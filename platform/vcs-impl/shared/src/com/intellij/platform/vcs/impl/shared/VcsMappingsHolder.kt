@@ -29,7 +29,12 @@ interface VcsMappingsHolder {
 
   fun hasMultipleRoots(): Boolean
 
+  fun hasActiveVcss(): Boolean
+
+  fun getSingleActiveVcs(): VcsKey?
+
   companion object {
+    @JvmStatic
     fun getInstance(project: Project): VcsMappingsHolder = project.service<VcsMappingsHolderImpl>()
   }
 }
@@ -48,7 +53,11 @@ private class VcsMappingsHolderImpl(val project: Project, cs: CoroutineScope) : 
 
   override fun getAllRoots(): List<FilePath> = mappings.value.values().map { it.path }
 
-  override fun hasMultipleRoots(): Boolean = mappings.value.values().filter { it.vcs != null }.size > 1
+  override fun hasMultipleRoots(): Boolean = mappings.value.values().count { it.vcs != null } > 1
+
+  override fun hasActiveVcss(): Boolean = mappings.value.values().isNotEmpty()
+
+  override fun getSingleActiveVcs(): VcsKey? = mappings.value.values().mapNotNull { it.vcs }.distinct().singleOrNull()
 
   private fun getMappingFor(filePath: FilePath): VcsMappedRoot? = mappings.value.getMappingFor(filePath.path)
 

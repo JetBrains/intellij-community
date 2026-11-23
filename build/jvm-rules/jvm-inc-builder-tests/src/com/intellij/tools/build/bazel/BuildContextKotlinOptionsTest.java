@@ -33,11 +33,14 @@ import java.util.Objects;
 import java.util.jar.JarOutputStream;
 import java.util.zip.ZipEntry;
 
+import static org.jetbrains.jps.util.Iterators.collect;
+
 /**
  * Checks the translation of worker command-line flags into the kotlinc configuration:
  * the CLI options assembled by {@link BuildContextImpl} and the typed {@link K2JVMCompilerArguments}
  * built by {@link KotlinCompilerRunner}; also checks that the {@code --x_compiler_plugin_order}
- * constraints actually reorder the compiler-plugin invocations in a real in-process compilation.
+ * constraints actually reorder the compiler-plugin invocations in a real in-process compilation,
+ * and that the files {@code --plugin_data} names are accepted inputs digested with the plugin classpath.
  */
 public final class BuildContextKotlinOptionsTest extends TestCase {
 
@@ -93,6 +96,23 @@ public final class BuildContextKotlinOptionsTest extends TestCase {
     );
     K2JVMCompilerArguments arguments = buildKotlinCompilerArguments(context);
     assertEquals(0, arguments.getPluginOrderConstraints().length);
+  }
+
+  public void testPluginDataFilesAreExpectedInputsDigestedWithThePluginClasspath() throws Exception {
+    Path baseDir = Files.createTempDirectory("build-context-plugin-data");
+    String[] args = {
+      "--target_label", "//test:lib",
+      "--out", "out/lib.jar",
+      "--kotlin_module_name", "lib",
+      "--plugin_options", "plugin:org.example.plugin:configurationPath=conf/plugin.conf",
+      "--plugin_data", "conf/plugin.conf"
+    };
+    BuildContext context = createBuildContext(baseDir, List.of(new Input("conf/plugin.conf", new byte[]{1})), new StringBuilder(), args);
+    assertEquals(List.of(), collect(context.getUnexpectedInputs(), new ArrayList<>()));
+
+    // the plugin reads the file for the whole compilation, so a change in it must invalidate every output the way a plugin jar change does
+    BuildContext changed = createBuildContext(baseDir, List.of(new Input("conf/plugin.conf", new byte[]{2})), new StringBuilder(), args);
+    assertTrue("a changed plugin data file must change the untracked inputs digest", context.getUntrackedInputsDigest() != changed.getUntrackedInputsDigest());
   }
 
   public void testCompilerPluginsCalledInConfiguredOrder() throws Exception {

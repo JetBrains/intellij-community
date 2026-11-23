@@ -3,14 +3,20 @@ package com.intellij.codeInspection.tests.java;
 
 import com.intellij.codeInspection.emptyMethod.EmptyMethodInspection;
 import com.intellij.jvm.analysis.JavaJvmAnalysisTestUtil;
-import com.intellij.testFramework.JavaInspectionTestCase;
+import com.intellij.testFramework.JavaInspectionFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.junit.jupiter.api.Test;
 
-public class JavaEmptyMethodInspectionTest extends JavaInspectionTestCase {
+import static com.intellij.testFramework.JavaInspectionFixtureKt.javaInspectionFixture;
+import static com.intellij.testFramework.JavaInspectionFixtureKt.javaInspectionProjectFixture;
 
-  @Override
-  protected String getTestDataPath() {
-    return JavaJvmAnalysisTestUtil.getTestDataPath() + "/codeInspection/emptyMethod/";
-  }
+@TestApplication
+public class JavaEmptyMethodInspectionTest {
+  private static final TestFixture<LightJavaProject> projectFixture = javaInspectionProjectFixture();
+  private final TestFixture<JavaInspectionFixture> javaInspection = javaInspectionFixture(projectFixture, JavaJvmAnalysisTestUtil.getTestDataPath() + "/codeInspection/emptyMethod/");
+
 
   private void doTest() {
     doTest(false);
@@ -18,49 +24,60 @@ public class JavaEmptyMethodInspectionTest extends JavaInspectionTestCase {
 
   private void doTest(final boolean checkRange) {
     final EmptyMethodInspection tool = new EmptyMethodInspection();
-    doTest(getTestName(true), tool, checkRange);
+    javaInspection.get().doTest(javaInspection.get().getTestName(true), tool, checkRange);
   }
 
+  @Test
   public void testDefaultOverride() {
     doTest();
   }
 
+  @Test
   public void testSuperCall() {
     doTest();
   }
 
+  @Test
   public void testSuperCallByRange() {
     doTest(true);
   }
 
+  @Test
   public void testExternalOverride() {
     doTest();
   }
 
+  @Test
   public void testSCR8321() {
     doTest();
   }
 
+  @Test
   public void testInAnonymous() {
     doTest(true);
   }
 
+  @Test
   public void testSuperFromAnotherPackageCall() {
     doTest();
   }
 
+  @Test
   public void testSuperWithoutSync() {
     doTest();
   }
 
+  @Test
   public void testEmptyMethodsHierarchy() {
     doTest();
   }
 
+  @Test
   public void testEmptyInLambda() {
     doTest();
   }
 
+  @Test
   public void testEmptyInLambdaSuper() {
     doTest();
   }

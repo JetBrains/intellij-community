@@ -13,7 +13,7 @@ import com.intellij.psi.util.childrenOfType
 import com.intellij.psi.util.siblings
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.annotations.KaAnnotationTarget
-import org.jetbrains.kotlin.analysis.api.components.returnType
+import org.jetbrains.kotlin.analysis.api.expressions.returnType
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.applicableAnnotationTargets
 import org.jetbrains.kotlin.analysis.api.symbols.symbol

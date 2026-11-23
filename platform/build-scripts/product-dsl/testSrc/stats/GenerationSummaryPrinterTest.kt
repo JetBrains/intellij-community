@@ -5,7 +5,7 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
 /**
- * Pins the dev-distribution plan report in the generation summary.
+ * Pins the distribution plan report in the generation summary.
  *
  * The summary reads the plan result off [GenerationStats]. A summary that receives no plan result cannot name a plan
  * file the run rewrote, and it reports `All files unchanged` instead.
@@ -19,16 +19,16 @@ class GenerationSummaryPrinterTest {
   fun `a committing run names the plan file it wrote`() {
     // A committing run with one modified plan file.
     val text = summaryOf(
-      stats = devDistPlanStats(
-        DevDistPlanFileResult("build/dev_dist_fragment_inputs.bzl", FileChangeStatus.MODIFIED),
-        DevDistPlanFileResult("build/dev_dist_module_sets.bzl", FileChangeStatus.UNCHANGED),
-        DevDistPlanFileResult("build/dev_dist_content_sets.bzl", FileChangeStatus.UNCHANGED),
+      stats = distPlanStats(
+        DistPlanFileResult("build/dist_fragment_inputs.bzl", FileChangeStatus.MODIFIED),
+        DistPlanFileResult("build/dist_module_sets.bzl", FileChangeStatus.UNCHANGED),
+        DistPlanFileResult("build/dist_content_sets.bzl", FileChangeStatus.UNCHANGED),
       ),
       committed = true,
     )
 
-    assertThat(text).contains("Dev-Dist Plan")
-    assertThat(text).contains("dev_dist_fragment_inputs.bzl")
+    assertThat(text).contains("Distribution Plan")
+    assertThat(text).contains("dist_fragment_inputs.bzl")
     assertThat(text).contains("Commit the change")
     assertThat(text).doesNotContain("All files unchanged")
   }
@@ -36,15 +36,15 @@ class GenerationSummaryPrinterTest {
   @Test
   fun `a committing run with no change counts the plan files`() {
     val text = summaryOf(
-      stats = devDistPlanStats(
-        DevDistPlanFileResult("build/dev_dist_fragment_inputs.bzl", FileChangeStatus.UNCHANGED),
-        DevDistPlanFileResult("build/dev_dist_module_sets.bzl", FileChangeStatus.UNCHANGED),
+      stats = distPlanStats(
+        DistPlanFileResult("build/dist_fragment_inputs.bzl", FileChangeStatus.UNCHANGED),
+        DistPlanFileResult("build/dist_module_sets.bzl", FileChangeStatus.UNCHANGED),
       ),
       committed = true,
     )
 
     assertThat(text).contains("All files unchanged")
-    assertThat(text).contains("Dev-dist plan:")
+    assertThat(text).contains("Distribution plan:")
     assertThat(text).doesNotContain("Commit the change")
   }
 
@@ -52,29 +52,29 @@ class GenerationSummaryPrinterTest {
   fun `a validating run prints no commit hint`() {
     // A validating run writes nothing, so a request to commit would point at no change.
     val text = summaryOf(
-      stats = devDistPlanStats(
-        DevDistPlanFileResult("build/dev_dist_fragment_inputs.bzl", FileChangeStatus.MODIFIED),
+      stats = distPlanStats(
+        DistPlanFileResult("build/dist_fragment_inputs.bzl", FileChangeStatus.MODIFIED),
       ),
       committed = false,
     )
 
-    assertThat(text).contains("dev_dist_fragment_inputs.bzl")
+    assertThat(text).contains("dist_fragment_inputs.bzl")
     assertThat(text).doesNotContain("Commit the change")
   }
 }
 
 /**
- * Builds a [GenerationStats] that holds only a dev-distribution plan result. Every other result stays empty, so a test
+ * Builds a [GenerationStats] that holds only a distribution plan result. Every other result stays empty, so a test
  * reads as one fact about the plan report.
  */
-private fun devDistPlanStats(vararg files: DevDistPlanFileResult): GenerationStats {
+private fun distPlanStats(vararg files: DistPlanFileResult): GenerationStats {
   return GenerationStats(
     moduleSetResults = emptyList(),
     dependencyResult = null,
     contentModuleResult = null,
     pluginDependencyResult = null,
     productResult = null,
-    devDistPlanResult = DevDistPlanGenerationResult(files = files.toList()),
+    distPlanResult = DistPlanGenerationResult(files = files.toList()),
     durationMs = 1_000,
   )
 }

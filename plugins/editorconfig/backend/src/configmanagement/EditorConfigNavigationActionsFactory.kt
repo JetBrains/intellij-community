@@ -5,7 +5,9 @@ import com.intellij.editorconfig.common.EditorConfigBundle.message
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.fileEditor.FileEditorComposite
 import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.fileEditor.FileEditorOpenRequest
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
@@ -14,6 +16,7 @@ import org.editorconfig.Utils
 import org.editorconfig.configmanagement.editor.EditorConfigPreviewManager
 import org.editorconfig.language.util.EditorConfigPresentationUtil.getFileName
 import org.jetbrains.annotations.Nls
+import java.util.concurrent.CompletableFuture
 
 object EditorConfigNavigationActionsFactory {
   fun getNavigationActions(project: Project, sourceFile: VirtualFile): List<AnAction> {
@@ -23,7 +26,7 @@ object EditorConfigNavigationActionsFactory {
     val withFolder = editorConfigFiles.size > 1
     val navigationActions = editorConfigFiles.map { editorConfigFile ->
       DumbAwareAction.create(getActionName(editorConfigFile, withFolder)) {
-        openEditorConfig(project, sourceFile, editorConfigFile)
+        requestOpenEditorConfig(project, sourceFile, editorConfigFile)
       }
     }
     
@@ -46,12 +49,12 @@ object EditorConfigNavigationActionsFactory {
     else 
       getFileName(file, withFolder)
 
-  private fun openEditorConfig(project: Project, sourceFile: VirtualFile, editorConfigFile: VirtualFile) {
+  private fun requestOpenEditorConfig(project: Project, sourceFile: VirtualFile, editorConfigFile: VirtualFile): CompletableFuture<FileEditorComposite> {
     val fileEditorManager = FileEditorManager.getInstance(project)
     if (fileEditorManager.isFileOpen(editorConfigFile)) {
       fileEditorManager.closeFile(editorConfigFile)
     }
     EditorConfigPreviewManager.getInstance(project).associateWithPreviewFile(editorConfigFile, sourceFile)
-    fileEditorManager.openFile(editorConfigFile, true)
+    return fileEditorManager.requestOpenFile(editorConfigFile, FileEditorOpenRequest.withFocus(true))
   }
 }

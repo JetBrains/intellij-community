@@ -112,9 +112,9 @@ internal class IjPluginPackagerTest {
         "--content_module",
         "module.with.package.and.library:input/module-with-package-and-library.jar,input/library.jar",
         "--non_classpath_data",
-        "LICENSE.txt:input/LICENSE.txt",
+        "LICENSE.txt:0644:input/LICENSE.txt",
         "--non_classpath_data",
-        "docs:input/additional-data",
+        "docs:0644:input/additional-data",
       ),
       baseDir = tempDirectory,
     )
@@ -608,7 +608,7 @@ internal class IjPluginPackagerTest {
         "--descriptor_module",
         "descriptor:input/descriptor.jar",
         "--non_classpath_data",
-        "data:input/data",
+        "data:0644:input/data",
       ),
       baseDir = tempDirectory,
     )
@@ -635,7 +635,7 @@ internal class IjPluginPackagerTest {
           "--descriptor_module",
           "descriptor:input/descriptor.jar",
           "--non_classpath_data",
-          "data:input/data",
+          "data:0644:input/data",
         ),
         baseDir = tempDirectory,
       )
@@ -662,15 +662,107 @@ internal class IjPluginPackagerTest {
           "--descriptor_module",
           "descriptor:input/descriptor.jar",
           "--non_classpath_data",
-          "data.txt:input/data1.txt",
+          "data.txt:0644:input/data1.txt",
           "--non_classpath_data",
-          "data.txt:input/data2.txt",
+          "data.txt:0644:input/data2.txt",
         ),
         baseDir = tempDirectory,
       )
     }
 
     assertTrue(error.message?.contains("because the output file already exists") == true, error.message)
+  }
+
+  @Test
+  fun writesFileAttributesForNonDefaultModes(@TempDir tempDirectory: Path) {
+    val inputDirectory = tempDirectory.resolve("input")
+    createDescriptorJar(inputDirectory)
+    directoryContent {
+      file("launcher.sh", "launcher")
+      file("README.md", "readme")
+      dir("tools") {
+        file("tool", "tool")
+        dir("nested") {
+          file("helper", "helper")
+        }
+      }
+      file("secret.txt", "secret")
+    }.generate(inputDirectory)
+
+    IjPluginPackager.packPlugin(
+      args = listOf(
+        "output/plugin",
+        "--file_attributes",
+        "output/file-attributes.txt",
+        "--descriptor_module",
+        "descriptor:input/descriptor.jar",
+        "--non_classpath_data",
+        "bin/launcher.sh:0755:input/launcher.sh",
+        "--non_classpath_data",
+        "README.md:0644:input/README.md",
+        "--non_classpath_data",
+        "bin/tools:0755:input/tools",
+        "--non_classpath_data",
+        "secret.txt:0600:input/secret.txt",
+      ),
+      baseDir = tempDirectory,
+    )
+
+    assertEquals(
+      """
+        bin/launcher.sh:0755
+        bin/tools/nested/helper:0755
+        bin/tools/tool:0755
+        secret.txt:0600
+
+      """.trimIndent(),
+      Files.readString(tempDirectory.resolve("output/file-attributes.txt")),
+    )
+  }
+
+  @Test
+  fun writesEmptyFileAttributesIfAllFilesHaveDefaultMode(@TempDir tempDirectory: Path) {
+    val inputDirectory = tempDirectory.resolve("input")
+    createDescriptorJar(inputDirectory)
+    Files.writeString(inputDirectory.resolve("data.txt"), "data")
+
+    IjPluginPackager.packPlugin(
+      args = listOf(
+        "output/plugin",
+        "--file_attributes",
+        "output/file-attributes.txt",
+        "--descriptor_module",
+        "descriptor:input/descriptor.jar",
+        "--non_classpath_data",
+        "data.txt:0644:input/data.txt",
+      ),
+      baseDir = tempDirectory,
+    )
+
+    assertEquals("", Files.readString(tempDirectory.resolve("output/file-attributes.txt")))
+  }
+
+  @Test
+  fun reportsErrorIfNonClasspathDataModeIsInvalid(@TempDir tempDirectory: Path) {
+    val inputDirectory = tempDirectory.resolve("input")
+    createDescriptorJar(inputDirectory)
+    Files.writeString(inputDirectory.resolve("data.txt"), "data")
+
+    for (mode in listOf("4755", "0999", "rwx")) {
+      val error = assertThrows(IjPluginPackagingException::class.java) {
+        IjPluginPackager.packPlugin(
+          args = listOf(
+            "output",
+            "--descriptor_module",
+            "descriptor:input/descriptor.jar",
+            "--non_classpath_data",
+            "data.txt:$mode:input/data.txt",
+          ),
+          baseDir = tempDirectory,
+        )
+      }
+      assertEquals("Non-classpath data mode must be an octal value from 0000 to 0777: $mode", error.message)
+    }
   }
 
   @Test

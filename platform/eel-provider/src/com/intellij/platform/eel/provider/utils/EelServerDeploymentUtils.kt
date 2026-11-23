@@ -7,7 +7,6 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.eel.provider.LocalEelDescriptor
 import com.intellij.platform.eel.provider.utils.EelPathUtils.TransferTarget
-import com.intellij.platform.util.annotations.VisibleToClasses
 import com.intellij.util.ReflectionUtil
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.io.sanitizeFileName
@@ -18,12 +17,10 @@ import java.nio.file.Path
 
 /** Utilities for deploying server files and directories to an Eel execution host. */
 @ApiStatus.Experimental
-@ApiStatus.Internal
-@VisibleToClasses(
-  "com.intellij.platform.ijent.functional.EelServerDeploymentTest",
-)
+@Deprecated("Use EelPathUtils.transferLocalContentToRemote with EelSystemFolderUtils.createTransferTarget or EelPathUtils.TransferTarget.Explicit instead")
 object EelServerDeploymentUtils {
   private const val SERVER_DEPLOYMENTS_DIRECTORY = "server-deployments"
+  @Suppress("DEPRECATION")
   private val LOG = logger<EelServerDeploymentUtils>()
 
   /**
@@ -32,8 +29,6 @@ object EelServerDeploymentUtils {
    *
    * For an identified plugin, uses `server-deployments/<plugin.id>/<plugin.version>/<filename>` under the system directory.
    * Sanitizes the plugin ID and version for use as directory names.
-   * Reuses the copy only when the destination and its completion marker both exist.
-   * Creates the sibling `<filename>.deployed` marker only after the transfer succeeds.
    *
    * Call this method directly from the plugin that owns [pathToCopy] to identify that plugin.
    * If the plugin cannot be identified, uses a cached temporary destination via [EelPathUtils.transferLocalContentToRemote].
@@ -42,6 +37,9 @@ object EelServerDeploymentUtils {
    *
    * @throws IOException if the transfer or a file operation fails.
    */
+  @Deprecated(
+    "Use EelPathUtils.transferLocalContentToRemote with EelSystemFolderUtils.createTransferTarget or EelPathUtils.TransferTarget.Explicit instead",
+  )
   @Suppress("unused")
   @JvmStatic
   @RequiresBackgroundThread(generateAssertion = false)
@@ -56,39 +54,25 @@ object EelServerDeploymentUtils {
 
     val callerClass = ReflectionUtil.getCallerClass(3)
     val plugin = (callerClass?.classLoader as? PluginAwareClassLoader)?.pluginDescriptor
-    if (plugin == null) {
+    val transferTarget = if (plugin == null) {
       LOG.warn("Cannot identify the calling plugin; deploying $pathToCopy to a temporary location")
-      return EelPathUtils.transferLocalContentToRemote(
-        source = pathToCopy,
-        target = TransferTarget.Temporary(target),
-      ).also {
-        LOG.info("Successfully deployed server from $pathToCopy to $it")
-      }
+      TransferTarget.Temporary(target)
+    }
+    else {
+      val pluginVersion = checkNotNull(plugin.version) { "Cannot determine the version of plugin ${plugin.pluginId}" }
+      val relativeDirectory = Path.of(
+        SERVER_DEPLOYMENTS_DIRECTORY,
+        sanitizeFileName(plugin.pluginId.idString),
+        sanitizeFileName(pluginVersion),
+      )
+      EelSystemFolderUtils.createTransferTarget(target, relativeDirectory)
     }
 
-    val pluginVersion = checkNotNull(plugin.version) { "Cannot determine the version of plugin ${plugin.pluginId}" }
-
-    val deployedServerPath = EelSystemFolderUtils.getSystemFolder(target)
-      .resolve(SERVER_DEPLOYMENTS_DIRECTORY)
-      .resolve(sanitizeFileName(plugin.pluginId.idString))
-      .resolve(sanitizeFileName(pluginVersion))
-      .resolve(pathToCopy.fileName?.toString() ?: error("Server path must have a file or directory name: $pathToCopy"))
-    val deploymentMarker = deployedServerPath.resolveSibling("${deployedServerPath.fileName}.deployed")
-
-    if (Files.exists(deployedServerPath) && Files.isRegularFile(deploymentMarker)) {
-      LOG.debug { "Reusing deployed server path: $deployedServerPath" }
-      return deployedServerPath
-    }
-
-    LOG.debug { "Deploying server from $pathToCopy to $deployedServerPath" }
-    Files.createDirectories(deployedServerPath.parent)
-    Files.deleteIfExists(deploymentMarker)
-    EelPathUtils.transferLocalContentToRemote(
+    return EelPathUtils.transferLocalContentToRemote(
       source = pathToCopy,
-      target = TransferTarget.Explicit(deployedServerPath),
-    )
-    Files.createFile(deploymentMarker)
-    LOG.info("Successfully deployed server from $pathToCopy to $deployedServerPath")
-    return deployedServerPath
+      target = transferTarget,
+    ).also {
+      LOG.info("Successfully deployed server from $pathToCopy to $it")
+    }
   }
 }

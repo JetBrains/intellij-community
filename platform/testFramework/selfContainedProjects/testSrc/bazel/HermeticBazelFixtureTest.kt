@@ -74,6 +74,7 @@ class HermeticBazelFixtureTest {
       common --repo_env=BAZEL_NO_APPLE_CPP_TOOLCHAIN=0
       startup --output_base=${outputBase.toAbsolutePath()}
       startup --output_user_root=${outputUserRoot.toAbsolutePath()}
+      startup --max_idle_secs=3600
     """.trimIndent()
     assertEquals(expected, HermeticBazelWorkspace.offlineBazelRc(cache, outputBase, outputUserRoot))
   }

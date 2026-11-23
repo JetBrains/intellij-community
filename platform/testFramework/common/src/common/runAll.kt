@@ -47,6 +47,13 @@ suspend fun runAllSuspend(vararg actions: suspend () -> Unit) {
 }
 
 @TestOnly
+suspend fun runAllSuspend(actions: Collection<suspend () -> Unit>) {
+  actions.asSequence().runAllCatchingSuspend()?.let {
+    throw it
+  }
+}
+
+@TestOnly
 suspend fun runAllCatchingSuspend(vararg actions: suspend () -> Unit): Throwable? {
   return actions.asSequence().runAllCatchingSuspend()
 }

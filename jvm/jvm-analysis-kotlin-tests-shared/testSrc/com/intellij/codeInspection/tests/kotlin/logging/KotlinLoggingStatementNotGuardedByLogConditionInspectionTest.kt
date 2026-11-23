@@ -1,12 +1,23 @@
 package com.intellij.codeInspection.tests.kotlin.logging
 
 import com.intellij.analysis.JvmAnalysisBundle
-import com.intellij.jvm.analysis.internal.testFramework.logging.LoggingStatementNotGuardedByLogConditionInspectionTestBase
+import com.intellij.jvm.analysis.internal.testFramework.logging.loggingStatementNotGuardedByLogConditionInspectionFixture
 import com.intellij.jvm.analysis.testFramework.JvmLanguage
+import com.intellij.jvm.analysis.testFramework.jvmProjectFixture
+import com.intellij.testFramework.junit5.TestApplication
+import org.junit.jupiter.api.Test
 
-abstract class KotlinLoggingStatementNotGuardedByLogConditionInspectionTest : LoggingStatementNotGuardedByLogConditionInspectionTestBase() {
+@TestApplication
+abstract class KotlinLoggingStatementNotGuardedByLogConditionInspectionTest {
+  companion object {
+    private val projectFixture = jvmProjectFixture()
+  }
+
+  protected val myFixture by loggingStatementNotGuardedByLogConditionInspectionFixture(projectFixture)
+
   
 
+  @Test
   fun `test slf4j`() {
     myFixture.testHighlighting(JvmLanguage.KOTLIN, """
       import org.slf4j.Logger
@@ -22,6 +33,7 @@ abstract class KotlinLoggingStatementNotGuardedByLogConditionInspectionTest : Lo
     """.trimIndent())
   }
 
+  @Test
   fun `test log4j2`() {
     myFixture.testHighlighting(JvmLanguage.KOTLIN, """
       import org.apache.logging.log4j.LogManager
@@ -39,6 +51,7 @@ abstract class KotlinLoggingStatementNotGuardedByLogConditionInspectionTest : Lo
     """.trimIndent())
   }
 
+  @Test
   fun `test skip according level for slf4j`() {
     myFixture.testHighlighting(JvmLanguage.KOTLIN, """
       import org.slf4j.Logger
@@ -56,6 +69,7 @@ abstract class KotlinLoggingStatementNotGuardedByLogConditionInspectionTest : Lo
     """.trimIndent())
   }
 
+  @Test
   fun `test is surrounded by guard for slf4j`() {
     myFixture.testHighlighting(JvmLanguage.KOTLIN, """
       import org.slf4j.Logger
@@ -89,6 +103,7 @@ abstract class KotlinLoggingStatementNotGuardedByLogConditionInspectionTest : Lo
     """.trimIndent())
   }
 
+  @Test
   fun `test skip if only constant arguments for slf4j`() {
     myFixture.testHighlighting(JvmLanguage.KOTLIN, """
       import org.slf4j.Logger
@@ -107,6 +122,7 @@ abstract class KotlinLoggingStatementNotGuardedByLogConditionInspectionTest : Lo
     """.trimIndent())
   }
 
+  @Test
   fun `test don't skip if only constant arguments for slf4j flagUnguardedConstant`() {
     myFixture.testHighlighting(JvmLanguage.KOTLIN, """
       import org.slf4j.Logger
@@ -128,6 +144,7 @@ abstract class KotlinLoggingStatementNotGuardedByLogConditionInspectionTest : Lo
     """.trimIndent())
   }
 
+  @Test
   fun `test skip with several log calls for slf4j`() {
     myFixture.testHighlighting(JvmLanguage.KOTLIN, """
       import org.slf4j.Logger
@@ -167,6 +184,7 @@ abstract class KotlinLoggingStatementNotGuardedByLogConditionInspectionTest : Lo
     """.trimIndent())
   }
 
+  @Test
   fun `test fix simple slf4j`() {
     myFixture.testQuickFix(
       testPreview = true,
@@ -205,6 +223,7 @@ abstract class KotlinLoggingStatementNotGuardedByLogConditionInspectionTest : Lo
     )
   }
 
+  @Test
   fun `test fix simple nested slf4j`() {
     myFixture.testQuickFix(
       testPreview = false,
@@ -247,6 +266,7 @@ abstract class KotlinLoggingStatementNotGuardedByLogConditionInspectionTest : Lo
     )
   }
 
+  @Test
   fun `test fix several similar slf4j`() {
     myFixture.testQuickFix(
       testPreview = true,
@@ -287,6 +307,7 @@ abstract class KotlinLoggingStatementNotGuardedByLogConditionInspectionTest : Lo
     )
   }
 
+  @Test
   fun `test fix several different slf4j`() {
     myFixture.testQuickFix(
       testPreview = true,

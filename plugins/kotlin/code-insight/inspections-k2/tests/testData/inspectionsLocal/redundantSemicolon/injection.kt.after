@@ -1,0 +1,16 @@
+// HOST_EDITOR
+import org.intellij.lang.annotations.Language
+
+class Remove {
+    class A {
+        fun x() {
+            @Language("kotlin")
+            val a = """
+                var s = 0
+                fun main() {
+                    var s = 99999
+                }
+            """
+        }
+    }
+}

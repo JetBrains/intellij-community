@@ -23,10 +23,9 @@ import org.jetbrains.annotations.Nls
 import com.intellij.util.io.URLUtil
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.launch
 import java.util.HashSet
 import java.util.LinkedHashMap
 import java.util.LinkedHashSet
@@ -113,7 +112,10 @@ internal data class UnifiedPluginMarketplaceFetchResult(
   val models: List<PluginUiModel>,
   val error: String? = null,
   val errorOrigin: MarketplaceFetchErrorOrigin = MarketplaceFetchErrorOrigin.Source,
+  val suggestedGroups: Map<PluginId, SuggestedPluginGroup> = emptyMap(),
 )
+
+internal const val SUGGESTED_PLUGIN_LIMIT: Int = 20
 
 internal enum class MarketplaceFetchErrorOrigin {
   Source,
@@ -136,6 +138,10 @@ internal class DefaultUnifiedPluginMarketplaceDataProvider(
   override fun loadSuggested(): Flow<UnifiedPluginMarketplaceFetchResult> = loadMergedSuggestedPlugins(
     loadProjectSuggestions = ::loadProjectSuggestions,
     loadStaffPicks = ::loadStaffPicks,
+    loadMarketplaceResults = {
+      val result = pluginManager.executeMarketplaceQuery("", SUGGESTED_PLUGIN_LIMIT, true)
+      UnifiedPluginMarketplaceFetchResult(result.getPlugins(), result.error)
+    },
     onFailure = { sourceName, cause ->
       LOG.warn("Failed to load $sourceName for the merged Suggested section", cause)
     },
@@ -292,37 +298,27 @@ internal fun buildUnifiedMarketplaceSearchRequest(query: String): UnifiedMarketp
 internal fun loadMergedSuggestedPlugins(
   loadProjectSuggestions: suspend () -> UnifiedPluginMarketplaceFetchResult,
   loadStaffPicks: suspend () -> UnifiedPluginMarketplaceFetchResult,
+  loadMarketplaceResults: suspend () -> UnifiedPluginMarketplaceFetchResult,
   onFailure: (sourceName: String, cause: Throwable) -> Unit = { _, _ -> },
 ): Flow<UnifiedPluginMarketplaceFetchResult> = flow {
   coroutineScope {
-    val sourceResults = Channel<SuggestedSourceResult>(capacity = 2)
-    launch {
-      sourceResults.send(
-        SuggestedSourceResult.Project(loadSuggestedSource("project suggestions", loadProjectSuggestions, onFailure))
-      )
+    val staffPicks = async {
+      loadSuggestedSource("Staff Picks", loadStaffPicks, onFailure)
     }
-    launch {
-      sourceResults.send(SuggestedSourceResult.StaffPicks(loadSuggestedSource("Staff Picks", loadStaffPicks, onFailure)))
+    val marketplace = async {
+      loadSuggestedSource("Marketplace results", loadMarketplaceResults, onFailure)
     }
-
-    var projectSuggestions = UnifiedPluginMarketplaceFetchResult(emptyList())
-    var staffPicks = UnifiedPluginMarketplaceFetchResult(emptyList())
-    repeat(2) {
-      when (val result = sourceResults.receive()) {
-        is SuggestedSourceResult.Project -> projectSuggestions = result.value
-        is SuggestedSourceResult.StaffPicks -> staffPicks = result.value
-      }
-      emit(combineSuggestedPluginResults(projectSuggestions, staffPicks))
+    val projectSuggestions = loadSuggestedSource("project suggestions", loadProjectSuggestions, onFailure)
+    if (projectSuggestions.models.isNotEmpty()) {
+      emit(combineSuggestedPluginResults(projectSuggestions))
     }
+    val picks = staffPicks.await()
+    if (picks.models.isNotEmpty()) {
+      emit(combineSuggestedPluginResults(projectSuggestions, picks))
+    }
+    emit(combineSuggestedPluginResults(projectSuggestions, picks, marketplace.await()))
   }
-}
-
-private sealed interface SuggestedSourceResult {
-  val value: UnifiedPluginMarketplaceFetchResult
-
-  data class Project(override val value: UnifiedPluginMarketplaceFetchResult) : SuggestedSourceResult
-  data class StaffPicks(override val value: UnifiedPluginMarketplaceFetchResult) : SuggestedSourceResult
-}
+}.distinctUntilChanged()
 
 private suspend fun loadSuggestedSource(
   sourceName: String,
@@ -343,21 +339,34 @@ private suspend fun loadSuggestedSource(
 
 internal fun combineSuggestedPluginResults(
   projectSuggestions: UnifiedPluginMarketplaceFetchResult,
-  staffPicks: UnifiedPluginMarketplaceFetchResult,
+  staffPicks: UnifiedPluginMarketplaceFetchResult? = null,
+  marketplace: UnifiedPluginMarketplaceFetchResult? = null,
 ): UnifiedPluginMarketplaceFetchResult {
+  val resultsByGroup = listOfNotNull(
+    SuggestedPluginGroup.Project to projectSuggestions,
+    staffPicks?.let { SuggestedPluginGroup.StaffPicks to it },
+    marketplace?.let { SuggestedPluginGroup.Marketplace to it },
+  )
   val models = LinkedHashMap<PluginId, PluginUiModel>()
-  for (model in projectSuggestions.models) {
-    models.putIfAbsent(model.pluginId, model)
+  val groups = HashMap<PluginId, SuggestedPluginGroup>()
+  for ((group, result) in resultsByGroup) {
+    for (model in result.models) {
+      if (models.putIfAbsent(model.pluginId, model) == null) {
+        groups[model.pluginId] = group
+      }
+    }
   }
-  for (model in staffPicks.models) {
-    models.putIfAbsent(model.pluginId, model)
-  }
-  val errors = sequenceOf(projectSuggestions, staffPicks)
+  val errors = resultsByGroup.asSequence()
+    .map { it.second }
     .filter { it.errorOrigin != MarketplaceFetchErrorOrigin.CustomRepository }
     .mapNotNull(UnifiedPluginMarketplaceFetchResult::error)
     .distinct()
     .toList()
-  return UnifiedPluginMarketplaceFetchResult(models.values.toList(), errors.takeIf { it.isNotEmpty() }?.joinToString("; "))
+  return UnifiedPluginMarketplaceFetchResult(
+    models.values.toList(),
+    errors.takeIf { it.isNotEmpty() }?.joinToString("; "),
+    suggestedGroups = groups,
+  )
 }
 
 internal fun normalizeMarketplaceModels(models: List<PluginUiModel>): List<PluginUiModel> {

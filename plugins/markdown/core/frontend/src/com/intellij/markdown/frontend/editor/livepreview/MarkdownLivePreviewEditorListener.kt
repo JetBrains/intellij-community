@@ -18,8 +18,9 @@ import kotlinx.coroutines.flow.dropWhile
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import org.intellij.plugins.markdown.editor.livepreview.MarkdownLivePreviewConfiguration
 import org.intellij.plugins.markdown.editor.livepreview.MarkdownLivePreviewRemoteApi
-import org.intellij.plugins.markdown.editor.livepreview.livePreviewEnablednessFlow
+import org.intellij.plugins.markdown.editor.livepreview.livePreviewConfigurationFlow
 import org.intellij.plugins.markdown.lang.supportsMarkdown
 
 /** Follows the live-preview state of each Markdown editor and keeps the backend and the reconciler in line with it. */
@@ -34,8 +35,8 @@ internal class MarkdownLivePreviewEditorListener : EditorFactoryListener {
       EditorScopeProvider.getInstance(project).getEditorScope(editor).launch(Dispatchers.Default) {
         try {
           // Skips the initial off state, so an editor that never turns live preview on keeps its look and makes no RPC calls.
-          editor.livePreviewEnablednessFlow().dropWhile { !it }
-            .collectLatest { enabled -> synchronize(editor, editorId, enabled) }
+          editor.livePreviewConfigurationFlow().dropWhile { it == null }
+            .collectLatest { configuration -> synchronize(editor, editorId, configuration) }
         }
         catch (exception: Throwable) {
           rethrowControlFlowException(exception)
@@ -45,13 +46,14 @@ internal class MarkdownLivePreviewEditorListener : EditorFactoryListener {
     }
   }
 
-  private suspend fun synchronize(editor: EditorEx, editorId: EditorId, enabled: Boolean) {
+  private suspend fun synchronize(editor: EditorEx, editorId: EditorId, configuration: MarkdownLivePreviewConfiguration?) {
+    val enabled = configuration != null
     if (enabled) {
       withContext(Dispatchers.EDT) { MarkdownLivePreviewEditorAppearance.getOrCreate(editor)?.change(true) }
     }
     durable {
       val api = MarkdownLivePreviewRemoteApi.getInstance()
-      api.setLivePreviewSupport(editorId, enabled)
+      api.setLivePreviewSupport(editorId, configuration)
       val specSets = if (enabled) api.getLivePreviewSpecs(editorId).toFlow() else flowOf(null)
       specSets.collect { specSet ->
         withContext(Dispatchers.EDT) {

@@ -8,9 +8,9 @@ import org.jdom.Namespace
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.intellij.build.PLUGIN_XML_RELATIVE_PATH
 import org.jetbrains.intellij.build.dev.DevPluginPreparationOperation
-import org.jetbrains.intellij.build.devDist.JarSourceRecipe
-import org.jetbrains.intellij.build.devDist.PluginPackingAsset
-import org.jetbrains.intellij.build.devDist.isNativeTreeAsset
+import org.jetbrains.intellij.build.dist.JarSourceRecipe
+import org.jetbrains.intellij.build.dist.PluginPackingAsset
+import org.jetbrains.intellij.build.dist.isNativeTreeAsset
 import org.jetbrains.intellij.build.getLibraryFileName
 import org.jetbrains.intellij.build.impl.BUILT_IN_HELP_MODULE_NAME
 import org.jetbrains.intellij.build.impl.LibraryPackMode
@@ -270,8 +270,8 @@ private class SymbolicLayoutProjector(
     if (moduleRoots == null) gap("module-roots:${module.name}", "Declare the ordered output roots, including an explicit empty list")
     val orderedRoots = moduleRoots.orEmpty()
     if (layout.moduleExcludes.get(module.name).orEmpty().isNotEmpty()) {
-      // The dev distribution has no module filter. A directory the module jar must not carry lives outside the resource root.
-      gap("module-excludes:${module.name}", "Move the excluded directory out of the resource root; the dev distribution has no module filter")
+      // The distribution has no module filter. A directory the module jar must not carry lives outside the resource root.
+      gap("module-excludes:${module.name}", "Move the excluded directory out of the resource root; the distribution has no module filter")
     }
     for (input in orderedRoots) {
       val identity = if (artifacts.get(input)?.kind == "directory") "common-module-excludes" to input else Any()
@@ -508,7 +508,7 @@ private class SymbolicLayoutProjector(
         return recordNativeSources(use, original)
       }
       PluginSymbolicNativeHandling.INLINE_SIGNING -> {
-        gap("native-signing:${use.occurrence}", "Inline native signing is not supported in the dev distribution")
+        gap("native-signing:${use.occurrence}", "Inline native signing is not supported in the distribution")
         return emptyList()
       }
     }

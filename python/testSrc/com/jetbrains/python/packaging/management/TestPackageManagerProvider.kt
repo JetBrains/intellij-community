@@ -41,8 +41,8 @@ class TestPackageManagerProvider : PythonPackageManagerProvider {
     return this
   }
 
-  override fun createPackageManager(project: Project, interpreter: PythonInterpreter): PythonPackageManager {
-    return TestPythonPackageManager(project, interpreter)
+  override fun createPackageManager(interpreter: PythonInterpreter): PythonPackageManager {
+    return TestPythonPackageManager(interpreter)
       .withPackageNames(packageNames)
       .withPackageDetails(packageDetails)
       .withPackageInstalled(packageInstalled)

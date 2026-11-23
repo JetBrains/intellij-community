@@ -1,6 +1,6 @@
 package com.intellij.platform.buildScripts.testFramework.distributionContent
 
-import com.intellij.platform.distributionContent.DevDistProductReport
+import com.intellij.platform.distributionContent.DistProductReport
 import com.intellij.platform.distributionContent.DistFileRow
 import com.intellij.platform.distributionContent.FileEntry
 import com.intellij.platform.distributionContent.PluginContentReport
@@ -11,7 +11,7 @@ import com.intellij.platform.distributionContent.ProductPlatformReview
 import com.intellij.platform.distributionContent.ProductPublishingReview
 import com.intellij.platform.distributionContent.ProductReviewReport
 import com.intellij.platform.distributionContent.ProductXmlReference
-import com.intellij.platform.distributionContent.readDevDistProductReport
+import com.intellij.platform.distributionContent.readDistProductReport
 import com.intellij.platform.distributionContent.readProductReviewReport
 import com.intellij.platform.distributionContent.writeProductReviewReport
 import org.assertj.core.api.Assertions.assertThat
@@ -128,7 +128,7 @@ class ProductReviewReportTest {
     val artifact = directory.resolve("logs/packaging-reports/suite/product.yaml")
     val output = directory.resolve("build-output").createDirectories()
     val scratch = output.resolve("scratch").also { it.writeText("temporary") }
-    val observed = DevDistProductReport(
+    val observed = DistProductReport(
       emptyList(), listOf(PluginContentReport("discovered")), listOf("shared.member"), emptyList(),
     )
     writeProductObservation(artifact, observed)
@@ -136,12 +136,12 @@ class ProductReviewReportTest {
     Files.delete(output)
     val home = directory.resolve("project").createDirectories()
     assertThat(validateProductReport(home, "product.yaml", emptyReport)).hasSize(1)
-    assertThat(readDevDistProductReport(artifact.readText())).isEqualTo(observed)
+    assertThat(readDistProductReport(artifact.readText())).isEqualTo(observed)
     home.resolve("product.yaml").writeText(writeProductReviewReport(emptyReport))
     val updated = observed.copy(platformContentModules = listOf("shared.member", "shared.new"))
     writeProductObservation(artifact, updated)
     assertThat(validateProductReport(home, "product.yaml", emptyReport)).isEmpty()
-    assertThat(readDevDistProductReport(artifact.readText())).isEqualTo(updated)
+    assertThat(readDistProductReport(artifact.readText())).isEqualTo(updated)
   }
 
   @Test

@@ -53,10 +53,10 @@ public interface BenchmarkTestInfo {
    * This way degradation will be easier to detect and metric deviation from the baseline will be easier to notice.
    * <p/>
    * On TeamCity all unit performance tests run as
-   * <a href="https://buildserver.labs.intellij.net/buildConfiguration/ijplatform_master_Idea_Tests_PerformanceTests?branch=&buildTypeTab=overview&mode=builds">the composite build</a>
+   * <a href="https://buildserver.labs.intellij.net/buildConfiguration/ijplatform_master_IntelliJUnitPerformanceTestsOnBlade?branch=&buildTypeTab=overview&mode=builds">the composite build</a>
    * <br/>
    * Raw metrics are reported as TC artifacts and can be found on Artifacts tqb in dependency builds.<br/>
-   * Human friendly metrics representation can be viewed in <a href="https://ij-perf.labs.jb.gg/perfUnit/tests?machine=linux-blade-hetzner&branch=master">IJ Perf</a><br/>
+   * Human friendly metrics representation can be viewed in <a href="https://ij-perf.labs.jb.gg/perfUnit/tests?machine=linux-unit-perf-blade&branch=master">IJ Perf</a><br/>
    * Last but not least: if metrics aren't published or even not collected - probably TelemetryManager instance isn't initialized correctly
    * or dependency on module intellij.tools.ide.metrics.benchmark isn't set.
    *

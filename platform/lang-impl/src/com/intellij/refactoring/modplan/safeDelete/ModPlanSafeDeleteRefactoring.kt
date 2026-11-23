@@ -8,8 +8,8 @@ import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiUtilCore
 import com.intellij.refactoring.RefactoringBundle
-import com.intellij.refactoring.modplan.ModPlanAnalysisResult
 import com.intellij.refactoring.modplan.ModPlan
+import com.intellij.refactoring.modplan.ModPlanAnalysisResult
 import com.intellij.refactoring.modplan.ModPlanChain
 import com.intellij.refactoring.modplan.ModPlanChainBuilder
 import com.intellij.refactoring.modplan.ModPlanConflictKind
@@ -163,8 +163,8 @@ class ModPlanSafeDeleteRefactoring : ModPlanRefactoring {
     val commandName =
       RefactoringBundle.message("safe.delete.command", RefactoringUIUtil.calculatePsiElementDescriptionList(elements.toTypedArray()))
     // As in the legacy safe delete, the deleted files go to the trash, as the user chose in the settings.
-    return ModPlan.createPlan(edits, conflicts, eventElementsOf(elements, edits), commandName,
-                              REFACTORING_ID, elements.first(), trashDeletedFiles = true)
+    return ModPlan.createPlan(edits, conflicts, commandName, REFACTORING_ID, elements.first(), trashDeletedFiles = true,
+                              writeEvents = ModPlanRefactoring.WriteEvent.ofElements(eventElementsOf(elements, edits)))
   }
 
   /**
@@ -204,7 +204,7 @@ class ModPlanSafeDeleteRefactoring : ModPlanRefactoring {
   }
 
   private fun refusalOf(reason: ModPlanAnalysisResult.RefusedReason, subject: SymbolPointer): ModPlan.RefusedPlan =
-    ModPlan.RefusedPlan(reason, subject.element())
+    ModPlan.RefusedPlan(reason, subject.element(), null)
 
   companion object {
     internal const val REFACTORING_ID = "refactoring.safeDelete"
@@ -224,7 +224,8 @@ private fun lastPositionFirst(edits: List<ModPlanEdit>): List<ModPlanEdit> {
   for (edit in edits) {
     val element = when (edit) {
       is ModPlanEdit.Update -> edit.pointers().firstOrNull()?.element
-      is ModPlanEdit.Delete, is ModPlanEdit.Create, is ModPlanEdit.Move -> null
+      is ModPlanEdit.Delete, is ModPlanEdit.Create, is ModPlanEdit.CreateDirectory, is ModPlanEdit.Move, is ModPlanEdit.ReplaceText,
+      is ModPlanEdit.UpdateRange -> null
     }
     if (element != null) {
       positionedEdits.add(edit to element)
@@ -249,4 +250,4 @@ private fun withoutBrokenAtTheSamePlace(conflicts: ModPlanConflicts, earlierConf
   return ModPlanConflicts(conflicts.conflicts.filter { it.kind != ModPlanConflictKind.BROKEN || it.location !in brokenPlaces })
 }
 
-private fun gone() = ModPlan.RefusedPlan(ModPlanAnalysisResult.RefusedReason.NOT_APPLICABLE, null as PsiElement?)
+private fun gone() = ModPlan.RefusedPlan(ModPlanAnalysisResult.RefusedReason.NOT_APPLICABLE, null as PsiElement?, null)

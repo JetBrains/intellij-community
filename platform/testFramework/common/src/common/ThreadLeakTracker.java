@@ -23,6 +23,7 @@ import com.intellij.util.ui.EDT;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.annotations.Unmodifiable;
 import org.jetbrains.io.NettyUtil;
@@ -197,6 +198,7 @@ public final class ThreadLeakTracker {
     Map<String, Thread> all = getThreads();
     Map<String, Thread> after = new HashMap<>(all);
     after.keySet().removeAll(threadsBefore.keySet());
+    removeCoroutinesRunningBefore(after, threadsBefore.keySet());
     Map<Thread, StackTraceElement[]> stackTraces = ContainerUtil.map2Map(
       after.values(),
       thread -> new Pair<>(thread, thread.getStackTrace())
@@ -205,6 +207,42 @@ public final class ThreadLeakTracker {
     for (Thread thread : after.values()) {
       waitForThread(thread, stackTraces, all, after, screencastStarted);
     }
+  }
+
+  /**
+   * Removes from {@code after} the threads that run a coroutine which already ran at the start, on the same or on another thread.
+   * In the coroutine debug mode, a thread that runs a coroutine has the name "thread name @coroutine name#coroutine id".
+   * When the coroutine resumes on another thread, the thread name changes, but the coroutine suffix stays.
+   * For example, a test fixture coroutine sets up a project on one thread and waits for its teardown on another thread.
+   */
+  private static void removeCoroutinesRunningBefore(Map<String, Thread> after, Set<String> threadNamesBefore) {
+    Set<String> coroutinesBefore = new HashSet<>();
+    for (String name : threadNamesBefore) {
+      String coroutine = getCoroutineSuffix(name);
+      if (coroutine != null) {
+        coroutinesBefore.add(coroutine);
+      }
+    }
+    if (!coroutinesBefore.isEmpty()) {
+      after.keySet().removeIf(name -> coroutinesBefore.contains(getCoroutineSuffix(name)));
+    }
+  }
+
+  /**
+   * Returns the suffix " @coroutine name#coroutine id" that the coroutine debug mode adds to the thread name, or null.
+   */
+  private static @Nullable String getCoroutineSuffix(String threadName) {
+    int separator = threadName.lastIndexOf(" @");
+    int idStart = threadName.lastIndexOf('#') + 1;
+    if (separator < 0 || idStart <= separator || idStart == threadName.length()) {
+      return null;
+    }
+    for (int i = idStart; i < threadName.length(); i++) {
+      if (!Character.isDigit(threadName.charAt(i))) {
+        return null;
+      }
+    }
+    return threadName.substring(separator);
   }
 
   private static void waitForThread(Thread thread,

@@ -3,7 +3,7 @@ use pretty_assertions::assert_eq;
 use super::*;
 use crate::areas::Areas;
 use crate::exit::{INFRA, USAGE};
-use crate::fake::{FakeRuntime, REPO_ROOT, areas, module_build_bazel_text, refusal};
+use crate::fake::{FakeRuntime, REPO_ROOT, areas, module_entry_json, refusal, target_json, tests_module_json};
 
 const ULTIMATE_LIST: &str = "community/build/bazel-migrated-test-modules.txt";
 const COMMUNITY_LIST: &str = "build/bazel-migrated-test-modules.txt";
@@ -21,8 +21,13 @@ fn modules_xml(imls: &[&str]) -> String {
     )
 }
 
-fn module_build(module: &str, target: &str) -> String {
-    module_build_bazel_text(module, target)
+/// Adds the module root `dir` to the fake accio: the tests module `module`, its main module, and the test target
+/// `target` that runs the tests module.
+fn module_build(fake: &FakeRuntime, dir: &str, module: &str, target: &str) {
+    let main = module
+        .strip_suffix(".tests")
+        .unwrap_or_else(|| panic!("{module} is not a tests module"));
+    fake.add_module(tests_module_json(dir, main, module, target));
 }
 
 /// The migrated list, with the header comment and the blank line of the real file.
@@ -56,21 +61,21 @@ fn one_label(label: &str) -> Resolution {
 #[test]
 fn a_migrated_community_module_of_the_ultimate_root_resolves_in_the_community_repository() {
     let fake = ultimate(&["community/plugins/x/intellij.x.tests.iml"], &["intellij.x.tests"]);
-    fake.put("community/plugins/x/BUILD.bazel", &module_build("intellij.x.tests", "x_test"));
+    module_build(&fake, "community/plugins/x", "intellij.x.tests", "x_test");
     assert_eq!(resolve(&fake, "intellij.x.tests"), one_label("@community//plugins/x:x_test"));
 }
 
 #[test]
 fn a_migrated_module_of_the_ultimate_root_resolves_to_a_root_label() {
     let fake = ultimate(&["tests/x/intellij.x.tests.iml"], &["intellij.x.tests"]);
-    fake.put("tests/x/BUILD.bazel", &module_build("intellij.x.tests", "x_test"));
+    module_build(&fake, "tests/x", "intellij.x.tests", "x_test");
     assert_eq!(resolve(&fake, "intellij.x.tests"), one_label("//tests/x:x_test"));
 }
 
 #[test]
 fn a_module_at_the_checkout_root_resolves_to_the_root_package() {
     let fake = ultimate(&["intellij.root.tests.iml"], &["intellij.root.tests"]);
-    fake.put("BUILD.bazel", &module_build("intellij.root.tests", "root_test"));
+    module_build(&fake, "", "intellij.root.tests", "root_test");
     assert_eq!(resolve(&fake, "intellij.root.tests"), one_label("//:root_test"));
 }
 
@@ -81,17 +86,14 @@ fn a_module_of_a_community_checkout_resolves_to_a_label_of_that_checkout() {
     let fake = FakeRuntime::new([]);
     fake.put(MODULES_FILE, &modules_xml(&["plugins/x/intellij.x.tests.iml"]));
     fake.put(COMMUNITY_LIST, &list_text(&["intellij.x.tests"]));
-    fake.put("plugins/x/BUILD.bazel", &module_build("intellij.x.tests", "x_test"));
+    module_build(&fake, "plugins/x", "intellij.x.tests", "x_test");
     assert_eq!(resolve(&fake, "intellij.x.tests"), one_label("//plugins/x:x_test"));
 }
 
 #[test]
 fn a_prefix_pattern_matches_every_module_that_starts_with_it() {
     let fake = ultimate(&["community/ls/foo/language-server.foo.tests.iml"], &["language-server.*"]);
-    fake.put(
-        "community/ls/foo/BUILD.bazel",
-        &module_build("language-server.foo.tests", "foo_test"),
-    );
+    module_build(&fake, "community/ls/foo", "language-server.foo.tests", "foo_test");
     assert_eq!(
         resolve(&fake, "language-server.foo.tests"),
         one_label("@community//ls/foo:foo_test")
@@ -112,9 +114,11 @@ fn a_module_inside_an_area_resolves_without_the_migrated_list() {
         &["plugins/air/backend/json/intellij.air.backend.json.tests.iml"],
         &["intellij.other.tests"],
     );
-    fake.put(
-        "plugins/air/backend/json/BUILD.bazel",
-        &module_build("intellij.air.backend.json.tests", "air-backend-json-tests_test"),
+    module_build(
+        &fake,
+        "plugins/air/backend/json",
+        "intellij.air.backend.json.tests",
+        "air-backend-json-tests_test",
     );
     let resolution = resolve_module(&fake, areas(), "intellij.air.backend.json.tests").unwrap_or_else(|failure| panic!("{failure:?}"));
     assert_eq!(resolution, one_label("//plugins/air/backend/json:air-backend-json-tests_test"));
@@ -125,10 +129,7 @@ fn a_module_inside_an_area_resolves_without_the_migrated_list() {
 #[test]
 fn a_module_outside_the_migrated_list_and_every_area_is_refused_with_the_tests_cmd_command() {
     let fake = ultimate(&["goland/intellij-go-tests/intellij.goland.tests.iml"], &["intellij.x.tests"]);
-    fake.put(
-        "goland/intellij-go-tests/BUILD.bazel",
-        &module_build("intellij.goland.tests", "go-tests_test"),
-    );
+    module_build(&fake, "goland/intellij-go-tests", "intellij.goland.tests", "go-tests_test");
     let failure = refusal(resolve_module(&fake, areas(), "intellij.goland.tests"));
     assert_eq!((failure.code.as_ref(), failure.exit), (MODULE_NOT_MIGRATED, USAGE));
     assert_eq!(
@@ -155,7 +156,7 @@ fn a_refusal_in_a_community_checkout_names_its_own_wrapper() {
     let fake = FakeRuntime::new([]);
     fake.put(MODULES_FILE, &modules_xml(&["plugins/x/intellij.x.tests.iml"]));
     fake.put(COMMUNITY_LIST, &list_text(&["intellij.other.tests"]));
-    fake.put("plugins/x/BUILD.bazel", &module_build("intellij.x.tests", "x_test"));
+    module_build(&fake, "plugins/x", "intellij.x.tests", "x_test");
     let failure = refusal(resolve_module(&fake, &Areas::default(), "intellij.x.tests"));
     assert_eq!(failure.code.as_ref(), MODULE_NOT_MIGRATED);
     assert!(
@@ -192,17 +193,21 @@ fn a_module_without_its_own_jps_test_is_refused() {
         ],
         &["intellij.*"],
     );
-    fake.put(
-        "community/plugins/plain/BUILD.bazel",
-        "load(\"@rules_jvm//:jvm.bzl\", \"jvm_library\")\n\njvm_library(name = \"plain\")\n",
-    );
-    fake.put(
-        "community/plugins/two/BUILD.bazel",
-        &format!(
-            "{}\njps_test(name = \"again_test\", runtime_deps = [\":other_test_lib\"])\n",
-            module_build("intellij.two.tests", "two-tests_test")
-        ),
-    );
+    let plain = "community/plugins/plain";
+    fake.add_module(module_entry_json(
+        plain,
+        None,
+        &[],
+        Some(&[target_json(plain, "jvm_library", "plain", Some("intellij.plain.tests"), &[], &[])]),
+    ));
+    // The test target of the tests module, and a second unfiltered test target of another library.
+    let two = "community/plugins/two";
+    let mut entry: serde_json::Value =
+        serde_json::from_str(&tests_module_json(two, "intellij.two", "intellij.two.tests", "two-tests_test")).expect("an entry");
+    let again: serde_json::Value =
+        serde_json::from_str(&target_json(two, "jps_test", "again_test", None, &[], &["other_test_lib"])).expect("a target");
+    entry["bazel"]["targets"].as_array_mut().expect("the targets").push(again);
+    fake.add_module(entry.to_string());
     for (module, reason) in [
         (
             "intellij.none.tests",
@@ -242,7 +247,7 @@ fn a_refusal_names_the_only_jps_test_of_the_build_file() {
         &["community/plugins/x/intellij.x.iml", "community/plugins/x/intellij.x.tests.iml"],
         &["intellij.*"],
     );
-    fake.put("community/plugins/x/BUILD.bazel", &module_build("intellij.x.tests", "x-tests_test"));
+    module_build(&fake, "community/plugins/x", "intellij.x.tests", "x-tests_test");
     let failure = refusal(resolve_module(&fake, &Areas::default(), "intellij.x"));
     assert_eq!((failure.code.as_ref(), failure.exit), (MODULE_WITHOUT_TEST_TARGET, USAGE));
     assert_eq!(
@@ -262,7 +267,7 @@ fn a_refusal_names_the_only_jps_test_of_the_build_file() {
 #[test]
 fn a_malformed_migrated_list_is_refused_with_its_file_and_line() {
     let fake = ultimate(&["community/plugins/x/intellij.x.tests.iml"], &[]);
-    fake.put("community/plugins/x/BUILD.bazel", &module_build("intellij.x.tests", "x_test"));
+    module_build(&fake, "community/plugins/x", "intellij.x.tests", "x_test");
     for (patterns, message) in [
         (
             ["intellij.a.tests", " intellij.x.tests"],
@@ -300,12 +305,47 @@ fn a_missing_module_list_or_migrated_list_is_an_infra_refusal() {
     let fake = FakeRuntime::new([]);
     fake.put("community/MODULE.bazel", "");
     fake.put(MODULES_FILE, &modules_xml(&["community/plugins/x/intellij.x.tests.iml"]));
-    fake.put("community/plugins/x/BUILD.bazel", &module_build("intellij.x.tests", "x_test"));
+    module_build(&fake, "community/plugins/x", "intellij.x.tests", "x_test");
     let failure = refusal(resolve_module(&fake, &Areas::default(), "intellij.x.tests"));
     assert_eq!(failure.exit, INFRA);
     assert!(
         failure.message.starts_with(&format!("{ULTIMATE_LIST} is unreadable")),
         "{}",
         failure.message
+    );
+}
+
+/// The module root of `root` with the main module `intellij.m`, its library `m`, the test library `m_test_lib` of the
+/// main module, and the test targets `targets`, each a name and whether it pins `JB_TEST_JUNIT5_FILTERS`.
+fn entry_with_targets(root: &str, targets: &[(&str, bool)]) -> ModuleEntry {
+    let mut rules: Vec<String> = targets
+        .iter()
+        .map(|(name, filtered)| {
+            let env: &[&str] = if *filtered { &["JB_TEST_JUNIT5_FILTERS"] } else { &[] };
+            target_json(root, "jps_test", name, None, env, &["m_test_lib"])
+        })
+        .collect();
+    rules.push(target_json(root, "jvm_library", "m", Some("intellij.m"), &[], &[]));
+    rules.push(target_json(root, "jvm_library", "m_test_lib", None, &[], &[]));
+    serde_json::from_str(&module_entry_json(root, None, &[], Some(&rules))).expect("an entry")
+}
+
+/// A target runs the module through the `_test_lib` of a library of the module too. A filtered target counts when it
+/// is the only one, an unfiltered target wins over it, and two unfiltered targets are infrastructure.
+#[test]
+fn the_test_target_of_a_module_follows_its_test_library_and_prefers_the_unfiltered_one() {
+    let only_filtered = entry_with_targets("plugins/m", &[("m-budget_test", true)]);
+    assert_eq!(module_test_target(&only_filtered, "intellij.m"), Ok(Some("m-budget_test")));
+    let both = entry_with_targets("plugins/m", &[("m-budget_test", true), ("m_test", false)]);
+    assert_eq!(module_test_target(&both, "intellij.m"), Ok(Some("m_test")));
+    assert_eq!(module_test_target(&both, "intellij.other"), Ok(None));
+    let two = entry_with_targets("plugins/m", &[("m_test", false), ("m-again_test", false)]);
+    let failure = refusal(module_test_target(&two, "intellij.m"));
+    assert_eq!(
+        (failure.exit, failure.message.as_str()),
+        (
+            INFRA,
+            "Expected one test target of module intellij.m in plugins/m/BUILD.bazel, found 2: m_test, m-again_test"
+        )
     );
 }

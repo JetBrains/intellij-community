@@ -112,7 +112,7 @@ internal class McpSessionHandler(
    * Takes the value from sessionOptions if set, otherwise falls back to settings.
    */
   private val invocationMode: McpSessionInvocationMode =
-    sessionOptions.invocationMode ?: McpToolFilterSettings.getInstance().invocationMode
+    sessionOptions.invocationMode ?: McpToolFilterSettings.getInstance().effectiveInvocationMode
 
   /**
    * The tools provider for direct MCP exposure.

@@ -162,6 +162,8 @@
   <applicationListeners>
     <listener class="com.intellij.workspaceModel.ide.impl.GlobalWorkspaceModelSeparationListener"
               topic="com.intellij.openapi.util.registry.RegistryValueListener"/>
+    <listener class="com.intellij.workspaceModel.ide.impl.WorkspaceEntityClassesUnloadListener"
+              topic="com.intellij.ide.plugins.DynamicPluginListener"/>
   </applicationListeners>
   <projectListeners>
     <listener class="com.intellij.workspaceModel.ide.impl.GlobalWorkspaceModelSynchronizerListener"

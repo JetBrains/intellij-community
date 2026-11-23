@@ -10,6 +10,7 @@ import com.intellij.platform.pluginSystem.parser.impl.elements.ModuleVisibilityV
 import com.intellij.platform.testFramework.loadDescriptorInTest
 import com.intellij.platform.testFramework.plugins.ContentModuleSpec
 import com.intellij.platform.testFramework.plugins.PluginPackagingConfig
+import com.intellij.platform.testFramework.plugins.applicationServiceImpl
 import com.intellij.platform.testFramework.plugins.content
 import com.intellij.platform.testFramework.plugins.dependencies
 import com.intellij.platform.testFramework.plugins.installAt
@@ -302,6 +303,21 @@ class PluginDescriptorTest {
       .hasExactlyContentModules("foo.module")
     assertThat(descriptor.contentModules[0])
       .hasExactlyApplicationServices("foo.module.service")
+  }
+
+  @Test
+  fun `embedded content module loads from a separate jar in the lib directory`() {
+    val barPath = plugin("bar") {
+      content {
+        module("bar.emb", loadingRule = ModuleLoadingRuleValue.EMBEDDED) { applicationServiceImpl("bar.emb.service") }
+      }
+    }.installAt(pluginDirPath)
+    val descriptor = loadDescriptorInTest(barPath)
+    assertThat(descriptor).isNotNull
+      .hasExactlyContentModules("bar.emb")
+    val moduleDescriptor = descriptor.contentModules[0]
+    assertThat(moduleDescriptor).hasExactlyApplicationServices("bar.emb.service")
+    Assertions.assertThat(moduleDescriptor.ownClassPath).containsExactly(barPath.resolve("lib/bar.emb.jar"))
   }
 
   @Test

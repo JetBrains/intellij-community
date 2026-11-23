@@ -1,7 +1,7 @@
 load("@community//build:tests-options.bzl", "jps_test")
 load("@community//platform/build-scripts/bazel-rules:ij_plugin.bzl", "ij_plugin")
 load("@community//platform/build-scripts/bazel-rules:ij_plugin_module.bzl", "ij_plugin_module")
-load("@jps_dynamic_deps_community//:targets.bzl", "dev_dist_plugin")
+load("@jps_dynamic_deps_community//:targets.bzl", "dist_plugin")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("@rules_pkg//pkg:mappings.bzl", "pkg_filegroup", "pkg_files")
 
@@ -14,7 +14,7 @@ jps_test(
 ### skip generation section `test intellij.ant.tests`
 
 ### auto-generated section `dev intellij.ant` start
-dev_dist_plugin(
+dist_plugin(
     content_modules = ["intellij.ant.jps"],
     descriptor = "resources/META-INF/plugin.xml",
     jars = {

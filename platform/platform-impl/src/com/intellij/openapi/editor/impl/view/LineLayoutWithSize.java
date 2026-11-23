@@ -51,7 +51,7 @@ final class LineLayoutWithSize extends LineLayout {
 
   private float calculateWidth() {
     float x = 0;
-    for (LineVisualFragment fragment : getFragmentsInVisualOrder(0)) {
+    for (PositionedLineFragment fragment : getFragmentsInVisualOrder(0)) {
       x = fragment.getEndX();
     }
     return x;

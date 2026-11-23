@@ -1,16 +1,14 @@
 package com.intellij.python.junit5Tests.env.tests.conda
 
-import com.intellij.python.sdk.backend.removeTestSdkFromOpenProjects
-
-import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.python.sdk.backend.flavor
+import com.intellij.python.sdk.backend.removeTestInterpreterFromOpenProjects
+import com.intellij.python.sdk.backend.PythonInterpreter
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.toNioPathOrNull
 import com.intellij.python.community.junit5Tests.framework.conda.CondaEnv
 import com.intellij.python.community.junit5Tests.framework.conda.PyEnvTestCaseWithConda
 import com.intellij.python.requirements.pyRequirementVersionSpec
 import com.intellij.python.sdk.backend.getPythonInfo
-import com.intellij.python.sdk.backend.getSdkAPI
-import com.intellij.python.sdk.backend.pythonInterpreterResultAsync
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.jetbrains.python.allure.Components
@@ -26,7 +24,6 @@ import com.jetbrains.python.packaging.management.findPackageSpecification
 import com.jetbrains.python.packaging.management.getInstalledPackage
 import com.jetbrains.python.packaging.management.hasInstalledPackage
 import com.jetbrains.python.packaging.requirement.PyRequirementRelation
-import com.jetbrains.python.sdk.pySdkAdditionalData
 import com.jetbrains.python.sdk.flavors.conda.CondaEnvSdkFlavor
 import com.jetbrains.python.sdk.flavors.conda.PyCondaEnv
 import org.junit.jupiter.api.AfterEach
@@ -45,17 +42,17 @@ internal class CondaPackageManagerTest {
 
   private lateinit var packageManager: PythonPackageManager
   private var currentPackages: List<PythonPackage> = listOf()
-  private lateinit var condaSdk: Sdk
+  private lateinit var condaInterpreter: PythonInterpreter
 
   @BeforeEach
   fun setUp(@CondaEnv condaEnv: PyCondaEnv): Unit = timeoutRunBlocking {
-    condaSdk = timeoutRunBlocking(230.seconds) {
-      condaEnv.createSdkFromThisEnv(projectFixture.get(), null, projectFixture.get().basePath?.toNioPathOrNull()!!).getOrThrow().getSdkAPI()
+    condaInterpreter = timeoutRunBlocking(230.seconds) {
+      condaEnv.createSdkFromThisEnv(projectFixture.get(), null, projectFixture.get().basePath?.toNioPathOrNull()!!).getOrThrow()
     }
-    assertTrue(condaSdk.pySdkAdditionalData.flavor is CondaEnvSdkFlavor, "$condaSdk must be a conda SDK")
-    val interpreter = condaSdk.pythonInterpreterResultAsync().orThrow()
-    assertNotNull(interpreter.getPythonInfo().successOrNull, "$condaSdk must be usable")
-    packageManager = CondaPackageManager(projectFixture.get(), interpreter).also {
+    assertTrue(condaInterpreter.flavor is CondaEnvSdkFlavor, "$condaInterpreter must be a conda interpreter")
+    val interpreter = condaInterpreter
+    assertNotNull(interpreter.getPythonInfo().successOrNull, "$condaInterpreter must be usable")
+    packageManager = CondaPackageManager(interpreter).also {
       Disposer.register(projectFixture.get(), it)
     }
 
@@ -101,7 +98,7 @@ internal class CondaPackageManagerTest {
   @AfterEach
   fun cleanUp() {
     timeoutRunBlocking(600.seconds) {
-      removeTestSdkFromOpenProjects(condaSdk)
+      removeTestInterpreterFromOpenProjects(condaInterpreter)
       for (pkg in currentPackages) {
         packageManager.uninstallPackage(pkg.name)
       }

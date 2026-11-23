@@ -5,36 +5,32 @@ use std::ffi::OsString;
 use std::path::{Path, PathBuf};
 
 use bt_core::areas::{Area, Areas};
-use bt_core::{Refusal, affected_text, exit, fail_usage, resolve_module};
+use bt_core::{Refusal, ResolutionInputs, exit, fail_usage};
 use serde::{Deserialize, Serialize};
 
 use crate::build::execute_build;
 use crate::check::{Check, CheckCommand, record_green_run, tree_before_run};
 use crate::digest::{
-    DEFAULT_MAX_FRAMES, RenderOptions, failure_detail, failure_message, failure_type, format_duration, render_digest, rerun_selector,
-    tail_lines, trim_frames,
+    DEFAULT_MAX_FRAMES, RenderOptions, RunTime, failure_detail, failure_message, failure_type, format_duration, render_digest,
+    rerun_selector, tail_lines, trim_frames,
 };
 use crate::options::{Args, Invocation, parse_args};
-use crate::prepare::{Prepare, prepare_host};
 use crate::remote::brd_host::BrdHost;
 use crate::remote::{Host, HostLink, run_on_host};
 use bt_core::bep::{BepSummary, parse_bep};
-use bt_core::evidence::keep_failed_evidence;
+use bt_core::evidence::{keep_bazel_output, keep_failed_evidence};
 use bt_core::lanes::{
     BEP_FLAG, LaneSpec, RunPlan, bazel_command, bep_override, build_bazel_args, default_shards, uses_shard_plan, wildcard_guards,
 };
 use bt_core::os_runtime::command_line;
 use bt_core::result::{FlakyRun, RunResult, RunStatus, ShardTimeout, TargetResult, TargetTiming, collect_results, is_verdict};
 use bt_core::runtime::{Runtime, SpawnResult, repo_file};
-use bt_core::scan::{ResolutionInputs, derive_package, read_text};
-use bt_core::selector::{
-    Resolution, Selector, SelectorKind, as_filter_or_package, checkout_label, directory_pattern, no_tests_hint, resolve_selector,
-    suggest_names, wanted_simple_name,
-};
+use bt_core::selector::{Resolution, Selector, SelectorKind, as_filter_or_package, canonical_filter, no_tests_hint, resolve_selector};
 use bt_core::shard_plan::{
-    Groups, HEAVY_PROFILE_FILE, HEAVY_SHARDS, PROFILE_FILE, SHARD_PLAN_FILE, SINGLE_PROFILE_FILE, SINGLE_SHARDS, ShardPlan, TreeTargets,
+    Groups, HEAVY_PROFILE_FILE, HEAVY_SHARDS, PROFILE_FILE, SHARD_PLAN_FILE, SHARED_SHARD_PLAN_FILE, SINGLE_PROFILE_FILE, SINGLE_SHARDS,
+    ShardPlan, TreeTargets,
 };
-use bt_core::suites::{named_suites, resolve_suite_run};
+use bt_core::suites::resolve_suite_run;
 
 /// What one invocation answers.
 ///
@@ -182,35 +178,27 @@ where
             text,
             json: None,
         }),
-        Invocation::Build(args) => match &args.host {
+        Invocation::Build(args) => match &args.shared.host {
             Some(alias) => {
                 let host = Host {
                     alias,
-                    repo: args.host_repo.as_deref(),
+                    repo: args.shared.host_repo.as_deref(),
                 };
-                run_on_host(&host, CheckCommand::Build, args.json, &argv, runtime, link)
+                run_on_host(&host, CheckCommand::Build, args.shared.json, &argv, runtime, link)
             }
             None => execute_build(&args, runtime),
         },
-        Invocation::Run(args) => match &args.host {
+        Invocation::Run(args) => match &args.shared.host {
             Some(alias) => {
                 let host = Host {
                     alias,
-                    repo: args.host_repo.as_deref(),
+                    repo: args.shared.host_repo.as_deref(),
                 };
-                if args.prepare {
-                    let prepare = Prepare {
-                        change: !args.dry_run,
-                        yes: args.yes,
-                    };
-                    return Ok(prepare_host(&host, &prepare, runtime, link));
-                }
                 if args.selector.is_none() && args.module.is_none() && args.lane.is_none() {
                     return Err(fail_usage("Pass a selector, --module or --lane; see --help"));
                 }
-                run_on_host(&host, CheckCommand::Test, args.json, &argv, runtime, link)
+                run_on_host(&host, CheckCommand::Test, args.shared.json, &argv, runtime, link)
             }
-            None if args.prepare => Err(fail_usage("--prepare needs --host")),
             None => execute_args(&args, runtime, &areas),
         },
     }
@@ -240,11 +228,14 @@ pub(crate) fn execute_args(args: &Args, runtime: &dyn Runtime, areas: &Areas) ->
         ),
         None => None,
     };
-    let explicit_filter = args.filter.as_deref();
+    let inputs = ResolutionInputs::new(runtime, areas);
+    // The runner reads the value at the start of the test JVM, after the build. So bt reads its form first.
+    let filter_form = args.filter.as_deref().map(|raw| canonical_filter(raw, &inputs)).transpose()?;
+    let explicit_filter = filter_form.as_ref().map(|form| form.value.as_str());
 
     let mut lane: Option<(&Area, &LaneSpec)> = None;
     let mut extra: Vec<String> = Vec::new();
-    let resolution = match &selector {
+    let mut resolution = match &selector {
         None => {
             // Checked above: a run without a selector names a lane an area declares.
             let Some((area, spec)) = named_lane else {
@@ -274,14 +265,6 @@ pub(crate) fn execute_args(args: &Args, runtime: &dyn Runtime, areas: &Areas) ->
                 return Err(fail_usage(
                     "--filter is only valid with an explicit label (//pkg:target or @repo//pkg:target) or --module; a name selector already implies a filter",
                 ));
-            }
-            let inputs = ResolutionInputs::new(runtime, areas);
-            if args.list {
-                return Ok(Outcome {
-                    exit_code: exit::GREEN,
-                    text: list_candidates(runtime, areas, selector, &inputs)?,
-                    json: None,
-                });
             }
             let mut resolution = if selector.kind.names_suites() {
                 resolve_suite_run(runtime, areas.with_catalog()?, selector, lane_name)?
@@ -318,12 +301,12 @@ pub(crate) fn execute_args(args: &Args, runtime: &dyn Runtime, areas: &Areas) ->
             resolution
         }
     };
+    resolution.notes.extend(filter_form.as_ref().and_then(|form| form.note.clone()));
 
     let overridden_bep = bep_override(&args.passthrough);
     let lane_spec = lane.map(|(_, spec)| spec);
     let shards = args.shards.unwrap_or_else(|| default_shards(&resolution, lane_spec));
     let planned = args.shards.is_none() && uses_shard_plan(&resolution, lane_spec);
-    let shard_plan_path = repo_file(runtime, SHARD_PLAN_FILE);
     let path_text = |path: &PathBuf| path.to_string_lossy().into_owned();
     let profile = resolution.multi_target.then(|| path_text(&repo_file(runtime, PROFILE_FILE)));
     let class_time_budget_config = if resolution.multi_target {
@@ -342,21 +325,27 @@ pub(crate) fn execute_args(args: &Args, runtime: &dyn Runtime, areas: &Areas) ->
     });
     let method_filtered = resolution.filter.as_deref().is_some_and(|filter| filter.contains('#'));
     let no_tests_hint = no_tests_hint(explicit_filter);
-    // A BEP path of the caller would take the events of all invocations, so such a run keeps one invocation.
-    let recorded_plan = if planned || class_time_budget_config.is_some() {
-        runtime
-            .read_text_file(&shard_plan_path)
-            .map(|text| ShardPlan::parse(&text))
-            .unwrap_or_default()
-    } else {
-        ShardPlan::default()
-    };
+    let plan_files = (planned || class_time_budget_config.is_some()).then(|| PlanFiles::locate(runtime));
+    let recorded_text = plan_files.as_ref().and_then(|files| files.read(runtime));
+    let recorded_plan = recorded_text.as_deref().map_or_else(ShardPlan::default, ShardPlan::parse);
+    // The tests read the checkout copy, so a planned run writes it before its first bazel command. A run before the
+    // first record splits each target into the default count, by class. A dry run writes nothing.
+    if planned
+        && !args.shared.dry_run
+        && let Some(files) = &plan_files
+    {
+        let text = recorded_text.unwrap_or_else(|| ShardPlan::default().render());
+        files.write_copy(runtime, &text);
+    }
     // A green run records this tree only when the files are the same after it. bt reads it before the first bazel
     // command of the run, such as the query of the groups. A dry run records nothing.
-    let tree_before = if args.dry_run { None } else { tree_before_run(runtime) };
+    let record_started = runtime.now_ms();
+    let tree_before = if args.shared.dry_run { None } else { tree_before_run(runtime) };
+    let mut check_record_ms = runtime.now_ms().saturating_sub(record_started);
+    // A BEP path of the caller would take the events of all invocations, so such a run keeps one invocation.
     let groups = if !(planned && owns_bep_file) {
         Groups::default()
-    } else if args.dry_run {
+    } else if args.shared.dry_run {
         // A dry run starts no bazel command, so it waits for the server lock of no other command and starts no server.
         recorded_plan.unchecked_groups(&resolution.labels)
     } else {
@@ -368,7 +357,7 @@ pub(crate) fn execute_args(args: &Args, runtime: &dyn Runtime, areas: &Areas) ->
                 return Ok(Outcome {
                     exit_code: exit::INFRA,
                     text: format!("INFRA  {message}"),
-                    json: args.json.then(|| infra_payload(&message)),
+                    json: args.shared.json.then(|| infra_payload(&message)),
                 });
             }
         }
@@ -437,12 +426,16 @@ pub(crate) fn execute_args(args: &Args, runtime: &dyn Runtime, areas: &Areas) ->
     }
     let build_only = lane.and_then(|(area, spec)| spec.build_only_args(area.lanes()));
 
-    if args.dry_run {
+    if args.shared.dry_run {
         return Ok(Outcome {
             exit_code: exit::GREEN,
             text: dry_run_text(runtime, &plan.resolution, &invocations, build_only.as_deref()),
             json: None,
         });
+    }
+
+    for note in &plan.resolution.notes {
+        runtime.write_error(&format!("note: {note}"));
     }
 
     // Compile what the lane excludes from its run, before the run, so a compile break is the answer rather than a
@@ -455,10 +448,12 @@ pub(crate) fn execute_args(args: &Args, runtime: &dyn Runtime, areas: &Areas) ->
 
     let class_time_budget_baseline = class_time_budget.map(|budget| budget.load_baseline(runtime)).transpose()?;
 
-    // The directory of the profile, and the plan the tests read. A run before the first record splits each target
-    // into the default count, by class.
-    if plan.profile.is_some() && !runtime.exists(&shard_plan_path) {
-        update_shard_plan(runtime, &shard_plan_path, &[], &[]);
+    // Bazel writes the profile into `out/bt/`. A planned run made the directory when it wrote the plan copy.
+    if !planned
+        && let Some(dir) = plan.profile.as_deref().and_then(|profile| Path::new(profile).parent())
+        && let Err(error) = runtime.create_dir_all(dir)
+    {
+        runtime.write_error(&format!("cannot create the directory of the profile {}: {error}", dir.display()));
     }
 
     let BazelRun { spawned, bep, mut result } = run_bazel_invocations(runtime, &invocations);
@@ -466,17 +461,18 @@ pub(crate) fn execute_args(args: &Args, runtime: &dyn Runtime, areas: &Areas) ->
     // Before anything else reads the run: the next run of a failed target overwrites its logs.
     let kept_run = keep_failed_evidence(runtime, &bep);
 
-    if planned {
-        // A filtered run times only some classes of a target, and they must not replace its record.
-        if runs_all_classes(&plan) {
-            update_shard_plan(runtime, &shard_plan_path, &result.timings, &result.lower_bounds);
-        } else {
-            update_shard_plan(runtime, &shard_plan_path, &[], &[]);
-        }
+    // A filtered run times only some classes of a target, and they must not replace its record.
+    if planned
+        && runs_all_classes(&plan)
+        && let Some(files) = &plan_files
+    {
+        update_shard_plan(runtime, files, &result.timings, &result.lower_bounds);
     }
 
     let class_time_budget_violations = if let (Some(budget), Some(baseline)) = (class_time_budget, class_time_budget_baseline.as_ref()) {
-        let mut current_plan = recorded_plan;
+        // Only the times of this run count. A failed target has no timing, and its recorded times can name classes that
+        // no longer exist.
+        let mut current_plan = ShardPlan::default();
         for timing in &result.timings {
             current_plan.record(timing);
         }
@@ -501,7 +497,7 @@ pub(crate) fn execute_args(args: &Args, runtime: &dyn Runtime, areas: &Areas) ->
 
     // The words of bazel are the only evidence when bt reads nothing structural from the run: an INFRA run, and a
     // failed build without a build error. `--verbose` shows all of them already.
-    if args.verbose {
+    if args.shared.verbose {
         runtime.write_error(&spawned.output);
     } else if result.status == RunStatus::Infra || (result.status == RunStatus::BuildFailed && result.build_errors.is_empty()) {
         runtime.write_error(&tail_lines(&spawned.output, DIGEST_TAIL_LINES));
@@ -513,8 +509,16 @@ pub(crate) fn execute_args(args: &Args, runtime: &dyn Runtime, areas: &Areas) ->
             patterns: &patterns,
             host: None,
         };
+        let record_started = runtime.now_ms();
         record_green_run(runtime, tree_before.as_ref(), &check);
+        check_record_ms += runtime.now_ms().saturating_sub(record_started);
     }
+    let time = RunTime {
+        self_build_ms: runtime.self_build_ms(),
+        check_record_ms,
+        bazel_ms: result.duration_ms,
+        analysis_ms: bep.analysis_ms,
+    };
 
     // The rerun selector rather than the test case id, and quoted rather than wrapped in bare single quotes: a
     // Kotlin backticked name holds apostrophes, and a display name is no selector at all.
@@ -522,7 +526,10 @@ pub(crate) fn execute_args(args: &Args, runtime: &dyn Runtime, areas: &Areas) ->
         .failures
         .first()
         .map(|failure| format!("{WRAPPER} {}", posix_shell_quote(&rerun_selector(failure))));
-    let json = args.json.then(|| {
+    let bazel_log = (result.status == RunStatus::BuildFailed)
+        .then(|| keep_bazel_output(runtime, kept_run.as_deref(), &spawned.output))
+        .flatten();
+    let json = args.shared.json.then(|| {
         let mut payload = to_json(&result);
         payload.class_time_budget_violations = class_time_budget_violations.clone();
         payload
@@ -536,6 +543,8 @@ pub(crate) fn execute_args(args: &Args, runtime: &dyn Runtime, areas: &Areas) ->
             no_tests_hint,
             kept_run,
             class_time_budget_violations,
+            time: Some(time),
+            bazel_log,
         },
     );
     Ok(Outcome {
@@ -707,12 +716,76 @@ fn runs_all_classes(plan: &RunPlan) -> bool {
             .any(|argument| argument.starts_with("--test_filter") || argument.contains("JB_TEST_JUNIT5_FILTERS"))
 }
 
-/// Records the class times of a run in the shard plan file.
+/// The files of the shard plan: the plan of the repository, and the checkout copy that the tests read.
 ///
-/// A plan that cannot be written is a warning, not a refusal: the plan steers the speed of the next run, and the
-/// verdict of this one is already decided.
-fn update_shard_plan(runtime: &dyn Runtime, path: &Path, timings: &[TargetTiming], lower_bounds: &[TargetTiming]) {
-    let mut plan = runtime.read_text_file(path).map(|text| ShardPlan::parse(&text)).unwrap_or_default();
+/// A file that cannot be written is a warning, not a refusal: the plan steers the speed of a run, never its verdict.
+struct PlanFiles {
+    /// [`SHARED_SHARD_PLAN_FILE`] in the common git directory, or `None` for a checkout outside git.
+    shared: Option<PathBuf>,
+    /// [`SHARD_PLAN_FILE`] of the checkout.
+    copy: PathBuf,
+}
+
+impl PlanFiles {
+    /// A git that names no common git directory is a warning, and the run keeps the plan in the checkout only.
+    fn locate(runtime: &dyn Runtime) -> Self {
+        let shared = runtime.git_common_path(SHARED_SHARD_PLAN_FILE).unwrap_or_else(|error| {
+            runtime.write_error(&format!(
+                "git names no common git directory, so the shard plan stays in the checkout: {error}"
+            ));
+            None
+        });
+        Self {
+            shared,
+            copy: repo_file(runtime, SHARD_PLAN_FILE),
+        }
+    }
+
+    /// The text of the plan, or `None` when neither file is there.
+    ///
+    /// It is the text of the shared file, with each target of the checkout copy that the shared file does not name. Such
+    /// a target comes from a checkout that ran before the plan was shared. Without such a target, the text is the text
+    /// of the shared file as it is.
+    fn read(&self, runtime: &dyn Runtime) -> Option<String> {
+        let copy = runtime.read_text_file(&self.copy).ok();
+        let shared = self.shared.as_ref().and_then(|path| runtime.read_text_file(path).ok());
+        match (shared, copy) {
+            (Some(shared), Some(copy)) => {
+                let mut plan = ShardPlan::parse(&shared);
+                if plan.add_missing_targets(&ShardPlan::parse(&copy)) {
+                    Some(plan.render())
+                } else {
+                    Some(shared)
+                }
+            }
+            (shared, copy) => shared.or(copy),
+        }
+    }
+
+    fn write_copy(&self, runtime: &dyn Runtime, text: &str) {
+        write_plan(runtime, &self.copy, text);
+    }
+
+    /// Writes the shared file and the checkout copy, each in one step.
+    fn write_all(&self, runtime: &dyn Runtime, text: &str) {
+        for path in self.shared.iter().chain([&self.copy]) {
+            write_plan(runtime, path, text);
+        }
+    }
+}
+
+fn write_plan(runtime: &dyn Runtime, path: &Path, text: &str) {
+    if let Err(error) = runtime.write_text_file(path, text) {
+        runtime.write_error(&format!("cannot write the shard plan {}: {error}", path.display()));
+    }
+}
+
+/// Records the class times and the lower bounds of a run in the shard plan.
+///
+/// It reads the plan again just before it writes, so an update of a run in another work tree since the start of this
+/// run stays. Two runs that update the plan at the same time can lose one update. That costs only speed.
+fn update_shard_plan(runtime: &dyn Runtime, files: &PlanFiles, timings: &[TargetTiming], lower_bounds: &[TargetTiming]) {
+    let mut plan = files.read(runtime).map_or_else(ShardPlan::default, |text| ShardPlan::parse(&text));
     for timing in timings {
         plan.record(timing);
     }
@@ -725,9 +798,7 @@ fn update_shard_plan(runtime: &dyn Runtime, path: &Path, timings: &[TargetTiming
             ));
         }
     }
-    if let Err(error) = runtime.write_text_file(path, &plan.render()) {
-        runtime.write_error(&format!("cannot write the shard plan {}: {error}", path.display()));
-    }
+    files.write_all(runtime, &plan.render());
 }
 
 /// The error of [`tree_targets`]: bazel exited with a code that is no verdict, so the run ends.
@@ -840,6 +911,7 @@ fn dry_run_text(runtime: &dyn Runtime, resolution: &Resolution, invocations: &[B
             .map(|suite| format!("suite   {} ({}, lane {})", suite.class, suite.suite, suite.lane)),
     );
     lines.push(format!("filter  {filter}"));
+    lines.extend(resolution.notes.iter().map(|note| format!("note    {note}")));
     lines.extend(
         invocations
             .iter()
@@ -884,66 +956,6 @@ fn build_excluded_targets(runtime: &dyn Runtime, args: &[String]) -> Option<Outc
         ),
         json: None,
     })
-}
-
-/// What `--list` prints: everything resolution would have considered, without running anything. It is the escape
-/// hatch for an ambiguity the refusal text cannot fully explain.
-fn list_candidates(runtime: &dyn Runtime, areas: &Areas, selector: &Selector, inputs: &ResolutionInputs<'_>) -> Result<String, Refusal> {
-    match selector.kind {
-        SelectorKind::Label | SelectorKind::Pattern => {
-            return Ok(format!("label   {}", checkout_label(runtime, &selector.name)));
-        }
-        SelectorKind::Dir => {
-            return Ok(format!("label   {}", directory_pattern(runtime, &selector.name)?));
-        }
-        SelectorKind::Module => {
-            let resolution = resolve_module(runtime, areas, &selector.name)?;
-            return Ok(format!("label   {}", resolution.labels.join(" ")));
-        }
-        // Every lane the selector names, before `--lane` narrows it, so a two-lane refusal can be read in full.
-        SelectorKind::Flow | SelectorKind::Suite => {
-            return Ok(affected_text(&named_suites(runtime, areas.with_catalog()?, selector)?));
-        }
-        SelectorKind::Package => {
-            let lines: Vec<String> = inputs
-                .roots()?
-                .iter()
-                .filter(|root| {
-                    root.package_prefix.as_deref().is_some_and(|prefix| {
-                        selector.name == prefix || selector.name.strip_prefix(prefix).is_some_and(|rest| rest.starts_with('.'))
-                    })
-                })
-                .map(|root| format!("{}\n    {}", root.label, root.src_dir))
-                .collect();
-            if lines.is_empty() {
-                return Ok(format!("(no test root declares a prefix covering {})", selector.name));
-            }
-            return Ok(lines.join("\n"));
-        }
-        SelectorKind::SimpleName | SelectorKind::Fqn => {}
-    }
-
-    let index = inputs.index()?;
-    let simple_name = wanted_simple_name(selector);
-    let Some(candidates) = index.get(simple_name).filter(|found| !found.is_empty()) else {
-        let suggestions = suggest_names(simple_name, index.keys().map(String::as_str), 3);
-        if suggestions.is_empty() {
-            return Ok("(no candidates)".to_owned());
-        }
-        return Ok(format!("(no candidates)\nsimilar: {}", suggestions.join(", ")));
-    };
-    let mut lines = Vec::new();
-    for candidate in candidates {
-        let text = read_text(runtime, &candidate.file)?;
-        lines.push(format!(
-            "{}.{}\n    {}\n    {}",
-            derive_package(&text),
-            candidate.simple_name,
-            candidate.root.label,
-            candidate.file
-        ));
-    }
-    Ok(lines.join("\n"))
 }
 
 #[cfg(test)]

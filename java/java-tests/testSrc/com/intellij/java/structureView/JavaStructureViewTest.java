@@ -17,18 +17,65 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiAnonymousClass;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.StructureViewComponentTestUtil;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.intellij.util.containers.JBTreeTraverser;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
+import org.junit.jupiter.api.Test;
 
-import javax.swing.JTree;
-import javax.swing.tree.TreeModel;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import javax.swing.JTree;
+import javax.swing.tree.TreeModel;
 
-public class JavaStructureViewTest extends LightJavaStructureViewTestCaseBase {
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaCodeInsightFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
+@TestApplication
+public class JavaStructureViewTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture = lightJavaCodeInsightFixture(projectFixture);
+  @Language("JAVA")
+  private static final String INTERFACE = """
+    interface Interface {
+     void g();
+     void setI(int i);
+     int getI();
+    }""";
+  @Language("JAVA")
+  private static final String BASE = """
+    public class Base {
+     public Base() {}
+     public void f() {}
+     public String toString() { return null; }
+     public void g() {}
+     public void setX(int x) {}
+     public int getX() {return 0;}
+     protected int getZ() {return 0;}
+     void setZ(int z) {}
+    }""";
+  @Language("JAVA")
+  private static final String DERIVED = """
+    public class Derived extends Base implements Interface {
+     public class Inner {}
+     public void f() {}
+     public void g() {}
+     public void setX(int x) {}
+     public int getX() {return 0;}
+     public void setY(int x) {}
+     public int getY() {return 0;}
+     public void setI(int i) {}
+     public int getI() {return 0;}
+     private int x;
+     private int i;
+    }""";
+
   @Language("JAVA")
   private static final String CLASS_WITH_ANONYMOUS = """
     class Foo {
@@ -54,10 +101,12 @@ public class JavaStructureViewTest extends LightJavaStructureViewTestCaseBase {
   private static final int ANNO_FIELD_COUNT = 13;
   private static final int FIELD_COUNT = 1;
 
+  @Test
   public void testAnonymousNotShown() {
     assertEquals(getFieldsCount(), getElements(false, true).length);
   }
 
+  @Test
   public void testAnonymousShown() {
     final Object[] elements = getElements();
     assertEquals(getFieldsCount(), elements.length);
@@ -79,6 +128,7 @@ public class JavaStructureViewTest extends LightJavaStructureViewTestCaseBase {
       .toList();
   }
 
+  @Test
   public void testSorting() {
     int i = 0;
     for (Object element : getElements(true, false)) {
@@ -86,6 +136,7 @@ public class JavaStructureViewTest extends LightJavaStructureViewTestCaseBase {
     }
   }
 
+  @Test
   public void testAnonymousInsideAnonymous() {
     Object[] elements = getElements();
     TreeElementWrapper last = (TreeElementWrapper)elements[elements.length - 1];
@@ -99,6 +150,7 @@ public class JavaStructureViewTest extends LightJavaStructureViewTestCaseBase {
   }
 
   private Object[] getElements(boolean showAnonymous, boolean showFields) {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.configureByText("Foo.java", CLASS_WITH_ANONYMOUS);
     Ref<Object[]> ref = Ref.create();
     StructureViewComponentTestUtil.testStructureView(myFixture, svc -> {
@@ -119,6 +171,7 @@ public class JavaStructureViewTest extends LightJavaStructureViewTestCaseBase {
     return ANNO_FIELD_COUNT + FIELD_COUNT;
   }
   
+  @Test
   public void testColons() {
     doTest("""
              class X {
@@ -131,7 +184,9 @@ public class JavaStructureViewTest extends LightJavaStructureViewTestCaseBase {
              """);
   }
   
+  @Test
   public void testFoldingRegions() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.configureByText("Test.java", """
              public final class Student {
                 private String fullName;
@@ -173,6 +228,7 @@ public class JavaStructureViewTest extends LightJavaStructureViewTestCaseBase {
     });
   }
 
+  @Test
   public void testSuperTypeGrouping() {
     doTest("""
              abstract class Abstract {
@@ -197,6 +253,7 @@ public class JavaStructureViewTest extends LightJavaStructureViewTestCaseBase {
       , true, false, false);
   }
 
+  @Test
   public void testSuperTypeGrouping2() {
     doTest("""
              abstract class Abstract {
@@ -267,6 +324,7 @@ public class JavaStructureViewTest extends LightJavaStructureViewTestCaseBase {
       , true, false, true);
   }
 
+  @Test
   public void testPropertiesGrouping1() {
     doPropertiesTest("""
                        class Foo {\s
@@ -284,6 +342,7 @@ public class JavaStructureViewTest extends LightJavaStructureViewTestCaseBase {
                        """);
   }
 
+  @Test
   public void testPropertiesGrouping2() {
     doPropertiesTest("""
                        class Foo {\s
@@ -299,6 +358,7 @@ public class JavaStructureViewTest extends LightJavaStructureViewTestCaseBase {
                        """);
   }
 
+  @Test
   public void testPropertiesGrouping3() {
     doPropertiesTest("""
                        class Foo {\s
@@ -316,6 +376,7 @@ public class JavaStructureViewTest extends LightJavaStructureViewTestCaseBase {
                        """);
   }
 
+  @Test
   public void testPropertiesGrouping4() {
     doPropertiesTest("""
                        class Foo {\s
@@ -331,6 +392,7 @@ public class JavaStructureViewTest extends LightJavaStructureViewTestCaseBase {
                        """);
   }
 
+  @Test
   public void testPropertiesGrouping5() {
     doPropertiesTest("""
                        class Foo {\s
@@ -345,6 +407,7 @@ public class JavaStructureViewTest extends LightJavaStructureViewTestCaseBase {
                        """);
   }
 
+  @Test
   public void testPropertiesGrouping6() {
     doPropertiesTest("""
                        class Foo {\s
@@ -361,6 +424,7 @@ public class JavaStructureViewTest extends LightJavaStructureViewTestCaseBase {
                        """);
   }
 
+  @Test
   public void testPropertiesGrouping7() {
     doPropertiesTest("""
                        class Foo {\s
@@ -374,6 +438,7 @@ public class JavaStructureViewTest extends LightJavaStructureViewTestCaseBase {
                        """);
   }
 
+  @Test
   public void testPropertiesGrouping8() {
     doPropertiesTest("""
                        class Foo {\s
@@ -389,6 +454,7 @@ public class JavaStructureViewTest extends LightJavaStructureViewTestCaseBase {
                        """);
   }
 
+  @Test
   public void testInnerMethodClasses() {
     doTest("""
              class Foo {
@@ -414,6 +480,7 @@ public class JavaStructureViewTest extends LightJavaStructureViewTestCaseBase {
                   -Inner2""");
   }
 
+  @Test
   public void testCustomRegionsIdea179610() {
     doTest(
       """
@@ -448,6 +515,7 @@ public class JavaStructureViewTest extends LightJavaStructureViewTestCaseBase {
     );
   }
 
+  @Test
   public void testCustomRegionsIdea205350() {
     doTest(
       """
@@ -470,6 +538,7 @@ public class JavaStructureViewTest extends LightJavaStructureViewTestCaseBase {
     );
   }
 
+  @Test
   public void testRecordComponents() {
     doTest(
       """
@@ -487,6 +556,7 @@ public class JavaStructureViewTest extends LightJavaStructureViewTestCaseBase {
     );
   }
 
+  @Test
   public void testImplicitClass() {
     doTest(
       """
@@ -500,7 +570,9 @@ public class JavaStructureViewTest extends LightJavaStructureViewTestCaseBase {
     );
   }
 
+  @Test
   public void testRecursive() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.configureByText("I.java", """
       interface I {
         class Impl implements I {
@@ -516,7 +588,9 @@ public class JavaStructureViewTest extends LightJavaStructureViewTestCaseBase {
     });
   }
 
+  @Test
   public void testVisibilitySorterComparingEqualKnown() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     init();
     StructureViewComponentTestUtil.testStructureView(myFixture, svc -> {
       svc.setActionActive(KindSorter.ID, true);
@@ -581,7 +655,9 @@ public class JavaStructureViewTest extends LightJavaStructureViewTestCaseBase {
     });
   }
 
+  @Test
   public void testVisibilitySorterCompareInheritanceGroups() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     init();
     StructureViewComponentTestUtil.testStructureView(myFixture, svc -> {
       svc.setActionActive(KindSorter.ID, true);
@@ -619,7 +695,9 @@ public class JavaStructureViewTest extends LightJavaStructureViewTestCaseBase {
     });
   }
 
+  @Test
   public void testHidingFieldsAndMethods() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.configureByText("Derived.java", DERIVED);
 
     StructureViewComponentTestUtil.testStructureView(myFixture, svc -> {
@@ -647,7 +725,9 @@ public class JavaStructureViewTest extends LightJavaStructureViewTestCaseBase {
     });
   }
 
+  @Test
   public void testGrouping() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     init();
 
     StructureViewComponentTestUtil.testStructureView(myFixture, svc -> {
@@ -674,7 +754,9 @@ public class JavaStructureViewTest extends LightJavaStructureViewTestCaseBase {
     });
   }
 
+  @Test
   public void testInheritedMembers() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     init();
 
     StructureViewComponentTestUtil.testStructureView(myFixture, svc -> {
@@ -733,7 +815,9 @@ public class JavaStructureViewTest extends LightJavaStructureViewTestCaseBase {
     });
   }
 
+  @Test
   public void testHideNotPublic() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     init();
 
     StructureViewComponentTestUtil.testStructureView(myFixture, svc -> {
@@ -785,7 +869,9 @@ public class JavaStructureViewTest extends LightJavaStructureViewTestCaseBase {
     });
   }
 
+  @Test
   public void testInheritedEnumMembers() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.configureByText("a.java", "enum F { A,B,C}");
 
     StructureViewComponentTestUtil.testStructureView(myFixture, svc -> {
@@ -843,6 +929,7 @@ public class JavaStructureViewTest extends LightJavaStructureViewTestCaseBase {
                       boolean showInterfaces,
                       boolean showProperties,
                       boolean showInherited) {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.configureByText("Test.java", classText);
     StructureViewComponentTestUtil.testStructureView(myFixture, svc -> {
       svc.setActionActive(KindSorter.ID, true);
@@ -855,5 +942,12 @@ public class JavaStructureViewTest extends LightJavaStructureViewTestCaseBase {
       PlatformTestUtil.expandAll(tree);
       PlatformTestUtil.assertTreeEqual(tree, expected);
     });
+  }
+
+  private void init() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    myFixture.addClass(INTERFACE);
+    myFixture.addClass(BASE);
+    myFixture.configureByText("Derived.java", DERIVED);
   }
 }

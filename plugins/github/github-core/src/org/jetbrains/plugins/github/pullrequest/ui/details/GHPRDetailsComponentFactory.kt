@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.github.pullrequest.ui.details
 
 import com.intellij.collaboration.messages.CollaborationToolsBundle
@@ -30,7 +30,6 @@ import com.intellij.ui.ScrollPaneFactory
 import com.intellij.ui.components.ActionLink
 import com.intellij.ui.components.panels.Wrapper
 import kotlinx.coroutines.CoroutineScope
-import net.miginfocom.layout.AC
 import net.miginfocom.layout.CC
 import net.miginfocom.layout.LC
 import net.miginfocom.swing.MigLayout
@@ -59,16 +58,20 @@ object GHPRDetailsComponentFactory {
     val titlePanel = if (withTitle) {
       val title = CodeReviewDetailsTitleComponentFactory.create(scope, detailsVm, GithubBundle.message("open.on.github.action"), actionGroup,
                                                                 htmlPaneFactory = { SimpleHtmlPane() })
+      val branches = CodeReviewDetailsBranchComponentFactory.create(scope, detailsVm.branchesVm)
       val timelineLink = ActionLink(CollaborationToolsBundle.message("review.details.view.timeline.action")) {
         showTimelineAction(it.source as JComponent)
       }
-      ReviewDetailsUIUtil.createTitlePanel(title, timelineLink)
+      val actionLinks = CodeReviewDetailsBranchComponentFactory.createActionLinks(scope, detailsVm.branchesVm, timelineLink)
+      ReviewDetailsUIUtil.createTitlePanel(title, branches, actionLinks)
     }
     else {
       null
     }
 
-    val commitsAndBranches = createCommitsAndBranchesComponent(scope, detailsVm)
+    val commits = CodeReviewDetailsCommitsComponentFactory.create(scope, detailsVm.changesVm) { commit: GHCommitModel ->
+      createCommitsPopupPresenter(commit, detailsVm.securityService.ghostUser)
+    }
     val statusChecks = GHPRStatusChecksComponentFactory.create(scope, project, detailsVm)
     val actionsComponent = GHPRDetailsActionsComponentFactory.create(scope, project, detailsVm.reviewRequestState, detailsVm.reviewFlowVm)
 
@@ -85,7 +88,7 @@ object GHPRDetailsComponentFactory {
       if (titlePanel != null) {
         add(titlePanel, CC().growX().gap(ReviewDetailsUIUtil.TITLE_GAPS))
       }
-      add(commitsAndBranches, CC().growX().gap(ReviewDetailsUIUtil.COMMIT_POPUP_BRANCHES_GAPS))
+      add(commits, CC().growX().gap(ReviewDetailsUIUtil.COMMIT_POPUP_BRANCHES_GAPS))
       add(createCommitsInfoComponent(scope, detailsVm), CC().growX().gap(ReviewDetailsUIUtil.COMMIT_INFO_GAPS))
       add(createCommitFilesBrowserComponent(scope, detailsVm.changesVm), CC().grow().shrinkPrioY(200))
       add(statusChecks, CC().growX().gap(ReviewDetailsUIUtil.STATUSES_GAPS).maxHeight("${ReviewDetailsUIUtil.STATUSES_MAX_HEIGHT}"))
@@ -106,16 +109,6 @@ object GHPRDetailsComponentFactory {
           addGithubHyperlinkListener(detailsVm::openPullRequestInfoAndTimeline)
         }
       })
-  }
-
-  private fun createCommitsAndBranchesComponent(cs: CoroutineScope, detailsVm: GHPRDetailsViewModel): JComponent {
-    return JPanel(MigLayout(LC().emptyBorders().fill(), AC().gap("push"))).apply {
-      isOpaque = false
-      add(CodeReviewDetailsCommitsComponentFactory.create(cs, detailsVm.changesVm) { commit: GHCommitModel ->
-        createCommitsPopupPresenter(commit, detailsVm.securityService.ghostUser)
-      })
-      add(CodeReviewDetailsBranchComponentFactory.create(cs, detailsVm.branchesVm))
-    }
   }
 
   private fun showTimelineAction(parentComponent: JComponent) {

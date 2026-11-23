@@ -9,7 +9,8 @@ internal class MarkdownProblemFilter : ProblemFilter() {
 
   override fun shouldIgnore(problem: TextProblem): Boolean {
     val parent = problem.text.commonParent
-    return MarkdownPsiUtils.isInOuterListItem(parent) && problem.fitsGroup(RuleGroup.UNDECORATED_SINGLE_SENTENCE) ||
+    return (MarkdownPsiUtils.isInOuterListItem(parent) || MarkdownPsiUtils.isTableCell(parent)) &&
+           problem.fitsGroup(RuleGroup.UNDECORATED_SINGLE_SENTENCE) ||
            MarkdownPsiUtils.isHeaderContent(parent) && problem.fitsGroup(ignoredInHeader)
   }
 }

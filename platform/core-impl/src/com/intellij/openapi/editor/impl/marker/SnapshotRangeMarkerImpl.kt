@@ -10,7 +10,6 @@ import com.intellij.openapi.util.TextRangeScalarUtil
 import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.openapi.vfs.VirtualFile
 import java.util.concurrent.atomic.AtomicIntegerFieldUpdater
-import java.util.concurrent.atomic.AtomicReference
 
 /**
  * A range marker whose offsets are stored in immutable snapshot roots.
@@ -125,8 +124,13 @@ open class SnapshotRangeMarkerImpl private constructor(
 
   protected open fun isValidInRoot(root: PMarkerRoot): Boolean {
     val cached = cachedResolution
-    if (cached != null && cached.identity === root.resolutionCacheIdentity) {
-      return PMarkerResolution.isValid(cached.resolution)
+    if (cached != null) {
+      if (cached.identity === root.resolutionCacheIdentity) return PMarkerResolution.isValid(cached.resolution)
+      val advanced = root.advanceResolution(cached.identity, cached.resolution)
+      if (advanced != PMarkerResolution.UNRESOLVED) {
+        cacheResolution(root, advanced)
+        return PMarkerResolution.isValid(advanced)
+      }
     }
     return root.isValid(markerHandle)
   }
@@ -212,9 +216,9 @@ open class SnapshotRangeMarkerImpl private constructor(
   private var cachedResolution: CachedResolution? = null
 
   private fun cachedCurrentResolution(): Long {
-    val root = currentRootReference().get()
+    val identity = currentRootCache?.rootIdentity ?: currentRootReference().get().resolutionCacheIdentity
     val cached = cachedResolution
-    return if (cached != null && cached.identity === root.resolutionCacheIdentity) cached.resolution else PMarkerResolution.UNRESOLVED
+    return if (cached != null && cached.identity === identity) cached.resolution else PMarkerResolution.UNRESOLVED
   }
 
   private fun currentRange(): Long {
@@ -235,7 +239,7 @@ open class SnapshotRangeMarkerImpl private constructor(
   }
 
   /**
-   * Resolves offsets for a cache miss or disposal. Advances offsets across one direct edit or resolves them in [root].
+   * Resolves offsets for a cache miss or disposal. Advances offsets across recent edits or resolves them in [root].
    */
   private fun resolveCurrent(root: PMarkerRoot, cached: CachedResolution?, forRemoval: Boolean): Long {
     if (cached != null && cached.identity === root.resolutionCacheIdentity) {
@@ -261,7 +265,7 @@ open class SnapshotRangeMarkerImpl private constructor(
     return rootStorage.updateCurrentRoot(update) != null
   }
 
-  fun currentRootReference(): AtomicReference<PMarkerRoot> = currentRootCache?.reference ?: rootStorage.currentRootReference()
+  fun currentRootReference(): PMarkerRootReference = currentRootCache?.reference ?: rootStorage.currentRootReference()
 
   override fun toString(): String = "SnapshotRangeMarker(id=$id" +
                                     (if (isDisposed()) ", disposed" else "") +

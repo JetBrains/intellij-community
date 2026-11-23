@@ -1,0 +1,197 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.debugger.engine.requests;
+
+import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
+import com.intellij.debugger.impl.DebuggerUtilsAsync;
+import com.intellij.debugger.impl.DebuggerUtilsEx;
+import com.intellij.debugger.impl.DebuggerUtilsImpl;
+import com.intellij.openapi.diagnostic.Logger;
+import com.sun.jdi.Method;
+import com.sun.jdi.ObjectCollectedException;
+import com.sun.jdi.ThreadReference;
+import com.sun.jdi.event.Event;
+import com.sun.jdi.event.MethodEntryEvent;
+import com.sun.jdi.event.MethodExitEvent;
+import com.sun.jdi.request.EventRequest;
+import com.sun.jdi.request.EventRequestManager;
+import com.sun.jdi.request.MethodEntryRequest;
+import com.sun.jdi.request.MethodExitRequest;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import static com.intellij.debugger.engine.requests.ReturnValueWatcherKt.WATCHER_REQUEST_KEY;
+
+/**
+ * @author Eugene Zhuravlev
+ */
+public class NativeReturnValueWatcher implements ReturnValueWatcher {
+  private static final Logger LOG = Logger.getInstance(NativeReturnValueWatcher.class);
+  private @Nullable MethodReturnValue myLastMethodReturnValue;
+
+  private ThreadReference myThread;
+  private @Nullable MethodEntryRequest myEntryRequest;
+  private @Nullable Method myEntryMethod;
+  private @Nullable MethodExitRequest myExitRequest;
+
+  private volatile boolean myCapturing;
+  private final EventRequestManager myRequestManager;
+
+  public NativeReturnValueWatcher(EventRequestManager requestManager) {
+    myRequestManager = requestManager;
+  }
+
+  private void processMethodExitEvent(MethodExitEvent event) {
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("<- " + event.method());
+    }
+    try {
+      if (myEntryMethod != null) {
+        // first check declaring type to avoid method calculation in some cases
+        if (myEntryMethod.declaringType().equals(event.location().declaringType()) && myEntryMethod.equals(event.method())) {
+          LOG.debug("Now watching all");
+          enableEntryWatching(true);
+          myEntryMethod = null;
+          DebuggerUtilsAsync.setEnabled(createExitRequest(), true);
+        }
+        else {
+          return;
+        }
+      }
+      final Method method = event.method();
+      if (method != null && !DebuggerUtilsEx.isVoid(method)) {
+        // remember methods with non-void return types only
+        myLastMethodReturnValue = new MethodReturnValue(method, event.returnValue());
+      }
+    }
+    catch (UnsupportedOperationException ex) {
+      LOG.error(ex);
+    }
+  }
+
+  private void processMethodEntryEvent(MethodEntryEvent event) {
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("-> " + event.method());
+    }
+    try {
+      if (myEntryRequest != null && myEntryRequest.isEnabled() && myEntryMethod == null) {
+        myExitRequest = createExitRequest();
+        myExitRequest.addClassFilter(event.location().declaringType());
+        myEntryMethod = event.method();
+        DebuggerUtilsAsync.setEnabled(myExitRequest, true);
+
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("Now watching only " + event.method());
+        }
+
+        enableEntryWatching(false);
+      }
+    }
+    catch (Exception e) {
+      DebuggerUtilsImpl.logError(e);
+    }
+  }
+
+  private void enableEntryWatching(boolean enable) {
+    if (myEntryRequest != null) {
+      DebuggerUtilsAsync.setEnabled(myEntryRequest, enable);
+    }
+  }
+
+  @Override
+  public @Nullable MethodReturnValue getLastMethodReturnValue() {
+    return myLastMethodReturnValue;
+  }
+
+  @Override
+  public void startCapture(@NotNull ThreadReference thread, @NotNull CaptureScope scope) {
+    // Exit events cannot be limited to one frame, so the scope makes no difference.
+    setCapturing(true, thread);
+  }
+
+  @Override
+  public void stopCapture() {
+    setCapturing(false, null);
+  }
+
+  private void setCapturing(boolean capturing, final @Nullable ThreadReference thread) {
+    myCapturing = capturing;
+    updateRequestState(capturing, thread);
+  }
+
+  @Override
+  public void clear() {
+    myLastMethodReturnValue = null;
+  }
+
+  private void updateRequestState(final boolean enabled, final @Nullable ThreadReference thread) {
+    DebuggerManagerThreadImpl.assertIsManagerThread();
+    myEntryMethod = null;
+    try {
+      if (myEntryRequest != null) {
+        DebuggerUtilsAsync.deleteEventRequest(myRequestManager, myEntryRequest);
+        myEntryRequest = null;
+      }
+      if (myExitRequest != null) {
+        DebuggerUtilsAsync.deleteEventRequest(myRequestManager, myExitRequest);
+        myExitRequest = null;
+      }
+      if (enabled) {
+        clear();
+        myThread = thread;
+
+        DebuggerUtilsAsync.setEnabled(createEntryRequest(), true);
+        DebuggerUtilsAsync.setEnabled(createExitRequest(), true);
+      }
+    }
+    catch (ObjectCollectedException ignored) {
+    }
+  }
+
+  private MethodEntryRequest createEntryRequest() {
+    DebuggerManagerThreadImpl.assertIsManagerThread(); // to ensure EventRequestManager synchronization
+    myEntryRequest = prepareRequest(myRequestManager.createMethodEntryRequest());
+    return myEntryRequest;
+  }
+
+  private @NotNull MethodExitRequest createExitRequest() {
+    DebuggerManagerThreadImpl.assertIsManagerThread(); // to ensure EventRequestManager synchronization
+    if (myExitRequest != null) {
+      DebuggerUtilsAsync.deleteEventRequest(myRequestManager, myExitRequest);
+    }
+    myExitRequest = prepareRequest(myRequestManager.createMethodExitRequest());
+    return myExitRequest;
+  }
+
+  private @NotNull <T extends EventRequest> T prepareRequest(T request) {
+    request.setSuspendPolicy(EventRequest.SUSPEND_EVENT_THREAD);
+    if (myThread != null) {
+      if (request instanceof MethodEntryRequest entryRequest) {
+        entryRequest.addThreadFilter(myThread);
+      }
+      else if (request instanceof MethodExitRequest exitRequest) {
+        exitRequest.addThreadFilter(myThread);
+      }
+    }
+    request.putProperty(WATCHER_REQUEST_KEY, true);
+    return request;
+  }
+
+  @Override
+  public boolean processEvent(@NotNull Event event) {
+    if (!ReturnValueWatcher.isWatcherEvent(event)) {
+      return false;
+    }
+    if (!myCapturing) {
+      // ignore a late event after stopCapture
+      return true;
+    }
+
+    if (event instanceof MethodEntryEvent entryEvent) {
+      processMethodEntryEvent(entryEvent);
+    }
+    else if (event instanceof MethodExitEvent exitEvent) {
+      processMethodExitEvent(exitEvent);
+    }
+    return true;
+  }
+}

@@ -2,20 +2,30 @@
 package com.intellij.java.codeInsight.folding
 
 import com.intellij.codeInsight.folding.JavaCodeFoldingSettings
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.editor.FoldRegion
-import com.intellij.testFramework.LightProjectDescriptor
+import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
-import junit.framework.TestCase
+import com.intellij.testFramework.fixtures.lightJavaProjectFixture
+import com.intellij.testFramework.junit5.TestApplication
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.fail
 
-class JavaFoldingTypeInferenceFoldingTest : JavaFoldingTestCase() {
-  override fun getProjectDescriptor(): LightProjectDescriptor = LightJavaCodeInsightFixtureTestCase.JAVA_X
+@TestApplication
+class JavaFoldingTypeInferenceFoldingTest {
+  companion object {
+    private val projectFixture = lightJavaProjectFixture(LightJavaCodeInsightFixtureTestCase.JAVA_X)
+  }
+
+  private val folding by javaFoldingFixture(projectFixture)
 
   private open class FoldRegionPart(val offset: Int)
   private class FoldRegionStart(offset: Int, val placeholder: String) : FoldRegionPart(offset)
   private class FoldRegionEnd(offset: Int) : FoldRegionPart(offset)
 
   fun renderTextWithFoldings(filter: (FoldRegion) -> Boolean = { true }): String {
-    val editor = myFixture.editor
+    val editor = folding.fixture.editor
     val text = editor.document.text
     val foldRegions = editor.foldingModel.allFoldRegions
     val regions = ArrayList<FoldRegionPart>(foldRegions.size)
@@ -47,18 +57,18 @@ class JavaFoldingTypeInferenceFoldingTest : JavaFoldingTestCase() {
 
   private val pattern = Regex("""<fold placeholder="(.*)">(.*)</fold>""")
 
-  fun doTestAllHints(text: String) {
+  suspend fun doTestAllHints(text: String) {
     val textWithoutMarks = text.replace(pattern) {
       it.groupValues[2]
     }
-    configure(textWithoutMarks)
-    TestCase.assertEquals(text, renderTextWithFoldings())
+    folding.configure(textWithoutMarks)
+    assertEquals(text, readAction { renderTextWithFoldings() })
   }
 
   /**
    * Tests single hint range. Range should be in form of <fold placeholder="(.*)">(.*)</fold>
    */
-  fun doTestHint(text: String) {
+  suspend fun doTestHint(text: String) {
     var range : IntRange? = null
     var replacementCount = 0
     val textWithoutMarks = text.replace(pattern) {
@@ -68,18 +78,21 @@ class JavaFoldingTypeInferenceFoldingTest : JavaFoldingTestCase() {
       it.groupValues[2]
     }
     if (replacementCount > 1) fail("Expected one fold region")
-    configure(textWithoutMarks)
+    folding.configure(textWithoutMarks)
     val finalRange = range
     if (replacementCount == 0 || finalRange == null) {
-      TestCase.assertEquals(text, renderTextWithFoldings())
+      assertEquals(text, readAction { renderTextWithFoldings() })
     } else {
-      TestCase.assertEquals(text, renderTextWithFoldings {
-        it.startOffset == finalRange.start && it.endOffset == finalRange.endInclusive
+      assertEquals(text, readAction {
+        renderTextWithFoldings {
+          it.startOffset == finalRange.start && it.endOffset == finalRange.endInclusive
+        }
       })
     }
   }
 
-  fun testLocalVariable() {
+  @Test
+  fun testLocalVariable(): Unit = timeoutRunBlocking {
     JavaCodeFoldingSettings.getInstance().isReplaceVarWithInferredType = true
     doTestHint("""
       class A {
@@ -89,7 +102,8 @@ class JavaFoldingTypeInferenceFoldingTest : JavaFoldingTestCase() {
       }""".trimIndent())
   }
 
-  fun testVariableParameter() {
+  @Test
+  fun testVariableParameter(): Unit = timeoutRunBlocking {
     JavaCodeFoldingSettings.getInstance().isReplaceVarWithInferredType = true
     doTestHint("""
 
@@ -101,7 +115,8 @@ class JavaFoldingTypeInferenceFoldingTest : JavaFoldingTestCase() {
       }""".trimIndent())
   }
 
-  fun testLambdaParameter() {
+  @Test
+  fun testLambdaParameter(): Unit = timeoutRunBlocking {
     JavaCodeFoldingSettings.getInstance().isReplaceVarWithInferredType = true
     doTestHint("""
       interface Consumer<T> {

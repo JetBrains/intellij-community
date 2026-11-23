@@ -23,7 +23,6 @@ import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.python.pyproject.model.internal.startPyProjectModelSyncIfNeeded
 import com.intellij.python.sdk.backend.getPythonInfo
-import com.intellij.python.sdk.backend.getSdkAPI
 import com.intellij.python.sdk.backend.refreshPaths
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.jetbrains.python.DEFAULT_EEL_FOR_NEW_PROJECTS
@@ -141,10 +140,10 @@ abstract class PyV3ProjectBaseGenerator<TYPE_SPECIFIC_SETTINGS : PyV3ProjectType
     // So we expand it right after SDK generation, but if there are no files yet, we do it again after project generation
     uiServices.expandProjectTreeView(project)
     withBackgroundProgress(project, PyBundle.message("python.project.model.progress.title.generating"), cancellable = true) {
-      typeSpecificSettings.generateProject(module, baseDir, interpreter.getSdkAPI()).onFailure {
+      typeSpecificSettings.generateProject(module, baseDir, interpreter).onFailure {
         uiServices.errorSink.emit(it, project)
       }
-      refreshPaths(project, interpreter)
+      refreshPaths(interpreter)
     }
     uiServices.expandProjectTreeView(project)
   }

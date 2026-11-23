@@ -21,7 +21,7 @@ import org.jetbrains.java.generate.element.FieldElement
 import org.jetbrains.java.generate.element.MethodElement
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.annotations.KaAnnotated
-import org.jetbrains.kotlin.analysis.api.components.returnType
+import org.jetbrains.kotlin.analysis.api.expressions.returnType
 import org.jetbrains.kotlin.analysis.api.rendering.KaRenderer
 import org.jetbrains.kotlin.analysis.api.rendering.renderToString
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind

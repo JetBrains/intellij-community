@@ -9,19 +9,19 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module-library" exported="">
       <library name="jcef" type="repository">
-        <properties maven-id="org.jetbrains.intellij.deps.jcef:jcef:150.0.14-g7c1aa68-chromium-150.0.7871.129-api-1.21-263-b20">
+        <properties maven-id="org.jetbrains.intellij.deps.jcef:jcef:150.0.14-g7c1aa68-chromium-150.0.7871.129-api-1.21-263-b21">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/jcef/jcef/150.0.14-g7c1aa68-chromium-150.0.7871.129-api-1.21-263-b20/jcef-150.0.14-g7c1aa68-chromium-150.0.7871.129-api-1.21-263-b20.jar">
-              <sha256sum>e0e6a7deb187514c192fd27f481d9bbb301a67bc7485480a2ecd263825174e0e</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/jcef/jcef/150.0.14-g7c1aa68-chromium-150.0.7871.129-api-1.21-263-b21/jcef-150.0.14-g7c1aa68-chromium-150.0.7871.129-api-1.21-263-b21.jar">
+              <sha256sum>864f67221aadb02f33c445fae1db8669020e26ff788c93c104eacdeaca8cff18</sha256sum>
             </artifact>
           </verification>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/jcef/jcef/150.0.14-g7c1aa68-chromium-150.0.7871.129-api-1.21-263-b20/jcef-150.0.14-g7c1aa68-chromium-150.0.7871.129-api-1.21-263-b20.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/jcef/jcef/150.0.14-g7c1aa68-chromium-150.0.7871.129-api-1.21-263-b21/jcef-150.0.14-g7c1aa68-chromium-150.0.7871.129-api-1.21-263-b21.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/jcef/jcef/150.0.14-g7c1aa68-chromium-150.0.7871.129-api-1.21-263-b20/jcef-150.0.14-g7c1aa68-chromium-150.0.7871.129-api-1.21-263-b20-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/jcef/jcef/150.0.14-g7c1aa68-chromium-150.0.7871.129-api-1.21-263-b21/jcef-150.0.14-g7c1aa68-chromium-150.0.7871.129-api-1.21-263-b21-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>

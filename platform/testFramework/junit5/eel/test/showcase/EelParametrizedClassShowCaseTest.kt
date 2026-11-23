@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.testFramework.junit5.eel.showcase
 
 import com.intellij.platform.testFramework.junit5.eel.params.api.EelHolder
@@ -33,6 +33,7 @@ class EelParametrizedClassShowCaseTest(val eelProvider: EelHolder) {
       }
       EelType.Local -> Unit //no target for local
       EelType.Wsl -> Unit
+      EelType.Ssh -> Unit
     }
     println(eelProvider.eel.userInfo)
   }

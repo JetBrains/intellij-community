@@ -41,9 +41,9 @@ bt prints a short summary of the run, the digest. The rules:
 
 - **Read the whole digest. Do not filter or cut it.** Do not pipe it to `grep`, `rg`, `head`, `tail`, `sed`, `awk`, `cut` or a similar tool. The first line of a test run gives the status: `PASS`, `FAIL`, `NO TESTS`, `BUILD FAILED` or `INFRA`. A pipe that drops the first line hides the result. The exit code gives the same status. A refusal prints no digest. It prints its message on stderr and exits 2, or 6 for a broken repository or host.
 - **One selector and one `--filter` for each run.** bt refuses a second class name, a second directory and a second `--filter`. To run several classes, run each class in its own call, or give their package. `--filter` needs one target: one `--module`, one label, or a lane of one target.
-- **`--module` is the test module.** Its name usually ends with `.tests`. For a module without a test target, bt refuses and prints the `tests.cmd` command.
-- **`--filter` takes no wildcard (`pkg.*`), no regex (`pkg.(A|B)`) and no list.** bt starts the build, and the run gives `NO TESTS`. Then the `hint` line of the digest names the form that works, for example the package for `pkg.*`. The method of `Class#method` is the exact name. A `*` in it is no wildcard. A `Class#method` needs the FQN of the class.
-- **A `--filter` class is a prefix.** It also runs the classes whose names start with it. A `Class#method` runs only the named method. The runner names a nested class `pkg.Outer$Inner`, so `pkg.Outer.Inner` matches no class. A `pkg.Outer$Inner` filter runs no `@Nested` class. For a `@Nested` class, give the outer class, or `'pkg.Outer$Inner#method'`. Write a `$` in single quotes, because the shell expands `$Inner`.
+- **`--module` is the test module.** Its name usually ends with `.tests`.
+- **bt checks `--filter` before the build.** It changes a value with a clear meaning into the form of the runner, and a `note` line names the change. `pkg.Class.method` and a simple `Class#method` become the FQN `Class#method`. `pkg.Outer.Inner#method` becomes `pkg.Outer$Inner#method`, and a nested class without a method becomes its outer class. `pkg.*` becomes the package. bt refuses a regex, a list and another wildcard with exit 2, before the build.
+- **A `--filter` class is a prefix.** It also runs the classes whose names start with it. A `Class#method` runs only the named method. The method is the exact name, so a `*` in it is no wildcard.
 - **The `env` of a rule can change the filter.** A target that sets `JB_TEST_FILTER` in the `env` of its rule runs only the classes of its rule. A target that sets `JB_TEST_JUNIT5_FILTERS` in its rule drops a package filter.
 - **Read the package from the `package` line of the file, not from its directory.** A class or a package that does not exist gives `NO TESTS`. A method that does not exist gives `NO TESTS`, and the cause names the `#method` filter.
 - **`--lane <name>` alone runs the lane.** Beside a selector, `--lane` works only with a flow or a suite selector. These two are Air selectors.
@@ -59,7 +59,7 @@ bt prints a short summary of the run, the digest. The rules:
 | `--no-cache` | Runs the tests again when Bazel has a cached result. |
 | `--dry-run` | Prints the resolved label, the filter, and the Bazel command. Runs nothing. |
 | `--json` | Writes one JSON object to stdout and nothing else. |
-| `--host <host>` | Runs the committed HEAD on another machine of the user through `brd-host` of Branch Deck. The `brd-host` skill (`brd-host skill install`) gives the rules. |
+| `--host <host>` | Runs the working tree, local changes included, on another machine of the user through `brd-host` of Branch Deck. The `brd-host` skill (`brd-host skill install`) gives the rules. |
 | `-- --flaky_test_attempts=3` | Runs a failed test up to 3 times. `tests.cmd` uses `-Dintellij.build.test.attempt.count=3` for this. |
 | `-- --test_arg=--jvm_flag=-Dkey=value` | Sets a system property in the test JVM. `tests.cmd` uses `-Dpass.key=value` for this. |
 | `-- --test_arg=--jvm_flag=-Xmx8g` | Sets the heap of the test JVM. `tests.cmd` uses `-Dintellij.build.test.jvm.memory.options=-Xmx8g` for this. |
@@ -96,7 +96,7 @@ bt refuses a module whose tests do not run under Bazel yet, and a module without
 ./tests.cmd --module <module> --test <pattern>
 ```
 
-- `--module` — the JPS module containing the test classes (always use the test's own module). To find the module name, look at the `.iml` file in the test's directory — the module name is the `.iml` filename without the extension.
+- `--module` — the same module as for bt.
 - `--test` — FQN, wildcard pattern, or FQN#methodName
 
 ```bash
@@ -112,23 +112,12 @@ bt refuses a module whose tests do not run under Bazel yet, and a module without
 ./tests.cmd --module intellij.cidr.compiler.custom.tests \
             --test com.intellij.cidr.compiler.custom.CidrCustomCompilerReadTest#testSingleDefine
 
-# Multiple (semicolon-separated)
-./tests.cmd --module intellij.platform.build.tests \
-            --test org.jetbrains.intellij.build.TestSelectorsTest#class selector;org.jetbrains.intellij.build.FileSetTest
+# Several class patterns (semicolon-separated, not with #methodName)
+./tests.cmd --module intellij.platform.buildScripts.tests \
+            --test 'org.jetbrains.intellij.build.FileSetTest;org.jetbrains.intellij.build.ZipTest'
 ```
 
 **Simple class names like `MyTest` do NOT work** — always use FQN or wildcard (`*MyTest`).
-
-### Why simple names fail
-
-Patterns are transformed (`*` → `.*`, `.` → `\.`) and matched against the fully qualified class name using `Pattern.matches()` (full-string match):
-
-| Pattern | Regex | Matches `org.example.MyTest`? |
-|---------|-------|-------------------------------|
-| `MyTest` | `MyTest` | NO — doesn't cover the package prefix |
-| `*MyTest` | `.*MyTest` | YES |
-| `org.example.MyTest` | `org\.example\.MyTest` | YES |
-| `org.example.*` | `org\.example\..*` | YES |
 
 ### Community tests
 
@@ -143,29 +132,12 @@ Use `community/tests.cmd` for tests that belong to community-only modules:
 In an Ultimate checkout, run `ApiCheckTest` directly through its Bazel test target. For a focused check, pass one or more comma-separated module names:
 
 ```bash
-./bazel.cmd test //tests/ideaProjectStructure:projectStructureTests_test \
-  --test_filter=com.intellij.ideaProjectStructure.api.ApiCheckTest \
-  --test_arg=--jvm_flag=-Dapi.dump.test.modules.to.check=<module>[,<module>...] \
-  --test_output=summary \
-  --test_summary=detailed
-```
-
-Omit `--test_arg` to check all modules. Do not use `bazel run` for this target: it streams noisy test output and does not provide Bazel's test summary.
-
-This bt command is the same run with a digest:
-
-```bash
 ./community/tools/bt.cmd //tests/ideaProjectStructure:projectStructureTests_test \
   --filter com.intellij.ideaProjectStructure.api.ApiCheckTest \
   -- --test_arg=--jvm_flag=-Dapi.dump.test.modules.to.check=<module>[,<module>...]
 ```
 
-On failure, keep agent context small by extracting the failing dynamic-test names and messages from Bazel's JUnit report instead of printing the full `test.log`:
-
-```bash
-xmllint --xpath '//testcase[failure or error]/@name | //testcase[failure or error]/*[self::failure or self::error]/@message' \
-  out/bazel-testlogs/tests/ideaProjectStructure/projectStructureTests_test/test.xml
-```
+Omit `--test_arg` to check all modules. Do not use `bazel run` for this target: it streams noisy test output and does not provide Bazel's test summary.
 
 ### Product layout and packaging changes
 
@@ -175,14 +147,14 @@ When changing `ProductProperties`, `productImplementationModules`, product conte
 ./community/tools/bt.cmd //build/tests/smoke:all-products-packaging_test
 ```
 
-The target pins the one class `AllProductsPackagingTest` and is tagged `manual`, so no `--filter` is needed, and no lane or wildcard pattern runs it. bt prints the digest, and Bazel writes `out/bazel-testlogs/build/tests/smoke/all-products-packaging_test/test.xml`. The raw form is `./bazel.cmd test //build/tests/smoke:all-products-packaging_test`.
+The target pins the one class `AllProductsPackagingTest` and is tagged `manual`, so no `--filter` is needed, and no lane or wildcard pattern runs it.
 
 ### Windows PowerShell note
 
 When running `tests.cmd` from PowerShell, pass JVM `-D...` arguments via stop-parsing mode to avoid argument mangling:
 
 ```powershell
-./tests.cmd --% -Dintellij.build.test.patterns=com.example.MyTest
+./tests.cmd --% --module <module> --test com.example.MyTest -Dintellij.build.test.attempt.count=3
 ```
 
 Without `--%`, PowerShell can alter `-D...` arguments before they reach `tests.cmd`, which may lead to errors like `Could not find or load main class ...`.
@@ -208,47 +180,25 @@ cd community/platform/build-scripts/bazel
 ../../../../bazel.cmd test //:bazel-generator-integration-tests --test_output=all
 ```
 
-- Do **not** use `./tests.cmd` for `org.jetbrains.intellij.build.bazel.BazelGeneratorIntegrationTests` or other tests in that module.
 - If a request touches files under `community/platform/build-scripts/bazel`, prefer that module-local `../../../../bazel.cmd test` flow for verification.
 
 ## How tests.cmd Works
 
-1. `tests.cmd` is a cross-platform script (works on Windows/Linux/macOS)
-2. It takes `--module` and `--test`, maps them to JVM properties, and calls `./bazel.cmd run //build:local_idea_ultimate_run_tests_build_target`
-3. The test runner uses JUnit to execute the specified test classes
+`tests.cmd` is a cross-platform script (works on Windows/Linux/macOS)
 
 **Troubleshooting test discovery:**
 - Bazel incremental compilation works correctly — remote caches do NOT cause staleness, don't waste time on `./bazel.cmd clean`
-- Test discovery issues are typically caused by:
-  1. Wrong test pattern (use FQN or wildcard, not simple class name)
-  2. Wrong module
-  3. Test class not in the correct test module's classpath
-
-For deeper troubleshooting, see [TESTING-internals.md](../testing-internals/SKILL.md).
 
 ## tests.cmd Parameters
 
-```
-Usage: tests.cmd --module <module> --test <pattern> [options]
-
-Required:
-  --module <module>    Name of the JPS module which contains the test classes
-  --test <pattern>     Full test class name (FQN) or wild card pattern (e.g. com.intellij.*Test) or exact FQN#methodName
-
-Options:
-  --debug              Debug build scripts JVM process
-  --help               Show this help message
-
-Additional options are passed as JVM flags to org.jetbrains.intellij.build.TestingOptions
-  Example: -Dintellij.build.test.debug.enabled=true -Dintellij.build.test.debug.suspend=true -Dintellij.build.test.debug.port=5005
-```
+`./tests.cmd --help` prints the usage. `--debug` debugs the JVM process of the build scripts.
 
 ### Additional JVM options
 
 Extra `-D...` arguments are passed through as JVM flags to `org.jetbrains.intellij.build.TestingOptions`:
 
 **`-Dintellij.build.test.attempt.count=<n>`**
-- Retry failed tests N times
+- The number of attempts. From the second attempt, only the failed tests run again.
 - Default: 1 (no retries)
 - Use 3 for flaky tests
 
@@ -266,44 +216,18 @@ Extra `-D...` arguments are passed through as JVM flags to `org.jetbrains.intell
 
 **Tests fail with OutOfMemoryError:**
 - Increase heap size: `-Dintellij.build.test.jvm.memory.options=-Xmx8g`
-- Check for memory leaks in test code
-
-**Tests not found:**
-- Verify `--test` uses FQN or wildcard, not simple class name: `--test com.example.MyTest`
-- Check that `--module` is the module that actually contains the test class (look at the .iml file location)
-- Before troubleshooting further, check whether the test lives in a separate Bazel module such as `community/platform/build-scripts/bazel`; those tests must be run with module-local `../../../../bazel.cmd test`, not `tests.cmd`
-- If `tests.cmd` refuses the module and names a pattern from `bazel-migrated-test-modules.txt`, the tests are Bazel-only. Run them with `./community/tools/bt.cmd --module <module> --filter <FQN>`, as in [Separate Bazel Modules](#separate-bazel-modules)
-
-**Tests pass locally but fail in CI:**
-- Check test isolation - tests may depend on execution order
-- Verify environment variables and system properties
-- Use `-Dintellij.build.test.attempt.count=3` for flaky tests
 
 **Bazel build fails before tests run:**
 - Check module dependencies in `.iml` file
-- Consult [module-dependencies.md](../module-dependencies/SKILL.md)
+- Consult [module-dependencies](../module-dependencies/SKILL.md)
 
-For deeper troubleshooting, see [TESTING-internals.md](../testing-internals/SKILL.md).
-
-## Test Execution Internals
-
-For detailed information about how `tests.cmd` works internally, including:
-- Execution flow diagrams
-- Key classes reference
-- TestingOptions properties
-- Bazel target configuration
-- Test discovery flow
-
-See [TESTING-internals.md](../testing-internals/SKILL.md)
+Read [references/testing-internals.md](references/testing-internals.md) when you debug the test discovery or the runner of `bt.cmd` or `tests.cmd`. Examples are a test that is not found, the wrong tests that run, a pattern that matches no class, and the bucketing.
 
 ## Writing Tests
 
-For guidelines on **writing** tests (as opposed to running them), see the guidelines:
-- [Writing Tests](../writing-tests/SKILL.md) - How to write tests, always consult before writing new tests
+Always read [Writing Tests](../writing-tests/SKILL.md) before you write a new test.
 
 ## Additional Resources
 
 - [Running and Testing Documentation](../../../../docs/IntelliJ-Platform/2_Running-and-Testing)
-- [Community README](../../../README.md)
-- [Main README](../../../../README.md)
 - [Driver UI testing](../driver-ui-tests/SKILL.md)

@@ -2,14 +2,27 @@
 package com.jetbrains.python.types
 
 import com.intellij.idea.TestFor
+import com.intellij.openapi.Disposable
+import com.intellij.psi.util.PsiTreeUtil
+import com.intellij.psi.util.QualifiedName
+import com.intellij.testFramework.junit5.TestDisposable
+import com.intellij.testFramework.runInEdtAndWait
 import com.jetbrains.python.allure.Components
 import com.jetbrains.python.allure.Layers
 import com.jetbrains.python.allure.Subsystems
+import com.jetbrains.python.codeInsight.PyDataclassCopyFunction
+import com.jetbrains.python.codeInsight.PyDataclassParameters
+import com.jetbrains.python.codeInsight.PyDataclassParametersProvider
+import com.jetbrains.python.codeInsight.stdlib.PyDataclassResolver
 import com.jetbrains.python.codeInsight.stdlib.PyDataclassTypeProvider
+import com.jetbrains.python.codeInsight.stdlib.PyStdlibDataclassType
 import com.jetbrains.python.fixtures.PyCodeInsightTestCase
 import com.jetbrains.python.inspections.PyArgumentListInspection
 import com.jetbrains.python.inspections.PyDataclassInspection
 import com.jetbrains.python.inspections.PyStdlibDataclassInspection
+import com.jetbrains.python.psi.PyCallExpression
+import com.jetbrains.python.psi.types.TypeEvalContext
+import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 
@@ -731,7 +744,6 @@ class PyDataclassTypeTest : PyCodeInsightTestCase() {
   inner class InitArgumentTypeChecking {
     @Test
     @TestFor(issues = ["PY-27398"])
-    @TestCaseOptions(assertRecursionPrevention = false)
     @TestInspections(disableInspections = [PyArgumentListInspection::class, PyStdlibDataclassInspection::class])
     fun `initializing dataclass checks generated init arguments`() = test("""
       import dataclasses
@@ -960,6 +972,48 @@ class PyDataclassTypeTest : PyCodeInsightTestCase() {
       # │                ^^^^^^^^ WARNING Expected type '_SupportsReplace[**_P, _RT_co]', got 'Point' instead FIXME
       # └ TYPE Unknown FIXME Point
       """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-92925"])
+    fun `copy function of a provider registered after the first replace call`(@TestDisposable disposable: Disposable) {
+      // A `dataclasses.replace` call reads the registered resolvers before the test provider is added.
+      runInEdtAndWait {
+        val file = myFixture.configureByText("prime.py", """
+          import dataclasses
+
+          @dataclasses.dataclass
+          class Point:
+              x: int
+
+          dataclasses.replace(Point(1), x=2)
+          """.trimIndent())
+        val call = PsiTreeUtil.findChildrenOfType(file, PyCallExpression::class.java).single { it.callee?.text == "dataclasses.replace" }
+        assertEquals("Point", TypeEvalContext.codeAnalysis(myFixture.project, file).getType(call)?.name)
+      }
+
+      val copyResolver = object : PyDataclassResolver by PyStdlibDataclassType.resolver {
+        override fun copyFunctions() = listOf(PyDataclassCopyFunction(QualifiedName.fromDottedString("mylib.replace"), "obj"))
+      }
+      val provider = object : PyDataclassParametersProvider {
+        override fun getType() = object : PyDataclassParameters.Type {
+          override val name = "TEST"
+          override val resolver = copyResolver
+        }
+      }
+      PyDataclassParametersProvider.EP_NAME.point.registerExtension(provider, disposable)
+
+      test("""
+        import dataclasses
+        import mylib
+
+        @dataclasses.dataclass
+        class Point:
+            x: int
+
+        expr = mylib.replace(Point(1), x=2)
+        #└ TYPE Point
+        """.trimIndent(), "mylib.py" to "def replace(obj, /, **changes): ...")
+    }
   }
 
   @Nested

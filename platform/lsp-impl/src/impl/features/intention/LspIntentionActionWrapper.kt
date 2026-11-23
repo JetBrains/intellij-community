@@ -1,30 +1,47 @@
 package com.intellij.platform.lsp.impl.features.intention
 
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 import com.intellij.injected.editor.EditorWindow
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.platform.lsp.api.LspBundle
-import com.intellij.platform.lsp.api.customization.LspIntentionAction
 import com.intellij.platform.lsp.impl.features.quickFix.LspIntentionActionWrapperBase
 import com.intellij.psi.PsiFile
+import java.lang.ref.WeakReference
 
+/**
+ * The platform registers one app-level instance of each subclass. It keeps no resolved action, because such
+ * an action holds the project and leaks it when the project closes. [LspIntentionActionService] holds the
+ * resolved action at the project level instead.
+ *
+ * [getText] has no project, so [isAvailable] keeps the project service in [lastService] for [getText] to read.
+ * The reference is weak and keeps no project.
+ */
 internal open class LspIntentionActionWrapper(index: Int) : LspIntentionActionWrapperBase(index) {
-  override var lspIntentionAction: LspIntentionAction? = null
+  @Volatile
+  private var lastService: WeakReference<LspIntentionActionService>? = null
 
   override fun getFamilyName(): String = LspBundle.message("intention.family.name")
 
+  override fun getText(): String = lastService?.get()?.resolvedIntentionAction(index)?.text ?: ""
+
   override fun isAvailable(project: Project, editor: Editor, psiFile: PsiFile): Boolean {
     if (editor is EditorWindow) return false
+    if (project.isDefault) return false
 
-    ensureInitialized(editor)
-    return super.isAvailable(project, editor, psiFile)
+    val service = LspIntentionActionService.getInstance(project)
+    if (lastService?.get() !== service) {
+      lastService = WeakReference(service)
+    }
+    return service.resolveIntentionAction(editor, index)?.isAvailable(project, editor, psiFile) == true
   }
 
-  private fun ensureInitialized(editor: Editor) {
-    val project = editor.project ?: return
-    if (project.isDefault) return
-    val intentionActions = LspIntentionActionService.getInstance(project).getIntentionActions(editor)
-    lspIntentionAction = if (index < intentionActions.size) intentionActions[index] else null
+  override fun generatePreview(project: Project, editor: Editor, psiFile: PsiFile): IntentionPreviewInfo =
+    LspIntentionActionService.getInstance(project).resolvedIntentionAction(index)?.generatePreview(project, editor, psiFile)
+    ?: IntentionPreviewInfo.EMPTY
+
+  override fun invoke(project: Project, editor: Editor, psiFile: PsiFile) {
+    LspIntentionActionService.getInstance(project).resolvedIntentionAction(index)?.invoke(project, editor, psiFile)
   }
 }
 

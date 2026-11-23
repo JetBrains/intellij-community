@@ -3,22 +3,32 @@ package org.intellij.plugins.markdown.highlighting
 
 import com.intellij.grazie.ide.inspection.grammar.GrazieInspection
 import com.intellij.grazie.spellcheck.GrazieSpellCheckingInspection
-import com.intellij.psi.PsiManager
-import com.intellij.testFramework.PerformanceUnitTest
-import com.intellij.testFramework.fixtures.BasePlatformTestCase
-import com.intellij.tools.ide.metrics.benchmark.Benchmark
-import org.intellij.plugins.markdown.MarkdownTestingUtil
 import com.intellij.markdown.backend.inspections.IncorrectListNumberingInspection
 import com.intellij.markdown.backend.inspections.MarkdownIncorrectTableFormattingInspection
 import com.intellij.markdown.backend.inspections.MarkdownNoTableBordersInspection
 import com.intellij.markdown.backend.inspections.MarkdownUnresolvedFileReferenceInspection
+import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightModuleFixture
+import com.intellij.psi.PsiManager
+import com.intellij.testFramework.PerformanceUnitTest
+import com.intellij.testFramework.TestDataPath
+import com.intellij.testFramework.junit5.StressTestApplication
+import com.intellij.testFramework.junit5.fixture.projectFixture
+import com.intellij.tools.ide.metrics.benchmark.Benchmark
 import org.intellij.plugins.markdown.model.psi.headers.UnresolvedHeaderReferenceInspection
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 
-class MarkdownHighlightingPerformanceTest : BasePlatformTestCase() {
-  override fun getTestDataPath(): String = MarkdownTestingUtil.TEST_DATA_PATH + "/performance"
+@StressTestApplication
+@TestDataPath($$"$PROJECT_ROOT/community/plugins/markdown/test/data/performance")
+class MarkdownHighlightingPerformanceTest {
+  companion object {
+    private val projectFixture = projectFixture(openAfterCreation = true)
+  }
 
-  override fun setUp() {
-    super.setUp()
+  private val myFixture by codeInsightModuleFixture(projectFixture)
+
+  @BeforeEach
+  fun setUp() {
     myFixture.enableInspections(
       IncorrectListNumberingInspection(),
       MarkdownIncorrectTableFormattingInspection(),
@@ -30,9 +40,10 @@ class MarkdownHighlightingPerformanceTest : BasePlatformTestCase() {
   }
 
   @PerformanceUnitTest
+  @Test
   fun `test opening large markdown file performance`() {
     Benchmark.newBenchmark("Opening markdown file") { runHighlightTestForFile("peformance_test_1.md") }
-      .setup { PsiManager.getInstance(project).dropPsiCaches() }
+      .setup { PsiManager.getInstance(myFixture.project).dropPsiCaches() }
       .runAsStressTest()
       .start()
   }

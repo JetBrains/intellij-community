@@ -15,32 +15,41 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
 
-/** Holds the live-preview state of an editor. Live preview is off until [setLivePreviewEnabledness] turns it on. */
-private val LIVE_PREVIEW_KEY: Key<MutableStateFlow<Boolean>> = Key.create("markdown.live.preview")
+/**
+ * Holds the live-preview configuration of an editor.
+ * Live preview is off while it is null, until [setLivePreviewEnabledness] turns it on.
+ */
+private val LIVE_PREVIEW_KEY: Key<MutableStateFlow<MarkdownLivePreviewConfiguration?>> = Key.create("markdown.live.preview")
 
-private fun Editor.livePreviewState(): MutableStateFlow<Boolean> {
-  return (this as UserDataHolderEx).getOrCreateUserData(LIVE_PREVIEW_KEY) { MutableStateFlow(false) }
+private fun Editor.livePreviewState(): MutableStateFlow<MarkdownLivePreviewConfiguration?> {
+  return (this as UserDataHolderEx).getOrCreateUserData(LIVE_PREVIEW_KEY) { MutableStateFlow(null) }
 }
 
+/**
+ * Turns Markdown live preview on or off for this editor.
+ * While it is on, live preview renders the elements that [configuration] does not prohibit.
+ */
 @ApiStatus.Experimental
-fun Editor.enableLivePreview() {
-  setLivePreviewEnabledness(true)
-}
-
-/** Turns Markdown live preview on or off for this editor. */
-@ApiStatus.Experimental
-fun Editor.setLivePreviewEnabledness(enabled: Boolean) {
-  livePreviewState().value = enabled
+@JvmOverloads
+fun Editor.setLivePreviewEnabledness(
+  enabled: Boolean,
+  configuration: MarkdownLivePreviewConfiguration = MarkdownLivePreviewConfiguration.DEFAULT_LIVE_PREVIEW_CONFIGURATION,
+) {
+  livePreviewState().value = if (enabled) configuration else null
 }
 
 @ApiStatus.Experimental
 fun Editor.isLivePreviewEnabled(): Boolean {
-  return getUserData(LIVE_PREVIEW_KEY)?.value == true
+  return livePreviewConfiguration() != null
 }
 
-/** Emits the live-preview state of this editor each time [setLivePreviewEnabledness] changes it. */
+internal fun Editor.livePreviewConfiguration(): MarkdownLivePreviewConfiguration? {
+  return getUserData(LIVE_PREVIEW_KEY)?.value
+}
+
+/** Emits the live-preview configuration of this editor each time it changes. Null means that live preview is off. */
 @ApiStatus.Internal
-fun Editor.livePreviewEnablednessFlow(): StateFlow<Boolean> {
+fun Editor.livePreviewConfigurationFlow(): StateFlow<MarkdownLivePreviewConfiguration?> {
   return livePreviewState()
 }
 
@@ -111,7 +120,7 @@ sealed interface MarkdownLivePreviewSpec {
   ) : MarkdownLivePreviewSpec
 
   /**
-   * Replaces a blockquote marker with [placeholderText] until a caret touches [range].
+   * Hides the glyph of a blockquote marker until a caret touches [range]. The marker keeps its width.
    * The [range] covers the run of markers on the marker line. Only spaces and tabs separate the markers of a run.
    * Thus one touch reveals all markers of the run.
    * While the marker is concealed, it paints a vertical rule over [ruleRange].
@@ -119,12 +128,10 @@ sealed interface MarkdownLivePreviewSpec {
   @Serializable
   data class BlockQuote(
     override val range: MarkdownLivePreviewRange,
-    /** The `>` character that the placeholder replaces. */
+    /** The `>` character with the hidden glyph. */
     val markerRange: MarkdownLivePreviewRange,
     /** Starts at the marker. Ends at the start of the next marker line of the blockquote, or at the end of the marker line. */
     val ruleRange: MarkdownLivePreviewRange,
-    /** Keeps each quote level two spaces wide. A space or a tab after the marker stays source text and gives the second space. */
-    val placeholderText: String,
     /** The rule takes the title color of this alert type. A regular blockquote has no alert type. */
     val alertType: AlertType? = null,
   ) : MarkdownLivePreviewSpec
@@ -161,8 +168,13 @@ sealed interface MarkdownLivePreviewSpec {
     val height: Int,
   )
 
+  /** Tells why the editor shows a placeholder instead of [Image]. */
+  @Serializable
+  enum class ImageFailure { NOT_FOUND, OUTSIDE_PROJECT, UNREADABLE, TOO_LARGE, UNTRUSTED }
+
   /**
-   * Replaces the source of a image with [placeholderText] and paints the image below its line.
+   * Replaces the source of an image with [placeholderText] and paints the image below its line.
+   * An image with a [failure] has no [source]. The editor paints a placeholder that shows the reason of [failure].
    */
   @Serializable
   data class Image(
@@ -171,6 +183,7 @@ sealed interface MarkdownLivePreviewSpec {
     val placeholderText: String,
     val isBrowserOwned: Boolean,
     val source: ImageSource? = null,
+    val failure: ImageFailure? = null,
   ) : MarkdownLivePreviewSpec
 
   /** Renders an object under the code fence, if the [language] is supported */

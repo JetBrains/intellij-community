@@ -1,12 +1,23 @@
 package com.intellij.codeInspection.tests.kotlin.logging
 
 import com.intellij.analysis.JvmAnalysisBundle
-import com.intellij.jvm.analysis.internal.testFramework.logging.LoggingConditionDisagreesWithLogLevelStatementInspectionTestBase
+import com.intellij.jvm.analysis.internal.testFramework.logging.loggingConditionDisagreesWithLogLevelStatementInspectionFixture
 import com.intellij.jvm.analysis.testFramework.JvmLanguage
+import com.intellij.jvm.analysis.testFramework.jvmProjectFixture
+import com.intellij.testFramework.junit5.TestApplication
+import org.junit.jupiter.api.Test
 
-abstract class KotlinLoggingConditionDisagreesWithLogLevelStatementInspectionTest : LoggingConditionDisagreesWithLogLevelStatementInspectionTestBase() {
+@TestApplication
+abstract class KotlinLoggingConditionDisagreesWithLogLevelStatementInspectionTest {
+  companion object {
+    private val projectFixture = jvmProjectFixture()
+  }
+
+  protected val myFixture by loggingConditionDisagreesWithLogLevelStatementInspectionFixture(projectFixture)
+
   
 
+  @Test
   fun `test slf4j`() {
     myFixture.testHighlighting(JvmLanguage.KOTLIN, """
         import org.slf4j.LoggerFactory
@@ -31,6 +42,7 @@ abstract class KotlinLoggingConditionDisagreesWithLogLevelStatementInspectionTes
     """.trimIndent())
   }
 
+  @Test
   fun `test log4j2`() {
     myFixture.testHighlighting(JvmLanguage.KOTLIN, """
       import org.apache.logging.log4j.LogManager
@@ -57,6 +69,7 @@ abstract class KotlinLoggingConditionDisagreesWithLogLevelStatementInspectionTes
     """.trimIndent())
   }
 
+  @Test
   fun `test several logs`() {
     myFixture.testHighlighting(JvmLanguage.KOTLIN, """
       
@@ -105,6 +118,7 @@ abstract class KotlinLoggingConditionDisagreesWithLogLevelStatementInspectionTes
     """.trimIndent())
   }
 
+  @Test
   fun `test java util logging`() {
     myFixture.testHighlighting(JvmLanguage.KOTLIN, """
       import java.util.logging.Level
@@ -125,6 +139,7 @@ abstract class KotlinLoggingConditionDisagreesWithLogLevelStatementInspectionTes
     """.trimIndent())
   }
 
+  @Test
   fun `test fixes slf4j change guards`() {
     myFixture.testQuickFix(
       testPreview = true,
@@ -161,6 +176,7 @@ abstract class KotlinLoggingConditionDisagreesWithLogLevelStatementInspectionTes
     )
   }
 
+  @Test
   fun `test fixes slf4j change guards as methods`() {
     myFixture.testQuickFix(
       testPreview = true,

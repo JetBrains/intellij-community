@@ -2,6 +2,7 @@
 package org.jetbrains.kotlin.idea.base.fir.projectStructure.provider
 
 import com.intellij.java.library.JavaLibraryModificationTracker
+import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
@@ -36,13 +37,16 @@ import com.intellij.workspaceModel.ide.legacyBridge.impl.java.JAVA_TEST_ROOT_ENT
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KaImplementationDetail
 import org.jetbrains.kotlin.analysis.api.platform.modification.KotlinModificationTrackerFactory
+import org.jetbrains.kotlin.analysis.api.platform.projectStructure.KaDanglingFileModuleImpl
 import org.jetbrains.kotlin.analysis.api.platform.projectStructure.resolveExtensionFileModule
+import org.jetbrains.kotlin.analysis.api.projectStructure.KaDanglingFileResolutionMode
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaLibraryModule
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaNotUnderContentRootModule
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaScriptDependencyModule
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaScriptModule
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaSourceModule
+import org.jetbrains.kotlin.analysis.api.projectStructure.baseContextModuleOrSelf
 import org.jetbrains.kotlin.analysis.api.projectStructure.danglingFileResolutionMode
 import org.jetbrains.kotlin.config.KOTLIN_SOURCE_ROOT_TYPE_ID
 import org.jetbrains.kotlin.config.KOTLIN_TEST_ROOT_TYPE_ID
@@ -112,6 +116,15 @@ class K2IDEProjectStructureProvider(private val project: Project) : IDEProjectSt
     internal fun computeKaModule(psiFile: PsiFile?, virtualFile: VirtualFile?, useSiteModule: KaModule?): KaModule {
         if (psiFile != null) {
             computeSpecialModule(psiFile)?.let { return it }
+
+            val injectionHost = InjectedLanguageManager.getInstance(project).getInjectionHost(psiFile.viewProvider)
+            if (psiFile is KtFile && injectionHost != null) {
+                return KaDanglingFileModuleImpl(
+                    listOf(psiFile),
+                    getModule(injectionHost.containingFile, null).baseContextModuleOrSelf,
+                    KaDanglingFileResolutionMode.PREFER_SELF
+                )
+            }
         }
 
         val candidates = CandidateCollector.collectCandidates(psiFile, virtualFile, project)

@@ -2,6 +2,7 @@ package com.intellij.python.lsp.core.type
 
 import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.platform.lsp.api.LspClient
+import com.intellij.psi.PsiFile
 import com.intellij.python.lsp.core.isUsable
 import com.jetbrains.python.psi.PyExpressionCodeFragment
 import com.jetbrains.python.psi.PyTypedElement
@@ -27,6 +28,12 @@ interface PyLspTypeEngine : PyTypeEngine {
     // A light element such as `PyImportedModule` belongs to a file but has no text in it, so it has no
     // position to send to the server.
     if (pyTypedElement.textRange == null)
+      return false
+
+    // A wrapper such as a custom member of `PyCustomMemberProviderImpl` wraps the node of another element.
+    // The position of that node does not give the type of the wrapper. The node of a file is always the
+    // file, and the check skips it because `getNode` of a file parses the whole file.
+    if (pyTypedElement !is PsiFile && pyTypedElement.node?.psi !== pyTypedElement)
       return false
 
     val realFile = pyTypedElement.containingFile?.originalFile ?: return false

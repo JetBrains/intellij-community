@@ -242,12 +242,15 @@ internal object WslPathParser {
   }
 }
 
+@ApiStatus.Experimental
 class WslEelDescriptor internal constructor(override val distribution: WSLDistribution, fsRoot: String) : EelPathBoundDescriptor,
                                                                                                           EelDescriptorWithoutNativeFileChooserSupport,
                                                                                                           EelDescriptorWithWslDistribution {
   internal val fsRoot = fsRoot.replace('/', '\\')
 
   constructor(distribution: WSLDistribution) : this(distribution, distribution.getUNCRootPath().pathString)
+
+  constructor(distributionId: String) : this(WSLDistribution(distributionId))
 
   override val rootPath: Path get() = fsRoot.let(::Path)
   override val name: @NonNls String = "WSL: ${distribution.presentableName}"

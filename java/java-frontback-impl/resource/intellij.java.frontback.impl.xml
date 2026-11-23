@@ -46,6 +46,7 @@
                         serviceImplementation="com.intellij.psi.codeStyle.JavaFileCodeStyleFacadeImpl$Factory"/>
     <projectService serviceInterface="com.intellij.psi.codeStyle.JavaCodeStyleSettingsFacade"
                     serviceImplementation="com.intellij.psi.codeStyle.JavaCodeStyleSettingsFacadeImpl"/>
+    <applicationService serviceImplementation="com.intellij.codeInsight.editorActions.JavaTypingSupport" open="true"/>
     <packageDirectoryProvider implementation="com.intellij.psi.impl.file.JavaPackageDirectoryProvider" id="default"/>
     <virtualFileCustomDataProvider implementation="com.intellij.ide.JavaCodeStyleSettingsCustomDataSynchronizer"/>
     <langCodeStyleSettingsProvider implementation="com.intellij.ide.JavaLanguageCodeStyleSettingsProvider"/>
@@ -80,6 +81,7 @@
     <lineIndentProvider implementation="com.intellij.codeInsight.editorActions.JavaLineIndentProvider"/>
     <quoteHandler fileType="JAVA" className="com.intellij.codeInsight.editorActions.JavaQuoteHandler"/>
 
+    <typedHandler implementation="com.intellij.codeInsight.editorActions.JavaTypedHandlerBase" id="java"/>
     <typedHandler implementation="com.intellij.codeInsight.editorActions.JavadocTypedHandler" id="javadoc"/>
     <typedHandler implementation="com.intellij.codeInsight.editorActions.AutoFormatTypedHandler"/>
 

@@ -185,7 +185,7 @@ internal class BackendTerminalHyperlinkHighlighter(
    *
    * Returns one [TerminalHyperlinksOutputEvent.HyperlinksUpdated] per finished batch — each a self-contained update
    * for a disjoint covered range — followed by a [TerminalHyperlinksOutputEvent.TaskFinished]
-   * if the currently running task has just finished.
+   * if the currently running task has just finished and processed all its lines.
    */
   fun collectResultsAndMaybeStartNewTask(): List<TerminalHyperlinksOutputEvent> {
     val runnerBefore = currentTaskRunner
@@ -200,7 +200,9 @@ internal class BackendTerminalHyperlinkHighlighter(
     }
 
     maybeStartNewTask()
-    if (runnerBefore != null && currentTaskRunner !== runnerBefore) {
+    // A task that stopped early left a part of its lines to the pending task, which can have the same stamp.
+    // So only a task that processed all its lines reports its stamp.
+    if (runnerBefore != null && currentTaskRunner !== runnerBefore && !runnerBefore.isStoppedEarly()) {
       events += TerminalHyperlinksOutputEvent.TaskFinished(documentModificationStamp = runnerBefore.task.modificationStamp)
     }
     return events
@@ -331,6 +333,7 @@ private class HighlightTaskRunner(
   private val continueCondition: (HighlightTaskRunner) -> Boolean,
 ) {
   private val isRunning = AtomicBoolean(true)
+  private val isStoppedEarly = AtomicBoolean(false)
 
   private val processor = HyperlinkProcessor(hyperlinkId)
   private val hypertext: HypertextInput = HypertextFromCharSequenceAdapter(task.charsSequence)
@@ -346,6 +349,9 @@ private class HighlightTaskRunner(
   var currentAbsoluteLine: Long = topStartLine.toAbsolute()
 
   fun isRunning(): Boolean = isRunning.get()
+
+  /** Returns `true` if the task stopped before it processed all its lines, because a newer task covers them. */
+  fun isStoppedEarly(): Boolean = isStoppedEarly.get()
 
   fun pendingBatchCount(): Int = completedBatches.size
 
@@ -379,7 +385,11 @@ private class HighlightTaskRunner(
 
   private suspend fun computeTopResults() {
     var firstBatchLine = topStartLine
-    while (firstBatchLine <= topStopLineInclusive && continueCondition(this)) {
+    while (firstBatchLine <= topStopLineInclusive) {
+      if (!continueCondition(this)) {
+        isStoppedEarly.set(true)
+        return
+      }
       val lastBatchLine = (firstBatchLine + BATCH_SIZE - 1).coerceAtMost(topStopLineInclusive)
       val results = processor.processBatch(hypertext, task, filter, firstBatchLine, lastBatchLine)
       LOG.debug { "Produced at the top: ${describe(results)} in lines $firstBatchLine-$lastBatchLine" }

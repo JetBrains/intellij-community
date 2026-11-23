@@ -2,13 +2,29 @@
 package org.intellij.plugins.intelliLang
 
 import com.intellij.lang.annotation.HighlightSeverity
+import com.intellij.openapi.application.EDT
 import com.intellij.psi.injection.Injectable
+import com.intellij.testFramework.common.timeoutRunBlocking
+import com.intellij.testFramework.fixtures.InjectionTestFixture
+import com.intellij.testFramework.fixtures.lightJavaCodeInsightFixture
+import com.intellij.testFramework.fixtures.lightJavaProjectFixture
+import com.intellij.testFramework.junit5.TestApplication
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.intellij.plugins.intelliLang.inject.InjectLanguageAction
 import org.jetbrains.yaml.YAMLLanguage
+import org.junit.jupiter.api.Test
 
-class YamlInjectionTest : AbstractLanguageInjectionTestCase() {
+@TestApplication
+class YamlInjectionTest {
+  companion object {
+    private val projectFixture = lightJavaProjectFixture()
+  }
 
-  fun testYamlSameLineAnnotatorInInjection() {
+  private val myFixture by lightJavaCodeInsightFixture(projectFixture)
+
+  @Test
+  fun testYamlSameLineAnnotatorInInjection(): Unit = timeoutRunBlocking {
     myFixture.configureByText("Foo.java", """
       class Foo {
           void bar() {
@@ -21,12 +37,14 @@ class YamlInjectionTest : AbstractLanguageInjectionTestCase() {
       }
     """)
 
-    InjectLanguageAction.invokeImpl(project,
-                                    myFixture.editor,
-                                    myFixture.file,
-                                    Injectable.fromLanguage(YAMLLanguage.INSTANCE))
+    withContext(Dispatchers.EDT) {
+      InjectLanguageAction.invokeImpl(myFixture.project,
+                                      myFixture.editor,
+                                      myFixture.file,
+                                      Injectable.fromLanguage(YAMLLanguage.INSTANCE))
 
-    assertInjectedLangAtCaret("yaml")
+      InjectionTestFixture(myFixture).assertInjectedLangAtCaret("yaml")
+    }
 
     val highlights = myFixture.doHighlighting(HighlightSeverity.ERROR)
 

@@ -7,8 +7,6 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.wm.ToolWindowId;
-import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiFile;
@@ -197,9 +195,10 @@ public class TypeMigrationProcessor extends BaseRefactoringProcessor {
         name += "...";
       }
     }
-    Content content = UsageViewContentManager.getInstance(myProject).addContent(XmlStringUtil.wrapInHtml(name), false, panel, true, true);
+    UsageViewContentManager usageViewContentManager = UsageViewContentManager.getInstance(myProject);
+    Content content = usageViewContentManager.addContent(XmlStringUtil.wrapInHtml(name), false, panel, true, true);
     panel.setContent(content);
-    ToolWindowManager.getInstance(myProject).getToolWindow(ToolWindowId.FIND).activate(null);
+    usageViewContentManager.getToolWindow().activate(null);
   }
 
   public static String getPresentation(PsiElement element) {

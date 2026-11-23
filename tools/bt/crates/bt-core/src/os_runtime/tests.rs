@@ -7,7 +7,7 @@ use std::io::Write;
 use std::path::Path;
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::{Arc, Mutex};
-use std::time::{Duration, Instant};
+use std::time::Duration;
 
 use pretty_assertions::assert_eq;
 
@@ -63,6 +63,39 @@ fn child_process() {
                     .unwrap_or_default()
             );
             0
+        }
+        script if script.starts_with("git-isolation:") => {
+            // The repository of the parent, which the inherited variables of git name a different one.
+            let repo = Path::new(&script["git-isolation:".len()..]);
+            write_in(repo, "module/Driver.kt", "first\n");
+            git_in(repo, &["init", "-q", "-b", "main"], None);
+            git_in(repo, &["add", "module/Driver.kt"], None);
+            git_in(repo, &["commit", "-q", "-m", "first"], None);
+            git_in(repo, &["branch", "published"], None);
+            let read = OsRuntime::builder(repo).build().revision_text("HEAD", "module/Driver.kt");
+            i32::from(read.ok().flatten().as_deref() != Some("first\n"))
+        }
+        script if script.starts_with("spawn-probe:") => {
+            // The child and its own child run the same script. The marker file tells them apart: the first one makes
+            // it and spawns, the second one finds it and reports what it inherited.
+            let marker = Path::new(&script["spawn-probe:".len()..]);
+            if marker.exists() {
+                let _ = write!(
+                    stdout,
+                    "GIT_DIR {}",
+                    if std::env::var_os("GIT_DIR").is_some() {
+                        "inherited"
+                    } else {
+                        "removed"
+                    }
+                );
+                0
+            } else {
+                std::fs::write(marker, "").expect("the marker of the probe");
+                let ran = spawn_child(None, &child_argv(), None);
+                let _ = write!(stdout, "{}", ran.output);
+                ran.exit_code
+            }
         }
         script => {
             if let Some(Ok(milliseconds)) = script.strip_prefix("sleep:").map(str::parse::<u64>) {
@@ -121,37 +154,6 @@ fn a_streamed_child_answers_its_stdout_and_passes_on_its_stderr_lines() {
     assert!(result.output.ends_with("said on stdout\n"), "{}", result.output);
     assert!(!result.output.contains("said on stderr"), "{}", result.output);
     assert!(lines.lock().expect("the sink lock").iter().any(|line| line == "said on stderr"));
-}
-
-/// A child that writes nothing for the idle limit is stopped, and a child that ends in time answers as usual.
-#[test]
-fn a_watched_child_that_stays_silent_is_stopped() {
-    let started = Instant::now();
-    let silent = watch_to_end(child(None, "sleep:20000"), Duration::from_millis(300));
-    assert_eq!(silent.exit_code, STOPPED_IDLE, "{}", silent.output);
-    assert!(
-        silent.output.contains("wrote nothing for 0 s, so it was stopped"),
-        "{}",
-        silent.output
-    );
-    assert!(started.elapsed() < Duration::from_secs(10), "{:?}", started.elapsed());
-
-    let speaking = watch_to_end(child(None, "streams"), Duration::from_secs(20));
-    assert_eq!(speaking.exit_code, 3, "{}", speaking.output);
-    assert!(speaking.output.contains("said on stdout"), "{}", speaking.output);
-}
-
-/// The stall is often in a grandchild that holds the pipe, as the ssh of a git push does. Its group goes with it.
-#[cfg(unix)]
-#[test]
-fn a_watched_child_is_stopped_with_its_grandchildren() {
-    let started = Instant::now();
-    let mut command = Command::new("/bin/sh");
-    command.args(["-c", "sleep 30; echo late"]).stdin(Stdio::null());
-    let stopped = watch_to_end(command, Duration::from_millis(300));
-    assert_eq!(stopped.exit_code, STOPPED_IDLE, "{}", stopped.output);
-    assert!(!stopped.output.contains("late"), "{}", stopped.output);
-    assert!(started.elapsed() < Duration::from_secs(10), "{:?}", started.elapsed());
 }
 
 /// The tail, because a lane run's bazel output is megabytes and only its end says why it failed.
@@ -303,10 +305,7 @@ fn lines_are_split_the_way_the_bep_reader_expects() {
 }
 
 fn git_available() -> bool {
-    Command::new("git")
-        .arg("--version")
-        .output()
-        .is_ok_and(|output| output.status.success())
+    git_command().arg("--version").output().is_ok_and(|output| output.status.success())
 }
 
 /// The directory of a test repository, or `None` where no git is installed: nothing here can stand in for git.
@@ -328,7 +327,7 @@ fn write_in(repo: &Path, path: &str, text: &str) {
 /// Runs git in `repo`, and answers its stdout without the line end. It is isolated from the configuration of the
 /// host, which may sign, hook or template a repository.
 fn git_in(repo: &Path, args: &[&str], index: Option<&Path>) -> String {
-    let mut command = Command::new("git");
+    let mut command = git_command();
     command
         .arg("-C")
         .arg(repo)
@@ -344,9 +343,8 @@ fn git_in(repo: &Path, args: &[&str], index: Option<&Path>) -> String {
     String::from_utf8(output.stdout).expect("UTF-8").trim_end().to_owned()
 }
 
-/// The listing is git's, so the case needs a real repository: a tracked file, an untracked one, an ignored one, and
-/// a tracked file that is gone from the disk. Skipped where no git is installed, because nothing here can stand in
-/// for it.
+/// The listing is that of `git ls-files`, so the case needs a repository that git makes: a tracked file, an untracked
+/// one, an ignored one, and a tracked file that is gone from the disk. Skipped where no git is installed.
 #[test]
 fn the_listing_holds_tracked_and_untracked_files_and_nothing_ignored() {
     let Some(dir) = repository_dir() else {
@@ -383,6 +381,34 @@ fn the_listing_holds_tracked_and_untracked_files_and_nothing_ignored() {
     );
 }
 
+/// A link to the directory and a `..` in it give the files of its real path, with the paths spelled as the caller spelled
+/// the directory. A link from outside the checkout reads the checkout too.
+#[cfg(unix)]
+#[test]
+fn the_listing_follows_the_real_path_of_the_directory() {
+    let Some(dir) = repository_dir() else {
+        return;
+    };
+    let repo = dir.path().join("repo");
+    write_in(&repo, "module/src/Tracked.kt", "tracked");
+    write_in(&repo, "module/src/Untracked.kt", "untracked");
+    git_in(&repo, &["init", "-q"], None);
+    git_in(&repo, &["add", "module/src/Tracked.kt"], None);
+    std::os::unix::fs::symlink("module", repo.join("link")).expect("a link");
+    let outside = dir.path().join("outside");
+    std::os::unix::fs::symlink(repo.join("module"), &outside).expect("a link");
+
+    let runtime = OsRuntime::builder(&repo).build();
+    for listed in [repo.join("link/src"), repo.join("module/src/../src"), outside.join("src")] {
+        assert_eq!(
+            runtime.list_files(&listed).expect("the directory is listed"),
+            [listed.join("Tracked.kt"), listed.join("Untracked.kt")],
+            "{}",
+            listed.display()
+        );
+    }
+}
+
 /// A revision reads a file as the commit holds it, answers no text for a file that the commit does not hold, and is an
 /// error when the checkout holds no such commit. The upstream base is where `HEAD` meets the upstream of its branch.
 #[test]
@@ -394,7 +420,7 @@ fn a_revision_reads_its_files_and_the_upstream_base_is_the_merge_base() {
     let dir = tempfile::tempdir().expect("a temporary directory");
     let repo = dir.path();
     let git = |args: &[&str]| -> String {
-        let output = Command::new("git")
+        let output = git_command()
             .arg("-C")
             .arg(repo)
             .args([
@@ -441,14 +467,10 @@ fn a_revision_reads_its_files_and_the_upstream_base_is_the_merge_base() {
     host.upstream_base().expect_err("a detached HEAD without origin has no upstream");
 }
 
-/// A directory git cannot list is an error that names it, never an empty listing: an empty one reads as "this
-/// directory holds no file", which is a different answer.
+/// A directory that cannot be listed is an error that names it, never an empty listing: an empty one reads as "this
+/// directory holds no file", which is a different answer. The listing needs no git.
 #[test]
-fn a_directory_git_cannot_list_is_an_error() {
-    if !git_available() {
-        eprintln!("skipped: no git on this host");
-        return;
-    }
+fn a_directory_that_cannot_be_listed_is_an_error() {
     let dir = tempfile::tempdir().expect("a temporary directory");
     let absent = dir.path().join("gone");
     let error = OsRuntime::builder(&absent)
@@ -458,9 +480,9 @@ fn a_directory_git_cannot_list_is_an_error() {
     assert!(error.to_string().contains(&absent.display().to_string()), "{error}");
 }
 
-/// Only a linked work tree has a tree: no git and a main checkout answer none. The tree of a clean work tree is the
-/// tree of HEAD. With local changes it is the tree that `git add -A` would stage: a changed file, a new file, a
-/// deleted file, and no ignored file. The index of the work tree stays as it was.
+/// Only a linked work tree has a tree: no git, a main checkout and a host slot answer none. The tree of a clean work
+/// tree is the tree of HEAD. With local changes it is the tree that `git add -A` would stage: a changed file, a new
+/// file, a deleted file, and no ignored file. The index of the work tree stays as it was.
 #[test]
 fn the_tree_of_a_checkout_holds_its_local_changes_and_leaves_its_index_alone() {
     let Some(dir) = repository_dir() else {
@@ -476,6 +498,7 @@ fn the_tree_of_a_checkout_holds_its_local_changes_and_leaves_its_index_alone() {
         write_in(&main, path, text);
     }
     assert_eq!(main_runtime.checkout_tree().expect("no git is no error"), None);
+    assert_eq!(main_runtime.git_common_path("bt/plan").expect("no git is no error"), None);
 
     git_in(&main, &["init", "-q"], None);
     git_in(&main, &["add", "-A"], None);
@@ -500,8 +523,22 @@ fn the_tree_of_a_checkout_holds_its_local_changes_and_leaves_its_index_alone() {
         }
     );
     assert_eq!(runtime.commit_tree(&head).expect("the tree of HEAD"), head_tree);
+    let host_slot = OsRuntime::builder(repo).host_slot(true).build();
+    assert_eq!(host_slot.checkout_tree().expect("a host slot is no error"), None);
     let records = runtime.git_path("bd-checks.jsonl").expect("a git path");
     assert!(records.ends_with(".git/worktrees/lease/bd-checks.jsonl"), "{}", records.display());
+    // The main checkout and its linked work tree name one file in the common git directory.
+    let main_plan = main_runtime
+        .git_common_path("bt/plan")
+        .expect("git names the common git directory")
+        .expect("a main checkout");
+    let lease_plan = runtime
+        .git_common_path("bt/plan")
+        .expect("git names the common git directory")
+        .expect("a linked work tree");
+    assert!(main_plan.ends_with(".git/bt/plan"), "{}", main_plan.display());
+    write_in(&main, ".git/bt/plan", "shared");
+    assert_eq!(std::fs::read_to_string(&lease_plan).expect("the same file"), "shared");
 
     for (path, text) in [
         ("src/Changed.kt", "after"),
@@ -563,4 +600,173 @@ fn a_kept_copy_is_writable_and_its_run_directory_is_removable() {
     runtime.remove_dir_all(&run).expect("the run directory is removed");
     assert!(!run.exists());
     runtime.remove_dir_all(&run).expect("a missing directory is no error");
+}
+
+/// The accio command line has the shape of the bazel one: the wrapper of the checkout through the shell of the
+/// platform, with the separator of the platform, then the project and the format.
+#[test]
+fn the_accio_command_runs_the_wrapper_of_the_checkout() {
+    let text = |command: Vec<OsString>| command.iter().map(|part| part.to_string_lossy().into_owned()).collect::<Vec<_>>();
+    assert_eq!(
+        text(accio_command(
+            Path::new("/repo"),
+            Platform::Darwin,
+            ACCIO_WRAPPERS[0],
+            &["symbol", "FooTest", "--kind", "class"]
+        )),
+        [
+            "/bin/sh",
+            "/repo/community/tools/accio.cmd",
+            "symbol",
+            "FooTest",
+            "--kind",
+            "class",
+            "--project",
+            "/repo",
+            "--format",
+            "json"
+        ]
+    );
+    assert_eq!(
+        text(accio_command(
+            Path::new(r"C:\repo\"),
+            Platform::Windows,
+            ACCIO_WRAPPERS[1],
+            &["modules"]
+        )),
+        [
+            "cmd.exe",
+            "/c",
+            r"C:\repo\tools\accio.cmd",
+            "modules",
+            "--project",
+            r"C:\repo\",
+            "--format",
+            "json"
+        ]
+    );
+}
+
+/// A checkout without the wrapper is refused, and no accio of the PATH stands in for it.
+#[test]
+fn a_checkout_without_an_accio_wrapper_is_refused() {
+    let dir = tempfile::tempdir().expect("a temporary directory");
+    let runtime = OsRuntime::resolver(dir.path(), |_| {});
+    let refused = runtime.accio(&["symbol", "FooTest"]).expect_err("a refusal");
+    assert_eq!(
+        (refused.code.as_ref(), refused.exit),
+        (crate::accio::ACCIO_FAILED, crate::exit::INFRA)
+    );
+    assert!(
+        refused
+            .message
+            .ends_with("has no accio wrapper: community/tools/accio.cmd or tools/accio.cmd"),
+        "{}",
+        refused.message
+    );
+}
+
+/// The resolver runtime refuses every spawn, and it still runs accio: in the checkout root, with its stdout as the
+/// answer. The refusal of a failed call names the tail of its stderr and the tail of its stdout, where accio writes its
+/// error, and a call without output says so. Each call may wait [`ACCIO_WAIT_SECS`] for the index.
+#[cfg(unix)]
+#[test]
+fn the_resolver_runtime_runs_the_accio_wrapper_in_the_checkout_root() {
+    let dir = tempfile::tempdir().expect("a temporary directory");
+    let wrapper = dir.path().join("tools/accio.cmd");
+    std::fs::create_dir_all(wrapper.parent().expect("a parent")).expect("the tools directory");
+    std::fs::write(
+        &wrapper,
+        concat!(
+            "if [ \"$1\" = fail ]; then echo 'no index' >&2; exit 3; fi\n",
+            "if [ \"$1\" = stdout ]; then echo 'Error: --project: No such file'; exit 1; fi\n",
+            "if [ \"$1\" = silent ]; then exit 1; fi\n",
+            "if [ \"$1\" = wait ]; then echo \"$ACCIO_WAIT\"; exit 0; fi\n",
+            "pwd -P\nprintf '%s\\n' \"$@\"\n",
+        ),
+    )
+    .expect("the wrapper");
+    let runtime = OsRuntime::resolver(dir.path(), |_| {});
+    let answered = runtime.accio(&["symbol", "FooTest"]).expect("an answer");
+    #[expect(
+        clippy::disallowed_methods,
+        reason = "the wrapper prints the real path of its working directory, which is under /private on macOS"
+    )]
+    let real_root = std::fs::canonicalize(dir.path()).expect("the real path");
+    let project = dir.path().to_string_lossy().into_owned();
+    assert_eq!(
+        answered.lines().collect::<Vec<_>>(),
+        [
+            &*real_root.to_string_lossy(),
+            "symbol",
+            "FooTest",
+            "--project",
+            &project,
+            "--format",
+            "json"
+        ]
+    );
+    let refused = runtime.accio(&["fail"]).expect_err("a refusal");
+    assert!(refused.message.ends_with("exited with 3\nstderr:\nno index"), "{}", refused.message);
+    let refused = runtime.accio(&["stdout"]).expect_err("a refusal");
+    assert!(
+        refused.message.ends_with("exited with 1\nstdout:\nError: --project: No such file"),
+        "{}",
+        refused.message
+    );
+    assert_eq!(runtime.accio(&["wait"]).expect("an answer").trim(), ACCIO_WAIT_SECS.to_string());
+    let refused = runtime.accio(&["silent"]).expect_err("a refusal");
+    assert!(
+        refused.message.ends_with("exited with 1, and printed nothing on stdout or stderr"),
+        "{}",
+        refused.message
+    );
+}
+
+/// A parent git, such as `git rebase --exec`, exports the variables that name its repository. A test that runs git
+/// under them, and the runtime itself, still write only their own repository, so the repository of the parent keeps
+/// its config, its refs and its index.
+#[test]
+fn an_inherited_git_dir_reaches_no_git_of_the_runtime_or_its_tests() {
+    let Some(dir) = repository_dir() else {
+        return;
+    };
+    let decoy = dir.path().join("decoy");
+    let own = dir.path().join("own");
+    std::fs::create_dir_all(&decoy).expect("mkdir");
+    git_in(&decoy, &["init", "-q", "-b", "main"], None);
+    let config = || std::fs::read_to_string(decoy.join(".git/config")).expect("the config of the decoy");
+    let before = config();
+
+    let mut command = child(None, &format!("git-isolation:{}", own.display()));
+    command
+        .env("GIT_DIR", decoy.join(".git"))
+        .env("GIT_WORK_TREE", &decoy)
+        .env("GIT_INDEX_FILE", decoy.join(".git/index"))
+        .env("GIT_COMMON_DIR", decoy.join(".git"));
+    let ran = command.output().expect("the child runs");
+    assert!(ran.status.success(), "{ran:?}");
+
+    assert_eq!(config(), before, "the child changed the config of the decoy");
+    assert_eq!(git_in(&decoy, &["for-each-ref"], None), "", "the child wrote a ref of the decoy");
+    assert!(!decoy.join(".git/index").exists(), "the child wrote the index of the decoy");
+    assert_eq!(git_in(&own, &["log", "--format=%s"], None), "first");
+    assert_eq!(
+        git_in(&own, &["branch", "--list", "published", "--format=%(refname)"], None),
+        "refs/heads/published"
+    );
+}
+
+/// bt runs under a parent git too, such as a `git rebase --exec` step. A child of the spawn, such as bazel, a test JVM
+/// or a `cargo test`, gets none of the variables of that git, so its own git calls stay in their own repository.
+#[test]
+fn a_spawned_child_inherits_no_git_dir_of_the_parent() {
+    let dir = tempfile::tempdir().expect("a temporary directory");
+    let mut command = child(None, &format!("spawn-probe:{}", dir.path().join("marker").display()));
+    command.env("GIT_DIR", dir.path().join("decoy.git"));
+    let ran = command.output().expect("the child runs");
+    assert!(ran.status.success(), "{ran:?}");
+    // The harness of each test binary prints its own header first, so only the end is the answer of the probe.
+    let stdout = String::from_utf8_lossy(&ran.stdout);
+    assert!(stdout.ends_with("GIT_DIR removed"), "{stdout}");
 }

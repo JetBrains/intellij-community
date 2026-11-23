@@ -2,6 +2,7 @@
 package com.intellij.codeInsight.options;
 
 import com.intellij.codeInspection.options.OptRegularComponent;
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -20,21 +21,18 @@ public enum JavaConfigurationDialogKind {
    * Implicit write annotations only
    */
   IMPLICIT_WRITE_ANNOTATIONS,
-  DEPENDENCY_CONFIGURATION;
+  DEPENDENCY_CONFIGURATION,
+  /**
+   * The toString generation settings and the toString templates of the language
+   */
+  TO_STRING_TEMPLATE_SETTINGS;
 
   /**
    * @return an {@link OptRegularComponent} component that represents the button to show a configuration dialog.
    * May return an empty control if no configuration dialog is supported by the provider.
    */
   public OptRegularComponent button() {
-    return JavaInspectionButtonProvider.getInstance().button(this);
-  }
-
-  /**
-   * @return true if configuration dialog is supported for this kind of configuration.
-   */
-  public boolean isConfigurationUISupported() {
-    return JavaInspectionButtonProvider.getInstance().isConfigurationUISupported(this);
+    return new JavaConfigurationDialogInfo(this, JavaLanguage.INSTANCE).button();
   }
 
   /**
@@ -44,6 +42,6 @@ public enum JavaConfigurationDialogKind {
    * @param project project for which the configuration is shown
    */
   public void showConfigurationDialog(@Nullable Component parent, @NotNull Project project) {
-    JavaInspectionButtonProvider.getInstance().showConfigurationDialog(this, parent, project);
+    new JavaConfigurationDialogInfo(this, JavaLanguage.INSTANCE).showConfigurationDialog(parent, project);
   }
 }

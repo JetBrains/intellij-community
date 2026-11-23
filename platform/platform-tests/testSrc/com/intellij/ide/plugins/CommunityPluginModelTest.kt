@@ -56,8 +56,7 @@ val communityPluginValidationOptions: PluginValidationOptions = PluginValidation
   ),
   existingPackageAttributes = existingPackageAttributesInCommunity,
   modulesContainingBothPluginDescriptorAndModuleDescriptorToIgnore = setOf(
-    //todo: remove plugin.xml from these two modules, it shouldn't be needed after dev build start generating test plugins automatically
-    "intellij.vcs.git.testFramework",
+    //todo: remove plugin.xml from this module, it shouldn't be needed after dev build start generating test plugins automatically
     "intellij.python.community.services.systemPython.tests",
   ),
   modulesWithXIncludeReferencingFilesFromOtherModulesToIgnore = mapOf(

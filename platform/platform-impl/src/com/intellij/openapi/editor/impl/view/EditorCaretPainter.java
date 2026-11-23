@@ -193,8 +193,8 @@ public final class EditorCaretPainter {
         try {
           Color withedOpacity = withOpacity(ColorUtil.isDark(caretColor) ? CARET_LIGHT : CARET_DARK, opacity);
           int targetVisualColumn = caret.getVisualPosition().column - (isRtl ? 1 : 0);
-          for (var fragment : VisualLineFragmentsIterator.create(myView, myDocument, caret.getVisualLineStart())) {
-            if (fragment.getCurrentInlay() != null) {
+          for (var fragment : VisualLineFragmentsIterator.create(myView, myDocument, caret.getVisualLineStart(), false, false)) {
+            if (fragment.getInlay() != null) {
               continue;
             }
             int startVisualColumn = fragment.getStartVisualColumn();
@@ -210,7 +210,7 @@ public final class EditorCaretPainter {
               break;
             }
           }
-          ComplexTextFragment.flushDrawingCache(g);
+          ComplexGlyphFragment.flushDrawingCache(g);
         } finally {
           config.restore();
         }

@@ -2,27 +2,31 @@
 package org.jetbrains.idea.devkit.kotlin.inspections.quickfix
 
 import com.intellij.testFramework.TestDataPath
-import org.jetbrains.idea.devkit.inspections.ApplicationServiceAsStaticFinalFieldOrPropertyInspectionTestBase
+import com.intellij.testFramework.fixtures.LightJavaProject
+import com.intellij.testFramework.junit5.fixture.TestFixture
+import org.jetbrains.idea.devkit.inspections.applicationServiceAsStaticFinalFieldOrPropertyFixture
 import org.jetbrains.idea.devkit.kotlin.DevkitKtTestsUtil
+import org.junit.jupiter.api.Test
 
 @TestDataPath("\$CONTENT_ROOT/testData/inspections/wrapInSupplierFix")
-abstract class KtWrapInSupplierFixTest : ApplicationServiceAsStaticFinalFieldOrPropertyInspectionTestBase() {
-
-  override fun getBasePath() = DevkitKtTestsUtil.TESTDATA_PATH + "inspections/wrapInSupplierFix"
-
-  override fun getFileExtension(): String = "kt"
+abstract class KtWrapInSupplierFixTest(projectFixture: TestFixture<LightJavaProject>) {
+  protected val appService by applicationServiceAsStaticFinalFieldOrPropertyFixture(projectFixture,
+    "kt", DevkitKtTestsUtil.TESTDATA_PATH + "inspections/wrapInSupplierFix")
 
   private val fixName = "Wrap application service in 'java.util.function.Supplier'"
 
+  @Test
   fun testWrapTopLevelPropertyInSupplier() {
-    doFixTest(fixName)
+    appService.doFixTest(fixName)
   }
 
+  @Test
   fun testWrapCompanionObjectPropertyInSupplier() {
-    doFixTest(fixName)
+    appService.doFixTest(fixName)
   }
 
+  @Test
   fun testWrapObjectPropertyInSupplier() {
-    doFixTest(fixName)
+    appService.doFixTest(fixName)
   }
 }

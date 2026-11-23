@@ -11,6 +11,11 @@ import com.intellij.testFramework.LightProjectDescriptor
 
 private val descriptor = JUnitProjectDescriptor(HIGHEST, JUNIT3, JUNIT4, JUNIT5)
 
+/**
+ * @deprecated Use [junitProjectFixture] and [junitMixedFrameworkInspectionFixture] in a JUnit 5 test.
+ */
+@Suppress("DEPRECATION")
+@Deprecated("Use junitProjectFixture and junitMixedFrameworkInspectionFixture in a JUnit 5 test")
 abstract class JUnitMixedFrameworkInspectionTestBase : JvmInspectionTestBase() {
   override val inspection: JUnitMixedFrameworkInspection = JUnitMixedFrameworkInspection()
   override fun getProjectDescriptor(): LightProjectDescriptor = descriptor

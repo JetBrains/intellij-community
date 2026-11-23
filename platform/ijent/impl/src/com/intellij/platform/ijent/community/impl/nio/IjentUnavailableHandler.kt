@@ -35,11 +35,6 @@ import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
 /** Signals the user's final decision to stop waiting for IJent. */
-@VisibleToClasses(
-  "com.intellij.platform.ijent.community.ui.actions.unavailable.EdtOnceTask",
-  "com.intellij.platform.ijent.community.ui.actions.unavailable.IjentUnavailableDialogHandler",
-  "com.intellij.platform.ijent.community.ui.actions.unavailable.NotRespondingFilesystemDialogServiceTest",
-)
 class IjentUnavailableUserDecisionException(message: String) : IOException(message)
 
 @VisibleToClasses(

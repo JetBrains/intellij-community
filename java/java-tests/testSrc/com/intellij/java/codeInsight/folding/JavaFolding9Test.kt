@@ -15,13 +15,24 @@
  */
 package com.intellij.java.codeInsight.folding
 
-import com.intellij.testFramework.LightProjectDescriptor
+import com.intellij.openapi.application.readAction
+import com.intellij.testFramework.common.timeoutRunBlocking
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.lightJavaProjectFixture
+import com.intellij.testFramework.junit5.TestApplication
 import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.Test
 
-class JavaFolding9Test : JavaFoldingTestCase() {
-  override fun getProjectDescriptor(): LightProjectDescriptor = JAVA_9
+@TestApplication
+class JavaFolding9Test {
+  companion object {
+    private val projectFixture = lightJavaProjectFixture(LightJavaCodeInsightFixtureTestCase.JAVA_9)
+  }
 
-  fun testModule() {
+  private val folding by javaFoldingFixture(projectFixture)
+
+  @Test
+  fun testModule(): Unit = timeoutRunBlocking {
     val text = """
         /**
          * A lonely comment.
@@ -31,19 +42,21 @@ class JavaFolding9Test : JavaFoldingTestCase() {
         module M {
           requires java.base;
         }""".trimIndent()
-    configure(text)
+    folding.configure(text)
 
-    val regions = myFixture.editor.foldingModel.allFoldRegions
-    assertThat(regions).hasSize(3)
+    readAction {
+      val regions = folding.fixture.editor.foldingModel.allFoldRegions
+      assertThat(regions).hasSize(3)
 
-    assertThat(regions.map { it.startOffset to it.endOffset }).containsExactly(
-      range(text, "/**", "*/"),
-      range(text, "@S", ")"),
-      range(text, "{", "}"))
+      assertThat(regions.map { it.startOffset to it.endOffset }).containsExactly(
+        range(text, "/**", "*/"),
+        range(text, "@S", ")"),
+        range(text, "{", "}"))
 
-    val region = regions.last()
-    assertThat(region.isExpanded).isTrue()
-    assertThat(region.placeholderText).isEqualTo("{...}")
+      val region = regions.last()
+      assertThat(region.isExpanded).isTrue()
+      assertThat(region.placeholderText).isEqualTo("{...}")
+    }
   }
 
   private fun range(text: String, start: String, end: String) =

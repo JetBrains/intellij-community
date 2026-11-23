@@ -5,13 +5,11 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.python.sdk.backend.PythonInterpreter;
-import com.intellij.python.sdk.backend.PythonInterpreterExtKt;
 import com.intellij.util.Function;
 import com.jetbrains.python.configuration.PyModuleInterpreterReader;
 import com.jetbrains.python.packaging.PyPackageUtil;
@@ -63,19 +61,17 @@ final class TestRunnerDetector implements Function<Pair<Module, Collection<Virtu
     }
     //check if installed in sdk
     final PythonInterpreter interpreter = PyModuleInterpreterReader.findModuleInterpreterIfReady(module);
-    //noinspection deprecation
-    final Sdk sdk = interpreter == null ? null : PythonInterpreterExtKt.getSdkAPI(interpreter);
     if (interpreter != null) {
-      PythonPackageManager packageManager = PythonPackageManager.Companion.forPythonInterpreter(module.getProject(), interpreter);
+      PythonPackageManager packageManager = PythonPackageManager.Companion.forPythonInterpreter(interpreter);
       PythonPackageManagerExt.waitInitBlocking(packageManager);
       var factories = PythonTestConfigurationType.getInstance().getTypedFactories();
-      var factory = factories.stream().filter(o -> o.isFrameworkInstalled(module.getProject(), sdk)).findFirst();
+      var factory = factories.stream().filter(o -> o.isFrameworkInstalled(module.getProject(), interpreter)).findFirst();
       if (factory.isPresent()) {
         testRunner = factory.get().getId();
       }
     }
     if (!testRunner.isEmpty()) {
-      LOG.debug("Test runner '" + testRunner + "' was detected from SDK " + sdk);
+      LOG.debug("Test runner '" + testRunner + "' was detected from the interpreter " + interpreter);
       return new TestRunnerService.ServiceState(testRunner);
     }
     return null;

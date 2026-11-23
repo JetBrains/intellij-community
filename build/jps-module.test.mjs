@@ -1,15 +1,20 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 import {deepEqual, equal, match, ok} from "node:assert/strict"
-import {existsSync, readFileSync, writeFileSync} from "node:fs"
+import {existsSync, mkdirSync, readFileSync, writeFileSync} from "node:fs"
 import {mkdir, mkdtemp, readFile, rm, writeFile} from "node:fs/promises"
 import {tmpdir} from "node:os"
 import {dirname, join} from "node:path"
 import {describe, it} from "node:test"
 import {
+  addContentModuleEntry,
   checkFailedExitCode,
+  commandExitCode,
   detectDefaultRoot,
+  inferModuleKind,
+  listFilesRecursively,
   parseArguments,
+  renderEmptyModuleIml,
   runCli,
   updateModulesXmlContent,
   usageExitCode,
@@ -46,8 +51,10 @@ function createRuntime(rootDir) {
       readFile: (path) => readFileSync(path, "utf8"),
       writeFile: (path, content) => {
         writes.push(path)
+        mkdirSync(dirname(path), {recursive: true})
         writeFileSync(path, content)
       },
+      listFiles: listFilesRecursively,
     },
     writes,
   }
@@ -77,7 +84,42 @@ describe("jps-module argument parsing", () => {
       command: "register",
       imlPaths: ["community/foo/intellij.foo.iml"],
       fixImlEof: true,
+      kind: null,
+      pluginXmlPath: null,
     })
+  })
+
+  it("parses create arguments", () => {
+    deepEqual(parseArguments(["create", "plugins/foo/backend/intellij.foo.backend.iml", "--kind", "backend", "--plugin", "plugins/foo/resources/META-INF/plugin.xml"]), {
+      help: false,
+      command: "create",
+      imlPaths: ["plugins/foo/backend/intellij.foo.backend.iml"],
+      fixImlEof: false,
+      kind: "backend",
+      pluginXmlPath: "plugins/foo/resources/META-INF/plugin.xml",
+    })
+  })
+
+  it("rejects an unknown module kind", () => {
+    try {
+      parseArguments(["create", "foo/intellij.foo.iml", "--kind", "library"])
+    }
+    catch (error) {
+      match(error.message, /Unknown module kind 'library'/)
+      return
+    }
+    throw new Error("Expected parseArguments to throw")
+  })
+
+  it("rejects --kind for register", () => {
+    try {
+      parseArguments(["register", "foo/intellij.foo.iml", "--kind", "empty"])
+    }
+    catch (error) {
+      match(error.message, /apply only to 'create'/)
+      return
+    }
+    throw new Error("Expected parseArguments to throw")
   })
 
   it("rejects missing iml paths", () => {
@@ -465,5 +507,338 @@ describe("jps-module CLI", () => {
 
     equal(exitCode, usageExitCode)
     match(stderr.join("\n"), /--fix-iml-eof does not apply to 'unregister'/)
+  })
+})
+
+const templateIml = (kind) => [
+  "<?xml version=\"1.0\" encoding=\"UTF-8\"?>",
+  "<module type=\"JAVA_MODULE\" version=\"4\">",
+  "  <component name=\"NewModuleRootManager\" inherit-compiler-output=\"true\">",
+  "    <content url=\"file://$MODULE_DIR$\">",
+  `      <sourceFolder url="file://$MODULE_DIR$/src" isTestSource="false" packagePrefix="com.intellij.remDevFeatureSample.${kind}" />`,
+  "    </content>",
+  ...(kind === "shared" ? [] : ["    <orderEntry type=\"module\" module-name=\"intellij.remDevFeatureSample.shared\" scope=\"RUNTIME\" />"]),
+  "  </component>",
+  "</module>",
+].join("\n")
+
+async function writeTemplate(rootDir, kind) {
+  const templateDir = join(rootDir, `plugins/.remdev/remDevFeatureSample.${kind}`)
+  await writeTextFile(join(templateDir, `intellij.remDevFeatureSample.${kind}.iml`), templateIml(kind))
+  await writeTextFile(join(templateDir, `resources/intellij.remDevFeatureSample.${kind}.xml`), "<idea-plugin>\n</idea-plugin>\n")
+  await writeTextFile(join(templateDir, "src/.keep"), "")
+  await writeTextFile(join(templateDir, "BUILD.bazel"), "# generated\n")
+}
+
+describe("jps-module create", () => {
+  it("infers the kind from the module name suffix", () => {
+    equal(inferModuleKind("intellij.foo.backend"), "backend")
+    equal(inferModuleKind("intellij.foo.frontend"), "frontend")
+    equal(inferModuleKind("intellij.foo.shared"), "shared")
+    equal(inferModuleKind("intellij.foo.backend.impl"), "empty")
+  })
+
+  it("creates an empty module with the root package as the package prefix", async () => {
+    const rootDir = await createFixtureRoot()
+    try {
+      await writeTextFile(join(rootDir, ".idea/modules.xml"), createModulesXml([]))
+      await writeTextFile(join(rootDir, "community/.idea/modules.xml"), createModulesXml([]))
+
+      const {runtime} = createRuntime(rootDir)
+      const {io, stdout} = createRecordingIo()
+      const exitCode = await runCli(["create", "community/plugins/demo/intellij.demo.iml"], {runtime, io})
+
+      equal(exitCode, 0)
+      const iml = await readFile(join(rootDir, "community/plugins/demo/intellij.demo.iml"), "utf8")
+      equal(iml, renderEmptyModuleIml("intellij.demo"))
+      match(iml, /<sourceFolder url="file:\/\/\$MODULE_DIR\$\/src" isTestSource="false" packagePrefix="com.intellij.demo" \/>/)
+      ok(!iml.endsWith("\n"))
+      equal(await readFile(join(rootDir, "community/plugins/demo/resources/intellij.demo.xml"), "utf8"), "<idea-plugin>\n</idea-plugin>\n")
+      ok(existsSync(join(rootDir, "community/plugins/demo/src/.keep")))
+      deepEqual(moduleLines(await readFile(join(rootDir, ".idea/modules.xml"), "utf8")), [
+        "<module fileurl=\"file://$PROJECT_DIR$/community/plugins/demo/intellij.demo.iml\" filepath=\"$PROJECT_DIR$/community/plugins/demo/intellij.demo.iml\" />",
+      ])
+      deepEqual(moduleLines(await readFile(join(rootDir, "community/.idea/modules.xml"), "utf8")), [
+        "<module fileurl=\"file://$PROJECT_DIR$/plugins/demo/intellij.demo.iml\" filepath=\"$PROJECT_DIR$/plugins/demo/intellij.demo.iml\" />",
+      ])
+      match(stdout.join("\n"), /An empty module goes into a plugin only with --plugin/)
+      match(stdout.join("\n"), /Next, run \.\/build\/jpsModelToBazel\.cmd/)
+    }
+    finally {
+      await rm(rootDir, {recursive: true, force: true})
+    }
+  })
+
+  it("copies the template, skips BUILD.bazel and registers the module in the plugin", async () => {
+    const rootDir = await createFixtureRoot()
+    try {
+      await writeTextFile(join(rootDir, ".idea/modules.xml"), createModulesXml([]))
+      await writeTemplate(rootDir, "shared")
+      await writeTextFile(join(rootDir, "plugins/foo/resources/META-INF/plugin.xml"), [
+        "<idea-plugin>",
+        "  <id>com.intellij.foo</id>",
+        "  <content namespace=\"jetbrains\">",
+        "    <module name=\"intellij.foo.core\"/>",
+        "  </content>",
+        "</idea-plugin>",
+        "",
+      ].join("\n"))
+
+      const {runtime} = createRuntime(rootDir)
+      const {io} = createRecordingIo()
+      const exitCode = await runCli(["create", "plugins/foo/shared/intellij.foo.shared.iml"], {runtime, io})
+
+      equal(exitCode, 0)
+      const iml = await readFile(join(rootDir, "plugins/foo/shared/intellij.foo.shared.iml"), "utf8")
+      match(iml, /packagePrefix="com\.intellij\.foo\.shared"/)
+      ok(!iml.includes("remDevFeatureSample"))
+      ok(existsSync(join(rootDir, "plugins/foo/shared/resources/intellij.foo.shared.xml")))
+      ok(existsSync(join(rootDir, "plugins/foo/shared/src/.keep")))
+      ok(!existsSync(join(rootDir, "plugins/foo/shared/BUILD.bazel")))
+      equal(await readFile(join(rootDir, "plugins/foo/resources/META-INF/plugin.xml"), "utf8"), [
+        "<idea-plugin>",
+        "  <id>com.intellij.foo</id>",
+        "  <content namespace=\"jetbrains\">",
+        "    <module name=\"intellij.foo.core\"/>",
+        "    <module name=\"intellij.foo.shared\" loading=\"required\"/>",
+        "  </content>",
+        "</idea-plugin>",
+        "",
+      ].join("\n"))
+    }
+    finally {
+      await rm(rootDir, {recursive: true, force: true})
+    }
+  })
+
+  it("points a backend module at the shared module of its family", async () => {
+    const rootDir = await createFixtureRoot()
+    try {
+      await writeTextFile(join(rootDir, ".idea/modules.xml"), createModulesXml([
+        "$PROJECT_DIR$/plugins/foo/shared/intellij.foo.shared.iml",
+      ]))
+      await writeTemplate(rootDir, "backend")
+
+      const {runtime} = createRuntime(rootDir)
+      const {io} = createRecordingIo()
+      const exitCode = await runCli(["create", "plugins/foo/backend/intellij.foo.backend.iml"], {runtime, io})
+
+      equal(exitCode, 0)
+      const iml = await readFile(join(rootDir, "plugins/foo/backend/intellij.foo.backend.iml"), "utf8")
+      match(iml, /packagePrefix="com\.intellij\.foo\.backend"/)
+      match(iml, /module-name="intellij\.foo\.shared"/)
+    }
+    finally {
+      await rm(rootDir, {recursive: true, force: true})
+    }
+  })
+
+  it("refuses a backend module without its shared module and writes nothing", async () => {
+    const rootDir = await createFixtureRoot()
+    try {
+      await writeTextFile(join(rootDir, ".idea/modules.xml"), createModulesXml([]))
+      await writeTemplate(rootDir, "backend")
+
+      const {runtime, writes} = createRuntime(rootDir)
+      const {io, stderr} = createRecordingIo()
+      const exitCode = await runCli(["create", "plugins/foo/backend/intellij.foo.backend.iml"], {runtime, io})
+
+      equal(exitCode, commandExitCode)
+      equal(writes.length, 0)
+      match(stderr.join("\n"), /intellij\.foo\.shared, which is not registered/)
+    }
+    finally {
+      await rm(rootDir, {recursive: true, force: true})
+    }
+  })
+
+  it("adds an empty module to a plugin only with --plugin", async () => {
+    const rootDir = await createFixtureRoot()
+    try {
+      await writeTextFile(join(rootDir, ".idea/modules.xml"), createModulesXml([]))
+      const pluginXml = ["<idea-plugin>", "  <content>", "    <module name=\"intellij.foo.core\"/>", "  </content>", "</idea-plugin>"].join("\n")
+      await writeTextFile(join(rootDir, "plugins/foo/resources/META-INF/plugin.xml"), pluginXml)
+
+      const {runtime} = createRuntime(rootDir)
+      equal(await runCli(["create", "plugins/foo/tests/intellij.foo.tests.iml"], {runtime, io: createRecordingIo().io}), 0)
+      equal(await readFile(join(rootDir, "plugins/foo/resources/META-INF/plugin.xml"), "utf8"), pluginXml)
+
+      equal(await runCli(["create", "plugins/foo/optional/intellij.foo.optional.iml", "--plugin", "plugins/foo/resources/META-INF/plugin.xml"],
+                         {runtime, io: createRecordingIo().io}), 0)
+      match(await readFile(join(rootDir, "plugins/foo/resources/META-INF/plugin.xml"), "utf8"), /    <module name="intellij\.foo\.optional"\/>\n  <\/content>/)
+    }
+    finally {
+      await rm(rootDir, {recursive: true, force: true})
+    }
+  })
+
+  it("refuses a directory that already holds a module", async () => {
+    const rootDir = await createFixtureRoot()
+    try {
+      await writeTextFile(join(rootDir, ".idea/modules.xml"), createModulesXml(["$PROJECT_DIR$/plugins/foo/core/intellij.foo.core.iml"]))
+      await writeTextFile(join(rootDir, "plugins/foo/core/intellij.foo.core.iml"), "<module></module>")
+
+      const {runtime, writes} = createRuntime(rootDir)
+      const {io, stderr} = createRecordingIo()
+      const exitCode = await runCli(["create", "plugins/foo/core/intellij.foo.core2.iml"], {runtime, io})
+
+      equal(exitCode, commandExitCode)
+      equal(writes.length, 0)
+      match(stderr.join("\n"), /already holds the module intellij\.foo\.core/)
+    }
+    finally {
+      await rm(rootDir, {recursive: true, force: true})
+    }
+  })
+
+  it("refuses a plugin descriptor outside the repository", async () => {
+    const rootDir = await createFixtureRoot()
+    try {
+      await writeTextFile(join(rootDir, ".idea/modules.xml"), createModulesXml([]))
+
+      const {runtime, writes} = createRuntime(rootDir)
+      const {io, stderr} = createRecordingIo()
+      const exitCode = await runCli(["create", "plugins/foo/x/intellij.foo.x.iml", "--plugin", "../outside/plugin.xml"], {runtime, io})
+
+      equal(exitCode, commandExitCode)
+      equal(writes.length, 0)
+      match(stderr.join("\n"), /outside the repository/)
+    }
+    finally {
+      await rm(rootDir, {recursive: true, force: true})
+    }
+  })
+
+  it("writes nothing when the community modules.xml is missing", async () => {
+    const rootDir = await createFixtureRoot()
+    try {
+      await writeTextFile(join(rootDir, ".idea/modules.xml"), createModulesXml([]))
+      await mkdir(join(rootDir, "community"), {recursive: true})
+
+      const {runtime, writes} = createRuntime(rootDir)
+      const {io, stderr} = createRecordingIo()
+      const exitCode = await runCli(["create", "community/plugins/demo/intellij.demo.iml"], {runtime, io})
+
+      equal(exitCode, commandExitCode)
+      equal(writes.length, 0)
+      match(stderr.join("\n"), /community\/\.idea\/modules\.xml/)
+    }
+    finally {
+      await rm(rootDir, {recursive: true, force: true})
+    }
+  })
+
+  it("refuses an existing module file", async () => {
+    const rootDir = await createFixtureRoot()
+    try {
+      await writeTextFile(join(rootDir, ".idea/modules.xml"), createModulesXml([]))
+      await writeTextFile(join(rootDir, "plugins/demo/intellij.demo.iml"), "<module></module>")
+
+      const {runtime, writes} = createRuntime(rootDir)
+      const {io, stderr} = createRecordingIo()
+      const exitCode = await runCli(["create", "plugins/demo/intellij.demo.iml"], {runtime, io})
+
+      equal(exitCode, commandExitCode)
+      equal(writes.length, 0)
+      match(stderr.join("\n"), /already exists/)
+    }
+    finally {
+      await rm(rootDir, {recursive: true, force: true})
+    }
+  })
+})
+
+describe("jps-module content module entries", () => {
+  it("expands a self-closing content tag", () => {
+    const text = [
+      "<idea-plugin>",
+      "  <!--suppress PluginXmlValidity -->",
+      "  <content namespace=\"jetbrains\" />",
+      "</idea-plugin>",
+    ].join("\n")
+
+    const result = addContentModuleEntry(text, "intellij.foo.frontend", "frontend", "plugin.xml")
+
+    equal(result.content, [
+      "<idea-plugin>",
+      "  <!--suppress PluginXmlValidity -->",
+      "  <content namespace=\"jetbrains\">",
+      "    <module name=\"intellij.foo.frontend\" required-if-available=\"intellij.platform.frontend\"/>",
+      "  </content>",
+      "</idea-plugin>",
+    ].join("\n"))
+  })
+
+  it("adds a content block before the dependencies", () => {
+    const text = [
+      "<idea-plugin>",
+      "  <id>com.intellij.foo</id>",
+      "",
+      "  <dependencies>",
+      "    <plugin id=\"com.intellij.modules.lang\"/>",
+      "  </dependencies>",
+      "</idea-plugin>",
+    ].join("\n")
+
+    const result = addContentModuleEntry(text, "intellij.foo.optional", "empty", "plugin.xml")
+
+    equal(result.content, [
+      "<idea-plugin>",
+      "  <id>com.intellij.foo</id>",
+      "",
+      "  <content namespace=\"jetbrains\">",
+      "    <module name=\"intellij.foo.optional\"/>",
+      "  </content>",
+      "",
+      "  <dependencies>",
+      "    <plugin id=\"com.intellij.modules.lang\"/>",
+      "  </dependencies>",
+      "</idea-plugin>",
+    ].join("\n"))
+  })
+
+  it("turns a one-line content block into a block", () => {
+    const text = ["<idea-plugin>", "  <content namespace=\"jetbrains\"><module name=\"intellij.foo.a\"/></content>", "</idea-plugin>"].join("\n")
+
+    const result = addContentModuleEntry(text, "intellij.foo.b", "empty", "plugin.xml")
+
+    equal(result.content, [
+      "<idea-plugin>",
+      "  <content namespace=\"jetbrains\">",
+      "    <module name=\"intellij.foo.a\"/>",
+      "    <module name=\"intellij.foo.b\"/>",
+      "  </content>",
+      "</idea-plugin>",
+    ].join("\n"))
+  })
+
+  it("keeps an entry of a second content block", () => {
+    const text = [
+      "<idea-plugin>",
+      "  <content>",
+      "    <module name=\"intellij.foo.a\"/>",
+      "  </content>",
+      "  <content namespace=\"jetbrains\">",
+      "    <module name=\"intellij.foo.b\" loading=\"required\"/>",
+      "  </content>",
+      "</idea-plugin>",
+    ].join("\n")
+
+    equal(addContentModuleEntry(text, "intellij.foo.b", "shared", "plugin.xml").changed, false)
+  })
+
+  it("keeps an existing entry", () => {
+    const text = [
+      "<idea-plugin>",
+      "  <content>",
+      "    <module name=\"intellij.foo.backend\" required-if-available=\"intellij.platform.backend\"/>",
+      "  </content>",
+      "</idea-plugin>",
+    ].join("\n")
+
+    const result = addContentModuleEntry(text, "intellij.foo.backend", "backend", "plugin.xml")
+
+    equal(result.changed, false)
+    equal(result.content, text)
   })
 })

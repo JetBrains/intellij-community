@@ -20,6 +20,7 @@ import com.intellij.ui.mac.foundation.Foundation;
 import com.intellij.ui.mac.foundation.ID;
 import com.intellij.ui.mac.foundation.MacUtil;
 import com.intellij.ui.mac.foundation.Selector;
+import com.intellij.ui.tabs.ProjectTabsHandler;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -47,7 +48,7 @@ import kotlin.Unit;
  * @author Alexander Lobas
  */
 @ApiStatus.Internal
-public class MacWinTabsHandler {
+public class MacWinTabsHandler implements ProjectTabsHandler {
   private static final String WIN_TAB_FILLER = "WIN_TAB_FILLER_KEY";
   private static final String CLOSE_MARKER = "TABS_CLOSE_MARKER";
 
@@ -117,6 +118,7 @@ public class MacWinTabsHandler {
            "-AwtWindow-WithTabs";
   }
 
+  @Override
   public void setProject() {
     // update tab logic only after call [NSWindow makeKeyAndOrderFront] and after add frame to window manager
     ApplicationManager.getApplication().invokeLater(() -> updateTabBars(myFrame));
@@ -344,6 +346,15 @@ public class MacWinTabsHandler {
     Foundation.invoke(tabGroup, "addObserver:forKeyPath:options:context:", myObserverDelegate, Foundation.nsString("windows"), 0, ID.NIL);
   }
 
+  public static boolean isTabbedWindow(@NotNull JFrame frame) {
+    if (JdkEx.isTabbingModeAvailable() && WindowManager.getInstance().getAllProjectFrames().length > 1) {
+      ID id = MacUtil.getWindowFromJavaWindow(frame);
+      int tabs = Foundation.invoke(Foundation.invoke(id, "tabbedWindows"), "count").intValue();
+      return tabs > 1;
+    }
+    return false;
+  }
+
   public static void switchFrameIfPossible(@NotNull JFrame frame, boolean next) {
     if (JdkEx.isTabbingModeAvailable()) {
       Foundation.executeOnMainThread(true, false, () -> {
@@ -352,6 +363,7 @@ public class MacWinTabsHandler {
     }
   }
 
+  @Override
   public void appClosing() {
     if (!myFrameAllowed) {
       return;

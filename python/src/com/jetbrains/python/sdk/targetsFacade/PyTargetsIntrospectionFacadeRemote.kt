@@ -2,6 +2,14 @@
 package com.jetbrains.python.sdk.targetsFacade
 
 import com.google.gson.Gson
+import com.intellij.python.sdk.backend.writePathMappings
+import com.intellij.python.sdk.backend.pathMappings
+import com.intellij.openapi.progress.runBlockingMaybeCancellable
+import com.intellij.openapi.util.io.FileUtil
+import com.intellij.python.sdk.backend.targetEnvironmentRequestOrNull
+import com.intellij.python.sdk.backend.remoteSourcesLocalPath
+import com.intellij.python.sdk.backend.PythonInterpreterDetails
+import com.intellij.python.sdk.backend.TargetPythonInterpreter
 import com.google.gson.annotations.SerializedName
 import com.intellij.execution.ExecutionException
 import com.intellij.execution.target.TargetEnvironment
@@ -11,15 +19,11 @@ import com.intellij.execution.target.TargetProgressIndicatorAdapter
 import com.intellij.execution.target.value.getRelativeTargetPath
 import com.intellij.execution.target.value.getTargetDownloadPath
 import com.intellij.execution.target.value.getTargetUploadPath
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.modules
 import com.intellij.openapi.project.rootManager
-import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.vfs.StandardFileSystems
-import com.intellij.python.sdk.backend.PythonInterpreterSdks
 import com.intellij.python.community.execService.impl.processLaunchers.uploadMeasureTime
 import com.intellij.util.PathMappingSettings
 import com.intellij.util.PathUtil
@@ -35,8 +39,6 @@ import com.jetbrains.python.run.prepareHelperScriptExecution
 import com.jetbrains.python.run.target.HelpersAwareTargetEnvironmentRequest
 import com.jetbrains.python.sdk.remoteSourcesLocalPath
 import com.jetbrains.python.target.PyTargetAwareAdditionalData
-import com.jetbrains.python.target.PyTargetAwareAdditionalData.Companion.pathsAddedByUser
-import com.jetbrains.python.target.PyTargetAwareAdditionalData.Companion.pathsRemovedByUser
 import com.jetbrains.python.target.targetWithVfs.TargetWithMappedLocalVfs
 import java.nio.file.Files
 import java.nio.file.Path
@@ -47,12 +49,9 @@ import kotlin.io.path.setPosixFilePermissions
 
 // Remote target
 internal class PyTargetsIntrospectionFacadeRemote private constructor(
-  sdk: Sdk,
-  private var data: PyTargetAwareAdditionalData,
-  project: Project,
+  private val targetInterpreter: TargetPythonInterpreter,
   private val pyRequest: HelpersAwareTargetEnvironmentRequest,
-  private val configuration: TargetEnvironmentConfiguration,
-) : PyTargetsIntrospectionFacade(sdk, project) {
+) : PyTargetsIntrospectionFacade(targetInterpreter) {
   companion object {
 
     private const val STATE_FILE = ".state.json"
@@ -62,21 +61,40 @@ internal class PyTargetsIntrospectionFacadeRemote private constructor(
     /**
      * @return `null` if the plugin for the target is not loaded
      */
-    fun create(sdk: Sdk, data: PyTargetAwareAdditionalData, project: Project): PyTargetsIntrospectionFacadeRemote? {
-      val request = PythonInterpreterTargetEnvironmentFactory.findPythonTargetInterpreter(data, project) ?: return null
-      val configuration = data.targetEnvironmentConfiguration ?: return null
-      return PyTargetsIntrospectionFacadeRemote(sdk, data, project, request, configuration)
+    fun create(interpreter: TargetPythonInterpreter): PyTargetsIntrospectionFacadeRemote? {
+      val request = interpreter.targetEnvironmentRequestOrNull() ?: return null
+      return PyTargetsIntrospectionFacadeRemote(interpreter, request)
     }
   }
 
   private val targetEnvRequest: TargetEnvironmentRequest
     get() = pyRequest.targetEnvironmentRequest
 
+  private val configuration: TargetEnvironmentConfiguration
+    get() = targetInterpreter.targetConfiguration
+
+  /** The current path mappings of the target, empty when none is stored. */
+  private val currentMappings: PathMappingSettings
+    get() = interpreter.pathMappings ?: PathMappingSettings()
+
+  /**
+   * The mappings of the paths that the user added to the interpreter or excluded from it. A sync keeps them, so the
+   * user paths stay mapped.
+   */
+  private fun userPathMappings(): List<PathMappingSettings.PathMapping> {
+    val facts = PythonInterpreterDetails.getInstance(project).facts(interpreter)
+    val current = currentMappings
+    return (facts.addedPaths + facts.excludedPaths).map { localPath ->
+      PathMappingSettings.PathMapping(localPath.toString(), current.convertToRemote(FileUtil.toSystemIndependentName(localPath.toString())))
+    }
+  }
+
 
   @Throws(ExecutionException::class)
   @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   private fun refreshSources(indicator: ProgressIndicator) {
-    val localRemoteSourcesRoot = Files.createDirectories(sdk.remoteSourcesLocalPath)
+    val remoteSourcesPath = targetInterpreter.remoteSourcesLocalPath ?: error("No target data for $interpreter")
+    val localRemoteSourcesRoot = Files.createDirectories(remoteSourcesPath)
 
     val localUploadDir = Files.createTempDirectory("remote_sync")
     if (Files.getFileStore(localUploadDir).supportsFileAttributeView("posix")) {
@@ -105,7 +123,7 @@ internal class PyTargetsIntrospectionFacadeRemote private constructor(
 
     val targetWithVfs = PythonInterpreterTargetEnvironmentFactory.getTargetWithMappedLocalVfs(configuration)
     if (targetWithVfs != null) {
-      // If sdk is target that supports local VFS, there is no reason to copy editable packages to remote_sources
+      // If the target supports local VFS, there is no reason to copy editable packages to remote_sources
       // since their paths should be available locally (to be edited)
       // Such packages are in user content roots, so we report them to remote_sync script
       val moduleRoots = project.modules.flatMap { it.rootManager.contentRoots.asList() }.mapNotNull {
@@ -136,7 +154,7 @@ internal class PyTargetsIntrospectionFacadeRemote private constructor(
       // XXX Make it automatic
       environment.uploadVolumes.values.forEach { it.uploadMeasureTime(".", targetIndicator, "sourceRefresher") }
 
-      val cmd = execution.buildTargetedCommandLine(environment, sdk, emptyList())
+      val cmd = execution.buildTargetedCommandLine(environment, interpreter, emptyList())
       cmd.execute(environment, indicator)
 
       // XXX Make it automatic
@@ -165,9 +183,7 @@ internal class PyTargetsIntrospectionFacadeRemote private constructor(
 
     // Preserve mappings for paths added by user and explicitly excluded by user
     // We may lose these mappings otherwise
-    (data.pathsAddedByUser + data.pathsRemovedByUser).forEach { (localPath, remotePath) ->
-      pathMappings.add(PathMappingSettings.PathMapping(localPath.toString(), remotePath))
-    }
+    userPathMappings().forEach(pathMappings::add)
     for (root in stateFile.roots) {
       val remoteRootPath = root.path
       val localRootName = remoteRootPath.hashCode().toString()
@@ -239,9 +255,7 @@ internal class PyTargetsIntrospectionFacadeRemote private constructor(
     val pathMappings = PathMappingSettings()
 
     // Preserve mappings for paths added/excluded by user
-    (data.pathsAddedByUser + data.pathsRemovedByUser).forEach { (localPath, remotePath) ->
-      pathMappings.add(PathMappingSettings.PathMapping(localPath.toString(), remotePath))
-    }
+    userPathMappings().forEach(pathMappings::add)
 
     for (remotePath in remotePaths) {
       val localPath = targetWithVfs.getLocalPath(remotePath) ?: continue
@@ -256,19 +270,8 @@ internal class PyTargetsIntrospectionFacadeRemote private constructor(
 
   @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   private fun commitMappings(pathMappings: PathMappingSettings) {
-    if (data.pathMappings == pathMappings) return // Do not commit the same paths twice
-    sdk.sdkModificator.apply {
-      // We are sure that modificator of this SDK is target, this sdk is for targets only
-      (sdkAdditionalData as PyTargetAwareAdditionalData).setPathMappings(pathMappings)
-      ApplicationManager.getApplication().let {
-        it.invokeAndWait {
-          it.runWriteAction { commitChanges() }
-        }
-      }
-    }
-    // An SDK of the interpreter store is in no SDK table, so its commit reports nothing itself.
-    PythonInterpreterSdks.sdkChangedInOpenProjects(sdk)
-    data = sdk.sdkAdditionalData as PyTargetAwareAdditionalData
+    if (currentMappings == pathMappings) return // Do not commit the same paths twice
+    runBlockingMaybeCancellable { interpreter.writePathMappings(pathMappings) }
   }
 }
 

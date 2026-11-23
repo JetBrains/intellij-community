@@ -6,8 +6,8 @@ import com.intellij.codeInsight.completion.CompletionContributorEP
 import com.intellij.codeInsight.completion.CompletionParameters
 import com.intellij.codeInsight.completion.CompletionProgressIndicator
 import com.intellij.codeInsight.completion.CompletionResultSet
-import com.intellij.codeInsight.completion.JavaCompletionAutoPopupTestCase
 import com.intellij.codeInsight.completion.impl.CompletionServiceImpl
+import com.intellij.codeInsight.completion.javaCompletionAutoPopupFixture
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.openapi.application.backgroundWriteAction
 import com.intellij.openapi.extensions.DefaultPluginDescriptor
@@ -16,8 +16,15 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.util.Disposer
+import com.intellij.platform.testFramework.junit5.codeInsight.indexing.IndexingModeTemplate
+import com.intellij.testFramework.UsefulTestCase.assertContainsElements
+import com.intellij.testFramework.fixtures.lightJavaProjectFixture
+import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.runInEdtAndGet
 import kotlinx.coroutines.runBlocking
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Test
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
@@ -30,22 +37,31 @@ import kotlin.concurrent.thread
  * A state delegate of the indicator blocks the cancellation until the contributor thread has queued the stop event.
  * If the listener cancels before it queues the restart, the stop event comes first, hides the empty lookup and expires the restart.
  */
-class CompletionBackgroundWriteActionRestartTest : JavaCompletionAutoPopupTestCase() {
+@TestApplication
+@IndexingModeTemplate
+class CompletionBackgroundWriteActionRestartTest {
+  companion object {
+    private val projectFixture = lightJavaProjectFixture()
+  }
+
+  private val autoPopup by javaCompletionAutoPopupFixture(projectFixture)
+  private val myFixture get() = autoPopup.fixture
+  private val testRootDisposable get() = myFixture.testRootDisposable
+
+  @Test
   fun testBackgroundWriteActionRestartsEmptyAutoPopup() {
     myFixture.configureByText("a.java", "class C { void foo() { <caret> } }")
     val state = RestartState()
     registerContributor(state)
     val writer = startBackgroundWriter(state)
 
-    type("x")
+    autoPopup.type("x")
 
-    assertTrue("The background write action did not finish", writer.done.await(30, TimeUnit.SECONDS))
-    assertTrue("The cancellation did not wait for the stop event", writer.stopQueued)
-    assertNotNull("The restart did not run", lookup)
+    assertTrue(writer.done.await(30, TimeUnit.SECONDS), "The background write action did not finish")
+    assertTrue(writer.stopQueued, "The cancellation did not wait for the stop event")
+    assertNotNull(autoPopup.getLookup(), "The restart did not run")
     assertContainsElements(myFixture.lookupElementStrings!!, RESTART_ITEM)
   }
-
-  // Keep the lambdas out of the test method. The JUnit 3 runner rejects the synthetic `test…$lambda` methods.
 
   private fun registerContributor(state: RestartState) {
     BlockingContributor.sharedState = state

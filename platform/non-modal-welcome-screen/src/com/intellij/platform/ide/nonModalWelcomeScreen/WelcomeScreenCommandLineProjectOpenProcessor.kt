@@ -9,6 +9,7 @@ import com.intellij.ide.TrustedFiles
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.fileEditor.FileEditorOpenRequest
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.fileEditor.impl.NonProjectFileWritingAccessProvider
 import com.intellij.openapi.project.Project
@@ -138,14 +139,16 @@ internal class WelcomeScreenCommandLineProjectOpenProcessor(
     selectInProjectView: Boolean,
   ) {
     val fileEditorManager = project.serviceAsync<FileEditorManager>()
-    withContext(Dispatchers.EDT) {
-      if (line > 0) {
+    if (line > 0) {
+      withContext(Dispatchers.EDT) {
         OpenFileDescriptor(project, virtualFile, line - 1, column.coerceAtLeast(0)).navigate(true)
       }
-      else {
-        fileEditorManager.openFile(virtualFile, true)
-      }
-      if (selectInProjectView) {
+    }
+    else {
+      fileEditorManager.openFile(virtualFile, FileEditorOpenRequest.withFocus(true))
+    }
+    if (selectInProjectView) {
+      withContext(Dispatchers.EDT) {
         ProjectView.getInstance(project).select(null, virtualFile, true)
       }
     }

@@ -3,15 +3,15 @@ package com.intellij.openapi.fileEditor.impl.skeleton.layout.components
 
 import java.awt.Graphics2D
 
-internal enum class Layout { HORIZONTAL, VERTICAL, FILL }
+internal enum class Layout { HORIZONTAL, VERTICAL }
 
 internal enum class Side { LEFT, RIGHT }
 
-internal data class Padding(
-  private val top: Int = 0,
-  private val left: Int = 0,
-  private val bottom: Int = 0,
-  private val right: Int = 0,
+internal class Padding(
+  top: Int = 0,
+  left: Int = 0,
+  bottom: Int = 0,
+  right: Int = 0,
   private val borderSide: Side? = null,
 ) {
   val topInset: Int = top
@@ -20,9 +20,13 @@ internal data class Padding(
   val horizontal: Int = leftInset + rightInset
   val vertical: Int = top + bottom
 
-  fun contentWidth(width: Int, x: Int = leftInset): Int = (width - rightInset - x).coerceAtLeast(0)
+  fun contentWidth(width: Int, x: Int = leftInset): Int {
+    return (width - rightInset - x).coerceAtLeast(0)
+  }
 
-  fun contentHeight(height: Int): Int = (height - vertical).coerceAtLeast(0)
+  fun contentHeight(height: Int): Int {
+    return (height - vertical).coerceAtLeast(0)
+  }
 
   fun paintBorder(g: Graphics2D, width: Int, height: Int) {
     when (borderSide) {

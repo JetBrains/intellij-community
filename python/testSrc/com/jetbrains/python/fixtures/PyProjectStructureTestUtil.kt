@@ -2,6 +2,14 @@
 package com.jetbrains.python.fixtures
 
 import com.intellij.openapi.application.WriteAction
+import com.intellij.python.sdk.backend.languageLevel
+import kotlin.time.Duration.Companion.minutes
+import com.jetbrains.python.sdk.add.v2.PathHolder
+import com.intellij.python.sdk.common.PyInterpreterRef
+import com.intellij.python.sdk.backend.PythonInterpreterUpdater
+import com.intellij.python.sdk.backend.pathEnvRef
+import com.intellij.python.sdk.backend.PIP_MANAGER
+import com.intellij.python.sdk.backend.PythonInterpreter
 import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
@@ -14,10 +22,10 @@ import com.intellij.python.pyproject.model.evolution.EvoPyProjectModel
 import com.intellij.python.pyproject.model.evolution.PyInterpreterLibrarySync
 import com.intellij.python.pyproject.model.evolution.findEvoPyProjectIfReady
 import com.intellij.python.pyproject.model.evolution.setPythonInterpreter
-import com.intellij.python.sdk.backend.PythonInterpreter
 import com.intellij.python.sdk.backend.PythonInterpreterRegistry
 import com.intellij.python.sdk.backend.PythonInterpreterRoots
-import com.intellij.python.sdk.backend.getSdkAPI
+import com.intellij.python.sdk.backend.addMockPythonInterpreter
+import com.intellij.python.sdk.backend.describeForTests
 import com.intellij.testFramework.IndexingTestUtil
 import com.intellij.testFramework.common.DEFAULT_TEST_TIMEOUT
 import com.intellij.testFramework.concurrency.waitForPromiseAndPumpEdt
@@ -30,13 +38,17 @@ import com.jetbrains.python.packaging.utils.PyPackageCoroutine
 import com.jetbrains.python.project.PyProject.Companion.asPyProject
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.psi.impl.awaitPythonLanguageLevelsForTests
+import com.jetbrains.python.psi.impl.describePythonLanguageLevelsForTests
 import com.jetbrains.python.sdk.PythonSdkAdditionalData
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeout
+import kotlinx.coroutines.withTimeoutOrNull
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.concurrency.asPromise
 import org.junit.jupiter.api.Assertions
 import java.nio.file.Path
+import java.util.concurrent.atomic.AtomicReference
+import kotlin.time.Duration.Companion.seconds
 
 /**
  * Blocking [EvoPyProjectModel.awaitCurrentInterpreters], then [awaitDerivedRoots], then the push of the language levels
@@ -44,16 +56,36 @@ import java.nio.file.Path
  */
 @TestOnly
 fun awaitPythonInterpreters(project: Project) {
+  // The report of a step that does not end. A completed job gives no value to its promise, so the report goes here.
+  val report = AtomicReference<String?>()
   val job = PyPackageCoroutine.getScope(project).launch {
-    withTimeout(DEFAULT_TEST_TIMEOUT) {
+    var step = "the snapshot of the current interpreters"
+    // Shorter than the wait below, so a step that does not end gives this report, not a bare timeout.
+    val done = withTimeoutOrNull(DEFAULT_TEST_TIMEOUT - 2.seconds) {
       EvoPyProjectModel.getInstance(project).awaitCurrentInterpreters()
+      step = "the derived roots"
       awaitDerivedRootsForTests(project)
+      step = "the push of the language levels"
       // A push of a new layout starts a dumb mode, so a test that starts before it can run in dumb mode.
       awaitPythonLanguageLevelsForTests(project)
     }
+    if (done == null) report.set(describeWait(project, step))
   }
   job.asPromise().waitForPromiseAndPumpEdt(DEFAULT_TEST_TIMEOUT)
+  report.get()?.let { throw AssertionError(it) }
   IndexingTestUtil.waitUntilIndexesAreReady(project)
+}
+
+/** The report of a wait of [awaitPythonInterpreters] that did not end in [step]: the states that each step waits for. */
+private fun describeWait(project: Project, step: String): String {
+  val snapshot = EvoPyProjectModel.getInstance(project).snapshotOrNull()
+  return listOf(
+    "awaitPythonInterpreters: $step did not end",
+    "snapshot: ${snapshot?.evoPyProjects?.map { "${it.pyProject.residesOnModule.name} -> ${it.interpreter?.let { i -> "${i.ref} in ${i.ownerDir}" }} (entry ${it.entryKey})" }?.toList()}",
+    PythonInterpreterRegistry.getInstance(project).describeForTests(),
+    PythonInterpreterRoots.getInstance(project).describePendingForTests(),
+    describePythonLanguageLevelsForTests(project),
+  ).joinToString("\n")
 }
 
 /**
@@ -78,7 +110,7 @@ fun loadDeclaredPackagesForTests(module: Module) {
   val interpreter = checkNotNull(findPythonInterpreterForTests(module)) { "No interpreter for ${module.name}" }
   val job = PyPackageCoroutine.getScope(module.project).launch {
     withTimeout(DEFAULT_TEST_TIMEOUT) {
-      PythonPackageManager.forPythonInterpreter(module.project, interpreter).listDeclaredPackagesCached()
+      PythonPackageManager.forPythonInterpreter(interpreter).listDeclaredPackagesCached()
     }
   }
   job.asPromise().waitForPromiseAndPumpEdt(DEFAULT_TEST_TIMEOUT)
@@ -95,15 +127,13 @@ fun findPythonInterpreterForTests(module: Module): PythonInterpreter? {
 }
 
 /**
- * The language level of the interpreter of [module], see [findPythonInterpreterForTests]. It reads the version that the
- * SDK of the interpreter records, so it also works for a mock interpreter, which has no binary to run.
+ * The language level of the interpreter of [module], see [findPythonInterpreterForTests]. It reads the recorded
+ * version, so it also works for a mock interpreter, which has no binary to run.
  */
 @TestOnly
 fun findLanguageLevelForTests(module: Module): LanguageLevel {
   val interpreter = checkNotNull(findPythonInterpreterForTests(module)) { "No interpreter for ${module.name}" }
-  @Suppress("DEPRECATION")
-  val versionString = checkNotNull(interpreter.getSdkAPI().versionString) { "No version for $interpreter" }
-  return LanguageLevel.fromPythonVersion(versionString.removePrefix("Python "))!!
+  return interpreter.languageLevel
 }
 
 /**
@@ -138,6 +168,32 @@ fun addMockPythonInterpreterForTests(module: Module, sdk: Sdk): PythonInterprete
     }
   }
   job.asPromise().waitForPromiseAndPumpEdt(DEFAULT_TEST_TIMEOUT)
+  return checkNotNull(result) { "No interpreter for ${module.name}" }
+}
+
+/**
+ * Makes an interpreter of the real [pythonBinary] the interpreter of the Python project on [module], and returns it. The
+ * registry of the project holds it, owned by that Python project. It waits for the update of the interpreter, which also
+ * generates its skeletons, and for the roots that its installed packages give, such as bundled stubs. Pumps the EDT, so
+ * a light fixture can call it while it sets up its project.
+ */
+@TestOnly
+fun addRealPythonInterpreterForTests(module: Module, pythonBinary: Path): PythonInterpreter {
+  // The update runs the real interpreter and generates its skeletons, which is heavy IO.
+  val timeout = 5.minutes
+  var result: PythonInterpreter? = null
+  val job = PyPackageCoroutine.getScope(module.project).launch {
+    withTimeout(timeout) {
+      val pyProject = checkNotNull(module.asPyProject()) { "${module.name} is not a Python project" }
+      val ref = PyInterpreterRef.native(PIP_MANAGER, pathEnvRef(PathHolder.Eel(pythonBinary), pyProject.baseDir))
+      val built = PythonInterpreterRegistry.getInstance(module.project).build(pyProject, ref).orThrow()
+      val interpreter = checkNotNull(pyProject.setPythonInterpreter(built).orThrow()) { "No interpreter for ${module.name}" }
+      PythonInterpreterUpdater.getInstance(module.project).awaitUpdate(interpreter)
+      awaitDerivedRootsForTests(module.project)
+      result = interpreter
+    }
+  }
+  job.asPromise().waitForPromiseAndPumpEdt(timeout)
   return checkNotNull(result) { "No interpreter for ${module.name}" }
 }
 
@@ -192,7 +248,7 @@ fun installPackagesWithBundledStubsForTests(module: Module, packages: List<Pytho
                           "Stub package root for ${pythonPackage.name} not found")
   }
   val interpreter = checkNotNull(findPythonInterpreterForTests(module)) { "No interpreter for ${module.name}" }
-  val manager = PythonPackageManager.forPythonInterpreter(module.project, interpreter)
+  val manager = PythonPackageManager.forPythonInterpreter(interpreter)
   check(manager is TestPythonPackageManager) {
     "The stubs follow the installed packages, which only the test manager of a mock SDK lets a test set: $manager"
   }

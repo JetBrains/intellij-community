@@ -26,7 +26,6 @@ jvm_library(
     deps = [
         # do not sort,
         "//plugins/devkit/devkit-core:core",
-        "//plugins/devkit/intellij.devkit.scaffolding:scaffolding",
         "@lib//:kotlin-stdlib",
         "//plugins/mcp-server:mcpserver",
         "//platform/core-api:core",

@@ -51,7 +51,7 @@ val knownMissingModuleDependencies: List<String> = java.util.List.of(
  * The folder is in the `lib/` directory of the plugin that owns the library jar.
  * Only `intellij-deps-rocksdbjni` is platform content, so its folder is `lib/rocksdbjni` of the distribution root.
  *
- * One map for all products, because the dev distribution packs a content module jar once for all of them. Only the
+ * One map for all products, because the distribution packs a content module jar once for all of them. Only the
  * language servers ship `intellij-deps-rocksdbjni`.
  */
 val PRESIGNED_NATIVE_LIBS: Map<String, String> = mapOf(

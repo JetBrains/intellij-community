@@ -2,35 +2,46 @@
 package org.jetbrains.idea.devkit.k2.inspections
 
 import com.intellij.testFramework.TestDataPath
-import org.jetbrains.idea.devkit.inspections.IncorrectServiceRetrievingInspectionTestBase
+import com.intellij.testFramework.fixtures.lightJavaProjectFixture
+import com.intellij.testFramework.junit5.TestApplication
+import org.jetbrains.idea.devkit.inspections.incorrectServiceRetrievingFixture
 import org.jetbrains.idea.devkit.kotlin.DevkitKtTestsUtil
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 
 @TestDataPath("\$CONTENT_ROOT/testData/inspections/incorrectServiceRetrieving")
-internal class KtIncorrectServiceRetrievingInspectionTest : IncorrectServiceRetrievingInspectionTestBase() {
+@TestApplication
+internal class KtIncorrectServiceRetrievingInspectionTest {
+  companion object {
+    private val projectFixture = lightJavaProjectFixture()
+  }
 
-  override fun setUp() {
-    super.setUp()
+  private val serviceRetrieving by incorrectServiceRetrievingFixture(projectFixture, "kt", DevkitKtTestsUtil.TESTDATA_PATH + "inspections/incorrectServiceRetrieving/")
+  private val myFixture get() = serviceRetrieving.fixture
+
+  @BeforeEach
+  fun setUp() {
     myFixture.configureByFile("service.kt")
     myFixture.configureByFile("services.kt")
   }
 
-  override fun getBasePath() = DevkitKtTestsUtil.TESTDATA_PATH + "inspections/incorrectServiceRetrieving/"
-
-  override fun getFileExtension() = "kt"
-
+  @Test
   fun testRetrievingServiceAsProjectLevel() {
-    doTest(true)
+    serviceRetrieving.doTest(true)
   }
 
+  @Test
   fun testRetrievingServiceAsAppLevel() {
-    doTest(true)
+    serviceRetrieving.doTest(true)
   }
 
+  @Test
   fun testUnregisteredServices() {
-    doTest(true)
+    serviceRetrieving.doTest(true)
   }
 
+  @Test
   fun testUnspecifiedLevelService() {
-    doTest(false)
+    serviceRetrieving.doTest(false)
   }
 }

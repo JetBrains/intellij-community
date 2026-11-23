@@ -111,11 +111,13 @@ class IndexMaintenanceService(scope: CoroutineScope) : IndexMaintenance<DurableD
     provider: DurableDatabaseIndexLayoutProvider,
     housekeepingRunner: HousekeepingRunner,
   ): AutoCloseable {
+    val metrics = provider.databaseMetrics()
+    val baselineMetrics = metrics.takeUnless { it === DatabaseMetrics.DUMMY }?.forMaintenance()
     synchronized(lock) {
       check(activeProvider == null) { "Provider is already registered: $activeProvider" }
       activeProvider = provider
       activeHousekeepingRunner = housekeepingRunner
-      providerBaselineMetrics = null
+      providerBaselineMetrics = baselineMetrics
       updateEnabledLocked()
     }
     return AutoCloseable {
@@ -193,7 +195,7 @@ class IndexMaintenanceService(scope: CoroutineScope) : IndexMaintenance<DurableD
         LOG.info("Maintenance skipped: no sealed or retired chunks")
       }
       else if (previousMetrics != null) {
-        LOG.info("Maintenance skipped: sealed chunks=${currentMetrics.sealedChunks}; since the previous round, " +
+        LOG.info("Maintenance skipped: sealed chunks=${currentMetrics.sealedChunks}; since the previous defragmentation, " +
                  "created chunks=${currentMetrics.createdChunks - previousMetrics.createdChunks}, " +
                  "allocated blocks=${currentMetrics.allocatedBlocks - previousMetrics.allocatedBlocks}, " +
                  "retired blocks=${currentMetrics.retiredBlocks - previousMetrics.retiredBlocks}; " +

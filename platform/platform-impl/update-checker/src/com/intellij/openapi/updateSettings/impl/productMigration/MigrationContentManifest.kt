@@ -17,6 +17,9 @@ private const val ALLOW_FILE_CONTENT_URLS_PROPERTY = "ide.update.migration.allow
 private const val SUPPORTED_SCHEMA_MAJOR = 1
 private const val ALLOWED_HOST = "jetbrains.com"
 
+/** A redirect can end on a regional mirror, for example `download-cdn.clf.jetbrains.com.cn`. The feed never names a mirror. */
+private val ALLOWED_FINAL_HOSTS = listOf(ALLOWED_HOST, "jetbrains.com.cn")
+
 @ApiStatus.Internal
 class MigrationImage(val light: String, val dark: String)
 
@@ -96,7 +99,18 @@ fun parseMigrationManifest(
  * Accepts `https` URLs on `jetbrains.com` and its subdomains. Accepts `file:` URLs only when [allowFileUrls] is true.
  */
 @ApiStatus.Internal
-fun isAllowedContentUrl(url: String, allowFileUrls: Boolean = isFileContentUrlAllowed()): Boolean {
+fun isAllowedContentUrl(url: String, allowFileUrls: Boolean = isFileContentUrlAllowed()): Boolean =
+  isAllowedUrl(url, listOf(ALLOWED_HOST), allowFileUrls)
+
+/**
+ * Accepts the final URL of a download after the redirects. It accepts more hosts than [isAllowedContentUrl], so a URL of the feed
+ * must pass [isAllowedContentUrl] first.
+ */
+@ApiStatus.Internal
+fun isAllowedFinalContentUrl(url: String, allowFileUrls: Boolean = isFileContentUrlAllowed()): Boolean =
+  isAllowedUrl(url, ALLOWED_FINAL_HOSTS, allowFileUrls)
+
+private fun isAllowedUrl(url: String, hosts: List<String>, allowFileUrls: Boolean): Boolean {
   val uri = try {
     URI(url)
   }
@@ -106,7 +120,7 @@ fun isAllowedContentUrl(url: String, allowFileUrls: Boolean = isFileContentUrlAl
   return when (uri.scheme?.lowercase(Locale.ROOT)) {
     "https" -> {
       val host = uri.host?.lowercase(Locale.ROOT) ?: return false
-      host == ALLOWED_HOST || host.endsWith(".${ALLOWED_HOST}")
+      hosts.any { host == it || host.endsWith(".${it}") }
     }
     "file" -> allowFileUrls
     else -> false

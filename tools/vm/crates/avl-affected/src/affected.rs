@@ -98,8 +98,8 @@ use std::sync::{Arc, Mutex, OnceLock};
 
 use bt_core::areas::Area;
 use bt_core::catalog::{SuiteDocument, read_suite_documents};
+use bt_core::runtime::source_simple_name;
 use bt_core::runtime::{Platform, Runtime, par_map, repo_file};
-use bt_core::scan::source_simple_name;
 use bt_core::suites::{Affected, UnmappedPath, VIA_MODULE, Via, affected_answer, note_via, suites_by_flow, suites_by_id};
 use bt_core::{Refusal, fail_usage, paths};
 
@@ -419,8 +419,8 @@ impl<'a> SuiteJoin<'a> {
 }
 
 /// The dotted-prefix rule `docs/guides/flow-authoring-guide.md` states for a step endpoint: an endpoint covers its
-/// own module and every module nested under it, so `intellij.air.backend.acp` covers
-/// `intellij.air.backend.acp.runtime` and does not cover `intellij.air.backend.acpx`.
+/// own module and every module nested under it, so `intellij.air.acp` covers
+/// `intellij.air.acp.runtime` and does not cover `intellij.air.acpx`.
 fn module_covers(endpoint: &str, module: &str) -> bool {
     module == endpoint || module.strip_prefix(endpoint).is_some_and(|rest| rest.starts_with('.'))
 }

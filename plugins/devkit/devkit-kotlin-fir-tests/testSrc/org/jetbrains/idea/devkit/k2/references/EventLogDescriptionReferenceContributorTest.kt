@@ -6,7 +6,10 @@ import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiReference
 import com.intellij.psi.impl.source.resolve.reference.impl.PsiMultiReference
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase5
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.lightJavaCodeInsightFixture
+import com.intellij.testFramework.fixtures.lightJavaProjectFixture
+import com.intellij.testFramework.junit5.TestApplication
 import org.jetbrains.idea.devkit.inspections.EventLogDescriptionInspection
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.BeforeEach
@@ -14,7 +17,13 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertInstanceOf
 import org.junit.jupiter.api.assertNotNull
 
-class EventLogDescriptionReferenceContributorTest : LightJavaCodeInsightFixtureTestCase5() {
+@TestApplication
+class EventLogDescriptionReferenceContributorTest {
+  companion object {
+    private val projectFixture = lightJavaProjectFixture(LightJavaCodeInsightFixtureTestCase.JAVA_LATEST_WITH_LATEST_JDK)
+  }
+
+  private val fixture by lightJavaCodeInsightFixture(projectFixture)
 
   @BeforeEach
   fun setUp() {

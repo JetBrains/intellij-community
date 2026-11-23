@@ -110,7 +110,7 @@ private fun StringBuilder.appendCompactSummary(stats: GenerationStats) {
     appendCompactFileCount("Plugin dependencies", it.files.size, " (${it.totalDependencies} deps)$contentPart")
   }
   stats.productResult?.let { appendCompactFileCount("Products", it.products.size) }
-  stats.devDistPlanResult?.let { appendCompactFileCount("Dev-dist plan", it.files.size) }
+  stats.distPlanResult?.let { appendCompactFileCount("Distribution plan", it.files.size) }
 
   val suppressionConfigStats = stats.suppressionConfigStats
   if (suppressionConfigStats != null) {
@@ -125,7 +125,7 @@ private fun StringBuilder.appendDetailedSummary(stats: GenerationStats) {
   appendDependenciesSection(stats.contentModuleResult, "Content Module Dependencies")
   appendPluginDependenciesSection(stats.pluginDependencyResult)
   appendProductsSection(stats.productResult)
-  appendDevDistPlanSection(stats.devDistPlanResult)
+  appendDistPlanSection(stats.distPlanResult)
   appendSuppressionConfigSection(stats.suppressionConfigStats)
 }
 
@@ -219,18 +219,18 @@ private fun StringBuilder.appendProductsSection(result: ProductGenerationResult?
   appendLine()
 }
 
-private fun StringBuilder.appendDevDistPlanSection(result: DevDistPlanGenerationResult?) {
+private fun StringBuilder.appendDistPlanSection(result: DistPlanGenerationResult?) {
   if (result == null || result.files.isEmpty()) return
 
   if (!result.files.hasChanges()) {
-    appendLine("Dev-Dist Plan (${AnsiColors.GRAY}${result.files.size} unchanged${AnsiColors.RESET})")
+    appendLine("Distribution Plan (${AnsiColors.GRAY}${result.files.size} unchanged${AnsiColors.RESET})")
     appendLine()
     return
   }
 
   // The plan generator creates or rewrites a file, and it deletes none, so the deleted count stays out.
   val counts = changeCounts(result.files.createdCount, result.files.modifiedCount, result.files.unchangedCount)
-  appendLine("${AnsiColors.BOLD}Dev-Dist Plan${AnsiColors.RESET} ($counts)")
+  appendLine("${AnsiColors.BOLD}Distribution Plan${AnsiColors.RESET} ($counts)")
 
   for (file in result.files.filter { it.status != FileChangeStatus.UNCHANGED }) {
     appendLine("  ${statusIcon(file.status)} ${file.relativePath}")

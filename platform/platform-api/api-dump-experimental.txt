@@ -157,6 +157,45 @@ c:com.intellij.openapi.diagnostic.IdeaLoggingEvent
 c:com.intellij.openapi.editor.highlighter.FragmentedEditorHighlighter
 - com.intellij.openapi.editor.highlighter.EditorHighlighter
 - *:getTextAttributesFontFamilies():java.util.Set
+a:com.intellij.openapi.fileChooser.FileChooserFactory
+- *:createNioFileChooser(com.intellij.openapi.fileChooser.FileChooserDescriptor,com.intellij.openapi.project.Project,java.awt.Component):com.intellij.openapi.fileChooser.NioFileChooserDialog
+*f:com.intellij.openapi.fileChooser.NioFileChooserBuilder
+- <init>():V
+- f:chooseFile(com.intellij.openapi.project.Project,java.nio.file.Path):java.nio.file.Path
+- f:chooseFile(com.intellij.openapi.project.Project,java.nio.file.Path,java.awt.Component):java.nio.file.Path
+- bs:chooseFile$default(com.intellij.openapi.fileChooser.NioFileChooserBuilder,com.intellij.openapi.project.Project,java.nio.file.Path,java.awt.Component,I,java.lang.Object):java.nio.file.Path
+- f:chooseFiles(com.intellij.openapi.project.Project,java.nio.file.Path):java.util.List
+- f:chooseFiles(com.intellij.openapi.project.Project,java.nio.file.Path,java.awt.Component):java.util.List
+- bs:chooseFiles$default(com.intellij.openapi.fileChooser.NioFileChooserBuilder,com.intellij.openapi.project.Project,java.nio.file.Path,java.awt.Component,I,java.lang.Object):java.util.List
+- f:withChooseFiles(Z):com.intellij.openapi.fileChooser.NioFileChooserBuilder
+- f:withChooseFolders(Z):com.intellij.openapi.fileChooser.NioFileChooserBuilder
+- f:withChooseJarContents(Z):com.intellij.openapi.fileChooser.NioFileChooserBuilder
+- f:withChooseMultiple(Z):com.intellij.openapi.fileChooser.NioFileChooserBuilder
+- f:withDescription(java.lang.String):com.intellij.openapi.fileChooser.NioFileChooserBuilder
+- f:withEnvironmentRestricted(Z):com.intellij.openapi.fileChooser.NioFileChooserBuilder
+- f:withExtensionFilter(com.intellij.openapi.fileTypes.FileType):com.intellij.openapi.fileChooser.NioFileChooserBuilder
+- f:withExtensionFilter(java.lang.String):com.intellij.openapi.fileChooser.NioFileChooserBuilder
+- f:withExtensionFilter(java.lang.String,com.intellij.openapi.fileTypes.FileType[]):com.intellij.openapi.fileChooser.NioFileChooserBuilder
+- f:withExtensionFilter(java.lang.String,java.lang.String[]):com.intellij.openapi.fileChooser.NioFileChooserBuilder
+- f:withHideIgnored(Z):com.intellij.openapi.fileChooser.NioFileChooserBuilder
+- f:withLocalFileSystem():com.intellij.openapi.fileChooser.NioFileChooserBuilder
+- f:withLocalFileSystem(Z):com.intellij.openapi.fileChooser.NioFileChooserBuilder
+- f:withPathFilter(com.intellij.openapi.util.Condition):com.intellij.openapi.fileChooser.NioFileChooserBuilder
+- f:withPathRoots(java.util.List):com.intellij.openapi.fileChooser.NioFileChooserBuilder
+- f:withPathRoots(java.nio.file.Path[]):com.intellij.openapi.fileChooser.NioFileChooserBuilder
+- f:withPathValidator(com.intellij.util.ThrowableConsumer):com.intellij.openapi.fileChooser.NioFileChooserBuilder
+- f:withShowFileSystemRoots(Z):com.intellij.openapi.fileChooser.NioFileChooserBuilder
+- f:withShowHiddenFiles(Z):com.intellij.openapi.fileChooser.NioFileChooserBuilder
+- f:withTitle(java.lang.String):com.intellij.openapi.fileChooser.NioFileChooserBuilder
+- f:withTreeRootVisible(Z):com.intellij.openapi.fileChooser.NioFileChooserBuilder
+- f:withoutExtensionFilter():com.intellij.openapi.fileChooser.NioFileChooserBuilder
+*:com.intellij.openapi.fileChooser.NioFileChooserDialog
+- a:choose(java.nio.file.Path[],Z):java.util.List
+- bs:choose$default(com.intellij.openapi.fileChooser.NioFileChooserDialog,java.nio.file.Path[],Z,I,java.lang.Object):java.util.List
+*f:com.intellij.openapi.fileChooser.PathValidationException
+- java.lang.Exception
+- <init>(java.lang.String):V
+- getMessage():java.lang.String
 com.intellij.openapi.fileEditor.AsyncFileEditorProvider
 - com.intellij.openapi.fileEditor.FileEditorProvider
 - com.intellij.openapi.project.DumbAware

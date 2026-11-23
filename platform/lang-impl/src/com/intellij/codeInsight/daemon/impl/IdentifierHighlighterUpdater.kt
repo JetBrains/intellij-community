@@ -4,6 +4,7 @@ package com.intellij.codeInsight.daemon.impl
 import com.intellij.codeInsight.highlighting.BraceHighlightingHandler
 import com.intellij.codeInsight.highlighting.HighlightHandlerBase
 import com.intellij.codeInsight.multiverse.CodeInsightContext
+import com.intellij.injected.editor.EditorWindow
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.ex.EditorEx
@@ -22,8 +23,7 @@ import org.jetbrains.annotations.TestOnly
 
 /**
  * Repaints/recreates identifier highlighting range highlighters
- * @param myPsiFile may be injected fragment, in which case the `editor` must be corresponding injected editor and  `visibleRange` must have consistent offsets inside the injected document.
- * In both cases, [doCollectInformation] will produce and apply HighlightInfos to the host file.
+ * [myPsiFile] and [myEditor] can describe an injected fragment. [doCollectInformation] returns ranges in the host document.
  */
 @ApiStatus.Internal
 class IdentifierHighlighterUpdater(
@@ -112,7 +112,9 @@ class IdentifierHighlighterUpdater(
     ThreadingAssertions.assertBackgroundThread()
     ThreadingAssertions.assertReadAccess()
     assert(ApplicationManager.getApplication().isUnitTestMode())
-    return IdentifierHighlightingComputer(myPsiFile, myEditor, ProperTextRange.create(myPsiFile.textRange), myEditor.caretModel.offset).computeRanges()
+    val hostEditor = (myEditor as? EditorWindow)?.delegate ?: myEditor
+    val visibleRange = ProperTextRange(0, hostEditor.document.textLength)
+    return IdentifierHighlightingComputer(myPsiFile, myEditor, visibleRange, hostEditor.caretModel.offset).computeRanges()
   }
 
   companion object {

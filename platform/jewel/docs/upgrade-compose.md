@@ -99,7 +99,7 @@ You should also run all the IJP tests using the [`tests.cmd`](../../../tests.cmd
 There are a few steps in the process that can only be performed by JetBrains employees in the monorepo:
 
 1. Update the platform jar tables. `AllProductsPackagingTest` compares the platform rows of
-   `community/build/dev_dist_platform_jars.txt` against the build, and it reports a stale row as a patch. Apply the
+   `community/build/dist_platform_jars.txt` against the build, and it reports a stale row as a patch. Apply the
    patch.
 2. If the Skiko version has changed, you need to make sure the Skiko binaries are properly signed
 3. Build and run monorepo tests, either locally or on TeamCity

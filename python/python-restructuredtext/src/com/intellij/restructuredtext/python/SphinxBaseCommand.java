@@ -2,6 +2,8 @@
 package com.intellij.restructuredtext.python;
 
 import com.google.common.collect.Lists;
+import com.intellij.python.sdk.backend.PythonInterpreterExtKt;
+import com.intellij.python.sdk.backend.PythonInterpreter;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.RunContentExecutor;
 import com.intellij.execution.configurations.GeneralCommandLine;
@@ -11,7 +13,6 @@ import com.intellij.execution.process.ProcessTerminatedListener;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
@@ -197,24 +198,22 @@ public class SphinxBaseCommand {
   }
 
   protected GeneralCommandLine createCommandLine(Module module, List<String> params) throws ExecutionException {
-    Sdk sdk = PyModuleInterpreterReader.findModuleSdkIfReady(module);
-    if (sdk == null) {
+    PythonInterpreter interpreter = PyModuleInterpreterReader.findModuleInterpreterIfReady(module);
+    if (interpreter == null) {
       throw new ExecutionException(PythonRestBundle.message("python.rest.no.sdk.specified"));
     }
 
     ReSTService service = ReSTService.getInstance(module);
 
-    String sdkHomePath = sdk.getHomePath();
+    String sdkHomePath = PythonInterpreterExtKt.getBinaryPathString(interpreter);
 
     GeneralCommandLine cmd = new GeneralCommandLine();
-    if (sdkHomePath != null) {
-      var executablePath = PythonSdkUtil.getExecutablePath(Path.of(sdkHomePath), OS.CURRENT.getBinaryName("sphinx-quickstart"));
-      if (executablePath != null) {
-        cmd.withExePath(executablePath.toString());
-      }
-      else {
-        cmd = PythonHelper.LOAD_ENTRY_POINT.newCommandLine(sdkHomePath, new ArrayList<>());
-      }
+    var executablePath = PythonSdkUtil.getExecutablePath(Path.of(sdkHomePath), OS.CURRENT.getBinaryName("sphinx-quickstart"));
+    if (executablePath != null) {
+      cmd.withExePath(executablePath.toString());
+    }
+    else {
+      cmd = PythonHelper.LOAD_ENTRY_POINT.newCommandLine(sdkHomePath, new ArrayList<>());
     }
 
     cmd.setWorkDirectory(service.getWorkdir().isEmpty() ? module.getProject().getBasePath() : service.getWorkdir());
@@ -231,18 +230,16 @@ public class SphinxBaseCommand {
     final Map<String, String> env = cmd.getEnvironment();
     PythonEnvUtil.setPythonIOEncoding(env, "utf-8");
     PythonEnvUtil.setPythonUnbuffered(env);
-    if (sdkHomePath != null) {
-      PythonEnvUtil.resetHomePathChanges(sdkHomePath, env);
-    }
+    PythonEnvUtil.resetHomePathChanges(sdkHomePath, env);
     env.put("PYCHARM_EP_DIST", "Sphinx");
     env.put("PYCHARM_EP_NAME", "sphinx-quickstart");
 
-    List<String> pathList = Lists.newArrayList(PythonCommandLineState.getAddedPaths(sdk));
+    List<String> pathList = Lists.newArrayList(PythonCommandLineState.getAddedPaths(interpreter));
     pathList.addAll(PythonCommandLineState.collectPythonPath(module));
 
     PythonCommandLineState.initPythonPath(cmd, true, pathList, sdkHomePath);
 
-    PythonSdkType.patchCommandLineForVirtualenv(cmd, sdk);
+    PythonSdkType.applyActivationEnvironment(cmd.getEnvironment(), PythonInterpreterExtKt.activationEnvironmentBlocking(interpreter).getSuccessOrNull());
 
     return cmd;
   }

@@ -6,7 +6,7 @@ import com.intellij.testFramework.fixtures.LightJavaProject;
 import com.intellij.testFramework.junit5.TestApplication;
 import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.java.generate.inspection.ClassHasNoToStringMethodInspection;
+import com.siyeh.ig.classlayout.ClassHasNoToStringMethodInspection;
 import org.junit.jupiter.api.Test;
 
 import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaCodeInsightFixture;

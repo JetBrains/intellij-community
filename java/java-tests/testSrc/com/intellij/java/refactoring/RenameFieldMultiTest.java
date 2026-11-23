@@ -4,12 +4,14 @@ package com.intellij.java.refactoring;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.rename.RenameProcessor;
 import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
 import com.intellij.testFramework.fixtures.LightJavaProject;
 import com.intellij.testFramework.junit5.TestApplication;
 import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -42,8 +44,13 @@ public class RenameFieldMultiTest {
     String suffix = myFixture.getTestName(false);
     myFixture.configureByFile("before" + suffix + "." + ext);
     EdtTestUtil.runInEdtAndWait(() -> {
-      new RenameProcessor(myFixture.getProject(), aClass.findFieldByName("myField", false), "myField1", true, true).run();
+      rename(aClass.findFieldByName("myField", false), "myField1");
     });
     myFixture.checkResultByFile("after" + suffix + "." + ext);
+  }
+
+  /** Renames {@code element}, searching in comments and in text occurrences; a subclass renames with another engine. */
+  protected void rename(@NotNull PsiElement element, @NotNull String newName) {
+    new RenameProcessor(element.getProject(), element, newName, true, true).run();
   }
 }

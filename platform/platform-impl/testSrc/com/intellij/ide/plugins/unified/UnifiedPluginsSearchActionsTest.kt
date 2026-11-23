@@ -44,7 +44,7 @@ internal class UnifiedPluginsSearchActionsTest {
     val rootActions = group.getChildren(TestActionEvent.createTestEvent())
     assertThat(rootActions.map { (it as? Separator)?.text ?: it.templatePresentation.text }).containsExactly(
       "Tag", "Vendor", "Repository", "Installed", "Category",
-      "Update available", "Enabled", "Disabled", "Invalid", "Updated bundled",
+      "Update available", "Enabled", "Disabled", "Invalid", "Updated bundled", "Built-in",
     )
 
     val vendorGroup = rootActions[1] as ActionGroup
@@ -95,7 +95,7 @@ internal class UnifiedPluginsSearchActionsTest {
       )
     )
     assertThat(categoryAction.isSelected(categoryEvent)).isFalse()
-    val installedActions = group.getChildren(TestActionEvent.createTestEvent()).takeLast(5)
+    val installedActions = group.getChildren(TestActionEvent.createTestEvent()).takeLast(6)
     val disabled = installedActions[2] as ToggleAction
     assertThat(disabled.isSelected(TestActionEvent.createTestEvent(disabled))).isTrue()
   }
@@ -111,7 +111,7 @@ internal class UnifiedPluginsSearchActionsTest {
       assertThat(group.getChildren(TestActionEvent.createTestEvent()).map { (it as? Separator)?.text ?: it.templatePresentation.text })
         .containsExactly(
           "Tag", "Vendor", "Installed", "Category",
-          "Update available", "Enabled", "Disabled", "Invalid", "Updated bundled",
+          "Update available", "Enabled", "Disabled", "Invalid", "Updated bundled", "Built-in",
         )
     }
   }
@@ -232,7 +232,7 @@ internal class UnifiedPluginsSearchActionsTest {
       selectedInstalledFilter = UnifiedPluginInstalledFilter.Disabled,
     )
     val group = createUnifiedPluginFilterActionGroup(state, intents::add)
-    val actions = group.getChildren(TestActionEvent.createTestEvent()).takeLast(5).map { it as ToggleAction }
+    val actions = group.getChildren(TestActionEvent.createTestEvent()).takeLast(6).map { it as ToggleAction }
     val enabled = actions[1]
     val disabled = actions[2]
 

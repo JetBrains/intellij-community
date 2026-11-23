@@ -17,6 +17,7 @@ import { dirname, join, relative, resolve, sep } from 'node:path'
 import { withoutFencedBlocks } from './fence.ts'
 import { isMainModule, repoRoot, runCheck, walkFiles } from './paths.ts'
 import type { SiteConfig } from './siteConfig.ts'
+import { readSourceFile } from './sourceCache.ts'
 
 /** The part of the site config that the check reads. */
 export type DecisionConfig = Pick<SiteConfig, 'decisions'>
@@ -203,7 +204,12 @@ export function checkDecisionReferences(records: readonly DecisionRecord[], conf
         return
       }
       const path = posix(relative(root, file))
-      const source = readFileSync(file, 'utf8')
+      // a site scan reads the same sources, so the text of a source file comes from the shared read cache
+      const source = markdown ? readFileSync(file, 'utf8') : readSourceFile(file)
+      // a source file has mentions only, and most source files have none
+      if (!markdown && !source.includes('ADR')) {
+        return
+      }
       const lines = (markdown ? withoutFencedBlocks(source) : source).split('\n')
       lines.forEach((text, index) => {
         // The text of a link to a numbered record, as [start, end, number of the target].

@@ -26,7 +26,7 @@ import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.JavaTemplateUtil;
 import com.intellij.ide.highlighter.JavaFileType;
-import com.intellij.java.codeInsight.folding.JavaFoldingTestCase;
+import com.intellij.java.codeInsight.folding.JavaFoldingFixture;
 import com.intellij.lang.LanguageSurrounders;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.lang.surroundWith.SurroundDescriptor;
@@ -289,7 +289,7 @@ public class JavaSurroundWithTest extends LightJavaCodeInsightTestCase {
                               Sy<caret>stem.out.println();
                              }
                             }""");
-    JavaFoldingTestCase.performInitialFolding(getEditor());
+    JavaFoldingFixture.performInitialFolding(getEditor());
     List<AnAction> actions = SurroundWithHandler.buildSurroundActions(getProject(), getEditor(), getFile());
     assertSize(2, ContainerUtil.findAll(actions, a -> {
       String text = a.getTemplatePresentation().getText();

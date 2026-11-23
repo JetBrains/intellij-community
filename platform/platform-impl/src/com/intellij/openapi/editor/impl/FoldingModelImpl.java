@@ -111,6 +111,15 @@ public final class FoldingModelImpl extends InlayModel.SimpleAdapter
     updateTextAttributes();
   }
 
+  /**
+   * Runs document edits with eligible fold marker updates buffered until the action exits.
+   * Marker queries and document callbacks remain available during the action.
+   * Completes pending updates even when the action throws.
+   */
+  void runBatchMarkerOperation(@NotNull Runnable runnable) {
+    myRegionStorage.runInBatch(runnable);
+  }
+
   @Override
   @RequiresEdt
   public FoldRegion addFoldRegion(int startOffset, int endOffset, @NotNull String placeholderText) {
@@ -446,7 +455,7 @@ public final class FoldingModelImpl extends InlayModel.SimpleAdapter
     return endOffset;
   }
 
-  void refreshSettings() {
+  void refreshSettings(boolean fontOnly) {
     updateTextAttributes();
 
     runBatchFoldingOperation(() ->
@@ -456,6 +465,14 @@ public final class FoldingModelImpl extends InlayModel.SimpleAdapter
         }
         return true;
       }));
+    if (!myDocument.isInBulkUpdate()) {
+      if (fontOnly) {
+        myFoldsCache.updateCachedHeights();
+      }
+      else {
+        myFoldsCache.rebuild();
+      }
+    }
   }
 
   void onPlaceholderTextChanged(@NotNull FoldRegionMarker region) {
@@ -740,7 +757,7 @@ public final class FoldingModelImpl extends InlayModel.SimpleAdapter
 
   private void update(boolean widthChanged, boolean heightChanged, boolean gutterMarkChanged, boolean repaintRequested) {
     if (heightChanged) {
-      updateCachedOffsets();
+      myFoldsCache.updateCachedHeights();
       myEditor.getCaretModel().updateVisualPosition();
     }
     if (widthChanged || heightChanged) {

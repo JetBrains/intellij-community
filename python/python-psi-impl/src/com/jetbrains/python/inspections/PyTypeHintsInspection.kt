@@ -754,7 +754,7 @@ class PyTypeHintsInspection : PyInspection() {
         }
       }
 
-      constraints.asSequence().plus(bound).forEach {
+      constraints.forEach {
         if (it != null) {
           val type = PyTypingTypeProvider.getType(it, myTypeEvalContext)?.get()
 
@@ -766,6 +766,10 @@ class PyTypeHintsInspection : PyInspection() {
       }
 
       val boundType = bound?.let { PyTypingTypeProvider.getType(it, myTypeEvalContext)?.get() }
+      if (bound != null && boundType.hasGenerics(myTypeEvalContext)) {
+        registerProblem(bound, PyPsiBundle.message("INSP.type.hints.typevar.bound.cannot.be.parametrized.by.type.variables"),
+                        ProblemHighlightType.GENERIC_ERROR_OR_WARNING)
+      }
       if (boundType is PyClassLikeType && boundType.classQName == PyTypingTypeProvider.TYPED_DICT) {
         registerProblem(bound, PyPsiBundle.message("INSP.type.hints.typed.dict.is.not.allowed.as.a.bound.for.a.type.var"),
                         ProblemHighlightType.GENERIC_ERROR_OR_WARNING)
@@ -2701,6 +2705,9 @@ private fun referenceIsCorrectTypeHint(
   }
   when (resolvedElement) {
     is PyTargetExpression -> {
+      // A name in `__all__` without a declaration for this Python version resolves to `__all__`, as `typing.Unpack` before 3.11.
+      // The inspection cannot check such a name.
+      if (resolvedElement.name == PyNames.ALL && referenceExpression.referencedName != PyNames.ALL) return true
       val qName = resolvedElement.qualifiedName ?: return true
       if (PyTypingTypeProvider.OPAQUE_NAMES.contains(qName)) return true
       val assignedTypeAliasValue = PyTypingAliasStubType.getAssignedValueStubLike(resolvedElement)

@@ -206,6 +206,10 @@ describe('render-guides skills', () => {
     ok(ultimate.allow.some(argv => argv[0] === 'grep' && argv.length === 1), 'grep should be allowed as a pipeline filter')
     ok(ultimate.deny.some(argv => argv[0] === 'grep' && argv[1] === '-r'), 'a recursive grep should be denied')
     ok(ultimate.denyTools.includes('Grep'), 'the Grep tool should be denied')
+    ok(ultimate.denyExact.some(argv => argv.join(' ') === './bazel-clean-caches.cmd'),
+       'bazel-clean-caches.cmd without arguments should be denied')
+    ok(!ultimate.deny.some(argv => argv[0] === './bazel-clean-caches.cmd'),
+       'a prefix deny of bazel-clean-caches.cmd would also deny --gc')
     ok(ultimate.additionalDirectories.includes('~/.branch-deck/pool'), 'the lease pool should be a working directory')
   })
 
@@ -225,13 +229,17 @@ describe('render-guides skills', () => {
 
   it('emits Codex rules with denies first and both path spellings', () => {
     const rules = buildCodexRules({
-      allow: [['./tests.cmd'], ['git', 'status']],
+      allow: [['./tests.cmd'], ['./wipe.cmd', '--gc'], ['git', 'status']],
       deny: [['grep']],
+      denyExact: [['./wipe.cmd']],
       denyTools: ['Grep'],
     })
 
+    // Codex has no exact match: the exact deny prompts for every run, and the allow under it is left out.
     equal(rules.split('\n').filter(line => line.startsWith('prefix_rule')).join('\n'), [
       'prefix_rule(pattern=["grep"], decision="forbidden")',
+      'prefix_rule(pattern=["./wipe.cmd"], decision="prompt")',
+      'prefix_rule(pattern=["wipe.cmd"], decision="prompt")',
       'prefix_rule(pattern=["./tests.cmd"], decision="allow")',
       'prefix_rule(pattern=["tests.cmd"], decision="allow")',
       'prefix_rule(pattern=["git", "status"], decision="allow")',
@@ -250,13 +258,15 @@ describe('render-guides skills', () => {
     }, null, 2)}\n`
 
     const rewritten = JSON.parse(applyClaudePermissions(settingsText, {
-      allow: [['./tests.cmd']],
+      allow: [['./tests.cmd'], ['./wipe.cmd', '--gc']],
       deny: [['grep']],
+      denyExact: [['./wipe.cmd']],
       denyTools: ['Grep', 'Glob'],
     }))
 
-    equal(rewritten.permissions.allow.join(' '), 'mcp__ijproxy__* WebSearch Bash(./tests.cmd:*) Bash(tests.cmd:*)')
-    equal(rewritten.permissions.deny.join(' '), 'Grep Glob Bash(grep:*)')
+    equal(rewritten.permissions.allow.join(' '),
+          'mcp__ijproxy__* WebSearch Bash(./tests.cmd:*) Bash(tests.cmd:*) Bash(./wipe.cmd --gc:*) Bash(wipe.cmd --gc:*)')
+    equal(rewritten.permissions.deny.join(' '), 'Grep Glob Bash(grep:*) Bash(./wipe.cmd) Bash(wipe.cmd)')
     equal(rewritten.permissions.defaultMode, 'plan')
     equal(rewritten.hooks.SessionStart[0], 'keep me')
     equal(Object.keys(rewritten.permissions).join(' '), 'defaultMode deny allow', 'key order should not churn')
@@ -332,8 +342,8 @@ describe('render-guides skills', () => {
 
   // NOTE: The committed-skill-output freshness / collision check lives in the Kotlin test
   // `AgentGuidelinesConsistencyTest.committed skill outputs are up to date and free of source collisions`,
-  // which runs in the ideaProjectStructure smoke suite on CI. Keep it the single source of truth for that
-  // invariant. The tests below still exercise the generator's rendering behavior directly.
+  // which runs as `//tests/agentGuidelines:agentGuidelines-tests_test` in the smoke suite on CI. Keep it the single
+  // source of truth for that invariant. The tests below still exercise the generator's rendering behavior directly.
 
   it('in ULTIMATE, emits ultimate-only stubs and cleans stale generated dirs', async () => {
     const {rootDir, communitySourceDir, agentsDir, claudeDir, communityClaudeDir} = createFixture()

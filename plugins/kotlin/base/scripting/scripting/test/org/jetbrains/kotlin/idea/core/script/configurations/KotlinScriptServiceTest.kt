@@ -1,6 +1,8 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.core.script.configurations
 
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
+import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileTypes.FileTypes
@@ -9,12 +11,13 @@ import com.intellij.openapi.vfs.VirtualFileWithoutContent
 import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.platform.workspace.jps.entities.ModuleId
 import com.intellij.testFramework.LightVirtualFile
+import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.registerExtension
 import com.intellij.testFramework.workspaceModel.update
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.channels.Channel
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCompilerSettings
 import org.jetbrains.kotlin.idea.core.script.definitions.ScriptDefinitionProviderImpl
-import org.jetbrains.kotlin.idea.core.script.definitions.ScriptDefinitionsModificationTracker
 import org.jetbrains.kotlin.idea.core.script.modules.KotlinScriptEntity
 import org.jetbrains.kotlin.idea.core.script.modules.KotlinScriptEntityProvider
 import org.jetbrains.kotlin.idea.core.script.definition.moduleSupplier
@@ -50,6 +53,28 @@ annotation class CircularImport(val path: String)
 
 class KotlinScriptServiceTest : KotlinLightCodeInsightFixtureTestCase() {
     override fun runInDispatchThread(): Boolean = false
+
+    fun `test script configuration changes notify the traffic light`(): Unit = timeoutRunBlocking {
+        val file = myFixture.addFileToProject("status.kts", "val x = 1")
+        val states = Channel<Boolean>(Channel.UNLIMITED)
+        project.messageBus.connect(testRootDisposable).subscribe(
+            DaemonCodeAnalyzer.DAEMON_EVENT_TOPIC,
+            object : DaemonCodeAnalyzer.DaemonListener {
+                override fun daemonStatusChanged() {
+                    states.trySend(ReadAction.computeBlocking<Boolean, RuntimeException> {
+                        KotlinScriptEntityProvider.findKotlinScriptEntity(project, file.virtualFile) != null
+                    })
+                }
+            }
+        )
+
+        KotlinScriptService.getInstance(project).load(file.virtualFile)
+        assertTrue("The configuration must exist when the traffic light is notified", states.receive())
+
+        val entity = requireNotNull(KotlinScriptEntityProvider.findKotlinScriptEntity(project, file.virtualFile))
+        project.workspaceModel.update { storage -> storage.removeEntity(entity) }
+        assertFalse("The notification must include a return to the suspended status", states.receive())
+    }
 
     fun `test load creates workspace model entity for kts file`() {
         val file = myFixture.configureByText("test.kts", "val x = 1")
@@ -200,44 +225,27 @@ class KotlinScriptServiceTest : KotlinLightCodeInsightFixtureTestCase() {
         )
     }
 
-    fun `test reload increments ScriptDefinitionsModificationTracker`() {
-        val file = myFixture.configureByText("test.kts", "val x = 1")
-        val tracker = ScriptDefinitionsModificationTracker.getInstance(project)
-
-        val countBefore = tracker.modificationCount
-
-        runBlocking {
-            KotlinScriptService.getInstance(project).reload(file.virtualFile)
-        }
-
-        assertTrue(
-            "ScriptDefinitionsModificationTracker must be incremented by reload",
-            tracker.modificationCount > countBefore
-        )
-    }
-
-    fun `test scheduleReloadOpenScripts invalidates stale closed scripts and reloads open scripts`() = runBlocking {
-        val openFile = myFixture.configureByText("open.kts", "val open = 1")
-        val closedFile = myFixture.addFileToProject("closed.kts", "val closed = 2")
+    fun `test load reloads a script with an outdated definition`() = runBlocking {
+        val script = myFixture.addFileToProject("outdated.claimed.kts", "val x = 1").virtualFile
         val service = KotlinScriptService.getInstance(project)
-        val tracker = ScriptDefinitionsModificationTracker.getInstance(project)
-
-        service.load(openFile.virtualFile)
-        service.load(closedFile.virtualFile)
-
-        val countBefore = tracker.modificationCount
-
-        service.scheduleReloadOpenScripts().join()
-
-        assertTrue("scheduleReloadOpenScripts must increment ScriptDefinitionsModificationTracker", tracker.modificationCount > countBefore)
-        assertNotNull(
-            "Open script must be reloaded after scheduleReloadOpenScripts",
-            KotlinScriptEntityProvider.findKotlinScriptEntity(project, openFile.virtualFile)
+        service.load(script)
+        project.registerExtension(
+            ScriptDefinitionsProvider.EP_NAME,
+            object : ScriptDefinitionsProvider {
+                override val id: String = "KotlinScriptServiceTestClaiming"
+                override fun provideDefinitions(
+                    baseHostConfiguration: ScriptingHostConfiguration,
+                    loadedScriptDefinitions: List<ScriptDefinition>,
+                ): Iterable<ScriptDefinition> = listOf(definitionFor("claimed.kts"))
+            },
+            testRootDisposable,
         )
-        assertNull(
-            "Closed script entity must stay invalidated until the file is opened again",
-            KotlinScriptEntityProvider.findKotlinScriptEntity(project, closedFile.virtualFile)
-        )
+        ScriptDefinitionProviderImpl.getInstance(project).awaitLoading()
+        assertTrue("A new definition must make the script outdated", service.hasOutdatedDefinition(script))
+
+        service.load(script)
+
+        assertFalse("A load must reload the outdated script", service.hasOutdatedDefinition(script))
     }
 
     fun `test workspace model listener drops script caches before script entity change`() = runBlocking {
@@ -258,7 +266,7 @@ class KotlinScriptServiceTest : KotlinLightCodeInsightFixtureTestCase() {
         )
     }
 
-    fun `test scheduleReloadOpenScripts replaces the cached definitions`() = runBlocking {
+    fun `test scheduleReloadOutdatedOpenScripts waits for the scheduled load of the definitions`() = runBlocking {
         var provided = definitionFor("first.kts")
         project.registerExtension(
             ScriptDefinitionsProvider.EP_NAME,
@@ -271,18 +279,20 @@ class KotlinScriptServiceTest : KotlinLightCodeInsightFixtureTestCase() {
             },
             testRootDisposable,
         )
-        ScriptDefinitionsModificationTracker.getInstance(project).incModificationCount()
+        val definitionProvider = ScriptDefinitionProviderImpl.getInstance(project)
+        definitionProvider.awaitLoading()
         assertTrue("first.kts must be provided before the reload", providedExtensions().contains("first.kts"))
 
         provided = definitionFor("second.kts")
-        KotlinScriptService.getInstance(project).scheduleReloadOpenScripts().join()
+        definitionProvider.scheduleLoading()
+        KotlinScriptService.getInstance(project).scheduleReloadOutdatedOpenScripts().join()
 
         val after = providedExtensions()
         assertFalse("first.kts must be gone after the reload", after.contains("first.kts"))
         assertTrue("second.kts must be provided after the reload", after.contains("second.kts"))
     }
 
-    fun `test reload refreshes the definition cache when no script is open`() = runBlocking {
+    fun `test scheduleReloadOutdatedOpenScripts waits for the scheduled load when no script is open`() = runBlocking {
         val openScripts = readAction {
             FileEditorManager.getInstance(project).openFiles.filter { it.name.endsWith(".kts") }
         }
@@ -291,7 +301,8 @@ class KotlinScriptServiceTest : KotlinLightCodeInsightFixtureTestCase() {
         val provider = ScriptDefinitionProviderImpl.getInstance(project)
         val before = provider.cachedProvidedDefinitions
 
-        KotlinScriptService.getInstance(project).scheduleReloadOpenScripts().join()
+        provider.scheduleLoading()
+        KotlinScriptService.getInstance(project).scheduleReloadOutdatedOpenScripts().join()
 
         assertNotSame("The definition cache must be rebuilt even with no open script", before, provider.cachedProvidedDefinitions)
     }
@@ -351,7 +362,7 @@ class KotlinScriptServiceTest : KotlinLightCodeInsightFixtureTestCase() {
             },
             testRootDisposable,
         )
-        ScriptDefinitionsModificationTracker.getInstance(project).incModificationCount()
+        runBlocking { ScriptDefinitionProviderImpl.getInstance(project).awaitLoading() }
     }
 
     private fun resolveImportedScripts(context: ScriptConfigurationRefinementContext): ResultWithDiagnostics<ScriptCompilationConfiguration> {

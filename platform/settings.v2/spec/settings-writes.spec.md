@@ -72,6 +72,9 @@ A batch applies several writes and slot operations as one atomic change.
   See [ADR 0032](../adr/0032-reads-are-synchronous-and-writes-suspend.md) and
   [ADR 0058](../adr/0058-mutations-apply-as-atomic-declarative-batches-under-one-lock.md).
   [@test] ../test/src/com/intellij/platform/settings/v2/SettingsResolutionTest.kt
+- An interface element must show the stored state. A write is asynchronous, so the UI does not wait for it and does
+  not lag. Until the write lands, the element can show the old value. It follows the storage through a read or a
+  change listener. See [ADR 0032](../adr/0032-reads-are-synchronous-and-writes-suspend.md).
 - `SettingsBlockingApi.set` must block until the write is applied, for a caller that cannot suspend. See
   [ADR 0032](../adr/0032-reads-are-synchronous-and-writes-suspend.md).
   [@test] ../test/src/com/intellij/platform/settings/v2/SettingsBlockingApiTest.kt

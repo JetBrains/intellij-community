@@ -3,16 +3,24 @@ package com.intellij.execution.junit.codeInspection
 
 import com.intellij.junit.testFramework.JUnitProjectDescriptor
 import com.intellij.junit.testFramework.MavenTestLib.JUNIT4
-import com.intellij.jvm.analysis.testFramework.JvmInspectionTestBase
 import com.intellij.jvm.analysis.testFramework.JvmLanguage
+import com.intellij.jvm.analysis.testFramework.jvmInspectionFixture
 import com.intellij.pom.java.LanguageLevel
-import com.intellij.testFramework.LightProjectDescriptor
+import com.intellij.testFramework.fixtures.lightJavaProjectFixture
+import com.intellij.testFramework.junit5.TestApplication
+import org.junit.jupiter.api.Test
 
 private val descriptor = JUnitProjectDescriptor(LanguageLevel.HIGHEST, JUNIT4)
 
-class JavaExpectedExceptionNeverThrownInspectionTest : JvmInspectionTestBase() {
-  override val inspection = ExpectedExceptionNeverThrownInspection()
-  override fun getProjectDescriptor(): LightProjectDescriptor = descriptor
+@TestApplication
+class JavaExpectedExceptionNeverThrownInspectionTest {
+  companion object {
+    private val projectFixture = lightJavaProjectFixture(descriptor)
+  }
+
+  private val myFixture by jvmInspectionFixture(projectFixture) { ExpectedExceptionNeverThrownInspection() }
+
+  @Test
   fun testSimple() {
     myFixture.testHighlighting(JvmLanguage.JAVA, """
       class X {
@@ -22,6 +30,7 @@ class JavaExpectedExceptionNeverThrownInspectionTest : JvmInspectionTestBase() {
     """.trimIndent())
   }
 
+  @Test
   fun testInheritance() {
     myFixture.testHighlighting(JvmLanguage.JAVA, """
       class X {
@@ -35,6 +44,7 @@ class JavaExpectedExceptionNeverThrownInspectionTest : JvmInspectionTestBase() {
     """.trimIndent())
   }
 
+  @Test
   fun testError() {
     myFixture.testHighlighting(JvmLanguage.JAVA, """
       class X {
@@ -44,6 +54,7 @@ class JavaExpectedExceptionNeverThrownInspectionTest : JvmInspectionTestBase() {
     """.trimIndent())
   }
 
+  @Test
   fun testRuntimeException() {
     myFixture.testHighlighting(JvmLanguage.JAVA, """
       class X {

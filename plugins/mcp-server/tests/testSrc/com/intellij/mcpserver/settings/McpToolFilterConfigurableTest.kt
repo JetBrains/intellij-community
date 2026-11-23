@@ -9,10 +9,10 @@ import com.intellij.mcpserver.McpToolDescriptor
 import com.intellij.mcpserver.McpToolFilterProvider
 import com.intellij.mcpserver.McpToolInvocationMode
 import com.intellij.mcpserver.McpToolSchema
-import com.intellij.mcpserver.frontend.settings.McpToolFilterConfigurable
-import com.intellij.mcpserver.frontend.settings.McpToolFilterPanel
-import com.intellij.mcpserver.frontend.settings.buildDescriptionRenderModel
-import com.intellij.mcpserver.frontend.settings.userConfigurableTools
+import com.intellij.mcpserver.configurables.McpToolFilterConfigurable
+import com.intellij.mcpserver.configurables.McpToolFilterPanel
+import com.intellij.mcpserver.configurables.buildDescriptionRenderModel
+import com.intellij.mcpserver.configurables.userConfigurableTools
 import com.intellij.mcpserver.impl.McpServerService
 import com.intellij.mcpserver.impl.McpServerServiceImpl
 import com.intellij.mcpserver.settings.McpToolDisallowListSettings.ToolState
@@ -165,6 +165,52 @@ class McpToolFilterConfigurableTest {
 
       assertThat(McpToolDisallowListSettings.getInstance().toolStates[toolKey])
         .isNull()
+    }
+    finally {
+      configurable.disposeUIResources()
+    }
+  }
+
+  @Test
+  fun `apply keeps the stored router mode while the router controls are off`(): Unit = runBlocking(Dispatchers.EDT) {
+    McpToolFilterSettings.getInstance().invocationMode = McpSessionInvocationMode.VIA_ROUTER
+    val configurable = McpToolFilterConfigurable()
+
+    try {
+      configurable.createComponent()
+      configurable.loadToolsAndUpdateUi()
+
+      assertThat(configurable.isModified()).isFalse()
+
+      configurable.apply()
+
+      assertThat(McpToolFilterSettings.getInstance().invocationMode).isEqualTo(McpSessionInvocationMode.VIA_ROUTER)
+    }
+    finally {
+      configurable.disposeUIResources()
+    }
+  }
+
+  @Test
+  fun `apply keeps a stored router-only flag when the user toggles enabled while the router controls are off`(): Unit = runBlocking(Dispatchers.EDT) {
+    val toolKey = McpServerServiceImpl.getInstance()
+      .getMcpToolsFilteredAsync(useFiltersFromEP = false, excludeProviders = emptySet())
+      .first { it.descriptor.name != UniversalToolset::execute_tool.name }
+      .descriptor
+      .fullyQualifiedName
+    val storedState = ToolState(enabled = true, routerOnly = false)
+    McpToolDisallowListSettings.getInstance().toolStates = mapOf(toolKey to storedState)
+    val configurable = McpToolFilterConfigurable()
+
+    try {
+      configurable.createComponent()
+      configurable.loadToolsAndUpdateUi()
+
+      toolEnabledCheckBox(configurable, toolKey).doClick()
+      configurable.apply()
+
+      assertThat(McpToolDisallowListSettings.getInstance().toolStates[toolKey])
+        .isEqualTo(ToolState(enabled = false, routerOnly = false))
     }
     finally {
       configurable.disposeUIResources()

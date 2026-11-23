@@ -137,7 +137,7 @@ public class GroovyPostHighlightingPass extends TextEditorHighlightingPass {
             )) {
               HighlightInfo.Builder builder = UnusedSymbolUtil
                 .createUnusedSymbolInfoBuilder(nameId, GroovyBundle.message(getKeyForTypeDefinition(definition), name), HighlightInfoType.UNUSED_SYMBOL, GroovyUnusedDeclarationInspection.SHORT_NAME);
-              IntentionAction action = QuickFixFactory.getInstance().createSafeDeleteFix(element);
+              IntentionAction action = QuickFixFactory.getInstance().createSafeDeleteFix(element).asIntention();
               builder.registerFix(action, null, HighlightDisplayKey.getDisplayNameByKey(unusedDefKey), null, unusedDefKey);
               ContainerUtil.addIfNotNull(unusedDeclarations, builder.create());
             }
@@ -154,7 +154,7 @@ public class GroovyPostHighlightingPass extends TextEditorHighlightingPass {
                     message = GroovyBundle.message("text.method.0.is.unused", name);
                   }
                   HighlightInfo.Builder builder = UnusedSymbolUtil.createUnusedSymbolInfoBuilder(nameId, message, HighlightInfoType.UNUSED_SYMBOL, GroovyUnusedDeclarationInspection.SHORT_NAME);
-                  IntentionAction action = QuickFixFactory.getInstance().createSafeDeleteFix(method);
+                  IntentionAction action = QuickFixFactory.getInstance().createSafeDeleteFix(method).asIntention();
                   builder.registerFix(action, null, HighlightDisplayKey.getDisplayNameByKey(unusedDefKey), null, unusedDefKey);
                   ContainerUtil.addIfNotNull(unusedDeclarations, builder.create());
                 }
@@ -166,7 +166,7 @@ public class GroovyPostHighlightingPass extends TextEditorHighlightingPass {
             else if (element instanceof GrField && isFieldUnused((GrField)element, usageHelper)) {
               HighlightInfo.Builder builder =
                 UnusedSymbolUtil.createUnusedSymbolInfoBuilder(nameId, GroovyBundle.message("text.property.0.is.unused", name), HighlightInfoType.UNUSED_SYMBOL, GroovyUnusedDeclarationInspection.SHORT_NAME);
-              IntentionAction action = QuickFixFactory.getInstance().createSafeDeleteFix(element);
+              IntentionAction action = QuickFixFactory.getInstance().createSafeDeleteFix(element).asIntention();
               builder.registerFix(action, null, HighlightDisplayKey.getDisplayNameByKey(unusedDefKey), null, unusedDefKey);
               ContainerUtil.addIfNotNull(unusedDeclarations, builder.create());
             }

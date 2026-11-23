@@ -1,23 +1,20 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
-### skip generation section `test intellij.vcs.git.testFramework`
-
 ### auto-generated section `build intellij.vcs.git.testFramework` start
 jvm_library(
-    name = "testFramework_test_lib",
-    testonly = True,
+    name = "testFramework",
     srcs = glob(
         [
-            "testSrc/**/*.kt",
-            "testSrc/**/*.java",
-            "testSrc/**/*.form",
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
         ],
         allow_empty = True,
     ),
     module_name = "intellij.vcs.git.testFramework",
-    resource_strip_prefix = "testResources",
+    resource_strip_prefix = "resources",
     resources = glob(
-        ["testResources/**/*"],
+        ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
     exports = [
@@ -103,6 +100,7 @@ jvm_library(
 exports_files(
     [
         "intellij.vcs.git.testFramework.iml",
+        "resources/intellij.vcs.git.testFramework.xml",
     ],
     visibility = ["//visibility:public"],
 )

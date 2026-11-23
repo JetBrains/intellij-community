@@ -6,7 +6,7 @@ description: Review IntelliJ UI accessibility for keyboard, focus, and labels.
 
 # IntelliJ UI Accessibility
 
-Use this skill when creating, changing, or reviewing UI in an IntelliJ-based IDE, including plugin UI. Do not use it just because a feature has a UI surface if the work is not on the UI itself. It covers accessibility expectations for Swing, Kotlin UI DSL, and other UI stacks, plus review and verification checks for keyboard use, screen readers, focus, labels, dynamic feedback, contrast, scaling, and localization.
+Use this skill when creating, changing, or reviewing UI in an IntelliJ-based IDE, including plugin UI. Do not use it just because a feature has a UI surface if the work is not on the UI itself.
 
 ## Primary References
 
@@ -16,22 +16,19 @@ Follow WCAG 2.2 as the primary accessibility standard.
 
 ## Swing And Kotlin UI DSL
 
-Accessible context details are relevant only for Swing-based UI, including Kotlin UI DSL.
-
 - For custom Swing components and custom renderers, provide the correct accessible name, role, state/value, and property-change notifications.
 - Accessible names are often inferred from component text, tooltip text, or `JLabel.setLabelFor()`. Set or override the accessible name only when the inferred name is absent, ambiguous, or incorrect.
 - Do not include the component role in the accessible name. For complex custom components, combine visible title, subtitle, icon meaning, and other visible parts needed to understand the component.
-- Modify `AccessibleContext` and its properties only when implicit metadata is missing, insufficient, or incorrect.
 - Prefer direct `component.getAccessibleContext().accessibleName = ...` / `accessibleDescription = ...` for assigning one already-known value.
 - Use `AccessibleContextUtil` when it adds value: copying metadata from another component, combining multiple accessible strings, avoiding duplicate descriptions, setting an accessible parent, or normalizing multiline text for screen readers.
-- Do not add accessibility properties or fire accessibility events preemptively. Rely on Swing/Kotlin UI DSL defaults when names, roles, state, values, focus behavior, and events are already correct; customize them only to fix a concrete guideline violation or missing screen-reader signal.
+- Rely on Swing/Kotlin UI DSL defaults when names, roles, state, values, focus behavior, and events are already correct; customize them only to fix a concrete guideline violation or missing screen-reader signal.
 - Use `accessibleDescription` in rare cases for supplementary text that already exists in the UI but is not otherwise read when the related component receives focus, such as comments, banners, hints, warnings, or inline explanations. Do not invent a separate description from scratch or duplicate the visible label/state.
 - Use `AccessibleRole.LABEL` for plain text content and `AccessibleRole.TEXT` for editable or selectable text fields/text areas. Use the specific button role that matches behavior: `PUSH_BUTTON`, `RADIO_BUTTON`, `TOGGLE_BUTTON`, or `HYPERLINK`.
 - Override accessible state when custom state such as checked, selected, expanded, or editable is not exposed correctly. Fire accessible property-change events when state, selection, value, text changes must be announced to assistive technologies.
 - For custom components from scratch, check similar Swing components for which `AccessibleAction`, `AccessibleText`, `AccessibleSelection`, `AccessibleValue`, or other `Accessible*` interfaces they implement before choosing interfaces manually.
 - Screen readers automatically announce accessible property changes of the focused component. Use `AccessibleAnnouncerUtil.announce()` for the most important changes outside the focused component or changes that do not fit existing property-change support.
 - Check `AccessibleAnnouncerUtil.isAnnouncingAvailable()` when code depends on announcement support.
-- Use `ScreenReader.isActive()` only for the rare behavior that must differ for screen reader users. By default, the UI should behave the same for all users.
+- Use `ScreenReader.isActive()` only for the rare behavior that must differ for screen reader users.
 
 ## Other UI Stacks
 

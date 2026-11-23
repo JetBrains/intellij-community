@@ -2,45 +2,43 @@
 package com.jetbrains.python.sdk.uv.run
 
 import com.intellij.python.pytools.resolveExecutable
+import com.jetbrains.python.run.features.PyInterpreterRunToolProvider
+import com.intellij.python.sdk.backend.binaryPathString
+import com.intellij.python.sdk.backend.PythonInterpreter
+import com.intellij.python.pytools.common.FusId
 import com.intellij.python.uv.backend.UvPyTool
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.getOrThrow
 import com.jetbrains.python.run.features.PyRunToolData
 import com.jetbrains.python.run.features.PyRunToolId
 import com.jetbrains.python.run.features.PyRunToolParameters
-import com.jetbrains.python.run.features.PySdkRunToolProvider
 import com.jetbrains.python.sdk.add.v2.FileSystem
 import com.jetbrains.python.sdk.add.v2.PathHolder
-import com.jetbrains.python.sdk.uv.UvSdkAdditionalData
-import com.jetbrains.python.sdk.uv.UvSdkFlavor
-import com.jetbrains.python.sdk.uv.UvSdkFlavorData
 import com.jetbrains.python.sdk.uv.impl.createUvCli
 import com.jetbrains.python.sdk.uv.impl.createUvLowLevel
-import com.jetbrains.python.target.PyTargetAwareAdditionalData
 import java.nio.file.Path
 
 /**
  * PyRunToolProvider implementation that runs scripts/modules using `uv run`.
  *
- * Matches both local UV SDKs ([UvSdkAdditionalData]) and remote ones
- * ([PyTargetAwareAdditionalData] wrapping `UvSdkFlavorData`).
+ * Matches every interpreter whose environment uv manages, on the IDE machine and on a target.
  */
-internal class UvRunToolProvider : PySdkRunToolProvider<UvSdkFlavorData, UvSdkFlavor>(UvSdkFlavor::class.java) {
+internal class UvRunToolProvider : PyInterpreterRunToolProvider() {
+  override val manager: FusId get() = UvPyTool.getInstance().fusId
 
   override suspend fun <P : PathHolder> getRunToolParameters(
-    sdkHome: String,
-    flavorData: UvSdkFlavorData,
+    interpreter: PythonInterpreter,
     fileSystem: FileSystem<P>,
     inlineScriptTarget: Path?,
   ): PyRunToolParameters {
-    val uvPath = requireNotNull(UvPyTool.getInstance().resolveExecutable(fileSystem, flavorData.uvPath)) {
+    val uvPath = requireNotNull(UvPyTool.getInstance().resolveExecutable(fileSystem)) {
       "Unable to find uv executable."
     }
     if (inlineScriptTarget != null) {
       return scriptRunToolParameters(uvPath, fileSystem, inlineScriptTarget)
     }
 
-    val pythonPath = fileSystem.parsePath(sdkHome).getOrThrow()
+    val pythonPath = fileSystem.parsePath(interpreter.binaryPathString).getOrThrow()
     val venvPath = fileSystem.resolvePythonHome(pythonPath).toStringOnRemoteMachine()
     return PyRunToolParameters(uvPath, listOf("run"), prepareEnv(venvPath))
   }

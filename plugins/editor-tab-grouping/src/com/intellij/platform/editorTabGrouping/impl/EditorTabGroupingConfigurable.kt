@@ -33,6 +33,12 @@ internal class EditorTabGroupingConfigurable : EditorTabsOptionsCustomSection {
             .bindSelected(settings::showGroupNames)
             .enabledIf(groupByDirectory.selected and islandsEnabled)
         }
+        row {
+          checkBox(EditorTabGroupingBundle.message("settings.collapse.groups"))
+            .bindSelected(settings::collapseGroups)
+            .comment(EditorTabGroupingBundle.message("settings.collapse.groups.description"))
+            .enabledIf(groupByDirectory.selected)
+        }
         buttonsGroup(EditorTabGroupingBundle.message("settings.group.label.style")) {
           row {
             radioButton(EditorTabGroupingBundle.message("settings.group.label.style.outline"), GroupLabelStyle.OUTLINE)

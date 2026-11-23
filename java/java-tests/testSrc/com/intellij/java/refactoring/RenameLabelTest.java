@@ -1,11 +1,13 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.refactoring;
 
+import com.intellij.psi.PsiElement;
 import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
 import com.intellij.testFramework.fixtures.LightJavaProject;
 import com.intellij.testFramework.junit5.TestApplication;
 import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Test;
 
 import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaCodeInsightFixture;
@@ -26,7 +28,7 @@ public class RenameLabelTest {
           <caret>a_label: while (true) break a_label;
         }
       }""");
-    EdtTestUtil.runInEdtAndWait(() -> myFixture.renameElementAtCaret("the_label"));
+    EdtTestUtil.runInEdtAndWait(() -> rename(myFixture.getElementAtCaret(), "the_label"));
     myFixture.checkResult("""
 
                             class a {
@@ -46,7 +48,7 @@ public class RenameLabelTest {
           a_label: while (true) continue <caret>a_label;
         }
       }""");
-    EdtTestUtil.runInEdtAndWait(() -> myFixture.renameElementAtCaret("the_label"));
+    EdtTestUtil.runInEdtAndWait(() -> rename(myFixture.getElementAtCaret(), "the_label"));
     myFixture.checkResult("""
 
                             class a {
@@ -54,5 +56,10 @@ public class RenameLabelTest {
                                 the_label: while (true) continue the_label;
                               }
                             }""");
+  }
+
+  /** Renames {@code element} as the fixture does; a subclass renames with another engine. */
+  protected void rename(@NotNull PsiElement element, @NotNull String newName) {
+    codeInsightFixture.get().renameElement(element, newName);
   }
 }

@@ -15,6 +15,7 @@ internal class EditorTabGroupingSettings : SimplePersistentStateComponent<Editor
   internal class State : BaseState() {
     var groupByDirectory: Boolean by property(true)
     var showGroupNames: Boolean by property(false)
+    var collapseGroups: Boolean by property(false)
     var groupLabelStyleOrdinal: Int by property(GroupLabelStyle.RAIL.ordinal)
   }
 
@@ -28,6 +29,13 @@ internal class EditorTabGroupingSettings : SimplePersistentStateComponent<Editor
     get() = state.showGroupNames
     set(value) {
       state.showGroupNames = value
+    }
+
+  /** Collapses a tab group into one tab when the user selects a tab outside it. */
+  var collapseGroups: Boolean
+    get() = state.collapseGroups
+    set(value) {
+      state.collapseGroups = value
     }
 
   var groupLabelStyle: GroupLabelStyle

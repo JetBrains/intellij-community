@@ -2,7 +2,6 @@
 package com.intellij.python.junit5Tests.env.documentation
 
 import com.intellij.python.sdk.backend.detectedEnvironment
-import com.intellij.python.sdk.backend.getSdkAPI
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.python.junit5Tests.framework.env.PyEnvTestCase
 import com.intellij.python.junit5Tests.framework.env.pyInterpreterFixture
@@ -58,7 +57,7 @@ internal class PyDocstringFormatterCacheEnvTest {
   }
 
   private fun runRealFormatter(): String? =
-    runExternalTool(PyRuntimeDocstringFormatter.ModuleOrSdk.TheSdk(@Suppress("DEPRECATION") sdkFixture.interpreter.getSdkAPI()),
+    runExternalTool(PyRuntimeDocstringFormatter.ModuleOrInterpreter.TheInterpreter(sdkFixture.interpreter),
                     DocStringFormat.REST,
                     INPUT,
                     emptyList())

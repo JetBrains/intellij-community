@@ -1,13 +1,13 @@
-"""Packs one independently reusable module or platform jar of a dev distribution.
+"""Packs one independently reusable module or platform jar of the distribution.
 
-`content_module_jar` packs a jar after its owner module. `dev_dist_platform_jar` packs a generated residual platform
+`content_module_jar` packs a jar after its owner module. `dist_platform_jar` packs a generated residual platform
 jar. A plugin remainder uses the model-driven batch rule instead of a jar-specific rule.
 
 A target of its own, next to the `jvm_library` whose module it is named after - not attributes on that library. It was
 attributes until the packer moved into this module, and the reason it could not be a target then was the reason the whole
 thing was wired through a flag: `jvm_library` belongs to `rules_jvm`, which may not name a label in a repository that
 consumes it, so the tool had to be pushed in from a `.bazelrc` against a default that failed at execution time. With the
-packer in `@community//build/dev-dist-tools/bins/content-module-packer` the rule can name it directly, and a rule of its
+packer in `@community//build/dist-tools/bins/content-module-packer` the rule can name it directly, and a rule of its
 own is then simply the better shape.
 
 Three things the attribute form got wrong and this does not:
@@ -18,13 +18,13 @@ Three things the attribute form got wrong and this does not:
   name itself.
 * **It works on both compile backends.** The attributes were dropped on the `kt_jvm_library` path, so a module packed
   nothing under the BTA backend. This reads `KtJvmInfo`, which both backends provide.
-* **The recipe is readable without guessing.** `dev_dist_content.bzl`'s aspect used to reach it with
+* **The recipe is readable without guessing.** `dist_content.bzl`'s aspect used to reach it with
   `getattr(ctx.rule.attr, "content_module_jar_libraries", None)` - a name-based read of another rule's attributes that
   answers `None` rather than failing when the name is wrong. They are this rule's own attributes now.
 
 The point of packing here at all is what the action declares: the jars it merges, and nothing else. A reference that
 packs these jars evaluates the whole product layout, so it declares the shared project-model tree, and any `.iml` edit
-re-keys it. No component packs these jars through a layout. The reference that `./build/dev-dist.cmd jars` builds
+re-keys it. No component packs these jars through a layout. The reference that `./build/dist.cmd jars` builds
 packs them only to compare this packer with `JarPackager` byte for byte.
 
 **Source order is load-bearing.** The packer resolves an entry name offered by more than one source to the first source
@@ -39,7 +39,7 @@ load("@bazel_skylib//rules:common_settings.bzl", "BuildSettingInfo")
 load("@rules_java//java:defs.bzl", "JavaInfo")
 load("@rules_kotlin//kotlin/internal:defs.bzl", _KtJvmInfo = "KtJvmInfo")
 load("//build:host_platforms.bzl", "HOST_PLATFORMS")
-load(":dev_dist_tool_info.bzl", "dev_dist_tool_inputs")
+load(":dist_tool_info.bzl", "dist_tool_inputs")
 
 ContentModuleJarInfo = provider(
     doc = """A packed `lib/<module>.jar` of the platform distribution, and what went into it.
@@ -47,7 +47,7 @@ ContentModuleJarInfo = provider(
     The recipe travels with the jar because everything downstream needs it and this is the only target that knows it. A
     fragment handed this jar must stop declaring the module jars and libraries whose bytes are now inside it, and the
     reference target that packs the same jars the `JarPackager` way declares exactly these two lists. Reading them here
-    is what replaced `dev_dist_content.bzl` asking another rule for attributes by name - `getattr(ctx.rule.attr,
+    is what replaced `dist_content.bzl` asking another rule for attributes by name - `getattr(ctx.rule.attr,
     "content_module_jar_libraries", None)`, which answered `None` rather than failing when the name was wrong.""",
     fields = {
         "jar": "The packed `File`, `<target>/<module>.jar`.",
@@ -56,7 +56,7 @@ ContentModuleJarInfo = provider(
         # than being re-derived from a label by every consumer.
         "module_name": "The JPS module the jar is named after.",
         # Derived from the module name. The packed file carries the same name, so the packer can check a `Boot-Class-Path`
-        # against it. A field all the same: `DevDistPlatformJarInfo` carries a destination that can name a subdirectory,
+        # against it. A field all the same: `DistPlatformJarInfo` carries a destination that can name a subdirectory,
         # and a consumer of both providers reads one field rather than deriving the flat case from the file and the
         # nested case from a provider.
         "relative_path": "string: the jar's destination, relative to the plugin's own `lib/`.",
@@ -185,7 +185,7 @@ def declare_spans(ctx, name):
     Public because every rule that calls `pack_jar` declares its span file the same way.
 
     Named after what the caller states rather than after the jar, because two targets may write a jar of one name and a
-    target name is unique in its package. `dev-dist trace` joins a span file to an action through the action's primary
+    target name is unique in its package. `dist trace` joins a span file to an action through the action's primary
     output, so the jar and this file must not disagree about which action wrote them.
     """
     if not ctx.attr._trace_spans[BuildSettingInfo].value:
@@ -238,12 +238,12 @@ def pack_jar(ctx, output, spans, module_jars, library_jars, merged_module_names,
         # grammar starts a group there.
         #
         # The `File`, not `spans.path`: this argument travels in a param file that output path mapping may rewrite, and
-        # only the `File` form is rewritten with it. `intellij_dev_dist.bzl`'s `_declare_spans` passes the string,
+        # only the `File` form is rewritten with it. `intellij_dist.bzl`'s `_declare_spans` passes the string,
         # because there the argument sits on a local-exec command line among neighbours that all pass strings.
         args.add(spans, format = "trace-file=%s")
 
         # Appended, never prepended: the jar stays this action's primary output, which is both its identity in a Bazel
-        # profile and the key `dev-dist trace` joins this file by.
+        # profile and the key `dist trace` joins this file by.
         outputs.append(spans)
     outputs.extend(extra_outputs)
 
@@ -278,7 +278,7 @@ def pack_jar(ctx, output, spans, module_jars, library_jars, merged_module_names,
         inputs = depset(library_jars + module_jars + [patch.file for patch in patch_files]),
         outputs = outputs,
         executable = ctx.executable._packer,
-        tools = dev_dist_tool_inputs(ctx.attr._packer),
+        tools = dist_tool_inputs(ctx.attr._packer),
         # One process per action, not a persistent worker: the memory of each action is freed when it exits, and
         # `resource_set` states it to the scheduler. See ADR 0019. The action reads only its declared inputs and writes
         # only its declared outputs, so a local build skips the sandbox. `--config=ci` removes `no-sandbox` and checks it.
@@ -495,7 +495,7 @@ def _relative_output_file(ctx):
             fail("'%s' holds an empty or relative path element" % path, attr = "relative_output_file")
     return path
 
-DevDistPlatformJarInfo = provider(
+DistPlatformJarInfo = provider(
     fields = {
         "jar": "The packed `File`.",
         "metadata": "The file hash metadata from the same packing action.",
@@ -524,7 +524,7 @@ def _patches(ctx, members):
         fail("the patched module '%s' is not a member of the jar" % module, attr = "patched_module")
     return struct(patches = patches, module = module)
 
-def _dev_dist_platform_jar_impl(ctx):
+def _dist_platform_jar_impl(ctx):
     members = [_module(target, "modules") for target in ctx.attr.modules]
     destination = _relative_output_file(ctx)
     libraries = _library_entries(ctx)
@@ -552,7 +552,7 @@ def _dev_dist_platform_jar_impl(ctx):
     return [
         DefaultInfo(files = depset([output])),
         OutputGroupInfo(trace_spans = depset([spans] if spans else []), file_metadata = depset([metadata])),
-        DevDistPlatformJarInfo(
+        DistPlatformJarInfo(
             jar = output,
             metadata = metadata,
             relative_path = destination,
@@ -562,14 +562,14 @@ def _dev_dist_platform_jar_impl(ctx):
         ),
     ]
 
-dev_dist_platform_jar = rule(
-    doc = """Packs one generated residual platform jar of a dev distribution.
+dist_platform_jar = rule(
+    doc = """Packs one generated residual platform jar of the distribution.
 
 One `PackContentModuleJar` action writes the jar at `<target>/<relative_output_file>` and its metadata. A jar with a
 module member holds no native file. A library-only jar merges no module and keeps the native files of its libraries. The
 application-info module jar replaces two entries of the module output with `patches`: the product descriptor and the
 stamped application info.""",
-    implementation = _dev_dist_platform_jar_impl,
+    implementation = _dist_platform_jar_impl,
     attrs = {
         "relative_output_file": attr.string(mandatory = True),
         "modules": attr.label_list(providers = [_KtJvmInfo], doc = "The merged modules. Empty for a library-only jar."),
@@ -597,10 +597,10 @@ def content_module_jar(module, name = None, tags = [], visibility = ["//visibili
     """Packs one content module's `lib/` jar, as a target excluded from wildcard builds.
 
     Two things the macro derives rather than have them restated 2 524 times over. `name` comes from `module`, the way
-    `dev_dist_plugin_descriptor` derives its own from `main_module`; and `manual` is added, because the jar is this
+    `dist_plugin_descriptor` derives its own from `main_module`; and `manual` is added, because the jar is this
     target's `DefaultInfo` and `bazel build //...` would otherwise pack all of them. Under the attribute form the jar sat
     in an output group and a wildcard build packed nothing; `manual` is what keeps that exactly true. Explicit labels and
-    `bazel query` still see these targets, which is all a dev distribution needs.
+    `bazel query` still see these targets, which is all the distribution needs.
 
     Args:
         module: the module whose jar this is - see the rule's own `module`.

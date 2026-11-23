@@ -3,15 +3,17 @@ package com.jetbrains.python;
 
 import com.jetbrains.python.allure.Layers;
 import com.jetbrains.python.allure.Subsystems;
-
 import com.intellij.codeInsight.documentation.DocumentationManager;
 import com.intellij.codeInsight.navigation.actions.GotoDeclarationAction;
 import com.intellij.lang.documentation.DocumentationProvider;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.projectRoots.SdkModificator;
-import com.intellij.openapi.roots.OrderRootType;
+import com.intellij.python.sdk.backend.PythonInterpreter;
+import com.intellij.python.sdk.backend.PythonInterpreterDetails;
+import com.jetbrains.python.fixtures.PyProjectStructureTestUtilKt;
+import com.jetbrains.python.tools.sdkTools.PythonInterpreterFactsForTests;
+import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
 import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
@@ -41,31 +43,25 @@ public class PyOverloadsProcessingPerformanceTest extends PyTestCase {
   private static final int NUMBER_OF_OVERLOADS = 1000;
 
   private VirtualFile myRoot;
+  private List<Path> myAddedPathsBefore;
 
   @Override
   protected void setUp() throws Exception {
     super.setUp();
 
     myRoot = StandardFileSystems.local().refreshAndFindFileByPath(getTestDataPath() + "/fixture");
-    final Sdk sdk = getSdkForRootEdits();
-    final SdkModificator modificator = sdk.getSdkModificator();
-    assertNotNull(modificator);
-    modificator.addRoot(myRoot, OrderRootType.CLASSES);
-    ApplicationManager.getApplication().runWriteAction(() -> {
-      modificator.commitChanges();
-    });
+    // A class root of the interpreter is a path that the user added to it.
+    final PythonInterpreter interpreter = interpreter();
+    myAddedPathsBefore = PythonInterpreterDetails.getInstance(myFixture.getProject()).facts(interpreter).getAddedPaths();
+    final List<Path> addedPaths = new ArrayList<>(myAddedPathsBefore);
+    addedPaths.add(myRoot.toNioPath());
+    PythonInterpreterFactsForTests.writeAddedPathsForTests(myFixture.getProject(), interpreter, addedPaths);
   }
 
   @Override
   public void tearDown() throws Exception {
     try {
-      final Sdk sdk = getSdkForRootEdits();
-      final SdkModificator modificator = sdk.getSdkModificator();
-      assertNotNull(modificator);
-      modificator.removeRoot(myRoot, OrderRootType.CLASSES);
-      ApplicationManager.getApplication().runWriteAction(() -> {
-        modificator.commitChanges();
-      });
+      PythonInterpreterFactsForTests.writeAddedPathsForTests(myFixture.getProject(), interpreter(), myAddedPathsBefore);
     }
     catch (Throwable e) {
       addSuppressedException(e);
@@ -174,5 +170,11 @@ public class PyOverloadsProcessingPerformanceTest extends PyTestCase {
   @Override
   protected String getTestDataPath() {
     return super.getTestDataPath() + "/performance/overloads/";
+  }
+
+  private @NotNull PythonInterpreter interpreter() {
+    final PythonInterpreter interpreter = PyProjectStructureTestUtilKt.findPythonInterpreterForTests(myFixture.getModule());
+    assertNotNull(interpreter);
+    return interpreter;
   }
 }

@@ -1,0 +1,18 @@
+// COMPILER_ARGUMENTS: -Xcompanion-blocks
+
+open class Base {
+    init { println("registered") }
+}
+
+class A {
+    companion object : Base() {
+    }
+
+    companion {
+        <caret>fun foo() {}
+    }
+}
+
+fun main() {
+    A()
+}

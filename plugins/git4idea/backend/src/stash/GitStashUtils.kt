@@ -394,13 +394,15 @@ fun loadStashStack(project: Project, root: VirtualFile): List<StashInfo> {
     }
 
     val hash = HashImpl.build(parts[indexedOptions.getValue(GitLogOption.HASH)])
+    val baseHash = HashImpl.build(parents.first())
+    // The base commit is the first parent; this list keeps only the index and untracked-files hashes.
     val parentHashes = parents.subList(1, parents.size).map { HashImpl.build(it) }
     val authorTime = GitLogUtil.parseTime(parts[indexedOptions.getValue(GitLogOption.AUTHOR_TIME)])
     val stash = parts[indexedOptions.getValue(GitLogOption.SHORT_REF_LOG_SELECTOR)]
     val branch = if (parts.size == options.size) null else parts[indexedOptions.getValue(GitLogOption.SUBJECT)].trim()
     val message = parts.last().trim()
 
-    result.add(StashInfo(root, hash, parentHashes, authorTime, stash, branch, message))
+    result.add(StashInfo(root, hash, baseHash, parentHashes, authorTime, stash, branch, message))
   }
   return result
 }

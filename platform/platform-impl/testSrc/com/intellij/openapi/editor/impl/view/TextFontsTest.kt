@@ -77,6 +77,30 @@ internal class TextFontsTest {
   }
 
   @Test
+  fun `the printable ASCII font is the font of each printable ASCII char`() {
+    val fonts = TextFonts(preferences, context, null)
+    // the second pass reads the cached fonts
+    repeat(2) {
+      for (style in STYLES) {
+        val font = fonts.printableAsciiFont(style, context)
+        assertThat(font).describedAs("style %d", style).isNotNull()
+        for (code in PRINTABLE_ASCII) {
+          val text = charArrayOf(code.toChar())
+          assertThat(fonts.fontAbleToDisplay(text, 0, 1, style, context)).describedAs("U+%04X in style %d", code, style)
+            .isEqualTo(font)
+        }
+      }
+    }
+  }
+
+  @Test
+  fun `another render context has no printable ASCII font`() {
+    val fonts = TextFonts(preferences, context, null)
+    val otherContext = FontRenderContext(AffineTransform.getScaleInstance(2.0, 2.0), true, true)
+    assertThat(fonts.printableAsciiFont(Font.PLAIN, otherContext)).isNull()
+  }
+
+  @Test
   fun `each width is the width of the font from the fallback search`() {
     val fonts = TextFonts(preferences, context, null)
     // the second pass reads the cached widths

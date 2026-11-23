@@ -6,7 +6,7 @@ import org.jetbrains.annotations.ApiStatus
 /**
  * One entry of a platform module output that a layout patcher writes, stated as data.
  *
- * The build scripts write the entry with the patcher. A dev distribution writes the same bytes with an isolated action,
+ * The build scripts write the entry with the patcher. The Bazel engine writes the same bytes with an isolated action,
  * and the residual jar of [moduleName] takes the output as the patch of [path]. A label names a file of the checkout or
  * of a dev-launch repository, so the action reads no project model and downloads nothing.
  */

@@ -17,6 +17,12 @@ internal class PyProjectServiceImpl : PyProjectService {
   }
 
   override fun getPyProjectsWithoutJpsSync(project: Project): List<PyProject> = project.getPyProjectsWithCurrentStorage().first
+
+  override fun isPyProject(module: Module): Boolean =
+    PyProjectImpl.create(module, WorkspaceModel.getInstance(module.project).currentSnapshot) != null
+
+  override fun getPyProjectCandidate(module: Module): PyProject? =
+    PyProjectImpl.createCandidate(module, WorkspaceModel.getInstance(module.project).currentSnapshot)
 }
 
 /** Every `PyProject` of [this] project, and the storage they were read from. Read more data from the same storage. */
@@ -36,8 +42,15 @@ internal fun Project.getPyProjectsWithCurrentStorage(): Pair<List<PyProjectImpl>
 }
 
 private suspend fun Project.getSnapshot(): ImmutableEntityStorage {
+  awaitSynchronizationWithJpsModel()
+  return WorkspaceModel.getInstance(this).currentSnapshot
+}
+
+/**
+ * Waits until the workspace model of [this] project is synchronized with the JPS model. The global model, which holds
+ * the SDK table, is synchronized first. Call it only in a non-modal context.
+ */
+internal suspend fun Project.awaitSynchronizationWithJpsModel() {
   @Suppress("UnsafeOpenServiceCast") // See IJPL-249625
-  val workspaceModel = WorkspaceModel.getInstance(this) as WorkspaceModelInternal
-  workspaceModel.awaitSynchronizationWithJpsModel()
-  return workspaceModel.currentSnapshot
+  (WorkspaceModel.getInstance(this) as WorkspaceModelInternal).awaitSynchronizationWithJpsModel()
 }

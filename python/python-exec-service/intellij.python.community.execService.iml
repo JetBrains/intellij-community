@@ -4,7 +4,7 @@
     <facet type="kotlin-language" name="Kotlin">
       <configuration version="5" platform="JVM 25" allPlatforms="JVM [25]" useProjectSettings="false">
         <compilerSettings>
-          <option name="additionalArguments" value="-Xjvm-default=all -opt-in=kotlin.time.ExperimentalTime -XXLanguage:+AllowEagerSupertypeAccessibilityChecks -XXLanguage:-WrapContinuationForTailCallFunctions -progressive -Werror -Xwarning-level=DEPRECATION:warning -opt-in=com.jetbrains.python.PyInternalExecApi" />
+          <option name="additionalArguments" value="-Xjvm-default=all -opt-in=kotlin.time.ExperimentalTime -XXLanguage:+AllowEagerSupertypeAccessibilityChecks -progressive -Werror -Xwarning-level=DEPRECATION:warning -opt-in=com.jetbrains.python.PyInternalExecApi" />
         </compilerSettings>
         <compilerArguments>
           <stringArguments>
@@ -51,6 +51,6 @@
     <orderEntry type="module" module-name="intellij.platform.eel.impl.base" />
     <orderEntry type="module" module-name="intellij.platform.ide.impl" />
     <orderEntry type="module" module-name="intellij.platform.projectModel.impl" />
-    <orderEntry type="module" module-name="intellij.platform.util.annotations" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.util.annotations" />
   </component>
 </module>

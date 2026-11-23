@@ -107,6 +107,8 @@ async fn the_help_of_bench_names_the_verbs_and_the_exit_codes_and_each_verb_its_
         &[
             "bench_busy",
             "AIR_VM_BIN",
+            "memory.json",
+            "responsible process",
             "Exit codes:",
             "6   an arm has no run that passed the gate",
             "75  the host is busy, or a session runs",
@@ -136,6 +138,8 @@ async fn the_help_of_bench_names_the_verbs_and_the_exit_codes_and_each_verb_its_
             &[
                 "--suppress-plugin <ID>",
                 "idea.suppressed.plugins.id",
+                "--with-property <NAME=VALUE>",
+                "-D<NAME>=<VALUE>",
                 "--profile-event <EVENT>",
                 "async-profiler",
             ],
@@ -149,6 +153,7 @@ async fn the_help_of_bench_names_the_verbs_and_the_exit_codes_and_each_verb_its_
         );
     }
     assert!(!open_project.contains("--suppress-plugin"), "{open_project}");
+    assert!(!open_project.contains("--with-property"), "{open_project}");
     assert_contains(&open_project, &["<PROJECT>", &format!("[default: {DEFAULT_OPEN_PROJECT_RUNS}]")]);
     assert_contains(
         &project,
@@ -317,6 +322,66 @@ fn checkout_with_a_license() -> (TempDir, PathBuf) {
     std::fs::create_dir_all(&session).expect("a session directory");
     std::fs::write(session.join("kept"), "").expect("a file");
     (root, session)
+}
+
+/// Runs `git` with `args`, with a fixed identity and without the signing and the hooks of the user.
+#[cfg(target_os = "macos")]
+fn git(args: &[&str]) {
+    let status = std::process::Command::new("git")
+        .args(["-c", "user.name=bench", "-c", "user.email=bench@localhost"])
+        .args(["-c", "commit.gpgsign=false", "-c", "core.hooksPath=/dev/null"])
+        .args(args)
+        .status()
+        .expect("git");
+    assert!(status.success(), "git {args:?}: {status}");
+}
+
+/// A root that is a linked worktree without a license, and a main checkout `main` with a license, in the second
+/// directory.
+#[cfg(target_os = "macos")]
+fn linked_worktree_without_a_license() -> (TempDir, TempDir) {
+    let root = tempfile::tempdir().expect("a temporary root");
+    let directory = tempfile::tempdir().expect("a temporary directory");
+    let main = text(&directory.path().join("main"));
+    git(&["init", "--quiet", &main]);
+    git(&["-C", &main, "commit", "--quiet", "--allow-empty", "--message", "base"]);
+    git(&["-C", &main, "worktree", "add", "--quiet", "--detach", &text(root.path())]);
+    let license = directory.path().join("main").join(crate::bench::session::LICENSE_FILE);
+    std::fs::create_dir_all(license.parent().expect("a parent")).expect("the license directory");
+    std::fs::write(&license, "key").expect("a license");
+    (root, directory)
+}
+
+/// A linked worktree without a license takes the license of its main checkout, and the session names it.
+#[cfg(target_os = "macos")]
+#[tokio::test]
+async fn a_linked_worktree_without_a_license_takes_the_license_of_its_main_checkout() {
+    let (root, directory) = linked_worktree_without_a_license();
+    let license_file = crate::bench::session::LICENSE_FILE;
+    let path = std::env::var("PATH").unwrap_or_default();
+    let session = text(&root.path().join("session"));
+    let argv = ["bench", "welcome", "--max-load", "0.001", "--session", &session, "--text"];
+    let answer = invoke_with(&root, &argv, &[("PATH", &path)]).await;
+    assert_eq!(answer.exit, Exit::TEMP_FAIL, "the license check passes: {}", answer.stderr);
+    let note = answer
+        .stderr
+        .lines()
+        .find_map(|line| line.strip_prefix("vm: license "))
+        .unwrap_or_else(|| panic!("no license note: {}", answer.stderr));
+    assert!(note.ends_with(&format!("/main/{license_file}")), "{note}");
+
+    // Without a license in the main checkout, the refusal names both paths that the session checked.
+    std::fs::remove_file(directory.path().join("main").join(license_file)).expect("a removal");
+    let answer = invoke_with(&root, &["bench", "welcome", "--json"], &[("PATH", &path)]).await;
+    assert_eq!(answer.exit, Exit::USAGE, "{}", answer.stderr);
+    let error = &envelope(&answer.stderr)["error"];
+    assert_eq!(error["code"], "license_missing");
+    let message = error["message"].as_str().unwrap_or_default();
+    let root_name = root.path().file_name().expect("a name").to_string_lossy();
+    assert!(message.starts_with("no license at "), "{message}");
+    assert!(message.contains(&format!("/{root_name}/{license_file} or at ")), "{message}");
+    assert!(message.contains(&format!("/main/{license_file}: an unlicensed IDE")), "{message}");
+    assert!(message.ends_with("start the dev IDE once and register it"), "{message}");
 }
 
 /// A session on a host above `--max-load` is the refusal `host_busy` before the lock and the build. Any live macOS
@@ -648,11 +713,30 @@ fn project_takes_markdown_or_a_directory_with_a_file_to_open() {
     use crate::bench::command::project_source;
     use crate::bench::session::ProjectSource;
     let dir = tempfile::tempdir().expect("a temporary directory");
-    assert_eq!(project_source("markdown", dir.path()), Ok(ProjectSource::Markdown));
+    assert_eq!(project_source("markdown", dir.path(), false), Ok(ProjectSource::Markdown));
     std::fs::create_dir_all(dir.path().join("docs")).expect("a project");
     std::fs::write(dir.path().join("docs/README.md"), "# docs\n").expect("a file");
-    assert_eq!(project_source("docs", dir.path()), Ok(ProjectSource::Dir(dir.path().join("docs"))));
-    let refused = |arg: &str| project_source(arg, dir.path()).expect_err("a refusal");
+    assert_eq!(
+        project_source("docs", dir.path(), false),
+        Ok(ProjectSource::Dir(dir.path().join("docs")))
+    );
+    assert_eq!(
+        project_source("docs", dir.path(), true),
+        Ok(ProjectSource::InPlace(dir.path().join("docs")))
+    );
+    assert_eq!(
+        project_source("./docs/.", dir.path(), true),
+        Ok(ProjectSource::InPlace(dir.path().join("docs"))),
+        "a `.` stays out of the path"
+    );
+    let markdown_in_place = project_source("markdown", dir.path(), true).expect_err("a refusal");
+    assert_eq!(markdown_in_place.code, "usage");
+    assert!(
+        markdown_in_place.message.starts_with("--in-place needs a project directory"),
+        "{}",
+        markdown_in_place.message
+    );
+    let refused = |arg: &str| project_source(arg, dir.path(), false).expect_err("a refusal");
     let absent = refused("absent");
     assert_eq!((absent.code.as_ref(), absent.exit), ("usage", Exit::USAGE));
     assert!(

@@ -120,7 +120,7 @@ internal fun embedContentModules(
   }
 }
 
-/** The dev distribution states the embedded product descriptor patch as an omitted slot. The classic dev build runs the patch. */
+/** The distribution states the embedded product descriptor patch as an omitted slot. The classic dev build runs the patch. */
 private val EMBEDDED_PRODUCT_DESCRIPTOR_DEV_SPEC: LayoutAssetSpec = LayoutAssetSpec.OMITTED.copy(classicDev = ClassicDevRun.RUN)
 
 /**
@@ -428,7 +428,7 @@ internal class XIncludeElementResolverImpl(
 
     // The whole search runs in the checkout first and only then in module output. A scope here can name every module
     // of the platform layout, and in `MODULE_OUTPUT` a *miss* still resolves that module's Bazel output - which is
-    // what declares it as an input of a dev-distribution fragment. See `DescriptorSearchPass`.
+    // what declares it as an input of a distribution fragment. See `DescriptorSearchPass`.
     for (pass in context.searchPasses) {
       for (searchPath in searchPath) {
         val descriptorCache = searchPath.descriptorCache
@@ -492,7 +492,7 @@ internal class XIncludeElementResolverImpl(
         // Generated module-set descriptors may be materialized under the module that owns the generated source,
         // while an xi:include still names the product module whose output used to receive a copy. Search the complete
         // source model before falling back to any compiled jar. This is the same deterministic last-resort scope the
-        // generated dev-distribution plan validates, and it keeps ordinary module byte changes out of unrelated
+        // generated distribution plan validates, and it keeps ordinary module byte changes out of unrelated
         // fragment keys.
         val outputProvider = context.outputProvider
         val alreadySearched = searchPath.flatMapTo(HashSet(), DescriptorSearchScope::modules)

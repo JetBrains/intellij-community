@@ -1,9 +1,20 @@
 package com.intellij.codeInspection.tests.java.test
 
-import com.intellij.jvm.analysis.internal.testFramework.test.TestCaseWithoutTestsInspectionTestBase
+import com.intellij.jvm.analysis.internal.testFramework.test.testCaseWithoutTestsInspectionFixture
+import com.intellij.jvm.analysis.internal.testFramework.test.testCaseWithoutTestsProjectFixture
 import com.intellij.jvm.analysis.testFramework.JvmLanguage
+import com.intellij.testFramework.junit5.TestApplication
+import org.junit.jupiter.api.Test
 
-class JavaTestCaseWithoutTestsInspectionTest : TestCaseWithoutTestsInspectionTestBase() {
+@TestApplication
+class JavaTestCaseWithoutTestsInspectionTest {
+  companion object {
+    private val projectFixture = testCaseWithoutTestsProjectFixture()
+  }
+
+  private val myFixture by testCaseWithoutTestsInspectionFixture(projectFixture)
+
+  @Test
   fun `test case without test methods in JUnit 3`() {
     myFixture.testHighlighting(JvmLanguage.JAVA, """
       public class <warning descr="Test class 'TestCaseWithNoTestMethods' has no tests">TestCaseWithNoTestMethods</warning> extends junit.framework.TestCase {
@@ -28,6 +39,7 @@ class JavaTestCaseWithoutTestsInspectionTest : TestCaseWithoutTestsInspectionTes
     """.trimIndent(), fileName = "TestCaseWithNoTestMethods")
   }
 
+  @Test
   fun `test case with JUnit 3 inner class without test methods in JUnit 3`() {
     myFixture.testHighlighting(JvmLanguage.JAVA, """
       public class <warning descr="Test class 'TestCaseWithInner' has no tests">TestCaseWithInner</warning> extends junit.framework.TestCase {
@@ -38,6 +50,7 @@ class JavaTestCaseWithoutTestsInspectionTest : TestCaseWithoutTestsInspectionTes
     """.trimIndent(), fileName = "TestCaseWithInner")
   }
 
+  @Test
   fun `test case without test methods but class is ignored in JUnit 3`() {
     myFixture.testHighlighting(JvmLanguage.JAVA, """
       @org.junit.Ignore
@@ -45,6 +58,7 @@ class JavaTestCaseWithoutTestsInspectionTest : TestCaseWithoutTestsInspectionTes
     """.trimIndent(), "IgnoredTest")
   }
 
+  @Test
   fun `test case with test in parent class in JUnit 3`() {
     myFixture.addClass("""
       public class SomeParentClassTest extends junit.framework.TestCase {
@@ -56,6 +70,7 @@ class JavaTestCaseWithoutTestsInspectionTest : TestCaseWithoutTestsInspectionTes
     """.trimIndent(), "SomeTestClass")
   }
 
+  @Test
   fun `test case without test methods in JUnit 4`() {
     myFixture.testHighlighting(JvmLanguage.JAVA, """
       public class <warning descr="Test class 'SomeTest' has no tests">SomeTest</warning> {
@@ -65,6 +80,7 @@ class JavaTestCaseWithoutTestsInspectionTest : TestCaseWithoutTestsInspectionTes
     """.trimIndent(), "SomeTest")
   }
 
+  @Test
   fun `test case without test methods in JUnit 4 inheritance`() {
     myFixture.testHighlighting(JvmLanguage.JAVA, """
       abstract class SomeAbstractTest {
@@ -78,6 +94,7 @@ class JavaTestCaseWithoutTestsInspectionTest : TestCaseWithoutTestsInspectionTes
     """.trimIndent(), "SomeTest")
   }
 
+  @Test
   fun `test case with ignored test in JUnit 4`() {
     myFixture.testHighlighting(JvmLanguage.JAVA, """
       public class SomeTest {
@@ -91,6 +108,7 @@ class JavaTestCaseWithoutTestsInspectionTest : TestCaseWithoutTestsInspectionTes
     """.trimIndent(), "SomeTest")
   }
 
+  @Test
   fun `test case with ignored test in TestNG`() {
     myFixture.testHighlighting(JvmLanguage.JAVA, """
       public class SomeTest {
@@ -100,6 +118,7 @@ class JavaTestCaseWithoutTestsInspectionTest : TestCaseWithoutTestsInspectionTes
     """.trimIndent(), "SomeTest")
   }
 
+  @Test
   fun `test case with nested class without test methods in JUnit 5`() {
     myFixture.testHighlighting(JvmLanguage.JAVA, """
       public class <warning descr="Test class 'TestCaseWithInner' has no tests">TestCaseWithInner</warning> {

@@ -120,7 +120,7 @@ To run one checker by hand: `uvx ty check test.py`, `uvx pyrefly check test.py`,
   `Python JUnit (dev mode)` runner in the root `intellij.yaml` passes `-Dpyrefly.bundle=true`
   for `tests.cmd` and for IDE runs alike, so pass no flag yourself. A failure in `@BeforeAll`
   with `Pyrefly LSP server did not reach the Running state` means the runner did not apply.
-  See the `py-junit5-tests` skill.
+  See `junit5-tests/index.md` of the `pycharm-dev-workflow` skill.
 
 ### Python 2 and Python 3 in tests
 

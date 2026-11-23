@@ -2,7 +2,8 @@
 package com.intellij.java.codeInsight.daemon
 
 import com.intellij.codeInsight.completion.CompletionType
-import com.intellij.java.testFramework.fixtures.LightJava9ModulesCodeInsightFixtureTestCase
+import com.intellij.java.testFramework.fixtures.lightJava9ModulesFixture
+import com.intellij.java.testFramework.fixtures.lightJava9ModulesProjectFixture
 import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.project.DumbService.Companion.getInstance
 import com.intellij.openapi.vfs.VirtualFile
@@ -19,70 +20,90 @@ import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.psi.stubs.StubUpdatingIndex
 import com.intellij.testFramework.DumbModeTestUtils.runInDumbModeSynchronously
 import com.intellij.testFramework.IdeaTestUtil
+import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.util.indexing.FileBasedIndex
 import org.assertj.core.api.Assertions.assertThat
-import kotlin.test.assertNotEquals
+import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNotEquals
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 
 private const val CLASS_NAME = "com.example.MultiReleaseClass"
 
-class MultiReleaseJarTest : LightJava9ModulesCodeInsightFixtureTestCase() {
+@TestApplication
+class MultiReleaseJarTest {
+  companion object {
+    private val projectFixture = lightJava9ModulesProjectFixture()
+  }
+
+  private val java9 by lightJava9ModulesFixture(projectFixture)
+  private val myFixture get() = java9.fixture
+
   private lateinit var scope: GlobalSearchScope
 
-  override fun setUp() {
-    super.setUp()
-    scope = ProjectScope.getLibrariesScope(project)
+  @BeforeEach
+  fun setUp() {
+    scope = ProjectScope.getLibrariesScope(myFixture.project)
   }
 
-  override fun tearDown() {
+  @AfterEach
+  fun tearDown() {
     scope = GlobalSearchScope.EMPTY_SCOPE
-    super.tearDown()
   }
 
+  @Test
   fun testResolve() {
-    IdeaTestUtil.withLevel(module, LanguageLevel.JDK_1_8) {
+    IdeaTestUtil.withLevel(myFixture.module, LanguageLevel.JDK_1_8) {
       myFixture.configureByText("a.java", "import com.example.*;\nclass a { <caret>MultiReleaseClass f; }")
-      assertUnversioned((myFixture.getReferenceAtCaretPosition() as PsiJavaReference).multiResolve(false).map { it.element })
+      runReadActionBlocking { assertUnversioned((myFixture.getReferenceAtCaretPosition() as PsiJavaReference).multiResolve(false).map { it.element }) }
     }
   }
 
+  @Test
   fun testResolve9() {
-    IdeaTestUtil.withLevel(module, LanguageLevel.JDK_1_9) {
+    IdeaTestUtil.withLevel(myFixture.module, LanguageLevel.JDK_1_9) {
       myFixture.configureByText("a.java", "import com.example.*;\nclass a { <caret>MultiReleaseClass f; }")
-      assertVersioned((myFixture.getReferenceAtCaretPosition() as PsiJavaReference).multiResolve(false).map { it.element })
+      runReadActionBlocking { assertVersioned((myFixture.getReferenceAtCaretPosition() as PsiJavaReference).multiResolve(false).map { it.element }) }
     }
   }
 
+  @Test
   fun testResolve11DumbMode() {
-    IdeaTestUtil.withLevel(module, LanguageLevel.JDK_11) {
-      runInDumbModeSynchronously(project) {
-        getInstance(project).withAlternativeResolveEnabled {
+    IdeaTestUtil.withLevel(myFixture.module, LanguageLevel.JDK_11) {
+      runInDumbModeSynchronously(myFixture.project) {
+        getInstance(myFixture.project).withAlternativeResolveEnabled {
           myFixture.configureByText("a.java", """
             import com.example.MultiReleaseClass;
             class a {
               <caret>MultiReleaseClass f;
             }""".trimIndent())
-          assertVersioned((myFixture.getReferenceAtCaretPosition() as PsiJavaReference).multiResolve(false).map { it.element })
+          runReadActionBlocking { assertVersioned((myFixture.getReferenceAtCaretPosition() as PsiJavaReference).multiResolve(false).map { it.element }) }
         }
       }
     }
   }
 
+  @Test
   fun testCompletion() {
-    IdeaTestUtil.withLevel(module, LanguageLevel.JDK_1_8) {
+    IdeaTestUtil.withLevel(myFixture.module, LanguageLevel.JDK_1_8) {
       myFixture.configureByText("a.java", "class a { MultiReleaseClass<caret> f; }")
       assertUnversioned(myFixture.complete(CompletionType.BASIC).map { it.psiElement })
     }
   }
 
+  @Test
   fun testCompletion9() {
-    IdeaTestUtil.withLevel(module, LanguageLevel.JDK_1_9) {
+    IdeaTestUtil.withLevel(myFixture.module, LanguageLevel.JDK_1_9) {
       myFixture.configureByText("a.java", "class a { MultiReleaseClass<caret> f; }")
       assertVersioned(myFixture.complete(CompletionType.BASIC).map { it.psiElement })
     }
   }
 
+  @Test
   fun testCompletionMethod() {
-    IdeaTestUtil.withLevel(module, LanguageLevel.JDK_1_8) {
+    IdeaTestUtil.withLevel(myFixture.module, LanguageLevel.JDK_1_8) {
       myFixture.configureByText("a.java", """
         import com.example.MultiReleaseClass;
         class a {
@@ -105,8 +126,9 @@ class MultiReleaseJarTest : LightJava9ModulesCodeInsightFixtureTestCase() {
     }
   }
 
+  @Test
   fun testCompletionMethod9() {
-    IdeaTestUtil.withLevel(module, LanguageLevel.JDK_1_9) {
+    IdeaTestUtil.withLevel(myFixture.module, LanguageLevel.JDK_1_9) {
       myFixture.configureByText("a.java", """
         import com.example.MultiReleaseClass;
         class a {
@@ -128,8 +150,9 @@ class MultiReleaseJarTest : LightJava9ModulesCodeInsightFixtureTestCase() {
     }
   }
 
+  @Test
   fun testCompletionMethod11() {
-    IdeaTestUtil.withLevel(module, LanguageLevel.JDK_11) {
+    IdeaTestUtil.withLevel(myFixture.module, LanguageLevel.JDK_11) {
       myFixture.configureByText("a.java", """
         import com.example.MultiReleaseClass;
         class a {
@@ -151,12 +174,14 @@ class MultiReleaseJarTest : LightJava9ModulesCodeInsightFixtureTestCase() {
     }
   }
 
-  fun testFindClassByFullName() {
+  @Test
+  fun testFindClassByFullName(): Unit = runReadActionBlocking {
     assertUnversioned(myFixture.javaFacade.findClass(CLASS_NAME, scope8()))
     assertVersioned(myFixture.javaFacade.findClass(CLASS_NAME, scope9()))
   }
 
-  fun testResolveFromMultiRelease() {
+  @Test
+  fun testResolveFromMultiRelease(): Unit = runReadActionBlocking {
     val facade = myFixture.javaFacade
     val class8 = facade.findClass(CLASS_NAME, scope8())!!
     val class9 = facade.findClass(CLASS_NAME, scope9())!!
@@ -171,63 +196,72 @@ class MultiReleaseJarTest : LightJava9ModulesCodeInsightFixtureTestCase() {
     assertEquals(another9, (method9.returnType as PsiClassType).resolve())
   }
   
+  @Test
   fun testReferenceSearch() {
     val facade = myFixture.javaFacade
-    val class8 = facade.findClass(CLASS_NAME, scope8())!!
-    assertUnversioned(class8)
-    val class9 = facade.findClass(CLASS_NAME, scope9())!!
-    assertVersioned(class9)
+    val (class8, class9) = runReadActionBlocking {
+      val class8 = facade.findClass(CLASS_NAME, scope8())!!
+      assertUnversioned(class8)
+      val class9 = facade.findClass(CLASS_NAME, scope9())!!
+      assertVersioned(class9)
+      class8 to class9
+    }
     myFixture.configureByText("Test.java", "import com.example.*; class Test extends MultiReleaseClass {}")
     for(level in listOf(LanguageLevel.JDK_1_8, LanguageLevel.JDK_1_9)) {
-      IdeaTestUtil.withLevel(module, level) {
+      IdeaTestUtil.withLevel(myFixture.module, level) {
         var refs = runReadActionBlocking { ReferencesSearch.search(class8).findAll() }
         assertEquals(1, refs.size)
-        assertEquals(myFixture.file, refs.first().element.containingFile)
+        assertEquals(myFixture.file, runReadActionBlocking { refs.first().element.containingFile })
         refs = runReadActionBlocking { ReferencesSearch.search(class9).findAll() }
         assertEquals(1, refs.size)
-        assertEquals(myFixture.file, refs.first().element.containingFile)
+        assertEquals(myFixture.file, runReadActionBlocking { refs.first().element.containingFile })
       }
     }
   }
 
-  fun testClassPresentation() {
+  @Test
+  fun testClassPresentation(): Unit = runReadActionBlocking {
     assertEquals("(com.example)", myFixture.javaFacade.findClass(CLASS_NAME, scope8())!!.presentation!!.locationString)
     assertEquals("(com.example/ver. 9)", myFixture.javaFacade.findClass(CLASS_NAME, scope9())!!.presentation!!.locationString)
     assertEquals("(com.example/ver. 10)", myFixture.javaFacade.findClass(CLASS_NAME, scope10())!!.presentation!!.locationString)
   }
 
-  fun testFindClassByShortName() {
-    assertUnversioned(PsiShortNamesCache.getInstance(project).getClassesByName("MultiReleaseClass", scope8()).toList())
-    assertVersioned(PsiShortNamesCache.getInstance(project).getClassesByName("MultiReleaseClass", scope9()).toList())
-    assertVersioned(PsiShortNamesCache.getInstance(project).getClassesByName("MultiReleaseClass", scope10()).toList())
+  @Test
+  fun testFindClassByShortName(): Unit = runReadActionBlocking {
+    assertUnversioned(PsiShortNamesCache.getInstance(myFixture.project).getClassesByName("MultiReleaseClass", scope8()).toList())
+    assertVersioned(PsiShortNamesCache.getInstance(myFixture.project).getClassesByName("MultiReleaseClass", scope9()).toList())
+    assertVersioned(PsiShortNamesCache.getInstance(myFixture.project).getClassesByName("MultiReleaseClass", scope10()).toList())
   }
 
-  fun testFindMethod() {
-    assertUnversioned(PsiShortNamesCache.getInstance(project).getMethodsByName("multiReleaseDefaultImpl", scope8()).toList())
-    assertThat(PsiShortNamesCache.getInstance(project).getMethodsByName("multiReleaseJava9Impl", scope8())).isEmpty()
-    assertVersioned(PsiShortNamesCache.getInstance(project).getMethodsByName("multiReleaseJava9Impl", scope9()).toList())
+  @Test
+  fun testFindMethod(): Unit = runReadActionBlocking {
+    assertUnversioned(PsiShortNamesCache.getInstance(myFixture.project).getMethodsByName("multiReleaseDefaultImpl", scope8()).toList())
+    assertThat(PsiShortNamesCache.getInstance(myFixture.project).getMethodsByName("multiReleaseJava9Impl", scope8())).isEmpty()
+    assertVersioned(PsiShortNamesCache.getInstance(myFixture.project).getMethodsByName("multiReleaseJava9Impl", scope9()).toList())
   }
 
-  private fun scope8() = JavaVersionBasedScope(project, scope, LanguageLevel.JDK_1_8)
+  private fun scope8() = JavaVersionBasedScope(myFixture.project, scope, LanguageLevel.JDK_1_8)
 
-  private fun scope9() = JavaVersionBasedScope(project, scope, LanguageLevel.JDK_1_9)
+  private fun scope9() = JavaVersionBasedScope(myFixture.project, scope, LanguageLevel.JDK_1_9)
 
-  private fun scope10() = JavaVersionBasedScope(project, scope, LanguageLevel.JDK_10)
+  private fun scope10() = JavaVersionBasedScope(myFixture.project, scope, LanguageLevel.JDK_10)
 
+  @Test
   fun testFindFile() {
     assertThat(getAllAvailableVersionClasses()).hasSize(3)
   }
 
-  fun testStubIndexInternals() {
+  @Test
+  fun testStubIndexInternals(): Unit = runReadActionBlocking {
     for (file in getAllAvailableVersionClasses()) {
-      val data = FileBasedIndex.getInstance().getFileData(StubUpdatingIndex.INDEX_ID, file, project)
-      val stub = assertOneElement(data.values)
+      val data = FileBasedIndex.getInstance().getFileData(StubUpdatingIndex.INDEX_ID, file, myFixture.project)
+      val stub = assertThat(data.values).singleElement().actual()
       assertNotNull(stub)
     }
   }
 
   private fun getAllAvailableVersionClasses(): Collection<VirtualFile> =
-    FilenameIndex.getVirtualFilesByName("MultiReleaseClass.class", scope)
+    runReadActionBlocking { FilenameIndex.getVirtualFilesByName("MultiReleaseClass.class", scope) }
 
   private fun assertUnversioned(elements: List<PsiElement?>) {
     assertThat(elements).hasSize(1)

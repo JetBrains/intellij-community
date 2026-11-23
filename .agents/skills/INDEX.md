@@ -6,21 +6,21 @@ One row per skill in this directory. `SKILL.md` holds the full instructions.
 
 | skill | description |
 | --- | --- |
+| [accio](accio/SKILL.md) | Search code with accio.cmd instead of grep, rg or find. |
 | [actions](actions/SKILL.md) | Implement or change IntelliJ `AnAction` actions and registrations. |
 | [bazel-test-migration](bazel-test-migration/SKILL.md) | Migrate IntelliJ JPS module tests to Bazel; debug Bazel-only failures. |
 | [code-style](code-style/SKILL.md) | Apply IntelliJ Kotlin and Java code style when writing or reviewing. |
 | [commits](commits/SKILL.md) | Read before each commit, amend or reword: the subject SafePush accepts and the body. |
 | [compare-python-typecheckers](compare-python-typecheckers/SKILL.md) | Compare Python type inference with ty, pyrefly, and basedpyright. |
 | [compose-ui](compose-ui/SKILL.md) | Write or audit Compose Desktop UI state, effects, and boundaries. |
-| [conda-env-tests](conda-env-tests/SKILL.md) | Bump the pinned Miniconda version for the Python conda env tests. |
-| [debugging](debugging/SKILL.md) | Debug IntelliJ IDE failures with repository-specific techniques. |
+| [conda-env-tests](conda-env-tests/SKILL.md) | Bump the Miniconda version of the Python conda env tests. |
+| [content-module](content-module/SKILL.md) | Create, convert or extract an IntelliJ plugin content module. |
+| [debugging](debugging/SKILL.md) | Debug IntelliJ IDE failures. |
 | [driver-ui-tests](driver-ui-tests/SKILL.md) | Write IntelliJ UI tests with IDE Starter or UI Driver, or run one off-screen to verify a change. |
 | [duplicate-and-dead-code](duplicate-and-dead-code/SKILL.md) | Find semantic copies and dead code before a plan or a review. |
 | [eel](eel/SKILL.md) | Use IntelliJ EEL APIs for process execution, paths, WSL, or Docker. |
-| [extract-module](extract-module/SKILL.md) | Extract optional plugin dependencies into IntelliJ content modules. |
-| [fix-project-leak-from-tc-report](fix-project-leak-from-tc-report/SKILL.md) | Fix TeamCity project-leak test failures end to end. |
-| [icon-resources](icon-resources/SKILL.md) | Manage IntelliJ icons, generated Icons classes, and icon-robots rules. |
-| [icons](icons/SKILL.md) | Create or review IntelliJ New UI SVG icons and theme variants. |
+| [fix-project-leak-from-tc-report](fix-project-leak-from-tc-report/SKILL.md) | Fix TeamCity project-leak test failures. |
+| [icons](icons/SKILL.md) | Add or review SVG icons, dark variants, Icons classes, icon-robots. |
 | [ide-diagnostics-mcp](ide-diagnostics-mcp/SKILL.md) | Inspect a running IntelliJ IDE for freezes or blocked threads via MCP. |
 | [jewel](jewel/SKILL.md) | Jewel UI: build, audit, Markdown, Swing interop, PRs and releases. |
 | [jna](jna/SKILL.md) | Implement or debug JNA bindings and ABI layouts in Kotlin or Java. |
@@ -34,17 +34,16 @@ One row per skill in this directory. `SKILL.md` holds the full instructions.
 | [notebook-for-experiment](notebook-for-experiment/SKILL.md) | Create reproducible Jupyter notebooks for performance experiments. |
 | [platform-coroutines-structured-concurrency](platform-coroutines-structured-concurrency/SKILL.md) | Write or review IntelliJ coroutine scope ownership and cancellation. |
 | [plugin-model-analyzer](plugin-model-analyzer/SKILL.md) | Query IntelliJ Product DSL modules, products, and plugin graphs. |
-| [poly-context](poly-context/SKILL.md) | Implement PolyContext feature gating and environment detection. |
-| [poly-symbols](poly-symbols/SKILL.md) | Implement PolySymbols completion, references, and rename. |
+| [poly-symbols](poly-symbols/SKILL.md) | Implement PolySymbols completion, references, rename, and PolyContext feature gating. |
 | [pseudo-kmp](pseudo-kmp/SKILL.md) | Create or modify IntelliJ pseudo-KMP expect/actual modules. |
 | [py-code-insight-counters](py-code-insight-counters/SKILL.md) | Count Python code insight work in tests with PyCodeInsightCounters. |
 | [registry](registry/SKILL.md) | Use the IntelliJ Registry API for registry keys and feature flags. |
 | [rust-code-style](rust-code-style/SKILL.md) | Write or review Rust in the build tools. |
-| [safe-push](safe-push/SKILL.md) | Push IntelliJ repository changes through the Safe Push workflow. |
+| [safe-push](safe-push/SKILL.md) | Push IntelliJ repository changes through Safe Push. |
+| [settings-v2-migration](settings-v2-migration/SKILL.md) | Move PSC to settings v2. |
 | [ssr](ssr/SKILL.md) | Create or modify IntelliJ Structural Search and Replace patterns. |
 | [symbols-api](symbols-api/SKILL.md) | Use IntelliJ Symbol API for declarations, references, and rename. |
 | [testing](testing/SKILL.md) | Run or troubleshoot IntelliJ tests with `bt.cmd` or `tests.cmd`. |
-| [testing-internals](testing-internals/SKILL.md) | Debug `bt.cmd` and `tests.cmd` runs, discovery, and runner internals. |
 | [ui-accessibility](ui-accessibility/SKILL.md) | Review IntelliJ UI accessibility for keyboard, focus, and labels. |
 | [writing-tests](writing-tests/SKILL.md) | Write IntelliJ JUnit 5 tests with fixtures, lifecycle, and EDT. |
 | [youtrack-community](youtrack-community/SKILL.md) | YouTrack CLI for a community checkout; the monorepo uses `youtrack`. |

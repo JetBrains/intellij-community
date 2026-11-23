@@ -9,7 +9,6 @@ import com.intellij.collaboration.ui.codereview.comment.CodeReviewSubmittableTex
 import com.intellij.collaboration.ui.codereview.comment.CodeReviewTextEditingViewModel
 import com.intellij.collaboration.ui.codereview.comment.submitActionIn
 import com.intellij.collaboration.ui.codereview.timeline.thread.CodeReviewTrackableItemViewModel
-import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.BufferOverflow
@@ -23,7 +22,7 @@ import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
-import org.jetbrains.plugins.gitlab.mergerequest.GitLabMergeRequestsPreferences
+import org.jetbrains.plugins.gitlab.mergerequest.GitLabReviewSettings
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabDiscussion
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequest
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabProject
@@ -173,7 +172,7 @@ private abstract class NewGitLabNoteViewModelBase(
 ) : AbstractGitLabNoteEditingViewModel(project, projectData, parentCs, initialText), NewGitLabNoteViewModel {
   override val trackingId: String = UUID.randomUUID().toString()
 
-  private val preferences = project.service<GitLabMergeRequestsPreferences>()
+  private val preferences = GitLabReviewSettings.getInstance(project)
 
   override val usedAsDraftSubmitActionLast: StateFlow<Boolean> = preferences.usedAsDraftSubmitActionLastState
 

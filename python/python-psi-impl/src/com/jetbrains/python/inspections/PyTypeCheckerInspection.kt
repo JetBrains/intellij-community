@@ -13,6 +13,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.childOfType
+import com.intellij.psi.util.parents
 import com.jetbrains.python.PyNames
 import com.jetbrains.python.PyPsiBundle
 import com.jetbrains.python.PyTokenTypes
@@ -25,6 +26,7 @@ import com.jetbrains.python.codeInsight.stdlib.PyStdlibTypeProvider.getEnumValue
 import com.jetbrains.python.codeInsight.stdlib.PyStdlibTypeProvider.isCustomEnum
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider.Companion.coroutineOrGeneratorElementType
+import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider.Companion.isFinalClass
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider.Companion.isInsideTypeHint
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider.GeneratorTypeDescriptor
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider.GeneratorTypeDescriptor.Companion.fromGeneratorOrProtocol
@@ -34,6 +36,7 @@ import com.jetbrains.python.documentation.PythonDocumentationProvider
 import com.jetbrains.python.inspections.PyInspectionMessages.CodifiedParam
 import com.jetbrains.python.inspections.quickfix.PyMakeFunctionReturnTypeQuickFix
 import com.jetbrains.python.psi.PyAnnotationOwner
+import com.jetbrains.python.psi.PyArgumentList
 import com.jetbrains.python.psi.PyAssignmentStatement
 import com.jetbrains.python.psi.PyAugAssignmentStatement
 import com.jetbrains.python.psi.PyBinaryExpression
@@ -43,6 +46,7 @@ import com.jetbrains.python.psi.PyCallable
 import com.jetbrains.python.psi.PyClass
 import com.jetbrains.python.psi.PyComprehensionElement
 import com.jetbrains.python.psi.PyDictLiteralExpression
+import com.jetbrains.python.psi.PyDisjointBaseUtil.areDisjoint
 import com.jetbrains.python.psi.PyDoubleStarExpression
 import com.jetbrains.python.psi.PyElement
 import com.jetbrains.python.psi.PyEllipsisLiteralExpression
@@ -50,6 +54,7 @@ import com.jetbrains.python.psi.PyExpression
 import com.jetbrains.python.psi.PyForStatement
 import com.jetbrains.python.psi.PyFunction
 import com.jetbrains.python.psi.PyKeywordArgument
+import com.jetbrains.python.psi.PyLambdaExpression
 import com.jetbrains.python.psi.PyListLiteralExpression
 import com.jetbrains.python.psi.PyNamedParameter
 import com.jetbrains.python.psi.PyParameterList
@@ -61,6 +66,7 @@ import com.jetbrains.python.psi.PyReferenceOwner
 import com.jetbrains.python.psi.PyReturnStatement
 import com.jetbrains.python.psi.PySequenceExpression
 import com.jetbrains.python.psi.PyStarArgument
+import com.jetbrains.python.psi.PyStatement
 import com.jetbrains.python.psi.PyStarExpression
 import com.jetbrains.python.psi.PySubscriptionExpression
 import com.jetbrains.python.psi.PyTargetExpression
@@ -76,7 +82,9 @@ import com.jetbrains.python.psi.PyYieldExpression
 import com.jetbrains.python.psi.impl.PyBuiltinCache
 import com.jetbrains.python.psi.impl.PyCallExpressionHelper
 import com.jetbrains.python.psi.impl.PyCallExpressionHelper.analyzeArguments
+import com.jetbrains.python.psi.impl.PyCallExpressionHelper.knownFixedTupleLength
 import com.jetbrains.python.psi.impl.PyCallExpressionHelper.mapArguments
+import com.jetbrains.python.psi.impl.PyPsiUtils
 import com.jetbrains.python.psi.impl.PyPsiUtils.flattenParens
 import com.jetbrains.python.psi.impl.PyReferenceExpressionImpl
 import com.jetbrains.python.psi.impl.PySubscriptionExpressionImpl
@@ -84,6 +92,7 @@ import com.jetbrains.python.psi.impl.PyTargetExpressionImpl
 import com.jetbrains.python.psi.impl.ResolvedOperator
 import com.jetbrains.python.psi.resolve.PyResolveContext
 import com.jetbrains.python.psi.search.PySuperMethodsSearch
+import com.jetbrains.python.psi.types.PyABCUtil.SUPPORTS_KEYS_AND_GET_ITEM
 import com.jetbrains.python.psi.types.PyABCUtil.isSubtype
 import com.jetbrains.python.psi.types.PyAnyType
 import com.jetbrains.python.psi.types.PyCallableArgument
@@ -122,6 +131,7 @@ import com.jetbrains.python.psi.types.PyTypeParameterType
 import com.jetbrains.python.psi.types.PyTypeUtil.asUnionSequence
 import com.jetbrains.python.psi.types.PyTypeUtil.compositeComponents
 import com.jetbrains.python.psi.types.PyTypeUtil.compositeMap
+import com.jetbrains.python.psi.types.PyTypeUtil.convertToType
 import com.jetbrains.python.psi.types.PyTypeUtil.derefOrUnknown
 import com.jetbrains.python.psi.types.PyTypeUtil.getCallableItems
 import com.jetbrains.python.psi.types.PyTypeUtil.isReadOnlyAttribute
@@ -289,8 +299,25 @@ open class PyTypeCheckerInspection : PyInspection() {
       if (operandType is PyTypedDictType) return
       // Don't type check __class_getitem__ calls inside type hints. Normally these are not type hinted as a construct
       // special-cased by type checkers
-      if (isInsideTypeHint(node, myTypeEvalContext)) return
+      if (isInsideTypeHint(node, myTypeEvalContext) || isInTypePositionOfSuperClassList(node)) return
       checkCallSite(node)
+    }
+
+    /**
+     * Returns `true` when [node] is in a type position of the base class list of a class statement,
+     * such as `C1[T]` in `class C2[T](C1[T])`.
+     * A keyword argument, a star argument, a call and a lambda in the base class list are runtime expressions,
+     * such as `metaclass=Meta[str]` or `make_base(C1[str])`.
+     * A quoted base class, such as `list["C1[T]"]`, gets the position of its string literal.
+     */
+    private fun isInTypePositionOfSuperClassList(node: PySubscriptionExpression): Boolean {
+      for (ancestor in PyPsiUtils.getRealContext(node).parents(false)) {
+        when (ancestor) {
+          is PyArgumentList -> return ancestor.parent is PyClass
+          is PyKeywordArgument, is PyStarArgument, is PyCallExpression, is PyLambdaExpression, is PyStatement -> return false
+        }
+      }
+      return false
     }
 
     override fun visitPyForStatement(node: PyForStatement) {
@@ -302,6 +329,7 @@ open class PyTypeCheckerInspection : PyInspection() {
       val forPart = node.forPart
       val target = flattenParens(forPart.target)
       if (target !is PyTupleExpression && target !is PyListLiteralExpression) return
+      if (checkStarredTargetCount(target)) return
       val source = forPart.source ?: return
       val sourceType = myTypeEvalContext.getType(source) ?: return
       if (sourceType.containsAny(context = myTypeEvalContext)) return
@@ -314,9 +342,7 @@ open class PyTypeCheckerInspection : PyInspection() {
                         ProblemHighlightType.GENERIC_ERROR_OR_WARNING)
         return
       }
-      if (itemType is PyTupleType && !itemType.isHomogeneous) {
-        checkNestedUnpackingBalance(target.elements, itemType)
-      }
+      if (itemType is PyTupleType && checkUnpackingTargetBalance(target, itemType)) return
       if (itemType != null) checkUnpackedTargetTypes(target, itemType, target)
     }
 
@@ -496,6 +522,7 @@ open class PyTypeCheckerInspection : PyInspection() {
       val rhs = node.assignedValue
       if ((lhs !is PyTupleExpression && lhs !is PyListLiteralExpression) || rhs == null) return
       val lhsSeq: PySequenceExpression = lhs
+      if (checkStarredTargetCount(lhsSeq)) return
 
       // Check that the RHS is iterable
       if (checkUnpackIterableValue(rhs)) return
@@ -517,9 +544,9 @@ open class PyTypeCheckerInspection : PyInspection() {
         getUnpackedTupleLength(rhs)
       }
       else {
-        rhsType.elementCount
+        knownFixedTupleLength(rhsType)
       }
-      if (rhsCount >= 0 && checkUnpackBalance(targets.size, lhsStarCount, rhsCount, rhs, lhs,
+      if (rhsCount >= 0 && checkUnpackBalance(targets.size, lhsStarCount, rhsCount, rhs,
                                               CodifiedParam.ofType(rhsType, rhs, myTypeEvalContext))) return
 
       checkNestedUnpackingBalance(targets, rhsType)
@@ -586,13 +613,13 @@ open class PyTypeCheckerInspection : PyInspection() {
     override fun visitPyDoubleStarExpression(node: PyDoubleStarExpression) {
       // Check that **expr in dict literals ({**a}) has a mapping type
       if (node.parent is PyDictLiteralExpression) {
-        checkUnpackMappingValue(node.expression)
+        checkUnpackMappingValue(node.expression, requiresStringKeys = false)
       }
     }
 
     override fun visitPyStarArgument(node: PyStarArgument) {
       if (node.isKeyword) {
-        checkUnpackMappingValue(node.expression)
+        checkUnpackMappingValue(node.expression, requiresStringKeys = true)
       }
       else {
         checkUnpackIterableValue(node.expression)
@@ -1736,18 +1763,75 @@ open class PyTypeCheckerInspection : PyInspection() {
       return false
     }
 
-    private fun checkUnpackMappingValue(mappingValue: PyExpression?) {
+    /**
+     * Checks the operand of `**`. CPython needs only `keys()` and `__getitem__` of the operand.
+     * A call needs `str` keys too, so [requiresStringKeys] is true for a `**` argument and false in a dict display.
+     */
+    private fun checkUnpackMappingValue(mappingValue: PyExpression?, requiresStringKeys: Boolean) {
       var value: PyExpression? = mappingValue ?: return
       if (value is PyDoubleStarExpression) value = value.expression
       if (value == null) return
       val type = myTypeEvalContext.getType(value)
-      if (type != null && !isUnknown(type, myTypeEvalContext) &&
-          // TODO: it's not Mapping, but a more wider type
-          !isSubtype(type, PyNames.MAPPING, myTypeEvalContext)) {
+      if (type == null || isUnknown(type, myTypeEvalContext)) return
+      if (!isSubtype(type, SUPPORTS_KEYS_AND_GET_ITEM, myTypeEvalContext)) {
         PyTypeCheckerProblemReporter.report(holder, PyTypeCheckerSuppressionCode.NOT_MAPPING, value,
                                             PyPsiBundle.problemMessage("INSP.type.checker.unpack.expected.mapping",
                                                                        CodifiedParam.ofType(type, value, myTypeEvalContext)),
                                             ProblemHighlightType.GENERIC_ERROR_OR_WARNING)
+        return
+      }
+      if (requiresStringKeys) checkKeywordUnpackingKeys(value, type)
+    }
+
+    /**
+     * Reports a `**` argument whose keys cannot be `str`, as CPython raises "keywords must be strings".
+     * A key type such as `object`, `str | int` or a user class can hold `str` keys, so it is not reported.
+     */
+    private fun checkKeywordUnpackingKeys(value: PyExpression, type: PyType) {
+      val strType = PyBuiltinCache.getInstance(value).strType ?: return
+      val members = type.asUnionSequence().filter { !it.isAnyOrUnknown }.toList()
+      if (members.isEmpty()) return
+      for (member in members) {
+        val keyType = mappingKeyType(member, value) ?: return
+        if (keyType.containsAny(context = myTypeEvalContext)) return
+        if (!keyType.asUnionSequence().all { isDisjointFromStr(it, strType) }) return
+      }
+      PyTypeCheckerProblemReporter.report(holder, PyTypeCheckerSuppressionCode.BAD_ARGUMENT_TYPE, value,
+                                          PyPsiBundle.problemMessage("INSP.type.checker.unpack.expected.string.keys",
+                                                                     CodifiedParam.ofType(type, value, myTypeEvalContext)),
+                                          ProblemHighlightType.GENERIC_ERROR_OR_WARNING)
+    }
+
+    /**
+     * True when no instance of [type] can be a `str`.
+     * That is a final class, or a class with a disjoint base (PEP 800) that conflicts with `str`, such as `int` or `bytes`.
+     */
+    private fun isDisjointFromStr(type: PyType?, strType: PyClassType): Boolean {
+      if (type !is PyClassType || type.isDefinition) return false
+      if (match(strType, type, myTypeEvalContext) || match(type, strType, myTypeEvalContext)) return false
+      return isFinalClass(type.pyClass, myTypeEvalContext) || areDisjoint(strType, type, myTypeEvalContext)
+    }
+
+    /** The key type of [type] as `_typeshed.SupportsKeysAndGetItem` sees it, or `null` when it does not match the protocol. */
+    private fun mappingKeyType(type: PyType?, anchor: PsiElement): PyType? {
+      val converted = type.convertToType(SUPPORTS_KEYS_AND_GET_ITEM_QNAME, anchor, myTypeEvalContext) as? PyClassType ?: return null
+      return converted.typeArguments.firstOrNull()
+    }
+
+    /**
+     * Reports a target list with more than one starred target, at any nesting level.
+     * CPython rejects it at compile time, so the value type does not matter.
+     */
+    private fun checkStarredTargetCount(targetSeq: PySequenceExpression): Boolean {
+      val targets = targetSeq.elements
+      if (targets.count { it is PyStarExpression } > 1) {
+        PyTypeCheckerProblemReporter.report(holder, PyTypeCheckerSuppressionCode.BAD_UNPACKING, targetSeq,
+                                            PyPsiBundle.message("INSP.tuple.assignment.balance.only.one.starred.expression.allowed.in.assignment"))
+        return true
+      }
+      return targets.any { target ->
+        val nested = flattenParens((target as? PyStarExpression)?.expression ?: target)
+        (nested is PyTupleExpression || nested is PyListLiteralExpression) && checkStarredTargetCount(nested)
       }
     }
 
@@ -1791,11 +1875,9 @@ open class PyTypeCheckerInspection : PyInspection() {
       for (element in rhsTuple.elements) {
         if (element is PyStarExpression) {
           val operand = element.expression ?: return -1
-          val operandType = myTypeEvalContext.getType(operand)
-          if (operandType !is PyTupleType || operandType.isHomogeneous) {
-            return -1
-          }
-          count += operandType.elementCount
+          val operandCount = knownFixedTupleLength(myTypeEvalContext.getType(operand))
+          if (operandCount < 0) return -1
+          count += operandCount
         }
         else {
           count++
@@ -1806,14 +1888,11 @@ open class PyTypeCheckerInspection : PyInspection() {
 
     private fun checkUnpackBalance(
       targetCount: Int, starCount: Int, valueCount: Int,
-      balanceHighlight: PsiElement, starHighlight: PsiElement,
+      balanceHighlight: PsiElement,
       valueType: CodifiedParam,
     ): Boolean {
-      if (starCount > 1) {
-        PyTypeCheckerProblemReporter.report(holder, PyTypeCheckerSuppressionCode.BAD_UNPACKING, starHighlight,
-                                            PyPsiBundle.message("INSP.tuple.assignment.balance.only.one.starred.expression.allowed.in.assignment"))
-        return true
-      }
+      // checkStarredTargetCount reports a target list with several starred targets before the balance check.
+      if (starCount > 1) return true
       // A starred target absorbs any surplus, so it only constrains the minimum number of values.
       val expectedCount = if (starCount == 1) targetCount - 1 else targetCount
       val tooMany = starCount == 0 && expectedCount < valueCount
@@ -1830,8 +1909,8 @@ open class PyTypeCheckerInspection : PyInspection() {
     }
 
     private fun checkNestedUnpackingBalance(targets: Array<PyExpression>, assignedTupleType: PyTupleType) {
-      if (assignedTupleType.isHomogeneous) return
-      val count = assignedTupleType.elementCount
+      val count = knownFixedTupleLength(assignedTupleType)
+      if (count < 0) return
       val starIndex = targets.indexOfFirst { it is PyStarExpression }
       for (i in targets.indices) {
         if (i == starIndex) continue
@@ -1846,15 +1925,16 @@ open class PyTypeCheckerInspection : PyInspection() {
       }
     }
 
-    private fun checkUnpackingTargetBalance(targetSeq: PySequenceExpression, assignedTupleType: PyTupleType) {
-      if (assignedTupleType.isHomogeneous) return
-      val valueCount = assignedTupleType.elementCount
-      if (valueCount < 0) return
+    /** Checks the balance of [targetSeq] and of its nested target lists. Returns true when it reports a problem at the top level. */
+    private fun checkUnpackingTargetBalance(targetSeq: PySequenceExpression, assignedTupleType: PyTupleType): Boolean {
+      val valueCount = knownFixedTupleLength(assignedTupleType)
+      if (valueCount < 0) return false
       val targets = targetSeq.elements
       val starCount = targets.count { it is PyStarExpression }
       val valueType = CodifiedParam.ofType(assignedTupleType, targetSeq, myTypeEvalContext)
-      if (checkUnpackBalance(targets.size, starCount, valueCount, targetSeq, targetSeq, valueType)) return
+      if (checkUnpackBalance(targets.size, starCount, valueCount, targetSeq, valueType)) return true
       checkNestedUnpackingBalance(targets, assignedTupleType)
+      return false
     }
 
     private fun checkContextManagerValue(iteratedValue: PyExpression?, isAsync: Boolean) {
@@ -2327,5 +2407,7 @@ open class PyTypeCheckerInspection : PyInspection() {
     private val TIME_KEY = Key.create<Long>("PyTypeCheckerInspection.StartTime")
 
     private const val STRICT_UNION_COMBINATION_LIMIT: Int = 16
+
+    private const val SUPPORTS_KEYS_AND_GET_ITEM_QNAME: String = "_typeshed.$SUPPORTS_KEYS_AND_GET_ITEM"
   }
 }

@@ -17,8 +17,8 @@ import java.util.TreeMap
  * The painter creates the model only while the editor rounds the corners of the highlighting.
  * [BackgroundLayer] tells which backgrounds are rounded.
  * The painter adds one rectangle per background style. [paint] fills the styles from the bottom up.
- * One style gives one shape, also across visual lines. A rounded style fills one outline with antialiasing,
- * and a straight style fills its rectangles at the device pixels.
+ * One style gives one shape, also across visual lines. A straight style fills its rectangles at the device pixels.
+ * A rounded style fills its straight parts at the device pixels and its corners with antialiasing.
  * A box of a background after the end of a line is a shape of its own. [paintAfterLineEndBoxes] fills the boxes.
  * A background of a line extension is a straight rectangle of its own. [paint] fills it among the styles.
  * A rectangle that fills the line ends at the viewport edge, not at the clip edge.
@@ -323,7 +323,7 @@ internal class HighlighterVisualModel(
   ) {
     graphics.color = style.color
     if (style.isRounded) {
-      graphics.fill(BackgroundOutline.build(source, styleId, radius))
+      fillRounded(graphics, source, styleId, style.color, radius)
       return
     }
     for (index in 0 until source.size) {
@@ -331,6 +331,39 @@ internal class HighlighterVisualModel(
         continue
       }
       fillRow(graphics, source, index, style.color)
+    }
+  }
+
+  /**
+   * Fills the shape of [styleId] with its straight parts at the device pixels and its corners with antialiasing.
+   */
+  private fun fillRounded(
+    graphics: Graphics2D,
+    source: BackgroundRows,
+    styleId: Int,
+    color: Color,
+    radius: Double,
+  ) {
+    val device = DeviceGrid.of(graphics.transform)
+    if (device == null) {
+      graphics.fill(BackgroundOutline.build(source, styleId, radius))
+      return
+    }
+    val pieces = BackgroundOutline.split(source, styleId, radius, device)
+    val rectangles = pieces.rectangles
+    val rectangle = Rectangle2D.Double()
+    for (index in rectangles.indices step 4) {
+      rectangle.setRect(
+        rectangles[index],
+        rectangles[index + 1],
+        rectangles[index + 2] - rectangles[index],
+        rectangles[index + 3] - rectangles[index + 1],
+      )
+      EditorPainter.fillRectExact(graphics, rectangle, color)
+    }
+    graphics.color = color
+    for (corners in pieces.corners) {
+      graphics.fill(corners)
     }
   }
 

@@ -27,7 +27,7 @@ suspend fun PyProject.installToolPackage(requirement: String) {
   // The venv fixture has just set the interpreter, so wait until the snapshot holds it.
   EvoPyProjectModel.getInstance(project).awaitInterpreterOf(listOf(this))
   val interpreter = requireNotNull(getInterpreter()) { "No interpreter for ${baseDir}" }
-  val packageManager = PythonPackageManager.forPythonInterpreter(project, interpreter)
+  val packageManager = PythonPackageManager.forPythonInterpreter(interpreter)
   val spec = PythonRepositoryPackageSpecification(PyPiPackageRepository, PyRequirementParser.fromLine(requirement)!!)
   val installRequest = PythonPackageInstallRequest.ByRepositoryPythonPackageSpecifications(listOf(spec))
 

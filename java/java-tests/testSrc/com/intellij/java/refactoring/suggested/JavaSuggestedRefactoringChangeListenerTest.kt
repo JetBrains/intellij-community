@@ -5,37 +5,45 @@ import com.intellij.ide.highlighter.JavaFileType
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.command.executeCommand
-import com.intellij.openapi.fileTypes.FileType
 import com.intellij.psi.PsiElementFactory
 import com.intellij.psi.PsiJavaFile
 import com.intellij.psi.PsiLocalVariable
 import com.intellij.psi.util.descendantsOfType
 import com.intellij.psi.util.endOffset
-import com.intellij.refactoring.suggested.BaseSuggestedRefactoringChangeListenerTest
+import com.intellij.refactoring.suggested.suggestedRefactoringChangeListenerFixture
+import com.intellij.testFramework.fixtures.lightJavaProjectFixture
+import com.intellij.testFramework.junit5.TestApplication
+import org.junit.jupiter.api.Test
 
-class JavaSuggestedRefactoringChangeListenerTest : BaseSuggestedRefactoringChangeListenerTest() {
-  override val fileType: FileType
-    get() = JavaFileType.INSTANCE
+@TestApplication
+class JavaSuggestedRefactoringChangeListenerTest {
+  companion object {
+    private val projectFixture = lightJavaProjectFixture()
+  }
 
+  private val listener by suggestedRefactoringChangeListenerFixture(projectFixture, JavaFileType.INSTANCE)
+
+  @Test
   fun test1() {
-    setup("class A { void foo(<caret>) {} }")
+    listener.setup("class A { void foo(<caret>) {} }")
 
-    perform("editingStarted: 'void foo() '") { myFixture.type("S") }
+    listener.perform("editingStarted: 'void foo() '") { fixture.type("S") }
 
-    perform {
-      myFixture.type("tring")
+    listener.perform {
+      fixture.type("tring")
     }
-    perform("nextSignature: 'void foo(String p) '") {
-      myFixture.type(" p")
+    listener.perform("nextSignature: 'void foo(String p) '") {
+      fixture.type(" p")
     }
 
-    perform {
-      perform { myFixture.type(", ") }
+    listener.perform {
+      listener.perform { fixture.type(", ") }
     }
   }
 
+  @Test
   fun testAddImport() {
-    setup(
+    listener.setup(
       """
         import foo.Bar;
         class A {
@@ -44,54 +52,56 @@ class JavaSuggestedRefactoringChangeListenerTest : BaseSuggestedRefactoringChang
       """.trimIndent()
     )
 
-    perform("editingStarted: 'void foo() '") {
-      myFixture.type("ArrayList")
+    listener.perform("editingStarted: 'void foo() '") {
+      fixture.type("ArrayList")
     }
-    perform {
+    listener.perform {
       addImport("java.util")
     }
-    perform("nextSignature: 'void foo(ArrayList<String> p) '") {
-      myFixture.type("<String> p")
+    listener.perform("nextSignature: 'void foo(ArrayList<String> p) '") {
+      fixture.type("<String> p")
     }
-    perform("nextSignature: 'void foo(ArrayList<String> p, Object p2) '") {
-      myFixture.type(", Object p2")
+    listener.perform("nextSignature: 'void foo(ArrayList<String> p, Object p2) '") {
+      fixture.type(", Object p2")
     }
   }
 
+  @Test
   fun testCommentTyping() {
-    setup("class A { void foo(<caret>) {} }")
+    listener.setup("class A { void foo(<caret>) {} }")
 
-    perform("editingStarted: 'void foo() '", "nextSignature: 'void foo(Object p1) '") {
-      myFixture.type("Object p1")
+    listener.perform("editingStarted: 'void foo() '", "nextSignature: 'void foo(Object p1) '") {
+      fixture.type("Object p1")
     }
 
-    perform("inconsistentState") {
-      myFixture.type("/*")
+    listener.perform("inconsistentState") {
+      fixture.type("/*")
     }
 
-    perform("inconsistentState") {
-      myFixture.type(" this is comment for parameter")
+    listener.perform("inconsistentState") {
+      fixture.type(" this is comment for parameter")
     }
 
-    perform("nextSignature: 'void foo(Object p1/* this is comment for parameter*/) '") {
-      myFixture.type("*/")
+    listener.perform("nextSignature: 'void foo(Object p1/* this is comment for parameter*/) '") {
+      fixture.type("*/")
     }
 
-    perform("inconsistentState") {
-      myFixture.type(", int p2 /*")
+    listener.perform("inconsistentState") {
+      fixture.type(", int p2 /*")
     }
 
-    perform("inconsistentState") {
-      myFixture.type("this is comment for another parameter")
+    listener.perform("inconsistentState") {
+      fixture.type("this is comment for another parameter")
     }
 
-    perform("nextSignature: 'void foo(Object p1/* this is comment for parameter*/, int p2 /*this is comment for another parameter*/) '") {
-      myFixture.type("*/")
+    listener.perform("nextSignature: 'void foo(Object p1/* this is comment for parameter*/, int p2 /*this is comment for another parameter*/) '") {
+      fixture.type("*/")
     }
   }
 
+  @Test
   fun testNewMethod() {
-    setup(
+    listener.setup(
       """
         class C {
             <caret>
@@ -99,13 +109,14 @@ class JavaSuggestedRefactoringChangeListenerTest : BaseSuggestedRefactoringChang
       """.trimIndent()
     )
 
-    perform {
-      myFixture.type("public void foo_bar123(int _p1)")
+    listener.perform {
+      fixture.type("public void foo_bar123(int _p1)")
     }
   }
 
+  @Test
   fun testNewLocalWithNewUsage() {
-    setup(
+    listener.setup(
       """
         class A {
             void foo() {
@@ -115,120 +126,126 @@ class JavaSuggestedRefactoringChangeListenerTest : BaseSuggestedRefactoringChang
       """.trimIndent()
     )
 
-    perform {
-      myFixture.type("int a = 10;")
-      myFixture.performEditorAction(IdeActions.ACTION_EDITOR_ENTER)
-      myFixture.type("x(a);")
+    listener.perform {
+      fixture.type("int a = 10;")
+      fixture.performEditorAction(IdeActions.ACTION_EDITOR_ENTER)
+      fixture.type("x(a);")
     }
 
-    perform("editingStarted: 'a'", "nextSignature: 'abcd'") {
+    listener.perform("editingStarted: 'a'", "nextSignature: 'abcd'") {
       val variable = file.descendantsOfType<PsiLocalVariable>().first()
-      myFixture.editor.caretModel.moveToOffset(variable.nameIdentifier!!.endOffset)
-      myFixture.type("bcd")
+      fixture.editor.caretModel.moveToOffset(variable.nameIdentifier!!.endOffset)
+      fixture.type("bcd")
     }
   }
 
+  @Test
   fun testAddThrowsList() {
-    setup("class A { void foo() <caret>{} }")
+    listener.setup("class A { void foo() <caret>{} }")
 
-    perform("editingStarted: 'void foo() '") {
-      myFixture.type("thr")
+    listener.perform("editingStarted: 'void foo() '") {
+      fixture.type("thr")
     }
 
-    perform("nextSignature: 'void foo() throws IO'") {
-      myFixture.type("ows IO")
+    listener.perform("nextSignature: 'void foo() throws IO'") {
+      fixture.type("ows IO")
     }
 
-    perform("nextSignature: 'void foo() throws IOException'") {
-      myFixture.type("Exception")
+    listener.perform("nextSignature: 'void foo() throws IOException'") {
+      fixture.type("Exception")
     }
   }
 
+  @Test
   fun testAddMethodAnnotation1() {
-    setup("""
+    listener.setup("""
       interface I { 
           <caret>String foo(); 
       }
     """.trimIndent())
 
-    perform("editingStarted: 'String foo()'", "nextSignature: '@Nullable String foo()'") {
-      myFixture.type("@Nullable ")
+    listener.perform("editingStarted: 'String foo()'", "nextSignature: '@Nullable String foo()'") {
+      fixture.type("@Nullable ")
     }
   }
 
+  @Test
   fun testAddMethodAnnotation2() {
-    setup("""
+    listener.setup("""
       interface I {<caret> 
           String foo(); 
       }
     """.trimIndent())
 
-    perform("editingStarted: 'String foo()'", "nextSignature: 'String foo()'") {
-      myFixture.performEditorAction(IdeActions.ACTION_EDITOR_ENTER)
+    listener.perform("editingStarted: 'String foo()'", "nextSignature: 'String foo()'") {
+      fixture.performEditorAction(IdeActions.ACTION_EDITOR_ENTER)
     }
 
-    perform("nextSignature: '@Null\\n    String foo()'") {
-      myFixture.type("@Null")
+    listener.perform("nextSignature: '@Null\\n    String foo()'") {
+      fixture.type("@Null")
     }
 
-    perform("nextSignature: '@Nullable\\n    String foo()'") {
-      myFixture.type("able")
+    listener.perform("nextSignature: '@Nullable\\n    String foo()'") {
+      fixture.type("able")
     }
   }
 
+  @Test
   fun testRemoveMethodAnnotation() {
-    setup("""
+    listener.setup("""
       interface I {
       <caret>    @Nullable
           String foo(); 
       }
     """.trimIndent())
 
-    perform("editingStarted: '@Nullable\\n    String foo()'", "nextSignature: 'String foo()'") {
-      myFixture.performEditorAction(IdeActions.ACTION_EDITOR_MOVE_CARET_DOWN_WITH_SELECTION)
-      myFixture.performEditorAction(IdeActions.ACTION_EDITOR_DELETE)
+    listener.perform("editingStarted: '@Nullable\\n    String foo()'", "nextSignature: 'String foo()'") {
+      fixture.performEditorAction(IdeActions.ACTION_EDITOR_MOVE_CARET_DOWN_WITH_SELECTION)
+      fixture.performEditorAction(IdeActions.ACTION_EDITOR_DELETE)
     }
   }
 
+  @Test
   fun testAddMethodAnnotation3() {
-    setup("""
+    listener.setup("""
       interface I {
           <caret>
           String foo(); 
       }
     """.trimIndent())
 
-    perform("editingStarted: 'String foo()'", "nextSignature: '@\\n    String foo()'") {
-      myFixture.type("@")
+    listener.perform("editingStarted: 'String foo()'", "nextSignature: '@\\n    String foo()'") {
+      fixture.type("@")
     }
 
-    perform("nextSignature: '@Nullable\\n    String foo()'") {
-      myFixture.type("Nullable")
+    listener.perform("nextSignature: '@Nullable\\n    String foo()'") {
+      fixture.type("Nullable")
     }
   }
 
+  @Test
   fun testChangeVisibility() {
-    setup("""
+    listener.setup("""
       class C {
           @NotNull
           <caret><selection>public</selection> String foo(){} 
       }
     """.trimIndent())
 
-    perform("editingStarted: '@NotNull\\n    public String foo()'", "inconsistentState") {
-      myFixture.type("p")
+    listener.perform("editingStarted: '@NotNull\\n    public String foo()'", "inconsistentState") {
+      fixture.type("p")
     }
 
-    perform("nextSignature: '@NotNull\\n    protected String foo()'") {
-      myFixture.type("rotected")
+    listener.perform("nextSignature: '@NotNull\\n    protected String foo()'") {
+      fixture.type("rotected")
     }
   }
 
   private fun addImport(packageName: String) {
     executeCommand {
       runWriteAction {
-        val importStatement = PsiElementFactory.getInstance(project).createImportStatementOnDemand(packageName)
-        (file as PsiJavaFile).importList!!.add(importStatement)
+        val importStatement = PsiElementFactory.getInstance(listener.project).createImportStatementOnDemand(packageName)
+        (listener.file as PsiJavaFile).importList!!.add(importStatement)
       }
     }
   }

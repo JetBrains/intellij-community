@@ -165,7 +165,7 @@ abstract class RenameKotlinPsiProcessor : RenamePsiElementProcessor() {
 
     protected var PsiElement.ambiguousImportUsages: List<UsageInfo>? by UserDataProperty(Key.create("AMBIGUOUS_IMPORT_USAGES"))
 
-    protected fun UsageInfo.importState(): ImportState {
+    internal fun UsageInfo.importState(): ImportState {
         val ref = reference as? PsiPolyVariantReference ?: return ImportState.NOT_IMPORT
         val refElement = ref.element
         if (refElement.parents.none { it is KtImportDirective && !it.isAllUnder || it is PsiImportStatementBase && !it.isOnDemand }) {
@@ -178,7 +178,7 @@ abstract class RenameKotlinPsiProcessor : RenamePsiElementProcessor() {
             ImportState.SIMPLE
     }
 
-    protected enum class ImportState {
+    internal enum class ImportState {
         NOT_IMPORT, AMBIGUOUS, SIMPLE
     }
 

@@ -1,7 +1,9 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.run;
 
+import com.intellij.python.sdk.backend.PythonInterpreterExtKt;
 import com.google.common.collect.Lists;
+import com.intellij.python.sdk.backend.PythonInterpreter;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Output;
 import com.intellij.execution.OutputListener;
@@ -25,7 +27,6 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts.TabTitle;
@@ -42,14 +43,10 @@ import com.jetbrains.python.PythonPluginDisposable;
 import com.jetbrains.python.configuration.PyModuleInterpreterReader;
 import com.jetbrains.python.console.PydevConsoleRunnerUtil;
 import com.jetbrains.python.run.target.HelpersAwareTargetEnvironmentRequest;
-import com.jetbrains.python.sdk.PyRemoteSdkAdditionalDataMarker;
 import com.jetbrains.python.sdk.PythonEnvUtil;
-import com.jetbrains.python.sdk.legacy.PythonSdkUtil;
-import com.jetbrains.python.target.PyTargetAwareAdditionalData;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
@@ -58,7 +55,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
-
 import static com.intellij.execution.target.value.TargetEnvironmentFunctions.constant;
 import static com.intellij.execution.target.value.TargetEnvironmentFunctions.targetPath;
 
@@ -82,7 +78,7 @@ public class PythonTask {
   private static final long TIME_TO_WAIT_PROCESS_STOP = 2000L;
   private static final int TIMEOUT_TO_WAIT_FOR_TASK = 30000;
   protected final @NotNull Module myModule;
-  protected final @NotNull Sdk mySdk;
+  protected final @NotNull PythonInterpreter myInterpreter;
   private String myWorkingDirectory;
   private String myRunnerScript;
   private HelperPackage myHelper = null;
@@ -98,21 +94,21 @@ public class PythonTask {
   private Runnable myAfterCompletion;
 
   public PythonTask(@NotNull Module module, @TabTitle String runTabTitle) throws ExecutionException {
-    this(module, runTabTitle, requirePythonSdk(module));
+    this(module, runTabTitle, requirePythonInterpreter(module));
   }
 
-  protected static @NotNull Sdk requirePythonSdk(@Nullable Module module) throws ExecutionException {
-    Sdk sdk = PyModuleInterpreterReader.findModuleSdkIfReady(module);
-    if (sdk == null) {
+  protected static @NotNull PythonInterpreter requirePythonInterpreter(@Nullable Module module) throws ExecutionException {
+    PythonInterpreter interpreter = PyModuleInterpreterReader.findModuleInterpreterIfReady(module);
+    if (interpreter == null) {
       throw new ExecutionException(PyBundle.message("python.task.cannot.find.python.interpreter.for.selected.module"));
     }
-    return sdk;
+    return interpreter;
   }
 
-  public PythonTask(@NotNull Module module, @TabTitle String runTabTitle, @NotNull Sdk sdk) {
+  public PythonTask(@NotNull Module module, @TabTitle String runTabTitle, @NotNull PythonInterpreter interpreter) {
     myModule = module;
     myRunTabTitle = runTabTitle;
-    mySdk = sdk;
+    myInterpreter = interpreter;
   }
 
   public String getWorkingDirectory() {
@@ -135,7 +131,7 @@ public class PythonTask {
   }
 
   /**
-   * Add parameter and treat it as path. It would be converted to the target path is {@link #mySdk} is target-based
+   * Add parameter and treat it as path. It is converted to the target path when {@link #myInterpreter} is on a target
    */
   public final void addPathParameter(@NotNull Path path) {
     myPathParameterIndices.add(myParameters.size());
@@ -169,28 +165,14 @@ public class PythonTask {
     }
     PydevConsoleRunnerUtil.setCorrectStdOutEncoding(commandLine); // To support UTF-8 output
 
-    ProcessHandler handler;
-    var additionalData = mySdk.getSdkAdditionalData();
-    if (additionalData instanceof PyRemoteSdkAdditionalDataMarker) {
-      // Either legacy remote or target SDK
-      if (additionalData instanceof PyTargetAwareAdditionalData) {
-        handler = executeTargetBasedProcess((PyTargetAwareAdditionalData)additionalData);
-      }
-      else {
-        throw new IllegalArgumentException("Unknown additional data " + additionalData);
-      }
-    }
-    else {
-      handler = executeLegacyLocalProcess(commandLine);
-    }
-    return handler;
+    return PythonInterpreterExtKt.isOnTarget(myInterpreter) ? executeTargetBasedProcess() : executeLegacyLocalProcess(commandLine);
   }
 
   /**
-   * Runs task on targets API based SDK.
+   * Runs task on the target of the interpreter.
    * Uploads all path-based parameters ({@link #myPathParameterIndices}), runs command and downloads everything back
    */
-  private @NotNull ProcessHandler executeTargetBasedProcess(@NotNull PyTargetAwareAdditionalData data) throws ExecutionException {
+  private @NotNull ProcessHandler executeTargetBasedProcess() throws ExecutionException {
     var helper = myHelper;
     var script = myRunnerScript;
     assert (helper == null) != (script == null) : "Either script or helper must be set but not both";
@@ -198,8 +180,7 @@ public class PythonTask {
     TargetEnvironmentRequest request;
 
     var uploadedPaths = new HashMap<@NotNull Path, @NotNull Function<TargetEnvironment, String>>();
-    var helpersAwareRequest = PythonInterpreterTargetEnvironmentFactory.findPythonTargetInterpreter(mySdk, myModule.getProject());
-    assert helpersAwareRequest != null : data.getClass() + " is not supported";
+    var helpersAwareRequest = PythonInterpreterExtKt.targetEnvironmentRequest(myInterpreter);
     if (helper != null) {
       // Special shortcut for helper: use it instead of creating environment request manually
       helpersAwareRequest.preparePyCharmHelpers();
@@ -235,7 +216,7 @@ public class PythonTask {
 
     setupPythonPath(request, execution);
 
-    var commandLine = PythonScripts.buildTargetedCommandLine(execution, environment, mySdk, new ArrayList<>());
+    var commandLine = PythonScripts.buildTargetedCommandLine(execution, environment, myInterpreter, new ArrayList<>());
 
     for (var volume : environment.getUploadVolumes().values()) {
       try {
@@ -282,20 +263,20 @@ public class PythonTask {
   }
 
   protected void setupPythonPath(@NotNull TargetEnvironmentRequest request, @NotNull PythonExecution pythonExecution) {
-    setupPythonPath(myModule, mySdk, request, pythonExecution, true, true);
+    setupPythonPath(myModule, myInterpreter, request, pythonExecution, true, true);
   }
 
-  protected static void setupPythonPath(@NotNull Module module, @NotNull Sdk sdk, @NotNull TargetEnvironmentRequest request,
+  protected static void setupPythonPath(@NotNull Module module, @NotNull PythonInterpreter interpreter, @NotNull TargetEnvironmentRequest request,
                                         @NotNull PythonExecution pythonExecution, boolean addContent, boolean addSource) {
-    PythonCommandLineState.buildPythonPath(module.getProject(), module, pythonExecution, sdk, null, false, addContent,
-                                           addSource, false, request);
+    PythonCommandLineState.buildPythonPath(module, pythonExecution, interpreter, null, false,
+                                           addContent, addSource, false, request);
   }
 
   protected void customizePythonExecution(@NotNull HelpersAwareTargetEnvironmentRequest request, @NotNull PythonExecution pythonExecution,
                                           @NotNull Module module) { }
 
   /**
-   * Utility fun for {@link #executeTargetBasedProcess(PyTargetAwareAdditionalData)}, see usage
+   * Utility fun for {@link #executeTargetBasedProcess()}, see usage
    */
   private static @NotNull Function<TargetEnvironment, String> addDirToUploadList(@NotNull TargetEnvironmentRequest request,
                                                                         @NotNull Map<@NotNull Path, @NotNull Function<TargetEnvironment, String>> uploadedPaths,
@@ -332,17 +313,14 @@ public class PythonTask {
       cmd.setWorkDirectory(myWorkingDirectory);
     }
 
-    String homePath = mySdk.getHomePath();
-    if (homePath != null) {
-      homePath = FileUtil.toSystemDependentName(homePath);
-    }
+    String homePath = FileUtil.toSystemDependentName(PythonInterpreterExtKt.getBinaryPathString(myInterpreter));
 
     PythonCommandLineState.createStandardGroups(cmd);
     ParamsGroup scriptParams = cmd.getParametersList().getParamsGroup(PythonCommandLineState.GROUP_SCRIPT);
     assert scriptParams != null;
 
     Map<String, String> env = cmd.getEnvironment();
-    if (!SystemInfo.isWindows && !PythonSdkUtil.isRemote(mySdk)) {
+    if (!SystemInfo.isWindows && !PythonInterpreterExtKt.isOnTarget(myInterpreter)) {
       cmd.setExePath("bash");
       ParamsGroup bashParams = cmd.getParametersList().addParamsGroupAt(0, "Bash");
       bashParams.addParameter("-cl");
@@ -373,9 +351,7 @@ public class PythonTask {
     }
 
     PythonEnvUtil.setPythonUnbuffered(env);
-    if (homePath != null) {
-      PythonEnvUtil.resetHomePathChanges(homePath, env);
-    }
+    PythonEnvUtil.resetHomePathChanges(homePath, env);
 
     List<String> pythonPath = setupPythonPath();
     PythonCommandLineState.initPythonPath(cmd, true, pythonPath, homePath);
@@ -388,7 +364,7 @@ public class PythonTask {
   }
 
   protected List<String> setupPythonPath(final boolean addContent, final boolean addSource) {
-    final List<String> pythonPath = Lists.newArrayList(PythonCommandLineState.getAddedPaths(mySdk));
+    final List<String> pythonPath = Lists.newArrayList(PythonCommandLineState.getAddedPaths(myInterpreter));
     pythonPath.addAll(PythonCommandLineState.collectPythonPath(myModule, addContent, addSource));
     return pythonPath;
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.impl.modcommand;
 
 import com.intellij.analysis.AnalysisBundle;
@@ -116,7 +116,6 @@ import com.intellij.refactoring.ui.ConflictsDialog;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -415,13 +414,11 @@ public class ModCommandExecutorImpl extends ModCommandBatchExecutorImpl {
 
   private boolean executeShowConflicts(@NotNull ActionContext context, @NotNull ModShowConflicts conflicts, @Nullable Editor editor,
                                        @NotNull ModCommand tail) {
-    MultiMap<PsiElement, String> conflictData = new MultiMap<>(new LinkedHashMap<>());
-    conflicts.conflicts().forEach((e, c) -> conflictData.put(e, c.messages()));
-    if (conflictData.isEmpty()) return true;
+    if (conflicts.isEmpty()) return true;
     ActionContextPointer pointer = new ActionContextPointer(context);
     Project project = context.project();
     var conflictsDialog =
-      new ConflictsDialog(project, conflictData, () -> {
+      new ConflictsDialog(project, conflicts.conflictsByPlace(), () -> {
         ActionContext restored = pointer.restoreAndCheck(editor);
         if (restored != null) {
           doExecuteInteractively(restored, tail, ModCommand.nop(), editor);

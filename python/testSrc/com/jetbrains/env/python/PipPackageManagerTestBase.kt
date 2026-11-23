@@ -2,6 +2,7 @@
 package com.jetbrains.env.python
 
 import com.intellij.openapi.util.Disposer
+import com.intellij.python.sdk.backend.PythonInterpreter
 import com.intellij.openapi.util.use
 import com.intellij.testFramework.ProjectRule
 import com.intellij.testFramework.common.timeoutRunBlocking
@@ -27,7 +28,7 @@ abstract class PipPackageManagerTestBase {
   @Test
   fun testList(): Unit =  timeoutRunBlocking(5.minutes) {
     disposableFixture().get().use {
-      PipPythonPackageManager(projectRule.project, sdkRule.interpreter).apply {
+      PipPythonPackageManager(sdkRule.interpreter).apply {
         Disposer.register(it, this)
         assertThat("No packages return", reloadPackages().successOrNull, not(empty()))
         assertThat("Installed packages shouldn't be empty", listInstalledPackages(), not(empty()))

@@ -18,21 +18,19 @@ import com.intellij.mcpserver.util.projectDirectory
 import com.intellij.mcpserver.util.relativizeIfPossible
 import com.intellij.mcpserver.util.renderDirectoryTree
 import com.intellij.mcpserver.util.resolveInProject
-import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.backgroundWriteAction
 import com.intellij.openapi.application.readAndEdtWriteAction
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.fileEditor.FileEditorOpenRequest
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.findOrCreateFile
 import com.intellij.openapi.vfs.isFile
 import com.intellij.openapi.vfs.toNioPathOrNull
 import com.intellij.openapi.vfs.transformer.TextPresentationTransformers
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.currentCoroutineContext
-import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.io.IOException
 import kotlinx.serialization.EncodeDefault
@@ -103,9 +101,7 @@ class FileToolset : McpToolset {
     if (file == null || !file.exists() || !file.isFile) mcpFail("File $filePath doesn't exist or can't be opened")
 
     val fileEditorManager = project.serviceAsync<FileEditorManager>()
-    withContext(Dispatchers.EDT) {
-      fileEditorManager.openFile(file, true)
-    }
+    fileEditorManager.openFile(file, FileEditorOpenRequest.withFocus(true))
   }
 
   @McpToolHints(readOnlyHint = TRUE, openWorldHint = FALSE)

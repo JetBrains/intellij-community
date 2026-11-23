@@ -24,7 +24,9 @@ import static com.intellij.openapi.util.NlsContexts.DialogMessage;
  * A processor that does ask overrides the one method which holds its question. Do not repeat the body of the
  * interactive method there. Give that method a parameter for the question, and call it from the override with
  * the default answer.
+ * @deprecated Use {@link com.intellij.refactoring.modplan.rename.ModPlanBridgeRenameProvider}
  */
+@Deprecated(forRemoval = true)
 @ApiStatus.Experimental
 public interface DelegatingHeadlessRenamePsiElementProcessor extends HeadlessRenamePsiElementProcessor {
   @Override

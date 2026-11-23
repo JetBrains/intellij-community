@@ -65,7 +65,7 @@ def java_glob(pattern, what):
     """Compiles one pattern of the subset. `what` names the pattern in the error, such as an attribute."""
     alternatives, problem = _alternatives(pattern)
     if problem:
-        fail("%s: glob \"%s\": the dev-dist plan supports only *, ** and {a,b}, but the pattern has %s" % (what, pattern, problem))
+        fail("%s: glob \"%s\": the distribution plan supports only *, ** and {a,b}, but the pattern has %s" % (what, pattern, problem))
     return struct(pattern = pattern, alternatives = alternatives)
 
 def _token_prefix(tokens):

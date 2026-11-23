@@ -17,7 +17,7 @@ import kotlinx.coroutines.runBlocking
 import org.jetbrains.kotlin.idea.KotlinIcons
 import org.jetbrains.kotlin.idea.core.script.configurations.KotlinScriptEntitySource
 import org.jetbrains.kotlin.idea.core.script.configurations.KotlinScriptService
-import org.jetbrains.kotlin.idea.core.script.definitions.ScriptDefinitionsModificationTracker
+import org.jetbrains.kotlin.idea.core.script.definitions.ScriptDefinitionProviderImpl
 import org.jetbrains.kotlin.idea.core.script.getOrCreateScriptConfigurationId
 import org.jetbrains.kotlin.idea.core.script.modules.KotlinScriptEntityProvider
 import org.jetbrains.kotlin.idea.core.script.modules.modifyKotlinScriptEntity
@@ -322,7 +322,7 @@ class KotlinFirScriptStructureViewTest : KotlinLightCodeInsightFixtureTestCase()
             },
             testRootDisposable,
         )
-        ScriptDefinitionsModificationTracker.getInstance(project).incModificationCount()
+        runBlocking { ScriptDefinitionProviderImpl.getInstance(project).awaitLoading() }
     }
 
     private fun configureScript(fileName: String): PsiFile {

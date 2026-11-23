@@ -464,8 +464,8 @@ object GHGQLRequests {
         withOperationName("get review threads")
       }
 
-    private class ThreadsConnection(pageInfo: GraphQLCursorPageInfoDTO, nodes: List<GHPullRequestReviewThread> = listOf())
-      : GraphQLConnectionDTO<GHPullRequestReviewThread>(pageInfo, nodes)
+    private class ThreadsConnection(pageInfo: GraphQLCursorPageInfoDTO, nodes: List<GHPullRequestReviewThread?> = listOf())
+      : GraphQLConnectionDTO<GHPullRequestReviewThread>(pageInfo, nodes.filterNotNull())
 
     fun commits(
       repository: GHRepositoryCoordinates,

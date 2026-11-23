@@ -5,7 +5,7 @@ package com.jetbrains.python
 
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.python.sdk.backend.PythonInterpreter
-import com.intellij.python.sdk.backend.getSdkAPI
+import com.intellij.python.sdk.backend.flavor
 import com.jetbrains.python.sdk.PythonSdkAdditionalData
 import com.jetbrains.python.sdk.flavors.conda.CondaEnvSdkFlavor
 import org.jetbrains.annotations.ApiStatus
@@ -17,5 +17,4 @@ val Sdk.isCondaVirtualEnv: Boolean get() = (sdkAdditionalData as? PythonSdkAddit
 
 @get:ApiStatus.Internal
 val PythonInterpreter.isCondaVirtualEnv: Boolean
-  @Suppress("DEPRECATION") // The flavor lives in the SDK additional data.
-  get() = getSdkAPI().isCondaVirtualEnv
+  get() = flavor is CondaEnvSdkFlavor

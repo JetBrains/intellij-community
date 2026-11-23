@@ -60,7 +60,7 @@
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>exec-maven-plugin</artifactId>
                 <configuration>
-                    <mainClass>MainKt</mainClass>
+                    <mainClass>org.testcase.MainKt</mainClass>
                 </configuration>
             </plugin>
         </plugins>

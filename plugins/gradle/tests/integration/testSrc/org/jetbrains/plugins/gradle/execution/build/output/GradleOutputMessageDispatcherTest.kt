@@ -24,30 +24,35 @@ import com.intellij.build.output.BuildOutputText
 import com.intellij.execution.process.ProcessOutputType
 import com.intellij.platform.testFramework.assertion.collectionAssertion.CollectionAssertions.assertEqualsUnordered
 import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.fixture.testFixture
 import org.jetbrains.plugins.gradle.execution.build.output.GradleOutputDispatcherFactory.GradleOutputMessageDispatcher
 import org.jetbrains.plugins.gradle.execution.build.output.GradleOutputDispatcherFactory.TaskNameId
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Assumptions.assumeFalse
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedClass
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.Arguments
 import org.junit.jupiter.params.provider.MethodSource
-import org.junit.jupiter.params.provider.ValueSource
 import org.junit.jupiter.api.Timeout
+import org.junit.jupiter.params.provider.ValueSource
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.function.Consumer
+import kotlin.booleanArrayOf
 
 @TestApplication
 @ParameterizedClass
-@ValueSource(booleans = [true, false])
-class GradleOutputMessageDispatcherTest(private val useSingleBuildConsole: Boolean) {
+@ValueSource(booleans = [false, true])
+class GradleOutputMessageDispatcherTest(useSingleConsole: Boolean) {
 
-  private class TestSettingsProvider(val useSingleBuildConsole: Boolean) : BuildViewSettingsProvider {
-    override fun isSingleBuildConsoleView(): Boolean = useSingleBuildConsole
+  private val settings: BuildViewSettingsProvider by testFixture {
+    initialized(object : BuildViewSettingsProvider {
+      override fun isSingleBuildConsoleView(): Boolean = useSingleConsole
+    }) {}
   }
 
   @Test
@@ -60,7 +65,7 @@ class GradleOutputMessageDispatcherTest(private val useSingleBuildConsole: Boole
 
     val parser = RecordingBuildOutputParser()
     val listener = RecordingBuildProgressListener()
-    GradleOutputMessageDispatcher(buildId, listener, listOf(parser), TestSettingsProvider(useSingleBuildConsole))
+    GradleOutputMessageDispatcher(buildId, listener, listOf(parser), settings)
       .use { dispatcher ->
         dispatcher.notifyBuildEvent(buildId, startBuildEvent)
         dispatcher.notifyBuildEvent(buildId, startEvent)
@@ -77,8 +82,8 @@ class GradleOutputMessageDispatcherTest(private val useSingleBuildConsole: Boole
       expectedEvents {
         root {
           event(startBuildEvent)
-          outputEvent("> Task :task\n")
-          outputEvent("task output\n")
+          rootOutput("> Task :task\n")
+          rootOutput("task output\n")
           event(finishBuildEvent)
         }
         node(buildId) {
@@ -106,7 +111,7 @@ class GradleOutputMessageDispatcherTest(private val useSingleBuildConsole: Boole
 
     val parser = RecordingBuildOutputParser()
     val listener = RecordingBuildProgressListener()
-    GradleOutputMessageDispatcher(buildId, listener, listOf(parser), TestSettingsProvider(useSingleBuildConsole))
+    GradleOutputMessageDispatcher(buildId, listener, listOf(parser), settings)
       .use { dispatcher ->
         dispatcher.notifyBuildEvent(buildId, startBuildEvent)
         dispatcher.notifyBuildEvent(buildId, startEvent1)
@@ -128,10 +133,10 @@ class GradleOutputMessageDispatcherTest(private val useSingleBuildConsole: Boole
       expectedEvents {
         root {
           event(startBuildEvent)
-          outputEvent("> Task :task1\n")
-          outputEvent("task1 output\n")
-          outputEvent("> Task :task2\n")
-          outputEvent("task2 output\n")
+          rootOutput("> Task :task1\n")
+          rootOutput("task1 output\n")
+          rootOutput("> Task :task2\n")
+          rootOutput("task2 output\n")
           event(finishBuildEvent)
         }
         node(buildId) {
@@ -163,7 +168,7 @@ class GradleOutputMessageDispatcherTest(private val useSingleBuildConsole: Boole
 
     val parser = RecordingBuildOutputParser()
     val listener = RecordingBuildProgressListener()
-    GradleOutputMessageDispatcher(buildId, listener, listOf(parser), TestSettingsProvider(useSingleBuildConsole))
+    GradleOutputMessageDispatcher(buildId, listener, listOf(parser), settings)
       .use { dispatcher ->
         dispatcher.notifyBuildEvent(buildId, startBuildEvent)
         dispatcher.notifyBuildEvent(buildId, startEvent)
@@ -180,8 +185,8 @@ class GradleOutputMessageDispatcherTest(private val useSingleBuildConsole: Boole
       expectedEvents {
         root {
           event(startBuildEvent)
-          outputEvent("> Task :task\n")
-          outputEvent("output after finish event\n")
+          rootOutput("> Task :task\n")
+          rootOutput("output after finish event\n")
           event(finishBuildEvent)
         }
         node(buildId) {
@@ -207,7 +212,7 @@ class GradleOutputMessageDispatcherTest(private val useSingleBuildConsole: Boole
 
     val parser = RecordingBuildOutputParser()
     val listener = RecordingBuildProgressListener()
-    GradleOutputMessageDispatcher(buildId, listener, listOf(parser), TestSettingsProvider(useSingleBuildConsole))
+    GradleOutputMessageDispatcher(buildId, listener, listOf(parser), settings)
       .use { dispatcher ->
         dispatcher.notifyBuildEvent(buildId, startBuildEvent)
         dispatcher.notifyBuildEvent(buildId, startEvent)
@@ -243,7 +248,7 @@ class GradleOutputMessageDispatcherTest(private val useSingleBuildConsole: Boole
 
     val parser = RecordingBuildOutputParser()
     val listener = RecordingBuildProgressListener()
-    GradleOutputMessageDispatcher(buildId, listener, listOf(parser), TestSettingsProvider(useSingleBuildConsole))
+    GradleOutputMessageDispatcher(buildId, listener, listOf(parser), settings)
       .use { dispatcher ->
         dispatcher.notifyBuildEvent(buildId, startBuildEvent)
         dispatcher.notifyBuildEvent(buildId, startEvent1)
@@ -265,10 +270,10 @@ class GradleOutputMessageDispatcherTest(private val useSingleBuildConsole: Boole
       expectedEvents {
         root {
           event(startBuildEvent)
-          outputEvent("> Task :task\n")
-          outputEvent("first run\n")
-          outputEvent("> Task :task\n")
-          outputEvent("second run\n")
+          rootOutput("> Task :task\n")
+          rootOutput("first run\n")
+          rootOutput("> Task :task\n")
+          rootOutput("second run\n")
           event(finishBuildEvent)
         }
         node(buildId) {
@@ -298,7 +303,7 @@ class GradleOutputMessageDispatcherTest(private val useSingleBuildConsole: Boole
 
     val parser = RecordingBuildOutputParser()
     val listener = RecordingBuildProgressListener()
-    GradleOutputMessageDispatcher(buildId, listener, listOf(parser), TestSettingsProvider(useSingleBuildConsole))
+    GradleOutputMessageDispatcher(buildId, listener, listOf(parser), settings)
       .use { dispatcher ->
         dispatcher.notifyBuildEvent(buildId, startBuildEvent)
         dispatcher.notifyTextAvailable("root output\n", ProcessOutputType.STDOUT)
@@ -312,7 +317,7 @@ class GradleOutputMessageDispatcherTest(private val useSingleBuildConsole: Boole
       expectedEvents {
         root {
           event(startBuildEvent)
-          outputEvent("root output\n")
+          rootOutput("root output\n")
           event(finishBuildEvent)
         }
       },
@@ -330,7 +335,7 @@ class GradleOutputMessageDispatcherTest(private val useSingleBuildConsole: Boole
 
     val parser = RecordingBuildOutputParser()
     val listener = RecordingBuildProgressListener()
-    GradleOutputMessageDispatcher(buildId, listener, listOf(parser), TestSettingsProvider(useSingleBuildConsole))
+    GradleOutputMessageDispatcher(buildId, listener, listOf(parser), settings)
       .use { dispatcher ->
         dispatcher.notifyBuildEvent(buildId, startBuildEvent)
         dispatcher.notifyBuildEvent(buildId, startEvent)
@@ -350,10 +355,10 @@ class GradleOutputMessageDispatcherTest(private val useSingleBuildConsole: Boole
       expectedEvents {
         root {
           event(startBuildEvent)
-          outputEvent("> Task :task\n")
-          outputEvent("task output\n")
-          outputEvent("BUILD SUCCESSFUL in 1s\n")
-          outputEvent("2 actionable tasks: 2 executed\n")
+          rootOutput("> Task :task\n")
+          rootOutput("task output\n")
+          rootOutput("BUILD SUCCESSFUL in 1s\n")
+          rootOutput("2 actionable tasks: 2 executed\n")
           event(finishBuildEvent)
         }
         node(buildId) {
@@ -388,7 +393,7 @@ class GradleOutputMessageDispatcherTest(private val useSingleBuildConsole: Boole
     }
 
     val listener = RecordingBuildProgressListener()
-    GradleOutputMessageDispatcher(buildId, listener, listOf(parser), TestSettingsProvider(useSingleBuildConsole)).use { dispatcher ->
+    GradleOutputMessageDispatcher(buildId, listener, listOf(parser), settings).use { dispatcher ->
       dispatcher.notifyBuildEvent(buildId, startBuildEvent)
       dispatcher.notifyBuildEvent(buildId, startEvent)
       dispatcher.notifyTextAvailable("> Task :task\n", ProcessOutputType.STDOUT)
@@ -401,8 +406,8 @@ class GradleOutputMessageDispatcherTest(private val useSingleBuildConsole: Boole
       expectedEvents {
         root {
           event(startBuildEvent)
-          outputEvent("> Task :task\n")
-          outputEvent("task output\n")
+          rootOutput("> Task :task\n")
+          rootOutput("task output\n")
           event(finishBuildEvent)
         }
         node(buildId) {
@@ -428,7 +433,7 @@ class GradleOutputMessageDispatcherTest(private val useSingleBuildConsole: Boole
     val finishBuildEvent = FinishBuildEvent.builder(buildId, "Build", SuccessResultImpl()).build()
 
     val listener = RecordingBuildProgressListener()
-    GradleOutputMessageDispatcher(buildId, listener, emptyList(), TestSettingsProvider(useSingleBuildConsole)).use { dispatcher ->
+    GradleOutputMessageDispatcher(buildId, listener, emptyList(), settings).use { dispatcher ->
       dispatcher.notifyBuildEvent(buildId, startBuildEvent)
       dispatcher.notifyTextAvailable("> Task :task\n", ProcessOutputType.STDOUT)
       dispatcher.notifyTextAvailable("task output\n", ProcessOutputType.STDOUT)
@@ -441,8 +446,8 @@ class GradleOutputMessageDispatcherTest(private val useSingleBuildConsole: Boole
       expectedEvents {
         root {
           event(startBuildEvent)
-          outputEvent("> Task :task\n")
-          outputEvent("task output\n")
+          rootOutput("> Task :task\n")
+          rootOutput("task output\n")
           event(finishBuildEvent)
         }
         node(buildId) {
@@ -468,7 +473,7 @@ class GradleOutputMessageDispatcherTest(private val useSingleBuildConsole: Boole
 
     val parser = RecordingBuildOutputParser()
     val listener = RecordingBuildProgressListener()
-    GradleOutputMessageDispatcher(buildId, listener, listOf(parser), TestSettingsProvider(useSingleBuildConsole))
+    GradleOutputMessageDispatcher(buildId, listener, listOf(parser), settings)
       .use { dispatcher ->
         dispatcher.notifyBuildEvent(buildId, startBuildEvent)
         dispatcher.notifyBuildEvent(buildId, startEvent)
@@ -488,10 +493,10 @@ class GradleOutputMessageDispatcherTest(private val useSingleBuildConsole: Boole
       expectedEvents {
         root {
           event(startBuildEvent)
-          outputEvent("> Task :task\n")
-          outputEvent("task output\n")
-          outputEvent("> Configure project :project\n")
-          outputEvent("configure output\n")
+          rootOutput("> Task :task\n")
+          rootOutput("task output\n")
+          rootOutput("> Configure project :project\n")
+          rootOutput("configure output\n")
           event(finishBuildEvent)
         }
         node(buildId) {
@@ -500,6 +505,53 @@ class GradleOutputMessageDispatcherTest(private val useSingleBuildConsole: Boole
         }
         node(startEvent.id) {
           taskOutput("> Task :task\n")
+          taskOutput("task output\n")
+        }
+      },
+      listener.events
+    )
+  }
+
+  @Test
+  fun `test Gradle test runner output is skipped from task output`() {
+    // In the single flow mode, GradleTestsExecutionConsoleOutputProcessor drops this output before the process handler
+    assumeFalse(settings.isSingleBuildConsoleView)
+
+    val buildId = BuildId()
+    val startBuildEvent = StartBuildEvent.builder("Build", DefaultBuildDescriptor(buildId, "Build", "/", 0L)).build()
+    val startEvent = StartEvent.builder(StartId(), ":test").withParentId(startBuildEvent.id).build()
+    val finishEvent = FinishEvent.builder(startEvent.id, ":test", SuccessResultImpl()).withParentId(startEvent.parentId).build()
+    val finishBuildEvent = FinishBuildEvent.builder(startBuildEvent.id, "Build", SuccessResultImpl()).build()
+
+    val parser = RecordingBuildOutputParser()
+    val listener = RecordingBuildProgressListener()
+    GradleOutputMessageDispatcher(buildId, listener, listOf(parser), settings)
+      .use { dispatcher ->
+        dispatcher.notifyBuildEvent(buildId, startBuildEvent)
+        dispatcher.notifyBuildEvent(buildId, startEvent)
+        dispatcher.notifyTextAvailable("> Task :test\n", ProcessOutputType.STDOUT)
+        dispatcher.notifyTextAvailable("<ijLog><event type='beforeTest'/></ijLog>\n", ProcessOutputType.STDOUT)
+        dispatcher.notifyTextAvailable("task output\n", ProcessOutputType.STDOUT)
+        dispatcher.notifyBuildEvent(buildId, finishEvent)
+        dispatcher.notifyBuildEvent(buildId, finishBuildEvent)
+      }
+
+    parser.assertLines(
+      TaskNameId(":test") to listOf("> Task :test", "task output")
+    )
+    assertEvents(
+      expectedEvents {
+        root {
+          event(startBuildEvent)
+          event(finishBuildEvent)
+        }
+        node(buildId) {
+          event(startEvent)
+          event(finishEvent)
+        }
+        node(startEvent.id) {
+          taskOutput("> Task :test\n")
+          // no <ijLog>
           taskOutput("task output\n")
         }
       },
@@ -581,7 +633,7 @@ class GradleOutputMessageDispatcherTest(private val useSingleBuildConsole: Boole
         buildIds[buildIndex],
         BuildProgressListener { _, _ -> },
         listOf(parser),
-        TestSettingsProvider(useSingleBuildConsole)
+        settings
       )
     }
 
@@ -621,7 +673,7 @@ class GradleOutputMessageDispatcherTest(private val useSingleBuildConsole: Boole
   }
 
   private fun expectedEvents(configure: ExpectedEventsBuilder.() -> Unit): Map<Any?, List<CollectedEvent>> =
-    ExpectedEventsBuilder(useSingleBuildConsole)
+    ExpectedEventsBuilder(settings)
       .apply(configure)
       .build()
 
@@ -656,22 +708,22 @@ class GradleOutputMessageDispatcherTest(private val useSingleBuildConsole: Boole
     data class Message(val kind: MessageEvent.Kind, val message: String) : CollectedEvent
   }
 
-  private class ExpectedEventsBuilder(private val useSingleBuildConsole: Boolean) {
+  private class ExpectedEventsBuilder(private val settings: BuildViewSettingsProvider) {
 
     private val nodes = LinkedHashMap<Any?, List<CollectedEvent>>()
 
     fun root(configure: ExpectedNodeBuilder.() -> Unit) {
-      nodes[null] = ExpectedNodeBuilder(useSingleBuildConsole).apply(configure).build()
+      nodes[null] = ExpectedNodeBuilder(settings).apply(configure).build()
     }
 
     fun node(parentId: Any, configure: ExpectedNodeBuilder.() -> Unit) {
-      nodes[parentId] = ExpectedNodeBuilder(useSingleBuildConsole).apply(configure).build()
+      nodes[parentId] = ExpectedNodeBuilder(settings).apply(configure).build()
     }
 
     fun build(): Map<Any?, List<CollectedEvent>> = nodes
   }
 
-  private class ExpectedNodeBuilder(private val useSingleBuildConsole: Boolean) {
+  private class ExpectedNodeBuilder(private val settings: BuildViewSettingsProvider) {
 
     private val events = ArrayList<CollectedEvent>()
 
@@ -683,6 +735,12 @@ class GradleOutputMessageDispatcherTest(private val useSingleBuildConsole: Boole
       events.add(CollectedEvent.Output(message))
     }
 
+    fun rootOutput(message: String) {
+      if (settings.isSingleBuildConsoleView) {
+        outputEvent(message)
+      }
+    }
+
     fun outputReferenceEvent(configure: ExpectedOutputReferenceBuilder.() -> Unit) {
       events.add(ExpectedOutputReferenceBuilder().apply(configure).build())
     }
@@ -692,7 +750,7 @@ class GradleOutputMessageDispatcherTest(private val useSingleBuildConsole: Boole
     }
 
     fun taskOutput(message: String) {
-      when (useSingleBuildConsole) {
+      when (settings.isSingleBuildConsoleView) {
         true -> outputReferenceEvent { outputEvent(message) }
         else -> outputEvent(message)
       }

@@ -11,6 +11,7 @@ use avl_host_sys::guest::ensure_host_paths;
 use avl_host_sys::lock::{LockGuard, LockManager};
 use avl_host_sys::{Ctx, Runner, SpawnOptions};
 use avl_wire::progress::Event;
+use avl_wire::worktree::linked_worktree_main_root;
 use jiff::tz::TimeZone;
 use serde_json::json;
 
@@ -65,8 +66,16 @@ struct Plan {
     profile: bool,
     profile_event: ProfileEvent,
     project: Option<PlannedProject>,
-    /// The plugin that the twin arms suppress.
+    /// The plugin that the twin arms of `--suppress-plugin` suppress.
     suppressed_plugin: Option<String>,
+    /// The property `<name>=<value>` that the twin arms of `--with-property` set.
+    with_property: Option<String>,
+    /// The queries of the find-in-files arm.
+    queries: Vec<String>,
+    /// The `context_plugin_dir` of `--context-plugins`.
+    context_plugins: Option<String>,
+    /// The directory of the second pass of the find-in-files arm, relative to the project.
+    directory: Option<PathBuf>,
 }
 
 /// The project of a session.
@@ -97,6 +106,30 @@ fn working_dir() -> Result<PathBuf, Refusal> {
     std::env::current_dir().map_err(|error| session_failed(format!("cannot read the working directory: {error}")))
 }
 
+/// The license of the checkout `repo`. When `repo` is a linked worktree without a license, the license at the same
+/// path in its main checkout.
+fn find_license(repo: &Path) -> Result<PathBuf, Refusal> {
+    let mut checked = vec![repo.join(session::LICENSE_FILE)];
+    if let Some(main) = std::fs::read_to_string(repo.join(".git"))
+        .ok()
+        .and_then(|dot_git| linked_worktree_main_root(repo, &dot_git))
+    {
+        checked.push(main.join(session::LICENSE_FILE));
+    }
+    if let Some(license) = checked.iter().find(|license| license.exists()) {
+        return Ok(license.clone());
+    }
+    let paths: Vec<String> = checked.iter().map(|license| license.display().to_string()).collect();
+    Err(Refusal::new(
+        "license_missing",
+        Exit::USAGE,
+        format!(
+            "no license at {}: an unlicensed IDE shows a dialog instead of the welcome screen; start the dev IDE once and register it",
+            paths.join(" or at ")
+        ),
+    ))
+}
+
 impl Bench<'_> {
     /// Runs one verb.
     pub(crate) async fn command(&self, ctx: &Ctx, verb: BenchVerb) -> Result<Outcome, Refusal> {
@@ -110,7 +143,11 @@ impl Bench<'_> {
                     profile: args.measure.profile,
                     profile_event: args.measure.profile_event,
                     project: None,
-                    suppressed_plugin: args.measure.suppress.plugin.clone(),
+                    suppressed_plugin: args.measure.twins.plugin.clone(),
+                    with_property: args.measure.twins.property.as_ref().map(ToString::to_string),
+                    queries: Vec::new(),
+                    context_plugins: None,
+                    directory: None,
                 };
                 self.session(ctx, &plan, &args.launch).await
             }
@@ -128,6 +165,10 @@ impl Bench<'_> {
                     profile_event: ProfileEvent::Cpu,
                     project: Some(PlannedProject::Open(project)),
                     suppressed_plugin: None,
+                    with_property: None,
+                    queries: Vec::new(),
+                    context_plugins: None,
+                    directory: None,
                 };
                 self.session(ctx, &plan, &args.launch).await
             }
@@ -139,8 +180,16 @@ impl Bench<'_> {
                     cold: args.cold(),
                     profile: args.measure.profile,
                     profile_event: args.measure.profile_event,
-                    project: Some(PlannedProject::Start(project_source(&args.project, &working_dir()?)?)),
-                    suppressed_plugin: args.measure.suppress.plugin.clone(),
+                    project: Some(PlannedProject::Start(project_source(
+                        &args.project,
+                        &working_dir()?,
+                        args.in_place,
+                    )?)),
+                    suppressed_plugin: args.measure.twins.plugin.clone(),
+                    with_property: args.measure.twins.property.as_ref().map(ToString::to_string),
+                    queries: args.queries.clone(),
+                    context_plugins: args.context_plugins.clone(),
+                    directory: args.directory.clone(),
                 };
                 self.session(ctx, &plan, &args.launch).await
             }
@@ -210,17 +259,8 @@ impl Bench<'_> {
         for warning in &warnings {
             self.reporter.note(format!("warning: {warning}"), None);
         }
-        let license = repo.join(session::LICENSE_FILE);
-        if !license.exists() {
-            return Err(Refusal::new(
-                "license_missing",
-                Exit::USAGE,
-                format!(
-                    "no license at {}: an unlicensed IDE shows a dialog instead of the welcome screen; start the dev IDE once and register it",
-                    license.display()
-                ),
-            ));
-        }
+        let license = find_license(&repo)?;
+        self.reporter.note(format!("license {}", license.display()), None);
         let host_load = load::read(ctx, self.runner).await;
         if host_load.is_none() {
             self.reporter
@@ -264,14 +304,18 @@ impl Bench<'_> {
         session: &Path,
         mut warnings: Vec<String>,
     ) -> Result<Outcome, Refusal> {
+        let build_log = session.join("build.log");
         let (generation, git, target) = if let Some(prefix) = &args.generation {
             let staged = stage::open(&self.settings.runtime_root, prefix)?;
             let (git, warning) = session::staged_commit(&staged.generation.digest, staged.git);
             warnings.extend(warning);
+            if let Some(label) = &plan.context_plugins {
+                self.bazel.build_labels(ctx, &build_log, std::slice::from_ref(label)).await?;
+            }
             (staged.generation, git, staged.target)
         } else {
-            let build_log = session.join("build.log");
-            self.bazel.build_labels(ctx, &build_log, std::slice::from_ref(&args.target)).await?;
+            let labels: Vec<String> = std::iter::once(args.target.clone()).chain(plan.context_plugins.clone()).collect();
+            self.bazel.build_labels(ctx, &build_log, &labels).await?;
             let sources = resolve::sources(ctx, self.bazel, repo, &args.target).await?;
             let git = self.git_info(ctx, repo).await;
             let generation = stage::stage(ctx, self.locks, &self.settings.runtime_root, &sources, &git, self.reporter).await?;
@@ -301,11 +345,17 @@ impl Bench<'_> {
         } else {
             None
         };
-        let launcher = Launcher::of(&generation, self.runner.clone(), repo, profiler, args.hold)?;
+        let launcher = Launcher::of(&generation, self.runner.clone(), repo, profiler, args.hold, &args.properties)?;
 
         let template = Sandbox::new(session.join(TEMPLATE_DIR));
         session::write_template(&template, license, generation.config.platform_prefix.as_deref())
             .map_err(|error| session_failed(format!("{error:#}")))?;
+        if let Some(label) = &plan.context_plugins {
+            let plugins = resolve::context_plugins(ctx, self.bazel, label).await?;
+            self.reporter
+                .note(format!("context plugins of {label}: {}", plugins.display()), None);
+            files::copy_dir_resolved(&plugins, &template.plugins()).map_err(|error| session_failed(format!("{error:#}")))?;
+        }
         let project = match &plan.project {
             Some(PlannedProject::Start(source)) => {
                 Some(session::write_project(&template, source).map_err(|error| session_failed(format!("{error:#}")))?)
@@ -345,6 +395,11 @@ impl Bench<'_> {
             additional_modules: generation.config.additional_modules.clone(),
             max_load,
             suppressed_plugin: plan.suppressed_plugin.clone(),
+            with_property: plan.with_property.clone(),
+            queries: plan.queries.clone(),
+            directory: plan.directory.as_ref().map(|directory| directory.display().to_string()),
+            context_plugins: plan.context_plugins.clone(),
+            properties: args.properties.iter().map(ToString::to_string).collect(),
             warnings,
         };
         files::write_json(&session.join(SESSION_FILE), &info).map_err(|error| session_failed(format!("{error:#}")))?;
@@ -410,7 +465,7 @@ impl Bench<'_> {
             let _ = std::fs::remove_dir_all(sandbox.root.join(stale));
         }
         session::own_welcome_project(&sandbox).map_err(failed)?;
-        if matches!(id.arm.kind, ArmKind::EmptyEditor | ArmKind::CargoSync) {
+        if matches!(id.arm.kind, ArmKind::EmptyEditor | ArmKind::CargoSync | ArmKind::FindInFiles) {
             session::open_no_readme(&sandbox).map_err(failed)?;
         }
         let name = match id.kind {
@@ -436,6 +491,8 @@ impl Bench<'_> {
                 Some(PlannedProject::Open(dir)) => Some(dir),
                 Some(PlannedProject::Start(_)) | None => None,
             },
+            queries: &running.plan.queries,
+            directory: running.plan.directory.as_deref(),
         };
         let mut facts = running.launcher.run(ctx, &run_dir, &sandbox, &plan).await;
         facts.dist_digest = Some(digest);
@@ -564,12 +621,23 @@ impl Bench<'_> {
 }
 
 /// The project of `bench project`: [`MARKDOWN_PROJECT`], else a directory relative to `working_dir` with a file to
-/// open. Any other argument is a usage refusal.
-pub(crate) fn project_source(arg: &str, working_dir: &Path) -> Result<ProjectSource, Refusal> {
+/// open, which `in_place` opens where it is. Any other argument is a usage refusal, and so is `in_place` with
+/// [`MARKDOWN_PROJECT`].
+pub(crate) fn project_source(arg: &str, working_dir: &Path, in_place: bool) -> Result<ProjectSource, Refusal> {
     if arg == MARKDOWN_PROJECT {
+        if in_place {
+            return Err(Refusal::usage(format!(
+                "--in-place needs a project directory: the session generates `{MARKDOWN_PROJECT}` in each sandbox"
+            )));
+        }
         return Ok(ProjectSource::Markdown);
     }
-    let dir = working_dir.join(arg);
+    // `.` stays out of the path, so the IDE and the directory pass of the find-in-files arm see the plain directory
+    let dir: PathBuf = working_dir
+        .join(arg)
+        .components()
+        .filter(|component| *component != std::path::Component::CurDir)
+        .collect();
     if !dir.is_dir() {
         return Err(Refusal::usage(format!(
             "the project {} is not a directory, and it is not `{MARKDOWN_PROJECT}`",
@@ -577,6 +645,7 @@ pub(crate) fn project_source(arg: &str, working_dir: &Path) -> Result<ProjectSou
         )));
     }
     match session::first_file(&dir) {
+        Ok(Some(_)) if in_place => Ok(ProjectSource::InPlace(dir)),
         Ok(Some(_)) => Ok(ProjectSource::Dir(dir)),
         Ok(None) => Err(Refusal::usage(format!(
             "the project {} has no file to open: it needs a file that is not hidden at its top level",

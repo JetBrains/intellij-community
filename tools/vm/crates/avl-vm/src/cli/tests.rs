@@ -95,7 +95,7 @@ fn parse_argv(argv: &[&str], facts: &TerminalFacts) -> Parsed {
 
 fn invocation(argv: &[&str], facts: &TerminalFacts) -> Invocation {
     match parse_argv(argv, facts) {
-        Parsed::Invocation(invocation) => invocation,
+        Parsed::Invocation(invocation) => *invocation,
         other => panic!("{argv:?} did not parse: {other:?}"),
     }
 }

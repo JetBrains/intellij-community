@@ -32,7 +32,6 @@ import org.jetbrains.intellij.build.impl.BundledRuntime
 import org.jetbrains.intellij.build.impl.Checksums
 import org.jetbrains.intellij.build.impl.DistributionForOsTaskResult
 import org.jetbrains.intellij.build.impl.Docker
-import org.jetbrains.intellij.build.impl.SUPPORTED_DISTRIBUTIONS
 import org.jetbrains.intellij.build.impl.getOsAndArchSpecificDistDirectory
 import org.jetbrains.intellij.build.impl.maven.MavenCoordinates
 import org.jetbrains.intellij.build.impl.projectStructureMapping.DistributionFileEntry
@@ -41,6 +40,7 @@ import org.jetbrains.intellij.build.impl.projectStructureMapping.ModuleLibraryFi
 import org.jetbrains.intellij.build.impl.projectStructureMapping.ProjectLibraryEntry
 import org.jetbrains.intellij.build.impl.projectStructureMapping.getIncludedModules
 import org.jetbrains.intellij.build.impl.sharedLazy
+import org.jetbrains.intellij.build.impl.supportedAndRequestedDistributions
 import org.jetbrains.intellij.build.io.ZipEntryProcessorResult
 import org.jetbrains.intellij.build.io.readZipFile
 import org.jetbrains.intellij.build.io.runProcess
@@ -312,6 +312,7 @@ class SoftwareBillOfMaterialsImpl(
         JvmArchitecture.aarch64 -> "windowsarm64"
         JvmArchitecture.x64 -> "windows64"
       }
+      OsFamily.OHOS -> error("An OHOS distribution has no bundled runtime")
     }
     val cefArchive = "cef_binary_${cefVersion}_$cefSuffix.tar.bz2"
     val cefPackage = spdxPackage(this, name = cefArchive) {
@@ -364,7 +365,7 @@ class SoftwareBillOfMaterialsImpl(
    * but documents with every distribution content specified will be built anyway.
    */
   private fun generateFromContentReport(): List<Path> {
-    return SUPPORTED_DISTRIBUTIONS
+    return supportedAndRequestedDistributions(context)
       .filter { (os, arch) -> context.shouldBuildDistributionForOS(os, arch) }
       .map { (os, arch, libc) ->
         val distributionDir = getOsAndArchSpecificDistDirectory(osFamily = os, arch = arch, libc = libc, context = context)
@@ -379,7 +380,8 @@ class SoftwareBillOfMaterialsImpl(
         generate(
           document = document,
           rootPackage = rootPackage,
-          runtimePackage = document.runtimePackage(os, arch, libc),
+          // an OHOS distribution has no bundled runtime
+          runtimePackage = if (os == OsFamily.OHOS) null else document.runtimePackage(os, arch, libc),
           distributionDir = distributionDir,
           // distributions weren't built
           claimContainedFiles = false,
@@ -612,8 +614,12 @@ class SoftwareBillOfMaterialsImpl(
     }
   }
 
+  // cache-redirector serves an upstream either under its own host (".../repo1.maven.org/maven2") or under an
+  // alias (".../maven/ultimate-public"). Only the first names a host to point the SBOM at; an alias is itself the
+  // public download URL.
   private fun translateRepositoryUrl(url: String): String {
-    return url.replace("https://cache-redirector.jetbrains.com/", "https://")
+    val path = url.removePrefix("https://cache-redirector.jetbrains.com/")
+    return if (path != url && '.' in path.substringBefore('/')) "https://$path" else url
   }
 
   private inner class MavenLibrary(

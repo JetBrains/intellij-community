@@ -47,6 +47,16 @@ pub const LINUX_GUEST_LABEL: &str = "//plugins/air/tests/integration/ui:ui_daemo
 /// needs an option of its own.
 pub const LINUX_GUEST_LIVE_LABEL: &str = "//plugins/air/tests/integration/ui:ui_daemon_linux_guest_live";
 
+/// The lane that runs JetBrains Light. Its descriptors name the JetBrains Light distribution in place of the IDEA one, so a
+/// run that holds this lane builds [`LIGHT_LABEL`] or [`LINUX_GUEST_LIGHT_LABEL`], and no other lane.
+pub const LIGHT_LANE: &str = "ui-light";
+
+/// The Bazel target of the runtime descriptor of a macOS guest for [`LIGHT_LANE`].
+pub const LIGHT_LABEL: &str = "//plugins/air/tests/integration/ui:ui_daemon_light";
+
+/// The Bazel target of the runtime descriptor of a Linux guest for [`LIGHT_LANE`].
+pub const LINUX_GUEST_LIGHT_LABEL: &str = "//plugins/air/tests/integration/ui:ui_daemon_linux_guest_light";
+
 /// The prefix of every daemon run id. Only a daemon start sends a supervisor `start` with it, so it is what lets a
 /// controller that holds no record still recognise a daemon run in the slot.
 pub const DAEMON_RUN_PREFIX: &str = "run-ui-daemon-";
@@ -304,11 +314,12 @@ pub fn plugin_directory_digests<'a>(files: impl IntoIterator<Item = (&'a str, &'
         .collect()
 }
 
-/// The digests of the three lane inputs of the runtime descriptor, as the push stored them.
+/// The digests of the four lane inputs of the runtime descriptor, as the push stored them.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct LaneInputs {
-    pub fake_agent_jar: String,
+    pub fake_agent: String,
+    pub genui_fixture_jar: String,
     pub lane_documents: String,
     pub suite_documents: String,
 }

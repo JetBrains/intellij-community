@@ -25,6 +25,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyPsiBundle;
+import com.jetbrains.python.codeInsight.controlflow.CallInstruction;
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
 import com.jetbrains.python.codeInsight.controlflow.ReadWriteInstruction;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
@@ -325,6 +326,7 @@ public final class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
     }
 
     final Instruction[] instructions = ControlFlowCache.getControlFlow(owner).getInstructions();
+    final String superReadName = getFirstParameterReadBySuper(owner);
     for (int i = 0; i < instructions.length; i++) {
       final Instruction instruction = instructions[i];
       if (instruction instanceof ReadWriteInstruction readWriteInstruction) {
@@ -353,8 +355,37 @@ public final class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
         allPathsScopeReads.addAll(
           analyzeReadsInScope(name, owner, instructions, startInstruction, PyUtil.as(element, PyReferenceExpression.class)));
       }
+      else if (superReadName != null &&
+               instruction instanceof CallInstruction callInstruction &&
+               isSuperCallWithoutArguments(callInstruction.getElement())) {
+        allPathsScopeReads.addAll(analyzeReadsInScope(superReadName, owner, instructions, i, null));
+      }
     }
     myScopeReads.put(owner, Collections.unmodifiableSet(allPathsScopeReads));
+  }
+
+  /**
+   * Returns the name of the first parameter of the method {@code owner}.
+   * Returns null if {@code owner} is not a method, or if its first parameter is not a plain named parameter.
+   * A call of {@code super()} with no arguments reads this parameter, as {@code super(__class__, self)} does.
+   */
+  private static @Nullable String getFirstParameterReadBySuper(@NotNull ScopeOwner owner) {
+    if (!(owner instanceof PyFunction function) || function.getContainingClass() == null) return null;
+    final PyParameter[] parameters = function.getParameterList().getParameters();
+    if (parameters.length == 0 ||
+        !(parameters[0] instanceof PyNamedParameter first) ||
+        first.isPositionalContainer() ||
+        first.isKeywordContainer()) {
+      return null;
+    }
+    return first.getName();
+  }
+
+  private static boolean isSuperCallWithoutArguments(@NotNull PyCallExpression call) {
+    return call.getCallee() instanceof PyReferenceExpression callee &&
+           !callee.isQualified() &&
+           PyNames.SUPER.equals(callee.getName()) &&
+           call.getArguments().length == 0;
   }
 
   private static @NotNull Set<PsiElement> analyzeReadsInScope(@NotNull String name,

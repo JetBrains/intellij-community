@@ -11,11 +11,13 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 interface PythonPackageManagerProvider {
 
-  /**
-   * Creates the [PythonPackageManager] for [interpreter], or `null` when this provider does not handle it.
-   * The SDK of [interpreter] is a Python SDK with `PythonSdkAdditionalData`.
-   */
-  fun createPackageManager(project: Project, interpreter: PythonInterpreter): PythonPackageManager?
+  /** Creates the [PythonPackageManager] for [interpreter], or `null` when this provider does not handle it. */
+  fun createPackageManager(interpreter: PythonInterpreter): PythonPackageManager? =
+    @Suppress("DEPRECATION") createPackageManager(interpreter.project, interpreter)
+
+  /** For the providers outside the Python plugin. */
+  @Deprecated("Implement createPackageManager(interpreter)")
+  fun createPackageManager(project: Project, interpreter: PythonInterpreter): PythonPackageManager? = null
 
   companion object {
     val EP_NAME: ExtensionPointName<PythonPackageManagerProvider> =
@@ -25,8 +27,9 @@ interface PythonPackageManagerProvider {
 
 @ApiStatus.Internal
 interface PythonPackageManagerService {
+  /** The manager of the environment that [interpreter] runs in. */
   @Throws(AlreadyDisposedException::class)
-  fun forPythonInterpreter(project: Project, interpreter: PythonInterpreter): PythonPackageManager
+  fun forPythonInterpreter(interpreter: PythonInterpreter): PythonPackageManager
 
   /** The cached manager of [interpreter], or `null` when no caller asked for it yet. It creates no manager. */
   fun cachedFor(interpreter: PythonInterpreter): PythonPackageManager?

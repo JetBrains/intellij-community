@@ -17,6 +17,7 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.debugger.impl.shared.proxy.XDebugManagerProxy
 import com.intellij.ui.SizedIcon
 import com.intellij.ui.scale.JBUIScale
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.NamedColorUtil
 import com.intellij.xdebugger.XDebuggerBundle
 import com.intellij.xdebugger.XDebuggerBundle.message
@@ -30,6 +31,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.PropertyKey
+import org.jetbrains.annotations.TestOnly
 import java.util.concurrent.atomic.AtomicBoolean
 import javax.swing.JComponent
 import javax.swing.JTree
@@ -86,6 +88,7 @@ internal class BreakpointListProvider(private val project: Project) : BookmarksL
       XDebugManagerProxy.getInstance().getBreakpointManagerProxy(project).subscribeOnBreakpointsChanges(project) {
         scheduleUpdate()
       }
+      service.updateRequest = ::scheduleUpdate
       scheduleUpdate()
     }
 
@@ -206,4 +209,18 @@ class BreakpointListUpdaterService(internal val cs: CoroutineScope) {
   @Volatile
   var updateJob: Job? = null
     internal set
+
+  @Volatile
+  internal var updateRequest: (() -> Unit)? = null
+
+  /**
+   * Starts a new update of the breakpoint list and cancels the current one.
+   * The new update reads the breakpoints after this call, and [updateJob] holds it.
+   * The breakpoint list must exist, so call [BookmarksListProvider.createNode] first.
+   */
+  @TestOnly
+  @RequiresEdt
+  fun requestUpdate() {
+    checkNotNull(updateRequest) { "The breakpoint list is not created" }()
+  }
 }

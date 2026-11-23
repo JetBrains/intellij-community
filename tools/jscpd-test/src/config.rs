@@ -9,7 +9,6 @@ use std::error::Error;
 use std::fs;
 use std::io;
 use std::path::{Component, Path, PathBuf};
-use std::process::{Command, Stdio};
 use walkdir::WalkDir;
 
 /// The file extensions of each jscpd format that a configuration of the repository names. A format that is not here
@@ -63,9 +62,9 @@ impl Config {
     /// The files under the `path` entries that have an extension of a `format` and that no `ignore` pattern matches.
     /// A hidden directory and the directories of [`SKIPPED_DIRS`] are skipped.
     ///
-    /// [`Listing::Runfiles`] walks the runfiles and follows their links. [`Listing::Git`] asks git for the files that
-    /// `.gitignore` keeps, as jscpd reads a checkout. A walk of a checkout would also read the ignored outputs, such as
-    /// the generated documents of Air, which take longer than the scan itself.
+    /// [`Listing::Runfiles`] walks the runfiles and follows their links. [`Listing::Checkout`] lists the files of the
+    /// checkout that `.gitignore` keeps, as jscpd reads a checkout. A walk of a checkout would also read the ignored
+    /// outputs, such as the generated documents of Air, which take longer than the scan itself.
     pub(crate) fn files(&self, file: &Path, listing: Listing) -> Result<Vec<PathBuf>, Box<dyn Error>> {
         let filter = Filter {
             extensions: self.extensions()?,
@@ -77,8 +76,8 @@ impl Config {
             let scan = normalize(&base.join(entry));
             match listing {
                 Listing::Runfiles => walk(&scan, &filter, &mut files)?,
-                Listing::Git => {
-                    for relative in git_files(&scan)? {
+                Listing::Checkout => {
+                    for relative in checkout_files_under(&scan)? {
                         if filter.keeps_file(&relative) {
                             files.push(scan.join(relative));
                         }
@@ -107,8 +106,8 @@ impl Config {
 pub(crate) enum Listing {
     /// Walk the directory and follow its links.
     Runfiles,
-    /// Ask git for the tracked files and the untracked files that `.gitignore` keeps.
-    Git,
+    /// List the tracked files and the untracked files that `.gitignore` keeps, as `git ls-files` does.
+    Checkout,
 }
 
 /// What a scanned file must have: an extension of a `format`, and no part that an `ignore` pattern or a skipped
@@ -152,27 +151,20 @@ fn walk(scan: &Path, filter: &Filter, files: &mut Vec<PathBuf>) -> Result<(), Bo
     Ok(())
 }
 
-/// The files of the checkout under `scan` that git tracks or that `.gitignore` keeps, relative to `scan`.
+/// The files of the checkout under `scan` that git tracks or that `.gitignore` keeps, relative to `scan`, with `/`
+/// separators. The crate `checkout-files` gives the answer of `git ls-files --cached --others --exclude-standard`,
+/// without the `git` executable.
 ///
-/// `listGitFiles` of `plugins/air/tests/plugin/testSrc/AirRepoScan.kt` and `list_git_files` of
-/// `plugins/air/tests/architecture-gate/src/repo.rs` in the ultimate root list a checkout with the same git command.
-fn git_files(scan: &Path) -> Result<Vec<String>, Box<dyn Error>> {
-    let output = Command::new("git")
-        .arg("-C")
-        .arg(scan)
-        .args(["ls-files", "-z", "--cached", "--others", "--exclude-standard"])
-        .stdin(Stdio::null())
-        .output()?;
-    if !output.status.success() {
-        return Err(io::Error::other(format!(
-            "git ls-files failed in {}: {}",
-            scan.display(),
-            String::from_utf8_lossy(&output.stderr)
-        ))
-        .into());
-    }
-    let text = String::from_utf8(output.stdout)?;
-    Ok(text.split('\0').filter(|path| !path.is_empty()).map(str::to_owned).collect())
+/// `listCheckoutFiles` of `plugins/air/tests/plugin/testSrc/AirRepoScan.kt` and `list_files` of
+/// `plugins/air/tests/architecture-gate/src/repo.rs` in the ultimate root list a checkout through the same crate.
+fn checkout_files_under(scan: &Path) -> Result<Vec<String>, Box<dyn Error>> {
+    let (checkout, root) = checkout_files::locate(scan)?;
+    let prefix = if root.is_empty() { String::new() } else { format!("{root}/") };
+    let files = checkout_files::list(&checkout, &[root.as_str()])?;
+    Ok(files
+        .into_iter()
+        .filter_map(|path| path.strip_prefix(&prefix).map(str::to_owned))
+        .collect())
 }
 
 /// A regular expression for a glob of jscpd's `ignore`: `**/` is any number of directories, `**` any text, `*` any

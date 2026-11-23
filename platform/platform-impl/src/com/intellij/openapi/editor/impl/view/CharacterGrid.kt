@@ -8,9 +8,13 @@ import org.jetbrains.annotations.ApiStatus
 import java.awt.Dimension
 
 /**
- * The facade of all things related to the character grid mode of the editor.
+ * The read API of the character grid mode of the editor, see [CharacterGridSpec].
  *
- * Accessed with [EditorImpl.getCharacterGrid].
+ * [EditorImpl.getCharacterGrid] gives the facade, and it gives the same instance for as long as the grid mode stays on.
+ * Each read gives the current value. The cell width follows the editor fonts and the spec, and the columns and the
+ * rows follow the visible area.
+ *
+ * To change the grid, give [EditorImpl.setCharacterGridSpec] a new spec. The facade only reads.
  */
 @ApiStatus.Internal
 interface CharacterGrid {
@@ -30,19 +34,20 @@ interface CharacterGrid {
   val rows: Int
 
   /**
-   * The width of a single-width character in pixels.
+   * The width of a single-width character in pixels, which is the width of one cell.
+   *
+   * The width is the width estimate of the widest editor character times the column spacing of the spec. It comes
+   * from the editor fonts alone, so the font families of the text do not change it.
    */
   val charWidth: Float
 
   /**
    * The strategy to differentiate between single and double width characters.
    *
-   * If not set, then all characters will be considered single width,
-   * so it's necessary to set it explicitly for double-width character support.
-   *
-   * @param doubleWidthCharacterStrategy the strategy to use
+   * The strategy comes from [CharacterGridSpec], so it stays the same for as long as the spec stays the same.
+   * To change it, give [EditorImpl.setCharacterGridSpec] a new spec.
    */
-  var doubleWidthCharacterStrategy: DoubleWidthCharacterStrategy
+  val doubleWidthCharacterStrategy: DoubleWidthCharacterStrategy
 
   /**
    * The width of the given character in pixels.
@@ -125,19 +130,16 @@ internal class CharacterGridImpl(
   private val view: EditorView
     get() = editor.view
 
-  private val columnSpacing: Float
-    get() = checkNotNull(editor.settings.characterGridWidthMultiplier) {
-      "The editor must be in the grid mode to create an instance of a character grid"
+  private val spec: CharacterGridSpec
+    get() = checkNotNull(editor.characterGridSpec) {
+      "The editor must be in the grid mode to use a character grid"
     }
 
   private val size: Dimension
     get() = editor.scrollingModel.visibleArea.size
 
-  /**
-   * The cell width comes from the editor fonts alone, so the font families of the text do not change the grid.
-   */
   override val charWidth: Float
-    get() = view.metrics.maxCharWidth() * columnSpacing
+    get() = view.metrics.maxCharWidth() * spec.columnSpacing
 
   override val columns: Int
     get() {
@@ -152,20 +154,21 @@ internal class CharacterGridImpl(
       return if (height > 0) (height.toFloat() / lineHeight.toFloat()).toInt() else 0
     }
 
-  override var doubleWidthCharacterStrategy: DoubleWidthCharacterStrategy = DoubleWidthCharacterStrategy { false }
+  override val doubleWidthCharacterStrategy: DoubleWidthCharacterStrategy
+    get() = spec.doubleWidthCharacterStrategy
 
   override fun codePointWidth(codePoint: Int): Float {
-    return (if (doubleWidthCharacterStrategy.isDoubleWidth(codePoint)) 2.0f else 1.0f) * charWidth
+    return spec.cells(codePoint) * charWidth
   }
 
   override fun iterator(startOffset: Int, endOffset: Int): CharacterGridIterator =
-    CharacterGridIteratorImpl(editor.document.immutableCharSequence, doubleWidthCharacterStrategy, startOffset, endOffset)
+    CharacterGridIteratorImpl(editor.document.immutableCharSequence, spec, startOffset, endOffset)
 
 }
 
 private class CharacterGridIteratorImpl(
   text: @NlsSafe CharSequence,
-  private val doubleWidthCharacterStrategy: DoubleWidthCharacterStrategy,
+  private val spec: CharacterGridSpec,
   private val startOffset: Int,
   private val endOffset: Int,
 ) : CharacterGridIterator {
@@ -238,7 +241,7 @@ private class CharacterGridIteratorImpl(
       cellEndColumn = 0
     }
     else {
-      cellEndColumn += if (doubleWidthCharacterStrategy.isDoubleWidth(codePoint)) 2 else 1
+      cellEndColumn += spec.cells(codePoint)
     }
   }
 }

@@ -7,6 +7,7 @@ import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.cl.PluginAwareClassLoader
 import com.intellij.openapi.actionSystem.ex.AnActionListener
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.command.impl.SeparatedCommandListener
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.serviceContainer.isListenerApplicable
@@ -17,15 +18,23 @@ import org.jetbrains.annotations.VisibleForTesting
 
 private val LOG = logger<ActionListenerClassesWarmUp>()
 
+@VisibleForTesting
+internal val WARM_UP_LISTENER_TOPICS: List<String> = listOf(
+  SeparatedCommandListener::class.java.name,
+  AnActionListener::class.java.name,
+)
+
 /**
- * Loads in the background, at start-up, the classes of the declarative [AnActionListener] listeners.
+ * Loads declarative listener classes in the background at start-up.
  */
 internal class ActionListenerClassesWarmUp : ApplicationActivity {
   override suspend fun execute() {
     if (ApplicationManager.getApplication().isHeadlessEnvironment) {
       return
     }
-    warmUpLazyListenerClasses(AnActionListener::class.java.name)
+    for (topicClassName in WARM_UP_LISTENER_TOPICS) {
+      warmUpLazyListenerClasses(topicClassName)
+    }
   }
 }
 

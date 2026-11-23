@@ -7,6 +7,7 @@ import com.intellij.openapi.editor.GenericLineWrapPositionStrategy
 import com.intellij.openapi.editor.ex.util.LexerEditorHighlighter
 import org.intellij.plugins.markdown.editor.tables.ui.alignment.isMarkdownTableVisualAlignmentEnabled
 import org.intellij.plugins.markdown.lang.MarkdownElementTypes
+import org.intellij.plugins.markdown.lang.MarkdownTokenTypeSets
 import org.intellij.plugins.markdown.lang.MarkdownTokenTypes
 
 class MarkdownLineWrapPositionStrategy : GenericLineWrapPositionStrategy() {
@@ -32,7 +33,14 @@ class MarkdownLineWrapPositionStrategy : GenericLineWrapPositionStrategy() {
                                                allowToBeyondMaxPreferredOffset, isSoftWrap)
     if (position < 0) return position
     val highlighter = editor.highlighter as? LexerEditorHighlighter ?: return if (isSoftWrap) position else -1
-    return if (isWrapForbidden(highlighter, document, position)) -1 else position
+    var wrapPosition = position
+    while (!isSoftWrap && isWrapAfterListPrefix(highlighter, document, wrapPosition)) {
+      val nextPosition = super.calculateWrapPosition(document, editor.project, wrapPosition + 1, endOffset,
+                                                     maxPreferredOffset, true, isSoftWrap)
+      if (nextPosition <= wrapPosition) return -1
+      wrapPosition = nextPosition
+    }
+    return if (isWrapForbidden(highlighter, document, wrapPosition)) -1 else wrapPosition
   }
 
   override fun isSoftWrappingAllowed(editor: Editor, offset: Int): Boolean {
@@ -51,9 +59,7 @@ class MarkdownLineWrapPositionStrategy : GenericLineWrapPositionStrategy() {
     return true
   }
 
-  /**
-   * Returns true when no position on the line of [position] is acceptable, that is, in a table row or a header.
-   */
+  /** Returns true when wrapping at [position] would break Markdown structure. */
   private fun isWrapForbidden(highlighter: LexerEditorHighlighter, document: Document, position: Int): Boolean {
     val iterator = highlighter.createIterator(position)
     if (iterator.atEnd()) return false
@@ -73,6 +79,22 @@ class MarkdownLineWrapPositionStrategy : GenericLineWrapPositionStrategy() {
       tokens.retreat()
     }
     return false
+  }
+
+  private fun isWrapAfterListPrefix(highlighter: LexerEditorHighlighter, document: Document, position: Int): Boolean {
+    if (position == 0) return false
+    val lineStart = document.getLineStartOffset(document.getLineNumber(position - 1))
+    val iterator = highlighter.createIterator(position - 1)
+    while (!iterator.atEnd() && iterator.start >= lineStart && iterator.tokenType in MarkdownTokenTypeSets.WHITE_SPACES) {
+      iterator.retreat()
+    }
+    if (!iterator.atEnd() && iterator.tokenType == MarkdownTokenTypes.CHECK_BOX) {
+      iterator.retreat()
+      while (!iterator.atEnd() && iterator.start >= lineStart && iterator.tokenType in MarkdownTokenTypeSets.WHITE_SPACES) {
+        iterator.retreat()
+      }
+    }
+    return !iterator.atEnd() && iterator.start >= lineStart && iterator.tokenType in MarkdownTokenTypeSets.LIST_MARKERS
   }
 
   private fun isSetextHeaderContent(highlighter: LexerEditorHighlighter, document: Document, line: Int): Boolean {

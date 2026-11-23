@@ -127,6 +127,7 @@ LEADING_TOKEN_MARKDOWN="///"
 // Allowed since JDK 15
 <DOC_TAG_VALUE_IN_PAREN> [\<] { return JavaDocSyntaxTokenType.DOC_TAG_VALUE_LT }
 <DOC_TAG_VALUE_IN_PAREN> [\>] { return JavaDocSyntaxTokenType.DOC_TAG_VALUE_GT }
+<DOC_TAG_VALUE_IN_PAREN> \? { return JavaDocSyntaxTokenType.DOC_TAG_VALUE_TOKEN }
 
 <INLINE_TAG_NAME, COMMENT_DATA_START> "@param" { yybegin(PARAM_TAG_SPACE); return JavaDocSyntaxTokenType.DOC_TAG_NAME }
 <PARAM_TAG_SPACE> {WHITE_DOC_SPACE_CHAR}+ {yybegin(DOC_TAG_VALUE); return JavaDocSyntaxTokenType.DOC_SPACE }
@@ -355,7 +356,7 @@ SNIPPET_ATTRIBUTE_VALUE_SINGLE_QUOTES, SNIPPET_TAG_COMMENT_DATA_UNTIL_COLON, DOC
 }
 
 <TAG_DOC_SPACE> {WHITE_DOC_SPACE_CHAR}+ {
-  if (checkAhead('<') || checkAhead('\"')) yybegin(COMMENT_DATA)
+  if (checkAhead('<') || checkAhead('\"')) yybegin(COMMENT_DATA) // Originally for the @see tag. Affects the @index tag
   else if (checkAhead('\u007b')) yybegin(COMMENT_DATA)  // lbrace - there's a error in JLex when typing lbrace directly
   else yybegin(DOC_TAG_VALUE)
   return JavaDocSyntaxTokenType.DOC_SPACE

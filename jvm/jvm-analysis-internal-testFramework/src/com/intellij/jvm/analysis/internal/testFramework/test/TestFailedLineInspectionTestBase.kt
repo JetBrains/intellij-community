@@ -16,6 +16,11 @@ import com.intellij.pom.java.LanguageLevel
 import com.intellij.testFramework.LightProjectDescriptor
 import java.util.Date
 
+/**
+ * @deprecated Use [testFailedLineProjectFixture] and [testFailedLineInspectionFixture] in a JUnit 5 test.
+ */
+@Suppress("DEPRECATION")
+@Deprecated("Use testFailedLineProjectFixture and testFailedLineInspectionFixture in a JUnit 5 test")
 abstract class TestFailedLineInspectionTestBase : JvmInspectionTestBase() {
   override val inspection: TestFailedLineInspection = TestFailedLineInspection()
 

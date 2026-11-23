@@ -10,6 +10,7 @@ import com.intellij.codeInsight.multiverse.CodeInsightContextManager
 import com.intellij.codeInsight.multiverse.CodeInsightContextProvider
 import com.intellij.codeInsight.multiverse.EditorContextManager
 import com.intellij.codeInsight.multiverse.SingleEditorContext
+import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.ActionToolbar
@@ -37,6 +38,7 @@ import com.intellij.testFramework.junit5.fixture.sourceRootFixture
 import com.intellij.testFramework.junit5.fixture.virtualFileFixture
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.yield
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
@@ -61,6 +63,83 @@ internal class ProblemsViewHighlightingFileRootContextsTest {
 
   private val first = TestCodeInsightContext("first")
   private val second = TestCodeInsightContext("second")
+
+  @Test
+  fun `bulk changes refresh the tree and count with hidden problems`() = timeoutRunBlocking {
+    withContext(Dispatchers.EDT) {
+      registerProvider(TwoContextsProvider(file, listOf(first, second)))
+      withEditorAndRoot(editorContext = first) { _, root ->
+        val panel = root.panel as TestHighlightingPanel
+        panel.state.addSeverity(HighlightSeverity.WARNING.myVal)
+        repeat(200) { root.problemAppeared(problem(second)) }
+        val problems = List(200) { problem(first, HighlightSeverity.ERROR.myVal) }
+        var updatesBefore = panel.toolWindowUpdates
+
+        problems.forEach(root::problemAppeared)
+        root.dispatchAllEvents()
+        assertTrue(treeText(panel).contains("Owned.txt"))
+        assertEquals(200, root.getProblemCount())
+        assertTrue(panel.toolWindowUpdates - updatesBefore <= 2, "Expected the bulk additions to share a refresh")
+
+        updatesBefore = panel.toolWindowUpdates
+        problems.take(100).forEach(root::problemDisappeared)
+        root.dispatchAllEvents()
+        assertTrue(treeText(panel).contains("Owned.txt"))
+        assertEquals(100, root.getProblemCount())
+        assertTrue(panel.toolWindowUpdates - updatesBefore <= 2, "Expected the bulk removals to share a refresh")
+
+        updatesBefore = panel.toolWindowUpdates
+        problems.drop(100).forEach(root::problemDisappeared)
+        root.dispatchAllEvents()
+        assertFalse(treeText(panel).contains("Owned.txt"))
+        assertEquals(0, root.getProblemCount())
+        assertTrue(panel.toolWindowUpdates - updatesBefore <= 2, "Expected one refresh when only hidden problems remain")
+      }
+    }
+  }
+
+  @Test
+  fun `a severity change refreshes the file node`() = timeoutRunBlocking {
+    withContext(Dispatchers.EDT) {
+      registerProvider(TwoContextsProvider(file, listOf(first, second)))
+      withEditorAndRoot(editorContext = first) { _, root ->
+        root.panel.state.addSeverity(HighlightSeverity.WARNING.myVal)
+        val problem = problem(first, HighlightSeverity.ERROR.myVal)
+        root.problemAppeared(problem)
+        root.dispatchAllEvents()
+        assertTrue(treeText(root.panel).contains("Owned.txt"))
+
+        problem.severity = HighlightSeverity.WARNING.myVal
+        root.problemUpdated(problem)
+        root.dispatchAllEvents()
+        assertFalse(treeText(root.panel).contains("Owned.txt"))
+        assertEquals(0, root.getProblemCount())
+
+        problem.severity = HighlightSeverity.ERROR.myVal
+        root.problemUpdated(problem)
+        root.dispatchAllEvents()
+        assertTrue(treeText(root.panel).contains("Owned.txt"))
+        assertEquals(1, root.getProblemCount())
+      }
+    }
+  }
+
+  @Test
+  fun `a queued update of a replaced root is ignored`() = timeoutRunBlocking {
+    withContext(Dispatchers.EDT) {
+      registerProvider(TwoContextsProvider(file, listOf(first, second)))
+      withEditorAndRoot(editorContext = first) { _, root ->
+        val panel = root.panel as TestHighlightingPanel
+        root.problemAppeared(problem(first))
+        panel.setCurrentFile(null, null)
+        val updatesBefore = panel.toolWindowUpdates
+
+        root.dispatchAllEvents()
+
+        assertEquals(updatesBefore, panel.toolWindowUpdates)
+      }
+    }
+  }
 
   @Test
   fun `a dirty context that no editor shows is hidden`() = timeoutRunBlocking {
@@ -407,7 +486,8 @@ internal class ProblemsViewHighlightingFileRootContextsTest {
   }
 
   /** The tree with every node expanded. */
-  private fun treeText(panel: ProblemsViewPanel): String {
+  private suspend fun treeText(panel: ProblemsViewPanel): String {
+    yield()
     PlatformTestUtil.waitWhileBusy(panel.tree)
     PlatformTestUtil.expandAll(panel.tree)
     return PlatformTestUtil.print(panel.tree, false)
@@ -487,11 +567,11 @@ internal class ProblemsViewHighlightingFileRootContextsTest {
     DaemonCodeAnalyzerEx.getInstanceEx(project).fileStatusMap.markFileUpToDateForAllPasses(document, context)
   }
 
-  private fun problem(context: CodeInsightContext): HighlightingProblem {
+  private fun problem(context: CodeInsightContext, severity: Int = -1): ContextProblem {
     val provider = object : ProblemsProvider {
       override val project: Project = this@ProblemsViewHighlightingFileRootContextsTest.project
     }
-    return ContextProblem(provider, file, mock(RangeHighlighter::class.java), context)
+    return ContextProblem(provider, file, mock(RangeHighlighter::class.java), context, severity)
   }
 
   /** Waits for the file contexts of the root and runs the EDT events. */
@@ -521,6 +601,7 @@ private class ContextProblem(
   file: VirtualFile,
   highlighter: RangeHighlighter,
   override val contextGroup: CodeInsightContext,
+  override var severity: Int,
 ) : HighlightingProblem(provider, file, highlighter)
 
 /** Owns [targetFile] with [contexts] and shows the results of all contexts together. */

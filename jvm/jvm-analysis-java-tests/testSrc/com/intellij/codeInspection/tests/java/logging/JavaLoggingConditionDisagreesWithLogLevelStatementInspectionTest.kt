@@ -1,10 +1,21 @@
 package com.intellij.codeInspection.tests.java.logging
 
 import com.intellij.analysis.JvmAnalysisBundle
-import com.intellij.jvm.analysis.internal.testFramework.logging.LoggingConditionDisagreesWithLogLevelStatementInspectionTestBase
+import com.intellij.jvm.analysis.internal.testFramework.logging.loggingConditionDisagreesWithLogLevelStatementInspectionFixture
 import com.intellij.jvm.analysis.testFramework.JvmLanguage
+import com.intellij.jvm.analysis.testFramework.jvmProjectFixture
+import com.intellij.testFramework.junit5.TestApplication
+import org.junit.jupiter.api.Test
 
-class JavaLoggingConditionDisagreesWithLogLevelStatementInspectionTest : LoggingConditionDisagreesWithLogLevelStatementInspectionTestBase() {
+@TestApplication
+class JavaLoggingConditionDisagreesWithLogLevelStatementInspectionTest {
+  companion object {
+    private val projectFixture = jvmProjectFixture()
+  }
+
+  private val myFixture by loggingConditionDisagreesWithLogLevelStatementInspectionFixture(projectFixture)
+
+  @Test
   fun `test slf4j`() {
     myFixture.testHighlighting(JvmLanguage.JAVA, """
       import org.slf4j.Logger;
@@ -23,6 +34,7 @@ class JavaLoggingConditionDisagreesWithLogLevelStatementInspectionTest : Logging
     """.trimIndent())
   }
 
+  @Test
   fun `test double guarded`() {
     myFixture.testHighlighting(JvmLanguage.JAVA, """
       import org.slf4j.Logger;
@@ -53,6 +65,7 @@ class JavaLoggingConditionDisagreesWithLogLevelStatementInspectionTest : Logging
     """.trimIndent())
   }
 
+  @Test
   fun `test several logs`() {
     myFixture.testHighlighting(JvmLanguage.JAVA, """
       import org.slf4j.Logger;
@@ -74,6 +87,7 @@ class JavaLoggingConditionDisagreesWithLogLevelStatementInspectionTest : Logging
       }
     """.trimIndent())
   }
+  @Test
   fun `test several logs 2`() {
     myFixture.testHighlighting(JvmLanguage.JAVA, """
       import org.slf4j.Logger;
@@ -96,6 +110,7 @@ class JavaLoggingConditionDisagreesWithLogLevelStatementInspectionTest : Logging
     """.trimIndent())
   }
 
+  @Test
   fun `test log4j2`() {
     myFixture.testHighlighting(JvmLanguage.JAVA, """
       import org.apache.logging.log4j.*;
@@ -110,6 +125,7 @@ class JavaLoggingConditionDisagreesWithLogLevelStatementInspectionTest : Logging
     """.trimIndent())
   }
 
+  @Test
   fun `test java util logging`() {
     myFixture.testHighlighting(JvmLanguage.JAVA, """
       import java.util.logging.*;
@@ -127,6 +143,7 @@ class JavaLoggingConditionDisagreesWithLogLevelStatementInspectionTest : Logging
       """.trimIndent())
   }
 
+  @Test
   fun `test fixes log4j2 change calls`() {
       myFixture.testQuickFix(
         testPreview = true,
@@ -163,6 +180,7 @@ class JavaLoggingConditionDisagreesWithLogLevelStatementInspectionTest : Logging
       )
   }
 
+  @Test
   fun `test fixes log4j2 change guards`() {
       myFixture.testQuickFix(
         testPreview = true,
@@ -199,6 +217,7 @@ class JavaLoggingConditionDisagreesWithLogLevelStatementInspectionTest : Logging
       )
   }
 
+  @Test
   fun `test fixes slf4j change guards`() {
       myFixture.testQuickFix(
         testPreview = true,

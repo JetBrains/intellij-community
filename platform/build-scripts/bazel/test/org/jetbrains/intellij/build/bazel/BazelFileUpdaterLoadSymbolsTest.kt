@@ -24,7 +24,7 @@ internal class BazelFileUpdaterLoadSymbolsTest {
   fun `keeps the symbol a hand-written call needs and drops the rest of the line`() {
     val file = buildFile("""
       load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library")
-      load("@community//platform/build-scripts/bazel-rules:dev_dist_content.bzl", "dev_dist_plugin_content")
+      load("@community//platform/build-scripts/bazel-rules:dist_content.bzl", "dist_plugin_content")
       load("//build:hand_written.bzl", "hand_written_rule", my_alias = "aliased_rule")
 
       hand_written_rule(name = "kept")
@@ -59,11 +59,11 @@ internal class BazelFileUpdaterLoadSymbolsTest {
   @Test
   fun `drops the whole line when no symbol on it survives`() {
     val file = buildFile("""
-      load("@community//platform/build-scripts/bazel-rules:dev_dist_content.bzl", "dev_dist_plugin_content")
-      load("@community//platform/build-scripts/bazel-rules:dev_dist_plugin_descriptor.bzl", "dev_dist_plugin_descriptor")
-      load("@community//platform/build-scripts/bazel-rules:dev_dist_plugin.bzl", "dev_dist_plugin")
+      load("@community//platform/build-scripts/bazel-rules:dist_content.bzl", "dist_plugin_content")
+      load("@community//platform/build-scripts/bazel-rules:dist_plugin_descriptor.bzl", "dist_plugin_descriptor")
+      load("@community//platform/build-scripts/bazel-rules:dist_plugin.bzl", "dist_plugin")
 
-      dev_dist_plugin(name = "sample_dev_dist")
+      dist_plugin(name = "sample_dev_dist")
     """.trimIndent())
 
     val updater = BazelFileUpdater(file)
@@ -71,9 +71,9 @@ internal class BazelFileUpdaterLoadSymbolsTest {
     updater.save()
 
     assertEquals("""
-      load("@community//platform/build-scripts/bazel-rules:dev_dist_plugin.bzl", "dev_dist_plugin")
+      load("@community//platform/build-scripts/bazel-rules:dist_plugin.bzl", "dist_plugin")
 
-      dev_dist_plugin(name = "sample_dev_dist")
+      dist_plugin(name = "sample_dev_dist")
     """.trimIndent() + "\n", file.readText())
   }
 

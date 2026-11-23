@@ -606,11 +606,11 @@ internal fun layoutPlatformDistribution(
   /**
    * The modules to pack, `null` for all of [PlatformLayout.includedModules].
    *
-   * A split dev-distribution fragment passes its share, so that the modules it does not pack are never resolved to
+   * A split distribution fragment passes its share, so that the modules it does not pack are never resolved to
    * their outputs and cannot invalidate it.
    */
   includedModules: Collection<ModuleItem>? = null,
-  /** Packs only the `lib/` jars this accepts; `null` packs all of them. Set by a split dev-distribution fragment. */
+  /** Packs only the `lib/` jars this accepts; `null` packs all of them. Set by a split distribution fragment. */
   assetFilter: DistributionAssetFilter? = null,
   context: BuildContext,
 ): List<DistributionFileEntry> {
@@ -774,7 +774,7 @@ internal fun satisfiesBundlingRequirements(plugin: PluginLayout, osFamily: OsFam
 /**
  * Applies the dev path's bundling rules without release-cycle restrictions or build context access.
  *
- * With [acceptsMarketplace], a marketplace layout serves every platform. The dev distribution gives such a layout to a
+ * With [acceptsMarketplace], a marketplace layout serves every platform. The distribution gives such a layout to a
  * plugin that the product publishes, as the old update path builds it.
  */
 internal fun satisfiesDevBundlingRequirements(

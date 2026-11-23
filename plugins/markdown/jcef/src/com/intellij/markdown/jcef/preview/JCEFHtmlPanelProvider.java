@@ -4,9 +4,11 @@ package com.intellij.markdown.jcef.preview;
 import com.intellij.idea.AppMode;
 import com.intellij.openapi.client.ClientKind;
 import com.intellij.openapi.client.ClientSessionsManager;
+import com.intellij.openapi.progress.Cancellation;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.jcef.JBCefApp;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import org.intellij.plugins.markdown.ui.preview.MarkdownHtmlPanel;
 import org.intellij.plugins.markdown.ui.preview.MarkdownHtmlPanelProvider;
 import org.intellij.plugins.markdown.ui.preview.SourceTextPreprocessor;
@@ -25,6 +27,24 @@ public final class JCEFHtmlPanelProvider extends MarkdownHtmlPanelProvider {
       throw new IllegalStateException("Tried to create a JCEF panel, but JCEF is not supported in the current environment");
     }
     return new MarkdownJCEFHtmlPanel(project, virtualFile);
+  }
+
+  @Override
+  @RequiresBackgroundThread
+  public void prepare() {
+    if (!canBeUsed()) {
+      return;
+    }
+    // TODO IJPL-262437 remove the guard when JBCefApp.getInstance() is safe to cancel.
+    // A cancellation inside the JCEF startup fails a class initializer, and JCEF stays broken until the IDE restarts.
+    Cancellation.executeInNonCancelableSection(() -> {
+      try {
+        JBCefApp.getInstance();
+      }
+      catch (IllegalStateException ignored) {
+        // createHtmlPanel calls JBCefApp.getInstance() again and reports the failure.
+      }
+    });
   }
 
   @Override

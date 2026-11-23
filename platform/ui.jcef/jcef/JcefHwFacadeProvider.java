@@ -2,18 +2,17 @@
 package com.intellij.ui.jcef;
 
 import com.intellij.ui.HwFacadeProvider;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.JComponent;
 import java.awt.Graphics;
 import java.util.function.Consumer;
 
-@ApiStatus.Internal
-public final class JcefHwFacadeProvider implements HwFacadeProvider {
+final class JcefHwFacadeProvider implements HwFacadeProvider {
   @Override
   public boolean isAvailable() {
-    return JBCefApp.isSupported();
+    // do not use HwFacadeHelper until we have any JCEF surfaces in UI
+    return JcefHwFacadeState.isStarted();
   }
 
   @Override

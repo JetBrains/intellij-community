@@ -13,6 +13,8 @@ import org.junit.platform.commons.annotation.Testable
 @Testable
 @TestApplication
 class McpToolFilterSettingsTest {
+  private var routerControls: AutoCloseable? = null
+
   @AfterEach
   fun tearDown() {
     // Reset filter to default after each test
@@ -20,6 +22,8 @@ class McpToolFilterSettingsTest {
       toolsFilter = McpToolFilterSettings.DEFAULT_FILTER
       invocationMode = McpSessionInvocationMode.DIRECT
     }
+    McpToolFilterSettings.getInstance().overrideInvocationModeForProcess(null)
+    routerControls?.close()
   }
 
   @Test
@@ -146,6 +150,35 @@ class McpToolFilterSettingsTest {
     McpToolFilterSettings.getInstance().invocationMode = McpSessionInvocationMode.VIA_ROUTER
 
     assertThat(McpToolFilterSettings.getInstance().invocationMode).isEqualTo(McpSessionInvocationMode.VIA_ROUTER)
+  }
+
+  @Test
+  fun `stored router mode does not apply while the router controls are off`() {
+    val settings = McpToolFilterSettings.getInstance()
+    settings.invocationMode = McpSessionInvocationMode.VIA_ROUTER
+
+    assertThat(settings.isRouterConfigurable).isFalse()
+    assertThat(settings.effectiveInvocationMode).isEqualTo(McpSessionInvocationMode.DIRECT)
+  }
+
+  @Test
+  fun `process override of the router mode beats the stored mode and the advanced setting`() {
+    val settings = McpToolFilterSettings.getInstance()
+
+    settings.overrideInvocationModeForProcess(McpSessionInvocationMode.VIA_ROUTER)
+
+    assertThat(settings.isRouterConfigurable).isFalse()
+    assertThat(settings.effectiveInvocationMode).isEqualTo(McpSessionInvocationMode.VIA_ROUTER)
+    assertThat(settings.invocationMode).isEqualTo(McpSessionInvocationMode.DIRECT)
+  }
+
+  @Test
+  fun `stored router mode applies while the router controls are on`() {
+    val settings = McpToolFilterSettings.getInstance()
+    settings.invocationMode = McpSessionInvocationMode.VIA_ROUTER
+    routerControls = setRouterControls(true)
+
+    assertThat(settings.effectiveInvocationMode).isEqualTo(McpSessionInvocationMode.VIA_ROUTER)
   }
 
 }

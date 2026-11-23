@@ -3,12 +3,10 @@ package com.jetbrains.python.sdk.poetry
 
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.fileLogger
-import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.python.community.execService.EnvVar
 import com.intellij.python.community.execService.EnvVarVal
 import com.intellij.python.community.execService.python.validatePythonAndGetInfo
-import com.intellij.python.community.impl.poetry.backend.PyPoetryBundle
 import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.PythonHomePath
 import com.jetbrains.python.errorProcessing.ErrorSink
@@ -27,8 +25,9 @@ import com.jetbrains.python.sdk.add.v2.EelOrJustPath.Companion.toFileSystem
 import com.jetbrains.python.sdk.add.v2.EelOrTarget
 import com.jetbrains.python.sdk.add.v2.FileSystem
 import com.jetbrains.python.sdk.add.v2.PathHolder
-import com.intellij.python.sdk.backend.PySdkBundle
-import com.jetbrains.python.sdk.pySdkAdditionalData
+import com.intellij.python.sdk.backend.PythonInterpreter
+import com.intellij.python.sdk.backend.binaryPathString
+import com.intellij.python.sdk.backend.toFileSystem
 import com.jetbrains.python.sdk.add.v2.EelOrJustPath
 import com.jetbrains.python.sdk.add.v2.toFileSystem
 import io.github.z4kn4fein.semver.Version
@@ -67,34 +66,25 @@ suspend fun runPoetry(
 
 
 /**
- * Runs poetry command for the specified Poetry SDK.
- * Runs:
- * 1. `poetry env use [sdk]`
- * 2. `poetry [args]`
+ * Runs `poetry [args]` in the environment of [interpreter], in the directory of the PyProject that owns it. The
+ * environment is the active one, see `VIRTUAL_ENV`.
  */
 @Internal
-suspend fun runPoetryWithSdk(sdk: Sdk, vararg args: String): PyResult<String> {
-  val data = sdk.pySdkAdditionalData
-  val projectPath = data.workingDirectory.takeIf { data.hasValidWorkingDirectory() }
-                    ?: return PyResult.localizedError(PyPoetryBundle.message("python.sdk.project.working.directory.not.found"))
-  val sdkHomePath = sdk.homePath
-                    ?: return PyResult.localizedError(PySdkBundle.message("python.sdk.broken.configuration", sdk.name))
-
-  return runPoetryWithSdk(
-    fileSystem = sdk.toFileSystem(),
-    projectPath = projectPath,
-    sdkHomePath = sdkHomePath,
+suspend fun runPoetryWithInterpreter(interpreter: PythonInterpreter, vararg args: String): PyResult<String> =
+  runPoetryInEnv(
+    fileSystem = interpreter.toFileSystem(),
+    projectPath = interpreter.ownerDir,
+    pythonBinary = interpreter.binaryPathString,
     args = args,
   )
-}
 
-private suspend fun <P : PathHolder> runPoetryWithSdk(
+private suspend fun <P : PathHolder> runPoetryInEnv(
   fileSystem: FileSystem<P>,
   projectPath: Path,
-  sdkHomePath: String,
+  pythonBinary: String,
   vararg args: String,
 ): PyResult<String> {
-  val pythonPath = fileSystem.parsePath(sdkHomePath).getOr { return it }
+  val pythonPath = fileSystem.parsePath(pythonBinary).getOr { return it }
   val pythonHomePath = fileSystem.resolvePythonHome(pythonPath)
   val env = buildList {
     add(EnvVar("POETRY_VIRTUALENVS_IN_PROJECT", "false"))
@@ -256,8 +246,8 @@ suspend fun <P : PathHolder> detectPoetryEnvironments(
   })
 }
 
-private suspend fun getPoetryVersion(sdk: Sdk): String? =
-  runPoetryWithSdk(sdk, "--version").getOrNull()?.parsePoetryVersion()
+private suspend fun getPoetryVersion(interpreter: PythonInterpreter): String? =
+  runPoetryWithInterpreter(interpreter, "--version").getOrNull()?.parsePoetryVersion()
 
 private fun String.parsePoetryVersion(): String? =
   split(' ').lastOrNull()?.replace(POETRY_EXCLUDE_NON_DIGITS_REGEX, "")
@@ -270,14 +260,14 @@ private fun String.parsePoetryVersion(): String? =
  * @param [extraArgs] Additional arguments to pass to the Poetry add command.
  */
 @Internal
-suspend fun poetryInstallPackage(sdk: Sdk, packages: List<String>, extraArgs: List<String>): PyResult<String> {
+suspend fun poetryInstallPackage(interpreter: PythonInterpreter, packages: List<String>, extraArgs: List<String>): PyResult<String> {
   val args = listOf("add") + packages + extraArgs
-  return runPoetryWithSdk(sdk, *args.toTypedArray())
+  return runPoetryWithInterpreter(interpreter, *args.toTypedArray())
 }
 
-internal suspend fun poetryInstallPackageDetached(sdk: Sdk, packages: List<String>, extraArgs: List<String>): PyResult<String> {
+internal suspend fun poetryInstallPackageDetached(interpreter: PythonInterpreter, packages: List<String>, extraArgs: List<String>): PyResult<String> {
   val args = listOf("run", "pip", "install") + packages + extraArgs
-  return runPoetryWithSdk(sdk, *args.toTypedArray())
+  return runPoetryWithInterpreter(interpreter, *args.toTypedArray())
 }
 
 /**
@@ -286,12 +276,12 @@ internal suspend fun poetryInstallPackageDetached(sdk: Sdk, packages: List<Strin
  *
  * @param [packages] The name of the package to be uninstalled.
  */
-internal suspend fun poetryRemovePackage(sdk: Sdk, vararg packages: String): PyResult<String> = runPoetryWithSdk(sdk, "remove", *packages)
+internal suspend fun poetryRemovePackage(interpreter: PythonInterpreter, vararg packages: String): PyResult<String> = runPoetryWithInterpreter(interpreter, "remove", *packages)
 
 @Internal
-suspend fun poetryUninstallPackage(sdk: Sdk, vararg packages: String): PyResult<String> {
+suspend fun poetryUninstallPackage(interpreter: PythonInterpreter, vararg packages: String): PyResult<String> {
   val args = listOf("run", "pip", "uninstall", "-y", *packages)
-  return runPoetryWithSdk(sdk, *args.toTypedArray())
+  return runPoetryWithInterpreter(interpreter, *args.toTypedArray())
 }
 
 @Internal
@@ -307,46 +297,46 @@ fun parsePoetryShow(input: String): List<PythonPackage> {
   return result
 }
 
-internal suspend fun poetryShowOutdated(sdk: Sdk): PyResult<Map<String, PythonOutdatedPackage>> {
-  val output = runPoetryWithSdk(sdk, "show", "--all", "--outdated").getOr { return it }
+internal suspend fun poetryShowOutdated(interpreter: PythonInterpreter): PyResult<Map<String, PythonOutdatedPackage>> {
+  val output = runPoetryWithInterpreter(interpreter, "show", "--all", "--outdated").getOr { return it }
 
   return parsePoetryShowOutdated(output).let { PyResult.success(it) }
 }
 
 @Internal
-suspend fun poetryListPackages(sdk: Sdk): PyResult<Pair<List<PyPackage>, List<PyRequirement>>> {
-  val version = getPoetryVersion(sdk)?.toVersion()
+suspend fun poetryListPackages(interpreter: PythonInterpreter): PyResult<Pair<List<PyPackage>, List<PyRequirement>>> {
+  val version = getPoetryVersion(interpreter)?.toVersion()
 
   // Ensure that the lock file is up to date.
-  if (!Registry.get("python.poetry.list.packages.without.lock").asBoolean() && !checkLock(sdk, version)) {
-    fixLock(sdk, version).getOr { return it }
+  if (!Registry.get("python.poetry.list.packages.without.lock").asBoolean() && !checkLock(interpreter, version)) {
+    fixLock(interpreter, version).getOr { return it }
   }
 
-  val output = runPoetryWithSdk(sdk, "install", "--dry-run", "--no-root").getOr { return it }
+  val output = runPoetryWithInterpreter(interpreter, "install", "--dry-run", "--no-root").getOr { return it }
 
   return parsePoetryInstallDryRun(output).let {
     PyResult.success(it)
   }
 }
 
-internal suspend fun checkLock(sdk: Sdk, version: Version?): Boolean {
+internal suspend fun checkLock(interpreter: PythonInterpreter, version: Version?): Boolean {
   // From Poetry 1.6.0 and forward, `poetry check --lock` should be used to figure out the validity of the lock file.
   // However, this command fails whenever a README file (as described in pyproject.toml) is absent, without even checking the lock file.
   // The old command, albeit deprecated, doesn't check for the README; instead, it only checks for the validity of the lock file.
   // After Poetry 2.0.0 and forward, `poetry check --lock` also only checks for the lock file, ignoring the existence of a README.
   if (version == null || version >= VERSION_2) {
-    return runPoetryWithSdk(sdk, "check", "--lock").isSuccess
+    return runPoetryWithInterpreter(interpreter, "check", "--lock").isSuccess
   }
 
-  return runPoetryWithSdk(sdk, "lock", "--check").isSuccess
+  return runPoetryWithInterpreter(interpreter, "lock", "--check").isSuccess
 }
 
-internal suspend fun fixLock(sdk: Sdk, version: Version?): PyResult<String> {
+internal suspend fun fixLock(interpreter: PythonInterpreter, version: Version?): PyResult<String> {
   if (version == null || version >= VERSION_2) {
-    return runPoetryWithSdk(sdk, "lock")
+    return runPoetryWithInterpreter(interpreter, "lock")
   }
 
-  return runPoetryWithSdk(sdk, "lock", "--no-update")
+  return runPoetryWithInterpreter(interpreter, "lock", "--no-update")
 }
 
 internal fun parsePoetryInstallDryRun(input: String): Pair<List<PyPackage>, List<PyRequirement>> {

@@ -2,9 +2,14 @@
 package org.intellij.plugins.markdown.highlighting
 
 import com.intellij.lexer.Lexer
-import com.intellij.testFramework.fixtures.BasePlatformTestCase
+import com.intellij.testFramework.junit5.TestApplication
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Test
 
-class MarkdownHighlightingLexerTest : BasePlatformTestCase() {
+@TestApplication
+class MarkdownHighlightingLexerTest {
+  @Test
   fun `test restart at Markdown block boundaries`() {
     val text = """
       # Header
@@ -50,6 +55,7 @@ class MarkdownHighlightingLexerTest : BasePlatformTestCase() {
     }
   }
 
+  @Test
   fun `test footnote definition followed by an indented table`() {
     val text = """
       Text[^n]

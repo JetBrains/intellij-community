@@ -16,17 +16,30 @@
 package org.jetbrains.idea.devkit.inspections.internal;
 
 import com.intellij.openapi.util.text.StringUtil;
-import org.jetbrains.idea.devkit.inspections.PluginModuleTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.jetbrains.idea.devkit.inspections.PluginModuleFixture;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
-public class UndesirableClassUsageInspectionTest extends PluginModuleTestCase {
+import static org.jetbrains.idea.devkit.inspections.PluginModuleFixtureKt.pluginModuleFixture;
+import static org.jetbrains.idea.devkit.inspections.PluginModuleFixtureKt.pluginModuleProjectFixture;
 
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
+@TestApplication
+public class UndesirableClassUsageInspectionTest {
+  private static final TestFixture<LightJavaProject> projectFixture = pluginModuleProjectFixture();
+  private final TestFixture<PluginModuleFixture> pluginModule = pluginModuleFixture(projectFixture);
+
+  @BeforeEach
+  void setUp() {
+    LightJavaCodeInsightTestFixture myFixture = pluginModule.get().getFixture();
 
     myFixture.enableInspections(new UndesirableClassUsageInspection());
   }
 
+  @Test
   public void testUsages() {
     doTest("javax.swing.JList", "com.intellij.ui.components.JBList");
     doTest("javax.swing.JTable", "com.intellij.ui.table.JBTable");
@@ -39,6 +52,7 @@ public class UndesirableClassUsageInspectionTest extends PluginModuleTestCase {
   }
 
   private void doTest(String classFqn, String replacementText) {
+    LightJavaCodeInsightTestFixture myFixture = pluginModule.get().getFixture();
     myFixture.addClass("package " + StringUtil.getPackageName(classFqn) + ";" +
                        "public class " + StringUtil.getShortName(classFqn) + " {}");
 

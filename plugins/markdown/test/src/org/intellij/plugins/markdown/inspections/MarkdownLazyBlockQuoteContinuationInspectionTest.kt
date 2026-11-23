@@ -2,21 +2,31 @@
 package org.intellij.plugins.markdown.inspections
 
 import com.intellij.markdown.backend.inspections.MarkdownLazyBlockQuoteContinuationInspection
-import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixture4TestCase
+import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightModuleFixture
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.fixture.projectFixture
 import org.intellij.plugins.markdown.MarkdownBundle
-import org.junit.Test
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 import java.util.UUID
 
-class MarkdownLazyBlockQuoteContinuationInspectionTest : LightPlatformCodeInsightFixture4TestCase() {
+@TestApplication
+class MarkdownLazyBlockQuoteContinuationInspectionTest {
+  companion object {
+    private val projectFixture = projectFixture(openAfterCreation = true)
+  }
+
+  private val myFixture by codeInsightModuleFixture(projectFixture)
+
   private val description = MarkdownBundle.message("markdown.lazy.block.quote.continuation.inspection.description")
 
-  override fun setUp() {
-    super.setUp()
+  @BeforeEach
+  fun setUp() {
     myFixture.enableInspections(MarkdownLazyBlockQuoteContinuationInspection())
   }
 
   @Test
-  fun `test all lazy lines`() = doFixTest("""
+  fun `test all lazy lines`(): Unit = doFixTest("""
     > line 1
     <weak_warning descr="$description">line 2
     line 3
@@ -29,7 +39,7 @@ class MarkdownLazyBlockQuoteContinuationInspectionTest : LightPlatformCodeInsigh
   """)
 
   @Test
-  fun `test nested quote`() = doFixTest("""
+  fun `test nested quote`(): Unit = doFixTest("""
     > > a
     <weak_warning descr="$description">b</weak_warning>
   """, """
@@ -38,7 +48,7 @@ class MarkdownLazyBlockQuoteContinuationInspectionTest : LightPlatformCodeInsigh
   """)
 
   @Test
-  fun `test quote in list`() = doFixTest("""
+  fun `test quote in list`(): Unit = doFixTest("""
     - > a
       <weak_warning descr="$description">b</weak_warning>
   """, """
@@ -47,7 +57,7 @@ class MarkdownLazyBlockQuoteContinuationInspectionTest : LightPlatformCodeInsigh
   """)
 
   @Test
-  fun `test list in quote`() = doFixTest("""
+  fun `test list in quote`(): Unit = doFixTest("""
     > - a
     <weak_warning descr="$description">b</weak_warning>
   """, """
@@ -56,7 +66,7 @@ class MarkdownLazyBlockQuoteContinuationInspectionTest : LightPlatformCodeInsigh
   """)
 
   @Test
-  fun `test alert`() = doFixTest("""
+  fun `test alert`(): Unit = doFixTest("""
     > [!NOTE]
     > a
     <weak_warning descr="$description">b</weak_warning>
@@ -67,7 +77,7 @@ class MarkdownLazyBlockQuoteContinuationInspectionTest : LightPlatformCodeInsigh
   """)
 
   @Test
-  fun `test marker without space`() = doFixTest("""
+  fun `test marker without space`(): Unit = doFixTest("""
     >a
     <weak_warning descr="$description">b</weak_warning>
   """, """
@@ -76,7 +86,7 @@ class MarkdownLazyBlockQuoteContinuationInspectionTest : LightPlatformCodeInsigh
   """)
 
   @Test
-  fun `test indented lazy line`() = doFixTest("""
+  fun `test indented lazy line`(): Unit = doFixTest("""
     > a
     <weak_warning descr="$description">   b</weak_warning>
   """, """
@@ -85,7 +95,7 @@ class MarkdownLazyBlockQuoteContinuationInspectionTest : LightPlatformCodeInsigh
   """)
 
   @Test
-  fun `test quote after lazy line`() = doFixTest("""
+  fun `test quote after lazy line`(): Unit = doFixTest("""
     > a
     <weak_warning descr="$description">b</weak_warning>
     > c
@@ -96,7 +106,7 @@ class MarkdownLazyBlockQuoteContinuationInspectionTest : LightPlatformCodeInsigh
   """)
 
   @Test
-  fun `test lazy line with inline markup`() = doFixTest("""
+  fun `test lazy line with inline markup`(): Unit = doFixTest("""
     > a
     <weak_warning descr="$description">**b** [link](https://example.com) `c`</weak_warning>
   """, """
@@ -105,27 +115,27 @@ class MarkdownLazyBlockQuoteContinuationInspectionTest : LightPlatformCodeInsigh
   """)
 
   @Test
-  fun `test blank line after quote`() = checkHighlighting("""
+  fun `test blank line after quote`(): Unit = checkHighlighting("""
     > a
 
     b
   """)
 
   @Test
-  fun `test empty quote line`() = checkHighlighting("""
+  fun `test empty quote line`(): Unit = checkHighlighting("""
     > a
     >
     b
   """)
 
   @Test
-  fun `test quote ends with heading`() = checkHighlighting("""
+  fun `test quote ends with heading`(): Unit = checkHighlighting("""
     > # a
     b
   """)
 
   @Test
-  fun `test quote ends with code fence`() = checkHighlighting("""
+  fun `test quote ends with code fence`(): Unit = checkHighlighting("""
     > ```
     > a
     > ```
@@ -133,7 +143,7 @@ class MarkdownLazyBlockQuoteContinuationInspectionTest : LightPlatformCodeInsigh
   """)
 
   @Test
-  fun `test block after quote`() = checkHighlighting("""
+  fun `test block after quote`(): Unit = checkHighlighting("""
     > a
     - b
 
@@ -148,13 +158,13 @@ class MarkdownLazyBlockQuoteContinuationInspectionTest : LightPlatformCodeInsigh
   """)
 
   @Test
-  fun `test new quote after quote in list`() = checkHighlighting("""
+  fun `test new quote after quote in list`(): Unit = checkHighlighting("""
     - > a
     > b
   """)
 
   @Test
-  fun `test lazy list line`() = checkHighlighting("""
+  fun `test lazy list line`(): Unit = checkHighlighting("""
     - a
     b
 

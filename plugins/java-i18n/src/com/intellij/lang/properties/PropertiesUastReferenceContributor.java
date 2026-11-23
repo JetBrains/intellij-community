@@ -17,10 +17,12 @@ import com.intellij.psi.UastInjectionHostReferenceProvider;
 import com.intellij.psi.UastReferenceRegistrar;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.AnnotatedElementsSearch;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.uast.UAnnotation;
 import org.jetbrains.uast.UElement;
 import org.jetbrains.uast.UExpression;
@@ -96,8 +98,7 @@ public final class PropertiesUastReferenceContributor extends PsiReferenceContri
                   ContainerUtil.find(annotations, anno -> AnnotationUtil.PROPERTY_KEY.equals(anno.getQualifiedName()));
                 if (uAnnotation == null) return true;
                 UExpression attributeValue = uAnnotation.findAttributeValue(AnnotationUtil.PROPERTY_KEY_RESOURCE_BUNDLE_PARAMETER);
-                if (attributeValue instanceof UResolvable &&
-                    field.equals(UastContextKt.toUElement(((UResolvable)attributeValue).resolve()))) {
+                if (attributeValue instanceof UResolvable resolvable && isField(field, resolvable.resolve())) {
                   Collections.addAll(references, myUnderlying.getReferencesForInjectionHost(uExpression, host, context));
                   return false;
                 }
@@ -107,5 +108,21 @@ public final class PropertiesUastReferenceContributor extends PsiReferenceContri
           return references.toArray(PsiReference.EMPTY_ARRAY);
         }
       }, PsiReferenceRegistrar.DEFAULT_PRIORITY);
+  }
+
+  /**
+   * @return whether {@code resolved} is {@code field}; in a copy of a file, also whether it is the field of the original file at the place
+   * of {@code field}, as the copy of a Kotlin file may resolve to the declarations of the original
+   */
+  private static boolean isField(@NotNull UField field, @Nullable PsiElement resolved) {
+    if (resolved == null) return false;
+    if (field.equals(UastContextKt.toUElement(resolved))) return true;
+    PsiElement fieldSource = field.getSourcePsi();
+    if (fieldSource == null) return false;
+    PsiFile file = fieldSource.getContainingFile();
+    PsiFile originalFile = file.getOriginalFile();
+    PsiElement resolvedSource = resolved.getNavigationElement();
+    if (originalFile == file || resolvedSource == null || resolvedSource.getContainingFile() != originalFile) return false;
+    return PsiTreeUtil.findSameElementInCopy(resolvedSource, originalFile, file) == fieldSource;
   }
 }

@@ -185,6 +185,24 @@ fn a_plan_reads_back_what_it_wrote_and_skips_the_lines_it_does_not_know() {
     });
 }
 
+/// The shared plan keeps its own record of a target, and takes each target that only the other plan names.
+#[test]
+fn a_plan_adds_only_the_targets_it_has_no_record_of() {
+    let mut shared = ShardPlan::default();
+    shared.record(&timing("//a:both", &[("A", 300.0)]));
+    let mut copy = ShardPlan::default();
+    copy.record(&timing("//a:both", &[("A", 5.0)]));
+    copy.record(&timing("//a:old", &[("B", 7.0)]));
+
+    assert!(shared.add_missing_targets(&copy));
+    assert_eq!(shared.shards_of("//a:both"), 4);
+    assert_eq!(
+        shared.class_times().collect::<Vec<_>>(),
+        [("//a:both", "A", 300.0), ("//a:old", "B", 7.0)]
+    );
+    assert!(!shared.add_missing_targets(&copy));
+}
+
 #[test]
 fn a_record_replaces_the_classes_of_its_own_target_only() {
     let mut plan = ShardPlan::default();

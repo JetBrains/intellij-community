@@ -76,24 +76,28 @@ private const val BULLET_PLACEHOLDERS = "•◦▪"
  * The live-preview spec set for [file] in [editor], sorted by element start offset.
  *
  * Collects the markup to hide, the lines of nested list items and the code for the code font.
- * Skips the subtrees named in [NoDescendTypes].
+ * Skips the subtrees named in [NoDescendTypes], and the elements that [configuration] prohibits.
  */
 @ApiStatus.Internal
-fun computeLivePreviewSpecs(file: PsiFile, editor: Editor): MarkdownLivePreviewSpecSet {
+fun computeLivePreviewSpecs(file: PsiFile, editor: Editor, configuration: MarkdownLivePreviewConfiguration): MarkdownLivePreviewSpecSet {
   val lines by lazy { LineIndex(file.viewProvider.contents, editor.document) }
   val elements = SyntaxTraverser.psiTraverser(file)
     .expand { PsiUtilCore.getElementType(it) !in NoDescendTypes }
     .asSequence()
     .flatMap {
       when (PsiUtilCore.getElementType(it)) {
-        MarkdownElementTypes.BLOCK_QUOTE -> lines.blockQuoteSpecs(it.textRange)
-        MarkdownElementTypes.ALERT -> lines.blockQuoteSpecs(it.textRange, it.alertType())
+        MarkdownElementTypes.BLOCK_QUOTE ->
+          if (configuration.isProhibited(MarkdownLivePreviewConfiguration.BLOCK_QUOTES)) emptyList()
+          else lines.blockQuoteSpecs(it.textRange)
+        MarkdownElementTypes.ALERT ->
+          if (configuration.isProhibited(MarkdownLivePreviewConfiguration.BLOCK_QUOTES)) emptyList()
+          else lines.blockQuoteSpecs(it.textRange, it.alertType())
         MarkdownElementTypes.LIST_ITEM -> lines.listIndentSpecs(it)
         MarkdownElementTypes.CODE_SPAN, MarkdownElementTypes.CODE_BLOCK ->
-          listOfNotNull(it.toDecorationSpecs(editor), it.toCodeFontSpec())
+          listOfNotNull(it.toDecorationSpecs(editor, configuration), it.toCodeFontSpec())
         MarkdownElementTypes.CODE_FENCE ->
-          listOfNotNull(it.toDecorationSpecs(editor), it.toCodeFontSpec(), it.toFenceMarkerSpec())
-        else -> listOfNotNull(it.toDecorationSpecs(editor))
+          listOfNotNull(it.toDecorationSpecs(editor, configuration), it.toCodeFontSpec(), it.toFenceMarkerSpec())
+        else -> listOfNotNull(it.toDecorationSpecs(editor, configuration))
       }
     }
     .sortedWith(compareBy({ it.range.startOffset }, { it.range.endOffset }))
@@ -102,7 +106,11 @@ fun computeLivePreviewSpecs(file: PsiFile, editor: Editor): MarkdownLivePreviewS
   return MarkdownLivePreviewSpecSet(version, elements)
 }
 
-private fun PsiElement.toDecorationSpecs(editor: Editor): MarkdownLivePreviewSpec? {
+private fun MarkdownLivePreviewConfiguration.isProhibited(element: String): Boolean = element in prohibited
+
+private fun MarkdownLivePreviewConfiguration.isEnabled(element: String): Boolean = !isProhibited(element)
+
+private fun PsiElement.toDecorationSpecs(editor: Editor, configuration: MarkdownLivePreviewConfiguration): MarkdownLivePreviewSpec? {
   return when (PsiUtilCore.getElementType(this)) {
     // One `*` or `_` is one EMPH token, so `**bold**` has two of them on each side, and the token type is
     // shared by emphasis and strong. A nested emphasis element is a composite of a different type, so it
@@ -113,19 +121,22 @@ private fun PsiElement.toDecorationSpecs(editor: Editor): MarkdownLivePreviewSpe
     MarkdownElementTypes.CODE_SPAN -> delimiterConceals(MarkdownTokenTypes.BACKTICK)
     MarkdownElementTypes.INLINE_LINK -> toInlineLinkSpecs()
     MarkdownElementTypes.FULL_REFERENCE_LINK, MarkdownElementTypes.SHORT_REFERENCE_LINK -> toReferenceLinkSpecs()
-    MarkdownElementTypes.IMAGE -> if (isInsideTable()) null else toImageSpec(editor)
-    MarkdownElementTypes.CODE_FENCE -> (this as? MarkdownCodeFence)?.toCodeFenceSpec()
+    MarkdownElementTypes.IMAGE ->
+      if (configuration.isProhibited(MarkdownLivePreviewConfiguration.IMAGES) || isInsideTable()) null else toImageSpec(editor)
+    MarkdownElementTypes.CODE_FENCE -> (this as? MarkdownCodeFence)?.toCodeFenceSpec(configuration)
     // `<https://example.org>` becomes a composite holding the brackets, while `<name@example.org>` stays
     // flat and keeps them as siblings, so the two forms need different lookups.
     MarkdownElementTypes.AUTOLINK -> toAutolinkSpecs()
     in LeafAutolinkTypes -> toAutolinkSpecs()
-    in MarkdownTokenTypeSets.HEADERS -> (this as? MarkdownHeader)?.toHeadingSpec(editor)
+    in MarkdownTokenTypeSets.HEADERS -> (this as? MarkdownHeader)?.toHeadingSpec(editor, configuration)
     MarkdownTokenTypes.LIST_BULLET -> toBulletSpec()
     MarkdownTokenTypes.CHECK_BOX -> toTaskCheckboxSpec()
     MarkdownTokenTypes.HORIZONTAL_RULE -> toHorizontalRuleSpec()
     MarkdownElementTypes.FRONT_MATTER_HEADER_DELIMITER -> toFrontMatterDelimiterSpec()
-    MarkdownTokenTypes.SETEXT_1, MarkdownTokenTypes.SETEXT_2 -> toSetextUnderlineSpec()
-    MarkdownTokenTypes.ALERT_TITLE -> toAlertTitleSpec()
+    MarkdownTokenTypes.SETEXT_1, MarkdownTokenTypes.SETEXT_2 ->
+      if (configuration.isProhibited(MarkdownLivePreviewConfiguration.HEADINGS)) null else toSetextUnderlineSpec()
+    MarkdownTokenTypes.ALERT_TITLE ->
+      if (configuration.isProhibited(MarkdownLivePreviewConfiguration.BLOCK_QUOTES)) null else toAlertTitleSpec()
     else -> null
   }
 }
@@ -188,12 +199,10 @@ private class LineIndex(private val source: CharSequence, private val document: 
       val ruleEnd =
         if (next != null) document.getLineStartOffset(document.getLineNumber(next.startOffset))
         else document.getLineEndOffset(document.getLineNumber(marker.startOffset))
-      val placeholder = if (source.getOrNull(marker.endOffset)?.let { it in " \t" } == true) " " else "  "
       MarkdownLivePreviewSpec.BlockQuote(
         range = markerRuns.getValue(marker.startOffset),
         markerRange = marker,
         ruleRange = MarkdownLivePreviewRange(marker.startOffset, ruleEnd),
-        placeholderText = placeholder,
         alertType = alertType,
       )
     }
@@ -279,21 +288,28 @@ private fun PsiElement.toAlertTitleSpec(): MarkdownLivePreviewSpec.Conceal? {
 
 private fun PsiElement.isInsideTable(): Boolean = PsiTreeUtil.getParentOfType(this, MarkdownTable::class.java) != null
 
-private fun MarkdownHeader.toHeadingSpec(editor: Editor): MarkdownLivePreviewSpec.Heading? {
+private fun MarkdownHeader.toHeadingSpec(
+  editor: Editor,
+  configuration: MarkdownLivePreviewConfiguration,
+): MarkdownLivePreviewSpec.Heading? {
   val content = contentElement
-  if (content == null || !isTopLevelOrQuoted()) return null
+  if (content == null || configuration.isProhibited(MarkdownLivePreviewConfiguration.HEADINGS)) return null
+  if (!isTopLevelOrQuoted(configuration.isEnabled(MarkdownLivePreviewConfiguration.BLOCK_QUOTES))) return null
   val range = logicalLineRange(editor)
-  val html = HeadingHtmlGenerator.generate(content, range.startOffset)
+  val html = HeadingHtmlGenerator.generate(
+    content,
+    range.startOffset,
+    configuration.isEnabled(MarkdownLivePreviewConfiguration.IMAGES),
+  )
   return MarkdownLivePreviewSpec.Heading(range.toMarkdownLivePreviewRange(), level, html)
 }
 
-private fun PsiElement.isTopLevelOrQuoted(): Boolean =
+private fun PsiElement.isTopLevelOrQuoted(quotes: Boolean): Boolean =
   generateSequence(parent) { it.parent }
     .takeWhile { it !is MarkdownFile }
-    .all { PsiUtilCore.getElementType(it) in QuoteTypes }
+    .all { quotes && PsiUtilCore.getElementType(it) in QuoteTypes }
 
 private fun PsiElement.toImageSpec(editor: Editor): MarkdownLivePreviewSpec.Image? {
-  if (!editor.isProjectTrusted()) return null
   val image = this as? MarkdownImage ?: return null
   val link = image.exclamationMark?.nextSibling ?: return null
   val linkDestination = image.linkDestination ?: LinkDefinitions.findFor(link)?.linkDestination ?: return null
@@ -303,13 +319,15 @@ private fun PsiElement.toImageSpec(editor: Editor): MarkdownLivePreviewSpec.Imag
   val range = image.wholeLineRange() ?: image.textRange
   val altText = image.collectLinkDescriptionText()?.let(StringUtil::collapseWhiteSpace).orEmpty()
   val placeholderText = altText.ifEmpty { MarkdownBundle.message("markdown.live.preview.image.placeholder") }
-  val source = editor.getOrCreateMarkdownLivePreviewImageManager().findImageData(destination)
-  return MarkdownLivePreviewSpec.Image(range.toMarkdownLivePreviewRange(), destination, placeholderText, isBrowserOwned, source)
+  val spec = MarkdownLivePreviewSpec.Image(range.toMarkdownLivePreviewRange(), destination, placeholderText, isBrowserOwned)
+  if (!editor.isProjectTrusted()) return spec.copy(failure = MarkdownLivePreviewSpec.ImageFailure.UNTRUSTED)
+  val loaded = editor.getOrCreateMarkdownLivePreviewImageManager().findImage(destination) ?: return spec
+  return spec.copy(source = loaded.source, failure = loaded.failure)
 }
 
-private fun MarkdownCodeFence.toCodeFenceSpec(): MarkdownLivePreviewSpec.CodeFence? {
+private fun MarkdownCodeFence.toCodeFenceSpec(configuration: MarkdownLivePreviewConfiguration): MarkdownLivePreviewSpec.CodeFence? {
   val language = fenceLanguage ?: return null
-  if (node.findChildByType(MarkdownTokenTypes.CODE_FENCE_END) == null) return null
+  if (configuration.isProhibited(language) || node.findChildByType(MarkdownTokenTypes.CODE_FENCE_END) == null) return null
   val source = MarkdownCodeFence.obtainFenceContent(this, withWhitespaces = false)?.joinToString("") { it.text } ?: return null
   return MarkdownLivePreviewSpec.CodeFence(textRange.toMarkdownLivePreviewRange(), language, source)
 }

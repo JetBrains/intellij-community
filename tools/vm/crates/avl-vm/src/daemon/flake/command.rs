@@ -150,7 +150,7 @@ async fn measure<I: ResetIo>(
             run_id,
             "flake",
             request,
-            DaemonTarget::Lanes,
+            DaemonTarget::of_lane(parsed.selection.lane.as_deref()),
             |held: &[HeldWorker]| Ok(plan_flake_trials(&names_of(held), usize::from(args.trials))),
             async |plan: &Vec<TrialAssignment>, _: usize, current: Lease, built: &Arc<PreparedBuild>| {
                 let assignments: Vec<TrialAssignment> = plan

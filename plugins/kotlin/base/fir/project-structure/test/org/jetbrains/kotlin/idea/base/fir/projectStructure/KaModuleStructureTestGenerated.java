@@ -47,6 +47,11 @@ public abstract class KaModuleStructureTestGenerated extends AbstractKaModuleStr
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
 
+            @TestMetadata("testProductionOnExportedTestLibrary")
+            public void testTestProductionOnExportedTestLibrary() throws Exception {
+                runTest("testData/kaModuleStructure/scopes/test/testProductionOnExportedTestLibrary/");
+            }
+
             @TestMetadata("testProductionOnExportedViaTest")
             public void testTestProductionOnExportedViaTest() throws Exception {
                 runTest("testData/kaModuleStructure/scopes/test/testProductionOnExportedViaTest/");
@@ -55,6 +60,16 @@ public abstract class KaModuleStructureTestGenerated extends AbstractKaModuleStr
             @TestMetadata("testProductionOnLibrary")
             public void testTestProductionOnLibrary() throws Exception {
                 runTest("testData/kaModuleStructure/scopes/test/testProductionOnLibrary/");
+            }
+
+            @TestMetadata("testProductionOnLibraryExportedViaTest")
+            public void testTestProductionOnLibraryExportedViaTest() throws Exception {
+                runTest("testData/kaModuleStructure/scopes/test/testProductionOnLibraryExportedViaTest/");
+            }
+
+            @TestMetadata("testProductionOnModuleExportedViaTest")
+            public void testTestProductionOnModuleExportedViaTest() throws Exception {
+                runTest("testData/kaModuleStructure/scopes/test/testProductionOnModuleExportedViaTest/");
             }
 
             @TestMetadata("testProductionOnProduction")

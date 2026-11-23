@@ -1,9 +1,23 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight.folding
 
-class JavaFolding14Test : JavaFoldingTestCase() {
+import com.intellij.openapi.application.readAction
+import com.intellij.testFramework.common.timeoutRunBlocking
+import com.intellij.testFramework.fixtures.lightJavaProjectFixture
+import com.intellij.testFramework.junit5.TestApplication
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Test
 
-  fun testTextBlock() {
+@TestApplication
+class JavaFolding14Test {
+  companion object {
+    private val projectFixture = lightJavaProjectFixture()
+  }
+
+  private val folding by javaFoldingFixture(projectFixture)
+
+  @Test
+  fun testTextBlock(): Unit = timeoutRunBlocking {
     val text = """
       String x = ""${'"'}
         @InProceedings{6055279,  Title                    = {Educational session 1},
@@ -12,15 +26,16 @@ class JavaFolding14Test : JavaFoldingTestCase() {
           Month                    = {Sept},
         ""${'"'};
     """.trimIndent()
-    configure(text)
+    folding.configure(text)
 
-    val regions = myFixture.editor.foldingModel.allFoldRegions
+    val regions = readAction { folding.fixture.editor.foldingModel.allFoldRegions.joinToString("\n") }
     assertEquals(
       "FoldRegion -(11:267), placeholder='\"\"${'"'}@InProceedings{6055279,  Title                    = {Educational session 1},...'",
-      regions.joinToString("\n"))
+      regions)
   }
 
-  fun testRecord() {
+  @Test
+  fun testRecord(): Unit = timeoutRunBlocking {
     val text = """
         class B {}
         
@@ -33,13 +48,13 @@ class JavaFolding14Test : JavaFoldingTestCase() {
           }
           void f() {}
         }""".trimIndent()
-    configure(text)
+    folding.configure(text)
 
-    val regions = myFixture.editor.foldingModel.allFoldRegions
+    val regions = readAction { folding.fixture.editor.foldingModel.allFoldRegions.joinToString("\n") }
     assertEquals("""
         FoldRegion -(20:44), placeholder='(...)'
         FoldRegion -(45:81), placeholder='{...}'
         FoldRegion -(51:65), placeholder='{...}'
-    """.trimIndent(), regions.joinToString("\n"))
+    """.trimIndent(), regions)
   }
 }

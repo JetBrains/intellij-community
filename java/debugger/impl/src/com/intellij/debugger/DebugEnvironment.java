@@ -7,6 +7,8 @@ import com.intellij.execution.configurations.RemoteConnection;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.sun.jdi.VirtualMachine;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,6 +35,16 @@ public interface DebugEnvironment {
   RemoteConnection getRemoteConnection();
 
   long getPollTimeout();
+
+  /**
+   * The live VM another process released for this one through
+   * {@link com.intellij.debugger.engine.DebugProcessImpl#releaseVirtualMachine(Runnable)}. When present, the process adopts it
+   * instead of connecting through {@link #getRemoteConnection()}.
+   */
+  @ApiStatus.Internal
+  default @Nullable VirtualMachine getVirtualMachineToAdopt() {
+    return null;
+  }
 
   @NlsSafe
   String getSessionName();

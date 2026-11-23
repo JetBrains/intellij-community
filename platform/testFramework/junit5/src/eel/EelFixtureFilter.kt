@@ -22,19 +22,34 @@ class EelFixtureFilter(
   val isLocalIjentEnabled: Boolean = true,
   val isDockerEnabled: Boolean = true,
   val isWslEnabled: Boolean = true,
-  /** No fixture reads this flag yet. With `ssh` alone in `eel.test.fixtures`, every fixture is filtered out. */
-  val isSshEnabled: Boolean = true,
+  /**
+   * Unlike [isDockerEnabled], this flag defaults to `false`.
+   * The SSH fixture starts an isolated `jetbrainsd`, downloads its bundle, and runs an `sshd` container.
+   * Default local runs leave it off unless `eel.test.fixtures` lists `ssh`.
+   * [isDefault] omits this flag.
+   */
+  val isSshEnabled: Boolean = false,
 ) {
   /**
    * The default case is optimized for local runs, where it's convenient to verify everything at once.
    * It can be not the best solution for CI, but can be OK for configurations with a few tests.
    */
-  val isDefault: Boolean = isLocalEelEnabled && isLocalIjentEnabled && isDockerEnabled && isWslEnabled && isSshEnabled
+  val isDefault: Boolean = isLocalEelEnabled && isLocalIjentEnabled && isDockerEnabled && isWslEnabled
 
   @TestOnly
   @Target(AnnotationTarget.CLASS, AnnotationTarget.FUNCTION)
   @ExtendWith(DockerEnabledCondition::class)
   annotation class OnlyWhenDockerEnabled
+
+  /**
+   * Runs a test only when [isSshEnabled] is `true`. The `ssh` label in `eel.test.fixtures` turns it on.
+   *
+   * Another annotation can carry this annotation, such as an annotation that starts an isolated `jetbrainsd`.
+   */
+  @TestOnly
+  @Target(AnnotationTarget.CLASS, AnnotationTarget.FUNCTION, AnnotationTarget.ANNOTATION_CLASS)
+  @ExtendWith(SshEnabledCondition::class)
+  annotation class OnlyWhenSshEnabled
 
   @TestOnly
   @Target(AnnotationTarget.CLASS, AnnotationTarget.FUNCTION)
@@ -114,7 +129,7 @@ class EelFixtureFilter(
       var isLocalIjentEnabled = defaultEnabled
       var isDockerEnabled = defaultEnabled
       var isWslEnabled = defaultEnabled
-      var isSshEnabled = defaultEnabled
+      var isSshEnabled = false
 
       val setters: Map<String, (Boolean) -> Unit> = mapOf(
         "local" to { enabled -> isLocalIjentEnabled = enabled; isLocalEelEnabled = enabled },
@@ -142,6 +157,8 @@ class EelFixtureFilter(
 
       if (System.getProperty("ijent.test.skip.docker") != null) {
         isDockerEnabled = false
+        // The SSH fixture runs sshd in a Docker container.
+        isSshEnabled = false
       }
 
       return EelFixtureFilter(
@@ -163,6 +180,18 @@ private class DockerEnabledCondition : ExecutionCondition {
     }
     else {
       ConditionEvaluationResult.disabled("Docker is disabled")
+    }
+  }
+}
+
+@TestOnly
+private class SshEnabledCondition : ExecutionCondition {
+  override fun evaluateExecutionCondition(context: ExtensionContext): ConditionEvaluationResult {
+    return if (EelFixtureFilter.instance.isSshEnabled) {
+      ConditionEvaluationResult.enabled("SSH is enabled")
+    }
+    else {
+      ConditionEvaluationResult.disabled("SSH is disabled")
     }
   }
 }

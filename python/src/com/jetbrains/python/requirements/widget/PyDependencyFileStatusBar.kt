@@ -2,6 +2,7 @@
 package com.jetbrains.python.requirements.widget
 
 import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.fileEditor.FileEditorOpenRequest
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ModuleRootEvent
@@ -75,7 +76,7 @@ private class PyDependenciesFileWidget(private val context: WidgetPresentationDa
 
   override fun getClickConsumer(): (MouseEvent) -> Unit = {
     currentState?.let { state ->
-      FileEditorManager.getInstance(project).openFile(state.file.virtualFile, true)
+      FileEditorManager.getInstance(project).requestOpenFile(state.file.virtualFile, FileEditorOpenRequest.withFocus(true))
     }
   }
 
@@ -83,7 +84,7 @@ private class PyDependenciesFileWidget(private val context: WidgetPresentationDa
     val virtualFile = context.currentFileEditor.value?.file
     val evoPyProject = (if (virtualFile == null) project.findMainEvoPyProject() else project.findEvoPyProject(virtualFile)) ?: return null
     val interpreter = evoPyProject.interpreter ?: return null
-    val packageManager = PythonPackageManager.forPythonInterpreter(project, interpreter)
+    val packageManager = PythonPackageManager.forPythonInterpreter(interpreter)
     val depFile = packageManager.getRootDependenciesFile() ?: return null
     return State(evoPyProject.pyProject.residesOnModule, depFile)
   }

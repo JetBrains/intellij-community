@@ -2,9 +2,9 @@
 package com.jetbrains.python.packaging.pipenv
 
 import com.intellij.openapi.module.Module
+import com.intellij.python.sdk.backend.PythonInterpreter
 import com.intellij.openapi.project.Project
 import com.intellij.python.pyproject.PyDependencyGroup
-import com.intellij.python.sdk.backend.PythonInterpreter
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.packaging.PyPackageName
 import com.jetbrains.python.packaging.common.PythonOutdatedPackage
@@ -21,29 +21,29 @@ import com.jetbrains.python.packaging.packageRequirements.cachedDependencyTree
 import com.jetbrains.python.packaging.pip.PipRepositoryManager
 import com.jetbrains.python.sdk.pipenv.PIP_FILE
 import com.jetbrains.python.sdk.pipenv.PIP_FILE_LOCK
-import com.jetbrains.python.sdk.pipenv.runPipEnvWithSdk
+import com.jetbrains.python.sdk.pipenv.runPipEnvWithInterpreter
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 import com.jetbrains.python.sdk.pipenv.PipEnvParser as SdkPipEnvParser
 
 @ApiStatus.Internal
-class PipEnvPackageManager(project: Project, interpreter: PythonInterpreter) : PythonPackageManager(project, interpreter) {
+class PipEnvPackageManager(interpreter: PythonInterpreter) : PythonPackageManager(interpreter) {
   override val repositoryManager: PythonRepositoryManager = PipRepositoryManager.getInstance(project)
 
   override val treeProvider: DependencyTreeProvider = cachedDependencyTree(
     lockFileName = PIP_FILE_LOCK,
     parse = { json -> PipEnvParser.parsePipEnvGraph(json).map { it.toTreeNode() } },
     dependencyFiles = { resolveDependencyFilesTree() },
-    fetchOutput = { runPipEnvWithSdk(sdk, "graph", "--json") },
+    fetchOutput = { runPipEnvWithInterpreter(interpreter, "graph", "--json") },
   )
 
 
   override suspend fun syncLockedCommand(): PyResult<Unit> {
-    return runPipEnvWithSdk(sdk, "install", "--dev").mapSuccess { }
+    return runPipEnvWithInterpreter(interpreter, "install", "--dev").mapSuccess { }
   }
 
   suspend fun lock(): PyResult<Unit> {
-    return runPipEnvWithSdk(sdk, "lock").mapSuccess { }
+    return runPipEnvWithInterpreter(interpreter, "lock").mapSuccess { }
   }
 
   override suspend fun installPackageCommand(installRequest: PythonPackageInstallRequest, options: List<String>, module: Module?, dependencyGroup: PyDependencyGroup?): PyResult<Unit> {
@@ -56,7 +56,7 @@ class PipEnvPackageManager(project: Project, interpreter: PythonInterpreter) : P
           installRequest.specifications.mapTo(this) { it.nameWithVersionSpecs }
           addAll(options)
         }
-        runPipEnvWithSdk(sdk, *args.toTypedArray()).mapSuccess { }
+        runPipEnvWithInterpreter(interpreter, *args.toTypedArray()).mapSuccess { }
       }
     }
   }
@@ -66,17 +66,17 @@ class PipEnvPackageManager(project: Project, interpreter: PythonInterpreter) : P
       addAll(listOf("install"))
       specifications.mapTo(this) { it.nameWithVersionSpecs }
     }
-    return runPipEnvWithSdk(sdk, *args.toTypedArray()).mapSuccess { }
+    return runPipEnvWithInterpreter(interpreter, *args.toTypedArray()).mapSuccess { }
   }
 
   override suspend fun uninstallPackageCommand(vararg pythonPackages: String, workspaceMember: PyWorkspaceMember?, dependencyGroup: PyDependencyGroup?): PyResult<Unit> {
     val args = listOf("uninstall") + pythonPackages.toList()
-    return runPipEnvWithSdk(sdk, *args.toTypedArray()).mapSuccess { }
+    return runPipEnvWithInterpreter(interpreter, *args.toTypedArray()).mapSuccess { }
 
   }
 
   override suspend fun loadPackagesCommand(): PyResult<List<PythonPackage>> {
-    val output = runPipEnvWithSdk(sdk, "graph", "--json")
+    val output = runPipEnvWithInterpreter(interpreter, "graph", "--json")
     output.getOr {
       return it
     }
@@ -90,7 +90,7 @@ class PipEnvPackageManager(project: Project, interpreter: PythonInterpreter) : P
   }
 
   override suspend fun loadOutdatedPackagesCommand(): PyResult<List<PythonOutdatedPackage>> {
-    val output = runPipEnvWithSdk(sdk, "update", "--dry-run").getOr { return it }
+    val output = runPipEnvWithInterpreter(interpreter, "update", "--dry-run").getOr { return it }
     val outdated = PipEnvParser.parseOutdatedPackagesOutput(output)
 
     return PyResult.success(outdated)

@@ -29,6 +29,7 @@ import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.eel.EelExecApi
 import com.intellij.platform.eel.environmentVariables
 import com.intellij.platform.eel.fs.getRoots
+import com.intellij.platform.eel.path.EelPathException
 import com.intellij.platform.eel.provider.asEelPath
 import com.intellij.platform.eel.provider.asNioPath
 import com.intellij.platform.eel.provider.equalsMayBeUsingMachine
@@ -62,11 +63,17 @@ import com.intellij.python.pytools.backend.impl.detectExecutableOnEel
 import com.intellij.python.pytools.backend.setCustomExecutablePath
 import com.intellij.python.sdk.backend.PySdkBundle
 import com.intellij.python.sdk.backend.PythonInterpreter
+import com.intellij.python.sdk.backend.binaryPathString
+import com.intellij.python.sdk.backend.NativePythonInterpreter
+import com.intellij.python.sdk.backend.PythonInterpreterRegistry
+import com.intellij.python.sdk.backend.TargetPythonInterpreter
+import com.intellij.python.sdk.backend.flavor
+import com.jetbrains.python.sdk.flavors.conda.CondaEnvSdkFlavor
 import com.intellij.python.sdk.backend.detectPythonEnvironment
 import com.intellij.python.sdk.backend.evolution.PyEvoEnvironmentProvider
 import com.intellij.python.sdk.backend.getPythonInfo
-import com.intellij.python.sdk.backend.getSdkAPI
 import com.intellij.python.sdk.backend.pythonInterpreterResultAsync
+import com.intellij.python.sdk.backend.getSdkAPI
 import com.intellij.python.sdk.backend.resolvePythonBinary
 import com.intellij.python.sdk.common.PyEnvRef
 import com.intellij.python.sdk.common.PyInterpreterRef
@@ -81,7 +88,6 @@ import com.jetbrains.python.Result
 import com.jetbrains.python.debugger.PyEelPathMapper
 import com.jetbrains.python.errorProcessing.MessageError
 import com.jetbrains.python.errorProcessing.PyResult
-import com.jetbrains.python.isCondaVirtualEnv
 import com.jetbrains.python.isSuccess
 import com.jetbrains.python.orLogException
 import com.jetbrains.python.pathValidation.PlatformAndRoot
@@ -94,21 +100,17 @@ import com.jetbrains.python.remote.PyRemotePathMapper
 import com.jetbrains.python.run.PythonInterpreterTargetEnvironmentFactory
 import com.jetbrains.python.sdk.BASE_DIR
 import com.jetbrains.python.sdk.ModuleOrProject
-import com.jetbrains.python.sdk.PyRemoteSdkAdditionalDataMarker
 import com.jetbrains.python.sdk.PySdkDataProvider
 import com.jetbrains.python.sdk.PySdkSettings
 import com.jetbrains.python.sdk.PythonSdkAdditionalData
 import com.jetbrains.python.sdk.PythonSdkType
 import com.jetbrains.python.sdk.ToolProbeResult
-import com.jetbrains.python.sdk.associatedModulePath
 import com.jetbrains.python.sdk.createSdk
 import com.jetbrains.python.sdk.flavors.PyFlavorAndData
 import com.jetbrains.python.sdk.flavors.PyFlavorData
 import com.jetbrains.python.sdk.flavors.UnixPythonSdkFlavor
 import com.jetbrains.python.sdk.getSdksToInstall
 import com.jetbrains.python.sdk.guessLocalFlavorAndData
-import com.jetbrains.python.sdk.isSystemWide
-import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 import com.jetbrains.python.sdk.targetAdditionalData
 import com.jetbrains.python.target.PyTargetAwareAdditionalData
 import com.jetbrains.python.target.PythonLanguageRuntimeConfiguration
@@ -238,35 +240,21 @@ data class EelFileSystem(
   }
 
   override suspend fun getExistingSelectableInterpreters(
+    project: Project?,
     projectPathPrefix: Path,
   ): List<ExistingSelectableInterpreter<PathHolder.Eel>> = withContext(Dispatchers.IO) {
-    if (!isLocal) return@withContext emptyList()
+    if (!isLocal || project == null) return@withContext emptyList()
 
-    val allValidSdks = PythonSdkUtil
-      .getAllSdksOn(eelApi.descriptor)
-      .filter { sdk ->
-        if (sdk.isCondaVirtualEnv) return@filter false
-        if (sdk.sdkAdditionalData is PyRemoteSdkAdditionalDataMarker) return@filter false
-
-        try {
-          val associatedModulePath = sdk.associatedModulePath?.let { Path(it) } ?: return@filter true
-          associatedModulePath.startsWith(projectPathPrefix)
-        }
-        catch (e: InvalidPathException) {
-          LOG.warn("Skipping bad association ${sdk.associatedModulePath}", e)
-          false
-        }
-      }.mapNotNull { sdk ->
-        // A broken SDK names no interpreter, so it is not offered.
-        val pythonInterpreter = sdk.pythonInterpreterResultAsync().successOrNull ?: return@mapNotNull null
-        val pythonInfo = pythonInterpreter.getPythonInfo()
-        val languageLevel = pythonInfo.successOrNull?.languageLevel
-
-        languageLevel?.let {
-          ExistingSelectableInterpreter(wrapSdk(pythonInterpreter), PythonInfo(it), sdk.isSystemWide)
-        }
+    PythonInterpreterRegistry.getInstance(project).allInterpreters().mapNotNull { interpreter ->
+      val native = when (interpreter) {
+        is NativePythonInterpreter -> interpreter
+        is TargetPythonInterpreter -> return@mapNotNull null
       }
-    allValidSdks
+      val flavor = native.flavor
+      if (flavor is CondaEnvSdkFlavor || !native.ownerDir.startsWith(projectPathPrefix)) return@mapNotNull null
+      val languageLevel = native.getPythonInfo().successOrNull?.languageLevel ?: return@mapNotNull null
+      ExistingSelectableInterpreter(wrapSdk(native), PythonInfo(languageLevel), isSystemWide = flavor !is VirtualEnvSdkFlavor)
+    }
   }
 
   override fun parsePath(raw: String): PyResult<PathHolder.Eel> {
@@ -284,6 +272,10 @@ data class EelFileSystem(
         return PyResult.success(PathHolder.Eel(Path(raw, eelDescriptor)))
       }
       catch (_: InvalidPathException) {
+        return PyResult.localizedError(PySdkBundle.message("path.validation.invalid", raw))
+      }
+      // The parse of a path of the machine of the eel declares it, for a string that is no path there.
+      catch (_: EelPathException) {
         return PyResult.localizedError(PySdkBundle.message("path.validation.invalid", raw))
       }
     }
@@ -365,7 +357,7 @@ data class EelFileSystem(
 
   override suspend fun wrapSdk(pythonInterpreter: PythonInterpreter): PythonInterpreterWrapper<PathHolder.Eel> =
     withContext(Dispatchers.IO) {
-      val adjustedHomePath = PythonSdkType.getInstance().adjustSelectedSdkHome(pythonInterpreter.getSdkAPI().homePath!!)
+      val adjustedHomePath = PythonSdkType.getInstance().adjustSelectedSdkHome(pythonInterpreter.binaryPathString)
       PythonInterpreterWrapper(pythonInterpreter, PathHolder.Eel(Path.of(adjustedHomePath)))
     }
 
@@ -521,7 +513,7 @@ internal data class TargetFileSystem(
 ) : FileSystem<PathHolder.Target> {
   override val eelOrTarget: EelOrTarget.IsTarget = EelOrTarget.IsTarget(targetEnvironmentConfiguration)
 
-  override suspend fun getExistingSelectableInterpreters(projectPathPrefix: Path): List<ExistingSelectableInterpreter<PathHolder.Target>> =
+  override suspend fun getExistingSelectableInterpreters(project: Project?, projectPathPrefix: Path): List<ExistingSelectableInterpreter<PathHolder.Target>> =
     emptyList()
 
   @RequiresBackgroundThread
@@ -719,7 +711,7 @@ internal data class TargetFileSystem(
   }
 
   override suspend fun wrapSdk(pythonInterpreter: PythonInterpreter): PythonInterpreterWrapper<PathHolder.Target> {
-    return PythonInterpreterWrapper(pythonInterpreter, PathHolder.Target(pythonInterpreter.getSdkAPI().homePath!!))
+    return PythonInterpreterWrapper(pythonInterpreter, PathHolder.Target(pythonInterpreter.binaryPathString))
   }
 
   override fun getBinaryToExec(path: PathHolder.Target, workingDir: Path?): BinaryToExec {

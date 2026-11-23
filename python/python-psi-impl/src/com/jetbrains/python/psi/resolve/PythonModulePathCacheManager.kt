@@ -24,7 +24,8 @@ import com.intellij.platform.workspace.jps.entities.SourceRootEntity
 import com.intellij.platform.workspace.storage.EntityChange
 import com.intellij.platform.workspace.storage.VersionedStorageChange
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.findModule
-import com.jetbrains.python.packaging.PyPackageManager
+import com.jetbrains.python.packaging.common.PythonPackageManagementListener
+import com.jetbrains.python.packaging.management.PythonPackageManager
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentMap
 
@@ -52,14 +53,15 @@ internal class PythonModulePathCacheManager(
 
     connection.subscribe(WorkspaceModelTopics.CHANGED, WorkspaceListener(project, pathCache))
 
-    connection.subscribe(PyPackageManager.PACKAGE_MANAGER_TOPIC, PyPackageManager.Listener { sdk ->
-      for (module in pathCache.keys) {
-        val interpreter = module.pythonInterpreterIfReady()
-        if (interpreter != null && interpreter.resolveSdk() === sdk) {
-          updateCacheForInterpreter(project, interpreter)
-          pathCache.computeIfPresent(module) { _, cache ->
-            cache.clearCache()
-            cache
+    connection.subscribe(PythonPackageManager.PACKAGE_MANAGEMENT_TOPIC, object : PythonPackageManagementListener {
+      override fun packagesChanged(interpreter: PythonInterpreter) {
+        for (module in pathCache.keys) {
+          if (module.pythonInterpreterIfReady() == interpreter) {
+            updateCacheForInterpreter(project, interpreter)
+            pathCache.computeIfPresent(module) { _, cache ->
+              cache.clearCache()
+              cache
+            }
           }
         }
       }

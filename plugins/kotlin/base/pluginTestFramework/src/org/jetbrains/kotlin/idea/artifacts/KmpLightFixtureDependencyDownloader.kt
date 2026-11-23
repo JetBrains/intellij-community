@@ -28,7 +28,7 @@ object KmpLightFixtureDependencyDownloader {
         "https://cache-redirector.jetbrains.com/repo.maven.apache.org/maven2/"
     // For the sliding kotlin-stdlib version
     private const val KOTLIN_IDE_PLUGIN_DEPENDENCIES: String =
-        "https://cache-redirector.jetbrains.com/intellij-dependencies/"
+        "https://cache-redirector.jetbrains.com/maven/ultimate-public/"
 
     /**
      * Download or resolve from local cache a part of a KMP library and transform if necessary.

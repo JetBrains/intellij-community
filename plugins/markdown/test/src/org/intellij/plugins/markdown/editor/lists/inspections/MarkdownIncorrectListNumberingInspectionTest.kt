@@ -1,51 +1,68 @@
 package org.intellij.plugins.markdown.editor.lists.inspections
 
 import com.intellij.markdown.backend.inspections.IncorrectListNumberingInspection
-import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixture4TestCase
-import org.intellij.plugins.markdown.MarkdownTestingUtil
+import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightModuleFixture
+import com.intellij.testFramework.PlatformTestUtil
+import com.intellij.testFramework.TestDataPath
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.fixture.projectFixture
 import org.intellij.plugins.markdown.settings.MarkdownCodeInsightSettings
 import org.intellij.plugins.markdown.settings.MarkdownCodeInsightSettings.ListNumberingType
-import org.junit.Test
-import org.junit.runner.RunWith
-import org.junit.runners.JUnit4
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.TestInfo
 
-@RunWith(JUnit4::class)
-class MarkdownIncorrectListNumberingInspectionTest: LightPlatformCodeInsightFixture4TestCase() {
-  @Test
-  fun `test problem registered in simple list`() = doTest()
+@TestApplication
+@TestDataPath($$"$PROJECT_ROOT/community/plugins/markdown/test/data/editor/lists/inspections/incorrectNumbering")
+class MarkdownIncorrectListNumberingInspectionTest {
+  companion object {
+    private val projectFixture = projectFixture(openAfterCreation = true)
+  }
 
-  @Test
-  fun `test problem registered only for incorrect items`() = doTest()
+  private val myFixture by codeInsightModuleFixture(projectFixture)
 
-  @Test
-  fun `test problem registered in sublists`() = doTest()
+  private lateinit var testName: String
 
-  @Test
-  fun `test problem registered in deep sublists`() = doTest()
-
-  @Test
-  fun `test no warning for paragraph content`() = doTest()
-
-  @Test
-  fun `test no warning for list item with code block`() = doTest()
+  @BeforeEach
+  fun setUp(testInfo: TestInfo) {
+    testName = PlatformTestUtil.getTestName(testInfo.testMethod.get().name, true).trimStart().replace(' ', '_')
+  }
 
   @Test
-  fun `test no warning for list starting from zero`() = doTest()
+  fun `test problem registered in simple list`(): Unit = doTest()
 
   @Test
-  fun `test no warning for all ones list in sequential mode`() = doTest()
+  fun `test problem registered only for incorrect items`(): Unit = doTest()
 
   @Test
-  fun `test no warning for ordered marker inside unordered list`() = doTest()
+  fun `test problem registered in sublists`(): Unit = doTest()
 
   @Test
-  fun `test no warning for ordered marker inside ordered list`() = doTest()
+  fun `test problem registered in deep sublists`(): Unit = doTest()
 
   @Test
-  fun `test problem registered in ordered sublist of unordered list`() = doTest()
+  fun `test no warning for paragraph content`(): Unit = doTest()
 
   @Test
-  fun `test no warning for sequential list in ones mode`() = doTest(ListNumberingType.ONES)
+  fun `test no warning for list item with code block`(): Unit = doTest()
+
+  @Test
+  fun `test no warning for list starting from zero`(): Unit = doTest()
+
+  @Test
+  fun `test no warning for all ones list in sequential mode`(): Unit = doTest()
+
+  @Test
+  fun `test no warning for ordered marker inside unordered list`(): Unit = doTest()
+
+  @Test
+  fun `test no warning for ordered marker inside ordered list`(): Unit = doTest()
+
+  @Test
+  fun `test problem registered in ordered sublist of unordered list`(): Unit = doTest()
+
+  @Test
+  fun `test no warning for sequential list in ones mode`(): Unit = doTest(ListNumberingType.ONES)
 
   @Test
   fun `test all numbering styles accepted regardless of setting`() {
@@ -53,28 +70,19 @@ class MarkdownIncorrectListNumberingInspectionTest: LightPlatformCodeInsightFixt
   }
 
   @Test
-  fun `test no warning in previous number mode`() = doTest(ListNumberingType.PREVIOUS_NUMBER)
+  fun `test no warning in previous number mode`(): Unit = doTest(ListNumberingType.PREVIOUS_NUMBER)
 
   private fun doTest(listNumberingType: ListNumberingType = ListNumberingType.SEQUENTIAL) {
     val settings = MarkdownCodeInsightSettings.getInstance()
     val previousListNumberingType = settings.state.listNumberingType
     settings.state.listNumberingType = listNumberingType
     try {
-      val name = getTestName(true)
+      val name = testName
       myFixture.configureByFile("$name.md")
       myFixture.enableInspections(IncorrectListNumberingInspection())
       myFixture.checkHighlighting()
     } finally {
       settings.state.listNumberingType = previousListNumberingType
     }
-  }
-
-  override fun getTestName(lowercaseFirstLetter: Boolean): String {
-    val name = super.getTestName(lowercaseFirstLetter)
-    return name.trimStart().replace(' ', '_')
-  }
-
-  override fun getTestDataPath(): String {
-    return "${MarkdownTestingUtil.TEST_DATA_PATH}/editor/lists/inspections/incorrectNumbering/"
   }
 }

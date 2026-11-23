@@ -113,6 +113,14 @@ class SeProvidersHolder(
             }
           }
         }
+        else if (providerFactory is SeTabAwareItemsProviderFactory) {
+          provider = initializationGuard.initialize(providerFactory.id, openingId, pluginId, logLabel) {
+            providerFactory.getItemsProviderCatchingOrNull(project, dataContext, isAllTab = true)
+          }
+          separateTabProvider = initializationGuard.initialize(providerFactory.id, openingId, pluginId, logLabel) {
+            providerFactory.getItemsProviderCatchingOrNull(project, dataContext, isAllTab = false)
+          }
+        }
         else {
           provider = initializationGuard.initialize(providerFactory.id, openingId, pluginId, logLabel) {
             providerFactory.getItemsProviderCatchingOrNull(project, dataContext)
@@ -191,6 +199,12 @@ class SeProvidersHolder(
 @ApiStatus.Internal
 suspend fun SeItemsProviderFactory.getItemsProviderCatchingOrNull(project: Project?, dataContext: DataContext): SeItemsProvider? =
   computeCatchingOrNull { getItemsProvider(project, dataContext) }
+
+@ApiStatus.Internal
+suspend fun SeTabAwareItemsProviderFactory.getItemsProviderCatchingOrNull(project: Project?,
+                                                                         dataContext: DataContext,
+                                                                         isAllTab: Boolean): SeItemsProvider? =
+  computeCatchingOrNull { getItemsProvider(project, dataContext, isAllTab) }
 
 @ApiStatus.Internal
 suspend fun SeWrappedLegacyContributorItemsProviderFactory.getItemsProviderCatchingOrNull(project: Project?,

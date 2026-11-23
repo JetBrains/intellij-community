@@ -3,36 +3,51 @@ package org.jetbrains.idea.devkit.k2.inspections
 
 import com.intellij.codeInsight.daemon.QuickFixBundle
 import com.intellij.testFramework.TestDataPath
-import org.jetbrains.idea.devkit.inspections.quickfix.MismatchedLightServiceLevelAndCtorInspectionTestBase
+import com.intellij.testFramework.fixtures.lightJavaProjectFixture
+import com.intellij.testFramework.junit5.TestApplication
+import org.jetbrains.idea.devkit.inspections.quickfix.mismatchedLightServiceLevelAndCtorFixture
 import org.jetbrains.idea.devkit.kotlin.DevkitKtTestsUtil
+import org.junit.jupiter.api.Test
 
 @TestDataPath("\$CONTENT_ROOT/testData/inspections/mismatchedLightServiceLevelAndCtor")
-internal class KtMismatchedLightServiceLevelAndCtorInspectionTest : MismatchedLightServiceLevelAndCtorInspectionTestBase() {
-    
+@TestApplication
+internal class KtMismatchedLightServiceLevelAndCtorInspectionTest {
+  companion object {
+    private val projectFixture = lightJavaProjectFixture()
+  }
 
-  override fun getBasePath() = DevkitKtTestsUtil.TESTDATA_PATH + "inspections/mismatchedLightServiceLevelAndCtor/"
+  private val mismatchedLevel by mismatchedLightServiceLevelAndCtorFixture(projectFixture, "kt", DevkitKtTestsUtil.TESTDATA_PATH + "inspections/mismatchedLightServiceLevelAndCtor/")
 
-  override fun getFileExtension() = "kt"
+  @Test
+  fun testFromAppToProjectLevel() { mismatchedLevel.doTest(mismatchedLevel.annotateAsServiceFixName) }
 
-  fun testFromAppToProjectLevel() { doTest(annotateAsServiceFixName) }
+  @Test
+  fun testFromAppToProjectLevelCoroutineScope() { mismatchedLevel.doTest(mismatchedLevel.annotateAsServiceFixName) }
 
-  fun testFromAppToProjectLevelCoroutineScope() { doTest(annotateAsServiceFixName) }
+  @Test
+  fun testFromDefaultToProjectLevel() { mismatchedLevel.doTest(mismatchedLevel.annotateAsServiceFixName) }
 
-  fun testFromDefaultToProjectLevel() { doTest(annotateAsServiceFixName) }
+  @Test
+  fun testFromAppWrappedInArrayToProjectLevel() { mismatchedLevel.doTest(mismatchedLevel.annotateAsServiceFixName) }
 
-  fun testFromAppWrappedInArrayToProjectLevel() { doTest(annotateAsServiceFixName) }
+  @Test
+  fun testFromEmptyArrayToProjectLevel() { mismatchedLevel.doTest(mismatchedLevel.annotateAsServiceFixName) }
 
-  fun testFromEmptyArrayToProjectLevel() { doTest(annotateAsServiceFixName) }
+  @Test
+  fun testRemoveProjectParam() { mismatchedLevel.doTest(QuickFixBundle.message("remove.parameter.from.usage.text", 1, "parameter", "constructor", "MyService()")) }
 
-  fun testRemoveProjectParam() { doTest(QuickFixBundle.message("remove.parameter.from.usage.text", 1, "parameter", "constructor", "MyService()")) }
+  @Test
+  fun testAppLevelDefaultCtor() { mismatchedLevel.doTest() }
 
-  fun testAppLevelDefaultCtor() { doTest() }
+  @Test
+  fun testAppLevelPrimaryNoArgCtor() { mismatchedLevel.doTest() }
 
-  fun testAppLevelPrimaryNoArgCtor() { doTest() }
+  @Test
+  fun testAppLevelSecondaryNoArgCtor() { mismatchedLevel.doTest() }
 
-  fun testAppLevelSecondaryNoArgCtor() { doTest() }
+  @Test
+  fun testAppLevelPrimaryCoroutineScopeCtor() { mismatchedLevel.doTest() }
 
-  fun testAppLevelPrimaryCoroutineScopeCtor() { doTest() }
-
-  fun testAppLevelSecondaryCoroutineScopeCtor() { doTest() }
+  @Test
+  fun testAppLevelSecondaryCoroutineScopeCtor() { mismatchedLevel.doTest() }
 }

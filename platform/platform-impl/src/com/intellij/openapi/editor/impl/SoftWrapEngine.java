@@ -21,6 +21,9 @@ import com.intellij.openapi.editor.impl.view.EditorViewSnapshot;
 import com.intellij.openapi.editor.impl.view.WrapElementMeasuringIterator;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
+import it.unimi.dsi.fastutil.floats.FloatArrayList;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -59,12 +62,12 @@ public final class SoftWrapEngine {
   private final CharSequence myText;
   private final SoftWrapsStorage myStorage;
   private final CachingSoftWrapDataMapper myDataMapper;
+  private final SoftWrapPainter myPainter;
   private final int myVisibleWidth;
   private final int myMaxWidthAtWrap;
   private final int mySoftWrapWidth;
   private final IncrementalCacheUpdateEvent myEvent;
   private final int myRelativeIndent;
-  private final boolean myAllowGridModeOptimizations;
 
   private LineWrapPositionStrategy myLineWrapPositionStrategy;
 
@@ -77,8 +80,7 @@ public final class SoftWrapEngine {
     @NotNull IncrementalCacheUpdateEvent event,
     @Nullable LineWrapPositionStrategy lineWrapStrategy,
     int visibleWidth,
-    int relativeIndent,
-    boolean allowGridModeOptimizations
+    int relativeIndent
   ) {
     myEditor = editor;
     myView = editor.getView();
@@ -87,13 +89,13 @@ public final class SoftWrapEngine {
     myText = document.luckyChars();
     myStorage = storage;
     myDataMapper = dataMapper;
+    myPainter = painter;
     myVisibleWidth = visibleWidth;
     myMaxWidthAtWrap = visibleWidth - painter.getMinDrawingWidth(SoftWrapDrawingType.BEFORE_SOFT_WRAP_LINE_FEED);
     mySoftWrapWidth = painter.getMinDrawingWidth(SoftWrapDrawingType.AFTER_SOFT_WRAP);
     myEvent = event;
     myRelativeIndent = relativeIndent;
     myLineWrapPositionStrategy = lineWrapStrategy;
-    myAllowGridModeOptimizations = allowGridModeOptimizations;
   }
 
   public void generate() {
@@ -110,7 +112,7 @@ public final class SoftWrapEngine {
                         afterLineEndInlays.isEmpty() &&
                         customWraps.isEmpty() &&
                         !SoftWrapHelper.hasCollapsedOffsetsIn(myEditor.getFoldingModel(), startOffset, maxEndOffset);
-    if (grid != null && myAllowGridModeOptimizations && plainText) {
+    if (grid != null && plainText) {
       generateGridSoftWraps(grid, startOffset, minEndOffset, maxEndOffset);
       return;
     }
@@ -122,6 +124,8 @@ public final class SoftWrapEngine {
     int maxWrapOffset = -1;
     float nonWhitespaceStartX = 0;
     int nonWhitespaceStartOffset = -1;
+    IntList lineOffsets = new IntArrayList();
+    FloatArrayList lineXs = new FloatArrayList();
     Boolean softWrappingAllowed = null;
     float x;
     if (startOffset == 0) {
@@ -166,6 +170,8 @@ public final class SoftWrapEngine {
         x = 0;
         lastSoftWrap = null;
         nonWhitespaceStartOffset = -1;
+        lineOffsets.clear();
+        lineXs.clear();
         softWrappingAllowed = null;
         if (it.getElementEndOffset() > minEndOffset) {
           myEvent.setActualEndOffset(it.getElementEndOffset());
@@ -188,6 +194,10 @@ public final class SoftWrapEngine {
           nonWhitespaceStartX = x;
           nonWhitespaceStartOffset = it.getElementStartOffset();
         }
+        if (myRelativeIndent >= 0 && lastSoftWrap == null) {
+          lineOffsets.add(it.getElementStartOffset());
+          lineXs.add(x);
+        }
         x = it.getElementEndX(x);
         if (minWrapOffset < 0 || x <= myMaxWidthAtWrap && it.isFoldRegion()) {
           minWrapOffset = it.getElementEndOffset();
@@ -203,6 +213,17 @@ public final class SoftWrapEngine {
               softWrappingAllowed = getLineWrapPositionStrategy().isSoftWrappingAllowed(myEditor, it.getElementStartOffset());
             }
             if (softWrappingAllowed) {
+              if (lastSoftWrap == null && !lineXs.isEmpty()) {
+                float indentX = getPainterIndentX(lineOffsets, lineXs, x);
+                if (indentX >= 0) {
+                  int i = 0;
+                  while (i < lineXs.size() && lineXs.getFloat(i) < indentX) {
+                    i++;
+                  }
+                  nonWhitespaceStartOffset = i < lineOffsets.size() ? lineOffsets.getInt(i) : -1;
+                  nonWhitespaceStartX = indentX;
+                }
+              }
               lastSoftWrap = createSoftWrap(
                 lastSoftWrap,
                 minWrapOffset,
@@ -258,6 +279,33 @@ public final class SoftWrapEngine {
       x = 0;
     }
     return offset;
+  }
+
+  private float getPainterIndentX(IntList lineOffsets, FloatArrayList lineXs, float lineEndX) {
+    float lineStartX = lineXs.getFloat(0);
+    int indentOffset = myPainter.getIndentOffset(
+      myDocument.lineStartOffset(myDocument.lineNumber(lineOffsets.getInt(0))),
+      offset -> {
+        int i = firstIndexAtOrAfter(lineOffsets, offset);
+        return (int)((i < lineXs.size() ? lineXs.getFloat(i) : lineEndX) - lineStartX);
+      }
+    );
+    return indentOffset < 0 ? -1 : lineStartX + indentOffset;
+  }
+
+  private static int firstIndexAtOrAfter(IntList sortedOffsets, int offset) {
+    int low = 0;
+    int high = sortedOffsets.size();
+    while (low < high) {
+      int mid = (low + high) >>> 1;
+      if (sortedOffsets.getInt(mid) < offset) {
+        low = mid + 1;
+      }
+      else {
+        high = mid;
+      }
+    }
+    return low;
   }
 
   private SoftWrap createSoftWrap(SoftWrap lastSoftWrap,

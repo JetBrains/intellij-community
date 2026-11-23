@@ -122,6 +122,7 @@ internal class ModuleSdkStateProbeOncePerToolTest {
 
       val answer = when (state) {
         is ModuleSdkState.HasSdk -> fail("the module should have no SDK yet, got ${state.interpreter}")
+        is ModuleSdkState.Unavailable -> fail("the module names no interpreter, got ${state.key}")
         is ModuleSdkState.NoSdk -> when (val instruction = state.sdkConfigInstruction) {
           is SdkForModuleConfigInstruction.CreateSdkInfoWrapper -> instruction.createSdkInfoWithTool
           is SdkForModuleConfigInstruction.SameAs, null ->

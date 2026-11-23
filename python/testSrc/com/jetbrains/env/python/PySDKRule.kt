@@ -3,9 +3,7 @@ package com.jetbrains.env.python
 
 import com.intellij.execution.target.TargetEnvironmentConfiguration
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.python.sdk.backend.PythonInterpreter
-import com.intellij.python.sdk.backend.getSdkAPI
 import com.intellij.python.test.env.common.SdkCreationRequest.LocalPython
 import com.intellij.python.test.env.common.SdkCreationRequest.RemotePython
 import com.intellij.python.test.env.common.createSdk
@@ -27,10 +25,6 @@ class PySDKRule(
   @Volatile
   lateinit var interpreter: PythonInterpreter
     private set
-
-  /** The SDK of [interpreter], for a test that still calls an SDK API. */
-  @Suppress("DEPRECATION")
-  val sdk: Sdk get() = interpreter.getSdkAPI()
 
   private lateinit var autoClosable: AutoCloseable
 

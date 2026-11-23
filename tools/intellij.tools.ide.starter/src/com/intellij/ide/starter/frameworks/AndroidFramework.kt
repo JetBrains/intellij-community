@@ -9,10 +9,8 @@ import com.intellij.ide.starter.utils.FileSystem
 import com.intellij.ide.starter.utils.FileSystem.deleteRecursivelyQuietly
 import com.intellij.ide.starter.utils.HttpClient
 import com.intellij.util.io.DigestUtil
-import com.intellij.util.io.copyRecursively
 import com.intellij.util.system.OS
 import java.nio.file.Files
-import java.nio.file.LinkOption
 import java.nio.file.Path
 import java.nio.file.attribute.PosixFilePermission
 import kotlin.io.path.absolutePathString
@@ -129,19 +127,15 @@ class AndroidFramework(testContext: IDETestContext) : Framework(testContext) {
     }
   }
 
+  /**
+   * Checks out the android repository into `<community>/android`, on the machine of the community checkout.
+   *
+   * The checkout fetches from the host clone of the android repository. It always ends at the commit with no local changes, so a
+   * directory that an earlier run left incomplete cannot reach the test.
+   */
   fun downloadAndroidPluginProjectForIJCommunity(intellijCommunityVersion: String, commit: String = "") {
     val androidProject = GitProjectInfo("ssh://git@git.jetbrains.team/ij/android.git", commit, intellijCommunityVersion, true)
-      .apply { downloadAndUnpackProject() }
-
-    // TODO: Hack because of https://youtrack.jetbrains.com/issue/AT-2013/Eel-in-Starter-Make-GitProjectInfo-and-Git-aware-of-target-eel
-    val communityProjectHome = if (testContext.testCase.projectInfo is GitProjectInfo) {
-      testContext.testCase.projectInfo.repositoryRootDir
-    }
-    else testContext.resolvedProjectHome
-
-    val androidPluginPath = communityProjectHome / "android"
-    if (androidPluginPath.exists()) return // TODO find better solution
-    androidProject.repositoryRootDir.copyRecursively(androidPluginPath, arrayOf(LinkOption.NOFOLLOW_LINKS))
+    androidProject.checkoutInto(testContext.resolvedProjectHome / "android")
   }
 
   fun setupAndroidSdkToProject(androidSdkPath: Path) {

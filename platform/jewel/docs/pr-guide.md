@@ -22,7 +22,9 @@ these steps:
    * Make sure your PR is rebased on master before moving it to ready for review
 4. Before pushing, run all the GitHub CI checks locally and fix any issues that are found
 5. Ensure impacted public APIs are properly covered by KDocs and the docs are up to date
-6. Run the `ApiCheckTest` to make sure the API dumps are up to date
+6. Run `ApiCheckTest` to make sure the API dumps are up to date. In an Ultimate checkout, run
+   `./tests.cmd --module intellij.projectStructureTests --test com.intellij.ideaProjectStructure.api.ApiCheckTest`. In a community checkout, run
+   `./tests.cmd --module intellij.platform.testFramework.monorepo.tests --test com.intellij.platform.testFramework.monorepo.api.ApiCheckTest`
 7. Ensure there are no binary compatibility breakages and avoid source compatibility breakages in stable APIs where practical. See the
    [API compatibility guide](api-compatibility.md) for the expected compatibility-preserving patterns and the Metalava workflow.
 8. Check that there are no new issues reported by Metalava either, with `./scripts/metalava-signatures.main.kts validate`
@@ -107,7 +109,7 @@ during safe-push if not done correctly, and prevent automated merging.
    * If the flag is off, the dependency is not exposed as a transitive dependency of the module (like Gradle's
      `implementation()`)
    * If the flag is on, the dependency will be exposed as a transitive dependency (like Gradle's `api()`)
-   * If libraries expose any non-IJP API, you need to run the `ApiCheckTest`
+   * If libraries expose any non-IJP API, you need to run `ApiCheckTest` as step 6 says
 4. Make sure that dependencies already contained in the platform are not included as transitive dependencies
    * The same applies if the current module depends on another module with this dependency already added
 5. Consider the right scope to add the dependency with, and use the narrowest possible one that works

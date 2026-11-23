@@ -5,11 +5,14 @@ import com.intellij.codeInspection.options.OptionContainer
 import com.intellij.codeInspection.ui.OptPaneUtils
 import com.intellij.modcommand.ModCommand
 import com.intellij.modcommand.ModEditOptions
+import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.psi.PsiElement
+import com.intellij.psi.SmartPsiFileRange
 import com.intellij.refactoring.BaseRefactoringProcessor
 import com.intellij.refactoring.RefactoringBundle
+import com.intellij.refactoring.modplan.ModPlan
 import com.intellij.refactoring.modplan.ModPlanOptionValues
 import com.intellij.refactoring.modplan.ModPlanQuestion
 import com.intellij.refactoring.modplan.ModPlanRefactoring
@@ -24,6 +27,7 @@ import com.intellij.usages.UsageTarget
 import com.intellij.usages.UsageViewManager
 import com.intellij.usages.UsageViewPresentation
 import com.intellij.usages.rules.PsiElementUsage
+import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.util.containers.MultiMap
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
@@ -64,25 +68,59 @@ class ModPlanDialogFlowUi : ModPlanFlowUi {
     proceed: (previewAgain: Boolean) -> Unit,
   ): Boolean {
     if (!UsageViewUtil.reportNonRegularUsages(usages, project)) return false
+    showUsages(project, refactoring, commandName, targets, usages) { previewAgain, _ -> proceed(previewAgain) }
+    return true
+  }
 
+  override fun previewUsages(
+    project: Project,
+    refactoring: ModPlanRefactoring,
+    targets: Array<out UsageTarget>,
+    plan: ModPlan.AcceptedPlan,
+    nonCodeUsages: Array<UsageInfo>,
+    proceed: (previewAgain: Boolean, excludedUsages: Set<SmartPsiFileRange>) -> Unit,
+  ): Boolean {
+    val nonCodeLocations = plan.conflicts.changedNonCodeUsages().mapNotNullTo(HashSet()) { it.location }
+    val changedUsages = runReadActionBlocking { usagesAt(plan.usages, nonCodeLocations) }
+    val allUsages = changedUsages.keys.toTypedArray() + nonCodeUsages
+    if (allUsages.isEmpty()) return false
+    UsageViewUtil.reportNonRegularUsages(allUsages, project)
+    // The non-code usages are not changed, so an excluded one changes nothing.
+    showUsages(project, refactoring, plan.execution.commandName, targets, allUsages) { previewAgain, excludedUsages ->
+      proceed(previewAgain, excludedUsages.mapNotNullTo(HashSet()) { changedUsages[it] })
+    }
+    return true
+  }
+
+  /** Shows [usages] in the usage view, where the user may exclude some; [proceed] gets the excluded ones when the user goes on. */
+  private fun showUsages(
+    project: Project,
+    refactoring: ModPlanRefactoring,
+    commandName: @NlsContexts.Command String,
+    targets: Array<out UsageTarget>,
+    usages: Array<UsageInfo>,
+    proceed: (previewAgain: Boolean, excludedUsages: Set<UsageInfo>) -> Unit,
+  ) {
     val usageAdapters = UsageInfo2UsageAdapter.convert(usages)
     val usageView = UsageViewManager.getInstance(project).showUsages(targets, usageAdapters, presentation(refactoring, usageAdapters))
     usageView.addPerformOperationAction(
-      { proceed(false) }, commandName, RefactoringBundle.message("usageView.need.reRun"), RefactoringBundle.message("usageView.doAction"),
-      false, false
+      {
+        val notExcludedUsages = UsageViewUtil.getNotExcludedUsageInfos(usageView)
+        proceed(false, usages.filterNotTo(HashSet()) { it in notExcludedUsages })
+      },
+      commandName, RefactoringBundle.message("usageView.need.reRun"), RefactoringBundle.message("usageView.doAction"), false, false
     )
     usageView.setRerunAction(object : AbstractAction() {
       override fun actionPerformed(e: ActionEvent?) {
         usageView.close()
-        proceed(true)
+        proceed(true, emptySet())
       }
     })
-    return true
   }
 
-  override fun showError(project: Project, refactoring: ModPlanRefactoring) {
+  override fun showError(project: Project, refactoring: ModPlanRefactoring, message: @NlsContexts.DialogMessage String?) {
     CommonRefactoringUtil.showErrorHint(
-      project, null, RefactoringBundle.message("cannot.perform.refactoring"), refactoring.title(), refactoring.id()
+      project, null, RefactoringBundle.getCannotRefactorMessage(message), refactoring.title(), refactoring.id()
     )
   }
 
@@ -115,6 +153,22 @@ class ModPlanDialogFlowUi : ModPlanFlowUi {
       )
     }
   }
+
+  /**
+   * @param nonCodeLocations the locations of [locations] whose usages are non-code usages
+   * @return the usages of the usage view at [locations], with their locations; a location whose file is gone has none
+   */
+  @RequiresReadLock
+  private fun usagesAt(locations: List<SmartPsiFileRange>, nonCodeLocations: Set<SmartPsiFileRange>): Map<UsageInfo, SmartPsiFileRange> {
+    val usages = LinkedHashMap<UsageInfo, SmartPsiFileRange>()
+    for (location in locations) {
+      val file = location.element ?: continue
+      val range = location.range
+      val nonCode = location in nonCodeLocations
+      usages[if (range == null) UsageInfo(file, nonCode) else UsageInfo(file, range.startOffset, range.endOffset, nonCode)] = location
+    }
+    return usages
+  }
 }
 
 /**
@@ -140,5 +194,14 @@ open class ModPlanTestFlowUi : ModPlanFlowUi by ModPlanDialogFlowUi() {
     targets: Array<out UsageTarget>,
     usages: Array<UsageInfo>,
     proceed: (previewAgain: Boolean) -> Unit,
+  ): Boolean = false
+
+  override fun previewUsages(
+    project: Project,
+    refactoring: ModPlanRefactoring,
+    targets: Array<out UsageTarget>,
+    plan: ModPlan.AcceptedPlan,
+    nonCodeUsages: Array<UsageInfo>,
+    proceed: (previewAgain: Boolean, excludedUsages: Set<SmartPsiFileRange>) -> Unit,
   ): Boolean = false
 }

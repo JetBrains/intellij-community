@@ -2,9 +2,10 @@
 package com.jetbrains.python.psi.resolve;
 
 import com.google.common.collect.Lists;
+import com.intellij.python.sdk.backend.PythonInterpreterExtKt;
+import com.intellij.python.sdk.backend.PythonInterpreter;
 import com.intellij.codeInsight.completion.CompletionUtilCoreImpl;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.python.sdk.backend.PythonInterpreter;
 import com.intellij.python.sdk.backend.PythonInterpreterExtKt;
 import com.intellij.openapi.util.RecursionManager;
@@ -52,6 +53,7 @@ import java.util.Collections;
 import java.util.List;
 
 import static com.jetbrains.python.psi.FutureFeature.ABSOLUTE_IMPORT;
+import static com.jetbrains.python.psi.resolve.PyFileModuleCacheKt.findModuleForPsiElementCached;
 
 public final class ResolveImportUtil {
 
@@ -220,7 +222,7 @@ public final class ResolveImportUtil {
 
   static @Nullable PythonPathCache getPathCache(PsiElement foothold) {
     PythonPathCache cache = null;
-    final Module module = ModuleUtilCore.findModuleForPsiElement(foothold);
+    final Module module = findModuleForPsiElementCached(foothold);
     if (module != null) {
       cache = PythonModulePathCache.getInstance(module);
     }
@@ -379,11 +381,11 @@ public final class ResolveImportUtil {
 
   @ApiStatus.Internal
   public static @Nullable PsiDirectory findCorrespondingSkeletonsDir(@NotNull PsiDirectory packageDir) {
-    final Module module = ModuleUtilCore.findModuleForPsiElement(packageDir);
+    final Module module = findModuleForPsiElementCached(packageDir);
     final PythonInterpreter moduleInterpreter = module != null ? MainPythonSdkKt.pythonInterpreterIfReady(module) : null;
     if (moduleInterpreter == null) return null;
 
-    VirtualFile skeletonsDir = PythonInterpreterExtKt.skeletonsDirectory(moduleInterpreter, module.getProject());
+    VirtualFile skeletonsDir = PythonInterpreterExtKt.skeletonsDirectory(moduleInterpreter);
     if (skeletonsDir == null) return null;
 
     boolean isInSkeletons = VfsUtilCore.isAncestor(skeletonsDir, packageDir.getVirtualFile(), false);

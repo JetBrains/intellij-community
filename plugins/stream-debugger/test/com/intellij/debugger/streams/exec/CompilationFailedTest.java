@@ -6,23 +6,34 @@ import com.intellij.debugger.streams.core.trace.TraceExpressionBuilder;
 import com.intellij.debugger.streams.core.trace.TracingResult;
 import com.intellij.debugger.streams.core.wrapper.StreamChain;
 import com.intellij.debugger.streams.test.ExecutionTestCaseHelper;
+import com.intellij.debugger.streams.test.TraceExecutionFixture;
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.intellij.xdebugger.XDebugSession;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.junit.jupiter.api.Test;
+
+import static com.intellij.debugger.streams.test.TraceExecutionFixtureKt.traceExecutionFixture;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.fail;
 
 /**
  * @author Vitaliy.Bibaev
  */
-public class CompilationFailedTest extends FailEvaluationTestCase {
+@TestApplication
+public class CompilationFailedTest {
+  private final TestFixture<TraceExecutionFixture> traceFixture = traceExecutionFixture(this::getHelper);
+
+  @Test
   public void testCompilationErrorDetected() {
-    doTest(true);
+    traceFixture.get().doTest(true);
   }
 
-  @Override
-  protected @NotNull TraceExecutionTestHelper getHelper(XDebugSession session) {
-    return new ExecutionTestCaseHelper(this, session, getLibrarySupportProvider(), myPositionResolver, LOG) {
+  private @NotNull TraceExecutionTestHelper getHelper(@NotNull TraceExecutionFixture trace, @NotNull XDebugSession session) {
+    return new ExecutionTestCaseHelper(trace, session) {
       @Override
       protected @NotNull TraceExpressionBuilder createExpressionBuilder() {
         final TraceExpressionBuilder builder = super.createExpressionBuilder();

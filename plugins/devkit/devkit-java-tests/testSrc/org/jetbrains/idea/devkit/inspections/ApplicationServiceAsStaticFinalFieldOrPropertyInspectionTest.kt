@@ -2,28 +2,37 @@
 package org.jetbrains.idea.devkit.inspections
 
 import com.intellij.testFramework.TestDataPath
+import com.intellij.testFramework.fixtures.lightJavaProjectFixture
+import com.intellij.testFramework.junit5.TestApplication
 import org.jetbrains.idea.devkit.DevkitJavaTestsUtil
+import org.junit.jupiter.api.Test
 
 @TestDataPath("\$CONTENT_ROOT/testData/inspections/applicationServiceAsStaticFinalFieldOrProperty")
-class ApplicationServiceAsStaticFinalFieldOrPropertyInspectionTest : ApplicationServiceAsStaticFinalFieldOrPropertyInspectionTestBase() {
-
-  override fun getBasePath() = DevkitJavaTestsUtil.TESTDATA_PATH + "inspections/applicationServiceAsStaticFinalFieldOrProperty"
-
-  override fun getFileExtension(): String = "java"
-
-  fun testNonServicesInFields() {
-    doHighlightTest()
+@TestApplication
+class ApplicationServiceAsStaticFinalFieldOrPropertyInspectionTest {
+  companion object {
+    private val projectFixture = lightJavaProjectFixture()
   }
 
+  private val appService by applicationServiceAsStaticFinalFieldOrPropertyFixture(projectFixture, "java", DevkitJavaTestsUtil.TESTDATA_PATH + "inspections/applicationServiceAsStaticFinalFieldOrProperty")
+
+  @Test
+  fun testNonServicesInFields() {
+    appService.doHighlightTest()
+  }
+
+  @Test
   fun testRegisteredServicesInFields() {
-    doHighlightTest()
+    appService.doHighlightTest()
  }
 
+  @Test
   fun testExplicitConstructorCallInFields() {
-    doHighlightTest()
+    appService.doHighlightTest()
   }
 
+  @Test
   fun testLightServicesInFields() {
-    doHighlightTest()
+    appService.doHighlightTest()
   }
 }

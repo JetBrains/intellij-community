@@ -9,8 +9,8 @@
 //! A local run takes the tree before its first bazel spawn and again after a green result. It writes the record only
 //! when both are the same tree, so an edit during the run leaves no record. A red run leaves none. A record of a tree
 //! with local changes names those paths on the stderr: the pick finds the record only when the commit holds the same
-//! files. A `--host` run records the tree of the commit that the host ran: `brd-host run --head` refuses a checkout
-//! with local changes, so that tree is the tree of the checkout.
+//! files. A `--host` run records the tree of the commit that the host ran, and HEAD of the checkout. `brd-host run`
+//! writes that commit from the working tree, so its tree holds the local changes, as the tree of a local run does.
 
 use bt_core::Runtime;
 use bt_core::exit;
@@ -76,36 +76,72 @@ pub(crate) fn record_green_run(runtime: &dyn Runtime, before: Option<&CheckoutTr
         ));
         return;
     }
-    if append(runtime, &after, check) && !after.changed.is_empty() {
-        let mut paths: Vec<&str> = after.changed.iter().take(SHOWN_PATHS).map(String::as_str).collect();
-        let rest = after.changed.len().saturating_sub(SHOWN_PATHS);
-        let more = format!("{rest} more");
-        if rest > 0 {
-            paths.push(&more);
-        }
-        runtime.write_error(&format!(
-            "bt: the check record names the tree with the local changes of {}. Commit them, or delete the ones that \
-             are not part of the work, before brd lease pick: the pick finds the record only for a commit of these files",
-            paths.join(", ")
-        ));
+    if append(runtime, &after, check) {
+        name_local_changes(runtime, &after.changed);
     }
+}
+
+/// Names the local changes of a recorded tree on the stderr, so the agent commits them before the pick.
+fn name_local_changes(runtime: &dyn Runtime, changed: &[String]) {
+    if changed.is_empty() {
+        return;
+    }
+    let mut paths: Vec<&str> = changed.iter().take(SHOWN_PATHS).map(String::as_str).collect();
+    let rest = changed.len().saturating_sub(SHOWN_PATHS);
+    let more = format!("{rest} more");
+    if rest > 0 {
+        paths.push(&more);
+    }
+    runtime.write_error(&format!(
+        "bt: the check record names the tree with the local changes of {}. Commit them, or delete the ones that \
+         are not part of the work, before brd lease pick: the pick finds the record only for a commit of these files",
+        paths.join(", ")
+    ));
 }
 
 /// How many paths of a tree with local changes the stderr line names.
 const SHOWN_PATHS: usize = 10;
 
-/// Records a green run on a host: the tree of the commit that the host ran.
-pub(crate) fn record_host_run(runtime: &dyn Runtime, commit: &str, check: &Check<'_>) {
-    match runtime.commit_tree(commit) {
-        Ok(tree) => {
-            let tree = CheckoutTree {
-                head: commit.to_owned(),
-                tree,
-                changed: Vec::new(),
-            };
-            append(runtime, &tree, check);
-        }
-        Err(error) => warn(runtime, &format!("git cannot tell the tree of the commit {commit}: {error}")),
+/// What the report of a `--host` run says about the commit that the host ran.
+pub(crate) struct HostSnapshot<'a> {
+    /// The commit that the host ran.
+    pub(crate) commit: &'a str,
+    /// HEAD of the checkout, or empty when the report names none.
+    pub(crate) head: &'a str,
+    /// Whether the commit holds the working tree. The local changes of the checkout are named only then.
+    pub(crate) working_tree: bool,
+}
+
+/// Records a green run on a host: the tree of the commit that the host ran, with HEAD of the checkout. Without a HEAD
+/// in the report, the record names the commit as its HEAD. For a run of the working tree, the stderr names the local
+/// changes of that tree, as after a local run. A checkout whose files changed after the start of the run gets a line
+/// that the record names the tree of the start.
+pub(crate) fn record_host_run(runtime: &dyn Runtime, snapshot: &HostSnapshot<'_>, check: &Check<'_>) {
+    let commit = snapshot.commit;
+    let tree = match runtime.commit_tree(commit) {
+        Ok(tree) => tree,
+        Err(error) => return warn(runtime, &format!("git cannot tell the tree of the commit {commit}: {error}")),
+    };
+    let head = if snapshot.head.is_empty() { commit } else { snapshot.head };
+    let ran = CheckoutTree {
+        head: head.to_owned(),
+        tree,
+        changed: Vec::new(),
+    };
+    if !append(runtime, &ran, check) || !snapshot.working_tree {
+        return;
+    }
+    match runtime.checkout_tree() {
+        Ok(Some(now)) if now.tree == ran.tree => name_local_changes(runtime, &now.changed),
+        Ok(Some(now)) => runtime.write_error(&format!(
+            "bt: the files changed after the start of the run (tree {} ran, the checkout has {}). The check record \
+             names the tree that ran: the pick finds it only for a commit of that tree",
+            ran.tree, now.tree
+        )),
+        Ok(None) => {}
+        Err(error) => runtime.write_error(&format!(
+            "bt: git cannot tell the tree of the checkout ({error}), so bt cannot name the local changes of the check record"
+        )),
     }
 }
 

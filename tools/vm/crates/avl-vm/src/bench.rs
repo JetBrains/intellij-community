@@ -17,7 +17,8 @@
 //! - [`classes`]: the loaded classes of one arm by plugin and by module, at an anchor of the run;
 //! - [`triggers`]: the plugin loaders of one run by the frame that triggered each one;
 //! - [`resolve`], [`stage`], [`gc`]: what Bazel built, the generation, and the removal of old generations;
-//! - [`launch`], [`load`]: the Starter-shaped IDE process and its supervision, and the host load at each run start;
+//! - [`launch`], [`load`], [`memory`]: the Starter-shaped IDE process and its supervision, the host load at each run
+//!   start, and the memory of the IDE at the gate;
 //! - [`binary`]: the age of the controller binary that `AIR_VM_BIN` names, against its sources;
 //! - [`session`], [`record`], [`summary`], [`digest`]: the session layout, one run, the summary and its text;
 //! - [`compare`]: the medians of several sessions against the first one, and the noise of the modal arm;
@@ -41,6 +42,7 @@ mod idealog;
 mod launch;
 mod load;
 mod ls;
+mod memory;
 mod options;
 mod pluginlog;
 mod profile;

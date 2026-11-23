@@ -4,7 +4,10 @@ package com.jetbrains.python;
 import com.jetbrains.python.allure.Layers;
 import com.jetbrains.python.allure.Subsystems;
 
+import com.intellij.idea.TestFor;
 import com.intellij.openapi.util.registry.RegistryManager;
+import com.intellij.openapi.vfs.VfsUtilCore;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
@@ -12,7 +15,9 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.util.QualifiedName;
+import com.intellij.testFramework.IndexingTestUtil;
 import com.intellij.testFramework.PsiTestUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.fixtures.PyMultiFileResolveTestCase;
 import com.jetbrains.python.namespacePackages.PyNamespacePackagesService;
 import com.jetbrains.python.psi.LanguageLevel;
@@ -20,6 +25,8 @@ import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.resolve.PyQualifiedNameResolveContext;
 import com.jetbrains.python.psi.resolve.PyResolveImportUtil;
+import com.jetbrains.python.psi.resolve.PythonModulePathCache;
+import com.jetbrains.python.psi.resolve.PythonPathCache;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -156,6 +163,28 @@ public class PyRelativeImportResolveTest extends PyMultiFileResolveTestCase {
     PsiFileSystemItem stdlibOsModule = assertInstanceOf(absOnlyResult, PsiFileSystemItem.class);
     assertNotEquals(myFixture.findFileInTempDir("dir/os.py"), stdlibOsModule.getVirtualFile());
     assertFalse(psiManager.isInProject(stdlibOsModule));
+  }
+
+  @TestFor(issues = "PY-92766", classes = {PythonPathCache.class, PyQualifiedNameResolveContext.class})
+  public void testCachedImportResultIndependentOfEarlierFoothold() {
+    myFixture.addFileToProject("mod.py", "X = 1");
+    myFixture.addFileToProject("lib/mod.py", "Y = 1");
+    PsiFile inLib = myFixture.addFileToProject("lib/a.py", "import mod");
+    PsiFile inRoot = myFixture.addFileToProject("b.py", "import mod");
+
+    runWithSourceRoots(List.of(inLib.getVirtualFile().getParent()), () -> {
+      IndexingTestUtil.waitUntilIndexesAreReady(myFixture.getProject());
+      PythonPathCache cache = PythonModulePathCache.getInstance(myFixture.getModule());
+
+      cache.clearCache();
+      List<String> cold = resolveModulePaths("mod", inRoot);
+      assertEquals(List.of("mod.py"), cold);
+
+      cache.clearCache();
+      resolveModulePaths("mod", inLib);
+      fixme("PY-92766 the path cache key omits the foothold", AssertionError.class, "but was:<[mod.py, lib/mod.py]>",
+            () -> assertEquals(cold, resolveModulePaths("mod", inRoot)));
+    });
   }
 
   // PY-45114
@@ -398,6 +427,14 @@ public class PyRelativeImportResolveTest extends PyMultiFileResolveTestCase {
   private <T extends PsiElement> @NotNull T assertResolvesToElementOfClass(@NotNull Class<T> cls) {
     PsiElement resolved = doResolve();
     return assertInstanceOf(resolved, cls);
+  }
+
+  /** Returns the paths of the resolved modules, relative to the temp directory of the fixture. */
+  private @NotNull List<String> resolveModulePaths(@NotNull String name, @NotNull PsiElement foothold) {
+    PyQualifiedNameResolveContext context = PyResolveImportUtil.fromFoothold(foothold).copyWithRelative(0);
+    VirtualFile tempDir = myFixture.findFileInTempDir(".");
+    return ContainerUtil.map(PyResolveImportUtil.resolveQualifiedName(QualifiedName.fromDottedString(name), context),
+                             element -> VfsUtilCore.getRelativePath(((PsiFileSystemItem)element).getVirtualFile(), tempDir));
   }
 
   private void toggleNamespacePackageDirectory(@NotNull String directory) {

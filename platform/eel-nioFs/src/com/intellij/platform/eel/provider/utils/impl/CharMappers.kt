@@ -1,12 +1,9 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:EelInternalApi
-
 package com.intellij.platform.eel.provider.utils.impl
 
-import com.intellij.platform.eel.EelInternalApi
-import com.intellij.platform.eel.channels.EelDelicateApi
 import com.intellij.platform.eel.isWindows
 import com.intellij.platform.eel.provider.LocalEelDescriptor
+import com.intellij.platform.util.annotations.VisibleToClasses
 import it.unimi.dsi.fastutil.ints.Int2IntArrayMap
 
 // Converts special chars from ijent@unix to local Windows and vice versa, see IJPL-213371
@@ -46,12 +43,18 @@ private fun convert(fileName: String, mapping: Int2IntArrayMap): String {
  * When [fileName] came from ijent/gprc, convert it to local (nio-compatible) name
  */
 
-@EelDelicateApi
+@VisibleToClasses(
+  "com.intellij.platform.eel.CharMappingTest",
+  "com.intellij.platform.ijent.community.impl.nio.fs.IjentEphemeralRootAwarePath",
+)
 fun ijentToLocal(fileName: String): String = convert(fileName, unixToWinMap)
 
 /**
  * When [fileName] came from local (i.e. nio) convert it to ijent/gprc compatible name
  */
 
-@EelDelicateApi
+@VisibleToClasses(
+  "com.intellij.platform.eel.CharMappingTest",
+  "com.intellij.platform.ijent.community.impl.nio.fs.IjentEphemeralRootAwareFileSystem",
+)
 fun localToIjent(fileName: String): String = convert(fileName, winToUnixMap)

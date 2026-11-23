@@ -2,68 +2,86 @@
 package org.jetbrains.idea.devkit.k2.inspections.quickfix
 
 import com.intellij.testFramework.TestDataPath
-import org.jetbrains.idea.devkit.inspections.quickfix.LightServiceMigrationInspectionTestBase
+import com.intellij.testFramework.fixtures.lightJavaProjectFixture
+import com.intellij.testFramework.junit5.TestApplication
+import org.jetbrains.idea.devkit.inspections.quickfix.lightServiceMigrationFixture
 import org.jetbrains.idea.devkit.kotlin.DevkitKtTestsUtil
+import org.junit.jupiter.api.Test
 
 @TestDataPath("\$CONTENT_ROOT/testData/inspections/lightServiceMigration")
-internal class KtLightServiceMigrationInspectionTest : LightServiceMigrationInspectionTestBase() {
-    
+@TestApplication
+internal class KtLightServiceMigrationInspectionTest {
+  companion object {
+    private val projectFixture = lightJavaProjectFixture()
+  }
+
+  private val migration by lightServiceMigrationFixture(projectFixture, "kt", DevkitKtTestsUtil.TESTDATA_PATH + "inspections/lightServiceMigration")
+  private val myFixture get() = migration.fixture
 
   private val CANNOT_BE_LIGHT_SERVICE_XML = "cannotBeLightService.xml"
   private val MY_SERVICE_KT = "MyService.kt"
 
-  override fun getBasePath(): String = DevkitKtTestsUtil.TESTDATA_PATH + "inspections/lightServiceMigration"
-  override fun getFileExtension(): String = "kt"
-
+  @Test
   fun testAddAppServiceAnnotation() {
-    myFixture.copyFileToProject(getXmlFilePath())
-    doTest(convertToLightServiceAppLevel, fileExtension, getTestName(false))
+    myFixture.copyFileToProject(migration.getXmlFilePath())
+    migration.doTest(migration.convertToLightServiceAppLevel, migration.fileExtension, myFixture.getTestName(false))
   }
 
+  @Test
   fun testAddProjectServiceAnnotation() {
-    myFixture.copyFileToProject(getXmlFilePath())
-    doTest(convertToLightServiceProjectLevel, fileExtension, getTestName(false))
+    myFixture.copyFileToProject(migration.getXmlFilePath())
+    migration.doTest(migration.convertToLightServiceProjectLevel, migration.fileExtension, myFixture.getTestName(false))
   }
 
+  @Test
   fun testRemoveAppServiceRegistration() {
     myFixture.copyFileToProject(MY_SERVICE_KT)
-    doTest(convertToLightServiceAppLevel, xmlExtension, getTestName(true))
+    migration.doTest(migration.convertToLightServiceAppLevel, migration.xmlExtension, myFixture.getTestName(true))
   }
 
+  @Test
   fun testRemoveProjectServiceRegistration() {
     myFixture.copyFileToProject(MY_SERVICE_KT)
-    doTest(convertToLightServiceProjectLevel, xmlExtension, getTestName(true))
+    migration.doTest(migration.convertToLightServiceProjectLevel, migration.xmlExtension, myFixture.getTestName(true))
   }
 
+  @Test
   fun testOpenClass() {
-    doTest(getCodeFilePath(), CANNOT_BE_LIGHT_SERVICE_XML)
+    migration.doTest(migration.getCodeFilePath(), CANNOT_BE_LIGHT_SERVICE_XML)
   }
 
+  @Test
   fun testServiceInterface() {
-    doTest(MY_SERVICE_KT, getXmlFilePath())
+    migration.doTest(MY_SERVICE_KT, migration.getXmlFilePath())
   }
 
+  @Test
   fun testPersistentStateComponent() {
-    doTest(getCodeFilePath(), CANNOT_BE_LIGHT_SERVICE_XML)
+    migration.doTest(migration.getCodeFilePath(), CANNOT_BE_LIGHT_SERVICE_XML)
   }
 
+  @Test
   fun testPreload() {
-    doTest(MY_SERVICE_KT, getXmlFilePath())
+    migration.doTest(MY_SERVICE_KT, migration.getXmlFilePath())
   }
 
+  @Test
   fun testConfigurationSchemaKey() {
-    doTest(MY_SERVICE_KT, getXmlFilePath())
+    migration.doTest(MY_SERVICE_KT, migration.getXmlFilePath())
   }
 
+  @Test
   fun testLightService() {
-    doTest(getCodeFilePath(), getXmlFilePath())
+    migration.doTest(migration.getCodeFilePath(), migration.getXmlFilePath())
   }
 
+  @Test
   fun testUnitTestMode() {
-    doTest(getCodeFilePath(), CANNOT_BE_LIGHT_SERVICE_XML)
+    migration.doTest(migration.getCodeFilePath(), CANNOT_BE_LIGHT_SERVICE_XML)
   }
 
+  @Test
   fun testHeadlessEnvironment() {
-    doTest(getCodeFilePath(), CANNOT_BE_LIGHT_SERVICE_XML)
+    migration.doTest(migration.getCodeFilePath(), CANNOT_BE_LIGHT_SERVICE_XML)
   }
 }

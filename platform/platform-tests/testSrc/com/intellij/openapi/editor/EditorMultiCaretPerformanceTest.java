@@ -84,6 +84,23 @@ public class EditorMultiCaretPerformanceTest {
   }
 
   @Test
+  void testTypingWithSelections() {
+    int caretCount = 1000;
+    int charactersToType = 100;
+    myFixture.initText(StringUtil.repeat(" <caret> \n", caretCount));
+    Caret lastCaret = myFixture.getEditor().getCaretModel().getAllCarets().getLast();
+    Benchmark.newBenchmark("Typing with many carets and a selection", () -> {
+      for (int i = 0; i < charactersToType; i++) {
+        int offset = lastCaret.getOffset();
+        lastCaret.setSelection(offset - 1, offset);
+        myFixture.type('a');
+      }
+    }).warmupIterations(0).attempts(1).start();
+    myFixture.checkResultByText(StringUtil.repeat(' ' + StringUtil.repeat("a", charactersToType) + "<caret> \n", caretCount - 1)
+                                + "a<caret> \n");
+  }
+
+  @Test
   void testTypingInXml() {
     int caretCount = 1000;
     int charactersToType = 100;

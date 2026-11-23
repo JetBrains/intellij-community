@@ -4,6 +4,7 @@
 package com.jetbrains.python.run
 
 import com.intellij.execution.target.TargetEnvironmentRequest
+import com.intellij.python.sdk.backend.pathMappings
 import com.intellij.execution.target.local.LocalTargetEnvironmentRequest
 import com.intellij.execution.target.value.TargetEnvironmentFunction
 import com.intellij.execution.target.value.constant
@@ -11,8 +12,6 @@ import com.intellij.execution.target.value.targetPath
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.openapi.projectRoots.SdkAdditionalData
 import com.intellij.openapi.roots.CompilerModuleExtension
 import com.intellij.openapi.roots.LibraryOrderEntry
 import com.intellij.openapi.roots.ModuleRootManager
@@ -21,14 +20,14 @@ import com.intellij.openapi.roots.impl.libraries.LibraryEx
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.JarFileSystem
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.remote.RemoteSdkProperties
+import com.intellij.python.sdk.backend.PythonInterpreter
+import com.intellij.python.sdk.backend.PythonInterpreterDetails
 import com.intellij.util.PlatformUtils
 import com.jetbrains.python.PYTHONPATH
 import com.jetbrains.python.facet.LibraryContributingFacet
 import com.jetbrains.python.library.PythonLibraryType
 import com.jetbrains.python.remote.PyRemotePathMapper
 import com.jetbrains.python.run.target.getTargetPathForPythonConsoleExecution
-import com.jetbrains.python.sdk.PythonSdkAdditionalData
 import org.jetbrains.annotations.ApiStatus
 import java.io.File
 import java.nio.file.Path
@@ -61,12 +60,12 @@ private fun appendSystemPythonPath(pythonPath: MutableCollection<TargetEnvironme
 @ApiStatus.Internal
 fun collectPythonPath(project: Project,
                       module: Module?,
-                      sdk: Sdk?,
+                      interpreter: PythonInterpreter?,
                       pathMapper: PyRemotePathMapper?,
                       shouldAddContentRoots: Boolean,
                       shouldAddSourceRoots: Boolean
 ): Collection<TargetEnvironmentFunction<String>> =
-  collectPythonPath(Context(project, sdk, pathMapper), module, shouldAddContentRoots, shouldAddSourceRoots)
+  collectPythonPath(Context(project, interpreter, pathMapper), module, shouldAddContentRoots, shouldAddSourceRoots)
 
 private fun collectPythonPath(context: Context,
                               module: Module?,
@@ -99,22 +98,14 @@ private fun collectPythonPath(context: Context,
 }
 
 /**
- * List of [target->targetPath] functions. TargetPaths are to be added to ``PYTHONPATH`` because user did so
+ * The paths that the user added to the `sys.path` of [interpreter], for the ``PYTHONPATH``. The path
+ * mappings of a target interpreter give the path on the target.
  */
-internal fun getAddedPaths(sdkAdditionalData: SdkAdditionalData): List<TargetEnvironmentFunction<String>> {
-  val pathList: MutableList<TargetEnvironmentFunction<String>> = ArrayList()
-  if (sdkAdditionalData is PythonSdkAdditionalData) {
-    val addedPaths = if (sdkAdditionalData is RemoteSdkProperties) {
-      sdkAdditionalData.addedPathFiles.map { sdkAdditionalData.pathMappings.convertToRemote(it.path) }
-    }
-    else {
-      sdkAdditionalData.addedPathFiles.map { it.path }
-    }
-    for (file in addedPaths) {
-      pathList.add(constant(file))
-    }
-  }
-  return pathList
+internal fun getAddedPaths(interpreter: PythonInterpreter): List<TargetEnvironmentFunction<String>> {
+  val addedPaths = PythonInterpreterDetails.getInstance(interpreter.project).facts(interpreter).addedPaths
+    .map { FileUtil.toSystemIndependentName(it.toString()) }
+  val pathMappings = interpreter.pathMappings
+  return addedPaths.map { path -> constant(pathMappings?.convertToRemote(path) ?: path) }
 }
 
 private fun addToPythonPath(context: Context,
@@ -135,7 +126,7 @@ private fun addIfNeeded(context: Context,
                         file: VirtualFile,
                         pathList: MutableCollection<TargetEnvironmentFunction<String>>) {
   val filePath = Path.of(FileUtil.toSystemDependentName(file.path))
-  pathList.add(getTargetPathForPythonConsoleExecution(context.project, context.sdk, context.pathMapper, filePath))
+  pathList.add(getTargetPathForPythonConsoleExecution(context.project, context.interpreter, context.pathMapper, filePath))
 }
 
 /**
@@ -198,4 +189,4 @@ private fun addRoots(context: Context,
   }
 }
 
-private data class Context(val project: Project, val sdk: Sdk?, val pathMapper: PyRemotePathMapper?)
+private data class Context(val project: Project, val interpreter: PythonInterpreter?, val pathMapper: PyRemotePathMapper?)

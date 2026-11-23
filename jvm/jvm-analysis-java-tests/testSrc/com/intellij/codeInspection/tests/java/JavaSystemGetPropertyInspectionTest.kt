@@ -1,9 +1,20 @@
 package com.intellij.codeInspection.tests.java
 
-import com.intellij.jvm.analysis.internal.testFramework.SystemGetPropertyInspectionTestBase
+import com.intellij.jvm.analysis.internal.testFramework.systemGetPropertyInspectionFixture
 import com.intellij.jvm.analysis.testFramework.JvmLanguage
+import com.intellij.jvm.analysis.testFramework.jvmProjectFixture
+import com.intellij.testFramework.junit5.TestApplication
+import org.junit.jupiter.api.Test
 
-class JavaSystemGetPropertyInspectionTest : SystemGetPropertyInspectionTestBase() {
+@TestApplication
+class JavaSystemGetPropertyInspectionTest {
+  companion object {
+    private val projectFixture = jvmProjectFixture()
+  }
+
+  private val myFixture by systemGetPropertyInspectionFixture(projectFixture)
+
+  @Test
   fun `test highlighting`() {
     myFixture.testHighlighting(JvmLanguage.JAVA, """
         class Foo {
@@ -17,6 +28,7 @@ class JavaSystemGetPropertyInspectionTest : SystemGetPropertyInspectionTestBase(
           """.trimIndent())
   }
 
+  @Test
   fun `test quickfix file-separator`() {
     myFixture.testQuickFix(JvmLanguage.JAVA, """
       class Foo {
@@ -35,6 +47,7 @@ class JavaSystemGetPropertyInspectionTest : SystemGetPropertyInspectionTestBase(
     """.trimIndent(), "Replace with 'java.nio.file.FileSystems.getDefault().getSeparator()'", true)
   }
 
+  @Test
   fun `test quickfix path-separator`() {
     myFixture.testQuickFix(JvmLanguage.JAVA, """
       class Foo {
@@ -53,6 +66,7 @@ class JavaSystemGetPropertyInspectionTest : SystemGetPropertyInspectionTestBase(
     """.trimIndent(), "Replace with 'java.io.File.pathSeparator'", true)
   }
 
+  @Test
   fun `test quickfix line-separator`() {
     myFixture.testQuickFix(JvmLanguage.JAVA, """
       class Foo {
@@ -69,6 +83,7 @@ class JavaSystemGetPropertyInspectionTest : SystemGetPropertyInspectionTestBase(
     """.trimIndent(), "Replace with 'java.lang.System.lineSeparator()'", true)
   }
 
+  @Test
   fun `test quickfix file-encoding`() {
     myFixture.testQuickFix(JvmLanguage.JAVA, """
       class Foo {

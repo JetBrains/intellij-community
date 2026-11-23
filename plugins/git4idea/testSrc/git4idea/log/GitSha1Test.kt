@@ -50,9 +50,8 @@ internal class GitSha1Test {
   @Test
   fun `test sha for del`(): Unit = with(context) {
     cd(projectPath)
-    val path = Paths.get(projectPath, A_FILE)
-    val expectedBefore = git("hash-object $path")
-    git("rm $path")
+    val expectedBefore = git("hash-object $A_FILE")
+    git("rm $A_FILE")
     checkSha1ForSingleChange(expectedBefore, BlobIndexUtil.NOT_COMMITTED_HASH)
   }
 
@@ -61,11 +60,11 @@ internal class GitSha1Test {
     cd(projectPath)
     val path = Paths.get(projectPath, A_FILE)
     val virtualFile = VirtualFileManager.getInstance().refreshAndFindFileByNioPath(path)!!
-    val expectedBefore = git("hash-object $path")
+    val expectedBefore = git("hash-object $A_FILE")
     WriteAction.runAndWait<IOException> { LoadTextUtil.write(null, virtualFile, virtualFile, "echo content\n with line separator", -1) }
 
     VfsUtil.markDirtyAndRefresh(false, false, false, VfsUtil.findFile(path, true))
-    checkSha1ForSingleChange(expectedBefore, git("hash-object $path"))
+    checkSha1ForSingleChange(expectedBefore, git("hash-object $A_FILE"))
   }
 
   private fun GitSingleRepoContext.checkSha1ForSingleChange(expectedBefore: String?, expectedAfter: String?) {

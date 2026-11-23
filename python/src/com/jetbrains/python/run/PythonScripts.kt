@@ -29,6 +29,10 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.python.sdk.backend.PythonInterpreter
+import com.intellij.python.sdk.backend.activationEnvironmentBlocking
+import com.intellij.python.sdk.backend.configureBuilderToRunPythonOnTarget
+import com.intellij.python.sdk.backend.targetAdditionalData
 import com.jetbrains.python.HelperPackage
 import com.jetbrains.python.PYTHONIOENCODING
 import com.jetbrains.python.PYTHONPATH
@@ -53,6 +57,23 @@ import kotlin.text.Charsets.UTF_8
 
 private val LOG = fileLogger()
 
+/** The command line that runs this execution with Python of [interpreter] in [targetEnvironment]. */
+@JvmOverloads
+@ApiStatus.Internal
+fun PythonExecution.buildTargetedCommandLine(
+  targetEnvironment: TargetEnvironment,
+  interpreter: PythonInterpreter,
+  interpreterParameters: List<String>,
+  isUsePty: Boolean = false,
+  runTool: PyRunToolParameters? = null,
+): TargetedCommandLine = buildTargetedCommandLine(
+  targetEnvironment, interpreterParameters, isUsePty, runTool,
+  configurePython = { interpreter.configureBuilderToRunPythonOnTarget(it) },
+  userPaths = interpreter.targetAdditionalData?.pathsAddedByUser?.map { it.value }.orEmpty(),
+  activateEnvironment = { PythonSdkType.applyActivationEnvironment(it, interpreter.activationEnvironmentBlocking().successOrNull) },
+)
+
+/** [buildTargetedCommandLine] for a caller that still holds an [Sdk]. */
 @JvmOverloads
 @ApiStatus.Internal
 fun PythonExecution.buildTargetedCommandLine(
@@ -61,6 +82,21 @@ fun PythonExecution.buildTargetedCommandLine(
   interpreterParameters: List<String>,
   isUsePty: Boolean = false,
   runTool: PyRunToolParameters? = null,
+): TargetedCommandLine = buildTargetedCommandLine(
+  targetEnvironment, interpreterParameters, isUsePty, runTool,
+  configurePython = { sdk.configureBuilderToRunPythonOnTarget(it) },
+  userPaths = sdk.targetAdditionalData?.pathsAddedByUser?.map { it.value }.orEmpty(),
+  activateEnvironment = { PythonSdkType.patchEnvironmentVariablesForVirtualenv(it, sdk) },
+)
+
+private fun PythonExecution.buildTargetedCommandLine(
+  targetEnvironment: TargetEnvironment,
+  interpreterParameters: List<String>,
+  isUsePty: Boolean,
+  runTool: PyRunToolParameters?,
+  configurePython: (TargetedCommandLineBuilder) -> Unit,
+  userPaths: List<String>,
+  activateEnvironment: (MutableMap<String, String>) -> Unit,
 ): TargetedCommandLine {
   val commandLineBuilder = TargetedCommandLineBuilder(targetEnvironment.request)
   workingDir?.apply(targetEnvironment)?.let { commandLineBuilder.setWorkingDirectory(it) }
@@ -75,7 +111,7 @@ fun PythonExecution.buildTargetedCommandLine(
       }
     }
     else -> {
-      sdk.configureBuilderToRunPythonOnTarget(commandLineBuilder)
+      configurePython(commandLineBuilder)
       commandLineBuilder.addParameters(interpreterParameters)
     }
   }
@@ -102,14 +138,14 @@ fun PythonExecution.buildTargetedCommandLine(
       commandLineBuilder.addParameter(resolvedParameter)
     }
   }
-  val userPathList = sdk.targetAdditionalData?.pathsAddedByUser?.map { it.value }?.map { constant(it) }?.toMutableList() ?: ArrayList()
+  val userPathList = userPaths.mapTo(ArrayList()) { constant(it) }
   initPythonPath(envs, true, userPathList, targetEnvironment.request, false)
   for ((name, value) in envs) {
     commandLineBuilder.addEnvironmentVariable(name, value.apply(targetEnvironment))
   }
   val environmentVariablesForVirtualenv = mutableMapOf<String, String>()
   // TODO [Targets API] It would be cool to activate environment variables for any type of target
-  PythonSdkType.patchEnvironmentVariablesForVirtualenv(environmentVariablesForVirtualenv, sdk)
+  activateEnvironment(environmentVariablesForVirtualenv)
   // TODO [Targets API] [major] PATH env for virtualenv should extend existing PATH env
   environmentVariablesForVirtualenv.forEach { (name, value) -> commandLineBuilder.addEnvironmentVariable(name, value) }
   // TODO [Targets API] [major] `PythonSdkFlavor` should be taken into account to pass (at least) "IRONPYTHONPATH" or "JYTHONPATH"
@@ -384,13 +420,10 @@ fun TargetEnvironmentRequest.ensureProjectSdkAndModuleDirsAreOnTarget(project: P
   project.basePath?.let { addPathToVolume(Path.of(it)) }
 }
 
-/**
- * Mimics [PyDebugRunner.disableBuiltinBreakpoint] for [PythonExecution].
- */
-
+/** [disableBuiltinBreakpoint] for a Python of [languageLevel]: Python 3.7 and later have the built-in `breakpoint()`. */
 @ApiStatus.Internal
-fun PythonExecution.disableBuiltinBreakpoint(sdk: Sdk?) {
-  if (sdk != null && PythonSdkFlavor.getFlavor(sdk)?.getLanguageLevel(sdk)?.isAtLeast(LanguageLevel.PYTHON37) == true) {
+fun PythonExecution.disableBuiltinBreakpoint(languageLevel: LanguageLevel) {
+  if (languageLevel.isAtLeast(LanguageLevel.PYTHON37)) {
     addEnvironmentVariable("PYTHONBREAKPOINT", "0")
   }
 }

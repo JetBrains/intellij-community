@@ -1,7 +1,6 @@
 # Working inside `psiUpdate`
 
-`ModCommand.psiUpdate` is how most converted fixes are written — roughly 90–95%; the rest merely show a
-message, navigate, copy to clipboard, update a system option, and the like. It:
+`ModCommand.psiUpdate` is how most converted fixes are written. It:
 
 1. creates a **non-physical copy** of the file containing the element,
 2. calls your lambda with a copy of that element (and, optionally, a `ModPsiUpdater`),
@@ -48,8 +47,9 @@ several methods retarget it if you pass an element from a different file.
 `ModNavigator` is the small, shared set of navigation/editor operations that lets one utility method
 serve both worlds: new callers pass the `ModPsiUpdater` they already hold, and old callers holding a real
 `Editor` adapt it with `Editor.asModNavigator()`. So when a public helper needs only those operations,
-type its parameter as `ModNavigator` to keep supporting `Editor`-based callers (see the
-`FixDocCommentAction` example at the end of this file).
+type its parameter as `ModNavigator` to keep supporting `Editor`-based callers (example:
+`FixDocCommentAction.generateComment(PsiElement, Project, ModNavigator)` in
+`community/platform/lang-impl/src/com/intellij/codeInsight/editorActions/FixDocCommentAction.java`).
 
 ### Reaching other files
 
@@ -64,7 +64,7 @@ too, but the copy only supports creating new files inside it.
 
 `getOriginalFile` maps a writable copy back to the physical file.
 
-### Editor state (all no-ops in batch — never branch on `isOnTheFly`)
+### Editor state (all no-ops in batch)
 
 ```java
 void moveCaretTo(int offset);  void moveCaretTo(PsiElement element);
@@ -120,8 +120,7 @@ void cancel(String errorMessage);
 ## `ModTemplateBuilder`
 
 From `updater.templateBuilder()`
-(`community/platform/analysis-api/src/com/intellij/modcommand/ModTemplateBuilder.java`) —
-usually 1–3 lines where the old code needed an `Editor`, a PSI commit and a physicality check:
+(`community/platform/analysis-api/src/com/intellij/modcommand/ModTemplateBuilder.java`):
 
 - `field(element, expression)` / `field(element, varName, expression)` /
   `field(element, rangeInElement, varName, expression)` / `field(element, value)` — expression fields
@@ -138,17 +137,14 @@ Inside the lambda everything is non-physical, so old physicality checks are mean
 - `isPhysical()` branches — delete them. If the branch existed for intention preview, it is redundant now;
   when you genuinely still need to detect preview, call `IntentionPreviewUtils.isIntentionPreviewActive()`
   (`com.intellij.codeInsight.intention.preview.IntentionPreviewUtils`) rather than an `isPhysical()` check.
-- "is this element synthetic?" → `element instanceof SyntheticElement`
-- "was this created by a factory, detached from a file?" →
-  `element.getContainingFile() instanceof DummyHolder`
 
 Normal PSI utilities work on the copies: `CodeStyleManager.reformat`,
 `JavaCodeStyleManager.shortenClassReferences`, element factories, `PsiElement.replace/add/delete`.
 
 ## Raw document edits
 
-**Editing the copy's `Document` text directly is allowed.** This surprises people, so it is worth
-spelling out: a fix does not have to express everything through PSI.
+**Editing the copy's `Document` text directly is allowed.** A fix does not have to express everything
+through PSI.
 
 ```java
 Document doc = copyFile.getFileDocument();          // or updater.getDocument()
@@ -157,17 +153,11 @@ PsiDocumentManager.getInstance(project).commitDocument(doc);   // required, keep
 // ... PSI work on copyFile from here on
 ```
 
-Why it works, from `PsiUpdateImpl.FileTracker`
-(`community/platform/analysis-impl/src/com/intellij/lang/impl/modcommand/PsiUpdateImpl.java`):
-
-- the tracker registers a `DocumentListener` on the copy's document and turns every change into a
-  `ModUpdateFileText.Fragment`, and `getUpdateCommand()` derives the final text from
-  `myTargetFile.getFileDocument().getText()` — so raw edits land in the resulting `ModUpdateFileText`
-  exactly like PSI edits, and the intention preview shows them;
-- the copy is backed by a free-threaded `LightVirtualFile`, so its document has threading/write
-  assertions disabled — that is why a raw write does not blow up in the background read action;
-- the framework does it itself: `FileTracker` deletes the selection with
-  `myDocument.deleteString(...)` + `myManager.commitDocument(myDocument)` before handing you the copy.
+`PsiUpdateImpl.FileTracker`
+(`community/platform/analysis-impl/src/com/intellij/lang/impl/modcommand/PsiUpdateImpl.java`) derives
+the final text from the copy's document. Thus raw edits land in the resulting `ModUpdateFileText` exactly
+like PSI edits, and the intention preview shows them. The copy is backed by a free-threaded
+`LightVirtualFile`, so its document has threading/write assertions disabled.
 
 Shipped examples: `PostfixModExpander.deleteTemplateKeyAndCommit`
 (`community/platform/lang-impl/src/com/intellij/codeInsight/template/postfix/templates/PostfixModExpander.java`)
@@ -182,9 +172,7 @@ and `SpringUpdateSchemaIntention.updateSchema`
    violation: `perform` must not touch physical state.
 2. **Commit before the next PSI read.** The tree is stale until you do, and a stale tree silently
    produces wrong offsets rather than an exception.
-3. **Do not assume your PSI references survive the commit.** In practice the incremental reparse patches
-   the tree in place and reuses unchanged nodes, so elements usually stay valid — but that depends on the
-   language's reparse granularity, so it is not a contract. If you need an element across the commit,
+3. **Do not assume your PSI references survive the commit.** If you need an element across the commit,
    take a `SmartPointerManager.createPointer(element)` first and re-resolve after.
 4. **Prefer PSI when PSI can express the change.** A raw edit is the escape hatch for things PSI cannot
    say in one step (rewriting a tag-name token into a name plus attributes, deleting a template key).
@@ -200,15 +188,10 @@ and `SpringUpdateSchemaIntention.updateSchema`
 | `Editor`, `FileEditorManager`, `DataContext`, `CommonDataKeys` | `ActionContext` in, `ModPsiUpdater` out |
 | `editor.getDocument()` | `element.getContainingFile().getFileDocument()`, or `updater.getDocument()` for the single-file case |
 | `TemplateManager` + `TemplateBuilder` + editor | `updater.templateBuilder()` |
-| `RefactoringUI`/`DialogWrapper`/`showAndGet` | a chooser, `ModEditOptions`, `showConflicts` — or do not convert |
+| `DialogWrapper`/`showAndGet` | a chooser, `ModEditOptions`, `showConflicts` — or do not convert |
 | balloons / `HintManager` | `updater.message` or `updater.cancel` |
 
 `doPostponedOperationsAndUnblockDocument` is **not** forbidden on the non-physical copy: calling it at the
 very end of `psiUpdate` is useless (the framework unblocks the copy for you), but it is legitimate
 in-between — e.g. to do one part of the change through PSI, unblock, then finish the rest through the
 document directly.
-
-A shared helper that legitimately needs to write to an editor can take `ModNavigator` instead of
-`Editor`; callers holding a real editor pass `editor.asModNavigator()`. Real example:
-`FixDocCommentAction.generateComment(PsiElement, Project, ModNavigator)` in
-`community/platform/lang-impl/src/com/intellij/codeInsight/editorActions/FixDocCommentAction.java`.

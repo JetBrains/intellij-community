@@ -151,16 +151,17 @@ There is a hierarchy with this class as its root. Child-classes reflect possible
 
 **How definitions are loaded**
 
-The first thing to know about definitions loading is that it's not on demand. All definitions are loaded after project opening, see
-`LoadScriptDefinitionsStartupActivity`.
+A lookup never loads definitions. `ScriptDefinitionProviderImpl.findDefinition` and `currentDefinitions` read the list of the last load.
+Before the first load, a lookup gets only the bundled definition.
 
-The entry point into loading mechanics is `ScriptDefinitionsManager.findDefinition` and `ScriptDefinitionsManager.currentDefinitions`
-The method just goes through caches and delegates via its `super` back to the property. 
+The loads run in the background, one at a time. `ScriptDefinitionProviderImpl.scheduleLoading` asks for a load, and `awaitLoading`
+waits for it. The first load starts when the provider service is created. A change of the `scriptDefinitionsProvider` extension point,
+a Gradle sync, a successful IDE build or Gradle task, the settings and the Reload button start the next loads.
 
 An Important point to know here is that there is a UI allowing to control enabled/disabled status per definition. You can find it the
 `Settings => Languages & Frameworks => Kotlin => Kotlin Scripting`.
 
-There are many `ScriptDefinitionsSource`-s, objects responsible for loading.
+Each `ScriptDefinitionsProvider` extension supplies a part of the definitions.
 
 
 ## From Definition to definition/configuration manager and ScriptClassRootsCache

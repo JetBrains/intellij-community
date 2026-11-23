@@ -8,6 +8,8 @@ description: Query IntelliJ Product DSL modules, products, and plugin graphs.
 
 Use the Product DSL analyzer directly through Bazel. Do not call the retired `PluginModelAnalyzer` MCP server.
 
+When a prompt or an older instruction names an operation of the `PluginModelAnalyzer` MCP server, find the JSON request in [references/old-mcp-operations.md](references/old-mcp-operations.md).
+
 ## Command Shape
 
 Run from the repository root:
@@ -19,7 +21,7 @@ Run from the repository root:
 The output is JSON with a `timestamp` plus one result property named after the requested filter.
 
 Prefer small, typed JSON requests. Avoid unfiltered `--json`: it emits the full model and is usually too large for agent context.
-Use JSON fields, not extra CLI flags, to describe the query. Treat the single top-level result property as the answer.
+Use JSON fields, not extra CLI flags, to describe the query.
 
 Transport options:
 
@@ -53,6 +55,12 @@ Module owners:
 {"filter":"moduleOwners","module":"intellij.platform.vcs.impl","includeTestSources":true}
 ```
 
+Module reachability in a module set:
+
+```json
+{"filter":"moduleReachability","module":"<module>","moduleSet":"<set>"}
+```
+
 Module-set details or search:
 
 ```json
@@ -65,6 +73,7 @@ Product details or search:
 ```json
 {"filter":"productQuery","product":"idea","details":false,"limit":50}
 {"filter":"productQuery","usesModuleSet":"ide.common","limit":30}
+{"filter":"productQuery","name":"<name>","limit":20}
 ```
 
 Product comparison and trace path:
@@ -73,6 +82,14 @@ Product comparison and trace path:
 {"filter":"productCompare","product":"idea","product2":"Idea","limit":50}
 {"filter":"productTracePath","product":"idea","moduleSet":"ide.common","limit":20}
 ```
+
+Composition of all products. The result property is `productCompositionAnalysis`:
+
+```json
+{"filter":"composition"}
+```
+
+For one product, use `productQuery`.
 
 Embedded dependency closure:
 
@@ -113,37 +130,6 @@ Deprecated `xi:include` usage:
 {"filter":"deprecatedIncludes","product":"idea","limit":100}
 ```
 
-## Old MCP Operation Map
-
-Use this map when a prompt or older instruction mentions the retired `PluginModelAnalyzer` MCP operation names.
-
-| Old operation | JSON request |
-| --- | --- |
-| `analyze_module_structure` | `{"filter":"summary"}` |
-| module `info` | `{"filter":"moduleInfo","module":"<module>"}` |
-| module `dependencies` | `{"filter":"moduleDependencies","module":"<module>"}` |
-| module `paths` | `{"filter":"modulePaths","module":"<module>"}` |
-| module `reachability` | `{"filter":"moduleReachability","module":"<module>","moduleSet":"<set>"}` |
-| module `find_by_loading` | `{"filter":"moduleLoading","loading":"EMBEDDED","details":true}` |
-| module `dependency_path` | `{"filter":"dependencyPath","fromModule":"<from>","toModule":"<to>","includeScopes":true}` |
-| module-set `info` | `{"filter":"moduleSetQuery","moduleSet":"<set>"}` |
-| module-set `search` | `{"filter":"moduleSetQuery","name":"<name>","location":"COMMUNITY","limit":20}` |
-| module-set `hierarchy` | `{"filter":"moduleSetQuery","moduleSet":"<set>","details":true}` |
-| module-set `overlap` | `{"filter":"moduleSetOverlap","minOverlapPercent":70,"limit":20}` |
-| module-set `graph` | No ASCII graph output; use `moduleSetQuery` plus `productTracePath` or `productUsage` for structured edges. |
-| module-set `suggest_for_modules` | `{"filter":"suggestModuleSetsForModules","modules":["<module>"]}` |
-| product `info` | `{"filter":"productQuery","product":"<product>"}` |
-| product `search` | `{"filter":"productQuery","name":"<name>","limit":20}` |
-| product `compare` | `{"filter":"productCompare","product":"<product1>","product2":"<product2>"}` |
-| product `similar` | `{"filter":"productSimilarity","threshold":0.8,"limit":20}` |
-| product `composition` | `{"filter":"composition"}` for all products; use `productQuery` for one product. |
-| product `trace_path` | `{"filter":"productTracePath","product":"<product>","moduleSet":"<set>"}` |
-| product `deprecated_includes` | `{"filter":"deprecatedIncludes","product":"<product>"}` |
-| product `full_analysis` | Avoid unless explicitly needed; omit the filter only when the full raw model is required. |
-| validation `community_products` | `{"filter":"validation","check":"community_products"}` |
-| validation `module_set_locations` | `{"filter":"validation","check":"module_set_locations"}` |
-| validation `loading_inconsistencies` | `{"filter":"validation","check":"loading_inconsistencies"}` |
-
 ## Fast Recipes
 
 Where is a module included?
@@ -151,19 +137,6 @@ Where is a module included?
 ```json
 {"filter":"moduleInfo","module":"<module>","limit":50}
 {"filter":"modulePaths","module":"<module>"}
-```
-
-What depends on what, and why?
-
-```json
-{"filter":"moduleDependencies","module":"<module>","includeTransitive":false,"includeTestDependencies":false}
-{"filter":"dependencyPath","fromModule":"<from>","toModule":"<to>","includeTestDependencies":true,"includeScopes":true}
-```
-
-Who owns a module?
-
-```json
-{"filter":"moduleOwners","module":"<module>","includeTestSources":true}
 ```
 
 Which products or module sets use something?
@@ -193,18 +166,12 @@ Did a Product DSL edit introduce placement or loading problems?
 {"filter":"validation","check":"embedded_dependency_closure","pluginSourceOnly":true}
 ```
 
-Which module set should contain these modules?
-
-```json
-{"filter":"suggestModuleSetsForModules","modules":["<module1>","<module2>"],"limit":20}
-```
-
 ## Reading Output
 
 - Compact list fields use `count`, `items`, and `truncated`; increase `limit` or set `details:true` only when needed.
 - Some focused filters return an `error` field in JSON for missing selectors or unknown names; a successful process exit does not always mean the query matched.
 - For direct `embeddedDependencyClosure`, use `value` for the product selector. The validation wrapper accepts `product` or `value`.
-- `location` values are `COMMUNITY` or `ULTIMATE`. `loading` values are `EMBEDDED`, `REQUIRED`, `OPTIONAL`, `ON_DEMAND`, or `UNSPECIFIED`.
+- `location` values are `COMMUNITY` or `ULTIMATE`. `loading` values are `EMBEDDED`, `REQUIRED`, `OPTIONAL`, or `ON_DEMAND`.
 
 ## Request Fields
 
@@ -217,7 +184,5 @@ Options: `operation`, `graph`, `check`, `loading`, `strategy`, `limit`, `minModu
 ## Practical Rules
 
 - Start with `summary`, `moduleInfo`, `moduleSetQuery`, or `productQuery` when exploring.
-- Use `details:false` and a small `limit` until you know the exact module set or product.
 - Use the legacy precise filters (`moduleDependencies`, `dependencyPath`, `moduleOwners`, `moduleReachability`, `productUsage`, `embeddedDependencyClosure`, `mergeImpact`) when you need the full typed analysis for one target.
-- Use `--json=-` or `--json=@file` for complex requests instead of adding more CLI flags.
 - If the command fails before producing JSON, treat stderr as the source of truth; invalid JSON requests exit nonzero.

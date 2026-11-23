@@ -51,9 +51,12 @@ private const val UVX_COMMAND: String = "uvx"
  * How to launch [tool] here: the binary to exec, plus the leading arguments that binary needs.
  *
  * The resolution chain is fixed (discovery mode is no longer selectable): the scripts directory of the interpreter of
- * the Python project, then the user's custom path, then `PATH`. When none of those has it, the tool is run through
- * `uvx`, which needs `--from <package> <executable>` whenever the executable's name differs from its package's
- * (pyright → pyright-langserver).
+ * the Python project, then the user's custom path of the [executableName], then `PATH`. When none of those has it,
+ * the tool is run through `uvx`, which needs `--from <package> <executable>` whenever the executable's name differs
+ * from its package's (pyright → pyright-langserver).
+ *
+ * The custom path belongs to the entry of [PyTool.executables] whose id is [executableName]. Each entry is a different
+ * command, so the custom path of one command never runs as another.
  *
  * Waits for the first snapshot to find the interpreter. A caller in a read action calls
  * [toolExecutableWithBaseArgsIfReady] instead, so it does not wait under the lock.
@@ -84,9 +87,9 @@ private suspend fun ModuleOrProject.toolExecutableWithBaseArgs(
 ): PyResult<Pair<BinaryToExec, List<String>>> {
   val eelDescriptor = project.getEelDescriptor()
   val eelApi = eelDescriptor.toEelApi()
-  val customPath = tool.getCustomExecutablePath(eelDescriptor)
+  val customPath = tool.executables.firstOrNull { it.fusId.value == executableName }?.getCustomExecutablePath(eelDescriptor)
 
-  val toolBinaryPath = interpreter?.findToolExecutable(tool, executableName)
+  val toolBinaryPath = interpreter?.let { withContext(Dispatchers.IO) { it.findToolExecutable(tool, executableName) } }
                        ?: customPath
                        ?: findExecutableInPath(eelApi, executableName)
 

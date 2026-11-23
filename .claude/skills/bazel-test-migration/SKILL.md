@@ -6,22 +6,20 @@ description: Migrate IntelliJ JPS module tests to Bazel; debug Bazel-only failur
 
 # Bazel Test Migration
 
-Use this skill to migrate a JPS test module, fix a Bazel-only failure, or review a migration.
-Migrate the complete module. Keep existing test behavior unless a failure proves that the test depends on an invalid environment assumption.
+Keep existing test behavior unless a failure proves that the test depends on an invalid environment assumption.
 
 ## Establish the Baseline
 
-- Inspect the current branch, test framework, `.iml`, and generated target. Use earlier migration commits as references, not patches to apply unchanged.
+- Use earlier migration commits as references, not patches to apply unchanged.
 - Identify the module that contains the tests. From Ultimate, use `@community//...` for Community targets. From standalone Community, use `//...`.
 - Record known failures and the user's exclusions from the task. Do not fix unrelated failures or silently remove them from the run.
-- Use existing CI results or an initial target run to establish the failures. During debugging, use a class or method filter.
+- Use existing CI results or an initial target run to establish the failures.
 
-For normal test commands, read the [testing skill](../testing/SKILL.md).
 During migration, run the Bazel target directly if `bt` refuses a module that is not yet marked as migrated.
 
 ## Configure the Target
 
-Keep `.iml` as the dependency source. Follow the [module dependencies skill](../module-dependencies/SKILL.md) for registration and generation.
+Follow the [module dependencies skill](../module-dependencies/SKILL.md) for registration and generation.
 
 - Use `scope="RUNTIME"` for plugins needed only for runtime loading, descriptors, extensions, or resources. Do not add them as `TEST` merely because tests need them.
 - Keep APIs required to compile test sources in the appropriate compile or `TEST` scope.
@@ -29,20 +27,6 @@ Keep `.iml` as the dependency source. Follow the [module dependencies skill](../
 - Fix a production descriptor only if its dependency is also wrong in production. An incomplete test product usually needs a test module dependency.
 - Keep custom `jps_test` declarations outside generated sections. Preserve the existing `runtime_deps`, `tags`, `timeout`, `env`, `jvm_flags`, and `data`.
 
-Protect a custom test section with the exact module name:
-
-```starlark
-### skip generation section `test module.name`
-```
-
-Register changed modules and regenerate from the Ultimate root:
-
-```bash
-./community/tools/bun.cmd build/jps-module.mjs register path/to/module.iml --fix-iml-eof
-./build/jpsModelToBazel.cmd
-```
-
-In standalone Community, follow its registration instructions and run `./build/jpsModelToBazelCommunityOnly.cmd`.
 Do not patch missing jars or descriptors into runfiles with `copy_file`.
 
 ## Resolve Test Inputs
@@ -81,7 +65,7 @@ Avoid repeated full-module runs while diagnosing a focused failure.
 - Read `test.log`, `idea.log`, and JUnit XML. Inspect the actual command, environment, and declared inputs before changing assertions.
 - Distinguish missing input or plugin wiring from behavior failures. Use [failure diagnosis](references/recipes.md#failure-diagnosis) for common cases.
 - If a test passes alone, check shared state and project reuse. Restore settings and include relevant configuration in fixture cache identity.
-- Fix a shared helper when it owns the defect. Avoid repeated test-local patches for the same helper bug.
+- Fix a shared helper when it owns the defect.
 - Keep broad platform or JDK fixes separate when they need independent review. A temporary test-local workaround must preserve the test's purpose and identify the follow-up.
 - Keep existing assertions and coverage. Do not add exclusions, assumptions, or disabled tests merely to make the migration green.
 - Use assumptions only for genuine environment restrictions. Declare required environment variables in the target instead of relying on the developer's shell.
@@ -110,8 +94,6 @@ See [discovery and sandbox checks](references/recipes.md#discovery-and-sandbox-c
 - Check CI and Safe-Push selection separately. Update their target lists or selectors within the requested scope; keep JPS coverage for modules not yet migrated.
 - Add the module to [the migrated-module list](../../../build/bazel-migrated-test-modules.txt) only after verification and replacement coverage are established.
 - The list makes `tests.cmd` refuse migrated modules. Do not assume it configures every CI build or automatically removes every JPS invocation.
-- Verify generated metadata, run the required format checks, and run `git diff --check`.
 - Report the focused and complete runs, known failures, and any unverified CI coverage. Do not describe a run as green when known failures remain.
 
 Keep test data resolution changes separate from configuration changes when that makes review easier.
-Put independently reviewed framework fixes in separate commits when requested.

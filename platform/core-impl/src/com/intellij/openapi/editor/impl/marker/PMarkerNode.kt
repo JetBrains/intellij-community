@@ -12,34 +12,57 @@ import kotlin.experimental.or
 /**
  * Stores a persistent AVL subtree with strong child references.
  * Metadata updates preserve the positions and parent histories of all entries.
- *
- * @property version the revision that creates this subtree.
- * @property state the position before shifts from ancestors.
- * @property entry the current marker metadata and stored offsets.
- * @property height the height used for AVL balancing.
- * @property minimumStart the smallest start offset, including lazy shifts within this subtree.
- * @property canShiftAtStart whether all markers at [minimumStart] use default nonempty ranges and have no left greediness.
- * @property maximumEnd the largest end offset, including lazy shifts within this subtree.
- * @property persistentCount the number of entries whose policies can require a full traversal.
- * @property subtreeFlavorFlags the combined flavor flags used for query pruning.
- * @property aggregate the sum of marker measures within this subtree.
- * @property changedParentMask the mask of parent links that this node must publish for its children.
- * Bit 0 selects [left], and bit 1 selects [right].
- * A clear bit means that the child inherits its parent link from an earlier version.
  */
 internal class PMarkerNode private constructor(
+  /** The revision that creates this tree node. Metadata copies retain the revision. */
   val version: PMarkerNodeVersion,
+
+  /**
+   * The shared position and lazy shift, before shifts from ancestors.
+   * Its revision can precede [version] when the offsets and lazy shift are unchanged.
+   */
   val state: PMarkerValidNode,
+
+  /** The marker handle, metadata, and stored offsets. Add the ancestor shifts to obtain document offsets. */
   val entry: MarkerEntry,
+
+  /** The child subtree before this entry in start offset and handle ID order, or null. */
   val left: PMarkerNode?,
+
+  /** The child subtree after this entry in start offset and handle ID order, or null. */
   val right: PMarkerNode?,
+
+  /** The subtree height used for AVL balancing. A leaf has height one, and an absent child contributes zero. */
   val height: Int,
+
+  /** The least start offset in this subtree. Includes shifts within this subtree and excludes shifts from ancestors. */
   val minimumStart: Int,
+
+  /**
+   * Whether all markers at [minimumStart] are nonempty ranges with [DefaultMarkerPolicy] and no left greediness.
+   * These markers can shift when text is inserted at that offset.
+   */
   val canShiftAtStart: Boolean,
+
+  /** The greatest end offset in this subtree, in the same coordinate system as [minimumStart]. */
   val maximumEnd: Int,
+
+  /** The number of entries in this subtree whose [MarkerPolicy.isPersistent] is true, including this entry. */
   val persistentCount: Int,
+
+  /** The bitwise OR of [MarkerEntry.flavorFlags] for this entry and both subtrees. Queries use it to skip unrelated categories. */
   val subtreeFlavorFlags: Byte,
+
+  /** The sum of [MarkerEntry.measure] for this entry and both subtrees. Prefix queries use it to skip whole subtrees. */
   val aggregate: Int,
+
+  /** Whether every entry in this subtree is a point with measure zero. [persistentCount] describes persistent policies separately. */
+  val pointsOnly: Boolean,
+
+  /**
+   * The child links that [publish] must record for this revision. Bit 0 selects [left], and bit 1 selects [right].
+   * A child with a clear bit inherits its parent link from an earlier revision.
+   */
   private val changedParentMask: Byte,
 ) {
   constructor(
@@ -60,11 +83,15 @@ internal class PMarkerNode private constructor(
     (if (entry.policy.isPersistent) 1 else 0) + (left?.persistentCount ?: 0) + (right?.persistentCount ?: 0),
     entry.flavorFlags or (left?.subtreeFlavorFlags ?: 0) or (right?.subtreeFlavorFlags ?: 0),
     entry.measure + (left?.aggregate ?: 0) + (right?.aggregate ?: 0),
+    pointsOnly(entry, left, right),
     changedParentMask(version, entry, left, right, lazyDelta, source),
   )
 
+  /** The stable marker reference stored in [entry]. */
   val handle: SnapshotMarkerReference<*>
     get() = entry.handle
+
+  /** The shift still owed to this node's children. The offsets in [entry] already include this shift. */
   val lazyDelta: Int
     get() = state.lazyDelta
 
@@ -85,10 +112,14 @@ internal class PMarkerNode private constructor(
     version, state, entry, left, right, height, minimumStart, canShiftAtStart(entry, left, right, lazyDelta), maximumEnd, persistentCount,
     if (updateAggregates) entry.flavorFlags or (left?.subtreeFlavorFlags ?: 0) or (right?.subtreeFlavorFlags ?: 0) else subtreeFlavorFlags,
     if (updateAggregates) entry.measure + (left?.aggregate ?: 0) + (right?.aggregate ?: 0) else aggregate,
+    pointsOnly(entry, left, right),
     changedParentMask,
   )
 
   companion object {
+    private fun pointsOnly(entry: MarkerEntry, left: PMarkerNode?, right: PMarkerNode?): Boolean =
+      entry.nodeStart == entry.nodeEnd && entry.measure == 0 && left?.pointsOnly != false && right?.pointsOnly != false
+
     private fun minimumStart(entry: MarkerEntry, left: PMarkerNode?, delta: Int): Int =
       if (left == null) entry.nodeStart else left.minimumStart + delta
 
@@ -231,6 +262,11 @@ internal class PMarkerNodeHistory<T : Any> {
    */
   @Synchronized
   fun put(version: PMarkerNodeVersion, value: T) {
+    val published = latest
+    if (published != null && published.branch === version.branch && published.get() === value) {
+      check(published.number <= version.number)
+      return
+    }
     val reference = HistoryReference(value, this, references, version)
     val histories = branches
     val indexed = singleBranch
@@ -381,6 +417,12 @@ internal class PMarkerNodeHistory<T : Any> {
     val purgedState: PMarkerInvalidNode = PMarkerInvalidNode(0, 0)
 
     /**
+     * Keeps removal records alive, as [purgedState] does for purge records.
+     * Unlike a purge, a removal stops a merge from restoring the marker.
+     */
+    val removedState: PMarkerInvalidNode = PMarkerInvalidNode(0, 0)
+
+    /**
      * Extends the branch of [previous] if [previous] is still its tip. Otherwise, starts a new branch at [previous].
      * Each allocation also processes a bounded number of collection notifications.
      */
@@ -393,7 +435,7 @@ internal class PMarkerNodeHistory<T : Any> {
     }
 
     /** Processes at most [limit] collection notifications. */
-    private fun collect(limit: Int) {
+    fun collect(limit: Int) {
       repeat(limit) {
         val reference = references.poll() ?: return
         (reference as HistoryReference<*>).reclaim()

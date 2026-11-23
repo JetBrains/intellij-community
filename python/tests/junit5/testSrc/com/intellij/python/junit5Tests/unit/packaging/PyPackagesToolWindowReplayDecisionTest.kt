@@ -2,6 +2,7 @@
 package com.intellij.python.junit5Tests.unit.packaging
 
 import com.intellij.python.sdk.backend.PythonInterpreter
+import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.python.sdk.backend.pythonInterpreterResult
 import com.jetbrains.python.packaging.toolwindow.shouldReplayBoundInterpreter
 import org.junit.jupiter.api.Assertions.assertFalse
@@ -23,6 +24,8 @@ import java.nio.file.Path
  */
 @TestApplication
 internal class PyPackagesToolWindowReplayDecisionTest {
+  private val projectFixture = projectFixture()
+
   @TempDir
   lateinit var root: Path
 
@@ -32,7 +35,7 @@ internal class PyPackagesToolWindowReplayDecisionTest {
   /** An interpreter of its own: its SDK is at its own path, so its ref differs from every other one. */
   private fun interpreterAt(name: String): PythonInterpreter =
     PythonMockSdk.create(name, root.resolve(name).toString(), PythonSdkType.getInstance(), LanguageLevel.getLatest())
-      .pythonInterpreterResult().orThrow()
+      .pythonInterpreterResult(projectFixture.get()).orThrow()
 
   @Test
   fun `replays when the binding is the interpreter to open on`() {

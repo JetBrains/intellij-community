@@ -78,7 +78,7 @@ internal fun shellDirectories(): List<String> =
  * gets `node`, `npm` and `npx` from the runtime, so the user does not have to install Node.js.
  *
  * This code is a reduced copy of the ACP agent runtime manager in
- * `plugins/air/backend/acp/runtime/src/com/intellij/air/acp/runtime/registry/AcpRuntimeManager.kt`.
+ * `plugins/air/frontback/acp/runtime/src/com/intellij/air/acp/runtime/registry/AcpRuntimeManager.kt`.
  * Read the `CLAUDE.md` next to that file for the decisions behind the staging directory, the pinned
  * checksum and the version sweep. Three things are cut on purpose:
  * - **The local machine only.** The original keys every path by an EEL descriptor, because an agent

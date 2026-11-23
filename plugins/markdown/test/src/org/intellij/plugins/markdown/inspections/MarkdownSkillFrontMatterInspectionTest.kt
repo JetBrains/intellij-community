@@ -3,17 +3,29 @@ package org.intellij.plugins.markdown.inspections
 import com.intellij.codeInsight.intention.EmptyIntentionAction
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.markdown.backend.inspections.MarkdownSkillFrontMatterInspection
-import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixture4TestCase
-import org.junit.Test
+import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightModuleFixture
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.fixture.projectFixture
+import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 
-class MarkdownSkillFrontMatterInspectionTest: LightPlatformCodeInsightFixture4TestCase() {
-  override fun setUp() {
-    super.setUp()
+@TestApplication
+class MarkdownSkillFrontMatterInspectionTest {
+  companion object {
+    private val projectFixture = projectFixture(openAfterCreation = true)
+  }
+
+  private val myFixture by codeInsightModuleFixture(projectFixture)
+
+  @BeforeEach
+  fun setUp() {
     myFixture.enableInspections(MarkdownSkillFrontMatterInspection())
   }
 
   @Test
-  fun `test valid front matter`() = checkHighlighting("""
+  fun `test valid front matter`(): Unit = checkHighlighting("""
     ---
     name: valid-skill
     description: Does useful work.
@@ -21,10 +33,10 @@ class MarkdownSkillFrontMatterInspectionTest: LightPlatformCodeInsightFixture4Te
   """.trimIndent())
 
   @Test
-  fun `test delimiters with trailing whitespace`() = checkHighlighting("---  \nname: valid-skill\ndescription: Does useful work.\n---\t")
+  fun `test delimiters with trailing whitespace`(): Unit = checkHighlighting("---  \nname: valid-skill\ndescription: Does useful work.\n---\t")
 
   @Test
-  fun `test description on the next line`() = checkHighlighting("""
+  fun `test description on the next line`(): Unit = checkHighlighting("""
     ---
     name: valid-skill
     description:
@@ -40,7 +52,7 @@ class MarkdownSkillFrontMatterInspectionTest: LightPlatformCodeInsightFixture4Te
   }
 
   @Test
-  fun `test nested name is not the skill name`() = checkHighlighting("""
+  fun `test nested name is not the skill name`(): Unit = checkHighlighting("""
     ---
     metadata:
       name: Internal Name!
@@ -50,7 +62,7 @@ class MarkdownSkillFrontMatterInspectionTest: LightPlatformCodeInsightFixture4Te
   """.trimIndent())
 
   @Test
-  fun `test code fences are not checked as front matter`() = checkHighlighting("""
+  fun `test code fences are not checked as front matter`(): Unit = checkHighlighting("""
     ---
     name: valid-skill
     <warning descr="`description` must not be blank">description: </warning>
@@ -61,7 +73,7 @@ class MarkdownSkillFrontMatterInspectionTest: LightPlatformCodeInsightFixture4Te
   """.trimIndent())
 
   @Test
-  fun `test quoted values`() = checkHighlighting("""
+  fun `test quoted values`(): Unit = checkHighlighting("""
     ---
     name: "valid-skill"
     description: 'Does useful work.'
@@ -210,7 +222,7 @@ class MarkdownSkillFrontMatterInspectionTest: LightPlatformCodeInsightFixture4Te
     """.trimIndent())
     myFixture.configureFromExistingVirtualFile(file.virtualFile)
     myFixture.checkHighlighting()
-    assertEmpty(myFixture.getAllQuickFixes().filterNot { it is EmptyIntentionAction })
+    assertThat(myFixture.getAllQuickFixes().filterNot { it is EmptyIntentionAction }).isEmpty()
   }
 
   private fun checkHighlighting(text: String) {

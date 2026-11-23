@@ -77,7 +77,7 @@ class UvWorkspaceOutdatedPackagesTest {
 
   /** Installs the locked packages of the workspace, and waits for the check of the outdated packages that this starts. */
   private suspend fun syncedManager(): PythonPackageManager {
-    val manager = PythonPackageManager.forPythonInterpreter(projectFixture.get(), interpreterFixture.get())
+    val manager = PythonPackageManager.forPythonInterpreter(interpreterFixture.get())
     manager.syncLocked().getOrThrow()
     manager.awaitOutdatedPackages()
     return manager

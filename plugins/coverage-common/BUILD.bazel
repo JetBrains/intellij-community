@@ -36,6 +36,7 @@ jvm_library(
         # do not sort,
         "//platform/diff-api:diff",
         "//jps/model-api:model",
+        "//plugins/coverage-common/plugin",
     ],
     deps = [
         # do not sort,

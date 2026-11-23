@@ -1,21 +1,31 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins.unified
 
+import com.intellij.diagnostic.LoadingState
 import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeBundle
+import com.intellij.ide.browsers.BrowserLauncher
+import com.intellij.ide.browsers.BrowserLauncherImpl
+import com.intellij.ide.browsers.WebBrowser
 import com.intellij.ide.plugins.PluginManagerConfigurable
 import com.intellij.ide.plugins.api.PluginDto
 import com.intellij.ide.plugins.newui.ListPluginComponent
 import com.intellij.ide.ui.LafManager
 import com.intellij.ide.util.PropertiesComponent
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.impl.ActionButton
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.UI
+import com.intellij.openapi.application.impl.ApplicationInfoImpl.DEFAULT_PLUGINS_HOST
 import com.intellij.openapi.extensions.PluginId
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Divider
 import com.intellij.openapi.ui.Splitter
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.TestDisposable
+import com.intellij.testFramework.replaceService
 import com.intellij.ui.AnimatedIcon
 import com.intellij.ui.ColorUtil
 import com.intellij.ui.JBColor
@@ -30,6 +40,7 @@ import com.intellij.ui.components.SearchFieldWithExtension
 import com.intellij.ui.border.CustomLineBorder
 import com.intellij.ui.popup.list.SelectablePanel
 import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.Dispatchers
 import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.annotations.Nls
@@ -422,6 +433,61 @@ internal class UnifiedPluginsPageViewTest {
     headerButton.actionMap.get(enterActionKey).actionPerformed(ActionEvent(headerButton, ActionEvent.ACTION_PERFORMED, null))
     assertThat(expansionChanges.last()).isEqualTo(PluginSectionId.Installed to true)
     view.close()
+  }
+
+  @Test
+  fun `Marketplace link uses section hover and focus and opens from the full row`(@TestDisposable disposable: Disposable) {
+    assertThat(LoadingState.COMPONENTS_LOADED.isOccurred).isTrue()
+    val openedUrls = ArrayList<String>()
+    val launcher = object : BrowserLauncherImpl() {
+      override fun browse(url: String, browser: WebBrowser?, project: Project?) {
+        openedUrls.add(url)
+      }
+    }
+    ApplicationManager.getApplication().replaceService(BrowserLauncher::class.java, launcher, disposable)
+
+    timeoutRunBlocking(context = Dispatchers.UI) {
+      val controller = UnifiedPluginsPageController(listOf(section(PluginSectionId.Suggested, itemCount = 5)))
+      createView().use { view ->
+        view.render(controller.state.value, showMarketplaceLink = true)
+        prepareForScrolling(view)
+
+        val link = componentsOfType(view.component, ActionLink::class.java).single()
+        val footer = link.parent as SelectablePanel
+        val header = sectionHeader(view, IdeBundle.message("plugins.configurable.suggested")) as SelectablePanel
+        assertThat(footer.selectionArc).isEqualTo(header.selectionArc)
+        assertThat(footer.selectionInsets).isEqualTo(header.selectionInsets)
+        assertThat(link.foreground).isEqualTo(UIUtil.getContextHelpForeground())
+
+        val x = footer.width - JBUI.scale(20)
+        val y = footer.height / 2
+        link.model.isRollover = true
+        val hoverColor = ColorUtil.alphaBlending(ListPluginComponent.HOVER_COLOR, PluginManagerConfigurable.MAIN_BG_COLOR)
+        assertThat(paintedPixel(footer, x, y)).isEqualTo(hoverColor.rgb)
+        assertThat(paintedPixel(footer, 0, y)).isNotEqualTo(hoverColor.rgb)
+
+        link.dispatchEvent(MouseEvent(link, MouseEvent.MOUSE_PRESSED, 0, 0, x, y, 1, false, MouseEvent.BUTTON1))
+        link.dispatchEvent(MouseEvent(link, MouseEvent.MOUSE_RELEASED, 0, 0, x, y, 1, false, MouseEvent.BUTTON1))
+        assertThat(openedUrls).containsExactly(DEFAULT_PLUGINS_HOST)
+
+        link.focusListeners.forEach { it.focusGained(FocusEvent(link, FocusEvent.FOCUS_GAINED)) }
+        val focusY = footer.selectionInsets.top + JBUI.scale(1)
+        assertThat(footer.selectionColor).isNull()
+        assertThat(paintedPixel(footer, x, focusY)).isEqualTo(JBUI.CurrentTheme.ActionButton.focusedBorder().rgb)
+
+        val enterKey = KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0)
+        val enterActionKey = link.getInputMap(JComponent.WHEN_FOCUSED).get(enterKey)
+        link.actionMap.get(enterActionKey).actionPerformed(ActionEvent(link, ActionEvent.ACTION_PERFORMED, null))
+        assertThat(openedUrls).containsExactly(DEFAULT_PLUGINS_HOST, DEFAULT_PLUGINS_HOST)
+
+        for (onRelease in listOf(false, true)) {
+          val spaceKey = KeyStroke.getKeyStroke(KeyEvent.VK_SPACE, 0, onRelease)
+          val spaceActionKey = link.getInputMap(JComponent.WHEN_FOCUSED).get(spaceKey)
+          link.actionMap.get(spaceActionKey).actionPerformed(ActionEvent(link, ActionEvent.ACTION_PERFORMED, null))
+        }
+        assertThat(openedUrls).containsExactly(DEFAULT_PLUGINS_HOST, DEFAULT_PLUGINS_HOST, DEFAULT_PLUGINS_HOST)
+      }
+    }
   }
 
   @Test
@@ -1396,7 +1462,7 @@ internal class UnifiedPluginsPageViewTest {
       return RecordingPluginRow().also { rows[occurrenceId] = it }
     }
 
-    override fun rowsRendered(bindings: List<PluginRowBinding<PluginRow>>) = Unit
+    override fun rowsRendered(bindings: List<PluginRowBinding<PluginRow>>, keyboardOrder: List<JComponent>) = Unit
 
     fun selectedOccurrences(): List<PluginOccurrenceId> {
       return rows.filterValues(RecordingPluginRow::selected).keys.toList()

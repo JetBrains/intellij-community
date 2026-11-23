@@ -13,6 +13,7 @@ import com.jetbrains.python.sdk.add.v2.PathHolder
 import com.jetbrains.python.sdk.add.v2.FileSystem
 import com.intellij.python.pytools.resolveExecutable
 import com.intellij.python.pytools.backend.PyTool
+import com.intellij.python.pytools.common.FusId
 import com.jetbrains.python.sdk.ModuleOrProject
 import com.intellij.icons.AllIcons
 import com.intellij.ide.ui.icons.rpcId
@@ -26,6 +27,7 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.python.community.common.tools.ToolId
 import com.intellij.python.sdk.backend.PySdkBundle
 import com.intellij.python.sdk.backend.PythonInterpreter
+import com.intellij.python.sdk.backend.PythonInterpreterKey
 import com.intellij.python.sdk.common.EvoRowAction
 import com.intellij.python.sdk.common.evolution.EvoAddNewDto
 import com.intellij.python.sdk.common.evolution.EvoAddNewOptionDto
@@ -117,8 +119,24 @@ class EvoWorkspace(
 class EvoPyProject(
   /** The project this entry describes. */
   val pyProject: PyProject,
+  /** The interpreter this project uses, see [interpreter]. */
+  interpreter: PythonInterpreter?,
   /**
-   * The interpreter this project uses, as it stood when the snapshot was computed.
+   * The key that the interpreter library entry of this project names, or `null` when it has none, or the legacy flow
+   * names the interpreter by its SDK. With a `null` [interpreter] the project names an interpreter that is unavailable:
+   * its environment is gone.
+   */
+  val entryKey: PythonInterpreterKey? = null,
+) {
+  /**
+   * This project's wire identity. See [keyOf].
+   *
+   * A field, so the key travels with the project it addresses. A caller that holds one never has to derive the other.
+   */
+  val key: String = keyOf(pyProject)
+
+  /**
+   * The interpreter this project uses, as [pyProject] uses it, as it stood when the snapshot was computed.
    *
    * Every module of a workspace holds its own reference to the interpreter, so the module of this project alone
    * answers it.
@@ -132,14 +150,7 @@ class EvoPyProject(
    * A [PythonInterpreter] and not an `Sdk`, so a caller asks the interpreter what it is. A caller that still needs the
    * `Sdk` API calls [com.intellij.python.sdk.backend.getSdkAPI], whose deprecation marks the work left to do.
    */
-  val interpreter: PythonInterpreter?,
-) {
-  /**
-   * This project's wire identity. See [keyOf].
-   *
-   * A field, so the key travels with the project it addresses. A caller that holds one never has to derive the other.
-   */
-  val key: String = keyOf(pyProject)
+  val interpreter: PythonInterpreter? = interpreter
 }
 
 /**
@@ -339,11 +350,11 @@ interface PyEvoEnvironmentProvider {
 
   /**
    * The interpreter of the *existing* environment that [ref] names, for the project of [context]. It is not
-   * registered yet: the caller sets it on the project, see [PythonInterpreterRegistry.newPythonInterpreter]. A tool
+   * registered yet: the caller sets it on the project, see [PythonInterpreterRegistry.build]. A tool
    * that also creates a missing environment, such as hatch, overrides it.
    */
   suspend fun createInterpreter(context: EvoToolContext, ref: PyInterpreterRef): PyResult<PythonInterpreter> =
-    PythonInterpreterRegistry.getInstance(context.workspace.project).newPythonInterpreter(context.workspace.pyProject, ref)
+    PythonInterpreterRegistry.getInstance(context.workspace.project).build(context.workspace.pyProject, ref)
 
   /**
    * Builds the SDK for an environment that does not exist yet, creating it first via the tool's own "create" logic —
@@ -398,6 +409,10 @@ interface PyEvoEnvironmentProvider {
   companion object {
     @ApiStatus.Internal
     val EP_NAME: ExtensionPointName<PyEvoEnvironmentProvider> = ExtensionPointName.create("Pythonid.evoEnvironmentProvider")
+
+    /** The icon of the tool [manager], see [PyInterpreterRef.manager], or `null` when no provider has the tool. */
+    @ApiStatus.Internal
+    fun iconOf(manager: FusId): Icon? = EP_NAME.extensionList.firstOrNull { it.tool.fusId == manager }?.icon
   }
 }
 

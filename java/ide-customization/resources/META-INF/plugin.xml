@@ -1,6 +1,6 @@
 <!-- BUILD_USING_BAZEL_MARKER: this plugin is also packaged by the `ij_plugin` Bazel rule, and IjPluginDistributionEquivalenceTest
      checks that the result matches the distribution produced by the build scripts. See IJPL-251444. -->
-<idea-plugin allow-bundled-update="true">
+<idea-plugin allow-bundled-update="true" implementation-detail="true">
   <id>com.intellij.java.ide</id>
   <name>Java IDE Customization</name>
   <vendor>JetBrains</vendor>

@@ -1,8 +1,8 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.plugins.markdown.ui.preview.accessor
 
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.fileEditor.FileEditorOpenRequest
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectLocator
@@ -24,11 +24,9 @@ object MarkdownSourceLinkNavigator {
                         ?: sourceFile?.let { ProjectLocator.getInstance().guessProjectForFile(it) }?.takeUnless { it.isDisposed }
                         ?: return true
     val targetFile = findTargetFile(targetProject, coordinates.filePath) ?: return true
-    ApplicationManager.getApplication().invokeLater {
-      if (targetProject.isDisposed) return@invokeLater
-      val descriptor = OpenFileDescriptor(targetProject, targetFile, coordinates.offset)
-      FileEditorManager.getInstance(targetProject).openEditor(descriptor, true)
-    }
+    val descriptor = OpenFileDescriptor(targetProject, targetFile, coordinates.offset)
+    FileEditorManager.getInstance(targetProject)
+      .requestOpenEditor(descriptor, FileEditorOpenRequest.fromDescriptor(descriptor).withRequestFocus(true))
     return true
   }
 

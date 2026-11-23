@@ -61,6 +61,6 @@ internal class PixiExportEnvironmentAction : DumbAwareAction() {
     val file = e.getData(CommonDataKeys.PSI_FILE) ?: return null
     if (file.name != "pixi.toml" && file.name != "pyproject.toml") return null
     val interpreter = file.findEvoPyProjectIfReady(mainForOrphans = false)?.interpreter ?: return null
-    return PythonPackageManager.forPythonInterpreter(file.project, interpreter) as? PixiPackageManager
+    return PythonPackageManager.forPythonInterpreter(interpreter) as? PixiPackageManager
   }
 }

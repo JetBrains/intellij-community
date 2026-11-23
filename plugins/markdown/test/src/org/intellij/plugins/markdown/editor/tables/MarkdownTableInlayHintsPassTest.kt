@@ -2,129 +2,167 @@
 package org.intellij.plugins.markdown.editor.tables
 
 import com.intellij.markdown.frontend.editor.livepreview.MarkdownLivePreviewReconciler
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.editor.Inlay
 import com.intellij.openapi.editor.impl.view.FontLayoutService
 import com.intellij.openapi.util.Disposer
+import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightModuleFixture
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.testFramework.DumbModeTestUtils
 import com.intellij.testFramework.MockFontLayoutService
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.assertNothingLogged
-import com.intellij.testFramework.fixtures.BasePlatformTestCase
-import org.intellij.plugins.markdown.MarkdownTestingUtil.paintInlay
+import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.TestDisposable
+import com.intellij.testFramework.junit5.fixture.projectFixture
+import com.intellij.util.concurrency.annotations.RequiresEdt
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import org.intellij.plugins.markdown.MarkdownTestingUtil.paintInlay
+import org.intellij.plugins.markdown.editor.livepreview.MarkdownLivePreviewConfiguration
 import org.intellij.plugins.markdown.editor.livepreview.computeLivePreviewSpecs
-import org.intellij.plugins.markdown.editor.livepreview.enableLivePreview
+import org.intellij.plugins.markdown.editor.livepreview.setLivePreviewEnabledness
 import org.intellij.plugins.markdown.editor.tables.ui.presentation.HorizontalBarPresentation
 import org.intellij.plugins.markdown.editor.tables.ui.presentation.VerticalBarPresentation
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTable
 import org.intellij.plugins.markdown.publishSpecsAndWait
 import org.intellij.plugins.markdown.settings.MarkdownSettings
+import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 
 @Suppress("MarkdownIncorrectTableFormatting")
-class MarkdownTableInlayHintsPassTest : BasePlatformTestCase() {
-  override fun setUp() {
-    super.setUp()
+@TestApplication
+class MarkdownTableInlayHintsPassTest {
+  private val myFixture by codeInsightModuleFixture(projectFixture)
+
+  @TestDisposable
+  lateinit var disposable: Disposable
+
+  @BeforeEach
+  fun setUp() {
     FontLayoutService.setInstance(MockFontLayoutService(CHAR_WIDTH, LINE_HEIGHT, DESCENT))
     disableVisualAlignment()
   }
 
-  override fun tearDown() {
-    try {
-      FontLayoutService.setInstance(null)
-    }
-    catch (e: Throwable) {
-      addSuppressedException(e)
-    }
-    finally {
-      super.tearDown()
-    }
+  @AfterEach
+  fun tearDown() {
+    FontLayoutService.setInstance(null)
   }
 
-  fun `test the pass adds a bar that spans the header row`() {
+  @Test
+  fun `test the pass adds a bar that spans the header row`(): Unit = timeoutRunBlocking {
     configureTable()
 
     myFixture.doHighlighting()
 
-    assertEquals(expectedBarWidth(), getInlayWidth())
+    withContext(Dispatchers.EDT) {
+      assertEquals(expectedBarWidth(), getInlayWidth())
+    }
   }
 
-  fun `test the bar follows the header row over the next pass`() {
+  @Test
+  fun `test the bar follows the header row over the next pass`(): Unit = timeoutRunBlocking {
     configureTable()
     myFixture.doHighlighting()
-    val before = getInlayWidth()
+    withContext(Dispatchers.EDT) {
+      val before = getInlayWidth()
 
-    widenHeaderRow()
-    myFixture.doHighlighting()
+      widenHeaderRow()
+      myFixture.doHighlighting()
 
-    assertTrue("the bar must grow with the header row, but it stayed $before", getInlayWidth() > before)
-    assertEquals(expectedBarWidth(), getInlayWidth())
+      assertTrue(getInlayWidth() > before, "the bar must grow with the header row, but it stayed $before")
+      assertEquals(expectedBarWidth(), getInlayWidth())
+    }
   }
 
-  fun `test a row bar of the next pass is a change only when its look changes`() {
+  @Test
+  fun `test a row bar of the next pass is a change only when its look changes`(): Unit = timeoutRunBlocking {
     configureTable()
-    val table = requireNotNull(PsiTreeUtil.findChildOfType(myFixture.file, MarkdownTable::class.java))
-    val row = requireNotNull(table.headerRow)
-    val tableRange = myFixture.editor.document.createRangeMarker(table.textRange)
-    val previous = VerticalBarPresentation(myFixture.editor, row, hover = false, tableRangeMarker = tableRange)
+    withContext(Dispatchers.EDT) {
+      val table = requireNotNull(PsiTreeUtil.findChildOfType(myFixture.file, MarkdownTable::class.java))
+      val row = requireNotNull(table.headerRow)
+      val tableRange = myFixture.editor.document.createRangeMarker(table.textRange)
+      val previous = VerticalBarPresentation(myFixture.editor, row, hover = false, tableRangeMarker = tableRange)
 
-    assertFalse(VerticalBarPresentation(myFixture.editor, row, hover = false, tableRangeMarker = tableRange).updateState(previous))
-    assertTrue(VerticalBarPresentation(myFixture.editor, row, hover = true, tableRangeMarker = tableRange).updateState(previous))
+      assertFalse(VerticalBarPresentation(myFixture.editor, row, hover = false, tableRangeMarker = tableRange).updateState(previous))
+      assertTrue(VerticalBarPresentation(myFixture.editor, row, hover = true, tableRangeMarker = tableRange).updateState(previous))
+    }
   }
 
+  @Test
   fun `test the pass removes the bar when the table loses its borders`() {
     configureTable()
     myFixture.doHighlighting()
-    assertNotNull(getInlay())
+    assertNotNull(runReadActionBlocking { getInlay() })
 
     val document = myFixture.editor.document
-    WriteCommandAction.runWriteCommandAction(project) {
+    WriteCommandAction.runWriteCommandAction(myFixture.project) {
       document.deleteString(0, 1)
     }
     myFixture.doHighlighting()
 
-    assertNull("a table without correct borders must have no bar", getInlay())
+    assertNull(runReadActionBlocking { getInlay() }, "a table without correct borders must have no bar")
   }
 
-  fun `test the mounted bar follows live preview folds`() = assertNothingLogged {
-    // language=Markdown
-    val content = """
-      | **aa** | x |
-      | --- | - |
-      | value | y |
-      """.trimIndent()
-    myFixture.configureByText("some.md", content)
-    myFixture.doHighlighting()
-    myFixture.editor.enableLivePreview()
-    myFixture.editor.caretModel.moveToOffset(content.length)
+  @Test
+  fun `test the mounted bar follows live preview folds`(): Unit = timeoutRunBlocking {
+    withContext(Dispatchers.EDT) {
+      assertNothingLogged {
+        // language=Markdown
+        val content = """
+          | **aa** | x |
+          | --- | - |
+          | value | y |
+          """.trimIndent()
+        myFixture.configureByText("some.md", content)
+        myFixture.doHighlighting()
+        myFixture.editor.setLivePreviewEnabledness(true)
+        myFixture.editor.caretModel.moveToOffset(content.length)
 
-    val reconciler = requireNotNull(MarkdownLivePreviewReconciler.getOrCreate(myFixture.editor))
-    reconciler.publishSpecsAndWait(computeLivePreviewSpecs(myFixture.file, myFixture.editor))
-    val bar = requireNotNull(getInlay())
-    paintInlay(bar)
-    val hiddenWidth = bar.widthInPixels
+        val reconciler = requireNotNull(MarkdownLivePreviewReconciler.getOrCreate(myFixture.editor))
+        reconciler.publishSpecsAndWait(
+          computeLivePreviewSpecs(myFixture.file, myFixture.editor, MarkdownLivePreviewConfiguration.DEFAULT_LIVE_PREVIEW_CONFIGURATION)
+        )
+        val bar = requireNotNull(getInlay())
+        paintInlay(bar)
+        val hiddenWidth = bar.widthInPixels
 
-    myFixture.editor.caretModel.moveToOffset(content.indexOf("**aa**") + 2)
-    PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue()
-    paintInlay(bar)
-    assertTrue("the mounted bar must include revealed table-cell markers", bar.widthInPixels > hiddenWidth)
+        myFixture.editor.caretModel.moveToOffset(content.indexOf("**aa**") + 2)
+        PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue()
+        paintInlay(bar)
+        assertTrue(bar.widthInPixels > hiddenWidth, "the mounted bar must include revealed table-cell markers")
 
-    myFixture.editor.caretModel.moveToOffset(content.length)
-    PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue()
-    paintInlay(bar)
-    assertEquals(hiddenWidth, bar.widthInPixels)
-    assertEquals(content, myFixture.editor.document.text)
+        myFixture.editor.caretModel.moveToOffset(content.length)
+        PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue()
+        paintInlay(bar)
+        assertEquals(hiddenWidth, bar.widthInPixels)
+        assertEquals(content, myFixture.editor.document.text)
+      }
+    }
   }
 
-  fun `test the pass adds the bar in dumb mode`() {
-    CodeInsightTestFixtureImpl.mustWaitForSmartMode(false, testRootDisposable)
-    DumbModeTestUtils.runInDumbModeSynchronously(project) {
-      configureTable()
+  @Test
+  fun `test the pass adds the bar in dumb mode`(): Unit = timeoutRunBlocking {
+    withContext(Dispatchers.EDT) {
+      CodeInsightTestFixtureImpl.mustWaitForSmartMode(false, disposable)
+      DumbModeTestUtils.runInDumbModeSynchronously(myFixture.project) {
+        configureTable()
 
-      myFixture.doHighlighting()
+        myFixture.doHighlighting()
 
-      assertEquals(expectedBarWidth(), getInlayWidth())
+        assertEquals(expectedBarWidth(), getInlayWidth())
+      }
     }
   }
 
@@ -142,7 +180,7 @@ class MarkdownTableInlayHintsPassTest : BasePlatformTestCase() {
 
   private fun widenHeaderRow() {
     val document = myFixture.editor.document
-    WriteCommandAction.runWriteCommandAction(project) {
+    WriteCommandAction.runWriteCommandAction(myFixture.project) {
       document.insertString(document.text.indexOf('a'), "wider ")
     }
   }
@@ -152,6 +190,7 @@ class MarkdownTableInlayHintsPassTest : BasePlatformTestCase() {
     return editor.inlayModel.getBlockElementsInRange(0, editor.document.textLength).singleOrNull()
   }
 
+  @RequiresEdt
   private fun getInlayWidth(): Int {
     val bar = requireNotNull(getInlay()) { "the table must have a horizontal bar" }
     assertEquals("HorizontalBarPresentation", bar.renderer.toString())
@@ -174,10 +213,12 @@ class MarkdownTableInlayHintsPassTest : BasePlatformTestCase() {
     val settings = MarkdownSettings.getInstance()
     val previous = settings.alignTableCellsVisually
     settings.alignTableCellsVisually = false
-    Disposer.register(testRootDisposable) { settings.alignTableCellsVisually = previous }
+    Disposer.register(disposable) { settings.alignTableCellsVisually = previous }
   }
 
   private companion object {
+    private val projectFixture = projectFixture(openAfterCreation = true)
+
     const val CHAR_WIDTH = 10
     const val LINE_HEIGHT = 10
     const val DESCENT = 2

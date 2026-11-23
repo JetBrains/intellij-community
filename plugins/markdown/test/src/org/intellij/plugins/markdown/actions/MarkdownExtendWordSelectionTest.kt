@@ -2,35 +2,54 @@
 package org.intellij.plugins.markdown.actions
 
 import com.intellij.openapi.actionSystem.IdeActions
-import com.intellij.testFramework.LightPlatformCodeInsightTestCase
-import org.intellij.plugins.markdown.MarkdownTestingUtil
+import com.intellij.openapi.application.EDT
+import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightModuleFixture
+import com.intellij.testFramework.common.timeoutRunBlocking
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.fixture.projectFixture
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import org.intellij.plugins.markdown.editor.executeAction
+import org.junit.jupiter.api.Test
 
-class MarkdownExtendWordSelectionTest: LightPlatformCodeInsightTestCase() {
-  fun testSingleInsideOneWord() = doTest(
+@TestApplication
+class MarkdownExtendWordSelectionTest {
+  companion object {
+    private val projectFixture = projectFixture(openAfterCreation = true)
+  }
+
+  private val myFixture by codeInsightModuleFixture(projectFixture)
+
+  @Test
+  fun testSingleInsideOneWord(): Unit = doTest(
     "`Some <caret>text`",
     "`Some <selection><caret>text</selection>`",
     1
   )
 
-  fun testSingleInsideAll() = doTest(
+  @Test
+  fun testSingleInsideAll(): Unit = doTest(
     "`Some <caret>text`",
     "`<selection>Some <caret>text</selection>`",
     2
   )
 
-  fun testSingleOutside() = doTest(
+  @Test
+  fun testSingleOutside(): Unit = doTest(
     "`Some <caret>text`",
     "<selection>`Some <caret>text`</selection>",
     3
   )
 
-  fun testDoubleInsideAll() = doTest(
+  @Test
+  fun testDoubleInsideAll(): Unit = doTest(
     "`Some <caret>text`",
     "`<selection>Some <caret>text</selection>`",
     2
   )
 
-  fun testSingleMultilineInsideAll() = doTest(
+  @Test
+  fun testSingleMultilineInsideAll(): Unit = doTest(
     """
     `Some <caret>text
     other line?`
@@ -42,7 +61,8 @@ class MarkdownExtendWordSelectionTest: LightPlatformCodeInsightTestCase() {
     3
   )
 
-  fun testDoubleMultilineInsideAll() = doTest(
+  @Test
+  fun testDoubleMultilineInsideAll(): Unit = doTest(
     """
     ``Some <caret>text
     other line?``
@@ -54,25 +74,29 @@ class MarkdownExtendWordSelectionTest: LightPlatformCodeInsightTestCase() {
     3
   )
 
-  fun testAlmostFenceInsideAll() = doTest(
+  @Test
+  fun testAlmostFenceInsideAll(): Unit = doTest(
     "```Some <caret>text and the rest```",
     "```<selection>Some <caret>text and the rest</selection>```",
     2
   )
 
-  fun testAlmostFenceOutside() = doTest(
+  @Test
+  fun testAlmostFenceOutside(): Unit = doTest(
     "```Some <caret>text and the rest```",
     "<selection>```Some <caret>text and the rest```</selection>",
     3
   )
 
-  fun testWithSelected() = doTest(
+  @Test
+  fun testWithSelected(): Unit = doTest(
     "`So<selection>me <caret>text and t</selection>he rest`",
     "`<selection>Some <caret>text and the rest</selection>`",
     1
   )
 
-  fun testWordIsSelected() = doTest(
+  @Test
+  fun testWordIsSelected(): Unit = doTest(
     sections,
     """
     # Head
@@ -88,7 +112,8 @@ class MarkdownExtendWordSelectionTest: LightPlatformCodeInsightTestCase() {
     1
   )
 
-  fun testLineIsSelected() = doTest(
+  @Test
+  fun testLineIsSelected(): Unit = doTest(
     sections,
     """
     # Head
@@ -104,7 +129,8 @@ class MarkdownExtendWordSelectionTest: LightPlatformCodeInsightTestCase() {
     2
   )
 
-  fun testParagraphIsSelected() = doTest(
+  @Test
+  fun testParagraphIsSelected(): Unit = doTest(
     sections,
     """
     # Head
@@ -120,7 +146,8 @@ class MarkdownExtendWordSelectionTest: LightPlatformCodeInsightTestCase() {
     3
   )
 
-  fun testSectionWithHeaderIsSelected() = doTest(
+  @Test
+  fun testSectionWithHeaderIsSelected(): Unit = doTest(
     sections,
     """
     # Head
@@ -136,7 +163,8 @@ class MarkdownExtendWordSelectionTest: LightPlatformCodeInsightTestCase() {
     4
   )
 
-  fun testFileIsSelected() = doTest(
+  @Test
+  fun testFileIsSelected(): Unit = doTest(
     sections,
     """
     <selection># Head
@@ -164,15 +192,13 @@ class MarkdownExtendWordSelectionTest: LightPlatformCodeInsightTestCase() {
     # Other
   """.trimIndent()
 
-  private fun doTest(before: String, expected: String, count: Int) {
-    configureFromFileText("test.md", before)
-    repeat(count) {
-      executeAction(IdeActions.ACTION_EDITOR_SELECT_WORD_AT_CARET)
+  private fun doTest(before: String, expected: String, count: Int): Unit = timeoutRunBlocking {
+    myFixture.configureByText("test.md", before)
+    withContext(Dispatchers.EDT) {
+      repeat(count) {
+        myFixture.executeAction(IdeActions.ACTION_EDITOR_SELECT_WORD_AT_CARET)
+      }
+      myFixture.checkResult(expected)
     }
-    checkResultByText(expected)
-  }
-
-  override fun getTestDataPath(): String {
-    return MarkdownTestingUtil.TEST_DATA_PATH + "/actions/extendWordSelection/"
   }
 }

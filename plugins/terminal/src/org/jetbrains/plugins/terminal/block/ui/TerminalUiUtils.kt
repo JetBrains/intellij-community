@@ -38,6 +38,7 @@ import com.intellij.openapi.editor.impl.ContextMenuPopupHandler
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.editor.impl.FontInfo
 import com.intellij.openapi.editor.impl.view.CharacterGrid
+import com.intellij.openapi.editor.impl.view.CharacterGridSpec
 import com.intellij.openapi.editor.impl.view.DoubleWidthCharacterStrategy
 import com.intellij.openapi.editor.impl.view.FontLayoutService
 import com.intellij.openapi.editor.markup.EffectType
@@ -206,12 +207,6 @@ object TerminalUiUtils {
 
     // The editor is not shown yet, so there is no size to validate.
     editor.applyFontSettings(settings, validateImmediately = false)
-
-    val editorGrid = checkNotNull(editor.characterGrid) { "The editor did not switch into the grid mode" }
-
-    editorGrid.doubleWidthCharacterStrategy = DoubleWidthCharacterStrategy {
-      codePoint -> CharUtils.isDoubleWidthCharacter(codePoint, false)
-    }
 
     if (installContextMenu) {
       installPopupMenu(editor)
@@ -497,14 +492,27 @@ object TerminalUiUtils {
   const val YELLOW_COLOR_INDEX: Int = 3
 }
 
+/**
+ * The rule that gives a code point two cells of the character grid.
+ *
+ * The rule is the JediTerm rule. The Ghostty emulator counts other cells for some code points. It joins a variation
+ * selector and a zero-width joiner to the cell of the code point before them. It gives each regional indicator two
+ * cells. The exact cell widths of the emulator are a follow-up.
+ *
+ * Both emulators write one char for each cell of a screen row. A tab and a cursor move over empty cells both give one
+ * space for each cell, so the document column of a char is its cell column.
+ */
+private val TERMINAL_DOUBLE_WIDTH_STRATEGY = DoubleWidthCharacterStrategy { codePoint ->
+  CharUtils.isDoubleWidthCharacter(codePoint, false)
+}
+
 fun EditorImpl.applyFontSettings(newSettings: JBTerminalSystemSettingsProviderBase, validateImmediately: Boolean = true) {
   val colorScheme = checkNotNull(getUserData(TerminalColorScheme.KEY)) { "Should've been set on creation" }
   colorScheme.fontPreferences = newSettings.fontPreferences
   // for some reason, even though fontPreferences contains lineSpacing, the editor doesn't take it from there
   colorScheme.lineSpacing = newSettings.lineSpacing
-  settings.apply {
-    characterGridWidthMultiplier = newSettings.columnSpacing
-  }
+  val strategy = characterGridSpec?.doubleWidthCharacterStrategy ?: TERMINAL_DOUBLE_WIDTH_STRATEGY
+  setCharacterGridSpec(CharacterGridSpec(newSettings.columnSpacing, strategy))
   // The font size in the preferences is not scaled.
   // Global user scaling will be applied by the editor itself,
   // but if the _terminal_ font size was changed temporarily (Ctrl/Cmd+wheel, pinch zoom, etc.),
@@ -529,6 +537,11 @@ fun EditorImpl.setTerminalFontSize(
 }
 
 internal fun Editor.getCharSize(): Dimension2D {
+  // lineHeight already includes lineSpacing
+  val grid = (this as? EditorImpl)?.characterGrid
+  if (grid != null) {
+    return Dimension2DDouble(grid.charWidth.toDouble(), lineHeight.toDouble())
+  }
   val baseContext = FontInfo.getFontRenderContext(contentComponent)
   val context = FontRenderContext(baseContext.transform,
                                   AntialiasingType.getKeyForCurrentScope(true),
@@ -538,9 +551,7 @@ internal fun Editor.getCharSize(): Dimension2D {
   // For monospaced fonts this shouldn't really matter, but let's stay on the safe side.
   // Otherwise, we may end up with some characters falsely displayed as double-width ones.
   val width = FontLayoutService.getInstance().charWidth2D(fontMetrics, '%'.code)
-  val columnSpacing = settings.characterGridWidthMultiplier ?: 1.0f
-  // lineHeight already includes lineSpacing
-  return Dimension2DDouble(width.toDouble() * columnSpacing, lineHeight.toDouble())
+  return Dimension2DDouble(width.toDouble(), lineHeight.toDouble())
 }
 
 /** Measures the grid and one cell in device pixels; null before the editor has a size. */

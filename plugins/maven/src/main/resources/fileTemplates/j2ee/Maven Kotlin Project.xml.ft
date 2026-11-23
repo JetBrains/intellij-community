@@ -78,7 +78,7 @@
                 <version>${MAVEN_CODEHAUS_MOJO_EXEC_PLUGIN_VERSION}</version>
                 #end
                 <configuration>
-                    <mainClass>MainKt</mainClass>
+                    <mainClass>${GROUP_ID}.MainKt</mainClass>
                 </configuration>
             </plugin>
         </plugins>

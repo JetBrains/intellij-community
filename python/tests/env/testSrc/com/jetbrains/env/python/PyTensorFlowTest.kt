@@ -6,15 +6,16 @@ import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.SdkModificator
 import com.intellij.openapi.roots.OrderRootType
+import com.intellij.python.sdk.backend.pythonInterpreterResult
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.util.ThrowableRunnable
 import com.jetbrains.env.EnvTestTagsRequired
 import com.jetbrains.env.PyEnvTestCase
 import com.jetbrains.env.PyExecutionFixtureTestTask
-import com.jetbrains.python.PyPsiPackageUtil
+import com.jetbrains.env.reloadInstalledPackages
 import com.jetbrains.python.codeInsight.typing.PyTypeShed.getStubRootForPackage
+import com.jetbrains.python.getOrThrow
 import com.jetbrains.python.inspections.unresolvedReference.PyUnresolvedReferencesInspection
-import com.jetbrains.python.packaging.PyPackageManager
 import com.jetbrains.python.tools.sdkTools.SdkCreationType
 import junit.framework.TestCase.assertNotNull
 import org.junit.Test
@@ -30,8 +31,8 @@ class PyTensorFlowTest : PyEnvTestCase() {
   private class TensorFlowModulesTask : PyExecutionFixtureTestTask("packages/tensorflow") {
     override fun runTestOn(sdkHome: String, existingSdk: Sdk?) {
       val sdk = createTempSdk(sdkHome, SdkCreationType.SDK_PACKAGES_AND_SKELETONS)
-      val packages = PyPackageManager.getInstance(sdk).refreshAndGetPackages(false)
-      assertNotNull(PyPsiPackageUtil.findPackage (packages, "tensorflow"))
+      val packages = reloadInstalledPackages(myFixture.project, sdk.pythonInterpreterResult(myFixture.project).getOrThrow())
+      assertNotNull(packages.find { it.name.equals("tensorflow", ignoreCase = true) })
 
       ApplicationManager.getApplication().invokeAndWait(Runnable {
         WriteAction.run<java.lang.RuntimeException?>(ThrowableRunnable {

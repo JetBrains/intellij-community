@@ -5,8 +5,7 @@ description: Find semantic copies and dead code before a plan or a review.
 
 # Duplicate and dead code
 
-The exact copy-paste gate finds a copied text only. This skill finds one responsibility in two pieces of different
-code, and dead code. Each tool gives candidates, not a proof. Read each candidate before you act on it.
+Each tool gives candidates, not a proof. Read each candidate before you act on it.
 
 ## The tools
 
@@ -21,7 +20,7 @@ code, and dead code. Each tool gives candidates, not a proof. Read each candidat
 | `accio trace <Name> --direction callers`, `accio references <Name>` | the callers and every use of a name | the owner check, dead code |
 | `accio unused --scope <dir>/` | declarations, bundle keys and image variants used nowhere | dead code |
 
-Without `accio` on the `PATH`, run `./community/tools/accio.cmd`. Run jscpd only through
+Run jscpd only through
 `./community/tools/jscpd.cmd -c <config>`. `<config>` is the `.jscpd.json` of the area, for example
 `plugins/air/.jscpd.json`. An area without a `.jscpd.json` runs the commands without `-c` and has no exact gate. Write
 each JSON report to a temporary directory of your session. The `jscpd_test` target of the area runs the gate too, for
@@ -42,8 +41,9 @@ Do this for each responsibility that the plan adds: a mapping, a policy, a parse
    more than one overload: read it.
 6. For each owner that the plan extends, read the first guard of its entry point and the body of each gate in that
    guard. A gate whose body is a literal (`fun isFeatureEnabled() = false`) makes the owner gated off. A registry key
-   that is off by default makes it gated. `accio trace` and `accio unused` count a gated caller as a use, so only the
-   body of the gate tells.
+   that is off by default makes it gated. `accio trace` and `accio unused` can mark an entry point that exits under a
+   gate with a literal body as `gated off`. Without the mark, they count a gated caller as a use, so only the body of
+   the gate tells.
 
 The plan then has an **Existing owners** line for each owner, in this form:
 `<owner> — live: <caller path> | gated: <gate> — extend | move | new (<why the owner does not fit>)`. Do not extend a
@@ -87,10 +87,10 @@ Filter the report by file, not by `kind`. An `--kind ast` pair has `"kind": "sim
 
 ## Dead code
 
-`accio unused --scope <dir>/ --limit 1000` gives the candidates. Each candidate is a lead. The `note` of the answer
+`accio unused --scope <dir>/ --limit 1000` gives the candidates. The `note` of the answer
 explains each mark, and `accio unused --help` says what the scan leaves out and cannot see.
 
-- A `(generated)` icon field: delete its SVG and generate the icon class again with the `icon-resources` skill. First
+- A `(generated)` icon field: delete its SVG and generate the icon class again with the `icons` skill. First
   search the SVG file name over the whole repository. A `SKILL.md` can name it as an icon, and then the fix is an
   `icon-robots.txt` skip.
 - A `(published)` candidate is a published API. Keep it unless its owner decides otherwise.

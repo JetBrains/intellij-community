@@ -68,31 +68,27 @@ fn an_unknown_format_fails() {
     assert_eq!(error.to_string(), "the runner knows no extensions of the format cobol");
 }
 
+/// A checkout without an index has only untracked files, so the fixture needs no `git`. The scanned `path` entry is a
+/// directory below the root of the checkout.
 #[test]
-fn the_git_listing_leaves_out_what_gitignore_names() {
+fn the_checkout_listing_leaves_out_what_gitignore_names() {
     let dir = tempfile::tempdir().expect("a directory");
-    let root = dir.path();
-    let git = |args: &[&str]| {
-        let status = std::process::Command::new("git")
-            .arg("-C")
-            .arg(root)
-            .args(args)
-            .status()
-            .expect("git");
-        assert!(status.success(), "git {args:?}");
-    };
-    git(&["init", "-q"]);
+    let checkout = dir.path();
+    fs::create_dir(checkout.join(".git")).expect("a git directory");
+    fs::write(checkout.join(".git/HEAD"), "ref: refs/heads/main\n").expect("a HEAD file");
+    let root = checkout.join("tool");
     for (file, text) in [
-        ("src/a.rs", "fn x() {}"),
-        ("generated/b.rs", "fn x() {}"),
-        (".gitignore", "generated/\n"),
+        ("tool/src/a.rs", "fn x() {}"),
+        ("tool/generated/b.rs", "fn x() {}"),
+        ("tool/.gitignore", "generated/\n"),
+        ("other/c.rs", "fn x() {}"),
     ] {
-        let path = root.join(file);
+        let path = checkout.join(file);
         fs::create_dir_all(path.parent().expect("a parent")).expect("a directory");
         fs::write(path, text).expect("a file");
     }
     let file = root.join(".jscpd.json");
     fs::write(&file, r#"{"path": ["."], "format": ["rust"]}"#).expect("a file");
     let config = Config::read(&file).expect("a configuration");
-    assert_eq!(config.files(&file, Listing::Git).expect("the files"), [root.join("src/a.rs")]);
+    assert_eq!(config.files(&file, Listing::Checkout).expect("the files"), [root.join("src/a.rs")]);
 }

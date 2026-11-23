@@ -3,7 +3,6 @@ package com.jetbrains.python.psi.resolve;
 
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.io.FileUtilRt;
@@ -312,7 +311,7 @@ public final class QualifiedNameFinder {
     }
 
     @Override
-    public boolean visitRoot(@NotNull VirtualFile root, @Nullable Module module, @Nullable Sdk sdk, boolean isModuleSource) {
+    public boolean visitRoot(@NotNull VirtualFile root, @Nullable Module module, boolean isModuleSource) {
       QualifiedName qName = computeQualifiedNameInRoot(root, myVFile);
       if (qName != null && ContainerUtil.all(qName.getComponents(), PyNames::isIdentifier)) {
         myResults.add(qName);

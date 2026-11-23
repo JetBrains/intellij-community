@@ -4,7 +4,7 @@
     <facet type="kotlin-language" name="Kotlin">
       <configuration version="5" platform="JVM 25" allPlatforms="JVM [25]" useProjectSettings="false">
         <compilerSettings>
-          <option name="additionalArguments" value="-Xjvm-default=all -opt-in=kotlin.ExperimentalStdlibApi -P plugin:androidx.compose.compiler.plugins.kotlin:featureFlag=-PausableComposition -XXLanguage:+AllowEagerSupertypeAccessibilityChecks -XXLanguage:-WrapContinuationForTailCallFunctions -progressive -Xcontext-parameters" />
+          <option name="additionalArguments" value="-Xjvm-default=all -opt-in=kotlin.ExperimentalStdlibApi -P plugin:androidx.compose.compiler.plugins.kotlin:featureFlag=-PausableComposition -XXLanguage:+AllowEagerSupertypeAccessibilityChecks -progressive -Xcontext-parameters" />
         </compilerSettings>
         <compilerArguments>
           <stringArguments>
@@ -247,6 +247,7 @@
     <orderEntry type="module" module-name="intellij.platform.ide.initialConfigImport.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.ide.tabInEditor.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.ide.nonModalWelcomeScreen.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.ide.presentationAssistant.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.ide.presentationAssistant" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.ide.tabInEditor" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.buildScripts.usages.tests" scope="TEST" />

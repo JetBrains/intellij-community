@@ -5,21 +5,37 @@ import com.intellij.JavaTestUtil
 import com.intellij.analysis.AnalysisScope
 import com.intellij.codeInspection.ex.GlobalInspectionToolWrapper
 import com.intellij.codeInspection.java19modules.Java9RedundantRequiresStatementInspection
-import com.intellij.java.testFramework.fixtures.LightJava9ModulesCodeInsightFixtureTestCase
 import com.intellij.java.testFramework.fixtures.MultiModuleJava9ProjectDescriptor.ModuleDescriptor
+import com.intellij.java.testFramework.fixtures.lightJava9ModulesFixture
+import com.intellij.java.testFramework.fixtures.lightJava9ModulesProjectFixture
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.InspectionTestUtil
+import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.createGlobalContextForTool
+import com.intellij.testFramework.junit5.TestApplication
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.intellij.lang.annotations.Language
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
+import kotlin.time.Duration.Companion.minutes
 
-class Java9RedundantRequiresStatementTest : LightJava9ModulesCodeInsightFixtureTestCase() {
-  override fun setUp() {
-    super.setUp()
+@TestApplication
+class Java9RedundantRequiresStatementTest {
+  companion object {
+    private val projectFixture = lightJava9ModulesProjectFixture()
+  }
 
-    addFile("module-info.java", "module M2 { exports org.example.m2; }", ModuleDescriptor.M2)
-    addFile("module-info.java", "module M4 { exports org.example.m4; }", ModuleDescriptor.M4)
-    addFile("module-info.java", "module M6 { exports org.example.m6; requires transitive M7; }", ModuleDescriptor.M6)
-    addFile("module-info.java", "module M7 { exports org.example.m7; }", ModuleDescriptor.M7)
+  private val java9 by lightJava9ModulesFixture(projectFixture, JavaTestUtil.getJavaTestDataPath() + "/inspection/redundantRequiresStatement/")
+  private val myFixture get() = java9.fixture
+
+  @BeforeEach
+  fun setUp() {
+    java9.addFile("module-info.java", "module M2 { exports org.example.m2; }", ModuleDescriptor.M2)
+    java9.addFile("module-info.java", "module M4 { exports org.example.m4; }", ModuleDescriptor.M4)
+    java9.addFile("module-info.java", "module M6 { exports org.example.m6; requires transitive M7; }", ModuleDescriptor.M6)
+    java9.addFile("module-info.java", "module M7 { exports org.example.m7; }", ModuleDescriptor.M7)
 
     add("org.example.m2", "C2", ModuleDescriptor.M2, "public static void foo() {}")
     add("org.example.m4", "C4", ModuleDescriptor.M4, "public void bar() {}")
@@ -27,84 +43,99 @@ class Java9RedundantRequiresStatementTest : LightJava9ModulesCodeInsightFixtureT
     add("org.example.m7", "C7", ModuleDescriptor.M7)
   }
   
-  fun testTestClassAndSrc() {
-    addFile("CT.java", "class CT extends org.example.m2.C2 {}", ModuleDescriptor.M_TEST)
-    addTestFile("MyTest.java", "class MyTest {}", ModuleDescriptor.M_TEST )
+  @Test
+  fun testTestClassAndSrc(): Unit = timeoutRunBlocking(timeout = 2.minutes) {
+    java9.addFile("CT.java", "class CT extends org.example.m2.C2 {}", ModuleDescriptor.M_TEST)
+    java9.addTestFile("MyTest.java", "class MyTest {}", ModuleDescriptor.M_TEST )
     mainModule("module m.src {requires M2; requires java.base;}", ModuleDescriptor.M_TEST)
   }
 
-  fun testNoSourcesAtAll() {
+  @Test
+  fun testNoSourcesAtAll(): Unit = timeoutRunBlocking(timeout = 2.minutes) {
     mainModule("module MAIN { requires M2; }")
   }
 
-  fun testNoImportsInSources() {
+  @Test
+  fun testNoImportsInSources(): Unit = timeoutRunBlocking(timeout = 2.minutes) {
     mainClass()
     mainModule("module MAIN { requires M2; }")
   }
 
-  fun testPackageImported() {
+  @Test
+  fun testPackageImported(): Unit = timeoutRunBlocking(timeout = 2.minutes) {
     mainClass("org.example.m2.*")
     mainModule("module MAIN { requires M2; }")
   }
 
-  fun testClassImported() {
+  @Test
+  fun testClassImported(): Unit = timeoutRunBlocking(timeout = 2.minutes) {
     mainClass("org.example.m2.C2")
     mainModule("module MAIN { requires M2; }")
   }
 
-  fun testClassMembersImported() {
+  @Test
+  fun testClassMembersImported(): Unit = timeoutRunBlocking(timeout = 2.minutes) {
     mainClass(staticImports = listOf("org.example.m2.C2.*"))
     mainModule("module MAIN { requires M2; }")
   }
 
-  fun testMethodImported() {
+  @Test
+  fun testMethodImported(): Unit = timeoutRunBlocking(timeout = 2.minutes) {
     mainClass(staticImports = listOf("org.example.m2.C2.foo"))
     mainModule("module MAIN { requires M2; }")
   }
 
-  fun testRequiresManyModulesAllPackagesImported() {
+  @Test
+  fun testRequiresManyModulesAllPackagesImported(): Unit = timeoutRunBlocking(timeout = 2.minutes) {
     mainClass("org.example.m2.*", "org.example.m4.*", "org.example.m6.*", "org.example.m7.*")
     mainModule("module MAIN { requires M2; requires M4; requires M6; requires M7; }")
   }
 
-  fun testRequiresManyModulesFewPackagesImported() {
+  @Test
+  fun testRequiresManyModulesFewPackagesImported(): Unit = timeoutRunBlocking(timeout = 2.minutes) {
     mainClass("org.example.m2.*", "org.example.m6.*")
     mainModule("module MAIN { requires M2; requires M4; requires M6; requires M7; }")
   }
 
-  fun testReexportedPackageImported() {
+  @Test
+  fun testReexportedPackageImported(): Unit = timeoutRunBlocking(timeout = 2.minutes) {
     mainClass("org.example.m7.*")
     mainModule("module MAIN { requires M6; }")
   }
 
-  fun testReexportedPackageImportedTransitive() {
+  @Test
+  fun testReexportedPackageImportedTransitive(): Unit = timeoutRunBlocking(timeout = 2.minutes) {
     mainClass("org.example.m7.*")
     mainModule("module MAIN { requires transitive M6; }")
   }
 
-  fun testNonexistentMethodImported() {
+  @Test
+  fun testNonexistentMethodImported(): Unit = timeoutRunBlocking(timeout = 2.minutes) {
     mainClass(staticImports = listOf("org.example.m2.C2.<error descr=\"Cannot resolve symbol 'nonexistent'\">nonexistent</error>"))
     mainModule("module MAIN { requires M2; }")
   }
 
-  fun testRequiresJavaBase() {
+  @Test
+  fun testRequiresJavaBase(): Unit = timeoutRunBlocking(timeout = 2.minutes) {
     mainClass("java.util.List")
     mainModule("module MAIN { requires java.base; }")
   }
 
-  fun testSuppressionByComment() {
+  @Test
+  fun testSuppressionByComment(): Unit = timeoutRunBlocking(timeout = 2.minutes) {
     mainClass()
     mainModule("module M {\n //noinspection Java9RedundantRequiresStatement\n requires M2;\n}")
   }
 
-  fun testSuppressionByAnnotation() {
+  @Test
+  fun testSuppressionByAnnotation(): Unit = timeoutRunBlocking(timeout = 2.minutes) {
     mainClass()
     mainModule("@SuppressWarnings(\"Java9RedundantRequiresStatement\") module M { requires M2; }")
   }
 
-  private fun mainModule(@Language("JAVA") text: String,
+  private suspend fun mainModule(@Language("JAVA") text: String,
                          moduleDescriptor: ModuleDescriptor = ModuleDescriptor.MAIN) {
-    addFile("module-info.java", text, moduleDescriptor)
+    java9.addFile("module-info.java", text, moduleDescriptor)
 
     val mainFile = myMainFile
     if (mainFile != null) {
@@ -113,15 +144,17 @@ class Java9RedundantRequiresStatementTest : LightJava9ModulesCodeInsightFixtureT
     }
 
     val toolWrapper = GlobalInspectionToolWrapper(Java9RedundantRequiresStatementInspection())
-    val scope = AnalysisScope(project)
-    val globalContext = createGlobalContextForTool(scope, project, listOf(toolWrapper))
-    InspectionTestUtil.runTool(toolWrapper, scope, globalContext)
-    InspectionTestUtil.compareToolResults(globalContext, toolWrapper, true, testDataPath + getTestName(true))
+    val scope = AnalysisScope(myFixture.project)
+    val globalContext = createGlobalContextForTool(scope, myFixture.project, listOf(toolWrapper))
+    withContext(Dispatchers.EDT) {
+      InspectionTestUtil.runTool(toolWrapper, scope, globalContext)
+      InspectionTestUtil.compareToolResults(globalContext, toolWrapper, true, myFixture.testDataPath + myFixture.getTestName(true))
+    }
   }
 
   private fun add(packageName: String, className: String, module: ModuleDescriptor, body: String = "", vararg imports: String) {
     val importsText = imports.joinToString("\n") { "import ${it};" }
-    addFile("${packageName.replace('.', '/')}/${className}.java", """
+    java9.addFile("${packageName.replace('.', '/')}/${className}.java", """
         package ${packageName};
         ${importsText}
         public class ${className} {
@@ -141,8 +174,6 @@ class Java9RedundantRequiresStatementTest : LightJava9ModulesCodeInsightFixtureT
         public class Main {
           void main() {}
         }""".trimIndent()
-    myMainFile = addFile("org.example.main/Main.java", mainText)
+    myMainFile = java9.addFile("org.example.main/Main.java", mainText)
   }
-
-  override fun getTestDataPath() = JavaTestUtil.getJavaTestDataPath() + "/inspection/redundantRequiresStatement/"
 }

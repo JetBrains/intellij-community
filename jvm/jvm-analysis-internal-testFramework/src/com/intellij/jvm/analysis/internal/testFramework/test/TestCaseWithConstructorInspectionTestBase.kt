@@ -8,6 +8,11 @@ import com.intellij.openapi.roots.ModifiableRootModel
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.testFramework.LightProjectDescriptor
 
+/**
+ * @deprecated Use [testCaseWithConstructorProjectFixture] and [testCaseWithConstructorInspectionFixture] in a JUnit 5 test.
+ */
+@Suppress("DEPRECATION")
+@Deprecated("Use testCaseWithConstructorProjectFixture and testCaseWithConstructorInspectionFixture in a JUnit 5 test")
 abstract class TestCaseWithConstructorInspectionTestBase : JvmInspectionTestBase() {
   override val inspection: TestCaseWithConstructorInspection = TestCaseWithConstructorInspection()
 

@@ -7,6 +7,7 @@ import com.intellij.openapi.actionSystem.ActionUiKind
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.RegistryManager
@@ -161,10 +162,12 @@ class SeProvidersTestFixture private constructor(
      * The fixture goes away with [parentDisposable].
      */
     suspend fun create(project: Project, parentDisposable: Disposable, contextFile: PsiFile? = null): SeProvidersTestFixture {
-      val dataContext = SimpleDataContext.builder()
-        .add(CommonDataKeys.PROJECT, project)
-        .add(CommonDataKeys.PSI_FILE, contextFile)
-        .build()
+      val dataContext = readAction {
+        SimpleDataContext.builder()
+          .add(CommonDataKeys.PROJECT, project)
+          .add(CommonDataKeys.PSI_FILE, contextFile)
+          .build()
+      }
       val initEvent = AnActionEvent.createEvent(dataContext, null, "", ActionUiKind.NONE, null)
       val session = SeSessionImpl(UUID.randomUUID().toString())
       val holder = SeProvidersHolder.initialize(initEvent, project, session, "Test", withAdaptedLegacyContributors = true)

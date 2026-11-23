@@ -1,14 +1,25 @@
 package com.intellij.customization.console.console
 
-import com.intellij.jvm.analysis.internal.testFramework.internal.LogFinderHyperlinkTestBase
 import com.intellij.jvm.analysis.internal.testFramework.internal.LogItem
+import com.intellij.jvm.analysis.internal.testFramework.internal.logFinderHyperlinkFixture
+import com.intellij.jvm.analysis.internal.testFramework.internal.logFinderHyperlinkProjectFixture
 import com.intellij.jvm.analysis.internal.testFramework.logging.LoggingTestUtils
 import com.intellij.openapi.editor.LogicalPosition
+import com.intellij.testFramework.junit5.TestApplication
+import org.junit.jupiter.api.Test
 
-class JavaLogFinderHyperlinkTest : LogFinderHyperlinkTestBase() {
+@TestApplication
+class JavaLogFinderHyperlinkTest {
+  companion object {
+    private val projectFixture = logFinderHyperlinkProjectFixture()
+  }
+
+  private val myFixture by logFinderHyperlinkFixture(projectFixture)
+
+  @Test
   fun testSimpleLog4j2() {
     LoggingTestUtils.addLog4J(myFixture)
-    checkColumnFinderJava(
+    myFixture.checkColumnFinderJava(
       fileName = "Log4jk",
       classText = """
           package com.example.loggingjava.java;
@@ -45,9 +56,10 @@ class JavaLogFinderHyperlinkTest : LogFinderHyperlinkTestBase() {
     )
   }
 
+  @Test
   fun testLastPartLog4j2() {
     LoggingTestUtils.addLog4J(myFixture)
-    checkColumnFinderJava(
+    myFixture.checkColumnFinderJava(
       fileName = "Log4jk",
       classText = """
           package com.example.loggingjava.java;
@@ -84,9 +96,10 @@ class JavaLogFinderHyperlinkTest : LogFinderHyperlinkTestBase() {
     )
   }
 
+  @Test
   fun testSimpleSlf4j() {
     LoggingTestUtils.addSlf4J(myFixture)
-    checkColumnFinderJava(
+    myFixture.checkColumnFinderJava(
       fileName = "Slf4J",
       classText = """
           package com.example.loggingjava.java;
@@ -127,9 +140,10 @@ class JavaLogFinderHyperlinkTest : LogFinderHyperlinkTestBase() {
     )
   }
 
+  @Test
   fun testIdeaLog() {
     LoggingTestUtils.addIdeaLog(myFixture)
-    checkColumnFinderJava(
+    myFixture.checkColumnFinderJava(
       fileName = "IdeaLog",
       classText = """
           package com.example.loggingjava.java;
@@ -168,9 +182,10 @@ class JavaLogFinderHyperlinkTest : LogFinderHyperlinkTestBase() {
     )
   }
 
+  @Test
   fun testSlf4JFluentApi() {
     LoggingTestUtils.addSlf4J(myFixture)
-    checkColumnFinderJava(
+    myFixture.checkColumnFinderJava(
       fileName = "Slf4JFluent",
       classText = """
           package com.example.loggingjava.java;
@@ -211,9 +226,10 @@ class JavaLogFinderHyperlinkTest : LogFinderHyperlinkTestBase() {
     )
   }
 
+  @Test
   fun testUnicode() {
     LoggingTestUtils.addSlf4J(myFixture)
-    checkColumnFinderJava(
+    myFixture.checkColumnFinderJava(
       fileName = "Slf4JFluent",
       classText = """
           package com.example.úsh.čas;
@@ -252,9 +268,10 @@ class JavaLogFinderHyperlinkTest : LogFinderHyperlinkTestBase() {
     )
   }
 
+  @Test
   fun testSkipException() {
     LoggingTestUtils.addSlf4J(myFixture)
-    checkColumnFinderJava(
+    myFixture.checkColumnFinderJava(
       fileName = "EmptySpringApplication",
       classText = """
           package org.example.emptyspring;
@@ -286,9 +303,10 @@ class JavaLogFinderHyperlinkTest : LogFinderHyperlinkTestBase() {
     )
   }
 
+  @Test
   fun testNestedClasses() {
     LoggingTestUtils.addSlf4J(myFixture)
-    checkColumnFinderJava(
+    myFixture.checkColumnFinderJava(
       fileName = "UpperClass",
       classText = """
           package com.example;
@@ -321,9 +339,10 @@ class JavaLogFinderHyperlinkTest : LogFinderHyperlinkTestBase() {
     )
   }
 
+  @Test
   fun testNestedClasses2() {
     LoggingTestUtils.addSlf4J(myFixture)
-    checkColumnFinderJava(
+    myFixture.checkColumnFinderJava(
       fileName = "UpperClass",
       classText = """
           package com.example;
@@ -358,9 +377,10 @@ class JavaLogFinderHyperlinkTest : LogFinderHyperlinkTestBase() {
     )
   }
 
+  @Test
   fun testLocalClasses() {
     LoggingTestUtils.addSlf4J(myFixture)
-    checkColumnFinderJava(
+    myFixture.checkColumnFinderJava(
       fileName = "UpperClass",
       classText = """
           package com.example;
@@ -392,9 +412,10 @@ class JavaLogFinderHyperlinkTest : LogFinderHyperlinkTestBase() {
   }
 
 
+  @Test
   fun `testSimpleSlf4jWith$AndNotClass`() {
     LoggingTestUtils.addSlf4J(myFixture)
-    checkColumnFinderJava(
+    myFixture.checkColumnFinderJava(
       fileName = "Slf4J",
       classText = """
           package com.example.loggingjava.java;

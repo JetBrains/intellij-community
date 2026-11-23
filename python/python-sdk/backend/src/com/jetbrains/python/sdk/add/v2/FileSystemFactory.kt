@@ -7,6 +7,7 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.platform.eel.EelApi
 import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.eel.provider.toEelApi
+import com.jetbrains.python.sdk.PythonSdkAdditionalData
 import com.jetbrains.python.sdk.pySdkAdditionalData
 import com.jetbrains.python.target.PyTargetAwareAdditionalData
 import org.jetbrains.annotations.ApiStatus
@@ -32,13 +33,18 @@ interface FileSystemFactory {
      * A target SDK always uses its target, never the Eel machine.
      */
     suspend fun createForSdk(sdk: Sdk): FileSystem<*> {
-      val instance = getInstance()
       val additionalData = sdk.pySdkAdditionalData
-      return if (additionalData is PyTargetAwareAdditionalData) {
-        instance.create(additionalData.targetEnvironmentConfiguration!!)
+      val homePath = Path.of(sdk.homePath!!)
+      return createForPythonSdkAdditionalData(additionalData, homePath)
+    }
+    
+    internal suspend fun createForPythonSdkAdditionalData(data: PythonSdkAdditionalData, homePath: Path): FileSystem<*> {
+      val instance = getInstance()
+      return if (data is PyTargetAwareAdditionalData) {
+        instance.create(data.targetEnvironmentConfiguration!!)
       }
       else {
-        instance.create(Path.of(sdk.homePath!!).getEelDescriptor().toEelApi())
+        instance.create(homePath.getEelDescriptor().toEelApi())
       }
     }
   }

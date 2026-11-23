@@ -23,6 +23,11 @@ public class K2KotlinInMarkdownHighlightingTestGenerated extends AbstractK2Kotli
         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
     }
 
+    @TestMetadata("withGradleKotlinDsl.md")
+    public void testWithGradleKotlinDsl() throws Exception {
+        runTest("testData/kotlinInjectedInMarkdownHighlighting/withGradleKotlinDsl.md");
+    }
+
     @TestMetadata("withKotlinDeclarations.md")
     public void testWithKotlinDeclarations() throws Exception {
         runTest("testData/kotlinInjectedInMarkdownHighlighting/withKotlinDeclarations.md");

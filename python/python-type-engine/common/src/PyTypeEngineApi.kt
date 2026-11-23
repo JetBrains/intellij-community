@@ -22,7 +22,19 @@ data class PyTypeEngineStateDto(
   val selected: PyTypeEngineId,
   val supported: Set<PyTypeEngineId>,
   val installed: Set<PyTypeEngineId>,
+  /** The engines that run a server of their own. The External Tools tool of the same package does not take part. */
+  val ownServer: Set<PyTypeEngineId> = emptySet(),
 )
+
+@Serializable
+data class PyTypeEngineRequest(val projectId: ProjectId, val typeEngineId: PyTypeEngineId)
+
+/** The editor features of a type engine that the Type Engine page edits. `null` means that the engine has no such feature. */
+@Serializable
+data class PyTypeEngineFeaturesDto(val inlayHints: Boolean?, val documentation: Boolean?)
+
+@Serializable
+data class PyTypeEngineSetFeaturesRequest(val engine: PyTypeEngineRequest, val features: PyTypeEngineFeaturesDto)
 
 @Serializable
 data class PyTypeEngineSelectionRequest(
@@ -43,6 +55,12 @@ interface PyTypeEngineApi : RemoteApi<Unit> {
   suspend fun observeState(projectId: ProjectId): Flow<PyTypeEngineStateDto>
 
   suspend fun select(request: PyTypeEngineSelectionRequest): PyTypeEngineStateDto
+
+  /** Returns the editor features of the engine, or `null` when the engine has none to edit. */
+  suspend fun getFeatures(request: PyTypeEngineRequest): PyTypeEngineFeaturesDto?
+
+  /** Writes the editor features of the engine. A feature that the engine does not have stays as it is. */
+  suspend fun setFeatures(request: PyTypeEngineSetFeaturesRequest)
 
   suspend fun logEvent(request: PyTypeEngineEventRequest)
 

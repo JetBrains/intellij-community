@@ -4,6 +4,6 @@
 pluginManagement {
     repositories {
         maven(url = "https://cache-redirector.jetbrains.com/plugins.gradle.org")
-        maven(url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2")
+        maven(url = "https://cache-redirector.jetbrains.com/maven-central")
     }
 }

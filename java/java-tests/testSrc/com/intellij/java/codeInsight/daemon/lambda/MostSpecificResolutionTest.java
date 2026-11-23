@@ -4,24 +4,30 @@ package com.intellij.java.codeInsight.daemon.lambda;
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase5;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-class MostSpecificResolutionTest extends LightJavaCodeInsightFixtureTestCase5 {
-  @NonNls static final String BASE_PATH = "/codeInsight/daemonCodeAnalyzer/lambda/mostSpecific";
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaCodeInsightFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
 
-  @NotNull
-  @Override
-  protected String getTestDataPath() {
-    return JavaTestUtil.getJavaTestDataPath() + BASE_PATH;
-  }
+@TestApplication
+class MostSpecificResolutionTest {
+  private static final TestFixture<LightJavaProject> projectFixture =
+    lightJavaProjectFixture(LightJavaCodeInsightFixtureTestCase.JAVA_LATEST_WITH_LATEST_JDK);
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture = lightJavaCodeInsightFixture(projectFixture);
+
+  @NonNls static final String BASE_PATH = "/codeInsight/daemonCodeAnalyzer/lambda/mostSpecific";
 
   @BeforeEach
   void setUp() {
-    getFixture().enableInspections(new UnusedDeclarationInspection());
+    codeInsightFixture.get().setTestDataPath(JavaTestUtil.getJavaTestDataPath() + BASE_PATH);
+    codeInsightFixture.get().enableInspections(new UnusedDeclarationInspection());
   }
 
   @Test
@@ -151,11 +157,16 @@ class MostSpecificResolutionTest extends LightJavaCodeInsightFixtureTestCase5 {
     doTest();
   }
 
+  @Test
+  void testInaccessibleConstructorInExactMethodReference() {
+    doTest(false);
+  }
+
   private void doTest() {
     doTest(true);
   }
 
   private void doTest(boolean warnings) {
-    getFixture().testHighlighting(warnings, false, false, getTestName(false) + ".java");
+    codeInsightFixture.get().testHighlighting(warnings, false, false, codeInsightFixture.get().getTestName(false) + ".java");
   }
 }

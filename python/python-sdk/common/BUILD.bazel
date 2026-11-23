@@ -9,7 +9,6 @@ content_module_jar(module = ":common")
 ### auto-generated section `build intellij.python.sdk.common` start
 create_kotlinc_options(
     name = "custom_common",
-    opt_in = ["com.jetbrains.python.PyInternalExecApi"],
     warn = "error",
     x_warning_level = ["DEPRECATION:warning"],
 )
@@ -50,8 +49,6 @@ jvm_library(
         "//libraries/kotlinx/serialization/core",
         "//platform/platform-impl/rpc",
         "//python/python-pytools/common",
-        "//platform/eel",
-        "//python/openapi:community",
     ],
 )
 ### auto-generated section `build intellij.python.sdk.common` end

@@ -34,6 +34,37 @@ use avl_base::RefusalExt;
 /// the guest.
 const DAEMON_LOG_TIMEOUT: Duration = Duration::from_secs(10);
 
+/// The daemon target of the light lane, [`DaemonTarget::LightLane`], for a plan whose every iteration runs that lane, and
+/// the one of the lanes for a plan that does not hold it.
+///
+/// One build names one IDE distribution, and the light lane runs JetBrains Light while every other lane runs IDEA. So a
+/// plan that holds the light lane beside another lane is refused before the build, and the refusal names the two runs
+/// that take the same selection apart.
+fn light_lane_target(plan: &RunPlan, program: &str) -> Result<DaemonTarget, Refusal> {
+    let lanes: Vec<&str> = plan
+        .iterations
+        .iter()
+        .filter_map(|iteration| iteration.selection.lane.as_deref())
+        .collect();
+    let (light, other): (Vec<&str>, Vec<&str>) = lanes
+        .iter()
+        .partition(|lane| DaemonTarget::of_lane(Some(lane)) == DaemonTarget::LightLane);
+    match (light.first(), other.is_empty()) {
+        (None, _) => Ok(DaemonTarget::Lanes),
+        (Some(_), true) => Ok(DaemonTarget::LightLane),
+        (Some(light), false) => Err(Refusal::new(
+            "light_lane_beside_other_lanes",
+            Exit::USAGE,
+            format!(
+                "the selection reaches the lane {light}, which runs JetBrains Light, and the lanes {}, which run IDEA; one \
+                 run builds one IDE, so run the selection twice: `{program} run ... --lane {light}`, then the same run with \
+                 --lane and each other lane",
+                other.join(", ")
+            ),
+        )),
+    }
+}
+
 #[cfg(test)]
 #[cfg(unix)]
 mod tests;
@@ -233,11 +264,12 @@ impl Host {
     /// [`Host::plan_run`], and the daemon descriptor that its build builds. A plan that holds the live lane builds the
     /// descriptor of the live lane, which adds its CLIs. Such a plan is refused when its run lacks the run input of the
     /// Central login, and on a macOS guest. The check reads the committed lane documents, so a refusal costs no build
-    /// and no lease. A plan of `--lane` alone reads no checkout, so the host paths resolve here first.
+    /// and no lease. A plan of `--lane` alone reads no checkout, so the host paths resolve here first. A plan that holds
+    /// the light lane builds the descriptor of JetBrains Light; see [`light_lane_target`].
     async fn plan_run_with(&self, ctx: &Ctx, args: &RunArgs, secrets: &RunSecrets) -> Result<(RunPlan, DaemonTarget), Refusal> {
         let plan = self.plan_run(ctx, args).await?;
         ensure_host_paths(ctx, &self.runner, &self.settings).await?;
-        let mut target = DaemonTarget::Lanes;
+        let mut target = light_lane_target(&plan, &self.reporter.program())?;
         if let Some(documents) = crate::lane::lane_document_root(&self.settings)? {
             for lane in plan.iterations.iter().filter_map(|iteration| iteration.selection.lane.as_deref()) {
                 let Some(live) = crate::lane::lane_live_context(&documents, lane)? else {

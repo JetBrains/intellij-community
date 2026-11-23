@@ -15,6 +15,7 @@ import com.intellij.ide.starter.models.VMOptions
 import com.intellij.ide.starter.models.VMOptions.Companion.TEST_SCRIPT_FILE_OPTION
 import com.intellij.ide.starter.path.IDEDataPaths
 import com.intellij.ide.starter.process.KILL_THREAD_DUMP_FILE_PREFIX
+import com.intellij.ide.starter.process.collectChildJavaThreadDumps
 import com.intellij.ide.starter.process.collectJavaThreadDumpSuspendable
 import com.intellij.ide.starter.process.collectJavaThreadDumpsWhileAlive
 import com.intellij.ide.starter.process.collectMemoryDump
@@ -41,6 +42,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeoutOrNull
 import org.kodein.di.direct
 import org.kodein.di.instance
 import java.nio.file.Files
@@ -308,6 +310,9 @@ data class IDERunContext(
       if (isLowMemorySignalPresent(logsDir)) {
         collectMemoryDump(jdkHome, startConfig.workDir, ideProcessId, memoryDumpFile)
       }
+    }
+    catchAll {
+      withTimeoutOrNull(15.seconds) { collectChildJavaThreadDumps(ideProcessId, jdkHome, startConfig.workDir, logsDir, timestamp) }
     }
   }
 

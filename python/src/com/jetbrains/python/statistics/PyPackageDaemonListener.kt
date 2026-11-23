@@ -16,7 +16,6 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.MultiplePsiFilesPerDocumentFileViewProvider
 import com.intellij.psi.PsiManager
-import com.intellij.python.sdk.backend.getSdkAPI
 import com.intellij.python.pyproject.model.evolution.findEvoPyProject
 import com.jetbrains.python.PyPsiPackageUtil
 import com.jetbrains.python.packaging.management.PythonPackageManager
@@ -25,7 +24,6 @@ import com.jetbrains.python.psi.PyImportStatementBase
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.annotations.VisibleForTesting
 import kotlin.time.Duration.Companion.days
@@ -63,14 +61,11 @@ internal class PackageDaemonTaskExecutor(private val project: Project, private v
         } else psiFile
         if (pyPsiFile !is PyFile) return@readAction emptyList()
         val interpreter = evoPyProject.interpreter
-        @Suppress("DEPRECATION") // The statistics read the SDK type and target.
-        val sdk = interpreter?.getSdkAPI()
-        val interpreterType = sdk?.interpreterType ?: InterpreterType.REGULAR
-        val interpreterTarget = sdk?.executionType ?: InterpreterTarget.LOCAL
-        // A mock SDK has no additional data, and the package manager cannot be built for it.
-        val packages2Versions = if (interpreter == null || sdk?.sdkAdditionalData == null) emptyMap()
+        val interpreterType = interpreter?.interpreterType ?: InterpreterType.REGULAR
+        val interpreterTarget = interpreter?.executionType ?: InterpreterTarget.LOCAL
+        val packages2Versions = if (interpreter == null) emptyMap()
         else {
-          PythonPackageManager.forPythonInterpreter(project, interpreter).listInstalledPackagesSnapshot().associate { it.name to it.version }
+          PythonPackageManager.forPythonInterpreter(interpreter).listInstalledPackagesSnapshot().associate { it.name to it.version }
         }
 
         pyPsiFile.children.filterIsInstance<PyImportStatementBase>().mapNotNull { import ->
@@ -82,7 +77,7 @@ internal class PackageDaemonTaskExecutor(private val project: Project, private v
               version = packages2Versions[packageName] ?: "0.0",
               interpreterTypeValue = interpreterType.value,
               targetTypeValue = interpreterTarget.value,
-              hasSdk = sdk != null,
+              hasSdk = interpreter != null,
               fileTypeName = psiFile.fileType.name
             )
           }

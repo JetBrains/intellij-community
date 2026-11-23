@@ -5,6 +5,9 @@ load("//build:compiler-options.bzl", "create_kotlinc_options")
 jps_test(
     name = "eel-tests_test",
     timeout = "moderate",
+    jvm_flags = [
+        "-Djava.nio.file.spi.DefaultFileSystemProvider=com.intellij.platform.core.nio.fs.MultiRoutingFileSystemProvider",
+    ],
     tags = ["community-aggregator"],
     runtime_deps = [":eel-tests_test_lib"],
 )

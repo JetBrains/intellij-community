@@ -1,7 +1,14 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.statistics
 
+import com.intellij.python.sdk.backend.isDetectedActivatable
+import com.intellij.python.sdk.backend.binaryPathString
+import com.intellij.python.sdk.backend.flavor
+import com.intellij.python.sdk.backend.languageLevel
+import com.intellij.python.sdk.backend.TargetPythonInterpreter
+import com.intellij.python.sdk.backend.NativePythonInterpreter
 import com.intellij.internal.statistic.eventLog.EventLogGroup
+import com.jetbrains.python.configuration.findModuleInterpreterIfReady
 import com.intellij.internal.statistic.eventLog.events.BooleanEventField
 import com.intellij.internal.statistic.eventLog.events.EventField
 import com.intellij.internal.statistic.eventLog.events.EventFields
@@ -15,7 +22,6 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.util.asSafely
 import com.jetbrains.python.PyInternalExecApi
 import com.jetbrains.python.PythonLanguage
-import com.jetbrains.python.configuration.findModuleSdkIfReady
 import com.jetbrains.python.hatch.sdk.isHatch
 import com.jetbrains.python.isCondaVirtualEnv
 import com.jetbrains.python.isNonToolVirtualEnv
@@ -24,7 +30,6 @@ import com.jetbrains.python.sdk.PySdkUtil
 import com.jetbrains.python.sdk.PythonSdkAdditionalData
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
 import com.jetbrains.python.sdk.flavors.conda.CondaEnvSdkFlavor
-import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 import com.jetbrains.python.sdk.pipenv.isPipEnv
 import com.jetbrains.python.sdk.poetry.isPoetry
 import com.jetbrains.python.sdk.uv.isUv
@@ -50,13 +55,13 @@ import com.jetbrains.python.statistics.InterpreterTarget.THIRD_PARTY
 import com.jetbrains.python.statistics.InterpreterType.CONDAVENV
 import com.jetbrains.python.statistics.InterpreterType.HATCH
 import com.jetbrains.python.statistics.InterpreterType.PIPENV
+import com.jetbrains.python.statistics.InterpreterType.PIXI
 import com.jetbrains.python.statistics.InterpreterType.POETRY
 import com.jetbrains.python.statistics.InterpreterType.PYENV
 import com.jetbrains.python.statistics.InterpreterType.REGULAR
 import com.jetbrains.python.statistics.InterpreterType.UV
 import com.jetbrains.python.statistics.InterpreterType.VIRTUALENV
 import com.intellij.python.sdk.backend.PythonInterpreter
-import com.intellij.python.sdk.backend.getSdkAPI
 import com.jetbrains.python.target.PyTargetAwareAdditionalData
 import com.jetbrains.python.venvReader.VirtualEnvReader
 import org.jetbrains.annotations.ApiStatus
@@ -66,11 +71,11 @@ import org.jetbrains.annotations.ApiStatus
 val Project.modules: Array<Module> get() = ModuleManager.getInstance(this).modules
 
 /**
- * Adds python language and interpreter version if the module has sdk
+ * Adds python language and interpreter version if the module has an interpreter
  */
 @ApiStatus.Internal
 fun getPythonSpecificInfo(module: Module): List<EventPair<*>> =
-  findModuleSdkIfReady(module)?.let { sdk -> getPythonSpecificInfo(sdk) } ?: emptyList()
+  findModuleInterpreterIfReady(module)?.let(::getPythonSpecificInfo) ?: emptyList()
 
 /**
  * Adds python language and interpreter version.
@@ -80,21 +85,13 @@ fun getPythonSpecificInfo(module: Module): List<EventPair<*>> =
  * reporting below throw (PY-90784).
  */
 @ApiStatus.Internal
-fun getPythonSpecificInfo(interpreter: PythonInterpreter): List<EventPair<*>> = getPythonSpecificInfo(interpreter.getSdkAPI())
-
-/**
- * Adds python language and interpreter version
- */
-internal fun getPythonSpecificInfo(sdk: Sdk): List<EventPair<*>> {
-  val data = ArrayList<EventPair<*>>()
-  if (!PythonSdkUtil.isPythonSdk(sdk)) return data
-  data.add(EventFields.Language.with(PythonLanguage.INSTANCE))
-  data.add(PYTHON_VERSION.with(sdk.version.toPythonVersion()))
-  data.add(PYTHON_IMPLEMENTATION.with(sdk.pythonImplementation))
-  data.add(EXECUTION_TYPE.with(sdk.executionType.value))
-  data.add(INTERPRETER_TYPE.with(sdk.interpreterType.value))
-  return data
-}
+fun getPythonSpecificInfo(interpreter: PythonInterpreter): List<EventPair<*>> = listOf(
+  EventFields.Language.with(PythonLanguage.INSTANCE),
+  PYTHON_VERSION.with(interpreter.languageLevel.toPythonVersion()),
+  PYTHON_IMPLEMENTATION.with(interpreter.flavor.name),
+  EXECUTION_TYPE.with(interpreter.executionType.value),
+  INTERPRETER_TYPE.with(interpreter.interpreterType.value),
+)
 
 @Deprecated("""
   It makes no sense to add a Python version or something similar to the event.
@@ -244,32 +241,52 @@ val Sdk.interpreterType: InterpreterType
     else -> REGULAR
   }
 
-/** [Sdk.executionType] for [PythonInterpreter]. **DO NOT USE FOR ANYTHING BUT FUS** */
+/** Where this interpreter runs: [LOCAL] for a native one, else its target. **DO NOT USE FOR ANYTHING BUT FUS** */
 @get:ApiStatus.Internal
 val PythonInterpreter.executionType: InterpreterTarget
-  @Suppress("DEPRECATION") get() = getSdkAPI().executionType
+  get() = when (this) {
+    is NativePythonInterpreter -> LOCAL
+    is TargetPythonInterpreter -> executionTypeOf(targetConfiguration.typeId)
+  }
 
-/** [Sdk.interpreterType] for [PythonInterpreter]. **DO NOT USE FOR ANYTHING BUT FUS** */
+/**
+ * The kind of the environment of this interpreter, from the tool that manages it, see [com.intellij.python.sdk.common.PyEnvId.manager]. An
+ * environment no tool manages is a pyenv one, a virtual environment, or a regular interpreter.
+ * **DO NOT USE FOR ANYTHING BUT FUS**
+ */
 @get:ApiStatus.Internal
 val PythonInterpreter.interpreterType: InterpreterType
-  @Suppress("DEPRECATION") get() = getSdkAPI().interpreterType
+  get() = when (ref.env.manager.value) {
+    PIPENV.value -> PIPENV
+    UV.value -> UV
+    POETRY.value -> POETRY
+    HATCH.value -> HATCH
+    PIXI.value -> PIXI
+    CONDA_MANAGER_ID -> CONDAVENV
+    else -> when {
+      binaryPathString.contains(PYENV_PATTERN) -> PYENV
+      isDetectedActivatable -> VIRTUALENV
+      else -> REGULAR
+    }
+  }
+
+private const val CONDA_MANAGER_ID = "conda"
 
 /**
  * Mapping from new targets to an old ones is need to keep compatibility with the current fus schema.
  * We are going to clean up these code together with housekeeping tasks about getting rid of old remotes.
  */
 private val PyTargetAwareAdditionalData.executionType: InterpreterTarget
-  get() =
-    targetEnvironmentConfiguration?.typeId?.let { typeId ->
-      when (typeId) {
-        TARGET_SSH_WEB_DEVELOPMENT.value -> REMOTE_WEB_DEPLOYMENT
-        TARGET_SSH_SFTP.value -> REMOTE_SSH_CREDENTIALS
-        TARGET_DOCKER.value -> REMOTE_DOCKER
-        TARGET_DOCKER_COMPOSE.value -> REMOTE_DOCKER_COMPOSE
-        TARGET_VAGRANT.value -> REMOTE_VAGRANT
-        TARGET_WSL.value -> REMOTE_WSL
-        else -> REMOTE_UNKNOWN
-      }
-    } ?: REMOTE_UNKNOWN
+  get() = targetEnvironmentConfiguration?.typeId?.let { executionTypeOf(it) } ?: REMOTE_UNKNOWN
+
+private fun executionTypeOf(targetTypeId: String): InterpreterTarget = when (targetTypeId) {
+  TARGET_SSH_WEB_DEVELOPMENT.value -> REMOTE_WEB_DEPLOYMENT
+  TARGET_SSH_SFTP.value -> REMOTE_SSH_CREDENTIALS
+  TARGET_DOCKER.value -> REMOTE_DOCKER
+  TARGET_DOCKER_COMPOSE.value -> REMOTE_DOCKER_COMPOSE
+  TARGET_VAGRANT.value -> REMOTE_VAGRANT
+  TARGET_WSL.value -> REMOTE_WSL
+  else -> REMOTE_UNKNOWN
+}
 
 private val PYENV_PATTERN = Regex("[/\\\\]${VirtualEnvReader.PYENV_DEFAULT_DIR_NAME}[/\\\\]")

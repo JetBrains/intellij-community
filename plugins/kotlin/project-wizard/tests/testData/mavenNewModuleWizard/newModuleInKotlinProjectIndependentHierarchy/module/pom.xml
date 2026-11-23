@@ -59,7 +59,7 @@
                 <artifactId>exec-maven-plugin</artifactId>
                 <version>VERSION</version>
                 <configuration>
-                    <mainClass>MainKt</mainClass>
+                    <mainClass>org.testcase.MainKt</mainClass>
                 </configuration>
             </plugin>
         </plugins>

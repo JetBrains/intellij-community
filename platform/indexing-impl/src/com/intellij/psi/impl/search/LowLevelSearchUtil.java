@@ -281,19 +281,23 @@ public final class LowLevelSearchUtil {
     int[] cachedOccurrences = cachedMap == null ? null : cachedMap.get(searcher);
     boolean hasCachedOccurrences = cachedOccurrences != null && cachedOccurrences[0] <= startOffset && cachedOccurrences[1] >= endOffset;
     if (!hasCachedOccurrences) {
-      IntList occurrences = new IntArrayList();
-      int newStart = Math.min(startOffset, cachedOccurrences == null ? startOffset : cachedOccurrences[0]);
-      int newEnd = Math.max(endOffset, cachedOccurrences == null ? endOffset : cachedOccurrences[1]);
+      int cachedStart = cachedOccurrences == null ? startOffset : cachedOccurrences[0];
+      int cachedEnd = cachedOccurrences == null ? startOffset : cachedOccurrences[1];
+      int newStart = Math.min(startOffset, cachedStart);
+      int newEnd = Math.max(endOffset, cachedEnd);
+      // A scan reaches this far into the cached range to find the occurrences that cross its boundary.
+      int crossing = searcher.getPatternLength() - 1;
+      IntList occurrences = cachedOccurrences == null ? new IntArrayList() : new IntArrayList(cachedOccurrences.length);
       occurrences.add(newStart);
       occurrences.add(newEnd);
-      for (int index = newStart; index < newEnd; index++) {
-        ProgressManager.checkCanceled();
-        //noinspection AssignmentToForLoopParameter
-        index = searcher.scan(text, index, newEnd);
-        if (index < 0) break;
-        if (checkJavaIdentifier(text, searcher, index)) {
-          occurrences.add(index);
-        }
+      if (newStart < cachedStart) {
+        scanOccurrences(text, newStart, Math.min(cachedStart + crossing, newEnd), searcher, occurrences);
+      }
+      if (cachedOccurrences != null) {
+        occurrences.addElements(occurrences.size(), cachedOccurrences, 2, cachedOccurrences.length - 2);
+      }
+      if (cachedEnd < newEnd) {
+        scanOccurrences(text, Math.max(cachedEnd - crossing, cachedStart), newEnd, searcher, occurrences);
       }
       cachedOccurrences = occurrences.toIntArray();
       if (cachedMap == null) {
@@ -310,6 +314,22 @@ public final class LowLevelSearchUtil {
       }
     }
     return offsets.toIntArray();
+  }
+
+  private static void scanOccurrences(@NotNull CharSequence text,
+                                      int startOffset,
+                                      int endOffset,
+                                      @NotNull StringSearcher searcher,
+                                      @NotNull IntList occurrences) {
+    for (int index = startOffset; index < endOffset; index++) {
+      ProgressManager.checkCanceled();
+      //noinspection AssignmentToForLoopParameter
+      index = searcher.scan(text, index, endOffset);
+      if (index < 0) break;
+      if (checkJavaIdentifier(text, searcher, index)) {
+        occurrences.add(index);
+      }
+    }
   }
 
   private static boolean checkJavaIdentifier(@NotNull CharSequence text,

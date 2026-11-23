@@ -1,9 +1,9 @@
 load("@community//platform/build-scripts/bazel-rules:ij_plugin.bzl", "ij_plugin")
-load("@jps_dynamic_deps_community//:targets.bzl", "dev_dist_plugin")
+load("@jps_dynamic_deps_community//:targets.bzl", "dist_plugin")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `dev intellij.sh.plugin` start
-dev_dist_plugin(
+dist_plugin(
     content_modules = [
         # do not sort,
         "intellij.sh.core",

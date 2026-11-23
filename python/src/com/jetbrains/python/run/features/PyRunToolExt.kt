@@ -2,9 +2,9 @@
 package com.jetbrains.python.run.features
 
 import com.intellij.execution.target.FullPathOnTarget
-import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.python.sdk.backend.PythonInterpreter
 import com.jetbrains.python.run.AbstractPythonRunConfiguration
-import com.jetbrains.python.run.features.PyRunToolProvider.Companion.forSdk
+import com.jetbrains.python.run.features.PyRunToolProvider.Companion.forInterpreter
 import org.jetbrains.annotations.ApiStatus
 
 /**
@@ -14,13 +14,13 @@ import org.jetbrains.annotations.ApiStatus
  * The debugpy debuggee uses it too, although its launch bypasses that method (PY-93398).
  */
 @ApiStatus.Internal
-suspend fun AbstractPythonRunConfiguration<*>.resolveRunToolParameters(sdk: Sdk): PyRunToolParameters? {
+suspend fun AbstractPythonRunConfiguration<*>.resolveRunToolParameters(interpreter: PythonInterpreter): PyRunToolParameters? {
   if (!enableRunTool) return null
-  val provider = forSdk(sdk) ?: return null
-  if (!useRunTool(sdk)) return null
+  val provider = forInterpreter(interpreter) ?: return null
+  if (!useRunTool(interpreter)) return null
   // Resolved here rather than in the tool: only the configuration knows whether it runs a bare script.
   val inlineScriptTarget = asBareScriptConfiguration()?.inlineScriptTarget
-  val parameters = provider.getRunToolParameters(sdk, inlineScriptTarget)
+  val parameters = provider.getRunToolParameters(interpreter, inlineScriptTarget)
   PyRunToolUsageCollector.logRun(project, PyRunToolIds.idOf(provider), inlineScriptTarget != null)
   return parameters
 }
@@ -46,10 +46,10 @@ fun PyRunToolParameters.launchOnInterpreterMachine(python: FullPathOnTarget): Py
     addAll(listOfNotNull(python.takeIf { this@launchOnInterpreterMachine.includeOriginalExe }))
   }, envs)
 
-internal fun AbstractPythonRunConfiguration<*>.useRunTool(sdk: Sdk): Boolean {
+internal fun AbstractPythonRunConfiguration<*>.useRunTool(interpreter: PythonInterpreter): Boolean {
   val explicit = this.useRunTool
   if (explicit != null) return explicit
-  val provider = forSdk(sdk) ?: return false
+  val provider = forInterpreter(interpreter) ?: return false
   return provider.initialToolState
 }
 
@@ -59,7 +59,7 @@ internal fun AbstractPythonRunConfiguration<*>.useRunTool(sdk: Sdk): Boolean {
  */
 internal fun AbstractPythonRunConfiguration<*>.activeRunToolData(): PyRunToolData? {
   if (!enableRunTool) return null
-  val sdk = sdk ?: return null
-  val provider = forSdk(sdk) ?: return null
-  return if (useRunTool(sdk)) provider.runToolData else null
+  val interpreter = pythonInterpreter ?: return null
+  val provider = forInterpreter(interpreter) ?: return null
+  return if (useRunTool(interpreter)) provider.runToolData else null
 }

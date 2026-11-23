@@ -51,6 +51,15 @@ internal object TestExecutionLog {
   const val SPAWN_TIMEOUT_MILLIS = 17
   const val SPAWN_METRICS = 18
 
+  // The field numbers of `SpawnMetrics`.
+  const val METRICS_TOTAL_TIME = 1
+  const val METRICS_QUEUE_TIME = 5
+  const val METRICS_EXECUTION_WALL_TIME = 8
+
+  // The field numbers of `google.protobuf.Duration`.
+  const val DURATION_SECONDS = 1
+  const val DURATION_NANOS = 2
+
   /**
    * Writes the entries to [log] as a compact execution log: a zstd stream of length-delimited `ExecLogEntry` messages.
    */
@@ -111,6 +120,28 @@ internal object TestExecutionLog {
       writeBool(SPAWN_REMOTE_CACHEABLE, remoteCacheable)
       extraFields()
     })
+  }
+
+  /**
+   * Writes a `SpawnMetrics` message into a spawn, for [spawnEntry] `extraFields`. A null duration leaves its field out.
+   */
+  fun CodedOutputStream.writeMetrics(executionWallTimeMillis: Long? = null, totalTimeMillis: Long? = null, queueTimeMillis: Long? = null) {
+    writeByteArray(SPAWN_METRICS, message {
+      if (totalTimeMillis != null) {
+        writeByteArray(METRICS_TOTAL_TIME, duration(totalTimeMillis))
+      }
+      if (queueTimeMillis != null) {
+        writeByteArray(METRICS_QUEUE_TIME, duration(queueTimeMillis))
+      }
+      if (executionWallTimeMillis != null) {
+        writeByteArray(METRICS_EXECUTION_WALL_TIME, duration(executionWallTimeMillis))
+      }
+    })
+  }
+
+  private fun duration(millis: Long): ByteArray = message {
+    writeInt64(DURATION_SECONDS, millis / 1000)
+    writeInt32(DURATION_NANOS, ((millis % 1000) * 1_000_000).toInt())
   }
 
   /**

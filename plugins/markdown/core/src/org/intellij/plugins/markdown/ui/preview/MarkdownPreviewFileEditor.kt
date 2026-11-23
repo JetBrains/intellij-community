@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.plugins.markdown.ui.preview
 
+import com.intellij.diagnostic.rethrowControlFlowException
 import com.intellij.ide.DataManager
 import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
@@ -88,10 +89,7 @@ class MarkdownPreviewFileEditor(
   init {
     coroutineScope.launch {
       mainEditor.filterNotNull().first()
-
-      withContext(Dispatchers.EDT) {
-        attachHtmlPanel()
-      }
+      prepareAndAttachHtmlPanel()
     }
 
     val messageBusConnection = application.messageBus.connect(this)
@@ -216,20 +214,24 @@ class MarkdownPreviewFileEditor(
     coroutineScope.cancel()
   }
 
+  private fun findAvailablePanelProvider(preferredProvider: MarkdownHtmlPanelProvider): MarkdownHtmlPanelProvider? {
+    if (preferredProvider.isAvailable() === MarkdownHtmlPanelProvider.AvailabilityInfo.AVAILABLE) {
+      return preferredProvider
+    }
+    return MarkdownHtmlPanelProvider.getProviders().firstOrNull { it.isAvailable() === MarkdownHtmlPanelProvider.AvailabilityInfo.AVAILABLE }
+  }
+
   private fun retrievePanelProvider(settings: MarkdownSettings): MarkdownHtmlPanelProvider {
-    val providerInfo = settings.previewPanelProviderInfo
-    var preferredProvider = MarkdownHtmlPanelProvider.createFromInfo(providerInfo)
-    if (preferredProvider.isAvailable() !== MarkdownHtmlPanelProvider.AvailabilityInfo.AVAILABLE) {
+    var preferredProvider = MarkdownHtmlPanelProvider.createFromInfo(settings.previewPanelProviderInfo)
+    val availableProvider = findAvailablePanelProvider(preferredProvider)
+    if (availableProvider == null) {
       val registeredProviders = MarkdownHtmlPanelProvider.getProviders()
-      val availableProvider = registeredProviders.firstOrNull { p: MarkdownHtmlPanelProvider -> p.isAvailable() === MarkdownHtmlPanelProvider.AvailabilityInfo.AVAILABLE }
-      if (availableProvider == null) {
-        logger.warn("Cannot find any available preview panel provider. Registered providers: ${registeredProviders.joinToString { it.providerInfo.name }}")
-      }
-      else {
-        logger.warn("Cannot use preview panel provider '${preferredProvider.providerInfo.name}'. Using the first one that is available: ${availableProvider.providerInfo.name}")
-        settings.previewPanelProviderInfo = availableProvider.providerInfo
-        preferredProvider = availableProvider
-      }
+      logger.warn("Cannot find any available preview panel provider. Registered providers: ${registeredProviders.joinToString { it.providerInfo.name }}")
+    }
+    else if (availableProvider !== preferredProvider) {
+      logger.warn("Cannot use preview panel provider '${preferredProvider.providerInfo.name}'. Using the first one that is available: ${availableProvider.providerInfo.name}")
+      settings.previewPanelProviderInfo = availableProvider.providerInfo
+      preferredProvider = availableProvider
     }
     lastPanelProviderInfo = settings.previewPanelProviderInfo
     return preferredProvider
@@ -308,12 +310,39 @@ class MarkdownPreviewFileEditor(
     putUserData(PREVIEW_BROWSER, null)
   }
 
+  private suspend fun preparePanelProvider() {
+    withContext(Dispatchers.Default) {
+      try {
+        // createFromInfo fails when no provider is registered.
+        if (MarkdownHtmlPanelProvider.getProviders().isNotEmpty()) {
+          val preferredProvider = MarkdownHtmlPanelProvider.createFromInfo(MarkdownSettings.getInstance().previewPanelProviderInfo)
+          findAvailablePanelProvider(preferredProvider)?.prepare()
+        }
+      }
+      catch (e: Throwable) {
+        rethrowControlFlowException(e)
+        logger.error("Cannot prepare preview panel provider", e)
+      }
+    }
+  }
+
+  private suspend fun prepareAndAttachHtmlPanel() {
+    preparePanelProvider()
+    withContext(Dispatchers.EDT) {
+      attachHtmlPanel()
+    }
+  }
+
   @RequiresEdt
   private fun attachHtmlPanel() {
     ThreadingAssertions.assertEventDispatchThread()
 
     if (panel != null) {
       logger.debug("MarkdownPreviewFileEditor: the panel is already attached")
+      return
+    }
+    if (!htmlPanelWrapper.isVisible) {
+      logger.debug("MarkdownPreviewFileEditor: the preview is hidden")
       return
     }
     if (!MarkdownHtmlPanelProvider.hasAvailableProviders()) {
@@ -357,7 +386,7 @@ class MarkdownPreviewFileEditor(
   private inner class AttachPanelOnVisibilityChangeListener : ComponentAdapter() {
     override fun componentShown(event: ComponentEvent) {
       if (panel == null) {
-        coroutineScope.launch(Dispatchers.EDT) { attachHtmlPanel() }
+        coroutineScope.launch { prepareAndAttachHtmlPanel() }
       }
     }
 
@@ -372,19 +401,22 @@ class MarkdownPreviewFileEditor(
     override fun beforeSettingsChanged(settings: MarkdownSettings) {}
 
     override fun settingsChanged(settings: MarkdownSettings) {
-      coroutineScope.launch(Dispatchers.EDT) {
-        if (htmlPanelWrapper.isVisible) {
-          if (panel == null) {
-            attachHtmlPanel()
-          }
-          else if (lastPanelProviderInfo == null ||
-                   MarkdownHtmlPanelProvider.createFromInfo(lastPanelProviderInfo!!) != retrievePanelProvider(settings)) {
-            detachHtmlPanel()
-            attachHtmlPanel()
-          }
-          else {
-            panel?.reloadStyles()
-            updateHtml()
+      coroutineScope.launch {
+        preparePanelProvider()
+        withContext(Dispatchers.EDT) {
+          if (htmlPanelWrapper.isVisible) {
+            if (panel == null) {
+              attachHtmlPanel()
+            }
+            else if (lastPanelProviderInfo == null ||
+                     MarkdownHtmlPanelProvider.createFromInfo(lastPanelProviderInfo!!) != retrievePanelProvider(settings)) {
+              detachHtmlPanel()
+              attachHtmlPanel()
+            }
+            else {
+              panel?.reloadStyles()
+              updateHtml()
+            }
           }
         }
       }

@@ -37,11 +37,11 @@ class BundledPluginBuilderTest {
       windowsDist to Path.of("windows"),
       linuxDist to Path.of("linux"),
     )
-    val commonPlugin = PluginLayout.pluginAuto(listOf("a.plugin"))
-    val windowsOnlyPlugin = PluginLayout.pluginAuto(listOf("z.plugin")) {
+    val commonPlugin = PluginLayout.pluginAuto("a.plugin") {}
+    val windowsOnlyPlugin = PluginLayout.pluginAuto("z.plugin") {
       it.bundlingRestrictions.supportedOs = persistentListOf(OsFamily.WINDOWS)
     }
-    val linuxOnlyPlugin = PluginLayout.pluginAuto(listOf("m.plugin")) {
+    val linuxOnlyPlugin = PluginLayout.pluginAuto("m.plugin") {
       it.bundlingRestrictions.supportedOs = persistentListOf(OsFamily.LINUX)
     }
     val applicationInfo = mock(ApplicationInfoProperties::class.java)
@@ -113,7 +113,7 @@ class BundledPluginBuilderTest {
 
   @Test
   fun `dev mode plugin applicability uses requested target os`() {
-    val macOnlyPlugin = PluginLayout.pluginAuto(listOf("mac.only.plugin")) {
+    val macOnlyPlugin = PluginLayout.pluginAuto("mac.only.plugin") {
       it.bundlingRestrictions.supportedOs = persistentListOf(OsFamily.MACOS)
     }
     val applicationInfo = mock(ApplicationInfoProperties::class.java)
@@ -146,7 +146,7 @@ class BundledPluginBuilderTest {
 
   @Test
   fun `a plugin that is not for public builds survives without release-cycle restrictions`() {
-    val internalPlugin = PluginLayout.pluginAuto(listOf("internal.plugin")) {
+    val internalPlugin = PluginLayout.pluginAuto("internal.plugin") {
       it.bundlingRestrictions.includeInDistribution = PluginDistribution.NOT_FOR_PUBLIC_BUILDS
     }
     val applicationInfo = mock(ApplicationInfoProperties::class.java)

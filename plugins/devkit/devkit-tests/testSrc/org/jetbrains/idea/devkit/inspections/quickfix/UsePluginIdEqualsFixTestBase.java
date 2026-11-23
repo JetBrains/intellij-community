@@ -3,6 +3,10 @@ package org.jetbrains.idea.devkit.inspections.quickfix;
 
 import org.jetbrains.idea.devkit.inspections.internal.UsePluginIdEqualsInspection;
 
+/**
+ * @deprecated Use {@link UsePluginIdEqualsFixtureKt#usePluginIdEqualsFixture} in a JUnit 5 test.
+ */
+@Deprecated
 public abstract class UsePluginIdEqualsFixTestBase extends LightDevKitInspectionFixTestBase {
 
   @Override

@@ -41,7 +41,7 @@ class DependenciesInlayHintsProvider : InlayHintsProvider {
   override fun createCollector(file: PsiFile, editor: Editor): InlayHintsCollector? {
     val packageManager =
       file.findEvoPyProjectIfReady(mainForOrphans = false)?.interpreter
-        ?.let { PythonPackageManager.forPythonInterpreter(file.project, it) }
+        ?.let { PythonPackageManager.forPythonInterpreter(it) }
 
     if (packageManager == null || !packageManager.tracksDependencyFile(file)) {
       return null

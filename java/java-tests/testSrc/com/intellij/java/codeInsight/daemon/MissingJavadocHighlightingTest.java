@@ -4,18 +4,29 @@ package com.intellij.java.codeInsight.daemon;
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInspection.javaDoc.MissingJavadocInspection;
 import com.intellij.testFramework.TestDataPath;
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase5;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaCodeInsightFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+
 @TestDataPath("$CONTENT_ROOT/testData/codeInsight/daemonCodeAnalyzer/missingJavadoc/")
-public class MissingJavadocHighlightingTest extends LightJavaCodeInsightFixtureTestCase5 {
+@TestApplication
+public class MissingJavadocHighlightingTest {
+  private static final TestFixture<LightJavaProject> projectFixture =
+    lightJavaProjectFixture(LightJavaCodeInsightFixtureTestCase.JAVA_LATEST_WITH_LATEST_JDK);
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture = lightJavaCodeInsightFixture(projectFixture);
 
   private MissingJavadocInspection myInspection;
 
   @BeforeEach
   void setUp() {
+    codeInsightFixture.get().setTestDataPath(JavaTestUtil.getJavaTestDataPath() + "/codeInsight/daemonCodeAnalyzer/missingJavadoc/");
     MissingJavadocInspection inspection = new MissingJavadocInspection();
     inspection.METHOD_SETTINGS.ENABLED = false;
     inspection.MODULE_SETTINGS.ENABLED = false;
@@ -23,13 +34,8 @@ public class MissingJavadocHighlightingTest extends LightJavaCodeInsightFixtureT
     inspection.PACKAGE_SETTINGS.ENABLED = false;
     inspection.INNER_CLASS_SETTINGS.ENABLED = false;
     inspection.TOP_LEVEL_CLASS_SETTINGS.ENABLED = false;
-    getFixture().enableInspections(inspection);
+    codeInsightFixture.get().enableInspections(inspection);
     myInspection = inspection;
-  }
-
-  @Override
-  protected @NotNull String getTestDataPath() {
-    return JavaTestUtil.getJavaTestDataPath() + "/codeInsight/daemonCodeAnalyzer/missingJavadoc/";
   }
 
   @Test void testAllDisabled(){
@@ -99,36 +105,36 @@ public class MissingJavadocHighlightingTest extends LightJavaCodeInsightFixtureT
   }
 
   @Test void testPackageDisabled(){
-    getFixture().testHighlighting("/packageInfo/disabled/package-info.java");
+    codeInsightFixture.get().testHighlighting("/packageInfo/disabled/package-info.java");
   }
 
   @Test void testPackageEnabled(){
     myInspection.PACKAGE_SETTINGS.ENABLED = true;
-    getFixture().testHighlighting("/packageInfo/enabled/package-info.java");
+    codeInsightFixture.get().testHighlighting("/packageInfo/enabled/package-info.java");
   }
 
   @Test void testPackageRequiredTags(){
     myInspection.PACKAGE_SETTINGS.ENABLED = true;
     myInspection.PACKAGE_SETTINGS.setTagRequired("author", true);
-    getFixture().testHighlighting("/packageInfo/requiredTags/package-info.java");
+    codeInsightFixture.get().testHighlighting("/packageInfo/requiredTags/package-info.java");
   }
 
   @Test void testModuleDisabled(){
-    getFixture().testHighlighting("/moduleInfo/disabled/module-info.java");
+    codeInsightFixture.get().testHighlighting("/moduleInfo/disabled/module-info.java");
   }
 
   @Test void testModuleEnabled(){
     myInspection.MODULE_SETTINGS.ENABLED = true;
-    getFixture().testHighlighting("/moduleInfo/enabled/module-info.java");
+    codeInsightFixture.get().testHighlighting("/moduleInfo/enabled/module-info.java");
   }
 
   @Test void testModuleRequiredTags(){
     myInspection.MODULE_SETTINGS.ENABLED = true;
     myInspection.MODULE_SETTINGS.setTagRequired("author", true);
-    getFixture().testHighlighting("/moduleInfo/requiredTags/module-info.java");
+    codeInsightFixture.get().testHighlighting("/moduleInfo/requiredTags/module-info.java");
   }
 
   private void doTest(){
-    getFixture().testHighlighting(getTestName(false) + ".java");
+    codeInsightFixture.get().testHighlighting(codeInsightFixture.get().getTestName(false) + ".java");
   }
 }

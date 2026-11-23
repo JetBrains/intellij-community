@@ -1,0 +1,3 @@
+// INJECTED AT: (0,94)
+val greeting: String
+fun printGreeting()

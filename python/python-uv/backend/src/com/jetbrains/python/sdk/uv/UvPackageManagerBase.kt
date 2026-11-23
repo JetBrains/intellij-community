@@ -4,7 +4,6 @@ package com.jetbrains.python.sdk.uv
 import com.intellij.openapi.project.Project
 import com.intellij.platform.eel.EelApi
 import com.intellij.python.sdk.backend.PythonInterpreter
-import com.intellij.python.sdk.backend.getSdkAPI
 import com.intellij.python.sdk.backend.resolveExecutable
 import com.intellij.python.uv.backend.UvPyTool
 import com.jetbrains.python.Result
@@ -31,20 +30,22 @@ import org.jetbrains.annotations.ApiStatus
  */
 @ApiStatus.Internal
 abstract class UvPackageManagerBase(
-  project: Project,
   interpreter: PythonInterpreter,
   uvExecutionContextDeferred: Deferred<UvExecutionContext<*>>,
-) : PythonPackageManager(project, interpreter) {
+) : PythonPackageManager(interpreter) {
   override val installedPackagesIncludeTransitive: Boolean = true
   override val repositoryManager: PythonRepositoryManager = PipRepositoryManager.getInstance(project)
   override fun getCliSpecs(eelApi: EelApi): List<PythonManagerCliSpec> = listOf(
     PythonManagerCliSpec("uv", { eelApi.toFileSystem().resolveExecutable(UvPyTool.getInstance())?.path })
   )
 
-  protected val uvExecutionContextDeferred: Deferred<UvExecutionContext<*>> = uvExecutionContextDeferred.cancelWithManager()
+  private val uvExecutionContextDeferred: Deferred<UvExecutionContext<*>> = uvExecutionContextDeferred.cancelWithManager()
   private lateinit var uvLowLevel: PyResult<UvLowLevel<*>>
 
-  /** Runs [action] with the uv CLI of this SDK. The first call creates the CLI, and every later call reuses it. */
+  /**
+   * Runs [action] with the uv CLI of this interpreter. The first call that gets the execution context creates the CLI,
+   * and every later call reuses it.
+   */
   protected suspend fun <T> withUv(action: suspend (UvLowLevel<*>) -> PyResult<T>): PyResult<T> {
     if (!this::uvLowLevel.isInitialized) {
       uvLowLevel = uvExecutionContextDeferred.await().createUvCli()
@@ -66,19 +67,17 @@ abstract class UvPackageManagerBase(
   override suspend fun loadOutdatedPackagesCommand(): PyResult<List<PythonOutdatedPackage>> = withUv { uv -> uv.listOutdatedPackages() }
 }
 
-/** Picks the manager for the [UvMode] of the SDK. It pins a legacy SDK first. */
+/** Picks the manager for the [UvMode] of the interpreter. It pins a legacy interpreter first. */
 internal class UvPackageManagerProvider : PythonPackageManagerProvider {
-  // The legacy mode pin reads and writes the SDK data.
-  @Suppress("DEPRECATION")
-  override fun createPackageManager(project: Project, interpreter: PythonInterpreter): PythonPackageManager? {
+  override fun createPackageManager(interpreter: PythonInterpreter): PythonPackageManager? {
     if (!interpreter.isUv) {
       return null
     }
-    val mode = pinLegacyUvMode(project, interpreter.getSdkAPI())
-    val uvExecutionContext = interpreter.getUvExecutionContextAsync(PyPackageCoroutine.getScope(project), project) ?: return null
+    val mode = pinLegacyUvMode(interpreter)
+    val uvExecutionContext = interpreter.getUvExecutionContextAsync(PyPackageCoroutine.getScope(interpreter.project))
     return when (mode) {
-      UvMode.Project -> UvPackageManager(project, interpreter, uvExecutionContext)
-      is UvMode.Pip -> UvPipPackageManager(project, interpreter, uvExecutionContext)
+      UvMode.Project -> UvPackageManager(interpreter, uvExecutionContext)
+      is UvMode.Pip -> UvPipPackageManager(interpreter, uvExecutionContext)
     }
   }
 }

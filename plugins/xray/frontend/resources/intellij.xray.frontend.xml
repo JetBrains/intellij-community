@@ -25,8 +25,13 @@
 
   <extensions defaultExtensionNs="com.intellij">
     <editorFactoryListener implementation="com.intellij.xray.frontend.impl.editorTracking.XRayModeTracker"/>
+    <editorFactoryListener implementation="com.intellij.xray.frontend.impl.XRayEditorMouseWheelPatcher"/>
+
     <iw.actionProvider implementation="com.intellij.xray.frontend.impl.action.XRayModeActionProvider"/>
     <notificationGroup displayType="BALLOON" id="X-Ray Inlay Visibility" bundle="messages.XRayBundle" key="xray.inlay.notification.group"/>
+
+    <registryKey defaultValue="false" description="Editor tracking feature: track caret, typing and debugger state to adapt X-Ray mode"
+                 key="com.intellij.xray.editorTracking" restartRequired="true"/>
 
     <!-- Platform EPs -->
     <codeInsight.inlayHintSettingsOverrider implementation="com.intellij.xray.frontend.impl.platform.XRayInlayHintSettingsOverrider"/>

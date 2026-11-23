@@ -9,7 +9,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
 
-final class VisualOrderIterator implements Iterator<LineVisualFragment> {
+final class VisualOrderIterator implements Iterator<PositionedLineFragment> {
   // optional params
   private final @Nullable EditorView view;
   private final @Nullable DocumentText document;
@@ -19,11 +19,13 @@ final class VisualOrderIterator implements Iterator<LineVisualFragment> {
   // mandatory param
   private final LineBidiRun[] runs;
 
-  private final LineVisualFragment current;
+  private final PositionedLineFragment current;
   private int runIndex;
   private int chunkIndex;
   private int fragmentIndex;
   private int offsetInsideRun;
+  private int runChunkCount;
+  private @Nullable LineChunk chunk;
 
   VisualOrderIterator(
     @Nullable EditorView view,
@@ -39,40 +41,22 @@ final class VisualOrderIterator implements Iterator<LineVisualFragment> {
     this.line = line;
     this.lineStartOffset = document == null ? 0 : document.lineStartOffset(line);
     this.runs = runsInVisualOrder;
-    this.current = new LineVisualFragment(startOffset, startVisualColumn, startX);
+    this.current = new PositionedLineFragment(startOffset, startVisualColumn, startX);
   }
 
   @Override
   public boolean hasNext() {
-    // run -> chunk -> fragment
-    if (runIndex < runs.length) {
-      LineBidiRun run = runs[runIndex];
-      var chars = document == null ? null : document.luckyChars();
-      List<LineChunk> chunks = run.getChunks(chars, lineStartOffset);
-      if (chunkIndex < chunks.size()) {
-        int chunkIndexRtl = run.isRtl() ? (chunks.size() - chunkIndex - 1) : chunkIndex;
-        LineChunk chunk = chunks.get(chunkIndexRtl);
-        if (view != null && document != null) {
-          chunk.ensureLayout(view, document, line, run.getLevel());
-        }
-        if (fragmentIndex < chunk.fragmentCount()) {
-          return true;
-        }
-      }
-    }
-    return false;
+    LineChunk chunk = currentChunk();
+    return chunk != null && fragmentIndex < chunk.fragmentCount();
   }
 
   @Override
-  public LineVisualFragment next() {
-    if (!hasNext()) {
+  public PositionedLineFragment next() {
+    LineChunk chunk = currentChunk();
+    if (chunk == null || fragmentIndex >= chunk.fragmentCount()) {
       throw new NoSuchElementException();
     }
     LineBidiRun run = runs[runIndex];
-    var chars = document == null ? null : document.luckyChars();
-    List<LineChunk> chunks = run.getChunks(chars, lineStartOffset);
-    int chunkIndexRtl = run.isRtl() ? (chunks.size() - chunkIndex - 1) : chunkIndex;
-    LineChunk chunk = chunks.get(chunkIndexRtl);
     int fragmentIndexRtl = run.isRtl() ? (chunk.fragmentCount() - fragmentIndex - 1) : fragmentIndex;
     LineFragment fragment = chunk.getFragment(fragmentIndexRtl);
     setCurrentFragment(run, fragment);
@@ -81,13 +65,43 @@ final class VisualOrderIterator implements Iterator<LineVisualFragment> {
     if (fragmentIndex >= chunk.fragmentCount()) {
       fragmentIndex = 0;
       chunkIndex++;
-      if (chunkIndex >= chunks.size()) {
+      this.chunk = null;
+      if (chunkIndex >= runChunkCount) {
         chunkIndex = 0;
         offsetInsideRun = 0;
         runIndex++;
       }
     }
     return current;
+  }
+
+  /**
+   * Gives the chunk at the current position with its fragments, or null after the last run.
+   * It lays the chunk out once, and again only when the layout cache drops its fragments.
+   */
+  private @Nullable LineChunk currentChunk() {
+    LineChunk known = chunk;
+    if (known != null && known.isLaidOut()) {
+      return known;
+    }
+    if (runIndex >= runs.length) {
+      return null;
+    }
+    // run -> chunk -> fragment
+    LineBidiRun run = runs[runIndex];
+    var chars = document == null ? null : document.luckyChars();
+    List<LineChunk> chunks = run.getChunks(chars, lineStartOffset);
+    if (chunkIndex >= chunks.size()) {
+      return null;
+    }
+    int chunkIndexRtl = run.isRtl() ? (chunks.size() - chunkIndex - 1) : chunkIndex;
+    LineChunk found = chunks.get(chunkIndexRtl);
+    if (view != null && document != null) {
+      found.ensureLayout(view, document, line, run.getLevel());
+    }
+    runChunkCount = chunks.size();
+    chunk = found;
+    return found;
   }
 
   private void setCurrentFragment(@NotNull LineBidiRun run, @NotNull LineFragment fragment) {

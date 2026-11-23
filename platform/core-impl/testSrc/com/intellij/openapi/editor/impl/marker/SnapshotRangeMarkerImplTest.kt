@@ -95,10 +95,86 @@ internal class SnapshotRangeMarkerImplTest {
     assertEquals(firstRange, root.resolve(first.markerHandle))
   }
 
+  @Test
+  fun `getters reuse cached offsets after unrelated marker creation and disposal`() {
+    val document = DocumentImpl("abcdefgh", true)
+    val markers = List(3) { document.createRangeMarker(4, 6) as SnapshotRangeMarkerImpl }
+    for (marker in markers) assertEquals(TextRange(4, 6), marker.textRange)
+    val reference = markers.first().currentRootReference()
+    val before = document.core.snapshot().text()
+    val firstPatch = DocumentPatch.simple(0, 0, "x", newModStamp = 1, clearLineFlags = false)
+    val after = before.replace(0, 0, "x")
+    reference.set(reference.get().applyPatch(firstPatch, before, after))
+    document.createRangeMarker(0, 1).dispose()
+    val secondPatch = DocumentPatch.simple(0, 0, "x", newModStamp = 2, clearLineFlags = false)
+    val shifted = reference.get().applyPatch(secondPatch, after, after.replace(0, 0, "x"))
+    reference.set(object : PMarkerRoot by shifted {
+      override fun resolve(handle: SnapshotMarkerReference<*>): Long = error("The getters must reuse cached offsets")
+      override fun isValid(handle: SnapshotMarkerReference<*>): Boolean = error("Validity checks must reuse cached offsets")
+    })
+
+    for (marker in markers) {
+      assertTrue(marker.isValid)
+      assertEquals(6, marker.startOffset)
+      assertEquals(8, marker.endOffset)
+      assertEquals(TextRange(6, 8), marker.textRange)
+      assertTrue(marker.isValid)
+    }
+  }
+
   private fun resolutionMap(root: PMarkerRoot): Any? {
     val cache = checkNotNull(PMarkerDirectRoot::class.java.getDeclaredField("cachedResolutions")
                               .apply { isAccessible = true }.get(root))
     return cache.javaClass.getDeclaredField("additionalResolutions").apply { isAccessible = true }.get(cache)
+  }
+
+  @Test
+  fun `repeated full traversals preserve ranges across root changes`() {
+    val document = DocumentImpl("x".repeat(100), true)
+    val markers = List(12) { index -> document.createRangeMarker(index * 4 + 1, index * 4 + 3) as SnapshotRangeMarkerImpl }
+    val original = markers.first().currentRootReference().get()
+    val before = document.core.snapshot().text()
+    val patch = DocumentPatch.simple(20, 20, "xx", newModStamp = 1, clearLineFlags = false)
+    val shifted = original.applyPatch(patch, before, before.replace(20, 20, "xx"))
+    val ranges = markers.mapIndexed { index, marker ->
+      val delta = if (index >= 5) 2 else 0
+      marker.markerHandle to TextRangeScalarUtil.toScalarRange(index * 4 + 1 + delta, index * 4 + 3 + delta)
+    }
+
+    fun assertRanges(root: PMarkerRoot, expected: List<Pair<SnapshotMarkerReference<*>, Long>>) {
+      repeat(2) {
+        val actual = ArrayList<Pair<SnapshotMarkerReference<*>, Long>>()
+        assertTrue(root.processAllRangeMarkers { entry, delta ->
+          val range = TextRangeScalarUtil.toScalarRange(entry.nodeStart + delta, entry.nodeEnd + delta)
+          actual.add(entry.handle to range)
+          assertEquals(range, root.resolve(entry.handle))
+          true
+        })
+        assertEquals(expected, actual)
+      }
+    }
+
+    var visited = 0
+    assertFalse(shifted.processAllRangeMarkers { _, _ -> ++visited < 3 })
+    assertEquals(3, visited)
+    assertThrows(IllegalStateException::class.java) {
+      shifted.processAllRangeMarkers { entry, _ ->
+        check(entry.handle !== markers[5].markerHandle)
+        true
+      }
+    }
+    assertRanges(shifted, ranges)
+    val flavored = shifted.updateFlavor(markers[4].markerHandle, 2)
+    assertRanges(flavored, ranges)
+    val removed = flavored.remove(markers[1].markerHandle)
+    assertRanges(removed, ranges.filter { it.first !== markers[1].markerHandle })
+    val added = document.createRangeMarker(80, 82) as SnapshotRangeMarkerImpl
+    val inserted = removed.insert(added.markerHandle, 80, 82, MarkerSpec.create(false, false), flavorFlags = 0)
+    assertRanges(inserted, ranges.filter { it.first !== markers[1].markerHandle } +
+                           (added.markerHandle to TextRangeScalarUtil.toScalarRange(80, 82)))
+    assertRanges(original, markers.mapIndexed { index, marker ->
+      marker.markerHandle to TextRangeScalarUtil.toScalarRange(index * 4 + 1, index * 4 + 3)
+    })
   }
 
   @Test

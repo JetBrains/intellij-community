@@ -2,20 +2,23 @@
 package org.jetbrains.idea.devkit.k2.inspections
 
 import com.intellij.testFramework.TestDataPath
-import org.jetbrains.idea.devkit.inspections.quickfix.UseIntelliJVirtualThreadsInspectionTestBase
+import com.intellij.testFramework.junit5.TestApplication
+import org.jetbrains.idea.devkit.inspections.quickfix.useIntelliJVirtualThreadsFixture
+import org.jetbrains.idea.devkit.inspections.quickfix.useIntelliJVirtualThreadsProjectFixture
 import org.jetbrains.idea.devkit.kotlin.DevkitKtTestsUtil
+import org.junit.jupiter.api.Test
 
 @TestDataPath($$"$CONTENT_ROOT/testData/inspections/useIntelliJVirtualThreads")
-class KtUseIntelliJVirtualThreadsInspectionTest : UseIntelliJVirtualThreadsInspectionTestBase() {
-    
-
-  override fun getBasePath(): String {
-    return DevkitKtTestsUtil.TESTDATA_PATH + "inspections/useIntelliJVirtualThreads"
+@TestApplication
+class KtUseIntelliJVirtualThreadsInspectionTest {
+  companion object {
+    private val projectFixture = useIntelliJVirtualThreadsProjectFixture()
   }
 
+  private val virtualThreads by useIntelliJVirtualThreadsFixture(projectFixture, "kt", DevkitKtTestsUtil.TESTDATA_PATH + "inspections/useIntelliJVirtualThreads")
+
+  @Test
   fun testUseIntelliJVirtualThreads() {
-    doTest("Replace with 'IntelliJVirtualThreads.ofVirtual()'")
+    virtualThreads.doTest("Replace with 'IntelliJVirtualThreads.ofVirtual()'")
   }
-
-  override fun getFileExtension(): String = "kt"
 }

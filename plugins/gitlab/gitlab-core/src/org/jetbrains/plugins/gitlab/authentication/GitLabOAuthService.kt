@@ -69,10 +69,11 @@ internal class GitLabOAuthService(private val cs: CoroutineScope) {
     get() = "http://127.0.0.1:${BuiltInServerManager.getInstance().port}/${RestService.PREFIX}/$SERVICE_NAME"
 
   @Throws(GitLabOAuthFlowException::class)
-  suspend fun authorizeToGitLabDotCom() = authorize(GitLabServerPath.DEFAULT_SERVER, GITLAB_DOT_COM_OAUTH_CLIENT_ID)
+  suspend fun authorizeToGitLabDotCom(rootNamespaceId: Int?) =
+    authorize(GitLabServerPath.DEFAULT_SERVER, GITLAB_DOT_COM_OAUTH_CLIENT_ID, rootNamespaceId)
 
   @Throws(GitLabOAuthFlowException::class)
-  suspend fun authorize(server: GitLabServerPath, clientId: String): GitLabCredentials.OAuth {
+  suspend fun authorize(server: GitLabServerPath, clientId: String, rootNamespaceId: Int?): GitLabCredentials.OAuth {
     val requestId = DigestUtil.randomToken()
     val codeVerifier = ByteArray(32).also { DigestUtil.random.nextBytes(it) }
     val codeVerifierEncoded = Base64.getUrlEncoder().withoutPadding().encodeToString(codeVerifier)
@@ -81,7 +82,7 @@ internal class GitLabOAuthService(private val cs: CoroutineScope) {
     val pending = PendingLoginWithRequest(server, clientId, codeVerifierEncoded, request)
     pendingLogins[requestId] = pending
     try {
-      val uri = server.buildAuthorizationURI(requestId, clientId, redirectUri, codeVerifierEncoded)
+      val uri = server.buildAuthorizationURI(requestId, clientId, rootNamespaceId, redirectUri, codeVerifierEncoded)
       BrowserUtil.browse(uri)
       return request.await()
     }
@@ -94,7 +95,13 @@ internal class GitLabOAuthService(private val cs: CoroutineScope) {
     }
   }
 
-  private fun GitLabServerPath.buildAuthorizationURI(requestId: String, clientId: String, redirectUri: String, codeVerifier: String): URI {
+  private fun GitLabServerPath.buildAuthorizationURI(
+    requestId: String,
+    clientId: String,
+    rootNamespaceId: Int?,
+    redirectUri: String,
+    codeVerifier: String,
+  ): URI {
     val codeChallenge = DigestUtil.sha256().digest(codeVerifier.toByteArray())
     val codeChallengeEncoded = Base64.getUrlEncoder()
       .withoutPadding()
@@ -107,6 +114,7 @@ internal class GitLabOAuthService(private val cs: CoroutineScope) {
       "code_challenge_method" eq CODE_CHALLENGE_METHOD
       "scope" eq TOKEN_SCOPE
       "redirect_uri" eq redirectUri
+      rootNamespaceId?.let { "root_namespace_id" eq it }
     }
   }
 

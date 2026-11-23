@@ -5,25 +5,30 @@ import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
 import com.intellij.codeInspection.uncheckedWarnings.UncheckedWarningLocalInspection;
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase5;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaCodeInsightFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-class NewMethodRefHighlightingTest extends LightJavaCodeInsightFixtureTestCase5 {
-  private static final String BASE_PATH = "/codeInsight/daemonCodeAnalyzer/lambda/newMethodRef/";
+@TestApplication
+class NewMethodRefHighlightingTest {
+  private static final TestFixture<LightJavaProject> projectFixture =
+    lightJavaProjectFixture(LightJavaCodeInsightFixtureTestCase.JAVA_LATEST_WITH_LATEST_JDK);
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture = lightJavaCodeInsightFixture(projectFixture);
 
-  @NotNull
-  @Override
-  protected String getTestDataPath() {
-    return JavaTestUtil.getJavaTestDataPath() + BASE_PATH;
-  }
+  private static final String BASE_PATH = "/codeInsight/daemonCodeAnalyzer/lambda/newMethodRef/";
 
   @BeforeEach
   void setUp() {
-    getFixture().enableInspections(new UnusedDeclarationInspection(), new UncheckedWarningLocalInspection());
+    codeInsightFixture.get().setTestDataPath(JavaTestUtil.getJavaTestDataPath() + BASE_PATH);
+    codeInsightFixture.get().enableInspections(new UnusedDeclarationInspection(), new UncheckedWarningLocalInspection());
   }
 
   @Test void testIDEA93587() { doTest(true); }
@@ -64,7 +69,7 @@ class NewMethodRefHighlightingTest extends LightJavaCodeInsightFixtureTestCase5 
   @Test void testReturnTypeCheckForRawReceiver() { doTest(); }
   @Test void testStaticNonStaticReferenceTypeAmbiguity() {
     doTest();
-    getFixture().doHighlighting()
+    codeInsightFixture.get().doHighlighting()
       .stream()
       .filter(info -> info.type == HighlightInfoType.ERROR)
       .forEach(info -> assertEquals("<html>Reference to 'm' is ambiguous, both 'm(String)' and 'm(Test, String)' match</html>",
@@ -197,6 +202,6 @@ class NewMethodRefHighlightingTest extends LightJavaCodeInsightFixtureTestCase5 
   }
 
   private void doTest(boolean warnings) {
-    getFixture().testHighlighting(warnings, false, false, getTestName(false) + ".java");
+    codeInsightFixture.get().testHighlighting(warnings, false, false, codeInsightFixture.get().getTestName(false) + ".java");
   }
 }

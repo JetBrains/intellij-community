@@ -37,6 +37,7 @@ sealed interface TerminalHyperlinksOutputEvent {
   /**
    * Signals that a highlighting task has finished — every [HyperlinksUpdated] event
    * for that task has already been emitted before this one.
+   * A task that stopped before it processed all its lines does not send this event.
    */
   @Serializable
   data class TaskFinished(

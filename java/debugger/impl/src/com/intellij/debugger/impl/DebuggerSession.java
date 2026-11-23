@@ -767,7 +767,10 @@ public final class DebuggerSession implements AbstractDebuggerSession {
     public void processAttached(final DebugProcessImpl process) {
       String message = JavaDebuggerBundle.message("status.connected", DebuggerUtilsImpl.getConnectionDisplayName(process.getConnection()));
 
-      process.printToConsole(message + "\n");
+      // the VM of an adopting process was connected, and said so, by the process that released it
+      if (!process.isVirtualMachineAdopted()) {
+        process.printToConsole(message + "\n");
+      }
       DebuggerInvocationUtil.invokeLater(getProject(),
                                          () -> getContextManager().setState(SESSION_EMPTY_CONTEXT, State.RUNNING, Event.ATTACHED, message));
     }

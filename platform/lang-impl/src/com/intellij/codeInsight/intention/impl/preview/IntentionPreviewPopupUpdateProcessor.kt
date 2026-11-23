@@ -27,6 +27,7 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.JBPopupFactory
+import com.intellij.openapi.util.Disposer
 import com.intellij.psi.PsiFile
 import com.intellij.ui.ScreenUtil
 import com.intellij.ui.popup.PopupPositionManager.Position.LEFT
@@ -93,6 +94,7 @@ class IntentionPreviewPopupUpdateProcessor internal constructor(
         .setCancelKeyEnabled(false)
         .addUserData(IntentionPreviewPopupKey())
         .createPopup()
+      Disposer.register(popup) { releaseEditors() }
 
       component.addComponentListener(object : ComponentAdapter() {
         override fun componentResized(e: ComponentEvent?) {
@@ -250,17 +252,21 @@ class IntentionPreviewPopupUpdateProcessor internal constructor(
 
   private fun cancel(): Boolean {
     job?.cancel()
-
-    if (editorsToRelease.isNotEmpty()) {
-      val editorFactory = EditorFactory.getInstance()
-      for (editor in editorsToRelease) {
-        Elf.getElf().runReadAction { editorFactory.releaseEditor(editor) }
-      }
-      editorsToRelease.clear()
-    }
+    releaseEditors()
     component.removeAll()
     show = false
     return true
+  }
+
+  private fun releaseEditors() {
+    if (editorsToRelease.isEmpty()) {
+      return
+    }
+    val editorFactory = EditorFactory.getInstance()
+    for (editor in editorsToRelease) {
+      Elf.getElf().runReadAction { editorFactory.releaseEditor(editor) }
+    }
+    editorsToRelease.clear()
   }
 
   private fun select(index: Int, previewComponent: JComponent? = null) {

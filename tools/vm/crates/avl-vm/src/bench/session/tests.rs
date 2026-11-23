@@ -345,7 +345,8 @@ fn the_markdown_project_lives_in_the_template_and_opens_its_readme() {
         project,
         Project {
             name: "markdown".to_owned(),
-            file: "README.md".into()
+            file: "README.md".into(),
+            place: None,
         }
     );
     let paths = project.paths(&template);
@@ -391,4 +392,27 @@ fn a_directory_project_is_copied_and_opens_its_first_markdown_file() {
     assert_eq!(first_file(&empty).expect("a listing"), None);
     let error = write_project(&template, &ProjectSource::Dir(empty.clone())).expect_err("no file to open");
     assert_eq!(format!("{error:#}"), format!("the project {} has no file to open", empty.display()));
+}
+
+/// An in-place project stays where it is: the template holds no copy, and every sandbox opens the same directory.
+#[test]
+fn an_in_place_project_is_not_copied_and_every_sandbox_opens_it() {
+    let dir = tempfile::tempdir().expect("a temporary directory");
+    let tree = dir.path().join("checkout");
+    std::fs::create_dir_all(tree.join("src")).expect("a tree");
+    std::fs::write(tree.join("README.md"), "# checkout\n").expect("a file");
+    let template = Sandbox::new(dir.path().join("template"));
+    let project = write_project(&template, &ProjectSource::InPlace(tree.clone())).expect("a project");
+    assert_eq!(
+        project,
+        Project {
+            name: "checkout".to_owned(),
+            file: "README.md".into(),
+            place: Some(tree.clone()),
+        }
+    );
+    assert!(!template.root.join("projects").exists(), "the template holds no copy");
+    let other = Sandbox::new(dir.path().join("other"));
+    assert_eq!(project.paths(&template).dir, tree);
+    assert_eq!(project.paths(&other), project.paths(&template));
 }

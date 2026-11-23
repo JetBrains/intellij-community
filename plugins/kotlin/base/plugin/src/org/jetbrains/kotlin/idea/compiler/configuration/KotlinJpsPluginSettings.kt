@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.compiler.configuration
 import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.application.runInEdt
+import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.State
@@ -215,20 +216,16 @@ class KotlinJpsPluginSettings(project: Project) : BaseKotlinCompilerSettings<Jps
                 }
         }
 
-        fun supportedJpsVersion(
-            project: Project,
-            onUnsupportedVersion: (@Nls(capitalization = Nls.Capitalization.Sentence) String) -> Unit,
-        ): String? {
+        /**
+         * The project's JPS version to build with, after the checks of [checkJpsVersion].
+         * An outdated compiler version maps to [fallbackVersionForOutdatedCompiler].
+         */
+        fun supportedJpsVersion(project: Project): JpsVersionSupport = runReadActionBlocking {
             val version = jpsVersion(project)
-            return when (val error = checkJpsVersion(version, project, fromFile = true)) {
-                is OutdatedCompilerVersion -> fallbackVersionForOutdatedCompiler
-
-                is NewCompilerVersion, is ParsingError, is IncompatibleJdkVersion -> {
-                    onUnsupportedVersion(error.message)
-                    null
-                }
-
-                null -> version
+            when (val error = checkJpsVersion(version, project, fromFile = true)) {
+                is OutdatedCompilerVersion -> JpsVersionSupport.Supported(fallbackVersionForOutdatedCompiler)
+                is NewCompilerVersion, is ParsingError, is IncompatibleJdkVersion -> JpsVersionSupport.Unsupported(error.message)
+                null -> JpsVersionSupport.Supported(version)
             }
         }
 
@@ -359,6 +356,15 @@ class ParsingError(message: @Nls(capitalization = Nls.Capitalization.Sentence) S
 class OutdatedCompilerVersion(message: @Nls(capitalization = Nls.Capitalization.Sentence) String) : UnsupportedJpsVersionError(message)
 class NewCompilerVersion(message: @Nls(capitalization = Nls.Capitalization.Sentence) String) : UnsupportedJpsVersionError(message)
 class IncompatibleJdkVersion(message: @Nls(capitalization = Nls.Capitalization.Sentence) String) : UnsupportedJpsVersionError(message)
+
+/**
+ * The result of the JPS version checks of [KotlinJpsPluginSettings.checkJpsVersion]:
+ * the version to build with, or the message that rejects the configured version.
+ */
+sealed interface JpsVersionSupport {
+    data class Supported(val version: String) : JpsVersionSupport
+    data class Unsupported(val message: @Nls(capitalization = Nls.Capitalization.Sentence) String) : JpsVersionSupport
+}
 
 @get:NlsSafe
 val JpsPluginSettings.versionWithFallback: String get() = version.ifEmpty { KotlinJpsPluginSettings.rawBundledVersion }

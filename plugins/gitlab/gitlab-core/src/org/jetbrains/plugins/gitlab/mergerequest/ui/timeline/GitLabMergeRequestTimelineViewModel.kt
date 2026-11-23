@@ -31,7 +31,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.launch
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
-import org.jetbrains.plugins.gitlab.mergerequest.GitLabMergeRequestsPreferences
+import org.jetbrains.plugins.gitlab.mergerequest.GitLabReviewSettings
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequest
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabProject
 import org.jetbrains.plugins.gitlab.mergerequest.ui.details.GitLabMergeRequestViewModel
@@ -61,7 +61,7 @@ internal class LoadAllGitLabMergeRequestTimelineViewModel(
   private val project: Project,
   parentCs: CoroutineScope,
   private val projectData: GitLabProject,
-  private val preferences: GitLabMergeRequestsPreferences,
+  private val settings: GitLabReviewSettings,
   override val currentUser: GitLabUserDTO,
   private val mergeRequest: GitLabMergeRequest,
   htmlConverter: GitLabMarkdownToHtmlConverter,
@@ -80,7 +80,7 @@ internal class LoadAllGitLabMergeRequestTimelineViewModel(
   }.modelFlow(cs, LOG)
   override val url: String = mergeRequest.url
 
-  private val _showEvents = MutableStateFlow(preferences.showEventsInTimeline)
+  private val _showEvents = MutableStateFlow(settings.showEventsInTimeline)
   override val showEvents: StateFlow<Boolean> = _showEvents.asStateFlow()
 
   override val timelineItems: SharedFlow<Result<List<GitLabMergeRequestTimelineItemViewModel>>> =
@@ -116,7 +116,7 @@ internal class LoadAllGitLabMergeRequestTimelineViewModel(
 
   override fun setShowEvents(show: Boolean) {
     _showEvents.value = show
-    preferences.showEventsInTimeline = show
+    settings.showEventsInTimeline = show
   }
 
   override fun reloadData() {

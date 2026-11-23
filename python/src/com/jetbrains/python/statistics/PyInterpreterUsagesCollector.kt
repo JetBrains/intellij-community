@@ -6,7 +6,6 @@ import com.intellij.internal.statistic.beans.MetricEvent
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesCollector
 import com.intellij.openapi.project.Project
-import com.intellij.python.sdk.backend.getSdkAPI
 
 /**
  * Reports sdk usages: version, dialect and remote/local
@@ -18,7 +17,7 @@ internal class PyInterpreterUsagesCollector : ProjectUsagesCollector() {
   override suspend fun collect(project: Project): Set<MetricEvent> =
     project.pythonInterpreters()
       .mapTo(mutableSetOf()) { interpreter ->
-        PYTHON_SDK_USED.metric(getPythonSpecificInfo(interpreter.getSdkAPI()))
+        PYTHON_SDK_USED.metric(getPythonSpecificInfo(interpreter))
       }
 
   override fun getGroup(): EventLogGroup = GROUP

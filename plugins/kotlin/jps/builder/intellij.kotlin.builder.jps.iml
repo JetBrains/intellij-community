@@ -4,7 +4,7 @@
     <facet type="kotlin-language" name="Kotlin">
       <configuration version="5" platform="JVM 11" allPlatforms="JVM [11]" useProjectSettings="false">
         <compilerSettings>
-          <option name="additionalArguments" value="-Xjvm-default=all -XXLanguage:+AllowEagerSupertypeAccessibilityChecks -progressive -opt-in=org.jetbrains.kotlin.buildtools.api.ExperimentalBuildToolsApi -opt-in=org.jetbrains.kotlin.buildtools.api.arguments.ExperimentalCompilerArgument -opt-in=org.jetbrains.kotlin.buildtools.api.jps.InternalBuildToolsApi -XXLanguage:-WrapContinuationForTailCallFunctions" />
+          <option name="additionalArguments" value="-Xjvm-default=all -XXLanguage:+AllowEagerSupertypeAccessibilityChecks -progressive -opt-in=org.jetbrains.kotlin.buildtools.api.ExperimentalBuildToolsApi -opt-in=org.jetbrains.kotlin.buildtools.api.arguments.ExperimentalCompilerArgument -opt-in=org.jetbrains.kotlin.buildtools.api.jps.InternalBuildToolsApi" />
         </compilerSettings>
         <compilerArguments>
           <stringArguments>

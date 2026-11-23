@@ -68,6 +68,12 @@ public class TransientFileContentIndex<Key, Value, FileCachedData extends VfsAwa
   }
 
   @Override
+  protected void doClear() throws StorageException, IOException {
+    super.doClear();
+    myInMemoryKeysAndValues.clear();
+  }
+
+  @Override
   protected @NotNull InputDataDiffBuilder<Key, Value> getKeysDiffBuilder(int inputId) throws IOException {
     if (myInMemoryMode.get()) {
       Map<Key, Value> keysAndValues = myInMemoryKeysAndValues.get(inputId);

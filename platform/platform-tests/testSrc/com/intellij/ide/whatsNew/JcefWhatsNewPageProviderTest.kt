@@ -1,13 +1,59 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.whatsNew
 
+import com.intellij.ide.Region
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.fileEditor.impl.HTMLEditorProvider
+import com.intellij.openapi.project.Project
+import com.intellij.testFramework.common.timeoutRunBlocking
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.fixture.projectFixture
+import kotlinx.coroutines.CompletableDeferred
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertSame
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.EnumSource
+import java.util.function.Consumer
 
+@TestApplication
 class JcefWhatsNewPageProviderTest {
+  companion object {
+    private val projectFixture = projectFixture()
+  }
+
+  @ParameterizedTest
+  @EnumSource(Region::class)
+  fun `the page waits for its region before it opens and excludes China from shows`(region: Region): Unit = timeoutRunBlocking {
+    val regionRequested = CompletableDeferred<Unit>()
+    val resolvedRegion = CompletableDeferred<Region>()
+    val opened = CompletableDeferred<Pair<Boolean, Boolean>>()
+    openAfterRegionCheck(projectFixture.get(), true, Consumer { showAirPromo ->
+      opened.complete(showAirPromo to ApplicationManager.getApplication().isDispatchThread)
+    }) {
+      regionRequested.complete(Unit)
+      resolvedRegion.await()
+    }
+
+    regionRequested.await()
+    assertFalse(opened.isCompleted)
+    resolvedRegion.complete(region)
+    assertEquals((region != Region.CHINA) to true, opened.await())
+  }
+
+  @Test
+  fun `a page without code opens without a region check or a block show`(): Unit = timeoutRunBlocking {
+    val opened = CompletableDeferred<Boolean>()
+    openAfterRegionCheck(projectFixture.get(), false, Consumer { opened.complete(it) }) {
+      error("A page without the promo needs no region check")
+    }
+    assertTrue(opened.isCompleted)
+    assertFalse(opened.await())
+  }
+
   @Test
   fun `the page trusts the origin of its URL and the origin of the web site that a short link redirects to`() {
     assertEquals(listOf("https://jb.gg", "https://www.jetbrains.com"),
@@ -31,6 +77,13 @@ class JcefWhatsNewPageProviderTest {
     assertSame(handler, withOrigins.queryHandler)
     assertEquals(listOf("https://example.com"), withOrigins.trustedOrigins)
   }
+}
+
+private fun openAfterRegionCheck(project: Project, hasAirPromo: Boolean, openPage: Consumer<Boolean>, currentRegion: suspend () -> Region) {
+  val openingClass = Class.forName("com.intellij.ide.whatsNew.JcefWhatsNewPageOpening")
+  val method = openingClass.getDeclaredMethod("openAfterRegionCheck", Boolean::class.javaPrimitiveType,
+                                              Consumer::class.java, Function1::class.java)
+  method.invoke(project.getService(openingClass), hasAirPromo, openPage, currentRegion)
 }
 
 private val providerClass: Class<*>

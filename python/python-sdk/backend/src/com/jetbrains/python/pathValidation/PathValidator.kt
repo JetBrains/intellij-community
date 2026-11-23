@@ -5,6 +5,7 @@ import com.intellij.execution.Platform
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.util.io.OSAgnosticPathUtil
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
+import com.intellij.util.concurrency.annotations.RequiresReadLockAbsence
 import com.jetbrains.python.sdk.appxProduct
 import com.intellij.python.sdk.backend.PySdkBundle
 import org.jetbrains.annotations.Nls
@@ -61,6 +62,8 @@ class ValidationRequest(@NonNls internal val path: String?,
  * Ensure file is executable
  */
 @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
+// Off until PY-93940.
+@RequiresReadLockAbsence(generateAssertion = false)
 fun validateExecutableFile(
   request: ValidationRequest
 ): ValidationInfo? = request.validate {
@@ -76,6 +79,7 @@ fun validateExecutableFile(
  * Ensure directory either doesn't exist or empty
  */
 @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
+@RequiresReadLockAbsence
 fun validateEmptyDir(request: ValidationRequest,
                      @Nls notADirectory: String,
                      @Nls directoryNotEmpty: String

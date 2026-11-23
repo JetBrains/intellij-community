@@ -15,4 +15,13 @@ interface PyProjectService {
 
   /** [getPyProjects] without the wait for the JPS model, see [getPyProjectsWithoutJpsSync]. */
   fun getPyProjectsWithoutJpsSync(project: Project): List<PyProject>
+
+  /** See [com.jetbrains.python.project.asPyProjectCandidate]. */
+  fun getPyProjectCandidate(module: Module): PyProject?
+
+  /**
+   * Whether [module] is a Python project in the current workspace model, by the rule of [getPyProject], without the
+   * wait for the JPS model.
+   */
+  fun isPyProject(module: Module): Boolean
 }

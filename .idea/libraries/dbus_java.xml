@@ -1,12 +1,12 @@
 <component name="libraryTable">
   <library name="dbus-java" type="repository">
-    <properties maven-id="com.github.hypfvieh:dbus-java-transport-native-unixsocket:4.2.1">
+    <properties maven-id="com.github.hypfvieh:dbus-java-transport-native-unixsocket:5.2.2">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/com/github/hypfvieh/dbus-java-transport-native-unixsocket/4.2.1/dbus-java-transport-native-unixsocket-4.2.1.jar">
-          <sha256sum>bb67de9bd08148123b918458efc78055146bd5ae1538487cf4a018dd0f644837</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/github/hypfvieh/dbus-java-transport-native-unixsocket/5.2.2/dbus-java-transport-native-unixsocket-5.2.2.jar">
+          <sha256sum>6174f8256fbae335548be75e57167042cbfae7bafb442295c56ea7f38466da6a</sha256sum>
         </artifact>
-        <artifact url="file://$MAVEN_REPOSITORY$/com/github/hypfvieh/dbus-java-core/4.2.1/dbus-java-core-4.2.1.jar">
-          <sha256sum>3a7b9fd543a1be94de99009c36ac1803f08d6d12357706c8f5040855315469d1</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/github/hypfvieh/dbus-java-core/5.2.2/dbus-java-core-5.2.2.jar">
+          <sha256sum>dd625ba59a632b7d05d712f29ee04551736d584d0f6c40d1d8a09eabaedc9cf0</sha256sum>
         </artifact>
       </verification>
       <exclude>
@@ -14,13 +14,13 @@
       </exclude>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/com/github/hypfvieh/dbus-java-transport-native-unixsocket/4.2.1/dbus-java-transport-native-unixsocket-4.2.1.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/com/github/hypfvieh/dbus-java-core/4.2.1/dbus-java-core-4.2.1.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/github/hypfvieh/dbus-java-transport-native-unixsocket/5.2.2/dbus-java-transport-native-unixsocket-5.2.2.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/github/hypfvieh/dbus-java-core/5.2.2/dbus-java-core-5.2.2.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/com/github/hypfvieh/dbus-java-transport-native-unixsocket/4.2.1/dbus-java-transport-native-unixsocket-4.2.1-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/com/github/hypfvieh/dbus-java-core/4.2.1/dbus-java-core-4.2.1-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/github/hypfvieh/dbus-java-transport-native-unixsocket/5.2.2/dbus-java-transport-native-unixsocket-5.2.2-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/github/hypfvieh/dbus-java-core/5.2.2/dbus-java-core-5.2.2-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

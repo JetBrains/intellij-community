@@ -18,7 +18,6 @@ package com.jetbrains.python.run;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.SdkAdditionalData;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -29,7 +28,6 @@ public interface PythonCommandLineEnvironmentProvider {
     ExtensionPointName.create("Pythonid.pythonCommandLineEnvironmentProvider");
 
   void extendEnvironment(@NotNull Project project,
-                         SdkAdditionalData data,
                          @NotNull GeneralCommandLine cmdLine,
                          PythonRunParams runParams);
 }

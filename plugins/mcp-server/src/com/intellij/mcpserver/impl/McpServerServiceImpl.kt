@@ -605,7 +605,7 @@ open class McpServerServiceImpl(private val cs: CoroutineScope) : McpServerServi
    */
   @ApiStatus.Internal
   fun hasActiveMcpTools(filter: McpToolFilter?, invocationMode: McpSessionInvocationMode?): Boolean {
-    return getMcpTools(filter = filter, invocationMode = when (invocationMode ?: McpToolFilterSettings.getInstance().invocationMode) {
+    return getMcpTools(filter = filter, invocationMode = when (invocationMode ?: McpToolFilterSettings.getInstance().effectiveInvocationMode) {
       McpSessionInvocationMode.DIRECT -> McpToolInvocationMode.DIRECT
       McpSessionInvocationMode.VIA_ROUTER -> McpToolInvocationMode.DIRECT_WITH_ROUTER_ENABLED
     }).isNotEmpty()

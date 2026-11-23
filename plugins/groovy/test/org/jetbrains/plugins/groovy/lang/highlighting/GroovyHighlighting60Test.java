@@ -129,6 +129,22 @@ public class GroovyHighlighting60Test implements HighlightingTest {
   }
 
   @Test
+  public void testAsyncAwait() {
+    highlightingTest("""
+                       <error descr="'defer' statement not allowed outside 'async' expression">defer</error> {}
+                       <error descr="'yield return' statement not allowed outside 'async' expression">yield return</error> 1
+                       async <error descr="Async lambda parameters not allowed">(a, b)</error> -> {}
+                       await async () -> {}
+                       async {
+                         for(i in 0..<10) {
+                           yield return i
+                         }
+                         defer {}
+                       }
+                       """);
+  }
+
+  @Test
   public void testWeakKeywordImportAlias() {
     highlightingTest("""
                        import java.lang.String as trait

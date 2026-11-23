@@ -106,6 +106,7 @@ com.intellij.internal.statistic.extensibility.StatisticsEventLogToolWindowEPLogP
 - sf:Companion:com.intellij.internal.statistic.extensibility.StatisticsEventLogToolWindowEPLogProvider$Companion
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - a:init(com.intellij.openapi.project.Project):V
+- subscribe(java.lang.String,com.intellij.openapi.Disposable,kotlin.jvm.functions.Function1):V
 - a:subscribe(java.lang.String,kotlin.jvm.functions.Function1):V
 - a:unsubscribe(java.lang.String):V
 f:com.intellij.internal.statistic.extensibility.StatisticsEventLogToolWindowEPLogProvider$Companion

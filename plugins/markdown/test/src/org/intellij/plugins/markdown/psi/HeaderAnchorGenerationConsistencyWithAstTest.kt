@@ -1,5 +1,7 @@
 package org.intellij.plugins.markdown.psi
 
+import com.intellij.openapi.application.readAction
+import com.intellij.testFramework.common.timeoutRunBlocking
 import org.intellij.markdown.MarkdownElementTypes.MARKDOWN_FILE
 import org.intellij.markdown.parser.MarkdownParser
 import org.intellij.plugins.markdown.lang.MarkdownElementType
@@ -7,12 +9,17 @@ import org.intellij.plugins.markdown.lang.parser.MarkdownDefaultFlavour
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownHeader
 import org.intellij.plugins.markdown.ui.preview.html.HeaderAnchorCache
 import org.intellij.plugins.markdown.ui.preview.html.HeaderGeneratingProvider
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Test
 
 class HeaderAnchorGenerationConsistencyWithAstTest: MarkdownHeaderAnchorTextTest() {
-  private fun generateFromPsi(content: String): String? {
-    configureFromFileText("some.md", content)
-    val header = firstElement as MarkdownHeader
-    return header.anchorText
+  private fun generateFromPsi(content: String): String? = timeoutRunBlocking {
+    myFixture.configureByText("some.md", content)
+    readAction {
+      val header = firstElement as MarkdownHeader
+      header.anchorText
+    }
   }
 
   private fun generateFromAst(content: String): String? {
@@ -22,11 +29,13 @@ class HeaderAnchorGenerationConsistencyWithAstTest: MarkdownHeaderAnchorTextTest
     return HeaderGeneratingProvider.buildAnchorText(header, content)
   }
 
-  private fun generateAllFromPsi(content: String): List<String?> {
-    configureFromFileText("some.md", content)
-    return file.children
-      .filterIsInstance<MarkdownHeader>()
-      .map { it.anchorText }
+  private fun generateAllFromPsi(content: String): List<String?> = timeoutRunBlocking {
+    myFixture.configureByText("some.md", content)
+    readAction {
+      myFixture.file.children
+        .filterIsInstance<MarkdownHeader>()
+        .map { it.anchorText }
+    }
   }
 
   private fun generateAllFromAst(content: String): List<String?> {
@@ -45,6 +54,7 @@ class HeaderAnchorGenerationConsistencyWithAstTest: MarkdownHeaderAnchorTextTest
     assertEquals(psi, ast)
   }
 
+  @Test
   fun `test duplicate headers keep unique anchor order consistent with psi`() {
     val content = """
       # Duplicate

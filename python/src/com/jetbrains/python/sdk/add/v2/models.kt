@@ -3,6 +3,7 @@ package com.jetbrains.python.sdk.add.v2
 
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.observable.properties.AtomicProperty
 import com.intellij.openapi.observable.properties.ObservableMutableProperty
 import com.intellij.openapi.observable.properties.PropertyGraph
@@ -50,6 +51,8 @@ internal interface PythonToolViewModel {
 abstract class PythonAddInterpreterModel<P : PathHolder>(
   val projectPathFlows: ProjectPathFlows<*>,
   val fileSystem: FileSystem<P>,
+  /** The project whose interpreters the model lists, or `null` when there is no project yet, as in the new project wizard. */
+  val project: Project? = null,
 ) {
   internal val modificationCounter: AtomicProperty<Int> = AtomicProperty(0)
 
@@ -119,7 +122,7 @@ abstract class PythonAddInterpreterModel<P : PathHolder>(
     scope.launch(coroutineContext + Dispatchers.EDT) {
       installable = fileSystem.getInstallableInterpreters()
       val projectPathPrefix = projectPathFlows.projectPathWithDefault.first()
-      val existingSelectableInterpreters = fileSystem.getExistingSelectableInterpreters(projectPathPrefix)
+      val existingSelectableInterpreters = fileSystem.getExistingSelectableInterpreters(project, projectPathPrefix)
       knownInterpreters.value = existingSelectableInterpreters
       val detectedSelectableInterpreters = withContext(Dispatchers.IO) { fileSystem.detectSelectableVenv(projectPathPrefix) }
       detectedInterpretersUnfiltered.value = detectedSelectableInterpreters
@@ -171,13 +174,19 @@ abstract class PythonAddInterpreterModel<P : PathHolder>(
 
 }
 
-abstract class PythonMutableTargetAddInterpreterModel<P : PathHolder>(projectPathFlows: ProjectPathFlows<*>, fileSystem: FileSystem<P>) :
-  PythonAddInterpreterModel<P>(projectPathFlows, fileSystem) {
+abstract class PythonMutableTargetAddInterpreterModel<P : PathHolder>(
+  projectPathFlows: ProjectPathFlows<*>,
+  fileSystem: FileSystem<P>,
+  project: Project? = null,
+) : PythonAddInterpreterModel<P>(projectPathFlows, fileSystem, project) {
   override val state: MutableTargetState<P> = MutableTargetState(propertyGraph)
 }
 
-class PythonLocalAddInterpreterModel<P : PathHolder>(projectPathFlows: ProjectPathFlows<*>, fileSystem: FileSystem<P>) :
-  PythonMutableTargetAddInterpreterModel<P>(projectPathFlows, fileSystem) {
+class PythonLocalAddInterpreterModel<P : PathHolder>(
+  projectPathFlows: ProjectPathFlows<*>,
+  fileSystem: FileSystem<P>,
+  project: Project? = null,
+) : PythonMutableTargetAddInterpreterModel<P>(projectPathFlows, fileSystem, project) {
   override fun initialize(scope: CoroutineScope) {
     super.initialize(scope)
 

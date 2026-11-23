@@ -10,6 +10,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiPolyVariantReference;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.python.externalIndex.PyExternalFilesIndexService;
+import com.intellij.python.sdk.backend.PythonInterpreter;
 import com.intellij.remote.RemoteSdkAdditionalData;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.jetbrains.python.console.PyConsoleOptions;
@@ -57,8 +58,8 @@ public final class PythonRuntimeServiceImpl extends PythonRuntimeService {
   }
 
   @Override
-  public @Nullable Sdk getConsoleSdk(@NotNull PsiElement foothold) {
-    return PydevConsoleRunnerUtil.getConsoleSdk(foothold);
+  public @Nullable PythonInterpreter getConsoleInterpreter(@NotNull PsiElement foothold) {
+    return PydevConsoleRunnerUtil.getConsoleInterpreter(foothold);
   }
 
   @Override
@@ -100,7 +101,7 @@ public final class PythonRuntimeServiceImpl extends PythonRuntimeService {
                                 @NotNull DocStringFormat format,
                                 @NotNull String input,
                                 @NotNull List<String> formatterFlags) {
-    return PyRuntimeDocstringFormatter.INSTANCE.runExternalTool(new PyRuntimeDocstringFormatter.ModuleOrSdk.TheModule((module)), format,
+    return PyRuntimeDocstringFormatter.INSTANCE.runExternalTool(new PyRuntimeDocstringFormatter.ModuleOrInterpreter.TheModule(module), format,
                                                                 input, formatterFlags);
   }
 

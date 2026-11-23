@@ -36,8 +36,9 @@ public open class FakeMacPlatformServices : MacPlatformServices {
 
     override fun readScrollbarVisibility(): ScrollbarVisibility = currentVisibility
 
-    override fun onPreferencesChanged(action: () -> Unit) {
+    override fun onPreferencesChanged(action: () -> Unit): AutoCloseable {
         listener = action
+        return AutoCloseable { if (listener === action) listener = null }
     }
 
     public fun simulateSystemChange(

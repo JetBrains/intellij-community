@@ -5,26 +5,36 @@ import com.intellij.JavaTestUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiFile;
-import com.intellij.refactoring.LightMultiFileTestCase;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.refactoring.LightMultiFileFixture;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.junit.jupiter.api.Test;
 
-public class IntroduceConstantMultiFileTest extends LightMultiFileTestCase {
-  @Override
-  protected @NotNull String getTestDataPath() {
-    return JavaTestUtil.getJavaTestDataPath() + "/refactoring/introduceConstant/multifile/";
-  }
+import static com.intellij.refactoring.LightMultiFileFixtureKt.lightMultiFileFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
+@TestApplication
+public class IntroduceConstantMultiFileTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<LightMultiFileFixture> multiFile =
+    lightMultiFileFixture(projectFixture, JavaTestUtil.getJavaTestDataPath() + "/refactoring/introduceConstant/multifile/");
+
+  @Test
   public void testStarImport() {
-    doTest(() -> {
+    LightJavaCodeInsightTestFixture myFixture = multiFile.get().getFixture();
+    multiFile.get().doTest(() -> {
       PsiClass starImportClass = myFixture.findClass("StarImport");
-      assertNotNull("StarImport class not found", starImportClass);
+      assertNotNull(starImportClass, "StarImport class not found");
 
       PsiFile containingFile = starImportClass.getContainingFile();
       VirtualFile virtualFile = containingFile.getVirtualFile();
       assertNotNull(virtualFile);
       myFixture.configureFromExistingVirtualFile(virtualFile);
 
-      new MockIntroduceConstantHandler(null).invoke(getProject(), getEditor(), containingFile, null);
+      new MockIntroduceConstantHandler(null).invoke(myFixture.getProject(), myFixture.getEditor(), containingFile, null);
     });
   }
 }

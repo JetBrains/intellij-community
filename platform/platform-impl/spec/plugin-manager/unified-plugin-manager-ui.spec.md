@@ -2,6 +2,7 @@
 name: Unified Plugin Manager UI
 description: Stable behavior for the unified Plugins page, its sources, and its navigation.
 targets:
+  - ../../src/com/intellij/ide/plugins/InstalledPluginsTabSearchResultPanel.kt
   - ../../src/com/intellij/ide/plugins/PluginCategoryPromotionProvider.kt
   - ../../src/com/intellij/ide/plugins/PluginManagerConfigurable.kt
   - ../../src/com/intellij/ide/plugins/PluginManagerConfigurableTreeRenderer.java
@@ -68,7 +69,6 @@ targets:
 # Unified Plugin Manager UI
 
 Status: Active
-Date: 2026-10-27
 
 ## Purpose
 
@@ -144,11 +144,14 @@ Untested: Product welcome buttons on a remote backend keep the Settings route be
     `default ready sections are hidden`
   )
 
-- Custom repository content must stay hidden for an empty query.
+- The page must show custom repository results and loading states when the query is empty.
 - A custom repository or repository catalog failure must remain visible without a query.
 - An active Repository filter must keep each selected repository visible after a successful empty result.
+  [@test] ../../testSrc/com/intellij/ide/plugins/UnifiedPluginsPageSessionTest.kt (
+    `session shows repository rows with and without a query`
+  )
   [@test] ../../testSrc/com/intellij/ide/plugins/unified/UnifiedPluginsPageControllerTest.kt (
-    `failed custom repository remains visible without a query until retry`;
+    `custom repository shows loading and failure without a query`;
     `repository filter keeps its empty selected repository visible`
   )
   [@test] ../../testSrc/com/intellij/ide/plugins/unified/UnifiedPluginsPageSourceCoordinatorTest.kt (
@@ -160,11 +163,29 @@ Untested: Product welcome buttons on a remote backend keep the Settings route be
 - Installed must contain plugins that have no bundled origin on any available side.
 - Bundled must contain plugins that have a bundled origin on at least one available side.
 - A staged descriptor must replace runtime presentation without losing the bundled origin.
-- The inventory must hide a plugin when any side marks it as an implementation detail.
+- The inventory must keep a plugin apart when any side marks it as an implementation detail.
+- Installed and Bundled must show an implementation-detail plugin only when `/built-in` is the effective installed filter.
+- `/built-in` must show only implementation-detail plugins, in the section that matches their bundled origin.
   [@test] ../../testSrc/com/intellij/ide/plugins/unified/UnifiedPluginInventoryTest.kt (
     `custom plugin stays in installed section with its side facts`;
     `staged descriptor supersedes runtime presentation and keeps bundled origin`;
-    `implementation detail plugin is excluded when either side marks it hidden`
+    `implementation detail plugin is kept apart when either side marks it hidden`
+  )
+  [@test] ../../testSrc/com/intellij/ide/plugins/unified/UnifiedPluginLocalDataProviderTest.kt (
+    `implementation detail plugins get items by their section`
+  )
+  [@test] ../../testSrc/com/intellij/ide/plugins/unified/UnifiedPluginsPageSourceCoordinatorTest.kt (
+    `built-in filter shows only implementation detail plugins`
+  )
+
+- The user must be able to enable and disable an implementation-detail plugin that `/built-in` shows.
+- Apply must disable an implementation-detail plugin that the user disables directly.
+- Apply must keep an implementation-detail plugin enabled when only a dependency change disables it.
+  [@test] ../../testSrc/com/intellij/ide/plugins/newui/ImplementationDetailPluginEnablementTest.kt (
+    `implementation detail plugin allows disable`;
+    `apply disables implementation detail plugin that the user disables`;
+    `apply keeps implementation detail plugin that a dependency change disables`;
+    `enable of implementation detail plugin cancels its direct disable`
   )
 
 - Several physical entries with one plugin ID must produce one inventory item.
@@ -178,20 +199,25 @@ Untested: Product welcome buttons on a remote backend keep the Settings route be
 - When a source filter hides local sections, the active remote sections can show these plugin IDs.
   [@test] ../../testSrc/com/intellij/ide/plugins/unified/UnifiedPluginsPageSourceCoordinatorTest.kt (
     `local plugins are excluded from Marketplace and repository sections`;
-    `local plugins are excluded from Suggested`;
+    `Suggested limits results after excluding local plugins`;
     `repository filter shows local plugins when local sections are hidden`
   )
 
-- Suggested must combine project suggestions before Staff Picks.
-- Suggested must keep one result per plugin ID and prefer the project suggestion.
-- Suggested must publish a completed source before the other source completes.
+- Suggested must show project suggestions, then Staff Picks, then results from an empty Marketplace query.
+- Suggested must show at most 20 plugins after it excludes local plugins.
+- Suggested must keep one result per plugin ID and prefer the result from the first group that contains it.
+- Suggested must publish each group as soon as that group and all preceding groups finish loading.
 - Suggested must keep successful results when one suggestion source fails.
 - Suggested must not report custom repository errors as Suggested errors.
   [@test] ../../testSrc/com/intellij/ide/plugins/unified/UnifiedPluginMarketplaceDataProviderTest.kt (
-    `merged suggestions keep project priority and partial errors`;
-    `Staff Picks publish while project suggestions are still loading`;
+    `merged suggestions keep source priority and partial errors`;
+    `project suggestions publish first even when Staff Picks load first`;
+    `merged suggestions load Staff Picks when project suggestions are empty`;
     `merged suggestions isolate a failed source`;
     `merged suggestions omit only custom repository errors`
+  )
+  [@test] ../../testSrc/com/intellij/ide/plugins/unified/UnifiedPluginMarketplaceSourceCoordinatorTest.kt (
+    `Suggested shows project suggestions Staff Picks and Marketplace results in order`
   )
 
 - Marketplace must keep one stable occurrence for each plugin ID.
@@ -252,7 +278,7 @@ Untested: Product welcome buttons on a remote backend keep the Settings route be
 - Repository choices must appear only when repository values exist.
 - Tag, Vendor, Category, and Repository filters must allow multiple selections.
 - Installed-status filters must allow one optional selection.
-- Installed-status choices must include Update available, Enabled, Disabled, Invalid, and Updated bundled.
+- Installed-status choices must include Update available, Enabled, Disabled, Invalid, Updated bundled, and Built-in.
   [@test] ../../testSrc/com/intellij/ide/plugins/unified/UnifiedPluginsSearchActionsTest.kt (
     `filter actions reflect snapshot and emit semantic intents`;
     `repository filter is hidden without repository values`;
@@ -343,10 +369,14 @@ Untested: Product welcome buttons on a remote backend keep the Settings route be
 - Relevance must initially place local plugins with errors before healthy plugins.
 - Without text terms, Installed relevance must place enabled plugins before disabled plugins within each error group.
 - Without text terms, Bundled relevance must place enabled plugins before disabled plugins within each category and error group.
-- With text terms, relevance must use the existing match scores before enabled state within each error group.
+- Text search in Installed, Bundled, Internal, and custom repositories must match a case-insensitive substring in the plugin name, description, or ID.
+- Relevance must score name matches highest, followed by description matches and plugin ID matches.
+- Within each match type, relevance must favor the match that covers a larger fraction of the field.
+- With text terms, relevance must use match scores before enabled state within each error group.
 - Enabled plugins must win a match score tie.
 - Later results in the same query revision must retain the relative order of plugins that remain in a section.
 - A new plugin must append after existing plugins. A plugin that leaves and returns must resume its retained position.
+- In Suggested, these rules apply separately to project suggestions, Staff Picks, and Marketplace results.
 - In expanded Bundled, a new plugin must append in its category. A new category must append after existing categories.
 - The first collapsed and expanded Bundled results may set separate orders to keep categories together.
 - An explicit sort must override both local priorities and control Marketplace ordering. Custom repositories must retain their source order.
@@ -355,12 +385,13 @@ Untested: Product welcome buttons on a remote backend keep the Settings route be
     `repeating a repository query restores its relevance order`;
     `local relevance prioritizes errors and enabled plugins while explicit sorts override priorities`;
     `text search ranks match scores before enabled state`;
-    `installed relevance uses legacy name and description match scores`;
+    `installed relevance ranks name, description, and plugin ID matches`;
     `sort controls primary Marketplace without suppressing cached filtering`
   )
   [@test] ../../testSrc/com/intellij/ide/plugins/unified/UnifiedPluginsPageControllerTest.kt (
     `query revision keeps local row order across repeated refreshes`;
     `new plugins append, returning plugins resume, and a new query resets order`;
+    `Suggested keeps the order within each group on refresh`;
     `expanded Bundled appends new plugins inside their category`
   )
 
@@ -535,10 +566,19 @@ Untested: Community tests verify the Enter handler, but they do not verify the S
   [@test] ../../testSrc/com/intellij/ide/plugins/unified/UnifiedPluginsPageRealRowsTest.kt (
     `Select All renders plugins from expanded related sections`
   )
+
+- Up and Down must visit the Marketplace link after the Suggested rows when the link is visible.
+- Moving to the link with an arrow key must clear the plugin selection.
+  [@test] ../../testSrc/com/intellij/ide/plugins/UnifiedPluginsPageSessionTest.kt (
+    `arrows move between Suggested rows the Marketplace link and the next section`
+  )
+
 - Tab must visit the active section and category actions, one plugin row, and that row's controls before it leaves the list for details.
 - The last selected row must be the list's row stop. Without a selection, the first rendered row must be that stop.
+- The Marketplace link must stay outside the Tab order.
   [@test] ../../testSrc/com/intellij/ide/plugins/unified/UnifiedPluginsPageRealRowsTest.kt (
-    `Tab order includes one plugin row and its controls`
+    `Tab order includes one plugin row and its controls`;
+    `Marketplace link follows Suggested rows in arrow order and stays outside Tab order`
   )
 
 - Plugin rows and section headers must show an outline for keyboard focus.
@@ -699,6 +739,22 @@ Untested: No focused test verifies Shift-selection across sections.
   [@test] ../../testSrc/com/intellij/ide/plugins/unified/LegacyPluginRowFactoryTest.kt (
     `unified host uses secondary plugin action buttons`;
     `legacy plugin action buttons keep custom colors`
+  )
+
+- Suggested must show a “More on JetBrains Marketplace” link after its plugin rows.
+  The link requires a successful load, all Suggested plugin rows to be visible, and the default Marketplace to be active.
+- The link must show an external link arrow and open the Marketplace home page in the browser.
+- Enter and Space on the focused link must open the Marketplace home page.
+- The link must use muted text and the same rounded hover and keyboard focus outline as the section headers.
+  [@test] ../../testSrc/com/intellij/ide/plugins/unified/UnifiedPluginsPageRealRowsTest.kt (
+    `Marketplace link follows Suggested rows in arrow order and stays outside Tab order`;
+    `Marketplace link requires all Suggested results to be visible and loaded`
+  )
+  [@test] ../../testSrc/com/intellij/ide/plugins/UnifiedPluginsPageSessionTest.kt (
+    `Suggested links to the default Marketplace and hides the link for an override`
+  )
+  [@test] ../../testSrc/com/intellij/ide/plugins/unified/UnifiedPluginsPageViewTest.kt (
+    `Marketplace link uses section hover and focus and opens from the full row`
   )
 
 - Unified rows and details must show visible plugin tags as accessible badges.

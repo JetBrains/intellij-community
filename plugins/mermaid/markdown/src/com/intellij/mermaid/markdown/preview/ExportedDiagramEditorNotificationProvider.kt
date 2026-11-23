@@ -45,7 +45,7 @@ internal class ExportedDiagramEditorNotificationProvider: EditorNotificationProv
         application.assertIsDispatchThread()
         enableBrowserBasedSvgViewer()
         FileEditorManager.getInstance(project).closeFile(file)
-        FileEditorManager.getInstance(project).openFile(file)
+        FileEditorManager.getInstance(project).requestOpenFile(file)
       }
     }
     return panel

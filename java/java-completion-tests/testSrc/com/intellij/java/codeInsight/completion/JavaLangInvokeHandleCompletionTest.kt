@@ -2,63 +2,93 @@
 package com.intellij.java.codeInsight.completion
 
 import com.intellij.JavaTestUtil
-import com.intellij.codeInsight.completion.LightFixtureCompletionTestCase
-import com.intellij.testFramework.LightProjectDescriptor
+import com.intellij.codeInsight.completion.lightCompletionFixture
+import com.intellij.codeInsight.completion.lightCompletionProjectFixture
+import com.intellij.openapi.application.EDT
+import com.intellij.platform.testFramework.junit5.codeInsight.indexing.IndexingModeTemplate
 import com.intellij.testFramework.NeedsIndex
+import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
+import com.intellij.testFramework.junit5.TestApplication
+import kotlinx.coroutines.Dispatchers
+import org.junit.jupiter.api.Assertions.assertIterableEquals
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Test
 import kotlin.math.min
 
 @NeedsIndex.Full
-class JavaLangInvokeHandleCompletionTest : LightFixtureCompletionTestCase() {
+@TestApplication
+@IndexingModeTemplate
+class JavaLangInvokeHandleCompletionTest {
+  companion object {
+    private val projectFixture = lightCompletionProjectFixture(LightJavaCodeInsightFixtureTestCase.JAVA_9)
+  }
 
-  override fun getProjectDescriptor(): LightProjectDescriptor = LightJavaCodeInsightFixtureTestCase.JAVA_9
+  private val completion by lightCompletionFixture(projectFixture, JavaTestUtil.getJavaTestDataPath() + "/codeInsight/completion/invokeHandle/")
+  private val myFixture get() = completion.fixture
 
-  override fun getTestDataPath() = JavaTestUtil.getJavaTestDataPath() + "/codeInsight/completion/invokeHandle/"
+  @Test
+  fun testVirtual(): Unit = timeoutRunBlocking(context = Dispatchers.EDT) { doTestFirst(1, "m1(int)", "pm1(int)", "m2(float, double)") }
+  @Test
+  fun testVirtualPrefixed(): Unit = timeoutRunBlocking(context = Dispatchers.EDT) { doTest(1, "m1(int)", "m2(float, double)", "pm1(int)") }
 
+  @Test
+  fun testStatic(): Unit = timeoutRunBlocking(context = Dispatchers.EDT) { doTest(0, "psm1(char)", "sm1(char)", "sm2(short)") }
 
-  fun testVirtual() = doTestFirst(1, "m1(int)", "pm1(int)", "m2(float, double)")
-  fun testVirtualPrefixed() = doTest(1, "m1(int)", "m2(float, double)", "pm1(int)")
+  @Test
+  fun testGetter(): Unit = timeoutRunBlocking(context = Dispatchers.EDT) { doTest(0, "f1", "pf1", "f2") }
+  @Test
+  fun testSetter(): Unit = timeoutRunBlocking(context = Dispatchers.EDT) { doTest(2, "f1", "pf1", "f2") }
 
-  fun testStatic() = doTest(0, "psm1(char)", "sm1(char)", "sm2(short)")
+  @Test
+  fun testStaticGetter(): Unit = timeoutRunBlocking(context = Dispatchers.EDT) { doTest(0, "psf1", "sf1", "sf2") }
+  @Test
+  fun testStaticSetter(): Unit = timeoutRunBlocking(context = Dispatchers.EDT) { doTest(2, "psf1", "sf1", "sf2") }
 
-  fun testGetter() = doTest(0, "f1", "pf1", "f2")
-  fun testSetter() = doTest(2, "f1", "pf1", "f2")
+  @Test
+  fun testVarHandle(): Unit = timeoutRunBlocking(context = Dispatchers.EDT) { doTest(0, "f1", "pf1", "f2") }
+  @Test
+  fun testStaticVarHandle(): Unit = timeoutRunBlocking(context = Dispatchers.EDT) { doTest(0, "psf1", "sf1", "sf2") }
 
-  fun testStaticGetter() = doTest(0, "psf1", "sf1", "sf2")
-  fun testStaticSetter() = doTest(2, "psf1", "sf1", "sf2")
+  @Test
+  fun testOverloaded(): Unit = timeoutRunBlocking(context = Dispatchers.EDT) { doTestTypes(1, "strMethod()", "strMethod(int, int)") }
 
-  fun testVarHandle() = doTest(0, "f1", "pf1", "f2")
-  fun testStaticVarHandle() = doTest(0, "psf1", "sf1", "sf2")
-
-  fun testOverloaded() = doTestTypes(1, "strMethod()", "strMethod(int, int)")
-
-
-  fun testVirtualType() = doTestTypes(0, "MethodType.methodType(String.class)", "MethodType.methodType(String.class, int.class, int.class)")
-  fun testStaticType() = doTestTypes(1,
+  @Test
+  fun testVirtualType(): Unit = timeoutRunBlocking(context = Dispatchers.EDT) { doTestTypes(0, "MethodType.methodType(String.class)", "MethodType.methodType(String.class, int.class, int.class)") }
+  @Test
+  fun testStaticType(): Unit = timeoutRunBlocking(context = Dispatchers.EDT) { doTestTypes(1,
                                      "MethodType.methodType(Object.class, int.class, int.class)",
-                                     "MethodType.methodType(Object.class, Object.class)")
+                                     "MethodType.methodType(Object.class, Object.class)") }
 
-  fun testGetterType() = doTestTypes(0, "int.class")
-  fun testSetterType() = doTestTypes(0, "float.class")
+  @Test
+  fun testGetterType(): Unit = timeoutRunBlocking(context = Dispatchers.EDT) { doTestTypes(0, "int.class") }
+  @Test
+  fun testSetterType(): Unit = timeoutRunBlocking(context = Dispatchers.EDT) { doTestTypes(0, "float.class") }
 
-  fun testVarHandleType() = doTestTypes(0, "String.class")
-  fun testStaticVarHandleType() = doTestTypes(0, "Object.class")
+  @Test
+  fun testVarHandleType(): Unit = timeoutRunBlocking(context = Dispatchers.EDT) { doTestTypes(0, "String.class") }
+  @Test
+  fun testStaticVarHandleType(): Unit = timeoutRunBlocking(context = Dispatchers.EDT) { doTestTypes(0, "Object.class") }
 
-  fun testVirtualTypeGeneric() = doTestTypes(0, "MethodType.methodType(Object.class, Object.class, String.class)")
-  fun testStaticTypeGeneric() = doTestTypes(0, "MethodType.methodType(Object.class, List.class, Object[].class)")
+  @Test
+  fun testVirtualTypeGeneric(): Unit = timeoutRunBlocking(context = Dispatchers.EDT) { doTestTypes(0, "MethodType.methodType(Object.class, Object.class, String.class)") }
+  @Test
+  fun testStaticTypeGeneric(): Unit = timeoutRunBlocking(context = Dispatchers.EDT) { doTestTypes(0, "MethodType.methodType(Object.class, List.class, Object[].class)") }
 
-  fun testConstructorType1() = doTestTypes(0, "MethodType.methodType(void.class)")
-  fun testConstructorType2() = doTestTypes(0,
+  @Test
+  fun testConstructorType1(): Unit = timeoutRunBlocking(context = Dispatchers.EDT) { doTestTypes(0, "MethodType.methodType(void.class)") }
+  @Test
+  fun testConstructorType2(): Unit = timeoutRunBlocking(context = Dispatchers.EDT) { doTestTypes(0,
                                            "MethodType.methodType(void.class)",
                                            "MethodType.methodType(void.class, int.class)",
                                            "MethodType.methodType(void.class, List.class)",
-                                           "MethodType.methodType(void.class, Object[].class)")
-  fun testConstructorType3() = doTestTypes(3,
+                                           "MethodType.methodType(void.class, Object[].class)") }
+  @Test
+  fun testConstructorType3(): Unit = timeoutRunBlocking(context = Dispatchers.EDT) { doTestTypes(3,
                                            "MethodType.methodType(void.class)",
                                            "MethodType.methodType(void.class, int.class)",
                                            "MethodType.methodType(void.class, List.class)",
-                                           "MethodType.methodType(void.class, Object[].class)")
-
+                                           "MethodType.methodType(void.class, Object[].class)") }
 
   private fun doTest(index: Int, vararg expected: String) {
     doTest(index, { assertLookupTexts(false, *expected) })
@@ -102,12 +132,12 @@ public class Constructed<T> {
     val elements = myFixture.lookupElements
     assertNotNull(elements)
     val lookupTexts = elements!!.map {
-      val presentation = NormalCompletionTestCase.renderElement(it)
+      val presentation = NormalCompletionFixture.renderElement(it)
       (presentation.itemText ?: "") + (presentation.tailText ?: "")
     }
 
     val actual = if (compareFirst) lookupTexts.subList(0, min(expected.size, lookupTexts.size)) else lookupTexts
-    assertOrderedEquals(actual, *expected)
+    assertIterableEquals(expected.toList(), actual)
   }
 
   private fun doTest(index: Int, assertion: () -> Unit) {
@@ -136,9 +166,9 @@ public class Test extends Parent {
   private static void sm2(short n) {}
 }""")
 
-    configureByFile(getTestName(false) + ".java")
+    completion.configureByFile(myFixture.getTestName(false) + ".java")
     assertion()
-    if (index >= 0) selectItem(lookup.items[index])
-    myFixture.checkResultByFile(getTestName(false) + "_after.java")
+    if (index >= 0) completion.selectItem(completion.getLookup()!!.items[index])
+    myFixture.checkResultByFile(myFixture.getTestName(false) + "_after.java")
   }
 }

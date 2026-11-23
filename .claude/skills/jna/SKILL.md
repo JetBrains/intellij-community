@@ -6,7 +6,7 @@ description: Implement or debug JNA bindings and ABI layouts in Kotlin or Java.
 
 # JNA bindings
 
-Treat every mapping as an ABI contract. Verify the native declaration, target architectures, and ownership rules before changing Kotlin or Java code.
+Verify the native declaration, target architectures, and ownership rules before changing Kotlin or Java code.
 
 ## Reuse existing mappings
 
@@ -37,6 +37,6 @@ Prefer moving visibility only as far as needed over suppressing reflection error
 
 Add a small JVM regression test that constructs each mapped structure and calls `size()` or otherwise forces JNA to derive its layout. Assert stable sizes or offsets only when they are defined for the tested architecture.
 
-Keep permission-, hardware-, and OS-dependent native integration coverage separate. A layout test should catch visibility and field-order failures before a native callback reaches production code.
+Keep permission-, hardware-, and OS-dependent native integration coverage separate.
 
 When debugging, retain the complete cause chain: wrapper errors often hide the useful `IllegalAccessException`, invalid field type, alignment error, or callback exception underneath.

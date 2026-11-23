@@ -6,10 +6,10 @@ import java.nio.file.Path
 /**
  * One file that [ProductProperties.additionalOsSpecificFiles] declares for the distribution of one OS and architecture.
  *
- * [label] is the Bazel label of the file, which a split dev distribution places. [resolve] finds the file for a build
+ * [label] is the Bazel label of the file, which a split distribution places. [resolve] finds the file for a build
  * that copies it. [relativePath] is the destination under the distribution root.
  *
- * [executable] is the mode a split dev distribution gives the file. A production build takes the mode of the source
+ * [executable] is the mode a split distribution gives the file. A production build takes the mode of the source
  * file and then applies the executable patterns of the OS. A file that a program runs states `true`.
  */
 class OsSpecificDistFile(

@@ -39,8 +39,10 @@
     <codeUsageScopeOptimizer implementation="org.jetbrains.kotlin.idea.search.refIndex.KotlinScopeOptimizer"/>
 
     <projectService
-            serviceImplementation="org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceIndexService"
-            preload="notHeadless"/>
+            serviceImplementation="org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceIndexService"/>
+
+    <backgroundPostStartupActivity
+            implementation="org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceIndexService$KCRIStartupActivity"/>
 
     <advancedSetting
             id="kotlin.compiler.ref.index"
@@ -57,6 +59,14 @@
     <languageCompilerRefAdapter.directInheritorProvider
             implementation="org.jetbrains.kotlin.idea.search.refIndex.KotlinDirectInheritorProvider"/>
   </extensions>
+
+  <projectListeners>
+    <listener class="org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceIndexService$KCRIBuildManagerListener"
+              topic="com.intellij.compiler.server.BuildManagerListener"/>
+    <listener class="org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceIndexService$KCRIProjectDataImportListener"
+              topic="com.intellij.openapi.externalSystem.service.project.manage.ProjectDataImportListener"
+              activeInTestMode="false"/>
+  </projectListeners>
 
   <extensionPoints>
     <extensionPoint

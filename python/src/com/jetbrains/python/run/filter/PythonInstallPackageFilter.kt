@@ -59,7 +59,7 @@ class PythonInstallPackageFilter(val project: Project, var editor: EditorImpl? =
      */
     fun launchInstall(project: Project, editor: Editor?, packageName: String, point: RelativePoint) {
       val interpreter = getInterpreter(project, editor) ?: return
-      PythonPackageManagerUI.forPythonInterpreter(project, interpreter).launchInstallPackageWithBalloonBackground(packageName, point)
+      PythonPackageManagerUI.forPythonInterpreter(interpreter).launchInstallPackageWithBalloonBackground(packageName, point)
     }
 
     /**
@@ -74,7 +74,7 @@ class PythonInstallPackageFilter(val project: Project, var editor: EditorImpl? =
       val moduleName = line.removePrefix(prefix).dropLastWhile { it != '\'' }.dropLast(1)
       val interpreter = getInterpreter(project, editor) ?: return null
 
-      val packageManager = PythonPackageManager.forPythonInterpreter(project, interpreter)
+      val packageManager = PythonPackageManager.forPythonInterpreter(interpreter)
 
       val packageName = PyPsiPackageUtil.moduleToPackageName(moduleName)
       val isCanBeInstalled = !interpreter.isReadOnly && runBlockingCancellable { packageManager.isNotInstalledAndCanBeInstalled(packageName) }

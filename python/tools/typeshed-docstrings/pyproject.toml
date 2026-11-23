@@ -1,0 +1,14 @@
+[project]
+name = "typeshed-docstrings"
+version = "0"
+description = "Adds runtime docstrings of compiled definitions to the bundled typeshed stdlib"
+requires-python = ">=3.10"
+dependencies = [
+    "docstring-adder",
+]
+
+[tool.uv]
+package = false
+
+[tool.uv.sources]
+docstring-adder = { git = "https://github.com/astral-sh/docstring-adder", rev = "877f03424044cbefa92cf220f5f565873e6ed4be" }

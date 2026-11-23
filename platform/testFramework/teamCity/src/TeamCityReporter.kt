@@ -184,7 +184,8 @@ object TeamCityReporter {
     TEXT,
     LINK,
     ARTIFACT,
-    IMAGE
+    IMAGE,
+    VIDEO
   }
 
   /**

@@ -1,15 +1,13 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk.uv
 
-import com.intellij.openapi.project.Project
-import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.python.sdk.backend.requirementsPath
+import com.intellij.python.sdk.backend.writeRequirementsPath
 import com.intellij.python.pyproject.PY_PROJECT_TOML
 import com.intellij.python.sdk.backend.PythonInterpreter
-import com.intellij.python.sdk.backend.getSdkAPI
-import com.jetbrains.python.packaging.requirementsTxt.PythonRequirementTxtSdkUtils
+import com.jetbrains.python.packaging.utils.PyPackageCoroutine
 import com.jetbrains.python.sdk.PythonSdkAdditionalData
-import com.jetbrains.python.sdk.pySdkAdditionalData
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
@@ -17,19 +15,20 @@ import java.nio.file.Path
 import kotlin.io.path.exists
 
 /**
- * How uv manages the packages of an SDK.
+ * How uv manages the packages of an interpreter.
  *
- * The root dependency file that the SDK stores in [PythonSdkAdditionalData.requirementsFile] selects the mode. The file
- * `pyproject.toml` selects [Project]. Any other file selects [Pip].
+ * The root dependency file that the interpreter stores selects the mode, see [PythonInterpreter.requirementsPath].
+ * The file `pyproject.toml` selects [Project]. Any other file selects [Pip].
  *
- * A new uv SDK always stores its file, in pip mode too. A stored file is a decision. An SDK without a stored file was
- * saved before the mode existed. [pinLegacyUvMode] resolves such an SDK from its working directory once.
+ * A new uv interpreter always stores its file, in pip mode too. A stored file is a decision. An interpreter without a
+ * stored file was saved before the mode existed. [pinLegacyUvMode] resolves such an interpreter from its owner
+ * directory once.
  *
  * Public for the test fixtures that create a uv SDK. Everything that reads or resolves a mode stays internal.
  */
 @ApiStatus.Internal
 sealed interface UvMode {
-  /** The root dependency file to store for this mode, relative to the working directory of the SDK. */
+  /** The root dependency file to store for this mode, relative to the owner directory of the interpreter. */
   val requirementsFile: Path
 
   /** A uv project. It has a `pyproject.toml` and a `uv.lock`. uv manages it with `uv add`, `uv remove`, `uv sync` and `uv lock`. */
@@ -42,23 +41,17 @@ sealed interface UvMode {
 }
 
 /**
- * The mode of this SDK, read from the stored dependency file. This getter does no I/O.
+ * The mode of this library, read from its stored dependency file, see [PythonInterpreter.requirementsPath]. This
+ * function does no I/O.
  *
- * No stored file reads as [UvMode.Pip]. An SDK saved before the mode existed reads the same way until
+ * No stored file reads as [UvMode.Pip]. An interpreter saved before the mode existed reads the same way until
  * [pinLegacyUvMode] has run for it.
  */
-@get:ApiStatus.Internal
-val Sdk.uvMode: UvMode
-  get() = when (val fileName = pySdkAdditionalData.requirementsFile) {
-    null -> UvMode.Pip()
-    PY_PROJECT_TOML -> UvMode.Project
-    else -> UvMode.Pip(Path.of(fileName))
-  }
-
-/** The mode of the SDK of this interpreter. See [Sdk.uvMode]. */
-@get:ApiStatus.Internal
-val PythonInterpreter.uvMode: UvMode
-  @Suppress("DEPRECATION") get() = getSdkAPI().uvMode
+@ApiStatus.Internal
+fun PythonInterpreter.uvMode(): UvMode {
+  val path = requirementsPath ?: return UvMode.Pip()
+  return if (path.fileName?.toString() == PY_PROJECT_TOML) UvMode.Project else UvMode.Pip(path)
+}
 
 /** Whether [workingDir] holds a `pyproject.toml`. One file stat, on the IO dispatcher. */
 @ApiStatus.Internal
@@ -78,40 +71,40 @@ internal suspend fun UvMode.needsInit(workingDir: Path): Boolean = when (this) {
 }
 
 /**
- * Resolves the mode of an SDK that stores no dependency file, and pins a project.
+ * Resolves the mode of an interpreter that stores no dependency file, and pins a project.
  *
- * When the working directory holds a `pyproject.toml`, this function stores that file and returns [UvMode.Project].
- * Otherwise it stores nothing and returns [UvMode.Pip]. For an SDK that already stores a file, it returns [Sdk.uvMode].
+ * When the owner directory holds a `pyproject.toml`, this function stores that file and returns [UvMode.Project].
+ * Otherwise it stores nothing and returns [UvMode.Pip]. For an interpreter that already stores a file, it returns its
+ * [uvMode].
  *
  * The lookup asks the VFS without a refresh, so the function runs on any thread. A file that the VFS has not seen counts
- * as absent. [migrateLegacyUvMode] refreshes the file first. The store commits asynchronously off the EDT. A caller that
- * needs the mode at once uses the returned value.
+ * as absent. [migrateLegacyUvMode] refreshes the file first. The store writes asynchronously. A caller that needs the
+ * mode at once uses the returned value.
  */
-internal fun pinLegacyUvMode(project: Project, sdk: Sdk): UvMode {
-  val pyProjectToml = legacyPyProjectToml(sdk) ?: return sdk.uvMode
+internal fun pinLegacyUvMode(interpreter: PythonInterpreter): UvMode {
+  val pyProjectToml = legacyPyProjectToml(interpreter) ?: return interpreter.uvMode()
   if (VirtualFileManager.getInstance().findFileByNioPath(pyProjectToml) == null) return UvMode.Pip()
-  PythonRequirementTxtSdkUtils.saveRequirementsTxtPath(project, sdk, UvMode.Project.requirementsFile)
+  PyPackageCoroutine.launch(interpreter.project) { interpreter.writeRequirementsPath(UvMode.Project.requirementsFile) }
   return UvMode.Project
 }
 
 /**
- * Refreshes the `pyproject.toml` of a legacy SDK from disk on the IO dispatcher, then calls [pinLegacyUvMode].
+ * Refreshes the `pyproject.toml` of a legacy interpreter from disk on the IO dispatcher, then calls [pinLegacyUvMode].
  * The VFS is current at that point, so the answer is final.
  */
 @ApiStatus.Internal
-suspend fun migrateLegacyUvMode(project: Project, sdk: Sdk): UvMode {
-  legacyPyProjectToml(sdk)?.let { path ->
+suspend fun migrateLegacyUvMode(interpreter: PythonInterpreter): UvMode {
+  legacyPyProjectToml(interpreter)?.let { path ->
     withContext(Dispatchers.IO) { VirtualFileManager.getInstance().refreshAndFindFileByNioPath(path) }
   }
-  return pinLegacyUvMode(project, sdk)
+  return pinLegacyUvMode(interpreter)
 }
 
 /**
- * The `pyproject.toml` path that decides the mode of a legacy SDK.
- * Returns `null` when the SDK stores a file or has no valid working directory.
+ * The `pyproject.toml` path that decides the mode of a legacy interpreter: the one in its owner directory. Returns
+ * `null` when the interpreter stores a file.
  */
-private fun legacyPyProjectToml(sdk: Sdk): Path? {
-  val data = sdk.pySdkAdditionalData
-  if (data.requirementsFile != null) return null
-  return data.workingDirectory.takeIf { data.hasValidWorkingDirectory() }?.resolve(PY_PROJECT_TOML)
+private fun legacyPyProjectToml(interpreter: PythonInterpreter): Path? {
+  if (interpreter.requirementsPath != null) return null
+  return interpreter.ownerDir.resolve(PY_PROJECT_TOML)
 }

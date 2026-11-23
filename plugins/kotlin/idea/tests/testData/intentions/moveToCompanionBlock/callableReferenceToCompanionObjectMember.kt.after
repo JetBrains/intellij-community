@@ -1,0 +1,9 @@
+// COMPILER_ARGUMENTS: -Xcompanion-blocks
+
+class Foo {
+    companion {
+        fun len(x: Int) = x
+    }
+}
+
+val companionReference: (Int) -> Int = Foo::len

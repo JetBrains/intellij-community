@@ -2,8 +2,8 @@
 package com.intellij.psi.impl.source.tree.injected
 
 import com.intellij.codeInsight.completion.CompletionItemLookupElement
-import com.intellij.codeInsight.completion.LightFixtureCompletionTestCase
 import com.intellij.codeInsight.completion.command.CommandCompletionLookupElement
+import com.intellij.codeInsight.completion.lightCompletionFixture
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 import com.intellij.codeInsight.lookup.LookupElementCustomPreviewHolder
 import com.intellij.codeInsight.template.impl.LiveTemplateCompletionContributor
@@ -12,29 +12,44 @@ import com.intellij.codeInsight.template.postfix.completion.PostfixTemplateModCo
 import com.intellij.ide.highlighter.JavaFileType
 import com.intellij.lang.java.JavaLanguage
 import com.intellij.modcommand.ActionContext
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiLanguageInjectionHost
 import com.intellij.psi.util.PsiTreeUtil
-import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.NeedsIndex
+import com.intellij.testFramework.common.timeoutRunBlocking
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.lightJavaProjectFixture
+import com.intellij.testFramework.junit5.TestApplication
+import kotlinx.coroutines.Dispatchers
 import org.intellij.plugins.intelliLang.inject.InjectedLanguage
 import org.intellij.plugins.intelliLang.inject.TemporaryPlacesRegistry
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 
 @NeedsIndex.SmartMode(reason = "it requires highlighting")
-class JavaCommandsCompletionInjectedTest : LightFixtureCompletionTestCase() {
-
-  override fun setUp() {
-    super.setUp()
-    Registry.get("ide.completion.command.enabled").setValue(false, getTestRootDisposable())
-    Registry.get("ide.completion.command.force.enabled").setValue(true, getTestRootDisposable())
+@TestApplication
+class JavaCommandsCompletionInjectedTest {
+  companion object {
+    private val projectFixture = lightJavaProjectFixture(LightJavaCodeInsightFixtureTestCase.JAVA_21)
   }
 
-  override fun getProjectDescriptor(): LightProjectDescriptor {
-    return JAVA_21
+  private val completion by lightCompletionFixture(projectFixture)
+  private val myFixture get() = completion.fixture
+
+  @BeforeEach
+  fun setUp() {
+    Registry.get("ide.completion.command.enabled").setValue(false, myFixture.testRootDisposable)
+    Registry.get("ide.completion.command.force.enabled").setValue(true, myFixture.testRootDisposable)
   }
 
-  fun testFlip() {
+  @Test
+  fun testFlip(): Unit = timeoutRunBlocking(context = Dispatchers.EDT) {
     // language="JAVA"
     @Suppress("ConstantValue", "StatementWithEmptyBody")
     myFixture.configureByText(JavaFileType.INSTANCE, """
@@ -48,7 +63,7 @@ class JavaCommandsCompletionInjectedTest : LightFixtureCompletionTestCase() {
       }
       """.trimIndent())
     val elements = myFixture.completeBasic()
-    selectItem(elements.first { element -> element.lookupString.contains("Flip", ignoreCase = true) })
+    completion.selectItem(elements.first { element -> element.lookupString.contains("Flip", ignoreCase = true) })
     // language="JAVA"
     @Suppress("ConstantValue", "StatementWithEmptyBody")
     myFixture.checkResult("""
@@ -62,7 +77,8 @@ class JavaCommandsCompletionInjectedTest : LightFixtureCompletionTestCase() {
         }""".trimIndent())
   }
 
-  fun testFlipPreview() {
+  @Test
+  fun testFlipPreview(): Unit = timeoutRunBlocking(context = Dispatchers.EDT) {
     // language="JAVA"
     @Suppress("ConstantValue", "StatementWithEmptyBody")
     myFixture.configureByText(JavaFileType.INSTANCE, """
@@ -96,8 +112,8 @@ class JavaCommandsCompletionInjectedTest : LightFixtureCompletionTestCase() {
     """.trimIndent(), preview?.modifiedText())
   }
 
-
-  fun testFlipPreviewTemporaryEnabled() {
+  @Test
+  fun testFlipPreviewTemporaryEnabled(): Unit = timeoutRunBlocking(context = Dispatchers.EDT) {
     // language="JAVA"
     @Suppress("ConstantValue", "StatementWithEmptyBody")
     val psiFile = myFixture.configureByText(JavaFileType.INSTANCE, """
@@ -110,8 +126,8 @@ class JavaCommandsCompletionInjectedTest : LightFixtureCompletionTestCase() {
         }""${'"'};
     }      
     """.trimIndent())
-    val textBlock = PsiTreeUtil.getParentOfType(psiFile.findElementAt(editor.caretModel.offset), PsiLanguageInjectionHost::class.java)
-    val temporaryPlacesRegistry = TemporaryPlacesRegistry.getInstance(project)
+    val textBlock = PsiTreeUtil.getParentOfType(psiFile.findElementAt(myFixture.editor.caretModel.offset), PsiLanguageInjectionHost::class.java)
+    val temporaryPlacesRegistry = TemporaryPlacesRegistry.getInstance(myFixture.project)
     temporaryPlacesRegistry.addHost(textBlock, InjectedLanguage.create(JavaLanguage.INSTANCE.id))
     val elements = myFixture.completeBasic()
     val lookupElement = elements
@@ -133,9 +149,10 @@ class JavaCommandsCompletionInjectedTest : LightFixtureCompletionTestCase() {
     """.trimIndent(), preview?.modifiedText())
   }
 
-  fun testCastPostfixPreview() {
-    TemplateManagerImpl.setTemplateTesting(getTestRootDisposable())
-    LiveTemplateCompletionContributor.setShowTemplatesInTests(true, getTestRootDisposable())
+  @Test
+  fun testCastPostfixPreview(): Unit = timeoutRunBlocking(context = Dispatchers.EDT) {
+    TemplateManagerImpl.setTemplateTesting(myFixture.testRootDisposable)
+    LiveTemplateCompletionContributor.setShowTemplatesInTests(true, myFixture.testRootDisposable)
     // language="JAVA"
     myFixture.configureByText(JavaFileType.INSTANCE, """
       class Hello {
@@ -167,7 +184,8 @@ class JavaCommandsCompletionInjectedTest : LightFixtureCompletionTestCase() {
     """.trimIndent(), (preview as IntentionPreviewInfo.CustomDiff).modifiedText())
   }
 
-  fun testCastPostfixPreviewTemporaryEnabled() {
+  @Test
+  fun testCastPostfixPreviewTemporaryEnabled(): Unit = timeoutRunBlocking(context = Dispatchers.EDT) {
     // language="JAVA"
     val psiFile = myFixture.configureByText(JavaFileType.INSTANCE, """
       class Hello {
@@ -180,10 +198,10 @@ class JavaCommandsCompletionInjectedTest : LightFixtureCompletionTestCase() {
         }""${'"'};
       }
       """.trimIndent())
-    LiveTemplateCompletionContributor.setShowTemplatesInTests(true, getTestRootDisposable())
-    TemplateManagerImpl.setTemplateTesting(getTestRootDisposable())
-    val textBlock = PsiTreeUtil.getParentOfType(psiFile.findElementAt(editor.caretModel.offset), PsiLanguageInjectionHost::class.java)
-    val temporaryPlacesRegistry = TemporaryPlacesRegistry.getInstance(project)
+    LiveTemplateCompletionContributor.setShowTemplatesInTests(true, myFixture.testRootDisposable)
+    TemplateManagerImpl.setTemplateTesting(myFixture.testRootDisposable)
+    val textBlock = PsiTreeUtil.getParentOfType(psiFile.findElementAt(myFixture.editor.caretModel.offset), PsiLanguageInjectionHost::class.java)
+    val temporaryPlacesRegistry = TemporaryPlacesRegistry.getInstance(myFixture.project)
     temporaryPlacesRegistry.addHost(textBlock, InjectedLanguage.create(JavaLanguage.INSTANCE.id))
     val elements = myFixture.completeBasic()
     val item = elements.first { element -> element.lookupString.contains("cast", ignoreCase = true) }
@@ -204,9 +222,10 @@ class JavaCommandsCompletionInjectedTest : LightFixtureCompletionTestCase() {
     """.trimIndent(), (preview as IntentionPreviewInfo.CustomDiff).modifiedText())
   }
 
-  fun testForiPostfixPreview() {
-    TemplateManagerImpl.setTemplateTesting(getTestRootDisposable())
-    LiveTemplateCompletionContributor.setShowTemplatesInTests(true, getTestRootDisposable())
+  @Test
+  fun testForiPostfixPreview(): Unit = timeoutRunBlocking(context = Dispatchers.EDT) {
+    TemplateManagerImpl.setTemplateTesting(myFixture.testRootDisposable)
+    LiveTemplateCompletionContributor.setShowTemplatesInTests(true, myFixture.testRootDisposable)
     // language="JAVA"
     myFixture.configureByText(JavaFileType.INSTANCE, """
       class Hello {
@@ -240,10 +259,11 @@ class JavaCommandsCompletionInjectedTest : LightFixtureCompletionTestCase() {
     """.trimIndent(), (preview as IntentionPreviewInfo.CustomDiff).modifiedText())
   }
 
-  fun testCastPostfixPerform() {
-    TemplateManagerImpl.setTemplateTesting(getTestRootDisposable())
-    LiveTemplateCompletionContributor.setShowTemplatesInTests(true, getTestRootDisposable())
-    Registry.get("postfix.template.mod.completion.enabled").setValue(true, getTestRootDisposable())
+  @Test
+  fun testCastPostfixPerform(): Unit = timeoutRunBlocking(context = Dispatchers.EDT) {
+    TemplateManagerImpl.setTemplateTesting(myFixture.testRootDisposable)
+    LiveTemplateCompletionContributor.setShowTemplatesInTests(true, myFixture.testRootDisposable)
+    Registry.get("postfix.template.mod.completion.enabled").setValue(true, myFixture.testRootDisposable)
     // language="JAVA"
     myFixture.configureByText(JavaFileType.INSTANCE, """
       class Hello {
@@ -262,10 +282,10 @@ class JavaCommandsCompletionInjectedTest : LightFixtureCompletionTestCase() {
       element.item() is PostfixTemplateModCompletionItemProvider.PostfixModCompletionItem &&
       element.lookupString.contains("cast", ignoreCase = true)
     }
-    selectItem(item)
+    completion.selectItem(item)
     val state = TemplateManagerImpl.getTemplateState(myFixture.editor)
     if (state != null) {
-      WriteCommandAction.runWriteCommandAction(project) { state.gotoEnd(false) }
+      WriteCommandAction.runWriteCommandAction(myFixture.project) { state.gotoEnd(false) }
     }
     // the caret must end up right after the expansion, exactly as in the non-injected
     // codeInsight/template/postfix/templates/cast/singleExpression_after.java: a coarse updated range would
@@ -284,10 +304,11 @@ class JavaCommandsCompletionInjectedTest : LightFixtureCompletionTestCase() {
       """.trimIndent())
   }
 
-  fun testCastVarPostfixPerform() {
-    TemplateManagerImpl.setTemplateTesting(getTestRootDisposable())
-    LiveTemplateCompletionContributor.setShowTemplatesInTests(true, getTestRootDisposable())
-    Registry.get("postfix.template.mod.completion.enabled").setValue(true, getTestRootDisposable())
+  @Test
+  fun testCastVarPostfixPerform(): Unit = timeoutRunBlocking(context = Dispatchers.EDT) {
+    TemplateManagerImpl.setTemplateTesting(myFixture.testRootDisposable)
+    LiveTemplateCompletionContributor.setShowTemplatesInTests(true, myFixture.testRootDisposable)
+    Registry.get("postfix.template.mod.completion.enabled").setValue(true, myFixture.testRootDisposable)
     // language="JAVA"
     myFixture.configureByText(JavaFileType.INSTANCE, """
       class Hello {
@@ -306,10 +327,10 @@ class JavaCommandsCompletionInjectedTest : LightFixtureCompletionTestCase() {
       element.item() is PostfixTemplateModCompletionItemProvider.PostfixModCompletionItem &&
       element.lookupString.contains("castvar", ignoreCase = true)
     }
-    selectItem(item)
+    completion.selectItem(item)
     val state = TemplateManagerImpl.getTemplateState(myFixture.editor)
     if (state != null) {
-      WriteCommandAction.runWriteCommandAction(project) { state.gotoEnd(false) }
+      WriteCommandAction.runWriteCommandAction(myFixture.project) { state.gotoEnd(false) }
     }
     // language="JAVA"
     myFixture.checkResult("""
@@ -325,7 +346,8 @@ class JavaCommandsCompletionInjectedTest : LightFixtureCompletionTestCase() {
       """.trimIndent())
   }
 
-  fun testFindDeclaration() {
+  @Test
+  fun testFindDeclaration(): Unit = timeoutRunBlocking(context = Dispatchers.EDT) {
     // language="JAVA"
     myFixture.configureByText(JavaFileType.INSTANCE, """
       class AB {
@@ -342,10 +364,11 @@ class JavaCommandsCompletionInjectedTest : LightFixtureCompletionTestCase() {
     assertTrue(elements.any { element -> element.lookupString.contains("Declaration", ignoreCase = true) })
   }
 
-  fun testVarPostfixInInjectionDoesNotRecurse() {
-    TemplateManagerImpl.setTemplateTesting(getTestRootDisposable())
-    LiveTemplateCompletionContributor.setShowTemplatesInTests(true, getTestRootDisposable())
-    Registry.get("postfix.template.mod.completion.enabled").setValue(true, getTestRootDisposable())
+  @Test
+  fun testVarPostfixInInjectionDoesNotRecurse(): Unit = timeoutRunBlocking(context = Dispatchers.EDT) {
+    TemplateManagerImpl.setTemplateTesting(myFixture.testRootDisposable)
+    LiveTemplateCompletionContributor.setShowTemplatesInTests(true, myFixture.testRootDisposable)
+    Registry.get("postfix.template.mod.completion.enabled").setValue(true, myFixture.testRootDisposable)
     // language="JAVA"
     myFixture.configureByText(JavaFileType.INSTANCE, """
       class Hello {
@@ -364,20 +387,21 @@ class JavaCommandsCompletionInjectedTest : LightFixtureCompletionTestCase() {
       element.item() is PostfixTemplateModCompletionItemProvider.PostfixModCompletionItem &&
       element.lookupString.contains("var", ignoreCase = true)
     }
-    selectItem(item)
+    completion.selectItem(item)
     val state = TemplateManagerImpl.getTemplateState(myFixture.editor)
     if (state != null) {
-      WriteCommandAction.runWriteCommandAction(project) { state.gotoEnd(false) }
+      WriteCommandAction.runWriteCommandAction(myFixture.project) { state.gotoEnd(false) }
     }
     val text = myFixture.file.text
     assertFalse( text.contains("a.var"))
     assertTrue(text.contains("= a;"))
   }
 
-  fun testPostfixInInjectionDeletesTheWholeKey() {
-    TemplateManagerImpl.setTemplateTesting(getTestRootDisposable())
-    LiveTemplateCompletionContributor.setShowTemplatesInTests(true, getTestRootDisposable())
-    Registry.get("postfix.template.mod.completion.enabled").setValue(true, getTestRootDisposable())
+  @Test
+  fun testPostfixInInjectionDeletesTheWholeKey(): Unit = timeoutRunBlocking(context = Dispatchers.EDT) {
+    TemplateManagerImpl.setTemplateTesting(myFixture.testRootDisposable)
+    LiveTemplateCompletionContributor.setShowTemplatesInTests(true, myFixture.testRootDisposable)
+    Registry.get("postfix.template.mod.completion.enabled").setValue(true, myFixture.testRootDisposable)
     myFixture.configureByText(JavaFileType.INSTANCE, """
       class Hello {
         @org.intellij.lang.annotations.Language("JAVA") String string = ""${'"'}
@@ -395,15 +419,15 @@ class JavaCommandsCompletionInjectedTest : LightFixtureCompletionTestCase() {
       element.item() is PostfixTemplateModCompletionItemProvider.PostfixModCompletionItem &&
       element.lookupString == "soutv"
     }
-    selectItem(item)
+    completion.selectItem(item)
     val state = TemplateManagerImpl.getTemplateState(myFixture.editor)
     if (state != null) {
-      WriteCommandAction.runWriteCommandAction(project) { state.gotoEnd(false) }
+      WriteCommandAction.runWriteCommandAction(myFixture.project) { state.gotoEnd(false) }
     }
     val text = myFixture.file.text
-    assertTrue(text, text.contains("""System.out.println("a = " + a);"""))
+    assertTrue(text.contains("""System.out.println("a = " + a);"""), text)
     // the template key must be gone completely: a leftover dot would glue onto the expansion
-    assertFalse(text, text.contains("a.System"))
-    assertFalse(text, text.contains("a.sou"))
+    assertFalse(text.contains("a.System"), text)
+    assertFalse(text.contains("a.sou"), text)
   }
 }

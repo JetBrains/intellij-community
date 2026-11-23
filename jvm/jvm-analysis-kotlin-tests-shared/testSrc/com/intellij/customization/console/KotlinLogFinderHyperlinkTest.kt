@@ -1,15 +1,26 @@
 package com.intellij.customization.console
 
-import com.intellij.jvm.analysis.internal.testFramework.internal.LogFinderHyperlinkTestBase
 import com.intellij.jvm.analysis.internal.testFramework.internal.LogItem
+import com.intellij.jvm.analysis.internal.testFramework.internal.logFinderHyperlinkFixture
+import com.intellij.jvm.analysis.internal.testFramework.internal.logFinderHyperlinkProjectFixture
 import com.intellij.jvm.analysis.internal.testFramework.logging.LoggingTestUtils
 import com.intellij.openapi.editor.LogicalPosition
+import com.intellij.testFramework.junit5.TestApplication
+import org.junit.jupiter.api.Test
 
 @Suppress("ConvertToStringTemplate")
-abstract class KotlinLogFinderHyperlinkTest : LogFinderHyperlinkTestBase() {
+@TestApplication
+abstract class KotlinLogFinderHyperlinkTest {
+  companion object {
+    private val projectFixture = logFinderHyperlinkProjectFixture()
+  }
+
+  protected val myFixture by logFinderHyperlinkFixture(projectFixture)
+
+  @Test
   fun testSimpleLog4j2() {
     LoggingTestUtils.addLog4J(myFixture)
-    checkColumnFinderKotlin(
+    myFixture.checkColumnFinderKotlin(
       fileName = "Log4jk",
       classText = """
 package com.example.loggingjava.java
@@ -62,9 +73,10 @@ fun main() {
     )
   }
 
+  @Test
   fun testTopLevelSlf4j() {
     LoggingTestUtils.addSlf4J(myFixture)
-    checkColumnFinderKotlin(
+    myFixture.checkColumnFinderKotlin(
       fileName = "Slf4Jk",
       classText = """
 package com.example.loggingjava.java

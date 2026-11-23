@@ -277,10 +277,11 @@ internal class UnifiedPluginsPageSourceCoordinatorTest {
   }
 
   @Test
-  fun `local plugins are excluded from Suggested`() {
+  fun `Suggested limits results after excluding local plugins`() {
     val installed = item(plugin("installed.plugin", "Installed"))
     val bundled = item(plugin("bundled.plugin", "Bundled"))
     val suggestedOnly = item(plugin("suggested.plugin", "Suggested"))
+    val marketplace = (1..20).map { index -> item(plugin("marketplace.$index", "Marketplace $index")) }
 
     val state = composeUnifiedPluginsPageSourceState(
       query = PluginsQueryState(),
@@ -298,14 +299,14 @@ internal class UnifiedPluginsPageSourceCoordinatorTest {
             item(plugin(installed.pluginId.idString, "Suggested Installed")),
             item(plugin(bundled.pluginId.idString, "Suggested Bundled")),
             suggestedOnly,
-          ),
+          ) + marketplace,
         ),
         listModelData = PluginListModelData.EMPTY,
       ),
     )
 
     assertThat(state.sections.single { it.id == PluginSectionId.Suggested }.items.map(PluginItemState::pluginId))
-      .containsExactly(suggestedOnly.pluginId)
+      .containsExactlyElementsOf(listOf(suggestedOnly.pluginId) + marketplace.take(19).map(PluginItemState::pluginId))
   }
 
   @Test
@@ -611,6 +612,49 @@ internal class UnifiedPluginsPageSourceCoordinatorTest {
   }
 
   @Test
+  fun `built-in filter shows only implementation detail plugins`() {
+    val regular = plugin("regular.plugin", "Regular").apply { isBundled = true }
+    val bundledDetail = plugin("bundled.detail", "Bundled Detail").apply {
+      isBundled = true
+      isImplementationDetail = true
+    }
+    val installedDetail = plugin("installed.detail", "Installed Detail").apply { isImplementationDetail = true }
+    val local = UnifiedPluginLocalSourceState(
+      sections = listOf(
+        PluginSectionState(PluginSectionId.Installed),
+        PluginSectionState(PluginSectionId.Bundled, items = listOf(localItem(regular, enabled = true))),
+      ),
+      listModelData = PluginListModelData.EMPTY,
+      mayEstablishSelection = true,
+      implementationDetailItems = mapOf(
+        PluginSectionId.Installed to listOf(localItem(installedDetail, enabled = true)),
+        PluginSectionId.Bundled to listOf(localItem(bundledDetail, enabled = false)),
+      ),
+    )
+
+    fun result(query: String, scope: PluginsQueryScope = PluginsQueryScope.Installed): Map<PluginSectionId, List<String>> {
+      return composeUnifiedPluginsPageSourceState(PluginsQueryState(query, query, scope = scope), local).sections
+        .filter { it.id == PluginSectionId.Installed || it.id == PluginSectionId.Bundled }
+        .associate { section -> section.id to section.items.map { it.pluginId.idString } }
+    }
+
+    val hidden = mapOf(PluginSectionId.Installed to emptyList<String>(), PluginSectionId.Bundled to listOf("regular.plugin"))
+    assertThat(result("")).isEqualTo(hidden)
+    assertThat(result("", PluginsQueryScope.Unified)).isEqualTo(hidden)
+    assertThat(result("Detail")).isEqualTo(mapOf(PluginSectionId.Installed to emptyList<String>(), PluginSectionId.Bundled to emptyList()))
+    assertThat(result("/built-in")).isEqualTo(
+      mapOf(PluginSectionId.Installed to listOf("installed.detail"), PluginSectionId.Bundled to listOf("bundled.detail"))
+    )
+    assertThat(result("/built-in", PluginsQueryScope.Unified)).isEqualTo(
+      mapOf(PluginSectionId.Installed to listOf("installed.detail"), PluginSectionId.Bundled to listOf("bundled.detail"))
+    )
+    assertThat(result("/built-in Bundled")).isEqualTo(
+      mapOf(PluginSectionId.Installed to emptyList<String>(), PluginSectionId.Bundled to listOf("bundled.detail"))
+    )
+    assertThat(result("/built-in /enabled")).isEqualTo(hidden)
+  }
+
+  @Test
   fun `installed state filters use applied state across session changes`() {
     val appliedEnabled = plugin("applied.enabled", "Enabled")
     val appliedDisabled = plugin("applied.disabled", "Disabled").apply { isEnabled = false }
@@ -778,7 +822,7 @@ internal class UnifiedPluginsPageSourceCoordinatorTest {
   }
 
   @Test
-  fun `installed relevance uses legacy name and description match scores`() {
+  fun `installed relevance ranks name, description, and plugin ID matches`() {
     val shortName = localItem(plugin("name.short", "Target"), enabled = true)
     val longName = localItem(plugin("name.long", "Target Integration"), enabled = true)
     val shortDescription = localItem(
@@ -786,14 +830,16 @@ internal class UnifiedPluginsPageSourceCoordinatorTest {
       enabled = true,
     )
     val longDescription = localItem(
-      plugin("description.long", "Verbose").apply { description = "Target appears in a longer description" },
+      plugin("description.target", "Verbose").apply { description = "Target appears in a longer description" },
       enabled = true,
     )
+    val idMatch = localItem(plugin("org.example.targetSupport", "Tools"), enabled = true)
+    val fullIdMatch = localItem(plugin("target", "Utilities"), enabled = true)
     val local = localState(
       listOf(
         PluginSectionState(
           PluginSectionId.Installed,
-          items = listOf(longDescription, longName, shortDescription, shortName),
+          items = listOf(idMatch, longDescription, longName, fullIdMatch, shortDescription, shortName),
         ),
         PluginSectionState(PluginSectionId.Bundled),
       )
@@ -804,7 +850,14 @@ internal class UnifiedPluginsPageSourceCoordinatorTest {
       local,
     ).sections.single { it.id == PluginSectionId.Installed }.items.map { it.pluginId.idString }
 
-    assertThat(result).containsExactly("name.short", "name.long", "description.short", "description.long")
+    assertThat(result).containsExactly(
+      "name.short",
+      "name.long",
+      "description.short",
+      "description.target",
+      "target",
+      "org.example.targetSupport",
+    )
   }
 
   @Test

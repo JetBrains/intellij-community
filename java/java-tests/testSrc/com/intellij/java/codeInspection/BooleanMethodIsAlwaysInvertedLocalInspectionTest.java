@@ -2,11 +2,13 @@
 package com.intellij.java.codeInspection;
 
 import com.intellij.codeInspection.booleanIsAlwaysInverted.BooleanMethodIsAlwaysInvertedInspection;
+import com.intellij.testFramework.junit5.TestApplication;
 
+@TestApplication
 public class BooleanMethodIsAlwaysInvertedLocalInspectionTest extends BooleanMethodIsAlwaysInvertedInspectionTest {
 
   @Override
   protected void doTest(boolean checkRange) {
-    doTest("invertedBoolean/" + getTestName(true), new BooleanMethodIsAlwaysInvertedInspection().getSharedLocalInspectionTool());
+    javaInspection.get().doTest("invertedBoolean/" + javaInspection.get().getTestName(true), new BooleanMethodIsAlwaysInvertedInspection().getSharedLocalInspectionTool());
   }
 }

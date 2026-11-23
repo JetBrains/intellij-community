@@ -53,6 +53,10 @@ jvm_library(
         "//platform/eel",
         "//libraries/gson",
         "//platform/util/jdom",
+        "//platform/progress/shared:ide-progress",
+        "//python/common",
+        "//python/python-sdk/common",
+        "//platform/statistics",
     ],
 )
 ### auto-generated section `build intellij.python.community.impl.pipenv` end

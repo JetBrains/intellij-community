@@ -1,13 +1,19 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.editorTabGrouping.impl
 
+import com.intellij.ide.setToolTipText
 import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.fileEditor.FileEditorManagerListener
 import com.intellij.openapi.fileEditor.impl.EditorTabs
 import com.intellij.openapi.fileEditor.impl.EditorTabsFactory
 import com.intellij.openapi.fileEditor.impl.EditorWindow
 import com.intellij.openapi.fileEditor.impl.createEditorTabListOptions
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.ActionCallback
+import com.intellij.openapi.util.text.HtmlBuilder
+import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.ClientProperty
 import com.intellij.ui.IslandsState
@@ -52,8 +58,29 @@ internal open class GroupingJBEditorTabs(
       }
 
       override fun tabRemoved(tabToRemove: TabInfo) {
-        if (!rearranging && !resettingDropTarget) regroupAfterTabRemoved()
+        collapser.tabRemoved(tabToRemove)
+        if (rearranging || resettingDropTarget) return
+        regroup()
       }
+
+      override fun selectionChanged(oldInfo: TabInfo?, newInfo: TabInfo?) {
+        if (newInfo == null || newInfo === dropInfo) return
+        collapser.tabSelected(newInfo)
+      }
+    })
+    if (project != null) subscribeToFileClose(project, parentDisposable)
+  }
+
+  @Suppress("SplitModeApiUsage")
+  private fun subscribeToFileClose(project: Project, parentDisposable: Disposable) {
+    val connection = project.messageBus.connect(parentDisposable)
+    connection.subscribe(FileEditorManagerListener.Before.FILE_EDITOR_MANAGER, object : FileEditorManagerListener.Before {
+      override fun beforeFileClosed(source: FileEditorManager, file: VirtualFile) {
+        if (tabs.any { it.`object` == file }) collapser.fileCloseStarted()
+      }
+    })
+    connection.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, object : FileEditorManagerListener {
+      override fun fileClosed(source: FileEditorManager, file: VirtualFile) = collapser.fileCloseFinished()
     })
   }
 
@@ -61,10 +88,20 @@ internal open class GroupingJBEditorTabs(
   private val controller = TabGroupingController(project, coroutineScope, resolver) {
     rebuildSnapshot()
     rearrangeTabsByGroup(rebuildCache = false)
+    collapser.update()
     revalidate()
     repaint()
   }
   private var dragCandidate: VirtualFile? = null
+
+  private val collapser = TabGroupCollapser(CollapseHost())
+  private val collapseAnimation = TabGroupCollapseAnimation(this, parentDisposable)
+
+  @TestOnly
+  internal fun collapseAnimationForTest(): TabGroupCollapseAnimation = collapseAnimation
+
+  @TestOnly
+  internal fun collapsedGroupTabForTest(isPinned: Boolean, groupKey: String): TabInfo? = collapser.groupTab(isPinned to groupKey)
 
   @TestOnly
   internal suspend fun awaitGroupResolution() = controller.awaitResolution()
@@ -83,7 +120,28 @@ internal open class GroupingJBEditorTabs(
   private fun rebuildSnapshot() {
     snapshot = TabGroupingSnapshot(tabs.filter { it !== dropInfo }, controller::group)
     invalidateLayoutCaches()
+    updateGroupTooltips()
+    collapser.updateLabels()
     repaint()
+  }
+
+  /** Adds the group name and size above the base tooltip of each tab in a shown group. */
+  private fun updateGroupTooltips() {
+    val active = isGroupingActive()
+    for (info in tabs) {
+      if (info === dropInfo) continue
+      val label = info.tabLabel ?: continue
+      val group = if (active) snapshot.groups[info] else null
+      if (group == null || !isVisibleGroup(info.isPinned, group.key)) {
+        label.setToolTipText(info.tooltipHtmlText)
+        continue
+      }
+      val header = EditorTabGroupingBundle.message("tab.tooltip.group", group.name)
+      val builder = HtmlBuilder().append(HtmlChunk.text(header))
+      // A group tab stands for the whole group, so it does not show the tooltip of its file.
+      if (!collapser.isGroupTab(info)) info.tooltipHtmlText?.let { builder.append(HtmlChunk.br()).append(it) }
+      label.setToolTipText(builder.toFragment())
+    }
   }
 
   internal fun logicalGroupSizes(): Map<Pair<Boolean, String>, Int> = snapshot.sizes
@@ -115,25 +173,29 @@ internal open class GroupingJBEditorTabs(
     val result = super.addTab(info, index)
     invalidateGroupCache()
     moveToGroupEnd(info)
+    collapser.update()
     return result
   }
 
-  private fun regroupAfterTabRemoved() {
+  /** Resolves the groups again, puts the tabs in group order and brings the collapsed groups up to date. */
+  private fun regroup() {
     invalidateGroupCache()
     rearrangeTabsByGroup(rebuildCache = false)
+    collapser.update()
   }
 
   override fun addTabSilently(info: TabInfo, index: Int): TabInfo {
     val result = super.addTabSilently(info, index)
     invalidateGroupCache()
     moveToGroupEnd(info)
+    collapser.update()
     return result
   }
 
   override fun setTabsFromWindow(tabs: List<TabInfo>) {
+    collapser.reset()
     super.setTabsFromWindow(tabs)
-    invalidateGroupCache()
-    rearrangeTabsByGroup(rebuildCache = false)
+    regroup()
   }
 
   override fun getPreferredInsertionIndex(file: VirtualFile, currentTabIndex: Int, isPinned: Boolean): Int? =
@@ -141,11 +203,20 @@ internal open class GroupingJBEditorTabs(
 
   override fun propertyChange(event: java.beans.PropertyChangeEvent) {
     super.propertyChange(event)
-    if (event.propertyName == TabInfo.HIDDEN) rebuildSnapshot()
+    when (event.propertyName) {
+      // One collapse update changes many tabs, and it rebuilds the snapshot one time at its end.
+      TabInfo.HIDDEN -> if (!collapser.isUpdating) rebuildSnapshot()
+      TabInfo.TEXT -> {
+        updateGroupTooltips()
+        collapser.labelOverwritten(event.source as TabInfo)
+      }
+      TabInfo.ICON, TabInfo.TAB_ACTION_GROUP -> collapser.labelOverwritten(event.source as TabInfo)
+    }
   }
 
   override fun tabsChanged() {
     rearrangeTabsByGroup()
+    collapser.update()
   }
 
   override fun prepareDropPreview(dropInfo: TabInfo, file: VirtualFile, isPinned: Boolean) {
@@ -161,6 +232,12 @@ internal open class GroupingJBEditorTabs(
     if (!isGroupingActive() || controller.isDragging) return
     val file = info.`object` as? VirtualFile
     if (file != null && !controller.isResolved(file)) return
+    if (collapser.hasCollapsedGroups) {
+      // The index math below uses the index of all tabs, and a move needs the index of the visible tabs.
+      // Hidden tabs make them differ, so the full sorter places the tab.
+      rearrangeTabsByGroup(rebuildCache = false)
+      return
+    }
     if (UISettings.getInstance().sortTabsAlphabetically) {
       rearrangeTabsByGroup(rebuildCache = false)
       return
@@ -339,8 +416,8 @@ internal open class GroupingJBEditorTabs(
 
   override fun uiSettingsChanged(uiSettings: UISettings) {
     super.uiSettingsChanged(uiSettings)
-    invalidateGroupCache()
-    rearrangeTabsByGroup(rebuildCache = false)
+    // The platform gives each label its tab actions back, so each group tab needs its label again.
+    regroup()
     revalidate()
     repaint()
   }
@@ -379,8 +456,7 @@ internal open class GroupingJBEditorTabs(
     controller.dragStateChanged(active)
     if (!active) {
       dragCandidate = null
-      invalidateGroupCache()
-      rearrangeTabsByGroup(rebuildCache = false)
+      regroup()
     }
   }
 
@@ -424,11 +500,15 @@ internal open class GroupingJBEditorTabs(
     val currentOrder = getVisibleInfos().filter { it !== dropInfo }
     // The order is already correct on most events, so this skips every move.
     if (currentOrder == reordered.filterNot { it.isHidden }) return
-    val positions = IdentityHashMap<TabInfo, Int>(reordered.size)
-    reordered.forEachIndexed { index, info -> positions[info] = index }
-    sortTabs(compareBy { positions.getValue(it) })
+    sortTabsTo(reordered)
     rebuildSnapshot()
     tabMoved()
+  }
+
+  private fun sortTabsTo(order: List<TabInfo>) {
+    val positions = IdentityHashMap<TabInfo, Int>(order.size)
+    order.forEachIndexed { index, info -> positions[info] = index }
+    sortTabs(compareBy { positions.getValue(it) })
   }
 
   private fun currentTabGroups(): List<Pair<Boolean, String?>> {
@@ -439,6 +519,45 @@ internal open class GroupingJBEditorTabs(
 
   internal fun isGroupingActive(excluding: TabInfo? = null): Boolean {
     return snapshot.isActive(settings.groupByDirectory, excluding)
+  }
+
+  override fun select(info: TabInfo, requestFocus: Boolean): ActionCallback {
+    collapser.expandGroupOf(info)
+    return super.select(info, requestFocus)
+  }
+
+  // The platform choice compares an index of the visible tabs with an index of all tabs, as a close does.
+  // Hidden tabs make them differ, so a collapsed group needs the plain neighbor.
+  override fun getToSelectOnRemoveOf(tab: TabInfo): TabInfo? {
+    if (!collapser.hasCollapsedGroups) return super.getToSelectOnRemoveOf(tab)
+    if (window.isDisposed || selectedInfo != tab) return null
+    val visibleInfos = getVisibleInfos()
+    return findSelectionNeighbor(visibleInfos, visibleInfos.indexOf(tab))
+  }
+
+  /** Returns true when the editor window has a current editor. */
+  protected open fun hasWindowSelection(): Boolean = window.selectedComposite != null
+
+  private inner class CollapseHost : TabGroupCollapseHost {
+    override val isCollapseEnabled: Boolean get() = settings.collapseGroups && settings.groupByDirectory
+    override val isDragging: Boolean get() = controller.isDragging
+    override val snapshot: TabGroupingSnapshot get() = this@GroupingJBEditorTabs.snapshot
+    override val selectedTab: TabInfo? get() = selectedInfo
+    override val hasWindowSelection: Boolean get() = hasWindowSelection()
+    override val visibleTabs: List<TabInfo> get() = getVisibleInfos()
+
+    override fun applyOrder(order: List<TabInfo>) = sortTabsTo(order)
+
+    override fun groupChanging(groupTab: TabInfo, members: List<TabInfo>, collapsing: Boolean) =
+      collapseAnimation.groupChanging(groupTab, members, collapsing)
+
+    override fun collapseChanged() {
+      rebuildSnapshot()
+      rearrangeTabsByGroup(rebuildCache = false)
+      revalidate()
+      repaint()
+      collapseAnimation.start()
+    }
   }
 }
 

@@ -2,7 +2,7 @@
 package com.jetbrains.python.testing.settings
 
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.python.sdk.backend.PythonInterpreter
 import com.intellij.ui.SimpleColoredComponent
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.components.JBLabel
@@ -14,15 +14,15 @@ import java.awt.Component
 import javax.swing.JList
 import javax.swing.ListCellRenderer
 
-internal class PyTestRunConfigurationRenderer(private val sdk: Sdk?, val project: Project) : ListCellRenderer<PyAbstractTestFactory<*>> {
+internal class PyTestRunConfigurationRenderer(private val interpreter: PythonInterpreter?, val project: Project) : ListCellRenderer<PyAbstractTestFactory<*>> {
   private val autoFactory: PyAutoDetectionConfigurationFactory = PythonTestConfigurationType.getInstance().autoDetectFactory
   override fun getListCellRendererComponent(list: JList<out PyAbstractTestFactory<*>>,
                                             value: PyAbstractTestFactory<*>,
                                             index: Int,
                                             isSelected: Boolean,
                                             cellHasFocus: Boolean): Component {
-    if (value == autoFactory && sdk != null) {
-      val detectedName = autoFactory.getFactory(sdk, project).name
+    if (value == autoFactory && interpreter != null) {
+      val detectedName = autoFactory.getFactory(interpreter, project).name
       return SimpleColoredComponent().apply {
         isOpaque = false
         ipad = JBInsets.create(0, 0)

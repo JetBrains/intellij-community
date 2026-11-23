@@ -209,7 +209,7 @@ abstract class AbstractRenameTest : KotlinLightCodeInsightFixtureTestCase() {
             configExtra(rootDir, renameParamsObject)
             val psiFile = myFixture.configureFromTempProjectFile(mainFilePath)
 
-            doRenameMarkedElement(renameParamsObject, psiFile)
+            doRenameMarkedElement(renameParamsObject, psiFile, ::runRename)
         }
     }
 
@@ -221,7 +221,7 @@ abstract class AbstractRenameTest : KotlinLightCodeInsightFixtureTestCase() {
             val aClass = context.javaFacade.findClass(classFQN, context.project.allScope())!!
             val substitution = RenamePsiElementProcessor.forElement(aClass).substituteElementToRename(aClass, null)
 
-            runRenameProcessor(context.project, newName, substitution, renameParamsObject, true, true)
+            runRename(context.project, newName, substitution, renameParamsObject, true, true)
         }
     }
 
@@ -239,7 +239,7 @@ abstract class AbstractRenameTest : KotlinLightCodeInsightFixtureTestCase() {
             if (method == null) throw IllegalStateException("Method with signature '$methodSignature' wasn't found in class $classFQN")
 
             val substitution = RenamePsiElementProcessor.forElement(method).substituteElementToRename(method, null)
-            runRenameProcessor(context.project, newName, substitution, renameParamsObject, false, false)
+            runRename(context.project, newName, substitution, renameParamsObject, false, false)
         }
     }
 
@@ -341,7 +341,7 @@ abstract class AbstractRenameTest : KotlinLightCodeInsightFixtureTestCase() {
                 ?: error("unable to resolve '${segmentReference.element.text}' from $packageDirective '${packageDirective.text}'")
 
             val substitution = RenamePsiElementProcessor.forElement(psiElement).substituteElementToRename(psiElement, null)
-            runRenameProcessor(context.project, newName, substitution, renameParamsObject, true, true)
+            runRename(context.project, newName, substitution, renameParamsObject, true, true)
         }
     }
 
@@ -352,7 +352,7 @@ abstract class AbstractRenameTest : KotlinLightCodeInsightFixtureTestCase() {
         doTestCommittingDocuments(context) {
             val psiFile = myFixture.configureFromTempProjectFile(file)
 
-            runRenameProcessor(context.project, newName, psiFile, renameParamsObject, true, true)
+            runRename(context.project, newName, psiFile, renameParamsObject, true, true)
         }
     }
 
@@ -365,7 +365,7 @@ abstract class AbstractRenameTest : KotlinLightCodeInsightFixtureTestCase() {
             val mainFile = myFixture.configureFromTempProjectFile(file) as PropertiesFile
             val property = mainFile.findPropertyByKey(oldName) as Property
 
-            runRenameProcessor(context.project, newName, property, renameParamsObject, true, true)
+            runRename(context.project, newName, property, renameParamsObject, true, true)
         }
     }
 
@@ -390,7 +390,7 @@ abstract class AbstractRenameTest : KotlinLightCodeInsightFixtureTestCase() {
             else
                 RenamePsiElementProcessor.forElement(psiElement).substituteElementToRename(psiElement, null)
 
-            runRenameProcessor(context.project, newName, substitution, renameParamsObject, true, true)
+            runRename(context.project, newName, substitution, renameParamsObject, true, true)
             PsiTestUtil.checkFileStructure(ktFile)
         }
     }
@@ -432,6 +432,18 @@ abstract class AbstractRenameTest : KotlinLightCodeInsightFixtureTestCase() {
                 handler.invoke(project, editor, psiFile, dataContext)
             }
         }
+    }
+
+    /** Runs the rename of [substitution], with every automatic renamer; a subclass renames with another engine. */
+    protected open fun runRename(
+        project: Project,
+        newName: String,
+        substitution: PsiElement?,
+        renameParamsObject: JsonObject,
+        isSearchInComments: Boolean,
+        isSearchTextOccurrences: Boolean
+    ) {
+        runRenameProcessor(project, newName, substitution, renameParamsObject, isSearchInComments, isSearchTextOccurrences)
     }
 
     protected fun getTestDirName(lowercaseFirstLetter: Boolean): String {
@@ -498,7 +510,11 @@ fun runRenameProcessor(
     processor.run()
 }
 
-fun doRenameMarkedElement(renameParamsObject: JsonObject, psiFile: PsiFile) {
+fun doRenameMarkedElement(
+    renameParamsObject: JsonObject,
+    psiFile: PsiFile,
+    rename: (Project, String, PsiElement?, JsonObject, Boolean, Boolean) -> Unit = ::runRenameProcessor,
+) {
     val project = psiFile.project
     val newName = renameParamsObject.getString("newName")
 
@@ -536,7 +552,7 @@ fun doRenameMarkedElement(renameParamsObject: JsonObject, psiFile: PsiFile) {
 
         val searchInComments = renameParamsObject["searchInComments"]?.asBoolean ?: true
         val searchInTextOccurrences = renameParamsObject["searchInTextOccurrences"]?.asBoolean ?: true
-        runRenameProcessor(project, newName, substitution, renameParamsObject, searchInComments, searchInTextOccurrences)
+        rename(project, newName, substitution, renameParamsObject, searchInComments, searchInTextOccurrences)
     } finally {
         if (shouldReleaseEditor) {
             editorFactory.releaseEditor(editor!!)

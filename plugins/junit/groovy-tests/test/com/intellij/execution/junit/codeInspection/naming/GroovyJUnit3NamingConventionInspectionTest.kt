@@ -3,24 +3,30 @@ package com.intellij.execution.junit.codeInspection.naming
 
 import com.intellij.junit.testFramework.JUnitProjectDescriptor
 import com.intellij.junit.testFramework.MavenTestLib
-import com.intellij.jvm.analysis.testFramework.JvmInspectionTestBase
 import com.intellij.jvm.analysis.testFramework.JvmLanguage
+import com.intellij.jvm.analysis.testFramework.jvmInspectionFixture
 import com.intellij.pom.java.LanguageLevel
-import com.intellij.testFramework.LightProjectDescriptor
+import com.intellij.testFramework.fixtures.lightJavaProjectFixture
+import com.intellij.testFramework.junit5.TestApplication
 import org.jetbrains.plugins.groovy.codeInspection.naming.NewGroovyClassNamingConventionInspection
+import org.junit.jupiter.api.Test
 
 private val descriptor = JUnitProjectDescriptor(LanguageLevel.HIGHEST, MavenTestLib.JUNIT3)
 
-class GroovyJUnit3NamingConventionInspectionTest : JvmInspectionTestBase() {
-  override val inspection by lazy {
+@TestApplication
+class GroovyJUnit3NamingConventionInspectionTest {
+  companion object {
+    private val projectFixture = lightJavaProjectFixture(descriptor)
+  }
+
+  private val myFixture by jvmInspectionFixture(projectFixture) {
     NewGroovyClassNamingConventionInspection().apply {
       setEnabled(true, TestClassNamingConvention.TEST_CLASS_NAMING_CONVENTION_SHORT_NAME)
       setEnabled(true, AbstractTestClassNamingConvention.ABSTRACT_TEST_CLASS_NAMING_CONVENTION_SHORT_NAME)
     }
   }
 
-  override fun getProjectDescriptor(): LightProjectDescriptor = descriptor
-
+  @Test
   fun testTestCaseConvention() {
     myFixture.testHighlighting(JvmLanguage.GROOVY, """
       import junit.framework.TestCase

@@ -1,9 +1,9 @@
-"""Packs one simple plugin of a dev distribution directly, with no plan file and no Kotlin preparation.
+"""Packs one simple plugin of the distribution directly, with no plan file and no Kotlin preparation.
 
 A simple plugin is a plugin whose every asset is a jar or a plain copy. Each jar merges module outputs, library jars and,
 for the jar of the main module, the patched descriptor. A plain copy places one file, every file of a source tree, or
 every file of one directory artifact at a destination as it is. The plugin's own `BUILD.bazel` states the jars on
-`dev_dist_plugin(jars = ...)` and the copies on `dev_dist_plugin(files = ...)`. This file packs the jars with the same
+`dist_plugin(jars = ...)` and the copies on `dist_plugin(files = ...)`. This file packs the jars with the same
 packer `content_module_jar` uses, and it names the copied files to the collector, which hashes them; the composer copies
 their bytes once, into the distribution. The collector walks a directory artifact when it runs, because analysis cannot
 list its files. A plugin with any other asset keeps the plan driven chain of `dev_plugin_remainder.bzl`.
@@ -22,17 +22,17 @@ load("@bazel_skylib//rules:common_settings.bzl", "BuildSettingInfo")
 load("@rules_java//java:defs.bzl", "JavaInfo")
 load("@rules_kotlin//kotlin/internal:defs.bzl", _KtJvmInfo = "KtJvmInfo")
 load(":content_module_jar.bzl", "ContentModuleJarInfo", "declare_spans", "library_entries", "merge_order_jars", "module_output_jar", "pack_jar")
-load(":dev_dist_content.bzl", "DevDistContentInfo")
-load(":dev_dist_plugin_descriptor.bzl", "DEV_DIST_STAMP_CLASS_ATTRS", "DEV_DIST_STAMP_CLASS_FLAG_ATTR", "DevDistPluginDescriptorInfo", "dev_dist_check_stamp_class", "dev_dist_mode_refusals", "dev_dist_neutral_product_transition", "dev_dist_stamp_class_transition")
 load(":dev_plugin_source_tree.bzl", "source_tree_entries", "source_tree_prefix")
-load(":intellij_dev_dist.bzl", "DevDistPlacementInfo", "IntellijDevFragmentInfo")
+load(":dist_content.bzl", "DistContentInfo")
+load(":dist_plugin_descriptor.bzl", "DIST_STAMP_CLASS_ATTRS", "DIST_STAMP_CLASS_FLAG_ATTR", "DistPluginDescriptorInfo", "dist_check_stamp_class", "dist_mode_refusals", "dist_neutral_product_transition", "dist_stamp_class_transition")
+load(":intellij_dist.bzl", "DistPlacementInfo", "IntellijDevFragmentInfo")
 load(":java_glob.bzl", "executable_destinations")
 
-DevDistRuntimeLayoutInfo = provider(
+DistRuntimeLayoutInfo = provider(
     doc = """The layout part of one plugin component: which modules and libraries each of its jars merges.
 
     The runtime module repository of a product reads the parts of its plugins, see `runtime-layout` in
-    `community/build/dev-dist-tools/bins`. A simple plugin writes its part at analysis. A complex plugin derives it
+    `community/build/dist-tools/bins`. A simple plugin writes its part at analysis. A complex plugin derives it
     from its resolved plan file.""",
     fields = {
         "part": "The part `File`, in the part format of `runtime-layout`.",
@@ -50,7 +50,7 @@ DevPluginInputsInfo = provider(
         `content_module_jar` target packed, and what it merges, see `ContentModuleJarInfo`.""",
         "files": """dict of label token to the tuple of `File`s the label produces: regular files, or one directory artifact
         alone. The token is the label string `files` names.""",
-        "content": "`DevDistContentInfo`: every raw module jar and library the plugin merges, the members of a reused content module jar included.",
+        "content": "`DistContentInfo`: every raw module jar and library the plugin merges, the members of a reused content module jar included.",
         "packed_jars": """dict of destination to `struct(jar, metadata, spans)`: every jar of `jars` that does not merge the main
         module, packed in the neutral configuration. A jar that names an undeclared token is left out, and the component
         refuses it.""",
@@ -180,7 +180,7 @@ def _dev_plugin_inputs_impl(ctx):
             libraries = libraries,
             content_jars = content_jars,
             files = files,
-            content = DevDistContentInfo(module_jars = depset(content_module_jars), library_jars = depset(content_library_jars)),
+            content = DistContentInfo(module_jars = depset(content_module_jars), library_jars = depset(content_library_jars)),
             packed_jars = packed_jars,
         ),
     ]
@@ -188,7 +188,7 @@ def _dev_plugin_inputs_impl(ctx):
 _dev_plugin_inputs = rule(
     doc = "The compiled inputs of one simple plugin and its jars without the descriptor, in the neutral configuration.",
     implementation = _dev_plugin_inputs_impl,
-    cfg = dev_dist_neutral_product_transition,
+    cfg = dist_neutral_product_transition,
     attrs = {
         "modules": attr.label_keyed_string_dict(
             doc = "Every module a jar merges, valued by its JPS module name.",
@@ -230,8 +230,8 @@ DevPluginDescriptorJarsInfo = provider(
 )
 
 def _dev_plugin_descriptor_jars_impl(ctx):
-    descriptor_info = ctx.attr.descriptor[DevDistPluginDescriptorInfo]
-    dev_dist_check_stamp_class(ctx, descriptor_info)
+    descriptor_info = ctx.attr.descriptor[DistPluginDescriptorInfo]
+    dist_check_stamp_class(ctx, descriptor_info)
     if ctx.attr.embed_content_modules != descriptor_info.embeds_content_modules:
         fail("%s states embed_content_modules = %s, and its descriptor states %s" % (
             ctx.label,
@@ -262,10 +262,10 @@ The incoming transition keeps only what changes the bytes of the descriptor. A l
 reads no mode, so its jar packs once for a monolith and a frontend product. A jar that names an undeclared token is left
 out, and the component refuses it.""",
     implementation = _dev_plugin_descriptor_jars_impl,
-    cfg = dev_dist_stamp_class_transition,
+    cfg = dist_stamp_class_transition,
     attrs = {
         "inputs": attr.label(mandatory = True, providers = [DevPluginInputsInfo]),
-        "descriptor": attr.label(mandatory = True, providers = [DevDistPluginDescriptorInfo]),
+        "descriptor": attr.label(mandatory = True, providers = [DistPluginDescriptorInfo]),
         "jars": attr.string_list_dict(doc = "The `jars` of the component. The rule packs each jar that merges `main_module`."),
         "main_module": attr.string(mandatory = True),
         "output_stem": attr.string(mandatory = True, doc = "The name of the component. Each jar is declared below it."),
@@ -275,7 +275,7 @@ out, and the component refuses it.""",
         ),
         "_packer": attr.label(default = "//platform/build-scripts/bazel-rules:content_module_packer", executable = True, cfg = "exec"),
         "_trace_spans": attr.label(default = "//platform/build-scripts/bazel-rules:trace_spans", providers = [BuildSettingInfo]),
-    } | DEV_DIST_STAMP_CLASS_ATTRS,
+    } | DIST_STAMP_CLASS_ATTRS,
 )
 
 def is_library_token(token):
@@ -286,7 +286,7 @@ def is_library_token(token):
     """
     return "//" in token
 
-def dev_dist_plugin_directory(main_module, directory_name = ""):
+def dist_plugin_directory(main_module, directory_name = ""):
     """The plugin's directory in the distribution - `("intellij.json", "")` gives `"plugins/json"`.
 
     The derived name is `convertModuleNameToPluginDirectoryName` of `PluginLayout.kt`: the main module with the
@@ -401,8 +401,8 @@ def _copies(ctx, inputs, destinations):
 
 def _dev_plugin_impl(ctx):
     inputs = ctx.attr.inputs[DevPluginInputsInfo]
-    descriptor_info = ctx.attr.descriptor[DevDistPluginDescriptorInfo]
-    dev_dist_check_stamp_class(ctx, descriptor_info)
+    descriptor_info = ctx.attr.descriptor[DistPluginDescriptorInfo]
+    dist_check_stamp_class(ctx, descriptor_info)
     main_module = ctx.attr.main_module
     if descriptor_info.plugin_main_module != main_module:
         fail("%s describes '%s', not '%s'" % (ctx.attr.descriptor.label, descriptor_info.plugin_main_module, main_module), attr = "descriptor")
@@ -424,7 +424,7 @@ def _dev_plugin_impl(ctx):
     # whose every module is refused is not packed, and a reused jar of a refused module is not placed. A jar that merges
     # a refused module with a kept one is packed whole, with the same bytes for every product, and the run time fences
     # the refused packages.
-    refused = {name: True for name in dev_dist_mode_refusals(ctx, descriptor_info)}
+    refused = {name: True for name in dist_mode_refusals(ctx, descriptor_info)}
     for destination, tokens in ctx.attr.jars.items():
         _check_destination(destination)
         if not tokens:
@@ -570,11 +570,11 @@ def _dev_plugin_impl(ctx):
     for copy in copies:
         (placed_trees if copy.tree else placed_files)[plugin_directory + "/" + copy.destination] = copy.file
     executables = executable_destinations(ctx.attr.executables, "%s: executables" % ctx.label, plugin_directory, placed_files)
-    placement = DevDistPlacementInfo(files = placed_files, trees = placed_trees, executables = executables)
+    placement = DistPlacementInfo(files = placed_files, trees = placed_trees, executables = executables)
     return [
         DefaultInfo(files = depset([manifest, classpath]), runfiles = ctx.runfiles(transitive_files = payload)),
-        DevDistRuntimeLayoutInfo(part = runtime_layout, descriptor = classpath_descriptor, descriptor_module = main_module),
-        # The raw content, published beside the packed component: `dev_dist_plugin_content` unions it per product for
+        DistRuntimeLayoutInfo(part = runtime_layout, descriptor = classpath_descriptor, descriptor_module = main_module),
+        # The raw content, published beside the packed component: `dist_plugin_content` unions it per product for
         # the reference that lays the plugin out without packing it.
         inputs.content,
         IntellijDevFragmentInfo(
@@ -586,8 +586,8 @@ def _dev_plugin_impl(ctx):
         ),
         placement,
         OutputGroupInfo(
-            dev_dist_plugin_outputs = depset([manifest, classpath], transitive = [payload]),
-            dev_dist_plugin_classpath = depset([classpath]),
+            dist_plugin_outputs = depset([manifest, classpath], transitive = [payload]),
+            dist_plugin_classpath = depset([classpath]),
             file_metadata = depset([entry.metadata for entry in packed]),
             trace_spans = depset(spans),
         ),
@@ -596,16 +596,16 @@ def _dev_plugin_impl(ctx):
 _dev_plugin = rule(
     doc = """One simple plugin, packed and collected as a platform-neutral component.
 
-The consumer reaches it in the configuration of its product. The incoming `dev_dist_stamp_class_transition` keeps only
+The consumer reaches it in the configuration of its product. The incoming `dist_stamp_class_transition` keeps only
 the stamp class that `stamp_class_modes` states, so one component serves every product of one mode.""",
-    cfg = dev_dist_stamp_class_transition,
+    cfg = dist_stamp_class_transition,
     implementation = _dev_plugin_impl,
     attrs = {
         "inputs": attr.label(mandatory = True, providers = [DevPluginInputsInfo]),
         "descriptor": attr.label(
-            doc = "The plugin's `dev_dist_plugin_descriptor` target, stamped for the product this component is built for.",
+            doc = "The plugin's `dist_plugin_descriptor` target, stamped for the product this component is built for.",
             mandatory = True,
-            providers = [DevDistPluginDescriptorInfo],
+            providers = [DistPluginDescriptorInfo],
         ),
         "main_module": attr.string(mandatory = True, doc = "The main JPS module. It names the component."),
         "plugin_directory": attr.string(mandatory = True, doc = "`plugins/<directory>`, the plugin's directory in the distribution."),
@@ -645,14 +645,14 @@ no file. The placement marks the placed files that a pattern matches.""",
 when it runs. Each directory and regular file lands at `<destination>/<relative path>`, a file with the mode 0644 and a
 directory with 0755. A link is refused.""",
         ),
-        "_collector": attr.label(default = "//platform/build-scripts/bazel-rules:dev_dist_collector", executable = True, cfg = "exec"),
+        "_collector": attr.label(default = "//platform/build-scripts/bazel-rules:dist_collector", executable = True, cfg = "exec"),
         "_trace_spans": attr.label(default = "//platform/build-scripts/bazel-rules:trace_spans", providers = [BuildSettingInfo]),
         "descriptor_jars": attr.label(
             doc = "The `_dev_plugin_descriptor_jars` target, which packs the jars that hold the descriptor.",
             mandatory = True,
             providers = [DevPluginDescriptorJarsInfo],
         ),
-    } | DEV_DIST_STAMP_CLASS_ATTRS | DEV_DIST_STAMP_CLASS_FLAG_ATTR,
+    } | DIST_STAMP_CLASS_ATTRS | DIST_STAMP_CLASS_FLAG_ATTR,
 )
 
 def dev_plugin(
@@ -680,7 +680,7 @@ def dev_plugin(
     Args:
         name: the component target. `<name>_inputs` holds the compiled inputs.
         main_module: the main JPS module.
-        descriptor: the plugin's `dev_dist_plugin_descriptor` target.
+        descriptor: the plugin's `dist_plugin_descriptor` target.
         plugin_directory: `plugins/<directory>`.
         modules: dict of module target to JPS module name, every module a jar merges except a test-only one.
         test_module_jars: dict of test jar label to JPS module name, every test-only module a jar merges. The label is

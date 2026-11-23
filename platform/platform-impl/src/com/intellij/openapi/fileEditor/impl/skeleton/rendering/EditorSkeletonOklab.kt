@@ -50,11 +50,10 @@ internal object EditorSkeletonOklab {
     return colorFrom(components, color.alpha)
   }
 
-  /** Creates a color ramp that interpolates Oklab components and alpha between [first] and [second]. */
-  fun ramp(first: Color, second: Color): Ramp = Ramp(first, second)
-
-  /** A perceptually smooth Oklab interpolation between two colors. */
-  internal class Ramp(private val first: Color, private val second: Color) {
+  /**
+   * A perceptually smooth interpolation of the Oklab components and the alpha between [first] and [second].
+   */
+  class Ramp(private val first: Color, private val second: Color) {
     private val firstComponents = fromRgb(first.getRGBColorComponents(null))
     private val secondComponents = fromRgb(second.getRGBColorComponents(null))
 

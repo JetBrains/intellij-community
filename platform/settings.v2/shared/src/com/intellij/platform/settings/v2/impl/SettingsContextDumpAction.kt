@@ -4,6 +4,7 @@ package com.intellij.platform.settings.v2.impl
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.project.DumbAwareAction
@@ -15,7 +16,6 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.settings.v2.SettingsContext
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.components.JBTextArea
-import org.jetbrains.annotations.ApiStatus.Internal
 import java.awt.Dimension
 import javax.swing.Action
 import javax.swing.JComponent
@@ -24,25 +24,17 @@ import javax.swing.JComponent
  * Shows the settings context of the selected file, with the content roots it was built from. It is an internal
  * action. Use it to check by hand where a file resolves its settings.
  *
- * A side implements [rootUrls] only. The report is the same on every side, and the roots are the one thing that each
- * side knows differently.
+ * The roots come from [fileContextRootUrls], so the report shows the roots of the side that runs the action.
+ * A split session shows the action of each side in the client, as [ActionRemoteBehaviorSpecification.Duplicated] says.
  */
-@Internal
-abstract class SettingsContextDumpAction : DumbAwareAction() {
-  /**
-   * Returns the content roots a context anchors on, as this side knows them.
-   *
-   * @param project the project the report is for
-   */
-  protected abstract fun rootUrls(project: Project): List<String>
+internal class SettingsContextDumpAction : DumbAwareAction(), ActionRemoteBehaviorSpecification.Duplicated {
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
-  final override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
-
-  final override fun update(e: AnActionEvent) {
+  override fun update(e: AnActionEvent) {
     e.presentation.isEnabledAndVisible = e.project != null
   }
 
-  final override fun actionPerformed(e: AnActionEvent) {
+  override fun actionPerformed(e: AnActionEvent) {
     val project = e.project ?: return
     val file = e.getData(CommonDataKeys.VIRTUAL_FILE)
     val title = templatePresentation.text ?: DEFAULT_TITLE
@@ -54,7 +46,7 @@ abstract class SettingsContextDumpAction : DumbAwareAction() {
   }
 
   private fun report(project: Project, file: VirtualFile?): @NlsSafe String {
-    val roots = rootUrls(project)
+    val roots = fileContextRootUrls(project)
     val context = if (file == null) SettingsContext.project(project) else SettingsContext.file(file, project)
     val chain = generateSequence(context) { it.parentContext }
     return buildString {

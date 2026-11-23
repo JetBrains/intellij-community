@@ -18,7 +18,7 @@ jvm_library(
     runtime_deps = ["//plugins/kotlin/jvm-debugger/test/compose:compose_test_lib"],
     deps = [
         # do not sort,
-        "//plugins/kotlin/tests-compose:tests-compose_test_lib",
+        "//plugins/kotlin/tests-compose",
         "//plugins/kotlin/refactorings/kotlin.refactorings.tests.k2:kotlin-refactorings-tests_test_lib",
     ],
 )

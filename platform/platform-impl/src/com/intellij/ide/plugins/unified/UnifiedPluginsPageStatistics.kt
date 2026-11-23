@@ -65,6 +65,7 @@ private val UnifiedPluginQueryCommand.searchFilterKind: UnifiedPluginSearchFilte
     UnifiedPluginQueryCommand.Bundled -> UnifiedPluginSearchFilterKind.BUNDLED
     UnifiedPluginQueryCommand.UserInstalled -> UnifiedPluginSearchFilterKind.USER_INSTALLED
     UnifiedPluginQueryCommand.Downloaded -> UnifiedPluginSearchFilterKind.DOWNLOADED
+    UnifiedPluginQueryCommand.BuiltIn -> UnifiedPluginSearchFilterKind.BUILT_IN
     UnifiedPluginQueryCommand.Suggested,
     UnifiedPluginQueryCommand.StaffPicks,
     UnifiedPluginQueryCommand.Internal -> null

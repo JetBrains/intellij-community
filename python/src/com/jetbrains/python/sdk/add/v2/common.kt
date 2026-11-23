@@ -25,10 +25,6 @@ import com.intellij.python.community.impl.poetry.common.icons.PythonCommunityImp
 import com.intellij.python.hatch.common.icons.PythonHatchCommonIcons
 import com.intellij.python.hatch.impl.HATCH_TOOL_ID
 import com.intellij.python.sdk.backend.PythonInterpreter
-import com.intellij.python.sdk.backend.PythonSdkTable
-import com.intellij.python.sdk.backend.PythonSdkTable.pythonSdks
-import com.intellij.python.sdk.backend.getSdkAPI
-import com.intellij.python.sdk.backend.pythonInterpreterResultAsync
 import com.intellij.python.uv.common.UV_TOOL_ID
 import com.intellij.python.uv.common.icons.PythonUvCommonIcons
 import com.intellij.python.venv.PipPyTool
@@ -37,6 +33,7 @@ import com.intellij.ui.dsl.builder.Align
 import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.builder.Row
 import com.jetbrains.python.PyBundle.message
+import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.newProject.collector.InterpreterStatisticsInfo
@@ -47,7 +44,7 @@ import com.jetbrains.python.sdk.configuration.CONDA_TOOL_ID
 import com.jetbrains.python.sdk.configuration.PIPENV_TOOL_ID
 import com.jetbrains.python.sdk.configuration.VENV_TOOL_ID
 import com.jetbrains.python.sdk.createSdkGuessingTypeByPath
-import com.jetbrains.python.sdk.excludeInnerVirtualEnv
+import com.jetbrains.python.sdk.findInstalledPython
 import com.jetbrains.python.statistics.InterpreterCreationMode
 import com.jetbrains.python.statistics.InterpreterTarget
 import com.jetbrains.python.statistics.InterpreterType
@@ -98,9 +95,8 @@ abstract class PythonAddEnvironment<P : PathHolder>(open val model: PythonAddInt
   @ApiStatus.Internal
   suspend fun setupSdk(moduleOrProject: ModuleOrProject): PyResult<PythonInterpreter> {
     savePathToExecutableToProperties()
-    val pythonInterpreter = getOrCreateSdk(moduleOrProject).getOr { return it }
-    moduleOrProject.project.excludeInnerVirtualEnv(pythonInterpreter.getSdkAPI())
-    return Result.success(pythonInterpreter)
+    // setPythonInterpreter, which the caller calls next, excludes a virtual environment inside the project.
+    return getOrCreateSdk(moduleOrProject)
   }
 
   /**
@@ -214,19 +210,22 @@ fun customEnvironmentStatistics(
   creationMode = InterpreterCreationMode.CUSTOM,
 )
 
-internal suspend fun installBaseSdk(installRequest: InstallablePythonSdk): kotlin.Result<PythonInterpreter> {
+/**
+ * Installs [installable] and returns the binary of the new Python. The system Python detection finds the binary by the
+ * language level of [installable].
+ */
+internal suspend fun installBasePython(installable: InstallableSelectableInterpreter<*>): kotlin.Result<PythonBinary> {
   // installBinary (reached via InstallablePythonSdk.install) is @RequiresEdt because it drives a
-  // modal ProgressManager.Task.WithResult. Callers of installBaseSdk run on background coroutines
+  // modal ProgressManager.Task.WithResult. Callers of installBasePython run on background coroutines
   // (PyV3ProjectBaseGenerator → generateAndGetSdk → setupVirtualenv / getOrInstallBasePython), so
   // hop here instead of pushing the EDT contract onto every caller.
   val installed = withContext(Dispatchers.EDT) {
-    installRequest.install(null) {
-      pythonSdks()
-    }
+    installable.installableSdk.install()
   }
 
   // Logs the failure and rethrows control flow exceptions (cancellation must not show the balloon)
-  if (installed.getOrLogException(LOGGER) == null) {
+  val python = installed.getOrLogException(LOGGER)?.let { findInstalledPython(installable.pythonInfo.languageLevel) }
+  if (python == null) {
     val notification = NotificationGroupManager.getInstance()
       .getNotificationGroup("Python interpreter installation")
       .createNotification(message("python.sdk.installation.balloon.error.message"), NotificationType.ERROR)
@@ -241,9 +240,11 @@ internal suspend fun installBaseSdk(installRequest: InstallablePythonSdk): kotli
     NotificationsManager
       .getNotificationsManager()
       .showNotification(notification, IdeFocusManager.getGlobalInstance().lastFocusedFrame?.project)
+    val cause = installed.exceptionOrNull()
+                ?: IllegalStateException("No Python of ${installable.pythonInfo.languageLevel} is found after the install")
+    return kotlin.Result.failure(cause)
   }
-  // A Python just installed always names an interpreter, so a failure here is a bug.
-  return installed.mapCatching { it.pythonInterpreterResultAsync().orThrow() }
+  return kotlin.Result.success(python)
 }
 
 

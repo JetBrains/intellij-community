@@ -31,9 +31,9 @@ import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.concurrency.annotations.RequiresWriteLock
 import com.intellij.util.progress.waitForMaybeCancellable
-import java.util.Objects
 import java.util.concurrent.TimeUnit
 import java.util.function.Consumer
+import java.util.function.Predicate
 import kotlin.concurrent.Volatile
 import kotlin.math.min
 
@@ -49,7 +49,7 @@ internal data class NewChildren internal constructor(
   val children: MutableList<String>,
 )
 
-
+@Suppress("SplitModeApiUsage")
 internal class RefreshSessionImpl internal constructor(
   val isAsynchronous: Boolean,
   private val myIsRecursive: Boolean,
@@ -71,6 +71,12 @@ internal class RefreshSessionImpl internal constructor(
   @Volatile private var myLaunched = false
   @Volatile private var myEventCount = 0
 
+  /**
+   * Files are kept in this batch from the moment this session's scan detected on-disk changes, and until the change events
+   * are applied to VFS; I.e. these are files in 'actualizing' state.
+   */
+  @Volatile private var actualizingFiles: InFlightScans.Batch? = null
+
   init {
     TransactionGuard.getInstance().assertWriteSafeContext(this.modality)
     val app = ApplicationManager.getApplication()
@@ -85,9 +91,7 @@ internal class RefreshSessionImpl internal constructor(
   }
 
   internal constructor(async: Boolean, events: List<VFileEvent>) : this(async, false, false, null, ModalityState.defaultModalityState()) {
-    val filtered: List<VFileEvent> = events.filter { obj: Any? -> Objects.nonNull(obj) }
-    if (filtered.size < events.size) LOG.error("The list of events must not contain null elements")
-    addEvents(filtered)
+    addEvents(events)
   }
 
   override fun addFile(file: VirtualFile) {
@@ -124,7 +128,7 @@ internal class RefreshSessionImpl internal constructor(
     require(file == null || childrenNames.size == 1) { "A copy request must have exactly one child name" }
     if (childrenNames.isEmpty()) return
     if (parent !is NewVirtualFile) {
-      LOG.debug("skipped: $parent / ${parent.javaClass}")
+      LOG.debug("skipped parent: $parent / ${parent.javaClass}")
       return
     }
     val newChildren = myNewFilesCaseSensitive[parent]
@@ -190,6 +194,24 @@ internal class RefreshSessionImpl internal constructor(
     val newFilesCaseSensitive = myNewFilesCaseSensitive
     myNewFilesCaseSensitive = LinkedHashMap()
     if (workQueue.isEmpty() && newFilesCaseSensitive.isEmpty()) return myEvents
+
+    // scan cleans 'file.dirty' mark, but adds the cleaned files to the 'actualizing' (=in-flight) batch until the
+    // events are applied (see [terminate]):
+    val inFlightScans = (RefreshQueue.getInstance() as RefreshQueueImpl).inFlightScans
+    val scanBatch = inFlightScans.begin()
+    actualizingFiles = scanBatch
+
+    val fileNeedsScan = Predicate<NewVirtualFile> { file ->
+      //Order is important: read .dirty flag before the accessing the inFlightScans, because a scan
+      // adds the file to the inFlightScans before it cleans the .dirty flag on the file
+      if (file.isDirty()) return@Predicate true
+
+      if (isAsynchronous) return@Predicate false
+
+      // A synchronous refresh promises an up-to-date VFS on return, so it does not trust the files that another session has
+      // scanned and has not applied yet: it re-scans them
+      return@Predicate inFlightScans.isActualizingElsewhere(file.id, scanBatch)
+    }
     val forceRefresh = !myIsRecursive && !this.isAsynchronous // shallow sync refresh (e.g., project config files on open)
 
     val fs = LocalFileSystem.getInstance()
@@ -215,7 +237,7 @@ internal class RefreshSessionImpl internal constructor(
       if (forceRefresh) {
         nvf.markDirty()
       }
-      if (!nvf.isDirty()) {
+      if (!fileNeedsScan.test(nvf)) {
         continue
       }
       refreshRoots.add(nvf)
@@ -235,7 +257,7 @@ internal class RefreshSessionImpl internal constructor(
         if (myCanceled) break
         if (LOG.isTraceEnabled) LOG.trace("try=${count}")
 
-        val worker = RefreshWorker(refreshRoots, myIsRecursive)
+        val worker = RefreshWorker(refreshRoots, myIsRecursive, scanBatch, fileNeedsScan)
         myWorker = worker
         events.addAll(worker.scanNewFiles(newFilesCaseSensitive))
         if (refreshRoots.isNotEmpty()) {
@@ -367,7 +389,13 @@ internal class RefreshSessionImpl internal constructor(
   }
 
   fun terminate() {
+    releaseScannedFiles()
     mySemaphore.up()
+  }
+
+  /** The events are applied, or the scan has failed: the scanned files are no longer in flight */
+  fun releaseScannedFiles() {
+    actualizingFiles?.release()
   }
 
   @RequiresWriteLock

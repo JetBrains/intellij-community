@@ -1,10 +1,21 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.inspections
 
-class UElementAsPsiInspectionTest : PluginModuleTestCase() {
+import com.intellij.testFramework.junit5.TestApplication
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 
-  override fun setUp() {
-    super.setUp()
+@TestApplication
+class UElementAsPsiInspectionTest {
+  companion object {
+    private val projectFixture = pluginModuleProjectFixture()
+  }
+
+  private val pluginModule by pluginModuleFixture(projectFixture)
+  private val myFixture get() = pluginModule.fixture
+
+  @BeforeEach
+  fun setUp() {
     myFixture.addClass("package org.jetbrains.uast; public interface UElement {}")
     myFixture.addClass("""package com.intellij.psi; public interface PsiElement {
       | PsiElement getParent();
@@ -21,6 +32,7 @@ class UElementAsPsiInspectionTest : PluginModuleTestCase() {
     myFixture.enableInspections(UElementAsPsiInspection())
   }
 
+  @Test
   fun testPassAsPsiClass() {
     //language=JAVA
     myFixture.addClass("""
@@ -43,6 +55,7 @@ class UElementAsPsiInspectionTest : PluginModuleTestCase() {
 
   }
 
+  @Test
   fun testAssignment() {
     //language=JAVA
     myFixture.addClass("""
@@ -65,6 +78,7 @@ class UElementAsPsiInspectionTest : PluginModuleTestCase() {
 
   }
 
+  @Test
   fun testCast() {
     //language=JAVA
     myFixture.addClass("""
@@ -89,6 +103,7 @@ class UElementAsPsiInspectionTest : PluginModuleTestCase() {
 
   }
 
+  @Test
   fun testCallParentMethod() {
     //language=JAVA
     myFixture.addClass("""
@@ -108,6 +123,7 @@ class UElementAsPsiInspectionTest : PluginModuleTestCase() {
 
   }
 
+  @Test
   fun testImplementAndCallParentMethod() {
     //language=JAVA
     myFixture.addClass("""
@@ -148,6 +164,7 @@ class UElementAsPsiInspectionTest : PluginModuleTestCase() {
 
   }
 
+  @Test
   fun testArrays() {
     //language=JAVA
     myFixture.addClass("""
@@ -167,6 +184,7 @@ class UElementAsPsiInspectionTest : PluginModuleTestCase() {
     myFixture.testHighlighting("UastUsage.java")
   }
 
+  @Test
   fun testReturn() {
     //language=JAVA
     myFixture.addClass("""
@@ -185,6 +203,7 @@ class UElementAsPsiInspectionTest : PluginModuleTestCase() {
   }
 
   // there was a bug reporting warning for nested methods multiple times (during analyzing top-level method and all nested)
+  @Test
   fun testNestedMethods() {
     myFixture.addClass("""
       import com.intellij.psi.PsiElement;

@@ -89,6 +89,7 @@ targets:
   - ../crates/avl-vm/src/worker/tart.rs
   - ../crates/avl-vm/src/worker/docker.rs
   - ../crates/avl-vm/src/worker/container.rs
+  - ../crates/avl-vm/src/worker/container/install.rs
   - ../crates/avl-testkit/src/tartfake.rs
   - ../crates/avl-vm/src/worker/parallels.rs
   - ../crates/avl-affected/src/affected.rs
@@ -359,6 +360,12 @@ The rest of the scenario matrix is in
   that is down. It refuses a server of another install with another major version.
   [@test] ../crates/avl-vm/src/worker/container/tests.rs
 
+- On Apple `container`, a pinned CLI on another volume than the runtime root runs from a copy under the runtime root.
+  There is one copy per pin. The copy is made once, passes a signature check before it is used, and is reused
+  without one. A copy that fails the check is refused and left nowhere. The copies of other pins go once the server
+  of the session runs from the copy of this pin. A CLI that `CONTAINER_BIN` names runs as it is.
+  [@test] ../crates/avl-vm/src/worker/container/install/tests.rs
+
 - On Apple `container`, each build and each container gets a nameserver, and each container gets the memory and the
   CPUs of one worker. A container that stops while it starts is refused with its log and its boot log.
   [@test] ../crates/avl-vm/src/worker/container/tests.rs (`a_start_speaks_the_apple_dialect`)
@@ -377,13 +384,13 @@ The rest of the scenario matrix is in
   [@test] ../crates/avl-wire/src/runtime/tests.rs
   [@test] ../crates/avl-vm/src/daemon/build/tests.rs
 
-- The runtime descriptor names three lane inputs: the fake agent jar, the jar of the suite documents and the jar of
-  the lane documents. The controller pushes them by digest with the context plugin files. No identity reads them, so
+- The runtime descriptor names four lane inputs. Two are the fake agent of the guest and the jar of the GenUI fixture
+  app server. The others are the jars of the suite documents and of the lane documents. The controller pushes them by digest with the context plugin files. No identity reads them, so
   an edit of the fake agent refreshes no share, keeps the IDE and keeps the daemon. The descriptor refuses a lane input
   that the data or another field of the descriptor also names. Each iteration names the digest of each lane input in
   the journal.
   [@test] ../crates/avl-wire/src/runtime/tests.rs (`every_way_the_descriptor_can_be_wrong_is_its_own_refusal`)
-  [@test] ../crates/avl-vm/src/daemon/build/tests.rs (`a_changed_fake_agent_jar_changes_no_identity_and_only_its_pushed_digest`)
+  [@test] ../crates/avl-vm/src/daemon/build/tests.rs (`a_changed_fake_agent_changes_no_identity_and_only_its_pushed_digest`)
   [@test] ../crates/avl-vm/src/daemon/run/tests.rs (`push_jars_uploads_only_missing_digests`)
   [@test] ../crates/avl-vm/src/daemon/iterate/tests.rs (`an_iteration_names_the_digests_of_the_lane_inputs`)
 
@@ -545,7 +552,8 @@ Before a launch, the lane daemon writes these files into the context:
 | `config/air-ui-test/token` | the token of the UI-test bridge |
 | `config/air-ui-test/lane-services.json` | the lane-service token and the URL of each lane service |
 | `config/air-ui-test/control.json` | the control server in the IDE and its credentials |
-| `home/.air-lane/acp-scenario-agent.jar` | the copy of the fake agent jar |
+| `home/.air-lane/acp-fake-agent` | the copy of the fake agent of the guest, executable by the owner |
+| `home/.air-lane/genui-fixture-app.jar` | the copy of the jar of the GenUI fixture app server |
 | `home/.jetbrains/acp.json` | one entry for each local agent |
 | `bin/<runtime>` | one launcher for each CLI runtime |
 | `home/.codex/config.toml` | the Codex mock model and the trusted project |
@@ -932,6 +940,15 @@ The daemon's half and the IDE's half of supervision are in
   [@test] ../crates/avl-junit/src/performance/tests.rs (`the_ide_build_of_a_build_file_drops_the_product_code_and_names_a_read_failure_and_an_empty_file`)
   [@test] ../crates/avl-junit/src/teamcity/tests.rs (`a_file_is_published_into_its_directory_with_its_path_escaped`)
   [@test] ../crates/avl-vm/src/daemon/results/tests.rs (`a_teamcity_build_step_writes_and_publishes_the_ij_perf_file_of_each_planned_scenario`)
+
+- A scenario can run in passes, and each pass is a case of its own. The lane document then names one series for each
+  pass, all with the same artifact path. The file of the series holds the median of each metric over the passes.
+  A rerun counts with its last attempt. Only the passes that passed count, and when no pass passed, every pass counts.
+  [@test] ../crates/avl-junit/src/performance/tests.rs (`the_passes_of_a_scenario_write_one_file_with_their_median`)
+  [@test] ../crates/avl-junit/src/performance/tests.rs (`the_median_of_the_passes_keeps_one_noisy_pass_out`)
+  [@test] ../crates/avl-junit/src/performance/tests.rs (`a_failed_pass_does_not_count_while_another_pass_passed`)
+  [@test] ../crates/avl-junit/src/performance/tests.rs (`the_last_attempt_of_a_rerun_counts`)
+  [@test] ../crates/avl-wire/src/program/lane/tests.rs (`the_passes_of_one_scenario_share_the_artifact_path_of_their_series`)
 
 - A metric whose name ends with `Ms` is a duration. A metric whose name starts with `growth.` is the counter
   `<name>.x100` of its value times 100. Every other metric is a counter. The file keeps whole numbers, so each value

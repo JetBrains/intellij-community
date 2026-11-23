@@ -110,8 +110,9 @@ internal class AwaitClassloaderUnloadAsyncPostReconfiguration : AwaitClassloader
           add(stillLoaded.pluginDescriptor)
         }
       }
+      val stillLoadedPluginNames = stillLoadedDescriptors.map { it.name }.distinct()
       val message = when {
-        stillLoadedDescriptors.size == 1 -> IdeBundle.message("notification.content.plugin.didnt.unload.cleanly", stillLoadedDescriptors[0].name)
+        stillLoadedPluginNames.size == 1 -> IdeBundle.message("notification.content.plugin.didnt.unload.cleanly", stillLoadedPluginNames[0])
         else -> IdeBundle.message("notification.content.plugins.didnt.unload.cleanly")
       }
       LOG.warn("Plugins that were expected to unload but are still referenced:\n${stillLoadedDescriptors.joinToString("\n")}")

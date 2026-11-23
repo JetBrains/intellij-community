@@ -232,7 +232,7 @@ com.intellij.ui.BalloonImpl$AtRight
 com.intellij.ui.BalloonImpl$AtLeft
 com.intellij.openapi.keymap.KeymapUtilKt
 com.intellij.openapi.actionSystem.ex.TooltipLinkProvider
-com.intellij.openapi.actionSystem.ExperimentalIcons
+com.intellij.openapi.actionSystem.ExperimentalIconRendering
 com.intellij.openapi.util.IconLoaderKt
 com.intellij.openapi.util.IconLoaderKt$fakeComponent$2$1
 com.intellij.openapi.util.DarkReplacer
@@ -297,7 +297,7 @@ kotlinx.serialization.json.JsonEncoder
 kotlinx.serialization.encoding.Encoder
 kotlinx.serialization.encoding.CompositeEncoder
 kotlinx.serialization.encoding.AbstractEncoder
-com.intellij.openapi.fileEditor.impl.skeleton.EditorSkeleton$startAnimation$1
+com.intellij.openapi.fileEditor.impl.skeleton.EditorSkeletonNew$frames$1
 kotlinx.serialization.json.internal.ComposersKt
 kotlinx.serialization.json.internal.ComposerWithPrettyPrint
 kotlinx.serialization.json.internal.Composer
@@ -318,7 +318,7 @@ com.intellij.ui.paint.LinePainter2D$StrokeType
 com.intellij.ui.paint.LinePainter2D
 java.awt.geom.Line2D$Double
 com.intellij.openapi.rd.GraphicsExKt
-com.intellij.openapi.fileEditor.impl.skeleton.rendering.EditorSkeletonColorManager$FrameColors
+com.intellij.openapi.fileEditor.impl.skeleton.rendering.SkeletonFrameColor
 com.intellij.openapi.application.impl.islands.EditorSearchComponentState
 com.intellij.openapi.ui.GraphicsConfig
 com.intellij.openapi.application.impl.islands.EditorSearchComponentState$Companion
@@ -8256,7 +8256,7 @@ com.intellij.openapi.editor.impl.view.animation.EditorPixelGrid
 com.intellij.openapi.editor.impl.view.animation.EditorPixelGrid$Companion
 com.intellij.openapi.editor.impl.view.EditorPainter$Session
 it.unimi.dsi.fastutil.floats.FloatList
-com.intellij.openapi.editor.impl.view.LineFragmentPainter
+com.intellij.openapi.editor.impl.view.VisualLineFragmentPainter
 com.intellij.openapi.editor.impl.view.XCorrector
 com.intellij.openapi.editor.impl.view.XCorrector$LeftAligned
 com.intellij.openapi.editor.impl.ClipDetector
@@ -8270,7 +8270,7 @@ com.intellij.openapi.actionSystem.impl.FloatingToolbar$Companion
 com.intellij.ui.codeFloatingToolbar.CodeFloatingToolbar$Companion
 com.intellij.openapi.editor.LineExtensionInfo
 com.intellij.openapi.editor.EditorLinePainter
-com.intellij.openapi.editor.impl.view.ComplexTextFragment
+com.intellij.openapi.editor.impl.view.ComplexGlyphFragment
 com.intellij.openapi.editor.impl.EditorGutterColor
 it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap$ValueIterator
 com.intellij.ui.paint.RectanglePainter
@@ -9106,7 +9106,7 @@ com.intellij.platform.workspace.jps.entities.SourceRootEntity
 com.intellij.platform.workspace.storage.WorkspaceEntityWithSymbolicId
 com.intellij.platform.workspace.storage.impl.cache.EntityStorageChange
 com.intellij.workspaceModel.core.fileIndex.EntityStorageKind
-com.intellij.platform.unified.workspace.IjLightWorkspaceProjectEntity
+com.intellij.platform.unified.workspace.shared.IjLightWorkspaceProjectEntity
 com.intellij.platform.diagnostic.telemetry.helpers.Nanoseconds
 com.intellij.platform.diagnostic.telemetry.helpers.Nanoseconds$Companion
 com.intellij.platform.workspace.storage.impl.ClassToIntConverterImpl
@@ -9127,7 +9127,6 @@ com.intellij.platform.eel.provider.EelMachineProviderUtil
 com.intellij.platform.eel.provider.EelMachineProviderUtil$resolveEelMachine$1
 com.intellij.platform.eel.provider.EelProviderProjectUtilKt
 com.intellij.openapi.extensions.impl.ExtensionPointCleanupKt
-com.intellij.platform.unified.workspace.IjLightWorkspaceViewPane
 com.intellij.diagnostic.CoroutineTracerShim
 com.intellij.diagnostic.CoroutineTracerShim$Companion
 com.intellij.openapi.extensions.impl.ExtensionUnregistrationReport
@@ -10062,8 +10061,6 @@ com.intellij.ide.project.impl.BaseProjectDirectoriesImpl$1
 com.intellij.openapi.application.impl.NonBlockingReadActionImpl$OTelMonitor
 com.intellij.openapi.application.impl.NonBlockingReadActionImpl$OTelMonitor$MonitoredComputation
 com.intellij.openapi.application.impl.SubmissionTracker
-com.intellij.openapi.fileEditor.impl.skeleton.EditorSkeleton$1
-com.intellij.openapi.fileEditor.impl.skeleton.EditorSkeleton$Companion
 com.intellij.openapi.fileEditor.impl.skeleton.layout.components.EditorSkeletonBuilder
 com.intellij.openapi.fileEditor.impl.skeleton.rendering.EditorSkeletonBackBuffer
 com.intellij.openapi.fileEditor.impl.skeleton.rendering.EditorSkeletonRenderer$Companion
@@ -10079,9 +10076,20 @@ com.intellij.ide.startup.impl.StartupManagerImpl$runInitProjectActivities$2$2
 com.intellij.openapi.application.impl.NonBlockingReadActionImpl$Submission
 com.intellij.openapi.fileEditor.impl.skeleton.layout.components.EditorSkeletonPanel
 com.intellij.openapi.fileEditor.impl.skeleton.rendering.EditorSkeletonColorManager
-com.intellij.openapi.fileEditor.impl.skeleton.rendering.EditorSkeletonColorManager$Companion
+com.intellij.openapi.fileEditor.impl.skeleton.rendering.EditorSkeletonTimeline
+com.intellij.openapi.fileEditor.impl.skeleton.rendering.EditorSkeletonPalette
+com.intellij.openapi.fileEditor.impl.skeleton.rendering.EditorSkeletonFrameState
 com.intellij.openapi.fileEditor.impl.skeleton.rendering.EditorSkeletonOklab
 com.intellij.openapi.fileEditor.impl.skeleton.rendering.EditorSkeletonOklab$Ramp
+com.intellij.openapi.fileEditor.impl.skeleton.rendering.EditorSkeletonFrames
+com.intellij.openapi.fileEditor.impl.skeleton.rendering.EditorSkeletonDirectRenderer
+com.intellij.openapi.fileEditor.impl.skeleton.rendering.EditorSkeletonDirectRenderer$TargetUpdater
+com.intellij.openapi.fileEditor.impl.skeleton.rendering.EditorSkeletonDirectRenderer$Overlays
+com.intellij.openapi.fileEditor.impl.skeleton.rendering.EditorSkeletonDirectRenderer$startRendering$1
+com.intellij.openapi.fileEditor.impl.skeleton.rendering.EditorSkeletonDirectRenderer$Companion
+com.intellij.openapi.fileEditor.impl.skeleton.rendering.EditorSkeletonWindowTarget
+com.intellij.openapi.fileEditor.impl.skeleton.rendering.EditorSkeletonRenderThread
+com.intellij.openapi.fileEditor.impl.skeleton.rendering.EditorSkeletonRenderThread$renderLoop$1
 com.intellij.platform.diagnostic.telemetry.exporters.Span
 com.intellij.platform.diagnostic.telemetry.exporters.Span$Companion
 com.intellij.psi.LanguageSubstitutors
@@ -11964,3 +11972,4 @@ com.intellij.station.core.discovery.DefaultDiscoveryService$doDiscovery$2$handle
 com.intellij.station.core.impl.StationConnectionUtilKt
 com.intellij.station.core.impl.StationSocketConnectionLoop
 com.intellij.station.core.impl.StationSocketConnectionLoop$connectWithRetries$2
+com.intellij.platform.unified.workspace.backend.baseline.IjLightWorkspaceViewPane

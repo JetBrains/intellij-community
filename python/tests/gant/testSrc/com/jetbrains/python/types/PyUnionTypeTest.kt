@@ -86,8 +86,7 @@ class PyUnionTypeTest : PyCodeInsightTestCase() {
     @Test
     @TestFor(issues = ["PY-26973"])
     @TestCaseOptions(languageLevel = LanguageLevel.PYTHON36,
-                enableWeakWarnings = false,
-                assertRecursionPrevention = false)
+                enableWeakWarnings = false)
     fun `slice of union picks matching member`() = test("""
       from typing import Union
       myvar: Union[str, int]
@@ -318,14 +317,13 @@ class PyUnionTypeTest : PyCodeInsightTestCase() {
       """.trimIndent())
 
     @Test
-    @TestCaseOptions(languageLevel = LanguageLevel.PYTHON34, assertRecursionPrevention = false)
+    @TestCaseOptions(languageLevel = LanguageLevel.PYTHON34)
     fun `None literal`() = test("""
       expr = None
       # └ TYPE None
       """.trimIndent())
 
     @Test
-    @TestCaseOptions(assertRecursionPrevention = false)
     fun `type of None`() = test(
       // PY-90413
       """
@@ -502,7 +500,7 @@ class PyUnionTypeTest : PyCodeInsightTestCase() {
 
     @Test
     @TestFor(issues = ["PY-44974"])
-    @TestCaseOptions(languageLevel = LanguageLevel.PYTHON39, assertRecursionPrevention = false)
+    @TestCaseOptions(languageLevel = LanguageLevel.PYTHON39)
     fun `bitwise-or union from branches with from future import`() = test("""
       from __future__ import annotations
       if something:
@@ -516,7 +514,7 @@ class PyUnionTypeTest : PyCodeInsightTestCase() {
 
     @Test
     @TestFor(issues = ["PY-44974"])
-    @TestCaseOptions(languageLevel = LanguageLevel.PYTHON39, assertRecursionPrevention = false)
+    @TestCaseOptions(languageLevel = LanguageLevel.PYTHON39)
     fun `bitwise-or union from branches without from future import`() = test("""
       if something:
       #  ^^^^^^^^^ ERROR Unresolved reference 'something'
@@ -737,7 +735,7 @@ class PyUnionTypeTest : PyCodeInsightTestCase() {
       """.trimIndent())
 
     @Test
-    @TestCaseOptions(enableWeakWarnings = false, assertRecursionPrevention = false)
+    @TestCaseOptions(enableWeakWarnings = false)
     fun `bitwise-or union with not calculated generic from union`() = test("""
       from typing import Union, TypeVar
 
@@ -764,6 +762,25 @@ class PyUnionTypeTest : PyCodeInsightTestCase() {
 
   @Nested
   inner class StrictUnionOperators {
+    @Test
+    @TestFor(issues = ["PY-93097"])
+    fun `subscription of union with member that does not take it`() = test("""
+      def f(x: list[int] | int, cls: type[list[int]] | None, classes: type[int] | type[str]):
+          x[0]
+      #    └ WEAK_WARNING Member 'int' of 'list[int] | int' does not have attribute '__getitem__'
+          cls[0]
+      #      └ WEAK_WARNING Member 'None' of 'type[list[int]] | None' does not have attribute '__getitem__'
+          classes[0]
+      #          └ WEAK_WARNING Member 'type[int]' of 'type[int | str]' does not have attribute '__getitem__'
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-93097"])
+    fun `subscription of union of generic class objects`() = test("""
+      def f(cls: type[list] | type[set]):
+          cls[int]
+      """.trimIndent())
+
     @Test
     @TestFor(issues = ["PY-90532"])
     fun `binary operator member rejects the operand`() = test("""

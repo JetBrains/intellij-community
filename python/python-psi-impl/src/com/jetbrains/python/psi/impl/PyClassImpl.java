@@ -146,6 +146,10 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
   private volatile @Nullable List<PyTargetExpression> myClassAttributesFromClassMethods;
 
   private volatile Map<String, Property> myLocalPropertyCache;
+  private volatile @Nullable MethodsAtLevel myMethods;
+
+  /** The methods of this class for the language level that selected its version-specific children. */
+  private record MethodsAtLevel(@NotNull LanguageLevel level, @NotNull List<PyFunction> methods) {}
 
   @Override
   public PyType getType(@NotNull TypeEvalContext context, @NotNull TypeEvalContext.Key key) {
@@ -621,8 +625,16 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
 
   @Override
   public PyFunction @NotNull [] getMethods() {
-    final TokenSet functionDeclarationTokens = PythonDialectsTokenSetProvider.getInstance().getFunctionDeclarationTokens();
-    return getClassChildren(functionDeclarationTokens, PyFunction.class, PyFunction.ARRAY_FACTORY);
+    // Do not cache the array: callers can change it, so each call gets a new one
+    // subtreeChanged drops the methods, but a level can change without a PSI change
+    final LanguageLevel level = getEffectiveLanguageLevelOfFile();
+    MethodsAtLevel methods = myMethods;
+    if (methods == null || methods.level() != level) {
+      final TokenSet functionDeclarationTokens = PythonDialectsTokenSetProvider.getInstance().getFunctionDeclarationTokens();
+      methods = new MethodsAtLevel(level, getClassChildrenList(functionDeclarationTokens, PyFunction.class));
+      myMethods = methods;
+    }
+    return ContainerUtil.toArray(methods.methods(), PyFunction.ARRAY_FACTORY);
   }
 
   @Override
@@ -654,6 +666,11 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
   private <T extends StubBasedPsiElement<? extends StubElement<T>>> T @NotNull [] getClassChildren(@NotNull TokenSet elementTypes,
                                                                                                    @NotNull Class<T> childrenClass,
                                                                                                    @NotNull ArrayFactory<? extends T> factory) {
+    return ContainerUtil.toArray(getClassChildrenList(elementTypes, childrenClass), factory);
+  }
+
+  private <T extends StubBasedPsiElement<? extends StubElement<T>>> @NotNull List<T> getClassChildrenList(@NotNull TokenSet elementTypes,
+                                                                                                          @NotNull Class<T> childrenClass) {
     final List<T> result = new ArrayList<>();
     processClassLevelDeclarations(new PsiScopeProcessor() {
       @Override
@@ -664,7 +681,7 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
         return true;
       }
     });
-    return ContainerUtil.toArray(result, factory);
+    return result;
   }
 
   @ApiStatus.Internal
@@ -1194,7 +1211,7 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
     }
     else {
       getStatementList().acceptChildren(
-        new PyTypeCheckedTopLevelElementVisitor(PyLanguageFacadeKt.getEffectiveLanguageLevel(getContainingFile())) {
+        new PyTypeCheckedTopLevelElementVisitor(getEffectiveLanguageLevelOfFile()) {
           @Override
           protected void checkAddElement(PsiElement psiElement) {
             if (psiElement instanceof PyAssignmentStatement assignmentStatement) {
@@ -1441,7 +1458,12 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
   }
 
   private @NotNull Iterable<@NotNull StubElement<?>> getVersionSpecificChildrenStubs(@NotNull PyClassStub stub) {
-    return PyVersionSpecificStubBaseKt.getChildrenStubs(stub, PyLanguageFacadeKt.getEffectiveLanguageLevel(getContainingFile()));
+    return PyVersionSpecificStubBaseKt.getChildrenStubs(stub, getEffectiveLanguageLevelOfFile());
+  }
+
+  private @NotNull LanguageLevel getEffectiveLanguageLevelOfFile() {
+    final PsiFile file = getContainingFile();
+    return file instanceof PyFileImpl pyFile ? pyFile.getEffectiveLanguageLevel() : PyLanguageFacadeKt.getEffectiveLanguageLevel(file);
   }
 
   @Override
@@ -1541,6 +1563,7 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
     myFallbackInstanceAttributes = null;
     myClassAttributesFromClassMethods = null;
     myLocalPropertyCache = null;
+    myMethods = null;
   }
 
   @Override

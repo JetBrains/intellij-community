@@ -50,7 +50,7 @@ import com.intellij.openapi.fileEditor.impl.HistoryEntry.Companion.FILE_ID_ATTRI
 import com.intellij.openapi.fileEditor.impl.HistoryEntry.Companion.MANAGING_FS_ATTRIBUTE
 import com.intellij.openapi.fileEditor.impl.HistoryEntry.Companion.PROTOCOL_ATTRIBUTE
 import com.intellij.openapi.fileEditor.impl.HistoryEntry.Companion.TAG
-import com.intellij.openapi.fileEditor.impl.skeleton.EditorSkeleton
+import com.intellij.openapi.fileEditor.impl.skeleton.EditorSkeletonNew
 import com.intellij.openapi.fileEditor.impl.text.AsyncEditorLoader
 import com.intellij.openapi.fileEditor.impl.text.TextEditorImpl
 import com.intellij.openapi.project.DumbService
@@ -220,6 +220,11 @@ open class EditorComposite internal constructor(
   @JvmField
   @Internal
   val shownDeferred: CompletableDeferred<Unit> = CompletableDeferred()
+
+  /** `true` for a composite that the startup restore built from a saved tab, see `StartupEditorCompositeProvider`. */
+  @Internal
+  var isRestoredOnStartup: Boolean = false
+    internal set
 
   @JvmField
   @Internal
@@ -1185,6 +1190,7 @@ internal class EditorCompositePanel(@JvmField val composite: EditorComposite) : 
   private val skeletonScope = composite.coroutineScope.childScope("Editor Skeleton")
 
   init {
+    installSkeleton()
     addFocusListener(object : FocusAdapter() {
       override fun focusGained(e: FocusEvent) {
         composite.coroutineScope.launch(Dispatchers.EDT + ModalityState.any().asContextElement()) {
@@ -1210,27 +1216,29 @@ internal class EditorCompositePanel(@JvmField val composite: EditorComposite) : 
       override fun getDefaultComponent(aContainer: Container) = composite.focusComponent
     }
     isFocusCycleRoot = true
+  }
 
-    if (EditorSkeletonPolicy.shouldShowSkeleton(composite)) {
-      val skeletonDelay = EditorSkeletonPolicy.getSkeletonDelayMs(composite)
-      skeletonScope.launch(Dispatchers.Default) {
-        val skeleton = EditorSkeleton(skeletonScope, composite.project, skeletonDelay)
-        withContext(Dispatchers.UI) {
-          setNewSkeleton(skeleton)
+  private fun installSkeleton() {
+    if (!EditorSkeletonPolicy.shouldShowSkeleton(composite)) {
+      skeletonScope.cancel()
+      return
+    }
+    val fadeInMs = EditorSkeletonPolicy.fadeInMs(composite)
+    if (EDT.isCurrentThreadEdt()) {
+      addSkeleton(fadeInMs)
+    } else {
+      skeletonScope.launch(Dispatchers.UI) {
+        if (components.isEmpty()) {
+          addSkeleton(fadeInMs)
         }
       }
     }
-    else {
-      skeletonScope.cancel()
-    }
   }
 
-  private fun setNewSkeleton(skeleton: EditorSkeleton?) {
-    if (skeleton == null) return
-    if (components.isEmpty()) {
-      add(skeleton, BorderLayout.CENTER)
-      skeleton.startAnimation()
-    }
+  private fun addSkeleton(fadeInMs: Long) {
+    val skeleton = EditorSkeletonNew(skeletonScope, composite.project, fadeInMs)
+    add(skeleton, BorderLayout.CENTER)
+    skeleton.start()
   }
 
   override fun updateUI() {

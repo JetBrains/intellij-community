@@ -36,4 +36,9 @@ class MavenUpdateConfigurationQuickFixTest12(mavenVersion: String, modelVersion:
     fun testAddKotlinReflect() = runBlocking {
         doTest("Add 'kotlin-reflect.jar' to the classpath")
     }
+
+    @Test
+    fun testAddKotlinReflectFromParent() = runBlocking {
+        doTest("Add 'kotlin-reflect.jar' to the classpath")
+    }
 }

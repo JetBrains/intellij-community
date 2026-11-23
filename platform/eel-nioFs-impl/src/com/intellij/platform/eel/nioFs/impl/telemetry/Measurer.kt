@@ -3,12 +3,12 @@ package com.intellij.platform.eel.nioFs.impl.telemetry
 
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.platform.core.nio.fs.RoutingAwareFileSystemProvider
-import com.intellij.platform.eel.provider.EelDescriptorOwner
 import com.intellij.platform.diagnostic.telemetry.PlatformMetrics
 import com.intellij.platform.diagnostic.telemetry.Scope
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager
 import com.intellij.platform.diagnostic.telemetry.TracerLevel
 import com.intellij.platform.diagnostic.telemetry.helpers.use
+import com.intellij.platform.eel.provider.EelDescriptorOwner
 import com.intellij.platform.util.annotations.VisibleToClasses
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
@@ -69,6 +69,7 @@ internal object Measurer {
           val names = generateSequence(c) { it.superclass }.map { it.name }.toList()
           Optional.ofNullable(
             when {
+              "com.intellij.platform.eel.provider.LocalEelDescriptor" in names -> local
               "com.intellij.platform.ide.impl.wsl.WslEelDescriptor" in names -> wsl
               "com.intellij.platform.ijent.ssh.SshEelDescriptor" in names -> ssh
               "com.intellij.platform.eel.tcp.TcpEelDescriptor" in names -> tcp

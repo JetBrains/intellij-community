@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.python.sdk.backend
 
+import com.intellij.execution.target.TargetEnvironmentConfiguration
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.io.toNioPathOrNull
@@ -8,6 +9,7 @@ import com.intellij.python.sdk.backend.impl.cachedPythonEnvironmentResult
 import com.intellij.python.sdk.backend.impl.enrichLocalPythonSdkWithHomeInfo
 import com.intellij.python.sdk.common.PyEnvId
 import com.intellij.python.sdk.common.PyInterpreterRef
+import com.intellij.util.concurrency.annotations.RequiresReadLockAbsence
 import com.intellij.util.PathMappingSettings
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext
@@ -18,8 +20,10 @@ import com.jetbrains.python.remote.PyRemotePathMapper
 import com.jetbrains.python.sdk.InvalidSdkException
 import com.jetbrains.python.sdk.PythonSdkAdditionalData
 import com.jetbrains.python.sdk.add.v2.FileSystem
+import com.jetbrains.python.sdk.add.v2.FileSystemFactory
 import com.jetbrains.python.sdk.add.v2.PathHolder
 import com.jetbrains.python.sdk.add.v2.toFileSystem
+import com.jetbrains.python.sdk.targetEnvConfiguration
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
@@ -27,9 +31,14 @@ import org.jetbrains.annotations.NonNls
 import java.nio.file.Path
 
 /**
- * A Python interpreter: an [Sdk], the [PyInterpreterRef] that names it, and the PyProject directory it belongs to.
+ * A Python interpreter of one [project]: an [Sdk], the [PyInterpreterRef] that names it, and the PyProject directory it
+ * belongs to.
  *
- * The identity is the pair [ownerDir] and [ref]. A ref is unique only inside one PyProject: the `.venv` of two
+ * The registry of [project] builds it, and [project] holds its SDK. Read the facts that [project] keeps about it, such
+ * as its version and its roots, with the extensions in `PythonInterpreterExt.kt`, see [PythonInterpreterDetails]. Two
+ * projects that use one Python share only its environment, see [PythonEnvironments].
+ *
+ * The identity is [project], [ownerDir] and [ref]. A ref is unique only inside one PyProject: the `.venv` of two
  * projects has one ref. [ownerDir] tells them apart. The identity does not depend on [sdk], so the registry can adopt
  * an existing SDK for an interpreter without a change to its hash code.
  *
@@ -55,26 +64,31 @@ sealed class PythonInterpreter {
    */
   abstract val ownerDir: Path
 
+  /** The project whose registry built this interpreter. */
+  val project: Project
+
   /**
    * The SDK of this interpreter. The registry replaces it when it adopts an existing SDK. Code outside this module
    * reaches it through the deprecated [getSdkAPI], so the SDK can be removed later.
    */
   internal var sdk: Sdk
 
-  constructor(sdk: Sdk) {
+  constructor(project: Project, sdk: Sdk) {
+    this.project = project
     this.sdk = sdk
   }
 
   final override fun equals(other: Any?): Boolean =
-    this === other || (other is PythonInterpreter && ref == other.ref && ownerDir == other.ownerDir)
+    this === other || (other is PythonInterpreter && project == other.project && ref == other.ref && ownerDir == other.ownerDir)
 
-  final override fun hashCode(): Int = 31 * ref.hashCode() + ownerDir.hashCode()
+  final override fun hashCode(): Int = 31 * (31 * project.hashCode() + ref.hashCode()) + ownerDir.hashCode()
 
-  override fun toString(): String = "PythonInterpreter($ref in $ownerDir)"
+  override fun toString(): String = "PythonInterpreter($ref in $ownerDir of ${project.name})"
 }
 
 /** An interpreter on an Eel machine: local, WSL or Docker. */
 class NativePythonInterpreter internal constructor(
+  project: Project,
   sdk: Sdk,
   env: PyEnvId,
   override val ownerDir: Path,
@@ -84,7 +98,7 @@ class NativePythonInterpreter internal constructor(
    */
   val pythonBinary: PythonBinary,
   private val detectedOnBuild: PyResult<PythonEnvironment>,
-) : PythonInterpreter(sdk) {
+) : PythonInterpreter(project, sdk) {
   override val ref: PyInterpreterRef = PyInterpreterRef(PyInterpreterRef.Mode.Native, env)
 
   /**
@@ -135,35 +149,42 @@ val PythonInterpreter.isDetectedActivatable: Boolean
 
 /** An interpreter on a legacy target, such as SSH or a Docker target. Its environment is not detected. */
 class TargetPythonInterpreter internal constructor(
+  project: Project,
   sdk: Sdk,
-  targetId: @NonNls String,
+  /** The id of [targetConfiguration], as the ref names it. */
+  val targetId: @NonNls String,
   env: PyEnvId,
   override val ownerDir: Path,
   /** The Python binary of this interpreter on the target. */
   val pythonBinary: PathHolder.Target,
-) : PythonInterpreter(sdk) {
+  /** The target that this interpreter runs on. */
+  val targetConfiguration: TargetEnvironmentConfiguration,
+) : PythonInterpreter(project, sdk) {
   override val ref: PyInterpreterRef = PyInterpreterRef(PyInterpreterRef.Mode.Target(targetId), env)
 }
 
 /**
- * The interpreter of this SDK. The SDK data gives its ref and the PyProject directory it belongs to, see
+ * The interpreter of this SDK in [project]. The SDK data gives its ref and the PyProject directory it belongs to, see
  * [interpreterRefOf] and [projectDirOf]. A native interpreter also gets its [PythonEnvironment] detected.
  *
  * A failure when this SDK names no interpreter: it is not a Python SDK, it has no home path, it has no owner directory,
  * or it is a target SDK without a target configuration. The registry adopts an SDK without an owner directory, see
- * [PythonInterpreterRegistry.registerPythonInterpreter]. The user can only recreate any other such SDK.
+ * [PythonInterpreterRegistry.register]. The user can only recreate any other such SDK.
  *
  * Triggers file I/O on the calling thread via the underlying detector; must not be called on EDT.
  *
  * @param forceRefresh re-detect even if a cached result already exists.
  */
 @RequiresBackgroundThread(generateAssertion = false)
+// Off until PY-93940.
+@RequiresReadLockAbsence(generateAssertion = false)
 @RequiresBlockingContext
-fun Sdk.pythonInterpreterResult(forceRefresh: Boolean = false): PyResult<PythonInterpreter> = buildPythonInterpreter(forceRefresh)
+fun Sdk.pythonInterpreterResult(project: Project, forceRefresh: Boolean = false): PyResult<PythonInterpreter> =
+  buildPythonInterpreter(project, forceRefresh)
 
 /** The body of [pythonInterpreterResult]. It does file I/O, so it runs on a background thread. */
 @RequiresBackgroundThread(generateAssertion = false)
-private fun Sdk.buildPythonInterpreter(forceRefresh: Boolean): PyResult<PythonInterpreter> {
+private fun Sdk.buildPythonInterpreter(project: Project, forceRefresh: Boolean): PyResult<PythonInterpreter> {
   val data = sdkAdditionalData as? PythonSdkAdditionalData
   val ref = interpreterRefOf(this)
   val homePath = pathEnvRef(this)
@@ -174,36 +195,43 @@ private fun Sdk.buildPythonInterpreter(forceRefresh: Boolean): PyResult<PythonIn
   // working directory of the module that uses it, see [projectDirOf].
   val ownerDir = projectDirOf(data) ?: return PyResult.localizedError(PySdkBundle.message("python.sdk.broken.configuration", name))
   val interpreter = when (val mode = ref.mode) {
-    is PyInterpreterRef.Mode.Target -> TargetPythonInterpreter(this, mode.targetId, ref.env, ownerDir, PathHolder.Target(homePath))
+    is PyInterpreterRef.Mode.Target -> {
+      val target = targetEnvConfiguration ?: return PyResult.localizedError(PySdkBundle.message("python.sdk.broken.configuration", name))
+      TargetPythonInterpreter(project, this, mode.targetId, ref.env, ownerDir, PathHolder.Target(homePath), target)
+    }
     PyInterpreterRef.Mode.Native -> {
       val binary = homePath.toNioPathOrNull()
                    ?: return PyResult.localizedError(PySdkBundle.message("python.sdk.broken.configuration", name))
       // `null` only for remote data, which is target data, so a native SDK always gets a result.
       val environment = enrichLocalPythonSdkWithHomeInfo(forceRefresh)
                         ?: return PyResult.localizedError(PySdkBundle.message("python.sdk.broken.configuration", name))
-      NativePythonInterpreter(this, ref.env, ownerDir, binary, environment)
+      NativePythonInterpreter(project, this, ref.env, ownerDir, binary, environment)
     }
   }
   return PyResult.success(interpreter)
 }
 
 /**
- * The interpreter of this SDK of the interpreter store, with the owner directory and the ref of [key], see
+ * The interpreter of this SDK of the interpreter store of [project], with the owner directory and the ref of [key], see
  * [PythonInterpreterRecords]. The key names the interpreter, so no change of the SDK data, such as its association,
  * moves it. Only the binary and the environment come from the SDK. A failure when the SDK has no home path, or when
  * its mode differs from the mode of [key].
  */
-internal suspend fun Sdk.pythonInterpreterOfKey(key: PythonInterpreterKey): PyResult<PythonInterpreter> = withContext(Dispatchers.IO) {
+internal suspend fun Sdk.pythonInterpreterOfKey(project: Project, key: PythonInterpreterKey): PyResult<PythonInterpreter> = withContext(Dispatchers.IO) {
   val sdk = this@pythonInterpreterOfKey
   val homePath = pathEnvRef(sdk) ?: return@withContext PyResult.localizedError(PySdkBundle.message("python.sdk.broken.configuration", name))
   val interpreter = when (val mode = key.ref.mode) {
-    is PyInterpreterRef.Mode.Target -> TargetPythonInterpreter(sdk, mode.targetId, key.ref.env, key.ownerDir, PathHolder.Target(homePath))
+    is PyInterpreterRef.Mode.Target -> {
+      val target = sdk.targetEnvConfiguration
+                   ?: return@withContext PyResult.localizedError(PySdkBundle.message("python.sdk.broken.configuration", name))
+      TargetPythonInterpreter(project, sdk, mode.targetId, key.ref.env, key.ownerDir, PathHolder.Target(homePath), target)
+    }
     PyInterpreterRef.Mode.Native -> {
       val binary = homePath.toNioPathOrNull()
                    ?: return@withContext PyResult.localizedError(PySdkBundle.message("python.sdk.broken.configuration", name))
       val environment = enrichLocalPythonSdkWithHomeInfo(false)
                         ?: return@withContext PyResult.localizedError(PySdkBundle.message("python.sdk.broken.configuration", name))
-      NativePythonInterpreter(sdk, key.ref.env, key.ownerDir, binary, environment)
+      NativePythonInterpreter(project, sdk, key.ref.env, key.ownerDir, binary, environment)
     }
   }
   PyResult.success(interpreter)
@@ -217,20 +245,28 @@ internal suspend fun Sdk.pythonInterpreterOfKey(key: PythonInterpreterKey): PyRe
  *
  * @param forceRefresh re-detect even if a cached result already exists.
  */
-suspend fun Sdk.pythonInterpreterResultAsync(forceRefresh: Boolean = false): PyResult<PythonInterpreter> = withContext(Dispatchers.IO) {
-  this@pythonInterpreterResultAsync.buildPythonInterpreter(forceRefresh)
-}
+suspend fun Sdk.pythonInterpreterResultAsync(project: Project, forceRefresh: Boolean = false): PyResult<PythonInterpreter> =
+  withContext(Dispatchers.IO) {
+    this@pythonInterpreterResultAsync.buildPythonInterpreter(project, forceRefresh)
+  }
 
 
+/**
+ * The [FileSystem] of the machine that this interpreter runs on: the Eel machine of [NativePythonInterpreter.pythonBinary],
+ * or [TargetPythonInterpreter.targetConfiguration].
+ */
 @ApiStatus.Internal
-suspend fun PythonInterpreter.toFileSystem(): FileSystem<*> = sdk.toFileSystem()
+suspend fun PythonInterpreter.toFileSystem(): FileSystem<*> = when (this) {
+  is NativePythonInterpreter -> pythonBinary.toFileSystem()
+  is TargetPythonInterpreter -> FileSystemFactory.getInstance().create(targetConfiguration)
+}
 
 /**
  * Creates the [PyRemotePathMapper] of this interpreter with the user-defined [console] mappings.
  * The [FileSystem] and the [Sdk] that [FileSystem.createMapper] needs come from this one interpreter.
  */
 @ApiStatus.Internal
-suspend fun PythonInterpreter.createMapper(project: Project, console: PathMappingSettings): PyRemotePathMapper =
+suspend fun PythonInterpreter.createMapper(console: PathMappingSettings): PyRemotePathMapper =
   withContext(Dispatchers.IO) { toFileSystem().createMapper(project, console, sdk) }
 
 /**
@@ -238,25 +274,29 @@ suspend fun PythonInterpreter.createMapper(project: Project, console: PathMappin
  * of the failure.
  */
 @RequiresBackgroundThread(generateAssertion = false)
+// Off until PY-93940.
+@RequiresReadLockAbsence(generateAssertion = false)
 @RequiresBlockingContext
 @Throws(InvalidSdkException::class)
-fun Sdk.pythonInterpreterOrThrow(forceRefresh: Boolean = false): PythonInterpreter =
-  pythonInterpreterResult(forceRefresh).getOr { throw InvalidSdkException(it.error.message) }
+fun Sdk.pythonInterpreterOrThrow(project: Project, forceRefresh: Boolean = false): PythonInterpreter =
+  pythonInterpreterResult(project, forceRefresh).getOr { throw InvalidSdkException(it.error.message) }
 
 /**
  * The interpreter of this SDK, for a caller that does not handle a broken SDK yet. It throws [InvalidSdkException] for
  * an SDK that names no interpreter.
  */
-@Deprecated("Handle a broken SDK", ReplaceWith("pythonInterpreterResult(forceRefresh)"))
+@Deprecated("Handle a broken SDK", ReplaceWith("pythonInterpreterResult(project, forceRefresh)"))
 @RequiresBackgroundThread(generateAssertion = false)
+// Off until PY-93940.
+@RequiresReadLockAbsence(generateAssertion = false)
 @RequiresBlockingContext
 @Throws(InvalidSdkException::class)
-fun Sdk.pythonInterpreter(forceRefresh: Boolean = false): PythonInterpreter = pythonInterpreterOrThrow(forceRefresh)
+fun Sdk.pythonInterpreter(project: Project, forceRefresh: Boolean = false): PythonInterpreter = pythonInterpreterOrThrow(project, forceRefresh)
 
 /** [Sdk.pythonInterpreter] for a caller that can suspend. */
-@Deprecated("Handle a broken SDK", ReplaceWith("pythonInterpreterResultAsync(forceRefresh)"))
-suspend fun Sdk.pythonInterpreterAsync(forceRefresh: Boolean = false): PythonInterpreter =
-  pythonInterpreterResultAsync(forceRefresh).getOr { throw InvalidSdkException(it.error.message) }
+@Deprecated("Handle a broken SDK", ReplaceWith("pythonInterpreterResultAsync(project, forceRefresh)"))
+suspend fun Sdk.pythonInterpreterAsync(project: Project, forceRefresh: Boolean = false): PythonInterpreter =
+  pythonInterpreterResultAsync(project, forceRefresh).getOr { throw InvalidSdkException(it.error.message) }
 
 /** The detected environment, see [NativePythonInterpreter.pythonEnvironment]. `null` for a target. */
 @Deprecated("Use detectedEnvironment", ReplaceWith("detectedEnvironment"))

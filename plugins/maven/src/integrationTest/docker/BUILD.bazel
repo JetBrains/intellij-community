@@ -114,6 +114,7 @@ jvm_library(
         "//platform/usageView",
         "//libraries/junit6",
         "//libraries/junit6-params",
+        "//platform/eel-nioFs",
     ],
 )
 ### auto-generated section `build intellij.maven.integration.tests.docker` end

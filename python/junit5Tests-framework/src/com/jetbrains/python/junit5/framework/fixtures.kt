@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.junit5.framework
 
+import com.intellij.python.sdk.backend.addMockPythonInterpreter
 import com.jetbrains.python.project.PyProject
 import com.intellij.python.pyproject.model.evolution.setPythonInterpreter
 import com.intellij.openapi.module.Module
@@ -36,7 +37,7 @@ fun TestFixture<Project>.pyMockInterpreterFixture(pyProject: TestFixture<PyProje
   pyProject.setPythonInterpreter(interpreter)
   initialized(interpreter) {
     pyProject.setPythonInterpreter(null)
-    registry.removePythonInterpreter(pyProject, interpreter)
+    registry.remove(interpreter)
   }
 }
 

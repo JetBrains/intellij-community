@@ -1,5 +1,5 @@
 //! The production [`HostLink`]: the `brd-host` binary of Branch Deck as a child process, with the contract of
-//! `spec/cli/host.spec.md` of Branch Deck.
+//! `openspec/specs/cli/host/spec.md` of Branch Deck.
 //!
 //! bt looks for `brd-host` on the PATH, else at `~/.local/bin/brd-host`, where `brd install` links it. The child gets the
 //! stdin and the stderr of bt, and bt reads its stdout. A run writes its report to the descriptor 3, which a shell
@@ -12,10 +12,11 @@ use std::path::{Path, PathBuf};
 use std::process::{Command, ExitStatus, Stdio};
 use std::sync::OnceLock;
 
+use bt_core::os_runtime::isolated_command;
 use bt_core::runtime::Runtime;
 use serde::Deserialize;
 
-use super::{HostHello, HostLink, HostOutcome, HostRefusal, HostRun, HostSetup, NOT_RUN, code};
+use super::{HostLink, HostOutcome, HostRefusal, HostRun, NOT_RUN, code};
 
 /// The file name of the binary.
 const BINARY: &str = "brd-host";
@@ -23,7 +24,7 @@ const BINARY: &str = "brd-host";
 /// The descriptor of the report of a run, as `--report-fd` names it.
 const REPORT_FD: &str = "3";
 
-/// The schema of the report and of the hello that bt reads.
+/// The schema of the report that bt reads.
 const SCHEMA: u32 = 1;
 
 /// The shell line that opens the report file, `$0`, at the descriptor 3 and replaces itself with `brd-host`, `$@`.
@@ -89,7 +90,7 @@ impl HostLink for BrdHost<'_> {
             .prefix("bt-host-report-")
             .tempfile()
             .map_err(|error| HostRefusal::new(code::NO_REPORT, NOT_RUN, format!("cannot make the file of the report: {error}")))?;
-        let mut command = Command::new("/bin/sh");
+        let mut command = isolated_command("/bin/sh");
         command
             .arg("-c")
             .arg(WITH_REPORT_FD)
@@ -102,45 +103,14 @@ impl HostLink for BrdHost<'_> {
         let text = std::fs::read_to_string(report.path()).unwrap_or_default();
         outcome_of(exit, stdout, &text)
     }
-
-    fn hello(&self, alias: &str) -> Result<HostHello, HostRefusal> {
-        let binary = self.binary()?;
-        let mut command = Command::new(binary);
-        command.args(["hello", alias, "--json"]).current_dir(self.runtime.repo_root());
-        let (exit, stdout) = run_to_end(command, binary)?;
-        hello_of(exit, &stdout)
-    }
-
-    fn setup(&self, request: &HostSetup<'_>) -> Result<String, HostRefusal> {
-        let binary = self.binary()?;
-        let mut command = Command::new(binary);
-        command
-            .args(["setup", request.alias, "--repo", request.repo, "--name", request.name])
-            .current_dir(self.runtime.repo_root());
-        let (exit, stdout) = run_to_end(command, binary)?;
-        if exit == 0 {
-            return Ok(stdout.trim().to_owned());
-        }
-        Err(HostRefusal::new(
-            code::SETUP_FAILED,
-            exit,
-            format!("`{BINARY} setup {}` exited with {exit}; its stderr is above", request.alias),
-        ))
-    }
 }
 
 /// The arguments of `brd-host run`, after the binary. The defaults of `run` are the ones of a person, so bt names its
-/// options in full ("The report of a run" in `spec/cli/host.spec.md` of Branch Deck): niceness 0 keeps the CPU for the
-/// tests, and `--no-outputs` keeps the local copies of the outputs of `[host]`.
+/// options in full ("The report of a run" in `openspec/specs/cli/host/spec.md` of Branch Deck): niceness 0 keeps the
+/// CPU for the tests, and `--no-outputs` keeps the local copies of the outputs of `[host]`. Without `--head`, the run
+/// ships the working tree, so the host tests the files of this checkout as they are.
 fn run_args(alias: &str, request: &HostRun<'_>) -> Vec<OsString> {
-    let mut args: Vec<OsString> = vec![
-        "run".into(),
-        alias.into(),
-        "--head".into(),
-        "--nice".into(),
-        "0".into(),
-        "--no-outputs".into(),
-    ];
+    let mut args: Vec<OsString> = vec!["run".into(), alias.into(), "--nice".into(), "0".into(), "--no-outputs".into()];
     for dir in request.fetch {
         args.push("--fetch".into());
         args.push(dir.into());
@@ -200,7 +170,7 @@ fn exit_code(status: ExitStatus) -> i32 {
     status.code().unwrap_or(-1)
 }
 
-/// The report of a run on the descriptor 3: "The report of a run" of `spec/cli/host.spec.md` of Branch Deck. bt
+/// The report of a run on the descriptor 3: "The report of a run" of `openspec/specs/cli/host/spec.md` of Branch Deck. bt
 /// reads only the fields that it acts on.
 #[derive(Deserialize)]
 struct RunReport {
@@ -209,13 +179,19 @@ struct RunReport {
     exit: i32,
     /// The exit code of the command, `None` when it did not run or its end is unknown.
     command_exit: Option<i32>,
+    /// The commit that the host ran: HEAD, or a commit of the working tree on top of it.
     commit: Option<String>,
+    /// HEAD of the checkout. An older `brd-host` writes no such field.
+    head: Option<String>,
+    /// Whether the run shipped the working tree. An older `brd-host` writes no such field.
+    #[serde(default)]
+    working_tree: bool,
     refusal: Option<ReportRefusal>,
     #[serde(default)]
     fetched: Vec<String>,
 }
 
-/// The refusal of a report or of a hello.
+/// The refusal of a report.
 #[derive(Deserialize)]
 struct ReportRefusal {
     code: String,
@@ -247,31 +223,12 @@ fn outcome_of(exit: i32, stdout: String, report: &str) -> Result<HostOutcome, Ho
     }
     Ok(HostOutcome {
         commit: report.commit.unwrap_or_default(),
+        head: report.head.unwrap_or_default(),
+        working_tree: report.working_tree,
         code: report.command_exit.unwrap_or(report.exit),
         stdout,
         fetched: report.fetched,
     })
-}
-
-/// The answer of `brd-host hello --json` from its exit code and its stdout: "hello" of `spec/cli/host.spec.md` of
-/// Branch Deck.
-fn hello_of(exit: i32, stdout: &str) -> Result<HostHello, HostRefusal> {
-    let lost = |why: String| HostRefusal::new(code::NO_REPORT, exit, format!("`{BINARY} hello` exited with {exit} and {why}"));
-    let value: serde_json::Value = serde_json::from_str(stdout.trim()).map_err(|error| lost(format!("printed no JSON ({error})")))?;
-    let schema = value.get("schema").and_then(serde_json::Value::as_u64);
-    if schema != Some(u64::from(SCHEMA)) {
-        return Err(lost(format!("printed a hello of schema {schema:?}, and bt reads {SCHEMA}")));
-    }
-    if let Some(refusal) = value.get("refusal").filter(|refusal| !refusal.is_null()) {
-        let refusal =
-            ReportRefusal::deserialize(refusal).map_err(|error| lost(format!("printed a refusal that bt cannot read ({error})")))?;
-        return Err(HostRefusal {
-            code: refusal.code,
-            exit,
-            message: refusal.message,
-        });
-    }
-    HostHello::deserialize(&value).map_err(|error| lost(format!("printed a hello that bt cannot read ({error})")))
 }
 
 #[cfg(test)]

@@ -20,5 +20,8 @@
     <extensionPoint qualifiedName="com.intellij.settings.v2.projectMigration"
                     interface="com.intellij.platform.settings.v2.SettingsMigration"
                     dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.settings.v2.keyPromoter"
+                    interface="com.intellij.platform.settings.v2.SettingsKeyPromoter"
+                    dynamic="true"/>
   </extensionPoints>
 </idea-plugin>

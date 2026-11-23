@@ -821,3 +821,145 @@ fn a_no_tests_run_where_a_target_ran_tests_gives_no_filter_hint() {
     let digest = render_digest(&result, &hinted);
     assert!(!digest.contains("hint      H"), "{digest}");
 }
+
+/// The `time` line names each part of a narrow run that bt knows. A part without a time, such as the build of a binary
+/// that no wrapper started, is left out. A slow part gets a `note` with its cause and its fix.
+#[test]
+fn the_time_line_names_the_parts_of_the_run_and_a_note_for_each_slow_one() {
+    let quick = RunTime {
+        self_build_ms: Some(2_100),
+        check_record_ms: 1_500,
+        bazel_ms: 4_000,
+        analysis_ms: 1_100,
+    };
+    assert_eq!(
+        render_time(&quick),
+        ["time   bt build 2.1s · check record 1.5s · bazel 4.0s (analysis 1.1s)"]
+    );
+    let bare = RunTime {
+        bazel_ms: 4_000,
+        ..RunTime::default()
+    };
+    assert_eq!(render_time(&bare), ["time   bazel 4.0s"]);
+
+    let slow = render_time(&RunTime {
+        self_build_ms: Some(34_800),
+        check_record_ms: 48_300,
+        bazel_ms: 30_000,
+        analysis_ms: 20_000,
+    });
+    assert_eq!(slow[0], "time   bt build 34.8s · check record 48.3s · bazel 30.0s (analysis 20.0s)");
+    assert!(slow[1].starts_with("note   bt built itself for 34.8s: "), "{slow:?}");
+    assert!(
+        slow[2].starts_with("note   the check record scanned the untracked files of the checkout for 48.3s. ")
+            && slow[2].contains("`git config status.showUntrackedFiles all`"),
+        "{slow:?}"
+    );
+    assert!(slow[3].starts_with("note   bazel spent 20.0s of 30.0s in analysis: "), "{slow:?}");
+    assert_eq!(slow.len(), 4);
+}
+
+/// The digest of a run ends with its `time` line when the run measured one.
+#[test]
+fn the_digest_ends_with_the_time_line() {
+    let text = render_digest(
+        &digest_result(|_| {}),
+        &RenderOptions {
+            time: Some(RunTime {
+                bazel_ms: 3_300,
+                ..RunTime::default()
+            }),
+            ..RenderOptions::default()
+        },
+    );
+    assert_eq!(text.lines().last(), Some("time   bazel 3.3s"), "{text}");
+}
+
+/// A lane whose build failed for some targets still ran the tests of the others. The digest counts them, names each
+/// target that did not build, the build error, and the file that keeps the output of bazel.
+#[test]
+fn a_build_failure_of_a_lane_names_the_targets_that_did_not_build_and_the_bazel_log() {
+    let error = "plugins/air/tests/integration/bridge/BUILD.bazel:74:12: compile //plugins/air/tests/integration/bridge:bridge_test_lib \
+                 (kt: 463, java: 0) failed: (Exit -1): [Internal Error] java.lang.RuntimeException: Method too large";
+    let result = digest_result(|result| {
+        result.status = RunStatus::BuildFailed;
+        result.exit_code = exit::BUILD_FAILED;
+        result.build_errors = vec![error.to_owned()];
+        result.targets = vec![
+            digest_target(|target| {
+                target.label = "//p:ran".to_owned();
+                target.tests = 313;
+            }),
+            TargetResult {
+                label: "//plugins/air/tests/integration/bridge:bridge_test".to_owned(),
+                ..TargetResult::default()
+            },
+            TargetResult {
+                label: "//plugins/air/tests/integration/contract:contract_test".to_owned(),
+                ..TargetResult::default()
+            },
+        ];
+    });
+    let text = render_digest(
+        &result,
+        &RenderOptions {
+            bazel_log: Some("out/bt-runs/0000000001000/bazel-output.log".to_owned()),
+            ..RenderOptions::default()
+        },
+    );
+    let lines: Vec<&str> = text.lines().collect();
+    assert_eq!(lines[0], "BUILD FAILED  313 tests ran, 2 targets did not build", "{text}");
+    assert_eq!(lines[2], error, "{text}");
+    assert_eq!(
+        lines[3], "did not build  //plugins/air/tests/integration/bridge:bridge_test",
+        "{text}"
+    );
+    assert_eq!(
+        lines[4], "did not build  //plugins/air/tests/integration/contract:contract_test",
+        "{text}"
+    );
+    assert!(
+        text.contains("bazel  out/bt-runs/0000000001000/bazel-output.log  (the output of bazel, where the build failed)"),
+        "{text}"
+    );
+    assert!(!text.contains("cause"), "a known build error needs no cause line: {text}");
+
+    let unknown = render_digest(
+        &digest_result(|result| {
+            result.status = RunStatus::BuildFailed;
+            result.exit_code = exit::BUILD_FAILED;
+        }),
+        &RenderOptions {
+            bazel_log: Some("out/bt-runs/0000000001000/bazel-output.log".to_owned()),
+            ..RenderOptions::default()
+        },
+    );
+    assert!(
+        unknown.contains("cause  bt recognised no build error; the output of bazel is in out/bt-runs/0000000001000/bazel-output.log"),
+        "{unknown}"
+    );
+}
+
+/// A runner that threw before its first test: the digest names the exception of its log and the frame that threw it.
+#[test]
+fn a_runner_crash_shows_the_exception_of_its_log() {
+    let suites = bt_junit::parse(concat!(
+        r#"<testsuites><testsuite name="community+/plugins/markdown/test/tests_test" tests="1" errors="1">"#,
+        r#"<testcase name="community+/plugins/markdown/test/tests_test" classname=""><error message="exited with error code 2"></error></testcase>"#,
+        "<system-out><![CDATA[Test filter: a.FooTest.testBar\n",
+        "java.lang.IllegalArgumentException: Class name should start with uppercase letter: testBar\n",
+        "\tat com.intellij.tests.JUnit5BazelRunner.getClassNameFilter(JUnit5BazelRunner.java:649)\n",
+        "\tat com.intellij.tests.JUnit5BazelRunner.main(JUnit5BazelRunner.java:265)]]></system-out>",
+        "</testsuite></testsuites>",
+    ));
+    assert_eq!(
+        render_failure(1, &suites[0].cases[0]),
+        [
+            "1) community+/plugins/markdown/test/tests_test",
+            "   exited with error code 2; the runner threw java.lang.IllegalArgumentException: Class name should start with \
+             uppercase letter: testBar",
+            "   at com.intellij.tests.JUnit5BazelRunner.getClassNameFilter(JUnit5BazelRunner.java:649)",
+            "   ... 1 frames omitted",
+        ]
+    );
+}

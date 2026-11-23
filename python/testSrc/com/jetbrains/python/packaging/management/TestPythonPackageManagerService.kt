@@ -2,9 +2,9 @@
 package com.jetbrains.python.packaging.management
 
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.python.sdk.backend.PythonInterpreter
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
-import com.intellij.python.sdk.backend.PythonInterpreter
 import com.intellij.testFramework.replaceService
 import com.jetbrains.python.packaging.common.PythonPackage
 import com.jetbrains.python.packaging.common.PythonSimplePackageDetails
@@ -21,8 +21,8 @@ class TestPythonPackageManagerService(
 ) : PythonPackageManagerService {
   private val cache: MutableMap<PythonInterpreter, PythonPackageManager> = ConcurrentHashMap()
 
-  override fun forPythonInterpreter(project: Project, interpreter: PythonInterpreter): PythonPackageManager {
-    val manager = cache.computeIfAbsent(interpreter) { createManager(project, interpreter) }
+  override fun forPythonInterpreter(interpreter: PythonInterpreter): PythonPackageManager {
+    val manager = cache.computeIfAbsent(interpreter) { createManager(interpreter) }
     // Production drives manager init via package UI / sync / FUS / install paths; tests
     // bypass those paths, so trigger init here so the inspection-side snapshot is ready
     // before the test starts reading it.
@@ -42,16 +42,17 @@ class TestPythonPackageManagerService(
 
   override fun cachedFor(interpreter: PythonInterpreter): PythonPackageManager? = cache[interpreter]
 
-  private fun createManager(project: Project, interpreter: PythonInterpreter): TestPythonPackageManager {
+  private fun createManager(interpreter: PythonInterpreter): TestPythonPackageManager {
+    val project = interpreter.project
     val repoPackageNames = (installedPackages.map { it.name } + availablePackageNames).distinct()
 
     if (installedPackages.isEmpty()) {
-      return TestPythonPackageManager(project, interpreter)
+      return TestPythonPackageManager(interpreter)
         .withPackageNames(repoPackageNames)
         .also { Disposer.register(project, it) }
     }
 
-    return TestPythonPackageManager(project, interpreter)
+    return TestPythonPackageManager(interpreter)
       .withPackageInstalled(installedPackages)
       .withPackageNames(repoPackageNames)
       .withPackageDetails(PythonSimplePackageDetails(installedPackages.first().name, listOf(installedPackages.first().version),

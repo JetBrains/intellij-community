@@ -104,7 +104,7 @@ internal class RequirementDocumentationTarget(
   override fun computeDocumentationHint(): @NlsContexts.HintText String {
     val packageManager = packageManagerOverride
                          ?: requirementsFile?.findEvoPyProjectIfReady(mainForOrphans = false)?.interpreter
-                           ?.let { PythonPackageManager.forPythonInterpreter(project, it) }
+                           ?.let { PythonPackageManager.forPythonInterpreter(it) }
     val packageName = pyRequirement.name
 
     val isLocal = ModuleManager.getInstance(project).modules.any { PyPackageName.from(it.name).name == packageName }
@@ -142,7 +142,7 @@ internal class RequirementDocumentationTarget(
     val packageManager = packageManagerOverride
                          ?: readAction { requirementsFile?.virtualFile }
                            ?.let { project.findPythonInterpreter(it, mainForOrphans = false) }
-                           ?.let { PythonPackageManager.forPythonInterpreter(project, it) }
+                           ?.let { PythonPackageManager.forPythonInterpreter(it) }
     val packageName = pyRequirement.name
     val installed = packageManager?.listInstalledPackages()?.firstOrNull { it.name == packageName }
     // Names matching a project module are local packages — mirrors NonModulePackageName.create.

@@ -3,6 +3,8 @@
 package org.jetbrains.kotlin.idea.refactoring.rename
 
 import com.intellij.psi.PsiElement
+import com.intellij.refactoring.modplan.ModPlanEdit
+import com.intellij.refactoring.modplan.rename.ModPlanWritableUsageInfo
 import com.intellij.refactoring.rename.ResolvableCollisionUsageInfo
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.references.mainReference
@@ -25,13 +27,21 @@ class UsageInfoWithReplacement(
     element: PsiElement,
     referencedElement: PsiElement,
     private val replacement: KtElement
-) : KtResolvableCollisionUsageInfo(element, referencedElement) {
+) : KtResolvableCollisionUsageInfo(element, referencedElement), ModPlanWritableUsageInfo {
     override fun apply() {
-        val toBeReplaced = (element?.parent as? KtCallableReferenceExpression)?.takeIf {
+        element?.let { replace(it) }
+    }
+
+    /** The edit of [apply], with the replacement that the analysis made. */
+    override fun asModPlanEdits(newName: String, renamed: Map<PsiElement, String>): List<ModPlanEdit>? =
+        element?.let { listOf(ModPlanEdit.update(it) { copy -> replace(copy) }) }
+
+    private fun replace(element: PsiElement) {
+        val toBeReplaced = (element.parent as? KtCallableReferenceExpression)?.takeIf {
             // ::element -> this::newElement
             replacement is KtCallableReferenceExpression
         } ?: element
-        toBeReplaced?.replaced(replacement)?.let {
+        toBeReplaced.replaced(replacement).let {
             KotlinRenameRefactoringSupport.getInstance().shortenReferencesLater(it)
         }
     }
@@ -41,8 +51,14 @@ class UsageInfoWithFqNameReplacement(
     element: KtSimpleNameExpression,
     referencedElement: PsiElement,
     private val newFqName: FqName
-) : KtResolvableCollisionUsageInfo(element, referencedElement) {
+) : KtResolvableCollisionUsageInfo(element, referencedElement), ModPlanWritableUsageInfo {
     override fun apply() {
         (element as? KtSimpleNameExpression)?.mainReference?.bindToFqName(newFqName)
+    }
+
+    /** The edit of [apply]: the reference gets the new qualified name of the renamed declaration, which the analysis knows. */
+    override fun asModPlanEdits(newName: String, renamed: Map<PsiElement, String>): List<ModPlanEdit>? {
+        val expression = element as? KtSimpleNameExpression ?: return null
+        return listOf(ModPlanEdit.update(expression) { copy -> copy.mainReference.bindToFqName(newFqName) })
     }
 }

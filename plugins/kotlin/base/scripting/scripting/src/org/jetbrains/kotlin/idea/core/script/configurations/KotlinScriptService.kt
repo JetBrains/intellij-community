@@ -3,6 +3,7 @@
 
 package org.jetbrains.kotlin.idea.core.script.configurations
 
+import com.intellij.codeInsight.daemon.impl.ErrorStripeUpdateManager
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingSettingsPerFile
 import com.intellij.ide.TrustedFiles
 import com.intellij.notification.NotificationGroup
@@ -26,12 +27,14 @@ import com.intellij.platform.backend.observation.launchTracked
 import com.intellij.platform.backend.workspace.WorkspaceModelChangeListener
 import com.intellij.platform.backend.workspace.findEntitiesByVirtualFile
 import com.intellij.platform.backend.workspace.toVirtualFileUrl
+import com.intellij.platform.backend.workspace.virtualFile
 import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.eel.provider.utils.asNio
 import com.intellij.platform.ide.progress.withBackgroundProgress
+import com.intellij.platform.workspace.jps.entities.LibraryEntity
+import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.platform.workspace.storage.EntitySource
-import com.intellij.platform.workspace.storage.ImmutableEntityStorage
 import com.intellij.platform.workspace.storage.VersionedStorageChange
 import com.intellij.psi.PsiManager
 import com.intellij.util.application
@@ -45,7 +48,10 @@ import kotlinx.coroutines.ensureActive
 import org.jetbrains.kotlin.analysis.api.platform.modification.publishGlobalModuleStateModificationEvent
 import org.jetbrains.kotlin.analysis.api.platform.modification.publishGlobalScriptModuleStateModificationEvent
 import org.jetbrains.kotlin.idea.KotlinFileType
-import org.jetbrains.kotlin.idea.core.script.definitions.ScriptDefinitionsModificationTracker
+import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCompilerPluginsScriptConfigurationListener
+import org.jetbrains.kotlin.idea.core.script.definitions.DefinitionFromDependenciesProvider
+import org.jetbrains.kotlin.idea.core.script.definitions.ScriptDefinitionProviderImpl
+import org.jetbrains.kotlin.idea.core.script.definitions.templateFingerprint
 import org.jetbrains.kotlin.idea.core.script.dependencies.ScriptArtifactResolutionService
 import org.jetbrains.kotlin.idea.core.script.dependencies.toRequest
 import org.jetbrains.kotlin.idea.core.script.getOrCreateScriptConfigurationId
@@ -54,11 +60,14 @@ import org.jetbrains.kotlin.idea.core.script.modules.KotlinScriptEntity
 import org.jetbrains.kotlin.idea.core.script.modules.KotlinScriptEntityProvider
 import org.jetbrains.kotlin.idea.core.script.modules.KotlinScriptLibraryEntity
 import org.jetbrains.kotlin.idea.core.script.modules.KotlinScriptLibraryEntityId
+import org.jetbrains.kotlin.idea.core.script.modules.ScriptCompilationConfigurationEntity
 import org.jetbrains.kotlin.idea.core.script.modules.modifyKotlinScriptLibraryEntity
 import org.jetbrains.kotlin.idea.core.script.KotlinBaseScriptingBundle
+import org.jetbrains.kotlin.idea.core.script.definition.BundledScriptDefinition
 import org.jetbrains.kotlin.idea.core.script.definition.javaHomePath
 import org.jetbrains.kotlin.idea.core.script.definition.jdkSupplier
 import org.jetbrains.kotlin.idea.core.script.definition.moduleSupplier
+import org.jetbrains.kotlin.idea.core.script.RELOAD_NEEDED
 import org.jetbrains.kotlin.idea.core.script.ScriptDependenciesModificationTracker
 import org.jetbrains.kotlin.idea.core.script.awaitExternalSystemInitialization
 import org.jetbrains.kotlin.idea.core.script.scriptingDebugLog
@@ -96,28 +105,9 @@ import kotlin.script.experimental.jvm.jdkHome
 import kotlin.script.experimental.jvm.jvm
 import kotlin.script.experimental.jvm.updateClasspath
 
-/**
- * Project-level service responsible for managing the full lifecycle of Kotlin script configurations.
- *
- * Responsibilities:
- * - Decides whether a script should be processed using [KotlinScriptProcessingFilter].
- * - Locates the appropriate [ScriptDefinition] for each script file.
- * - Resolves script configurations and writes workspace model entities.
- * - Invalidates entries when scripts are deleted or reloaded.
- * - Drops analysis caches and publishes modification events when entities change.
- *
- * Threading:
- * - Use [scheduleLoading] for fire-and-forget processing from listeners (e.g., VFS or editor events).
- *   If you are already inside a coroutine, prefer the suspend [load] overloads.
- * - External system initialization is awaited before processing begins, see [awaitExternalSystemInitialization].
- */
 @Service(Service.Level.PROJECT)
 class KotlinScriptService(val project: Project, val coroutineScope: CoroutineScope) {
 
-    /**
-     * Launches asynchronous processing for a single `.kts` file on [coroutineScope].
-     * Safe to call from any thread; awaits external system initialization.
-     */
     fun scheduleLoading(virtualFile: VirtualFile) {
         coroutineScope.launchTracked {
             project.awaitExternalSystemInitialization()
@@ -127,36 +117,50 @@ class KotlinScriptService(val project: Project, val coroutineScope: CoroutineSco
         }
     }
 
-    /**
-     * Resolves the script and updates its workspace model entity.
-     * Skips files rejected by [KotlinScriptProcessingFilter].
-     */
+    /** Waits for the pending loads of the script definitions first, so that the entity gets the current definition. */
     suspend fun load(virtualFile: VirtualFile) {
         if (virtualFile is VirtualFileWithoutContent) return
         if (!KotlinScriptProcessingFilter.shouldProcessScript(project, virtualFile)) return
         assert(!application.isWriteAccessAllowed)
+        ScriptDefinitionProviderImpl.getInstance(project).awaitLoading()
+        if (hasOutdatedDefinition(virtualFile)) invalidate(virtualFile)
         update(virtualFile, virtualFile.findScriptDefinition())
     }
 
+    /** Waits for the pending loads of the script definitions first, so that the script keeps its entity during them. */
     suspend fun reload(virtualFile: VirtualFile) {
+        ScriptDefinitionProviderImpl.getInstance(project).awaitLoading()
         invalidate(virtualFile)
-        ScriptDefinitionsModificationTracker.getInstance(project).incModificationCount()
         load(virtualFile)
     }
 
-    /**
-     * Drops all entities contributed under [KotlinScriptEntitySource], then rebuilds only the currently open `.kts` files.
-     * Precise owner-specific entities survive because they use a different entity source.
-     * Closed generic scripts are restored lazily on the next editor-driven load.
-     *
-     * The returned job waits, but does not rethrow a failure.
-     */
-    fun scheduleReloadOpenScripts(): Job = coroutineScope.launchTracked {
-        invalidateAll()
-        ScriptDefinitionsModificationTracker.getInstance(project).incModificationCount()
+    fun scheduleLoadOpenScripts(): Job = coroutineScope.launchTracked {
         for (openFile in collectOpenScriptFiles(project)) {
             load(openFile)
         }
+    }
+
+    /**
+     * A closed script reloads when it opens.
+     *
+     * The returned job waits, but does not rethrow a failure.
+     */
+    fun scheduleReloadOutdatedOpenScripts(): Job = coroutineScope.launchTracked {
+        ScriptDefinitionProviderImpl.getInstance(project).awaitLoading()
+        for (script in collectOpenScriptFiles(project)) {
+            if (hasOutdatedDefinition(script)) reload(script)
+        }
+    }
+
+    /**
+     * Another fingerprint means that a build rewrote the template.
+     * A script of another owner, such as a Gradle sync, is never outdated here, because its owner updates it.
+     */
+    internal fun hasOutdatedDefinition(virtualFile: VirtualFile): Boolean {
+        val entity = KotlinScriptEntityProvider.findKotlinScriptEntity(project, virtualFile)
+            ?.takeIf { it.entitySource == KotlinScriptEntitySource } ?: return false
+        val definition = ScriptDefinitionProviderImpl.getInstance(project).findMatchingDefinition(VirtualFileScriptSource(virtualFile))
+        return entity.definitionId != definition.definitionId || entity.definitionFingerprint != definition.templateFingerprint
     }
 
     private class CircularScriptException(override val message: String) : Throwable(message)
@@ -164,7 +168,7 @@ class KotlinScriptService(val project: Project, val coroutineScope: CoroutineSco
         get() = NotificationGroupManager.getInstance().getNotificationGroup("KotlinScriptNotificationGroup")
 
     private suspend fun update(virtualFile: VirtualFile, definition: ScriptDefinition) {
-        if (!TrustedFiles.isTrusted(virtualFile, project)) return
+        if (definition !is BundledScriptDefinition && !TrustedFiles.isTrusted(virtualFile, project)) return
         if (KotlinScriptEntityProvider.provide(project, virtualFile) != null) return
 
         val urlManager = project.workspaceModel.getVirtualFileUrlManager()
@@ -227,7 +231,8 @@ class KotlinScriptService(val project: Project, val coroutineScope: CoroutineSco
             listOfNotNull(definition.compilationConfiguration[ScriptCompilationConfiguration.ide.moduleSupplier]?.invoke(project, virtualFile))
         }
 
-        project.workspaceModel.update("updating kotlin script entities [$KotlinScriptEntitySource]") { storage ->
+        val entitySource = KotlinScriptEntityProvider.entitySource(project, virtualFile) ?: KotlinScriptEntitySource
+        project.workspaceModel.update("updating kotlin script entities [$entitySource]") { storage ->
             if (!storage.containsScriptEntity(scriptUrl)) {
                 val libraries = generateScriptLibraryEntities(project, configuration, definition).toList()
                 val libraryIds = mutableListOf<KotlinScriptLibraryEntityId>()
@@ -241,7 +246,7 @@ class KotlinScriptService(val project: Project, val coroutineScope: CoroutineSco
                             scope,
                             classes,
                             setOf(scriptUrl),
-                            KotlinScriptEntitySource
+                            entitySource
                         ) {
                             this.sources += sources
                         }
@@ -252,8 +257,8 @@ class KotlinScriptService(val project: Project, val coroutineScope: CoroutineSco
                         }
                     }
                 }
-                storage addEntity KotlinScriptEntity(scriptUrl, libraryIds, KotlinScriptEntitySource) {
-                    this.configurationId = configuration.getOrCreateScriptConfigurationId(storage, KotlinScriptEntitySource)
+                storage addEntity KotlinScriptEntity(scriptUrl, libraryIds, definition.definitionId, definition.templateFingerprint, entitySource) {
+                    this.configurationId = configuration.getOrCreateScriptConfigurationId(storage, entitySource)
                     this.sdkId = configuration.sdkId
                     this.relatedModuleIds = relatedModuleIds.toMutableList()
                 }
@@ -267,7 +272,7 @@ class KotlinScriptService(val project: Project, val coroutineScope: CoroutineSco
         }
     }
 
-    // Refresh VFS for any dependency JARs that may have been re-downloaded from the last VFS scan.
+    // A dependency JAR can be downloaded again after the last VFS scan.
     private fun ScriptCompilationConfiguration.refreshVfsDependencies() {
         ThreadingAssertions.assertNoReadAccess()
 
@@ -346,10 +351,7 @@ class KotlinScriptService(val project: Project, val coroutineScope: CoroutineSco
         }
     }
 
-    /**
-     * Sets the JDK of the script, and makes sure the SDK table holds that JDK.
-     * [sdkId] resolves the script SDK from that table, so a JDK that is absent from that table gives no SDK.
-     */
+    /** [sdkId] resolves the script SDK from the SDK table, so a JDK that is absent from that table gives no SDK. */
     fun ScriptCompilationConfiguration.Builder.configureJdkHome(virtualFile: VirtualFile) {
         val jdkHome = get(ide.jdkSupplier)?.invoke(virtualFile)?.absolutePath
             ?: project.javaHomePath?.absolutePath
@@ -371,12 +373,6 @@ class KotlinScriptService(val project: Project, val coroutineScope: CoroutineSco
         project.workspaceModel.update("removing .kts modules") { it.removeEntity(entity) }
     }
 
-    private suspend fun invalidateAll() {
-        project.workspaceModel.update("removing all .kts entities") { storage ->
-            storage.replaceBySource({ it == KotlinScriptEntitySource }, ImmutableEntityStorage.empty())
-        }
-    }
-
     private fun VirtualFile.findScriptDefinition(): ScriptDefinition {
         val definition = findScriptDefinition(project, VirtualFileScriptSource(this))
         scriptingDebugLog {
@@ -394,6 +390,19 @@ class KotlinScriptService(val project: Project, val coroutineScope: CoroutineSco
             if (configurationChanges.any()) {
                 dropKotlinScriptCaches(project)
             }
+            // A removed or replaced configuration loads again from the current definition.
+            configurationChanges.forEach { it.oldEntity?.virtualFileUrl?.virtualFile?.putUserData(RELOAD_NEEDED, null) }
+        }
+
+        override fun changed(event: VersionedStorageChange) {
+            if (event.getChanges(KotlinScriptEntity::class.java).any() ||
+                event.getChanges(ScriptCompilationConfigurationEntity::class.java).any()
+            ) {
+                ErrorStripeUpdateManager.getInstance(project).notifyTrafficLightStatusChanged()
+            }
+            if (event.getChanges(LibraryEntity::class.java).any() || event.getChanges(ModuleEntity::class.java).any()) {
+                DefinitionFromDependenciesProvider.getInstance(project).refresh()
+            }
         }
     }
 
@@ -401,12 +410,13 @@ class KotlinScriptService(val project: Project, val coroutineScope: CoroutineSco
         @JvmStatic
         fun getInstance(project: Project): KotlinScriptService = project.service()
 
-        private fun dropKotlinScriptCaches(project: Project) {
+        internal fun dropKotlinScriptCaches(project: Project) {
             ThreadingAssertions.assertWriteAccess()
             ScriptDependenciesModificationTracker.getInstance(project).incModificationCount()
             HighlightingSettingsPerFile.getInstance(project).incModificationCount()
             project.publishGlobalModuleStateModificationEvent()
             project.publishGlobalScriptModuleStateModificationEvent()
+            project.messageBus.syncPublisher(KotlinCompilerPluginsScriptConfigurationListener.TOPIC).scriptConfigurationsChanged()
         }
 
         private suspend fun collectOpenScriptFiles(project: Project): List<VirtualFile> {
@@ -418,9 +428,8 @@ class KotlinScriptService(val project: Project, val coroutineScope: CoroutineSco
     }
 }
 
-// Mirrors MainKtsDependencyResolver from the compiler side: the configuration leaves the coordinates unresolved
-// (ScriptingHostConfiguration.resolveDependencies is off in the IDE) and we fetch them here, off the EDT and
-// under a cancellable progress, before the configuration reaches the workspace model.
+// The IDE turns off ScriptingHostConfiguration.resolveDependencies, so the configuration keeps the coordinates.
+// This function resolves them like MainKtsDependencyResolver of the compiler.
 private suspend fun ScriptCompilationConfiguration.resolveDependencies(
     project: Project,
     virtualFile: VirtualFile,
@@ -465,9 +474,7 @@ private suspend fun ScriptCompilationConfiguration.resolveDependencies(
     }
 }
 
-/**
- * suspendable version of [org.jetbrains.kotlin.utils.topologicalSort]
- */
+/** A suspend copy of [org.jetbrains.kotlin.utils.topologicalSort]. */
 private suspend fun <A> topologicalSort(
     nodes: Iterable<A>,
     reportCycle: (A) -> Nothing = { throw IllegalStateException("Cannot compute a topological sort: The node $it is in a cycle.") },
@@ -480,8 +487,6 @@ private suspend fun <A> topologicalSort(
         if (node in visited) return
         if (node in visiting) reportCycle(node)
 
-        // Keeping track of the nodes that are being visited allows the algorithm to throw an exception in case of a cycle. The input should
-        // never be cyclic, but this approach gives some additional safety in case of bugs.
         visiting.add(node)
         node.dependencies().forEach { visit(it) }
         visiting.remove(node)
@@ -491,8 +496,6 @@ private suspend fun <A> topologicalSort(
 
     nodes.forEach { visit(it) }
 
-    // The paper algorithm inserts nodes at the head of the result list. Because our `visited` set remembers elements in their order of
-    // insertion, the result needs to be reversed.
     return visited.toMutableList()
 }
 

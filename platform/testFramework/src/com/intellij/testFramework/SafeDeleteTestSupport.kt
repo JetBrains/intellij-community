@@ -115,7 +115,7 @@ object SafeDeleteTestSupport {
         plan.conflicts.nonCodeUsages().forEach { nonCodeUsage -> nonCodeUsage.location?.let { recorder.add(it.virtualFile, it.range?.let { range -> TextRange.create(range) }) } }
       }
     }
-    assertTrue(ModPlanExecutor.execute(plan.execution, true) is ModPlanExecutionResult.Applied)
+    assertTrue(ModPlanExecutor.execute(plan.execution, true, plan.writeEvents) is ModPlanExecutionResult.Applied)
     return plan
   }
 
@@ -144,7 +144,9 @@ object SafeDeleteTestSupport {
     }
 
   private fun messagesOf(plan: ModPlan.AcceptedPlan): List<String> {
-    val conflictMessages = plan.conflicts.conflicts.filter { it.kind != ModPlanConflictKind.NON_CODE_USAGE }.flatMap { it.messages }
+    val conflictMessages = plan.conflicts.conflicts
+      .filter { it.kind != ModPlanConflictKind.NON_CODE_USAGE && it.kind != ModPlanConflictKind.CHANGED_NON_CODE_USAGE }
+      .flatMap { it.messages }
     val nonCodeUsageMessages = plan.conflicts.nonCodeUsages().flatMap { it.messages }
     return conflictMessages + nonCodeUsageMessages
   }

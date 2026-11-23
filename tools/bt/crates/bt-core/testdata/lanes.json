@@ -31,7 +31,7 @@
       "name": "air-slow",
       "axis": "category",
       "excludedFromBroadRuns": "fast-lane",
-      "description": "An IDE-free target that sweeps many cases through the platform editor of an open project. Only `BT --lane fast` leaves it out. A directory run, `BT --lane all`, and the CI configurations run it."
+      "description": "An IDE-free target that is slow by nature: it sweeps many cases through the platform editor of an open project, it creates the production preview of each entry of the showcase catalog, it starts many processes, or it drives the platform cherry-pick of an open project. Only `BT --lane fast` leaves it out. A directory run, `BT --lane all`, and the CI configurations run it."
     },
     {
       "name": "air-integration-ui-flow",
@@ -64,6 +64,12 @@
       "description": "The performance tests on the product heap, `ui-perf_lane_test`. `BT --lane ui-perf` selects it."
     },
     {
+      "name": "air-integration-ui-light",
+      "axis": "lane",
+      "category": "air-integration-ui",
+      "description": "The JetBrains Light workspace suites, `ui-light_lane_test`. `BT --lane ui-light` selects it."
+    },
+    {
       "name": "air-integration-jcp",
       "axis": "lane",
       "category": "air-integration-ui",
@@ -71,9 +77,12 @@
     }
   ],
   "excludedTestLibs": [
+    "//plugins/air/backend/agent-extensions/hooks:aiagentextensions-hooks-tests_test_lib",
     "//plugins/air/backend/workflows:air-backend-workflows-tests_test_lib",
+    "//plugins/air/backend/worktree:air-backend-worktree-tests_test_lib",
     "//plugins/air/frontend/llm:air-frontend-llm-tests_test_lib",
     "//plugins/air/frontend/llm/analytics/jcp:air-frontend-llm-analytics-jcp-tests_test_lib",
+    "//plugins/air/frontend/session/view.gui.showcase:air-frontend-session-view-gui-showcase-tests_test_lib",
     "//plugins/air/tests/integration/headless/acp-perf:acp-perf_test_lib",
     "//plugins/air/tests/integration/headless/acp:acp_test_lib",
     "//plugins/air/tests/integration/headless/acp/installed-process:installed-process_test_lib",
@@ -84,7 +93,7 @@
     "//plugins/air/tests/integration/headless/opencode:opencode_test_lib",
     "//plugins/air/tests/integration/headless/pi:pi_test_lib",
     "//plugins/air/tests/integration/jcp:jcp_test_lib",
-    "//plugins/air/tests/property/acp:air-backend-acp-property-tests_test_lib",
+    "//plugins/air/tests/property/acp:air-acp-property-tests_test_lib",
     "//plugins/air/tests/property/gui:air-frontend-session-view-gui-property-tests_test_lib"
   ],
   "laneWideModules": {
@@ -107,6 +116,7 @@
     "plugins/air/tests/integration/lanes.json": [],
     "plugins/air/tests/integration/testData": [],
     "plugins/air/tests/integration/ui": [],
+    "plugins/air/tests/integration/ui-light": [],
     "plugins/air/tests/integration/ui-live": [],
     "plugins/air/tests/integration/ui-perf": [],
     "plugins/air/tests/integration/ui-real": [],
@@ -131,7 +141,7 @@
   "lanes": [
     {
       "name": "fast",
-      "description": "all Air unit tests, excluding UI, GUI-chat, headless integration, and the slow editor sweeps (the default loop)",
+      "description": "all Air unit tests, excluding UI, GUI-chat, headless integration, and the air-slow targets (the default loop)",
       "classTimeBudget": {
         "seconds": 30,
         "baseline": "plugins/air/tests/integration/class-time-budget.tsv"
@@ -214,6 +224,16 @@
       "integrationTag": "air-integration-gui-chat",
       "catalogLane": "GUI_CHAT",
       "testLabel": "//plugins/air/tests/integration/gui-chat:gui-chat_lane_test"
+    },
+    {
+      "name": "ui-light",
+      "description": "the JetBrains Light workspace scenarios (launches JetBrains Light through the guest agent; its target is manual, so a guest run is vm.cmd run --lane ui-light, or a suite, flow or changed path of the lane)",
+      "target": "//plugins/air/tests/integration/ui-light:ui-light_lane_test",
+      "extra": [],
+      "shards": 1,
+      "integrationTag": "air-integration-ui-light",
+      "catalogLane": "UI_LIGHT",
+      "testLabel": "//plugins/air/tests/integration/ui-light:ui-light_lane_test"
     },
     {
       "name": "headless",

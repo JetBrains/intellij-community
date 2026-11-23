@@ -1,6 +1,10 @@
 package com.jetbrains.env.python.testing;
 
 import com.google.common.collect.ImmutableList;
+import java.util.Objects;
+import com.jetbrains.python.packaging.PyPackage;
+import com.intellij.python.sdk.backend.PythonInterpreterKt;
+import com.jetbrains.env.PyEnvTestPackages;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.RunManager;
 import com.intellij.execution.testframework.AbstractTestProxy;
@@ -32,8 +36,6 @@ import com.jetbrains.env.PyProcessWithConsoleTestTask;
 import com.jetbrains.env.python.testing.CreateConfigurationTestTask.PyConfigurationValidationTask;
 import com.jetbrains.env.ut.PyTestTestProcessRunner;
 import com.jetbrains.python.PyBundle;
-import com.jetbrains.python.PyPsiPackageUtil;
-import com.jetbrains.python.packaging.PyPackageManager;
 import com.intellij.python.requirements.parser.PyRequirementParser;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyFunction;
@@ -376,13 +378,12 @@ public final class PythonPyTestingTest extends PyEnvTestCase {
   }
 
   private static boolean isPyTestVersionAtLeast(@NotNull PyTestConfiguration configuration, @NotNull String version) {
-    try {
-      var packages = PyPackageManager.getInstance(configuration.getSdk()).refreshAndGetPackages(false);
-      return PyPsiPackageUtil.findPackage(packages, "pytest").matches(PyRequirementParser.fromLine("pytest>=" + version));
-    }
-    catch (ExecutionException e) {
-      throw new RuntimeException(e);
-    }
+    var interpreter = Objects.requireNonNull(configuration.getPythonInterpreter());
+    var pytest = PyEnvTestPackages.reloadInstalledPackages(configuration.getProject(), interpreter).stream()
+      .filter(pkg -> pkg.getName().equalsIgnoreCase("pytest"))
+      .findFirst()
+      .orElseThrow();
+    return new PyPackage(pytest.getName(), pytest.getVersion()).matches(PyRequirementParser.fromLine("pytest>=" + version));
   }
 
 
@@ -928,7 +929,7 @@ public final class PythonPyTestingTest extends PyEnvTestCase {
       @Override
       public void runTestOn(@NotNull String sdkHome, @Nullable Sdk existingSdk) throws InvalidSdkException, ExecutionException {
         Sdk sdk = createTempSdk(sdkHome, SdkCreationType.SDK_PACKAGES_ONLY);
-        PyPackageManager.getInstance(sdk).refreshAndGetPackages(true);
+        PyEnvTestPackages.reloadInstalledPackages(myFixture.getProject(), PythonInterpreterKt.pythonInterpreterOrThrow(sdk, myFixture.getProject(), false));
         var runnerService = TestRunnerService.getInstance(myFixture.getModule());
         runnerService.setSelectedFactory(PythonTestConfigurationType.getInstance().getAutoDetectFactory());
         ApplicationManager.getApplication().invokeAndWait(() -> PyTestFixtureAndParametrizedTest.Companion.testInspectionStatic(myFixture));
@@ -1115,12 +1116,7 @@ public final class PythonPyTestingTest extends PyEnvTestCase {
         PyTestConfiguration configuration = getConfiguration();
         configuration.getTarget().setTargetType(PyRunTargetVariant.PATH);
         configuration.getTarget().setTarget("");
-        try {
-          PyPackageManager.getInstance(configuration.getSdk()).refreshAndGetPackages(true);
-        }
-        catch (ExecutionException e) {
-          throw new AssertionError(e);
-        }
+        PyEnvTestPackages.reloadInstalledPackages(configuration.getProject(), Objects.requireNonNull(configuration.getPythonInterpreter()));
         configuration.checkConfiguration();
       }
     });
@@ -1141,12 +1137,7 @@ public final class PythonPyTestingTest extends PyEnvTestCase {
         PyAutoDetectTestConfiguration configuration = getConfiguration();
         configuration.getTarget().setTargetType(PyRunTargetVariant.PATH);
         configuration.getTarget().setTarget("");
-        try {
-          PyPackageManager.getInstance(configuration.getSdk()).refreshAndGetPackages(true);
-        }
-        catch (ExecutionException e) {
-          throw new AssertionError(e);
-        }
+        PyEnvTestPackages.reloadInstalledPackages(configuration.getProject(), Objects.requireNonNull(configuration.getPythonInterpreter()));
         configuration.checkConfiguration();
       }
     });

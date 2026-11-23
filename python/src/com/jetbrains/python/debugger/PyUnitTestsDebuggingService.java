@@ -15,6 +15,7 @@ import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileEditor.FileEditorOpenRequest;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.project.Project;
@@ -46,7 +47,6 @@ import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.awt.event.ComponentListener;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -84,8 +84,11 @@ public final class PyUnitTestsDebuggingService {
     if (position == null) return;
     AppUIUtil.invokeLaterIfProjectAlive(debugSession.getProject(), () -> {
       Consumer<Editor> addInlayToEditor = makeAddInlayToEditorFunction(debugSession, position, exceptionType, errorMessage, isTestSetUpFail);
-      Arrays.stream(getAllEditorsForFile(debugSession.getProject(), position.getFile())).forEach(
-        editor -> addInlayToEditor.consume(editor));
+      forEachEditorOfFile(debugSession.getProject(), position.getFile(), editor -> {
+        if (!debugSession.isStopped() && !editor.isDisposed()) {
+          addInlayToEditor.consume(editor);
+        }
+      });
     });
   }
 
@@ -254,23 +257,24 @@ public final class PyUnitTestsDebuggingService {
     }
   }
 
-  private static Editor @NotNull [] getAllEditorsForFile(@NotNull Project project, @NotNull VirtualFile file) {
-    FileEditor[] fileEditors = FileEditorManager.getInstance(project).getAllEditors(file);
+  private static void forEachEditorOfFile(@NotNull Project project, @NotNull VirtualFile file, @NotNull Consumer<Editor> action) {
+    FileEditorManager fileEditorManager = FileEditorManager.getInstance(project);
+    FileEditor[] fileEditors = fileEditorManager.getAllEditors(file);
 
     if (fileEditors.length == 0) {
-      Editor editor = openEditorForFile(project, file);
-      return editor == null ? Editor.EMPTY_ARRAY : new Editor[]{openEditorForFile(project, file)};
+      OpenFileDescriptor descriptor = new OpenFileDescriptor(project, file, 0);
+      fileEditorManager.requestOpenTextEditor(descriptor, FileEditorOpenRequest.fromDescriptor(descriptor).withRequestFocus(true))
+        .thenAccept(editor -> {
+          if (editor != null) {
+            fileEditorManager.runWhenLoaded(editor, () -> action.consume(editor));
+          }
+        });
+      return;
     }
 
-    return Arrays.stream(fileEditors)
-      .map(fileEditor -> (TextEditor)fileEditor)
-      .map(textEditor -> textEditor.getEditor())
-      .toArray(Editor[]::new);
-  }
-
-  private static @Nullable Editor openEditorForFile(@NotNull Project project, @NotNull VirtualFile file) {
-    OpenFileDescriptor descriptor = new OpenFileDescriptor(project, file, 0);
-    return FileEditorManager.getInstance(project).openTextEditor(descriptor, true);
+    for (FileEditor fileEditor : fileEditors) {
+      action.consume(((TextEditor)fileEditor).getEditor());
+    }
   }
 
   private static @NotNull Color getInlayBackgroundColor() {

@@ -22,8 +22,10 @@
     <module name="intellij.platform.projectModel"/>
     <module name="intellij.platform.rpc.lite"/>
     <module name="intellij.platform.util.coroutines"/>
+    <module name="intellij.platform.util.diff"/>
     <module name="intellij.platform.util.text.matching"/>
     <module name="intellij.platform.util.ui"/>
+    <module name="intellij.platform.vcs.core"/>
     <module name="intellij.platform.vcs.dvcs.impl.shared"/>
     <module name="intellij.platform.vcs.impl.shared"/>
     <module name="intellij.platform.vcs.shared"/>
@@ -74,6 +76,7 @@
     <rdct.remoteSettingProvider implementation="git4idea.config.GitRemoteSettingsInfoProvider"/>
 
     <postStartupActivity implementation="com.intellij.vcs.git.GitDataHoldersInitializer"/>
+    <vcs.presenter implementation="com.intellij.vcs.git.GitVcsPresenter"/>
 
     <registryKey key="git.enable.working.trees.feature" defaultValue="true" restartRequired="true"
                  description="Enables the 'Working Trees' feature, see https://youtrack.jetbrains.com/issue/IJPL-204771"/>

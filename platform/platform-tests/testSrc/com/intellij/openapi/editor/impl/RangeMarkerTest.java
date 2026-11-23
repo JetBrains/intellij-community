@@ -509,7 +509,7 @@ public class RangeMarkerTest {
       String newText = StringUtil.replaceSubstring(document.getText(), marker.getTextRange(), "");
       synchronizer.replaceString(document, 0, document.getTextLength(), newText);
 
-      final List<DocumentEvent> events = new ArrayList<>();
+      List<DocumentEvent> events = new ArrayList<>();
       document.addDocumentListener(new DocumentListener() {
         @Override
         public void documentChanged(@NotNull DocumentEvent e) {
@@ -628,7 +628,7 @@ public class RangeMarkerTest {
     RangeMarker marker = createMarker(buffer.toString(), 2, 5);
     WriteCommandAction.runWriteCommandAction(getProject(), () -> {
     synchronizer.startTransaction(getProject(), document, psiFile);
-    final PsiToDocumentSynchronizer.DocumentChangeTransaction transaction = synchronizer.getTransaction(document);
+    PsiToDocumentSynchronizer.DocumentChangeTransaction transaction = synchronizer.getTransaction(document);
     assertNotNull(transaction);
 
     for (int i = 0; i < 10; i++) {
@@ -1028,7 +1028,7 @@ public class RangeMarkerTest {
 
   @Test
   public void testRandomStressEdit() {
-    final Random gen = new Random();
+    Random gen = new Random();
     int N_TRIES = Timings.adjustAccordingToMySpeed(7000, false);
     LOG.debug("N_TRIES = " + N_TRIES);
     DocumentEx document = null;
@@ -1158,14 +1158,14 @@ public class RangeMarkerTest {
   }
 
   @NotNull
-  private RangeMarkerEx createMarker(@NotNull String text, final int start, final int end) {
+  private RangeMarkerEx createMarker(@NotNull String text, int start, int end) {
     psiFile = createFile("x.txt", text);
     fileNode = psiFile.getNode(); // the node should be loaded, otherwise PsiToDocumentSynchronizer will ignore our commands
     return createMarker(psiFile, start, end);
   }
 
   @NotNull
-  private RangeMarkerEx createMarker(@NotNull PsiFile psiFile, final int start, final int end) {
+  private RangeMarkerEx createMarker(@NotNull PsiFile psiFile, int start, int end) {
     document = Objects.requireNonNull(documentManager.getDocument(psiFile));
     return (RangeMarkerEx)document.createRangeMarker(start, end);
   }
@@ -1383,10 +1383,10 @@ public class RangeMarkerTest {
   @Test
   public void testValidationBug() {
     Document document = EditorFactory.getInstance().createDocument("[xxxxxxxxxxxxxx]");
-    final Editor editor = EditorFactory.getInstance().createEditor(document);
+    Editor editor = EditorFactory.getInstance().createEditor(document);
 
     try {
-      final FoldRegion[] fold = new FoldRegion[1];
+      FoldRegion[] fold = new FoldRegion[1];
       editor.getFoldingModel().runBatchFoldingOperation(() -> fold[0] = editor.getFoldingModel().addFoldRegion(0, 2, ""));
       RangeMarker marker = document.createRangeMarker(0, 2);
       deleteString(document, 1, 2);
@@ -1498,11 +1498,11 @@ public class RangeMarkerTest {
 
   @PerformanceUnitTest
   @Test
-  public void testRangeHighlighterLinesInRangeForLongLinePerformance() {
-    final int N = 50000;
+  public void testRangeHighlighterLinesInRangeForVeryLongLinePerformance() {
+    int N = 500_000;
     Document document = EditorFactory.getInstance().createDocument(StringUtil.repeatSymbol('x', 2 * N));
 
-    final MarkupModelEx markupModel = (MarkupModelEx)DocumentMarkupModel.forDocument(document, getProject(), true);
+    MarkupModelEx markupModel = (MarkupModelEx)DocumentMarkupModel.forDocument(document, getProject(), true);
     for (int i=0; i<N-1;i++) {
       markupModel.addRangeHighlighter(null, 2 * i, 2 * i + 1, 0, HighlighterTargetArea.EXACT_RANGE);
     }
@@ -1523,7 +1523,7 @@ public class RangeMarkerTest {
   public void testRangeHighlighterIteratorOrder() {
     Document document = EditorFactory.getInstance().createDocument("1234567890");
 
-    final MarkupModelEx markupModel = (MarkupModelEx)DocumentMarkupModel.forDocument(document, getProject(), true);
+    MarkupModelEx markupModel = (MarkupModelEx)DocumentMarkupModel.forDocument(document, getProject(), true);
     RangeHighlighter exact = markupModel.addRangeHighlighter(null, 3, 6, 0, HighlighterTargetArea.EXACT_RANGE);
     RangeHighlighter line = markupModel.addRangeHighlighter(null, 4, 5, 0, HighlighterTargetArea.LINES_IN_RANGE);
     List<RangeHighlighter> list = new ArrayList<>();

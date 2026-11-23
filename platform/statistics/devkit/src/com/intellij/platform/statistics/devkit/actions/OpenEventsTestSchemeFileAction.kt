@@ -2,7 +2,7 @@
 package com.intellij.platform.statistics.devkit.actions
 
 import com.intellij.platform.statistics.devkit.StatisticsDevKitUtil
-import com.intellij.platform.statistics.devkit.actions.OpenEventsSchemeFileAction.Manager.openFileInEditor
+import com.intellij.platform.statistics.devkit.actions.OpenEventsSchemeFileAction.Manager.requestOpenFileInEditor
 import com.intellij.internal.statistic.eventLog.validator.storage.persistence.EventLogTestMetadataPersistence
 import com.intellij.internal.statistic.utils.StatisticsRecorderUtil
 import com.intellij.openapi.actionSystem.ActionUpdateThread
@@ -23,6 +23,6 @@ internal class OpenEventsTestSchemeFileAction() : DumbAwareAction() {
     val project = e.project ?: return
 
     val file = EventLogTestMetadataPersistence(myRecorderId).eventsTestSchemeFile
-    openFileInEditor(file, project)
+    requestOpenFileInEditor(file, project)
   }
 }

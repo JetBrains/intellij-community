@@ -3,6 +3,7 @@ package com.jetbrains.python.tools.sdkTools
 
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.Key
+import com.intellij.python.sdk.backend.PythonMockInterpreterKeys
 import org.jetbrains.annotations.TestOnly
 import java.nio.file.Path
 
@@ -14,15 +15,15 @@ import java.nio.file.Path
 object PythonMockSdkKeys {
   /** The `sys.path` of the mock SDK. Without it, the directory of its home path is its `sys.path`. */
   @JvmField
-  val SYS_PATH: Key<List<String>> = Key.create("PY_MOCK_SYS_PATH_KEY")
+  val SYS_PATH: Key<List<String>> = PythonMockInterpreterKeys.SYS_PATH
 
   /** The version of the mock SDK, such as `Python 3.12`. Without it, the SDK keeps its own version. */
   @JvmField
-  val VERSION: Key<String> = Key.create("PY_MOCK_PY_VERSION_KEY")
+  val VERSION: Key<String> = PythonMockInterpreterKeys.VERSION
 
   /** Marks an SDK as a mock that sets neither [SYS_PATH] nor [VERSION]. */
   @JvmField
-  val MARKER: Key<Boolean> = Key.create("MOCK_PY_MARKER_KEY")
+  val MARKER: Key<Boolean> = PythonMockInterpreterKeys.MARKER
 
   /** Whether [sdk] is a mock SDK of a test. */
   @JvmStatic

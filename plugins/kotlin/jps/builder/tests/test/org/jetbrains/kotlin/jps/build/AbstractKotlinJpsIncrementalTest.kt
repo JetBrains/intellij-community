@@ -46,9 +46,9 @@ abstract class AbstractKotlinJpsIncrementalTest : JpsBuildTestBase() {
 
   /** The implementation that the cases compile with. A subclass runs the same cases with another one. */
   protected open val btaImplementation: KotlinBtaImplementation
-    get() = KotlinBtaImplementation.CURRENT
+    get() = KotlinBtaImplementation.BOOTSTRAP
 
-  override fun shouldRunTest(): Boolean = super.shouldRunTest() && !btaImplementation.duplicatesCurrent
+  override fun shouldRunTest(): Boolean = super.shouldRunTest() && !btaImplementation.duplicatesBootstrap
 
   @BeforeEach
   fun setUpKotlinJpsIncrementalTest() {

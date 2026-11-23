@@ -33,6 +33,7 @@ jvm_library(
         "//jps/model-api:model",
         "//platform/testFramework",
         "//platform/projectModel-api:projectModel",
+        "//platform/testFramework/junit5",
         ":libraries_junit4_provided",
     ],
 )

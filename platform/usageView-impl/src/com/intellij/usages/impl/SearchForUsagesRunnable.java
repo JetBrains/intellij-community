@@ -30,8 +30,6 @@ import com.intellij.openapi.util.text.HtmlBuilder;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.wm.ToolWindowId;
-import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.SearchScope;
@@ -156,8 +154,7 @@ final class SearchForUsagesRunnable implements Runnable {
         String detailedMessage = detailedLargeFilesMessage(largeFiles);
         List<String> strings = new ArrayList<>(lines);
         strings.add(detailedMessage);
-        //noinspection SSBasedInspection
-        ToolWindowManager.getInstance(myProject).notifyByBalloon(ToolWindowId.FIND, messageType, wrapInHtml(strings), AllIcons.Actions.Find, listener);
+        UsageViewContentManager.getInstance(myProject).notifyByBalloon(messageType, wrapInHtml(strings), AllIcons.Actions.Find, listener);
       });
     }
 
@@ -177,8 +174,7 @@ final class SearchForUsagesRunnable implements Runnable {
       resultLines.add(mayHaveUsagesInUnloadedModulesMessage(unloadedModulesBelongingToScope));
     }
 
-    //noinspection SSBasedInspection
-    ToolWindowManager.getInstance(myProject).notifyByBalloon(ToolWindowId.FIND, actualType, wrapInHtml(resultLines), AllIcons.Actions.Find, resultListener);
+    UsageViewContentManager.getInstance(myProject).notifyByBalloon(actualType, wrapInHtml(resultLines), AllIcons.Actions.Find, resultListener);
   }
 
   @RequiresBackgroundThread

@@ -6,14 +6,15 @@ load("//build/rust-tools:defs.bzl", "optimized_binary", "rust_tool_binary")
 rust_tool_binary(
     name = "jscpd-test",
     edition = "2024",
-    lints = "//build/dev-dist-tools:lints",
-    test_deps = ["@ddt//:tempfile"],
+    lints = "//build/dist-tools:lints",
+    test_deps = ["@dt//:tempfile"],
     deps = [
-        "//build/dev-dist-tools/crates/fscopy",
-        "@ddt//:regex",
-        "@ddt//:serde",
-        "@ddt//:serde_json",
-        "@ddt//:walkdir",
+        "//build/dist-tools/crates/checkout-files",
+        "//build/dist-tools/crates/fscopy",
+        "@dt//:regex",
+        "@dt//:serde",
+        "@dt//:serde_json",
+        "@dt//:walkdir",
         "@rules_rust//tools/runfiles",
     ],
 )

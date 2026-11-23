@@ -90,8 +90,14 @@ fun SyntaxNode.leafLeft(): SyntaxNode? {
 fun SyntaxNode.sequenceLeft(excludeSelf: Boolean = false): Sequence<SyntaxNode> =
   generateSequence(if (excludeSelf) leafLeft() else this) { it.leafLeft() }
 
-fun SyntaxNode.leafRight(): SyntaxNode? =
-  generateSequence(this.skipRight()) { it.firstChild() }.lastOrNull()
+fun SyntaxNode.leafRight(): SyntaxNode? {
+  tailrec fun SyntaxNode.loop(): SyntaxNode =
+    when (val c = firstChild()) {
+      null -> this
+      else -> c.loop()
+    }
+  return this.skipRight()?.loop()
+}
 
 fun SyntaxNode.sequenceRight(excludeSelf: Boolean = false): Sequence<SyntaxNode> =
   generateSequence(if (excludeSelf) leafRight() else this) { it.leafRight() }

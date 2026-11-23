@@ -18,7 +18,7 @@ import java.nio.file.Path
 
 /**
  * How production packaging and a complete dev build place the files of one [PlatformDistFileDeclaration].
- * The dev distribution does not read this half; its component places the files from the layout asset spec.
+ * The Bazel engine does not read this half; its component places the files from the layout asset spec.
  */
 @ApiStatus.Internal
 sealed interface PlatformDistFilePlacement {
@@ -39,7 +39,7 @@ sealed interface PlatformDistFilePlacement {
 /**
  * The files a downloaded dependency contributes to the distribution for one target platform.
  *
- * [layoutAssetSpec] is the data the dev distribution packs from: the archive as a Bazel label, and each archive path
+ * [layoutAssetSpec] is the data the Bazel engine packs from: the archive as a Bazel label, and each archive path
  * with its distribution destination. [placement] places the same files for production packaging and for a complete
  * dev build. Both halves describe the same files, so a change to one is a change to the other.
  */
@@ -90,8 +90,8 @@ class PlatformLayout(@JvmField val descriptorCacheContainer: DescriptorCacheCont
   /**
    * Declares the files a downloaded dependency contributes to the distribution on [os] and [arch].
    *
-   * The plugin counterpart is `PluginLayoutSpec.withGeneratedPlatformResources` with a layout asset spec. The dev
-   * distribution packs the files [layoutAssetSpec] names out of the archive it names. Production packaging and a
+   * The plugin counterpart is `PluginLayoutSpec.withGeneratedPlatformResources` with a layout asset spec. The Bazel
+   * engine packs the files [layoutAssetSpec] names out of the archive it names. Production packaging and a
    * complete dev build register the [DistFile]s [distFiles] returns; the build calls it once per declaration.
    */
   fun withDistFiles(
@@ -106,7 +106,7 @@ class PlatformLayout(@JvmField val descriptorCacheContainer: DescriptorCacheCont
   /**
    * Declares the files a downloaded dependency contributes to the OS-specific distribution directory on [os] and [arch].
    *
-   * The dev distribution packs the files [layoutAssetSpec] names, as with [withDistFiles]. Production packaging and a
+   * The Bazel engine packs the files [layoutAssetSpec] names, as with [withDistFiles]. Production packaging and a
    * complete dev build call [copy] with the distribution directory where the OS builder copies its `bin` files; [copy]
    * returns the files it wrote, so the build can set their executable bits and keep them out of a stale-file sweep.
    */

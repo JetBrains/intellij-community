@@ -3,6 +3,11 @@ package org.jetbrains.idea.devkit.inspections
 
 import org.jetbrains.idea.devkit.inspections.quickfix.LightDevKitInspectionFixTestBase
 
+/**
+ * Use [threadingConcurrencyFixture] in a JUnit 5 test.
+ */
+@Suppress("DEPRECATION")
+@Deprecated("Use threadingConcurrencyFixture in a JUnit 5 test")
 abstract class ThreadingConcurrencyInspectionTestBase : LightDevKitInspectionFixTestBase() {
 
   private val inspection = ThreadingConcurrencyInspection()

@@ -2,9 +2,11 @@
 package com.intellij.python.test.env.conda
 
 import com.intellij.execution.processTools.getResultStdout
+import com.intellij.python.sdk.backend.addTestInterpreter
+import com.intellij.python.sdk.backend.PythonInterpreterRegistry
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.thisLogger
-import com.intellij.openapi.project.ProjectManager
 import com.intellij.python.community.execService.Args
 import com.intellij.python.community.execService.BinOnEel
 import com.intellij.python.community.execService.ExecService
@@ -351,14 +353,10 @@ class CondaPyEnvironment(
   override suspend fun prepareSdk(pyProject: PyProject): PythonInterpreter =
     condaEnv().createSdkFromThisEnv(ModuleOrProject.ModuleAndProject(pyProject), null, pyProject.baseDir).getOrThrow()
 
-  /**
-   * The conda interpreter of this environment for the old fixtures, which have no project. It is not in the SDK table:
-   * the fixture adds it. The env dir is its owner directory.
-   */
-  override suspend fun prepareSdk(): PythonInterpreter {
-    val project = ProjectManager.getInstance().defaultProject
-    return condaEnv().createSdkFromThisEnv(ModuleOrProject.ProjectOnly(project), null, envPath).getOrThrow()
-  }
+  /** The conda interpreter of this environment in [project], for a test without a `PyProject`. The env dir owns it. */
+  override suspend fun prepareInterpreter(project: Project): PythonInterpreter =
+    PythonInterpreterRegistry.getInstance(project)
+      .addTestInterpreter(condaEnv().createSdkFromThisEnv(ModuleOrProject.ProjectOnly(project), null, envPath).getOrThrow())
 
   private suspend fun condaEnv(): PyCondaEnv {
     return PyCondaEnv(

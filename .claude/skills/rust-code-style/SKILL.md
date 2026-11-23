@@ -6,7 +6,7 @@ description: Write or review Rust in the build tools.
 
 # Rust Code Style
 
-These rules apply to the Rust tool workspaces: the dev-dist tools, BT and the Air UI-lane tooling. The spec of a
+These rules apply to the Rust tool workspaces: the distribution tools, BT and the Air UI-lane tooling. The spec of a
 workspace is [`community/build/rust-tools/README.md`](../../../build/rust-tools/README.md). It names the files, the
 Bazel targets and the checks that every workspace has. This skill holds the idioms.
 
@@ -20,7 +20,7 @@ A tool has one of two audiences. The audience picks the error model and the comm
 | Examples | the packer, the collector, the composer, the descriptor writer | `bt`, `vm` |
 | Error model | `anyhow`, `ERROR: {e:#}`, a nonzero exit | a typed `Refusal` with a stable code and exit |
 | Command line | the `cli` crate, `--key=value` | clap derive |
-| Crate closure | pinned in `closure.txt` | not pinned |
+| Crate closure | pinned in `closure.txt` | not pinned, except in the Air UI-lane tooling |
 
 Bazel reads only "nonzero" from an action tool. A person or an agent branches on the exit code and on the refusal code.
 
@@ -36,7 +36,7 @@ fn main() -> ExitCode {
 
 `run` takes the arguments and the error stream, as a test calls it, and returns the exit code: `cli::exit_code` turns a
 result into 0, or into the code of the failure after `cli::report` prints `ERROR: {error:#}`. Each tool keeps its own
-exit codes. `bins/runtime-layout/src/main.rs` of the dev-dist tools shows the shape.
+exit codes. `bins/runtime-layout/src/main.rs` of the distribution tools shows the shape.
 
 An action tool that succeeds prints nothing. Bazel shows the output of a successful action as an `INFO: From` block.
 A count or a report of a run goes into a tag of its span.
@@ -49,8 +49,8 @@ that converts a refusal of another tool maps the exit by its meaning, never by i
 
 ## 2. Two command line grammars
 
-Bazel writes the argv of an action tool, so the tool reads it with the `cli` crate. The crate has no dependency, and
-it refuses every other form with one text. `community/build/dev-dist-tools/crates/cli/API.md` lists the refusals.
+Bazel writes the argv of an action tool, so the tool reads it with the `cli` crate. The crate depends only on `anyhow`,
+and it refuses every other form with one text. `community/build/dist-tools/crates/cli/API.md` lists the refusals.
 
 ```rust
 let mut options = cli::parse(args)?;
@@ -105,7 +105,7 @@ A person- or agent-facing CLI uses clap derive: help, environment variables, sug
 - A crate exists when two binaries share it, or when it is the frozen-bytes engine of one binary with its own
   goldens. Code that one binary uses lives in that binary.
 - An action tool pins its crate closure in `closure.txt`, such as
-  `community/build/dev-dist-tools/bins/content-module-packer/closure.txt`. A change to any crate in the closure reruns
+  `community/build/dist-tools/bins/content-module-packer/closure.txt`. A change to any crate in the closure reruns
   every action of the tool, so `<bin>_closure_test` makes each new crate a visible choice.
 - Prefer a maintained crate to own code. The exception is a crate that would re-key an action tool, when about 30
   lines replace it. State the reason in one sentence of the doc comment:
@@ -129,7 +129,7 @@ pub(crate) fn is_versioned_module_info(name: &str) -> bool {
   own library lives there: a unit test compiles a second copy of the library, so it cannot share types with the
   testkit.
 - A test finds `testdata/` through one lookup: the variable that the crate macro sets under Bazel, such as
-  `DDT_TESTDATA_DIR`, and the run-time `CARGO_MANIFEST_DIR` under cargo. The rules_rust process wrapper refuses
+  `DT_TESTDATA_DIR`, and the run-time `CARGO_MANIFEST_DIR` under cargo. The rules_rust process wrapper refuses
   `env!("CARGO_MANIFEST_DIR")`. A file that `include_str!` reads is `compile_data` of the crate.
 - Never edit a golden by hand. Regenerate it with the update path of its test.
 - The Windows check is the `clippy-windows-*` targets of the workspace and the cross-target cargo clippy below.
@@ -149,12 +149,12 @@ pub(crate) fn is_versioned_module_info(name: &str) -> bool {
 
 ## Refresh a crate hub
 
-`community/MODULE.bazel` generates `@ddt` and `@bt` from the workspace `Cargo.toml` and `Cargo.lock`. After a change of
-`Cargo.lock`, update the Bazel lockfiles of both roots. For the dev-dist tools:
+`community/MODULE.bazel` generates `@dt` and `@bt` from the workspace `Cargo.toml` and `Cargo.lock`. After a change of
+`Cargo.lock`, update the Bazel lockfiles of both roots. For the distribution tools:
 
 ```sh
-cd community && ./bazel.cmd build --nobuild --lockfile_mode=update //build/dev-dist-tools/...
-cd .. && ./bazel.cmd build --nobuild --lockfile_mode=update @community//build/dev-dist-tools/... //build/dev-dist-tools/...
+cd community && ./bazel.cmd build --nobuild --lockfile_mode=update //build/dist-tools/...
+cd .. && ./bazel.cmd build --nobuild --lockfile_mode=update @community//build/dist-tools/... //build/dist-tools/...
 ```
 
 For BT, use `//tools/bt/...` and `@community//tools/bt/...`. The extension watches only the workspace `Cargo.toml` and
@@ -168,11 +168,11 @@ Run them before a commit, in addition to the gates of the workspace README:
 ```sh
 cargo fmt --check && cargo clippy --all-targets      # in the workspace directory
 bun community/build/rust-tools/sync.mjs --check
-cd community && ./bazel.cmd test //build/dev-dist-tools/... //tools/bt/... //build/rust-tools/...
+cd community && ./bazel.cmd test //build/dist-tools/... //tools/bt/... //build/rust-tools/...
 RUSTC_BOOTSTRAP=1 cargo clippy -Zbuild-std=std,panic_abort --target x86_64-pc-windows-msvc --workspace --all-targets
 ```
 
-From the ultimate root, also run `./bazel.cmd test @community//build/dev-dist-tools/... //build/dev-dist-tools/...`.
+From the ultimate root, also run `./bazel.cmd test @community//build/dist-tools/... //build/dist-tools/...`.
 The clippy tests of a community crate run only from `community/`, because the clippy aspect skips a target of an
 external repository.
 
@@ -183,6 +183,6 @@ external repository.
 | The spec of a workspace, the checks, how a workspace joins | [`community/build/rust-tools/README.md`](../../../build/rust-tools/README.md) |
 | The lint, format and clippy sources, and `sync.mjs` | `community/build/rust-tools/` |
 | The Bazel macro core: `rust_tool_crate`, `optimized_binary`, `windows_clippy_tests` | `community/build/rust-tools/defs.bzl` |
-| The dev-dist tools: crate map, gates, agent rules | [`community/build/dev-dist-tools/README.md`](../../../build/dev-dist-tools/README.md) and `AGENTS.md` |
+| The distribution tools: crate map, gates, agent rules | [`community/build/dist-tools/README.md`](../../../build/dist-tools/README.md) and `AGENTS.md` |
 | BT | [`community/tools/bt/README.md`](../../../tools/bt/README.md) |
 | The Air UI-lane tooling: crate map, gates, agent rules | [`community/tools/vm/README.md`](../../../tools/vm/README.md) and `AGENTS.md` |

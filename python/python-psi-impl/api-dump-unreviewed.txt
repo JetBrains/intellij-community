@@ -558,6 +558,7 @@ f:com.jetbrains.python.codeInsight.typing.PyStubPackages
 f:com.jetbrains.python.codeInsight.typing.PyTypeShed
 - sf:INSTANCE:com.jetbrains.python.codeInsight.typing.PyTypeShed
 - f:findAllRootsForLanguageLevel(com.jetbrains.python.psi.LanguageLevel):java.util.List
+- f:findStdlibModuleNames(com.jetbrains.python.psi.LanguageLevel):java.util.List
 - f:findStdlibRootsForLanguageLevel(com.jetbrains.python.psi.LanguageLevel):java.util.List
 - f:findStdlibRootsForSdk(com.intellij.openapi.projectRoots.Sdk):java.util.List
 - f:getDirectory():com.intellij.openapi.vfs.VirtualFile
@@ -1274,7 +1275,6 @@ f:com.jetbrains.python.psi.impl.PyBuiltinCache
 - sf:TYPES_MODULE:java.lang.String
 - <init>(com.intellij.openapi.project.Project,com.intellij.python.sdk.backend.PythonInterpreter):V
 - sf:findInterpreterForFile(com.intellij.psi.PsiFileSystemItem):com.intellij.python.sdk.backend.PythonInterpreter
-- sf:findSdkForFile(com.intellij.psi.PsiFileSystemItem):com.intellij.openapi.projectRoots.Sdk
 - f:getBoolType():com.jetbrains.python.psi.types.PyClassType
 - f:getBuiltinsFile():com.jetbrains.python.psi.PyFile
 - sf:getBuiltinsFileName(com.jetbrains.python.psi.LanguageLevel):java.lang.String
@@ -1312,7 +1312,6 @@ f:com.jetbrains.python.psi.impl.PyBuiltinCache
 f:com.jetbrains.python.psi.impl.PyBuiltinCache$Companion
 - f:findInterpreterForFile(com.intellij.psi.PsiFileSystemItem):com.intellij.python.sdk.backend.PythonInterpreter
 - f:findInterpreterForNonModuleFile(com.intellij.psi.PsiFileSystemItem):com.intellij.python.sdk.backend.PythonInterpreter
-- f:findSdkForFile(com.intellij.psi.PsiFileSystemItem):com.intellij.openapi.projectRoots.Sdk
 - f:getBuiltinsFileName(com.jetbrains.python.psi.LanguageLevel):java.lang.String
 - f:getBuiltinsForInterpreter(com.intellij.openapi.project.Project,com.intellij.python.sdk.backend.PythonInterpreter):com.jetbrains.python.psi.PyFile
 - f:getBuiltinsForSdk(com.intellij.openapi.project.Project,com.intellij.openapi.projectRoots.Sdk):com.jetbrains.python.psi.PyFile
@@ -2792,6 +2791,7 @@ f:com.jetbrains.python.pyi.PyiUtil
 - s:getOriginalElementOrLeaveAsIs(com.jetbrains.python.psi.PyElement,java.lang.Class):com.jetbrains.python.psi.PyElement
 - s:getOverloads(com.jetbrains.python.psi.PyFunction,com.jetbrains.python.psi.types.TypeEvalContext):java.util.List
 - s:getPythonStub(com.jetbrains.python.psi.PyElement):com.intellij.psi.PsiElement
+- s:isInSkeleton(com.intellij.psi.PsiElement):Z
 - s:isInsideStub(com.intellij.psi.PsiElement):Z
 - s:isOverload(com.intellij.psi.PsiElement,com.jetbrains.python.psi.types.TypeEvalContext):Z
 - s:isPyiFileOfPackage(com.intellij.psi.PsiElement):Z
@@ -2957,13 +2957,10 @@ f:com.jetbrains.python.sdk.PythonSdkUtil
 - s:findSkeletonsDir(com.intellij.openapi.projectRoots.Sdk):com.intellij.openapi.vfs.VirtualFile
 - s:getAllSdks():java.util.List
 - s:getPythonExecutable(java.lang.String):java.lang.String
-- s:getSitePackagesDirectory(com.intellij.openapi.projectRoots.Sdk):com.intellij.openapi.vfs.VirtualFile
 - s:getUserSite():java.lang.String
-- s:isCondaVirtualEnv(com.intellij.openapi.projectRoots.Sdk):Z
 - s:isDisposed(com.intellij.openapi.projectRoots.Sdk):Z
 - s:isPythonSdk(com.intellij.openapi.projectRoots.Sdk):Z
 - s:isRemote(com.intellij.openapi.projectRoots.Sdk):Z
-- s:isVirtualEnv(com.intellij.openapi.projectRoots.Sdk):Z
 f:com.jetbrains.python.testing.PythonUnitTestDetectorsKt
 - sf:isTestClass(com.jetbrains.python.psi.PyClass,com.jetbrains.python.psi.types.TypeEvalContext):Z
 c:com.jetbrains.python.validation.UnsupportedFeatures

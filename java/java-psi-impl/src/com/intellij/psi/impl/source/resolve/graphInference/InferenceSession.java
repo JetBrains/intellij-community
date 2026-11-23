@@ -1115,15 +1115,25 @@ public class InferenceSession {
     while (!allVars.isEmpty()) {
       final List<InferenceVariable> vars = InferenceVariablesOrder.resolveOrder(allVars, dependencies);
       List<InferenceVariable> unresolved = new ArrayList<>();
+      List<InferenceVariable> withLowerBound = new ArrayList<>();
       for (InferenceVariable var : vars) {
         final PsiType eqBound = getEqualsBound(var, substitutor);
         if (eqBound == PsiTypes.nullType()) {
           unresolved.add(var);
+          if (vars.size() > 1 && getLowerBound(var, substitutor) != PsiTypes.nullType()) {
+            withLowerBound.add(var);
+          }
         }
       }
-      if (!unresolved.isEmpty() && vars.size() > unresolved.size()) {
+      if (!unresolved.isEmpty() && vars.size() > 1) {
+        // Resolve the variables with an equality bound first, then the variables with a proper lower bound, then the rest.
         vars.removeAll(unresolved);
-        vars.addAll(unresolved);
+        vars.addAll(withLowerBound);
+        for (InferenceVariable var : unresolved) {
+          if (!withLowerBound.contains(var)) {
+            vars.add(var);
+          }
+        }
       }
       if (!myIncorporationPhase.hasCaptureConstraints(unresolved)) {
         PsiSubstitutor firstSubstitutor = resolveSubset(vars, substitutor);

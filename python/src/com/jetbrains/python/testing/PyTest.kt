@@ -20,11 +20,11 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.options.SettingsEditor
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.search.GlobalSearchScope
+import com.intellij.python.sdk.backend.PythonInterpreter
 import com.intellij.util.execution.ParametersListUtil
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PythonHelper
@@ -216,7 +216,9 @@ class PyTestFactory(type: PythonTestConfigurationType) : PyAbstractTestFactory<P
 
   override fun getName(): String = PyBundle.message("runcfg.pytest.display_name")
 
-  override fun onlyClassesAreSupported(project: Project, sdk: Sdk): Boolean = false
+  @ApiStatus.Internal
+
+  override fun onlyClassesAreSupported(project: Project, interpreter: PythonInterpreter): Boolean = false
 
   override val packageSpec: PackageAvailabilitySpec = PACKAGE_SPEC
 }

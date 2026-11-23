@@ -127,7 +127,7 @@ data class BuildRequest(
 
   /**
    * Where the runtime module repository fragment also writes the `RuntimeModuleRepositoryLayout` it generates the
-   * repository from, or `null` for none. `./build/dev-dist.cmd runtime-repo` reads it.
+   * repository from, or `null` for none. `./build/dist.cmd runtime-repo` reads it.
    */
   @JvmField val runtimeModuleRepositoryLayoutFile: Path? = null,
 
@@ -213,7 +213,7 @@ internal fun buildProductFromProject(
  */
 internal fun buildProduct(request: BuildRequest, createBuildContext: (buildDir: Path, lifetime: BuildLifetime) -> BuildContext): DevBuildResult {
   check(request.fragment.isComplete || request.scrambleTool == null) {
-    "Split dev distribution assembly does not support scrambling"
+    "Split distribution assembly does not support scrambling"
   }
   val buildDir = request.runDirOverride?.let { prepareOverriddenRunDir(it) } ?: prepareDevRunDir(request)
   request.scratchDir?.let { prepareScratchDir(it) }

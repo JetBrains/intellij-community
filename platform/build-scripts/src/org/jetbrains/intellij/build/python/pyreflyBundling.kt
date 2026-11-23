@@ -36,7 +36,7 @@ private const val PYREFLY_DIR_NAME: String = "pyrefly"
 private const val PYREFLY_BINARY_NAME: String = "pyrefly"
 
 /**
- * The license report as the dev distribution copies it: the `license` tree of the unpacked license archive, which the
+ * The license report as the distribution copies it: the `license` tree of the unpacked license archive, which the
  * dev-launch extension declares from the same `pyreflyBuild` value.
  */
 private val PYREFLY_LICENSE_DEV_SPEC: LayoutAssetSpec = LayoutAssetSpec(
@@ -49,7 +49,7 @@ private val PYREFLY_LICENSE_DEV_SPEC: LayoutAssetSpec = LayoutAssetSpec(
   assets = listOf(LayoutAsset(destination = "$PYREFLY_DIR_NAME/license", sources = listOf(0))),
 )
 
-/** The binary of one platform as the dev distribution copies it, out of the unpacked platform archive. */
+/** The binary of one platform as the distribution copies it, out of the unpacked platform archive. */
 private fun pyreflyBinaryDevSpec(os: OsFamily, arch: JvmArchitecture): LayoutAssetSpec {
   val platformDirName = pyreflyPlatformDirName(os, arch)
   val binaryName = os.binaryName(PYREFLY_BINARY_NAME)
@@ -69,7 +69,7 @@ private fun pyreflyBinaryDevSpec(os: OsFamily, arch: JvmArchitecture): LayoutAss
 }
 
 /**
- * Declares pyrefly for every distribution. The dev distribution bundles it from these declarations. Production copies
+ * Declares pyrefly for every distribution. The Bazel engine bundles it from these declarations. Production copies
  * the files only when [isPyreflyBundlingEnabled] is true. The value is read once, when the layout is declared.
  */
 fun PluginLayout.PluginLayoutSpec.withBundledPyrefly() {

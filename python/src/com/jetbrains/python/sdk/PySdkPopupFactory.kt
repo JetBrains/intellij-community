@@ -1,7 +1,8 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk
 
-import com.intellij.python.sdk.backend.findSdk
+import com.intellij.python.sdk.backend.PythonInterpreter
+import com.intellij.python.sdk.backend.targetAdditionalData
 import com.intellij.ide.DataManager
 import com.intellij.ide.ui.icons.icon
 import com.intellij.openapi.actionSystem.ActionGroup
@@ -16,13 +17,11 @@ import com.intellij.openapi.actionSystem.impl.Utils
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.DumbAwareAction
-import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.ListPopup
 import com.intellij.openapi.util.Condition
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.python.pyproject.model.evolution.setPythonInterpreter
-import com.intellij.python.sdk.backend.pythonInterpreterResultAsync
 import com.jetbrains.python.project.PyProject.Companion.asPyProject
 import com.intellij.python.sdk.common.PyInterpreterItem
 import com.intellij.ui.popup.ActionPopupOptions
@@ -43,7 +42,9 @@ import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import java.util.function.Supplier
 import com.intellij.python.pyproject.model.evolution.findEvoPyProjectIfReady
-import com.intellij.python.sdk.backend.getSdkAPI
+
+/** One row of the interpreter popup: the item that it shows and the interpreter that it sets. */
+private typealias InterpreterRow = Pair<PyInterpreterItem, PythonInterpreter>
 
 class PySdkPopupFactory(val module: Module) {
 
@@ -86,14 +87,13 @@ class PySdkPopupFactory(val module: Module) {
     val asyncContext = Utils.createAsyncDataContext(context)
     val title = PyBundle.message("configurable.PyActiveSdkModuleConfigurable.python.interpreter.display.name")
     // The popup opens on the EDT, so it peeks at the snapshot to mark the current row.
-    @Suppress("DEPRECATION") // A row holds an SDK.
-    val currentSdk = module.findEvoPyProjectIfReady()?.interpreter?.getSdkAPI()
+    val current = module.findEvoPyProjectIfReady()?.interpreter
     val options = ActionPopupOptions.forAid(
       JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, false, -1,
-      Condition { it is SwitchToSdkAction && it.sdk == currentSdk },
+      Condition { it is SwitchToInterpreterAction && it.interpreter == current },
     )
 
-    fun buildContent(interpreters: Map<PyRenderedSdkType, List<PyInterpreterItem>>): Pair<List<PopupFactoryImpl.ActionItem>, AnAction> {
+    fun buildContent(interpreters: Map<PyRenderedSdkType, List<InterpreterRow>>): Pair<List<PopupFactoryImpl.ActionItem>, AnAction> {
       val (group, addInterpreterGroup) = buildInterpreterActionGroup(interpreters)
       val items = ActionPopupStep.createActionItems(group, asyncContext, ActionPlaces.POPUP, PresentationFactory(), options)
       return items to addInterpreterGroup
@@ -122,7 +122,7 @@ class PySdkPopupFactory(val module: Module) {
     popup.content.launchOnShow("PySdkPopupFactory.interpreters") {
       reload.collect {
         val interpreters = withContext(Dispatchers.IO) {
-          module.asModuleOrProject.getAssignablePythonSdks().groupInterpreterItemsByTypes(module)
+          interpreterRowsByTypes(module)
         }
         withContext(Dispatchers.EDT) {
           content = buildContent(interpreters)
@@ -144,7 +144,7 @@ class PySdkPopupFactory(val module: Module) {
    * submenu, and the "Interpreter Settings" / "Manage Packages" actions. Returns the group together
    * with its "Add New Interpreter" sub-group so the step can recognize and grey it out.
    */
-  private fun buildInterpreterActionGroup(interpreters: Map<PyRenderedSdkType, List<PyInterpreterItem>>): Pair<DefaultActionGroup, AnAction> {
+  private fun buildInterpreterActionGroup(interpreters: Map<PyRenderedSdkType, List<InterpreterRow>>): Pair<DefaultActionGroup, AnAction> {
     val group = DefaultActionGroup()
     addSwitchInterpreterActions(group, interpreters)
 
@@ -165,47 +165,29 @@ class PySdkPopupFactory(val module: Module) {
   }
 
   /**
-   * Adds [interpreters] to [group] as [SwitchToSdkAction]s, grouped by [PyRenderedSdkType] with separators.
-   *
-   * Each row needs its interpreter's SDK as well as its item: to tell two interpreters of the same kind and path
-   * apart, to judge whether a target can run the module's code, and to assign it. An item whose interpreter is gone
-   * is dropped.
+   * Adds [interpreters] to [group] as [SwitchToInterpreterAction]s, grouped by [PyRenderedSdkType] with separators. A
+   * target interpreter is listed only when it can probably run the code of the module.
    */
-  private fun addSwitchInterpreterActions(group: DefaultActionGroup, interpreters: Map<PyRenderedSdkType, List<PyInterpreterItem>>) {
+  private fun addSwitchInterpreterActions(group: DefaultActionGroup, interpreters: Map<PyRenderedSdkType, List<InterpreterRow>>) {
     val targetModuleSitsOn = PythonInterpreterTargetEnvironmentFactory.getTargetModuleResidesOn(module)
     PyRenderedSdkType.entries.forEachIndexed { index, type ->
       if (index != 0) group.addSeparator()
-      val rows = interpreters[type]
-                   ?.withSdks()
-                   ?.distinctBy { (_, sdk) -> sdk.sdkAdditionalData?.javaClass to sdk.homePath }
-                 ?: return@forEachIndexed
-
-      val uniqueRows = if (type == PyRenderedSdkType.REMOTE) {
-        rows.filter { (_, sdk) ->
+      val rows = interpreters[type] ?: return@forEachIndexed
+      val usableRows = if (type == PyRenderedSdkType.REMOTE) {
+        rows.filter { (_, interpreter) ->
           targetModuleSitsOn == null ||
-          targetModuleSitsOn.codeCouldProbablyBeRunWithConfig(sdk.targetAdditionalData?.targetEnvironmentConfiguration)
+          targetModuleSitsOn.codeCouldProbablyBeRunWithConfig(interpreter.targetAdditionalData?.targetEnvironmentConfiguration)
         }
       }
       else {
         rows
       }
-
-      group.addAll(uniqueRows.map { (item, sdk) -> SwitchToSdkAction(item, sdk) })
+      group.addAll(usableRows.map { (item, interpreter) -> SwitchToInterpreterAction(item, interpreter) })
     }
     if (interpreters.isNotEmpty()) group.addSeparator()
   }
 
-  /**
-   * These rows paired with the SDK each one names, dropping a row whose interpreter is gone.
-   *
-   * Reads the interpreter registry once, so a whole list costs one pass rather than a lookup per row. A list is built
-   * off the EDT and the actions from it later, so an interpreter can be renamed or removed in between — that is the
-   * dropped row.
-   */
-  private fun List<PyInterpreterItem>.withSdks(): List<Pair<PyInterpreterItem, Sdk>> =
-    mapNotNull { item -> item.findSdk()?.let { item to it } }
-
-  private inner class SwitchToSdkAction(item: PyInterpreterItem, val sdk: Sdk) : DumbAwareAction() {
+  private inner class SwitchToInterpreterAction(item: PyInterpreterItem, val interpreter: PythonInterpreter) : DumbAwareAction() {
 
     init {
       with (templatePresentation) {
@@ -217,9 +199,9 @@ class PySdkPopupFactory(val module: Module) {
 
     override fun actionPerformed(e: AnActionEvent) {
       runWithSdkConfigurationLock(module.project) {
-        // The popup does not read the snapshot back.
-        // A broken SDK names no interpreter, so the module gets none, as for no SDK.
-        module.asPyProject()?.setPythonInterpreter(sdk.pythonInterpreterResultAsync().successOrNull, waitForSnapshot = false)
+        // The popup does not read the snapshot back. The row holds the interpreter that the registry holds, with the key
+        // of the registry, so it names the right owner and target (PY-94164).
+        module.asPyProject()?.setPythonInterpreter(interpreter, waitForSnapshot = false)
       }
     }
   }

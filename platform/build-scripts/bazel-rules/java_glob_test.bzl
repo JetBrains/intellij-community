@@ -1,6 +1,6 @@
 """Checks `java_glob.bzl` against the JDK answers that the `javaglob` crate records.
 
-`_RECORDS` copies `community/build/dev-dist-tools/crates/javaglob/testdata/java-path-matcher.txt`, without the names
+`_RECORDS` copies `community/build/dist-tools/crates/javaglob/testdata/java-path-matcher.txt`, without the names
 that hold a line terminator, which no destination holds. A new record there needs a row here.
 """
 

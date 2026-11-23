@@ -78,6 +78,12 @@ and a context, but no value: it reads the current value itself.
 - A queued burst of reported changes must fold into one model change.
   [@test] ../test/src/com/intellij/platform/settings/v2/SettingsChangeListenerTest.kt
 
+### Threads
+
+- A listener must not rely on a thread. The vault calls it with no lock held, on the thread of the change that made
+  the notification due: a write, a push, a reload, or the change that makes a dirty context ready. A listener that
+  needs a thread, such as the EDT, moves there itself.
+
 ## Error Handling
 
 - An exception from a listener must be logged. It must not reach the writer or the other listeners.

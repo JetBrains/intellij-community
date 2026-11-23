@@ -7,21 +7,19 @@ import com.intellij.platform.eel.EelMachineConnectionRegistry.MachineLeaseSlot.S
 import com.intellij.platform.eel.provider.LocalEelDescriptor
 import com.intellij.platform.eel.provider.LocalEelMachine
 import com.intellij.platform.eel.provider.localEel
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.CoroutineStart
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.awaitCancellation
-import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 import java.util.ServiceLoader
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.CopyOnWriteArrayList
-import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReference
 
 /**
- * Internal SPI for opening reference-counted [EelMachine] connection leases bound to a [CoroutineScope].
+ * Internal SPI for opening reference-counted [EelMachine] connection leases.
+ *
+ * A lease is block-scoped: [EelMachineConnectionRegistry.withConnection] acquires it before the block runs and releases it
+ * when the block completes, whether normally, by an exception, or by cancellation. The only non-block lease is the
+ * deploy-free project lease, see [EelMachineConnectionRegistry.acquireProjectLease].
  *
  * All [EelMachine], [EelDescriptor], and `Eel*Api` instances for the same environment share consistent backend and OS characteristics
  * (for example, an IJent machine corresponds to an IJent descriptor and an `IjentApi` whose [EelApi.fs] is an `IjentFileSystemApi`).
@@ -111,64 +109,63 @@ class EelMachineConnectionRegistry {
     }
   }
 
+  /**
+   * Runs [block] with a connected [EelApi] of [machine], holding a lease on the connection for the whole duration of [block].
+   *
+   * The lease is released in `finally`, so it also ends when [block] is cancelled. Concurrent and nested calls for the same
+   * machine share one [EelApi] and one [FileSystem]; they are closed when the last lease ends.
+   */
   @ApiStatus.Internal
   @Suppress("WHEN_SUBJECT_CAN_BE_NULL_IN_JAVA")
   @Throws(EelUnavailableException::class)
-  suspend fun openConnection(machine: EelMachine, descriptor: EelDescriptor, scope: CoroutineScope): EelApi {
+  suspend fun <T> withConnection(machine: EelMachine, descriptor: EelDescriptor, block: suspend (EelApi) -> T): T {
     if (machine === LocalEelMachine) {
       check(descriptor === LocalEelDescriptor) { "Wrong descriptor: $descriptor for machine: $machine" }
-      return localEel
+      return block(localEel)
     }
 
     val slot = acquireSlot(machine)
     try {
-      getAlreadyConnectedEelApi(slot)?.let { alreadyConnectedEelApi ->
-        bindSlotToScope(slot, scope)
-        return alreadyConnectedEelApi
-      }
+      val api = getAlreadyConnectedEelApi(slot) ?: connect(slot, machine, descriptor)
+      return block(api)
+    }
+    finally {
+      releaseSlot(slot)
+    }
+  }
 
-      // TODO This code looks complicated. It seems, that there's a lot of confusion between EelDescriptor and EelMachine in our code.
-      val eelApi = machine.toEelApi(descriptor)
-      val api: EelApi
-      while (true) {
-        when (val currentState = slot.state.get()) {
-          is Unconnected -> {
-            val connectedState = Connected(
-              refCount = currentState.refCount,
-              eelApi = eelApi,
-            )
-            if (slot.state.compareAndSet(currentState, connectedState)) {
-              notifyConnectionOpened(eelApi)
-              api = eelApi
-              break
-            }
+  private suspend fun connect(slot: MachineLeaseSlot, machine: EelMachine, descriptor: EelDescriptor): EelApi {
+    // TODO This code looks complicated. It seems, that there's a lot of confusion between EelDescriptor and EelMachine in our code.
+    val eelApi = machine.toEelApi(descriptor)
+    while (true) {
+      when (val currentState = slot.state.get()) {
+        is Unconnected -> {
+          val connectedState = Connected(
+            refCount = currentState.refCount,
+            eelApi = eelApi,
+          )
+          if (slot.state.compareAndSet(currentState, connectedState)) {
+            notifyConnectionOpened(eelApi)
+            return eelApi
           }
-          is Connected -> {
-            if (isSessionAlive(currentState.eelApi)) {
-              api = currentState.eelApi
-              break
+        }
+        is Connected -> {
+          if (isSessionAlive(currentState.eelApi)) {
+            return currentState.eelApi
+          }
+          val connectedState = Connected(
+            refCount = currentState.refCount,
+            eelApi = eelApi,
+          )
+          if (slot.state.compareAndSet(currentState, connectedState)) {
+            if (currentState.eelApi !== eelApi) {
+              notifyConnectionClosed(currentState.eelApi)
             }
-            val connectedState = Connected(
-              refCount = currentState.refCount,
-              eelApi = eelApi,
-            )
-            if (slot.state.compareAndSet(currentState, connectedState)) {
-              if (currentState.eelApi !== eelApi) {
-                notifyConnectionClosed(currentState.eelApi)
-              }
-              notifyConnectionOpened(eelApi)
-              api = eelApi
-              break
-            }
+            notifyConnectionOpened(eelApi)
+            return eelApi
           }
         }
       }
-      bindSlotToScope(slot, scope)
-      return api
-    }
-    catch (t: Throwable) {
-      releaseSlot(slot)
-      throw t
     }
   }
 
@@ -195,17 +192,19 @@ class EelMachineConnectionRegistry {
     }
   }
 
+  /**
+   * Holds a lease on [machine] until [job] completes, without connecting to the machine.
+   *
+   * Unlike [withConnection], this does not deploy anything: it only keeps an already opened connection alive
+   * while the project that owns [job] is open.
+   */
   @ApiStatus.Internal
-  fun acquireProjectLease(machine: EelMachine, scope: CoroutineScope) {
-    if (machine === LocalEelMachine) {
-      return
-    }
-    val job = scope.coroutineContext[Job] ?: return
-    if (!job.isActive) {
+  fun acquireProjectLease(machine: EelMachine, job: Job) {
+    if (machine === LocalEelMachine || !job.isActive) {
       return
     }
     val slot = acquireSlot(machine)
-    bindSlotToScope(slot, scope)
+    job.invokeOnCompletion { releaseSlot(slot) }
   }
 
   @ApiStatus.Internal
@@ -215,20 +214,6 @@ class EelMachineConnectionRegistry {
     }
     val slot = slots[machine] ?: return 0
     return slot.state.get().refCount
-  }
-
-  private fun bindSlotToScope(slot: MachineLeaseSlot, scope: CoroutineScope) {
-    val released = AtomicBoolean(false)
-    scope.launch(Dispatchers.Unconfined, start = CoroutineStart.UNDISPATCHED) {
-      try {
-        awaitCancellation()
-      }
-      finally {
-        if (released.compareAndSet(false, true)) {
-          releaseSlot(slot)
-        }
-      }
-    }
   }
 
   private fun acquireSlot(machine: EelMachine): MachineLeaseSlot {

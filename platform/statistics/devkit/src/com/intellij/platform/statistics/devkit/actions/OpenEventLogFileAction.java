@@ -13,6 +13,7 @@ import com.intellij.notification.NotificationType;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileEditor.FileEditorOpenRequest;
 import com.intellij.openapi.options.ex.SingleConfigurableEditor;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
@@ -56,7 +57,7 @@ public final class OpenEventLogFileAction extends DumbAwareAction {
       showNotification(project, StatisticsBundle.message("stats.there.is.no.active.event.log"));
       return;
     }
-    FileEditorManager.getInstance(project).openFile(logVFile, true);
+    FileEditorManager.getInstance(project).requestOpenFile(logVFile, FileEditorOpenRequest.withFocus(true));
   }
 
   private static void showNotification(@NotNull Project project,

@@ -127,7 +127,6 @@ internal object DefaultJavaSyntaxResources {
     "feature.string.switch" to "Strings in 'switch' statements",
     "feature.string.templates" to "String templates",
     "feature.structured.concurrency" to "Structured Concurrency",
-    "feature.structured.concurrency.constructors" to "Structured Concurrency (StructuredTaskScope with constructors)",
     "feature.structured.concurrency.static.factory.methods" to "Structured Concurrency (StructuredTaskScope with static factory methods)",
     "feature.structured.concurrency.static.factory.methods.with.execution.exception" to "Structured Concurrency (StructuredTaskScope with static factory methods and ExecutionException)",
     "feature.switch.expressions" to "'switch' expressions",

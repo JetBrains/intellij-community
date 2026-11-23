@@ -68,6 +68,13 @@ class LineChunk {
   }
 
   /**
+   * Says that the chunk holds its fragments, so {@link #fragmentCount()} and {@link #getFragment(int)} can read them.
+   */
+  boolean isLaidOut() {
+    return fragments != null;
+  }
+
+  /**
    * Returns the largest ascent of the fonts of the font families in this chunk, or -1 before its first layout.
    * The editor fonts count as 0. The value stays after {@link #clearFragments()}, and each layout writes it again.
    */
@@ -311,12 +318,12 @@ class LineChunk {
       FontInfo fontInfo = ffi.getFontInfo();
       if (start0 < end0) {
         assert fontInfo != null;
-        createTextFragments(text, start0, end0, isRtl, fontInfo, view);
+        createGlyphFragments(text, start0, end0, isRtl, fontInfo, view);
       }
     }
   }
 
-  private void createTextFragments(
+  private void createGlyphFragments(
     char[] lineChars,
     int start,
     int end,
@@ -324,6 +331,13 @@ class LineChunk {
     FontInfo fontInfo,
     EditorView view
   ) {
+    EditorViewSnapshot viewSnapshot = view.getSnapshotWithMetrics();
+    CharacterGridSpec gridSpec = viewSnapshot.gridSpec();
+    if (gridSpec != null) {
+      // The grid owns the geometry of the text, so one fragment covers each run, also a run of plain ASCII
+      fragments.add(new GridGlyphFragment(lineChars, start, end, isRtl, fontInfo, gridSpec, viewSnapshot.gridCellWidth()));
+      return;
+    }
     boolean needsLayout = isRtl || fontInfo.getFont().hasLayoutAttributes();
     boolean nonLatinText = false;
     if (!needsLayout) {
@@ -334,7 +348,7 @@ class LineChunk {
       }
     }
     if (!needsLayout) {
-      LineFragment fragment = new SimpleTextFragment(lineChars, start, end, fontInfo, view);
+      LineFragment fragment = new SimpleGlyphFragment(lineChars, start, end, fontInfo);
       fragments.add(fragment);
       return;
     }
@@ -355,7 +369,7 @@ class LineChunk {
             script != Character.UnicodeScript.INHERITED &&
             script != Character.UnicodeScript.UNKNOWN) {
           if (lastScript != script && lastScript != Character.UnicodeScript.COMMON) {
-            LineFragment fragment = new ComplexTextFragment(lineChars, lastOffset, i, isRtl, fontInfo, view);
+            LineFragment fragment = new ComplexGlyphFragment(lineChars, lastOffset, i, isRtl, fontInfo);
             fragments.add(fragment);
             lastOffset = i;
           }
@@ -363,7 +377,7 @@ class LineChunk {
         }
       }
     }
-    LineFragment fragment = new ComplexTextFragment(lineChars, lastOffset, end, isRtl, fontInfo, view);
+    LineFragment fragment = new ComplexGlyphFragment(lineChars, lastOffset, end, isRtl, fontInfo);
     fragments.add(fragment);
   }
 

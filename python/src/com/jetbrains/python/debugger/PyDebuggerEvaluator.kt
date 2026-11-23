@@ -24,8 +24,6 @@ import com.jetbrains.python.psi.PyLiteralExpression
 import com.jetbrains.python.psi.PyPrefixExpression
 import com.jetbrains.python.psi.PyReferenceExpression
 import com.jetbrains.python.psi.PyBinaryExpression
-import com.jetbrains.python.psi.PyStringLiteralExpression
-import com.jetbrains.python.psi.impl.PyPsiUtils
 import org.jetbrains.annotations.ApiStatus
 
 internal class PyDebuggerEvaluator(private val myProject: Project, private val myDebugProcess: PyFrameAccessor) : XDebuggerEvaluator(), XDebuggerDocumentOffsetEvaluator {
@@ -71,7 +69,7 @@ internal class PyDebuggerEvaluator(private val myProject: Project, private val m
 
   override fun evaluate(document: Document, offset: Int, hintType: ValueHintType, callback: XEvaluationCallback) {
     evaluateWithOffset(myProject, document, offset, hintType, callback) { expression ->
-      doEvaluate(expression, callback, false)
+      doEvaluate(expression, callback, true)
     }
   }
 }

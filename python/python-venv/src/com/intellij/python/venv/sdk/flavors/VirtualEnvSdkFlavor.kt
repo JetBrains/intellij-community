@@ -4,7 +4,6 @@ package com.intellij.python.venv.sdk.flavors
 import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.util.UserDataHolder
-import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.python.venv.common.icons.PythonVenvCommonIcons
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.jetbrains.python.PyInternalExecApi
@@ -28,24 +27,17 @@ class VirtualEnvSdkFlavor private constructor() : CPythonSdkFlavor<PyFlavorData.
   override fun getFlavorDataClass(): Class<PyFlavorData.Empty> = PyFlavorData.Empty::class.java
 
   @RequiresBackgroundThread(generateAssertion = false)
-  override fun suggestLocalHomePathsImpl(module: Module?, context: UserDataHolder?): Collection<Path> = runReadActionBlocking {
-    val candidates = mutableListOf<Path>()
-
-    val baseDirFromModule = module?.baseDir
-    val baseDirFromContext = context?.getUserData(BASE_DIR)
+  override fun suggestLocalHomePathsImpl(module: Module?, context: UserDataHolder?): Collection<Path> {
+    // Only the base directory of the module needs the read action. The scan reads the disk, so it runs outside of it.
+    val baseDir = runReadActionBlocking { module?.baseDir }?.toNioPath() ?: context?.getUserData(BASE_DIR)
 
     val reader = VirtualEnvReader()
-    when {
-      baseDirFromModule != null -> candidates.addAll(reader.findVenvsInDir(baseDirFromModule.toNioPath()))
-      baseDirFromContext != null -> VfsUtil.findFile(baseDirFromContext, false)?.let {
-        candidates.addAll(reader.findVenvsInDir(it.toNioPath()))
-      }
-    }
-
+    val candidates = mutableListOf<Path>()
+    baseDir?.let { candidates.addAll(reader.findVenvsInDir(it)) }
     candidates.addAll(reader.findVEnvInterpreters())
     candidates.addAll(reader.findPyenvInterpreters())
 
-    candidates.filter { it.detectPythonEnvironment().successOrNull is VenvEnvironment }
+    return candidates.filter { it.detectPythonEnvironment().successOrNull is VenvEnvironment }
   }
 
   override fun isValidSdkPath(pythonBinaryPath: Path): Boolean {

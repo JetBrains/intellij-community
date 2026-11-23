@@ -1,7 +1,7 @@
 load("@community//build:bazel_targets_json.bzl", "current_bazel_targets_json")
 load("@community//build:tests-options.bzl", "jps_test")
 load("@community//platform/build-scripts/bazel-rules:ij_plugin.bzl", "ij_plugin")
-load("@jps_dynamic_deps_community//:targets.bzl", "ALL_COMMUNITY_TARGETS", "dev_dist_plugin")
+load("@jps_dynamic_deps_community//:targets.bzl", "dist_plugin")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load(":stream_debugger_test_dependencies.bzl", "MAVEN_REPOSITORY_RUNFILES_PATH", "all_test_dep_targets")
 
@@ -15,7 +15,7 @@ filegroup(
 jps_test(
     name = "java-debugger-streams-tests_test",
     timeout = "long",
-    data = ALL_COMMUNITY_TARGETS + all_test_dep_targets + [
+    data = all_test_dep_targets + [
         "@community//plugins/stream-debugger:testData",
         BAZEL_TARGETS_JSON,
     ],
@@ -32,7 +32,7 @@ jps_test(
 ### skip generation section `test intellij.java.debugger.streams.tests`
 
 ### auto-generated section `dev intellij.debugger.streams.plugin` start
-dev_dist_plugin(
+dist_plugin(
     content_modules = [
         # do not sort,
         "intellij.debugger.streams.core",
@@ -159,7 +159,9 @@ jvm_library(
         "//platform/util:util-ui",
         "//platform/analysis-api:analysis",
         "//platform/code-style-api:codeStyle",
-        "//libraries/junit4",
+        "//libraries/junit6",
+        "//platform/testFramework/junit5",
+        "//platform/testFramework/junit5/codeInsight",
         "//libraries/asm",
         "//platform/projectModel-api:projectModel",
     ],

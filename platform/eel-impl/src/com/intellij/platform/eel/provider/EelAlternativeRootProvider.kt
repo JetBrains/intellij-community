@@ -17,7 +17,6 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 @VisibleToClasses(
   "com.intellij.compiler.server.EelBuildCommandLineBuilder",
-  "com.intellij.platform.ijent.ssh.ui.actions.MySshContributor",
 )
 fun EelDescriptor.routingPrefixes(): List<@NioPath String> {
   val alternativeRoots = EelAlternativeRootProvider.EP_NAME.extensionList.flatMap { it.getAlternativeRoots(this) ?: emptyList() }

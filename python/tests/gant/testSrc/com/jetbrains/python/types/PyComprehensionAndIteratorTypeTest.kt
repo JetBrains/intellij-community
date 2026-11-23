@@ -31,7 +31,6 @@ class PyComprehensionAndIteratorTypeTest : PyCodeInsightTestCase() {
 
     @TestFor(issues = ["PY-7020"])
     @Test
-    @TestCaseOptions(assertRecursionPrevention = false)
     fun `list comprehension type`() = test("""
       expr = [str(x) for x in range(10)]
       # └ TYPE list[str]
@@ -39,7 +38,6 @@ class PyComprehensionAndIteratorTypeTest : PyCodeInsightTestCase() {
 
     @TestFor(issues = ["PY-7021"])
     @Test
-    @TestCaseOptions(assertRecursionPrevention = false)
     fun `generator comprehension type`() = test("""
       expr = (str(x) for x in range(10))
       # └ TYPE Generator[str, Unknown, None]
@@ -47,7 +45,6 @@ class PyComprehensionAndIteratorTypeTest : PyCodeInsightTestCase() {
 
     @TestFor(issues = ["PY-7021"])
     @Test
-    @TestCaseOptions(assertRecursionPrevention = false)
     fun `iterate over generator comprehension`() = test("""
       xs = (str(x) for x in range(10))
       for expr in xs:
@@ -73,7 +70,6 @@ class PyComprehensionAndIteratorTypeTest : PyCodeInsightTestCase() {
 
     // PEP 798
     @Test
-    @TestCaseOptions(assertRecursionPrevention = false)
     fun `unpacking in generator comprehension type`() = test("""
       def f(its: list[list[int]]):
           expr = (*it for it in its)
@@ -90,7 +86,6 @@ class PyComprehensionAndIteratorTypeTest : PyCodeInsightTestCase() {
 
     // PEP 798: a bare generator expression with star unpacking passed as the sole call argument
     @Test
-    @TestCaseOptions(assertRecursionPrevention = false)
     fun `unpacking in generator expression call argument type`() = test("""
       def f(its: list[list[int]]):
           expr = list(*it for it in its)
@@ -151,7 +146,6 @@ class PyComprehensionAndIteratorTypeTest : PyCodeInsightTestCase() {
 
     @TestFor(issues = ["PY-16585"])
     @Test
-    @TestCaseOptions(assertRecursionPrevention = false)
     fun `comment after comprehension in for loop`() = test("""
       for _ in [str(expr) for expr in range(10)]:  # type: str
       #             └ TYPE int
@@ -220,7 +214,7 @@ class PyComprehensionAndIteratorTypeTest : PyCodeInsightTestCase() {
 
     @TestFor(issues = ["PY-22181"])
     @Test
-    @TestCaseOptions(languageLevel = LanguageLevel.PYTHON27, assertRecursionPrevention = false)
+    @TestCaseOptions(languageLevel = LanguageLevel.PYTHON27)
     fun `iteration over iterable with separate iterator using next`() =
       test("""
       class AIter(object):
@@ -557,7 +551,6 @@ class PyComprehensionAndIteratorTypeTest : PyCodeInsightTestCase() {
       """.trimIndent())
 
     @Test
-    @TestCaseOptions(assertRecursionPrevention = false)
     fun `map return type for-loop element`() = test("""
       for x in map(lambda x: 42, 'foo'):
           expr = x
@@ -1092,7 +1085,6 @@ class PyComprehensionAndIteratorTypeTest : PyCodeInsightTestCase() {
 
     @TestFor(issues = ["PY-6729"])
     @Test
-    @TestCaseOptions(assertRecursionPrevention = false)
     fun `yield from non-iterable`() = test(
       // `CustomIterable.__iter__` returns `self`, so its return type is inferred as `Self`. Matching such a type
       // against the `Iterable`/`Iterator` protocols is inherently recursive (`__iter__` keeps yielding `Self`),

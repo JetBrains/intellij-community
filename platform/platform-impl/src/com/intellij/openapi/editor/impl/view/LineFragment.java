@@ -12,8 +12,8 @@ import java.util.function.Consumer;
  */
 @ApiStatus.Internal
 public sealed interface LineFragment
-  permits TextFragment,
-          TextFragmentWindow,
+  permits GlyphFragment,
+          GlyphSubFragment,
           SpecialCharacterFragment,
           ApproximationFragment,
           TabFragment {

@@ -9,19 +9,21 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 /**
  * @author Dmitry Avdeev
  */
 final class PerIndexDocumentVersionMap {
   private static final int INVALID_STAMP = -1; // 0 isn't acceptable as Document has 0 stamp when loaded from unchanged file
-  private volatile int mapVersion;
+  private final ConcurrentMap<ID<?, ?>, Object> mapVersions = new ConcurrentHashMap<>();
   private static final class IdVersionInfo {
     private final ID<?,?> id;
-    private int mapVersion;
+    private Object mapVersion;
     private long docVersion;
 
-    private IdVersionInfo(@NotNull ID<?, ?> id, long docVersion, int mapVersion) {
+    private IdVersionInfo(@NotNull ID<?, ?> id, long docVersion, @NotNull Object mapVersion) {
       this.docVersion = docVersion;
       this.mapVersion = mapVersion;
       this.id = id;
@@ -36,13 +38,11 @@ final class PerIndexDocumentVersionMap {
     }
 
     synchronized (list) {
+      var mapVersion = mapVersions.computeIfAbsent(indexId, _ -> new Object());
       for (IdVersionInfo info : list) {
         if (info.id == indexId) {
-          long old = info.docVersion;
-          if (info.mapVersion != mapVersion) {
-            old = INVALID_STAMP;
-            info.mapVersion = mapVersion;
-          }
+          long old = info.mapVersion == mapVersion ? info.docVersion : INVALID_STAMP;
+          info.mapVersion = mapVersion;
           info.docVersion = value;
           return old;
         }
@@ -61,11 +61,7 @@ final class PerIndexDocumentVersionMap {
     synchronized (list) {
       for (IdVersionInfo info : list) {
         if (info.id == indexId) {
-          long old = info.docVersion;
-          if (info.mapVersion != mapVersion) {
-            return INVALID_STAMP;
-          }
-          return old;
+          return info.mapVersion == mapVersions.get(indexId) ? info.docVersion : INVALID_STAMP;
         }
       }
       return INVALID_STAMP;
@@ -75,7 +71,12 @@ final class PerIndexDocumentVersionMap {
   void clearForDocument(@NotNull Document document) {
     document.putUserData(KEY, new ArrayList<>());
   }
+
+  void clearForIndex(@NotNull ID<?, ?> indexId) {
+    mapVersions.remove(indexId);
+  }
+
   void clear() {
-    mapVersion++;
+    mapVersions.clear();
   }
 }

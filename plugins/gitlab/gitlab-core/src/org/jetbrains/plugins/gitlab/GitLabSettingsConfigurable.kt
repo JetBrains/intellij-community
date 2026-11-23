@@ -4,8 +4,6 @@ package org.jetbrains.plugins.gitlab
 import com.intellij.collaboration.auth.ui.AccountsPanelFactory
 import com.intellij.collaboration.auth.ui.AccountsPanelFactory.Companion.addWarningForEnabledCredentialHelper
 import com.intellij.collaboration.auth.ui.AccountsPanelFactory.Companion.addWarningForMemoryOnlyPasswordSafeAndGet
-import com.intellij.collaboration.messages.CollaborationToolsBundle
-import com.intellij.collaboration.util.URIUtil
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
@@ -20,15 +18,10 @@ import com.intellij.openapi.options.BoundConfigurable
 import com.intellij.openapi.options.NoAutomaticReset
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogPanel
-import com.intellij.openapi.ui.ValidationInfo
-import com.intellij.openapi.util.NlsSafe
-import com.intellij.ui.components.JBTextArea
 import com.intellij.ui.dsl.builder.Align
 import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.bindSelected
-import com.intellij.ui.dsl.builder.bindText
 import com.intellij.ui.dsl.builder.panel
-import com.intellij.util.io.URLUtil
 import git4idea.config.GitVcsApplicationSettings
 import kotlinx.coroutines.Dispatchers
 import kotlinx.serialization.Serializable
@@ -40,10 +33,12 @@ import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabProjectDefault
 import org.jetbrains.plugins.gitlab.authentication.ui.GitLabAccountsDetailsProvider
 import org.jetbrains.plugins.gitlab.authentication.ui.GitLabAccountsListModel
 import org.jetbrains.plugins.gitlab.authentication.ui.GitLabAccountsPanelActionsController
+import org.jetbrains.plugins.gitlab.authentication.ui.GitLabCustomServersPanelFactory
+import org.jetbrains.plugins.gitlab.authentication.ui.GitLabCustomServersViewModel
 import org.jetbrains.plugins.gitlab.ui.util.GitLabPluginProjectScopeProvider
 import org.jetbrains.plugins.gitlab.util.GitLabBundle.message
+import org.jetbrains.plugins.gitlab.util.GitLabStatistics
 import org.jetbrains.plugins.gitlab.util.GitLabUtil
-import kotlin.text.startsWith
 
 internal class GitLabSettingsConfigurable(private val project: Project) :
   BoundConfigurable(GitLabUtil.SERVICE_DISPLAY_NAME, "settings.gitlab"), NoAutomaticReset {
@@ -64,6 +59,7 @@ internal class GitLabSettingsConfigurable(private val project: Project) :
 
     val glSettings = GitLabSettings.getInstance()
     val oauthSettings = GitLabOAuthSettings.getInstance(project)
+    val customServersVm = GitLabCustomServersViewModel(oauthSettings.customServers)
 
     panel = panel {
       row {
@@ -81,17 +77,16 @@ internal class GitLabSettingsConfigurable(private val project: Project) :
           .bindSelected({ glSettings.isCloneGitUsingSsh }, { glSettings.isCloneGitUsingSsh = it })
       }
 
-      collapsibleGroup(message("settings.oauth.custom.server.oauth.label")) {
+      collapsibleGroup(message("settings.oauth.custom.server.label")) {
         row {
-          textArea()
-            .bindText(
-              { oauthSettings.clientIdsText },
-              { oauthSettings.clientIdsText = it }
-            )
-            .validationOnApply { validateOAuthConfig(it) }
-            .contextHelp(message("settings.oauth.custom.server.oauth.example.label"))
-            .align(AlignX.FILL)
-            .resizableColumn()
+          cell(GitLabCustomServersPanelFactory.create(project, scope, customServersVm))
+            .align(Align.FILL)
+            .onIsModified { customServersVm.servers.value != oauthSettings.customServers }
+            .onApply {
+              oauthSettings.customServers = customServersVm.servers.value
+              GitLabStatistics.logOAuthConfigChanged(project)
+            }
+            .onReset { customServersVm.reset(oauthSettings.customServers) }
         }.resizableRow()
       }
       addWarningForMemoryOnlyPasswordSafeAndGet(
@@ -109,46 +104,6 @@ internal class GitLabSettingsConfigurable(private val project: Project) :
   override fun apply() {
     if (panel.validateAll().any { !it.warning }) return
     panel.apply()
-  }
-
-  private fun validateOAuthConfig(textArea: JBTextArea): ValidationInfo? {
-    var warning: ValidationInfo? = null
-    textArea.text.lines()
-      .map { it.trim() }
-      .filter { it.isNotEmpty() }
-      .forEach { line: @NlsSafe String ->
-        try {
-          val separatorIndex = line.indexOf('=')
-          if (separatorIndex <= 0 || separatorIndex == line.lastIndex) {
-            return ValidationInfo(message("settings.oauth.validation.one.per.line") + "\n$line", textArea)
-          }
-          val serverUri = line.substring(0, separatorIndex).trim()
-          val clientId = line.substring(separatorIndex + 1).trim()
-
-          if (clientId.any { it.isWhitespace() }) {
-            return ValidationInfo(message("settings.oauth.validation.one.per.line") + "\n$line", textArea)
-          }
-
-          if (serverUri.isEmpty() || clientId.isEmpty()) {
-            return ValidationInfo(message("settings.oauth.validation.incomplete") + "\n$line", textArea)
-          }
-
-          if (!URIUtil.isValidHttpUri(serverUri)) {
-            return ValidationInfo(message("settings.oauth.validation.invalid.uri") + "\n$line", textArea)
-          }
-
-          if (serverUri.startsWith(URLUtil.HTTP_PROTOCOL + URLUtil.SCHEME_SEPARATOR)) {
-            warning = ValidationInfo(
-              CollaborationToolsBundle.message("accounts.warning.http.uri") + ":\n$line",
-              textArea
-            ).asWarning()
-          }
-        }
-        catch (_: Exception) {
-          return ValidationInfo(message("settings.oauth.validation.incomplete") + "\n$line", textArea)
-        }
-      }
-    return warning
   }
 }
 

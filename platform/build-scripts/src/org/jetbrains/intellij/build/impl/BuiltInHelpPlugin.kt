@@ -22,7 +22,7 @@ import kotlin.io.path.exists
 const val BUILT_IN_HELP_MODULE_NAME: String = "intellij.builtInHelp"
 
 /**
- * The dev distribution omits the help assets jar. A `HelpIndexer` run builds it from `help/plugin-resources`, which only
+ * The distribution omits the help assets jar. A `HelpIndexer` run builds it from `help/plugin-resources`, which only
  * a help build fills, and only the non-bundled plugin step builds this plugin.
  */
 private val HELP_ASSETS_DEV_SPEC: LayoutAssetSpec = LayoutAssetSpec.OMITTED
@@ -36,7 +36,7 @@ internal fun buildHelpPlugin(pluginVersion: String, context: BuildContext): Pair
   }
 
   val pluginXml = helpPluginXml(pluginVersion, context.buildNumber, productName)
-  return PluginLayout.pluginAutoWithCustomDirName(BUILT_IN_HELP_MODULE_NAME) { spec ->
+  return PluginLayout.pluginWithCustomLayout(BUILT_IN_HELP_MODULE_NAME) { spec ->
     val productLowerCase = productName.replace(' ', '-').lowercase()
     spec.mainJarName = "$productLowerCase-help.jar"
     spec.directoryName = "${productName.replace(" ", "")}Help"

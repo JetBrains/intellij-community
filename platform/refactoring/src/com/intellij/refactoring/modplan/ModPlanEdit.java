@@ -1,17 +1,22 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.modplan;
 
+import com.intellij.modcommand.FutureVirtualFile;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
+import com.intellij.psi.SmartPsiFileRange;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.List;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 /**
@@ -20,6 +25,16 @@ import java.util.function.Consumer;
  * <p>
  * An update keeps the elements it changes as smart pointers, so it outlives a read action. Build it with {@link #update}, {@link #delete}
  * or with a pointer to the element. The engine turns an edit with a gone element into no command, which refuses the refactoring.
+ * <p>
+ * <b>Which edit to use.</b>
+ * <ul>
+ *   <li>{@link Update}: the edit changes an element as a whole, such as a declaration, an import or a statement. The address is the
+ *   element. If another edit removes or replaces the element, the update is skipped.</li>
+ *   <li>{@link UpdateRange}: the edit changes what is at a place of the text, such as a reference, and another edit may move the place
+ *   or build the PSI around it again. The address is the range. The action finds its PSI at the range at the time of the write.</li>
+ *   <li>{@link ReplaceText}: the place is not code, such as a comment, a string or a text file. The engine replaces the text after
+ *   every PSI edit.</li>
+ * </ul>
  */
 public sealed interface ModPlanEdit {
   /**
@@ -44,6 +59,30 @@ public sealed interface ModPlanEdit {
   }
 
   /**
+   * Changes the file at {@code place}. The action gets the copy of the file and the range that the place has at the time of the write.
+   * The engine follows the place with a range marker in the copy from before the first write. It runs the action among the updates, in
+   * the order of the edits. So an earlier edit can make the text before the place longer, or replace the element that holds the place.
+   * If another edit replaces the text of the whole place, the action is skipped. It is skipped inside a deleted file.
+   *
+   * @param place  the range in a physical file
+   * @param action gets the writable copy of the file and the range of the place in it
+   */
+  record UpdateRange(@NotNull SmartPsiFileRange place,
+                     @NotNull BiConsumer<? super PsiFile, ? super TextRange> action) implements ModPlanEdit {
+  }
+
+  /**
+   * Replaces the text at {@code place} with {@code newText}, after every PSI edit of the plan, as the legacy rename writes the non-code
+   * usages in the document. Of several replacements at one start offset of a file, the first one is written. It is skipped inside a
+   * deleted file.
+   *
+   * @param place   the range in a physical file
+   * @param newText the text that replaces the range
+   */
+  record ReplaceText(@NotNull SmartPsiFileRange place, @NotNull String newText) implements ModPlanEdit {
+  }
+
+  /**
    * Deletes a file or a directory. An edit inside it is skipped.
    */
   record Delete(@NotNull VirtualFile file) implements ModPlanEdit {
@@ -57,6 +96,19 @@ public sealed interface ModPlanEdit {
    * @param text   the content of the new file
    */
   record Create(@NotNull VirtualFile parent, @NotNull @NonNls String name, @NotNull String text) implements ModPlanEdit {
+  }
+
+  /**
+   * Creates a directory.
+   *
+   * @param directory the new directory, whose parent exists or is created by an earlier edit
+   */
+  record CreateDirectory(@NotNull FutureVirtualFile directory) implements ModPlanEdit {
+    public CreateDirectory {
+      if (!directory.isDirectory()) {
+        throw new IllegalArgumentException("Not a directory: " + directory);
+      }
+    }
   }
 
   /**

@@ -41,7 +41,7 @@ fun targetAsPsiElement(targetType: PyRunTargetVariant,
 
     return runReadAction {
       QualifiedName.fromDottedString(target)
-        .resolveToElement(QNameResolveContext(ModuleBasedContextAnchor(module), configuration.getSdk(), context, workingDirectory, true))
+        .resolveToElement(QNameResolveContext(ModuleBasedContextAnchor(module), configuration.pythonInterpreter, context, workingDirectory, true))
     }
   }
   return null

@@ -4,22 +4,30 @@ package com.intellij.devkit.ide.wizard
 import com.intellij.devkit.ide.wizard.IdePluginModuleBuilder.PluginType
 import com.intellij.ide.starters.local.StarterModuleBuilder.Companion.setupTestModule
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase.JAVA_21
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase4
+import com.intellij.testFramework.fixtures.lightJavaCodeInsightFixture
+import com.intellij.testFramework.fixtures.lightJavaProjectFixture
+import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.utils.editor.getVirtualFile
-import org.junit.Assert.assertFalse
-import org.junit.Test
+import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertIterableEquals
+import org.junit.jupiter.api.Test
 
 private const val PLUGIN_XML_LOCATION = "src/main/resources/META-INF/plugin.xml"
 
 private val BUNDLED_PLUGIN_REGEX = Regex("bundledPlugin\\(\"(.+?)\"\\)")
 private val PLUGIN_REGEX = Regex("compatiblePlugin\\(\"(.+?)\"\\)")
 
-class IdePluginModuleBuilderTest : LightJavaCodeInsightFixtureTestCase4(JAVA_21) {
+@TestApplication
+class IdePluginModuleBuilderTest {
+  companion object {
+    private val projectFixture = lightJavaProjectFixture(JAVA_21)
+  }
+
+  private val fixture by lightJavaCodeInsightFixture(projectFixture)
 
   private fun assertNoUnprocessedTemplates() {
     val text = fixture.editor.document.text
-    assertFalse("${fixture.editor.document.getVirtualFile()} contains unprocessed VTL directives", text.contains($$"${context"))
+    assertFalse(text.contains($$"${context"), "${fixture.editor.document.getVirtualFile()} contains unprocessed VTL directives")
   }
 
   private fun expectFile(path: String, content: String) {

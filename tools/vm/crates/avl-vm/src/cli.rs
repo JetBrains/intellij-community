@@ -451,7 +451,8 @@ pub(crate) struct Invocation {
 /// The outcome of reading a command line.
 #[derive(Debug)]
 pub(crate) enum Parsed {
-    Invocation(Invocation),
+    /// Boxed: the options of the largest command are many times the size of the other two variants.
+    Invocation(Box<Invocation>),
     /// `--help` before the command, or a command's own `--help`.
     Help {
         form: Form,
@@ -509,13 +510,13 @@ fn validate(cli: Cli, facts: &TerminalFacts) -> Parsed {
     if global.lease_file.as_ref().is_some_and(|path| path.as_os_str().is_empty()) {
         return refused(lease_file_needs_a_value());
     }
-    Parsed::Invocation(Invocation {
+    Parsed::Invocation(Box::new(Invocation {
         form,
         stream: global.stream,
         selection,
         lease_file: global.lease_file,
         command,
-    })
+    }))
 }
 
 fn lease_file_needs_a_value() -> Refusal {

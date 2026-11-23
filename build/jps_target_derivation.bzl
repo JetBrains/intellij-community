@@ -444,49 +444,49 @@ def format_module_descriptor_index(descriptors_by_module):
     lines.append("}\n")
     return "\n".join(lines)
 
-# The macro every `dev <module>` section calls. The bridge binds it to its own maps, see `format_dev_dist_plugin_wrapper`.
-DEV_DIST_PLUGIN_BZL = "@community//platform/build-scripts/bazel-rules:dev_dist_plugin.bzl"
+# The macro every `dev <module>` section calls. The bridge binds it to its own maps, see `format_dist_plugin_wrapper`.
+DIST_PLUGIN_BZL = "@community//platform/build-scripts/bazel-rules:dist_plugin.bzl"
 
 # The macro every cross-half plugin package calls. The bridge binds it to its descriptor index.
-DEV_DIST_PLUGIN_DESCRIPTOR_BZL = "@community//platform/build-scripts/bazel-rules:dev_dist_plugin_descriptor.bzl"
+DIST_PLUGIN_DESCRIPTOR_BZL = "@community//platform/build-scripts/bazel-rules:dist_plugin_descriptor.bzl"
 
 # The macros of the product descriptor packages. The bridge binds them to its descriptor index.
-DEV_DIST_PRODUCT_DESCRIPTOR_BZL = "@community//platform/build-scripts/bazel-rules:dev_dist_product_descriptor.bzl"
-DEV_DIST_EMBEDDED_PRODUCT_DESCRIPTOR_BZL = "@community//platform/build-scripts/bazel-rules:dev_dist_embedded_product_descriptor.bzl"
+DIST_PRODUCT_DESCRIPTOR_BZL = "@community//platform/build-scripts/bazel-rules:dist_product_descriptor.bzl"
+DIST_EMBEDDED_PRODUCT_DESCRIPTOR_BZL = "@community//platform/build-scripts/bazel-rules:dist_embedded_product_descriptor.bzl"
 
-def format_dev_dist_plugin_load():
+def format_dist_plugin_load():
     """Render the load lines of the four bound macros. They are the first statements of `targets.bzl`."""
     return "".join([
-        'load("%s", _dev_dist_plugin = "dev_dist_plugin")\n' % DEV_DIST_PLUGIN_BZL,
-        'load("%s", _dev_dist_plugin_descriptor = "dev_dist_plugin_descriptor")\n' % DEV_DIST_PLUGIN_DESCRIPTOR_BZL,
-        'load("%s", _dev_dist_product_descriptor = "dev_dist_product_descriptor")\n' % DEV_DIST_PRODUCT_DESCRIPTOR_BZL,
-        'load("%s", _dev_dist_embedded_product_descriptor = "dev_dist_embedded_product_descriptor")\n' % DEV_DIST_EMBEDDED_PRODUCT_DESCRIPTOR_BZL,
+        'load("%s", _dist_plugin = "dist_plugin")\n' % DIST_PLUGIN_BZL,
+        'load("%s", _dist_plugin_descriptor = "dist_plugin_descriptor")\n' % DIST_PLUGIN_DESCRIPTOR_BZL,
+        'load("%s", _dist_product_descriptor = "dist_product_descriptor")\n' % DIST_PRODUCT_DESCRIPTOR_BZL,
+        'load("%s", _dist_embedded_product_descriptor = "dist_embedded_product_descriptor")\n' % DIST_EMBEDDED_PRODUCT_DESCRIPTOR_BZL,
     ])
 
-def format_dev_dist_plugin_wrapper():
-    """Render `dev_dist_plugin` and the descriptor macros bound to the bridge's maps.
+def format_dist_plugin_wrapper():
+    """Render `dist_plugin` and the descriptor macros bound to the bridge's maps.
 
-    A `dev <module>` section loads only `dev_dist_plugin`. A cross-half plugin package loads `dev_dist_plugin_descriptor`
-    too. A product descriptor package loads `dev_dist_product_descriptor` or `dev_dist_embedded_product_descriptor`. The
+    A `dev <module>` section loads only `dist_plugin`. A cross-half plugin package loads `dist_plugin_descriptor`
+    too. A product descriptor package loads `dist_product_descriptor` or `dist_embedded_product_descriptor`. The
     bridge is the one file that knows its half, so the binding lives here and not in the macros, which the community
     module owns. A caller can still state each map.
     """
     return "\n".join([
-        "def dev_dist_plugin(module_targets = MODULE_TARGETS, descriptor_index = MODULE_DESCRIPTORS, **kwargs):",
-        '    """`dev_dist_plugin` bound to this bridge\'s module map and descriptor index."""',
-        "    _dev_dist_plugin(module_targets = module_targets, descriptor_index = descriptor_index, **kwargs)",
+        "def dist_plugin(module_targets = MODULE_TARGETS, descriptor_index = MODULE_DESCRIPTORS, **kwargs):",
+        '    """`dist_plugin` bound to this bridge\'s module map and descriptor index."""',
+        "    _dist_plugin(module_targets = module_targets, descriptor_index = descriptor_index, **kwargs)",
         "",
-        "def dev_dist_plugin_descriptor(descriptor_index = MODULE_DESCRIPTORS, **kwargs):",
-        '    """`dev_dist_plugin_descriptor` bound to this bridge\'s descriptor index."""',
-        "    _dev_dist_plugin_descriptor(descriptor_index = descriptor_index, **kwargs)",
+        "def dist_plugin_descriptor(descriptor_index = MODULE_DESCRIPTORS, **kwargs):",
+        '    """`dist_plugin_descriptor` bound to this bridge\'s descriptor index."""',
+        "    _dist_plugin_descriptor(descriptor_index = descriptor_index, **kwargs)",
         "",
-        "def dev_dist_product_descriptor(descriptor_index = MODULE_DESCRIPTORS, **kwargs):",
-        '    """`dev_dist_product_descriptor` bound to this bridge\'s descriptor index."""',
-        "    _dev_dist_product_descriptor(descriptor_index = descriptor_index, **kwargs)",
+        "def dist_product_descriptor(descriptor_index = MODULE_DESCRIPTORS, **kwargs):",
+        '    """`dist_product_descriptor` bound to this bridge\'s descriptor index."""',
+        "    _dist_product_descriptor(descriptor_index = descriptor_index, **kwargs)",
         "",
-        "def dev_dist_embedded_product_descriptor(descriptor_index = MODULE_DESCRIPTORS, **kwargs):",
-        '    """`dev_dist_embedded_product_descriptor` bound to this bridge\'s descriptor index."""',
-        "    _dev_dist_embedded_product_descriptor(descriptor_index = descriptor_index, **kwargs)",
+        "def dist_embedded_product_descriptor(descriptor_index = MODULE_DESCRIPTORS, **kwargs):",
+        '    """`dist_embedded_product_descriptor` bound to this bridge\'s descriptor index."""',
+        "    _dist_embedded_product_descriptor(descriptor_index = descriptor_index, **kwargs)",
         "",
     ])
 

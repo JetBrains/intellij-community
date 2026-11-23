@@ -2,8 +2,8 @@
 package com.jetbrains.python.packaging.management
 
 import com.intellij.openapi.application.readAction
+import com.intellij.python.sdk.backend.PythonInterpreter
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiFile
@@ -11,9 +11,7 @@ import com.intellij.psi.PsiManager
 import com.intellij.python.community.impl.conda.environmentYml.format.CondaEnvironmentYmlParser
 import com.intellij.python.pyproject.PyDependencyGroup
 import com.intellij.python.requirements.parser.PyRequirementParser
-import com.intellij.python.sdk.backend.PythonInterpreter
 import com.intellij.python.sdk.backend.associatedModuleDir
-import com.intellij.python.sdk.backend.getSdkAPI
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.extensions.toPsi
 import com.jetbrains.python.packaging.common.PythonOutdatedPackage
@@ -31,8 +29,8 @@ import org.toml.lang.psi.TomlFile
 import java.nio.file.Path
 
 @TestOnly
-class TestPythonPackageManager(project: Project, interpreter: PythonInterpreter) :
-  PythonPackageManager(project, interpreter) {
+class TestPythonPackageManager(interpreter: PythonInterpreter) :
+  PythonPackageManager(interpreter) {
   private var packageNames: List<String> = emptyList()
   private var packageDetails: PythonPackageDetails? = null
   private var packageVersions: Map<String, List<String>> = emptyMap()
@@ -105,14 +103,14 @@ class TestPythonPackageManager(project: Project, interpreter: PythonInterpreter)
 
   override val dependenciesFilesRelativePaths: List<Path>
     get() {
-      val providerType = requirementsProviderOf(interpreter) ?: return emptyList()
+      val providerType = getUserData(REQUIREMENTS_PROVIDER_KEY) ?: return emptyList()
       interpreter.associatedModuleDir ?: return emptyList()
 
       return listOf(Path.of(providerType.filename))
     }
 
   override suspend fun listDeclaredPackages(): PyResult<List<PythonPackage>>? {
-    val providerType = requirementsProviderOf(interpreter) ?: return null
+    val providerType = getUserData(REQUIREMENTS_PROVIDER_KEY) ?: return null
     val moduleDir = interpreter.associatedModuleDir ?: return null
     val dependenciesFile = moduleDir.findChild(providerType.filename) ?: return null
 
@@ -209,16 +207,14 @@ class TestPythonPackageManager(project: Project, interpreter: PythonInterpreter)
     @JvmField
     val REQUIREMENTS_PROVIDER_KEY: Key<RequirementsProviderType> = Key<RequirementsProviderType>("REQUIREMENTS_PROVIDER_KEY")
 
-    /** Makes this manager read the dependency file of [type] for [interpreter]. The value lives as long as the interpreter. */
+    /**
+     * Makes this manager read the dependency file of [type] for [interpreter]. The value lives in the user data of the
+     * manager of [interpreter], as long as that manager.
+     */
     @JvmStatic
     fun setRequirementsProvider(interpreter: PythonInterpreter, type: RequirementsProviderType?) {
-      @Suppress("DEPRECATION") // An interpreter keeps its data on its SDK.
-      interpreter.getSdkAPI().putUserData(REQUIREMENTS_PROVIDER_KEY, type)
+      PythonPackageManager.forPythonInterpreter(interpreter).putUserData(REQUIREMENTS_PROVIDER_KEY, type)
     }
-
-    @Suppress("DEPRECATION") // An interpreter keeps its data on its SDK.
-    private fun requirementsProviderOf(interpreter: PythonInterpreter): RequirementsProviderType? =
-      interpreter.getSdkAPI().getUserData(REQUIREMENTS_PROVIDER_KEY)
 
     private val DEFAULT_PACKAGES = listOf(
       PythonPackage(PIP_PACKAGE, EMPTY_STRING, false),

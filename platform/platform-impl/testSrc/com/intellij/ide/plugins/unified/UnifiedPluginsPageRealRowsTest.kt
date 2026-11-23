@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins.unified
 
+import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.plugins.newui.PluginNodeModelBuilderFactory
 import com.intellij.ide.ui.LafManager
@@ -24,6 +25,7 @@ import java.awt.Dimension
 import java.awt.Font
 import java.awt.Point
 import java.awt.Rectangle
+import javax.accessibility.AccessibleRole
 import javax.swing.JButton
 import javax.swing.JComponent
 import javax.swing.JPanel
@@ -479,6 +481,94 @@ internal class UnifiedPluginsPageRealRowsTest {
     assertThat(view.focusTraversalOrder().filter { it in factory.activeRows.values.map(RecordingRow::component) })
       .containsExactly(firstRow.component)
     view.close()
+  }
+
+  @Test
+  fun `Marketplace link follows Suggested rows in arrow order and stays outside Tab order`(): Unit =
+    timeoutRunBlocking(context = Dispatchers.UI) {
+      val factory = RecordingRowFactory()
+      val first = item("suggested.first")
+      val last = item("suggested.last")
+      val repositoryId = PluginSectionId.CustomRepository("repository")
+      val repositoryItem = item("repository.plugin")
+      val controller = UnifiedPluginsPageController(listOf(
+        section(PluginSectionId.Suggested, first, last),
+        section(PluginSectionId.Marketplace, item("marketplace.plugin")),
+        section(repositoryId, repositoryItem),
+      ))
+
+      createView(factory).use { view ->
+        view.render(controller.state.value, showMarketplaceLink = true)
+        prepareForScrolling(view)
+
+        val link = componentsOfType(view.component, ActionLink::class.java).single()
+        val firstRow = factory.row(PluginSectionId.Suggested, first)
+        val lastRow = factory.row(PluginSectionId.Suggested, last).component
+        val linkTop = SwingUtilities.convertPoint(link, Point(), view.component).y
+        val lastRowBottom = SwingUtilities.convertPoint(lastRow, Point(0, lastRow.height), view.component).y
+        assertThat(linkTop).isGreaterThanOrEqualTo(lastRowBottom)
+        assertThat(link.accessibleContext.accessibleName).isEqualTo(IdeBundle.message("plugins.configurable.more.on.marketplace"))
+        assertThat(link.accessibleContext.accessibleRole).isEqualTo(AccessibleRole.HYPERLINK)
+        assertThat(link.icon).isSameAs(AllIcons.Ide.External_link_arrow)
+        val repositoryRow = factory.row(repositoryId, repositoryItem)
+        assertThat(factory.keyboardOrder).containsExactly(firstRow.component, lastRow, link, repositoryRow.component)
+        assertThat(view.focusTraversalOrder()).endsWith(firstRow.component, firstRow.actionButton).doesNotContain(link)
+
+        controller.setQuery(PluginsQueryState("plugin", "plugin", revision = 1))
+        view.render(controller.state.value, showMarketplaceLink = true)
+
+        assertThat(componentsOfType(view.component, ActionLink::class.java)).isEmpty()
+        assertThat(factory.keyboardOrder).doesNotContain(link)
+      }
+    }
+
+  @Test
+  fun `Marketplace link requires all Suggested results to be visible and loaded`(): Unit = timeoutRunBlocking(context = Dispatchers.UI) {
+    val factory = RecordingRowFactory()
+    val suggestedId = PluginSectionId.Suggested
+    val ready = section(suggestedId, *(1..5).map { item("suggested.$it") }.toTypedArray())
+    val loading = PluginSectionStatus.Loading(showingStaleContent = false)
+    val controller = UnifiedPluginsPageController(listOf(ready.copy(items = emptyList(), status = loading)))
+
+    createView(factory).use { view ->
+      fun assertLinkVisible(visible: Boolean) {
+        view.render(controller.state.value, showMarketplaceLink = true)
+        val text = IdeBundle.message("plugins.configurable.more.on.marketplace")
+        val link = componentsOfType(view.component, ActionLink::class.java).single { it.text == text }
+        assertThat(link.parent.isVisible).isEqualTo(visible)
+        assertThat(link in factory.keyboardOrder).isEqualTo(visible)
+      }
+
+      assertLinkVisible(false)
+
+      controller.updateSection(ready)
+      assertLinkVisible(true)
+
+      controller.setSectionExpanded(suggestedId, false)
+      assertLinkVisible(false)
+
+      val collapsedItems = ready.items.take(PluginSectionState.COLLAPSED_ITEM_LIMIT)
+      controller.updateSection(ready.copy(items = collapsedItems))
+      assertThat(controller.state.value.sections.single { it.id == suggestedId }.expanded).isFalse()
+      assertLinkVisible(true)
+
+      controller.updateSection(ready)
+      assertLinkVisible(false)
+      controller.setSectionExpanded(suggestedId, true)
+      assertLinkVisible(true)
+
+      controller.updateSection(ready.copy(status = PluginSectionStatus.Loading(showingStaleContent = true)))
+      assertLinkVisible(false)
+
+      val error = PluginSectionError("Unable to load Suggested", retryable = true)
+      controller.updateSection(ready.copy(status = PluginSectionStatus.Degraded(error)))
+      assertLinkVisible(false)
+      controller.updateSection(ready.copy(items = emptyList(), status = PluginSectionStatus.Failed(error)))
+      assertLinkVisible(false)
+
+      controller.updateSection(ready)
+      assertLinkVisible(true)
+    }
   }
 
   @Test
@@ -961,6 +1051,8 @@ internal class UnifiedPluginsPageRealRowsTest {
     val activeRows = LinkedHashMap<PluginOccurrenceId, RecordingRow>()
     var renderedOccurrences: List<PluginOccurrenceId> = emptyList()
       private set
+    var keyboardOrder: List<JComponent> = emptyList()
+      private set
 
     override fun specification(section: PluginSectionState, item: PluginItemState): PluginRowSpecification<Any> {
       return PluginRowSpecification(section.occurrenceId(item.pluginId), item, item.name.orEmpty())
@@ -970,7 +1062,8 @@ internal class UnifiedPluginsPageRealRowsTest {
       return RecordingRow().also { activeRows[occurrenceId] = it }
     }
 
-    override fun rowsRendered(bindings: List<PluginRowBinding<PluginRow>>) {
+    override fun rowsRendered(bindings: List<PluginRowBinding<PluginRow>>, keyboardOrder: List<JComponent>) {
+      this.keyboardOrder = keyboardOrder
       renderedOccurrences = bindings.map(PluginRowBinding<PluginRow>::occurrenceId)
       val activeOccurrences = renderedOccurrences.toSet()
       activeRows.keys.removeIf { it !in activeOccurrences }

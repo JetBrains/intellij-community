@@ -17,9 +17,7 @@ package org.intellij.plugins.xpathView.eval;
 
 import com.intellij.find.FindSettings;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.wm.ToolWindow;
-import com.intellij.openapi.wm.ToolWindowId;
-import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.usageView.UsageViewContentManager;
 import org.intellij.plugins.xpathView.Config;
 import org.intellij.plugins.xpathView.HistoryElement;
 import org.intellij.plugins.xpathView.XPathBundle;
@@ -39,8 +37,7 @@ public class EvalExpressionDialog extends InputExpressionDialog<EvalFormPanel> {
 
     @Override
     protected void init() {
-        final ToolWindow findWindow = ToolWindowManager.getInstance(myProject).getToolWindow(ToolWindowId.FIND);
-        final boolean available = findWindow != null && findWindow.isAvailable();
+        final boolean available = UsageViewContentManager.getInstance(myProject).getToolWindow().isAvailable();
 
         myForm.getNewTabCheckbox().setEnabled(available);
         myForm.getNewTabCheckbox().setSelected(FindSettings.getInstance().isShowResultsInSeparateView());

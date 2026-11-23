@@ -29,6 +29,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import org.jetbrains.plugins.gitlab.api.GitLabServerPath
 import org.jetbrains.plugins.gitlab.authentication.GitLabGitAuthorizationSignal
+import org.jetbrains.plugins.gitlab.authentication.GitLabLoginUtil
 import org.jetbrains.plugins.gitlab.authentication.GitLabOAuthService
 import org.jetbrains.plugins.gitlab.authentication.GitLabOAuthSettings
 import org.jetbrains.plugins.gitlab.authentication.GitLabSecurityUtil
@@ -50,7 +51,7 @@ internal class GitLabOAuthLoginViewModel(
 
   val servers: List<String> =
     (GitRepositoryManager.getInstance(project).collectRemotes().mapNotNull { getServerPath(it.url) } +
-     GitLabOAuthSettings.getInstance(project).state.clientIds.keys.mapNotNull { getServerPath(it) })
+     GitLabOAuthSettings.getInstance(project).state.customServers.mapNotNull { getServerPath(it.serverUri) })
       .filter { !it.isDefault }
       .map { it.uri }
       .distinct()
@@ -119,9 +120,11 @@ internal class GitLabOAuthLoginViewModel(
     loginJob = cs.launch {
       _loginState.value = LoginState.Connecting
       try {
-        val serverPath = GitLabServerPath(URIUtil.normalizeAndValidateHttpUri(_serverUri.value))
+        val serverUri = _serverUri.value
         val clientId = _clientId.value
-        val credentials = GitLabOAuthService.instance.authorize(serverPath, clientId)
+        val serverPath = GitLabServerPath(URIUtil.normalizeAndValidateHttpUri(serverUri))
+        val rootNamespaceId = GitLabLoginUtil.getStoredRootNamespaceId(project, serverPath.uri)
+        val credentials = GitLabOAuthService.instance.authorize(serverPath, clientId, rootNamespaceId)
         val username =
           GitLabSecurityUtil.validateAndResolveUsername(requiredUsername, serverPath, credentials.accessToken, uniqueAccountPredicate)
         _loginState.value = LoginState.Connected(username)
@@ -155,7 +158,7 @@ internal class GitLabOAuthLoginViewModel(
 
   private fun getStoredClientId(serverUri: String): String? {
     val uri = runCatching { URIUtil.normalizeAndValidateHttpUri(serverUri) }.getOrElse { return null }
-    return GitLabOAuthSettings.getInstance(project).state.clientIds[uri]
+    return GitLabOAuthSettings.getInstance(project).state.customServers.find { it.serverUri == uri }?.clientId
   }
 
   private fun getServerPath(remoteUrl: String): GitLabServerPath? {

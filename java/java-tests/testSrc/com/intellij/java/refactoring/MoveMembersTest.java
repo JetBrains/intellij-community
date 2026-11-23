@@ -11,20 +11,32 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMember;
 import com.intellij.psi.PsiModifier;
 import com.intellij.refactoring.BaseRefactoringProcessor;
-import com.intellij.refactoring.LightMultiFileTestCase;
+import com.intellij.refactoring.LightMultiFileFixture;
 import com.intellij.refactoring.move.moveMembers.MockMoveMembersOptions;
 import com.intellij.refactoring.move.moveMembers.MoveMembersProcessor;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
 import com.intellij.testFramework.fixtures.MavenDependencyUtil;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.intellij.util.VisibilityUtil;
 import org.jetbrains.annotations.NotNull;
+import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 
-public class MoveMembersTest extends LightMultiFileTestCase {
+import static com.intellij.refactoring.LightMultiFileFixtureKt.lightMultiFileFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
+
+@TestApplication
+public class MoveMembersTest {
   private static final LightProjectDescriptor PROJECT_DESCRIPTOR = new DefaultLightProjectDescriptor() {
     @Override
     public void configureModule(@NotNull Module module, @NotNull ModifiableRootModel model, @NotNull ContentEntry contentEntry) {
@@ -33,105 +45,121 @@ public class MoveMembersTest extends LightMultiFileTestCase {
       MavenDependencyUtil.addFromMaven(model, "org.jspecify:jspecify:1.0.0");
     }
   };
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(PROJECT_DESCRIPTOR);
+  private final TestFixture<LightMultiFileFixture> multiFile =
+    lightMultiFileFixture(projectFixture, JavaTestUtil.getJavaTestDataPath() + "/refactoring/moveMembers/");
 
-  @Override
-  protected @NotNull LightProjectDescriptor getProjectDescriptor() {
-    return PROJECT_DESCRIPTOR;
-  }
-
-  @Override
-  protected String getTestDataPath() {
-    return JavaTestUtil.getJavaTestDataPath() + "/refactoring/moveMembers/";
-  }
-
+  @Test
   public void testJavadocRefs() {
     doTest("Class1", "Class2", 0);
   }
 
+  @Test
   public void testWeirdDeclaration() {
     doTest("A", "B", 0);
   }
 
+  @Test
   public void testInnerClass() {
     doTest("A", "B", 0);
   }
 
+  @Test
   public void testScr11871() {
     doTest("pack1.A", "pack1.B", 0);
   }
 
+  @Test
   public void testOuterClassTypeParameters() {
     doTest("pack1.A", "pack2.B", 0);
   }
 
+  @Test
   public void testscr40064() {
     doTest("Test", "Test1", 0);
   }
 
+  @Test
   public void testscr40947() {
     doTest("A", "Test", 0, 1);
   }
 
+  @Test
   public void testIDEADEV11416() {
     doTest("Y", "X", false, 0);
   }
 
+  @Test
   public void testDependantConstants() {
     doTest("A", "B", 0, 1);
   }
 
+  @Test
   public void testTwoMethods() {
     doTest("pack1.A", "pack1.C", 0, 1, 2);
   }
 
+  @Test
   public void testParameterizedRefOn() {
     doTest("pack1.POne", "pack1.C", 1, 2);
   }
 
+  @Test
   public void testIDEADEV12448() {
     doTest("B", "A", false, 0);
   }
   
+  @Test
   public void testClearFinalStatic() {
     doTest("B", "A", 0, 1);
   }
 
+  @Test
   public void testFieldForwardRef() {
     doTest("A", "Constants", 0);
   }
 
+  @Test
   public void testStaticImport() {
     doTest("C", "B", 0);
   }
 
+  @Test
   public void testExplicitStaticImport() {
     doTest("C", "B", 0);
   }
 
+  @Test
   public void testProtectedConstructor() {
     doTest("pack1.A", "pack1.C", 0);
   }
 
+  @Test
   public void testPackagePrivateStaticMember() {
     doTest("pack1.A", "pack2.C", true, PsiModifier.PACKAGE_LOCAL, 0);
   }
 
+  @Test
   public void testUntouchedVisibility() {
     doTest("pack1.A", "pack1.C", 0, 1);
   }
 
+  @Test
   public void testEscalateVisibility() {
     doTest("pack1.A", "pack1.C", true, VisibilityUtil.ESCALATE_VISIBILITY, 0);
   }
 
+  @Test
   public void testOtherPackageImport() {
     doTest("pack1.ClassWithStaticMethod", "pack2.OtherClass", 1);
   }
 
+  @Test
   public void testEnumConstant() {
     doTest("B", "A", 0);
   }
 
+  @Test
   public void testEnumConstantFromCaseStatement() {
     try {
       doTest("B", "A", 0);
@@ -142,22 +170,27 @@ public class MoveMembersTest extends LightMultiFileTestCase {
     }
   }
 
+  @Test
   public void testStringConstantFromCaseStatement() {
     doTest("B", "A", 0);
   }
 
+  @Test
   public void testDependantFields() {
     doTest("B", "A", 0);
   }
 
+  @Test
   public void testStaticImportAndOverridenMethods() {
     doTest("bar.B", "bar.A", 0);
   }
 
+  @Test
   public void testStaticClassInitializer() {
     doTest("B", "A", 0);
   }
 
+  @Test
   public void testStaticClassInitializerToInterface() {
     try {
       doTest("B", "A", 0);
@@ -167,6 +200,7 @@ public class MoveMembersTest extends LightMultiFileTestCase {
     }
   }
 
+  @Test
   public void testWritableField() {
     try {
       doTest("B", "A", 0);
@@ -177,6 +211,7 @@ public class MoveMembersTest extends LightMultiFileTestCase {
     }
   }
   
+  @Test
   public void testFinalFieldWithInitializer() {
     try {
       doTest("B", "A", 0);
@@ -187,6 +222,7 @@ public class MoveMembersTest extends LightMultiFileTestCase {
     }
   }
 
+  @Test
   public void testEnumConstantToInterface() {
     try {
       doTest("B", "A", 0);
@@ -197,6 +233,7 @@ public class MoveMembersTest extends LightMultiFileTestCase {
     }
   }
 
+  @Test
   public void testNonConstantToInterface() {
     try {
       doTest("B", "A", 0);
@@ -207,6 +244,7 @@ public class MoveMembersTest extends LightMultiFileTestCase {
     }
   }
 
+  @Test
   public void testExistingFieldInSuper() {
     try {
       doTest("B", "A", 0, 1);
@@ -218,102 +256,126 @@ public class MoveMembersTest extends LightMultiFileTestCase {
     }
   }
 
+  @Test
   public void testInnerToInterface() {
     doTest("A", "B", 0);
   }
 
+  @Test
   public void testStaticToInterface() {
-    final LanguageLevel level = IdeaTestUtil.setProjectLanguageLevel(getProject(), LanguageLevel.JDK_1_8);
+    LightJavaCodeInsightTestFixture myFixture = multiFile.get().getFixture();
+    final LanguageLevel level = IdeaTestUtil.setProjectLanguageLevel(myFixture.getProject(), LanguageLevel.JDK_1_8);
     try {
       doTest("A", "B", 0);
     }
     finally {
-      IdeaTestUtil.setProjectLanguageLevel(getProject(), level);
+      IdeaTestUtil.setProjectLanguageLevel(myFixture.getProject(), level);
     }
   }
   
+  @Test
   public void testEscalateVisibility1() {
     doTest("A", "B", true, VisibilityUtil.ESCALATE_VISIBILITY, 0);
   }
 
+  @Test
   public void testEscalateVisibilityWhenMoveStaticMemberToStaticClass() {
     doTest("pack.A", "pack.A.B", true, VisibilityUtil.ESCALATE_VISIBILITY, 1, 2);
   }
 
+  @Test
   public void testStringConstantInSwitchLabelExpression() {
     doTest("A", "B", true, VisibilityUtil.ESCALATE_VISIBILITY, 0);
   }
 
+  @Test
   public void testMultipleWithDependencies() {
     doTest("A", "B", true, VisibilityUtil.ESCALATE_VISIBILITY, 0, 1);
   }
 
+  @Test
   public void testMultipleWithDependencies1() {
     doTest("A", "B", true, VisibilityUtil.ESCALATE_VISIBILITY, 0, 1);
   }
 
+  @Test
   public void testFromNestedToOuter() {
     doTest("Outer.Inner", "Outer", true, VisibilityUtil.ESCALATE_VISIBILITY, 0);
   }
 
+  @Test
   public void testMixedStaticImportAndQualified() {
     doTest("ImportingClass.Constants", "ImportingClass.ImportantConstants", 0);
   }
 
+  @Test
   public void testStaticProblemsShouldNotRaiseAConflict() {
     doTest("A", "B", 0);
   }
 
+  @Test
   public void testClearQualifierInsideInnerAnnotation() {
     doTest("A", "B", 0);
   }
 
+  @Test
   public void testFromNestedToOuterMethodRef() {
-    final LanguageLevel oldLevel = IdeaTestUtil.setProjectLanguageLevel(getProject(), LanguageLevel.HIGHEST);
+    LightJavaCodeInsightTestFixture myFixture = multiFile.get().getFixture();
+    final LanguageLevel oldLevel = IdeaTestUtil.setProjectLanguageLevel(myFixture.getProject(), LanguageLevel.HIGHEST);
     try {
       doTest("Outer.Inner", "Outer", true, VisibilityUtil.ESCALATE_VISIBILITY, 0);
     }
     finally {
-      IdeaTestUtil.setProjectLanguageLevel(getProject(), oldLevel);
+      IdeaTestUtil.setProjectLanguageLevel(myFixture.getProject(), oldLevel);
     }
   }
 
+  @Test
   public void testNullabilityMethodFromUnspecifiedToNullMarked() {
     doTest("A", "B", 0);
   }
 
+  @Test
   public void testNullabilityMethodFromNullMarkedToUnspecified() {
     doTest("A", "B", 0);
   }
 
+  @Test
   public void testNullabilityMethodFromNullMarkedToNullMarked() {
     doTest("A", "B", 0);
   }
 
+  @Test
   public void testNullabilityMethodWithConflictFromUnspecifiedToNullMarked() {
     doTest("A", "B", 0);
   }
 
+  @Test
   public void testNullabilityMethodWithConflictFromNullMarkedToUnspecified() {
     doTest("A", "B", 0);
   }
 
+  @Test
   public void testNullabilityClassFromNullMarkedToNullMarked() {
     doTest("A", "B", 0);
   }
 
+  @Test
   public void testNullabilityClassFromNullMarkedToUnspecified() {
     doTest("A", "B", 0);
   }
 
+  @Test
   public void testNullabilityClassFromUnspecifiedToNullMarked() {
     doTest("A", "B", 0);
   }
 
+  @Test
   public void testNullabilityFieldFromNullMarkedToUnspecified() {
     doTest("A", "B", 0);
   }
 
+  @Test
   public void testNullabilityFieldFromUnspecifiedToNullMarked() {
     doTest("A", "B", 0);
   }
@@ -334,10 +396,11 @@ public class MoveMembersTest extends LightMultiFileTestCase {
                       final boolean lowercaseFirstLetter,
                       final String defaultVisibility,
                       final int... memberIndices) {
-    doTest(() -> this.performAction(sourceClassName, targetClassName, memberIndices, defaultVisibility), lowercaseFirstLetter);
+    multiFile.get().doTest(() -> this.performAction(sourceClassName, targetClassName, memberIndices, defaultVisibility), lowercaseFirstLetter);
   }
 
   private void performAction(String sourceClassName, String targetClassName, int[] memberIndices, final String visibility) {
+    LightJavaCodeInsightTestFixture myFixture = multiFile.get().getFixture();
     PsiClass sourceClass = myFixture.findClass(sourceClassName);
     PsiClass targetClass = myFixture.findClass(targetClassName);
     PsiElement[] children = sourceClass.getChildren();
@@ -357,7 +420,7 @@ public class MoveMembersTest extends LightMultiFileTestCase {
 
     MockMoveMembersOptions options = new MockMoveMembersOptions(targetClass.getQualifiedName(), memberSet);
     options.setMemberVisibility(visibility);
-    new MoveMembersProcessor(getProject(), null, options).run();
+    new MoveMembersProcessor(myFixture.getProject(), null, options).run();
   }
 
 }

@@ -2,23 +2,25 @@
 package org.jetbrains.idea.devkit.inspections;
 
 import com.intellij.testFramework.TestDataPath;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.jetbrains.idea.devkit.DevkitJavaTestsUtil;
+import org.jetbrains.idea.devkit.inspections.quickfix.LightDevKitInspectionFixture;
+import org.junit.jupiter.api.Test;
+
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.jetbrains.idea.devkit.inspections.UseGrayInspectionFixtureKt.useGrayInspectionFixture;
 
 @TestDataPath("$CONTENT_ROOT/testData/inspections/useGray")
-public class UseGrayInspectionTest extends UseGrayInspectionTestBase {
+@TestApplication
+public class UseGrayInspectionTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<LightDevKitInspectionFixture> useGray =
+    useGrayInspectionFixture(projectFixture, "java", DevkitJavaTestsUtil.TESTDATA_PATH + "inspections/useGray");
 
-  @Override
-  protected String getBasePath() {
-    return DevkitJavaTestsUtil.TESTDATA_PATH + "inspections/useGray";
-  }
-
-  @Override
-  protected @NotNull String getFileExtension() {
-    return "java";
-  }
-
+  @Test
   public void testUseGrayConstantWhenAwtColorUsed() {
-    doTest();
+    useGray.get().doTest();
   }
 }

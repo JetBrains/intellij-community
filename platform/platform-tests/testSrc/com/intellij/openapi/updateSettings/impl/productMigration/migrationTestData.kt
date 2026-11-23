@@ -4,9 +4,11 @@ package com.intellij.openapi.updateSettings.impl.productMigration
 import com.intellij.openapi.application.productMigration.MigrationImageData
 import com.intellij.openapi.application.productMigration.MigrationRedirectContent
 import com.intellij.openapi.application.productMigration.MigrationRedirectTexts
+import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.attribute.PosixFilePermissions
 import kotlin.io.path.createDirectories
+import kotlin.io.path.readText
 import kotlin.io.path.setPosixFilePermissions
 import kotlin.io.path.writeText
 
@@ -39,6 +41,12 @@ internal fun redirectContent(title: String = "GoLand is now part of Unified IDE"
     sourceLogo = MigrationImageData(light = svg("#000001"), dark = svg("#000002")),
     targetLogo = MigrationImageData(light = svg("#000003"), dark = svg("#000004")),
   )
+
+/** The relative path of each file and folder in [dir], with the text of each file. */
+internal fun snapshot(dir: Path): Map<String, String?> =
+  Files.walk(dir).use { paths ->
+    paths.toList().associate { dir.relativize(it).toString() to if (Files.isRegularFile(it)) it.readText() else null }
+  }
 
 /** Writes a macOS `product-info.json` with [productCode] into [app], and an optional [extra] JSON text. */
 internal fun writeProductInfo(app: Path, productCode: String? = "JB", extra: String = "") {

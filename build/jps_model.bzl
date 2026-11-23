@@ -112,11 +112,11 @@ def _join_project_relative_path(directory, relative):
     return directory + "/" + relative if directory else relative
 
 def _find_descriptor_rel_paths(project_root, module_name, resource_roots, extra_rel_paths):
-    """Every descriptor a dev-distribution assembly reads out of this module's production resources.
+    """Every descriptor that the assembly of a distribution reads out of this module's production resources.
 
     A content module's descriptor is `<moduleName>.xml` at a production resource root, and a plugin's descriptor is
     `META-INF/plugin.xml`. Almost every descriptor follows that convention, and it is derived here.
-    [extra_rel_paths] is the remainder, named by the product model in `build/dev_dist_descriptors.bzl`: descriptors reached
+    [extra_rel_paths] is the remainder, named by the product model in `build/dist_descriptors.bzl`: descriptors reached
     only through an `xi:include`, whose names this side cannot predict. Splitting it that way keeps the generated
     file ~300 lines instead of ~3300, which matters for a file every model change would otherwise rewrite under a
     large team.
@@ -162,7 +162,7 @@ def read_project_model(ctx, project_root, extra_descriptor_rel_paths_by_module =
         ctx: repository rule context.
         project_root: the repository root to read the model from.
         extra_descriptor_rel_paths_by_module: module name to the project-relative descriptor paths the convention
-            in [_find_descriptor_rel_paths] cannot derive, from `build/dev_dist_descriptors.bzl`. Only the Ultimate
+            in [_find_descriptor_rel_paths] cannot derive, from `build/dist_descriptors.bzl`. Only the Ultimate
             repository rule passes it: the list is an Ultimate artifact, community has to build standalone without
             it, and no community target materializes a project model tree.
 

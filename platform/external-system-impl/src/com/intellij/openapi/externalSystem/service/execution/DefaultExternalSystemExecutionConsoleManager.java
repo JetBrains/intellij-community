@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.service.execution;
 
+import com.intellij.build.BuildView;
 import com.intellij.execution.filters.TextConsoleBuilderFactory;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
@@ -31,7 +32,8 @@ public class DefaultExternalSystemExecutionConsoleManager
                                                            @NotNull ExternalSystemTask task,
                                                            @Nullable ExecutionEnvironment env,
                                                            @Nullable ProcessHandler processHandler) {
-    ConsoleView executionConsole = createConsoleView(project, task, env);
+    assert processHandler != null;
+    var executionConsole = createConsoleView(project, task, env);
     executionConsole.attachToProcess(processHandler);
     return executionConsole;
   }
@@ -39,7 +41,11 @@ public class DefaultExternalSystemExecutionConsoleManager
   protected @NotNull ConsoleView createConsoleView(@NotNull Project project,
                                                    @NotNull ExternalSystemTask task,
                                                    @Nullable ExecutionEnvironment env) {
-    return TextConsoleBuilderFactory.getInstance().createBuilder(project).getConsole();
+    var isSingleBuildConsoleView = getExecutionConsoleSettings().isSingleBuildConsoleView();
+    var isShowInDashboard = BuildView.isShowInDashboard(project, env);
+    return TextConsoleBuilderFactory.getInstance().createBuilder(project)
+      .setAttachToProcessOutput(!isSingleBuildConsoleView || isShowInDashboard)
+      .getConsole();
   }
 
   @Override

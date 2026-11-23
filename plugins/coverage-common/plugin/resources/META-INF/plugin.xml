@@ -1,0 +1,19 @@
+<!--suppress PluginXmlPluginLogo -->
+<idea-plugin>
+  <id>com.intellij.platform.coverage</id>
+  <name>Code Coverage</name>
+  <description><![CDATA[
+    Provides the code coverage platform modules and the coverage agent that the language plugins build on.
+  ]]></description>
+  <category>Test Tools</category>
+  <vendor>JetBrains</vendor>
+
+  <content namespace="jetbrains">
+    <module name="intellij.platform.coverage" loading="required"/>
+    <module name="intellij.platform.coverage.agent" loading="embedded"/>
+  </content>
+
+  <dependencies>
+    <module name="intellij.platform.execution"/>
+  </dependencies>
+</idea-plugin>

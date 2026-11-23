@@ -16,23 +16,23 @@ set -eu
 
 # fd configuration
 export TOOL_NAME="fd"
-export TOOL_VERSION="v10.3.0"
+export TOOL_VERSION="v10.5.2"
 
 # SHA-256 checksums for each platform
-export TOOL_CHECKSUM_LINUX_X64="2b6bfaae8c48f12050813c2ffe1884c61ea26e750d803df9c9114550a314cd14"
-export TOOL_CHECKSUM_LINUX_ARM64="66f297e404400a3358e9a0c0b2f3f4725956e7e4435427a9ae56e22adbe73a68"
-export TOOL_CHECKSUM_WINDOWS_X64="318aa2a6fa664325933e81fda60d523fff29444129e91ebf0726b5b3bcd8b059"
-export TOOL_CHECKSUM_WINDOWS_ARM64="bf9b1e31bcac71c1e95d49c56f0d872f525b95d03854e94b1d4dd6786f825cc5"
-export TOOL_CHECKSUM_MACOS_X64="50d30f13fe3d5914b14c4fff5abcbd4d0cdab4b855970a6956f4f006c17117a3"
-export TOOL_CHECKSUM_MACOS_ARM64="0570263812089120bc2a5d84f9e65cd0c25e4a4d724c80075c357239c74ae904"
+export TOOL_CHECKSUM_LINUX_X64="7e2d07fa2b8807642aaec67b7e2972a9fbe4db26fcb340a7372392db42b26694"
+export TOOL_CHECKSUM_LINUX_ARM64="4b144f38bd7352cd4c95020b58e8e575476e60edcdf1dc5e0733e3d01efba6dd"
+export TOOL_CHECKSUM_WINDOWS_X64="7edac75ef96b7e9a01ebb251a21ee86ea365a09adcfb865f1ec3346a906153b6"
+export TOOL_CHECKSUM_WINDOWS_ARM64="0ee570ad513e6e1909642dbd79bf7177cf3457652e912c27726582c0f49df86e"
+export TOOL_CHECKSUM_MACOS_X64="0f02e6000a8c896cd254cf4dccc7da1e604e77a32c6783609eed5e4cb07785e3"
+export TOOL_CHECKSUM_MACOS_ARM64="81bf98a16d3d7230e4a9123fcede243d71ea31a577113476ed43f1cdf4773162"
 
-# Download URLs (direct GitHub releases)
-export TOOL_URL_LINUX_X64="https://github.com/sharkdp/fd/releases/download/${TOOL_VERSION}/fd-${TOOL_VERSION}-x86_64-unknown-linux-musl.tar.gz"
-export TOOL_URL_LINUX_ARM64="https://github.com/sharkdp/fd/releases/download/${TOOL_VERSION}/fd-${TOOL_VERSION}-aarch64-unknown-linux-gnu.tar.gz"
-export TOOL_URL_WINDOWS_X64="https://github.com/sharkdp/fd/releases/download/${TOOL_VERSION}/fd-${TOOL_VERSION}-x86_64-pc-windows-msvc.zip"
-export TOOL_URL_WINDOWS_ARM64="https://github.com/sharkdp/fd/releases/download/${TOOL_VERSION}/fd-${TOOL_VERSION}-aarch64-pc-windows-msvc.zip"
-export TOOL_URL_MACOS_X64="https://github.com/sharkdp/fd/releases/download/${TOOL_VERSION}/fd-${TOOL_VERSION}-x86_64-apple-darwin.tar.gz"
-export TOOL_URL_MACOS_ARM64="https://github.com/sharkdp/fd/releases/download/${TOOL_VERSION}/fd-${TOOL_VERSION}-aarch64-apple-darwin.tar.gz"
+# Download URLs (GitHub releases through the cache redirector)
+export TOOL_URL_LINUX_X64="https://cache-redirector.jetbrains.com/github.com/sharkdp/fd/releases/download/${TOOL_VERSION}/fd-${TOOL_VERSION}-x86_64-unknown-linux-musl.tar.gz"
+export TOOL_URL_LINUX_ARM64="https://cache-redirector.jetbrains.com/github.com/sharkdp/fd/releases/download/${TOOL_VERSION}/fd-${TOOL_VERSION}-aarch64-unknown-linux-gnu.tar.gz"
+export TOOL_URL_WINDOWS_X64="https://cache-redirector.jetbrains.com/github.com/sharkdp/fd/releases/download/${TOOL_VERSION}/fd-${TOOL_VERSION}-x86_64-pc-windows-msvc.zip"
+export TOOL_URL_WINDOWS_ARM64="https://cache-redirector.jetbrains.com/github.com/sharkdp/fd/releases/download/${TOOL_VERSION}/fd-${TOOL_VERSION}-aarch64-pc-windows-msvc.zip"
+export TOOL_URL_MACOS_X64="https://cache-redirector.jetbrains.com/github.com/sharkdp/fd/releases/download/${TOOL_VERSION}/fd-${TOOL_VERSION}-x86_64-apple-darwin.tar.gz"
+export TOOL_URL_MACOS_ARM64="https://cache-redirector.jetbrains.com/github.com/sharkdp/fd/releases/download/${TOOL_VERSION}/fd-${TOOL_VERSION}-aarch64-apple-darwin.tar.gz"
 
 # Binary path within extracted archive
 export TOOL_BINARY_UNIX="fd"
@@ -55,23 +55,23 @@ REM to verify all platform checksums before committing.
 
 REM fd configuration
 set "TOOL_NAME=fd"
-set "TOOL_VERSION=v10.3.0"
+set "TOOL_VERSION=v10.5.2"
 
 REM SHA-256 checksums for each platform
-set "TOOL_CHECKSUM_LINUX_X64=2b6bfaae8c48f12050813c2ffe1884c61ea26e750d803df9c9114550a314cd14"
-set "TOOL_CHECKSUM_LINUX_ARM64=66f297e404400a3358e9a0c0b2f3f4725956e7e4435427a9ae56e22adbe73a68"
-set "TOOL_CHECKSUM_WINDOWS_X64=318aa2a6fa664325933e81fda60d523fff29444129e91ebf0726b5b3bcd8b059"
-set "TOOL_CHECKSUM_WINDOWS_ARM64=bf9b1e31bcac71c1e95d49c56f0d872f525b95d03854e94b1d4dd6786f825cc5"
-set "TOOL_CHECKSUM_MACOS_X64=50d30f13fe3d5914b14c4fff5abcbd4d0cdab4b855970a6956f4f006c17117a3"
-set "TOOL_CHECKSUM_MACOS_ARM64=0570263812089120bc2a5d84f9e65cd0c25e4a4d724c80075c357239c74ae904"
+set "TOOL_CHECKSUM_LINUX_X64=7e2d07fa2b8807642aaec67b7e2972a9fbe4db26fcb340a7372392db42b26694"
+set "TOOL_CHECKSUM_LINUX_ARM64=4b144f38bd7352cd4c95020b58e8e575476e60edcdf1dc5e0733e3d01efba6dd"
+set "TOOL_CHECKSUM_WINDOWS_X64=7edac75ef96b7e9a01ebb251a21ee86ea365a09adcfb865f1ec3346a906153b6"
+set "TOOL_CHECKSUM_WINDOWS_ARM64=0ee570ad513e6e1909642dbd79bf7177cf3457652e912c27726582c0f49df86e"
+set "TOOL_CHECKSUM_MACOS_X64=0f02e6000a8c896cd254cf4dccc7da1e604e77a32c6783609eed5e4cb07785e3"
+set "TOOL_CHECKSUM_MACOS_ARM64=81bf98a16d3d7230e4a9123fcede243d71ea31a577113476ed43f1cdf4773162"
 
-REM Download URLs (direct GitHub releases)
-set "TOOL_URL_LINUX_X64=https://github.com/sharkdp/fd/releases/download/%TOOL_VERSION%/fd-%TOOL_VERSION%-x86_64-unknown-linux-musl.tar.gz"
-set "TOOL_URL_LINUX_ARM64=https://github.com/sharkdp/fd/releases/download/%TOOL_VERSION%/fd-%TOOL_VERSION%-aarch64-unknown-linux-gnu.tar.gz"
-set "TOOL_URL_WINDOWS_X64=https://github.com/sharkdp/fd/releases/download/%TOOL_VERSION%/fd-%TOOL_VERSION%-x86_64-pc-windows-msvc.zip"
-set "TOOL_URL_WINDOWS_ARM64=https://github.com/sharkdp/fd/releases/download/%TOOL_VERSION%/fd-%TOOL_VERSION%-aarch64-pc-windows-msvc.zip"
-set "TOOL_URL_MACOS_X64=https://github.com/sharkdp/fd/releases/download/%TOOL_VERSION%/fd-%TOOL_VERSION%-x86_64-apple-darwin.tar.gz"
-set "TOOL_URL_MACOS_ARM64=https://github.com/sharkdp/fd/releases/download/%TOOL_VERSION%/fd-%TOOL_VERSION%-aarch64-apple-darwin.tar.gz"
+REM Download URLs (GitHub releases through the cache redirector)
+set "TOOL_URL_LINUX_X64=https://cache-redirector.jetbrains.com/github.com/sharkdp/fd/releases/download/%TOOL_VERSION%/fd-%TOOL_VERSION%-x86_64-unknown-linux-musl.tar.gz"
+set "TOOL_URL_LINUX_ARM64=https://cache-redirector.jetbrains.com/github.com/sharkdp/fd/releases/download/%TOOL_VERSION%/fd-%TOOL_VERSION%-aarch64-unknown-linux-gnu.tar.gz"
+set "TOOL_URL_WINDOWS_X64=https://cache-redirector.jetbrains.com/github.com/sharkdp/fd/releases/download/%TOOL_VERSION%/fd-%TOOL_VERSION%-x86_64-pc-windows-msvc.zip"
+set "TOOL_URL_WINDOWS_ARM64=https://cache-redirector.jetbrains.com/github.com/sharkdp/fd/releases/download/%TOOL_VERSION%/fd-%TOOL_VERSION%-aarch64-pc-windows-msvc.zip"
+set "TOOL_URL_MACOS_X64=https://cache-redirector.jetbrains.com/github.com/sharkdp/fd/releases/download/%TOOL_VERSION%/fd-%TOOL_VERSION%-x86_64-apple-darwin.tar.gz"
+set "TOOL_URL_MACOS_ARM64=https://cache-redirector.jetbrains.com/github.com/sharkdp/fd/releases/download/%TOOL_VERSION%/fd-%TOOL_VERSION%-aarch64-apple-darwin.tar.gz"
 
 REM Binary path within extracted archive
 set "TOOL_BINARY_UNIX=fd"

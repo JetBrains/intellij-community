@@ -35,7 +35,7 @@ internal class PyRunAnythingCondaProvider : PyRunAnythingPackageProvider() {
 
   override fun getPackageManager(dataContext: DataContext): PythonPackageManager? {
     val interpreter = getInterpreter(dataContext) ?: return null
-    return (PythonPackageManager.forPythonInterpreter(dataContext.project, interpreter) as? CondaPackageManager)
+    return (PythonPackageManager.forPythonInterpreter(interpreter) as? CondaPackageManager)
   }
 
   override fun getPackageRepository(dataContext: DataContext): PyPackageRepository? {

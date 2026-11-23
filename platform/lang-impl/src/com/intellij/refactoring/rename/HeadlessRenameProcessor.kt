@@ -108,8 +108,13 @@ object HeadlessRenameProcessor {
 
     val targetProcessors = when (val processorLookup = headlessProcessorsOf(target)) {
       is HeadlessProcessorLookup.Found -> processorLookup
-      is HeadlessProcessorLookup.Missing ->
+      is HeadlessProcessorLookup.Missing -> {
+        // A rename of no language changes the target, such as a library class.
+        PsiElementRenameHandler.getRenameErrorMessage(project, null, target, true)?.let {
+          return HeadlessRenameResult.Failed(HeadlessRenameFailure.TARGET_NOT_RENAMABLE, it)
+        }
         return HeadlessRenameResult.Failed(HeadlessRenameFailure.LANGUAGE_NOT_SUPPORTED, processorLookup.detail())
+      }
     }
     // Turns an override into its super method, a constructor into its class, and an accessor into
     // its property, with every question of the language answered by a default.
@@ -181,7 +186,7 @@ private fun isSupportedState(project: Project, element: PsiElement): HeadlessRen
  * Whether every rename processor of [language] carries a headless registration.
  * It is a temporary solution until other languages are not supported.
  */
-private fun isHeadlessRenameSupported(language: Language): Boolean {
+internal fun isHeadlessRenameSupported(language: Language): Boolean {
   if (language === Language.ANY) return true
   val supported = HeadlessRenameSupportedLanguage.EP_NAME.extensionList.mapTo(HashSet()) { it.language }
   var candidate: Language? = language

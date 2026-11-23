@@ -14,7 +14,11 @@ import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture
 
 /**
  * A base class for testing JVM inspections.
+ *
+ * @deprecated Use [jvmProjectFixture] and [jvmInspectionFixture] in a JUnit 5 test.
  */
+@Suppress("DEPRECATION")
+@Deprecated("Use jvmProjectFixture and jvmInspectionFixture in a JUnit 5 test")
 abstract class JvmInspectionTestBase : LightJvmCodeInsightFixtureTestCase() {
   abstract val inspection: InspectionProfileEntry
 

@@ -24,7 +24,7 @@ import org.jetbrains.annotations.ApiStatus
 /**
  * Drops the resolve caches when a snapshot gives a module another interpreter.
  *
- * Resolve reads the interpreter from the snapshot, see [pythonSdkIfReady], and caches what it finds against PSI
+ * Resolve reads the interpreter from the snapshot, see [pythonInterpreterIfReady], and caches what it finds against PSI
  * changes. A snapshot lands after the roots change that set the interpreter, and before the first snapshot resolve
  * sees no interpreter at all. A daemon restart reruns the inspections on these cached results, so it is not enough.
  */

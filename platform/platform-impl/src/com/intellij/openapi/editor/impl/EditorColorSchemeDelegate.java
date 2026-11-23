@@ -168,7 +168,7 @@ final class EditorColorSchemeDelegate extends DelegateColorScheme {
         .withFontSize(newFontSize)
     ));
     if (changed) {
-      myEditor.reinitSettings(true, false);
+      myEditor.reinitSettingsAfterFontChange(false);
     }
   }
 
@@ -199,7 +199,7 @@ final class EditorColorSchemeDelegate extends DelegateColorScheme {
         .withFontPreferences(snapshot.fontPreferences().withChanges(preferences::copyTo))
     ));
     if (changed) {
-      myEditor.reinitSettings();
+      myEditor.reinitSettingsAfterFontChange(true);
     }
   }
 
@@ -224,7 +224,7 @@ final class EditorColorSchemeDelegate extends DelegateColorScheme {
         )
     ));
     if (changed) {
-      myEditor.reinitSettings();
+      myEditor.reinitSettingsAfterFontChange(true);
     }
   }
 
@@ -247,7 +247,7 @@ final class EditorColorSchemeDelegate extends DelegateColorScheme {
         .withFaceName(fontName)
     ));
     if (changed) {
-      myEditor.reinitSettings();
+      myEditor.reinitSettingsAfterFontChange(true);
     }
   }
 
@@ -282,7 +282,7 @@ final class EditorColorSchemeDelegate extends DelegateColorScheme {
       snapshot.withConsoleFontSize(newConsoleFontSize)
     ));
     if (changed) {
-      myEditor.reinitSettings();
+      myEditor.reinitSettingsAfterFontChange(true);
     }
   }
 
@@ -308,7 +308,7 @@ final class EditorColorSchemeDelegate extends DelegateColorScheme {
     float newLineSpacing = EditorFontsConstants.checkAndFixEditorLineSpacing(lineSpacing);
     updateSnapshot(snapshot -> snapshot.withLineSpacing(newLineSpacing));
     if (oldLineSpacing != newLineSpacing) {
-      myEditor.reinitSettings();
+      myEditor.reinitSettingsAfterFontChange(true);
     }
   }
 
@@ -321,7 +321,7 @@ final class EditorColorSchemeDelegate extends DelegateColorScheme {
   @Override
   public void setUseLigatures(boolean useLigatures) {
     if (updateSnapshot(snapshot -> withFonts(snapshot.withUseLigatures(useLigatures)))) {
-      myEditor.reinitSettings();
+      myEditor.reinitSettingsAfterFontChange(true);
     }
   }
 

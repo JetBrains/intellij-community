@@ -2,10 +2,14 @@
 package com.intellij.platform.vcs.impl.shared.changes
 
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.vcs.changes.DiffPreview
 import com.intellij.ui.OnePixelSplitter
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.JBUI.emptySize
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import javax.swing.SwingUtilities.updateComponentTreeUI
 
 class PreviewDiffSplitterComponent(
@@ -15,7 +19,13 @@ class PreviewDiffSplitterComponent(
 
   private var isPreviewVisible = false
 
-  override fun openPreview(requestFocus: Boolean): Boolean {
+  override suspend fun openPreview(requestFocus: Boolean): Boolean = withContext(Dispatchers.EDT) { showPreview() }
+
+  override fun performDiffAction(): Boolean = showPreview()
+
+  /** Shows the preview pane of the splitter. The refresh of its content comes later. */
+  @RequiresEdt
+  fun showPreview(): Boolean {
     setPreviewVisible(true)
     // diff may need the platform locks, and we can't guarantee the correct dispatcher, so let's update with a delay
     ApplicationManager.getApplication()

@@ -3,6 +3,34 @@ f:com.intellij.platform.eel.EelNioFsKt
 *:com.intellij.platform.eel.EelPathBoundDescriptor
 - com.intellij.platform.eel.EelDescriptor
 - a:getRootPath():java.nio.file.Path
+*:com.intellij.platform.eel.fs.EelCopyOption
+- java.nio.file.CopyOption
+*f:com.intellij.platform.eel.fs.EelCopyOption$Cancellable
+- com.intellij.platform.eel.fs.EelCopyOption
+- sf:INSTANCE:com.intellij.platform.eel.fs.EelCopyOption$Cancellable
+*f:com.intellij.platform.eel.fs.EelCopyOption$ContinueOnError
+- com.intellij.platform.eel.fs.EelCopyOption
+- sf:INSTANCE:com.intellij.platform.eel.fs.EelCopyOption$ContinueOnError
+*f:com.intellij.platform.eel.fs.EelCopyOption$Progress
+- com.intellij.platform.eel.fs.EelCopyOption
+- <init>():V
+- <init>(kotlinx.coroutines.flow.MutableSharedFlow):V
+- equals(java.lang.Object):Z
+- f:getFlow():kotlinx.coroutines.flow.MutableSharedFlow
+- hashCode():I
+*f:com.intellij.platform.eel.fs.EelCopyOption$ProgressEvent
+- <init>(java.nio.file.Path,java.nio.file.Path,J,I):V
+- <init>(java.nio.file.Path,java.nio.file.Path,J,I,java.io.IOException):V
+- equals(java.lang.Object):Z
+- f:getBytesTransferred():J
+- f:getError():java.io.IOException
+- f:getFilesTransferred():I
+- f:getSource():java.nio.file.Path
+- f:getTarget():java.nio.file.Path
+- hashCode():I
+*f:com.intellij.platform.eel.fs.EelCopyOption$Recursive
+- com.intellij.platform.eel.fs.EelCopyOption
+- sf:INSTANCE:com.intellij.platform.eel.fs.EelCopyOption$Recursive
 *f:com.intellij.platform.eel.fs.EelFileUtils
 - sf:INSTANCE:com.intellij.platform.eel.fs.EelFileUtils
 - sf:deleteRecursively(java.nio.file.Path):V
@@ -87,21 +115,18 @@ f:com.intellij.platform.eel.provider.EelPathDescriptorKt
 *:com.intellij.platform.eel.provider.utils.EelPathUtils$TransferTarget
 *f:com.intellij.platform.eel.provider.utils.EelPathUtils$TransferTarget$Explicit
 - com.intellij.platform.eel.provider.utils.EelPathUtils$TransferTarget
+- <init>(com.intellij.platform.eel.EelDescriptor,kotlin.jvm.functions.Function1):V
+- <init>(com.intellij.platform.eel.EelDescriptor,Z,kotlin.jvm.functions.Function1):V
 - <init>(java.nio.file.Path):V
-- f:component1():java.nio.file.Path
-- f:copy(java.nio.file.Path):com.intellij.platform.eel.provider.utils.EelPathUtils$TransferTarget$Explicit
-- bs:copy$default(com.intellij.platform.eel.provider.utils.EelPathUtils$TransferTarget$Explicit,java.nio.file.Path,I,java.lang.Object):com.intellij.platform.eel.provider.utils.EelPathUtils$TransferTarget$Explicit
-- equals(java.lang.Object):Z
-- f:getPath():java.nio.file.Path
-- hashCode():I
+- <init>(java.nio.file.Path,Z):V
+- f:getDescriptor():com.intellij.platform.eel.EelDescriptor
+- f:getPathResolver():kotlin.jvm.functions.Function1
+- f:getResyncOnEachCall():Z
 *f:com.intellij.platform.eel.provider.utils.EelPathUtils$TransferTarget$Temporary
 - com.intellij.platform.eel.provider.utils.EelPathUtils$TransferTarget
 - <init>(com.intellij.platform.eel.EelDescriptor):V
-- f:component1():com.intellij.platform.eel.EelDescriptor
-- f:copy(com.intellij.platform.eel.EelDescriptor):com.intellij.platform.eel.provider.utils.EelPathUtils$TransferTarget$Temporary
-- bs:copy$default(com.intellij.platform.eel.provider.utils.EelPathUtils$TransferTarget$Temporary,com.intellij.platform.eel.EelDescriptor,I,java.lang.Object):com.intellij.platform.eel.provider.utils.EelPathUtils$TransferTarget$Temporary
-- equals(java.lang.Object):Z
+- <init>(com.intellij.platform.eel.EelDescriptor,Z):V
 - f:getDescriptor():com.intellij.platform.eel.EelDescriptor
-- hashCode():I
+- f:getResyncOnEachCall():Z
 f:com.intellij.platform.eel.provider.utils.EelPathUtilsKt
 - *sf:Path(java.lang.String,com.intellij.platform.eel.EelDescriptor):java.nio.file.Path

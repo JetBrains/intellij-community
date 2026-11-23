@@ -148,6 +148,31 @@ class MigrationContentManifestTest {
   }
 
   @Test
+  fun `final URL can be on the regional mirror, the first URL cannot`() {
+    val mirror = "https://download-cdn.clf.jetbrains.com.cn/go/goland-2027.1-aarch64.dmg"
+    assertTrue(isAllowedFinalContentUrl(mirror, allowFileUrls = false))
+    assertFalse(isAllowedContentUrl(mirror, allowFileUrls = false))
+    assertTrue(isAllowedFinalContentUrl("https://jetbrains.com.cn/a.dmg", allowFileUrls = false))
+    assertTrue(isAllowedFinalContentUrl("https://download-cdn.jetbrains.com/a.dmg", allowFileUrls = false))
+  }
+
+  @Test
+  fun `final URL must be https on a JetBrains domain`() {
+    assertFalse(isAllowedFinalContentUrl("https://jetbrains.com.cn.evil.com/a.dmg", allowFileUrls = false))
+    assertFalse(isAllowedFinalContentUrl("https://evil-jetbrains.com.cn/a.dmg", allowFileUrls = false))
+    assertFalse(isAllowedFinalContentUrl("http://download-cdn.clf.jetbrains.com.cn/a.dmg", allowFileUrls = false))
+    assertFalse(isAllowedFinalContentUrl("https://jetbrains.com.evil.com/a.dmg", allowFileUrls = false))
+    assertFalse(isAllowedFinalContentUrl("https://example.com/a.dmg", allowFileUrls = false))
+    assertFalse(isAllowedFinalContentUrl("https://www.jetbrains.com.cn@evil.com/a.dmg", allowFileUrls = false))
+  }
+
+  @Test
+  fun `final file URL needs the debug flag`() {
+    assertFalse(isAllowedFinalContentUrl("file:///tmp/a.dmg", allowFileUrls = false))
+    assertTrue(isAllowedFinalContentUrl("file:///tmp/a.dmg", allowFileUrls = true))
+  }
+
+  @Test
   fun `file URLs need the debug flag`() {
     assertFalse(isAllowedContentUrl("file:///tmp/a.svg", allowFileUrls = false))
     assertTrue(isAllowedContentUrl("file:///tmp/a.svg", allowFileUrls = true))

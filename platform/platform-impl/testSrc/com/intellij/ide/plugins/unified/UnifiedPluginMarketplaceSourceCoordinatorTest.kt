@@ -182,29 +182,44 @@ internal class UnifiedPluginMarketplaceSourceCoordinatorTest {
   }
 
   @Test
-  fun `Suggested publishes partial content while another input is loading`() = runTest {
-    val mergedResult = CompletableDeferred<UnifiedPluginMarketplaceFetchResult>()
+  fun `Suggested shows project suggestions Staff Picks and Marketplace results in order`() = runTest {
+    val staffPicks = CompletableDeferred<UnifiedPluginMarketplaceFetchResult>()
+    val marketplaceResults = CompletableDeferred<UnifiedPluginMarketplaceFetchResult>()
     val provider = FakeMarketplaceDataProvider(
       loadSuggested = {
-        flow {
-          emit(fetch("staff.pick"))
-          emit(mergedResult.await())
-        }
+        loadMergedSuggestedPlugins(
+          loadProjectSuggestions = { fetch("project.suggestion") },
+          loadStaffPicks = { staffPicks.await() },
+          loadMarketplaceResults = { marketplaceResults.await() },
+        )
       }
     )
     val coordinator = coordinator(provider)
     coordinator.start()
     runCurrent()
 
-    assertThat(coordinator.state.value.section.items.map { it.pluginId.idString }).containsExactly("staff.pick")
+    assertThat(coordinator.state.value.section.items.map { it.pluginId.idString }).containsExactly("project.suggestion")
     assertThat(coordinator.state.value.section.status).isEqualTo(PluginSectionStatus.Loading(showingStaleContent = true))
 
-    mergedResult.complete(fetch("project.suggestion", "staff.pick"))
+    staffPicks.complete(fetch("staff.pick"))
     runCurrent()
 
     assertThat(coordinator.state.value.section.items.map { it.pluginId.idString })
       .containsExactly("project.suggestion", "staff.pick")
+    assertThat(coordinator.state.value.section.status).isEqualTo(PluginSectionStatus.Loading(showingStaleContent = true))
+
+    marketplaceResults.complete(fetch("marketplace.plugin"))
+    runCurrent()
+
+    assertThat(coordinator.state.value.section.items.map { it.pluginId.idString })
+      .containsExactly("project.suggestion", "staff.pick", "marketplace.plugin")
     assertThat(coordinator.state.value.section.status).isEqualTo(PluginSectionStatus.Ready)
+
+    coordinator.refreshEnrichment()
+    runCurrent()
+
+    assertThat(coordinator.state.value.section.items.map(PluginItemState::suggestedGroup))
+      .containsExactly(SuggestedPluginGroup.Project, SuggestedPluginGroup.StaffPicks, SuggestedPluginGroup.Marketplace)
     coordinator.close()
   }
 

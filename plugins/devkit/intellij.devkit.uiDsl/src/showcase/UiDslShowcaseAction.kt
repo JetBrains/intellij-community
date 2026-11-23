@@ -23,31 +23,35 @@ import kotlin.reflect.KFunction
 import kotlin.reflect.full.findAnnotation
 import kotlin.reflect.jvm.javaMethod
 
-private val DEMOS = arrayOf(
-  ::demoExamples,
-  ::demoBasics,
-  ::demoRowLayout,
-  ::demoComponentLabels,
-  ::demoComments,
-  ::demoComponents,
-  ::demoGaps,
-  ::demoGroups,
-  ::demoAvailability,
-  ::demoValidation,
-  ::demoBinding,
-)
-
 internal class UiDslShowcaseAction : DumbAwareAction() {
 
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   override fun actionPerformed(e: AnActionEvent) {
-    UiDslShowcaseDialog(e.project, templatePresentation.text).show()
+    UiDslShowcaseDialog(e.project, templatePresentation.text, null).show()
   }
 }
 
-private class UiDslShowcaseDialog(val project: Project?, dialogTitle: @NlsContexts.DialogTitle String) :
-  DialogWrapper(project, null, true, IdeModalityType.MODELESS, false) {
+@Suppress("SplitModeApiUsage")
+internal class UiDslShowcaseDialog(
+  val project: Project?,
+  dialogTitle: @NlsContexts.DialogTitle String,
+  private val initialTab: Tab?,
+) : DialogWrapper(project, null, true, IdeModalityType.MODELESS, false) {
+
+  enum class Tab(internal val creator: KFunction<DialogPanel>) {
+    EXAMPLES(::demoExamples),
+    BASICS(::demoBasics),
+    ROW_LAYOUT(::demoRowLayout),
+    COMPONENT_LABELS(::demoComponentLabels),
+    COMMENTS(::demoComments),
+    COMPONENTS(::demoComponents),
+    GAPS(::demoGaps),
+    GROUPS(::demoGroups),
+    AVAILABILITY(::demoAvailability),
+    VALIDATION(::demoValidation),
+    BINDING(::demoBinding),
+  }
 
   init {
     title = dialogTitle
@@ -59,14 +63,17 @@ private class UiDslShowcaseDialog(val project: Project?, dialogTitle: @NlsContex
     result.minimumSize = Dimension(400, 300)
     result.preferredSize = Dimension(800, 600)
 
-    for (demo in DEMOS) {
-      addDemo(demo, result)
+    for (tab in Tab.entries) {
+      val content = addDemo(tab.creator, result)
+      if (tab == initialTab) {
+        result.selectedComponent = content
+      }
     }
 
     return result
   }
 
-  private fun addDemo(demo: KFunction<DialogPanel>, tabbedPane: JBTabbedPane) {
+  private fun addDemo(demo: KFunction<DialogPanel>, tabbedPane: JBTabbedPane): JComponent {
     val annotation = demo.findAnnotation<Demo>()
     if (annotation == null) {
       throw Exception("Demo annotation is missed for ${demo.name}")
@@ -114,5 +121,6 @@ private class UiDslShowcaseDialog(val project: Project?, dialogTitle: @NlsContex
     }
 
     tabbedPane.add(DevkitUiDslBundle.message(annotation.title), content)
+    return content
   }
 }

@@ -58,7 +58,7 @@ class PluginLayout(val mainModule: String, @Internal @JvmField val auto: Boolean
    * Whether the layout replaces the raw descriptor text before the stamps run - see [rawPluginXmlPatcher].
    *
    * A reader cannot compare the field against the default itself, because the default is one shared instance a caller
-   * outside this file cannot name. The dev-distribution descriptor plan needs the answer: a plugin whose raw text is
+   * outside this file cannot name. The distribution descriptor plan needs the answer: a plugin whose raw text is
    * patched by code cannot be produced by an action that reads a plan.
    */
   val hasRawPluginXmlPatcher: Boolean
@@ -71,7 +71,7 @@ class PluginLayout(val mainModule: String, @Internal @JvmField val auto: Boolean
   /**
    * The raw text patch as data, or `null` when the layout states it as code - see [DescriptorMarkerPatcher].
    *
-   * The dev-distribution descriptor plan states a marker list and holds a plugin out when this answer is `null`.
+   * The distribution descriptor plan states a marker list and holds a plugin out when this answer is `null`.
    *
    * The empty list for a layout that patches nothing, because that is the table such a layout states.
    */
@@ -117,11 +117,11 @@ class PluginLayout(val mainModule: String, @Internal @JvmField val auto: Boolean
   var scrambleClasspathFilter: (BuildContext, Path) -> Boolean = { _, _ -> true }
 
   /**
-   * The checkout directories of modules that a dev-distribution target of another layout reads, see
-   * [PluginLayoutSpec.withDevDistSourceTree]. Production packs none of them.
+   * The checkout directories of modules that a distribution target of another layout reads, see
+   * [PluginLayoutSpec.withDistSourceTree]. Production packs none of them.
    */
   @Internal
-  var devDistSourceTrees: PersistentList<LayoutAssetSource.ModuleDirectory> = persistentListOf()
+  var distSourceTrees: PersistentList<LayoutAssetSource.ModuleDirectory> = persistentListOf()
     private set
 
   /**
@@ -190,7 +190,7 @@ class PluginLayout(val mainModule: String, @Internal @JvmField val auto: Boolean
    *
    * A declared-input question, which is why it is readable from outside. `JarPackager` does not copy these libraries
    * into the module's jar, so nothing about the module's own bytes says they are needed; a custom asset or generator
-   * reads them instead (`layoutDatabaseDialects` zips the dialect jars this way). A dev-distribution action must
+   * reads them instead (`layoutDatabaseDialects` zips the dialect jars this way). A distribution action must
    * therefore still declare them.
    */
   @Internal
@@ -199,7 +199,7 @@ class PluginLayout(val mainModule: String, @Internal @JvmField val auto: Boolean
   /**
    * The module libraries `excludeModuleLibrary` takes out of a member's jar, by member module name.
    *
-   * A declared-input question, like [getModulesWithExcludedModuleLibraries]: the dev-distribution layout tables state
+   * A declared-input question, like [getModulesWithExcludedModuleLibraries]: the distribution layout tables state
    * it, so that the JPS-to-Bazel converter derives the library set a member's jar really merges.
    */
   @Internal
@@ -220,7 +220,7 @@ class PluginLayout(val mainModule: String, @Internal @JvmField val auto: Boolean
     private set
 
   /**
-   * The platform resource generators. The dev-distribution generator plans each one from its [LayoutAssetSpec],
+   * The platform resource generators. The distribution generator plans each one from its [LayoutAssetSpec],
    * and the spec states whether the classic dev build runs it. See [PluginLayoutBuilder.withGeneratedPlatformResources].
    */
   @ApiStatus.Internal
@@ -292,9 +292,12 @@ class PluginLayout(val mainModule: String, @Internal @JvmField val auto: Boolean
       return layout
     }
 
+    /**
+     * Defines layout for a plugin where additional customization are applied
+     */
     @Deprecated("Use `pluginAuto` instead")
     @Suppress("DEPRECATION")
-    fun pluginAutoWithCustomDirName(mainModuleName: String, body: (PluginLayoutSpec) -> Unit): PluginLayout {
+    fun pluginWithCustomLayout(mainModuleName: String, body: (PluginLayoutSpec) -> Unit): PluginLayout {
       return plugin(mainModuleName = mainModuleName, auto = true, body = body)
     }
 
@@ -310,6 +313,7 @@ class PluginLayout(val mainModule: String, @Internal @JvmField val auto: Boolean
 
     fun pluginAuto(moduleName: String, body: (SimplePluginLayoutSpec) -> Unit): PluginLayout = pluginAuto(listOf(moduleName), body)
 
+    @Deprecated("Use pluginAuto(moduleName, body) and register additional modules as content modules")
     fun pluginAuto(moduleNames: List<String>, body: (SimplePluginLayoutSpec) -> Unit): PluginLayout {
       val layout = PluginLayout(mainModule = moduleNames.first(), auto = true)
       layout.withModules(moduleNames)
@@ -330,6 +334,7 @@ class PluginLayout(val mainModule: String, @Internal @JvmField val auto: Boolean
      * Direct main module dependencies in the same module group are included automatically.
      * Project-level libraries are not - see the note in [plugin].
      */
+    @Deprecated("Use pluginAuto(moduleName) and register additional modules as content modules")
     fun pluginAuto(moduleNames: List<String>): PluginLayout {
       val layout = PluginLayout(mainModule = moduleNames.first(), auto = true)
       layout.withModules(moduleNames)
@@ -397,7 +402,7 @@ class PluginLayout(val mainModule: String, @Internal @JvmField val auto: Boolean
      * @param relativeOutputPath target path relative to the plugin root directory
      *
      * The path stays inside the Bazel package of the module, the directory that holds its `BUILD.bazel`. It uses no `..`
-     * and crosses no nested package. The dev-distribution generator derives `//<package>:dev_dist_resources` from the
+     * and crosses no nested package. The distribution generator derives `//<package>:dist_resources` from the
      * declaration and refuses a layout that breaks the rule. Declare a resource against the module whose package holds it.
      */
     fun withResource(resourcePath: String, relativeOutputPath: String) {
@@ -413,8 +418,8 @@ class PluginLayout(val mainModule: String, @Internal @JvmField val auto: Boolean
     }
 
     /**
-     * A resource generator. The dev-distribution generator plans it from [layoutAssetSpec], and
-     * [LayoutAssetSpec.OMITTED] states that the dev distribution leaves its files out.
+     * A resource generator. The distribution generator plans it from [layoutAssetSpec], and
+     * [LayoutAssetSpec.OMITTED] states that the distribution leaves its files out.
      * [LayoutAssetSpec.runsInClassicDev] states whether the classic dev build also runs [generator].
      */
     fun withGeneratedResources(layoutAssetSpec: LayoutAssetSpec, generator: ResourceGenerator) {
@@ -422,14 +427,14 @@ class PluginLayout(val mainModule: String, @Internal @JvmField val auto: Boolean
     }
 
     /**
-     * Declares the checkout directory [tree] as a source tree that a dev-distribution target of another layout reads.
-     * Its path is relative to the first content root of the module. The dev-distribution generator declares the
+     * Declares the checkout directory [tree] as a source tree that a distribution target of another layout reads.
+     * Its path is relative to the first content root of the module. The distribution generator declares the
      * filegroup of the directory in the package of the module. Production packs nothing for it.
      */
     @Internal
-    fun withDevDistSourceTree(tree: LayoutAssetSource.ModuleDirectory) {
-      require(tree.exclusions.isEmpty()) { "A dev-distribution source tree states no exclusions: $tree" }
-      layout.devDistSourceTrees += tree
+    fun withDistSourceTree(tree: LayoutAssetSource.ModuleDirectory) {
+      require(tree.exclusions.isEmpty()) { "A distribution source tree states no exclusions: $tree" }
+      layout.distSourceTrees += tree
     }
 
     /** Copies a module resource tree through the same declaration in production and development. */
@@ -445,7 +450,7 @@ class PluginLayout(val mainModule: String, @Internal @JvmField val auto: Boolean
 
     /**
      * Unpacks the single jar of the project library [libraryName] into [relativeOutputPath] under the plugin directory.
-     * The dev-distribution generator plans this declaration from the library name.
+     * The distribution generator plans this declaration from the library name.
      */
     fun withLibraryResources(libraryName: String, relativeOutputPath: String) {
       layout.resourceGenerators += LibraryResourceGenerator(libraryName = libraryName, targetPath = relativeOutputPath)
@@ -475,8 +480,8 @@ class PluginLayout(val mainModule: String, @Internal @JvmField val auto: Boolean
     }
 
     /**
-     * A platform resource generator. The dev-distribution generator plans it from [layoutAssetSpec], and
-     * [LayoutAssetSpec.OMITTED] states that the dev distribution leaves its files out.
+     * A platform resource generator. The distribution generator plans it from [layoutAssetSpec], and
+     * [LayoutAssetSpec.OMITTED] states that the distribution leaves its files out.
      * [LayoutAssetSpec.runsInClassicDev] states whether the classic dev build also runs [generator].
      * See [platformResourceGenerators].
      */
@@ -509,7 +514,7 @@ class PluginLayout(val mainModule: String, @Internal @JvmField val auto: Boolean
      * @param relativeOutputPath target path relative to the plugin root directory
      *
      * The path stays inside the Bazel package of the module, the directory that holds its `BUILD.bazel`. It uses no `..`
-     * and crosses no nested package. The dev-distribution generator derives `//<package>:dev_dist_resources` from the
+     * and crosses no nested package. The distribution generator derives `//<package>:dist_resources` from the
      * declaration and refuses a layout that breaks the rule. Declare a resource against the module whose package holds it.
      */
     fun withResourceFromModule(moduleName: String, resourcePath: String, relativeOutputPath: String) {
@@ -546,7 +551,6 @@ class PluginLayout(val mainModule: String, @Internal @JvmField val auto: Boolean
        * (with stripped `intellij` prefix and `plugin` suffix, and dots replaced by dashes).
        * **Don't set this property for new plugins**; it is temporarily added to keep the layout of old plugins unchanged.
        */
-      @Deprecated("Plugins shouldn't specify custom directory names to simplify build scripts and migration to Bazel")
       set(value) {
         field = value
         directoryNameSetExplicitly = true
@@ -711,7 +715,7 @@ private const val OS_SPECIFIC_DEPENDENCIES_PLUGIN_XML_PLACEHOLDER: String = "<!-
 /**
  * One replacement of the raw descriptor text: the text that must be there, and what takes its place.
  *
- * A pair of strings and not a lambda, so that the dev-distribution descriptor plan can state the replacement as data.
+ * A pair of strings and not a lambda, so that the distribution descriptor plan can state the replacement as data.
  * Both producers of a patched descriptor then apply the same pair, and neither runs the layout's Kotlin.
  */
 class DescriptorMarker(@JvmField val literal: String, @JvmField val replacement: String)
@@ -778,7 +782,7 @@ fun interface PluginVersionEvaluator {
 /**
  * A [PluginVersionEvaluator] whose answer is the IDE build version plus a fixed suffix.
  *
- * The dev-distribution descriptor plan holds no build context and cannot run an evaluator. It reads [versionSuffix]
+ * The distribution descriptor plan holds no build context and cannot run an evaluator. It reads [versionSuffix]
  * instead, and both producers of the patched descriptor append that string to the build number they compute.
  */
 interface DataPluginVersionEvaluator : PluginVersionEvaluator {

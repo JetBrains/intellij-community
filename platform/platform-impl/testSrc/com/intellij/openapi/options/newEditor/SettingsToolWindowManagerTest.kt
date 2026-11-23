@@ -15,10 +15,10 @@ import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.util.asDisposable
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import org.assertj.core.api.Assertions.assertThat
-import org.jetbrains.concurrency.await
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Timeout
 import javax.swing.JComponent
@@ -90,8 +90,9 @@ internal class SettingsToolWindowManagerTest {
         override fun getConfigurables(): Array<Configurable> = arrayOf(page)
       }
       val manager = SettingsToolWindowManager.getInstance(project)
-      manager.createEditor(listOf(group), configurable = page, filter = null).treeView.select(page).await()
-      // the editor resets a page when it shows the page first
+      manager.createEditor(listOf(group), configurable = page, filter = null)
+      // The editor loads and resets the page asynchronously after the tree selects it.
+      page.initialReset.await()
       page.resets = 0
       block(manager, page)
     }
@@ -100,6 +101,7 @@ internal class SettingsToolWindowManagerTest {
 
 /** A page that the test changes. Apply and Reset drop the change, as a real page does. */
 private class TestPage(private val id: String) : SearchableConfigurable {
+  val initialReset = CompletableDeferred<Unit>()
   var modified: Boolean = false
   var applies: Int = 0
   var resets: Int = 0
@@ -120,5 +122,6 @@ private class TestPage(private val id: String) : SearchableConfigurable {
   override fun reset() {
     resets++
     modified = false
+    initialReset.complete(Unit)
   }
 }

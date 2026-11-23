@@ -1,5 +1,5 @@
 <!--suppress PluginXmlPluginLogo -->
-<idea-plugin>
+<idea-plugin implementation-detail="true">
   <id>com.intellij.modules.pty4j</id>
   <name>Pseudo Terminal (PTY4J)</name>
   <vendor>JetBrains</vendor>

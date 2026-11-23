@@ -31,7 +31,7 @@ macOS guest, for the golden image, and for the Parallels VM. It is needed for a 
 takes the user's own screen and focus.
 
 The host-side provider, layout-plan, fragment and composition flow is documented
-in [Dev-build architecture](../../../../build/docs/guides/dev-build-architecture.md). The guest consumes a
+in [Distribution architecture](../../../../build/docs/guides/dev-build-architecture.md). The guest consumes a
 self-contained Bazel distribution, and it needs no checkout of its own. Nothing caches a guest run,
 so an iteration runs every suite it selects again. On 2026-09-30 the `ui` lane was 71 tests in 40
 classes, and it took 750 s of test time on a Tart Linux worker with a cold daemon. Ask `vm.cmd suites <paths>` what your change reaches, then run `run --changed <paths>`.
@@ -296,6 +296,11 @@ env -u DOCKER_HOST ./community/tools/vm.cmd run AgentSessionToolWindowComposerUi
   downloads the kernel, about 700 MB, and its log is `<runtime root>/container-system.log`.
 - **A foreign server.** A server of another install with another major version is refused
   `container_engine_foreign`. A server of another install with the same major version is used, with a note.
+- **A pin on another volume.** When `AIR_VM_BAZEL_USER_ROOT` or `--output_user_root` puts the Bazel root on another
+  volume than the runtime root, such as an external disk, the network plugin of the engine does not start from there.
+  The controller then runs a copy of the pinned install, `<runtime root>/apple-container/<pin>`, made once per pin
+  (about 420 MB) and checked with `codesign --verify --strict`. A failed copy or check is `container_copy_failed`
+  ([the pinned Apple container runs from the volume of the runtime root](decisions/2026-11-18-the-pinned-container-runs-from-the-volume-of-the-runtime-root.md)).
 - **The nameserver.** The DNS proxy of the engine does not answer on every host. So each build and each container
   gets `--dns`: `AIR_VM_DNS`, else the first nameserver of the host outside the loopback, else `1.1.1.1`. A guest
   that needs a name that only a VPN resolver knows needs `AIR_VM_DNS`.
@@ -405,7 +410,7 @@ route exists. No lane time is measured for this route.
 The runtime descriptor of the lanes names everything a run needs, and its runfiles carry it. The lane test of each
 lane, such as `//plugins/air/tests/integration/ui:ui_lane_test`, runs the descriptor
 `//plugins/air/tests/integration/ui:ui_daemon` on the host, through the `lane-run` verb of the guest agent. The IDE arrives as an already-assembled distribution: `//plugins/air/tests/integration/ide:idea_air_lane_dist_linux` on
-the default guest, and `//plugins/air/tests/integration/ide:idea_air_lane_dist` on a macOS one. The field `devDist.config`
+the default guest, and `//plugins/air/tests/integration/ide:idea_air_lane_dist` on a macOS one. The field `dist.config`
 of the descriptor names the file of that distribution's `_ide_config` companion target, not the distribution itself.
 The field `ide.flagsFile` names the IDE flags file. The guest agent reads both from these fields. Of the static flags,
 it reads only `-Dair.trace.recorder`, `-Dair.flow.trace=off`, `-Dair.flow.trace.screen=on` and
@@ -477,6 +482,24 @@ holds it, because the IDE runs from the share, and so does any in-flight run tha
 data. The daemon does not, and the next section states how that is asserted. Each lane IDE is a run of
 the guest agent's supervisor, so after the IDE stop the controller asks the supervisor about every IDE
 context. A run that is not finished refuses the remount as `daemon_remount_ide_running`.
+
+### The JetBrains Light lane
+
+The lane `ui-light` runs JetBrains Light, not IDEA. Its suites check the frame model of Air in a workspace host frame of
+JetBrains Light. Use it for a change of `plugins/air/frontend/session/unifiedIde/`,
+`plugins/air/frontend/session/toolwindow.unifiedIde/` or `platform/unified/workspace/`. `vm.cmd suites` maps these
+paths to its suites.
+
+The lane has two descriptors of its own: `//plugins/air/tests/integration/ui:ui_daemon_linux_guest_light` on the
+default guest and `:ui_daemon_light` on a macOS guest. They name the distribution
+`//plugins/air/tests/integration/ide:light_air_lane_dist_linux` and `:light_air_lane_dist`. JetBrains Light does not
+bundle the performance plugin, which the bridge needs for its robot. So the IDE context gets that plugin beside the
+bridge. The lane document turns the registry key `ijlight.workspace.enabled` on, so the driven project opens as a member
+of a workspace host frame.
+
+One build names one distribution. So a run that reaches `ui-light` and another lane is refused with
+`light_lane_beside_other_lanes`. Run the selection twice, once with `--lane ui-light`. The lane test is `manual`, so
+neither a wildcard build nor the TeamCity UI job assembles the JetBrains Light distribution.
 
 ### Guest-local writable state
 
@@ -1168,7 +1191,7 @@ under cargo's own feature resolution, the reference gates, and one live command:
 ./bazel.cmd test @community//tools/vm/... //plugins/air/tests/integration/vm-contract/... @community//tools/bt/...
 ./bazel.cmd build @community//tools/vm:vm-guest-agent-linux-arm64 @community//tools/vm:air-trace-record-linux-arm64
 (cd community/tools/vm && cargo test)
-./community/tools/bt.cmd AirSpecReferencesTest
+./community/tools/bt.cmd //plugins/air:air-plugin-tests_test --filter com.intellij.air.plugin.AirSpecReferencesTest
 (cd plugins/air/docs && pnpm run check)
 ./community/tools/vm.cmd status
 ```

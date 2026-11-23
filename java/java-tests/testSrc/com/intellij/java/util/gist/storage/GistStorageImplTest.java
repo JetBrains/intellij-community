@@ -3,8 +3,10 @@ package com.intellij.java.util.gist.storage;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.testFramework.UsefulTestCase;
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase4;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.intellij.util.gist.storage.GistStorage;
 import com.intellij.util.gist.storage.GistStorage.Gist;
 import com.intellij.util.gist.storage.GistStorage.GistData;
@@ -13,7 +15,7 @@ import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.EnumeratorStringDescriptor;
 import com.intellij.util.io.IOUtil;
 import org.jetbrains.annotations.NotNull;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.io.DataInput;
 import java.io.DataOutput;
@@ -23,11 +25,17 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.is;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaCodeInsightFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.fail;
 
-public class GistStorageImplTest extends LightJavaCodeInsightFixtureTestCase4 {
+@TestApplication
+public class GistStorageImplTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
 
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture = lightJavaCodeInsightFixture(projectFixture);
 
   public static final int DEFAULT_GIST_VERSION = 1;
   public static final int DEFAULT_GIST_STAMP = 42;
@@ -46,7 +54,7 @@ public class GistStorageImplTest extends LightJavaCodeInsightFixtureTestCase4 {
   @Test
   public void attemptToCreateGist_WithSameName_ButDifferentVersion_Fails() throws Throwable {
     gistOf("testGist", DEFAULT_GIST_VERSION);
-    UsefulTestCase.assertThrows(
+    assertThrows(
       IllegalArgumentException.class,
       () -> gistOf("testGist", DEFAULT_GIST_VERSION + 1)
     );
@@ -228,13 +236,13 @@ public class GistStorageImplTest extends LightJavaCodeInsightFixtureTestCase4 {
 
   @NotNull
   private String randomFileName() {
-    return getTestName() + '.' + filesCounter.incrementAndGet();
+    return codeInsightFixture.get().getTestName(true) + '.' + filesCounter.incrementAndGet();
   }
 
 
   private VirtualFile fileWithContent(@NotNull String fileName,
                                       @NotNull String fileContent) {
-    return getFixture().addFileToProject(fileName, fileContent).getVirtualFile();
+    return codeInsightFixture.get().addFileToProject(fileName, fileContent).getVirtualFile();
   }
 
   private VirtualFile emptyFile(@NotNull String fileName) {

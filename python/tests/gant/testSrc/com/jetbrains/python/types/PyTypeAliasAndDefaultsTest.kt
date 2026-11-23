@@ -41,7 +41,6 @@ class PyTypeAliasAndDefaultsTest : PyCodeInsightTestCase() {
           Type = set
 
       expr: Type[str]
-      # │       └ WEAK_WARNING Member 'type[set]' of 'type[list | set]' does not have attribute '__getitem__' FIXME
       # └ TYPE list[str]
       """.trimIndent())
 
@@ -57,7 +56,6 @@ class PyTypeAliasAndDefaultsTest : PyCodeInsightTestCase() {
           Type = set[T]
 
       expr: Type[str]
-      #│        └ WEAK_WARNING Member 'type[set[T]]' of 'type[list[T] | set[T]]' does not have attribute '__getitem__' FIXME
       #└ TYPE list[str]
       """.trimIndent())
 
@@ -70,7 +68,6 @@ class PyTypeAliasAndDefaultsTest : PyCodeInsightTestCase() {
       Type = list[T] | set[T]
 
       expr: Type[str]
-      # │       └ WEAK_WARNING Member 'type[set[T]]' of 'UnionType | type[list[T]] | type[set[T]]' does not have attribute '__getitem__' FIXME
       # └ TYPE list[str] | set[str]
       """.trimIndent())
 
@@ -84,8 +81,22 @@ class PyTypeAliasAndDefaultsTest : PyCodeInsightTestCase() {
       Type = dict[T1, T2] | set[T2]
 
       expr: Type[str, int]
-      #│        └ WEAK_WARNING Member 'type[set[T2]]' of 'UnionType | type[dict[T1, T2]] | type[set[T2]]' does not have attribute '__getitem__' FIXME
       #└ TYPE dict[str, int] | set[int]
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-93097"])
+    fun `type alias of union of generic type and plain type`() = test("""
+      from typing import TypeVar
+
+      T = TypeVar("T")
+
+      Tree = list[T] | int
+      Forest = Tree[T]
+
+      expr: Forest[str]
+      # │         └ WEAK_WARNING Member 'object' of 'object | type[list[T]] | type[int]' does not have attribute '__getitem__' FIXME # `UnionType.__getitem__` returns `object`
+      # └ TYPE list[str] | int
       """.trimIndent())
   }
 
@@ -130,7 +141,6 @@ class PyTypeAliasAndDefaultsTest : PyCodeInsightTestCase() {
 
     @Test
     @TestFor(issues = ["PY-84484"])
-    @TestCaseOptions(assertRecursionPrevention = false)
     fun `recursive type in dict`() = test("""
       from SpanQuery import SpanQuery
 

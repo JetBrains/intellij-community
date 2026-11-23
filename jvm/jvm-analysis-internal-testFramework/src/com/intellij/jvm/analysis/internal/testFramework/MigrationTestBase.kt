@@ -7,6 +7,10 @@ import com.intellij.refactoring.migration.MigrationProcessor
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import junit.framework.TestCase
 
+/**
+ * @deprecated Use [migrationFixture] in a JUnit 5 test.
+ */
+@Deprecated("Use migrationFixture in a JUnit 5 test")
 abstract class MigrationTestBase : LightJavaCodeInsightFixtureTestCase() {
   fun migrationTest(lang: JvmLanguage, before: String, after: String, vararg migrations: MigrationMapEntry) {
     val migrationMap = MigrationMap(migrations)

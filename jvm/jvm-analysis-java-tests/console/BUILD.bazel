@@ -68,7 +68,6 @@ jvm_library(
         "//jvm/jvm-analysis-internal-testFramework:analysis-internal-testFramework",
         "//libraries/jetcheck",
         "//libraries/fastutil",
-        "//libraries/junit4",
         "@lib//:easymock",
         "//platform/bazel-runfiles",
         "//platform/testFramework/junit5",

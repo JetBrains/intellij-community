@@ -2,18 +2,23 @@
 package com.jetbrains.python.packaging.management
 
 import com.intellij.openapi.application.WriteAction
+import com.intellij.python.sdk.backend.PythonInterpreter
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.impl.ProjectJdkImpl
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.psi.PsiManager
 import com.intellij.python.junit5Tests.framework.pyProjectFixture
 import com.intellij.python.pyproject.PyDependencyGroup
-import com.intellij.python.sdk.backend.PythonInterpreter
 import com.intellij.python.sdk.backend.PythonInterpreterDetails
 import com.intellij.python.sdk.backend.PythonInterpreterRegistry
 import com.intellij.python.sdk.backend.PythonInterpreterRoots
+import com.intellij.python.sdk.backend.addMockPythonInterpreter
 import com.intellij.python.venv.sdk.flavors.VirtualEnvSdkFlavor
 import com.intellij.testFramework.common.timeoutRunBlocking
+import com.intellij.testFramework.common.waitUntil
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.testFramework.junit5.fixture.tempPathFixture
@@ -33,6 +38,7 @@ import org.junit.jupiter.api.io.TempDir
 import java.nio.file.Path
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.io.path.createDirectories
+import kotlin.io.path.createFile
 import kotlin.time.Duration.Companion.minutes
 
 /**
@@ -56,10 +62,10 @@ internal class PythonPackageManagerCacheTest {
     val lists = AtomicInteger()
 
     val outdated = AtomicInteger()
-    val first = CountingManager(project, interpreter, lists)
+    val first = CountingManager(interpreter, lists)
     first.waitForInit()
     Disposer.dispose(first)
-    val second = CountingManager(project, interpreter, lists, outdated)
+    val second = CountingManager(interpreter, lists, outdated)
     second.waitForInit()
 
     assertThat(lists.get()).describedAs("Only the first manager lists the packages").isEqualTo(1)
@@ -75,12 +81,12 @@ internal class PythonPackageManagerCacheTest {
     sitePackages.resolve("requests-2.31.0.dist-info").createDirectories()
     val interpreter = registerInterpreter(project, home, sitePackages)
     val lists = AtomicInteger()
-    val first = CountingManager(project, interpreter, lists)
+    val first = CountingManager(interpreter, lists)
     first.waitForInit()
     Disposer.dispose(first)
 
     sitePackages.resolve("idna-3.6.dist-info").createDirectories()
-    val second = CountingManager(project, interpreter, lists)
+    val second = CountingManager(interpreter, lists)
     second.waitForInit()
 
     assertThat(lists.get()).isEqualTo(2)
@@ -94,23 +100,48 @@ internal class PythonPackageManagerCacheTest {
     val interpreter = registerInterpreter(project, home, sitePackages)
     val lists = AtomicInteger()
     val withSubclass = listOf(object : PythonPackage("conda-only", "1.0", false) {})
-    val first = CountingManager(project, interpreter, lists, packages = withSubclass)
+    val first = CountingManager(interpreter, lists, packages = withSubclass)
     first.waitForInit()
     Disposer.dispose(first)
 
-    val second = CountingManager(project, interpreter, lists, packages = withSubclass)
+    val second = CountingManager(interpreter, lists, packages = withSubclass)
     second.waitForInit()
 
     assertThat(lists.get()).describedAs("A list that the cache cannot keep is listed again").isEqualTo(2)
     Disposer.dispose(second)
   }
 
+  @Test
+  fun `a dependency file created after the init is tracked`(@TempDir home: Path): Unit = timeoutRunBlocking(1.minutes) {
+    val project = projectFixture.get()
+    val sitePackages = home.resolve("lib/python3.12/site-packages").createDirectories()
+    val requirements = modulePathFixture.get().resolve("requirements.txt")
+    val interpreter = registerInterpreter(project, home, sitePackages, requirementsPath = requirements)
+    val manager = CountingManager(interpreter, AtomicInteger())
+    manager.waitForInit()
+    manager.listDeclaredPackagesCached()
+
+    requirements.createFile()
+    val virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(requirements)!!
+    val psiFile = readAction { PsiManager.getInstance(project).findFile(virtualFile)!! }
+
+    waitUntil("The manager tracks the new dependency file") { manager.tracksDependencyFile(psiFile) }
+    Disposer.dispose(manager)
+  }
+
   /** A non-mock interpreter of the Python project of the fixture, whose `sys.path` is [sitePackages]. */
-  private suspend fun registerInterpreter(project: Project, home: Path, sitePackages: Path): PythonInterpreter {
+  private suspend fun registerInterpreter(
+    project: Project,
+    home: Path,
+    sitePackages: Path,
+    requirementsPath: Path? = null,
+  ): PythonInterpreter {
     val sdk = ProjectJdkImpl("py-packages-cache ${home.fileName}", PythonSdkType.getInstance())
     val modificator = sdk.sdkModificator
     modificator.homePath = home.resolve("bin").resolve("python").toString()
-    modificator.sdkAdditionalData = PythonSdkAdditionalData(PyFlavorAndData(PyFlavorData.Empty, VirtualEnvSdkFlavor.getInstance()), home)
+    modificator.sdkAdditionalData = PythonSdkAdditionalData(PyFlavorAndData(PyFlavorData.Empty, VirtualEnvSdkFlavor.getInstance()), home).apply {
+      setRequirementsPath(requirementsPath)
+    }
     WriteAction.runAndWait<RuntimeException> { modificator.commitChanges() }
     val interpreter = PythonInterpreterRegistry.getInstance(project).addMockPythonInterpreter(pyProjectFixture.get(), sdk)
     PythonInterpreterDetails.getInstance(project).writeSysPath(interpreter, listOf(sitePackages.toString()))
@@ -120,13 +151,12 @@ internal class PythonPackageManagerCacheTest {
 
   /** A manager whose list reads one package and counts the lists in [lists]. */
   private class CountingManager(
-    project: Project,
     interpreter: PythonInterpreter,
     private val lists: AtomicInteger,
     private val outdated: AtomicInteger = AtomicInteger(),
     private val packages: List<PythonPackage> = listOf(PythonPackage("requests", "2.31.0", false)),
   ) :
-    PythonPackageManager(project, interpreter) {
+    PythonPackageManager(interpreter) {
     override val repositoryManager: PythonRepositoryManager = TestPythonRepositoryManager(project)
     override val dependenciesFilesRelativePaths: List<Path> = emptyList()
 

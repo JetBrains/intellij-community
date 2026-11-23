@@ -31,13 +31,12 @@ use std::sync::{Arc, Condvar, Mutex, MutexGuard, PoisonError};
 use std::thread;
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
+use avl_control::proxy::{self, Command, Commands, ControlEndpoint, Lifecycle, Proxy};
+use avl_control::websocket::{self, Message, Receiver, Sender};
 use serde::Serialize;
 
-use self::proxy::{Command, Commands, Lifecycle, Proxy};
 use super::super::http::{self, Request, Response};
-use super::super::websocket::{self, Message, Receiver, Sender};
 
-mod proxy;
 #[cfg(test)]
 mod tests;
 
@@ -52,15 +51,6 @@ pub(crate) const UNAUTHORIZED: u16 = 401;
 
 /// What an MCP command of the control server gets.
 const NO_MCP_SERVER: &str = "a remote spawner offers no MCP server";
-
-/// Where the control server in the IDE listens, with the token of the credential, and the agent key that a dial
-/// connects as.
-#[derive(Clone, Debug, PartialEq, Eq)]
-pub(crate) struct ControlEndpoint {
-    /// `ws://127.0.0.1:<port>/control?token=<token>`.
-    pub url: String,
-    pub agent_key: String,
-}
 
 /// One dial of the IDE, in arrival order.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize)]
@@ -341,9 +331,9 @@ fn forward_inbound(dial: &mut Receiver, ide: &Sender, proxy: &Proxy, ends: &Ends
     if ends.exited() {
         return;
     }
-    let reported = forwarded.and_then(|()| proxy.lifecycle(Lifecycle::StdinEof, "the WebSocket closed", None));
+    let reported = forwarded.and_then(|()| proxy.lifecycle(Lifecycle::StdinEof, Some("the WebSocket closed"), None));
     if let Err(error) = reported {
-        let _ = proxy.lifecycle(Lifecycle::ControlFailure, &format!("{:?}", error.kind()), None);
+        let _ = proxy.lifecycle(Lifecycle::ControlFailure, Some(&format!("{:?}", error.kind())), None);
         ide.close(websocket::INTERNAL_ERROR);
     }
     proxy.close();
@@ -368,16 +358,16 @@ fn apply_commands(index: usize, commands: &mut Commands, ide: &Sender, proxy: &P
                 proxy.ack(&id)
             }
             Command::CloseStdout { id } => proxy
-                .lifecycle(Lifecycle::StdoutClosed, "the WebSocket closed by control", None)
+                .lifecycle(Lifecycle::StdoutClosed, Some("the WebSocket closed by control"), None)
                 .and_then(|()| proxy.ack(&id))
                 .map(|()| {
                     ide.close(websocket::NORMAL_CLOSURE);
                 }),
             Command::Exit { id, code } => proxy
-                .lifecycle(Lifecycle::ProcessExit, "exit command", Some(code))
+                .lifecycle(Lifecycle::ProcessExit, Some("exit command"), Some(code))
                 .and_then(|()| proxy.ack(&id))
                 .map(|()| exit(ide, proxy, ends)),
-            Command::Mcp { id } => proxy.mcp_error(&id, NO_MCP_SERVER),
+            Command::Mcp { id, .. } => proxy.mcp_result(&id, true, NO_MCP_SERVER),
         };
         if let Err(error) = applied {
             break error;

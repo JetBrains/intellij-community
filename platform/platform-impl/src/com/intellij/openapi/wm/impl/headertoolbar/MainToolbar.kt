@@ -70,6 +70,7 @@ import com.intellij.ui.UIBundle
 import com.intellij.ui.WindowMoveListener
 import com.intellij.ui.components.panels.HorizontalLayout
 import com.intellij.ui.mac.touchbar.TouchbarSupport
+import com.intellij.util.StartupUiGate
 import com.intellij.util.asDisposable
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.ContainerUtil
@@ -223,6 +224,8 @@ class MainToolbar(
    * the creation and the first update of each widget are EDT events that the tool window initialization would wait for.
    * The first update of such a deferred fill skips the fast track: the actions expand in the background,
    * and only the result of each update is an EDT event, so the post-paint work of the frame keeps the EDT.
+   * An armed [StartupUiGate] delays the fill further, until the editors are shown: the widget creation is one EDT block
+   * that otherwise sits between the first editor and its paint.
    */
   internal suspend fun initInHeader(customTitleBar: WindowDecorations.CustomTitleBar?) {
     val permit = ProjectFrameHelper.getFrameHelper(frame)?.mainMenuFillPermit
@@ -235,6 +238,11 @@ class MainToolbar(
     withContext(if (StartUpMeasurer.isEnabled()) rootTask() else EmptyCoroutineContext) {
       span("main toolbar fill: frame content painted waiting") {
         permit.join()
+      }
+      if (!StartupUiGate.isReady) {
+        span("main toolbar fill: startup UI gate waiting") {
+          StartupUiGate.awaitEditorsShown()
+        }
       }
       span("main toolbar fill") {
         doInit(customTitleBar = customTitleBar, suppressesFirstUpdateFastTrack = true)

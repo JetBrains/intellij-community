@@ -20,4 +20,7 @@ internal object MarkdownTextUtil {
   fun Char.isPunctuation(): Boolean {
     return isPunctuation(this)
   }
+
+  /** Checks for a whitespace that separates words in a reflowed paragraph. */
+  fun Char.isFormatterWhitespace(): Boolean = this == ' ' || this == '\t' || this == '\n'
 }

@@ -1,11 +1,11 @@
-load("@jps_dynamic_deps_community//:targets.bzl", "dev_dist_plugin")
+load("@jps_dynamic_deps_community//:targets.bzl", "dist_plugin")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
-load("//platform/build-scripts/bazel-rules:dev_plugin_remainder.bzl", "dev_dist_complex_plugin")
+load("//platform/build-scripts/bazel-rules:dev_plugin_remainder.bzl", "dist_complex_plugin")
 load(":downloads_test.bzl", "downloads_test_suite")
 
 ### auto-generated section `dev intellij.python.community.plugin` start
-dev_dist_plugin(
+dist_plugin(
     content_modules = [
         # do not sort,
         "intellij.python.community.common",
@@ -128,9 +128,7 @@ dev_dist_plugin(
             "intellij.python.pytools.backend.runtime",
             "intellij.python.psi",
             "intellij.python.psi.impl",
-            "intellij.python.sdk.common",
             "intellij.python.sdk.backend",
-            "intellij.python.sdk.frontend",
             "intellij.python.pyproject",
             "intellij.python.sdkConfigurator.backend",
             "intellij.python.community.impl.poetry.backend",
@@ -190,7 +188,7 @@ dev_dist_plugin(
     },
 )
 
-dev_dist_complex_plugin(
+dist_complex_plugin(
     artifact_inputs = {
         "//python/pluginCore:community-plugin.jar": "intellij.python.community.plugin",
         "//commandInterface:commandInterface.jar": "intellij.commandInterface",
@@ -338,14 +336,14 @@ dev_dist_complex_plugin(
         "layout-source:resource-generator:2:0": "license",
     },
     source_tree_targets = {
-        "module-resource:resource-generator:0:0:source": "//python:dev_dist_resources_helpers",
-        "module-resource:resource-generator:1:0:source": "//python:dev_dist_resources",
+        "module-resource:resource-generator:0:0:source": "//python:dist_resources_helpers",
+        "module-resource:resource-generator:1:0:source": "//python:dist_resources",
         "layout-source:resource-generator:2:0": "@pyrefly_license_extracted//:files",
     },
     stamp_class_modes = ["frontend"],
 )
 
-dev_dist_complex_plugin(
+dist_complex_plugin(
     artifact_inputs = {
         "//python/pluginCore:community-plugin.jar": "intellij.python.community.plugin",
         "//commandInterface:commandInterface.jar": "intellij.commandInterface",
@@ -493,14 +491,14 @@ dev_dist_complex_plugin(
         "layout-source:resource-generator:2:0": "license",
     },
     source_tree_targets = {
-        "module-resource:resource-generator:0:0:source": "//python:dev_dist_resources_helpers",
-        "module-resource:resource-generator:1:0:source": "//python:dev_dist_resources",
+        "module-resource:resource-generator:0:0:source": "//python:dist_resources_helpers",
+        "module-resource:resource-generator:1:0:source": "//python:dist_resources",
         "layout-source:resource-generator:2:0": "@pyrefly_license_extracted//:files",
     },
     stamp_class_modes = ["frontend"],
 )
 
-dev_dist_complex_plugin(
+dist_complex_plugin(
     artifact_inputs = {
         "//python/pluginCore:community-plugin.jar": "intellij.python.community.plugin",
         "//commandInterface:commandInterface.jar": "intellij.commandInterface",
@@ -648,14 +646,14 @@ dev_dist_complex_plugin(
         "layout-source:resource-generator:2:0": "license",
     },
     source_tree_targets = {
-        "module-resource:resource-generator:0:0:source": "//python:dev_dist_resources_helpers",
-        "module-resource:resource-generator:1:0:source": "//python:dev_dist_resources",
+        "module-resource:resource-generator:0:0:source": "//python:dist_resources_helpers",
+        "module-resource:resource-generator:1:0:source": "//python:dist_resources",
         "layout-source:resource-generator:2:0": "@pyrefly_license_extracted//:files",
     },
     stamp_class_modes = ["frontend"],
 )
 
-dev_dist_complex_plugin(
+dist_complex_plugin(
     artifact_inputs = {
         "//python/pluginCore:community-plugin.jar": "intellij.python.community.plugin",
         "//commandInterface:commandInterface.jar": "intellij.commandInterface",
@@ -803,14 +801,14 @@ dev_dist_complex_plugin(
         "layout-source:resource-generator:2:0": "license",
     },
     source_tree_targets = {
-        "module-resource:resource-generator:0:0:source": "//python:dev_dist_resources_helpers",
-        "module-resource:resource-generator:1:0:source": "//python:dev_dist_resources",
+        "module-resource:resource-generator:0:0:source": "//python:dist_resources_helpers",
+        "module-resource:resource-generator:1:0:source": "//python:dist_resources",
         "layout-source:resource-generator:2:0": "@pyrefly_license_extracted//:files",
     },
     stamp_class_modes = ["frontend"],
 )
 
-dev_dist_complex_plugin(
+dist_complex_plugin(
     artifact_inputs = {
         "//python/pluginCore:community-plugin.jar": "intellij.python.community.plugin",
         "//commandInterface:commandInterface.jar": "intellij.commandInterface",
@@ -958,14 +956,14 @@ dev_dist_complex_plugin(
         "layout-source:resource-generator:2:0": "license",
     },
     source_tree_targets = {
-        "module-resource:resource-generator:0:0:source": "//python:dev_dist_resources_helpers",
-        "module-resource:resource-generator:1:0:source": "//python:dev_dist_resources",
+        "module-resource:resource-generator:0:0:source": "//python:dist_resources_helpers",
+        "module-resource:resource-generator:1:0:source": "//python:dist_resources",
         "layout-source:resource-generator:2:0": "@pyrefly_license_extracted//:files",
     },
     stamp_class_modes = ["frontend"],
 )
 
-dev_dist_complex_plugin(
+dist_complex_plugin(
     artifact_inputs = {
         "//python/pluginCore:community-plugin.jar": "intellij.python.community.plugin",
         "//commandInterface:commandInterface.jar": "intellij.commandInterface",
@@ -1113,8 +1111,8 @@ dev_dist_complex_plugin(
         "layout-source:resource-generator:2:0": "license",
     },
     source_tree_targets = {
-        "module-resource:resource-generator:0:0:source": "//python:dev_dist_resources_helpers",
-        "module-resource:resource-generator:1:0:source": "//python:dev_dist_resources",
+        "module-resource:resource-generator:0:0:source": "//python:dist_resources_helpers",
+        "module-resource:resource-generator:1:0:source": "//python:dist_resources",
         "layout-source:resource-generator:2:0": "@pyrefly_license_extracted//:files",
     },
     stamp_class_modes = ["frontend"],

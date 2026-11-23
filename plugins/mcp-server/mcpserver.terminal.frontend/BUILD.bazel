@@ -28,6 +28,7 @@ jvm_library(
         "//libraries/jetbrains/annotations",
         "@lib//:kotlin-stdlib",
         "//plugins/mcp-server:mcpserver",
+        "//plugins/mcp-server/mcpserver.configurables",
         "//plugins/mcp-server/mcpserver.frontend",
         "//platform/core-api:core",
         "//platform/platform-api:ide",

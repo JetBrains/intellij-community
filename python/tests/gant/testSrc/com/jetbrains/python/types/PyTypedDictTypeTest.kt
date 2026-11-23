@@ -944,7 +944,7 @@ class PyTypedDictTypeTest : PyCodeInsightTestCase() {
 
     @Test
     @TestFor(issues = ["PY-85421"])
-    @TestCaseOptions(languageLevel = LanguageLevel.PYTHON313, assertRecursionPrevention = false)
+    @TestCaseOptions(languageLevel = LanguageLevel.PYTHON313)
     fun `extra_items reflected in items`() = test("""
       from typing_extensions import TypedDict
 
@@ -958,7 +958,7 @@ class PyTypedDictTypeTest : PyCodeInsightTestCase() {
 
     @Test
     @TestFor(issues = ["PY-85421"])
-    @TestCaseOptions(languageLevel = LanguageLevel.PYTHON313, assertRecursionPrevention = false)
+    @TestCaseOptions(languageLevel = LanguageLevel.PYTHON313)
     fun `extra_items reflected in values`() = test("""
       from typing_extensions import TypedDict
 

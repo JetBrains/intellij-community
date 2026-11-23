@@ -11,6 +11,7 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class PresentationTest extends LightPlatformTestCase {
   private final Data[] data = new Data[]{
@@ -118,6 +119,52 @@ public class PresentationTest extends LightPlatformTestCase {
       assertEquals(p1.getMnemonic(), p2.getMnemonic());
       assertEquals(p1.getDisplayedMnemonicIndex(), p2.getDisplayedMnemonicIndex());
     }
+  }
+
+  public void testCopyUnsetTemplatePropertiesDoesNotReadTexts() {
+    AtomicInteger reads = new AtomicInteger();
+    Presentation stub = Presentation.newTemplatePresentation();
+    stub.setText(() -> {
+      reads.incrementAndGet();
+      return "Stub text";
+    });
+    stub.setDescription(() -> {
+      reads.incrementAndGet();
+      return "Stub description";
+    });
+
+    Presentation target = Presentation.newTemplatePresentation();
+    target.copyUnsetTemplateProperties(stub);
+    assertEquals(0, reads.get());
+
+    assertEquals("Stub text", target.getText());
+    assertEquals("Stub description", target.getDescription());
+    assertEquals(2, reads.get());
+  }
+
+  public void testCopyUnsetTemplatePropertiesKeepsSetTexts() {
+    Presentation stub = Presentation.newTemplatePresentation();
+    stub.setText("Stub text");
+    stub.setDescription("Stub description");
+
+    Presentation target = Presentation.newTemplatePresentation();
+    target.setText("Own text");
+    target.setDescription("Own description");
+    target.copyUnsetTemplateProperties(stub);
+
+    assertEquals("Own text", target.getText());
+    assertEquals("Own description", target.getDescription());
+  }
+
+  public void testCopyUnsetTemplatePropertiesKeepsEmptyTextWhenBothAreEmpty() {
+    Presentation stub = Presentation.newTemplatePresentation();
+    Presentation target = Presentation.newTemplatePresentation();
+    target.setText("");
+    target.copyUnsetTemplateProperties(stub);
+
+    assertTrue(target.hasText());
+    assertEquals("", target.getText());
+    assertNull(target.getDescription());
   }
 
   public void testPresentationWithDisabledMnemonics() {

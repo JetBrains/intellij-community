@@ -1469,6 +1469,7 @@ com.intellij.modcommand.ModCommand
 - s:psiUpdateStep(com.intellij.psi.PsiElement,java.lang.String,java.util.function.BiConsumer,java.util.function.Function):com.intellij.modcommand.ModCommandAction
 - s:select(com.intellij.psi.PsiElement):com.intellij.modcommand.ModCommand
 - s:showConflicts(java.util.Map):com.intellij.modcommand.ModCommand
+- s:showConflictsAtPlaces(java.util.Map):com.intellij.modcommand.ModCommand
 - unpack():java.util.List
 - s:updateInspectionOption(com.intellij.psi.PsiElement,com.intellij.codeInspection.InspectionProfileEntry,java.util.function.Consumer):com.intellij.modcommand.ModCommand
 com.intellij.modcommand.ModCommandAction

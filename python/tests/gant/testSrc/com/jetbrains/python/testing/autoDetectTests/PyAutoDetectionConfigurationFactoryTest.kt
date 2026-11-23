@@ -1,6 +1,5 @@
 package com.jetbrains.python.testing.autoDetectTests
 
-import com.intellij.python.sdk.backend.getSdkAPI
 import com.jetbrains.python.allure.Subsystems
 import com.jetbrains.python.allure.Layers
 import com.jetbrains.python.allure.Components
@@ -42,9 +41,7 @@ class PyAutoDetectionConfigurationFactoryTest : PyTestCase() {
   private fun doTestAutoDetection(installedPackages: Array<String>, expectedFactoryClass: Class<out PyAbstractTestFactory<*>>) {
     val interpreter = findPythonInterpreterForTests(myFixture.module) ?: error("No interpreter for ${myFixture.module.name}")
     mockInstalledPackages(*installedPackages)
-    // The factory API takes an SDK.
-    @Suppress("DEPRECATION")
-    val factory = autoDetectFactory.getFactory(interpreter.getSdkAPI(), myFixture.project)
+    val factory = autoDetectFactory.getFactory(interpreter, myFixture.project)
 
     assertTrue(expectedFactoryClass.isInstance(factory))
   }

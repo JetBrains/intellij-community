@@ -6,6 +6,10 @@ import com.siyeh.ig.callMatcher.CallMatcher
 import org.jetbrains.uast.UCallExpression
 import org.jetbrains.uast.UCallableReferenceExpression
 
+/**
+ * @deprecated Use [callMatcherFixture] in a JUnit 5 test.
+ */
+@Deprecated("Use callMatcherFixture in a JUnit 5 test")
 abstract class CallMatcherTestBase : LightJavaCodeInsightFixtureTestCase() {
   protected fun checkMatchCall(lang: JvmLanguage, call: CallMatcher, text: String) {
     val psiFile = myFixture.configureByText("UnderTest${lang.ext}", text)

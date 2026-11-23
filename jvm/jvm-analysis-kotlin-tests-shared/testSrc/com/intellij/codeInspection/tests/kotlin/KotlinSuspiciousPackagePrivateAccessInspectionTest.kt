@@ -4,37 +4,50 @@ import com.intellij.jvm.analysis.KotlinJvmAnalysisTestUtil
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.TestDataPath
+import com.intellij.testFramework.junit5.fixture.testFixture
 import com.intellij.util.PathUtil
-import com.siyeh.ig.dependency.SuspiciousPackagePrivateAccessInspectionTestCase
+import com.siyeh.ig.LightJavaInspectionFixture
+import com.siyeh.ig.dependency.suspiciousPackagePrivateAccessFixture
+import com.siyeh.ig.dependency.suspiciousPackagePrivateAccessProjectFixture
+import org.junit.jupiter.api.Test
 import java.io.File
 
 @TestDataPath("\$CONTENT_ROOT/testData/codeInspection/suspiciousPackagePrivateAccess")
-abstract class KotlinSuspiciousPackagePrivateAccessInspectionTest : SuspiciousPackagePrivateAccessInspectionTestCase("kt") {
-  override fun setUp() {
-    super.setUp()
-    val jar = File(PathUtil.getJarPathForClass(JvmStatic::class.java))
-    val modules = ModuleManager.getInstance(project).modules
-    for (module in modules) {
-      PsiTestUtil.addLibrary(module, "kotlin-stdlib", jar.parent, jar.name)
+abstract class KotlinSuspiciousPackagePrivateAccessInspectionTest {
+  companion object {
+    private val projectFixture = testFixture("kotlinSuspiciousPackagePrivateAccessProjectFixture") {
+      val modulesProject = suspiciousPackagePrivateAccessProjectFixture().init()
+      val jar = File(PathUtil.getJarPathForClass(JvmStatic::class.java))
+      val modules = ModuleManager.getInstance(modulesProject.project).modules
+      for (module in modules) {
+        PsiTestUtil.addLibrary(module, "kotlin-stdlib", jar.parent, jar.name)
+      }
+      initialized(modulesProject) {}
     }
   }
 
+  private val inspectionFixture by suspiciousPackagePrivateAccessFixture(
+    projectFixture, "kt",
+    LightJavaInspectionFixture.inspectionTestDataPath(
+      "${KotlinJvmAnalysisTestUtil.TEST_DATA_PROJECT_RELATIVE_BASE_PATH}/codeInspection/suspiciousPackagePrivateAccess"))
+
+  @Test
   fun testAccessingPackagePrivateMembers() {
-    doTestWithDependency()
+    inspectionFixture.doTestWithDependency()
   }
 
+  @Test
   fun testAccessingProtectedMembers() {
-    doTestWithDependency()
+    inspectionFixture.doTestWithDependency()
   }
 
+  @Test
   fun testAccessingProtectedMembersFromKotlin() {
-    doTestWithDependency()
+    inspectionFixture.doTestWithDependency()
   }
 
+  @Test
   fun testOverridePackagePrivateMethod() {
-    doTestWithDependency()
+    inspectionFixture.doTestWithDependency()
   }
-
-  override fun getBasePath() =
-    "${KotlinJvmAnalysisTestUtil.TEST_DATA_PROJECT_RELATIVE_BASE_PATH}/codeInspection/suspiciousPackagePrivateAccess"
 }

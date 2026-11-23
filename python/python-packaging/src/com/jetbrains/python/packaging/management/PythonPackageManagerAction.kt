@@ -10,13 +10,11 @@ import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.util.NlsContexts
-import com.intellij.openapi.util.UserDataHolder
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.python.pyproject.PY_PROJECT_TOML
 import com.intellij.python.pyproject.model.evolution.findEvoPyProjectIfReady
 import com.intellij.python.sdk.backend.associatedModuleDir
-import com.intellij.python.sdk.backend.getSdkAPI
 import com.intellij.python.sdk.backend.isReadOnly
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.jetbrains.python.errorProcessing.ErrorSink
@@ -130,12 +128,12 @@ private fun refreshAfterToolRun(dir: VirtualFile) {
 inline fun <reified T : PythonPackageManager> AnActionEvent.getPythonPackageManager(): T? {
   val psiFile = getData(PSI_FILE) ?: return null
   val interpreter = psiFile.findEvoPyProjectIfReady(mainForOrphans = false)?.interpreter ?: return null
-  return PythonPackageManager.forPythonInterpreter(psiFile.project, interpreter) as? T
+  return PythonPackageManager.forPythonInterpreter(interpreter) as? T
 }
 
 
 internal fun PythonPackageManager.isRunLocked(): Boolean {
-  return CancellableJobSerialRunner.isRunLocked(runLockHolder)
+  return CancellableJobSerialRunner.isRunLocked(this)
 }
 
 @ApiStatus.Internal
@@ -143,12 +141,6 @@ suspend fun <V> PythonPackageManager.runSynchronized(
   title: @NlsContexts.ProgressTitle String,
   runnable: suspend () -> PyResult<V>,
 ): PyResult<V> {
-  return CancellableJobSerialRunner.run(this.project, runLockHolder, title, runnable)
+  return CancellableJobSerialRunner.run(this.project, this, title, runnable)
 }
 
-/**
- * The object that one run of this interpreter locks on. The interpreter wrapper is new on each call, so the lock lives
- * on its SDK, which is the same object for every wrapper.
- */
-private val PythonPackageManager.runLockHolder: UserDataHolder
-  @Suppress("DEPRECATION") get() = interpreter.getSdkAPI()

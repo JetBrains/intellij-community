@@ -10,7 +10,6 @@ import com.intellij.build.BuildTreeFilters;
 import com.intellij.build.BuildView;
 import com.intellij.build.BuildViewManager;
 import com.intellij.build.BuildViewSettingsProvider;
-import com.intellij.build.BuildViewSettingsProviderAdapter;
 import com.intellij.build.DefaultBuildDescriptor;
 import com.intellij.build.WeakFilterableSupplier;
 import com.intellij.build.events.BuildEvent;
@@ -93,6 +92,7 @@ import static com.intellij.openapi.externalSystem.util.ExternalSystemUtil.attach
 import static com.intellij.openapi.externalSystem.util.ExternalSystemUtil.convert;
 import static com.intellij.openapi.externalSystem.util.ExternalSystemUtil.createFailureResult;
 import static com.intellij.openapi.externalSystem.util.ExternalSystemUtil.getConsoleManagerFor;
+import static com.intellij.openapi.externalSystem.util.ExternalSystemUtil.getExecutionConsoleSettings;
 import static com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfiguration.PROGRESS_LISTENER_KEY;
 
 public class ExternalSystemRunnableState extends UserDataHolderBase implements RunProfileState {
@@ -234,9 +234,7 @@ public class ExternalSystemRunnableState extends UserDataHolderBase implements R
 
     var consoleManager = getConsoleManagerFor(task);
     var consoleView = consoleManager.attachExecutionConsole(myProject, task, myEnv, processHandler);
-    var consoleSettings = consoleView instanceof BuildViewSettingsProvider
-                          ? new BuildViewSettingsProviderAdapter((BuildViewSettingsProvider)consoleView)
-                          : consoleManager.getExecutionConsoleSettings();
+    var consoleSettings = getExecutionConsoleSettings(consoleManager, consoleView);
 
     attachExecutionConsole(myProject, consoleView, processHandler);
 
@@ -252,6 +250,8 @@ public class ExternalSystemRunnableState extends UserDataHolderBase implements R
       var progressIndicator = ObjectUtils.notNull(myEnv.getUserData(PROGRESS_INDICATOR_KEY), () -> new EmptyProgressIndicator());
       var dataContext = BuildConsoleUtils.getDataContext(task.getId(), progressListener, consoleView);
       try (var eventDispatcher = new ExternalSystemEventDispatcher(task.getId(), progressListener, consoleSettings)) {
+        eventDispatcher.attachToProcess(processHandler);
+
         ExternalSystemTelemetryUtil.runWithSpan(mySettings.getExternalSystemId(), "ExternalSystemTaskExecution", _ ->
           task.execute(progressIndicator, new ExternalSystemTaskEventMulticaster(
             processHandler, eventDispatcher, buildDescriptor, dataContext,
@@ -444,7 +444,9 @@ public class ExternalSystemRunnableState extends UserDataHolderBase implements R
     private final @NotNull DataContext myDataContext;
     private final @NotNull ExternalSystemExecutionConsoleManager<ExecutionConsole, ProcessHandler> myConsoleManager;
     private final @Nullable ExecutionConsole myConsoleView;
-    private final @Nullable BuildViewSettingsProvider myConsoleSettings;
+    private final @NotNull BuildViewSettingsProvider myConsoleSettings;
+
+    private final @NotNull String mySettingsDescription = StringUtil.isEmpty(mySettings.toString()) ? "" : String.format(" '%s'", mySettings);
 
     private ExternalSystemTaskEventMulticaster(
       @NotNull ExternalSystemProcessHandler processHandler,
@@ -453,7 +455,7 @@ public class ExternalSystemRunnableState extends UserDataHolderBase implements R
       @NotNull DataContext dataContext,
       @NotNull ExternalSystemExecutionConsoleManager<ExecutionConsole, ProcessHandler> consoleManager,
       @Nullable ExecutionConsole consoleView,
-      @Nullable BuildViewSettingsProvider consoleSettings
+      @NotNull BuildViewSettingsProvider consoleSettings
     ) {
       myProcessHandler = processHandler;
       myEventDispatcher = eventDispatcher;
@@ -467,16 +469,28 @@ public class ExternalSystemRunnableState extends UserDataHolderBase implements R
     @Override
     public void onStart(@NotNull String projectPath, @NotNull ExternalSystemTaskId id) {
       var eventMessage = BuildBundle.message("build.status.running");
-      myEventDispatcher.notifyBuildEvent(id,
-                                         StartBuildEvent.builder(eventMessage, myBuildDescriptor)
+      myEventDispatcher.notifyBuildEvent(id, StartBuildEvent.builder(eventMessage, myBuildDescriptor)
           .withBuildViewSettings(myConsoleSettings)
           .build()
       );
+
+      // the greeting is sent after the start build event, because the build views attach their consoles on this event
+      var startDateTime = DateFormatUtil.formatTimeWithSeconds(myBuildDescriptor.getStartTime());
+      var greeting = ExternalSystemBundle.message("run.text.starting.task", startDateTime, mySettingsDescription) + "\n";
+      myProcessHandler.notifyTextAvailable(greeting + "\n", ProcessOutputTypes.SYSTEM);
     }
 
     @Override
     public void onTaskOutput(@NotNull ExternalSystemTaskId id, @NotNull String text, @NotNull ProcessOutputType outputType) {
-      myEventDispatcher.notifyTextAvailable(text, outputType);
+      if (myConsoleView != null) {
+        myConsoleManager.onOutput(myConsoleView, myProcessHandler, text, outputType);
+      }
+      else {
+        myProcessHandler.notifyTextAvailable(text, outputType);
+      }
+      if (!myConsoleSettings.isSingleBuildConsoleView()) {
+        myEventDispatcher.notifyTextAvailable(text, outputType);
+      }
     }
 
     @Override
@@ -528,6 +542,9 @@ public class ExternalSystemRunnableState extends UserDataHolderBase implements R
 
     @Override
     public void onEnd(@NotNull String projectPath, @NotNull ExternalSystemTaskId id) {
+      final String endDateTime = DateFormatUtil.formatTimeWithSeconds(System.currentTimeMillis());
+      final String farewell = ExternalSystemBundle.message("run.text.ended.task", endDateTime, mySettingsDescription);
+      myProcessHandler.notifyTextAvailable(farewell + "\n", ProcessOutputTypes.SYSTEM);
       myProcessHandler.notifyProcessTerminated(0);
     }
   }

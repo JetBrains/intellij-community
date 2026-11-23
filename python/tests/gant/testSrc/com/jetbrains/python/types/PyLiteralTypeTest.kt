@@ -6,14 +6,21 @@ import com.jetbrains.python.allure.Layers
 import com.jetbrains.python.allure.Components
 import com.intellij.idea.TestFor
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.python.community.testFramework.fixme
 import com.intellij.testFramework.junit5.TestDisposable
 import com.jetbrains.python.codeInsight.controlflow.PyTypeAssertionEvaluator
 import com.jetbrains.python.fixtures.PyCodeInsightTestCase
 import com.jetbrains.python.inspections.PyUnreachableCodeInspection
 import com.jetbrains.python.psi.LanguageLevel
+import com.jetbrains.python.psi.PyFile
+import com.jetbrains.python.psi.types.PyLiteralType
+import org.junit.jupiter.api.Assertions.assertNotEquals
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
+import java.math.BigInteger
 
 /**
  * Type and type-checker tests for [literal types](https://typing.python.org/en/latest/spec/literal.html)
@@ -690,7 +697,7 @@ class PyLiteralTypeTest : PyCodeInsightTestCase() {
       """.trimIndent())
 
     @Test
-    @TestCaseOptions(languageLevel = LanguageLevel.PYTHON27, assertRecursionPrevention = false)
+    @TestCaseOptions(languageLevel = LanguageLevel.PYTHON27)
     fun `narrow literal union by legacy not equal operator`() = test("""
       from typing import Literal
       def foo(v: Literal["abba", "ab"]):
@@ -1480,5 +1487,19 @@ class PyLiteralTypeTest : PyCodeInsightTestCase() {
       #                    ^^ WARNING Expected type 'Literal[-1]', got 'int' instead
           e: int = -1
       """.trimIndent())
+  }
+
+  @Test
+  @TestFor(issues = ["PY-92769"], classes = [PyLiteralType::class])
+  fun `class form of a literal type is not equal to its instance form`() {
+    val file = myFixture.configureByText("a.py", "") as PyFile
+    runReadActionBlocking {
+      val instanceForm = PyLiteralType.intLiteral(file, BigInteger.ONE)!!
+      val classForm = instanceForm.toClass()
+      assertTrue(classForm.isDefinition)
+      fixme<AssertionError>("PY-92769 PyLiteralType.equals ignores isDefinition", "expected: not equal but was: <PyLiteralType: 1>") {
+        assertNotEquals(instanceForm, classForm)
+      }
+    }
   }
 }

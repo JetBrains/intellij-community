@@ -7,447 +7,566 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementPresentation;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.platform.testFramework.junit5.codeInsight.indexing.IndexingModeTemplate;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.statistics.StatisticsManager;
+import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.NeedsIndex;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.intellij.util.containers.ContainerUtil;
-import junit.framework.TestCase;
+import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
-public class SmartTypeCompletionOrderingTest extends CompletionSortingTestCase {
-  public SmartTypeCompletionOrderingTest() {
-    super(CompletionType.SMART);
-  }
+import static com.intellij.codeInsight.completion.LightCompletionFixtureKt.lightCompletionProjectFixture;
+import static com.intellij.java.codeInsight.completion.CompletionSortingFixtureKt.completionSortingFixture;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-  @Override
-  protected void complete() {
-    myItems = myFixture.complete(CompletionType.SMART);
-  }
+@TestApplication
+@IndexingModeTemplate
+public class SmartTypeCompletionOrderingTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightCompletionProjectFixture();
+  private final TestFixture<CompletionSortingFixture> completion =
+    completionSortingFixture(projectFixture, CompletionType.SMART, JavaTestUtil.getJavaTestDataPath() + BASE_PATH);
 
+  @Test
   @NeedsIndex.ForStandardLibrary
   public void testJComponentAdd() {
-    checkPreferredItems(0, "name", "b", "fooBean239", "foo");
+    EdtTestUtil.runInEdtAndWait(() -> completion.get().checkPreferredItems(0, "name", "b", "fooBean239", "foo"));
   }
 
+  @Test
   @NeedsIndex.SmartMode(reason = "AbstractExpectedTypeSkipper works in smart mode only")
   public void testJComponentAddNew() {
     //there's no PopupMenu in mock jdk
-    checkPreferredItems(2, "Component", "String", "FooBean3", "JComponent", "Container");
+    EdtTestUtil.runInEdtAndWait(() -> completion.get().checkPreferredItems(2, "Component", "String", "FooBean3", "JComponent", "Container"));
   }
 
+  @Test
   @NeedsIndex.SmartMode(reason = "AbstractExpectedTypeSkipper works in smart mode only")
   public void testJComponentAddNewWithStats() {
     //there's no PopupMenu in mock jdk
-    invokeCompletion("/JComponentAddNew.java");
-    assertPreferredItems(2, "Component", "String", "FooBean3", "JComponent", "Container");
-    incUseCount(4);//Container
-    assertPreferredItems(2, "Component", "String", "Container", "FooBean3", "JComponent");
-    CompletionSortingTestCase.imitateItemSelection(getLookup(), 3);//FooBean3
-    for (int i = 0; i < StatisticsManager.OBLIVION_THRESHOLD; i++) {
-      CompletionSortingTestCase.imitateItemSelection(getLookup(), 2);//Container
-    }
+    EdtTestUtil.runInEdtAndWait(() -> {
+      completion.get().invokeCompletion("/JComponentAddNew.java");
+      completion.get().assertPreferredItems(2, "Component", "String", "FooBean3", "JComponent", "Container");
+      completion.get().incUseCount(4);//Container
+      completion.get().assertPreferredItems(2, "Component", "String", "Container", "FooBean3", "JComponent");
+      CompletionSortingFixture.imitateItemSelection(completion.get().getLookup(), 3);//FooBean3
+      for (int i = 0; i < StatisticsManager.OBLIVION_THRESHOLD; i++) {
+        CompletionSortingFixture.imitateItemSelection(completion.get().getLookup(), 2);//Container
+      }
 
-    refreshSorting();
-    assertPreferredItems(2, "Component", "String", "Container", "FooBean3", "JComponent");
+      refreshSorting();
+      completion.get().assertPreferredItems(2, "Component", "String", "Container", "FooBean3", "JComponent");
+    });
   }
 
+  @Test
   @NeedsIndex.SmartMode(reason = "AbstractExpectedTypeSkipper works in smart mode only")
   public void testNewListAlwaysFirst() {
-    LookupImpl lookup = invokeCompletion(getTestName(false) + ".java");
-    assertPreferredItems(1, "List", "ArrayList", "AbstractList", "AbstractSequentialList");
-    for (int i = 0; i < StatisticsManager.OBLIVION_THRESHOLD + 10; i++) {
-      CompletionSortingTestCase.imitateItemSelection(lookup, 3);//AbstractSequentialList
-    }
+    LightJavaCodeInsightTestFixture myFixture = completion.get().getFixture();
+    EdtTestUtil.runInEdtAndWait(() -> {
+      LookupImpl lookup = completion.get().invokeCompletion(myFixture.getTestName(false) + ".java");
+      completion.get().assertPreferredItems(1, "List", "ArrayList", "AbstractList", "AbstractSequentialList");
+      for (int i = 0; i < StatisticsManager.OBLIVION_THRESHOLD + 10; i++) {
+        CompletionSortingFixture.imitateItemSelection(lookup, 3);//AbstractSequentialList
+      }
 
-    refreshSorting();
-    assertPreferredItems(1, "List", "AbstractSequentialList", "ArrayList", "AbstractList");
+      refreshSorting();
+      completion.get().assertPreferredItems(1, "List", "AbstractSequentialList", "ArrayList", "AbstractList");
+    });
   }
 
+  @Test
   @NeedsIndex.SmartMode(reason = "AbstractExpectedTypeSkipper works in smart mode only")
   public void testNoStatsOnUnsuccessfulAttempt() {
-    final LookupImpl lookup = invokeCompletion("/JComponentAddNew.java");
-    assertPreferredItems(2, "Component", "String", "FooBean3", "JComponent", "Container");
-    lookup.setCurrentItem(lookup.getItems().get(4));//Container
-    myFixture.type("\n\b");
-    StatisticsUpdate.applyLastCompletionStatisticsUpdate();
-    FileDocumentManager.getInstance().saveAllDocuments();
-    invokeCompletion("/JComponentAddNew.java");
-    assertPreferredItems(2, "Component", "String", "FooBean3", "JComponent", "Container");
+    LightJavaCodeInsightTestFixture myFixture = completion.get().getFixture();
+    EdtTestUtil.runInEdtAndWait(() -> {
+      final LookupImpl lookup = completion.get().invokeCompletion("/JComponentAddNew.java");
+      completion.get().assertPreferredItems(2, "Component", "String", "FooBean3", "JComponent", "Container");
+      lookup.setCurrentItem(lookup.getItems().get(4));//Container
+      myFixture.type("\n\b");
+      StatisticsUpdate.applyLastCompletionStatisticsUpdate();
+      FileDocumentManager.getInstance().saveAllDocuments();
+      completion.get().invokeCompletion("/JComponentAddNew.java");
+      completion.get().assertPreferredItems(2, "Component", "String", "FooBean3", "JComponent", "Container");
+    });
   }
 
+  @Test
   public void testMethodStats() {
-    checkPreferredItems(0, "bar", "foo", "goo");
-    incUseCount(2);
-    assertPreferredItems(0, "goo", "bar", "foo");
+    EdtTestUtil.runInEdtAndWait(() -> {
+      completion.get().checkPreferredItems(0, "bar", "foo", "goo");
+      completion.get().incUseCount(2);
+      completion.get().assertPreferredItems(0, "goo", "bar", "foo");
+    });
   }
 
+  @Test
   @NeedsIndex.Full
   public void testNewRunnable() {
-    checkPreferredItems(0, "Runnable", "MyAnotherRunnable", "MyRunnable", "Thread");
+    EdtTestUtil.runInEdtAndWait(() -> completion.get().checkPreferredItems(0, "Runnable", "MyAnotherRunnable", "MyRunnable", "Thread"));
   }
 
+  @Test
   @NeedsIndex.SmartMode(reason = "AbstractExpectedTypeSkipper works in smart mode only")
   public void testNewComponent() {
-    checkPreferredItems(1, "Component", "Foo", "JComponent", "Container");
+    EdtTestUtil.runInEdtAndWait(() -> completion.get().checkPreferredItems(1, "Component", "Foo", "JComponent", "Container"));
   }
 
+  @Test
   @NeedsIndex.ForStandardLibrary
   public void testClassLiteral() throws Throwable {
-    checkPreferredItems(0, "String.class");
+    EdtTestUtil.runInEdtAndWait(() -> completion.get().checkPreferredItems(0, "String.class"));
   }
 
+  @Test
   @NeedsIndex.ForStandardLibrary
   public void testMethodsWithSubstitutableReturnType() {
-    checkPreferredItems(0, "foo", "toString", "bar");
+    EdtTestUtil.runInEdtAndWait(() -> completion.get().checkPreferredItems(0, "foo", "toString", "bar"));
   }
 
+  @Test
   @NeedsIndex.ForStandardLibrary
   public void testDontPreferKeywords() {
-    checkPreferredItems(0, "o1", "foo", "name", "this");
+    EdtTestUtil.runInEdtAndWait(() -> completion.get().checkPreferredItems(0, "o1", "foo", "name", "this"));
   }
 
+  @Test
   @NeedsIndex.ForStandardLibrary
   public void testEnumValueOf() throws Throwable {
-    checkPreferredItems(0, "e", "MyEnum.BAR", "MyEnum.FOO", "valueOf", "valueOf");
+    EdtTestUtil.runInEdtAndWait(() -> completion.get().checkPreferredItems(0, "e", "MyEnum.BAR", "MyEnum.FOO", "valueOf", "valueOf"));
   }
 
+  @Test
   public void testEnumValueOf2() throws Throwable {
-    checkPreferredItems(0, "e", "MyEnum.BAR", "MyEnum.FOO", "bar", "valueOf");
+    EdtTestUtil.runInEdtAndWait(() -> completion.get().checkPreferredItems(0, "e", "MyEnum.BAR", "MyEnum.FOO", "bar", "valueOf"));
   }
 
+  @Test
   public void testPreferMatchedWords() {
-    checkPreferredItems(0, "getVersionString", "getTitle");
+    EdtTestUtil.runInEdtAndWait(() -> completion.get().checkPreferredItems(0, "getVersionString", "getTitle"));
   }
 
+  @Test
   @NeedsIndex.SmartMode(reason = "AbstractExpectedTypeSkipper works in smart mode only")
   public void testPreferImportedClasses() {
     //there's no PopupMenu in mock jdk
-    checkPreferredItems(2, "Component", "String", "FooBean3", "JPanel", "JComponent");
+    EdtTestUtil.runInEdtAndWait(() -> completion.get().checkPreferredItems(2, "Component", "String", "FooBean3", "JPanel", "JComponent"));
   }
 
+  @Test
   @NeedsIndex.SmartMode(reason = "AbstractExpectedTypeSkipper works in smart mode only")
   public void testPreferNestedClasses() {
     //there's no PopupMenu in mock jdk
-    checkPreferredItems(2, "Component", "String", "FooBean3", "NestedClass", "JComponent");
+    EdtTestUtil.runInEdtAndWait(() -> completion.get().checkPreferredItems(2, "Component", "String", "FooBean3", "NestedClass", "JComponent"));
   }
 
+  @Test
   @NeedsIndex.ForStandardLibrary
   public void testSmartCollections() {
-    checkPreferredItems(0, "s");
+    EdtTestUtil.runInEdtAndWait(() -> completion.get().checkPreferredItems(0, "s"));
   }
 
+  @Test
   @NeedsIndex.ForStandardLibrary
   public void testSmartEquals() {
-    checkPreferredItems(0, "s");
+    EdtTestUtil.runInEdtAndWait(() -> completion.get().checkPreferredItems(0, "s"));
   }
 
+  @Test
   @NeedsIndex.ForStandardLibrary
   public void testSmartEquals2() {
-    checkPreferredItems(0, "foo", "this", "o", "s");
+    EdtTestUtil.runInEdtAndWait(() -> completion.get().checkPreferredItems(0, "foo", "this", "o", "s"));
   }
 
+  @Test
   @NeedsIndex.ForStandardLibrary
   public void testSmartEquals3() {
-    checkPreferredItems(0, "b", "this", "a", "z");
+    EdtTestUtil.runInEdtAndWait(() -> completion.get().checkPreferredItems(0, "b", "this", "a", "z"));
   }
 
+  @Test
   @NeedsIndex.SmartMode(reason = "AbstractExpectedTypeSkipper works in smart mode only")
   public void testSmartCollectionsNew() {
-    checkPreferredItems(1, "Foo", "Bar");
+    EdtTestUtil.runInEdtAndWait(() -> completion.get().checkPreferredItems(1, "Foo", "Bar"));
   }
 
+  @Test
   @NeedsIndex.SmartMode(reason = "AbstractExpectedTypeSkipper works in smart mode only")
   public void testSmartEqualsNew() {
-    checkPreferredItems(1, "Foo", "Bar");
+    EdtTestUtil.runInEdtAndWait(() -> completion.get().checkPreferredItems(1, "Foo", "Bar"));
   }
 
+  @Test
   @NeedsIndex.ForStandardLibrary
   public void testSmartEqualsNew2() {
-    checkPreferredItems(0, "Foo");
+    EdtTestUtil.runInEdtAndWait(() -> completion.get().checkPreferredItems(0, "Foo"));
   }
 
+  @Test
   @NeedsIndex.ForStandardLibrary
   public void testBooleanValueOf() {
-    checkPreferredItems(0, "b", "Boolean.FALSE", "Boolean.TRUE", "equals", "false", "true", "valueOf", "valueOf");
+    EdtTestUtil.runInEdtAndWait(() -> completion.get().checkPreferredItems(0, "b", "Boolean.FALSE", "Boolean.TRUE", "equals", "false", "true", "valueOf", "valueOf"));
   }
 
+  @Test
   @NeedsIndex.ForStandardLibrary
   public void testXmlTagGetAttribute() {
-    checkPreferredItems(0, "getAttributeValue", "getNamespace", "toString");
+    EdtTestUtil.runInEdtAndWait(() -> completion.get().checkPreferredItems(0, "getAttributeValue", "getNamespace", "toString"));
   }
 
+  @Test
   public void testPreferFieldsToMethods() {
-    checkPreferredItems(0, "myVersion", "getVersion", "getSelectedVersion", "calculateVersion");
+    EdtTestUtil.runInEdtAndWait(() -> completion.get().checkPreferredItems(0, "myVersion", "getVersion", "getSelectedVersion", "calculateVersion"));
   }
 
+  @Test
   public void testPreferFieldsToConstants() {
-    checkPreferredItems(0, "dateField", "LocalDate.MAX", "LocalDate.MIN");
+    EdtTestUtil.runInEdtAndWait(() -> completion.get().checkPreferredItems(0, "dateField", "LocalDate.MAX", "LocalDate.MIN"));
   }
 
+  @Test
   public void testPreferParametersToGetters() {
-    checkPreferredItems(0, "a", "I._1", "getLastI", "valueOf");
+    EdtTestUtil.runInEdtAndWait(() -> completion.get().checkPreferredItems(0, "a", "I._1", "getLastI", "valueOf"));
   }
 
+  @Test
   public void testExpectedInterfaceShouldGoFirst() {
-    checkPreferredItems(0, "MyProcessor", "Proc1");
+    EdtTestUtil.runInEdtAndWait(() -> completion.get().checkPreferredItems(0, "MyProcessor", "Proc1"));
   }
 
+  @Test
   @NeedsIndex.SmartMode(reason = "AbstractExpectedTypeSkipper works in smart mode only")
   public void testStatisticsAffectsNonPreferableExpectedItems() {
-    checkPreferredItems(1, "List", "ArrayList", "AbstractList", "AbstractSequentialList");
-    incUseCount(0);
-    assertPreferredItems(1, "List", "ArrayList", "AbstractList", "AbstractSequentialList");
-    incUseCount(0);
-    assertPreferredItems(0, "List", "ArrayList", "AbstractList", "AbstractSequentialList");
+    EdtTestUtil.runInEdtAndWait(() -> {
+      completion.get().checkPreferredItems(1, "List", "ArrayList", "AbstractList", "AbstractSequentialList");
+      completion.get().incUseCount(0);
+      completion.get().assertPreferredItems(1, "List", "ArrayList", "AbstractList", "AbstractSequentialList");
+      completion.get().incUseCount(0);
+      completion.get().assertPreferredItems(0, "List", "ArrayList", "AbstractList", "AbstractSequentialList");
+    });
   }
 
+  @Test
   @NeedsIndex.ForStandardLibrary
   public void testPreferNonRecursiveMethodParams() {
-    checkPreferredItems(0, "b", "s", "a", "hashCode");
+    EdtTestUtil.runInEdtAndWait(() -> completion.get().checkPreferredItems(0, "b", "s", "a", "hashCode"));
   }
 
+  @Test
   public void testPreferDelegatingMethodParams() {
     //there's no PopupMenu in mock jdk
-    checkPreferredItems(0, "xyz", "abc");
-    incUseCount(1);
-    assertPreferredItems(0, "xyz", "abc");
+    EdtTestUtil.runInEdtAndWait(() -> {
+      completion.get().checkPreferredItems(0, "xyz", "abc");
+      completion.get().incUseCount(1);
+      completion.get().assertPreferredItems(0, "xyz", "abc");
+    });
   }
 
+  @Test
   public void testGwtButtons() {
-    checkPreferredItems(0, "Button", "ButtonBase");
+    EdtTestUtil.runInEdtAndWait(() -> completion.get().checkPreferredItems(0, "Button", "ButtonBase"));
   }
 
+  @Test
   public void testNewArrayList() {
-    checkPreferredItems(0, "ArrayList", "OtherList");
+    EdtTestUtil.runInEdtAndWait(() -> completion.get().checkPreferredItems(0, "ArrayList", "OtherList"));
   }
 
+  @Test
   public void testPassingQualifierToMethodCall() {
-    checkPreferredItems(0, "this", "param");
+    EdtTestUtil.runInEdtAndWait(() -> completion.get().checkPreferredItems(0, "this", "param"));
   }
 
+  @Test
   public void testPassingThisToUnqualifiedMethodCall() {
-    checkPreferredItems(0, "param", "this");
+    EdtTestUtil.runInEdtAndWait(() -> completion.get().checkPreferredItems(0, "param", "this"));
   }
 
+  @Test
   @NeedsIndex.SmartMode(reason = "isEffectivelyDeprecated needs smart mode")
   public void testPreferAccessibleMembers() {
-    checkPreferredItems(0, "Foo.C_NORMAL", "Foo.B_DEPRECATED");
+    EdtTestUtil.runInEdtAndWait(() -> completion.get().checkPreferredItems(0, "Foo.C_NORMAL", "Foo.B_DEPRECATED"));
   }
 
+  @Test
   public void testNoSkippingInSmartCast() {
-    checkPreferredItems(0, "Foo", "Bar", "Goo");
+    EdtTestUtil.runInEdtAndWait(() -> completion.get().checkPreferredItems(0, "Foo", "Bar", "Goo"));
   }
 
+  @Test
   @NeedsIndex.ForStandardLibrary
   public void testLiteralInReturn() {
-    checkPreferredItems(0, "false", "true", "equals");
+    EdtTestUtil.runInEdtAndWait(() -> completion.get().checkPreferredItems(0, "false", "true", "equals"));
   }
 
+  @Test
   @NeedsIndex.ForStandardLibrary
   public void testLiteralInIf() {
-    checkPreferredItems(0, "equals", "false", "true");
+    EdtTestUtil.runInEdtAndWait(() -> completion.get().checkPreferredItems(0, "equals", "false", "true"));
   }
 
+  @Test
   @NeedsIndex.ForStandardLibrary
   public void testFactoryMethodForDefaultType() {
-    checkPreferredItems(0, "create", "this");
+    EdtTestUtil.runInEdtAndWait(() -> completion.get().checkPreferredItems(0, "create", "this"));
   }
 
+  @Test
   @NeedsIndex.ForStandardLibrary
   public void testLocalVarsBeforeClassLiterals() {
-    checkPreferredItems(0, "local", "Foo.class", "Bar.class");
+    EdtTestUtil.runInEdtAndWait(() -> completion.get().checkPreferredItems(0, "local", "Foo.class", "Bar.class"));
   }
 
+  @Test
   public void testPreferInstanceofed() {
-    checkPreferredItems(0, "_o", "b");
+    EdtTestUtil.runInEdtAndWait(() -> completion.get().checkPreferredItems(0, "_o", "b"));
   }
 
+  @Test
   @NeedsIndex.Full
   public void testInnerClassesProximity() {
-    checkPreferredItems(0, "Goo", "InnerGoo", "Bar", "AGoo");
+    EdtTestUtil.runInEdtAndWait(() -> completion.get().checkPreferredItems(0, "Goo", "InnerGoo", "Bar", "AGoo"));
   }
 
+  @Test
   public void testLocalVariablesOutweighStats() {
-    checkPreferredItems(0, "foo", "param", "this", "bar", "goo");
-    incUseCount(4);
-    assertPreferredItems(0, "foo", "param", "this", "goo", "bar");
-    for (int i = 0; i < StatisticsManager.OBLIVION_THRESHOLD; i++) {
-      CompletionSortingTestCase.imitateItemSelection(getLookup(), 3);//goo
-    }
+    EdtTestUtil.runInEdtAndWait(() -> {
+      completion.get().checkPreferredItems(0, "foo", "param", "this", "bar", "goo");
+      completion.get().incUseCount(4);
+      completion.get().assertPreferredItems(0, "foo", "param", "this", "goo", "bar");
+      for (int i = 0; i < StatisticsManager.OBLIVION_THRESHOLD; i++) {
+        CompletionSortingFixture.imitateItemSelection(completion.get().getLookup(), 3);//goo
+      }
 
-    refreshSorting();
-    assertPreferredItems(0, "foo", "param", "this", "goo", "bar");
+      refreshSorting();
+      completion.get().assertPreferredItems(0, "foo", "param", "this", "goo", "bar");
+    });
   }
 
   private void refreshSorting() {
-    getLookup().hideLookup(true);
-    complete();
+    completion.get().getLookup().hideLookup(true);
+    completion.get().complete();
   }
 
+  @Test
   @NeedsIndex.ForStandardLibrary
   public void testPreferredByNameDontChangeStatistics() {
-    invokeCompletion(getTestName(false) + ".java");
-    assertPreferredItems(0, "foo", "false");
-    myFixture.type(",");
-    complete();
-    assertPreferredItems(0, "bar", "foo", "equals", "false", "true");
+    LightJavaCodeInsightTestFixture myFixture = completion.get().getFixture();
+    EdtTestUtil.runInEdtAndWait(() -> {
+      completion.get().invokeCompletion(myFixture.getTestName(false) + ".java");
+      completion.get().assertPreferredItems(0, "foo", "false");
+      myFixture.type(",");
+      completion.get().complete();
+      completion.get().assertPreferredItems(0, "bar", "foo", "equals", "false", "true");
+    });
   }
 
+  @Test
   public void testExpectedNameDependentStats() {
-    checkPreferredItems(0, "myFoo", "myBar");
-    incUseCount(1);//myBar
-    assertPreferredItems(0, "myBar", "myFoo");
+    EdtTestUtil.runInEdtAndWait(() -> {
+      completion.get().checkPreferredItems(0, "myFoo", "myBar");
+      completion.get().incUseCount(1);//myBar
+      completion.get().assertPreferredItems(0, "myBar", "myFoo");
+    });
   }
 
+  @Test
   @NeedsIndex.ForStandardLibrary
   public void testPreferSameNamedMethods() {
-    checkPreferredItems(0, "foo", "boo", "doo", "hashCode");
+    EdtTestUtil.runInEdtAndWait(() -> completion.get().checkPreferredItems(0, "foo", "boo", "doo", "hashCode"));
   }
 
+  @Test
   @NeedsIndex.Full
   public void testErasureNotAffectingProximity() {
-    myFixture.addClass("package foo; public interface Foo<T> {}");
-    myFixture.addClass("package bar; public class Bar implements foo.Foo {}");
-    myFixture.addClass("public class Bar<T> implements foo.Foo<T> {}");
-    checkPreferredItems(0, "Bar", "Bar");
+    LightJavaCodeInsightTestFixture myFixture = completion.get().getFixture();
+    EdtTestUtil.runInEdtAndWait(() -> {
+      myFixture.addClass("package foo; public interface Foo<T> {}");
+      myFixture.addClass("package bar; public class Bar implements foo.Foo {}");
+      myFixture.addClass("public class Bar<T> implements foo.Foo<T> {}");
+      completion.get().checkPreferredItems(0, "Bar", "Bar");
 
-    LookupElementPresentation presentation = new LookupElementPresentation();
-    List<LookupElement> items = getLookup().getItems();
+      LookupElementPresentation presentation = new LookupElementPresentation();
+      List<LookupElement> items = completion.get().getLookup().getItems();
 
-    LookupElement first = items.get(0);
-    TestCase.assertEquals("Bar", ((PsiClass)first.getObject()).getQualifiedName());
-    first.renderElement(presentation);
-    TestCase.assertEquals("Bar<String>", presentation.getItemText());
+      LookupElement first = items.get(0);
+      assertEquals("Bar", ((PsiClass)first.getObject()).getQualifiedName());
+      first.renderElement(presentation);
+      assertEquals("Bar<String>", presentation.getItemText());
 
-    LookupElement second = items.get(1);
-    TestCase.assertEquals("bar.Bar", ((PsiClass)second.getObject()).getQualifiedName());
-    second.renderElement(presentation);
-    TestCase.assertEquals("Bar", presentation.getItemText());
+      LookupElement second = items.get(1);
+      assertEquals("bar.Bar", ((PsiClass)second.getObject()).getQualifiedName());
+      second.renderElement(presentation);
+      assertEquals("Bar", presentation.getItemText());
+    });
   }
 
+  @Test
   @NeedsIndex.Full
   public void testAssertEquals() {
-    myFixture.addClass("package junit.framework; public class Assert { " +
-                       "public static void assertEquals(Object a, Object b) {} " +
-                       "public static void assertEquals(String a, String b) {} " +
-                       "}");
-    checkPreferredItems(0, "boo", "bar");
+    LightJavaCodeInsightTestFixture myFixture = completion.get().getFixture();
+    EdtTestUtil.runInEdtAndWait(() -> {
+      myFixture.addClass("package junit.framework; public class Assert { " +
+                         "public static void assertEquals(Object a, Object b) {} " +
+                         "public static void assertEquals(String a, String b) {} " +
+                         "}");
+      completion.get().checkPreferredItems(0, "boo", "bar");
+    });
   }
 
+  @Test
   @NeedsIndex.Full
   public void testAssertEqualsJupiter() {
-    myFixture.addClass("package org.junit.jupiter.api;" +
-                       "public class Assertions { public static void assertEquals(Object expected, Object actual, String message) {} }");
-    checkPreferredItems(0, "boo", "bar");
+    LightJavaCodeInsightTestFixture myFixture = completion.get().getFixture();
+    EdtTestUtil.runInEdtAndWait(() -> {
+      myFixture.addClass("package org.junit.jupiter.api;" +
+                         "public class Assertions { public static void assertEquals(Object expected, Object actual, String message) {} }");
+      completion.get().checkPreferredItems(0, "boo", "bar");
+    });
   }
 
+  @Test
   @NeedsIndex.Full
   public void testAssertEqualsJupiterSupplier() {
-    myFixture.addClass("package java.util.function;public interface Supplier<T> {T get();}");
-    myFixture.addClass("package org.junit.jupiter.api;" +
-                       "public class Assertions { public static void assertEquals(Object expected, Object actual, " +
-                       "java.util.function.Supplier<String> message) {} }");
-    checkPreferredItems(0, "boo", "bar");
+    LightJavaCodeInsightTestFixture myFixture = completion.get().getFixture();
+    EdtTestUtil.runInEdtAndWait(() -> {
+      myFixture.addClass("package java.util.function;public interface Supplier<T> {T get();}");
+      myFixture.addClass("package org.junit.jupiter.api;" +
+                         "public class Assertions { public static void assertEquals(Object expected, Object actual, " +
+                         "java.util.function.Supplier<String> message) {} }");
+      completion.get().checkPreferredItems(0, "boo", "bar");
+    });
   }
 
+  @Test
   @NeedsIndex.Full
   public void testAssertNotEquals() {
-    myFixture.addClass("package org.junit; public class Assert { public static void assertNotEquals(Object a, Object b) {} }");
-    checkPreferredItems(0, "boo", "bar");
+    LightJavaCodeInsightTestFixture myFixture = completion.get().getFixture();
+    EdtTestUtil.runInEdtAndWait(() -> {
+      myFixture.addClass("package org.junit; public class Assert { public static void assertNotEquals(Object a, Object b) {} }");
+      completion.get().checkPreferredItems(0, "boo", "bar");
+    });
   }
 
+  @Test
   @NeedsIndex.Full
   public void testPreferCollectionsEmptyList() {
-    myFixture.addClass("package foo; public class FList<T> implements java.util.List<T> { public static <T> FList<T> emptyList() {} }");
-    configureNoCompletion(getTestName(false) + ".java");
-    myFixture.complete(CompletionType.SMART, 2);
-    assertTrue(ContainerUtil.indexOf(getLookup().getItems(), item -> item.getAllLookupStrings().contains("Collections.emptyList")) <
-               ContainerUtil.indexOf(getLookup().getItems(), item -> item.getAllLookupStrings().contains("FList.emptyList")));
-    assertPreferredItems(0, "local", "local.subList", "locMethod");
+    LightJavaCodeInsightTestFixture myFixture = completion.get().getFixture();
+    EdtTestUtil.runInEdtAndWait(() -> {
+      myFixture.addClass("package foo; public class FList<T> implements java.util.List<T> { public static <T> FList<T> emptyList() {} }");
+      completion.get().configureNoCompletion(myFixture.getTestName(false) + ".java");
+      myFixture.complete(CompletionType.SMART, 2);
+      assertTrue(ContainerUtil.indexOf(completion.get().getLookup().getItems(), item -> item.getAllLookupStrings().contains("Collections.emptyList")) <
+                 ContainerUtil.indexOf(completion.get().getLookup().getItems(), item -> item.getAllLookupStrings().contains("FList.emptyList")));
+      completion.get().assertPreferredItems(0, "local", "local.subList", "locMethod");
+    });
   }
 
+  @Test
   @NeedsIndex.ForStandardLibrary
   public void testDispreferGetterInSetterCall() {
-    checkPreferredItems(0, "color", "getZooColor", "getColor", "hashCode");
+    EdtTestUtil.runInEdtAndWait(() -> completion.get().checkPreferredItems(0, "color", "getZooColor", "getColor", "hashCode"));
   }
 
+  @Test
   @NeedsIndex.ForStandardLibrary
   public void testPreferOtherGetterInSetterCall() {
-    checkPreferredItems(0, "color", "getColor", "getZooColor", "hashCode");
+    EdtTestUtil.runInEdtAndWait(() -> completion.get().checkPreferredItems(0, "color", "getColor", "getZooColor", "hashCode"));
   }
 
+  @Test
   public void testPreferLocalOverFactoryMatchingName() {
-    checkPreferredItems(0, "e", "createEvent");
+    EdtTestUtil.runInEdtAndWait(() -> completion.get().checkPreferredItems(0, "e", "createEvent"));
   }
 
+  @Test
   @NeedsIndex.ForStandardLibrary
   public void testPreferLocalOverThis() {
-    checkPreferredItems(0, "value", "this", "hashCode");
+    EdtTestUtil.runInEdtAndWait(() -> completion.get().checkPreferredItems(0, "value", "this", "hashCode"));
   }
 
+  @Test
   @NeedsIndex.ForStandardLibrary
   public void testGetLogger() {
-    checkPreferredItems(0, "Foo.class", "forName");
+    EdtTestUtil.runInEdtAndWait(() -> completion.get().checkPreferredItems(0, "Foo.class", "forName"));
   }
 
+  @Test
   @NeedsIndex.ForStandardLibrary
   public void testGetWildcardLogger() {
-    checkPreferredItems(0, "Foo.class", "forName");
+    EdtTestUtil.runInEdtAndWait(() -> completion.get().checkPreferredItems(0, "Foo.class", "forName"));
   }
 
+  @Test
   @NeedsIndex.ForStandardLibrary
   public void testGetWildcardFactoryLogger() {
-    checkPreferredItems(0, "Foo.class", "forName");
+    EdtTestUtil.runInEdtAndWait(() -> completion.get().checkPreferredItems(0, "Foo.class", "forName"));
   }
 
+  @Test
   @NeedsIndex.ForStandardLibrary
   public void testPreferLocalWildcardClassOverObject() {
-    checkPreferredItems(0, "type", "Object.class", "forName", "forName");
+    EdtTestUtil.runInEdtAndWait(() -> completion.get().checkPreferredItems(0, "type", "Object.class", "forName", "forName"));
   }
 
+  @Test
   @NeedsIndex.ForStandardLibrary
   public void testPreferStringsInStringConcatenation() {
-    checkPreferredItems(0, "toString");
+    EdtTestUtil.runInEdtAndWait(() -> completion.get().checkPreferredItems(0, "toString"));
   }
 
+  @Test
   @NeedsIndex.Full
   public void testGlobalStaticMemberStats() {
-    configureNoCompletion(getTestName(false) + ".java");
-    myFixture.complete(CompletionType.SMART, 2);
-    assertPreferredItems(0, "newLinkedSet0", "newLinkedSet1", "newLinkedSet2");
-    CompletionSortingTestCase.imitateItemSelection(getLookup(), 1);
-    myFixture.complete(CompletionType.SMART, 2);
-    assertPreferredItems(0, "newLinkedSet1", "newLinkedSet0", "newLinkedSet2");
+    LightJavaCodeInsightTestFixture myFixture = completion.get().getFixture();
+    EdtTestUtil.runInEdtAndWait(() -> {
+      completion.get().configureNoCompletion(myFixture.getTestName(false) + ".java");
+      myFixture.complete(CompletionType.SMART, 2);
+      completion.get().assertPreferredItems(0, "newLinkedSet0", "newLinkedSet1", "newLinkedSet2");
+      CompletionSortingFixture.imitateItemSelection(completion.get().getLookup(), 1);
+      myFixture.complete(CompletionType.SMART, 2);
+      completion.get().assertPreferredItems(0, "newLinkedSet1", "newLinkedSet0", "newLinkedSet2");
+    });
   }
 
+  @Test
   @NeedsIndex.Full
   public void testPreferExpectedTypeMembers() {
-    configureNoCompletion(getTestName(false) + ".java");
-    myFixture.complete(CompletionType.SMART, 2);
-    assertPreferredItems(0, "MyColor.RED", "Another.RED");
-    assert getLookup().getItems().size() == 2;
+    LightJavaCodeInsightTestFixture myFixture = completion.get().getFixture();
+    EdtTestUtil.runInEdtAndWait(() -> {
+      completion.get().configureNoCompletion(myFixture.getTestName(false) + ".java");
+      myFixture.complete(CompletionType.SMART, 2);
+      completion.get().assertPreferredItems(0, "MyColor.RED", "Another.RED");
+      assert completion.get().getLookup().getItems().size() == 2;
+    });
   }
 
+  @Test
   @NeedsIndex.Full
   public void testPreferGlobalMembersReturningExpectedType() {
-    configureNoCompletion(getTestName(false) + ".java");
-    LookupElement[] items = myFixture.complete(CompletionType.SMART, 2);
-    assert NormalCompletionTestCase.renderElement(items[0]).getItemText().equals("Map.builder");
-    assert NormalCompletionTestCase.renderElement(items[1]).getItemText().equals("BiMap.builder");
+    LightJavaCodeInsightTestFixture myFixture = completion.get().getFixture();
+    EdtTestUtil.runInEdtAndWait(() -> {
+      completion.get().configureNoCompletion(myFixture.getTestName(false) + ".java");
+      LookupElement[] items = myFixture.complete(CompletionType.SMART, 2);
+      assert NormalCompletionFixture.renderElement(items[0]).getItemText().equals("Map.builder");
+      assert NormalCompletionFixture.renderElement(items[1]).getItemText().equals("BiMap.builder");
+    });
   }
 
+  @Test
   public void testPreferExpectedLocalOverExactlyDefaultMember() {
-    checkPreferredItems(0, "method", "PsiUtil.NULL_PSI_ELEMENT");
+    EdtTestUtil.runInEdtAndWait(() -> completion.get().checkPreferredItems(0, "method", "PsiUtil.NULL_PSI_ELEMENT"));
   }
 
+  @Test
   public void testPreferStaticsOfExpectedTypeToNonStaticGetterOfGenericOne() {
-    checkPreferredItems(0, "getE", "myE", "getGeneric");
-  }
-
-  @Override
-  protected String getTestDataPath() {
-    return JavaTestUtil.getJavaTestDataPath() + BASE_PATH;
+    EdtTestUtil.runInEdtAndWait(() -> completion.get().checkPreferredItems(0, "getE", "myE", "getGeneric"));
   }
 
   private static final String BASE_PATH = "/codeInsight/completion/smartTypeSorting";

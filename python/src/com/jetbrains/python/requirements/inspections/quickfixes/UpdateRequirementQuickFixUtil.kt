@@ -19,7 +19,7 @@ import com.jetbrains.python.packaging.management.ui.PythonPackageManagerUI
 /** Resolves the UI-level package manager for the Python project of [file], or `null` when no interpreter is ready. */
 internal suspend fun Project.pythonPackageManagerUIFor(file: VirtualFile): PythonPackageManagerUI? {
   val interpreter = findPythonInterpreter(file, mainForOrphans = false) ?: return null
-  return PythonPackageManagerUI.forPythonInterpreter(this, interpreter)
+  return PythonPackageManagerUI.forPythonInterpreter(interpreter)
 }
 
 /**

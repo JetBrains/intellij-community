@@ -13,6 +13,7 @@ com.intellij.openapi.editor.impl.EditorAccessibilityCaret
 com.intellij.openapi.editor.impl.EditorAccessibilityDocument
 com.intellij.openapi.editor.impl.view.EditorView
 com.intellij.openapi.editor.impl.view.IterationState
+com.intellij.openapi.command.impl.CommandIdentity
 # Load only
 # The static initializers of these classes can access the toolkit, UI listeners or Swing state.
 com.intellij.openapi.editor.impl.EditorImpl
@@ -343,25 +344,28 @@ com.intellij.openapi.editor.impl.view.EditorFontResolver$Companion
 com.intellij.openapi.editor.impl.view.EditorViewMetrics
 com.intellij.openapi.editor.impl.view.FontLayoutService
 com.intellij.openapi.editor.impl.view.FontLayoutService$Companion
+com.intellij.openapi.editor.impl.view.GlyphFragment
 com.intellij.openapi.editor.impl.view.GuardedBlocksIndex
 com.intellij.openapi.editor.impl.view.GuardedBlocksIndex$Builder
 com.intellij.openapi.editor.impl.view.GuardedBlocksIndex$DocumentBuilder
 com.intellij.openapi.editor.impl.view.IterationState$HighlighterSweep
 com.intellij.openapi.editor.impl.view.LineBidiRun
 com.intellij.openapi.editor.impl.view.LineChunk
-com.intellij.openapi.editor.impl.view.LineVisualFragment
 com.intellij.openapi.editor.impl.view.LogicalColumns
 com.intellij.openapi.editor.impl.view.LogicalLines
-com.intellij.openapi.editor.impl.view.SimpleTextFragment
+com.intellij.openapi.editor.impl.view.PositionedLineFragment
+com.intellij.openapi.editor.impl.view.SimpleGlyphFragment
 com.intellij.openapi.editor.impl.view.SpecialCharacterFragment
 com.intellij.openapi.editor.impl.view.SyntheticLineChunk
 com.intellij.openapi.editor.impl.view.TextFonts
 com.intellij.openapi.editor.impl.view.TextFonts$Companion
 com.intellij.openapi.editor.impl.view.TextFonts$WidthCaches
-com.intellij.openapi.editor.impl.view.TextFragment
+com.intellij.openapi.editor.impl.view.VisualLineFragment
+com.intellij.openapi.editor.impl.view.VisualLineFragment$FoldRegionFragment
+com.intellij.openapi.editor.impl.view.VisualLineFragment$InlayFragment
+com.intellij.openapi.editor.impl.view.VisualLineFragment$TextFragment
 com.intellij.openapi.editor.impl.view.VisualLineFragmentsIterator
-com.intellij.openapi.editor.impl.view.VisualLineFragmentsIterator$Fragment
-com.intellij.openapi.editor.impl.view.VisualLineFragmentsIterator$RightAlignedFragment
+com.intellij.openapi.editor.impl.view.VisualLineFragmentsIterator$Step
 com.intellij.openapi.editor.impl.view.VisualLinesIterator
 com.intellij.openapi.editor.impl.view.VisualLinesIterator$Location
 com.intellij.openapi.editor.impl.view.VisualOrderIterator
@@ -454,7 +458,8 @@ com.intellij.openapi.fileEditor.impl.SpinnerTabIconHolder
 com.intellij.openapi.fileEditor.impl.StartupEditorCompositeProvider
 com.intellij.openapi.fileEditor.impl.TabMouseListener
 com.intellij.openapi.fileEditor.impl.TabToOpenOnStartup
-com.intellij.openapi.fileEditor.impl.skeleton.EditorSkeleton
+com.intellij.openapi.fileEditor.impl.skeleton.EditorSkeletonNew
+com.intellij.openapi.fileEditor.impl.skeleton.EditorSkeletonNewKt
 com.intellij.openapi.fileEditor.impl.skeleton.rendering.EditorSkeletonCanvas$RemovedArea
 com.intellij.openapi.fileEditor.impl.tabActions.CloseTab
 com.intellij.openapi.fileEditor.impl.tabActions.CloseTabKt

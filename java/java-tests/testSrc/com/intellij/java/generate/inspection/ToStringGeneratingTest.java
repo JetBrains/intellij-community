@@ -17,9 +17,9 @@ import com.intellij.testFramework.junit5.TestApplication;
 import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.java.generate.GenerateToStringActionHandlerImpl;
 import org.jetbrains.java.generate.GenerateToStringContext;
 import org.jetbrains.java.generate.GenerateToStringWorker;
+import org.jetbrains.java.generate.JavaGenerateToStringActionHandler;
 import org.jetbrains.java.generate.config.Config;
 import org.jetbrains.java.generate.config.ConflictResolutionPolicy;
 import org.jetbrains.java.generate.config.ReplacePolicy;
@@ -358,7 +358,7 @@ public class ToStringGeneratingTest {
   @NotNull
   private static Collection<PsiMember> collectMembers(@NotNull PsiClass clazz) {
     return ReadAction.computeBlocking(() -> {
-      PsiElementClassMember<?>[] memberElements = GenerateToStringActionHandlerImpl.buildMembersToShow(clazz);
+      PsiElementClassMember<?>[] memberElements = JavaGenerateToStringActionHandler.buildMembersToShow(clazz);
       return Arrays.stream(memberElements)
         .<PsiMember>map(x -> x.getElement())
         .sorted((o1, o2) -> compareMembers(o1, o2))

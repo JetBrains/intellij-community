@@ -15,7 +15,7 @@ import com.jetbrains.python.packaging.PyPackageName
  * is keyed by machine, while whether the user turned it on and how they configured it belong to one project.
  * The two are independent — one machine's binary serves every project on it, and each of those projects
  * enables and configures it on its own. So everything taking a [Project] lives here: the enabled flag
- * ([isEnabledOn], [setEnabledOn]), the configuration of type [C], the type-engine selection, and the hooks
+ * ([isEnabledOn], [setEnabledOn]), the configuration of type [C], and the hooks
  * that fire when the enablement or the executable changes. A [PackageManagerPyTool] has none of it, which is
  * why [PyTool] itself takes no [Project] at all.
  *
@@ -44,16 +44,6 @@ interface ProjectLevelPyTool<C : PyToolConfigurationDto> : PyTool {
    * on paper and not running.
    */
   fun onEnabledChanged(project: Project, enabled: Boolean) {}
-
-  /**
-   * Returns true when the project uses this tool as its type engine.
-   *
-   * A selected type engine counts as active even with its enabled flag off, which is what [isActiveOn]
-   * captures for an LSP tool. Declared here and not in the LSP module, where the only type engines live,
-   * because [buildToolState] reports it to the settings page and `python-pytools` cannot depend on that
-   * module; tools that are not type engines leave the default.
-   */
-  fun isSelectedAsTypeEngine(project: Project): Boolean = false
 
   /**
    * Invoked when the executable this tool would run may have changed. Any persisting is already done
@@ -137,8 +127,6 @@ fun ProjectLevelPyTool<*>.setEnabledOn(project: Project, enabled: Boolean) {
 
 /**
  * Returns true when the user enabled this tool for the project.
- *
- * An LSP tool asks [isActiveOn] instead, which also counts being the selected type engine.
  */
 fun ProjectLevelPyTool<*>.isEnabledOn(project: Project): Boolean =
   PyToolsState.getInstance(project).isEnabled(this)

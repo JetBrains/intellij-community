@@ -3,6 +3,11 @@ package org.jetbrains.idea.devkit.inspections.quickfix
 
 import org.jetbrains.idea.devkit.inspections.LightServiceMustBeFinalInspection
 
+/**
+ * Use [lightServiceMustBeFinalFixture] in a JUnit 5 test.
+ */
+@Suppress("DEPRECATION")
+@Deprecated("Use lightServiceMustBeFinalFixture in a JUnit 5 test")
 abstract class LightServiceMustBeFinalInspectionTestBase : LightDevKitInspectionFixTestBase() {
 
   override fun setUp() {

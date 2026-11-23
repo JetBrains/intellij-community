@@ -132,9 +132,6 @@ class SettingsSnapshotTest {
     settings.lineNumerationType = lineNumeration
     assertEquals(lineNumeration, settings.lineNumerationType)
 
-    settings.characterGridWidthMultiplier = 1.5f
-    assertEquals(1.5f, settings.characterGridWidthMultiplier)
-
     settings.setSoftMargins(listOf(17, 42))
     assertEquals(listOf(17, 42), settings.softMargins)
   }

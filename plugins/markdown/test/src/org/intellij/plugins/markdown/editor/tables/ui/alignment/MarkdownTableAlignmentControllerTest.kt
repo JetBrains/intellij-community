@@ -2,77 +2,94 @@
 package org.intellij.plugins.markdown.editor.tables.ui.alignment
 
 import com.intellij.markdown.frontend.editor.livepreview.MarkdownLivePreviewReconciler
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.editor.impl.view.FontLayoutService
-import com.intellij.testFramework.LightPlatformCodeInsightTestCase
+import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightModuleFixture
 import com.intellij.testFramework.MockFontLayoutService
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.assertNothingLogged
+import com.intellij.testFramework.common.timeoutRunBlocking
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.fixture.projectFixture
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import org.intellij.plugins.markdown.editor.livepreview.MarkdownLivePreviewConfiguration
 import org.intellij.plugins.markdown.editor.livepreview.computeLivePreviewSpecs
-import org.intellij.plugins.markdown.editor.livepreview.enableLivePreview
+import org.intellij.plugins.markdown.editor.livepreview.setLivePreviewEnabledness
 import org.intellij.plugins.markdown.publishSpecsAndWait
+import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 
+@TestApplication
 @Suppress("MarkdownIncorrectTableFormatting")
-class MarkdownTableAlignmentControllerTest : LightPlatformCodeInsightTestCase() {
-  override fun setUp() {
-    super.setUp()
+class MarkdownTableAlignmentControllerTest {
+  private val myFixture by codeInsightModuleFixture(projectFixture)
+
+  @BeforeEach
+  fun setUp() {
     FontLayoutService.setInstance(MockFontLayoutService(CHAR_WIDTH, LINE_HEIGHT, DESCENT))
   }
 
-  override fun tearDown() {
-    try {
-      FontLayoutService.setInstance(null)
-    }
-    catch (e: Throwable) {
-      addSuppressedException(e)
-    }
-    finally {
-      super.tearDown()
-    }
+  @AfterEach
+  fun tearDown() {
+    FontLayoutService.setInstance(null)
   }
 
-  fun `test a document change is picked up`() {
+  @Test
+  fun `test a document change is picked up`(): Unit = timeoutRunBlocking {
     configureRaggedTable()
-    awaitPads()
-    val widthsBefore = padWidths()
-    // Widen the last row's first cell past the current column width, so the column has to grow.
-    WriteCommandAction.runWriteCommandAction(project) {
-      editor.document.insertString(editor.document.text.indexOf("ccc") + 3, "cccc")
+    withContext(Dispatchers.EDT) {
+      awaitPads()
+      val widthsBefore = padWidths()
+      // Widen the last row's first cell past the current column width, so the column has to grow.
+      WriteCommandAction.runWriteCommandAction(myFixture.project) {
+        myFixture.editor.document.insertString(myFixture.editor.document.text.indexOf("ccc") + 3, "cccc")
+      }
+      PlatformTestUtil.waitWithEventsDispatching(
+        "padding did not react to the document change",
+        { padWidths() != widthsBefore },
+        TIMEOUT_SECONDS,
+      )
     }
-    PlatformTestUtil.waitWithEventsDispatching(
-      "padding did not react to the document change",
-      { padWidths() != widthsBefore },
-      TIMEOUT_SECONDS,
-    )
   }
 
-  fun `test live preview folds are aligned inside the table`() = assertNothingLogged {
-    // language=Markdown
-    val content = """
-      | aaa | x |
-      | --- | - |
-      | **bb** | y |
-      """.trimIndent()
-    configureFromFileText("some.md", content)
-    editor.enableLivePreview()
-    editor.caretModel.moveToOffset(content.length)
+  @Test
+  fun `test live preview folds are aligned inside the table`(): Unit = timeoutRunBlocking {
+    withContext(Dispatchers.EDT) {
+      assertNothingLogged {
+        // language=Markdown
+        val content = """
+          | aaa | x |
+          | --- | - |
+          | **bb** | y |
+          """.trimIndent()
+        myFixture.configureByText("some.md", content)
+        myFixture.editor.setLivePreviewEnabledness(true)
+        myFixture.editor.caretModel.moveToOffset(content.length)
 
-    val reconciler = requireNotNull(MarkdownLivePreviewReconciler.getOrCreate(editor))
-    reconciler.publishSpecsAndWait(computeLivePreviewSpecs(file, editor))
-    awaitPads()
-    assertBordersAligned()
+        val reconciler = requireNotNull(MarkdownLivePreviewReconciler.getOrCreate(myFixture.editor))
+        reconciler.publishSpecsAndWait(
+          computeLivePreviewSpecs(myFixture.file, myFixture.editor, MarkdownLivePreviewConfiguration.DEFAULT_LIVE_PREVIEW_CONFIGURATION)
+        )
+        awaitPads()
+        assertBordersAligned()
 
-    editor.caretModel.moveToOffset(content.indexOf("**bb**") + 2)
-    assertBordersAligned()
+        myFixture.editor.caretModel.moveToOffset(content.indexOf("**bb**") + 2)
+        assertBordersAligned()
 
-    editor.caretModel.moveToOffset(content.length)
-    PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue()
-    assertBordersAligned()
+        myFixture.editor.caretModel.moveToOffset(content.length)
+        PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue()
+        assertBordersAligned()
+      }
+    }
   }
 
   private fun configureRaggedTable() {
     // language=Markdown
-    configureFromFileText(
+    myFixture.configureByText(
       "some.md",
       """
       | a | bb |
@@ -91,12 +108,12 @@ class MarkdownTableAlignmentControllerTest : LightPlatformCodeInsightTestCase() 
   }
 
   private fun allPads() =
-    editor.inlayModel.getInlineElementsInRange(0, editor.document.textLength, TablePadRenderer::class.java)
+    myFixture.editor.inlayModel.getInlineElementsInRange(0, myFixture.editor.document.textLength, TablePadRenderer::class.java)
 
   private fun padWidths() = allPads().map { it.offset to it.widthInPixels }
 
   private fun assertBordersAligned() {
-    val document = editor.document
+    val document = myFixture.editor.document
     val text = document.charsSequence
     val bordersByRow = (0 until document.lineCount)
       .map { line ->
@@ -106,16 +123,18 @@ class MarkdownTableAlignmentControllerTest : LightPlatformCodeInsightTestCase() 
     val separatorCount = bordersByRow.minOf { it.size }
     for (index in 0 until separatorCount) {
       val xs = bordersByRow.map { borders -> renderedX(borders[index]) }
-      assertEquals("separator #$index should stay aligned: $xs", 1, xs.distinct().size)
+      assertEquals(1, xs.distinct().size, "separator #$index should stay aligned: $xs")
     }
   }
 
   private fun renderedX(offset: Int): Int {
-    return editor.offsetToXY(offset, false, false).x +
-           editor.inlayModel.getInlineElementsInRange(offset, offset).sumOf { it.widthInPixels }
+    return myFixture.editor.offsetToXY(offset, false, false).x +
+           myFixture.editor.inlayModel.getInlineElementsInRange(offset, offset).sumOf { it.widthInPixels }
   }
 
   private companion object {
+    private val projectFixture = projectFixture(openAfterCreation = true)
+
     const val CHAR_WIDTH = 10
     const val LINE_HEIGHT = 10
     const val DESCENT = 2

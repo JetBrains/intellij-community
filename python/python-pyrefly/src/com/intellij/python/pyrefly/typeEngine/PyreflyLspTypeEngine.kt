@@ -6,7 +6,7 @@ import com.intellij.psi.util.parents
 import com.intellij.python.lsp.core.findLspClientFor
 import com.intellij.python.lsp.core.type.PyLspTypeEngine
 import com.intellij.python.lsp.core.typeEngine.PyTypeEngineType
-import com.intellij.python.pyrefly.lsp.PyreflyLspIntegrationProvider
+import com.intellij.python.pyrefly.PyreflyPyTool
 import com.jetbrains.python.project.PyProject
 import com.jetbrains.python.psi.PyFromImportStatement
 import com.jetbrains.python.psi.PyKeyValueExpression
@@ -23,7 +23,7 @@ internal class PyreflyLspTypeEngine(private val pyProject: PyProject) : PyLspTyp
   override val name: String = PyTypeEngineType.PYREFLY.name
 
   override val lspClient: LspClient?
-    get() = findLspClientFor(pyProject, PyreflyLspIntegrationProvider::class.java)
+    get() = findLspClientFor(pyProject, PyreflyPyTool.typeEngineProviderClass())
 
   /**
    * Pyrefly answers for every element its server sees.

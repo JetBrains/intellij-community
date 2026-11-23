@@ -2,11 +2,26 @@
 package com.intellij.java.spring
 
 import com.intellij.ide.highlighter.JavaFileType
+import com.intellij.openapi.application.EDT
 import com.intellij.psi.PsiParameter
 import com.intellij.refactoring.safeDelete.SafeDeleteHandler
+import com.intellij.testFramework.common.timeoutRunBlocking
+import com.intellij.testFramework.fixtures.lightJavaCodeInsightFixture
+import com.intellij.testFramework.junit5.TestApplication
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import org.junit.jupiter.api.Test
 
-class SpringSafeDeleteContractTest : SpringJSpecifyLightHighlightingTestCase() {
-  fun `test signature string contains contract annotation`() {
+@TestApplication
+class SpringSafeDeleteContractTest {
+  companion object {
+    private val projectFixture = springJSpecifyProjectFixture()
+  }
+
+  private val myFixture by lightJavaCodeInsightFixture(projectFixture)
+
+  @Test
+  fun `test signature string contains contract annotation`(): Unit = timeoutRunBlocking {
     myFixture.configureByText(JavaFileType.INSTANCE, """
       class Baz {
         @org.springframework.lang.Contract("null, _ -> false")
@@ -15,15 +30,17 @@ class SpringSafeDeleteContractTest : SpringJSpecifyLightHighlightingTestCase() {
         }
       }
     """.trimIndent())
-    val psiParameter = myFixture.elementAtCaret as PsiParameter
-    SafeDeleteHandler.invoke(project, arrayOf(psiParameter), true)
-    myFixture.checkResult("""
-      class Baz {
-        @org.springframework.lang.Contract("null -> false")
-        public static boolean foo(Object o1) {
-            return o1 != null;
+    withContext(Dispatchers.EDT) {
+      val psiParameter = myFixture.elementAtCaret as PsiParameter
+      SafeDeleteHandler.invoke(myFixture.project, arrayOf(psiParameter), true)
+      myFixture.checkResult("""
+        class Baz {
+          @org.springframework.lang.Contract("null -> false")
+          public static boolean foo(Object o1) {
+              return o1 != null;
+          }
         }
-      }
-    """.trimIndent())
+      """.trimIndent())
+    }
   }
 }

@@ -17,6 +17,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.platform.debugger.impl.shared.CustomDebuggerHintsKt;
 import com.intellij.platform.debugger.impl.shared.proxy.XDebugSessionProxy;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
@@ -44,7 +45,7 @@ import java.util.List;
 @Service(Service.Level.PROJECT)
 public final class XDebuggerInlayUtil {
   public static final String INLINE_HINTS_DELIMETER = ":";
-  public static final Key<Boolean> CUSTOM_DEBUGGER_HINT = Key.create("custom debugger hint");
+  public static final Key<Boolean> CUSTOM_DEBUGGER_HINT = CustomDebuggerHintsKt.CUSTOM_DEBUGGER_HINT;
   private final @NotNull Project myProject;
 
   public static XDebuggerInlayUtil getInstance(Project project) {
@@ -115,7 +116,7 @@ public final class XDebuggerInlayUtil {
         return;
       }
       List<Inlay<?>> inlays = e.getInlayModel().getAfterLineEndElementsInRange(lineStart, lineEnd);
-      if (ContainerUtil.exists(inlays, inlay -> CUSTOM_DEBUGGER_HINT.get(inlay) != null)) {
+      if (ContainerUtil.exists(inlays, CustomDebuggerHintsKt::isCustomDebuggerHint)) {
         return;
       }
 

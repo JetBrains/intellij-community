@@ -6,9 +6,12 @@ import com.intellij.markdown.jcef.preview.JCEFHtmlPanelProvider
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.FileEditorProvider
+import com.intellij.openapi.fileEditor.TextEditorWithPreview
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.LightVirtualFile
+import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.SkipInHeadlessEnvironment
 import com.intellij.testFramework.dispatchAllEventsInIdeEventQueue
 import com.intellij.testFramework.junit5.RunInEdt
@@ -17,8 +20,12 @@ import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.TestDisposable
 import com.intellij.testFramework.junit5.fixture.projectFixture
 import org.assertj.core.api.Assertions.assertThat
+import org.intellij.plugins.markdown.settings.MarkdownPreviewMode
+import org.intellij.plugins.markdown.settings.MarkdownSettings
+import org.intellij.plugins.markdown.ui.preview.MarkdownEditorWithPreview
 import org.intellij.plugins.markdown.ui.preview.MarkdownHtmlPanel
 import org.intellij.plugins.markdown.ui.preview.MarkdownHtmlPanelProvider
+import org.intellij.plugins.markdown.ui.preview.MarkdownPreviewFileEditor
 import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import javax.swing.JComponent
@@ -60,11 +67,25 @@ class MarkdownEditorCreationTest {
       listOf(JCEFHtmlPanelProvider()),
       disposable
     )
+    val settings = MarkdownSettings.getInstance()
+    val previewMode = settings.previewMode
+    Disposer.register(disposable) { settings.update { it.previewMode = previewMode } }
+    settings.update { it.previewMode = MarkdownPreviewMode.JCEF }
     val file = LightVirtualFile("some.md", "# Some")
     val provider = MarkdownSplitEditorProvider()
     file.putUserData(FileEditorProvider.KEY, provider)
     val manager = FileEditorManager.getInstance(project)
     manager.openFile(file)
+    if (JCEFHtmlPanelProvider.canBeUsed()) {
+      val editor = manager.getAllEditors(file).filterIsInstance<MarkdownEditorWithPreview>().single()
+      // The preview creates no panel while the last used layout hides it.
+      editor.setLayout(TextEditorWithPreview.Layout.SHOW_EDITOR_AND_PREVIEW)
+      PlatformTestUtil.waitWithEventsDispatching(
+        "The preview did not create a JCEF panel",
+        { editor.previewEditor.getUserData(MarkdownPreviewFileEditor.PREVIEW_BROWSER)?.get() != null },
+        JCEF_STARTUP_TIMEOUT_SECONDS
+      )
+    }
     dispatchAllEventsInIdeEventQueue()
     manager.closeFile(file)
   }
@@ -122,5 +143,9 @@ class MarkdownEditorCreationTest {
         StubHtmlPanelProvider::class.java.toString()
       )
     }
+  }
+
+  private companion object {
+    const val JCEF_STARTUP_TIMEOUT_SECONDS = 60
   }
 }

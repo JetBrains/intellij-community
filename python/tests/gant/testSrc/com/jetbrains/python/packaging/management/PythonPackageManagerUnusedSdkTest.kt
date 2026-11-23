@@ -2,6 +2,7 @@
 package com.jetbrains.python.packaging.management
 
 import com.intellij.openapi.Disposable
+import com.intellij.python.sdk.backend.PythonInterpreter
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
@@ -11,8 +12,8 @@ import com.intellij.python.junit5Tests.framework.pyProjectFixture
 import com.intellij.python.pyproject.model.evolution.EvoPyProjectModel
 import com.intellij.python.pyproject.model.evolution.setPythonInterpreter
 import com.intellij.python.sdk.backend.PythonEnvironmentWatchers
-import com.intellij.python.sdk.backend.PythonInterpreter
 import com.intellij.python.sdk.backend.PythonInterpreterRegistry
+import com.intellij.python.sdk.backend.addMockPythonInterpreter
 import com.intellij.python.venv.sdk.flavors.VirtualEnvSdkFlavor
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
@@ -61,9 +62,9 @@ internal class PythonPackageManagerUnusedSdkTest {
       useInterpreter(interpreter)
       val service = project.service<PythonPackageManagerService>()
 
-      val manager = service.forPythonInterpreter(project, interpreter)
+      val manager = service.forPythonInterpreter(interpreter)
 
-      assertThat(service.forPythonInterpreter(project, interpreter)).isSameAs(manager)
+      assertThat(service.forPythonInterpreter(interpreter)).isSameAs(manager)
     }
 
   @Test
@@ -74,7 +75,7 @@ internal class PythonPackageManagerUnusedSdkTest {
       useInterpreter(interpreter)
       val service = project.service<PythonPackageManagerService>()
 
-      service.forPythonInterpreter(project, interpreter)
+      service.forPythonInterpreter(interpreter)
 
       service.awaitWatcher(interpreter, watched = true)
     }
@@ -88,7 +89,7 @@ internal class PythonPackageManagerUnusedSdkTest {
     val interpreter = registerInterpreter("PY-88315 packages of nobody", home)
     val service = project.service<PythonPackageManagerService>()
 
-    service.forPythonInterpreter(project, interpreter)
+    service.forPythonInterpreter(interpreter)
 
     // The structure has landed, so an absent watcher is a decision and not a moment before one
     EvoPyProjectModel.getInstance(project).snapshot()
@@ -105,14 +106,14 @@ internal class PythonPackageManagerUnusedSdkTest {
     val project = projectFixture.get()
     val interpreter = registerInterpreter("PY-88315 packages attached later", home)
     val service = project.service<PythonPackageManagerService>()
-    val manager = service.forPythonInterpreter(project, interpreter)
+    val manager = service.forPythonInterpreter(interpreter)
     EvoPyProjectModel.getInstance(project).snapshot()
     assertThat(service.impl().watchesInterpreterPaths(interpreter)).isFalse()
 
     useInterpreter(interpreter)
 
     service.awaitWatcher(interpreter, watched = true)
-    assertThat(service.forPythonInterpreter(project, interpreter)).describedAs("The manager a caller holds must survive the move").isSameAs(manager)
+    assertThat(service.forPythonInterpreter(interpreter)).describedAs("The manager a caller holds must survive the move").isSameAs(manager)
   }
 
   @Test
@@ -123,13 +124,13 @@ internal class PythonPackageManagerUnusedSdkTest {
     val interpreter = registerInterpreter("PY-88315 packages left behind", home.resolve("old"))
     useInterpreter(interpreter)
     val service = project.service<PythonPackageManagerService>()
-    val manager = service.forPythonInterpreter(project, interpreter)
+    val manager = service.forPythonInterpreter(interpreter)
     service.awaitWatcher(interpreter, watched = true)
 
     useInterpreter(registerInterpreter("PY-88315 packages the new one", home.resolve("new")))
 
     service.awaitWatcher(interpreter, watched = false)
-    assertThat(service.forPythonInterpreter(project, interpreter)).describedAs("The manager a caller holds must survive the move").isSameAs(manager)
+    assertThat(service.forPythonInterpreter(interpreter)).describedAs("The manager a caller holds must survive the move").isSameAs(manager)
   }
 
   /**
@@ -145,20 +146,19 @@ internal class PythonPackageManagerUnusedSdkTest {
     val interpreter = registerInterpreter("PY-88315 packages of a doomed interpreter", home)
     useInterpreter(interpreter)
     val service = project.service<PythonPackageManagerService>()
-    service.forPythonInterpreter(project, interpreter)
+    service.forPythonInterpreter(interpreter)
     service.awaitWatcher(interpreter, watched = true)
 
     val watcherGone = AtomicBoolean()
     Disposer.register(service.impl().interpreterPathsWatcher(interpreter)!!, Disposable { watcherGone.set(true) })
-    PythonInterpreterRegistry.getInstance(project).removePythonInterpreter(pyProjectFixture.get(), interpreter)
+    PythonInterpreterRegistry.getInstance(project).remove(interpreter)
 
     assertThat(watcherGone.get()).describedAs("The watcher outlived the interpreter it watches").isTrue()
   }
 
   /**
-   * A watcher is parented to the interpreter, which lives as long as the application, and the change it runs holds the
-   * service and through it the project. Closing the project therefore has to take the watcher, or the interpreter keeps
-   * the closed project alive (PY-89433).
+   * The change a watcher runs holds the service and through it the project. Closing the project therefore has to take
+   * the watcher, so nothing that outlives the project keeps it alive (PY-89433).
    */
   @Test
   fun `the watcher of an interpreter goes when the project goes`(
@@ -168,7 +168,7 @@ internal class PythonPackageManagerUnusedSdkTest {
     val interpreter = registerInterpreter("PY-89433 packages of a closed project", home)
     useInterpreter(interpreter)
     val service = project.service<PythonPackageManagerService>()
-    service.forPythonInterpreter(project, interpreter)
+    service.forPythonInterpreter(interpreter)
     service.awaitWatcher(interpreter, watched = true)
 
     val watcherGone = AtomicBoolean()
@@ -189,13 +189,33 @@ internal class PythonPackageManagerUnusedSdkTest {
     val project = projectFixture.get()
     val interpreter = registerInterpreter("PY-93818 packages of a closed project", home)
     val service = project.service<PythonPackageManagerService>()
-    service.forPythonInterpreter(project, interpreter)
+    service.forPythonInterpreter(interpreter)
 
     val removalGone = AtomicBoolean()
-    Disposer.register(service.impl().sdkRemoval(interpreter)!!, Disposable { removalGone.set(true) })
+    Disposer.register(service.impl().lifetimeRemoval(interpreter)!!, Disposable { removalGone.set(true) })
     Disposer.dispose(service.impl())
 
     assertThat(removalGone.get()).describedAs("The removal outlived the project that owns it").isTrue()
+  }
+
+  /**
+   * The manager takes the removal back. A service that is made while the project closes is not disposed, and its
+   * removal would keep the closed project under the SDK.
+   */
+  @Test
+  fun `the removal of an entry goes with its manager`(
+    @TempDir home: Path,
+  ): Unit = timeoutRunBlocking(1.minutes) {
+    val project = projectFixture.get()
+    val interpreter = registerInterpreter("PY-93079 packages of a dropped manager", home)
+    val service = project.service<PythonPackageManagerService>()
+    val manager = service.forPythonInterpreter(interpreter)
+
+    val removalGone = AtomicBoolean()
+    Disposer.register(service.impl().lifetimeRemoval(interpreter)!!, Disposable { removalGone.set(true) })
+    Disposer.dispose(manager)
+
+    assertThat(removalGone.get()).describedAs("The removal outlived the manager that it removes").isTrue()
   }
 
   private fun PythonPackageManagerService.impl(): PythonPackageManagerServiceImpl = this as PythonPackageManagerServiceImpl
@@ -216,8 +236,8 @@ internal class PythonPackageManagerUnusedSdkTest {
       val service = projectFixture.get().service<PythonPackageManagerService>()
       val otherService = otherProjectFixture.get().service<PythonPackageManagerService>()
 
-      service.forPythonInterpreter(projectFixture.get(), interpreter)
-      otherService.forPythonInterpreter(otherProjectFixture.get(), other)
+      service.forPythonInterpreter(interpreter)
+      otherService.forPythonInterpreter(other)
       service.awaitWatcher(interpreter, watched = true)
       otherService.awaitWatcher(other, watched = true)
 

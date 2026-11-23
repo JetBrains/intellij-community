@@ -9,18 +9,11 @@ import com.intellij.python.pyproject.model.evolution.findMainEvoPyProjectIfReady
 import com.intellij.python.sdk.backend.PythonInterpreter
 import com.intellij.python.sdk.backend.getSdkAPI
 import com.intellij.python.sdk.backend.remoteSourcesLocalPath
-import com.jetbrains.python.isCondaVirtualEnv
-import com.jetbrains.python.isNonToolVirtualEnv
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
-import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 import com.jetbrains.python.target.PyTargetAwareAdditionalData
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval
 import java.nio.file.Path
-
-internal fun resetSystemWideSdksDetectors() {
-  PythonSdkFlavor.getApplicableFlavors(false).forEach(PythonSdkFlavor<*>::dropCaches)
-}
 
 @Internal
 fun Sdk.isAssociatedWithModule(module: Module?): Boolean {
@@ -60,9 +53,6 @@ val Project.pythonSdk: Sdk?
   @Deprecated("An interpreter belongs to a Python project. Use the interpreter of the PyProject.")
   @Suppress("DEPRECATION") // It still answers an SDK.
   get() = mainPythonInterpreterIfReady()?.getSdkAPI()
-
-internal val Sdk.isSystemWide: Boolean
-  get() = !PythonSdkUtil.isRemote(this) && !this.isNonToolVirtualEnv && !this.isCondaVirtualEnv
 
 
 internal val Sdk.sdkFlavor: PythonSdkFlavor<*> get() = pySdkAdditionalData.flavor

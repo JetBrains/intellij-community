@@ -98,82 +98,21 @@
                         overrides="true"/>
 
     <!--Settings -->
-    <projectConfigurable groupId="project"
-                         id="com.intellij.pycharm.community.ide.impl.configuration.PythonContentEntriesConfigurable"
-                         bundle="messages.PyBundle"
-                         key="configurable.PythonContentEntriesConfigurable.display.name"
-                         provider="com.intellij.pycharm.community.ide.impl.configuration.PythonContentEntriesConfigurableProvider"
-                         groupWeight="15"
-                         nonDefaultProject="true"/>
-
-    <projectConfigurable groupId="project"
-                         id="com.intellij.pycharm.community.ide.impl.configuration.PyDependenciesConfigurable"
-                         bundle="messages.PyBundle"
-                         key="configurable.PyDependenciesConfigurable.pycharm.display.name"
-                         provider="com.intellij.pycharm.community.ide.impl.configuration.PyDependenciesConfigurableProvider"
-                         groupWeight="5"/>
-
     <groupConfigurable id="python.tools.group.settings"
                        parentId="python.group.settings"
                        weight="72"
                        bundle="messages.PyBundle"
                        displayNameKey="settings.python.tools.group.title"
                        descriptionKey="settings.python.tools.group.description"/>
-
-    <!-- Interpreter Settings Redesign (PY-89840). On (default): new pages replace legacy ones. Off: legacy layout. -->
-    <registryKey defaultValue="true"
-                 description="PY-89840 Interpreter Settings Redesign: show new 'All Interpreters' and 'Workspace/Project Structure' pages instead of the legacy 'Python | Interpreter' and 'Project Structure' pages"
-                 key="python.interpreter.settings.redesign"
-                 restartRequired="false"/>
-
-    <!-- "Auto-configure project workspace from pyproject.toml" checkbox + cleanup on the Workspace Structure page. -->
-    <registryKey defaultValue="true"
-                 description="Show the 'Auto-configure project workspace from pyproject.toml' checkbox on the Workspace Structure page. When off, the checkbox and the cleanup it triggers are hidden entirely."
-                 key="python.pyproject.toggle.in.settings"
-                 restartRequired="false"/>
-
-    <projectConfigurable groupId="python.group.settings"
-                         id="com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable"
-                         bundle="messages.PyBundle"
-                         key="configurable.PyActiveSdkModuleConfigurable.pycharm.interpreter.display.name"
-                         provider="com.intellij.pycharm.community.ide.impl.configuration.interpreter.PyCharmPyActiveSdkModuleConfigurableProvider"
-                         groupWeight="200"/> <!-- id is used in InterpreterSettingsQuickFix.showPythonInterpreterSettings -->
-
-    <!-- New "Python | All Interpreters" page (PY-89840); gated by python.interpreter.settings.redesign -->
-    <projectConfigurable groupId="python.group.settings"
-                         id="com.intellij.pycharm.community.ide.impl.configuration.interpreter.PyAllInterpretersConfigurable"
-                         bundle="messages.PyBundle"
-                         key="configurable.PyAllInterpretersConfigurable.display.name"
-                         provider="com.intellij.pycharm.community.ide.impl.configuration.interpreter.PyAllInterpretersConfigurableProvider"
-                         groupWeight="199"/>
-
-    <!-- New Project/Workspace Structure page (PY-89840); gated by python.interpreter.settings.redesign. -->
-    <projectConfigurable groupId="root"
-                         id="com.intellij.pycharm.community.ide.impl.configuration.interpreter.PyWorkspaceStructureConfigurable"
-                         bundle="messages.PyBundle"
-                         key="configurable.PyWorkspaceStructureConfigurable.display.name"
-                         provider="com.intellij.pycharm.community.ide.impl.configuration.interpreter.PyWorkspaceStructureConfigurableProvider"
-                         groupWeight="1010"
-                         nonDefaultProject="true"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">
-
-    <!-- Routes the "Interpreter Settings" quick fix to the redesigned Workspace Structure page (PY-89840). -->
-    <applicationService
-      serviceInterface="com.jetbrains.python.sdk.inspections.PythonInterpreterSettingsNavigator"
-      serviceImplementation="com.intellij.pycharm.community.ide.impl.configuration.interpreter.PyWorkspaceStructureSettingsNavigator"/>
-
 
     <applicationConfigurable id="memory.settings" groupWeight="45"
                              key="settings.memory.group.title"
                              bundle="messages.PyBundle"
                              instance="com.intellij.pycharm.community.ide.impl.settings.MemoryUsageConfigurable"
                              groupId="root"/>
-
-    <statusBarWidgetFactory id="pythonInterpreterWidget"
-                            implementation="com.intellij.pycharm.community.ide.impl.configuration.PySdkStatusBarWidgetFactory"
-                            order="after CodeStyleStatusBarWidget, before git, before hg, before Notifications"/>
 
     <directoryProjectConfigurator implementation="com.intellij.pycharm.community.ide.impl.PythonSourceRootConfigurator" id="sourceRoot"
                                   order="after sdk"/>
@@ -191,12 +130,6 @@
     <diffPreviewProvider implementation="com.intellij.pycharm.community.ide.impl.configuration.PyDiffPreviewProvider"/>
 
     <optionsApplicabilityFilter implementation="com.intellij.pycharm.community.ide.impl.PyOptionsApplicabilityFilter"/>
-
-    <applicationService serviceInterface="com.jetbrains.python.run.PyCommonOptionsFormFactory"
-                        serviceImplementation="com.intellij.pycharm.community.ide.impl.PyIdeCommonOptionsFormFactory"/>
-
-    <applicationService serviceInterface="com.jetbrains.python.run.PyCommonFragmentsBuilder"
-                        serviceImplementation="com.intellij.pycharm.community.ide.impl.PyIdeCommonFragmentsBuilder"/>
 
     <applicationService serviceInterface="com.intellij.platform.whatsNew.WhatsNewInVisionContentProvider"
                         serviceImplementation="com.intellij.pycharm.community.ide.impl.whatsnew.PyCharmWhatsNewInVisionContentProvider"

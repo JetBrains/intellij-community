@@ -75,7 +75,9 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.fileEditor.FileEditor;
+import com.intellij.openapi.fileEditor.FileEditorComposite;
 import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileEditor.FileEditorOpenRequest;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
@@ -149,6 +151,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.OptionalInt;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -1032,21 +1035,23 @@ public class GridUtil extends GridUtilCore {
         }
         VfsUtil.markDirtyAndRefresh(false, false, false, virtualFile);
         ApplicationManager.getApplication().invokeLater(() -> {
-          showFile(myProject, virtualFile);
+          requestShowFile(myProject, virtualFile);
         });
       });
     }
 
-    private static void showFile(@NotNull Project project, @NotNull VirtualFile virtualFile) {
+    private static @Nullable CompletableFuture<FileEditorComposite> requestShowFile(@NotNull Project project, @NotNull VirtualFile virtualFile) {
       if (virtualFile.isDirectory()) {
         RevealFileAction.openDirectory(VfsUtilCore.virtualToIoFile(virtualFile));
-        return;
+        return null;
       }
       if (SingleRootFileViewProvider.isTooLargeForIntelligence(virtualFile) || virtualFile.getFileType().isBinary()) {
         RevealFileAction.openFile(VfsUtilCore.virtualToIoFile(virtualFile));
-        return;
+        return null;
       }
-      FileEditorManager.getInstance(project).openEditor(new OpenFileDescriptor(project, virtualFile), true);
+      OpenFileDescriptor descriptor = new OpenFileDescriptor(project, virtualFile);
+      return FileEditorManager.getInstance(project)
+        .requestOpenEditor(descriptor, FileEditorOpenRequest.fromDescriptor(descriptor).withRequestFocus(true));
     }
   }
 

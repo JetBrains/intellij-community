@@ -2,108 +2,215 @@
 package com.intellij.java.codeInsight.completion
 
 import com.intellij.codeInsight.completion.CompletionType
-import com.intellij.java.testFramework.fixtures.LightJava9ModulesCodeInsightFixtureTestCase
 import com.intellij.java.testFramework.fixtures.MultiModuleJava9ProjectDescriptor.ModuleDescriptor.M2
 import com.intellij.java.testFramework.fixtures.MultiModuleJava9ProjectDescriptor.ModuleDescriptor.M4
+import com.intellij.java.testFramework.fixtures.lightJava9ModulesFixture
+import com.intellij.java.testFramework.fixtures.lightJava9ModulesProjectFixture
+import com.intellij.openapi.application.EDT
+import com.intellij.platform.testFramework.junit5.codeInsight.indexing.IndexingModeTemplate
 import com.intellij.testFramework.NeedsIndex
+import com.intellij.testFramework.common.timeoutRunBlocking
+import com.intellij.testFramework.junit5.TestApplication
+import kotlinx.coroutines.Dispatchers
 import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 import java.util.jar.JarFile
 
-class ModuleCompletionTest : LightJava9ModulesCodeInsightFixtureTestCase() {
-  override fun setUp() {
-    super.setUp()
-    addFile("pkg/empty/package-info.java", "package pkg.empty;")
-    addFile("pkg/main/MyAnno.java", "package pkg.main;\npublic @interface MyAnno { }")
-    addFile("pkg/main/MySvc.java", "package pkg.main;\npublic class MySvc { }")
-    addFile("pkg/other/MySvcImpl.groovy", "package pkg.other\nclass MySvcImpl extends pkg.main.MySvc { }")
-    addFile("module-info.java", "module M2 { }", M2)
-    addFile(JarFile.MANIFEST_NAME, "Manifest-Version: 1.0\nAutomatic-Module-Name: all.fours\n", M4)
+@TestApplication
+@IndexingModeTemplate
+class ModuleCompletionTest {
+  companion object {
+    private val projectFixture = lightJava9ModulesProjectFixture()
   }
 
-  fun testFileHeader() = variants("<caret>", "import", "module", "open")
-  fun testFileHeaderAfterComment() = variants("/** a comment */\n<caret>", "import", "module", "open")
-  fun testFileHeaderAfterImport() = variants("import java.lang.Deprecated;\n<caret>", "import", "module", "open")
-  fun testFileHeaderAfterAnnotation() = variants("@Deprecated <caret>", "module", "open")
-  fun testFileHeaderAfterOpen() = complete("open <caret>", "open module <caret>")
-  fun testFileHeaderAfterModule() = variants("module M { }\n<caret>")
-  fun testAnnotation() = complete("@Dep<caret>", "@Deprecated<caret>")
-  fun testAnnotationBeforeModule() = complete("@Dep<caret> module M { }", "@Deprecated<caret> module M { }")
-  fun testNoCompletionInModuleName() = variants("module M<caret>")
-  fun testNoStatementsInModuleName() = variants("module test.module.<caret> { }")
+  private val java9 by lightJava9ModulesFixture(projectFixture)
+  private val myFixture get() = java9.fixture
 
-  fun testStatementsInEmptyModule() = variants("module M { <caret> }", "requires", "exports", "opens", "uses", "provides")
-  fun testStatementsAfterComment() = variants("module M { /*requires X;*/ <caret> }", "requires", "exports", "opens", "uses", "provides")
-  fun testStatementsAfterStatement() = variants("module M { requires X; <caret> }", "requires", "exports", "opens", "uses", "provides")
-  fun testStatementsUnambiguous() = complete("module M { requires X; ex<caret> }", "module M { requires X; exports <caret> }")
+  @BeforeEach
+  fun setUp(): Unit = timeoutRunBlocking(context = Dispatchers.EDT) {
+    java9.addFile("pkg/empty/package-info.java", "package pkg.empty;")
+    java9.addFile("pkg/main/MyAnno.java", "package pkg.main;\npublic @interface MyAnno { }")
+    java9.addFile("pkg/main/MySvc.java", "package pkg.main;\npublic class MySvc { }")
+    java9.addFile("pkg/other/MySvcImpl.groovy", "package pkg.other\nclass MySvcImpl extends pkg.main.MySvc { }")
+    java9.addFile("module-info.java", "module M2 { }", M2)
+    java9.addFile(JarFile.MANIFEST_NAME, "Manifest-Version: 1.0\nAutomatic-Module-Name: all.fours\n", M4)
+  }
+
+  @Test
+  fun testFileHeader(): Unit = timeoutRunBlocking(context = Dispatchers.EDT) { variants("<caret>", "import", "module", "open") }
+  @Test
+  fun testFileHeaderAfterComment(): Unit = timeoutRunBlocking(context = Dispatchers.EDT) {
+    variants("/** a comment */\n<caret>", "import", "module", "open")
+  }
+  @Test
+  fun testFileHeaderAfterImport(): Unit = timeoutRunBlocking(context = Dispatchers.EDT) {
+    variants("import java.lang.Deprecated;\n<caret>", "import", "module", "open")
+  }
+  @Test
+  fun testFileHeaderAfterAnnotation(): Unit = timeoutRunBlocking(context = Dispatchers.EDT) {
+    variants("@Deprecated <caret>", "module", "open")
+  }
+  @Test
+  fun testFileHeaderAfterOpen(): Unit = timeoutRunBlocking(context = Dispatchers.EDT) { complete("open <caret>", "open module <caret>") }
+  @Test
+  fun testFileHeaderAfterModule(): Unit = timeoutRunBlocking(context = Dispatchers.EDT) { variants("module M { }\n<caret>") }
+  @Test
+  fun testAnnotation(): Unit = timeoutRunBlocking(context = Dispatchers.EDT) { complete("@Dep<caret>", "@Deprecated<caret>") }
+  @Test
+  fun testAnnotationBeforeModule(): Unit = timeoutRunBlocking(context = Dispatchers.EDT) {
+    complete("@Dep<caret> module M { }", "@Deprecated<caret> module M { }")
+  }
+  @Test
+  fun testNoCompletionInModuleName(): Unit = timeoutRunBlocking(context = Dispatchers.EDT) { variants("module M<caret>") }
+  @Test
+  fun testNoStatementsInModuleName(): Unit = timeoutRunBlocking(context = Dispatchers.EDT) { variants("module test.module.<caret> { }") }
+
+  @Test
+  fun testStatementsInEmptyModule(): Unit = timeoutRunBlocking(context = Dispatchers.EDT) {
+    variants("module M { <caret> }", "requires", "exports", "opens", "uses", "provides")
+  }
+  @Test
+  fun testStatementsAfterComment(): Unit = timeoutRunBlocking(context = Dispatchers.EDT) {
+    variants("module M { /*requires X;*/ <caret> }", "requires", "exports", "opens", "uses", "provides")
+  }
+  @Test
+  fun testStatementsAfterStatement(): Unit = timeoutRunBlocking(context = Dispatchers.EDT) {
+    variants("module M { requires X; <caret> }", "requires", "exports", "opens", "uses", "provides")
+  }
+  @Test
+  fun testStatementsUnambiguous(): Unit = timeoutRunBlocking(context = Dispatchers.EDT) {
+    complete("module M { requires X; ex<caret> }", "module M { requires X; exports <caret> }")
+  }
 
   @NeedsIndex.Full
-  fun testRequiresBare() =
+  @Test
+  fun testRequiresBare(): Unit = timeoutRunBlocking(context = Dispatchers.EDT) {
     variants("module M { requires <caret>",
              "transitive", "static", "M2", "java.base", "java.non.root", "java.se", "java.xml.bind", "java.xml.ws",
              "lib.multi.release", "lib.named", "lib.auto", "lib.claimed", "all.fours", "lib.with.module.info")
+  }
 
-  fun testRequiresTransitive() = complete("module M { requires tr<caret> }", "module M { requires transitive <caret> }")
+  @Test
+  fun testRequiresTransitive(): Unit = timeoutRunBlocking(context = Dispatchers.EDT) {
+    complete("module M { requires tr<caret> }", "module M { requires transitive <caret> }")
+  }
 
   @NeedsIndex.Full
-  fun testRequiresSimpleName() = complete("module M { requires M<caret> }", "module M { requires M2;<caret> }")
+  @Test
+  fun testRequiresSimpleName(): Unit = timeoutRunBlocking(context = Dispatchers.EDT) {
+    complete("module M { requires M<caret> }", "module M { requires M2;<caret> }")
+  }
 
   @NeedsIndex.ForStandardLibrary
-  fun testRequiresQualifiedName() = complete("module M { requires lib.mult<caret> }", "module M { requires lib.multi.release;<caret> }")
+  @Test
+  fun testRequiresQualifiedName(): Unit = timeoutRunBlocking(context = Dispatchers.EDT) {
+    complete("module M { requires lib.mult<caret> }", "module M { requires lib.multi.release;<caret> }")
+  }
 
   @NeedsIndex.ForStandardLibrary
-  fun testRequiresWithNextLine() {
+  @Test
+  fun testRequiresWithNextLine(): Unit = timeoutRunBlocking(context = Dispatchers.EDT) {
     myFixture.configureByText("module-info.java", "module M { requires lib.mult<caret>\nrequires java.io;}")
     myFixture.completeBasic()
     myFixture.type('\t')
     myFixture.checkResult("module M { requires lib.multi.release;  \nrequires java.io;}")
   }
 
-  fun testExportsBare() = variants("module M { exports <caret> }", "pkg")
-  fun testExportsPrefixed() = complete("module M { exports p<caret> }", "module M { exports pkg<caret> }")
-  fun testExportsQualified() = variants("module M { exports pkg.<caret> }", "main", "other", "empty")
-  fun testExportsQualifiedUnambiguous() = complete("module M { exports pkg.o<caret> }", "module M { exports pkg.other<caret> }")
-  fun testExportsQualifiedUnambiguousDot() {
+  @Test
+  fun testExportsBare(): Unit = timeoutRunBlocking(context = Dispatchers.EDT) { variants("module M { exports <caret> }", "pkg") }
+  @Test
+  fun testExportsPrefixed(): Unit = timeoutRunBlocking(context = Dispatchers.EDT) {
+    complete("module M { exports p<caret> }", "module M { exports pkg<caret> }")
+  }
+  @Test
+  fun testExportsQualified(): Unit = timeoutRunBlocking(context = Dispatchers.EDT) {
+    variants("module M { exports pkg.<caret> }", "main", "other", "empty")
+  }
+  @Test
+  fun testExportsQualifiedUnambiguous(): Unit = timeoutRunBlocking(context = Dispatchers.EDT) {
+    complete("module M { exports pkg.o<caret> }", "module M { exports pkg.other<caret> }")
+  }
+  @Test
+  fun testExportsQualifiedUnambiguousDot(): Unit = timeoutRunBlocking(context = Dispatchers.EDT) {
     myFixture.configureByText("module-info.java", "module M { exports pkg.o<caret> }")
     myFixture.complete(CompletionType.BASIC, 0)
     myFixture.type('.')
     myFixture.checkResult("module M { exports pkg.other.<caret> }")
   }
 
-  fun testExportsTo() = complete("module M { exports pkg.other <caret> }", "module M { exports pkg.other to <caret> }")
+  @Test
+  fun testExportsTo(): Unit = timeoutRunBlocking(context = Dispatchers.EDT) {
+    complete("module M { exports pkg.other <caret> }", "module M { exports pkg.other to <caret> }")
+  }
 
   @NeedsIndex.Full
-  fun testExportsToList() =
+  @Test
+  fun testExportsToList(): Unit = timeoutRunBlocking(context = Dispatchers.EDT) {
     variants("module M { exports pkg.other to <caret> }",
              "M2", "java.base", "java.non.root", "java.se", "java.xml.bind", "java.xml.ws", "lib.multi.release", "lib.named",
              "lib.with.module.info")
+  }
 
   @NeedsIndex.Full
-  fun testExportsToUnambiguous() = complete("module M { exports pkg.other to M<caret> }", "module M { exports pkg.other to M2<caret> }")
+  @Test
+  fun testExportsToUnambiguous(): Unit = timeoutRunBlocking(context = Dispatchers.EDT) {
+    complete("module M { exports pkg.other to M<caret> }", "module M { exports pkg.other to M2<caret> }")
+  }
 
-  fun testUsesPrefixed() = complete("module M { uses p<caret> }", "module M { uses pkg.<caret> }")
+  @Test
+  fun testUsesPrefixed(): Unit = timeoutRunBlocking(context = Dispatchers.EDT) {
+    complete("module M { uses p<caret> }", "module M { uses pkg.<caret> }")
+  }
   // TODO return it after refactoring the completion algorithm.
   //fun testUsesQualified1() = variants("module M { uses pkg.<caret> }", "main", "other", "empty")
-  fun testUsesQualified2() = variants("module M { uses pkg.main.<caret> }", "MyAnno", "MySvc")
-  fun testUsesUnambiguous() = complete("module M { uses pkg.main.MS<caret> }", "module M { uses pkg.main.MySvc<caret> }")
+  @Test
+  fun testUsesQualified2(): Unit = timeoutRunBlocking(context = Dispatchers.EDT) {
+    variants("module M { uses pkg.main.<caret> }", "MyAnno", "MySvc")
+  }
+  @Test
+  fun testUsesUnambiguous(): Unit = timeoutRunBlocking(context = Dispatchers.EDT) {
+    complete("module M { uses pkg.main.MS<caret> }", "module M { uses pkg.main.MySvc<caret> }")
+  }
 
-  fun testProvidesPrefixed() = complete("module M { provides p<caret> }", "module M { provides pkg.<caret> }")
+  @Test
+  fun testProvidesPrefixed(): Unit = timeoutRunBlocking(context = Dispatchers.EDT) {
+    complete("module M { provides p<caret> }", "module M { provides pkg.<caret> }")
+  }
   // TODO return it after refactoring the completion algorithm.
   //fun testProvidesQualified1() = variants("module M { provides pkg.<caret> }", "main", "other", "empty")
-  fun testProvidesQualified2() = variants("module M { provides pkg.main.<caret> }", "MyAnno", "MySvc")
-  fun testProvidesUnambiguous() = complete("module M { provides pkg.main.MS<caret> }", "module M { provides pkg.main.MySvc<caret> }")
-  fun testProvidesWith() = complete("module M { provides pkg.main.MySvc <caret> }", "module M { provides pkg.main.MySvc with <caret> }")
-  fun testProvidesWithPrefixed() =
+  @Test
+  fun testProvidesQualified2(): Unit = timeoutRunBlocking(context = Dispatchers.EDT) {
+    variants("module M { provides pkg.main.<caret> }", "MyAnno", "MySvc")
+  }
+  @Test
+  fun testProvidesUnambiguous(): Unit = timeoutRunBlocking(context = Dispatchers.EDT) {
+    complete("module M { provides pkg.main.MS<caret> }", "module M { provides pkg.main.MySvc<caret> }")
+  }
+  @Test
+  fun testProvidesWith(): Unit = timeoutRunBlocking(context = Dispatchers.EDT) {
+    complete("module M { provides pkg.main.MySvc <caret> }", "module M { provides pkg.main.MySvc with <caret> }")
+  }
+  @Test
+  fun testProvidesWithPrefixed(): Unit = timeoutRunBlocking(context = Dispatchers.EDT) {
     complete("module M { provides pkg.main.MySvc with p<caret> }", "module M { provides pkg.main.MySvc with pkg.<caret> }")
+  }
 
-  fun testProvidesWithQualified() =
+  @Test
+  fun testProvidesWithQualified(): Unit = timeoutRunBlocking(context = Dispatchers.EDT) {
     complete("module M { provides pkg.main.MySvc with pkg.o<caret> }", "module M { provides pkg.main.MySvc with pkg.other.<caret> }")
+  }
 
-  fun testProvidesWithUnambiguous() =
+  @Test
+  fun testProvidesWithUnambiguous(): Unit = timeoutRunBlocking(context = Dispatchers.EDT) {
     complete("module M { provides pkg.main.MySvc with pkg.other.M<caret> }",
              "module M { provides pkg.main.MySvc with pkg.other.MySvcImpl<caret> }")
+  }
 
   @NeedsIndex.SmartMode(reason = "Smart mode is necessary for optimizing imports; full index is needed for inheritance check")
-  fun testProvidesOrder() {
+  @Test
+  fun testProvidesOrder(): Unit = timeoutRunBlocking(context = Dispatchers.EDT) {
     myFixture.configureByText("module-info.java", "import pkg.main.*; module M {provides MySvc with M<caret>}")
     myFixture.completeBasic()
     assertEquals(listOf("MySvc", "MySvcImpl", "MyAnno"), myFixture.lookupElementStrings)
@@ -117,19 +224,21 @@ class ModuleCompletionTest : LightJava9ModulesCodeInsightFixtureTestCase() {
   }
 
   @NeedsIndex.Full
-  fun testImports() {
-    addFile("module-info.java", "module M { requires M2; }")
-    addFile("module-info.java", "module M2 { exports pkg.m2; }", M2)
-    addFile("pkg/m2/C2.java", "package pkg.m2;\npublic class C2 { }", M2)
-    addFile("pkg/m2/impl/C2Impl.java", "package pkg.m2.impl;\npublic class C2Impl { }", M2)
+  @Test
+  fun testImports(): Unit = timeoutRunBlocking(context = Dispatchers.EDT) {
+    java9.addFile("module-info.java", "module M { requires M2; }")
+    java9.addFile("module-info.java", "module M2 { exports pkg.m2; }", M2)
+    java9.addFile("pkg/m2/C2.java", "package pkg.m2;\npublic class C2 { }", M2)
+    java9.addFile("pkg/m2/impl/C2Impl.java", "package pkg.m2.impl;\npublic class C2Impl { }", M2)
     myFixture.configureByText("test.java", "import pkg.m2.<caret>")
     myFixture.completeBasic()
     assertThat(myFixture.lookupElementStrings).containsExactly("*", "C2")  // no 'C2Impl'
   }
 
-  fun testTypeParameter() {
-    addFile("module-info.java", "module M { }")
-    addTestFile("whatever/test.txt", "-")
+  @Test
+  fun testTypeParameter(): Unit = timeoutRunBlocking(context = Dispatchers.EDT) {
+    java9.addFile("module-info.java", "module M { }")
+    java9.addTestFile("whatever/test.txt", "-")
     myFixture.configureByText("test.java", "package whatever;\nclass Foo<TParam> { TPar<caret> p; }")
     myFixture.completeBasic()
     myFixture.checkResult("package whatever;\nclass Foo<TParam> { TParam<caret> p; }")

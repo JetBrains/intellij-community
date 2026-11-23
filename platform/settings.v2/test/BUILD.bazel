@@ -27,6 +27,11 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        "//platform/vcs-impl",
+        "//platform/vcs/plugin",
+    ],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
@@ -47,6 +52,8 @@ jvm_library(
         "//libraries/junit6",
         "//platform/editor-ui-api:editor-ui",
         "//platform/util/xmlDom",
+        "//platform/settings.v2/vcs",
+        "//platform/vcs-api:vcs",
     ],
 )
 ### auto-generated section `build intellij.platform.settings.v2.test` end

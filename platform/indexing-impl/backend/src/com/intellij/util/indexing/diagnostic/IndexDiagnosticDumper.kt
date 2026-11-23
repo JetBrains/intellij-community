@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.diagnostic
 
 import com.intellij.concurrency.ConcurrentCollectionFactory
@@ -32,6 +32,7 @@ import com.intellij.util.io.delete
 import com.intellij.util.io.directoryStreamIfExists
 import com.intellij.util.io.fileSizeSafe
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.TestOnly
 import tools.jackson.core.JsonToken
@@ -226,6 +227,8 @@ class IndexDiagnosticDumper(private val coroutineScope: CoroutineScope) : Dispos
 
   private var isDisposed = false
 
+  private val dumpDispatcher = Dispatchers.IO.limitedParallelism(1, "IndexDiagnosticDumper")
+
   private val unsavedIndexingActivityHistories = ConcurrentCollectionFactory.createConcurrentIdentitySet<ProjectIndexingActivityHistory>()
 
   fun onScanningStarted(history: ProjectScanningHistoryImpl) {
@@ -245,7 +248,7 @@ class IndexDiagnosticDumper(private val coroutineScope: CoroutineScope) : Dispos
         return
       }
       unsavedIndexingActivityHistories.add(projectScanningHistory)
-      coroutineScope.launch { dumpProjectIndexingActivityHistoryToLogSubdirectory(projectScanningHistory) }
+      coroutineScope.launch(dumpDispatcher) { dumpProjectIndexingActivityHistoryToLogSubdirectory(projectScanningHistory) }
     }
      finally {
        runAllListenersSafely {
@@ -270,7 +273,7 @@ class IndexDiagnosticDumper(private val coroutineScope: CoroutineScope) : Dispos
       }
       projectDumbIndexingHistory.indexingFinished()
       unsavedIndexingActivityHistories.add(projectDumbIndexingHistory)
-      coroutineScope.launch { dumpProjectIndexingActivityHistoryToLogSubdirectory(projectDumbIndexingHistory) }
+      coroutineScope.launch(dumpDispatcher) { dumpProjectIndexingActivityHistoryToLogSubdirectory(projectDumbIndexingHistory) }
     }
     finally {
       runAllListenersSafely {

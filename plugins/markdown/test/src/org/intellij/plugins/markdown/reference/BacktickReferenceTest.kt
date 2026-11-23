@@ -3,8 +3,13 @@ package org.intellij.plugins.markdown.reference
 
 import com.intellij.find.FindManager
 import com.intellij.find.findUsages.FindUsagesHandler
+import com.intellij.find.findUsages.FindUsagesOptions
 import com.intellij.find.impl.FindManagerBase
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.runWriteActionAndWait
+import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightModuleFixture
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFileSystemItem
@@ -16,17 +21,28 @@ import com.intellij.psi.impl.source.resolve.reference.impl.PsiMultiReference
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReference
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectoriesHandler
-import com.intellij.testFramework.fixtures.BasePlatformTestCase
+import com.intellij.testFramework.common.timeoutRunBlocking
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.usageView.UsageInfo
 import com.intellij.util.Processor
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import org.assertj.core.api.Assertions.assertThat
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownCodeSpan
 import org.intellij.plugins.markdown.lang.references.backtick.BacktickReference
-import org.junit.Test
-import org.junit.runner.RunWith
-import org.junit.runners.JUnit4
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertInstanceOf
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Test
 
-@RunWith(JUnit4::class)
-class BacktickReferenceTest : BasePlatformTestCase() {
+@TestApplication
+class BacktickReferenceTest {
+  private val myFixture by codeInsightModuleFixture(projectFixture)
+
   @Test
   fun `test unresolved reference does not yield any errors`() {
     val reference = configureAndGetReferenceAtCaret("There is an `Java<caret>Class` backtick")
@@ -44,20 +60,20 @@ class BacktickReferenceTest : BasePlatformTestCase() {
   fun `test reference resolves to original element`() {
     val javaClass = createJavaClass()
     val reference = configureAndGetReferenceAtCaret("There is an `Java<caret>Class` backtick")
-    assertTrue(myFixture.psiManager.areElementsEquivalent(javaClass, reference!!.resolve()))
+    timeoutRunBlocking { readAction { assertTrue(myFixture.psiManager.areElementsEquivalent(javaClass, reference!!.resolve())) } }
   }
 
   @Test
   fun `test short class reference is not resolved`() {
     createJavaClass("SS")
-    assertNull(configureAndGetReferenceAtCaret("There is an `S<caret>S` backtick")?.resolve())
+    assertNull(configureAndGetReferenceAtCaret("There is an `S<caret>S` backtick")?.let { reference -> timeoutRunBlocking { readAction { reference.resolve() } } })
   }
 
   @Test
   fun `test reference with extension resolves to original element`() {
     val file = createFile("JavaClass.java", "class JavaClass {}")
     val reference = configureAndGetReferenceAtCaret("There is an `JavaClass.ja<caret>va` backtick")
-    assertTrue(myFixture.psiManager.areElementsEquivalent(file, reference!!.resolve()))
+    timeoutRunBlocking { readAction { assertTrue(myFixture.psiManager.areElementsEquivalent(file, reference!!.resolve())) } }
   }
 
   @Test
@@ -71,7 +87,7 @@ class BacktickReferenceTest : BasePlatformTestCase() {
         JavaClass
        Dynamic usages in Project Files (1)
         Value read (1)
-         light_idea_test_case (1)
+         ${myFixture.module.name} (1)
            (1)
            some.md (1)
             1There is an `JavaClass` backtick
@@ -92,7 +108,7 @@ class BacktickReferenceTest : BasePlatformTestCase() {
         JavaClass
        Usages in Project Files (1)
         Field declaration (1)
-         light_idea_test_case (1)
+         ${myFixture.module.name} (1)
            (1)
            Other (1)
             1class Other { JavaClass field; }
@@ -113,8 +129,8 @@ class BacktickReferenceTest : BasePlatformTestCase() {
     val representation = withoutTextOccurrences(method) {
       myFixture.getUsageViewTreeTextRepresentation(method)
     }
-    assertTrue(representation, representation.contains("Caller"))
-    assertFalse(representation, representation.contains("some.md"))
+    assertTrue(representation.contains("Caller"), representation)
+    assertFalse(representation.contains("some.md"), representation)
   }
 
   @Test
@@ -125,7 +141,7 @@ class BacktickReferenceTest : BasePlatformTestCase() {
     val representation = withTextOccurrences(method) {
       myFixture.getUsageViewTreeTextRepresentation(method)
     }
-    assertTrue(representation, representation.contains("some.md"))
+    assertTrue(representation.contains("some.md"), representation)
   }
 
   @Test
@@ -135,11 +151,11 @@ class BacktickReferenceTest : BasePlatformTestCase() {
 
     val usages = mutableListOf<UsageInfo>()
     val handler = findUsagesHandler(target)
-    val options = handler.findUsagesOptions
+    val options = ReadAction.computeBlocking<FindUsagesOptions, Throwable> { handler.findUsagesOptions }
     options.isSearchForTextOccurrences = false
     handler.processElementUsages(target, Processor { usages.add(it) }, options)
 
-    assertEmpty(usages)
+    assertThat(usages).isEmpty()
   }
 
   @Test
@@ -154,7 +170,7 @@ class BacktickReferenceTest : BasePlatformTestCase() {
     )
     val reference = configureAndGetReferenceAtCaret("some.md", "There is an `sh<caret>ort` backtick")
     assertBacktickReference(reference!!)
-    assertNull(reference.resolve())
+    timeoutRunBlocking { readAction { assertNull(reference.resolve()) } }
 
     createFile(
       "JavaClass1.java",
@@ -194,16 +210,24 @@ class BacktickReferenceTest : BasePlatformTestCase() {
   fun `test renaming original element updates markdown reference`() {
     val javaClass = createJavaClass()
     myFixture.configureByText("some.md", "There is an `JavaClass` backtick")
-    renameWithTextOccurrences(javaClass, "NewJavaClass")
-    myFixture.checkResult("There is an `NewJavaClass` backtick")
+    timeoutRunBlocking {
+      withContext(Dispatchers.EDT) {
+        renameWithTextOccurrences(javaClass, "NewJavaClass")
+        myFixture.checkResult("There is an `NewJavaClass` backtick")
+      }
+    }
   }
 
   @Test
   fun `test renaming original element keeps markdown reference without text occurrences`() {
     val javaClass = createJavaClass()
     myFixture.configureByText("some.md", "There is an `JavaClass` backtick")
-    myFixture.renameElement(javaClass, "NewJavaClass", false, false)
-    myFixture.checkResult("There is an `JavaClass` backtick")
+    timeoutRunBlocking {
+      withContext(Dispatchers.EDT) {
+        myFixture.renameElement(javaClass, "NewJavaClass", false, false)
+        myFixture.checkResult("There is an `JavaClass` backtick")
+      }
+    }
   }
 
   @Test
@@ -211,8 +235,12 @@ class BacktickReferenceTest : BasePlatformTestCase() {
     val document = createFile("docs/document.md", "See `../src/file.md`")
     val target = createFile("src/file.md")
     myFixture.configureFromExistingVirtualFile(document.virtualFile)
-    myFixture.renameElement(target, "renamed.md", false, false)
-    myFixture.checkResult("See `../src/renamed.md`")
+    timeoutRunBlocking {
+      withContext(Dispatchers.EDT) {
+        myFixture.renameElement(target, "renamed.md", false, false)
+        myFixture.checkResult("See `../src/renamed.md`")
+      }
+    }
   }
 
   @Test
@@ -220,59 +248,83 @@ class BacktickReferenceTest : BasePlatformTestCase() {
     val document = createFile("document.md", "See `file.md`")
     val target = createFile("file.md")
     myFixture.configureFromExistingVirtualFile(document.virtualFile)
-    myFixture.renameElement(target, "renamed.md", false, false)
-    myFixture.checkResult("See `renamed.md`")
+    timeoutRunBlocking {
+      withContext(Dispatchers.EDT) {
+        myFixture.renameElement(target, "renamed.md", false, false)
+        myFixture.checkResult("See `renamed.md`")
+      }
+    }
   }
 
   @Test
   fun `test renaming method updates qualified mention without text occurrences`() {
-    val method = createSampleClass().findMethodsByName("doStuff", false).single()
+    val method = createSampleClass().let { sample -> timeoutRunBlocking { readAction { sample.findMethodsByName("doStuff", false).single() } } }
     myFixture.configureByText("some.md", "Call `com.example.Sample#doStuff`")
-    myFixture.renameElement(method, "doOther", false, false)
-    myFixture.checkResult("Call `com.example.Sample#doOther`")
+    timeoutRunBlocking {
+      withContext(Dispatchers.EDT) {
+        myFixture.renameElement(method, "doOther", false, false)
+        myFixture.checkResult("Call `com.example.Sample#doOther`")
+      }
+    }
   }
 
   @Test
   fun `test renaming method keeps plain mention without text occurrences`() {
     val method = createLongNamedMethod()
     myFixture.configureByText("some.md", "Call `longLongLong` here")
-    myFixture.renameElement(method, "renamedLongName", false, false)
-    myFixture.checkResult("Call `longLongLong` here")
+    timeoutRunBlocking {
+      withContext(Dispatchers.EDT) {
+        myFixture.renameElement(method, "renamedLongName", false, false)
+        myFixture.checkResult("Call `longLongLong` here")
+      }
+    }
   }
 
   @Test
   fun `test renaming method updates plain mention with text occurrences`() {
     val method = createLongNamedMethod()
     myFixture.configureByText("some.md", "Call `longLongLong` here")
-    renameWithTextOccurrences(method, "renamedLongName")
-    myFixture.checkResult("Call `renamedLongName` here")
+    timeoutRunBlocking {
+      withContext(Dispatchers.EDT) {
+        renameWithTextOccurrences(method, "renamedLongName")
+        myFixture.checkResult("Call `renamedLongName` here")
+      }
+    }
   }
 
   @Test
   fun `test java reference in qualified mention stays a usage without text occurrences`() {
-    val method = createSampleClass().findMethodsByName("doStuff", false).single()
+    val method = createSampleClass().let { sample -> timeoutRunBlocking { readAction { sample.findMethodsByName("doStuff", false).single() } } }
     createFile("some.md", "Call `com.example.Sample#doStuff`")
 
     val representation = withoutTextOccurrences(method) {
       myFixture.getUsageViewTreeTextRepresentation(method)
     }
-    assertTrue(representation, representation.contains("some.md"))
+    assertTrue(representation.contains("some.md"), representation)
   }
 
   @Test
   fun `test renaming qualified class without member separator preserves package`() {
     val javaClass = createSampleClass()
     myFixture.configureByText("some.md", "Call `com.example.Sample`")
-    myFixture.renameElement(javaClass, "RenamedSample")
-    myFixture.checkResult("Call `com.example.RenamedSample`")
+    timeoutRunBlocking {
+      withContext(Dispatchers.EDT) {
+        myFixture.renameElement(javaClass, "RenamedSample")
+        myFixture.checkResult("Call `com.example.RenamedSample`")
+      }
+    }
   }
 
   @Test
   fun `test renaming class without member separator preserves code span markers`() {
     val javaClass = createJavaClass()
     myFixture.configureByText("some.md", "Call ``JavaClass``")
-    renameWithTextOccurrences(javaClass, "RenamedJavaClass")
-    myFixture.checkResult("Call ``RenamedJavaClass``")
+    timeoutRunBlocking {
+      withContext(Dispatchers.EDT) {
+        renameWithTextOccurrences(javaClass, "RenamedJavaClass")
+        myFixture.checkResult("Call ``RenamedJavaClass``")
+      }
+    }
   }
 
   @Test
@@ -280,8 +332,12 @@ class BacktickReferenceTest : BasePlatformTestCase() {
     val document = createFile("document.md", "See `file.md`")
     val target = createFile("file.md")
     myFixture.configureFromExistingVirtualFile(document.virtualFile)
-    renameWithTextOccurrences(target, "renamed.md")
-    myFixture.checkResult("See `renamed.md`")
+    timeoutRunBlocking {
+      withContext(Dispatchers.EDT) {
+        renameWithTextOccurrences(target, "renamed.md")
+        myFixture.checkResult("See `renamed.md`")
+      }
+    }
     assertCodeSpanContentAndFileReference(target, "renamed.md", markerLength = 1)
   }
 
@@ -290,8 +346,12 @@ class BacktickReferenceTest : BasePlatformTestCase() {
     val document = createFile("document.md", "See `file.md`")
     val target = myFixture.addFileToProject("file.md", "")
     myFixture.configureFromExistingVirtualFile(document.virtualFile)
-    renameWithTextOccurrences(target, "fi`le.md")
-    myFixture.checkResult("See ``fi`le.md``")
+    timeoutRunBlocking {
+      withContext(Dispatchers.EDT) {
+        renameWithTextOccurrences(target, "fi`le.md")
+        myFixture.checkResult("See ``fi`le.md``")
+      }
+    }
     assertCodeSpanContentAndFileReference(target, "fi`le.md", markerLength = 2)
   }
 
@@ -300,8 +360,12 @@ class BacktickReferenceTest : BasePlatformTestCase() {
     val document = createFile("document.md", "See `file.md`")
     val target = createFile("file.md")
     myFixture.configureFromExistingVirtualFile(document.virtualFile)
-    renameWithTextOccurrences(target, "fi``le.md")
-    myFixture.checkResult("See ```fi``le.md```")
+    timeoutRunBlocking {
+      withContext(Dispatchers.EDT) {
+        renameWithTextOccurrences(target, "fi``le.md")
+        myFixture.checkResult("See ```fi``le.md```")
+      }
+    }
     assertCodeSpanContentAndFileReference(target, "fi``le.md", markerLength = 3)
   }
 
@@ -310,8 +374,12 @@ class BacktickReferenceTest : BasePlatformTestCase() {
     val document = createFile("document.md", "See `file.md`")
     val target = createFile("file.md")
     myFixture.configureFromExistingVirtualFile(document.virtualFile)
-    renameWithTextOccurrences(target, "fi`le`name.md")
-    myFixture.checkResult("See ``fi`le`name.md``")
+    timeoutRunBlocking {
+      withContext(Dispatchers.EDT) {
+        renameWithTextOccurrences(target, "fi`le`name.md")
+        myFixture.checkResult("See ``fi`le`name.md``")
+      }
+    }
     assertCodeSpanContentAndFileReference(target, "fi`le`name.md", markerLength = 2)
   }
 
@@ -324,9 +392,13 @@ class BacktickReferenceTest : BasePlatformTestCase() {
       myFixture.file.containingDirectory.createSubdirectory("new")
     }
 
-    val handler = MoveFilesOrDirectoriesHandler()
-    handler.doMove(project, arrayOf<PsiElement>(target), targetDirectory, null)
-    myFixture.checkResult("See ``new/`file.md``")
+    timeoutRunBlocking {
+      withContext(Dispatchers.EDT) {
+        val handler = MoveFilesOrDirectoriesHandler()
+        handler.doMove(myFixture.project, arrayOf<PsiElement>(target), targetDirectory, null)
+        myFixture.checkResult("See ``new/`file.md``")
+      }
+    }
     assertCodeSpanContentAndFileReference(target, "new/`file.md", markerLength = 2)
   }
 
@@ -340,40 +412,46 @@ class BacktickReferenceTest : BasePlatformTestCase() {
   fun `test qualified name package segment resolves to package`() {
     createSampleClass()
     val reference = configureAndGetReferenceAtCaret("doc.md", "See `com.exa<caret>mple.Sample`")
-    val resolved = reference!!.resolve()
-    assertInstanceOf(resolved, PsiPackage::class.java)
+    val resolved = timeoutRunBlocking { readAction { reference!!.resolve() } }
+    assertInstanceOf(PsiPackage::class.java, resolved)
     assertEquals("com.example", (resolved as PsiPackage).qualifiedName)
   }
 
   @Test
   fun `test qualified name with hash resolves to method`() {
-    val method = createSampleClass().findMethodsByName("doStuff", false).single()
+    val method = createSampleClass().let { sample -> timeoutRunBlocking { readAction { sample.findMethodsByName("doStuff", false).single() } } }
     assertResolvesTo("Call `com.example.Sample#doSt<caret>uff`", method)
   }
 
   @Test
   fun `test qualified name with hash resolves to variable`() {
-    val field = createSampleClass().findFieldByName("varStuff", false)!!
+    val field = createSampleClass().let { sample -> timeoutRunBlocking { readAction { sample.findFieldByName("varStuff", false)!! } } }
     assertResolvesTo("Call `com.example.Sample#varSt<caret>uff`", field)
   }
 
   @Test
   fun `test qualified name with dot resolves to method`() {
-    val method = createSampleClass().findMethodsByName("doStuff", false).single()
+    val method = createSampleClass().let { sample -> timeoutRunBlocking { readAction { sample.findMethodsByName("doStuff", false).single() } } }
     assertResolvesTo("Call `com.example.Sample.doSt<caret>uff`", method)
   }
 
   @Test
   fun `test short class name with member separator resolves class and method`() {
-    val javaClass = createFile(
+    val (javaClass, method) = createFile(
       "JavaClass.java",
       """
         class JavaClass {
           public void methodName() {}
         }
       """.trimIndent()
-    ).children.single { it is PsiClass } as PsiClass
-    val method = javaClass.findMethodsByName("methodName", false).single()
+    ).let { file ->
+      timeoutRunBlocking {
+        readAction {
+          val javaClass = file.children.single { it is PsiClass } as PsiClass
+          javaClass to javaClass.findMethodsByName("methodName", false).single()
+        }
+      }
+    }
 
     assertResolvesTo("Call `JavaCla<caret>ss#methodName`", javaClass)
     assertResolvesTo("Call `JavaClass#met<caret>hodName`", method)
@@ -390,12 +468,12 @@ class BacktickReferenceTest : BasePlatformTestCase() {
           public void anotherMethodName() {}
         }
       """.trimIndent()
-    ).children.single { it is PsiClass } as PsiClass
+    ).let { file -> timeoutRunBlocking { readAction { file.children.single { it is PsiClass } as PsiClass } } }
 
     assertResolvesTo("Call `JavaCla<caret>ss#methodName`", javaClass)
-    assertNull(configureAndGetReferenceAtCaret("Call `JavaClass#met<caret>hodName`")?.resolve())
+    assertNull(configureAndGetReferenceAtCaret("Call `JavaClass#met<caret>hodName`")?.let { reference -> timeoutRunBlocking { readAction { reference.resolve() } } })
     assertResolvesTo("Call `JavaCla<caret>ss.methodName`", javaClass)
-    assertNull(configureAndGetReferenceAtCaret("Call `JavaClass.methodNa<caret>me`")?.resolve())
+    assertNull(configureAndGetReferenceAtCaret("Call `JavaClass.methodNa<caret>me`")?.let { reference -> timeoutRunBlocking { readAction { reference.resolve() } } })
   }
 
   @Test
@@ -409,16 +487,19 @@ class BacktickReferenceTest : BasePlatformTestCase() {
           public void methodName(int first, int second) {}
         }
       """.trimIndent()
-    ).children.single { it is PsiClass } as PsiClass
-    val noArgumentsMethod = javaClass.findMethodsByName("methodName", false).single { it.parameterList.parametersCount == 0 }
-    val oneArgumentMethod = javaClass.findMethodsByName("methodName", false).single { it.parameterList.parametersCount == 1 }
-    val twoArgumentsMethod = javaClass.findMethodsByName("methodName", false).single { it.parameterList.parametersCount == 2 }
+    ).let { file -> timeoutRunBlocking { readAction { file.children.single { it is PsiClass } as PsiClass } } }
+    val (noArgumentsMethod, oneArgumentMethod, twoArgumentsMethod) = timeoutRunBlocking {
+      readAction {
+        val methods = javaClass.findMethodsByName("methodName", false)
+        (0..2).map { count -> methods.single { it.parameterList.parametersCount == count } }
+      }
+    }
 
     assertResolvesTo("Call `JavaClass.methodNa<caret>me()`", noArgumentsMethod)
     assertResolvesTo("Call `JavaClass.methodNa<caret>me(argument)`", oneArgumentMethod)
     assertResolvesTo("Call `JavaClass.methodNa<caret>me(foo.bar)`", oneArgumentMethod)
     assertResolvesTo("Call `JavaClass.methodNa<caret>me(first, second)`", twoArgumentsMethod)
-    assertNull(configureAndGetReferenceAtCaret("Call `JavaClass.methodNa<caret>me(first, second, third)`")?.resolve())
+    assertNull(configureAndGetReferenceAtCaret("Call `JavaClass.methodNa<caret>me(first, second, third)`")?.let { reference -> timeoutRunBlocking { readAction { reference.resolve() } } })
     assertResolvesTo("Call `JavaCla<caret>ss.methodName()`", javaClass)
   }
 
@@ -433,41 +514,47 @@ class BacktickReferenceTest : BasePlatformTestCase() {
       """.trimIndent()
     )
 
-    assertNull(configureAndGetReferenceAtCaret("Call `JavaClass.methodNa<caret>me()`")?.resolve())
+    assertNull(configureAndGetReferenceAtCaret("Call `JavaClass.methodNa<caret>me()`")?.let { reference -> timeoutRunBlocking { readAction { reference.resolve() } } })
   }
 
   @Test
   fun `test renaming member referenced by short class name updates markdown`() {
-    val javaClass = createFile(
+    val method = createFile(
       "JavaClass.java",
       """
         class JavaClass {
           public void methodName() {}
         }
       """.trimIndent()
-    ).children.single { it is PsiClass } as PsiClass
-    val method = javaClass.findMethodsByName("methodName", false).single()
+    ).let { file -> timeoutRunBlocking { readAction { (file.children.single { it is PsiClass } as PsiClass).findMethodsByName("methodName", false).single() } } }
     myFixture.configureByText("some.md", "Call `JavaClass#methodName`")
 
-    myFixture.renameElement(method, "renamedMethod")
-    myFixture.checkResult("Call `JavaClass#renamedMethod`")
+    timeoutRunBlocking {
+      withContext(Dispatchers.EDT) {
+        myFixture.renameElement(method, "renamedMethod")
+        myFixture.checkResult("Call `JavaClass#renamedMethod`")
+      }
+    }
   }
 
   @Test
   fun `test renaming method with parentheses preserves parentheses`() {
-    val javaClass = createFile(
+    val method = createFile(
       "JavaClass.java",
       """
         class JavaClass {
           public void methodName() {}
         }
       """.trimIndent()
-    ).children.single { it is PsiClass } as PsiClass
-    val method = javaClass.findMethodsByName("methodName", false).single()
+    ).let { file -> timeoutRunBlocking { readAction { (file.children.single { it is PsiClass } as PsiClass).findMethodsByName("methodName", false).single() } } }
     myFixture.configureByText("some.md", "Call `JavaClass.methodName()`")
 
-    myFixture.renameElement(method, "renamedMethod")
-    myFixture.checkResult("Call `JavaClass.renamedMethod()`")
+    timeoutRunBlocking {
+      withContext(Dispatchers.EDT) {
+        myFixture.renameElement(method, "renamedMethod")
+        myFixture.checkResult("Call `JavaClass.renamedMethod()`")
+      }
+    }
   }
 
   @Test
@@ -479,11 +566,15 @@ class BacktickReferenceTest : BasePlatformTestCase() {
           public void methodName() {}
         }
       """.trimIndent()
-    ).children.single { it is PsiClass } as PsiClass
+    ).let { file -> timeoutRunBlocking { readAction { file.children.single { it is PsiClass } as PsiClass } } }
     myFixture.configureByText("some.md", "Call `JavaClass.methodName`")
 
-    renameWithTextOccurrences(javaClass, "RenamedJavaClass")
-    myFixture.checkResult("Call `RenamedJavaClass.methodName`")
+    timeoutRunBlocking {
+      withContext(Dispatchers.EDT) {
+        renameWithTextOccurrences(javaClass, "RenamedJavaClass")
+        myFixture.checkResult("Call `RenamedJavaClass.methodName`")
+      }
+    }
   }
 
   @Test
@@ -505,8 +596,8 @@ class BacktickReferenceTest : BasePlatformTestCase() {
       """.trimIndent()
     )
     val reference = configureAndGetReferenceAtCaret("doc.md", "Call `com.example.Sample#doSt<caret>uff`")
-    assertInstanceOf(reference, PsiPolyVariantReference::class.java)
-    val resolved = (reference as PsiPolyVariantReference).multiResolve(false)
+    assertInstanceOf(PsiPolyVariantReference::class.java, reference)
+    val resolved = timeoutRunBlocking { readAction { (reference as PsiPolyVariantReference).multiResolve(false) } }
     assertEquals(2, resolved.size)
     assertTrue(resolved.all { it.element is PsiMethod })
   }
@@ -525,7 +616,7 @@ class BacktickReferenceTest : BasePlatformTestCase() {
     myFixture.configureByText("doc.md", "See `com.example.Sample#<caret>`")
     val items = myFixture.completeBasic()
     assertNotNull(items)
-    assertContainsElements(items!!.map { it.lookupString }, "doStuff", "varStuff")
+    assertThat(items!!.map { it.lookupString }).contains("doStuff", "varStuff")
   }
 
   @Test
@@ -573,7 +664,7 @@ class BacktickReferenceTest : BasePlatformTestCase() {
     myFixture.configureByText("doc.md", "See `com.example.Sample.<caret>`")
     val items = myFixture.completeBasic()
     assertNotNull(items)
-    assertContainsElements(items!!.map { it.lookupString }, "doStuff", "varStuff")
+    assertThat(items!!.map { it.lookupString }).contains("doStuff", "varStuff")
   }
 
   @Test
@@ -589,7 +680,7 @@ class BacktickReferenceTest : BasePlatformTestCase() {
     myFixture.configureByText("doc.md", "See `JavaClass1.<caret>`")
     val items = myFixture.completeBasic()
     assertNotNull(items)
-    assertContainsElements(items!!.map { it.lookupString }, "doStuff")
+    assertThat(items!!.map { it.lookupString }).contains("doStuff")
   }
 
   @Test
@@ -597,24 +688,33 @@ class BacktickReferenceTest : BasePlatformTestCase() {
     createSampleClass()
     myFixture.configureByText("doc.md", "See `com.example.Sample<caret>` docs")
     val strings = myFixture.completeBasic()?.map { it.lookupString } ?: emptyList()
-    assertDoesntContain(strings, "doStuff", "varStuff")
+    assertThat(strings).doesNotContain("doStuff", "varStuff")
   }
 
   @Test
   fun `test class part reference range accounts for multiple backticks`() {
     createSampleClass()
     myFixture.configureByText("doc.md", "See ``Sample.doStuff`` docs")
-    val codeSpan = PsiTreeUtil.findChildOfType(myFixture.file, MarkdownCodeSpan::class.java)!!
-    val classPart = codeSpan.references.filterIsInstance<BacktickReference>().minByOrNull { it.rangeInElement.length }!!
-    assertEquals("Sample", classPart.rangeInElement.substring(codeSpan.text))
+    timeoutRunBlocking {
+      readAction {
+        val codeSpan = PsiTreeUtil.findChildOfType(myFixture.file, MarkdownCodeSpan::class.java)!!
+        val classPart = codeSpan.references.filterIsInstance<BacktickReference>().minByOrNull { it.rangeInElement.length }!!
+        assertEquals("Sample", classPart.rangeInElement.substring(codeSpan.text))
+      }
+    }
   }
 
   @Test
   fun `test path reference resolves from project root`() {
-    val target = createFile("community/module-set-plugins/generated/intellij.moduleSet.plugin.main/README.md").parent!!
-    val generated = target.parent!!
-    val moduleSetPlugins = generated.parent!!
-    val community = moduleSetPlugins.parent!!
+    val file = createFile("community/module-set-plugins/generated/intellij.moduleSet.plugin.main/README.md")
+    val (target, generated, moduleSetPlugins, community) = timeoutRunBlocking {
+      readAction {
+        val target = file.parent!!
+        val generated = target.parent!!
+        val moduleSetPlugins = generated.parent!!
+        listOf(target, generated, moduleSetPlugins, moduleSetPlugins.parent!!)
+      }
+    }
 
     assertFileReferenceResolves(
       "docs/references/project-root-community.md",
@@ -662,7 +762,7 @@ class BacktickReferenceTest : BasePlatformTestCase() {
 
   @Test
   fun `test skill dir variable segment resolves to current skill directory`() {
-    val skillDirectory = createFile("docs/example-skill/scripts/nb.py").parent!!.parent!!
+    val skillDirectory = createFile("docs/example-skill/scripts/nb.py").let { file -> timeoutRunBlocking { readAction { file.parent!!.parent!! } } }
 
     assertFileReferenceResolves(
       "docs/example-skill/SKILL.md",
@@ -695,7 +795,7 @@ class BacktickReferenceTest : BasePlatformTestCase() {
     )
 
     assertFalse(reference is FileReference)
-    assertNull(reference?.resolve())
+    timeoutRunBlocking { readAction { assertNull(reference?.resolve()) } }
   }
 
   private fun renameWithTextOccurrences(element: PsiElement, newName: String) {
@@ -703,8 +803,8 @@ class BacktickReferenceTest : BasePlatformTestCase() {
   }
 
   private fun findUsagesHandler(target: PsiElement): FindUsagesHandler {
-    val findUsagesManager = (FindManager.getInstance(project) as FindManagerBase).findUsagesManager
-    return findUsagesManager.getFindUsagesHandler(target, false)!!
+    val findUsagesManager = (FindManager.getInstance(myFixture.project) as FindManagerBase).findUsagesManager
+    return ReadAction.computeBlocking<FindUsagesHandler, Throwable> { findUsagesManager.getFindUsagesHandler(target, false)!! }
   }
 
   /** Runs [action] with the text occurrence option off on the shared handler options for [target], then restores it. */
@@ -714,7 +814,8 @@ class BacktickReferenceTest : BasePlatformTestCase() {
   private fun <T> withTextOccurrences(target: PsiElement, action: () -> T): T = withTextOccurrences(target, true, action)
 
   private fun <T> withTextOccurrences(target: PsiElement, enabled: Boolean, action: () -> T): T {
-    val options = findUsagesHandler(target).findUsagesOptions
+    val handler = findUsagesHandler(target)
+    val options = ReadAction.computeBlocking<FindUsagesOptions, Throwable> { handler.findUsagesOptions }
     val previous = options.isSearchForTextOccurrences
     options.isSearchForTextOccurrences = enabled
     try {
@@ -727,7 +828,7 @@ class BacktickReferenceTest : BasePlatformTestCase() {
 
   private fun createJavaClass(name: String = "JavaClass"): PsiClass {
     val file = createFile("$name.java", "class $name {}")
-    return file.children.single { it is PsiClass } as PsiClass
+    return timeoutRunBlocking { readAction { file.children.single { it is PsiClass } as PsiClass } }
   }
 
   private fun createSampleClass(): PsiClass {
@@ -741,7 +842,7 @@ class BacktickReferenceTest : BasePlatformTestCase() {
         }
       """.trimIndent()
     )
-    return file.children.single { it is PsiClass } as PsiClass
+    return timeoutRunBlocking { readAction { file.children.single { it is PsiClass } as PsiClass } }
   }
 
   private fun createStaticMethod(): PsiMethod {
@@ -753,8 +854,12 @@ class BacktickReferenceTest : BasePlatformTestCase() {
         }
       """.trimIndent()
     )
-    val javaClass = file.children.single { it is PsiClass } as PsiClass
-    return javaClass.findMethodsByName("getElementName1234567", false).single()
+    return timeoutRunBlocking {
+      readAction {
+        val javaClass = file.children.single { it is PsiClass } as PsiClass
+        javaClass.findMethodsByName("getElementName1234567", false).single()
+      }
+    }
   }
 
   private fun createLongNamedMethod(): PsiMethod {
@@ -766,8 +871,12 @@ class BacktickReferenceTest : BasePlatformTestCase() {
         }
       """.trimIndent()
     )
-    val javaClass = file.children.single { it is PsiClass } as PsiClass
-    return javaClass.findMethodsByName("longLongLong", false).single()
+    return timeoutRunBlocking {
+      readAction {
+        val javaClass = file.children.single { it is PsiClass } as PsiClass
+        javaClass.findMethodsByName("longLongLong", false).single()
+      }
+    }
   }
 
   private fun createFile(path: String, text: String = ""): PsiFileSystemItem {
@@ -785,14 +894,18 @@ class BacktickReferenceTest : BasePlatformTestCase() {
     } else {
       myFixture.configureByText(fileName, text)
     }
-    return myFixture.file.findReferenceAt(myFixture.editor.caretModel.offset)
+    return timeoutRunBlocking { readAction { myFixture.file.findReferenceAt(myFixture.editor.caretModel.offset) } }
   }
 
   private fun assertFileReferenceResolves(fileName: String, text: String, target: PsiFileSystemItem) {
     val reference = configureAndGetReferenceAtCaret(fileName, text)!!
-    assertFileReference(reference)
-    assertTrue(reference.isReferenceTo(target))
-    assertTrue(myFixture.psiManager.areElementsEquivalent(target, reference.resolve()))
+    timeoutRunBlocking {
+      readAction {
+        assertFileReference(reference)
+        assertTrue(reference.isReferenceTo(target))
+        assertTrue(myFixture.psiManager.areElementsEquivalent(target, reference.resolve()))
+      }
+    }
   }
 
   private fun assertCodeSpanContentAndFileReference(
@@ -800,28 +913,36 @@ class BacktickReferenceTest : BasePlatformTestCase() {
     expectedContent: String,
     markerLength: Int,
   ) {
-    val codeSpan = PsiTreeUtil.findChildOfType(myFixture.file, MarkdownCodeSpan::class.java)!!
-    assertEquals(expectedContent, codeSpan.getContentRange()!!.substring(codeSpan.text))
-    assertEquals(markerLength, codeSpan.firstChild.textLength)
-    assertEquals(markerLength, codeSpan.lastChild.textLength)
-    val fileReference = codeSpan.references.filterIsInstance<FileReference>().lastOrNull()
-    assertNotNull(fileReference)
-    val resolved = fileReference!!.resolve()
-    assertNotNull(resolved)
-    assertEquals(target.virtualFile.path, resolved!!.virtualFile.path)
+    timeoutRunBlocking {
+      readAction {
+        val codeSpan = PsiTreeUtil.findChildOfType(myFixture.file, MarkdownCodeSpan::class.java)!!
+        assertEquals(expectedContent, codeSpan.getContentRange()!!.substring(codeSpan.text))
+        assertEquals(markerLength, codeSpan.firstChild.textLength)
+        assertEquals(markerLength, codeSpan.lastChild.textLength)
+        val fileReference = codeSpan.references.filterIsInstance<FileReference>().lastOrNull()
+        assertNotNull(fileReference)
+        val resolved = fileReference!!.resolve()
+        assertNotNull(resolved)
+        assertEquals(target.virtualFile.path, resolved!!.virtualFile.path)
+      }
+    }
   }
 
   private fun assertResolvesToPsiMethod(fileName: String, text: String) {
     val reference = configureAndGetReferenceAtCaret(fileName, text)
-    assertBacktickReference(reference!!)
-    assertTrue(reference.resolve() is PsiMethod)
+    timeoutRunBlocking {
+      readAction {
+        assertBacktickReference(reference!!)
+        assertTrue(reference.resolve() is PsiMethod)
+      }
+    }
   }
 
   private fun assertFileReference(reference: PsiReference) {
     if (reference is PsiMultiReference) {
       assertTrue(reference.references.any { it is FileReference })
     } else {
-      assertInstanceOf(reference, FileReference::class.java)
+      assertInstanceOf(FileReference::class.java, reference)
     }
   }
 
@@ -829,17 +950,23 @@ class BacktickReferenceTest : BasePlatformTestCase() {
     if (reference is PsiMultiReference) {
       assertTrue(reference.references.any { it is BacktickReference })
     } else {
-      assertInstanceOf(reference, BacktickReference::class.java)
+      assertInstanceOf(BacktickReference::class.java, reference)
     }
   }
 
   private fun assertResolvesTo(text: String, expected: PsiElement) {
     val reference = configureAndGetReferenceAtCaret("doc.md", text)
-    assertNotNull(reference)
-    assertTrue(myFixture.psiManager.areElementsEquivalent(expected, reference!!.resolve()))
+    timeoutRunBlocking {
+      readAction {
+        assertNotNull(reference)
+        assertTrue(myFixture.psiManager.areElementsEquivalent(expected, reference!!.resolve()))
+      }
+    }
   }
 
   companion object {
+    private val projectFixture = projectFixture(openAfterCreation = true)
+
     private const val CLAUDE_SKILL_DIR = $$"${CLAUDE_SKILL_DIR}"
   }
 }

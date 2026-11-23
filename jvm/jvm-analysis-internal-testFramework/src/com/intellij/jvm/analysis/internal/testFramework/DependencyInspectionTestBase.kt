@@ -7,6 +7,11 @@ import com.intellij.packageDependencies.DependencyValidationManager
 import com.intellij.psi.search.scope.packageSet.NamedScope
 import com.intellij.psi.search.scope.packageSet.PackageSetFactory
 
+/**
+ * @deprecated Use [dependencyInspectionFixture] in a JUnit 5 test.
+ */
+@Suppress("DEPRECATION")
+@Deprecated("Use dependencyInspectionFixture in a JUnit 5 test")
 abstract class DependencyInspectionTestBase : JvmInspectionTestBase() {
   override val inspection: DependencyInspection = DependencyInspection()
 

@@ -1,43 +1,51 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.packaging.conda
 
-import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.python.community.execService.BinaryToExec
+import com.intellij.python.community.impl.conda.CondaPyTool
 import com.intellij.python.community.impl.conda.PyCondaBundle
+import com.intellij.python.pyproject.PyDependencyGroup
+import com.intellij.python.sdk.backend.PythonInterpreter
+import com.intellij.python.sdk.backend.evolution.toolMissing
+import com.intellij.python.sdk.backend.resolveExecutable
+import com.intellij.python.sdk.backend.toFileSystem
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.packaging.common.PythonOutdatedPackage
 import com.jetbrains.python.packaging.common.PythonPackage
 import com.jetbrains.python.packaging.common.PythonRepositoryPackageSpecification
-import com.intellij.python.pyproject.PyDependencyGroup
 import com.jetbrains.python.packaging.management.PyWorkspaceMember
 import com.jetbrains.python.packaging.management.PythonPackageInstallRequest
 import com.jetbrains.python.packaging.management.PythonPackageManagerEngine
+import com.jetbrains.python.sdk.add.v2.FileSystem
+import com.jetbrains.python.sdk.add.v2.PathHolder
+import com.jetbrains.python.sdk.conda.condaIdentityOf
 import com.jetbrains.python.sdk.conda.execution.CondaExecutor
-import com.jetbrains.python.sdk.conda.execution.getCondaBinToExecute
-import com.jetbrains.python.sdk.flavors.conda.PyCondaEnv
-import com.jetbrains.python.sdk.flavors.conda.PyCondaFlavorData
-import com.jetbrains.python.sdk.pySdkAdditionalData
+import com.jetbrains.python.sdk.flavors.conda.PyCondaEnvIdentity
 
-internal class CondaPackageManagerEngine(private val sdk: Sdk) : PythonPackageManagerEngine {
+/** What runs conda for the env of an interpreter: the conda binary on the machine of the env, and the identity of the env. */
+private data class CondaEnvExecution(val conda: BinaryToExec, val env: PyCondaEnvIdentity)
+
+internal class CondaPackageManagerEngine(private val interpreter: PythonInterpreter) : PythonPackageManagerEngine {
   suspend fun updateFromEnvironmentFile(envFile: VirtualFile): PyResult<Unit> {
-    val env = getEnvData()
-    return CondaExecutor.updateFromEnvironmentFile(sdk.getCondaBinToExecute(), envFile.path, env.envIdentity)
+    val (conda, env) = condaEnvExecution().getOr { return it }
+    return CondaExecutor.updateFromEnvironmentFile(conda, envFile.path, env)
   }
 
   suspend fun exportToEnvironmentFile(): PyResult<String> {
-    val env = getEnvData()
-    return CondaExecutor.exportEnvironmentFile(sdk.getCondaBinToExecute(), env.envIdentity)
+    val (conda, env) = condaEnvExecution().getOr { return it }
+    return CondaExecutor.exportEnvironmentFile(conda, env)
   }
 
   override suspend fun loadOutdatedPackagesCommand(): PyResult<List<PythonOutdatedPackage>> {
-    val env = getEnvData()
-    return CondaExecutor.listOutdatedPackages(sdk.getCondaBinToExecute(), env.envIdentity)
+    val (conda, env) = condaEnvExecution().getOr { return it }
+    return CondaExecutor.listOutdatedPackages(conda, env)
   }
 
   override suspend fun installPackageCommand(installRequest: PythonPackageInstallRequest, options: List<String>): PyResult<Unit> {
     val installationArgs = installRequest.buildCondaInstallationArguments().getOr { return it }
-    val env = getEnvData()
-    return CondaExecutor.installPackages(sdk.getCondaBinToExecute(), env.envIdentity, installationArgs, options)
+    val (conda, env) = condaEnvExecution().getOr { return it }
+    return CondaExecutor.installPackages(conda, env, installationArgs, options)
   }
 
   override suspend fun updatePackageCommand(vararg specifications: PythonRepositoryPackageSpecification): PyResult<Unit> {
@@ -45,25 +53,33 @@ internal class CondaPackageManagerEngine(private val sdk: Sdk) : PythonPackageMa
     // conda updates to the newest version it can resolve, silently ignoring the requested spec.
     // Specs are single argv elements (no shell) and must not be quoted, see PY-91412.
     val packages = specifications.map { it.nameWithVersionSpecs }
-    val env = getEnvData()
-    return CondaExecutor.installPackages(sdk.getCondaBinToExecute(), env.envIdentity, packages, emptyList())
+    val (conda, env) = condaEnvExecution().getOr { return it }
+    return CondaExecutor.installPackages(conda, env, packages, emptyList())
   }
 
   override suspend fun uninstallPackageCommand(vararg pythonPackages: String, workspaceMember: PyWorkspaceMember?, dependencyGroup: PyDependencyGroup?): PyResult<Unit> {
     if (pythonPackages.isEmpty())
       return PyResult.success(Unit)
 
-    val env = getEnvData()
-    return CondaExecutor.uninstallPackages(sdk.getCondaBinToExecute(), env.envIdentity, pythonPackages.toList())
+    val (conda, env) = condaEnvExecution().getOr { return it }
+    return CondaExecutor.uninstallPackages(conda, env, pythonPackages.toList())
   }
 
   override suspend fun loadPackagesCommand(): PyResult<List<PythonPackage>> {
-    val env = getEnvData()
-    return CondaExecutor.listPackages(sdk.getCondaBinToExecute(), env.envIdentity)
+    val (conda, env) = condaEnvExecution().getOr { return it }
+    return CondaExecutor.listPackages(conda, env)
   }
 
+  /** The conda binary and the env of [interpreter], from its ref, see [condaIdentityOf]. */
+  private suspend fun condaEnvExecution(): PyResult<CondaEnvExecution> =
+    condaEnvExecutionOn(interpreter.toFileSystem())
 
-  private fun getEnvData(): PyCondaEnv = (sdk.pySdkAdditionalData.flavorAndData.data as PyCondaFlavorData).env
+  private suspend fun <P : PathHolder> condaEnvExecutionOn(fileSystem: FileSystem<P>): PyResult<CondaEnvExecution> {
+    val tool = CondaPyTool.getInstance()
+    val conda = fileSystem.resolveExecutable(tool) ?: return toolMissing(tool)
+    val env = condaIdentityOf(fileSystem, interpreter.ref.envRef)
+    return PyResult.success(CondaEnvExecution(fileSystem.getBinaryToExec(conda), env))
+  }
 }
 
 internal fun PythonPackageInstallRequest.buildCondaInstallationArguments(): PyResult<List<String>> = when (this) {

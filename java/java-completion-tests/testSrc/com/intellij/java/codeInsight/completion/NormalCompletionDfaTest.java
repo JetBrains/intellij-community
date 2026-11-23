@@ -1,251 +1,332 @@
 package com.intellij.java.codeInsight.completion;
 
 import com.intellij.codeInsight.completion.CompletionType;
+import com.intellij.platform.testFramework.junit5.codeInsight.indexing.IndexingModeTemplate;
 import com.intellij.psi.PsiClass;
-import com.intellij.testFramework.LightProjectDescriptor;
+import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.NeedsIndex;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
 
-public class NormalCompletionDfaTest extends NormalCompletionTestCase {
-  @NotNull
-  @Override
-  protected LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_8;
-  }
+import static com.intellij.codeInsight.completion.LightCompletionFixtureKt.lightCompletionProjectFixture;
+import static com.intellij.java.codeInsight.completion.NormalCompletionFixtureKt.normalCompletionFixture;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
+@TestApplication
+@IndexingModeTemplate
+public class NormalCompletionDfaTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightCompletionProjectFixture(LightJavaCodeInsightFixtureTestCase.JAVA_8);
+  private final TestFixture<NormalCompletionFixture> completion = normalCompletionFixture(projectFixture);
+
+  @Test
   @NeedsIndex.ForStandardLibrary
-  public void testCastInstanceofedQualifier() { doTest(); }
+  public void testCastInstanceofedQualifier() { EdtTestUtil.runInEdtAndWait(() -> completion.get().doTest()); }
 
+  @Test
   @NeedsIndex.ForStandardLibrary
-  public void testCastInstanceofedQualifierInForeach() { doTest(); }
+  public void testCastInstanceofedQualifierInForeach() { EdtTestUtil.runInEdtAndWait(() -> completion.get().doTest()); }
 
+  @Test
   @NeedsIndex.ForStandardLibrary
-  public void testCastComplexInstanceofedQualifier() { doTest(); }
+  public void testCastComplexInstanceofedQualifier() { EdtTestUtil.runInEdtAndWait(() -> completion.get().doTest()); }
 
-  public void _testCastIncompleteInstanceofedQualifier() { doTest(); }
+  public void _testCastIncompleteInstanceofedQualifier() { completion.get().doTest(); }
 
-  public void testCastTooComplexInstanceofedQualifier() { doAntiTest(); }
+  @Test
+  public void testCastTooComplexInstanceofedQualifier() { EdtTestUtil.runInEdtAndWait(() -> completion.get().doAntiTest()); }
 
-  public void testCastInstanceofedThisQualifier() { doTest(); }
+  @Test
+  public void testCastInstanceofedThisQualifier() { EdtTestUtil.runInEdtAndWait(() -> completion.get().doTest()); }
 
+  @Test
   @NeedsIndex.ForStandardLibrary
-  public void testDontCastInstanceofedQualifier() { doTest(); }
+  public void testDontCastInstanceofedQualifier() { EdtTestUtil.runInEdtAndWait(() -> completion.get().doTest()); }
 
-  public void testDontCastPartiallyInstanceofedQualifier() { doAntiTest(); }
+  @Test
+  public void testDontCastPartiallyInstanceofedQualifier() { EdtTestUtil.runInEdtAndWait(() -> completion.get().doAntiTest()); }
 
+  @Test
   @NeedsIndex.ForStandardLibrary
-  public void testQualifierCastingWithUnknownAssignments() { doTest(); }
+  public void testQualifierCastingWithUnknownAssignments() { EdtTestUtil.runInEdtAndWait(() -> completion.get().doTest()); }
 
+  @Test
   @NeedsIndex.ForStandardLibrary
-  public void testQualifierCastingBeforeLt() { doTest(); }
+  public void testQualifierCastingBeforeLt() { EdtTestUtil.runInEdtAndWait(() -> completion.get().doTest()); }
 
+  @Test
   @NeedsIndex.ForStandardLibrary
-  public void testCastQualifierForPrivateFieldReference() { doTest(); }
+  public void testCastQualifierForPrivateFieldReference() { EdtTestUtil.runInEdtAndWait(() -> completion.get().doTest()); }
 
+  @Test
   @NeedsIndex.ForStandardLibrary
-  public void testOrAssignmentDfa() { doTest(); }
+  public void testOrAssignmentDfa() { EdtTestUtil.runInEdtAndWait(() -> completion.get().doTest()); }
 
+  @Test
   @NeedsIndex.ForStandardLibrary
-  public void testAssignmentPreciseTypeDfa() { doTestSecond(); }
+  public void testAssignmentPreciseTypeDfa() { EdtTestUtil.runInEdtAndWait(() -> doTestSecond()); }
 
+  @Test
   @NeedsIndex.ForStandardLibrary
-  public void testAssignmentTwicePreciseTypeDfa() { doTestSecond(); }
+  public void testAssignmentTwicePreciseTypeDfa() { EdtTestUtil.runInEdtAndWait(() -> doTestSecond()); }
 
-  public void testAssignmentParameterDfa() { doTest(); }
+  @Test
+  public void testAssignmentParameterDfa() { EdtTestUtil.runInEdtAndWait(() -> completion.get().doTest()); }
 
-  public void testAssignmentNoPreciseTypeDfa() { doTest(); }
+  @Test
+  public void testAssignmentNoPreciseTypeDfa() { EdtTestUtil.runInEdtAndWait(() -> completion.get().doTest()); }
 
+  @Test
   @NeedsIndex.ForStandardLibrary
-  public void testAssignmentPrimitiveLiteral() { doTest(); }
+  public void testAssignmentPrimitiveLiteral() { EdtTestUtil.runInEdtAndWait(() -> completion.get().doTest()); }
 
+  @Test
   @NeedsIndex.ForStandardLibrary
-  public void testDeclarationPreciseTypeDfa() { doTestSecond(); }
+  public void testDeclarationPreciseTypeDfa() { EdtTestUtil.runInEdtAndWait(() -> doTestSecond()); }
 
+  @Test
   @NeedsIndex.ForStandardLibrary
-  public void testInstanceOfAssignmentDfa() { doTestSecond(); }
+  public void testInstanceOfAssignmentDfa() { EdtTestUtil.runInEdtAndWait(() -> doTestSecond()); }
 
+  @Test
   @NeedsIndex.ForStandardLibrary
-  public void testStreamDfa() { doTest(); }
+  public void testStreamDfa() { EdtTestUtil.runInEdtAndWait(() -> completion.get().doTest()); }
 
+  @Test
   @NeedsIndex.Full
-  public void testStreamIncompleteDfa() { doTest(); }
+  public void testStreamIncompleteDfa() { EdtTestUtil.runInEdtAndWait(() -> completion.get().doTest()); }
 
+  @Test
   @NeedsIndex.ForStandardLibrary
-  public void testOptionalDfa() { doTest(); }
+  public void testOptionalDfa() { EdtTestUtil.runInEdtAndWait(() -> completion.get().doTest()); }
 
+  @Test
   @NeedsIndex.ForStandardLibrary
-  public void testFieldWithCastingCaret() { doTest(); }
+  public void testFieldWithCastingCaret() { EdtTestUtil.runInEdtAndWait(() -> completion.get().doTest()); }
 
-  public void testCastWhenMethodComesFromDfaSuperType() { doTest(); }
+  @Test
+  public void testCastWhenMethodComesFromDfaSuperType() { EdtTestUtil.runInEdtAndWait(() -> completion.get().doTest()); }
 
+  @Test
   @NeedsIndex.ForStandardLibrary
-  public void testGenericTypeDfa() { doTestSecond(); }
+  public void testGenericTypeDfa() { EdtTestUtil.runInEdtAndWait(() -> doTestSecond()); }
 
-  public void testNarrowingReturnType() { doTest(); }
+  @Test
+  public void testNarrowingReturnType() { EdtTestUtil.runInEdtAndWait(() -> completion.get().doTest()); }
 
-  public void testNarrowingReturnTypeInVoidContext() { doTest(); }
+  @Test
+  public void testNarrowingReturnTypeInVoidContext() { EdtTestUtil.runInEdtAndWait(() -> completion.get().doTest()); }
 
+  @Test
   @NeedsIndex.ForStandardLibrary
-  public void testNoUnnecessaryCastDfa() { doTest(); }
+  public void testNoUnnecessaryCastDfa() { EdtTestUtil.runInEdtAndWait(() -> completion.get().doTest()); }
 
+  @Test
   @NeedsIndex.ForStandardLibrary
-  public void testNoUnnecessaryCastRawDfa() { doTest(); }
+  public void testNoUnnecessaryCastRawDfa() { EdtTestUtil.runInEdtAndWait(() -> completion.get().doTest()); }
 
+  @Test
   @NeedsIndex.ForStandardLibrary
-  public void testInconsistentHierarchyDfa() { doTest(); }
+  public void testInconsistentHierarchyDfa() { EdtTestUtil.runInEdtAndWait(() -> completion.get().doTest()); }
 
+  @Test
   @NeedsIndex.ForStandardLibrary
-  public void testAfterAssertTrueDfa() { doTest(); }
+  public void testAfterAssertTrueDfa() { EdtTestUtil.runInEdtAndWait(() -> completion.get().doTest()); }
 
-  public void testNoUnnecessaryCastDeepHierarchy() { doTest(); }
+  @Test
+  public void testNoUnnecessaryCastDeepHierarchy() { EdtTestUtil.runInEdtAndWait(() -> completion.get().doTest()); }
 
+  @Test
   @NeedsIndex.ForStandardLibrary
-  public void testInstanceOfAfterFunction() { doTest(); }
+  public void testInstanceOfAfterFunction() { EdtTestUtil.runInEdtAndWait(() -> completion.get().doTest()); }
 
+  @Test
   @NeedsIndex.ForStandardLibrary
-  public void testInstanceOfDisjunction() { doTest(); }
+  public void testInstanceOfDisjunction() { EdtTestUtil.runInEdtAndWait(() -> completion.get().doTest()); }
 
+  @Test
   @NeedsIndex.ForStandardLibrary
-  public void testInstanceOfDisjunction2() { doTest(); }
+  public void testInstanceOfDisjunction2() { EdtTestUtil.runInEdtAndWait(() -> completion.get().doTest()); }
 
+  @Test
   @NeedsIndex.ForStandardLibrary
-  public void testInstanceOfDisjunctionDeep() { doTest(); }
+  public void testInstanceOfDisjunctionDeep() { EdtTestUtil.runInEdtAndWait(() -> completion.get().doTest()); }
 
+  @Test
   @NeedsIndex.ForStandardLibrary
-  public void testInstanceOfDisjunctionCircular() { doTest(); }
+  public void testInstanceOfDisjunctionCircular() { EdtTestUtil.runInEdtAndWait(() -> completion.get().doTest()); }
 
+  @Test
   @NeedsIndex.ForStandardLibrary
-  public void testAfterGetClass() { doTest(); }
+  public void testAfterGetClass() { EdtTestUtil.runInEdtAndWait(() -> completion.get().doTest()); }
 
+  @Test
   @NeedsIndex.ForStandardLibrary
-  public void testNoCastForCompatibleCapture() { doTest(); }
+  public void testNoCastForCompatibleCapture() { EdtTestUtil.runInEdtAndWait(() -> completion.get().doTest()); }
 
+  @Test
   @NeedsIndex.ForStandardLibrary
-  public void testBooleanFlagDfa() { doTest(); }
+  public void testBooleanFlagDfa() { EdtTestUtil.runInEdtAndWait(() -> completion.get().doTest()); }
 
+  @Test
   @NeedsIndex.ForStandardLibrary
   public void testComplexInstanceOfDfa() {
-    configureByTestName();
-    myFixture.assertPreferredCompletionItems(0, "methodFromX", "methodFromX2", "methodFromY", "methodFromY2");
+    LightJavaCodeInsightTestFixture myFixture = completion.get().getFixture();
+    EdtTestUtil.runInEdtAndWait(() -> {
+      completion.get().configureByTestName();
+      myFixture.assertPreferredCompletionItems(0, "methodFromX", "methodFromX2", "methodFromY", "methodFromY2");
 
-    assertEquals("() on X", NormalCompletionTestCase.renderElement(myItems[0]).getTailText());
+      assertEquals("() on X", NormalCompletionFixture.renderElement(completion.get().getItems()[0]).getTailText());
+    });
   }
 
+  @Test
   @NeedsIndex.ForStandardLibrary
   public void testCastTwice() {
-    configureByTestName();
-    myFixture.assertPreferredCompletionItems(0, "b", "a");
+    LightJavaCodeInsightTestFixture myFixture = completion.get().getFixture();
+    EdtTestUtil.runInEdtAndWait(() -> {
+      completion.get().configureByTestName();
+      myFixture.assertPreferredCompletionItems(0, "b", "a");
+    });
   }
 
+  @Test
   @NeedsIndex.Full
   public void testPublicMethodExtendsProtected() {
-    myFixture.addClass("""
+    LightJavaCodeInsightTestFixture myFixture = completion.get().getFixture();
+    EdtTestUtil.runInEdtAndWait(() -> {
+      myFixture.addClass("""
 
 
-                         package foo;
-public class Foo {
-    protected void consume() {}
-}
-
-""");
-    myFixture.addClass("""
-
-package foo;
-public class FooImpl extends Foo {
-    public void consume() {}
-}
-""");
-    doTest();
+                           package foo;
+  public class Foo {
+      protected void consume() {}
   }
 
-@NeedsIndex.ForStandardLibrary public void testCastInstanceofedQualifierInLambda() {doTest(); }
+  """);
+      myFixture.addClass("""
 
+  package foo;
+  public class FooImpl extends Foo {
+      public void consume() {}
+  }
+  """);
+      completion.get().doTest();
+    });
+  }
+
+@Test
+@NeedsIndex.ForStandardLibrary public void testCastInstanceofedQualifierInLambda() {EdtTestUtil.runInEdtAndWait(() -> completion.get().doTest()); }
+
+  @Test
   @NeedsIndex.ForStandardLibrary
-  public void testCastInstanceofedQualifierInLambda2() { doTest(); }
+  public void testCastInstanceofedQualifierInLambda2() { EdtTestUtil.runInEdtAndWait(() -> completion.get().doTest()); }
 
+  @Test
   @NeedsIndex.ForStandardLibrary
-  public void testCastInstanceofedQualifierInExpressionLambda() { doTest(); }
+  public void testCastInstanceofedQualifierInExpressionLambda() { EdtTestUtil.runInEdtAndWait(() -> completion.get().doTest()); }
 
+  @Test
   public void testCastQualifierInstanceofedTwice() {
-    configureByTestName();
-    myFixture.assertPreferredCompletionItems(0, "boo", "foo", "moo");
-    myFixture.getLookup().setCurrentItem(myFixture.getLookupElements()[1]);
-    myFixture.type("\n");
-    checkResultByFile(getTestName(false) + "_after.java");
+    LightJavaCodeInsightTestFixture myFixture = completion.get().getFixture();
+    EdtTestUtil.runInEdtAndWait(() -> {
+      completion.get().configureByTestName();
+      myFixture.assertPreferredCompletionItems(0, "boo", "foo", "moo");
+      myFixture.getLookup().setCurrentItem(myFixture.getLookupElements()[1]);
+      myFixture.type("\n");
+      completion.get().checkResultByFile(myFixture.getTestName(false) + "_after.java");
+    });
   }
 
+  @Test
   @NeedsIndex.Full
   public void testPreferCastExpressionSuperTypes() {
-    myFixture.addClass("package nonImported; public interface SzNameInTheEnd {}");
-    configureByTestName();
-    myFixture.assertPreferredCompletionItems(0, "SString", "SzNameInTheEnd", "Serializable");
+    LightJavaCodeInsightTestFixture myFixture = completion.get().getFixture();
+    EdtTestUtil.runInEdtAndWait(() -> {
+      myFixture.addClass("package nonImported; public interface SzNameInTheEnd {}");
+      completion.get().configureByTestName();
+      myFixture.assertPreferredCompletionItems(0, "SString", "SzNameInTheEnd", "Serializable");
+    });
   }
 
+  @Test
   public void test_no_casts_to_inaccessible_type() {
-    myFixture.addClass("""
+    LightJavaCodeInsightTestFixture myFixture = completion.get().getFixture();
+    EdtTestUtil.runInEdtAndWait(() -> {
+      myFixture.addClass("""
 
 
-                         package some;
+                           package some;
 
-public abstract class PublicInterface {
+  public abstract class PublicInterface {
 
-    public static PackagePrivateImplementation createPrivateImplementation() {
-        return new PackagePrivateImplementation();
-    }
-}
-
-class PackagePrivateImplementation extends PublicInterface {
-    public String getValue() { }
-}
-""");
-
-    myFixture.configureByText("a.java", """
-
-import some.PublicInterface;
-
-public class Main {
-
-    public static void main(String[] args) {
-        PublicInterface i = PublicInterface.createPrivateImplementation();
-        i.getVa<caret>x
-    }
-}""");
-
-    assertEquals(0, myFixture.complete(CompletionType.BASIC, 2).length);
+      public static PackagePrivateImplementation createPrivateImplementation() {
+          return new PackagePrivateImplementation();
+      }
   }
 
-public void test_show_methods_accessible_on_base_type_but_inaccessible_on_cast_type() {
-    PsiClass clazz = myFixture.addClass("""
+  class PackagePrivateImplementation extends PublicInterface {
+      public String getValue() { }
+  }
+  """);
 
-package some;
-import another.*;
+      myFixture.configureByText("a.java", """
 
-public class Super {
-    void foo() {}
-   \s
-    void test(Super o) {
-      if (o instanceof Sub) {
-        o.fo<caret>o
+  import some.PublicInterface;
+
+  public class Main {
+
+      public static void main(String[] args) {
+          PublicInterface i = PublicInterface.createPrivateImplementation();
+          i.getVa<caret>x
       }
-    }
-}
+  }""");
 
-""");
-    myFixture.addClass("package another; public class Sub extends some.Super {}");
+      assertEquals(0, myFixture.complete(CompletionType.BASIC, 2).length);
+    });
+  }
 
-    myFixture.configureFromExistingVirtualFile(clazz.getContainingFile().getVirtualFile());
+@Test
+public void test_show_methods_accessible_on_base_type_but_inaccessible_on_cast_type() {
+  LightJavaCodeInsightTestFixture myFixture = completion.get().getFixture();
+    EdtTestUtil.runInEdtAndWait(() -> {
+      PsiClass clazz = myFixture.addClass("""
 
-    myFixture.completeBasic();
-    assertEquals(myFixture.getLookupElementStrings(), Arrays.asList("foo"));
+  package some;
+  import another.*;
+
+  public class Super {
+      void foo() {}
+     \s
+      void test(Super o) {
+        if (o instanceof Sub) {
+          o.fo<caret>o
+        }
+      }
+  }
+
+  """);
+      myFixture.addClass("package another; public class Sub extends some.Super {}");
+
+      myFixture.configureFromExistingVirtualFile(clazz.getContainingFile().getVirtualFile());
+
+      myFixture.completeBasic();
+      assertEquals(myFixture.getLookupElementStrings(), Arrays.asList("foo"));
+    });
   }
 
 private void doTestSecond() {
-    configure();
-    assertTrue(myItems == null || myItems.length == 0);
+  LightJavaCodeInsightTestFixture myFixture = completion.get().getFixture();
+    completion.get().configure();
+    assertTrue(completion.get().getItems() == null || completion.get().getItems().length == 0);
     myFixture.completeBasic();
-    checkResult();
+    completion.get().checkResult();
   }
 
 }

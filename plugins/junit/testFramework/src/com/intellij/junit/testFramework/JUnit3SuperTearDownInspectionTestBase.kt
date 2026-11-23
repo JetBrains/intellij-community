@@ -9,6 +9,11 @@ import com.intellij.testFramework.LightProjectDescriptor
 
 private val descriptor = JUnitProjectDescriptor(HIGHEST, JUNIT3)
 
+/**
+ * @deprecated Use [junitProjectFixture] and [junit3SuperTearDownInspectionFixture] in a JUnit 5 test.
+ */
+@Suppress("DEPRECATION")
+@Deprecated("Use junitProjectFixture and junit3SuperTearDownInspectionFixture in a JUnit 5 test")
 abstract class JUnit3SuperTearDownInspectionTestBase : JvmInspectionTestBase() {
   override val inspection: JUnit3SuperTearDownInspection = JUnit3SuperTearDownInspection()
   override fun getProjectDescriptor(): LightProjectDescriptor = descriptor

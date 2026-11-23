@@ -123,14 +123,14 @@ protected constructor(
    * Check if framework is available on SDK
    */
   fun isFrameworkInstalled(): Boolean {
-    val sdk = sdk
-    if (sdk == null) {
-      // No SDK -- no tests
-      logger<AbstractPythonRunConfiguration<*>>().warn("Failed to detect test framework: SDK is null")
+    val interpreter = pythonInterpreter
+    if (interpreter == null) {
+      // No interpreter -- no tests
+      logger<AbstractPythonRunConfiguration<*>>().warn("Failed to detect test framework: the interpreter is null")
       return false
     }
     if (packageSpec == null) return true
-    return isPackageAvailable(project, sdk, packageSpec)
+    return isPackageAvailable(project, interpreter, packageSpec)
   }
 
 

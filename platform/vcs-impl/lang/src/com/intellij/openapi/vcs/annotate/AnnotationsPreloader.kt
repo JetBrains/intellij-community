@@ -31,6 +31,7 @@ import com.intellij.openapi.vcs.VcsListener
 import com.intellij.openapi.vcs.changes.ChangeListManager
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiManager
+import com.intellij.util.StartupUiGate
 import com.intellij.util.ui.update.DebouncedUpdates
 import com.intellij.util.ui.update.UpdateQueue
 import com.intellij.vcs.CacheableAnnotationProvider
@@ -40,6 +41,9 @@ import kotlinx.coroutines.withContext
 import kotlin.system.measureTimeMillis
 import kotlin.time.Duration.Companion.milliseconds
 
+/**
+ * Each preload batch waits for the [StartupUiGate] before the first annotation load of a start.
+ */
 @Service(Level.PROJECT)
 internal class AnnotationsPreloader(private val project: Project, coroutineScope: CoroutineScope) {
   private val updateQueue: UpdateQueue<VirtualFile> = DebouncedUpdates.forScope<VirtualFile>(
@@ -48,6 +52,7 @@ internal class AnnotationsPreloader(private val project: Project, coroutineScope
     1000.milliseconds
   ).withContext(Dispatchers.IO)
     .runBatchedDistinct { files: Set<VirtualFile> ->
+      StartupUiGate.awaitEditorsShown()
       var hasPreloadedAnnotations = false
       for (file in files) {
         hasPreloadedAnnotations = preloadAnnotations(file) || hasPreloadedAnnotations

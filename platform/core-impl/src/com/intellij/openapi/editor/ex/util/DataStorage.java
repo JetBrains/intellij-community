@@ -1,7 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.ex.util;
 
 import com.intellij.psi.tree.IElementType;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -25,6 +26,15 @@ public interface DataStorage {
 
   @NotNull
   IElementType unpackTokenFromData(int data);
+
+  /**
+   * Returns the {@link IElementType#getIndex() index} of the token type that {@link #unpackTokenFromData} gives for {@code data},
+   * or {@code -1} when this storage does not know it.
+   */
+  @ApiStatus.Internal
+  default int unpackTokenIndexFromData(int data) {
+    return -1;
+  }
 
   @NotNull
   DataStorage copy();

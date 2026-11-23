@@ -4,7 +4,9 @@ import com.intellij.diagnostic.rethrowControlFlowException
 import com.intellij.driver.client.Driver
 import com.intellij.driver.client.Remote
 import com.intellij.driver.model.OnDispatcher
+import com.intellij.driver.model.RdTarget
 import com.intellij.driver.model.RemoteMouseButton
+import com.intellij.driver.sdk.IdeFrame
 import com.intellij.driver.sdk.ManualWaitForIndicators
 import com.intellij.driver.sdk.getOpenProjects
 import com.intellij.driver.sdk.Project
@@ -70,29 +72,41 @@ fun Driver.ideFrame(action: IdeaFrameUI.() -> Unit = {}): IdeaFrameUI = ui.ideFr
 fun Driver.ideFrame(index: Int, action: IdeaFrameUI.() -> Unit = {}): IdeaFrameUI = ui.ideFrames().list()[index].apply(action)
 
 /**
- * Brings the first project frame to the front after the IDE start, as [IdeaFrameUI.ensureFocused] does.
+ * Brings the active project frame to the front after the IDE start, as [IdeaFrameUI.ensureFocused] does.
  * A reused IDE also calls it after it reopens the project for the next test.
  *
- * Returns false when no frame is shown yet or the frame is minimized. When another window of the IDE has the focus,
- * as a popup or a dialog does, and the IDE gets the keys, the call does not click.
+ * Returns false when no frame is shown yet or the active frame is minimized. When a window of the IDE has the focus
+ * and the IDE gets the keys, the call does not click. With several frames, the active frame is the focused frame,
+ * else the last focused frame, else the frame of the project with the latest activation.
  * The call does not wait for a frame or for the indicators, and it writes what it did to the build log.
  */
 @ApiStatus.Internal
 fun Driver.requestInitialFocus(): Boolean = withoutPauseOnIndicators {
   if (getOpenProjects().isEmpty()) return@withoutPauseOnIndicators false
-  val frame = ui.ideFrames().list().firstOrNull() ?: return@withoutPauseOnIndicators false
+  val frame = activeFrame(ui.ideFrames().list()) ?: return@withoutPauseOnIndicators false
   if (frame.isMinimized()) return@withoutPauseOnIndicators false
-  val frameFocused = frame.isFocused()
   val outcome = when {
-    frameFocused && frame.getsKeysOrUnknown() -> "the IDE frame has the focus"
-    !frameFocused && isIdeFocused() && frame.getsKeysOrUnknown() -> "another window of the IDE has the focus and gets the keys"
+    isIdeFocused() && frame.getsKeysOrUnknown() -> "a window of the IDE has the focus and gets the keys"
     else -> {
       frame.toFront()
-      "the IDE frame came to the front"
+      "the IDE frame of the project ${frame.project?.getName()} came to the front"
     }
   }
   logOutput("The initial focus request is done: $outcome")
   true
+}
+
+/** The frame that the IDE shows as active, by the same order as [requestInitialFocus] states. */
+private fun Driver.activeFrame(frames: List<IdeaFrameUI>): IdeaFrameUI? {
+  if (frames.size <= 1) return frames.firstOrNull()
+  frames.firstOrNull { it.isFocused() }?.let { return it }
+  val lastFocusedPath = utility(IdeFocusManagerRef::class).getGlobalInstance().getLastFocusedFrame()?.getProject()?.getBasePath()
+  val paths = frames.associateWith { it.project?.getBasePath() }
+  if (lastFocusedPath != null) {
+    frames.firstOrNull { paths[it] == lastFocusedPath }?.let { return it }
+  }
+  val recentProjects = utility(RecentProjectsManagerRef::class).getInstanceEx()
+  return frames.maxBy { frame -> paths[frame]?.let { recentProjects.getActivationTimestamp(it) } ?: 0L }
 }
 
 /**
@@ -364,6 +378,18 @@ annotation class ManualEnsureFocused
 @Remote("com.intellij.ide.welcomeScreen.WelcomeUtils")
 interface WelcomeUtils {
   fun isWelcomeProject(project: Project): Boolean
+}
+
+@Remote("com.intellij.openapi.wm.IdeFocusManager")
+private interface IdeFocusManagerRef {
+  fun getGlobalInstance(): IdeFocusManagerRef
+  fun getLastFocusedFrame(): IdeFrame?
+}
+
+@Remote("com.intellij.ide.RecentProjectsManagerBase", rdTarget = RdTarget.BACKEND)
+private interface RecentProjectsManagerRef {
+  fun getInstanceEx(): RecentProjectsManagerRef
+  fun getActivationTimestamp(path: String): Long?
 }
 
 @Remote("com.intellij.openapi.wm.impl.ProjectFrameHelper")

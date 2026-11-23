@@ -7,6 +7,7 @@ import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle
 import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.fileEditor.FileEditorOpenRequest
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.vfs.VirtualFile
 
@@ -17,7 +18,7 @@ abstract class DependencyAnalyzerOpenConfigAction(val systemId: ProjectSystemId)
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project ?: return
     val virtualFile = getConfigFile(e) ?: return
-    FileEditorManager.getInstance(project).openFile(virtualFile, true)
+    FileEditorManager.getInstance(project).requestOpenFile(virtualFile, FileEditorOpenRequest.withFocus(true))
   }
 
   override fun update(e: AnActionEvent) {

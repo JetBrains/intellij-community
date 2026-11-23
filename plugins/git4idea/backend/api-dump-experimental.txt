@@ -9,45 +9,12 @@ f:git4idea.annotate.GitAnnotationProvider
 - annotate(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.vcs.history.VcsFileRevision):git4idea.annotate.GitFileAnnotation
 - a:getId():java.lang.String
 - s:isDefault(java.lang.String):Z
-*:git4idea.changes.GitBranchComparisonResult
-- *sf:Companion:git4idea.changes.GitBranchComparisonResult$Companion
-- a:getBaseSha():java.lang.String
-- a:getChanges():java.util.List
-- a:getChangesByCommits():java.util.Map
-- a:getCommits():java.util.List
-- a:getHeadSha():java.lang.String
-- a:getMergeBaseSha():java.lang.String
-- a:getPatchesByChange():java.util.Map
-*f:git4idea.changes.GitBranchComparisonResult$Companion
-- f:create(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,java.lang.String,java.lang.String,java.util.List,java.util.List):git4idea.changes.GitBranchComparisonResult
-f:git4idea.changes.GitBranchComparisonResultKt
+*f:git4idea.changes.GitBranchComparisonResultUtil
+- sf:INSTANCE:git4idea.changes.GitBranchComparisonResultUtil
+- f:create(com.intellij.openapi.vfs.VirtualFile,java.lang.String,java.lang.String,java.util.List,java.util.List):git4idea.changes.GitBranchComparisonResult
+f:git4idea.changes.GitBranchComparisonResultUtilKt
 - *sf:createVcsChange(com.intellij.openapi.vcs.changes.RefComparisonChange,com.intellij.openapi.project.Project):com.intellij.openapi.vcs.changes.Change
-- *sf:findCumulativeChange(git4idea.changes.GitBranchComparisonResult,java.lang.String,java.lang.String):com.intellij.openapi.vcs.changes.RefComparisonChange
 - *sf:getDiffComputer(git4idea.changes.GitTextFilePatchWithHistory):com.intellij.diff.util.DiffUserDataKeysEx$DiffComputer
-*f:git4idea.changes.GitCommitShaWithPatches
-- <init>(java.lang.String,java.util.List,java.util.List):V
-- equals(java.lang.Object):Z
-- f:getParents():java.util.List
-- f:getPatches():java.util.List
-- f:getSha():java.lang.String
-- hashCode():I
-*:git4idea.changes.GitFileHistory
-- java.util.Comparator
-- a:compare(java.lang.String,java.lang.String):I
-- a:contains(java.lang.String,java.lang.String):Z
-- a:findFirstParent(java.lang.String):java.lang.String
-- a:findStartCommit():java.lang.String
-- a:getPatchesBetween(java.lang.String,java.lang.String):java.util.List
-*f:git4idea.changes.GitTextFilePatchWithHistory
-- *sf:Companion:git4idea.changes.GitTextFilePatchWithHistory$Companion
-- <init>(com.intellij.openapi.diff.impl.patch.TextFilePatch,Z,git4idea.changes.GitFileHistory):V
-- f:contains(java.lang.String,java.lang.String):Z
-- f:forcefullyMapLine(java.lang.String,I,com.intellij.diff.util.Side):java.lang.Integer
-- f:getFileHistory():git4idea.changes.GitFileHistory
-- f:getPatch():com.intellij.openapi.diff.impl.patch.TextFilePatch
-- f:isCumulative():Z
-- f:mapLine(java.lang.String,I,com.intellij.diff.util.Side):kotlin.Pair
-*f:git4idea.changes.GitTextFilePatchWithHistory$Companion
 *:git4idea.checkout.GitCheckoutListener
 - com.intellij.openapi.vcs.CheckoutProvider$Listener
 - *sf:Companion:git4idea.checkout.GitCheckoutListener$Companion

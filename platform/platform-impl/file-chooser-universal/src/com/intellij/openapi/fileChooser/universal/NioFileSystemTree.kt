@@ -41,6 +41,7 @@ import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.awt.Color
+import java.awt.GraphicsEnvironment
 import java.awt.dnd.DnDConstants
 import java.awt.dnd.DropTarget
 import java.awt.dnd.DropTargetAdapter
@@ -118,7 +119,10 @@ class NioFileSystemTree(
       }
     })
 
-    installDropTarget()
+    // AWT cannot create a drop target in a headless environment.
+    if (!GraphicsEnvironment.isHeadless()) {
+      installDropTarget()
+    }
     installDragSource()
   }
 

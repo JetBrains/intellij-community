@@ -199,17 +199,11 @@ public class MiscPsiTest {
   @Test
   public void testSCR5929() throws Throwable {
     LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    PsiFile fileA = myFixture.addFileToProject("A.java", "class A{ /** @see a.B */ }");
+    myFixture.addFileToProject("a/B.java", "class B{}");
+
     runTest(myFixture, () -> {
-      String text = "class A{ /** @see a.B */ }";
-      VirtualFile vFileA = myFixture.addFileToProject("A.java", text).getVirtualFile();
-
-      VirtualFile dir = myFixture.getTempDirFixture().findOrCreateDir("a");
-      VirtualFile vFileB = dir.createChildData(null, "B.java");
-      text = "class B{}";
-      VfsUtil.saveText(vFileB, text);
-
       PsiDocumentManager.getInstance(myFixture.getProject()).commitAllDocuments();
-      PsiFile fileA = myFixture.getPsiManager().findFile(vFileA);
       PsiJavaFile fileACopy = (PsiJavaFile)fileA.copy();
       PsiClass aClass = fileACopy.getClasses()[0];
       aClass.setName("A2");

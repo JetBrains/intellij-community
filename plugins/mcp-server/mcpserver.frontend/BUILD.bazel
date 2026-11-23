@@ -27,6 +27,7 @@ jvm_library(
         # do not sort,
         "@lib//:kotlin-stdlib",
         "//plugins/mcp-server:mcpserver",
+        "//plugins/mcp-server/mcpserver.configurables",
         "//platform/compose/swing-ui:swing",
         "//platform/platform-api:ide",
         "//platform/lang-api:lang",

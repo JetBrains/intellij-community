@@ -404,6 +404,12 @@ internal class TerminalOptionsConfigurable(private val project: Project) : Bound
                          .and(shellPathField.shellWithIntegrationSelected(project)))
         }
         row {
+          checkBox(message("settings.move.cursor.on.click"))
+            .bindSelected(optionsProvider::moveCursorOnClick)
+            .visibleIf(terminalEngineComboBox.selectedValueIs(TerminalEngine.REWORKED)
+                         .and(shellPathField.shellWithIntegrationSelected(project)))
+        }
+        row {
           checkBox(message("settings.audible.bell"))
             .bindSelected(optionsProvider::audibleBell)
         }

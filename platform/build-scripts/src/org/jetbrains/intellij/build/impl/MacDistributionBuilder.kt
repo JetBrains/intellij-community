@@ -115,7 +115,7 @@ class MacDistributionBuilder(
         "apple.awt.graphics.UseQuartz=true",
         "apple.awt.fullscreencapturealldisplays=false"
       )
-      for ((k, v) in customizer.getCustomIdeaProperties(context.applicationInfo)) {
+      for ([k, v] in customizer.getCustomIdeaProperties(context.applicationInfo)) {
         platformProperties.add("$k=$v")
       }
       (ideaProperties!!.lineSequence() + platformProperties).joinToString(separator = "\n")
@@ -135,22 +135,22 @@ class MacDistributionBuilder(
 
     // if copyDistFiles false, it means that we will copy dist files directly without a stage dir
     if (copyDistFiles) {
-      copyDistFiles(newDir = targetPath, os = OsFamily.MACOS, arch = arch, libcImpl = MacLibcImpl.DEFAULT, context = context)
+      copyDistFiles(targetPath, OsFamily.MACOS, arch, MacLibcImpl.DEFAULT, context)
     }
 
-    customizer.copyAdditionalFiles(context, targetDir = targetPath, arch = arch)
+    customizer.copyAdditionalFiles(context, targetPath, arch)
   }
 
   override fun buildArtifacts(osAndArchSpecificDistPath: Path, arch: JvmArchitecture) {
-    doCopyFilesForOsDistribution(osAndArchSpecificDistPath, arch, false)
+    doCopyFilesForOsDistribution(osAndArchSpecificDistPath, arch, copyDistFiles = false)
 
     context.executeStep(spanBuilder("build macOS artifacts").setAttribute("arch", arch.name), BuildOptions.MAC_ARTIFACTS_STEP) {
       setLastModifiedTime(osAndArchSpecificDistPath, context)
 
-      val executableFileMatchers = generateExecutableFilesMatchers(includeRuntime = true, arch = arch).keys
+      val executableFileMatchers = generateExecutableFilesMatchers(includeRuntime = true, arch).keys
       updateExecutablePermissions(osAndArchSpecificDistPath, executableFileMatchers)
 
-      val runtimeDir = context.bundledRuntime.extract(os = OsFamily.MACOS, arch = arch, libc = MacLibcImpl.DEFAULT)
+      val runtimeDir = context.bundledRuntime.extract(OsFamily.MACOS, arch, MacLibcImpl.DEFAULT)
       updateExecutablePermissions(runtimeDir, executableFileMatchers)
 
       if (context.isMacCodeSignEnabled) {
@@ -174,35 +174,17 @@ class MacDistributionBuilder(
       val directories = listOf(context.paths.distAllDir, osAndArchSpecificDistPath, runtimeDir)
       val builder = this@MacDistributionBuilder
 
-      val productJson = generateProductJson(arch = arch, withRuntime = true, context = context)
-      val productJsonWithoutRuntime = generateProductJson(arch = arch, withRuntime = false, context = context)
+      val productJson = generateProductJson(arch, true, context)
+      val productJsonWithoutRuntime = generateProductJson(arch, withRuntime = false, context)
       macZipProductInfoJson.writeText(productJson)
       macZipWithoutRuntimeProductInfoJson.writeText(productJsonWithoutRuntime)
 
-      buildMacZip(
-        macDistributionBuilder = builder,
-        targetFile = macZip,
-        zipRoot = zipRoot,
-        arch = arch,
-        productJson = productJson,
-        directories = directories,
-        extraFiles = extraFiles,
-        includeRuntime = true,
-        compressionLevel = compressionLevel
-      )
+      buildMacZip(builder, macZip, zipRoot, arch, productJson, directories, extraFiles, includeRuntime = true, compressionLevel)
 
       if (customizer.buildArtifactWithoutRuntime) {
-        val directoriesSansRuntime = directories.filterNot { it == runtimeDir }
+        val directories = directories.filterNot { it == runtimeDir }
         buildMacZip(
-          macDistributionBuilder = builder,
-          targetFile = macZipWithoutRuntime,
-          zipRoot = zipRoot,
-          arch = arch,
-          productJson = productJsonWithoutRuntime,
-          directories = directoriesSansRuntime,
-          extraFiles = extraFiles,
-          includeRuntime = false,
-          compressionLevel = compressionLevel
+          builder, macZipWithoutRuntime, zipRoot, arch, productJsonWithoutRuntime, directories, extraFiles, includeRuntime = false, compressionLevel
         )
       }
 
@@ -273,7 +255,7 @@ class MacDistributionBuilder(
       isEap = context.applicationInfo.isEAP,
       embeddedFrontendEnabled = context.isEmbeddedFrontendEnabled,
     )
-    for ((name, source) in icons) {
+    for ([name, source] in icons) {
       val dest = resourcesDistDir.resolve(name)
       Files.deleteIfExists(dest)
       copyFile(source, dest)
@@ -514,7 +496,7 @@ class MacDistributionBuilder(
       notarize(sitFile, context)
     }
 
-    buildDmg(sitFile = sitFile, productInfoJson = productInfoJson, dmgName = "${baseName}.dmg", staple = notarize)
+    buildDmg(sitFile, productInfoJson, dmgName = "${baseName}.dmg", staple = notarize)
 
     if (publishSitArchive) {
       context.notifyArtifactBuilt(sitFile)
@@ -522,12 +504,11 @@ class MacDistributionBuilder(
     }
 
     val zipRoot = getMacZipRoot(customizer, context)
-    checkExecutablePermissions(distribution = sitFile, root = zipRoot, includeRuntime = isRuntimeBundled, arch = arch, libc = targetLibcImpl, context = context)
+    checkExecutablePermissions(sitFile, zipRoot, isRuntimeBundled, arch, targetLibcImpl, context)
 
-    createChecksumAndGpgSignFiles(
-      context = context,
-      buildArtifact = { sitFile }
-    )
+    createChecksumAndGpgSignFiles(context) {
+      sitFile
+    }
 
     if (isRuntimeBundled) {
       generateIntegrityManifest(sitFile, zipRoot, arch, context)

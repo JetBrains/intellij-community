@@ -42,7 +42,7 @@ import org.jetbrains.plugins.gitlab.authentication.LoginResult
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccount
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccountManager
 import org.jetbrains.plugins.gitlab.authentication.save
-import org.jetbrains.plugins.gitlab.mergerequest.util.localizedMessageOrClassName
+import org.jetbrains.plugins.gitlab.mergerequest.util.GitLabThrowableUtil
 import org.jetbrains.plugins.gitlab.util.GitLabBundle.message
 import org.jetbrains.plugins.gitlab.util.GitLabStatistics.SnippetAction.CREATE_CANCEL
 import org.jetbrains.plugins.gitlab.util.GitLabStatistics.SnippetAction.CREATE_CREATED
@@ -106,7 +106,7 @@ internal class GitLabSnippetService(private val project: Project, private val se
         VcsNotifier.getInstance(project)
           .notifyError(GL_NOTIFICATION_CREATE_SNIPPET_ERROR,
                        message("snippet.create.action.error.title"),
-                       e.localizedMessageOrClassName())
+                       GitLabThrowableUtil.localizedMessageOrClassName(e))
       }
     }
   }

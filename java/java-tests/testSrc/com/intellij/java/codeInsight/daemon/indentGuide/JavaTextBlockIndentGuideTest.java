@@ -7,15 +7,27 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
+import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-public class JavaTextBlockIndentGuideTest extends BaseIndentGuideTest {
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaCodeInsightFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
 
+@TestApplication
+public class JavaTextBlockIndentGuideTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture = lightJavaCodeInsightFixture(projectFixture);
+
+  @Test
   public void testOneLiner() {
     doTest(
       """
@@ -29,6 +41,7 @@ public class JavaTextBlockIndentGuideTest extends BaseIndentGuideTest {
         """);
   }
 
+  @Test
   public void testWithoutIndent() {
     doTest(
       """
@@ -43,6 +56,7 @@ public class JavaTextBlockIndentGuideTest extends BaseIndentGuideTest {
         """);
   }
 
+  @Test
   public void testEmpty() {
     doTest(
       """
@@ -55,6 +69,7 @@ public class JavaTextBlockIndentGuideTest extends BaseIndentGuideTest {
         """);
   }
 
+  @Test
   public void testTextOnLastLine() {
     doTest(
       """
@@ -68,6 +83,7 @@ public class JavaTextBlockIndentGuideTest extends BaseIndentGuideTest {
         """);
   }
 
+  @Test
   public void testWithWhitespacesOnly() {
     doTest(
       """
@@ -83,6 +99,7 @@ public class JavaTextBlockIndentGuideTest extends BaseIndentGuideTest {
         """);
   }
 
+  @Test
   public void testMultipleTextBlocks() {
     doTest(
       """
@@ -99,6 +116,7 @@ public class JavaTextBlockIndentGuideTest extends BaseIndentGuideTest {
         """);
   }
 
+  @Test
   public void testTabsOnlyIndent() {
     doTest("""
              public class TextBlock {
@@ -111,6 +129,7 @@ public class JavaTextBlockIndentGuideTest extends BaseIndentGuideTest {
              }""");
   }
 
+  @Test
   public void testMixedIndent() {
     doTest("""
              public class TextBlock {
@@ -124,7 +143,7 @@ public class JavaTextBlockIndentGuideTest extends BaseIndentGuideTest {
   }
 
   private void doTest(@NotNull String text) {
-    doTest(text, TextBlockIndentGuidesProvider::create);
+    IndentGuideTestUtil.doTest(codeInsightFixture.get(), text, TextBlockIndentGuidesProvider::create);
   }
 
   private static final class TextBlockIndentGuidesProvider implements IndentGuidesProvider {

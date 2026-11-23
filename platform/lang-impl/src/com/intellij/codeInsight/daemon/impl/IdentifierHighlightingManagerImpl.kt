@@ -2,10 +2,10 @@
 package com.intellij.codeInsight.daemon.impl
 
 import com.intellij.codeHighlighting.TextEditorHighlightingPassRegistrar
-import com.intellij.codeInsight.daemon.impl.IdentifierHighlightingManagerImpl.Companion.EDITOR_IDENT_RESULTS
 import com.intellij.codeInsight.daemon.impl.IdentifierHighlightingResult.Companion.EMPTY_RESULT
 import com.intellij.codeInsight.daemon.impl.IdentifierHighlightingResult.Companion.WRONG_DOCUMENT_VERSION
 import com.intellij.concurrency.ConcurrentCollectionFactory
+import com.intellij.injected.editor.EditorWindow
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.editor.Document
@@ -33,16 +33,16 @@ import com.intellij.psi.PsiCompiledFile
 import com.intellij.psi.PsiManager
 import com.intellij.psi.PsiTreeChangeAdapter
 import com.intellij.psi.PsiTreeChangeEvent
-import com.intellij.psi.impl.PsiDocumentManagerBase
 import com.intellij.psi.util.PsiUtilBase
 import com.intellij.util.ConcurrencyUtil
 import com.intellij.util.Processor
 import com.intellij.util.concurrency.ThreadingAssertions
+import com.intellij.util.containers.WeakList
 import org.jetbrains.annotations.ApiStatus
 
 /**
  * Identifier highlighting implementation, which contain the main entry point to the identifier highlighting: [getMarkupData]
- * Obtains the identifier highlighting info via [IdentifierHighlightingAccessor] and caches the information in document range markers under the [EDITOR_IDENT_RESULTS] key.
+ * Obtains the identifier highlighting info via [IdentifierHighlightingAccessor] and caches it in document range markers.
  * That allows to not recalculate all this information on the next caret move, if nothing changes, and the caret is still on the same declaration.
  * Implements the pull model: when the caret moves:
  * - the [com.intellij.codeInsight.highlighting.BackgroundHighlighter] starts the identifier highlighting activity in the background
@@ -113,36 +113,37 @@ class IdentifierHighlightingManagerImpl(private val myProject: Project) : Identi
   }
 
   private fun clearCache(document: Document) {
-    val markers: MutableList<RangeMarker> = ArrayList()
-    (document as DocumentEx).processRangeMarkers(Processor { marker: RangeMarker ->
-      val data = marker.getUserData(IDENT_MARKUP)
-      if (data != null) {
-        markers.add(marker)
+    val documentMarkers = document.getUserData(DOCUMENT_IDENT_MARKERS) ?: return
+    val virtualFile = FileDocumentManager.getInstance().getFile(document)
+    val editors = virtualFile?.let { FileEditorManager.getInstance(myProject).getAllEditors(it) } ?: emptyArray()
+    val markers = synchronized(documentMarkers) {
+      val markers = documentMarkers.copyAndClear()
+      for (marker in markers) {
+        marker.putUserData(IDENT_MARKUP, null)
       }
-      true
-    })
-    for (marker in markers) {
-      marker.putUserData(IDENT_MARKUP, null)
-      marker.dispose()
+      for (editor in editors) {
+        if (editor is TextEditor) {
+          editor.editor.putUserData(EDITOR_IDENT_RESULTS, null)
+        }
+      }
+      markers
     }
-    val virtualFile = FileDocumentManager.getInstance().getFile(document)?:return
-    for (editor in FileEditorManager.getInstance(myProject).getAllEditors(virtualFile)) {
-      if (editor is TextEditor) {
-        editor.editor.putUserData(EDITOR_IDENT_RESULTS, null)
-      }
+    for (marker in markers) {
+      marker.dispose()
     }
   }
 
   override suspend fun getMarkupData(editor: Editor, visibleRange: ProperTextRange): IdentifierHighlightingResult {
     ThreadingAssertions.assertBackgroundThread()
     val start = System.currentTimeMillis()
-    val document = editor.getDocument()
-    val modStamp = (document as DocumentEx).modificationSequence
+    val hostEditor = (editor as? EditorWindow)?.delegate ?: editor
+    val document = hostEditor.document as DocumentEx
+    val modStamp = document.modificationSequence
     var result: IdentifierHighlightingResult? = null
     var bestMarker: RangeMarker? = null
     var offset = 0
     readAction {
-      offset = editor.getCaretModel().offset
+      offset = hostEditor.caretModel.offset
       // find the range marker marked by "IDENT_MARKUP" user data, the smallest overlapping with "offset"
       // to resolve ambiguities e.g. between exit point highlighting "return xxx" and the reference highlighting "xxx"
       document.processRangeMarkersOverlappingWith(offset, offset, Processor { marker: RangeMarker ->
@@ -181,25 +182,28 @@ class IdentifierHighlightingManagerImpl(private val myProject: Project) : Identi
             if (document.modificationSequence != modStamp) {
               throw ProcessCanceledException(RuntimeException("document changed during RPC call. modStamp before=$modStamp; mod stamp after=${document.modificationSequence}"))
             }
-            val hostDocument = PsiDocumentManagerBase.getTopLevelDocument(document)
-            val occurrenceRangeMarkers = ArrayList<RangeMarker>(hostRes.occurrences.size)
             val cache = mutableMapOf<TextRange, RangeMarker>()
             val rangeMarkerOccurrences = hostRes.occurrences.map { o: IdentifierOccurrence ->
-              val marker = createMarker(hostDocument, o.range, cache)
-              occurrenceRangeMarkers.add(marker)
+              val marker = createMarker(document, o.range, cache)
               IdentifierOccurrence(marker, o.highlightInfoType)
             }
             val rangeMarkerTargets = hostRes.targets.map { r ->
-              createMarker(hostDocument, r, cache)
+              createMarker(document, r, cache)
             }
             val rangeMarkerResult = IdentifierHighlightingResult(rangeMarkerOccurrences, rangeMarkerTargets)
-            for (marker in cache.values) {
-              marker.putUserData(IDENT_MARKUP, rangeMarkerResult)
+            if (cache.isNotEmpty()) {
+              val documentMarkers = ConcurrencyUtil.computeIfAbsent(document, DOCUMENT_IDENT_MARKERS) { WeakList() }
+              synchronized(documentMarkers) {
+                documentMarkers.addAll(cache.values)
+                val editorResults = ConcurrencyUtil.computeIfAbsent(hostEditor, EDITOR_IDENT_RESULTS) {
+                  ConcurrentCollectionFactory.createConcurrentSet()
+                }
+                editorResults.add(rangeMarkerResult)
+                for (marker in cache.values) {
+                  marker.putUserData(IDENT_MARKUP, rangeMarkerResult)
+                }
+              }
             }
-            val editorResults = ConcurrencyUtil.computeIfAbsent(editor, EDITOR_IDENT_RESULTS) {
-              ConcurrentCollectionFactory.createConcurrentSet()
-            }
-            editorResults.add(rangeMarkerResult)
             rangeMarkerResult
           }
         }
@@ -235,6 +239,8 @@ class IdentifierHighlightingManagerImpl(private val myProject: Project) : Identi
     private val IDENT_MARKUP: Key<IdentifierHighlightingResult> = Key.create("IDENT_MARKUP")
     // stored in Editor to be able to hard-retain range markers from IdentifierHighlightingResult
     private val EDITOR_IDENT_RESULTS: Key<MutableCollection<IdentifierHighlightingResult>> = Key.create("EDITOR_IDENT_RESULTS")
+    // The editor retains the markers. The document tracks them for invalidation.
+    private val DOCUMENT_IDENT_MARKERS: Key<WeakList<RangeMarker>> = Key.create("DOCUMENT_IDENT_MARKERS")
 
     // true if this Result is valid when the caret is at offset
     @ApiStatus.Internal

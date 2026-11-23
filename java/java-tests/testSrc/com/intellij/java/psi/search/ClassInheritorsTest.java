@@ -3,18 +3,26 @@ package com.intellij.java.psi.search;
 
 import com.intellij.concurrency.JobScheduler;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.extensions.LoadingOrder;
 import com.intellij.openapi.module.JavaModuleType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.StandardProgressIndicatorBase;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.DependencyScope;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiClassOwner;
 import com.intellij.psi.PsiJavaFile;
+import com.intellij.psi.ResolveScopeProvider;
 import com.intellij.psi.impl.compiled.ClsClassImpl;
+import com.intellij.psi.impl.search.RelaxedDirectInheritorChecker;
 import com.intellij.psi.impl.source.PsiClassImpl;
+import com.intellij.psi.search.CodeInsightContextAwareSearchScopes;
+import com.intellij.psi.search.CodeInsightContextInfo;
+import com.intellij.psi.search.DelegatingGlobalSearchScope;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.search.searches.DirectClassInheritorsSearch;
@@ -22,6 +30,7 @@ import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.concurrency.ThreadingAssertions;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.util.Collection;
@@ -162,6 +171,40 @@ public class ClassInheritorsTest extends JavaCodeInsightFixtureTestCase {
       model.addModuleOrderEntry(getModule()).setProductionOnTestDependency(true));
 
     assertSize(1, ReadAction.computeBlocking(() -> ClassInheritorsSearch.search(myFixture.findClass("B")).findAll()));
+  }
+
+  public void testRelaxedCheckerChecksCancellationWhileScanningSameNamedClasses() {
+    for (int i = 0; i < 50; i++) {
+      myFixture.addClass("package p" + i + "; public class Base { }");
+    }
+    PsiClass base = myFixture.findClass("p0.Base");
+    PsiClass inheritor = myFixture.addClass("package p0; public class Inheritor extends Base { }");
+
+    StandardProgressIndicatorBase progress = new StandardProgressIndicatorBase();
+    VirtualFile inheritorFile = inheritor.getContainingFile().getVirtualFile();
+    // The resolve scope of the inheritor contains no class and cancels the progress at its first check, like a pending write action
+    ResolveScopeProvider.EP_NAME.getPoint().registerExtension(new ResolveScopeProvider() {
+      @Override
+      public GlobalSearchScope getResolveScope(@NotNull VirtualFile file, @NotNull Project project) {
+        if (!file.equals(inheritorFile)) return null;
+        return new DelegatingGlobalSearchScope(GlobalSearchScope.EMPTY_SCOPE) {
+          @Override
+          public @NotNull CodeInsightContextInfo getCodeInsightContextInfo() {
+            return CodeInsightContextAwareSearchScopes.NoContextInformation();
+          }
+
+          @Override
+          public boolean contains(@NotNull VirtualFile f) {
+            progress.cancel();
+            return false;
+          }
+        };
+      }
+    }, LoadingOrder.FIRST, getTestRootDisposable());
+
+    RelaxedDirectInheritorChecker checker = new RelaxedDirectInheritorChecker(base);
+    ProgressManager.getInstance().executeProcessUnderProgress(
+      () -> assertThrows(ProcessCanceledException.class, () -> checker.checkInheritance(inheritor)), progress);
   }
 
   public void testSpaceBeforeSuperTypeGenerics() {

@@ -172,7 +172,7 @@ class PyNamedTupleTypeTest : PyCodeInsightTestCase() {
       """.trimIndent())
 
     @Test
-    @TestCaseOptions(languageLevel = LanguageLevel.PYTHON35, assertRecursionPrevention = false)
+    @TestCaseOptions(languageLevel = LanguageLevel.PYTHON35)
     fun `function with different namedtuples as parameter and return types`() = test("""
       from collections import namedtuple
       MyType1 = namedtuple('MyType1', 'x y')

@@ -129,8 +129,10 @@ jvm_library(
         "//java/java-psi-api:psi",
         "//plugins/kotlin/base/plugin",
         "//plugins/kotlin/base/testFramework",
-        "//plugins/kotlin/test-framework:test-framework_test_lib",
-        "//libraries/junit4",
+        "//plugins/kotlin/test-framework",
+        "//platform/testFramework/junit5",
+        "//libraries/junit6",
+        "//libraries/assertj-core",
     ],
 )
 ### auto-generated section `build intellij.python.devkit.tests` end

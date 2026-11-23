@@ -8,4 +8,23 @@ fun test(person: Person) {
     val (one , two) = person
 }
 
+data class Point(val x: Int, val y: Int)
+
+data class Point3D(val x: Int, val y: Int, val z: Int)
+
+fun skippedLast(p: Point): Any {
+    val (x: Any, _) = p
+    return x
+}
+
+fun skippedFirst(p: Point): Int {
+    val (_, y) = p
+    return y
+}
+
+fun skippedMiddle(p: Point3D): Int {
+    val (x, _, z) = p
+    return x + z
+}
+
 // FUS_QUICKFIX_NAME: com.intellij.codeInspection.actions.CleanupInspectionIntention

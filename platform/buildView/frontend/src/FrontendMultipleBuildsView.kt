@@ -211,7 +211,7 @@ internal class FrontendMultipleBuildsView(
       threeComponentsSplitter.secondComponent = view
       content.preferredFocusableComponent = view
       if (focusWatcher.focused) {
-        view.requestFocusInWindow() // todo check IJPL-172285
+        view.requestFocusInWindow()
       }
     }
   }

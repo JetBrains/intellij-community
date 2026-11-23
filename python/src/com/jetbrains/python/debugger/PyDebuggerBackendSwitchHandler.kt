@@ -3,9 +3,9 @@
 package com.jetbrains.python.debugger
 
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.python.sdk.backend.PythonInterpreter
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.projectRoots.Sdk
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
@@ -39,9 +39,9 @@ interface PyDebuggerBackendSwitchHandler {
   fun shouldShowSwitcher(project: Project, e: AnActionEvent): Boolean = true
 
   /**
-   * Returns true if debugpy is available for the current SDK.
+   * Returns true if debugpy is available for the interpreter of [interpreter] in its project.
    */
-  fun isDebugpyAvailableForSdk(project: Project, sdk: Sdk): Boolean
+  fun isDebugpyAvailable(interpreter: PythonInterpreter): Boolean
 
   /**
    * Returns a non-empty set of available backends, or null to use the SDK defaults.

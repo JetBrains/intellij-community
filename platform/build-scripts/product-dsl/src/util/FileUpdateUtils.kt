@@ -59,7 +59,7 @@ internal fun FileUpdateStrategy.withUpdateSuppressions(updateSuppressions: Boole
  * Deferred file writer. It collects the changes during generation, and it commits them only on request.
  * Use it when you want to validate before you write.
  *
- * The class is public, because a generator outside this module needs it. The dev-distribution plan generator is that
+ * The class is public, because a generator outside this module needs it. The distribution plan generator is that
  * caller.
  *
  * [commit] stays off [FileUpdateStrategy], because [GeneratedArtifactWritePolicy] filters a delegate and owns no write.

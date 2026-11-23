@@ -5,33 +5,35 @@ import com.intellij.JavaTestUtil;
 import com.intellij.codeInspection.defUse.DefUseInspection;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.testFramework.IdeaTestUtil;
-import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
-public class AdvHighlightingJdk7Test extends LightJavaCodeInsightFixtureTestCase {
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaCodeInsightFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+
+@TestApplication
+public class AdvHighlightingJdk7Test {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(LightJavaCodeInsightFixtureTestCase.JAVA_1_7);
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture = lightJavaCodeInsightFixture(projectFixture);
+
   @NonNls private static final String BASE_PATH = "/codeInsight/daemonCodeAnalyzer/advHighlighting7/";
 
-
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
+  @BeforeEach
+  void setUp() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    myFixture.setTestDataPath(JavaTestUtil.getJavaTestDataPath() + BASE_PATH);
     myFixture.enableInspections(new DefUseInspection());
   }
 
-  @NotNull
-  @Override
-  protected LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_1_7;
-  }
-
-  @Override
-  protected String getTestDataPath() {
-    return JavaTestUtil.getJavaTestDataPath() + BASE_PATH;
-  }
-
+  @Test
   public void testStaticImports() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.addClass("""
                          package P1;
                          public class C1 {
@@ -48,12 +50,14 @@ public class AdvHighlightingJdk7Test extends LightJavaCodeInsightFixtureTestCase
     doTest();
   }
 
+  @Test
   public void testStaticImportMethodShadowing() {
     doTest();
   }
 
   //static import conflicts---------------
   private void setupBaseClasses() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.addClass("""
                          package x;
 
@@ -82,12 +86,15 @@ public class AdvHighlightingJdk7Test extends LightJavaCodeInsightFixtureTestCase
                          }""");
   }
 
+  @Test
   public void testStaticImportConflict() {
     setupBaseClasses();
     doTest();
   }
 
+  @Test
   public void testStaticOnDemandImportConflict() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     setupBaseClasses();
     myFixture.addClass("""
                          package x;
@@ -96,6 +103,7 @@ public class AdvHighlightingJdk7Test extends LightJavaCodeInsightFixtureTestCase
     doTest();
   }
 
+  @Test
   public void testStaticAndSingleImportConflict() {
     setupBaseClasses();
     doTest();
@@ -103,7 +111,9 @@ public class AdvHighlightingJdk7Test extends LightJavaCodeInsightFixtureTestCase
 
   //----------------------------------------
 
+  @Test
   public void testRawInnerClassImport() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.addClass("""
                          package p;
                          import p2.GenericClass.InnerClass;
@@ -122,7 +132,9 @@ public class AdvHighlightingJdk7Test extends LightJavaCodeInsightFixtureTestCase
     doTest();
   }
 
+  @Test
   public void testRawInnerClassImportOnDemand() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.addClass("""
                          package p;
                          import p2.GenericClass.*;
@@ -141,116 +153,146 @@ public class AdvHighlightingJdk7Test extends LightJavaCodeInsightFixtureTestCase
     doTest();
   }
 
+  @Test
   public void testAmbiguous() {
     doTest();
   }
 
+  @Test
   public void testAmbiguousArrayInSubst() {
     doTest();
   }
 
+  @Test
   public void testAmbiguousTypeParamExtends() {
     doTest();
   }
 
+  @Test
   public void testAmbiguousTypeParamNmb() {
     doTest();
   }
 
+  @Test
   public void testAmbiguousTypeParamNmb1() {
     doTest();
   }
 
+  @Test
   public void testAmbiguousInheritance() {
     doTest();
   }
 
+  @Test
   public void testAmbiguousInheritance1() {
     doTest();
   }
 
+  @Test
   public void testAmbiguousVarargs() {
-    IdeaTestUtil.setTestVersion(JavaSdkVersion.JDK_1_8, myFixture.getModule(), getTestRootDisposable());
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    IdeaTestUtil.setTestVersion(JavaSdkVersion.JDK_1_8, myFixture.getModule(), myFixture.getTestRootDisposable());
     doTest();
   }
 
+  @Test
   public void testAmbiguousVarargs1() {
     doTest();
   }
 
+  @Test
   public void testAmbiguousMultiIntInheritance() {
     doTest();
   }
 
+  @Test
   public void testAmbiguousMultipleTypeParamExtends() {
     doTest();
   }
 
+  @Test
   public void testAmbiguousMultipleTypeParamExtends1() {
     doTest();
   }
 
+  @Test
   public void testAmbiguousMultipleTypeParamExtends2() {
     doTest();
   }
 
+  @Test
   public void testAmbiguousMultipleTypeParamExtends3() {
     doTest();
   }
 
+  @Test
   public void testAmbiguousIDEA57317() {
     doTest();
   }
 
+  @Test
   public void testAmbiguousIDEA57278() {
     doTest();
   }
 
+  @Test
   public void testAmbiguousIDEA57269() {
     doTest();
   }
 
+  @Test
   public void testAmbiguousIDEA67573() {
     doTest();
   }
 
+  @Test
   public void testAmbiguousIDEA57306() {
     doTest();
   }
 
+  @Test
   public void testAmbiguousIDEA67841() {
     doTest();
   }
 
+  @Test
   public void testAmbiguousIDEA57535() {
     doTest();
   }
 
+  @Test
   public void testAmbiguousIDEA67832() {
     doTest();
   }
 
+  @Test
   public void testAmbiguousIDEA67837() {
     doTest();
   }
 
+  @Test
   public void testAmbiguousIDEA78027() {
     doTest();
   }
 
+  @Test
   public void testAmbiguousIDEA25097() {
     doTest();
   }
 
+  @Test
   public void testAmbiguousIDEA24768() {
     doTest();
   }
 
+  @Test
   public void testAmbiguousIDEA21660() {
     doTest();
   }
 
+  @Test
   public void testAmbiguousIDEA22547() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.addClass("""
                          package pck;
                          class Assert {
@@ -261,48 +303,60 @@ public class AdvHighlightingJdk7Test extends LightJavaCodeInsightFixtureTestCase
     doTest();
   }
 
+  @Test
   public void testAmbiguousInferenceOrder() {
     doTest();
   }
 
+  @Test
   public void testAmbiguousIDEA87672() {
     doTest();
   }
 
+  @Test
   public void testAmbiguousIDEA57500() {
     doTest();
   }
 
+  @Test
   public void testAmbiguousIDEA67864() {
     doTest();
   }
 
+  @Test
   public void testAmbiguousIDEA67836() {
     doTest();
   }
 
+  @Test
   public void testAmbiguousIDEA67576() {
     doTest();
   }
 
+  @Test
   public void testAmbiguousIDEA67519() {
     doTest();
   }
 
+  @Test
   public void testAmbiguousIDEA57569() {
     doTest();
   }
 
+  @Test
   public void testAmbiguousMethodsFromSameClassAccess() {
     doTest();
   }
 
+  @Test
   public void testAmbiguousIDEA57633() {
     doTest();
   }
 
+  @Test
   public void testAmbiguousStaticImportMethod() {
-    myFixture.addFileToProject("pck\\A.java",
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    myFixture.addFileToProject("pck/A.java",
                                """
                                  package pck;
                                  public class A {
@@ -320,8 +374,9 @@ public class AdvHighlightingJdk7Test extends LightJavaCodeInsightFixtureTestCase
   }
 
   private void doTest() {
-    final String name = getTestName(false);
-    IdeaTestUtil.setTestVersion(JavaSdkVersion.JDK_1_7, myFixture.getModule(), getTestRootDisposable());
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    final String name = myFixture.getTestName(false);
+    IdeaTestUtil.setTestVersion(JavaSdkVersion.JDK_1_7, myFixture.getModule(), myFixture.getTestRootDisposable());
     myFixture.configureByFile(name + ".java");
     myFixture.checkHighlighting(false, false, false);
   }

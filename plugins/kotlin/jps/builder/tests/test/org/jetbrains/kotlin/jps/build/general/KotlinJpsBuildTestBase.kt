@@ -52,9 +52,9 @@ abstract class KotlinJpsBuildTestBase : JpsBuildTestBase() {
 
   /** The implementation that the projects compile with. A subclass runs the same tests with another one. */
   protected open val btaImplementation: KotlinBtaImplementation
-    get() = KotlinBtaImplementation.CURRENT
+    get() = KotlinBtaImplementation.BOOTSTRAP
 
-  override fun shouldRunTest(): Boolean = super.shouldRunTest() && !btaImplementation.duplicatesCurrent
+  override fun shouldRunTest(): Boolean = super.shouldRunTest() && !btaImplementation.duplicatesBootstrap
 
   enum class LibraryDependency {
     NONE,

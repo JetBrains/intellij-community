@@ -4,17 +4,24 @@ package com.intellij.execution.junit.codeInspection
 import com.intellij.junit.testFramework.JUnitProjectDescriptor
 import com.intellij.junit.testFramework.MavenTestLib.JUNIT4
 import com.intellij.junit.testFramework.MavenTestLib.JUNIT5
-import com.intellij.jvm.analysis.testFramework.JvmInspectionTestBase
 import com.intellij.jvm.analysis.testFramework.JvmLanguage
+import com.intellij.jvm.analysis.testFramework.jvmInspectionFixture
 import com.intellij.pom.java.LanguageLevel
-import com.intellij.testFramework.LightProjectDescriptor
+import com.intellij.testFramework.fixtures.lightJavaProjectFixture
+import com.intellij.testFramework.junit5.TestApplication
+import org.junit.jupiter.api.Test
 
 private val descriptor = JUnitProjectDescriptor(LanguageLevel.HIGHEST, JUNIT4, JUNIT5)
 
-class JavaJUnit3StyleTestMethodInJUnit4ClassInspectionTest : JvmInspectionTestBase() {
-  override val inspection = JUnit3StyleTestMethodInJUnit4ClassInspection()
-  override fun getProjectDescriptor(): LightProjectDescriptor = descriptor
+@TestApplication
+class JavaJUnit3StyleTestMethodInJUnit4ClassInspectionTest {
+  companion object {
+    private val projectFixture = lightJavaProjectFixture(descriptor)
+  }
 
+  private val myFixture by jvmInspectionFixture(projectFixture) { JUnit3StyleTestMethodInJUnit4ClassInspection() }
+
+  @Test
   fun testJUnit3StyleTestMethodInJUnit4Class() {
     myFixture.testHighlighting(JvmLanguage.JAVA, """
       import org.junit.Test;
@@ -28,6 +35,7 @@ class JavaJUnit3StyleTestMethodInJUnit4ClassInspectionTest : JvmInspectionTestBa
     """.trimIndent())
   }
 
+  @Test
   fun testBeforeAnnotationUsed() {
     myFixture.testHighlighting(JvmLanguage.JAVA, """
       import org.junit.Before;
@@ -41,6 +49,7 @@ class JavaJUnit3StyleTestMethodInJUnit4ClassInspectionTest : JvmInspectionTestBa
     """.trimIndent())
   }
 
+  @Test
   fun testSimpleJUnit5() {
     myFixture.testHighlighting(JvmLanguage.JAVA, """
       import org.junit.jupiter.api.Test;
@@ -52,6 +61,7 @@ class JavaJUnit3StyleTestMethodInJUnit4ClassInspectionTest : JvmInspectionTestBa
     """.trimIndent())
   }
 
+  @Test
   fun testOtherAnnotation() {
     myFixture.testHighlighting(JvmLanguage.JAVA, """
       import org.junit.*;

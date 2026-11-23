@@ -5,19 +5,8 @@ description: Write or review IntelliJ coroutine scope ownership and cancellation
 
 # Coroutines: structured concurrency
 
-Keep cancellation, failures, and lifetimes predictable in Kotlin coroutine code across any
-IntelliJ-based product module. Three rules govern every decision:
-
-1. **Hierarchy** — which scope owns this coroutine, and when is that scope cancelled.
-2. **Propagation** — what a cancellation or failure does to parents, siblings, and children.
-3. **Don't be creative** — prefer standard primitives (`coroutineScope`, `supervisorScope`, a
-   lifecycle-bound scope) over hand-rolled scope wiring, the most common source of leaks.
-
-Reach for this skill when changing suspend functions, `launch`/`async`, `CoroutineScope`
-construction, cancellation handling, or `Flow` collection — and when diagnosing leaked coroutines,
-uncancellable loops, swallowed cancellation, `GlobalScope`, launch-in-`init`, detached scopes,
-`invokeOnCompletion`, `ProcessCanceledException`, blocking/progress bridges, `ModalityState`
-context capture, or promise/callback cancellation bridges.
+Prefer standard primitives (`coroutineScope`, `supervisorScope`, a lifecycle-bound scope) over
+hand-rolled scope wiring.
 
 Related skill: **kotlin-ui-swing-component-architecture** (Swing UI and EDT ownership).
 
@@ -27,8 +16,9 @@ Deeper reading on the platform internals:
   [Cancellation](../../../docs/notebooks/2-CancellationModel.ipynb),
   [Read-Write Lock](../../../docs/notebooks/3-ReadWriteLock.ipynb).
 - The Platform Docs of the ultimate checkout: `docs/IntelliJ-Platform/4_man/Kotlin-Coroutines/` (services, EDT
-  dispatchers, read actions), `docs/IntelliJ-Platform/4_man/Performance/` (freezes, background write actions,
-  profiling) and `docs/IntelliJ-Platform/4_man/Indexes/` (the indexing system, dumb-aware code).
+  dispatchers, read actions), `docs/IntelliJ-Platform/4_man/Performance/` (freezes, background write actions)
+  and `docs/IntelliJ-Platform/4_man/Indexes/` (the indexing system, dumb-aware code).
+  In `Kotlin-Coroutines/`, read especially `9_Gotchas-and-practices/` and `8_UI-EDT-Dispatchers.md`.
 
 ## Core review loop
 
@@ -42,8 +32,7 @@ Deeper reading on the platform internals:
 
 ## Scope ownership and lifecycle
 
-- **Never use `GlobalScope`** for feature work — it is never cancelled, so its coroutines outlive the
-  component that started them.
+- **Never use `GlobalScope`** for feature work.
 - **Prefer an injected or platform lifecycle scope** (project/service scope, or the scope handed to
   you). A standalone `CoroutineScope(context)` with no `Job` in the context gets a fresh root `Job()`
   not linked to any parent — nothing cancels or awaits it, so it leaks:
@@ -58,8 +47,7 @@ Deeper reading on the platform internals:
 
 - **If a manual scope is unavoidable**, either make it a child of an owning scope, or register the
   owning `Disposable` (cancel the scope in `dispose()`) **before launching any work**, and verify that
-  registration actually runs. Disposal-only cancellation with no parent link is fragile — a missed
-  `dispose()` leaks everything the scope launched.
+  registration actually runs.
 - **`launch` in `init {}` — depends on what cancels the scope.** If the object owns a scope tied to
   its own `Disposer` registration, don't launch in `init`: the coroutine can run (touching a half-built
   `this`) before registration completes and leak on failure — expose `start()` and call it after
@@ -68,31 +56,13 @@ Deeper reading on the platform internals:
   `dispose()`, and no `Disposable` is needed solely to cancel the injected scope — so a service
   self-starting workers from `init` is acceptable. Just keep the constructor cheap and don't read
   not-yet-initialized state.
-
-  ```kotlin
-  // Owned scope, cancelled via your own Disposer registration:
-  init { scope.launch { observe() } }          // Wrong — may run before Disposer.register completes
-  fun start() { scope.launch { observe() } }   // Right — after Disposer.register(owner, this)
-  // @Service(private val scope: CoroutineScope) — self-start from init is fine; scope is platform-managed.
-  ```
-
 - Prefer the **shortest** lifecycle that consumes the work; use an app/project service scope only
   when the result is genuinely owned for that whole lifetime.
 - **Do not store per-submission UI context in a long-lived scope.** Context elements such as current
   `ModalityState` must be captured at the submit site, not at service/object construction. Avoid
   `CoroutineScope(ModalityState.defaultModalityState().asContextElement())`; prefer
   `scope.launch(currentModality.asContextElement()) { ... }` when modality belongs to that operation.
-  Modality dispatch semantics belong to **kotlin-ui-swing-component-architecture** /
-  **platform-deep-dives**.
-
-## Job hierarchy and failure propagation
-
-- Cancelling a parent cancels all children recursively; a child failing with anything **other than
-  `CancellationException`** cancels its parent and siblings. `SupervisorJob`/`supervisorScope` opts
-  child failure out of cancelling the parent; parent cancellation still cancels supervised children.
-- A parent that finished its block is **completing**, not done, until every child completes.
-- `coroutineScope { }` is all-or-nothing (one failure fails the scope and rethrows); `supervisorScope { }`
-  is only for genuinely independent children.
+  Modality dispatch semantics belong to **kotlin-ui-swing-component-architecture**.
 
 ## Cooperative cancellation
 
@@ -122,8 +92,8 @@ Deeper reading on the platform internals:
   ```kotlin
   try {
     body()
-  } catch (c: CancellationException) {   // also covers ProcessCanceledException (a subtype)
-    throw c                              // never swallow cancellation
+  } catch (c: CancellationException) {
+    throw c
   } catch (x: Throwable) {
     handle(x)
   }
@@ -186,12 +156,6 @@ Adjust for actual impact.
 | Self-cancellation (`cancel()` on current job) | Major | return / throw `CancellationException` |
 | Promise/callback bridge left pending on cancellation | Major | complete/cancel external primitive before rethrow |
 | Unnecessary `invokeOnCompletion` bookkeeping | Minor | remove it |
-| `blockingContext` wrapper (deprecated 2024.2; context now implicit) | Minor | delete the wrapper |
+| `blockingContext` wrapper | Minor | delete the wrapper |
 | Cancellation reported as a user-visible error | Minor | rethrow silently |
 | `supervisorScope`/`SupervisorJob` where a plain scope suffices | Minor | use `coroutineScope` |
-
-## Further reading
-
-For deep internals see **platform-deep-dives** (coroutine notebooks: cancellation model, context
-propagation) and the ultimate coroutine docs `docs/IntelliJ-Platform/4_man/Kotlin-Coroutines/`,
-especially `9_Gotchas-and-practices/` and `8_UI-EDT-Dispatchers.md`.

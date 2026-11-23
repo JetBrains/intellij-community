@@ -1,19 +1,14 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.run.features
 
-import com.intellij.execution.target.FullPathOnTarget
 import com.intellij.openapi.extensions.ExtensionPointName
-import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.python.pytools.common.FusId
+import com.intellij.python.sdk.backend.PythonInterpreter
+import com.intellij.python.sdk.backend.toFileSystem
 import com.jetbrains.python.PyInternalExecApi
 import com.jetbrains.python.sdk.add.v2.FileSystem
 import com.jetbrains.python.sdk.add.v2.PathHolder
-import com.jetbrains.python.sdk.add.v2.toFileSystem
-import com.jetbrains.python.sdk.flavors.PyFlavorAndData
-import com.jetbrains.python.sdk.flavors.PyFlavorData
-import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
-import com.jetbrains.python.sdk.pySdkAdditionalData
-import com.jetbrains.python.sdk.sdkFlavor
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
@@ -90,52 +85,44 @@ interface PyRunToolProvider {
    * (see [com.jetbrains.python.run.PyBareScriptConfiguration]); a tool that has no notion of that ignores it and
    * behaves as it does for any other run.
    */
-  suspend fun getRunToolParameters(sdk: Sdk, inlineScriptTarget: Path?): PyRunToolParameters
+  suspend fun getRunToolParameters(interpreter: PythonInterpreter, inlineScriptTarget: Path?): PyRunToolParameters
 
   /**
    * Represents the initial state of the tool, determining whether it is enabled or not by default.
    */
   val initialToolState: Boolean
 
-  /**
-   * Checks if the tool is available for the given SDK.
-   *
-   * @param sdk the SDK to check the availability for
-   * @return true if the tool is available for the specified SDK, false otherwise
-   */
-  fun isAvailable(sdk: Sdk): Boolean
+  /** Whether this tool can run Python in the environment of [interpreter]. */
+  fun isAvailable(interpreter: PythonInterpreter): Boolean
 
   companion object {
     @JvmField
     val EP: ExtensionPointName<PyRunToolProvider> = ExtensionPointName.create("Pythonid.pyRunToolProvider")
 
+    /** The tool that can run Python in the environment of [interpreter], or `null` when no tool can. */
     @JvmStatic
-    fun forSdk(sdk: Sdk): PyRunToolProvider? = EP.extensionList.firstOrNull { it.isAvailable(sdk) }
+    fun forInterpreter(interpreter: PythonInterpreter): PyRunToolProvider? = EP.extensionList.firstOrNull { it.isAvailable(interpreter) }
   }
 }
 
 /**
- * Base class for [PyRunToolProvider] implementations that are bound to a specific [PyFlavorData] subtype.
+ * Base class for a [PyRunToolProvider] of the tool that manages the environment of an interpreter, see
+ * [com.intellij.python.sdk.common.PyInterpreterRef.manager].
  */
 @ApiStatus.Internal
 @PyInternalExecApi
-abstract class PySdkRunToolProvider<T : PyFlavorData, U : PythonSdkFlavor<T>>(
-  private val flavorClass: Class<U>,
-) : PyRunToolProvider {
-  override fun isAvailable(sdk: Sdk): Boolean = flavorClass.isInstance(sdk.sdkFlavor)
+abstract class PyInterpreterRunToolProvider : PyRunToolProvider {
+  /** The id of the tool that manages the environments this provider runs, see [com.intellij.python.pytools.backend.PyTool]. */
+  protected abstract val manager: FusId
 
-  override suspend fun getRunToolParameters(sdk: Sdk, inlineScriptTarget: Path?): PyRunToolParameters {
-    val additionalData = sdk.pySdkAdditionalData
-    val fileSystem = sdk.toFileSystem()
+  override fun isAvailable(interpreter: PythonInterpreter): Boolean = interpreter.ref.manager == manager
 
-    @Suppress("UNCHECKED_CAST") // Checked by isAvailable and the flavor's data contract
-    val flavorAndData = additionalData.flavorAndData as PyFlavorAndData<T, U>
-    return getRunToolParameters(requireNotNull(sdk.homePath), flavorAndData.data, fileSystem, inlineScriptTarget)
-  }
+  override suspend fun getRunToolParameters(interpreter: PythonInterpreter, inlineScriptTarget: Path?): PyRunToolParameters =
+    getRunToolParameters(interpreter, interpreter.toFileSystem(), inlineScriptTarget)
 
+  /** The parameters to run Python of [interpreter] through this tool on the machine of [fileSystem]. */
   protected abstract suspend fun <P : PathHolder> getRunToolParameters(
-    sdkHome: FullPathOnTarget,
-    flavorData: T,
+    interpreter: PythonInterpreter,
     fileSystem: FileSystem<P>,
     inlineScriptTarget: Path?,
   ): PyRunToolParameters

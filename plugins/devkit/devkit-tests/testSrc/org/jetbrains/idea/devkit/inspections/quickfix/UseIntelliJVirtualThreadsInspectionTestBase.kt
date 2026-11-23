@@ -7,6 +7,11 @@ import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor
 import org.jetbrains.idea.devkit.inspections.UseIntelliJVirtualThreadsInspection
 import java.util.function.Supplier
 
+/**
+ * Use [useIntelliJVirtualThreadsFixture] in a JUnit 5 test.
+ */
+@Suppress("DEPRECATION")
+@Deprecated("Use useIntelliJVirtualThreadsFixture in a JUnit 5 test")
 abstract class UseIntelliJVirtualThreadsInspectionTestBase : LightDevKitInspectionFixTestBase() {
 
   override fun getProjectDescriptor(): LightProjectDescriptor {

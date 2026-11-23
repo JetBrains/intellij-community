@@ -8,10 +8,12 @@ import com.intellij.internal.jcef.test.cases.BadSslCertificateTest
 import com.intellij.internal.jcef.test.cases.ClipboardTest
 import com.intellij.internal.jcef.test.cases.DetailedFrame
 import com.intellij.internal.jcef.test.cases.DevToolsTest
+import com.intellij.internal.jcef.test.cases.FocusTest
 import com.intellij.internal.jcef.test.cases.FullscreenDemo
 import com.intellij.internal.jcef.test.cases.KeyboardEvents
 import com.intellij.internal.jcef.test.cases.MessageRouterTests
 import com.intellij.internal.jcef.test.cases.PerformanceTest
+import com.intellij.internal.jcef.test.cases.RequestContextDemo
 import com.intellij.internal.jcef.test.cases.ResourceHandler
 import com.intellij.internal.jcef.test.cases.ScrollbarsDemo
 import com.intellij.internal.jcef.test.detailed.handler.ClientSchemeHandler
@@ -114,6 +116,7 @@ internal class JBCefTestAppFrame : JFrame() {
     ContextMenu(),
     DialogHandlersTest(),
     ClipboardTest(),
+    RequestContextDemo(),
     ResourceHandler(),
     PerformanceTest(),
     DetailedFrame(),
@@ -122,6 +125,7 @@ internal class JBCefTestAppFrame : JFrame() {
     AggressiveRouterTest(),
     ScrollbarsDemo(),
     FullscreenDemo(),
+    FocusTest(),
     DevToolsTest(),
     BadSslCertificateTest())
 

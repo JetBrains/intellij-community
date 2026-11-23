@@ -10,6 +10,7 @@ import com.intellij.editorconfig.common.syntax.psi.EditorConfigSection;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileEditor.FileEditorOpenRequest;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
@@ -71,7 +72,7 @@ final class EditorConfigStatusListener implements CodeStyleSettingsListener {
     if (!isEnabled) {
       FileEditorManager fileEditorManager = FileEditorManager.getInstance(myProject);
       fileEditorManager.closeFile(myVirtualFile);
-      fileEditorManager.openFile(myVirtualFile, false);
+      fileEditorManager.requestOpenFile(myVirtualFile, FileEditorOpenRequest.withFocus(false));
     }
     EditorNotifications.getInstance(myProject).updateNotifications(myVirtualFile);
     Document document = FileDocumentManager.getInstance().getDocument(myVirtualFile);

@@ -3,14 +3,15 @@ package com.intellij.markdown.frontend.editor.livepreview
 
 import com.intellij.openapi.editor.CustomFoldRegion
 import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.editor.FoldRegion
 import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.openapi.editor.markup.CustomHighlighterRenderer
 import com.intellij.openapi.editor.markup.HighlighterLayer
 import com.intellij.openapi.editor.markup.HighlighterTargetArea
 import com.intellij.openapi.editor.markup.RangeHighlighter
+import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.util.TextRange
+import com.intellij.ui.Gray
 import com.intellij.util.DocumentUtil
 import com.intellij.util.ui.JBUI
 import org.intellij.plugins.markdown.editor.livepreview.MarkdownLivePreviewSpec
@@ -22,73 +23,84 @@ import java.awt.Graphics
 import java.awt.Graphics2D
 import kotlin.math.roundToInt
 
+/**
+ * Hides the glyph of each blockquote marker that no caret touches and paints its rule.
+ * The marker stays in the text and keeps its width.
+ */
 internal class MarkdownLivePreviewBlockQuoteRenderer(private val editor: Editor) : MarkdownLivePreviewElementRenderer {
-  override fun presentation(spec: MarkdownLivePreviewSpec): List<MarkdownLivePreviewFold> {
-    val blockQuote = spec as MarkdownLivePreviewSpec.BlockQuote
-    return listOf(MarkdownLivePreviewTextFold(
-      range = blockQuote.markerRange.toTextRange(),
-      placeholderText = blockQuote.placeholderText,
-      decoration = BlockQuoteMarkerDecoration(
-        editor,
-        blockQuote.ruleRange.toTextRange(),
-        ruleColorKey(blockQuote.alertType),
-      ),
-    ))
-  }
+  private var quotes = emptyList<ConcealedQuote>()
 
-  private fun ruleColorKey(alertType: MarkdownLivePreviewSpec.AlertType?): TextAttributesKey = when (alertType) {
-    MarkdownLivePreviewSpec.AlertType.NOTE -> MarkdownHighlighterColors.ALERT_TITLE_NOTE
-    MarkdownLivePreviewSpec.AlertType.TIP -> MarkdownHighlighterColors.ALERT_TITLE_TIP
-    MarkdownLivePreviewSpec.AlertType.IMPORTANT -> MarkdownHighlighterColors.ALERT_TITLE_IMPORTANT
-    MarkdownLivePreviewSpec.AlertType.WARNING -> MarkdownHighlighterColors.ALERT_TITLE_WARNING
-    MarkdownLivePreviewSpec.AlertType.CAUTION -> MarkdownHighlighterColors.ALERT_TITLE_CAUTION
-    null -> MarkdownHighlighterColors.BLOCK_QUOTE_MARKER
-  }
-
+  override fun presentation(spec: MarkdownLivePreviewSpec): List<MarkdownLivePreviewFold> = emptyList()
   override fun documentChanged() = Unit
-  override fun reconcile(presentation: MarkdownLivePreviewPresentation?) = Unit
-  override fun dispose() = Unit
 
-  private class BlockQuoteMarkerDecoration(
-    private val editor: Editor,
-    private val ruleRange: TextRange,
-    private val ruleColorKey: TextAttributesKey,
-  ) : MarkdownLivePreviewFoldDecoration {
-    override fun create(region: FoldRegion): MarkdownLivePreviewMountedDecoration {
-      val highlighter = editor.markupModel.addRangeHighlighter(
-        null,
-        ruleRange.startOffset,
-        ruleRange.endOffset,
-        HighlighterLayer.ADDITIONAL_SYNTAX,
-        HighlighterTargetArea.EXACT_RANGE,
-      ).also { it.customRenderer = MarkdownBlockQuotePainter(region, ruleColorKey) }
-      return object : MarkdownLivePreviewMountedDecoration {
-        override fun update(decoration: MarkdownLivePreviewFoldDecoration): Boolean {
-          return decoration is BlockQuoteMarkerDecoration && highlighter.isValid && decoration.ruleColorKey == ruleColorKey &&
-                 highlighter.startOffset == decoration.ruleRange.startOffset &&
-                 highlighter.endOffset == decoration.ruleRange.endOffset
-        }
+  override fun reconcile(presentation: MarkdownLivePreviewPresentation?) {
+    val carets = editor.caretModel.allCarets
+    val missing = LinkedHashSet<QuoteKey>()
+    for (element in presentation?.elements.orEmpty()) {
+      val spec = element.spec as? MarkdownLivePreviewSpec.BlockQuote ?: continue
+      (val startOffset, val endOffset) = spec.range
 
-        override fun dispose() = highlighter.dispose()
-      }
+      if (carets.any { it.selectionStart <= endOffset && startOffset <= it.selectionEnd }) continue
+      missing.add(QuoteKey(spec.markerRange.toTextRange(), spec.ruleRange.toTextRange(), spec.alertType))
+    }
+
+    val kept = ArrayList<ConcealedQuote>()
+    for (quote in quotes) {
+      val key = quote.key()
+      if (key != null && missing.remove(key)) kept.add(quote) else quote.dispose()
+    }
+    missing.mapTo(kept) { ConcealedQuote(it) }
+    quotes = kept
+  }
+
+  override fun dispose() {
+    quotes.forEach(ConcealedQuote::dispose)
+    quotes = emptyList()
+  }
+
+  private data class QuoteKey(val marker: TextRange, val rule: TextRange, val alertType: MarkdownLivePreviewSpec.AlertType?)
+
+  private inner class ConcealedQuote(key: QuoteKey) {
+    private val alertType = key.alertType
+    private val marker = editor.markupModel.addRangeHighlighter(
+      key.marker.startOffset, key.marker.endOffset, HighlighterLayer.ADDITIONAL_SYNTAX + 1, HIDDEN_GLYPH, HighlighterTargetArea.EXACT_RANGE,
+    )
+    private val rule = editor.markupModel.addRangeHighlighter(
+      null, key.rule.startOffset, key.rule.endOffset, HighlighterLayer.ADDITIONAL_SYNTAX, HighlighterTargetArea.EXACT_RANGE,
+    ).also { it.customRenderer = MarkdownBlockQuotePainter(ruleColorKey(alertType)) }
+
+    fun key(): QuoteKey? =
+      if (marker.isValid && rule.isValid) QuoteKey(marker.textRange, rule.textRange, alertType) else null
+
+    fun dispose() {
+      marker.dispose()
+      rule.dispose()
     }
   }
 }
 
+private val HIDDEN_GLYPH = TextAttributes(Gray.TRANSPARENT, null, null, null, Font.PLAIN)
+
+private fun ruleColorKey(alertType: MarkdownLivePreviewSpec.AlertType?): TextAttributesKey = when (alertType) {
+  MarkdownLivePreviewSpec.AlertType.NOTE -> MarkdownHighlighterColors.ALERT_TITLE_NOTE
+  MarkdownLivePreviewSpec.AlertType.TIP -> MarkdownHighlighterColors.ALERT_TITLE_TIP
+  MarkdownLivePreviewSpec.AlertType.IMPORTANT -> MarkdownHighlighterColors.ALERT_TITLE_IMPORTANT
+  MarkdownLivePreviewSpec.AlertType.WARNING -> MarkdownHighlighterColors.ALERT_TITLE_WARNING
+  MarkdownLivePreviewSpec.AlertType.CAUTION -> MarkdownHighlighterColors.ALERT_TITLE_CAUTION
+  null -> MarkdownHighlighterColors.BLOCK_QUOTE_MARKER
+}
+
 /**
  * Paints the vertical rule of one blockquote marker without changing editor layout or input handling.
- * The rule starts on the marker line at the x position of the marker.
+ * The highlighter starts at the marker. The rule starts on the marker line at the x position of the marker.
  * A highlighter that ends at a line start stops the rule above that line.
  * The rule takes the foreground of [ruleColorKey].
  */
 @ApiStatus.Internal
-class MarkdownBlockQuotePainter internal constructor(
-  private val markerRegion: FoldRegion,
-  private val ruleColorKey: TextAttributesKey,
-) : CustomHighlighterRenderer {
+class MarkdownBlockQuotePainter internal constructor(private val ruleColorKey: TextAttributesKey) : CustomHighlighterRenderer {
   override fun paint(editor: Editor, highlighter: RangeHighlighter, graphics: Graphics) {
-    if (editor.isDisposed || !highlighter.isValid || !markerRegion.isValid) return
-    val markerOffset = markerRegion.startOffset
+    if (editor.isDisposed || !highlighter.isValid) return
+    val markerOffset = highlighter.startOffset
     val endOffset = highlighter.endOffset
     if (markerOffset >= endOffset) return
 
@@ -118,10 +130,10 @@ class MarkdownBlockQuotePainter internal constructor(
 
 internal fun getQuotePrefixWidth(editor: Editor, lineStart: Int, end: Int): Int {
   val text = editor.document.charsSequence
-  val columns = (lineStart until end)
+  return (lineStart until end)
     .sumOf {
-      if (text[it] == '>' && text.getOrNull(it + 1)?.let { next -> next in " \t" } != true) 2
-      else 1
+      val char = if (text[it] == '\t') ' ' else text[it]
+      EditorUtil.fontForChar(char, Font.PLAIN, editor).charWidth2D(char.code).toDouble()
     }
-  return (columns * EditorUtil.fontForChar(' ', Font.PLAIN, editor).charWidth2D(' '.code)).roundToInt()
+    .roundToInt()
 }

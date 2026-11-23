@@ -15,6 +15,9 @@ import org.jetbrains.plugins.terminal.util.ShellType
 internal class TerminalCommandSpecCompletionContributor : TerminalCommandCompletionContributor {
   override suspend fun getCompletionSuggestions(context: TerminalCommandCompletionContext): TerminalCommandCompletionResult? {
     val shellSupport = TerminalShellSupport.findByShellType(ShellType.ZSH) ?: return null
+    if (!context.hasWorkingDirectory) {
+      return null
+    }
 
     val commandTokens = getCommandTokens(context)
     if (commandTokens.isEmpty()) {
@@ -142,6 +145,13 @@ internal class TerminalCommandSpecCompletionContributor : TerminalCommandComplet
     val shellSupport: TerminalShellSupport,
   )
 }
+
+/**
+ * Whether the session knows the working directory of the shell.
+ * The file and command spec suggestions depend on it, so a contributor gives no suggestions without it.
+ */
+internal val TerminalCommandCompletionContext.hasWorkingDirectory: Boolean
+  get() = terminalView.workingDirectoryFlow.value != null
 
 internal suspend fun getCommandTokens(context: TerminalCommandCompletionContext): List<String> {
   val shellSupport = TerminalShellSupport.findByShellType(ShellType.ZSH) ?: return emptyList()

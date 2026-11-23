@@ -2,16 +2,18 @@
 package com.jetbrains.python.sdk
 
 import com.intellij.execution.ExecutionException
+import com.intellij.python.sdk.backend.isDisposed
+import com.intellij.python.sdk.backend.isOnTarget
+import com.intellij.python.sdk.backend.asItem
+import com.intellij.python.community.execService.BinaryToExec
 import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.coroutineToIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsContexts.NotificationContent
 import com.intellij.openapi.util.NlsContexts.NotificationTitle
 import com.intellij.python.sdk.backend.PythonEnvironmentContext
@@ -24,7 +26,6 @@ import com.intellij.python.sdk.backend.PythonInterpreterUpdateRequest
 import com.intellij.python.sdk.backend.PythonInterpreterUpdateStep
 import com.intellij.python.sdk.backend.PythonInterpreterUpdater
 import com.intellij.python.sdk.backend.detectedEnvironment
-import com.intellij.python.sdk.backend.getSdkAPI
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.errorProcessing.PyError
@@ -51,14 +52,14 @@ internal class PythonSdkSourcesStep : PythonInterpreterUpdateStep {
   ): Boolean {
     try {
       coroutineToIndicator { indicator ->
-        PyTargetsIntrospectionFacade.create(interpreter.getSdkAPI(), project).synchronizeRemoteSourcesAndSetupMappingsIfNeeded(indicator)
+        PyTargetsIntrospectionFacade.create(interpreter).synchronizeRemoteSourcesAndSetupMappingsIfNeeded(indicator)
       }
     }
     catch (e: ExecutionException) {
-      logger<PythonSdkSourcesStep>().warn("Cannot synchronize the sources of ${interpreter.getSdkAPI().name}", e)
+      logger<PythonSdkSourcesStep>().warn("Cannot synchronize the sources of $interpreter", e)
     }
     catch (e: InvalidSdkException) {
-      logger<PythonSdkSourcesStep>().warn("Cannot synchronize the sources of ${interpreter.getSdkAPI().name}", e)
+      logger<PythonSdkSourcesStep>().warn("Cannot synchronize the sources of $interpreter", e)
     }
     return true
   }
@@ -72,7 +73,7 @@ internal class PythonSdkSourcesStep : PythonInterpreterUpdateStep {
 internal class PythonEnvironmentSkeletonsStep : PythonEnvironmentStep {
   override suspend fun update(context: PythonEnvironmentContext, facts: PythonEnvironmentFacts): PythonEnvironmentFacts =
     try {
-      val localRoots = coroutineToIndicator { indicator -> generateSkeletons(context.sdk, indicator) }
+      val localRoots = coroutineToIndicator { indicator -> generateSkeletons(context.sdk, context.binary, indicator) }
       if (localRoots != null) facts.copy(sysPath = localRoots) else facts
     }
     catch (e: UnsupportedPythonSdkTypeException) {
@@ -86,12 +87,12 @@ internal class PythonEnvironmentSkeletonsStep : PythonEnvironmentStep {
     }
 
   /**
-   * Generates the skeletons of the environment of [sdk], and returns the local copies of the remote roots of a target,
+   * Generates the skeletons of the environment of [sdk] with its Python [binary], and returns the local copies of the remote roots of a target,
    * or `null` for a local environment, which reads its `sys.path` with the probe.
    */
   @RequiresBackgroundThread
   @Throws(InvalidSdkException::class, ExecutionException::class)
-  private fun generateSkeletons(sdk: Sdk, indicator: ProgressIndicator): List<String>? {
+  private fun generateSkeletons(sdk: Sdk, binary: BinaryToExec, indicator: ProgressIndicator): List<String>? {
     try {
       sdk.createSkeletonsRootDirectory()
     }
@@ -103,7 +104,7 @@ internal class PythonEnvironmentSkeletonsStep : PythonEnvironmentStep {
     logger<PythonEnvironmentSkeletonsStep>().info("Performing background update of skeletons for SDK ${sdk.name} (${sdk.homePath})")
     indicator.text = PyBundle.message("python.sdk.updating.skeletons")
     // The skeletons belong to the environment, and no project: the daemon restart is up to each project.
-    PySkeletonRefresher.refreshSkeletonsOfSdk(null, sdk.skeletonsPath, sdk)
+    PySkeletonRefresher.refreshSkeletonsOfSdk(null, sdk.skeletonsPath, sdk, binary)
     return if (PythonSdkUtil.isRemote(sdk)) sdk.remoteInterpreterLocalRoots else null
   }
 }
@@ -116,15 +117,14 @@ internal class PythonSdkSkeletonsFailureStep : PythonInterpreterUpdateStep {
     request: PythonInterpreterUpdateRequest,
     failure: (PyError) -> Unit,
   ): Boolean {
-    val key = PythonEnvironmentKey.of(interpreter.getSdkAPI()) ?: return true
+    val key = PythonEnvironmentKey.of(interpreter) ?: return true
     PythonEnvironments.getInstance().factsIfReady(key)?.backgroundError?.let { error -> notifyOfFailure(project, error, interpreter) }
     return true
   }
 
   private fun notifyOfFailure(project: Project, exception: Exception, interpreter: PythonInterpreter) {
-    val sdk = interpreter.getSdkAPI()
-    // The SDK name, which is what the interpreter's presentation would report here anyway, without running it.
-    val interpreterName = sdk.name
+    // The item reads only what the interpreter records, so the name costs no run of it.
+    val interpreterName = interpreter.asItem().shortName
     if (ApplicationManager.getApplication().isHeadlessEnvironment) {
       logger<PythonSdkSkeletonsFailureStep>().warn(exception)
       return
@@ -136,9 +136,9 @@ internal class PythonSdkSkeletonsFailureStep : PythonInterpreterUpdateStep {
         PyBundle.message("remote.interpreter.support.is.not.available", interpreterName),
         REMOTE_INTERPRETER_SUPPORT_IS_NOT_AVAILABLE,
       )
-      exception is InvalidSdkException && PythonSdkUtil.isRemote(sdk) -> PythonSdkType.notifyRemoteSdkSkeletonsFail(exception) {
-        if (!(sdk is Disposable && Disposer.isDisposed(sdk))) {
-          PythonInterpreterUpdater.getInstance(project).request(sdk, PythonInterpreterUpdateRequest(packages = true, background = false))
+      exception is InvalidSdkException && interpreter.isOnTarget -> PythonSdkType.notifyRemoteSdkSkeletonsFail(exception) {
+        if (!interpreter.isDisposed) {
+          PythonInterpreterUpdater.getInstance(project).request(interpreter, PythonInterpreterUpdateRequest(packages = true, background = false))
         }
       }
       else -> {
@@ -179,9 +179,8 @@ internal class PythonSdkPackagesStep : PythonInterpreterUpdateStep {
     failure: (PyError) -> Unit,
   ): Boolean {
     if (request.packages) {
-      val manager = PythonPackageManager.forPythonInterpreter(project, interpreter)
-      val sdk = interpreter.getSdkAPI()
-      logger<PythonSdkPackagesStep>().info("Performing background scan of packages for SDK ${sdk.name} (${sdk.homePath})")
+      val manager = PythonPackageManager.forPythonInterpreter(interpreter)
+      logger<PythonSdkPackagesStep>().info("Performing background scan of packages for $interpreter")
       coroutineToIndicator { indicator ->
         indicator.isIndeterminate = true
         indicator.text = PyBundle.message("python.sdk.scanning.installed.packages")

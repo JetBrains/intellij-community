@@ -40,6 +40,10 @@ class TomlParserTest {
     @Test
     fun testStrings() = doTest()
     @Test
+    fun testStringsEndingInBackslash() = doTest()
+    @Test
+    fun testMultilineStringsEndingInQuotes() = doTest()
+    @Test
     fun testNumbers() = doTest()
     @Test
     fun testBoolean() = doTest()

@@ -1,7 +1,8 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.ui.tree.nodes
 
-import com.intellij.testFramework.UsefulTestCase
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.fail
 import java.lang.reflect.Method
 import java.lang.reflect.Modifier
 
@@ -9,8 +10,9 @@ import java.lang.reflect.Modifier
 /**
  * Verifies that XValueNodeImplDelegate delegates all overridable methods from XValueNodeImpl.
  */
-class XValueNodeImplDelegateTest : UsefulTestCase() {
+class XValueNodeImplDelegateTest {
 
+  @Test
   fun testDelegatesAllOverridableMethods() {
     val base = XValueNodeImpl::class.java
     val delegate = XValueNodeImplDelegate::class.java

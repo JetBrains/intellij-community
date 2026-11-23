@@ -6,8 +6,6 @@ description: "Read before each commit, amend or reword: the subject SafePush acc
 
 # Commits
 
-SafePush rejects a malformed subject, and each rejection costs a CI round trip.
-
 ## Scope
 
 - One commit does one thing. Do not mix a cleanup or a refactoring into a behavioral change. When unsure, split.
@@ -37,8 +35,12 @@ Write a body unless the change is mechanical (a typo, an import, a format pass).
 
 - The diff shows what changed. The body says why.
 - The first paragraph is the lead: the new state and its cause, in 1-3 sentences.
-- Then one paragraph per decision: what you chose, what you did not choose, and why. Write code names in backticks.
-- Then `Tests:`, `Evidence:` and `Left out:`, each on its own line right before its list.
+- Then one paragraph for each decision that a reader could question: what you chose, what you did not choose, and
+  why. Skip an obvious decision and a detail that the diff shows. Write code names in backticks.
+- Do not report a test run, a build, or a test that fails also without the change. A commit in master compiles and
+  passes its tests. Give a measurement that caused the change in the lead or in its decision.
+- Do not name a stage, a session or a step of a plan. A reader of the history does not have the plan. Say the
+  remaining work in words.
 
 ## Passing the message
 
@@ -64,18 +66,6 @@ Do not write the message to a file outside the workspace, such as `/tmp`: that a
 ## Examples
 
 ```text
-MRI-3589 bound the fan-out of the plugin content extraction
-
-`extractPlugins` started one coroutine per plugin target, and `extractContentModules` started one per new
-xi:include path. Both awaited all of them. An unresolved path reads the output archive of every module
-of the project, so the fan-out put far more blocking work on the dispatcher than it has threads. On a
-CI agent with two processors that starved a read of an archived module output past its timeout.
-
-`mapConcurrent` caps the count at `BUILD_CONCURRENCY` and keeps the order of the input. It leaves
-`workerDispatcher` null, because the archive read now enters `Dispatchers.IO` on its own.
-```
-
-```text
 IJAI-3334 the published-surface wait of the editor service test names its step and dumps the state
 
 The test failed once on TeamCity with no log line in its 10 s window, and 208 local runs did not reproduce it.
@@ -90,15 +80,11 @@ A change with no ticket, with a Branch Deck prefix:
 
 QD-16701 added -Dqodana.build.date=<yyyyMMddHHmm> to the qodana command of the production product-info.json.
 `computeProductLaunchModel` gave no date to `QodanaProductProperties`, so the dev dist model had no such argument.
-`DevDistProductLaunchModelTest` compares both files byte for byte, and it failed.
+`DistProductLaunchModelTest` compares both files byte for byte, and it failed.
 
 The model now states the token @@build_date@@, next to @@build_number@@. product-files replaces it with the date
 of --build-date-seconds, which the action already receives. A test exclusion would hide a real difference
 of the dev dist qodana command, so the tool writes the argument as production does.
-
-Tests:
-- `DevDistProductLaunchModelTest` passed both tests.
-- ./build/dev-dist.cmd jars passed.
 ```
 
 Other cases, such as isolated commits and `misc` triage: [2_Commits.md](../../../../docs/IntelliJ-Platform/0_Intro/2_Commits.md). To push, use the `safe-push` skill.

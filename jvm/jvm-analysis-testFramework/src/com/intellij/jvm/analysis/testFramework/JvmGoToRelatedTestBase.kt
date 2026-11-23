@@ -6,7 +6,11 @@ import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture
 
 /**
  * A test base for testing [com.intellij.navigation.GotoRelatedProvider] implementations in all JVM languages.
+ *
+ * @deprecated Use [jvmCodeInsightFixture] and [JvmCodeInsightFixture.testGoToRelatedAction] in a JUnit 5 test.
  */
+@Suppress("DEPRECATION")
+@Deprecated("Use jvmCodeInsightFixture in a JUnit 5 test")
 abstract class JvmGoToRelatedTestBase : LightJvmCodeInsightFixtureTestCase() {
   protected fun JavaCodeInsightTestFixture.testGoToRelatedAction(
     lang: JvmLanguage,

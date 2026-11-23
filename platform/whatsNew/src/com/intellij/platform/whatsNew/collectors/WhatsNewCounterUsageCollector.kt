@@ -13,7 +13,7 @@ import com.jetbrains.fus.reporting.api.IEventContext
 import com.jetbrains.fus.reporting.api.ValidationResultType
 
 internal object WhatsNewCounterUsageCollector : CounterUsagesCollector() {
-  private val eventLogGroup: EventLogGroup = EventLogGroup("whatsnew", 5)
+  private val eventLogGroup: EventLogGroup = EventLogGroup("whatsnew", 6)
 
   private val pageId = EventFields.StringValidatedByCustomRule("page_id", WhatsNewMultipageIdValidationRule::class.java)
   private val opened = eventLogGroup.registerEvent("tab_opened", pageId, EventFields.Enum(("type"), OpenedType::class.java))
@@ -30,6 +30,11 @@ internal object WhatsNewCounterUsageCollector : CounterUsagesCollector() {
   private val newId = EventFields.StringValidatedByCustomRule("new_id", WhatsNewMultipageIdValidationRule::class.java)
   private val multipageIdChanged = eventLogGroup.registerEvent("multipage_id_changed", oldId, newId)
 
+  private val tabsGroupId = EventFields.StringValidatedByCustomRule("tabs_group_id", WhatsNewPageElementIdValidationRule::class.java)
+  private val pageTabId = EventFields.StringValidatedByCustomRule("page_tab_id", WhatsNewPageElementIdValidationRule::class.java)
+  private val pageTabSelected = eventLogGroup.registerEvent("page_tab_selected", pageId, tabsGroupId, pageTabId)
+  private val anchorId = EventFields.StringValidatedByCustomRule("anchor_id", WhatsNewPageElementIdValidationRule::class.java)
+  private val anchorNavigated = eventLogGroup.registerEvent("anchor_navigated", pageId, anchorId)
 
   fun openedPerformed(project: Project?, id: String?, byClient: Boolean) {
     opened.log(project, id ?: WhatsNewInVisionContentProvider.DEFAULT_MULTIPAGE_ID, if (byClient) OpenedType.ByClient else OpenedType.Auto)
@@ -59,6 +64,14 @@ internal object WhatsNewCounterUsageCollector : CounterUsagesCollector() {
     multipageIdChanged.log(project, oldId, newId)
   }
 
+  fun pageTabSelected(project: Project?, pageId: String, tabsGroupId: String, tabId: String) {
+    pageTabSelected.log(project, pageId, tabsGroupId, tabId)
+  }
+
+  fun anchorNavigated(project: Project?, pageId: String, anchorId: String) {
+    anchorNavigated.log(project, pageId, anchorId)
+  }
+
   override fun getGroup(): EventLogGroup {
     return eventLogGroup
   }
@@ -79,6 +92,24 @@ internal class WhatsNewMultipageIdValidationRule : CustomValidationRule() {
     context: IEventContext,
   ): ValidationResultType {
     return if (id in service<WhatsNewInVisionContentProvider>().getAllowedMultipageIds()) {
+      ValidationResultType.ACCEPTED
+    }
+    else ValidationResultType.REJECTED
+  }
+}
+
+/**
+ * Accepts the tab group, tab and anchor ids that the loaded Vision artifact lists.
+ */
+@Suppress("UnstableApiUsage")
+internal class WhatsNewPageElementIdValidationRule : CustomValidationRule() {
+  override fun getRuleId(): String = "whats_new_page_element_id"
+
+  override fun doValidate(
+    id: String,
+    context: IEventContext,
+  ): ValidationResultType {
+    return if (id in service<WhatsNewInVisionContentProvider>().pageElementIds) {
       ValidationResultType.ACCEPTED
     }
     else ValidationResultType.REJECTED

@@ -9,6 +9,11 @@ import com.intellij.testFramework.LightProjectDescriptor
 
 private val descriptor = JUnitProjectDescriptor(HIGHEST, JUNIT4)
 
+/**
+ * @deprecated Use [junitProjectFixture] and [junitAssertEqualsMayBeAssertSameInspectionFixture] in a JUnit 5 test.
+ */
+@Suppress("DEPRECATION")
+@Deprecated("Use junitProjectFixture and junitAssertEqualsMayBeAssertSameInspectionFixture in a JUnit 5 test")
 abstract class JUnitAssertEqualsMayBeAssertSameInspectionTestBase : JvmInspectionTestBase() {
   override val inspection: JUnitAssertEqualsMayBeAssertSameInspection = JUnitAssertEqualsMayBeAssertSameInspection()
   override fun getProjectDescriptor(): LightProjectDescriptor = descriptor

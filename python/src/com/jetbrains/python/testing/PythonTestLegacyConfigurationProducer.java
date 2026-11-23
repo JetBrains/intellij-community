@@ -23,10 +23,10 @@ import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyElement;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.psi.PyIfStatement;
 import com.jetbrains.python.psi.PyStatement;
 import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.psi.types.TypeEvalContext;
-import com.jetbrains.python.run.RunnableScriptFilter;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -111,7 +111,7 @@ public abstract class PythonTestLegacyConfigurationProducer<T extends AbstractPy
       element = PyUtil.findNonWhitespaceAtOffset(element.getContainingFile(), element.getTextOffset());
     }
 
-    if (RunnableScriptFilter.isIfNameMain(location)) return false;
+    if (isIfNameMain(location)) return false;
     final Module module = location.getModule();
     if (module == null) return false;
     if (!isPythonModule(module)) return false;
@@ -150,6 +150,18 @@ public abstract class PythonTestLegacyConfigurationProducer<T extends AbstractPy
     configuration.setGeneratedName();
     setModuleSdk(element, configuration);
     return true;
+  }
+
+  private static boolean isIfNameMain(@NotNull Location location) {
+    PsiElement element = location.getPsiElement();
+    while (true) {
+      final PyIfStatement ifStatement = PsiTreeUtil.getParentOfType(element, PyIfStatement.class);
+      if (ifStatement == null) {
+        break;
+      }
+      element = ifStatement;
+    }
+    return element instanceof PyIfStatement ifStatement && PyUtil.isIfNameEqualsMain(ifStatement);
   }
 
   private static void setModuleSdk(final @NotNull PsiElement element,

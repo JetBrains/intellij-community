@@ -17,7 +17,7 @@ class HttpClientTests {
   @Test
   @Timeout(value = 1, unit = TimeUnit.MINUTES)
   fun downloadNonExistingFileShouldFailTest() {
-    val url = "https://cache-redirector.jetbrains.com/intellij-jbr/jbrsdk-11_0_15-linux-x64-b2043.56.tar.gz"
+    val url = "https://repo1.maven.org/maven2/org/example/starter-missing/1.0/starter-missing-1.0.jar"
     val tmpFile = Files.createTempFile("download", "")
 
     try {

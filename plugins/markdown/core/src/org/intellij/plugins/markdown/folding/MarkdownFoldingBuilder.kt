@@ -102,7 +102,9 @@ internal class MarkdownFoldingBuilder: CustomFoldingBuilder(), DumbAware {
         addDescriptors(element, element.textRange, descriptors, document)
       }
     })
-    val headerVisitor = HeaderRegionsBuildingVisitor { header, range -> addDescriptors(header, range, descriptors, document) }
+    val headerVisitor = HeaderRegionsBuildingVisitor { header, range ->
+      addDescriptors(header, range, descriptors, document)
+    }
     root.accept(headerVisitor)
     headerVisitor.processLastHeaderIfNeeded()
     if (root is MarkdownFile) {
@@ -149,7 +151,12 @@ internal class MarkdownFoldingBuilder: CustomFoldingBuilder(), DumbAware {
     }
 
     val explicitName = foldedElementsPresentations[elementType]
-    val elementText = StringUtil.shortenTextWithEllipsis(node.text, 30, 5)
+    val elementText = if (node.psi is MarkdownHeader) {
+      StringUtil.shortenTextWithEllipsis(node.text.lineSequence().first(), HEADER_PLACEHOLDER_MAX_LENGTH, 5)
+    }
+    else {
+      StringUtil.shortenTextWithEllipsis(node.text, 30, 5)
+    }
     return explicitName?.let { "$it: $elementText" } ?: elementText
   }
 
@@ -286,3 +293,4 @@ private fun skipNewLinesBackward(element: PsiElement?): PsiElement? {
 
 private const val DATA_IMAGE_PREFIX = "data:image/"
 private const val BASE64_MARKER = ";base64,"
+private const val HEADER_PLACEHOLDER_MAX_LENGTH = 120

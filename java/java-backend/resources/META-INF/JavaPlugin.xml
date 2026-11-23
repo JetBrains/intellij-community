@@ -81,6 +81,8 @@
 
     <applicationService serviceImplementation="com.intellij.codeInsight.generation.EqualsHashCodeTemplatesManager"/>
     <applicationService serviceImplementation="org.jetbrains.java.generate.template.toString.ToStringTemplatesManager"/>
+    <generation.toStringTemplatesManager language="JAVA"
+                                         implementationClass="org.jetbrains.java.generate.template.toString.JavaToStringTemplatesManagerProvider"/>
     <applicationService serviceImplementation="com.intellij.codeInsight.javadoc.JavaDocInfoGeneratorFactory" open="true"/>
     <applicationService serviceImplementation="com.intellij.pom.java.AcceptedLanguageLevelsSettings"/>
     <applicationService serviceImplementation="com.intellij.refactoring.JavaRefactoringSettings"/>
@@ -90,6 +92,8 @@
                         serviceImplementation="com.intellij.psi.impl.file.JavaDirectoryServiceImpl" overrides="true"/>
     <applicationService serviceInterface="com.intellij.openapi.projectRoots.JavaVersionService"
                         serviceImplementation="com.intellij.openapi.projectRoots.JavaVersionServiceImpl" overrides="true"/>
+    <applicationService serviceInterface="com.intellij.codeInsight.editorActions.JavaTypingSupport"
+                        serviceImplementation="com.intellij.codeInsight.editorActions.JavaTypingSupportImpl" overrides="true"/>
     <applicationService
       serviceInterface="com.intellij.codeInsight.generation.OverrideImplementExploreUtil$MemberImplementorExplorersProvider"
       serviceImplementation="com.intellij.codeInsight.generation.MemberImplementorExplorersProviderImpl"/>
@@ -578,19 +582,13 @@
     <renameInputValidator implementation="com.intellij.refactoring.rename.JavaModuleRenameValidator"/>
     <renameInputValidator implementation="com.intellij.refactoring.rename.JavaTypeRenameValidator"/>
     <renamePsiElementProcessor implementation="com.intellij.refactoring.rename.RenamePsiPackageProcessor"/>
-    <headlessRenamePsiElementProcessor implementation="com.intellij.refactoring.rename.RenamePsiPackageProcessor$HeadlessRenamePsiPackageProcessor"/>
     <renamePsiElementProcessor implementation="com.intellij.refactoring.rename.RenamePsiDirectoryProcessor"/>
     <headlessRenamePsiElementProcessor implementation="com.intellij.refactoring.rename.RenamePsiDirectoryProcessor"/>
     <renamePsiElementProcessor implementation="com.intellij.refactoring.rename.RenameJavaClassProcessor"/>
-    <headlessRenamePsiElementProcessor implementation="com.intellij.refactoring.rename.RenameJavaClassProcessor$HeadlessRenameJavaClassProcessor"/>
     <renamePsiElementProcessor implementation="com.intellij.refactoring.rename.RenameJavaMethodProcessor" id="javamethod"/>
-    <headlessRenamePsiElementProcessor implementation="com.intellij.refactoring.rename.RenameJavaMethodProcessor$HeadlessRenameJavaMethodProcessor" id="javamethod"/>
     <renamePsiElementProcessor implementation="com.intellij.refactoring.rename.RenameJavaVariableProcessor" id="javaVariable"/>
-    <headlessRenamePsiElementProcessor implementation="com.intellij.refactoring.rename.RenameJavaVariableProcessor$HeadlessRenameJavaVariableProcessor" id="javaVariable"/>
     <renamePsiElementProcessor implementation="com.intellij.refactoring.rename.RenameJavaModuleProcessor"/>
-    <headlessRenamePsiElementProcessor implementation="com.intellij.refactoring.rename.RenameJavaModuleProcessor"/>
     <renamePsiElementProcessor implementation="com.intellij.refactoring.rename.RenameAliasingPomTargetProcessor" id="aliasingPom"/>
-    <headlessRenamePsiElementProcessor implementation="com.intellij.refactoring.rename.RenameAliasingPomTargetProcessor" id="aliasingPom"/>
     <!-- Temporary. See HeadlessRenameSupportedLanguage. Remove it when every language is converted. -->
     <headlessRenameSupportedLanguage language="JAVA"/>
     <findUsagesHandlerFactory implementation="com.intellij.find.findUsages.JavaFindUsagesHandlerFactory" id="java"
@@ -644,6 +642,17 @@
                                                    language="JAVA"/>
     <refactoring.safeDeleteProcessor implementation="com.intellij.refactoring.safeDelete.JavaSafeDeleteProcessor" id="javaProcessor"/>
     <refactoring.modPlanSafeDeleteProvider implementation="com.intellij.refactoring.safeDelete.ModPlanJavaSafeDeleteProvider"/>
+    <refactoring.modPlanRenameProvider implementation="com.intellij.refactoring.rename.RenameJavaClassProcessor$ModPlanJavaClassRenameProvider"/>
+    <refactoring.modPlanRenameProvider implementation="com.intellij.refactoring.rename.RenameJavaMethodProcessor$ModPlanJavaMethodRenameProvider"/>
+    <refactoring.modPlanRenameProvider implementation="com.intellij.refactoring.rename.RenameJavaVariableProcessor$ModPlanJavaVariableRenameProvider"/>
+    <refactoring.modPlanRenameProvider implementation="com.intellij.refactoring.rename.ModPlanJavaRenameProvider$ModPlanJavaLabelRenameProvider"/>
+    <refactoring.modPlanRenameProvider implementation="com.intellij.refactoring.rename.ModPlanJavaPackageRenameProvider"/>
+    <refactoring.modPlanRenameProvider
+      implementation="com.intellij.refactoring.rename.RenameJavaModuleProcessor$ModPlanRenameJavaModuleProvider"/>
+    <refactoring.modPlanRenameProvider
+      implementation="com.intellij.refactoring.rename.RenameAliasingPomTargetProcessor$ModPlanRenameAliasingPomTargetProvider"/>
+    <refactoring.modPlanRenameProvider
+      implementation="com.intellij.refactoring.rename.RenamePsiDirectoryProcessor$ModPlanRenamePsiDirectoryProvider"/>
     <refactoring.moveInnerHandler language="JAVA" implementationClass="com.intellij.refactoring.move.moveInner.MoveJavaInnerHandler"
                                   id="java"/>
     <refactoring.moveMemberHandler language="JAVA" implementationClass="com.intellij.refactoring.move.moveMembers.MoveJavaMemberHandler"
@@ -754,7 +763,6 @@
     <editorSmartKeysConfigurable instance="com.intellij.application.options.JavadocOptionsProvider" id="editor.preferences.javadocOptions"/>
     <editorActionHandler action="PrevParameter" implementationClass="com.intellij.codeInsight.editorActions.JavaPrevParameterHandler"/>
     <editorActionHandler action="NextParameter" implementationClass="com.intellij.codeInsight.editorActions.JavaNextParameterHandler"/>
-    <typedHandler implementation="com.intellij.codeInsight.editorActions.JavaTypedHandler" id="java"/>
     <constructorBodyGenerator language="JAVA"
                               implementationClass="com.intellij.codeInsight.generation.JavaConstructorBodyWithSuperCallGenerator"/>
     <lang.sliceProvider language="JAVA" implementationClass="com.intellij.slicer.JavaSliceProvider"/>
@@ -1182,7 +1190,7 @@
 
     <!--  from JavaAnalysisPlugin.xml for java.impl-->
     <applicationService serviceInterface="org.jetbrains.java.generate.GenerateToStringActionHandler"
-                        serviceImplementation="org.jetbrains.java.generate.GenerateToStringActionHandlerImpl"/>
+                        serviceImplementation="org.jetbrains.java.generate.JavaGenerateToStringActionHandler"/>
     <applicationService serviceInterface="com.intellij.codeInsight.intention.QuickFixFactory"
                         serviceImplementation="com.intellij.codeInsight.intention.impl.config.QuickFixFactoryImpl"/>
     <projectService serviceInterface="com.intellij.execution.filters.ExceptionAnalysisProvider"

@@ -65,21 +65,17 @@ public final class IdeaTestUtil {
   }
 
   public static void withLevel(final @NotNull Module module, @NotNull LanguageLevel level, final @NotNull Runnable r) {
-    final LanguageLevelProjectExtension projectExt = LanguageLevelProjectExtension.getInstance(module.getProject());
-
-    final LanguageLevel projectLevel = projectExt.getLanguageLevel();
+    final Project project = module.getProject();
+    final LanguageLevel projectLevel = LanguageLevelProjectExtension.getInstance(project).getLanguageLevel();
     final LanguageLevel moduleLevel = LanguageLevelUtil.getCustomLanguageLevel(module);
-    final Application application = ApplicationManager.getApplication();
     try {
-      application.invokeAndWait(() -> application.runWriteAction(() -> projectExt.setLanguageLevel(level)));
+      setProjectLanguageLevel(project, level);
       setModuleLanguageLevel(module, level);
-      IndexingTestUtil.waitUntilIndexesAreReady(module.getProject());
       r.run();
     }
     finally {
       setModuleLanguageLevel(module, moduleLevel);
-      application.invokeAndWait(() -> application.runWriteAction(() -> projectExt.setLanguageLevel(projectLevel)));
-      IndexingTestUtil.waitUntilIndexesAreReady(module.getProject());
+      setProjectLanguageLevel(project, projectLevel);
     }
   }
 

@@ -6,6 +6,7 @@ import com.intellij.ide.starter.path.GlobalPaths
 import com.intellij.ide.starter.runner.SetupException
 import com.intellij.ide.starter.runner.targets.TargetIdentifier
 import com.intellij.ide.starter.runner.targets.isLocal
+import com.intellij.ide.starter.utils.DownloadMirror
 import com.intellij.ide.starter.utils.FileSystem
 import com.intellij.ide.starter.utils.HttpClient
 import com.intellij.platform.eel.EelPlatform
@@ -41,12 +42,12 @@ object GoSdkDownloaderFacade {
   }
 
   /**
-   * Fetches the latest available Go SDK version, including a beta or an RC, from the Go module proxy through Cache Redirector.
+   * Fetches the latest available Go SDK version, including a beta or an RC, from the Go module proxy through the [DownloadMirror].
    *
    * The proxy lists each release of the `golang.org/toolchain` module once per platform and in no particular order.
    */
   fun getLatestAvailableVersion(): String {
-    val url = "https://cache-redirector.jetbrains.com/proxy.golang.org/golang.org/toolchain/@v/list"
+    val url = DownloadMirror.instance.mirror("https://proxy.golang.org/golang.org/toolchain/@v/list")
     logOutput("Fetching Go versions from $url")
     val response = java.net.URI(url).toURL().openStream().bufferedReader().use { it.readText() }
     val latest = response.lineSequence()
@@ -134,7 +135,7 @@ object GoSdkDownloaderFacade {
   @OptIn(ExperimentalPathApi::class)
   private fun downloadAndInstallGoSdk(version: String, platformInfo: PlatformInfo, installPath: Path) {
     val sdkFileName = "go$version.${platformInfo.os}-${platformInfo.arch}${platformInfo.extension}"
-    val url = "https://cache-redirector.jetbrains.com/dl.google.com/go/$sdkFileName"
+    val url = DownloadMirror.instance.mirror("https://dl.google.com/go/$sdkFileName")
     val downloadedFile = installPath.resolve(sdkFileName)
 
     withRetryBlocking(messageOnFailure = "Failure on downloading/installing Go SDK", retries = 3) {

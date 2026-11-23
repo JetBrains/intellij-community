@@ -1,0 +1,69 @@
+# pluginpack API
+
+The plugin remainder packer. Its contract types are in `planfile::contract`. The binary `plugin-remainder-packer` is its
+only caller. The asset rules and the link-graph rules of its plan step are in `planfile::validate`, because the
+collector applies them again to the produced table.
+
+## The subset rule
+
+The crate executes only the shapes that the checked-in `*.dev-plan.json` files use, and it refuses every other shape
+with an error that names it. `planfile` refuses most unused shapes at decode time, so its typed recipe cannot state
+them. The table lists the refused shapes.
+
+| Refused input | Error |
+| --- | --- |
+| a recipe of the retired version 3, or of a version other than 1 and 2 | `the recipe must use version 1 or 2` |
+| a jar or copy mode other than 0644 and 0755, also mode zero | `unsupported file mode` |
+| a layout archive named `.tgz`, or any name other than `.zip`, `.jar`, `.zip.zst` and `.tar.gz` | `unsupported layout archive` |
+| a `.zip.zst` with data after its one zstd frame | `the archive holds data after its zstd frame` |
+| a zip with two central-directory records of one name | `the zip repeats the entry name` |
+| a destination or a tree entry that is not ASCII, or that holds `&` | the `distpath::path_identity` error |
+| a tree link that resolves through another link, or a link target with an empty segment | the `distpath::validate_links` error |
+| a remainder entry at the name of an independent file or native tree, at a parent of it, or below it | `conflicting output destination` or `conflicting output directory` |
+| a gzip resource source that is not a `.zip` or a `.jar` | `a gzip resource source is a zip or jar archive` |
+| a gzip resource entry that is not an `.xml` file, or that is a link | `unexpected file` |
+| a jar writer with `directoryEntries` | the `planfile` error ``unknown field `directoryEntries` `` |
+| a plan file with `layoutSignature`, because a plan file carries no layout signature | the `planfile` error ``unknown field `layoutSignature` `` |
+| a plan file with `preparations`, because a plan file holds `operations` only | the `planfile` error ``unknown field `preparations` `` |
+
+A jar operation writes no directory record. A directory of a non-class file is an index row of `__index__`.
+
+Every asset is below the plugin directory, and the remainder writes only plugin files. The crate has no transport
+root, such as the former `.distribution-root/`.
+
+## Errors
+
+Every function returns `anyhow::Result`. `{:#}` prints the error with its context, and a refusal of `distpath` or
+`planfile::validate` keeps its text. The doc comments of `plan`, `Execution::write` and `write_gzip_resources` state
+their contracts.
+
+## Archive readers
+
+- `.zip` and `.jar`: the `zip` crate, in central-directory order. A creator platform 3 or 19 gives the Unix mode and the
+  link type of an entry.
+- `.zip.zst`: `ruzstd` decodes the zip into the scratch directory. The entries have mode zero and no links.
+- `.tar.gz`: `flate2` and the `tar` crate, in stream order, the first gzip member only. A hard link is a file with the
+  bytes of its target.
+
+A transform without mappings reads the archive once. With mappings, a first visit selects the mapping. A single visit
+that meets a hard link scans the archive once more for every target, and reads it again up to the link.
+
+## Modes
+
+The packer reads no mode from the disk. It writes 0755 for each directory, 0755 for an executable file and 0644 for
+every other file. The executable bit comes from declared data only:
+
+- A jar or a copy gets the declared mode of its asset.
+- A plain copy of a file or a directory takes the executable bit of the declared mode of its asset. Mode zero marks no
+  file executable.
+- An `archive-tree` transform takes the executable bit of the mode of the asset, or of the archive header when the
+  asset states mode zero. A file that an `executables` pattern matches is executable too.
+- A copy-tree operation marks no file executable.
+
+## Tests
+
+Under `cargo test`, the tests read `testdata/` from `CARGO_MANIFEST_DIR`, and under Bazel from `DT_TESTDATA_DIR`. The
+three `testdata/kotlin-*-golden-*.txt` files are the frozen output of the deleted Kotlin preparer. Never edit them.
+
+The corpus test plans every plan file in `testdata/corpus` of `planfile`. Under Bazel, the unit test gets these files
+through the `test_data` attribute with the `planfile_testdata` filegroup.

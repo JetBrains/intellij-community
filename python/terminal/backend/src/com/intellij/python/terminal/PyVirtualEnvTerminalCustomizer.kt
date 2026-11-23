@@ -1,12 +1,12 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.python.terminal
 
-import com.intellij.python.sdk.backend.NativePythonInterpreter
+import com.intellij.python.sdk.backend.activationEnvironment
+import com.intellij.python.sdk.backend.TargetPythonInterpreter
 import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.guessProjectDir
-import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.toNioPathOrNull
@@ -20,19 +20,17 @@ import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.platform.workspace.storage.entities
 import com.intellij.python.pyproject.model.evolution.findPythonInterpreter
+import com.intellij.python.sdk.backend.NativePythonInterpreter
 import com.intellij.python.sdk.backend.PythonEnvironment
 import com.intellij.python.sdk.backend.ShellActivation
-import com.intellij.python.sdk.backend.getSdkAPI
 import com.intellij.python.terminal.shared.PyVirtualEnvTerminalSettings
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.jetbrains.python.orLogException
-import com.jetbrains.python.sdk.activationEnvironment
-import com.jetbrains.python.sdk.internal.PYTHON_MODULE_ID
 import com.jetbrains.python.sdk.ShellType
+import com.jetbrains.python.sdk.internal.PYTHON_MODULE_ID
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.plugins.terminal.TerminalOptionsProvider
-import org.jetbrains.plugins.terminal.session.ShellName
 import org.jetbrains.plugins.terminal.startup.MutableShellExecOptions
 import org.jetbrains.plugins.terminal.startup.ShellExecOptionsCustomizer
 import java.nio.file.Path
@@ -79,11 +77,11 @@ internal class PyVirtualEnvTerminalCustomizer : ShellExecOptionsCustomizer {
   }
 
   @RequiresBackgroundThread
-  private fun activateUnknownShell(sdk: Sdk, envs: MutableMap<String, String>): Jediterm? {
+  private fun activateUnknownShell(interpreter: NativePythonInterpreter, envs: MutableMap<String, String>): Jediterm? {
     //for other shells we read envs from activate script by the default shell and pass them to the process
-    val envVars = runBlockingMaybeCancellable { sdk.activationEnvironment() }.successOrNull ?: emptyMap()
+    val envVars = runBlockingMaybeCancellable { interpreter.activationEnvironment() }.successOrNull ?: emptyMap()
     if (envVars.isEmpty()) {
-      logger.warn("No vars found to activate in ${sdk.homePath}")
+      logger.warn("No vars found to activate in ${interpreter.pythonBinary}")
     }
     else {
       envs.putAll(envVars)
@@ -94,12 +92,13 @@ internal class PyVirtualEnvTerminalCustomizer : ShellExecOptionsCustomizer {
   /**
    * What the shell must run to activate [environment], or null when there is nothing to run.
    *
-   * When [shell] is null, the shell is not known and cannot source anything. So the default shell reads the
+   * When [shell] is null, the shell is not known or the terminal has no shell integration for it, so the shell
+   * cannot source anything. So the default shell reads the
    * environment, and the terminal gets it as variables. Every other shell asks the environment itself, so no kind of environment is named here.
    */
   @RequiresBackgroundThread
-  private fun activate(shell: ShellType?, sdk: Sdk, environment: PythonEnvironment, envs: MutableMap<String, String>): Jediterm? {
-    if (shell == null) return activateUnknownShell(sdk, envs)
+  private fun activate(shell: ShellType?, interpreter: NativePythonInterpreter, environment: PythonEnvironment, envs: MutableMap<String, String>): Jediterm? {
+    if (shell == null) return activateUnknownShell(interpreter, envs)
     return when (val activation = environment.activationScript(shell)) {
       null -> null
       is ShellActivation.SourceScript -> Jediterm(activation.scriptPath, activation.args)
@@ -114,17 +113,17 @@ internal class PyVirtualEnvTerminalCustomizer : ShellExecOptionsCustomizer {
     customizeEnvironment(
       project = project,
       workingDirectory = shellExecOptions.workingDirectory.asNioPath().toString(),
-      shellName = shellExecOptions.execCommand.shellName,
+      shell = shellExecOptions.shell,
       envs = activationEnvs,
       terminalEelDescriptor = shellExecOptions.eelDescriptor,
     )
-    for ((name, value) in activationEnvs) {
+    for ([name, value] in activationEnvs) {
       shellExecOptions.setEnvironmentVariable(name, value)
     }
   }
 
   /**
-   * Computes the virtual env activation for a shell running [shellName] in [workingDirectory], writing the
+   * Computes the virtual env activation for [shell] (see [activate]) in [workingDirectory], writing the
    * activation environment variables into [envs]. The interpreter is the one of the Python project that owns
    * [workingDirectory], read from the snapshot.
    *
@@ -136,7 +135,7 @@ internal class PyVirtualEnvTerminalCustomizer : ShellExecOptionsCustomizer {
   internal fun customizeEnvironment(
     project: Project,
     workingDirectory: String?,
-    shellName: ShellName,
+    shell: ShellType?,
     envs: MutableMap<String, String>,
     terminalEelDescriptor: EelDescriptor,
   ) {
@@ -168,13 +167,16 @@ internal class PyVirtualEnvTerminalCustomizer : ShellExecOptionsCustomizer {
       logger.warn("Cannot find Python interpreter for directory ${directory} in project ${project.name}")
       return
     }
-    @Suppress("DEPRECATION") // The activation of an unknown shell takes an SDK.
-    val sdk = pythonInterpreter.getSdkAPI()
 
-    // A target interpreter has no environment on this machine.
-    val interpreter = pythonInterpreter as? NativePythonInterpreter
-    val pythonEnvironment = interpreter?.environmentResult?.orLogException(logger) ?: run {
-      logger.warn("Cannot detect Python environment for SDK ${sdk.homePath}, skipping activation")
+    val interpreter = when (pythonInterpreter) {
+      is NativePythonInterpreter -> pythonInterpreter
+      is TargetPythonInterpreter -> {
+        logger.info("Skipping virtual env activation: a target interpreter has no environment on this machine")
+        return
+      }
+    }
+    val pythonEnvironment = interpreter.environmentResult.orLogException(logger) ?: run {
+      logger.warn("Cannot detect Python environment for ${interpreter.pythonBinary}, skipping activation")
       return
     }
 
@@ -185,13 +187,13 @@ internal class PyVirtualEnvTerminalCustomizer : ShellExecOptionsCustomizer {
     }
 
     if (!pythonEnvironment.isActivatable) {
-      logger.debug("Nothing to activate for ${sdk.homePath}")
+      logger.debug("Nothing to activate for ${interpreter.pythonBinary}")
       return
     }
-    val jediterm = activate(ShellType.resolve(shellName.value), sdk, pythonEnvironment, envs)
+    val jediterm = activate(shell, interpreter, pythonEnvironment, envs)
     jediterm?.buildEnvironmentVariables()?.let { envs.putAll(it) }
 
-    logger.debug("Activating ${sdk.homePath} with ${envs.entries.joinToString("\n")}")
+    logger.debug("Activating ${interpreter.pythonBinary} with ${envs.entries.joinToString("\n")}")
   }
 }
 
@@ -226,3 +228,16 @@ fun pyTerminalDefaultWorkingDirectory(project: Project, file: VirtualFile?): Pat
   // Follow the module only if it's a Python module; otherwise keep the platform default.
   return if (module.type?.name == PYTHON_MODULE_ID) contentRoot.toNioPathOrNull() else null
 }
+
+private val MutableShellExecOptions.shell: ShellType?
+  get() =
+    // `null` means the platform Terminal doesn't support integration,
+    // so it makes no sense to return a shell here
+    // Instead, we will fall back to activateUnknownShell
+    // See PY-94080, IJPL-262202
+    if (shellIntegrationConfigurer != null) {
+      ShellType.resolve(execCommand.shellName.value)
+    }
+    else {
+      null
+    }

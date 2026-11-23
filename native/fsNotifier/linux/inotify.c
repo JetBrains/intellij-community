@@ -15,6 +15,9 @@
 
 #define WATCH_COUNT_NAME "/proc/sys/fs/inotify/max_user_watches"
 
+// the highest limit that Linux 5.11+ picks by itself; the watch table of this size takes ~8 MB
+#define DEFAULT_WATCH_COUNT 1048576
+
 #define DEFAULT_SUBDIR_COUNT 5
 
 typedef struct watch_node_str {
@@ -74,7 +77,13 @@ bool init_inotify(void) {
 static void read_watch_descriptors_count(void) {
   FILE* f = fopen(WATCH_COUNT_NAME, "r");
   if (f == NULL) {
-    userlog(LOG_ERR, "can't open %s: %s", WATCH_COUNT_NAME, strerror(errno));
+    if (errno == ENOENT) {
+      userlog(LOG_WARNING, "%s is missing, the watch count is %d", WATCH_COUNT_NAME, DEFAULT_WATCH_COUNT);
+      watch_count = DEFAULT_WATCH_COUNT;
+    }
+    else {
+      userlog(LOG_ERR, "can't open %s: %s", WATCH_COUNT_NAME, strerror(errno));
+    }
     return;
   }
 

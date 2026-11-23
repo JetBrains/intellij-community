@@ -21,7 +21,6 @@ import com.intellij.python.junit5Tests.framework.pyModuleFixture
 import com.intellij.python.junit5Tests.framework.pyProjectFixture
 import com.intellij.python.pyproject.model.evolution.setPythonInterpreter
 import com.intellij.python.sdk.backend.PythonInterpreterRegistry
-import com.intellij.python.sdk.backend.getSdkAPI
 import com.intellij.python.venv.createVenv
 import com.intellij.python.venv.createVenvAdditionalData
 import com.intellij.testFramework.ExtensionTestUtil
@@ -175,7 +174,7 @@ internal class DependenciesPsiProviderTest {
   @Test
   fun emptyRequirementsFile() = runTest(RequirementsProviderType.REQUIREMENTS_TXT) {
     fixture.checkHighlighting(true, false, true, false)
-    assertTrue(fixture.availableIntentions.any { it.text == "Export packages" })
+    assertTrue(fixture.availableIntentions.any { it.text == "Add imported packages to requirements\u2026" })
   }
 
   @Test
@@ -252,10 +251,10 @@ internal class DependenciesPsiProviderTest {
       // The test package manager reads its provider from the SDK. The project starts the manager of an interpreter as soon
       // as a module uses it, so the key is there before the interpreter is set.
       @Suppress("DEPRECATION")
-      built.getSdkAPI().putUserData(TestPythonPackageManager.REQUIREMENTS_PROVIDER_KEY, requirementsProviderType)
+      TestPythonPackageManager.setRequirementsProvider(built, requirementsProviderType)
       withContext(Dispatchers.EDT) { beforePackageManager() }
       val interpreter = checkNotNull(pyProject.setPythonInterpreter(built).orThrow())
-      PythonPackageManager.forPythonInterpreter(project, interpreter).waitForInit()
+      PythonPackageManager.forPythonInterpreter(interpreter).waitForInit()
 
       fixture.configureFromTempProjectFile(requirementsProviderType.filename)
 
@@ -266,7 +265,7 @@ internal class DependenciesPsiProviderTest {
       }
       finally {
         pyProject.setPythonInterpreter(null).orThrow()
-        PythonInterpreterRegistry.getInstance(project).removePythonInterpreter(pyProject, interpreter)
+        PythonInterpreterRegistry.getInstance(project).remove(interpreter)
       }
     }
   }

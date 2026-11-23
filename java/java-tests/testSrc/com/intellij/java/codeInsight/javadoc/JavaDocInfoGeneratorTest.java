@@ -168,6 +168,7 @@ abstract class JavaDocInfoGeneratorTest extends JavaCodeInsightTestCase {
     configureByFile();
     verifyJavaDoc(getTestClass().getAllInnerClasses()[0].getMethods()[0]);
   }
+  public void testLinkWithWildcard() { doTestClass(); }
   public void testLinkWithLineBreak() { doTestClass(); }
   public void testDocumentationForJdkClassWithReferencesToClassesFromJavaLang() { useJava7(); doTestAtCaret(); }
   public void testDocumentationForUncheckedExceptionsInSupers() { useJava7(); doTestAtCaret(); }

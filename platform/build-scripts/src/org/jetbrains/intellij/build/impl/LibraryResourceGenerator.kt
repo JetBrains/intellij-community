@@ -5,7 +5,7 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.intellij.build.BuildContext
 import java.nio.file.Path
 
-/** Extracts the one jar of the project library [libraryName] into [targetPath]. The dev-dist plan states it as an `archive-tree` asset. */
+/** Extracts the one jar of the project library [libraryName] into [targetPath]. The distribution plan states it as an `archive-tree` asset. */
 @ApiStatus.Internal
 data class LibraryResourceGenerator(
   @JvmField val libraryName: String,

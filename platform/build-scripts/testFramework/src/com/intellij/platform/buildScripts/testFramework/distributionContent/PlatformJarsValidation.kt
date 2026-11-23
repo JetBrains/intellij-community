@@ -4,12 +4,12 @@ package com.intellij.platform.buildScripts.testFramework.distributionContent
 import com.intellij.platform.buildScripts.pluginModelTool.PlatformJarRows
 import com.intellij.platform.buildScripts.pluginModelTool.derivePlatformJars
 import com.intellij.platform.buildScripts.pluginModelTool.deriveProductReviewReport
-import com.intellij.platform.buildScripts.pluginModelTool.devDistProductToken
-import com.intellij.platform.distributionContent.DevDistProductReport
+import com.intellij.platform.buildScripts.pluginModelTool.distProductToken
+import com.intellij.platform.distributionContent.DistProductReport
 import com.intellij.platform.distributionContent.DistFileRow
 import com.intellij.platform.distributionContent.FileEntry
 import com.intellij.platform.distributionContent.ProductReviewReport
-import com.intellij.platform.distributionContent.writeDevDistProductReport
+import com.intellij.platform.distributionContent.writeDistProductReport
 import com.intellij.platform.distributionContent.writeProductReviewReport
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.nio.file.Path
@@ -62,7 +62,7 @@ private val libraryVersionRegex = Regex("([/-])(\\d+)(\\.\\d+){1,2}[0-9a-zA-Z\\-
 
 private fun derivePlatform(context: PackagingTargetValidationContext): PlatformJarRows {
   val buildContext = context.layout.buildContext
-  val product = devDistProductToken(projectHome = context.projectHome, productProperties = buildContext.productProperties)
+  val product = distProductToken(projectHome = context.projectHome, productProperties = buildContext.productProperties)
   return derivePlatformJars(
     product = product,
     layout = context.layout.distributionState.platformLayout,
@@ -72,7 +72,7 @@ private fun derivePlatform(context: PackagingTargetValidationContext): PlatformJ
 
 private fun validateSourcePlatformJars(context: PackagingTargetValidationContext): List<PackagingCheckFailure> {
   val productProperties = context.target.createProductProperties(context.projectHome)
-  val product = devDistProductToken(projectHome = context.projectHome, productProperties = productProperties)
+  val product = distProductToken(projectHome = context.projectHome, productProperties = productProperties)
   val source = derivePlatformJars(product = product, productProperties = productProperties, outputProvider = context.outputProvider)
   val actual = derivePlatform(context)
   return listOfNotNull(
@@ -171,7 +171,7 @@ private fun validateProductReport(context: PackagingTargetValidationContext): Li
   }
   writeProductObservation(
     file = context.productObservationFile,
-    report = DevDistProductReport(
+    report = DistProductReport(
       bundledPlugins = content.bundled,
       nonBundledPlugins = content.nonBundled,
       platformContentModules = derivePlatform(context).contentModules.map { it.module },
@@ -191,8 +191,8 @@ private fun validateProductReport(context: PackagingTargetValidationContext): Li
   )
 }
 
-internal fun writeProductObservation(file: Path, report: DevDistProductReport) {
-  val text = writeDevDistProductReport(report)
+internal fun writeProductObservation(file: Path, report: DistProductReport) {
+  val text = writeDistProductReport(report)
   file.parent.createDirectories()
   file.writeText(text)
   println("Expanded product observation: $file")

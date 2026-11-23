@@ -450,7 +450,9 @@ sealed class CompletionPhase @ApiStatus.Internal constructor(
     @RequiresEdt
     private fun restartOnWriteAction() {
       if (ApplicationManagerEx.getApplicationEx().isWriteActionPending) {
-        doRestartBecauseOfWriteAction()
+        // This phase is not installed yet. A restart now installs its CommittingDocuments phase,
+        // and the caller then replaces it with this phase, which disposes the lookup of the restart.
+        doRestartBecauseOfWriteAction(deferRestart = true)
         return
       }
       ApplicationManager.getApplication().addApplicationListener(object : ApplicationListener {
@@ -460,15 +462,16 @@ sealed class CompletionPhase @ApiStatus.Internal constructor(
       }, this)
     }
 
-    private fun doRestartBecauseOfWriteAction() {
+    private fun doRestartBecauseOfWriteAction(deferRestart: Boolean = false) {
       if (!indicator!!.lookup.isLookupDisposed && !indicator.isCanceled) {
         withExplicitClientId(ownerId) {
-          if (EDT.isCurrentThreadEdt()) {
+          if (EDT.isCurrentThreadEdt() && !deferRestart) {
             indicator.cancel()
             indicator.scheduleRestart()
           }
           else {
-            // this branch is possible because completion can be canceled on background write action
+            // this branch is possible because completion can be canceled on background write action,
+            // and the constructor of this phase defers the restart until the phase is installed
             ApplicationManager.getApplication().invokeLater(
               /* runnable = */ { indicator.scheduleRestart() },
 

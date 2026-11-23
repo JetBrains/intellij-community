@@ -3,127 +3,192 @@ package com.intellij.java.codeInsight.completion;
 
 import com.intellij.codeInsight.template.impl.LiveTemplateCompletionContributor;
 import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
+import com.intellij.platform.testFramework.junit5.codeInsight.indexing.IndexingModeTemplate;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.pom.java.LanguageLevel;
+import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.IdeaTestUtil;
-import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.NeedsIndex;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.junit.jupiter.api.Test;
 
-public class NormalSwitchCompletionTest extends NormalCompletionTestCase {
-  @NotNull
-  @Override
-  protected LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_21;
-  }
+import static com.intellij.codeInsight.completion.LightCompletionFixtureKt.lightCompletionProjectFixture;
+import static com.intellij.java.codeInsight.completion.NormalCompletionFixtureKt.normalCompletionFixture;
 
-  public void testDefaultInRuleSwitch() { doTest(); }
+@TestApplication
+@IndexingModeTemplate
+public class NormalSwitchCompletionTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightCompletionProjectFixture(LightJavaCodeInsightFixtureTestCase.JAVA_21);
+  private final TestFixture<NormalCompletionFixture> completion = normalCompletionFixture(projectFixture);
 
-  public void testLabelInRuleSwitch() { doTest(); }
+  @Test
+  public void testDefaultInRuleSwitch() { EdtTestUtil.runInEdtAndWait(() -> completion.get().doTest()); }
 
-  public void testSecondLabelInOldSwitch() { doTest(); }
+  @Test
+  public void testLabelInRuleSwitch() { EdtTestUtil.runInEdtAndWait(() -> completion.get().doTest()); }
 
-  public void testSecondLabelInRuleSwitch() { doTest(); }
+  @Test
+  public void testSecondLabelInOldSwitch() { EdtTestUtil.runInEdtAndWait(() -> completion.get().doTest()); }
 
-  public void testSwitchExpressionStart() { doTest(); }
+  @Test
+  public void testSecondLabelInRuleSwitch() { EdtTestUtil.runInEdtAndWait(() -> completion.get().doTest()); }
 
-  public void testYieldInSwitchExpression() { doTest(); }
+  @Test
+  public void testSwitchExpressionStart() { EdtTestUtil.runInEdtAndWait(() -> completion.get().doTest()); }
 
-  public void testInsideYieldInSwitchExpression() { doTest(); }
+  @Test
+  public void testYieldInSwitchExpression() { EdtTestUtil.runInEdtAndWait(() -> completion.get().doTest()); }
 
-  public void testInsideRuleInSwitchExpression() { doTest(); }
+  @Test
+  public void testInsideYieldInSwitchExpression() { EdtTestUtil.runInEdtAndWait(() -> completion.get().doTest()); }
 
-  public void testBreakDeepInsideSwitchExpression() { doTest(); }
+  @Test
+  public void testInsideRuleInSwitchExpression() { EdtTestUtil.runInEdtAndWait(() -> completion.get().doTest()); }
 
+  @Test
+  public void testBreakDeepInsideSwitchExpression() { EdtTestUtil.runInEdtAndWait(() -> completion.get().doTest()); }
+
+  @Test
   @NeedsIndex.Full
-  public void testCompletePatternVariableInSwitchExpr() { doTest(); }
+  public void testCompletePatternVariableInSwitchExpr() { EdtTestUtil.runInEdtAndWait(() -> completion.get().doTest()); }
 
+  @Test
   @NeedsIndex.Full
-  public void testCompletePatternVariableInSwitchStmt() { doTest(); }
+  public void testCompletePatternVariableInSwitchStmt() { EdtTestUtil.runInEdtAndWait(() -> completion.get().doTest()); }
 
-  public void testCompleteReturnInSwitch() { doTest(); }
+  @Test
+  public void testCompleteReturnInSwitch() { EdtTestUtil.runInEdtAndWait(() -> completion.get().doTest()); }
 
+  @Test
   @NeedsIndex.Full
-  public void testCompleteConstantInSwitchExpr() { doTest("\n"); }
+  public void testCompleteConstantInSwitchExpr() { EdtTestUtil.runInEdtAndWait(() -> completion.get().doTest("\n")); }
 
+  @Test
   @NeedsIndex.Full
-  public void testCompleteConstantInSwitchStmt() { doTest("\n"); }
+  public void testCompleteConstantInSwitchStmt() { EdtTestUtil.runInEdtAndWait(() -> completion.get().doTest("\n")); }
 
-  public void testCompleteNullInSwitchStmt() { doTest(); }
+  @Test
+  public void testCompleteNullInSwitchStmt() { EdtTestUtil.runInEdtAndWait(() -> completion.get().doTest()); }
 
-  public void testCompleteNullInSwitchExpr() { doTest(); }
+  @Test
+  public void testCompleteNullInSwitchExpr() { EdtTestUtil.runInEdtAndWait(() -> completion.get().doTest()); }
 
-  public void testCompletePatternVariableSwitchStmt() { doTest(); }
+  @Test
+  public void testCompletePatternVariableSwitchStmt() { EdtTestUtil.runInEdtAndWait(() -> completion.get().doTest()); }
 
-  public void testCompletePatternVariableSwitchExpr() { doTest(); }
+  @Test
+  public void testCompletePatternVariableSwitchExpr() { EdtTestUtil.runInEdtAndWait(() -> completion.get().doTest()); }
 
-  public void testCompleteSealedLabelSwitch() { doTest(); }
+  @Test
+  public void testCompleteSealedLabelSwitch() { EdtTestUtil.runInEdtAndWait(() -> completion.get().doTest()); }
 
-  public void testCompleteReturnInSwitchRule() { doTest(); }
+  @Test
+  public void testCompleteReturnInSwitchRule() { EdtTestUtil.runInEdtAndWait(() -> completion.get().doTest()); }
 
-  public void testCompleteReturnInSwitchRule2() { doTest(); }
+  @Test
+  public void testCompleteReturnInSwitchRule2() { EdtTestUtil.runInEdtAndWait(() -> completion.get().doTest()); }
 
-  public void testCompleteThrowInSwitchRule() { doTest(); }
+  @Test
+  public void testCompleteThrowInSwitchRule() { EdtTestUtil.runInEdtAndWait(() -> completion.get().doTest()); }
 
+  @Test
   @NeedsIndex.Full(reason = "Other options do not appear if there's no index. As a result, '\n' goes right into the editor")
-  public void testCompleteIfInSwitchRule() { doTest("\n"); }
+  public void testCompleteIfInSwitchRule() { EdtTestUtil.runInEdtAndWait(() -> completion.get().doTest("\n")); }
 
-  public void testCompleteSwitchObjectSelectorPostfix() { doTestPostfixCompletion(); }
+  @Test
+  public void testCompleteSwitchObjectSelectorPostfix() { EdtTestUtil.runInEdtAndWait(() -> doTestPostfixCompletion()); }
 
+  @Test
   public void testCompleteSwitchPrimitiveSelectorPostfix() {
-    IdeaTestUtil.withLevel(myFixture.getModule(), JavaFeature.PRIMITIVE_TYPES_IN_PATTERNS.getMinimumLevel(),
-                           () -> doTestPostfixCompletion());
+    LightJavaCodeInsightTestFixture myFixture = completion.get().getFixture();
+    EdtTestUtil.runInEdtAndWait(() -> {
+      IdeaTestUtil.withLevel(myFixture.getModule(), JavaFeature.PRIMITIVE_TYPES_IN_PATTERNS.getMinimumLevel(),
+                             () -> doTestPostfixCompletion());
+    });
   }
 
+  @Test
   public void testCompleteSwitchPrimitiveSelectorPostfixLowerLanguageLevel() {
-    IdeaTestUtil.withLevel(myFixture.getModule(), LanguageLevel.JDK_11,
-                           () -> doTestPostfixCompletion());
+    LightJavaCodeInsightTestFixture myFixture = completion.get().getFixture();
+    EdtTestUtil.runInEdtAndWait(() -> {
+      IdeaTestUtil.withLevel(myFixture.getModule(), LanguageLevel.JDK_11,
+                             () -> doTestPostfixCompletion());
+    });
   }
 
-  public void testCompleteSwitchSealedSelectorPostfix() { doTestPostfixCompletion(); }
+  @Test
+  public void testCompleteSwitchSealedSelectorPostfix() { EdtTestUtil.runInEdtAndWait(() -> doTestPostfixCompletion()); }
 
+  @Test
   @NeedsIndex.ForStandardLibrary
   public void testCompleteReferencesInExpressionSwitch() {
-    doTest();
+    EdtTestUtil.runInEdtAndWait(() -> completion.get().doTest());
   }
 
+  @Test
   @NeedsIndex.ForStandardLibrary
-  public void testCompleteFinalInsideSwitch() { doTest("\n"); }
+  public void testCompleteFinalInsideSwitch() { EdtTestUtil.runInEdtAndWait(() -> completion.get().doTest("\n")); }
 
-  public void testCompleteYieldInsideSwitch() { doTest(); }
-  public void testWhenInSwitchRule() { doTest(); }
+  @Test
+  public void testCompleteYieldInsideSwitch() { EdtTestUtil.runInEdtAndWait(() -> completion.get().doTest()); }
+  @Test
+  public void testWhenInSwitchRule() { EdtTestUtil.runInEdtAndWait(() -> completion.get().doTest()); }
 
-  public void testQualifierEnumConstantInSwitch1() { doTest(); }
-  public void testQualifierEnumConstantInSwitch2() { doTest(); }
-  public void testQualifierEnumConstantInSwitch3() { doTest(); }
-  public void testQualifierEnumConstantInSwitch4() { doTest(); }
+  @Test
+  public void testQualifierEnumConstantInSwitch1() { EdtTestUtil.runInEdtAndWait(() -> completion.get().doTest()); }
+  @Test
+  public void testQualifierEnumConstantInSwitch2() { EdtTestUtil.runInEdtAndWait(() -> completion.get().doTest()); }
+  @Test
+  public void testQualifierEnumConstantInSwitch3() { EdtTestUtil.runInEdtAndWait(() -> completion.get().doTest()); }
+  @Test
+  public void testQualifierEnumConstantInSwitch4() { EdtTestUtil.runInEdtAndWait(() -> completion.get().doTest()); }
+  @Test
   @NeedsIndex.ForStandardLibrary
-  public void testQualifierEnumConstantInSwitchWithObject() { doTest(); }
+  public void testQualifierEnumConstantInSwitchWithObject() { EdtTestUtil.runInEdtAndWait(() -> completion.get().doTest()); }
+  @Test
   @NeedsIndex.ForStandardLibrary
   public void testQualifierEnumConstantInSwitchWithObjectInJava20() {
-    IdeaTestUtil.withLevel(myFixture.getModule(), LanguageLevel.JDK_20, () -> doTest());
+    LightJavaCodeInsightTestFixture myFixture = completion.get().getFixture();
+    EdtTestUtil.runInEdtAndWait(() -> IdeaTestUtil.withLevel(myFixture.getModule(), LanguageLevel.JDK_20, () -> completion.get().doTest()));
   }
+  @Test
   public void testQualifierEnumConstantInSwitchInJava20() {
-    IdeaTestUtil.withLevel(myFixture.getModule(), LanguageLevel.JDK_20, () -> doTest());
+    LightJavaCodeInsightTestFixture myFixture = completion.get().getFixture();
+    EdtTestUtil.runInEdtAndWait(() -> IdeaTestUtil.withLevel(myFixture.getModule(), LanguageLevel.JDK_20, () -> completion.get().doTest()));
   }
-  public void testClassPatternInSwitch1() { doTest(); }
-  public void testClassPatternInSwitch2() { doTest(); }
-  public void testClassEnumInSwitch() { doTest(); }
-  public void testDefaultAfterNull() { doTest(); }
+  @Test
+  public void testClassPatternInSwitch1() { EdtTestUtil.runInEdtAndWait(() -> completion.get().doTest()); }
+  @Test
+  public void testClassPatternInSwitch2() { EdtTestUtil.runInEdtAndWait(() -> completion.get().doTest()); }
+  @Test
+  public void testClassEnumInSwitch() { EdtTestUtil.runInEdtAndWait(() -> completion.get().doTest()); }
+  @Test
+  public void testDefaultAfterNull() { EdtTestUtil.runInEdtAndWait(() -> completion.get().doTest()); }
+  @Test
   public void testDefaultAfterNullInJava20() {
-    IdeaTestUtil.withLevel(myFixture.getModule(), LanguageLevel.JDK_20, () -> doTest());
+    LightJavaCodeInsightTestFixture myFixture = completion.get().getFixture();
+    EdtTestUtil.runInEdtAndWait(() -> IdeaTestUtil.withLevel(myFixture.getModule(), LanguageLevel.JDK_20, () -> completion.get().doTest()));
   }
-  public void testDefaultAfterNotNull() { doTest(); }
-  public void testDefaultAfterDefault() { doTest(); }
+  @Test
+  public void testDefaultAfterNotNull() { EdtTestUtil.runInEdtAndWait(() -> completion.get().doTest()); }
+  @Test
+  public void testDefaultAfterDefault() { EdtTestUtil.runInEdtAndWait(() -> completion.get().doTest()); }
 
+  @Test
   public void testClassEnumInSwitchInJava20() {
-    IdeaTestUtil.withLevel(myFixture.getModule(), LanguageLevel.JDK_20, () -> doTest());
+    LightJavaCodeInsightTestFixture myFixture = completion.get().getFixture();
+    EdtTestUtil.runInEdtAndWait(() -> IdeaTestUtil.withLevel(myFixture.getModule(), LanguageLevel.JDK_20, () -> completion.get().doTest()));
   }
   private void doTestPostfixCompletion() {
+    LightJavaCodeInsightTestFixture myFixture = completion.get().getFixture();
     LiveTemplateCompletionContributor.setShowTemplatesInTests(true, myFixture.getTestRootDisposable());
-    configure();
+    completion.get().configure();
     myFixture.type('\t');
     NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
-    checkResult();
+    completion.get().checkResult();
   }
 }

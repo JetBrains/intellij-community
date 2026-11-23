@@ -4,16 +4,13 @@ package com.jetbrains.python.sdk.inspections
 import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.ide.DataManager
-import com.intellij.ide.actions.ShowSettingsUtilImpl
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.options.ex.ConfigurableExtensionPointUtil
-import com.intellij.openapi.options.ex.ConfigurableVisitor
+import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ModuleRootManager
-import com.intellij.openapi.roots.ui.configuration.ProjectSettingsService
 import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.use
@@ -38,7 +35,7 @@ import com.intellij.ui.components.ActionLink
 import com.intellij.ui.components.DropDownLink
 import com.intellij.util.PlatformUtils
 import com.jetbrains.python.PyBundle
-import com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable
+import com.jetbrains.python.configuration.interpreter.PyWorkspaceStructureConfigurable
 import com.jetbrains.python.errorProcessing.ErrorSink
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.errorProcessing.emit
@@ -112,28 +109,10 @@ class InterpreterSettingsQuickFix(private val myModule: Module?) : LocalQuickFix
   }
 
   companion object {
+    /** Opens the Workspace page, where each module of a Python project sets its interpreter, with [module] selected. */
     fun showPythonInterpreterSettings(project: Project, module: Module?) {
-      // Ask each registered navigator (typically the redesigned "Workspace Structure" page in
-      // `intellij.pycharm.community.ide.impl`) before falling back to the legacy configurable. The
-      // lower-level module here has no back-dependency on the concrete Configurable classes, so the
-      // routing runs through an extension point instead of a hardcoded FQN.
-      val target = module?.let { ModuleOrProject.ModuleAndProject(it) } ?: ModuleOrProject.ProjectOnly(project)
-      if (PythonInterpreterSettingsNavigator.getInstance()?.tryNavigate(target) == true) return
-
-      val group = ConfigurableExtensionPointUtil.getConfigurableGroup(project, true)
-      val configurable = ConfigurableVisitor.findById(PyActiveSdkModuleConfigurable.CONFIGURABLE_ID, listOf(group))
-      if (configurable != null) {
-        ShowSettingsUtilImpl.showSettings(project, listOf(group), configurable)
-        return
-      }
-
-      // An interpreter belongs to the module of a Python project, so a module opens its own settings.
-      val settingsService = ProjectSettingsService.getInstance(project)
-      if (module == null) {
-        settingsService.openProjectSettings()
-      }
-      else {
-        settingsService.openModuleSettings(module)
+      ShowSettingsUtil.getInstance().showSettingsDialog(project, PyWorkspaceStructureConfigurable::class.java) { configurable ->
+        module?.let(configurable::selectModule)
       }
     }
   }
@@ -226,18 +205,19 @@ private suspend fun Module.getQuickFixBySdkSuggestion(): FindQuickFixResult {
   // the synchronization with it replaces the module.
   // A module that is not a Python project has no suggestion, but it still needs an interpreter.
   val pyProject = asPyProject() ?: return FindQuickFixResult.ShowUserFix(null)
-  return when (val r = pyProject.getModuleSdkState()) {
-    is ModuleSdkState.HasSdk -> FindQuickFixResult.SdkAppliedAutomatically
-    is ModuleSdkState.NoSdk -> {
-      r.sdkConfigInstruction?.let { instruction ->
-        when (val r = instruction.autoConfigureSdkDoNotCreateFiles()) {
-          is InterpreterConfigurationResult.ToolNotInstalled, is InterpreterConfigurationResult.NotConfigured -> r
-          is InterpreterConfigurationResult.ParentHasNoInterpreter -> r.reason
-          is InterpreterConfigurationResult.Configured -> return FindQuickFixResult.SdkAppliedAutomatically // SDK was configured automatically (e.g. existing env attached)
-        }
-      }?.toQuickFix(this).let { FindQuickFixResult.ShowUserFix(it) }
-    }
+  val instruction = when (val r = pyProject.getModuleSdkState()) {
+    is ModuleSdkState.HasSdk -> return FindQuickFixResult.SdkAppliedAutomatically
+    is ModuleSdkState.NoSdk -> r.sdkConfigInstruction
+    // The module names an interpreter whose environment is gone: install its tool, or make the environment again.
+    is ModuleSdkState.Unavailable -> r.sdkConfigInstruction
   }
+  return instruction?.let {
+    when (val r = it.autoConfigureSdkDoNotCreateFiles()) {
+      is InterpreterConfigurationResult.ToolNotInstalled, is InterpreterConfigurationResult.NotConfigured -> r
+      is InterpreterConfigurationResult.ParentHasNoInterpreter -> r.reason
+      is InterpreterConfigurationResult.Configured -> return FindQuickFixResult.SdkAppliedAutomatically // SDK was configured automatically (e.g. existing env attached)
+    }
+  }?.toQuickFix(this).let { FindQuickFixResult.ShowUserFix(it) }
 }
 
 private sealed interface FindQuickFixResult {

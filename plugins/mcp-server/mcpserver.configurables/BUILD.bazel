@@ -1,0 +1,55 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
+
+### auto-generated section `dev intellij.mcpserver.configurables` start
+content_module_jar(module = ":mcpserver.configurables")
+### auto-generated section `dev intellij.mcpserver.configurables` end
+
+### auto-generated section `build intellij.mcpserver.configurables` start
+jvm_library(
+    name = "mcpserver.configurables",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.mcpserver.configurables",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//libraries/kotlinx/serialization/core",
+        "//libraries/kotlinx/serialization/json",
+        "//plugins/mcp-server:mcpserver",
+        "//platform/analysis-api:analysis",
+        "//platform/compose/swing-ui:swing",
+        "//platform/core-api:core",
+        "//platform/core-ui",
+        "//platform/editor-ui-api:editor-ui",
+        "//platform/ide-core",
+        "//platform/platform-impl:ide-impl",
+        "//platform/progress/shared:ide-progress",
+        "//platform/lang-impl",
+        "//platform/util",
+        "//platform/util-ex",
+        "//platform/util:util-ui",
+    ],
+)
+### auto-generated section `build intellij.mcpserver.configurables` end
+
+### auto-generated section `iml intellij.mcpserver.configurables` start
+exports_files(
+    [
+        "intellij.mcpserver.configurables.iml",
+        "resources/intellij.mcpserver.configurables.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.mcpserver.configurables` end

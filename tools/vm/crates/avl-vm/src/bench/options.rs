@@ -5,10 +5,10 @@ use std::time::Duration;
 
 use clap::{Subcommand, ValueEnum};
 
-use super::arm::{Arm, ArmKind, check_plugin_id, parse_arm};
+use super::arm::{Arm, ArmKind, Property, Twin, check_plugin_id, parse_arm};
 use super::gc::DEFAULT_KEEP;
 use super::profile::ProfileEvent;
-use super::record::CLASS_ANCHORS;
+use super::record::{CLASS_ANCHORS, FIND_QUERY_SEPARATOR};
 
 /// The plugin id of Air, which owns the gate span of the empty-editor arm.
 const AIR_PLUGIN_ID: &str = "com.intellij.air";
@@ -23,6 +23,10 @@ distribution, and takes no worker and no lease.
 welcome, open-project and project build the self-contained distribution --target with the host Bazel build. They \
 stage it with its JBR as an immutable generation under the runtime root, keyed by its digest. Every IDE run starts \
 from that generation, never from bazel-out. The answer is the summary, also in <session>/summary.json, and a text digest.
+
+The IDE starts as its own responsible process of macOS. After the gate, a run writes <run>/memory.json: the physical \
+footprint and the resident size of the IDE, of its descendants, and of the WebKit processes whose responsible process \
+is the IDE. The digest shows them in the group `memory at the gate (MB)`. A failed sample is a note of the run.
 
 A session holds a lock from its build to its summary, so a second session or a gc on this host is refused with \
 bench_busy. When AIR_VM_BIN names the vm binary, a session notes its age. A source under crates/ that is newer is a \
@@ -67,6 +71,13 @@ pub(crate) enum BenchVerb {
     /// no prime run, and the IDE opens no README, as RustRoverIndexingTest does. The gate is the first line
     /// `CargoSyncTask started` of idea.log. Its metric cargoSyncStarted is in ms from the process start, and cargoSyncStarted.ideaLog is
     /// the ms of the log, the value of rust_duration_from_start_to_cargo_sync of the RustRover perf test.
+    ///
+    /// In the find-in-files arm, every run opens the project directory, and the IDE opens no README. The command
+    /// %findInFiles of the performance plugin then searches the project scope for each --query in turn. The gate is the
+    /// end of the span `findInFiles#search: <query>` of each query. The metric findInFiles.search is the sum of their
+    /// durations, and each span is a metric with its duration and its result count. The IDE needs the performance
+    /// plugin: JetBrains Light gets it through --context-plugins. --in-place opens a large tree, such as a checkout,
+    /// where it is.
     Project(ProjectArgs),
     /// Removes the old generations: all except the --keep newest and those a session of the last 24 hours names.
     Gc(GcArgs),
@@ -140,7 +151,8 @@ pub(crate) struct RunSelection {
     #[arg(long, value_name = "DIR")]
     pub(crate) run: Option<String>,
     /// The arm whose median run the verb reads. A run that --run names must be a run of this arm. An arm is modal,
-    /// non-modal, open-project, project or empty-editor, or the twin `<arm>-without-<plugin id>` of --suppress-plugin.
+    /// non-modal, open-project, project or empty-editor, or a twin: `<arm>-without-<plugin id>` of --suppress-plugin, or
+    /// `<arm>-with-<name>=<value>` of --with-property.
     #[arg(long, value_name = "ARM", value_parser = parse_arm)]
     pub(crate) arm: Option<Arm>,
 }
@@ -196,8 +208,8 @@ pub(crate) struct ClassesArgs {
     #[arg(value_name = "SESSION", help = format!("The session: {SESSION_FORMS}"))]
     pub(crate) session: String,
     /// The arm. The default is the first arm that is not modal and has a valid run, else the modal arm. An arm is
-    /// modal, non-modal, open-project, project or empty-editor, or the twin `<arm>-without-<plugin id>` of
-    /// --suppress-plugin.
+    /// modal, non-modal, open-project, project or empty-editor, or a twin: `<arm>-without-<plugin id>` of
+    /// --suppress-plugin, or `<arm>-with-<name>=<value>` of --with-property.
     #[arg(long, value_name = "ARM", value_parser = parse_arm)]
     pub(crate) arm: Option<Arm>,
     /// The rows of each table at most. With --plugin, the plugin table holds each named plugin.
@@ -327,6 +339,11 @@ pub(crate) struct LaunchArgs {
     /// the generation, so an A/B/A run measures the base again from its own bytes.
     #[arg(long, value_name = "DIGEST", value_parser = parse_digest_prefix, conflicts_with = "target")]
     pub(crate) generation: Option<String>,
+    /// Passes `-D<NAME>=<VALUE>` to every run of the session, also to the prime runs, before the properties of the
+    /// bench and of a twin, so both win over a property of the same name. Repeatable. A value can name a path, such as
+    /// accio.binary=/opt/accio/bin/accio.
+    #[arg(long = "property", value_name = "NAME=VALUE", value_parser = Property::parse_session)]
+    pub(crate) properties: Vec<Property>,
 }
 
 #[derive(Clone, Debug, PartialEq, clap::Args)]
@@ -344,15 +361,15 @@ pub(crate) struct WelcomeArgs {
 }
 
 impl WelcomeArgs {
-    /// The arms of the session, in the interleave order: each arm of --arm, and after it its twin of
-    /// --suppress-plugin.
+    /// The arms of the session, in the interleave order: each arm of --arm, and after it its twins of
+    /// --suppress-plugin and --with-property.
     pub(crate) fn arms(&self) -> Vec<Arm> {
-        self.measure.suppress.with_twins(self.arm.arms())
+        self.measure.twins.with_twins(self.arm.arms())
     }
 }
 
-/// The options of each measured run of a session of arms: the start from the template, the profile and the suppressed
-/// plugin. A verb can replace the help of an option with its own text, which names its arms.
+/// The options of each measured run of a session of arms: the start from the template, the profile and the twins. A
+/// verb can replace the help of an option with its own text, which names its arms.
 #[derive(Clone, Debug, PartialEq, Eq, clap::Args)]
 pub(crate) struct MeasureArgs {
     /// Starts each measured run from a fresh copy of the unprimed template, and skips the prime runs.
@@ -367,7 +384,7 @@ pub(crate) struct MeasureArgs {
     #[arg(long, value_name = "EVENT", value_enum, default_value_t = ProfileEvent::Cpu, requires = "profile")]
     pub(crate) profile_event: ProfileEvent,
     #[command(flatten)]
-    pub(crate) suppress: SuppressArgs,
+    pub(crate) twins: TwinArgs,
 }
 
 /// The help of `--cold` of `bench project`, which names the arms that take it.
@@ -381,26 +398,36 @@ const PROJECT_PROFILE_HELP: &str = "Samples with async-profiler from the JVM sta
     of a sample, so it covers the whole start-up to the gate, not one span. A run whose JBR has no jcmd keeps the profile of \
     the whole run.";
 
-/// The plugin that the twin arms of a session suppress.
+/// The twins of each arm of a session: the arm without a plugin, and the arm with a system property.
 #[derive(Clone, Debug, PartialEq, Eq, clap::Args)]
-pub(crate) struct SuppressArgs {
+pub(crate) struct TwinArgs {
     /// Adds a twin to each arm: the arm `<arm>-without-<ID>`, whose runs pass `-Didea.suppressed.plugins.id=<ID>`, so the
     /// IDE loads no plugin of that id. A twin has its own prime run and its own sandbox, and its runs interleave with
     /// the runs of its arm.
     #[arg(long = "suppress-plugin", value_name = "ID", value_parser = plugin_id)]
     pub(crate) plugin: Option<String>,
+    /// Adds a twin to each arm: the arm `<arm>-with-<NAME>=<VALUE>`, whose runs pass `-D<NAME>=<VALUE>` after the
+    /// properties of the bench, so the property wins over a property of the same name. The twin has its own prime run
+    /// and its own sandbox, and its runs interleave with the runs of its arm, as a twin of --suppress-plugin.
+    #[arg(long = "with-property", value_name = "NAME=VALUE", value_parser = Property::parse)]
+    pub(crate) property: Option<Property>,
 }
 
-impl SuppressArgs {
-    /// The arms, each one followed by its twin when a plugin is suppressed.
+impl TwinArgs {
+    /// The change of each twin, in the order of the twins of an arm: the suppressed plugin, then the property.
+    fn twins(&self) -> Vec<Twin> {
+        let without = self.plugin.clone().map(Twin::Without);
+        let with = self.property.clone().map(Twin::With);
+        without.into_iter().chain(with).collect()
+    }
+
+    /// The arms, each one followed by its twins.
     pub(crate) fn with_twins(&self, arms: Vec<Arm>) -> Vec<Arm> {
-        let Some(plugin) = &self.plugin else {
-            return arms;
-        };
+        let twins = self.twins();
         arms.into_iter()
             .flat_map(|arm| {
-                let twin = arm.without(plugin);
-                [arm, twin]
+                let arm_twins: Vec<Arm> = twins.iter().map(|twin| arm.twin(twin.clone())).collect();
+                std::iter::once(arm).chain(arm_twins)
             })
             .collect()
     }
@@ -434,9 +461,27 @@ pub(crate) struct ProjectArgs {
     #[arg(long, value_name = "N", default_value_t = DEFAULT_OPEN_PROJECT_RUNS, value_parser = clap::value_parser!(u32).range(1..=50))]
     pub(crate) runs: u32,
     /// The arms of the session. `both` interleaves the project arm and the empty-editor arm. `cargo-sync` needs an IDE
-    /// with the Rust plugin, such as --target //build:rustrover_dist, and a Cargo project.
+    /// with the Rust plugin, such as --target //build:rustrover_dist, and a Cargo project. `find-in-files` needs --query
+    /// and an IDE with the performance plugin.
     #[arg(long, value_enum, default_value_t = ProjectArmChoice::Project)]
     pub(crate) arm: ProjectArmChoice,
+    /// A text that each run of the find-in-files arm finds in the project scope, repeatable, in the order of the
+    /// searches. A query cannot hold `;`, which separates the queries of %findInFiles.
+    #[arg(long = "query", value_name = "TEXT", value_parser = find_query)]
+    pub(crate) queries: Vec<String>,
+    /// A directory of the project, relative to it, or `.` for the project directory. Each run of the find-in-files arm
+    /// then searches it too, with its subdirectories, after the project scope. The span of such a search is `findInFiles#searchInDirectory: <query>`.
+    #[arg(long, value_name = "DIR", value_parser = find_directory)]
+    pub(crate) directory: Option<PathBuf>,
+    /// Opens the project directory where it is, in every run, and copies nothing into the sandbox. A tree too large to
+    /// copy, such as a checkout, needs it. The IDE writes its project files into the `.idea` of the tree.
+    #[arg(long)]
+    pub(crate) in_place: bool,
+    /// The label of a `context_plugin_dir`, such as //platform/unified:performance_testing_plugin_dir. The session builds it from
+    /// the working tree, also with --generation, and each sandbox holds its plugin directories. JetBrains Light does
+    /// not bundle the performance plugin that the find-in-files arm needs.
+    #[arg(long, value_name = "LABEL", value_parser = flag_value)]
+    pub(crate) context_plugins: Option<String>,
     #[command(flatten)]
     pub(crate) measure: MeasureArgs,
     #[command(flatten)]
@@ -450,11 +495,20 @@ impl ProjectArgs {
         self.measure.cold || self.arm == ProjectArmChoice::CargoSync
     }
 
-    /// The arms of the session, in the interleave order: each arm of --arm, and after it its twin of
-    /// --suppress-plugin. A cold session of the project arm is refused: without a prime run, no editor state is there
-    /// to restore. A twin of the empty-editor arm without Air is refused too: its gate is a span of the Air composer.
+    /// The arms of the session, in the interleave order: each arm of --arm, and after it its twins of
+    /// --suppress-plugin and --with-property. A cold session of the project arm is refused: without a prime run, no
+    /// editor state is there to restore. A twin of the empty-editor arm without Air is refused too: its gate is a span
+    /// of the Air composer.
     pub(crate) fn arms(&self) -> Result<Vec<Arm>, String> {
-        let arms = self.measure.suppress.with_twins(self.arm.arms());
+        let arms = self.measure.twins.with_twins(self.arm.arms());
+        match (self.arm == ProjectArmChoice::FindInFiles, self.queries.is_empty()) {
+            (true, true) => return Err("--arm find-in-files needs --query: a run searches for each query".to_owned()),
+            (false, false) => return Err("--query needs --arm find-in-files".to_owned()),
+            (true, false) | (false, true) => {}
+        }
+        if self.directory.is_some() && self.arm != ProjectArmChoice::FindInFiles {
+            return Err("--directory needs --arm find-in-files".to_owned());
+        }
         if self.measure.cold && arms.iter().any(|arm| arm.kind == ArmKind::Project) {
             return Err(
                 "--cold needs --arm empty-editor: the project arm restores the editor that its prime run saved, and a cold session has no prime run"
@@ -463,7 +517,7 @@ impl ProjectArgs {
         }
         if arms
             .iter()
-            .any(|arm| arm.kind == ArmKind::EmptyEditor && arm.suppressed.as_deref() == Some(AIR_PLUGIN_ID))
+            .any(|arm| arm.kind == ArmKind::EmptyEditor && arm.suppressed_plugin() == Some(AIR_PLUGIN_ID))
         {
             return Err(format!(
                 "--suppress-plugin {AIR_PLUGIN_ID} needs --arm project: the gate of the empty-editor arm is the span of the Air composer, so a run without Air never passes it"
@@ -515,6 +569,7 @@ pub(crate) enum ProjectArmChoice {
     EmptyEditor,
     Both,
     CargoSync,
+    FindInFiles,
 }
 
 impl ProjectArmChoice {
@@ -525,8 +580,38 @@ impl ProjectArmChoice {
             Self::EmptyEditor => vec![Arm::EMPTY_EDITOR],
             Self::Both => vec![Arm::PROJECT, Arm::EMPTY_EDITOR],
             Self::CargoSync => vec![Arm::CARGO_SYNC],
+            Self::FindInFiles => vec![Arm::FIND_IN_FILES],
         }
     }
+}
+
+/// Parses `--query`: a text that is not empty, has no space at its ends, and holds no `;` and no control character.
+fn find_query(value: &str) -> Result<String, String> {
+    if value.is_empty() || value.trim() != value {
+        return Err(format!("the query `{value}` is empty or has a space at an end"));
+    }
+    if let Some(character) = value
+        .chars()
+        .find(|character| *character == FIND_QUERY_SEPARATOR || character.is_control())
+    {
+        return Err(format!(
+            "the query `{value}` holds `{}`, which separates the queries of %findInFiles or ends its line",
+            character.escape_default()
+        ));
+    }
+    Ok(value.to_owned())
+}
+
+/// Parses `--directory`: a relative path without a space, which ends the path in the script, and without `..`.
+fn find_directory(value: &str) -> Result<PathBuf, String> {
+    let path = PathBuf::from(value);
+    if value.is_empty() || path.is_absolute() || value.chars().any(|character| character.is_whitespace() || character.is_control()) {
+        return Err(format!("the directory `{value}` must be a relative path without a space"));
+    }
+    if path.components().any(|component| component == std::path::Component::ParentDir) {
+        return Err(format!("the directory `{value}` leaves the project"));
+    }
+    Ok(path)
 }
 
 /// A value of an option, refused when it is another long option.

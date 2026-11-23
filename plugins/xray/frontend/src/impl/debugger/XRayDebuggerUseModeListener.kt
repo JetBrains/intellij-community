@@ -2,8 +2,10 @@
 package com.intellij.xray.frontend.impl.debugger
 
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.xdebugger.XDebugSession
 import com.intellij.xdebugger.XDebuggerManagerListener
+import com.intellij.xray.frontend.api.editorTracking.XRAY_EDITOR_TRACKING_REGISTRY_KEY
 import com.intellij.xray.frontend.impl.service.XRayModeService
 
 /**
@@ -15,6 +17,9 @@ internal class XRayDebuggerUseModeListener(private val project: Project) : XDebu
    * Updates the editor mode for the X-Ray service (`true` if debug is active, `false` otherwise).
    */
   override fun currentSessionChanged(previousSession: XDebugSession?, currentSession: XDebugSession?) {
+
+    if (!Registry.`is`(XRAY_EDITOR_TRACKING_REGISTRY_KEY)) return
+
     val service = XRayModeService.getInstance()
     service.setDebuggingUseMode(project, currentSession != null)
   }

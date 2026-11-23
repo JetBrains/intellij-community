@@ -18,6 +18,11 @@ data class PythonInterpreterFacts(
   val addedPaths: List<Path> = emptyList(),
   /** The paths that the user excluded from the interpreter. */
   val excludedPaths: Set<Path> = emptySet(),
+  /**
+   * The folders inside the roots that the user excluded, such as a `test` directory of the standard library. The
+   * interpreter library excludes them, and they stay roots of the interpreter.
+   */
+  val excludedFolders: Set<Path> = emptySet(),
 )
 
 /**

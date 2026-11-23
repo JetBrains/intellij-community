@@ -58,7 +58,6 @@ class SettingsSnapshot internal constructor(
   fun isShowingSpecialChars(): Boolean = booleanAt(Index.specialCharsShown)
   fun getAdditionalLinesCount(): Int = intAt(Index.additionalLinesCount)
   fun getAdditionalColumnsCount(): Int = intAt(Index.additionalColumnsCount)
-  fun getCharacterGridWidthMultiplier(): Float? = valueAt(Index.characterGridWidthMultiplier) as Float?
 
   fun isBlockCursor(): Boolean = booleanAt(Index.blockCursor)
   fun isFullLineHeightCursor(): Boolean = booleanAt(Index.fullLineHeightCursor)
@@ -156,7 +155,6 @@ class SettingsSnapshot internal constructor(
     val specialCharsShown: Int = indexOf(EditorSettingsState::showingSpecialCharacters)
     val additionalLinesCount: Int = indexOf(EditorSettingsState::myAdditionalLinesCount)
     val additionalColumnsCount: Int = indexOf(EditorSettingsState::myAdditionalColumnsCount)
-    val characterGridWidthMultiplier: Int = indexOf(EditorSettingsState::characterGridWidth)
     val blockCursor: Int = indexOf(EditorSettingsState::myIsBlockCursor)
     val fullLineHeightCursor: Int = indexOf(EditorSettingsState::myIsFullLineHeightCursor)
     val lineCursorWidth: Int = indexOf(EditorSettingsState::myLineCursorWidth)

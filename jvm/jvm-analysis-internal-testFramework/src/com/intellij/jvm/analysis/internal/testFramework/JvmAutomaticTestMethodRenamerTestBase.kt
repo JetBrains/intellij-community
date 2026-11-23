@@ -14,6 +14,11 @@ import java.nio.file.Path
 import kotlin.io.path.name
 import kotlin.io.path.pathString
 
+/**
+ * @deprecated Use [jvmAutomaticTestMethodRenamerFixture] in a JUnit 5 test.
+ */
+@Suppress("DEPRECATION")
+@Deprecated("Use jvmAutomaticTestMethodRenamerFixture in a JUnit 5 test")
 abstract class JvmAutomaticTestMethodRenamerTestBase : LightJvmCodeInsightFixtureTestCase() {
   override fun getProjectDescriptor(): LightProjectDescriptor {
     return object : DefaultLightProjectDescriptor() {

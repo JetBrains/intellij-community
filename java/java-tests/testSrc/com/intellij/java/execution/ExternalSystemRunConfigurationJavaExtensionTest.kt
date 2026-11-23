@@ -12,23 +12,26 @@ import com.intellij.execution.process.ProcessHandler
 import com.intellij.execution.runners.ExecutionEnvironmentBuilder
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationsManager
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfiguration
 import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.LoggedErrorProcessor
-import com.intellij.testFramework.runInEdtAndWait
-import org.hamcrest.CoreMatchers.containsString
-import org.hamcrest.CoreMatchers.hasItem
-import org.junit.Assert.assertThat
+import com.intellij.testFramework.common.timeoutRunBlocking
+import com.intellij.testFramework.junit5.TestApplication
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.Assertions.fail
+import org.junit.jupiter.api.Test
 
-class ExternalSystemRunConfigurationJavaExtensionTest : RunConfigurationJavaExtensionManagerTestCase() {
-  override fun getTestAppPath(): String = ""
-  override fun setUpModule() {
-    // do nothing
-  }
+@TestApplication
+class ExternalSystemRunConfigurationJavaExtensionTest {
+  private val execution by runConfigurationExtensionTestFixture()
 
+  @Test
   fun `test ExecutionException thrown from RunConfigurationExtension#updateJavaParameters should terminate execution`() {
-    ExtensionTestUtil.maskExtensions(RunConfigurationExtension.EP_NAME, listOf(CantUpdateJavaParametersExtension()), testRootDisposable)
+    ExtensionTestUtil.maskExtensions(RunConfigurationExtension.EP_NAME, listOf(CantUpdateJavaParametersExtension()), execution.disposable)
     val configuration = createExternalSystemRunConfiguration()
 
     LoggedErrorProcessor.executeWith<RuntimeException>(object : LoggedErrorProcessor() {
@@ -36,22 +39,25 @@ class ExternalSystemRunConfigurationJavaExtensionTest : RunConfigurationJavaExte
         // don't fail this if `LOG.error()` was called for our exception somewhere
         if (t is FakeExecutionException) Action.NONE else Action.ALL
     }) {
-      runInEdtAndWait {
-        ExecutionEnvironmentBuilder.create(DefaultRunExecutor.getRunExecutorInstance(), configuration).buildAndExecute()
+      timeoutRunBlocking {
+        withContext(Dispatchers.EDT) {
+          ExecutionEnvironmentBuilder.create(DefaultRunExecutor.getRunExecutorInstance(), configuration).buildAndExecute()
+        }
       }
 
-      val notifications = NotificationsManager.getNotificationsManager().getNotificationsOfType(Notification::class.java, project)
+      val notifications = NotificationsManager.getNotificationsManager().getNotificationsOfType(Notification::class.java, execution.project)
         .map { it.content }
-      assertThat(notifications, hasItem(containsString(FakeExecutionException.MESSAGE)))
+      assertThat(notifications).anySatisfy { assertThat(it).contains(FakeExecutionException.MESSAGE) }
     }
   }
 
+  @Test
   fun `test only applicable configuration extensions should be processed`() {
-    doTestOnlyApplicableConfigurationExtensionsShouldBeProcessed(createExternalSystemRunConfiguration())
+    doTestOnlyApplicableConfigurationExtensionsShouldBeProcessed(execution, createExternalSystemRunConfiguration())
   }
 
   private fun createExternalSystemRunConfiguration() =
-    ExternalSystemRunConfiguration(ProjectSystemId("FakeExternalSystem"), project, FakeConfigurationFactory(), "FakeConfiguration").apply {
+    ExternalSystemRunConfiguration(ProjectSystemId("FakeExternalSystem"), execution.project, FakeConfigurationFactory(), "FakeConfiguration").apply {
       settings.externalProjectPath = "" // any string to prevent NPE
     }
 
@@ -67,7 +73,7 @@ class ExternalSystemRunConfigurationJavaExtensionTest : RunConfigurationJavaExte
 
       override fun attachToProcess(configuration: RunConfigurationBase<*>, handler: ProcessHandler, runnerSettings: RunnerSettings?) {
         // 'attachToProcess' is called after 'updateJavaParameters'
-        fail("Should not be here")
+        fail<Unit>("Should not be here")
       }
     }
 

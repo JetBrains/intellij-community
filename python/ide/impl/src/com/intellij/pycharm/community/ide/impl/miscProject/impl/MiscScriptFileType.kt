@@ -1,8 +1,8 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.pycharm.community.ide.impl.miscProject.impl
 
+import com.intellij.python.sdk.backend.PythonInterpreter
 import com.intellij.openapi.application.edtWriteAction
-import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.NlsActions
 import com.intellij.psi.PsiFile
 import com.intellij.pycharm.community.ide.impl.PyCharmCommunityCustomizationBundle
@@ -22,7 +22,7 @@ object MiscScriptFileType : MiscFileType {
   override val fileName: TemplateFileName = TemplateFileName.parse("script.py")
   override val technicalNameForStatistics: @NonNls String = "script"
 
-  override suspend fun fillFile(file: PsiFile, sdk: Sdk) {
+  override suspend fun fillFile(file: PsiFile, interpreter: PythonInterpreter) {
     edtWriteAction {
       PyWelcome.writeText(file)
     }

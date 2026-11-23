@@ -5,6 +5,10 @@ import com.intellij.testFramework.TestDataFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.devkit.inspections.PluginModuleTestCase;
 
+/**
+ * @deprecated Use {@link UseEqualsFixtureKt#useEqualsFixture} in a JUnit 5 test.
+ */
+@Deprecated
 @SuppressWarnings("unused")
 public abstract class UseEqualsInspectionTestBase extends PluginModuleTestCase {
 

@@ -57,6 +57,12 @@ impl Span {
         self.tags.iter().find(|tag| tag.key == key).and_then(|tag| tag.value.as_str())
     }
 
+    /// The number of the tag `key`: a JSON number, or a string that holds one. `None` for another value.
+    pub(crate) fn number_tag(&self, key: &str) -> Option<f64> {
+        let value = &self.tags.iter().find(|tag| tag.key == key)?.value;
+        value.as_f64().or_else(|| value.as_str()?.parse().ok())
+    }
+
     /// The start of the span in milliseconds from `origin_us`, to a tenth. The origin is [`Trace::origin_us`], which a
     /// caller reads once for all spans.
     pub(crate) fn offset_ms(&self, origin_us: i64) -> f64 {

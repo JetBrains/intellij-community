@@ -7,7 +7,13 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.project.DumbAware
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
+import com.intellij.openapi.vcs.VcsBundle
+import com.intellij.openapi.vcs.VcsKey
+import com.intellij.platform.vcs.impl.shared.VcsMappingsHolder
+import com.intellij.platform.vcs.impl.shared.VcsPresentation
+import com.intellij.platform.vcs.impl.shared.VcsPresenter
 
 internal class VcsGroupsActionGroup : DefaultActionGroup(), DumbAware {
 
@@ -15,7 +21,9 @@ internal class VcsGroupsActionGroup : DefaultActionGroup(), DumbAware {
     val presentation = e.presentation
     val project = e.project
     if (project != null) {
-      presentation.text = ProjectLevelVcsManager.getInstance(project).getConsolidatedVcsName()
+      presentation.text = VcsMappingsHolder.getInstance(project).getSingleActiveVcs()
+                            ?.let { findVcsPresentation(project, it) }?.shortNameWithMnemonic
+                          ?: VcsBundle.message("vcs.generic.name.with.mnemonic")
     }
     presentation.isEnabledAndVisible = project != null && TrustedProjects.isProjectTrusted(project) && !WelcomeUtils.isWelcomeProject(project)
   }
@@ -23,4 +31,13 @@ internal class VcsGroupsActionGroup : DefaultActionGroup(), DumbAware {
   override fun getActionUpdateThread(): ActionUpdateThread {
     return ActionUpdateThread.BGT
   }
+}
+
+/**
+ * Returns the presentation of the VCS with the [vcsKey].
+ */
+internal fun findVcsPresentation(project: Project, vcsKey: VcsKey): VcsPresentation? {
+  return VcsPresenter.findPresentation(vcsKey)
+         ?: ProjectLevelVcsManager.getInstance(project).findVcsByName(vcsKey.name)
+           ?.let { VcsPresentation(it.shortNameWithMnemonic, it.isWithCustomMenu) }
 }

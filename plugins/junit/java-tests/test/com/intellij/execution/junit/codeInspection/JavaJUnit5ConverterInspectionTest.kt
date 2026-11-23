@@ -1,10 +1,23 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.junit.codeInspection
 
-import com.intellij.junit.testFramework.JUnit5ConverterInspectionTestBase
+import com.intellij.junit.testFramework.MavenTestLib.JUNIT4
+import com.intellij.junit.testFramework.MavenTestLib.JUNIT5
+import com.intellij.junit.testFramework.junit5ConverterInspectionFixture
+import com.intellij.junit.testFramework.junitProjectFixture
 import com.intellij.jvm.analysis.testFramework.JvmLanguage
+import com.intellij.testFramework.junit5.TestApplication
+import org.junit.jupiter.api.Test
 
-class JavaJUnit5ConverterInspectionTest : JUnit5ConverterInspectionTestBase() {
+@TestApplication
+class JavaJUnit5ConverterInspectionTest {
+  companion object {
+    private val projectFixture = junitProjectFixture(JUNIT4, JUNIT5)
+  }
+
+  private val myFixture by junit5ConverterInspectionFixture(projectFixture)
+
+  @Test
   fun `test qualified conversion`() {
     myFixture.testQuickFix(JvmLanguage.JAVA, """
       import org.junit.Test;
@@ -65,6 +78,7 @@ class JavaJUnit5ConverterInspectionTest : JUnit5ConverterInspectionTestBase() {
     """.trimIndent(), "Migrate to JUnit 5")
   }
 
+  @Test
   fun `test unqualified conversion`() {
     myFixture.testQuickFix(JvmLanguage.JAVA, """
       import org.junit.Test;
@@ -117,6 +131,7 @@ class JavaJUnit5ConverterInspectionTest : JUnit5ConverterInspectionTestBase() {
     """.trimIndent(), "Migrate to JUnit 5")
   }
 
+  @Test
   fun `test remove public modifier`() {
     myFixture.testQuickFix(JvmLanguage.JAVA, """
       import org.junit.Test;
@@ -141,6 +156,7 @@ class JavaJUnit5ConverterInspectionTest : JUnit5ConverterInspectionTestBase() {
     """.trimIndent(), "Migrate to JUnit 5")
   }
 
+  @Test
   fun `test expected on test annotation`() {
     myFixture.testQuickFixUnavailable(JvmLanguage.JAVA, """
       import org.junit.Test;

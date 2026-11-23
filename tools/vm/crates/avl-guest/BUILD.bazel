@@ -7,7 +7,7 @@ avl_crate(
     test_data = [":testdata"],
 )
 
-# The goldens of the lane services and the fixture agent jar. Public, because the Kotlin test of the Codex mock model
+# The goldens of the lane services and the fixture files of the fake agent and of the GenUI fixture app server. Public, because the Kotlin test of the Codex mock model
 # holds its event stream to the same golden.
 filegroup(
     name = "testdata",
@@ -23,5 +23,13 @@ filegroup(
         "src/lane/performance.rs",
         "src/lane/program.rs",
     ],
+    visibility = ["//visibility:public"],
+)
+
+# The source with the names of the directories of the ACP agent installs. The Kotlin bridge test
+# `AirLaneInstallsContractTest` holds them to the names of `AcpPaths`, so a rename on one side fails the fast lane.
+filegroup(
+    name = "agent_installs_contract_sources",
+    srcs = ["src/lane/context.rs"],
     visibility = ["//visibility:public"],
 )

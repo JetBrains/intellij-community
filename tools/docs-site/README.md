@@ -161,18 +161,20 @@ so no check runs twice there.
 
 ### The gate protocol
 
-A JUnit test runs `scripts/gate.ts` of a site on the bun that Bazel declares, `//build:bun`. The gate follows one
-protocol:
+A Rust test runs `scripts/gate.ts` of a site on the bun that Bazel declares, `//build:bun`. `scripts/gate.ts` of the
+kernel holds the protocol, and the gate of each site calls its `runGate`:
 
-- The first stdout line is the sentinel, `air-gate 1` or `build-gate 1`. The gate prints it before any check module
-  loads.
+- The first stdout line is the sentinel, `docs-gate 1`. The gate prints it before any check module loads.
 - Exit 0: the docs are valid. The records follow the sentinel, one per line, with tab-separated fields.
 - Exit 3: a check failed. The report follows the sentinel, and no record follows.
+- Exit 4: the gate could not finish, such as an OpenSpec CLI that gives no report. The report follows the sentinel.
 - Any other result, or no sentinel: an infrastructure failure, not a check failure.
 
-`air-architecture-model_test` of `plugins/air/tests/architecture-gate` runs the Air gate, and `DevDistDocsSiteTest` runs the build gate. The gate has no
-`node_modules`, so each module that it loads imports nothing from npm. `scripts/yamlCompat.ts` falls back to
-`Bun.YAML` there.
+The crate `docs-gate` of `community/build/dist-tools/crates` runs the gate and reads its output. Its test target
+takes `DOCS_GATE_DATA` and `DOCS_GATE_ENV` of `//tools/openspec:defs.bzl`. `air-architecture-model_test` of
+`plugins/air/tests/architecture-gate` runs the Air gate, and `//build/docs:docs-site_test` runs the build gate. The gate has no
+`node_modules`, so each module that it loads imports nothing from npm. `scripts/yamlCompat.ts` parses with
+`Bun.YAML` on bun, also on a machine that has the packages.
 
 ## Wiring in a site
 
@@ -235,11 +237,13 @@ module. After a kernel change, run the checks and the e2e suite of both sites.
    Set `packageManager` and `engines.node` to the kernel values.
 3. Write `site.config.ts`. Pick a new `base`, `outDir`, and `themeStorageKey`, and the doc folders, the topics, and
    the diagram kinds.
-4. Write `scripts/modelProvider.ts` and `scripts/harvest.ts`. The harvest calls `harvestDocs` and `harvestSpecs` of
-   the kernel and writes `generated/`.
+4. Write `scripts/modelProvider.ts` and `scripts/harvest.ts`. `readHarvest` calls `harvestDocs` and `harvestSpecs` of
+   the kernel and returns the harvest in memory, and `harvest` writes it to `generated/`.
 5. Write `src/main.tsx`, `src/site.tsx`, and the Home page, and add the Tailwind entry with its `@source` lines.
-6. Add the `check` script with the kernel CLIs of the Checks section, and `test:scripts` with the kernel tests.
-7. Write `scripts/gate.ts` with a new sentinel, and a JUnit test that runs it on `//build:bun`.
+6. Write `scripts/checks.ts` with the list of the checks of the site, as in `build/docs`. Its CLI is the `check`
+   script: it runs the list, and then the script tests of the site and of the kernel.
+7. Write `scripts/gate.ts` with a new sentinel. It runs the list of `scripts/checks.ts`. Add a test that runs it on
+   `//build:bun`.
 8. Add the site manifest to the list of `DocsSiteToolchainConsistencyTest`.
 9. Add a `.gitignore` with `generated/`. The root `.gitignore` already covers `out/`.
 10. Write `README.md` and `AGENTS.md`, and a dated decision record of the site that names the kernel.

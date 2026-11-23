@@ -14,7 +14,6 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.Processor
 import com.intellij.util.messages.Topic
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.TestOnly
 
@@ -68,8 +67,6 @@ abstract class ProjectLevelVcsManager {
    * Checks if all given files are managed by the specified VCS.
    */
   abstract fun checkAllFilesAreUnder(abstractVcs: AbstractVcs, files: Array<VirtualFile>): Boolean
-
-  abstract fun getConsolidatedVcsName(): @Nls String
 
   @NlsSafe
   abstract fun getShortNameForVcsRoot(file: VirtualFile): @NlsSafe String

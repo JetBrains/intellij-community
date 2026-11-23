@@ -354,7 +354,7 @@ def derive_library_target_index(
         community_root_rel):
     """[derive_library_targets], plus the owner each jar target came from.
 
-    The dev-distribution plan names the libraries a platform fragment may resolve by *name* - a project library name,
+    The distribution plan names the libraries a platform fragment may resolve by *name* - a project library name,
     or the module that declares a module library - because only this converter knows what those become as labels.
     Answering that needs the attribution the flat list throws away.
 

@@ -7,10 +7,10 @@ load("//build:host_platforms.bzl", "HOST_PLATFORMS")
 load(
     ":content_module_jar.bzl",
     "ContentModuleJarInfo",
-    "DevDistPlatformJarInfo",
+    "DistPlatformJarInfo",
     "content_module_jar",
     "content_module_jar_target_name",
-    "dev_dist_platform_jar",
+    "dist_platform_jar",
 )
 
 _TRACE_SPANS = str(Label("//platform/build-scripts/bazel-rules:trace_spans"))
@@ -154,7 +154,7 @@ _natives_test = analysistest.make(
 def _platform_jar_test_impl(ctx):
     env = analysistest.begin(ctx)
     target = analysistest.target_under_test(env)
-    info = target[DevDistPlatformJarInfo]
+    info = target[DistPlatformJarInfo]
     actions = [action for action in analysistest.target_actions(env) if action.mnemonic == "PackContentModuleJar"]
     asserts.equals(env, 1, len(actions))
     action = actions[0]
@@ -248,7 +248,7 @@ def content_module_jar_test_suite(name):
     # survive both the rule and the provider rather than collapsing to the jar's own name.
     for case, destination in [("flat", "platform-flat.jar"), ("nested", "ext/platform-nested.jar")]:
         platform_jar = name + "_platform_" + case
-        dev_dist_platform_jar(
+        dist_platform_jar(
             name = platform_jar,
             relative_output_file = destination,
             modules = [":" + first],
@@ -269,7 +269,7 @@ def content_module_jar_test_suite(name):
     patch_paths = ["META-INF/plugin.xml", "idea/ApplicationInfo.xml"]
     for file in patch_files:
         native.genrule(name = file + "_file", outs = [file], cmd = "echo '<idea-plugin/>' > $@", tags = ["manual"])
-    dev_dist_platform_jar(
+    dist_platform_jar(
         name = patched_jar,
         relative_output_file = "platform-patched.jar",
         modules = [":" + first],
@@ -289,7 +289,7 @@ def content_module_jar_test_suite(name):
 
     # A patched module that is not a member is refused at analysis.
     foreign_patch = name + "_platform_foreign_patch"
-    dev_dist_platform_jar(
+    dist_platform_jar(
         name = foreign_patch,
         relative_output_file = "platform-foreign.jar",
         modules = [":" + first],
@@ -308,7 +308,7 @@ def content_module_jar_test_suite(name):
     # library that the layout places. Its manifest follows the same rule as for any other jar.
     for case, library, library_jars in [("single", "_single_library", [first]), ("multi", "_library", [second, first])]:
         library_jar = name + "_platform_library_" + case
-        dev_dist_platform_jar(
+        dist_platform_jar(
             name = library_jar,
             relative_output_file = "platform-library-%s.jar" % case,
             libraries = [":" + name + library],
@@ -324,7 +324,7 @@ def content_module_jar_test_suite(name):
 
     # A jar with neither a module nor a library is refused at analysis.
     refused = name + "_platform_refused_empty"
-    dev_dist_platform_jar(
+    dist_platform_jar(
         name = refused,
         relative_output_file = "platform-refused.jar",
         tags = ["manual"],

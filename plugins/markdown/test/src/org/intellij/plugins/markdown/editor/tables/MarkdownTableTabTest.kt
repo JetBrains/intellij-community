@@ -1,14 +1,25 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.plugins.markdown.editor.tables
 
-import com.intellij.testFramework.LightPlatformCodeInsightTestCase
-import org.junit.Test
-import org.junit.runner.RunWith
-import org.junit.runners.JUnit4
+import com.intellij.openapi.application.EDT
+import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightModuleFixture
+import com.intellij.testFramework.common.timeoutRunBlocking
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.fixture.projectFixture
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import org.intellij.plugins.markdown.editor.executeAction
+import org.junit.jupiter.api.Test
 
-@RunWith(JUnit4::class)
+@TestApplication
 @Suppress("MarkdownIncorrectTableFormatting")
-class MarkdownTableTabTest: LightPlatformCodeInsightTestCase() {
+class MarkdownTableTabTest {
+  companion object {
+    private val projectFixture = projectFixture(openAfterCreation = true)
+  }
+
+  private val myFixture by codeInsightModuleFixture(projectFixture)
+
   @Test
   fun `test single tab forward`() {
     // language=Markdown
@@ -132,14 +143,16 @@ class MarkdownTableTabTest: LightPlatformCodeInsightTestCase() {
     doTest(before, after, count = 2)
   }
 
-  private fun doTest(content: String, expected: String, count: Int = 1, forward: Boolean = true) {
-    configureFromFileText("some.md", content)
-    repeat(count) {
-      when {
-        forward -> executeAction("EditorTab")
-        else -> executeAction("EditorUnindentSelection")
+  private fun doTest(content: String, expected: String, count: Int = 1, forward: Boolean = true): Unit = timeoutRunBlocking {
+    myFixture.configureByText("some.md", content)
+    withContext(Dispatchers.EDT) {
+      repeat(count) {
+        when {
+          forward -> myFixture.executeAction("EditorTab")
+          else -> myFixture.executeAction("EditorUnindentSelection")
+        }
       }
+      myFixture.checkResult(expected)
     }
-    checkResultByText(expected)
   }
 }

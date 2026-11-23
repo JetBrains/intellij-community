@@ -222,6 +222,40 @@ impl Scanner {
         }
     }
 
+    /// Bazel writes `exited with error code N` with no stack when the runner stopped before it reported a test, and it
+    /// puts the log of the runner into `<system-out>`. The last exception of that log, with its frames, then becomes the
+    /// message and the detail of that case, so that the digest names the cause. `start` is the index of `<system-out`.
+    fn read_runner_crash(&mut self, xml: &str, start: usize) {
+        if self.crashed_case().is_none() {
+            return;
+        }
+        let Some(tag_end) = find_tag_end(xml, start).filter(|tag_end| !xml[..*tag_end].ends_with('/')) else {
+            return;
+        };
+        let output = element_text(xml, tag_end + 1, "system-out").content;
+        let Some((exception, frames)) = last_exception(&output) else {
+            return;
+        };
+        if let Some(failure) = self.crashed_case().and_then(|case| case.failure.as_mut()) {
+            let message = failure.message.take().unwrap_or_default();
+            failure.message = Some(format!("{message}; the runner threw {exception}"));
+            failure.detail = frames;
+        }
+    }
+
+    /// The case whose failure is only Bazel's `exited with error code N`: the open case, or a case of the open suite.
+    fn crashed_case(&mut self) -> Option<&mut TestCase> {
+        let is_crash = |case: &TestCase| {
+            case.failure
+                .as_ref()
+                .is_some_and(|failure| failure.detail.trim().is_empty() && failure.message.as_deref().and_then(wrapper_exit_code).is_some())
+        };
+        if self.pending.as_ref().is_some_and(is_crash) {
+            return self.pending.as_mut();
+        }
+        self.current.as_mut()?.cases.iter_mut().find(|case| is_crash(case))
+    }
+
     fn finish_pending(&mut self) {
         if let Some(case) = self.pending.take() {
             self.finish_case(case);
@@ -329,6 +363,9 @@ fn scan(xml: &str) -> (Vec<Suite>, Integrity) {
     while let Some(next) = xml[index..].find('<') {
         index += next;
 
+        if xml[index..].starts_with("<system-out") {
+            state.read_runner_crash(xml, index);
+        }
         if let Some(skip) = skip_opaque(xml, index) {
             if let Some(description) = skip.unterminated {
                 state.note_truncated(format!("unterminated {description}"));
@@ -503,6 +540,33 @@ fn scan(xml: &str) -> (Vec<Suite>, Integrity) {
     }
     let integrity = state.integrity();
     (state.suites, integrity)
+}
+
+/// The last exception line of a log, such as `java.lang.IllegalArgumentException: text`, and the `at` frames after it,
+/// one per line.
+fn last_exception(log: &str) -> Option<(String, String)> {
+    const MAIN_THREAD: &str = "Exception in thread \"main\" ";
+    let lines: Vec<&str> = log.lines().map(|line| line.trim().trim_start_matches(MAIN_THREAD)).collect();
+    let start = lines.iter().rposition(|line| is_exception_line(line))?;
+    let frames: Vec<&str> = lines[start + 1..]
+        .iter()
+        .copied()
+        .take_while(|line| line.starts_with("at ") || line.starts_with("..."))
+        .filter(|line| line.starts_with("at "))
+        .collect();
+    Some((lines[start].to_owned(), frames.join("\n")))
+}
+
+/// Whether a line starts with the dotted name of a throwable class, then `:` or the end: `a.b.FooException: text`.
+fn is_exception_line(line: &str) -> bool {
+    let name = line.split_once(':').map_or(line, |(name, _)| name);
+    let identifier = |segment: &str| {
+        segment.starts_with(|first: char| first.is_ascii_alphabetic() || first == '_' || first == '$')
+            && segment
+                .chars()
+                .all(|char| char.is_ascii_alphanumeric() || char == '_' || char == '$')
+    };
+    name.contains('.') && name.split('.').all(identifier) && ["Exception", "Error", "Throwable"].iter().any(|suffix| name.ends_with(suffix))
 }
 
 /// The exit code in Bazel's `exited with error code N`.

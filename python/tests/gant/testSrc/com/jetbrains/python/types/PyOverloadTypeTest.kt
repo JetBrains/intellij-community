@@ -352,6 +352,43 @@ class PyOverloadTypeTest : PyCodeInsightTestCase() {
       #    │         ^^^ WARNING No overload of 'conv' matches the arguments. Argument types: (int | str). Expected one of: (x: int), (x: str) FIXME
       #    └ TYPE UnsafeUnion[int, str] FIXME int | str
       """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-92229"])
+    fun `overloaded callable argument binds a type parameter with any matching overload`() = test("""
+      from typing import Callable, overload
+
+      @overload
+      def takes(x: int) -> None: ...
+      @overload
+      def takes(x: str) -> None: ...
+      def takes(x): ...
+
+      def upper_first[T](cb: Callable[[T], None], x: T) -> None: ...
+      def lower_first[T](x: T, cb: Callable[[T], None]) -> None: ...
+
+      upper_first(takes, "")
+      lower_first("", takes)
+      lower_first(b"", takes)
+      #                ^^^^^ WARNING Expected type '(bytes) -> None' (matched generic type '(T) -> None'), got 'Overload[(x: int) -> None, (x: str) -> None]' instead
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-92229"])
+    fun `overloaded callable argument with one matching overload binds a type parameter from its side`() = test("""
+      from typing import Callable, overload
+
+      @overload
+      def takes(x: int) -> None: ...
+      @overload
+      def takes(x: bytes, y: int) -> None: ...
+      def takes(x, y=0): ...
+
+      def upper_first[T](cb: Callable[[T], None], x: T) -> None: ...
+
+      upper_first(takes, 1)
+      upper_first(takes, "") # WARNING Expected type 'int' (matched generic type 'T'), got 'Literal[""]' instead
+      """.trimIndent())
   }
 
   @Nested
@@ -481,6 +518,99 @@ class PyOverloadTypeTest : PyCodeInsightTestCase() {
                 @classmethod
                 def now(cls: Type[T], tz: int = ...) -> T: ...
         """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-94223"])
+    fun `overloaded call in a collection literal selects the matching overload`() = test("""
+      from typing import overload
+
+      @overload
+      def conv(x: int) -> int: ...
+      @overload
+      def conv(x: str) -> str: ...
+      def conv(x: int | str) -> int | str:
+          return x
+
+      in_list = [conv(1)]
+      #└ TYPE list[int]
+      in_set = {conv("a")}
+      #└ TYPE set[str]
+      in_tuple = (conv(1), conv("a"))
+      #└ TYPE tuple[int, str]
+
+      def ident[T](x: T) -> T: ...
+
+      generic_argument = [conv(ident("a"))]
+      #└ TYPE list[str]
+      generic_overload_argument = [conv(conv(1))]
+      #└ TYPE list[int]
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-94223"])
+    fun `overloaded generic method call in a collection literal selects the matching overload`() = test("""
+      renames: dict[str, str] = {}
+      k = "a"
+
+      in_list = [renames.get(k, k)]
+      #└ TYPE list[str]
+      in_tuple = (renames.get(k), renames.get(k, k))
+      #└ TYPE tuple[str | None, str]
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-94223"])
+    fun `call of a union callee in a collection literal selects the matching overload of each member`() = test("""
+      from typing import overload
+
+      @overload
+      def conv(x: int) -> int: ...
+      @overload
+      def conv(x: str) -> str: ...
+      def conv(x: int | str) -> int | str:
+          return x
+
+      def to_bytes(x: int) -> bytes: ...
+      def to_str(x: int) -> str: ...
+
+      def f(flag: bool):
+          overload_or_function = conv if flag else to_bytes
+          in_list = [overload_or_function(1)]
+          #└ TYPE list[int | bytes]
+          two_functions = to_bytes if flag else to_str
+          in_tuple = (two_functions(1), conv(1))
+          #└ TYPE tuple[bytes | str, int]
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-94223"])
+    fun `overloaded call in a tuple of a generator passed to sorted`() = test("""
+      def make_query() -> list[tuple[str, str | int]]:
+          return [("b", 2), ("a", "x")]
+
+      renames: dict[str, str] = {"a": "alpha"}
+
+      query = sorted(
+          ((renames.get(k, k), v) for k, v in make_query()),
+      #                └ TYPE str
+          key=lambda item: item[0],
+      )
+
+
+      class Builder:
+          def __init__(self, renames_: dict[str, str]) -> None:
+              self.renames = renames_
+
+          def _make_query(self, **kwargs: str | int) -> list[tuple[str, str | int]]:
+              return list(kwargs.items())
+
+          def build(self, **kwargs: str | int) -> list[tuple[str, str | int]]:
+              keys = self.renames
+              return sorted(
+                  ((keys.get(k, k), v) for k, v in self._make_query(**kwargs)),
+                  key=lambda item: item[0],
+              )
+      """.trimIndent())
   }
 
   @Nested

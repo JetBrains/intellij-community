@@ -16,17 +16,17 @@ import org.jetbrains.annotations.ApiStatus
 private val LIVE_PREVIEW_SPEC_SET_FLOW = Key.create<MutableStateFlow<MarkdownLivePreviewSpecSet?>>("markdown.live.preview.spec.set.flow")
 
 /**
- * Set when the frontend of an editor asks for live-preview specs.
- * The key is separate from the shared live-preview flag, so a late request never overwrites a newer frontend state.
+ * Holds the configuration of the live-preview specs that the frontend of an editor asks for.
+ * The key is separate from the shared live-preview state, so a late request never overwrites a newer frontend state.
  */
-private val LIVE_PREVIEW_REQUESTED = Key.create<Boolean>("markdown.live.preview.requested")
+private val LIVE_PREVIEW_REQUESTED = Key.create<MarkdownLivePreviewConfiguration>("markdown.live.preview.requested")
 
 internal fun Editor.livePreviewSpecSetFlow(): MutableStateFlow<MarkdownLivePreviewSpecSet?> {
   return (this as UserDataHolderEx).getOrCreateUserData(LIVE_PREVIEW_SPEC_SET_FLOW) { MutableStateFlow(null) }
 }
 
-internal fun Editor.isLivePreviewRequested(): Boolean {
-  return getUserData(LIVE_PREVIEW_REQUESTED) == true
+internal fun Editor.requestedLivePreviewConfiguration(): MarkdownLivePreviewConfiguration? {
+  return getUserData(LIVE_PREVIEW_REQUESTED)
 }
 
 @ApiStatus.Internal
@@ -36,11 +36,12 @@ class MarkdownLivePreviewRemoteApiImpl : MarkdownLivePreviewRemoteApi {
     return specSets.dropWhile { it == null }.toRpc()
   }
 
-  override suspend fun setLivePreviewSupport(editorId: EditorId, enabled: Boolean) {
+  override suspend fun setLivePreviewSupport(editorId: EditorId, configuration: MarkdownLivePreviewConfiguration?) {
     val editor = editorId.findEditorOrNull() ?: return
-    editor.putUserData(LIVE_PREVIEW_REQUESTED, enabled)
-    if (enabled) {
-      editor.publishCurrentLivePreviewSpecs()
+    val previous = editor.requestedLivePreviewConfiguration()
+    editor.putUserData(LIVE_PREVIEW_REQUESTED, configuration)
+    if (configuration != null) {
+      editor.publishCurrentLivePreviewSpecs(force = previous != configuration)
     }
   }
 

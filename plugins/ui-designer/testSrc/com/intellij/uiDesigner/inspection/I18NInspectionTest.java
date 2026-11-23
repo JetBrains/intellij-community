@@ -19,19 +19,27 @@ import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.codeInspection.i18n.I18nInspection;
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.testFramework.InspectionsKt;
-import com.intellij.testFramework.JavaInspectionTestCase;
+import com.intellij.testFramework.JavaInspectionFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.intellij.uiDesigner.i18n.I18nFormInspection;
+import org.junit.jupiter.api.Test;
 
-public class I18NInspectionTest extends JavaInspectionTestCase {
-  @Override
-  protected String getTestDataPath() {
-    return PluginPathManager.getPluginHomePath("ui-designer") + "/testData/inspection";
-  }
+import static com.intellij.testFramework.JavaInspectionFixtureKt.javaInspectionFixture;
+import static com.intellij.testFramework.JavaInspectionFixtureKt.javaInspectionProjectFixture;
 
+@TestApplication
+public class I18NInspectionTest {
+  private static final TestFixture<LightJavaProject> projectFixture = javaInspectionProjectFixture();
+  private final TestFixture<JavaInspectionFixture> javaInspection = javaInspectionFixture(projectFixture, PluginPathManager.getPluginHomePath("ui-designer") + "/testData/inspection");
+
+
+  @Test
   public void testFormTabbedPaneTitle() {
     LocalInspectionToolWrapper wrapper = new LocalInspectionToolWrapper(new I18nFormInspection());
-    InspectionsKt.enableInspectionTool(getProject(), wrapper, getTestRootDisposable());
-    doTest("i18n/" + getTestName(true), new LocalInspectionToolWrapper(new I18nInspection()), false, false,
+    InspectionsKt.enableInspectionTool(javaInspection.get().getFixture().getProject(), wrapper, javaInspection.get().getFixture().getTestRootDisposable());
+    javaInspection.get().doTest("i18n/" + javaInspection.get().getTestName(true), new LocalInspectionToolWrapper(new I18nInspection()), false, false,
            wrapper);
   }
 }

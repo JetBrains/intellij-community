@@ -1,17 +1,24 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.junit.kotlin.codeInspection
 
+import com.intellij.execution.junit.kotlin.kotlinJUnitProjectFixture
 import com.intellij.idea.IJIgnore
-import com.intellij.junit.testFramework.HamcrestAssertionsConverterInspectionTestBase
+import com.intellij.junit.testFramework.MavenTestLib.HAMCREST
+import com.intellij.junit.testFramework.MavenTestLib.JUNIT4
+import com.intellij.junit.testFramework.hamcrestAssertionsConverterInspectionFixture
 import com.intellij.jvm.analysis.testFramework.JvmLanguage
-import org.jetbrains.kotlin.idea.test.ConfigLibraryUtil
+import com.intellij.testFramework.junit5.TestApplication
+import org.junit.jupiter.api.Test
 
-abstract class KotlinHamcrestAssertionsConverterInspectionTest : HamcrestAssertionsConverterInspectionTestBase() {
-  override fun setUp() {
-    super.setUp()
-    ConfigLibraryUtil.configureKotlinRuntime(myFixture.module)
+@TestApplication
+abstract class KotlinHamcrestAssertionsConverterInspectionTest {
+  companion object {
+    private val projectFixture = kotlinJUnitProjectFixture(JUNIT4, HAMCREST)
   }
 
+  protected val myFixture by hamcrestAssertionsConverterInspectionFixture(projectFixture)
+
+  @Test
   fun `test highlighting`() {
     myFixture.testHighlighting(JvmLanguage.KOTLIN, """
       import org.junit.Assert
@@ -55,6 +62,7 @@ abstract class KotlinHamcrestAssertionsConverterInspectionTest : HamcrestAsserti
   }
 
   @IJIgnore(issue = "KTIJ-37248")
+  @Test
   fun `test quickfix nested expression`() {
     myFixture.testAllQuickfixes(JvmLanguage.KOTLIN, """
       import org.junit.Assert
@@ -89,6 +97,7 @@ abstract class KotlinHamcrestAssertionsConverterInspectionTest : HamcrestAsserti
     """.trimIndent(), "Replace with 'assertThat()'")
   }
 
+  @Test
   fun `test quickfix binary expression`() {
     myFixture.testAllQuickfixes(JvmLanguage.KOTLIN, """
       import org.junit.Assert
@@ -131,6 +140,7 @@ abstract class KotlinHamcrestAssertionsConverterInspectionTest : HamcrestAsserti
     """.trimIndent(), "Replace with 'assertThat()'")
   }
 
+  @Test
   fun `test quickfix string`() {
     myFixture.testAllQuickfixes(JvmLanguage.KOTLIN, """
       import org.junit.Assert
@@ -159,6 +169,7 @@ abstract class KotlinHamcrestAssertionsConverterInspectionTest : HamcrestAsserti
     """.trimIndent(), "Replace with 'assertThat()'")
   }
 
+  @Test
   fun `test quickfix collection`() {
     myFixture.testAllQuickfixes(JvmLanguage.KOTLIN, """
       import org.junit.Assert
@@ -191,6 +202,7 @@ abstract class KotlinHamcrestAssertionsConverterInspectionTest : HamcrestAsserti
     """.trimIndent(), "Replace with 'assertThat()'")
   }
 
+  @Test
   fun `test quickfix array`() {
     myFixture.testAllQuickfixes(JvmLanguage.KOTLIN, """
       import org.junit.Assert

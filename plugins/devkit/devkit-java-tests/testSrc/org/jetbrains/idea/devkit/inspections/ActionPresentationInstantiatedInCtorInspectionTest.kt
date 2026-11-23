@@ -2,29 +2,40 @@
 package org.jetbrains.idea.devkit.inspections
 
 import com.intellij.testFramework.TestDataPath
+import com.intellij.testFramework.junit5.TestApplication
 import org.jetbrains.idea.devkit.DevkitJavaTestsUtil
-
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 
 @TestDataPath("\$CONTENT_ROOT/testData/inspections/actionPresentationInstantiatedInCtor")
-internal class ActionPresentationInstantiatedInCtorInspectionTest : ActionPresentationInstantiatedInCtorInspectionTestBase() {
-
-  override fun getBasePath(): String = DevkitJavaTestsUtil.TESTDATA_PATH + "inspections/actionPresentationInstantiatedInCtor/"
-  override fun getFileExtension(): String = "java"
-
-  override fun setUp() {
-    super.setUp()
-    setPluginXml("plugin.xml")
+@TestApplication
+internal class ActionPresentationInstantiatedInCtorInspectionTest {
+  companion object {
+    private val projectFixture = pluginModuleProjectFixture()
   }
 
-  fun testDefaultCtorNegative() { doTest() }
+  private val actionPresentation by actionPresentationInstantiatedInCtorFixture(projectFixture, "java", DevkitJavaTestsUtil.TESTDATA_PATH + "inspections/actionPresentationInstantiatedInCtor/")
 
-  fun testDefaultCtorPositive() { doTest() }
+  @BeforeEach
+  fun setUp() {
+    actionPresentation.setPluginXml("plugin.xml")
+  }
 
-  fun testThisCall() { doTest() }
+  @Test
+  fun testDefaultCtorNegative() { actionPresentation.doTest() }
 
-  fun testUnregisteredAction() { doTest() }
+  @Test
+  fun testDefaultCtorPositive() { actionPresentation.doTest() }
 
-  fun testNewExpressionNegative() { doTest() }
+  @Test
+  fun testThisCall() { actionPresentation.doTest() }
 
-  fun testNewExpressionPositive() { doTest() }
+  @Test
+  fun testUnregisteredAction() { actionPresentation.doTest() }
+
+  @Test
+  fun testNewExpressionNegative() { actionPresentation.doTest() }
+
+  @Test
+  fun testNewExpressionPositive() { actionPresentation.doTest() }
 }

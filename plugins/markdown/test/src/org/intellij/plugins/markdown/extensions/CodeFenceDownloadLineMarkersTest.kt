@@ -4,45 +4,50 @@ package org.intellij.plugins.markdown.extensions
 import com.intellij.codeInsight.daemon.LineMarkerInfo
 import com.intellij.codeInsight.daemon.impl.LineMarkersPass.getDisplayedLineMarkers
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.application.readAction
+import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightModuleFixture
 import com.intellij.psi.util.PsiUtilCore
-import com.intellij.testFramework.fixtures.BasePlatformTestCase
-import com.intellij.testFramework.rules.TempDirectory
+import com.intellij.testFramework.PlatformTestUtil
+import com.intellij.testFramework.common.timeoutRunBlocking
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.TestDisposable
+import com.intellij.testFramework.junit5.fixture.projectFixture
+import org.assertj.core.api.Assertions.assertThat
 import org.intellij.plugins.markdown.MarkdownBundle
 import org.intellij.plugins.markdown.MarkdownTestingUtil
 import org.intellij.plugins.markdown.extensions.common.plantuml.PlantUMLCodeGeneratingProvider
 import org.intellij.plugins.markdown.lang.MarkdownTokenTypes
-import org.junit.Rule
-import org.junit.Test
-import org.junit.rules.ExternalResource
-import org.junit.rules.RuleChain
-import org.junit.rules.TestRule
-import org.junit.runner.RunWith
-import org.junit.runners.JUnit4
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.TestInfo
+import org.junit.jupiter.api.io.TempDir
+import java.nio.file.Path
 
-@RunWith(JUnit4::class)
-abstract class CodeFenceDownloadLineMarkersTest(createFakeFiles: Boolean): BasePlatformTestCase() {
-  private val tempDirectory = TempDirectory()
+@TestApplication
+abstract class CodeFenceDownloadLineMarkersTest(private val createFakeFiles: Boolean) {
+  companion object {
+    private val projectFixture = projectFixture(openAfterCreation = true)
+  }
 
-  @Rule
-  @JvmField
-  val rules: TestRule = RuleChain.outerRule(tempDirectory).around(SetupRule(tempDirectory, createFakeFiles))
+  protected val myFixture by codeInsightModuleFixture(projectFixture)
 
-  private class SetupRule(private val tempDirectory: TempDirectory, private val createFakeFiles: Boolean): ExternalResource() {
-    private var disposable: Disposable? = null
+  @TestDisposable
+  lateinit var disposable: Disposable
 
-    override fun before() {
-      disposable = Disposer.newDisposable()
-      ExtensionTestingUtil.mockPathManager(tempDirectory.newDirectoryPath(), disposable!!)
-      if (createFakeFiles) {
-        val plantUmlExtension = MarkdownExtensionsUtil.findCodeFenceGeneratingProvider<PlantUMLCodeGeneratingProvider>()!!
-        ExtensionTestingUtil.createFakeExternalFiles(plantUmlExtension)
-      }
-    }
+  @TempDir
+  lateinit var tempDirectory: Path
 
-    override fun after() {
-      disposable?.let(Disposer::dispose)
-      disposable = null
+  private lateinit var testName: String
+
+  @BeforeEach
+  fun setUpExternalFiles(testInfo: TestInfo) {
+    testName = PlatformTestUtil.getTestName(testInfo.testMethod.get().name, false).trimStart().replace(' ', '_')
+    myFixture.testDataPath = "${MarkdownTestingUtil.TEST_DATA_PATH}/lineMarkers/"
+    ExtensionTestingUtil.mockPathManager(tempDirectory, disposable)
+    if (createFakeFiles) {
+      val plantUmlExtension = MarkdownExtensionsUtil.findCodeFenceGeneratingProvider<PlantUMLCodeGeneratingProvider>()!!
+      ExtensionTestingUtil.createFakeExternalFiles(plantUmlExtension)
     }
   }
 
@@ -56,10 +61,10 @@ abstract class CodeFenceDownloadLineMarkersTest(createFakeFiles: Boolean): BaseP
   }
 
   @Test
-  fun `plantuml single fence`() = doTest(1, ::plantumlPredicate)
+  fun `plantuml single fence`(): Unit = doTest(1, ::plantumlPredicate)
 
   @Test
-  fun `plantuml multiple fences`() = doTest(3, ::plantumlPredicate)
+  fun `plantuml multiple fences`(): Unit = doTest(3, ::plantumlPredicate)
 
   protected fun plantumlPredicate(markerInfo: LineMarkerInfo<*>): Boolean {
     return markerInfo.lineMarkerTooltip == MarkdownBundle.message("markdown.extensions.plantuml.download.line.marker.text")
@@ -72,24 +77,19 @@ abstract class CodeFenceDownloadLineMarkersTest(createFakeFiles: Boolean): BaseP
   protected open fun doTest(expectedCount: Int, predicate: (LineMarkerInfo<*>) -> Boolean) {
     configureContent()
     myFixture.doHighlighting()
-    val allMarkers = getDisplayedLineMarkers(myFixture.editor.document, myFixture.project)
-    val markers = allMarkers.filter(predicate)
-    assertSize(expectedCount, markers)
-    for (info in markers) {
-      assertEquals(MarkdownTokenTypes.FENCE_LANG, PsiUtilCore.getElementType(info.element))
+    timeoutRunBlocking {
+      readAction {
+        val allMarkers = getDisplayedLineMarkers(myFixture.editor.document, myFixture.project)
+        val markers = allMarkers.filter(predicate)
+        assertThat(markers).hasSize(expectedCount)
+        for (info in markers) {
+          assertEquals(MarkdownTokenTypes.FENCE_LANG, PsiUtilCore.getElementType(info.element))
+        }
+      }
     }
   }
 
   protected fun getTestFileName(): String {
-    return "${getTestName(false)}.md"
-  }
-
-  override fun getTestName(lowercaseFirstLetter: Boolean): String {
-    val name = super.getTestName(lowercaseFirstLetter)
-    return name.trimStart().replace(' ', '_')
-  }
-
-  override fun getTestDataPath(): String {
-    return "${MarkdownTestingUtil.TEST_DATA_PATH}/lineMarkers/"
+    return "$testName.md"
   }
 }

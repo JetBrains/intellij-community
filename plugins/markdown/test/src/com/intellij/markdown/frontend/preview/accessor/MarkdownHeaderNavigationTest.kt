@@ -3,7 +3,6 @@ package com.intellij.markdown.frontend.preview.accessor
 
 import com.intellij.ide.vfs.rpcId
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.FileEditorProvider
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider
@@ -14,6 +13,7 @@ import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.testFramework.junit5.fixture.psiFileFixture
 import com.intellij.testFramework.junit5.fixture.sourceRootFixture
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.withContext
 import org.intellij.plugins.markdown.dto.MarkdownHeaderInfo
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -46,20 +46,20 @@ internal class MarkdownHeaderNavigationTest {
     val targetOffset = 9
     val header = MarkdownHeaderInfo("Target", filePath, file.name, 2, targetOffset, file.rpcId())
 
-    withContext(Dispatchers.EDT) {
-      val manager = FileEditorManager.getInstance(project)
-      file.putUserData(FileEditorProvider.KEY, TextEditorProvider.getInstance())
-      try {
-        runReadAction {
-          MarkdownLinkOpenerUtil.navigateToHeader(project, header)
-        }
+    file.putUserData(FileEditorProvider.KEY, TextEditorProvider.getInstance())
+    try {
+      MarkdownLinkOpenerUtil.navigateToHeaderAsync(project, header)
+      withContext(Dispatchers.EDT) {
+        val manager = FileEditorManager.getInstance(project)
         assertEquals(listOf(file), manager.selectedFiles.toList())
         assertEquals(targetOffset, manager.selectedTextEditor?.caretModel?.offset)
       }
-      finally {
-        manager.closeFile(file)
-        file.putUserData(FileEditorProvider.KEY, null)
+    }
+    finally {
+      withContext(Dispatchers.EDT + NonCancellable) {
+        FileEditorManager.getInstance(project).closeFile(file)
       }
+      file.putUserData(FileEditorProvider.KEY, null)
     }
   }
 }

@@ -889,6 +889,105 @@ c:com.intellij.refactoring.memberPushDown.PushDownProcessor
 - isAnswered(com.intellij.refactoring.modplan.ModPlanOptionValues):Z
 - isConfirmed(com.intellij.refactoring.modplan.ModPlanOptionValues):Z
 - options():java.util.List
+*c:com.intellij.refactoring.modplan.rename.ModPlanBridgeRenameProvider
+- com.intellij.refactoring.modplan.rename.ModPlanRenameProviderBase
+- p:<init>(java.lang.Class):V
+- p:analyze(com.intellij.psi.PsiElement,java.lang.String,java.util.List,java.util.Map):com.intellij.refactoring.modplan.ModPlanAnalysisResult
+- p:core(com.intellij.psi.PsiElement):com.intellij.refactoring.rename.RenamePsiElementProcessorCore
+- isOwner(com.intellij.model.SymbolPointer):Z
+- p:nameConflicts(com.intellij.psi.PsiElement,java.lang.String,java.util.Map):com.intellij.util.containers.MultiMap
+- p:prepareRenaming(com.intellij.psi.PsiElement,java.lang.String,java.util.Map,com.intellij.refactoring.modplan.ModPlanOptionValues):V
+- searchStorage(com.intellij.model.SymbolPointer):com.intellij.refactoring.modplan.ModPlanQuestion$Storage
+- p:substitute(com.intellij.psi.PsiElement,com.intellij.refactoring.modplan.ModPlanOptionValues):com.intellij.psi.PsiElement
+- p:usagesOf(com.intellij.psi.PsiElement,java.lang.String,com.intellij.refactoring.modplan.ModPlanRequest,java.util.Map):java.util.List
+*f:com.intellij.refactoring.modplan.rename.ModPlanRenameOptions
+- sf:CHOOSE_RELATED:com.intellij.refactoring.modplan.ModPlanOption
+- sf:NEW_NAME:com.intellij.refactoring.modplan.ModPlanOption
+- sf:RELATED_RENAMES:com.intellij.refactoring.modplan.ModPlanOption
+- sf:RENAME_RELATED:com.intellij.refactoring.modplan.ModPlanOption
+- sf:SEARCH_IN_COMMENTS:com.intellij.refactoring.modplan.ModPlanOption
+- sf:SEARCH_TEXT_OCCURRENCES:com.intellij.refactoring.modplan.ModPlanOption
+- sf:SKIP_READ_ONLY_USAGES:com.intellij.refactoring.modplan.ModPlanOption
+- sf:SUBSTITUTE_TARGET:com.intellij.refactoring.modplan.ModPlanOption
+- s:newNameOfSubject(I):com.intellij.refactoring.modplan.ModPlanOption
+- s:optionForRenamer(com.intellij.refactoring.rename.naming.AutomaticRenamerFactory):com.intellij.refactoring.modplan.ModPlanOption
+- s:relatedRename(com.intellij.psi.PsiElement,java.lang.String):java.lang.String
+- s:withRenamersOfSettings(com.intellij.refactoring.modplan.ModPlanOptionValues):com.intellij.refactoring.modplan.ModPlanOptionValues
+*:com.intellij.refactoring.modplan.rename.ModPlanRenameProvider
+- sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
+- a:analyze(com.intellij.model.SymbolPointer,com.intellij.refactoring.modplan.rename.ModPlanRenameProvider$ElementsForRename,java.util.List):com.intellij.refactoring.modplan.ModPlanAnalysisResult
+- a:findUsages(com.intellij.model.SymbolPointer,com.intellij.refactoring.modplan.rename.ModPlanRenameProvider$ElementsForRename,com.intellij.refactoring.modplan.ModPlanRequest):java.util.List
+- a:isOwner(com.intellij.model.SymbolPointer):Z
+- prepare(com.intellij.refactoring.modplan.ModPlanChainBuilder,com.intellij.model.SymbolPointer,com.intellij.refactoring.modplan.rename.ModPlanRenameProvider$ElementsForRename):com.intellij.refactoring.modplan.ModPlanChain
+- renamers(com.intellij.model.SymbolPointer,com.intellij.refactoring.modplan.rename.ModPlanRenameProvider$ElementsForRename,java.util.List,java.util.List):java.util.List
+- searchStorage(com.intellij.model.SymbolPointer):com.intellij.refactoring.modplan.ModPlanQuestion$Storage
+- a:substituteRequest(com.intellij.refactoring.modplan.ModPlanChainBuilder,com.intellij.model.SymbolPointer,java.lang.String):com.intellij.refactoring.modplan.ModPlanChain
+*f:com.intellij.refactoring.modplan.rename.ModPlanRenameProvider$ElementsForRename
+- sf:EMPTY:com.intellij.refactoring.modplan.rename.ModPlanRenameProvider$ElementsForRename
+- elements():java.util.Map
+- newNameOf(com.intellij.model.SymbolPointer):java.lang.String
+- s:of(com.intellij.model.SymbolPointer,java.lang.String):com.intellij.refactoring.modplan.rename.ModPlanRenameProvider$ElementsForRename
+- plus(com.intellij.refactoring.modplan.rename.ModPlanRenameProvider$ElementsForRename):com.intellij.refactoring.modplan.rename.ModPlanRenameProvider$ElementsForRename
+- subjects():java.util.List
+- without(com.intellij.model.SymbolPointer):com.intellij.refactoring.modplan.rename.ModPlanRenameProvider$ElementsForRename
+*:com.intellij.refactoring.modplan.rename.ModPlanRenameProvider$SubjectUsage
+- collisionKind():com.intellij.refactoring.modplan.rename.ModPlanRenameProvider$SubjectUsage$CollisionKind
+- a:place():com.intellij.psi.SmartPsiFileRange
+*e:com.intellij.refactoring.modplan.rename.ModPlanRenameProvider$SubjectUsage$CollisionKind
+- java.lang.Enum
+- sf:RESOLVABLE:com.intellij.refactoring.modplan.rename.ModPlanRenameProvider$SubjectUsage$CollisionKind
+- sf:UNRESOLVABLE:com.intellij.refactoring.modplan.rename.ModPlanRenameProvider$SubjectUsage$CollisionKind
+- s:valueOf(java.lang.String):com.intellij.refactoring.modplan.rename.ModPlanRenameProvider$SubjectUsage$CollisionKind
+- s:values():com.intellij.refactoring.modplan.rename.ModPlanRenameProvider$SubjectUsage$CollisionKind[]
+*f:com.intellij.refactoring.modplan.rename.ModPlanRenameProvider$Substitution
+- java.lang.Record
+- <init>(com.intellij.model.SymbolPointer,java.lang.String):V
+- f:equals(java.lang.Object):Z
+- f:hashCode():I
+- newName():java.lang.String
+- target():com.intellij.model.SymbolPointer
+*a:com.intellij.refactoring.modplan.rename.ModPlanRenameProviderBase
+- com.intellij.refactoring.modplan.rename.ModPlanRenameProvider
+- <init>():V
+- analyze(com.intellij.model.SymbolPointer,com.intellij.refactoring.modplan.rename.ModPlanRenameProvider$ElementsForRename,java.util.List):com.intellij.refactoring.modplan.ModPlanAnalysisResult
+- p:analyze(com.intellij.psi.PsiElement,java.lang.String,java.util.List,java.util.Map):com.intellij.refactoring.modplan.ModPlanAnalysisResult
+- p:declarationEdits(com.intellij.psi.PsiElement,java.lang.String):java.util.List
+- findUsages(com.intellij.model.SymbolPointer,com.intellij.refactoring.modplan.rename.ModPlanRenameProvider$ElementsForRename,com.intellij.refactoring.modplan.ModPlanRequest):java.util.List
+- p:nameConflicts(com.intellij.psi.PsiElement,java.lang.String,java.util.Map):com.intellij.util.containers.MultiMap
+- prepare(com.intellij.refactoring.modplan.ModPlanChainBuilder,com.intellij.model.SymbolPointer,com.intellij.refactoring.modplan.rename.ModPlanRenameProvider$ElementsForRename):com.intellij.refactoring.modplan.ModPlanChain
+- p:prepareQuestions(com.intellij.psi.PsiElement,java.lang.String):java.util.List
+- p:prepareRenaming(com.intellij.psi.PsiElement,java.lang.String,java.util.Map,com.intellij.refactoring.modplan.ModPlanOptionValues):V
+- p:referenceEdits(com.intellij.psi.PsiElement,java.lang.String,java.util.List,java.util.Map):java.util.List
+- ps:referencesAmong(java.util.List,java.util.Map):java.util.List
+- renamers(com.intellij.model.SymbolPointer,com.intellij.refactoring.modplan.rename.ModPlanRenameProvider$ElementsForRename,java.util.List,java.util.List):java.util.List
+- searchStorage(com.intellij.model.SymbolPointer):com.intellij.refactoring.modplan.ModPlanQuestion$Storage
+- p:shouldPrepareWith(com.intellij.model.SymbolPointer):Z
+- p:substitute(com.intellij.psi.PsiElement,com.intellij.refactoring.modplan.ModPlanOptionValues):com.intellij.psi.PsiElement
+- substituteRequest(com.intellij.refactoring.modplan.ModPlanChainBuilder,com.intellij.model.SymbolPointer,java.lang.String):com.intellij.refactoring.modplan.ModPlanChain
+- p:substitutionQuestions(com.intellij.model.SymbolPointer,com.intellij.psi.PsiElement):java.util.List
+- pa:usagesOf(com.intellij.psi.PsiElement,java.lang.String,com.intellij.refactoring.modplan.ModPlanRequest,java.util.Map):java.util.List
+*f:com.intellij.refactoring.modplan.rename.ModPlanRenameRefactoring
+- com.intellij.refactoring.modplan.ModPlanRefactoring
+- *sf:Companion:com.intellij.refactoring.modplan.rename.ModPlanRenameRefactoring$Companion
+- <init>():V
+- chain(com.intellij.refactoring.modplan.ModPlanChainBuilder):com.intellij.refactoring.modplan.ModPlanChain
+- *sf:getInstance():com.intellij.refactoring.modplan.rename.ModPlanRenameRefactoring
+- id():java.lang.String
+- isSupported(com.intellij.refactoring.modplan.ModPlanRequest):Z
+- nonCodeUsagesHeader(I,I):java.lang.String
+- *sf:request(com.intellij.openapi.project.Project,com.intellij.psi.PsiElement,java.lang.String,Z,com.intellij.refactoring.modplan.ModPlanOptionValues):com.intellij.refactoring.modplan.ModPlanRequest
+- *sf:request(com.intellij.openapi.project.Project,com.intellij.psi.PsiElement,java.lang.String,Z,com.intellij.refactoring.modplan.ModPlanOptionValues,com.intellij.psi.search.SearchScope):com.intellij.refactoring.modplan.ModPlanRequest
+- *sf:request(com.intellij.openapi.project.Project,com.intellij.psi.PsiElement,java.lang.String,Z,com.intellij.refactoring.modplan.ModPlanOptionValues,com.intellij.psi.search.SearchScope,java.util.Map):com.intellij.refactoring.modplan.ModPlanRequest
+- targetsNodeText():java.lang.String
+- title():java.lang.String
+*f:com.intellij.refactoring.modplan.rename.ModPlanRenameRefactoring$Companion
+- f:getInstance():com.intellij.refactoring.modplan.rename.ModPlanRenameRefactoring
+- f:request(com.intellij.openapi.project.Project,com.intellij.psi.PsiElement,java.lang.String,Z,com.intellij.refactoring.modplan.ModPlanOptionValues):com.intellij.refactoring.modplan.ModPlanRequest
+- f:request(com.intellij.openapi.project.Project,com.intellij.psi.PsiElement,java.lang.String,Z,com.intellij.refactoring.modplan.ModPlanOptionValues,com.intellij.psi.search.SearchScope):com.intellij.refactoring.modplan.ModPlanRequest
+- f:request(com.intellij.openapi.project.Project,com.intellij.psi.PsiElement,java.lang.String,Z,com.intellij.refactoring.modplan.ModPlanOptionValues,com.intellij.psi.search.SearchScope,java.util.Map):com.intellij.refactoring.modplan.ModPlanRequest
+- bs:request$default(com.intellij.refactoring.modplan.rename.ModPlanRenameRefactoring$Companion,com.intellij.openapi.project.Project,com.intellij.psi.PsiElement,java.lang.String,Z,com.intellij.refactoring.modplan.ModPlanOptionValues,com.intellij.psi.search.SearchScope,java.util.Map,I,java.lang.Object):com.intellij.refactoring.modplan.ModPlanRequest
+*:com.intellij.refactoring.modplan.rename.ModPlanWritableUsageInfo
+- a:asModPlanEdits(java.lang.String,java.util.Map):java.util.List
 *f:com.intellij.refactoring.modplan.safeDelete.ModPlanLegacySafeDeleteProvider
 - com.intellij.refactoring.modplan.safeDelete.ModPlanSafeDeleteProvider
 - <init>(com.intellij.refactoring.safeDelete.SafeDeleteProcessorDelegate):V

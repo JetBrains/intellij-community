@@ -10,5 +10,5 @@ The [grid implementation](../impl/README.md) builds the Swing grid on top of it.
 | Class                                                          | Role                                                                             |
 |----------------------------------------------------------------|----------------------------------------------------------------------------------|
 | [GridDataHookUp](src/datagrid/GridDataHookUp.java)             | Models, loading, paging, sorting and an optional mutator of one result.          |
-| [GridHookUpRegistry](src/datagrid/GridHookUpRegistry.kt)       | Registers hookups of a project; `GridDataHookUpManager` implements it.           |
+| [GridHookUpRegistry](src/datagrid/GridHookUpRegistry.kt)       | Shares a project's hookups by id; keeps those of editors closing to reopen.      |
 | [MutationsStorageImpl](src/datagrid/MutationsStorageImpl.java) | Pending cell edits; `TypesMutationsStorageImpl` adds the pending types of cells. |

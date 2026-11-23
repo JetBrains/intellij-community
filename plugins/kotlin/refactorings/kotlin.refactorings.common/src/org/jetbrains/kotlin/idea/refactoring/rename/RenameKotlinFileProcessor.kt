@@ -9,9 +9,9 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.SearchScope
 import com.intellij.refactoring.listeners.RefactoringElementListener
-import com.intellij.refactoring.rename.DelegatingHeadlessRenamePsiElementProcessor
 import com.intellij.refactoring.rename.RenamePsiFileProcessor
 import com.intellij.usageView.UsageInfo
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.asJava.classes.KtLightClassForFacade
 import org.jetbrains.kotlin.fileClasses.JvmFileClassUtil
 import org.jetbrains.kotlin.idea.KotlinFileType
@@ -22,11 +22,8 @@ import org.jetbrains.kotlin.psi.KtFile
 
 /**
  * Renames a Kotlin file, and also the facade class of that file.
- *
- * It asks the user nothing, so it states the headless rename itself. The base class cannot state it:
- * it has subclasses in several products, and a subclass must not inherit the statement.
  */
-class RenameKotlinFileProcessor : RenamePsiFileProcessor(), DelegatingHeadlessRenamePsiElementProcessor {
+class RenameKotlinFileProcessor : RenamePsiFileProcessor() {
     class FileRenamingPsiClassWrapper(
         private val psiClass: KtLightClassForFacade,
         private val file: KtFile
@@ -80,3 +77,7 @@ class RenameKotlinFileProcessor : RenamePsiFileProcessor(), DelegatingHeadlessRe
         super.renameElement(element, newName, kotlinUsages.toTypedArray(), listener)
     }
 }
+
+/** The rename on the ModPlan engine of the elements that [RenameKotlinFileProcessor] renames. */
+@ApiStatus.Internal
+class ModPlanKotlinFileRenameProvider : ModPlanKotlinRenameProvider<RenameKotlinFileProcessor>(RenameKotlinFileProcessor())

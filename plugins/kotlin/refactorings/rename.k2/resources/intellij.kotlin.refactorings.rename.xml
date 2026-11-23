@@ -19,10 +19,21 @@
     <module name="intellij.platform.core.impl"/>
     <module name="intellij.platform.indexing"/>
     <module name="intellij.platform.lang.impl"/>
+    <module name="intellij.platform.refactoring"/>
   </dependencies>
   <!-- endregion -->
   <extensions defaultExtensionNs="com.intellij">
     <applicationService serviceImplementation="org.jetbrains.kotlin.idea.k2.refactoring.rename.K2RenameRefactoringSupport"
                         serviceInterface="org.jetbrains.kotlin.idea.refactoring.rename.KotlinRenameRefactoringSupport"/>
+    <refactoring.modPlanRenameProvider implementation="org.jetbrains.kotlin.idea.refactoring.rename.ModPlanKotlinClassifierRenameProvider"/>
+    <refactoring.modPlanRenameProvider implementation="org.jetbrains.kotlin.idea.refactoring.rename.ModPlanKotlinFileRenameProvider"/>
+    <refactoring.modPlanRenameProvider implementation="org.jetbrains.kotlin.idea.refactoring.rename.ModPlanKotlinParameterRenameProvider"/>
+    <refactoring.modPlanRenameProvider implementation="org.jetbrains.kotlin.idea.refactoring.rename.ModPlanKotlinPropertyRenameProvider"/>
+    <refactoring.modPlanRenameProvider implementation="org.jetbrains.kotlin.idea.refactoring.rename.ModPlanKotlinTypeParameterRenameProvider"/>
+    <refactoring.modPlanRenameProvider implementation="org.jetbrains.kotlin.idea.refactoring.rename.ModPlanKotlinFunctionRenameProvider"/>
+    <refactoring.modPlanRenameProvider implementation="org.jetbrains.kotlin.idea.refactoring.rename.ModPlanKotlinPlainRenameProvider"/>
+    <refactoring.modPlanRenameProvider implementation="org.jetbrains.kotlin.idea.refactoring.rename.ModPlanKotlinLightOriginRenameProvider"/>
+    <refactoring.modPlanRenameProvider implementation="org.jetbrains.kotlin.idea.k2.refactoring.rename.ModPlanKotlinAwareJavaGetterRenameProvider"
+                                       order="first"/>
   </extensions>
 </idea-plugin>

@@ -7,12 +7,12 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfoType
 import com.intellij.codeInsight.daemon.impl.UnusedSymbolUtil
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder
 import com.intellij.codeInspection.LocalInspectionTool
-import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement
 import com.intellij.codeInspection.SuppressionUtil
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspectionBase
 import com.intellij.codeInspection.ex.InspectionProfileWrapper
 import com.intellij.codeInspection.util.IntentionName
 import com.intellij.concurrency.JobLauncher
+import com.intellij.modcommand.ModCommandAction
 import com.intellij.openapi.util.Predicates
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager
 import com.intellij.psi.PsiElement
@@ -304,11 +304,8 @@ class KotlinRefsHolder(val containingFile: KtFile) {
 }
 
 /** @return the safe delete of [declaration] alone, on the ModPlan engine. Every safe delete fix of a Kotlin declaration is created here. */
-internal fun createSafeDeleteFix(declaration: KtNamedDeclaration): LocalQuickFixAndIntentionActionOnPsiElement =
-    LocalQuickFixAndIntentionActionOnPsiElement.from(
-        ModPlanSafeDeleteFix(declaration, ModPlanOptionValues.EMPTY.with(ModPlanSafeDeleteOptions.SEARCH_RELATED, false), declaration.safeDeleteText()),
-        declaration,
-    )
+internal fun createSafeDeleteFix(declaration: KtNamedDeclaration): ModCommandAction =
+    ModPlanSafeDeleteFix(declaration, ModPlanOptionValues.EMPTY.with(ModPlanSafeDeleteOptions.SEARCH_RELATED, false), declaration.safeDeleteText())
 
 internal fun KtNamedDeclaration.safeDeleteText(): @IntentionName String {
     val key = when (this) {

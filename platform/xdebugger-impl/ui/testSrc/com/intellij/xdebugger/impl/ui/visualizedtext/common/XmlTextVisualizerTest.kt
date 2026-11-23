@@ -2,16 +2,28 @@
 package com.intellij.xdebugger.impl.ui.visualizedtext.common
 
 import com.intellij.idea.TestFor
-import org.junit.Rule
-import org.junit.rules.TemporaryFolder
+import com.intellij.testFramework.common.timeoutRunBlocking
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.fixture.projectFixture
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.io.TempDir
+import java.nio.file.Path
+import kotlin.io.path.writeText
 
-class XmlTextVisualizerTest : FormattedTextVisualizerTestCase(XmlTextVisualizer()) {
+@TestApplication
+class XmlTextVisualizerTest {
+  companion object {
+    private val projectFixture = projectFixture()
+  }
 
-  @get:Rule
-  val tempDir = TemporaryFolder()
+  private val checker = TextVisualizerChecker(XmlTextVisualizer(), projectFixture)
 
-  fun testSomeValidXml() {
-    checkPositive(
+  @TempDir
+  lateinit var tempDir: Path
+
+  @Test
+  fun testSomeValidXml(): Unit = timeoutRunBlocking {
+    checker.checkPositive(
       """<note><to>Tove</to><from>Jani</from><heading type="reminder">Reminder</heading><body priority="high">Don't forget our meeting tomorrow!</body></note>""",
       """
         <?xml version="1.0" encoding="UTF-8" standalone="no"?>
@@ -25,7 +37,8 @@ class XmlTextVisualizerTest : FormattedTextVisualizerTestCase(XmlTextVisualizer(
       """.trimIndent())
   }
 
-  fun testLFvsCRLF() {
+  @Test
+  fun testLFvsCRLF(): Unit = timeoutRunBlocking {
     val input =
       "<foo>\n<bar>Hello</bar></foo>"
     val output = """
@@ -37,25 +50,29 @@ class XmlTextVisualizerTest : FormattedTextVisualizerTestCase(XmlTextVisualizer(
         
       """.trimIndent()
 
-    checkPositive(input, output)
-    checkPositive(input.replace("\n", "\r\n"), output)
+    checker.checkPositive(input, output)
+    checker.checkPositive(input.replace("\n", "\r\n"), output)
   }
 
+  @Test
   fun testNotSoValidXml() {
-    checkNegative("<p>Hello, <b>world</b>!")
+    checker.checkNegative("<p>Hello, <b>world</b>!")
   }
 
+  @Test
   fun testNotXml() {
-    checkNegative("Hello, world!")
+    checker.checkNegative("Hello, world!")
   }
 
+  @Test
   fun testNotStandaloneXml() {
-    checkNegative("Hello, <b>world</b>!")
+    checker.checkNegative("Hello, <b>world</b>!")
   }
 
   @TestFor(issues = ["EA-1461644"])
+  @Test
   fun testWithoutNamespaceForPrefix() {
-    checkNegative(
+    checker.checkNegative(
       """
         <?xml version="1.0" encoding="UTF-8" standalone="no"?>
         <spml:modifyRequest>   
@@ -68,12 +85,12 @@ class XmlTextVisualizerTest : FormattedTextVisualizerTestCase(XmlTextVisualizer(
   }
 
   @TestFor(issues = ["GO-18010"])
-  fun testXXEVulnerabilityPrevention() {
-    tempDir.create()
-    val secretFile = tempDir.newFile("secret")
+  @Test
+  fun testXXEVulnerabilityPrevention(): Unit = timeoutRunBlocking {
+    val secretFile = tempDir.resolve("secret")
     secretFile.writeText("some secret password")
-    val secretPath = secretFile.absolutePath
-    checkPositive(
+    val secretPath = secretFile.toAbsolutePath().toString()
+    checker.checkPositive(
       """
         <?xml version="1.0" encoding="UTF-8" standalone="no"?>
         <!DOCTYPE imp [

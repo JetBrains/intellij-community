@@ -782,6 +782,7 @@ internal class BazelBuildFileGenerator(
     val kotlincOptionsLabel = computeKotlincOptions(buildFile = this, module = moduleDescriptor, jvmTarget = jvmTarget, kotlincDefaults = kotlincDefaults)
                               ?: (if (jvmTarget == kotlincDefaults.jvmTarget) null else "@community//:k$jvmTarget")
     // TODO: require kotlincOptionsLabel == null || sources.isNotEmpty()
+    val pluginConfigurationLabels = computeCompilerPluginConfigurations(buildFile = this, module = moduleDescriptor)
     val javacOptionsLabel = computeJavacOptions(moduleDescriptor, jvmTarget)
     // TODO: require javacOptionsLabel == null || sources.isNotEmpty()
 
@@ -802,6 +803,11 @@ internal class BazelBuildFileGenerator(
     if (deps != null && deps.provided.isNotEmpty()) {
       val wrappedProvidedLibs = generateProvidedLibs(deps.provided)
       deps = deps.copy(deps = deps.deps + wrappedProvidedLibs.values, exports = deps.exports.map { export -> wrappedProvidedLibs.get(export) ?: export })
+    }
+    // a plugin configuration needs the plugin, which arrives with the compile dependencies; a target without sources has none
+    val compilesSources = if (customModule == null) sources.isNotEmpty() else customModule.sources.isNotEmpty()
+    if (pluginConfigurationLabels.isNotEmpty() && compilesSources) {
+      deps = withPluginConfigurations(deps, pluginConfigurationLabels)
     }
 
     val mustGenerateFleetPluginServicesResources = moduleDescriptor.isFleetModule() && hasRhizomeDbOrPluginDependency(moduleList, moduleDescriptor)
@@ -1477,14 +1483,9 @@ private fun computeKotlincOptions(buildFile: BuildFile, module: ModuleDescriptor
       options.put("opt_in", effectiveOptIn)
     }
   }
-  //plugin_options
-  handleArgument(K2JVMCompilerArguments::pluginOptions) { pluginOptions ->
-    if (pluginOptions?.isNotEmpty() == true) {
-      options.put("plugin_options", pluginOptions.map {
-        it.replace("${module.bazelBuildFileDir.invariantSeparatorsPathString}/", "${'$'}BASE_DIR$/${module.relativePathFromProjectRoot.invariantSeparatorsPathString}/")
-      })
-    }
-  }
+  // -P options configure compiler plugins, not the compiler: computeCompilerPluginConfigurations emits them as
+  // kt_plugin_cfg targets next to this one.
+  handleArgument(K2JVMCompilerArguments::pluginOptions) { }
   // progressive
   handleArgument(K2JVMCompilerArguments::progressiveMode) {
     if (!it) {
@@ -1672,6 +1673,95 @@ private fun computeKotlincOptions(buildFile: BuildFile, module: ModuleDescriptor
   return ":$kotlincOptionsName"
 }
 
+/** A compiler plugin a facet may pass `-P` options to: the id its CommandLineProcessor answers to, its target, and a short name for generated target names. [facetClasspathEntry] is the `pluginClasspaths` entry by which a facet loads the plugin. */
+private data class CompilerPluginTarget(@JvmField val label: String, @JvmField val shortName: String, @JvmField val facetClasspathEntry: String)
+
+private val compilerPluginTargets = mapOf(
+  "androidx.compose.compiler.plugins.kotlin" to CompilerPluginTarget(label = "@lib//:compose-plugin", shortName = "compose", facetClasspathEntry = $$"$KOTLIN_COMPOSE_COMPILER_PLUGIN$"),
+)
+
+private val pluginOptionPattern = Regex("plugin:([^:]+):([^=]+)=(.*)")
+
+/** A `-P` option value; [file] is the package-relative path of the file the value names, if it names one. */
+private class PluginOptionValue(@JvmField val text: String, @JvmField val file: String?)
+
+/**
+ * Emits one `kt_plugin_cfg` target per compiler plugin the module's facet passes `-P plugin:<id>:<key>=<value>` options
+ * to, and returns the labels for the `plugins` attribute of the module's targets that compile sources. The plugin itself
+ * also reaches the module through `exported_compiler_plugins` of a dependency. Both attributes resolve the plugin in the
+ * execution configuration, so the compile rules see one plugin and render the options for its id.
+ * The facet must list the plugin in `pluginClasspaths`: the compiler reads a `-P` option only for a plugin that it loads,
+ * and a `kt_plugin_cfg` target loads its plugin. An option of a plugin that the facet does not list is an error.
+ * A value that names a file next to the BUILD file becomes `$(location <file>)` with the file in `data`, so the compiler
+ * receives an exec-root-relative path and the file is an input of the compilation.
+ */
+private fun computeCompilerPluginConfigurations(buildFile: BuildFile, module: ModuleDescriptor): List<String> {
+  val kotlinFacetModuleExtension = module.module.container.getChild(JpsKotlinFacetModuleExtension.KIND) ?: return emptyList()
+  val mergedCompilerArguments = kotlinFacetModuleExtension.settings.mergedCompilerArguments as? K2JVMCompilerArguments ?: return emptyList()
+  val pluginOptions = mergedCompilerArguments.pluginOptions?.takeIf { it.isNotEmpty() } ?: return emptyList()
+
+  // plugin id -> option key -> values, in facet order
+  val optionsByPlugin = LinkedHashMap<String, LinkedHashMap<String, MutableList<PluginOptionValue>>>()
+  for (pluginOption in pluginOptions) {
+    val match = pluginOptionPattern.matchEntire(pluginOption)
+                ?: error("module '${module.module.name}' has a compiler plugin option of an unknown form: $pluginOption")
+    val (pluginId, key, rawValue) = match.destructured
+    var file: String? = null
+    val path = runCatching { Path.of(rawValue) }.getOrNull()?.let { if (it.isAbsolute) it else module.bazelBuildFileDir.resolve(it) }?.normalize()
+    if (path != null && path.isRegularFile()) {
+      require(path.startsWith(module.bazelBuildFileDir)) {
+        "module '${module.module.name}' passes the file $path to compiler plugin '$pluginId', but the file is outside the package of ${module.bazelBuildFileDir}"
+      }
+      file = module.bazelBuildFileDir.relativize(path).invariantSeparatorsPathString
+    }
+    optionsByPlugin.computeIfAbsent(pluginId) { LinkedHashMap() }.computeIfAbsent(key) { mutableListOf() }.add(PluginOptionValue(text = rawValue, file = file))
+  }
+
+  val labels = ArrayList<String>()
+  for ((pluginId, options) in optionsByPlugin) {
+    val plugin = compilerPluginTargets.get(pluginId)
+                 ?: error("module '${module.module.name}' passes options to compiler plugin '$pluginId', which has no kt_compiler_plugin target known to the generator")
+    require(plugin.facetClasspathEntry in mergedCompilerArguments.pluginClasspaths) {
+      "module must not pass options to compiler plugin '$pluginId' that its Kotlin facet does not load, please remove the options or add ${plugin.facetClasspathEntry} to pluginClasspaths of the facet: ${module.imlFile}"
+    }
+    val name = "${plugin.shortName}_plugin_${module.targetName}"
+    val dataFiles = LinkedHashSet<String>()
+    for (value in options.values.flatten()) {
+      value.file?.let { dataFiles.add(it) }
+    }
+
+    buildFile.load("@rules_kotlin//kotlin:core.bzl", "kt_plugin_cfg")
+    buildFile.target("kt_plugin_cfg") {
+      option("name", name)
+      if (dataFiles.isNotEmpty()) {
+        option("data", dataFiles.toList())
+      }
+      option("options", LinkedHashMap<String, Any>().also { sorted ->
+        for ((key, values) in options.entries.sortedBy { it.key }) {
+          sorted.put(key, values.map { value -> value.file?.let { "${'$'}(location $it)" } ?: value.text })
+        }
+      })
+      option("plugin", plugin.label)
+    }
+    labels.add(":$name")
+  }
+  return labels
+}
+
+/** The module's dependencies with the compiler plugin configurations added to `plugins`. */
+private fun withPluginConfigurations(deps: ModuleDeps?, pluginConfigurationLabels: List<String>): ModuleDeps {
+  return deps?.copy(plugins = deps.plugins + pluginConfigurationLabels)
+         ?: ModuleDeps(
+           deps = emptyList(),
+           provided = emptyList(),
+           runtimeDeps = emptyList(),
+           packedDeps = emptyList(),
+           exports = emptyList(),
+           associates = emptyList(),
+           plugins = pluginConfigurationLabels,
+         )
+}
+
 private fun checkNoUnhandledKotlincOptions(module: JpsModule, mergedCompilerArguments: K2JVMCompilerArguments, handledArguments: Set<String>, allowedInternalArguments: Set<String>, allowedUnknownExtraFlags: Set<String>) {
   // check arguments:
   mergedCompilerArguments::class.memberProperties
@@ -1818,7 +1908,7 @@ private fun compileExcludeSortKey(pattern: String): String = pattern.lowercase()
  * and a predicate that assumes two directories leaves those unexported, which is an analysis error
  * the moment the plan names one.
  *
- * Deliberately a superset. An `exports_files` entry costs nothing - only what `build/dev_dist_plan.bzl` and the
+ * Deliberately a superset. An `exports_files` entry costs nothing - only what `build/dist_plan.bzl` and the
  * convention probe name is materialized into the project model tree - and keeping the two rules independent is what
  * makes them unable to disagree: this side only has to be wide enough.
  */
@@ -1845,7 +1935,7 @@ private fun exportDescriptorFiles(module: ModuleDescriptor, buildFile: BuildFile
       // root, and Bazel therefore leaves the subtree out of the main repository's execroot symlink farm:
       // `//:community/<path>` analyses, and an action that declares it gets a symlink to nothing. The label an action
       // can read is `@community//<package>:<path>`, which only the community package can export - see
-      // `containingBazelPackageLabel` in `devDistPluginDescriptorPlan.kt`.
+      // `containingBazelPackageLabel` in `distPluginDescriptorPlan.kt`.
       if (relative.startsWith("../")) {
         continue
       }

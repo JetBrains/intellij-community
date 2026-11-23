@@ -18,7 +18,7 @@ internal object CodeFenceLanguageAliases {
   )
 
   private val aliases = setOf(
-    Entry("ASM", "asm", setOf("armasm")),
+    Entry("ASM", "asm", setOf("armasm", "assembly", "nasm", "gas", "x86asm")),
     Entry("go", "go", setOf("golang")),
     Entry("HCL", "hcl", setOf("hcl")),
     Entry("ApacheConfig", "apacheconf", setOf("aconf", "apache", "apacheconfig")),
@@ -32,12 +32,32 @@ internal object CodeFenceLanguageAliases {
     Entry("RegExp", "regexp", setOf("regex")),
     Entry("Ruby", "ruby", setOf("ruby", "rb")),
     Entry("Yaml", "yaml", setOf("yml")),
-    Entry("Kotlin", "kotlin", setOf("kt", "kts")),
+    Entry("Kotlin", "kotlin", setOf("kt", "kts", "gradle kotlin dsl")),
     Entry("HCL-Terraform", "terraform", setOf("hcl-terraform", "tf")),
     Entry("C#", "csharp", setOf("cs", "c#")),
     Entry("C++", "c++", setOf("cpp")),
     Entry("F#", "fsharp", setOf("fs", "f#")),
-    Entry("Shell Script", "shell", setOf("shell script", "bash", "zsh", "sh", "console"))
+    Entry("Shell Script", "shell", setOf("shell script", "bash", "zsh", "sh", "console", "shell-script", "shellsession")),
+    Entry("Groovy", "groovy", setOf("gradle")),
+    Entry("Properties", "properties", setOf("java properties")),
+    Entry("JSON", "json", setOf("geojson", "jsonld")),
+    Entry("JSON5", "json5", setOf("jsonc")),
+    Entry("JSON Lines", "json lines", setOf("jsonl")),
+    Entry("Rust", "rust", setOf("rs")),
+    Entry("Starlark", "starlark", setOf("bazel", "bzl")),
+    Entry("protobuf", "protobuf", setOf("proto")),
+    Entry("TEXT", "text", setOf("plain text")),
+    Entry("Dockerfile", "dockerfile", setOf("containerfile")),
+    Entry("Makefile", "makefile", setOf("make")),
+    Entry("Ini", "ini", setOf("dosini")),
+    Entry("ERB", "erb", setOf("html+erb")),
+    Entry("Handlebars", "handlebars", setOf("hbs")),
+    Entry("VTL", "vtl", setOf("velocity")),
+    Entry("Jade", "jade", setOf("pug")),
+    Entry("SvelteHTML", "sveltehtml", setOf("svelte")),
+    Entry("ReST", "rest", setOf("restructuredtext", "rst")),
+    Entry("WebAssembly", "webassembly", setOf("wasm")),
+    Entry("VB", "vb", setOf("visual basic", "vbnet", "vb.net"))
   )
 
   fun findRegisteredEntry(value: String): String? {

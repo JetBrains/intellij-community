@@ -1,18 +1,34 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.plugins.markdown.editor.tables
 
-import com.intellij.testFramework.LightPlatformCodeInsightTestCase
-import org.junit.Before
-import org.junit.Test
-import org.junit.runner.RunWith
-import org.junit.runners.JUnit4
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.EDT
+import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightModuleFixture
+import com.intellij.testFramework.common.timeoutRunBlocking
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.TestDisposable
+import com.intellij.testFramework.junit5.fixture.projectFixture
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import org.intellij.plugins.markdown.editor.backspace
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 
-@RunWith(JUnit4::class)
+@TestApplication
 @Suppress("MarkdownIncorrectTableFormatting")
-class MarkdownTableColumnShrinkTest: LightPlatformCodeInsightTestCase() {
-  @Before
+class MarkdownTableColumnShrinkTest {
+  companion object {
+    private val projectFixture = projectFixture(openAfterCreation = true)
+  }
+
+  private val myFixture by codeInsightModuleFixture(projectFixture)
+
+  @TestDisposable
+  lateinit var disposable: Disposable
+
+  @BeforeEach
   fun enableTableReformatting() {
-    setupTableReformatting(testRootDisposable)
+    setupTableReformatting(disposable)
   }
 
   @Test
@@ -181,11 +197,13 @@ class MarkdownTableColumnShrinkTest: LightPlatformCodeInsightTestCase() {
     )
   }
 
-  private fun doTest(content: String, expected: String, count: Int = 1) {
-    configureFromFileText("some.md", content)
-    repeat(count) {
-      backspace()
+  private fun doTest(content: String, expected: String, count: Int = 1): Unit = timeoutRunBlocking {
+    myFixture.configureByText("some.md", content)
+    withContext(Dispatchers.EDT) {
+      repeat(count) {
+        myFixture.backspace()
+      }
+      myFixture.checkResult(expected)
     }
-    checkResultByText(expected)
   }
 }

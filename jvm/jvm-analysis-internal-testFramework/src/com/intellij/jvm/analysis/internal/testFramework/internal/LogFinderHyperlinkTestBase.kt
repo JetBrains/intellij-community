@@ -19,6 +19,11 @@ import org.junit.Assert
 
 class LogItem(val text: String, val position: LogicalPosition?)
 
+/**
+ * @deprecated Use [logFinderHyperlinkProjectFixture] and [logFinderHyperlinkFixture] in a JUnit 5 test.
+ */
+@Suppress("DEPRECATION")
+@Deprecated("Use logFinderHyperlinkProjectFixture and logFinderHyperlinkFixture in a JUnit 5 test")
 abstract class LogFinderHyperlinkTestBase : LightJvmCodeInsightFixtureTestCase() {
 
   override fun getProjectDescriptor(): LightProjectDescriptor = object: ProjectDescriptor(LanguageLevel.HIGHEST){

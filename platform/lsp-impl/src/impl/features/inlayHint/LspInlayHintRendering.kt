@@ -4,24 +4,35 @@ import com.intellij.codeInsight.hints.InlayHintsSettings
 import com.intellij.codeInsight.hints.presentation.InlayPresentation
 import com.intellij.codeInsight.hints.presentation.PresentationFactory
 import com.intellij.codeInsight.hints.presentation.SequencePresentation
+import com.intellij.diagnostic.rethrowControlFlowException
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.FileEditorOpenRequest
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.lsp.api.LspClient.Companion.DEFAULT_REQUEST_TIMEOUT_MS
 import com.intellij.platform.lsp.api.LspClientDescriptor
 import com.intellij.platform.lsp.api.customization.LspInlayHintSupport
+import com.intellij.platform.lsp.impl.LspClientImpl
 import com.intellij.platform.lsp.impl.LspClientManagerImpl
+import com.intellij.platform.lsp.impl.LspCoroutineScopeService
 import com.intellij.platform.lsp.impl.features.inlayCommon.LspInlayItem
+import com.intellij.platform.lsp.impl.supportsInlayHintResolve
 import com.intellij.platform.lsp.util.getOffsetInDocument
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresReadLock
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeoutOrNull
 import org.eclipse.lsp4j.InlayHint
 import org.eclipse.lsp4j.InlayHintLabelPart
 import org.eclipse.lsp4j.Range
 import org.eclipse.lsp4j.jsonrpc.messages.Either
 import java.awt.Cursor
+import kotlin.time.Duration.Companion.milliseconds
 
 private const val MAX_ALLOWED_INLAY_HINT_LENGTH = 100
 private const val MIN_ALLOWED_INLAY_HINT_LENGTH = 1
@@ -44,9 +55,10 @@ internal fun collectInlayHintItems(project: Project, virtualFile: VirtualFile): 
     if (customizer is LspInlayHintSupport) {
       val raw = customizer.getMaxInlayHintChars()
       val maxChars = raw.coerceIn(MIN_ALLOWED_INLAY_HINT_LENGTH, MAX_ALLOWED_INLAY_HINT_LENGTH)
+      val supportsResolve = client.supportsInlayHintResolve(virtualFile)
       client.highlightingCacheRegistry.inlayHintsCache.getHighlightings(virtualFile)
         .filter { customizer.shouldDisplayInlayHint(virtualFile, it.highlightingInfo) }
-        .map { LspInlayHintItem(project, client.descriptor, it.highlightingInfo, it.textRange.startOffset, maxChars) }
+        .map { LspInlayHintItem(project, client, virtualFile, it.highlightingInfo, it.textRange.startOffset, maxChars, supportsResolve) }
     }
     else {
       emptyList()
@@ -56,17 +68,54 @@ internal fun collectInlayHintItems(project: Project, virtualFile: VirtualFile): 
 
 private class LspInlayHintItem(
   private val project: Project,
-  private val descriptor: LspClientDescriptor,
-  private val inlayHint: InlayHint,
+  private val lspClient: LspClientImpl,
+  private val file: VirtualFile,
+  private var inlayHint: InlayHint,
   override val offset: Int,
   private val maxChars: Int,
+  private val supportsResolve: Boolean,
 ) : LspInlayItem {
+  private var resolvedHint: InlayHint? = null
 
-  override val identity: Any = LspInlayHintIdentity(descriptor, inlayHint.label, maxChars)
+  override val identity: Any = LspInlayHintIdentity(lspClient.descriptor, inlayHint.label, maxChars, supportsResolve)
 
   override fun buildPresentation(editor: Editor, factory: PresentationFactory): InlayPresentation {
-    val presentation = buildInlayPresentation(factory, project, descriptor, inlayHint, maxChars)
+    val presentation = buildInlayPresentation(factory, inlayHint, maxChars, supportsResolve) { partIndex ->
+      navigateToLabelPart(editor, partIndex)
+    }
     return factory.roundWithBackground(presentation)
+  }
+
+  override fun updateFrom(newItem: LspInlayItem) {
+    val newHint = (newItem as LspInlayHintItem).inlayHint
+    if (newHint !== inlayHint) {
+      inlayHint = newHint
+      resolvedHint = null
+    }
+  }
+
+  private fun navigateToLabelPart(editor: Editor, partIndex: Int) {
+    val hint = inlayHint
+    val resolved = resolvedHint
+    val location = (resolved ?: hint).label.right?.getOrNull(partIndex)?.location
+    if (location != null) {
+      navigateTo(lspClient.descriptor, project, location.uri, location.range)
+      return
+    }
+    if (resolved != null) return
+
+    LspCoroutineScopeService.getInstance(project).cs.launch {
+      val newResolved = resolveInlayHint(lspClient, file, hint) ?: return@launch
+      withContext(Dispatchers.EDT) {
+        if (inlayHint === hint) {
+          resolvedHint = newResolved
+        }
+        val resolvedLocation = newResolved.label.right?.getOrNull(partIndex)?.location
+        if (resolvedLocation != null && !editor.isDisposed) {
+          navigateTo(lspClient.descriptor, project, resolvedLocation.uri, resolvedLocation.range)
+        }
+      }
+    }
   }
 }
 
@@ -81,14 +130,15 @@ private data class LspInlayHintIdentity(
   val descriptor: LspClientDescriptor,
   val label: Either<String, List<InlayHintLabelPart>>,
   val maxChars: Int,
+  val supportsResolve: Boolean,
 )
 
 private fun buildInlayPresentation(
   factory: PresentationFactory,
-  project: Project,
-  descriptor: LspClientDescriptor,
   inlayHint: InlayHint,
   maxChars: Int,
+  supportsResolve: Boolean,
+  onLabelPartClick: (partIndex: Int) -> Unit,
 ): InlayPresentation {
   val label = inlayHint.label
   val ellipsis = "..."
@@ -99,7 +149,7 @@ private fun buildInlayPresentation(
     val subPresentations = mutableListOf<InlayPresentation>()
     var currentInlayHintLength = 0
 
-    for (part in parts) {
+    for ((partIndex, part) in parts.withIndex()) {
       val value = part.value
       currentInlayHintLength += value.length
       if (currentInlayHintLength > maxChars) {
@@ -110,11 +160,10 @@ private fun buildInlayPresentation(
 
       var inlayPresentation: InlayPresentation = factory.smallText(value)
 
-      // Make clickable if location is present
-      val location = part.location
-      if (location != null) {
+      // Make clickable if location is present or can be resolved
+      if (part.location != null || supportsResolve) {
         val clickable = factory.reference(inlayPresentation) {
-          navigateTo(descriptor, project, location.uri, location.range)
+          onLabelPartClick(partIndex)
         }
         inlayPresentation = factory.withCursorOnHoverWhenControlDown(clickable, cursor)
       }
@@ -129,6 +178,24 @@ private fun buildInlayPresentation(
   val hintText = label.left ?: ""
   val shownText = if (hintText.length > maxChars) hintText.take(maxChars) + ellipsis else hintText
   return factory.smallText(shownText)
+}
+
+/**
+ * Sends [inlayHint/resolve](https://microsoft.github.io/language-server-protocol/specification/#inlayHint_resolve).
+ * Returns `null` when the server does not support it, fails, or does not answer in [DEFAULT_REQUEST_TIMEOUT_MS] milliseconds.
+ */
+private suspend fun resolveInlayHint(client: LspClientImpl, file: VirtualFile, inlayHint: InlayHint): InlayHint? {
+  if (!client.supportsInlayHintResolve(file)) return null
+  try {
+    return withTimeoutOrNull(DEFAULT_REQUEST_TIMEOUT_MS.milliseconds) {
+      client.sendRequest { it.textDocumentService.resolveInlayHint(inlayHint) }
+    }
+  }
+  catch (e: Exception) {
+    rethrowControlFlowException(e)
+    client.logWarn("Inlay hint resolve failed for ${file.url}", e)
+    return null
+  }
 }
 
 private fun navigateTo(descriptor: LspClientDescriptor, project: Project, targetUri: String, targetRange: Range?) {

@@ -57,4 +57,6 @@ open class AutomaticFileRenamerFactory : AutomaticRenamerFactory {
     }
 
     override fun getOptionName(): String? = KotlinBundle.message("rename.file")
+
+    override fun getOptionId(): String = "renameFile"
 }

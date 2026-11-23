@@ -31,7 +31,7 @@ jvm_library(
         "//plugins/kotlin/util/test-generator-fir:test-generator-fir_test_lib",
         "//libraries/junit6",
         "//plugins/kotlin/base/testFramework",
-        "//plugins/kotlin/tests-common:common-tests_test_lib",
+        "//plugins/kotlin/tests-common:common-testFramework",
         "//plugins/kotlin/util/project-model-updater",
         "//plugins/kotlin/intellij.kotlin.base.test:base-test_test_lib",
         "//platform/testFramework/common",

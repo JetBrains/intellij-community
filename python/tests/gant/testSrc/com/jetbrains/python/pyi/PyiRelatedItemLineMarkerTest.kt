@@ -6,6 +6,7 @@ import com.jetbrains.python.allure.Layers
 import com.jetbrains.python.allure.Components
 import com.intellij.codeInsight.daemon.LineMarkerInfo
 import com.intellij.codeInsight.daemon.impl.LineMarkersPass.getDisplayedLineMarkers
+import com.intellij.idea.TestFor
 import com.intellij.psi.util.descendantsOfType
 import com.intellij.psi.util.parentOfType
 import com.jetbrains.python.fixtures.PyTestCase
@@ -100,6 +101,17 @@ class PyiRelatedItemLineMarkerTest : PyTestCase() {
     myFixture.configureByFile("pkg-stubs/foo.pyi")
 
     assertEquals("Stub for item in foo.py", getMarkersInCurrentFile ("bar").singleOrNull()?.lineMarkerTooltip)
+  }
+
+  // `__all__` names the subpackage, so the name resolves to the package directory, which has no containing file.
+  @TestFor(issues = ["PY-92908"])
+  fun testNoMarkerForStubOfSubpackageInDunderAll() {
+    myFixture.addFileToProject("pkg/__init__.py", "__all__ = ['sub']")
+    myFixture.addFileToProject("pkg/sub/__init__.py", "")
+    myFixture.addFileToProject("pkg/__init__.pyi", "sub: int")
+    myFixture.configureFromTempProjectFile("pkg/__init__.pyi")
+
+    assertEmpty(getMarkersInCurrentFile("sub"))
   }
 
   // PY-38169

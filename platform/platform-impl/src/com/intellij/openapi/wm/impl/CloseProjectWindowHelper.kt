@@ -19,8 +19,8 @@ import com.intellij.openapi.wm.ex.WindowManagerEx
 import com.intellij.openapi.wm.ex.getWelcomeScreenProjectProvider
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame
 import com.intellij.ui.mac.MacMenuSettings
-import com.intellij.ui.mac.MergeAllWindowsAction
-import com.intellij.ui.mac.WindowTabsComponent
+import com.intellij.ui.tabs.ProjectTabsComponent
+import com.intellij.ui.tabs.ProjectTabsManager
 import com.intellij.util.PlatformUtils
 import com.intellij.util.SystemProperties
 import com.intellij.util.concurrency.annotations.RequiresEdt
@@ -54,7 +54,7 @@ open class CloseProjectWindowHelper {
       return false
     }
     val projectFrame = WindowManager.getInstance().getFrame(project) ?: return false
-    return MergeAllWindowsAction.isTabbedWindow(projectFrame)
+    return ProjectTabsManager.isTabbedWindow(projectFrame)
   }
 
   @ApiStatus.Internal
@@ -62,7 +62,7 @@ open class CloseProjectWindowHelper {
     project ?: return false
 
     val frame = WindowManager.getInstance().getFrame(project) ?: return false
-    return frame.rootPane.getClientProperty(WindowTabsComponent.CLOSE_TAB_KEY) == true
+    return frame.rootPane.getClientProperty(ProjectTabsComponent.CLOSE_TAB_KEY) == true
   }
 
   @RequiresEdt

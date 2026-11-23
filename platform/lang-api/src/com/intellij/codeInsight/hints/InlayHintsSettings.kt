@@ -12,6 +12,7 @@ import com.intellij.openapi.components.Storage
 import com.intellij.openapi.components.service
 import com.intellij.util.messages.Topic
 import org.jdom.Element
+import org.jetbrains.annotations.ApiStatus
 import java.util.TreeSet
 
 @State(name = "InlayHintsSettings", storages = [Storage("editor.xml")], category = SettingsCategory.CODE)
@@ -152,6 +153,16 @@ class InlayHintsSettings : PersistentStateComponent<InlayHintsSettings.State> {
       }
     }
     listener.settingsChanged()
+  }
+
+  /**
+   * Drops every cached settings object. The next [findSettings] restores it from the state element.
+   */
+  @ApiStatus.Internal
+  fun forgetCachedSettings() {
+    synchronized(lock) {
+      myCachedSettingsMap.clear()
+    }
   }
 
   fun hintsEnabled(language: Language): Boolean = synchronized(lock) {

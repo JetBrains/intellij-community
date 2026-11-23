@@ -17,7 +17,7 @@ import com.intellij.psi.search.SearchScope
 import com.intellij.psi.util.MethodSignatureUtil
 import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.returnType
+import org.jetbrains.kotlin.analysis.api.expressions.returnType
 import org.jetbrains.kotlin.analysis.api.imports.getDefaultImports
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
@@ -403,7 +403,7 @@ internal class KotlinK2SearchUsagesSupport(private val project: Project) : Kotli
     private fun isOverridableBySymbol(declaration: KtDeclaration) = analyze(declaration) {
         var declarationSymbol: KaSymbol? = declaration.symbol
         if (declarationSymbol is KaValueParameterSymbol) {
-            declarationSymbol = declarationSymbol.generatedPrimaryConstructorProperty
+            declarationSymbol = declarationSymbol.primaryConstructorProperty
         }
         val symbol = declarationSymbol as? KaDeclarationSymbol ?: return@analyze false
         when (symbol.modality) {

@@ -898,7 +898,7 @@ object K2UnusedSymbolUtil {
 
         val fixes = mutableListOf<IntentionAction>()
         
-        fixes += createSafeDeleteFix(declaration)
+        fixes += createSafeDeleteFix(declaration).asIntention()
 
         for (annotationEntry in declaration.annotationEntries) {
             val annotationClassId = annotationEntry.tryResolveCall()?.single?.constructor?.symbol?.containingClassId ?: continue

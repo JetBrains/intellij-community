@@ -18,7 +18,7 @@ repositories {
   mavenLocal()
   mavenCentral()
   maven {
-    url = uri("https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies")
+    url = uri("https://cache-redirector.jetbrains.com/maven/ultimate-public")
   }
 }
 

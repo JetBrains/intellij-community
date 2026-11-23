@@ -21,14 +21,6 @@
   <!-- endregion -->
 
   <extensions defaultExtensionNs="com.intellij">
-    <projectConfigurable groupId="build"
-                         id="com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable"
-                         bundle="messages.PyBundle"
-                         key="configurable.PyActiveSdkModuleConfigurable.python.interpreter.display.name"
-                         instance="com.intellij.python.community.plugin.minor.facet.PyPluginSdkModuleConfigurable"
-                         groupWeight="118"/> <!-- id is used in InterpreterSettingsQuickFix.showPythonInterpreterSettings -->
-
-    <facetType implementation="com.intellij.python.community.plugin.minor.facet.MinorPythonFacetType"/>
     <applicationService serviceImplementation="com.intellij.python.community.plugin.minor.facet.PySdkToFacetSetterMinorImpl" serviceInterface="com.jetbrains.python.module.PySdkToFacetSetter"/>
   </extensions>
 

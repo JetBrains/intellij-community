@@ -31,6 +31,7 @@ class BundledRuntimeTest {
               OsFamily.LINUX -> LinuxLibcImpl.ALL
               OsFamily.WINDOWS -> WindowsLibcImpl.ALL
               OsFamily.MACOS -> MacLibcImpl.ALL
+              OsFamily.OHOS -> emptyList() // no bundled runtime
             }
             for (libc in libcList) {
               val home = try {

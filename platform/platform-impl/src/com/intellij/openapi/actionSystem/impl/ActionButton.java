@@ -20,12 +20,14 @@ import com.intellij.openapi.actionSystem.AnActionHolder;
 import com.intellij.openapi.actionSystem.AnActionResult;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.ExperimentalIcons;
+import com.intellij.openapi.actionSystem.ExperimentalIconRendering;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.Toggleable;
 import com.intellij.openapi.actionSystem.ex.ActionButtonLook;
+import com.intellij.openapi.actionSystem.ex.ActionIconDescriptors;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
+import com.intellij.openapi.actionSystem.ex.SwingIconCache;
 import com.intellij.openapi.actionSystem.ex.TooltipDescriptionProvider;
 import com.intellij.openapi.actionSystem.ex.TooltipLinkProvider;
 import com.intellij.openapi.diagnostic.Logger;
@@ -42,9 +44,6 @@ import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.platform.icons.AllIconDescriptors;
-import com.intellij.platform.icons.IconDescriptor;
-import com.intellij.platform.icons.scale.IconScale;
-import com.intellij.platform.icons.swing.SwingIconKt;
 import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.codeFloatingToolbar.CodeFloatingToolbar;
 import com.intellij.ui.popup.ActionPopupOptions;
@@ -107,10 +106,11 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
   private Supplier<? extends @NotNull Dimension> myMinimumButtonSizeFunction;
   private Icon myDisabledIcon;
   private Icon myIcon;
-  // experimental icons pipeline: createSwingIcon is expensive, so cache the bridge per descriptor
-  private IconDescriptor myIconDescriptor;
-  private Icon myDescriptorSwingIcon;
-  private Icon myDescriptorDisabledSwingIcon;
+  // experimental icons pipeline: keep the Swing icons while the descriptor and the theme stay the same
+  private final SwingIconCache myDescriptorIcons = new SwingIconCache();
+  private final SwingIconCache myHoveredDescriptorIcons = new SwingIconCache();
+  private final SwingIconCache mySelectedDescriptorIcons = new SwingIconCache();
+  private final SwingIconCache myFallbackIcons = new SwingIconCache();
   protected final Presentation myPresentation;
   protected final AnAction myAction;
   protected final String myPlace;
@@ -337,6 +337,8 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
         if (myNoIconsInPopup) {
           presentation.setIcon(null);
           presentation.setHoveredIcon(null);
+          presentation.setIconDescriptor(null);
+          presentation.setHoveredIconDescriptor(null);
         }
       }
     };
@@ -453,14 +455,22 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
    * @return button's icon. Icon depends on action's state and button's state. It means that the method returns
    *         disabled icon if action is disabled.
    *         In case of rollover (POPPED) or pressed (PUSHED) button's state hovered icon is used (if presented)
+   *         While the new icons pipeline is on, a selected button uses the selected icon descriptor,
+   *         and a POPPED or PUSHED button uses the hovered icon descriptor.
    *         If the action's icon is {@code null} then it returns
    *         an empty icon.
    */
   public Icon getIcon() {
     boolean enabled = isEnabled();
     int popState = getPopState();
-    Icon hoveredIcon = !ExperimentalIcons.isEnabled() && (popState == POPPED || popState == PUSHED) ? myPresentation.getHoveredIcon() : null;
-    Icon icon = enabled ? (hoveredIcon == null ? myIcon : hoveredIcon) : myDisabledIcon;
+    Icon icon;
+    if (ExperimentalIconRendering.isEnabled()) {
+      icon = getIconFromDescriptor(enabled, popState);
+    }
+    else {
+      Icon hoveredIcon = (popState == POPPED || popState == PUSHED) ? myPresentation.getHoveredIcon() : null;
+      icon = enabled ? (hoveredIcon == null ? myIcon : hoveredIcon) : myDisabledIcon;
+    }
     return icon == null ? getFallbackIcon(enabled) : icon;
   }
 
@@ -470,6 +480,10 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
 
   protected @NotNull Icon getFallbackIcon(boolean enabled) {
     Presentation p = getAction().getTemplatePresentation();
+    if (ExperimentalIconRendering.isEnabled()) {
+      myFallbackIcons.update(Objects.requireNonNullElse(ActionIconDescriptors.effective(p), AllIconDescriptors.Toolbar.getUnknown()));
+      return Objects.requireNonNull(enabled ? myFallbackIcons.getIcon() : myFallbackIcons.getDisabled());
+    }
     Icon icon = Objects.requireNonNullElse(p.getIcon(), AllIcons.Toolbar.Unknown);
     if (enabled) return icon;
     if (p.getDisabledIcon() != null) return p.getDisabledIcon();
@@ -477,8 +491,8 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
   }
 
   public void updateIcon() {
-    if (ExperimentalIcons.isEnabled()) {
-      updateDescriptorIcons();
+    if (ExperimentalIconRendering.isEnabled()) {
+      updateIconsFromDescriptor();
       return;
     }
     myIcon = myPresentation.getIcon();
@@ -498,16 +512,23 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
     }
   }
 
-  private void updateDescriptorIcons() {
-    IconDescriptor descriptor = myPresentation.getIconDescriptor();
-    IconDescriptor effective = descriptor != null ? descriptor : AllIconDescriptors.Toolbar.getUnknown();
-    if (!Objects.equals(effective, myIconDescriptor) || myDescriptorSwingIcon == null) {
-      myIconDescriptor = effective;
-      myDescriptorSwingIcon = SwingIconKt.createSwingIcon(effective, IconScale.Default);
-      myDescriptorDisabledSwingIcon = myLook.getDisabledIcon(myDescriptorSwingIcon);
+  private void updateIconsFromDescriptor() {
+    myDescriptorIcons.update(ActionIconDescriptors.effective(myPresentation));
+    myIcon = myDescriptorIcons.getIcon();
+  }
+
+  private @Nullable Icon getIconFromDescriptor(boolean enabled, int popState) {
+    if (isSelected()) {
+      mySelectedDescriptorIcons.update(myPresentation.getSelectedIconDescriptor());
+      Icon selectedIcon = enabled ? mySelectedDescriptorIcons.getIcon() : mySelectedDescriptorIcons.getDisabled();
+      if (selectedIcon != null) return selectedIcon;
     }
-    myIcon = myDescriptorSwingIcon;
-    myDisabledIcon = myDescriptorDisabledSwingIcon;
+    if (enabled && (popState == POPPED || popState == PUSHED)) {
+      myHoveredDescriptorIcons.update(myPresentation.getHoveredIconDescriptor());
+      Icon hoveredIcon = myHoveredDescriptorIcons.getIcon();
+      if (hoveredIcon != null) return hoveredIcon;
+    }
+    return enabled ? myIcon : myDescriptorIcons.getDisabled();
   }
 
   protected void updateToolTipText() {
@@ -679,9 +700,13 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
       repaint();
     }
     else if (Presentation.PROP_DISABLED_ICON.equals(propertyName)) {
-      if (!ExperimentalIcons.isEnabled()) {
+      if (!ExperimentalIconRendering.isEnabled()) {
         myDisabledIcon = myPresentation.getDisabledIcon();
       }
+      repaint();
+    }
+    else if (Presentation.PROP_HOVERED_ICON_DESCRIPTOR.equals(propertyName)
+             || Presentation.PROP_SELECTED_ICON_DESCRIPTOR.equals(propertyName)) {
       repaint();
     }
     else if ("selected".equals(propertyName)) {

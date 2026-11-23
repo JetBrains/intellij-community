@@ -157,8 +157,7 @@ internal class GHPRDataContextRepository(private val project: Project, parentCs:
                                                   requestExecutor, apiRepositoryCoordinates)
       val timelineService = GHPRTimelineServiceImpl(requestExecutor, apiRepositoryCoordinates)
       val commentService = GHPRCommentServiceImpl(requestExecutor, apiRepositoryCoordinates)
-      val changesService = GHPRChangesServiceImpl(cs, project, requestExecutor,
-                                                  remoteCoordinates, apiRepositoryCoordinates)
+      val changesService = GHPRChangesServiceImpl(cs, requestExecutor, remoteCoordinates, apiRepositoryCoordinates)
       val reviewService = GHPRReviewServiceImpl(securityService, requestExecutor, apiRepositoryCoordinates)
       val filesService = GHPRFilesServiceImpl(requestExecutor, apiRepositoryCoordinates)
       val reactionsService = GHReactionsServiceImpl(requestExecutor, apiRepositoryCoordinates)

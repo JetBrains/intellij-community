@@ -14,29 +14,39 @@
  * limitations under the License.
  */
 package com.siyeh.ig.classlayout;
+import com.intellij.JavaTestUtil;
+import com.intellij.testFramework.JavaInspectionFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.junit.jupiter.api.Test;
 
-import com.siyeh.ig.IGInspectionTestCase;
+import static com.intellij.testFramework.JavaInspectionFixtureKt.javaInspectionFixture;
+import static com.intellij.testFramework.JavaInspectionFixtureKt.javaInspectionProjectFixture;
 
-public class MethodReturnAlwaysConstantInspectionTest extends IGInspectionTestCase {
 
+@TestApplication
+public class MethodReturnAlwaysConstantInspectionTest {
+  private static final TestFixture<LightJavaProject> projectFixture = javaInspectionProjectFixture();
+  private final TestFixture<JavaInspectionFixture> javaInspection = javaInspectionFixture(projectFixture, JavaTestUtil.getJavaTestDataPath() + "/ig" + "/com/siyeh/igtest/classlayout/method_return_always_constant");
+
+
+  @Test
   public void testNoInheritors() {
     doTest();
   }
 
+  @Test
   public void testReturnsConstant() {
     doTest();
   }
 
+  @Test
   public void testNotReturnConstant() {
     doTest();
   }
 
-  @Override
-  protected String getTestDataPath() {
-    return super.getTestDataPath() + "/com/siyeh/igtest/classlayout/method_return_always_constant";
-  }
-
   private void doTest() {
-    doTest(getTestName(true), new MethodReturnAlwaysConstantInspection());
+    javaInspection.get().doTest(javaInspection.get().getTestName(true), new MethodReturnAlwaysConstantInspection());
   }
 }

@@ -138,6 +138,9 @@ public interface IdeaPlugin extends DomElement {
   @SubTagList("incompatible-with")
   @NotNull List<GenericDomValue<IdeaPlugin>> getIncompatibilities();
 
+  @SubTagList("technology")
+  @NotNull List<? extends Technology> getTechnologies();
+
   @Stubbed
   @SubTagList("module")
   @NotNull List<? extends PluginModule> getModules();

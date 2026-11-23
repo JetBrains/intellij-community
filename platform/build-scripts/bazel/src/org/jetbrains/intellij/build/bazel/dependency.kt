@@ -368,6 +368,10 @@ internal fun generateDeps(
   if (module.module.name == "fleet.noria.cells") {
     plugins.add("@community//fleet/compiler-plugins/noria:noria-plugin")
   }
+  // kotlinx-rpc generates the `@Rpc` service stubs at compile time
+  if (module.module.dependenciesList.dependencies.any { it is JpsLibraryDependency && it.libraryReference.libraryName == "kotlinx-rpc-core-jvm" }) {
+    plugins.add("@lib//:krpc-plugin")
+  }
 
   checkForDuplicates("bazel deps", deps)
   checkForDuplicates("bazel associates", associates)

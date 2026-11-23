@@ -2,7 +2,7 @@
 package com.jetbrains.python.run
 
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
-import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.python.sdk.backend.PythonInterpreter
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.jetbrains.python.run.features.PyRunToolParameters
 import com.jetbrains.python.run.features.resolveRunToolParameters
@@ -13,5 +13,5 @@ import org.jetbrains.annotations.ApiStatus
  */
 @ApiStatus.Internal
 @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
-fun AbstractPythonRunConfiguration<*>.resolveRunToolParametersForJvm(sdk: Sdk): PyRunToolParameters? =
-  runBlockingMaybeCancellable { resolveRunToolParameters(sdk) }
+fun AbstractPythonRunConfiguration<*>.resolveRunToolParametersForJvm(interpreter: PythonInterpreter): PyRunToolParameters? =
+  runBlockingMaybeCancellable { resolveRunToolParameters(interpreter) }

@@ -2,8 +2,12 @@
 package com.intellij.python.devkit
 
 import com.intellij.idea.TestFor
-import com.intellij.testFramework.LightProjectDescriptor
+import com.intellij.testFramework.fixtures.lightJavaProjectFixture
+import com.intellij.testFramework.junit5.TestApplication
+import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 
 /**
  * Checks which Python strings of a Kotlin test get the DevKit support of the `PyCodeInsightTestCase` assertion language.
@@ -11,12 +15,13 @@ import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescrip
  * The tests of the monorepo are Kotlin tests. So these cases cover the call forms that such tests use.
  */
 @TestFor(classes = [PyTestCaseText::class])
-class PyTestAssertionKotlinEditorTest : PyTestAssertionEditorTestBase() {
+@TestApplication
+class PyTestAssertionKotlinEditorTest {
+  private val pyTestAssertion by pyTestAssertionEditorFixture(projectFixture)
+  private val myFixture get() = pyTestAssertion.fixture
 
-  override fun getProjectDescriptor(): LightProjectDescriptor = KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()
-
-  override fun setUp() {
-    super.setUp()
+  @BeforeEach
+  fun addTestCaseStub() {
     myFixture.addFileToProject("com/jetbrains/python/fixtures/PyCodeInsightTestCase.kt", """
       package com.jetbrains.python.fixtures
       import org.intellij.lang.annotations.Language
@@ -28,28 +33,32 @@ class PyTestAssertionKotlinEditorTest : PyTestAssertionEditorTestBase() {
     """.trimIndent())
   }
 
+  @Test
   fun `test string argument`() {
     configureKotlin("test($TEXT)")
 
-    assertSize(1, errors())
+    assertThat(pyTestAssertion.errors()).hasSize(1)
   }
 
+  @Test
   fun `test named argument with trimIndent`() {
     configureKotlin("test(fileContent = $TEXT.trimIndent())")
 
-    assertSize(1, errors())
+    assertThat(pyTestAssertion.errors()).hasSize(1)
   }
 
+  @Test
   fun `test string that a member function passes on`() {
     configureKotlin("check($TEXT)", """private fun check(@Language("Python") text: String) = test(text.trimIndent(), "a.py" to "")""")
 
-    assertSize(1, errors())
+    assertThat(pyTestAssertion.errors()).hasSize(1)
   }
 
+  @Test
   fun `test plain Python text gets no checks`() {
     configureKotlin("""testQuickFix($TEXT, "Fix")""")
 
-    assertEmpty(errors())
+    assertThat(pyTestAssertion.errors()).isEmpty()
   }
 
   private fun configureKotlin(statement: String, members: String = "") {
@@ -65,6 +74,8 @@ class PyTestAssertionKotlinEditorTest : PyTestAssertionEditorTestBase() {
   }
 
   private companion object {
+    private val projectFixture = lightJavaProjectFixture(KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance())
+
     /** A Kotlin raw string with a misspelled directive. */
     const val TEXT = "\"\"\"\n      x = 1 # WEAK-WARNING message\n    \"\"\""
   }

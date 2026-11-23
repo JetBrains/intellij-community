@@ -2,6 +2,7 @@
 package com.jetbrains.python.hatch.packaging
 
 import com.intellij.openapi.project.Project
+import com.intellij.python.sdk.backend.PythonInterpreter
 import com.intellij.platform.eel.EelApi
 import com.intellij.python.hatch.HatchPyTool
 import com.intellij.python.hatch.HatchService
@@ -9,7 +10,6 @@ import com.intellij.python.pyproject.PY_PROJECT_TOML
 import com.intellij.python.pyproject.PyProjectToml
 import com.intellij.python.pytools.resolveExecutable
 import com.intellij.python.requirements.parser.PyRequirementParser
-import com.intellij.python.sdk.backend.PythonInterpreter
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.hatch.sdk.createHatchServiceAsync
@@ -28,10 +28,9 @@ import java.nio.file.Path
 
 @ApiStatus.Internal
 class HatchPackageManager(
-  project: Project,
   interpreter: PythonInterpreter,
   hatchServiceDeferred: Deferred<PyResult<HatchService<*>>>,
-) : PipPythonPackageManager(project, interpreter) {
+) : PipPythonPackageManager(interpreter) {
   override fun getCliSpecs(eelApi: EelApi): List<PythonManagerCliSpec> = listOf(
     PythonManagerCliSpec("hatch", { HatchPyTool.getInstance().resolveExecutable(eelApi.toFileSystem())?.path }),
   ) + super.getCliSpecs(eelApi)
@@ -72,12 +71,12 @@ class HatchPackageManager(
 }
 
 internal class HatchPackageManagerProvider : PythonPackageManagerProvider {
-  override fun createPackageManager(project: Project, interpreter: PythonInterpreter): PythonPackageManager? {
+  override fun createPackageManager(interpreter: PythonInterpreter): PythonPackageManager? {
     if (!interpreter.isHatch) {
       return null
     }
 
-    val hatchService = interpreter.createHatchServiceAsync(PyPackageCoroutine.getScope(project)) ?: return null
-    return HatchPackageManager(project, interpreter, hatchService)
+    val hatchService = interpreter.createHatchServiceAsync(PyPackageCoroutine.getScope(interpreter.project))
+    return HatchPackageManager(interpreter, hatchService)
   }
 }

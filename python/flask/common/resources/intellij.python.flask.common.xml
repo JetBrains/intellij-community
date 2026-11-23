@@ -3,13 +3,17 @@
   <dependencies>
     <module name="intellij.libraries.jetbrains.annotations"/>
     <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
     <module name="intellij.platform.core.ui"/>
     <module name="intellij.platform.execution"/>
+    <module name="intellij.platform.ide.impl"/>
     <module name="intellij.platform.util.ui"/>
+    <module name="intellij.python.community.common"/>
     <module name="intellij.python.community.impl"/>
   </dependencies>
   <!-- endregion -->
   <extensions defaultExtensionNs="com.intellij">
+    <directoryProjectGenerator implementation="com.intellij.python.flask.common.FlaskPromoProjectGenerator"/>
     <configurationType implementation="com.intellij.python.flask.common.FlaskServerLockedRunConfigurationType" order="first"/>
   </extensions>
   <extensions defaultExtensionNs="Pythonid">

@@ -23,8 +23,6 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
-import com.intellij.openapi.wm.ToolWindowId;
-import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.platform.util.coroutines.CoroutineScopeKt;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.EverythingGlobalScope;
@@ -314,15 +312,7 @@ public class UsageViewManagerImpl extends UsageViewManagerWithUsageViewFactoryCa
   }
 
   void showToolWindow(boolean activateWindow) {
-    ToolWindow toolWindow = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.FIND);
-    if (toolWindow == null) {
-      LOG.warn(String.format("Uninitialized %s tool window, which is unexpected. Attempting initializing ad hoc", ToolWindowId.FIND));
-      UsageViewContentManager.getInstance(project);
-      toolWindow = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.FIND);
-      if (toolWindow == null) {
-        throw new RuntimeException(String.format("Uninitialized %s tool window, which is unexpected. Ad hoc initialization attempt failed", ToolWindowId.FIND));
-      }
-    }
+    ToolWindow toolWindow = UsageViewContentManager.getInstance(project).getToolWindow();
     toolWindow.show(null);
     if (activateWindow && !toolWindow.isActive()) {
       toolWindow.activate(null);

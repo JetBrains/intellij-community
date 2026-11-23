@@ -319,6 +319,7 @@ object LibraryModuleSets {
     embeddedModule("intellij.libraries.ktor.network.tls")
     embeddedModule("intellij.libraries.ktor.client")
     module("intellij.libraries.ktor.client.cio")
+    module("intellij.libraries.ktor.server.core")
     module("intellij.libraries.ktor.server.cio")
   }
 

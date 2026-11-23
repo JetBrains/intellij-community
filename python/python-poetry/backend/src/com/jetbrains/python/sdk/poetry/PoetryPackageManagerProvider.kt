@@ -10,6 +10,6 @@ import com.jetbrains.python.packaging.management.PythonPackageManagerProvider
  */
 
 internal class PoetryPackageManagerProvider : PythonPackageManagerProvider {
-  override fun createPackageManager(project: Project, interpreter: PythonInterpreter): PythonPackageManager? =
-    if (interpreter.isPoetry) PoetryPackageManager(project, interpreter) else null
+  override fun createPackageManager(interpreter: PythonInterpreter): PythonPackageManager? =
+    if (interpreter.isPoetry) PoetryPackageManager(interpreter) else null
 }

@@ -1,0 +1,25 @@
+<!-- Written by hand: no product bundles this plugin, and no generator knows it.
+     `intellij.platform.lsp.impl.integrationTests` adds it to the IDE that it starts, see `AGENTS.md` of that module. -->
+<idea-plugin>
+  <id>com.intellij.platform.lsp.integrationTests</id>
+  <name>LSP Integration Tests</name>
+  <vendor>JetBrains</vendor>
+
+  <dependencies>
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
+    <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.lsp"/>
+    <module name="intellij.platform.projectModel"/>
+  </dependencies>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <platform.lsp.integrationProvider implementation="com.intellij.platform.lsp.integrationTests.idePlugin.FakeLspIntegrationProvider"/>
+    <fileType name="SpaceTokenizing" implementationClass="com.intellij.platform.lsp.integrationTests.idePlugin.SpaceTokenizingFileType"
+              fieldName="INSTANCE" language="SpaceTokenizing" extensions="stok"/>
+    <lang.parserDefinition language="SpaceTokenizing"
+                           implementationClass="com.intellij.platform.lsp.integrationTests.idePlugin.SpaceTokenizingParserDefinition"/>
+    <problemFileHighlightFilter implementation="com.intellij.platform.lsp.integrationTests.idePlugin.FakeLspProblemFileHighlightFilter"/>
+  </extensions>
+</idea-plugin>

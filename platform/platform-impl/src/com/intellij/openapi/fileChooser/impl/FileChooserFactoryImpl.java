@@ -11,6 +11,7 @@ import com.intellij.openapi.fileChooser.FileChooserFactory;
 import com.intellij.openapi.fileChooser.FileSaverDescriptor;
 import com.intellij.openapi.fileChooser.FileSaverDialog;
 import com.intellij.openapi.fileChooser.FileTextField;
+import com.intellij.openapi.fileChooser.NioFileChooserDialog;
 import com.intellij.openapi.fileChooser.PathChooserDialog;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.ApiStatus;
@@ -36,6 +37,16 @@ public class FileChooserFactoryImpl extends FileChooserFactory {
   @Override
   public @NotNull PathChooserDialog createPathChooser(@NotNull FileChooserDescriptor descriptor, @Nullable Project project, @Nullable Component parent) {
     return getService().createPathChooser(descriptor, project, parent);
+  }
+
+  @Override
+  public @NotNull NioFileChooserDialog createNioFileChooser(
+    @NotNull FileChooserDescriptor descriptor,
+    @Nullable Project project,
+    @Nullable Component parent
+  ) {
+    var chooser = getService().createNioFileChooser(descriptor, project, parent);
+    return chooser != null ? chooser : super.createNioFileChooser(descriptor, project, parent);
   }
 
   @Override

@@ -18,6 +18,7 @@ import com.intellij.util.PathUtil;
 import com.intellij.util.Url;
 import com.intellij.util.Urls;
 import com.intellij.util.concurrency.SameThreadExecutor;
+import com.intellij.util.io.URLUtil;
 import com.jetbrains.jsonSchema.JsonSchemaCatalogProjectConfiguration;
 import com.jetbrains.jsonSchema.remote.http.JsonSchemaRemoteContentService;
 import com.jetbrains.jsonSchema.remote.http.SchemaOrigin;
@@ -50,7 +51,10 @@ public final class JsonFileResolver {
     if (tempPath != null) {
       return TempFileSystem.getInstance().findFileByPath(tempPath);
     }
-    return VirtualFileManager.getInstance().findFileByUrl(PathUtil.toSystemIndependentName(replaceUnsafeSchemaStoreUrls(urlString)));
+    String url = PathUtil.toSystemIndependentName(replaceUnsafeSchemaStoreUrls(urlString));
+    VirtualFile file = VirtualFileManager.getInstance().findFileByUrl(url);
+    // a file URL from Path.toUri() or a browser escapes a space as %20
+    return file != null || !url.contains("%") ? file : VirtualFileManager.getInstance().findFileByUrl(URLUtil.unescapePercentSequences(url));
   }
 
   @Contract("null -> null; !null -> !null")

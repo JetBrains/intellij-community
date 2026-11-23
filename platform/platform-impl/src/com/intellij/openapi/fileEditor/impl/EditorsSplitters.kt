@@ -984,6 +984,21 @@ open class EditorsSplitters internal constructor(
   internal open val isSingletonEditorInWindow: Boolean
     get() = false
 
+  /**
+   * `true` when another component shows the tabs of these splitters. Each window then hides its own tab row, also after a
+   * new tab, a reopen, a split and a settings change, see [EditorWindow.updateTabsVisibility].
+   */
+  @Internal
+  var isTabRowHidden: Boolean = false
+    @RequiresEdt
+    set(value) {
+      if (field == value) return
+      field = value
+      for (window in windows) {
+        window.updateTabsVisibility()
+      }
+    }
+
   internal open fun afterFileClosed(file: VirtualFile) {
     cancelEmptyStateComponentCreation()
     if (showEmptyText()) {
@@ -1684,7 +1699,7 @@ private class UiBuilder(private val splitters: EditorsSplitters, private val isL
   }
 }
 
-private fun computeFileEntry(
+private suspend fun computeFileEntry(
   virtualFileManager: VirtualFileManager,
   fileEntry: FileEntry,
   fileEditorManager: FileEditorManagerImpl,
@@ -1695,53 +1710,59 @@ private fun computeFileEntry(
   compositeScopes: MutableCollection<CoroutineScope>,
   isLazyComposite: Boolean,
 ): FileToOpen? {
-  val notFullyPreparedFile = resolveFileOrLogError(fileEntry, virtualFileManager, fileEditorManager.project) ?: return null
+  val notFullyPreparedFile = span("editor file resolve") {
+    resolveFileOrLogError(fileEntry, virtualFileManager, fileEditorManager.project)
+  } ?: return null
   val compositeCoroutineScope = splitters.coroutineScope.childScope("EditorComposite(file=${fileEntry.url})")
   compositeScopes.add(compositeCoroutineScope)
 
   // https://youtrack.jetbrains.com/issue/IJPL-157845/Incorrect-encoding-of-file-during-project-opening
   // In the case of the JetBrains client, it's better to avoid a blocking protocol call inside [VirtualFile.contentsToByteArray]
-  val [tabFileDeferred, hint] = when {
-    PlatformUtils.isJetBrainsClient() -> {
-      // In the case of the JetBrains client, the editor composite is requested from the backend
-      CompletableDeferred(notFullyPreparedFile) to null
-    }
-    else -> {
-      val startEagerly = fileEntry.currentInTab || !isLazyComposite
-      // only the startup preparation of an eager composite reads this pipe; a lazy composite reports through its own one
-      val startupProgress = if (startEagerly) compositeCoroutineScope.createProgressPipe() else null
-      val preparedFile = compositeCoroutineScope.async(CoroutineName("editor file content preload"), start = CoroutineStart.LAZY) {
-        if (startupProgress == null) {
-          windowAdded.await()
-          preloadFileContent(notFullyPreparedFile, fileEditorManager.project)
-        }
-        else {
-          startupProgress.collectProgressUpdates {
+  val [tabFileDeferred, hint] = span("editor composite model") {
+    when {
+      PlatformUtils.isJetBrainsClient() -> {
+        // In the case of the JetBrains client, the editor composite is requested from the backend
+        CompletableDeferred(notFullyPreparedFile) to null
+      }
+      else -> {
+        val startEagerly = fileEntry.currentInTab || !isLazyComposite
+        // only the startup preparation of an eager composite reads this pipe; a lazy composite reports through its own one
+        val startupProgress = if (startEagerly) compositeCoroutineScope.createProgressPipe() else null
+        val preparedFile = compositeCoroutineScope.async(CoroutineName("editor file content preload"), start = CoroutineStart.LAZY) {
+          if (startupProgress == null) {
+            windowAdded.await()
             preloadFileContent(notFullyPreparedFile, fileEditorManager.project)
           }
+          else {
+            startupProgress.collectProgressUpdates {
+              preloadFileContent(notFullyPreparedFile, fileEditorManager.project)
+            }
+          }
+          notFullyPreparedFile
         }
-        notFullyPreparedFile
-      }
 
-      val model = fileEditorManager.createEditorCompositeModelOnStartup(
-        compositeCoroutineScope = compositeCoroutineScope,
-        fileProvider = { preparedFile.await() },
-        fileEntry = fileEntry,
-        publicationReady = windowAdded,
-        startupProgress = startupProgress,
-      )
-      preparedFile to StartupFileEditorOpenOptionsHint(compositeCoroutineScope, model)
+        val model = fileEditorManager.createEditorCompositeModelOnStartup(
+          compositeCoroutineScope = compositeCoroutineScope,
+          fileProvider = { preparedFile.await() },
+          fileEntry = fileEntry,
+          publicationReady = windowAdded,
+          startupProgress = startupProgress,
+        )
+        preparedFile to StartupFileEditorOpenOptionsHint(compositeCoroutineScope, model)
+      }
     }
   }
 
-  return setupFileTab(compositeCoroutineScope,
-                      fileEditorManager,
-                      tabFileDeferred,
-                      fileEntry,
-                      delayedTasks,
-                      notFullyPreparedFile,
-                      placeholderIcon,
-                      hint)
+  return span("editor tab setup") {
+    setupFileTab(compositeCoroutineScope,
+                 fileEditorManager,
+                 tabFileDeferred,
+                 fileEntry,
+                 delayedTasks,
+                 notFullyPreparedFile,
+                 placeholderIcon,
+                 hint)
+  }
 }
 
 private suspend fun preloadFileContent(file: VirtualFile, project: Project) {
@@ -2122,10 +2143,12 @@ internal class StartupEditorCompositeProvider : EditorCompositeProvider {
     if (hint !is StartupFileEditorOpenOptionsHint) return null
 
     val feManager = FileEditorManager.getInstance(project) as FileEditorManagerImpl
-    return feManager.createCompositeInstance(
+    val composite = feManager.createCompositeInstance(
       file = file,
       model = hint.model,
       coroutineScope = hint.compositeScope,
     )
+    composite?.isRestoredOnStartup = true
+    return composite
   }
 }

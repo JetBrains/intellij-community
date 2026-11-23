@@ -15,24 +15,35 @@ import com.intellij.codeInspection.javaDoc.JavaDocReferenceInspection;
 import com.intellij.codeInspection.uncheckedWarnings.UncheckedWarningLocalInspection;
 import com.intellij.lang.Language;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.source.tree.injected.MyTestInjector;
-import com.intellij.testFramework.JavaInspectionTestCase;
-import com.intellij.testFramework.LightProjectDescriptor;
+import com.intellij.testFramework.JavaInspectionFixture;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class RedundantSuppressTest extends JavaInspectionTestCase {
+import static com.intellij.testFramework.JavaInspectionFixtureKt.javaInspectionFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+
+@TestApplication
+public class RedundantSuppressTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(LightJavaCodeInsightFixtureTestCase.JAVA_9);
+  private final TestFixture<JavaInspectionFixture> javaInspection = javaInspectionFixture(projectFixture);
+
   private GlobalInspectionToolWrapper myWrapper;
   private final List<InspectionToolWrapper<?, ?>> myWrappers = new ArrayList<>();
 
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-
+  @BeforeEach
+  public void setUp() {
     myWrapper = new GlobalInspectionToolWrapper(new RedundantSuppressInspection() {
       @Override
       protected @NotNull @Unmodifiable List<InspectionToolWrapper<?, ?>> getInspectionTools(@NotNull PsiElement psiElement, @NotNull InspectionProfile profile) {
@@ -41,55 +52,53 @@ public class RedundantSuppressTest extends JavaInspectionTestCase {
     });
   }
 
-  @NotNull
-  @Override
-  protected LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_9;
-  }
-
-  @Override
-  protected void tearDown() throws Exception {
-    myWrapper = null;
-    super.tearDown();
-  }
-
+  @Test
   public void testModuleInfo() {
     myWrappers.add(new LocalInspectionToolWrapper(new JavaDocReferenceInspection()));
-    doTest("redundantSuppress/" + getTestName(true), myWrapper, false);
+    javaInspection.get().doTest("redundantSuppress/" + javaInspection.get().getTestName(true), myWrapper, false);
   }
 
+  @Test
   public void testDefaultFile() {
     myWrappers.add(new LocalInspectionToolWrapper(new I18nInspection()));
     doTest();
   }
 
+  @Test
   public void testAlternativeIds() { doTest(); }
 
+  @Test
   public void testAnnotator() {
     myWrappers.add(new GlobalInspectionToolWrapper(new HighlightVisitorBasedInspection().setRunAnnotators(true)));
-    doTest("redundantSuppress/" + getTestName(true), myWrapper, false);
+    javaInspection.get().doTest("redundantSuppress/" + javaInspection.get().getTestName(true), myWrapper, false);
   }
 
+  @Test
   public void testIgnoreUnused() { doTest(); }
+  @Test
   public void testIgnoreWithAnnotation() { doTest(); }
 
+  @Test
   public void testSameSuppressIds() {
     myWrappers.add(new LocalInspectionToolWrapper(new UncheckedWarningLocalInspection()));
     doTest(); 
   }
 
+  @Test
   public void testSuppressAll() {
     ((RedundantSuppressInspection)myWrapper.getTool()).IGNORE_ALL = true;
     doTest();
   }
 
+  @Test
   public void testInjections() {
-    MyTestInjector testInjector = new MyTestInjector(getPsiManager());
-    testInjector.injectAll(myFixture.getTestRootDisposable());
+    MyTestInjector testInjector = new MyTestInjector(PsiManager.getInstance(javaInspection.get().getFixture().getProject()));
+    testInjector.injectAll(javaInspection.get().getFixture().getTestRootDisposable());
 
     doTest();
   }
 
+  @Test
   public void testAdditionalEmptySuppressor() {
     LanguageInspectionSuppressors.INSTANCE.addExplicitExtension(Language.findLanguageByID("UAST"), new InspectionSuppressor() {
       @Override
@@ -101,12 +110,12 @@ public class RedundantSuppressTest extends JavaInspectionTestCase {
       public SuppressQuickFix @NotNull [] getSuppressActions(@Nullable PsiElement element, @NotNull String toolId) {
         return SuppressQuickFix.EMPTY_ARRAY;
       }
-    }, getTestRootDisposable());
+    }, javaInspection.get().getFixture().getTestRootDisposable());
     myWrappers.add(new LocalInspectionToolWrapper(new I18nInspection()));
     doTest();
   }
 
   private void doTest() {
-    doTest("redundantSuppress/" + getTestName(true), myWrapper, true);
+    javaInspection.get().doTest("redundantSuppress/" + javaInspection.get().getTestName(true), myWrapper, true);
   }
 }

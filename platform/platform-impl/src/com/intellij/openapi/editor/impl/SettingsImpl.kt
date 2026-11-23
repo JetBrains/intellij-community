@@ -330,14 +330,6 @@ class SettingsImpl internal constructor(
     state.myAdditionalColumnsCount = additionalColumnsCount
   }
 
-  override fun getCharacterGridWidthMultiplier(): Float? {
-    return getSnapshot().getCharacterGridWidthMultiplier()
-  }
-
-  override fun setCharacterGridWidthMultiplier(value: Float?) {
-    state.characterGridWidth = value
-  }
-
   // The caret.
 
   override fun isBlockCursor(): Boolean {

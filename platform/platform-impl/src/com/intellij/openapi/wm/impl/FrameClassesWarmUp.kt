@@ -314,6 +314,7 @@ internal val COMMON_FRAME_CLASS_NAMES: List<String> = listOf(
   classNames(
     "com.intellij.ui.tabs.",
     "JBTabs", "JBTabsEx", "JBTabsPresentation", "TabsListener", "TabInfo\$DragOutDelegate", "TabInfo\$DragDelegate", "UiDecorator",
+    "ProjectTabsManager", "ProjectTabsHandler",
   ),
   classNames(
     "com.intellij.ui.switcher.",
@@ -577,8 +578,12 @@ internal val MAC_FRAME_CLASS_NAMES: List<String> = listOf(
   classNames(
     "com.intellij.ui.mac.",
     "MergeAllWindowsAction", "MacWinTabsHandler", "MacWinTabsHandlerV2", "WindowTabsComponent", "MacMainFrameDecorator",
-    "MacMainFrameDecorator\$Companion", "MacMainFrameDecorator\$FSListener", "WindowTabsComponent\$WindowDropAreaPainter",
-    "MacMainFrameDecorator\$FSAdapter", "MacFullScreenControlsManager",
+    "MacMainFrameDecorator\$Companion", "MacMainFrameDecorator\$FSListener", "MacMainFrameDecorator\$FSAdapter",
+    "MacFullScreenControlsManager",
+  ),
+  classNames(
+    "com.intellij.ui.tabs.",
+    "ProjectTabsComponent", "ProjectTabsComponent\$Companion", "ProjectTabsComponent\$WindowDropAreaPainter",
   ),
   classNames(
     "com.intellij.ui.",

@@ -2,18 +2,23 @@
 package org.jetbrains.idea.devkit.inspections
 
 import com.intellij.testFramework.TestDataPath
+import com.intellij.testFramework.junit5.TestApplication
 import org.jetbrains.idea.devkit.DevkitJavaTestsUtil
-import org.jetbrains.idea.devkit.inspections.quickfix.UseIntelliJVirtualThreadsInspectionTestBase
+import org.jetbrains.idea.devkit.inspections.quickfix.useIntelliJVirtualThreadsFixture
+import org.jetbrains.idea.devkit.inspections.quickfix.useIntelliJVirtualThreadsProjectFixture
+import org.junit.jupiter.api.Test
 
 @TestDataPath($$"$CONTENT_ROOT/testData/inspections/useIntelliJVirtualThreads")
-class UseIntelliJVirtualThreadsInspectionTest : UseIntelliJVirtualThreadsInspectionTestBase() {
-  override fun getBasePath(): String {
-    return DevkitJavaTestsUtil.TESTDATA_PATH + "inspections/useIntelliJVirtualThreads"
+@TestApplication
+class UseIntelliJVirtualThreadsInspectionTest {
+  companion object {
+    private val projectFixture = useIntelliJVirtualThreadsProjectFixture()
   }
 
+  private val virtualThreads by useIntelliJVirtualThreadsFixture(projectFixture, "java", DevkitJavaTestsUtil.TESTDATA_PATH + "inspections/useIntelliJVirtualThreads")
+
+  @Test
   fun testUseIntelliJVirtualThreads() {
-    doTest("Replace with 'IntelliJVirtualThreads.ofVirtual()'")
+    virtualThreads.doTest("Replace with 'IntelliJVirtualThreads.ofVirtual()'")
   }
-
-  override fun getFileExtension(): String = "java"
 }

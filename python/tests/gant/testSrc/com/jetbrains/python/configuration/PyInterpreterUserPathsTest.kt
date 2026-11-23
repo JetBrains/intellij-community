@@ -7,7 +7,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.python.junit5Tests.framework.pyProjectFixture
 import com.intellij.python.sdk.backend.PythonInterpreterDetails
 import com.intellij.python.sdk.backend.PythonInterpreterRegistry
-import com.intellij.python.sdk.backend.getSdkAPI
+import com.intellij.python.sdk.backend.addMockPythonInterpreter
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.RegistryKeyAppLevel
 import com.intellij.testFramework.junit5.TestApplication
@@ -42,16 +42,14 @@ internal class PyInterpreterUserPathsTest {
     try {
       val added = newDir("added")
       val excluded = newDir("excluded")
-      @Suppress("DEPRECATION") val sdk = interpreter.getSdkAPI()
-
-      writeUserPaths(project, sdk, setOf(added), setOf(excluded))
+      writeUserPaths(project, interpreter, setOf(added), setOf(excluded))
 
       val facts = PythonInterpreterDetails.getInstance(project).facts(interpreter)
       assertThat(facts.addedPaths).containsExactly(added.toNioPath())
       assertThat(facts.excludedPaths).containsExactly(excluded.toNioPath())
     }
     finally {
-      registry.removePythonInterpreter(pyProject, interpreter)
+      registry.remove(interpreter)
     }
   }
 

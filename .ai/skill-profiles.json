@@ -23,7 +23,7 @@
     "dotnet": ["dotnet"],
     "jewel": ["jewel"],
     "kotlin-mpp": ["kmt-tc-duty"],
-    "python": ["compare-python-typecheckers", "py-junit5-tests", "pycharm-dev-workflow"],
+    "python": ["compare-python-typecheckers", "pycharm-dev-workflow"],
     "remote-dev": [
       "investigate-split-completion",
       "remote-dev",
@@ -38,7 +38,6 @@
     "toolbox": ["tbx-update-jetbrainsd"],
     "ui": [
       "compose-ui",
-      "icon-resources",
       "icons",
       "kotlin-ui-dsl",
       "kotlin-ui-swing-component-architecture",

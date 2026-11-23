@@ -44,7 +44,7 @@ The classic contributors below stay for the code that is not migrated yet.
 
 - `java-tests/testSrc/com/intellij/java/codeInsight/completion/` holds the tests.
   `com/intellij/codeInsight/completion` of the same module holds file-path tests only.
-- `LightFixtureCompletionTestCase` is the base class, and `NormalCompletionTestCase` adds the base
+- A JUnit 6 test uses `lightCompletionFixture`, and `normalCompletionFixture` adds the base
   path and the `doTest` helpers of the `normal` data set.
 - The data is in `java-tests/testData/codeInsight/completion/<area>/`.
 

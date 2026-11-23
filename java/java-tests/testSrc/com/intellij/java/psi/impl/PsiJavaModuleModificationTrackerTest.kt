@@ -6,13 +6,23 @@ import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiJavaFile
 import com.intellij.psi.PsiJavaModule
 import com.intellij.psi.impl.PsiJavaModuleModificationTracker
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase5
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.lightJavaCodeInsightFixture
+import com.intellij.testFramework.fixtures.lightJavaProjectFixture
 import com.intellij.testFramework.junit5.RunInEdt
+import com.intellij.testFramework.junit5.TestApplication
 import org.junit.jupiter.api.Test
 import kotlin.test.assertTrue
 
+@TestApplication
 @RunInEdt(writeIntent = true)
-class PsiJavaModuleModificationTrackerTest : LightJavaCodeInsightFixtureTestCase5() {
+class PsiJavaModuleModificationTrackerTest {
+  companion object {
+    private val projectFixture = lightJavaProjectFixture(LightJavaCodeInsightFixtureTestCase.JAVA_LATEST_WITH_LATEST_JDK)
+  }
+
+  private val fixture by lightJavaCodeInsightFixture(projectFixture)
+
   @Test
   fun changeInPsiModuleInfo() {
     val file = fixture.configureByText("module-info.java", "module M1 {}")

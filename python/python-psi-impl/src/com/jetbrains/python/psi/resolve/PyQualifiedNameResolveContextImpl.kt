@@ -8,7 +8,6 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
 import com.intellij.python.sdk.backend.PythonInterpreter
-import com.intellij.python.sdk.backend.findPythonInterpreterIfReady
 import com.jetbrains.python.PyNames
 import com.jetbrains.python.PythonRuntimeService
 import com.jetbrains.python.psi.impl.PyExpressionCodeFragmentImpl
@@ -86,12 +85,9 @@ data class PyQualifiedNameResolveContextImpl(
   }
 }
 
-/**
- * The interpreter of the Python console that [foothold] is in, or `null`. The console stores its SDK, and the registry
- * of its project holds the interpreter of that SDK.
- */
+/** The interpreter of the Python console that [foothold] is in, or `null`. The console stores it on its file. */
 internal fun consoleInterpreterOf(foothold: PsiElement): PythonInterpreter? =
-  PythonRuntimeService.getInstance().getConsoleSdk(foothold)?.let { foothold.project.findPythonInterpreterIfReady(it) }
+  PythonRuntimeService.getInstance().getConsoleInterpreter(foothold)
 
 /**
  * The interpreter of a context without a module and a foothold, see [PyQualifiedNameResolveContextImpl.interpreter].

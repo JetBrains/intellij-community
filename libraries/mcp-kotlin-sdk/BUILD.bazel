@@ -19,6 +19,7 @@ ij_plugin_module(
         # do not sort,
         "@lib//:libraries-mcp-kotlin-sdk-io-modelcontextprotocol-kotlin-sdk",
         "//libraries/kotlin/logging",
+        "//libraries/ktor/server-core:libraries-ktor-server-core",
     ],
 )
 ### auto-generated section `build intellij.libraries.mcp.kotlin.sdk` end

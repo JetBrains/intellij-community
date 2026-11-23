@@ -4,9 +4,14 @@ package com.intellij.refactoring.rename;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ContentEntry;
+import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.roots.SourceFolder;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -15,6 +20,7 @@ import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiNameHelper;
 import com.intellij.psi.PsiPackage;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiUtilCore;
@@ -25,9 +31,11 @@ import com.intellij.refactoring.move.moveClassesOrPackages.MoveDirectoryWithClas
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.MultiMap;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 
 import java.util.Map;
 
@@ -147,13 +155,36 @@ public class RenamePsiPackageProcessor extends RenamePsiElementProcessor {
   @Override
   public void findExistingNameConflicts(@NotNull PsiElement element, @NotNull String newName,
                                         @NotNull MultiMap<PsiElement, @DialogMessage String> conflicts) {
-    final PsiPackage aPackage = (PsiPackage)element;
-    final Project project = element.getProject();
+    findExistingPackageNameConflicts((PsiPackage)element, newName, conflicts);
+  }
+
+  /** Adds the conflict of a class that has the qualified name of {@code aPackage} after the rename. */
+  @ApiStatus.Internal
+  public static void findExistingPackageNameConflicts(@NotNull PsiPackage aPackage, @NotNull String newName,
+                                                      @NotNull MultiMap<PsiElement, @DialogMessage String> conflicts) {
+    final Project project = aPackage.getProject();
     final String qualifiedNameAfterRename = getPackageQualifiedNameAfterRename(aPackage, newName, true);
     final PsiClass psiClass = JavaPsiFacade.getInstance(project).findClass(qualifiedNameAfterRename, GlobalSearchScope.allScope(project));
     if (psiClass != null) {
       conflicts.putValue(psiClass, JavaBundle.message("rename.package.class.already.exist.conflict", qualifiedNameAfterRename));
     }
+  }
+
+  /**
+   * @return whether the rename of {@code psiPackage} changes the package prefix of a source root, as {@link #renameElement} does through
+   * {@link PsiPackage#handleQualifiedNameChange}
+   */
+  @ApiStatus.Internal
+  public static boolean changesPackagePrefix(@NotNull PsiPackage psiPackage) {
+    String qualifiedName = psiPackage.getQualifiedName();
+    for (Module module : ModuleManager.getInstance(psiPackage.getProject()).getModules()) {
+      for (ContentEntry contentEntry : ModuleRootManager.getInstance(module).getContentEntries()) {
+        for (SourceFolder sourceFolder : contentEntry.getSourceFolders(JavaModuleSourceRootTypes.SOURCES)) {
+          if (PsiNameHelper.isSubpackageOf(sourceFolder.getPackagePrefix(), qualifiedName)) return true;
+        }
+      }
+    }
+    return false;
   }
 
   @Override
@@ -208,36 +239,5 @@ public class RenamePsiPackageProcessor extends RenamePsiElementProcessor {
   @Override
   public void setToSearchForTextOccurrences(final @NotNull PsiElement element, final boolean enabled) {
     JavaRefactoringSettings.getInstance().RENAME_SEARCH_FOR_TEXT_FOR_PACKAGE = enabled;
-  }
-
-  /**
-   * Renames a Java package for a caller that has no user.
-   * <p>
-   * The outer class asks the user nothing, but it does not state the headless rename itself, because
-   * it has a subclass. A subclass must not inherit that statement.
-   */
-  public static final class HeadlessRenamePsiPackageProcessor extends RenamePsiPackageProcessor
-    implements DelegatingHeadlessRenamePsiElementProcessor {
-
-    /**
-     * Refuses a name that moves the package, then collects the conflicts the outer class collects.
-     * <p>
-     * A qualified name is a name for a package, so {@link PsiPackageRenameValidator} takes it. The
-     * rename dialog then reads the parent package of it: an equal parent keeps a rename, and another
-     * parent starts a move instead. See {@code createRenameDialog} above, which calls
-     * {@link #createRenameMoveProcessor}. A headless rename holds no move, so it refuses any
-     * qualified name here, even one with an equal parent: {@link #findExistingNameConflicts} and
-     * {@link #getPostRenameCallback} take the new short name.
-     */
-    @Override
-    public void findExistingNameConflictsHeadless(@NotNull PsiElement element,
-                                                  @NotNull String newName,
-                                                  @NotNull MultiMap<PsiElement, @DialogMessage String> conflicts,
-                                                  @NotNull Map<PsiElement, String> allRenames) {
-      if (newName.contains(".")) {
-        conflicts.putValue(element, JavaBundle.message("rename.package.move.not.supported.conflict", newName));
-      }
-      findExistingNameConflicts(element, newName, conflicts, allRenames);
-    }
   }
 }

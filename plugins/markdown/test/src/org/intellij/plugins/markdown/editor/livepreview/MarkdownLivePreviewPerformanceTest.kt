@@ -14,13 +14,13 @@ import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsigh
 import com.intellij.psi.PsiManager
 import com.intellij.testFramework.PerformanceUnitTest
 import com.intellij.testFramework.PlatformTestUtil
+import com.intellij.testFramework.TestDataPath
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.TestDisposable
 import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.tools.ide.metrics.benchmark.Benchmark
 import kotlinx.coroutines.Dispatchers
-import org.intellij.plugins.markdown.MarkdownTestingUtil
 import org.junit.jupiter.api.Assertions.assertNotEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
@@ -32,6 +32,7 @@ import kotlin.time.Duration.Companion.minutes
 
 @PerformanceUnitTest
 @TestApplication
+@TestDataPath($$"$PROJECT_ROOT/community/plugins/markdown/test/data/performance")
 internal class MarkdownLivePreviewPerformanceTest {
   private val myFixture by codeInsightModuleFixture(projectFixture)
 
@@ -43,10 +44,9 @@ internal class MarkdownLivePreviewPerformanceTest {
   @BeforeEach
   fun setUp(testInfo: TestInfo) {
     testMethod = testInfo.testMethod.get()
-    myFixture.testDataPath = MarkdownTestingUtil.TEST_DATA_PATH + "/performance"
     EditorFactory.getInstance().addEditorFactoryListener(object : EditorFactoryListener {
       override fun editorCreated(event: EditorFactoryEvent) {
-        if (event.editor.editorKind == EditorKind.UNTYPED) event.editor.enableLivePreview()
+        if (event.editor.editorKind == EditorKind.UNTYPED) event.editor.setLivePreviewEnabledness(true)
       }
     }, disposable)
   }

@@ -13,7 +13,7 @@ use avl_host_sys::Ctx;
 use avl_host_sys::runfiles::{GuestRunfilesTree, GuestTreeInputs, HostRunfiles};
 use avl_junit::performance;
 use avl_report::digest::{self, FileDigestCache, PathDigest, ProductIdentityInput};
-use avl_wire::daemon::{LABEL, LINUX_GUEST_LABEL, LINUX_GUEST_LIVE_LABEL};
+use avl_wire::daemon::{LABEL, LIGHT_LABEL, LIGHT_LANE, LINUX_GUEST_LABEL, LINUX_GUEST_LIGHT_LABEL, LINUX_GUEST_LIVE_LABEL};
 use avl_wire::progress::{Event, Phase};
 use avl_wire::report::Tree;
 use avl_wire::runtime::{self, RuntimeDescriptor, RuntimeFile};
@@ -35,22 +35,36 @@ pub(crate) fn lane_environment_digest(environment: &BTreeMap<String, String>) ->
     digest::path_sensitive_digest(&entries)
 }
 
-/// Which daemon descriptor a build builds: the one of the lanes, or the one of the live lane, which adds its CLIs.
+/// Which daemon descriptor a build builds: the one of the lanes, the one of the live lane, which adds its CLIs, or the one
+/// of the light lane, which names the JetBrains Light distribution.
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub(crate) enum DaemonTarget {
     #[default]
     Lanes,
     /// A run that holds the live lane. Only a Linux guest runs it, and a run refuses it on a macOS guest before the build.
     LiveLane,
+    /// A run that holds [`LIGHT_LANE`]. Its IDE is JetBrains Light, so a run refuses this lane beside another lane.
+    LightLane,
 }
 
-/// The daemon target of a guest: one target per guest OS and per [`DaemonTarget`], because the guest and the live CLIs
-/// are targets and not build options. An option of its own would discard the analysis of the shared Bazel server.
+impl DaemonTarget {
+    /// The target that a selection of `lane` builds: [`DaemonTarget::LightLane`] for [`LIGHT_LANE`], else the one of the
+    /// lanes. The live lane is decided apart, from its lane document.
+    pub(crate) fn of_lane(lane: Option<&str>) -> Self {
+        if lane == Some(LIGHT_LANE) { Self::LightLane } else { Self::Lanes }
+    }
+}
+
+/// The daemon target of a guest: one target per guest OS and per [`DaemonTarget`], because the guest, the live CLIs and
+/// the JetBrains Light distribution are targets and not build options. An option of its own would discard the analysis
+/// of the shared Bazel server. A macOS guest runs no live lane.
 pub(crate) const fn daemon_label(guest_os: GuestOs, target: DaemonTarget) -> &'static str {
     match (guest_os, target) {
+        (GuestOs::Macos, DaemonTarget::LightLane) => LIGHT_LABEL,
         (GuestOs::Macos, _) => LABEL,
         (GuestOs::Linux, DaemonTarget::Lanes) => LINUX_GUEST_LABEL,
         (GuestOs::Linux, DaemonTarget::LiveLane) => LINUX_GUEST_LIVE_LABEL,
+        (GuestOs::Linux, DaemonTarget::LightLane) => LINUX_GUEST_LIGHT_LABEL,
     }
 }
 
@@ -102,7 +116,7 @@ pub(crate) struct PluginFile {
     pub host: PathDigest,
 }
 
-/// One lane input of the descriptor: its key in the `ide` section, such as `fakeAgentJar`, and its bytes on the host by
+/// One lane input of the descriptor: its key in the `ide` section, such as `fakeAgent`, and its bytes on the host by
 /// path and content digest, as `/jars` is asked about them.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub(crate) struct LaneInput {
@@ -309,11 +323,11 @@ pub(crate) fn declared_input(
 /// The build of the IDE of `descriptor`: the `build.txt` of its distribution without the product code, or why it cannot
 /// be read. The IDE config names the home, and [`performance::build_txt`] states where the home holds the file.
 fn ide_build(runfiles: &HostRunfiles, descriptor: &RuntimeDescriptor) -> Result<String, String> {
-    let config = &descriptor.dev_dist.config.logical_path;
+    let config = &descriptor.dist.config.logical_path;
     let config = runfiles
         .host_path(config)
         .ok_or_else(|| format!("the runfiles hold no IDE config {config}"))?;
-    let home = runtime::dev_dist_home(&config)?;
+    let home = runtime::dist_home(&config)?;
     let path = performance::build_txt(&home, &descriptor.jbr.platform);
     performance::ide_build(&path, fs::read_to_string(&path))
 }
@@ -370,8 +384,8 @@ fn stamp(
         });
     }
     let distribution = digest::product_identity(&ProductIdentityInput {
-        fingerprint: file(&descriptor.dev_dist.fingerprint)?.identity,
-        config: file(&descriptor.dev_dist.config)?.identity,
+        fingerprint: file(&descriptor.dist.fingerprint)?.identity,
+        config: file(&descriptor.dist.config)?.identity,
     });
     let product_digest = digest::path_sensitive_digest(&[
         PathDigest::new("@distribution", &distribution),

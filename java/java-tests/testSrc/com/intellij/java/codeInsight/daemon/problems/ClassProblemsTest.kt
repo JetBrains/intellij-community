@@ -5,6 +5,7 @@ import com.intellij.codeInsight.daemon.problems.Problem
 import com.intellij.codeInsight.daemon.problems.pass.ProjectProblemUtils
 import com.intellij.java.syntax.parser.JavaKeywords
 import com.intellij.lang.java.JavaLanguage
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.command.undo.UndoManager
 import com.intellij.openapi.fileEditor.FileEditorManager
@@ -25,25 +26,61 @@ import com.intellij.refactoring.BaseRefactoringProcessor
 import com.intellij.refactoring.RefactoringFactory
 import com.intellij.refactoring.move.moveInner.MoveInnerImpl
 import com.intellij.refactoring.openapi.impl.MoveInnerRefactoringImpl
+import com.intellij.testFramework.common.timeoutRunBlocking
+import com.intellij.testFramework.junit5.TestApplication
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Test
 
-internal class ClassProblemsTest : ProjectProblemsViewTest() {
-  fun testRename() = doClassTest { psiClass, factory ->
-    psiClass.nameIdentifier?.replace(factory.createIdentifier("Bar"))
+@TestApplication
+internal class ClassProblemsTest {
+  companion object {
+    private val projectFixture = projectProblemsProjectFixture()
   }
 
-  fun testMakeClassFinal() = doClassTest { psiClass, _ ->
-    psiClass.modifierList?.setModifierProperty(PsiModifier.FINAL, true)
+  private val problems by projectProblemsFixture(projectFixture)
+  private val myFixture get() = problems.fixture
+  @Test
+  fun testRename(): Unit = timeoutRunBlocking {
+    withContext(Dispatchers.EDT) {
+      doClassTest { psiClass, factory ->
+        psiClass.nameIdentifier?.replace(factory.createIdentifier("Bar"))
+      }
+    }
   }
 
-  fun testMakeClassPackagePrivate() = doClassTest { psiClass, _ ->
-    psiClass.modifierList?.setModifierProperty(PsiModifier.PUBLIC, false)
+  @Test
+  fun testMakeClassFinal(): Unit = timeoutRunBlocking {
+    withContext(Dispatchers.EDT) {
+      doClassTest { psiClass, _ ->
+        psiClass.modifierList?.setModifierProperty(PsiModifier.FINAL, true)
+      }
+    }
   }
 
-  fun testChangeClassHierarchy() = doClassTest { psiClass, factory ->
-    psiClass.extendsList?.replace(factory.createReferenceList(PsiJavaCodeReferenceElement.EMPTY_ARRAY))
+  @Test
+  fun testMakeClassPackagePrivate(): Unit = timeoutRunBlocking {
+    withContext(Dispatchers.EDT) {
+      doClassTest { psiClass, _ ->
+        psiClass.modifierList?.setModifierProperty(PsiModifier.PUBLIC, false)
+      }
+    }
   }
 
-  fun testSealedClassPermittedInheritors() {
+  @Test
+  fun testChangeClassHierarchy(): Unit = timeoutRunBlocking {
+    withContext(Dispatchers.EDT) {
+      doClassTest { psiClass, factory ->
+        psiClass.extendsList?.replace(factory.createReferenceList(PsiJavaCodeReferenceElement.EMPTY_ARRAY))
+      }
+    }
+  }
+
+  @Test
+  fun testSealedClassPermittedInheritors(): Unit = timeoutRunBlocking {
     val targetClass = myFixture.addClass("""
         package foo;
         public sealed class A {
@@ -56,26 +93,29 @@ internal class ClassProblemsTest : ProjectProblemsViewTest() {
         }
       """.trimIndent())
 
-    doTest(targetClass) {
-      changeClass(targetClass) { psiClass, _ ->
-        val factory = PsiFileFactory.getInstance(project)
-        val javaFile = factory.createFileFromText(JavaLanguage.INSTANCE, "class __Dummy permits B {}") as PsiJavaFile
-        val dummyClass = javaFile.classes[0]
-        val permitsList = dummyClass.permitsList
-        psiClass.addAfter(permitsList!!, psiClass.implementsList)
+    withContext(Dispatchers.EDT) {
+      problems.doTest(targetClass) {
+        changeClass(targetClass) { psiClass, _ ->
+          val factory = PsiFileFactory.getInstance(myFixture.project)
+          val javaFile = factory.createFileFromText(JavaLanguage.INSTANCE, "class __Dummy permits B {}") as PsiJavaFile
+          val dummyClass = javaFile.classes[0]
+          val permitsList = dummyClass.permitsList
+          psiClass.addAfter(permitsList!!, psiClass.implementsList)
+        }
+        assertTrue(problems.hasReportedProblems<PsiClass>(refClass))
+        myFixture.openFileInEditor(refClass.containingFile.virtualFile)
+        changeClass(refClass) { psiClass, _ ->
+          psiClass.modifierList?.setModifierProperty(PsiModifier.FINAL, true)
+        }
+        myFixture.openFileInEditor(targetClass.containingFile.virtualFile)
+        myFixture.doHighlighting()
+        assertFalse(problems.hasReportedProblems<PsiClass>(refClass))
       }
-      assertTrue(hasReportedProblems<PsiClass>(refClass))
-      myFixture.openFileInEditor(refClass.containingFile.virtualFile)
-      changeClass(refClass) { psiClass, _ ->
-        psiClass.modifierList?.setModifierProperty(PsiModifier.FINAL, true)
-      }
-      myFixture.openFileInEditor(targetClass.containingFile.virtualFile)
-      myFixture.doHighlighting()
-      assertFalse(hasReportedProblems<PsiClass>(refClass))
     }
   }
   
-  fun testClassOverrideBecamePrivate() {
+  @Test
+  fun testClassOverrideBecamePrivate(): Unit = timeoutRunBlocking {
     myFixture.addClass("""
         package foo;
         
@@ -100,25 +140,28 @@ internal class ClassProblemsTest : ProjectProblemsViewTest() {
           }
         }
     """.trimIndent())
-    
-    doTest(targetClass) {
-      changeClass(targetClass) { psiClass, factory -> 
-        psiClass.methods[0].parameterList.add(factory.createParameterFromText("int a", psiClass))
-      }
 
-      changeClass(targetClass) { psiClass, _ ->
-        psiClass.methods[0].modifierList.setModifierProperty(PsiModifier.PUBLIC, true)
+    withContext(Dispatchers.EDT) {
+      problems.doTest(targetClass) {
+        changeClass(targetClass) { psiClass, factory -> 
+          psiClass.methods[0].parameterList.add(factory.createParameterFromText("int a", psiClass))
+        }
+
+        changeClass(targetClass) { psiClass, _ ->
+          psiClass.methods[0].modifierList.setModifierProperty(PsiModifier.PUBLIC, true)
+        }
+        
+        changeClass(targetClass) { psiClass, factory ->
+          psiClass.extendsList?.replace(factory.createReferenceList(PsiJavaCodeReferenceElement.EMPTY_ARRAY))
+        }
       }
       
-      changeClass(targetClass) { psiClass, factory ->
-        psiClass.extendsList?.replace(factory.createReferenceList(PsiJavaCodeReferenceElement.EMPTY_ARRAY))
-      }
+      assertTrue(problems.hasReportedProblems<PsiMethod>(refClass))
     }
-    
-    assertTrue(hasReportedProblems<PsiMethod>(refClass))
   }
 
-  fun testMakeClassInterface() {
+  @Test
+  fun testMakeClassInterface(): Unit = timeoutRunBlocking {
     val targetClass = myFixture.addClass("""
         package foo;
         public class A {
@@ -134,25 +177,34 @@ internal class ClassProblemsTest : ProjectProblemsViewTest() {
           }
         }
       """.trimIndent())
-    doTest(targetClass) {
-      changeClass(targetClass) { psiClass, factory ->
-        val classKeyword = PsiTreeUtil.getPrevSiblingOfType(psiClass.nameIdentifier, PsiKeyword::class.java)
-        val interfaceKeyword = factory.createKeyword(JavaKeywords.INTERFACE)
-        classKeyword?.replace(interfaceKeyword)
+    withContext(Dispatchers.EDT) {
+      problems.doTest(targetClass) {
+        changeClass(targetClass) { psiClass, factory ->
+          val classKeyword = PsiTreeUtil.getPrevSiblingOfType(psiClass.nameIdentifier, PsiKeyword::class.java)
+          val interfaceKeyword = factory.createKeyword(JavaKeywords.INTERFACE)
+          classKeyword?.replace(interfaceKeyword)
+        }
+        assertTrue(problems.hasReportedProblems<PsiDeclarationStatement>(refClass))
       }
-      assertTrue(hasReportedProblems<PsiDeclarationStatement>(refClass))
     }
   }
 
-  fun testMakeNestedInner() {
-    doNestedClassTest(true)
+  @Test
+  fun testMakeNestedInner(): Unit = timeoutRunBlocking {
+    withContext(Dispatchers.EDT) {
+      doNestedClassTest(true)
+    }
   }
 
-  fun testMakeInnerNested() {
-    doNestedClassTest(false)
+  @Test
+  fun testMakeInnerNested(): Unit = timeoutRunBlocking {
+    withContext(Dispatchers.EDT) {
+      doNestedClassTest(false)
+    }
   }
 
-  fun testMakeClassAnnotationType() {
+  @Test
+  fun testMakeClassAnnotationType(): Unit = timeoutRunBlocking {
     var targetClass = myFixture.addClass("""
       package foo;
       
@@ -174,16 +226,19 @@ internal class ClassProblemsTest : ProjectProblemsViewTest() {
       }
     """.trimIndent())
 
-    doTest(targetClass) {
-      changeClass(targetClass) { _, factory ->
-        val annoType = factory.createAnnotationType("A")
-        targetClass = targetClass.replace(annoType) as PsiClass
+    withContext(Dispatchers.EDT) {
+      problems.doTest(targetClass) {
+        changeClass(targetClass) { _, factory ->
+          val annoType = factory.createAnnotationType("A")
+          targetClass = targetClass.replace(annoType) as PsiClass
+        }
       }
+      assertTrue(problems.hasReportedProblems<PsiDeclarationStatement>(refClass))
     }
-    assertTrue(hasReportedProblems<PsiDeclarationStatement>(refClass))
   }
 
-  fun testInheritedMethodUsage() {
+  @Test
+  fun testInheritedMethodUsage(): Unit = timeoutRunBlocking {
     myFixture.addClass("""
         package foo;
         
@@ -209,16 +264,19 @@ internal class ClassProblemsTest : ProjectProblemsViewTest() {
         }
     """.trimIndent())
 
-    doTest(aClass) {
-      changeClass(aClass) { psiClass, factory ->
-        psiClass.extendsList?.replace(factory.createReferenceList(PsiJavaCodeReferenceElement.EMPTY_ARRAY))
-      }
+    withContext(Dispatchers.EDT) {
+      problems.doTest(aClass) {
+        changeClass(aClass) { psiClass, factory ->
+          psiClass.extendsList?.replace(factory.createReferenceList(PsiJavaCodeReferenceElement.EMPTY_ARRAY))
+        }
 
-      assertTrue(hasReportedProblems<PsiClass>(refClass))
+        assertTrue(problems.hasReportedProblems<PsiClass>(refClass))
+      }
     }
   }
 
-  fun testMoveInnerClassAndUndo() {
+  @Test
+  fun testMoveInnerClassAndUndo(): Unit = timeoutRunBlocking {
     val refClass = myFixture.addClass("""
         public class A {
           private String s = "foo";
@@ -230,38 +288,41 @@ internal class ClassProblemsTest : ProjectProblemsViewTest() {
         }
     """.trimIndent())
 
-    myFixture.openFileInEditor(refClass.containingFile.virtualFile)
+    withContext(Dispatchers.EDT) {
+      myFixture.openFileInEditor(refClass.containingFile.virtualFile)
 
-    doTest(refClass) {
-      changeClass(refClass) { psiClass, _ ->
-        val innerClass = psiClass.innerClasses[0]
-        val targetContainer = MoveInnerImpl.getTargetContainer(innerClass, false)!!
-        val moveRefactoring = MoveInnerRefactoringImpl(myFixture.project, innerClass, innerClass.name, true, "a", targetContainer)
-        BaseRefactoringProcessor.ConflictsInTestsException.withIgnoredConflicts<Throwable> { moveRefactoring.run() }
-      }
-      changeClass(refClass) { psiClass, _ ->
-        psiClass.fields[0].modifierList?.setModifierProperty(PsiModifier.PRIVATE, false)
-      }
-      changeClass(refClass) { psiClass, _ ->
-        psiClass.fields[0].modifierList?.setModifierProperty(PsiModifier.PRIVATE, true)
-      }
+      problems.doTest(refClass) {
+        changeClass(refClass) { psiClass, _ ->
+          val innerClass = psiClass.innerClasses[0]
+          val targetContainer = MoveInnerImpl.getTargetContainer(innerClass, false)!!
+          val moveRefactoring = MoveInnerRefactoringImpl(myFixture.project, innerClass, innerClass.name, true, "a", targetContainer)
+          BaseRefactoringProcessor.ConflictsInTestsException.withIgnoredConflicts<Throwable> { moveRefactoring.run() }
+        }
+        changeClass(refClass) { psiClass, _ ->
+          psiClass.fields[0].modifierList?.setModifierProperty(PsiModifier.PRIVATE, false)
+        }
+        changeClass(refClass) { psiClass, _ ->
+          psiClass.fields[0].modifierList?.setModifierProperty(PsiModifier.PRIVATE, true)
+        }
 
-      assertNotEmpty(getProblems())
+        assertThat(problems.getProblems()).isNotEmpty()
 
-      val selectedEditor = FileEditorManager.getInstance(project).selectedEditor
-      WriteCommandAction.runWriteCommandAction(project) {
-        UndoManager.getInstance(project).undo(selectedEditor)
-        UndoManager.getInstance(project).undo(selectedEditor)
-        UndoManager.getInstance(project).undo(selectedEditor)
+        val selectedEditor = FileEditorManager.getInstance(myFixture.project).selectedEditor
+        WriteCommandAction.runWriteCommandAction(myFixture.project) {
+          UndoManager.getInstance(myFixture.project).undo(selectedEditor)
+          UndoManager.getInstance(myFixture.project).undo(selectedEditor)
+          UndoManager.getInstance(myFixture.project).undo(selectedEditor)
+        }
+        PsiDocumentManager.getInstance(myFixture.project).commitAllDocuments()
+
+        myFixture.doHighlighting()
+        assertThat(ProjectProblemUtils.getReportedProblems(myFixture.editor).entries).isEmpty()
       }
-      PsiDocumentManager.getInstance(project).commitAllDocuments()
-
-      myFixture.doHighlighting()
-      assertEmpty(ProjectProblemUtils.getReportedProblems(myFixture.editor).entries)
     }
   }
 
-  fun testRenameClassRenameMethodAndUndoAll() {
+  @Test
+  fun testRenameClassRenameMethodAndUndoAll(): Unit = timeoutRunBlocking {
     val targetClass = myFixture.addClass("""
         public class A {
           public void foo() {}
@@ -280,41 +341,44 @@ internal class ClassProblemsTest : ProjectProblemsViewTest() {
         }
     """.trimIndent())
 
-    doTest(targetClass) {
-      val factory = JavaPsiFacade.getInstance(project).elementFactory
+    withContext(Dispatchers.EDT) {
+      problems.doTest(targetClass) {
+        val factory = JavaPsiFacade.getInstance(myFixture.project).elementFactory
 
-      changeClass(targetClass) { psiClass, _ ->
-        psiClass.identifyingElement?.replace(factory.createIdentifier("A1"))
+        changeClass(targetClass) { psiClass, _ ->
+          psiClass.identifyingElement?.replace(factory.createIdentifier("A1"))
+        }
+
+        val problems: Map<PsiMember, Set<Problem>> = ProjectProblemUtils.getReportedProblems(myFixture.editor)
+        val reportedMembers = problems.map { it.key }
+        assertThat(reportedMembers).hasSize(1)
+        assertTrue(targetClass in reportedMembers)
+
+        WriteCommandAction.runWriteCommandAction(myFixture.project) {
+          val method = targetClass.findMethodsByName("foo", false)[0]
+          method.identifyingElement?.replace(factory.createIdentifier("foo1"))
+        }
+        myFixture.doHighlighting()
+        assertThat(ProjectProblemUtils.getReportedProblems(myFixture.editor).entries).isNotEmpty()
+
+        WriteCommandAction.runWriteCommandAction(myFixture.project) {
+          val method = targetClass.findMethodsByName("foo1", false)[0]
+          method.identifyingElement?.replace(factory.createIdentifier("foo"))
+        }
+        myFixture.doHighlighting()
+        assertThat(ProjectProblemUtils.getReportedProblems(myFixture.editor).entries).hasSize(2)
+
+        changeClass(targetClass) { psiClass, _ ->
+          psiClass.identifyingElement?.replace(factory.createIdentifier("A"))
+        }
+
+        assertThat(ProjectProblemUtils.getReportedProblems(myFixture.editor).entries).isEmpty()
       }
-
-      val problems: Map<PsiMember, Set<Problem>> = ProjectProblemUtils.getReportedProblems(myFixture.editor)
-      val reportedMembers = problems.map { it.key }
-      assertSize(1, reportedMembers)
-      assertTrue(targetClass in reportedMembers)
-
-      WriteCommandAction.runWriteCommandAction(project) {
-        val method = targetClass.findMethodsByName("foo", false)[0]
-        method.identifyingElement?.replace(factory.createIdentifier("foo1"))
-      }
-      myFixture.doHighlighting()
-      assertNotEmpty(ProjectProblemUtils.getReportedProblems(myFixture.editor).entries)
-
-      WriteCommandAction.runWriteCommandAction(project) {
-        val method = targetClass.findMethodsByName("foo1", false)[0]
-        method.identifyingElement?.replace(factory.createIdentifier("foo"))
-      }
-      myFixture.doHighlighting()
-      assertSize(2, ProjectProblemUtils.getReportedProblems(myFixture.editor).entries)
-
-      changeClass(targetClass) { psiClass, _ ->
-        psiClass.identifyingElement?.replace(factory.createIdentifier("A"))
-      }
-
-      assertEmpty(ProjectProblemUtils.getReportedProblems(myFixture.editor).entries)
     }
   }
 
-  fun testAddMissingTypeParam() {
+  @Test
+  fun testAddMissingTypeParam(): Unit = timeoutRunBlocking {
     val targetClass = myFixture.addClass("""
       class TargetClass {
       }
@@ -325,24 +389,27 @@ internal class ClassProblemsTest : ProjectProblemsViewTest() {
       }
     """.trimIndent())
 
-    doTest(targetClass) {
-      changeClass(targetClass) { psiClass, _ ->
-        psiClass.modifierList?.setModifierProperty(PsiModifier.PUBLIC, true)
+    withContext(Dispatchers.EDT) {
+      problems.doTest(targetClass) {
+        changeClass(targetClass) { psiClass, _ ->
+          psiClass.modifierList?.setModifierProperty(PsiModifier.PUBLIC, true)
+        }
+
+        assertThat(ProjectProblemUtils.getReportedProblems(myFixture.editor).entries).hasSize(1)
+
+        changeClass(targetClass) { psiClass, factory ->
+          val typeParameterList = factory.createTypeParameterList()
+          typeParameterList.add(factory.createTypeParameterFromText("T", psiClass))
+          psiClass.typeParameterList?.replace(typeParameterList)
+        }
+
+        assertThat(ProjectProblemUtils.getReportedProblems(myFixture.editor).entries).isEmpty()
       }
-
-      assertSize(1, ProjectProblemUtils.getReportedProblems(myFixture.editor).entries)
-
-      changeClass(targetClass) { psiClass, factory ->
-        val typeParameterList = factory.createTypeParameterList()
-        typeParameterList.add(factory.createTypeParameterFromText("T", psiClass))
-        psiClass.typeParameterList?.replace(typeParameterList)
-      }
-
-      assertEmpty(ProjectProblemUtils.getReportedProblems(myFixture.editor).entries)
     }
   }
 
-  fun testRenameClassAndFixUsages() {
+  @Test
+  fun testRenameClassAndFixUsages(): Unit = timeoutRunBlocking {
     val targetClass = myFixture.addClass("""
       class AClass {
       }
@@ -358,20 +425,22 @@ internal class ClassProblemsTest : ProjectProblemsViewTest() {
       }
     """.trimIndent())
 
-    doTest(targetClass) {
-      changeClass(targetClass) { psiClass, factory ->
-        psiClass.nameIdentifier?.replace(factory.createIdentifier("AClass1"))
+    withContext(Dispatchers.EDT) {
+      problems.doTest(targetClass) {
+        changeClass(targetClass) { psiClass, factory ->
+          psiClass.nameIdentifier?.replace(factory.createIdentifier("AClass1"))
+        }
+
+        assertThat(ProjectProblemUtils.getReportedProblems(myFixture.editor).entries).hasSize(1)
+
+        changeClass(targetClass) { psiClass, _ ->
+          psiClass.setName("AClass")
+          val renameRefactoring = RefactoringFactory.getInstance(myFixture.project).createRename(psiClass, "AClass1", true, false)
+          renameRefactoring.run()
+        }
+
+        assertThat(ProjectProblemUtils.getReportedProblems(myFixture.editor).entries).isEmpty()
       }
-
-      assertSize(1, ProjectProblemUtils.getReportedProblems(myFixture.editor).entries)
-
-      changeClass(targetClass) { psiClass, _ ->
-        psiClass.setName("AClass")
-        val renameRefactoring = RefactoringFactory.getInstance(project).createRename(psiClass, "AClass1", true, false)
-        renameRefactoring.run()
-      }
-
-      assertEmpty(ProjectProblemUtils.getReportedProblems(myFixture.editor).entries)
     }
   }
 
@@ -399,12 +468,12 @@ internal class ClassProblemsTest : ProjectProblemsViewTest() {
         }
       """.trimIndent())
 
-    doTest(targetClass) {
+    problems.doTest(targetClass) {
       changeClass(targetClass) { psiClass, _ ->
         val innerClass = psiClass.findInnerClassByName("Inner", false)
         innerClass?.modifierList?.setModifierProperty(PsiModifier.STATIC, !isStatic)
       }
-      assertTrue(hasReportedProblems<PsiDeclarationStatement>(refClass))
+      assertTrue(problems.hasReportedProblems<PsiDeclarationStatement>(refClass))
     }
   }
 
@@ -438,15 +507,15 @@ internal class ClassProblemsTest : ProjectProblemsViewTest() {
       }
     """.trimIndent())
 
-    doTest(targetClass) {
+    problems.doTest(targetClass) {
       changeClass(targetClass, classChangeAction)
-      assertTrue(hasReportedProblems<PsiDeclarationStatement>(refClass))
+      assertTrue(problems.hasReportedProblems<PsiDeclarationStatement>(refClass))
     }
   }
 
   private fun changeClass(targetClass: PsiClass, classChangeAction: (PsiClass, PsiElementFactory) -> Unit) {
-    WriteCommandAction.runWriteCommandAction(project) {
-      val factory = JavaPsiFacade.getInstance(project).elementFactory
+    WriteCommandAction.runWriteCommandAction(myFixture.project) {
+      val factory = JavaPsiFacade.getInstance(myFixture.project).elementFactory
       classChangeAction(targetClass, factory)
     }
     myFixture.doHighlighting()

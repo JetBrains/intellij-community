@@ -124,7 +124,7 @@ interface PMarkerRoot {
   fun updateMeasure(handle: SnapshotMarkerReference<*>, measure: Int): PMarkerRoot
 
   /**
-   * Removes the marker's endpoint anchors and secondary-index entries, retaining an absent tombstone without offsets.
+   * Removes the marker's endpoint anchors and secondary-index entries, and records an absent state without offsets.
    *
    * If [handle] is absent, this method should return the receiver
    * unchanged.

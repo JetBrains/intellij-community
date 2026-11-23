@@ -29,6 +29,9 @@ private const val fileFlag = 32768  // 0100000
 
 internal const val executableFileUnixMode: Int = fileFlag or 493  // 0755
 
+/** Returns the unix mode of a zip entry for a regular file with the [permissions] bits, for example `0644`. */
+internal fun regularFileUnixMode(permissions: Int): Int = fileFlag or permissions
+
 internal fun filterFileIfAlreadyInZip(relativePath: String, file: Path, zipFiles: MutableMap<String, DistFileContent>): Boolean {
   val content = LocalDistFileContent(file)
   val oldContent = zipFiles.putIfAbsent(relativePath, content) ?: return true

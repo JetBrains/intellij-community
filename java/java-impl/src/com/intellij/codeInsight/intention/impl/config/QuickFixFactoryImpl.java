@@ -73,6 +73,7 @@ import com.intellij.codeInsight.daemon.impl.quickfix.MergeDuplicateAttributesFix
 import com.intellij.codeInsight.daemon.impl.quickfix.MethodParameterFix;
 import com.intellij.codeInsight.daemon.impl.quickfix.MethodReturnTypeFix;
 import com.intellij.codeInsight.daemon.impl.quickfix.MethodThrowsFix;
+import com.intellij.codeInsight.daemon.impl.quickfix.ModPlanRenameFix;
 import com.intellij.codeInsight.daemon.impl.quickfix.ModifierFix;
 import com.intellij.codeInsight.daemon.impl.quickfix.MoveAnonymousOrLocalToInnerFix;
 import com.intellij.codeInsight.daemon.impl.quickfix.MoveBoundClassToFrontFix;
@@ -585,13 +586,18 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
   }
 
   @Override
-  public @NotNull LocalQuickFixAndIntentionActionOnPsiElement createRenameElementFix(@NotNull PsiNamedElement element) {
-    return new RenameElementFix(element);
+  public @NotNull ModCommandAction createRenameElementFix(@NotNull PsiNamedElement element) {
+    return new ModPlanRenameFix(element);
   }
 
   @Override
   public @NotNull LocalQuickFixAndIntentionActionOnPsiElement createRenameElementFix(@NotNull PsiNamedElement element, @NotNull String newName) {
     return new RenameElementFix(element, newName);
+  }
+
+  @Override
+  public @NotNull ModCommandAction createModPlanRenameFix(@NotNull PsiNamedElement element, @NotNull String newName) {
+    return new ModPlanRenameFix(element, newName);
   }
 
   @Override
@@ -862,7 +868,7 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
         JavaErrorBundle.message("parameter.excluding.hierarchy.disable.text"), false).asIntention();
     }
     else {
-      return createSafeDeleteFix(parameter);
+      return createSafeDeleteFix(parameter).asIntention();
     }
   }
 
@@ -917,8 +923,8 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
   }
 
   @Override
-  public @NotNull LocalQuickFixAndIntentionActionOnPsiElement createSafeDeleteFix(@NotNull PsiElement element) {
-    return LocalQuickFixAndIntentionActionOnPsiElement.from(new JavaModPlanSafeDeleteFix(element), element);
+  public @NotNull ModCommandAction createSafeDeleteFix(@NotNull PsiElement element) {
+    return new JavaModPlanSafeDeleteFix(element);
   }
 
   @Override

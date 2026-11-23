@@ -1,9 +1,9 @@
 load("@community//platform/build-scripts/bazel-rules:ij_plugin.bzl", "ij_plugin")
-load("@jps_dynamic_deps_community//:targets.bzl", "dev_dist_plugin")
+load("@jps_dynamic_deps_community//:targets.bzl", "dist_plugin")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `dev intellij.compose.ide.plugin` start
-dev_dist_plugin(
+dist_plugin(
     content_modules = [
         # do not sort,
         "intellij.compose.ide.plugin.shared",
@@ -12,24 +12,7 @@ dev_dist_plugin(
         "intellij.compose.ide.plugin.resources",
         "intellij.compose.ide.plugin.resources.android",
     ],
-    descriptor = "resources/META-INF/plugin.xml",
-    jars = {
-        "lib/compose-ide-plugin.jar": [
-            "intellij.compose.ide.plugin",
-            "intellij.compose.ide.plugin.codeInsight",
-            "intellij.compose.ide.plugin.resources",
-            "intellij.compose.ide.plugin.resources.android",
-        ],
-    },
     main_module = "intellij.compose.ide.plugin",
-    mode_refused_content_modules = {
-        "frontend": [
-            "intellij.compose.ide.plugin.shared",
-            "intellij.compose.ide.plugin.codeInsight",
-            "intellij.compose.ide.plugin.resources",
-            "intellij.compose.ide.plugin.resources.android",
-        ],
-    },
 )
 ### auto-generated section `dev intellij.compose.ide.plugin` end
 
@@ -60,7 +43,14 @@ ij_plugin(
         "//plugins/compose/intellij.compose.ide.plugin.gradleTooling:ide-plugin-gradleTooling-rt",
         "//plugins/compose/intellij.compose.ide.plugin.resources:ide-plugin-resources",
         "//plugins/compose/intellij.compose.ide.plugin.resources.android:ide-plugin-resources-android",
-    ],
+    ] + select({
+        "@community//build:is_inside_ultimate": [
+            # do not sort,
+            "@@//CIDR-appcode/kmm-wizard/shared:shared_plugin_module",
+            "@@//CIDR-appcode/kmm-wizard/core:kmm-wizard",
+        ],
+        "//conditions:default": [],
+    }),
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `plugin intellij.compose.ide.plugin` end

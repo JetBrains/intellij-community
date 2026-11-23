@@ -5,6 +5,7 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
+import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.openapi.project.DumbAwareToggleAction
 import com.intellij.xray.frontend.api.XRayMode
 import com.intellij.xray.frontend.impl.service.XRayModeService
@@ -16,7 +17,7 @@ internal class ToggleXRayModeAction : DumbAwareToggleAction() {
 
   override fun update(e: AnActionEvent) {
     super.update(e)
-    e.presentation.isEnabledAndVisible = e.getData(CommonDataKeys.EDITOR) != null
+    e.presentation.isEnabledAndVisible = e.getData(CommonDataKeys.EDITOR)?.let(EditorUtil::isRealFileEditor) == true
   }
 
   override fun isSelected(e: AnActionEvent): Boolean {

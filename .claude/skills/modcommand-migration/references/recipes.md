@@ -1,11 +1,6 @@
 # Conversion recipes
 
-Each recipe shows the legacy shape and its ModCommand equivalent, and points at a converted file in this
-repo to copy from.
-
 ## 1. Plain single-file fix
-
-The most common case, and genuinely a four-line change.
 
 ```java
 // before
@@ -26,16 +21,11 @@ public class AddArgumentFix extends PsiUpdateModCommandQuickFix {
 }
 ```
 
-`getName()`/`getFamilyName()` stay exactly as they were. Marker interfaces still work.
-
 Reference: `AddArgumentFix` (`community/java/java-impl/src/com/siyeh/ig/fixes/AddArgumentFix.java`) —
 note that non-element state (here two `String` fields) is still fine in a field, and no
 `@SafeFieldForPreview` is needed.
 
 ## 2. Fix holding an element pointer
-
-A `LocalQuickFix` whose constructor takes a `PsiElement` becomes a `PsiUpdateModCommandAction<E>`, which
-binds to that element for you: it is passed back already validity- and writability-checked.
 
 ```java
 private static class InsertParagraphTagFix extends PsiUpdateModCommandAction<PsiElement> {
@@ -54,15 +44,8 @@ private static class InsertParagraphTagFix extends PsiUpdateModCommandAction<Psi
 }
 ```
 
-Register it with the builder API, which accepts a `ModCommandAction` directly:
-
-```java
-holder.problem(token, message).fix(new InsertParagraphTagFix(token)).register();
-```
-
-`ProblemsHolder.problem(...)` also offers `.range(...)`, `.highlight(...)`, `.maybeFix(...)`, and must
-end with `.register()`. Where you need a `LocalQuickFix` value instead, use
-`LocalQuickFix.from(action)`.
+Besides `.fix(...)`, `ProblemsHolder.problem(...)` offers `.range(...)`, `.highlight(...)`, `.maybeFix(...)`,
+and must end with `.register()`.
 
 Reference:
 `JavadocBlankLinesInspection` (`community/java/java-impl/src/com/intellij/codeInspection/javaDoc/JavadocBlankLinesInspection.java`)
@@ -85,8 +68,7 @@ updater.moveCaretTo(newElement.getTextRange().getStartOffset());
 updater.select(newElement);
 ```
 
-Same for highlighting (`updater.highlight`). Do **not** guard these with `isOnTheFly` — batch execution
-drops them for you.
+Same for highlighting (`updater.highlight`).
 
 ## 4. Live template or rename UI
 
@@ -120,9 +102,6 @@ PsiMethod writableCtor = updater.getWritable(constructor);   // other file
 PsiField  writableField = element;                           // already writable
 ...edit both...
 ```
-
-**All `getWritable` calls must precede all writes** — it throws `IllegalStateException` once that file's
-copy has been modified. The executor produces one composite command covering every touched file.
 
 ## 6. Confirmation dialog or conflicts
 
@@ -178,9 +157,8 @@ Reference:
 Two rules:
 
 - **Put the safest option first.** Batch and preview select it automatically.
-- **Do not special-case zero or one option.** Return `chooseAction` for every list size, and let the
-  platform handle the small lists. An empty chooser is empty, like `nop()`. The executor runs a single
-  available option without UI. A `switch` on `actions.size()` only adds code.
+- **Do not special-case zero or one option.** An empty chooser is empty, like `nop()`. The executor runs
+  a single available option without UI.
 
 ## 8. `MemberChooser`
 
@@ -208,17 +186,5 @@ branch of
 
 ## 10. Not convertible
 
-Keep the `LocalQuickFix`, and optionally implement
-`LocalQuickFixWithModCommandFallback` (`community/platform/analysis-api/src/com/intellij/modcommand/LocalQuickFixWithModCommandFallback.java`)
-so headless clients get a reduced version:
-
-```java
-public class MyFix implements LocalQuickFixWithModCommandFallback {
-  @Override
-  public @NotNull ModCommandAction getFallbackModCommandAction() {
-    return new MySimplifiedAction(myElement);
-  }
-}
-```
-
-The fallback is allowed to be less capable — that is its purpose. Do not fake the unsupported part.
+Keep the `LocalQuickFix`. Step 1 of [../SKILL.md](../SKILL.md) gives its optional
+`LocalQuickFixWithModCommandFallback`. In the fallback, do not fake the unsupported part.

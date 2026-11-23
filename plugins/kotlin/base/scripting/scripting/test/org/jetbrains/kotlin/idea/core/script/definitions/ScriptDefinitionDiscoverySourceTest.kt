@@ -2,6 +2,7 @@
 package org.jetbrains.kotlin.idea.core.script.definitions
 
 import com.intellij.testFramework.registerExtension
+import kotlinx.coroutines.runBlocking
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import kotlin.script.experimental.api.ScriptCompilationConfiguration
 import kotlin.script.experimental.api.KotlinType
@@ -47,7 +48,7 @@ class ScriptDefinitionDiscoverySourceTest : KotlinLightCodeInsightFixtureTestCas
     fun `test a definition built outside the cache still reports its source`() {
         // `defaultDefinition` builds a new object on every read, so this is not the instance the cache
         // holds. A configuration key travels with it; user data on the cached instance would not.
-        val fresh = ScriptDefinitionProviderImpl.getInstance(project).getDefaultDefinition()
+        val fresh = project.defaultDefinition
         val cached = ScriptDefinitionProviderImpl.getInstance(project).cachedProvidedDefinitions.last()
 
         assertNotSame("The test is pointless if both reads return one object", fresh, cached)
@@ -69,7 +70,9 @@ class ScriptDefinitionDiscoverySourceTest : KotlinLightCodeInsightFixtureTestCas
         registerProvider(definitionFor("reloaded.kts"))
         assertNotNull("The source must be attached on the first read", sourceOfDefinitionWith("reloaded.kts"))
 
-        ScriptDefinitionsModificationTracker.getInstance(project).incModificationCount()
+        val definitionProvider = ScriptDefinitionProviderImpl.getInstance(project)
+        definitionProvider.scheduleLoading()
+        runBlocking { definitionProvider.awaitLoading() }
 
         assertInstanceOf(sourceOfDefinitionWith("reloaded.kts"), ScriptDefinitionDiscoverySource.Provider::class.java)
     }
@@ -100,6 +103,6 @@ class ScriptDefinitionDiscoverySourceTest : KotlinLightCodeInsightFixtureTestCas
             },
             testRootDisposable,
         )
-        ScriptDefinitionsModificationTracker.getInstance(project).incModificationCount()
+        runBlocking { ScriptDefinitionProviderImpl.getInstance(project).awaitLoading() }
     }
 }

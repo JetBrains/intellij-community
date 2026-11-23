@@ -507,8 +507,8 @@ private fun deleteOldFiles(projectDir: Path, generatedFiles: Set<Path>, currentB
 /** Which directories one repository half's last conversion generated, one project-relative directory per line. */
 internal const val BAZEL_GENERATED_FILE_LIST_RELATIVE_PATH: String = "build/bazel-generated-file-list.txt"
 
-/** Where `collectCrossHalfDescriptorPackages` of `devDistCrossHalfDescriptorPackage.kt` writes such a package. */
-private const val CROSS_HALF_DESCRIPTOR_PACKAGE_ROOT: String = "build/dev-dist-descriptors"
+/** Where `collectCrossHalfDescriptorPackages` of `distCrossHalfDescriptorPackage.kt` writes such a package. */
+private const val CROSS_HALF_DESCRIPTOR_PACKAGE_ROOT: String = "build/dist-descriptors"
 
 /**
  * The Bazel package a module's generated targets and exported files live in, as a label prefix.

@@ -14,8 +14,10 @@ import com.intellij.openapi.editor.ex.RangeHighlighterEx
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.concurrency.annotations.RequiresEdt
+import com.intellij.util.ui.EdtInvocationManager
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
+import java.util.concurrent.atomic.AtomicBoolean
 
 @ApiStatus.Internal
 open class ProblemsViewHighlightingFileRoot(
@@ -23,10 +25,11 @@ open class ProblemsViewHighlightingFileRoot(
   override val file: VirtualFile,
   override val document: Document
 ) : Root(panel), HighlightingFileRoot {
-  private val problems = mutableSetOf<HighlightingProblem>()
-  private val filter = ProblemFilter(panel.state)
+  private val problems: MutableSet<HighlightingProblem> = mutableSetOf()
+  private val filter: ProblemFilter = ProblemFilter(panel.state)
+  private val updateScheduled: AtomicBoolean = AtomicBoolean()
 
-  private val shownContexts = mutableSetOf<CodeInsightContext?>() // guarded by problems; the problem contexts that the tree can show
+  private val shownContexts: MutableSet<CodeInsightContext?> = mutableSetOf() // guarded by problems; the problem contexts that the tree can show
 
   private val provider: ProblemsProvider = object : ProblemsProvider {
     override val project = panel.project
@@ -37,10 +40,9 @@ open class ProblemsViewHighlightingFileRoot(
   }
 
   // without shared sources, a file has one context, and the context rule has nothing to do
-  private val visibilityTracker: ProblemsViewContextVisibilityTracker? = when {
-    isSharedSourceSupportEnabled(panel.project) -> ProblemsViewContextVisibilityTracker(panel.project, file, document, this, ::updateShownContexts)
-    else -> null
-  }
+  private val visibilityTracker: ProblemsViewContextVisibilityTracker? =
+    if (isSharedSourceSupportEnabled(panel.project)) ProblemsViewContextVisibilityTracker(panel.project, file, document, this, ::updateShownContexts)
+    else null
 
   // the watcher delivers the existing highlighters on the EDT at once, so the tracker must exist before it
   private val watcher: ProblemsViewHighlightingWatcher =
@@ -120,16 +122,11 @@ open class ProblemsViewHighlightingFileRoot(
       return
     }
     val visible = isVisible(problem)
-    val [state, shown] = synchronized(problems) {
-      val shown = problem.contextGroup in shownContexts
+    val state = synchronized(problems) {
       if (visible) shownContexts.add(problem.contextGroup)
-      SetUpdateState.add(problem, problems) to shown
+      SetUpdateState.add(problem, problems)
     }
-    when {
-      // a repeated report of a problem whose context the tree did not show adds it, as in problemUpdated
-      visible && !shown && state == SetUpdateState.UPDATED -> notify(problem, SetUpdateState.ADDED)
-      visible -> notify(problem, state)
-    }
+    if (visible) notify(state)
   }
 
   override fun problemDisappeared(problem: Problem) {
@@ -137,7 +134,7 @@ open class ProblemsViewHighlightingFileRoot(
       val visible = isVisible(problem)
       val [state, shown] = synchronized(problems) { SetUpdateState.remove(problem, problems) to (problem.contextGroup in shownContexts) }
       // the tree can show the problem of a context that became hidden after the last updateShownContexts
-      if (visible || shown) notify(problem, state)
+      if (visible || shown) notify(state)
     }
   }
 
@@ -149,20 +146,19 @@ open class ProblemsViewHighlightingFileRoot(
         if (visible) shownContexts.add(problem.contextGroup)
         SetUpdateState.update(problem, problems) to shown
       }
-      when {
-        // the tree has no node of a problem whose context it did not show, so the update adds it
-        visible && !shown && state == SetUpdateState.UPDATED -> notify(problem, SetUpdateState.ADDED)
-        visible || shown -> notify(problem, state)
-      }
+      if (visible || shown) notify(state)
     }
   }
 
-  private fun notify(problem: Problem, state: SetUpdateState) {
+  private fun notify(state: SetUpdateState) {
     when (state) {
-      SetUpdateState.ADDED -> super.problemAppeared(problem)
-      SetUpdateState.REMOVED -> super.problemDisappeared(problem)
-      SetUpdateState.UPDATED -> super.problemUpdated(problem)
-      SetUpdateState.IGNORED -> Unit
+      SetUpdateState.ADDED, SetUpdateState.REMOVED, SetUpdateState.UPDATED -> Unit
+      SetUpdateState.IGNORED -> return
+    }
+    if (!updateScheduled.compareAndSet(false, true)) return
+    EdtInvocationManager.getInstance().invokeLater {
+      updateScheduled.set(false)
+      if (panel.treeModel.isRoot(this)) fileProblemsChanged(file)
     }
   }
 

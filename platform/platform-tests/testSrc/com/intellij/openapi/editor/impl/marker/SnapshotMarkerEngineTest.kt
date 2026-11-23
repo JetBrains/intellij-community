@@ -32,7 +32,6 @@ import java.lang.ref.Reference
 import java.lang.ref.WeakReference
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.CountDownLatch
-import java.util.concurrent.atomic.AtomicReference
 import java.util.function.Consumer
 import kotlin.concurrent.thread
 import kotlin.random.Random
@@ -308,7 +307,7 @@ class SnapshotMarkerEngineTest {
   @Test
   fun `root reference cache releases unused snapshots and roots`() {
     val fixture = Fixture("abcdef")
-    fun cacheDetachedRoot(): Pair<WeakReference<DocumentSnapshot>, WeakReference<AtomicReference<PMarkerRoot>>> {
+    fun cacheDetachedRoot(): Pair<WeakReference<DocumentSnapshot>, WeakReference<PMarkerRootReference>> {
       val snapshot = fixture.initialSnapshot.newInstance()
       val reference = fixture.rootStore.rootReference(snapshot)
       assertSame(reference, fixture.rootStore.rootReference(snapshot))

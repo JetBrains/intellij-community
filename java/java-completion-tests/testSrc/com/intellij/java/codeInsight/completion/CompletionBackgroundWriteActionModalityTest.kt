@@ -6,8 +6,8 @@ import com.intellij.codeInsight.completion.CompletionContributorEP
 import com.intellij.codeInsight.completion.CompletionParameters
 import com.intellij.codeInsight.completion.CompletionPhase
 import com.intellij.codeInsight.completion.CompletionResultSet
-import com.intellij.codeInsight.completion.JavaCompletionAutoPopupTestCase
 import com.intellij.codeInsight.completion.impl.CompletionServiceImpl
+import com.intellij.codeInsight.completion.javaCompletionAutoPopupFixture
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
@@ -18,8 +18,13 @@ import com.intellij.openapi.extensions.LoadingOrder
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.util.Disposer
+import com.intellij.platform.testFramework.junit5.codeInsight.indexing.IndexingModeTemplate
 import com.intellij.testFramework.SkipInHeadlessEnvironment
+import com.intellij.testFramework.fixtures.lightJavaProjectFixture
+import com.intellij.testFramework.junit5.TestApplication
 import kotlinx.coroutines.runBlocking
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Test
 import java.awt.Dialog
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
@@ -38,30 +43,39 @@ import javax.swing.JDialog
  * The test therefore checks the restarted completion pass, not the lookup.
  */
 @SkipInHeadlessEnvironment
-class CompletionBackgroundWriteActionModalityTest : JavaCompletionAutoPopupTestCase() {
+@TestApplication
+@IndexingModeTemplate
+class CompletionBackgroundWriteActionModalityTest {
+  companion object {
+    private val projectFixture = lightJavaProjectFixture()
+  }
+
+  private val autoPopup by javaCompletionAutoPopupFixture(projectFixture)
+  private val myFixture get() = autoPopup.fixture
+  private val testRootDisposable get() = myFixture.testRootDisposable
+
   private var modalDialog: JDialog? = null
 
+  @Test
   fun testBackgroundWriteActionRestartsAutoPopupInModalContext() {
     myFixture.configureByText("a.java", "class C { void foo() { <caret> } }")
     val state = ModalRestartState()
     registerContributor(state)
 
     typeOnEdt('x')
-    assertTrue("The contributor did not start", state.contributorEntered.await(30, TimeUnit.SECONDS))
+    assertTrue(state.contributorEntered.await(30, TimeUnit.SECONDS), "The contributor did not start")
     enterModalContext()
     try {
       runBlocking {
         backgroundWriteAction { }
       }
       val restarted = awaitSecondPass(state)
-      assertTrue("The restart did not run in the modal context, phase=${CompletionServiceImpl.completionPhase}", restarted)
+      assertTrue(restarted, "The restart did not run in the modal context, phase=${CompletionServiceImpl.completionPhase}")
     }
     finally {
       leaveModalContext()
     }
   }
-
-  // Keep the lambdas out of the test method. The JUnit 3 runner rejects the synthetic `test…$lambda` methods.
 
   private fun registerContributor(state: ModalRestartState) {
     ModalContributor.sharedState = state

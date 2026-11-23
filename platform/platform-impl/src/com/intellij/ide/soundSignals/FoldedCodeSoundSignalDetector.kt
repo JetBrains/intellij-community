@@ -30,6 +30,7 @@ internal class FoldedCodeSoundSignalDetector : EditorSoundSignalDetector {
   private fun isFoldedCode(region: FoldRegion): Boolean =
     region.isValid &&
     !region.isExpanded &&
+    !region.shouldNeverExpand() &&
     region !is CustomFoldRegion &&
     region.placeholderText.isNotEmpty()
 }

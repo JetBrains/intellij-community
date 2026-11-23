@@ -1,0 +1,16 @@
+[package]
+name = "avl-control"
+description = "The proxy side of the fake-agent control channel in the IDE: the WebSocket of RFC 6455, base64 and SHA-1, and the control protocol."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+publish.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+serde_json.workspace = true
+
+[dev-dependencies]
+pretty_assertions.workspace = true

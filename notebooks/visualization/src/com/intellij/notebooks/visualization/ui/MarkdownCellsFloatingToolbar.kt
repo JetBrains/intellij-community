@@ -16,6 +16,8 @@ class MarkdownCellsFloatingToolbar(
   coroutineScope: CoroutineScope,
 ) : FloatingToolbar(editor, coroutineScope) {
   override fun isEnabled(): Boolean {
+    // The customizer also adds the toolbar to an editor whose document has no cell lines.
+    if (!NotebookCellLines.hasSupport(editor)) return false
     val selectedCells = getSelectedCells()
     if (selectedCells.isEmpty() || selectedCells.size > 1) return false
     return selectedCells.first().type == CellType.MARKDOWN

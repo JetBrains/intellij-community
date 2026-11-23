@@ -165,7 +165,7 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
 
     // When a condition is enabled, the count filter is applied manually after the condition is evaluated.
     // The JDI count filter would also count events that fail the condition.
-    if (requestor.isCountFilterEnabled() && !requestor.isConditionEnabled()) {
+    if (requestor.isCountFilterEnabled() && !requestor.isCountFilterEmulated()) {
       request.addCountFilter(requestor.getCountFilter());
     }
 

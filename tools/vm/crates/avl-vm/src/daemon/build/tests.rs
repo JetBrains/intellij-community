@@ -108,7 +108,7 @@ async fn pushed_file_drift_names_a_file_that_was_rebuilt_under_the_run() {
     let prep = fixture.prepared().await;
     assert_eq!(prep.pushed_file_drift(), None, "an untouched build drifted");
 
-    fs::write(&prep.lane_inputs[1].host.path, "rebuilt by another agent").unwrap();
+    fs::write(&prep.lane_inputs[2].host.path, "rebuilt by another agent").unwrap();
     let drift = prep.pushed_file_drift().expect("a rebuilt file left the verdict believable");
     assert!(
         drift.starts_with("1 pushed file(s) were rebuilt")
@@ -127,7 +127,7 @@ async fn pushed_file_drift_names_a_file_that_was_rebuilt_under_the_run() {
 async fn pushed_file_drift_reports_a_file_that_is_gone() {
     let fixture = Fixture::new().await;
     let prep = fixture.prepared().await;
-    fs::remove_file(&prep.lane_inputs[1].host.path).unwrap();
+    fs::remove_file(&prep.lane_inputs[2].host.path).unwrap();
     let drift = prep.pushed_file_drift().expect("a missing file left the verdict believable");
     assert!(drift.contains("a.jar (unreadable: "), "{drift}");
 }
@@ -151,7 +151,7 @@ async fn the_launch_digest_is_composed_of_the_static_launch_the_boot_settings_an
         prep.launch_digest,
         launch_digest(&fixture_static_launch(&fixture), &boot, &prep.daemon_environment)
     );
-    let documents = &prep.lane_inputs[1].host;
+    let documents = &prep.lane_inputs[2].host;
     assert!(
         documents.path.ends_with(crate::daemon::testing::FIXTURE_DOCUMENTS_JAR)
             && Path::new(&documents.path).starts_with(runtime::runfiles_root(&fixture.bazel.descriptor_path)),
@@ -261,15 +261,15 @@ async fn a_changed_context_plugin_file_changes_only_the_plugins_digest() {
 // The lane inputs travel by the push: an edit of the fake agent moves no identity, so it refreshes no share, keeps the
 // IDE and keeps the daemon. Only the digest that the push offers moves.
 #[tokio::test]
-async fn a_changed_fake_agent_jar_changes_no_identity_and_only_its_pushed_digest() {
+async fn a_changed_fake_agent_changes_no_identity_and_only_its_pushed_digest() {
     let fixture = Fixture::new().await;
     let before = fixture.prepared().await;
     let fields: Vec<&str> = before.lane_inputs.iter().map(|input| input.field).collect();
-    assert_eq!(fields, ["fakeAgentJar", "laneDocuments", "suiteDocuments"]);
+    assert_eq!(fields, ["fakeAgent", "genuiFixtureJar", "laneDocuments", "suiteDocuments"]);
     // The two documents of the fixture are one jar, so the push offers their digest once.
-    assert_eq!(before.lane_inputs[1].host, before.lane_inputs[2].host);
+    assert_eq!(before.lane_inputs[2].host, before.lane_inputs[3].host);
 
-    let agent = runtime::runfiles_root(&fixture.bazel.descriptor_path).join(crate::daemon::testing::FIXTURE_FAKE_AGENT_JAR);
+    let agent = runtime::runfiles_root(&fixture.bazel.descriptor_path).join(crate::daemon::testing::FIXTURE_FAKE_AGENT);
     fs::write(&agent, "another fake agent").unwrap();
     let after = fixture.prepared().await;
     assert_ne!(before.lane_inputs[0].host.sha256, after.lane_inputs[0].host.sha256);
@@ -286,8 +286,8 @@ fn the_lane_inputs_note_names_each_key_with_its_digest() {
         host: PathDigest::new("/host/x.jar", sha256),
     };
     assert_eq!(
-        lane_inputs_note(&[input("fakeAgentJar", "0123456789abcdef"), input("laneDocuments", "short")]),
-        "lane inputs by digest: fakeAgentJar 0123456789ab, laneDocuments short"
+        lane_inputs_note(&[input("fakeAgent", "0123456789abcdef"), input("laneDocuments", "short")]),
+        "lane inputs by digest: fakeAgent 0123456789ab, laneDocuments short"
     );
 }
 
@@ -429,12 +429,23 @@ fn the_environment_digest_is_by_name() {
     );
 }
 
-/// The guest and the live CLIs are targets and not build options, so each guest OS has its own daemon target, and a
-/// Linux guest has one more for a run that holds the live lane. A macOS guest runs no live lane.
+/// The guest, the live CLIs and the JetBrains Light distribution are targets and not build options, so each guest OS has
+/// its own daemon target, one more for the light lane, and a Linux guest has one more for a run that holds the live
+/// lane. A macOS guest runs no live lane.
 #[test]
 fn each_guest_builds_its_own_daemon_target() {
     assert_eq!(daemon_label(GuestOs::Macos, DaemonTarget::Lanes), LABEL);
     assert_eq!(daemon_label(GuestOs::Linux, DaemonTarget::Lanes), LINUX_GUEST_LABEL);
     assert_eq!(daemon_label(GuestOs::Linux, DaemonTarget::LiveLane), LINUX_GUEST_LIVE_LABEL);
     assert_eq!(daemon_label(GuestOs::Macos, DaemonTarget::LiveLane), LABEL);
+    assert_eq!(daemon_label(GuestOs::Macos, DaemonTarget::LightLane), LIGHT_LABEL);
+    assert_eq!(daemon_label(GuestOs::Linux, DaemonTarget::LightLane), LINUX_GUEST_LIGHT_LABEL);
+}
+
+/// Only the light lane builds the descriptor of JetBrains Light. A selection of no lane builds the one of the lanes.
+#[test]
+fn only_the_light_lane_builds_the_light_descriptor() {
+    assert_eq!(DaemonTarget::of_lane(Some(LIGHT_LANE)), DaemonTarget::LightLane);
+    assert_eq!(DaemonTarget::of_lane(Some("ui")), DaemonTarget::Lanes);
+    assert_eq!(DaemonTarget::of_lane(None), DaemonTarget::Lanes);
 }

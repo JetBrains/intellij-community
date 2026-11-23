@@ -14,15 +14,28 @@
  * limitations under the License.
  */
 package com.siyeh.ig.javadoc;
+import com.intellij.JavaTestUtil;
+import com.intellij.testFramework.JavaInspectionFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.junit.jupiter.api.Test;
 
-import com.siyeh.ig.IGInspectionTestCase;
+import static com.intellij.testFramework.JavaInspectionFixtureKt.javaInspectionFixture;
+import static com.intellij.testFramework.JavaInspectionFixtureKt.javaInspectionProjectFixture;
+
 
 /**
  * @author Bas Leijdekkers
  */
-public class PackageInfoWithoutPackageInspectionTest extends IGInspectionTestCase {
+@TestApplication
+public class PackageInfoWithoutPackageInspectionTest {
+  private static final TestFixture<LightJavaProject> projectFixture = javaInspectionProjectFixture();
+  private final TestFixture<JavaInspectionFixture> javaInspection = javaInspectionFixture(projectFixture, JavaTestUtil.getJavaTestDataPath() + "/ig");
 
+
+  @Test
   public void test() {
-    doTest("com/siyeh/igtest/javadoc/package_info_without_package", new PackageInfoWithoutPackageInspection());
+    javaInspection.get().doTest("com/siyeh/igtest/javadoc/package_info_without_package", new PackageInfoWithoutPackageInspection());
   }
 }

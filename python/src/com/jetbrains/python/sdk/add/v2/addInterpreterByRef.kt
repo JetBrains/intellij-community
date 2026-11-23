@@ -28,7 +28,7 @@ internal suspend fun <P : PathHolder> FileSystem<P>.addInterpreterByEnvRef(
   if (this !is FileSystemWithEel) return null
   val pyProject = moduleOrProject.findPyProject() ?: return null
   val provider = PyEvoEnvironmentProvider.EP_NAME.findFirstSafe { it.tool.fusId == manager.fusId } ?: return null
-  return PythonInterpreterRegistry.getInstance(pyProject.project).newPythonInterpreter(pyProject, provider.interpreterRefOf(envRef))
+  return PythonInterpreterRegistry.getInstance(pyProject.project).build(pyProject, provider.interpreterRefOf(envRef))
 }
 
 /**
@@ -44,5 +44,5 @@ internal suspend fun <P : PathHolder> FileSystem<P>.addInterpreterByBinary(
   val pyProject = moduleOrProject.findPyProject() ?: return null
   val provider = PyEvoEnvironmentProvider.EP_NAME.findFirstSafe { it.tool.fusId == manager.fusId } ?: return null
   val ref = provider.interpreterRefOf(provider.envRefOf(pyProject, pythonBinary))
-  return PythonInterpreterRegistry.getInstance(pyProject.project).newPythonInterpreter(pyProject, ref)
+  return PythonInterpreterRegistry.getInstance(pyProject.project).build(pyProject, ref)
 }

@@ -27,14 +27,14 @@ import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.PyKeywordArgument;
 import com.jetbrains.python.psi.PyQualifiedExpression;
+import com.jetbrains.python.psi.PySequenceExpression;
 import com.jetbrains.python.psi.PyStarArgument;
 import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.psi.impl.PyCallExpressionHelper;
+import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.types.PyCallableParameter;
 import com.jetbrains.python.psi.types.PyCallableType;
-import com.jetbrains.python.psi.types.PyTupleType;
-import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.ApiStatus;
@@ -151,6 +151,7 @@ public final class PyArgumentListInspection extends PyInspection {
     }
 
     highlightMappingProblems(node, holder, mappings, context);
+    PyArgumentUnpacking.checkRepeatedKeywords(node, mappings, holder, context);
   }
 
   /**
@@ -168,14 +169,14 @@ public final class PyArgumentListInspection extends PyInspection {
       // so the two checks below cover every incomplete mapping.
       final PyCallExpression.PyArgumentsMapping mapping = mappings.getFirst();
       if (!mapping.getUnmappedArguments().isEmpty()) {
-        highlightUnexpectedArguments(node, holder, mapping);
+        highlightUnexpectedArguments(node, holder, mapping, context);
       }
       if (!mapping.getUnmappedParameters().isEmpty()) {
         highlightUnfilledParameters(node, holder, mapping, context);
       }
     }
     else {
-      if (ContainerUtil.all(mappings, mapping -> !mapping.isComplete())) {
+      if (ContainerUtil.all(mappings, mapping -> !isCompleteIgnoringEmptyUnpacking(mapping, context))) {
         boolean anchorOnClosingParen = ContainerUtil.all(mappings, mapping -> !mapping.getUnmappedParameters().isEmpty()) &&
                                        ContainerUtil.exists(mappings, mapping -> mapping.getUnmappedArguments().isEmpty());
         if (anchorOnClosingParen) {
@@ -189,6 +190,13 @@ public final class PyArgumentListInspection extends PyInspection {
         }
       }
     }
+  }
+
+  /** Like {@link PyCallExpression.PyArgumentsMapping#isComplete()}, but a `*` or `**` operand that can be empty can map to nothing. */
+  private static boolean isCompleteIgnoringEmptyUnpacking(@NotNull PyCallExpression.PyArgumentsMapping mapping,
+                                                          @NotNull TypeEvalContext context) {
+    return mapping.getUnmappedParameters().isEmpty() &&
+           ContainerUtil.all(mapping.getUnmappedArguments(), argument -> PyArgumentUnpacking.canBeEmpty(argument, context));
   }
 
   private static @Nullable PsiElement findClosingParen(@NotNull PyArgumentList node) {
@@ -205,8 +213,9 @@ public final class PyArgumentListInspection extends PyInspection {
     PyExpression expr = node.getExpression();
     if (expr == null) return;
 
-    PyType type = resolveContext.getTypeEvalContext().getType(expr);
-    if (!(type instanceof PyTupleType tupleType) || tupleType.isHomogeneous()) return;
+    // A tuple with a part of unknown length, such as `tuple[int, *tuple[str, ...]]`, gives no exact count.
+    int knownLength = PyCallExpressionHelper.knownFixedTupleLength(resolveContext.getTypeEvalContext().getType(expr));
+    if (knownLength < 0) return;
 
     PsiElement parent = node.getParent();
     if (!(parent instanceof PyArgumentList argList)) return;
@@ -221,7 +230,8 @@ public final class PyArgumentListInspection extends PyInspection {
     List<PyCallExpression.PyArgumentsMapping> mappings = callExpr.multiMapArguments(resolveContext);
     if (mappings.size() != 1) return;
 
-    List<PyCallableParameter> variadicParams = mappings.get(0).getParametersMappedToVariadicPositionalArguments();
+    PyCallExpression.PyArgumentsMapping mapping = mappings.getFirst();
+    List<PyCallableParameter> variadicParams = mapping.getParametersMappedToVariadicPositionalArguments();
     if (variadicParams.isEmpty()) return;
 
     int positionalAfter = 0;
@@ -236,7 +246,18 @@ public final class PyArgumentListInspection extends PyInspection {
       }
     }
 
-    int filled = tupleType.getElementCount() + positionalAfter;
+    // The mapping places a display and a spread before a positional argument exactly, and reports a surplus itself.
+    if (knownLength > variadicParams.size() && positionalAfter == 0 && !(PyPsiUtils.flattenParens(expr) instanceof PySequenceExpression)) {
+      // A tuple of known length gives more values than the parameters that it fills, and no `*args` takes the rest.
+      PyCallableType callableType = mapping.getCallableType();
+      List<PyCallableParameter> parameters = callableType == null ? null : callableType.getParameters(resolveContext.getTypeEvalContext());
+      if (parameters != null && !ContainerUtil.exists(parameters, PyCallableParameter::isPositionalContainer)) {
+        registerProblem(holder, node, PyPsiBundle.message("INSP.unexpected.arg"));
+      }
+      return;
+    }
+
+    int filled = knownLength + positionalAfter;
     if (filled >= variadicParams.size()) return;
 
     ASTNode argListNode = argList.getNode();
@@ -248,7 +269,8 @@ public final class PyArgumentListInspection extends PyInspection {
     for (int i = filled; i < variadicParams.size(); i++) {
       PyCallableParameter param = variadicParams.get(i);
       if (param.isPositionalContainer() || param.isKeywordContainer()) break;
-      if (!param.hasDefaultValue()) {
+      // A `**` operand can fill the parameter by its name.
+      if (!param.hasDefaultValue() && !mapping.getParametersMappedToVariadicKeywordArguments().contains(param)) {
         String name = param.getName();
         if (name != null) {
           registerProblem(holder, rpar, PyPsiBundle.problemMessage("INSP.parameter.unfilled", name));
@@ -323,10 +345,15 @@ public final class PyArgumentListInspection extends PyInspection {
 
   private static void highlightUnexpectedArguments(@NotNull PyArgumentList node,
                                                    @NotNull ProblemsHolder holder,
-                                                   @NotNull PyCallExpression.PyArgumentsMapping mapping) {
+                                                   @NotNull PyCallExpression.PyArgumentsMapping mapping,
+                                                   @NotNull TypeEvalContext context) {
     final Set<String> duplicateKeywords = getDuplicateKeywordArguments(node);
+    // A `*` or `**` operand that can be empty at runtime maps to no parameter without an error.
+    final List<PyExpression> unexpectedArguments = ContainerUtil.filter(
+      mapping.getUnmappedArguments(),
+      argument -> !PyArgumentUnpacking.canBeEmpty(argument, context));
 
-    if (holder.isOnTheFly() && !mapping.getUnmappedArguments().isEmpty() && mapping.getUnmappedParameters().isEmpty()) {
+    if (holder.isOnTheFly() && !unexpectedArguments.isEmpty() && mapping.getUnmappedParameters().isEmpty()) {
       final PyCallableType callableType = mapping.getCallableType();
       if (callableType != null) {
         final PyCallable callable = callableType.getCallable();
@@ -339,7 +366,7 @@ public final class PyArgumentListInspection extends PyInspection {
       }
     }
 
-    for (PyExpression argument : mapping.getUnmappedArguments()) {
+    for (PyExpression argument : unexpectedArguments) {
       final List<LocalQuickFix> quickFixes = Lists.newArrayList(new PyRemoveArgumentQuickFix());
       if (argument instanceof PyKeywordArgument) {
         if (duplicateKeywords.contains(((PyKeywordArgument)argument).getKeyword())) {

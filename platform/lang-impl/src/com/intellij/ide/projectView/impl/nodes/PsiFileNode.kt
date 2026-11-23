@@ -46,12 +46,12 @@ import kotlinx.coroutines.withContext
  * [getValue] finds the file in any code insight context.
  * It returns the root of the language of the original value, or null when the file type or the PSI class changed.
  * A subclass that needs the file of one code insight context must look it up itself.
- * A light file, which has no virtual file, and an invalid file keep a smart pointer.
+ * A light file, which has no virtual file, an invalid file, and a file with no containing file keep a smart pointer.
  */
 open class PsiFileNode(project: Project?, value: PsiFile, viewSettings: ViewSettings?)
   : BasePsiNode<PsiFile>(project, value, viewSettings), NavigatableWithText, PathElementIdProvider, AsyncNavigatable {
   override fun createAnchor(value: PsiFile): Any {
-    if (!value.isValid || value.virtualFile == null) {
+    if (!value.isValid || value.virtualFile == null || value.containingFile == null) {
       return super.createAnchor(value)
     }
     return PsiFileSystemItemAnchor.of(value)

@@ -149,10 +149,9 @@ class LinuxDistributionBuilder(
         "linux_tar_gz_${arch.name}"
       ) { _ ->
         val suffix = suffix(arch, targetLibcImpl)
-        createChecksumAndGpgSignFiles(
-          context = context,
-          buildArtifact = { buildTarGz(arch, runtimeDir, osAndArchSpecificDistPath, suffix) }
-        )
+        createChecksumAndGpgSignFiles(context) {
+          buildTarGz(arch, runtimeDir, osAndArchSpecificDistPath, suffix)
+        }
       }
 
       if (targetLibcImpl != LinuxLibcImpl.MUSL) {
@@ -166,7 +165,7 @@ class LinuxDistributionBuilder(
           val tempTar = Files.createTempDirectory(context.paths.tempDir, "tar-")
           try {
             unTar(tarGzPath, tempTar)
-            generateInstallationIntegrityManifest(unpackedDistribution = tempTar.resolve(rootDirectoryName), os = OsFamily.LINUX, arch = arch, context = context)
+            generateInstallationIntegrityManifest(unpackedDistribution = tempTar.resolve(rootDirectoryName), OsFamily.LINUX, arch, context)
           }
           finally {
             NioFiles.deleteRecursively(tempTar)
@@ -269,14 +268,8 @@ class LinuxDistributionBuilder(
     checkNotNull(tarGzPath) {
       "A Linux .snap package is built from the .tar.gz with the bundled runtime, but the build skips the step 'linux_tar_gz_${arch.name}'"
     }
-    customizer.snaps.forEach {
-      buildSnapPackage(
-        snapName = it.name,
-        snapDescription = it.description,
-        tarGzPath = tarGzPath,
-        arch = arch,
-        targetLibcImpl = targetLibcImpl,
-      )
+    customizer.snaps.forEach { (val name, val description) ->
+      buildSnapPackage(name, description, tarGzPath, arch, targetLibcImpl)
     }
   }
 
@@ -365,10 +358,9 @@ class LinuxDistributionBuilder(
         context.notifyArtifactBuilt(snapArtifactPath)
         checkExecutablePermissions(distribution = snapArtifactPath, root = "", includeRuntime = true, arch, targetLibcImpl, context)
 
-        createChecksumAndGpgSignFiles(
-          context = context,
-          buildArtifact = { snapArtifactPath }
-        )
+        createChecksumAndGpgSignFiles(context) {
+          snapArtifactPath
+        }
 
         val snapProductInfoJsonPath = snapArtifactPath.resolveProductInfoJsonSibling()
         copyFile(tarGzPath.resolveProductInfoJsonSibling(), snapProductInfoJsonPath)

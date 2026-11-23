@@ -8,6 +8,11 @@ import com.intellij.openapi.roots.ModifiableRootModel
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.testFramework.LightProjectDescriptor
 
+/**
+ * @deprecated Use [assertEqualsBetweenInconvertibleTypesProjectFixture] and [assertEqualsBetweenInconvertibleTypesInspectionFixture] in a JUnit 5 test.
+ */
+@Suppress("DEPRECATION")
+@Deprecated("Use assertEqualsBetweenInconvertibleTypesProjectFixture and assertEqualsBetweenInconvertibleTypesInspectionFixture in a JUnit 5 test")
 abstract class AssertEqualsBetweenInconvertibleTypesInspectionTestBase : JvmInspectionTestBase() {
   override val inspection: AssertBetweenInconvertibleTypesInspection = AssertBetweenInconvertibleTypesInspection()
 

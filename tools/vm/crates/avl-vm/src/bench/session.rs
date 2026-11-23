@@ -144,6 +144,25 @@ pub(crate) struct SessionInfo {
     /// twin, and a session from before the option, has none.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub(crate) suppressed_plugin: Option<String>,
+    /// The property `<name>=<value>` that the twin arms of `--with-property` set. Each twin is in `arms` too. A session
+    /// without such a twin, and a session from before the option, has none.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub(crate) with_property: Option<String>,
+    /// The queries of the find-in-files arm, in their order. A session without that arm has none.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub(crate) queries: Vec<String>,
+    /// The directory of the second pass of the find-in-files arm, relative to the project. A session without
+    /// `--directory` has none.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub(crate) directory: Option<String>,
+    /// The properties `<name>=<value>` of every run of the session, see `--property`. A session without the option has
+    /// none.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub(crate) properties: Vec<String>,
+    /// The label of the `context_plugin_dir` whose plugin directories each sandbox of the session holds. A session
+    /// without `--context-plugins` has none.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub(crate) context_plugins: Option<String>,
     /// What the session changed or dropped, such as the agent of the profile.
     pub(crate) warnings: Vec<String>,
 }
@@ -266,14 +285,20 @@ pub(crate) enum ProjectSource {
     Markdown,
     /// A copy of a directory.
     Dir(PathBuf),
+    /// A directory that every run opens where it is, with no copy: a tree too large to copy, such as a checkout. The
+    /// IDE writes its project files into the `.idea` of the tree.
+    InPlace(PathBuf),
 }
 
-/// The project of a `project` session: `<sandbox>/projects/<name>` in each sandbox, and its first file.
+/// The project of a `project` session: `<sandbox>/projects/<name>` in each sandbox, or the directory of an in-place
+/// project, and its first file.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub(crate) struct Project {
     pub(crate) name: String,
     /// The file that the prime run opens, relative to the project directory.
     pub(crate) file: PathBuf,
+    /// The directory of a [`ProjectSource::InPlace`] project. A project inside each sandbox has none.
+    pub(crate) place: Option<PathBuf>,
 }
 
 /// The paths of a [`Project`] inside one sandbox.
@@ -284,9 +309,12 @@ pub(crate) struct ProjectPaths {
 }
 
 impl Project {
-    /// The paths of the project inside `sandbox`.
+    /// The paths of the project inside `sandbox`, or the paths of an in-place project, which every sandbox shares.
     pub(crate) fn paths(&self, sandbox: &Sandbox) -> ProjectPaths {
-        let dir = sandbox.root.join(PROJECTS_DIR).join(&self.name);
+        let dir = match &self.place {
+            Some(place) => place.clone(),
+            None => sandbox.root.join(PROJECTS_DIR).join(&self.name),
+        };
         ProjectPaths {
             file: dir.join(&self.file),
             dir,
@@ -295,13 +323,15 @@ impl Project {
 }
 
 /// Writes the project into the template, so each sandbox copy carries it. The prime run then writes the editor
-/// state into it, and each measured run starts from a copy of that state.
+/// state into it, and each measured run starts from a copy of that state. An in-place project is not written: every run
+/// opens the directory itself.
 pub(crate) fn write_project(template: &Sandbox, source: &ProjectSource) -> anyhow::Result<Project> {
     match source {
         ProjectSource::Markdown => {
             let project = Project {
                 name: MARKDOWN_PROJECT.to_owned(),
                 file: PathBuf::from("README.md"),
+                place: None,
             };
             let dir = project.paths(template).dir;
             for (name, text) in markdown_files() {
@@ -310,15 +340,28 @@ pub(crate) fn write_project(template: &Sandbox, source: &ProjectSource) -> anyho
             Ok(project)
         }
         ProjectSource::Dir(source) => {
-            let file = first_file(source)?.with_context(|| format!("the project {} has no file to open", source.display()))?;
-            let name = source
-                .file_name()
-                .map_or_else(|| "project".to_owned(), |name| name.to_string_lossy().into_owned());
-            let project = Project { name, file };
+            let project = Project {
+                place: None,
+                ..project_of(source)?
+            };
             files::copy_dir(source, &project.paths(template).dir)?;
             Ok(project)
         }
+        ProjectSource::InPlace(source) => project_of(source),
     }
+}
+
+/// The project of the directory `source`: its name, its first file, and the directory as its place.
+fn project_of(source: &Path) -> anyhow::Result<Project> {
+    let file = first_file(source)?.with_context(|| format!("the project {} has no file to open", source.display()))?;
+    let name = source
+        .file_name()
+        .map_or_else(|| "project".to_owned(), |name| name.to_string_lossy().into_owned());
+    Ok(Project {
+        name,
+        file,
+        place: Some(source.to_path_buf()),
+    })
 }
 
 /// The file of `dir` that the prime run opens: the first `*.md` file in name order, else the first regular file. A

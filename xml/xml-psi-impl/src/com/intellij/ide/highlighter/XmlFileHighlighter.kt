@@ -57,6 +57,7 @@ import com.intellij.util.containers.MultiMap
 import com.intellij.util.containers.nullize
 import java.lang.invoke.MethodHandles
 import java.lang.invoke.VarHandle
+import java.util.Collections
 
 open class XmlFileHighlighter
 @JvmOverloads
@@ -126,7 +127,7 @@ constructor(val isDtd: Boolean = false, val isXHtml: Boolean = false) : SyntaxHi
     fun createMapAndListenForExtensionChanges(attributes: MultiMap<IElementType, TextAttributesKey>,
                                               fixer: (Array<TextAttributesKey>) -> Array<TextAttributesKey> = { it }
     ): AttributeArrayMapStorage {
-      val map = java.util.Map.copyOf(attributes.entrySet().associate { e -> e.key to fixer(e.value.toTypedArray()) })
+      val map = Collections.unmodifiableMap(attributes.entrySet().associate { e -> e.key to fixer(e.value.toTypedArray()) })
       val storage = AttributeArrayMapStorage(map, fixer)
       return storage
     }
@@ -153,31 +154,48 @@ constructor(val isDtd: Boolean = false, val isXHtml: Boolean = false) : SyntaxHi
       return map.getOrDefault(token, defaultValue)
     }
 
-    internal fun registerChangedHighlighters(
+    private fun registerAdded(
       fixer: (Array<TextAttributesKey>) -> Array<TextAttributesKey>,
       addedAttributes: MultiMap<IElementType, TextAttributesKey>,
-      removedAttributes: MultiMap<IElementType, TextAttributesKey>
     ) {
       do {
         val oldMap = map
-        val relevantOldMap = oldMap.toMutableMap()
-        for ((removedToken, removedAttributes) in removedAttributes.entrySet()) {
-          relevantOldMap.merge(removedToken, TextAttributesKey.EMPTY_ARRAY) { existingAttributes, _->
-            val fixedRemoved = ContainerUtil.newHashSet(*fixer(removedAttributes.toTypedArray()))
-            ContainerUtil.subtract(ContainerUtil.newHashSet(*existingAttributes), fixedRemoved).toTypedArray().nullize()
+        var newMap: HashMap<IElementType, Array<TextAttributesKey>>? = null
+        for ([token, attributes] in addedAttributes.entrySet()) {
+          if (oldMap.containsKey(token)) continue
+          val fixedAttributes = fixer(attributes.toTypedArray())
+          if (newMap == null) {
+            newMap = HashMap.newHashMap(oldMap.size + addedAttributes.size())
+            newMap.putAll(oldMap)
+          }
+          newMap[token] = fixedAttributes
+        }
+        if (newMap == null) return
+      } while (!updater.compareAndSet(this, oldMap, Collections.unmodifiableMap(newMap)))
+    }
+
+    private fun registerRemoved(
+      fixer: (Array<TextAttributesKey>) -> Array<TextAttributesKey>,
+      removedAttributes: MultiMap<IElementType, TextAttributesKey>,
+    ) {
+      do {
+        val oldMap = map
+        var newMap: HashMap<IElementType, Array<TextAttributesKey>>? = null
+        for ([removedToken, removedAttributes] in removedAttributes.entrySet()) {
+          val existingAttributes : Array<TextAttributesKey> = oldMap[removedToken] ?: continue
+          val fixedRemoved : Set<TextAttributesKey> = fixer(removedAttributes.toTypedArray()).toHashSet()
+          if (existingAttributes.isNotEmpty() && existingAttributes.none { it in fixedRemoved }) continue
+          val remainingAttributes = ContainerUtil.subtract(existingAttributes.toHashSet(), fixedRemoved).toTypedArray().nullize()
+          if (newMap == null) newMap = HashMap(oldMap)
+          if (remainingAttributes == null) {
+            newMap.remove(removedToken)
+          }
+          else {
+            newMap[removedToken] = remainingAttributes
           }
         }
-        val newMap = HashMap.newHashMap<IElementType, Array<TextAttributesKey>>(relevantOldMap.size + addedAttributes.size() )
-        for ((key, value) in addedAttributes.entrySet()) {
-          if (!relevantOldMap.containsKey(key)) {
-            newMap.put(key, fixer(value.toTypedArray()))
-          }
-        }
-        if (newMap.isEmpty() && removedAttributes.isEmpty) {
-          break
-        }
-        newMap.putAll(relevantOldMap)
-      } while(!updater.compareAndSet(this, oldMap, java.util.Map.copyOf(newMap)))
+        if (newMap == null) return
+      } while (!updater.compareAndSet(this, oldMap, Collections.unmodifiableMap(newMap)))
     }
     /**
      * listens for [XmlFileHighlighter.EMBEDDED_HIGHLIGHTERS] extensions and updates the [map] with attributes read from new extension set
@@ -187,15 +205,11 @@ constructor(val isDtd: Boolean = false, val isXHtml: Boolean = false) : SyntaxHi
       private val fixer: (Array<TextAttributesKey>) -> Array<TextAttributesKey>,
     ) : ExtensionPointListener<EmbeddedTokenHighlighter> {
       override fun extensionAdded(extension: EmbeddedTokenHighlighter, pluginDescriptor: PluginDescriptor) {
-        registerChangedHighlighters(fixer,
-                                    addedAttributes = extension.embeddedTokenAttributes,
-                                    removedAttributes = MultiMap.empty())
+        registerAdded(fixer, extension.embeddedTokenAttributes)
       }
 
       override fun extensionRemoved(extension: EmbeddedTokenHighlighter, pluginDescriptor: PluginDescriptor) {
-        registerChangedHighlighters(fixer,
-                                    addedAttributes = MultiMap.empty(),
-                                    removedAttributes = extension.embeddedTokenAttributes)
+        registerRemoved(fixer, extension.embeddedTokenAttributes)
       }
     }
   }

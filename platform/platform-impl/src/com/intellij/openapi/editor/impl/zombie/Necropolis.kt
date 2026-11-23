@@ -25,24 +25,30 @@ import com.intellij.openapi.vfs.FileIdAdapter
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.diagnostic.telemetry.impl.span
 import com.intellij.platform.ide.productMode.IdeProductMode
+import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.concurrency.ThreadingAssertions
+import com.intellij.util.io.cache.ManagedCacheCloseBarrier
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.job
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.plus
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
 import org.jetbrains.annotations.TestOnly
 import java.nio.file.Path
 import java.util.concurrent.CancellationException
 import java.util.concurrent.atomic.AtomicReference
+import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
-
 
 /**
  * Service managing all necromancers.
@@ -56,22 +62,25 @@ class Necropolis(private val project: Project, private val coroutineScope: Corou
     private val LOG: Logger = logger<Necropolis>()
     private val NECROMANCER_EP = ExtensionPointName<NecromancerAwaker<Zombie>>("com.intellij.textEditorNecromancerAwaker")
 
+    /**
+     * Stays below [ManagedCacheCloseBarrier.MAX_WAIT], so that a grave closes after its burials.
+     * Leaves time for the grave close within the 10 s that a project close waits for its scope.
+     */
+    private val BURIAL_TIMEOUT: Duration = 5.seconds
+
     @JvmStatic
     fun getInstance(project: Project, onlyIfCreated: Boolean = false): Necropolis? {
       return if (isEnabled()) {
         if (onlyIfCreated) {
           project.serviceIfCreated<Necropolis>()
-        }
-        else {
+        } else {
           project.service<Necropolis>()
         }
-      }
-      else {
+      } else {
         null
       }
     }
 
-    @JvmStatic
     suspend fun getInstanceAsync(project: Project): Necropolis? {
       return if (isEnabled()) project.serviceAsync<Necropolis>() else null
     }
@@ -80,18 +89,22 @@ class Necropolis(private val project: Project, private val coroutineScope: Corou
       return PathManager.getSystemDir().resolve("editor")
     }
 
-    private fun isEnabled(): Boolean = !AppMode.isRemoteDevHost() && !IdeProductMode.isLight
+    private fun isEnabled(): Boolean {
+      return !AppMode.isRemoteDevHost() && !IdeProductMode.isLight
+    }
   }
 
+  private val burialScope: CoroutineScope = coroutineScope.childScope("Necropolis burials")
   private val necromancersDeferred: Deferred<List<Necromancer<Zombie>>>
   private val necromancersRef: AtomicReference<List<Necromancer<Zombie>>> = AtomicReference()
 
   init {
     necromancersDeferred = coroutineScope.async {
       service<NecropolisDestroyer>().cleanGravesIfNeeded()
+      val necromancerScope = coroutineScope + ManagedCacheCloseBarrier(burialScope.coroutineContext.job)
       val necromancers = createAwakers().map {
         async(Dispatchers.IO + CoroutineName(it.javaClass.name)) {
-          it.awake(project, coroutineScope)
+          it.awake(project, necromancerScope)
         }
       }.awaitAll()
       necromancersRef.set(necromancers)
@@ -135,11 +148,9 @@ class Necropolis(private val project: Project, private val coroutineScope: Corou
                     necromancer.spawnZombie(recipe, zombie)
                   }
                 }
-              }
-              catch (e: CancellationException) {
+              } catch (e: CancellationException) {
                 throw e
-              }
-              catch (e: Throwable) {
+              } catch (e: Throwable) {
                 LOG.warn(
                   "Exception during editor loading",
                   if (e is ControlFlowException) RuntimeException(e) else e
@@ -181,15 +192,16 @@ class Necropolis(private val project: Project, private val coroutineScope: Corou
     return null
   }
 
+  @OptIn(DelicateCoroutinesApi::class)
   private fun turnIntoZombiesAndBury(necromancers: List<Necromancer<Zombie>>, recipe: TurningRecipe) {
     val zombies = turnIntoZombies(necromancers, recipe)
     if (LOG.isDebugEnabled) {
       LOG.debug("Turned into zombies for ${recipe.fileId}: ${zombies.map { it.first.name() }}")
     }
-    if (zombies.isNotEmpty()) {
-      coroutineScope.launch {
+    if (zombies.isNotEmpty() && !burialScope.coroutineContext.job.isCompleted) {
+      burialScope.launch(start = CoroutineStart.ATOMIC) {
         withContext(NonCancellable) {
-          withTimeout(8.seconds) {
+          withTimeout(BURIAL_TIMEOUT) {
             buryZombies(zombies, recipe)
           }
         }
@@ -217,8 +229,7 @@ class Necropolis(private val project: Project, private val coroutineScope: Corou
     val documentContent = readActionBlocking {
       if (recipe.isValid()) {
         recipe.document.immutableCharSequence
-      }
-      else {
+      } else {
         LOG.debug("Invalid recipe for ${recipe.fileId}}")
         null
       }

@@ -12,8 +12,8 @@ import com.intellij.execution.target.TargetEnvironment
 import com.intellij.execution.util.ProgramParametersUtil
 import com.intellij.openapi.options.SettingsEditor
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.vfs.StandardFileSystems
+import com.intellij.python.sdk.backend.PythonInterpreter
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PyNames
 import com.jetbrains.python.PythonHelper
@@ -189,7 +189,9 @@ class PyUnitTestFactory(type: PythonTestConfigurationType) : PyAbstractTestFacto
 
   override fun getId(): String = PyUnitTestFactory.id
 
-  override fun onlyClassesAreSupported(project: Project, sdk: Sdk): Boolean = true
+  @ApiStatus.Internal
+
+  override fun onlyClassesAreSupported(project: Project, interpreter: PythonInterpreter): Boolean = true
 
   override val packageSpec: PackageAvailabilitySpec? = null
 }

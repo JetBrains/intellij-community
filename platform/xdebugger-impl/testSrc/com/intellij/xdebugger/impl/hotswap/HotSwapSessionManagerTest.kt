@@ -7,7 +7,10 @@ import com.intellij.mock.MockVirtualFile
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.util.Disposer
 import com.intellij.platform.debugger.impl.rpc.HotSwapVisibleStatus
-import com.intellij.testFramework.HeavyPlatformTestCase
+import com.intellij.testFramework.common.timeoutRunBlocking
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.TestDisposable
+import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.xdebugger.hotswap.HotSwapProvider
 import com.intellij.xdebugger.hotswap.HotSwapSession
 import com.intellij.xdebugger.hotswap.HotSwapSessionManager
@@ -23,10 +26,22 @@ import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.job
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
+import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.Assertions.assertSame
 import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Test
 
-class HotSwapSessionManagerTest : HeavyPlatformTestCase() {
+@TestApplication
+class HotSwapSessionManagerTest {
+  private val projectFixture = projectFixture(openAfterCreation = true)
+  private val project get() = projectFixture.get()
+
+  @TestDisposable
+  lateinit var testRootDisposable: Disposable
+
+  @Test
   fun testCurrentSession() {
     val manager = HotSwapSessionManagerImpl.getInstance(project)
     val disposable = Disposer.newDisposable(testRootDisposable)
@@ -37,7 +52,8 @@ class HotSwapSessionManagerTest : HeavyPlatformTestCase() {
     assertNull(manager.currentSession)
   }
 
-  fun testListenerAfterSessionStart(): Unit = runBlocking {
+  @Test
+  fun testListenerAfterSessionStart(): Unit = timeoutRunBlocking {
     val manager = HotSwapSessionManager.getInstance(project)
     val disposable1 = Disposer.newDisposable(testRootDisposable)
     val disposable2 = Disposer.newDisposable(testRootDisposable)
@@ -48,7 +64,8 @@ class HotSwapSessionManagerTest : HeavyPlatformTestCase() {
     assertCompletedAndDispose(channel, disposable2)
   }
 
-  fun testOnChanges() = runBlocking {
+  @Test
+  fun testOnChanges(): Unit = timeoutRunBlocking {
     val manager = HotSwapSessionManager.getInstance(project)
     val disposable1 = Disposer.newDisposable(testRootDisposable)
     val disposable2 = Disposer.newDisposable(testRootDisposable)
@@ -57,7 +74,7 @@ class HotSwapSessionManagerTest : HeavyPlatformTestCase() {
     val provider = MockHotSwapProvider()
     val hotSwapSession = manager.createSession(provider, disposable1)
     assertEquals(HotSwapVisibleStatus.NoChanges, channel.receive())
-    assertEmpty(hotSwapSession.getChanges())
+    assertThat(hotSwapSession.getChanges()).isEmpty()
 
     provider.collector.addFile(MockVirtualFile("a.txt"))
     assertEquals(HotSwapVisibleStatus.ChangesReady, channel.receive())
@@ -70,7 +87,8 @@ class HotSwapSessionManagerTest : HeavyPlatformTestCase() {
     assertCompletedAndDispose(channel, disposable2)
   }
 
-  fun testOnIncompatibleChanges() = runBlocking {
+  @Test
+  fun testOnIncompatibleChanges(): Unit = timeoutRunBlocking {
     val reason = "Method was added"
     val manager = HotSwapSessionManager.getInstance(project)
     val disposable1 = Disposer.newDisposable(testRootDisposable)
@@ -80,7 +98,7 @@ class HotSwapSessionManagerTest : HeavyPlatformTestCase() {
     val provider = MockHotSwapProvider()
     val hotSwapSession = manager.createSession(provider, disposable1)
     assertEquals(HotSwapVisibleStatus.NoChanges, channel.receive())
-    assertEmpty(hotSwapSession.getChanges())
+    assertThat(hotSwapSession.getChanges()).isEmpty()
 
     provider.collector.addIncompatibleFile(MockVirtualFile("a.txt"), reason)
 
@@ -89,12 +107,13 @@ class HotSwapSessionManagerTest : HeavyPlatformTestCase() {
 
     provider.collector.cancelChanges()
     assertEquals(HotSwapVisibleStatus.NoChanges, channel.receive())
-    assertEmpty(hotSwapSession.getChanges())
+    assertThat(hotSwapSession.getChanges()).isEmpty()
     Disposer.dispose(disposable1)
     assertNull(channel.receive())
     Disposer.dispose(disposable2)
   }
 
+  @Test
   fun testRestart() {
     val manager = HotSwapSessionManager.getInstance(project)
     val disposable = Disposer.newDisposable(testRootDisposable)
@@ -107,7 +126,8 @@ class HotSwapSessionManagerTest : HeavyPlatformTestCase() {
     Disposer.dispose(disposable)
   }
 
-  fun testHotSwap() = runBlocking {
+  @Test
+  fun testHotSwap(): Unit = timeoutRunBlocking {
     val manager = HotSwapSessionManager.getInstance(project)
     val disposable1 = Disposer.newDisposable(testRootDisposable)
     val disposable2 = Disposer.newDisposable(testRootDisposable)
@@ -124,7 +144,7 @@ class HotSwapSessionManagerTest : HeavyPlatformTestCase() {
       assertEquals(HotSwapVisibleStatus.InProgress, channel.receive())
       listener.onFinish()
       assertEquals(HotSwapVisibleStatus.NoChanges, channel.receive())
-      assertEmpty(hotSwapSession.getChanges())
+      assertThat(hotSwapSession.getChanges()).isEmpty()
     }
 
     run {
@@ -134,7 +154,7 @@ class HotSwapSessionManagerTest : HeavyPlatformTestCase() {
       assertEquals(HotSwapVisibleStatus.InProgress, channel.receive())
       listener.onSuccessfulReload()
       assertEquals(HotSwapVisibleStatus.Success, channel.receive())
-      assertEmpty(hotSwapSession.getChanges())
+      assertThat(hotSwapSession.getChanges()).isEmpty()
     }
 
     run {
@@ -160,7 +180,8 @@ class HotSwapSessionManagerTest : HeavyPlatformTestCase() {
     assertCompletedAndDispose(channel, disposable2)
   }
 
-  fun testSameHotSwapStatusHasNoEffect() = runBlocking {
+  @Test
+  fun testSameHotSwapStatusHasNoEffect(): Unit = timeoutRunBlocking {
     val manager = HotSwapSessionManager.getInstance(project)
     val disposable0 = Disposer.newDisposable(testRootDisposable)
     val disposable1 = Disposer.newDisposable(testRootDisposable)
@@ -191,9 +212,10 @@ class HotSwapSessionManagerTest : HeavyPlatformTestCase() {
     Disposer.dispose(disposable0)
   }
 
+  @Test
   fun testAddingListenerConcurrentlyToSessionClose() {
     repeat(100) {
-      runBlocking {
+      timeoutRunBlocking {
         val manager = HotSwapSessionManager.getInstance(project)
         val channel = Channel<HotSwapVisibleStatus?>()
         val disposable1 = Disposer.newDisposable(testRootDisposable)
@@ -224,7 +246,8 @@ class HotSwapSessionManagerTest : HeavyPlatformTestCase() {
     }
   }
 
-  fun testMultipleSessionsNotifyLastOneWhenNoSelected() = runBlocking {
+  @Test
+  fun testMultipleSessionsNotifyLastOneWhenNoSelected(): Unit = timeoutRunBlocking {
     val disposable0 = Disposer.newDisposable(testRootDisposable)
     val disposable1 = Disposer.newDisposable(testRootDisposable)
     val disposable2 = Disposer.newDisposable(testRootDisposable)
@@ -261,7 +284,8 @@ class HotSwapSessionManagerTest : HeavyPlatformTestCase() {
     Disposer.dispose(disposable0)
   }
 
-  fun testCloseNonSelectedSession() = runBlocking {
+  @Test
+  fun testCloseNonSelectedSession(): Unit = timeoutRunBlocking {
     val disposable0 = Disposer.newDisposable(testRootDisposable)
     val disposable1 = Disposer.newDisposable(testRootDisposable)
     val disposable2 = Disposer.newDisposable(testRootDisposable)
@@ -292,7 +316,8 @@ class HotSwapSessionManagerTest : HeavyPlatformTestCase() {
     Disposer.dispose(disposable0)
   }
 
-  fun testSessionSelection() = runBlocking {
+  @Test
+  fun testSessionSelection(): Unit = timeoutRunBlocking {
     val disposable0 = Disposer.newDisposable(testRootDisposable)
     val disposable1 = Disposer.newDisposable(testRootDisposable)
     val disposable2 = Disposer.newDisposable(testRootDisposable)
@@ -337,7 +362,8 @@ class HotSwapSessionManagerTest : HeavyPlatformTestCase() {
     Disposer.dispose(disposable0)
   }
 
-  fun testSessionIsNotLeakedAfterClose() = runBlocking {
+  @Test
+  fun testSessionIsNotLeakedAfterClose(): Unit = timeoutRunBlocking {
     val disposable = Disposer.newDisposable(testRootDisposable)
 
     val manager = HotSwapSessionManager.getInstance(project)
@@ -354,7 +380,8 @@ class HotSwapSessionManagerTest : HeavyPlatformTestCase() {
     Disposer.dispose(listenerDisposable)
   }
 
-  fun testSelectionAlreadySelectedOrClosedHasNoEffect() = runBlocking {
+  @Test
+  fun testSelectionAlreadySelectedOrClosedHasNoEffect(): Unit = timeoutRunBlocking {
     val disposable0 = Disposer.newDisposable(testRootDisposable)
     val disposable1 = Disposer.newDisposable(testRootDisposable)
 
@@ -386,7 +413,8 @@ class HotSwapSessionManagerTest : HeavyPlatformTestCase() {
     Disposer.dispose(disposable0)
   }
 
-  fun testHidingAndAddingChangesAfterIt() = runBlocking {
+  @Test
+  fun testHidingAndAddingChangesAfterIt(): Unit = timeoutRunBlocking {
     val disposable = Disposer.newDisposable(testRootDisposable)
 
     val manager = HotSwapSessionManagerImpl.getInstance(project)

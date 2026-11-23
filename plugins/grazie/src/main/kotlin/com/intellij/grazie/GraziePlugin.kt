@@ -22,7 +22,7 @@ object GraziePlugin {
 
   object Hunspell : GrazieStateLifecycle {
     const val version = "0.9.9"
-    const val url = "https://packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/spell"
+    const val url = "https://cache-redirector.jetbrains.com/maven/ultimate-public/ai/grazie/spell"
 
     override fun update(prevState: GrazieConfig.State, newState: GrazieConfig.State) {
       // Do not preload the hunspell / speller in test mode, so it won't slow down tests not related to the spellchecker.

@@ -3,8 +3,8 @@ package com.jetbrains.python.documentation;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.NlsSafe;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.HtmlBuilder;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.LineTokenizer;
@@ -29,6 +29,7 @@ import com.jetbrains.python.PythonDocumentationHighlightingService;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.codeInsight.decorator.PyFunctoolsWrapsDecoratedFunctionTypeProvider;
+import com.jetbrains.python.codeInsight.typing.PyTypeShed;
 import com.jetbrains.python.documentation.docstrings.DocStringUtil;
 import com.jetbrains.python.psi.AccessDirection;
 import com.jetbrains.python.psi.Property;
@@ -75,9 +76,8 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.FileReader;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
@@ -108,7 +108,9 @@ public final class PyDocumentationBuilder {
   private final Map<String, HtmlBuilder> mySectionsMap = FactoryMap.createMap(item -> new HtmlBuilder(), LinkedHashMap::new);
   private final TypeEvalContext myContext;
 
+  private static final Logger LOG = Logger.getInstance(PyDocumentationBuilder.class);
   private static final Pattern ourSpacesPattern = Pattern.compile("^\\s+");
+  private static final String KEYWORD_DESCRIPTIONS_DIR = "tools/python_keywords";
 
   public PyDocumentationBuilder(@NotNull PsiElement element, @Nullable PsiElement originalElement) {
     myElement = element;
@@ -253,15 +255,16 @@ public final class PyDocumentationBuilder {
   }
 
   private void buildForKeyword(@NotNull String name) {
-    try {
-      try (FileReader reader = new FileReader(PythonHelpersLocator.findPathStringInHelpers("/tools/python_keywords/" + name),
-                                              StandardCharsets.UTF_8)) {
-        final String text = FileUtil.loadTextAndClose(reader);
-        final String converted = StringUtil.convertLineSeparators(text, "\n");
-        myContent.appendRaw(converted);
-      }
+    var description = PythonHelpersLocator.findPathInHelpers(KEYWORD_DESCRIPTIONS_DIR).resolve(name);
+    // A keyword can have no description file.
+    if (!Files.isRegularFile(description)) {
+      return;
     }
-    catch (IOException ignored) {
+    try {
+      myContent.appendRaw(StringUtil.convertLineSeparators(Files.readString(description), "\n"));
+    }
+    catch (IOException e) {
+      LOG.warn("Cannot read the keyword description " + description, e);
     }
   }
 
@@ -704,6 +707,10 @@ public final class PyDocumentationBuilder {
       classes = ContainerUtil.prepend(classes, pyClass);
     }
     for (PyClass ancestor : classes) {
+      // The docstrings of `object` and its constructor describe no particular class
+      if (isConstructor && PyUtil.isObjectClass(ancestor)) {
+        continue;
+      }
       PyStringLiteralExpression docstringElement = null;
       PyFunction inherited = null;
       boolean isFromClass = false;
@@ -875,14 +882,53 @@ public final class PyDocumentationBuilder {
     return PyDocumentationLink.toTypeAliasStatement(linkText, typeAliasStatement);
   }
 
+  /**
+   * Returns the docstring of {@code owner}, or of its implementation if {@code owner} is in a stub.
+   * <p>
+   * The bundled typeshed has the docstrings of the newest Python, so an implementation of the interpreter wins over it.
+   * A generated skeleton does not win over it, because the docstring of a skeleton often comes from {@code object}.
+   * Another stub wins over its implementation. A stub overload without a docstring takes the docstring of an overload
+   * of the same function, because a stub documents only one of them.
+   */
   static @Nullable PyStringLiteralExpression getEffectiveDocStringExpression(@NotNull PyDocStringOwner owner) {
     final PyStringLiteralExpression expression = owner.getDocStringExpression();
-    if (expression != null) {
+    if (expression != null && !isInBundledTypeshed(owner)) {
       return expression;
     }
     final PsiElement original = PyiUtil.getOriginalElement(owner);
-    final PyDocStringOwner originalOwner = as(original, PyDocStringOwner.class);
-    return originalOwner != null ? originalOwner.getDocStringExpression() : null;
+    if (original instanceof PyDocStringOwner originalOwner && (expression == null || !PyiUtil.isInSkeleton(original))) {
+      final PyStringLiteralExpression originalExpression = originalOwner.getDocStringExpression();
+      if (originalExpression != null) {
+        return originalExpression;
+      }
+    }
+    if (expression != null) {
+      return expression;
+    }
+    return owner instanceof PyFunction function ? getDocStringExpressionOfOverload(function) : null;
+  }
+
+  private static boolean isInBundledTypeshed(@NotNull PsiElement element) {
+    final PsiFile file = element.getContainingFile();
+    final VirtualFile virtualFile = file != null ? file.getVirtualFile() : null;
+    return virtualFile != null && PyTypeShed.INSTANCE.isInside(virtualFile);
+  }
+
+  private static @Nullable PyStringLiteralExpression getDocStringExpressionOfOverload(@NotNull PyFunction function) {
+    if (!PyiUtil.isInsideStub(function)) {
+      return null;
+    }
+    final TypeEvalContext context = TypeEvalContext.codeInsightFallback(function.getProject());
+    if (!PyiUtil.isOverload(function, context)) {
+      return null;
+    }
+    for (PyFunction overload : PyiUtil.getOverloads(function, context)) {
+      final PyStringLiteralExpression docstring = overload != function ? overload.getDocStringExpression() : null;
+      if (docstring != null) {
+        return docstring;
+      }
+    }
+    return null;
   }
 
   private enum FormatterDocFragmentType {

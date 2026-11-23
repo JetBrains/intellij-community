@@ -44,7 +44,7 @@ internal class MarkdownLivePreviewListIndentRenderer(private val editor: EditorE
     }
     val changeCount = obsolete.size + wanted.size
     if (changeCount == 0) return
-    editor.inlayModel.execute(changeCount > 100) {
+    editor.inlayModel.execute(changeCount > INLAY_BATCH_THRESHOLD) {
       obsolete.forEach(Disposer::dispose)
       inlays.removeAll(obsolete.toSet())
       for ((key, value) in wanted) {

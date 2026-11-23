@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.stubs;
 
+import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -16,6 +17,7 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.source.PsiFileImpl;
+import com.intellij.util.containers.ConcurrentIntObjectMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.DumbModeAccessType;
 import com.intellij.util.indexing.FileBasedIndex;
@@ -38,6 +40,8 @@ final class StubTreeLoaderImpl extends StubTreeLoader implements Closeable {
   private static final Logger LOG = Logger.getInstance(StubTreeLoaderImpl.class);
   //FIXME RC: need to close this on Reindex!
   private final IndexingStampInfoStorage indexingStampInfoStorage = createStorage();
+  /** The stamps of the stubs of unsaved documents, by file id. They live as long as the transient data of the stub index. */
+  private final ConcurrentIntObjectMap<IndexingStampInfo> transientStampInfos = ConcurrentCollectionFactory.createConcurrentIntObjectMap();
 
   private static IndexingStampInfoStorage createStorage() {
     return IndexingStampInfoStorage.create("stubIndexStamp", 4);
@@ -263,12 +267,12 @@ final class StubTreeLoaderImpl extends StubTreeLoader implements Closeable {
   @Override
   @Nullable
   public IndexingStampInfo getIndexingStampInfo(@NotNull VirtualFile file) {
-    if (file instanceof VirtualFileWithId fileWithId) {
-      return indexingStampInfoStorage.readStampInfo(fileWithId.getId());
-    }
-    else {
+    if (!(file instanceof VirtualFileWithId fileWithId)) {
       return null;
     }
+    int fileId = fileWithId.getId();
+    IndexingStampInfo transientStampInfo = transientStampInfos.get(fileId);
+    return transientStampInfo != null ? transientStampInfo : indexingStampInfoStorage.readStampInfo(fileId);
   }
 
   @Override
@@ -276,20 +280,38 @@ final class StubTreeLoaderImpl extends StubTreeLoader implements Closeable {
     return FileBasedIndex.getInstance() instanceof FileBasedIndexImpl index && index.isTooLarge(file);
   }
 
-  void saveIndexingStampInfo(@Nullable IndexingStampInfo indexingStampInfo, int fileId) {
+  void saveIndexingStampInfo(@Nullable IndexingStampInfo indexingStampInfo, int fileId, boolean transientContent) {
     IndexingEventsLogger.tryLog(() -> {
       return "event=SAVE_STUB_INDEXING_STAMP_INFO" +
              ",id=" + fileId +
+             ",transient=" + transientContent +
              "," + indexingStampInfo;
     });
 
-    if (indexingStampInfo != null) {
+    if (indexingStampInfo == null) {
+      return;
+    }
+    if (transientContent) {
+      transientStampInfos.put(fileId, indexingStampInfo);
+    }
+    else {
       indexingStampInfoStorage.writeStampInfo(fileId, indexingStampInfo);
     }
   }
 
+  /** Drops the transient stamp of the file. Call it when the stub index drops the transient data of the file. */
+  void removeTransientStampInfo(int fileId) {
+    transientStampInfos.remove(fileId);
+  }
+
+  /** Drops all transient stamps. Call it when the stub index drops all its transient data. */
+  void clearTransientStampInfos() {
+    transientStampInfos.clear();
+  }
+
   @Override
   public void close() throws IOException {
+    transientStampInfos.clear();
     indexingStampInfoStorage.close();//will be re-opened on access, see implementation
   }
 }

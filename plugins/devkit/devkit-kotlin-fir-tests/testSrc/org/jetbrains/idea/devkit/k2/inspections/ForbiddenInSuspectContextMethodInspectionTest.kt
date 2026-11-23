@@ -1,30 +1,34 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.k2.inspections
 
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.ContentEntry
 import com.intellij.openapi.roots.LanguageLevelModuleExtension
 import com.intellij.openapi.roots.ModifiableRootModel
 import com.intellij.openapi.util.registry.RegistryManager
 import com.intellij.pom.java.LanguageLevel
-import com.intellij.testFramework.LightProjectDescriptor
+import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import com.intellij.testFramework.fixtures.kotlin.withKotlinStdlib
+import com.intellij.testFramework.fixtures.lightJavaProjectFixture
+import com.intellij.testFramework.junit5.TestApplication
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.jetbrains.idea.devkit.kotlin.inspections.ForbiddenInSuspectContextMethodInspection
-import org.junit.Before
-import org.junit.Test
-import org.junit.runner.RunWith
-import org.junit.runners.JUnit4
+import org.junit.jupiter.api.Test
+import kotlin.time.Duration.Companion.minutes
 import kotlin.test.assertNotNull as assertNotNullK
 import kotlin.test.assertNull as assertNullK
 
-@RunWith(JUnit4::class)
-class ForbiddenInSuspectContextMethodInspectionTest : KtBlockingContextInspectionTestCase() {
-  @Before
-  fun initInspection() {
-    myFixture.enableInspections(ForbiddenInSuspectContextMethodInspection::class.java)
+@TestApplication
+class ForbiddenInSuspectContextMethodInspectionTest {
+  companion object {
+    private val projectFixture = lightJavaProjectFixture(PROJECT_DESCRIPTOR_WITH_KOTLIN)
   }
+
+  private val blockingContext by ktBlockingContextInspectionFixture(projectFixture, ForbiddenInSuspectContextMethodInspection::class.java)
+  private val myFixture get() = blockingContext.fixture
 
   private val progressManagerDescr = "Do not call 'ProgressManager.checkCanceled' in suspend context. Use top-level 'checkCanceled' function"
   private val progressManagerFix = "Replace 'ProgressManager.checkCanceled' with coroutine-friendly 'checkCanceled'"
@@ -41,8 +45,8 @@ class ForbiddenInSuspectContextMethodInspectionTest : KtBlockingContextInspectio
   private val invokeLaterFixLaunch = "Replace 'invokeLater' with 'launch(Dispatchers.EDT)'"
 
   @Test
-  fun `progress manager checkCanceled in suspend function`() {
-    addCheckCanceledFunctions()
+  fun `progress manager checkCanceled in suspend function`(): Unit = timeoutRunBlocking(timeout = 2.minutes) {
+    blockingContext.addCheckCanceledFunctions()
 
     myFixture.configureByText("file.kt", """
       import com.intellij.openapi.progress.ProgressManager
@@ -53,23 +57,25 @@ class ForbiddenInSuspectContextMethodInspectionTest : KtBlockingContextInspectio
     """.trimIndent())
     myFixture.testHighlighting()
 
-    val intention = myFixture.getAvailableIntention(progressManagerFix)
-    assertNotNullK(intention)
-    myFixture.checkPreviewAndLaunchAction(intention)
+    withContext(Dispatchers.EDT) {
+      val intention = myFixture.getAvailableIntention(progressManagerFix)
+      assertNotNullK(intention)
+      myFixture.checkPreviewAndLaunchAction(intention)
 
-    myFixture.configureByText("file.kt", """
-      import com.intellij.openapi.progress.ProgressManager
-      import com.intellij.openapi.progress.checkCanceled
-      
-      suspend fun myFun() {
-        checkCanceled()
-      }
-    """.trimIndent())
+      myFixture.configureByText("file.kt", """
+        import com.intellij.openapi.progress.ProgressManager
+        import com.intellij.openapi.progress.checkCanceled
+        
+        suspend fun myFun() {
+          checkCanceled()
+        }
+      """.trimIndent())
+    }
   }
 
   @Test
-  fun `progress manager checkCanceled imported in suspend function`() {
-    addCheckCanceledFunctions()
+  fun `progress manager checkCanceled imported in suspend function`(): Unit = timeoutRunBlocking(timeout = 2.minutes) {
+    blockingContext.addCheckCanceledFunctions()
 
     myFixture.configureByText("file.kt", """
       import com.intellij.openapi.progress.ProgressManager.checkCanceled
@@ -80,22 +86,24 @@ class ForbiddenInSuspectContextMethodInspectionTest : KtBlockingContextInspectio
     """.trimIndent())
     myFixture.testHighlighting()
 
-    val intention = myFixture.getAvailableIntention(progressManagerFix)
-    assertNotNullK(intention)
-    myFixture.checkPreviewAndLaunchAction(intention)
+    withContext(Dispatchers.EDT) {
+      val intention = myFixture.getAvailableIntention(progressManagerFix)
+      assertNotNullK(intention)
+      myFixture.checkPreviewAndLaunchAction(intention)
 
-    myFixture.checkResult("""
-      import com.intellij.openapi.progress.ProgressManager.checkCanceled
-      
-      suspend fun myFun() {
-          com.intellij.openapi.progress.checkCanceled()
-      }
-    """.trimIndent())
+      myFixture.checkResult("""
+        import com.intellij.openapi.progress.ProgressManager.checkCanceled
+        
+        suspend fun myFun() {
+            com.intellij.openapi.progress.checkCanceled()
+        }
+      """.trimIndent())
+    }
   }
 
   @Test
   fun `progress manager checkCanceled in lambda in suspend function`() {
-    addCheckCanceledFunctions()
+    blockingContext.addCheckCanceledFunctions()
 
     myFixture.configureByText("file.kt", """
       import com.intellij.openapi.progress.ProgressManager
@@ -114,8 +122,8 @@ class ForbiddenInSuspectContextMethodInspectionTest : KtBlockingContextInspectio
   }
 
   @Test
-  fun `progress manager checkCanceled in suspend lambda`() {
-    addCheckCanceledFunctions()
+  fun `progress manager checkCanceled in suspend lambda`(): Unit = timeoutRunBlocking(timeout = 2.minutes) {
+    blockingContext.addCheckCanceledFunctions()
 
     myFixture.configureByText("file.kt", """
       @file:Suppress("UNUSED_VARIABLE", "UNUSED_PARAMETER")
@@ -132,29 +140,31 @@ class ForbiddenInSuspectContextMethodInspectionTest : KtBlockingContextInspectio
     """.trimIndent())
     myFixture.testHighlighting()
 
-    val intention = myFixture.getAvailableIntention(progressManagerFix)
-    assertNotNullK(intention)
-    myFixture.checkPreviewAndLaunchAction(intention)
+    withContext(Dispatchers.EDT) {
+      val intention = myFixture.getAvailableIntention(progressManagerFix)
+      assertNotNullK(intention)
+      myFixture.checkPreviewAndLaunchAction(intention)
 
-    myFixture.configureByText("file.kt", """
-      @file:Suppress("UNUSED_VARIABLE", "UNUSED_PARAMETER")
-      import com.intellij.openapi.progress.ProgressManager
-      import com.intellij.openapi.progress.checkCanceled
-      
-      fun callSuspendFunction(function: suspend () -> Unit) {
-      }
-      
-      fun myFun() {
-        callSuspendFunction {
-          checkCanceled() 
+      myFixture.configureByText("file.kt", """
+        @file:Suppress("UNUSED_VARIABLE", "UNUSED_PARAMETER")
+        import com.intellij.openapi.progress.ProgressManager
+        import com.intellij.openapi.progress.checkCanceled
+        
+        fun callSuspendFunction(function: suspend () -> Unit) {
         }
-      }
-    """.trimIndent())
+        
+        fun myFun() {
+          callSuspendFunction {
+            checkCanceled() 
+          }
+        }
+      """.trimIndent())
+    }
   }
 
   @Test
   fun `progress checkCanceled in lambda in suspend lambda`() {
-    addCheckCanceledFunctions()
+    blockingContext.addCheckCanceledFunctions()
 
     myFixture.configureByText("file.kt", """
       @file:Suppress("UNUSED_VARIABLE", "UNUSED_PARAMETER")
@@ -178,8 +188,8 @@ class ForbiddenInSuspectContextMethodInspectionTest : KtBlockingContextInspectio
   }
 
   @Test
-  fun `progress manager checkCanceled in suspend inner function`() {
-    addCheckCanceledFunctions()
+  fun `progress manager checkCanceled in suspend inner function`(): Unit = timeoutRunBlocking(timeout = 2.minutes) {
+    blockingContext.addCheckCanceledFunctions()
 
     myFixture.configureByText("file.kt", """
       @file:Suppress("UNUSED_VARIABLE", "UNUSED_PARAMETER")
@@ -193,26 +203,28 @@ class ForbiddenInSuspectContextMethodInspectionTest : KtBlockingContextInspectio
     """.trimIndent())
     myFixture.testHighlighting()
 
-    val intention = myFixture.getAvailableIntention(progressManagerFix)
-    assertNotNullK(intention)
-    myFixture.checkPreviewAndLaunchAction(intention)
+    withContext(Dispatchers.EDT) {
+      val intention = myFixture.getAvailableIntention(progressManagerFix)
+      assertNotNullK(intention)
+      myFixture.checkPreviewAndLaunchAction(intention)
 
-    myFixture.checkResult("""
-      @file:Suppress("UNUSED_VARIABLE", "UNUSED_PARAMETER")
-      import com.intellij.openapi.progress.ProgressManager
-      import com.intellij.openapi.progress.checkCanceled
-      
-      fun myFun() {
-        suspend fun myInnerFun() {
-            checkCanceled()
+      myFixture.checkResult("""
+        @file:Suppress("UNUSED_VARIABLE", "UNUSED_PARAMETER")
+        import com.intellij.openapi.progress.ProgressManager
+        import com.intellij.openapi.progress.checkCanceled
+        
+        fun myFun() {
+          suspend fun myInnerFun() {
+              checkCanceled()
+          }
         }
-      }
-    """.trimIndent())
+      """.trimIndent())
+    }
   }
 
   @Test
-  fun `progress manager checkCanceled in inner suspend lambda`() {
-    addCheckCanceledFunctions()
+  fun `progress manager checkCanceled in inner suspend lambda`(): Unit = timeoutRunBlocking(timeout = 2.minutes) {
+    blockingContext.addCheckCanceledFunctions()
 
     myFixture.configureByText("file.kt", """
       @file:Suppress("UNUSED_VARIABLE", "UNUSED_PARAMETER")
@@ -229,29 +241,31 @@ class ForbiddenInSuspectContextMethodInspectionTest : KtBlockingContextInspectio
     """.trimIndent())
     myFixture.testHighlighting()
 
-    val intention = myFixture.getAvailableIntention(progressManagerFix)
-    assertNotNullK(intention)
-    myFixture.checkPreviewAndLaunchAction(intention)
+    withContext(Dispatchers.EDT) {
+      val intention = myFixture.getAvailableIntention(progressManagerFix)
+      assertNotNullK(intention)
+      myFixture.checkPreviewAndLaunchAction(intention)
 
-    myFixture.checkResult("""
-      @file:Suppress("UNUSED_VARIABLE", "UNUSED_PARAMETER")
-      import com.intellij.openapi.progress.ProgressManager
-      import com.intellij.openapi.progress.checkCanceled
-      
-      fun callSuspendFunction(function: suspend () -> Unit) {
-      }
-      
-      val myLambda: () -> Unit = {
-        callSuspendFunction {
-            checkCanceled()
+      myFixture.checkResult("""
+        @file:Suppress("UNUSED_VARIABLE", "UNUSED_PARAMETER")
+        import com.intellij.openapi.progress.ProgressManager
+        import com.intellij.openapi.progress.checkCanceled
+        
+        fun callSuspendFunction(function: suspend () -> Unit) {
         }
-      }
-    """.trimIndent())
+        
+        val myLambda: () -> Unit = {
+          callSuspendFunction {
+              checkCanceled()
+          }
+        }
+      """.trimIndent())
+    }
   }
 
   @Test
   fun `progress manager no warning in non-suspend context`() {
-    addCheckCanceledFunctions()
+    blockingContext.addCheckCanceledFunctions()
 
     myFixture.configureByText("file.kt", """
       @file:Suppress("UNUSED_VARIABLE", "UNUSED_PARAMETER")
@@ -271,7 +285,7 @@ class ForbiddenInSuspectContextMethodInspectionTest : KtBlockingContextInspectio
   @Test
   fun `custom marked function`() {
     RegistryManager.getInstance().get("devkit.inspections.forbidden.method.in.suspend.context")
-      .setValue(true, testRootDisposable)
+      .setValue(true, myFixture.testRootDisposable)
 
     myFixture.configureByText("file.kt", """
       import com.intellij.util.concurrency.annotations.*
@@ -294,9 +308,9 @@ class ForbiddenInSuspectContextMethodInspectionTest : KtBlockingContextInspectio
   private val replaceWithSuspendAlternativeFix = "Replace with suspend alternative"
 
   @Test
-  fun `custom marked function with ReplaceWith`() {
+  fun `custom marked function with ReplaceWith`(): Unit = timeoutRunBlocking(timeout = 2.minutes) {
     RegistryManager.getInstance().get("devkit.inspections.forbidden.method.in.suspend.context")
-      .setValue(true, testRootDisposable)
+      .setValue(true, myFixture.testRootDisposable)
 
     myFixture.configureByText("suspendAlternative.kt", """
       package com.example
@@ -319,28 +333,30 @@ class ForbiddenInSuspectContextMethodInspectionTest : KtBlockingContextInspectio
 
     myFixture.testHighlighting()
 
-    val intention = myFixture.getAvailableIntention(replaceWithSuspendAlternativeFix)
-    assertNotNullK(intention)
-    myFixture.launchAction(intention)
+    withContext(Dispatchers.EDT) {
+      val intention = myFixture.getAvailableIntention(replaceWithSuspendAlternativeFix)
+      assertNotNullK(intention)
+      myFixture.launchAction(intention)
 
-    myFixture.checkResult("""
-      import com.example.suspendAlternative
-      import com.intellij.util.concurrency.annotations.*
+      myFixture.checkResult("""
+        import com.example.suspendAlternative
+        import com.intellij.util.concurrency.annotations.*
 
-      @RequiresBlockingContext(ReplaceWith("suspendAlternative()", "com.example.suspendAlternative"))
-      fun blockingFunction() {
-      }
+        @RequiresBlockingContext(ReplaceWith("suspendAlternative()", "com.example.suspendAlternative"))
+        fun blockingFunction() {
+        }
 
-      suspend fun suspendContext() {
-          suspendAlternative()
-      }
-    """.trimIndent())
+        suspend fun suspendContext() {
+            suspendAlternative()
+        }
+      """.trimIndent())
+    }
   }
 
   @Test
-  fun `custom marked function with ReplaceWith without imports`() {
+  fun `custom marked function with ReplaceWith without imports`(): Unit = timeoutRunBlocking(timeout = 2.minutes) {
     RegistryManager.getInstance().get("devkit.inspections.forbidden.method.in.suspend.context")
-      .setValue(true, testRootDisposable)
+      .setValue(true, myFixture.testRootDisposable)
 
     myFixture.configureByText("file.kt", /* language=kotlin */ """
       package demo
@@ -361,32 +377,34 @@ class ForbiddenInSuspectContextMethodInspectionTest : KtBlockingContextInspectio
 
     myFixture.testHighlighting()
 
-    val intention = myFixture.getAvailableIntention(replaceWithSuspendAlternativeFix)
-    assertNotNullK(intention)
-    myFixture.launchAction(intention)
+    withContext(Dispatchers.EDT) {
+      val intention = myFixture.getAvailableIntention(replaceWithSuspendAlternativeFix)
+      assertNotNullK(intention)
+      myFixture.launchAction(intention)
 
-    myFixture.checkResult("""
-      package demo
+      myFixture.checkResult("""
+        package demo
 
-      import com.intellij.util.concurrency.annotations.*
+        import com.intellij.util.concurrency.annotations.*
 
-      @RequiresBlockingContext(ReplaceWith("suspendAlternative()", imports = []))
-      fun blockingFunction() {
-      }
+        @RequiresBlockingContext(ReplaceWith("suspendAlternative()", imports = []))
+        fun blockingFunction() {
+        }
 
-      suspend fun suspendAlternative() {
-      }
+        suspend fun suspendAlternative() {
+        }
 
-      suspend fun suspendContext() {
-          suspendAlternative()
-      }
-    """.trimIndent())
+        suspend fun suspendContext() {
+            suspendAlternative()
+        }
+      """.trimIndent())
+    }
   }
 
   @Test
   fun `custom marked function with empty ReplaceWith has no quickfix`() {
     RegistryManager.getInstance().get("devkit.inspections.forbidden.method.in.suspend.context")
-      .setValue(true, testRootDisposable)
+      .setValue(true, myFixture.testRootDisposable)
 
     myFixture.configureByText("file.kt", """
       import com.intellij.util.concurrency.annotations.*
@@ -408,7 +426,7 @@ class ForbiddenInSuspectContextMethodInspectionTest : KtBlockingContextInspectio
 
   @Test
   fun `progress manager checkCanceled inside restricted suspension function by class`() {
-    addCheckCanceledFunctions()
+    blockingContext.addCheckCanceledFunctions()
 
     myFixture.configureByText("file.kt", """
       import kotlin.coroutines.RestrictsSuspension
@@ -428,7 +446,7 @@ class ForbiddenInSuspectContextMethodInspectionTest : KtBlockingContextInspectio
 
   @Test
   fun `progress manager checkCanceled inside restricted suspension function by receiver`() {
-    addCheckCanceledFunctions()
+    blockingContext.addCheckCanceledFunctions()
 
     myFixture.configureByText("file.kt", """
       import kotlin.coroutines.RestrictsSuspension
@@ -451,7 +469,7 @@ class ForbiddenInSuspectContextMethodInspectionTest : KtBlockingContextInspectio
 
   @Test
   fun `progress manager checkCanceled inside restricted suspension lambda`() {
-    addCheckCanceledFunctions()
+    blockingContext.addCheckCanceledFunctions()
 
     myFixture.configureByText("file.kt", """
       import com.intellij.openapi.progress.ProgressManager
@@ -468,8 +486,8 @@ class ForbiddenInSuspectContextMethodInspectionTest : KtBlockingContextInspectio
   }
 
   @Test
-  fun `progress manager checkCanceled inside runBlockingCancellable`() {
-    addCheckCanceledFunctions()
+  fun `progress manager checkCanceled inside runBlockingCancellable`(): Unit = timeoutRunBlocking(timeout = 2.minutes) {
+    blockingContext.addCheckCanceledFunctions()
 
     myFixture.configureByText("file.kt", """
       import com.intellij.openapi.progress.*
@@ -484,26 +502,28 @@ class ForbiddenInSuspectContextMethodInspectionTest : KtBlockingContextInspectio
     """.trimIndent())
     myFixture.testHighlighting()
 
-    val intention = myFixture.getAvailableIntention(progressManagerFix)
-    assertNotNullK(intention)
-    myFixture.checkPreviewAndLaunchAction(intention)
+    withContext(Dispatchers.EDT) {
+      val intention = myFixture.getAvailableIntention(progressManagerFix)
+      assertNotNullK(intention)
+      myFixture.checkPreviewAndLaunchAction(intention)
 
-    myFixture.checkResult("""
-      import com.intellij.openapi.progress.*
-      import com.intellij.util.concurrency.annotations.*
-      
-      @RequiresBlockingContext
-      fun blockingFun() {
-        runBlockingCancellable {
-            checkCanceled()
+      myFixture.checkResult("""
+        import com.intellij.openapi.progress.*
+        import com.intellij.util.concurrency.annotations.*
+        
+        @RequiresBlockingContext
+        fun blockingFun() {
+          runBlockingCancellable {
+              checkCanceled()
+          }
         }
-      }
-    """.trimIndent())
+      """.trimIndent())
+    }
   }
 
   @Test
-  fun `progress manager checkCanceled inside inline lambda`() {
-    addCheckCanceledFunctions()
+  fun `progress manager checkCanceled inside inline lambda`(): Unit = timeoutRunBlocking(timeout = 2.minutes) {
+    blockingContext.addCheckCanceledFunctions()
 
     myFixture.configureByText("file.kt", """
       import com.intellij.openapi.progress.*
@@ -517,25 +537,27 @@ class ForbiddenInSuspectContextMethodInspectionTest : KtBlockingContextInspectio
     """.trimIndent())
     myFixture.testHighlighting()
 
-    val intention = myFixture.getAvailableIntention(progressManagerFix)
-    assertNotNullK(intention)
-    myFixture.checkPreviewAndLaunchAction(intention)
+    withContext(Dispatchers.EDT) {
+      val intention = myFixture.getAvailableIntention(progressManagerFix)
+      assertNotNullK(intention)
+      myFixture.checkPreviewAndLaunchAction(intention)
 
-    myFixture.configureByText("file.kt", """
-      import com.intellij.openapi.progress.*
-      
-      suspend fun process(items: List<Int>) {
-        items.map {
-          checkCanceled()
-          it + 1
+      myFixture.configureByText("file.kt", """
+        import com.intellij.openapi.progress.*
+        
+        suspend fun process(items: List<Int>) {
+          items.map {
+            checkCanceled()
+            it + 1
+          }
         }
-      }
-    """.trimIndent())
+      """.trimIndent())
+    }
   }
 
   @Test
   fun `progress manager checkCanceled inside crossinline lambda`() {
-    addCheckCanceledFunctions()
+    blockingContext.addCheckCanceledFunctions()
 
     myFixture.configureByText("file.kt", """
       @file:Suppress("UNUSED_VARIABLE", "UNUSED_PARAMETER")
@@ -555,8 +577,8 @@ class ForbiddenInSuspectContextMethodInspectionTest : KtBlockingContextInspectio
   }
 
   @Test
-  fun `invokeAndWait with lambda argument`() {
-    addApplicationAndEtc()
+  fun `invokeAndWait with lambda argument`(): Unit = timeoutRunBlocking(timeout = 2.minutes) {
+    blockingContext.addApplicationAndEtc()
 
     myFixture.configureByText("file.kt", """
       import com.intellij.openapi.application.*
@@ -569,26 +591,28 @@ class ForbiddenInSuspectContextMethodInspectionTest : KtBlockingContextInspectio
     """.trimIndent())
     myFixture.testHighlighting()
 
-    val intention = myFixture.getAvailableIntention(invokeAndWaitFix)
-    assertNotNullK(intention)
-    myFixture.checkPreviewAndLaunchAction(intention)
+    withContext(Dispatchers.EDT) {
+      val intention = myFixture.getAvailableIntention(invokeAndWaitFix)
+      assertNotNullK(intention)
+      myFixture.checkPreviewAndLaunchAction(intention)
 
-    myFixture.checkResult("""
-      import com.intellij.openapi.application.*
-      import kotlinx.coroutines.Dispatchers
-      import kotlinx.coroutines.withContext
-      
-      suspend fun a() {
-          withContext(Dispatchers.EDT) {
-            println()
-          }
-      }
-    """.trimIndent())
+      myFixture.checkResult("""
+        import com.intellij.openapi.application.*
+        import kotlinx.coroutines.Dispatchers
+        import kotlinx.coroutines.withContext
+        
+        suspend fun a() {
+            withContext(Dispatchers.EDT) {
+              println()
+            }
+        }
+      """.trimIndent())
+    }
   }
 
   @Test
-  fun `invokeAndWait with modality argument`() {
-    addApplicationAndEtc()
+  fun `invokeAndWait with modality argument`(): Unit = timeoutRunBlocking(timeout = 2.minutes) {
+    blockingContext.addApplicationAndEtc()
 
     myFixture.configureByText("file.kt", """
       import com.intellij.openapi.application.*
@@ -601,26 +625,28 @@ class ForbiddenInSuspectContextMethodInspectionTest : KtBlockingContextInspectio
     """.trimIndent())
     myFixture.testHighlighting()
 
-    val intention = myFixture.getAvailableIntention(invokeAndWaitFix)
-    assertNotNullK(intention)
-    myFixture.checkPreviewAndLaunchAction(intention)
+    withContext(Dispatchers.EDT) {
+      val intention = myFixture.getAvailableIntention(invokeAndWaitFix)
+      assertNotNullK(intention)
+      myFixture.checkPreviewAndLaunchAction(intention)
 
-    myFixture.configureByText("file.kt", """
-      import com.intellij.openapi.application.*
-      import kotlinx.coroutines.Dispatchers
-      import kotlinx.coroutines.withContext
-      
-      suspend fun a() {
-        withContext(Dispatchers.EDT) {
-          println()
+      myFixture.configureByText("file.kt", """
+        import com.intellij.openapi.application.*
+        import kotlinx.coroutines.Dispatchers
+        import kotlinx.coroutines.withContext
+        
+        suspend fun a() {
+          withContext(Dispatchers.EDT) {
+            println()
+          }
         }
-      }
-    """.trimIndent())
+      """.trimIndent())
+    }
   }
 
   @Test
-  fun `invokeAndWait on Application receiver`() {
-    addApplicationAndEtc()
+  fun `invokeAndWait on Application receiver`(): Unit = timeoutRunBlocking(timeout = 2.minutes) {
+    blockingContext.addApplicationAndEtc()
 
     myFixture.configureByText("file.kt", """
       import com.intellij.openapi.application.*
@@ -633,26 +659,28 @@ class ForbiddenInSuspectContextMethodInspectionTest : KtBlockingContextInspectio
     """.trimIndent())
     myFixture.testHighlighting()
 
-    val intention = myFixture.getAvailableIntention(invokeAndWaitFix)
-    assertNotNullK(intention)
-    myFixture.checkPreviewAndLaunchAction(intention)
+    withContext(Dispatchers.EDT) {
+      val intention = myFixture.getAvailableIntention(invokeAndWaitFix)
+      assertNotNullK(intention)
+      myFixture.checkPreviewAndLaunchAction(intention)
 
-    myFixture.configureByText("file.kt", """
-      import com.intellij.openapi.application.*
-      import kotlinx.coroutines.Dispatchers
-      import kotlinx.coroutines.withContext
-      
-      suspend fun Application.a() {
-        withContext(Dispatchers.EDT) {
-          println()
+      myFixture.configureByText("file.kt", """
+        import com.intellij.openapi.application.*
+        import kotlinx.coroutines.Dispatchers
+        import kotlinx.coroutines.withContext
+        
+        suspend fun Application.a() {
+          withContext(Dispatchers.EDT) {
+            println()
+          }
         }
-      }
-    """.trimIndent())
+      """.trimIndent())
+    }
   }
 
   @Test
-  fun `invokeAndWaitIfNeeded with modality parameter`() {
-    addApplicationAndEtc()
+  fun `invokeAndWaitIfNeeded with modality parameter`(): Unit = timeoutRunBlocking(timeout = 2.minutes) {
+    blockingContext.addApplicationAndEtc()
 
     myFixture.configureByText("file.kt", """
       import com.intellij.openapi.application.*
@@ -665,26 +693,28 @@ class ForbiddenInSuspectContextMethodInspectionTest : KtBlockingContextInspectio
     """.trimIndent())
     myFixture.testHighlighting()
 
-    val intention = myFixture.getAvailableIntention(invokeAndWaitFix)
-    assertNotNullK(intention)
-    myFixture.checkPreviewAndLaunchAction(intention)
+    withContext(Dispatchers.EDT) {
+      val intention = myFixture.getAvailableIntention(invokeAndWaitFix)
+      assertNotNullK(intention)
+      myFixture.checkPreviewAndLaunchAction(intention)
 
-    myFixture.checkResult(""" 
-      import com.intellij.openapi.application.*
-      import kotlinx.coroutines.Dispatchers
-      import kotlinx.coroutines.withContext
-      
-      suspend fun a() {
-          withContext(Dispatchers.EDT) {
-            println()
-          }
-      }
-    """.trimIndent())
+      myFixture.checkResult(""" 
+        import com.intellij.openapi.application.*
+        import kotlinx.coroutines.Dispatchers
+        import kotlinx.coroutines.withContext
+        
+        suspend fun a() {
+            withContext(Dispatchers.EDT) {
+              println()
+            }
+        }
+      """.trimIndent())
+    }
   }
 
   @Test
   fun `defaultModalityState in suspend context`() {
-    addApplicationAndEtc()
+    blockingContext.addApplicationAndEtc()
 
     myFixture.configureByText("file.kt", """
       @file:Suppress("UNUSED_VARIABLE", "UNUSED_PARAMETER")
@@ -703,7 +733,7 @@ class ForbiddenInSuspectContextMethodInspectionTest : KtBlockingContextInspectio
 
   @Test
   fun `getDefaultModalityState in suspend context`() {
-    addApplicationAndEtc()
+    blockingContext.addApplicationAndEtc()
 
     myFixture.configureByText("file.kt", """
       @file:Suppress("UNUSED_VARIABLE", "UNUSED_PARAMETER")
@@ -721,8 +751,8 @@ class ForbiddenInSuspectContextMethodInspectionTest : KtBlockingContextInspectio
   }
 
   @Test
-  fun `check in called non-suspend function`() {
-    addCheckCanceledFunctions()
+  fun `check in called non-suspend function`(): Unit = timeoutRunBlocking(timeout = 2.minutes) {
+    blockingContext.addCheckCanceledFunctions()
 
     myFixture.configureByText("file.kt", """
       @file:Suppress("UNUSED_VARIABLE", "UNUSED_PARAMETER")
@@ -749,38 +779,40 @@ class ForbiddenInSuspectContextMethodInspectionTest : KtBlockingContextInspectio
     """.trimIndent())
     myFixture.testHighlighting()
 
-    val intention = myFixture.getAvailableIntention(navigateToSuspendContextFix)
-    assertNotNullK(intention)
-    myFixture.launchAction(intention)
+    withContext(Dispatchers.EDT) {
+      val intention = myFixture.getAvailableIntention(navigateToSuspendContextFix)
+      assertNotNullK(intention)
+      myFixture.launchAction(intention)
 
-    myFixture.checkResult("""
-      @file:Suppress("UNUSED_VARIABLE", "UNUSED_PARAMETER")
-      
-      import com.intellij.openapi.progress.*
-      
-      class MyClass {
-        suspend fun a() {
-          <caret>b()
-          b()
-          b()
-          b()
-          b()
+      myFixture.checkResult("""
+        @file:Suppress("UNUSED_VARIABLE", "UNUSED_PARAMETER")
+        
+        import com.intellij.openapi.progress.*
+        
+        class MyClass {
+          suspend fun a() {
+            <caret>b()
+            b()
+            b()
+            b()
+            b()
+          }
+           
+          fun b() {
+            ProgressManager.checkCanceled()
+          }
         }
-         
+        
         fun b() {
           ProgressManager.checkCanceled()
         }
-      }
-      
-      fun b() {
-        ProgressManager.checkCanceled()
-      }
-    """.trimIndent())
+      """.trimIndent())
+    }
   }
 
   @Test
-  fun `invokeLater replace withContext`() {
-    addApplicationAndEtc()
+  fun `invokeLater replace withContext`(): Unit = timeoutRunBlocking(timeout = 2.minutes) {
+    blockingContext.addApplicationAndEtc()
 
     myFixture.configureByText("file.kt", """
       import com.intellij.openapi.application.*
@@ -793,26 +825,28 @@ class ForbiddenInSuspectContextMethodInspectionTest : KtBlockingContextInspectio
     """.trimIndent())
     myFixture.testHighlighting()
 
-    val intention = myFixture.getAvailableIntention(invokeLaterFixWithContext)
-    assertNotNullK(intention)
-    myFixture.checkPreviewAndLaunchAction(intention)
+    withContext(Dispatchers.EDT) {
+      val intention = myFixture.getAvailableIntention(invokeLaterFixWithContext)
+      assertNotNullK(intention)
+      myFixture.checkPreviewAndLaunchAction(intention)
 
-    myFixture.checkResult("""
-      import com.intellij.openapi.application.*
-      import kotlinx.coroutines.Dispatchers
-      import kotlinx.coroutines.withContext
-      
-      suspend fun a() {
-          withContext(Dispatchers.EDT) {
-            println()
-          }
-      }
-    """.trimIndent())
+      myFixture.checkResult("""
+        import com.intellij.openapi.application.*
+        import kotlinx.coroutines.Dispatchers
+        import kotlinx.coroutines.withContext
+        
+        suspend fun a() {
+            withContext(Dispatchers.EDT) {
+              println()
+            }
+        }
+      """.trimIndent())
+    }
   }
 
   @Test
-  fun `invokeLater with launch`() {
-    addApplicationAndEtc()
+  fun `invokeLater with launch`(): Unit = timeoutRunBlocking(timeout = 2.minutes) {
+    blockingContext.addApplicationAndEtc()
 
     myFixture.configureByText("file.kt", """
       import com.intellij.openapi.application.*
@@ -826,26 +860,28 @@ class ForbiddenInSuspectContextMethodInspectionTest : KtBlockingContextInspectio
     """.trimIndent())
     myFixture.testHighlighting()
 
-    val intention = myFixture.getAvailableIntention(invokeLaterFixLaunch)
-    assertNotNullK(intention)
-    myFixture.checkPreviewAndLaunchAction(intention)
+    withContext(Dispatchers.EDT) {
+      val intention = myFixture.getAvailableIntention(invokeLaterFixLaunch)
+      assertNotNullK(intention)
+      myFixture.checkPreviewAndLaunchAction(intention)
 
-    myFixture.checkResult("""
-      import com.intellij.openapi.application.*
-      import kotlinx.coroutines.*
-      
-      suspend fun CoroutineScope.a() {
-          launch(Dispatchers.EDT) {
-            println()
-          }
-      }
-    """.trimIndent())
+      myFixture.checkResult("""
+        import com.intellij.openapi.application.*
+        import kotlinx.coroutines.*
+        
+        suspend fun CoroutineScope.a() {
+            launch(Dispatchers.EDT) {
+              println()
+            }
+        }
+      """.trimIndent())
+    }
   }
 
   @Test
   fun `call as parameter should be checked`() {
     RegistryManager.getInstance().get("devkit.inspections.forbidden.method.in.suspend.context")
-      .setValue(true, testRootDisposable)
+      .setValue(true, myFixture.testRootDisposable)
 
     myFixture.configureByText("file.kt", """
       import com.intellij.util.concurrency.annotations.*
@@ -865,129 +901,6 @@ class ForbiddenInSuspectContextMethodInspectionTest : KtBlockingContextInspectio
     """.trimIndent())
 
     myFixture.testHighlighting()
-  }
-}
-
-@RunWith(JUnit4::class)
-abstract class KtBlockingContextInspectionTestCase : LightJavaCodeInsightFixtureTestCase() {
-
-    
-
-  override fun getProjectDescriptor(): LightProjectDescriptor = PROJECT_DESCRIPTOR_WITH_KOTLIN
-
-  @Before
-  fun addAnnotation() {
-    myFixture.addFileToProject("RequiresBlockingContext.kt", """
-      package com.intellij.util.concurrency.annotations;
-
-      @MustBeDocumented
-      @Retention(AnnotationRetention.BINARY)
-      @Target(
-        AnnotationTarget.FUNCTION,
-        AnnotationTarget.PROPERTY_GETTER,
-        AnnotationTarget.PROPERTY_SETTER,
-      )
-      @ApiStatus.Experimental
-      annotation class RequiresBlockingContext(
-        val replaceWith: ReplaceWith = ReplaceWith(""),
-      )
-    """.trimIndent())
-  }
-
-  protected fun addApplicationAndEtc() {
-    myFixture.addClass("""
-        package com.intellij.openapi.progress;
-        
-        public class ProcessCanceledException extends RuntimeException {
-          public ProcessCanceledException() { }
-        }
-      """.trimIndent())
-
-    myFixture.addClass("""
-        package com.intellij.openapi.application;
-        
-        import com.intellij.util.concurrency.annotations.RequiresBlockingContext;
-        import com.intellij.openapi.progress.ProcessCanceledException;
-        
-        public interface Application {
-            @RequiresBlockingContext
-            void invokeAndWait(Runnable runnable, ModalityState modalityState) throws ProcessCanceledException;
-            
-            @RequiresBlockingContext
-            void invokeAndWait(Runnable runnable) throws ProcessCanceledException;
-            
-            @RequiresBlockingContext
-            ModalityState getDefaultModalityState();
-            
-            @RequiresBlockingContext
-            void invokeLater(Runnable runnable);
-        }
-      """.trimIndent())
-
-    myFixture.addClass("""
-        package com.intellij.openapi.application;
-        
-        public class ApplicationManager {
-          public static Application getApplication() {
-            return null;
-          }
-        }
-      """.trimIndent())
-
-    myFixture.addClass("""
-        package com.intellij.openapi.application;
-        
-        import com.intellij.util.concurrency.annotations.RequiresBlockingContext;
-        
-        public abstract class ModalityState {
-          @RequiresBlockingContext
-          public static ModalityState defaultModalityState() {
-            return null;
-          }
-          
-          public static ModalityState any() {
-            return null;
-          }
-        }
-      """.trimIndent())
-
-    myFixture.configureByText("utils.kt", """
-      package com.intellij.openapi.application
-      
-      import com.intellij.util.concurrency.annotations.RequiresBlockingContext
-      
-      @RequiresBlockingContext
-      fun <T> invokeAndWaitIfNeeded(modalityState: ModalityState? = null, runnable: () -> T): T {
-      }
-    """.trimIndent())
-  }
-
-  protected fun addCheckCanceledFunctions() {
-    myFixture.addClass("""
-      package com.intellij.openapi.progress;
-      
-      import com.intellij.util.concurrency.annotations.*;
-      
-      public class ProgressManager {
-      
-        @RequiresBlockingContext
-        public static void checkCanceled() throws ProcessCanceledException {
-        
-        }
-      }
-    """.trimIndent())
-
-    myFixture.configureByText("utils.kt", /*language=kotlin*/ """
-      package com.intellij.openapi.progress
-      import kotlinx.coroutines.*
-
-      @Suppress("RedundantSuspendModifier")
-      suspend fun checkCanceled(): Unit = Unit
-      
-      fun <T> runBlockingCancellable(action: suspend CoroutineScope.() -> T): T {
-        throw RuntimeException("Unimplemented")
-      }
-    """.trimIndent())
   }
 }
 

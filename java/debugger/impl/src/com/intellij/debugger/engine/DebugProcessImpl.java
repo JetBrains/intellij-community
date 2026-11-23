@@ -21,8 +21,10 @@ import com.intellij.debugger.engine.events.DebuggerContextCommandImpl;
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
 import com.intellij.debugger.engine.jdi.ThreadReferenceProxy;
 import com.intellij.debugger.engine.jdi.VirtualMachineProxy;
-import com.intellij.debugger.engine.requests.MethodReturnValueWatcher;
+import com.intellij.debugger.engine.requests.CaptureScope;
+import com.intellij.debugger.engine.requests.MethodReturnValue;
 import com.intellij.debugger.engine.requests.RequestManagerImpl;
+import com.intellij.debugger.engine.requests.ReturnValueWatcher;
 import com.intellij.debugger.engine.requests.StepRequestor;
 import com.intellij.debugger.impl.DebugUtilsKt;
 import com.intellij.debugger.impl.DebuggerCompletableFuture;
@@ -84,7 +86,6 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.CheckedDisposable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.UserDataHolderBase;
@@ -204,6 +205,7 @@ import java.util.stream.Stream;
 import static com.intellij.debugger.engine.DebuggerUtils.forEachSafe;
 import static com.intellij.debugger.engine.EvaluationUtilsKt.BREAKPOINT_CHECK_FN_KEY;
 import static com.intellij.debugger.engine.MethodInvokeUtilsKt.tryInvokeWithHelper;
+import static com.intellij.diagnostic.ControlFlowExceptionsKt.rethrowControlFlowException;
 import static com.intellij.platform.util.coroutines.CoroutineScopeKt.childScope;
 
 public abstract class DebugProcessImpl extends UserDataHolderBase implements DebugProcess {
@@ -217,6 +219,8 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
   private final RequestManagerImpl requestManager;
 
   private final Deque<VirtualMachineData> myStashedVirtualMachines = new LinkedList<>();
+  /** Manager thread only: the pending {@link #releaseVirtualMachine(Runnable) release}. */
+  private @Nullable Release myRelease;
 
   protected final CheckedDisposable disposable = Disposer.newCheckedDisposable();
   protected final DisposableWrapperList<DebugProcessListener> myDebugProcessListeners = new DisposableWrapperList<>(); // propagate exceptions from listeners
@@ -231,6 +235,8 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
 
   private volatile ExecutionResult myExecutionResult;
   private volatile RemoteConnection myConnection;
+  /** Set once by {@link #attachVirtualMachine}: see {@link #isVirtualMachineAdopted()}. */
+  private volatile boolean myVirtualMachineAdopted;
   private JavaDebugProcess myXDebugProcess;
 
   private volatile Map<String, Connector.Argument> myArguments;
@@ -250,7 +256,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
   private final AtomicBoolean myIsStopped = new AtomicBoolean(false);
   private final AtomicBoolean myRootProcessClosed = new AtomicBoolean(false);
   protected volatile DebuggerSession mySession;
-  protected @Nullable MethodReturnValueWatcher myReturnValueWatcher;
+  protected @Nullable ReturnValueWatcher myReturnValueWatcher;
   private final CoroutineScope myCoroutineScope;
   private final CompletableJob myWorkJob = SupervisorKt.SupervisorJob(null);
   private final ShowStatusManager myShowStatusManager;
@@ -346,22 +352,9 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     });
   }
 
-  public @Nullable Pair<Method, Value> getLastExecutedMethod() {
-    final MethodReturnValueWatcher watcher = myReturnValueWatcher;
-    if (watcher == null) {
-      return null;
-    }
-    final Method method = watcher.getLastExecutedMethod();
-    if (method == null) {
-      return null;
-    }
-    return Pair.create(method, watcher.getLastMethodReturnValue());
-  }
-
-  public void setWatchMethodReturnValuesEnabled(boolean enabled) {
-    if (myReturnValueWatcher != null) {
-      myReturnValueWatcher.setEnabled(enabled);
-    }
+  public @Nullable MethodReturnValue getLastMethodReturnValue() {
+    final ReturnValueWatcher watcher = myReturnValueWatcher;
+    return watcher != null ? watcher.getLastMethodReturnValue() : null;
   }
 
   public boolean canGetMethodReturnValue() {
@@ -1051,6 +1044,15 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     return myState.get() == State.ATTACHED;
   }
 
+  /**
+   * True for a process that attached to the VM another process released ({@link DebugEnvironment#getVirtualMachineToAdopt()}),
+   * not to a VM it connected itself: the user saw the connection once, at the attach of the first process.
+   */
+  @ApiStatus.Internal
+  public boolean isVirtualMachineAdopted() {
+    return myVirtualMachineAdopted;
+  }
+
   @Override
   public boolean isDetached() {
     return myState.get() == State.DETACHED;
@@ -1136,6 +1138,11 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     DebuggerManagerThreadImpl.assertIsManagerThread();
 
     if (myState.compareAndSet(State.INITIAL, State.DETACHING) || myState.compareAndSet(State.ATTACHED, State.DETACHING)) {
+      Release release = myRelease;
+      myRelease = null;
+      if (release != null) {
+        release.future.completeExceptionally(new IllegalStateException("The debug process stopped during the release"));
+      }
       DebuggerManagerThreadImpl managerThread = myDebuggerManagerThread;
       try {
         if (!keepManagerThread) {
@@ -1196,6 +1203,92 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
       myDebuggerManagerThread.closeAndCancel();
       myWaitFor.up();
     }
+  }
+
+  private record Release(@NotNull VirtualMachine vm, @NotNull Runnable beforeDetach,
+                         @NotNull CompletableFuture<@NotNull VirtualMachine> future) {
+  }
+
+  /**
+   * Detaches this process from its live VM without disposing it, for another process to adopt through
+   * {@link DebugEnvironment#getVirtualMachineToAdopt()}; the session stops. Manager thread only.
+   * <p>
+   * Later, in one command between two event sets, suspends the VM, runs {@code beforeDetach}, resumes every suspend context and
+   * detaches: the VM comes out suspended exactly once, by this release. Requests are left to {@code beforeDetach}. A throw from it
+   * resumes the VM and fails the future with it; the process goes on. A detach or stop before that fails the future.
+   * <p>
+   * Throws {@link IllegalStateException}, changing nothing, for a process that is not attached, a read-only VM, stashed VMs and
+   * another release in progress. A call with the {@code beforeDetach} of the pending release wakes the event reader again and returns
+   * the pending future.
+   */
+  @ApiStatus.Internal
+  public @NotNull CompletableFuture<@NotNull VirtualMachine> releaseVirtualMachine(@NotNull Runnable beforeDetach) {
+    DebuggerManagerThreadImpl.assertIsManagerThread();
+    VirtualMachineProxyImpl vmProxy = myDebuggerManagerThread.getVmProxy();
+    if (!isAttached() || vmProxy == null) {
+      throw new IllegalStateException("Cannot release the VM of a debug process that is not attached: " + myState.get());
+    }
+    if (!vmProxy.canBeModified()) {
+      throw new IllegalStateException("Cannot release a read-only VM");
+    }
+    if (!myStashedVirtualMachines.isEmpty()) {
+      throw new IllegalStateException("Cannot release the VM of a debug process with stashed VMs");
+    }
+    if (myRelease != null && myRelease.beforeDetach != beforeDetach) {
+      throw new IllegalStateException("Cannot release the VM while another release of it is in progress");
+    }
+    if (myRelease == null) {
+      myRelease = new Release(vmProxy.getVirtualMachine(), beforeDetach, new CompletableFuture<>());
+    }
+    if (!wakeEventReaderForRelease(myRelease.vm)) {
+      myDebuggerManagerThread.schedule(PrioritizedTask.Priority.HIGH, this::commitRelease);
+    }
+    return myRelease.future;
+  }
+
+  /** Manager thread only, between two event sets: commits the pending release; true if this process detached for it. */
+  boolean commitRelease() {
+    Release release = myRelease;
+    if (release == null) {
+      return false;
+    }
+    myRelease = null;
+    try {
+      VirtualMachineProxyImpl vmProxy = myDebuggerManagerThread.getVmProxy();
+      if (!isAttached() || vmProxy == null || vmProxy.getVirtualMachine() != release.vm) {
+        throw new IllegalStateException("The debug process stopped during the release: " + myState.get());
+      }
+      release.vm.suspend();
+      try {
+        release.beforeDetach.run();
+      }
+      catch (Throwable e) {
+        release.vm.resume();
+        throw e;
+      }
+      // Every listed context still holds its suspend, as a resume pops it first; one going to resume too: its queued resume
+      // dies with the manager thread the detach closes.
+      for (SuspendContextImpl context : mySuspendManager.getEventContextsAsItIs()) {
+        mySuspendManager.resume(context);
+      }
+      // the detach of closeCurrentProcess, minus the dispose of the VM
+      detachProcess(true, false, vmData -> {
+        DebuggerManagerThreadImpl.getCurrentThread().setVmProxy(null);
+        closeRootProcess();
+      });
+      release.future.complete(release.vm);
+      return true;
+    }
+    catch (Throwable e) {
+      release.future.completeExceptionally(e);
+      rethrowControlFlowException(e);
+      return false;
+    }
+  }
+
+  /** Manager thread only: makes the event reader of {@code vm} call {@link #commitRelease()}; false if it has none. */
+  boolean wakeEventReaderForRelease(@NotNull VirtualMachine vm) {
+    return false;
   }
 
   @Contract(pure = true)
@@ -2126,7 +2219,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
       final ThreadReferenceProxyImpl thread = getContextThread();
       RequestHint hint = getHint(suspendContext, thread, null);
       applyThreadFilter(getThreadFilterFromContext(suspendContext));
-      startWatchingMethodReturn(thread);
+      startWatchingMethodReturn(thread, CaptureScope.BASE_FRAME);
       step(suspendContext, thread, hint, createCommandToken());
       super.contextAction(suspendContext);
     }
@@ -2175,6 +2268,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
       }
       hint.setIgnoreFilters(myForcedIgnoreFilters || mySession.shouldIgnoreSteppingFilters());
       applyThreadFilter(getThreadFilterFromContext(suspendContext));
+      startWatchingMethodReturn(stepThread, CaptureScope.WITH_CALLS);
       if (myBreakpoint != null) {
         prepareAndSetSteppingBreakpoint(suspendContext, myBreakpoint, hint, false);
       }
@@ -2256,7 +2350,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
 
       applyThreadFilter(getThreadFilterFromContext(suspendContext));
 
-      startWatchingMethodReturn(stepThread);
+      startWatchingMethodReturn(stepThread, CaptureScope.WITH_CALLS);
 
       step(suspendContext, stepThread, hint, createCommandToken());
     }
@@ -2448,6 +2542,9 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     @Override
     public void contextAction(@NotNull SuspendContextImpl suspendContext) {
       showStatusText(JavaDebuggerBundle.message("status.process.resumed"));
+      if (myReturnValueWatcher != null) {
+        myReturnValueWatcher.clear();
+      }
       if (!(this instanceof StepCommand)) {
         forEachSafe(SteppingListener.getExtensions(), listener -> listener.beforeResume(suspendContext));
       }
@@ -2843,9 +2940,12 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     LOG.assertTrue(isInInitialState());
 
     myConnection = environment.getRemoteConnection();
+    VirtualMachine vmToAdopt = environment.getVirtualMachineToAdopt();
+    myVirtualMachineAdopted = vmToAdopt != null;
 
     // in client mode start target process before the debugger to reduce polling
-    if (!(myConnection instanceof RemoteConnectionStub) &&
+    if (vmToAdopt == null &&
+        !(myConnection instanceof RemoteConnectionStub) &&
         !(myConnection instanceof DelayedRemoteConnection) &&
         myConnection.isServerMode()) {
       createVirtualMachine(environment);
@@ -2879,7 +2979,21 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
       throw e;
     }
 
-    if (myConnection instanceof DelayedRemoteConnection connection) {
+    if (vmToAdopt != null) {
+      // commits the VM another process released, as createVirtualMachine commits a connected one
+      afterProcessStarted(() -> myDebuggerManagerThread.schedule(new DebuggerCommandImpl(PrioritizedTask.Priority.HIGH) {
+        @Override
+        protected void action() {
+          try {
+            commitVM(vmToAdopt);
+          }
+          catch (VMDisconnectedException e) {
+            fail();
+          }
+        }
+      }));
+    }
+    else if (myConnection instanceof DelayedRemoteConnection connection) {
       connection.setAttachRunnable(() -> createVirtualMachine(environment));
     }
     else if (!(myConnection instanceof RemoteConnectionStub) && !myConnection.isServerMode()) {
@@ -3048,9 +3162,6 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
       @Override
       public void contextAction(@NotNull SuspendContextImpl suspendContext) {
         breakpointManager.removeThreadFilter(DebugProcessImpl.this); // clear the filter on resume
-        if (myReturnValueWatcher != null) {
-          myReturnValueWatcher.clear();
-        }
         super.contextAction(suspendContext);
       }
 
@@ -3188,9 +3299,9 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     return mySuspendManager.hasPausedContext(suspendContext);
   }
 
-  public void startWatchingMethodReturn(ThreadReferenceProxyImpl thread) {
-    if (myReturnValueWatcher != null) {
-      myReturnValueWatcher.enable(thread.getThreadReference());
+  public void startWatchingMethodReturn(ThreadReferenceProxyImpl thread, CaptureScope scope) {
+    if (myReturnValueWatcher != null && DebuggerSettings.getInstance().WATCH_RETURN_VALUES) {
+      myReturnValueWatcher.startCapture(thread.getThreadReference(), scope);
     }
   }
 
@@ -3211,7 +3322,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
 
   void stopWatchingMethodReturn() {
     if (myReturnValueWatcher != null) {
-      myReturnValueWatcher.disable();
+      myReturnValueWatcher.stopCapture();
     }
   }
 

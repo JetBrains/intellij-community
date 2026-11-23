@@ -114,6 +114,8 @@ public final class PsiMethodReferenceExpressionImpl extends JavaStubPsiElement<F
     final PsiMethodReferenceUtil.QualifierResolveResult qualifierResolveResult = PsiMethodReferenceUtil.getQualifierResolveResult(this);
     final int interfaceArity = interfaceMethod.getParameterList().getParametersCount();
     for (ResolveResult resolveResult : result) {
+      // JLS 15.13.1: a potentially applicable method must be accessible
+      if (resolveResult instanceof JavaResolveResult && !((JavaResolveResult)resolveResult).isAccessible()) continue;
       final PsiElement element = resolveResult.getElement();
       if (element instanceof PsiMethod) {
         final boolean isStatic = ((PsiMethod)element).hasModifierProperty(PsiModifier.STATIC);

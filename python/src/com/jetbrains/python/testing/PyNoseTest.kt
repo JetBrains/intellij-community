@@ -6,7 +6,7 @@ import com.intellij.execution.configurations.RunProfileState
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.openapi.options.SettingsEditor
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.python.sdk.backend.PythonInterpreter
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PythonHelper
 import com.jetbrains.python.psi.resolve.PackageAvailabilitySpec
@@ -66,7 +66,9 @@ class PyNoseTestFactory(type: PythonTestConfigurationType) : PyAbstractTestFacto
 
   override fun getName(): String = PyBundle.message("runcfg.nosetests.display_name")
 
-  override fun onlyClassesAreSupported(project: Project, sdk: Sdk): Boolean = false
+  @ApiStatus.Internal
+
+  override fun onlyClassesAreSupported(project: Project, interpreter: PythonInterpreter): Boolean = false
 
   override val packageSpec: PackageAvailabilitySpec = PACKAGE_SPEC
 }

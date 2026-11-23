@@ -33,7 +33,7 @@ internal class PyRunAnythingPipProvider : PyRunAnythingPackageProvider() {
 
   override fun getPackageManager(dataContext: DataContext): PythonPackageManager? {
     val interpreter = getInterpreter(dataContext) ?: return null
-    return PythonPackageManager.forPythonInterpreter(dataContext.project, interpreter)
+    return PythonPackageManager.forPythonInterpreter(interpreter)
   }
 
   override fun getPackageRepository(dataContext: DataContext): PyPackageRepository? {

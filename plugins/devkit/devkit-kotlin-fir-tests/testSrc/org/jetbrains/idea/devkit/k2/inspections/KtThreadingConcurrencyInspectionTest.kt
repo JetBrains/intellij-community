@@ -1,13 +1,26 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.k2.inspections
 
-import com.intellij.testFramework.UsefulTestCase
-import org.jetbrains.idea.devkit.inspections.ThreadingConcurrencyInspectionTestBase
+import com.intellij.openapi.application.EDT
+import com.intellij.testFramework.common.timeoutRunBlocking
+import com.intellij.testFramework.fixtures.lightJavaProjectFixture
+import com.intellij.testFramework.junit5.TestApplication
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import org.assertj.core.api.Assertions.assertThat
+import org.jetbrains.idea.devkit.inspections.threadingConcurrencyFixture
+import org.junit.jupiter.api.Test
 
-class KtThreadingConcurrencyInspectionTest : ThreadingConcurrencyInspectionTestBase() {
+@TestApplication
+class KtThreadingConcurrencyInspectionTest {
+  companion object {
+    private val projectFixture = lightJavaProjectFixture()
+  }
 
-    
+  private val threading by threadingConcurrencyFixture(projectFixture)
+  private val myFixture get() = threading.fixture
 
+  @Test
   fun testWithCheckUnannotatedMethodsDisabledAnnotatedMethod() {
     doTestHighlighting("""
       fun doNotCare() {
@@ -35,8 +48,9 @@ class KtThreadingConcurrencyInspectionTest : ThreadingConcurrencyInspectionTestB
     """)
   }
 
+  @Test
   fun testWithCheckUnannotatedMethodsAnnotatedMethod() {
-    runWithCheckUnannotatedMethodsEnabled {
+    threading.runWithCheckUnannotatedMethodsEnabled {
       doTestHighlighting("""
       private fun checkUnannotatedNotInPrivateMethod() {
         edt()
@@ -86,6 +100,7 @@ class KtThreadingConcurrencyInspectionTest : ThreadingConcurrencyInspectionTestB
     }
   }
 
+  @Test
   fun testWithCheckUnannotatedMethodsNotInOverridingMethod() {
     myFixture.addClass("""
       public class Parent {
@@ -93,7 +108,7 @@ class KtThreadingConcurrencyInspectionTest : ThreadingConcurrencyInspectionTestB
       }
     """.trimIndent())
 
-    runWithCheckUnannotatedMethodsEnabled {
+    threading.runWithCheckUnannotatedMethodsEnabled {
       myFixture.configureByText("Subclass.kt", """
         import com.intellij.util.concurrency.annotations.*
 
@@ -111,8 +126,9 @@ class KtThreadingConcurrencyInspectionTest : ThreadingConcurrencyInspectionTestB
     }
   }
 
+  @Test
   fun testWithCheckUnannotatedMethodCallsAnnotatedMethodFix() {
-    runWithCheckUnannotatedMethodsEnabled {
+    threading.runWithCheckUnannotatedMethodsEnabled {
       doTestHighlighting("""    
         fun checkUnannotated() {
             <error descr="Unannotated method calls method annotated with '@RequiresEdt'"><caret>edt</error>()
@@ -122,28 +138,33 @@ class KtThreadingConcurrencyInspectionTest : ThreadingConcurrencyInspectionTestB
         fun edt() {}
       """)
 
-      val intention = myFixture.findSingleIntention("Annotate as @RequiresEdt")
-      myFixture.checkPreviewAndLaunchAction(intention)
-      myFixture.checkResult("""
-        import com.intellij.util.concurrency.annotations.*
+      timeoutRunBlocking {
+        withContext(Dispatchers.EDT) {
+          val intention = myFixture.findSingleIntention("Annotate as @RequiresEdt")
+          myFixture.checkPreviewAndLaunchAction(intention)
+          myFixture.checkResult("""
+            import com.intellij.util.concurrency.annotations.*
 
-        class A {
+            class A {
 
-            @RequiresEdt
-            fun checkUnannotated() {
-                edt()
+                @RequiresEdt
+                fun checkUnannotated() {
+                    edt()
+                }
+
+                @RequiresEdt
+                fun edt() {}
+
             }
-
-            @RequiresEdt
-            fun edt() {}
-
+          """.trimIndent(), true)
         }
-      """.trimIndent(), true)
+      }
     }
   }
 
+  @Test
   fun testWithCheckUnannotatedMethodCallsMultipleAnnotatedMethodFixes() {
-    runWithCheckUnannotatedMethodsEnabled {
+    threading.runWithCheckUnannotatedMethodsEnabled {
       doTestHighlighting("""    
         fun checkUnannotated() {
           <error descr="Unannotated method calls method annotated with multiple threading annotations"><caret>multipleAnnotations</error>()
@@ -155,14 +176,13 @@ class KtThreadingConcurrencyInspectionTest : ThreadingConcurrencyInspectionTestB
         """)
 
       val availableIntentions = myFixture.filterAvailableIntentions("Annotate as")
-      UsefulTestCase.assertSameElements(availableIntentions.map { it.text },
-                                        "Annotate as @RequiresReadLock",
-                                        "Annotate as @RequiresBackgroundThread")
+      assertThat(availableIntentions.map { it.text }).containsOnly("Annotate as @RequiresReadLock", "Annotate as @RequiresBackgroundThread")
     }
   }
 
+  @Test
   fun testWithCheckUnannotatedNotAllAnnotationsMethodCallsMultipleAnnotatedMethodFix() {
-    runWithCheckUnannotatedMethodsEnabled {
+    threading.runWithCheckUnannotatedMethodsEnabled {
       doTestHighlighting("""    
         @RequiresReadLock
         fun checkNotAllAnnotationsAndViolation() {
@@ -182,13 +202,11 @@ class KtThreadingConcurrencyInspectionTest : ThreadingConcurrencyInspectionTestB
         """)
 
       val availableIntentions = myFixture.filterAvailableIntentions("Annotate as")
-      UsefulTestCase.assertSameElements(availableIntentions.map { it.text },
-                                        "Annotate as @RequiresReadLock",
-                                        "Annotate as @RequiresBackgroundThread"
-      )
+      assertThat(availableIntentions.map { it.text }).containsOnly("Annotate as @RequiresReadLock", "Annotate as @RequiresBackgroundThread")
     }
   }
 
+  @Test
   fun testDoNotCheckLambdaReturn() {
     doTestHighlighting("""
       @RequiresBackgroundThread
@@ -201,6 +219,7 @@ class KtThreadingConcurrencyInspectionTest : ThreadingConcurrencyInspectionTestB
     """.trimIndent())
   }
 
+  @Test
   fun testDoNotCheckAnonymous() {
     doTestHighlighting("""
       @RequiresEdt
@@ -219,8 +238,9 @@ class KtThreadingConcurrencyInspectionTest : ThreadingConcurrencyInspectionTestB
     """.trimIndent())
   }
 
+  @Test
   fun testDoNotCheckEventDispatcherMulticaster() {
-    addEventDispatcherClass()
+    threading.addEventDispatcherClass()
 
     doTestHighlighting("""
       @RequiresBackgroundThread
@@ -244,6 +264,7 @@ class KtThreadingConcurrencyInspectionTest : ThreadingConcurrencyInspectionTestB
     """.trimIndent())
   }
 
+  @Test
   fun testMayCallRequiresEdtCalledFromRequiresEdtMethod() {
     doTestHighlighting("""
       @RequiresEdt
@@ -256,6 +277,7 @@ class KtThreadingConcurrencyInspectionTest : ThreadingConcurrencyInspectionTestB
     """)
   }
 
+  @Test
   fun testRequiresBackgroundThreadVersusRequiresEdtMethod() {
     doTestHighlighting("""
       @RequiresEdt
@@ -270,6 +292,7 @@ class KtThreadingConcurrencyInspectionTest : ThreadingConcurrencyInspectionTestB
      """)
   }
 
+  @Test
   fun testRequiresWriteLockInsideRequiresReadLock() {
     doTestHighlighting("""
       @RequiresReadLock
@@ -284,6 +307,7 @@ class KtThreadingConcurrencyInspectionTest : ThreadingConcurrencyInspectionTestB
     """)
   }
 
+  @Test
   fun testRequiresReadLockAbsenceVersusRequiresReadOrWriteLock() {
     doTestHighlighting("""
       @RequiresReadLock
@@ -305,8 +329,9 @@ class KtThreadingConcurrencyInspectionTest : ThreadingConcurrencyInspectionTestB
     """)
   }
 
+  @Test
   fun testRequiresReadLockInsideRequiresEdt() {
-    runWithRequiresReadLockInsideRequiresEdtEnabled {
+    threading.runWithRequiresReadLockInsideRequiresEdtEnabled {
       doTestHighlighting("""
       @RequiresEdt
       fun edt() {
@@ -319,6 +344,7 @@ class KtThreadingConcurrencyInspectionTest : ThreadingConcurrencyInspectionTestB
     }
   }
 
+  @Test
   fun testRequiresReadLockInsideRequiresEdtOptionDisabled() {
     doTestHighlighting("""
       @RequiresEdt
@@ -331,8 +357,9 @@ class KtThreadingConcurrencyInspectionTest : ThreadingConcurrencyInspectionTestB
     """)
   }
 
+  @Test
   fun testRequiresWriteLockInsideRequiresEdt() {
-    runWithRequiresWriteLockInsideRequiresEdtEnabled {
+    threading.runWithRequiresWriteLockInsideRequiresEdtEnabled {
       doTestHighlighting("""
       @RequiresEdt
       fun edt() {
@@ -345,6 +372,7 @@ class KtThreadingConcurrencyInspectionTest : ThreadingConcurrencyInspectionTestB
     }
   }
 
+  @Test
   fun testRequiresWriteLockInsideRequiresEdtOptionDisabled() {
     doTestHighlighting("""
       @RequiresEdt

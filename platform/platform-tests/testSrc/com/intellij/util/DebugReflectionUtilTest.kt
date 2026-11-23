@@ -68,6 +68,13 @@ class DebugReflectionUtilTest {
     }
   }
 
+  @Test
+  fun `walkObjects ignores a static initializer that throws UnsatisfiedLinkError`() {
+    assertTrue {
+      walkObjects(NativeInitHolder::class.java)
+    }
+  }
+
   private fun walkObjects(root: Any, shouldExamineField: Predicate<Field> = Predicate { true }): Boolean {
     return DebugReflectionUtil.walkObjects(
       5,
@@ -96,3 +103,17 @@ private class StaticLeakHolder {
     val leaked = LeakTarget()
   }
 }
+
+private class NativeInitHolder {
+  companion object {
+    init {
+      throwLinkError()
+    }
+
+    @Suppress("unused")
+    @JvmField
+    val target = LeakTarget()
+  }
+}
+
+private fun throwLinkError(): Nothing = throw UnsatisfiedLinkError("test")

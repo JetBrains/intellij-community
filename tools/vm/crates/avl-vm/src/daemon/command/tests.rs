@@ -12,7 +12,9 @@ use serde_json::{Value, json};
 
 use super::*;
 use crate::daemon::fixture::Fixture;
+use crate::daemon::host::WatchdogPolicy;
 use crate::daemon::run::tests::{suite_catalog, three_lane_catalog};
+use crate::daemon::run::{LaneIteration, RunSelection};
 use crate::daemon::testing::{PLENTIFUL_DF, Recorded, failing_run, ndjson_line, passing_run_lines, run_started_record, summary_record};
 use crate::daemon::verdict::{checkout_of, failures_of, reproduce_commands, traces_of};
 use crate::worker::lease::{LeaseCommand, command_lease};
@@ -1337,6 +1339,62 @@ async fn a_live_run_builds_the_live_descriptor_and_another_run_the_one_of_the_la
     assert_eq!(
         fixture.bazel.built_labels().last().map(String::as_str),
         Some(avl_wire::daemon::LINUX_GUEST_LABEL)
+    );
+}
+
+// A run of the light lane builds the descriptor of JetBrains Light, and a run of another lane builds the one of the
+// lanes. The distribution is a target and not a build option, so neither build needs an option of its own.
+#[tokio::test]
+async fn a_light_run_builds_the_light_descriptor_and_another_run_the_one_of_the_lanes() {
+    let (fixture, receipt) = run_outcome_fixture(Vec::new()).await;
+    assert_eq!(fixture.settings.guest_os, GuestOs::Linux);
+    fixture.queue_runs(vec![passing_run_lines("it-38"), passing_run_lines("it-39")]);
+    let (light, _) = run_for_verdict(&fixture, &["--lane", avl_wire::daemon::LIGHT_LANE], Some(&receipt)).await;
+    light.unwrap();
+    assert_eq!(
+        fixture.bazel.built_labels().last().map(String::as_str),
+        Some(avl_wire::daemon::LINUX_GUEST_LIGHT_LABEL)
+    );
+    let (lanes, _) = run_for_verdict(&fixture, &["--lane", "ui"], Some(&receipt)).await;
+    lanes.unwrap();
+    assert_eq!(
+        fixture.bazel.built_labels().last().map(String::as_str),
+        Some(avl_wire::daemon::LINUX_GUEST_LABEL)
+    );
+}
+
+// One build names one IDE distribution. So a plan that holds the light lane beside another lane is refused, and a plan
+// of the light lane alone builds its descriptor.
+#[test]
+fn a_plan_of_the_light_lane_beside_another_lane_is_refused() {
+    let iteration = |lane: &str| LaneIteration {
+        lane: Some(lane.to_owned()),
+        classes: Vec::new(),
+        selection: RunSelection {
+            lane: Some(lane.to_owned()),
+            ..RunSelection::default()
+        },
+    };
+    let plan = |lanes: &[&str]| RunPlan {
+        iterations: lanes.iter().map(|lane| iteration(lane)).collect(),
+        policy: WatchdogPolicy {
+            active_execution: Duration::from_secs(1),
+            progress_gap: Duration::from_secs(1),
+        },
+        fresh_ide: false,
+    };
+    assert_eq!(light_lane_target(&plan(&["ui", "gui-chat"]), "vm").unwrap(), DaemonTarget::Lanes);
+    assert_eq!(light_lane_target(&plan(&["ui-light"]), "vm").unwrap(), DaemonTarget::LightLane);
+    let refused = light_lane_target(&plan(&["ui", "ui-light"]), "vm").unwrap_err();
+    assert_eq!(
+        (refused.code.as_ref(), refused.exit),
+        ("light_lane_beside_other_lanes", Exit::USAGE)
+    );
+    assert_eq!(
+        refused.message,
+        "the selection reaches the lane ui-light, which runs JetBrains Light, and the lanes ui, which run IDEA; one run \
+         builds one IDE, so run the selection twice: `vm run ... --lane ui-light`, then the same run with --lane and \
+         each other lane"
     );
 }
 

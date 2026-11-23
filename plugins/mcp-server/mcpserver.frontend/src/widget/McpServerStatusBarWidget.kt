@@ -2,8 +2,8 @@ package com.intellij.mcpserver.frontend.widget
 
 import com.intellij.icons.AllIcons
 import com.intellij.mcpserver.McpServerBundle
-import com.intellij.mcpserver.frontend.settings.McpServerSettingsConfigurable
-import com.intellij.mcpserver.frontend.settings.McpToolFilterConfigurable
+import com.intellij.mcpserver.configurables.McpServerSettingsConfigurable
+import com.intellij.mcpserver.configurables.McpToolFilterConfigurable
 import com.intellij.mcpserver.impl.McpServerService
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.serviceAsync

@@ -108,7 +108,7 @@ fn run() -> Result<bool, Box<dyn Error>> {
             &config,
             &config_file,
             &root,
-            if working_copy { Listing::Git } else { Listing::Runfiles },
+            if working_copy { Listing::Checkout } else { Listing::Runfiles },
         ),
     };
 

@@ -237,7 +237,7 @@ public class DataFlowInspection21Test {
   }
 
   @Test
-  @TestFor(issues = "IDEA-396004")
+  @TestFor(issues = {"IDEA-396004", "IDEA-396232"})
   public void testJSpecifyVarFromGenericMethodWithDeclarationNullable() {
     LightJavaCodeInsightTestFixture myFixture = dataFlow.get().getFixture();
     addJSpecifyNullMarked(myFixture);

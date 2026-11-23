@@ -17,40 +17,59 @@ package com.intellij.java.codeInsight.completion;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.completion.CompletionType;
-import com.intellij.codeInsight.completion.LightFixtureCompletionTestCase;
+import com.intellij.codeInsight.completion.LightCompletionFixture;
 import com.intellij.codeInsight.lookup.Lookup;
-import com.intellij.testFramework.LightProjectDescriptor;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.platform.testFramework.junit5.codeInsight.indexing.IndexingModeTemplate;
+import com.intellij.testFramework.EdtTestUtil;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.junit.jupiter.api.Test;
 
-public class SmartType21CompletionTest extends LightFixtureCompletionTestCase {
+import static com.intellij.codeInsight.completion.LightCompletionFixtureKt.lightCompletionFixture;
+import static com.intellij.codeInsight.completion.LightCompletionFixtureKt.lightCompletionProjectFixture;
 
-  @NotNull
-  @Override
-  protected LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_21;
+@TestApplication
+@IndexingModeTemplate
+public class SmartType21CompletionTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightCompletionProjectFixture(LightJavaCodeInsightFixtureTestCase.JAVA_21);
+  private final TestFixture<LightCompletionFixture> completion =
+    lightCompletionFixture(projectFixture, JavaTestUtil.getJavaTestDataPath() + "/codeInsight/completion/smartType/");
+
+  private void complete() {
+    LightJavaCodeInsightTestFixture myFixture = completion.get().getFixture();
+    EdtTestUtil.runInEdtAndWait(() -> {
+      completion.get().setItems(myFixture.complete(CompletionType.SMART));
+    });
   }
 
-  @Override
-  protected String getTestDataPath() {
-    return JavaTestUtil.getJavaTestDataPath() + "/codeInsight/completion/smartType/";
+  private void configureByFile(String path) {
+    LightJavaCodeInsightTestFixture myFixture = completion.get().getFixture();
+    EdtTestUtil.runInEdtAndWait(() -> {
+      myFixture.configureFromExistingVirtualFile(myFixture.copyFileToProject(path, StringUtil.getShortName(path, '/')));
+      complete();
+    });
   }
 
-  @Override
-  protected void complete() {
-    myItems = myFixture.complete(CompletionType.SMART);
-  }
-
+  @Test
   public void testSwitchPattern() { doTest(); }
+  @Test
   public void testSwitchPatternGeneric() { doTest(); }
 
   private void doTest() {
-    configureByFile("/" + getTestName(false) + ".java");
-    if (myItems != null) {
-      final Lookup lookup = getLookup();
-      if (lookup != null) {
-        selectItem(lookup.getCurrentItem(), Lookup.NORMAL_SELECT_CHAR);
+    LightJavaCodeInsightTestFixture myFixture = completion.get().getFixture();
+    EdtTestUtil.runInEdtAndWait(() -> {
+      configureByFile("/" + myFixture.getTestName(false) + ".java");
+      if (completion.get().getItems() != null) {
+        final Lookup lookup = completion.get().getLookup();
+        if (lookup != null) {
+          completion.get().selectItem(lookup.getCurrentItem(), Lookup.NORMAL_SELECT_CHAR);
+        }
       }
-    }
-    checkResultByFile("/" + getTestName(false) + "-out.java");
+      completion.get().checkResultByFile("/" + myFixture.getTestName(false) + "-out.java");
+    });
   }
 }

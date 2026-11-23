@@ -1,0 +1,5 @@
+// NEW_NAME: total
+fun f(): Int {
+    val total = 1
+    return total + 1
+}

@@ -10,9 +10,11 @@ GOTO :CMDSCRIPT
 # does this on Windows too, where jscpd ships only `.tar.gz` archives.
 #
 # The first run of a version asks Bazel for the absolute path of `//tools:jscpd`, whose `select` picks the host
-# binary. It writes the path to `out/jscpd/jscpd-<version>-<host>`. Each later run reads that file and spawns no
-# Bazel. The version is the cache key, so a version bump makes an old entry unreachable, not wrong. A path that does
-# not exist any more resolves again.
+# binary. It writes the path to `jscpd-<version>-<host>` in the cache of the monorepo tools of the user, as
+# `tool-wrapper.sh` does for a downloaded tool. Each later run reads that file and spawns no Bazel. Every checkout of
+# the user reads the same file, so a new worktree starts warm and does not wait for the Bazel server of its checkout.
+# The version is the cache key, so a version bump makes an old entry unreachable, not wrong. A path that does not
+# exist any more resolves again.
 # `plugins/air/docs/decisions/0017-bazel-provided-bt.md` records this design for the old BT wrapper.
 #
 # `JSCPD_BIN` names an explicit binary and skips Bazel.
@@ -28,7 +30,8 @@ case "$0" in
   */*) self_dir="${0%/*}" ;;
   *) self_dir="." ;;
 esac
-# The shared steps of the polyglot wrappers: the Git Bash hand-off, the override, the roots, the real path.
+# The shared steps of the polyglot wrappers: the Git Bash hand-off, the override, the roots, the user cache, the real
+# path.
 . "$self_dir/polyglot-wrapper.sh"
 polyglot_hand_off_to_cmd "$0" "$@"
 polyglot_exec_override jscpd JSCPD_BIN 78 "$@"
@@ -52,9 +55,10 @@ if [ -z "$version" ]; then
   exit 78
 fi
 
-# The host is part of the cache name, so a checkout that a guest mounts does not read the path of another machine.
+# The host is part of the cache name, so a guest that shares the home folder does not read the path of another machine.
 # Bash sets both variables, so the warm path starts no process for them.
-cache="$root/out/jscpd/jscpd-$version-$OSTYPE-$HOSTTYPE"
+polyglot_user_cache jscpd || { echo "jscpd: HOME is not set; required to locate the cache directory" >&2; exit 78; }
+cache="$user_cache/jscpd-$version-$OSTYPE-$HOSTTYPE"
 if [ -f "$cache" ]; then
   resolved=""
   IFS= read -r resolved < "$cache" || true
@@ -99,7 +103,8 @@ exec "$resolved" "$@"
 
 setlocal
 
-REM The same design as the POSIX half: JSCPD_BIN first, then the cached path, then one cquery and one info
+REM The same design as the POSIX half: JSCPD_BIN first, then the cached path in the cache of the monorepo tools of
+REM the user, then one cquery and one info
 REM output_base. Bazel writes each answer to a file. Thus no Bazel argument goes through a FOR /F command string, and
 REM the exit code of Bazel stays visible. Windows has no readlink, so the cache holds the path under the output base.
 REM After an expunge of the output base that path does not exist, and the next run resolves again.
@@ -128,7 +133,9 @@ if not defined VERSION goto :NOVERSION
 
 REM The host is part of the cache name, as in the bash half. PROCESSOR_ARCHITECTURE is that of this process, which
 REM is enough for a cache name. Bazel picks the host binary through the select of //tools:jscpd.
-set "CACHE=%ROOT%\out\jscpd\jscpd-%VERSION%-%OS%-%PROCESSOR_ARCHITECTURE%"
+call "%POLYGLOT_WRAPPER%" user-cache jscpd
+if errorlevel 1 goto :NOCACHE
+set "CACHE=%USER_CACHE%\jscpd-%VERSION%-%OS%-%PROCESSOR_ARCHITECTURE%"
 set "RESOLVED="
 if exist "%CACHE%" set /p RESOLVED=<"%CACHE%"
 if not defined RESOLVED goto :RESOLVE
@@ -137,7 +144,7 @@ if exist "%RESOLVED%" goto :RUN
 :RESOLVE
 set "LABEL=%LABEL_PREFIX%tools:jscpd"
 echo jscpd: the first run of jscpd %VERSION% asks Bazel for %LABEL% 1>&2
-if not exist "%ROOT%\out\jscpd" mkdir "%ROOT%\out\jscpd"
+if not exist "%USER_CACHE%" mkdir "%USER_CACHE%"
 REM One %RANDOM% read, reused: two reads give two different names.
 set "STEM=%CACHE%.%RANDOM%"
 pushd "%ROOT%"
@@ -174,6 +181,10 @@ exit /B 78
 
 :NOVERSION
 echo jscpd: found no JSCPD_VERSION line in %COMMUNITY_ROOT%\tools\jscpd.MODULE.bazel 1>&2
+exit /B 78
+
+:NOCACHE
+echo jscpd: LOCALAPPDATA is not set; required to locate the cache directory 1>&2
 exit /B 78
 
 :BAZELFAILED

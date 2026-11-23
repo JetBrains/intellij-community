@@ -2,97 +2,113 @@ package com.intellij.codeInspection.tests.java.sourceToSink
 
 import com.intellij.analysis.JvmAnalysisBundle
 import com.intellij.jvm.analysis.JavaJvmAnalysisTestUtil
-import com.intellij.jvm.analysis.internal.testFramework.sourceToSink.SourceToSinkFlowInspectionTestBase
-import com.intellij.testFramework.LightProjectDescriptor
+import com.intellij.jvm.analysis.internal.testFramework.sourceToSink.sourceToSinkFlowInspectionFixture
 import com.intellij.testFramework.TestDataPath
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.lightJavaProjectFixture
+import com.intellij.testFramework.junit5.TestApplication
+import org.junit.jupiter.api.Test
 
 private const val INSPECTION_PATH = "/codeInspection/sourceToSinkFlow/propagateSafe"
 
 @TestDataPath("\$CONTENT_ROOT/testData$INSPECTION_PATH")
-class JavaPropagateFixSourceToSinkFlowInspectionTest : SourceToSinkFlowInspectionTestBase() {
-
-  override fun getProjectDescriptor(): LightProjectDescriptor {
-    return JAVA_17
+@TestApplication
+class JavaPropagateFixSourceToSinkFlowInspectionTest {
+  companion object {
+    private val projectFixture = lightJavaProjectFixture(LightJavaCodeInsightFixtureTestCase.JAVA_17)
   }
 
-  override fun getTestDataPath(): String {
-    return JavaJvmAnalysisTestUtil.testDataPath + INSPECTION_PATH
-  }
+  private val myFixture by sourceToSinkFlowInspectionFixture(projectFixture, JavaJvmAnalysisTestUtil.testDataPath + INSPECTION_PATH)
 
   private fun getMessage() = JvmAnalysisBundle.message("jvm.inspections.source.unsafe.to.sink.flow.propagate.safe.text")
 
+  @Test
   fun `test ParameterMethodUntainted`() {
-    prepareCheckFramework()
+    myFixture.prepareCheckFramework()
     myFixture.testQuickFix("ParameterMethodUntainted.java", getMessage())
   }
 
+  @Test
   fun `test tainted field`() {
-    prepareCheckFramework()
+    myFixture.prepareCheckFramework()
     myFixture.testQuickFixUnavailable("TaintedField.java", getMessage())
   }
 
+  @Test
   fun `test ParameterParameterUntainted`() {
-    prepareCheckFramework()
+    myFixture.prepareCheckFramework()
     myFixture.testQuickFix("ParameterParameterUntainted.java", getMessage())
   }
 
+  @Test
   fun `test ParameterMethodUnknown`() {
-    prepareCheckFramework()
+    myFixture.prepareCheckFramework()
     myFixture.testQuickFix("ParameterMethodUnknown.java", getMessage())
   }
 
+  @Test
   fun `test ParameterMethodTainted`() {
-    prepareCheckFramework()
+    myFixture.prepareCheckFramework()
     myFixture.testQuickFix("ParameterMethodTainted.java", getMessage())
   }
 
+  @Test
   fun `test ParameterFieldUnknown`() {
-    prepareCheckFramework()
+    myFixture.prepareCheckFramework()
     myFixture.testQuickFix("ParameterFieldUnknown.java", getMessage())
   }
 
+  @Test
   fun `test ParameterFieldTainted`() {
-    prepareCheckFramework()
+    myFixture.prepareCheckFramework()
     myFixture.testQuickFix("ParameterFieldTainted.java", getMessage())
   }
 
+  @Test
   fun `test Parameter`() {
-    prepareCheckFramework()
+    myFixture.prepareCheckFramework()
     myFixture.testQuickFix("Parameter.java", getMessage())
   }
 
+  @Test
   fun `test MethodMethodUnknown`() {
-    prepareCheckFramework()
+    myFixture.prepareCheckFramework()
     myFixture.testQuickFix("MethodMethodUnknown.java", getMessage())
   }
 
+  @Test
   fun `test MethodMethodTainted`() {
-    prepareCheckFramework()
+    myFixture.prepareCheckFramework()
     myFixture.testQuickFix("MethodMethodTainted.java", getMessage())
   }
 
+  @Test
   fun `test MethodFieldUnknown`() {
-    prepareCheckFramework()
+    myFixture.prepareCheckFramework()
     myFixture.testQuickFix("MethodFieldUnknown.java", getMessage())
   }
 
+  @Test
   fun `test MethodFieldTainted`() {
-    prepareCheckFramework()
+    myFixture.prepareCheckFramework()
     myFixture.testQuickFix("MethodFieldTainted.java", getMessage())
   }
 
+  @Test
   fun `test MethodFieldMethodUnknown`() {
-    prepareCheckFramework()
+    myFixture.prepareCheckFramework()
     myFixture.testQuickFix("MethodFieldMethodUnknown.java", getMessage())
   }
 
+  @Test
   fun `test MethodFieldMethodTainted`() {
-    prepareCheckFramework()
+    myFixture.prepareCheckFramework()
     myFixture.testQuickFix("MethodFieldMethodTainted.java", getMessage())
   }
 
+  @Test
   fun `test AnotherClassMethodCall`() {
-    prepareCheckFramework()
+    myFixture.prepareCheckFramework()
     myFixture.testQuickFix("AnotherClassMethodCall.java", getMessage())
   }
 }

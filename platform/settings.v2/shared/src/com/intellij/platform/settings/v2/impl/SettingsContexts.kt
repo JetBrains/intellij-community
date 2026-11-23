@@ -20,7 +20,7 @@ import java.util.IdentityHashMap
 // An identity holds no editing flag (ADR 0141).
 
 // The `identity` of a context is also its persisted form. The snapshot cache stores it and rebuilds the context
-// through `BaseSettingsContextFactory.deserialize`. So these id prefixes and the `identity` layouts below are an
+// through `SettingsContextFactory.deserialize`. So these id prefixes and the `identity` layouts below are an
 // on-disk format. A change to any of them changes the cache format and must bump `VERSION` in
 // `SettingsCacheSerializer`. The layouts: `app`, `project|<projectId>`, `file|<projectId>|<rootUrl>|<relativePath>`.
 internal const val APP_CONTEXT_ID: String = "app"
@@ -61,13 +61,14 @@ internal class ProjectSettingsContext(
 
 /**
  * Represents the context of a VFS node: a persistent (non-light) file or a directory under an anchor [rootUrl]. Today
- * the anchor is a content root. Later it can also be an external-dependency root.
+ * the anchor is a content root, or the base directory of the project in a light product mode. Later it can also be an
+ * external-dependency root.
  *
  * The context stores [rootUrl], the [relativePath] under it, and the [projectId]. It never holds the live
  * [VirtualFile] or [Project]. The whole [parentContext] chain (directory, …, root, project) derives from these strings
- * with no VFS access, so a context restores from its [identity] alone. Only the first build from a live file ([of])
- * reads the VFS, to resolve the anchor root once. The context does not know whether it is a file or a directory. Only
- * the storage needs that, and the file layer reads it from the disk (ADR 0121).
+ * with no VFS access, so a context restores from its [identity] alone. Only the first build from a live file
+ * ([SettingsContextFactory.file]) reads the VFS, to resolve the anchor root once. The context does not know whether
+ * it is a file or a directory. Only the storage needs that, and the file layer reads it from the disk (ADR 0121).
  *
  * A file under no content root has no file context. It resolves at the project (ADR 0125, see
  * [ContextFactory.file][com.intellij.platform.settings.v2.ContextFactory.file]).
@@ -75,7 +76,7 @@ internal class ProjectSettingsContext(
  * @property rootUrl the url of the anchor root
  * @property relativePath the path of this node under [rootUrl], or `""` for the root itself
  */
-class VirtualFileSettingsContext(
+class FileSettingsContext(
   /** Holds the [ProjectSettingsContext.projectId] of the project that holds this file. */
   val projectId: String,
   val rootUrl: String,
@@ -96,27 +97,10 @@ class VirtualFileSettingsContext(
    */
   override val parentContext: SettingsContext =
     if (relativePath.isEmpty()) ProjectSettingsContext(projectId)
-    else VirtualFileSettingsContext(projectId, rootUrl, relativePath.substringBeforeLast('/', ""))
+    else FileSettingsContext(projectId, rootUrl, relativePath.substringBeforeLast('/', ""))
 
-  override fun equals(other: Any?): Boolean = other is VirtualFileSettingsContext && other.identity == identity
+  override fun equals(other: Any?): Boolean = other is FileSettingsContext && other.identity == identity
   override fun hashCode(): Int = identity.hashCode()
-
-  companion object {
-    /**
-     * Builds the context for a live [file] under [root]. It reads only the urls, so it needs no read lock.
-     * [parentContext] and every later restore are string math.
-     *
-     * @param root the anchor root of [file], which the caller resolves
-     * @param project the project that holds [file]
-     * @throws IllegalArgumentException if [root] is not [file] itself or an ancestor of it
-     */
-    fun of(file: VirtualFile, root: VirtualFile, project: Project): VirtualFileSettingsContext {
-      require(file.url == root.url || file.url.startsWith("${root.url}/")) { "root '${root.url}' is not an ancestor of '${file.url}'" }
-      return VirtualFileSettingsContext(project.locationHash,
-                                        root.url,
-                                        file.url.removePrefix(root.url).trimStart('/'))
-    }
-  }
 }
 
 /**

@@ -247,7 +247,7 @@ public final class DebugReflectionUtil {
         }
         catch (IllegalAccessException ignored) {
         }
-        catch (ExceptionInInitializerError | NoClassDefFoundError ignored) {
+        catch (LinkageError ignored) {
           // class initilisation (<clinit>) may still not be called, init can fail
         }
       }

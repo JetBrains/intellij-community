@@ -5,7 +5,7 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.intellij.build.impl.ModuleItem
 
 /**
- * Which independently cacheable slice of a dev distribution one assembly produces.
+ * Which independently cacheable slice of the distribution one assembly produces.
  *
  * A complete distribution is [COMPLETE] - one assembly, everything in it. Anything else is a fragment. No
  * distribution composes a fragment now: the fragments are the references of the `jars`, `replay` and `runtime-repo`
@@ -80,7 +80,7 @@ data class PlatformJarSelector(
     /**
      * Only [jars], and nothing else.
      *
-     * What the reference target of `./build/dev-dist.cmd jars` assembles: the same jars the other producer
+     * What the reference target of `./build/dist.cmd jars` assembles: the same jars the other producer
      * packs, packed the way `JarPackager` packs them, so the two can be compared byte for byte. It is composed into no
      * distribution.
      */

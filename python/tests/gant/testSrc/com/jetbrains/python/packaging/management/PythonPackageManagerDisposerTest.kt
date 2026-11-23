@@ -2,6 +2,7 @@
 package com.jetbrains.python.packaging.management
 
 import com.intellij.openapi.util.Disposer
+import com.intellij.python.sdk.backend.PythonInterpreter
 import com.intellij.python.sdk.backend.pythonInterpreterResultAsync
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
@@ -39,9 +40,9 @@ class PythonPackageManagerDisposerTest {
   fun `a fresh manager is absent from the Disposer tree`(): Unit = timeoutRunBlocking {
     val project = projectFixture.get()
     val sdk = PythonMockSdk.create("PY-90829 test SDK", tempDir.toString(), PythonSdkType.getInstance(), LanguageLevel.getLatest())
-    val interpreter = sdk.pythonInterpreterResultAsync().orThrow()
+    val interpreter = sdk.pythonInterpreterResultAsync(project).orThrow()
 
-    val manager = TestPythonPackageManager(project, interpreter)
+    val manager = TestPythonPackageManager(interpreter)
 
     Disposer.getTree().assertNoReferenceKeptInTree(manager)
   }

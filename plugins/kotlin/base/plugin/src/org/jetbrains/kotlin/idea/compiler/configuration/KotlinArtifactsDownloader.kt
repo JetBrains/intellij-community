@@ -142,8 +142,6 @@ object KotlinArtifactsDownloader {
         if (IdeKotlinVersion.get(version).isStandaloneCompilerVersion) KotlinPluginLayout.kotlincPath
         else KOTLIN_DIST_LOCATION_PREFIX_PATH.resolve(version)
 
-    fun getUnpackedKotlinDistPath(project: Project) = getUnpackedKotlinDistPath(KotlinJpsPluginSettings.jpsVersion(project))
-
     /**
      * @see lazyDownloadAndUnpackKotlincDist
      */
@@ -390,19 +388,15 @@ object KotlinArtifactsDownloader {
             "$artifactId should be one of $KOTLIN_JPS_PLUGIN_PLUGIN_ARTIFACT_ID, $KOTLIN_DIST_FOR_JPS_META_ARTIFACT_ID, " +
                     KOTLIN_BUILD_TOOLS_IMPL_ARTIFACT_ID
         }
-        val suggestions = listOf(KotlinBasePluginBundle.message("you.can.use.kotlin.compiler.which.is.bundled.into.your.ide")) +
-                FailedToDownloadJpsMavenArtifactSuggestedSolutionsContributor.getAllContributors(project).mapNotNull { it.getSuggestion() }
-        val suggestion = if (suggestions.size == 1) {
-            @Suppress("HardCodedStringLiteral") // Suppress because it's false positive
-            suggestions.single()
-        } else {
-            KotlinBasePluginBundle.message("suggested.solutions", suggestions.joinToString("\n") { "- $it" })
-        }
+        val suggestions = listOf(
+            KotlinBasePluginBundle.message("you.can.use.kotlin.compiler.which.is.bundled.into.your.ide"),
+            KotlinBasePluginBundle.message("you.can.check.that.the.remote.jar.repositories.contain.the.artifact"),
+        ) + FailedToDownloadJpsMavenArtifactSuggestedSolutionsContributor.getAllContributors(project).mapNotNull { it.getSuggestion() }
         return KotlinBasePluginBundle.message(
             "failed.to.download.unbundled.jps.maven.artifact",
             "$KOTLIN_MAVEN_GROUP_ID:$artifactId:$version",
             getMavenRepos(project).joinToString("\n") { it.url }.prependIndent()
-        ) + "\n\n" + suggestion
+        ) + "\n\n" + KotlinBasePluginBundle.message("suggested.solutions", suggestions.joinToString("\n") { "- $it" })
     }
 }
 
@@ -476,9 +470,8 @@ private fun openStream(artifactCoordinates: String): InputStream? {
 @get:ApiStatus.Internal
 val kotlinArtifactRepositoryCoordinates: List<String> by lazy(LazyThreadSafetyMode.PUBLICATION) {
     buildList {
-        add("https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies")
-        add("https://cache-redirector.jetbrains.com/intellij-dependencies")
-        add("https://cache-redirector.jetbrains.com/repo1.maven.org/maven2")
+        add("https://cache-redirector.jetbrains.com/maven/ultimate-public")
+        add("https://cache-redirector.jetbrains.com/maven-central")
 
         // This aims to cover tests when run both from sources and binaries, and the debug IDE in various configurations
         val isTestLikeRun = application.isUnitTestMode

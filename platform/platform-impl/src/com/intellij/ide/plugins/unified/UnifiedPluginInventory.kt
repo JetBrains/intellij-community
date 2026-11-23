@@ -11,7 +11,12 @@ internal data class UnifiedPluginInventory(
   val installedPlugins: List<UnifiedPluginInventoryItem>,
   val bundledPlugins: List<UnifiedPluginInventoryItem>,
   val unavailableSides: Set<PluginSource> = emptySet(),
-)
+  /** Plugins that any side marks as an implementation detail. Only the `/built-in` filter shows them. */
+  val implementationDetailPlugins: List<UnifiedPluginInventoryItem> = emptyList(),
+) {
+  val allPlugins: List<UnifiedPluginInventoryItem>
+    get() = installedPlugins + bundledPlugins + implementationDetailPlugins
+}
 
 internal data class UnifiedPluginInventoryItem(
   val model: PluginUiModel,
@@ -27,12 +32,11 @@ internal fun normalizePluginInventory(snapshot: PluginInventorySnapshot): Unifie
   val remotePlugins = normalizeSide(snapshot, PluginSource.REMOTE)
   val installed = ArrayList<UnifiedPluginInventoryItem>()
   val bundled = ArrayList<UnifiedPluginInventoryItem>()
+  val implementationDetails = ArrayList<UnifiedPluginInventoryItem>()
 
   for (pluginId in orderedPluginIds(localPlugins, remotePlugins)) {
     val local = localPlugins[pluginId]
     val remote = remotePlugins[pluginId]
-    if (local?.isImplementationDetail == true || remote?.isImplementationDetail == true) continue
-
     val item = UnifiedPluginInventoryItem(
       model = checkNotNull(local?.model ?: remote?.model),
       runtimeOn = presentSides(local?.hasRuntime == true, remote?.hasRuntime == true),
@@ -40,15 +44,18 @@ internal fun normalizePluginInventory(snapshot: PluginInventorySnapshot): Unifie
       bundledOn = presentSides(local?.isBundled == true, remote?.isBundled == true),
     )
     item.model.source = item.installedOn
-    if (item.bundledOn == null) {
-      installed.add(item)
-    }
-    else {
-      bundled.add(item)
+    when {
+      local?.isImplementationDetail == true || remote?.isImplementationDetail == true -> implementationDetails.add(item)
+      item.bundledOn == null -> installed.add(item)
+      else -> bundled.add(item)
     }
   }
 
-  return UnifiedPluginInventory(installedPlugins = installed, bundledPlugins = bundled)
+  return UnifiedPluginInventory(
+    installedPlugins = installed,
+    bundledPlugins = bundled,
+    implementationDetailPlugins = implementationDetails,
+  )
 }
 
 internal fun normalizePluginInventory(result: PluginInventoryLoadResult): UnifiedPluginInventory {

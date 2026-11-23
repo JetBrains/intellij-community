@@ -6,6 +6,9 @@
 //! options of the run with the JVM class-load log, the `--add-opens` lines of `OpenedPackages.txt` for this OS, `-classpath` with the entries of
 //! `core-classpath.txt`, and the main class of the dist config. Every path in it is a path of the generation.
 //!
+//! The IDE is its own responsible process on macOS, as an app that Launch Services starts, so the WebKit processes of its
+//! web views name its pid, see [`super::memory`].
+//!
 //! A run starts the IDE under a child context, waits for the event of its gate, holds, reads the FUS log, and quits the IDE
 //! through a second JVM with the program argument `exit`. When the IDE does not exit, the run cancels the child
 //! context, which sends SIGTERM to its process group, and then drops the spawn, which sends SIGKILL. The spawn
@@ -19,14 +22,16 @@ use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
 
 use anyhow::{Context, anyhow, bail};
 use avl_base::{Exit, Refusal};
+use avl_host_sys::proc::Responsibility;
 use avl_host_sys::{Ctx, ProcError, Runner, SpawnOptions};
 use serde::Deserialize;
 
-use super::arm::{Arm, ArmKind, Gate};
+use super::arm::{Arm, ArmKind, Gate, Property, Twin};
 use super::files;
 use super::fus;
+use super::memory::{self, MEMORY_FILE};
 use super::profile::{GATE_PROFILE, ProfileEvent, WHOLE_PROFILE};
-use super::record::{self, EDITOR_HIGHLIGHTED, LaunchFacts, RunKind, THREAD_DUMP_FILE};
+use super::record::{self, EDITOR_HIGHLIGHTED, FindScript, LaunchFacts, RunKind, THREAD_DUMP_FILE};
 use super::session::{CLASS_LOAD_LOG, ProjectPaths, Sandbox, TRACE_FILE};
 use super::stage::{DistConfig, Generation};
 use super::stats;
@@ -36,6 +41,9 @@ use super::trace;
 const POLL: Duration = Duration::from_millis(200);
 /// How long a run waits for its event.
 pub(crate) const EVENT_TIMEOUT: Duration = Duration::from_secs(180);
+/// How long a run of the find-in-files arm waits for its last search. The first search of a project can wait for the
+/// first index of accio, and a search without accio walks every file of the project.
+pub(crate) const FIND_TIMEOUT: Duration = Duration::from_mins(15);
 /// How long a run waits for the event of its gate after `startup-stats.json` appeared.
 const AFTER_REPORT_TIMEOUT: Duration = Duration::from_secs(20);
 /// How long a run of a span gate waits after `startup-stats.json` appeared, when the trace does not show the span yet.
@@ -89,8 +97,8 @@ const MEASURE_PROPERTIES: [&str; 8] = [
 /// The property that forces the modal welcome screen.
 pub(crate) const FORCE_MODAL_PROPERTY: &str = "idea.force.disable.non.modal.welcome.screen=true";
 
-/// The property of the `project` and `empty-editor` arms: the project of the command line is trusted, so no trust
-/// dialog stops a run.
+/// The property of the `project`, `empty-editor`, `cargo-sync` and `find-in-files` arms: the project of the command line is
+/// trusted, so no trust dialog stops a run.
 pub(crate) const TRUST_PROPERTY: &str = "idea.trust.all.projects=true";
 
 /// The properties of the cargo-sync arm that the context of `RustRoverIndexingTest` sets (`rustRoverVmOptions`) and
@@ -100,8 +108,15 @@ pub(crate) const CARGO_SYNC_PROPERTIES: [&str; 2] = [
     "org.rust.external.linter.on.the.fly=false",
 ];
 
-/// The property of a twin arm, see [`Arm::suppressed`]. The IDE reads it as a list of plugin ids at the start and loads
-/// none of them.
+/// The property of the performance plugin that names its script.
+pub(crate) const TEST_SCRIPT_PROPERTY: &str = "testscript.filename";
+
+/// The property of the performance plugin that runs the script once the project opened. Without it, the plugin waits
+/// for the smart mode, and JetBrains Light holds the dumb mode, so the script never starts there.
+pub(crate) const SCRIPT_AT_OPEN_PROPERTY: &str = "performance.execute.script.right.after.ide.opened=true";
+
+/// The property of a twin arm without a plugin, see [`Twin::Without`]. The IDE reads it as a list of plugin ids at the
+/// start and loads none of them.
 pub(crate) const SUPPRESSED_PLUGINS_PROPERTY: &str = "idea.suppressed.plugins.id";
 
 /// The file of the opened packages in a generation, a copy of
@@ -144,8 +159,8 @@ pub(crate) fn class_load_option(run_dir: &Path) -> Result<String, String> {
 }
 
 /// The options of a measured start, in order: the sandbox, the files of the run, the asynchronous log, see
-/// [`ASYNC_LOG_OPTIONS`], the class-load log, the properties, the arm, the suppressed plugin of a twin and the
-/// profiler. A run directory that the class-load log cannot name is an error, see [`class_load_option`]. The profiler
+/// [`ASYNC_LOG_OPTIONS`], the class-load log, the properties, the arm, the change of a twin and the profiler. The
+/// property of a twin comes after the properties of the bench, so it wins over a property of the same name. A run directory that the class-load log cannot name is an error, see [`class_load_option`]. The profiler
 /// starts with the JVM and writes [`WHOLE_PROFILE`] at the exit, unless the run stops it at the gate.
 pub(crate) fn measure_options(run_dir: &Path, sandbox: &Sandbox, arm: &Arm, profiler: Option<&Profiler>) -> Result<Vec<String>, String> {
     let mut options = sandbox_options(sandbox);
@@ -166,10 +181,17 @@ pub(crate) fn measure_options(run_dir: &Path, sandbox: &Sandbox, arm: &Arm, prof
             options.push(format!("-D{TRUST_PROPERTY}"));
             options.extend(CARGO_SYNC_PROPERTIES.iter().map(|property| format!("-D{property}")));
         }
+        ArmKind::FindInFiles => {
+            options.push(format!("-D{TRUST_PROPERTY}"));
+            options.push(property(TEST_SCRIPT_PROPERTY, &run_dir.join(record::FIND_SCRIPT_FILE)));
+            options.push(format!("-D{SCRIPT_AT_OPEN_PROPERTY}"));
+        }
         ArmKind::NonModal | ArmKind::OpenProject => {}
     }
-    if let Some(plugin) = &arm.suppressed {
-        options.push(format!("-D{SUPPRESSED_PLUGINS_PROPERTY}={plugin}"));
+    match &arm.twin {
+        Some(Twin::Without(plugin)) => options.push(format!("-D{SUPPRESSED_PLUGINS_PROPERTY}={plugin}")),
+        Some(Twin::With(property)) => options.push(format!("-D{property}")),
+        None => {}
     }
     if let Some(profiler) = profiler {
         options.push(DYNAMIC_AGENT_OPTION.to_owned());
@@ -218,6 +240,38 @@ pub(crate) struct RunPlan<'a> {
     pub(crate) project: Option<ProjectPaths>,
     /// The project that the running IDE opens in the `open-project` arm.
     pub(crate) open_project: Option<&'a Path>,
+    /// The queries of the `find-in-files` arm, in their order. Another arm has none.
+    pub(crate) queries: &'a [String],
+    /// The directory of the second pass of the `find-in-files` arm, relative to the project. A run without it searches
+    /// the project scope alone.
+    pub(crate) directory: Option<&'a Path>,
+}
+
+impl RunPlan<'_> {
+    /// The script of the `find-in-files` arm: the project directory of this run, the queries, and the directory of the
+    /// second pass below the project directory. `None` for another arm, and for a run without a project.
+    pub(crate) fn find_script(&self) -> Option<FindScript> {
+        if self.arm.kind != ArmKind::FindInFiles {
+            return None;
+        }
+        let project = self.project.as_ref()?;
+        Some(FindScript {
+            project: Some(project.dir.display().to_string()),
+            queries: self.queries.to_vec(),
+            directory: self.directory.map(|directory| {
+                // `.` is the project directory itself, without a trailing `/.` that the IDE would keep in the scope
+                let inner: PathBuf = directory
+                    .components()
+                    .filter(|component| *component != std::path::Component::CurDir)
+                    .collect();
+                if inner.as_os_str().is_empty() {
+                    project.dir.display().to_string()
+                } else {
+                    project.dir.join(inner).display().to_string()
+                }
+            }),
+        })
+    }
 }
 
 impl RunPlan<'_> {
@@ -460,7 +514,7 @@ pub(crate) struct Launcher {
     pub(crate) runner: Runner,
     pub(crate) java: PathBuf,
     pub(crate) repo_root: PathBuf,
-    /// The JVM options of the distribution: [`dist_options`].
+    /// The JVM options of the distribution, [`dist_options`], and the properties of the session.
     pub(crate) dist_options: Vec<String>,
     /// The tail of every argfile: [`entry_options`].
     pub(crate) entry_options: Vec<String>,
@@ -470,12 +524,15 @@ pub(crate) struct Launcher {
 
 impl Launcher {
     /// The launcher of a generation. A generation of another shape is a refusal that names the file.
+    /// `properties` are the properties of every run of the session, see [`super::options::LaunchArgs::properties`]. They come after the
+    /// options of the distribution and before the options of a run, so a property of the bench or of a twin wins.
     pub(crate) fn of(
         generation: &Generation,
         runner: Runner,
         repo_root: &Path,
         profiler: Option<Profiler>,
         hold: Duration,
+        properties: &[Property],
     ) -> Result<Self, Refusal> {
         let refuse = |error: anyhow::Error| {
             Refusal::new(
@@ -484,7 +541,8 @@ impl Launcher {
                 format!("the generation {} cannot start: {error:#}", generation.root.display()),
             )
         };
-        let dist_options = dist_options(&generation.home, &generation.config, repo_root).map_err(refuse)?;
+        let mut dist_options = dist_options(&generation.home, &generation.config, repo_root).map_err(refuse)?;
+        dist_options.extend(properties.iter().map(|property| format!("-D{property}")));
         let opened_packages = files::read_text(&generation.root.join(OPENED_PACKAGES_FILE)).map_err(refuse)?;
         let classpath = files::read_text(&generation.home.join("core-classpath.txt")).map_err(refuse)?;
         let entry_options = entry_options(&generation.home, &opened_packages, &classpath, &generation.config.main_class).map_err(refuse)?;
@@ -521,9 +579,9 @@ impl Launcher {
         }
     }
 
-    /// The ceiling of one IDE process: every wait of a run, and the hold.
-    fn ceiling(&self) -> Duration {
-        EVENT_TIMEOUT * 2 + self.hold + QUIT_TIMEOUT * 3 + TERM_TIMEOUT
+    /// The ceiling of one IDE process of `gate`: every wait of a run, and the hold.
+    fn ceiling(&self, gate: Gate) -> Duration {
+        gate_timeout(gate) + EVENT_TIMEOUT + self.hold + QUIT_TIMEOUT * 3 + TERM_TIMEOUT
     }
 
     /// Writes the FUS test scheme into the template with one headless run.
@@ -561,6 +619,13 @@ impl Launcher {
                 return facts;
             }
         };
+        let find_script = plan.find_script();
+        if let Some(script) = &find_script
+            && let Err(error) = files::write_text(&run_dir.join(record::FIND_SCRIPT_FILE), &script.text())
+        {
+            facts.failure = Some(format!("{error:#}"));
+            return facts;
+        }
         let argv = match self.argv(&run_dir.join("launch.args"), &options, &plan.program_arguments()) {
             Ok(argv) => argv,
             Err(error) => {
@@ -570,7 +635,10 @@ impl Launcher {
         };
         let child = Ctx::new(ctx.token().child_token());
         let log = run_dir.join("launch.log");
-        let spawn_options = self.logged(self.ceiling(), "bench_ide_ceiling");
+        let spawn_options = SpawnOptions {
+            responsibility: Responsibility::Own,
+            ..self.logged(self.ceiling(plan.arm.gate()), "bench_ide_ceiling")
+        };
         let started = Instant::now();
         let mut ide = Box::pin(self.runner.checked_to_file(&child, &argv, &log, &spawn_options));
         let mut collector = fus::Collector::default();
@@ -580,9 +648,18 @@ impl Launcher {
             Gate::Highlighted => wait_for_highlighted(ctx, &mut ide, run_dir, plan.kind == RunKind::Prime, &mut facts).await,
             Gate::Span { name, missing } => wait_for_span(ctx, &mut ide, run_dir, name, missing, &mut facts).await,
             Gate::LogLine { line, missing, .. } => wait_for_log_line(ctx, &mut ide, run_dir, line, missing, &mut facts).await,
+            Gate::FindInFiles => {
+                if let Some(script) = &find_script {
+                    wait_for_find_in_files(ctx, &mut ide, run_dir, &script.last_span(), &mut facts).await
+                } else {
+                    facts.failure = Some("the find-in-files arm has no project to search".to_owned());
+                    None
+                }
+            }
         };
         facts.waited_ms = u64::try_from(started.elapsed().as_millis()).unwrap_or(u64::MAX);
         if exited.is_none() && facts.failure.is_none() {
+            facts.memory_failure = sample_memory(run_dir).err();
             facts.thread_dump_failure = self.dump_threads(ctx, run_dir).await.err();
         }
         if exited.is_none()
@@ -620,12 +697,7 @@ impl Launcher {
         if !jcmd.is_file() {
             return Err("the JBR of the generation has no bin/jcmd".to_owned());
         }
-        let log = files::read_optional(&run_dir.join("log").join("idea.log"))
-            .ok()
-            .flatten()
-            .unwrap_or_default();
-        let pid = idea_log_pid(&log).ok_or_else(|| "log/idea.log names no PID".to_owned())?;
-        Ok((jcmd, pid))
+        Ok((jcmd, ide_pid(run_dir)?))
     }
 
     /// Stops the profiler of the running IDE when the run passed its gate, so [`GATE_PROFILE`] holds the start-up and
@@ -779,6 +851,24 @@ impl Launcher {
     }
 }
 
+/// The PID of the running IDE, which `log/idea.log` of `run_dir` names, see [`idea_log_pid`].
+fn ide_pid(run_dir: &Path) -> Result<u32, String> {
+    let log = files::read_optional(&run_dir.join("log").join("idea.log"))
+        .ok()
+        .flatten()
+        .unwrap_or_default();
+    idea_log_pid(&log).ok_or_else(|| "log/idea.log names no PID".to_owned())
+}
+
+/// Writes [`MEMORY_FILE`] with the memory of the IDE and of the processes that work for it, after the gate and before
+/// the thread dump, so the `jcmd` of the dump adds nothing to it. Answers why it could not: no PID, or a failed
+/// sample. The record makes that a note of the run.
+fn sample_memory(run_dir: &Path) -> Result<(), String> {
+    let pid = ide_pid(run_dir)?;
+    let sample = memory::take(pid).map_err(|error| format!("the memory sample of the IDE {pid} failed: {error:#}"))?;
+    files::write_json(&run_dir.join(MEMORY_FILE), &sample).map_err(|error| format!("{error:#}"))
+}
+
 fn interrupted_text() -> String {
     "the session was interrupted".to_owned()
 }
@@ -793,21 +883,45 @@ enum Check {
     Failed(String),
 }
 
-/// Runs `check` every [`POLL`] until it ends the wait, the IDE exits, the session is interrupted, or [`EVENT_TIMEOUT`]
-/// passes. An exit, an interrupt and the timeout set the failure: `event` names the awaited event in the failure of an
-/// exit, and `timed_out` is the failure of the timeout. Answers how the IDE ended when it exited.
+/// How long the wait for `gate` takes at most.
+pub(crate) const fn gate_timeout(gate: Gate) -> Duration {
+    match gate {
+        Gate::FindInFiles => FIND_TIMEOUT,
+        Gate::Welcome { .. } | Gate::Highlighted | Gate::Span { .. } | Gate::LogLine { .. } => EVENT_TIMEOUT,
+    }
+}
+
+/// [`poll_until_within`] [`EVENT_TIMEOUT`].
 async fn poll_until<F>(
     ctx: &Ctx,
     ide: &mut F,
     facts: &mut LaunchFacts,
     event: &str,
     timed_out: String,
+    check: impl FnMut(Instant) -> Check,
+) -> Option<Ended>
+where
+    F: Future<Output = Result<String, ProcError>> + Unpin,
+{
+    poll_until_within(ctx, ide, facts, event, timed_out, EVENT_TIMEOUT, check).await
+}
+
+/// Runs `check` every [`POLL`] until it ends the wait, the IDE exits, the session is interrupted, or `timeout` passes.
+/// An exit, an interrupt and the timeout set the failure: `event` names the awaited event in the failure of an exit,
+/// and `timed_out` is the failure of the timeout. Answers how the IDE ended when it exited.
+async fn poll_until_within<F>(
+    ctx: &Ctx,
+    ide: &mut F,
+    facts: &mut LaunchFacts,
+    event: &str,
+    timed_out: String,
+    timeout: Duration,
     mut check: impl FnMut(Instant) -> Check,
 ) -> Option<Ended>
 where
     F: Future<Output = Result<String, ProcError>> + Unpin,
 {
-    let deadline = Instant::now() + EVENT_TIMEOUT;
+    let deadline = Instant::now() + timeout;
     loop {
         tokio::select! {
             result = &mut *ide => {
@@ -971,6 +1085,23 @@ where
         } else {
             Check::Pending
         }
+    })
+    .await
+}
+
+/// Waits for the span `name` of the last search, an exit of the IDE, an interrupt or [`FIND_TIMEOUT`]. The performance
+/// plugin runs the searches one after another, so the last span ends after the others. An exit, an interrupt and the
+/// timeout set the failure.
+async fn wait_for_find_in_files<F>(ctx: &Ctx, ide: &mut F, run_dir: &Path, name: &str, facts: &mut LaunchFacts) -> Option<Ended>
+where
+    F: Future<Output = Result<String, ProcError>> + Unpin,
+{
+    let timed_out = format!(
+        "no {name} span within {} s: the IDE has no performance plugin, or a search did not finish",
+        FIND_TIMEOUT.as_secs()
+    );
+    poll_until_within(ctx, ide, facts, &format!("the {name} span ended"), timed_out, FIND_TIMEOUT, |_| {
+        if span_ended(run_dir, name) { Check::Done } else { Check::Pending }
     })
     .await
 }

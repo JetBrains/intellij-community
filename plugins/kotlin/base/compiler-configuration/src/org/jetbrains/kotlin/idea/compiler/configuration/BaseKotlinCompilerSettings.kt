@@ -21,7 +21,6 @@ import org.jetbrains.kotlin.cli.common.arguments.K2JSCompilerArguments
 import org.jetbrains.kotlin.cli.common.arguments.K2JsArgumentConstants
 import org.jetbrains.kotlin.cli.common.arguments.frozen
 import org.jetbrains.kotlin.cli.common.arguments.unfrozen
-import kotlin.reflect.KClass
 
 abstract class BaseKotlinCompilerSettings<T : Freezable> protected constructor(private val project: Project) :
     PersistentStateComponent<Element>, Cloneable {
@@ -84,11 +83,9 @@ abstract class BaseKotlinCompilerSettings<T : Freezable> protected constructor(p
         settings = settings.unfrozen().apply { changer() }
     }
 
-    protected fun validateInheritedFieldsUnchanged(settings: T) {
-        @Suppress("UNCHECKED_CAST")
-        val inheritedProperties = collectProperties(settings::class as KClass<T>, true)
-        val defaultInstance = createSettings()
-        val invalidFields = inheritedProperties.filter {
+    protected fun validateInheritedFieldsUnchanged(settings: CommonCompilerArguments) {
+        val defaultInstance = createSettings() as CommonCompilerArguments
+        val invalidFields = collectProperties(CommonCompilerArguments::class, inheritedOnly = false).filter {
             val currentValue = it.get(settings)
             !(currentValue.isEmptyArray() || currentValue == it.get(defaultInstance))
         }

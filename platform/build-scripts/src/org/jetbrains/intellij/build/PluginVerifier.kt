@@ -21,7 +21,7 @@ fun createPluginVerifier(
   exceptionHandler: (exception: String) -> Unit = {},
   errorHandler: (exception: String) -> Unit = {},
 ): PluginVerifier {
-  val url = "https://packages.jetbrains.team/maven/p/intellij-plugin-verifier/intellij-plugin-verifier/org/jetbrains/intellij/plugins/verifier-cli/$pluginVerifierVersion/verifier-cli-$pluginVerifierVersion-all.jar"
+  val url = "https://cache-redirector.jetbrains.com/maven/p/intellij-plugin-verifier/intellij-plugin-verifier/org/jetbrains/intellij/plugins/verifier-cli/$pluginVerifierVersion/verifier-cli-$pluginVerifierVersion-all.jar"
   val verifier = downloadFileToCacheLocation(url, COMMUNITY_ROOT)
   return PluginVerifier(
     verifierJar = verifier,

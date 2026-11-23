@@ -4,6 +4,7 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.fileEditor.FileEditorOpenRequest
 import com.intellij.openapi.fileTypes.PlainTextLanguage
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
@@ -38,7 +39,7 @@ internal class DumpDictionaryToFileAction : AnAction() {
       }
 
     val virtualFile = writeToFile(project, dictionaryWithFrequencies)
-    FileEditorManager.getInstance(project).openFile(virtualFile, true)
+    FileEditorManager.getInstance(project).requestOpenFile(virtualFile, FileEditorOpenRequest.withFocus(true))
   }
 
   fun writeToFile(project: Project, content: CharSequence): VirtualFile {

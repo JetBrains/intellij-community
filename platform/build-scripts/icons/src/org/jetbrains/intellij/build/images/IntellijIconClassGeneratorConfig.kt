@@ -198,7 +198,7 @@ class IntellijIconClassGeneratorConfig : IconClasses() {
       )
 
       // default name 'com.goide.GOIcons' clashes with existing 'com.goide.GoIcons'
-      "intellij.go.frontback" -> IntellijIconClassGeneratorModuleConfig(className = "GoGeneratedIcons", packageName = "com.goide")
+      "intellij.go.resources" -> IntellijIconClassGeneratorModuleConfig(className = "GoGeneratedIcons", packageName = "com.goide")
       "intellij.javascript.parser" -> IntellijIconClassGeneratorModuleConfig(
         className = "JavaScriptCoreIcons",
         packageName = "icons",

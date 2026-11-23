@@ -124,7 +124,6 @@ def _download_repo_impl(repository_ctx):
 
     # Reproducible even where the checksum was not known up front: every URL here carries its own
     # version, so the same URL is the same artifact, and the repo contents cache may share it.
-    # The one exception is `jetbrains_public_keys`, whose URL carries no version.
     return repository_ctx.repo_metadata(reproducible = all_downloads_pinned(files))
 
 download_repo = repository_rule(

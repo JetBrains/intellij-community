@@ -49,17 +49,46 @@ public final class VFileCreateEvent extends VFileEvent {
     ChildInfo @Nullable("null means children not available (e.g. the created file is not a directory) or unknown") [] children,
     boolean allChildren
   ) {
+    this(requestor, requireDirectory(parent), VirtualFileManager.getInstance().storeName(childName), isDirectory, attributes,
+         symlinkTarget, children, allChildren);
+  }
+
+  /**
+   * Creates the event for {@code childInfo}.
+   * The name id, the attributes, the symlink target and the children come from {@code childInfo}.
+   * The name id is not stored again.
+   */
+  @ApiStatus.Internal
+  public VFileCreateEvent(Object requestor, @NotNull VirtualFile parent, @NotNull ChildInfo childInfo, boolean isDirectory) {
+    this(requestor, requireDirectory(parent), childInfo.getNameId(), isDirectory, childInfo.getFileAttributes(), childInfo.getSymlinkTarget(),
+         childInfo.getChildren(), childInfo.isAllChildren());
+  }
+
+  private VFileCreateEvent(
+    Object requestor,
+    @NotNull VirtualFile parent,
+    int childNameId,
+    boolean isDirectory,
+    @Nullable FileAttributes attributes,
+    @Nullable String symlinkTarget,
+    ChildInfo @Nullable [] children,
+    boolean allChildren
+  ) {
     super(requestor);
-    if (!parent.isDirectory()) {
-      throw new IllegalArgumentException("parent[" + parent + "] must be directory");
-    }
     myParent = parent;
     myDirectory = isDirectory;
     myAttributes = attributes;
     mySymlinkTarget = symlinkTarget;
     myChildren = children;
     myAllChildren = children != null && allChildren;
-    myChildNameId = VirtualFileManager.getInstance().storeName(childName);
+    myChildNameId = childNameId;
+  }
+
+  private static @NotNull VirtualFile requireDirectory(@NotNull VirtualFile parent) {
+    if (!parent.isDirectory()) {
+      throw new IllegalArgumentException("parent[" + parent + "] must be directory");
+    }
+    return parent;
   }
 
   public @NotNull String getChildName() {

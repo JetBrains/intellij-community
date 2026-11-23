@@ -2,27 +2,34 @@
 package com.intellij.psi.html;
 
 import com.intellij.ide.highlighter.HtmlFileType;
-import com.intellij.psi.AbstractReparseTestCase;
+import com.intellij.psi.ReparseFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.intellij.util.IncorrectOperationException;
+import org.junit.jupiter.api.Test;
 
-public class HtmlReparseTest extends AbstractReparseTestCase {
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-    setFileType(HtmlFileType.INSTANCE);
-  }
+import static com.intellij.psi.ReparseFixtureKt.reparseFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
 
+@TestApplication
+public class HtmlReparseTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<ReparseFixture> reparseFixture = reparseFixture(projectFixture, HtmlFileType.INSTANCE);
+
+  @Test
   public void testReparseOnCompletion() throws IncorrectOperationException {
-    prepareFile("""
+    ReparseFixture reparse = reparseFixture.get();
+    reparse.prepareFile("""
                   <html>
                     <head>
                       <LINK REL="StyleSheet">
                     </head>
                     <body class=\"""", "\"></body>\n" +
                                        "</html>");
-    insert("Rulezz");
+    reparse.insert("Rulezz");
 
-    prepareFile("""
+    reparse.prepareFile("""
                   <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Frameset//EN">
                   <!-- saved from url=(0029)http://edu.uuu.com.tw/doclib/ -->
                   <HTML>
@@ -52,9 +59,9 @@ public class HtmlReparseTest extends AbstractReparseTestCase {
                           </FRAMESET>
                       </FRAMESET>
                   </HTML>""");
-    insert("Rulezz");
+    reparse.insert("Rulezz");
     
-    prepareFile("""
+    reparse.prepareFile("""
                   <html>
                   <head>
                     <script type="text/css">
@@ -64,11 +71,13 @@ public class HtmlReparseTest extends AbstractReparseTestCase {
                     </script>
                   </head>
                   <body\s""", "\n</html>");
-    insert("Rulezz");
+    reparse.insert("Rulezz");
   }
 
+  @Test
   public void testReparseOnTyping1() {
-    prepareFile(
+    ReparseFixture reparse = reparseFixture.get();
+    reparse.prepareFile(
       """
         <span jwcid="@Border">
         <form jwcid="@Form">
@@ -90,14 +99,18 @@ public class HtmlReparseTest extends AbstractReparseTestCase {
         </form>
         </span>""");
 
-    insert("aaa");
+    reparse.insert("aaa");
 
   }
+  @Test
   public void testReparseOnTypingTiny() {
-    prepareFile("<span><td></","></span>");
-    insert("aaa");
+    ReparseFixture reparse = reparseFixture.get();
+    reparse.prepareFile("<span><td></","></span>");
+    reparse.insert("aaa");
   }
+  @Test
   public void testReparseOnTyping() {
+    ReparseFixture reparse = reparseFixture.get();
     //prepareFile(
     //        "<html>\n" +
     //        "<body>\n" +
@@ -115,57 +128,65 @@ public class HtmlReparseTest extends AbstractReparseTestCase {
     //remove(1);
     //insert("\"");
 
-    prepareFile(
+    reparse.prepareFile(
       "<p>\n something\n",
       "</p>"
     );
     
-    insert("<div");
-    insert(" id");
-    insert("=");
+    reparse.insert("<div");
+    reparse.insert(" id");
+    reparse.insert("=");
 
-    insert("\"");
-    insert("\"");
-    insert("/");
-    insert(">");
+    reparse.insert("\"");
+    reparse.insert("\"");
+    reparse.insert("/");
+    reparse.insert(">");
   }
 
+  @Test
   public void testReparseOnTyping6() {
-    prepareFile(
+    ReparseFixture reparse = reparseFixture.get();
+    reparse.prepareFile(
       "<p>\n something\n",
       "</p>"
     );
 
-    insert("<div");
-    insert(" id=\"aaa\"");
-    insert("/");
-    insert(">");
+    reparse.insert("<div");
+    reparse.insert(" id=\"aaa\"");
+    reparse.insert("/");
+    reparse.insert(">");
   }
 
+  @Test
   public void testReparseOnTyping5() {
-    prepareFile("""
+    ReparseFixture reparse = reparseFixture.get();
+    reparse.prepareFile("""
                   <html>
                     <body>
                       <""", """
                   a></a>
                     </body>
                   </html>""");
-    insert("!--");
-    remove(3);
+    reparse.insert("!--");
+    reparse.remove(3);
   }
 
+  @Test
   public void testReparseOnTyping4() {
-    prepareFile(
+    ReparseFixture reparse = reparseFixture.get();
+    reparse.prepareFile(
             "<importbean>" +
             "<droplet>" +
             "<param value=\"bean:/meredith/SiteProperties.usingLightWeightVersion\"",
             "<td bgcolor=\"`request.getParameter(\"promoBGC1\")`\"></td>\n" +
             "</droplet>");
-    insert("/>");
+    reparse.insert("/>");
   }
 
+  @Test
   public void testReparseOnTyping3() {
-    prepareFile(
+    ReparseFixture reparse = reparseFixture.get();
+    reparse.prepareFile(
       """
         <span jwcid="@Border">
         <form jwcid="@Form">
@@ -187,20 +208,24 @@ public class HtmlReparseTest extends AbstractReparseTestCase {
         </form>
         </span>""");
 
-    insert("aaa");
+    reparse.insert("aaa");
   }
 
+  @Test
   public void testReparseOnTyping2() {
-    prepareFile("""
+    ReparseFixture reparse = reparseFixture.get();
+    reparse.prepareFile("""
                   <ul>
                   <li>
                   <li>
                   </""", "ul>");
-    insert("o");
-    remove(1);
+    reparse.insert("o");
+    reparse.remove(1);
   }
 
+  @Test
   public void testStackOverflowInEditOfErrorElement() throws IncorrectOperationException {
+    ReparseFixture reparse = reparseFixture.get();
     String errorStr1 = "<!-- My Comment In Error -->";
     String s = "<html>\n" +
                "<body>\n" +
@@ -227,13 +252,15 @@ public class HtmlReparseTest extends AbstractReparseTestCase {
     final int errorMarkerPos = s.indexOf(errorStr1);
     String s1 = s.substring(0,errorMarkerPos);
     String s2 = s.substring(errorMarkerPos);
-    prepareFile(s1,s2);
-    remove(errorStr1.length());
+    reparse.prepareFile(s1,s2);
+    reparse.remove(errorStr1.length());
   }
 
+  @Test
   public void testPaste() {
-    prepareFile("","");
-    insert("""
+    ReparseFixture reparse = reparseFixture.get();
+    reparse.prepareFile("","");
+    reparse.insert("""
              <html>
              <body><table>
              \t<tr>
@@ -261,7 +288,9 @@ public class HtmlReparseTest extends AbstractReparseTestCase {
              </html>""");
   }
   
+  @Test
   public void testEdit() {
+    ReparseFixture reparse = reparseFixture.get();
     String s = """
       <html>
       <body>
@@ -300,34 +329,34 @@ public class HtmlReparseTest extends AbstractReparseTestCase {
     markerPos = s.indexOf(marker);
     s1 = s.substring(0,markerPos);
     s2 = s.substring(markerPos);
-    prepareFile(s1,s2);
-    remove(marker.length());
+    reparse.prepareFile(s1,s2);
+    reparse.remove(marker.length());
 
     markerPos = s.indexOf(marker2) + marker2.length();
     s1 = s.substring(0,markerPos);
     s2 = s.substring(markerPos);
-    prepareFile(s1,s2);
+    reparse.prepareFile(s1,s2);
 
-    remove(marker2.length());
-    moveEditPointRight(marker.length());
-    insert(marker2);
-
-    markerPos = s.indexOf(marker,markerPos+marker2.length()) + marker.length();
-    setEditPoint(markerPos);
-    remove(marker.length());
-    moveEditPointRight(marker2.length());
-    insert(marker);
+    reparse.remove(marker2.length());
+    reparse.moveEditPointRight(marker.length());
+    reparse.insert(marker2);
 
     markerPos = s.indexOf(marker,markerPos+marker2.length()) + marker.length();
-    setEditPoint(markerPos);
-    remove(marker.length());
-    moveEditPointRight(marker2.length());
-    insert(marker);
+    reparse.setEditPoint(markerPos);
+    reparse.remove(marker.length());
+    reparse.moveEditPointRight(marker2.length());
+    reparse.insert(marker);
+
+    markerPos = s.indexOf(marker,markerPos+marker2.length()) + marker.length();
+    reparse.setEditPoint(markerPos);
+    reparse.remove(marker.length());
+    reparse.moveEditPointRight(marker2.length());
+    reparse.insert(marker);
 
     String NewMarker = "A-A";
     s = "<html><body><p id=1>AAAAA" + NewMarker + "<p id=3>BBBB</body></html>";
     markerPos = s.indexOf(NewMarker) + NewMarker.length();
-    prepareFile(s.substring(0,markerPos),s.substring(markerPos));
-    insert("<p id=2>ZZZZ");
+    reparse.prepareFile(s.substring(0,markerPos),s.substring(markerPos));
+    reparse.insert("<p id=2>ZZZZ");
   }
 }

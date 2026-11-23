@@ -3,8 +3,11 @@ package com.intellij.refactoring.rename.naming;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.usageView.UsageInfo;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -34,6 +37,19 @@ public interface AutomaticRenamerFactory {
   @Nullable
   @NlsContexts.Checkbox
   String getOptionName();
+
+  /**
+   * Returns the id of the option of {@link #getOptionName()} for a rename that has no rename dialog, such as the rename on the ModPlan
+   * engine. By default, it is the simple name of the class with a lowercase first letter. The factories with the same option name, such as
+   * the ones of several languages, override it to return the same id. It must match {@code [a-z][A-Za-z0-9]*}.
+   *
+   * @return the id; null if such a rename cannot turn the option on
+   */
+  @ApiStatus.Experimental
+  default @Nullable @NonNls String getOptionId() {
+    String simpleName = getClass().getSimpleName();
+    return simpleName.isEmpty() ? null : StringUtil.decapitalize(simpleName);
+  }
 
   /**
    * Returns true if this renamer factory is enabled (and the checkbox representing its state should be checked.)

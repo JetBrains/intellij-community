@@ -14,8 +14,6 @@ import org.jetbrains.annotations.ApiStatus
  */
 @ApiStatus.Internal
 interface PyInterpreterSelection {
-  /** The selected interpreter, or `null` when the panel has none selected. */
-  val selectedSdk: Sdk?
 
   /** Runs [listener] on the EDT whenever the selection changes. */
   fun onChange(listener: Runnable)

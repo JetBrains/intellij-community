@@ -1,12 +1,6 @@
 # New UI Icon Palette
 
-Canonical color palette used by New UI icons. Empirically derived from a full scan of `community/platform/icons/src/expui/` (~2000 light + ~2000 dark SVGs). When picking colors, always pull from this table; the IntelliJ icon engine recolors by exact-string match, so a one-off hue will fail to theme.
-
-## How to read the mapping
-
-- **Light** column is the color used in the default (light) SVG file: `foo.svg`.
-- **Dark** column is its replacement in the `_dark` partner: `foo_dark.svg`.
-- Always swap **all** light colors at once when generating the dark variant. Do not mix-and-match — the palette pairs are tuned for contrast.
+When picking colors, always pull from this table; the IntelliJ icon engine recolors by exact-string match, so a one-off hue will fail to theme.
 
 ## Neutrals (most icons need only these)
 
@@ -17,9 +11,7 @@ Canonical color palette used by New UI icons. Empirically derived from a full sc
 | Tertiary stroke (very faint)      | `#A8ADBD`   | `#9DA0A8`   |
 | Disabled / inert fill background  | `#EBECF0`   | `#43454A`   |
 | Background plate (rare)           | `#F0F1F2`   | `#5A5D63` / `#1E1F22` |
-| Plain white (status glyph only)   | `white`     | per-status muted (see below) |
-
-`#6C707E` ↔ `#CED0D6` is the single most-used pair across the entire icon set. If you only remember one pair, remember this one.
+| Plain white (status glyph only)   | `white`     | `white`; muted dark on a warm fill (see below) |
 
 ## Accent — Blue (primary action, info, default node)
 
@@ -37,8 +29,6 @@ Canonical color palette used by New UI icons. Empirically derived from a full sc
 | Stroke / fill       | `#DB3B4B`   | `#DB5C5C`   |
 | Soft background fill | `#FFF7F7`  | `#402929`   |
 | Status badge fill (error circle) | `#E55765` | `#DB5C5C` |
-
-The slightly different `#DB3B4B` (line / accent) vs `#E55765` (badge fill) split is intentional — the filled status circle is a touch more saturated than the line accent.
 
 ## Accent — Green (run, success, version-control add)
 
@@ -60,8 +50,6 @@ The slightly different `#DB3B4B` (line / accent) vs `#E55765` (badge fill) split
 | Brown / gold deep   | `#C27D04`   | `#D6AE58`   |
 | Muted dark glyph inside warning fill | n/a (uses `white`) | `#5E4D33` |
 
-The "white on yellow" combination is illegible in Dark theme; that's why the dark warning glyph uses `#5E4D33` (a deep brown). Apply the same idea — muted-dark glyph inside the warm fill — for any other warm-color badge in the dark theme.
-
 ## Accent — Purple (annotations, special / preview)
 
 | Role                | Light       | Dark        |
@@ -74,10 +62,8 @@ The "white on yellow" combination is illegible in Dark theme; that's why the dar
 
 | Role                                | Light/Dark          |
 |-------------------------------------|---------------------|
-| Inside-circle glyph (light status)  | `white`             |
 | Empty / placeholder                 | `#231F20` (avoid)   |
 | Tool window panel base (very rare)  | `#1E1F22` (dark)    |
-| Other repository-specific tints     | only when a sibling icon already uses them |
 
 If your icon needs a color that is not in this table, find a sibling icon that uses something similar and reuse its exact hex string. If no sibling uses it, change your design — do not introduce a new color.
 
@@ -112,7 +98,7 @@ If your icon needs a color that is not in this table, find a sibling icon that u
 #834DF0 -> #B589EC   purple
 #FAF5FF -> #2F2936   purple soft
 
-white   -> (status-glyph specific muted dark — see Orange/Yellow section)
+white   -> white (muted dark on a warm fill — see Orange/Yellow section)
 ```
 
 A script can do a literal find-and-replace using this map to produce a `_dark.svg` from a light SVG; review the result manually for any white-on-warm cases that need the muted-dark glyph treatment.

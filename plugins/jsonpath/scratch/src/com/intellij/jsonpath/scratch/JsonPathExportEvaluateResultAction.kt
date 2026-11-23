@@ -10,6 +10,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.fileEditor.FileEditorOpenRequest
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.DumbAwareAction
@@ -35,7 +36,8 @@ internal class JsonPathExportEvaluateResultAction : DumbAwareAction() {
 
           val fileEditorManager = FileEditorManager.getInstance(project)
           if (!fileEditorManager.isFileOpen(file)) {
-            fileEditorManager.openEditor(OpenFileDescriptor(project, file), true)
+            val descriptor = OpenFileDescriptor(project, file)
+            fileEditorManager.requestOpenEditor(descriptor, FileEditorOpenRequest.fromDescriptor(descriptor).withRequestFocus(true))
           }
         })
       }, JsonPathBundle.message("jsonpath.evaluate.progress.export.result"), false, project)

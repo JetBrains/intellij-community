@@ -1,10 +1,10 @@
-load("@jps_dynamic_deps_community//:targets.bzl", "dev_dist_plugin")
+load("@jps_dynamic_deps_community//:targets.bzl", "dist_plugin")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
-load("//platform/build-scripts/bazel-rules:dev_plugin_remainder.bzl", "dev_dist_complex_plugin")
+load("//platform/build-scripts/bazel-rules:dev_plugin_remainder.bzl", "dist_complex_plugin")
 load(":downloads_test.bzl", "downloads_test_suite")
 
 ### auto-generated section `dev intellij.jcef.plugin` start
-dev_dist_plugin(
+dist_plugin(
     content_modules = [
         # do not sort,
         "intellij.libraries.jcef",
@@ -26,7 +26,7 @@ dev_dist_plugin(
     ],
 )
 
-dev_dist_complex_plugin(
+dist_complex_plugin(
     artifact_inputs = {
         "//plugins/jcef/plugin:plugin.jar": "intellij.jcef.plugin",
     },

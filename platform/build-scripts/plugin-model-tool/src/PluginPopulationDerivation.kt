@@ -3,7 +3,7 @@
 
 package com.intellij.platform.buildScripts.pluginModelTool
 
-import com.intellij.platform.distributionContent.DevDistPlatformJars
+import com.intellij.platform.distributionContent.DistPlatformJars
 import com.intellij.platform.distributionContent.NonBundledPluginRow
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.intellij.build.ModuleOutputProvider
@@ -28,20 +28,20 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.LongAdder
 
 /**
- * The plugins the split dev distribution of IDEA Ultimate offers on demand without bundling them.
+ * The plugins the split distribution of IDEA Ultimate offers on demand without bundling them.
  *
  * The plan generator states the same list in its split-distribution config. The list is here too, so that a reader
  * without the tool's module derives the same population.
  */
-val DEV_DIST_ON_DEMAND_PLUGIN_MODULES: Set<String> = setOf("intellij.devkit")
+val DIST_ON_DEMAND_PLUGIN_MODULES: Set<String> = setOf("intellij.devkit")
 
 /** Derives the platform jars and published plugins once for each discovered product. */
 @ApiStatus.Internal
-fun deriveDevDistPlatformJars(
+fun deriveDistPlatformJars(
   products: List<DiscoveredProduct>,
   outputProvider: ModuleOutputProvider,
-): DevDistPlatformJars {
-  return deriveDevDistPlatformJars(
+): DistPlatformJars {
+  return deriveDistPlatformJars(
     products = products.mapNotNull { product -> (product.properties as? ProductProperties)?.let { product.name to it } }.toMap(),
     outputProvider = outputProvider,
   )
@@ -59,10 +59,10 @@ private const val PRODUCT_DERIVATION_CONCURRENCY = 6
  * The products are derived beside each other, and the rows keep the order of [products].
  */
 @ApiStatus.Internal
-fun deriveDevDistPlatformJars(
+fun deriveDistPlatformJars(
   products: Map<String, ProductProperties>,
   outputProvider: ModuleOutputProvider,
-): DevDistPlatformJars {
+): DistPlatformJars {
   // Every product walks the whole project for a plugin descriptor, and the answer of that walk is the same for each
   // of them. One cache for the derivation turns 22 walks over the file system into one.
   val descriptorFiles = PluginDescriptorFileCache(outputProvider)
@@ -76,7 +76,7 @@ fun deriveDevDistPlatformJars(
       )
     }
   }
-  return DevDistPlatformJars(
+  return DistPlatformJars(
     platformJars = rowsByProduct.flatMap { it.rows.jars },
     platformLibraries = rowsByProduct.flatMap { it.rows.libraries },
     platformMergedLibraries = rowsByProduct.flatMap { it.rows.mergedLibraries },
@@ -168,7 +168,7 @@ class DerivedPluginJars(
 }
 
 /**
- * The plugins the dev distribution states content for: the population of the derivation.
+ * The plugins the distribution states content for: the population of the derivation.
  *
  * The population includes bundled plugins, published plugins, and [extraPopulation].
  * [platformJars] supplies compatible published plugins from source derivation. Names absent from the project are excluded.
@@ -177,7 +177,7 @@ class DerivedPluginJars(
 fun derivePluginPopulation(
   products: List<ProductProperties>,
   extraPopulation: Set<String>,
-  platformJars: DevDistPlatformJars,
+  platformJars: DistPlatformJars,
   outputProvider: ModuleOutputProvider,
 ): Set<String> {
   val population = TreeSet<String>()
@@ -241,7 +241,7 @@ private fun reportPluginPackingStats(span: Span, start: Instant, stats: PluginPa
 fun derivePluginJars(
   products: List<ProductProperties>,
   extraPopulation: Set<String>,
-  platformJars: DevDistPlatformJars,
+  platformJars: DistPlatformJars,
   outputProvider: ModuleOutputProvider,
 ): DerivedPluginJars {
   val layoutsByMainModule = TreeMap<String, MutableList<PluginLayout>>()

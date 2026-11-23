@@ -17,87 +17,121 @@ package com.intellij.java.codeInsight.completion;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.completion.CompletionType;
-import com.intellij.codeInsight.completion.LightFixtureCompletionTestCase;
+import com.intellij.codeInsight.completion.LightCompletionFixture;
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupElementPresentation;
-import com.intellij.testFramework.LightProjectDescriptor;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.platform.testFramework.junit5.codeInsight.indexing.IndexingModeTemplate;
+import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.NeedsIndex;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.junit.jupiter.api.Test;
 
-public class SmartType17CompletionTest extends LightFixtureCompletionTestCase {
-  @Override
-  protected String getTestDataPath() {
-    return JavaTestUtil.getJavaTestDataPath() + "/codeInsight/completion/smartType/";
+import static com.intellij.codeInsight.completion.LightCompletionFixtureKt.lightCompletionFixture;
+import static com.intellij.codeInsight.completion.LightCompletionFixtureKt.lightCompletionProjectFixture;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
+@TestApplication
+@IndexingModeTemplate
+public class SmartType17CompletionTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightCompletionProjectFixture(LightJavaCodeInsightFixtureTestCase.JAVA_1_7);
+  private final TestFixture<LightCompletionFixture> completion =
+    lightCompletionFixture(projectFixture, JavaTestUtil.getJavaTestDataPath() + "/codeInsight/completion/smartType/");
+
+  private void complete() {
+    LightJavaCodeInsightTestFixture myFixture = completion.get().getFixture();
+    EdtTestUtil.runInEdtAndWait(() -> {
+      completion.get().setItems(myFixture.complete(CompletionType.SMART));
+    });
   }
 
-  @Override
-  protected void complete() {
-    myItems = myFixture.complete(CompletionType.SMART);
+  private void configureByFile(String path) {
+    LightJavaCodeInsightTestFixture myFixture = completion.get().getFixture();
+    EdtTestUtil.runInEdtAndWait(() -> {
+      myFixture.configureFromExistingVirtualFile(myFixture.copyFileToProject(path, StringUtil.getShortName(path, '/')));
+      complete();
+    });
   }
 
-  @NotNull
-  @Override
-  protected LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_1_7;
-  }
-
+  @Test
   public void testDiamondCollapsed() {
     doTest();
   }
 
+  @Test
   @NeedsIndex.ForStandardLibrary
   public void testDiamondCollapsedWithMethodTypeParameter() {
     doTest();
   }
 
+  @Test
   public void testDiamondCollapsedWithOverloadedConstructors() {
     doTest();
   }
 
+  @Test
   public void testDiamondNotCollapsed() {
     doTest();
   }
 
+  @Test
   @NeedsIndex.ForStandardLibrary
   public void testDiamondNotCollapsedNotApplicable() {
     doTest();
   }
 
+  @Test
   @NeedsIndex.SmartMode(reason = "For now ConstructorInsertHandler.createOverrideRunnable doesn't work in dumb mode")
   public void testDiamondNotCollapsedInCaseOfAnonymousClasses() {
     doTest();
   }
 
+  @Test
   @NeedsIndex.ForStandardLibrary
   public void testDiamondNotCollapsedInCaseOfInapplicableInference() {
     doTest();
   }
 
+  @Test
   public void testTryWithResourcesNoSemicolon() { doTest(); }
 
+  @Test
   @NeedsIndex.ForStandardLibrary
   public void testTryWithResourcesThrowsException() {
-    configureByFile("/" + getTestName(false) + ".java");
-    myFixture.type('\n');
-    checkResultByFile("/" + getTestName(false) + "-out.java");
+    LightJavaCodeInsightTestFixture myFixture = completion.get().getFixture();
+    EdtTestUtil.runInEdtAndWait(() -> {
+      configureByFile("/" + myFixture.getTestName(false) + ".java");
+      myFixture.type('\n');
+      completion.get().checkResultByFile("/" + myFixture.getTestName(false) + "-out.java");
+    });
   }
 
+  @Test
   public void testDiamondPresentation() {
-    configureByFile("/" + getTestName(false) + ".java");
-    LookupElementPresentation presentation = new LookupElementPresentation();
-    myItems[0].renderElement(presentation);
-    assertEquals("MyDD<>", presentation.getItemText());
+    LightJavaCodeInsightTestFixture myFixture = completion.get().getFixture();
+    EdtTestUtil.runInEdtAndWait(() -> {
+      configureByFile("/" + myFixture.getTestName(false) + ".java");
+      LookupElementPresentation presentation = new LookupElementPresentation();
+      completion.get().getItems()[0].renderElement(presentation);
+      assertEquals("MyDD<>", presentation.getItemText());
+    });
   }
-
 
   private void doTest() {
-    configureByFile("/" + getTestName(false) + ".java");
-    if (myItems != null && myItems.length == 1) {
-      final Lookup lookup = getLookup();
-      if (lookup != null) {
-        selectItem(lookup.getCurrentItem(), Lookup.NORMAL_SELECT_CHAR);
+    LightJavaCodeInsightTestFixture myFixture = completion.get().getFixture();
+    EdtTestUtil.runInEdtAndWait(() -> {
+      configureByFile("/" + myFixture.getTestName(false) + ".java");
+      if (completion.get().getItems() != null && completion.get().getItems().length == 1) {
+        final Lookup lookup = completion.get().getLookup();
+        if (lookup != null) {
+          completion.get().selectItem(lookup.getCurrentItem(), Lookup.NORMAL_SELECT_CHAR);
+        }
       }
-    }
-    checkResultByFile("/" + getTestName(false) + "-out.java");
+      completion.get().checkResultByFile("/" + myFixture.getTestName(false) + "-out.java");
+    });
   }
 }

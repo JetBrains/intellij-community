@@ -24,6 +24,11 @@ public final class AutomaticVariableRenamerFactory implements AutomaticRenamerFa
   }
 
   @Override
+  public @NotNull String getOptionId() {
+    return "renameVariables";
+  }
+
+  @Override
   public boolean isEnabled() {
     return JavaRefactoringSettings.getInstance().isToRenameVariables();
   }

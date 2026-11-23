@@ -1,23 +1,38 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.k2.inspections.quickfix
 
+import com.intellij.openapi.application.EDT
 import com.intellij.testFramework.TestDataPath
+import com.intellij.testFramework.common.timeoutRunBlocking
+import com.intellij.testFramework.fixtures.lightJavaProjectFixture
+import com.intellij.testFramework.junit5.TestApplication
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.jetbrains.idea.devkit.DevKitBundle
-import org.jetbrains.idea.devkit.inspections.quickfix.SimplifiableServiceRetrievingInspectionTestBase
+import org.jetbrains.idea.devkit.inspections.quickfix.simplifiableServiceRetrievingFixture
 import org.jetbrains.idea.devkit.kotlin.DevkitKtTestsUtil
 import org.jetbrains.kotlin.idea.test.ConfigLibraryUtil
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 
 @TestDataPath("\$CONTENT_ROOT/testData/inspections/simplifiableServiceRetrieving")
-internal class KtSimplifiableServiceRetrievingInspectionTest : SimplifiableServiceRetrievingInspectionTestBase() {
-  override fun setUp() {
-    super.setUp()
-    ConfigLibraryUtil.configureKotlinRuntime(module)
+@TestApplication
+internal class KtSimplifiableServiceRetrievingInspectionTest {
+  companion object {
+    private val projectFixture = lightJavaProjectFixture()
   }
 
-  override fun getBasePath() = DevkitKtTestsUtil.TESTDATA_PATH + "inspections/simplifiableServiceRetrieving/"
+  private val simplifiable by simplifiableServiceRetrievingFixture(projectFixture, "kt", DevkitKtTestsUtil.TESTDATA_PATH + "inspections/simplifiableServiceRetrieving/")
+  private val myFixture get() = simplifiable.fixture
 
-  override fun getFileExtension() = "kt"
+  @BeforeEach
+  fun setUp(): Unit = timeoutRunBlocking {
+    withContext(Dispatchers.EDT) {
+      ConfigLibraryUtil.configureKotlinRuntime(myFixture.module)
+    }
+  }
 
+  @Test
   fun testReplaceWithGetInstanceApplicationLevel() {
     myFixture.addClass(
       """
@@ -31,9 +46,10 @@ internal class KtSimplifiableServiceRetrievingInspectionTest : SimplifiableServi
         }
       }
       """)
-    doTest(DevKitBundle.message("inspection.simplifiable.service.retrieving.replace.with", "MyService", "getInstance"))
+    simplifiable.doTest(DevKitBundle.message("inspection.simplifiable.service.retrieving.replace.with", "MyService", "getInstance"))
   }
 
+  @Test
   fun testReplaceWithGetInstanceProjectLevel() {
     myFixture.addClass(
       """
@@ -48,41 +64,50 @@ internal class KtSimplifiableServiceRetrievingInspectionTest : SimplifiableServi
         }
       }
       """)
-    doTest(DevKitBundle.message("inspection.simplifiable.service.retrieving.replace.with", "MyService", "getInstance"))
+    simplifiable.doTest(DevKitBundle.message("inspection.simplifiable.service.retrieving.replace.with", "MyService", "getInstance"))
   }
 
+  @Test
   fun testTooGenericGetInstanceReturnType() {
-    doTest()
+    simplifiable.doTest()
   }
 
+  @Test
   fun testPropertyWithGetterRetrievingService() {
-    doTest()
+    simplifiable.doTest()
   }
 
+  @Test
   fun testNullableGetInstanceMethod() {
-    doTest()
+    simplifiable.doTest()
   }
 
+  @Test
   fun testReturnTypeHasTypeParam() {
-    doTest(DevKitBundle.message("inspection.simplifiable.service.retrieving.replace.with", "MyAppService", "getInstance"))
+    simplifiable.doTest(DevKitBundle.message("inspection.simplifiable.service.retrieving.replace.with", "MyAppService", "getInstance"))
   }
 
+  @Test
   fun testGetInstanceServicesKtMethodsNoWarnings() {
     doTestWithServicesKt()
   }
 
+  @Test
   fun testServicesKtMethodsCallsNoWarnings() {
     doTestWithServicesKt()
   }
 
+  @Test
   fun testServiceKtMethods() {
     doTestWithServiceKt()
   }
 
+  @Test
   fun testSafeCall() {
     doTestWithServicesKt()
   }
 
+  @Test
   fun testJvmName() {
     myFixture.addFileToProject(
       "JvmPlatformAnnotations.kt",
@@ -93,11 +118,12 @@ internal class KtSimplifiableServiceRetrievingInspectionTest : SimplifiableServi
         actual annotation class JvmName(actual val name: String)
       """
     )
-    doTest(DevKitBundle.message("inspection.simplifiable.service.retrieving.replace.with", "MyAppService", "getInstance"))
+    simplifiable.doTest(DevKitBundle.message("inspection.simplifiable.service.retrieving.replace.with", "MyAppService", "getInstance"))
   }
 
+  @Test
   fun testReturnExpressionOfNullableMethod() {
-    doTest()
+    simplifiable.doTest()
   }
 
   private fun doTestWithServicesKt() {
@@ -113,7 +139,7 @@ internal class KtSimplifiableServiceRetrievingInspectionTest : SimplifiableServi
       inline fun <reified T : Any> ComponentManager.serviceIfCreated(): T? {}
       inline fun <reified T : Any> ComponentManager.serviceOrNull(): T? {}
     """)
-    doTest()
+    simplifiable.doTest()
   }
 
   private fun doTestWithServiceKt() {
@@ -127,6 +153,6 @@ internal class KtSimplifiableServiceRetrievingInspectionTest : SimplifiableServi
       inline fun <reified T : Any> serviceIfCreated(): T? {}
       inline fun <reified T : Any> serviceOrNull(): T? {}
     """)
-    doTest()
+    simplifiable.doTest()
   }
 }

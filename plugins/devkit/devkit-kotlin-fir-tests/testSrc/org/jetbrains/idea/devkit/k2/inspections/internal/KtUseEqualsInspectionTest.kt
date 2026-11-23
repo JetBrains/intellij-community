@@ -2,28 +2,36 @@
 package org.jetbrains.idea.devkit.k2.inspections.internal
 
 import com.intellij.testFramework.TestDataPath
-import org.jetbrains.idea.devkit.inspections.internal.UseEqualsInspectionTestBase
+import com.intellij.testFramework.junit5.TestApplication
 import org.jetbrains.idea.devkit.inspections.internal.UsePluginIdEqualsInspection
 import org.jetbrains.idea.devkit.inspections.internal.UsePrimitiveTypesEqualsInspection
 import org.jetbrains.idea.devkit.inspections.internal.UseVirtualFileEqualsInspection
+import org.jetbrains.idea.devkit.inspections.internal.useEqualsFixture
+import org.jetbrains.idea.devkit.inspections.pluginModuleProjectFixture
 import org.jetbrains.idea.devkit.kotlin.DevkitKtTestsUtil
+import org.junit.jupiter.api.Test
 
 @TestDataPath("\$CONTENT_ROOT/testData/inspections/internal")
-class KtUseEqualsInspectionTest : UseEqualsInspectionTestBase() {
-
-    
-
-  override fun getBasePath() = DevkitKtTestsUtil.TESTDATA_PATH + "inspections/internal"
-
-  override fun testVirtualFile() {
-    doTest(UseVirtualFileEqualsInspection::class.java, "VirtualFile.kt")
+@TestApplication
+class KtUseEqualsInspectionTest {
+  companion object {
+    private val projectFixture = pluginModuleProjectFixture()
   }
 
-  override fun testPluginId() {
-    doTest(UsePluginIdEqualsInspection::class.java, "PluginId.kt")
+  private val useEquals by useEqualsFixture(projectFixture, DevkitKtTestsUtil.TESTDATA_PATH + "inspections/internal")
+
+  @Test
+  fun testVirtualFile() {
+    useEquals.doTest(UseVirtualFileEqualsInspection::class.java, "VirtualFile.kt")
   }
 
-  override fun testPrimitiveTypes() {
-    doTest(UsePrimitiveTypesEqualsInspection::class.java, "PsiType.kt")
+  @Test
+  fun testPluginId() {
+    useEquals.doTest(UsePluginIdEqualsInspection::class.java, "PluginId.kt")
+  }
+
+  @Test
+  fun testPrimitiveTypes() {
+    useEquals.doTest(UsePrimitiveTypesEqualsInspection::class.java, "PsiType.kt")
   }
 }

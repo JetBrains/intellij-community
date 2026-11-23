@@ -31,6 +31,7 @@ import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileEditor.FileEditorOpenRequest;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
@@ -139,7 +140,7 @@ public final class RunIdeConsoleAction extends DumbAwareAction {
       VirtualFile virtualFile = IdeConsoleRootType.getInstance().findFile(project, pathName, ScratchFileService.Option.create_if_missing);
       if (virtualFile != null) {
         virtualFile.putUserData(SELECTED_ENGINE_INFO_KEY, info);
-        FileEditorManager.getInstance(project).openFile(virtualFile, true);
+        FileEditorManager.getInstance(project).requestOpenFile(virtualFile, FileEditorOpenRequest.withFocus(true));
       }
     }
     catch (IOException ex) {

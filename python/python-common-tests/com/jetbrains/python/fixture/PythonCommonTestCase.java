@@ -1,6 +1,8 @@
 package com.jetbrains.python.fixture;
 
 import com.intellij.application.options.CodeStyle;
+import com.intellij.python.sdk.backend.PythonInterpreterExtKt;
+import com.intellij.python.sdk.backend.PythonInterpreter;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -8,9 +10,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
-import com.intellij.python.sdk.backend.PythonInterpreter;
 import com.intellij.python.sdk.backend.PythonInterpreterDetails;
-import com.intellij.python.sdk.backend.PythonInterpreterExtKt;
 import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.PythonTestUtil;
 import com.jetbrains.python.documentation.PyDocumentationSettings;
@@ -129,7 +129,7 @@ public abstract class PythonCommonTestCase extends TestCase {
   protected void assertSdkRootsNotParsed(@NotNull PsiFile currentFile) {
     final PythonInterpreter interpreter = myFixture.getPythonInterpreter();
     assertNotNull(interpreter);
-    for (VirtualFile root : PythonInterpreterExtKt.classRoots(interpreter, myFixture.getProject())) {
+    for (VirtualFile root : PythonInterpreterExtKt.getClassRoots(interpreter)) {
       assertRootNotParsed(currentFile, root, null);
     }
   }

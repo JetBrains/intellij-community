@@ -4,3 +4,10 @@ f:com.jetbrains.python.run.EnvFileComponent$Companion
 - f:createEnvFilesFragment(com.intellij.openapi.project.Project,kotlin.jvm.functions.Function0):com.intellij.execution.ui.SettingsEditorFragment
 f:com.jetbrains.python.run.EnvironmentFilePathTextFieldWithBrowseButton
 - <init>(com.intellij.openapi.project.Project,kotlin.jvm.functions.Function0):V
+com.jetbrains.python.run.PythonCommandLineEnvironmentProvider
+- a:extendEnvironment(com.intellij.openapi.project.Project,com.intellij.execution.configurations.GeneralCommandLine,com.jetbrains.python.run.PythonRunParams):V
+a:com.jetbrains.python.run.PythonCommandLineState
+- s:createPythonCommandLine(com.intellij.openapi.project.Project,com.jetbrains.python.run.PythonRunParams,Z,Z):com.intellij.execution.configurations.GeneralCommandLine
+- ps:initEnvironment(com.intellij.openapi.project.Project,com.intellij.execution.configurations.GeneralCommandLine,com.jetbrains.python.run.PythonRunParams,Z):V
+f:com.jetbrains.python.sdk.PythonSdkType
+- allowCreationByUser():Z

@@ -5,6 +5,7 @@ import com.intellij.java.JavaBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.JComponent;
@@ -35,14 +36,23 @@ public class GenerateGetterHandler extends GenerateGetterSetterHandlerBase {
   @Override
   protected GenerationInfo[] generateMemberPrototypes(PsiClass aClass, ClassMember original) throws IncorrectOperationException {
     if (aClass == null) return GenerationInfo.EMPTY_ARRAY;
+    return generateGetters(aClass, original, getOptions());
+  }
+
+  /**
+   * @return the getters of the member that the class does not have yet
+   */
+  static GenerationInfo @NotNull [] generateGetters(@NotNull PsiClass aClass,
+                                                    @NotNull ClassMember original,
+                                                    @NotNull GetterSetterGenerationOptions options) throws IncorrectOperationException {
     if (original instanceof PropertyClassMember propertyClassMember) {
-      final GenerationInfo[] getters = propertyClassMember.generateGetters(aClass, getOptions());
+      final GenerationInfo[] getters = propertyClassMember.generateGetters(aClass, options);
       if (getters != null) {
         return getters;
       }
     }
     else if (original instanceof EncapsulatableClassMember encapsulatableClassMember) {
-      final GenerationInfo getter = encapsulatableClassMember.generateGetter(getOptions());
+      final GenerationInfo getter = encapsulatableClassMember.generateGetter(options);
       if (getter != null) {
         return new GenerationInfo[]{getter};
       }

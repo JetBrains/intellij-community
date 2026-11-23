@@ -535,6 +535,10 @@ public final class CaretModelImpl implements CaretModel, PrioritizedDocumentList
     return true;
   }
 
+  /**
+   * Runs the action and merges overlapping carets after successful completion. Nested calls reuse the outer operation.
+   * With snapshot caret storage, the outer operation batches caret markers and also batches fold markers for multiple carets.
+   */
   void doWithCaretMerging(@NotNull Runnable runnable) {
     ThreadingAssertions.assertEventDispatchThread();
     if (performCaretMergingAfterCurrentOperation) {
@@ -542,7 +546,15 @@ public final class CaretModelImpl implements CaretModel, PrioritizedDocumentList
     } else {
       performCaretMergingAfterCurrentOperation = true;
       try {
-        runnable.run();
+        if (snapshotMarkerStorage == null) {
+          runnable.run();
+        }
+        else if (allCarets.size() > 1) {
+          editor.getFoldingModel().runBatchMarkerOperation(() -> snapshotMarkerStorage.runInBatch(runnable));
+        }
+        else {
+          snapshotMarkerStorage.runInBatch(runnable);
+        }
         mergeOverlappingCaretsAndSelections();
       } finally {
         performCaretMergingAfterCurrentOperation = false;

@@ -140,6 +140,41 @@ internal class UnifiedPluginLocalDataProviderTest {
   }
 
   @Test
+  fun `implementation detail plugins get items by their section`() {
+    val regular = inventoryItem("regular.plugin", "Regular", runtimeOn = PluginSource.LOCAL)
+    val installedDetail = inventoryItem("installed.detail", "Installed Detail", runtimeOn = PluginSource.LOCAL)
+    val bundledDetail = inventoryItem(
+      "bundled.detail",
+      "Bundled Detail",
+      runtimeOn = PluginSource.LOCAL,
+      bundledOn = PluginSource.LOCAL,
+    )
+    val inventory = UnifiedPluginInventory(
+      installedPlugins = listOf(regular),
+      bundledPlugins = emptyList(),
+      implementationDetailPlugins = listOf(installedDetail, bundledDetail),
+    )
+
+    val snapshot = buildLocalSnapshot(
+      inventory = inventory,
+      updates = null,
+      contentRevision = 1,
+      enabledStates = inventory.allPlugins.associate { it.model.pluginId to true },
+      errors = emptyMap(),
+      installationStates = emptyMap(),
+      restrictions = emptyMap(),
+    )
+
+    assertThat(snapshot.installedItems.map { it.pluginId.idString }).containsExactly("regular.plugin")
+    assertThat(snapshot.bundledItems).isEmpty()
+    assertThat(snapshot.implementationDetailItems.mapValues { (_, items) -> items.map { it.pluginId.idString } }).isEqualTo(
+      mapOf(PluginSectionId.Installed to listOf("installed.detail"), PluginSectionId.Bundled to listOf("bundled.detail"))
+    )
+    assertThat(snapshot.listModelData.installedModels.keys.map { it.idString })
+      .containsExactlyInAnyOrder("regular.plugin", "installed.detail", "bundled.detail")
+  }
+
+  @Test
   fun `local snapshot assigns bundled categories and normalizes a missing category`() {
     val installedModel = plugin("installed.plugin", "Installed").apply { displayCategory = "Productivity" }
     val installed = UnifiedPluginInventoryItem(

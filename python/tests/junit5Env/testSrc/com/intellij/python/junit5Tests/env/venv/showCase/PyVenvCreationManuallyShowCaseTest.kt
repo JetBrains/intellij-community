@@ -1,13 +1,11 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.python.junit5Tests.env.venv.showCase
 
-import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.python.sdk.backend.PythonInterpreter
 import com.intellij.python.community.execService.Args
 import com.intellij.python.community.execService.ExecService
 import com.intellij.python.junit5Tests.framework.env.PyEnvTestCase
 import com.intellij.python.junit5Tests.framework.env.PythonBinaryPath
-import com.intellij.python.sdk.backend.getSdkAPI
-import com.intellij.python.sdk.backend.pythonInterpreterResultAsync
 import com.intellij.python.venv.createVenv
 import com.intellij.python.venv.createVenvAdditionalData
 import com.intellij.testFramework.common.timeoutRunBlocking
@@ -36,21 +34,19 @@ internal class PyVenvCreationManuallyShowCaseTest {
     val venvPython = createVenv(python, venvDir).getOrThrow()
     val additionalData = createVenvAdditionalData(venvDir.parent)
     val interpreter = createSdk(ModuleOrProject.ProjectOnly(projectFixture.get()), PathHolder.Eel(venvPython), additionalData).getOrThrow()
-    val sdk = interpreter.getSdkAPI()
-    assertTrue(sdkIsValid(sdk),
-               "Sdk not valid after creation")
+    assertTrue(interpreterRuns(interpreter),
+               "The interpreter does not run after creation")
     venvPython.deleteExisting()
-    assertFalse(sdkIsValid(sdk),
-                "Broken SDK is valid?")
+    assertFalse(interpreterRuns(interpreter),
+                "A broken interpreter runs?")
 
     createVenv(python, venvDir).getOrThrow()
-    assertTrue(sdkIsValid(sdk),
-               "Sdk not valid after creation")
+    assertTrue(interpreterRuns(interpreter),
+               "The interpreter does not run after it is created again")
 
   }
 }
 
-private suspend fun sdkIsValid(sdk: Sdk): Boolean {
-  val interpreter = sdk.pythonInterpreterResultAsync(forceRefresh = true).successOrNull ?: return false
+private suspend fun interpreterRuns(interpreter: PythonInterpreter): Boolean {
   return ExecService().execGetStdout(interpreter, Args("-c", "print(1)")).isSuccess
 }

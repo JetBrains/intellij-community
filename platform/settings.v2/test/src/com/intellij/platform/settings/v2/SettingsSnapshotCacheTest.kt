@@ -74,6 +74,9 @@ class SettingsSnapshotCacheTest {
     val file = tempDir.resolve("project.bin")
     SettingsCacheStorage.write(file, SettingsCacheSerializer.encode(listOf(layer)))
 
+    // The reload of the project open sweeps a layer that no provider returned, and this directory has no config on
+    // the disk. So the seed must come after that reload, or the sweep removes it.
+    dirCtx.awaitReady()
     SettingsSnapshotCache(file, project = project).load()
 
     awaitEquals("cached") { key[dirCtx] }  // the seeded layer resolves

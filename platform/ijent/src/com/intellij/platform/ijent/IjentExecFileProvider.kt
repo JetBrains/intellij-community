@@ -29,12 +29,6 @@ interface IjentExecFileProvider {
 
 /** The IJent binary uses a protocol that is incompatible with this IDE. Absence of this exception does not mean that the binary is compatible. */
 @Internal
-@VisibleToClasses(
-  "com.intellij.platform.ijent.execFileProvider.ProductionIjentExecFileProvider",
-  "com.intellij.platform.ijent.impl.base.GrpcIjentSessionProviderKt",
-  "com.intellij.platform.ijent.impl.base.IjentProtocolHashTest",
-  "com.intellij.platform.ijent.spi.IjentDeployingOverShellProcessStrategyUnitTest",
-)
 class IjentIncompatibleBinary(message: String, cause: Throwable? = null) : EelUnavailableException.Conclusive(message, cause) {
   override fun copyForCaller(): EelUnavailableException = IjentIncompatibleBinary(message, this)
 }
@@ -67,13 +61,6 @@ interface IjentProvisioningProgress : CoroutineContext.Element {
 }
 
 @Suppress("HardCodedStringLiteral") // Internal diagnostic message, not user-facing UI text.
-@VisibleToClasses(
-  "com.intellij.platform.ijent.community.ui.actions.AbstractIjentVerificationAction",
-  "com.intellij.platform.ijent.execFileProvider.ProductionIjentExecFileProvider",
-  "com.intellij.platform.ijent.execFileProvider.ProductionIjentExecFileProviderKt",
-  "com.intellij.platform.ijent.execFileProvider.UnknownThirdPartyPlugin",
-  "com.intellij.platform.ijent.spi.IjentDeployingOverShellProcessStrategyUnitTest",
-)
 open class IjentMissingBinary private constructor(message: String, cause: Throwable?) : EelUnavailableException.Conclusive(message, cause) {
   constructor(
     platform: EelPlatform,

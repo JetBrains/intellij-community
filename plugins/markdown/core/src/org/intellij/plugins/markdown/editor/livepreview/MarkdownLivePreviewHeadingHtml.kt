@@ -46,23 +46,26 @@ private val HeadingProviders: Map<IElementType, GeneratingProvider> =
 /**
  * Generates the inline HTML of the headings, ATX and Setext. Only the heading lines are parsed.
  * Raw HTML and math stay literal text. Images are left out, because an inlay below the line paints them.
+ * Without the image inlays, an image stays literal text.
  */
 internal object HeadingHtmlGenerator {
   private val providers by lazy {
     MarkdownParserManager.FLAVOUR.createHtmlGeneratingProviders(LinkMap(emptyMap()), null) + HeadingProviders
   }
+  private val providersWithImageText by lazy { providers + (MarkdownElementTypes.IMAGE to LiteralTextProvider) }
 
   /**
    * The HTML of [content]. Its source ranges are relative to [lineStart].
    * An edit before the heading then keeps the HTML, so the frontend keeps the heading fold.
    */
-  fun generate(content: MarkdownHeaderContent, lineStart: Int): String {
+  fun generate(content: MarkdownHeaderContent, lineStart: Int, images: Boolean): String {
     val range = content.textRange
     val line = content.containingFile.viewProvider.contents.substring(lineStart, range.endOffset)
     val lineEnd = range.endOffset - lineStart
     val type = if (content.isSetextContent) MarkdownTokenTypes.SETEXT_CONTENT else MarkdownTokenTypes.ATX_CONTENT
     val root = MarkdownParserManager.createMarkdownParser(MarkdownParserManager.FLAVOUR)
       .parseInline(type, line, range.startOffset - lineStart, lineEnd)
+    val providers = if (images) providers else providersWithImageText
     return HtmlGenerator(line, root, providers, includeSrcPositions = true).generateHtml()
   }
 }

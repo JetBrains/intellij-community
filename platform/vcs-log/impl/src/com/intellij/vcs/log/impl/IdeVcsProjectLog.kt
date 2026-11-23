@@ -16,6 +16,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener
 import com.intellij.platform.ide.progress.withBackgroundProgress
+import com.intellij.util.StartupUiGate
 import com.intellij.util.asSafely
 import com.intellij.vcs.log.Hash
 import com.intellij.vcs.log.VcsLogBundle
@@ -166,6 +167,9 @@ internal class IdeVcsProjectLog(
     fun installMainUi(manager: IdeVcsLogManager, ui: MainVcsLogUi)
   }
 
+  /**
+   * The first log load of a start waits for the [StartupUiGate].
+   */
   class InitLogStartupActivity : ProjectActivity {
     init {
       val app = ApplicationManager.getApplication()
@@ -175,7 +179,14 @@ internal class IdeVcsProjectLog(
     }
 
     override suspend fun execute(project: Project) {
-      getInstance(project).init(false)
+      initOnStartup(project)
+    }
+
+    internal companion object {
+      suspend fun initOnStartup(project: Project) {
+        StartupUiGate.awaitEditorsShown()
+        getInstance(project).init(false)
+      }
     }
   }
 }

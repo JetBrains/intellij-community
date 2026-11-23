@@ -83,7 +83,15 @@ open class WhatsNewInVisionContentProvider {
                            val html: String,
                            val languages: List<Language>,
                            val publicVars: List<PublicVar>,
-                           val multipageIds: List<String> = listOf())
+                           val multipageIds: List<String> = listOf(),
+                           val tabIds: List<TabGroup> = listOf(),
+                           val anchorIds: List<String> = listOf())
+
+  /**
+   * A tab group of the page. The page puts the selected tab into the URL query as `<id>=<one of values>`.
+   */
+  @Serializable
+  internal data class TabGroup(val id: String, val values: List<String> = listOf())
 
   @Serializable
   internal data class Action(val value: String, val description: String)
@@ -115,10 +123,20 @@ open class WhatsNewInVisionContentProvider {
 
   private val json = Json { ignoreUnknownKeys = true }
 
+  /**
+   * The tab group, tab and anchor ids of the last loaded content. FUS accepts only these ids.
+   */
+  @Volatile
+  internal var pageElementIds: Set<String> = emptySet()
+    private set
+
   internal suspend fun getContent(): Container {
     val container = content.openStream()?.use { inputStream ->
       json.decodeFromStream<Container>(inputStream)
     } ?: error("Vision page not found")
+    pageElementIds = container.entities.flatMapTo(HashSet()) { page ->
+      page.anchorIds + page.tabIds.flatMap { it.values + it.id }
+    }
 
     val allowedIds = getAllowedMultipageIds()
 

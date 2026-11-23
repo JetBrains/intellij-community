@@ -28,7 +28,6 @@ class PyTypeAliasAndFormsTest : PyCodeInsightTestCase() {
   @Nested
   inner class TypeObjectForms {
     @Test
-    @TestCaseOptions(assertRecursionPrevention = false)
     @TestFor(issues = ["PY-7058"])
     fun `type of an instance is a class object type`() = test(
       // PY-90413
@@ -42,7 +41,6 @@ class PyTypeAliasAndFormsTest : PyCodeInsightTestCase() {
       """.trimIndent())
 
     @Test
-    @TestCaseOptions(assertRecursionPrevention = false)
     @TestFor(issues = ["PY-7058"])
     fun `type of a class object is type`() = test(
       // PY-90413
@@ -55,7 +53,6 @@ class PyTypeAliasAndFormsTest : PyCodeInsightTestCase() {
       """.trimIndent())
 
     @Test
-    @TestCaseOptions(assertRecursionPrevention = false)
     @TestFor(issues = ["PY-7058"])
     fun `type of an unknown value is Unknown`() = test(
       // PY-90413
@@ -605,7 +602,6 @@ class PyTypeAliasAndFormsTest : PyCodeInsightTestCase() {
       """.trimIndent())
 
     @Test
-    @TestCaseOptions(assertRecursionPrevention = false)
     @TestFor(issues = ["PY-53612"])
     fun `LiteralString format with str argument`() = test("""
       from typing_extensions import LiteralString
@@ -784,7 +780,6 @@ class PyTypeAliasAndFormsTest : PyCodeInsightTestCase() {
           return "foo" if condition1() else literal_string  # OK
       """.trimIndent())
 
-    @TestCaseOptions(assertRecursionPrevention = false)
     @Test
     @TestFor(issues = ["PY-61137"])
     fun `LiteralString does not get captured inside generics`() =

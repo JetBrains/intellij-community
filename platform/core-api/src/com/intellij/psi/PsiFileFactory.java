@@ -45,6 +45,12 @@ public abstract class PsiFileFactory {
     return createFileFromText("foo.bar", language, text);
   }
 
+  /**
+   * Creates a file of {@code language} from {@code text}.
+   *
+   * @param supportsSendingPsiEvents see {@link FileViewProvider#supportsSendingPsiEvents()}
+   * @param markAsCopy               whether the formatter reformats the elements of the file when they are added to another file
+   */
   public abstract PsiFile createFileFromText(@NonNls @NotNull String name, @NotNull Language language, @NotNull @NonNls CharSequence text,
                                              boolean supportsSendingPsiEvents, boolean markAsCopy) throws IncorrectOperationException;
 

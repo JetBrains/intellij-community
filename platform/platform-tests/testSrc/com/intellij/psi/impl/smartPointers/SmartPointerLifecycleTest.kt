@@ -7,8 +7,12 @@ import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.openapi.module.Module
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.vfs.VfsUtil
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiFileFactory
@@ -17,12 +21,14 @@ import com.intellij.psi.SmartPointerManager
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.xml.XmlText
 import com.intellij.testFramework.common.timeoutRunBlocking
+import com.intellij.testFramework.common.waitUntilAssertSucceeds
 import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.fixture.TestFixture
 import com.intellij.testFramework.junit5.fixture.moduleFixture
 import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.testFramework.junit5.fixture.sourceRootFixture
 import com.intellij.testFramework.utils.vfs.createFile
-import com.intellij.util.ref.GCUtil
+import com.intellij.util.ref.GCWatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -31,7 +37,6 @@ import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertSame
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
-import java.lang.ref.WeakReference
 
 /**
  * Lifecycle cases of the smart pointer subsystem that the main suite
@@ -44,13 +49,13 @@ import java.lang.ref.WeakReference
 @TestApplication
 internal class SmartPointerLifecycleTest {
   private companion object {
-    private val projectFixture = projectFixture(openAfterCreation = true)
-    private val moduleFixture = projectFixture.moduleFixture("SmartPointerLifecycleTest")
-    private val sourceRootFixture = moduleFixture.sourceRootFixture()
+    private val projectFixture: TestFixture<Project> = projectFixture(openAfterCreation = true)
+    private val moduleFixture: TestFixture<Module> = projectFixture.moduleFixture("SmartPointerLifecycleTest")
+    private val sourceRootFixture: TestFixture<PsiDirectory> = moduleFixture.sourceRootFixture()
   }
 
-  private val project get() = projectFixture.get()
-  private val manager get() = SmartPointerManager.getInstance(project)
+  private val project: Project get() = projectFixture.get()
+  private val manager: SmartPointerManager get() = SmartPointerManager.getInstance(project)
 
   /** A pointer to a deleted file resolves neither the element nor the file. */
   @Test
@@ -165,14 +170,12 @@ internal class SmartPointerLifecycleTest {
   fun `tracker stops tracking a collected pointer`() = timeoutRunBlocking {
     val psiFile = createXmlFile("gc.xml")
     val impl = manager as SmartPointerManagerImpl
-    val ref = createPointerAndForget(psiFile)
-    assertEquals(1, impl.getPointersNumber(psiFile))
+    createPointerAndForget(psiFile).ensureCollected()
 
-    GCUtil.tryGcSoftlyReachableObjects { ref.get() == null }
-    assertNull(ref.get(), "Nothing but the tracker and the element cache holds the pointer, so it must be collectible")
-
-    SmartPointerTracker.processQueue()
-    assertEquals(0, impl.getPointersNumber(psiFile), "A collected pointer must leave the tracker")
+    waitUntilAssertSucceeds {
+      SmartPointerTracker.processQueue()
+      assertEquals(0, impl.getPointersNumber(psiFile), "A collected pointer must leave the tracker")
+    }
   }
 
   /**
@@ -231,7 +234,7 @@ internal class SmartPointerLifecycleTest {
     }
   }
 
-  private fun sourceRootVFile() = sourceRootFixture.get().virtualFile
+  private fun sourceRootVFile(): VirtualFile = sourceRootFixture.get().virtualFile
 
   private suspend fun createXmlFile(name: String, text: String = "<root>text</root>"): PsiFile {
     val vFile = writeAction {
@@ -240,7 +243,9 @@ internal class SmartPointerLifecycleTest {
     return readAction { PsiManager.getInstance(project).findFile(vFile)!! }
   }
 
-  private suspend fun createPointerAndForget(psiFile: PsiFile): WeakReference<*> = readAction {
-    WeakReference(manager.createSmartPsiElementPointer(PsiTreeUtil.findChildOfType(psiFile, XmlText::class.java)!!))
+  private suspend fun createPointerAndForget(psiFile: PsiFile): GCWatcher = readAction {
+    val pointer = manager.createSmartPsiElementPointer(PsiTreeUtil.findChildOfType(psiFile, XmlText::class.java)!!)
+    assertEquals(1, (manager as SmartPointerManagerImpl).getPointersNumber(psiFile))
+    GCWatcher.tracking(pointer)
   }
 }

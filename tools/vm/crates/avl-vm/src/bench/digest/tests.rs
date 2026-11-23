@@ -231,3 +231,34 @@ fn the_digest_notes_the_samples_of_the_symbol_parsing_of_the_profiler() {
         "{text}"
     );
 }
+
+/// A session with a memory sample shows the memory group and the process group after the classes. A session without a
+/// sample shows neither, and names no memory metric as `not measured`.
+#[test]
+fn a_session_with_a_memory_sample_shows_the_memory_at_the_gate() {
+    let (_dir, session_dir) = fixture_session();
+    let text = project_digest(&session_dir, "project-run-01", |_| {});
+    let lines: Vec<&str> = text.lines().collect();
+    let group = lines
+        .iter()
+        .position(|line| *line == "memory at the gate (MB):")
+        .expect("the memory group");
+    let rows: Vec<&str> = lines[group..group + 12].to_vec();
+    expect_test::expect![[r"
+        memory at the gate (MB):
+          memory.ide                                                    1229    1229    1229
+          memory.jcef                                                    200     200     200
+          memory.webkit                                                   65      65      65
+          memory.other                                                     1       1       1
+          memory.all                                                    1495    1495    1495
+          memory.ide.resident                                           1434    1434    1434
+          memory.all.resident                                           1938    1938    1938
+        processes at the gate (count):
+          processes.jcef                                                   4       4       4
+          processes.webkit                                                 3       3       3
+          processes.other                                                  1       1       1"]]
+    .assert_eq(&rows.join("\n"));
+    std::fs::remove_file(session_dir.join("project-run-01").join(crate::bench::memory::MEMORY_FILE)).expect("no sample");
+    let text = project_digest(&session_dir, "project-run-01", |_| {});
+    assert!(!text.contains("memory"), "{text}");
+}

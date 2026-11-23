@@ -59,7 +59,7 @@
     <mkdir dir="${maven.resolver.ant.tasks.cache.dir}" />
     <retry retrycount="${retry.attempts}" retrydelay="${retry.delay}">
       <get
-        src="https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/${maven.resolver.ant.tasks.file.path}/${maven.resolver.ant.tasks.file.name}"
+        src="https://cache-redirector.jetbrains.com/maven-central/${maven.resolver.ant.tasks.file.path}/${maven.resolver.ant.tasks.file.name}"
         dest="${maven.resolver.ant.tasks.cache.file}.tmp"
         verbose="true"/>
     </retry>
@@ -74,8 +74,8 @@
              classpath="${maven.resolver.ant.tasks.cache.file}"/>
 
     <resolver:remoterepos id="remoterepos.buildscript">
-      <resolver:remoterepo id="central-proxy" url="https://cache-redirector.jetbrains.com/repo1.maven.org/maven2"/>
-      <resolver:remoterepo id="intellij-dependencies" url="https://cache-redirector.jetbrains.com/intellij-dependencies"/>
+      <resolver:remoterepo id="central-proxy" url="https://cache-redirector.jetbrains.com/maven-central"/>
+      <resolver:remoterepo id="intellij-dependencies" url="https://cache-redirector.jetbrains.com/maven/ultimate-public"/>
       <resolver:remoterepo id="teamcity-repository" url="https://cache-redirector.jetbrains.com/download.jetbrains.com/teamcity-repository"/>
     </resolver:remoterepos>
 

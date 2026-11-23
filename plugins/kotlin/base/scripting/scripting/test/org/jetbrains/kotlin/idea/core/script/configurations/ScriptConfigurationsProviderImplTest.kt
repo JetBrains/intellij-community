@@ -23,16 +23,29 @@ class ScriptConfigurationsProviderImplTest : KotlinLightCodeInsightFixtureTestCa
 
     fun `test untrusted script is not processed`() {
         val file = myFixture.addFileToProject("untrusted.main.kts", "@file:DependsOn(\"evil:payload:1.0\")")
+        distrustAllFiles()
+
+        runBlocking { KotlinScriptService.getInstance(project).load(file.virtualFile) }
+
+        assertNull(KotlinScriptEntityProvider.findKotlinScriptEntity(project, file.virtualFile))
+    }
+
+    fun `test untrusted script of the bundled definition is processed`() {
+        val file = myFixture.addFileToProject("untrusted.kts", "val x = 1")
+        distrustAllFiles()
+
+        runBlocking { KotlinScriptService.getInstance(project).load(file.virtualFile) }
+
+        assertNotNull(KotlinScriptEntityProvider.findKotlinScriptEntity(project, file.virtualFile))
+    }
+
+    private fun distrustAllFiles() {
         application.replaceService(TrustedFilesService::class.java, object : TrustedFilesService {
             override fun isTrusted(file: VirtualFile, project: Project): Boolean = false
             override fun isTrustDecidedByFile(file: VirtualFile, project: Project): Boolean = true
             override fun markExternallyOpened(file: VirtualFile) = Unit
             override fun markExternallyOpenedIfOutsideProject(file: VirtualFile, project: Project) = Unit
         }, testRootDisposable)
-
-        runBlocking { KotlinScriptService.getInstance(project).load(file.virtualFile) }
-
-        assertNull(KotlinScriptEntityProvider.findKotlinScriptEntity(project, file.virtualFile))
     }
 
     fun `test cached configuration is reused for VirtualFileScriptSource`() {

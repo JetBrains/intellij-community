@@ -5,6 +5,7 @@ import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiPlace
 import com.intellij.psi.createSmartFileRange
 import com.intellij.psi.findElement
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
@@ -64,6 +65,29 @@ class ModPlanConflictsTest : BasePlatformTestCase() {
     assertEquals(ModPlanConflictKind.FIXABLE, conflicts.at(file).kind)
     assertEquals(listOf("nonCodeUsage", "fixable"), conflicts.at(file).messages)
     assertTrue(conflicts.nonCodeUsages().isEmpty())
+  }
+
+  fun `test a changed non-code usage needs no confirmation and is not shown as a conflict`() {
+    val file = addFile("a.txt", "text")
+
+    val conflicts = ModPlanConflicts.builder().changedNonCodeUsage(file, TextRange(1, 3)).build()
+
+    val changedNonCodeUsage = conflicts.changedNonCodeUsages().single()
+    assertEquals(ModPlanConflictKind.CHANGED_NON_CODE_USAGE, changedNonCodeUsage.kind)
+    assertEmpty(changedNonCodeUsage.messages)
+    assertEquals(TextRange(1, 3), TextRange.create(changedNonCodeUsage.location!!.range!!))
+    assertEmpty(conflicts.nonCodeUsages())
+    assertFalse(conflicts.needsConfirmation())
+    assertEmpty(runReadActionBlocking { conflicts.toShowConflictsWithNonCodeUsages(file) }.keys)
+  }
+
+  fun `test a changed non-code usage and a non-code usage of one place merge into the non-code usage`() {
+    val file = addFile("a.txt", "text")
+
+    val conflicts = ModPlanConflicts.builder().changedNonCodeUsage(file, null).nonCodeUsage(file, null, "nonCodeUsage").build()
+
+    assertEquals(ModPlanConflictKind.NON_CODE_USAGE, conflicts.at(file).kind)
+    assertEquals(listOf("nonCodeUsage"), conflicts.at(file).messages)
   }
 
   fun `test non-code usages alone need no confirmation`() {
@@ -126,10 +150,22 @@ class ModPlanConflictsTest : BasePlatformTestCase() {
     val shownConflicts = runReadActionBlocking { conflicts.toShowConflicts(file) }
 
     assertEquals(2, shownConflicts.size)
-    val shownFiles = shownConflicts.keys.map { it.containingFile }
+    val shownFiles = shownConflicts.keys.map { it.element.containingFile }
     assertEquals(listOf(file, otherFile), shownFiles)
     assertEquals(listOf("one", "two"), shownConflicts.values.first().messages)
     assertEquals(listOf("three"), shownConflicts.values.last().messages)
+    assertTrue(shownConflicts.keys.all { it.rangeInElement == null })
+  }
+
+  fun `test toShowConflictsWithNonCodeUsages keeps the range of each non-code usage`() {
+    val file = addFile("a.txt", "some text here")
+    val conflicts = ModPlanConflicts.builder()
+      .nonCodeUsage(file, TextRange(5, 9), "nonCodeUsage").nonCodeUsage(file, TextRange(10, 14), "nonCodeUsage")
+      .build()
+
+    val shownConflicts = runReadActionBlocking { conflicts.toShowConflictsWithNonCodeUsages(file) }
+
+    assertEquals(listOf(PsiPlace(file, TextRange(5, 9)), PsiPlace(file, TextRange(10, 14))), shownConflicts.keys.toList())
   }
 
   fun `test toShowConflicts puts a conflict without an element on the anchor`() {
@@ -139,8 +175,8 @@ class ModPlanConflictsTest : BasePlatformTestCase() {
 
     val shownConflicts = runReadActionBlocking { conflicts.toShowConflicts(anchor) }
 
-    assertEquals(listOf("everywhere"), shownConflicts[anchor]!!.messages)
-    assertEquals(listOf("there"), shownConflicts.entries.single { it.key != anchor }.value.messages)
+    assertEquals(listOf("everywhere"), shownConflicts[PsiPlace(anchor, null)]!!.messages)
+    assertEquals(listOf("there"), shownConflicts.entries.single { it.key.element != anchor }.value.messages)
   }
 
   fun `test toShowConflicts puts a conflict of a place that is gone on the anchor`() {
@@ -153,7 +189,7 @@ class ModPlanConflictsTest : BasePlatformTestCase() {
 
     val shownConflicts = runReadActionBlocking { goneConflicts.toShowConflicts(anchor) }
 
-    assertEquals(setOf(anchor), shownConflicts.keys)
+    assertEquals(setOf(PsiPlace(anchor, null)), shownConflicts.keys)
   }
 
   fun `test findElement of a whole file is the file`() {

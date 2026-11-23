@@ -1,0 +1,47 @@
+# `community/MODULE.bazel` reads `Cargo.toml`, `Cargo.lock` and `.cargo/config.toml` of this package to generate `@dt`.
+# `defs.bzl` declares the binaries of the Cargo workspace in this directory.
+
+load("//build/rust-tools:defs.bzl", "rust_lints_as_errors", "windows_clippy_tests")
+
+# The lint policy of every crate: `[workspace.lints]` of `Cargo.toml` as `@dt` renders it, with every clippy warning
+# an error. `dist_rust_crate` passes it to each target, and the ultimate workspace `build/dist-tools` too.
+rust_lints_as_errors(
+    name = "lints",
+    cargo = "@dt//:workspace_cargo_lints",
+    visibility = ["//visibility:public"],
+)
+
+# Clippy over the `cfg(windows)` code that a macOS or Linux host never compiles, one test per Windows host:
+# `:clippy-windows-x86_64` and `:clippy-windows-arm64`. The binaries bring every crate that they link. `contentreport`
+# and `docs-gate` are here because only the ultimate root links them, and `testkit` because only the tests link it.
+# The tests run from the community root only.
+windows_clippy_tests(
+    targets = [
+        "//build/dist-tools/bins/checkout-files",
+        "//build/dist-tools/bins/content-module-packer",
+        "//build/dist-tools/bins/dist-collector",
+        "//build/dist-tools/bins/dist-composer",
+        "//build/dist-tools/bins/plugin-descriptor-writer",
+        "//build/dist-tools/bins/plugin-remainder-packer",
+        "//build/dist-tools/bins/product-files",
+        "//build/dist-tools/bins/project-model-tree",
+        "//build/dist-tools/bins/runtime-layout",
+        "//build/dist-tools/bins/tool-identity",
+        "//build/dist-tools/crates/contentreport",
+        "//build/dist-tools/crates/docs-gate",
+        "//build/dist-tools/crates/testkit",
+    ],
+)
+
+# The files of this workspace that pin what a crate of a tool links: the versions in `Cargo.lock`, the features in
+# `Cargo.toml` and the build settings in `.cargo/config.toml`. The identity of each distribution tool hashes them, see
+# `dist_tool`.
+filegroup(
+    name = "tool_identity_manifests",
+    srcs = [
+        ".cargo/config.toml",
+        "Cargo.lock",
+        "Cargo.toml",
+    ],
+    visibility = ["//platform/build-scripts/bazel-rules:__pkg__"],
+)

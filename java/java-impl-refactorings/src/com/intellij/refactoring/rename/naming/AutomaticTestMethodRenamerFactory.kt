@@ -19,6 +19,8 @@ abstract class AutomaticTestMethodRenamerFactory : AutomaticRenamerFactory {
 
   override fun getOptionName(): String = JavaRefactoringBundle.message("rename.test.method")
 
+  override fun getOptionId(): String = "renameTestMethods"
+
   protected class AutomaticTestMethodRenamer(oldMethodName: String?,
                                              className: String?,
                                              module: Module?,

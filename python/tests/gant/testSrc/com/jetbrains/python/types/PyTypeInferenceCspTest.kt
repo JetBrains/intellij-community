@@ -115,10 +115,7 @@ class PyTypeInferenceCspTest : PyCodeInsightTestCase() {
     """.trimIndent())
 
   @Test
-  @TestCaseOptions(
-    assertRecursionPrevention = false,
-    additionalSdkRoots = [SdkRoot("packages", OrderRootTypeEnum.CLASSES)],
-  )
+  @TestCaseOptions(additionalSdkRoots = [SdkRoot("packages", OrderRootTypeEnum.CLASSES)])
   fun `Attrs type per default`() = test("""
     from typing import Any, assert_type
     import attr
@@ -1054,6 +1051,33 @@ class PyTypeInferenceCspTest : PyCodeInsightTestCase() {
       def f(user: User[int]) : ...
       f({ "name": "Alice", "data": 30 })
       """.trimIndent())
+
+  @Test
+  @TestFor(issues = ["PY-89241"])
+  fun `narrow SupportsMul to int`() = test("""
+    from functools import reduce
+    from operator import mul
+    
+    def foo() -> int:
+        return reduce(mul, range(1, 10))
+    """.trimIndent())
+
+  @Test
+  @TestFor(issues = ["PY-89241"])
+  fun `cyclic type var binding with callable instance`() = test("""
+    from typing import Callable, Protocol
+
+    class SupportsMul[C, R](Protocol):
+        def __mul__(self, other: C, /) -> R: ...
+
+    class Mul:
+        def __call__[C, R](self, a: SupportsMul[C, R], b: C) -> R: ...
+
+    def apply[T](f: Callable[[T, T], T], x: T) -> T: ...
+
+    def foo() -> int:
+        return apply(Mul(), 1)
+    """.trimIndent())
 
   @Test
   @TestFor(issues = ["PY-91164"])

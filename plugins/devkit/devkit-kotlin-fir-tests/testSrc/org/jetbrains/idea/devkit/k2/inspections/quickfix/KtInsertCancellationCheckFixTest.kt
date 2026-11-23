@@ -2,19 +2,26 @@
 package org.jetbrains.idea.devkit.k2.inspections.quickfix
 
 import com.intellij.testFramework.TestDataPath
+import com.intellij.testFramework.junit5.TestApplication
 import org.jetbrains.idea.devkit.DevKitBundle
-import org.jetbrains.idea.devkit.inspections.CancellationCheckInLoopsInspectionTestBase
+import org.jetbrains.idea.devkit.inspections.cancellationCheckInLoopsFixture
+import org.jetbrains.idea.devkit.inspections.cancellationCheckInLoopsProjectFixture
 import org.jetbrains.idea.devkit.kotlin.DevkitKtTestsUtil
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 
 @TestDataPath("\$CONTENT_ROOT/testData/inspections/insertCancellationCheckFix")
-class KtInsertCancellationCheckFixTest : CancellationCheckInLoopsInspectionTestBase() {
+@TestApplication
+class KtInsertCancellationCheckFixTest {
+  companion object {
+    private val projectFixture = cancellationCheckInLoopsProjectFixture()
+  }
 
-  override fun getFileExtension(): String = "kt"
+  private val cancellationCheck by cancellationCheckInLoopsFixture(projectFixture, "kt", DevkitKtTestsUtil.TESTDATA_PATH + "inspections/insertCancellationCheckFix")
+  private val myFixture get() = cancellationCheck.fixture
 
-  override fun getBasePath() = DevkitKtTestsUtil.TESTDATA_PATH + "inspections/insertCancellationCheckFix"
-
-  override fun setUp() {
-    super.setUp()
+  @BeforeEach
+  fun setUp() {
     myFixture.addFileToProject(
       "Coroutines.kt",
       //language=kotlin
@@ -29,78 +36,96 @@ class KtInsertCancellationCheckFixTest : CancellationCheckInLoopsInspectionTestB
 
   // loops:
 
+  @Test
   fun testBlockDoWhileLoop() {
-    doTest(fixName)
+    cancellationCheck.doTest(fixName)
   }
 
+  @Test
   fun testBlockForEachLoop() {
-    doTest(fixName)
+    cancellationCheck.doTest(fixName)
   }
 
+  @Test
   fun testBlockWhileLoop() {
-    doTest(fixName)
+    cancellationCheck.doTest(fixName)
   }
 
+  @Test
   fun testEmptyDoWhileLoop() {
-    doTest(fixName)
+    cancellationCheck.doTest(fixName)
   }
 
+  @Test
   fun testEmptyForEachLoop() {
-    doTest(fixName)
+    cancellationCheck.doTest(fixName)
   }
 
+  @Test
   fun testEmptyWhileLoop() {
-    doTest(fixName)
+    cancellationCheck.doTest(fixName)
   }
 
+  @Test
   fun testSingleLineDoWhileLoop() {
-    doTest(fixName)
+    cancellationCheck.doTest(fixName)
   }
 
+  @Test
   fun testSingleLineForEachLoop() {
-    doTest(fixName)
+    cancellationCheck.doTest(fixName)
   }
 
+  @Test
   fun testSingleLineWhileLoop() {
-    doTest(fixName)
+    cancellationCheck.doTest(fixName)
   }
 
+  @Test
   fun testNoBodyForEachLoop() {
-    doTest(fixName)
+    cancellationCheck.doTest(fixName)
   }
 
+  @Test
   fun testNoBodyWhileLoop() {
-    doTest(fixName)
+    cancellationCheck.doTest(fixName)
   }
 
+  @Test
   fun testSuspendingDoWhileLoop() {
-    doTest(fixName)
+    cancellationCheck.doTest(fixName)
   }
 
+  @Test
   fun testSuspendingForEachLoop() {
-    doTest(fixName)
+    cancellationCheck.doTest(fixName)
   }
 
+  @Test
   fun testSuspendingLambdaForEachLoop() {
-    doTest(fixName)
+    cancellationCheck.doTest(fixName)
   }
 
+  @Test
   fun testSuspendingWhileLoop() {
-    doTest(fixName)
+    cancellationCheck.doTest(fixName)
   }
 
   // loop methods:
 
+  @Test
   fun testBlockIterableForEachMethod() {
-    doTest(fixName)
+    cancellationCheck.doTest(fixName)
   }
 
+  @Test
   fun testEmptyIteratorForEachRemainingMethod() {
-    doTest(fixName)
+    cancellationCheck.doTest(fixName)
   }
 
+  @Test
   fun testSuspendingMapForMethod() {
-    doTest(fixName)
+    cancellationCheck.doTest(fixName)
   }
 
 }

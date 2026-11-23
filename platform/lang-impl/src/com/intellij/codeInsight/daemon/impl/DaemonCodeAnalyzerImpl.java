@@ -366,7 +366,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
         continue;
       }
       infos.removeIf(fileLevelInfo -> {
-        if (!info.attributesEqual(fileLevelInfo)) {
+        if (info != fileLevelInfo) {
           return false;
         }
         disposeFileLevelInfo(fileEditor, fileLevelInfo);
@@ -381,9 +381,15 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
   private void disposeFileLevelInfo(@NotNull FileEditor fileEditor, @NotNull HighlightInfo info) {
     ThreadingAssertions.assertEventDispatchThread();
     doRemoveFileLevelInfoComponent(info, fileEditor, getFileEditorManager());
-    RangeHighlighterEx highlighter = info.getHighlighter();
-    if (highlighter != null) {
-      highlighter.dispose();
+    disposeFileLevelHighlighter(info, null);
+  }
+
+  private void disposeFileLevelHighlighter(@NotNull HighlightInfo info, @Nullable RangeHighlighter toReuse) {
+    synchronized (HighlightInfoUpdater.getInstance(myProject)) {
+      RangeHighlighterEx highlighter = info.getHighlighter();
+      if (highlighter != null && highlighter != toReuse && HighlightInfo.fromRangeHighlighter(highlighter) == info) {
+        highlighter.dispose();
+      }
     }
   }
 
@@ -433,10 +439,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
             return false;
           }
           doRemoveFileLevelInfoComponent(oldFileLevelInfo, fileEditor, getFileEditorManager());
-          RangeHighlighterEx oldHighlighter = oldFileLevelInfo.getHighlighter();
-          if (oldHighlighter != null && oldHighlighter != toReuse) {
-            oldHighlighter.dispose();
-          }
+          disposeFileLevelHighlighter(oldFileLevelInfo, toReuse);
           return true;
         });
         Document document = textEditor.getEditor().getDocument();
@@ -1455,7 +1458,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
               }
             }
           });
-        }, ForkJoinPool.commonPool());
+        }, JobLauncher.getInstance());
         return null;
       }
       progress = createUpdateProgress(fileEditor);
@@ -1747,6 +1750,9 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
   private static boolean isInActiveProject(@NotNull FileEditor editor) {
     ThreadingAssertions.assertEventDispatchThread();
     if (ProjectManager.getInstance().getOpenProjects().length <= 1 || ApplicationManager.getApplication().isUnitTestMode()) {
+      return true;
+    }
+    if (!ClientId.isLocal(ClientFileEditorManager.getClientId(editor))) {
       return true;
     }
     // optimization: in the case of two or more projects, ignore projects which are not active at the moment, e.g., inside minimized windows

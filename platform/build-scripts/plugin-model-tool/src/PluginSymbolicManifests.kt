@@ -3,8 +3,8 @@
 package com.intellij.platform.buildScripts.pluginModelTool
 
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.intellij.build.devDist.PluginPackingAsset
-import org.jetbrains.intellij.build.devDist.PreparedSourceManifestRecipe
+import org.jetbrains.intellij.build.dist.PluginPackingAsset
+import org.jetbrains.intellij.build.dist.PreparedSourceManifestRecipe
 import org.jetbrains.intellij.build.productLayout.LIB_MODULE_PREFIX
 
 /**

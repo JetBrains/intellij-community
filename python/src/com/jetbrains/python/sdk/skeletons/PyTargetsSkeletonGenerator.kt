@@ -2,6 +2,8 @@
 package com.jetbrains.python.sdk.skeletons
 
 import com.intellij.execution.ExecutionException
+import com.intellij.python.sdk.backend.PythonInterpreter
+import org.jetbrains.annotations.ApiStatus
 import com.intellij.execution.process.CapturingProcessHandler
 import com.intellij.execution.process.ProcessOutput
 import com.intellij.execution.target.TargetEnvironment
@@ -38,7 +40,6 @@ import com.intellij.python.community.execService.RelativePath
 import com.intellij.python.community.execService.impl.processLaunchers.uploadMeasureTime
 import com.intellij.python.community.execService.python.advancedApi.ExecutablePython
 import com.intellij.python.community.execService.python.advancedApi.executeHelperAdvanced
-import com.intellij.python.sdk.backend.pythonInterpreterResultAsync
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.jetbrains.python.PythonHelper
 import com.jetbrains.python.Result
@@ -62,8 +63,14 @@ import kotlin.io.path.exists
 import kotlin.io.path.setPosixFilePermissions
 import kotlin.time.Duration
 
-internal class PyTargetsSkeletonGenerator(skeletonPath: Path, pySdk: Sdk, currentFolder: String?, project: Project?) :
-  PySkeletonGenerator(skeletonPath, pySdk, currentFolder) {
+/** [binary] is the Python of the environment. The Eel builder runs it, so the skeletons need no interpreter of a project. */
+internal class PyTargetsSkeletonGenerator(
+  skeletonPath: Path,
+  pySdk: Sdk,
+  currentFolder: String?,
+  project: Project?,
+  private val binary: BinaryToExec,
+) : PySkeletonGenerator(skeletonPath, pySdk, currentFolder) {
   private val pyRequest: HelpersAwareTargetEnvironmentRequest = checkNotNull(
     // TODO Get rid of the dependency on the default project
     PythonInterpreterTargetEnvironmentFactory.findPythonTargetInterpreter(mySdk, project ?: ProjectManager.getInstance().defaultProject)
@@ -85,7 +92,7 @@ internal class PyTargetsSkeletonGenerator(skeletonPath: Path, pySdk: Sdk, curren
 
   override fun commandBuilder(): Builder {
     val builder = if (isLocalTarget() && eelNativeMode) {
-      EelBuilder(mySdk, mySkeletonsPath)
+      EelBuilder(mySkeletonsPath)
     }
     else {
       TargetedBuilder(mySdk, mySkeletonsPath)
@@ -205,11 +212,9 @@ internal class PyTargetsSkeletonGenerator(skeletonPath: Path, pySdk: Sdk, curren
    * Runs [PythonHelper.GENERATOR3] with [ExecService].
    * [skeletonsLocalRootPath] is given to the process, and the process output is copied back to it.
    */
-  private inner class EelBuilder(private val sdk: Sdk, private val skeletonsLocalRootPath: Path) : Builder() {
+  private inner class EelBuilder(private val skeletonsLocalRootPath: Path) : Builder() {
     @RequiresBackgroundThread(generateAssertion = false)
     override fun runProcessWithLineOutputListener(listener: LineWiseProcessOutputListener): ProcessOutput = runBlockingMaybeCancellable {
-      val interpreter = sdk.pythonInterpreterResultAsync().getOr { throw InvalidSdkException(it.error.message) }
-      val binary = interpreter.asBinToExecute().getOr { throw InvalidSdkException(it.error.message) }
 
       val args = Args(SKELETOR_DIR_ARG).addLocalDir(skeletonsLocalRootPath) {
         reportDir(andReport = { it to AnArgument })
@@ -296,3 +301,13 @@ internal class PyTargetsSkeletonGenerator(skeletonPath: Path, pySdk: Sdk, curren
     }
   }
 }
+
+/**
+ * The Python of [interpreter] for [PySkeletonRefresher], for a caller that generates the skeletons of one interpreter.
+ *
+ * @throws InvalidSdkException when the interpreter has no binary to run
+ */
+@ApiStatus.Internal
+@Throws(InvalidSdkException::class)
+fun skeletonBinaryOf(interpreter: PythonInterpreter): BinaryToExec =
+  interpreter.asBinToExecute().getOr { throw InvalidSdkException(it.error.message) }

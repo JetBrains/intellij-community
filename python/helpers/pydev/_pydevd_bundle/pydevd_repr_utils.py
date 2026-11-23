@@ -160,6 +160,14 @@ if IS_PY3K:
                 else:
                     return "'{x}'".format(x=x)
 
+        def repr_bytes(self, x, level):
+            # `Repr.repr_str` slices the value before the `repr`, so a large value is not copied whole.
+            if self.do_trim:
+                return super().repr_str(x, level)
+            return repr(x)
+
+        repr_bytearray = repr_bytes
+
         def repr_dict(self, x, level):
             n = len(x)
             if n == 0: return '{}'

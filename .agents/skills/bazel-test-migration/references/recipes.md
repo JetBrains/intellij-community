@@ -1,11 +1,10 @@
 # Bazel Migration Recipes
 
-Read only the section needed for the current failure.
 The examples use Community labels from an Ultimate checkout.
 
 ## Test Data and Writable Files
 
-Declare the files and add them to `data`. This example shows the relevant parts of the Ant target:
+This example shows the relevant parts of the Ant target:
 
 ```starlark
 load("@community//build:tests-options.bzl", "jps_test")
@@ -23,7 +22,7 @@ jps_test(
 ### skip generation section `test intellij.ant.jps.tests`
 ```
 
-Merge this wiring with the target's existing attributes. Declare shared fixture roots and generated files separately when the tests need them.
+Declare shared fixture roots and generated files separately when the tests need them.
 
 Use the same label in the test helper. For example, `JpsAntSerializationTest` resolves its project path in its companion object:
 
@@ -37,15 +36,12 @@ else {
 }
 ```
 
-Use the existing imports and path conventions of the test.
 For Java fixtures, prefer `JavaTestUtil.getJavaTestDataPath()` and append the test's subdirectory.
-Override the absolute `getTestDataPath()` when the base implementation assumes a path relative to the repository.
 Do not make `getRelativeJavaTestDataPath()` return an absolute path under a different contract.
 
 `BazelRunfiles.getFileByLabel()` resolves the label's runtime path. It does not enumerate a filegroup's members.
 A group named `testData` that contains `java/**` does not create a `testData` directory.
 Choose the resolver path from the actual files and directory layout.
-Use the returned path unchanged, whether it comes from a runfiles tree or a manifest.
 
 ### VFS Access
 
@@ -56,14 +52,13 @@ Register the required root through the fixture's existing access mechanism, with
 An indexer can follow leaf symlinks to a canonical root outside the runfiles tree.
 For that case, inspect `BazelTestUtil.allowVfsAccessToCanonicalRunfilesRoot()`.
 This helper grants access; it does not replace the test's selected input path.
-Keep canonical VFS access handling separate from test data resolution.
 
 ### Writable Copies
 
 - Use the fixture's temporary directory, or a unique child of `BazelTestUtil.bazelTestTmpDirPath` under Bazel.
 - Check `isUnderBazelTest` before accessing Bazel-only temporary paths. Preserve the normal fixture behavior outside Bazel.
 - `TEST_TMPDIR` belongs to the test process, not to one method. Avoid fixed directory names that collide between tests.
-- Copy input projects or unpack archives before the test modifies them. Treat runfiles as read-only even when the local filesystem permits writes.
+- Treat runfiles as read-only even when the local filesystem permits writes.
 - Put diagnostics that must survive the run in `BazelTestUtil.bazelUndeclaredTestOutputsPath`.
 
 ## External Inputs
@@ -107,7 +102,6 @@ jps_test(
 )
 ```
 
-Merge these attributes into the existing target and retain its skip-generation marker.
 The Ant JPS target provides a complete example.
 
 Propagate required runfiles and repository mapping information to child processes through the existing launch helpers.
@@ -149,27 +143,21 @@ To reproduce interactions between classes, use the runner's semicolon-separated 
   @community//path/to/package:target_test
 ```
 
-Remove diagnostic selectors before the final full-target run.
-Use the [testing internals skill](../../testing-internals/SKILL.md) when the failure is in discovery or the runner itself.
+Use the [testing internals reference](../../testing/references/testing-internals.md) of the testing skill when the failure is in discovery or the runner itself.
 
 ## Discovery and Sandbox Checks
 
 Check the generated `*_test_lib`, the target's runtime dependencies, and `JUnit5BazelRunner` discovery roots.
-The runner does not scan every transitive test dependency.
-A method selector can bypass normal root selection, so a focused pass does not prove complete discovery.
 
 Tests mixed with framework code can require a dedicated module and Bazel package.
 The Java framework tests use `@community//java/testFramework/tests:tests_test`.
 Separate placement is appropriate when it clarifies ownership and discovery, not merely because a class currently fails.
-Prefer that structure over a permanent list of individual test classes in the target filter.
 
 Inspect `jps_test` in `tests-options.bzl` before changing sandbox options.
 Its `sandbox = True` mode sets up an isolated test home and requests network blocking.
 Its default is `False`, which permits checkout-based home discovery and adds `no-sandbox`.
 Actual filesystem and network isolation also depends on the platform and execution strategy.
 
-Declare inputs and writable paths before enabling the sandbox.
-Do not disable an existing sandbox to mask undeclared inputs.
 Keep a necessary platform workaround scoped to the affected target; do not add it to all test JVMs without evidence.
 
 ## CI Coverage Comparison
@@ -184,7 +172,3 @@ Use this procedure when checking a rollout or investigating missing tests:
 6. Account for synthetic runner checks separately. Confirm that their purpose remains covered before treating them as reporting-only differences.
 7. Compare the combined shard coverage. An intentionally idle shard can report success with no tests.
 8. Report genuinely missing and extra tests, plus unresolved naming ambiguities. Recheck target selection and discovery before changing tests.
-
-A green local target does not prove that CI or Safe-Push selects it.
-Verify both configurations before removing their JPS coverage.
-The migrated-module list controls runner routing; it is not evidence that a replacement CI target ran.

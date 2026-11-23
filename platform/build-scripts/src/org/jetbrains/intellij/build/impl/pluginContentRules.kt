@@ -9,7 +9,7 @@ import org.jetbrains.jps.model.module.JpsModuleReference
  * The jar of the plugin content module [moduleName], relative to the plugin's `lib/`, or `null` when the layout places
  * the module by a path of its own.
  *
- * This is the one jar-path rule. The packer applies it in `autoLayout.kt`, and the dev-distribution derivation applies
+ * This is the one jar-path rule. The packer applies it in `autoLayout.kt`, and the distribution derivation applies
  * it in its projection and its candidacy. Each caller reads the facts itself: the packer from the patched descriptor and
  * the product's frontend filter, the derivation from the source descriptor and its own model walk. The packaging gate
  * compares the two outputs, so it still catches a wrong fact, and the rule itself cannot drift between them.
@@ -63,7 +63,7 @@ fun isAutoLayoutChild(mainModule: String, moduleName: String): Boolean {
  *
  * [productionLibraryDependencies] are the production runtime library dependencies of the module. [librariesKeptOut]
  * holds when the layout keeps the module libraries out of the module's jar, see `doNotCopyModuleLibrariesAutomatically`.
- * The packer and the dev-distribution derivation both ask this one predicate over the facts each reads itself.
+ * The packer and the distribution derivation both ask this one predicate over the facts each reads itself.
  */
 @ApiStatus.Internal
 fun hasOwnModuleLibraries(productionLibraryDependencies: List<JpsLibraryDependency>, librariesKeptOut: Boolean): Boolean {

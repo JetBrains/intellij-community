@@ -29,7 +29,7 @@ import org.jetbrains.intellij.build.ZipSource
 import org.jetbrains.intellij.build.buildJar
 import org.jetbrains.intellij.build.checkForNoDiskSpace
 import org.jetbrains.intellij.build.computeModuleSourcesByContent
-import org.jetbrains.intellij.build.dev.DevDistRecipe
+import org.jetbrains.intellij.build.dev.DistRecipe
 import org.jetbrains.intellij.build.dev.syntheticTestPluginModuleName
 import org.jetbrains.intellij.build.getLibraryFileName
 import org.jetbrains.intellij.build.getLibraryRoots
@@ -70,7 +70,7 @@ private fun isJarPreSigned(file: Path, context: BuildContext): Boolean {
 /**
  * Selects the jars an assembly actually writes, out of everything the layout put in them.
  *
- * A split dev-distribution fragment lays the whole layout out - that part is metadata, and cheap - and then packs only
+ * A split distribution fragment lays the whole layout out - that part is metadata, and cheap - and then packs only
  * the jars it owns, so that reading and zipping is what the split divides. Ownership is decided per jar name against
  * an explicit generated set (see `org.jetbrains.intellij.build.dev.PlatformJarSelector`): a name is all a filter sees,
  * because a jar as a whole belongs to one producer regardless of what the layout put into it.
@@ -798,7 +798,7 @@ private fun buildAsset(
   // The merged list, not the two collections it came from: this is the order the jar writer and the jar cache use, so
   // it is the only order a recipe of this run can state. Recorded before the early return below, because an output with
   // no sources is a fact about the run too.
-  DevDistRecipe.record(
+  DistRecipe.record(
     outputFile = asset.file,
     sources = sources,
     includedModules = includedModules.keys,

@@ -19,7 +19,7 @@ Write every user-visible artifact in [ASD-STE100 Simplified Technical English](h
 - Make an aside its own sentence. Do not put it between dashes.
 - Keep the articles. Write "the session", not "session".
 - One term per concept. Never introduce a synonym for a term the area already defines.
-- Say what you left out and why. Do not pad a report to look complete.
+- In a report to the user, say what you left out and why. Do not pad the report to look complete.
 
 Each kind of text has one home. Rationale and evidence for a change go in the commit message, not in a code comment. Document a declaration in KDoc on it, not in a `README.md`.
 
@@ -58,7 +58,7 @@ Search the repository with `./tools/accio.cmd`, not with the `search_*` tools of
 
 When JetBrains MCP is available, check the changed files with `lint_files` and fix the warnings of your change, and use `rename_refactoring` instead of a search and replace. An IDE answers from the project that it has open, not from a lease.
 
-Shell is allowed where this guide documents it, and for git, build, and test. Outside the working copy, read only what the task names. The accio commands, the allowlist, the Windows rules, and the tool inventory: [Tools Reference](./.ai/tools.md).
+Shell is allowed where this guide documents it, and for git, build, and test. Outside the working copy, read only what the task names. The accio commands are in the `accio` skill. The allowlist, the Windows rules, and the tool inventory: [Tools Reference](./.ai/tools.md).
 
 ### Skills
 

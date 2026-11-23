@@ -12,7 +12,7 @@ import org.jetbrains.jps.model.JpsProject
  * The filter a product applies to an optional `<module/>` of the platform or of a bundled plugin.
  *
  * One body, two callers, so the two cannot drift: [BuildContextImpl] asks during an assembly, and the
- * dev-distribution descriptor plan asks during generation. The plan carries the survivors, which is what lets a
+ * distribution descriptor plan asks during generation. The plan carries the survivors, which is what lets a
  * produced descriptor be written by an action that loads no project model.
  *
  * [bundledPluginModules] is a lambda because the [ProductMode.MONOLITH] branches never ask for it, and computing the
@@ -42,7 +42,7 @@ fun createContentModuleFilter(
 /**
  * The filter of [productMode] over every module of [project], whatever plugin holds it.
  *
- * The dev-distribution generator states the modules each mode refuses as a fact of the plugin, once per plugin and not
+ * The distribution generator states the modules each mode refuses as a fact of the plugin, once per plugin and not
  * per product. So it asks for every mode a split product uses, and no plugin is bypassed as "not bundled".
  */
 fun createProductModeContentModuleFilter(project: JpsProject, productMode: ProductMode): ContentModuleFilter {

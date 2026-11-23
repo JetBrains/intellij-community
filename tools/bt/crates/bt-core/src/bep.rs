@@ -56,6 +56,9 @@ pub struct BepSummary {
     /// Distinguishes an empty file from a file that was never written. Both mean the results are not usable, and
     /// neither may be read as green.
     pub saw_any_event: bool,
+    /// The analysis phase of bazel, from `buildMetrics.timingMetrics`, summed over the invocations of a run. Zero when
+    /// bazel reports none, such as when the analysis and the execution overlap.
+    pub analysis_ms: u64,
 }
 
 impl BepSummary {
@@ -78,6 +81,7 @@ impl BepSummary {
             _ => None,
         };
         self.saw_any_event &= other.saw_any_event;
+        self.analysis_ms += other.analysis_ms;
     }
 }
 
@@ -221,6 +225,19 @@ struct Finished {
 }
 
 #[derive(Deserialize, Default)]
+#[serde(default, rename_all = "camelCase")]
+struct BuildMetrics {
+    timing_metrics: Option<TimingMetrics>,
+}
+
+#[derive(Deserialize, Default)]
+#[serde(default, rename_all = "camelCase")]
+struct TimingMetrics {
+    #[serde(deserialize_with = "lenient_integer")]
+    analysis_phase_time_in_ms: Option<i64>,
+}
+
+#[derive(Deserialize, Default)]
 #[serde(default)]
 struct Uri {
     #[serde(deserialize_with = "lenient_string")]
@@ -328,6 +345,14 @@ pub fn parse_bep(lines: impl IntoIterator<Item = String>, platform: Platform) ->
             {
                 summary.action_stderr.push(uri_to_path(&uri, platform));
             }
+            continue;
+        }
+
+        if has_object(id, "buildMetrics")
+            && let Some(metrics) = object::<BuildMetrics>(&event, "buildMetrics")
+        {
+            let analysis = metrics.timing_metrics.and_then(|timing| timing.analysis_phase_time_in_ms);
+            summary.analysis_ms += analysis.map_or(0, |millis| u64::try_from(millis).unwrap_or(0));
             continue;
         }
 

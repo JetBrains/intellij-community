@@ -16,7 +16,6 @@ import com.jetbrains.python.ProtectionLevel
 import com.jetbrains.python.PyCustomType
 import com.jetbrains.python.PyNames
 import com.jetbrains.python.PyPsiBundle
-import com.jetbrains.python.PythonRuntimeService
 import com.jetbrains.python.codeInsight.PyCodeInsightCounters
 import com.jetbrains.python.codeInsight.PyCodeInsightCounters.Counter
 import com.jetbrains.python.codeInsight.typing.ProtocolAndSubclassElements
@@ -49,7 +48,8 @@ import com.jetbrains.python.psi.impl.PyPsiUtils
 import com.jetbrains.python.psi.impl.PyTargetExpressionImpl
 import com.jetbrains.python.psi.impl.PyTypeProvider
 import com.jetbrains.python.psi.resolve.PyResolveContext
-import com.jetbrains.python.psi.resolve.pythonSdkIfReady
+import com.jetbrains.python.psi.resolve.pythonInterpreterIfReady
+import com.intellij.python.sdk.backend.languageLevel
 import com.jetbrains.python.psi.types.PyCallableParameterMapping.mapCallableParameters
 import com.jetbrains.python.psi.types.PyInferredVarianceJudgment.getDeclaredOrInferredVariance
 import com.jetbrains.python.psi.types.PyLiteralStringType.Companion.match
@@ -570,40 +570,29 @@ object PyTypeChecker {
       return match(expected, actual.moduleClassType ?: PyAnyType.unknown, context)
     }
 
-    // Handle PyOverloadType matching. Each branch fans out over candidate overloads; we discard the
-    // per-candidate dead-ends ([withoutRecording]) and record a single summarizing leaf instead.
+    // For assignability, an overload is the intersection of its items: the expected side needs `all` items,
+    // the actual side needs `any` item. A callable class or protocol first gives its `__call__` type.
+    // Each branch discards the per-item dead-ends ([withoutRecording]) and records a single summarizing leaf instead.
     if (expected is PyOverloadType) {
-      if (actual is PyOverloadType) {
-        // When both are overload types, check if all overloads in expected have a match in actual (subset matching)
-        val matched = withoutRecording(context) {
-          expected.items.all { expectedItem ->
-            actual.items.any { actualItem ->
-              match(expectedItem, actualItem, context).getOrDefault(false)
-            }
-          }
+      val matched = withoutRecording(context) {
+        if (actual is PyClassLikeType && actual.isCallable) {
+          matchOverloadWithCallable(expected, actual, context, true)
         }
-        return Optional.of(recordOverloadLeaf(context, expected, actual, matched))
+        else {
+          // An actual overload can match an item with any of its own items, so the choice is arbitrary.
+          matchAllMembers(expected, expected.items, actual, if (actual is PyOverloadType) context.withoutBoundSides() else context)
+        }
       }
-      // If expected is overload but actual is not, check if actual is a callable class/protocol
-      // Extract the __call__ type and compare with the overload
-      if (actual is PyClassLikeType && actual.isCallable) {
-        val matched = withoutRecording(context) { matchOverloadWithCallable(expected, actual, context, true) }
-        return Optional.of(recordOverloadLeaf(context, expected, actual, matched))
-      }
-      return Optional.of(recordOverloadLeaf(context, expected, actual, false))
+      return Optional.of(recordOverloadLeaf(context, expected, actual, matched))
     }
 
     if (actual is PyOverloadType) {
-      // If actual is overload but expected is not, first check if expected is a callable protocol
-      if (expected is PyClassLikeType && expected.isCallable) {
-        val matched = withoutRecording(context) { matchOverloadWithCallable(actual, expected, context, false) }
-        return Optional.of(recordOverloadLeaf(context, expected, actual, matched))
-      }
-      // Otherwise, check if any overload in actual matches expected.
-      // An overload is tried on a copy first, so that a failed overload does not bind type parameters for the next one.
       val matched = withoutRecording(context) {
-        actual.items.any { item ->
-          matchOnCopy(context) { match(expected, item, it) } == Optional.of(true)
+        if (expected is PyClassLikeType && expected.isCallable) {
+          matchOverloadWithCallable(actual, expected, context, false)
+        }
+        else {
+          matchAnyMember(expected, actual, actual.items, context, onCopy = true)
         }
       }
       return Optional.of(recordOverloadLeaf(context, expected, actual, matched))
@@ -617,6 +606,28 @@ object PyTypeChecker {
       }
     }
     return Optional.of(numericMatch)
+  }
+
+  /**
+   * Matches with the first of [candidates] that [matches] accepts, and keeps its substitutions.
+   * Each candidate is tried on a copy, so that a failed candidate leaves no trace in [context].
+   * When more than one candidate matches, the choice is arbitrary, so the substitutions do not keep their bound sides.
+   */
+  private fun <T> matchFirstCandidate(candidates: Iterable<T>, context: MatchContext, matches: (T, MatchContext) -> Boolean): Boolean {
+    var firstMatch: Pair<T, GenericSubstitutions>? = null
+    for (candidate in candidates) {
+      val substitutions = context.mySubstitutions.copy(KeyImpl)
+      if (!matches(candidate, context.withSubstitutions(substitutions))) continue
+      val first = firstMatch
+      if (first == null) {
+        firstMatch = candidate to substitutions
+        continue
+      }
+      return matchOnCopy(context.withoutBoundSides()) { Optional.of(matches(first.first, it)) } == Optional.of(true)
+    }
+    val (_, firstSubstitutions) = firstMatch ?: return false
+    context.mySubstitutions.replaceWith(firstSubstitutions, KeyImpl)
+    return true
   }
 
   private fun match(
@@ -698,6 +709,7 @@ object PyTypeChecker {
     var safeActual = if (constraints.isEmpty() && bound is PyLiteralStringType) actual else replaceLiteralStringWithStr(actual, context.context)
     safeActual = PyNumericTowerUtil.enrich(safeActual)
 
+    var newBoundSide = context.boundSide
     if (substitutedRef != null) {
       val substitution = substitutedRef.get()
       if (expected == safeActual || expected == substitution) {
@@ -710,6 +722,15 @@ object PyTypeChecker {
       }
       if (expected in context.mySubstitutions.getFrozenTypeVars(KeyImpl)) {
         return false
+      }
+      // A lower bound and an upper bound that are not compatible leave no solution, so widening would hide the error.
+      val substitutionBoundSide = context.mySubstitutions.getTypeVarBoundSide(expected, KeyImpl)
+      if (newBoundSide != null && substitutionBoundSide != null && newBoundSide != substitutionBoundSide) {
+        return false
+      }
+      // A widened substitution keeps the part with no known side, so it gets no side either.
+      if (substitutionBoundSide == null) {
+        newBoundSide = null
       }
       if (!matchHelper.match(safeActual, substitution)) {
         safeActual = PyUnionType.unionOrUnknown(safeActual, substitution)
@@ -738,7 +759,9 @@ object PyTypeChecker {
         if (isWidenBoundsCase(expected, context.context)) PyLiteralType.upcastLiteralToClass(safeActual)
         else safeActual
       else constraints[matchedConstraintIndex]
-      context.mySubstitutions.putTypeVar(expected, Ref(type), KeyImpl)
+      if (!occursIn(expected, type, context.context)) {
+        context.mySubstitutions.putTypeVar(expected, Ref(type), KeyImpl, boundSide = newBoundSide)
+      }
     }
     else {
       val effectiveBound = expected.effectiveBound
@@ -750,6 +773,21 @@ object PyTypeChecker {
     return true
   }
 
+  /**
+   * Returns true if [type] is not [typeVar] itself but contains it, for example `T` in `list[T]`.
+   * A binding of [typeVar] to such a type is cyclic, and a later match against it recurses endlessly.
+   *
+   * TODO: After [MatchContext.reversedSubstitutions] is obsolete (i.e., when CSP is the single instance to
+   *       compute substitutions), re-visit this check and remove it if it is no longer needed.
+   */
+  private fun occursIn(typeVar: PyTypeVarType, type: PyType?, context: TypeEvalContext): Boolean {
+    if (type == null || type == typeVar) {
+      return false
+    }
+    val normalized = if (typeVar.isDefinition) typeVar.toInstance() else typeVar
+    return normalized in type.collectGenerics(context).allTypeParameters
+  }
+
   private fun match(expected: PySelfType, actual: PyType?, context: MatchContext): Boolean {
     if (actual.isAnyOrUnknown) return true
     val selfType = context.mySubstitutions.selfType
@@ -758,6 +796,11 @@ object PyTypeChecker {
       return match(substitution, actual, context).getOrDefault(false)
     }
     if (actual !is PySelfType) {
+      // A class with an `Any` or an unresolved base, such as `NotImplementedType`, matches `Self` as `matchClasses` matches it to a class.
+      if (actual is PyClassType && actual.isDefinition == expected.isDefinition &&
+          PyUtil.hasUnresolvedAncestors(actual.pyClass, context.context)) {
+        return true
+      }
       // A final class has no subclass, so `Self` in it denotes the class itself. A class with own type parameters
       // is excluded: `Self` then denotes the class with those parameters, which the bare scope type cannot express.
       return PyTypingTypeProvider.isFinalClass(expected.pyClass, context.context) &&
@@ -950,8 +993,13 @@ object PyTypeChecker {
 
   /** Whether [composite] is too wide for a per-member breakdown. See [maxBreakdownMembers]. */
   private fun exceedsBreakdownBound(composite: PyCompositeTypeBase): Boolean {
+    return exceedsBreakdownBound(composite.members)
+  }
+
+  /** Whether [members] are too many for a per-member breakdown. See [maxBreakdownMembers]. */
+  private fun exceedsBreakdownBound(members: Collection<PyType?>): Boolean {
     val bound = maxBreakdownMembers()
-    return bound > 0 && composite.members.size > bound
+    return bound > 0 && members.size > bound
   }
 
   private fun match(expected: PyType, actual: PyUnionType, context: MatchContext): Boolean {
@@ -1059,12 +1107,33 @@ object PyTypeChecker {
     }) {
       // Past the bound the summary node keeps its line but loses the per-member sub-reasons.
       if (exceedsBreakdownBound(expected)) {
-        withoutDiagnostics(context) { expected.members.any { type: PyType? -> match(type, actual, context).getOrDefault(true) } }
+        withoutDiagnostics(context) { matchAnyUnionMember(expected.members, actual, context) }
       }
       else {
-        expected.members.any { type: PyType? -> match(type, actual, context).getOrDefault(true) }
+        matchAnyUnionMember(expected.members, actual, context)
       }
     }
+  }
+
+  /**
+   * Matches [actual] against any of the expected union [members].
+   * When the match solves type variables and more than one member matches, the choice is arbitrary.
+   * Then the substitutions do not keep their bound sides.
+   */
+  private fun matchAnyUnionMember(members: Collection<PyType?>, actual: PyType, context: MatchContext): Boolean {
+    val matchesMember = { member: PyType?, memberContext: MatchContext -> match(member, actual, memberContext).getOrDefault(true) }
+    // In a reversed match, the type variables to solve are in [actual].
+    if (!context.tracksBoundSides || !actual.hasGenerics(context.context) && members.none { it.hasGenerics(context.context) }) {
+      return members.any { matchesMember(it, context) }
+    }
+    if (matchFirstCandidate(members, context, matchesMember)) return true
+    // Run the failed match again on [context], so that it records the breakdown.
+    if (context.diagnostics != null) {
+      for (member in members) {
+        val _ = matchesMember(member, context)
+      }
+    }
+    return false
   }
 
   /**
@@ -1072,17 +1141,44 @@ object PyTypeChecker {
    * accepted wherever either member is. Mirrors the expected-side union case.
    */
   private fun match(expected: PyType, actual: PyIntersectionType, context: MatchContext): Boolean {
+    return matchAnyMember(expected, actual, actual.members, context, onCopy = false)
+  }
+
+  /**
+   * Matches [expected] against the provided value [actual] that has all of [members], for example an intersection or an overload.
+   * The quantifier is `any`. With [onCopy], each member runs on a copy of the substitutions.
+   * Then a failed member binds no type parameters for the next member.
+   * When more than one member can match, the choice is arbitrary, so the substitutions do not keep their bound sides.
+   */
+  private fun matchAnyMember(
+    expected: PyType?,
+    actual: PyType?,
+    members: Collection<PyType?>,
+    context: MatchContext,
+    onCopy: Boolean,
+  ): Boolean {
+    val matchesAnyMember = {
+      when {
+        onCopy && context.tracksBoundSides ->
+          matchFirstCandidate(members, context) { member, memberContext -> match(expected, member, memberContext) == Optional.of(true) }
+        onCopy -> members.any { member -> matchOnCopy(context) { match(expected, member, it) } == Optional.of(true) }
+        else -> {
+          val memberContext = if (members.size > 1) context.withoutBoundSides() else context
+          members.any { member -> match(expected, member, memberContext).getOrDefault(false) }
+        }
+      }
+    }
     return recordFrameBool(context, {
       PyPsiBundle.problemMessage("INSP.type.checker.breakdown.intersection.member.not.assignable",
                                  codifiedType(context, actual), codifiedType(context, expected))
     }, {
       PyMismatchStep.NoIntersectionMember(codifiedType(context, expected), codifiedType(context, actual))
     }) {
-      if (exceedsBreakdownBound(actual)) {
-        withoutDiagnostics(context) { actual.members.any { type: PyType? -> match(expected, type, context).getOrDefault(false) } }
+      if (exceedsBreakdownBound(members)) {
+        withoutDiagnostics(context) { matchesAnyMember() }
       }
       else {
-        actual.members.any { type: PyType? -> match(expected, type, context).getOrDefault(false) }
+        matchesAnyMember()
       }
     }
   }
@@ -1092,10 +1188,18 @@ object PyTypeChecker {
    * requirement, and each failing one earns its own frame.
    */
   private fun match(expected: PyIntersectionType, actual: PyType, context: MatchContext): Boolean {
+    return matchAllMembers(expected, expected.members, actual, context)
+  }
+
+  /**
+   * Matches the provided value [actual] against the required [expected] that has all of [members], for example an intersection
+   * or an overload. The quantifier is `all`.
+   */
+  private fun matchAllMembers(expected: PyType?, members: Collection<PyType?>, actual: PyType?, context: MatchContext): Boolean {
     val collector = context.diagnostics
-    if (collector == null || exceedsBreakdownBound(expected)) {
+    if (collector == null || exceedsBreakdownBound(members)) {
       val shortCircuited = withoutDiagnostics(context) {
-        expected.members.all { type: PyType? -> match(type, actual, context).getOrDefault(true) }
+        members.all { type: PyType? -> match(type, actual, context).getOrDefault(true) }
       }
       if (!shortCircuited) {
         recordLeaf(context, {
@@ -1111,7 +1215,7 @@ object PyTypeChecker {
 
     // One walk, one buffer per failing member, as the actual-side union does.
     val failing = mutableListOf<Pair<PyType?, List<PyTypeMismatchExplanation>>>()
-    for (member in expected.members) {
+    for (member in members) {
       val (memberMatched, reasons) = collectInto(collector) { match(member, actual, context).getOrDefault(true) }
       if (!memberMatched) {
         failing.add(member to reasons)
@@ -1144,7 +1248,8 @@ object PyTypeChecker {
   }
 
   private fun match(expected: PyType, actual: PyUnsafeUnionType, context: MatchContext): Boolean {
-    return actual.members.any { type: PyType? -> match(expected, type, context).getOrDefault(false) }
+    val memberContext = if (actual.members.size > 1) context.withoutBoundSides() else context
+    return actual.members.any { type: PyType? -> match(expected, type, memberContext).getOrDefault(false) }
   }
 
   private fun match(expected: PyUnsafeUnionType, actual: PyType, context: MatchContext): Boolean {
@@ -1160,10 +1265,10 @@ object PyTypeChecker {
       PyMismatchStep.NoUnionMember(codifiedType(context, actual), codifiedType(context, expected))
     }) {
       if (exceedsBreakdownBound(expected)) {
-        withoutDiagnostics(context) { expected.members.any { type: PyType? -> match(type, actual, context).getOrDefault(true) } }
+        withoutDiagnostics(context) { matchAnyUnionMember(expected.members, actual, context) }
       }
       else {
-        expected.members.any { type: PyType? -> match(type, actual, context).getOrDefault(true) }
+        matchAnyUnionMember(expected.members, actual, context)
       }
     }
   }
@@ -1288,6 +1393,7 @@ object PyTypeChecker {
     val protocolContext = MatchContext(matchContext.context, protocolSubstitutions, matchContext.reversedSubstitutions)
     protocolContext.diagnostics = matchContext.diagnostics
     protocolContext.anchor = matchContext.anchor
+    protocolContext.tracksBoundSides = false
 
     val matchingMembers = getMatchingProtocolMembers(expected, actual, protocolContext)
     val hasMissingMatch = matchingMembers.any { pair -> pair.second.isEmpty() }
@@ -1303,7 +1409,10 @@ object PyTypeChecker {
       // Effectively, we're just copying substitutions for the terminal type parameters e.g.
       // extracting: T@func -> str
       // from: Iterable[T@func] <- Iterable[str]
-      return matchGenericClassesParameterWise(expected, concreteExpected, matchContext)
+      // When more than one overload of a member matches, the substitutions mix their bounds.
+      val isOverloadChoiceArbitrary = matchingMembers.any { (_, members) -> members.size > 1 }
+      return matchGenericClassesParameterWise(expected, concreteExpected,
+                                              if (isOverloadChoiceArbitrary) matchContext.withoutBoundSides() else matchContext)
     }
 
     return true
@@ -1313,6 +1422,7 @@ object PyTypeChecker {
   fun getMatchingProtocolMembers(expected: PyClassType, actual: PyClassType, substitutions: GenericSubstitutions,context: TypeEvalContext): List<ProtocolAndSubclassElements> {
     substitutions.selfType = actual.toInstance()
     val protocolContext = MatchContext(context, substitutions, false)
+    protocolContext.tracksBoundSides = false
     return getMatchingProtocolMembers(expected, actual, protocolContext)
   }
 
@@ -1755,10 +1865,11 @@ object PyTypeChecker {
       else {
         listOf(actual)
       }
+      val overloadContext = if (actualOverloads.size > 1) matchContext.withoutBoundSides() else matchContext
       return Optional.of(expectedOverloads.all { expectedCall ->
         actualOverloads.any { actualCall ->
           match(dropSelfInProtocolMember(expected, expectedCall, context),
-                actualCall, matchContext).getOrDefault(true)
+                actualCall, overloadContext).getOrDefault(true)
         }
       })
     }
@@ -1794,7 +1905,8 @@ object PyTypeChecker {
    * its constructor. When that overload does not match, each constructor overload is tried.
    */
   private fun matchClassAsCallable(expected: PyCallableType, actual: PyCallableType, matchContext: MatchContext): Optional<Boolean> {
-    val firstOverloadMatch = matchOnCopy(matchContext) { match(expected, actual, it) }
+    // Another constructor overload can also match, so the first overload is an arbitrary choice.
+    val firstOverloadMatch = matchOnCopy(matchContext.withoutBoundSides()) { match(expected, actual, it) }
     if (firstOverloadMatch != Optional.of(false)) return firstOverloadMatch
     val constructorType = PyCallExpressionHelper.createCallableFromClass(actual as PyClassType, PyResolveContext.defaultContext(matchContext.context))
     // A failed match runs again on [matchContext], so that it records the breakdown.
@@ -1807,7 +1919,7 @@ object PyTypeChecker {
    */
   private inline fun matchOnCopy(matchContext: MatchContext, body: (MatchContext) -> Optional<Boolean>): Optional<Boolean> {
     val substitutions = matchContext.mySubstitutions.copy(KeyImpl)
-    val result = body(MatchContext(matchContext.context, substitutions, matchContext.reversedSubstitutions))
+    val result = body(matchContext.withSubstitutions(substitutions))
     if (result == Optional.of(true)) {
       matchContext.mySubstitutions.replaceWith(substitutions, KeyImpl)
     }
@@ -2025,7 +2137,8 @@ object PyTypeChecker {
     val expectedElementTypes = expected.typeArguments
     val actualElementTypes = actual.typeArguments
     if (context.reversedSubstitutions) {
-      return matchTypeParameters(actual, actualElementTypes, expectedElementTypes, context.resetSubstitutions())
+      // The swap of the sides also swaps the bound sides of the type variables, so they are not recorded.
+      return matchTypeParameters(actual, actualElementTypes, expectedElementTypes, context.resetSubstitutions().withoutBoundSides())
     }
     else {
       return matchTypeParameters(expected, expectedElementTypes, actualElementTypes, context)
@@ -2241,50 +2354,34 @@ object PyTypeChecker {
   }
 
   /**
-   * Compares an overload type against a callable class/protocol's __call__ type.
-   * Returns true if all expected overload items have a match in the actual overload items.
+   * Compares an overload type against the bound `__call__` type of a callable class or protocol.
+   * Both types match like intersections of their items.
    */
   private fun matchOverloadWithCallable(
     overloadType: PyOverloadType,
     callableType: PyClassLikeType,
-    context: MatchContext,
+    matchContext: MatchContext,
     expectedIsOverload: Boolean,
   ): Boolean {
+    // Any overload can match, so the choice of an overload is arbitrary.
+    val context = matchContext.withoutBoundSides()
     val resolveContext = PyResolveContext.defaultContext(context.context)
     val resolveResults = callableType.resolveMember(PyNames.CALL, null, AccessDirection.READ, resolveContext)
     if (resolveResults.isNullOrEmpty()) {
       return false
     }
 
-    val element = resolveResults[0].element
-    var callType = if (element is PyTypedElement) context.context.getType(element) else null
+    // All overloads of `__call__`, not only the first one, bound to the instance.
+    val callType = PyTypeUtil.getTypeOfBoundMember(callableType, resolveResults, context.context)
 
-    if (callableType is PyClassType) {
-      callType = dropSelfInProtocolMember(callableType, callType, context.context)
+    if (callType !is PyOverloadType && callType !is PyCallableType) {
+      return false
     }
-
-    when (callType) {
-      is PyOverloadType -> {
-        // If the __call__ is overloaded, compare overload types (subset matching)
-        return overloadType.items.all { expectedItem ->
-          callType.items.any { actualItem ->
-            match(expectedItem, actualItem, context).getOrDefault(false)
-          }
-        }
-      }
-      is PyCallableType -> {
-        // If __call__ is not overloaded, check if any overload matches the single callable
-        return overloadType.items.any { item ->
-          // Match with correct argument order based on which is expected
-          if (expectedIsOverload) {
-            match(item, callType, context).getOrDefault(false)
-          }
-          else {
-            match(callType, item, context).getOrDefault(false)
-          }
-        }
-      }
-      else -> return false
+    // Each expected item needs some actual item, so an overloaded `__call__` on the expected side spreads over its items first.
+    return when {
+      expectedIsOverload -> matchAllMembers(overloadType, overloadType.items, callType, context)
+      callType is PyOverloadType -> matchAllMembers(callType, callType.items, overloadType, context)
+      else -> matchAnyMember(callType, overloadType, overloadType.items, context, onCopy = true)
     }
   }
 
@@ -2945,7 +3042,7 @@ object PyTypeChecker {
     val subClassFile = subClass.containingFile
 
     val isPy2 = if (subClassFile is PyiFile)
-      PythonRuntimeService.getInstance().getLanguageLevelForSdk(subClassFile.pythonSdkIfReady()).isPython2
+      (subClassFile.pythonInterpreterIfReady()?.languageLevel ?: LanguageLevel.getDefault()).isPython2
     else
       LanguageLevel.forElement(subClass).isPython2
 
@@ -3293,6 +3390,8 @@ object PyTypeChecker {
 
     private var frozenTypeVars: Set<PyTypeVarType> = emptySet()
 
+    private val myTypeVarBoundSides: MutableMap<PyTypeVarType, TypeVarBoundSide> = HashMap()
+
     constructor(typeParameters: Map<PyTypeParameterType, PyType?>) : this() {
       for ((key, value) in typeParameters) {
         when (key) {
@@ -3348,7 +3447,13 @@ object PyTypeChecker {
       if (paramSpecs != null) {
         newParamSpecs.putAll(paramSpecs)
       }
-      return GenericSubstitutions(newTypeVars, newTypeVarTuples, newParamSpecs, selfType)
+      val result = GenericSubstitutions(newTypeVars, newTypeVarTuples, newParamSpecs, selfType)
+      for ((typeVar, boundSide) in myTypeVarBoundSides) {
+        if (typeVars == null || typeVar !in typeVars) {
+          result.myTypeVarBoundSides[typeVar] = boundSide
+        }
+      }
+      return result
     }
 
     fun simplify(context: TypeEvalContext) : GenericSubstitutions {
@@ -3375,6 +3480,8 @@ object PyTypeChecker {
       myParamSpecs.putAll(other.myParamSpecs)
       selfType = other.selfType
       frozenTypeVars = other.frozenTypeVars
+      myTypeVarBoundSides.clear()
+      myTypeVarBoundSides.putAll(other.myTypeVarBoundSides)
     }
 
     @ApiStatus.Internal
@@ -3382,11 +3489,26 @@ object PyTypeChecker {
       frozenTypeVars = value
     }
 
+    /**
+     * The side of the bound that gave the substitution of [typeVar].
+     * It is null when the substitution is not a bound of a match, for example a class type argument or a default.
+     * It is also null when the substitution comes from an arbitrary choice among overloads or union members.
+     */
     @ApiStatus.Internal
-    fun putTypeVar(typeVar: PyTypeVarType, substitute: Ref<PyType?>?, @Suppress("unused") key: Key, ifAbsent: Boolean = false) {
-      val safeSubstitute: Ref<PyType?>? = substitute?.let { Ref(PyNumericTowerUtil.enrich(it.derefOrUnknown())) }
-      if (ifAbsent) myTypeVars.putIfAbsent(typeVar, safeSubstitute)
-      else myTypeVars[typeVar] = safeSubstitute
+    fun getTypeVarBoundSide(typeVar: PyTypeVarType, @Suppress("unused") key: Key): TypeVarBoundSide? = myTypeVarBoundSides[typeVar]
+
+    @ApiStatus.Internal
+    fun putTypeVar(
+      typeVar: PyTypeVarType,
+      substitute: Ref<PyType?>?,
+      @Suppress("unused") key: Key,
+      ifAbsent: Boolean = false,
+      boundSide: TypeVarBoundSide? = null,
+    ) {
+      if (ifAbsent && myTypeVars[typeVar] != null) return
+      myTypeVars[typeVar] = substitute?.let { Ref(PyNumericTowerUtil.enrich(it.derefOrUnknown())) }
+      if (boundSide != null) myTypeVarBoundSides[typeVar] = boundSide
+      else myTypeVarBoundSides.remove(typeVar)
     }
 
     @ApiStatus.Internal
@@ -3418,6 +3540,10 @@ object PyTypeChecker {
   sealed class Key
   private object KeyImpl : Key()
 
+  /** The side of a type variable that a match constrains: `actual <: T` gives a lower bound, `T <: expected` an upper. */
+  @ApiStatus.Internal
+  enum class TypeVarBoundSide { LOWER, UPPER }
+
   private class MatchContext(
     val context: TypeEvalContext,
     val mySubstitutions: GenericSubstitutions,
@@ -3441,14 +3567,41 @@ object PyTypeChecker {
     @JvmField
     var anchor: PsiElement? = null
 
+    /**
+     * Whether a type variable match records the bound side of its substitution.
+     * When it is true, a match also rejects a bound on the other side that the substitution does not satisfy.
+     * It is false after an arbitrary choice among overloads or union members, because another choice can give a compatible bound.
+     * It is also false inside protocol members, and in a reversed match of a generic class, which swaps the sides.
+     */
+    @JvmField
+    var tracksBoundSides: Boolean = true
+
+    /** The bound that a match of a type variable in the expected type gives, or null when [tracksBoundSides] is false. */
+    val boundSide: TypeVarBoundSide?
+      get() = when {
+        !tracksBoundSides -> null
+        reversedSubstitutions -> TypeVarBoundSide.UPPER
+        else -> TypeVarBoundSide.LOWER
+      }
+
     fun reverseSubstitutions(): MatchContext {
       return MatchContext(context, mySubstitutions, !reversedSubstitutions)
-        .also { it.diagnostics = diagnostics; it.anchor = anchor }
+        .also { it.diagnostics = diagnostics; it.anchor = anchor; it.tracksBoundSides = tracksBoundSides }
     }
 
     fun resetSubstitutions(): MatchContext {
       return MatchContext(context, mySubstitutions, false)
-        .also { it.diagnostics = diagnostics; it.anchor = anchor }
+        .also { it.diagnostics = diagnostics; it.anchor = anchor; it.tracksBoundSides = tracksBoundSides }
+    }
+
+    fun withoutBoundSides(): MatchContext {
+      return MatchContext(context, mySubstitutions, reversedSubstitutions)
+        .also { it.diagnostics = diagnostics; it.anchor = anchor; it.tracksBoundSides = false }
+    }
+
+    /** A context on [substitutions] that records no breakdown. */
+    fun withSubstitutions(substitutions: GenericSubstitutions): MatchContext {
+      return MatchContext(context, substitutions, reversedSubstitutions).also { it.tracksBoundSides = tracksBoundSides }
     }
   }
 

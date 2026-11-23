@@ -1,5 +1,6 @@
 package com.intellij.ide.starter.project
 
+import com.intellij.execution.wsl.EelDescriptorWithWslDistribution
 import com.intellij.ide.starter.di.di
 import com.intellij.ide.starter.ide.IDETestContext
 import com.intellij.ide.starter.path.GlobalPaths
@@ -9,6 +10,7 @@ import com.intellij.ide.starter.utils.Git
 import com.intellij.ide.starter.utils.abortOnUnavailableGitRemote
 import com.intellij.ide.starter.utils.setRemoteUrlIfDifferent
 import com.intellij.ide.starter.utils.withRetryBlocking
+import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.tools.ide.util.common.logError
 import com.intellij.tools.ide.util.common.logOutput
 import com.intellij.util.system.OS
@@ -64,25 +66,27 @@ data class GitProjectInfo(
   private val description: String = "",
 ) : ProjectInfoSpec {
 
+  /**
+   * The checkout that the test uses, on the machine of the target.
+   *
+   * On the local target, it is [hostRepositoryRootDir]. A Docker container sees [hostRepositoryRootDir] here through a bind mount.
+   * A WSL guest has its own checkout here, which fetches from [hostRepositoryRootDir].
+   */
   val repositoryRootDir: Path
     get() {
       val globalPaths by di.instance<GlobalPaths>()
-
-      // TODO: https://youtrack.jetbrains.com/issue/AT-2013/Eel-in-Starter-Make-GitProjectInfo-and-Git-aware-of-target-eel
-      // as of now just use local cache directory for git project
-      val projectsUnpacked = globalPaths.localCacheDirectory.resolve("projects").resolve("unpacked").createDirectories()
-
-      return projectsUnpacked.resolve(repositoryUrl.split("/").last().split(".git").first())
+      return globalPaths.cacheDirForProjects.resolve("unpacked").createDirectories().resolve(repositoryName)
     }
 
-  // TODO: Remove this after https://youtrack.jetbrains.com/issue/AT-2013/Eel-in-Starter-Make-GitProjectInfo-and-Git-aware-of-target-eel
-  // after setting up project we should return "real" directory path (not local) to use in remote target (Docker, WSL, etc)
-  private val remoteRepositoryRootDir: Path
+  /** The checkout on the host. The credentials for [repositoryUrl] exist only on the host. */
+  val hostRepositoryRootDir: Path
     get() {
       val globalPaths by di.instance<GlobalPaths>()
-      val projectsUnpacked = globalPaths.cacheDirForProjects.resolve("unpacked").createDirectories()
-      return projectsUnpacked.resolve(repositoryUrl.split("/").last().split(".git").first())
+      return globalPaths.localCacheDirectory.resolve("projects").resolve("unpacked").createDirectories().resolve(repositoryName)
     }
+
+  private val repositoryName: String
+    get() = repositoryUrl.split("/").last().split(".git").first()
 
   val projectPath: Path
     get() = repositoryRootDir.let(projectHomeRelativePath)
@@ -178,17 +182,42 @@ data class GitProjectInfo(
   }
 
   override fun downloadAndUnpackProject(): Path {
+    val hostRoot = provisionHostRepository()
+    val targetRoot = repositoryRootDir
+    if (isInWslGuest(targetRoot)) {
+      checkoutInTarget(hostRoot, targetRoot, cleanWorkingTree = !isReusable)
+    }
+    check(isCheckout(targetRoot)) {
+      "The project directory $targetRoot has no checkout of $repositoryUrl. Its environment is ${targetRoot.getEelDescriptor()}. " +
+      "The directory must be the host checkout $hostRoot, a bind mount of it, or a checkout in a WSL guest."
+    }
+    return targetRoot.let(projectHomeRelativePath)
+  }
+
+  /**
+   * Checks out the commit of this project in [targetDir], on the machine of [targetDir]. The checkout has no local changes.
+   * Git on this machine must be able to read the host checkout, so the machine is the host or a WSL guest.
+   */
+  internal fun checkoutInto(targetDir: Path) {
+    checkoutInTarget(provisionHostRepository(), targetDir, cleanWorkingTree = true)
+  }
+
+  private fun isInWslGuest(dir: Path): Boolean = dir.getEelDescriptor() is EelDescriptorWithWslDistribution
+
+  /** Moves the host checkout to [branchName] and [commitHash]. A failure tries once more from a new clone. */
+  private fun provisionHostRepository(): Path {
+    val hostRoot = hostRepositoryRootDir
     try {
-      if (isCheckout(repositoryRootDir)) processReusable(repositoryRootDir) else cleanupAndCloneRepo(repositoryRootDir)
-      setupRepositoryState(repositoryRootDir)
+      if (isCheckout(hostRoot)) processReusable(hostRoot) else cleanupAndCloneRepo(hostRoot)
+      setupRepositoryState(hostRoot)
     }
     catch (failure: Exception) {
       logError("Failed to setup the test project git repository state as: $this. " +
                "Trying one more time from clean checkout.", failure)
 
       try {
-        cleanupAndCloneRepo(repositoryRootDir)
-        setupRepositoryState(repositoryRootDir)
+        cleanupAndCloneRepo(hostRoot)
+        setupRepositoryState(hostRoot)
       }
       catch (retryFailure: Exception) {
         retryFailure.addSuppressed(failure)
@@ -196,8 +225,18 @@ data class GitProjectInfo(
         throw retryFailure
       }
     }
+    return hostRoot
+  }
 
-    return remoteRepositoryRootDir.let(projectHomeRelativePath)
+  /** Checks out the commit of [hostRoot] in [targetRoot]. */
+  private fun checkoutInTarget(hostRoot: Path, targetRoot: Path, cleanWorkingTree: Boolean) {
+    check(!withSubmodules) {
+      "The checkout in $targetRoot cannot get the submodules of $repositoryUrl, because it fetches only from the host checkout"
+    }
+    GitTargetCheckout.checkoutHostHead(hostRepositoryDir = hostRoot,
+                                       targetDir = targetRoot,
+                                       cleanWorkingTree = cleanWorkingTree,
+                                       timeout = downloadTimeout)
   }
 
   fun onCommit(commitHash: String): GitProjectInfo = copy(commitHash = commitHash)

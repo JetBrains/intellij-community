@@ -37,8 +37,9 @@ jvm_import = rule(
             providers = [JavaInfo],
         ),
         "exported_compiler_plugins": attr.label_list(
-            doc = """Exported compiler plugins.""",
+            doc = """Exported compiler plugins. They resolve in the execution configuration, like `plugins`.""",
             default = [],
+            cfg = "exec",
             providers = [[_KtCompilerPluginInfo]],
         ),
     },

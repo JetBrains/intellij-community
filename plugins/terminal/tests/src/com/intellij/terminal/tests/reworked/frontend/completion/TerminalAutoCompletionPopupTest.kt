@@ -7,6 +7,7 @@ import com.intellij.terminal.tests.reworked.frontend.completion.TerminalCompleti
 import com.intellij.terminal.tests.reworked.util.EchoingTerminalSession
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
+import com.intellij.testFramework.utils.io.deleteRecursively
 import kotlinx.coroutines.Dispatchers
 import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.plugins.terminal.block.completion.TerminalCommandCompletionShowingMode
@@ -16,6 +17,8 @@ import org.jetbrains.plugins.terminal.startup.TerminalProcessType
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
+import java.nio.file.Path
+import kotlin.io.path.createTempDirectory
 
 @RunWith(JUnit4::class)
 internal class TerminalAutoCompletionPopupTest : BasePlatformTestCase() {
@@ -142,7 +145,7 @@ internal class TerminalAutoCompletionPopupTest : BasePlatformTestCase() {
       val fixtureScope = childScope("TerminalCompletionFixture")
       val startupOptions = TerminalStartupOptionsImpl(
         shellCommand = listOf("/bin/zsh", "--login", "-i"),
-        workingDirectory = "fakeDir",
+        workingDirectory = createTempDir().toString(),
         envVariables = emptyMap(),
         processType = TerminalProcessType.SHELL,
         pid = null,
@@ -163,6 +166,12 @@ internal class TerminalAutoCompletionPopupTest : BasePlatformTestCase() {
         block(fixture)
       }
     }
+
+  private fun createTempDir(): Path {
+    return createTempDirectory().also {
+      Disposer.register(testRootDisposable) { it.deleteRecursively() }
+    }
+  }
 
   private suspend fun TerminalCompletionFixture.typeWithNoCompletion(text: String) {
     val disposable = Disposer.newDisposable(testRootDisposable)

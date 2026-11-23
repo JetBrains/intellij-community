@@ -6,8 +6,6 @@ description: Write IntelliJ JUnit 5 tests with fixtures, lifecycle, and EDT.
 
 # Writing Tests
 
-Guidelines for writing tests in IntelliJ IDEA codebase.
-
 For examples, see `community/platform/testFramework/junit5/test/showcase/`.
 
 ## Place Tests in the Owning Module
@@ -16,21 +14,14 @@ Put a test in the test module associated with the production module it exercises
 that module has the production module on its test classpath. Check the production module's `.iml` file and neighboring tests before adding
 a new test.
 
-In particular, code in `org.jetbrains.intellij.build.io` under `community/build/tasks` belongs to
-`intellij.idea.community.build.tasks.tests` (`community/build/tasks/test`), not `intellij.platform.buildScripts.tests`. The
-`BUILD_SCRIPTS_PLATFORM_TESTS` group deliberately excludes `org.jetbrains.intellij.build.io.*` to avoid matching build-task tests by class
-name across module boundaries. Putting such a test in the build-scripts test module leaves it outside every community test group and causes
-`UltimateProjectTestsStructureTest` to fail.
+A test of `org.jetbrains.intellij.build.io` code under `community/build/tasks` belongs in `intellij.idea.community.build.tasks.tests`
+(`community/build/tasks/test`), not in `intellij.platform.buildScripts.tests`. There, such a test is outside every community test group,
+and `UltimateProjectTestsStructureTest` fails. The `BUILD_SCRIPTS_PLATFORM_TESTS` group deliberately excludes
+`org.jetbrains.intellij.build.io.*`.
 
 ## Prefer JUnit 5 over JUnit 4
 
 Use JUnit 5 with `@TestApplication` annotation instead of extending `LightJavaCodeInsightFixtureTestCase`.
-
-**Why JUnit 5:**
-- **Faster**: No class hierarchy overhead, shared fixtures via companion objects
-- **Cleaner**: Annotations (`@TestDisposable`, `@RegistryKey`) instead of manual setup/teardown
-- **Flexible**: Mix EDT and non-EDT tests in one class, parameterized tests, nested tests
-- **Better isolation**: Each test gets fresh disposables automatically
 
 ## Shared Fixtures Pattern
 
@@ -51,38 +42,7 @@ internal class MyTest {
 
 ## Lifecycle Hooks
 
-Use JUnit 5 lifecycle annotations for setup and teardown:
-
-```kotlin
-@TestApplication
-internal class MyTest {
-  companion object {
-    @JvmStatic
-    @BeforeAll
-    fun setUpClass() {
-      // Once before all tests in class
-    }
-
-    @JvmStatic
-    @AfterAll
-    fun tearDownClass() {
-      // Once after all tests in class
-    }
-  }
-
-  @BeforeEach
-  fun setUp() {
-    // Before each test method
-  }
-
-  @AfterEach
-  fun tearDown() {
-    // After each test method
-  }
-}
-```
-
-**Note:** Prefer `@TestDisposable` over manual `@AfterEach` cleanup for resources.
+Prefer `@TestDisposable` over manual `@AfterEach` cleanup for resources.
 
 ## Test Disposables
 
@@ -166,13 +126,9 @@ delay as a completion signal.
 
 ## Key Classes
 
-- `com.intellij.testFramework.junit5.TestApplication` - initializes shared application
-- `com.intellij.testFramework.junit5.TestDisposable` - injects test disposables
-- `com.intellij.testFramework.junit5.RegistryKey` - sets registry values
-- `com.intellij.testFramework.junit5.SystemProperty` - sets system properties
-- `com.intellij.testFramework.common.timeoutRunBlocking` - runs suspending test code with a 10-second default timeout
-- `com.intellij.testFramework.junit5.fixture.projectFixture` - creates project fixtures
-- `com.intellij.testFramework.junit5.fixture.moduleFixture` - creates module fixtures
+- `com.intellij.testFramework.junit5`: `TestApplication` (initializes the shared application), `TestDisposable`, `RegistryKey`,
+  `SystemProperty`
+- `com.intellij.testFramework.junit5.fixture`: `projectFixture`, `moduleFixture`
 
 ## Showcase Tests
 
@@ -183,9 +139,4 @@ delay as a completion signal.
 
 ## Running Tests
 
-To run tests via command line, see [TESTING.md](../testing/SKILL.md).
-
-Quick example:
-```bash
-./tests.cmd --module <test-module> --test com.example.MyTest
-```
+To run tests via command line, see the [testing](../testing/SKILL.md) skill.

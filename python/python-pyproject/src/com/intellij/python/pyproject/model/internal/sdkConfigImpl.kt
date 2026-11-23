@@ -1,6 +1,5 @@
 package com.intellij.python.pyproject.model.internal
 
-import com.intellij.python.pyproject.model.evolution.getInterpreter
 import com.intellij.python.pyproject.model.api.ModuleSdkState
 import com.intellij.python.pyproject.model.api.InterpreterConfigurationError
 import com.intellij.python.pyproject.model.api.InterpreterConfigurationResult
@@ -50,12 +49,10 @@ internal suspend fun <T : Any> SdkForModuleConfigInstruction.autoConfigureSdk(co
       // A parent that `SameAs` configured on the way is written too, so the snapshot must hold it as well.
       val written = listOfNotNull(pyProject, (this as? SdkForModuleConfigInstruction.SameAs)?.parent)
       val model = EvoPyProjectModel.getInstance(module.project)
-      model.awaitInterpreterOf(written)
-      // The wait above ends only when the snapshot holds the interpreter the module holds now.
-      val interpreter = checkNotNull(pyProject.getInterpreter()) {
-        "${pyProject.residesOnModule} has no interpreter in the snapshot after it was configured"
-      }
-      InterpreterConfigurationResult.Configured(interpreter)
+      // One read: the snapshot that the wait ended on, and not a later one that a sibling configured in parallel may have
+      // published. A wait that timed out reported it, and the interpreter that this call wrote stands.
+      val snapshot = model.awaitInterpreterOf(written)
+      InterpreterConfigurationResult.Configured(snapshot?.forPyProject(pyProject)?.interpreter ?: outcome.interpreter)
     }
     is ConfigOutcome.Failed -> when (val error = outcome.error) {
       is InterpreterConfigurationResult.NotConfigured -> error
@@ -158,8 +155,11 @@ private suspend fun <T : Any> SdkForModuleConfigInstruction.autoConfigureSdkImpl
       when (val parentSdkResult = parent.getModuleSdkState(fresh = true)) {
         // Parent already has SDK
         is ModuleSdkState.HasSdk -> inheritFromParent(parentSdkResult.interpreter)
-        is ModuleSdkState.NoSdk -> {
-          val parentSdkInfo = parentSdkResult.sdkConfigInstruction
+        is ModuleSdkState.NoSdk, is ModuleSdkState.Unavailable -> {
+          val parentSdkInfo = when (parentSdkResult) {
+            is ModuleSdkState.NoSdk -> parentSdkResult.sdkConfigInstruction
+            is ModuleSdkState.Unavailable -> parentSdkResult.sdkConfigInstruction
+          }
           val error = if (parentSdkInfo == null) {
             null // Parent module has no SDK config info
           }

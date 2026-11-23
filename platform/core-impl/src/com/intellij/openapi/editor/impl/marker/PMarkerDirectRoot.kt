@@ -18,7 +18,7 @@ import java.util.function.Consumer
 
 /**
  * Stores one persistent AVL snapshot with direct child links.
- * The tree retains valid nodes. [invalids] retains invalid states and removal tombstones.
+ * The tree retains valid nodes. [invalids] retains invalid states. Removal records [PMarkerNodeHistory.removedState] in the histories.
  * Handles select positions and invalid states through weak histories for [version].
  * Updates copy changed paths. Position changes publish histories after the new root retains the resulting tree.
  *
@@ -26,7 +26,7 @@ import java.util.function.Consumer
  *
  * @property version the revision used for state and parent lookup.
  * @property root the valid subtree, or null when this snapshot has no valid markers.
- * @property invalids the invalid and removed states retained by this snapshot, keyed by handle ID.
+ * @property invalids the invalid states retained by this snapshot, keyed by handle ID.
  * @property resolutionCacheIdentity the token shared by roots with unchanged marker offsets and validity.
  * @property cachedResolutions the valid resolutions already checked for this snapshot.
  * Only roots with the same resolution identity share it.
@@ -44,6 +44,17 @@ class PMarkerDirectRoot private constructor(
     resolutionUpdate?.advance(previousIdentity, resolution) ?: PMarkerResolution.UNRESOLVED
 
   override fun isEmpty(): Boolean = root == null
+
+  /** Whether all valid markers have zero length and measure, and no policy is persistent. */
+  internal val canDeferPointInsertions: Boolean
+    get() = root?.let { it.pointsOnly && it.persistentCount == 0 } ?: true
+
+  /** Whether any valid marker uses a persistent policy. */
+  internal val hasPersistentMarkers: Boolean
+    get() = (root?.persistentCount ?: 0) > 0
+
+  /** Returns whether every valid marker ends before [offset]. */
+  internal fun endsBefore(offset: Int): Boolean = root == null || root.maximumEnd < offset
 
   override fun isValid(handle: SnapshotMarkerReference<*>): Boolean {
     val resolution = cachedResolutions?.get(handle.id) ?: PMarkerResolution.UNRESOLVED
@@ -129,7 +140,7 @@ class PMarkerDirectRoot private constructor(
   ): PMarkerDirectRoot = keepingRootAlive {
     val entry = MarkerEntry(handle, startOffset, endOffset, specMask, flavorFlags, measure, policy)
     val editor = Editor()
-    editor.finish(editor.insert(root, entry))
+    editor.finish(editor.insert(root, entry), resolutionUpdate = insertionResolutionUpdate())
   }
 
   override fun insertMany(entries: List<MarkerEntry>): PMarkerDirectRoot = keepingRootAlive {
@@ -141,13 +152,102 @@ class PMarkerDirectRoot private constructor(
       require(inserted.add(entry.handle)) { "The marker already exists" }
       result = editor.insert(result, entry)
     }
-    editor.finish(result)
+    editor.finish(result, resolutionUpdate = insertionResolutionUpdate())
   }
+
+  private fun insertionResolutionUpdate(): PMarkerResolutionUpdate =
+    PMarkerResolutionUpdate(resolutionCacheIdentity, Int.MAX_VALUE, Int.MAX_VALUE, 0, resolutionUpdate)
 
   /** Restores supplied offsets after removing their old states. The new snapshot starts with an empty resolution cache. */
   override fun restoreEntries(entries: List<MarkerEntry>): PMarkerDirectRoot {
     if (entries.isEmpty()) return this
     return purgeMany(entries.map { it.handle }).insertMany(entries)
+  }
+
+  /** Replaces valid point markers. Large batches rebuild the ordered tree in one version. */
+  internal fun restorePointEntries(entries: List<MarkerEntry>): PMarkerDirectRoot = keepingRootAlive {
+    if (entries.isEmpty()) return@keepingRootAlive this
+    require(entries.all { it.nodeStart >= 0 && it.nodeStart == it.nodeEnd && it.measure == 0 }) { "The marker must be a point" }
+    val height = root?.height ?: 0
+    if (entries.size < 16 || entries.size.toLong() * height < (1L shl height)) {
+      val editor = Editor()
+      var result = root
+      var changeStart = Int.MAX_VALUE
+      var changeEnd = 0
+      val handles = if (entries.size > 1) HashSet<SnapshotMarkerReference<*>>() else null
+      for (entry in entries) {
+        require(handles?.add(entry.handle) != false) { "The marker already exists" }
+        val previous = resolve(entry.handle)
+        require(PMarkerResolution.isValid(previous)) { "The relocated marker must be valid" }
+        val start = PMarkerResolution.startOffset(previous)
+        changeStart = minOf(changeStart, start, entry.nodeStart)
+        changeEnd = maxOf(changeEnd, PMarkerResolution.endOffset(previous), entry.nodeEnd)
+        result = editor.delete(result, start, entry.handle)
+        result = editor.insertNode(result, entry)
+      }
+      val restored = editor.finish(
+        result, PMarkerResolutionUpdate(resolutionCacheIdentity, changeStart, changeEnd, 0, resolutionUpdate),
+      )
+      for (entry in entries) restored.cacheResolution(entry, 0)
+      return@keepingRootAlive restored
+    }
+    val replacements = PersistentLongMap.empty<MarkerEntry>().builder()
+    for (entry in entries) {
+      require(replacements.getUnchecked(entry.handle.id) == null) { "The marker already exists" }
+      replacements.put(entry.handle.id, entry)
+    }
+    val combined = ArrayList<MarkerEntry>(entries.size)
+    var found = 0
+    processAll(root, 0) { entry, delta ->
+      val replacement = replacements.getUnchecked(entry.handle.id)
+      if (replacement != null) found++
+      combined.add(replacement ?: entry.shifted(delta))
+      true
+    }
+    require(found == entries.size) { "The relocated marker must be valid" }
+    rebuildEntries(combined)
+  }
+
+  /**
+   * Applies insertions whose affected policies were checked by [PMarkerInsertionRoot].
+   * Preserves marker handles and metadata. Small batches update paths, and larger batches rebuild the tree.
+   */
+  internal fun applyInsertions(insertions: PMarkerRelocationRoot.Insertions): PMarkerDirectRoot {
+    val height = root?.height ?: 0
+    if (insertions.size < 16 || insertions.size.toLong() * height < (1L shl height)) {
+      var result = this
+      insertions.forEach { offset, length -> result = result.applyBufferedInsertion(offset, length) }
+      return result
+    }
+    val entries = ArrayList<MarkerEntry>()
+    processAll(root, 0) { entry, delta ->
+      val start = entry.nodeStart + delta
+      val end = entry.nodeEnd + delta
+      entries.add(entry.copy(nodeStart = start + insertions.deltaAt(start), nodeEnd = end + insertions.deltaAt(end)))
+      true
+    }
+    return rebuildEntries(entries)
+  }
+
+  /** Applies an insertion whose policies and strict interior ranges were checked by [PMarkerInsertionRoot]. */
+  private fun applyBufferedInsertion(offset: Int, length: Int): PMarkerDirectRoot = keepingRootAlive {
+    val editor = Editor()
+    val node = editor.updateOutsideStarts(root, offset, offset, length) { entry ->
+      MarkerTransformResult(entry.nodeStart, entry.nodeEnd + if (entry.nodeEnd > offset) length else 0)
+    }
+    editor.finish(node, PMarkerResolutionUpdate(resolutionCacheIdentity, offset, offset, length, resolutionUpdate))
+  }
+
+  /** Rebuilds all valid entries in one version. The entries must preserve the marker handles and metadata. */
+  internal fun rebuildEntries(entries: MutableList<MarkerEntry>): PMarkerDirectRoot = keepingRootAlive {
+    if ((1 until entries.size).any { compare(entries[it - 1], entries[it]) > 0 }) {
+      entries.sortWith { first, second -> compare(first, second) }
+    }
+    PMarkerNodeHistory.collect(entries.size.coerceAtMost(Int.MAX_VALUE / 2) * 2)
+    val editor = Editor()
+    val result = editor.finish(editor.build(entries, 0, entries.size))
+    for (entry in entries) result.cacheResolution(entry, 0)
+    result
   }
 
   override fun updateSpec(handle: SnapshotMarkerReference<*>, specMask: Byte): PMarkerDirectRoot =
@@ -204,7 +304,6 @@ class PMarkerDirectRoot private constructor(
 
   override fun remove(handle: SnapshotMarkerReference<*>): PMarkerDirectRoot = keepingRootAlive {
     val previous = state(handle) ?: return@keepingRootAlive this
-    if (previous is PMarkerInvalidNode && previous.reason == 0) return@keepingRootAlive this
     val offsets = resolveState(previous)
     if (PMarkerResolution.isAbsent(offsets)) return@keepingRootAlive this
     val editor = Editor()
@@ -212,11 +311,18 @@ class PMarkerDirectRoot private constructor(
       editor.delete(root, TextRangeScalarUtil.startOffset(offsets), previous.handle)
     }
     else root
-    editor.recordInvalid(handle, 0, 0)
-    editor.finish(result)
+    editor.recordRemoval(handle)
+    val resolutionUpdate = if (previous is PMarkerValidNode) {
+      PMarkerResolutionUpdate(
+        resolutionCacheIdentity, TextRangeScalarUtil.startOffset(offsets), TextRangeScalarUtil.endOffset(offsets), 0,
+        this@PMarkerDirectRoot.resolutionUpdate,
+      )
+    }
+    else null
+    editor.finish(result, resolutionUpdate = resolutionUpdate)
   }
 
-  /** Removes each distinct handle in one version and discards its entry from [invalids]. */
+  /** Purges each distinct handle in one version. A purge also replaces a removal and discards the entry from [invalids]. */
   override fun purgeMany(handles: Collection<SnapshotMarkerReference<*>>): PMarkerDirectRoot = keepingRootAlive {
     if (handles.isEmpty()) return@keepingRootAlive this
     val editor = Editor()
@@ -225,9 +331,12 @@ class PMarkerDirectRoot private constructor(
     val processed = HashSet<SnapshotMarkerReference<*>>()
     for (handle in handles) {
       if (!processed.add(handle)) continue
-      val previous = state(handle) ?: continue
-      val offsets = resolveState(previous)
-      if (previous is PMarkerValidNode) {
+      val previous = state(handle)
+      if (previous == null) {
+        if (!isRemoved(handle)) continue
+      }
+      else if (previous is PMarkerValidNode) {
+        val offsets = resolveState(previous)
         if (!PMarkerResolution.isValid(offsets)) continue
         result = editor.delete(result, TextRangeScalarUtil.startOffset(offsets), handle)
       }
@@ -239,16 +348,15 @@ class PMarkerDirectRoot private constructor(
 
   /**
    * Merges valid markers from another root.
-   * Existing valid markers and invalid or removed states in this root take precedence.
+   * Existing valid markers, invalid states and removals in this root take precedence.
    */
   override fun mergeValidMarkersFrom(other: PMarkerRoot): PMarkerDirectRoot = keepingRootAlive {
-    require(other is PMarkerDirectRoot) { "The roots must use the same implementation" }
-    if (other.root == null || root === other.root) return@keepingRootAlive this
+    if (other is PMarkerDirectRoot && (other.root == null || root === other.root)) return@keepingRootAlive this
     val editor = Editor()
     var result = root
     other.processAllRangeMarkers { entry, delta ->
       val handle = entry.handle
-      if (invalids.getUnchecked(handle.id) == null && !isValid(handle)) {
+      if (invalids.getUnchecked(handle.id) == null && !isRemoved(handle) && !isValid(handle)) {
         result = editor.insert(result, entry.shifted(delta))
       }
       true
@@ -283,7 +391,7 @@ class PMarkerDirectRoot private constructor(
         if (delta == 0) return@keepingRootAlive this
         val editor = Editor()
         return@keepingRootAlive editor.finish(
-          editor.shift(root, delta), resolutionUpdate = PMarkerResolutionUpdate(resolutionCacheIdentity, start, end, delta),
+          editor.shift(root, delta), resolutionUpdate = PMarkerResolutionUpdate(resolutionCacheIdentity, start, end, delta, resolutionUpdate),
         )
       }
     }
@@ -296,6 +404,9 @@ class PMarkerDirectRoot private constructor(
     var result: PMarkerNode?
     if (fullTraversal) {
       result = editor.rebuild(root, transform)
+    }
+    else if (patch.moveOffset() == start && !hasStartInRange(start, end)) {
+      result = editor.updateOutsideStarts(root, start, end, length - (end - start), transform)
     }
     else {
       val [before, fromStart] = editor.split(root, start, false)
@@ -318,10 +429,27 @@ class PMarkerDirectRoot private constructor(
       }
     }
     val resolutionUpdate = if (!fullTraversal && patch.moveOffset() == start) {
-      PMarkerResolutionUpdate(resolutionCacheIdentity, minOf(start, editor.firstChangedEnd), end, length - (end - start))
+      PMarkerResolutionUpdate(
+        resolutionCacheIdentity, minOf(start, editor.firstChangedEnd), end, length - (end - start), this@PMarkerDirectRoot.resolutionUpdate,
+      )
     }
     else null
     editor.finish(result, resolutionUpdate = resolutionUpdate)
+  }
+
+  private fun hasStartInRange(start: Int, end: Int): Boolean {
+    var node = root
+    var delta = 0
+    while (node != null) {
+      val nodeStart = node.entry.nodeStart + delta
+      delta += node.lazyDelta
+      node = when {
+        nodeStart < start -> node.right
+        nodeStart > end -> node.left
+        else -> return true
+      }
+    }
+    return false
   }
 
   override fun getPrefixAggregate(offset: Int): Int {
@@ -400,20 +528,28 @@ class PMarkerDirectRoot private constructor(
     }
   }
 
-  override fun processAllRangeMarkers(processor: MarkerDeltaProcessor): Boolean = processAll(root, 0) { entry, delta ->
-    cacheResolution(entry, delta)
-    processor.process(entry, delta)
+  override fun processAllRangeMarkers(processor: MarkerDeltaProcessor): Boolean {
+    if (cachedResolutions?.allMarkersCached == true) return processAll(root, 0, processor)
+    val completed = processAll(root, 0) { entry, delta ->
+      cacheResolution(entry, delta)
+      processor.process(entry, delta)
+    }
+    if (completed) cachedResolutions?.allMarkersCached = true
+    return completed
   }
 
   /**
    * Reads this version's history for a handle.
-   * An invalid or removed state must also appear by identity in [invalids].
+   * An invalid state must also appear by identity in [invalids], so a removal reads as null.
    * Tree entries supply the current metadata. Callers must check whether a valid position belongs to this root.
    */
   private fun state(handle: SnapshotMarkerReference<*>): PMarkerNodeState? {
     val state = handle.states.get(version)
     return if (state is PMarkerInvalidNode && invalids.getUnchecked(handle.id) !== state) null else state
   }
+
+  /** Whether [remove] removed [handle] in this version or an earlier one, and no later record replaces the removal. */
+  private fun isRemoved(handle: SnapshotMarkerReference<*>): Boolean = handle.states.get(version) === PMarkerNodeHistory.removedState
 
   /**
    * Resolves absolute offsets by summing lazy shifts along versioned parents.
@@ -458,6 +594,14 @@ class PMarkerDirectRoot private constructor(
 
   /** Stores the first resolution directly and allocates a map for other marker IDs. Metadata changes share this cache. */
   private class ResolutionCache(private val firstId: Long, private val firstResolution: Long) {
+    /**
+     * A full traversal sets this flag after it caches every valid marker's absolute offsets and completes normally.
+     * The volatile write publishes those offsets, so later traversals and lookups can skip cache writes.
+     * Metadata changes preserve this flag. Changes to marker offsets or membership use a new cache.
+     */
+    @Volatile
+    var allMarkersCached: Boolean = false
+
     @Volatile
     private var additionalResolutions: ConcurrentLongLongMap? = null
 
@@ -465,7 +609,7 @@ class PMarkerDirectRoot private constructor(
       if (id == firstId) firstResolution else additionalResolutions?.get(id) ?: PMarkerResolution.UNRESOLVED
 
     fun put(id: Long, resolution: Long) {
-      if (id == firstId) return
+      if (id == firstId || allMarkersCached) return
       var cache = additionalResolutions
       if (cache == null) {
         cache = Java11Shim.createConcurrentLongLongMap(PMarkerResolution.UNRESOLVED)
@@ -492,16 +636,18 @@ class PMarkerDirectRoot private constructor(
    * Each editor is confined to one update.
    */
   private inner class Editor {
+    /** The successor version, or null before the first use of [version]. */
+    private var allocatedVersion: PMarkerNodeVersion? = null
+
     /** Allocates one successor version on first use. */
-    val version: PMarkerNodeVersion by lazy(LazyThreadSafetyMode.NONE) {
-      PMarkerNodeHistory.nextVersion(this@PMarkerDirectRoot.version)
-    }
+    val version: PMarkerNodeVersion
+      get() = allocatedVersion ?: PMarkerNodeHistory.nextVersion(this@PMarkerDirectRoot.version).also { allocatedVersion = it }
 
     private var firstPendingHandle: SnapshotMarkerReference<*>? = null
     private var firstPendingState: PMarkerInvalidNode? = null
     private var additionalPendingStates: MutableMap<SnapshotMarkerReference<*>, PMarkerInvalidNode>? = null
 
-    /** Builds the map of invalid and removed states for this version from the existing [invalids]. */
+    /** Builds the map of invalid states for this version from the existing [invalids]. */
     private var invalidsBuilder: PersistentLongMapBuilder<PMarkerInvalidNode>? = null
 
     private fun editInvalids(): PersistentLongMapBuilder<PMarkerInvalidNode> =
@@ -535,18 +681,29 @@ class PMarkerDirectRoot private constructor(
       removeInvalid(handle.id)
     }
 
+    /** Records a removal for this version. Unlike [recordInvalid], it leaves no entry in [invalids]. */
+    fun recordRemoval(handle: SnapshotMarkerReference<*>) {
+      recordPendingState(handle, PMarkerNodeHistory.removedState)
+      removeInvalid(handle.id)
+    }
+
     /** The smallest old end offset changed by a policy, or [Int.MAX_VALUE] when no policy changes a range or validity. */
     var firstChangedEnd: Int = Int.MAX_VALUE
       private set
 
-    /** Creates a node in this editor's version. */
+    /** Reuses an unchanged node or creates a node in this editor's version. */
     fun make(
       entry: MarkerEntry,
       left: PMarkerNode? = null,
       right: PMarkerNode? = null,
       delta: Int = 0,
       source: PMarkerNode? = null,
-    ): PMarkerNode = PMarkerNode(version, entry, left, right, delta, source)
+    ): PMarkerNode {
+      if (source != null && entry === source.entry && left === source.left && right === source.right && delta == source.lazyDelta) {
+        return source
+      }
+      return PMarkerNode(version, entry, left, right, delta, source)
+    }
 
     /** Copies the subtree root with shifted offsets and defers the same shift to both children. */
     fun shift(node: PMarkerNode?, delta: Int): PMarkerNode? {
@@ -570,8 +727,8 @@ class PMarkerDirectRoot private constructor(
       val handle = entry.handle
       var existing = state(handle)
       if (existing is PMarkerValidNode && !isValid(handle)) existing = null
-      require(existing == null || existing is PMarkerInvalidNode && existing.reason == 0) { "The marker already exists" }
-      assert(existing == null) { "The marker handle must not be reused" }
+      require(existing == null) { "The marker already exists" }
+      assert(!isRemoved(handle)) { "The marker handle must not be reused" }
       return insertNode(root, entry)
     }
 
@@ -642,6 +799,8 @@ class PMarkerDirectRoot private constructor(
      */
     fun split(initial: PMarkerNode?, boundary: Int, equalGoesLeft: Boolean): Pair<PMarkerNode?, PMarkerNode?> {
       if (initial == null) return null to null
+      if (initial.maximumEnd < boundary || equalGoesLeft && initial.maximumEnd == boundary) return initial to null
+      if (initial.minimumStart > boundary || !equalGoesLeft && initial.minimumStart == boundary) return null to initial
       val node = push(initial)
       return if (node.entry.nodeStart < boundary || equalGoesLeft && node.entry.nodeStart == boundary) {
         val [middle, after] = split(node.right, boundary, equalGoesLeft)
@@ -688,20 +847,35 @@ class PMarkerDirectRoot private constructor(
       return make(left.entry, left.left, right, source = left)
     }
 
+    /** Transforms markers around an edit that has no marker starts in its range and preserves their order. */
+    fun updateOutsideStarts(
+      initial: PMarkerNode?,
+      start: Int,
+      end: Int,
+      delta: Int,
+      transform: MarkerTransformer,
+    ): PMarkerNode? {
+      if (initial == null || initial.maximumEnd < start) return initial
+      if (initial.minimumStart > end) return shift(initial, delta)
+      val node = push(initial)
+      val left = updateOutsideStarts(node.left, start, end, delta, transform)
+      val right = updateOutsideStarts(node.right, start, end, delta, transform)
+      val entry = if (node.entry.nodeStart > end) node.entry.shifted(delta)
+      else {
+        val result = transform.transform(node.entry)
+        if (!result.isValid) return join(left, right)
+        check(result.startOffset == node.entry.nodeStart) { "An edit changed a marker start before the edit" }
+        result.applyTo(node.entry)
+      }
+      return join(left, entry, right, node)
+    }
+
     /**
      * Transforms the prefix whose markers start before [start], skipping subtrees that end before the edit.
      * A valid result must preserve each marker's start offset.
      */
-    fun updateBefore(initial: PMarkerNode?, start: Int, transform: MarkerTransformer): PMarkerNode? {
-      if (initial == null || initial.maximumEnd < start) return initial
-      val node = push(initial)
-      val left = updateBefore(node.left, start, transform)
-      val right = updateBefore(node.right, start, transform)
-      val result = transform.transform(node.entry)
-      if (!result.isValid) return join(left, right)
-      check(result.startOffset == node.entry.nodeStart) { "An edit changed a marker start before the edit" }
-      return join(left, result.applyTo(node.entry), right, node)
-    }
+    fun updateBefore(initial: PMarkerNode?, start: Int, transform: MarkerTransformer): PMarkerNode? =
+      updateOutsideStarts(initial, start, Int.MAX_VALUE, 0, transform)
 
     /** Transforms a subtree and builds a balanced tree from valid results, sorting them when their order changes. */
     fun rebuild(node: PMarkerNode?, transform: MarkerTransformer): PMarkerNode? {
@@ -720,7 +894,7 @@ class PMarkerDirectRoot private constructor(
     }
 
     /** Builds a balanced tree from entries sorted by start offset and handle ID in `[from, to)`. */
-    private fun build(entries: List<MarkerEntry>, from: Int, to: Int): PMarkerNode? {
+    fun build(entries: List<MarkerEntry>, from: Int, to: Int): PMarkerNode? {
       if (from == to) return null
       val middle = (from + to) ushr 1
       val entry = entries[middle]
@@ -745,18 +919,19 @@ class PMarkerDirectRoot private constructor(
       }
     }
 
-    /** Records an invalid state or removal tombstone for this version. A zero [reason] marks removal. */
+    /** Records an invalid state for this version. [reason] is the negative code from [MarkerTransformResult.range]. */
     fun recordInvalid(handle: SnapshotMarkerReference<*>, range: Long, reason: Int) {
       val state = PMarkerInvalidNode(range, reason)
       recordPendingState(handle, state)
       editInvalids().put(handle.id, state)
     }
 
-    /** Creates a root that retains the final tree and invalid and removed states, then publishes their weak histories. */
+    /** Creates a root that retains the final tree and invalid states, then publishes the weak histories. */
     fun finish(
       node: PMarkerNode?,
       resolutionUpdate: PMarkerResolutionUpdate? = null,
     ): PMarkerDirectRoot {
+      if (node === root && invalidsBuilder == null && firstPendingHandle == null) return this@PMarkerDirectRoot
       val result = PMarkerDirectRoot(version, node, invalidsBuilder?.build() ?: invalids, resolutionUpdate = resolutionUpdate)
       firstPendingHandle?.states?.put(version, checkNotNull(firstPendingState))
       additionalPendingStates?.forEach { [handle, state] -> handle.states.put(version, state) }

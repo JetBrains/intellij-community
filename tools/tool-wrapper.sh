@@ -5,6 +5,10 @@
 
 set -eu
 
+# The step `polyglot_user_cache` of `polyglot-wrapper.sh` names the cache folder. Every caller starts this file by its
+# absolute path, so `BASH_SOURCE` holds the directory.
+. "${BASH_SOURCE[0]%/*}/polyglot-wrapper.sh"
+
 # Required environment variables (set by calling script):
 #   TOOL_NAME              - Tool name (e.g., "uv")
 #   TOOL_VERSION           - Tool version (e.g., "0.9.24")
@@ -53,31 +57,6 @@ detect_platform() {
       ;;
     *)
       die "Unsupported OS: $os"
-      ;;
-  esac
-}
-
-# Get cache directory for current platform
-get_cache_dir() {
-  case "$(uname -s)" in
-    Linux)
-      echo "${HOME}/.cache/JetBrains/monorepo-tools"
-      ;;
-    Darwin)
-      echo "${HOME}/Library/Caches/JetBrains/monorepo-tools"
-      ;;
-    MINGW*|MSYS*|CYGWIN*)
-      local localappdata="${LOCALAPPDATA:-}"
-      if [ -z "$localappdata" ]; then
-        die "LOCALAPPDATA not set; required to locate Windows cache directory"
-      fi
-      if command -v cygpath >/dev/null 2>&1; then
-        localappdata=$(cygpath -u "$localappdata")
-      fi
-      echo "${localappdata}/JetBrains/monorepo-tools"
-      ;;
-    *)
-      die "Unsupported OS for cache directory"
       ;;
   esac
 }
@@ -318,7 +297,7 @@ download_and_cache() {
     die "No URL defined for platform: $platform"
   fi
 
-  target_dir="$cache_dir/$TOOL_NAME/$TOOL_VERSION"
+  target_dir="$cache_dir/$TOOL_NAME/$TOOL_VERSION-$platform"
   flag_file="$target_dir/.complete"
 
   # Try to acquire lock
@@ -491,7 +470,7 @@ verify_all_platforms() {
 is_cached() {
   local cache_dir="$1"
   local platform="$2"
-  local target_dir="$cache_dir/$TOOL_NAME/$TOOL_VERSION"
+  local target_dir="$cache_dir/$TOOL_NAME/$TOOL_VERSION-$platform"
   local flag_file="$target_dir/.complete"
   local expected_checksum
 
@@ -538,7 +517,8 @@ main() {
   local binary_path
 
   platform=$(detect_platform)
-  cache_dir=$(get_cache_dir)
+  polyglot_user_cache "" || die "HOME (LOCALAPPDATA on Windows) is not set; required to locate the cache directory"
+  cache_dir="$user_cache"
 
   # Download if not cached
   if ! is_cached "$cache_dir" "$platform"; then
@@ -548,7 +528,7 @@ main() {
   # Get binary path and execute
   local platform_binary
   platform_binary=$(get_binary_for_platform "$platform")
-  binary_path="$cache_dir/$TOOL_NAME/$TOOL_VERSION/$platform_binary"
+  binary_path="$cache_dir/$TOOL_NAME/$TOOL_VERSION-$platform/$platform_binary"
 
   if [ ! -x "$binary_path" ]; then
     die "Binary not found or not executable: $binary_path"

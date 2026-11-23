@@ -5,7 +5,6 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -13,6 +12,8 @@ import com.intellij.psi.search.GlobalSearchScopesCore;
 import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyNames;
+import com.intellij.python.sdk.backend.PythonInterpreter;
+import com.intellij.python.sdk.backend.PythonInterpreterExtKt;
 import com.jetbrains.python.psi.resolve.MainPythonSdkKt;
 import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
 import com.jetbrains.python.sdk.ModuleOrProject;
@@ -52,7 +53,7 @@ public final class PySearchScopeBuilder {
   private boolean myExcludeThirdPartyBundledDeps = false;
   private boolean myExcludeThirdPartyTests = false;
   private final @NotNull ModuleOrProject myModuleOrProject;
-  private final @NotNull List<Sdk> myEffectiveSdks;
+  private final @NotNull List<PythonInterpreter> myEffectiveInterpreters;
 
   /**
    * Creates a new builder for the given Python SDK.
@@ -64,7 +65,7 @@ public final class PySearchScopeBuilder {
   /**
    * Creates a new builder, deducing Python SDK from the given element.
    * <p>
-   * The element's own module answers first, then {@link MainPythonSdkKt#mainPythonSdk}.
+   * The element's own module answers first, then {@link MainPythonSdkKt#mainPythonInterpreter}.
    */
   public static @NotNull PySearchScopeBuilder forModuleOf(@NotNull PsiElement element) {
     Module module = ModuleUtilCore.findModuleForPsiElement(element);
@@ -77,7 +78,7 @@ public final class PySearchScopeBuilder {
 
   private PySearchScopeBuilder(@NotNull ModuleOrProject moduleOrProject) {
     myModuleOrProject = moduleOrProject;
-    myEffectiveSdks = findEffectivePythonSdks(moduleOrProject);
+    myEffectiveInterpreters = findEffectiveInterpreters(moduleOrProject);
   }
 
   /**
@@ -140,8 +141,8 @@ public final class PySearchScopeBuilder {
   }
 
   private @NotNull GlobalSearchScope buildStdlibTestsScope() {
-    return StreamEx.of(myEffectiveSdks)
-      .map(sdk -> PySearchUtilBase.findLibDir(sdk))
+    return StreamEx.of(myEffectiveInterpreters)
+      .map(interpreter -> PythonInterpreterExtKt.stdlibLibDirectory(interpreter))
       .nonNull()
       .flatMap(libDir -> StreamEx.of(STDLIB_TEST_DIRS)
         .map(relPath -> libDir.findFileByRelativePath(relPath))
@@ -151,11 +152,11 @@ public final class PySearchScopeBuilder {
       .reduce(GlobalSearchScope.EMPTY_SCOPE, GlobalSearchScope::union);
   }
 
-  private static @NotNull List<Sdk> findEffectivePythonSdks(@NotNull ModuleOrProject moduleOrProject) {
+  private static @NotNull List<PythonInterpreter> findEffectiveInterpreters(@NotNull ModuleOrProject moduleOrProject) {
     if (moduleOrProject instanceof ModuleOrProject.ModuleAndProject moduleAndProject) {
-      Sdk sdk = MainPythonSdkKt.pythonSdkIfReady(moduleAndProject.getModule());
-      if (sdk != null) {
-        return List.of(sdk);
+      PythonInterpreter interpreter = MainPythonSdkKt.pythonInterpreterIfReady(moduleAndProject.getModule());
+      if (interpreter != null) {
+        return List.of(interpreter);
       }
     }
     else {
@@ -163,13 +164,13 @@ public final class PySearchScopeBuilder {
       ModuleManager moduleManager = ModuleManager.Companion.getInstanceIfDefined(moduleOrProject.getProject());
       if (moduleManager != null) {
         return StreamEx.of(moduleManager.getModules())
-          .map(m -> MainPythonSdkKt.pythonSdkIfReady(m))
+          .map(m -> MainPythonSdkKt.pythonInterpreterIfReady(m))
           .nonNull()
           .distinct()
           .toList();
       }
     }
-    Sdk mainPythonSdk = MainPythonSdkKt.mainPythonSdk(moduleOrProject.getProject());
-    return mainPythonSdk != null ? List.of(mainPythonSdk) : List.of();
+    PythonInterpreter mainInterpreter = MainPythonSdkKt.mainPythonInterpreter(moduleOrProject.getProject());
+    return mainInterpreter != null ? List.of(mainInterpreter) : List.of();
   }
 }

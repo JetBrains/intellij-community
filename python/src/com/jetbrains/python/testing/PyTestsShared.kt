@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.testing
 
+import com.intellij.python.sdk.backend.PythonInterpreter
 import com.intellij.python.sdk.backend.getSdkAPI
 import com.intellij.python.pyproject.model.evolution.findEvoPyProjectIfReady
 import com.google.gson.Gson
@@ -525,8 +526,8 @@ abstract class PyAbstractTestConfiguration(
 
 
   fun isTestClassRequired(): ThreeState {
-    val sdk = sdk ?: return ThreeState.UNSURE
-    return if (testFactory.onlyClassesAreSupported(project, sdk)) {
+    val interpreter = pythonInterpreter ?: return ThreeState.UNSURE
+    return if (testFactory.onlyClassesAreSupported(project, interpreter)) {
       ThreeState.YES
     }
     else {
@@ -807,10 +808,9 @@ abstract class PyAbstractTestFactory<out CONF_T : PyAbstractTestConfiguration>(t
   override fun equals(other: Any?): Boolean = ((other as? PyAbstractTestFactory<*>))?.id == id
   override fun hashCode(): Int = id.hashCode()
 
-  /**
-   * Only UnitTest inheritors are supported
-   */
-  abstract fun onlyClassesAreSupported(project: Project, sdk: Sdk): Boolean
+  /** Whether the framework of this factory runs only test classes, for [interpreter], such as unittest. */
+  @ApiStatus.Internal
+  abstract fun onlyClassesAreSupported(project: Project, interpreter: PythonInterpreter): Boolean
 
   /**
    * Marker fully-qualified name used to detect if the framework is installed.
@@ -819,10 +819,11 @@ abstract class PyAbstractTestFactory<out CONF_T : PyAbstractTestConfiguration>(t
    */
   open val packageSpec: PackageAvailabilitySpec? = null
 
-  open fun isFrameworkInstalled(project: Project, sdk: Sdk): Boolean {
+  @ApiStatus.Internal
+  open fun isFrameworkInstalled(project: Project, interpreter: PythonInterpreter): Boolean {
     // example is unittest, it's part of stdlib, so no need to check.
     val spec = packageSpec ?: return true
-    return isPackageAvailable(project, sdk, spec)
+    return isPackageAvailable(project, interpreter, spec)
   }
 }
 

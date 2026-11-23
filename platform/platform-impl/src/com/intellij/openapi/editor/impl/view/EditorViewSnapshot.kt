@@ -13,6 +13,7 @@ internal data class EditorViewSnapshot(
   private val rtlEnabled: Boolean,
   private val prefix: EditorPrefix?,
   private val paintCallback: Runnable?,
+  private val gridSpec: CharacterGridSpec?,
 ) {
   constructor(fontRenderContext: FontRenderContext, tabSize: Int, rtlEnabled: Boolean) : this(
     fontRenderContext = fontRenderContext,
@@ -23,6 +24,7 @@ internal data class EditorViewSnapshot(
     rtlEnabled = rtlEnabled,
     prefix = null,
     paintCallback = null,
+    gridSpec = null,
   )
 
   fun fontRenderContext(): FontRenderContext = fontRenderContext
@@ -44,6 +46,23 @@ internal data class EditorViewSnapshot(
   fun prefix(): EditorPrefix? = prefix
   fun metrics(): EditorViewMetrics = metrics
   fun fontResolver(): EditorFontResolver = fontResolver
+
+  /**
+   * Returns the setup of the character grid mode, or null when the editor lays out its text without a grid.
+   */
+  fun gridSpec(): CharacterGridSpec? = gridSpec
+
+  /**
+   * Returns the width of one grid cell in pixels. The editor must be in the grid mode.
+   * The width comes from the editor fonts alone, so the font families of the text do not change the grid.
+   */
+  fun gridCellWidth(): Float {
+    return metrics.maxCharWidth * requireGridSpec().columnSpacing
+  }
+
+  private fun requireGridSpec(): CharacterGridSpec {
+    return checkNotNull(gridSpec) { "The editor must be in the grid mode to read a grid width" }
+  }
 
   /**
    * Returns how far text can reach above its line, in the editor fonts and in the resolved font families.
@@ -132,6 +151,14 @@ internal data class EditorViewSnapshot(
       this
     } else {
       copy(paintCallback = paintCallback)
+    }
+  }
+
+  fun withGridSpec(gridSpec: CharacterGridSpec?): EditorViewSnapshot {
+    return if (gridSpec == this.gridSpec) {
+      this
+    } else {
+      copy(gridSpec = gridSpec)
     }
   }
 }

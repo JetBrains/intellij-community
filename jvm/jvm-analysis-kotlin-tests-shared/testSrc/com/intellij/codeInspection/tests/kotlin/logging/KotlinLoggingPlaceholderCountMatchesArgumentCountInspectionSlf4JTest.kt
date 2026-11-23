@@ -1,14 +1,25 @@
 package com.intellij.codeInspection.tests.kotlin.logging
 
 import com.intellij.codeInspection.logging.LoggingPlaceholderCountMatchesArgumentCountInspection
-import com.intellij.jvm.analysis.internal.testFramework.logging.LoggingPlaceholderCountMatchesArgumentCountInspectionTestBase
+import com.intellij.jvm.analysis.internal.testFramework.logging.loggingPlaceholderCountMatchesArgumentCountInspectionFixture
 import com.intellij.jvm.analysis.testFramework.JvmLanguage
+import com.intellij.jvm.analysis.testFramework.jvmProjectFixture
+import com.intellij.testFramework.junit5.TestApplication
+import org.junit.jupiter.api.Test
 
-abstract class KotlinLoggingPlaceholderCountMatchesArgumentCountInspectionSlf4JTest : LoggingPlaceholderCountMatchesArgumentCountInspectionTestBase() {
+@TestApplication
+abstract class KotlinLoggingPlaceholderCountMatchesArgumentCountInspectionSlf4JTest {
+  companion object {
+    private val projectFixture = jvmProjectFixture()
+  }
+
+  protected val myFixture by loggingPlaceholderCountMatchesArgumentCountInspectionFixture(projectFixture)
+
   
 
+  @Test
   fun `test slf4j disable slf4jToLog4J2Type`() {
-    inspection.slf4jToLog4J2Type = LoggingPlaceholderCountMatchesArgumentCountInspection.Slf4jToLog4J2Type.NO
+    myFixture.inspection.slf4jToLog4J2Type = LoggingPlaceholderCountMatchesArgumentCountInspection.Slf4jToLog4J2Type.NO
     myFixture.testHighlighting(JvmLanguage.KOTLIN, """
         import org.slf4j.LoggerFactory
 
@@ -30,8 +41,9 @@ abstract class KotlinLoggingPlaceholderCountMatchesArgumentCountInspectionSlf4JT
       """.trimIndent())
   }
 
+  @Test
   fun `test slf4j auto slf4jToLog4J2Type`() {
-    inspection.slf4jToLog4J2Type = LoggingPlaceholderCountMatchesArgumentCountInspection.Slf4jToLog4J2Type.AUTO
+    myFixture.inspection.slf4jToLog4J2Type = LoggingPlaceholderCountMatchesArgumentCountInspection.Slf4jToLog4J2Type.AUTO
     myFixture.addClass("""
         package org.apache.logging.slf4j;
         public interface Log4jLogger {
@@ -53,8 +65,9 @@ abstract class KotlinLoggingPlaceholderCountMatchesArgumentCountInspectionSlf4JT
       """.trimIndent())
   }
 
+  @Test
   fun `test slf4j`() {
-    inspection.slf4jToLog4J2Type = LoggingPlaceholderCountMatchesArgumentCountInspection.Slf4jToLog4J2Type.NO
+    myFixture.inspection.slf4jToLog4J2Type = LoggingPlaceholderCountMatchesArgumentCountInspection.Slf4jToLog4J2Type.NO
 
     myFixture.testHighlighting(JvmLanguage.KOTLIN, """
         import org.slf4j.*;
@@ -83,6 +96,7 @@ abstract class KotlinLoggingPlaceholderCountMatchesArgumentCountInspectionSlf4JT
       """.trimIndent())
   }
 
+  @Test
   fun `test slf4j with partial known strings`() {
     myFixture.testHighlighting(JvmLanguage.KOTLIN, """
         import org.slf4j.LoggerFactory
@@ -127,6 +141,7 @@ abstract class KotlinLoggingPlaceholderCountMatchesArgumentCountInspectionSlf4JT
       """.trimIndent())
   }
 
+  @Test
   fun `test slf4j builder`() {
     myFixture.testHighlighting(JvmLanguage.KOTLIN, """
         import org.slf4j.LoggerFactory

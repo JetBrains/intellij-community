@@ -16,7 +16,6 @@ import com.intellij.featureStatistics.FeatureUsageTracker
 import com.intellij.ide.util.propComponentProperty
 import com.intellij.lang.documentation.DocumentationSettings
 import com.intellij.lang.documentation.ide.DocumentationLinkNavigatable
-import com.intellij.lang.documentation.ide.ui.DocumentationUI
 import com.intellij.lang.documentation.ide.ui.toolWindowUI
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.CommonDataKeys
@@ -175,7 +174,7 @@ class DocumentationManager(private val project: Project, private val coroutineSc
 
     val popupContext = ComponentAreaPopupContext(project, component, areaWithinComponent, onDocumentationSessionDone, minHeight, delay)
     val started = showDocumentation(requests, popupContext, null) {
-      onDocumentationSessionDone?.run()
+      popupContext.finishSession()
     }
     return if (started) popupContext.session else null
   }
@@ -196,15 +195,15 @@ class DocumentationManager(private val project: Project, private val coroutineSc
     return popup
   }
 
-  private fun setPopup(popup: AbstractPopup, documentationUI: DocumentationUI, popupDependencies: Disposable?, documentationUiDependencies: Disposable?) {
+  private fun setPopup(popup: AbstractPopup) {
     EDT.assertIsEdt()
-    this.popup = WeakReference(popup)
-    Disposer.register(popup) {
-      EDT.assertIsEdt()
-      this.popup = null
+    if (!popup.isDisposed) {
+      this.popup = WeakReference(popup)
+      Disposer.register(popup) {
+        EDT.assertIsEdt()
+        this.popup = null
+      }
     }
-    popupDependencies?.let { Disposer.register(popup, it) }
-    documentationUiDependencies?.let { Disposer.register(documentationUI, it) }
   }
 
   /**
@@ -232,8 +231,8 @@ class DocumentationManager(private val project: Project, private val coroutineSc
     }
     popupScope.coroutineContext.job.cancelChildren()
     popupScope.launch(context = Dispatchers.EDT + ModalityState.current().asContextElement(), start = CoroutineStart.UNDISPATCHED) {
-      val (popup, documentationUi) = showDocumentationPopup(project, requests, popupContext)
-      setPopup(popup, documentationUi, popupDependencies, documentationUiDependencies)
+      val popup = showDocumentationPopup(project, requests, popupContext, popupDependencies, documentationUiDependencies)
+      setPopup(popup)
     }
     return true
   }
@@ -300,7 +299,9 @@ class DocumentationManager(private val project: Project, private val coroutineSc
   fun navigateInlineLink(
     url: String,
     targetSupplier: () -> DocumentationTarget?,
-  ) = navigateInlineLink(url, null, null, targetSupplier)
+  ) {
+    navigateInlineLink(url, null, null, targetSupplier)
+  }
 
   fun navigateInlineLink(
     url: String,

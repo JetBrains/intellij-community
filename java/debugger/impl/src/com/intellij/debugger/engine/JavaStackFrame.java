@@ -9,6 +9,7 @@ import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.engine.evaluation.TextWithImports;
 import com.intellij.debugger.engine.evaluation.TextWithImportsImpl;
 import com.intellij.debugger.engine.events.DebuggerContextCommandImpl;
+import com.intellij.debugger.engine.requests.MethodReturnValue;
 import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.impl.DebuggerSession;
 import com.intellij.debugger.impl.DebuggerUtilsAsync;
@@ -33,7 +34,6 @@ import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.util.Comparing;
@@ -41,13 +41,13 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.JavaRecursiveElementVisitor;
 import com.intellij.psi.PsiArrayAccessExpression;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiClassInitializer;
 import com.intellij.psi.PsiCompiledElement;
 import com.intellij.psi.PsiDeclarationStatement;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiEnumConstant;
 import com.intellij.psi.PsiExpressionStatement;
@@ -88,7 +88,6 @@ import com.sun.jdi.Field;
 import com.sun.jdi.InternalException;
 import com.sun.jdi.InvalidStackFrameException;
 import com.sun.jdi.Location;
-import com.sun.jdi.Method;
 import com.sun.jdi.ObjectReference;
 import com.sun.jdi.ReferenceType;
 import com.sun.jdi.VMDisconnectedException;
@@ -267,15 +266,18 @@ public class JavaStackFrame extends XStackFrame implements JVMStackFrameInfoProv
   }
 
   protected @NotNull List<? extends XNamedValue> createReturnValueNodes(EvaluationContextImpl evaluationContext) {
-    Pair<Method, Value> methodValuePair = myDebugProcess.getLastExecutedMethod();
-    if (methodValuePair != null && myDescriptor.getUiIndex() == 0) {
-      Value returnValue = methodValuePair.getSecond();
+    if (!DebuggerSettings.getInstance().WATCH_RETURN_VALUES) {
+      return Collections.emptyList();
+    }
+    MethodReturnValue lastReturnValue = myDebugProcess.getLastMethodReturnValue();
+    if (lastReturnValue != null && myDescriptor.getUiIndex() == 0) {
+      Value returnValue = lastReturnValue.getValue();
       // try to keep the value as early as possible
       if (returnValue instanceof ObjectReference returnValueObject) {
         evaluationContext.getSuspendContext().keepAsync(returnValueObject);
       }
       ValueDescriptorImpl returnValueDescriptor =
-        myNodeManager.getMethodReturnValueDescriptor(myDescriptor, methodValuePair.getFirst(), returnValue);
+        myNodeManager.getMethodReturnValueDescriptor(myDescriptor, lastReturnValue.getMethod(), returnValue);
       return Collections.singletonList(JavaValue.create(returnValueDescriptor, evaluationContext, myNodeManager));
     }
     return Collections.emptyList();
@@ -283,7 +285,7 @@ public class JavaStackFrame extends XStackFrame implements JVMStackFrameInfoProv
 
   protected @Nullable XNamedValue createCurrentMethodReturnValueNode(@NotNull EvaluationContextImpl evaluationContext,
                                                                      @NotNull MethodExitEvent methodExitEvent) {
-    if (!myDebugProcess.canGetMethodReturnValue() ||
+    if (!evaluationContext.getVirtualMachineProxy().canGetMethodReturnValues() ||
         myDescriptor.getUiIndex() != 0 ||
         !myDescriptor.getFrameProxy().threadProxy().getThreadReference().equals(methodExitEvent.thread())) {
       return null;
@@ -307,7 +309,7 @@ public class JavaStackFrame extends XStackFrame implements JVMStackFrameInfoProv
         children.add(currentMethodReturnValueNode);
         // Do not add the last method return value if the watcher captured the same method exit.
         // This can happen when a method exit breakpoint interrupts a step.
-        if (Pair.create(exitEvent.method(), exitEvent.returnValue()).equals(myDebugProcess.getLastExecutedMethod())) {
+        if (new MethodReturnValue(exitEvent.method(), exitEvent.returnValue()).equals(myDebugProcess.getLastMethodReturnValue())) {
           return;
         }
       }
@@ -320,10 +322,12 @@ public class JavaStackFrame extends XStackFrame implements JVMStackFrameInfoProv
     if (myDescriptor.getUiIndex() != 0) {
       return Collections.emptyList();
     }
-    return StreamEx.of(DebuggerUtilsEx.getEventDescriptors(evaluationContext.getSuspendContext()))
+    SuspendContextImpl suspendContext = evaluationContext.getSuspendContext();
+    return StreamEx.of(DebuggerUtilsEx.getEventDescriptors(suspendContext))
       .map(p -> p.getSecond())
       .select(ExceptionEvent.class)
       .map(ExceptionEvent::exception)
+      .append(suspendContext.getThrownException())
       .nonNull()
       .distinct()
       .map(e -> JavaValue.create(myNodeManager.getThrownExceptionObjectDescriptor(myDescriptor, e), evaluationContext, myNodeManager))
@@ -765,8 +769,7 @@ public class JavaStackFrame extends XStackFrame implements JVMStackFrameInfoProv
       return Pair.create(visibleVars, Collections.emptySet());
     }
 
-    final VirtualFile vFile = positionFile.getVirtualFile();
-    final Document doc = vFile != null ? FileDocumentManager.getInstance().getDocument(vFile) : null;
+    final Document doc = PsiDocumentManager.getInstance(positionFile.getProject()).getLastCommittedDocument(positionFile);
     if (doc == null || doc.getLineCount() == 0 || line > (doc.getLineCount() - 1)) {
       return Pair.create(Collections.emptySet(), Collections.emptySet());
     }

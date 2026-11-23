@@ -2,18 +2,20 @@
 package com.jetbrains.env.python
 
 import com.intellij.execution.target.TargetProgressIndicator
+import com.jetbrains.python.getOrThrow
+import com.intellij.python.sdk.backend.pythonInterpreterResult
 import com.intellij.execution.target.local.LocalTargetEnvironmentRequest
 import com.intellij.openapi.application.runWriteActionAndWait
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.python.sdk.backend.setPythonSdkForTests
 import com.intellij.testFramework.UsefulTestCase
 import com.jetbrains.env.PyEnvTestCase
 import com.jetbrains.env.PyExecutionFixtureTestTask
 import com.jetbrains.python.run.PythonCommandLineState
 import com.jetbrains.python.run.collectPythonPath
-import com.jetbrains.python.sdk.setPythonSdkForTests
 import com.jetbrains.python.tools.sdkTools.SdkCreationType
 import junit.framework.TestCase.assertNotNull
 import org.junit.Test
@@ -64,7 +66,7 @@ internal class PyPathGeneratorTest : PyEnvTestCase() {
 
         // New (target) API
         val env = LocalTargetEnvironmentRequest().prepareEnvironment(TargetProgressIndicator.EMPTY)
-        paths = collectPythonPath(myFixture.project, module, sdk, null, true, true)
+        paths = collectPythonPath(myFixture.project, module, sdk.pythonInterpreterResult(myFixture.project).getOrThrow(), null, true, true)
           .map { it.apply(env) }
         assertContains(expected = false, paths = paths, file = myFile)
         assertContains(paths = paths, file = myDir)

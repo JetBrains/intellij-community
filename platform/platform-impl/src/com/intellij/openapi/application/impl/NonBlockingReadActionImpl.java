@@ -660,64 +660,64 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
 
     T executeSynchronously() {
       try {
-        // with the presence of background write action, it is possible that synchronous execution of NBRA will cause
-        // thread starvation of the Default dispatcher. We need to use compensation to avoid this problem
-        return NbraUtilKt.runSynchronousNonBlockingReadActionWithCompensation(() -> {
-          while (true) {
-            // here we override the context job in case when this code is running under non-cancellable section
-            CoroutineContext context;
-            if (myChildContext.getJob() != null) {
-              context = myChildContext.getContext();
-            }
-            else if (Cancellation.isInNonCancelableSection()) {
-              context = ThreadContext.currentThreadContext().minusKey(Job.Key);
-            }
-            else {
-              context = ThreadContext.currentThreadContext();
-            }
-            // the caller blocks until the computation ends, so it must not run under an ambient blocking job:
-            // that job would capture the computation and any nested runBlocking, and break read-lock sharing
-            context = context.minusKey(BlockingJob.Companion);
-            boolean couldRun = ThreadContext.installThreadContext(context, true, this::attemptComputation);
+        while (true) {
+          // here we override the context job in case when this code is running under non-cancellable section
+          CoroutineContext context;
+          if (myChildContext.getJob() != null) {
+            context = myChildContext.getContext();
+          }
+          else if (Cancellation.isInNonCancelableSection()) {
+            context = ThreadContext.currentThreadContext().minusKey(Job.Key);
+          }
+          else {
+            context = ThreadContext.currentThreadContext();
+          }
+          // the caller blocks until the computation ends, so it must not run under an ambient blocking job:
+          // that job would capture the computation and any nested runBlocking, and break read-lock sharing
+          context = context.minusKey(BlockingJob.Companion);
+          boolean couldRun = ThreadContext.installThreadContext(context, true, this::attemptComputation);
 
-            if (!couldRun) {
-              blockUntilWriteActionIsDone(this, context);
-            }
+          if (!couldRun) {
+            CoroutineContext finalContext = context;
+            NbraUtilKt.runSynchronousNonBlockingReadActionWithCompensation(() -> {
+              blockUntilWriteActionIsDone(this, finalContext);
+              return null;
+            });
+          }
 
-            if (isDone()) {
-              if (isCancelled()) {
-                throw createCancellationException();
-              }
-              try {
-                return blockingGet(0, TimeUnit.MILLISECONDS);
-              }
-              catch (TimeoutException e) {
-                throw new RuntimeException(e);
-              }
+          if (isDone()) {
+            if (isCancelled()) {
+              throw createCancellationException();
             }
-
-            ProgressIndicatorUtils.checkCancelledEvenWithPCEDisabled(myProgressIndicator);
-            ContextConstraint[] constraints = builder.myConstraints;
-            if (shouldFinishOnEdt() || constraints.length != 0) {
-              Semaphore semaphore = new Semaphore(1);
-              invokeLater((ContextAwareRunnable) () -> {
-                if (checkObsolete()) {
-                  semaphore.up();
-                }
-                else {
-                  BaseConstrainedExecution.scheduleWithinConstraints(semaphore::up, null, constraints);
-                }
-              }, () -> {
-                cancel();
-                semaphore.up();
-              });
-              ProgressIndicatorUtils.awaitWithCheckCanceled(semaphore, myProgressIndicator);
-              if (isCancelled()) {
-                throw createCancellationException();
-              }
+            try {
+              return blockingGet(0, TimeUnit.MILLISECONDS);
+            }
+            catch (TimeoutException e) {
+              throw new RuntimeException(e);
             }
           }
-        });
+
+          ProgressIndicatorUtils.checkCancelledEvenWithPCEDisabled(myProgressIndicator);
+          ContextConstraint[] constraints = builder.myConstraints;
+          if (shouldFinishOnEdt() || constraints.length != 0) {
+            Semaphore semaphore = new Semaphore(1);
+            invokeLater((ContextAwareRunnable)() -> {
+              if (checkObsolete()) {
+                semaphore.up();
+              }
+              else {
+                BaseConstrainedExecution.scheduleWithinConstraints(semaphore::up, null, constraints);
+              }
+            }, () -> {
+              cancel();
+              semaphore.up();
+            });
+            ProgressIndicatorUtils.awaitWithCheckCanceled(semaphore, myProgressIndicator);
+            if (isCancelled()) {
+              throw createCancellationException();
+            }
+          }
+        }
       } catch (ProcessCanceledException e) {
         cancelJob(e);
         throw e;

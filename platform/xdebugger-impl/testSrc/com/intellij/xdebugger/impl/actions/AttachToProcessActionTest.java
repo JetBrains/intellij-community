@@ -3,11 +3,13 @@ package com.intellij.xdebugger.impl.actions;
 
 import com.intellij.execution.process.ProcessInfo;
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.impl.OpenProjectTask;
 import com.intellij.openapi.progress.DumbProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.UserDataHolderBase;
-import com.intellij.testFramework.HeavyPlatformTestCase;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xdebugger.attach.LocalAttachHost;
 import com.intellij.xdebugger.attach.XAttachDebugger;
@@ -19,6 +21,7 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
+import org.junit.jupiter.api.Test;
 
 import javax.swing.Icon;
 import java.util.ArrayList;
@@ -26,13 +29,20 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
+import static com.intellij.testFramework.junit5.fixture.FixturesKt.projectFixture;
+import static com.intellij.testFramework.junit5.fixture.FixturesKt.tempPathFixture;
 import static com.intellij.xdebugger.impl.actions.AttachToProcessAction.AttachToProcessItem;
 import static com.intellij.xdebugger.impl.actions.AttachToProcessAction.RecentItem;
 import static com.intellij.xdebugger.impl.actions.AttachToProcessAction.addToRecent;
 import static com.intellij.xdebugger.impl.actions.AttachToProcessAction.doCollectAttachProcessItems;
 import static com.intellij.xdebugger.impl.actions.AttachToProcessAction.getRecentItems;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
-public class AttachToProcessActionTest extends HeavyPlatformTestCase {
+@TestApplication
+public class AttachToProcessActionTest {
+  @SuppressWarnings("deprecation")
+  private final TestFixture<Project> projectFixture = projectFixture(tempPathFixture(), OpenProjectTask.build(), true);
 
   @NotNull
   private AttachToProcessItem fixtureCreateAttachToProcessItem(@NotNull XAttachPresentationGroup<ProcessInfo> group,
@@ -41,7 +51,7 @@ public class AttachToProcessActionTest extends HeavyPlatformTestCase {
                                                                @NotNull List<XAttachDebugger> debuggers,
                                                                @NotNull UserDataHolder dataHolder) {
     List<XAttachDebugger> attachDebuggers = new ArrayList<>(debuggers);
-    return new AttachToProcessItem(group, firstInGroup, LocalAttachHost.INSTANCE, info, attachDebuggers, getProject(), dataHolder);
+    return new AttachToProcessItem(group, firstInGroup, LocalAttachHost.INSTANCE, info, attachDebuggers, projectFixture.get(), dataHolder);
   }
 
   @NotNull
@@ -53,9 +63,10 @@ public class AttachToProcessActionTest extends HeavyPlatformTestCase {
 
   private List<AttachToProcessItem> fixtureCollectAttachItems(ProcessInfo[] infos, XAttachDebuggerProvider @NotNull ... providers) {
     List<ProcessInfo> infoList = List.of(infos);
-    return doCollectAttachProcessItems(getProject(), LocalAttachHost.INSTANCE, infoList, DumbProgressIndicator.INSTANCE, Arrays.asList(providers));
+    return doCollectAttachProcessItems(projectFixture.get(), LocalAttachHost.INSTANCE, infoList, DumbProgressIndicator.INSTANCE, Arrays.asList(providers));
   }
 
+  @Test
   public void testCollectingAttachItems_Empty() {
     // no providers
     assertItems("");
@@ -64,6 +75,7 @@ public class AttachToProcessActionTest extends HeavyPlatformTestCase {
     assertItems("", new TestDebuggerProvider(), new TestDebuggerProvider());
   }
 
+  @Test
   public void testCollectingAttachItems_OneDebugger() {
     assertItems("""
                   --------
@@ -73,6 +85,7 @@ public class AttachToProcessActionTest extends HeavyPlatformTestCase {
                 new TestDebuggerProvider("dbg"));
   }
 
+  @Test
   public void testCollectingAttachItems_DebuggerPerProcess() {
     // from one provider
     assertItems("""
@@ -84,6 +97,7 @@ public class AttachToProcessActionTest extends HeavyPlatformTestCase {
                 new TestDebuggerProvider(2, TEST_GROUP, "dbg2"));
   }
 
+  @Test
   public void testCollectingAttachItems_SeveralDebuggers() {
     // from one provider
     assertItems("""
@@ -145,6 +159,7 @@ public class AttachToProcessActionTest extends HeavyPlatformTestCase {
                 new TestDebuggerProvider("dbg"));
   }
 
+  @Test
   public void testCollectingAttachItems_Groups() {
     // one group
     assertItems("""
@@ -192,6 +207,7 @@ public class AttachToProcessActionTest extends HeavyPlatformTestCase {
                 new TestDebuggerProvider(new TestAttachGroup("", 1), "dbg1", "dbg2"));
   }
 
+  @Test
   public void testCollectingAttachItems_Groups_SortingGroups() {
     assertItems("""
                   ----group1----
@@ -259,6 +275,7 @@ public class AttachToProcessActionTest extends HeavyPlatformTestCase {
                 new TestDebuggerProvider(new TestAttachGroup("group2", -1), "dbg1", "dbg2"));
   }
 
+  @Test
   public void testCollectingAttachItems_Groups_SortingItems() {
     assertItems("""
                   ----group----
@@ -279,6 +296,7 @@ public class AttachToProcessActionTest extends HeavyPlatformTestCase {
                 }, "dbg1"));
   }
 
+  @Test
   public void testCollectingAttachItems_Groups_CustomItemTitles() {
     assertItems("""
                   ----group----
@@ -296,6 +314,7 @@ public class AttachToProcessActionTest extends HeavyPlatformTestCase {
                 }, "dbg1"));
   }
 
+  @Test
   public void testHistory() {
     ProcessInfo info1 = new ProcessInfo(1, "command line 1", "exec1", "args1");
     ProcessInfo info2 = new ProcessInfo(1, "command line 2", "exec1", "args1");
@@ -318,29 +337,30 @@ public class AttachToProcessActionTest extends HeavyPlatformTestCase {
     RecentItem recentItem5 = fixtureCreateHistoryItem(info5, TEST_GROUP, "gdb");
 
     // empty
-    assertEmpty(getRecentItems(LocalAttachHost.INSTANCE, getProject()));
+    assertThat(getRecentItems(LocalAttachHost.INSTANCE, projectFixture.get())).isEmpty();
 
     // adding some items
-    addToRecent(getProject(), item1);
-    addToRecent(getProject(), item2);
+    addToRecent(projectFixture.get(), item1);
+    addToRecent(projectFixture.get(), item2);
 
-    assertOrderedEquals(getRecentItems(LocalAttachHost.INSTANCE, getProject()), recentItem1, recentItem2);
+    assertThat(getRecentItems(LocalAttachHost.INSTANCE, projectFixture.get())).containsExactly(recentItem1, recentItem2);
 
-    addToRecent(getProject(), item3);
-    addToRecent(getProject(), item4);
+    addToRecent(projectFixture.get(), item3);
+    addToRecent(projectFixture.get(), item4);
 
-    assertOrderedEquals(getRecentItems(LocalAttachHost.INSTANCE, getProject()), recentItem1, recentItem2, recentItem3, recentItem4);
+    assertThat(getRecentItems(LocalAttachHost.INSTANCE, projectFixture.get())).containsExactly(recentItem1, recentItem2, recentItem3, recentItem4);
 
     // limiting size to 4 items
-    addToRecent(getProject(), item5);
-    assertOrderedEquals(getRecentItems(LocalAttachHost.INSTANCE, getProject()), recentItem2, recentItem3, recentItem4, recentItem5);
+    addToRecent(projectFixture.get(), item5);
+    assertThat(getRecentItems(LocalAttachHost.INSTANCE, projectFixture.get())).containsExactly(recentItem2, recentItem3, recentItem4, recentItem5);
 
     // popping up recent items
-    addToRecent(getProject(), item3);
-    addToRecent(getProject(), item2);
-    assertOrderedEquals(getRecentItems(LocalAttachHost.INSTANCE, getProject()), recentItem4, recentItem5, recentItem3, recentItem2);
+    addToRecent(projectFixture.get(), item3);
+    addToRecent(projectFixture.get(), item2);
+    assertThat(getRecentItems(LocalAttachHost.INSTANCE, projectFixture.get())).containsExactly(recentItem4, recentItem5, recentItem3, recentItem2);
   }
 
+  @Test
   public void testHistory_UpdatingPreviousItems() {
     TestAttachGroup group1 = new TestAttachGroup("group1", 1);
     TestAttachGroup group2 = new TestAttachGroup("group2", 2);
@@ -355,12 +375,13 @@ public class AttachToProcessActionTest extends HeavyPlatformTestCase {
     RecentItem recentItem1 = fixtureCreateHistoryItem(info1, group1, "gdb1");
     RecentItem recentItem2 = fixtureCreateHistoryItem(info2, group2, "gdb2");
 
-    addToRecent(getProject(), item1);
-    assertOrderedEquals(getRecentItems(LocalAttachHost.INSTANCE, getProject()), recentItem1);
-    addToRecent(getProject(), item2);
-    assertOrderedEquals(getRecentItems(LocalAttachHost.INSTANCE, getProject()), recentItem2);
+    addToRecent(projectFixture.get(), item1);
+    assertThat(getRecentItems(LocalAttachHost.INSTANCE, projectFixture.get())).containsExactly(recentItem1);
+    addToRecent(projectFixture.get(), item2);
+    assertThat(getRecentItems(LocalAttachHost.INSTANCE, projectFixture.get())).containsExactly(recentItem2);
   }
 
+  @Test
   public void testHistoryGroup() {
     TestAttachGroup group1 = new TestAttachGroup("group1", 1);
     TestAttachGroup group2 = new TestAttachGroup("group2", 2);
@@ -374,7 +395,7 @@ public class AttachToProcessActionTest extends HeavyPlatformTestCase {
                                                         new TestDebuggerProvider(2, group2, debuggers2));
 
     // one item in history
-    addToRecent(getProject(), originalItems.get(0));
+    addToRecent(projectFixture.get(), originalItems.get(0));
     assertItems("""
                   ----Recent----
                   10 exec10: gdb1
@@ -397,7 +418,7 @@ public class AttachToProcessActionTest extends HeavyPlatformTestCase {
                 new TestDebuggerProvider(20, group2, debuggers2));
 
     // several items in history
-    addToRecent(getProject(), originalItems.get(1));
+    addToRecent(projectFixture.get(), originalItems.get(1));
     assertItems("""
                   ----Recent----
                   20 exec20: gdb2
@@ -423,7 +444,7 @@ public class AttachToProcessActionTest extends HeavyPlatformTestCase {
                 new TestDebuggerProvider(20, group2, debuggers2));
 
     // put most recent item on top
-    addToRecent(getProject(), originalItems.get(0));
+    addToRecent(projectFixture.get(), originalItems.get(0));
     assertItems("""
                   ----Recent----
                   10 exec10: gdb1
@@ -449,8 +470,8 @@ public class AttachToProcessActionTest extends HeavyPlatformTestCase {
                 new TestDebuggerProvider(20, group2, debuggers2));
 
     // put debugger used in history item on top
-    addToRecent(getProject(), originalItems.get(0).getSubItems().get(1));
-    addToRecent(getProject(), originalItems.get(1).getSubItems().get(1));
+    addToRecent(projectFixture.get(), originalItems.get(0).getSubItems().get(1));
+    addToRecent(projectFixture.get(), originalItems.get(1).getSubItems().get(1));
     assertItems("""
                   ----Recent----
                   20 exec20: lldb2
@@ -660,7 +681,7 @@ public class AttachToProcessActionTest extends HeavyPlatformTestCase {
     for (AttachToProcessItem each : items) {
       String title = each.getSeparatorTitle();
       if (title != null) builder.append("----").append(title).append("----\n");
-      builder.append(each.getText(getProject())).append(": ").append(each.getSelectedDebugger().getDebuggerDisplayName()).append("\n");
+      builder.append(each.getText(projectFixture.get())).append(": ").append(each.getSelectedDebugger().getDebuggerDisplayName()).append("\n");
       for (AttachToProcessItem eachSubItem : each.getSubItems()) {
         builder.append("    ").append(eachSubItem.getSelectedDebugger().getDebuggerDisplayName()).append("\n");
       }

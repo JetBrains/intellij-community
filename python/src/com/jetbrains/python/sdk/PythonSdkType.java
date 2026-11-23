@@ -46,14 +46,11 @@ import com.intellij.remote.RemoteSdkException;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
-import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
-import com.jetbrains.python.configuration.PyModuleInterpreterReader;
 import com.jetbrains.python.parser.icons.PythonParserIcons;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.sdk.add.PyAddSdkDialog;
-import com.jetbrains.python.sdk.flavors.CPythonSdkFlavor;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
 import com.jetbrains.python.sdk.impl.SdkInternalUtilKt;
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil;
@@ -242,6 +239,16 @@ public final class PythonSdkType extends SdkType {
     return SystemInfo.isWindows && isCustomPythonSdkHomePath(file.getPath());
   }
 
+  /**
+   * In the interpreter library flow, the SDK combos do not offer to add a Python SDK, and they do not list the detected
+   * ones. A module names its interpreter by its interpreter library entry, see
+   * {@link PyInterpreterLibraryFlowKt#isInterpreterLibraryFlowEnabled()}.
+   */
+  @Override
+  public boolean allowCreationByUser() {
+    return !PyInterpreterLibraryFlowKt.isInterpreterLibraryFlowEnabled();
+  }
+
   @Override
   public boolean supportsCustomCreateUI() {
     return true;
@@ -262,7 +269,9 @@ public final class PythonSdkType extends SdkType {
                                PyBundle.message("python.sdk.add.python.interpreter.title"));
       return;
     }
-    PyAddSdkDialog.show(project, module, sdk -> {
+    PyAddSdkDialog.show(project, module, interpreter -> {
+      // The SDK UI of the platform takes an SDK back, so this is the place where the interpreter becomes one.
+      Sdk sdk = PythonInterpreterExtKt.getSdkAPI(interpreter);
       sdk.putUserData(SDK_CREATOR_COMPONENT_KEY, new WeakReference<>(parentComponent));
       sdkCreatedCallback.accept(sdk);
     });
@@ -555,8 +564,15 @@ public final class PythonSdkType extends SdkType {
     return type == OrderRootType.CLASSES;
   }
 
+  /**
+   * In the interpreter library flow, the SDK combos show a Python SDK as broken: a module names its interpreter by its
+   * interpreter library entry, not by an SDK.
+   */
   @Override
   public boolean sdkHasValidPath(@NotNull Sdk sdk) {
+    if (PyInterpreterLibraryFlowKt.isInterpreterLibraryFlowEnabled()) {
+      return false;
+    }
     if (PythonSdkUtil.isRemote(sdk)) {
       return true;
     }
@@ -573,25 +589,6 @@ public final class PythonSdkType extends SdkType {
   @Override
   public boolean isLocalSdk(@NotNull Sdk sdk) {
     return !PythonSdkUtil.isRemote(sdk);
-  }
-
-  @ApiStatus.Internal
-  public static @Nullable Sdk findLocalCPython(@Nullable Module module) {
-    final Sdk moduleSDK = PyModuleInterpreterReader.findModuleSdkIfReady(module);
-    return findLocalCPythonForSdk(moduleSDK);
-  }
-
-  @ApiStatus.Internal
-  public static @Nullable Sdk findLocalCPythonForSdk(@Nullable Sdk existingSdk) {
-    if (existingSdk != null && !PythonSdkUtil.isRemote(existingSdk) && PythonSdkFlavor.getFlavor(existingSdk) instanceof CPythonSdkFlavor) {
-      return existingSdk;
-    }
-    for (Sdk sdk : ContainerUtil.sorted(PythonSdkUtil.getAllSdks(), PreferredSdkComparator.INSTANCE)) {
-      if (!PythonSdkUtil.isRemote(sdk)) {
-        return sdk;
-      }
-    }
-    return null;
   }
 
   /**

@@ -24,6 +24,7 @@ follows [`AGENTS.md`](AGENTS.md).
 | `./community/tools/vm.cmd` | `:vm` | `avl-vm` | the lane controller |
 | `./community/tools/trace.cmd` | `:air-trace` | `air-trace` | `serve`, `plan`, `pack` and `teamcity-publish` |
 | (none; `ui_lane_ide.bzl`) | `:air-trace-record` | `avl-record` | the scenario recorder that the lane daemon starts for each iteration |
+| (none) | `:acp-fake-agent` | `avl-fake-agent` | the fake ACP agent that the Air tests start as the process of an agent |
 
 Each wrapper builds its binary on every call, so the binary is always built from the working copy. Both halves run
 `bazel build` and read the path of the binary from the build event file.
@@ -31,7 +32,8 @@ Each wrapper builds its binary on every call, so the binary is always built from
 the community workspace `community/tools/bt`; its README is its crate map. A UI lane takes the
 recorder from its runfiles: `ui_lane_ide.bzl` names `:air-trace-record` for a lane on the host,
 `:air-trace-record-linux-arm64` for one in an arm64 Linux guest and `:air-trace-record-linux-x86_64` for one in
-an x86_64 Linux guest.
+an x86_64 Linux guest. The fake agent has the same three labels: `:acp-fake-agent`, `:acp-fake-agent-linux-arm64` and
+`:acp-fake-agent-linux-x86_64`.
 
 The guest half is `vm-guest-agent` (crate `avl-guest`), statically linked, as `:vm-guest-agent-linux-arm64`,
 `:vm-guest-agent-linux-x86_64` and `:vm-guest-agent-darwin-arm64`. The controller never builds it under a lease:
@@ -87,25 +89,27 @@ A crate exists when two binaries share it, or when it is the frozen-bytes engine
 `avl-report` writes the bytes an agent reads. Code that one binary uses is a module of that binary. So the `vm`
 controller holds the modules `bench`, `console`, `daemon`, `lane`, `report` and `worker`, and `air-trace` holds `serve`,
 `plan` and `publish`.
-`build/docs/decisions/0043-the-crate-boundaries-follow-the-re-key-domains.md` states the same rule for the dev-dist tools.
+`build/docs/decisions/0043-the-crate-boundaries-follow-the-re-key-domains.md` states the same rule for the distribution tools.
 The crates form a DAG with the contracts at the bottom. `avl-wire`,
-`avl-trace` and `avl-testkit` depend on no sibling, and `avl-trace-tools` and `avl-bridge` stand on `avl-trace` alone.
+`avl-trace`, `avl-control` and `avl-testkit` depend on no sibling, and `avl-trace-tools` and `avl-bridge` stand on `avl-trace` alone.
 `avl-junit` stands on `avl-wire` and on `serde`, `serde_json` and `jiff`, which the guest agent links already. So the guest agent can write the JUnit XML and the IJ Perf file.
 `avl-record` links `avl-trace` and `avl-bridge` and no other sibling, so the recorder links no packer, no discovery and
 no URL code. `avl-base` stands on `avl-wire`, and on `avl-trace-tools` for the viewer links its renderer prints. Of the
-siblings, `avl-guest` depends on `avl-wire`, `avl-junit`, `avl-trace`, `avl-trace-tools` and `avl-bridge` alone and
-never on `avl-base`, so the agent links no controller code. The recorder and the agent link one client of the bridge,
+siblings, `avl-guest` depends on `avl-wire`, `avl-junit`, `avl-trace`, `avl-trace-tools`, `avl-bridge` and
+`avl-control` alone and never on `avl-base`, so the agent links no controller code. The recorder and the agent link one client of the bridge,
 so they send one token header and follow one deadline rule.
 `bt-junit` of BT's workspace, the JUnit XML reader, is linked by `air-trace`, which reads a `test.xml`, and by `avl-vm`,
 which takes the class pattern of BT from it. The tests of `avl-junit` read back its XML with it. The agent links no
 crate of BT. `bt-core` is linked by `avl-affected` and by the
 two crates that resolve a lane or a selector, `avl-vm` and `air-trace`.
-`avl-host-sys`, `avl-trace-tools`, `air-trace` and `avl-vm` link `fscopy` of the dev-dist tools for the
+`avl-host-sys`, `avl-trace-tools`, `air-trace` and `avl-vm` link `fscopy` of the distribution tools for the
 real path. `refusal` of BT's workspace holds the refusal type, and `avl-base`, `avl-affected`, `air-trace` and
-`avl-guest` link it. `avl-affected` also links `distpath` of the dev-dist tools for the slash paths of BT. `avl-guest`
-links `dev-launch` of the dev-dist tools, which composes the argument file of the lane IDE. Through it the agent links
+`avl-guest` link it. `avl-affected` also links `distpath` of the distribution tools for the slash paths of BT, and `checkout-files` of the
+distribution tools, which `bt-core` links for the file listing of a checkout. rules_rs finds the path of such a crate
+only in a dependency of a member of this workspace, so `avl-affected` names it. `avl-guest`
+links `dev-launch` of the distribution tools, which composes the argument file of the lane IDE. Through it the agent links
 `java-properties` and a regex engine.
-`avl.bzl` maps each of these six crates to its label in the community module
+`avl.bzl` maps each of these seven crates to its label in the community module
 (`_CROSS_MODULE_CRATES`), so Bazel builds it once. That build links the community module's `serde` and `regex`, so a value crosses as JSON text, and
 `avl-affected` compiles its patterns with its own `regex!`. `avl-host-testkit` is only ever a
 dev-dependency, and nothing depends on `avl-vm`.
@@ -135,9 +139,10 @@ No crate calls a `tempfile` persist either, which fails past `MAX_PATH` on Windo
 mutual exclusion of a lease. The guest and `avl-trace-tools` do not link `avl-base`, so they rename their
 temporary in the same way.
 
-The four shipped binaries pin the crates they link. `<bin>_closure_test` in the crate of each binary compares them
+The five shipped binaries pin the crates they link. `<bin>_closure_test` in the crate of each binary compares them
 with its `closure.txt`: `vm_closure_test` in `avl-vm`, `air-trace_closure_test` in `air-trace`,
-`air-trace-record_closure_test` in `avl-record` and `vm-guest-agent_closure_test` in `avl-guest`. The closure is the
+`air-trace-record_closure_test` in `avl-record`, `vm-guest-agent_closure_test` in `avl-guest` and
+`acp-fake-agent_closure_test` in `avl-fake-agent`. The closure is the
 one for x86_64 Linux on every host, because each host adds crates of its own. The file leaves out the proc macros and
 the crates that `_HOST_CRATES` of the core names. A new crate in a closure is a choice: after the change, build
 `<bin>_closure` (for example `cd community && ./bazel.cmd build //tools/vm/crates/avl-vm:vm_closure`)
@@ -149,18 +154,20 @@ and copy `<bin>_closure.txt` from `out/bazel-bin` over `closure.txt`.
 | | `avl-trace` | the scenario traces that the recorder writes: the lane protocol, OTLP, the bundle with its manifest encoder and decoder and its file names, the Allure result document, and the bridge's trace routes. The golden transcript and bundles are its `testdata`, a public filegroup. The transcript of the routes of `air-trace serve` is there too, and the docs site's test reads it |
 | | `avl-trace-tools` | the tools over the traces, which the recorder does not run: the deterministic zips with the media stored (`air-trace pack` and the guest's `trace-pack-ready`), the discovery of bundles in directories and zips, and the viewer URLs with the default port of `air-trace serve` |
 | | `avl-bridge` | the client of the IDE's bridge, which the recorder and the guest agent share: one HTTP/1.1 call over loopback with the launch's token, a deadline whose time left goes to the IDE, the typed error, in which a refused connect, a passed deadline and a bridge that unloads are transient and a refused token is final, the bridge failure with its cause chain, the readers of the trace routes, and the lifecycle reader with the wait for a phase over the long poll |
+| | `avl-control` | the proxy side of the fake-agent control channel in the IDE, which the spawner of the guest agent and the fake agent speak: the WebSocket of RFC 6455 as a server and as a client, base64 in its two alphabets and SHA-1, and the control protocol of one agent process with its `hello`, its identity, its envelopes and its commands. It links `serde_json` alone, because the guest agent pins its closure |
 | base | `avl-base` | the exit vocabulary `Exit` and the controller's refusal, `refusal::Refusal<Exit>` with the constructors of `RefusalExt`, the `{ok,…}` envelope, the `AIR_VM_*` settings and their per-guest defaults (`src/config.rs`), phase timing, ids, the journal and history, atomic file publication. The image pins are read from `community/tools/vm/provision/versions.env` at compile time |
 | guest | `avl-guest` | the guest half and the agent binary: the run supervisor, the Linux boot and macOS image verbs, the lane IDE contexts (the preparation checks its document and lays out the directories of one context, the launch checks its document, writes the argument file and the launch record, and starts the IDE run in the closed environment of its context, `ide-gc` stops IDE runs and removes old logs, and `cancel --thread-dump` writes a thread dump before the kill), `trace-pack-ready`, the `relay` verb that bridges its stdin and stdout to a loopback port inside the guest, the `runfiles-tree` verb that builds the runfiles tree of the host's MANIFEST with the copies of the staged runfiles, the `read-file` verb that writes one file on stdout unchanged for a pull, and the `lane-daemon` verb (`src/lane`): the control channel of the lane daemon, the owner of the lane IDE and its readiness, the lane services with the fake agent package, and the context files |
-| host system | `avl-host-sys` | subprocesses, each with its timeout, and the byte stream of an exec channel child, the one wait loop with its budget and backoff (`Poll`), the batched lookup of the pinned files (`external_files`), the process-wide interrupt service and the operation context, locks and the one host-process identity that the Tart pid receipt, the lock record and the run marker share (`ProcessIdentity`), private files, the one mapping of host paths to guest paths (`GuestPaths`), the choice of a runfiles tree or a MANIFEST and the plan of the guest tree with its staged runfiles (`HostRunfiles`); what a guest must be to run host-built outputs (the read-only share set and its mount, the parity layout, TCC admission, the agent install, the run supervisor, the Linux guest's packages); the detached trace viewer: its probe and the one start of a detached server, which `air-trace serve --detach` and the controller share (`viewer`) |
+| host system | `avl-host-sys` | subprocesses, each with its timeout, the responsible process of a child on macOS (`Responsibility`), and the byte stream of an exec channel child, the one wait loop with its budget and backoff (`Poll`), the batched lookup of the pinned files (`external_files`), the process-wide interrupt service and the operation context, locks and the one host-process identity that the Tart pid receipt, the lock record and the run marker share (`ProcessIdentity`), the process table of a macOS host with the responsible process and the memory of each process (`host_processes`, `process_memory`), private files, the one mapping of host paths to guest paths (`GuestPaths`), the choice of a runfiles tree or a MANIFEST and the plan of the guest tree with its staged runfiles (`HostRunfiles`); what a guest must be to run host-built outputs (the read-only share set and its mount, the parity layout, TCC admission, the agent install, the run supervisor, the Linux guest's packages); the detached trace viewer: its probe and the one start of a detached server, which `air-trace serve --detach` and the controller share (`viewer`) |
 | workers | `avl-vm` (`worker`) | the four backends, Tart, Parallels, Docker and `container-linux`, of which a Windows host has Docker and `container-linux` (the binaries, the share grammars, the sealed golden, worker provenance, the Docker image and its containers), the Apple `container` engine and its CLI dialect, one dispatch for each lifecycle operation, the one resolver of the pinned tools (`PinnedTools`), readiness gates and the `pool` commands, lease ownership, receipts, the run marker that names the run in flight on each worker (`run.json`) and the `lease` commands |
 | reports | `avl-report` | the content digests that decide whether a warm iteration reuses the lane daemon, its IDE and its shares, report assembly, the TeamCity service messages from the run stream, the shard merge ladder and the flake arithmetic |
 | | `avl-junit` | the JUnit XML of a run from its run stream, the fold of the stream into cases that the report and the TeamCity messages read too, one TeamCity service message, and the IJ Perf file of a scenario with its plan. The controller and the guest agent both write the XML and the IJ Perf file, so the crate links no controller code and does no file I/O. The recorded stream, the golden of its XML and the golden of the IJ Perf file are its `testdata` |
 | lanes | `avl-vm` (`lane`) | lane and selector resolution for the controller, the `suites` command, the host Bazel build, the guest launch environment, the lane IDEs that the controller stops or keeps and the check that no IDE runs from the shares (`ide`), and `exec`, `peekaboo`, `pull`, `ls`, `vnc`, `status` |
 | runs | `avl-vm` (`daemon`) | `run`, `shard`, `flake` and `daemon`: the HTTP client that reaches the guest daemon through the relay, the daemon start, the push of the files of the build, iterations, the verdict, the pull of each iteration's traces beside its report, the shard split and the flake trial chains, and the leased-run driver the three share: build first, lease, one body per worker, release, and the interrupt policy |
 | run time | `avl-vm` (`report`) | `report time`: where the time of a run went, from its journal, its iteration reports and the spans of its trace bundles, with no worker; `--baseline` adds the ratio of each test class |
-| bench | `avl-vm` (`bench`) | `vm bench`, the start-up measurement of the IDE on this host: the generation of a dev distribution, the Starter-shaped IDE launch and its supervision, the session, the readers of the files the IDE writes (the start-up report, the trace, the FUS log, the class log, the CPU profile), the gate, the summary and the digest |
+| bench | `avl-vm` (`bench`) | `vm bench`, the start-up measurement of the IDE on this host: the generation of a dev distribution, the Starter-shaped IDE launch and its supervision, the session, the readers of the files the IDE writes (the start-up report, the trace, the FUS log, the class log, the CPU profile), the memory sample at the gate, the gate, the summary and the digest |
 | | `avl-vm` | the `vm` binary: the clap command tree, which renders the help, the global arguments and the dispatch, the output form and renderer the descriptors allow, the live terminal dashboard of `run`, `shard` and `flake` (`console`), `image validate\|build`, and the viewer a prose run starts (`ensure_viewer`, through `avl_host_sys::viewer`) |
 | suites | `avl-affected` | which suites a changed path reaches (the suite's own files, the lane harness, the flow tags, the specs' `[@test]` links, the JPS modules), the UI lanes a VM worker runs with their test labels (`lanes`, which the controller and the planner share), and the bridge: the Air area that `bt.json` of the checkout names, read at the start of each program (`plugins/air/tests/integration/lanes.json`, with each UI lane's test label, which `AirIntegrationTagTest`, `AirTestTargetDeclarationTest`, the architecture gate test `air-architecture-model_test` and the flow generator `docs/scripts/flowCatalog.ts` read too), and a BT refusal as the controller's |
+| agents | `avl-fake-agent` | the fake ACP agent, the `acp-fake-agent` binary, std-only and blocking: the controlled proxy, which passes each line of the IDE to the control server and applies each command of the test process, the deterministic agent with its fixed answers, whose forms are the golden `testdata/answers.json` that a Kotlin test reads, the terminal sign-in and TUI modes, and the MCP client of a session over streamable HTTP and stdio. It links `avl-control` alone of the siblings |
 | traces | `avl-record` | the recorder that the lane daemon starts, the `air-trace-record` binary: the protocol's state machine, the bundle writer, the Allure result of each bundle when a run asks for it, the snapshots, the `idea.log` slice; where the pixels come from (X11 over MIT-SHM, else the IDE's paint route), the stills, lossless WebP or, when the scenario has a video, lossy AVIF from libaom (`aom/`), the H.264 video the recorder encodes itself, its fragmented MP4 and frame index; ffmpeg only for a Mac's screen |
 | | `air-trace` | the `air-trace` binary: dispatch to `pack`, which is `avl-trace-tools`', and the modules `serve` and `plan`. `air-trace serve`: the bundles discovery finds, by byte range and live, the planner route, the bundles of a TeamCity build (`--teamcity`), and the docs site; `air-trace teamcity-publish`: after a Bazel test on TeamCity, the one archive artifact `air-traces.zip` with the viewer page, `runs.json` in the listing form of `serve` and one zip for each bundle, the messages that publish it and link each test to its trace, which `avl-report` writes, the viewer, which it builds as `serve` builds the site when `--viewer` is absent, and the build from the agent's property files; `air-trace plan`: from a bundle, a flow text, a profile, a `test.xml`, a report, a path or a name to the scenarios, the bundles the input names, the bundles of those scenarios on disk, and the commands |
 | tests | `avl-testkit` | test helpers: repository files under cargo and under Bazel, the paths of the scenario-trace goldens (`traces`), fake executables, the Tart fake with its fake `docker` and fake Apple `container`, and the loopback HTTP server that stands in for the IDE's bridge (`src/http.rs`). On Windows, which runs no shell script, the fake `docker` and the fake `git` are the Rust program `avl-fake` (`src/fakebin.rs`), linked under the tool's name and found through `AVL_FAKE`. A test compares it with the script, call by call, on Unix. The fakes are hard links to one file each, which all test processes share and which is named by its content (`src/shared.rs`), so only the first process after a change of a fake writes a new executable that macOS scans at its first exec |
@@ -168,7 +175,8 @@ and copy `<bin>_closure.txt` from `out/bazel-bin` over `closure.txt`.
 
 ## The bench
 
-`vm bench` measures the start-up of the IDE on a macOS host. ADR 0193 records why the verb is in `vm`.
+`vm bench` measures the start-up of the IDE on a macOS host, and one search workload after the start-up: Find in
+Files. ADR 0193 records why the verb is in `vm`.
 `vm.cmd bench --help` states what a session does and the exit codes. `vm.cmd bench <verb> --help` states the grammar
 and the defaults of the verb.
 
@@ -187,9 +195,23 @@ the record reads it after the quit. Its `totalDuration` is negative or missing, 
 metric.
 
 `--suppress-plugin <id>` of `welcome` and `project` adds a twin after each arm, such as `project-without-<id>`. A
-run of a twin passes `-Didea.suppressed.plugins.id=<id>`, so the IDE loads no plugin of that id. The twin has its own
-prime run and sandbox, and its runs interleave with the runs of its arm. Every verb that reads a session takes the
-twin as an arm, and the noise check of `compare` uses the plain arms only.
+run of a twin passes `-Didea.suppressed.plugins.id=<id>`, so the IDE loads no plugin of that id. `--with-property
+<name>=<value>` adds a twin such as `empty-editor-with-<name>=<value>`, whose runs pass `-D<name>=<value>` after the
+properties of the bench. A twin has its own prime run and sandbox, and its runs interleave with the runs of its arm.
+With both options, each arm has two twins. Every verb that reads a session takes a twin as an arm, and the noise check
+of `compare` uses the plain arms only.
+
+The IDE of a run starts as its own responsible process of macOS, as an app that Launch Services starts. After the
+gate and before the thread dump, the run writes `memory.json`. It holds the physical footprint and the resident size
+of the IDE, of each descendant, and of each process whose responsible process is the IDE. The WebKit XPC processes of a
+web view are children of launchd, so only the responsible process names them. The record
+[The bench finds the WebKit processes of the IDE by the responsible process](docs/decisions/2026-11-20-the-bench-finds-the-webkit-processes-of-the-ide-by-the-responsible-process.md)
+states why. The digest group `memory at the gate (MB)` holds the footprint of the IDE, of the JCEF processes
+(`cef_server` and its helpers), of the WebKit processes, of the other processes and of all, and the resident size of
+the IDE and of all. An MB is 2^20 bytes, as Activity Monitor counts it. The group `processes at the gate (count)`
+holds the processes of each group. A failed sample is a note of the run. The empty-editor arm opens no Markdown file,
+so the IDE starts no Markdown preview. The project arm opens a Markdown file of its project, so its memory holds the
+preview when the IDE shows one.
 
 A module is the main module or a content module of a plugin, and each module has its own class loader. The debug log
 `plugin-classes.txt` names the module and the `findClass` nanos of each class. With the first class of a module, it
@@ -227,7 +249,7 @@ that the JVM loads, and the digest notes how many samples it left out.
 | --- | --- | --- |
 | `welcome` | How long does the IDE take to show the welcome screen, in the modal and the non-modal arm? | A session directory with its `summary.json`, and a text digest. |
 | `open-project <project>` | How long does a running IDE take to open a project and paint its editor? | A session with the open-project arm. |
-| `project <project>` | How long does the IDE take from its start on a project to the highlighted editor, or, with `--arm empty-editor`, to the built Air composer of an empty editor area? With `--arm cargo-sync` and `--target //build:rustrover_dist`, to the first Cargo sync, as the RustRover perf test measures it. `--cold` starts each empty-editor run with empty caches. | A session with the project arm, the empty-editor arm, both, or the cargo-sync arm. |
+| `project <project>` | How long does the IDE take from its start on a project to the highlighted editor, or, with `--arm empty-editor`, to the built Air composer of an empty editor area? With `--arm cargo-sync` and `--target //build:rustrover_dist`, to the first Cargo sync, as the RustRover perf test measures it. With `--arm find-in-files` and `--query`, how long the Find in Files searches of each query take. `--cold` starts each empty-editor run with empty caches. | A session with the project arm, the empty-editor arm, both, or the cargo-sync arm. |
 | `replay <session>` | What does a finished session give when the controller parses it again? | A new `summary.json` and the digest, without an IDE. |
 | `trace <session>` | What runs between the frame and the welcome paint? | The anchors of one run, and one line per span in the window. |
 | `activities <session>` | Which post-startup activities run while the welcome panel paints? | One table by class and one table by plugin for one run. |
@@ -244,6 +266,8 @@ the `.dist` directory, the dist config and `OpenedPackages.txt`. The home in the
 three inputs is the key, so a generation that exists is reused. Its files are read-only. Its `generation.json`
 names the commit of the checkout that built it. A run starts from the home that the dist config names: the `.dist`
 directory, or its `Contents` for a macOS app.
+The sandbox template takes the license `out/dev-data/idea/config/idea.key` of the checkout, or of the main checkout when
+the checkout is a linked worktree without a license.
 
 `--generation` takes the start of a digest and runs the session over that generation, with no build and no stage. The
 session names the commit that built the generation, so `ls` and `compare` show the commit of the measured bytes. An
@@ -264,13 +288,47 @@ A session directory holds:
 | file | what it holds |
 | --- | --- |
 | `events.ndjson` | the run journal |
-| `session.json` | the inputs, with the generation, its digest, the measurement model `measureModel`, which `compare` notes when two sessions differ in it, and the `suppressedPlugin` of the twin arms |
+| `session.json` | the inputs, with the generation, its digest, the measurement model `measureModel`, which `compare` notes when two sessions differ in it, and the `suppressedPlugin` and the `withProperty` of the twin arms |
 | `build.log`, `template/`, `template-log/` | the host build, the sandbox template with the FUS test scheme, and its headless run |
-| `<arm>-prime/`, `<arm>-run-NN/` | one run, by the label of its arm, such as `project-without-<id>-run-01` for a twin: `sandbox/`, `log/`, `launch.args`, `launch.log`, the files the IDE writes, `class-load.log` of the JVM, `threads.txt`, `plugin-classes.txt`, `fus.jsonl`, `result.json` with the class maps by plugin and by module and the activation of each module, and with `--profile` the profile `cpu-gate.collapsed` and the log `profile-stop.log` of its stop |
+| `<arm>-prime/`, `<arm>-run-NN/` | one run, by the label of its arm, such as `project-without-<id>-run-01` for a twin: `sandbox/`, `log/`, `launch.args`, `launch.log`, the files the IDE writes, `class-load.log` of the JVM, `threads.txt`, `memory.json`, `plugin-classes.txt`, `fus.jsonl`, `result.json` with the class maps by plugin and by module and the activation of each module, and with `--profile` the profile `cpu-gate.collapsed` and the log `profile-stop.log` of its stop |
 | `<arm>-sandbox/` | the sandbox of the run that is running now, at one path per arm |
 | `summary.json` | `distDigest`, `measureModel`, `maxLoad`, `warnings`, the runs and the median, min and max of each metric per arm, and the non-modal minus modal `delta` |
 
 The lock of a session and of `gc` is `<runtime root>/bench/session.lock`.
+
+A run of the find-in-files arm writes the script `find-in-files.ijperf` of the performance plugin into its run
+directory. The script is the line `%findInFiles -headless -project=<project> <query>;<query>`, and
+`-Dtestscript.filename` names it. `-Dperformance.execute.script.right.after.ide.opened=true` runs it once the first
+project opened: JetBrains Light holds the dumb mode, and the plugin would wait for the smart mode. `-headless` runs each
+search to its last usage without the popup, because the popup search of JetBrains Light does not finish in a bench run.
+`-project=<project>` runs the searches in the project of the project directory, after it opened and its
+`FindInProjectDirectoriesProvider` gave its directories. JetBrains Light opens the project as a member project of a
+workspace, because the workspace feature is on by default. It opens the host project of the workspace first, and the
+script starts there, but the frame gives the member project to Find in Files. The gate is the span
+`findInFiles#search: <query>` of each query. The metric `findInFiles.search` is the sum of the searches. `--directory
+<dir>` adds a second pass over that directory of the project, with its subdirectories: the line `%findInFiles -headless
+-project=<project> -directory=<path> <query>;<query>`, the spans `findInFiles#searchInDirectory: <query>` and their sum
+`findInFiles.searchInDirectory`. The two passes take two paths through Find in Files, and the digest shows both. A
+directory pass in the project directories skips the walk of the tree once accio covered all candidates. With
+`--property ijlight.workspace.enabled=false`, the project opens outside a workspace, the IDE logs "No project directory
+found for search", and the directory pass walks the whole tree of its directory. A run with that line in `idea.log` is
+not valid, and its reason names the property. Each search is a metric with its duration, and `<span> results` holds its
+result count, so a twin of `--with-property ijlight.accio.enabled=false` shows whether accio and the platform walk find
+the same. JetBrains Light does not bundle the performance plugin, so a session gives it with `--context-plugins
+//platform/unified:performance_testing_plugin_dir`. The session builds that pool from the working tree, also with
+`--generation`, and copies its plugin directories into the `plugins` directory of the template. `--in-place` opens a tree
+too large to copy, such as a checkout, where it is, and the IDE writes the `.idea` of that tree. Each run gets the
+environment of `vm.cmd`, so the accio of `PATH` answers the searches of the accio plugin. `--property accio.binary=<path>`
+and `--property accio.home=<dir>` name another accio and its index for every run. `--property` passes `-D<name>=<value>`
+to every run of a session, also to the prime runs, and its value can name a path, which a twin of `--with-property`
+cannot.
+
+```bash
+./community/tools/vm.cmd bench project . --in-place --target //build:jetbrains_light_all_plugins_dist \
+  --context-plugins //platform/unified:performance_testing_plugin_dir --arm find-in-files \
+  --query createSearcher --query FindModel --directory platform \
+  --property accio.binary=$HOME/.cargo/bin/accio --property accio.home=$PWD/out/bench-accio-home
+```
 
 What a session cannot measure yet:
 
@@ -284,8 +342,8 @@ What a session cannot measure yet:
 ```bash
 (cd community && ./bazel.cmd test //tools/vm/... //tools/bt/... //build/rust-tools:duplicate-code_test)
 ./bazel.cmd test @community//tools/vm/... //plugins/air/tests/integration/vm-contract/...
-./bazel.cmd build @community//tools/vm:vm-guest-agent-linux-arm64 @community//tools/vm:air-trace-record-linux-arm64
-./bazel.cmd build @community//tools/vm:vm-guest-agent-linux-x86_64 @community//tools/vm:air-trace-record-linux-x86_64
+./bazel.cmd build @community//tools/vm:vm-guest-agent-linux-arm64 @community//tools/vm:air-trace-record-linux-arm64 @community//tools/vm:acp-fake-agent-linux-arm64
+./bazel.cmd build @community//tools/vm:vm-guest-agent-linux-x86_64 @community//tools/vm:air-trace-record-linux-x86_64 @community//tools/vm:acp-fake-agent-linux-x86_64
 (cd community/tools/vm && cargo test)
 (cd community/tools/vm && cargo fmt --check && cargo clippy --workspace --all-targets -- -D warnings)
 (cd community/tools/vm && RUSTC_BOOTSTRAP=1 cargo clippy -Zbuild-std=std,panic_abort --target x86_64-pc-windows-msvc --workspace --exclude avl-guest --all-targets)
@@ -301,7 +359,7 @@ bun community/build/rust-tools/sync.mjs --check
   each one installs it with `avl_affected::bridge::install_fixture`.
 - The cross-target cargo clippy lints the `cfg(windows)` code and the tests, which the Bazel clippy targets do not.
   `avl-guest` runs only inside a guest, so it is left out.
-- After a change of a spec or a move of a file that a spec names, run `./community/tools/bt.cmd AirSpecReferencesTest`.
+- After a change of a spec or a move of a file that a spec names, run `./community/tools/bt.cmd //plugins/air:air-plugin-tests_test --filter com.intellij.air.plugin.AirSpecReferencesTest`.
 - After a change of a Starlark file, run `bazel run //:format.check`.
 
 A golden is an `expect-test` snapshot: an `expect!` in the test, or a file that `expect_file!` names. `UPDATE_EXPECT=1
@@ -337,7 +395,7 @@ The extension watches only the workspace `Cargo.toml` and `Cargo.lock`. A depend
 `Cargo.toml`, for example with a comment line, and run the command again.
 
 A member names a crate of another workspace by path: `bt-core`, `bt-junit` and `refusal` of BT, and `dev-launch`,
-`distpath` and `fscopy` of the dev-dist tools. rules_rs finds such a path only from a direct dependency of a member, so each member
+`distpath` and `fscopy` of the distribution tools. rules_rs finds such a path only from a direct dependency of a member, so each member
 that uses the crate names it. rules_rs also reads the `Cargo.toml` of the crate without its own workspace. So that
 crate spells its `[package]` values inline, with no `.workspace = true`. A fetch of its repository proves it:
 

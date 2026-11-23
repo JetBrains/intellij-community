@@ -2,6 +2,7 @@
 package com.jetbrains.python.configuration;
 
 import com.google.common.collect.Lists;
+import com.intellij.python.sdk.backend.PythonInterpreterExtKt;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.facet.impl.ui.FacetErrorPanel;
 import com.intellij.facet.ui.FacetConfigurationQuickFix;
@@ -14,8 +15,8 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.DefaultProjectFactory;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.projectRoots.SdkAdditionalData;
+import com.intellij.python.sdk.backend.PythonInterpreter;
+import com.jetbrains.python.errorProcessing.ErrorSinkKt;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.DialogPanel;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
@@ -39,8 +40,6 @@ import com.jetbrains.python.documentation.PyDocumentationSettings;
 import com.jetbrains.python.documentation.docstrings.DocStringFormat;
 import com.jetbrains.python.packaging.PyPackageRequirementsSettings;
 import com.jetbrains.python.packaging.management.ui.PythonPackageManagerUI;
-import com.jetbrains.python.packaging.requirementsTxt.PythonRequirementTxtSdkUtils;
-import com.jetbrains.python.sdk.PythonSdkAdditionalData;
 import com.jetbrains.python.testing.PyAbstractTestFactory;
 import com.jetbrains.python.testing.settings.PyTestRunConfigurationRenderer;
 import com.jetbrains.python.testing.settings.PyTestRunConfigurationsModel;
@@ -49,7 +48,6 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
 import javax.swing.AbstractButton;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.JCheckBox;
@@ -309,15 +307,11 @@ final class PyIntegratedToolsConfigurable implements SearchableConfigurable {
     if (myModule == null) {
       return "";
     }
-    Sdk sdk = PyModuleInterpreterReader.findModuleSdkIfReady(myModule);
-    if (sdk == null) {
+    PythonInterpreter interpreter = PyModuleInterpreterReader.findModuleInterpreterIfReady(myModule);
+    if (interpreter == null) {
       return "";
     }
-    SdkAdditionalData data = sdk.getSdkAdditionalData();
-    if (!(data instanceof PythonSdkAdditionalData)) {
-      return "";
-    }
-    Path requirementsPath = ((PythonSdkAdditionalData)data).getRequirementsPath();
+    Path requirementsPath = PythonInterpreterExtKt.getRequirementsPath(interpreter);
     return requirementsPath != null ? requirementsPath.toString() : "";
   }
 
@@ -326,17 +320,21 @@ final class PyIntegratedToolsConfigurable implements SearchableConfigurable {
       return;
     }
 
-    Sdk sdk = PyModuleInterpreterReader.findModuleSdkIfReady(myModule);
-    if (sdk == null) {
+    PythonInterpreter interpreter = PyModuleInterpreterReader.findModuleInterpreterIfReady(myModule);
+    if (interpreter == null) {
       return;
     }
+    Path path;
     try {
-      Path path = requirementsPath.isBlank() ? null : Path.of(requirementsPath);
-      PythonRequirementTxtSdkUtils.saveRequirementsTxtPath(myModule.getProject(), sdk, path);
+      path = requirementsPath.isBlank() ? null : Path.of(requirementsPath);
     }
     catch (InvalidPathException e) {
       throw new ConfigurationException(PyBundle.message("form.integrated.tools.package.requirements.file.invalid.path", e.getMessage()));
     }
+    if (Objects.equals(path, PythonInterpreterExtKt.getRequirementsPath(interpreter))) {
+      return;
+    }
+    PyModuleInterpreterSetter.writeRequirementsPathBlocking(interpreter, path);
   }
 
   private void initErrorValidation() {
@@ -346,13 +344,13 @@ final class PyIntegratedToolsConfigurable implements SearchableConfigurable {
     facetErrorPanel.getValidatorsManager().registerValidator(new FacetEditorValidator() {
       @Override
       public @NotNull ValidationResult check() {
-        final Sdk sdk = PyModuleInterpreterReader.findModuleSdkIfReady(myModule);
-        if (sdk != null) {
+        final PythonInterpreter interpreter = PyModuleInterpreterReader.findModuleInterpreterIfReady(myModule);
+        if (interpreter != null) {
           var factory = myModel.getSelected();
-          if (factory != null && !factory.isFrameworkInstalled(myProject, sdk)) {
+          if (factory != null && !factory.isFrameworkInstalled(myProject, interpreter)) {
             return new ValidationResult(PyBundle.message("runcfg.testing.no.test.framework", factory.getName()),
                                         // isFrameworkInstalled() == false => getPackageSpec() != null
-                                        createQuickFix(sdk, facetErrorPanel,
+                                        createQuickFix(interpreter, facetErrorPanel,
                                                        Objects.requireNonNull(factory.getPackageSpec()).getPackageName()));
           }
         }
@@ -363,11 +361,11 @@ final class PyIntegratedToolsConfigurable implements SearchableConfigurable {
     facetErrorPanel.getValidatorsManager().validate();
   }
 
-  private FacetConfigurationQuickFix createQuickFix(final Sdk sdk, final FacetErrorPanel facetErrorPanel, final String name) {
+  private FacetConfigurationQuickFix createQuickFix(final PythonInterpreter interpreter, final FacetErrorPanel facetErrorPanel, final String name) {
     return new FacetConfigurationQuickFix() {
       @Override
       public void run(JComponent place) {
-        PythonPackageManagerUI.installPackagesWithModalProgressBlocking(myProject, sdk, name);
+        PythonPackageManagerUI.Companion.forPythonInterpreter(interpreter, ErrorSinkKt.ErrorSink()).installPackagesWithModalProgressBlocking(name);
         facetErrorPanel.getValidatorsManager().validate();
       }
     };
@@ -390,7 +388,7 @@ final class PyIntegratedToolsConfigurable implements SearchableConfigurable {
 
     if (myModule != null) {
       Project project = myModule.getProject();
-      myTestRunnerComboBox.setRenderer(new PyTestRunConfigurationRenderer(PyModuleInterpreterReader.findModuleSdkIfReady(myModule), project));
+      myTestRunnerComboBox.setRenderer(new PyTestRunConfigurationRenderer(PyModuleInterpreterReader.findModuleInterpreterIfReady(myModule), project));
     }
 
     for (@NotNull DialogPanel panel : myCustomizePanels) {

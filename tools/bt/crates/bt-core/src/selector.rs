@@ -1,22 +1,24 @@
 //! Selector classification and resolution: what a selector names, and the targets and filter it runs.
 
+use std::collections::HashMap;
 use std::fmt;
 use std::str::FromStr;
+use std::sync::{Arc, Mutex, PoisonError};
 
 use refusal::Refusal;
 
-use crate::areas::{AREAS_FILE, Areas};
+use crate::accio::{ModulesAnswer, SymbolAnswer, SymbolHit, accio_failed, parse_modules, parse_symbols};
+use crate::areas::Areas;
 use crate::catalog::read_suite_documents;
 use crate::exit::fail_usage;
-use crate::modules::{Layout, resolve_module};
-use crate::runtime::{Platform, Runtime};
-use crate::scan::{Candidate, Index, ResolutionInputs, TestRoot, derive_package, read_dir_or_none, read_text};
+use crate::modules::{Layout, MODULE_WITHOUT_TEST_TARGET, check_migrated, module_test_target, resolve_module};
+use crate::runtime::{Platform, Runtime, read_dir_or_none};
 use crate::suites::{AffectedSuite, resolve_suite_run};
 use crate::{paths, regex, runtime::repo_file};
 
 /// How a selector was read. The kind decides how much work resolution costs: a label and a pattern already name
 /// their targets, a directory needs one listing, a flow and a suite read the committed suite documents, and only a
-/// name or a package makes the tree scan happen.
+/// class name asks accio.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub enum SelectorKind {
     Label,
@@ -24,14 +26,13 @@ pub enum SelectorKind {
     Dir,
     SimpleName,
     Fqn,
-    Package,
     /// A flow id, `flow-` and lower-case words joined by hyphens. It selects every generated suite whose scenarios
     /// tell or walk the flow; see [`crate::named_suites`].
     Flow,
     /// A generated or authored suite id, the base name of one committed suite document.
     Suite,
     /// A JPS module name, from `--module`. [`Selector::classify`] never answers it, because a module name reads as a
-    /// package. [`crate::modules::resolve_module`] resolves it.
+    /// package, which it refuses. [`crate::modules::resolve_module`] resolves it.
     Module,
 }
 
@@ -49,7 +50,6 @@ impl SelectorKind {
             Self::Dir => "dir",
             Self::SimpleName => "simpleName",
             Self::Fqn => "fqn",
-            Self::Package => "package",
             Self::Flow => "flow",
             Self::Suite => "suite",
             Self::Module => "module",
@@ -67,8 +67,8 @@ impl fmt::Display for SelectorKind {
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Selector {
     pub kind: SelectorKind,
-    /// A class simple name, a class FQN, a package, a directory path, a bazel label, a flow id, a suite id or a
-    /// module name, depending on the kind.
+    /// A class simple name, a class FQN, a directory path, a bazel label, a flow id, a suite id or a module name,
+    /// depending on the kind.
     pub name: String,
     /// The single test method to run. `Foo#` is not a selector this accepts, so there is no empty method.
     pub method: Option<String>,
@@ -139,6 +139,11 @@ impl Selector {
             return Ok(Self::new(kind, head));
         }
 
+        // `Foo.bar` and `a.Foo.bar` name the method `bar`, as `Foo#bar` does.
+        let (head, method) = match (&method, member_after_class(head)) {
+            (None, Some((class, member))) if regex!(r"^[A-Za-z0-9_]+$").is_match(member) => (class, Some(member.to_owned())),
+            _ => (head, method),
+        };
         if regex!(r"^[A-Z][A-Za-z0-9_]*$").is_match(head) {
             return Ok(Self {
                 kind: SelectorKind::SimpleName,
@@ -153,16 +158,18 @@ impl Selector {
                 method,
             });
         }
+        // A JPS module name and a package are both dotted lower-case words, so neither is a selector of its own.
         if is_package_name(head) {
-            if method.is_some() {
-                return Err(fail_usage("A package selector cannot carry a #method"));
-            }
-            return Ok(Self::new(SelectorKind::Package, head));
+            return Err(fail_usage(format!(
+                "Cannot interpret selector: {raw}\n\
+                 bt takes no package selector. For a JPS module, pass --module {head}. For a package, pass \
+                 --module <module> --filter {head}"
+            )));
         }
         Err(fail_usage(format!(
             "Cannot interpret selector: {raw}\n\
-             Expected ClassName, ClassName#method, a.b.c.ClassName, a.b.c (package), a/directory/path, \
-             //pkg:target, @repo//pkg:target, //pkg/..., flow-id, or suite-id"
+             Expected ClassName, ClassName#method, a.b.c.ClassName, a/directory/path, //pkg:target, \
+             @repo//pkg:target, //pkg/..., flow-id, or suite-id"
         )))
     }
 }
@@ -226,6 +233,9 @@ pub struct Resolution {
     pub lane: Option<String>,
     /// The run can hit more than one test target, so no filter may be attached.
     pub multi_target: bool,
+    /// What the caller must know about the resolution, such as the outer class that the filter of a nested class
+    /// names. Each note is one line.
+    pub notes: Vec<String>,
 }
 
 /// Splits an explicit `--filter` value into the field that can express it: `(filter, include_package)`.
@@ -241,54 +251,170 @@ pub fn as_filter_or_package(value: Option<&str>) -> (Option<String>, Option<Stri
     }
 }
 
-/// The hint of a run that found no test, from the `--filter` value of the caller. It names the form of the filter that
-/// the JUnit runner reads. It changes nothing of the run. `None` for a run without `--filter`, and for an FQN
-/// `Class#method`, because the cause line of the digest already names the `#method` part.
+/// The hint of a run that found no test, from the `--filter` value after [`canonical_filter`]. It names the form of the
+/// filter that the JUnit runner reads. It changes nothing of the run. `None` for a run without `--filter`, and for an
+/// FQN `Class#method`, because the cause line of the digest already names the `#method` part.
 ///
-/// The runner reads `--test_filter` as a class name prefix whose last segment starts with an upper-case letter, or as
-/// one `Class#method`. It throws on a wildcard and a regex, and a list matches no class. It loads the class of a
-/// `Class#method` by its name, so the class needs its FQN. Jupiter finds an `@Nested` class only through its outer
-/// class, so the prefix `a.Outer$Inner` runs no test, but `a.Outer$Inner#method` runs. The runner names a nested
-/// class `a.Outer$Inner`, so `a.Outer.Inner` matches no class. A package filter also runs the subpackages.
+/// The runner reads `--test_filter` as a class name prefix, or as one `Class#method` whose class it loads by its name.
+/// A package filter also runs the subpackages. [`canonical_filter`] already gave every other value one of these forms.
 pub fn no_tests_hint(filter: Option<&str>) -> Option<String> {
     const PACKAGE_LINE: &str = "take the package from the package line of the file, not from its directory";
-    const OUTER_CLASS: &str = "the runner finds an @Nested class only through its outer class";
     let value = filter?;
     if is_package_name(value) {
         return Some(format!(
             "a package filter runs the classes of that package and its subpackages: {PACKAGE_LINE}"
         ));
     }
-    let (class, method) = value.split_once('#').map_or((value, None), |(class, method)| (class, Some(method)));
-    if !regex!(r"^(?:[A-Za-z_][A-Za-z0-9_]*\.)*[A-Z][A-Za-z0-9_$]*$").is_match(class) {
-        if let Some(package) = value.strip_suffix(".*").filter(|package| is_package_name(package)) {
-            return Some(format!(
-                "--filter takes no wildcard. To run every class of the package, pass --filter {package}"
-            ));
-        }
-        return Some(
-            "--filter takes a class, a Class#method or a package. It takes no wildcard, no regex and no list. Run each \
-             class in its own call, or pass the package of the classes"
-                .to_owned(),
-        );
-    }
-    let nested = nested_class_with_dots(class);
-    match method {
-        Some(_) if !class.contains('.') => Some(format!(
+    match value.split_once('#') {
+        Some((class, _)) if !class.contains('.') => Some(format!(
             "a Class#method needs the FQN of the class, because the runner loads the class by its name: {PACKAGE_LINE}"
         )),
-        Some(method) => nested.map(|nested| {
-            format!("a nested class takes $ after its outer class. If {class} is a nested class, pass --filter '{nested}#{method}'")
-        }),
-        None => {
-            if let Some((outer, _)) = class.split_once('$') {
-                return Some(format!("{OUTER_CLASS}. To run it, pass --filter {outer}"));
-            }
-            if let Some((outer, _)) = nested.as_deref().and_then(|nested| nested.split_once('$')) {
-                return Some(format!("{OUTER_CLASS}. If {class} is a nested class, pass --filter {outer}"));
-            }
-            Some(format!("a class filter is a prefix of the class names: {PACKAGE_LINE}"))
+        Some(_) => None,
+        None => Some(format!("a class filter is a prefix of the class names: {PACKAGE_LINE}")),
+    }
+}
+
+/// An explicit `--filter` value in the form that the JUnit runner reads, and the note that names a change of it.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct FilterForm {
+    pub value: String,
+    /// One line for the caller when the value is not the given one: the given value, the used one, and why.
+    pub note: Option<String>,
+}
+
+/// Reads an explicit `--filter` value before the first Bazel command, so that a form the runner cannot read costs no
+/// build.
+///
+/// The runner reads a class name prefix, an FQN `Class#method`, or a package ([`no_tests_hint`] names its rules). A
+/// value whose meaning is clear but whose form is not that one becomes that form, and the note says so:
+/// - `a.Foo.bar` and `Foo.bar`: a segment after a class that starts with a lower-case letter is a method, `#bar`.
+/// - `Foo#bar`: the runner loads the class by its name, so accio gives the FQN.
+/// - `a.Outer.Inner#bar` and `a.Outer$Inner#bar`: the `$` form. Without a method, the outer class, because the runner
+///   finds an `@Nested` class only through it.
+/// - `a.b.*`: the package `a.b`.
+///
+/// A value that no form can express, such as a regex or a list, is a usage refusal. An accio failure proves nothing
+/// about the class, so the value then stays as given, and the note names the cause.
+pub fn canonical_filter(raw: &str, inputs: &ResolutionInputs<'_>) -> Result<FilterForm, Refusal> {
+    if is_package_name(raw) {
+        return Ok(FilterForm {
+            value: raw.to_owned(),
+            note: None,
+        });
+    }
+    if let Some(package) = raw.strip_suffix(".*").filter(|package| is_package_name(package)) {
+        return Ok(changed_filter(
+            raw,
+            package.to_owned(),
+            "--filter takes no wildcard, and a package runs every class of it",
+        ));
+    }
+    let (class, method, method_with_dot) = match raw.split_once('#') {
+        Some((class, method)) => (class, Some(method), false),
+        None => match member_after_class(raw) {
+            Some((class, method)) => (class, Some(method), true),
+            None => (raw, None, false),
+        },
+    };
+    let bad_form = || {
+        fail_usage(format!(
+            "Cannot interpret --filter {raw}\n\
+             --filter takes a class, an FQN Class#method or a package. It takes no wildcard, no regex and no list. Run \
+             each class in its own call, or pass the package of the classes"
+        ))
+    };
+    if !regex!(r"^(?:[A-Za-z_][A-Za-z0-9_]*\.)*[A-Z][A-Za-z0-9_$]*$").is_match(class) {
+        return Err(bad_form());
+    }
+    if let Some(method) = method
+        && !regex!(r"^[A-Za-z_$][A-Za-z0-9_$ '`,.()\[\]-]*$").is_match(method)
+    {
+        return Err(bad_form());
+    }
+    let dot_reason = method_with_dot.then_some("the runner reads a method after #, not after a dot");
+
+    // A simple name with a method: the runner loads the class by its name.
+    if !class.contains('.')
+        && let Some(method) = method
+    {
+        return match unique_fqn(class, inputs)? {
+            Some(fqn) => Ok(changed_filter(
+                raw,
+                format!("{fqn}#{method}"),
+                dot_reason.unwrap_or("the runner loads the class of a Class#method by its FQN"),
+            )),
+            None => Ok(FilterForm {
+                value: format!("{class}#{method}"),
+                note: Some(format!(
+                    "--filter {raw}: accio gave no class, so the runner gets the simple name and can find no test"
+                )),
+            }),
+        };
+    }
+
+    let binary_class = nested_class_with_dots(class).unwrap_or_else(|| class.to_owned());
+    match method {
+        Some(method) => {
+            let value = format!("{binary_class}#{method}");
+            let reason = if binary_class == class {
+                dot_reason
+            } else {
+                Some("the runner names a nested class with $ after its outer class")
+            };
+            Ok(match reason {
+                Some(reason) => changed_filter(raw, value, reason),
+                None => FilterForm { value, note: None },
+            })
         }
+        None => Ok(match binary_class.split_once('$') {
+            Some((outer, _)) => changed_filter(
+                raw,
+                outer.to_owned(),
+                "the runner finds an @Nested class only through its outer class",
+            ),
+            None => FilterForm {
+                value: raw.to_owned(),
+                note: None,
+            },
+        }),
+    }
+}
+
+fn changed_filter(raw: &str, value: String, reason: &str) -> FilterForm {
+    let note = Some(format!("--filter {raw} runs as {value}: {reason}"));
+    FilterForm { value, note }
+}
+
+/// The class and the method of `a.Foo.bar` or `Foo.bar`: a last segment that starts with a lower-case letter, after a
+/// segment that [`nested_class_with_dots`] reads as a class.
+fn member_after_class(raw: &str) -> Option<(&str, &str)> {
+    let (class, member) = raw.rsplit_once('.')?;
+    let last_class_segment = class.rsplit('.').next()?;
+    let is_class = last_class_segment.starts_with(|first: char| first.is_ascii_uppercase())
+        && last_class_segment.contains(|letter: char| letter.is_ascii_lowercase());
+    (is_class && member.starts_with(|first: char| first.is_ascii_lowercase())).then_some((class, member))
+}
+
+/// The FQN of the one JVM class that accio names `simple_name`. `None` when accio names no class or fails. Two or more
+/// classes are a usage refusal that lists them.
+fn unique_fqn(simple_name: &str, inputs: &ResolutionInputs<'_>) -> Result<Option<String>, Refusal> {
+    let Ok(symbols) = inputs.symbols(simple_name) else {
+        return Ok(None);
+    };
+    let mut fqns: Vec<&str> = Vec::new();
+    for fqn in symbols.hits.iter().filter(|hit| hit.is_jvm()).filter_map(|hit| hit.fqn.as_deref()) {
+        if !fqns.contains(&fqn) {
+            fqns.push(fqn);
+        }
+    }
+    match fqns.as_slice() {
+        [] => Ok(None),
+        [fqn] => Ok(Some((*fqn).to_owned())),
+        _ => Err(fail_usage(format!(
+            "{} classes named {simple_name}; pass the FQN in --filter:\n  {}",
+            fqns.len(),
+            fqns.join("\n  ")
+        ))),
     }
 }
 
@@ -309,105 +435,267 @@ fn nested_class_with_dots(class: &str) -> Option<String> {
 }
 
 /// The class simple name a name selector asks for.
-pub fn wanted_simple_name(selector: &Selector) -> &str {
+fn wanted_simple_name(selector: &Selector) -> &str {
     match selector.kind {
         SelectorKind::Fqn => selector.name.rsplit_once('.').map_or(&*selector.name, |(_, name)| name),
         _ => &selector.name,
     }
 }
 
+/// The `--limit` of a `symbol` call: a name with more classes is refused, never cut.
+pub const SYMBOL_LIMIT: usize = 200;
+
+/// The accio answers of one resolution, read once each: the `symbol` answers by name and the `modules` answers by
+/// path. A failed call is kept as its refusal, so a second lookup of the same name or path makes no second call.
+pub struct ResolutionInputs<'r> {
+    runtime: &'r dyn Runtime,
+    areas: &'r Areas,
+    symbols: Mutex<HashMap<String, Result<Arc<SymbolAnswer>, Refusal>>>,
+    modules: Mutex<HashMap<String, Result<Arc<ModulesAnswer>, Refusal>>>,
+}
+
+impl<'r> ResolutionInputs<'r> {
+    /// The empty memo. Nothing is asked until a lookup needs it.
+    pub fn new(runtime: &'r dyn Runtime, areas: &'r Areas) -> Self {
+        ResolutionInputs {
+            runtime,
+            areas,
+            symbols: Mutex::new(HashMap::new()),
+            modules: Mutex::new(HashMap::new()),
+        }
+    }
+
+    /// The areas that resolution reads its lanes, its catalog and the module rule from.
+    pub const fn areas(&self) -> &'r Areas {
+        self.areas
+    }
+
+    /// Asks accio once for the classes of every name that the memo does not hold yet: one batch
+    /// `symbol <name>... --kind class --limit 200` call, and no call when every name is known. A planner that
+    /// resolves many classes calls it once, before its first [`resolve_selector`].
+    ///
+    /// The answer objects name no query, so they are matched to the names by position. The limit and `complete` apply
+    /// to each name on its own. A failed call is the refusal of each of its names.
+    pub fn prefetch_symbols(&self, names: &[&str]) {
+        let missing: Vec<&str> = {
+            let known = lock(&self.symbols);
+            let mut missing: Vec<&str> = Vec::new();
+            for name in names {
+                if !known.contains_key(*name) && !missing.contains(name) {
+                    missing.push(name);
+                }
+            }
+            missing
+        };
+        if missing.is_empty() {
+            return;
+        }
+        let limit = SYMBOL_LIMIT.to_string();
+        let mut args = vec!["symbol"];
+        args.extend(&missing);
+        args.extend(["--kind", "class", "--limit", &limit]);
+        let answered = self.runtime.accio(&args).and_then(|text| parse_symbols(&text, &missing));
+        let mut known = lock(&self.symbols);
+        match answered {
+            Ok(answers) => {
+                for (name, answer) in missing.iter().zip(answers) {
+                    known.insert((*name).to_owned(), Ok(Arc::new(answer)));
+                }
+            }
+            Err(refusal) => {
+                for name in &missing {
+                    known.insert((*name).to_owned(), Err(refusal.clone()));
+                }
+            }
+        }
+    }
+
+    /// The `symbol` answer of one name.
+    pub fn symbols(&self, name: &str) -> Result<Arc<SymbolAnswer>, Refusal> {
+        self.prefetch_symbols(&[name]);
+        lock(&self.symbols)
+            .get(name)
+            .cloned()
+            .unwrap_or_else(|| Err(accio_failed(format!("accio gave no symbol answer for {name}"))))
+    }
+
+    /// Asks accio once for the module roots of every path that the memo does not hold yet: one
+    /// `modules --paths <path>...` call.
+    fn prefetch_modules(&self, paths: &[&str]) {
+        let missing: Vec<&str> = {
+            let known = lock(&self.modules);
+            let mut missing: Vec<&str> = Vec::new();
+            for path in paths {
+                if !known.contains_key(*path) && !missing.contains(path) {
+                    missing.push(path);
+                }
+            }
+            missing
+        };
+        if missing.is_empty() {
+            return;
+        }
+        let mut args = vec!["modules", "--paths"];
+        args.extend(&missing);
+        let answered = self.runtime.accio(&args).and_then(|text| parse_modules(&text)).map(Arc::new);
+        let mut known = lock(&self.modules);
+        for path in missing {
+            known.insert(path.to_owned(), answered.clone());
+        }
+    }
+
+    /// The `modules` answer that holds one path.
+    fn modules_of(&self, path: &str) -> Result<Arc<ModulesAnswer>, Refusal> {
+        self.prefetch_modules(&[path]);
+        lock(&self.modules)
+            .get(path)
+            .cloned()
+            .unwrap_or_else(|| Err(accio_failed(format!("accio gave no modules answer for {path}"))))
+    }
+}
+
+fn lock<T>(mutex: &Mutex<T>) -> std::sync::MutexGuard<'_, T> {
+    mutex.lock().unwrap_or_else(PoisonError::into_inner)
+}
+
 /// Turns a selector into the targets and filter to run.
 pub fn resolve_selector(runtime: &dyn Runtime, selector: &Selector, inputs: &ResolutionInputs<'_>) -> Result<Resolution, Refusal> {
     match selector.kind {
-        // Before any tree scan: a label and a pattern already name their targets.
-        SelectorKind::Label | SelectorKind::Pattern => {
-            return Ok(Resolution {
-                labels: vec![checkout_label(runtime, &selector.name)],
-                multi_target: selector.kind == SelectorKind::Pattern,
-                ..Resolution::default()
-            });
-        }
-        SelectorKind::Dir => {
-            return Ok(Resolution {
-                labels: vec![directory_pattern(runtime, &selector.name)?],
-                multi_target: true,
-                ..Resolution::default()
-            });
-        }
-        // Before the tree scan too: the module list and one BUILD.bazel answer it.
-        SelectorKind::Module => return resolve_module(runtime, inputs.areas(), &selector.name),
-        SelectorKind::Package | SelectorKind::SimpleName | SelectorKind::Fqn if inputs.areas().is_empty() => {
-            return Err(fail_usage(format!(
-                "{} is a {} selector, and {AREAS_FILE} names no area to scan for it; pass a //label or a \
-                 //pkg/... pattern",
-                selector.name, selector.kind
-            )));
-        }
-        SelectorKind::Package => return resolve_package(runtime, selector, inputs),
-        // Before the tree scan too: the committed suite documents answer both kinds.
-        SelectorKind::Flow | SelectorKind::Suite => {
-            return resolve_suite_run(runtime, inputs.areas().with_catalog()?, selector, None);
-        }
-        SelectorKind::SimpleName | SelectorKind::Fqn => {}
+        // No accio call: a label and a pattern already name their targets.
+        SelectorKind::Label | SelectorKind::Pattern => Ok(Resolution {
+            labels: vec![checkout_label(runtime, &selector.name)],
+            multi_target: selector.kind == SelectorKind::Pattern,
+            ..Resolution::default()
+        }),
+        SelectorKind::Dir => Ok(Resolution {
+            labels: vec![directory_pattern(runtime, &selector.name)?],
+            multi_target: true,
+            ..Resolution::default()
+        }),
+        SelectorKind::Module => resolve_module(runtime, inputs.areas(), &selector.name),
+        // The committed suite documents answer both kinds.
+        SelectorKind::Flow | SelectorKind::Suite => resolve_suite_run(runtime, inputs.areas().with_catalog()?, selector, None),
+        SelectorKind::SimpleName | SelectorKind::Fqn => resolve_class(runtime, selector, inputs),
     }
+}
 
-    let index = inputs.index()?;
+/// One class that a name can mean: its FQN, the outer class of a nested class, and its test label or the refusal of
+/// its module.
+struct Candidate {
+    fqn: String,
+    top_level: Option<String>,
+    label: Result<String, Refusal>,
+}
+
+/// Resolves a class name or an FQN, in the whole repository.
+///
+/// The classes come from the committed suite documents and from one `accio symbol` call. A class of a suite document
+/// runs in the lane of the document. Any other class runs in the test target of the module whose test source root
+/// holds its file ([`module_test_target`]), under the module rule of `--module` ([`check_migrated`]). One
+/// `accio modules` call gives the modules of every file. A class outside every test source root is no candidate.
+fn resolve_class(runtime: &dyn Runtime, selector: &Selector, inputs: &ResolutionInputs<'_>) -> Result<Resolution, Refusal> {
     let simple_name = wanted_simple_name(selector);
     let documented = documented_classes(runtime, inputs.areas(), simple_name)?;
-    let mut candidates = index.get(simple_name).cloned().unwrap_or_default();
-    if candidates.is_empty() && documented.is_empty() {
-        // The @Nested / secondary-class fallback: the filename told us nothing, so read every indexed file.
-        candidates = scan_for_type(runtime, index, simple_name)?;
+    let symbols = inputs.symbols(&selector.name)?;
+    if !symbols.complete {
+        return Err(fail_usage(format!(
+            "accio finds more than {SYMBOL_LIMIT} classes named {}; pass the fully-qualified name",
+            selector.name
+        )));
     }
+    // A class of the same name in another language, such as a Python `SampleTest`, is no JUnit class.
+    let hits: Vec<&SymbolHit> = symbols.hits.iter().filter(|hit| hit.is_jvm()).collect();
+    let files: Vec<&str> = hits.iter().map(|hit| hit.file.as_str()).collect();
+    inputs.prefetch_modules(&files);
 
-    // Keyed by FQN and kept in candidate order, which is what the caller is asked to copy a name out of. A class that a
-    // suite document names runs in the lane of the document, so its label is the test label of that lane, also where
-    // the index found the class in a module.
-    let mut found: Vec<(String, String)> = Vec::new();
-    let mut keep = |fqn: String, label: String| match found.iter_mut().find(|(known, _)| *known == fqn) {
-        Some(entry) => entry.1 = label,
-        None => found.push((fqn, label)),
-    };
-    for candidate in candidates {
-        let package = derive_package(&read_text(runtime, &candidate.file)?);
-        let fqn = if package.is_empty() {
-            candidate.simple_name.clone()
-        } else {
-            format!("{package}.{}", candidate.simple_name)
+    // Keyed by FQN and kept in the order of accio, which is what the caller is asked to copy a name out of.
+    let mut found: Vec<Candidate> = Vec::new();
+    let mut outside: Vec<&str> = Vec::new();
+    for hit in hits {
+        let Some(fqn) = hit.fqn.clone() else {
+            return Err(accio_failed(format!(
+                "accio names no fqn for the class {} of {}; bt needs an accio that answers it",
+                hit.name, hit.file
+            )));
         };
-        keep(fqn, candidate.root.label.clone());
+        let answer = inputs.modules_of(&hit.file)?;
+        let Some((entry, owner)) = answer
+            .entry_of(&hit.file)
+            .and_then(|entry| Some((entry, entry.test_module_of(&hit.file)?)))
+        else {
+            outside.push(&hit.file);
+            continue;
+        };
+        let layout = Layout::detect(runtime);
+        let label = match module_test_target(entry, &owner.name)? {
+            Some(name) => {
+                let label = layout.label(&entry.root, name);
+                check_migrated(runtime, inputs.areas(), &owner.name, &entry.root, &label, &fqn).map(|()| label)
+            }
+            None => Err(Refusal::new(
+                MODULE_WITHOUT_TEST_TARGET,
+                crate::exit::USAGE,
+                format!(
+                    "module {} of {fqn} has no test target in {}. Run: ./tests.cmd --module {} --test {fqn}",
+                    owner.name,
+                    if entry.root.is_empty() {
+                        "BUILD.bazel".to_owned()
+                    } else {
+                        format!("{}/BUILD.bazel", entry.root)
+                    },
+                    owner.name
+                ),
+            )),
+        };
+        if !found.iter().any(|known| known.fqn == fqn) {
+            found.push(Candidate {
+                fqn,
+                top_level: hit.top_level.clone(),
+                label,
+            });
+        }
     }
     for (fqn, label) in documented {
-        keep(fqn, label);
+        match found.iter_mut().find(|known| known.fqn == fqn) {
+            Some(known) => known.label = Ok(label),
+            None => found.push(Candidate {
+                fqn,
+                top_level: None,
+                label: Ok(label),
+            }),
+        }
     }
     if selector.kind == SelectorKind::Fqn && found.len() > 1 {
-        let narrowed: Vec<(String, String)> = found.iter().filter(|(fqn, _)| *fqn == selector.name).cloned().collect();
         // An FQN that narrows to nothing keeps the wide list, so the answer is the ambiguity refusal naming every
         // real candidate rather than "no such class" for a class that plainly exists.
-        if !narrowed.is_empty() {
-            found = narrowed;
+        if found.iter().any(|candidate| candidate.fqn.replace('$', ".") == selector.name) {
+            found.retain(|candidate| candidate.fqn.replace('$', ".") == selector.name);
         }
     }
 
     if found.is_empty() {
-        let suggestions = suggest_names(simple_name, index.keys().map(String::as_str), 3);
-        let hint = if suggestions.is_empty() {
-            "  (no similar name found; @Nested and secondary top-level classes need a full FQN)".to_owned()
+        let hint = if outside.is_empty() {
+            symbols
+                .note
+                .as_deref()
+                .map_or_else(|| "  (accio names no similar class)".to_owned(), |note| format!("  accio: {note}"))
         } else {
-            suggestions
-                .iter()
-                .map(|name| format!("  did you mean  {name}"))
-                .collect::<Vec<_>>()
-                .join("\n")
+            format!("  accio finds it only outside a test source root: {}", outside.join(", "))
         };
-        return Err(fail_usage(format!(
-            "No test class named {simple_name} under {}\n{hint}",
-            inputs.areas().dirs().join(", ")
-        )));
+        return Err(fail_usage(format!("No test class named {}\n{hint}", selector.name)));
     }
 
     if found.len() > 1 {
-        let listed: Vec<String> = found.iter().map(|(fqn, label)| format!("  {fqn}\n      {label}")).collect();
+        let listed: Vec<String> = found
+            .iter()
+            .map(|candidate| {
+                let label = match &candidate.label {
+                    Ok(label) => label.clone(),
+                    Err(refusal) => refusal.message.lines().next().unwrap_or_default().to_owned(),
+                };
+                format!("  {}\n      {label}", candidate.fqn)
+            })
+            .collect();
         return Err(fail_usage(format!(
             "{} classes named {simple_name}; pass the fully-qualified name:\n{}",
             found.len(),
@@ -415,14 +703,24 @@ pub fn resolve_selector(runtime: &dyn Runtime, selector: &Selector, inputs: &Res
         )));
     }
 
-    let (fqn, label) = found.swap_remove(0);
-    let filter = match &selector.method {
-        Some(method) => format!("{fqn}#{method}"),
-        None => fqn,
+    let Candidate { fqn, top_level, label } = found.swap_remove(0);
+    let label = label?;
+    let mut notes = Vec::new();
+    let filter = match (&selector.method, top_level) {
+        (Some(method), _) => format!("{fqn}#{method}"),
+        (None, Some(top_level)) => {
+            notes.push(format!(
+                "{fqn} is a nested class, so the filter is its outer class {top_level}: the runner finds an @Nested \
+                 class only through its outer class"
+            ));
+            top_level
+        }
+        (None, None) => fqn,
     };
     Ok(Resolution {
         labels: vec![label],
         filter: Some(filter),
+        notes,
         ..Resolution::default()
     })
 }
@@ -450,49 +748,6 @@ fn documented_classes(runtime: &dyn Runtime, areas: &Areas, simple_name: &str) -
             Some((document.test_class().to_owned(), label))
         })
         .collect())
-}
-
-/// The roots whose declared package prefix covers a package.
-pub fn roots_declaring<'a>(roots: &'a [TestRoot], package: &str) -> Vec<&'a TestRoot> {
-    roots
-        .iter()
-        .filter(|root| {
-            root.package_prefix
-                .as_deref()
-                .is_some_and(|prefix| prefix == package || package.strip_prefix(prefix).is_some_and(|rest| rest.starts_with('.')))
-        })
-        .collect()
-}
-
-fn resolve_package(runtime: &dyn Runtime, selector: &Selector, inputs: &ResolutionInputs<'_>) -> Result<Resolution, Refusal> {
-    let roots = inputs.roots()?;
-    let mut resolved: Vec<TestRoot> = roots_declaring(roots, &selector.name).into_iter().cloned().collect();
-    if resolved.is_empty() {
-        // No declared prefix covers it, so fall back to what the files themselves say. This is what makes a
-        // package selector work for a root whose .iml declares no prefix at all.
-        resolved = roots_by_scanned_package(runtime, roots, inputs.index()?, &selector.name)?;
-    }
-    let Some(first) = resolved.first() else {
-        return Err(fail_usage(format!(
-            "No test source root under {} contains package {}",
-            inputs.areas().dirs().join(", "),
-            selector.name
-        )));
-    };
-    if resolved.iter().any(|root| root.label != first.label) {
-        let listed: Vec<String> = resolved.iter().map(|root| format!("  {}", root.label)).collect();
-        return Err(fail_usage(format!(
-            "Package {} spans {} test targets; run one explicitly:\n{}",
-            selector.name,
-            resolved.len(),
-            listed.join("\n")
-        )));
-    }
-    Ok(Resolution {
-        labels: vec![first.label.clone()],
-        include_package: Some(selector.name.clone()),
-        ..Resolution::default()
-    })
 }
 
 /// The recursive target pattern of a directory selector. In the ultimate root, the root `.bazelignore` hides
@@ -632,46 +887,6 @@ fn repo_tail(clean_root: &str, absolute: &str, fold_case: bool) -> Option<String
     };
     let tail = &absolute[prefix.len()..];
     (inside && !tail.is_empty()).then(|| tail.to_owned())
-}
-
-fn scan_for_type(runtime: &dyn Runtime, index: &Index, simple_name: &str) -> Result<Vec<Candidate>, Refusal> {
-    let all: Vec<&Candidate> = index.values().flatten().collect();
-    let declaration = crate::scan::type_declaration_pattern(simple_name);
-    // The whole index, so the files are read concurrently: this is the fallback, and the only path that reads
-    // every indexed source.
-    let verdicts = crate::runtime::par_map(&all, |candidate| {
-        read_text(runtime, &candidate.file).map(|text| declaration.is_match(&text))
-    });
-    let mut declaring = Vec::new();
-    for (candidate, declares) in all.into_iter().zip(verdicts) {
-        if declares? {
-            // The name the caller asked for wins over the filename, because that is the class the filter names.
-            declaring.push(Candidate {
-                simple_name: simple_name.to_owned(),
-                ..candidate.clone()
-            });
-        }
-    }
-    Ok(declaring)
-}
-
-fn roots_by_scanned_package(runtime: &dyn Runtime, roots: &[TestRoot], index: &Index, package: &str) -> Result<Vec<TestRoot>, Refusal> {
-    let mut matching_dirs: Vec<&str> = Vec::new();
-    for candidate in index.values().flatten() {
-        let src_dir = candidate.root.src_dir.as_str();
-        if matching_dirs.contains(&src_dir) || !candidate.file.starts_with(&format!("{src_dir}/")) {
-            continue;
-        }
-        let file_package = derive_package(&read_text(runtime, &candidate.file)?);
-        if file_package == package || file_package.strip_prefix(package).is_some_and(|rest| rest.starts_with('.')) {
-            matching_dirs.push(src_dir);
-        }
-    }
-    Ok(roots
-        .iter()
-        .filter(|root| matching_dirs.contains(&root.src_dir.as_str()))
-        .cloned()
-        .collect())
 }
 
 #[cfg(test)]

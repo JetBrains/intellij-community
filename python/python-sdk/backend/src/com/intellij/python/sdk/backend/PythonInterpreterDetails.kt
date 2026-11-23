@@ -2,8 +2,10 @@
 package com.intellij.python.sdk.backend
 
 import com.intellij.openapi.application.ApplicationManager
+import com.jetbrains.python.target.PyTargetAwareAdditionalData
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.WriteAction
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
@@ -13,34 +15,37 @@ import com.intellij.openapi.projectRoots.SdkModificator
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.FileUtilRt
+import com.intellij.openapi.util.io.OSAgnosticPathUtil
 import com.intellij.openapi.vfs.JarFileSystem
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.toNioPathOrNull
 import com.intellij.platform.backend.workspace.workspaceModel
+import com.intellij.platform.util.annotations.paths.OsPath
 import com.intellij.platform.workspace.jps.entities.SdkEntity
 import com.intellij.python.community.helpersLocator.PythonBundledPyiStubsLocator
+import com.intellij.remote.RemoteSdkProperties
+import com.intellij.util.PathMappingSettings
 import com.jetbrains.python.PyNames
 import com.jetbrains.python.sdk.PythonSdkAdditionalData
 import com.jetbrains.python.sdk.getPathsToTransfer
-import com.jetbrains.python.sdk.updateTransferredRoots
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil
+import com.jetbrains.python.sdk.updateTransferredRoots
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.callbackFlow
-import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.launch
-import com.intellij.platform.util.annotations.paths.OsPath
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import java.nio.file.InvalidPathException
 import java.nio.file.Path
+import kotlin.io.path.invariantSeparatorsPathString
 
 /**
  * The facts of the interpreters of this project, see [PythonInterpreterFacts]: what the SDK updater measures and what
@@ -61,10 +66,19 @@ class PythonInterpreterDetails(private val project: Project, scope: CoroutineSco
   private val changeEvents = MutableSharedFlow<PythonInterpreterKey?>(extraBufferCapacity = Int.MAX_VALUE)
 
   init {
+    // Only the source of the flow of this session, which a restart changes: the interpreter library flow ignores the SDK
+    // table, which also holds other SDKs, such as a Java one.
+    val source = if (isInterpreterLibraryFlowEnabled()) {
+      // The version of the store now, read before the collector starts. A change between this read and the start of the
+      // collector is newer, so the collector still reports it.
+      val records = PythonInterpreterRecords.getInstance(project)
+      val seen = records.versions.value
+      records.versions.filter { it > seen }.map { }
+    }
+    else {
+      sdkTableChanges()
+    }
     scope.launch {
-      // Only the source of the flow of this session, which a restart changes: the interpreter library flow ignores the SDK
-      // table, which also holds other SDKs, such as a Java one.
-      val source = if (isInterpreterLibraryFlowEnabled()) PythonInterpreterRecords.getInstance(project).changes.drop(1) else sdkTableChanges()
       source.collect { changeEvents.emit(null) }
     }
   }
@@ -122,6 +136,86 @@ class PythonInterpreterDetails(private val project: Project, scope: CoroutineSco
   suspend fun writeExcludedPaths(interpreter: PythonInterpreter, paths: Set<Path>): Boolean =
     writeFacts(interpreter, facts(interpreter).copy(excludedPaths = paths))
 
+  /**
+   * The dependency file stored for [interpreter], such as its `requirements.txt` or its `pyproject.toml`, or `null`
+   * when none is stored. The default of the package manager applies then. The interpreter library flow keeps the file
+   * in the record, relative to the owner directory. The legacy flow keeps it in the SDK data. Read it with
+   * [PythonInterpreter.requirementsPath].
+   */
+  internal fun requirementsPath(interpreter: PythonInterpreter): Path? =
+    if (isInterpreterLibraryFlowEnabled()) {
+      PythonInterpreterRecords.getInstance(project).recordOf(interpreter.key)?.requirementsFile?.let { interpreter.ownerDir.resolve(it) }
+    }
+    else {
+      (interpreter.sdk.sdkAdditionalData as? PythonSdkAdditionalData)?.requirementsPath
+    }
+
+  /**
+   * Stores [path] as the dependency file of [interpreter], see [requirementsPath]. `null` removes the stored file. A
+   * relative [path] is relative to the owner directory of [interpreter].
+   */
+  internal suspend fun writeRequirementsPath(interpreter: PythonInterpreter, path: Path?) {
+    if (isInterpreterLibraryFlowEnabled()) {
+      val records = PythonInterpreterRecords.getInstance(project)
+      val record = records.recordOf(interpreter.key) ?: return
+      val file = path?.let { requirementsFileOf(interpreter.ownerDir, it) }
+      if (record.requirementsFile == file) return
+      records.put(interpreter.key, record.withRequirementsFile(file))
+      // The SDK keeps a copy of the record for the code that still reads the dependency file from an SDK, see [applyRecord].
+      commitAsync(interpreter.sdk) { modificator ->
+        (modificator.sdkAdditionalData as? PythonSdkAdditionalData)?.requirementsFile = file
+      }
+    }
+    else {
+      commitAsync(interpreter.sdk) { modificator ->
+        (modificator.sdkAdditionalData as? PythonSdkAdditionalData)?.requirementsPath = path?.let { interpreter.ownerDir.resolve(it) }
+      }
+    }
+  }
+
+  /**
+   * The path mappings of the target of [interpreter], from a local root to a root on the target, or `null` for an
+   * interpreter that has none. The interpreter library flow keeps them in the record. The legacy flow keeps them in
+   * the SDK data. Read them with [PythonInterpreter.pathMappings].
+   */
+  internal fun pathMappings(interpreter: PythonInterpreter): PathMappingSettings? =
+    if (isInterpreterLibraryFlowEnabled()) {
+      PythonInterpreterRecords.getInstance(project).recordOf(interpreter.key)?.pathMappings
+        ?.takeIf { it.isNotEmpty() }
+        ?.let { mappings -> PathMappingSettings(mappings.map { PathMappingSettings.PathMapping(it.local, it.remote) }) }
+    }
+    else {
+      (interpreter.sdk.sdkAdditionalData as? RemoteSdkProperties)?.pathMappings
+    }
+
+  /**
+   * Stores [mappings] as the path mappings of the target of [interpreter], see [pathMappings]. The interpreter library
+   * flow keeps them in the record. The legacy flow keeps them in the SDK data.
+   */
+  internal suspend fun writePathMappings(interpreter: PythonInterpreter, mappings: PathMappingSettings) {
+    if (isInterpreterLibraryFlowEnabled()) {
+      val records = PythonInterpreterRecords.getInstance(project)
+      val record = records.recordOf(interpreter.key) ?: return
+      val stored = mappings.pathMappings.map { mapping ->
+        PythonInterpreterRecords.StoredPathMapping().apply {
+          local = mapping.localRoot
+          remote = mapping.remoteRoot
+        }
+      }
+      if (record.pathMappings.map { it.local to it.remote } == stored.map { it.local to it.remote }) return
+      records.put(interpreter.key, record.withPathMappings(stored))
+      // The SDK keeps a copy of the record for the code that still reads the mappings from an SDK, see [applyRecord].
+      commitAsync(interpreter.sdk) { modificator ->
+        (modificator.sdkAdditionalData as? PyTargetAwareAdditionalData)?.setPathMappings(mappings)
+      }
+    }
+    else {
+      commitAsync(interpreter.sdk) { modificator ->
+        (modificator.sdkAdditionalData as? PyTargetAwareAdditionalData)?.setPathMappings(mappings)
+      }
+    }
+  }
+
   /** The facts that the record of [interpreter] saves. No record gives no fact. */
   private fun recordFacts(interpreter: PythonInterpreter): PythonInterpreterFacts {
     val record = PythonInterpreterRecords.getInstance(project).recordOf(interpreter.key)
@@ -130,6 +224,7 @@ class PythonInterpreterDetails(private val project: Project, scope: CoroutineSco
       sysPath = record?.sysPath.orEmpty().mapNotNull(::toPathOrNull),
       addedPaths = record?.addedPaths.orEmpty().mapNotNull(::urlToPathOrNull),
       excludedPaths = record?.excludedPaths.orEmpty().mapNotNullTo(HashSet(), ::urlToPathOrNull),
+      excludedFolders = record?.excludedFolders.orEmpty().mapNotNullTo(HashSet(), ::urlToPathOrNull),
     )
   }
 
@@ -293,6 +388,16 @@ private fun commit(sdk: Sdk, change: (SdkModificator) -> Unit) {
   PythonInterpreterSdks.sdkChangedInOpenProjects(sdk)
 }
 
+/** [commit] for a caller that can suspend: the write action does not block a thread that holds a read lock. */
+private suspend fun commitAsync(sdk: Sdk, change: (SdkModificator) -> Unit) {
+  edtWriteAction {
+    val modificator = sdk.sdkModificator
+    change(modificator)
+    modificator.commitChanges()
+  }
+  PythonInterpreterSdks.sdkChangedInOpenProjects(sdk)
+}
+
 /** These facts, with the version of [current] when they have none: a probe that could not answer. */
 private fun PythonInterpreterFacts.withVersionOf(current: PythonInterpreterFacts): PythonInterpreterFacts =
   if (version == null) copy(version = current.version) else this
@@ -307,19 +412,67 @@ private fun PythonInterpreterRecords.StoredInterpreter.copyWith(facts: PythonInt
     requirementsFile = source.requirementsFile
     addedPaths += facts.addedPaths.map(::pathToUrl)
     excludedPaths += facts.excludedPaths.map(::pathToUrl).sorted()
+    excludedFolders += facts.excludedFolders.map(::pathToUrl).sorted()
     pathMappings += source.pathMappings
     version = facts.version
     sysPath += facts.sysPath.map { it.toString() }.distinct()
   }
 }
 
+/** A copy of this record with [pathMappings] as its path mappings. The record keeps all else. */
+private fun PythonInterpreterRecords.StoredInterpreter.withPathMappings(
+  pathMappings: List<PythonInterpreterRecords.StoredPathMapping>,
+): PythonInterpreterRecords.StoredInterpreter {
+  val source = this
+  return PythonInterpreterRecords.StoredInterpreter().apply {
+    ownerDir = source.ownerDir
+    ref = source.ref
+    uuid = source.uuid
+    requirementsFile = source.requirementsFile
+    addedPaths += source.addedPaths
+    excludedPaths += source.excludedPaths
+    excludedFolders += source.excludedFolders
+    this.pathMappings += pathMappings
+    version = source.version
+    sysPath += source.sysPath
+  }
+}
+
+/** A copy of this record with [requirementsFile] as its dependency file. The record keeps all else. */
+private fun PythonInterpreterRecords.StoredInterpreter.withRequirementsFile(requirementsFile: String?): PythonInterpreterRecords.StoredInterpreter {
+  val source = this
+  return PythonInterpreterRecords.StoredInterpreter().apply {
+    ownerDir = source.ownerDir
+    ref = source.ref
+    uuid = source.uuid
+    this.requirementsFile = requirementsFile
+    addedPaths += source.addedPaths
+    excludedPaths += source.excludedPaths
+    excludedFolders += source.excludedFolders
+    pathMappings += source.pathMappings
+    version = source.version
+    sysPath += source.sysPath
+  }
+}
+
+/**
+ * The form of the dependency file [path] that a record stores: relative to [ownerDir], with `/` separators, when it is
+ * inside [ownerDir], else absolute. A relative [path] is relative to [ownerDir].
+ */
+private fun requirementsFileOf(ownerDir: Path, path: Path): String {
+  val absolute = ownerDir.resolve(path).normalize()
+  val base = ownerDir.normalize()
+  return if (absolute.startsWith(base)) base.relativize(absolute).invariantSeparatorsPathString else absolute.toString()
+}
+
 private fun PythonInterpreterRecords.StoredInterpreter.sameAsRecord(other: PythonInterpreterRecords.StoredInterpreter): Boolean =
   version == other.version && sysPath == other.sysPath &&
-  addedPaths == other.addedPaths && excludedPaths.toSet() == other.excludedPaths.toSet()
+  addedPaths == other.addedPaths && excludedPaths.toSet() == other.excludedPaths.toSet() &&
+  excludedFolders.toSet() == other.excludedFolders.toSet()
 
-private fun PythonSdkAdditionalData?.addedPaths(): List<Path> = this?.addedPathFiles.orEmpty().mapNotNull { it.toNioPathOrNull() }
+private fun PythonSdkAdditionalData?.addedPaths(): List<Path> = this?.addedPathFiles.orEmpty().mapNotNull(::nioPathOf)
 
-private fun PythonSdkAdditionalData?.excludedPaths(): Set<Path> = this?.excludedPathFiles.orEmpty().mapNotNullTo(HashSet()) { it.toNioPathOrNull() }
+private fun PythonSdkAdditionalData?.excludedPaths(): Set<Path> = this?.excludedPathFiles.orEmpty().mapNotNullTo(HashSet(), ::nioPathOf)
 
 /** Whether the SDK data of [sdk] holds the user paths of [facts] already, see [commitUserPaths]. */
 internal fun hasUserPaths(sdk: Sdk, facts: PythonInterpreterFacts): Boolean =
@@ -349,7 +502,31 @@ private fun pathToUrl(path: Path): String = VfsUtilCore.pathToUrl(FileUtil.toSys
 private fun urlToPathOrNull(url: String): Path? = toPathOrNull(VfsUtilCore.urlToPath(url))
 
 /** [path] as the file system names it, or [path] itself when no file is there. */
-internal fun canonicalPath(path: Path): Path = LocalFileSystem.getInstance().findFileByNioFile(path)?.toNioPathOrNull() ?: path
+internal fun canonicalPath(path: Path): Path = LocalFileSystem.getInstance().findFileByNioFile(path)?.let(::nioPathOf) ?: path
+
+/**
+ * The NIO path of [file], as [VirtualFile.toNioPathOrNull] gives it, or `null` for a file outside of [LocalFileSystem] or
+ * for a path that [Path.of] cannot parse.
+ * [LocalFileSystem] holds the files of every eel, such as WSL and Docker, and [Path.of] routes their paths to the eel.
+ *
+ * [VirtualFile.toNioPathOrNull] waits for all pending writes of the local file system, in
+ * `com.intellij.openapi.vfs.impl.local.AsyncableLocalFileSystemImpl.getNioPath`. Resolve derives the roots under a read
+ * action, and a write action can wait for that read action. So this function makes the path from the VFS path of the
+ * file, and waits for no write.
+ *
+ * The platform has no API that gives the path without the wait. So this function is a copy of
+ * `com.intellij.openapi.vfs.impl.local.LocalFileSystemBase.getNioPath` and `LocalFileSystemBase.toIoPath`. Keep it the
+ * same as them. The copy differs in two points: it has no OS check of the drive root, see the comment in the function,
+ * and it gives `null` where [Path.of] throws.
+ */
+internal fun nioPathOf(file: VirtualFile): Path? {
+  if (file.fileSystem != LocalFileSystem.getInstance()) return null
+  val path = file.path
+  // On Windows, `C:` names the current directory of the drive, so a drive root needs the slash. No OS check is necessary:
+  // a VFS path on Unix starts with `/`, so `startsWithWindowsDrive` rejects it.
+  val drive = path.length == 2 && OSAgnosticPathUtil.startsWithWindowsDrive(path)
+  return toPathOrNull(if (drive) "$path/" else path)
+}
 
 /** The root at [path]: the directory itself, or the archive of a `.zip` or `.egg` file. `null` when no file is there. */
 internal fun toRoot(path: Path): VirtualFile? {

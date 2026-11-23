@@ -148,7 +148,12 @@ public final class MultiRoutingFileSystem extends DelegatingFileSystem<MultiRout
     if (root == null) {
       return false;
     }
-    return getBackend(root.toString()) != myLocalFS;
+    return !isLocalBackend(getBackend(root.toString()));
+  }
+
+  boolean isLocalBackend(@NotNull FileSystem backend) {
+    return backend == myLocalFS ||
+           backend instanceof DelegatingFileSystem<?> dfs && dfs.getDelegate() == myLocalFS;
   }
 
   /**

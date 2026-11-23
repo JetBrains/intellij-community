@@ -81,7 +81,7 @@ data class ModuleSetGenerationConfig(
    */
   @JvmField val includeTestPluginDescriptorsFromSources: Boolean = false,
   /**
-   * The plugin main modules the dev distribution states content for. `derivePluginPopulation` of the build scripts
+   * The plugin main modules the distribution states content for. `derivePluginPopulation` of the build scripts
    * derives the set from the product model and the platform table. The caller passes the result, because this module
    * cannot read the build scripts. A name this project does not hold is a name nothing matches.
    */

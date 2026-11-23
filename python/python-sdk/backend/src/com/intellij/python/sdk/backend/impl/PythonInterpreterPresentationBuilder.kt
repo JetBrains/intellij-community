@@ -5,10 +5,10 @@ import com.intellij.ide.ui.icons.IconId
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.icons.AllIcons
 import com.intellij.ide.ui.icons.rpcId
-import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.python.sdk.backend.PySdkBundle.message
 import com.intellij.python.sdk.backend.PythonInterpreter
+import com.intellij.python.sdk.backend.PythonInterpreterKey
 import com.intellij.execution.target.getTargetType
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.platform.eel.EelDescriptor
@@ -71,7 +71,7 @@ fun PythonInterpreter.presentation(): PythonInterpreterPresentation {
   return PythonInterpreterPresentation(
     name = listOfNotNull(envName(), whereItRuns()).joinToString(" · "),
     suffix = secondary,
-    description = FileUtil.getLocationRelativeToUserHome(environmentRoot()),
+    description = FileUtil.getLocationRelativeToUserHome(environmentRoot(), false),
     problem = problem,
     icon = icon(problem).rpcId(),
     isPathDerivedName = false,
@@ -85,7 +85,7 @@ fun PythonInterpreter.presentation(): PythonInterpreterPresentation {
 private fun PythonInterpreter.envName(): @NlsSafe String {
   val envRef = ref.envRef.value
   val isAbsolute = envRef.startsWith("/") || envRef.toNioPathOrNull()?.isAbsolute == true
-  return if (isAbsolute) FileUtil.getLocationRelativeToUserHome(environmentRoot()) else envRef
+  return if (isAbsolute) FileUtil.getLocationRelativeToUserHome(environmentRoot(), false) else envRef
 }
 
 /**
@@ -112,17 +112,23 @@ private fun PythonInterpreter.environmentRoot(): String = when (this) {
 }
 
 /**
- * What a row draws for an SDK that names no interpreter, see [com.intellij.python.sdk.backend.pythonInterpreterResult].
- * The row is `[invalid]`, and [reason] says why. The user can only remove or recreate such an SDK.
+ * What a row draws for the interpreter that an interpreter library entry names while its environment is gone, see
+ * [PythonInterpreterKey]. The row is `[invalid]`. The name is the env ref, as for an interpreter, so the user recognizes
+ * it, and the reason names its manager. Only the manager knows whether the env ref is a path or a name, so the row
+ * places the environment nowhere.
  */
-fun brokenSdkPresentation(sdk: Sdk, reason: @Nls String): PythonInterpreterPresentation = PythonInterpreterPresentation(
-  name = sdk.name,
-  suffix = null,
-  description = sdk.homePath.orEmpty(),
-  problem = invalidProblem(reason),
-  icon = wrapIconWithWarningDecorator(AllIcons.Nodes.Unknown).rpcId(),
-  isPathDerivedName = isNameDerivedFromHomePath(sdk.name, sdk.homePath),
-)
+internal fun PythonInterpreterKey.buildUnavailableItem(): PyInterpreterItem {
+  val envRef = ref.env.envRef.value
+  return PyInterpreterItem(
+    ref = ref,
+    name = envRef,
+    suffix = null,
+    description = envRef,
+    problem = invalidProblem(message("python.sdk.problem.environment.gone", envRef, ref.manager.value)),
+    icon = wrapIconWithWarningDecorator(AllIcons.Nodes.Unknown).rpcId(),
+    isPathDerivedName = false,
+  )
+}
 
 /** A configuration the user has to fix, which is `[invalid]` like any other. */
 private fun invalidProblem(reason: @Nls String) = PythonInterpreterProblem(message("python.sdk.problem.invalid"), reason)

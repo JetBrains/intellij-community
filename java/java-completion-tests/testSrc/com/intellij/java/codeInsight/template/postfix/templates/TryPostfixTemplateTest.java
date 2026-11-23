@@ -1,55 +1,82 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight.template.postfix.templates;
 
-import org.jetbrains.annotations.NotNull;
+import com.intellij.platform.testFramework.junit5.codeInsight.indexing.IndexingModeTemplate;
+import com.intellij.testFramework.EdtTestUtil;
+import com.intellij.testFramework.NeedsIndex;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.junit.jupiter.api.Test;
 
-public class TryPostfixTemplateTest extends PostfixTemplateTestCase {
-  @NotNull
-  @Override
-  protected String getSuffix() {
-    return "try";
-  }
+import static com.intellij.java.codeInsight.template.postfix.templates.PostfixTemplateFixtureKt.postfixTemplateFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
 
+@TestApplication
+@IndexingModeTemplate
+public class TryPostfixTemplateTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<PostfixTemplateFixture> postfix = postfixTemplateFixture(projectFixture, "try");
+
+  @Test
   public void testSimple() {
     doTest();
   }
 
+  @Test
   public void testMultiStatement() {
     doTest();
   }
 
+  @Test
   public void testNotStatement() {
     doTest();
   }
 
+  @Test
   public void testNotResolvedExpression() {
     doTest();
   }
 
+  @Test
   public void testDeclarationStatement() {
     doTest();
   }
 
+  @Test
   public void testExpressionInMethodBody() {
     doTest();
   }
 
+  @Test
   public void testSimpleWithThrowsCheckedException() {
     doTest();
   }
 
+  @Test
   public void testIncompleteStatement() {
     doTest();
   }
 
+  @Test
   public void testConstructorStatement() {
     doTest();
   }
 
+  @Test
   public void testAfterLambda() {
     doTest();
   }
 
+  private void doTest() {
+    EdtTestUtil.runInEdtAndWait(() -> postfix.get().doTest(useModCommandTemplates()));
+  }
+
+  protected boolean useModCommandTemplates() {
+    return false;
+  }
+
+  @NeedsIndex.SmartMode(reason = "The JUnit 3 dumb completion suite did not run the ModCommand variants")
   public static class ModTryPostfixTemplateTest extends TryPostfixTemplateTest {
     @Override
     protected boolean useModCommandTemplates() {

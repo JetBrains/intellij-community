@@ -81,6 +81,31 @@ pub(crate) async fn sources(ctx: &Ctx, bazel: &Bazel, repo_root: &Path, target: 
     })
 }
 
+/// The plugins directory of the `context_plugin_dir` `label` among the lines of `cquery --output=files`: the
+/// directory `<name>` beside the manifest, which holds a link for each file and each directory tree of its plugins at
+/// its path below `plugins/`. A label without a name, and a target with no output below that directory, have none.
+pub(crate) fn context_plugins_dir<'a>(label: &str, files: &'a str) -> Option<&'a str> {
+    let name = label
+        .rsplit_once(':')
+        .map_or_else(|| label.rsplit('/').next().unwrap_or(label), |(_, name)| name);
+    let marker = format!("/{name}/");
+    files.lines().map(str::trim).find_map(|line| {
+        let index = line.find(&marker)?;
+        Some(&line[..index + marker.len() - 1])
+    })
+}
+
+/// The plugins directory of the `context_plugin_dir` `label`, after its build. See [`context_plugins_dir`].
+pub(crate) async fn context_plugins(ctx: &Ctx, bazel: &Bazel, label: &str) -> Result<PathBuf, Refusal> {
+    let files = bazel.query(ctx, "cquery", &["--output=files".to_owned(), label.to_owned()]).await?;
+    let Some(dir) = context_plugins_dir(label, &files) else {
+        return Err(Refusal::usage(format!(
+            "--context-plugins {label} has no output below its own name, so it is no context_plugin_dir"
+        )));
+    };
+    output_path(ctx, bazel, dir).await
+}
+
 /// The async-profiler jar among the lines of `cquery --output=files`.
 pub(crate) fn profiler_jar(files: &str) -> Option<&str> {
     files.lines().map(str::trim).find(|line| {

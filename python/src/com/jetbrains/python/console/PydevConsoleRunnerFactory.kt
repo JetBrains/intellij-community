@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.console
 
-import com.intellij.python.sdk.backend.getSdkAPI
 import com.intellij.execution.target.TargetEnvironment
 import com.intellij.execution.target.value.TargetEnvironmentFunction
 import com.intellij.execution.target.value.constant
@@ -14,7 +13,6 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.util.PathMapper
@@ -44,7 +42,7 @@ import kotlin.io.path.exists
 open class PydevConsoleRunnerFactory : PyConsoleRunnerFactoryAsync() {
   @ApiStatus.Experimental
   protected sealed class ConsoleParameters(val project: Project,
-                                           val sdk: Sdk?,
+                                           val interpreter: PythonInterpreter?,
                                            @ApiStatus.ScheduledForRemoval
                                            @Deprecated("Use `ConstantConsoleParameters.workingDir`")
                                            open val workingDir: String?,
@@ -57,42 +55,35 @@ open class PydevConsoleRunnerFactory : PyConsoleRunnerFactoryAsync() {
 
   @ApiStatus.Experimental
   protected class ConstantConsoleParameters(project: Project,
-                                            sdk: Sdk?,
+                                            interpreter: PythonInterpreter?,
                                             @Suppress("OVERRIDE_DEPRECATION") override val workingDir: String?,
                                             envs: Map<String, String>,
                                             consoleType: PyConsoleType,
                                             settingsProvider: PyConsoleSettings,
                                             val setupFragment: Array<String>)
-    : ConsoleParameters(project, sdk, workingDir, envs, consoleType, settingsProvider)
+    : ConsoleParameters(project, interpreter, workingDir, envs, consoleType, settingsProvider)
 
   @ApiStatus.Experimental
   protected class TargetedConsoleParameters private constructor(project: Project,
-                                                                sdk: Sdk?,
+                                                                interpreter: PythonInterpreter?,
                                                                 workingDir: String?,
                                                                 val workingDirFunction: TargetEnvironmentFunction<String>?,
                                                                 envs: Map<String, String>,
                                                                 consoleType: PyConsoleType,
                                                                 settingsProvider: PyConsoleSettings,
                                                                 val setupScript: TargetEnvironmentFunction<String>)
-    : ConsoleParameters(project, sdk, workingDir, envs, consoleType, settingsProvider) {
-    constructor(project: Project, sdk: Sdk?, workingDirFunction: TargetEnvironmentFunction<String>?, envs: Map<String, String>,
-                consoleType: PyConsoleType, settingsProvider: PyConsoleSettings, setupScript: TargetEnvironmentFunction<String>)
-      : this(project, sdk, null, workingDirFunction, envs, consoleType, settingsProvider, setupScript)
-
-    @Suppress("DEPRECATION") // The console runner still takes an Sdk.
-    constructor(project: Project, interpreter: PythonInterpreter, workingDirFunction: TargetEnvironmentFunction<String>?,
+    : ConsoleParameters(project, interpreter, workingDir, envs, consoleType, settingsProvider) {
+    constructor(project: Project, interpreter: PythonInterpreter?, workingDirFunction: TargetEnvironmentFunction<String>?,
                 envs: Map<String, String>, consoleType: PyConsoleType, settingsProvider: PyConsoleSettings,
                 setupScript: TargetEnvironmentFunction<String>)
-      : this(project, interpreter.getSdkAPI(), null, workingDirFunction, envs, consoleType, settingsProvider, setupScript)
+      : this(project, interpreter, null, workingDirFunction, envs, consoleType, settingsProvider, setupScript)
   }
 
   protected open suspend fun createConsoleParametersAsync(moduleOrProject: ModuleOrProject): ConsoleParameters {
     val (interpreter, target) = findPythonSdkAndModule(moduleOrProject)
     val project = target.project
-    @Suppress("DEPRECATION") // The console runner still takes an Sdk.
-    val sdk = interpreter?.getSdkAPI()
     val settingsProvider = PyConsoleOptions.getInstance(project).pythonConsoleSettings
-    val pathMapper = interpreter?.createMapper(project, settingsProvider.mappingSettings) ?: PyRemotePathMapper()
+    val pathMapper = interpreter?.createMapper(settingsProvider.mappingSettings) ?: PyRemotePathMapper()
     val envs = settingsProvider.envs.toMutableMap()
     putIPythonEnvFlag(project, envs)
     // Both read the module's content and source roots, and this now runs on a background thread rather than on the
@@ -100,20 +91,20 @@ open class PydevConsoleRunnerFactory : PyConsoleRunnerFactoryAsync() {
     // whole creation stood for.
     val (workingDirFunction, setupScriptFunction) = readAction {
       val workingDir = getWorkingDirFunction(target, pathMapper, settingsProvider)
-      workingDir to createSetupScriptFunction(target, sdk, workingDir, pathMapper, settingsProvider)
+      workingDir to createSetupScriptFunction(target, interpreter, workingDir, pathMapper, settingsProvider)
     }
-    return TargetedConsoleParameters(project, sdk, workingDirFunction, envs, PyConsoleType.PYTHON, settingsProvider, setupScriptFunction)
+    return TargetedConsoleParameters(project, interpreter, workingDirFunction, envs, PyConsoleType.PYTHON, settingsProvider, setupScriptFunction)
       .also { it.module = target.moduleIfExists }
   }
 
   override suspend fun createConsoleRunnerAsync(project: Project, contextModule: Module?): PydevConsoleRunner {
     val module = PyConsoleCustomizer.EP_NAME.extensionList.firstNotNullOfOrNull { it.guessConsoleModule(project, contextModule) }
     return when (val consoleParameters = createConsoleParametersAsync(toModuleOrProject(project, module))) {
-      is ConstantConsoleParameters -> PydevConsoleRunnerImpl(project, consoleParameters.sdk, consoleParameters.consoleType,
+      is ConstantConsoleParameters -> PydevConsoleRunnerImpl(project, consoleParameters.interpreter, consoleParameters.consoleType,
                                                              consoleParameters.workingDir,
                                                              consoleParameters.envs, consoleParameters.settingsProvider,
                                                              *consoleParameters.setupFragment)
-      is TargetedConsoleParameters -> PydevConsoleRunnerImpl(project, consoleParameters.sdk, consoleParameters.consoleType,
+      is TargetedConsoleParameters -> PydevConsoleRunnerImpl(project, consoleParameters.interpreter, consoleParameters.consoleType,
                                                              consoleTabTitle(project, consoleParameters.module,
                                                                              consoleParameters.consoleType.title),
                                                              consoleParameters.workingDirFunction,
@@ -124,16 +115,16 @@ open class PydevConsoleRunnerFactory : PyConsoleRunnerFactoryAsync() {
 
   override suspend fun createConsoleRunnerWithFileAsync(project: Project, config: PythonRunConfiguration): PydevConsoleRunner {
     val consoleParameters = createConsoleParametersAsync(toModuleOrProject(project, config.module))
-    val sdk = config.sdk ?: consoleParameters.sdk
+    val interpreter = config.pythonInterpreter ?: consoleParameters.interpreter
     val consoleEnvs = mutableMapOf<String, String>()
     consoleEnvs.putAll(consoleParameters.envs)
     consoleEnvs.putAll(config.envs)
     return when (consoleParameters) {
-      is ConstantConsoleParameters -> PydevConsoleWithFileRunnerImpl(project, sdk, consoleParameters.consoleType, config.name,
+      is ConstantConsoleParameters -> PydevConsoleWithFileRunnerImpl(project, interpreter, consoleParameters.consoleType, config.name,
                                                                      config.workingDirectory ?: consoleParameters.workingDir, consoleEnvs,
                                                                      consoleParameters.settingsProvider, config,
                                                                      *consoleParameters.setupFragment)
-      is TargetedConsoleParameters -> PydevConsoleWithFileRunnerImpl(project, sdk, consoleParameters.consoleType, config.name,
+      is TargetedConsoleParameters -> PydevConsoleWithFileRunnerImpl(project, interpreter, consoleParameters.consoleType, config.name,
                                                                      config.workingDirectory?.let { targetPath(Path.of(it)) }
                                                                      ?: consoleParameters.workingDirFunction, consoleEnvs,
                                                                      consoleParameters.settingsProvider, config,
@@ -218,13 +209,13 @@ open class PydevConsoleRunnerFactory : PyConsoleRunnerFactoryAsync() {
     }
 
     private fun createSetupScriptFunction(moduleOrProject: ModuleOrProject,
-                                          sdk: Sdk?,
+                                          interpreter: PythonInterpreter?,
                                           workingDir: TargetEnvironmentFunction<String>?,
                                           pathMapper: PyRemotePathMapper?,
                                           settingsProvider: PyConsoleSettings): TargetEnvironmentFunction<String> {
       val customStartScript = makeStartWithEmptyLine(settingsProvider.myCustomStartScript)
       val (project, module) = moduleOrProject.destructured
-      val pythonPathFuns = collectPythonPath(project, module, sdk, pathMapper,
+      val pythonPathFuns = collectPythonPath(project, module, interpreter, pathMapper,
                                              settingsProvider.shouldAddContentRoots(), settingsProvider.shouldAddSourceRoots()
       ).toMutableSet()
       return constructPyPathAndWorkingDirCommand(pythonPathFuns, workingDir, customStartScript)
@@ -237,7 +228,7 @@ open class PydevConsoleRunnerFactory : PyConsoleRunnerFactoryAsync() {
       val paths = ArrayList<Function<TargetEnvironment, String>>()
       paths.add(getTargetEnvironmentValueForLocalPath(Path.of(projectRoot)))
 
-      val targetEnvironmentRequest = interpreter.targetEnvironmentRequest(project)
+      val targetEnvironmentRequest = interpreter.targetEnvironmentRequest()
       val communityHelpers = targetEnvironmentRequest.preparePyCharmHelpers().helpers.find { it.localPath.endsWith("helpers") }
       if (communityHelpers != null) {
         for (helper in listOf("pycharm", "pydev")) {

@@ -18,17 +18,17 @@ import kotlin.io.path.name
  */
 enum class KotlinBtaImplementation {
   /**
-   * The implementation of [KotlinJpsBuilderTestArtifacts.BUILD_TOOLS_IMPL_CURRENT_VERSION].
+   * The implementation of [KotlinJpsBuilderTestArtifacts.BUILD_TOOLS_IMPL_BOOTSTRAP_VERSION].
    *
    * The `kotlin.jps.tests.build.tools.impl.home` system property or the `KOTLIN_JPS_BTA_IMPL_HOME` environment variable
    * replaces it with a local directory. An example is the `btaImplHome` output of
    * `:prepare:ide-plugin-dependencies:kotlin-build-tools-impl-for-ide` in the Kotlin repository.
    */
-  CURRENT {
+  BOOTSTRAP {
     override fun findHome(): Path {
       val local = System.getProperty(LOCAL_HOME_PROPERTY)?.takeIf { it.isNotBlank() }
                   ?: System.getenv(LOCAL_HOME_ENVIRONMENT_VARIABLE)?.takeIf { it.isNotBlank() }
-      return local?.let { Path.of(it) } ?: KotlinJpsBuilderTestArtifacts.buildToolsImplHome(KotlinJpsBuilderTestArtifacts.BUILD_TOOLS_IMPL_CURRENT_VERSION)
+      return local?.let { Path.of(it) } ?: KotlinJpsBuilderTestArtifacts.buildToolsImplHome(KotlinJpsBuilderTestArtifacts.BUILD_TOOLS_IMPL_BOOTSTRAP_VERSION)
     }
   },
 
@@ -49,11 +49,11 @@ enum class KotlinBtaImplementation {
   }
 
   /**
-   * Whether the tests of this implementation repeat the tests of [CURRENT]. It is so when both versions are the same, so
+   * Whether the tests of this implementation repeat the tests of [BOOTSTRAP]. It is so when both versions are the same, so
    * the tests skip such an implementation.
    */
-  val duplicatesCurrent: Boolean
-    get() = this != CURRENT && version == CURRENT.version
+  val duplicatesBootstrap: Boolean
+    get() = this != BOOTSTRAP && version == BOOTSTRAP.version
 
   /** The compiler version that the implementation reports. */
   @OptIn(ExperimentalBuildToolsApi::class)

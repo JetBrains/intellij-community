@@ -235,7 +235,7 @@ private class RemoteRequirementNavTarget(
     val newJob = PyPackageCoroutine.launch(project) {
       val packageManager = file
         ?.let { project.findPythonInterpreter(it, mainForOrphans = false) }
-        ?.let { PythonPackageManager.forPythonInterpreter(project, it) }
+        ?.let { PythonPackageManager.forPythonInterpreter(it) }
       // Background progress so the user sees that the click did register; cancellable so a
       // long wait on init can be aborted from the status bar.
       withBackgroundProgress(project, PyBundle.message("python.requirements.resolve.package.page", packageName), cancellable = true) {

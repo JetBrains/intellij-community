@@ -11,6 +11,14 @@ import javax.swing.JTextField
 interface ClientFileChooserFactory {
   fun createFileChooser(descriptor: FileChooserDescriptor, project: Project?, parent: Component?): FileChooserDialog
   fun createPathChooser(descriptor: FileChooserDescriptor, project: Project?, parent: Component?): PathChooserDialog
+
+  /**
+   * Creates a file chooser that returns the chosen files as [java.nio.file.Path] values.
+   * Returns `null` when this factory has no such chooser.
+   * [FileChooserFactory.createNioFileChooser] then wraps [createFileChooser].
+   */
+  fun createNioFileChooser(descriptor: FileChooserDescriptor, project: Project?, parent: Component?): NioFileChooserDialog? = null
+
   fun createSaveFileDialog(descriptor: FileSaverDescriptor, project: Project?): FileSaverDialog
   fun createSaveFileDialog(descriptor: FileSaverDescriptor, parent: Component): FileSaverDialog
   fun createFileTextField(descriptor: FileChooserDescriptor, showHidden: Boolean, parent: Disposable?): FileTextField

@@ -6,6 +6,7 @@ targets:
   - ../src/com/intellij/platform/settings/v2/Locality.kt
   - ../shared/src/com/intellij/platform/settings/v2/impl/SettingsVaultImpl.kt
   - ../shared/src/com/intellij/platform/settings/v2/impl/providers/localityFiles.kt
+  - ../vcs/src/com/intellij/platform/settings/v2/vcs/SettingsIgnoredFileProvider.kt
   - ../backend/baseline/src/com/intellij/platform/settings/v2/impl/TeamEditingModeOptions.kt
 ---
 
@@ -38,8 +39,8 @@ A locality is defined by where its value travels.
 | Locality | What it holds | Goes to VCS | Goes to the other remote-dev side |
 | --- | --- | --- | --- |
 | team | The value that the team shares. | Yes, when its file is in a repository. | Yes, when mirroring is built. |
-| local | A personal value. It wins over the team value. | Must not. The `.gitignore` entry is an open question. | Yes, when mirroring is built. |
-| environmental | A value of one machine or one checkout, such as a tool path or a choice for this checkout. | Must not. The `.gitignore` entry is an open question. | Never. |
+| local | A personal value. It wins over the team value. | Must not. The platform declares its files as ignored for VCS. | Yes, when mirroring is built. |
+| environmental | A value of one machine or one checkout, such as a tool path or a choice for this checkout. | Must not. The platform declares its files as ignored for VCS. | Never. |
 
 - "Environmental" means bound to one machine or one checkout. It has nothing to do with environment variables. The
   settings engine reads no environment variable.
@@ -101,13 +102,27 @@ A locality is defined by where its value travels.
 - A map key has no locality of its own. A slot operation ignores it.
   See [ADR 0077](../adr/0077-a-map-key-has-no-locality.md).
 
+### VCS
+
+- The platform must declare the local and the environmental files of the project layer and of the file layer as
+  ignored for VCS. It must not declare a team file or an application file.
+  See [ADR 0174](../adr/0174-the-settings-engine-declares-its-local-and-environmental-files-as-ignored-and-the-vcs-applies-its-own-rules.md).
+  [@test] ../test/src/com/intellij/platform/settings/v2/SettingsIgnoredFilesTest.kt
+- The project layer must declare only the files in `<basePath>/.jetbrains/`. The file layer must declare its files in
+  every directory of the project.
+  [@test] ../test/src/com/intellij/platform/settings/v2/SettingsIgnoredFilesTest.kt
+- The platform must not write an ignore file itself. The VCS subsystem decides what to do with a declared file, so a
+  declaration does not promise an entry in `.gitignore`.
+  See [ADR 0174](../adr/0174-the-settings-engine-declares-its-local-and-environmental-files-as-ignored-and-the-vcs-applies-its-own-rules.md).
+- The declaration must come from an optional module that loads only with the VCS module. Without the VCS module, the
+  settings engine works and declares no file.
+  See [ADR 0174](../adr/0174-the-settings-engine-declares-its-local-and-environmental-files-as-ignored-and-the-vcs-applies-its-own-rules.md).
+
 ## Open Questions / Risks
 
 - A single write cannot choose its locality. So a "move this setting to the team" action cannot exist yet.
   See [ADR 0072](../adr/0072-a-delegated-job-comes-with-a-mechanism.md) and
   [ADR 0076](../adr/0076-settings-have-three-localities-a-write-goes-to-local-by-default-and-team-editing-is-a-per-machine-mode.md).
-- The platform must add the local and environmental files to `.gitignore`, so only the team file goes to VCS.
-  It does not do it yet. See [ADR 0075](../adr/0075-each-locality-has-its-own-file.md).
 - Settings Sync is to sync the local layer, but the application layer has no local locality. So it is open what Settings
   Sync syncs at the application level. See
   [ADR 0149](../adr/0149-the-application-layer-has-no-local-locality.md).

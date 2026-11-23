@@ -10,6 +10,7 @@ import com.intellij.openapi.fileTypes.FileTypeEvent
 import com.intellij.openapi.fileTypes.FileTypeListener
 import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.progress.util.ProgressIndicatorUtils
 import com.intellij.openapi.project.DumbModeTask
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.DumbServiceImpl
@@ -98,7 +99,10 @@ class FileBasedIndexTumbler(private val reason: @NonNls String) {
 
               val dumbService = DumbService.getInstance(project)
               dumbService.cancelAllTasksAndWait()
-              WaitForSemaphoreInDumbModeTask(dumbModeSemaphore, reason).queue(project)
+              val task = WaitForSemaphoreInDumbModeTask(dumbModeSemaphore, reason)
+              // Register before the queue: the synchronous test mode runs and disposes the task inside `queue`.
+              Disposer.register(project, task)
+              task.queue(project)
             }
           }
 
@@ -210,6 +214,12 @@ class FileBasedIndexTumbler(private val reason: @NonNls String) {
   companion object {
     private val LOG = logger<FileBasedIndexTumbler>()
 
+    /**
+     * Keeps the project dumb while the index is off.
+     * The task ends when [turnOn] releases the semaphore, when the dumb queue cancels it, or when the project disposes it.
+     * The project disposes it when the module of the tumbler unloads, because the unload disposes the children of the project
+     * whose class comes from the unloaded module. The `turnOn` of that unload never runs: the unload drops the listener first.
+     */
     private class WaitForSemaphoreInDumbModeTask(val semaphore: Semaphore,
                                                  val reason: String) : DumbModeTask() {
       override fun performInDumbMode(indicator: ProgressIndicator) {
@@ -217,7 +227,7 @@ class FileBasedIndexTumbler(private val reason: @NonNls String) {
           return // TODO: this will be a deadlock otherwise (IJPL-578)
         }
         indicator.text = IndexingBundle.message("indexes.reloading")
-        semaphore.waitFor()
+        ProgressIndicatorUtils.awaitWithCheckCanceled(semaphore, indicator)
       }
 
       override fun toString(): String {

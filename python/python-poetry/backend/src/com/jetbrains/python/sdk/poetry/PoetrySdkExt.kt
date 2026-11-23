@@ -3,7 +3,7 @@ package com.jetbrains.python.sdk.poetry
 
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.python.sdk.backend.PythonInterpreter
-import com.intellij.python.sdk.backend.getSdkAPI
+import com.intellij.python.sdk.backend.flavor
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 import com.jetbrains.python.sdk.pySdkAdditionalData
 import org.jetbrains.annotations.ApiStatus
@@ -16,4 +16,4 @@ val Sdk.isPoetry: Boolean
 /** Whether this interpreter is a Poetry environment. */
 @get:ApiStatus.Internal
 val PythonInterpreter.isPoetry: Boolean
-  get() = getSdkAPI().isPoetry
+  get() = flavor == PyPoetrySdkFlavor

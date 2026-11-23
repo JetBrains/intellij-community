@@ -22,8 +22,8 @@ internal class SyncProjectQuickFix : LocalQuickFix {
     val file = element.containingFile?.originalFile?.virtualFile ?: return
     PyPackageCoroutine.launch(project) {
       val interpreter = project.findPythonInterpreter(file, mainForOrphans = false) ?: return@launch
-      val packageManager = PythonPackageManager.forPythonInterpreter(project, interpreter)
-      val managerUI = PythonPackageManagerUI.forPythonInterpreter(project, interpreter)
+      val packageManager = PythonPackageManager.forPythonInterpreter(interpreter)
+      val managerUI = PythonPackageManagerUI.forPythonInterpreter(interpreter)
       managerUI.executeCommand(PyBundle.message("python.sdk.sync.project.text")) {
         withContext(Dispatchers.Default) {
           FileDocumentManager.getInstance().saveAllDocuments()

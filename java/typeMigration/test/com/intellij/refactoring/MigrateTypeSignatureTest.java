@@ -1,6 +1,8 @@
 package com.intellij.refactoring;
 
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiAnonymousClass;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
@@ -9,514 +11,695 @@ import com.intellij.psi.PsiType;
 import com.intellij.psi.PsiTypes;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.refactoring.TypeMigrationTestUtil.RulesProvider;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.jetbrains.annotations.NotNull;
+import org.junit.jupiter.api.Test;
 
-public class MigrateTypeSignatureTest extends TypeMigrationTestBase {
-  @Override
-  protected String getTestDataPath() {
-    return super.getTestDataPath() + "/refactoring/migrateTypeSignature/";
-  }
+import static com.intellij.refactoring.LightMultiFileFixtureKt.lightMultiFileFixture;
+import static com.intellij.refactoring.TypeMigrationTestUtil.doTestFieldType;
+import static com.intellij.refactoring.TypeMigrationTestUtil.doTestFirstParamType;
+import static com.intellij.refactoring.TypeMigrationTestUtil.doTestMethodType;
+import static com.intellij.refactoring.TypeMigrationTestUtil.start;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
+@TestApplication
+public class MigrateTypeSignatureTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(LightJavaCodeInsightFixtureTestCase.JAVA_1_6);
+  private final TestFixture<LightMultiFileFixture> multiFile =
+    lightMultiFileFixture(projectFixture, TypeMigrationTestUtil.getTestDataPath() + "/refactoring/migrateTypeSignature/");
+
+  @Test
   public void testExprAccess2Lvalue() {
-    doTestFieldType("myForAccess", "Expr",
-                    getElementFactory().createTypeFromText("ClassParent", null));
+    LightJavaCodeInsightTestFixture myFixture = multiFile.get().getFixture();
+    doTestFieldType(multiFile.get(), "myForAccess", "Expr",
+                    ReadAction.computeBlocking(() -> JavaPsiFacade.getElementFactory(myFixture.getProject()).createTypeFromText("ClassParent", null)));
   }
 
+  @Test
   public void testExprAccess2Rvalue() {
-    doTestFieldType("myField", "Expr",
-                    getElementFactory().createTypeFromText("ClassGrandChild", null));
+    LightJavaCodeInsightTestFixture myFixture = multiFile.get().getFixture();
+    doTestFieldType(multiFile.get(), "myField", "Expr",
+                    ReadAction.computeBlocking(() -> JavaPsiFacade.getElementFactory(myFixture.getProject()).createTypeFromText("ClassGrandChild", null)));
   }
 
+  @Test
   public void testExprAccessParent2Lvalue() {
-    doTestFieldType("myForSuperAccess", "Ession",
-                    getElementFactory().createTypeFromText("ClassParent", null));
+    LightJavaCodeInsightTestFixture myFixture = multiFile.get().getFixture();
+    doTestFieldType(multiFile.get(), "myForSuperAccess", "Ession",
+                    ReadAction.computeBlocking(() -> JavaPsiFacade.getElementFactory(myFixture.getProject()).createTypeFromText("ClassParent", null)));
   }
 
+  @Test
   public void testExprAccessParent2Rvalue() {
-    doTestFieldType("myField", "Expr",
-                    getElementFactory().createTypeFromText("ClassGrandChild", null));
+    LightJavaCodeInsightTestFixture myFixture = multiFile.get().getFixture();
+    doTestFieldType(multiFile.get(), "myField", "Expr",
+                    ReadAction.computeBlocking(() -> JavaPsiFacade.getElementFactory(myFixture.getProject()).createTypeFromText("ClassGrandChild", null)));
   }
 
+  @Test
   public void testExprArrayAccessNegative() {
-    doTestFirstParamType("meth", "Expr", PsiTypes.doubleType());
+    doTestFirstParamType(multiFile.get(), "meth", "Expr", PsiTypes.doubleType());
   }
 
+  @Test
   public void testExprArrayAccessPositive() {
-    doTestFirstParamType("meth", "Expr", PsiTypes.charType());
+    doTestFirstParamType(multiFile.get(), "meth", "Expr", PsiTypes.charType());
   }
 
+  @Test
   public void testExprCalcBooleanBoolean() {
-    doTestFirstParamType("meth", "Expr", PsiTypes.intType());
+    doTestFirstParamType(multiFile.get(), "meth", "Expr", PsiTypes.intType());
   }
 
+  @Test
   public void testExprCalcBooleanNumeric() {
-    doTestFirstParamType("meth", "Expr",
-                         getElementFactory().createTypeFromText(CommonClassNames.JAVA_LANG_OBJECT, null));
+    LightJavaCodeInsightTestFixture myFixture = multiFile.get().getFixture();
+    doTestFirstParamType(multiFile.get(), "meth", "Expr",
+                         ReadAction.computeBlocking(() -> JavaPsiFacade.getElementFactory(myFixture.getProject()).createTypeFromText(CommonClassNames.JAVA_LANG_OBJECT, null)));
   }
 
+  @Test
   public void testExprCalcBooleanReference() {
-    doTestFirstParamType("meth", "Expr",
+    doTestFirstParamType(multiFile.get(), "meth", "Expr",
                          PsiTypes.doubleType());
   }
 
+  @Test
   public void testExprCalcNumeric2Boolean() {
-    doTestFirstParamType("meth", "Expr", PsiTypes.booleanType());
+    doTestFirstParamType(multiFile.get(), "meth", "Expr", PsiTypes.booleanType());
   }
 
+  @Test
   public void testExprCalcNumeric2Floating() {
-    doTestFirstParamType("meth", "Expr", PsiTypes.floatType());
+    doTestFirstParamType(multiFile.get(), "meth", "Expr", PsiTypes.floatType());
   }
 
+  @Test
   public void testExprCalcNumeric2Int() {
-    doTestFirstParamType("meth", "Expr", PsiTypes.longType());
+    doTestFirstParamType(multiFile.get(), "meth", "Expr", PsiTypes.longType());
   }
 
+  @Test
   public void testExprCalcNumeric2String() {
-    doTestFirstParamType("meth", "Expr",
-                         getElementFactory().createTypeFromText("java.lang.String", null));
+    LightJavaCodeInsightTestFixture myFixture = multiFile.get().getFixture();
+    doTestFirstParamType(multiFile.get(), "meth", "Expr",
+                         ReadAction.computeBlocking(() -> JavaPsiFacade.getElementFactory(myFixture.getProject()).createTypeFromText("java.lang.String", null)));
   }
 
+  @Test
   public void testExprCast2LvalueNeg() {
-    doTestFirstParamType("meth", "Expr",
-                         getElementFactory().createTypeFromText("java.lang.String", null));
+    LightJavaCodeInsightTestFixture myFixture = multiFile.get().getFixture();
+    doTestFirstParamType(multiFile.get(), "meth", "Expr",
+                         ReadAction.computeBlocking(() -> JavaPsiFacade.getElementFactory(myFixture.getProject()).createTypeFromText("java.lang.String", null)));
   }
 
+  @Test
   public void testExprCast2LvaluePos() {
-    doTestFirstParamType("meth", "Expr", PsiTypes.intType());
+    doTestFirstParamType(multiFile.get(), "meth", "Expr", PsiTypes.intType());
   }
 
+  @Test
   public void testExprConcatNumeric2Reference() {
-    doTestFirstParamType("meth", "Expr",
-                         getElementFactory().createTypeFromText(CommonClassNames.JAVA_LANG_OBJECT, null));
+    LightJavaCodeInsightTestFixture myFixture = multiFile.get().getFixture();
+    doTestFirstParamType(multiFile.get(), "meth", "Expr",
+                         ReadAction.computeBlocking(() -> JavaPsiFacade.getElementFactory(myFixture.getProject()).createTypeFromText(CommonClassNames.JAVA_LANG_OBJECT, null)));
   }
 
+  @Test
   public void testExprConcatNumeric2String() {
-    doTestFirstParamType("meth", "Expr",
-                         getElementFactory().createTypeFromText("java.lang.String", null));
+    LightJavaCodeInsightTestFixture myFixture = multiFile.get().getFixture();
+    doTestFirstParamType(multiFile.get(), "meth", "Expr",
+                         ReadAction.computeBlocking(() -> JavaPsiFacade.getElementFactory(myFixture.getProject()).createTypeFromText("java.lang.String", null)));
   }
 
+  @Test
   public void testExprConcatString2Numeric() {
-    doTestFirstParamType("meth", "Expr",
+    doTestFirstParamType(multiFile.get(), "meth", "Expr",
                          PsiTypes.intType());
   }
 
+  @Test
   public void testExprConcatString2Reference() {
-    doTestFirstParamType("meth", "Expr",
-                         getElementFactory().createTypeFromText(CommonClassNames.JAVA_LANG_OBJECT, null));
+    LightJavaCodeInsightTestFixture myFixture = multiFile.get().getFixture();
+    doTestFirstParamType(multiFile.get(), "meth", "Expr",
+                         ReadAction.computeBlocking(() -> JavaPsiFacade.getElementFactory(myFixture.getProject()).createTypeFromText(CommonClassNames.JAVA_LANG_OBJECT, null)));
   }
 
+  @Test
   public void testExprInstanceofNeg() {
-    doTestFirstParamType("meth", "Expr",
-                         getElementFactory().createTypeFromText(CommonClassNames.JAVA_UTIL_LIST, null));
+    LightJavaCodeInsightTestFixture myFixture = multiFile.get().getFixture();
+    doTestFirstParamType(multiFile.get(), "meth", "Expr",
+                         ReadAction.computeBlocking(() -> JavaPsiFacade.getElementFactory(myFixture.getProject()).createTypeFromText(CommonClassNames.JAVA_UTIL_LIST, null)));
   }
 
+  @Test
   public void testExprInstanceofPos() {
-    doTestFirstParamType("meth", "Expr",
-                         getElementFactory().createTypeFromText("java.util.AbstractMap", null));
+    LightJavaCodeInsightTestFixture myFixture = multiFile.get().getFixture();
+    doTestFirstParamType(multiFile.get(), "meth", "Expr",
+                         ReadAction.computeBlocking(() -> JavaPsiFacade.getElementFactory(myFixture.getProject()).createTypeFromText("java.util.AbstractMap", null)));
   }
 
+  @Test
   public void testExprLiteralBoolean() {
-    doTestFieldType("myField", "Expr",
+    doTestFieldType(multiFile.get(), "myField", "Expr",
                     PsiTypes.booleanType());
   }
 
+  @Test
   public void testExprLiteralByte() {
-    doTestFieldType("myField", "Expr",
+    doTestFieldType(multiFile.get(), "myField", "Expr",
                     PsiTypes.byteType());
   }
 
+  @Test
   public void testExprLiteralChar() {
-    doTestFieldType("myField", "Expr",
+    doTestFieldType(multiFile.get(), "myField", "Expr",
                     PsiTypes.charType());
   }
 
+  @Test
   public void testExprLiteralClassExtends() {
-    doTestFieldType("myField", "Expr",
-                    getElementFactory().createTypeFromText("java.lang.Class<? extends java.util.Collection[]>", null));
+    LightJavaCodeInsightTestFixture myFixture = multiFile.get().getFixture();
+    doTestFieldType(multiFile.get(), "myField", "Expr",
+                    ReadAction.computeBlocking(() -> JavaPsiFacade.getElementFactory(myFixture.getProject()).createTypeFromText("java.lang.Class<? extends java.util.Collection[]>", null)));
   }
 
+  @Test
   public void testExprLiteralClassPrimitive() {
-    doTestFieldType("myField", "Expr",
-                    getElementFactory().createTypeFromText("java.lang.Class<Integer>", null));
+    LightJavaCodeInsightTestFixture myFixture = multiFile.get().getFixture();
+    doTestFieldType(multiFile.get(), "myField", "Expr",
+                    ReadAction.computeBlocking(() -> JavaPsiFacade.getElementFactory(myFixture.getProject()).createTypeFromText("java.lang.Class<Integer>", null)));
   }
 
+  @Test
   public void testExprLiteralClassPrimitiveArray() {
-    doTestFieldType("myField", "Expr",
-                    getElementFactory().createTypeFromText("java.lang.Class<int[]>", null));
+    LightJavaCodeInsightTestFixture myFixture = multiFile.get().getFixture();
+    doTestFieldType(multiFile.get(), "myField", "Expr",
+                    ReadAction.computeBlocking(() -> JavaPsiFacade.getElementFactory(myFixture.getProject()).createTypeFromText("java.lang.Class<int[]>", null)));
   }
 
+  @Test
   public void testExprLiteralClassRaw() {
-    doTestFieldType("myField", "Expr",
-                    getElementFactory().createTypeFromText("java.lang.Class", null));
+    LightJavaCodeInsightTestFixture myFixture = multiFile.get().getFixture();
+    doTestFieldType(multiFile.get(), "myField", "Expr",
+                    ReadAction.computeBlocking(() -> JavaPsiFacade.getElementFactory(myFixture.getProject()).createTypeFromText("java.lang.Class", null)));
   }
 
+  @Test
   public void testExprLiteralClassReference() {
-    doTestFieldType("myField", "Expr",
-                    getElementFactory().createTypeFromText("java.lang.Class<java.util.Set>", null));
+    LightJavaCodeInsightTestFixture myFixture = multiFile.get().getFixture();
+    doTestFieldType(multiFile.get(), "myField", "Expr",
+                    ReadAction.computeBlocking(() -> JavaPsiFacade.getElementFactory(myFixture.getProject()).createTypeFromText("java.lang.Class<java.util.Set>", null)));
   }
 
+  @Test
   public void testExprLiteralClassReferenceArray() {
-    doTestFieldType("myField", "Expr",
-                    getElementFactory().createTypeFromText("java.lang.Class<java.util.Set[]>", null));
+    LightJavaCodeInsightTestFixture myFixture = multiFile.get().getFixture();
+    doTestFieldType(multiFile.get(), "myField", "Expr",
+                    ReadAction.computeBlocking(() -> JavaPsiFacade.getElementFactory(myFixture.getProject()).createTypeFromText("java.lang.Class<java.util.Set[]>", null)));
   }
 
+  @Test
   public void testExprLiteralClassSuper() {
-    doTestFieldType("myField", "Expr",
-                    getElementFactory().createTypeFromText("java.lang.Class<? super java.util.AbstractSet[]>", null));
+    LightJavaCodeInsightTestFixture myFixture = multiFile.get().getFixture();
+    doTestFieldType(multiFile.get(), "myField", "Expr",
+                    ReadAction.computeBlocking(() -> JavaPsiFacade.getElementFactory(myFixture.getProject()).createTypeFromText("java.lang.Class<? super java.util.AbstractSet[]>", null)));
   }
 
+  @Test
   public void testExprLiteralDouble() {
-    doTestFieldType("myField", "Expr",
+    doTestFieldType(multiFile.get(), "myField", "Expr",
                     PsiTypes.doubleType());
   }
 
+  @Test
   public void testExprLiteralFloat() {
-    doTestFieldType("myField", "Expr",
+    doTestFieldType(multiFile.get(), "myField", "Expr",
                     PsiTypes.floatType());
   }
 
+  @Test
   public void testExprLiteralInt() {
-    doTestFieldType("myField", "Expr",
+    doTestFieldType(multiFile.get(), "myField", "Expr",
                     PsiTypes.intType());
   }
 
+  @Test
   public void testExprLiteralLong() {
-    doTestFieldType("myField", "Expr",
+    doTestFieldType(multiFile.get(), "myField", "Expr",
                     PsiTypes.longType());
   }
 
+  @Test
   public void testExprLiteralShort() {
-    doTestFieldType("myField", "Expr",
+    doTestFieldType(multiFile.get(), "myField", "Expr",
                     PsiTypes.shortType());
   }
 
+  @Test
   public void testExprLiteralString() {
-    doTestFieldType("myField", "Expr",
-                    getElementFactory().createTypeFromText("java.lang.String", null));
+    LightJavaCodeInsightTestFixture myFixture = multiFile.get().getFixture();
+    doTestFieldType(multiFile.get(), "myField", "Expr",
+                    ReadAction.computeBlocking(() -> JavaPsiFacade.getElementFactory(myFixture.getProject()).createTypeFromText("java.lang.String", null)));
   }
 
+  @Test
   public void testExprNewArrayArray2Lvalue() {
-    doTestFirstParamType("meth", "Expr",
-                         getElementFactory().createTypeFromText("FaceParent", null).createArrayType());
+    LightJavaCodeInsightTestFixture myFixture = multiFile.get().getFixture();
+    doTestFirstParamType(multiFile.get(), "meth", "Expr",
+                         ReadAction.computeBlocking(() -> JavaPsiFacade.getElementFactory(myFixture.getProject()).createTypeFromText("FaceParent", null).createArrayType()));
   }
 
+  @Test
   public void testExprNewArrayArray2Rvalue() {
-    doTestFieldType("myField", "Expr",
-                    getElementFactory().createTypeFromText("ClassParent", null).createArrayType().createArrayType().createArrayType());
+    LightJavaCodeInsightTestFixture myFixture = multiFile.get().getFixture();
+    doTestFieldType(multiFile.get(), "myField", "Expr",
+                    ReadAction.computeBlocking(() -> JavaPsiFacade.getElementFactory(myFixture.getProject()).createTypeFromText("ClassParent", null).createArrayType().createArrayType().createArrayType()));
   }
 
+  @Test
   public void testExprNewArrayGen2Rvalue() {
-    doTestFieldType("myField", "Expr",
-                    getElementFactory().createTypeFromText("java.util.Set<java.lang.Integer>", null).createArrayType());
+    LightJavaCodeInsightTestFixture myFixture = multiFile.get().getFixture();
+    doTestFieldType(multiFile.get(), "myField", "Expr",
+                    ReadAction.computeBlocking(() -> JavaPsiFacade.getElementFactory(myFixture.getProject()).createTypeFromText("java.util.Set<java.lang.Integer>", null).createArrayType()));
   }
 
+  @Test
   public void testExprNewArrayPrimitive2Lvalue() {
-    doTestFirstParamType("meth", "Expr", PsiTypes.intType());
+    doTestFirstParamType(multiFile.get(), "meth", "Expr", PsiTypes.intType());
   }
 
+  @Test
   public void testExprNewArrayPrimitive2Rvalue() {
-    doTestFieldType("myField", "Expr",
+    doTestFieldType(multiFile.get(), "myField", "Expr",
                     PsiTypes.intType().createArrayType().createArrayType());
   }
 
+  @Test
   public void testExprNewArrayReftype2Lvalue() {
-    doTestFirstParamType("meth", "Expr",
-                         getElementFactory().createTypeFromText("FaceParent", null));
+    LightJavaCodeInsightTestFixture myFixture = multiFile.get().getFixture();
+    doTestFirstParamType(multiFile.get(), "meth", "Expr",
+                         ReadAction.computeBlocking(() -> JavaPsiFacade.getElementFactory(myFixture.getProject()).createTypeFromText("FaceParent", null)));
   }
 
+  @Test
   public void testExprNewArrayReftype2Rvalue() {
-    doTestFieldType("myField", "Expr",
-                    getElementFactory().createTypeFromText("ClassParent", null).createArrayType().createArrayType());
+    LightJavaCodeInsightTestFixture myFixture = multiFile.get().getFixture();
+    doTestFieldType(multiFile.get(), "myField", "Expr",
+                    ReadAction.computeBlocking(() -> JavaPsiFacade.getElementFactory(myFixture.getProject()).createTypeFromText("ClassParent", null).createArrayType().createArrayType()));
   }
 
+  @Test
   public void testExprNewGen() {
-    doTestFieldType("myField", "Expr",
-                    getElementFactory().createTypeFromText("java.util.Set<Subject>", null));
+    LightJavaCodeInsightTestFixture myFixture = multiFile.get().getFixture();
+    doTestFieldType(multiFile.get(), "myField", "Expr",
+                    ReadAction.computeBlocking(() -> JavaPsiFacade.getElementFactory(myFixture.getProject()).createTypeFromText("java.util.Set<Subject>", null)));
   }
 
+  @Test
   public void testExprNewGenExtends() {
-    doTestFieldType("myField", "Expr",
-                    getElementFactory().createTypeFromText("java.util.Set<? extends Subject>", null));
+    LightJavaCodeInsightTestFixture myFixture = multiFile.get().getFixture();
+    doTestFieldType(multiFile.get(), "myField", "Expr",
+                    ReadAction.computeBlocking(() -> JavaPsiFacade.getElementFactory(myFixture.getProject()).createTypeFromText("java.util.Set<? extends Subject>", null)));
   }
 
+  @Test
   public void testExprNewGenSuper() {
-    doTestFieldType("myField", "Expr",
-                    getElementFactory().createTypeFromText("java.util.Set<? super Subject>", null));
+    LightJavaCodeInsightTestFixture myFixture = multiFile.get().getFixture();
+    doTestFieldType(multiFile.get(), "myField", "Expr",
+                    ReadAction.computeBlocking(() -> JavaPsiFacade.getElementFactory(myFixture.getProject()).createTypeFromText("java.util.Set<? super Subject>", null)));
   }
 
+  @Test
   public void testExprNewReference() {
-    doTestFieldType("myField", "Expr",
-                    getElementFactory().createTypeFromText("Expr.Subject", null));
+    LightJavaCodeInsightTestFixture myFixture = multiFile.get().getFixture();
+    doTestFieldType(multiFile.get(), "myField", "Expr",
+                    ReadAction.computeBlocking(() -> JavaPsiFacade.getElementFactory(myFixture.getProject()).createTypeFromText("Expr.Subject", null)));
   }
 
+  @Test
   public void testExprReturn2Lvalue() {
-    doTestFirstParamType("meth", "Expr",
-                         getElementFactory().createTypeFromText("java.lang.String", null));
+    LightJavaCodeInsightTestFixture myFixture = multiFile.get().getFixture();
+    doTestFirstParamType(multiFile.get(), "meth", "Expr",
+                         ReadAction.computeBlocking(() -> JavaPsiFacade.getElementFactory(myFixture.getProject()).createTypeFromText("java.lang.String", null)));
   }
 
+  @Test
   public void testExprReturn2Rvalue() {
-    doTestMethodType("meth", "Expr",
-                     getElementFactory().createTypeFromText("java.lang.String", null));
+    LightJavaCodeInsightTestFixture myFixture = multiFile.get().getFixture();
+    doTestMethodType(multiFile.get(), "meth", "Expr",
+                     ReadAction.computeBlocking(() -> JavaPsiFacade.getElementFactory(myFixture.getProject()).createTypeFromText("java.lang.String", null)));
   }
 
+  @Test
   public void testExprTernary() {
-    doTestFirstParamType("meth", "Expr",
-                         getElementFactory().createTypeFromText("java.lang.String", null));
+    LightJavaCodeInsightTestFixture myFixture = multiFile.get().getFixture();
+    doTestFirstParamType(multiFile.get(), "meth", "Expr",
+                         ReadAction.computeBlocking(() -> JavaPsiFacade.getElementFactory(myFixture.getProject()).createTypeFromText("java.lang.String", null)));
   }
 
+  @Test
   public void testOverridingDown() {
-    doTestMethodType("getInt", "Parent", PsiTypes.byteType());
+    doTestMethodType(multiFile.get(), "getInt", "Parent", PsiTypes.byteType());
   }
 
+  @Test
   public void testOverridingUp() {
-    doTestMethodType("getInt", "Child", PsiTypes.byteType());
+    doTestMethodType(multiFile.get(), "getInt", "Child", PsiTypes.byteType());
   }
 
+  @Test
   public void testSpecJavadoc() {
-    JavaCodeStyleSettings settings = JavaCodeStyleSettings.getInstance(getProject());
+    LightJavaCodeInsightTestFixture myFixture = multiFile.get().getFixture();
+    JavaCodeStyleSettings settings = JavaCodeStyleSettings.getInstance(myFixture.getProject());
     settings.CLASS_NAMES_IN_JAVADOC = JavaCodeStyleSettings.FULLY_QUALIFY_NAMES_ALWAYS;
-    doTestFirstParamType("meth", "Spec",
-                         getElementFactory().createTypeFromText(CommonClassNames.JAVA_UTIL_SET, null));
+    doTestFirstParamType(multiFile.get(), "meth", "Spec",
+                         ReadAction.computeBlocking(() -> JavaPsiFacade.getElementFactory(myFixture.getProject()).createTypeFromText(CommonClassNames.JAVA_UTIL_SET, null)));
   }
 
+  @Test
   public void testSpecNotUsed() {
-    doTestFieldType("myField", "Spec", PsiTypes.booleanType());
+    doTestFieldType(multiFile.get(), "myField", "Spec", PsiTypes.booleanType());
   }
 
+  @Test
   public void testTypeArrayReftype2Lvalue() {
-    doTestFirstParamType("meth", "Type",
-                         getElementFactory().createTypeFromText("Subject", null).createArrayType());
+    LightJavaCodeInsightTestFixture myFixture = multiFile.get().getFixture();
+    doTestFirstParamType(multiFile.get(), "meth", "Type",
+                         ReadAction.computeBlocking(() -> JavaPsiFacade.getElementFactory(myFixture.getProject()).createTypeFromText("Subject", null).createArrayType()));
   }
 
+  @Test
   public void testTypeArrayReftype2Rvalue() {
-    doTestFieldType("myField", "Type",
-                    getElementFactory().createTypeFromText("Subject", null).createArrayType().createArrayType());
+    LightJavaCodeInsightTestFixture myFixture = multiFile.get().getFixture();
+    doTestFieldType(multiFile.get(), "myField", "Type",
+                    ReadAction.computeBlocking(() -> JavaPsiFacade.getElementFactory(myFixture.getProject()).createTypeFromText("Subject", null).createArrayType().createArrayType()));
   }
 
+  @Test
   public void testTypeArrayRoots2Lvalue() {
-    doTestFirstParamType("meth", "Type",
-                         getElementFactory().createTypeFromText("Holder", null).createArrayType());
+    LightJavaCodeInsightTestFixture myFixture = multiFile.get().getFixture();
+    doTestFirstParamType(multiFile.get(), "meth", "Type",
+                         ReadAction.computeBlocking(() -> JavaPsiFacade.getElementFactory(myFixture.getProject()).createTypeFromText("Holder", null).createArrayType()));
   }
 
+  @Test
   public void testTypeArrayVararg2Lvalue() {
-    doTestFirstParamType("meth", "Type",
-                         new PsiEllipsisType(getElementFactory().createTypeFromText("Subject", null)));
+    LightJavaCodeInsightTestFixture myFixture = multiFile.get().getFixture();
+    doTestFirstParamType(multiFile.get(), "meth", "Type",
+                         new PsiEllipsisType(ReadAction.computeBlocking(() -> JavaPsiFacade.getElementFactory(myFixture.getProject()).createTypeFromText("Subject", null))));
   }
 
+  @Test
   public void testTypeArrayVararg2RvalueNeg() {
-    doTestFieldType("myField", "Type",
-                    getElementFactory().createTypeFromText("Descendant", null).createArrayType());
+    LightJavaCodeInsightTestFixture myFixture = multiFile.get().getFixture();
+    doTestFieldType(multiFile.get(), "myField", "Type",
+                    ReadAction.computeBlocking(() -> JavaPsiFacade.getElementFactory(myFixture.getProject()).createTypeFromText("Descendant", null).createArrayType()));
   }
 
+  @Test
   public void testTypeArrayVararg2RvaluePos() {
-    doTestFieldType("myField", "Type",
-                    getElementFactory().createTypeFromText("Subject", null).createArrayType());
+    LightJavaCodeInsightTestFixture myFixture = multiFile.get().getFixture();
+    doTestFieldType(multiFile.get(), "myField", "Type",
+                    ReadAction.computeBlocking(() -> JavaPsiFacade.getElementFactory(myFixture.getProject()).createTypeFromText("Subject", null).createArrayType()));
   }
 
+  @Test
   public void testTypeAutoboxBoolean2Lvalue() {
-    doTestFirstParamType("meth", "Type",
-                         getElementFactory().createTypeFromText("java.lang.Boolean", null));
+    LightJavaCodeInsightTestFixture myFixture = multiFile.get().getFixture();
+    doTestFirstParamType(multiFile.get(), "meth", "Type",
+                         ReadAction.computeBlocking(() -> JavaPsiFacade.getElementFactory(myFixture.getProject()).createTypeFromText("java.lang.Boolean", null)));
   }
 
+  @Test
   public void testTypeAutoboxBoolean2Rvalue() {
-    doTestFieldType("myField", "Type",
+    doTestFieldType(multiFile.get(), "myField", "Type",
                     PsiTypes.booleanType());
   }
 
+  @Test
   public void testTypeAutoboxByte2Lvalue() {
-    doTestFirstParamType("meth", "Type",
-                         getElementFactory().createTypeFromText("java.lang.Byte", null));
+    LightJavaCodeInsightTestFixture myFixture = multiFile.get().getFixture();
+    doTestFirstParamType(multiFile.get(), "meth", "Type",
+                         ReadAction.computeBlocking(() -> JavaPsiFacade.getElementFactory(myFixture.getProject()).createTypeFromText("java.lang.Byte", null)));
   }
 
+  @Test
   public void testTypeAutoboxByte2Rvalue() {
-    doTestFieldType("myField", "Type",
+    doTestFieldType(multiFile.get(), "myField", "Type",
                     PsiTypes.byteType());
   }
 
+  @Test
   public void testTypeAutoboxChar2Lvalue() {
-    doTestFirstParamType("meth", "Type",
-                         getElementFactory().createTypeFromText("java.lang.Character", null));
+    LightJavaCodeInsightTestFixture myFixture = multiFile.get().getFixture();
+    doTestFirstParamType(multiFile.get(), "meth", "Type",
+                         ReadAction.computeBlocking(() -> JavaPsiFacade.getElementFactory(myFixture.getProject()).createTypeFromText("java.lang.Character", null)));
   }
 
+  @Test
   public void testTypeAutoboxChar2Rvalue() {
-    doTestFieldType("myField", "Type",
+    doTestFieldType(multiFile.get(), "myField", "Type",
                     PsiTypes.charType());
   }
 
+  @Test
   public void testTypeAutoboxDouble2Lvalue() {
-    doTestFirstParamType("meth", "Type",
-                         getElementFactory().createTypeFromText("java.lang.Double", null));
+    LightJavaCodeInsightTestFixture myFixture = multiFile.get().getFixture();
+    doTestFirstParamType(multiFile.get(), "meth", "Type",
+                         ReadAction.computeBlocking(() -> JavaPsiFacade.getElementFactory(myFixture.getProject()).createTypeFromText("java.lang.Double", null)));
   }
 
+  @Test
   public void testTypeAutoboxDouble2Rvalue() {
-    doTestFieldType("myField", "Type",
+    doTestFieldType(multiFile.get(), "myField", "Type",
                     PsiTypes.doubleType());
   }
 
+  @Test
   public void testTypeAutoboxFloat2Lvalue() {
-    doTestFirstParamType("meth", "Type",
-                         getElementFactory().createTypeFromText("java.lang.Float", null));
+    LightJavaCodeInsightTestFixture myFixture = multiFile.get().getFixture();
+    doTestFirstParamType(multiFile.get(), "meth", "Type",
+                         ReadAction.computeBlocking(() -> JavaPsiFacade.getElementFactory(myFixture.getProject()).createTypeFromText("java.lang.Float", null)));
   }
 
+  @Test
   public void testTypeAutoboxFloat2Rvalue() {
-    doTestFieldType("myField", "Type",
+    doTestFieldType(multiFile.get(), "myField", "Type",
                     PsiTypes.floatType());
   }
 
+  @Test
   public void testTypeAutoboxInt2Lvalue() {
-    doTestFirstParamType("meth", "Type",
-                         getElementFactory().createTypeFromText("java.lang.Integer", null));
+    LightJavaCodeInsightTestFixture myFixture = multiFile.get().getFixture();
+    doTestFirstParamType(multiFile.get(), "meth", "Type",
+                         ReadAction.computeBlocking(() -> JavaPsiFacade.getElementFactory(myFixture.getProject()).createTypeFromText("java.lang.Integer", null)));
   }
 
+  @Test
   public void testTypeAutoboxInt2Rvalue() {
-    doTestFieldType("myField", "Type",
+    doTestFieldType(multiFile.get(), "myField", "Type",
                     PsiTypes.intType());
   }
 
+  @Test
   public void testTypeAutoboxLong2Lvalue() {
-    doTestFirstParamType("meth", "Type",
-                         getElementFactory().createTypeFromText("java.lang.Long", null));
+    LightJavaCodeInsightTestFixture myFixture = multiFile.get().getFixture();
+    doTestFirstParamType(multiFile.get(), "meth", "Type",
+                         ReadAction.computeBlocking(() -> JavaPsiFacade.getElementFactory(myFixture.getProject()).createTypeFromText("java.lang.Long", null)));
   }
 
+  @Test
   public void testTypeAutoboxLong2Rvalue() {
-    doTestFieldType("myField", "Type",
+    doTestFieldType(multiFile.get(), "myField", "Type",
                     PsiTypes.longType());
   }
 
+  @Test
   public void testTypeAutoboxShort2Lvalue() {
-    doTestFirstParamType("meth", "Type",
-                         getElementFactory().createTypeFromText("java.lang.Short", null));
+    LightJavaCodeInsightTestFixture myFixture = multiFile.get().getFixture();
+    doTestFirstParamType(multiFile.get(), "meth", "Type",
+                         ReadAction.computeBlocking(() -> JavaPsiFacade.getElementFactory(myFixture.getProject()).createTypeFromText("java.lang.Short", null)));
   }
 
+  @Test
   public void testTypeAutoboxShort2Rvalue() {
-    doTestFieldType("myField", "Type",
+    doTestFieldType(multiFile.get(), "myField", "Type",
                     PsiTypes.shortType());
   }
 
+  @Test
   public void testTypeGenAncestor2Lvalue() {
-    doTestFirstParamType("meth", "Type",
-                         getElementFactory().createTypeFromText("java.util.Set<Subject>", null));
+    LightJavaCodeInsightTestFixture myFixture = multiFile.get().getFixture();
+    doTestFirstParamType(multiFile.get(), "meth", "Type",
+                         ReadAction.computeBlocking(() -> JavaPsiFacade.getElementFactory(myFixture.getProject()).createTypeFromText("java.util.Set<Subject>", null)));
   }
 
+  @Test
   public void testTypeGenAncestorWildcard2Lvalue() {
-    doTestFirstParamType("meth", "Type",
-                         getElementFactory().createTypeFromText("java.util.Set<? extends Subject>", null));
+    LightJavaCodeInsightTestFixture myFixture = multiFile.get().getFixture();
+    doTestFirstParamType(multiFile.get(), "meth", "Type",
+                         ReadAction.computeBlocking(() -> JavaPsiFacade.getElementFactory(myFixture.getProject()).createTypeFromText("java.util.Set<? extends Subject>", null)));
   }
 
+  @Test
   public void testTypeGenDescendant2Rvalue() {
-    doTestFieldType("myField", "Type",
-                    getElementFactory().createTypeFromText("java.util.Set<Subject>", null));
+    LightJavaCodeInsightTestFixture myFixture = multiFile.get().getFixture();
+    doTestFieldType(multiFile.get(), "myField", "Type",
+                    ReadAction.computeBlocking(() -> JavaPsiFacade.getElementFactory(myFixture.getProject()).createTypeFromText("java.util.Set<Subject>", null)));
   }
 
+  @Test
   public void testTypeGenDescendantWildcard2Rvalue() {
-    doTestFieldType("myField", "Type",
-                    getElementFactory().createTypeFromText("java.util.Set<? super Subject>", null));
+    LightJavaCodeInsightTestFixture myFixture = multiFile.get().getFixture();
+    doTestFieldType(multiFile.get(), "myField", "Type",
+                    ReadAction.computeBlocking(() -> JavaPsiFacade.getElementFactory(myFixture.getProject()).createTypeFromText("java.util.Set<? super Subject>", null)));
   }
 
+  @Test
   public void testTypeGenRaw2Lvalue() {
-    doTestFirstParamType("meth", "Type",
-                         getElementFactory().createTypeFromText(CommonClassNames.JAVA_UTIL_SET, null));
+    LightJavaCodeInsightTestFixture myFixture = multiFile.get().getFixture();
+    doTestFirstParamType(multiFile.get(), "meth", "Type",
+                         ReadAction.computeBlocking(() -> JavaPsiFacade.getElementFactory(myFixture.getProject()).createTypeFromText(CommonClassNames.JAVA_UTIL_SET, null)));
   }
 
+  @Test
   public void testTypeGenRaw2Rvalue() {
-    doTestFieldType("myField", "Type",
-                    getElementFactory().createTypeFromText(CommonClassNames.JAVA_UTIL_SET, null));
+    LightJavaCodeInsightTestFixture myFixture = multiFile.get().getFixture();
+    doTestFieldType(multiFile.get(), "myField", "Type",
+                    ReadAction.computeBlocking(() -> JavaPsiFacade.getElementFactory(myFixture.getProject()).createTypeFromText(CommonClassNames.JAVA_UTIL_SET, null)));
   }
 
+  @Test
   public void testTypePrimsubBoolean2Lvalue() {
-    doTestFirstParamType("meth", "Type", PsiTypes.booleanType());
+    doTestFirstParamType(multiFile.get(), "meth", "Type", PsiTypes.booleanType());
   }
 
+  @Test
   public void testTypePrimsubBoolean2Rvalue() {
-    doTestFieldType("myField", "Type", PsiTypes.booleanType());
+    doTestFieldType(multiFile.get(), "myField", "Type", PsiTypes.booleanType());
   }
 
+  @Test
   public void testTypePrimsubByte2Rvalue() {
-    doTestFieldType("myField", "Type", PsiTypes.byteType());
+    doTestFieldType(multiFile.get(), "myField", "Type", PsiTypes.byteType());
   }
 
+  @Test
   public void testTypePrimsubChar2Lvalue() {
-    doTestFirstParamType("meth", "Type", PsiTypes.charType());
+    doTestFirstParamType(multiFile.get(), "meth", "Type", PsiTypes.charType());
   }
 
+  @Test
   public void testTypePrimsubChar2Rvalue() {
-    doTestFieldType("myField", "Type", PsiTypes.charType());
+    doTestFieldType(multiFile.get(), "myField", "Type", PsiTypes.charType());
   }
 
+  @Test
   public void testTypePrimsubDouble2Lvalue() {
-    doTestFirstParamType("meth", "Type", PsiTypes.doubleType());
+    doTestFirstParamType(multiFile.get(), "meth", "Type", PsiTypes.doubleType());
   }
 
+  @Test
   public void testTypePrimsubFloat2Lvalue() {
-    doTestFirstParamType("meth", "Type", PsiTypes.floatType());
+    doTestFirstParamType(multiFile.get(), "meth", "Type", PsiTypes.floatType());
   }
 
+  @Test
   public void testTypePrimsubFloat2Rvalue() {
-    doTestFieldType("myField", "Type", PsiTypes.floatType());
+    doTestFieldType(multiFile.get(), "myField", "Type", PsiTypes.floatType());
   }
 
+  @Test
   public void testTypePrimsubInt2Lvalue() {
-    doTestFirstParamType("meth", "Type", PsiTypes.intType());
+    doTestFirstParamType(multiFile.get(), "meth", "Type", PsiTypes.intType());
   }
 
+  @Test
   public void testTypePrimsubInt2Rvalue() {
-    doTestFieldType("myField", "Type", PsiTypes.intType());
+    doTestFieldType(multiFile.get(), "myField", "Type", PsiTypes.intType());
   }
 
+  @Test
   public void testTypePrimsubLong2Lvalue() {
-    doTestFirstParamType("meth", "Type", PsiTypes.longType());
+    doTestFirstParamType(multiFile.get(), "meth", "Type", PsiTypes.longType());
   }
 
+  @Test
   public void testTypePrimsubLong2Rvalue() {
-    doTestFieldType("myField", "Type", PsiTypes.longType());
+    doTestFieldType(multiFile.get(), "myField", "Type", PsiTypes.longType());
   }
 
+  @Test
   public void testTypePrimsubShort2Lvalue() {
-    doTestFirstParamType("meth", "Type", PsiTypes.shortType());
+    doTestFirstParamType(multiFile.get(), "meth", "Type", PsiTypes.shortType());
   }
 
+  @Test
   public void testTypePrimsubShort2Rvalue() {
-    doTestFieldType("myField", "Type", PsiTypes.shortType());
+    doTestFieldType(multiFile.get(), "myField", "Type", PsiTypes.shortType());
   }
 
+  @Test
   public void testTypeRefClassChild2Rvalue() {
-    doTestFieldType("myField", "Type",
-                    getElementFactory().createTypeFromText("ClassChild", null));
+    LightJavaCodeInsightTestFixture myFixture = multiFile.get().getFixture();
+    doTestFieldType(multiFile.get(), "myField", "Type",
+                    ReadAction.computeBlocking(() -> JavaPsiFacade.getElementFactory(myFixture.getProject()).createTypeFromText("ClassChild", null)));
   }
 
+  @Test
   public void testTypeRefClassParent2Lvalue() {
-    doTestFirstParamType("meth", "Type",
-                         getElementFactory().createTypeFromText("ClassParent", null));
+    LightJavaCodeInsightTestFixture myFixture = multiFile.get().getFixture();
+    doTestFirstParamType(multiFile.get(), "meth", "Type",
+                         ReadAction.computeBlocking(() -> JavaPsiFacade.getElementFactory(myFixture.getProject()).createTypeFromText("ClassParent", null)));
   }
 
+  @Test
   public void testTypeRefClassParent2Rvalue() {
-    doTestFieldType("myField", "Type",
-                    getElementFactory().createTypeFromText("ClassParent", null));
+    LightJavaCodeInsightTestFixture myFixture = multiFile.get().getFixture();
+    doTestFieldType(multiFile.get(), "myField", "Type",
+                    ReadAction.computeBlocking(() -> JavaPsiFacade.getElementFactory(myFixture.getProject()).createTypeFromText("ClassParent", null)));
   }
 
+  @Test
   public void testTypeRefFaceChild2Lvalue() {
-    doTestFirstParamType("meth", "Type",
-                         getElementFactory().createTypeFromText("FaceChild", null));
+    LightJavaCodeInsightTestFixture myFixture = multiFile.get().getFixture();
+    doTestFirstParamType(multiFile.get(), "meth", "Type",
+                         ReadAction.computeBlocking(() -> JavaPsiFacade.getElementFactory(myFixture.getProject()).createTypeFromText("FaceChild", null)));
   }
 
+  @Test
   public void testTypeRefFaceChild2Rvalue() {
-    doTestFieldType("myField", "Type",
-                    getElementFactory().createTypeFromText("FaceChild", null));
+    LightJavaCodeInsightTestFixture myFixture = multiFile.get().getFixture();
+    doTestFieldType(multiFile.get(), "myField", "Type",
+                    ReadAction.computeBlocking(() -> JavaPsiFacade.getElementFactory(myFixture.getProject()).createTypeFromText("FaceChild", null)));
   }
 
+  @Test
   public void testTypeRefFaceParent2Lvalue() {
-    doTestFirstParamType("meth", "Type",
-                         getElementFactory().createTypeFromText("FaceParent", null));
+    LightJavaCodeInsightTestFixture myFixture = multiFile.get().getFixture();
+    doTestFirstParamType(multiFile.get(), "meth", "Type",
+                         ReadAction.computeBlocking(() -> JavaPsiFacade.getElementFactory(myFixture.getProject()).createTypeFromText("FaceParent", null)));
   }
 
+  @Test
   public void testMigrateAnonymousClassTypeParameters() {
+    LightJavaCodeInsightTestFixture myFixture = multiFile.get().getFixture();
     doTestAnonymousClassMethod("invoke",
-                               getElementFactory().createTypeFromText("java.lang.String", null));
+                               ReadAction.computeBlocking(() -> JavaPsiFacade.getElementFactory(myFixture.getProject()).createTypeFromText("java.lang.String", null)));
   }
 
+  @Test
   public void testMigrateAnonymousClassTypeParameters2() {
+    LightJavaCodeInsightTestFixture myFixture = multiFile.get().getFixture();
     doTestAnonymousClassMethod("invoke",
-                               getElementFactory().createTypeFromText("java.lang.Long", null));
+                               ReadAction.computeBlocking(() -> JavaPsiFacade.getElementFactory(myFixture.getProject()).createTypeFromText("java.lang.Long", null)));
   }
 
   protected void doTestAnonymousClassMethod(@NotNull final String methodName,
@@ -534,6 +717,6 @@ public class MigrateTypeSignatureTest extends TypeMigrationTestBase {
         return anonymousClass.findMethodsByName(methodName, false)[0];
       }
     };
-    start(provider);
+    start(multiFile.get(), provider);
   }
 }

@@ -17,12 +17,7 @@ internal const val BOOTSTRAP_VERSION = "2.5.255-dev-255"
 // This is the new repository where artifacts SINCE `2.2.20-dev-2414` are published to.
 private val INTELLIJ_DEPENDENCIES_REPOSITORY = JpsRemoteRepository(
     "intellij-dependencies",
-    "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies",
-)
-
-private val INTELLIJ_EXPERIMENTAL_DEPENDENCIES_REPOSITORY = JpsRemoteRepository(
-    "kotlin-experimental",
-    "https://packages.jetbrains.team/maven/p/kt/experimental",
+    "https://cache-redirector.jetbrains.com/maven/ultimate-public",
 )
 
 internal class ArtifactCoordinates(private val originalVersion: String, val mode: ArtifactMode, val repository: JpsRemoteRepository) {
@@ -38,8 +33,7 @@ internal val GeneratorPreferences.kotlincArtifactCoordinates: ArtifactCoordinate
 
 private val GeneratorPreferences.kotlincRepository: JpsRemoteRepository?
     get() = when (kotlincArtifactsMode) {
-        ArtifactMode.MAVEN_EXPERIMENTAL -> INTELLIJ_EXPERIMENTAL_DEPENDENCIES_REPOSITORY
-        ArtifactMode.MAVEN -> INTELLIJ_DEPENDENCIES_REPOSITORY
+        ArtifactMode.MAVEN, ArtifactMode.MAVEN_EXPERIMENTAL -> INTELLIJ_DEPENDENCIES_REPOSITORY
         ArtifactMode.BOOTSTRAP -> null
     }
 

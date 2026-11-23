@@ -5,15 +5,15 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.ProjectJdkTable;
-import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.python.sdk.backend.PythonInterpreter;
+import com.intellij.python.sdk.backend.PythonInterpreterExtKt;
 import com.intellij.util.messages.MessageBusConnection;
 import com.jetbrains.python.PythonPluginDisposable;
-import com.jetbrains.python.packaging.PyPackageManager;
+import com.jetbrains.python.packaging.common.PythonPackageManagementListener;
+import com.jetbrains.python.packaging.management.PythonPackageManager;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import org.jetbrains.annotations.NotNull;
 
@@ -56,24 +56,18 @@ public class PythonSdkPathCache extends PythonPathCache implements Disposable {
     if (project.isDisposed()) {
       return;
     }
-    Disposer.register(PythonPluginDisposable.getInstance(project), this);
-    // The updater still writes the roots and the packages of an interpreter into its SDK.
-    final Sdk sdk = MainPythonSdkKt.resolveSdk(interpreter);
+    // The cache ends with the interpreter. A change of its roots comes from PythonInterpreterRoots, see PyResolveCachesInvalidator.
+    final Disposable lifetime = PythonInterpreterExtKt.getLifetime(interpreter);
+    Disposer.register(lifetime != null ? lifetime : PythonPluginDisposable.getInstance(project), this);
     final MessageBusConnection connection = project.getMessageBus().connect(this);
-    connection.subscribe(ProjectJdkTable.JDK_TABLE_TOPIC, new ProjectJdkTable.Listener() {
+    connection.subscribe(PythonPackageManager.Companion.getPACKAGE_MANAGEMENT_TOPIC(), new PythonPackageManagementListener() {
       @Override
-      public void jdkRemoved(@NotNull Sdk jdk) {
-        if (jdk == sdk) {
-          Disposer.dispose(PythonSdkPathCache.this);
+      public void packagesChanged(@NotNull PythonInterpreter changed) {
+        if (changed.equals(myInterpreter)) {
+          clearCache();
         }
       }
     });
-    connection.subscribe(PyPackageManager.PACKAGE_MANAGER_TOPIC, eventSdk -> {
-      if (eventSdk == sdk) {
-        clearCache();
-      }
-    });
-    sdk.getRootProvider().addRootSetChangedListener(wrapper -> onRootsChanged(), this);
     VirtualFileManager.getInstance().addVirtualFileListener(new MyVirtualFileListener(), this);
   }
 

@@ -15,6 +15,8 @@ import java.util.List;
  */
 public final class DiffTree<OldNode, NewNode> {
   private static final int CHANGE_PARENT_VERSUS_CHILDREN_THRESHOLD = 20;
+  private static final int MIN_CHUNKED_LENGTH = 64;
+  private static final int CHUNK_LENGTH = 4096;
 
   private final FlyweightCapableTreeStructure<OldNode> myOldTree;
   private final FlyweightCapableTreeStructure<NewNode> myNewTree;
@@ -25,6 +27,16 @@ public final class DiffTree<OldNode, NewNode> {
   private final CharSequence myNewText;
   private final int myOldTreeStart;
   private final int myNewTreeStart;
+  private char[] myOldChunk;
+  private char[] myNewChunk;
+
+  /**
+   * The old text from {@code myMatchedOldStart} to {@code myMatchedOldEnd} is equal to the new text that starts {@code myMatchedShift} chars later.
+   * A node inside this range at the same shift has the same text, so the drill-down does not compare its text again.
+   */
+  private int myMatchedOldStart;
+  private int myMatchedOldEnd;
+  private int myMatchedShift;
 
   private DiffTree(@NotNull FlyweightCapableTreeStructure<OldNode> oldTree,
                    @NotNull FlyweightCapableTreeStructure<NewNode> newTree,
@@ -294,7 +306,7 @@ public final class DiffTree<OldNode, NewNode> {
       CompareResult c11 = looksEqual(oldChild, newChild);
 
       if (c11 == CompareResult.DRILL_DOWN_NEEDED) {
-        c11 = textMatch(oldChild, newChild) ? build(oldChild, newChild, level + 1, emptyConsumer()) : CompareResult.NOT_EQUAL;
+        c11 = drillDownIfTextMatches(oldChild, newChild, level);
         assert c11 != CompareResult.DRILL_DOWN_NEEDED;
       }
       if (c11 != CompareResult.EQUAL) {
@@ -305,14 +317,58 @@ public final class DiffTree<OldNode, NewNode> {
     return delta * step;
   }
 
-  private boolean textMatch(@NotNull OldNode oldChild,
-                            @NotNull NewNode newChild) {
+  /**
+   * Compares the children of two nodes only if the nodes have the same text.
+   * When the texts match, the comparison goes all the way down.
+   */
+  private @NotNull CompareResult drillDownIfTextMatches(@NotNull OldNode oldChild, @NotNull NewNode newChild, int level) {
     int oldStart = myOldTree.getStartOffset(oldChild) - myOldTreeStart;
     int oldEnd = myOldTree.getEndOffset(oldChild) - myOldTreeStart;
     int newStart = myNewTree.getStartOffset(newChild) - myNewTreeStart;
     int newEnd = myNewTree.getEndOffset(newChild) - myNewTreeStart;
-    // drill down only if node texts match, but when they do, match all the way down unconditionally
-    return CharArrayUtil.regionMatches(myOldText, oldStart, oldEnd, myNewText, newStart, newEnd);
+    if (oldEnd - oldStart != newEnd - newStart) return CompareResult.NOT_EQUAL;
+    if (oldStart >= myMatchedOldStart && oldEnd <= myMatchedOldEnd && newStart - oldStart == myMatchedShift) {
+      return build(oldChild, newChild, level + 1, emptyConsumer());
+    }
+    if (!regionMatches(oldStart, newStart, oldEnd - oldStart)) return CompareResult.NOT_EQUAL;
+
+    int outerStart = myMatchedOldStart;
+    int outerEnd = myMatchedOldEnd;
+    int outerShift = myMatchedShift;
+    myMatchedOldStart = oldStart;
+    myMatchedOldEnd = oldEnd;
+    myMatchedShift = newStart - oldStart;
+    try {
+      return build(oldChild, newChild, level + 1, emptyConsumer());
+    }
+    finally {
+      myMatchedOldStart = outerStart;
+      myMatchedOldEnd = outerEnd;
+      myMatchedShift = outerShift;
+    }
+  }
+
+  /**
+   * Compares the old text at {@code oldStart} with the new text at {@code newStart}.
+   * A long range is copied in chunks, because each char read of a rope text, such as a document text, walks the rope.
+   */
+  private boolean regionMatches(int oldStart, int newStart, int length) {
+    if (length < MIN_CHUNKED_LENGTH) {
+      return CharArrayUtil.regionMatches(myOldText, oldStart, oldStart + length, myNewText, newStart, newStart + length);
+    }
+    if (myOldChunk == null) {
+      myOldChunk = new char[CHUNK_LENGTH];
+      myNewChunk = new char[CHUNK_LENGTH];
+    }
+    for (int offset = 0; offset < length; offset += CHUNK_LENGTH) {
+      int chunkLength = Math.min(CHUNK_LENGTH, length - offset);
+      CharArrayUtil.getChars(myOldText, myOldChunk, oldStart + offset, 0, chunkLength);
+      CharArrayUtil.getChars(myNewText, myNewChunk, newStart + offset, 0, chunkLength);
+      for (int i = 0; i < chunkLength; i++) {
+        if (myOldChunk[i] != myNewChunk[i]) return false;
+      }
+    }
+    return true;
   }
 
   private @NotNull CompareResult looksEqual(@Nullable OldNode oldChild1,

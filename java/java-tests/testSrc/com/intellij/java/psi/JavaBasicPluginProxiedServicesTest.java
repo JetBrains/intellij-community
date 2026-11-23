@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.psi;
 
+import com.intellij.codeInsight.editorActions.JavaTypingSupport;
 import com.intellij.core.CoreJavaCodeStyleManager;
 import com.intellij.core.CoreJavaDirectoryService;
 import com.intellij.core.CoreJavaFileManager;
@@ -59,7 +60,8 @@ public class JavaBasicPluginProxiedServicesTest {
     "com.intellij.psi.codeStyle.JavaCodeStyleManager",
     "com.intellij.openapi.roots.PackageIndex",
     "com.intellij.pom.java.InternalPersistentJavaLanguageLevelReaderService",
-    "com.intellij.psi.JavaModuleGraphHelper"
+    "com.intellij.psi.JavaModuleGraphHelper",
+    "com.intellij.codeInsight.editorActions.JavaTypingSupport"
   );
 
   @Test
@@ -116,6 +118,7 @@ public class JavaBasicPluginProxiedServicesTest {
     defaults.put(PackageIndex.class, new CorePackageIndex());
     defaults.put(InternalPersistentJavaLanguageLevelReaderService.class, new InternalPersistentJavaLanguageLevelReaderService.DefaultImpl());
     defaults.put(JavaModuleGraphHelper.class, new DumbJavaModuleGraphHelper());
+    defaults.put(JavaTypingSupport.class, new JavaTypingSupport());
     return defaults;
   }
 }

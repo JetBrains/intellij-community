@@ -5,6 +5,7 @@ package com.intellij.patterns.compiler;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringHash;
 import com.intellij.openapi.util.text.StringUtil;
@@ -563,7 +564,7 @@ public final class PatternCompilerImpl<T> implements PatternCompiler<T> {
     private final Set<Method> myStaticMethods;
     private final long myHashCode;
 
-    private ElementPattern<T> myCompiledPattern;
+    private final NotNullLazyValue<ElementPattern<T>> myCompiledPattern = NotNullLazyValue.atomicLazy(this::compileOrFalse);
 
     public LazyPresentablePattern(@NotNull Node node, @NotNull Set<Method> staticMethods) {
       myNode = node;
@@ -586,20 +587,26 @@ public final class PatternCompilerImpl<T> implements PatternCompiler<T> {
       return getCompiledPattern().getCondition();
     }
 
+    /**
+     * Compiled form of this pattern, built once on first use; concurrent callers wait until it is built.
+     * When the compilation throws, the failure is logged, and the returned pattern accepts nothing and is not
+     * compiled again.
+     */
     public ElementPattern<T> getCompiledPattern() {
-      if (myCompiledPattern == null) {
-        ElementPattern<?> result;
-        try {
-          result = compile();
-        }
-        catch (Throwable throwable) {
-          onCompilationFailed(null, toString(), throwable);
-          result = ALWAYS_FALSE;
-        }
-        //noinspection unchecked
-        myCompiledPattern = (ElementPattern<T>)result;
+      return myCompiledPattern.getValue();
+    }
+
+    private @NotNull ElementPattern<T> compileOrFalse() {
+      ElementPattern<?> result;
+      try {
+        result = compile();
       }
-      return myCompiledPattern;
+      catch (Throwable throwable) {
+        onCompilationFailed(null, toString(), throwable);
+        result = ALWAYS_FALSE;
+      }
+      //noinspection unchecked
+      return (ElementPattern<T>)result;
     }
 
     public ElementPattern<?> compile() throws Throwable {

@@ -4,6 +4,8 @@ package com.intellij.platform.debugger.impl.backend
 import com.intellij.ide.ui.colors.rpcId
 import com.intellij.ide.ui.icons.rpcId
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.platform.debugger.impl.rpc.PreloadChildrenEvent
 import com.intellij.platform.debugger.impl.rpc.XContainerId
@@ -21,6 +23,7 @@ import com.intellij.platform.debugger.impl.rpc.XValueGroupId
 import com.intellij.platform.debugger.impl.rpc.XValueId
 import com.intellij.platform.debugger.impl.rpc.XValuePresentationDataDto
 import com.intellij.platform.debugger.impl.rpc.toRpc
+import com.intellij.platform.debugger.impl.shared.hasCustomDebuggerHint
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.util.awaitCancellationAndInvoke
@@ -64,6 +67,7 @@ import kotlinx.coroutines.flow.buffer
 import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.future.await
@@ -164,14 +168,25 @@ internal class BackendXValueApi : XValueApi {
 
   override suspend fun computeInlineData(xValueId: XValueId): XInlineDebuggerDataDto? {
     val xValueModel = BackendXValueModel.findById(xValueId) ?: return null
-    val channel = Channel<suspend () -> XSourcePositionDto>(Channel.UNLIMITED)
+    val project = xValueModel.session.project
+    val channel = Channel<XSourcePosition>(Channel.UNLIMITED)
     val state = xValueModel.xValue.computeInlineDebuggerData(object : XInlineDebuggerDataCallback() {
       override fun computed(position: XSourcePosition?) {
         if (position == null) return
-        channel.trySend { position.toRpc() }
+        channel.trySend(position)
       }
     })
-    return XInlineDebuggerDataDto(state, channel.asColdFlow().map { it() }.toRpc())
+    val positions = channel.asColdFlow()
+      .filter { position -> !isOnCustomDebuggerHintLine(project, position) }
+      .map { position -> position.toRpc() }
+    return XInlineDebuggerDataDto(state, positions.toRpc())
+  }
+
+  private suspend fun isOnCustomDebuggerHintLine(project: Project, position: XSourcePosition): Boolean {
+    return withContext(Dispatchers.EDT) {
+      val document = FileDocumentManager.getInstance().getCachedDocument(position.file) ?: return@withContext false
+      hasCustomDebuggerHint(project, document, position.line)
+    }
   }
 
   override suspend fun nodeLinkClicked(linkId: XDebuggerHyperlinkId) {

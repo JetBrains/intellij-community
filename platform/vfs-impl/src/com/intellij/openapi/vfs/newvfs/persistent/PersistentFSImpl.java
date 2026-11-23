@@ -23,6 +23,7 @@ import com.intellij.openapi.progress.util.PingProgress;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectLocator;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.ShutDownTracker;
@@ -58,6 +59,7 @@ import com.intellij.openapi.vfs.newvfs.AsyncEventSupport;
 import com.intellij.openapi.vfs.newvfs.AsyncableFileSystem;
 import com.intellij.openapi.vfs.newvfs.AttributeInputStream;
 import com.intellij.openapi.vfs.newvfs.AttributeOutputStream;
+import com.intellij.openapi.vfs.newvfs.BackgroundEventSupport;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.BulkFileListenerBackgroundable;
 import com.intellij.openapi.vfs.newvfs.ChildInfoImpl;
@@ -221,6 +223,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
                                                                    HashingStrategy.caseInsensitive());
 
     AsyncEventSupport.startListening();
+    BackgroundEventSupport.startListening();
 
     app.getMessageBus().simpleConnect().subscribe(DynamicPluginListener.TOPIC, new DynamicPluginListener() {
       @Override
@@ -1795,6 +1798,24 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     }
   }
 
+  @ApiStatus.Internal
+  @RequiresWriteLock
+  public void fireEventsImpl(@NotNull List<? extends @NotNull VFileEvent> events, @NotNull Runnable applyAction) {
+    if (events.isEmpty()) {
+      applyAction.run();
+      return;
+    }
+    List<Runnable> applyActions = applyAction == EmptyRunnable.getInstance() ? List.of() : List.of(applyAction);
+    applyMultipleEvents(
+      getPublisherEdt(),
+      getPublisherBackgroundable(),
+      AsyncEventSupport.ChangeAppliers.EMPTY,
+      applyActions,
+      events,
+      /*excludeAsyncListeners: */ false
+    );
+  }
+
   private static void applyMultipleEvents(@NotNull BulkFileListener publisher,
                                           @NotNull BulkFileListenerBackgroundable publisherBackgroundable,
                                           @NotNull AsyncEventSupport.ChangeAppliers earlyAfterEventChangeAppliers,
@@ -1845,25 +1866,37 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
   private static void fireBeforeEvents(@NotNull BulkFileListener publisherEdt,
                                        @NotNull BulkFileListenerBackgroundable publisherBackgroundable,
                                        @NotNull List<? extends VFileEvent> toSend) {
-    runSuppressing(
-      () -> runActionOnBackgroundRegardlessOfCurrentThread(() -> publisherBackgroundable.before(toSend)),
-      () -> runActionOnEdtRegardlessOfCurrentThread(() -> publisherEdt.before(toSend)),
-      () -> ((BulkFileListener)VirtualFilePointerManager.getInstance()).before(toSend)
-    );
+    BackgroundEventSupport.markBeforeProcessed(toSend);
+    try {
+      runSuppressing(
+        () -> runActionOnBackgroundRegardlessOfCurrentThread(() -> publisherBackgroundable.before(toSend)),
+        () -> runActionOnEdtRegardlessOfCurrentThread(() -> publisherEdt.before(toSend)),
+        () -> ((BulkFileListener)VirtualFilePointerManager.getInstance()).before(toSend)
+      );
+    }
+    finally {
+      BackgroundEventSupport.unmarkBeforeProcessed(toSend);
+    }
   }
 
   private static void fireAfterEvents(@NotNull BulkFileListener publisherEdt,
                                       @NotNull BulkFileListenerBackgroundable publisherBackgroundable,
                                       @NotNull AsyncEventSupport.ChangeAppliers earlyAfterEventChangeAppliers,
                                       @NotNull List<? extends VFileEvent> toSend) {
-    runSuppressing(
-      () -> CachedFileType.clearCache(),
-      () -> afterVfsChange(earlyAfterEventChangeAppliers),
-      () -> ((BulkFileListener)VirtualFilePointerManager.getInstance()).after(toSend),
-      () -> AsyncEventSupport.drainEarlyAppliers(toSend),
-      () -> runActionOnEdtRegardlessOfCurrentThread(() -> publisherEdt.after(toSend)),
-      () -> runActionOnBackgroundRegardlessOfCurrentThread(() -> publisherBackgroundable.after(toSend))
-    );
+    BackgroundEventSupport.markAfterProcessed(toSend);
+    try {
+      runSuppressing(
+        () -> CachedFileType.clearCache(),
+        () -> afterVfsChange(earlyAfterEventChangeAppliers),
+        () -> ((BulkFileListener)VirtualFilePointerManager.getInstance()).after(toSend),
+        () -> AsyncEventSupport.drainEarlyAppliers(toSend),
+        () -> runActionOnEdtRegardlessOfCurrentThread(() -> publisherEdt.after(toSend)),
+        () -> runActionOnBackgroundRegardlessOfCurrentThread(() -> publisherBackgroundable.after(toSend))
+      );
+    }
+    finally {
+      BackgroundEventSupport.unmarkAfterProcessed(toSend);
+    }
   }
 
   // remove children from specified directories using VirtualDirectoryImpl.removeChildren() optimised for bulk removals
@@ -1981,19 +2014,18 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     parentDir.initializeAndAddChildren(childrenToInitialize, /*allChildrenLoaded: */ false, (__, ___) -> { });
     //@formatter:on
 
-    saveScannedChildrenRecursively(createEvents, fs, caseSensitive);
+    saveScannedChildrenRecursively(createEvents, fs);
   }
 
   private void saveScannedChildrenRecursively(@NotNull Collection<VFileCreateEvent> createEvents,
-                                              @NotNull NewVirtualFileSystem fs,
-                                              boolean isCaseSensitive) {
+                                              @NotNull NewVirtualFileSystem fs) {
     for (VFileCreateEvent createEvent : createEvents) {
       ChildInfo[] children = createEvent.getChildren();
       if (children == null || !createEvent.isDirectory()) continue;
       // todo avoid expensive findFile
       VirtualFile createdDir = createEvent.getFile();
       if (createdDir instanceof VirtualDirectoryImpl) {
-        saveScannedChildrenRecursively((VirtualDirectoryImpl)createdDir, children, createEvent.isAllChildren(), fs, isCaseSensitive);
+        saveScannedChildrenRecursively((VirtualDirectoryImpl)createdDir, children, createEvent.isAllChildren(), fs);
       }
     }
   }
@@ -2001,39 +2033,70 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
   private void saveScannedChildrenRecursively(@NotNull VirtualDirectoryImpl createdDirectory,
                                               @NotNull ChildInfo[] children,
                                               boolean allChildren,
-                                              @NotNull NewVirtualFileSystem fs,
-                                              boolean isCaseSensitive) {
+                                              @NotNull NewVirtualFileSystem fs) {
     record ScannedChildren(VirtualDirectoryImpl directory, ChildInfo[] children, boolean allChildren) { }
+    // Keep scanned descendants together with attributes prepared before the parent lock is taken
+    record PreparedChild(ChildInfo childInfo, Pair<@NotNull FileAttributes, String> childData) { }
     Queue<ScannedChildren> queue = new ArrayDeque<>();
     queue.add(new ScannedChildren(createdDirectory, children, allChildren));
     while (!queue.isEmpty()) {
       ScannedChildren queued = queue.remove();
       VirtualDirectoryImpl directory = queued.directory();
+      boolean isCaseSensitive = directory.isCaseSensitive();
       List<ChildInfo> scannedChildren = Arrays.asList(queued.children());
       int directoryId = directory.getId();
-      List<ChildInfo> added = new ArrayList<>(scannedChildren.size());
+      var preparedChildren = new ArrayList<PreparedChild>(scannedChildren.size());
       for (ChildInfo childInfo : scannedChildren) {
         CharSequence childName = childInfo.getName();
         Pair<@NotNull FileAttributes, String> childData =
           getChildData(fs, directory, childName.toString(), childInfo.getFileAttributes(), childInfo.getSymlinkTarget());
         if (childData != null) {
-          added.add(makeChildRecord(directory, directoryId, childName, childData, fs, childInfo.getChildren(), childInfo.isAllChildren()));
+          preparedChildren.add(new PreparedChild(childInfo, childData));
         }
       }
 
-      added.sort(ChildInfo.BY_ID);
+      var childrenToInitialize = new ArrayList<ChildInfo>(preparedChildren.size());
       // set "all children cached" only when the scanned list is complete; partial lists must stay partial
-      vfsPeer.update(
+      ListResult persistedChildren = vfsPeer.update(
         directory, directoryId,
-        oldChildren -> oldChildren.merge(vfsPeer, added, isCaseSensitive),
+        oldChildren -> {
+          //See comment in applyCreateEventsInDirectory about why we need to re-check children names uniqueness here:
+          Map<String, ChildInfo> existingChildren = createFilePathMap(oldChildren.children.size(), isCaseSensitive);
+          for (ChildInfo child : oldChildren.children) {
+            existingChildren.put(child.getName().toString(), child);
+          }
+          var processedNames = createFilePathSet(preparedChildren.size(), isCaseSensitive);
+          for (PreparedChild prepared : preparedChildren) {
+            ChildInfo scanned = prepared.childInfo();
+            String name = scanned.getName().toString();
+            if (!processedNames.add(name)) continue;
+            ChildInfo existing = existingChildren.get(name);
+            if (existing == null) {
+              childrenToInitialize.add(makeChildRecord(directory, directoryId, name, prepared.childData(), fs,
+                                                        scanned.getChildren(), scanned.isAllChildren()));
+            }
+            else {
+              childrenToInitialize.add(new ChildInfoImpl(existing.getId(), existing.getNameId(), prepared.childData().first,
+                                                         scanned.getChildren(), prepared.childData().second, scanned.isAllChildren()));
+            }
+          }
+          childrenToInitialize.sort(ChildInfo.BY_ID);
+          return oldChildren.merge(vfsPeer, childrenToInitialize, isCaseSensitive);
+        },
         /*setAllChildrenCached: */ queued.allChildren()
       );
-      directory.initializeAndAddChildren(added, /*allChildrenLoaded: */ queued.allChildren(), (childCreated, childInfo) -> {
-        // enqueue recursive children
-        if (childCreated instanceof VirtualDirectoryImpl && childInfo.getChildren() != null) {
-          queue.add(new ScannedChildren((VirtualDirectoryImpl)childCreated, childInfo.getChildren(), childInfo.isAllChildren()));
+      // A lookup can persist extra children after the scan; leave them available for a later load
+      boolean allChildrenInMemory = queued.allChildren() && childrenToInitialize.size() == persistedChildren.children.size();
+      directory.initializeAndAddChildren(childrenToInitialize, /*allChildrenLoaded: */ allChildrenInMemory, (_, _) -> { });
+      // enqueue recursive children, including descendants of directories that were already loaded
+      for (PreparedChild prepared : preparedChildren) {
+        ChildInfo childInfo = prepared.childInfo();
+        if (childInfo.getChildren() == null) continue;
+        VirtualFile child = directory.findChildIfCached(childInfo.getName().toString());
+        if (child instanceof VirtualDirectoryImpl childDirectory) {
+          queue.add(new ScannedChildren(childDirectory, childInfo.getChildren(), childInfo.isAllChildren()));
         }
-      });
+      }
     }
   }
 
@@ -2579,7 +2642,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
         if (children != null && createdFile instanceof VirtualDirectoryImpl) {
           NewVirtualFileSystem fs = fileSystemOf(ce.getNewParent());
           saveScannedChildrenRecursively(
-            (VirtualDirectoryImpl)createdFile, children, ce.isAllChildren(), fs, ce.getNewParent().isCaseSensitive()
+            (VirtualDirectoryImpl)createdFile, children, ce.isAllChildren(), fs
           );
         }
       }

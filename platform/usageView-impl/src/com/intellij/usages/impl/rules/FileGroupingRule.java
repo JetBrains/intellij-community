@@ -6,6 +6,7 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataSink;
 import com.intellij.openapi.actionSystem.UiDataProvider;
 import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileEditor.FileEditorOpenRequest;
 import com.intellij.openapi.fileEditor.UniqueVFilePathBuilder;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
@@ -129,7 +130,7 @@ public class FileGroupingRule extends SingleParentUsageGroupingRule implements D
 
     @Override
     public void navigate(boolean focus) throws UnsupportedOperationException {
-      if (!myProject.isDisposed()) FileEditorManager.getInstance(myProject).openFile(myFile, focus);
+      if (!myProject.isDisposed()) FileEditorManager.getInstance(myProject).requestOpenFile(myFile, FileEditorOpenRequest.withFocus(focus));
     }
 
     @Override

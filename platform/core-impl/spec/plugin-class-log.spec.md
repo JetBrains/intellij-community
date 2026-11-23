@@ -52,6 +52,9 @@ A loader is the class loader of the main module or of one content module of a pl
   [@test] ../testSrc/com/intellij/ide/plugins/PluginClassLogTest.kt
 - A stack must skip the frames of the class-loading machinery and keep at most 40 frames.
   [@test] ../testSrc/com/intellij/ide/plugins/PluginClassLogTest.kt
+- After a dynamic unload starts, a pending stack must be held as frames without a class reference, and the `S`
+  records at the exit must not change.
+  [@test] ../testSrc/com/intellij/ide/plugins/PluginClassLogTest.kt
 - The last line must be the `#cost` trailer.
   [@test] ../testSrc/com/intellij/ide/plugins/PluginClassLogTest.kt
 - A record after the exit must not reach the file.
@@ -84,6 +87,10 @@ S	<loader id>	<class>.<method>(<file>:<line>)
 - The order of the `C` records of one loader is the order of their definitions.
 - The `S` records of all loaders come after the other records, and before the trailer.
 - A loader that the IDE unloaded before the exit has no `S` records. Its `L` and `C` records stay.
+- The IDE keeps the stack of a first class as a `Throwable` until the first dynamic unload or the exit. A `Throwable`
+  keeps the classes of its frames, and a frame of one plugin can wake the loader of another plugin. So the first
+  unload converts every pending stack to `StackTraceElement` frames, which keep no class. The conversion runs there
+  and not at the record time, because it costs 29 to 125 ms per start and `vm bench` passes the property on every run.
 - A log of an IDE that did not exit normally can lack the `S` records and the trailer.
 
 ## Error Handling
@@ -98,8 +105,3 @@ callers. Build `//build:idea_dist`, and start it without `plugin.classloader.deb
 `-Xlog:class+load:file=<file>`. After the welcome screen shows, `<file>` must name no class
 `com.intellij.ide.plugins.cl.PluginClassLog*`. A typed field of the log on the class-loading path breaks this rule
 in compiled code only, so a short run can miss it. Let the IDE run until it is idle.
-
-## Open Questions / Risks
-
-- The stack of a first class keeps the classes of its frames until the exit or until its loader goes. So a plugin
-  whose frame woke another loader can stay in memory after its unload.

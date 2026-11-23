@@ -156,11 +156,11 @@ public final class CachedIntentions implements IntentionContainer {
   public boolean wrapAndUpdateActions(@NotNull ShowIntentionsPass.IntentionsInfo newInfo, boolean callUpdate) {
     myOffset = newInfo.getOffset();
     myHighlightInfoType = newInfo.getHighlightInfoType();
-    boolean changed = wrapActionsTo(newInfo.errorFixesToShow, myErrorFixes, callUpdate);
-    changed |= wrapActionsTo(newInfo.inspectionFixesToShow, myInspectionFixes, callUpdate);
-    changed |= wrapActionsTo(newInfo.intentionsToShow, myIntentions, callUpdate);
+    boolean changed = wrapActionsTo(newInfo.errorFixesToShow, myErrorFixes, callUpdate, true);
+    changed |= wrapActionsTo(newInfo.inspectionFixesToShow, myInspectionFixes, callUpdate, true);
+    changed |= wrapActionsTo(newInfo.intentionsToShow, myIntentions, callUpdate, false);
     changed |= updateGuttersRaw(newInfo);
-    changed |= wrapActionsTo(newInfo.notificationActionsToShow, myNotifications, callUpdate);
+    changed |= wrapActionsTo(newInfo.notificationActionsToShow, myNotifications, callUpdate, false);
     return changed;
   }
 
@@ -212,7 +212,7 @@ public final class CachedIntentions implements IntentionContainer {
       descriptors.add(descriptor);
       hasSeparatorAbove = false;
     }
-    wrapActionsTo(descriptors, myGutters, false);
+    wrapActionsTo(descriptors, myGutters, false, false);
   }
 
   private boolean addActionsTo(@NotNull List<? extends HighlightInfo.IntentionActionDescriptor> newDescriptors,
@@ -226,15 +226,16 @@ public final class CachedIntentions implements IntentionContainer {
 
   private boolean wrapActionsTo(@NotNull List<? extends HighlightInfo.IntentionActionDescriptor> newDescriptors,
                                 @NotNull Set<? super IntentionActionWithTextCaching> cachedActions,
-                                boolean shouldCallIsAvailable) {
+                                boolean shouldCallIsAvailable,
+                                boolean removeOldActions) {
     if (cachedActions.isEmpty() && newDescriptors.isEmpty()) return false;
-    boolean changed = false;
     if (myEditor == null) {
       LOG.assertTrue(!shouldCallIsAvailable);
+      Set<IntentionActionWithTextCaching> wrappedNew = new LinkedHashSet<>();
       for (HighlightInfo.IntentionActionDescriptor descriptor : newDescriptors) {
-        changed |= cachedActions.add(wrapAction(descriptor, myPsiFile, myPsiFile, null));
+        wrappedNew.add(wrapAction(descriptor, myPsiFile, myPsiFile, null));
       }
-      return changed;
+      return updateCachedActions(cachedActions, wrappedNew, removeOldActions);
     }
     int caretOffset = myOffset >= 0 ? myOffset : myEditor.getCaretModel().getOffset();
     int fileOffset = caretOffset > 0 && caretOffset == myPsiFile.getTextLength() ? caretOffset - 1 : caretOffset;
@@ -286,18 +287,26 @@ public final class CachedIntentions implements IntentionContainer {
       }
     }
 
-    if (cachedActions.equals(wrappedNew)) {
+    return updateCachedActions(cachedActions, wrappedNew, removeOldActions);
+  }
+
+  private static boolean updateCachedActions(@NotNull Set<? super IntentionActionWithTextCaching> cachedActions,
+                                             @NotNull Set<IntentionActionWithTextCaching> newActions,
+                                             boolean removeOldActions) {
+    if (cachedActions.equals(newActions)) {
       return false;
     }
-    cachedActions.addAll(wrappedNew);
+    if (removeOldActions) {
+      cachedActions.retainAll(newActions);
+    }
+    cachedActions.addAll(newActions);
     return true;
   }
 
-  @NotNull
-  IntentionActionWithTextCaching wrapAction(@NotNull HighlightInfo.IntentionActionDescriptor descriptor,
-                                            @NotNull PsiElement element,
-                                            @NotNull PsiFile containingFile,
-                                            @Nullable Editor containingEditor) {
+  @NotNull IntentionActionWithTextCaching wrapAction(@NotNull HighlightInfo.IntentionActionDescriptor descriptor,
+                                                     @NotNull PsiElement element,
+                                                     @NotNull PsiFile containingFile,
+                                                     @Nullable Editor containingEditor) {
     IntentionActionWithTextCaching cachedAction =
       new IntentionActionWithTextCaching(
         descriptor.getAction(), descriptor.getDisplayName(), descriptor.getIcon(), descriptor.getToolId(),

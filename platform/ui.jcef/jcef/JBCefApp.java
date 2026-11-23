@@ -59,9 +59,11 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
@@ -120,10 +122,14 @@ public final class JBCefApp {
   private boolean myIsRemoteEnabled;
   private final @Nullable File myServerExe;
   private final @NotNull JcefStarter myStarter = new JcefStarter();
+  private final Object myRequestContextsLock = new Object();
+  private final @NotNull Set<JBCefRequestContext> myInMemoryRequestContexts = new HashSet<>();
+  private final @NotNull Map<Path, JBCefRequestContext> myPersistentRequestContexts = new HashMap<>();
 
   private  final @NotNull Disposable myDisposable = new Disposable() {
     @Override
     public void dispose() {
+      disposeRequestContexts();
       if (myCefApp != null) {
         myCefApp.dispose();
       }
@@ -481,11 +487,15 @@ public final class JBCefApp {
       }
 
       // Dispose old and set default new.
+      if (myCefApp != null) {
+        releaseRequestContexts();
+      }
       CefApp.setDefaultInstance(cefApp);
       if (myCefApp != null) {
         myCefApp.dispose();
       }
       myCefApp = cefApp;
+      resetRequestContexts();
 
       // Write summary to log.
       String logTxt = instanceNum != 0 ? "JCEF has been restarted (instance number " + instanceNum + ")." : "JCEF has been started.";
@@ -592,6 +602,7 @@ public final class JBCefApp {
       if (config != null) {
         try {
           app = new JBCefApp(config);
+          JcefHwFacadeState.setStarted(true);
         }
         catch (IllegalStateException ignore) {
         }
@@ -761,6 +772,102 @@ public final class JBCefApp {
   public @NotNull JBCefClient createClient() {
     CefClient cefClient = myDelegate == null ? Objects.requireNonNull(myCefApp).createClient() : myDelegate.createClient();
     return new JBCefClient(cefClient);
+  }
+
+  /**
+   * Creates a new in-memory browser profile. It is accessible only through the returned instance.
+   */
+  @ApiStatus.Experimental
+  public @NotNull JBCefRequestContext createRequestContext() {
+    if (myDelegate != null) throw new UnsupportedOperationException("Request contexts are not supported by CefDelegate");
+
+    synchronized (myRequestContextsLock) {
+      JBCefRequestContext context = new JBCefRequestContext(this, null);
+      myInMemoryRequestContexts.add(context);
+      return context;
+    }
+  }
+
+  /**
+   * Returns a persistent browser profile for the given cache path, creating it if needed.
+   * Relative paths are resolved under the configured CEF cache directory. The resolved path must be
+   * below that directory and must not overlap CEF's default global profile at {@code Default}.
+   */
+  @ApiStatus.Experimental
+  public @NotNull JBCefRequestContext getRequestContext(@NotNull Path cachePath) {
+    if (myDelegate != null) throw new UnsupportedOperationException("Request contexts are not supported by CefDelegate");
+    if (cachePath.isAbsolute()) {
+      Path requestedPath = cachePath.toAbsolutePath().normalize();
+      synchronized (myRequestContextsLock) {
+        JBCefRequestContext existing = myPersistentRequestContexts.get(requestedPath);
+        if (existing != null) return existing;
+      }
+    }
+    Path normalizedPath = normalizeRequestContextCachePath(Objects.requireNonNull(cachePath));
+
+    synchronized (myRequestContextsLock) {
+      return myPersistentRequestContexts.computeIfAbsent(
+        normalizedPath, path -> new JBCefRequestContext(this, path));
+    }
+  }
+
+  /**
+   * Removes and disposes the given profile. This does not delete on-disk data.
+   * A later {@link #getRequestContext(Path)} call with the same path creates a new profile.
+   */
+  @ApiStatus.Experimental
+  public void disposeRequestContext(@NotNull JBCefRequestContext context) {
+    if (myDelegate != null) throw new UnsupportedOperationException("Request contexts are not supported by CefDelegate");
+    Objects.requireNonNull(context);
+    if (!context.isOwnedBy(this)) throw new IllegalArgumentException("Request context belongs to another JBCefApp");
+    synchronized (myRequestContextsLock) {
+      myInMemoryRequestContexts.remove(context);
+      if (context.getCachePath() != null) myPersistentRequestContexts.remove(Path.of(context.getCachePath()), context);
+    }
+    context.disposeFromApp();
+  }
+
+  private @NotNull Path normalizeRequestContextCachePath(@NotNull Path cachePath) {
+    String cacheRootValue = Objects.requireNonNull(myCefSettings, "CEF settings are unavailable").cache_path;
+    if (cacheRootValue == null || cacheRootValue.isBlank()) {
+      throw new IllegalStateException("A CEF cache path must be configured before creating a persistent request context");
+    }
+    Path cacheRoot = Path.of(cacheRootValue).toAbsolutePath().normalize();
+    Path normalizedPath = (cachePath.isAbsolute() ? cachePath : cacheRoot.resolve(cachePath)).toAbsolutePath().normalize();
+    Path globalProfilePath = cacheRoot.resolve("Default");
+    if (!normalizedPath.startsWith(cacheRoot) || normalizedPath.equals(cacheRoot) || normalizedPath.startsWith(globalProfilePath)) {
+      throw new IllegalArgumentException("Request context cache path must be below the CEF cache directory and outside the global profile: " + cachePath);
+    }
+    return normalizedPath;
+  }
+
+  private void resetRequestContexts() {
+    List<JBCefRequestContext> contexts;
+    synchronized (myRequestContextsLock) {
+      contexts = new ArrayList<>(myInMemoryRequestContexts);
+      contexts.addAll(myPersistentRequestContexts.values());
+    }
+    contexts.forEach(JBCefRequestContext::resetCefContext);
+  }
+
+  private void releaseRequestContexts() {
+    List<JBCefRequestContext> contexts;
+    synchronized (myRequestContextsLock) {
+      contexts = new ArrayList<>(myInMemoryRequestContexts);
+      contexts.addAll(myPersistentRequestContexts.values());
+    }
+    contexts.forEach(JBCefRequestContext::releaseCefContext);
+  }
+
+  private void disposeRequestContexts() {
+    List<JBCefRequestContext> contexts;
+    synchronized (myRequestContextsLock) {
+      contexts = new ArrayList<>(myInMemoryRequestContexts);
+      contexts.addAll(myPersistentRequestContexts.values());
+      myInMemoryRequestContexts.clear();
+      myPersistentRequestContexts.clear();
+    }
+    contexts.forEach(JBCefRequestContext::disposeFromApp);
   }
 
   public @NotNull CefMessageRouter createMessageRouter(@Nullable CefMessageRouter.CefMessageRouterConfig config) {

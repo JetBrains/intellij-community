@@ -32,13 +32,14 @@ fun createPromoPanel(
   onAction: (() -> Unit)? = null,
   isTrialAvailable: Boolean = onAction != null && PyFrameworkPromoProvider.getInstance()?.isTrialAvailable() == true,
 ): JPanel {
+  val showTrial = isTrialAvailable && onAction != null
   val contentPanel = panel {
     row {
       icon(PythonIcons.Python.Pycharm32).align(AlignY.TOP)
       panel {
         row {
           @Suppress("DialogTitleCapitalization") // PyCharm Pro is literally how we want to see it
-          text(PyBundle.message("pycharm.free.mode.upgrade.title")).align(AlignY.BOTTOM).applyToComponent {
+          text(PyBundle.message(if (showTrial) "pycharm.free.mode.start.trial.title" else "pycharm.free.mode.upgrade.title")).align(AlignY.BOTTOM).applyToComponent {
             font = JBFont.h1()
           }
         }.topGap(TopGap.SMALL)
@@ -68,7 +69,7 @@ fun createPromoPanel(
     }
   }
 
-  val actionButtonText = if (isTrialAvailable && onAction != null) {
+  val actionButtonText = if (showTrial) {
     PyBundle.message("pycharm.free.mode.start.trial.button")
   }
   else {

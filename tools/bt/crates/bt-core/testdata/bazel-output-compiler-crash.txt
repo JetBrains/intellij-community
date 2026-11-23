@@ -1,0 +1,63 @@
+INFO: Invocation ID: 5fc0695b-6fff-4efd-a1d6-1230e563e89c
+INFO: Checking for file changes...
+INFO: Analyzed target //plugins/air/tests/integration/contract:contract_test (1671 packages loaded, 103295 targets configured, 21 aspect applications).
+ERROR: /repo/plugins/air/tests/integration/bridge/BUILD.bazel:74:12: compile //plugins/air/tests/integration/bridge:bridge_test_lib (kt: 463, java: 0) failed: (Exit -1): java failed: error executing JvmCompile command (from _jvm_library_jps rule target //plugins/air/tests/integration/bridge:bridge_test_lib) external/community++jbr_toolchains+remotejbr25_macos_aarch64/bin/java -XX:+UseG1GC '-XX:MinHeapFreeRatio=40' '-XX:MaxHeapFreeRatio=40' -Xmx10g -Xms256m '-XX:SoftRefLRUPolicyMSPerMB=50' ... (remaining 15 arguments skipped)
+Kotlinc Runner: Error: [Internal Error] java.lang.RuntimeException: Error generating class file com/intellij/air/integration/bridge/authored/AirAuthoredBodies.class (compiled from [/cache/MonorepoBazel/4c6/execroot/_main/plugins/air/tests/integration/bridge/testGen/AirAuthoredBodies.generated.kt]): Method too large: com/intellij/air/integration/bridge/authored/AirAuthoredBodies.run (Lcom/intellij/air/integration/bridge/AirUiTestBridges;Lcom/intellij/air/integration/bridge/AirFlowActionAuthoredStep;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	at org.jetbrains.kotlin.codegen.ClassFileFactory$OutputClassFile.asByteArray(ClassFileFactory.kt:207)
+	at org.jetbrains.kotlin.jvm.abi.JvmAbiOutputExtension$AbiOutputFiles.asList(JvmAbiOutputExtension.kt:93)
+	at com.intellij.tools.build.bazel.jvmIncBuilder.impl.KotlinCompilerRunner.lambda$createAbiOutputConsumer$0(KotlinCompilerRunner.java:435)
+	at org.jetbrains.kotlin.jvm.abi.JvmAbiComponentRegistrar.registerExtensions$lambda$0(JvmAbiComponentRegistrar.kt:39)
+	at org.jetbrains.kotlin.jvm.abi.JvmAbiOutputExtension.finalizeClassFactory(JvmAbiOutputExtension.kt:34)
+	at org.jetbrains.kotlin.codegen.ClassFileFactory.done(ClassFileFactory.kt:56)
+	at org.jetbrains.kotlin.backend.jvm.JvmIrCodegenFactory.invokeCodegen(JvmIrCodegenFactory.kt:208)
+	at org.jetbrains.kotlin.cli.pipeline.jvm.JvmCodegenPipelinePhase.executePhase(JvmCodegenPipelinePhase.kt:27)
+	at org.jetbrains.kotlin.cli.pipeline.jvm.JvmBackendPipelinePhase.executePhase(JvmBackendPipelinePhase.kt:23)
+	at org.jetbrains.kotlin.cli.pipeline.jvm.JvmBackendPipelinePhase.executePhase(JvmBackendPipelinePhase.kt:11)
+	at org.jetbrains.kotlin.cli.pipeline.PipelinePhase.phaseBody(PipelinePhase.kt:60)
+	at org.jetbrains.kotlin.cli.pipeline.PipelinePhase.phaseBody(PipelinePhase.kt:50)
+	at org.jetbrains.kotlin.config.phaser.NamedCompilerPhase.invoke(CompilerPhase.kt:102)
+	at org.jetbrains.kotlin.backend.common.phaser.CompositePhase.invoke(PhaseBuilders.kt:22)
+	at org.jetbrains.kotlin.config.phaser.CompilerPhaseKt.invokeToplevel(CompilerPhase.kt:53)
+	at org.jetbrains.kotlin.cli.pipeline.AbstractCliPipeline.runPhasedPipeline(AbstractCliPipeline.kt:134)
+	at org.jetbrains.kotlin.cli.pipeline.AbstractCliPipeline.executeAndReturnPipeLineArtifact(AbstractCliPipeline.kt:88)
+	at org.jetbrains.kotlin.cli.pipeline.AbstractCliPipeline.executeAndReturnPipeLineArtifact$default(AbstractCliPipeline.kt:48)
+	at org.jetbrains.kotlin.cli.pipeline.AbstractCliPipeline.execute(AbstractCliPipeline.kt:39)
+	at com.intellij.tools.build.bazel.jvmIncBuilder.impl.KotlinCompilerRunner.compile(KotlinCompilerRunner.java:206)
+	at com.intellij.tools.build.bazel.jvmIncBuilder.BazelIncBuilder.build(BazelIncBuilder.java:282)
+	at com.intellij.tools.build.bazel.jvmIncBuilder.BazelIncExecutor.execute(BazelIncExecutor.kt:78)
+	at org.jetbrains.bazel.jvm.WorkRequestHandler$executeRequest$$inlined$span$1.invokeSuspend(tracing.kt:51)
+	at org.jetbrains.bazel.jvm.WorkRequestHandler$executeRequest$$inlined$span$1.invoke(tracing.kt)
+	at org.jetbrains.bazel.jvm.WorkRequestHandler$executeRequest$$inlined$span$1.invoke(tracing.kt)
+	at kotlinx.coroutines.intrinsics.UndispatchedKt.startUndispatchedOrReturn(Undispatched.kt:44)
+	at kotlinx.coroutines.BuildersKt__Builders_commonKt.withContext(Builders.common.kt:166)
+	at kotlinx.coroutines.BuildersKt.withContext(Unknown Source)
+	at org.jetbrains.bazel.jvm.WorkRequestHandler.executeRequest$worker_framework_worker_framework(WorkRequestHandler.kt:665)
+	at org.jetbrains.bazel.jvm.WorkRequestHandler.checkStateAndExecuteRequest(WorkRequestHandler.kt:308)
+	at org.jetbrains.bazel.jvm.WorkRequestHandler.access$checkStateAndExecuteRequest(WorkRequestHandler.kt:176)
+	at org.jetbrains.bazel.jvm.WorkRequestHandler$processRequests$2$1$requestJob$1.invokeSuspend(WorkRequestHandler.kt:262)
+	at kotlin.coroutines.jvm.internal.BaseContinuationImpl.resumeWith(ContinuationImpl.kt:34)
+	at kotlinx.coroutines.DispatchedTask.run(DispatchedTask.kt:100)
+	at kotlinx.coroutines.internal.LimitedDispatcher$Worker.run(LimitedDispatcher.kt:113)
+	at kotlinx.coroutines.scheduling.TaskImpl.run(Tasks.kt:89)
+	at kotlinx.coroutines.scheduling.CoroutineScheduler.runSafely(CoroutineScheduler.kt:613)
+	at kotlinx.coroutines.scheduling.CoroutineScheduler$Worker.executeTask(CoroutineScheduler.kt:1189)
+	at kotlinx.coroutines.scheduling.CoroutineScheduler$Worker.runWorker(CoroutineScheduler.kt:778)
+	at kotlinx.coroutines.scheduling.CoroutineScheduler$Worker.run(CoroutineScheduler.kt:765)
+Caused by: org.jetbrains.org.objectweb.asm.MethodTooLargeException: Method too large: com/intellij/air/integration/bridge/authored/AirAuthoredBodies.run (Lcom/intellij/air/integration/bridge/AirUiTestBridges;Lcom/intellij/air/integration/bridge/AirFlowActionAuthoredStep;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	at org.jetbrains.org.objectweb.asm.MethodWriter.computeMethodInfoSize(MethodWriter.java:2088)
+	at org.jetbrains.org.objectweb.asm.ClassWriter.toByteArray(ClassWriter.java:512)
+	at org.jetbrains.org.objectweb.asm.ClassWriter.replaceAsmInstructions(ClassWriter.java:782)
+	at org.jetbrains.org.objectweb.asm.ClassWriter.toByteArray(ClassWriter.java:741)
+	at org.jetbrains.kotlin.codegen.ClassBuilderFactories$1.asBytes(ClassBuilderFactories.java:82)
+	at org.jetbrains.kotlin.codegen.DelegatingClassBuilderFactory.asBytes(DelegatingClassBuilderFactory.kt:27)
+	at org.jetbrains.kotlin.codegen.DelegatingClassBuilderFactory.asBytes(DelegatingClassBuilderFactory.kt:27)
+	at org.jetbrains.kotlin.codegen.DelegatingClassBuilderFactory.asBytes(DelegatingClassBuilderFactory.kt:27)
+	at org.jetbrains.kotlin.codegen.ClassFileFactory$ClassBuilderAndSourceFileList.asBytes(ClassFileFactory.kt:230)
+	at org.jetbrains.kotlin.codegen.ClassFileFactory$OutputClassFile.asByteArray(ClassFileFactory.kt:205)
+	... 39 more
+
+Target //plugins/air/tests/integration/contract:contract_test failed to build
+Use --verbose_failures to see the command lines of failed build steps.
+INFO: Elapsed time: 226.538s, Critical Path: 181.38s
+INFO: 10 processes: 1194 action cache hit, 8 disk cache hit, 2 internal.
+ERROR: Build did NOT complete successfully

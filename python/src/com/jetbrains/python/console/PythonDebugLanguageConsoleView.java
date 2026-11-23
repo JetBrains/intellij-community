@@ -2,6 +2,7 @@
 package com.jetbrains.python.console;
 
 import com.intellij.execution.console.DuplexConsoleView;
+import com.intellij.python.sdk.backend.PythonInterpreter;
 import com.intellij.execution.filters.TextConsoleBuilderFactory;
 import com.intellij.execution.impl.ConsoleViewImpl;
 import com.intellij.execution.process.AnsiEscapeDecoder;
@@ -15,7 +16,6 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapAppliancePlaces;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -53,8 +53,8 @@ public class PythonDebugLanguageConsoleView extends DuplexConsoleView<ConsoleVie
    * @param testMode this console will be used to display test output and should support TC messages
    */
   @SuppressWarnings("IncorrectParentDisposable") // the project is the shortest lifetime available before the adoption
-  public PythonDebugLanguageConsoleView(final Project project, Sdk sdk, ConsoleView consoleView, final boolean testMode) {
-    super(consoleView, createPydevConsoleView(project, sdk, testMode, consoleView));
+  public PythonDebugLanguageConsoleView(final Project project, @Nullable PythonInterpreter interpreter, ConsoleView consoleView, final boolean testMode) {
+    super(consoleView, createPydevConsoleView(project, interpreter, testMode, consoleView));
 
     // The super constructor made this console the owner of the two consoles. This console needs an owner of its own,
     // because a RunContentDescriptor adopts it much later. XDebugSessionImpl.init makes that descriptor, and the
@@ -83,8 +83,8 @@ public class PythonDebugLanguageConsoleView extends DuplexConsoleView<ConsoleVie
     getPydevConsoleView().getEditor().getSettings().setUseSoftWraps(isUseSoftWraps);
   }
 
-  public PythonDebugLanguageConsoleView(final Project project, Sdk sdk) {
-    this(project, sdk, TextConsoleBuilderFactory.getInstance().createBuilder(project).getConsole(), false);
+  public PythonDebugLanguageConsoleView(final Project project, @Nullable PythonInterpreter interpreter) {
+    this(project, interpreter, TextConsoleBuilderFactory.getInstance().createBuilder(project).getConsole(), false);
   }
 
   /**
@@ -102,10 +102,10 @@ public class PythonDebugLanguageConsoleView extends DuplexConsoleView<ConsoleVie
    * on a closing project. The project owns the consoles in that case, so neither one stays at the Disposer root.
    */
   @SuppressWarnings("IncorrectParentDisposable") // the project is the shortest lifetime available before the adoption
-  private static PythonConsoleView createPydevConsoleView(Project project, Sdk sdk, boolean testMode, ConsoleView primaryConsoleView) {
+  private static PythonConsoleView createPydevConsoleView(Project project, @Nullable PythonInterpreter interpreter, boolean testMode, ConsoleView primaryConsoleView) {
     Disposer.tryRegister(project, primaryConsoleView);
     try {
-      PythonConsoleView pydevConsoleView = new PythonConsoleView(project, PyBundle.message("python.console"), sdk, testMode);
+      PythonConsoleView pydevConsoleView = new PythonConsoleView(project, PyBundle.message("python.console"), interpreter, testMode);
       Disposer.tryRegister(project, pydevConsoleView);
       return pydevConsoleView;
     }

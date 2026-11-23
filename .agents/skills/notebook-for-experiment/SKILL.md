@@ -7,22 +7,6 @@ description: Create reproducible Jupyter notebooks for performance experiments.
 
 ## Tooling
 
-### Installing uv
-
-`uv` is the recommended tool for running notebooks — it requires no global Jupyter installation,
-pins exact dependency versions per invocation, and keeps each invocation's environment isolated.
-There are no conflicts with system Python or existing virtualenvs.
-
-Install on macOS / Linux:
-```bash
-curl -LsSf https://astral.sh/uv/install.sh | sh
-```
-
-Install on Windows (PowerShell):
-```powershell
-powershell -c "irm https://astral.sh/uv/install.ps1 | iex"
-```
-
 Inside the IntelliJ monorepo, use the pinned wrapper instead of a system `uv`.
 It downloads and caches the right version automatically:
 
@@ -65,7 +49,7 @@ uv run ${CLAUDE_SKILL_DIR}/scripts/nb.py expand-cells notebook.ipynb
 uv run ${CLAUDE_SKILL_DIR}/scripts/nb.py collapse-cells notebook.ipynb --keep 1 4
 
 # Apply the patch(es) embedded in the last cell to a git repo
-# --repo is required when the notebook and repo are on different paths
+# --repo defaults to the current working directory
 uv run ${CLAUDE_SKILL_DIR}/scripts/nb.py apply-patch notebook.ipynb --repo /path/to/repo
 
 # Apply the patch(es) embedded in a specific cell
@@ -93,50 +77,15 @@ nb.py carries inline dependency metadata (PEP 723), so uv installs the required 
 (nbconvert, jupyter-client, ipykernel, numpy, pandas, matplotlib, plotly) automatically
 for commands that need them.
 
-If system `uv` is not available, use the pinned monorepo wrapper instead:
-
-```bash
-# Full monorepo layout:
-./community/tools/uv.cmd run ${CLAUDE_SKILL_DIR}/scripts/nb.py list-cells notebook.ipynb
-
-# Community-only checkout:
-./tools/uv.cmd run ${CLAUDE_SKILL_DIR}/scripts/nb.py list-cells notebook.ipynb
-```
-
-### Passing complex arguments on Windows
-
-PowerShell and cmd.exe handle escaping poorly for arguments containing backslashes, spaces, or
-special characters (e.g. JVM options with UNC paths). Store the value in an environment variable
-first to sidestep the problem.
-
-Bash:
-```bash
-export WSL_PROJECT='\\wsl.localhost\Ubuntu-24.04\home\yourname\idea'
-./tests.cmd --jvm-option "-Dijent.wsl.project.root=$WSL_PROJECT"
-```
-
-PowerShell:
-```powershell
-$env:WSL_PROJECT = '\\wsl.localhost\Ubuntu-24.04\home\yourname\idea'
-./tests.cmd --jvm-option "-Dijent.wsl.project.root=$env:WSL_PROJECT"
-```
-
-The same technique applies for any argument that would be hard to inline-escape: paths, output
-directories, or flags that differ per engineer. The Kotlin side can read the value via
-`System.getProperty("...")` or `System.getenv("...")`.
+If system `uv` is not available, use the pinned monorepo wrapper instead.
 
 ## Cell visibility
 
 By convention, notebooks should open with all boilerplate code collapsed so the
 reader only sees the config cell they need to edit. Use `collapse-cells` after
-finishing the notebook structure:
+finishing the notebook structure.
 
-```bash
-uv run ${CLAUDE_SKILL_DIR}/scripts/nb.py collapse-cells notebook.ipynb
-```
-
-This hides all code cells except cell 1 (the standard config cell). To mark a
-different cell as permanently visible, add the tag `nb:visible` to its metadata:
+To mark a different cell as permanently visible, add the tag `nb:visible` to its metadata:
 
 ```python
 # In a one-off update script:
@@ -145,11 +94,7 @@ nb["cells"][4]["metadata"].setdefault("tags", []).append("nb:visible")
 
 When any code cell carries `nb:visible`, the tag takes precedence over `--keep`.
 
-After collapsing, open the notebook in the browser to verify the layout before committing:
-
-```bash
-uv run ${CLAUDE_SKILL_DIR}/scripts/nb.py serve notebook.ipynb
-```
+After collapsing, open the notebook in the browser with `nb.py serve` to verify the layout before committing.
 
 ## Standard cell layout
 
@@ -172,13 +117,8 @@ Every notebook must be self-contained enough for a different engineer on a diffe
   The commit must belong to a stable branch — `origin/master` or a release branch (three-digit major version and maybe a minor version after a dot, e.g. `origin/261`, `origin/261.12345`).
   Feature branches are deleted after merging, so a hash reachable only from a feature branch becomes inaccessible to anyone trying to reproduce the results.
 - **Full patch in last cell**: embed the exact diff as a fenced block.
-  Bash / macOS / Linux:
   ```bash
   git diff $(git merge-base <stable branch> <hash>) <hash>
-  ```
-  PowerShell:
-  ```powershell
-  git diff (git merge-base <stable branch> <hash>) <hash>
   ```
   If an instrumentation patch was applied separately (not merged), include it too.
 - **Exact run command**: the title cell must contain the complete command including module and test class FQN.
@@ -200,24 +140,15 @@ If a test result depends on any random or session-specific factor, **ask the use
 
 ## Test design
 
-The fewer steps a user needs to collect data, the better. The ideal: apply one patch, run one
-command, open the notebook.
-
 **Aim for a single test invocation.** Put all measurements in one test class. If measurements
 share setup (e.g. opening and indexing a project), run them in sequence inside one test method,
 or as `@Order`-annotated methods that always run together as a group.
 
-**Use a single patch.** Combine instrumentation and test changes into one diff. Two patches
-double the preparation steps for anyone trying to reproduce the results.
-
-**Anti-pattern:** a notebook that requires running an indexing test and a rename test as separate
-invocations (different `--module` flags, different log files to locate) forces a two-step recipe.
-Merge the measurements into one test class so a single command generates all data.
+**Use a single patch.** Combine instrumentation and test changes into one diff.
 
 **Verify that the experiment code compiles** before embedding the patch in the notebook.
 Run `./tests.cmd --module <module> --test <FQN>` — Bazel compilation runs as part of the
-test launch even if the test fails at runtime. Fix any compilation errors before the diff
-goes into the patch cell.
+test launch even if the test fails at runtime.
 
 ## Machine info cell
 
@@ -281,8 +212,6 @@ else:
         pass
 ```
 
-This scales to any number of variants without duplicating the guard logic.
-
 Never `raise` or `sys.exit()` inside an analysis cell — that aborts the entire notebook execution.
 The `find_log` function is intentionally different: it raises because it guards a hard prerequisite
 (the test must have run), while availability guards handle optional configurations.
@@ -291,29 +220,9 @@ The `find_log` function is intentionally different: it raises because it guards 
 
 To change cell content without running a full Jupyter server:
 
-1. **For a single cell** — use `nb.py set-cell` with `-` to read from stdin:
+1. **For a single cell** — use `nb.py set-cell` with `-` to read from stdin.
 
-   Bash (macOS / Linux / Git Bash):
-   ```bash
-   uv run ${CLAUDE_SKILL_DIR}/scripts/nb.py set-cell notebook.ipynb 3 - <<'EOF'
-   import pandas as pd
-   df = pd.read_csv(log_path)
-   EOF
-   ```
-
-   PowerShell:
-   ```powershell
-   @"
-   import pandas as pd
-   df = pd.read_csv(log_path)
-   "@ | uv run ${CLAUDE_SKILL_DIR}/scripts/nb.py set-cell notebook.ipynb 3 -
-   ```
-
-   Passing a file path instead of `-` is also supported when the content is already on disk.
-
-   `set-cell` preserves the existing cell type — replacing a markdown cell with a `.md`
-   file leaves it as markdown; replacing a code cell leaves it as code. Outputs are
-   cleared only for code cells (stale outputs from old code would be misleading).
+   `set-cell` keeps the existing cell type. It clears the outputs only of a code cell.
 
 2. **For multi-cell edits** — write a temporary Python script that manipulates the JSON directly,
    run it, then delete the script:
@@ -336,44 +245,21 @@ To change cell content without running a full Jupyter server:
    ```
 
 3. **After modifying experiment source files** (Kotlin, Java, Rust, etc.) that are part
-   of the patch — run `update-patch` to bake the updated diff back into the last cell:
-   ```bash
-   uv run ${CLAUDE_SKILL_DIR}/scripts/nb.py update-patch notebook.ipynb \
-       --repo /path/to/repo
-   # or, if you have staged the changes instead:
-   uv run ${CLAUDE_SKILL_DIR}/scripts/nb.py update-patch notebook.ipynb \
-       --repo /path/to/repo --staged
-   ```
+   of the patch — run `update-patch` to bake the updated diff back into the last cell.
+   Add `--staged` if you have staged the changes instead.
    Do this after every iteration on the experiment code so the patch cell always
-   reflects exactly what was applied when the data was collected. Forgetting this step
-   is a common source of stale patches in committed notebooks.
+   reflects exactly what was applied when the data was collected.
 
-4. **Re-execute** to refresh all outputs:
-   ```bash
-   uv run ${CLAUDE_SKILL_DIR}/scripts/nb.py execute notebook.ipynb
-   ```
+4. **Re-execute** with `execute` to refresh all outputs.
 
-The notebook file itself is the artifact to commit; keep any update scripts temporary.
+The notebook file itself is the artifact to commit.
 
 ## Cell content guidelines
 
 ### Static text: use Markdown, not `print()`
 
 A code cell that only calls `print("...")` or `print("""...""")` with literal strings should
-be a Markdown cell instead. Markdown cells render with proper headings, bold, tables, and
-links; `print()` output is plain monospace with no formatting.
-
-**Do** — markdown cell:
-```
-## Key finding
-
-The root cause is …
-```
-
-**Don't** — code cell:
-```python
-print("""Key finding\n\nThe root cause is …""")
-```
+be a Markdown cell instead.
 
 Only use `print()` for values computed at runtime (log paths, parsed numbers, verdicts that
 depend on data).
@@ -381,11 +267,7 @@ depend on data).
 ### Measurements: add visual plots
 
 Every cell that produces a table of measured values should also (or instead) produce a
-`matplotlib` figure. Prefer:
-
-- **Bar charts** for comparing values across configurations or time points.
-- **Histograms** for distributions (e.g. batch-size counts).
-- **Pie / stacked-bar charts** for proportions (e.g. special-channel vs gRPC bytes).
+`matplotlib` figure.
 
 Use `plt.show()` so outputs are embedded in the notebook.  When data for a configuration is
 unavailable (guarded by an `_ok` flag), skip its bars rather than crashing.
@@ -394,43 +276,11 @@ unavailable (guarded by an `_ok` flag), skip its bars rather than crashing.
 
 When an analysis cell produces a table — comparison results, per-variant stats, ranked lists — use
 a `pandas` DataFrame instead of building ASCII tables with `print()` and string formatting.
-Jupyter renders DataFrames as HTML automatically; the output is sortable, readable, and
-copy-paste friendly.
 
-**Do** — DataFrame output:
-```python
-import pandas as pd
-
-rows = [
-    {"variant": "baseline", "p50_ms": 120, "p99_ms": 340},
-    {"variant": "nagle",    "p50_ms": 118, "p99_ms": 310},
-    {"variant": "nodelay",  "p50_ms":  95, "p99_ms": 270},
-]
-df = pd.DataFrame(rows)
-display(df)
-```
-
-**Don't** — manual ASCII table:
-```python
-print(f"{'variant':<10} {'p50_ms':>8} {'p99_ms':>8}")
-for r in rows:
-    print(f"{r['variant']:<10} {r['p50_ms']:>8} {r['p99_ms']:>8}")
-```
-
-Use pandas for the full data lifecycle inside notebook cells:
-
-- **Loading:** `pd.read_csv(log_path)` or construct from parsed dicts/lists.
-- **Transforming:** `df.groupby(...).agg(...)`, `df.assign(delta=df.after - df.before)`.
-- **Displaying:** `display(df)` (HTML table) or `display(df.describe())` for quick stats.
-- **Feeding plots:** `df.plot.bar(x="variant", y=["p50_ms", "p99_ms"])` integrates directly with matplotlib.
+Use pandas for the full data lifecycle inside notebook cells: loading, transforming, displaying, and feeding plots.
 
 Declare `pandas` in the imports cell (cell 3) so it is available to all subsequent analysis cells.
 
 ## Anti-patterns
 
 - Hardcoded absolute log paths — breaks on every other machine.
-- No commit hash or patch — results cannot be reproduced.
-- Tests that reuse index caches or download shared indexes — results vary between runs.
-- Tests that run on the wrong filesystem silently (WSL/Docker path bugs) — data measures the wrong thing.
-- `raise` / `sys.exit()` on missing data — breaks "run all cells".
-- Measuring a workload with an unverified random or session-specific factor without asking the user.

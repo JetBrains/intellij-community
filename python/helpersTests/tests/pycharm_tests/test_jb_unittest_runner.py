@@ -13,6 +13,40 @@ from testing import python2_only
 from testing import python3_only
 
 
+class RunnerProcessTestCase(HelpersTestCase):
+    def _write(self, name, content):
+        with open(self.resolve_in_temp_dir(name), "w") as f:
+            f.write(textwrap.dedent(content))
+
+    def _run_script(self, script, *args):
+        return self._run_helper(args, {"JB_UNITTEST_RUNNER_SCRIPT": script})
+
+    def _run_helper(self, args, extra_env=None):
+        env = os.environ.copy()
+        env.update(extra_env or {})
+        env["PWD"] = self.temp_dir
+
+        return subprocess.run(
+            [sys.executable, os.path.join(_helpers_pycharm_root, "_jb_unittest_runner.py")] + list(args),
+            cwd=self.temp_dir,
+            env=env,
+            capture_output=True,
+            text=True,
+        )
+
+    @staticmethod
+    def _node_ids(output):
+        return {
+            name: (node_id, parent_id)
+            for name, node_id, parent_id in re.findall(
+                r"##teamcity\[testStarted .*?name='([^']+)' nodeId='([0-9]+)' parentNodeId='([0-9]+)'", output)
+        }
+
+    @staticmethod
+    def _test_events(output):
+        return re.findall(r"##teamcity\[(testStarted|testFailed|testFinished) .*? name='([^']+)'", output)
+
+
 class JBUnittestRunnerTest(HelpersTestCase):
     @python3_only
     def test_path_doesnt_exist(self):
@@ -27,24 +61,21 @@ class JBUnittestRunnerTest(HelpersTestCase):
                 path=None,
                 targets=["test_some_func.SomeFuncTestCase"],
                 additional_args=[],
-                verbose=False,
                 project_dir="/project_dir",
             ),
             [
                 "python -m unittest",
                 "test_some_func.SomeFuncTestCase",
-                "--quiet",
             ],
         )
 
     @python3_only
-    def test_quiet_discover(self):
+    def test_discover(self):
         self.assertEqual(
             build_unittest_args(
                 path=self.temp_dir,
                 targets=None,
                 additional_args=[],
-                verbose=False,
                 project_dir="/project_dir",
             ),
             [
@@ -54,28 +85,6 @@ class JBUnittestRunnerTest(HelpersTestCase):
                 self.temp_dir,
                 "-t",
                 "/project_dir",
-                "--quiet",
-            ],
-        )
-
-    @python3_only
-    def test_verbose_discover(self):
-        self.assertEqual(
-            build_unittest_args(
-                path=self.temp_dir,
-                targets=None,
-                additional_args=[],
-                verbose=True,
-                project_dir="/project_dir",
-            ),
-            [
-                "python -m unittest",
-                "discover",
-                "-s",
-                self.temp_dir,
-                "-t",
-                "/project_dir",
-                "--verbose",
             ],
         )
 
@@ -86,7 +95,6 @@ class JBUnittestRunnerTest(HelpersTestCase):
                 path=self.temp_dir,
                 targets=None,
                 additional_args=[],
-                verbose=True,
                 project_dir="/project_dir",
             ),
             [
@@ -96,7 +104,6 @@ class JBUnittestRunnerTest(HelpersTestCase):
                 self.temp_dir,
                 "-t",
                 "/project_dir",
-                "--verbose",
             ],
         )
 
@@ -110,7 +117,6 @@ class JBUnittestRunnerTest(HelpersTestCase):
                 path=temp_file,
                 targets=None,
                 additional_args=[],
-                verbose=True,
                 project_dir="/project_dir",
             ),
             [
@@ -122,7 +128,6 @@ class JBUnittestRunnerTest(HelpersTestCase):
                 os.path.basename(temp_file),
                 "-t",
                 "/project_dir",
-                "--verbose",
             ],
         )
 
@@ -136,13 +141,11 @@ class JBUnittestRunnerTest(HelpersTestCase):
                 path=temp_file,
                 targets=None,
                 additional_args=[],
-                verbose=True,
                 project_dir="/project_dir",
             ),
             [
                 "python -m unittest",
                 temp_file,
-                "--verbose",
             ],
         )
 
@@ -153,33 +156,13 @@ class JBUnittestRunnerTest(HelpersTestCase):
                 path=None,
                 targets=["test_some_func.SomeFuncTestCase"],
                 additional_args=["--locals", "-f"],
-                verbose=True,
                 project_dir="/project_dir",
             ),
             [
                 "python -m unittest",
                 "test_some_func.SomeFuncTestCase",
-                "--verbose",
                 "--locals",
                 "-f",
-            ],
-        )
-
-    @python3_only
-    def test_user_overrides_verbosity(self):
-        self.assertEqual(
-            build_unittest_args(
-                path=None,
-                targets=["test_some_func.SomeFuncTestCase"],
-                additional_args=["--quiet"],
-                verbose=True,
-                project_dir="/project_dir",
-            ),
-            [
-                "python -m unittest",
-                "test_some_func.SomeFuncTestCase",
-                "--verbose",
-                "--quiet",
             ],
         )
 
@@ -193,19 +176,17 @@ class JBUnittestRunnerTest(HelpersTestCase):
                     "test_some_func.SomeFuncTestCase.test_false_2",
                 ],
                 additional_args=[],
-                verbose=False,
                 project_dir="/project_dir",
             ),
             [
                 "python -m unittest",
                 "test_some_func.SomeFuncTestCase.test_false_1",
                 "test_some_func.SomeFuncTestCase.test_false_2",
-                "--quiet",
             ],
         )
 
 
-class JBUnittestRunnerScriptTest(HelpersTestCase):
+class JBUnittestRunnerScriptTest(RunnerProcessTestCase):
     def test_runner_script_targets(self):
         self.assertEqual(
             build_runner_script_args(
@@ -301,7 +282,7 @@ class JBUnittestRunnerScriptTest(HelpersTestCase):
                             self.assertEqual(i, 0)
         """)
 
-        result = self._run_helper("runtests.py", "--target", "test_sample.SampleTest")
+        result = self._run_script("runtests.py", "--target", "test_sample.SampleTest")
 
         self.assertEqual(result.returncode, 1, msg=result.stdout + result.stderr)
         self.assertEqual(
@@ -350,7 +331,7 @@ class JBUnittestRunnerScriptTest(HelpersTestCase):
                     pass
         """)
 
-        result = self._run_helper("runtests.py", "--target", "test_sample.SampleTest")
+        result = self._run_script("runtests.py", "--target", "test_sample.SampleTest")
 
         self.assertEqual(result.returncode, 0, msg=result.stdout + result.stderr)
         self.assertEqual(self._test_events(result.stdout), [("testStarted", "test_pass"), ("testFinished", "test_pass")])
@@ -374,7 +355,7 @@ class JBUnittestRunnerScriptTest(HelpersTestCase):
             result.stopTest(test)
         """)
 
-        result = self._run_helper("runtests.py")
+        result = self._run_script("runtests.py")
 
         self.assertEqual(result.returncode, 0, msg=result.stdout + result.stderr)
         durations = re.findall(r"##teamcity\[testFinished .*?duration='([0-9]+)'", result.stdout)
@@ -412,36 +393,62 @@ class JBUnittestRunnerScriptTest(HelpersTestCase):
                     pass
         """)
 
-        result = self._run_helper("runtests.py")
+        result = self._run_script("runtests.py")
 
         self.assertEqual(result.returncode, 0, msg=result.stdout + result.stderr)
         suites = re.findall(r"##teamcity\[testSuiteStarted .*? name='([^']+)'", result.stdout)
         self.assertEqual(suites, ["test_sample", "FirstTest", "SecondTest"])
 
-    def _write(self, name, content):
-        with open(self.resolve_in_temp_dir(name), "w") as f:
-            f.write(textwrap.dedent(content))
 
-    def _run_helper(self, script, *args):
-        env = os.environ.copy()
-        env["JB_UNITTEST_RUNNER_SCRIPT"] = script
-        env["PWD"] = self.temp_dir
-        return subprocess.run(
-            [sys.executable, os.path.join(_helpers_pycharm_root, "_jb_unittest_runner.py")] + list(args),
-            cwd=self.temp_dir,
-            env=env,
-            capture_output=True,
-            text=True,
+class JBUnittestRunnerMainTest(RunnerProcessTestCase):
+    def setUp(self):
+        super(JBUnittestRunnerMainTest, self).setUp()
+        os.makedirs(self.resolve_in_temp_dir("testmodule"))
+        self._write(os.path.join("testmodule", "test.py"), """\
+            import unittest
+
+            class SampleTest(unittest.TestCase):
+                def test_pass(self):
+                    pass
+        """)
+
+    @python3_only
+    def test_user_discover_args(self):
+        result = self._run_helper(["--", "discover", "testmodule", "*.py"])
+
+        self.assertEqual(result.returncode, 0, msg=result.stdout + result.stderr)
+        self.assertEqual(
+            self._test_events(result.stdout),
+            [
+                ("testStarted", "test_pass"),
+                ("testFinished", "test_pass"),
+            ],
         )
 
-    @staticmethod
-    def _node_ids(output):
-        return {
-            name: (node_id, parent_id)
-            for name, node_id, parent_id in re.findall(
-                r"##teamcity\[testStarted .*?name='([^']+)' nodeId='([0-9]+)' parentNodeId='([0-9]+)'", output)
-        }
+    @python3_only
+    def test_quiet_by_default(self):
+        result = self._run_helper(["--target", "testmodule.test.SampleTest"])
 
-    @staticmethod
-    def _test_events(output):
-        return re.findall(r"##teamcity\[(testStarted|testFailed|testFinished) .*? name='([^']+)'", output)
+        self.assertEqual(result.returncode, 0, msg=result.stdout + result.stderr)
+        self.assertNotIn(" ... ok", result.stdout + result.stderr)
+
+    @python3_only
+    def test_jb_verbose(self):
+        result = self._run_helper(["--target", "testmodule.test.SampleTest"], {"JB_VERBOSE": "1"})
+
+        self.assertEqual(result.returncode, 0, msg=result.stdout + result.stderr)
+        self.assertIn(" ... ok", result.stdout + result.stderr)
+
+    @python3_only
+    def test_user_verbose_flag(self):
+        result = self._run_helper(["--", "discover", "testmodule", "*.py", "--verbose"])
+
+        self.assertEqual(result.returncode, 0, msg=result.stdout + result.stderr)
+        self.assertIn(" ... ok", result.stdout + result.stderr)
+
+    @python3_only
+    def test_user_quiet_flag_overrides_jb_verbose(self):
+        result = self._run_helper(["--target", "testmodule.test.SampleTest", "--", "--quiet"], {"JB_VERBOSE": "1"})
+
+        self.assertEqual(result.returncode, 0, msg=result.stdout + result.stderr)
+        self.assertNotIn(" ... ok", result.stdout + result.stderr)

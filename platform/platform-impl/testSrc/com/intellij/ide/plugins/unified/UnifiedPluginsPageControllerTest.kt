@@ -201,20 +201,20 @@ internal class UnifiedPluginsPageControllerTest {
   }
 
   @Test
-  fun `failed custom repository remains visible without a query until retry`() {
+  fun `custom repository shows loading and failure without a query`() {
     val repositoryId = PluginSectionId.CustomRepository("repository")
     val error = PluginSectionError("Unable to load repository plugins", retryable = true)
     val controller = UnifiedPluginsPageController(
       listOf(PluginSectionState(repositoryId, status = PluginSectionStatus.Loading(false)))
     )
 
-    assertThat(controller.state.value.sections.map { it.id }).doesNotContain(repositoryId)
+    assertThat(controller.state.value.sections.map { it.id }).contains(repositoryId)
 
     controller.updateSection(PluginSectionState(repositoryId, status = PluginSectionStatus.Failed(error)))
     assertThat(controller.state.value.sections.map { it.id }).contains(repositoryId)
 
     controller.updateSection(PluginSectionState(repositoryId, status = PluginSectionStatus.Loading(false)))
-    assertThat(controller.state.value.sections.map { it.id }).doesNotContain(repositoryId)
+    assertThat(controller.state.value.sections.map { it.id }).contains(repositoryId)
 
     controller.updateSection(PluginSectionState(repositoryId))
     assertThat(controller.state.value.sections.map { it.id }).doesNotContain(repositoryId)
@@ -646,6 +646,23 @@ internal class UnifiedPluginsPageControllerTest {
     )
     assertThat(controller.state.value.section(PluginSectionId.Installed).items.map(PluginItemState::pluginId))
       .containsExactly(first.pluginId, added.pluginId, second.pluginId)
+  }
+
+  @Test
+  fun `Suggested keeps the order within each group on refresh`() {
+    val project = item("project.first")
+    val newProject = item("project.new")
+    val firstPick = item("staff.first").copy(suggestedGroup = SuggestedPluginGroup.StaffPicks)
+    val secondPick = item("staff.second").copy(suggestedGroup = SuggestedPluginGroup.StaffPicks)
+    val newPick = item("staff.new").copy(suggestedGroup = SuggestedPluginGroup.StaffPicks)
+    val marketplace = item("marketplace.first").copy(suggestedGroup = SuggestedPluginGroup.Marketplace)
+    val suggested = PluginSectionState(PluginSectionId.Suggested, items = listOf(project, firstPick, secondPick, marketplace))
+    val controller = UnifiedPluginsPageController(listOf(suggested))
+
+    controller.updateSection(suggested.copy(items = listOf(newProject, project, newPick, secondPick, firstPick, marketplace)))
+
+    assertThat(controller.state.value.section(PluginSectionId.Suggested).items)
+      .containsExactly(project, newProject, firstPick, secondPick, newPick, marketplace)
   }
 
   @Test

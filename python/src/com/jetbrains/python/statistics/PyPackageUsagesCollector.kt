@@ -20,7 +20,7 @@ internal class PyPackageVersionUsagesCollector : ProjectUsagesCollector() {
     // creation path carries no PythonSdkAdditionalData, which `forSdk` is keyed by, and reporting statistics must not
     // fail over one (PY-90784).
     for (interpreter in project.pythonInterpreters()) {
-      val manager = PythonPackageManager.forPythonInterpreter(project, interpreter)
+      val manager = PythonPackageManager.forPythonInterpreter(interpreter)
       addAll(manager.getDeclaredPackages())
       addAll(manager.getInstalledPackages())
     }

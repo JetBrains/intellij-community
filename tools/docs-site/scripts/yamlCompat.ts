@@ -1,24 +1,25 @@
-// YAML runtime compatibility. The docs scripts normally run under node with docs/node_modules
-// installed, but the architecture gate (scripts/gate.ts) also runs under the repo-pinned bun
-// (community/tools/bun.cmd) inside the Bazel test sandbox, where node_modules may be absent.
-// Parsing falls back to the Bun.YAML built-in there; stringification (the npm `yaml` Document
-// API, needed only when regenerating the committed files) stays npm-only.
+// YAML runtime compatibility. On bun, a docs script parses YAML with the Bun.YAML built-in. The gate of a site
+// (scripts/gate.ts) runs on the bun that Bazel declares, with no node_modules, so a script on bun reads YAML the same
+// way with and without the installed packages. On node, a docs script parses with the npm `yaml` package of the site.
 
-let yamlModule: typeof import('yaml') | null
-try {
-  yamlModule = await import('yaml')
-}
-catch {
-  yamlModule = null
+const bunYaml = (globalThis as { Bun?: { YAML?: { parse: (text: string) => unknown } } }).Bun?.YAML
+
+let yamlModule: typeof import('yaml') | null = null
+if (bunYaml === undefined) {
+  try {
+    yamlModule = await import('yaml')
+  }
+  catch {
+    yamlModule = null
+  }
 }
 
 export function parseYaml(text: string): unknown {
-  if (yamlModule) {
-    return yamlModule.parse(text, { prettyErrors: true })
-  }
-  const bunYaml = (globalThis as { Bun?: { YAML?: { parse: (text: string) => unknown } } }).Bun?.YAML
   if (bunYaml) {
     return bunYaml.parse(text)
+  }
+  if (yamlModule) {
+    return yamlModule.parse(text, { prettyErrors: true })
   }
   throw new Error("no YAML parser available: the npm 'yaml' package is not installed and Bun.YAML is missing")
 }

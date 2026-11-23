@@ -11,6 +11,11 @@ import com.intellij.testFramework.PsiTestUtil
 import com.intellij.util.PathUtil
 import org.jetbrains.annotations.ApiStatus
 
+/**
+ * @deprecated Use [overrideOnlyApiProjectFixture] and [overrideOnlyApiInspectionFixture] in a JUnit 5 test.
+ */
+@Suppress("DEPRECATION")
+@Deprecated("Use overrideOnlyApiProjectFixture and overrideOnlyApiInspectionFixture in a JUnit 5 test")
 abstract class OverrideOnlyApiInspectionTestBase : JvmInspectionTestBase() {
   override val inspection: OverrideOnlyApiInspection = OverrideOnlyApiInspection()
 

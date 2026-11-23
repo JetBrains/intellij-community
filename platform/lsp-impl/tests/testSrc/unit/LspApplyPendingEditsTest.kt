@@ -4,8 +4,8 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.platform.lsp.impl.features.highlightingCommon.LspCachedHighlighting
 import com.intellij.platform.lsp.impl.features.highlightingCommon.PendingEdit
 import com.intellij.platform.lsp.impl.features.highlightingCommon.applyPendingEdits
-import org.junit.Assert.assertEquals
-import org.junit.Test
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Test
 
 class LspApplyPendingEditsTest {
 

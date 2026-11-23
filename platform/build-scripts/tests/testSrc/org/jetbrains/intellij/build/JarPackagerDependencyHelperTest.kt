@@ -39,7 +39,7 @@ internal class JarPackagerDependencyHelperTest {
 
     assertThat(content).isEqualTo(DESCRIPTOR)
     // The negative half is the point: a production read is what declares the empty stub jar of a `.tests` module as
-    // an input of a dev-distribution fragment, and the fragment never declared it.
+    // an input of a distribution fragment, and the fragment never declared it.
     assertThat(provider.requestedForTests).containsExactly(true)
   }
 

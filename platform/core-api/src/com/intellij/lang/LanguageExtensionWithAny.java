@@ -21,6 +21,11 @@ public class LanguageExtensionWithAny<T> extends LanguageExtension<T> {
   }
 
   @Override
+  protected @NotNull @Unmodifiable List<ExtensionWithModule<T>> buildExtensionsWithModules(@NotNull String stringKey, @NotNull Language key) {
+    return buildExtensionsWithModules(getAllBaseLanguageIdsWithAny(key));
+  }
+
+  @Override
   public void invalidateCacheForExtension(@NotNull String key) {
     super.invalidateCacheForExtension(key);
 

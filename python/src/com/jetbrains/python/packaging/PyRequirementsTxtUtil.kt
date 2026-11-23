@@ -2,6 +2,8 @@
 package com.jetbrains.python.packaging
 
 import com.intellij.notification.NotificationAction
+import com.intellij.python.sdk.backend.writeRequirementsPath
+import com.intellij.python.sdk.backend.requirementsPath
 import com.intellij.notification.NotificationGroup
 import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
@@ -26,10 +28,8 @@ import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.psi.PsiManager
 import com.intellij.psi.search.FileTypeIndex
 import com.intellij.python.pyproject.model.evolution.getInterpreter
-import com.intellij.python.sdk.backend.PySdkBundle
 import com.intellij.python.sdk.backend.PythonInterpreter
-import com.intellij.python.sdk.backend.getSdkAPI
-import com.intellij.python.sdk.backend.requirementsPath
+import com.intellij.python.sdk.backend.PySdkBundle
 import com.intellij.ui.components.dialog
 import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.bindItem
@@ -46,6 +46,7 @@ import com.jetbrains.python.packaging.common.PythonPackage
 import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.packaging.requirementsTxt.PyRequirementsSyncService
 import com.jetbrains.python.packaging.requirementsTxt.PythonRequirementTxtSdkUtils
+import com.jetbrains.python.packaging.utils.PyPackageCoroutine
 import com.jetbrains.python.project.PyProject.Companion.asPyProject
 import com.jetbrains.python.psi.PyFile
 import com.jetbrains.python.sdk.PySdkPopupFactory
@@ -214,7 +215,7 @@ private suspend fun prepareRequirementsText(
   interpreter: PythonInterpreter,
   settings: PyPackageRequirementsSettings,
 ): PyRequirementsAnalysisResult {
-  val packageManager = PythonPackageManager.forPythonInterpreter(module.project, interpreter)
+  val packageManager = PythonPackageManager.forPythonInterpreter(interpreter)
   val psiManager = PsiManager.getInstance(module.project)
   val imports = collectImports(module, psiManager)
   val installedPackages = packageManager.listInstalledPackages()
@@ -273,11 +274,7 @@ private fun showSyncSettingsDialog(
                     // pre-filled value would clear the SDK path on the next open (PY-84976).
                     val normalized = stringPath.ifBlank { null }?.toNioPathOrNull()
                     if (normalized == initialPath) return@bindText
-                    // Goes through a modificator rather than writing to the committed data: an in-place edit leaves the
-                    // stored entity behind the bridge, which the workspace model reports as a mismatch (PY-82614).
-                    PythonRequirementTxtSdkUtils.saveRequirementsTxtPath(
-                      project, interpreter.getSdkAPI(), normalized
-                    )
+                    PyPackageCoroutine.launch(project) { interpreter.writeRequirementsPath(normalized) }
                   })
         .align(AlignX.FILL)
         .focused()

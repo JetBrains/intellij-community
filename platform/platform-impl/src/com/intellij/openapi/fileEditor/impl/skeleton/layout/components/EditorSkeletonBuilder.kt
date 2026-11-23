@@ -5,16 +5,18 @@ import com.intellij.openapi.fileEditor.impl.skeleton.layout.components.EditorSke
 
 @SkeletonDsl
 @Suppress("FunctionName")
-internal class EditorSkeletonBuilder(private val children: MutableList<EditorSkeletonComponent>) {
+internal class EditorSkeletonBuilder(
+  private val children: MutableList<EditorSkeletonComponent>,
+) {
+
   fun Panel(
     layout: Layout,
     gap: Int = 0,
     padding: Padding = Padding(),
     rightAligned: Boolean = false,
-    fillLast: Boolean = false,
     content: EditorSkeletonBuilder.() -> Unit,
   ) {
-    children.add(EditorSkeletonPanel(layout, gap, padding, rightAligned, fillLast, content))
+    children.add(EditorSkeletonPanel(layout, gap, padding, rightAligned, content = content))
   }
 
   fun Block(width: Width) {

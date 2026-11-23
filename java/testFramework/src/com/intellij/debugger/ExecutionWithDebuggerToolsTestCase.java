@@ -74,7 +74,10 @@ import static com.intellij.debugger.DebuggerBreakpointTestUtilsKt.USE_XSESSION_P
  * To set a breakpoint in the source code,
  * place a 'Breakpoint!' comment in the line directly above,
  * see {@link #createBreakpoints} for details.
+ *
+ * @deprecated Use {@link DebuggerTestFixtureKt#debuggerTestFixture} in a JUnit 6 test.
  */
+@Deprecated
 public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCase {
   private @Nullable BreakpointProvider myBreakpointProvider;
   protected static final int RATHER_LATER_INVOKES_N = 10;

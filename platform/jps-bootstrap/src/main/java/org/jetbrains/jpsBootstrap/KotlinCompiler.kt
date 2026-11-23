@@ -14,7 +14,7 @@ import kotlin.io.path.toPath
 
 object KotlinCompiler {
   private const val INTELLIJ_DEPENDENCIES_REPOSITORY_URL =
-    "https://cache-redirector.jetbrains.com/intellij-dependencies"
+    "https://cache-redirector.jetbrains.com/maven/ultimate-public"
 
   private val MAVEN_LOCAL_URL by lazy { "file://${getMavenRepositoryPath() ?: (System.getProperty("user.home") + "/.m2/repository")}" }
 

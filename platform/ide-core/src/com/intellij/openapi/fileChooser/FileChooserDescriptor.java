@@ -109,7 +109,18 @@ public class FileChooserDescriptor {
    * use this way only for overriding default behavior.
    */
   public FileChooserDescriptor(@NotNull FileChooserDescriptor d) {
-    this(d.isChooseFiles(), d.isChooseFolders(), d.isChooseJarContents(), d.isChooseMultiple(), d);
+    this(d, d.isChooseFiles(), d.isChooseFolders(), d.isChooseJarContents(), d.isChooseMultiple());
+  }
+
+  /**
+   * Copies the options of {@code d}, but replaces the kind of the selectable items.
+   */
+  @ApiStatus.Internal
+  public FileChooserDescriptor(
+    @NotNull FileChooserDescriptor d,
+    boolean chooseFiles, boolean chooseFolders, boolean chooseJarContents, boolean chooseMultiple
+  ) {
+    this(chooseFiles, chooseFolders, chooseJarContents, chooseMultiple, d);
     myTitle = d.getTitle();
     myDescription = d.getDescription();
     myHideIgnored = d.isHideIgnored();

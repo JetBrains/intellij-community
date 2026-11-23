@@ -6,6 +6,6 @@ class A {
     @Delegate public X list = []
 }
 
-<error descr="Method 'foo' is not implemented">class Y implements X</error>{
+<error descr="Method 'foo()' not implemented">class Y implements X</error>{
   def foo(X<String> x){}
 }

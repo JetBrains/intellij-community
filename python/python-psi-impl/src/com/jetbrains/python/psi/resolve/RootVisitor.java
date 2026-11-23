@@ -2,7 +2,6 @@
 package com.jetbrains.python.psi.resolve;
 
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
@@ -16,10 +15,9 @@ public interface RootVisitor {
   /**
    * @param root   what we're visiting.
    * @param module the module to which the root belongs, or null
-   * @param sdk the SDK to which the root belongs, or null
-   * @param isModuleSource true iff the root belongs to the module in case both module and sdk are present
+   * @param isModuleSource true iff the root is a source root or the content root of a module
    *
    * @return false when visiting must stop.
    */
-  boolean visitRoot(VirtualFile root, @Nullable Module module, @Nullable Sdk sdk, boolean isModuleSource);
+  boolean visitRoot(VirtualFile root, @Nullable Module module, boolean isModuleSource);
 }

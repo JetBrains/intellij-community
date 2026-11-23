@@ -1,16 +1,14 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.python.junit5Tests.env.tests.conda
 
-import com.intellij.python.sdk.backend.removeTestSdkFromOpenProjects
-import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.python.sdk.backend.removeTestInterpreterFromOpenProjects
+import com.intellij.python.sdk.backend.PythonInterpreter
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.toNioPathOrNull
 import com.intellij.python.community.junit5Tests.framework.conda.CondaEnv
 import com.intellij.python.community.junit5Tests.framework.conda.PyEnvTestCaseWithConda
 import com.intellij.python.requirements.pyRequirementVersionSpec
-import com.intellij.python.sdk.backend.getSdkAPI
-import com.intellij.python.sdk.backend.pythonInterpreterResultAsync
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.jetbrains.python.allure.Components
@@ -61,7 +59,7 @@ internal class CondaEnvWithoutImplicitPipTest {
   private lateinit var conda: String
   private lateinit var condarc: Path
   private var originalCondarc: String? = null
-  private val sdks = mutableListOf<Sdk>()
+  private val interpreters = mutableListOf<PythonInterpreter>()
   private val namedEnvs = mutableListOf<String>()
 
   @BeforeEach
@@ -79,7 +77,7 @@ internal class CondaEnvWithoutImplicitPipTest {
 
   @AfterEach
   fun tearDown(): Unit = timeoutRunBlocking(10.minutes) {
-    sdks.forEach { removeTestSdkFromOpenProjects(it) }
+    interpreters.forEach { removeTestInterpreterFromOpenProjects(it) }
     for (name in namedEnvs) {
       runConda("env", "remove", "-y", "-n", name)
     }
@@ -143,9 +141,9 @@ internal class CondaEnvWithoutImplicitPipTest {
 
   private suspend fun packageManager(env: PyCondaEnv): CondaPackageManager {
     val project = projectFixture.get()
-    val sdk = env.createSdkFromThisEnv(project, null, project.basePath?.toNioPathOrNull()!!).getOrThrow().getSdkAPI()
-    sdks += sdk
-    return CondaPackageManager(project, sdk.pythonInterpreterResultAsync().orThrow()).also {
+    val interpreter = env.createSdkFromThisEnv(project, null, project.basePath?.toNioPathOrNull()!!).getOrThrow()
+    interpreters += interpreter
+    return CondaPackageManager(interpreter).also {
       Disposer.register(project, it)
       it.waitForInit()
     }

@@ -4,18 +4,18 @@ load("@bazel_skylib//lib:unittest.bzl", "analysistest", "asserts")
 load("@rules_java//java:defs.bzl", "JavaInfo", "java_common")
 load("@rules_kotlin//kotlin/internal:defs.bzl", _KtJvmInfo = "KtJvmInfo")
 load(":content_module_jar.bzl", "ContentModuleJarInfo", "content_module_jar", "content_module_jar_target_name")
-load(":dev_dist_content.bzl", "DevDistContentInfo")
+load(":dev_plugin.bzl", "DistRuntimeLayoutInfo")
+load(":dev_plugin_remainder.bzl", "DevPluginArtifactCatalogueInfo", "DevPluginGraphInfo", "DevPluginRemainderInfo", "dev_plugin_artifact_catalogue", "dev_plugin_component", "dev_plugin_file_graph", "dev_plugin_remainder_from_plan", "dist_complex_plugin", "dist_complex_plugin_variant", "platform_values_error")
+load(":dist_content.bzl", "DistContentInfo")
 load(
-    ":dev_dist_plugin_descriptor.bzl",
-    "DevDistPluginClasspathDescriptorInfo",
-    "DevDistPluginDescriptorInfo",
-    "dev_dist_plugin_descriptor",
-    "dev_dist_plugin_descriptor_target_name",
-    "dev_dist_stamp_class_consumer_transition",
+    ":dist_plugin_descriptor.bzl",
+    "DistPluginClasspathDescriptorInfo",
+    "DistPluginDescriptorInfo",
+    "dist_plugin_descriptor",
+    "dist_plugin_descriptor_target_name",
+    "dist_stamp_class_consumer_transition",
 )
-load(":dev_plugin.bzl", "DevDistRuntimeLayoutInfo")
-load(":dev_plugin_remainder.bzl", "DevPluginArtifactCatalogueInfo", "DevPluginGraphInfo", "DevPluginRemainderInfo", "dev_dist_complex_plugin", "dev_dist_complex_plugin_variant", "dev_plugin_artifact_catalogue", "dev_plugin_component", "dev_plugin_file_graph", "dev_plugin_remainder_from_plan", "platform_values_error")
-load(":intellij_dev_dist.bzl", "DevDistPlacementInfo", "IntellijDevFragmentInfo")
+load(":intellij_dist.bzl", "DistPlacementInfo", "IntellijDevFragmentInfo")
 
 # The application info of the fixture product, an EAP product without a release date.
 _EMPTY_JAR = "PK\005\006" + ("\000" * 18)
@@ -23,7 +23,7 @@ _EMPTY_JAR = "PK\005\006" + ("\000" * 18)
 _PACKAGE = "//platform/build-scripts/bazel-rules/dev-plugin-remainder-tests"
 _SUITE = "dev_plugin_remainder_tests"
 
-_STAMP_CLASS_FLAG = str(Label("//build:dev_dist_stamp_class"))
+_STAMP_CLASS_FLAG = str(Label("//build:dist_stamp_class"))
 
 # A chain states no product, so a test of a remainder or a component sets the mode the way a consumer of a monolith
 # product does.
@@ -31,7 +31,7 @@ _PRODUCT_CONFIG = {_STAMP_CLASS_FLAG: "monolith"}
 
 def _short_paths(files):
     """The configuration-independent paths of [files]. A target under `config_settings` and a target reached through
-    `dev_dist_stamp_class_consumer_transition` state one mode in two output roots, so a test compares these."""
+    `dist_stamp_class_consumer_transition` state one mode in two output roots, so a test compares these."""
     return [file.short_path for file in files]
 
 # The attributes of a test that reads a chain target beside the one under test, in the configuration of the consumer.
@@ -160,7 +160,7 @@ _graph_resolution_test = analysistest.make(
         "platform": attr.string(mandatory = True),
         "platform_values": attr.string_dict(),
         "execution_version": attr.int(mandatory = True),
-        "consumer": attr.label(mandatory = True, cfg = dev_dist_stamp_class_consumer_transition, doc = "The from-plan remainder target of the chain."),
+        "consumer": attr.label(mandatory = True, cfg = dist_stamp_class_consumer_transition, doc = "The from-plan remainder target of the chain."),
     } | _PRODUCT_ATTRS,
 )
 
@@ -291,7 +291,7 @@ def _library_catalogue_test_impl(ctx):
     asserts.equals(env, [catalogue.catalogue], target[DefaultInfo].files.to_list())
 
     # The raw content names each container once, with its jars in container order. A resource is no content.
-    content = target[DevDistContentInfo]
+    content = target[DistContentInfo]
     asserts.equals(env, [], content.module_jars.to_list())
     entries = {entry.label: entry for entry in content.library_jars.to_list()}
     asserts.equals(env, sorted([str(container.label) for container in ctx.attr.containers]), sorted(entries.keys()))
@@ -320,7 +320,7 @@ def _archive_catalogue_test_impl(ctx):
     asserts.equals(env, catalogue.artifacts["compiled"].root.path, archive.root.path)
     asserts.false(env, catalogue.artifacts["raw"].root.path == archive.root.path)
 
-    content = target[DevDistContentInfo]
+    content = target[DistContentInfo]
     asserts.equals(env, [catalogue.artifacts["compiled"].short_path], _short_paths(content.module_jars.to_list()))
     entries = content.library_jars.to_list()
     asserts.equals(env, [str(ctx.attr.archive.label)], [entry.label for entry in entries])
@@ -342,7 +342,7 @@ def _resource_jar_catalogue_test_impl(ctx):
     env = analysistest.begin(ctx)
     target = analysistest.target_under_test(env)
     asserts.equals(env, ["downloaded"], target[DevPluginArtifactCatalogueInfo].artifacts.keys())
-    content = target[DevDistContentInfo]
+    content = target[DistContentInfo]
     asserts.equals(env, [], content.module_jars.to_list())
     asserts.equals(env, [], content.library_jars.to_list())
     return analysistest.end(env)
@@ -380,7 +380,7 @@ def _component_test_impl(ctx):
     asserts.equals(env, _short_paths(remainder.outputs.values()), _short_paths(fragment.payload.to_list()))
 
     # A remainder without a reused jar places each of its outputs at its own destination.
-    placement = target[DevDistPlacementInfo]
+    placement = target[DistPlacementInfo]
     asserts.equals(env, {"plugins/test/" + key: value.short_path for key, value in remainder.outputs.items()}, {key: value.short_path for key, value in placement.files.items()})
     asserts.equals(env, {}, placement.trees)
     for input_file in [remainder.metadata, remainder.assets, remainder.classpath]:
@@ -396,8 +396,8 @@ def _component_test_impl(ctx):
         asserts.equals(env, ["--os=linux", "--arch=x64"], platform_arguments)
 
     # The component forwards the raw content of its remainder unchanged.
-    remainder_content = ctx.attr.remainder[0][DevDistContentInfo]
-    content = target[DevDistContentInfo]
+    remainder_content = ctx.attr.remainder[0][DistContentInfo]
+    content = target[DistContentInfo]
     asserts.equals(env, _short_paths(remainder_content.module_jars.to_list()), _short_paths(content.module_jars.to_list()))
     asserts.equals(env, _short_paths(remainder_content.library_jars.to_list()), _short_paths(content.library_jars.to_list()))
     return analysistest.end(env)
@@ -406,7 +406,7 @@ _component_test = analysistest.make(
     _component_test_impl,
     config_settings = _PRODUCT_CONFIG,
     attrs = {
-        "remainder": attr.label(mandatory = True, cfg = dev_dist_stamp_class_consumer_transition, providers = [DevPluginRemainderInfo]),
+        "remainder": attr.label(mandatory = True, cfg = dist_stamp_class_consumer_transition, providers = [DevPluginRemainderInfo]),
         "neutral": attr.bool(doc = "Whether the component states no target platform."),
         "kind": attr.string(default = "plugin-test", doc = "The component name the collector receives as `--kind`."),
     } | _PRODUCT_ATTRS,
@@ -432,13 +432,13 @@ _derived_remainder_test = analysistest.make(
     attrs = {
         "catalogue": attr.label(
             mandatory = True,
-            cfg = dev_dist_stamp_class_consumer_transition,
+            cfg = dist_stamp_class_consumer_transition,
             providers = [DevPluginArtifactCatalogueInfo],
         ),
         "raw": attr.label(
             mandatory = True,
             allow_single_file = True,
-            cfg = dev_dist_stamp_class_consumer_transition,
+            cfg = dist_stamp_class_consumer_transition,
         ),
         "stamp_class": attr.string(default = "monolith"),
         "descriptor_id": attr.string(mandatory = True),
@@ -461,7 +461,7 @@ def _remainder_from_plan_test_impl(ctx):
     asserts.equals(env, 1, len(ctx.attr.raw))
     catalogue = ctx.attr.catalogue[0][DevPluginArtifactCatalogueInfo]
     descriptor_target = ctx.attr.descriptor[0]
-    descriptor_info = descriptor_target[DevDistPluginDescriptorInfo]
+    descriptor_info = descriptor_target[DistPluginDescriptorInfo]
     descriptor = descriptor_info.descriptor
     classpath_descriptor = descriptor_info.classpath_descriptor
     raw = ctx.attr.raw[0][DefaultInfo].files.to_list()[0]
@@ -476,7 +476,7 @@ def _remainder_from_plan_test_impl(ctx):
     asserts.equals(env, 1, len(descriptor_actions))
     primary_actions = [candidate for candidate in descriptor_actions if descriptor in candidate.outputs]
     if ctx.attr.separate_classpath_descriptor:
-        classpath_info = ctx.attr.classpath_descriptor_target[DevDistPluginClasspathDescriptorInfo]
+        classpath_info = ctx.attr.classpath_descriptor_target[DistPluginClasspathDescriptorInfo]
         classpath_actions = classpath_info._declaration.actions
         asserts.equals(env, [_short_paths([classpath_descriptor])[0]], _short_paths([classpath_info.descriptor]))
         asserts.equals(
@@ -499,7 +499,7 @@ def _remainder_from_plan_test_impl(ctx):
     asserts.equals(env, ["true" if ctx.attr.separate_classpath_descriptor else "false"], classpath_reserialize)
     asserts.equals(env, [] if ctx.attr.separate_classpath_descriptor else [classpath_descriptor], reserialized_output)
     actions = analysistest.target_actions(env)
-    asserts.equals(env, ["PackDevPluginRemainder", "DevDistRuntimeLayoutPart"], [action.mnemonic for action in actions])
+    asserts.equals(env, ["PackDevPluginRemainder", "DistRuntimeLayoutPart"], [action.mnemonic for action in actions])
     action = actions[0]
     asserts.equals(env, ctx.attr.graph[0].label, remainder.graph.label)
     asserts.equals(env, graph.execution_version, remainder.execution_version)
@@ -531,7 +531,7 @@ def _remainder_from_plan_test_impl(ctx):
     asserts.equals(env, remainder.outputs.values(), target[DefaultInfo].files.to_list())
 
     # The layout part comes from the same plan file and catalogue, in an action of its own that reads no packed byte.
-    layout = target[DevDistRuntimeLayoutInfo]
+    layout = target[DistRuntimeLayoutInfo]
     layout_action = actions[1]
     asserts.equals(env, [layout.part], layout_action.outputs.to_list())
     asserts.equals(env, classpath_descriptor.short_path, layout.descriptor.short_path)
@@ -550,13 +550,13 @@ def _remainder_from_plan_test_impl(ctx):
     ], layout_action.argv[1:])
 
     groups = target[OutputGroupInfo]
-    asserts.equals(env, remainder.outputs.values(), groups.dev_dist_plugin_remainder.to_list())
+    asserts.equals(env, remainder.outputs.values(), groups.dist_plugin_remainder.to_list())
     asserts.equals(env, [remainder.metadata], groups.file_metadata.to_list())
-    asserts.equals(env, [remainder.assets], groups.dev_dist_plugin_assets.to_list())
-    asserts.equals(env, [remainder.classpath], groups.dev_dist_plugin_classpath.to_list())
+    asserts.equals(env, [remainder.assets], groups.dist_plugin_assets.to_list())
+    asserts.equals(env, [remainder.classpath], groups.dist_plugin_classpath.to_list())
 
     # A catalogue of resources alone is empty content, and a remainder without a reused jar adds nothing to it.
-    content = target[DevDistContentInfo]
+    content = target[DistContentInfo]
     asserts.equals(env, [], content.module_jars.to_list())
     asserts.equals(env, [], content.library_jars.to_list())
     return analysistest.end(env)
@@ -565,22 +565,22 @@ _remainder_from_plan_test = analysistest.make(
     _remainder_from_plan_test_impl,
     config_settings = _PRODUCT_CONFIG,
     attrs = {
-        "graph": attr.label(mandatory = True, cfg = dev_dist_stamp_class_consumer_transition, providers = [DevPluginGraphInfo]),
+        "graph": attr.label(mandatory = True, cfg = dist_stamp_class_consumer_transition, providers = [DevPluginGraphInfo]),
         "catalogue": attr.label(
             mandatory = True,
-            cfg = dev_dist_stamp_class_consumer_transition,
+            cfg = dist_stamp_class_consumer_transition,
             providers = [DevPluginArtifactCatalogueInfo],
         ),
         "descriptor": attr.label(
             mandatory = True,
-            cfg = dev_dist_stamp_class_consumer_transition,
-            providers = [DevDistPluginDescriptorInfo],
+            cfg = dist_stamp_class_consumer_transition,
+            providers = [DistPluginDescriptorInfo],
         ),
-        "classpath_descriptor_target": attr.label(providers = [DevDistPluginClasspathDescriptorInfo]),
+        "classpath_descriptor_target": attr.label(providers = [DistPluginClasspathDescriptorInfo]),
         "raw": attr.label(
             mandatory = True,
             allow_single_file = True,
-            cfg = dev_dist_stamp_class_consumer_transition,
+            cfg = dist_stamp_class_consumer_transition,
         ),
         "stamp_class": attr.string(default = "monolith"),
         "separate_classpath_descriptor": attr.bool(),
@@ -647,7 +647,7 @@ _split_part_test = analysistest.make(_split_part_test_impl, config_settings = _P
 def _split_chain_remainder_test_impl(ctx):
     """The chain of a split remainder packs nothing. It derives only its runtime layout part."""
     env = analysistest.begin(ctx)
-    asserts.equals(env, ["DevDistRuntimeLayoutPart"], [action.mnemonic for action in analysistest.target_actions(env)])
+    asserts.equals(env, ["DistRuntimeLayoutPart"], [action.mnemonic for action in analysistest.target_actions(env)])
     return analysistest.end(env)
 
 _split_chain_remainder_test = analysistest.make(_split_chain_remainder_test_impl, config_settings = _PRODUCT_CONFIG)
@@ -760,7 +760,7 @@ def _reused_component_test_impl(ctx):
     asserts.true(env, content.jar.short_path in [file.short_path for file in payload])
 
     # The reused jar is placed at `lib/modules/<module>.jar` beside the remainder output, so no file is cloned.
-    placement = target[DevDistPlacementInfo]
+    placement = target[DistPlacementInfo]
     asserts.equals(
         env,
         {
@@ -781,15 +781,15 @@ def _reused_component_test_impl(ctx):
     asserts.true(env, sources[0].endswith("/" + content.jar.short_path.removeprefix("../")), sources[0])
 
     # The component forwards the layout part of its remainder, and no action of its own writes one.
-    layout = ctx.attr.remainder[0][DevDistRuntimeLayoutInfo]
-    asserts.equals(env, layout.part.short_path, target[DevDistRuntimeLayoutInfo].part.short_path)
+    layout = ctx.attr.remainder[0][DistRuntimeLayoutInfo]
+    asserts.equals(env, layout.part.short_path, target[DistRuntimeLayoutInfo].part.short_path)
     return analysistest.end(env)
 
 _reused_component_test = analysistest.make(
     _reused_component_test_impl,
     config_settings = _PRODUCT_CONFIG,
     attrs = {
-        "remainder": attr.label(mandatory = True, cfg = dev_dist_stamp_class_consumer_transition, providers = [DevPluginRemainderInfo]),
+        "remainder": attr.label(mandatory = True, cfg = dist_stamp_class_consumer_transition, providers = [DevPluginRemainderInfo]),
         "content_jar": attr.label(mandatory = True, providers = [ContentModuleJarInfo]),
     } | _PRODUCT_ATTRS,
 )
@@ -807,7 +807,7 @@ def _reused_remainder_test_impl(ctx):
     asserts.false(env, content.jar.short_path in [file.short_path for file in actions[0].inputs.to_list()])
 
     # The reused jar's members are raw content of the plugin, though the remainder action never reads them.
-    raw_content = target[DevDistContentInfo]
+    raw_content = target[DistContentInfo]
     asserts.equals(env, [jar.short_path for jar in content.member_jars], [file.short_path for file in raw_content.module_jars.to_list()])
     asserts.equals(env, list(content.library_jars), raw_content.library_jars.to_list())
     return analysistest.end(env)
@@ -843,7 +843,7 @@ _remainder_outputs_test = analysistest.make(_remainder_outputs_test_impl, config
 
 # The product of the refusal case: its mode is `frontend`, so a descriptor that refuses a module for that mode omits it.
 _FRONTEND_PRODUCT_CONFIG = {
-    str(Label("//build:dev_dist_stamp_class")): "frontend",
+    str(Label("//build:dist_stamp_class")): "frontend",
 }
 
 _refused_remainder_outputs_test = analysistest.make(_remainder_outputs_test_impl, config_settings = _FRONTEND_PRODUCT_CONFIG, attrs = _REMAINDER_OUTPUTS_ATTRS)
@@ -864,9 +864,9 @@ def _placement_test_impl(ctx):
     env = analysistest.begin(ctx)
     target = analysistest.target_under_test(env)
     if not ctx.attr.placed:
-        asserts.false(env, DevDistPlacementInfo in target)
+        asserts.false(env, DistPlacementInfo in target)
         return analysistest.end(env)
-    placement = target[DevDistPlacementInfo]
+    placement = target[DistPlacementInfo]
     asserts.equals(env, sorted(ctx.attr.files), sorted(placement.files.keys()))
     asserts.equals(env, sorted(ctx.attr.trees), sorted(placement.trees.keys()))
 
@@ -909,14 +909,14 @@ def dev_plugin_remainder_test_suite(name):
         tags = ["manual"],
     )
     normal_main_module = "test.%s.normal" % name
-    normal_descriptor = dev_dist_plugin_descriptor_target_name(normal_main_module)
-    dev_dist_plugin_descriptor(
+    normal_descriptor = dist_plugin_descriptor_target_name(normal_main_module)
+    dist_plugin_descriptor(
         main_module = normal_main_module,
         descriptor = ":" + descriptor_source,
     )
     scrambled_main_module = "test.%s.scrambled" % name
-    scrambled_descriptor = dev_dist_plugin_descriptor_target_name(scrambled_main_module)
-    dev_dist_plugin_descriptor(
+    scrambled_descriptor = dist_plugin_descriptor_target_name(scrambled_main_module)
+    dist_plugin_descriptor(
         main_module = scrambled_main_module,
         descriptor = ":" + descriptor_source,
         embed_content_modules = False,
@@ -1193,15 +1193,15 @@ def dev_plugin_remainder_test_suite(name):
     # are outputs. A tree at the plugin root is the root itself. A file whose every module the mode refuses is omitted.
     outputs_tests = []
     refusing_main_module = "test.%s.refusing" % name
-    refusing_descriptor = dev_dist_plugin_descriptor_target_name(refusing_main_module)
-    dev_dist_plugin_descriptor(
+    refusing_descriptor = dist_plugin_descriptor_target_name(refusing_main_module)
+    dist_plugin_descriptor(
         main_module = refusing_main_module,
         descriptor = ":" + descriptor_source,
         mode_refused_content_modules = {"frontend": ["test.refused"]},
     )
     refusing_scrambled_main_module = "test.%s.refusing.scrambled" % name
-    refusing_scrambled_descriptor = dev_dist_plugin_descriptor_target_name(refusing_scrambled_main_module)
-    dev_dist_plugin_descriptor(
+    refusing_scrambled_descriptor = dist_plugin_descriptor_target_name(refusing_scrambled_main_module)
+    dist_plugin_descriptor(
         main_module = refusing_scrambled_main_module,
         descriptor = ":" + descriptor_source,
         mode_refused_content_modules = {"frontend": ["test.refused"]},
@@ -1329,7 +1329,7 @@ def dev_plugin_remainder_test_suite(name):
     content_module_jar(module = ":" + member)
     content_jar = content_module_jar_target_name(member)
     complex = name + "_complex"
-    dev_dist_complex_plugin_variant(
+    dist_complex_plugin_variant(
         name = complex,
         projection = ":" + projection,
         execution_version = 1,
@@ -1392,7 +1392,7 @@ def dev_plugin_remainder_test_suite(name):
         ("below_tree", {"remainder_trees": ["lib"]}, struct(placed = False, files = [], trees = [], executables = [])),
     ]:
         placement_chain = complex + "_" + suffix
-        dev_dist_complex_plugin_variant(
+        dist_complex_plugin_variant(
             name = placement_chain,
             projection = ":" + projection,
             execution_version = 2,
@@ -1423,7 +1423,7 @@ def dev_plugin_remainder_test_suite(name):
     # The variant sorts a resource whose label names a jar into the archive inputs. So a library jar the plan names
     # jar by jar reaches the content boundary in the neutral configuration without a generated argument of its own.
     archive_chain = name + "_archive_chain"
-    dev_dist_complex_plugin_variant(
+    dist_complex_plugin_variant(
         name = archive_chain,
         projection = ":" + plan_file,
         execution_version = 1,
@@ -1451,7 +1451,7 @@ def dev_plugin_remainder_test_suite(name):
     # A chain over a plan file with a layout-assets operation. The packer executes the operation in the remainder
     # action. The same action writes the asset table and the classpath record the component reads.
     plan_chain = name + "_plan_chain"
-    dev_dist_complex_plugin_variant(
+    dist_complex_plugin_variant(
         name = plan_chain,
         projection = ":" + plan_file,
         execution_version = 1,
@@ -1495,7 +1495,7 @@ def dev_plugin_remainder_test_suite(name):
     # A split remainder: the jar of the main module reads the descriptor, so the chain packs every other asset in a
     # neutral part. The descriptor part packs the main jar and writes the rows and the record.
     split_chain = name + "_split_chain"
-    dev_dist_complex_plugin_variant(
+    dist_complex_plugin_variant(
         name = split_chain,
         projection = ":" + plan_file,
         execution_version = 1,
@@ -1530,7 +1530,7 @@ def dev_plugin_remainder_test_suite(name):
         ("scrambled", refusing_scrambled_descriptor, False, ["frontend"], True),
     ]:
         refusing_chain = name + "_refusing_" + case + "_chain"
-        dev_dist_complex_plugin_variant(
+        dist_complex_plugin_variant(
             name = refusing_chain,
             projection = ":" + plan_file,
             execution_version = 1,
@@ -1566,7 +1566,7 @@ def dev_plugin_remainder_test_suite(name):
 
     # No mode may refuse every module of a descriptor asset, because the collector places every one.
     omitting_chain = name + "_omitting_chain"
-    dev_dist_complex_plugin_variant(
+    dist_complex_plugin_variant(
         name = omitting_chain,
         projection = ":" + plan_file,
         execution_version = 1,
@@ -1598,7 +1598,7 @@ def dev_plugin_remainder_test_suite(name):
     for platform in derived_platforms:
         _file(name = name + "_derived_raw_" + platform)
         _file(name = derived_module + "." + platform + ".dev-plan.json")
-    dev_dist_complex_plugin(
+    dist_complex_plugin(
         main_module = derived_module,
         descriptor = ":" + normal_descriptor,
         execution_version = 1,
@@ -1642,7 +1642,7 @@ def dev_plugin_remainder_test_suite(name):
     plan_home_projection = plan_home_package + ":" + plan_home_module + ".linux_x64.dev-plan.json"
     plan_home_raw = name + "_plan_home_raw"
     _file(name = plan_home_raw)
-    dev_dist_complex_plugin(
+    dist_complex_plugin(
         main_module = plan_home_module,
         plan_package = plan_home_package,
         descriptor = ":" + normal_descriptor,
@@ -1677,7 +1677,7 @@ def dev_plugin_remainder_test_suite(name):
     _file(name = folded_projection, content = _FOLDED_PLAN)
     for platform in folded_platforms:
         _file(name = name + "_folded_raw_" + platform)
-    dev_dist_complex_plugin(
+    dist_complex_plugin(
         main_module = folded_module,
         descriptor = ":" + normal_descriptor,
         execution_version = 1,
@@ -1709,7 +1709,7 @@ def dev_plugin_remainder_test_suite(name):
     _file(name = zero_slot_projection, content = _ZERO_SLOT_PLAN)
     for platform in folded_platforms:
         _file(name = name + "_zero_slot_raw_" + platform)
-    dev_dist_complex_plugin(
+    dist_complex_plugin(
         main_module = zero_slot_module,
         descriptor = ":" + normal_descriptor,
         execution_version = 1,
@@ -1739,7 +1739,7 @@ def dev_plugin_remainder_test_suite(name):
     for platform in class_platforms:
         _file(name = name + "_plan_class_raw_" + platform)
         _file(name = class_module + ".Light." + platform + ".dev-plan.json")
-    dev_dist_complex_plugin(
+    dist_complex_plugin(
         main_module = class_module,
         plan_class = "Light",
         descriptor = ":" + normal_descriptor,
@@ -1778,7 +1778,7 @@ def dev_plugin_remainder_test_suite(name):
     _file(name = class_folded_projection, content = _FOLDED_PLAN)
     for platform in class_platforms:
         _file(name = name + "_plan_class_folded_raw_" + platform)
-    dev_dist_complex_plugin(
+    dist_complex_plugin(
         main_module = class_folded_module,
         plan_class = "Light",
         descriptor = ":" + normal_descriptor,
@@ -1810,7 +1810,7 @@ def dev_plugin_remainder_test_suite(name):
     for platform in chain_class_platforms:
         _file(name = name + "_chain_class_raw_" + platform)
         _file(name = chain_class_module + "." + platform + ".dev-plan.json")
-    dev_dist_complex_plugin(
+    dist_complex_plugin(
         main_module = chain_class_module,
         chain_class = "Light",
         descriptor = ":" + normal_descriptor,

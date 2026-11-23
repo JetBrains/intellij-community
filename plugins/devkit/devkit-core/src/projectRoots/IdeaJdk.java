@@ -210,7 +210,8 @@ public final class IdeaJdk extends JavaDependentSdkType implements JavaSdkType {
     appendIdeaLibrary(plugins + "css", result, "css.jar");
     // "uml" is the directory of the Diagrams plugin in older IDEs
     for (String diagramDirName : List.of("diagram", "uml")) {
-      appendIdeaLibrary(plugins + diagramDirName, result, "diagram-plugin.jar", "uml-support.jar");
+      appendIdeaLibrary(plugins + diagramDirName, result, "diagram-plugin.jar", "intellij.diagram.jar", "intellij.diagram.impl.jar",
+                        "uml-support.jar");
     }
     // "Spring" is the directory of the Spring plugin in older IDEs
     for (String springDirName : List.of("spring-core", "Spring")) {

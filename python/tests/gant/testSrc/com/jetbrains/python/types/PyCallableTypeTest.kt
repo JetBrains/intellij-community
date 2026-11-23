@@ -370,7 +370,6 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
 
     @Test
     @TestFor(issues = ["PY-10413"])
-    @TestCaseOptions(assertRecursionPrevention = false)
     fun `function parameter return type`() = test("""
       def func(f, seq):
           '''
@@ -514,23 +513,19 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
 
       pair: tuple[int, int] = (1, 2)
       f(*xs(), *pair, "s")
-      # ^^^^^ WARNING Unexpected argument
       f(*xs(), *pair, 1)
-      # │             └ WARNING Expected type 'str', got 'Literal[1]' instead
-      # ^^^^^ WARNING Unexpected argument
+      #               └ WARNING Expected type 'str', got 'Literal[1]' instead
       """)
 
     @Test
     @TestFor(issues = ["PY-94140"])
-    fun `spread that gets no parameter is an unexpected argument`() = test("""
+    fun `spread that gets no parameter is not reported because it can be empty`() = test("""
       def f(a: int, b: str): ...
       def xs() -> list[int]: ...
 
       f(*xs(), 1, "s")
-      # ^^^^^ WARNING Unexpected argument
       f(*xs(), 1, 2)
-      # │         └ WARNING Expected type 'str', got 'Literal[2]' instead
-      # ^^^^^ WARNING Unexpected argument
+      #           └ WARNING Expected type 'str', got 'Literal[2]' instead
       """)
 
     @Test
@@ -551,7 +546,6 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
       def xs() -> list[int]: ...
 
       f(*xs(), 1, __b="x", c="y")
-      # ^^^^^ WARNING Unexpected argument
       """)
 
     @Test
@@ -564,7 +558,6 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
       #                 └ WARNING Unexpected argument
       f(*xs(), 1, c=3)
       f(*xs(), 1, 2, c=3)
-      # ^^^^^ WARNING Unexpected argument
       f(*xs(), 1, 2, 3, c=4)
       #              └ WARNING Unexpected argument
       """)
@@ -3288,7 +3281,7 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
       """.trimIndent())
 
     @Test
-    @TestFor(issues = ["PY-37876"])
+    @TestFor(issues = ["PY-37876", "PY-92229"])
     fun `generic parameter of expected callable mapped by other argument`() = test("""
       from typing import Callable, TypeVar
 
@@ -3300,10 +3293,8 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
       def accepts_anything(x: str) -> None:
           pass
 
-      # Bug: Expected error.
-      # `Callable[[str], None]` is assignable to `Callable[[int | str], None]`.
-      # Thus, substitution `T` -> `int | str` is considered valid.
       func(42, accepts_anything)
+      #        ^^^^^^^^^^^^^^^^ WARNING Expected type '(int) -> None' (matched generic type '(T) -> None'), got '(x: str) -> None' instead
       """.trimIndent())
 
     @Test

@@ -2,32 +2,37 @@
 package org.jetbrains.idea.devkit.inspections.internal;
 
 import com.intellij.testFramework.TestDataPath;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.jetbrains.idea.devkit.DevkitJavaTestsUtil;
+import org.junit.jupiter.api.Test;
+
+import static org.jetbrains.idea.devkit.inspections.PluginModuleFixtureKt.pluginModuleProjectFixture;
+import static org.jetbrains.idea.devkit.inspections.internal.UseEqualsFixtureKt.useEqualsFixture;
 
 @TestDataPath("$CONTENT_ROOT/testData/inspections/internal")
-public class UseEqualsInspectionTest extends UseEqualsInspectionTestBase {
+@TestApplication
+public class UseEqualsInspectionTest {
+  private static final TestFixture<LightJavaProject> projectFixture = pluginModuleProjectFixture();
+  private final TestFixture<UseEqualsFixture> useEquals =
+    useEqualsFixture(projectFixture, DevkitJavaTestsUtil.TESTDATA_PATH + "inspections/internal/");
 
-  @Override
-  protected @NotNull String getBasePath() {
-    return DevkitJavaTestsUtil.TESTDATA_PATH + "inspections/internal/";
-  }
-
-  @Override
+  @Test
   public void testVirtualFile() {
-    doTest(UseVirtualFileEqualsInspection.class,
+    useEquals.get().doTest(UseVirtualFileEqualsInspection.class,
            "com/intellij/openapi/vfs/VirtualFile.java");
   }
 
-  @Override
+  @Test
   public void testPluginId() {
-    doTest(UsePluginIdEqualsInspection.class,
+    useEquals.get().doTest(UsePluginIdEqualsInspection.class,
            "com/intellij/openapi/extensions/PluginId.java");
   }
 
-  @Override
+  @Test
   public void testPrimitiveTypes() {
-    doTest(UsePrimitiveTypesEqualsInspection.class,
+    useEquals.get().doTest(UsePrimitiveTypesEqualsInspection.class,
            "com/intellij/psi/PsiPrimitiveType.java",
            "com/intellij/psi/PsiType.java");
   }

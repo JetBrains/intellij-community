@@ -3,7 +3,6 @@ package com.jetbrains.python.packaging.conda
 
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.projectRoots.Sdk
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.getOrNull
@@ -15,7 +14,7 @@ import com.jetbrains.python.packaging.repository.PyPackageRepository
 import com.jetbrains.python.packaging.repository.PythonRepositoryManagerBase
 import org.jetbrains.annotations.ApiStatus
 
-internal class CondaRepositoryManger(override val project: Project, val sdk: Sdk) : PythonRepositoryManagerBase() {
+internal class CondaRepositoryManger(override val project: Project) : PythonRepositoryManagerBase() {
   private val pipRepositoryManger = PipRepositoryManager.getInstance(project)
 
   override val builtInRepositories: List<PyPackageRepository>

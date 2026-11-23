@@ -5,10 +5,12 @@ import com.intellij.debugger.streams.core.trace.dsl.impl.DslImpl
 import com.intellij.debugger.streams.test.DslTestCase
 import com.intellij.debugger.streams.test.StreamDebuggerTestUtil
 import com.intellij.debugger.streams.trace.dsl.impl.java.JavaStatementFactory
+import com.intellij.testFramework.junit5.TestApplication
 
 /**
  * @author Vitaliy.Bibaev
  */
+@TestApplication
 class JavaDslTest : DslTestCase(DslImpl(JavaStatementFactory())) {
   override fun getTestDataPath(): String {
     return StreamDebuggerTestUtil.getTestDataPath("dsl/java")

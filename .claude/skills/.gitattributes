@@ -1,4 +1,5 @@
 # BEGIN community/.ai/render-guides.mjs: the files it writes whole; rerun it instead of editing this block
+/accio/** linguist-generated
 /actions/** linguist-generated
 /bazel-test-migration/** linguist-generated
 /code-style/** linguist-generated
@@ -6,13 +7,12 @@
 /compare-python-typecheckers/** linguist-generated
 /compose-ui/** linguist-generated
 /conda-env-tests/** linguist-generated
+/content-module/** linguist-generated
 /debugging/** linguist-generated
 /driver-ui-tests/** linguist-generated
 /duplicate-and-dead-code/** linguist-generated
 /eel/** linguist-generated
-/extract-module/** linguist-generated
 /fix-project-leak-from-tc-report/** linguist-generated
-/icon-resources/** linguist-generated
 /icons/** linguist-generated
 /ide-diagnostics-mcp/** linguist-generated
 /jewel/** linguist-generated
@@ -27,17 +27,16 @@
 /notebook-for-experiment/** linguist-generated
 /platform-coroutines-structured-concurrency/** linguist-generated
 /plugin-model-analyzer/** linguist-generated
-/poly-context/** linguist-generated
 /poly-symbols/** linguist-generated
 /pseudo-kmp/** linguist-generated
 /py-code-insight-counters/** linguist-generated
 /registry/** linguist-generated
 /rust-code-style/** linguist-generated
 /safe-push/** linguist-generated
+/settings-v2-migration/** linguist-generated
 /ssr/** linguist-generated
 /symbols-api/** linguist-generated
 /testing/** linguist-generated
-/testing-internals/** linguist-generated
 /ui-accessibility/** linguist-generated
 /writing-tests/** linguist-generated
 /youtrack-community/** linguist-generated

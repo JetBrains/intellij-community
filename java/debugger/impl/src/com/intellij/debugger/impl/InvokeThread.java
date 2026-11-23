@@ -23,9 +23,11 @@ import kotlinx.coroutines.SupervisorKt;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Async;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletionException;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
@@ -44,14 +46,50 @@ public abstract class InvokeThread<E extends PrioritizedTask> {
     private final ProgressIndicator myProgressIndicator = new EmptyProgressIndicator();
     private volatile Future<?> myRequestFuture;
     private final int myId = ourWorkerCounter.getAndIncrement();
+    private final @Nullable WorkerThreadRequest<?> myPreviousRequest;
+    private final long myPreviousRequestTimeoutMillis;
+    private volatile boolean myStarted;
+    private final CountDownLatch myExited = new CountDownLatch(1);
 
-    WorkerThreadRequest(InvokeThread<E> owner, @NotNull Job workJob) {
+    WorkerThreadRequest(InvokeThread<E> owner,
+                        @NotNull Job workJob,
+                        @Nullable WorkerThreadRequest<?> previousRequest,
+                        long previousRequestTimeoutMillis) {
       myOwner = owner;
       myWorkerJob = SupervisorKt.SupervisorJob(workJob);
+      myPreviousRequest = previousRequest;
+      myPreviousRequestTimeoutMillis = previousRequestTimeoutMillis;
     }
 
     @Override
     public void run() {
+      myStarted = true;
+      try {
+        awaitPreviousRequest();
+        runWorker();
+      }
+      finally {
+        myExited.countDown();
+      }
+    }
+
+    private void awaitPreviousRequest() {
+      WorkerThreadRequest<?> previous = myPreviousRequest;
+      if (previous == null) {
+        return;
+      }
+      try {
+        previous.join(myPreviousRequestTimeoutMillis);
+      }
+      catch (InterruptedException | ExecutionException ignored) {
+      }
+      if (!previous.hasExited()) {
+        LOG.warn("Worker thread request " + previous + " still runs after " + myPreviousRequestTimeoutMillis + " ms, request " + this +
+                 " starts in parallel");
+      }
+    }
+
+    private void runWorker() {
       synchronized (this) {
         while (myRequestFuture == null) {
           try {
@@ -99,22 +137,41 @@ public abstract class InvokeThread<E extends PrioritizedTask> {
       return myProgressIndicator;
     }
 
+    /** Waits until the worker exits. A cancelled request can still run its last command, so the wait does not end at the cancellation. */
     public void join() throws InterruptedException, ExecutionException {
       assert myRequestFuture != null;
       try {
         myRequestFuture.get();
       }
       catch (CancellationException ignored) {
+        awaitExit(Long.MAX_VALUE);
       }
     }
 
+    /** Waits until the worker exits, or until {@code timeout} milliseconds pass. */
     public void join(long timeout) throws InterruptedException, ExecutionException {
       assert myRequestFuture != null;
+      long deadline = System.nanoTime() + TimeUnit.MILLISECONDS.toNanos(timeout);
       try {
         myRequestFuture.get(timeout, TimeUnit.MILLISECONDS);
       }
-      catch (TimeoutException | CancellationException ignored) {
+      catch (TimeoutException ignored) {
       }
+      catch (CancellationException ignored) {
+        awaitExit(TimeUnit.NANOSECONDS.toMillis(deadline - System.nanoTime()));
+      }
+    }
+
+    private void awaitExit(long timeoutMillis) throws InterruptedException {
+      // the executor does not start a request that is cancelled before its start
+      if (myStarted) {
+        //noinspection ResultOfMethodCallIgnored
+        myExited.await(timeoutMillis, TimeUnit.MILLISECONDS);
+      }
+    }
+
+    private boolean hasExited() {
+      return !myStarted || myExited.getCount() == 0;
     }
 
     void setRequestFuture(Future<?> requestFuture) {
@@ -160,12 +217,21 @@ public abstract class InvokeThread<E extends PrioritizedTask> {
   }
 
   protected void startNewWorkerThread() {
+    startNewWorkerThread(null, 0);
+  }
+
+  /**
+   * Starts a new worker. With a {@code previousRequest}, the new worker becomes the current request at once,
+   * but it processes no event before the previous worker exits, or before {@code previousRequestTimeoutMillis} pass.
+   * So the previous worker does not process the queue after its last command, and the two workers do not run commands in parallel.
+   */
+  protected void startNewWorkerThread(@Nullable WorkerThreadRequest<?> previousRequest, long previousRequestTimeoutMillis) {
     // myCurrentRequest has to be updated atomically with calling setRequestFuture
     // otherwise we may have asserts triggering inside workerRequest.requestStop etc.
     synchronized (this) {
       assertCurrentThreadIsActive();
 
-      final WorkerThreadRequest<E> workerRequest = new WorkerThreadRequest<>(this, myWorkJob);
+      final WorkerThreadRequest<E> workerRequest = new WorkerThreadRequest<>(this, myWorkJob, previousRequest, previousRequestTimeoutMillis);
       WorkerThreadRequest<E> oldRequest = myCurrentRequest; // just for logging
       myCurrentRequest = workerRequest;
       if (LOG.isDebugEnabled()) {

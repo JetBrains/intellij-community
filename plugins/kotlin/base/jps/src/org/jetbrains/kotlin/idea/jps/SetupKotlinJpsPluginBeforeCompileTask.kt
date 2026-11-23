@@ -10,6 +10,7 @@ import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.project.stateStore
 import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.config.SettingConstants
+import org.jetbrains.kotlin.idea.compiler.configuration.JpsVersionSupport
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinArtifactsDownloader
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinJpsPluginSettings
 import org.jetbrains.kotlin.idea.core.util.toPsiFile
@@ -24,10 +25,13 @@ class SetupKotlinJpsPluginBeforeCompileTask : CompileTask {
         val bundledJpsVersion = KotlinJpsPluginSettings.rawBundledVersion
         LOG.debug("Found bundled JPS version: $bundledJpsVersion")
 
-        val jpsVersion = KotlinJpsPluginSettings.supportedJpsVersion(
-            project = project,
-            onUnsupportedVersion = { context.addErrorWithReferenceToKotlincXml(it) }
-        ) ?: return true
+        val jpsVersion = when (val support = KotlinJpsPluginSettings.supportedJpsVersion(project)) {
+            is JpsVersionSupport.Supported -> support.version
+            is JpsVersionSupport.Unsupported -> {
+                context.addErrorWithReferenceToKotlincXml(support.message)
+                return true
+            }
+        }
 
         LOG.debug("Attempting to lazy download JPS version: $jpsVersion")
 

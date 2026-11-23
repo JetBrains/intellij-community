@@ -6,11 +6,13 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiPackage;
 import com.intellij.refactoring.rename.RenamePsiPackageProcessor;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.java.JavaSourceRootType;
 import org.jetbrains.jps.model.java.JpsJavaExtensionService;
 
@@ -96,7 +98,7 @@ public class RenamePackageTest extends JavaCodeInsightFixtureTestCase {
     PsiTestUtil.addSourceRoot(getModule(), myFixture.getTempDirFixture().getFile("srcPrefix"), JavaSourceRootType.SOURCE,
                               JpsJavaExtensionService.getInstance().createSourceRootProperties("p"));
 
-    myFixture.renameElement(myFixture.findPackage("p"), "p1");
+    rename(myFixture.findPackage("p"), "p1");
     FileDocumentManager.getInstance().saveAllDocuments();
 
     assertTrue(a.getPath().endsWith("srcPrefix/foo/A.java"));
@@ -124,7 +126,7 @@ public class RenamePackageTest extends JavaCodeInsightFixtureTestCase {
     PsiTestUtil.removeSourceRoot(getModule(), ModuleRootManager.getInstance(getModule()).getSourceRoots()[0]);
     PsiTestUtil.addSourceRoot(getModule(), myFixture.getTempDirFixture().getFile("src"));
 
-    myFixture.renameElement(myFixture.findPackage("p.p"), "p.p1");
+    rename(myFixture.findPackage("p.p"), "p.p1");
     FileDocumentManager.getInstance().saveAllDocuments();
 
     assertEquals("""
@@ -134,5 +136,10 @@ public class RenamePackageTest extends JavaCodeInsightFixtureTestCase {
                         C.class.getResource("/p/p1/m.txt");
                      }\s
                    }""", VfsUtilCore.loadText(c));
+  }
+
+  /** Renames {@code element} as the fixture does; a subclass renames with another engine. */
+  protected void rename(@NotNull PsiElement element, @NotNull String newName) {
+    myFixture.renameElement(element, newName);
   }
 }

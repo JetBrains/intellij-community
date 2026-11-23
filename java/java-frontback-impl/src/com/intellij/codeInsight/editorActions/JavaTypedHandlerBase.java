@@ -3,7 +3,6 @@ package com.intellij.codeInsight.editorActions;
 
 import com.intellij.codeInsight.AutoPopupController;
 import com.intellij.codeInsight.CodeInsightSettings;
-import com.intellij.codeInsight.completion.NewRdCompletionSupport;
 import com.intellij.codeInsight.completion.command.configuration.CommandCompletionSettingsService;
 import com.intellij.codeInsight.completion.commands.JavaCommandCompletionSupport;
 import com.intellij.codeInsight.editorActions.smartEnter.JavaSmartEnterProcessor;
@@ -73,9 +72,6 @@ public class JavaTypedHandlerBase extends TypedHandlerDelegate {
   private boolean myJavaLTTyped;
   private boolean myJavaLTTypedInClassBody;
 
-  protected JavaTypedHandlerBase() {
-  }
-
   private static boolean isJavaFile(@NotNull PsiFile file) {
     return file instanceof AbstractBasicJavaFile;
   }
@@ -83,16 +79,6 @@ public class JavaTypedHandlerBase extends TypedHandlerDelegate {
   private static boolean isJspFile(@NotNull PsiFile file) {
     // avoid dependency on jsp openapi until we have xml psi on
     return file.getLanguage() instanceof XMLLanguage;
-  }
-
-  protected void autoPopupMemberLookup(@NotNull Project project, @NotNull Editor editor) {
-    if (NewRdCompletionSupport.isFrontendRdCompletionOn(editor)) {
-      AutoPopupController.getInstance(project).scheduleAutoPopup(editor, new FrontendAutoPopupMemberLookupCondition(editor));
-    }
-  }
-
-  protected void autoPopupJavadocLookup(final @NotNull Project project, final @NotNull Editor editor) {
-
   }
 
   private static boolean isLanguageLevel5OrHigher(@NotNull PsiFile file) {
@@ -105,29 +91,6 @@ public class JavaTypedHandlerBase extends TypedHandlerDelegate {
     return Result.STOP;
   }
 
-
-  /**
-   * Automatically inserts parentheses if != or == was typed after a&b, a|b or a^b where a and b are numbers.
-   *
-   * @return true if the '=' char was processed
-   */
-  public boolean handleEquality(Project project, Editor editor, PsiFile file, int offsetBefore) {
-    return false;
-  }
-
-  /**
-   * Automatically insert parentheses around the ?: when necessary.
-   *
-   * @return true if question mark was handled
-   */
-  protected boolean handleQuestionMark(Project project, Editor editor, PsiFile file, int offsetBefore) {
-    return false;
-  }
-
-  protected boolean handleAnnotationParameter(Project project, @NotNull Editor editor, @NotNull PsiFile file) {
-    return false;
-  }
-
   @Override
   public @NotNull Result beforeCharTyped(final char c,
                                          final @NotNull Project project,
@@ -136,17 +99,18 @@ public class JavaTypedHandlerBase extends TypedHandlerDelegate {
                                          final @NotNull FileType fileType) {
     if (!isJavaFile(file)) return Result.CONTINUE;
 
+    JavaTypingSupport support = JavaTypingSupport.getInstance();
     if (c == '/') {
       PsiElement element = file.findElementAt(editor.getCaretModel().getOffset() - 1);
       if (element != null && element.getNode().getElementType() == JavaTokenType.END_OF_LINE_COMMENT && element.getTextLength() == 2) {
-        autoPopupJavadocLookup(project, editor);
+        support.autoPopupJavadocLookup(project, editor);
       }
     }
     else if (c == '@') {
-      autoPopupJavadocLookup(project, editor);
+      support.autoPopupJavadocLookup(project, editor);
     }
     else if (c == '#' || c == '.') {
-      autoPopupMemberLookup(project, editor);
+      support.autoPopupMemberLookup(project, editor);
     }
 
     int offsetBefore = editor.getCaretModel().getOffset();
@@ -171,13 +135,13 @@ public class JavaTypedHandlerBase extends TypedHandlerDelegate {
     }
 
     if (c == '?') {
-      if (handleQuestionMark(project, editor, file, offsetBefore)) {
+      if (support.handleQuestionMark(project, editor, file, offsetBefore)) {
         return Result.STOP;
       }
     }
 
     if (c == '=') {
-      if (handleEquality(project, editor, file, offsetBefore)) {
+      if (support.handleEquality(project, editor, file, offsetBefore)) {
         return Result.STOP;
       }
     }
@@ -433,7 +397,7 @@ public class JavaTypedHandlerBase extends TypedHandlerDelegate {
         return Result.STOP;
       }
     }
-    else if (c == ',' && handleAnnotationParameter(project, editor, file)) {
+    else if (c == ',' && JavaTypingSupport.getInstance().handleAnnotationParameter(project, editor, file)) {
       return Result.STOP;
     }
     else if (c == '.') {
@@ -565,15 +529,10 @@ public class JavaTypedHandlerBase extends TypedHandlerDelegate {
 
   @Override
   public @NotNull Result checkAutoPopup(char charTyped, @NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
-    if (NewRdCompletionSupport.isFrontendRdCompletionOn(editor)) {
-      return doCheckAutoPopup(charTyped, project, editor, file);
-    }
-    else {
-      return Result.CONTINUE;
-    }
+    return JavaTypingSupport.getInstance().checkAutoPopup(charTyped, project, editor, file);
   }
 
-  protected static @NotNull Result doCheckAutoPopup(char charTyped, @NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+  public static @NotNull Result doCheckAutoPopup(char charTyped, @NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
     if (!(file instanceof PsiJavaFile)) return Result.CONTINUE;
 
     int offset = editor.getCaretModel().getOffset();
@@ -591,7 +550,7 @@ public class JavaTypedHandlerBase extends TypedHandlerDelegate {
     return Result.CONTINUE;
   }
 
-  protected static class FrontendAutoPopupMemberLookupCondition implements Condition<PsiFile> {
+  public static class FrontendAutoPopupMemberLookupCondition implements Condition<PsiFile> {
     @NotNull private final Editor myEditor;
 
     public FrontendAutoPopupMemberLookupCondition(@NotNull Editor editor) {

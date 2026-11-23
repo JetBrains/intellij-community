@@ -21,6 +21,7 @@ import com.intellij.java.JavaPluginDisposable;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.application.WriteIntentReadAction;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.project.Project;
@@ -143,7 +144,7 @@ class CompoundRendererConfigurable extends JPanel {
           .chooseClassDialog(JavaDebuggerBundle.message("title.compound.renderer.configurable.choose.renderer.reference.type"), myProject);
         if (psiClass != null) {
           String qName = JVMNameUtil.getClassVMName(psiClass);
-          myClassNameField.setText(qName);
+          WriteIntentReadAction.run(() -> myClassNameField.setText(qName));
           updateContext(qName);
         }
       }
@@ -390,7 +391,7 @@ class CompoundRendererConfigurable extends JPanel {
       return;
     }
     final String className = myRenderer.getClassName();
-    myClassNameField.setText(className);
+    WriteIntentReadAction.run(() -> myClassNameField.setText(className));
 
     updateContext(className);
 

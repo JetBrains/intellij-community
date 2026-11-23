@@ -6,6 +6,8 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.psi.PsiElement
+import com.intellij.psi.SmartPsiFileRange
+import com.intellij.refactoring.modplan.ModPlan
 import com.intellij.refactoring.modplan.ModPlanOptionValues
 import com.intellij.refactoring.modplan.ModPlanQuestion
 import com.intellij.refactoring.modplan.ModPlanRefactoring
@@ -54,9 +56,31 @@ interface ModPlanFlowUi {
     proceed: (previewAgain: Boolean) -> Unit,
   ): Boolean
 
-  /** Tells the user that [refactoring] failed. */
+  /**
+   * Shows the [ModPlan.AcceptedPlan.usages] that [plan] changes and the [nonCodeUsages] that it leaves as they are, as
+   * [previewNonCodeUsages] does. A changed usage in a comment, a string or a non-code file, see
+   * [com.intellij.refactoring.modplan.ModPlanConflicts.changedNonCodeUsages], is shown apart from the code usages. The user may exclude
+   * changed usages: [proceed] gets them when the user goes on.
+   *
+   * @return false if there is nothing to show
+   */
   @RequiresEdt
-  fun showError(project: Project, refactoring: ModPlanRefactoring)
+  fun previewUsages(
+    project: Project,
+    refactoring: ModPlanRefactoring,
+    targets: Array<out UsageTarget>,
+    plan: ModPlan.AcceptedPlan,
+    nonCodeUsages: Array<UsageInfo>,
+    proceed: (previewAgain: Boolean, excludedUsages: Set<SmartPsiFileRange>) -> Unit,
+  ): Boolean
+
+  /**
+   * Tells the user that [refactoring] failed.
+   *
+   * @param message the reason that the refactoring or the language gives, such as [ModPlan.RefusedPlan.message]; null if there is none
+   */
+  @RequiresEdt
+  fun showError(project: Project, refactoring: ModPlanRefactoring, message: @NlsContexts.DialogMessage String?)
 
   companion object {
     @JvmStatic

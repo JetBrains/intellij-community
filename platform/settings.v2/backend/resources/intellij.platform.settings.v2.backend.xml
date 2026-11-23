@@ -1,4 +1,4 @@
-<idea-plugin>
+<idea-plugin visibility="internal">
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <module name="intellij.platform.backend"/>
@@ -20,6 +20,7 @@
   <extensions defaultExtensionNs="com.intellij">
     <settings.v2.layerProvider id="settings.v2.fileProvider" order="after settings.v2.projectProvider"
                                implementation="com.intellij.platform.settings.v2.impl.providers.JsonFileLayerProvider"/>
+    <settings.v2.contentRootsProvider implementation="com.intellij.platform.settings.v2.impl.ProjectModelContentRootsProvider"/>
   </extensions>
 
 </idea-plugin>

@@ -35,6 +35,14 @@ class CodeVisionFusEditorListener : EditorFactoryListener {
 
 internal class CodeVisionPluginListener : DynamicPluginListener {
   override fun beforePluginUnload(pluginDescriptor: IdeaPluginDescriptor, isUpdate: Boolean) {
+    dropProviderStorages()
+  }
+
+  override fun pluginsUnloaded() {
+    dropProviderStorages()
+  }
+
+  private fun dropProviderStorages() {
     for (editor in EditorFactory.getInstance().allEditors) {
       editor.removeUserData(PROVIDER_STORAGE_KEY)
     }

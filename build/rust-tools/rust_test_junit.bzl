@@ -4,8 +4,8 @@
 
 libtest writes no report, so Bazel synthesizes one which holds a single test case for the whole target. The
 rule here runs the test binary through `//build/rust-tools/libtest-junit-wrapper` of the community module, which
-writes one test case per test to `XML_OUTPUT_FILE`. The `wrapper` argument names another wrapper binary, and the
-`junit_class` argument gives every test case one class name.
+writes one test case per test to `XML_OUTPUT_FILE`. The `wrapper` argument names another wrapper binary, the
+`junit_class` argument gives every test case one class name, and the `optimized` argument builds the test optimized.
 """
 
 load("@rules_rs//rs:rust_test.bzl", "rust_test")
@@ -61,18 +61,38 @@ def _rust_test_junit_test_impl(ctx):
     ]
 
 _PLATFORMS_SETTING = "//command_line_option:platforms"
+_EXTRA_RUSTC_FLAGS = str(Label("@rules_rust//rust/settings:extra_rustc_flags"))
 
-def _platform_transition_impl(settings, attr):
-    if not attr.platform:
-        return {_PLATFORMS_SETTING: settings[_PLATFORMS_SETTING]}
-    return {_PLATFORMS_SETTING: str(attr.platform)}
+# The rustc flags of an `optimized` test, after the flags of the configuration. rustc takes the last `-Copt-level`, so
+# `1` replaces the `0` of `fastbuild`. Each crate keeps its debug assertions and its overflow checks, which rustc
+# turns off with an `-Copt-level` above `0` unless a flag names them.
+OPTIMIZED_TEST_RUSTC_FLAGS = ["-Copt-level=1", "-Cdebug-assertions=on", "-Coverflow-checks=on"]
 
-# The transition is on the test target and not on the `rust_test`, so the wrapper builds for the same platform. A
-# wrapper for another platform would build all its dependencies, the cc runtime libraries included, a second time.
-_platform_transition = transition(
-    implementation = _platform_transition_impl,
-    inputs = [_PLATFORMS_SETTING],
-    outputs = [_PLATFORMS_SETTING],
+def without_optimized_test_rustc_flags(flags):
+    """`flags` of `@rules_rust//rust/settings:extra_rustc_flags` without the flags of an `optimized` test at their end.
+
+    A transition to a shipped build uses it, so a binary or a library in the data of an `optimized` test builds as it
+    does outside the test, and both share one build.
+    """
+    count = len(OPTIMIZED_TEST_RUSTC_FLAGS)
+    if len(flags) >= count and flags[len(flags) - count:] == OPTIMIZED_TEST_RUSTC_FLAGS:
+        return flags[:len(flags) - count]
+    return flags
+
+def _test_transition_impl(settings, attr):
+    extra_rustc_flags = settings[_EXTRA_RUSTC_FLAGS]
+    return {
+        _PLATFORMS_SETTING: str(attr.platform) if attr.platform else settings[_PLATFORMS_SETTING],
+        _EXTRA_RUSTC_FLAGS: extra_rustc_flags + OPTIMIZED_TEST_RUSTC_FLAGS if attr.optimized else extra_rustc_flags,
+    }
+
+# The transition is on the test target and not on the `rust_test`, so the wrapper builds for the same platform and
+# with the same flags. A wrapper for another platform would build all its dependencies, the cc runtime libraries
+# included, a second time.
+_test_transition = transition(
+    implementation = _test_transition_impl,
+    inputs = [_PLATFORMS_SETTING, _EXTRA_RUSTC_FLAGS],
+    outputs = [_PLATFORMS_SETTING, _EXTRA_RUSTC_FLAGS],
 )
 
 # Bazel asks the class name of a test rule to end with `_test`, so the name of the rule holds the suffix
@@ -81,10 +101,13 @@ _rust_test_junit_test = rule(
     doc = "Runs a `rust_test` through the wrapper which writes the JUnit report.",
     implementation = _rust_test_junit_test_impl,
     test = True,
-    cfg = _platform_transition,
+    cfg = _test_transition,
     attrs = {
         "junit_class": attr.string(
             doc = "The class name of every test case of the report. Empty keeps the module path of each test.",
+        ),
+        "optimized": attr.bool(
+            doc = "Builds the test, the wrapper and their dependencies with `OPTIMIZED_TEST_RUSTC_FLAGS`.",
         ),
         "platform": attr.label(
             doc = "The target platform of the test, the wrapper and their dependencies. `None` keeps the platform.",
@@ -110,6 +133,7 @@ def rust_test_junit(
         exec_properties = {},
         flaky = False,
         junit_class = "",
+        optimized = False,
         platform = None,
         size = None,
         tags = [],
@@ -138,6 +162,9 @@ def rust_test_junit(
         junit_class: The class name of every test case of the report, such as the name of the JUnit test that the
             target replaces. Each case is then named by the last segment of its test name, which must be unique, and
             a `--test_filter` of `<class>#<case>` selects the case.
+        optimized: Builds the test target, the wrapper, the `rust_test` and their dependencies with
+            `OPTIMIZED_TEST_RUSTC_FLAGS`. The `rust_test` itself, such as the one that a clippy test names, keeps the
+            flags of its configuration.
         platform: The target platform of the test target, the wrapper and the `rust_test`. `None` keeps the
             platform of the configuration.
         size: Size of the test target.
@@ -162,6 +189,7 @@ def rust_test_junit(
         exec_properties = exec_properties,
         flaky = flaky,
         junit_class = junit_class,
+        optimized = optimized,
         platform = platform,
         size = size,
         tags = tags,

@@ -70,7 +70,7 @@ private val LOG = Logger.getInstance("org.jetbrains.idea.devkit.actions.updateFr
 private const val DEV_DIST_REGISTRY_KEY = "devkit.update.from.sources.dev.dist"
 
 /**
- * When `true`, the action installs the dev distribution through `build/dev-dist.cmd update-ide`,
+ * When `true`, the action installs the dev distribution through `build/dist.cmd update-ide`,
  * and not the output of the build scripts.
  */
 internal fun isDevDistUpdateEnabled(): Boolean = RegistryManager.getInstance().`is`(DEV_DIST_REGISTRY_KEY)
@@ -568,7 +568,7 @@ internal fun createDevDistUpdateCommandLine(
   logFile: Path,
 ): GeneralCommandLine {
   require(!allPlugins || pluginDirs.isEmpty()) { "allPlugins and pluginDirs exclude each other" }
-  val script = devIdeaHome.resolve("build/dev-dist.cmd")
+  val script = devIdeaHome.resolve("build/dist.cmd")
   require(script.isRegularFile()) {
     "Dev distribution script not found at ${script.toAbsolutePath()}"
   }
@@ -594,7 +594,7 @@ internal fun createDevDistUpdateCommandLine(
 private fun toolPath(path: Path): String = path.toAbsolutePath().normalize().pathString
 
 /**
- * The result file of `dev-dist.cmd update-ide --stage-only`.
+ * The result file of `dist.cmd update-ide --stage-only`.
  *
  * @property apply the command that replaces the home with the staged home
  * @property repository the absolute path of the `plugins.xml` file of the local plugin repository, or `null` if no plugin is built.

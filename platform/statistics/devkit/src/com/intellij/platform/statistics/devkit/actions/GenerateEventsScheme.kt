@@ -14,6 +14,7 @@ import com.intellij.notification.NotificationType
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.fileEditor.FileEditorOpenRequest
 import com.intellij.openapi.project.DumbAwareAction
 
 @Suppress("ActionPresentationInstantiatedInCtor")
@@ -43,6 +44,6 @@ internal class GenerateEventsScheme(private val recorderId: String = StatisticsD
       return
     }
 
-    FileEditorManager.getInstance(project).openFile(scratchFile, true)
+    FileEditorManager.getInstance(project).requestOpenFile(scratchFile, FileEditorOpenRequest.withFocus(true))
   }
 }

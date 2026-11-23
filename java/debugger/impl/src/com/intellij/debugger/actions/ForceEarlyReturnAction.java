@@ -116,7 +116,6 @@ public class ForceEarlyReturnAction extends DebuggerAction {
       @Override
       protected void action() {
         try {
-          debugProcess.startWatchingMethodReturn(thread);
           thread.forceEarlyReturn(value);
         }
         catch (Exception e) {

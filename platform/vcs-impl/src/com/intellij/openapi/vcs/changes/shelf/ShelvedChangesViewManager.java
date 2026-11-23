@@ -45,6 +45,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
@@ -64,7 +65,6 @@ import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeViewDiffRequestProcessor;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
-import com.intellij.openapi.vcs.changes.DiffPreview;
 import com.intellij.openapi.vcs.changes.VcsToolwindowDnDTarget;
 import com.intellij.openapi.vcs.changes.actions.ShowDiffPreviewAction;
 import com.intellij.openapi.vcs.changes.shelf.DiffShelvedChangesActionProvider.PatchesPreloader;
@@ -103,7 +103,6 @@ import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.content.Content;
 import com.intellij.util.Consumer;
 import com.intellij.util.ModalityUiUtil;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.PathUtil;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.messages.MessageBusConnection;
@@ -143,6 +142,7 @@ import java.util.EventObject;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -823,7 +823,7 @@ public class ShelvedChangesViewManager {
 
       if (hasSplitterPreview) {
         mySplitterDiffPreview = new ShelveSplitterDiffPreview();
-        DiffPreview.setPreviewVisible(mySplitterDiffPreview, myVcsConfiguration.SHELVE_DETAILS_PREVIEW_SHOWN);
+        mySplitterDiffPreview.setPreviewVisible(myVcsConfiguration.SHELVE_DETAILS_PREVIEW_SHOWN);
       }
       else {
         Disposer.dispose(mySplitterDiffPreview);
@@ -848,7 +848,7 @@ public class ShelvedChangesViewManager {
       }
 
       @Override
-      public boolean openPreview(boolean requestFocus) {
+      protected @NotNull CompletableFuture<List<FileEditor>> submitOpenRequest(boolean requestFocus) {
         return CommitToolWindowUtil.openDiff(SHELF, this, requestFocus);
       }
 
@@ -865,7 +865,7 @@ public class ShelvedChangesViewManager {
       }
     }
 
-    private class ShelveSplitterDiffPreview implements DiffPreview, Disposable {
+    private class ShelveSplitterDiffPreview implements Disposable {
       private final MyShelvedPreviewProcessor myProcessor;
       private final PreviewDiffSplitterComponent mySplitterComponent;
 
@@ -886,14 +886,13 @@ public class ShelvedChangesViewManager {
         }
       }
 
-      @Override
-      public boolean openPreview(boolean requestFocus) {
-        return mySplitterComponent.openPreview(requestFocus);
-      }
-
-      @Override
-      public void closePreview() {
-        mySplitterComponent.closePreview();
+      public void setPreviewVisible(boolean value) {
+        if (value) {
+          mySplitterComponent.showPreview();
+        }
+        else {
+          mySplitterComponent.closePreview();
+        }
       }
     }
 
@@ -975,8 +974,15 @@ public class ShelvedChangesViewManager {
 
       @Override
       public void setSelected(@NotNull AnActionEvent e, boolean state) {
-        DiffPreview previewSplitter = ObjectUtils.chooseNotNull(mySplitterDiffPreview, myEditorDiffPreview);
-        DiffPreview.setPreviewVisible(previewSplitter, state);
+        if (mySplitterDiffPreview != null) {
+          mySplitterDiffPreview.setPreviewVisible(state);
+        }
+        else if (state) {
+          myEditorDiffPreview.requestOpenPreview(false);
+        }
+        else {
+          myEditorDiffPreview.closePreview();
+        }
         myVcsConfiguration.SHELVE_DETAILS_PREVIEW_SHOWN = state;
       }
 

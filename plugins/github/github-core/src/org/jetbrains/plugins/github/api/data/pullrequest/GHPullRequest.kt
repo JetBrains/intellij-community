@@ -26,7 +26,7 @@ class GHPullRequest(
   @JsonProperty("assignees") assignees: GraphQLNodesDTO<GHUser>,
   @JsonProperty("labels") labels: GraphQLNodesDTO<GHLabel>?,
   @JsonProperty("reviewRequests") reviewRequests: GraphQLNodesDTO<GHPullRequestReviewRequest>?,
-  @JsonProperty("reviewThreads") reviewThreads: GraphQLNodesDTO<ReviewThreadDetails>,
+  @JsonProperty("reviewThreads") reviewThreads: GraphQLNodesDTO<ReviewThreadDetails?>,
   @JsonProperty("reviews") reviews: GraphQLNodesDTO<GHPullRequestReview>?,
   val reviewDecision: GHPullRequestReviewDecision?,
   mergeable: GHPullRequestMergeableState,

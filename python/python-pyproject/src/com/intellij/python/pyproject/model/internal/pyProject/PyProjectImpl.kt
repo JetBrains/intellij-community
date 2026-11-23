@@ -23,6 +23,12 @@ internal data class PyProjectImpl private constructor(override val baseDir: Path
       return baseDirOf(moduleEntity)?.let { PyProjectImpl(it, residesOnModule = module) }
     }
 
+    /** [module] as a PyProject at its content root, also when it is no Python project yet, see [baseDirOfRoots]. */
+    fun createCandidate(module: Module, snapshot: ImmutableEntityStorage): PyProjectImpl? {
+      val moduleEntity = module.findModuleEntity(snapshot) ?: return null
+      return baseDirOfRoots(moduleEntity)?.let { PyProjectImpl(it, residesOnModule = module) }
+    }
+
     /**
      * The base dir of the PyProject on [moduleEntity], or `null` when the module is not a Python project. A module with a
      * content root is a Python project when one of these is true:

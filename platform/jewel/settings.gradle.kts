@@ -19,7 +19,7 @@ dependencyResolutionManagement {
         google()
         maven("https://www.jetbrains.com/intellij-repository/releases")
         maven("https://www.jetbrains.com/intellij-repository/snapshots")
-        maven("https://cache-redirector.jetbrains.com/intellij-dependencies")
+        maven("https://cache-redirector.jetbrains.com/maven/ultimate-public")
         mavenCentral()
     }
 }

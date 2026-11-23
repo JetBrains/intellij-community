@@ -61,6 +61,17 @@ private val IDENTITY_HASH_REGEX = Regex("@[0-9a-fA-F]+")
 private val ARRAY_INDEX_REGEX = Regex("""\[\d+]""")
 private val IDE_FRAME_REGEX = Regex("""IdeFrameImpl\[frame[0-9]""")
 
+/**
+ * Identifies a retention chain of a leak. Two leaks with equal signatures differ only in identity hashes and array indices.
+ */
+internal fun leakSignature(leak: LeakInfo): String {
+  val path = leak.referencePath
+    .replace(IDENTITY_HASH_REGEX, "@")
+    .replace(ARRAY_INDEX_REGEX, "[]")
+    .replace(IDE_FRAME_REGEX, "IdeFrameImpl[")
+  return "${leak.kind}\n${leak.className}\n$path"
+}
+
 /** Surfaces [ProjectLeakDetector] results: a balloon notification (with actions) plus a `LOG.error` so Diogen collects them. */
 @ApiStatus.Internal
 class LeakReporter(private val coroutineScope: CoroutineScope) {
@@ -82,10 +93,12 @@ class LeakReporter(private val coroutineScope: CoroutineScope) {
     val notification = group.createNotification(DevLeakDetectionBundle.message("notification.title.leaks.found"),
                                                 DevLeakDetectionBundle.message("notification.content.leaks.found", leaks.size),
                                                 type)
-      .addAction(NotificationAction.createSimple(DevLeakDetectionBundle.message("notification.action.create.ticket")) {
+    if (ApplicationInfoEx.getInstanceEx().isVendorJetBrains) { // we do not need third-party issues in YouTrack
+      notification.addAction(NotificationAction.createSimple(DevLeakDetectionBundle.message("notification.action.create.ticket")) {
         createTicket(project, leaks, report)
       })
-      .addAction(NotificationAction.createSimple(DevLeakDetectionBundle.message("notification.action.copy.report")) {
+    }
+    notification.addAction(NotificationAction.createSimple(DevLeakDetectionBundle.message("notification.action.copy.report")) {
         copyToClipboard(report)
       })
 
@@ -148,7 +161,7 @@ class LeakReporter(private val coroutineScope: CoroutineScope) {
     // report with many near-identical retention chains stays readable: each distinct path is printed only once.
     val groups = LinkedHashMap<String, MutableList<LeakInfo>>()
     for (leak in leaks) {
-      val key = "${leak.kind}\n${leak.className}\n${pathSignature(leak.referencePath)}"
+      val key = leakSignature(leak)
       groups.getOrPut(key) { ArrayList() }.add(leak)
     }
 
@@ -177,16 +190,14 @@ class LeakReporter(private val coroutineScope: CoroutineScope) {
           sb.append('\n')
         }
       }
-      sb.append("  reference path:\n").append(representative.referencePath.trimEnd().prependIndent("    ")).append("\n\n")
+      sb.append("  reference path:\n").append(representative.referencePath.trimEnd().prependIndent("    ")).append('\n')
+      representative.disposerParentChain?.let {
+        sb.append("  Disposer parent chain:\n").append(it.trimEnd().prependIndent("  ")).append('\n')
+      }
+      sb.append('\n')
     }
     return sb.toString()
   }
-
-  private fun pathSignature(referencePath: String): String =
-    referencePath
-      .replace(IDENTITY_HASH_REGEX, "@")
-      .replace(ARRAY_INDEX_REGEX, "[]")
-      .replace(IDE_FRAME_REGEX, "IdeFrameImpl[")
 
   private fun copyToClipboard(report: String) {
     CopyPasteManager.getInstance().setContents(StringSelection(report))

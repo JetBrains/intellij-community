@@ -15,7 +15,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.kotlin.idea.base.test.KotlinRoot
 import org.jetbrains.kotlin.idea.core.script.configurations.KotlinScriptService
-import org.jetbrains.kotlin.idea.core.script.definitions.ScriptDefinitionsModificationTracker
+import org.jetbrains.kotlin.idea.core.script.definitions.ScriptDefinitionProviderImpl
 import kotlin.script.experimental.intellij.ScriptDefinitionsProvider
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.test.invalidateLibraryCache
@@ -133,7 +133,7 @@ class KotlinCustomImportScriptDefinitionCompletionTest : KotlinLightCodeInsightF
             },
             testRootDisposable,
         )
-        ScriptDefinitionsModificationTracker.getInstance(project).incModificationCount()
+        runBlocking { ScriptDefinitionProviderImpl.getInstance(project).awaitLoading() }
     }
 
     private fun resolveImportedScripts(context: ScriptConfigurationRefinementContext): ResultWithDiagnostics<ScriptCompilationConfiguration> {

@@ -714,7 +714,9 @@ f:com.intellij.platform.vcs.impl.shared.changes.PreviewDiffSplitterComponent
 - com.intellij.openapi.vcs.changes.DiffPreview
 - <init>(com.intellij.platform.vcs.impl.shared.changes.DiffPreviewUpdateProcessor,java.lang.String):V
 - closePreview():V
-- openPreview(Z):Z
+- openPreview(Z,kotlin.coroutines.Continuation):java.lang.Object
+- performDiffAction():Z
+- f:showPreview():Z
 f:com.intellij.platform.vcs.impl.shared.commit.EditedCommitNodeKt
 - sf:insertEditedCommitNode(com.intellij.openapi.vcs.changes.ui.ChangesViewModelBuilder,com.intellij.platform.vcs.impl.shared.commit.EditedCommitPresentation):V
 com.intellij.platform.vcs.impl.shared.commit.EditedCommitPresentation

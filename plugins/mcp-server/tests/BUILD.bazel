@@ -66,6 +66,7 @@ jvm_library(
         "//plugins/mcp-server/mcpserver.testFramework",
         "//plugins/mcp-server/mcpserver.vcs",
         "//plugins/mcp-server/mcpserver.terminal",
+        "//plugins/mcp-server/mcpserver.configurables",
         "//plugins/editorconfig/backend",
         "//aether-dependency-resolver",
         "//aether-dependency-resolver/plugin",

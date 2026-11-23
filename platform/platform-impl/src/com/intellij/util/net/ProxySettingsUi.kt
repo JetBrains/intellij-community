@@ -17,6 +17,7 @@ import com.intellij.ui.UIBundle
 import com.intellij.ui.components.JBRadioButton
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.dsl.builder.AlignX
+import com.intellij.ui.dsl.builder.RightGap
 import com.intellij.ui.dsl.builder.actionListener
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.layout.and
@@ -113,7 +114,9 @@ internal class ProxySettingsUi(
         }
         indent {
           row {
-            pacUrlCheckBox = checkBox(UIBundle.message("proxy.pac.url.label")).component
+            pacUrlCheckBox = checkBox(UIBundle.message("proxy.pac.url.label"))
+              .gap(RightGap.SMALL)
+              .component
             pacUrlTextField = textField().align(AlignX.FILL).comment(UIBundle.message("proxy.pac.url.example")).enabledIf(pacUrlCheckBox.selected).component
           }
           row {

@@ -344,29 +344,11 @@ public class RenameJavaVariableProcessor extends RenameJavaMemberProcessor {
     return qualifiedName == null ? null : StringUtil.getQualifiedName(qualifiedName, newName);
   }
 
-  /**
-   * Renames a Java variable for a caller that has no user.
-   * <p>
-   * The outer class asks the user nothing, but it does not state the headless rename itself, because
-   * it has subclasses. A subclass must not inherit that statement.
-   */
-  public static final class HeadlessRenameJavaVariableProcessor extends RenameJavaVariableProcessor
-    implements DelegatingHeadlessRenamePsiElementProcessor {
-
-    /**
-     * Collects the conflicts of every element of the rename, and reads no interactive registration.
-     * <p>
-     * The outer class dispatches the conflicts of one element to the processor of that element, and it
-     * takes that processor from {@code renamePsiElementProcessor}. A caller with no user can leave that
-     * extension point empty, and the default processor collects no conflict. So this dispatches through
-     * {@link HeadlessRenamePsiElementProcessor} instead.
-     */
-    @Override
-    public void findExistingNameConflictsHeadless(@NotNull PsiElement element,
-                                                  @NotNull String newName,
-                                                  @NotNull MultiMap<PsiElement, @DialogMessage String> conflicts,
-                                                  @NotNull Map<PsiElement, String> allRenames) {
-      findExistingNameConflicts(conflicts, allRenames, HeadlessRenamePsiElementProcessor::processorOf);
+  /** The rename on the ModPlan engine of the elements that this processor renames. */
+  @ApiStatus.Internal
+  public static final class ModPlanJavaVariableRenameProvider extends ModPlanJavaRenameProvider {
+    public ModPlanJavaVariableRenameProvider() {
+      super(RenameJavaVariableProcessor.class);
     }
   }
 }

@@ -249,11 +249,7 @@ class ExtensionPointName<T : Any>(name: @NonNls String) : BaseExtensionPointName
   }
 
   @Internal
-  fun filterableLazySequence(): Sequence<LazyExtension<T>> {
-    val point = getRootPoint()
-    val adapters = point.sortedAdapters
-    return LazyExtensionSequence(point = point, adapters = adapters)
-  }
+  fun filterableLazySequence(): Sequence<LazyExtension<T>> = getRootPoint().filterableLazySequence()
 
   @Internal
   fun findByIdOrFromInstance(id: String, idGetter: (T) -> String?): T? {
@@ -306,7 +302,7 @@ suspend fun <T : Any, R : Any> LazyExtension<T>.useOrLogError(task: suspend (ins
   }
 }
 
-private class LazyExtensionSequence<T : Any>(
+internal class LazyExtensionSequence<T : Any>(
   private val point: ExtensionPointImpl<T>,
   private val adapters: List<ExtensionComponentAdapter>,
 ) : Sequence<LazyExtension<T>> {

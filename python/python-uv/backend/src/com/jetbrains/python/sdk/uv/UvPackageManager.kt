@@ -2,6 +2,7 @@
 package com.jetbrains.python.sdk.uv
 
 import com.intellij.openapi.application.readAction
+import com.intellij.python.sdk.backend.PythonInterpreter
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
@@ -14,7 +15,6 @@ import com.intellij.python.pyproject.PyProjectTomlFile
 import com.intellij.python.pyproject.model.evolution.findModuleFor
 import com.intellij.python.pyproject.model.internal.workspaceBridge.getToolWorkspaceLayout
 import com.intellij.python.pyproject.model.spi.ProjectName
-import com.intellij.python.sdk.backend.PythonInterpreter
 import com.intellij.python.uv.backend.PyUvBundle.message
 import com.intellij.python.uv.common.UV_TOOL_ID
 import com.jetbrains.python.errorProcessing.PyResult
@@ -56,10 +56,9 @@ import java.nio.file.Path
  */
 @ApiStatus.Internal
 class UvPackageManager internal constructor(
-  project: Project,
   interpreter: PythonInterpreter,
   uvExecutionContextDeferred: Deferred<UvExecutionContext<*>>,
-) : UvPackageManagerBase(project, interpreter, uvExecutionContextDeferred) {
+) : UvPackageManagerBase(interpreter, uvExecutionContextDeferred) {
   override val workspaceSupport: PythonWorkspaceSupport = UvWorkspaceSupport(project, interpreter)
   override val treeProvider = cachedDependencyTree(
     lockFileName = UV_LOCK.value,
@@ -81,7 +80,7 @@ class UvPackageManager internal constructor(
     get() = listOf(Path.of(PY_PROJECT_TOML))
 
   /** Project mode only. A stored requirements file selects [UvPipPackageManager]. */
-  override fun matchesSdk(): Boolean = when (sdk.uvMode) {
+  override fun matchesInterpreter(): Boolean = when (interpreter.uvMode()) {
     UvMode.Project -> true
     is UvMode.Pip -> false
   }
@@ -273,7 +272,7 @@ class UvPackageManager internal constructor(
     val rootFile = getRootDependenciesFile() ?: return emptyList()
     val rootPyProjectToml = (rootFile as? PyProjectTomlFile) ?: return listOf(rootFile)
 
-    val uvWorkingDirectory = uvExecutionContextDeferred.await().workingDir
+    val uvWorkingDirectory = interpreter.ownerDir
     val memberModules = readAction {
       val rootModule = ModuleManager.getInstance(project).modules.firstOrNull { module ->
         ModuleRootManager.getInstance(module).contentRoots.any { it.toNioPath() == uvWorkingDirectory }

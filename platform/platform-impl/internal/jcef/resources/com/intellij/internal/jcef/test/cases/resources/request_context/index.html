@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>JCEF request-context demo</title>
+  <style>
+    html, body { background: #fff; color: #000; }
+    body { font: 16px sans-serif; margin: 2rem; }
+    code { overflow-wrap: anywhere; }
+    input { min-width: 16rem; padding: .4rem; }
+    button { margin: .25rem; padding: .4rem .7rem; }
+  </style>
+</head>
+<body>
+<h1>Request-context storage</h1>
+<p>Selected profile: <strong id="profile"></strong></p>
+<p>Page visits in this profile: <strong id="visits"></strong></p>
+<p>Saved note in localStorage: <code id="stored"></code></p>
+<p>Saved note in cookie: <code id="cookie"></code></p>
+<p>
+  <input id="note" placeholder="Enter a note to share within this profile">
+  <button id="save">Save note</button>
+  <button id="clear">Clear this page's storage</button>
+</p>
+<script>
+  const profile = new URLSearchParams(location.search).get('profile') || location.host;
+  const visits = Number(localStorage.getItem('visits') || '0') + 1;
+  localStorage.setItem('visits', String(visits));
+  document.getElementById('profile').textContent = profile;
+  document.getElementById('visits').textContent = String(visits);
+
+  function refresh() {
+    document.getElementById('stored').textContent = localStorage.getItem('note') || '(empty)';
+    const cookie = document.cookie.split('; ').find(value => value.startsWith('note='));
+    document.getElementById('cookie').textContent = cookie ? decodeURIComponent(cookie.slice(5)) : '(empty)';
+  }
+
+  document.getElementById('save').addEventListener('click', () => {
+    const note = document.getElementById('note').value;
+    localStorage.setItem('note', note);
+    document.cookie = 'note=' + encodeURIComponent(note) + '; path=/; SameSite=Lax; Secure';
+    refresh();
+  });
+  document.getElementById('clear').addEventListener('click', () => {
+    localStorage.clear();
+    document.cookie = 'note=; path=/; max-age=0; SameSite=Lax; Secure';
+    location.reload();
+  });
+  refresh();
+</script>
+</body>
+</html>

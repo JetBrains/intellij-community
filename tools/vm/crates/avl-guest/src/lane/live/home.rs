@@ -24,6 +24,7 @@ use std::path::{Component, Path, PathBuf};
 use std::sync::LazyLock;
 use std::time::SystemTime;
 
+use avl_wire::worktree::linked_worktree_main_root;
 use regex::Regex;
 use serde_json::{Map, Value, json};
 
@@ -657,24 +658,15 @@ fn codex_trusted_directories(project_dir: &Path) -> Vec<PathBuf> {
         return vec![project_dir.to_owned()];
     };
     let mut directories = vec![project_dir.to_owned()];
-    for directory in std::iter::once(root.to_owned()).chain(linked_worktree_main_root(root)) {
+    let main_root = fs::read_to_string(root.join(".git"))
+        .ok()
+        .and_then(|dot_git| linked_worktree_main_root(root, &dot_git));
+    for directory in std::iter::once(root.to_owned()).chain(main_root) {
         if !directories.iter().any(|known| lexical(known) == directory) {
             directories.push(directory);
         }
     }
     directories
-}
-
-/// The main checkout of the linked worktree `root`, from the `gitdir:` line of its `.git` file.
-fn linked_worktree_main_root(root: &Path) -> Option<PathBuf> {
-    let text = fs::read_to_string(root.join(".git")).ok()?;
-    let git_dir = text.lines().find_map(|line| line.strip_prefix("gitdir:"))?.trim();
-    if git_dir.is_empty() {
-        return None;
-    }
-    let worktrees = lexical(&root.join(git_dir)).parent()?.to_owned();
-    let common = worktrees.parent()?;
-    (worktrees.file_name()? == "worktrees" && common.file_name()? == ".git").then(|| common.parent().map(Path::to_owned))?
 }
 
 /// The `.mcp.json` server names of `project_dir` and of each directory above it, by directory, for each directory whose

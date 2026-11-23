@@ -1,14 +1,27 @@
 package org.intellij.plugins.markdown.actions
 
 import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.project.Project
+import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightModuleFixture
 import com.intellij.testFramework.EditorTestUtil
-import com.intellij.testFramework.LightPlatformCodeInsightTestCase
+import com.intellij.testFramework.common.timeoutRunBlocking
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.fixture.projectFixture
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.intellij.plugins.markdown.ui.actions.styling.SetHeaderLevelImpl
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Test
 
-class SetHeaderLevelActionTest: LightPlatformCodeInsightTestCase() {
+@TestApplication
+class SetHeaderLevelActionTest {
+  private val myFixture by codeInsightModuleFixture(projectFixture)
+
+  @Test
   fun `test header with selection at file end`() {
     // language=Markdown
     val content = """
@@ -21,6 +34,7 @@ class SetHeaderLevelActionTest: LightPlatformCodeInsightTestCase() {
     doTest(content, expected, SetHeaderLevelImpl.Title())
   }
 
+  @Test
   fun `test consistency between normal and header`() {
     // language=Markdown
     val content = """
@@ -34,6 +48,7 @@ class SetHeaderLevelActionTest: LightPlatformCodeInsightTestCase() {
     doTest(expected, content, SetHeaderLevelImpl.Title())
   }
 
+  @Test
   fun `test header from single line in multiline paragraph`() {
     // language=Markdown
     val content = """
@@ -52,6 +67,7 @@ class SetHeaderLevelActionTest: LightPlatformCodeInsightTestCase() {
     doTest(content, expected, SetHeaderLevelImpl.Subtitle())
   }
 
+  @Test
   fun `test in list`() {
     // language=Markdown
     val content = """
@@ -68,6 +84,7 @@ class SetHeaderLevelActionTest: LightPlatformCodeInsightTestCase() {
     doTest(content, expected, SetHeaderLevelImpl.Heading(level = 3))
   }
 
+  @Test
   fun `test in sublist`() {
     // language=Markdown
     val content = """
@@ -88,6 +105,7 @@ class SetHeaderLevelActionTest: LightPlatformCodeInsightTestCase() {
     doTest(content, expected, SetHeaderLevelImpl.Heading(level = 3))
   }
 
+  @Test
   fun `test applies header level to multiple carets`() {
     val content = "First line\n\nSecond line"
     val firstLineEnd = content.indexOf('\n')
@@ -101,6 +119,7 @@ class SetHeaderLevelActionTest: LightPlatformCodeInsightTestCase() {
     )
   }
 
+  @Test
   fun `test removes header level from multiple carets`() {
     val content = "# First line\n\n# Second line"
     val firstLineStart = 2
@@ -115,12 +134,16 @@ class SetHeaderLevelActionTest: LightPlatformCodeInsightTestCase() {
     )
   }
 
-  private fun doTest(content: String, expected: String, action: AnAction) {
-    configureFromFileText("some.md", content, true)
-    executeCommand(project, editor.document) {
-      EditorTestUtil.executeAction(editor, true, action)
+  private fun doTest(content: String, expected: String, action: AnAction): Unit = timeoutRunBlocking {
+    assertTrue(content.contains("<caret>") || content.contains("<selection>"), "No caret specified in some.md")
+    myFixture.configureByText("some.md", content)
+    withContext(Dispatchers.EDT) {
+      val editor = myFixture.editor
+      executeCommand(myFixture.project, editor.document) {
+        EditorTestUtil.executeAction(editor, true, action)
+      }
+      myFixture.checkResult(expected)
     }
-    checkResultByText(expected)
   }
 
   private fun doMultiCaretTest(
@@ -129,18 +152,23 @@ class SetHeaderLevelActionTest: LightPlatformCodeInsightTestCase() {
     action: AnAction,
     firstSelection: IntRange,
     secondSelection: IntRange,
-  ) {
-    configureFromFileText("some.md", content)
-    editor.caretModel.primaryCaret.setSelection(firstSelection.first, firstSelection.last + 1)
-    val secondCaret = editor.caretModel.addCaret(editor.offsetToVisualPosition(secondSelection.first))!!
-    secondCaret.setSelection(secondSelection.first, secondSelection.last + 1)
-    executeCommand(project, editor.document) {
-      EditorTestUtil.executeAction(editor, true, action)
+  ): Unit = timeoutRunBlocking {
+    myFixture.configureByText("some.md", content)
+    withContext(Dispatchers.EDT) {
+      val editor = myFixture.editor
+      editor.caretModel.primaryCaret.setSelection(firstSelection.first, firstSelection.last + 1)
+      val secondCaret = editor.caretModel.addCaret(editor.offsetToVisualPosition(secondSelection.first))!!
+      secondCaret.setSelection(secondSelection.first, secondSelection.last + 1)
+      executeCommand(myFixture.project, editor.document) {
+        EditorTestUtil.executeAction(editor, true, action)
+      }
+      assertEquals(expected, editor.document.text)
     }
-    assertEquals(expected, editor.document.text)
   }
 
   companion object {
+    private val projectFixture = projectFixture(openAfterCreation = true)
+
     private inline fun executeCommand(project: Project, document: Document, crossinline block: () -> Unit) {
       CommandProcessor.getInstance().executeCommand(project, Runnable { block() }, "", null, document)
     }

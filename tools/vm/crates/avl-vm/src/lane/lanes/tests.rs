@@ -1,10 +1,9 @@
 use avl_host_testkit::{quiet, refusal};
-use std::fs;
-use std::path::Path;
 
 use avl_affected::{air_area, ui_lane_names};
 use avl_base::{Backend, Exit, GuestOs};
 use bt_core::Lanes;
+use bt_core::fake::{FakeRuntime, jps_json, module_entry_json, target_json};
 use pretty_assertions::assert_eq;
 
 use super::*;
@@ -21,7 +20,10 @@ fn lanes() -> &'static Lanes {
 #[test]
 fn only_the_ide_lanes_are_runnable() {
     avl_affected::bridge::install_fixture();
-    assert_eq!(ui_lane_names(), ["ui", "ui-real", "ui-live", "ui-perf", "jcp", "gui-chat"]);
+    assert_eq!(
+        ui_lane_names(),
+        ["ui", "ui-real", "ui-live", "ui-perf", "jcp", "gui-chat", "ui-light"]
+    );
     for lane in ui_lanes() {
         assert!(
             lanes().get(lane.name).is_some(),
@@ -33,7 +35,7 @@ fn only_the_ide_lanes_are_runnable() {
     let refused = refusal(lane_selection("fast"));
     assert_eq!(refused.exit, Exit::USAGE);
     assert!(
-        refused.message.contains("ui, ui-real, ui-live, ui-perf, jcp, gui-chat"),
+        refused.message.contains("ui, ui-real, ui-live, ui-perf, jcp, gui-chat, ui-light"),
         "the refusal does not name the runnable lanes: {}",
         refused.message
     );
@@ -67,34 +69,34 @@ fn a_lane_selects_its_documents_by_its_name_and_has_no_filter() {
 
 // --- selector resolution --------------------------------------------------------------------------------------
 
-/// A repository shaped the way resolution requires, and no more: one module with a test source root, its
-/// `jps_test`, and one test class. The module is the one of the jcp lane, the one IDE lane whose row still names a
-/// JUnit target. When the JVM runner goes (E2), a class of a lane resolves through its suite document alone, and
-/// this fixture goes with the JUnit path of the resolution.
-fn fixture_repo(repo: &Path) {
-    let module = repo.join("plugins/air/tests/integration/jcp");
-    fs::create_dir_all(module.join("testSrc/flow")).unwrap();
-    fs::write(
-        module.join("intellij.air.jcp.iml"),
-        r#"<module><component><content url="file://$MODULE_DIR$"><sourceFolder url="file://$MODULE_DIR$/testSrc" isTestSource="true" /></content></component></module>"#,
-    )
-    .unwrap();
-    fs::write(module.join("BUILD.bazel"), "jps_test(\n  name = \"jcp_test\",\n)\n").unwrap();
-    fs::write(
-        module.join("testSrc/flow/AirFlowSmokeTest.kt"),
-        "package com.intellij.air.integration.flow\n\nclass AirFlowSmokeTest\n",
-    )
-    .unwrap();
+/// A checkout shaped the way resolution requires, and no more: one module root with a test source root and its
+/// `jps_test`, and one test class, as accio answers them. The module is the one of the jcp lane, the one IDE lane whose
+/// row still names a JUnit target. When the JVM runner goes (E2), a class of a lane resolves through its suite document
+/// alone, and this fixture goes with the JUnit path of the resolution.
+fn fixture_runtime() -> FakeRuntime {
+    let fake = FakeRuntime::new([("plugins/air/tests/integration/jcp/BUILD.bazel", "")]);
+    let root = "plugins/air/tests/integration/jcp";
+    fake.add_class(
+        "plugins/air/tests/integration/jcp/testSrc/flow/AirFlowSmokeTest.kt",
+        "com.intellij.air.integration.flow.AirFlowSmokeTest",
+    );
+    fake.add_module(module_entry_json(
+        root,
+        Some(&jps_json("intellij.air.jcp", root, &[("testSrc", true)], None)),
+        &[],
+        Some(&[
+            target_json(root, "jvm_library", "jcp_test_lib", Some("intellij.air.jcp"), &[], &[]),
+            target_json(root, "jps_test", "jcp_test", None, &[], &["jcp_test_lib"]),
+        ]),
+    ));
+    fake
 }
 
 /// A class name resolves to the lane's own target, and its test filter becomes the selector of the run request.
 #[test]
 fn a_selector_inside_a_lane_resolves_to_its_filter() {
-    let repo = tempfile::tempdir().unwrap();
-    fixture_repo(repo.path());
-    let settings = settings(Backend::Docker, GuestOs::Linux, repo.path());
-
-    let selection = resolve_selector_selection(&settings, "AirFlowSmokeTest", &quiet()).unwrap();
+    avl_affected::bridge::install_fixture();
+    let selection = resolve_selector_selection_in(&fixture_runtime(), "AirFlowSmokeTest").unwrap();
 
     // A selector names no lane, and the daemon branches on that: a lane iteration is selected by tag.
     assert_eq!(
@@ -113,19 +115,14 @@ fn a_selector_inside_a_lane_resolves_to_its_filter() {
 #[test]
 fn a_class_that_a_suite_document_names_resolves_to_its_lane_with_no_test_target() {
     avl_affected::bridge::install_fixture();
-    let repo = tempfile::tempdir().unwrap();
     let catalog = air_area().lanes().catalog().expect("the Air lane table names a catalog");
-    let documents = repo.path().join(catalog.flow_profile_dir);
-    fs::create_dir_all(&documents).unwrap();
-    fs::write(
-        documents.join("rename-session.json"),
+    let fake = FakeRuntime::new([(
+        format!("{}/rename-session.json", catalog.flow_profile_dir).as_str(),
         r#"{"suite": "rename-session", "lane": "GUI_CHAT", "testClassName": "AirRenameSessionUiTest",
   "labels": [{"name": "testClass", "value": "com.intellij.air.integration.acp.AirRenameSessionUiTest"}], "profiles": []}"#,
-    )
-    .unwrap();
-    let settings = settings(Backend::Docker, GuestOs::Linux, repo.path());
+    )]);
 
-    let selection = resolve_selector_selection(&settings, "AirRenameSessionUiTest", &quiet()).unwrap();
+    let selection = resolve_selector_selection_in(&fake, "AirRenameSessionUiTest").unwrap();
 
     assert_eq!(
         selection,
@@ -142,16 +139,14 @@ fn a_class_that_a_suite_document_names_resolves_to_its_lane_with_no_test_target(
 /// with no checkout and no Bazel.
 #[test]
 fn a_target_outside_the_ide_lanes_is_refused() {
-    let repo = tempfile::tempdir().unwrap();
-    fixture_repo(repo.path());
-    let settings = settings(Backend::Docker, GuestOs::Linux, repo.path());
+    avl_affected::bridge::install_fixture();
     for selector in [
         "//plugins/air/tests/integration/headless/claude:claude_test",
         // A pattern can hit more than one target, so no single label - and no filter - can describe it.
         "//plugins/air/tests/integration/...",
         "NoSuchTest",
     ] {
-        let refused = refusal(resolve_selector_selection(&settings, selector, &quiet()));
+        let refused = refusal(resolve_selector_selection_in(&fixture_runtime(), selector));
         assert_eq!(
             (refused.code.as_ref(), refused.exit),
             ("usage", Exit::USAGE),
@@ -161,8 +156,73 @@ fn a_target_outside_the_ide_lanes_is_refused() {
     }
 }
 
-/// The lane's own label resolves without a tree scan at all, which is what keeps a `--lane` start off the ~250 ms
-/// the scan costs.
+/// A target outside the lanes is refused with the host command, which runs it with no guest.
+#[test]
+fn a_refused_target_names_the_host_command() {
+    avl_affected::bridge::install_fixture();
+    let selector = "//plugins/air/tests/integration/headless/claude:claude_test";
+    let refused = refusal(resolve_selector_selection_in(&fixture_runtime(), selector));
+    assert!(
+        refused
+            .message
+            .ends_with(&format!("Run it on the host: ./community/tools/bt.cmd {selector}")),
+        "{}",
+        refused.message
+    );
+}
+
+/// A class of a module whose tests do not run under Bazel is no class of a UI lane, so the refusal is the controller's
+/// and not the migration of `bt`: a migration would not make it a lane test. The host command of `bt` follows.
+#[test]
+fn a_class_of_a_module_outside_the_migrated_list_is_no_lane_test() {
+    avl_affected::bridge::install_fixture();
+    let fake = fixture_runtime();
+    fake.put("community/MODULE.bazel", "");
+    fake.put("community/build/bazel-migrated-test-modules.txt", "intellij.x.tests\n");
+    let root = "platform/unified/accio-plugin/tests";
+    fake.add_class(
+        &format!("{root}/src/AccioLocateQueryTest.kt"),
+        "com.intellij.platform.light.accio.AccioLocateQueryTest",
+    );
+    fake.add_module(module_entry_json(
+        root,
+        Some(&jps_json("intellij.platform.light.accio.tests", root, &[("src", true)], None)),
+        &[],
+        Some(&[
+            target_json(
+                root,
+                "jvm_library",
+                "tests_test_lib",
+                Some("intellij.platform.light.accio.tests"),
+                &[],
+                &[],
+            ),
+            target_json(root, "jps_test", "tests_test", None, &[], &["tests_test_lib"]),
+        ]),
+    ));
+
+    let refused = refusal(resolve_selector_selection_in(&fake, "AccioLocateQueryTest"));
+
+    assert_eq!((refused.code.as_ref(), refused.exit), ("usage", Exit::USAGE));
+    assert!(
+        refused
+            .message
+            .starts_with("AccioLocateQueryTest is no test of a UI lane; a VM worker runs only the IDE UI targets ("),
+        "{}",
+        refused.message
+    );
+    assert!(
+        refused.message.ends_with(
+            "./community/tools/bt.cmd //platform/unified/accio-plugin/tests:tests_test --filter \
+             com.intellij.platform.light.accio.AccioLocateQueryTest"
+        ),
+        "{}",
+        refused.message
+    );
+}
+
+/// The lane's own label resolves without accio and without a read, through the real runtime over an empty
+/// checkout.
 #[test]
 fn the_lane_label_itself_is_accepted_as_a_selector() {
     let empty = tempfile::tempdir().unwrap();

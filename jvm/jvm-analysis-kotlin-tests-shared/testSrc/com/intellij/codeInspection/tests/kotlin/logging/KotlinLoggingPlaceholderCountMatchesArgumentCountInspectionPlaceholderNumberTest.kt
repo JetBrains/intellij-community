@@ -1,12 +1,23 @@
 package com.intellij.codeInspection.tests.kotlin.logging
 
 import com.intellij.codeInspection.logging.LoggingPlaceholderCountMatchesArgumentCountInspection
-import com.intellij.jvm.analysis.internal.testFramework.logging.LoggingPlaceholderCountMatchesArgumentCountInspectionTestBase
+import com.intellij.jvm.analysis.internal.testFramework.logging.loggingPlaceholderCountMatchesArgumentCountInspectionFixture
 import com.intellij.jvm.analysis.testFramework.JvmLanguage
+import com.intellij.jvm.analysis.testFramework.jvmProjectFixture
+import com.intellij.testFramework.junit5.TestApplication
+import org.junit.jupiter.api.Test
 
-abstract class KotlinLoggingPlaceholderCountMatchesArgumentCountInspectionPlaceholderNumberTest : LoggingPlaceholderCountMatchesArgumentCountInspectionTestBase() {
+@TestApplication
+abstract class KotlinLoggingPlaceholderCountMatchesArgumentCountInspectionPlaceholderNumberTest {
+  companion object {
+    private val projectFixture = jvmProjectFixture()
+  }
+
+  protected val myFixture by loggingPlaceholderCountMatchesArgumentCountInspectionFixture(projectFixture)
+
   
 
+  @Test
   fun `test many variables`() {
     myFixture.testHighlighting(JvmLanguage.KOTLIN, """
         import org.slf4j.LoggerFactory
@@ -22,6 +33,7 @@ abstract class KotlinLoggingPlaceholderCountMatchesArgumentCountInspectionPlaceh
       """.trimIndent())
   }
 
+  @Test
   fun `test variables`() {
     myFixture.testHighlighting(JvmLanguage.KOTLIN, """
         import org.slf4j.LoggerFactory
@@ -60,6 +72,7 @@ abstract class KotlinLoggingPlaceholderCountMatchesArgumentCountInspectionPlaceh
       """.trimIndent())
   }
 
+  @Test
   fun `test fewer and more placeholders`() {
     myFixture.testHighlighting(JvmLanguage.KOTLIN, """
         import org.slf4j.*;
@@ -73,8 +86,9 @@ abstract class KotlinLoggingPlaceholderCountMatchesArgumentCountInspectionPlaceh
       """.trimIndent())
   }
 
+  @Test
   fun `test escaping`() {
-    inspection.slf4jToLog4J2Type = LoggingPlaceholderCountMatchesArgumentCountInspection.Slf4jToLog4J2Type.NO
+    myFixture.inspection.slf4jToLog4J2Type = LoggingPlaceholderCountMatchesArgumentCountInspection.Slf4jToLog4J2Type.NO
     myFixture.testHighlighting(JvmLanguage.KOTLIN, """
         import org.slf4j.LoggerFactory
 
@@ -89,6 +103,7 @@ abstract class KotlinLoggingPlaceholderCountMatchesArgumentCountInspectionPlaceh
         """.trimIndent())
   }
 
+  @Test
   fun `test non constant string`() {
     myFixture.testHighlighting(JvmLanguage.KOTLIN, """
         import org.slf4j.LoggerFactory
@@ -108,6 +123,7 @@ abstract class KotlinLoggingPlaceholderCountMatchesArgumentCountInspectionPlaceh
         """.trimIndent())
   }
 
+  @Test
   fun `test 1 exception and several placeholder`() {
     myFixture.testHighlighting(JvmLanguage.KOTLIN, """
         import org.slf4j.LoggerFactory
@@ -125,6 +141,7 @@ abstract class KotlinLoggingPlaceholderCountMatchesArgumentCountInspectionPlaceh
       """.trimIndent())
   }
 
+  @Test
   fun `test throwable`() {
     myFixture.testHighlighting(JvmLanguage.KOTLIN, """
       import org.slf4j.LoggerFactory
@@ -138,6 +155,7 @@ abstract class KotlinLoggingPlaceholderCountMatchesArgumentCountInspectionPlaceh
         """.trimIndent())
   }
 
+  @Test
   fun `test multi catch`() {
     myFixture.testHighlighting(JvmLanguage.KOTLIN, """
       import org.slf4j.LoggerFactory
@@ -165,6 +183,7 @@ abstract class KotlinLoggingPlaceholderCountMatchesArgumentCountInspectionPlaceh
         """.trimIndent())
   }
 
+  @Test
   fun `test no slf4j`() {
     myFixture.testHighlighting(JvmLanguage.KOTLIN, """
       internal class FalsePositiveSLF4J {
@@ -179,6 +198,7 @@ abstract class KotlinLoggingPlaceholderCountMatchesArgumentCountInspectionPlaceh
          """.trimIndent())
   }
 
+  @Test
   fun `test array argument`() {
     myFixture.testHighlighting(JvmLanguage.KOTLIN, """
       import org.slf4j.LoggerFactory
@@ -192,6 +212,7 @@ abstract class KotlinLoggingPlaceholderCountMatchesArgumentCountInspectionPlaceh
          """.trimIndent())
   }
 
+  @Test
   fun `test uncountable array`() {
     myFixture.testHighlighting(JvmLanguage.KOTLIN, """
       import org.slf4j.LoggerFactory
@@ -205,6 +226,7 @@ abstract class KotlinLoggingPlaceholderCountMatchesArgumentCountInspectionPlaceh
          """.trimIndent())
   }
 
+  @Test
   fun `test lazy init`() {
     myFixture.testHighlighting(JvmLanguage.KOTLIN, """
       import org.apache.logging.log4j.LogBuilder

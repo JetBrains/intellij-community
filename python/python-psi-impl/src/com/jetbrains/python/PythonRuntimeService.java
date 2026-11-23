@@ -7,6 +7,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiPolyVariantReference;
+import com.intellij.python.sdk.backend.PythonInterpreter;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.jetbrains.python.documentation.docstrings.DocStringFormat;
 import com.jetbrains.python.parsing.console.PythonConsoleData;
@@ -27,7 +28,8 @@ public class PythonRuntimeService {
     return false;
   }
 
-  public @Nullable Sdk getConsoleSdk(@NotNull PsiElement foothold) {
+  /** The interpreter of the Python console that {@code foothold} is in, or {@code null} outside a console. */
+  public @Nullable PythonInterpreter getConsoleInterpreter(@NotNull PsiElement foothold) {
     return null;
   }
 

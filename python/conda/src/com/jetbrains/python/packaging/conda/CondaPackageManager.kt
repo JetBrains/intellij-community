@@ -2,9 +2,9 @@
 package com.jetbrains.python.packaging.conda
 
 import com.intellij.openapi.application.edtWriteAction
+import com.intellij.python.sdk.backend.PythonInterpreter
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.writeText
@@ -14,7 +14,6 @@ import com.intellij.python.community.impl.conda.environmentYml.CondaEnvironmentY
 import com.intellij.python.community.impl.conda.environmentYml.CondaEnvironmentYmlSdkUtils.ENV_YML_FILE_NAME
 import com.intellij.python.community.impl.conda.environmentYml.format.CondaEnvironmentYmlParser
 import com.intellij.python.community.impl.conda.environmentYml.format.EnvironmentYmlModifier
-import com.intellij.python.sdk.backend.PythonInterpreter
 import com.intellij.python.community.impl.conda.PyCondaBundle
 import com.jetbrains.python.errorProcessing.ErrorSink
 import com.jetbrains.python.errorProcessing.PyResult
@@ -48,9 +47,8 @@ import java.nio.file.Path
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
-
-class CondaPackageManager(project: Project, interpreter: PythonInterpreter) : PythonPackageManager(project, interpreter) {
-  override val repositoryManager: PythonRepositoryManager = CondaRepositoryManger(project, sdk).also {
+class CondaPackageManager(interpreter: PythonInterpreter) : PythonPackageManager(interpreter) {
+  override val repositoryManager: PythonRepositoryManager = CondaRepositoryManger(project).also {
     Disposer.register(this, it)
   }
   override val dependenciesFilesRelativePaths: List<Path>
@@ -59,8 +57,8 @@ class CondaPackageManager(project: Project, interpreter: PythonInterpreter) : Py
       Path.of(ENV_YAML_FILE_NAME),
     )
 
-  private val condaPackageEngine = CondaPackageManagerEngine(sdk)
-  private val pipPackageEngine = PipPackageManagerEngine(project, sdk)
+  private val condaPackageEngine = CondaPackageManagerEngine(interpreter)
+  private val pipPackageEngine = PipPackageManagerEngine(project, interpreter)
 
   override fun getCliSpecs(eelApi: EelApi): List<PythonManagerCliSpec> = listOf(
     PythonManagerCliSpec("conda", { loadPythonCondaPath(eelApi.descriptor) }),

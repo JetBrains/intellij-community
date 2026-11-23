@@ -5,6 +5,7 @@ import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.platform.core.nio.fs.BasicFileAttributesHolder2.FetchAttributesFilter
 import com.intellij.platform.eel.EelOsFamily
 import com.intellij.platform.eel.directorySeparators
+import com.intellij.platform.eel.fs.EelCopyMoveImpl
 import com.intellij.platform.eel.fs.EelFileInfo.Type.Directory
 import com.intellij.platform.eel.fs.EelFileInfo.Type.Other
 import com.intellij.platform.eel.fs.EelFileInfo.Type.Regular
@@ -29,6 +30,7 @@ import com.intellij.platform.eel.impl.base.fs.EelFsResultImpl
 import com.intellij.platform.eel.provider.utils.EelPathUtils
 import com.intellij.platform.eel.provider.utils.getOrThrowFileSystemException
 import com.intellij.platform.eel.provider.utils.throwFileSystemException
+import com.intellij.platform.ijent.community.impl.CriticalSection
 import com.intellij.platform.ijent.fs.IjentFileSystemApi
 import com.intellij.platform.ijent.fs.IjentFileSystemPosixApi
 import com.intellij.platform.ijent.fs.IjentFileSystemWindowsApi
@@ -104,14 +106,6 @@ class IjentNioFileSystemProvider : FileSystemProvider() {
 
     private const val SCHEME = "ijent"
     private const val KEY_IJENT_FS = "ijentFs"
-  }
-
-  @JvmInline
-  internal value class CriticalSection<D : Any>(val hidden: D) {
-    inline operator fun <T> invoke(body: D.() -> T): T =
-      synchronized(hidden) {
-        hidden.body()
-      }
   }
 
   private val criticalSection = CriticalSection(object {
@@ -319,6 +313,15 @@ class IjentNioFileSystemProvider : FileSystemProvider() {
     if (StandardCopyOption.ATOMIC_MOVE in options) {
       throw UnsupportedOperationException("Unsupported copy option")
     }
+    // A cross-environment operation may bring a foreign path, for example a local sun.nio.fs.UnixPath in a local-to-remote
+    // copy. Per nio-routing.md, the IJent provider handles foreign paths by delegating the operation to EelCopyMoveImpl,
+    // so the check for a cross-environment pair must happen before the strict IJent-only path checks below.
+    val sourceNioFs = (source as? IjentNioPath)?.nioFs
+    val targetNioFs = (target as? IjentNioPath)?.nioFs
+    if (sourceNioFs == null || targetNioFs == null || sourceNioFs != targetNioFs || EelCopyMoveImpl.hasEelCopyOption(options)) {
+      EelCopyMoveImpl.copy(source, target, *options)
+      return
+    }
     ensureAbsoluteIjentNioPath(source)
     ensureAbsoluteIjentNioPath(target)
     val sourcePath = source.eelPath
@@ -345,6 +348,15 @@ class IjentNioFileSystemProvider : FileSystemProvider() {
   }
 
   override fun move(source: Path, target: Path, vararg options: CopyOption?) {
+    // A cross-environment operation may bring a foreign path, for example a local sun.nio.fs.UnixPath in a remote-to-local
+    // move. Per nio-routing.md, the IJent provider handles foreign paths by delegating the operation to EelCopyMoveImpl,
+    // so the check for a cross-environment pair must happen before the strict IJent-only path checks below.
+    val sourceNioFs = (source as? IjentNioPath)?.nioFs
+    val targetNioFs = (target as? IjentNioPath)?.nioFs
+    if (sourceNioFs == null || targetNioFs == null || sourceNioFs != targetNioFs || EelCopyMoveImpl.hasEelCopyOption(options)) {
+      EelCopyMoveImpl.move(source, target, *options.filterNotNull().toTypedArray())
+      return
+    }
     ensureAbsoluteIjentNioPath(source)
     ensureAbsoluteIjentNioPath(target)
     val sourcePath = source.eelPath

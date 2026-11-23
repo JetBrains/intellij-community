@@ -1,6 +1,8 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk
 
+import com.intellij.python.sdk.backend.activationEnvironment
+import com.intellij.python.sdk.backend.TargetPythonInterpreter
 import com.intellij.python.sdk.backend.NativePythonInterpreter
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.components.BaseState
@@ -14,18 +16,13 @@ import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.options.UiDslUnnamedConfigurable
 import com.intellij.openapi.options.UnnamedConfigurable
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.vcs.VcsEnvCustomizer
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapi.vfs.impl.wsl.WslConstants
-import com.intellij.remote.RemoteSdkAdditionalData
 import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.builder.bindSelected
 import com.jetbrains.python.PyBundle
-import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 import com.intellij.python.pyproject.model.evolution.EvoPyProjectModel
 import com.intellij.python.sdk.backend.PythonInterpreter
-import com.intellij.python.sdk.backend.getSdkAPI
 import org.jetbrains.annotations.ApiStatus
 
 internal class PyVirtualEnvVcsCustomizer : VcsEnvCustomizer() {
@@ -36,17 +33,16 @@ internal class PyVirtualEnvVcsCustomizer : VcsEnvCustomizer() {
     // this runs in a git command (background thread) and must yield to pending write actions
     // to avoid non-cancellable read-action freezes (PY-89735).
     val interpreter = ReadAction.nonBlocking<PythonInterpreter?> { findInterpreter(project, context.root) }.executeSynchronously() ?: return
-    @Suppress("DEPRECATION") // The remote and WSL checks and the activation environment read an SDK.
-    val sdk = interpreter.getSdkAPI()
-    when {
-      PythonSdkUtil.isRemote(sdk) -> return
-      sdk.isWsl -> if (context.type != ExecutableType.WSL) return
-      else -> if (context.type != ExecutableType.LOCAL) return
+    val native = when (interpreter) {
+      is NativePythonInterpreter -> interpreter
+      // A target interpreter has no environment that a local git can activate.
+      is TargetPythonInterpreter -> return
     }
+    if (context.type != ExecutableType.LOCAL) return
 
-    if (interpreter is NativePythonInterpreter && interpreter.isActivatable) {
+    if (native.isActivatable) {
       // in case of virtualenv sdk on unix we activate virtualenv
-      envs.putAll(runBlockingMaybeCancellable { sdk.activationEnvironment() }.successOrNull ?: emptyMap())
+      envs.putAll(runBlockingMaybeCancellable { native.activationEnvironment() }.successOrNull ?: emptyMap())
     }
   }
 
@@ -71,10 +67,6 @@ internal class PyVirtualEnvVcsCustomizer : VcsEnvCustomizer() {
     val snapshot = EvoPyProjectModel.getInstance(project).snapshotOrNull() ?: return null
     return root?.let { snapshot.forFile(it, mainForOrphans = false) }?.interpreter ?: snapshot.main?.interpreter
   }
-
-  private val Sdk.isWsl: Boolean
-    // WSLCredentialsType#WZSL_CREDENTIALS_PREFIX is inaccessible, let's use WslConstants.UNC_PREFIX
-    get() = (sdkAdditionalData as? RemoteSdkAdditionalData)?.remoteConnectionType?.hasPrefix(WslConstants.UNC_PREFIX) == true
 }
 
 @Service(Service.Level.PROJECT)

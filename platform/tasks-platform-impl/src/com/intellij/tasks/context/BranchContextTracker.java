@@ -9,6 +9,7 @@ import com.intellij.notification.NotificationType;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.TransactionGuard;
+import com.intellij.openapi.fileEditor.FileEditorOpenRequest;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.BranchChangeListener;
@@ -96,7 +97,7 @@ public class BranchContextTracker implements BranchChangeListener {
     contextManager.loadContext(contextName);
     for (VirtualFile file : filesOpenedDuringCheckout) {
       if (file.isValid() && !editorManager.isFileOpen(file)) {
-        editorManager.openFile(file, file.equals(selectedFile), true);
+        editorManager.requestOpenFile(file, FileEditorOpenRequest.withFocus(file.equals(selectedFile)).withReuseOpen(true));
       }
     }
 

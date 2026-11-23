@@ -390,6 +390,22 @@ public class RenameDialog extends RefactoringDialog implements RenameRefactoring
       }
     }
 
+    // A processor of a subclass may rename in its own way.
+    if (processor.getClass() == RenameProcessor.class) {
+      //todo cases to check each results
+      switch (processor.runOnModPlan(isPreviewUsages())) {
+        // A preview of the usages stays open after this dialog, as in the legacy rename.
+        case DONE, FAILED, PREVIEW_SHOWN -> {
+          close(OK_EXIT_CODE);
+          return;
+        }
+        case CANCELLED -> {
+          return;
+        }
+        case LEGACY -> {
+        }
+      }
+    }
     invokeRefactoring(processor);
   }
 

@@ -41,6 +41,7 @@ def report_data(dumper, commands_to_skip):
     :param dumper: destination to report
     """
     utility = ManagementUtility()
+    timeout = int(os.getenv("_PYCHARM_DJANGO_DEFAULT_TIMEOUT", "2"))
     for command_name in get_commands().keys():
 
         if command_name in commands_to_skip:
@@ -50,17 +51,17 @@ def report_data(dumper, commands_to_skip):
         fetcher = _Fetcher(utility, command_name)
         fetcher.daemon = True
         fetcher.start()
-        fetcher.join(int(os.getenv("_PYCHARM_DJANGO_DEFAULT_TIMEOUT", "2")))
+        fetcher.join(timeout)
         command = fetcher.result
         if not command:
             if fetcher.command_lead_to_exception:
                 sys.stderr.write("Command '{0}' skipped\n".format(command_name))
-                continue
             else:
                 sys.stderr.write(
-                    "Command '{0}' took too long and may freeze everything. Consider adding it to 'skip commands' list\n".format(
-                        command_name))
-                sys.exit(1)
+                    "Command '{0}' is not in the command list: it did not load in {1} s.\n"
+                    "To skip it without the wait, add it to the comma-separated list "
+                    "'python.django.commandsToSkip' in Find Action | Registry.\n".format(command_name, timeout))
+            continue
 
         use_argparse = False
         # There is no optparse in 1.10

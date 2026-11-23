@@ -26,7 +26,11 @@ private const val CUSTOM_BUILT_IN_PLUGIN_REPOSITORY_PROPERTY = "intellij.plugins
 internal fun generateVmOptions(context: BuildContext, extra: List<String>): List<String> = generateVmOptions(
   isEAP = context.applicationInfo.isEAP,
   customMemoryVmOptions = context.productProperties.customJvmMemoryOptions,
-  additionalVmOptions = context.productProperties.additionalVmOptions + customPluginRepositoryOptions(context) + extra,
+  additionalVmOptions = buildList {
+    addAll(context.productProperties.additionalVmOptions)
+    addAll(customPluginRepositoryOptions(context))
+    addAll(extra)
+  },
   platformPrefix = context.productProperties.platformPrefix,
   isHeadless = context.isLanguageServer,
 )
@@ -69,7 +73,7 @@ internal fun multiRoutingFileSystemVmOptions(platformPrefix: String?): List<Stri
 /**
  * Inserts the line that an EAP build adds: before `-ea`, else before the first `-D` line, else at the end.
  *
- * The tool `product-files` ports this rule, because the dev-dist launch model states no EAP flag.
+ * The tool `product-files` ports this rule, because the launch model of the distribution states no EAP flag.
  */
 internal fun insertEapVmOptions(vmOptions: MutableList<String>) {
   var index = vmOptions.indexOf("-ea")
@@ -107,6 +111,7 @@ internal fun osVmOptions(os: OsFamily, platformPrefix: String?): List<String> = 
     "-Dsun.java2d.vulkan=true".takeIf { platformPrefix != "JetBrainsClient" }, // disabled for rem-dev due to IJPL-259757
   )
   OsFamily.WINDOWS -> emptyList()
+  OsFamily.OHOS -> emptyList()
 }
 
 internal fun writeVmOptions(file: Path, vmOptions: List<String>, separator: String) {

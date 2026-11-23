@@ -1,7 +1,7 @@
 package com.intellij.mcpserver.frontend.toolwindow
 
 import com.intellij.mcpserver.McpServerBundle
-import com.intellij.mcpserver.frontend.settings.McpServerSettingsConfigurable
+import com.intellij.mcpserver.configurables.McpServerSettingsConfigurable
 import com.intellij.mcpserver.impl.McpServerService
 import com.intellij.mcpserver.settings.McpServerSettings
 import com.intellij.openapi.options.ShowSettingsUtil

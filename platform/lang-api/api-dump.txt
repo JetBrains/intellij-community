@@ -232,6 +232,7 @@ com.intellij.codeInsight.generation.ClassMember
 - com.intellij.codeInspection.options.OptMultiSelector$OptElement
 - sf:EMPTY_ARRAY:com.intellij.codeInsight.generation.ClassMember[]
 - s:from(com.intellij.codeInspection.options.OptMultiSelector$OptElement):com.intellij.codeInsight.generation.ClassMember
+- getGroupName():java.lang.String
 - a:getParentNodeDelegate():com.intellij.codeInsight.generation.MemberChooserObject
 com.intellij.codeInsight.generation.MemberChooserObject
 - com.intellij.codeInspection.options.OptMultiSelector$OptElement

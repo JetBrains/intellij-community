@@ -17,6 +17,8 @@ import com.intellij.gradle.testFramework.util.KOTLIN_DSL_BASE_SCRIPTS_MODEL_IMPO
 import com.intellij.gradle.testFramework.util.KOTLIN_DSL_SCRIPTS_MODEL_IMPORT_SUPPORTED_VERSIONS
 import com.intellij.gradle.toolingExtension.util.GradleVersionSpecificsUtil
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.platform.backend.workspace.toVirtualFileUrl
 import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.platform.testFramework.assertion.collectionAssertion.CollectionAssertions.assertEmpty
 import com.intellij.platform.testFramework.assertion.collectionAssertion.CollectionAssertions.assertEqualsUnordered
@@ -30,6 +32,7 @@ import com.intellij.util.asDisposable
 import kotlinx.coroutines.runBlocking
 import org.gradle.util.GradleVersion
 import org.jetbrains.kotlin.gradle.scripting.workspaceModel.GradleKotlinScriptEntitySource
+import org.jetbrains.kotlin.idea.core.script.configurations.KotlinScriptService
 import org.jetbrains.kotlin.idea.core.script.modules.KotlinScriptEntity
 import org.jetbrains.plugins.gradle.importing.syncAction.whenSyncPhaseCompleted
 import org.jetbrains.plugins.gradle.service.syncAction.GradleSyncPhase
@@ -77,6 +80,10 @@ class KotlinGradleScriptImportingTest {
         @Test
         fun `test Kotlin DSL sync phases order`() =
             `test Kotlin DSL sync phases order`(gradle)
+
+        @Test
+        fun `test a script loaded between the sync phases has one entity after the sync`() =
+            `test a script loaded between the sync phases has one entity after the sync`(gradle)
     }
 
     @Nested
@@ -261,6 +268,35 @@ class KotlinGradleScriptImportingTest {
                     override fun toString(): String = "during re-sync"
                     override fun test(phase: GradleSyncPhase): Boolean = true
                 })
+            }
+        }
+    }
+
+    fun `test a script loaded between the sync phases has one entity after the sync`(gradle: GradleTestFixture) = runBlocking {
+        val projectInfo = simpleJavaProjectInfo(gradle.gradleVersion)
+        val projectRoot = projectInfo.initProject(testRoot)
+
+        gradle.openProject(projectRoot).useProjectAsync { project ->
+            val buildScript = VirtualFileManager.getInstance()
+                .refreshAndFindFileByNioPath(projectRoot.resolve(projectInfo.rootModule.buildScriptName))!!
+            val entityPhasesAfterSync = CopyOnWriteArrayList<GradleSyncPhase?>()
+            whenSyncPhaseCompleted(asDisposable()) { context, phase ->
+                when (phase) {
+                    // An editor loads the open script after the base script phase.
+                    BASE_SCRIPT_MODEL_PHASE -> runBlocking { KotlinScriptService.getInstance(context.project).load(buildScript) }
+                    SCRIPT_MODEL_PHASE -> entityPhasesAfterSync += context.project.workspaceModel.currentSnapshot
+                        .getVirtualFileUrlIndex()
+                        .findEntitiesByUrl(buildScript.toVirtualFileUrl(context.project.workspaceModel.getVirtualFileUrlManager()))
+                        .filterIsInstance<KotlinScriptEntity>()
+                        .map { (it.entitySource as? GradleKotlinScriptEntitySource)?.phase }
+                    else -> Unit
+                }
+            }
+
+            gradle.syncProject(project, projectRoot)
+
+            assertEquals(listOf(SCRIPT_MODEL_PHASE), entityPhasesAfterSync.toList()) {
+                "The script phase must replace the entity that the base script phase loaded"
             }
         }
     }

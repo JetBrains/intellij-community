@@ -6,7 +6,7 @@ import com.intellij.execution.configurations.RunProfileState
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.openapi.options.SettingsEditor
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.python.sdk.backend.PythonInterpreter
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PythonHelper
 import com.jetbrains.python.psi.resolve.PackageAvailabilitySpec
@@ -55,7 +55,9 @@ class PyTrialTestFactory(type:PythonTestConfigurationType) : PyAbstractTestFacto
 
   override fun getId(): String = "Twisted Trial"
 
-  override fun onlyClassesAreSupported(project: Project, sdk: Sdk): Boolean = true
+  @ApiStatus.Internal
+
+  override fun onlyClassesAreSupported(project: Project, interpreter: PythonInterpreter): Boolean = true
 
   override val packageSpec: PackageAvailabilitySpec = PACKAGE_SPEC
 }

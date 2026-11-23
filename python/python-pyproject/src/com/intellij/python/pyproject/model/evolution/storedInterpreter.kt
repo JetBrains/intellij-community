@@ -11,9 +11,10 @@ import com.intellij.python.sdk.backend.isInterpreterLibraryFlowEnabled
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.platform.workspace.storage.EntityStorage
 import com.intellij.workspaceModel.ide.legacyBridge.findModuleEntity
+import com.jetbrains.python.sdk.legacy.findBySdkName
 import org.jetbrains.annotations.ApiStatus
-import java.nio.file.Path
 import com.intellij.python.sdk.backend.PyInterpreterLibraryName
+import com.intellij.python.sdk.backend.interpreterOwnerProjectDir
 
 /**
  * The owner directory and the ref of the interpreter that [name] names, or `null` when the project has no directory.
@@ -21,7 +22,7 @@ import com.intellij.python.sdk.backend.PyInterpreterLibraryName
  * of a tool workspace names the interpreter of the workspace root.
  */
 internal fun Project.keyOf(name: PyInterpreterLibraryName): PythonInterpreterKey? {
-  val projectDir = basePath?.let { Path.of(it) } ?: return null
+  val projectDir = interpreterOwnerProjectDir ?: return null
   return PythonInterpreterKey(name.ownerDir.resolveIn(projectDir), name.ref)
 }
 
@@ -49,9 +50,9 @@ internal fun Project.storedInterpreterReferenceOf(module: ModuleEntity, storage:
   else sdkReferenceOf(module, storage)?.let(StoredInterpreterReference::SdkName)
 
 /** The interpreter that [reference] names, see [StoredInterpreterReference]. Waits for the first list of the registry. */
-internal suspend fun PythonInterpreterRegistry.resolve(reference: StoredInterpreterReference): PythonInterpreter? = when (reference) {
-  is StoredInterpreterReference.Library -> resolve(reference.key)
-  is StoredInterpreterReference.SdkName -> findByModuleSdkName(reference.name)
+internal suspend fun PythonInterpreterRegistry.find(reference: StoredInterpreterReference): PythonInterpreter? = when (reference) {
+  is StoredInterpreterReference.Library -> find(reference.key)
+  is StoredInterpreterReference.SdkName -> findBySdkName(reference.name)
 }
 
 /** What this module stores to name its interpreter now, see [StoredInterpreterReference], or `null`. */
@@ -63,6 +64,16 @@ private fun Module.storedInterpreterReference(): StoredInterpreterReference? {
 }
 
 /**
+ * The key that the interpreter library entry of this module names, or `null`: the module has no entry, or the legacy
+ * flow names the interpreter by its SDK. It reads the module itself, not the snapshot.
+ */
+internal fun Module.storedInterpreterKey(): PythonInterpreterKey? =
+  when (val reference = storedInterpreterReference()) {
+    is StoredInterpreterReference.Library -> reference.key
+    is StoredInterpreterReference.SdkName, null -> null
+  }
+
+/**
  * The interpreter that this module stores now, see [StoredInterpreterReference], or `null`. It reads the module
  * itself, not the snapshot.
  *
@@ -72,4 +83,4 @@ private fun Module.storedInterpreterReference(): StoredInterpreterReference? {
  */
 @ApiStatus.Internal
 suspend fun Module.readStoredInterpreter(): PythonInterpreter? =
-  storedInterpreterReference()?.let { PythonInterpreterRegistry.getInstance(project).resolve(it) }
+  storedInterpreterReference()?.let { PythonInterpreterRegistry.getInstance(project).find(it) }

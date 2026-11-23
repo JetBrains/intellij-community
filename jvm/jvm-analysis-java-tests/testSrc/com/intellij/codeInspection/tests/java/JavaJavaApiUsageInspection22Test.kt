@@ -1,14 +1,21 @@
 package com.intellij.codeInspection.tests.java
 
-import com.intellij.jvm.analysis.internal.testFramework.JavaApiUsageInspectionTestBase
+import com.intellij.jvm.analysis.internal.testFramework.javaApiUsageInspectionFixture
 import com.intellij.jvm.analysis.testFramework.JvmLanguage
 import com.intellij.pom.java.LanguageLevel
-import com.intellij.testFramework.LightProjectDescriptor
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.lightJavaProjectFixture
+import com.intellij.testFramework.junit5.TestApplication
+import org.junit.jupiter.api.Test
 
-class JavaJavaApiUsageInspection22Test : JavaApiUsageInspectionTestBase() {
-  override fun getProjectDescriptor(): LightProjectDescriptor {
-    return JAVA_22
+@TestApplication
+class JavaJavaApiUsageInspection22Test {
+  companion object {
+    private val projectFixture = lightJavaProjectFixture(LightJavaCodeInsightFixtureTestCase.JAVA_22)
   }
+
+  private val myFixture by javaApiUsageInspectionFixture(projectFixture)
+
   
   fun addGatherer() {
     myFixture.addClass("""
@@ -18,6 +25,7 @@ class JavaJavaApiUsageInspection22Test : JavaApiUsageInspectionTestBase() {
     """.trimIndent())
   }
 
+  @Test
   fun `test gatherer language level 22 with JDK 22`() {
     myFixture.setLanguageLevel(LanguageLevel.JDK_22)
     addGatherer()
@@ -32,6 +40,7 @@ class JavaJavaApiUsageInspection22Test : JavaApiUsageInspectionTestBase() {
     """.trimIndent())
   }
 
+  @Test
   fun `test gatherer language level 22 preview with JDK 22`() {
     myFixture.setLanguageLevel(LanguageLevel.JDK_22_PREVIEW)
     addGatherer()

@@ -1,0 +1,16 @@
+<idea-plugin>
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.platform.backend"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.settings.v2"/>
+    <module name="intellij.platform.settings.v2.shared"/>
+    <module name="intellij.platform.vcs"/>
+    <module name="intellij.platform.vcs.impl"/>
+  </dependencies>
+  <!-- endregion -->
+  <extensions defaultExtensionNs="com.intellij">
+    <ignoredFileProvider implementation="com.intellij.platform.settings.v2.vcs.SettingsIgnoredFileProvider"/>
+  </extensions>
+</idea-plugin>

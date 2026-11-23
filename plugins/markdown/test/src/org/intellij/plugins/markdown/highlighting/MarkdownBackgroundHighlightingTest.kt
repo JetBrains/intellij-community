@@ -1,6 +1,8 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.plugins.markdown.highlighting
 
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.VisualPosition
@@ -13,12 +15,17 @@ import com.intellij.openapi.editor.impl.IndentsModelImpl
 import com.intellij.openapi.editor.markup.RangeHighlighter
 import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.util.TextRange
+import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightModuleFixture
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.elementType
 import com.intellij.testFramework.EditorTestUtil
 import com.intellij.testFramework.PlatformTestUtil
-import com.intellij.testFramework.fixtures.BasePlatformTestCase
+import com.intellij.testFramework.common.timeoutRunBlocking
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.fixture.projectFixture
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.intellij.plugins.markdown.MarkdownTestingUtil.paintEditor
 import org.intellij.plugins.markdown.editor.fence.MarkdownBackgroundRenderer
 import org.intellij.plugins.markdown.editor.fence.collectBlockQuoteBackground
@@ -28,21 +35,37 @@ import org.intellij.plugins.markdown.lang.MarkdownElementTypes
 import org.intellij.plugins.markdown.lang.MarkdownLanguage
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownCodeFence
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownCodeSpan
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertSame
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Test
 import java.awt.Color
 import java.awt.Font
 import java.awt.Rectangle
 import java.awt.image.BufferedImage
 import kotlin.math.abs
 
-class MarkdownBackgroundHighlightingTest : BasePlatformTestCase() {
+@TestApplication
+class MarkdownBackgroundHighlightingTest {
+  private val myFixture by codeInsightModuleFixture(projectFixture)
+
+  @Test
   fun `test a fence suppresses the background of its injection`() {
     myFixture.configureByText("test.md", "```python\na\n```")
 
-    val fence = PsiTreeUtil.findChildOfType(myFixture.file, MarkdownCodeFence::class.java)
-    assertNotNull(fence)
-    assertFalse(InjectedLanguageUtil.isHighlightInjectionBackground(fence))
+    val highlightBackground = timeoutRunBlocking {
+      readAction {
+        val fence = PsiTreeUtil.findChildOfType(myFixture.file, MarkdownCodeFence::class.java)
+        assertNotNull(fence)
+        InjectedLanguageUtil.isHighlightInjectionBackground(fence)
+      }
+    }
+    assertFalse(highlightBackground)
   }
 
+  @Test
   fun `test the background of a top-level fence covers the fence from the opening marker to the closing marker`() {
     val [background, document] = collectFence("```python\na\n\nbbbb\n```")
 
@@ -50,6 +73,7 @@ class MarkdownBackgroundHighlightingTest : BasePlatformTestCase() {
     assertEquals(document.getLineEndOffset(4), background.endOffset)
   }
 
+  @Test
   fun `test the background of a fence in a list starts in the column of the code`() {
     val [background, document] = collectFence("- ```python\n  a\n\n  bbbb\n  ```")
 
@@ -57,24 +81,28 @@ class MarkdownBackgroundHighlightingTest : BasePlatformTestCase() {
     assertEquals(document.getLineEndOffset(4), background.endOffset)
   }
 
+  @Test
   fun `test the background of an indented fence starts in the column of the code`() {
     val [background, document] = collectFence("    ```python\n    a\n\n    bbbb\n    ```")
 
     assertEquals(4, getColumn(background, document))
   }
 
+  @Test
   fun `test the background of a fence in a block quote starts in the column of the code`() {
     val [background, document] = collectFence(">     ```python\n>     a\n>\n>     bbbb\n>     ```")
 
     assertEquals(6, getColumn(background, document))
   }
 
+  @Test
   fun `test the background of a fence ignores an extra indent on a blank line`() {
     val [background, document] = collectFence("    ```python\n    a\n        \n    b\n    ```")
 
     assertEquals(4, getColumn(background, document))
   }
 
+  @Test
   fun `test a fence that holds only blank lines keeps a background`() {
     val [background, document] = collectFence("    ```python\n    \n    ```")
 
@@ -82,6 +110,7 @@ class MarkdownBackgroundHighlightingTest : BasePlatformTestCase() {
     assertEquals(2, document.getLineNumber(background.endOffset))
   }
 
+  @Test
   fun `test a fence without a closing marker keeps a background`() {
     val [background, document] = collectFence("```python\na\n")
 
@@ -89,76 +118,91 @@ class MarkdownBackgroundHighlightingTest : BasePlatformTestCase() {
     assertEquals(1, document.getLineNumber(background.endOffset))
   }
 
-  fun `test selection uses the selection background inside a code fence`() {
-    val editor = configureEditor(FENCE_TEXT)
-    val codeStart = FENCE_TEXT.indexOf(CODE_LINE)
-    val sampleOffset = codeStart + CODE_LINE_PREFIX.length + 5
+  @Test
+  fun `test selection uses the selection background inside a code fence`(): Unit = timeoutRunBlocking {
+    withContext(Dispatchers.EDT) {
+      val editor = configureEditor(FENCE_TEXT)
+      val codeStart = FENCE_TEXT.indexOf(CODE_LINE)
+      val sampleOffset = codeStart + CODE_LINE_PREFIX.length + 5
 
-    val withoutSelection = paintEditor(editor)
-    select(editor, codeStart, codeStart + CODE_LINE.length)
-    val withSelection = paintEditor(editor)
+      val withoutSelection = paintEditor(editor)
+      select(editor, codeStart, codeStart + CODE_LINE.length)
+      val withSelection = paintEditor(editor)
 
-    assertEquals(getCodeFenceBackgroundColor(editor), getPixelAt(editor, withoutSelection, sampleOffset))
-    assertEquals(getSelectionBackgroundColor(editor), getPixelAt(editor, withSelection, sampleOffset))
-  }
-
-  fun `test selection uses the selection background on an empty code fence line`() {
-    val editor = configureEditor(FENCE_TEXT)
-    val emptyLineSampleOffset = FENCE_TEXT.indexOf("\n\n") + 1
-    val selectionStart = FENCE_TEXT.indexOf(CODE_LINE)
-    val selectionEnd = FENCE_TEXT.indexOf(SECOND_CODE_LINE) + SECOND_CODE_LINE.length
-
-    val withoutSelection = paintEditor(editor)
-    select(editor, selectionStart, selectionEnd)
-    val withSelection = paintEditor(editor)
-
-    assertEquals(getCodeFenceBackgroundColor(editor), getPixelAt(editor, withoutSelection, emptyLineSampleOffset))
-    assertEquals(getSelectionBackgroundColor(editor), getPixelAt(editor, withSelection, emptyLineSampleOffset))
-  }
-
-  fun `test the background of a fence without a language has round corners`() {
-    val editor = configureEditor("```\naaaa\n\nbbbb\n```", MarkdownHighlighterColors.CODE_FENCE)
-
-    val image = paintEditor(editor)
-    val corner = editor.offsetToXY(editor.document.getLineStartOffset(0))
-    val blankLine = editor.offsetToXY(editor.document.getLineStartOffset(2))
-
-    assertEquals(Color.RED, getPixel(image, corner.x, blankLine.y + editor.lineHeight / 2))
-    assertOutsideTheFill(editor, getPixel(image, corner.x, corner.y))
-  }
-
-  fun `test a fence with folded marker lines draws its language at the right end of the closing line`() {
-    val text = "```lang title=\"123\"\naaaa\n```"
-    val editor = configureEditor(text, MarkdownHighlighterColors.CODE_FENCE)
-    editor.colorsScheme.setAttributes(MarkdownHighlighterColors.CODE_FENCE_LANGUAGE, TextAttributes(Color.BLUE, null, null, null, Font.PLAIN))
-    foldMarkerLines(editor, text)
-
-    val image = paintEditor(editor)
-    val x = editor.offsetToXY(text.indexOf("\n```")).x + 10
-    val closingY = editor.offsetToXY(text.length).y
-    val labelXs = (image.width / 2 until image.width).filter { px ->
-      (closingY until closingY + editor.lineHeight).any { distance(Color.BLUE, getPixel(image, px, it)) < distance(Color.RED, getPixel(image, px, it)) }
+      assertEquals(getCodeFenceBackgroundColor(editor), getPixelAt(editor, withoutSelection, sampleOffset))
+      assertEquals(getSelectionBackgroundColor(editor), getPixelAt(editor, withSelection, sampleOffset))
     }
-    val languageWidth = editor.contentComponent.getFontMetrics(editor.colorsScheme.getFont(EditorFontType.PLAIN)).stringWidth("lang")
-
-    assertEquals(getEditorBackgroundColor(editor), getPixel(image, x, editor.offsetToXY(0).y + editor.lineHeight / 2))
-    assertEquals(Color.RED, getPixel(image, x, editor.offsetToXY(text.indexOf("aaaa")).y + editor.lineHeight / 2))
-    assertEquals(Color.RED, getPixel(image, x, closingY + editor.lineHeight / 2))
-    assertTrue("The right half of the closing line shows the language", labelXs.isNotEmpty())
-    assertTrue("The label shows only the language, not the title", labelXs.last() - labelXs.first() <= languageWidth + 2)
   }
 
-  fun `test a fence without a language has no background on folded marker lines`() {
-    val text = "```\naaaa\n```"
-    val editor = configureEditor(text, MarkdownHighlighterColors.CODE_FENCE)
-    foldMarkerLines(editor, text)
+  @Test
+  fun `test selection uses the selection background on an empty code fence line`(): Unit = timeoutRunBlocking {
+    withContext(Dispatchers.EDT) {
+      val editor = configureEditor(FENCE_TEXT)
+      val emptyLineSampleOffset = FENCE_TEXT.indexOf("\n\n") + 1
+      val selectionStart = FENCE_TEXT.indexOf(CODE_LINE)
+      val selectionEnd = FENCE_TEXT.indexOf(SECOND_CODE_LINE) + SECOND_CODE_LINE.length
 
-    val image = paintEditor(editor)
-    val x = editor.offsetToXY(text.indexOf("\n```")).x + 10
+      val withoutSelection = paintEditor(editor)
+      select(editor, selectionStart, selectionEnd)
+      val withSelection = paintEditor(editor)
 
-    assertEquals(getEditorBackgroundColor(editor), getPixel(image, x, editor.offsetToXY(0).y + editor.lineHeight / 2))
-    assertEquals(Color.RED, getPixel(image, x, editor.offsetToXY(text.indexOf("aaaa")).y + editor.lineHeight / 2))
-    assertEquals(getEditorBackgroundColor(editor), getPixel(image, x, editor.offsetToXY(text.length).y + editor.lineHeight / 2))
+      assertEquals(getCodeFenceBackgroundColor(editor), getPixelAt(editor, withoutSelection, emptyLineSampleOffset))
+      assertEquals(getSelectionBackgroundColor(editor), getPixelAt(editor, withSelection, emptyLineSampleOffset))
+    }
+  }
+
+  @Test
+  fun `test the background of a fence without a language has round corners`(): Unit = timeoutRunBlocking {
+    withContext(Dispatchers.EDT) {
+      val editor = configureEditor("```\naaaa\n\nbbbb\n```", MarkdownHighlighterColors.CODE_FENCE)
+
+      val image = paintEditor(editor)
+      val corner = editor.offsetToXY(editor.document.getLineStartOffset(0))
+      val blankLine = editor.offsetToXY(editor.document.getLineStartOffset(2))
+
+      assertEquals(Color.RED, getPixel(image, corner.x, blankLine.y + editor.lineHeight / 2))
+      assertOutsideTheFill(editor, getPixel(image, corner.x, corner.y))
+    }
+  }
+
+  @Test
+  fun `test a fence with folded marker lines draws its language at the right end of the closing line`(): Unit = timeoutRunBlocking {
+    withContext(Dispatchers.EDT) {
+      val text = "```lang title=\"123\"\naaaa\n```"
+      val editor = configureEditor(text, MarkdownHighlighterColors.CODE_FENCE)
+      editor.colorsScheme.setAttributes(MarkdownHighlighterColors.CODE_FENCE_LANGUAGE, TextAttributes(Color.BLUE, null, null, null, Font.PLAIN))
+      foldMarkerLines(editor, text)
+
+      val image = paintEditor(editor)
+      val x = editor.offsetToXY(text.indexOf("\n```")).x + 10
+      val closingY = editor.offsetToXY(text.length).y
+      val labelXs = (image.width / 2 until image.width).filter { px ->
+        (closingY until closingY + editor.lineHeight).any { distance(Color.BLUE, getPixel(image, px, it)) < distance(Color.RED, getPixel(image, px, it)) }
+      }
+      val languageWidth = editor.contentComponent.getFontMetrics(editor.colorsScheme.getFont(EditorFontType.PLAIN)).stringWidth("lang")
+
+      assertEquals(getEditorBackgroundColor(editor), getPixel(image, x, editor.offsetToXY(0).y + editor.lineHeight / 2))
+      assertEquals(Color.RED, getPixel(image, x, editor.offsetToXY(text.indexOf("aaaa")).y + editor.lineHeight / 2))
+      assertEquals(Color.RED, getPixel(image, x, closingY + editor.lineHeight / 2))
+      assertTrue(labelXs.isNotEmpty(), "The right half of the closing line shows the language")
+      assertTrue(labelXs.last() - labelXs.first() <= languageWidth + 2, "The label shows only the language, not the title")
+    }
+  }
+
+  @Test
+  fun `test a fence without a language has no background on folded marker lines`(): Unit = timeoutRunBlocking {
+    withContext(Dispatchers.EDT) {
+      val text = "```\naaaa\n```"
+      val editor = configureEditor(text, MarkdownHighlighterColors.CODE_FENCE)
+      foldMarkerLines(editor, text)
+
+      val image = paintEditor(editor)
+      val x = editor.offsetToXY(text.indexOf("\n```")).x + 10
+
+      assertEquals(getEditorBackgroundColor(editor), getPixel(image, x, editor.offsetToXY(0).y + editor.lineHeight / 2))
+      assertEquals(Color.RED, getPixel(image, x, editor.offsetToXY(text.indexOf("aaaa")).y + editor.lineHeight / 2))
+      assertEquals(getEditorBackgroundColor(editor), getPixel(image, x, editor.offsetToXY(text.length).y + editor.lineHeight / 2))
+    }
   }
 
   private fun foldMarkerLines(editor: Editor, text: String) {
@@ -169,83 +213,110 @@ class MarkdownBackgroundHighlightingTest : BasePlatformTestCase() {
     }
   }
 
-  fun `test the indent of a fence line has no background`() {
-    val pixels = listOf("java", "").associateWith { language ->
-      val editor = configureEditor("    ```$language\n    class C {}\n    ```")
-      getPixelAt(editor, paintEditor(editor), editor.document.getLineStartOffset(1)) to getEditorBackgroundColor(editor)
+  @Test
+  fun `test the indent of a fence line has no background`(): Unit = timeoutRunBlocking {
+    withContext(Dispatchers.EDT) {
+      val pixels = listOf("java", "").associateWith { language ->
+        val editor = configureEditor("    ```$language\n    class C {}\n    ```")
+        getPixelAt(editor, paintEditor(editor), editor.document.getLineStartOffset(1)) to getEditorBackgroundColor(editor)
+      }
+      assertEquals(pixels.mapValues { it.value.second }, pixels.mapValues { it.value.first })
     }
-    assertEquals(pixels.mapValues { it.value.second }, pixels.mapValues { it.value.first })
   }
 
+  @Test
   fun `test a fence has no indent guides and a list keeps its indent guide`() {
     myFixture.configureByText("test.md", "- a\n    - b\n        - c\n\n```\na\n    b\n        c\n```")
     myFixture.doHighlighting()
 
-    val model = myFixture.editor.indentsModel as IndentsModelImpl
-    assertEquals(listOf(1 to 4), model.indents.map { it.startLine to it.indentLevel })
+    val indents = timeoutRunBlocking {
+      readAction {
+        val model = myFixture.editor.indentsModel as IndentsModelImpl
+        model.indents.map { it.startLine to it.indentLevel }
+      }
+    }
+    assertEquals(listOf(1 to 4), indents)
   }
 
+  @Test
   fun `test the background of a code span covers the content between the backtick runs`() {
     assertEquals(TextRange(3, 7), collectSpan("a `code` b"))
   }
 
+  @Test
   fun `test the background of a code span keeps the spaces next to the backtick runs`() {
     assertEquals(TextRange(2, 10), collectSpan("`` `code` ``"))
   }
 
-  fun `test the content has the code span background and the backtick has none`() {
-    val editor = configureEditor("a `x    y` b", MarkdownHighlighterColors.CODE_SPAN)
+  @Test
+  fun `test the content has the code span background and the backtick has none`(): Unit = timeoutRunBlocking {
+    withContext(Dispatchers.EDT) {
+      val editor = configureEditor("a `x    y` b", MarkdownHighlighterColors.CODE_SPAN)
 
-    val image = paintEditor(editor)
+      val image = paintEditor(editor)
 
-    assertEquals(Color.RED, getPixelAt(editor, image, 6))
-    assertEquals(getEditorBackgroundColor(editor), getPixelAt(editor, image, 2))
+      assertEquals(Color.RED, getPixelAt(editor, image, 6))
+      assertEquals(getEditorBackgroundColor(editor), getPixelAt(editor, image, 2))
+    }
   }
 
-  fun `test the background of a code span covers an inline HTML tag`() {
+  @Test
+  fun `test the background of a code span covers an inline HTML tag`(): Unit = timeoutRunBlocking {
     val text = "`test <a> hello`"
     assertEquals(TextRange(1, 15), collectSpan(text))
-    val codeSpanBackground = EditorColorsManager.getInstance().globalScheme
-      .getAttributes(MarkdownHighlighterColors.CODE_SPAN).backgroundColor
-    assertNotNull(codeSpanBackground)
-    val editor = configureEditor(text, MarkdownHighlighterColors.CODE_SPAN, codeSpanBackground!!)
+    withContext(Dispatchers.EDT) {
+      val codeSpanBackground = EditorColorsManager.getInstance().globalScheme
+        .getAttributes(MarkdownHighlighterColors.CODE_SPAN).backgroundColor
+      assertNotNull(codeSpanBackground)
+      val editor = configureEditor(text, MarkdownHighlighterColors.CODE_SPAN, codeSpanBackground!!)
 
-    val image = paintEditor(editor)
+      val image = paintEditor(editor)
 
-    assertEquals(codeSpanBackground, getPixelAt(editor, image, 9))
+      assertEquals(codeSpanBackground, getPixelAt(editor, image, 9))
+    }
   }
 
-  fun `test the selection stays visible over the code span background`() {
-    val editor = configureEditor("`test <a> hello`", MarkdownHighlighterColors.CODE_SPAN)
-    editor.selectionModel.setSelection(6, 10)
+  @Test
+  fun `test the selection stays visible over the code span background`(): Unit = timeoutRunBlocking {
+    withContext(Dispatchers.EDT) {
+      val editor = configureEditor("`test <a> hello`", MarkdownHighlighterColors.CODE_SPAN)
+      editor.selectionModel.setSelection(6, 10)
 
-    val image = paintEditor(editor)
+      val image = paintEditor(editor)
 
-    assertEquals(getSelectionBackgroundColor(editor), getPixelAt(editor, image, 9))
-    assertEquals(Color.RED, getPixelAt(editor, image, 5))
+      assertEquals(getSelectionBackgroundColor(editor), getPixelAt(editor, image, 9))
+      assertEquals(Color.RED, getPixelAt(editor, image, 5))
+    }
   }
 
-  fun `test the corners of a code span background are round`() {
-    val editor = configureEditor("a `x    y` b", MarkdownHighlighterColors.CODE_SPAN)
+  @Test
+  fun `test the corners of a code span background are round`(): Unit = timeoutRunBlocking {
+    withContext(Dispatchers.EDT) {
+      val editor = configureEditor("a `x    y` b", MarkdownHighlighterColors.CODE_SPAN)
 
-    val image = paintEditor(editor)
-    val corner = editor.offsetToXY(3)
+      val image = paintEditor(editor)
+      val corner = editor.offsetToXY(3)
 
-    assertEquals(Color.RED, getPixelAt(editor, image, 5))
-    assertOutsideTheFill(editor, getPixel(image, corner.x, corner.y))
+      assertEquals(Color.RED, getPixelAt(editor, image, 5))
+      assertOutsideTheFill(editor, getPixel(image, corner.x, corner.y))
+    }
   }
 
-  fun `test a code span over two lines paints one rectangle per line`() {
-    val editor = configureEditor("`a\n   b` c", MarkdownHighlighterColors.CODE_SPAN)
+  @Test
+  fun `test a code span over two lines paints one rectangle per line`(): Unit = timeoutRunBlocking {
+    withContext(Dispatchers.EDT) {
+      val editor = configureEditor("`a\n   b` c", MarkdownHighlighterColors.CODE_SPAN)
 
-    val image = paintEditor(editor)
-    val firstLineEnd = editor.offsetToXY(2)
+      val image = paintEditor(editor)
+      val firstLineEnd = editor.offsetToXY(2)
 
-    assertEquals(Color.RED, getPixelAt(editor, image, 4))
-    assertEquals(getEditorBackgroundColor(editor), getPixelAt(editor, image, 8))
-    assertEquals(getEditorBackgroundColor(editor), getPixel(image, firstLineEnd.x + 2, firstLineEnd.y + editor.lineHeight / 2))
+      assertEquals(Color.RED, getPixelAt(editor, image, 4))
+      assertEquals(getEditorBackgroundColor(editor), getPixelAt(editor, image, 8))
+      assertEquals(getEditorBackgroundColor(editor), getPixel(image, firstLineEnd.x + 2, firstLineEnd.y + editor.lineHeight / 2))
+    }
   }
 
+  @Test
   fun `test only an outermost quote or alert has a background`() {
     val text = """
       |> lazy line
@@ -285,64 +356,79 @@ class MarkdownBackgroundHighlightingTest : BasePlatformTestCase() {
     assertEquals(listOf("> [!NOTE]\n> > inner"), collectQuotes("> [!NOTE]\n> > inner"))
   }
 
-  fun `test the left corners of a quote background are square and the right corners are round`() {
-    val editor = configureEditor("> quote", MarkdownHighlighterColors.BLOCK_QUOTE)
-    val image = paintEditor(editor)
-    val top = editor.offsetToXY(0)
-    val right = getRightEdge(editor, image)
+  @Test
+  fun `test the left corners of a quote background are square and the right corners are round`(): Unit = timeoutRunBlocking {
+    withContext(Dispatchers.EDT) {
+      val editor = configureEditor("> quote", MarkdownHighlighterColors.BLOCK_QUOTE)
+      val image = paintEditor(editor)
+      val top = editor.offsetToXY(0)
+      val right = getRightEdge(editor, image)
 
-    assertEquals(Color.RED, getPixel(image, top.x, top.y))
-    assertEquals(Color.RED, getPixel(image, right, top.y + editor.lineHeight / 2))
-    assertOutsideTheFill(editor, getPixel(image, right, top.y))
-    assertTrue("The background must end before the right edge", right < editor.scrollingModel.visibleArea.let { it.x + it.width } - 1)
+      assertEquals(Color.RED, getPixel(image, top.x, top.y))
+      assertEquals(Color.RED, getPixel(image, right, top.y + editor.lineHeight / 2))
+      assertOutsideTheFill(editor, getPixel(image, right, top.y))
+      assertTrue(right < editor.scrollingModel.visibleArea.let { it.x + it.width } - 1, "The background must end before the right edge")
+    }
   }
 
-  fun `test each line of a quote background starts at the opening marker or at its text further left`() {
-    val editor = configureEditor("- [ ] > a\n  > b\n\n> c\n  > d\n\n> e\nlazy", MarkdownHighlighterColors.BLOCK_QUOTE)
-    val image = paintEditor(editor)
-    val text = editor.document.text
+  @Test
+  fun `test each line of a quote background starts at the opening marker or at its text further left`(): Unit = timeoutRunBlocking {
+    withContext(Dispatchers.EDT) {
+      val editor = configureEditor("- [ ] > a\n  > b\n\n> c\n  > d\n\n> e\nlazy", MarkdownHighlighterColors.BLOCK_QUOTE)
+      val image = paintEditor(editor)
+      val text = editor.document.text
 
-    assertOutsideTheFill(editor, getTopPixel(editor, image, text.indexOf("[ ]")))
-    assertEquals("A line below a task checkbox", Color.RED, getTopPixel(editor, image, text.indexOf("> b")))
-    assertEquals("A marker with an indent", Color.RED, getTopPixel(editor, image, text.indexOf("  > d")))
-    // The parser puts a lazy line into a paragraph of its own, after the quote.
-    assertOutsideTheFill(editor, getTopPixel(editor, image, text.indexOf("lazy")))
+      assertOutsideTheFill(editor, getTopPixel(editor, image, text.indexOf("[ ]")))
+      assertEquals(Color.RED, getTopPixel(editor, image, text.indexOf("> b")), "A line below a task checkbox")
+      assertEquals(Color.RED, getTopPixel(editor, image, text.indexOf("  > d")), "A marker with an indent")
+      // The parser puts a lazy line into a paragraph of its own, after the quote.
+      assertOutsideTheFill(editor, getTopPixel(editor, image, text.indexOf("lazy")))
+    }
   }
 
-  fun `test a wrapped quote line keeps its text on the background`() {
-    val editor = configureEditor("- > aaaa bbbb cccc dddd eeee", MarkdownHighlighterColors.BLOCK_QUOTE)
-    EditorTestUtil.configureSoftWraps(editor, 12)
-    val wrap = editor.visualPositionToOffset(VisualPosition(1, 0))
-    val wrapX = editor.offsetToXY(wrap, true, false).x
-    assertTrue("The wrapped part must start left of the marker", wrapX < editor.offsetToXY(2).x)
+  @Test
+  fun `test a wrapped quote line keeps its text on the background`(): Unit = timeoutRunBlocking {
+    withContext(Dispatchers.EDT) {
+      val editor = configureEditor("- > aaaa bbbb cccc dddd eeee", MarkdownHighlighterColors.BLOCK_QUOTE)
+      EditorTestUtil.configureSoftWraps(editor, 12)
+      val wrap = editor.visualPositionToOffset(VisualPosition(1, 0))
+      val wrapX = editor.offsetToXY(wrap, true, false).x
+      assertTrue(wrapX < editor.offsetToXY(2).x, "The wrapped part must start left of the marker")
 
-    val image = paintEditor(editor)
+      val image = paintEditor(editor)
 
-    assertEquals(Color.RED, getPixel(image, wrapX, editor.visualLineToY(1) + 1))
-    assertOutsideTheFill(editor, getPixel(image, wrapX, 1))
+      assertEquals(Color.RED, getPixel(image, wrapX, editor.visualLineToY(1) + 1))
+      assertOutsideTheFill(editor, getPixel(image, wrapX, 1))
+    }
   }
 
-  fun `test a clip in the middle of a quote paints no corner`() {
-    val editor = configureEditor("> a\n> b\n> c\n> d", MarkdownHighlighterColors.BLOCK_QUOTE)
-    val right = getRightEdge(editor, paintEditor(editor))
-    val y = editor.offsetToXY(editor.document.getLineStartOffset(2)).y
+  @Test
+  fun `test a clip in the middle of a quote paints no corner`(): Unit = timeoutRunBlocking {
+    withContext(Dispatchers.EDT) {
+      val editor = configureEditor("> a\n> b\n> c\n> d", MarkdownHighlighterColors.BLOCK_QUOTE)
+      val right = getRightEdge(editor, paintEditor(editor))
+      val y = editor.offsetToXY(editor.document.getLineStartOffset(2)).y
 
-    val image = paintEditor(editor, Rectangle(0, y, editor.contentComponent.width, editor.lineHeight))
+      val image = paintEditor(editor, Rectangle(0, y, editor.contentComponent.width, editor.lineHeight))
 
-    assertEquals(Color.RED, getPixel(image, right, y))
+      assertEquals(Color.RED, getPixel(image, right, y))
+    }
   }
 
-  fun `test a new highlighting keeps the highlighter of an unchanged background`() {
+  @Test
+  fun `test a new highlighting keeps the highlighter of an unchanged background`(): Unit = timeoutRunBlocking {
     myFixture.configureByText("test.md", "`a` `b<caret>`")
     myFixture.doHighlighting()
-    val kept = getBackgroundHighlighters().single { it.textRange == TextRange(1, 2) }
+    withContext(Dispatchers.EDT) {
+      val kept = getBackgroundHighlighters().single { it.textRange == TextRange(1, 2) }
 
-    myFixture.type("c")
-    myFixture.doHighlighting()
+      myFixture.type("c")
+      myFixture.doHighlighting()
 
-    val after = getBackgroundHighlighters()
-    assertSame(kept, after.single { it.textRange == TextRange(1, 2) })
-    assertEquals(listOf(TextRange(1, 2), TextRange(5, 7)), after.map { it.textRange }.sortedBy { it.startOffset })
+      val after = getBackgroundHighlighters()
+      assertSame(kept, after.single { it.textRange == TextRange(1, 2) })
+      assertEquals(listOf(TextRange(1, 2), TextRange(5, 7)), after.map { it.textRange }.sortedBy { it.startOffset })
+    }
   }
 
   private fun getBackgroundHighlighters(): List<RangeHighlighter> =
@@ -350,11 +436,15 @@ class MarkdownBackgroundHighlightingTest : BasePlatformTestCase() {
 
   private fun collectFence(text: String): Pair<TextRange, Document> {
     myFixture.configureByText("test.md", text)
-    val fence = PsiTreeUtil.findChildOfType(myFixture.file, MarkdownCodeFence::class.java)
-    assertNotNull(fence)
-    val background = collectCodeFenceBackground(fence!!)
-    assertNotNull(background)
-    return background!! to myFixture.editor.document
+    return timeoutRunBlocking {
+      readAction {
+        val fence = PsiTreeUtil.findChildOfType(myFixture.file, MarkdownCodeFence::class.java)
+        assertNotNull(fence)
+        val background = collectCodeFenceBackground(fence!!)
+        assertNotNull(background)
+        background!! to myFixture.editor.document
+      }
+    }
   }
 
   /** The column of the left side of the background. */
@@ -365,15 +455,23 @@ class MarkdownBackgroundHighlightingTest : BasePlatformTestCase() {
 
   private fun collectSpan(text: String): TextRange? {
     myFixture.configureByText("test.md", text)
-    val span = PsiTreeUtil.findChildOfType(myFixture.file, MarkdownCodeSpan::class.java)
-    assertNotNull(span)
-    return collectCodeSpanBackground(span!!)
+    return timeoutRunBlocking {
+      readAction {
+        val span = PsiTreeUtil.findChildOfType(myFixture.file, MarkdownCodeSpan::class.java)
+        assertNotNull(span)
+        collectCodeSpanBackground(span!!)
+      }
+    }
   }
 
   private fun collectQuotes(text: String): List<String> {
     myFixture.configureByText("test.md", text)
-    val quotes = PsiTreeUtil.collectElements(myFixture.file) { it.elementType == MarkdownElementTypes.BLOCK_QUOTE || it.elementType == MarkdownElementTypes.ALERT }
-    return quotes.mapNotNull { collectBlockQuoteBackground(it)?.substring(text) }
+    return timeoutRunBlocking {
+      readAction {
+        val quotes = PsiTreeUtil.collectElements(myFixture.file) { it.elementType == MarkdownElementTypes.BLOCK_QUOTE || it.elementType == MarkdownElementTypes.ALERT }
+        quotes.mapNotNull { collectBlockQuoteBackground(it)?.substring(text) }
+      }
+    }
   }
 
   /** Opens [text] in an editor of 80 by 10 columns without the caret row. A non-null [key] gets the [background] color. */
@@ -429,14 +527,16 @@ class MarkdownBackgroundHighlightingTest : BasePlatformTestCase() {
   private fun assertOutsideTheFill(editor: Editor, actual: Color) {
     val background = getEditorBackgroundColor(editor)
     assertTrue(
-      "Expected a color near $background, got $actual",
-      distance(background, actual) < distance(Color.RED, actual)
+      distance(background, actual) < distance(Color.RED, actual),
+      "Expected a color near $background, got $actual"
     )
   }
 
   private fun distance(a: Color, b: Color): Int = maxOf(abs(a.red - b.red), abs(a.green - b.green), abs(a.blue - b.blue))
 
   private companion object {
+    private val projectFixture = projectFixture(openAfterCreation = true)
+
     const val CODE_LINE_PREFIX = "int a = 3;"
     const val SECOND_CODE_LINE = "System.out.println(\"test\");"
     val CODE_LINE = CODE_LINE_PREFIX + " ".repeat(20)

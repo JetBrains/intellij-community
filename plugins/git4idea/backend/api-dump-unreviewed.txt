@@ -4619,7 +4619,6 @@ c:git4idea.ui.GitUnstashDialog
 - s:showUnstashDialog(com.intellij.openapi.project.Project,java.util.List,com.intellij.openapi.vfs.VirtualFile):V
 f:git4idea.ui.StashInfo
 - sf:Companion:git4idea.ui.StashInfo$Companion
-- <init>(com.intellij.openapi.vfs.VirtualFile,com.intellij.vcs.log.Hash,java.util.List,J,java.lang.String,java.lang.String,java.lang.String):V
 - f:getAuthorTime():J
 - f:getBranch():java.lang.String
 - f:getHash():com.intellij.vcs.log.Hash

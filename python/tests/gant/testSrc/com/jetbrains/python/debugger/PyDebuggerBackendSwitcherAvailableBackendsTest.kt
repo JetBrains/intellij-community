@@ -2,12 +2,12 @@
 package com.jetbrains.python.debugger
 
 import com.intellij.idea.TestFor
+import com.intellij.python.sdk.backend.PythonInterpreter
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.TestActionEvent
 import com.intellij.testFramework.junit5.TestApplication
@@ -70,7 +70,7 @@ internal class PyDebuggerBackendSwitcherAvailableBackendsTest {
 
     override fun handleSessions(project: Project) = Unit
 
-    override fun isDebugpyAvailableForSdk(project: Project, sdk: Sdk): Boolean = true
+    override fun isDebugpyAvailable(interpreter: PythonInterpreter): Boolean = true
 
     override fun ownsRunProfile(e: AnActionEvent): Boolean = owns
 

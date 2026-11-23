@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide;
 
+import com.intellij.codeInsight.editorActions.TextBlockTransferable;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.CaretStateTransferableData;
@@ -25,6 +26,7 @@ import java.awt.datatransfer.Transferable;
 import java.awt.datatransfer.UnsupportedFlavorException;
 import java.io.IOException;
 import java.util.Iterator;
+import java.util.ListIterator;
 import java.util.Objects;
 import java.util.function.Predicate;
 
@@ -215,6 +217,39 @@ public abstract class CopyPasteManagerWithHistory implements ClientCopyPasteMana
   @Override
   public boolean removeIf(@NotNull Predicate<? super Transferable> predicate) {
     return myData.removeIf(predicate);
+  }
+
+  /**
+   * Drops the data of the classes that {@code isStale} accepts, the classes of unloaded modules.
+   * An item of a stale class leaves the history. A {@link TextBlockTransferable} keeps its text and raw text
+   * and loses the stale extra data: the paste processor of the module is gone, so the data has no reader.
+   * When the top item changes and the IDE owns the system clipboard, the clipboard gets the new top item.
+   */
+  @ApiStatus.Internal
+  public void forgetDataOf(@NotNull Predicate<? super Class<?>> isStale) {
+    Transferable oldTop = myData.isEmpty() ? null : myData.get(0);
+    ListIterator<Transferable> it = myData.listIterator();
+    while (it.hasNext()) {
+      Transferable item = it.next();
+      if (isStale.test(item.getClass())) {
+        it.remove();
+      }
+      else if (item instanceof TextBlockTransferable textBlock) {
+        TextBlockTransferable stripped = textBlock.dropExtraData(data -> {
+          DataFlavor flavor = data.getFlavor();
+          return isStale.test(data.getClass()) || flavor != null && isStale.test(flavor.getRepresentationClass());
+        });
+        if (stripped != textBlock) {
+          it.set(stripped);
+        }
+      }
+    }
+    Transferable newTop = myData.isEmpty() ? null : myData.get(0);
+    if (myOwnContent && oldTop != null && newTop != oldTop) {
+      Transferable newContent = newTop != null ? newTop : new StringSelection("");
+      setSystemClipboardContent(newContent);
+      fireContentChanged(oldTop, newContent);
+    }
   }
 
   @Override

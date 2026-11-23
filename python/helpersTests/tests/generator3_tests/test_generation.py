@@ -9,6 +9,7 @@ import unittest
 import generator3.core
 import json
 from generator3.constants import (
+    BUILTIN_MOD_NAME,
     CACHE_DIR_NAME,
     ENV_REQUIRED_GEN_VERSION_FILE,
     ENV_TEST_MODE_FLAG,
@@ -183,27 +184,6 @@ class SkeletonGenerationTest(FunctionalGeneratorTestCase):
                     __init__.py
                     mod.py
         """.format(hash=generator3.core.module_hash('mod', mod_path)))
-
-    # PY-36884
-    def test_pregenerated_skeletons_mode(self):
-        self.check_generator_output('mod', mod_path='mod.py', extra_env={
-            'IS_PREGENERATED_SKELETONS': '1'
-        })
-
-    # PY-36884
-    def test_pregenerated_skeletons_mode_for_builtin_module(self):
-        self.run_generator('sys', extra_env={
-            'IS_PREGENERATED_SKELETONS': '1'
-        })
-        sys_cached_skeleton_path = os.path.join(self.temp_cache_dir, generator3.core.module_hash('sys', None), 'sys.py')
-        self.assertTrue(os.path.exists(sys_cached_skeleton_path))
-        with open(sys_cached_skeleton_path, 'r') as f:
-            self.assertTrue('# from (pre-generated)\n' in f.read())
-
-        sys_skeleton_path = os.path.join(self.temp_skeletons_dir, 'sys.py')
-        self.assertTrue(os.path.exists(sys_skeleton_path))
-        with open(sys_skeleton_path, 'r') as f:
-            self.assertTrue('# from (built-in)\n' in f.read())
 
     def test_skeleton_regenerated_for_changed_module(self):
         self.check_generator_output('mod', mod_path='mod.py', extra_syspath=['versions/v2'])
@@ -444,6 +424,25 @@ class MultiModuleGenerationTest(FunctionalGeneratorTestCase):
         # "mod1.so" has "mod1.pyi" next to it, and "mod3/ext.so" is covered by the stub-only
         # package "mod3-stubs". The skeleton generated for "mod1" earlier is also removed.
         self.check_generator_output(extra_args=['--name-pattern', 'mod*'])
+
+    def test_stdlib_stubs_skip_only_the_named_builtin_modules(self):
+        names = set(sys.builtin_module_names) | {BUILTIN_MOD_NAME}
+        names.discard('sys')
+        result = self.run_generator(extra_args=['--builtins-only', '--stdlib-stubs', ','.join(sorted(names)),
+                                                '--init-state-file'],
+                                    extra_syspath=[])
+        self.assertEqual(0, result.exit_code)
+        self.assertEqual(['sys'], list(result.state_json['sdk_skeletons']))
+
+    def test_stdlib_stubs_delete_the_old_skeletons(self):
+        mkdir(self.temp_skeletons_dir)
+        old_skeleton = os.path.join(self.temp_skeletons_dir, 'sys.py')
+        with open(old_skeleton, 'w') as f:
+            f.write('# The skeleton of an older IDE\n')
+        result = self.run_generator(extra_args=['--builtins-only', '--stdlib-stubs', 'sys', '--init-state-file'],
+                                    extra_syspath=[])
+        self.assertEqual(0, result.exit_code)
+        self.assertFalse(os.path.exists(old_skeleton))
 
     def test_synthetic_submodules_imported_by_previous_module(self):
         # "mod1" imports "mod2", which registers the synthetic submodule "mod2.sub" in `sys.modules`.

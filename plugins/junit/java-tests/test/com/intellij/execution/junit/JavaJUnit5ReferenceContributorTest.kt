@@ -1,11 +1,27 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.junit
 
-import com.intellij.junit.testFramework.JUnit5ReferenceContributorTestBase
+import com.intellij.junit.testFramework.MavenTestLib.JUNIT5
+import com.intellij.junit.testFramework.junitProjectFixture
 import com.intellij.jvm.analysis.testFramework.JvmLanguage
+import com.intellij.jvm.analysis.testFramework.jvmCodeInsightFixture
+import com.intellij.jvm.analysis.testFramework.lookupStringVariants
 import com.intellij.psi.PsiMethod
+import com.intellij.testFramework.junit5.TestApplication
+import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Test
 
-class JavaJUnit5ReferenceContributorTest : JUnit5ReferenceContributorTestBase() {
+@TestApplication
+class JavaJUnit5ReferenceContributorTest {
+  companion object {
+    private val projectFixture = junitProjectFixture(JUNIT5)
+  }
+
+  private val myFixture by jvmCodeInsightFixture(projectFixture)
+
+  @Test
   fun `test resolve to source method`() {
     myFixture.assertResolvableReference(JvmLanguage.JAVA, """
       import org.junit.jupiter.params.ParameterizedTest;
@@ -22,10 +38,11 @@ class JavaJUnit5ReferenceContributorTest : JUnit5ReferenceContributorTestBase() 
          private static List<String> cde() { return Arrays.asList("something1", "something2"); }
       }
     """.trimIndent()) { reference, _ ->
-      assertContainsElements(reference.lookupStringVariants(), "abc")
+      assertThat(reference.lookupStringVariants()).contains("abc")
     }
   }
 
+  @Test
   fun `test filter resolved to source method`() {
     myFixture.assertMultiresolveReference(JvmLanguage.JAVA, """
       import org.junit.jupiter.params.ParameterizedTest;
@@ -58,6 +75,7 @@ class JavaJUnit5ReferenceContributorTest : JUnit5ReferenceContributorTestBase() 
     }
   }
 
+  @Test
   fun `test filter resolved to source method from first interface`() {
     myFixture.assertMultiresolveReference(JvmLanguage.JAVA, """
       import org.junit.jupiter.params.ParameterizedTest;
@@ -88,6 +106,7 @@ class JavaJUnit5ReferenceContributorTest : JUnit5ReferenceContributorTestBase() 
     }
   }
 
+  @Test
   fun `test filter resolved to source method from abstract class`() {
     myFixture.assertMultiresolveReference(JvmLanguage.JAVA, """
       import org.junit.jupiter.params.ParameterizedTest;
@@ -118,6 +137,7 @@ class JavaJUnit5ReferenceContributorTest : JUnit5ReferenceContributorTestBase() 
     }
   }
 
+  @Test
   fun `test filter resolved to source method from deep interface hierarchy`() {
     myFixture.assertMultiresolveReference(JvmLanguage.JAVA, """
       import org.junit.jupiter.params.ParameterizedTest;
@@ -152,6 +172,7 @@ class JavaJUnit5ReferenceContributorTest : JUnit5ReferenceContributorTestBase() 
     }
   }
 
+  @Test
   fun `test filter resolved to source method with inherited`() {
     myFixture.assertMultiresolveReference(JvmLanguage.JAVA, """
       import org.junit.jupiter.params.ParameterizedTest;
@@ -182,6 +203,7 @@ class JavaJUnit5ReferenceContributorTest : JUnit5ReferenceContributorTestBase() 
     }
   }
 
+  @Test
   fun `test filter resolved to source method with meta-annotation`() {
     myFixture.assertMultiresolveReference(JvmLanguage.JAVA, """
       import org.junit.jupiter.params.ParameterizedTest;
@@ -224,6 +246,7 @@ class JavaJUnit5ReferenceContributorTest : JUnit5ReferenceContributorTestBase() 
     }
   }
 
+  @Test
   fun `test resolve to source field`() {
     myFixture.assertResolvableReference(JvmLanguage.JAVA, """
       import org.junit.jupiter.params.ParameterizedTest;
@@ -243,6 +266,7 @@ class JavaJUnit5ReferenceContributorTest : JUnit5ReferenceContributorTestBase() 
     """.trimIndent())
   }
 
+  @Test
   fun `test resolve to enum source`() {
     myFixture.assertResolvableReference(JvmLanguage.JAVA, """
       import org.junit.jupiter.params.ParameterizedTest;
@@ -257,6 +281,7 @@ class JavaJUnit5ReferenceContributorTest : JUnit5ReferenceContributorTestBase() 
       }""".trimIndent())
   }
 
+  @Test
   fun `test resolve enum source with unsupported mode`() {
     myFixture.assertUnResolvableReference(JvmLanguage.JAVA, """
       import org.junit.jupiter.params.ParameterizedTest;
@@ -268,9 +293,10 @@ class JavaJUnit5ReferenceContributorTest : JUnit5ReferenceContributorTestBase() 
         @ParameterizedTest
         @EnumSource(value = Foo.class, names = "AA<caret>A", mode = EnumSource.Mode.MATCH_ALL)
         void single() { } 
-      }""".trimIndent()) { reference -> assertDoesntContain(reference.lookupStringVariants(), "AAA", "AAX", "BBB") }
+      }""".trimIndent()) { reference -> assertThat(reference.lookupStringVariants()).doesNotContain("AAA", "AAX", "BBB") }
   }
 
+  @Test
   fun `test resolve enum source with default mode`() {
     myFixture.assertResolvableReference(JvmLanguage.JAVA, """
       import org.junit.jupiter.params.ParameterizedTest;
@@ -285,6 +311,7 @@ class JavaJUnit5ReferenceContributorTest : JUnit5ReferenceContributorTestBase() 
       }""".trimIndent())
   }
 
+  @Test
   fun `test resolve enum source without mode`() {
     myFixture.addClass("""
       package org.junit.jupiter.params.provider;
@@ -308,6 +335,7 @@ class JavaJUnit5ReferenceContributorTest : JUnit5ReferenceContributorTestBase() 
     """.trimIndent())
   }
 
+  @Test
   fun `test unresolvable enum source because of invalid name`() {
     myFixture.assertUnResolvableReference(JvmLanguage.JAVA, """
       import org.junit.jupiter.params.ParameterizedTest;
@@ -320,6 +348,6 @@ class JavaJUnit5ReferenceContributorTest : JUnit5ReferenceContributorTestBase() 
         @EnumSource(value = Foo.class, names = "invalid<caret>value")
         void single() { }
       }
-    """.trimIndent()) { reference -> assertContainsElements(reference.lookupStringVariants(), "AAA", "AAX", "BBB") }
+    """.trimIndent()) { reference -> assertThat(reference.lookupStringVariants()).contains("AAA", "AAX", "BBB") }
   }
 }

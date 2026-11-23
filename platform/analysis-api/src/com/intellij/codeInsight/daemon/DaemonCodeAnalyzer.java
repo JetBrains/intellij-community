@@ -144,6 +144,14 @@ public abstract class DaemonCodeAnalyzer {
     }
 
     /**
+     * Called when a contributor changes the traffic light status outside a daemon pass.
+     * The callback can run on any thread and without read access.
+     */
+    @ApiStatus.Internal
+    default void daemonStatusChanged() {
+    }
+
+    /**
      * Fired when the daemon is canceled because of user tries to type something into the document or other reasons.
      *
      * @implNote Please don't do anything remotely expensive in your listener implementation

@@ -1,10 +1,10 @@
-load("@jps_dynamic_deps_community//:targets.bzl", "dev_dist_plugin")
+load("@jps_dynamic_deps_community//:targets.bzl", "dist_plugin")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
-load("//platform/build-scripts/bazel-rules:dev_plugin_remainder.bzl", "dev_dist_complex_plugin")
+load("//platform/build-scripts/bazel-rules:dev_plugin_remainder.bzl", "dist_complex_plugin")
 
 ### auto-generated section `dev intellij.kotlin.plugin` start
-dev_dist_plugin(
+dist_plugin(
     content_modules = [
         # do not sort,
         "intellij.kotlin.highlighting.minimal",
@@ -185,7 +185,7 @@ dev_dist_plugin(
     main_module = "intellij.kotlin.plugin",
 )
 
-dev_dist_complex_plugin(
+dist_complex_plugin(
     artifact_inputs = {
         "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common.jar": "intellij.libraries.kotlinc.kotlin.compiler.common",
         "//libraries/kotlinc/kotlinx-serialization-compiler-plugin:libraries-kotlinc-kotlinx-serialization-compiler-plugin.jar": "intellij.libraries.kotlinc.kotlinx.serialization.compiler.plugin",
@@ -211,7 +211,7 @@ dev_dist_complex_plugin(
         "//libraries/kotlinc/kotlin-main-kts:libraries-kotlinc-kotlin-main-kts.jar": "intellij.libraries.kotlinc.kotlin.main.kts",
         "//plugins/kotlin/plugin:plugin.jar": "intellij.kotlin.plugin",
     },
-    descriptor = "//build/dev-dist-descriptors/intellij.kotlin.plugin:intellij.kotlin.plugin_dev_descriptor",
+    descriptor = "//build/dist-descriptors/intellij.kotlin.plugin:intellij.kotlin.plugin_dev_descriptor",
     directory_name = "Kotlin",
     executables = [
         "kotlinc/bin/kotlin",

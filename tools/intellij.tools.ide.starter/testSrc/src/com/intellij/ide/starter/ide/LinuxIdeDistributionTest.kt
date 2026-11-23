@@ -34,6 +34,10 @@ class LinuxIdeDistributionTest {
 
   private val marker: Path get() = tempDir.resolve("wm-registered")
   private val fluxboxPidFile: Path get() = tempDir.resolve("fluxbox.pid")
+  private val fluxboxHomeFile: Path get() = tempDir.resolve("fluxbox.home")
+  private val home: Path get() = tempDir.resolve("home")
+  private val fluxboxFiles = listOf("init", "keys", "menu", "apps", "overlay", "windowmenu")
+  private val fluxboxDefaults: Path get() = tempDir.resolve("defaults")
 
   @Test
   fun `a headless IDE gets no command line prefix`() {
@@ -128,6 +132,33 @@ class LinuxIdeDistributionTest {
   }
 
   @Test
+  fun `fluxbox gets its own HOME with the files when the HOME of the IDE misses one, and the IDE keeps its HOME`() {
+    home.resolve(".fluxbox").createDirectories().resolve("init").writeText("")
+    fluxboxDefaults.createDirectories().resolve("key-bindings").writeText("default keys")
+    fluxboxDefaults.resolve("apps").writeText("default apps")
+
+    val result = runScript(display = DISPLAY, ide = listOf("/bin/sh", "-c", "echo \"\$HOME\""))
+
+    result.stdout.trim() shouldBe home.toString()
+    val fluxboxHome = tempDir.resolve("fluxbox-home")
+    fluxboxHomeFile.readText().trim() shouldBe fluxboxHome.toString()
+    fluxboxFiles.filterNot { fluxboxHome.resolve(".fluxbox/$it").exists() }.shouldBeEmpty()
+    fluxboxHome.resolve(".fluxbox/keys").readText() shouldBe "default keys"
+    fluxboxHome.resolve(".fluxbox/apps").readText() shouldBe "default apps"
+    fluxboxHome.resolve(".fluxbox/init").readText() shouldContain "session.configVersion:"
+  }
+
+  @Test
+  fun `fluxbox keeps the HOME of the IDE when it has all the files`() {
+    fluxboxFiles.forEach { home.resolve(".fluxbox").createDirectories().resolve(it).writeText("") }
+
+    runScript(display = DISPLAY, ide = listOf("/bin/sh", "-c", "exit 0"))
+
+    fluxboxHomeFile.readText().trim() shouldBe home.toString()
+    tempDir.resolve("fluxbox-home").exists() shouldBe false
+  }
+
+  @Test
   fun `fluxbox starts only after the X server accepts a client`() {
     val serverUp = tempDir.resolve("server-up")
     val xprop = "[ -e '$serverUp' ] || { touch '$serverUp'; exit 1; }; $registeredXprop"
@@ -141,7 +172,13 @@ class LinuxIdeDistributionTest {
 
   private class ScriptResult(val pid: Long, val exitCode: Int, val stdout: String, val stderr: String)
 
-  private val registeringFluxbox: String get() = "echo $$ > '$fluxboxPidFile'; touch '$marker'; exec sleep 60"
+  private val registeringFluxbox: String
+    get() = "echo $$ > '$fluxboxPidFile'; echo \"\$HOME\" > '$fluxboxHomeFile'; touch '$marker'; exec sleep 60"
+
+  /** Like a real `fluxbox -info`, it names the default files and exits. The default init does not exist. */
+  private val fluxboxInfo: String
+    get() = "[ \"$1\" = -info ] && " +
+            "{ echo '       keys: $fluxboxDefaults/key-bindings'; echo '       init: $fluxboxDefaults/init'; exit 0; }"
 
   /** Like a real `xprop`, it exits with 0 also when the property is missing. */
   private val registeredXprop: String get() = "[ -e '$marker' ] && echo '_NET_SUPPORTING_WM_CHECK(WINDOW): window id # 0x1'; exit 0"
@@ -157,10 +194,11 @@ class LinuxIdeDistributionTest {
     val bin = tempDir.resolve("bin").createDirectories()
     if (fakeTools) {
       bin.writeScript("xprop", xprop)
-      bin.writeScript("fluxbox", fluxbox)
+      bin.writeScript("fluxbox", "$fluxboxInfo\n$fluxbox")
     }
     val process = ProcessBuilder(commandLine + ide).apply {
       environment().remove("DISPLAY")
+      environment()["HOME"] = home.toString()
       if (display != null) environment()["DISPLAY"] = display
       // without the fakes, only the empty directory and no system directory is on the PATH, so no real fluxbox is found
       environment()["PATH"] = if (fakeTools) "$bin:/usr/bin:/bin" else bin.toString()

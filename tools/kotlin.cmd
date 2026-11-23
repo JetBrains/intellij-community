@@ -38,14 +38,16 @@ compute_checksum() {
   fi
 }
 
-# Cache directory
+# Cache directory. Git Bash and other systems stay refused: the CMD half serves Windows.
 case "$(uname -s)" in
-  Linux)  CACHE_BASE="${HOME}/.cache/JetBrains/monorepo-tools" ;;
-  Darwin) CACHE_BASE="${HOME}/Library/Caches/JetBrains/monorepo-tools" ;;
-  *)      die "Unsupported OS: $(uname -s)" ;;
+  Linux | Darwin) ;;
+  *) die "Unsupported OS: $(uname -s)" ;;
 esac
+# `$0` and not `BASH_SOURCE`: zsh runs this file too.
+. "$SCRIPT_DIR/polyglot-wrapper.sh"
+polyglot_user_cache kotlin || die "HOME is not set; required to locate the cache directory"
 
-KOTLIN_HOME="$CACHE_BASE/kotlin/$KOTLIN_VERSION"
+KOTLIN_HOME="$user_cache/$KOTLIN_VERSION"
 FLAG_FILE="$KOTLIN_HOME/.complete"
 
 ensure_kotlin_cached() {
@@ -56,7 +58,7 @@ ensure_kotlin_cached() {
     fi
   fi
 
-  local lock_dir="$CACHE_BASE/kotlin"
+  local lock_dir="$user_cache"
   local lock_file="$lock_dir/.kotlin-cmd-lock.pid"
   local tmp_lock_file="$lock_dir/.tmp.$$.pid"
 

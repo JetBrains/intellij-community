@@ -34,11 +34,9 @@ fun configurePlugins(
   abiConsumer: ((OutputFileCollection) -> Unit)?,
   consumer: (RegisteredPluginInfo) -> Unit,
 ) {
-  val pluginIdToPluginOptions = internalPluginIdToPluginOptions.withDefaultComposePluginOptions()
-
   for ((id, classpathConfig) in pluginIdToPluginClasspath) {
     if (classpathConfig.classpath.isNotEmpty()) {
-      consumer(loadRegisteredPluginsInfo(classpathConfig, pluginIdToPluginOptions))
+      consumer(loadRegisteredPluginsInfo(classpathConfig, internalPluginIdToPluginOptions))
       continue
     }
 
@@ -48,7 +46,7 @@ fun configurePlugins(
         consumer(RegisteredPluginInfo(
           compilerPluginRegistrar = SerializationComponentRegistrar(),
           commandLineProcessor = processor,
-          pluginOptions = pluginIdToPluginOptions[processor.pluginId] ?: emptyList(),
+          pluginOptions = internalPluginIdToPluginOptions[processor.pluginId] ?: emptyList(),
         ))
       }
 
@@ -57,12 +55,12 @@ fun configurePlugins(
         consumer(RegisteredPluginInfo(
           compilerPluginRegistrar = ComposePluginRegistrar(),
           commandLineProcessor = processor,
-          pluginOptions = pluginIdToPluginOptions[processor.pluginId] ?: emptyList(),
+          pluginOptions = internalPluginIdToPluginOptions[processor.pluginId] ?: emptyList(),
         ))
       }
 
       else -> {
-        consumer(CompilerPluginProvider.provide(id, pluginIdToPluginOptions))
+        consumer(CompilerPluginProvider.provide(id, internalPluginIdToPluginOptions))
       }
     }
   }
@@ -87,19 +85,6 @@ fun configurePlugins(
     ))
   }
 
-}
-
-/** Adds the defaults used by the Compose Gradle plugin when the caller does not set them. */
-private fun Map<String, List<CliOptionValue>>.withDefaultComposePluginOptions(): Map<String, List<CliOptionValue>> {
-  val pluginId = ComposeCommandLineProcessor.PLUGIN_ID
-  val options = this[pluginId] ?: emptyList()
-  val defaultOptions = listOf(
-    // Records source locations for composable calls.
-    ComposeCommandLineProcessor.SOURCE_INFORMATION_ENABLED_OPTION to "true",
-  )
-    .filter { (option, _) -> options.none { it.optionName == option.optionName } }
-    .map { (option, value) -> CliOptionValue(pluginId, option.optionName, value) }
-  return this + (pluginId to (defaultOptions + options))
 }
 
 /**

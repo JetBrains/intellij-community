@@ -124,16 +124,17 @@ internal class PyExternalToolsList(
     preview.stagedEnginePackage.afterChange(engineObserverDisposable) { staged ->
       rows.forEach { row ->
         val pkg = row.tool.fusId.value
+        val stagedRunsTool = preview.engineRunsTool(staged, pkg)
         when {
           // Became the staged engine → turn its toggle on.
-          staged == pkg && !row.staged.enabled -> {
+          stagedRunsTool && !row.staged.enabled -> {
             row.staged = row.staged.copy(enabled = true)
             row.enabledEdited = false
             refreshRow(row)
           }
           // Was on only because it was the staged engine (not persisted-enabled) and no longer is →
           // revert to off, so staging an engine and switching away leaves the tool unchanged.
-          lastStagedEngine == pkg && staged != pkg && row.staged.enabled &&
+          preview.engineRunsTool(lastStagedEngine, pkg) && !stagedRunsTool && row.staged.enabled &&
           !snapshotOf(row).enabled && !row.enabledEdited -> {
             row.staged = row.staged.copy(enabled = false); refreshRow(row)
           }
@@ -471,11 +472,13 @@ internal class PyExternalToolsList(
   }
 
   /**
-   * Whether [tool] is the project's current type engine: the **staged** selection published by an open
-   * Type Engine page ([PyToolTypeEnginePreview]) when present, else the persisted engine.
+   * Whether the project's current type engine runs [tool]: the **staged** selection published by an open
+   * Type Engine page ([PyToolTypeEnginePreview]) when present, else the persisted engine. An engine with a
+   * server of its own runs no tool, see [PyToolTypeEnginePreview.engineRunsTool].
    */
   private fun isEngineFor(tool: PyTool): Boolean {
-    val staged = PyToolTypeEnginePreview.getInstance(project).stagedEnginePackage.get()
-    return if (staged != null) staged == tool.fusId.value else rows.first { it.tool == tool }.selectedAsTypeEngine
+    val preview = PyToolTypeEnginePreview.getInstance(project)
+    val staged = preview.stagedEnginePackage.get()
+    return if (staged != null) preview.engineRunsTool(staged, tool.fusId.value) else rows.first { it.tool == tool }.selectedAsTypeEngine
   }
 }

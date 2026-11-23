@@ -1,0 +1,277 @@
+# Test Execution Internals
+
+## Overview
+
+The test execution chains:
+```
+bt.cmd → ./bazel.cmd test <jps_test label> → JUnit5BazelRunner
+tests.cmd → Bazel → LocalIdeaUltimateRunTestsBuildTarget → TestingTasksImpl → JUnit 5
+```
+
+## Common Issues & Solutions
+
+### Tests Not Found
+
+**Symptoms:**
+- "No tests found" message
+- Test class exists but isn't executed
+
+**Causes & Solutions:**
+
+1. **Pattern mismatch** - Simple class names don't work (see [Pattern Transformation Table](#pattern-transformation-table)).
+
+2. **Test not in classpath** - The test class must be in a module that's part of the test classpath. Check if the module is included in the build.
+
+### Test Discovery Issues
+
+**Symptoms:**
+- Wrong tests executed
+- Tests filtered unexpectedly
+
+**Debug steps:**
+
+1. Check test groups - If using groups, verify `testGroups.properties` configuration.
+
+2. Check bucketing - For parallel execution, tests are distributed by hash:
+   ```bash
+   # See which bucket a test falls into
+   -Didea.test.runners.count=4
+   -Didea.test.runner.index=0  # Run only bucket 0
+   ```
+
+3. Check class filters - `TestCaseLoader` applies pattern matching before test execution.
+
+---
+
+## Detailed Reference
+
+### Execution Flow
+
+1. Command line: `./tests.cmd --module <module> --test <pattern>`.
+2. Shell script: `tests.cmd` maps `--module` and `--test` to `-D` properties, and wraps each one as `--jvm_flag=<arg>`.
+3. Bazel: `./bazel.cmd run //build:local_idea_ultimate_run_tests_build_target`. `build/BUILD.bazel` defines the target.
+4. Build target entry point: `LocalIdeaUltimateRunTestsBuildTarget.main()` calls `UltimateProjectTestingTasks.runTests()`.
+5. Test options parsing: `UltimateProjectTestingOptions` extends `TestingOptions`. It reads all `-Dintellij.build.test.*` system properties.
+6. Test execution orchestration: `TestingTasksImpl.runTests()` builds the test classpath. It prepares the JVM arguments and the system properties.
+7. Forked test process: `TestingTasksImpl.runJUnit5Engine()` starts a new JVM with the bootstrap classpath.
+8. JUnit runner: `JUnit5TeamCityRunner.main()` runs the JUnit 5 tests and the legacy JUnit 3/4 tests. It uses the JUnit Platform Launcher, a `ClassNameFilter` and a `PostDiscoveryFilter`.
+9. Test discovery and filtering: `TestCaseLoader` loads the test classes from the classpath roots. It applies the pattern and group filters, and it handles the bucketing for parallel execution.
+10. Test execution: the JUnit Platform executes the tests. `TCExecutionListener` reports the results to TeamCity.
+
+### Key Classes Reference
+
+#### Entry Points & Orchestration
+
+| Class | Purpose |
+|-------|---------|
+| `IdeaUltimateRunTestsBuildTarget` | Ultimate tests entry point, calls `UltimateProjectTestingTasks` |
+| `CommunityRunTestsBuildTarget` | Community tests entry point, calls `TestingTasks` |
+| `UltimateProjectTestingTasks` | Ultimate-specific test orchestration (YourKit) |
+| `TestingTasks` | Interface for test execution |
+| `TestingTasksImpl` | Core test execution logic |
+
+#### Test Options
+
+| Class | Purpose |
+|-------|---------|
+| `TestingOptions` | **Base class for all test options**. Parses `-Dintellij.build.test.*` properties |
+| `UltimateProjectTestingOptions` | Ultimate-specific options (YourKit, skip community tests) |
+
+#### JUnit 5 Test Runners
+
+| Class | Purpose |
+|-------|---------|
+| `JUnit5TeamCityRunner` | Runs JUnit 3/4 tests using the JUnit Vintage test engine, or JUnit5 tests using the JUnit Jupiter test engine |
+| `TCExecutionListener` | Reports test results to TeamCity via service messages |
+
+#### Test Discovery & Loading
+
+| Class | Purpose |
+|-------|---------|
+| `TestCaseLoader` | Discovers and filters test classes |
+| `TestClassesFilter` | Pattern/group-based test filtering |
+
+#### Bucketing & Distribution
+
+| Class | Purpose |
+|-------|---------|
+| `BucketingScheme` | Interface for test distribution |
+| `HashingBucketingScheme` | Default: hash-based distribution |
+| `TestsDurationBucketingScheme` | Duration-aware distribution |
+
+## Test Module Hierarchy
+
+### Entry Points by Product
+
+| Product | Entry Point | Default mainModule | Source |
+|---------|-------------|-------------------|--------|
+| IDEA Ultimate | `IdeaUltimateRunTestsBuildTarget` | `intellij.idea.ultimate.tests.main` | `build/src/` |
+| Community | `CommunityRunTestsBuildTarget` | `intellij.idea.community.main.tests` | `community/build/src/` |
+| RustRover | `RustRoverRunTestsBuildTarget` | `intellij.idea.ultimate.tests.main` | `rustrover/build/src/` |
+| RubyMine | `RubyRunTestsBuildTarget` | `intellij.idea.ultimate.tests.main` | `ruby/build/src/` |
+| CLion | `CLionRunTestsBuildTarget` | `intellij.idea.ultimate.tests.main` | `CIDR/clion-build/src/` |
+
+### CI-Defined Test Modules
+
+From `.teamcity/src/ijplatform/KnownModules.kt`:
+
+| CI Constant | Module Name                  |
+|-------------|------------------------------|
+| `ULTIMATE_TESTS` | `intellij.idea.ultimate.tests.main` |
+| `COMMUNITY_MAIN_TESTS` | `intellij.idea.community.main.tests` |
+| `GOLAND_TESTS` | `intellij.goland.tests`      |
+| `PYTHON_TESTS` | `intellij.python.tests`      |
+| `PHPSTORM_MAIN_TESTS` | `intellij.phpstorm.main.tests` |
+| `CLION_MAIN_TESTS` | `intellij.clion.main.tests`  |
+| `RUSTROVER_MAIN_TESTS` | `intellij.rustrover.main.tests` |
+| `KOTLIN_TESTS` | `intellij.kotlin.tests`      |
+| `DATABASE_SQL_TESTS` | `intellij.database.sql.tests` |
+
+### Module Configuration
+
+Default mainModule is set in:
+- `UltimateProjectTestingOptions.kt:36` - Ultimate: `intellij.idea.ultimate.tests.main`
+- `CommunityRunTestsBuildTarget.kt:29` - Community: `intellij.idea.community.main.tests`
+
+### Ultimate Test Module Tree (Simplified)
+
+```
+intellij.idea.ultimate.tests.main
+├── intellij.idea.ultimate.tests
+├── intellij.platform.tests
+├── intellij.java.tests
+└── ... (hundreds of test modules)
+
+Separate hierarchies (NOT in .main):
+├── intellij.idea.ultimate.tests.kotlin
+├── intellij.idea.ultimate.tests.kotlin.k2
+│   └── intellij.devkit.kotlin.fir.tests
+└── intellij.kotlin.tests
+```
+
+## TestingOptions Properties
+
+Most options use the `intellij.build.test.*` prefix. Bucketing uses `idea.test.*` prefix.
+
+```kotlin
+// Test selection (mutually exclusive, in priority order)
+testPatterns        // -Dintellij.build.test.patterns=<pattern>
+testGroups          // -Dintellij.build.test.groups=<group>
+
+// Test execution
+mainModule          // -Dintellij.build.test.main.module=<module>
+attemptCount        // -Dintellij.build.test.attempt.count=<n>
+
+// JVM configuration
+jvmMemoryOptions    // -Dintellij.build.test.jvm.memory.options=<opts>
+customRuntimePath   // -Dintellij.build.test.jre=<path>
+
+// Debugging
+isDebugEnabled      // -Dintellij.build.test.debug.enabled=<bool>
+debugPort           // -Dintellij.build.test.debug.port=<port>
+isSuspendDebugProcess // -Dintellij.build.test.debug.suspend=<bool>
+
+// Bucketing (parallel execution) - NOTE: uses idea.test.* prefix
+bucketsCount        // -Didea.test.runners.count=<n>
+bucketIndex         // -Didea.test.runner.index=<n>
+
+// Coverage
+enableCoverage      // -Dintellij.build.test.coverage.enabled=<bool>
+coveredClassesPatterns // -Dintellij.build.test.coverage.include.class.patterns=<patterns>
+```
+
+### Bazel Target Configuration
+
+The test target is defined in `build/BUILD.bazel`:
+
+```python
+java_binary(
+  name = "local_idea_ultimate_run_tests_build_target",
+  runtime_deps = [":build"],
+  main_class = "LocalIdeaUltimateRunTestsBuildTarget",
+  data = ALL_ULTIMATE_TARGETS + [BAZEL_TARGETS_JSON_ULTIMATE],
+  jvm_flags = [
+    "-Dintellij.build.console.exporter.to.temp.file=true",
+    "-Dintellij.build.console.messages.verbose=false",
+    "-Dintellij.build.clean.output.root=false",      # Reuse compiled classes
+    "-Dintellij.build.use.compiled.classes=true",    # Skip recompilation
+    "-Dintellij.build.bazel.targets.json.file=$(rlocationpath %s)" % BAZEL_TARGETS_JSON_ULTIMATE,
+  ],
+  add_opens = INTELLIJ_ADD_OPENS,
+)
+```
+
+### Test Process JVM Configuration
+
+`TestingTasksImpl.prepareEnvForTestRun()` configures the forked test JVM:
+
+```kotlin
+// Key system properties set for test process:
+"idea.home.path"     → projectHome
+"idea.config.path"   → tempDir/config
+"idea.system.path"   → tempDir/system
+"java.io.tmpdir"     → tempDir
+
+// JVM options:
+"-XX:+HeapDumpOnOutOfMemoryError"
+"-XX:HeapDumpPath=<snapshotsDir>/intellij-tests-oom-<timestamp>.hprof"
+"-Xms750m -Xmx1024m"  // or custom from jvmMemoryOptions
+// Plus --add-opens for module access
+```
+
+### Passing JVM Args to Test Process
+
+#### 1. Memory Options (`intellij.build.test.jvm.memory.options`)
+
+Multiple options are space-separated within quotes. These options are added to the beginning of the JVM arguments via `generateVmOptions()`.
+
+#### 2. Pass-through System Properties (`pass.*` prefix)
+
+To pass arbitrary system properties to the test JVM, use the `pass.` prefix. `TestingTasksImpl.prepareEnvForTestRun()` strips the prefix, so `-Dpass.my.custom.property=value` reaches the test JVM as `-Dmy.custom.property=value`.
+
+**Important**: Properties without `pass.` prefix are consumed by the build scripts, NOT passed to the test JVM.
+
+### Pattern Transformation Table
+
+| Input Pattern | Compiled Regex | Matches `org.example.MyTest`? |
+|---------------|----------------|-------------------------------|
+| `MyTest` | `MyTest` | ❌ NO (not full match) |
+| `*MyTest` | `.*MyTest` | ✅ YES |
+| `org.example.MyTest` | `org\.example\.MyTest` | ✅ YES |
+| `org.example.*` | `org\.example\..*` | ✅ YES |
+| `*` | `.*` | ✅ YES (matches all) |
+
+### Key Implementation Details
+
+1. **Pattern Compilation** (`TestClassesFilter.compilePattern()`):
+   ```java
+   filter = filter.replace("$", "\\$").replace(".", "\\.").replace("*", ".*");
+   return Pattern.compile(filter);
+   ```
+
+2. **Pattern Matching** (`PatternListTestClassFilter.matches()` calls `TestClassesFilter.matchesAnyPattern()`):
+   ```java
+   return ContainerUtil.exists(patterns, pattern -> pattern.matcher(className).matches());
+   ```
+   - Uses `matches()` NOT `find()` - requires ENTIRE string to match
+   - className is ALWAYS the fully qualified name (FQN)
+
+3. **ClassNameFilter** (JUnit 5) - Fast pre-filter on class names
+   - Calls `TestCaseLoader.isClassNameIncluded(className)`
+   - Applied to EVERY class in classpath (must be fast)
+
+4. **BucketingClassNameFilter** (JUnit 5) - Class name filter
+   - Calls `TestCaseLoader.matchesCurrentBucket(className)`
+   - Checks bucketing (which runner should execute this test)
+
+5. **TestCaseLoader.fillTestCases()** (only test suites call it) - Scans classpath roots
+   - Uses `ClassFinder` to find all `.class` files
+   - Calls `isPotentiallyTestCase()` which calls filter's `matches()`
+   - Applies group-based filtering from `testGroups.properties`
+
+---
+
+## Related Documentation
+
+- [testing](../SKILL.md) - How to run tests via `bt.cmd` and `tests.cmd` (quick start, parameters, examples)
+- [Writing Tests](../../writing-tests/SKILL.md) - How to write tests (framework, `@TestApplication`, fixtures, EDT)

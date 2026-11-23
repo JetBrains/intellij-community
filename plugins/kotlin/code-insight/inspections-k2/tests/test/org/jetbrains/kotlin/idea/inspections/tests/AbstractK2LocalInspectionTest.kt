@@ -2,9 +2,11 @@
 
 package org.jetbrains.kotlin.idea.inspections.tests
 
+import com.intellij.openapi.util.io.FileUtil
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.psi.PsiFile
 import com.intellij.testFramework.common.runAll
+import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.idea.core.script.alwaysVirtualFile
 import org.jetbrains.kotlin.idea.core.script.configurations.KotlinScriptService
 import org.jetbrains.kotlin.idea.fir.K2DirectiveBasedActionUtils
@@ -46,6 +48,10 @@ abstract class AbstractK2LocalInspectionTest : AbstractLocalInspectionTest() {
 
     override fun doTest(path: String) {
         val mainFile = File(dataFilePath(fileName()))
+
+        if (InTextDirectivesUtils.findLinesWithPrefixesRemoved(FileUtil.loadFile(mainFile), "// HOST_EDITOR").isNotEmpty()) {
+            myFixture.setCaresAboutInjection(false)
+        }
 
         val extraFileNames = findExtraFilesForTest(mainFile)
 

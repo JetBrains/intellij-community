@@ -9,6 +9,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.Processor;
+import com.intellij.util.indexing.FileBasedIndexExtension;
 import com.intellij.util.indexing.IdFilter;
 import com.intellij.util.io.EnumeratorStringDescriptor;
 import com.intellij.util.io.KeyDescriptor;
@@ -33,7 +34,8 @@ public abstract class StringStubIndexExtension<Psi extends PsiElement> extends A
    * <p>
    * This property might come useful for optimizing "Go to Class/Symbol" and completion performance in case of multiple indexed projects.
    *
-   * @see IdFilter#buildProjectIdFilter(Project, boolean)
+   * @see FileBasedIndexExtension#traceKeyHashToVirtualFileMapping()
+   * @see IdFilter#getProjectIdFilter(Project, boolean)
    */
   public boolean traceKeyHashToVirtualFileMapping() {
     return false;

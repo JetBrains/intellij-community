@@ -9,7 +9,7 @@
 
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs'
 import { join } from 'node:path'
-import { assertRunOf, type CheckRun, createCheckRun } from './checkRun.ts'
+import { assertRunOf, type CheckRun, createCheckRun, once } from './checkRun.ts'
 import { resolveCodeSpanPaths } from './codeSpans.ts'
 import { type AirDiagram, DIAGRAM_FILE_SUFFIX, type HarvestedDiagram, type HarvestedDiagramNode, type HarvestedDiagramStep } from './diagram.ts'
 import type { DiagramFiles } from './diagramFiles.ts'
@@ -61,8 +61,12 @@ export interface DocHarvest {
   pictures: Set<string>
   /** The hand-laid diagrams, with their references resolved. */
   diagrams: HarvestedDiagram[]
-  /** The code spans of the doc bodies that their folder does not resolve, by doc folder (codeSpans.ts). */
-  codeSpanPaths: Map<string, Map<string, string | null>>
+  /**
+   * The code spans of the doc bodies that their folder does not resolve, by doc folder (codeSpans.ts). The first call
+   * resolves them and asks git for the ignored files. A caller that needs no code span never calls it, so it runs no
+   * git.
+   */
+  codeSpanPaths: () => Map<string, Map<string, string | null>>
 }
 
 export interface DocHarvestOptions {
@@ -246,8 +250,7 @@ export function harvestDocs(config: SiteConfig, provider: ModelProvider, options
   checks.prose()
   // the terms of the site vocabulary, shared with the gate and the check script (vocabulary.ts)
   checks.vocabulary()
-  const codeSpanPaths = resolveCodeSpanPaths(config.contentRoot, bodies, root)
-  return { docs, bodies, pictures, diagrams, codeSpanPaths }
+  return { docs, bodies, pictures, diagrams, codeSpanPaths: once(() => resolveCodeSpanPaths(config.contentRoot, bodies, root)) }
 }
 
 /**

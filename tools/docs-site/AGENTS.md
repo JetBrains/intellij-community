@@ -8,7 +8,7 @@ explains the config, the provider, the checks, the wiring, and how to add a site
 - Do not put a site fact in the kernel. A path, a node kind, a topic, or a term goes into the site config.
 - Import a kernel file by its relative path. Do not use the `@/` alias, because each site defines its own.
 - Keep each module that a gate loads free of npm imports. Both gates run on Bazel bun without `node_modules`.
-  `scripts/yamlCompat.ts` falls back to `Bun.YAML` there.
+  `scripts/yamlCompat.ts` parses with `Bun.YAML` on bun.
 - Keep each shared dependency at the version that each site `package.json` names. `DocsSiteToolchainConsistencyTest`
   checks the three manifests and the Bazel pins.
 - Keep the toolchain aliases in `//build`. The root `.bazelignore` lists `community`.

@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins
 
+import com.intellij.configurationStore.BatchUpdateListener
 import com.intellij.configurationStore.saveProjectsAndApp
 import com.intellij.diagnostic.dumpCoroutines
 import com.intellij.ide.IdeBundle
@@ -20,6 +21,7 @@ import com.intellij.lang.Language
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.impl.ActionManagerImpl
+import com.intellij.openapi.application.AccessToken
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.edtWriteAction
@@ -35,8 +37,11 @@ import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.extensions.impl.ExtensionPointDeferredListenersNotification
 import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl
 import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.openapi.fileTypes.FileTypeManager
+import com.intellij.openapi.fileTypes.impl.FileTypeManagerImpl
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
@@ -76,16 +81,10 @@ import kotlinx.coroutines.withContext
 import java.util.function.Predicate
 import kotlin.time.Duration.Companion.seconds
 
-private val LOG = Logger.getInstance(DynamicPluginsSupportImpl::class.java)
-private const val REPORT_ISSUES_COUNT_PROPERTY = "dynamic.plugins.report.issues.count"
-private const val DISREGARD_ISSUES_PROPERTY = "ide.plugins.disregard.dynamic.plugin.reconfiguration.issues"
-
-private val tracer: IJTracer by lazy { TelemetryManager.getInstance().getTracer(Scope("dynamicPluginsSupport", PlatformMetrics)) }
-
 internal class DynamicPluginsSupportImpl(
   val classloaderUnloadAwaitStrategy: AwaitClassloaderUnloadStrategy
 ) : DynamicPluginsSupport {
-  private val rwLock = Mutex() // TODO replace with a proper suspending RW lock?
+  private val rwLock: Mutex = Mutex() // TODO replace with a proper suspending RW lock?
 
   override suspend fun validateDynamicReconfigurationPossible(targetState: PluginSet): DynamicPluginsReconfigurationResult.Invalid? {
     return tracer.spanBuilder("validateDynamicReconfigurationPossible").useWithScope { span ->
@@ -432,13 +431,43 @@ internal class DynamicPluginsSupportImpl(
           runSafe { application.messageBus.syncPublisher(DynamicPluginListener.TOPIC).beforePluginLoaded(plugin) }
         }
       }
+      var fileTypeEvents: AccessToken? = null
+      var projectsWithDeferredRoots = emptyArray<Project>()
       val notifyListenersPostLoad: suspend () -> Unit = suspend {
-        withContext(Dispatchers.EDT) {
-          for (plugin in affectedPlugins) {
-            runSafe { application.messageBus.syncPublisher(DynamicPluginListener.TOPIC).pluginLoaded(plugin) }
-            DynamicPluginsUsagesCollector.logDescriptorLoad(plugin)
+        try {
+          withContext(Dispatchers.EDT) {
+            for (plugin in affectedPlugins) {
+              runSafe { application.messageBus.syncPublisher(DynamicPluginListener.TOPIC).pluginLoaded(plugin) }
+              DynamicPluginsUsagesCollector.logDescriptorLoad(plugin)
+            }
           }
-          runSafe { application.messageBus.syncPublisher(DynamicPluginListener.TOPIC).pluginsLoaded() }
+        }
+        finally {
+          try {
+            fileTypeEvents?.let { token ->
+              edtWriteAction {
+                token.finish()
+              }
+            }
+          }
+          finally {
+            try {
+              withContext(Dispatchers.EDT) {
+                runSafe { application.messageBus.syncPublisher(DynamicPluginListener.TOPIC).pluginsLoaded() }
+              }
+            }
+            finally {
+              if (projectsWithDeferredRoots.isNotEmpty()) {
+                edtWriteAction {
+                  for (project in projectsWithDeferredRoots) {
+                    if (!project.isDisposed) {
+                      project.messageBus.syncPublisher(BatchUpdateListener.TOPIC).onBatchUpdateFinished()
+                    }
+                  }
+                }
+              }
+            }
+          }
         }
       }
       var exception: Throwable? = null
@@ -471,6 +500,11 @@ internal class DynamicPluginsSupportImpl(
             }
           }
           val runListeners = {
+            projectsWithDeferredRoots = ProjectManager.getInstance().openProjects
+            for (project in projectsWithDeferredRoots) {
+              project.messageBus.syncPublisher(BatchUpdateListener.TOPIC).onBatchUpdateStarted()
+            }
+            fileTypeEvents = (application.getServiceIfCreated(FileTypeManager::class.java) as? FileTypeManagerImpl)?.deferFileTypesChanged()
             listenerCallbacks.forEach {
               runSafe { it.notify.run() }
             }
@@ -750,9 +784,9 @@ internal class DynamicPluginsSupportImpl(
       createDisposeTreePredicate(module)?.let { Disposer.disposeChildren(project, it) }
     }
 
-    appMessageBus.disconnectPluginConnections(Predicate { aClass ->
+    appMessageBus.disconnectPluginConnections { aClass ->
       (aClass.classLoader as? PluginClassLoader)?.pluginDescriptor === module
-    })
+    }
 
     createDisposeTreePredicate(module)?.let { Disposer.disposeChildren(ApplicationManager.getApplication(), it) }
 
@@ -854,23 +888,32 @@ internal class DynamicPluginsSupportImpl(
       return null
     }
   }
-}
+  companion object {
+    private val LOG: Logger = Logger.getInstance(DynamicPluginsSupportImpl::class.java)
+    private const val REPORT_ISSUES_COUNT_PROPERTY: String = "dynamic.plugins.report.issues.count"
+    private const val DISREGARD_ISSUES_PROPERTY: String = "ide.plugins.disregard.dynamic.plugin.reconfiguration.issues"
 
-private class DeferredLoadListeners {
-  private val deferred: ArrayList<suspend () -> Unit> = ArrayList()
-
-  fun add(callback: suspend () -> Unit) {
-    deferred.add(callback)
+    private val tracer: IJTracer by lazy { TelemetryManager.getInstance().getTracer(Scope("dynamicPluginsSupport", PlatformMetrics)) }
   }
 
-  suspend fun run() {
-    for (func in deferred) {
-      try {
-        func()
-      }
-      catch (e: Throwable) {
-        currentCoroutineContext().ensureActive()
-        if (e !is CancellationException) LOG.error(e)
+  private class DeferredLoadListeners {
+    private val deferred: MutableList<suspend () -> Unit> = ArrayList()
+
+    fun add(callback: suspend () -> Unit) {
+      deferred.add(callback)
+    }
+
+    suspend fun run() {
+      for (func in deferred) {
+        try {
+          func()
+        }
+        catch (e: Throwable) {
+          currentCoroutineContext().ensureActive()
+          if (e !is CancellationException) {
+            LOG.error(e)
+          }
+        }
       }
     }
   }

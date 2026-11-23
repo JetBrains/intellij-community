@@ -9,6 +9,7 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileEditor.FileEditorOpenRequest;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.FileUtil;
@@ -148,7 +149,7 @@ public final class GenerateInstanceDocumentFromSchemaAction extends AnAction {
 
       VirtualFile virtualFile =
         WriteAction.compute(() -> StandardFileSystems.local().refreshAndFindFileByPath(xmlFile.getAbsolutePath()));
-      FileEditorManager.getInstance(project).openFile(virtualFile, true);
+      FileEditorManager.getInstance(project).requestOpenFile(virtualFile, FileEditorOpenRequest.withFocus(true));
     }
     catch (IOException e) {
       Messages.showErrorDialog(project, XmlBeansBundle.message("could.not.save.generated.xml.document.0", StringUtil.getMessage(e)),

@@ -10,6 +10,7 @@ import com.intellij.platform.core.nio.fs.MultiRoutingFsPath
 import com.intellij.platform.core.nio.fs.RoutingAwareFileSystemProvider
 import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.eel.EelOsFamily
+import com.intellij.platform.eel.fs.EelCopyMoveImpl
 import com.intellij.platform.eel.isPosix
 import com.intellij.platform.eel.provider.EelDescriptorOwner
 import com.intellij.platform.eel.provider.utils.EelPathTransfer
@@ -415,6 +416,9 @@ class IjentEphemeralRootAwareFileSystemProvider(
       LOG.warn("This branch is not supposed to execute. Copying $source => $target through an inappropriate FileSystemProvider")
       originalFsProvider.copy(source.unwrap(), target.unwrap(), *options)
     }
+    else if (EelCopyMoveImpl.hasEelCopyOption(options)) {
+      EelCopyMoveImpl.copy(source.toOriginalPath(), target.toOriginalPath(), *options.filterNotNull().toTypedArray())
+    }
     else {
       EelPathTransfer.walkingTransfer(source.toOriginalPath(),
                                       target.toOriginalPath(),
@@ -432,6 +436,9 @@ class IjentEphemeralRootAwareFileSystemProvider(
     else if (source.toIjentPathOrNull() == null && target.toIjentPathOrNull() == null) {
       LOG.warn("This branch is not supposed to execute. Moving $source => $target through an inappropriate FileSystemProvider")
       originalFsProvider.move(source.unwrap(), target.unwrap(), *options)
+    }
+    else if (EelCopyMoveImpl.hasEelCopyOption(options)) {
+      EelCopyMoveImpl.move(source.toOriginalPath(), target.toOriginalPath(), *options.filterNotNull().toTypedArray())
     }
     else {
       EelPathTransfer.walkingTransfer(source.toOriginalPath(),

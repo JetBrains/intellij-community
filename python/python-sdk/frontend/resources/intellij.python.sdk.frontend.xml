@@ -6,7 +6,6 @@
     <module name="intellij.platform.core"/>
     <module name="intellij.platform.core.ui"/>
     <module name="intellij.platform.editor.ui"/>
-    <module name="intellij.platform.eel.provider"/>
     <module name="intellij.platform.frontend"/>
     <module name="intellij.platform.ide"/>
     <module name="intellij.platform.ide.core"/>
@@ -28,12 +27,9 @@
       after the VCS and schema widgets. That pairing is stated from both sides — see the dependency-file widget's own
       `after EvoPySdkStatusBarWidget`.
 
-      Every `after` here has to name something this process can resolve, which is what went wrong before (PY-92487).
-      The order used to read `after pythonInterpreterWidget, before pythonDependencyFileWidget`, and on the frontend
-      neither `after` survived: `pythonInterpreterWidget` is the classic widget, which disables itself whenever this one
-      is on (`PySdkStatusBarWidgetFactory.isAvailable`), so it is never registered at all. `LoadingOrder` drops an
-      anchor it cannot resolve, leaving only a `before` — and a widget with no `after` may be placed anywhere ahead of
-      it, which put this one at the far left of the bar.
+      Every `after` here has to name something this process can resolve (PY-92487). `LoadingOrder` drops an anchor it
+      cannot resolve, leaving only a `before` — and a widget with no `after` may be placed anywhere ahead of it, which
+      put this one at the far left of the bar.
 
       `CodeStyleStatusBarWidget` leads the list because it is the one anchor that is always there: it is an EP of
       `intellij.platform.lang.impl`, a shared module, so it is registered in both processes. `git`, `hg` and

@@ -1,13 +1,24 @@
 package com.intellij.codeInspection.tests.kotlin
 
-import com.intellij.jvm.analysis.internal.testFramework.MustAlreadyBeRemovedApiInspectionTestBase
+import com.intellij.jvm.analysis.internal.testFramework.jvmAnnotationsProjectFixture
+import com.intellij.jvm.analysis.internal.testFramework.mustAlreadyBeRemovedApiInspectionFixture
 import com.intellij.jvm.analysis.testFramework.JvmLanguage
+import com.intellij.testFramework.junit5.TestApplication
+import org.junit.jupiter.api.Test
 
-abstract class KotlinMustAlreadyBeRemovedApiInspectionTest : MustAlreadyBeRemovedApiInspectionTestBase() {
+@TestApplication
+abstract class KotlinMustAlreadyBeRemovedApiInspectionTest {
+  companion object {
+    private val projectFixture = jvmAnnotationsProjectFixture()
+  }
+
+  protected val myFixture by mustAlreadyBeRemovedApiInspectionFixture(projectFixture)
+
   
 
+  @Test
   fun `test APIs must have been removed`() {
-    inspection.currentVersion = "3.0"
+    myFixture.inspection.currentVersion = "3.0"
     myFixture.testHighlighting(JvmLanguage.KOTLIN, """
       import org.jetbrains.annotations.ApiStatus
 

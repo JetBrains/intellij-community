@@ -902,7 +902,7 @@ The Runs page, the run page and the trace page are in
   The replay keeps a still that differs and names it, and that file replaces the golden one.
 - Regenerate the server's transcript after a route change with
   `UPDATE_EXPECT=1 cargo test -p air-trace the_routes_answer_what_the_site_reads`, from `community/tools/vm`.
-  Then run the site's reader of it with `pnpm run test:scripts`, from `plugins/air/docs`.
+  Then run the site's reader of it with `pnpm run check`, from `plugins/air/docs`.
 - Browse the bundles on this machine with `./community/tools/trace.cmd serve`, or keep one server for the
   machine in the background with `./community/tools/trace.cmd serve --detach`.
 - Ask what to run with `./community/tools/trace.cmd plan <input>`.

@@ -19,52 +19,58 @@ import com.intellij.JavaTestUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiFile;
-import com.intellij.refactoring.LightMultiFileTestCase;
+import com.intellij.refactoring.LightMultiFileFixture;
 import com.intellij.refactoring.introduceVariable.IntroduceVariableBase;
 import com.intellij.testFramework.HeavyPlatformTestCase;
-import com.intellij.testFramework.LightProjectDescriptor;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.intellij.util.ThrowableRunnable;
-import org.jetbrains.annotations.NotNull;
+import org.junit.jupiter.api.Test;
+
+import static com.intellij.refactoring.LightMultiFileFixtureKt.lightMultiFileFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 @HeavyPlatformTestCase.WrapInCommand
-public class IntroduceVariableMultifileTest extends LightMultiFileTestCase {
-  @Override
-  protected String getTestDataPath() {
-    return JavaTestUtil.getJavaTestDataPath() + "/refactoring/introduceVariable/";
-  }
+@TestApplication
+public class IntroduceVariableMultifileTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(LightJavaCodeInsightFixtureTestCase.JAVA_1_5);
+  private final TestFixture<LightMultiFileFixture> multiFile =
+    lightMultiFileFixture(projectFixture, JavaTestUtil.getJavaTestDataPath() + "/refactoring/introduceVariable/");
 
-  @NotNull
-  @Override
-  protected LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_1_5;
-  }
-
+  @Test
   public void testSamePackageRef() {
-    doTest(
+    multiFile.get().doTest(
       createAction("pack1.A",
                    new MockIntroduceVariableHandler("b", false, false, false, "pack1.B")
       )
     );
   }
 
+  @Test
   public void testGenericTypeWithInner() {
-    doTest(
+    multiFile.get().doTest(
       createAction("test.Client",
                    new MockIntroduceVariableHandler("l", false, true, true, "test.List<test.A.B>")
       )
     );
   }
 
+  @Test
   public void testGenericTypeWithInner1() {
-    doTest(
+    multiFile.get().doTest(
       createAction("test.Client",
                    new MockIntroduceVariableHandler("l", false, true, true, "test.List<test.A.B>")
       )
     );
   }
 
+  @Test
   public void testGenericWithTwoParameters() {
-    doTest(
+    multiFile.get().doTest(
       createAction("Client",
                    new MockIntroduceVariableHandler("p", false, false, true,
                                                     "util.Pair<java.lang.String,util.Pair<java.lang.Integer,java.lang.Boolean>>")
@@ -72,8 +78,9 @@ public class IntroduceVariableMultifileTest extends LightMultiFileTestCase {
     );
   }
 
+  @Test
   public void testGenericWithTwoParameters2() {
-    doTest(
+    multiFile.get().doTest(
       createAction("Client",
                    new MockIntroduceVariableHandler("p", false, false, true,
                                                     "Pair<java.lang.String,Pair<java.lang.Integer,java.lang.Boolean>>")
@@ -82,13 +89,14 @@ public class IntroduceVariableMultifileTest extends LightMultiFileTestCase {
   }
 
   ThrowableRunnable<Exception> createAction(final String className, final IntroduceVariableBase testMe) {
+    LightJavaCodeInsightTestFixture myFixture = multiFile.get().getFixture();
     return () -> {
       final PsiClass aClass = myFixture.findClass(className);
       final PsiFile containingFile = aClass.getContainingFile();
       final VirtualFile virtualFile = containingFile.getVirtualFile();
       assertNotNull(virtualFile);
       myFixture.configureFromExistingVirtualFile(virtualFile);
-      testMe.invoke(getProject(), getEditor(), containingFile, null);
+      testMe.invoke(myFixture.getProject(), myFixture.getEditor(), containingFile, null);
     };
   }
 }

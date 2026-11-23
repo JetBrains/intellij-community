@@ -7,30 +7,43 @@ import com.intellij.codeInsight.template.postfix.templates.JavaPostfixTemplatePr
 import com.intellij.codeInsight.template.postfix.templates.PostfixTemplate;
 import com.intellij.codeInsight.template.postfix.templates.editable.JavaEditablePostfixTemplate;
 import com.intellij.codeInsight.template.postfix.templates.editable.JavaPostfixTemplateExpressionCondition;
+import com.intellij.platform.testFramework.junit5.codeInsight.indexing.IndexingModeTemplate;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.NeedsIndex;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.intellij.util.LazyKt;
 import kotlin.Lazy;
 import org.jdom.Element;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.util.Set;
 
+import static com.intellij.java.codeInsight.template.postfix.templates.PostfixTemplateFixtureKt.postfixTemplateFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
 import static java.util.Arrays.asList;
 
-public class OriginalElementPostfixTemplateTest extends PostfixTemplateTestCase {
+@TestApplication
+@IndexingModeTemplate
+public class OriginalElementPostfixTemplateTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<PostfixTemplateFixture> postfix = postfixTemplateFixture(projectFixture, "originalElement");
+
   private static final Lazy<JavaPostfixTemplateProvider> PROVIDER = LazyKt.lazyPub(() -> new JavaPostfixTemplateProvider());
 
   private Set<PostfixTemplate> myOriginalTemplates;
 
-  @Override
-  public void setUp() throws Exception {
-    super.setUp();
-
+  @BeforeEach
+  void setUp() {
     JavaPostfixTemplateProvider provider = PROVIDER.getValue();
     myOriginalTemplates = PostfixTemplateStorage.getInstance().getTemplates(provider);
     // Register a custom condition which returns true if it can get an original element of the next method.
@@ -42,28 +55,15 @@ public class OriginalElementPostfixTemplateTest extends PostfixTemplateTestCase 
     PostfixTemplateStorage.getInstance().setTemplates(provider, asList(template));
   }
 
-  @Override
-  protected void tearDown() throws Exception {
-    try {
-      PostfixTemplateStorage.getInstance().setTemplates(PROVIDER.getValue(), myOriginalTemplates);
-    }
-    catch (Throwable e) {
-      addSuppressedException(e);
-    }
-    finally {
-      super.tearDown();
-    }
+  @AfterEach
+  void tearDown() {
+    PostfixTemplateStorage.getInstance().setTemplates(PROVIDER.getValue(), myOriginalTemplates);
   }
 
   @NeedsIndex.SmartMode(reason = "Not created as DumbAware")
+  @Test
   public void testOriginalElement() {
     doTest();
-  }
-
-  @NotNull
-  @Override
-  protected String getSuffix() {
-    return "originalElement";
   }
 
   private static class OriginalElementCondition implements JavaPostfixTemplateExpressionCondition {
@@ -88,5 +88,9 @@ public class OriginalElementPostfixTemplateTest extends PostfixTemplateTestCase 
     @Override
     public void serializeTo(@NotNull Element element) {
     }
+  }
+
+  private void doTest() {
+    EdtTestUtil.runInEdtAndWait(() -> postfix.get().doTest());
   }
 }

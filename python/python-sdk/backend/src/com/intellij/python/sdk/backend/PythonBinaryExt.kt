@@ -4,6 +4,7 @@ import com.intellij.openapi.components.service
 import com.intellij.python.sdk.backend.PySdkBundle.message
 import com.intellij.python.sdk.backend.service.ActivatableEnvironmentService
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
+import com.intellij.util.concurrency.annotations.RequiresReadLockAbsence
 import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.PythonHomePath
 import com.jetbrains.python.errorProcessing.PyResult
@@ -12,6 +13,8 @@ import kotlin.io.path.isExecutable
 
 
 @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
+// Off until PY-93940.
+@RequiresReadLockAbsence(generateAssertion = false)
 fun PythonHomePath.resolvePythonBinary(): PythonBinary? {
   return VirtualEnvReader().findPythonInPythonRoot(this)
 }
@@ -33,6 +36,8 @@ fun PythonBinary.resolvePythonHome(): PythonHomePath = VirtualEnvReader().resolv
  * layout is broken.
  */
 @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
+// Off until PY-93940.
+@RequiresReadLockAbsence(generateAssertion = false)
 fun PythonBinary.detectPythonEnvironment(): PyResult<PythonEnvironment> {
   if (!isExecutable()) return PyResult.localizedError(message("python.sdk.detect.binary.not.executable", this))
 

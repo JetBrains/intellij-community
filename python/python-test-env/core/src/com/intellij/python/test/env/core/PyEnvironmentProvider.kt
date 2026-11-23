@@ -2,16 +2,14 @@
 package com.intellij.python.test.env.core
 
 import com.intellij.python.sdk.backend.PIP_MANAGER
+import com.intellij.python.sdk.backend.buildTestInterpreter
+import com.intellij.python.sdk.backend.addTestInterpreter
+import com.intellij.openapi.project.Project
 import com.jetbrains.python.sdk.add.v2.PathHolder
 import com.intellij.python.sdk.backend.pathEnvRef
 import com.intellij.python.sdk.common.PyInterpreterRef
-import com.intellij.openapi.projectRoots.SdkType
-import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil
-import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.python.sdk.backend.PythonInterpreter
 import com.intellij.python.sdk.backend.PythonInterpreterRegistry
-import com.intellij.python.sdk.backend.pythonInterpreterResultAsync
-import com.jetbrains.python.PyNames
 import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.sdk.PythonSdkAdditionalData
 import com.jetbrains.python.project.PyProject
@@ -42,26 +40,25 @@ interface PyEnvironment : AutoCloseable {
    */
   val envPath: Path
 
-  suspend fun prepareSdk(): PythonInterpreter = withContext(Dispatchers.IO) {
-    val vfsFile = VfsUtil.findFile(pythonPath, true) ?: error("Cannot find Python executable: ${pythonPath}")
-    // The environment belongs to no project, and its working directory is the env dir rather than a module base dir:
+  /**
+   * The interpreter of this environment in [project], for a test without a `PyProject`. [envPath] owns it. It is in
+   * the registry of [project]: remove it with `removeTestInterpreter`.
+   */
+  suspend fun prepareInterpreter(project: Project): PythonInterpreter = withContext(Dispatchers.IO) {
+    // The environment belongs to no module, and its working directory is the env dir rather than a module base dir:
     // drop the association the constructor derives from it. Fixtures that want one call setAssociationToModule.
     val data = PythonSdkAdditionalData(osSpecificSdkFlavorAndData, envPath).apply { associatedModulePath = null }
-    SdkConfigurationUtil.setupSdk(
-      emptyArray(), vfsFile,
-      SdkType.findByName(PyNames.PYTHON_SDK_ID_NAME)!!,
-      data,
-      null
-    ).pythonInterpreterResultAsync().orThrow()
+    val registry = PythonInterpreterRegistry.getInstance(project)
+    registry.addTestInterpreter(registry.buildTestInterpreter(envPath, PathHolder.Eel(pythonPath), data).orThrow())
   }
 
   /**
    * The interpreter of this environment for [pyProject], by its `pip` ref. It is not registered yet: set it with
-   * `PyProject.setPythonInterpreter`. Remove it with [PythonInterpreterRegistry.removePythonInterpreter].
+   * `PyProject.setPythonInterpreter`. Remove it with [PythonInterpreterRegistry.remove].
    */
   suspend fun prepareSdk(pyProject: PyProject): PythonInterpreter =
     PythonInterpreterRegistry.getInstance(pyProject.project)
-      .newPythonInterpreter(pyProject, PyInterpreterRef.native(PIP_MANAGER, pathEnvRef(PathHolder.Eel(pythonPath), pyProject.baseDir)))
+      .build(pyProject, PyInterpreterRef.native(PIP_MANAGER, pathEnvRef(PathHolder.Eel(pythonPath), pyProject.baseDir)))
       .orThrow()
 
   /**

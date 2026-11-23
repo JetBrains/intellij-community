@@ -10,7 +10,7 @@ internal class GitLabMergeRequestOpenInWorktreeAction : DumbAwareAction() {
 
   override fun update(e: AnActionEvent) {
     val vm = e.getData(GitLabMergeRequestsActionKeys.CONNECTED_PROJECT_VM)
-    val mergeRequest = e.getData(GitLabMergeRequestsActionKeys.SELECTED)
+    val mergeRequest = e.getData(GitLabMergeRequestDataKeys.SELECTED)
 
     e.presentation.isEnabledAndVisible = vm != null && mergeRequest != null && vm.canCheckoutInNewWorktree &&
                                          !vm.isCheckedOut(mergeRequest.iid)
@@ -18,7 +18,7 @@ internal class GitLabMergeRequestOpenInWorktreeAction : DumbAwareAction() {
 
   override fun actionPerformed(e: AnActionEvent) {
     val vm = e.getData(GitLabMergeRequestsActionKeys.CONNECTED_PROJECT_VM) ?: return
-    val mergeRequest = e.getData(GitLabMergeRequestsActionKeys.SELECTED) ?: return
+    val mergeRequest = e.getData(GitLabMergeRequestDataKeys.SELECTED) ?: return
 
     vm.checkoutMergeRequestInNewWorktree(mergeRequest.iid)
   }

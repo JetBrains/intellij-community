@@ -8,6 +8,11 @@ import com.intellij.pom.java.LanguageLevel
 import com.intellij.testFramework.fixtures.kotlin.KotlinTester
 import org.jetbrains.idea.devkit.inspections.quickfix.LightDevKitInspectionFixTestBase
 
+/**
+ * Use [cancellationCheckInLoopsFixture] in a JUnit 5 test.
+ */
+@Suppress("DEPRECATION")
+@Deprecated("Use cancellationCheckInLoopsFixture in a JUnit 5 test")
 abstract class CancellationCheckInLoopsInspectionTestBase : LightDevKitInspectionFixTestBase() {
 
   private val projectDescriptor = object : ProjectDescriptor(LanguageLevel.HIGHEST) {

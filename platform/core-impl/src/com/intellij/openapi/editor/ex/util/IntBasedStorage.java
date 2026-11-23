@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.ex.util;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -39,6 +39,17 @@ public class IntBasedStorage extends IntArrayDataStorage {
   @Override
   public @NotNull IElementType unpackTokenFromData(int data) {
     return IElementType.find((short)(data & 0xffff));
+  }
+
+  /**
+   * Returns {@code -1} for a subclass.
+   */
+  @Override
+  public int unpackTokenIndexFromData(int data) {
+    if (getClass() != IntBasedStorage.class) {
+      return -1;
+    }
+    return (short)(data & 0xffff);
   }
 
   @Override

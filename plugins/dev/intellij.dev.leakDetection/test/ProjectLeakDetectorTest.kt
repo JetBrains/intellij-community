@@ -6,11 +6,13 @@ import com.intellij.openapi.editor.EditorFactory
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.runInEdtAndGet
+import kotlinx.coroutines.CoroutineScope
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import java.net.URLClassLoader
+import kotlin.coroutines.EmptyCoroutineContext
 
 @TestApplication
 class ProjectLeakDetectorTest {
@@ -86,6 +88,49 @@ class ProjectLeakDetectorTest {
     finally {
       leakedEditor = null
     }
+  }
+
+  @Test
+  fun testFindsLeakedDisposedEditorWithoutGc() {
+    try {
+      val editorHash = runInEdtAndGet {
+        val factory = EditorFactory.getInstance()
+        val editor = factory.createEditor(factory.createDocument("leaked editor content without GC"))
+        LeakCandidateRegistry.getInstance().register(editor)
+        factory.releaseEditor(editor)
+        leakedEditor = editor
+        System.identityHashCode(editor)
+      }
+
+      val leaks = timeoutRunBlocking { ProjectLeakDetector(editorStaleThresholdMs = 0).detect(forceGc = false) }
+      assertTrue(leaks.any { it.kind == LeakKind.EDITOR && it.identityHashCode == editorHash },
+                 "expected the leaked editor to be detected without a GC, got: $leaks")
+    }
+    finally {
+      leakedEditor = null
+    }
+  }
+
+  @Test
+  fun testBuildReportContainsDisposerParentChain() {
+    val leak = LeakInfo(LeakKind.PROJECT, "com.example.FooProject", 0x1234, "Project Foo", null, null,
+                        "via 'com.example.Holder.project'", "  Foo (com.example.Foo)\n    <- ROOT")
+    val report = LeakDetectionRunner.getInstance().reporter().buildReport(listOf(leak))
+
+    assertTrue(report.contains("  Disposer parent chain:\n    Foo (com.example.Foo)\n      <- ROOT"), report)
+  }
+
+  @Test
+  fun testSameLeakIsSelectedForReportOnce() {
+    val service = IdleLeakDetectionService(CoroutineScope(EmptyCoroutineContext))
+    val first = LeakInfo(LeakKind.EDITOR, "com.example.BarEditor", 0xaaaa, "Editor A", null, 100L, "via 'com.example.Tracker@1111'")
+    // Differs only by the identity hash, so it has the same signature.
+    val same = first.copy(identityHashCode = 0xbbbb, referencePath = "via 'com.example.Tracker@2222'")
+    val other = first.copy(referencePath = "via 'com.example.Other@1111'")
+
+    assertEquals(listOf(listOf(first, same)), service.selectNotReported(listOf(first, same)))
+    assertEquals(listOf(listOf(other)), service.selectNotReported(listOf(same, other)))
+    assertEquals(emptyList<List<LeakInfo>>(), service.selectNotReported(listOf(first, same, other)))
   }
 
   @Test

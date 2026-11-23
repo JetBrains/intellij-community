@@ -37,6 +37,8 @@ class AutomaticInheritorRenamer(klass: KtClass, newName: String) : AutomaticRena
 class AutomaticInheritorRenamerFactory : AutomaticRenamerFactory {
     override fun isApplicable(element: PsiElement) = element is KtClass
     override fun getOptionName() = RefactoringBundle.message("rename.inheritors")
+
+    override fun getOptionId(): String = "renameInheritors"
     override fun isEnabled() = KotlinCommonRefactoringSettings.getInstance().renameInheritors
     override fun setEnabled(enabled: Boolean) {
         KotlinCommonRefactoringSettings.getInstance().renameInheritors = enabled

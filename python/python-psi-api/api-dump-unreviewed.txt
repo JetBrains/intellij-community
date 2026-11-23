@@ -1333,7 +1333,6 @@ com.jetbrains.python.psi.stubs.PyTypeParameterStub
 - a:getDefaultExpressionText():java.lang.String
 - a:getKind():com.jetbrains.python.ast.PyAstTypeParameter$Kind
 com.jetbrains.python.psi.stubs.PyVersionSpecificStub
-- a:getVersions():com.google.common.collect.RangeSet
 com.jetbrains.python.psi.types.PyCallableParameter
 - a:getArgumentType(com.jetbrains.python.psi.types.TypeEvalContext):com.jetbrains.python.psi.types.PyType
 - getDeclarationElement():com.intellij.psi.PsiElement

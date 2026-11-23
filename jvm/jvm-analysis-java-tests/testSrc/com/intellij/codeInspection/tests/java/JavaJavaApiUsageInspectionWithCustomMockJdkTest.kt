@@ -1,15 +1,16 @@
 package com.intellij.codeInspection.tests.java
 
 import com.intellij.jvm.analysis.JavaJvmAnalysisTestUtil
-import com.intellij.jvm.analysis.internal.testFramework.JavaApiUsageInspectionTestBase
+import com.intellij.jvm.analysis.internal.testFramework.javaApiUsageInspectionFixture
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.ContentEntry
 import com.intellij.openapi.roots.ModifiableRootModel
-import com.intellij.testFramework.LightProjectDescriptor
+import com.intellij.pom.java.LanguageLevel
 import com.intellij.testFramework.PsiTestUtil
-import org.junit.Ignore
-import org.junit.runner.RunWith
-import org.junit.runners.BlockJUnit4ClassRunner
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase.ProjectDescriptor
+import com.intellij.testFramework.fixtures.lightJavaProjectFixture
+import com.intellij.testFramework.junit5.TestApplication
+import org.junit.jupiter.api.Disabled
 
 /**
  * This is a base test case for test cases that highlight all the use of APIs
@@ -21,16 +22,20 @@ import org.junit.runners.BlockJUnit4ClassRunner
  * - Set `JAVA_HOME` to JDK 1.8. In this case it's possible to redefine JDK's own classes like `String` or `Class`
  * - Invoke `./compile.sh`. The new class(es) will appear in `./classes`
  */
-@Ignore
-@RunWith(BlockJUnit4ClassRunner::class) // disabled because there are currently no tests for a JDK higher than the highest mock JDK
-class JavaJavaApiUsageInspectionWithCustomMockJdkTest : JavaApiUsageInspectionTestBase() {
-  override fun getTestDataPath(): String = JavaJvmAnalysisTestUtil.testDataPath
-
-  override fun getProjectDescriptor(): LightProjectDescriptor = object : ProjectDescriptor(sdkLevel) {
-    override fun configureModule(module: Module, model: ModifiableRootModel, contentEntry: ContentEntry) {
-      super.configureModule(module, model, contentEntry)
-      val dataDir = "$testDataPath/codeInspection/apiUsage"
-      PsiTestUtil.newLibrary("JDKMock").classesRoot("$dataDir/classes").addTo(model)
-    }
+@Disabled("There are currently no tests for a JDK higher than the highest mock JDK")
+@TestApplication
+@Suppress("JUnitTestCaseWithNoTests")
+class JavaJavaApiUsageInspectionWithCustomMockJdkTest {
+  companion object {
+    private val projectFixture = lightJavaProjectFixture(object : ProjectDescriptor(LanguageLevel.HIGHEST) {
+      override fun configureModule(module: Module, model: ModifiableRootModel, contentEntry: ContentEntry) {
+        super.configureModule(module, model, contentEntry)
+        val dataDir = "${JavaJvmAnalysisTestUtil.testDataPath}/codeInspection/apiUsage"
+        PsiTestUtil.newLibrary("JDKMock").classesRoot("$dataDir/classes").addTo(model)
+      }
+    })
   }
+
+  @Suppress("unused")
+  private val myFixture by javaApiUsageInspectionFixture(projectFixture, JavaJvmAnalysisTestUtil.testDataPath)
 }

@@ -25,6 +25,11 @@
       <option name="FOREGROUND" value="808080"/>
     </value>
   </option>
+  <option name="MARKDOWN_LIST_MARKER">
+    <value>
+      <option name="FOREGROUND" value="808080"/>
+    </value>
+  </option>
   <option name="MARKDOWN_CODE_BLOCK">
     <value>
       <option name="FOREGROUND" value="A9B7C6"/>

@@ -2,6 +2,7 @@
 package com.jetbrains.python.junit5.framework.util
 
 import com.intellij.codeInsight.completion.CompletionType
+import com.intellij.python.sdk.backend.classRoots
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.diagnostic.logger
@@ -11,7 +12,6 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.refreshAndFindVirtualFile
 import com.intellij.psi.PsiFile
 import com.intellij.python.pyproject.model.evolution.findEvoPyProjectIfReady
-import com.intellij.python.sdk.backend.classRoots
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture
 import com.jetbrains.python.PythonFileType
 import com.jetbrains.python.psi.PyFile
@@ -92,7 +92,7 @@ fun CodeInsightTestFixture.assertSdkRootsNotParsed(currentFile: PsiFile) {
     LOG.warn("The interpreter is null. assertSdkRootsNotParsed is skipped")
     return
   }
-  for (root in interpreter.classRoots(currentFile.project)) {
+  for (root in interpreter.classRoots) {
     assertRootNotParsed(currentFile, root, null)
   }
 }

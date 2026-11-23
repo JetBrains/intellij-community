@@ -42,7 +42,10 @@ public final class ExecutorsQuery<Result, Parameter> extends AbstractQuery<Resul
       catch (CancellationException e) {
         throw new CeProcessCanceledException(e);
       }
-      catch (Exception e) {
+      catch (Throwable e) {
+        if (Logger.shouldRethrow(e)) {
+          throw e;
+        }
         LOG.error(e);
       }
     }

@@ -4,8 +4,11 @@ package com.jetbrains.python.sdk
 import com.intellij.python.sdk.backend.PythonInterpreter
 import com.intellij.python.pyproject.model.evolution.EvoPyProjectModel
 import com.jetbrains.python.project.PyProject
-import com.intellij.python.sdk.backend.getSdkAPI
 import com.intellij.python.sdk.backend.asItem
+import com.intellij.python.sdk.backend.flavor
+import com.intellij.python.sdk.backend.isTargetBased
+import com.intellij.python.venv.sdk.flavors.VirtualEnvSdkFlavor
+import com.jetbrains.python.sdk.flavors.conda.CondaEnvSdkFlavor
 import com.intellij.python.sdk.backend.PythonInterpreterRegistry
 import com.intellij.ide.ui.icons.icon
 import com.intellij.openapi.diagnostic.thisLogger
@@ -21,9 +24,6 @@ import com.intellij.python.sdk.common.PyInterpreterItem
 import com.intellij.ui.SimpleColoredComponent
 import com.intellij.ui.SimpleTextAttributes
 import com.jetbrains.python.PyBundle
-import com.jetbrains.python.isCondaVirtualEnv
-import com.jetbrains.python.isNonToolVirtualEnv
-import com.jetbrains.python.sdk.legacy.PythonSdkUtil.isRemote
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import javax.swing.JComponent
@@ -42,100 +42,79 @@ enum class PyRenderedSdkType {
 }
 
 /**
- * These SDKs as a UI list holds them, grouped by type, with the ones [module] cannot use dropped.
- *
- * Virtual environments, pipenv and conda environments are grouped as [PyRenderedSdkType.VIRTUALENV].
- * Remote interpreters are grouped as [PyRenderedSdkType.REMOTE]. All the others are [PyRenderedSdkType.SYSTEM].
- *
- * An interpreter that is associated with another module is dropped, and so is one that cannot be used at all. Whether
- * it can be used is what the interpreter itself answers, so this runs each of them and must not be called on the EDT.
- * The SDK is read here, while grouping, and never reaches the list: the caller gets items.
- *
- * @see Sdk.isAssociatedWithAnotherModule
- * @see com.jetbrains.python.sdk.legacy.PythonSdkUtil.isRemote
- */
-@ApiStatus.Internal
-suspend fun List<Sdk>.groupInterpreterItemsByTypes(module: Module?): Map<PyRenderedSdkType, List<PyInterpreterItem>> {
-  val assignable = filter { !it.isAssociatedWithAnotherModule(module) }
-  // `pyInterpreterItems` keeps the order it was given, so the two lists line up.
-  return assignable.zip(assignable.pyInterpreterItems())
-    .filter { (_, item) -> item.problem == null }
-    .groupBy({ (sdk, _) -> sdk.renderedSdkType }, { (_, item) -> item })
-}
-
-/**
- * [groupInterpreterItemsByTypes] for a Java caller that cannot suspend.
- *
- * The interpreters are read under a progress over [owner], so they run off the EDT. One progress covers the whole
- * list, where before PY-91967 each row probed the file system under a modal progress of its own while it was painted.
- */
-@ApiStatus.Internal
-@RequiresEdt
-fun List<Sdk>.groupInterpreterItemsByTypesUnderProgress(
-  module: Module?,
-  owner: JComponent,
-): Map<PyRenderedSdkType, List<PyInterpreterItem>> =
-  runWithModalProgressBlocking(ModalTaskOwner.component(owner), PyBundle.message("python.interpreters.reading.interpreters.progress")) {
-    groupInterpreterItemsByTypes(module)
-  }
-
-/**
- * These SDKs as a UI list holds them, read under a progress over [owner], for a Java caller that cannot suspend.
+ * These SDKs as a UI list holds them in [project], read under a progress over [owner], for a Java caller that cannot suspend.
  *
  * Order is kept, so a caller that also holds the SDKs can line the two lists up.
  */
 @ApiStatus.Internal
 @RequiresEdt
-fun List<Sdk>.interpreterItemsUnderProgress(owner: JComponent): List<PyInterpreterItem> =
+fun List<Sdk>.interpreterItemsUnderProgress(project: Project, owner: JComponent): List<PyInterpreterItem> =
   runWithModalProgressBlocking(ModalTaskOwner.component(owner), PyBundle.message("python.interpreters.reading.interpreters.progress")) {
-    pyInterpreterItems()
+    pyInterpreterItems(project)
   }
 
 /**
- * The same, for a caller that has no component to hang the progress on yet, such as a form constructor.
- */
-@ApiStatus.Internal
-@RequiresEdt
-fun List<Sdk>.interpreterItemsUnderProgress(project: Project): List<PyInterpreterItem> =
-  runWithModalProgressBlocking(ModalTaskOwner.project(project), PyBundle.message("python.interpreters.reading.interpreters.progress")) {
-    pyInterpreterItems()
-  }
-
-/**
- * The interpreters of the [PyProject] of [module], or of every [PyProject] of [project] when [module] is `null`. A run
- * configuration offers them before the user picks its module.
+ * The interpreters that [pyProject] owns, or the interpreters of every [PyProject] of [project] when [pyProject] is
+ * `null`. A run configuration offers them before the user picks its module.
  *
- * The [PyProject]s come from the [EvoPyProjectModel] snapshot, which does not wait for the JPS model. The callers read
- * under a modal progress, and a modal progress holds the synchronization with the JPS model back (PY-93821).
+ * The [PyProject]s for `null` come from the [EvoPyProjectModel] snapshot, which does not wait for the JPS model. The
+ * callers read under a modal progress, and a modal progress holds the synchronization with the JPS model back
+ * (PY-93821).
  */
-private suspend fun pyProjectInterpreters(project: Project, module: Module?): List<PythonInterpreter> {
+private suspend fun pyProjectInterpreters(project: Project, pyProject: PyProject?): List<PythonInterpreter> {
   val registry = PythonInterpreterRegistry.getInstance(project)
-  val snapshot = EvoPyProjectModel.getInstance(project).snapshot()
-  val pyProjects = if (module != null) listOfNotNull(snapshot.forModule(module)?.pyProject) else snapshot.evoPyProjects.map { it.pyProject }.toList()
+  val pyProjects = if (pyProject != null) listOf(pyProject) else EvoPyProjectModel.getInstance(project).snapshot().pyProjects()
   return pyProjects.flatMap { registry.interpreters(it) }.distinct()
 }
 
 /**
- * The interpreters of [module] as a UI list holds them, read under a progress over the project, for a Java caller that
- * cannot suspend. See [pyProjectInterpreters]. The rows of the list are their [PythonInterpreter.asItem].
+ * [pyProjectInterpreters] without the wait, for a Java form on the EDT that cannot suspend. It is empty before the first
+ * computation of [PythonInterpreterRegistry], and for `null` also before the first [EvoPyProjectModel] snapshot.
+ *
+ * It returns the interpreters that [pyProject] owns in [PythonInterpreterRegistry], or the interpreters of every
+ * [PyProject] of the snapshot when [pyProject] is `null`. A [PyProject] can own more interpreters than
+ * [com.intellij.python.sdk.backend.evolution.EvoPyProject.interpreter], the one that its module uses. A member of a tool
+ * workspace owns none, because it uses the interpreter of the workspace root.
+ */
+@ApiStatus.Internal
+fun pyProjectInterpretersIfReady(project: Project, pyProject: PyProject?): List<PythonInterpreter> {
+  val pyProjects = if (pyProject != null) listOf(pyProject) else EvoPyProjectModel.getInstance(project).snapshotOrNull()?.pyProjects()
+  val registry = PythonInterpreterRegistry.getInstance(project)
+  return pyProjects.orEmpty().flatMap { registry.interpretersIfReady(it) }.distinct()
+}
+
+private fun EvoPyProjectModel.Snapshot.pyProjects(): List<PyProject> = evoPyProjects.map { it.pyProject }.toList()
+
+/**
+ * The interpreters of [pyProject] as a UI list holds them, read under a progress over the project, for a Java caller that
+ * cannot suspend. `null` means every [PyProject]. See [pyProjectInterpreters]. The rows of the list are their
+ * [PythonInterpreter.asItem].
  */
 @ApiStatus.Internal
 @RequiresEdt
-fun pyProjectInterpretersUnderProgress(project: Project, module: Module?): List<PythonInterpreter> =
+fun pyProjectInterpretersUnderProgress(project: Project, pyProject: PyProject?): List<PythonInterpreter> =
   runWithModalProgressBlocking(ModalTaskOwner.project(project), PyBundle.message("python.interpreters.reading.interpreters.progress")) {
-    pyProjectInterpreters(project, module)
+    pyProjectInterpreters(project, pyProject)
   }
 
 /**
- * The SDKs of the interpreters of [module] under a progress, for a Java caller that lines them up with
- * [interpreterItemsUnderProgress]. See [pyProjectInterpreters].
+ * The interpreters of the [PyProject] of [module] as the interpreter popup lists them, grouped by type. Each row pairs
+ * the item with its interpreter. A row whose interpreter has a problem is dropped. See [pyProjectInterpreters].
  */
 @ApiStatus.Internal
-@RequiresEdt
-fun pyProjectPythonSdksUnderProgress(project: Project, module: Module?): List<Sdk> =
-  runWithModalProgressBlocking(ModalTaskOwner.project(project), PyBundle.message("python.interpreters.reading.interpreters.progress")) {
-    @Suppress("DEPRECATION") // A Java caller still holds SDKs.
-    pyProjectInterpreters(project, module).map { it.getSdkAPI() }
+suspend fun interpreterRowsByTypes(module: Module): Map<PyRenderedSdkType, List<Pair<PyInterpreterItem, PythonInterpreter>>> {
+  val pyProject = EvoPyProjectModel.getInstance(module.project).snapshot().forModule(module)?.pyProject ?: return emptyMap()
+  return pyProjectInterpreters(module.project, pyProject)
+    .map { it.asItem() to it }
+    .filter { (item, _) -> item.problem == null }
+    .groupBy { (_, interpreter) -> interpreter.renderedSdkType }
+}
+
+private val PythonInterpreter.renderedSdkType: PyRenderedSdkType
+  get() = when {
+    flavor.let { it is VirtualEnvSdkFlavor || it is CondaEnvSdkFlavor } -> PyRenderedSdkType.VIRTUALENV
+    isTargetBased -> PyRenderedSdkType.REMOTE
+    else -> PyRenderedSdkType.SYSTEM
   }
 
 /**
@@ -145,13 +124,6 @@ fun pyProjectPythonSdksUnderProgress(project: Project, module: Module?): List<Sd
  * what tells whoever sees it where to look.
  */
 private val Any.diagnosticLabel: @NlsSafe String get() = toString()
-
-private val Sdk.renderedSdkType: PyRenderedSdkType
-  get() = when {
-    isNonToolVirtualEnv || isCondaVirtualEnv -> PyRenderedSdkType.VIRTUALENV
-    isRemote(this) -> PyRenderedSdkType.REMOTE
-    else -> PyRenderedSdkType.SYSTEM
-  }
 
 /**
  * Draws one row of an interpreter list.

@@ -98,9 +98,7 @@ f:git4idea.branch.GitRebaseParams$Companion
 - bs:editCommits$default(git4idea.branch.GitRebaseParams$Companion,git4idea.config.GitVersion,git4idea.branch.GitRebaseParams$RebaseUpstream,git4idea.rebase.GitRebaseEditorHandler,Z,Z,I,java.lang.Object):git4idea.branch.GitRebaseParams
 f:git4idea.branch.GitRebaseParams$RebaseUpstream$Companion
 - f:fromRefString(java.lang.String):git4idea.branch.GitRebaseParams$RebaseUpstream$Reference
-f:git4idea.changes.GitBranchComparisonResultImplKt
-- sf:getFilePath(com.intellij.openapi.diff.impl.patch.FilePatch):java.lang.String
-f:git4idea.changes.GitBranchComparisonResultKt
+f:git4idea.changes.GitBranchComparisonResultUtilKt
 f:git4idea.checkin.GitCheckinEnvironment
 - getAmendCommitDetails(com.intellij.openapi.vfs.VirtualFile,com.intellij.vcs.commit.CommitToAmend):org.jetbrains.concurrency.CancellablePromise
 - getAmendSpecificCommitTargets(com.intellij.openapi.vfs.VirtualFile,kotlin.coroutines.Continuation):java.lang.Object
@@ -321,6 +319,9 @@ f:git4idea.ui.ComboBoxWithAutoCompletion
 - f:addDocumentListener(com.intellij.openapi.editor.event.DocumentListener):V
 - f:setPlaceholder(java.lang.String):V
 - f:updatePreserving(kotlin.jvm.functions.Function0):V
+f:git4idea.ui.StashInfo
+- <init>(com.intellij.openapi.vfs.VirtualFile,com.intellij.vcs.log.Hash,com.intellij.vcs.log.Hash,java.util.List,J,java.lang.String,java.lang.String,java.lang.String):V
+- f:getBaseHash():com.intellij.vcs.log.Hash
 f:git4idea.ui.branch.GitBranchPopupActions
 - s:getSelectedBranchFullPresentation(java.lang.String):java.lang.String
 c:git4idea.ui.branch.GitBranchWidget

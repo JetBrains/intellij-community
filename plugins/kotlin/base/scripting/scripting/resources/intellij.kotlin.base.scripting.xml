@@ -119,6 +119,10 @@
 
     <useScopeEnlarger implementation="org.jetbrains.kotlin.idea.core.script.navigation.KotlinScriptUseScopeEnlarger"/>
 
+    <externalSystemTaskNotificationListener implementation="org.jetbrains.kotlin.idea.core.script.definitions.ScriptDefinitionsExternalTaskListener"/>
+
+    <postStartupActivity implementation="org.jetbrains.kotlin.idea.core.script.definitions.ScriptDefinitionsStartupActivity"/>
+
     <resolveScopeProvider implementation="org.jetbrains.kotlin.idea.core.script.dependencies.KotlinScriptResolveScopeProvider"/>
     <resolveScopeProvider implementation="org.jetbrains.kotlin.idea.core.script.dependencies.ScriptDependenciesResolveScopeProvider"/>
 

@@ -15,6 +15,7 @@ import com.intellij.ui.HyperlinkLabel
 import com.intellij.ui.components.JBRadioButton
 import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.Cell
+import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.builder.Row
 import com.intellij.ui.dsl.builder.bind
 import com.intellij.ui.dsl.builder.bindItem
@@ -61,6 +62,7 @@ class ChooseModulePanel(
         modulesWithKtFiles = modulesPair.second
 
         val type = when {
+            modules.size == 1 -> ChoseModuleType.ALL
             modulesWithKtFiles.isEmpty() -> {
                 if (modules.isEmpty()) {
                     ChoseModuleType.ALL
@@ -120,37 +122,46 @@ class ChooseModulePanel(
 
     fun createPanel(): DialogPanel {
         return panel {
-            buttonsGroup {
-                twoColumnsRow(
-                    {
-                        radioButton(message("all.modules"), ChoseModuleType.ALL)
-                            .applySelected(ChoseModuleType.ALL)
-                    }
-                )
-                twoColumnsRow(
-                    {
-                        radioButton(message("all.modules.containing.kotlin.files"), ChoseModuleType.CONTAINING_KT)
-                            .applySelected(ChoseModuleType.CONTAINING_KT)
-                    },
-                    {
-                        createKtModulesText()
-                    }
-                ).visible(modulesWithKtFiles.isNotEmpty())
-                lateinit var singleModuleButton: Cell<JBRadioButton>
-                twoColumnsRow(
-                    {
-                        singleModuleButton = radioButton(message("single.module"), ChoseModuleType.SINGLE)
-                            .applySelected(ChoseModuleType.SINGLE)
-                    },
-                    {
-                        val comboBox = comboBox(modules.naturalSorted() as List<Module?>, textListCellRenderer { it?.name })
-                            .bindItem(selectedModule)
-                            .align(AlignX.FILL)
-                        comboBox.component.isSwingPopup = false
-                        comboBox.enabledIf(singleModuleButton.selected)
-                    }
-                )
-            }.bind(chosenModuleType::get, chosenModuleType::set)
+            val singleModule = modules.singleOrNull()
+            if (singleModule != null) {
+                row(message("configure.kotlin.module")) { label(singleModule.name) }
+            } else {
+                createModuleChooser()
+            }
         }
+    }
+
+    private fun Panel.createModuleChooser() {
+        buttonsGroup {
+            twoColumnsRow(
+                {
+                    radioButton(message("all.modules"), ChoseModuleType.ALL)
+                        .applySelected(ChoseModuleType.ALL)
+                }
+            )
+            twoColumnsRow(
+                {
+                    radioButton(message("all.modules.containing.kotlin.files"), ChoseModuleType.CONTAINING_KT)
+                        .applySelected(ChoseModuleType.CONTAINING_KT)
+                },
+                {
+                    createKtModulesText()
+                }
+            ).visible(modulesWithKtFiles.isNotEmpty())
+            lateinit var singleModuleButton: Cell<JBRadioButton>
+            twoColumnsRow(
+                {
+                    singleModuleButton = radioButton(message("single.module"), ChoseModuleType.SINGLE)
+                        .applySelected(ChoseModuleType.SINGLE)
+                },
+                {
+                    val comboBox = comboBox(modules.naturalSorted() as List<Module?>, textListCellRenderer { it?.name })
+                        .bindItem(selectedModule)
+                        .align(AlignX.FILL)
+                    comboBox.component.isSwingPopup = false
+                    comboBox.enabledIf(singleModuleButton.selected)
+                }
+            )
+        }.bind(chosenModuleType::get, chosenModuleType::set)
     }
 }

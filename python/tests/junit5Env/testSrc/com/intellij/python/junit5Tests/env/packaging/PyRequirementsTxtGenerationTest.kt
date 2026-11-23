@@ -25,7 +25,6 @@ import com.intellij.testFramework.IndexingTestUtil
 import com.intellij.testFramework.TestDataPath
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.python.junit5Tests.framework.pyProjectFixture
-import com.intellij.python.sdk.backend.getSdkAPI
 import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.testFramework.junit5.fixture.tempPathFixture
 import com.jetbrains.python.packaging.PyPackageRequirementsSettings
@@ -137,7 +136,7 @@ internal class PyRequirementsTxtGenerationTest {
     TestPythonPackageManagerService.replacePythonPackageManagerServiceWithTestInstance(project, packages)
     // The test package manager finds the existing requirements file only through this key.
     @Suppress("DEPRECATION") // The key is user data of the SDK.
-    venvFixture.get().getSdkAPI().putUserData(TestPythonPackageManager.REQUIREMENTS_PROVIDER_KEY, RequirementsProviderType.REQUIREMENTS_TXT)
+    TestPythonPackageManager.setRequirementsProvider(venvFixture.get(), RequirementsProviderType.REQUIREMENTS_TXT)
 
     val settings = PyPackageRequirementsSettings.getInstance(module)
     settings.versionSpecifier = versionSpecifier

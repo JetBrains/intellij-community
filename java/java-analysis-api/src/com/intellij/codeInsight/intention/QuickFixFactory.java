@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention;
 
 import com.intellij.codeInspection.LocalQuickFix;
@@ -247,10 +247,13 @@ public abstract class QuickFixFactory {
 
   public abstract @Nullable IntentionAction createRenameFix(@NotNull PsiElement element);
 
-  public abstract @NotNull LocalQuickFixAndIntentionActionOnPsiElement createRenameElementFix(@NotNull PsiNamedElement element);
+  public abstract @NotNull ModCommandAction createRenameElementFix(@NotNull PsiNamedElement element);
 
   public abstract @NotNull LocalQuickFixAndIntentionActionOnPsiElement createRenameElementFix(@NotNull PsiNamedElement element,
                                                                                               @NotNull String newName);
+
+  @ApiStatus.Experimental
+  public abstract @NotNull ModCommandAction createModPlanRenameFix(@NotNull PsiNamedElement element, @NotNull String newName);
 
   public abstract @NotNull IntentionAction createChangeExtendsToImplementsFix(@NotNull PsiClass aClass, @NotNull PsiClassType classToExtendFrom);
 
@@ -387,7 +390,7 @@ public abstract class QuickFixFactory {
    *
    * @return the safe delete of {@code element} on the ModPlan engine
    */
-  public abstract @NotNull LocalQuickFixAndIntentionActionOnPsiElement createSafeDeleteFix(@NotNull PsiElement element);
+  public abstract @NotNull ModCommandAction createSafeDeleteFix(@NotNull PsiElement element);
 
   /**
    * @param method method to delete

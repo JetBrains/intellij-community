@@ -8,7 +8,7 @@ import org.jetbrains.intellij.build.telemetry.withTracer
 import java.nio.file.Path
 
 /**
- * The option every dev-distribution producer takes to write the spans of its own process out, in the Jaeger JSON shape
+ * The option every distribution producer takes to write the spans of its own process out, in the Jaeger JSON shape
  * [org.jetbrains.intellij.build.telemetry.TraceFileSpanExporter] produces.
  *
  * A trace file is a pure side output: nothing reads it while the build runs, so a producer that is not given one must
@@ -51,7 +51,7 @@ internal fun runDevDistJob(traceFile: Path?, jobName: String, block: () -> Unit)
       // calling this block - so the first touch has to happen inside. Anything reading `TraceManager` earlier in
       // `main` would bind it to the default processor, leave `withTracer`'s `TraceFileSpanExporter` writing a file
       // nothing flushes, and make this call flush a processor with no spans in it. The failure is not silent - the
-      // trace file arrives with no root and `dev-dist trace` reports it as unusable rather than joining it - but it
+      // trace file arrives with no root and `dist trace` reports it as unusable rather than joining it - but it
       // is remote from its cause, so: do not read `TraceManager` before `runDevDistJob`.
       TraceManager.flush()
     }

@@ -4,13 +4,19 @@ package com.intellij.java.codeInsight.navigation;
 import com.intellij.codeInsight.daemon.GutterMark;
 import com.intellij.codeInsight.daemon.LineMarkerInfo;
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiIdentifier;
 import com.intellij.testFramework.IdeaTestUtil;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
 import org.jetbrains.annotations.NotNull;
+import org.junit.jupiter.api.Test;
 
 import java.util.List;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class RunLineMarkerJava23Test extends RunLineMarkerJava22Test {
 
@@ -24,9 +30,11 @@ public class RunLineMarkerJava23Test extends RunLineMarkerJava22Test {
     return LanguageLevel.JDK_23;
   }
 
+  @Test
   public void testStaticMainMethodInSuperClass() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.addClass("public class B { public static void main(String[] args) {} }");
-    IdeaTestUtil.withLevel(getModule(), getDisabledLevel(), () -> {
+    IdeaTestUtil.withLevel(myFixture.getModule(), getDisabledLevel(), () -> {
       myFixture.configureByText("MainTest.java", """
         class A extends B {}
         """);
@@ -35,8 +43,10 @@ public class RunLineMarkerJava23Test extends RunLineMarkerJava22Test {
     });
   }
 
+  @Test
   public void testBasic() {
-    IdeaTestUtil.withLevel(getModule(),  getDisabledLevel(), () -> {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    IdeaTestUtil.withLevel(myFixture.getModule(),  getDisabledLevel(), () -> {
       myFixture.configureByText("MainTest.java", """
         class A{
           public static void main<caret>(String[] args) {
@@ -48,10 +58,10 @@ public class RunLineMarkerJava23Test extends RunLineMarkerJava22Test {
       GutterMark mark = marks.get(0);
       assertTrue(mark instanceof LineMarkerInfo.LineMarkerGutterIconRenderer);
       LineMarkerInfo.LineMarkerGutterIconRenderer gutterIconRenderer = (LineMarkerInfo.LineMarkerGutterIconRenderer)mark;
-      PsiElement element = gutterIconRenderer.getLineMarkerInfo().getElement();
+      PsiElement element = ReadAction.computeBlocking(() -> gutterIconRenderer.getLineMarkerInfo().getElement());
       assertEquals(AllIcons.RunConfigurations.TestState.Run, gutterIconRenderer.getIcon());
       assertTrue(element instanceof PsiIdentifier);
-      assertEquals("main", element.getText());
+      assertEquals("main", ReadAction.computeBlocking(element::getText));
     });
   }
 }

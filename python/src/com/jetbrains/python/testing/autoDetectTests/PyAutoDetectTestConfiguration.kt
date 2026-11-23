@@ -69,7 +69,7 @@ class PyAutoDetectTestConfiguration(project: Project, private val factory: PyAut
   }
 
   override val isTargetRequired: Boolean
-    get() = sdk?.let { factory.getFactory(it, project) !is PyTestFactory } ?: true
+    get() = pythonInterpreter?.let { factory.getFactory(it, project) !is PyTestFactory } ?: true
 
   override fun isNewUiSupported(): Boolean = true
 }

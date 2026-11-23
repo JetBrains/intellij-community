@@ -1,0 +1,93 @@
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.jetbrains.python.configuration.interpreter
+
+import com.jetbrains.python.allure.Layers
+import com.jetbrains.python.allure.Subsystems
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Test
+
+/**
+ * Pure-state tests for [PyModuleDetailsModel]. Comparing by SDK name reflects the module editor's
+ * apply semantics — the editable clone from `ProjectSdksModel` and the registered SDK differ by
+ * instance identity but share a name.
+ */
+@Subsystems.Interpreters
+@Layers.Functional
+internal class PyModuleDetailsModelTest {
+
+  //region isSdkChanged / markSdkApplied
+
+  @Test
+  fun `no change when nothing was selected`() {
+    val model = PyModuleDetailsModel(initialSdkName = "Python 3.12")
+    assertFalse(model.isSdkChanged("Python 3.12"))
+    assertEquals("Python 3.12", model.initialSdkName)
+  }
+
+  @Test
+  fun `change detected when a different name is chosen`() {
+    val model = PyModuleDetailsModel(initialSdkName = "Python 3.12")
+    assertTrue(model.isSdkChanged("Python 3.11"))
+  }
+
+  @Test
+  fun `change detected when the module goes from no SDK to a chosen SDK`() {
+    val model = PyModuleDetailsModel<String>(initialSdkName = null)
+    assertTrue(model.isSdkChanged("Python 3.12"))
+  }
+
+  @Test
+  fun `change detected when the module SDK is cleared`() {
+    val model = PyModuleDetailsModel(initialSdkName = "Python 3.12")
+    assertTrue(model.isSdkChanged(null))
+  }
+
+  @Test
+  fun `markSdkApplied resets the baseline`() {
+    val model = PyModuleDetailsModel(initialSdkName = "Python 3.12")
+    model.markSdkApplied("Python 3.11")
+    assertEquals("Python 3.11", model.initialSdkName)
+    assertFalse(model.isSdkChanged("Python 3.11"))
+    assertTrue(model.isSdkChanged("Python 3.12"))
+  }
+
+  @Test
+  fun `markSdkApplied accepts null when the caller clears the SDK`() {
+    val model = PyModuleDetailsModel(initialSdkName = "Python 3.12")
+    model.markSdkApplied(null)
+    assertNull(model.initialSdkName)
+    assertFalse(model.isSdkChanged(null))
+  }
+
+  /**
+   * Mirrors the exact call sequence in `PyModuleDetailsPane.applyAsync`:
+   * `isSdkChanged(chosen) → applySdkChange(chosen) → markSdkApplied(chosen) → isSdkChanged(chosen) == false`.
+   * The pane relies on this to skip a redundant SDK write on the next apply.
+   */
+  @Test
+  fun `apply pipeline round-trip clears the dirty flag for the just-applied SDK`() {
+    val model = PyModuleDetailsModel(initialSdkName = "Python 3.12")
+    val chosen = "Python 3.11"
+
+    assertTrue(model.isSdkChanged(chosen))
+    // Pane would call applySdkChange(chosen) here.
+    model.markSdkApplied(chosen)
+
+    assertFalse(model.isSdkChanged(chosen))
+    // The previously-initial SDK is now the "other" option and reads as dirty if re-selected.
+    assertTrue(model.isSdkChanged("Python 3.12"))
+  }
+
+  @Test
+  fun `markSdkApplied is idempotent when the chosen name already matches the baseline`() {
+    val model = PyModuleDetailsModel(initialSdkName = "Python 3.12")
+    model.markSdkApplied("Python 3.12")
+    assertEquals("Python 3.12", model.initialSdkName)
+    assertFalse(model.isSdkChanged("Python 3.12"))
+  }
+
+  //endregion
+}

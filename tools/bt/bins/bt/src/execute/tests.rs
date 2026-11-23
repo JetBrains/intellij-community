@@ -4,7 +4,7 @@ use serde_json::json;
 use super::*;
 use bt_core::fake::{
     AttemptSpec, FakeRuntime, LANES_FILE, REPO_ROOT, area_files, attempt, bep_lines, build_bazel_text, case, failing, flow_catalog_tree,
-    lanes, loading_failure_events, module_build_bazel_text, refusal, suite, suite_xml, test_result_event,
+    lanes, loading_failure_events, refusal, suite, suite_xml, test_result_event,
 };
 use bt_core::runtime::SpawnResult;
 
@@ -196,16 +196,31 @@ fn failed_build_tree(output: &str) -> FakeRuntime {
     fake
 }
 
-/// A failed build with no error that bt recognises shows the tail of bazel, as an INFRA run does.
+/// A failed build with no error that bt recognises shows the tail of bazel, as an INFRA run does, and keeps the whole
+/// output of bazel in a file that the digest names.
 #[test]
 fn a_failed_build_without_a_known_error_shows_the_tail_of_bazel() {
-    let fake = failed_build_tree("ERROR: a genrule failed\nERROR: Build did NOT complete successfully");
+    let output = "ERROR: a genrule failed\nERROR: Build did NOT complete successfully";
+    let fake = failed_build_tree(output);
     let outcome = run(&["--lane", "fast"], &fake);
 
     assert_eq!(outcome.exit_code, exit::BUILD_FAILED, "{}", outcome.text);
+    let log = outcome
+        .text
+        .lines()
+        .find_map(|line| line.strip_prefix("bazel  ")?.split_once("  ").map(|(path, _)| path.to_owned()))
+        .unwrap_or_else(|| panic!("no bazel line in:\n{}", outcome.text));
+    assert!(log.starts_with("out/bt-runs/") && log.ends_with("/bazel-output.log"), "{log}");
     assert_mentions(
         &outcome.text,
-        &["cause  bt recognised no build error; the tail of the bazel output is above"],
+        &[
+            &format!("cause  bt recognised no build error; the output of bazel is in {log}"),
+            &format!("bazel  {log}  (the output of bazel, where the build failed)"),
+        ],
+    );
+    assert_eq!(
+        fake.state().files.get(&format!("{REPO_ROOT}/{log}")).map(String::as_str),
+        Some(output)
     );
     assert_mentions(&fake.state().stderr.join("\n"), &["ERROR: a genrule failed"]);
 
@@ -400,6 +415,22 @@ fn a_full_lane_allows_a_class_over_the_budget_when_the_baseline_has_a_reason() {
     let outcome = run(&["--lane", "fast"], &fake);
 
     assert_eq!(outcome.exit_code, exit::GREEN, "{}", outcome.text);
+    assert!(!outcome.text.contains("class-time budget"), "{}", outcome.text);
+}
+
+#[test]
+fn a_failed_target_is_not_judged_by_its_recorded_class_times() {
+    let fake = class_time_budget_tree("");
+    fake.put_absolute(SHARD_PLAN, &format!("default\t2\nclass\t{CORE_LABEL}\tcom.air.GoneTest\t120.000\n"));
+    one_attempt(
+        &fake,
+        "FAILED",
+        r#"<testsuites><testsuite name="com.air.NewTest" tests="1" failures="1" time="1.0"/></testsuites>"#,
+    );
+
+    let outcome = run(&["--lane", "fast"], &fake);
+
+    assert_eq!(outcome.exit_code, exit::TEST_FAILED, "{}", outcome.text);
     assert!(!outcome.text.contains("class-time budget"), "{}", outcome.text);
 }
 
@@ -914,6 +945,141 @@ fn a_dry_run_writes_no_shard_plan() {
     let fake = fake_air_tree();
     run(&["--lane", "fast", "--dry-run"], &fake);
     assert!(!fake.state().files.contains_key(SHARD_PLAN));
+
+    let fake = heavy_work_tree(SHARED_PLAN);
+    let text = run(&["--lane", "fast", "--dry-run"], &fake).text;
+    assert_mentions(&line_of(&text, "heavy   "), &["--test_sharding_strategy=forced=8", CORE_LABEL]);
+    assert!(!fake.state().files.contains_key(SHARD_PLAN));
+}
+
+/// A target that only the plan of a checkout from before the shared plan names.
+const OLD_LABEL: &str = "//plugins/air/stale:stale_test";
+
+/// The common git directory of a linked work tree in the fake.
+const COMMON_GIT_DIR: &str = "/main/.git";
+/// The plan of the repository in [`COMMON_GIT_DIR`].
+const SHARED_PLAN: &str = "/main/.git/bt/shard-plan.tsv";
+
+/// Makes the fake checkout a linked work tree of git with the common git directory [`COMMON_GIT_DIR`].
+fn work_tree(fake: FakeRuntime) -> FakeRuntime {
+    fake.state().git_common_dir = Some(COMMON_GIT_DIR.to_owned());
+    fake
+}
+
+/// The text of a plan where the core target wants six shards and the other target two.
+fn heavy_plan_text() -> String {
+    format!("default\t2\nclass\t{CORE_LABEL}\tcom.A\t530.000\nclass\t{OTHER_LABEL}\tcom.B\t120.000\n")
+}
+
+/// A linked work tree whose plan file `plan` holds [`heavy_plan_text`], and whose tree has the core and the other target.
+fn heavy_work_tree(plan: &str) -> FakeRuntime {
+    let fake = work_tree(fake_air_tree());
+    fake.put_absolute(plan, &heavy_plan_text());
+    tree_has(&fake, &[CORE_LABEL, OTHER_LABEL]);
+    fake
+}
+
+/// Runs the fast lane, checks that its first `bazel test` invocation runs the core target with the heavy count, and
+/// answers the `bazel test` command lines.
+#[track_caller]
+fn run_with_heavy_core(fake: &FakeRuntime) -> Vec<String> {
+    run(&["--lane", "fast"], fake);
+    let tests = test_commands(fake);
+    assert!(tests[0].contains("forced=8") && tests[0].ends_with(CORE_LABEL), "{tests:#?}");
+    tests
+}
+
+/// A new lease has no `out/`, so it has no checkout copy. The plan of the repository still gives the heavy count.
+#[test]
+fn a_work_tree_without_a_checkout_copy_takes_the_heavy_count_from_the_shared_plan() {
+    let tests = run_with_heavy_core(&heavy_work_tree(SHARED_PLAN));
+    assert_mentions(&tests[0], &["--test_env=JB_TEST_SHARD_PLAN=out/bt/shard-plan.tsv"]);
+    assert!(
+        tests[1].contains("forced=2") && tests[1].ends_with(&format!("-- -{CORE_LABEL}")),
+        "{tests:#?}"
+    );
+}
+
+/// The tests read the checkout copy, so a planned run writes the text of the shared plan there before it starts bazel. A
+/// filtered run records nothing, so the copy keeps that text after the run. For a target that both files name, the
+/// shared plan wins.
+#[test]
+fn a_planned_run_copies_the_shared_plan_into_the_checkout() {
+    let fake = heavy_work_tree(SHARED_PLAN);
+    fake.put_absolute(SHARD_PLAN, &format!("default\t2\nclass\t{CORE_LABEL}\tcom.Old\t1.000\n"));
+    run(&["--lane", "fast", "--", "--test_filter=com.A"], &fake);
+
+    let state = fake.state();
+    assert_eq!(state.files.get(SHARD_PLAN), Some(&heavy_plan_text()));
+    assert_eq!(state.files.get(SHARED_PLAN), Some(&heavy_plan_text()));
+}
+
+/// The update reads the shared plan again, and it writes the shared plan and the checkout copy. A target that only the
+/// checkout copy names joins the shared plan. For a target that both files name, the shared plan wins.
+#[test]
+fn a_run_records_the_class_times_in_the_shared_plan_and_in_the_checkout_copy() {
+    let fake = work_tree(fake_air_tree());
+    fake.put_absolute(SHARED_PLAN, &format!("default\t2\nclass\t{OTHER_LABEL}\tcom.B\t120.000\n"));
+    fake.put_absolute(
+        SHARD_PLAN,
+        &format!("default\t2\nclass\t{OTHER_LABEL}\tcom.B\t5.000\nclass\t{OLD_LABEL}\tcom.Old\t7.000\n"),
+    );
+    // The old target is a single-shard target that the current tree does not have.
+    tree_has(&fake, &[CORE_LABEL, OTHER_LABEL]);
+    let xml = r#"<testsuites><testsuite name="com.air.RecordedTest" tests="1" time="40.0"/></testsuites>"#;
+    one_attempt(&fake, "PASSED", xml);
+    let outcome = run(&["--lane", "fast"], &fake);
+    assert_eq!(outcome.exit_code, exit::GREEN, "{}", outcome.text);
+
+    let expected = [
+        "# The shard plan of bt. bt rewrites this file after each multi-target run.",
+        "default\t2",
+        &format!("target\t{OTHER_LABEL}\t2"),
+        &format!("class\t{OTHER_LABEL}\tcom.B\t120.000"),
+        &format!("target\t{CORE_LABEL}\t1"),
+        &format!("class\t{CORE_LABEL}\tcom.air.RecordedTest\t40.000"),
+        &format!("target\t{OLD_LABEL}\t1"),
+        &format!("class\t{OLD_LABEL}\tcom.Old\t7.000"),
+        "",
+    ]
+    .join("\n");
+    let state = fake.state();
+    assert_eq!(state.files.get(SHARED_PLAN), Some(&expected));
+    assert_eq!(state.files.get(SHARD_PLAN), Some(&expected));
+}
+
+/// A checkout outside git reads and writes only the checkout copy.
+#[test]
+fn a_checkout_outside_git_keeps_the_plan_in_the_checkout_only() {
+    let fake = heavy_plan_tree();
+    run_with_heavy_core(&fake);
+    let plans: Vec<String> = fake
+        .state()
+        .files
+        .keys()
+        .filter(|path| path.ends_with("shard-plan.tsv"))
+        .cloned()
+        .collect();
+    assert_eq!(plans, [SHARD_PLAN]);
+    let reads: Vec<String> = fake.reads().into_iter().filter(|read| read.ends_with("shard-plan.tsv")).collect();
+    assert_eq!(reads, [format!("read {SHARD_PLAN}"), format!("read {SHARD_PLAN}")]);
+}
+
+/// The checkout copy of a checkout that ran before the plan was shared gives the plan when the shared plan is missing.
+/// The run then writes the shared plan.
+#[test]
+fn a_work_tree_without_a_shared_plan_reads_its_checkout_copy_and_shares_it() {
+    let fake = heavy_work_tree(SHARD_PLAN);
+    run_with_heavy_core(&fake);
+    let shared = fake.state().files.get(SHARED_PLAN).cloned().unwrap_or_default();
+    assert_mentions(
+        &shared,
+        &[
+            &format!("target\t{CORE_LABEL}\t6\n"),
+            &format!("class\t{CORE_LABEL}\tcom.A\t530.000\n"),
+        ],
+    );
+    assert_eq!(fake.state().files.get(SHARD_PLAN), Some(&shared));
 }
 
 #[test]
@@ -982,35 +1148,7 @@ fn a_flow_selector_dry_runs_as_its_lane_and_lane_settles_it() {
     assert!(!settled.text.contains("--test_filter"), "{}", settled.text);
     let ambiguous = refusal(execute(["flow-manage-launch-preset", "--dry-run"], &fake));
     assert_eq!(ambiguous.code, "affected_lanes_ambiguous");
-    // `--list` shows every lane before `--lane` narrows it.
-    let listed = run(&["flow-manage-launch-preset", "--list"], &fake);
-    assert_mentions(
-        &listed.text,
-        &[
-            "gui-chat AirManageLaunchPresetGeneratedFlowUiTest (manage-launch-preset)",
-            "ui AirManageLaunchPresetQuickStartGeneratedFlowUiTest (manage-launch-preset-quick-start)",
-        ],
-    );
     assert_eq!(fake.spawned(), Vec::<Vec<String>>::new());
-}
-
-#[test]
-fn list_prints_candidates_without_running_bazel() {
-    let fake = fake_air_tree();
-    let outcome = run(&["AgentPromptChangesTreeContextContributorTest", "--list"], &fake);
-    assert_eq!(fake.spawned(), Vec::<Vec<String>>::new());
-    assert_mentions(
-        &outcome.text,
-        &[
-            "com.intellij.air.backend.vcs.context.AgentPromptChangesTreeContextContributorTest",
-            "//plugins/air/backend/vcs:air-backend-vcs-tests_test",
-            "//plugins/air/frontend/prompt/vcs:air-frontend-prompt-vcs-tests_test",
-        ],
-    );
-    let near = run(&["AgentThreadCliTst", "--list"], &fake);
-    assert_eq!(near.text, "(no candidates)\nsimilar: AgentThreadCliTest");
-    let package = run(&["com.intellij.air.shared.core", "--list"], &fake);
-    assert_mentions(&package.text, &[CORE_LABEL]);
 }
 
 /// A label outside plugins/air is not resolved at all, which is what makes the wrapper usable for any target.
@@ -1061,26 +1199,28 @@ fn a_directory_inside_the_integration_tree_keeps_its_tags() {
     assert!(!text.contains("--test_tag_filters"), "{text}");
 }
 
-/// A run and its candidate list name one pattern for a directory under `community/` of the ultimate root.
+/// A run names one pattern for a directory under `community/` of the ultimate root.
 #[test]
 fn a_directory_under_community_runs_in_the_community_repository() {
     let fake = fake_air_tree();
     fake.put("community/MODULE.bazel", "");
     fake.put("community/tools/vm/BUILD.bazel", "");
-    for argv in [["community/tools/vm", "--dry-run"], ["community/tools/vm", "--list"]] {
-        assert_mentions(&run(&argv, &fake).text, &["label   @community//tools/vm/..."]);
-    }
+    assert_mentions(
+        &run(&["community/tools/vm", "--dry-run"], &fake).text,
+        &["label   @community//tools/vm/..."],
+    );
     assert!(fake.spawned().is_empty(), "{:?}", fake.spawned());
 }
 
-/// A run and its candidate list name the `@community` label for a label under `community/` of the ultimate root.
+/// A run names the `@community` label for a label under `community/` of the ultimate root.
 #[test]
 fn a_label_under_community_runs_in_the_community_repository() {
     let fake = fake_air_tree();
     fake.put("community/MODULE.bazel", "");
-    for argv in [["//community/tools/bt/...", "--dry-run"], ["//community/tools/bt/...", "--list"]] {
-        assert_mentions(&run(&argv, &fake).text, &["label   @community//tools/bt/..."]);
-    }
+    assert_mentions(
+        &run(&["//community/tools/bt/...", "--dry-run"], &fake).text,
+        &["label   @community//tools/bt/..."],
+    );
     assert!(fake.spawned().is_empty(), "{:?}", fake.spawned());
 }
 
@@ -1131,7 +1271,8 @@ fn a_full_run_spawns_bazel_once_digests_the_result_and_deletes_the_bep_file() {
         spawned[0]
     );
     assert_eq!(outcome.exit_code, exit::GREEN);
-    assert_eq!(outcome.text, format!("PASS  2 tests  5.0s  {CORE_LABEL}"));
+    // The fake bazel takes 5 s; the fake wrapper names no build time, and the fake checkout is no linked work tree.
+    assert_eq!(outcome.text, format!("PASS  2 tests  5.0s  {CORE_LABEL}\ntime   bazel 5.0s"));
     // No payload without --json: stdout stays untouched for a caller that did not ask for one.
     assert_eq!(outcome.json, None);
     assert_eq!(fake.state().removed, [BEP_PATH]);
@@ -1326,23 +1467,20 @@ fn the_bep_file_is_deleted_even_when_the_run_blows_up() {
         fn git_path(&self, name: &str) -> std::io::Result<PathBuf> {
             self.0.git_path(name)
         }
+        fn git_common_path(&self, name: &str) -> std::io::Result<Option<PathBuf>> {
+            self.0.git_common_path(name)
+        }
         fn spawn(&self, command: &[OsString], heartbeat: Option<bt_core::runtime::Heartbeat<'_>>) -> SpawnResult {
             self.0.spawn(command, heartbeat)
         }
         fn spawn_streaming(&self, command: &[OsString]) -> SpawnResult {
             self.0.spawn_streaming(command)
         }
-        fn spawn_with_input(&self, command: &[OsString], input: &str) -> SpawnResult {
-            self.0.spawn_with_input(command, input)
-        }
-        fn spawn_watched(&self, command: &[OsString], idle: std::time::Duration) -> SpawnResult {
-            self.0.spawn_watched(command, idle)
-        }
         fn home_dir(&self) -> Option<PathBuf> {
             self.0.home_dir()
         }
-        fn confirm(&self, question: &str) -> Option<bool> {
-            self.0.confirm(question)
+        fn accio(&self, args: &[&str]) -> Result<String, Refusal> {
+            self.0.accio(args)
         }
         fn temp_file(&self, prefix: &str) -> PathBuf {
             self.0.temp_file(prefix)
@@ -1502,7 +1640,8 @@ fn fake_module_tree() -> FakeRuntime {
             "tests_test",
         ),
     ] {
-        fake.put(&format!("{dir}/BUILD.bazel"), &module_build_bazel_text(module, target));
+        let main = module.strip_suffix(".tests").unwrap_or(module);
+        fake.add_module(bt_core::fake::tests_module_json(dir, main, module, target));
     }
     fake.put("community/build/bazel-migrated-test-modules.txt", "intellij.platform.util.tests\n");
     fake
@@ -1510,22 +1649,48 @@ fn fake_module_tree() -> FakeRuntime {
 
 const UTIL_LABEL: &str = "@community//platform/util:util-tests_test";
 
-/// bt gives a filter that the runner cannot read to bazel as before. Only the NO TESTS digest names the form that
-/// works, see `no_tests_hint`.
+/// An agent gave `--filter pkg.Class.method`. bt built the target, and then the runner threw on the value. Now the dry
+/// run shows the form of the runner and the note, and a value that no form expresses is refused before bazel starts.
 #[test]
-fn a_wildcard_filter_still_goes_to_bazel() {
+fn a_filter_takes_the_form_of_the_runner_before_bazel_starts() {
     let fake = fake_module_tree();
-    let wildcard = run(
+    let dry_run = |filter: &str| {
+        run(
+            &["--module", "intellij.platform.util.tests", "--filter", filter, "--dry-run"],
+            &fake,
+        )
+    };
+    let method = dry_run("com.intellij.openapi.util.io.FileUtilLightTest.isAncestor");
+    assert_mentions(
+        &method.text,
         &[
+            "filter  com.intellij.openapi.util.io.FileUtilLightTest#isAncestor",
+            "note    --filter com.intellij.openapi.util.io.FileUtilLightTest.isAncestor runs as \
+             com.intellij.openapi.util.io.FileUtilLightTest#isAncestor: the runner reads a method after #, not after a dot",
+            "--test_filter=com.intellij.openapi.util.io.FileUtilLightTest#isAncestor",
+        ],
+    );
+    let wildcard = dry_run("com.intellij.openapi.util.io.*");
+    assert_mentions(
+        &wildcard.text,
+        &[
+            "filter  com.intellij.openapi.util.io",
+            "--test_env=JB_TEST_JUNIT5_FILTERS=include-package=com.intellij.openapi.util.io",
+        ],
+    );
+    assert!(!wildcard.text.contains("--test_filter"), "{}", wildcard.text);
+    let regex = refusal(execute(
+        [
             "--module",
             "intellij.platform.util.tests",
             "--filter",
-            "com.intellij.openapi.util.io.*",
-            "--dry-run",
+            "com.intellij.openapi.util.io.(ATest|BTest)",
         ],
         &fake,
-    );
-    assert_mentions(&wildcard.text, &["--test_filter=com.intellij.openapi.util.io.*"]);
+    ));
+    assert_eq!(regex.exit, exit::USAGE, "{}", regex.message);
+    assert!(regex.message.contains("no wildcard, no regex and no list"), "{}", regex.message);
+    assert!(fake.spawned().is_empty(), "{:?}", fake.spawned());
 }
 
 #[test]
@@ -1569,8 +1734,6 @@ fn a_module_runs_its_jps_test_with_the_filter() {
     assert!(!package.text.contains("--test_filter"), "{}", package.text);
     let unfiltered = run(&["--module", "intellij.platform.util.tests", "--dry-run"], &fake);
     assert_mentions(&unfiltered.text, &[&format!("label   {UTIL_LABEL}"), "filter  (none)"]);
-    let listed = run(&["--module", "intellij.platform.util.tests", "--list"], &fake);
-    assert_eq!(listed.text, format!("label   {UTIL_LABEL}"));
     assert!(fake.spawned().is_empty(), "{:?}", fake.spawned());
 }
 
@@ -1662,16 +1825,26 @@ fn a_class_selector_that_runs_no_test_gets_no_filter_hint() {
     assert!(!outcome.text.contains("\nhint "), "{}", outcome.text);
 }
 
-/// The agents gave `--filter 'pkg.*'`. The run found no test, and the digest named no fix.
+/// The note of a nested class goes into the dry run, and a run writes it to the stderr before bazel starts.
 #[test]
-fn a_wildcard_filter_that_runs_no_test_gets_the_hint_of_its_form() {
+fn the_note_of_a_nested_class_is_in_the_dry_run_and_on_the_stderr() {
     let fake = fake_air_tree();
-    one_attempt(&fake, "FAILED", &suite_xml(&suite("AgentThreadIdentityTest", Vec::new())));
-    spawn_answers(&fake, 3, "");
-    let outcome = run(&[CORE_LABEL, "--filter", "com.intellij.air.core.*"], &fake);
-    assert_eq!(outcome.exit_code, exit::NO_TESTS, "{}", outcome.text);
+    fake.add_class(
+        "plugins/air/shared/core/testSrc/AgentIdTest.kt",
+        "com.intellij.air.shared.core.AgentIdTest$Parsing",
+    );
+    let note = "com.intellij.air.shared.core.AgentIdTest$Parsing is a nested class, so the filter is its outer class \
+                com.intellij.air.shared.core.AgentIdTest: the runner finds an @Nested class only through its outer class";
+    let planned = run(&["Parsing", "--dry-run"], &fake);
     assert_mentions(
-        &outcome.text,
-        &["\nhint      --filter takes no wildcard. To run every class of the package, pass --filter com.intellij.air.core"],
+        &planned.text,
+        &["filter  com.intellij.air.shared.core.AgentIdTest", &format!("note    {note}")],
+    );
+    spawn_answers(&fake, 0, "");
+    run(&["Parsing"], &fake);
+    assert!(
+        fake.state().stderr.iter().any(|line| *line == format!("note: {note}")),
+        "{:?}",
+        fake.state().stderr
     );
 }

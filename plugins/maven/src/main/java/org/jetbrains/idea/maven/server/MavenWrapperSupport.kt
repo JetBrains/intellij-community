@@ -101,6 +101,7 @@ internal class MavenWrapperSupport {
       }
       catch (t: Throwable) {
         if (t is ControlFlowException) throw RuntimeException(SyncBundle.message("maven.sync.wrapper.downloading.canceled"))
+        throw RuntimeException(SyncBundle.message("cannot.download.zip.from", urlString), t)
       }
 
       NioFiles.rename(partFile, zipFile)

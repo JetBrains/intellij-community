@@ -1,14 +1,17 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.psi.impl
 
+import com.intellij.python.sdk.backend.findPythonInterpreterIfReady
+import com.intellij.python.sdk.backend.languageLevel
+import com.intellij.python.sdk.backend.PythonInterpreter
 import com.intellij.python.sdk.backend.isIgnoredInterpreterEntry
 import com.intellij.python.sdk.backend.isInterpreterLibraryCarrier
-import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.JdkOrderEntry
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.roots.impl.OrderEntryUtil
+import com.intellij.openapi.util.Key
 import com.jetbrains.python.psi.resolve.mainPythonInterpreter
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
@@ -16,10 +19,12 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiFileSystemItem
 import com.intellij.psi.PsiInvalidElementAccessException
 import com.intellij.psi.impl.source.resolve.FileContextUtil
+import com.intellij.psi.util.CachedValue
+import com.intellij.psi.util.CachedValueProvider
+import com.intellij.psi.util.CachedValuesManager
+import com.intellij.psi.util.PsiModificationTracker
 import com.intellij.psi.util.QualifiedName
-import com.intellij.python.sdk.backend.PythonInterpreter
 import com.intellij.python.sdk.backend.PythonInterpreterRegistry
-import com.intellij.python.sdk.backend.languageLevel
 import com.jetbrains.python.PyNames
 import com.jetbrains.python.PythonRuntimeService
 import com.jetbrains.python.psi.LanguageLevel
@@ -29,9 +34,10 @@ import com.jetbrains.python.psi.PyFile
 import com.jetbrains.python.psi.PyQualifiedExpression
 import com.jetbrains.python.psi.PyUtil
 import com.jetbrains.python.psi.resolve.PythonSdkPathCache
+import com.jetbrains.python.psi.resolve.PyResolveCachesInvalidator
+import com.jetbrains.python.psi.resolve.findModuleForPsiElementCached
 import com.jetbrains.python.psi.resolve.fromInterpreter
 import com.jetbrains.python.psi.resolve.pythonInterpreterIfReady
-import com.jetbrains.python.psi.resolve.resolveSdk
 import com.jetbrains.python.psi.resolve.resolveQualifiedName
 import com.jetbrains.python.psi.types.PyAnyType
 import com.jetbrains.python.psi.types.PyClassLikeType
@@ -204,6 +210,7 @@ class PyBuiltinCache private constructor(
     private const val EXCEPTIONS_MODULE = "exceptions"
 
     private val DUD_INSTANCE = PyBuiltinCache()
+    private val INTERPRETER_FOR_FILE_KEY = Key.create<CachedValue<PythonInterpreter?>>("Python.interpreterForFile")
 
     /**
      * Returns an instance of builtin cache. Instances differ per module and are cached.
@@ -226,10 +233,6 @@ class PyBuiltinCache private constructor(
       return DUD_INSTANCE // a non-functional fail-fast instance, for a case when skeletons are not available
     }
 
-    /** The SDK of [findInterpreterForFile]. */
-    @JvmStatic
-    fun findSdkForFile(psiFile: PsiFileSystemItem?): Sdk? = findInterpreterForFile(psiFile)?.resolveSdk()
-
     /**
      * The interpreter that resolves the names of [psiFile]: the interpreter of its module, or for a file outside every
      * module, see [findInterpreterForNonModuleFile].
@@ -237,8 +240,17 @@ class PyBuiltinCache private constructor(
     @JvmStatic
     fun findInterpreterForFile(psiFile: PsiFileSystemItem?): PythonInterpreter? {
       psiFile ?: return null
-      val module = ModuleUtilCore.findModuleForPsiElement(psiFile)
-      return if (module != null) module.pythonInterpreterIfReady() else findInterpreterForNonModuleFile(psiFile)
+      return CachedValuesManager.getCachedValue(psiFile, INTERPRETER_FOR_FILE_KEY) {
+        val project = psiFile.project
+        val module = findModuleForPsiElementCached(psiFile)
+        val interpreter = if (module != null) module.pythonInterpreterIfReady() else findInterpreterForNonModuleFile(psiFile)
+        CachedValueProvider.Result.create(
+          interpreter,
+          PsiModificationTracker.MODIFICATION_COUNT,
+          ProjectRootManager.getInstance(project),
+          PyResolveCachesInvalidator.getInstance(project).modificationTracker,
+        )
+      }
     }
 
     /**
@@ -257,9 +269,9 @@ class PyBuiltinCache private constructor(
       var interpreter: PythonInterpreter? = null
       if (vfile != null) { // reality
         val projectRootManager = ProjectRootManager.getInstance(psiFile.project)
-        // A Python console is served by `PythonRuntimeService.getConsoleSdk` together with `visitAllModules`, so
+        // A Python console is served by `PythonRuntimeService.getConsoleInterpreter` together with `visitAllModules`, so
         // answering here would hand it a second, competing interpreter (PY-89831).
-        if (PythonRuntimeService.getInstance().getConsoleSdk(psiFile) == null) {
+        if (PythonRuntimeService.getInstance().getConsoleInterpreter(psiFile) == null) {
           interpreter = psiFile.project.mainPythonInterpreter()
         }
         if (interpreter == null) {
@@ -269,7 +281,7 @@ class PyBuiltinCache private constructor(
             // isIgnoredInterpreterEntry.
             if (orderEntry == null || orderEntry.isIgnoredInterpreterEntry()) continue
             if (orderEntry is JdkOrderEntry) {
-              interpreter = orderEntry.jdk?.let { PythonInterpreterRegistry.getInstance(psiFile.project).interpreterOfIfReady(it) }
+              interpreter = orderEntry.jdk?.let { psiFile.project.findPythonInterpreterIfReady(it) }
             }
             // The interpreter library of a module carries the roots of its interpreter, as its SDK does.
             else if (OrderEntryUtil.isModuleLibraryOrderEntry(orderEntry) || orderEntry.isInterpreterLibraryCarrier()) {
@@ -282,13 +294,14 @@ class PyBuiltinCache private constructor(
     }
 
     /** [getBuiltinsForInterpreter] for the interpreter that the registry of [project] holds for [sdk]. */
+    @Deprecated("Use getBuiltinsForInterpreter", ReplaceWith("getBuiltinsForInterpreter(project, interpreter)"))
     @JvmStatic
     fun getBuiltinsForSdk(project: Project, sdk: Sdk): PyFile? =
-      PythonInterpreterRegistry.getInstance(project).interpreterOfIfReady(sdk)?.let { getBuiltinsForInterpreter(project, it) }
+      project.findPythonInterpreterIfReady(sdk)?.let { getBuiltinsForInterpreter(project, it) }
 
     @JvmStatic
     fun getBuiltinsForInterpreter(project: Project, interpreter: PythonInterpreter): PyFile? {
-      val moduleName = getBuiltinsModuleName(interpreter.languageLevel(project))
+      val moduleName = getBuiltinsModuleName(interpreter.languageLevel)
       return getFileForInterpreter(project, interpreter, QualifiedName.fromDottedString(moduleName))
     }
 

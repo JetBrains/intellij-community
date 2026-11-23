@@ -66,6 +66,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.Compressor;
+import com.intellij.util.io.DataEnumerator;
 import com.intellij.util.io.DataInputOutputUtil;
 import com.intellij.util.io.SuperUserStatus;
 import com.intellij.util.io.storage.HeavyProcessLatch;
@@ -97,6 +98,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -120,6 +122,7 @@ import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
+import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeFalse;
@@ -683,6 +686,17 @@ public class PersistentFsTest extends BareTestFixtureTestCase {
   }
 
   @Test
+  public void testCreateEventWithFileParentDoesNotStoreName() throws Exception {
+    VirtualFile parent = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(tempDirectory.newFile("parent.txt"));
+    assertNotNull(parent);
+    var names = FSRecords.getInstance().connection().names();
+    String childName = "rejected-" + UUID.randomUUID() + ".txt";
+
+    assertThrows(IllegalArgumentException.class, () -> new VFileCreateEvent(this, parent, childName, false, null, null, null));
+    assertEquals(DataEnumerator.NULL_ID, names.tryEnumerate(childName));
+  }
+
+  @Test
   public void testCreateNewDirectoryCanLoadOnlySomeChildren() throws Exception {
     VirtualFile vTemp = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(tempDirectory.getRoot());
     assertNotNull(vTemp);
@@ -883,6 +897,182 @@ public class PersistentFsTest extends BareTestFixtureTestCase {
     assertNotNull(vTarget);
     assertChildrenAreLoaded(vTarget);
     assertEmpty(((VirtualDirectoryImpl)vTarget).getCachedChildren());
+  }
+
+  @Test
+  public void testCreateEventLoadsScannedDescendantsOfExistingDirectories() throws IOException {
+    checkScannedDescendantsOfExistingDirectories(false, true, false);
+  }
+
+  @Test
+  public void testCreateEventKeepsScannedDescendantsPartialForExistingDirectories() throws IOException {
+    checkScannedDescendantsOfExistingDirectories(false, false, false);
+  }
+
+  @Test
+  public void testCopyEventLoadsScannedDescendantsOfExistingDirectories() throws IOException {
+    checkScannedDescendantsOfExistingDirectories(true, true, false);
+  }
+
+  @Test
+  public void testCopyEventKeepsScannedDescendantsPartialForExistingDirectories() throws IOException {
+    checkScannedDescendantsOfExistingDirectories(true, false, false);
+  }
+
+  @Test
+  public void testScannedChildRecordIsAddedToMemoryBeforeAfterListeners() throws IOException {
+    checkScannedDescendantsOfExistingDirectories(false, true, true);
+  }
+
+  @Test
+  public void testScannedChildrenUseEachDirectoryCaseSensitivity() throws IOException {
+    var root = (VirtualDirectoryImpl)refreshAndFind(tempDirectory.newDirectory("root"));
+    root.setCaseSensitivityFlag(false);
+    assertNull(root.findChild("target"));
+    var targetPath = tempDirectory.getRootPath().resolve("root/target");
+    var childPath = Files.createDirectories(targetPath.resolve("child"));
+    var pfs = (PersistentFSImpl)PersistentFS.getInstance();
+    // Supply scan data to test directory flags independently of the host file system
+    var attributes = new FileAttributes(false, false, false, false, 1, 1, true);
+    var firstInfo = new ChildInfoImpl(pfs.peer().getNameId("A"), attributes, null, null, false);
+    var secondInfo = new ChildInfoImpl(pfs.peer().getNameId("a"), attributes, null, null, false);
+    var childInfo = new ChildInfoImpl(pfs.peer().getNameId("child"), fileAttributes(childPath),
+                                     new ChildInfo[]{firstInfo, secondInfo}, null, true);
+    var scannedEvent = new VFileCreateEvent(this, root, "target", true, fileAttributes(targetPath), null,
+                                            new ChildInfo[]{childInfo}, true);
+    ApplicationManager.getApplication().getMessageBus().connect(getTestRootDisposable())
+      .subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
+        @Override
+        public void before(@NotNull List<? extends @NotNull VFileEvent> events) {
+          if (!events.contains(scannedEvent)) return;
+          var target = (VirtualDirectoryImpl)assertOneElement(root.getChildren());
+          target.setCaseSensitivityFlag(false);
+          var child = (VirtualDirectoryImpl)target.findChild("child");
+          assertNotNull(child);
+          child.setCaseSensitivityFlag(true);
+        }
+      });
+
+    processEvent(scannedEvent);
+
+    var target = (VirtualDirectoryImpl)assertOneElement(root.getCachedChildren());
+    var child = (VirtualDirectoryImpl)assertOneElement(target.getCachedChildren());
+    assertEquals("The nested directory must keep both case-sensitive names",
+                 Set.of("A", "a"), new HashSet<>(ContainerUtil.map(child.getCachedChildren(), VirtualFile::getName)));
+    assertChildrenAreLoaded(child);
+  }
+
+  @Test
+  @SuppressWarnings("UseOptimizedEelFunctions")
+  public void testScannedChildrenWithDuplicateDirectoryNamesKeepAllDescendants() throws IOException {
+    var root = (VirtualDirectoryImpl)refreshAndFind(tempDirectory.newDirectory("root"));
+    assertNull(root.findChild("target"));
+    var targetPath = tempDirectory.getRootPath().resolve("root/target");
+    var childPath = Files.createDirectories(targetPath.resolve("child"));
+    var firstPath = Files.writeString(childPath.resolve("first.txt"), "first");
+    var secondPath = Files.writeString(childPath.resolve("second.txt"), "second");
+    var pfs = (PersistentFSImpl)PersistentFS.getInstance();
+    var firstInfo = new ChildInfoImpl(pfs.peer().getNameId("first.txt"), fileAttributes(firstPath), null, null, false);
+    var secondInfo = new ChildInfoImpl(pfs.peer().getNameId("second.txt"), fileAttributes(secondPath), null, null, false);
+    var firstDirectory = new ChildInfoImpl(pfs.peer().getNameId("child"), fileAttributes(childPath),
+                                           new ChildInfo[]{firstInfo}, null, false);
+    String secondName = root.isCaseSensitive() ? "child" : "CHILD";
+    var secondDirectory = new ChildInfoImpl(pfs.peer().getNameId(secondName), fileAttributes(childPath),
+                                            new ChildInfo[]{secondInfo}, null, false);
+
+    processEvent(new VFileCreateEvent(this, root, "target", true, fileAttributes(targetPath), null,
+                                      new ChildInfo[]{firstDirectory, secondDirectory}, false));
+
+    var target = (VirtualDirectoryImpl)assertOneElement(root.getCachedChildren());
+    var child = (VirtualDirectoryImpl)assertOneElement(target.getCachedChildren());
+    assertEquals("Both scans must use one directory and preserve their descendants",
+                 Set.of("first.txt", "second.txt"), new HashSet<>(ContainerUtil.map(child.getCachedChildren(), VirtualFile::getName)));
+    assertFalse("The combined scans are still partial", child.allChildrenLoaded());
+    assertFalse("The persistent list must remain partial", pfs.areChildrenLoaded(child));
+  }
+
+  // Load directories before application, but leave their descendants for the scanned event to initialize
+  @SuppressWarnings("UseOptimizedEelFunctions")
+  private void checkScannedDescendantsOfExistingDirectories(boolean copy, boolean allChildren, boolean persistentLeafOnly) throws IOException {
+    var root = (VirtualDirectoryImpl)refreshAndFind(tempDirectory.newDirectory("root"));
+    var source = refreshAndFind(tempDirectory.newDirectory("source"));
+    assertNull(root.findChild("target"));
+
+    var targetPath = tempDirectory.getRootPath().resolve("root/target");
+    var childPath = Files.createDirectories(targetPath.resolve("child"));
+    var grandchildPath = Files.createDirectory(childPath.resolve("grandchild"));
+    var leafPath = Files.writeString(grandchildPath.resolve("leaf.txt"), "text");
+    if (!allChildren) {
+      Files.writeString(grandchildPath.resolve("skipped.txt"), "text");
+    }
+
+    var pfs = (PersistentFSImpl)PersistentFS.getInstance();
+    var leafInfo = new ChildInfoImpl(pfs.peer().getNameId("leaf.txt"), fileAttributes(leafPath), null, null, false);
+    var grandchildInfo = new ChildInfoImpl(pfs.peer().getNameId("grandchild"), fileAttributes(grandchildPath),
+                                           new ChildInfo[]{leafInfo}, null, allChildren);
+    var childInfo = new ChildInfoImpl(pfs.peer().getNameId("child"), fileAttributes(childPath),
+                                     new ChildInfo[]{grandchildInfo}, null, allChildren);
+    VFileEvent scannedEvent = copy
+                             ? new VFileCopyEvent(this, source, root, "target", fileAttributes(targetPath), null,
+                                                  new ChildInfo[]{childInfo}, allChildren)
+                             : new VFileCreateEvent(this, root, "target", true, fileAttributes(targetPath), null,
+                                                    new ChildInfo[]{childInfo}, allChildren);
+
+    var loadedDirectories = new ArrayList<VirtualDirectoryImpl>();
+    var loadedLeafId = new AtomicInteger();
+    var checkedAfter = new AtomicBoolean();
+    ApplicationManager.getApplication().getMessageBus().connect(getTestRootDisposable())
+      .subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
+        @Override
+        public void before(@NotNull List<? extends @NotNull VFileEvent> events) {
+          if (!events.contains(scannedEvent)) return;
+          var target = (VirtualDirectoryImpl)assertOneElement(root.getChildren());
+          var child = (VirtualDirectoryImpl)target.findChild("child");
+          assertNotNull(child);
+          var grandchild = (VirtualDirectoryImpl)child.findChild("grandchild");
+          assertNotNull(grandchild);
+          loadedDirectories.addAll(List.of(target, child, grandchild));
+          assertNull("The lookup must leave the leaf for the scanned event", grandchild.findChildIfCached("leaf.txt"));
+          if (persistentLeafOnly) {
+            // This child appears after the scan and must remain accessible after its application
+            try {
+              Files.writeString(grandchildPath.resolve("late.txt"), "late");
+            }
+            catch (IOException e) {
+              throw new UncheckedIOException(e);
+            }
+            var persistedChildren = pfs.listAllChildren(grandchild).children();
+            assertEquals(2, persistedChildren.size());
+            var persistedLeaf = ContainerUtil.find(persistedChildren, info -> "leaf.txt".contentEquals(info.getName()));
+            assertNotNull(persistedLeaf);
+            loadedLeafId.set(persistedLeaf.getId());
+          }
+        }
+
+        @Override
+        public void after(@NotNull List<? extends @NotNull VFileEvent> events) {
+          if (!events.contains(scannedEvent)) return;
+          assertEquals("The before listener must load all three directories", 3, loadedDirectories.size());
+          VirtualDirectoryImpl parent = root;
+          for (VirtualDirectoryImpl directory : loadedDirectories) {
+            assertSame("The scanned event must preserve the directory ID", directory, assertOneElement(parent.getCachedChildren()));
+            boolean allCached = allChildren && !(persistentLeafOnly && directory == loadedDirectories.get(2));
+            assertEquals("The cached list must stay partial if the lookup persisted extra children", allCached, directory.allChildrenLoaded());
+            assertEquals("The persistent list must keep the scan completeness", allChildren, pfs.areChildrenLoaded(directory));
+            parent = directory;
+          }
+          var leaf = assertOneElement(parent.getCachedChildren());
+          assertEquals("The scanned leaf must be cached before after listeners run", "leaf.txt", leaf.getName());
+          if (persistentLeafOnly) {
+            assertEquals("The scan must preserve the leaf record", loadedLeafId.get(), ((VirtualFileWithId)leaf).getId());
+            assertNotNull("A child persisted after the scan must remain accessible", parent.findChild("late.txt"));
+          }
+          checkedAfter.set(true);
+        }
+      });
+
+    processEvent(scannedEvent);
+    assertTrue("The after listener must check the scanned tree", checkedAfter.get());
   }
 
   @Test

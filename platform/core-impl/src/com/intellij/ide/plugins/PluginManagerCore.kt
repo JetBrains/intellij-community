@@ -577,8 +577,7 @@ object PluginManagerCore {
     if (descriptor !is PluginMainDescriptor) {
       return true // TODO does not really make sense ?
     }
-    if (descriptor.isImplementationDetail() ||
-        ApplicationInfo.getInstance().isEssentialPlugin(descriptor.pluginId) ||
+    if (ApplicationInfo.getInstance().isEssentialPlugin(descriptor.pluginId) ||
         isRequiredForEssentialPlugin(descriptor)) {
       return false
     }

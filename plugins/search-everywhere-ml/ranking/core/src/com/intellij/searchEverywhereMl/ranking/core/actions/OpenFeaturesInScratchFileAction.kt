@@ -12,7 +12,9 @@ import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.fileEditor.FileEditorComposite
 import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.fileEditor.FileEditorOpenRequest
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.searchEverywhereMl.SearchEverywhereMlExperiment
@@ -21,6 +23,7 @@ import com.intellij.searchEverywhereMl.ranking.core.adapters.SearchResultAdapter
 import com.intellij.searchEverywhereMl.ranking.core.adapters.SearchResultProviderAdapter
 import com.intellij.searchEverywhereMl.ranking.core.features.SearchEverywhereContributorFeaturesProvider
 import tools.jackson.module.kotlin.jacksonObjectMapper
+import java.util.concurrent.CompletableFuture
 
 /**
  * This action will open a scratch file with a feature dump.
@@ -71,7 +74,7 @@ class OpenFeaturesInScratchFileAction : AnAction() {
 
     val context = createScratchFileContext(json)
     val scratchFile = createNewJsonScratchFile(e.project!!, context)
-    openScratchFile(scratchFile, e.project!!)
+    requestOpenScratchFile(scratchFile, e.project!!)
   }
 
   private fun getFeaturesReport(searchEverywhereUI: SearchEverywhereUI): Map<String, Any> {
@@ -130,8 +133,8 @@ class OpenFeaturesInScratchFileAction : AnAction() {
     return ScratchFileCreator.createScratchFile(project, fileName, context.language, context.text, context.createOption)!!
   }
 
-  private fun openScratchFile(file: VirtualFile, project: Project) {
-    FileEditorManager.getInstance(project).openFile(file, true)
+  private fun requestOpenScratchFile(file: VirtualFile, project: Project): CompletableFuture<FileEditorComposite> {
+    return FileEditorManager.getInstance(project).requestOpenFile(file, FileEditorOpenRequest.withFocus(true))
   }
 
   @JsonPropertyOrder("id", "name", "mlWeight", "rankingWeight", "contributor", "features")

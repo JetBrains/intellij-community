@@ -41,6 +41,16 @@ internal object BazelCompactExecutionLog {
   private const val SPAWN_RUNNER = (11 shl 3) or WIRETYPE_LENGTH_DELIMITED
   private const val SPAWN_CACHE_HIT = (12 shl 3) or WIRETYPE_VARINT
   private const val SPAWN_REMOTE_CACHEABLE = (15 shl 3) or WIRETYPE_VARINT
+  private const val SPAWN_METRICS = (18 shl 3) or WIRETYPE_LENGTH_DELIMITED
+
+  // The tags of `SpawnMetrics`.
+  private const val METRICS_TOTAL_TIME = (1 shl 3) or WIRETYPE_LENGTH_DELIMITED
+  private const val METRICS_QUEUE_TIME = (5 shl 3) or WIRETYPE_LENGTH_DELIMITED
+  private const val METRICS_EXECUTION_WALL_TIME = (8 shl 3) or WIRETYPE_LENGTH_DELIMITED
+
+  // The tags of `google.protobuf.Duration`.
+  private const val DURATION_SECONDS = (1 shl 3) or WIRETYPE_VARINT
+  private const val DURATION_NANOS = (2 shl 3) or WIRETYPE_VARINT
 
   // The tag of `ExecLogEntry.Output.output_id`.
   private const val OUTPUT_ID = (5 shl 3) or WIRETYPE_VARINT
@@ -147,11 +157,24 @@ internal object BazelCompactExecutionLog {
     var exitCode = 0
     var cacheHit = false
     var remoteCacheable = false
+    var totalTimeNanos = 0L
+    var executionWallTimeNanos = 0L
+    var queueTimeNanos = 0L
     input.forEachField { tag ->
       when (tag) {
         SPAWN_OUTPUTS -> input.readMessage {
           input.forEachField {
             if (it == OUTPUT_ID) outputIds.add(input.readUInt32()) else input.skipField(it)
+          }
+        }
+        SPAWN_METRICS -> input.readMessage {
+          input.forEachField {
+            when (it) {
+              METRICS_TOTAL_TIME -> totalTimeNanos = input.readMessage { readDurationNanos(input) }
+              METRICS_EXECUTION_WALL_TIME -> executionWallTimeNanos = input.readMessage { readDurationNanos(input) }
+              METRICS_QUEUE_TIME -> queueTimeNanos = input.readMessage { readDurationNanos(input) }
+              else -> input.skipField(it)
+            }
           }
         }
         SPAWN_TARGET_LABEL -> targetLabel = input.readString()
@@ -170,7 +193,25 @@ internal object BazelCompactExecutionLog {
       exitCode = exitCode,
       cacheHit = cacheHit,
       remoteCacheable = remoteCacheable,
+      wallTimeNanos = if (executionWallTimeNanos > 0) executionWallTimeNanos else totalTimeNanos,
+      queueTimeNanos = queueTimeNanos,
     )
+  }
+
+  /**
+   * Reads one `google.protobuf.Duration` message as nanoseconds.
+   */
+  private fun readDurationNanos(input: CodedInputStream): Long {
+    var seconds = 0L
+    var nanos = 0
+    input.forEachField { tag ->
+      when (tag) {
+        DURATION_SECONDS -> seconds = input.readInt64()
+        DURATION_NANOS -> nanos = input.readInt32()
+        else -> input.skipField(tag)
+      }
+    }
+    return seconds * 1_000_000_000L + nanos
   }
 
   /**

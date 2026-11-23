@@ -6,6 +6,7 @@ import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.module.UnloadedModuleDescription
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiPlace
 import com.intellij.psi.SmartPsiFileRange
 import com.intellij.psi.createSmartFileRange
 import com.intellij.psi.findElement
@@ -32,7 +33,7 @@ class ModPlanConflicts(conflicts: List<ModPlanConflict>) {
   val conflicts: @Unmodifiable List<ModPlanConflict> = conflicts.toList()
 
   /** @return true if a person has to agree before the refactoring runs: there is a fixable or a broken conflict */
-  fun needsConfirmation(): Boolean = conflicts.any { it.kind != ModPlanConflictKind.NON_CODE_USAGE }
+  fun needsConfirmation(): Boolean = conflicts.any { it.kind == ModPlanConflictKind.FIXABLE || it.kind == ModPlanConflictKind.BROKEN }
 
   /** @return true if there are conflicts that stay after the refactoring */
   fun hasBroken(): Boolean = conflicts.any { it.kind == ModPlanConflictKind.BROKEN }
@@ -40,32 +41,46 @@ class ModPlanConflicts(conflicts: List<ModPlanConflict>) {
   /** @return the places that the refactoring found and does not change */
   fun nonCodeUsages(): @Unmodifiable List<ModPlanConflict> = conflicts.filter { it.kind == ModPlanConflictKind.NON_CODE_USAGE }
 
+  /** @return the places in comments, strings and non-code files that the refactoring changes */
+  fun changedNonCodeUsages(): @Unmodifiable List<ModPlanConflict> =
+    conflicts.filter { it.kind == ModPlanConflictKind.CHANGED_NON_CODE_USAGE }
+
   /** @return the conflicts of both; the conflicts of the same location are joined */
   fun merge(otherConflicts: ModPlanConflicts): ModPlanConflicts = ModPlanConflicts(mergedByLocation(conflicts + otherConflicts.conflicts))
 
   /**
    * @param anchor the element for a conflict without a location, or with a location where no element is found, see
    *               [com.intellij.psi.findElement]
-   * @return the messages per element, without the non-code usages; the argument for [com.intellij.modcommand.ModCommand.showConflicts]
+   * @return the messages per place, without the non-code usages; the argument for
+   * [com.intellij.modcommand.ModCommand.showConflictsAtPlaces]. A place keeps its range where no element has exactly it, such as
+   * a word in a comment.
    */
   @RequiresReadLock
-  fun toShowConflicts(anchor: PsiElement): @Unmodifiable Map<PsiElement, ModShowConflicts.Conflict> = toShowConflicts(anchor, false)
+  fun toShowConflicts(anchor: PsiElement): @Unmodifiable Map<PsiPlace, ModShowConflicts.Conflict> = toShowConflicts(anchor, false)
 
   /**
-   * @return the messages per element, with the non-code usages, so that a person sees them before the command writes, see
+   * @return the messages per place, with the non-code usages, so that a person sees them before the command writes, see
    * [toShowConflicts]
    */
   @RequiresReadLock
-  fun toShowConflictsWithNonCodeUsages(anchor: PsiElement): @Unmodifiable Map<PsiElement, ModShowConflicts.Conflict> {
+  fun toShowConflictsWithNonCodeUsages(anchor: PsiElement): @Unmodifiable Map<PsiPlace, ModShowConflicts.Conflict> {
     return toShowConflicts(anchor, true)
   }
 
-  private fun toShowConflicts(anchor: PsiElement, withNonCodeUsages: Boolean): @Unmodifiable Map<PsiElement, ModShowConflicts.Conflict> {
-    val resultConflicts = LinkedHashMap<PsiElement, ModShowConflicts.Conflict>()
+  private fun toShowConflicts(anchor: PsiElement, withNonCodeUsages: Boolean): @Unmodifiable Map<PsiPlace, ModShowConflicts.Conflict> {
+    val resultConflicts = LinkedHashMap<PsiPlace, ModShowConflicts.Conflict>()
     for (conflict in conflicts.sortedBy { it.location?.range?.startOffset ?: Int.MAX_VALUE }) {
+      if (conflict.kind == ModPlanConflictKind.CHANGED_NON_CODE_USAGE) continue
       if (!withNonCodeUsages && conflict.kind == ModPlanConflictKind.NON_CODE_USAGE) continue
+      val range = conflict.location?.range?.let { TextRange.create(it) }
       val element = conflict.location?.findElement()
-      resultConflicts.merge(element ?: anchor, ModShowConflicts.Conflict(conflict.messages), ModShowConflicts.Conflict::merge)
+      val place = if (element == null || range == null) {
+        PsiPlace(anchor, null)
+      }
+      else {
+        PsiPlace(element, range.takeIf { it != element.textRange }?.shiftLeft(element.textRange.startOffset))
+      }
+      resultConflicts.merge(place, ModShowConflicts.Conflict(conflict.messages), ModShowConflicts.Conflict::merge)
     }
     return Collections.unmodifiableMap(resultConflicts)
   }
@@ -104,6 +119,19 @@ class ModPlanConflicts(conflicts: List<ModPlanConflict>) {
     @RequiresReadLock
     fun nonCodeUsage(element: PsiElement, rangeInElement: TextRange?, message: @Nls String): Builder {
       myConflicts.add(ModPlanConflict(element.createSmartFileRange(rangeInElement), listOf(message), ModPlanConflictKind.NON_CODE_USAGE))
+      return this
+    }
+
+    /**
+     * Adds a place in a comment, a string or a non-code file that the refactoring changes. A person is told nothing about it, but an
+     * interactive flow shows it in a preview, as the legacy rename does.
+     *
+     * @param element        the element that holds the non-code usage
+     * @param rangeInElement the range of the non-code usage inside [element]; null for the whole element
+     */
+    @RequiresReadLock
+    fun changedNonCodeUsage(element: PsiElement, rangeInElement: TextRange?): Builder {
+      myConflicts.add(ModPlanConflict(element.createSmartFileRange(rangeInElement), listOf(), ModPlanConflictKind.CHANGED_NON_CODE_USAGE))
       return this
     }
 
@@ -163,7 +191,8 @@ class ModPlanConflicts(conflicts: List<ModPlanConflict>) {
  * A conflict of a ModPlan refactoring: the messages that [ModShowConflicts] shows for a place, and what agreeing to it does.
  *
  * @param location the place of the conflict; null for a conflict of the whole refactoring
- * @param messages what a person is told; a [ModPlanConflictKind.NON_CODE_USAGE] has its message too
+ * @param messages what a person is told; a [ModPlanConflictKind.NON_CODE_USAGE] has its message too, a
+ *                 [ModPlanConflictKind.CHANGED_NON_CODE_USAGE] has none
  * @param kind     what happens to the conflict if a person goes on
  */
 class ModPlanConflict(val location: SmartPsiFileRange?,
@@ -180,6 +209,9 @@ class ModPlanConflict(val location: SmartPsiFileRange?,
 
 /** In the order of strength: a merged conflict has the strongest kind. */
 enum class ModPlanConflictKind {
+  /** A place in a comment, a string or a non-code file that the refactoring changes. Nothing breaks. */
+  CHANGED_NON_CODE_USAGE,
+
   /** A place in a comment, a string or a non-code file that is not changed. Nothing breaks. */
   NON_CODE_USAGE,
 

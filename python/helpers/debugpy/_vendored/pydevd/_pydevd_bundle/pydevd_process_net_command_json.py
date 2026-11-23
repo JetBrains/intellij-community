@@ -37,6 +37,7 @@ from _pydevd_bundle._debug_adapter.pydevd_schema import (
     InitializedEvent,
 )
 from _pydevd_bundle.custom import pydevd_ipython_console
+from _pydevd_bundle.custom import pydevd_utils as custom_pydevd_utils
 from _pydevd_bundle.custom.pydevd_tables import TableCommandType
 from _pydevd_bundle.pydevd_api import PyDevdAPI
 from _pydevd_bundle.pydevd_breakpoints import get_exception_class, FunctionBreakpoint
@@ -1477,6 +1478,11 @@ class PyDevJsonCommandProcessor(object):
         ipython_console = args.kwargs.get("ipythonConsole")
         if ipython_console is not None:
             pydevd_ipython_console.set_enabled(ipython_console)
+
+        # The Variables Loading Policy of the IDE, changed during the session.
+        values_policy = args.kwargs.get("valuesPolicy")
+        if values_policy is not None and not custom_pydevd_utils.set_values_policy(values_policy):
+            pydev_log.info("Unknown valuesPolicy debugger property: %s", values_policy)
 
         # TODO: Support other common settings. Note that not all of these might be relevant to python.
         # AllowOutOfProcessSymbols: 0 or 1

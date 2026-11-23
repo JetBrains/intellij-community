@@ -3,6 +3,8 @@
 package org.jetbrains.kotlin.jps.build
 
 import com.intellij.openapi.application.PathManager
+import com.intellij.platform.bazel.runfiles.BazelLabel
+import com.intellij.testFramework.common.BazelTestUtil
 import java.nio.file.Path
 import kotlin.io.path.isDirectory
 import kotlin.io.path.isRegularFile
@@ -16,6 +18,8 @@ import kotlin.io.path.writeText
  * [KotlinJpsTestData]. The groups and the exclusions follow `GenerateJpsPluginTests.kt` of the Kotlin repository.
  *
  * The "Generate Kotlin Tests" run configuration calls it, and `AllTestsGeneratedTest` checks that the class is up to date.
+ * The pinned versions, the test data and the golden files:
+ * [JpsBuilderTests.md](https://github.com/JetBrains/intellij-community/blob/master/plugins/kotlin/docs/JpsBuilderTests.md).
  */
 fun main() {
   generateKotlinJpsBuilderTests()
@@ -23,10 +27,10 @@ fun main() {
 
 /** @param isUpToDateCheck fail when the generated class differs, instead of writing it. */
 fun generateKotlinJpsBuilderTests(isUpToDateCheck: Boolean = false) {
-  val roots = listOf(KotlinJpsTestData.artifactRoot, KotlinJpsTestData.overlaySourceRoot).filter { it.isDirectory() }
+  val roots = KotlinJpsTestData.roots
   val content = render(GROUPS.flatMap { collectCases(it, roots) })
 
-  val target = Path.of(PathManager.getCommunityHomePath(), OUTPUT_PATH)
+  val target = generatedTestFile()
   val existing = if (target.isRegularFile()) target.readText() else null
   if (existing == content) return
   check(!isUpToDateCheck) {
@@ -36,7 +40,18 @@ fun generateKotlinJpsBuilderTests(isUpToDateCheck: Boolean = false) {
   target.writeText(content)
 }
 
-private const val OUTPUT_PATH = "plugins/kotlin/jps/builder/tests/test-gen/org/jetbrains/kotlin/jps/build/KotlinJpsIncrementalTestGenerated.java"
+/** Under Bazel, the sandbox has no source tree, so the file comes from the run files of the `test-gen` file group. */
+private fun generatedTestFile(): Path =
+  if (BazelTestUtil.isUnderBazelTest) {
+    BazelTestUtil.getFileFromBazelRuntime(BazelLabel.fromString("$GENERATED_TESTS_LABEL/$GENERATED_CLASS_NAME"))
+  }
+  else {
+    Path.of(PathManager.getCommunityHomePath(), OUTPUT_PATH)
+  }
+
+private const val GENERATED_TESTS_LABEL = "@community//plugins/kotlin/jps/builder/tests:test-gen"
+private const val GENERATED_CLASS_NAME = "org/jetbrains/kotlin/jps/build/KotlinJpsIncrementalTestGenerated.java"
+private const val OUTPUT_PATH = "plugins/kotlin/jps/builder/tests/test-gen/$GENERATED_CLASS_NAME"
 
 /** A group of cases. A [recursive] group has its cases in the leaf directories. */
 private class Group(val path: String, val recursive: Boolean, val excluded: Regex? = null)

@@ -3,6 +3,7 @@ package com.intellij.java.codeInsight.completion;
 
 import com.intellij.TestCaseLoader;
 import com.intellij.java.codeInsight.completion.ml.JavaCompletionFeaturesTest;
+import com.intellij.platform.testFramework.junit5.codeInsight.indexing.IndexingModeTemplate;
 import com.intellij.testFramework.SkipSlowTestLocally;
 import com.intellij.testFramework.TestFrameworkUtil;
 import com.intellij.testFramework.TestIndexingModeSupporter;
@@ -45,11 +46,13 @@ public class JavaCompletionTestSuite extends TestSuite {
 
     List<Class<?>> classes = myTestCaseLoader.getClasses();
     for (Class<?> aClass : classes) {
-      if (!aClass.getSimpleName().contains("Completion") && !isJavaPostfixTest(aClass)) continue;
+      if (!aClass.getSimpleName().contains("Completion")) continue;
       // JavaCompletionFeaturesTest does not depend on indices
       if (JavaCompletionFeaturesTest.class.equals(aClass)) continue;
       // Exclude feature suggester tests
       if (aClass.getPackageName().equals("com.intellij.java.ifs")) continue;
+      // JavaDumbCompletionTestSuite runs the JUnit 5 classes
+      if (aClass.isAnnotationPresent(IndexingModeTemplate.class)) continue;
       if (TestIndexingModeSupporter.class.isAssignableFrom(aClass)) {
         Class<? extends TestIndexingModeSupporter> testCaseClass = aClass.asSubclass(TestIndexingModeSupporter.class);
         TestIndexingModeSupporter.addAllTests(testCaseClass, suite);
@@ -59,11 +62,5 @@ public class JavaCompletionTestSuite extends TestSuite {
       }
     }
     return TestFrameworkUtil.flattenSuite(suite);
-  }
-
-  private static boolean isJavaPostfixTest(Class<?> testClass) {
-    Class<?> superclass = testClass.getSuperclass();
-    return superclass != null &&
-           "com.intellij.java.codeInsight.template.postfix.templates.PostfixTemplateTestCase".equals(superclass.getName());
   }
 }

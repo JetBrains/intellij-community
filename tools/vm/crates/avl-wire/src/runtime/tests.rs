@@ -31,10 +31,10 @@ fn plugin(destination: &str) -> Value {
 /// Bazel rule actually emits.
 fn valid_descriptor() -> Value {
     json!({
-        "schemaVersion": 10,
+        "schemaVersion": 12,
         "kind": "air-ui-daemon-runtime",
         "staticJvmFlags": ["-Xmx4g", "-Dsun.io.useCanonCaches=false", "-Dair.ui.runfiles=${RUNFILES_ROOT}/_main"],
-        "devDist": {
+        "dist": {
             "config": file("_main/dist/ultimate.ide.config", "//build:dev_config"),
             "fingerprint": file("_main/dist/fingerprint.txt", "//build:dev_fingerprint"),
             "home": file("_main/dist/home", "//build:dev_home"),
@@ -43,8 +43,9 @@ fn valid_descriptor() -> Value {
             "platform": "linux-x64",
         },
         "ide": {
-            "fakeAgentJar": file(FAKE_AGENT_JAR, "//plugins/air/integrationTests/test-support:acp_scenario_agent"),
+            "fakeAgent": file(FAKE_AGENT, "@@community+//tools/vm:acp-fake-agent-linux-x86_64"),
             "flagsFile": file("_main/plugins/air/tests/integration/ui/ide_flags.jvm-flags.txt", "//plugins/air/tests/integration/ui:ide_flags"),
+            "genuiFixtureJar": file(GENUI_FIXTURE_JAR, "//plugins/air/integrationTests/test-support:genui_fixture_app"),
             // One jar holds both kinds of document.
             "laneDocuments": documents_jar(),
             "plugins": [
@@ -59,7 +60,8 @@ fn valid_descriptor() -> Value {
     })
 }
 
-const FAKE_AGENT_JAR: &str = "_main/plugins/air/integrationTests/test-support/acp_scenario_agent_deploy.jar";
+const FAKE_AGENT: &str = "community+/tools/vm/acp-fake-agent-linux-x86_64";
+const GENUI_FIXTURE_JAR: &str = "_main/plugins/air/integrationTests/test-support/genui_fixture_app_deploy.jar";
 const DOCUMENTS_JAR: &str = "_main/plugins/air/tests/integration/flow-profiles/flow-profiles_test_lib.jar";
 
 /// The flow-profiles resource jar, which holds the suite and the lane documents.
@@ -98,7 +100,7 @@ fn parse(descriptor: &Value) -> RuntimeDescriptor {
 #[test]
 fn a_well_formed_descriptor_parses_into_the_launch_contract() {
     let parsed = parse(&valid_descriptor());
-    assert_eq!((parsed.schema_version, parsed.kind.as_str()), (10, DESCRIPTOR_KIND));
+    assert_eq!((parsed.schema_version, parsed.kind.as_str()), (12, DESCRIPTOR_KIND));
     // The lane inputs in key order, each with its runfile.
     let inputs: Vec<(&str, &str)> = parsed
         .ide
@@ -109,7 +111,8 @@ fn a_well_formed_descriptor_parses_into_the_launch_contract() {
     assert_eq!(
         inputs,
         [
-            ("fakeAgentJar", FAKE_AGENT_JAR),
+            ("fakeAgent", FAKE_AGENT),
+            ("genuiFixtureJar", GENUI_FIXTURE_JAR),
             ("laneDocuments", DOCUMENTS_JAR),
             ("suiteDocuments", DOCUMENTS_JAR),
         ]
@@ -124,7 +127,7 @@ fn a_well_formed_descriptor_parses_into_the_launch_contract() {
         }]
     );
     assert_eq!(parsed.jbr.platform, GUEST_JBR_PLATFORM);
-    assert_eq!(parsed.dev_dist.home.logical_path, "_main/dist/home");
+    assert_eq!(parsed.dist.home.logical_path, "_main/dist/home");
     assert_eq!(parsed.ide.project_root, "BookmarksTestProject");
     assert_eq!(
         parsed.ide.flags_file.logical_path,
@@ -162,29 +165,42 @@ fn corpus() -> Vec<(&'static str, Vec<u8>, &'static str, &'static [&'static str]
             "a JSON array has no schema version",
             b"[]".to_vec(),
             code::SCHEMA_VERSION,
-            &["schemaVersion is absent, expected 10"],
+            &["schemaVersion is absent, expected 12"],
         ),
         // The version before the JBR of the distribution: it names a JBR archive, which this controller stages no more.
         (
             "a descriptor of the version that names a JBR archive",
             bytes(set(valid(), "/schemaVersion", json!(7))),
             code::SCHEMA_VERSION,
-            &["schemaVersion is 7, expected 10"],
+            &["schemaVersion is 7, expected 12"],
         ),
         // The version before the lane inputs: its fake agent jar is data, so an edit of the agent moves the mount.
         (
             "a descriptor of the version without the lane inputs",
             bytes(set(valid(), "/schemaVersion", json!(8))),
             code::SCHEMA_VERSION,
-            &["schemaVersion is 8, expected 10"],
+            &["schemaVersion is 8, expected 12"],
         ),
-        // The version before this one: it declares the classpath tiers, the main class and the JBR directory of the
-        // retired JVM daemon.
+        // The version that declares the classpath tiers, the main class and the JBR directory of the retired JVM daemon.
         (
             "a descriptor of the version with the classpath tiers",
             bytes(set(valid(), "/schemaVersion", json!(9))),
             code::SCHEMA_VERSION,
-            &["schemaVersion is 9, expected 10"],
+            &["schemaVersion is 9, expected 12"],
+        ),
+        // The version with one fake agent: its fake agent is one jar for every guest, which the lane runs with `java -jar`.
+        (
+            "a descriptor of the version with one fake agent jar for every guest",
+            bytes(set(valid(), "/schemaVersion", json!(10))),
+            code::SCHEMA_VERSION,
+            &["schemaVersion is 10, expected 12"],
+        ),
+        // The version before this one: it names the distribution section `devDist`.
+        (
+            "a descriptor of the version with the devDist section",
+            bytes(set(valid(), "/schemaVersion", json!(11))),
+            code::SCHEMA_VERSION,
+            &["schemaVersion is 11, expected 12"],
         ),
         (
             "an older rule emits no schema version",
@@ -194,9 +210,9 @@ fn corpus() -> Vec<(&'static str, Vec<u8>, &'static str, &'static [&'static str]
         ),
         (
             "a schema version this controller predates",
-            bytes(set(valid(), "/schemaVersion", json!(11))),
+            bytes(set(valid(), "/schemaVersion", json!(13))),
             code::SCHEMA_VERSION,
-            &["schemaVersion is 11, expected 10"],
+            &["schemaVersion is 13, expected 12"],
         ),
         (
             "the schema version arrives as text",
@@ -236,10 +252,10 @@ fn corpus() -> Vec<(&'static str, Vec<u8>, &'static str, &'static [&'static str]
             &["staticJvmFlags[0]"],
         ),
         (
-            "a null devDist section",
-            bytes(set(valid(), "/devDist", Value::Null)),
+            "a null dist section",
+            bytes(set(valid(), "/dist", Value::Null)),
             code::FIELD_INVALID,
-            &["devDist"],
+            &["dist"],
         ),
         (
             "a jbr section that is a number",
@@ -249,18 +265,18 @@ fn corpus() -> Vec<(&'static str, Vec<u8>, &'static str, &'static [&'static str]
         ),
         // The same rule one level up: a section is an object, never three files taken positionally.
         (
-            "a devDist section that is an array of its files",
+            "a dist section that is an array of its files",
             bytes({
                 let descriptor = valid();
                 let files = json!([
-                    descriptor["devDist"]["config"],
-                    descriptor["devDist"]["fingerprint"],
-                    descriptor["devDist"]["home"],
+                    descriptor["dist"]["config"],
+                    descriptor["dist"]["fingerprint"],
+                    descriptor["dist"]["home"],
                 ]);
-                set(descriptor, "/devDist", files)
+                set(descriptor, "/dist", files)
             }),
             code::FIELD_INVALID,
-            &["devDist"],
+            &["dist"],
         ),
         (
             "a data list that is null",
@@ -297,9 +313,9 @@ fn corpus() -> Vec<(&'static str, Vec<u8>, &'static str, &'static [&'static str]
         ),
         (
             "an absolute logical path",
-            bytes(set(valid(), "/devDist/home/logicalPath", json!("/etc/passwd"))),
+            bytes(set(valid(), "/dist/home/logicalPath", json!("/etc/passwd"))),
             code::PATH_ESCAPES,
-            &["devDist.home.logicalPath escapes the runfiles root"],
+            &["dist.home.logicalPath escapes the runfiles root"],
         ),
         (
             "a logical path that climbs out of the tree",
@@ -327,10 +343,10 @@ fn corpus() -> Vec<(&'static str, Vec<u8>, &'static str, &'static [&'static str]
             &["data"],
         ),
         (
-            "no dev-dist config",
-            bytes(drop_field(valid(), "/devDist/config")),
+            "no dist config",
+            bytes(drop_field(valid(), "/dist/config")),
             code::FIELD_INVALID,
-            &["devDist", "config"],
+            &["dist", "config"],
         ),
         ("no IDE section", bytes(drop_field(valid(), "/ide")), code::FIELD_INVALID, &["ide"]),
         (
@@ -457,10 +473,10 @@ fn corpus() -> Vec<(&'static str, Vec<u8>, &'static str, &'static [&'static str]
             &["duplicate logical path _main/dist/ultimate.ide.config"],
         ),
         (
-            "no fake agent jar",
-            bytes(drop_field(valid(), "/ide/fakeAgentJar")),
+            "no fake agent",
+            bytes(drop_field(valid(), "/ide/fakeAgent")),
             code::FIELD_INVALID,
-            &["missing field `fakeAgentJar`"],
+            &["missing field `fakeAgent`"],
         ),
         (
             "no jar of the suite documents",
@@ -474,15 +490,15 @@ fn corpus() -> Vec<(&'static str, Vec<u8>, &'static str, &'static [&'static str]
             code::PATH_ESCAPES,
             &["ide.laneDocuments.logicalPath escapes the runfiles root"],
         ),
-        // The point of a lane input: the rule must take the fake agent jar out of the data list, or an edit of the
-        // agent still moves the mount identity.
+        // The point of a lane input: the rule must take the fake agent out of the data list, or an edit of the agent
+        // still moves the mount identity.
         (
-            "a fake agent jar that is also declared data",
-            bytes(set(valid(), "/data/0/logicalPath", json!(FAKE_AGENT_JAR))),
+            "a fake agent that is also declared data",
+            bytes(set(valid(), "/data/0/logicalPath", json!(FAKE_AGENT))),
             code::LANE_INPUT_STAGED,
-            &["ide.fakeAgentJar _main/plugins/air/integrationTests/test-support/acp_scenario_agent_deploy.jar is also staged"],
+            &["ide.fakeAgent community+/tools/vm/acp-fake-agent-linux-x86_64 is also staged"],
         ),
-        // The rule must take the jar of the documents out of the data list too, as it takes the fake agent jar.
+        // The rule must take the jar of the documents out of the data list too, as it takes the fake agent.
         (
             "a jar of the documents that is also declared data",
             bytes(set(valid(), "/data/0/logicalPath", json!(DOCUMENTS_JAR))),
@@ -531,7 +547,7 @@ fn every_way_the_descriptor_can_be_wrong_is_its_own_refusal() {
 #[test]
 fn the_validator_refuses_nothing_it_should_accept() {
     // A float that is the same number in JSON.
-    parse(&set(valid_descriptor(), "/schemaVersion", json!(10.0)));
+    parse(&set(valid_descriptor(), "/schemaVersion", json!(12.0)));
     // A jar of the lane documents apart from the jar of the suite documents.
     parse(&set(
         valid_descriptor(),
@@ -600,13 +616,13 @@ fn the_ide_config_names_the_home_of_the_distribution() {
     )
     .unwrap();
     assert_eq!(
-        dev_dist_home(&config).unwrap(),
+        dist_home(&config).unwrap(),
         root.path().join("ide/idea_air_lane_dist.dist/Contents")
     );
     fs::write(&config, "home.path=/out/../opt/idea.dist\n").unwrap();
-    assert_eq!(dev_dist_home(&config).unwrap(), PathBuf::from("/opt/idea.dist"));
+    assert_eq!(dist_home(&config).unwrap(), PathBuf::from("/opt/idea.dist"));
     fs::write(&config, "main.class.name=com.intellij.idea.Main\n").unwrap();
-    assert!(dev_dist_home(&config).unwrap_err().starts_with("'home.path' is missing from"));
+    assert!(dist_home(&config).unwrap_err().starts_with("'home.path' is missing from"));
     let missing = root.path().join("missing.ide.config");
-    assert!(dev_dist_home(&missing).unwrap_err().starts_with("cannot read the IDE config"));
+    assert!(dist_home(&missing).unwrap_err().starts_with("cannot read the IDE config"));
 }

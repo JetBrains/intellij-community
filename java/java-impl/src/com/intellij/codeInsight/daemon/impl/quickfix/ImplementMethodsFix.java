@@ -5,14 +5,17 @@ import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.generation.JavaOverrideImplementMemberChooser;
 import com.intellij.codeInsight.generation.OverrideImplementExploreUtil;
+import com.intellij.codeInsight.generation.OverrideImplementMethodsModCommandAction;
 import com.intellij.codeInsight.generation.OverrideImplementUtil;
 import com.intellij.codeInsight.generation.OverrideOrImplementOptions;
 import com.intellij.codeInsight.generation.PsiMethodMember;
+import com.intellij.codeInsight.intention.IntentionActionWithModCommandFallback;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.featureStatistics.ProductivityFeatureNames;
+import com.intellij.modcommand.ModCommandAction;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -35,7 +38,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.function.Consumer;
 
-public class ImplementMethodsFix extends LocalQuickFixAndIntentionActionOnPsiElement {
+public class ImplementMethodsFix extends LocalQuickFixAndIntentionActionOnPsiElement implements IntentionActionWithModCommandFallback {
   public ImplementMethodsFix(PsiElement aClass) {
     super(aClass);
   }
@@ -88,6 +91,12 @@ public class ImplementMethodsFix extends LocalQuickFixAndIntentionActionOnPsiEle
   @Override
   public boolean startInWriteAction() {
     return false;
+  }
+
+  @Override
+  public @Nullable ModCommandAction getFallbackModCommandAction() {
+    PsiElement startElement = getStartElement();
+    return startElement == null ? null : OverrideImplementMethodsModCommandAction.implement(startElement);
   }
 
   protected static void chooseMethodsToImplement(Editor editor,

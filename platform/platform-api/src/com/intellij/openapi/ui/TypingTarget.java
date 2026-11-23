@@ -16,9 +16,8 @@
 package com.intellij.openapi.ui;
 
 import com.intellij.openapi.util.ActionCallback;
+import org.jetbrains.annotations.NotNull;
 
 public interface TypingTarget {
-
-  ActionCallback type(String text);
-
+  @NotNull ActionCallback type(@NotNull String text);
 }

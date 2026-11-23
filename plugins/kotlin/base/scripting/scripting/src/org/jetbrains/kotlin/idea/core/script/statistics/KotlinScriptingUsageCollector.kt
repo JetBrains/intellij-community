@@ -45,6 +45,7 @@ internal class KotlinScriptingUsageCollector : ProjectUsagesCollector() {
 
         val settings = KotlinScriptingSettings.getInstance(project)
         val definitionProvider = ScriptDefinitionProviderImpl.getInstance(project)
+        definitionProvider.awaitLoading()
         val providedDefinitions = definitionProvider.cachedProvidedDefinitions
         val enabledDefinitions = definitionProvider.currentDefinitions.toList()
 

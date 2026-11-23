@@ -4,6 +4,10 @@ package org.jetbrains.idea.devkit.inspections;
 import com.intellij.codeInsight.intention.IntentionAction;
 import org.jetbrains.idea.devkit.inspections.internal.StatisticsCollectorNotRegisteredInspection;
 
+/**
+ * @deprecated Use {@link StatisticsCollectorNotRegisteredFixtureKt#statisticsCollectorNotRegisteredFixture} in a JUnit 5 test.
+ */
+@Deprecated
 public abstract class StatisticsCollectorNotRegisteredInspectionTestBase extends PluginModuleTestCase {
   @Override
   protected void setUp() throws Exception {

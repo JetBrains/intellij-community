@@ -3,8 +3,8 @@ package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.multiverse.CodeInsightContext;
 import com.intellij.codeInsight.multiverse.CodeInsightContextManager;
-import com.intellij.codeInsight.multiverse.CodeInsightContextManagerImpl;
 import com.intellij.codeInsight.multiverse.CodeInsightContexts;
+import com.intellij.codeInsight.multiverse.LightFileCodeInsightContexts;
 import com.intellij.diagnostic.PluginException;
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.injected.editor.VirtualFileWindow;
@@ -41,6 +41,7 @@ import com.intellij.util.FileContentUtilCore;
 import com.intellij.util.indexing.DumbModeAccessType;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import java.lang.ref.SoftReference;
 import java.util.List;
@@ -259,7 +260,8 @@ public final class CompletionInitializationUtil {
     return insertedElement;
   }
 
-  private static @NotNull PsiFile obtainFileCopy(@NotNull PsiFile file) {
+  @VisibleForTesting
+  public static @NotNull PsiFile obtainFileCopy(@NotNull PsiFile file) {
     final VirtualFile virtualFile = file.getVirtualFile();
     // we don't want to cache code fragment copies even if they appear to be physical
     boolean mayCacheCopy = file.isPhysical() &&
@@ -285,10 +287,8 @@ public final class CompletionInitializationUtil {
     CompletionAssertions.assertCorrectOriginalFile("New", file, copy);
 
     if (CodeInsightContexts.isSharedSourceSupportEnabled(file.getProject())) {
-      CodeInsightContextManagerImpl codeInsightContextManager =
-        (CodeInsightContextManagerImpl)CodeInsightContextManager.getInstance(file.getProject());
-      CodeInsightContext context = codeInsightContextManager.getCodeInsightContext(file.getViewProvider());
-      codeInsightContextManager.setCodeInsightContext(copy.getViewProvider(), context);
+      CodeInsightContext context = CodeInsightContextManager.getInstance(file.getProject()).getCodeInsightContext(file.getViewProvider());
+      LightFileCodeInsightContexts.setCodeInsightContextOfLightFile(copy, context);
     }
 
     if (mayCacheCopy) {
@@ -305,13 +305,23 @@ public final class CompletionInitializationUtil {
   private static boolean isCopyUpToDate(@NotNull Document document, @NotNull PsiFile copyFile, @NotNull PsiFile originalFile) {
     if (!copyFile.getClass().equals(originalFile.getClass()) ||
         !copyFile.isValid() ||
-        !copyFile.getName().equals(originalFile.getName())) {
+        !copyFile.getName().equals(originalFile.getName()) ||
+        !hasSameCodeInsightContext(copyFile, originalFile)) {
       return false;
     }
     // the psi file cache might have been cleared by some external activity,
     // in which case PSI-document sync may stop working
     PsiFile current = PsiDocumentManager.getInstance(copyFile.getProject()).getPsiFile(document);
     return current != null && current.getViewProvider().getPsi(copyFile.getLanguage()) == copyFile;
+  }
+
+  /** The copy keeps the context that the original had when completion made it, so a later change of that context makes the copy stale. */
+  private static boolean hasSameCodeInsightContext(@NotNull PsiFile copyFile, @NotNull PsiFile originalFile) {
+    Project project = originalFile.getProject();
+    if (!CodeInsightContexts.isSharedSourceSupportEnabled(project)) return true;
+
+    CodeInsightContextManager manager = CodeInsightContextManager.getInstance(project);
+    return manager.getCodeInsightContext(copyFile.getViewProvider()).equals(manager.getCodeInsightContext(originalFile.getViewProvider()));
   }
 
   private static void syncAcceptSlashR(Document originalDocument, Document documentCopy) {

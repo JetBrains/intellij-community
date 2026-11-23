@@ -2,14 +2,25 @@
 package com.intellij.refactoring.rename
 
 import com.intellij.jvm.analysis.KotlinJvmAnalysisTestUtil
-import com.intellij.jvm.analysis.internal.testFramework.JvmAutomaticTestMethodRenamerTestBase
+import com.intellij.jvm.analysis.internal.testFramework.jvmAutomaticTestMethodRenamerFixture
+import com.intellij.jvm.analysis.testFramework.jvmProjectFixture
+import com.intellij.testFramework.junit5.TestApplication
+import org.junit.jupiter.api.Test
 
-abstract class KotlinAutomaticTestMethodRenamerTest : JvmAutomaticTestMethodRenamerTestBase() {
-    override fun getBasePath(): String = KotlinJvmAnalysisTestUtil.TEST_DATA_PROJECT_RELATIVE_BASE_PATH + "/refactoring/renameTestMethod"
+@TestApplication
+abstract class KotlinAutomaticTestMethodRenamerTest {
+  companion object {
+    private val projectFixture = jvmProjectFixture()
+  }
 
-    fun testTestMethod() = doTest("ClassTest.kt")
+  protected val myFixture by jvmAutomaticTestMethodRenamerFixture(projectFixture, KotlinJvmAnalysisTestUtil.testDataPath + "/refactoring/renameTestMethod")
 
-    fun testHelperMethod() = doTest("ClassTest.kt")
+    @Test
+    fun testTestMethod() = myFixture.doTest("ClassTest.kt")
 
-    fun testHelperClass() = doTest("TestUtil.kt")
+    @Test
+    fun testHelperMethod() = myFixture.doTest("ClassTest.kt")
+
+    @Test
+    fun testHelperClass() = myFixture.doTest("TestUtil.kt")
 }

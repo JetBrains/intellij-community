@@ -4,10 +4,14 @@ package com.jetbrains.python;
 import com.jetbrains.python.allure.Layers;
 import com.jetbrains.python.allure.Subsystems;
 
+import com.intellij.idea.TestFor;
 import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
+import com.jetbrains.python.codeInsight.PyCodeInsightCounters;
+import com.jetbrains.python.codeInsight.PyCodeInsightCounters.Counter;
 import com.jetbrains.python.documentation.PythonDocumentationProvider;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.inspections.PyTypeCheckerInspection;
@@ -15,8 +19,15 @@ import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.PyReferenceExpression;
 import com.jetbrains.python.psi.PyTargetExpression;
 import com.jetbrains.python.psi.PyUtil;
+import com.jetbrains.python.psi.types.TypeEvalConstraints;
 import com.jetbrains.python.psi.types.TypeEvalContext;
+import com.jetbrains.python.psi.types.TypeEvalContextCache;
+import kotlin.Unit;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.List;
+import java.util.Map;
+import java.util.function.Supplier;
 
 @Subsystems.CodeInsight
 @Layers.Functional
@@ -73,6 +84,33 @@ public final class PyTypeCachingTest extends PyTestCase {
                  myFixture.findElementByText("expr", PyTargetExpression.class),
                  TypeEvalContext.userInitiated(myFixture.getProject(), myFixture.getFile()));
     });
+  }
+
+  @TestFor(issues = "PY-83189")
+  public void testRepeatedContextLookupBuildsNoContext() {
+    myFixture.configureByText("a.py", "x = 1");
+    final Project project = myFixture.getProject();
+    final PsiFile file = myFixture.getFile();
+    final List<Supplier<TypeEvalContext>> lookups = List.of(
+      () -> TypeEvalContext.codeCompletion(project, file),
+      () -> TypeEvalContext.userInitiated(project, file),
+      () -> TypeEvalContext.codeAnalysis(project, file),
+      () -> TypeEvalContext.codeInsightFallback(project),
+      () -> TypeEvalContext.externalContext(project),
+      () -> TypeEvalContext.deepCodeInsight(project),
+      // The constraints of codeAnalysis, which the library context takes without a context to carry them
+      () -> project.getService(TypeEvalContextCache.class)
+        .getLibraryContext(new TypeEvalConstraints(false, false, false, false, file)));
+    for (Supplier<TypeEvalContext> lookup : lookups) {
+      final TypeEvalContext first = lookup.get();
+      final TypeEvalContext[] second = new TypeEvalContext[1];
+      final Map<Counter, Long> counts = PyCodeInsightCounters.countOnCurrentThread(() -> {
+        second[0] = lookup.get();
+        return Unit.INSTANCE;
+      });
+      assertSame(first, second[0]);
+      assertEquals("A cached context is found without building a new one", Long.valueOf(0), counts.get(Counter.CONTEXTS_CONSTRUCTED));
+    }
   }
 
   @Override

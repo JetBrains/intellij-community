@@ -612,7 +612,6 @@ class PySubtypingTypeTest : PyCodeInsightTestCase() {
 
     @Test
     @TestFor(issues = ["PY-25989", "PY-84544"])
-    @TestCaseOptions(assertRecursionPrevention = false)
     fun `type var widening`() = test("""
       from collections.abc import Iterable
       from typing import assert_type, Literal
@@ -658,7 +657,6 @@ class PySubtypingTypeTest : PyCodeInsightTestCase() {
 
     @Test
     @TestFor(issues = ["PY-28130"])
-    @TestCaseOptions(assertRecursionPrevention = false)
     fun `lambda parameter uses assignment context split definition class`() = test("""
       from typing import Callable
 
@@ -1129,7 +1127,6 @@ class PySubtypingTypeTest : PyCodeInsightTestCase() {
 
     @Test
     @TestFor(issues = ["PY-88298"])
-    @TestCaseOptions(assertRecursionPrevention = false)
     fun `str passed to super __new__ of str subclass`() = test("""
       class StrIdentifier(str):
           __slots__ = ()
@@ -1498,7 +1495,6 @@ class PySubtypingTypeTest : PyCodeInsightTestCase() {
       """.trimIndent())
 
     @Test
-    @TestCaseOptions(assertRecursionPrevention = false)
     fun `function return type checks`() = test("""
       from typing import List, Optional, Union, Generator, Iterable
 
@@ -1734,7 +1730,6 @@ class PySubtypingTypeTest : PyCodeInsightTestCase() {
 
     @Test
     @TestFor(issues = ["PY-20073"])
-    @TestCaseOptions(assertRecursionPrevention = false)
     fun `map arguments in opposite order`() = test("""
       map('foo', lambda c: 42)
       #  ^^^^^^^^^^^^^^^^^^^^^ WARNING No overload of 'map' matches the arguments. Argument types: (Literal["foo"], (c: Unknown) -> Literal[42]). Expected one of: (func: (_T1) -> _S, iterable: Iterable[_T1], strict: bool), (func: (_T1, _T2) -> _S, iterable: Iterable[_T1], iter2: Iterable[_T2], strict: bool), (func: (_T1, _T2, _T3) -> _S, iterable: Iterable[_T1], iter2: Iterable[_T2], iter3: Iterable[_T3], strict: bool), (func: (_T1, _T2, _T3, _T4) -> _S, iterable: Iterable[_T1], iter2: Iterable[_T2], iter3: Iterable[_T3], iter4: Iterable[_T4], strict: bool), (func: (_T1, _T2, _T3, _T4, _T5) -> _S, iterable: Iterable[_T1], iter2: Iterable[_T2], iter3: Iterable[_T3], iter4: Iterable[_T4], iter5: Iterable[_T5], strict: bool), (func: (...) -> _S, iterable: Iterable[Any], iter2: Iterable[Any], iter3: Iterable[Any], iter4: Iterable[Any], iter5: Iterable[Any], iter6: Iterable[Any], *iterables: tuple[Iterable[Any], ...], strict: bool)

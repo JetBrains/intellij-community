@@ -133,9 +133,9 @@ public abstract class FileBasedIndexExtension<K, V> extends IndexExtension<K, V,
    * (e.g. a forward index), or no optimizations at all (slow), or ignore the {@link IdFilter} parameter and deliver all the keys
    * (potentially a lot of unrelated keys reported to {@code Processor}) -- up to implementation to decide.
    * <p>
-   * This capability may speed up index lookup in the case of multiple indexed projects, where significant part of indexes'
-   * content may be unrelated to the current project, and is better filtered away early on. It is unlikely to provide benefits
-   * on a single project case.
+   * This capability may speed up {@link FileBasedIndex#processAllKeys(ID, Processor, GlobalSearchScope, IdFilter)} in case
+   * of multiple indexed projects, where significant part of keys in index may be unrelated to the current project, and is
+   * better to be filtered away early on. It is unlikely to provide benefits in a single project case.
    * <p>
    * <b>BEWARE</b>: This capability is not a free lunch: it builds and maintains a special data structure, which takes up disk
    * space, RAM, and CPU cycles. Also, the first (cold) lookup may be quite slow. I.e. do not enable it blindly: do before/after

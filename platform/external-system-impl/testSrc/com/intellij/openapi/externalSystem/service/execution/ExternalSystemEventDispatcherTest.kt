@@ -4,7 +4,9 @@ package com.intellij.openapi.externalSystem.service.execution
 import com.intellij.build.BuildProgressListener
 import com.intellij.build.BuildViewSettingsProvider
 import com.intellij.build.DefaultBuildDescriptor
+import com.intellij.build.events.BuildEvent
 import com.intellij.build.events.impl.SuccessResultImpl
+import com.intellij.build.output.BuildOutputInstantReader
 import com.intellij.build.output.BuildOutputParser
 import com.intellij.build.progress.BuildProgressDescriptorImpl
 import com.intellij.build.progress.BuildRootProgressImpl
@@ -12,41 +14,53 @@ import com.intellij.execution.process.ProcessOutputType
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskType
+import com.intellij.platform.externalSystem.testFramework.ExternalSystemTestUtil.TEST_EXTERNAL_SYSTEM_ID
 import com.intellij.testFramework.ExtensionTestUtil
-import com.intellij.testFramework.LightPlatformTestCase
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.fixture.disposableFixture
+import com.intellij.testFramework.junit5.fixture.projectFixture
+import com.intellij.testFramework.junit5.fixture.testFixture
 import com.intellij.util.concurrency.Semaphore
 import org.assertj.core.api.Assertions.assertThat
-import java.util.concurrent.atomic.LongAdder
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedClass
+import org.junit.jupiter.params.provider.ValueSource
+import java.util.concurrent.CopyOnWriteArrayList
+import java.util.function.Consumer
 
-class ExternalSystemEventDispatcherTest : LightPlatformTestCase() {
+@TestApplication
+@ParameterizedClass
+@ValueSource(booleans = [false, true])
+class ExternalSystemEventDispatcherTest(useSingleConsole: Boolean) {
 
+  private val disposable by disposableFixture()
+
+  private val settings: BuildViewSettingsProvider by testFixture {
+    initialized(object : BuildViewSettingsProvider {
+      override fun isSingleBuildConsoleView(): Boolean = useSingleConsole
+    }) {}
+  }
+
+  private val project by projectFixture()
+
+  @Test
   fun `test parser execution flow`() {
-    val parserInvocations = LongAdder()
-    val parsers = listOf(
-      BuildOutputParser { _, _, _ -> throw RuntimeException("Bad parser") },
-      BuildOutputParser { _, _, _ ->
-        parserInvocations.increment()
-        return@BuildOutputParser true
-      },
-      BuildOutputParser { _, _, _ ->
-        fail("This parser should not be invoked")
-        throw IllegalStateException()
-      }
-    )
+    val badParser = RecordingBuildOutputParser { throw RuntimeException("Bad parser") }
+    val goodParser = RecordingBuildOutputParser { true }
+    val skippedParser = RecordingBuildOutputParser { true }
+    val parsers = TestOutputParserProvider(listOf(badParser, goodParser, skippedParser))
+    ExtensionTestUtil.maskExtensions(ExternalSystemOutputParserProvider.EP_NAME, listOf(parsers), disposable)
 
-    val eventMessages = mutableListOf<String>()
-    ExtensionTestUtil.maskExtensions(ExternalSystemOutputParserProvider.EP_NAME, listOf(TestParserProvider(parsers)), testRootDisposable)
+    val listener = RecordingBuildProgressListener()
     val semaphore = Semaphore(1)
+    val taskId = ExternalSystemTaskId.create(TEST_EXTERNAL_SYSTEM_ID, ExternalSystemTaskType.EXECUTE_TASK, project)
     val buildDescriptor = DefaultBuildDescriptor(taskId, "test task", "/path", System.currentTimeMillis())
-    val dispatcher = ExternalSystemEventDispatcher(
-      taskId,
-      BuildProgressListener { _, event -> eventMessages += event.message },
-      BuildViewSettingsProvider.EMPTY
-    )
+    val dispatcher = ExternalSystemEventDispatcher(taskId, listener, settings)
     dispatcher.use {
       val buildRootProgress = BuildRootProgressImpl { buildId, event -> dispatcher.notifyBuildEvent(buildId, event) }
       buildRootProgress.start("Build started", BuildProgressDescriptorImpl(buildDescriptor))
-      dispatcher.invokeOnCompletion { eventMessages += "completion message 1" }
+      dispatcher.invokeOnCompletion { listener.messages += "completion message 1" }
       val task1Progress = buildRootProgress.startChildProgress("sub task1 started")
       dispatcher.notifyTextAvailable("Task output line 1\n", ProcessOutputType.STDOUT)
       val task2Progress = buildRootProgress.startChildProgress("sub task2 started")
@@ -55,45 +69,76 @@ class ExternalSystemEventDispatcherTest : LightPlatformTestCase() {
       task1Progress.finish("sub task1 finished", SuccessResultImpl())
       buildRootProgress.finish("Build finished", SuccessResultImpl())
       dispatcher.invokeOnCompletion { throw RuntimeException("Bad happens") }
-      dispatcher.invokeOnCompletion { eventMessages += "completion message 2" }
+      dispatcher.invokeOnCompletion { listener.messages += "completion message 2" }
       dispatcher.invokeOnCompletion { semaphore.up() }
       dispatcher.notifyTextAvailable("Task output line 3\n", ProcessOutputType.STDOUT)
     }
-    dispatcher.invokeOnCompletion { eventMessages += "Late completion message" }
+    dispatcher.invokeOnCompletion { listener.messages += "Late completion message" }
 
     assertTrue(semaphore.waitFor(500))
 
-    assertThat(eventMessages)
+    val progressMessages = listOf(
+      "Build started",
+      "sub task1 started",
+      "sub task2 started",
+      "sub task2 finished",
+      "sub task1 finished",
+    )
+    val outputLines = listOf(
+      "Task output line 1",
+      "Task output line 2",
+      "Task output line 3"
+    )
+    val completionMessages = listOf(
+      "completion message 1",
+      "Build finished",
+      "completion message 2",
+    )
+    val progressAndOutputMessages = when (settings.isSingleBuildConsoleView) {
+      true -> progressMessages + outputLines.map { it + "\n" }
+      else -> progressMessages
+    }
+
+    assertThat(listener.messages)
       .doesNotContain("Late completion message")
-      .hasSize(11)
-    assertSameElements(eventMessages.take(8),
-                       "Build started",
-                       "sub task1 started",
-                       "Task output line 1\n",
-                       "sub task2 started",
-                       "Task output line 2\n",
-                       "sub task2 finished",
-                       "sub task1 finished",
-                       "Task output line 3\n")
+      .hasSize(progressAndOutputMessages.size + completionMessages.size)
+    assertThat(listener.messages.take(progressAndOutputMessages.size))
+      .containsExactlyInAnyOrderElementsOf(progressAndOutputMessages)
+    assertThat(listener.messages.takeLast(completionMessages.size))
+      .containsExactlyElementsOf(completionMessages)
 
-    assertOrderedEquals(eventMessages.takeLast(3),
-                        "completion message 1",
-                        "Build finished",
-                        "completion message 2")
-
-    assertEquals(3, parserInvocations.toInt())
+    assertThat(badParser.lines)
+      .describedAs("The failing parser should be invoked for each line")
+      .containsExactlyElementsOf(outputLines)
+    assertThat(goodParser.lines)
+      .describedAs("The parser after the failing one should be invoked for each line")
+      .containsExactlyElementsOf(outputLines)
+    assertThat(skippedParser.lines)
+      .describedAs("The parser after the consuming one should not be invoked")
+      .isEmpty()
   }
 
-  private class TestParserProvider(val parsers: List<BuildOutputParser>) : ExternalSystemOutputParserProvider {
-    override fun getExternalSystemId(): ProjectSystemId = testSystemId
+  private class RecordingBuildProgressListener : BuildProgressListener {
 
-    override fun getBuildOutputParsers(taskId: ExternalSystemTaskId): List<BuildOutputParser> {
-      return parsers
+    val messages = CopyOnWriteArrayList<String>()
+
+    override fun onEvent(buildId: Any, event: BuildEvent) {
+      messages.add(event.message)
     }
   }
 
-  companion object {
-    private val testSystemId = ProjectSystemId("ExternalSystemEventDispatcherTest")
-    private val taskId = ExternalSystemTaskId.create(testSystemId, ExternalSystemTaskType.EXECUTE_TASK, "ExternalSystemEventDispatcherTest")
+  private class RecordingBuildOutputParser(private val result: () -> Boolean) : BuildOutputParser {
+
+    val lines = CopyOnWriteArrayList<String>()
+
+    override fun parse(line: String, reader: BuildOutputInstantReader, messageConsumer: Consumer<in BuildEvent>): Boolean {
+      lines.add(line)
+      return result()
+    }
+  }
+
+  private class TestOutputParserProvider(val parsers: List<BuildOutputParser>) : ExternalSystemOutputParserProvider {
+    override fun getExternalSystemId(): ProjectSystemId = TEST_EXTERNAL_SYSTEM_ID
+    override fun getBuildOutputParsers(taskId: ExternalSystemTaskId): List<BuildOutputParser> = parsers
   }
 }

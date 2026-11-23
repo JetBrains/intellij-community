@@ -975,6 +975,48 @@ elements:
                   <resource-bundle>messages.Bundle</resource-bundle>
                   ```
         - element:
+            name: technology
+            description: |
+              Declares a technology of JetBrains Light, for example a language ecosystem.
+              A plugin or a content module can contain multiple `<technology>` elements.
+              The key `technology.<id>.name` of the [`<resource-bundle>`](#element:idea-plugin__resource-bundle) of the module
+              wins over the `name` attribute. The key `technology.<id>.description` wins over the `description` attribute.
+            internalNote: This item is internal and should be used only in modules implemented by JetBrains.
+            requirement:
+              required: no
+              details:
+                - A `<depends>` sub-descriptor must not declare a technology.
+            attributes:
+              - attribute:
+                  name: id
+                  requirement:
+                    required: yes
+                  description: |
+                    The technology ID. It is also the stored form of an enabled technology.
+              - attribute:
+                  name: name
+                  requirement:
+                    required: no
+                  description: |
+                    The technology name. It is required when the resource bundle has no key `technology.<id>.name`.
+              - attribute:
+                  name: description
+                  requirement:
+                    required: no
+                  description: |
+                    The technology description.
+              - attribute:
+                  name: icon
+                  requirement:
+                    required: no
+                  description: |
+                    The path of the technology icon in the module.
+            examples:
+              - |
+                ```xml
+                <technology id="rust" name="Rust" description="The Rust language and Cargo" icon="/icons/rust.svg"/>
+                ```
+        - element:
             name: actions
             references:
               - |

@@ -1,10 +1,22 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.junit.codeInspection.deadCode
 
-import com.intellij.junit.testFramework.JUnit5ImplicitUsageProviderTestBase
+import com.intellij.junit.testFramework.MavenTestLib.JUNIT5
+import com.intellij.junit.testFramework.junitProjectFixture
 import com.intellij.jvm.analysis.testFramework.JvmLanguage
+import com.intellij.jvm.analysis.testFramework.jvmImplicitUsageProviderFixture
+import com.intellij.testFramework.junit5.TestApplication
+import org.junit.jupiter.api.Test
 
-class JavaJunit5ImplicitUsageProviderTest : JUnit5ImplicitUsageProviderTestBase() {
+@TestApplication
+class JavaJunit5ImplicitUsageProviderTest {
+  companion object {
+    private val projectFixture = junitProjectFixture(JUNIT5)
+  }
+
+  private val myFixture by jvmImplicitUsageProviderFixture(projectFixture)
+
+  @Test
   fun `test method source inner annotation`() {
     myFixture.testHighlighting(JvmLanguage.JAVA, """
       import java.lang.annotation.*;
@@ -30,6 +42,7 @@ class JavaJunit5ImplicitUsageProviderTest : JUnit5ImplicitUsageProviderTestBase(
     """)
   }
 
+  @Test
   fun `test method source outer annotation`() {
     myFixture.testHighlighting(JvmLanguage.JAVA, """
       import java.lang.annotation.*;
@@ -55,6 +68,7 @@ class JavaJunit5ImplicitUsageProviderTest : JUnit5ImplicitUsageProviderTestBase(
     """)
   }
 
+  @Test
   fun `test method source direct link`() {
     myFixture.addClass("""
       package org.example;
@@ -98,6 +112,7 @@ class JavaJunit5ImplicitUsageProviderTest : JUnit5ImplicitUsageProviderTestBase(
     myFixture.checkHighlighting()
   }
 
+  @Test
   fun `test method source missing link`() {
     myFixture.addClass("""
       package org.example;
@@ -136,6 +151,7 @@ class JavaJunit5ImplicitUsageProviderTest : JUnit5ImplicitUsageProviderTestBase(
     myFixture.checkHighlighting()
   }
 
+  @Test
   fun `test implicit usage of enum source`() {
     myFixture.testHighlighting(JvmLanguage.JAVA, """
       class Test {
@@ -152,6 +168,7 @@ class JavaJunit5ImplicitUsageProviderTest : JUnit5ImplicitUsageProviderTestBase(
     """.trimIndent())
   }
 
+  @Test
   fun `test implicit usage of parameter in parameterized test`() {
     myFixture.testHighlighting(JvmLanguage.JAVA, """
       class MyTest {
@@ -161,6 +178,7 @@ class JavaJunit5ImplicitUsageProviderTest : JUnit5ImplicitUsageProviderTestBase(
    """.trimIndent())
   }
 
+  @Test
   fun `test implicit usage of multiple parameters in parameterized test`() {
     myFixture.testHighlighting(JvmLanguage.JAVA, """
       import org.junit.jupiter.params.provider.Arguments;
@@ -178,6 +196,7 @@ class JavaJunit5ImplicitUsageProviderTest : JUnit5ImplicitUsageProviderTestBase(
    """.trimIndent())
   }
 
+  @Test
   fun `test unused parameter when not in display name`() {
     myFixture.testHighlighting(JvmLanguage.JAVA, """
       class MyTest {
@@ -188,6 +207,7 @@ class JavaJunit5ImplicitUsageProviderTest : JUnit5ImplicitUsageProviderTestBase(
    """.trimIndent())
   }
 
+  @Test
   fun `test implicit usage of method in parameterized test`() {
     myFixture.testHighlighting(JvmLanguage.JAVA, """
     class MyTest {
@@ -207,6 +227,7 @@ class JavaJunit5ImplicitUsageProviderTest : JUnit5ImplicitUsageProviderTestBase(
     """.trimIndent())
   }
 
+  @Test
   fun `test implicit usage of field in parameterized test`() {
     myFixture.testHighlighting(JvmLanguage.JAVA, """
     class MyTest {
@@ -226,6 +247,7 @@ class JavaJunit5ImplicitUsageProviderTest : JUnit5ImplicitUsageProviderTestBase(
     """.trimIndent())
   }
 
+  @Test
   fun `test implicit usage of method source with implicit method name`() {
     myFixture.testHighlighting(JvmLanguage.JAVA, """
       import java.util.stream.*;
@@ -244,6 +266,7 @@ class JavaJunit5ImplicitUsageProviderTest : JUnit5ImplicitUsageProviderTestBase(
     """.trimIndent())
   }
 
+  @Test
   fun `test usage of method source with method name`() {
     myFixture.testHighlighting(JvmLanguage.JAVA, """
       import java.util.stream.*;
@@ -266,6 +289,7 @@ class JavaJunit5ImplicitUsageProviderTest : JUnit5ImplicitUsageProviderTestBase(
     """.trimIndent())
   }
 
+  @Test
   fun `test usage of field source with field name`() {
     myFixture.testHighlighting(JvmLanguage.JAVA, """
       import java.util.stream.*;
@@ -283,6 +307,7 @@ class JavaJunit5ImplicitUsageProviderTest : JUnit5ImplicitUsageProviderTestBase(
     """.trimIndent())
   }
 
+  @Test
   fun `test implicit usage of TempDir as direct annotation`() {
     myFixture.testHighlighting(JvmLanguage.JAVA, """
       class Test {
@@ -298,6 +323,7 @@ class JavaJunit5ImplicitUsageProviderTest : JUnit5ImplicitUsageProviderTestBase(
     """.trimIndent())
   }
 
+  @Test
   fun `test implicit usage of TempDir as meta annotation`() {
     myFixture.testHighlighting(JvmLanguage.JAVA, """
       import java.lang.annotation.*;
@@ -320,6 +346,7 @@ class JavaJunit5ImplicitUsageProviderTest : JUnit5ImplicitUsageProviderTestBase(
     """.trimIndent())
   }
 
+  @Test
   fun `test implicit usage of field source field`() {
     myFixture.testHighlighting(JvmLanguage.JAVA, """
       import org.junit.jupiter.params.ParameterizedTest;
@@ -338,6 +365,7 @@ class JavaJunit5ImplicitUsageProviderTest : JUnit5ImplicitUsageProviderTestBase(
     """.trimIndent())
   }
 
+  @Test
   fun `test implicit usage of field source`() {
     myFixture.testHighlighting(JvmLanguage.JAVA, """
       import org.junit.jupiter.params.ParameterizedTest;
@@ -356,6 +384,7 @@ class JavaJunit5ImplicitUsageProviderTest : JUnit5ImplicitUsageProviderTestBase(
     """.trimIndent())
   }
 
+  @Test
   fun `test implicit usage of field source multiple fields`() {
     myFixture.testHighlighting(JvmLanguage.JAVA, """
       import org.junit.jupiter.params.ParameterizedTest;
@@ -375,6 +404,7 @@ class JavaJunit5ImplicitUsageProviderTest : JUnit5ImplicitUsageProviderTestBase(
     """.trimIndent())
   }
 
+  @Test
   fun `test field source inner annotation`() {
     myFixture.testHighlighting(JvmLanguage.JAVA, """
       import java.lang.annotation.*;
@@ -399,6 +429,7 @@ class JavaJunit5ImplicitUsageProviderTest : JUnit5ImplicitUsageProviderTestBase(
     """.trimIndent())
   }
 
+  @Test
   fun `test field source outer annotation`() {
     myFixture.testHighlighting(JvmLanguage.JAVA, """
       import java.lang.annotation.*;
@@ -423,6 +454,7 @@ class JavaJunit5ImplicitUsageProviderTest : JUnit5ImplicitUsageProviderTestBase(
     """.trimIndent())
   }
 
+  @Test
   fun `test field source direct link`() {
     myFixture.addClass("""
       package org.example;
@@ -462,6 +494,7 @@ class JavaJunit5ImplicitUsageProviderTest : JUnit5ImplicitUsageProviderTestBase(
     myFixture.checkHighlighting()
   }
 
+  @Test
   fun `test malformed nested should be used highlighting`() {
     myFixture.addClass("""
       package org.example;

@@ -60,7 +60,7 @@ internal class KotlinDslBaseScriptSyncContributor : GradleSyncContributor {
     }
 }
 
-private data class GradleKotlinDslBaseScriptEntitySource(
+internal data class GradleKotlinDslBaseScriptEntitySource(
     override val projectPath: String,
     override val phase: GradleSyncPhase
 ) : GradleKotlinScriptEntitySource

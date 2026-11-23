@@ -1,20 +1,21 @@
 package com.intellij.codeInspection.tests.kotlin.test
 
-import com.intellij.jvm.analysis.internal.testFramework.test.AssertEqualsBetweenInconvertibleTypesInspectionTestBase
+import com.intellij.jvm.analysis.addKotlinRuntime
+import com.intellij.jvm.analysis.internal.testFramework.test.assertEqualsBetweenInconvertibleTypesInspectionFixture
+import com.intellij.jvm.analysis.internal.testFramework.test.assertEqualsBetweenInconvertibleTypesProjectFixture
 import com.intellij.jvm.analysis.testFramework.JvmLanguage
+import com.intellij.testFramework.junit5.TestApplication
 import org.intellij.lang.annotations.Language
-import org.jetbrains.kotlin.idea.test.ConfigLibraryUtil
-import org.junit.Ignore
-import org.junit.Test
-import org.junit.runner.RunWith
-import org.junit.runners.BlockJUnit4ClassRunner
+import org.junit.jupiter.api.Disabled
+import org.junit.jupiter.api.Test
 
-@RunWith(BlockJUnit4ClassRunner::class)
-abstract class KotlinAssertEqualsBetweenInconvertibleTypesInspectionTest : AssertEqualsBetweenInconvertibleTypesInspectionTestBase() {
-  override fun setUp() {
-    super.setUp()
-    ConfigLibraryUtil.configureKotlinRuntime(myFixture.module)
+@TestApplication
+abstract class KotlinAssertEqualsBetweenInconvertibleTypesInspectionTest {
+  companion object {
+    private val projectFixture = assertEqualsBetweenInconvertibleTypesProjectFixture { addKotlinRuntime() }
   }
+
+  protected val myFixture by assertEqualsBetweenInconvertibleTypesInspectionFixture(projectFixture)
 
   @Test
   fun `JUnit 4 assertEquals`() {
@@ -765,7 +766,7 @@ abstract class KotlinAssertEqualsBetweenInconvertibleTypesInspectionTest : Asser
     myFixture.testHighlighting(JvmLanguage.KOTLIN, code)
   }
 
-  @Ignore("We are aware of this edge case, but do not support it for now. See IDEA-360595")
+  @Disabled("We are aware of this edge case, but do not support it for now. See IDEA-360595")
   @Test
   fun `AssertJ assertEquals List and Stream with non-matching generics (more complex case)`() {
     @Language("kotlin") val code = """
@@ -1044,7 +1045,7 @@ abstract class KotlinAssertEqualsBetweenInconvertibleTypesInspectionTest : Asser
     myFixture.testHighlighting(JvmLanguage.KOTLIN, code)
   }
 
-  @Ignore("We are aware of this edge case, but it seems not possible to fix with the current UAST API. See IDEA-362694")
+  @Disabled("We are aware of this edge case, but it seems not possible to fix with the current UAST API. See IDEA-362694")
   @Test
   fun `Kotlin inline value class (JUnit 4)`() {
     @Language("kotlin") val code = """

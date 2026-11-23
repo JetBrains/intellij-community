@@ -714,6 +714,11 @@
         <option name="FONT_TYPE" value="0" />
       </value>
     </option>
+    <option name="MARKDOWN_LIST_MARKER">
+      <value>
+        <option name="FOREGROUND" value="999999" />
+      </value>
+    </option>
     <option name="MARKED_FOR_REMOVAL_ATTRIBUTES">
       <value>
         <option name="EFFECT_COLOR" value="ff0d25" />

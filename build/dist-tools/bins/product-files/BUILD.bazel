@@ -1,0 +1,8 @@
+load("//build/dist-tools:defs.bzl", "dist_rust_crate")
+
+dist_rust_crate(
+    name = "product-files",
+    closure = True,
+    # The tests fill the macOS app template of the repository.
+    test_data = ["//platform/build-scripts:mac_app_template"],
+)

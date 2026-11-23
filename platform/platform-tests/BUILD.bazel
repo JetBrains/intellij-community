@@ -1,6 +1,5 @@
 load("@community//build:bazel_targets_json.bzl", "current_bazel_targets_json")
 load("@community//build:tests-options.bzl", "jps_test")
-load("@jps_dynamic_deps_community//:targets.bzl", "ALL_COMMUNITY_TARGETS")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 BAZEL_TARGETS_JSON = current_bazel_targets_json()
@@ -14,7 +13,7 @@ filegroup(
 jps_test(
     name = "tests_test",
     timeout = "eternal",
-    data = ALL_COMMUNITY_TARGETS + [BAZEL_TARGETS_JSON],
+    data = [BAZEL_TARGETS_JSON],
     env_inherit = [
         "LANG",
         "SHELL",
@@ -248,6 +247,7 @@ jvm_library(
         "//libraries/junit6-params",
         "//plugins/webp/tests:tests_test_lib",
         "//platform/searchEverywhere/backend",
+        "//platform/searchEverywhere/shared:searchEverywhere",
         "//aether-dependency-resolver/plugin",
         "//java/java-backend:backend",
         "//java/plugin",

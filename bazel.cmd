@@ -55,8 +55,8 @@ if [ ! -x "$binary_path" ]; then
         echo "ERROR: please install curl or wget" >&2
         exit 1
     fi
+    chmod +x "$binary_path.tmp.$$"
     mv "$binary_path.tmp.$$" "$binary_path"
-    chmod +x "$binary_path"
 fi
 
 exec "$binary_path" "$@"

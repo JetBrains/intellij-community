@@ -7,7 +7,7 @@ import com.intellij.psi.PsiPackage
 import com.intellij.psi.impl.JavaPsiFacadeEx
 import com.intellij.testFramework.TestIndexingModeSupporter
 
-open class JavaIndexingModeCodeInsightTestFixture private constructor(delegate: JavaCodeInsightTestFixture,
+open class JavaIndexingModeCodeInsightTestFixture protected constructor(delegate: JavaCodeInsightTestFixture,
                                                                       indexingMode: TestIndexingModeSupporter.IndexingMode) :
   IndexingModeCodeInsightTestFixture<JavaCodeInsightTestFixture>(delegate, indexingMode), JavaCodeInsightTestFixture {
 

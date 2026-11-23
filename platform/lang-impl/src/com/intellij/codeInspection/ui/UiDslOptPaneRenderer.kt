@@ -37,6 +37,7 @@ import com.intellij.openapi.options.ex.ConfigurableVisitor
 import com.intellij.openapi.options.ex.Settings
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Iconable
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.openapi.wm.IdeFocusManager
@@ -77,6 +78,7 @@ import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil.setEnabledRecursively
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.Nls
 import java.awt.EventQueue
 import javax.swing.ComboBoxModel
 import javax.swing.DefaultComboBoxModel
@@ -331,8 +333,17 @@ class UiDslOptPaneRenderer : OptionPaneRenderer {
         }
       
         is OptMultiSelector -> {
-          val list = JBList(component.elements).apply {
+          val groups = groupByName(component.elements)
+          val elements = groups?.flatMap { it.second } ?: component.elements
+          val separators = HashMap<Int, @NlsContexts.Separator String>()
+          var groupStart = 0
+          groups?.forEach { (name, members) ->
+            if (name != null) separators[groupStart] = name
+            groupStart += members.size
+          }
+          val list = JBList(elements).apply {
             cellRenderer = listCellRenderer {
+              separators[index]?.let { separator { text = it } }
               (value as? Iconable)?.getIcon(0)?.let {
                 icon(it)
               }
@@ -361,7 +372,7 @@ class UiDslOptPaneRenderer : OptionPaneRenderer {
                 -> ListSelectionModel.MULTIPLE_INTERVAL_SELECTION
             }
             selectedIndices = (context.getOption(component.bindId) as? List<*>)
-                                ?.map { component.elements().indexOf(it) }
+                                ?.map { elements.indexOf(it) }
                                 ?.toList()
                                 ?.let { list -> IntArray(list.size) { n -> list[n] } }
                               ?: IntArray(0)
@@ -546,6 +557,22 @@ class UiDslOptPaneRenderer : OptionPaneRenderer {
 
   private val OptComponent.hasResizableRow: Boolean
     get() = this is OptStringList || this is OptTable || this is OptMultiSelector
+
+  /**
+   * Groups the elements of a multi-selector by [OptMultiSelector.OptElement.getGroupName].
+   * The groups keep the order of the first element of each group, and each group keeps the order of its elements.
+   * The elements without a group name are a group with the null name.
+   *
+   * @return the groups, or null if all elements are in one group
+   */
+  private fun groupByName(elements: List<OptMultiSelector.OptElement>): List<Pair<@Nls String?, List<OptMultiSelector.OptElement>>>? {
+    val groups = LinkedHashMap<@Nls String?, MutableList<OptMultiSelector.OptElement>>()
+    for (element in elements) {
+      groups.getOrPut(element.groupName) { ArrayList() }.add(element)
+    }
+    if (groups.size < 2) return null
+    return groups.toList()
+  }
 
   private fun convertItem(key: String, type: Class<*>): Any {
     @Suppress("UNCHECKED_CAST")

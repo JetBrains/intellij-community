@@ -38,6 +38,7 @@ import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.refactoring.modplan.impl.ModPlanFlow;
 import com.intellij.refactoring.rename.RenameProcessor;
 import com.intellij.refactoring.rename.RenamePsiElementProcessor;
 import com.intellij.refactoring.rename.RenameUtil;
@@ -313,6 +314,11 @@ public class MemberInplaceRenamer extends VariableInplaceRenamer {
       if (factory.getOptionName() != null && factory.isEnabled() && factory.isApplicable(element)) {
         renameProcessor.addRenamerFactory(factory);
       }
+    }
+    // The text of the template is rolled back already, so the rename starts from the code as it was.
+    if (renameProcessor.getClass() == MyRenameProcessor.class && renameProcessor.runOnModPlan(false) != ModPlanFlow.Result.LEGACY) {
+      restoreCaretOffsetAfterRename();
+      return;
     }
     renameProcessor.run();
   }

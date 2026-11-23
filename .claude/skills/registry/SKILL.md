@@ -6,8 +6,6 @@ description: Use the IntelliJ Registry API for registry keys and feature flags.
 
 # Working with Registry
 
-Guidelines for using the IntelliJ Registry API.
-
 ## Documentation
 
 - **Defining Registry Keys**: [Registry.md](../../../../docs/IntelliJ-Platform/4_man/Registry.md) - How to declare keys in `plugin.xml` or `registry.properties`
@@ -26,14 +24,7 @@ Always prefer declaring in `plugin.xml` (not `registry.properties`):
              restartRequired="false"/>
 ```
 
-To override in a dependent plugin:
-```xml
-<registryKey key="my.feature.enabled"
-             defaultValue="false"
-             description="Enables my feature"
-             restartRequired="false"
-             overrides="true"/>
-```
+To override the default value in a dependent plugin, repeat the declaration with the new `defaultValue` and add `overrides="true"`.
 
 ### Accessing the Registry
 In suspending code:
@@ -55,7 +46,6 @@ When code may run before `COMPONENTS_LOADED` state (e.g., during EULA dialog, sp
 you MUST use `Registry.is(key, defaultValue)` with an explicit default:
 
 ```kotlin
-// Required for early startup code
 Registry.`is`("my.key", false)  // default must match registry.properties
 ```
 
@@ -63,7 +53,7 @@ Registry.`is`("my.key", false)  // default must match registry.properties
 1. Search in `community/platform/util/resources/misc/registry.properties`
 2. Or check the `<registryKey>` declaration in `plugin.xml`
 
-**Why:** `Registry.is(key)` without default throws an exception if called before
+**Why:** `Registry.is(key)` without default logs an error or throws an exception if called before
 `LoadingState.COMPONENTS_LOADED`. The safe overload returns the provided default
 when Registry is not yet initialized.
 
@@ -76,12 +66,6 @@ For testing or run configurations:
 
 ## Registry in Tests
 
-Use `@RegistryKey` annotation instead of `Registry.get().setValue()`:
+Use the `@RegistryKey(key = "my.registry.key", value = "true")` annotation on the test method instead of `Registry.get().setValue()`.
 
-```kotlin
-@Test
-@RegistryKey(key = "my.registry.key", value = "true")
-fun testWithRegistryEnabled() { ... }
-```
-
-See [writing-tests.md](../writing-tests/SKILL.md#registry-values-in-tests) for more test patterns.
+See [writing-tests](../writing-tests/SKILL.md#registry-values-in-tests) for more test patterns.

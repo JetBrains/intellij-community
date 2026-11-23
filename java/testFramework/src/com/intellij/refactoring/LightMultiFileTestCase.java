@@ -15,6 +15,10 @@ import org.jetbrains.annotations.NotNull;
 import java.io.File;
 import java.nio.file.Path;
 
+/**
+ * @deprecated Use {@link LightMultiFileFixtureKt#lightMultiFileFixture} in a JUnit 5 test.
+ */
+@Deprecated
 public abstract class LightMultiFileTestCase extends LightJavaCodeInsightFixtureTestCase {
   protected void doTest(final ThrowableRunnable<? extends Exception> performAction) {
     doTest(performAction, getTestName(true));

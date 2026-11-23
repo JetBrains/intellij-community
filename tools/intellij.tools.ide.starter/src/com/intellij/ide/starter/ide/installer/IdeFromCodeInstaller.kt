@@ -12,6 +12,7 @@ import com.intellij.ide.starter.models.IdeInfo
 import com.intellij.ide.starter.models.VMOptions
 import com.intellij.ide.starter.models.VMOptionsDiff
 import com.intellij.ide.starter.path.GlobalPaths
+import com.intellij.ide.starter.process.findAndKillProcessesBySubPathInArguments
 import com.intellij.ide.starter.runner.AdditionalModulesForDevBuildServer
 import com.intellij.ide.starter.runner.DevBuildServerRunner
 import com.intellij.ide.starter.runner.FINGERPRINT_DEBUG_FILE_NAME
@@ -34,6 +35,7 @@ import kotlin.io.path.ExperimentalPathApi
 import kotlin.io.path.appendLines
 import kotlin.io.path.deleteRecursively
 import kotlin.io.path.exists
+import kotlin.io.path.name
 import kotlin.io.path.pathString
 
 class IdeFromCodeInstaller(private val useInstallationCache: Boolean = true) : IdeInstaller {
@@ -218,7 +220,7 @@ class IdeFromCodeInstaller(private val useInstallationCache: Boolean = true) : I
 
     // usually is only needed to save agent's space
     @OptIn(ExperimentalPathApi::class)
-    fun cleanUpCachedInstallationDirectories(filter: (IdeInfo) -> Boolean = { true }) {
+    suspend fun cleanUpCachedInstallationDirectories(filter: (IdeInfo) -> Boolean = { true }) {
       if (!DevBuildServerRunner.instance.ownsInstallationDirectory) {
         // The cached directory is a build artifact this test only borrowed - see `DevBuildServerRunner.ownsInstallationDirectory`.
         logOutput("Keeping ${cachedInstallationDirectories.size} installation directories: they are not this test run's to delete")
@@ -226,8 +228,11 @@ class IdeFromCodeInstaller(private val useInstallationCache: Boolean = true) : I
       }
       cachedInstallationDirectories.filter { filter(it.key.ideInfo) }.forEach {
         logOutput("Cleaning up cached installation directory: ${it.value}")
-        it.value.deleteRecursively()
+        // A child process of the IDE can outlive it and lock files of the directory, as the .NET backend of CLion does on Windows.
+        findAndKillProcessesBySubPathInArguments(it.value.name)
+        // `install` takes an existing directory as a complete installation, and a failed delete leaves a partial one.
         cachedInstallationDirectories.remove(it.key)
+        it.value.deleteRecursively()
       }
     }
   }

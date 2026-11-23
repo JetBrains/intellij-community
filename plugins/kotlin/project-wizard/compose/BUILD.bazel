@@ -103,6 +103,8 @@ jvm_library(
         "//java/testFramework",
         "//java/java-tests:tests_test_lib",
         "//libraries/junit4",
+        "//platform/testFramework/junit5",
+        "//libraries/junit6",
     ],
 )
 ### auto-generated section `build intellij.kotlin.projectWizard.compose.tests` end

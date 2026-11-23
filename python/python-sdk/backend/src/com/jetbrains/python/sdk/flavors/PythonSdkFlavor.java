@@ -15,6 +15,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.python.community.execService.python.VersionParserKt;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
+import com.intellij.util.concurrency.annotations.RequiresReadLockAbsence;
 import com.jetbrains.python.parser.icons.PythonParserIcons;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.run.CommandLinePatcher;
@@ -148,6 +149,8 @@ public abstract class PythonSdkFlavor<D extends PyFlavorData> {
    * On local targets some flavors could be detected. It returns a path to python interpreters for such cases.
    */
   @RequiresBackgroundThread(generateAssertion = false)
+  // External plugins call this, and their threads are unknown.
+  @RequiresReadLockAbsence(generateAssertion = false)
   public final @NotNull Collection<@NotNull Path> suggestLocalHomePaths(final @Nullable Module module,
                                                                         final @Nullable UserDataHolder context) {
     return suggestLocalHomePathsImpl(module, context).stream().filter(path -> {
@@ -233,6 +236,8 @@ public abstract class PythonSdkFlavor<D extends PyFlavorData> {
   //No warning yet as there are usages: to be fixed
   @Deprecated(forRemoval = true)
   @RequiresBackgroundThread(generateAssertion = false)
+  // Off until PY-93940.
+  @RequiresReadLockAbsence(generateAssertion = false)
   public static @Nullable PythonSdkFlavor<?> getFlavor(@Nullable String sdkPath) {
     if (sdkPath == null || CustomSdkHomePattern.isCustomPythonSdkHomePath(sdkPath)) return null;
     return tryDetectFlavorByLocalPath(Path.of(sdkPath));
@@ -243,6 +248,8 @@ public abstract class PythonSdkFlavor<D extends PyFlavorData> {
    */
   @ApiStatus.Internal
   @RequiresBackgroundThread(generateAssertion = false) //No warning yet as there are usages: to be fixed
+  // Off until PY-93940.
+  @RequiresReadLockAbsence(generateAssertion = false)
   public static @Nullable PythonSdkFlavor<?> tryDetectFlavorByLocalPath(@NotNull Path pythonBinaryPath) {
     // Iterate over all flavors starting with platform-independent (like venv): see `getApplicableFlavors` doc.
     // Order is important as venv must have priority over unix/windows
@@ -258,6 +265,9 @@ public abstract class PythonSdkFlavor<D extends PyFlavorData> {
    * It only validates path for local target
    */
   @ApiStatus.Internal
+  @RequiresBackgroundThread(generateAssertion = false)
+  // Off until PY-93940.
+  @RequiresReadLockAbsence(generateAssertion = false)
   public boolean isValidSdkPath(@NotNull Path pythonBinaryPath) {
     return Files.exists(pythonBinaryPath) && Files.isExecutable(pythonBinaryPath);
   }
@@ -269,6 +279,8 @@ public abstract class PythonSdkFlavor<D extends PyFlavorData> {
   @Deprecated(forRemoval = true)
   //because of process output
   @RequiresBackgroundThread(generateAssertion = false)
+  // Off until PY-93940.
+  @RequiresReadLockAbsence(generateAssertion = false)
   public static @Nullable String getVersionStringStatic(@Nullable String sdkHome) {
     if (sdkHome == null) {
       return null;

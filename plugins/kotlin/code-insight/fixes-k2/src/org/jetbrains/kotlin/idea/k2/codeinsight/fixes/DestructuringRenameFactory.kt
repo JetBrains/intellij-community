@@ -30,6 +30,11 @@ internal object DestructuringRenameFactory {
         return targetName to allExpectedNames
     }
 
+    private fun KtDestructuringDeclarationEntry.hasNameMismatch(expectedName: Name): Boolean {
+        val currentName = nameAsName ?: return false
+        return currentName.asString() != "_" && currentName != expectedName
+    }
+
     context(_: KaSession)
     private fun createFix(psi: PsiElement): List<RenameDestructuringEntriesToMatchPropertiesFix> {
         val entry = psi as? KtDestructuringDeclarationEntry ?: return emptyList()
@@ -37,11 +42,10 @@ internal object DestructuringRenameFactory {
         if (declaration.isFullForm || declaration.hasSquareBrackets() || declaration.entries.isEmpty()) return emptyList()
 
         val (expected, expectedNames) = expectedNameForEntry(entry, declaration) ?: return emptyList()
-        val current = entry.nameAsName ?: return emptyList()
-        if (current == expected) return emptyList()
+        if (!entry.hasNameMismatch(expected)) return emptyList()
 
         val mismatchesCount = declaration.entries.zip(expectedNames).count { (entry, expectedName) ->
-            entry.nameAsName?.let { it != expectedName } == true
+            entry.hasNameMismatch(expectedName)
         }
 
         return listOf(RenameDestructuringEntriesToMatchPropertiesFix(entry, expected, expectedNames, mismatchesCount))
@@ -73,11 +77,7 @@ internal object DestructuringRenameFactory {
             val entries = declaration.entries
             if (entries.size != expectedNames.size) return
 
-            val mismatched = entries.mapIndexedNotNull { index, entry ->
-                    val name = entry.nameAsName ?: return@mapIndexedNotNull null
-                    val expected = expectedNames[index]
-                    if (name == expected) null else entry to expected
-                }
+            val mismatched = entries.zip(expectedNames).filter { (entry, expectedName) -> entry.hasNameMismatch(expectedName) }
             if (mismatched.isEmpty()) return
 
             val (firstElementToRename, firstNameToRename) = mismatched.first()

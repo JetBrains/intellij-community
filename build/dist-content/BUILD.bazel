@@ -1,0 +1,17 @@
+# The package of `dist_content_sets.bzl`, which holds `DIST_PLUGIN_COMPONENTS`, the component map of every
+# community product. The community half of the distribution generator writes the map.
+#
+# Its own package, and not `//build`, for the reason `//build/dist-content` of the ultimate checkout gives: the
+# map stays readable without the module extension that `build/BUILD.bazel` loads.
+#
+# Hand-written. It holds one `<product>_plugin_components` target per product, so `bazel build //...` builds every
+# component once under a product, on every platform.
+
+load("//build:dist_product_info.bzl", "DIST_PRODUCT_INFO")
+load("//platform/build-scripts/bazel-rules:dist_content.bzl", "dist_plugin_component_builds")
+load(":dist_content_sets.bzl", "DIST_PLUGIN_COMPONENTS")
+
+dist_plugin_component_builds(
+    components = DIST_PLUGIN_COMPONENTS,
+    modes = {product: info.mode for product, info in DIST_PRODUCT_INFO.items()},
+)

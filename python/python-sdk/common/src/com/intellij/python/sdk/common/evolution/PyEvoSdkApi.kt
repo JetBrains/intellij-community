@@ -1,5 +1,6 @@
 package com.intellij.python.sdk.common.evolution
 
+import com.intellij.python.sdk.common.PythonInterpreterProblem
 import com.intellij.python.sdk.common.PyInterpreterRef
 import com.intellij.ide.ui.icons.IconId
 import com.intellij.python.sdk.common.EvoRowAction
@@ -22,8 +23,7 @@ import org.jetbrains.annotations.NonNls
 private val LOG: Logger = fileLogger()
 
 /**
- * Split-mode wire contract for the "Evo" Python interpreter widget
- * (registry `python.evolution.widget`).
+ * Split-mode wire contract for the "Evo" Python interpreter widget.
  *
  * All Python-SDK discovery is backend-only, so the frontend widget/popup obtain their display data
  * through these read-only RPC calls and render it into UI; [selectInterpreter] is the single mutating
@@ -278,10 +278,6 @@ suspend fun requestEvoResolveVersion(projectId: ProjectId, pyProjectKey: String,
   PyEvoSdkApi().resolveInterpreterVersion(projectId, pyProjectKey, nodeId, homePath, traceId)
 
 @ApiStatus.Internal
-suspend fun requestEvoAddInterpreter(projectId: ProjectId, pyProjectKey: String, nodeId: String): EvoSelectResultDto =
-  PyEvoSdkApi().addInterpreter(projectId, pyProjectKey, nodeId)
-
-@ApiStatus.Internal
 suspend fun requestEvoPerformNodeAction(projectId: ProjectId, pyProjectKey: String, nodeId: String, actionId: String): EvoSelectResultDto =
   PyEvoSdkApi().performNodeAction(projectId, pyProjectKey, nodeId, actionId)
 
@@ -330,6 +326,12 @@ data class PyInterpreterDto(
    * then lists every tool, as it did before, rather than promoting a node it guessed at.
    */
   val activeNodeId: @NonNls String? = null,
+  /**
+   * Why this interpreter cannot be used, or `null` when it can. An interpreter that an interpreter library entry names
+   * while its environment is gone has one: the widget shows it as unavailable, and offers to install its tool or to make
+   * its environment again instead of a current environment.
+   */
+  val problem: PythonInterpreterProblem? = null,
 )
 
 
@@ -373,6 +375,20 @@ data class EvoPyProjectDto(
    * never asked about renders from what another project on the same interpreter already fetched (PY-90174).
    */
   val interpreterRef: PyInterpreterRef? = null,
+  /**
+   * Whether the popup offers the tools and their actions for this `PyProject` — the backend's answer to
+   * `areToolsEnabledFor`, which only it can give: the gate asks about the project's eel, and the frontend's own
+   * machine is the user's laptop even when the project lives on an SSH host (PY-94224).
+   */
+  val toolsEnabled: Boolean = true,
+  /**
+   * Every content root of the module this `PyProject` resides on, in system-independent form, [key] among them.
+   *
+   * Stated here because a frontend with no module model of its own cannot read it, and it is how such a frontend
+   * answers "which `PyProject` holds this file" — see `pyProjectForPath` (PY-94235). Defaults to empty, which is
+   * wire-compatible and leaves the match to [key] alone.
+   */
+  val contentRoots: List<@NonNls String> = emptyList(),
 )
 
 /**

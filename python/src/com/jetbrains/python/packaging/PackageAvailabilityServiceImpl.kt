@@ -5,29 +5,22 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.ProjectCloseListener
-import com.intellij.python.sdk.backend.PythonSdkTable
-import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ProjectFileIndex
-import com.intellij.openapi.util.UserDataHolderBase
-import com.intellij.openapi.util.removeUserData
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.util.QualifiedName
 import com.intellij.python.sdk.backend.PythonInterpreter
-import com.intellij.python.sdk.backend.findPythonInterpreterIfReady
 import com.jetbrains.python.configuration.findModuleInterpreterIfReady
 import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.psi.resolve.PackageAvailabilityService
 import com.jetbrains.python.psi.resolve.PackageAvailabilitySpec
 import com.jetbrains.python.psi.resolve.PyResolveCachesInvalidator
 import com.jetbrains.python.psi.resolve.fromInterpreter
-import com.jetbrains.python.psi.resolve.isPackageAvailableKey
 import com.jetbrains.python.psi.resolve.resolveQualifiedName
 import com.jetbrains.python.pyi.PyiFile
-import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus
+import java.util.concurrent.ConcurrentHashMap
 
 /**
  * Checks if any of the fully-qualified names can be resolved to a real .py file (not .pyi stub)
@@ -67,21 +60,7 @@ fun canResolveFqn(project: Project, interpreter: PythonInterpreter, fqns: List<S
  * Implementation of [PackageAvailabilityService] that uses [PythonPackageManager]
  * for fast package lookups with PSI resolution fallback.
  */
-internal class PackageAvailabilityServiceImpl(val cs: CoroutineScope) : PackageAvailabilityService {
-
-  init {
-    val messageBus = ApplicationManager.getApplication().messageBus
-    messageBus.connect(cs).subscribe(ProjectCloseListener.TOPIC, object : ProjectCloseListener {
-      override fun projectClosed(project: Project) {
-        PythonSdkTable.pythonSdksOfEveryTier().forEach { sdk ->
-          check(sdk is UserDataHolderBase)
-          sdk.userMap.keys.filter{ it.isPackageAvailableKey() }.forEach {
-            sdk.removeUserData(it)
-          }
-        }
-      }
-    })
-  }
+internal class PackageAvailabilityServiceImpl : PackageAvailabilityService {
 
   override fun isPackageAvailable(module: Module, spec: PackageAvailabilitySpec): Boolean {
     val interpreter = findModuleInterpreterIfReady(module) ?: return false
@@ -95,26 +74,24 @@ internal class PackageAvailabilityServiceImpl(val cs: CoroutineScope) : PackageA
     return canResolveFqnCached(module, spec)
   }
 
-  override fun isPackageAvailable(project: Project, sdk: Sdk, spec: PackageAvailabilitySpec): Boolean {
-    // Sync, so it does not wait. An SDK that this project holds no interpreter for has no packages to look at.
-    val interpreter = project.findPythonInterpreterIfReady(sdk) ?: return false
+  override fun isPackageAvailable(project: Project, interpreter: PythonInterpreter, spec: PackageAvailabilitySpec): Boolean {
     // 1. First check package manager (has its own snapshot cache)
     if (isPackageInstalledInPackageManager(project, interpreter, spec.packageName)) {
       return true
     }
 
     // 2. Fallback to cached PSI resolution
-    return canResolveFqnCached(project, sdk, interpreter, spec)
+    return canResolveFqnCached(project, interpreter, spec)
   }
 
   override fun installedPackageVersion(project: Project, interpreter: PythonInterpreter, packageName: String): String? {
     val normalizedName = PyPackageName.from(packageName)
-    return PythonPackageManager.forPythonInterpreter(project, interpreter).listInstalledPackagesSnapshot()
+    return PythonPackageManager.forPythonInterpreter(interpreter).listInstalledPackagesSnapshot()
       .firstOrNull { it.normalizedName == normalizedName }?.version
   }
 
   private fun isPackageInstalledInPackageManager(project: Project, interpreter: PythonInterpreter, packageName: String): Boolean {
-    val packageManager = PythonPackageManager.forPythonInterpreter(project, interpreter)
+    val packageManager = PythonPackageManager.forPythonInterpreter(interpreter)
     val normalizedName = PyPackageName.from(packageName)
     return packageManager.listInstalledPackagesSnapshot()
       .any { it.normalizedName == normalizedName }
@@ -132,14 +109,16 @@ internal class PackageAvailabilityServiceImpl(val cs: CoroutineScope) : PackageA
     }, false)
   }
 
-  /** The value is stored on [sdk], see [PackageAvailabilityServiceImpl] that drops it when the project closes. */
-  private fun canResolveFqnCached(project: Project, sdk: Sdk, interpreter: PythonInterpreter, spec: PackageAvailabilitySpec): Boolean {
+  /** The project holds the values, so they go with the project. */
+  private fun canResolveFqnCached(project: Project, interpreter: PythonInterpreter, spec: PackageAvailabilitySpec): Boolean {
     if (ApplicationManager.getApplication().isUnitTestMode) return canResolveFqn(project, interpreter, spec.fqns)
-    return CachedValuesManager.getManager(project).getCachedValue(sdk, spec.cacheKey, {
+    val byInterpreter = CachedValuesManager.getManager(project).getCachedValue(project, spec.interpreterCacheKey, {
       CachedValueProvider.Result.create(
-        canResolveFqn(project, interpreter, spec.fqns),
-        VirtualFileManager.VFS_STRUCTURE_MODIFICATIONS
+        ConcurrentHashMap<PythonInterpreter, Boolean>(),
+        VirtualFileManager.VFS_STRUCTURE_MODIFICATIONS,
+        PyResolveCachesInvalidator.getInstance(project).modificationTracker,
       )
     }, false)
+    return byInterpreter.getOrPut(interpreter) { canResolveFqn(project, interpreter, spec.fqns) }
   }
 }

@@ -934,3 +934,235 @@ fn a_cargo_sync_run_without_the_line_is_invalid() {
         Some("no line \"CargoSyncTask started\" in log/idea.log: the IDE has no Rust plugin, or the project has no Cargo.toml")
     );
 }
+
+/// The memory sample of a run gives the memory metrics of its groups. A run whose sample failed has a note with the
+/// reason, a run from before the sample has neither, and a sample of another shape is a note. None of them fails the
+/// run.
+#[test]
+fn a_memory_sample_gives_the_memory_metrics_and_a_failed_one_is_a_note() {
+    use crate::bench::memory::{MEMORY_ALL, MEMORY_FILE, MEMORY_IDE, MEMORY_JCEF, MEMORY_WEBKIT, PROCESSES_JCEF};
+    let (_dir, session) = fixture_session();
+    let run = session.join("project-run-01");
+    let record = collect(&run, &id(Arm::PROJECT), LaunchFacts::default());
+    let metric = |name: &str| record.metrics.get(name).copied();
+    assert_eq!(
+        (
+            metric(MEMORY_IDE),
+            metric(MEMORY_JCEF),
+            metric(MEMORY_WEBKIT),
+            metric(MEMORY_ALL),
+            metric(PROCESSES_JCEF)
+        ),
+        (Some(1228.8), Some(200.0), Some(65.0), Some(1494.8), Some(4.0))
+    );
+    assert_eq!(record.notes, vec!["no fus.jsonl".to_owned()]);
+
+    let failed = LaunchFacts {
+        memory_failure: Some("log/idea.log names no PID".to_owned()),
+        ..LaunchFacts::default()
+    };
+    let record = collect(&run, &id(Arm::PROJECT), failed);
+    assert!(record.valid, "{:?}", record.reason);
+    assert_eq!(metric_of(&record, MEMORY_IDE), None);
+    assert!(
+        record.notes.contains(&format!("no {MEMORY_FILE}: log/idea.log names no PID")),
+        "{:?}",
+        record.notes
+    );
+
+    std::fs::write(run.join(MEMORY_FILE), "{}").expect("a broken sample");
+    let record = collect(&run, &id(Arm::PROJECT), LaunchFacts::default());
+    assert!(record.valid, "{:?}", record.reason);
+    assert_eq!(metric_of(&record, MEMORY_IDE), None);
+    assert!(
+        record
+            .notes
+            .iter()
+            .any(|note| note.starts_with(&format!("{MEMORY_FILE}: not a memory sample"))),
+        "{:?}",
+        record.notes
+    );
+
+    std::fs::remove_file(run.join(MEMORY_FILE)).expect("no sample");
+    let record = collect(&run, &id(Arm::PROJECT), LaunchFacts::default());
+    assert_eq!(
+        (metric_of(&record, MEMORY_IDE), record.notes),
+        (None, vec!["no fus.jsonl".to_owned()])
+    );
+}
+
+fn metric_of(record: &RunRecord, name: &str) -> Option<f64> {
+    record.metrics.get(name).copied()
+}
+
+/// A run of the find-in-files arm in `session`: a copy of the fixture `project-run-01` with the script of `queries`
+/// and `directory`, and the spans of `%findInFiles`, each search with the result count `results`. Answers the run directory.
+fn find_in_files_run(
+    session: &Path,
+    queries: &[&str],
+    directory: Option<&str>,
+    spans: &[(&str, i64, i64)],
+    results: u64,
+) -> std::path::PathBuf {
+    use super::{FIND_DIRECTORY_PREFIX, FIND_SCRIPT_FILE, FIND_SEARCH_PREFIX, FindScript};
+    let run = session.join("find-in-files-run-01");
+    avl_testkit::traces::copy_tree(&session.join("project-run-01"), &run);
+    let queries: Vec<String> = queries.iter().map(|query| (*query).to_owned()).collect();
+    let script = FindScript {
+        project: Some("/work/idea".to_owned()),
+        queries,
+        directory: directory.map(str::to_owned),
+    };
+    std::fs::write(run.join(FIND_SCRIPT_FILE), script.text()).expect("a script");
+    append_spans(&run, spans);
+    let path = run.join("opentelemetry.json");
+    let mut trace: serde_json::Value = serde_json::from_str(&std::fs::read_to_string(&path).expect("a trace")).expect("a Jaeger trace");
+    for span in trace["data"][0]["spans"].as_array_mut().expect("a span list") {
+        if span["operationName"]
+            .as_str()
+            .is_some_and(|name| name.starts_with(FIND_SEARCH_PREFIX) || name.starts_with(FIND_DIRECTORY_PREFIX))
+        {
+            span["tags"] = serde_json::json!([{"key": "resultsCount", "type": "int64", "value": results}]);
+        }
+    }
+    std::fs::write(&path, trace.to_string()).expect("a trace");
+    run
+}
+
+/// A find-in-files run ends at its last search. Each search is a metric with its duration and its result count, the
+/// main metric is their sum, and the end of the last search is an anchor of the class counts.
+#[test]
+fn a_find_in_files_run_sums_its_searches_and_ends_at_the_last_one() {
+    use super::{FIND_DIALOG_SPAN, FIND_IN_DIRECTORY, FIND_IN_FILES, FIND_IN_FILES_END, find_results};
+    let (_dir, session) = fixture_session();
+    let run = find_in_files_run(
+        &session,
+        &["FindModel", "createSearcher"],
+        Some("/work/idea/platform"),
+        &[
+            (FIND_DIALOG_SPAN, 3000, 40),
+            ("findInFiles#search: FindModel", 3100, 250),
+            ("findInFiles#search: createSearcher", 3400, 150),
+            ("findInFiles#searchInDirectory: FindModel", 3600, 1600),
+            ("findInFiles#searchInDirectory: createSearcher", 5300, 1500),
+        ],
+        12,
+    );
+    let record = collect(&run, &id(Arm::FIND_IN_FILES), LaunchFacts::default());
+    assert_eq!(record.reason, None);
+    let metric = |name: &str| record.metrics.get(name).copied();
+    assert_eq!(
+        (
+            metric(FIND_IN_FILES),
+            metric(FIND_IN_DIRECTORY),
+            metric(FIND_IN_FILES_END),
+            metric(FIND_DIALOG_SPAN),
+            metric("findInFiles#search: FindModel"),
+            metric(&find_results("findInFiles#searchInDirectory: createSearcher")),
+        ),
+        (Some(400.0), Some(3100.0), Some(6800.0), Some(40.0), Some(250.0), Some(12.0))
+    );
+    assert!(
+        record.metrics.contains_key(&named_at(FIND_IN_FILES_END)),
+        "{:?}",
+        record.metrics.keys()
+    );
+}
+
+/// A find-in-files run without the span of a query is not valid, and the reason says why a run can lack it. A run
+/// without its script has no queries and is not valid either.
+#[test]
+fn a_find_in_files_run_without_a_search_or_its_script_is_invalid() {
+    use super::FIND_SCRIPT_FILE;
+    let (_dir, session) = fixture_session();
+    let run = find_in_files_run(
+        &session,
+        &["FindModel", "createSearcher"],
+        None,
+        &[("findInFiles#search: FindModel", 3100, 250)],
+        3,
+    );
+    let record = collect(&run, &id(Arm::FIND_IN_FILES), LaunchFacts::default());
+    assert!(!record.valid);
+    assert_eq!(
+        record.reason.as_deref(),
+        Some(
+            "no findInFiles#search: createSearcher span in opentelemetry.json: the IDE has no performance plugin, or the search did not finish"
+        )
+    );
+    assert!(record.metrics.is_empty(), "a failed run reports no number");
+
+    std::fs::remove_file(run.join(FIND_SCRIPT_FILE)).expect("a removal");
+    let record = collect(&run, &id(Arm::FIND_IN_FILES), LaunchFacts::default());
+    assert_eq!(record.reason.as_deref(), Some("no find-in-files.ijperf, so the run has no queries"));
+}
+
+/// A find-in-files run whose `idea.log` says that the IDE gave no project directory is not valid: its searches took
+/// another path than in the product, and the reason names the property that causes it.
+#[test]
+fn a_find_in_files_run_without_a_project_directory_is_invalid() {
+    use super::NO_PROJECT_DIRECTORY_LOG_LINE;
+    let (_dir, session) = fixture_session();
+    let run = find_in_files_run(
+        &session,
+        &["FindModel"],
+        Some("/work/idea"),
+        &[
+            ("findInFiles#search: FindModel", 3100, 250),
+            ("findInFiles#searchInDirectory: FindModel", 3600, 1600),
+        ],
+        3,
+    );
+    let log = run.join("log").join("idea.log");
+    let mut text = std::fs::read_to_string(&log).expect("a log");
+    text.push_str(&format!(
+        "2026-11-22 10:00:05,000 [   5000]   WARN - #c.i.f.i.FindInProjectTask - {NO_PROJECT_DIRECTORY_LOG_LINE} in Project(name=idea)\n"
+    ));
+    std::fs::write(&log, text).expect("a log");
+    let record = collect(&run, &id(Arm::FIND_IN_FILES), LaunchFacts::default());
+    assert!(!record.valid);
+    let reason = record.reason.expect("a reason");
+    assert!(
+        reason.starts_with(&format!("log/idea.log holds \"{NO_PROJECT_DIRECTORY_LOG_LINE}\""))
+            && reason.contains("ijlight.workspace.enabled=false"),
+        "{reason}"
+    );
+    assert!(record.metrics.is_empty(), "a failed run reports no number");
+}
+
+/// The script holds one `%findInFiles` line with the project and the queries in their order, and a second one with the
+/// directory, and it reads back to the same script. A script of a session before the project option reads back too.
+#[test]
+fn the_find_in_files_script_reads_back_to_its_queries_and_its_directory() {
+    use super::FindScript;
+    let project = FindScript {
+        project: Some("/work/idea".to_owned()),
+        queries: vec!["FindModel".to_owned(), "a b".to_owned()],
+        directory: None,
+    };
+    assert_eq!(project.text(), "%findInFiles -headless -project=/work/idea FindModel;a b\n");
+    assert_eq!(FindScript::parse(&project.text()), Some(project.clone()));
+    let both = FindScript {
+        directory: Some("/work/idea/platform".to_owned()),
+        ..project
+    };
+    assert_eq!(
+        both.text(),
+        "%findInFiles -headless -project=/work/idea FindModel;a b\n\
+         %findInFiles -headless -project=/work/idea -directory=/work/idea/platform FindModel;a b\n"
+    );
+    assert_eq!(FindScript::parse(&both.text()), Some(both.clone()));
+    let before_the_project = FindScript { project: None, ..both };
+    assert_eq!(
+        FindScript::parse("%findInFiles -headless FindModel;a b\n%findInFiles -headless -directory=/work/idea/platform FindModel;a b\n"),
+        Some(before_the_project),
+        "a script of a session before -project"
+    );
+    assert_eq!(
+        FindScript::parse("%findInFiles -headless -directory=/work/idea FindModel\n"),
+        None,
+        "a directory in the line of the project scope"
+    );
+    assert_eq!(FindScript::parse("%findInFiles -headless \n"), None, "an empty query");
+    assert_eq!(FindScript::parse("%openFile a\n"), None, "another command");
+}

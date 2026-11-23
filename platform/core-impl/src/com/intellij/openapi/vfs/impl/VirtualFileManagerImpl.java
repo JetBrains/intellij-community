@@ -2,6 +2,7 @@
 package com.intellij.openapi.vfs.impl;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
@@ -22,13 +23,19 @@ import com.intellij.openapi.vfs.VirtualFileManagerListener;
 import com.intellij.openapi.vfs.VirtualFileMoveEvent;
 import com.intellij.openapi.vfs.VirtualFilePropertyEvent;
 import com.intellij.openapi.vfs.VirtualFileSystem;
+import com.intellij.openapi.vfs.newvfs.BulkFileListener;
+import com.intellij.openapi.vfs.newvfs.BulkFileListenerBackgroundable;
 import com.intellij.openapi.vfs.newvfs.CachingVirtualFileSystem;
+import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.KeyedLazyInstance;
 import com.intellij.util.KeyedLazyInstanceEP;
+import com.intellij.util.concurrency.TransferredWriteActionService;
+import com.intellij.util.concurrency.annotations.RequiresWriteLock;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.URLUtil;
 import com.intellij.util.messages.MessageBus;
+import com.intellij.util.ui.EDT;
 import com.intellij.util.xmlb.annotations.Attribute;
 import kotlin.Unit;
 import kotlinx.coroutines.CoroutineScope;
@@ -41,6 +48,7 @@ import java.nio.file.FileSystems;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Consumer;
 
 @ApiStatus.Internal
 public class VirtualFileManagerImpl extends VirtualFileManager implements Disposable {
@@ -232,6 +240,34 @@ public class VirtualFileManagerImpl extends VirtualFileManager implements Dispos
     result.addAll(listeners);
     result.addAll(asyncFileListenersBackgroundable);
     return result;
+  }
+
+  @Override
+  @RequiresWriteLock
+  public void fireEvents(@NotNull List<? extends @NotNull VFileEvent> events, @NotNull Runnable applyAction) {
+    // This method is not expected to be used, `PlatformVirtualFileManager` provides the correct implementation
+    // This is fallback implementation for cases when platform is not available, but events still have to be published
+    Application application = ApplicationManager.getApplication();
+    BulkFileListener publisher = application.getMessageBus().syncPublisher(VirtualFileManager.VFS_CHANGES);
+    BulkFileListenerBackgroundable publisherBackgroundable = application.getMessageBus().syncPublisher(VirtualFileManager.VFS_CHANGES_BG);
+
+    TransferredWriteActionService service = application.getService(TransferredWriteActionService.class);
+    Consumer<Runnable> bgToEdt = service == null ? Runnable::run : service::runOnEdtWithTransferredWriteActionAndWait;
+    Consumer<Runnable> edtToBg = service == null ? Runnable::run : service::runOnBackgroundThreadWithTransferredWriteActionAndWait;
+
+    invokePublisher(() -> publisherBackgroundable.before(events), edtToBg, Runnable::run);
+    invokePublisher(() -> publisher.before(events), Runnable::run, bgToEdt);
+    applyAction.run();
+    invokePublisher(() -> publisher.after(events), Runnable::run, bgToEdt);
+    invokePublisher(() -> publisherBackgroundable.after(events), edtToBg, Runnable::run);
+  }
+
+  private static void invokePublisher(Runnable targetRunnable, Consumer<Runnable> whatToDoOnEdt, Consumer<Runnable> whatToDoOnBgt) {
+    if (EDT.isCurrentThreadEdt()) {
+      whatToDoOnEdt.accept(targetRunnable);
+    } else {
+      whatToDoOnBgt.accept(targetRunnable);
+    }
   }
 
   @Override

@@ -1,16 +1,31 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.plugins.markdown.editor.tables
 
-import com.intellij.openapi.application.runWriteActionAndWait
+import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
-import com.intellij.testFramework.LightPlatformCodeInsightTestCase
+import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightModuleFixture
+import com.intellij.psi.PsiDocumentManager
+import com.intellij.testFramework.common.timeoutRunBlocking
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.fixture.projectFixture
 import org.intellij.plugins.markdown.editor.tables.TableFormattingUtils.reformatColumnOnChange
 import org.intellij.plugins.markdown.editor.tables.TableUtils.columnsIndices
 import org.intellij.plugins.markdown.lang.formatter.settings.TableStyle
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Test
 
+@TestApplication
 @Suppress("MarkdownIncorrectTableFormatting")
-class MarkdownTableSingleReformatOnInsertTest: LightPlatformCodeInsightTestCase() {
+class MarkdownTableSingleReformatOnInsertTest {
+  companion object {
+    private val projectFixture = projectFixture(openAfterCreation = true)
+  }
+
+  private val myFixture by codeInsightModuleFixture(projectFixture)
+
+  @Test
   fun `test single column without alignment`() {
     // language=Markdown
     val before = """
@@ -27,6 +42,7 @@ class MarkdownTableSingleReformatOnInsertTest: LightPlatformCodeInsightTestCase(
     doTest(before, after, trimToMaxContent = true)
   }
 
+  @Test
   fun `test single column without alignment and padding`() {
     // language=Markdown
     val before = """
@@ -43,6 +59,7 @@ class MarkdownTableSingleReformatOnInsertTest: LightPlatformCodeInsightTestCase(
     doTest(before, after, trimToMaxContent = true)
   }
 
+  @Test
   fun `test single column with center alignment`() {
     // language=Markdown
     val before = """
@@ -59,6 +76,7 @@ class MarkdownTableSingleReformatOnInsertTest: LightPlatformCodeInsightTestCase(
     doTest(before, after)
   }
 
+  @Test
   fun `test single column with center alignment and caret`() {
     // language=Markdown
     val before = """
@@ -75,6 +93,7 @@ class MarkdownTableSingleReformatOnInsertTest: LightPlatformCodeInsightTestCase(
     doTest(before, after)
   }
 
+  @Test
   fun `test single column with center alignment and multiple carets`() {
     // language=Markdown
     val before = """
@@ -91,9 +110,10 @@ class MarkdownTableSingleReformatOnInsertTest: LightPlatformCodeInsightTestCase(
     doTest(before, after)
   }
 
-  fun `test compact empty cell keeps one padding space around caret`() {
-    withTableStyle(project, TableStyle.COMPACT) {
-      configureFromFileText(
+  @Test
+  fun `test compact empty cell keeps one padding space around caret`(): Unit = timeoutRunBlocking {
+    withTableStyle(myFixture.project, TableStyle.COMPACT) {
+      myFixture.configureByText(
         "some.md",
         """
         | a |
@@ -101,18 +121,18 @@ class MarkdownTableSingleReformatOnInsertTest: LightPlatformCodeInsightTestCase(
         | <caret> |
         """.trimIndent()
       )
-      val table = TableUtils.findTable(file, 0)!!
-      runWriteActionAndWait {
+      WriteCommandAction.runWriteCommandAction(myFixture.project) {
+        val table = TableUtils.findTable(myFixture.file, 0)!!
         table.reformatColumnOnChange(
-          editor.document,
-          editor.caretModel.allCarets,
+          myFixture.editor.document,
+          myFixture.editor.caretModel.allCarets,
           0,
           trimToMaxContent = true,
           tableStyle = TableStyle.COMPACT,
         )
-        commitDocument(editor.document)
+        PsiDocumentManager.getInstance(myFixture.project).commitDocument(myFixture.editor.document)
       }
-      checkResultByText(
+      myFixture.checkResult(
         """
         | a |
         | --- |
@@ -122,6 +142,7 @@ class MarkdownTableSingleReformatOnInsertTest: LightPlatformCodeInsightTestCase(
     }
   }
 
+  @Test
   fun `test multiple columns with right alignment and multiple carets`() {
     // language=Markdown
     val before = """
@@ -138,6 +159,7 @@ class MarkdownTableSingleReformatOnInsertTest: LightPlatformCodeInsightTestCase(
     doTest(before, after)
   }
 
+  @Test
   fun `test reformatting is not confused by escaped pipe`() {
     // language=Markdown
     val before = """
@@ -154,6 +176,7 @@ class MarkdownTableSingleReformatOnInsertTest: LightPlatformCodeInsightTestCase(
     doTest(before, after)
   }
 
+  @Test
   fun `test reformatting is not confused by escaped pipe in table with multiple columns`() {
     // language=Markdown
     val before = """
@@ -170,6 +193,7 @@ class MarkdownTableSingleReformatOnInsertTest: LightPlatformCodeInsightTestCase(
     doTest(before, after)
   }
 
+  @Test
   fun `test reformatting is not confused by escaped pipe inside code span`() {
     // language=Markdown
     val before = """
@@ -186,48 +210,49 @@ class MarkdownTableSingleReformatOnInsertTest: LightPlatformCodeInsightTestCase(
     doTest(before, after)
   }
 
-  fun `test large column reformat uses bulk update mode`() {
-    configureFromFileText("some.md", createLargeSingleColumnTable())
-    val table = TableUtils.findTable(file, 0)!!
+  @Test
+  fun `test large column reformat uses bulk update mode`(): Unit = timeoutRunBlocking {
+    myFixture.configureByText("some.md", createLargeSingleColumnTable())
     var bulkUpdateSeen = false
-    editor.document.addDocumentListener(object : DocumentListener {
+    myFixture.editor.document.addDocumentListener(object : DocumentListener {
       override fun beforeDocumentChange(event: DocumentEvent) {
         bulkUpdateSeen = bulkUpdateSeen || event.document.isInBulkUpdate
       }
-    }, testRootDisposable)
+    }, myFixture.testRootDisposable)
 
-    runWriteActionAndWait {
+    WriteCommandAction.runWriteCommandAction(myFixture.project) {
+      val table = TableUtils.findTable(myFixture.file, 0)!!
       table.reformatColumnOnChange(
-        editor.document,
-        editor.caretModel.allCarets,
+        myFixture.editor.document,
+        myFixture.editor.caretModel.allCarets,
         0,
         trimToMaxContent = true,
         tableStyle = TableStyle.ALIGNED,
       )
-      commitDocument(editor.document)
+      PsiDocumentManager.getInstance(myFixture.project).commitDocument(myFixture.editor.document)
     }
 
     assertTrue(bulkUpdateSeen)
-    assertFalse(editor.document.isInBulkUpdate)
-    checkResultByText(createLargeSingleColumnTableAfterReformat())
+    assertFalse(myFixture.editor.document.isInBulkUpdate)
+    myFixture.checkResult(createLargeSingleColumnTableAfterReformat())
   }
 
-  private fun doTest(before: String, after: String, trimToMaxContent: Boolean = false) {
-    configureFromFileText("some.md", before)
-    val table = TableUtils.findTable(file, 0)!!
-    runWriteActionAndWait {
+  private fun doTest(before: String, after: String, trimToMaxContent: Boolean = false): Unit = timeoutRunBlocking {
+    myFixture.configureByText("some.md", before)
+    WriteCommandAction.runWriteCommandAction(myFixture.project) {
+      val table = TableUtils.findTable(myFixture.file, 0)!!
       for (columnIndex in table.columnsIndices) {
         table.reformatColumnOnChange(
-          editor.document,
-          editor.caretModel.allCarets,
+          myFixture.editor.document,
+          myFixture.editor.caretModel.allCarets,
           columnIndex,
           trimToMaxContent,
           tableStyle = TableStyle.ALIGNED,
         )
-        commitDocument(editor.document)
+        PsiDocumentManager.getInstance(myFixture.project).commitDocument(myFixture.editor.document)
       }
     }
-    checkResultByText(after)
+    myFixture.checkResult(after)
   }
 
   private fun createLargeSingleColumnTable(): String {

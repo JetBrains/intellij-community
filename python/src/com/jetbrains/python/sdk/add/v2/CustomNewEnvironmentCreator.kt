@@ -27,6 +27,7 @@ import com.jetbrains.python.statistics.InterpreterType
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.first
 import java.nio.file.Path
+import kotlin.io.path.pathString
 
 internal abstract class CustomNewEnvironmentCreator<P : PathHolder>(
   model: PythonMutableTargetAddInterpreterModel<P>,
@@ -159,7 +160,7 @@ internal suspend fun <P : PathHolder> PythonMutableTargetAddInterpreterModel<P>.
   // todo use target config
   val path = when (interpreter) {
     is InstallableSelectableInterpreter -> {
-      installBaseSdk(interpreter.installableSdk).getOrElse { return null }.let { fileSystem.wrapSdk(it) }.homePath
+      installBasePython(interpreter).getOrElse { return null }.let { fileSystem.parsePath(it.pathString) }.successOrNull
     }
     is DetectedSelectableInterpreter, is ExistingSelectableInterpreter, is ManuallyAddedSelectableInterpreter -> interpreter.homePath
   }

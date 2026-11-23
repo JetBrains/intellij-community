@@ -636,8 +636,8 @@ com.intellij.dvcs.ui.PopupElementWithAdditionalInfo
 c:com.intellij.dvcs.ui.RepositoryChangesBrowserNode
 - com.intellij.openapi.vcs.changes.ui.RepositoryChangesBrowserNodeBase
 - sf:Companion:com.intellij.dvcs.ui.RepositoryChangesBrowserNode$Companion
+- <init>(com.intellij.dvcs.repo.Repository):V
 - <init>(com.intellij.dvcs.repo.Repository,com.intellij.vcs.log.ui.VcsLogColorManager):V
-- b:<init>(com.intellij.dvcs.repo.Repository,com.intellij.vcs.log.ui.VcsLogColorManager,I,kotlin.jvm.internal.DefaultConstructorMarker):V
 - compareUserObjects(com.intellij.dvcs.repo.Repository):I
 - pf:getBranchText(com.intellij.vcs.branch.BranchData):java.lang.String
 - pf:getBranchTooltipText(com.intellij.vcs.branch.BranchData):java.lang.String

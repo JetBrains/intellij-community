@@ -10,6 +10,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.CommonDataKeys.PROJECT
 import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.actionSystem.ex.TooltipDescriptionProvider
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
@@ -20,7 +21,6 @@ import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.psi.PsiDocumentManager
-import com.intellij.psi.PsiManager
 import com.intellij.ui.IconManager
 import com.intellij.util.ui.JBUI
 import kotlinx.coroutines.CoroutineScope
@@ -28,6 +28,7 @@ import kotlinx.coroutines.launch
 import org.jetbrains.kotlin.idea.KotlinIcons
 import org.jetbrains.kotlin.idea.core.script.configurations.KotlinScriptService
 import org.jetbrains.kotlin.idea.core.script.definition.editorToolbar
+import org.jetbrains.kotlin.idea.core.script.definitions.ScriptDefinitionProviderImpl
 import org.jetbrains.kotlin.idea.core.script.statistics.KotlinScriptingSettingsCollector
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.scripting.definitions.ScriptConfigurationsProvider
@@ -37,11 +38,12 @@ import javax.swing.Icon
 import kotlin.script.experimental.api.ScriptCompilationConfiguration
 import kotlin.script.experimental.api.ide
 
-private val SHOW_NOTIFICATION = Key.create<Boolean>("SHOW_NOTIFICATION")
+/** True on a `.main.kts` file whose text changed after its configuration loaded, so that the reload button asks for a reload. */
+internal val RELOAD_NEEDED: Key<Boolean> = Key.create("RELOAD_NEEDED")
 
 private val RELOAD_NEEDED_ICON: Icon = IconManager.getInstance().withIconBadge(KotlinIcons.LOAD_SCRIPT_CONFIGURATION, JBUI.CurrentTheme.IconBadge.INFORMATION)
 
-internal class ReloadScriptConfigurationAction : AnAction() {
+internal class ReloadScriptConfigurationAction : AnAction(), TooltipDescriptionProvider {
     override fun actionPerformed(e: AnActionEvent) {
         val project = e.project ?: return
         val ktFile = getProjectKtFile(e.dataContext) ?: return
@@ -58,8 +60,13 @@ internal class ReloadScriptConfigurationAction : AnAction() {
         }
         e.presentation.isEnabledAndVisible = true
         e.presentation.text = KotlinBaseScriptingBundle.message("reload.script.configuration.text", ktFile.name)
-        val reloadNeeded = !ktFile.alwaysVirtualFile.scriptDiagnostics.isNullOrEmpty() || ktFile.getUserData(SHOW_NOTIFICATION) == true
+        val virtualFile = ktFile.alwaysVirtualFile
+        val reloadNeeded = !virtualFile.scriptDiagnostics.isNullOrEmpty() || virtualFile.getUserData(RELOAD_NEEDED) == true ||
+                KotlinScriptService.getInstance(ktFile.project).hasOutdatedDefinition(virtualFile)
         e.presentation.icon = if (reloadNeeded) RELOAD_NEEDED_ICON else KotlinIcons.LOAD_SCRIPT_CONFIGURATION
+        e.presentation.description =
+            if (reloadNeeded) KotlinBaseScriptingBundle.message("reload.script.configuration.needed.description")
+            else templatePresentation.description
     }
 
     override fun getActionUpdateThread() = ActionUpdateThread.BGT
@@ -74,8 +81,7 @@ class ReloadScriptConfigurationService(private val project: Project, private val
                     val virtualFile = FileDocumentManager.getInstance().getFile(event.document)?.takeIf { it.isInLocalFileSystem }
                     if (virtualFile == null || virtualFile.isNonScript() || !virtualFile.name.endsWith(".main.kts")) return@launch
 
-                    val ktFile = readAction { PsiManager.getInstance(project).findFile(virtualFile) } as? KtFile
-                    ktFile?.putUserData(SHOW_NOTIFICATION, true)
+                    virtualFile.putUserData(RELOAD_NEEDED, true)
                 }
             }
         }, this)
@@ -86,7 +92,9 @@ class ReloadScriptConfigurationService(private val project: Project, private val
 
         scope.launch {
             scriptingDebugLog(virtualFile) { "reloadScriptData started" }
+            ScriptDefinitionProviderImpl.getInstance(project).scheduleLoading()
             KotlinScriptService.getInstance(project).reload(virtualFile)
+            virtualFile.putUserData(RELOAD_NEEDED, null)
             val configurationResult = project.service<ScriptConfigurationsProvider>().getScriptConfigurationResult(ktFile)
 
             readAction { ktFile.findScriptDefinition() }?.let {
@@ -105,8 +113,6 @@ class ReloadScriptConfigurationService(private val project: Project, private val
             } else {
                 scriptingWarnLog("reloadScriptData failed: ${virtualFile.path}")
             }
-
-            ktFile.putUserData(SHOW_NOTIFICATION, false)
         }
     }
 

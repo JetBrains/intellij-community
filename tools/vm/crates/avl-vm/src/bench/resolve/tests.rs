@@ -1,6 +1,6 @@
 use pretty_assertions::assert_eq;
 
-use super::{check_dist_label, dist_outputs, profiler_jar};
+use super::{check_dist_label, context_plugins_dir, dist_outputs, profiler_jar};
 
 #[test]
 fn a_label_without_the_dist_suffix_is_refused_before_the_build() {
@@ -31,4 +31,17 @@ fn finds_the_profiler_jar_among_the_cquery_files() {
                  external/lib+http/file/async-profiler-4.6-0-sources.jar\n";
     assert_eq!(profiler_jar(files), Some("external/lib+http/file/async-profiler-4.6-0.jar"));
     assert_eq!(profiler_jar("bazel-out/x/idea-async-profiler.jar\n"), None);
+}
+
+/// The plugins directory of a `context_plugin_dir` is the directory of its name, above the links of its plugins.
+#[test]
+fn finds_the_plugins_directory_of_a_context_plugin_dir_among_the_cquery_files() {
+    let files = "bazel-out/x/bin/platform/unified/performance_testing_plugin_dir/performanceTesting/lib/a.jar\n\
+                 bazel-out/x/bin/platform/unified/performance_testing_plugin_dir/performanceTesting/lib/b.jar\n";
+    assert_eq!(
+        context_plugins_dir("//platform/unified:performance_testing_plugin_dir", files),
+        Some("bazel-out/x/bin/platform/unified/performance_testing_plugin_dir")
+    );
+    assert_eq!(context_plugins_dir("//platform/unified:other", files), None);
+    assert_eq!(context_plugins_dir("//platform/unified:performance_testing_plugin_dir", ""), None);
 }

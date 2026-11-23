@@ -6,6 +6,11 @@ import com.intellij.find.FindInProjectSearchEngine.FindInProjectSearcher
 import com.intellij.find.impl.FindInProjectDirectoriesProvider
 import com.intellij.find.impl.FindInProjectUtil
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.edtWriteAction
+import com.intellij.openapi.application.readAction
+import com.intellij.openapi.command.WriteCommandAction
+import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.vfs.VirtualFile
@@ -31,7 +36,9 @@ import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileKind
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSetRegistrar
 import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexImpl
 import com.intellij.workspaceModel.ide.NonPersistentEntitySource
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
@@ -41,6 +48,7 @@ import java.util.concurrent.atomic.AtomicInteger
 /**
  * Pins the contract of [FindInProjectDirectoriesProvider]: a project search walks the directories of the provider
  * instead of the platform traversal, and they stand for the whole project (see `FindInProjectTask` and `ScopeWalker`).
+ * A named directory in them holds only non-indexable files too.
  * The roots are non-indexable, so no index searcher finds their files, and the walk alone decides.
  */
 @TestApplication
@@ -96,7 +104,7 @@ class FindInProjectDirectoriesProviderTest {
   }
 
   @Test
-  fun `a directory search does not ask the provider`(): Unit = runBlocking {
+  fun `a directory search without a searcher that covers all candidates does not ask the provider`(): Unit = runBlocking {
     val calls = registerProvider(listOf(firstRoot))
 
     val model = projectModel().apply {
@@ -191,6 +199,44 @@ class FindInProjectDirectoriesProviderTest {
     assertThat(findFileNames(projectModel())).containsExactlyInAnyOrder("second.txt")
   }
 
+  @Test
+  fun `a named directory in a directory of the provider skips its walk when a searcher covers all candidates`(): Unit = runBlocking {
+    val nested = baseDir.newVirtualDirectory("first/nested")
+    baseDir.newVirtualFile("first/nested/nested.txt", "nested file with zq data".toByteArray())
+    val calls = registerProvider(listOf(firstRoot))
+    registerSearcherCoveringAllCandidates(emptyList())
+
+    // the walk would find nested.txt, so an empty answer shows the skipped walk
+    assertThat(findFileNames(directoryModel(nested))).isEmpty()
+    assertThat(calls.get()).isPositive()
+  }
+
+  @Test
+  fun `a named directory outside the directories of the provider is walked although a searcher covers all candidates`(): Unit = runBlocking {
+    registerProvider(listOf(firstRoot))
+    registerSearcherCoveringAllCandidates(emptyList())
+
+    assertThat(findFileNames(directoryModel(secondRoot))).containsExactlyInAnyOrder("second.txt")
+  }
+
+  @Test
+  fun `a named directory whose walk is skipped still searches its unsaved documents`(): Unit = runBlocking {
+    registerProvider(listOf(firstRoot))
+    registerSearcherCoveringAllCandidates(emptyList())
+    val unsaved = baseDir.newVirtualFile("first/unsaved.txt", "saved text".toByteArray())
+    val documentManager = FileDocumentManager.getInstance()
+    val document = checkNotNull(readAction { documentManager.getDocument(unsaved) })
+    withContext(Dispatchers.EDT) {
+      WriteCommandAction.runWriteCommandAction(project) { document.setText("unsaved text with data") }
+    }
+    try {
+      assertThat(findFileNames(directoryModel(firstRoot))).containsExactlyInAnyOrder("unsaved.txt")
+    }
+    finally {
+      edtWriteAction { documentManager.saveDocument(document) }
+    }
+  }
+
   /** Registers a provider that answers [directories], and gives the number of its calls. */
   private fun registerProvider(directories: List<VirtualFile>): AtomicInteger {
     val calls = AtomicInteger()
@@ -225,6 +271,12 @@ class FindInProjectDirectoriesProviderTest {
     isMultipleFiles = true
     isProjectScope = true
     isWithSubdirectories = true
+  }
+
+  /** A search in [directory] and its subdirectories, as the Directory scope of the Find in Files popup. */
+  private fun directoryModel(directory: VirtualFile): FindModel = projectModel().apply {
+    isProjectScope = false
+    directoryName = directory.path
   }
 
   private fun findFileNames(model: FindModel): List<String> {

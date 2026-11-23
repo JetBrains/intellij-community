@@ -10,8 +10,7 @@ import com.intellij.ui.LayeredIcon
 import kotlinx.serialization.Polymorphic
 import kotlinx.serialization.Serializable
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.javaGetterName
-import org.jetbrains.kotlin.analysis.api.components.javaSetterName
+import org.jetbrains.kotlin.analysis.api.javaInterop.javaMethodName
 import org.jetbrains.kotlin.analysis.api.signatures.KaVariableSignature
 import org.jetbrains.kotlin.analysis.api.symbols.KaPropertySymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSyntheticJavaPropertySymbol
@@ -58,8 +57,8 @@ internal object VariableLookupElementFactory {
 
         val symbol = signature.symbol
         if (symbol is KaPropertySymbol) {
-            builder = builder.withLookupString(symbol.javaGetterName.asString())
-            symbol.javaSetterName?.let { builder = builder.withLookupString(it.asString()) }
+            symbol.getter?.javaMethodName?.let { builder = builder.withLookupString(it) }
+            symbol.setter?.javaMethodName?.let { builder = builder.withLookupString(it) }
         }
 
         return withCallableSignatureInfo(signature, builder, smartCastType)
@@ -140,10 +139,14 @@ internal object VariableLookupElementFactory {
         symbol: KaVariableSymbol
     ): LookupElementBuilder = when (symbol) {
         is KaSyntheticJavaPropertySymbol -> {
-            val getterName = symbol.javaGetterName.asString()
-            val setterName = symbol.javaSetterName?.asString()
-            lookupElementBuilder.withTailText((" (from ${buildSyntheticPropertyTailText(getterName, setterName)})"))
-                .withLookupStrings(listOfNotNull(getterName, setterName))
+            val getterName = symbol.getter.javaMethodName
+            val setterName = symbol.setter?.javaMethodName
+            if (getterName == null) {
+                lookupElementBuilder
+            } else {
+                lookupElementBuilder.withTailText((" (from ${buildSyntheticPropertyTailText(getterName, setterName)})"))
+                    .withLookupStrings(listOfNotNull(getterName, setterName))
+            }
         }
 
         else -> lookupElementBuilder

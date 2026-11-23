@@ -632,7 +632,8 @@ pub(crate) fn run_request(
             .ok_or_else(|| Refusal::internal(format!("the descriptor names no lane input {field}")))
     };
     let lane_inputs = LaneInputs {
-        fake_agent_jar: digest("fakeAgentJar")?,
+        fake_agent: digest("fakeAgent")?,
+        genui_fixture_jar: digest("genuiFixtureJar")?,
         lane_documents: digest("laneDocuments")?,
         suite_documents: digest("suiteDocuments")?,
     };

@@ -50,6 +50,7 @@ jvm_library(
         "//java/testFramework",
         "//java/codeserver/core",
         "//java/java-frontback-psi-api:frontback-psi",
+        "//platform/testFramework/junit5",
         ":libraries_junit4_provided",
         ":libraries_junit6_provided",
     ],

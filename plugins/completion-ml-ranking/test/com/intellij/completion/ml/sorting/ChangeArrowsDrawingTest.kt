@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.completion.ml.sorting
 
+import com.intellij.codeInsight.completion.lightCompletionProjectFixture
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementPresentation
 import com.intellij.codeInsight.lookup.LookupManagerListener
@@ -9,46 +10,57 @@ import com.intellij.codeInsight.lookup.impl.LookupImpl
 import com.intellij.completion.ml.storage.MutableLookupStorage
 import com.intellij.completion.ml.tracker.LookupTracker
 import com.intellij.completion.ml.tracker.setupCompletionContext
-import junit.framework.TestCase
+import com.intellij.openapi.application.EDT
+import com.intellij.testFramework.common.timeoutRunBlocking
+import com.intellij.testFramework.junit5.TestApplication
+import kotlinx.coroutines.Dispatchers
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 import javax.swing.Icon
 
-class ChangeArrowsDrawingTest : MLSortingTestCase() {
-  private val arrowChecker = ArrowPresenceChecker()
-
-  override fun customizeSettings(settings: MLRankingSettingsState): MLRankingSettingsState {
-    return settings.withRankingEnabled(true).withDiffEnabled(true)
+@TestApplication
+class ChangeArrowsDrawingTest {
+  companion object {
+    private val projectFixture = lightCompletionProjectFixture()
   }
 
-  override fun setUp() {
-    super.setUp()
+  private val sorting by mlSortingFixture(projectFixture, { it.withRankingEnabled(true).withDiffEnabled(true) })
+  private val arrowChecker = ArrowPresenceChecker()
 
-    project.messageBus.connect(testRootDisposable).subscribe(
+  @BeforeEach
+  fun setUp() {
+    val fixture = sorting.completion.fixture
+    fixture.project.messageBus.connect(fixture.testRootDisposable).subscribe(
       LookupManagerListener.TOPIC,
       ItemsDecoratorInitializer()
     )
-    project.messageBus.connect(testRootDisposable).subscribe(
+    fixture.project.messageBus.connect(fixture.testRootDisposable).subscribe(
       LookupManagerListener.TOPIC,
       arrowChecker
     )
   }
 
-  fun testArrowsAreShowingAndUpdated() {
-    withRanker(Ranker.Inverse)
-    setupCompletionContext(myFixture)
-    complete()
+  @Test
+  fun testArrowsAreShowingAndUpdated(): Unit = timeoutRunBlocking(context = Dispatchers.EDT) {
+    sorting.withRanker(Ranker.Inverse)
+    setupCompletionContext(sorting.completion.fixture)
+    sorting.completion.complete()
     val invokedCountBeforeTyping = arrowChecker.invokedCount
-    type('r')
-    TestCase.assertTrue(arrowChecker.invokedCount > 1)
-    TestCase.assertTrue(arrowChecker.arrowsFound)
-    TestCase.assertTrue(invokedCountBeforeTyping < arrowChecker.invokedCount)
+    sorting.completion.type('r')
+    assertTrue(arrowChecker.invokedCount > 1)
+    assertTrue(arrowChecker.arrowsFound)
+    assertTrue(invokedCountBeforeTyping < arrowChecker.invokedCount)
   }
 
-  fun testNoArrowsWithDefaultRanker() {
-    setupCompletionContext(myFixture)
-    complete()
+  @Test
+  fun testNoArrowsWithDefaultRanker(): Unit = timeoutRunBlocking(context = Dispatchers.EDT) {
+    setupCompletionContext(sorting.completion.fixture)
+    sorting.completion.complete()
 
-    TestCase.assertTrue(arrowChecker.invokedCount > 1)
-    TestCase.assertFalse(arrowChecker.arrowsFound)
+    assertTrue(arrowChecker.invokedCount > 1)
+    assertFalse(arrowChecker.arrowsFound)
   }
 
   private class ArrowPresenceChecker : LookupTracker() {

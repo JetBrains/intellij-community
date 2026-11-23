@@ -3,6 +3,9 @@
 open class Base
 
 class Foo {
+    companion object : Base() {
+    }
+
     companion {
         fun foo() {
         }

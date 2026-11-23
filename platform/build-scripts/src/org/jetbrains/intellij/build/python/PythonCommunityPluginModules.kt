@@ -13,7 +13,7 @@ object PythonCommunityPluginModules {
 
   /**
    * The pydev tree of the Python helpers. The path is relative to the content root of the module. The debugger egg of a
-   * Python plugin reads the whole tree, so the community Python layout declares it as a dev-distribution source tree.
+   * Python plugin reads the whole tree, so the community Python layout declares it as a distribution source tree.
    */
   @JvmField
   val pydevSourceTree: LayoutAssetSource.ModuleDirectory = LayoutAssetSource.ModuleDirectory(
@@ -43,7 +43,7 @@ object PythonCommunityPluginModules {
           resourcePath = "",
           relativeOutputPath = "bundledPyiStubs",
         )
-        spec.withDevDistSourceTree(pydevSourceTree)
+        spec.withDistSourceTree(pydevSourceTree)
       }
 
       // required for "Python Console" in PythonCore plugin

@@ -19,13 +19,16 @@ from teamcity import unittestpy
 # Script that the IDE runs instead of "unittest" to discover and run the tests
 JB_RUNNER_SCRIPT = os.getenv("JB_UNITTEST_RUNNER_SCRIPT")
 
+# per `unittest` API
+QUIET = 0
+VERBOSE = 2
+
 
 def build_unittest_args(
     path,
     targets,
     additional_args,
     project_dir=PROJECT_DIR,
-    verbose=JB_VERBOSE,
 ):
     args = ["python -m unittest"]
     subcommand_args = []
@@ -61,12 +64,6 @@ def build_unittest_args(
         subcommand_args = list(targets)
 
     args += subcommand_args
-
-    if verbose:
-        args.append("--verbose")
-    elif sys.version_info >= (3, 0):
-        args.append("--quiet")
-
     args += additional_args
     return args
 
@@ -186,7 +183,8 @@ def main():
             argv=args,
             module=None,
             testRunner=unittestpy.TeamcityTestRunner,
-            buffer=not JB_DISABLE_BUFFERING
+            buffer=not JB_DISABLE_BUFFERING,
+            verbosity=VERBOSE if JB_VERBOSE else QUIET,
         ))
     finally:
         jb_finish_tests()

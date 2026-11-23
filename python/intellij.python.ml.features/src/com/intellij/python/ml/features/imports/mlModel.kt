@@ -30,18 +30,21 @@ internal class ImportsRankingModelService {
   private fun loadModel() {
     modelFuture?.cancel(true)
 
-    LOG.info("Loading CatBoost Imports Ranking model")
-    modelFuture = ModelPipelineLoader(this::class.java.classLoader).load(
-      PythonImportsRankingModelHolder.getStream(),
-      AppExecutorUtil.getAppExecutorService()
-    ).thenAccept { model ->
-      LOG.info("Successfully loaded imports ranking model")
-      this.model = model.predicting<RegressionResult>()
-    }.exceptionally { e ->
-      LOG.warn("Failed to load CatBoost imports ranking model", e)
-      null
+    // see IJPL-254117 and IJPL-254644, this code does not work and has no tests for it, so why
+    // do we have it enabled?
+    if (false) {
+      LOG.info("Loading CatBoost Imports Ranking model")
+      modelFuture = ModelPipelineLoader(this::class.java.classLoader).load(
+        PythonImportsRankingModelHolder.getStream(),
+        AppExecutorUtil.getAppExecutorService()
+      ).thenAccept { model ->
+        LOG.info("Successfully loaded imports ranking model")
+        this.model = model.predicting<RegressionResult>()
+      }.exceptionally { e ->
+        LOG.warn("Failed to load CatBoost imports ranking model", e)
+        null
+      }
     }
-
   }
 
   companion object {

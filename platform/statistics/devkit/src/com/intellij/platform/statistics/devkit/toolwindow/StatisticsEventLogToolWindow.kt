@@ -105,10 +105,9 @@ internal class StatisticsEventLogToolWindow(
       }
 
       it.init(project)
-      it.subscribe(recorderId) { message ->
+      it.subscribe(recorderId, this) { message ->
         application.invokeLater { consoleLog.addLogLine(message) }
       }
-      Disposer.register(this, Disposable { it.unsubscribe(recorderId) })
     }
   }
 

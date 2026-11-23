@@ -13,6 +13,28 @@ internal class PMarkerNodeHistoryTest {
   private val branch: PMarkerNodeBranch = PMarkerNodeBranch(null, 0)
 
   @Test
+  fun `repeated values preserve history across replacements and branches`() {
+    val history = PMarkerNodeHistory<Any>()
+    val value = Any()
+    val first = publish(history, version(1), value)
+    for (number in 2L..64L) assertSame(first, publish(history, version(number), value))
+
+    val fork = PMarkerNodeVersion(PMarkerNodeBranch(version(32), 65), 65)
+    val replacement = Any()
+    publish(history, version(64), replacement)
+    assertSame(value, history.get(version(63)))
+    assertSame(value, history.get(fork))
+    assertSame(replacement, history.get(version(64)))
+
+    val forkReference = publish(history, fork, value)
+    collect(listOf(first))
+    assertNull(history.get(version(63)))
+    assertSame(value, history.get(fork))
+    assertSame(replacement, history.get(version(64)))
+    assertSame(forkReference, publish(history, PMarkerNodeVersion(fork.branch, 66), value))
+  }
+
+  @Test
   fun `small histories preserve values through index and branch promotion`() {
     val history = PMarkerNodeHistory<Any>()
     val first = Any()

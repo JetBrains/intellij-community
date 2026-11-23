@@ -71,8 +71,10 @@ _jvm_library_jps = rule(
 
     Compiler plugins listed here will be treated as if they were added in the plugins attribute
     of any targets that directly depend on this target. Unlike `java_plugin`s exported_plugins,
-    this is not transitive""",
+    this is not transitive. The plugins resolve in the execution configuration, like `plugins`, so a
+    plugin that also reaches a dependent through its own `kt_plugin_cfg` is one configured target.""",
             default = [],
+            cfg = "exec",
             providers = [[_KtCompilerPluginInfo]],
         ),
         "exports": attr.label_list(

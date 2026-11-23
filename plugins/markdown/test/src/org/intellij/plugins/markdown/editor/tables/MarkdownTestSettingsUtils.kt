@@ -9,6 +9,7 @@ import org.intellij.plugins.markdown.lang.formatter.settings.MarkdownCustomCodeS
 import org.intellij.plugins.markdown.lang.formatter.settings.TableStyle
 import org.intellij.plugins.markdown.settings.MarkdownCodeInsightSettings.Companion.getInstance
 import org.intellij.plugins.markdown.settings.MarkdownCodeInsightSettings.EmphasisStyle
+import org.intellij.plugins.markdown.settings.MarkdownSettings
 
 internal fun withTableStyle(project: Project, style: TableStyle, block: () -> Unit) {
   val settings = CodeStyle.getSettings(project).getCustomSettings(MarkdownCustomCodeStyleSettings::class.java)
@@ -27,6 +28,13 @@ internal fun setupTableReformatting(disposable: Disposable) {
   val old = settings.state.reformatTablesOnType
   settings.state.reformatTablesOnType = true
   Disposer.register(disposable) { settings.state.reformatTablesOnType = old }
+}
+
+internal fun setupTableCellsAlignedVisually(value: Boolean, disposable: Disposable) {
+  val settings = MarkdownSettings.getInstance()
+  val old = settings.alignTableCellsVisually
+  settings.alignTableCellsVisually = value
+  Disposer.register(disposable) { settings.alignTableCellsVisually = old }
 }
 
 internal fun withEmphasisStyle(emphasisStyle: EmphasisStyle, block: Runnable) {

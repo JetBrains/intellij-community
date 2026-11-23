@@ -1,0 +1,3 @@
+package module
+
+class Composed

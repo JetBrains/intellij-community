@@ -177,6 +177,46 @@ public class ImmediatePainterTest extends ImmediatePainterTestCase {
   }
 
   @Test
+  public void testRoundedHighlighterEndingAtCaretTurnsImmediatePaintingOff() {
+    myFixture.runTest(() -> {
+      enableRoundedHighlighting();
+      init("a");
+      addRangeHighlighter(0, 1, HighlighterLayer.ERROR, background(JBColor.GREEN));
+      assertNotRenderedImmediately(1, 'b');
+    });
+  }
+
+  @Test
+  public void testRoundedHighlighterOnTypedCharTurnsImmediatePaintingOff() {
+    myFixture.runTest(() -> {
+      enableRoundedHighlighting();
+      init("a");
+      addRangeHighlighter(1, 1, HighlighterLayer.ERROR, background(JBColor.GREEN)).setGreedyToRight(true);
+      assertNotRenderedImmediately(1, 'b');
+    });
+  }
+
+  @Test
+  public void testRoundedHighlightingKeepsImmediatePaintingOnCaretRow() {
+    myFixture.runTest(() -> {
+      enableRoundedHighlighting();
+      init("a");
+      setCaretRowVisible(true);
+      assertRenderedCorrectly(1, 'b');
+    });
+  }
+
+  @Test
+  public void testRoundedHighlightingKeepsImmediatePaintingOnLineHighlighter() {
+    myFixture.runTest(() -> {
+      enableRoundedHighlighting();
+      init("a");
+      addLineHighlighter(0, 1, HighlighterLayer.ERROR, background(JBColor.GREEN));
+      assertRenderedCorrectly(1, 'b');
+    });
+  }
+
+  @Test
   public void testThinLineCursor() {
     myFixture.runTest(() -> {
       init("");

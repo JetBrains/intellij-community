@@ -1,0 +1,7 @@
+class Foo {
+    companion object {
+        fun len(x: Int) = x
+    }
+}
+
+fun boundParam(foo: Foo): (Int) -> Int = Foo.Companion::len

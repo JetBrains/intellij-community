@@ -1,15 +1,16 @@
 package org.intellij.plugins.markdown.injection
 
 import com.intellij.idea.TestFor
-import com.intellij.testFramework.LightPlatformCodeInsightTestCase
-import junit.framework.TestCase
+import com.intellij.testFramework.junit5.TestApplication
 import org.intellij.plugins.markdown.injection.aliases.CodeFenceLanguageGuesser
-import org.junit.Test
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Test
 
 @TestFor(issues = ["IDEA-299029"])
-class CodeFenceInfoStringResolveTest : LightPlatformCodeInsightTestCase() {
+@TestApplication
+class CodeFenceInfoStringResolveTest {
   @Test
-  fun `test markdown is resolved`() = assertInfoStringIsResolved("markdown", "markdown")
+  fun `test markdown is resolved`(): Unit = assertInfoStringIsResolved("markdown", "markdown")
 
   @Test
   fun `test markdown text is resolved to just markdown`() {
@@ -17,19 +18,19 @@ class CodeFenceInfoStringResolveTest : LightPlatformCodeInsightTestCase() {
   }
 
   @Test
-  fun `test markdown with suffix is resolved`() = assertInfoStringIsResolved("markdown live", "markdown")
+  fun `test markdown with suffix is resolved`(): Unit = assertInfoStringIsResolved("markdown live", "markdown")
 
   @Test
-  fun `test plain text is resolved`() = assertInfoStringIsResolved("text", "text")
+  fun `test plain text is resolved`(): Unit = assertInfoStringIsResolved("text", "text")
 
   @Test
-  fun `test json is resolved`() = assertInfoStringIsResolved("json", "json")
+  fun `test json is resolved`(): Unit = assertInfoStringIsResolved("json", "json")
 
   @Test
-  fun `test json lines are resolved`() = assertInfoStringIsResolved("json lines", "json lines")
+  fun `test json lines are resolved`(): Unit = assertInfoStringIsResolved("json lines", "json lines")
 
   @Test
-  fun `test json lines with suffix are resolved`() = assertInfoStringIsResolved("json lines live", "json lines")
+  fun `test json lines with suffix are resolved`(): Unit = assertInfoStringIsResolved("json lines live", "json lines")
 
   @Test
   fun `test json awesome lines are resolved to just json`() {
@@ -43,7 +44,7 @@ class CodeFenceInfoStringResolveTest : LightPlatformCodeInsightTestCase() {
 
   private fun assertInfoStringIsResolved(infoString: String, expectedId: String?) {
     val id = resolveInfoString(infoString)
-    TestCase.assertEquals(expectedId, id)
-    TestCase.assertEquals(expectedId, CodeFenceLanguageGuesser.guessLanguageForExecution(infoString)?.id?.lowercase())
+    assertEquals(expectedId, id)
+    assertEquals(expectedId, CodeFenceLanguageGuesser.guessLanguageForExecution(infoString)?.id?.lowercase())
   }
 }

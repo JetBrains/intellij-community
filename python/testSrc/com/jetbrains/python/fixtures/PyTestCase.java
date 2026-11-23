@@ -2,6 +2,7 @@
 package com.jetbrains.python.fixtures;
 
 import com.google.common.base.Joiner;
+import com.intellij.python.sdk.backend.PythonInterpreter;
 import com.google.common.collect.Lists;
 import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.lookup.LookupElement;
@@ -21,7 +22,6 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtil;
@@ -41,7 +41,6 @@ import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.python.community.testFramework.PyFixmeKt;
-import com.intellij.python.sdk.backend.PythonInterpreter;
 import com.intellij.python.sdk.backend.PythonInterpreterDetails;
 import com.intellij.python.sdk.backend.PythonInterpreterExtKt;
 import com.intellij.refactoring.RefactoringActionHandler;
@@ -82,12 +81,10 @@ import com.jetbrains.python.psi.impl.PythonLanguageLevelPusher;
 import com.jetbrains.python.psi.types.PyAnyType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
-import com.jetbrains.python.sdk.SdkExtKt;
 import com.jetbrains.python.tools.sdkTools.PythonInterpreterFactsForTests;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.Assert;
-
 import java.io.File;
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -193,7 +190,7 @@ public abstract class PyTestCase extends UsefulTestCase {
       LOG.warn("The interpreter is null. assertSdkRootsNotParsed is skipped");
       return;
     }
-    for (VirtualFile root : PythonInterpreterExtKt.classRoots(interpreter, myFixture.getProject())) {
+    for (VirtualFile root : PythonInterpreterExtKt.getClassRoots(interpreter)) {
       assertRootNotParsed(currentFile, root, null);
     }
   }
@@ -242,7 +239,7 @@ public abstract class PyTestCase extends UsefulTestCase {
                                                @NotNull String text,
                                                @NotNull Consumer<VirtualFile> fileConsumer) {
     final PythonInterpreter interpreter = getPythonInterpreter();
-    final VirtualFile libDir = interpreter == null ? null : PythonInterpreterExtKt.stdlibLibDirectory(interpreter, myFixture.getProject());
+    final VirtualFile libDir = interpreter == null ? null : PythonInterpreterExtKt.stdlibLibDirectory(interpreter);
     if (libDir != null) {
       runWithAdditionalFileIn(relativePath, text, libDir, fileConsumer);
     }
@@ -264,7 +261,7 @@ public abstract class PyTestCase extends UsefulTestCase {
                                                     @NotNull Consumer<VirtualFile> fileConsumer) {
     final PythonInterpreter interpreter = getPythonInterpreter();
     assertNotNull(interpreter);
-    final Path skeletonsPath = SdkExtKt.getSkeletonsPath(getSdkForRootEdits());
+    final Path skeletonsPath = PythonInterpreterExtKt.getSkeletonsPath(interpreter);
     assertNotNull(skeletonsPath);
     final VirtualFile skeletonsDir = WriteAction.computeAndWait(() -> {
       try {
@@ -427,19 +424,6 @@ public abstract class PyTestCase extends UsefulTestCase {
   /** The interpreter of the Python project of the fixture module, read from the snapshot. */
   protected @Nullable PythonInterpreter getPythonInterpreter() {
     return PyProjectStructureTestUtilKt.findPythonInterpreterForTests(myFixture.getModule());
-  }
-
-  /** The SDK of the interpreter, for a test that adds or removes its class roots. A root belongs to the SDK. */
-  protected @NotNull Sdk getSdkForRootEdits() {
-    return getSdkForRootEdits(myFixture.getModule());
-  }
-
-  /** The SDK of the interpreter of {@code module}, see {@link #getSdkForRootEdits()}. */
-  public static @NotNull Sdk getSdkForRootEdits(@NotNull Module module) {
-    final PythonInterpreter interpreter = PyProjectStructureTestUtilKt.findPythonInterpreterForTests(module);
-    assertNotNull(interpreter);
-    //noinspection deprecation
-    return PythonInterpreterExtKt.getSdkAPI(interpreter);
   }
 
   protected String getTestDataPath() {

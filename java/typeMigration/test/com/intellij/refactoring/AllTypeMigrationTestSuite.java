@@ -13,13 +13,7 @@ import org.junit.runners.Suite;
 @Ignore("Manual only")
 @RunWith(Suite.class)
 @Suite.SuiteClasses({
-  TypeMigrationTest.class,
-  TypeMigrationByAtomicRuleTest.class,
-  TypeMigrationByThreadLocalRuleTest.class,
-  TypeMigrationByLongAdderTest.class,
-  MigrateTypeSignatureTest.class,
   ChangeTypeSignatureTest.class,
-  WildcardTypeMigrationTest.class,
   ConvertToAtomicIntentionTest.class,
   ConvertToLongAdderIntentionTest.class,
   ConvertToThreadLocalIntentionTest.class,

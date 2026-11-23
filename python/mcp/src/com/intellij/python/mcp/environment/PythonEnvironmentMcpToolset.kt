@@ -84,24 +84,30 @@ class PythonEnvironmentMcpToolset : McpToolset {
   private suspend fun describeInterpreterSetupHint(pyProject: PyProject): String? =
     when (val moduleInfo = pyProject.getModuleSdkState()) {
       is ModuleSdkState.HasSdk -> null
-      is ModuleSdkState.NoSdk -> when (val r = moduleInfo.sdkConfigInstruction) {
-        is SdkForModuleConfigInstruction.CreateSdkInfoWrapper -> {
-          when (val createSdkInfo = r.createSdkInfoWithTool.createSdkInfo) {
-            is CreateInterpreterInfo.ExistingEnv ->
-              "PyCharm can attach the existing virtual environment detected for this module — $CONFIGURE_PYTHON_INTERPRETER_SUFFIX"
-            is CreateInterpreterInfo.WillCreateEnv ->
-              "PyCharm can create a new ${r.toolId.id} environment — $CONFIGURE_PYTHON_INTERPRETER_SUFFIX"
-            is CreateInterpreterInfo.WillInstallTool ->
-              "PyCharm expects this project to use ${createSdkInfo.toolToInstall}, but ${createSdkInfo.toolToInstall} is not installed."
-          }
+      is ModuleSdkState.NoSdk -> describeInstruction(moduleInfo.sdkConfigInstruction)
+      is ModuleSdkState.Unavailable ->
+        "The interpreter that this module names is unavailable: its environment is gone. " +
+        (describeInstruction(moduleInfo.sdkConfigInstruction) ?: "")
+    }
+
+  private suspend fun describeInstruction(instruction: SdkForModuleConfigInstruction?): String? =
+    when (val r = instruction) {
+      is SdkForModuleConfigInstruction.CreateSdkInfoWrapper -> {
+        when (val createSdkInfo = r.createSdkInfoWithTool.createSdkInfo) {
+          is CreateInterpreterInfo.ExistingEnv ->
+            "PyCharm can attach the existing virtual environment detected for this module — $CONFIGURE_PYTHON_INTERPRETER_SUFFIX"
+          is CreateInterpreterInfo.WillCreateEnv ->
+            "PyCharm can create a new ${r.toolId.id} environment — $CONFIGURE_PYTHON_INTERPRETER_SUFFIX"
+          is CreateInterpreterInfo.WillInstallTool ->
+            "PyCharm expects this project to use ${createSdkInfo.toolToInstall}, but ${createSdkInfo.toolToInstall} is not installed."
         }
-        is SdkForModuleConfigInstruction.SameAs -> {
-          if (r.parent.getInterpreter() != null)
-            "PyCharm can inherit the interpreter from parent module '${r.parent.residesOnModule.name}' — $CONFIGURE_PYTHON_INTERPRETER_SUFFIX"
-          else null
-        }
-        null -> null
       }
+      is SdkForModuleConfigInstruction.SameAs -> {
+        if (r.parent.getInterpreter() != null)
+          "PyCharm can inherit the interpreter from parent module '${r.parent.residesOnModule.name}' — $CONFIGURE_PYTHON_INTERPRETER_SUFFIX"
+        else null
+      }
+      null -> null
     }
 
   @McpTool(name = CONFIGURE_PYTHON_INTERPRETER_TOOL)

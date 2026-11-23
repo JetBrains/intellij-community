@@ -15,10 +15,7 @@ Follow the IntelliJ Coding Guidelines with these IntelliJ-specific rules.
 - Before writing or reviewing Java, read [Modern Java](references/modern-java.md).
 - Use idiomatic Kotlin: extension functions, data classes, null safety
 - Mark experimental APIs with `@ApiStatus.Experimental`
-- **Build scripts Kotlin style**: Follow `community/platform/build-scripts/kotlin-style-recommendations.md` for build-scripts code:
-  - Use `@JvmField` for internal data class fields
-  - Use `.put()`/`.get()` instead of `[]` operator
-  - Use explicit `HashMap`/`HashSet`/`LinkedHashMap` instead of `mutableMapOf()`/`mutableSetOf()`
+- **Build scripts Kotlin style**: Follow `community/platform/build-scripts/kotlin-style-recommendations.md` for build-scripts code.
 
 ## Sealed hierarchies
 
@@ -33,7 +30,7 @@ Follow the IntelliJ Coding Guidelines with these IntelliJ-specific rules.
   - Indentation: 2 spaces (4 for Go files)
   - Line length: 140 characters max
   - Braces: `else`, `catch`, and `finally` on new lines
-- Only in `/rustrover` directory you must always use standard Kotlin formatting rules with 4 spaces indentation.
+- In `/rustrover` directory, except `/rustrover/build`, you must always use standard Kotlin formatting rules with 4 spaces indentation.
 
 ## Threading annotations
 
@@ -41,11 +38,6 @@ Follow the IntelliJ Coding Guidelines with these IntelliJ-specific rules.
   or `@RequiresReadLockAbsence`, do not pass `generateAssertion`. Keep the default value unless the user explicitly requests a different one.
 - Never write `generateAssertion = false /* IJPL-115548 */`. It is a legacy mass-migration marker. Do not copy it from existing code.
 - Set `generateAssertion = false` only when the user explicitly requests it, or when the runtime assertion is known to fail. State the reason in a comment.
-
-```kotlin
-@RequiresEdt
-fun updateUi() { ... }
-```
 
 ## Error handling
 

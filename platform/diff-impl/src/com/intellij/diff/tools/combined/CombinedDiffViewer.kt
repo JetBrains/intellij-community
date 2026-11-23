@@ -710,6 +710,9 @@ class CombinedDiffViewer(
   internal val editors: List<Editor>
     get() = diffViewers.values.flatMap { it.editors }
 
+  internal val highlightEditors: List<Editor>
+    get() = diffViewers.values.flatMap { (it as? EditorDiffViewer)?.highlightEditors.orEmpty() }
+
   private inner class FocusListener(disposable: Disposable) : FocusAdapter(), FocusChangeListener {
     init {
       (EditorFactory.getInstance().eventMulticaster as? EditorEventMulticasterEx)?.addFocusChangeListener(this, disposable)

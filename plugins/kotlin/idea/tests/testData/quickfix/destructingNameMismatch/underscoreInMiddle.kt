@@ -1,4 +1,4 @@
-// "Convert to positional destructuring syntax with square brackets" "false"
+// "Rename variable to 'second'" "false"
 // COMPILER_ARGUMENTS: -Xname-based-destructuring=only-syntax
 
 data class Triple(val first: String, val second: Int, val third: Boolean)

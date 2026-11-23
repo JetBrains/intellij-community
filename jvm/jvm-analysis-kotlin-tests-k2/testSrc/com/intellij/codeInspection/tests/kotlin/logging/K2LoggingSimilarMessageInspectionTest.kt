@@ -1,9 +1,13 @@
 package com.intellij.codeInspection.tests.kotlin.logging
 
 import com.intellij.jvm.analysis.testFramework.JvmLanguage
+import com.intellij.testFramework.junit5.TestApplication
+import org.junit.jupiter.api.Test
 
+@TestApplication
 class K2LoggingSimilarMessageInspectionTest : KotlinLoggingSimilarMessageInspectionTest() {
 
+  @Test
   fun `test equals slf4j`() {
     myFixture.testHighlighting(JvmLanguage.KOTLIN, """
       import org.slf4j.Logger
@@ -26,6 +30,7 @@ class K2LoggingSimilarMessageInspectionTest : KotlinLoggingSimilarMessageInspect
     """.trimIndent())
   }
 
+  @Test
   fun `test setMessage slf4j`() {
     myFixture.testHighlighting(JvmLanguage.KOTLIN, """
       import org.slf4j.Logger
@@ -49,6 +54,7 @@ class K2LoggingSimilarMessageInspectionTest : KotlinLoggingSimilarMessageInspect
     """.trimIndent())
   }
 
+  @Test
   fun `test skip in the middle parts`() {
     myFixture.testHighlighting(JvmLanguage.KOTLIN, """
       import org.slf4j.Logger
@@ -70,6 +76,7 @@ class K2LoggingSimilarMessageInspectionTest : KotlinLoggingSimilarMessageInspect
     """.trimIndent())
   }
 
+  @Test
   fun `test skip inside calls`() {
     myFixture.testHighlighting(JvmLanguage.KOTLIN, """
       import org.slf4j.Logger
@@ -91,6 +98,7 @@ class K2LoggingSimilarMessageInspectionTest : KotlinLoggingSimilarMessageInspect
   }
 
 
+  @Test
   fun `test suppressed slf4j statement`() {
     myFixture.testHighlighting(JvmLanguage.KOTLIN, """
         import org.slf4j.Logger
@@ -111,6 +119,7 @@ class K2LoggingSimilarMessageInspectionTest : KotlinLoggingSimilarMessageInspect
     """.trimIndent())
   }
 
+  @Test
   fun `test suppressed slf4j method`() {
     myFixture.testHighlighting(JvmLanguage.KOTLIN, """
       import org.slf4j.Logger

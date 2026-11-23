@@ -21,7 +21,6 @@ import com.intellij.psi.util.QualifiedName
 import com.intellij.python.pyproject.model.api.isPyProjectTomlBased
 import com.intellij.python.pyproject.model.evolution.findEvoPyProjectIfReady
 import com.intellij.python.sdk.backend.PythonInterpreter
-import com.intellij.python.sdk.backend.getSdkAPI
 import com.intellij.python.sdk.backend.isReadOnly
 import com.intellij.util.containers.ContainerUtil
 import com.jetbrains.python.PyNames
@@ -41,7 +40,7 @@ import com.jetbrains.python.inspections.quickfix.InstallAndImportPackageQuickFix
 import com.jetbrains.python.inspections.quickfix.InstallPackageQuickFix
 import com.jetbrains.python.inspections.quickfix.PyMarkDirectoryAsSourceRootQuickFix
 import com.jetbrains.python.module.PySourceRootDetectionService
-import com.jetbrains.python.packaging.PyPackageUtil
+import com.jetbrains.python.packaging.isPackageManagementEnabled
 import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.packaging.management.isNotInstalledAndCanBeInstalled
 import com.jetbrains.python.psi.PyCallExpression
@@ -94,13 +93,12 @@ open class PyUnresolvedReferenceQuickFixesImpl(private val suggestInstallingPack
     }
     val packageName = PyPsiPackageUtil.moduleToPackageName(components[0])
 
-    val interpreter = node.findEvoPyProjectIfReady(mainForOrphans = false)?.interpreter
-    @Suppress("DEPRECATION")
-    if (interpreter == null || !PyPackageUtil.packageManagementEnabled(interpreter.getSdkAPI(), false, true)) {
+    val interpreter = node.findEvoPyProjectIfReady(mainForOrphans = false)?.interpreter ?: return emptyList()
+    if (!interpreter.isPackageManagementEnabled()) {
       return emptyList()
     }
 
-    val packageManager = PythonPackageManager.forPythonInterpreter(node.project, interpreter)
+    val packageManager = PythonPackageManager.forPythonInterpreter(interpreter)
 
     val shouldBeSuggest = !interpreter.isReadOnly && runBlockingCancellable { packageManager.isNotInstalledAndCanBeInstalled(packageName) }
     if (!shouldBeSuggest)
@@ -266,7 +264,7 @@ open class PyUnresolvedReferenceQuickFixesImpl(private val suggestInstallingPack
     val packageName = PyPsiPackageUtil.moduleToPackageName(importedModuleName)
     val canBeInstalled = !interpreter.isReadOnly &&
                          runBlockingCancellable {
-                           PythonPackageManager.forPythonInterpreter(project, interpreter).isNotInstalledAndCanBeInstalled(packageName)
+                           PythonPackageManager.forPythonInterpreter(interpreter).isNotInstalledAndCanBeInstalled(packageName)
                          }
     return if (canBeInstalled)
         InstallAndImportPackageQuickFix(importedModuleName, asName)

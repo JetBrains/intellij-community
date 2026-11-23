@@ -13,11 +13,14 @@ import com.intellij.internal.statistic.utils.StatisticsRecorderUtil
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.fileEditor.FileEditorComposite
 import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.fileEditor.FileEditorOpenRequest
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFileManager
 import java.nio.file.Path
+import java.util.concurrent.CompletableFuture
 
 internal class OpenEventsSchemeFileAction : DumbAwareAction {
   private val recorderId: String
@@ -43,19 +46,19 @@ internal class OpenEventsSchemeFileAction : DumbAwareAction {
 
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project ?: return
-    Manager.openFileInEditor(Manager.getEventsSchemeFile(recorderId), project)
+    Manager.requestOpenFileInEditor(Manager.getEventsSchemeFile(recorderId), project)
   }
 
   internal object Manager {
-    fun openFileInEditor(file: Path, project: Project) {
+    fun requestOpenFileInEditor(file: Path, project: Project): CompletableFuture<FileEditorComposite>? {
       val fileManager = VirtualFileManager.getInstance()
       val virtualFile = fileManager.findFileByNioPath(file)?.takeIf { it.isValid }
                         ?: fileManager.refreshAndFindFileByNioPath(file)
       if (virtualFile == null) {
         showNotification(project, NotificationType.WARNING, StatisticsBundle.message("stats.file.0.does.not.exist", file.toString()))
-        return
+        return null
       }
-      FileEditorManager.getInstance(project).openFile(virtualFile, true)
+      return FileEditorManager.getInstance(project).requestOpenFile(virtualFile, FileEditorOpenRequest.withFocus(true))
     }
 
     fun getEventsSchemeFile(recorderId: String): Path {

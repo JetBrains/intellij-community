@@ -1366,7 +1366,6 @@ class PyNarrowingTypeTest : PyCodeInsightTestCase() {
 
     @Test
     @TestFor(issues = ["PY-32113"])
-    @TestCaseOptions(assertRecursionPrevention = false)
     fun `assertion on variable from outer scope`() = test("""
       class B: pass
 
@@ -1383,7 +1382,6 @@ class PyNarrowingTypeTest : PyCodeInsightTestCase() {
 
     @Test
     @TestFor(issues = ["PY-32113"])
-    @TestCaseOptions(assertRecursionPrevention = false)
     fun `assertion on function from outer scope`() = test("""
       class B: pass
 
@@ -1949,7 +1947,6 @@ class PyNarrowingTypeTest : PyCodeInsightTestCase() {
 
     @Test
     @TestFor(issues=["PY-87917"])
-    @TestCaseOptions(assertRecursionPrevention = false)
     fun `type narrowing by type call is`() = test("""
       def g(x):
           assert type(x) is int
@@ -1968,7 +1965,6 @@ class PyNarrowingTypeTest : PyCodeInsightTestCase() {
 
     @Test
     @TestFor(issues=["PY-87917"])
-    @TestCaseOptions(assertRecursionPrevention = false)
     fun `type narrowing by class equality`() = test("""
       def g(x: int | str):
           if type(x) == int:

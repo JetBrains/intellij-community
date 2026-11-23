@@ -6,15 +6,14 @@ import com.intellij.platform.backend.workspace.WorkspaceModelChangeListener
 import com.intellij.platform.workspace.storage.VersionedStorageChange
 import org.jetbrains.kotlin.gradle.scripting.workspaceModel.GradleScriptDefinitionEntity
 import org.jetbrains.kotlin.idea.core.script.definitions.ScriptDefinitionProviderImpl
-import org.jetbrains.kotlin.idea.core.script.definitions.ScriptDefinitionsModificationTracker
 
 /**
- * Mark the definitions cache of [ScriptDefinitionProviderImpl] dirty when a Gradle sync changes the [GradleScriptDefinitionEntity] set.
+ * Reloads the definitions of [ScriptDefinitionProviderImpl] when a Gradle sync changes the [GradleScriptDefinitionEntity] set.
  */
 internal class GradleWorkspaceModelListener(private val project: Project) : WorkspaceModelChangeListener {
     override fun changed(event: VersionedStorageChange) {
         if (event.getChanges(GradleScriptDefinitionEntity::class.java).any()) {
-            ScriptDefinitionsModificationTracker.getInstance(project).incModificationCount()
+            ScriptDefinitionProviderImpl.getInstance(project).scheduleLoading()
         }
     }
 }

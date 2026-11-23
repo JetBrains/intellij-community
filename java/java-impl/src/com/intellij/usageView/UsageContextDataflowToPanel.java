@@ -7,8 +7,6 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.ToolWindow;
-import com.intellij.openapi.wm.ToolWindowId;
-import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiJavaFile;
@@ -18,6 +16,7 @@ import com.intellij.slicer.JavaSliceUsage;
 import com.intellij.slicer.SliceAnalysisParams;
 import com.intellij.slicer.SlicePanel;
 import com.intellij.slicer.SliceRootNode;
+import com.intellij.usageView.UsageViewContentManager;
 import com.intellij.usages.PsiElementUsageTarget;
 import com.intellij.usages.UsageContextPanel;
 import com.intellij.usages.UsageTarget;
@@ -112,7 +111,7 @@ public class UsageContextDataflowToPanel extends UsageContextPanelBase {
 
   protected @NotNull JComponent createPanel(@NotNull PsiElement element, final boolean dataFlowToThis) {
     Project project = element.getProject();
-    ToolWindow toolWindow = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.FIND);
+    ToolWindow toolWindow = UsageViewContentManager.getInstance(project).getToolWindow();
     SliceAnalysisParams params = createParams(element, dataFlowToThis);
 
     SliceRootNode rootNode = new SliceRootNode(project, new DuplicateMap(), JavaSliceUsage.createRootUsage(element, params));

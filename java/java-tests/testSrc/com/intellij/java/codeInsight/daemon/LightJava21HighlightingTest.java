@@ -2,6 +2,7 @@
 package com.intellij.java.codeInsight.daemon;
 
 import com.intellij.JavaTestUtil;
+import com.intellij.idea.TestFor;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
 import com.intellij.testFramework.fixtures.LightJavaProject;
@@ -25,6 +26,12 @@ public final class LightJava21HighlightingTest {
 
   @Test
   public void testMyCNMap() {
+    doTest();
+  }
+
+  @Test
+  @TestFor(issues = "IDEA-396045")
+  public void testConditionalWithListOfAsArgument() {
     doTest();
   }
 

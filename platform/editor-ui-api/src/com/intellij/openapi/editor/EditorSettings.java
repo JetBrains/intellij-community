@@ -139,32 +139,6 @@ public interface EditorSettings {
   int getAdditionalColumnsCount();
   void setAdditionalColumnsCount(int additionalColumnsCount);
 
-  /**
-   * Returns the width of single-width characters
-   *
-   * @see #setCharacterGridWidthMultiplier(Float)
-   * @return the width of single-width characters or {@code null} if cell grid alignment is disabled
-   */
-  @ApiStatus.Internal
-  @Nullable Float getCharacterGridWidthMultiplier();
-
-  /**
-   * Sets the width of single-width characters and enables the character grid mode
-   * <p>
-   *   Settings this to a non-null value enables a special mode in which the editor tries to align all
-   *   characters to a grid of cells with their width determined by multiplying this value
-   *   by the width of the widest character of the editor fonts.
-   *   Double-width characters take two cells each.
-   * </p>
-   * <p>
-   *   If this mode is enabled, all kinds of grid properties can be queried by calling
-   *   {@link com.intellij.openapi.editor.impl.EditorImpl#getCharacterGrid()}.
-   * </p>
-   * @param value the width of single-width characters or {@code null} to disable cell grid alignment
-   */
-  @ApiStatus.Internal
-  void setCharacterGridWidthMultiplier(@Nullable Float value);
-
   // The caret.
 
   boolean isBlockCursor();

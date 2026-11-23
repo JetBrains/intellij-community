@@ -1,34 +1,44 @@
 package com.intellij.codeInspection.tests.kotlin;
 
 import com.intellij.JavaTestUtil;
-import com.intellij.testFramework.JavaInspectionTestCase;
+import com.intellij.testFramework.JavaInspectionFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.siyeh.ig.dependency.CyclicClassDependencyInspection;
+import org.junit.jupiter.api.Test;
 
-public abstract class KotlinCyclicClassDependencyInspectionTest extends JavaInspectionTestCase {
+import static com.intellij.testFramework.JavaInspectionFixtureKt.javaInspectionFixture;
+import static com.intellij.testFramework.JavaInspectionFixtureKt.javaInspectionProjectFixture;
+
+@TestApplication
+public abstract class KotlinCyclicClassDependencyInspectionTest {
+  private static final TestFixture<LightJavaProject> projectFixture = javaInspectionProjectFixture();
+  protected final TestFixture<JavaInspectionFixture> javaInspection = javaInspectionFixture(projectFixture, JavaTestUtil.getJavaTestDataPath() + "/inspection/jvm");
+
   private final CyclicClassDependencyInspection myGlobalTool = new CyclicClassDependencyInspection();
 
-  @Override
-  protected String getTestDataPath() {
-    return JavaTestUtil.getJavaTestDataPath() + "/inspection/jvm";
-  }
-
   private String getGlobalTestDir() {
-    return "kotlinCyclicClassDependency/" + getTestName(true);
+    return "kotlinCyclicClassDependency/" + javaInspection.get().getTestName(true);
   }
 
+  @Test
   public void testCompanionObject() {
-    doTest(getGlobalTestDir(), myGlobalTool);
+    javaInspection.get().doTest(getGlobalTestDir(), myGlobalTool);
   }
 
+  @Test
   public void testNonCompanionObject() {
-    doTest(getGlobalTestDir(), myGlobalTool);
+    javaInspection.get().doTest(getGlobalTestDir(), myGlobalTool);
   }
 
+  @Test
   public void testOutsiderCompanionObject() {
-    doTest(getGlobalTestDir(), myGlobalTool);
+    javaInspection.get().doTest(getGlobalTestDir(), myGlobalTool);
   }
 
+  @Test
   public void testRealCycle() {
-    doTest(getGlobalTestDir(), myGlobalTool);
+    javaInspection.get().doTest(getGlobalTestDir(), myGlobalTool);
   }
 }

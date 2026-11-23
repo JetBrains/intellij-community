@@ -295,6 +295,42 @@ internal class PersistentLongMapTest {
     }
   }
 
+  @ParameterizedTest
+  @EnumSource(PersistentLongMapImplementation::class)
+  fun `mixed persistent and builder updates keep every published version intact`(implementation: PersistentLongMapImplementation) {
+    val random = Random(0xFACE + implementation.ordinal)
+    val keys = KEYS + LongArray(64) { random.nextLong().ushr(1) } + LongArray(256) { random.nextLong(5_000) }
+    val expected = mutableMapOf<Long, Int>()
+    var actual = implementation.empty<Int>()
+    val versions = mutableListOf<Pair<Map<Long, Int>, PersistentLongMap<Int>>>()
+
+    repeat(60) { batch ->
+      val builder = if (random.nextBoolean()) actual.builder() else null
+      repeat(random.nextInt(1, 60)) { operation ->
+        val key = keys[random.nextInt(keys.size)]
+        val value = batch * 100 + operation
+        if (random.nextInt(3) == 0) {
+          expected.remove(key)
+          if (builder != null) builder.remove(key) else actual = actual.remove(key)
+        }
+        else {
+          expected[key] = value
+          if (builder != null) builder.put(key, value) else actual = actual.put(key, value)
+        }
+      }
+      if (builder != null) actual = builder.build()
+      versions.add(expected.toMap() to actual)
+    }
+
+    for ((index, version) in versions.withIndex()) {
+      val (expectedVersion, actualVersion) = version
+      val entries = mutableListOf<Pair<Long, Int>>()
+      actualVersion.forEachEntry { key, value -> entries.add(key to value) }
+      assertEquals(expectedVersion.toSortedMap().toList(), entries, "$implementation, version $index")
+      assertEquals(expectedVersion.size, actualVersion.size(), "$implementation, version $index")
+    }
+  }
+
   private fun value(index: Int): String = "value-$index"
 
   companion object {

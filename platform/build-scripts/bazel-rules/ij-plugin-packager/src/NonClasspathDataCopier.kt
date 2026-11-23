@@ -7,18 +7,29 @@ import java.nio.file.Path
 import java.nio.file.SimpleFileVisitor
 import java.nio.file.StandardCopyOption
 import java.nio.file.attribute.BasicFileAttributes
+import kotlin.io.path.invariantSeparatorsPathString
 
 internal data class NonClasspathDataArgument(
   val relativeOutputPath: Path,
+  /** The mode of the copied file, or of each regular file of the copied directory. */
+  val mode: Int,
   val source: Path,
 )
 
-internal fun copyNonClasspathData(nonClasspathData: List<NonClasspathDataArgument>, outputDirectory: Path) {
+/**
+ * Copies [nonClasspathData] to [outputDirectory], and returns the declared mode of each copied regular file.
+ * The key is the path relative to [outputDirectory] with `/` as the separator. A symbolic link gets no entry.
+ */
+internal fun copyNonClasspathData(nonClasspathData: List<NonClasspathDataArgument>, outputDirectory: Path): Map<String, Int> {
+  val fileModes = HashMap<String, Int>()
   for (data in nonClasspathData) {
     val outputPath = resolveRelativeOutputPath(outputDirectory, data.relativeOutputPath)
     Files.createDirectories(outputPath.parent)
-    copyNonClasspathData(data.source, outputPath)
+    copyNonClasspathData(data.source, outputPath) { copiedFile ->
+      fileModes.put(outputDirectory.normalize().relativize(copiedFile).invariantSeparatorsPathString, data.mode)
+    }
   }
+  return fileModes
 }
 
 private fun resolveRelativeOutputPath(outputDirectory: Path, relativeOutputPath: Path): Path {
@@ -30,7 +41,7 @@ private fun resolveRelativeOutputPath(outputDirectory: Path, relativeOutputPath:
   return outputPath
 }
 
-private fun copyNonClasspathData(source: Path, outputPath: Path) {
+private fun copyNonClasspathData(source: Path, outputPath: Path, regularFileCopied: (Path) -> Unit) {
   val sourceRoot = source.toRealPath()
   Files.walkFileTree(source, object : SimpleFileVisitor<Path>() {
     override fun preVisitDirectory(dir: Path, attrs: BasicFileAttributes): FileVisitResult {
@@ -54,6 +65,7 @@ private fun copyNonClasspathData(source: Path, outputPath: Path) {
       }
       else {
         Files.copy(file, destination, LinkOption.NOFOLLOW_LINKS, StandardCopyOption.COPY_ATTRIBUTES)
+        regularFileCopied(destination)
       }
       return FileVisitResult.CONTINUE
     }

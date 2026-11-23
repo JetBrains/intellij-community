@@ -9,7 +9,6 @@ import com.intellij.idea.IJIgnore
 import com.intellij.lang.documentation.CompositeDocumentationProvider
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.QualifiedName
-import com.intellij.python.sdk.backend.getSdkAPI
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture
 import com.jetbrains.python.codeInsight.stdlib.PyStdlibDocumentationLinkProvider
 import com.jetbrains.python.fixtures.PyTestCase
@@ -88,7 +87,7 @@ abstract class PyExternalDocTest : PyTestCase() {
     val elementName = qname.substring(ind+1)
     val p = PyStdlibDocumentationLinkProvider()
     TestCase.assertEquals(expectedUrl,
-                          "${p.webPageName(QualifiedName.fromDottedString(moduleName), checkNotNull(findPythonInterpreterForTests(myFixture.module)).getSdkAPI())}.html#${p.fragmentName(
+                          "${p.webPageName(QualifiedName.fromDottedString(moduleName), checkNotNull(findPythonInterpreterForTests(myFixture.module)))}.html#${p.fragmentName(
                             moduleName)}.$elementName")
   }
 }

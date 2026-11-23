@@ -10,6 +10,6 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Experimental
 @ApiStatus.Internal
 class PipPackageManagerProvider : PythonPackageManagerProvider {
-  override fun createPackageManager(project: Project, interpreter: PythonInterpreter): PythonPackageManager =
-    PipPythonPackageManager(project, interpreter)
+  override fun createPackageManager(interpreter: PythonInterpreter): PythonPackageManager =
+    PipPythonPackageManager(interpreter)
 }

@@ -13,6 +13,19 @@ import com.intellij.platform.settings.v2.LayerLocality
 const val JETBRAINS_CONFIG_NAME: String = ".jetbrains"
 
 /**
+ * Holds the name of the team file of the project layer, `project.settings.json`. The file is in the
+ * [JETBRAINS_CONFIG_NAME] directory under the base path of the project. [localityFileName] derives the names of the
+ * other localities from it.
+ */
+const val PROJECT_CONFIG_FILE_NAME: String = "project.settings.json"
+
+/**
+ * Holds the name of the team file of the file layer, `.jetbrains.json`. A directory of the project keeps its config
+ * in this file. [localityFileName] derives the names of the other localities from it.
+ */
+const val DIRECTORY_CONFIG_FILE_NAME: String = "$JETBRAINS_CONFIG_NAME.json"
+
+/**
  * Returns the on-disk file name of the [locality] variant of the team file [teamFileName]. The team layer keeps the
  * plain name. The local and the environmental layers insert an infix before the extension. So `.jetbrains.json`
  * gives `.jetbrains.local.json` and `.jetbrains.env.json`, and `project.settings.json` gives

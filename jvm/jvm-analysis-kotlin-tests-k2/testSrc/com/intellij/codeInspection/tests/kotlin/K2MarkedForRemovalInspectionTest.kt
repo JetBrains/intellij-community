@@ -1,9 +1,13 @@
 package com.intellij.codeInspection.tests.kotlin
 
 import com.intellij.jvm.analysis.testFramework.JvmLanguage
+import com.intellij.testFramework.junit5.TestApplication
+import org.junit.jupiter.api.Test
 
+@TestApplication
 class K2MarkedForRemovalInspectionTest : KotlinMarkedForRemovalInspectionTest() {
 
+  @Test
   fun `test highlighted as deprecated for removal`() {
     myFixture.addClass("""
       package test;
@@ -18,6 +22,7 @@ class K2MarkedForRemovalInspectionTest : KotlinMarkedForRemovalInspectionTest() 
     """.trimIndent())
   }
 
+  @Test
   fun `test call of override of non-deprecated interface method is not reported`() {
     myFixture.addClass("""
       package test;

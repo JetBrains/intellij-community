@@ -41,6 +41,7 @@ import org.eclipse.lsp4j.GeneralClientCapabilities
 import org.eclipse.lsp4j.HoverCapabilities
 import org.eclipse.lsp4j.ImplementationCapabilities
 import org.eclipse.lsp4j.InlayHintCapabilities
+import org.eclipse.lsp4j.InlayHintResolveSupportCapabilities
 import org.eclipse.lsp4j.InlayHintWorkspaceCapabilities
 import org.eclipse.lsp4j.InsertTextMode
 import org.eclipse.lsp4j.MarkupKind
@@ -124,7 +125,9 @@ internal fun createClientCapabilities(lspCustomization: LspCustomization): Clien
       willSaveWaitUntil = false
       didSave = true
     }
-    inlayHint = InlayHintCapabilities(true)
+    inlayHint = InlayHintCapabilities(true).apply {
+      resolveSupport = InlayHintResolveSupportCapabilities(listOf("label.location"))
+    }
     documentHighlight = DocumentHighlightCapabilities(true)
     diagnostic = DiagnosticCapabilities(true)
     definition = DefinitionCapabilities().apply {

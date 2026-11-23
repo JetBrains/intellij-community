@@ -315,15 +315,16 @@ class PyDivisionByZeroInspectionTest : PyCodeInsightTestCase() {
       """.trimIndent())
 
     @Test
+    @TestFor(issues = ["PY-92229"])
     fun `divmod by zero on various types`() = test("""
       from decimal import Decimal
       from fractions import Fraction
       
       divmod(1.0, 0)            # WARNING Division by zero
-      divmod(1j, 0)             # WARNING FIXME Expected type 'int', got 'complex' instead # PY-92229
+      divmod(1j, 0)             # WARNING No overload of 'divmod' matches the arguments. Argument types: (complex, Literal[0]). Expected one of: (x: SupportsDivMod[_T_contra, _T_co], y: _T_contra), (x: _T_contra, y: SupportsRDivMod[_T_contra, _T_co])
       divmod(Fraction(1, 2), 0) # WARNING Division by zero
       divmod(Decimal(1), 0)     # WARNING Division by zero
-      divmod("", 0)             # WARNING FIXME Expected type 'int', got 'Literal[""]' instead # PY-92229
+      divmod("", 0)             # WARNING No overload of 'divmod' matches the arguments. Argument types: (Literal[""], Literal[0]). Expected one of: (x: SupportsDivMod[_T_contra, _T_co], y: _T_contra), (x: _T_contra, y: SupportsRDivMod[_T_contra, _T_co])
       """.trimIndent())
   }
 
@@ -411,6 +412,7 @@ class PyDivisionByZeroInspectionTest : PyCodeInsightTestCase() {
       """.trimIndent())
 
     @Test
+    @TestFor(issues = ["PY-92229"])
     fun `operator module division by zero on various types`() = test("""
       import operator
       from decimal import Decimal
@@ -420,19 +422,19 @@ class PyDivisionByZeroInspectionTest : PyCodeInsightTestCase() {
       operator.truediv(1j, 0)              # WARNING Division by zero
       operator.truediv(Fraction(1, 2), 0)  # WARNING Division by zero
       operator.truediv(Decimal(1), 0)      # WARNING Division by zero
-      operator.truediv("", 0)              # WARNING FIXME Expected type 'int', got 'Literal[""]' instead # PY-92229
+      operator.truediv("", 0)
       
       operator.floordiv(1.0, 0)            # WARNING Division by zero
-      operator.floordiv(1j, 0)             # WARNING FIXME Expected type 'int', got 'complex' instead # PY-92229
+      operator.floordiv(1j, 0)
       operator.floordiv(Fraction(1, 2), 0) # WARNING Division by zero
       operator.floordiv(Decimal(1), 0)     # WARNING Division by zero
-      operator.floordiv("", 0)             # WARNING FIXME Expected type 'int', got 'Literal[""]' instead # PY-92229
+      operator.floordiv("", 0)
       
       operator.mod(1.0, 0)                 # WARNING Division by zero
-      operator.mod(1j, 0)                  # WARNING FIXME Expected type 'int', got 'complex' instead # PY-92229
+      operator.mod(1j, 0)                  # WARNING No overload of 'mod' matches the arguments. Argument types: (complex, Literal[0]). Expected one of: (a: SupportsMod[_T_contra, _T_co], b: _T_contra), (a: _T_contra, b: SupportsRMod[_T_contra, _T_co])
       operator.mod(Fraction(1, 2), 0)      # WARNING Division by zero
       operator.mod(Decimal(1), 0)          # WARNING Division by zero
-      operator.mod("", 0)                  # WARNING FIXME Expected type 'int', got 'Literal[""]' instead # PY-92229
+      operator.mod("", 0)
       """.trimIndent())
   }
 

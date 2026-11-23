@@ -3,9 +3,11 @@ package com.intellij.java.refactoring;
 
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.rename.RenameProcessor;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 
@@ -23,7 +25,7 @@ public class RenameDirectoryTest extends JavaCodeInsightFixtureTestCase {
                                              """);
     myFixture.configureFromExistingVirtualFile(fooClass.getContainingFile().getVirtualFile());
 
-    new RenameProcessor(getProject(), getPsiManager().findDirectory(srcRoot), "newName", true, true).run();
+    rename(getPsiManager().findDirectory(srcRoot), "newName");
 
     assert srcRoot.getPath().endsWith("newName");
     myFixture.checkResult("""
@@ -32,5 +34,10 @@ public class RenameDirectoryTest extends JavaCodeInsightFixtureTestCase {
                               String s1 = "PsiPackage:"
                             }
                             """);
+  }
+
+  /** Renames {@code element}, searching in comments and in text occurrences; a subclass renames with another engine. */
+  protected void rename(@NotNull PsiElement element, @NotNull String newName) {
+    new RenameProcessor(getProject(), element, newName, true, true).run();
   }
 }

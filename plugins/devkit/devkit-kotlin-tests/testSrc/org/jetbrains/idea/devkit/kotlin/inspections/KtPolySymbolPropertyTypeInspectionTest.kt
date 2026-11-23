@@ -1,21 +1,24 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.kotlin.inspections
 
-import com.intellij.testFramework.LightProjectDescriptor
-import org.jetbrains.idea.devkit.inspections.quickfix.LightDevKitInspectionFixTestBase
+import com.intellij.testFramework.fixtures.LightJavaProject
+import com.intellij.testFramework.fixtures.lightJavaProjectFixture
+import com.intellij.testFramework.junit5.fixture.TestFixture
+import org.jetbrains.idea.devkit.inspections.quickfix.lightDevKitInspectionFixture
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 
-abstract class KtPolySymbolPropertyTypeInspectionTest : LightDevKitInspectionFixTestBase() {
+/**
+ * The tests of [KtPolySymbolPropertyTypeInspection]. Each subclass runs them in the project that it gives to the constructor.
+ * The project must have the Kotlin standard library, for example from [polySymbolPropertyTypeProjectFixture].
+ */
+abstract class KtPolySymbolPropertyTypeInspectionTest(projectFixture: TestFixture<LightJavaProject>) {
+  private val devKit by lightDevKitInspectionFixture(projectFixture, "kt")
+  private val myFixture get() = devKit.fixture
 
-  override fun getFileExtension(): String = "kt"
-
-  override fun getProjectDescriptor(): LightProjectDescriptor {
-    return KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()
-  }
-
-  override fun setUp() {
-    super.setUp()
-
+  @BeforeEach
+  fun setUpPolySymbolClasses() {
     myFixture.enableInspections(KtPolySymbolPropertyTypeInspection())
 
     // Add necessary infrastructure classes
@@ -32,6 +35,7 @@ abstract class KtPolySymbolPropertyTypeInspectionTest : LightDevKitInspectionFix
     """.trimIndent())
   }
 
+  @Test
   fun testCompatibleType() {
     myFixture.configureByText("Test.kt", """
       package test
@@ -49,6 +53,7 @@ abstract class KtPolySymbolPropertyTypeInspectionTest : LightDevKitInspectionFix
     myFixture.checkHighlighting()
   }
 
+  @Test
   fun testIncompatibleType() {
     myFixture.configureByText("Test.kt", """
       package test
@@ -66,6 +71,7 @@ abstract class KtPolySymbolPropertyTypeInspectionTest : LightDevKitInspectionFix
     myFixture.checkHighlighting()
   }
 
+  @Test
   fun testSubtypeIsCompatible() {
     myFixture.configureByText("Test.kt", """
       package test
@@ -86,6 +92,7 @@ abstract class KtPolySymbolPropertyTypeInspectionTest : LightDevKitInspectionFix
     myFixture.checkHighlighting()
   }
 
+  @Test
   fun testNullableTypeCompatible() {
     myFixture.configureByText("Test.kt", """
       package test
@@ -103,6 +110,7 @@ abstract class KtPolySymbolPropertyTypeInspectionTest : LightDevKitInspectionFix
     myFixture.checkHighlighting()
   }
 
+  @Test
   fun testPropertyGetter() {
     myFixture.configureByText("Test.kt", """
       package test
@@ -121,6 +129,7 @@ abstract class KtPolySymbolPropertyTypeInspectionTest : LightDevKitInspectionFix
     myFixture.checkHighlighting()
   }
 
+  @Test
   fun testPrimaryConstructorProperty() {
     myFixture.configureByText("Test.kt", """
       package test
@@ -138,6 +147,7 @@ abstract class KtPolySymbolPropertyTypeInspectionTest : LightDevKitInspectionFix
     myFixture.checkHighlighting()
   }
 
+  @Test
   fun testRealWorldExample_TypeScriptTypeMember() {
     myFixture.configureByText("PropertySignature.kt", """
       package com.intellij.lang.javascript.psi
@@ -174,3 +184,10 @@ abstract class KtPolySymbolPropertyTypeInspectionTest : LightDevKitInspectionFix
     myFixture.checkHighlighting()
   }
 }
+
+/**
+ * Creates the project of a [KtPolySymbolPropertyTypeInspectionTest] subclass: the JDK and the Kotlin standard library.
+ * Declare it in a companion object.
+ */
+fun polySymbolPropertyTypeProjectFixture(): TestFixture<LightJavaProject> =
+  lightJavaProjectFixture(KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance())

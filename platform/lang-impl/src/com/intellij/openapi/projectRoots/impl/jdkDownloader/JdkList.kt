@@ -555,7 +555,7 @@ abstract class JdkListDownloaderBase {
   /**
    * Returns a list of entries for JDK automatic installation. That set of entries normally
    * contains few more entries than the result of the [downloadForUI] call.
-   * Entries are sorter from the best suggested to the worst suggested items.
+   * Entries are sorted from the best suggested to the worst suggested items.
    */
   fun downloadModelForJdkInstaller(progress: ProgressIndicator?): List<JdkItem> =
     downloadModelForJdkInstaller(progress, JdkPredicate.default())

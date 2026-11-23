@@ -54,8 +54,9 @@ class MarkdownSettings private constructor(private val legacyProject: Project?):
     get() = preferences.splitLayout
     set(value) { preferences.splitLayout = value }
 
+  @Suppress("RemoveRedundantQualifierName")
   var previewPanelProviderInfo: MarkdownHtmlPanelProvider.ProviderInfo
-    get() = preferences.previewPanelProviderInfo
+    get() = preferences.previewPanelProviderInfo ?: MarkdownSettings.defaultProviderInfo
     set(value) { preferences.previewPanelProviderInfo = value }
 
   var isVerticalSplit: Boolean
@@ -201,18 +202,16 @@ class MarkdownSettings private constructor(private val legacyProject: Project?):
     private const val PROJECT_SETTINGS_MIGRATED = "markdown.settings.migrated.v1"
 
     internal val defaultFontSize
-      get() = (checkNotNull(AppEditorFontOptions.getInstance().state).FONT_SIZE + 0.5).toInt()
+      get() = (AppEditorFontOptions.getInstance().state.FONT_SIZE + 0.5).toInt()
 
     internal val defaultFontFamily
-      get() = checkNotNull(AppEditorFontOptions.getInstance().state).FONT_FAMILY
+      get() = AppEditorFontOptions.getInstance().state.FONT_FAMILY
 
     @JvmStatic
     val defaultProviderInfo: MarkdownHtmlPanelProvider.ProviderInfo
       get() {
-        return MarkdownHtmlPanelProvider.getProviders()
-          .firstOrNull { it.isAvailable() == MarkdownHtmlPanelProvider.AvailabilityInfo.AVAILABLE }
-          ?.providerInfo
-               ?: MarkdownHtmlPanelProvider.getProviders().firstOrNull()?.providerInfo
+        return MarkdownHtmlPanelProvider.getAvailable()?.providerInfo
+               ?: MarkdownHtmlPanelProvider.firstProviderOrNull()?.providerInfo
                ?: MarkdownHtmlPanelProvider.ProviderInfo("Unavailable", "Unavailable")
       }
 

@@ -1,16 +1,24 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.junit.kotlin.codeInspection
 
-import com.intellij.junit.testFramework.JUnitMixedFrameworkInspectionTestBase
+import com.intellij.execution.junit.kotlin.kotlinJUnitProjectFixture
+import com.intellij.junit.testFramework.MavenTestLib.JUNIT3
+import com.intellij.junit.testFramework.MavenTestLib.JUNIT4
+import com.intellij.junit.testFramework.MavenTestLib.JUNIT5
+import com.intellij.junit.testFramework.junitMixedFrameworkInspectionFixture
 import com.intellij.jvm.analysis.testFramework.JvmLanguage
-import org.jetbrains.kotlin.idea.test.ConfigLibraryUtil
+import com.intellij.testFramework.junit5.TestApplication
+import org.junit.jupiter.api.Test
 
-abstract class KotlinJUnitMixedFrameworkInspectionTest : JUnitMixedFrameworkInspectionTestBase() {
-  override fun setUp() {
-    super.setUp()
-    ConfigLibraryUtil.configureKotlinRuntime(module)
+@TestApplication
+abstract class KotlinJUnitMixedFrameworkInspectionTest {
+  companion object {
+    private val projectFixture = kotlinJUnitProjectFixture(JUNIT3, JUNIT4, JUNIT5)
   }
 
+  protected val myFixture by junitMixedFrameworkInspectionFixture(projectFixture)
+
+  @Test
   fun `test no highlighting`() {
     myFixture.testHighlighting(
       JvmLanguage.KOTLIN, """
@@ -47,6 +55,7 @@ abstract class KotlinJUnitMixedFrameworkInspectionTest : JUnitMixedFrameworkInsp
     """.trimIndent(), fileName = "JUnit5Test")
   }
 
+  @Test
   fun `test highlighting junit 3 test case with junit 4 test`() {
     myFixture.testHighlighting(
       JvmLanguage.KOTLIN, """
@@ -57,6 +66,7 @@ abstract class KotlinJUnitMixedFrameworkInspectionTest : JUnitMixedFrameworkInsp
     """.trimIndent(), fileName = "MyTest")
   }
 
+  @Test
   fun `test highlighting junit 3 test case with junit 5 test`() {
     myFixture.testHighlighting(
       JvmLanguage.KOTLIN, """
@@ -67,6 +77,7 @@ abstract class KotlinJUnitMixedFrameworkInspectionTest : JUnitMixedFrameworkInsp
     """.trimIndent(), fileName = "MyTest")
   }
 
+  @Test
   fun `test junit 3 test case with junit 4 test remove annotation quickfix`() {
     myFixture.testQuickFix(
       JvmLanguage.KOTLIN, """
@@ -81,6 +92,7 @@ abstract class KotlinJUnitMixedFrameworkInspectionTest : JUnitMixedFrameworkInsp
     """.trimIndent(), fileName = "MyTest", hint = "Remove '@Test' annotation", testPreview = true)
   }
 
+  @Test
   fun `test junit 3 test case with junit 4 test remove test annotation and rename quickfix`() {
     myFixture.testQuickFix(
       JvmLanguage.KOTLIN, """
@@ -95,6 +107,7 @@ abstract class KotlinJUnitMixedFrameworkInspectionTest : JUnitMixedFrameworkInsp
     """.trimIndent(), fileName = "MyTest", hint = "Remove '@Test' annotation", testPreview = true)
   }
 
+  @Test
   fun `test junit 3 test case with junit 4 test remove ignore annotation and rename quickfix`() {
     myFixture.testQuickFix(
       JvmLanguage.KOTLIN, """
@@ -109,6 +122,7 @@ abstract class KotlinJUnitMixedFrameworkInspectionTest : JUnitMixedFrameworkInsp
     """.trimIndent(), fileName = "MyTest", hint = "Remove '@Ignore' annotation", testPreview = true)
   }
 
+  @Test
   fun `test highlighting junit 4 test case with junit 5 test`() {
     myFixture.testHighlighting(
       JvmLanguage.KOTLIN, """
@@ -125,6 +139,7 @@ abstract class KotlinJUnitMixedFrameworkInspectionTest : JUnitMixedFrameworkInsp
     """.trimIndent(), fileName = "MyTest")
   }
 
+  @Test
   fun `test highlighting junit 5 test case with junit 4 test`() {
     myFixture.testHighlighting(
       JvmLanguage.KOTLIN, """
@@ -171,6 +186,7 @@ abstract class KotlinJUnitMixedFrameworkInspectionTest : JUnitMixedFrameworkInsp
     """.trimIndent(), fileName = "MyTest", hint = "Migrate to JUnit 5")
   }
 
+  @Test
   fun `test highlighting junit 5 test case with junit 4 super class`() {
     myFixture.addFileToProject("JUnit4TestCase.kt", """
       open class JUnit4TestCase {
@@ -187,6 +203,7 @@ abstract class KotlinJUnitMixedFrameworkInspectionTest : JUnitMixedFrameworkInsp
     """.trimIndent(), fileName = "MyTest")
   }
 
+  @Test
   fun `test highlighting junit 5 test case with misplaced junit 4 ignore on multiple methods`() {
     myFixture.testHighlighting(
       JvmLanguage.KOTLIN, """

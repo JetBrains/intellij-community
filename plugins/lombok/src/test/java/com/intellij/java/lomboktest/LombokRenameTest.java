@@ -4,7 +4,9 @@ package com.intellij.java.lomboktest;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
+import com.intellij.refactoring.modplan.ModPlanOptionValues;
 import com.intellij.testFramework.EdtTestUtil;
+import com.intellij.testFramework.ModPlanRenameTestSupport;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
 import com.intellij.testFramework.fixtures.LightJavaProject;
 import com.intellij.testFramework.junit5.TestApplication;
@@ -63,6 +65,51 @@ public class LombokRenameTest {
       final PsiMethod doSomethingMethod = appBuilderClass.getContainingClass().findMethodsByName("doSomething", false)[0];
       assertTrue(doSomethingMethod.getBody().getText().contains("withFirmPartyGfcId_NewName(\"firm_party_gfcid\")"));
     });
+  }
+
+  @Test
+  public void testLombokRenameFieldRenamesGetterCallInOtherClass() {
+    LightJavaCodeInsightTestFixture myFixture = configureGetterCaller();
+
+    EdtTestUtil.runInEdtAndWait(() -> {
+      myFixture.renameElementAtCaret("title");
+
+      assertGetterCallRenamed(myFixture);
+    });
+  }
+
+  @Test
+  public void testLombokRenameFieldRenamesGetterCallInOtherClassOnModPlan() {
+    LightJavaCodeInsightTestFixture myFixture = configureGetterCaller();
+
+    EdtTestUtil.runInEdtAndWait(() -> {
+      ModPlanRenameTestSupport.renameOnModPlan(myFixture.getProject(), myFixture.getElementAtCaret(), "title", ModPlanOptionValues.EMPTY);
+
+      assertGetterCallRenamed(myFixture);
+    });
+  }
+
+  private LightJavaCodeInsightTestFixture configureGetterCaller() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    myFixture.addClass("""
+      public class Caller {
+        String read(Person person) {
+          return person.getName();
+        }
+      }""");
+    myFixture.configureByText(JavaFileType.INSTANCE, """
+      import lombok.Getter;
+
+      @Getter
+      public class Person {
+        private String na<caret>me;
+      }""");
+    return myFixture;
+  }
+
+  private static void assertGetterCallRenamed(LightJavaCodeInsightTestFixture myFixture) {
+    assertEquals(1, myFixture.findClass("Person").findMethodsByName("getTitle", false).length);
+    assertTrue(myFixture.findClass("Caller").getText().contains("person.getTitle()"));
   }
 
   @Test

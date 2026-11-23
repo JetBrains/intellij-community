@@ -11,10 +11,15 @@ import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.JdkOrderEntry
 import com.intellij.openapi.roots.ProjectFileIndex
+import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.util.RecursionManager
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
+import com.intellij.psi.util.CachedValue
+import com.intellij.psi.util.CachedValueProvider
+import com.intellij.psi.util.CachedValuesManager
+import com.intellij.psi.util.PsiModificationTracker
 import com.intellij.util.ArrayUtil
 import com.intellij.util.ProcessingContext
 import com.intellij.util.containers.CollectionFactory
@@ -264,17 +269,7 @@ open class TypeEvalContextImpl internal constructor(
   }
 
   private fun getLibraryContext(project: Project): TypeEvalContext {
-    // code completion will always have a new PsiFile, use the original file instead
-    val origin = constraints.myOrigin?.originalFile
-    val constraints = TypeEvalConstraints(
-      constraints.myAllowDataFlow,
-      constraints.myAllowStubToAST,
-      constraints.myAllowCallContext,
-      constraints.myIsExternal,
-      origin,
-    )
-    return project.service<TypeEvalContextCache>()
-      .getLibraryContext(LibraryTypeEvalContext(constraints))
+    return project.service<TypeEvalContextCache>().getLibraryContext(constraints)
   }
 
   /**
@@ -282,6 +277,18 @@ open class TypeEvalContextImpl internal constructor(
    */
   protected open fun canDelegateToLibraryContext(element: PyTypedElement): Boolean {
     return Registry.`is`("python.use.separated.libraries.type.cache") && element.isLibraryElement()
+  }
+
+  private fun PsiElement.isLibraryElement(): Boolean {
+    val file = containingFile?.originalFile ?: return false
+    val vFile = file.virtualFile ?: return false
+    return "pyi" == vFile.extension || CachedValuesManager.getCachedValue(file, IS_LIBRARY_ELEMENT_KEY) {
+      CachedValueProvider.Result.create(
+        ProjectFileIndex.getInstance(file.project).isInLibrary(vFile),
+        PsiModificationTracker.MODIFICATION_COUNT,
+        ProjectRootManager.getInstance(file.project),
+      )
+    }
   }
 
   override fun getType(element: PyTypedElement): PyType? {
@@ -543,7 +550,7 @@ open class TypeEvalContextImpl internal constructor(
     }
   }
 
-  private class LibraryTypeEvalContext(constraints: TypeEvalConstraints) : TypeEvalContextImpl(constraints) {
+  internal class LibraryTypeEvalContext(constraints: TypeEvalConstraints) : TypeEvalContextImpl(constraints) {
     override fun canDelegateToLibraryContext(element: PyTypedElement): Boolean {
       // It's already the library-context.
       return false
@@ -635,11 +642,7 @@ open class TypeEvalContextImpl internal constructor(
 
     protected val logger: Logger = logger<TypeEvalContextImpl>()
 
-
-    private fun PsiElement.isLibraryElement(): Boolean {
-      val vFile = this.containingFile?.originalFile?.virtualFile
-      return vFile != null && ("pyi" == vFile.extension || ProjectFileIndex.getInstance(this.project).isInLibrary(vFile))
-    }
+    private val IS_LIBRARY_ELEMENT_KEY = com.intellij.openapi.util.Key.create<CachedValue<Boolean>>("Python.isLibraryElement")
 
     private fun assertValid(result: PyType?, element: PyTypedElement) {
       result?.assertValid(element.toString())

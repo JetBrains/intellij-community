@@ -46,4 +46,42 @@ public abstract class TextConsoleBuilder {
   @ApiStatus.Internal
   public void setUseOwnModalityStateForUpdates(boolean useOwnModalityStateForUpdates) {
   }
+
+  /**
+   * Determines whether {@link ConsoleView#attachToProcess} prints the process output into the console.
+   * <p>
+   * If set to {@code true} (the default), the console prints the process output.
+   * If set to {@code false}, the console owner prints the process output into the console.
+   * </p>
+   * <p>
+   * The default implementation supports only {@code true}.
+   * It must be overridden by a specific builder to support {@code false}.
+   * </p>
+   */
+  @ApiStatus.Internal
+  public @NotNull TextConsoleBuilder setAttachToProcessOutput(boolean attachToProcessOutput) {
+    if (!attachToProcessOutput) {
+      throw new UnsupportedOperationException(getClass().getName() + " doesn't support consoles detached from the process output");
+    }
+    return this;
+  }
+
+  /**
+   * Determines whether {@link ConsoleView#attachToProcess} sends the user input of the console into the process input.
+   * <p>
+   * If set to {@code true} (the default), the console sends the user input into the process input.
+   * If set to {@code false}, the console doesn't accept the user input.
+   * </p>
+   * <p>
+   * The default implementation supports only {@code true}.
+   * It must be overridden by a specific builder to support {@code false}.
+   * </p>
+   */
+  @ApiStatus.Internal
+  public @NotNull TextConsoleBuilder setAttachToProcessInput(boolean attachToProcessInput) {
+    if (!attachToProcessInput) {
+      throw new UnsupportedOperationException(getClass().getName() + " doesn't support consoles detached from the process input");
+    }
+    return this;
+  }
 }

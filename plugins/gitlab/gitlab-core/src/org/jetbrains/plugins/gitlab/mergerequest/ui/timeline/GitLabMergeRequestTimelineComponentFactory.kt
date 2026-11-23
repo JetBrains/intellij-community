@@ -51,6 +51,7 @@ import org.jetbrains.plugins.gitlab.api.dto.GitLabResourceStateEventDTO
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.data.GitLabImageLoader
 import org.jetbrains.plugins.gitlab.mergerequest.ui.details.GitLabMergeRequestViewModel
+import org.jetbrains.plugins.gitlab.mergerequest.util.GitLabNoteLinkHandler
 import org.jetbrains.plugins.gitlab.mergerequest.util.addGitLabHyperlinkListener
 import org.jetbrains.plugins.gitlab.ui.comment.GitLabCodeReviewCommentTextFieldFactory
 import org.jetbrains.plugins.gitlab.ui.comment.NewGitLabNoteType
@@ -253,7 +254,7 @@ internal object GitLabMergeRequestTimelineComponentFactory {
         return VerticalListPanel().apply {
           add(SimpleHtmlPane(addBrowserListener = false).apply {
             setHtmlBody(title)
-            addGitLabHyperlinkListener(project)
+            addGitLabHyperlinkListener(GitLabNoteLinkHandler.getInstance(project))
           })
           add(StatusMessageComponentFactory.create(createCommitsListPane(project, commits)))
         }
@@ -264,7 +265,7 @@ internal object GitLabMergeRequestTimelineComponentFactory {
     }
     return StatusMessageComponentFactory.create(SimpleHtmlPane(addBrowserListener = false).apply {
       setHtmlBody(item.contentHtml ?: "")
-      addGitLabHyperlinkListener(project)
+      addGitLabHyperlinkListener(GitLabNoteLinkHandler.getInstance(project))
     })
   }
 
@@ -275,7 +276,7 @@ internal object GitLabMergeRequestTimelineComponentFactory {
   private fun createCommitsListPane(project: Project, commits: @NlsSafe String) =
     SimpleHtmlPane(noUlGapsStyleSheet, addBrowserListener = false).apply {
       setHtmlBody(commits)
-      addGitLabHyperlinkListener(project)
+      addGitLabHyperlinkListener(GitLabNoteLinkHandler.getInstance(project))
     }
 
   private fun createLabeledEventContent(item: GitLabMergeRequestTimelineItemViewModel.LabelEvent): JComponent {

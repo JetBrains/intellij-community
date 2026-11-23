@@ -132,7 +132,7 @@ internal class GHPRChangesServiceLoadTest {
   fun `a pull request loads commits within the concurrent commit limit`(): Unit = timeoutRunBlocking(2.minutes) {
     val executor = GithubApiRequestExecutor.Factory.getInstance().create(repository.serverPath, "test-token")
     val serviceCs = childScope("GHPRChangesServiceLoadTest")
-    val service = GHPRChangesServiceImpl(serviceCs, mockk(), executor, createGitRemote(), repository)
+    val service = GHPRChangesServiceImpl(serviceCs, executor, createGitRemote(), repository)
     val commits = createCommits()
 
     val result = try {

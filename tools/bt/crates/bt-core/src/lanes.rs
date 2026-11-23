@@ -536,21 +536,26 @@ pub fn wildcard_guards(areas: &Areas, labels: &[String]) -> Vec<String> {
 /// line, so an argument holding `&|^` or a quote could break. Today's arguments are flag-like; a lane that ever
 /// passes such a value needs `CommandExt::raw_arg`.
 pub fn bazel_command(repo_root: &Path, platform: Platform, args: &[String]) -> Vec<OsString> {
+    let mut command = checkout_script_command(repo_root, platform, "bazel.cmd");
+    command.extend(args.iter().map(OsString::from));
+    command
+}
+
+/// The argv head that runs a `.cmd` script of the checkout, such as the bazel wrapper or the accio wrapper, through
+/// the shell of the platform: `/bin/sh`, or `cmd.exe /c` with `\` in the path of the script on Windows. `script` is
+/// relative to the checkout root, with `/` as its separator.
+pub fn checkout_script_command(repo_root: &Path, platform: Platform, script: &str) -> Vec<OsString> {
     let (head, separator): (&[&str], char) = match platform {
         Platform::Windows => (&["cmd.exe", "/c"], '\\'),
         Platform::Darwin | Platform::Linux => (&["/bin/sh"], '/'),
     };
-    let mut wrapper = repo_root.as_os_str().to_owned();
+    let mut path = repo_root.as_os_str().to_owned();
     let root = repo_root.to_string_lossy();
     if !root.ends_with(['/', '\\']) {
-        wrapper.push(separator.to_string());
+        path.push(separator.to_string());
     }
-    wrapper.push("bazel.cmd");
-    head.iter()
-        .map(OsString::from)
-        .chain(std::iter::once(wrapper))
-        .chain(args.iter().map(OsString::from))
-        .collect()
+    path.push(script.replace('/', &separator.to_string()));
+    head.iter().map(OsString::from).chain(std::iter::once(path)).collect()
 }
 
 /// Everything the argv builder needs, decided before bazel is spawned.

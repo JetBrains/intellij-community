@@ -1,12 +1,16 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.collaboration.ui.codereview.details.model
 
+import com.intellij.collaboration.async.stateFlowOf
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 
 interface CodeReviewBranchesViewModel {
   val sourceBranch: StateFlow<String>
+  val targetBranch: StateFlow<String>
+  val hasRemoteBranch: StateFlow<Boolean> get() = stateFlowOf(true)
   val isCheckedOut: SharedFlow<Boolean>
+  val isCheckoutInProgress: StateFlow<Boolean>
 
   val showBranchesRequests: SharedFlow<CodeReviewBranches>
 
@@ -15,7 +19,7 @@ interface CodeReviewBranchesViewModel {
   val canShowInLog: Boolean get() = false
   fun fetchAndShowInLog() {}
 
-  val canCheckoutInNewWorktree: Boolean get() = false
+  val canCheckoutInNewWorktree: StateFlow<Boolean> get() = stateFlowOf(false)
   fun checkoutInNewWorktree() {}
 
   fun showBranches()

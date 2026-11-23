@@ -2,14 +2,17 @@
 package com.intellij.lang.documentation.ide.impl
 
 import com.intellij.model.Pointer
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.UI
 import com.intellij.openapi.application.readAction
+import com.intellij.platform.backend.documentation.DocumentationResult
 import com.intellij.platform.backend.documentation.DocumentationTarget
 import com.intellij.platform.backend.documentation.impl.documentationRequest
 import com.intellij.platform.backend.presentation.TargetPresentation
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.fixture.projectFixture
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.junit.jupiter.api.Assertions.assertFalse
@@ -41,9 +44,39 @@ class DocumentationManagerHoverSessionTest {
     }
   }
 
-  private fun target(): DocumentationTarget = object : DocumentationTarget {
+  @Test
+  fun `leaving the hover area while documentation loads ends the session`(): Unit = timeoutRunBlocking {
+    val documentationReady = CompletableDeferred<Unit>()
+    val documentation = DocumentationResult.asyncDocumentation {
+      documentationReady.await()
+      null
+    }
+    val request = readAction { target(documentation).documentationRequest() }
+    val sessionDone = CompletableDeferred<Unit>()
+    val oldSkipPopup = DocumentationManager.skipPopup
+    DocumentationManager.skipPopup = false
+    try {
+      val project = project.get()
+      withContext(Dispatchers.EDT) {
+        val manager = DocumentationManager.getInstance(project)
+        val session = checkNotNull(
+          manager.showDocumentationOnHoverAroundByRequests(listOf(request), project, JPanel(), Rectangle(), 0, 0) {
+            sessionDone.complete(Unit)
+          },
+        )
+        session.mouseOutsideOfSourceArea()
+        documentationReady.complete(Unit)
+      }
+      sessionDone.await()
+    }
+    finally {
+      DocumentationManager.skipPopup = oldSkipPopup
+    }
+  }
+
+  private fun target(documentation: DocumentationResult? = null): DocumentationTarget = object : DocumentationTarget {
     override fun createPointer() = Pointer.hardPointer(this)
     override fun computePresentation() = TargetPresentation.builder("target").presentation()
-    override fun computeDocumentation() = null
+    override fun computeDocumentation() = documentation
   }
 }

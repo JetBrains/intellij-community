@@ -90,6 +90,13 @@ public class PyStackFrame extends XStackFrame {
     return new PyDebuggerEvaluator(myProject, myDebugProcess);
   }
 
+  // PyDebuggerEvaluator is a document offset evaluator. Without this flag, the hover goes through the evaluation of an expression.
+  @ApiStatus.Internal
+  @Override
+  public boolean isDocumentEvaluator() {
+    return true;
+  }
+
   @Override
   public void customizePresentation(@NotNull ColoredTextContainer component) {
     component.setIcon(AllIcons.Debugger.Frame);

@@ -4,11 +4,13 @@ package com.intellij.util
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.withTimeoutOrNull
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.TestOnly
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.time.Duration.Companion.seconds
 
 /**
  * Holds the startup work that the first project frame does not need before its editors are shown.
+ * The first VCS log load and the annotations preload of a start also wait for the gate.
  * The application start arms the gate when the property `ide.startup.ui.gate` is true. The gate opens when the
  * first project has restored and focused its editors, or when the IDE opens no project, or after a timeout.
  */
@@ -16,7 +18,8 @@ import kotlin.time.Duration.Companion.seconds
 @ApiStatus.Experimental
 object StartupUiGate {
   private val armed = AtomicBoolean()
-  private val editorsShown = CompletableDeferred<Unit>()
+  @Volatile
+  private var editorsShown = CompletableDeferred<Unit>()
 
   fun arm() {
     armed.set(true)
@@ -27,6 +30,12 @@ object StartupUiGate {
 
   fun markEditorsShown() {
     editorsShown.complete(Unit)
+  }
+
+  @TestOnly
+  fun resetForTest() {
+    armed.set(false)
+    editorsShown = CompletableDeferred()
   }
 
   /**

@@ -25,7 +25,7 @@ internal class InstallRequirementQuickFix(val requirement: PyRequirement) : Loca
     PyPackageCoroutine.launch(project) {
       val evoPyProject = project.findEvoPyProject(file, mainForOrphans = false) ?: return@launch
       val interpreter = evoPyProject.interpreter ?: return@launch
-      PythonPackageManagerUI.forPythonInterpreter(project, interpreter)
+      PythonPackageManagerUI.forPythonInterpreter(interpreter)
         .installPyRequirementsWithConfirmation(listOf(requirement), evoPyProject.pyProject.residesOnModule)
     }
   }

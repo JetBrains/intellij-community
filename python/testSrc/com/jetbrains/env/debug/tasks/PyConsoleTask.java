@@ -26,6 +26,7 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.frame.XValueChildrenList;
 import com.jetbrains.env.PyExecutionFixtureTestTask;
 import com.jetbrains.python.console.PydevConsoleCommunication;
+import com.intellij.python.sdk.backend.PythonInterpreterSdkBoundaryKt;
 import com.jetbrains.python.console.PydevConsoleRunner;
 import com.jetbrains.python.console.PydevConsoleRunnerImpl;
 import com.jetbrains.python.console.PythonConsoleExecuteActionHandler;
@@ -217,7 +218,9 @@ public class PyConsoleTask extends PyExecutionFixtureTestTask {
 
     PydevConsoleRunner consoleRunner = PythonConsoleStarter.createConsoleRunnerForTest(getProject(), myFixture.getModule());
 
-    consoleRunner.setSdk(existingSdk);
+    // The env tests give an SDK. The registry holds its interpreter, see `ProviderTestEnvironment.prepareSdk`.
+    consoleRunner.setPythonInterpreter(
+      existingSdk != null ? PythonInterpreterSdkBoundaryKt.findPythonInterpreterIfReady(getProject(), existingSdk) : null);
 
     before();
 

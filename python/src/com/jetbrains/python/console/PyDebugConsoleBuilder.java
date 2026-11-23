@@ -3,10 +3,11 @@
 package com.jetbrains.python.console;
 
 import com.intellij.execution.filters.Filter;
+import org.jetbrains.annotations.ApiStatus;
+import com.intellij.python.sdk.backend.PythonInterpreter;
 import com.intellij.execution.filters.TextConsoleBuilder;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.Sdk;
 import com.jetbrains.python.run.PythonTracebackFilter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -16,11 +17,12 @@ import java.util.ArrayList;
 public class PyDebugConsoleBuilder extends TextConsoleBuilder {
   private final Project myProject;
   private final ArrayList<Filter> myFilters = new ArrayList<>();
-  private final Sdk mySdk;
+  private final @Nullable PythonInterpreter myInterpreter;
 
-  public PyDebugConsoleBuilder(final Project project, @Nullable Sdk sdk) {
+  @ApiStatus.Internal
+  public PyDebugConsoleBuilder(final Project project, @Nullable PythonInterpreter interpreter) {
     myProject = project;
-    mySdk = sdk;
+    myInterpreter = interpreter;
   }
 
   @Override
@@ -33,7 +35,7 @@ public class PyDebugConsoleBuilder extends TextConsoleBuilder {
   }
 
   protected  ConsoleView createConsole() {
-    PythonDebugLanguageConsoleView consoleView = new PythonDebugLanguageConsoleView(myProject, mySdk);
+    PythonDebugLanguageConsoleView consoleView = new PythonDebugLanguageConsoleView(myProject, myInterpreter);
     consoleView.addMessageFilter(new PythonTracebackFilter(myProject));
     return consoleView;
   }

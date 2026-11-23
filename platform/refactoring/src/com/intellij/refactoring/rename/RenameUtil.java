@@ -68,6 +68,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
 
 import static com.intellij.openapi.util.NlsContexts.DialogMessage;
 
@@ -146,31 +147,109 @@ public final class RenameUtil {
     boolean searchForTextOccurrences,
     @NotNull Processor<? super UsageInfo> processor
   ) {
-    SearchScope useScope = PsiSearchHelper.getInstance(element.getProject()).getUseScope(element);
-    if (!(useScope instanceof LocalSearchScope)) {
-      useScope = searchScope.intersectWith(useScope);
-    }
+    SearchScope useScope = useScopeOf(element, searchScope);
 
     if (searchInCode) {
       Collection<PsiReference> refs = elementProcessor.findReferences(element, useScope, searchInStringsAndComments);
       ProgressManager.progress(RefactoringBundle.message("progress.text.rename.processing.references"));
-      for (final PsiReference ref : refs) {
-        if (ref == null) {
-          LOG.error("null reference from processor " + elementProcessor);
-          continue;
-        }
-        if (!searchForTextOccurrences && ref instanceof TextOccurrenceReference) continue;
-        PsiElement referenceElement = ref.getElement();
-        if (!processor.process(elementProcessor.createUsageInfo(element, ref, referenceElement))) return false;
+      if (!processReferenceUsages(refs, searchForTextOccurrences, ref -> elementProcessor.createUsageInfo(element, ref, ref.getElement()),
+                                  "processor " + elementProcessor, processor)) {
+        return false;
       }
     }
 
     final PsiElement searchForInComments = elementProcessor.getElementToSearchInStringsAndComments(element);
+    return processNonCodeUsages(element, searchForInComments, newName, searchScope, searchInStringsAndComments, searchForTextOccurrences,
+                                nonJava -> elementProcessor.getQualifiedNameAfterRename(element, newName, nonJava),
+                                searched -> elementProcessor.getTextOccurrenceSearchStrings(searched, newName), processor);
+  }
 
+  /**
+   * @return the scope in which the references of {@code element} are searched: its use scope inside {@code searchScope}
+   */
+  @ApiStatus.Internal
+  public static @NotNull SearchScope useScopeOf(@NotNull PsiElement element, @NotNull SearchScope searchScope) {
+    SearchScope useScope = PsiSearchHelper.getInstance(element.getProject()).getUseScope(element);
+    return useScope instanceof LocalSearchScope ? useScope : searchScope.intersectWith(useScope);
+  }
+
+  /**
+   * Adds the usages of {@code references}, as {@link #findUsages} adds the references that the search found.
+   *
+   * @param usageOf the usage that a reference makes
+   */
+  @ApiStatus.Internal
+  public static void addReferenceUsages(@NotNull PsiElement element,
+                                        @NotNull Collection<? extends PsiReference> references,
+                                        boolean searchForTextOccurrences,
+                                        @NotNull Function<@NotNull PsiReference, @NotNull UsageInfo> usageOf,
+                                        @NotNull Collection<? super UsageInfo> result) {
+    processReferenceUsages(references, searchForTextOccurrences, usageOf, "the search of " + element, usage -> {
+      result.add(usage);
+      return true;
+    });
+  }
+
+  /** @param source what found {@code references}, for the error about a null reference */
+  private static boolean processReferenceUsages(@NotNull Collection<? extends PsiReference> references,
+                                                boolean searchForTextOccurrences,
+                                                @NotNull Function<@NotNull PsiReference, @NotNull UsageInfo> usageOf,
+                                                @NotNull String source,
+                                                @NotNull Processor<? super UsageInfo> processor) {
+    for (final PsiReference ref : references) {
+      if (ref == null) {
+        LOG.error("null reference from " + source);
+        continue;
+      }
+      if (!searchForTextOccurrences && ref instanceof TextOccurrenceReference) continue;
+      if (!processor.process(usageOf.apply(ref))) return false;
+    }
+    return true;
+  }
+
+  /**
+   * Adds the usages of the rename of {@code element} in strings, comments and non-code files, as {@link #findUsages} finds them.
+   *
+   * @param searched      the element whose name the texts hold; null if no text holds it
+   * @param searchScope   the scope of the search, not the {@link #useScopeOf use scope}
+   * @param nameInComments the text that a usage in a string or a comment gets; null for the new name
+   * @param nameInNonCode the text that a usage in a non-code file gets; null for the new name
+   * @param extraStrings  another string that a text occurrence holds, with the string that the rename writes instead
+   */
+  @ApiStatus.Internal
+  public static void addNonCodeUsages(@NotNull PsiElement element,
+                                      @Nullable PsiElement searched,
+                                      @NotNull String newName,
+                                      @NotNull SearchScope searchScope,
+                                      boolean searchInStringsAndComments,
+                                      boolean searchForTextOccurrences,
+                                      @Nullable String nameInComments,
+                                      @Nullable String nameInNonCode,
+                                      @Nullable TextOccurrenceSearchStrings extraStrings,
+                                      @NotNull Collection<? super UsageInfo> result) {
+    processNonCodeUsages(element, searched, newName, searchScope, searchInStringsAndComments, searchForTextOccurrences,
+                         nonJava -> nonJava ? nameInNonCode : nameInComments, _ -> extraStrings, usage -> {
+        result.add(usage);
+        return true;
+      });
+  }
+
+  /**
+   * @param qualifiedNameAfterRename the text that a usage gets, by whether it is in a non-code file; null for the new name
+   */
+  private static boolean processNonCodeUsages(@NotNull PsiElement element,
+                                              @Nullable PsiElement searchForInComments,
+                                              String newName,
+                                              @NotNull SearchScope searchScope,
+                                              boolean searchInStringsAndComments,
+                                              boolean searchForTextOccurrences,
+                                              @NotNull Function<Boolean, @Nullable String> qualifiedNameAfterRename,
+                                              @NotNull Function<@NotNull PsiElement, @Nullable TextOccurrenceSearchStrings> textOccurrenceSearchStrings,
+                                              @NotNull Processor<? super UsageInfo> processor) {
     if (searchInStringsAndComments && searchForInComments != null) {
       String stringToSearch = ElementDescriptionUtil.getElementDescription(searchForInComments, NonCodeSearchDescriptionLocation.STRINGS_AND_COMMENTS);
       if (!stringToSearch.isEmpty()) {
-        final String stringToReplace = getStringToReplace(element, newName, false, elementProcessor);
+        final String stringToReplace = getStringToReplace(element, newName, qualifiedNameAfterRename.apply(false));
         UsageInfoFactory factory = new NonCodeUsageInfoFactory(searchForInComments, stringToReplace);
         if (!TextOccurrencesUtilBase.processUsagesInStringsAndComments(processor, searchForInComments,
                                                                        searchScope, stringToSearch, factory)) return false;
@@ -180,11 +259,11 @@ public final class RenameUtil {
     if (searchForTextOccurrences && searchForInComments != null) {
       String stringToSearch = ElementDescriptionUtil.getElementDescription(searchForInComments, NonCodeSearchDescriptionLocation.NON_JAVA);
       if (!stringToSearch.isEmpty()) {
-        final String stringToReplace = getStringToReplace(element, newName, true, elementProcessor);
+        final String stringToReplace = getStringToReplace(element, newName, qualifiedNameAfterRename.apply(true));
         if (!processTextOccurrences(searchForInComments, searchScope, stringToSearch, stringToReplace, processor)) return false;
       }
 
-      final TextOccurrenceSearchStrings additionalStringToSearch = elementProcessor.getTextOccurrenceSearchStrings(searchForInComments, newName);
+      final TextOccurrenceSearchStrings additionalStringToSearch = textOccurrenceSearchStrings.apply(searchForInComments);
       if (additionalStringToSearch != null && !additionalStringToSearch.toSearch().isEmpty()) {
         if (!processTextOccurrences(searchForInComments, searchScope, additionalStringToSearch.toSearch(),
                                     additionalStringToSearch.toReplace(), processor
@@ -229,7 +308,7 @@ public final class RenameUtil {
     }
   }
 
-  private static String getStringToReplace(@NotNull PsiElement psiElement, String newName, boolean nonJava, @NotNull RenamePsiElementProcessorCore theProcessor) {
+  private static String getStringToReplace(@NotNull PsiElement psiElement, String newName, @Nullable String qualifiedNameAfterRename) {
     if (psiElement instanceof PsiMetaOwner psiMetaOwner) {
       final PsiMetaData metaData = psiMetaOwner.getMetaData();
       if (metaData != null) {
@@ -237,9 +316,8 @@ public final class RenameUtil {
       }
     }
 
-    String result = theProcessor.getQualifiedNameAfterRename(psiElement, newName, nonJava);
-    if (result != null) {
-      return result;
+    if (qualifiedNameAfterRename != null) {
+      return qualifiedNameAfterRename;
     }
 
     if (psiElement instanceof PsiNamedElement) {

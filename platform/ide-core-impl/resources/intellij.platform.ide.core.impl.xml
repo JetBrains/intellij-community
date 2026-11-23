@@ -104,6 +104,8 @@ The refresh itself is toggled by (Preferences | Appearance &amp; Behavior | Syst
                  description="Pause dumb queue (including indexing) while scanning is in progress."/>
     <registryKey defaultValue="true" key="vfs.refresh.should.pause.dumb.queue" restartRequired="true"
                  description="Pause dumb queue (including indexing) while bulk VFS update is in progress."/>
+    <registryKey defaultValue="true" key="vfs.refresh.sync.rescans.in.flight.files" restartRequired="false"
+                 description="A synchronous VFS refresh re-scans the files that another refresh has scanned but has not applied yet (IJPL-254123). When disabled, refreshes do not track such files."/>
     <registryKey defaultValue="false" key="vfs.windows.use.buffered.directory.stream"
                  description="Use faster native Windows calls for directory enumeration. When disabled, falls back to NIO directory streams."
                  restartRequired="true"/>
@@ -510,6 +512,16 @@ The refresh itself is toggled by (Preferences | Appearance &amp; Behavior | Syst
       key="editor.skeleton.delay.ms"
       defaultValue="1000"
       description="Skeleton fade in duration (in milliseconds)"
+    />
+    <registryKey
+      key="editor.skeleton.animation.duration.ms"
+      defaultValue="1500"
+      description="Sets the editor skeleton animation duration in milliseconds"
+    />
+    <registryKey
+      key="editor.skeleton.direct.renderer.enabled"
+      defaultValue="true"
+      description="Render the editor skeleton off the EDT directly into the window graphics, without a heavyweight Canvas"
     />
   </extensions>
 </idea-plugin>

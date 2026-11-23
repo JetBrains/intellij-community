@@ -21,6 +21,7 @@ import com.intellij.tasks.context.BranchContextTracker
 import com.intellij.tasks.context.WorkingContextManager
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.TestActionEvent
+import com.intellij.testFramework.awaitPendingEditorOpen
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.TestDisposable
 import com.intellij.testFramework.junit5.fixture.fileEditorManagerFixture
@@ -98,6 +99,7 @@ class BranchContextTrackerTest {
 
     tracker.branchHasChanged("b")
     PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue()
+    awaitPendingEditorOpen(project)
 
     assertThat(openFileNames()).containsExactlyInAnyOrder("third.txt", "second.txt")
     assertThat(editorManager.currentFile).isEqualTo(second)

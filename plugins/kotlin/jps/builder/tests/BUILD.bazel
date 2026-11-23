@@ -1,4 +1,5 @@
 load("@community//build:tests-options.bzl", "jps_test")
+load("@community//plugins/kotlin:kotlin_test_dependencies.bzl", "all_test_dep_targets")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 # The overlay of the published test data of the Kotlin repository
@@ -11,11 +12,24 @@ filegroup(
     visibility = ["//visibility:public"],
 )
 
+# The generated tests, for the up-to-date check under Bazel
+filegroup(
+    name = "test-gen",
+    srcs = glob(
+        ["test-gen/**"],
+        allow_empty = True,
+    ),
+    visibility = ["//visibility:public"],
+)
+
 jps_test(
     name = "tests_test",
     data = [
+        ":test-gen",
         ":testData",
-    ],
+    ] + all_test_dep_targets,
+    sandbox = True,
+    tags = ["kotlin-jps-builder-tests"],
     runtime_deps = [":tests_test_lib"],
 )
 ### skip generation section `test intellij.kotlin.builder.jps.tests`
@@ -35,10 +49,6 @@ jvm_library(
         allow_empty = True,
     ),
     module_name = "intellij.kotlin.builder.jps.tests",
-    resource_strip_prefix = "testResources",
-    resources = glob(
-        ["testResources/**/*"],
-    ),
     visibility = ["//visibility:public"],
     deps = [
         # do not sort,

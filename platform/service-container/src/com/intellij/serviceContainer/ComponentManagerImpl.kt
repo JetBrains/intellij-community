@@ -1644,7 +1644,6 @@ val servicePreloadingAllowListForNonCorePlugin: Set<String> = java.util.Set.of(
   "com.intellij.packaging.impl.artifacts.workspacemodel.ArtifactManagerBridge",
   "com.intellij.compiler.CompilerConfigurationImpl",
   "com.intellij.compiler.backwardRefs.CompilerReferenceServiceImpl",
-  "org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceIndexService",
   "org.jetbrains.idea.maven.project.MavenProjectsManagerEx",
   // use lazy listener
   "org.jetbrains.idea.maven.navigator.MavenProjectsNavigator",

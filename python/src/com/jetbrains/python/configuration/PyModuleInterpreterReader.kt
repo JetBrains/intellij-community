@@ -4,6 +4,7 @@
 package com.jetbrains.python.configuration
 
 import com.intellij.psi.PsiElement
+import com.intellij.python.sdk.backend.PythonInterpreter
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
@@ -11,7 +12,6 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.python.pyproject.model.evolution.findEvoPyProjectIfReady
 import com.intellij.python.pyproject.model.evolution.findMainEvoPyProjectIfReady
 import com.intellij.python.pyproject.model.evolution.pythonInterpretersIfReady
-import com.intellij.python.sdk.backend.PythonInterpreter
 import com.intellij.python.sdk.backend.getSdkAPI
 import org.jetbrains.annotations.ApiStatus
 
@@ -35,6 +35,10 @@ fun findElementSdkIfReady(element: PsiElement): Sdk? = findModuleSdkIfReady(Modu
 /** [findModuleSdkIfReady] for a Java caller that takes the interpreter. */
 @ApiStatus.Internal
 fun findModuleInterpreterIfReady(module: Module?): PythonInterpreter? = module?.findEvoPyProjectIfReady()?.interpreter
+
+/** Whether [module] has an interpreter, read from the snapshot, for a caller that needs no more than that. */
+@ApiStatus.Internal
+fun hasModuleInterpreterIfReady(module: Module?): Boolean = findModuleInterpreterIfReady(module) != null
 
 /** [findModuleSdkIfReady] for the main Python project of [project], for a Java caller that has no module. */
 @ApiStatus.Internal

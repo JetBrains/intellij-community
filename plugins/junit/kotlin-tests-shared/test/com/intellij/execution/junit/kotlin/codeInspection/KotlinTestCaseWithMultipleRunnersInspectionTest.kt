@@ -1,16 +1,22 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.junit.kotlin.codeInspection
 
-import com.intellij.junit.testFramework.TestCaseWithMultipleRunnersInspectionTestBase
+import com.intellij.execution.junit.kotlin.kotlinJUnitProjectFixture
+import com.intellij.junit.testFramework.MavenTestLib.JUNIT4
+import com.intellij.junit.testFramework.testCaseWithMultipleRunnersInspectionFixture
 import com.intellij.jvm.analysis.testFramework.JvmLanguage
-import org.jetbrains.kotlin.idea.test.ConfigLibraryUtil
+import com.intellij.testFramework.junit5.TestApplication
+import org.junit.jupiter.api.Test
 
-abstract class KotlinTestCaseWithMultipleRunnersInspectionTest : TestCaseWithMultipleRunnersInspectionTestBase() {
-  override fun setUp() {
-    super.setUp()
-    ConfigLibraryUtil.configureKotlinRuntime(module)
+@TestApplication
+abstract class KotlinTestCaseWithMultipleRunnersInspectionTest {
+  companion object {
+    private val projectFixture = kotlinJUnitProjectFixture(JUNIT4)
   }
 
+  protected val myFixture by testCaseWithMultipleRunnersInspectionFixture(projectFixture)
+
+  @Test
   fun `test parent annotation`() {
     myFixture.addClass("""
       @org.junit.runner.RunWith(org.junit.runners.Suite.class)
@@ -29,6 +35,7 @@ abstract class KotlinTestCaseWithMultipleRunnersInspectionTest : TestCaseWithMul
     """.trimIndent())
   }
 
+  @Test
   fun `test interface annotation`() {
     myFixture.testHighlighting(
       JvmLanguage.KOTLIN, """
@@ -46,6 +53,7 @@ abstract class KotlinTestCaseWithMultipleRunnersInspectionTest : TestCaseWithMul
     """.trimIndent())
   }
 
+  @Test
   fun `test inherited annotation1`() {
     myFixture.testHighlighting(
       JvmLanguage.KOTLIN, """
@@ -69,6 +77,7 @@ abstract class KotlinTestCaseWithMultipleRunnersInspectionTest : TestCaseWithMul
     """.trimIndent())
   }
 
+  @Test
   fun `test inherited annotation2`() {
     myFixture.testHighlighting(
       JvmLanguage.KOTLIN, """
@@ -89,6 +98,7 @@ abstract class KotlinTestCaseWithMultipleRunnersInspectionTest : TestCaseWithMul
     """.trimIndent())
   }
 
+  @Test
   fun `test not inherited annotation`() {
     myFixture.addClass("""
       public class ParentTestBase {

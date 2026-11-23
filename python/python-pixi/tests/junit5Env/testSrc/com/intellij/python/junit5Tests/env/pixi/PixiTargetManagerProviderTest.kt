@@ -2,6 +2,7 @@
 package com.intellij.python.junit5Tests.env.pixi
 
 import com.intellij.execution.target.TargetEnvironmentType
+import com.intellij.python.sdk.backend.PythonInterpreter
 import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.util.Disposer
@@ -54,12 +55,12 @@ internal class PixiTargetManagerProviderTest {
         commitChanges()
       }
     }
-    val interpreter = sdk.pythonInterpreterResultAsync().getOrThrow()
+    val interpreter = sdk.pythonInterpreterResultAsync(project.get()).getOrThrow()
 
     assertThat(interpreter).isInstanceOf(TargetPythonInterpreter::class.java)
     assertThat(interpreter.ref.envRef.value).isEqualTo("docs")
     assertThat(PixiAddInterpreterProvider().manager.supports(fileSystem)).isTrue()
-    val manager = PixiPackageManagerProvider().createPackageManager(project.get(), interpreter)
+    val manager = PixiPackageManagerProvider().createPackageManager(interpreter)
     assertThat(manager).isInstanceOf(PixiPackageManager::class.java)
     Disposer.register(disposable.get(), checkNotNull(manager))
   }

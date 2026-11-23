@@ -1,12 +1,25 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.plugins.markdown.editor.links
 
-import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixture4TestCase
+import com.intellij.openapi.application.EDT
+import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightModuleFixture
+import com.intellij.testFramework.common.timeoutRunBlocking
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.fixture.projectFixture
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.intellij.plugins.markdown.MarkdownBundle
-import org.junit.Assert
-import org.junit.Test
+import org.junit.jupiter.api.Assertions
+import org.junit.jupiter.api.Test
 
-class ConvertToInlineLinkIntentionTest: LightPlatformCodeInsightFixture4TestCase() {
+@TestApplication
+class ConvertToInlineLinkIntentionTest {
+  companion object {
+    private val projectFixture = projectFixture(openAfterCreation = true)
+  }
+
+  private val myFixture by codeInsightModuleFixture(projectFixture)
+
   @Test
   fun `full reference link becomes an inline link`() {
     // language=Markdown
@@ -351,14 +364,18 @@ class ConvertToInlineLinkIntentionTest: LightPlatformCodeInsightFixture4TestCase
   private fun doTest(content: String, after: String) {
     myFixture.configureByText("some.md", content)
     val fix = myFixture.findSingleIntention(intentionText)
-    myFixture.checkPreviewAndLaunchAction(fix)
-    myFixture.checkResult(after)
+    timeoutRunBlocking {
+      withContext(Dispatchers.EDT) {
+        myFixture.checkPreviewAndLaunchAction(fix)
+        myFixture.checkResult(after)
+      }
+    }
   }
 
   private fun doUnavailableTest(content: String) {
     myFixture.configureByText("some.md", content)
     val intentions = myFixture.filterAvailableIntentions(intentionText)
-    Assert.assertTrue("Intention should not be available", intentions.isEmpty())
+    Assertions.assertTrue(intentions.isEmpty(), "Intention should not be available")
   }
 
   private val intentionText

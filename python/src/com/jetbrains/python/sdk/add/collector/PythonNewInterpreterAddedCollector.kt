@@ -1,11 +1,10 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk.add.collector
 
+import com.intellij.python.sdk.backend.languageLevel
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
-import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.python.sdk.backend.PythonInterpreter
-import com.intellij.python.sdk.backend.getSdkAPI
 import com.jetbrains.python.statistics.EXECUTION_TYPE
 import com.jetbrains.python.statistics.INTERPRETER_TYPE
 import com.jetbrains.python.statistics.InterpreterTarget
@@ -14,8 +13,6 @@ import com.jetbrains.python.statistics.PREVIOUSLY_CONFIGURED
 import com.jetbrains.python.statistics.PYTHON_VERSION
 import com.jetbrains.python.statistics.executionType
 import com.jetbrains.python.statistics.interpreterType
-import com.jetbrains.python.statistics.version
-import org.jetbrains.annotations.ApiStatus
 
 
 internal object PythonNewInterpreterAddedCollector : CounterUsagesCollector() {
@@ -31,11 +28,10 @@ internal object PythonNewInterpreterAddedCollector : CounterUsagesCollector() {
                                                                   )
 
   fun logPythonNewInterpreterAdded(pythonInterpreter: PythonInterpreter, isPreviouslyConfigured: Boolean) {
-    val sdk = pythonInterpreter.getSdkAPI()
     INTERPRETER_ADDED_EVENT.log(
-      INTERPRETER_TYPE.with(sdk.interpreterType.value),
-      EXECUTION_TYPE.with(sdk.executionType.value),
-      PYTHON_VERSION.with(sdk.version.toPythonVersion()),
+      INTERPRETER_TYPE.with(pythonInterpreter.interpreterType.value),
+      EXECUTION_TYPE.with(pythonInterpreter.executionType.value),
+      PYTHON_VERSION.with(pythonInterpreter.languageLevel.toPythonVersion()),
       PREVIOUSLY_CONFIGURED.with(isPreviouslyConfigured),
     )
   }

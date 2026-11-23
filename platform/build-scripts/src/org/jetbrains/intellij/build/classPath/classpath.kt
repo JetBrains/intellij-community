@@ -108,8 +108,8 @@ fun generateClassPathByLayoutReport(libDir: Path, entries: List<DistributionFile
 /**
  * Which of [externallyPackedJars] belong on the core classpath, decided from the layout instead of from packed entries.
  *
- * A split dev-distribution fragment hands these jars to another producer, so it neither packs them nor resolves the
- * modules in them. `dev_dist_platform_payload` derives the core classpath of these jars in Bazel. The dev-distribution
+ * A split distribution fragment hands these jars to another producer, so it neither packs them nor resolves the
+ * modules in them. `dist_platform_payload` derives the core classpath of these jars in Bazel. The distribution
  * plan generator calls this function over the source layout of each product and fails when the two answers differ.
  * The core classpath has to stay complete: it is what `PreBuiltDevMain` starts the IDE with.
  *
@@ -161,9 +161,9 @@ fun contentModuleJarCoreClasspathEntries(
 }
 
 /**
- * The core classpath of a split dev distribution of the platform [layout], as `lib/`-relative names in bytewise order.
+ * The core classpath of a split distribution of the platform [layout], as `lib/`-relative names in bytewise order.
  *
- * `dev_dist_platform_payload` derives the same list in Bazel: every packed direct child of `lib/` that the module system
+ * `dist_platform_payload` derives the same list in Bazel: every packed direct child of `lib/` that the module system
  * does not load. Here the module jars come from [contentModuleJarCoreClasspathEntries] over every module jar of
  * [layout]. A jar with project libraries and no module is on the list when it is a direct child of `lib/`, as in
  * [generateClassPathByLayoutReport]. The plan generator checks the Bazel derivation against this function, see ADR 0037.
@@ -212,7 +212,7 @@ fun platformLibraryJarDestination(library: ProjectLibraryData): String {
  *
  * The result is what [generateClassPathByLayoutReport] gives for these jars. It has no `nio-fs.jar` when [skipNioFs] is
  * set. The leading jars come first, then the other names in sorted order. The tool `product-files` applies the same rule
- * to the core classpath of a dev distribution, and `DevDistProductLaunchModelTest` compares the two.
+ * to the core classpath of the distribution, and `DistProductLaunchModelTest` compares the two.
  */
 @ApiStatus.Internal
 fun launchBootClassPathJarNames(coreClassPathJarNames: Collection<String>, skipNioFs: Boolean): List<String> {
@@ -325,6 +325,11 @@ data class PluginBuildResult(
   @JvmField val os: OsFamily?,
   @JvmField val arch: JvmArchitecture?,
   @JvmField val distribution: Collection<DistributionFileEntry>,
+  /**
+   * The mode of each regular file in [dir] that has a mode other than `0644`, keyed by the path relative to [dir] with `/` as the separator.
+   * Only a plugin that the `ij_plugin` Bazel rule builds fills it, from the `file-attributes.txt` file of the rule.
+   */
+  @JvmField val fileModes: Map<String, Int> = emptyMap(),
 )
 
 /**
@@ -340,7 +345,7 @@ data class PluginBuildDescriptor(
 /**
  * Writes everything in `plugin-classpath.txt` that precedes the plugin count: the format version and the product descriptor.
  *
- * The count is not written here because it is not always known to whoever knows the descriptor. A split dev assembly
+ * The count is not written here because it is not always known to whoever knows the descriptor. A split assembly
  * has the platform fragment produce this prefix while each plugin fragment produces only its own records, so the count
  * is the sum the composer arrives at once every fragment is in - see `writePluginClassPathCount`.
  */

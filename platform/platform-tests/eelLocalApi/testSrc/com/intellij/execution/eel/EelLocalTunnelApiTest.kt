@@ -2,7 +2,9 @@
 package com.intellij.execution.eel
 
 import com.intellij.openapi.util.SystemInfoRt
+import com.intellij.platform.eel.ConfigurableClientSocket
 import com.intellij.platform.eel.EelConnectionError
+import com.intellij.platform.eel.EelIpPreference
 import com.intellij.platform.eel.EelProcess
 import com.intellij.platform.eel.EelTunnelsApi
 import com.intellij.platform.eel.ReadResult
@@ -20,15 +22,19 @@ import com.intellij.platform.tests.eelHelpers.EelHelper
 import com.intellij.platform.tests.eelHelpers.network.NetworkConstants
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
+import com.sun.management.UnixOperatingSystemMXBean
 import io.ktor.util.decodeString
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
 import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.plus
 import org.junit.jupiter.api.Assertions
-import org.junit.jupiter.api.BeforeAll
+import org.junit.jupiter.api.Assumptions.assumeTrue
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.AnnotatedElementContext
 import org.junit.jupiter.api.extension.ExtensionContext
@@ -36,7 +42,10 @@ import org.junit.jupiter.api.io.TempDir
 import org.junit.jupiter.api.io.TempDirFactory
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.ValueSource
+import java.lang.management.ManagementFactory
+import java.net.InetAddress
 import java.net.InetSocketAddress
+import java.net.ServerSocket
 import java.net.UnixDomainSocketAddress
 import java.nio.ByteBuffer
 import java.nio.channels.ClosedChannelException
@@ -69,16 +78,11 @@ private class ShortUnixSocketTempDirFactory : TempDirFactory {
 @TestApplication
 class EelLocalTunnelApiTest {
   companion object {
-
-    private lateinit var serverExecutor: JavaMainClassExecutor
-    private lateinit var clientExecutor: JavaMainClassExecutor
-
-    @BeforeAll
-    @JvmStatic
-    fun createExecutor() { // helper is SERVER (we connect)
-      serverExecutor = JavaMainClassExecutor(EelHelper::class.java, EelHelper.HelperMode.NETWORK_SERVER.name) // helper is CLIENT (we are the server)
-      clientExecutor = JavaMainClassExecutor(EelHelper::class.java, EelHelper.HelperMode.NETWORK_CLIENT.name)
-    }
+    // lazy: only the tests that run the helper need its class path.
+    // helper is SERVER (we connect)
+    private val serverExecutor by lazy { JavaMainClassExecutor(EelHelper::class.java, EelHelper.HelperMode.NETWORK_SERVER.name) }
+    // helper is CLIENT (we are the server)
+    private val clientExecutor by lazy { JavaMainClassExecutor(EelHelper::class.java, EelHelper.HelperMode.NETWORK_CLIENT.name) }
   }
 
   @Test
@@ -187,6 +191,66 @@ class EelLocalTunnelApiTest {
       rx.closeForReceive()
       tx.close(null)
     }
+  }
+
+  @Test
+  fun testFailedConnectionsLeaveNoOpenFiles(): Unit = timeoutRunBlocking(1.minutes) {
+    assumeTrue(!SystemInfoRt.isWindows, "counts open file descriptors, Unix only")
+    // a refusal does not fit here: the JDK closes the channel itself when connect fails.
+    assertFewOpenFilesLeft {
+      try {
+        localEel.tunnels.getConnectionToRemotePort(connectArgs(1) { throw IllegalStateException("configure failed") }).close()
+        Assertions.fail("connection should fail")
+      }
+      catch (_: IllegalStateException) {
+        // ok
+      }
+    }
+  }
+
+  @Test
+  fun testCancelledConnectionsLeaveNoOpenFiles(): Unit = timeoutRunBlocking(1.minutes) {
+    assumeTrue(!SystemInfoRt.isWindows, "counts open file descriptors, Unix only")
+    withSilentServer { port ->
+      assertFewOpenFilesLeft {
+        coroutineScope {
+          // the caller is cancelled while the channel is open: the call fails in the connect loop,
+          // or `withContext` drops a ready connection.
+          lateinit var caller: Job
+          caller = launch(start = CoroutineStart.LAZY) {
+            localEel.tunnels.getConnectionToRemotePort(connectArgs(port) { caller.cancel() }).close()
+          }
+          caller.join()
+          Assertions.assertTrue(caller.isCancelled)
+        }
+      }
+    }
+  }
+
+  private fun connectArgs(port: Int, configure: ConfigurableClientSocket.() -> Unit): EelTunnelsApi.GetConnectionToRemotePortArgs {
+    return object : EelTunnelsApi.GetConnectionToRemotePortArgs {
+      override val port: UShort = port.toUShort()
+      override val hostname: String = "127.0.0.1"
+      override val protocolPreference: EelIpPreference = EelIpPreference.PREFER_V4
+      override val configureSocketBeforeConnection: ConfigurableClientSocket.() -> Unit = configure
+    }
+  }
+
+  /** a server that never accepts: connects queue in its backlog and open no files in this process. */
+  private suspend fun withSilentServer(block: suspend (port: Int) -> Unit) {
+    ServerSocket(0, 200, InetAddress.getLoopbackAddress()).use { server ->
+      block(server.localPort)
+    }
+  }
+
+  private suspend fun assertFewOpenFilesLeft(connect: suspend () -> Unit) {
+    val os = ManagementFactory.getOperatingSystemMXBean() as UnixOperatingSystemMXBean
+    connect() // warm up class loading and dispatcher threads.
+    val before = os.openFileDescriptorCount
+    val attempts = 50
+    repeat(attempts) { connect() }
+    val growth = os.openFileDescriptorCount - before
+    Assertions.assertTrue(growth < attempts / 2, "open file descriptors grew by $growth after $attempts failed connects")
   }
 
   private suspend fun withServer(block: suspend CoroutineScope.(EelTunnelsApi.Connection, EelProcess) -> Unit) {

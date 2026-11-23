@@ -1423,6 +1423,7 @@ f:com.intellij.modcommand.ModShowConflicts
 - com.intellij.modcommand.ModCommand
 - <init>(java.util.Map):V
 - conflicts():java.util.Map
+- conflictsByPlace():java.util.Map
 - f:equals(java.lang.Object):Z
 - f:hashCode():I
 - isEmpty():Z
@@ -1807,6 +1808,13 @@ a:com.intellij.problems.WolfTheProblemSolver
 - a:weHaveGotProblems(com.intellij.openapi.vfs.VirtualFile,java.util.List):V
 com.intellij.psi.ForceableComparable
 - a:force():V
+f:com.intellij.psi.PsiPlace
+- java.lang.Record
+- <init>(com.intellij.psi.PsiElement,com.intellij.openapi.util.TextRange):V
+- element():com.intellij.psi.PsiElement
+- f:equals(java.lang.Object):Z
+- f:hashCode():I
+- rangeInElement():com.intellij.openapi.util.TextRange
 a:com.intellij.psi.Weigher
 - <init>():V
 - setDebugName(java.lang.String):V

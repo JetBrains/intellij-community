@@ -30,7 +30,7 @@ const val PLUGIN_XML_RELATIVE_PATH: String = "META-INF/plugin.xml"
  * separated rather than tried module by module. [MODULE_OUTPUT] resolves a module's Bazel output *before* it can
  * look inside, and under an explicit input manifest that resolution is the declaration - see
  * `org.jetbrains.intellij.build.impl.BazelBuildInputs`. Asking three hundred modules "do you have this?" that way
- * makes three hundred jars an input of a dev-distribution fragment that packs four of them, whether or not a byte
+ * makes three hundred jars an input of a distribution fragment that packs four of them, whether or not a byte
  * is read.
  *
  * So a search over several candidates runs [PRODUCTION_SOURCES] across all of them first and falls through to
@@ -40,7 +40,7 @@ const val PLUGIN_XML_RELATIVE_PATH: String = "META-INF/plugin.xml"
 enum class DescriptorSearchPass {
   /**
    * The checkout, which costs nothing to miss. Every descriptor a product layout can reach is materialized here -
-   * a dev-distribution fragment gets them through the project model tree (see `intellij_project_model_tree`), so
+   * a distribution fragment gets them through the project model tree (see `intellij_project_model_tree`), so
    * this pass answers the normal case on its own.
    */
   PRODUCTION_SOURCES,

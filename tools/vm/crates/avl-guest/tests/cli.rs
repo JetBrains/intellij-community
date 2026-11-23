@@ -182,11 +182,12 @@ fn lane_runfiles(root: &std::path::Path) -> (PathBuf, PathBuf) {
             "-Dair.test.codex.runtime=${RUNFILES_ROOT}/_main/tools/codex/runtime.properties",
             "-Dair.test.pi.runtime=${RUNFILES_ROOT}/_main/tools/pi/runtime.properties",
         ],
-        "devDist": {"config": file("_main/dist/ide.properties"), "fingerprint": file("_main/dist/fingerprint.txt"), "home": file("_main/dist/home")},
+        "dist": {"config": file("_main/dist/ide.properties"), "fingerprint": file("_main/dist/fingerprint.txt"), "home": file("_main/dist/home")},
         "jbr": {"platform": guest_platform()},
         "ide": {
-            "fakeAgentJar": file("_main/agent.jar"),
+            "fakeAgent": file("_main/acp-fake-agent"),
             "flagsFile": file("_main/ide/flags.txt"),
+            "genuiFixtureJar": file("_main/genui-fixture-app.jar"),
             "laneDocuments": file("_main/documents.jar"),
             "plugins": [],
             "projectArchive": file("_main/missing-project.zip"),
@@ -271,9 +272,9 @@ fn the_lane_daemon_serves_a_run_that_logs_from_its_run_thread_and_ends_with_a_su
     let call = |method: &str, target: &str, body: &[u8]| exchange(port, &token, method, target, body, Duration::from_secs(60));
 
     let documents = documents_jar(&[("rename-session", rename_session())]);
-    let agent_jar = b"agent jar".to_vec();
+    let (agent, genui) = (b"fake agent".to_vec(), b"genui fixture app jar".to_vec());
     let (bridge, resident) = (b"bridge".to_vec(), b"resident".to_vec());
-    for content in [&documents, &agent_jar, &bridge, &resident] {
+    for content in [&documents, &agent, &genui, &bridge, &resident] {
         assert_eq!(call("PUT", &format!("/jars/{}", sha256(content)), content).0, 200);
     }
     let request = serde_json::json!({
@@ -284,7 +285,7 @@ fn the_lane_daemon_serves_a_run_that_logs_from_its_run_thread_and_ends_with_a_su
             {"destination": "air-integrationTests-bridge-resident/lib/r.jar", "sha256": sha256(&resident)},
         ],
         "lane": "ui",
-        "laneInputs": {"fakeAgentJar": sha256(&agent_jar), "laneDocuments": sha256(&documents), "suiteDocuments": sha256(&documents)},
+        "laneInputs": {"fakeAgent": sha256(&agent), "genuiFixtureJar": sha256(&genui), "laneDocuments": sha256(&documents), "suiteDocuments": sha256(&documents)},
     });
     let (status, stream) = call("POST", "/run", request.to_string().as_bytes());
     let stream = String::from_utf8(stream).unwrap();
@@ -339,7 +340,8 @@ fn lane_run_plan_only_writes_the_plan_and_launches_no_ide() {
     });
     let jar = documents_jar(&[("startup-class-loading", startup), ("rename-session", rename_session())]);
     put(&main.join("documents.jar"), &jar, false);
-    put(&main.join("agent.jar"), b"agent jar", false);
+    put(&main.join("acp-fake-agent"), b"fake agent", true);
+    put(&main.join("genui-fixture-app.jar"), b"genui fixture app jar", false);
     put(&main.join("dist/fingerprint.txt"), b"product-1", false);
     let run_root = root.path().join("run");
     let path = |path: &std::path::Path| path.display().to_string();
@@ -517,7 +519,8 @@ fn lane_run_writes_the_record_of_its_watchdog_thread_on_standard_output() {
         &documents_jar(&[("startup-class-loading", startup)]),
         false,
     );
-    put(&main.join("agent.jar"), b"agent jar", false);
+    put(&main.join("acp-fake-agent"), b"fake agent", true);
+    put(&main.join("genui-fixture-app.jar"), b"genui fixture app jar", false);
     put(&main.join("dist/fingerprint.txt"), b"product-1", false);
 
     let (stdout_path, stderr_path) = (root.path().join("stdout.txt"), root.path().join("stderr.txt"));

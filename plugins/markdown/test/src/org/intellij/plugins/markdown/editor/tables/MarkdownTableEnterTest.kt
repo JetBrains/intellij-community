@@ -2,19 +2,37 @@
 package org.intellij.plugins.markdown.editor.tables
 
 import com.intellij.markdown.frontend.actions.InsertEmptyTableAction
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.ui.popup.JBPopup
-import com.intellij.testFramework.LightPlatformCodeInsightTestCase
+import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightModuleFixture
+import com.intellij.testFramework.common.timeoutRunBlocking
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.TestDisposable
+import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.ui.UiInterceptors
 import com.intellij.util.ui.UIUtil
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import org.intellij.plugins.markdown.editor.executeAction
+import org.intellij.plugins.markdown.editor.typeInEditor
 import org.intellij.plugins.markdown.lang.formatter.settings.TableStyle
-import org.junit.Test
-import org.junit.runner.RunWith
-import org.junit.runners.JUnit4
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Test
 import java.awt.event.ActionEvent
 
-@RunWith(JUnit4::class)
+@TestApplication
 @Suppress("MarkdownIncorrectTableFormatting", "MarkdownNoTableBorders")
-class MarkdownTableEnterTest: LightPlatformCodeInsightTestCase() {
+class MarkdownTableEnterTest {
+  companion object {
+    private val projectFixture = projectFixture(openAfterCreation = true)
+  }
+
+  private val myFixture by codeInsightModuleFixture(projectFixture)
+
+  @TestDisposable
+  lateinit var disposable: Disposable
+
   @Test
   fun `test single enter inside cell`() {
     // language=Markdown
@@ -97,7 +115,7 @@ class MarkdownTableEnterTest: LightPlatformCodeInsightTestCase() {
 
   @Test
   fun `test shift enter at the row end in compact table`() {
-    withTableStyle(project, TableStyle.COMPACT) {
+    withTableStyle(myFixture.project, TableStyle.COMPACT) {
       val before = """
       | a | b |
       | --- | --- |
@@ -115,7 +133,7 @@ class MarkdownTableEnterTest: LightPlatformCodeInsightTestCase() {
 
   @Test
   fun `test shift enter at the row end in tight table`() {
-    withTableStyle(project, TableStyle.TIGHT) {
+    withTableStyle(myFixture.project, TableStyle.TIGHT) {
       val before = """
       |a|b|
       |---|---|
@@ -133,6 +151,7 @@ class MarkdownTableEnterTest: LightPlatformCodeInsightTestCase() {
 
   @Test
   fun `test shift enter at the row end with CJK header`() {
+    setupTableCellsAlignedVisually(false, disposable)
     // language=Markdown
     val before = """
     | 名字 | 年龄 |
@@ -186,48 +205,54 @@ class MarkdownTableEnterTest: LightPlatformCodeInsightTestCase() {
   }
 
   @Test
-  fun `test insert table inside blockquote`() {
-    configureFromFileText("some.md", "> <caret>")
+  fun `test insert table inside blockquote`(): Unit = timeoutRunBlocking {
+    myFixture.configureByText("some.md", "> <caret>")
 
-    insertTable()
+    withContext(Dispatchers.EDT) {
+      insertTable()
 
-    assertEquals(
-      """
-      > |   |   |
-      > |---|---|
-      > |   |   |
-      """.trimIndent() + "\n",
-      editor.document.text,
-    )
+      assertEquals(
+        """
+        > |   |   |
+        > |---|---|
+        > |   |   |
+        """.trimIndent() + "\n",
+        myFixture.editor.document.text,
+      )
+    }
   }
 
   @Test
-  fun `test insert table after a blockquote line`() {
-    configureFromFileText("some.md", "> previous\n> <caret>")
+  fun `test insert table after a blockquote line`(): Unit = timeoutRunBlocking {
+    myFixture.configureByText("some.md", "> previous\n> <caret>")
 
-    insertTable()
+    withContext(Dispatchers.EDT) {
+      insertTable()
 
-    assertEquals(
-      """
-      > previous
-      >${" "}
-      > |   |   |
-      > |---|---|
-      > |   |   |
-      """.trimIndent() + "\n",
-      editor.document.text,
-    )
+      assertEquals(
+        """
+        > previous
+        >${" "}
+        > |   |   |
+        > |---|---|
+        > |   |   |
+        """.trimIndent() + "\n",
+        myFixture.editor.document.text,
+      )
+    }
   }
 
-  private fun doTest(content: String, expected: String, count: Int = 1, shift: Boolean = false) {
-    configureFromFileText("some.md", content)
-    repeat(count) {
-      when {
-        shift -> executeAction("EditorStartNewLine")
-        else -> type("\n")
+  private fun doTest(content: String, expected: String, count: Int = 1, shift: Boolean = false): Unit = timeoutRunBlocking {
+    myFixture.configureByText("some.md", content)
+    withContext(Dispatchers.EDT) {
+      repeat(count) {
+        when {
+          shift -> myFixture.executeAction("EditorStartNewLine")
+          else -> myFixture.typeInEditor("\n")
+        }
       }
+      myFixture.checkResult(expected)
     }
-    checkResultByText(expected)
   }
 
   private fun insertTable() {
@@ -239,7 +264,7 @@ class MarkdownTableEnterTest: LightPlatformCodeInsightTestCase() {
         grid.actionMap.get("confirmSelection").actionPerformed(ActionEvent(grid, 0, ""))
       }
     })
-    executeAction("Markdown.InsertEmptyTable")
+    myFixture.executeAction("Markdown.InsertEmptyTable")
   }
 
 }

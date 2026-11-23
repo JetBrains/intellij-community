@@ -9,6 +9,10 @@
 //! TeamCity each of them publishes the file there. A case with metrics and no series, such as a warm-up, gets no file.
 //! Its metrics still reach TeamCity as `testMetadata`.
 //!
+//! The lane can run a scenario more than once: each pass is a case of its own, and the lane document names one series
+//! for each pass, all with the same artifact path. The file of a series holds the median of each metric over its passes
+//! ([`median_of_passes`]), so one noisy run does not move the series.
+//!
 //! The format is `PerformanceMetricsDto` of `intellij.tools.ide.metrics.collector`, version 1, as the JVM host wrote it.
 //! A metric whose name starts with `growth.` is a ratio, and it is the counter `<name>.x100` of its value times 100,
 //! also when the name of its step ends with `Ms`. Another metric whose name ends with `Ms` is a duration. Every other
@@ -23,7 +27,7 @@ use avl_wire::daemon::RunEvent;
 use avl_wire::program::lane::{PerformanceSeries, parse_lane_document};
 use serde::{Deserialize, Serialize};
 
-use crate::cases::{StreamCase, simple_class_name};
+use crate::cases::{CaseOutcome, StreamCase, simple_class_name};
 
 #[cfg(test)]
 mod tests;
@@ -41,7 +45,7 @@ pub const BUILD_TXT: &str = "build.txt";
 const MACOS_APP_HOME: &str = "Contents";
 
 /// The [`BUILD_TXT`] of the IDE home `home` of the guest `platform`, such as `linux_aarch64`. `home.path` of the IDE
-/// config names the home, see [`avl_wire::runtime::dev_dist_home`].
+/// config names the home, see [`avl_wire::runtime::dist_home`].
 ///
 /// Production puts the file in `Resources/` of a macOS app home, which is the `Contents` directory. It puts the file at
 /// the root of every other home, also of a macOS language server.
@@ -134,16 +138,60 @@ impl File {
 }
 
 /// The files of the iteration that streamed `events`, written at `generated`, an RFC 1123 time ([`rfc_1123`]): one for
-/// each case that reported a metric and has a series in `plan`.
+/// each series in `plan` that a case reported a metric for, with the median of its passes.
 pub fn files(plan: &Plan, events: &[RunEvent], generated: &str) -> Vec<File> {
-    crate::cases::cases(events)
+    let mut passes: Vec<(&PerformanceSeries, Vec<StreamCase>)> = Vec::new();
+    for case in crate::cases::cases(events)
         .into_iter()
         .filter(|case| !case.report.metrics.is_empty())
-        .filter_map(|case| {
-            plan.series_of(&case).map(|series| File {
-                artifact_path: series.artifact_path.clone(),
-                text: render(series, &plan.ide_build, generated, &case.report.metrics),
-            })
+    {
+        let Some(series) = plan.series_of(&case) else {
+            continue;
+        };
+        match passes.iter_mut().find(|(known, _)| known.artifact_path == series.artifact_path) {
+            Some((_, cases)) => cases.push(case),
+            None => passes.push((series, vec![case])),
+        }
+    }
+    passes
+        .into_iter()
+        .map(|(series, cases)| File {
+            artifact_path: series.artifact_path.clone(),
+            text: render(series, &plan.ide_build, generated, &median_of_passes(&cases)),
+        })
+        .collect()
+}
+
+/// The metrics of a series from the `cases` of its passes, in stream order: the median of each metric.
+///
+/// A rerun repeats the name of its scenario, and its last attempt counts. Only the passes that passed count, because a
+/// failed pass can stop in the middle of its measurement. When no pass passed, every pass counts, as the one pass of a
+/// failed scenario did before passes existed. A metric that a pass did not report takes the median of the others.
+pub fn median_of_passes(cases: &[StreamCase]) -> BTreeMap<String, serde_json::Number> {
+    let mut last: Vec<&StreamCase> = Vec::new();
+    for case in cases {
+        last.retain(|known| known.name != case.name);
+        last.push(case);
+    }
+    let passed: Vec<&StreamCase> = last.iter().copied().filter(|case| case.outcome == CaseOutcome::Passed).collect();
+    let counted = if passed.is_empty() { last } else { passed };
+    let mut values: BTreeMap<&str, Vec<f64>> = BTreeMap::new();
+    for case in counted {
+        for (name, value) in &case.report.metrics {
+            values.entry(name).or_default().extend(value.as_f64());
+        }
+    }
+    values
+        .into_iter()
+        .filter_map(|(name, mut values)| {
+            values.sort_by(f64::total_cmp);
+            let middle = values.len() / 2;
+            let median = if values.len() % 2 == 0 {
+                f64::midpoint(*values.get(middle.checked_sub(1)?)?, *values.get(middle)?)
+            } else {
+                *values.get(middle)?
+            };
+            Some((name.to_owned(), serde_json::Number::from_f64(median)?))
         })
         .collect()
 }

@@ -16,6 +16,8 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.xml.XmlFile
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
+import org.jetbrains.idea.maven.dom.MavenDomProjectProcessorUtils
+import org.jetbrains.idea.maven.dom.MavenDomUtil
 import org.jetbrains.idea.maven.model.MavenId
 import org.jetbrains.idea.maven.utils.MavenArtifactScope
 import org.jetbrains.idea.maven.utils.MavenUtil
@@ -78,10 +80,11 @@ class MavenKotlinBuildSystemDependencyManager(
             else -> MavenArtifactScope.COMPILE
         }
 
+        val version = findVersionToAdd(pomFile, libraryDescriptor)
+
         return ModCommand.psiUpdate(actionContext) {
             val writablePomFile = it.getWritable(pomFile)
             val pom = PomFile.forFileOrNull(writablePomFile) ?: return@psiUpdate
-            val version = pom.findVersionToAdd(libraryDescriptor)
             val mavenId = MavenId(libraryDescriptor.libraryGroupId, libraryDescriptor.libraryArtifactId, version)
             pom.addDependency(mavenId, scope)
         }.andThen(KotlinDependencyProvider.syncModCommand(pomFile))
@@ -106,11 +109,15 @@ class MavenKotlinBuildSystemDependencyManager(
     }
 }
 
-private fun PomFile.findVersionToAdd(libraryDescriptor: ExternalLibraryDescriptor): String? {
+private fun findVersionToAdd(pomFile: XmlFile, libraryDescriptor: ExternalLibraryDescriptor): String? {
     val requestedVersion = libraryDescriptor.preferredVersion ?: libraryDescriptor.maxVersion ?: libraryDescriptor.minVersion
-    if (libraryDescriptor.libraryGroupId == KotlinMavenConfigurator.GROUP_ID &&
-        findProperty(KotlinMavenConfigurator.KOTLIN_VERSION_PROPERTY) != null
-    ) {
+    if (libraryDescriptor.libraryGroupId != KotlinMavenConfigurator.GROUP_ID) return requestedVersion
+
+    val project = pomFile.project
+    val domModel = MavenDomUtil.getMavenDomProjectModel(project, pomFile.virtualFile) ?: return requestedVersion
+    val kotlinVersionProperty =
+        MavenDomProjectProcessorUtils.searchProperty(KotlinMavenConfigurator.KOTLIN_VERSION_PROPERTY, domModel, project)
+    if (kotlinVersionProperty != null) {
         return $$"${$${KotlinMavenConfigurator.KOTLIN_VERSION_PROPERTY}}"
     }
 

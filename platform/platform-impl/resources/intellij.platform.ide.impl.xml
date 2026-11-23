@@ -1016,6 +1016,8 @@
     <themeProvider id="Islands Dark" path="/themes/islands/ManyIslandsDark.theme.json" targetUi="islands"/>
     <themeProvider id="Islands Light" path="/themes/islands/ManyIslandsLight.theme.json" targetUi="islands"/>
     <themeProvider id="Islands Darcula" path="/themes/islands/ManyIslandsDarcula.theme.json" targetUi="islands"/>
+    <registryKey key="ide.show.legacy.themes" defaultValue="true"
+                 description="Show the legacy Dark, Light, Light with Light Header, and Darcula themes in the new UI"/>
     <themeMetadataProvider path="/themes/metadata/IntelliJPlatform.themeMetadata.json"/>
     <themeMetadataProvider path="/themes/metadata/JDK.themeMetadata.json"/>
     <themeRemapper implementation="com.intellij.openapi.application.impl.islands.IslandsThemeRemapper"/>
@@ -1761,7 +1763,7 @@
                        key="notification.missing.plugin.update.source.title"/>
     <backgroundPostStartupActivity implementation="com.intellij.openapi.updateSettings.impl.PluginUpdateSourceInitializationActivity"/>
     <registryKey key="update.source.initialization.enabled" defaultValue="true"
-                 description="Enable initialization of update plugin update sources once for an IDE" />
+                 description="Enable initialization of update plugin update sources on each IDE start" />
     <registryKey key="plugin.auto.update.enabler.enabled" defaultValue="false"
                  description="Enable auto-update of plugins after opening a project if possible"/>
     <troubleInfoCollector implementation="com.intellij.ide.plugins.CustomPluginRepositoriesTroubleInfoCollector"/>
@@ -2018,6 +2020,8 @@
     <listener class="com.intellij.openapi.keymap.impl.LockOffendersListenerInitializer"
               topic="com.intellij.ide.AppLifecycleListener"/>
     <listener class="com.intellij.diagnostic.DynamicPluginUnloadDiagnosticListener"
+              topic="com.intellij.ide.plugins.DynamicPluginListener"/>
+    <listener class="com.intellij.ide.ClipboardPluginUnloadListener"
               topic="com.intellij.ide.plugins.DynamicPluginListener"/>
     <listener class="com.intellij.ide.plugins.LocalizationPluginListener" activeInHeadlessMode="false" activeInTestMode="false"
               topic="com.intellij.ide.plugins.DynamicPluginListener"/>

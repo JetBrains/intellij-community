@@ -224,33 +224,44 @@ class MarkdownLivePreviewReconciler private constructor(
     ownedRegions.clear()
     ownedRegions.putAll(kept)
     updateFoldRegions(obsolete, missing)
-    val rangesToReconcile = missing.keys + decorationChanges
-    val failed = reconcileDecorations(desired, rangesToReconcile).mapNotNull { ownedRegions.remove(it) }
+    val failed = reconcileDecorations(desired, missing.keys + decorationChanges).mapNotNull { ownedRegions.remove(it) }
     updateFoldRegions(failed)
   }
 
+  /** Runs [body] in one inlay batch when it makes more than [INLAY_BATCH_THRESHOLD] decoration changes. */
+  private fun changeDecorations(changeCount: Int, body: () -> Unit) {
+    editor.inlayModel.execute(changeCount > INLAY_BATCH_THRESHOLD, body)
+  }
+
+  /** Updates the decorations at [ranges] in place where possible, and replaces the others. */
   private fun reconcileDecorations(
     desired: Map<TextRange, MarkdownLivePreviewFold>,
     ranges: Collection<TextRange>,
   ): List<TextRange> {
-    val failed = ArrayList<TextRange>()
+    val replaced = ArrayList<Pair<TextRange, OwnedFold>>()
     for ((range, owned) in ownedRegions) {
       if (range !in ranges) continue
       val wanted = desired.getValue(range).decoration
-      if (wanted == null) {
+      if (wanted != null && owned.decoration?.update(wanted) == true) {
+        owned.decorationSource = wanted
+        continue
+      }
+      if (wanted != null || owned.decoration != null) replaced += range to owned
+    }
+    val changeCount = replaced.sumOf { [range, owned] ->
+      (if (owned.decoration != null) 1 else 0) + (if (desired.getValue(range).decoration != null) 1 else 0)
+    }
+    val failed = ArrayList<TextRange>()
+    changeDecorations(changeCount) {
+      for ((range, owned) in replaced) {
         owned.disposeMountedDecoration()
-        continue
-      }
-      if (owned.decoration?.update(wanted) == true) {
-        owned.decorationSource = wanted
-        continue
-      }
-      owned.disposeMountedDecoration()
-      val decoration = wanted.create(owned.region)
-      if (decoration == null) failed += range
-      else {
-        owned.decoration = decoration
-        owned.decorationSource = wanted
+        val wanted = desired.getValue(range).decoration ?: continue
+        val decoration = wanted.create(owned.region)
+        if (decoration == null) failed += range
+        else {
+          owned.decoration = decoration
+          owned.decorationSource = wanted
+        }
       }
     }
     return failed
@@ -359,7 +370,7 @@ class MarkdownLivePreviewReconciler private constructor(
     removed: Collection<OwnedFold>,
     added: Map<TextRange, MarkdownLivePreviewFold> = emptyMap(),
   ) {
-    removed.forEach(Disposer::dispose)
+    changeDecorations(removed.count { it.decoration != null }) { removed.forEach(Disposer::dispose) }
     if (removed.isNotEmpty()) {
       editor.foldingModel.runBatchFoldingOperation({
         for (owned in removed) {

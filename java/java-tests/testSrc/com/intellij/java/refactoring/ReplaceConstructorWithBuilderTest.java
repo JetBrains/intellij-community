@@ -5,46 +5,64 @@ import com.intellij.JavaTestUtil;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
 import com.intellij.refactoring.BaseRefactoringProcessor;
-import com.intellij.refactoring.LightMultiFileTestCase;
+import com.intellij.refactoring.LightMultiFileFixture;
 import com.intellij.refactoring.replaceConstructorWithBuilder.ParameterData;
 import com.intellij.refactoring.replaceConstructorWithBuilder.ReplaceConstructorWithBuilderProcessor;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.junit.jupiter.api.Test;
 
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-public class ReplaceConstructorWithBuilderTest extends LightMultiFileTestCase {
-  @Override
-  protected String getTestDataPath() {
-    return JavaTestUtil.getJavaTestDataPath() + "/refactoring/replaceConstructorWithBuilder/";
-  }
+import static com.intellij.refactoring.LightMultiFileFixtureKt.lightMultiFileFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.fail;
 
+@TestApplication
+public class ReplaceConstructorWithBuilderTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<LightMultiFileFixture> multiFile =
+    lightMultiFileFixture(projectFixture, JavaTestUtil.getJavaTestDataPath() + "/refactoring/replaceConstructorWithBuilder/");
+
+  @Test
   public void testVarargs() {
     doTest(true);
   }
 
+  @Test
   public void testExistingEmptyBuilder() {
     doTest(false);
   }
 
+  @Test
   public void testMultipleParams() {
     doTest(true);
   }
 
+  @Test
   public void testExistingHalfEmptyBuilder() {
     doTest(false);
   }
 
+  @Test
   public void testExistingVoidSettersBuilder() {
     doTest(false);
   }
 
+  @Test
   public void testConstructorChain() {
     final HashMap<String, String> defaults = new HashMap<>();
     defaults.put("i", "2");
     doTest(true, defaults);
   }
 
+  @Test
   public void testConstructorChainWithoutDefaults() {
     final HashMap<String, String> defaults = new HashMap<>();
     defaults.put("i", "2");
@@ -52,22 +70,27 @@ public class ReplaceConstructorWithBuilderTest extends LightMultiFileTestCase {
     doTest(true, defaults);
   }
 
+  @Test
   public void testConstructorTree() {
     doTest(true, null, "Constructors of class <b><code>Test</code></b> do not form a simple chain.");
   }
 
+  @Test
   public void testGenerics() {
     doTest(true);
   }
   
+  @Test
   public void testGenericsImport() {
     doTest(true);
   }
 
+  @Test
   public void testImports() {
     doTest(true, null, null, "foo");
   }
   
+  @Test
   public void testAnonymousInheritor() {
     doTest(true);
   }
@@ -85,7 +108,8 @@ public class ReplaceConstructorWithBuilderTest extends LightMultiFileTestCase {
   }
 
   private void doTest(boolean createNew, Map<String, String> expectedDefaults, String conflicts, String packageName) {
-    doTest(() -> {
+    LightJavaCodeInsightTestFixture myFixture = multiFile.get().getFixture();
+    multiFile.get().doTest(() -> {
       final PsiClass aClass = myFixture.findClass("Test");
 
       final LinkedHashMap<String, ParameterData> map = new LinkedHashMap<>();
@@ -102,7 +126,7 @@ public class ReplaceConstructorWithBuilderTest extends LightMultiFileTestCase {
       }
       try {
         final ReplaceConstructorWithBuilderProcessor processor =
-          new ReplaceConstructorWithBuilderProcessor(getProject(), constructors, map, "Builder", packageName, null, createNew, false);
+          new ReplaceConstructorWithBuilderProcessor(myFixture.getProject(), constructors, map, "Builder", packageName, null, createNew, false);
         processor.run();
         if (conflicts != null) {
           fail("Conflicts were not detected: " + conflicts);

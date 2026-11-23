@@ -2,11 +2,13 @@
 package com.intellij.ide.minimap
 
 import com.intellij.ide.minimap.settings.MinimapSettings
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.TestDisposable
 import com.intellij.testFramework.registerServiceInstance
 import com.intellij.testFramework.replaceService
 import com.intellij.testFramework.unregisterService
@@ -20,32 +22,29 @@ import org.junit.jupiter.params.provider.ValueSource
 internal class MinimapServiceDisposalTest {
   @ParameterizedTest
   @ValueSource(booleans = [false, true])
-  fun `dispose does not require registered settings`(unregisterSettings: Boolean): Unit = timeoutRunBlocking {
+  fun `dispose does not require registered settings`(
+    unregisterSettings: Boolean,
+    @TestDisposable testRootDisposable: Disposable,
+  ): Unit = timeoutRunBlocking {
     withContext(Dispatchers.EDT) {
       val application = ApplicationManager.getApplication()
       val settings = MinimapSettings()
-      val replacement = Disposer.newDisposable()
+      application.replaceService(MinimapSettings::class.java, settings, testRootDisposable)
+      val service = MinimapService(this)
+      if (unregisterSettings) {
+        application.unregisterService(MinimapSettings::class.java)
+      }
       try {
-        application.replaceService(MinimapSettings::class.java, settings, replacement)
-        val service = MinimapService(this)
         if (unregisterSettings) {
-          application.unregisterService(MinimapSettings::class.java)
+          assertThat(application.serviceIfCreated<MinimapSettings>()).isNull()
         }
-        try {
-          if (unregisterSettings) {
-            assertThat(application.getServiceIfCreated(MinimapSettings::class.java)).isNull()
-          }
-          service.dispose()
-        }
-        finally {
-          if (unregisterSettings) {
-            application.registerServiceInstance(MinimapSettings::class.java, settings)
-          }
-          service.dispose()
-        }
+        service.dispose()
       }
       finally {
-        Disposer.dispose(replacement)
+        if (unregisterSettings) {
+          application.registerServiceInstance(MinimapSettings::class.java, settings)
+        }
+        service.dispose()
       }
     }
   }

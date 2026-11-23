@@ -3,6 +3,11 @@ package org.jetbrains.idea.devkit.inspections
 
 import org.jetbrains.idea.devkit.inspections.quickfix.LightDevKitInspectionFixTestBase
 
+/**
+ * Use [jComponentDataProviderFixture] in a JUnit 5 test.
+ */
+@Suppress("DEPRECATION")
+@Deprecated("Use jComponentDataProviderFixture in a JUnit 5 test")
 abstract class JComponentDataProviderInspectionTestBase : LightDevKitInspectionFixTestBase() {
 
   override fun setUp() {

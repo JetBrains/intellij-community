@@ -1,8 +1,8 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 // The bash half of the polyglot wrappers, without Bazel: the Git Bash hand-off, the roots in both checkout layouts,
-// the override, the build step against a stand-in `bazel.cmd`, and the jscpd paths that need no Bazel. The event file
-// reader of the CMD half runs when a PowerShell is on PATH.
+// the override, the user cache, the build step against a stand-in `bazel.cmd`, and the jscpd paths that need no Bazel.
+// The event file reader of the CMD half runs when a PowerShell is on PATH.
 // Run with `node --test community/tools/polyglot-wrapper.test.mjs`.
 
 import {after, before, describe, it} from "node:test"
@@ -133,6 +133,97 @@ describe("the override", () => {
   })
 })
 
+describe("the user cache", () => {
+  const dash = spawnSync("dash", ["-c", "exit 0"]).status === 0
+
+  /**
+   * Runs `polyglot_user_cache` in `shell` and answers its exit code and the value of `user_cache`.
+   *
+   * @param {Record<string, string | undefined>} variables the values of HOME, OSTYPE and the like, undefined to unset one
+   * @param {{name?: string, shell?: string, path?: string}} [options]
+   */
+  function userCache(variables, options = {}) {
+    const assignments = Object.entries(variables)
+      .map(([name, value]) => (value === undefined ? `unset ${name}` : `${name}='${value}'`))
+      .join("; ")
+    const name = options.name ?? "openspec"
+    const script = `. "${toolsDir}/polyglot-wrapper.sh"; ${assignments}; polyglot_user_cache '${name}'; printf "%s|%s" "$?" "$user_cache"`
+    const env = {...process.env, ...(options.path === undefined ? {} : {PATH: options.path})}
+    const result = spawnSync(options.shell ?? "bash", ["-c", script], {env, encoding: "utf8"})
+    equal(result.stderr, "")
+    const [status, value] = result.stdout.split("|")
+    return {status: Number(status), value}
+  }
+
+  it("is the cache of the monorepo tools on macOS", () => {
+    deepEqual(userCache({HOME: "/home/u", OSTYPE: "darwin25"}), {
+      status: 0,
+      value: "/home/u/Library/Caches/JetBrains/monorepo-tools/openspec",
+    })
+  })
+
+  it("is the cache of the monorepo tools on Linux", () => {
+    deepEqual(userCache({HOME: "/home/u", OSTYPE: "linux-gnu"}), {
+      status: 0,
+      value: "/home/u/.cache/JetBrains/monorepo-tools/openspec",
+    })
+  })
+
+  it("is the cache itself, with no trailing slash, for an empty name", () => {
+    deepEqual(userCache({HOME: "/home/u", OSTYPE: "darwin25"}, {name: ""}), {
+      status: 0,
+      value: "/home/u/Library/Caches/JetBrains/monorepo-tools",
+    })
+  })
+
+  it("returns 1 and an empty path without HOME", () => {
+    deepEqual(userCache({HOME: undefined, OSTYPE: "darwin25"}), {status: 1, value: ""})
+  })
+
+  it("is LOCALAPPDATA as written in Git Bash without cygpath", () => {
+    deepEqual(userCache({HOME: "/home/u", OSTYPE: "msys", LOCALAPPDATA: "C:\\x"}, {path: "/usr/bin:/bin"}), {
+      status: 0,
+      value: "C:\\x/JetBrains/monorepo-tools/openspec",
+    })
+  })
+
+  it("is LOCALAPPDATA through cygpath in Git Bash", () => {
+    deepEqual(
+      userCache({HOME: "/home/u", OSTYPE: "msys", LOCALAPPDATA: "C:\\x"}, {path: `${gitBashStubs}:/usr/bin:/bin`}),
+      {status: 0, value: "W:C:\\x/JetBrains/monorepo-tools/openspec"},
+    )
+  })
+
+  it("returns 1 in Git Bash without LOCALAPPDATA", () => {
+    deepEqual(userCache({HOME: "/home/u", OSTYPE: "msys", LOCALAPPDATA: undefined}), {status: 1, value: ""})
+  })
+
+  it("is the macOS path without OSTYPE when the home has Library/Caches", async () => {
+    const home = join(scratch, "home-with-library")
+    await mkdir(join(home, "Library", "Caches"), {recursive: true})
+    deepEqual(userCache({HOME: home, OSTYPE: undefined}), {
+      status: 0,
+      value: `${home}/Library/Caches/JetBrains/monorepo-tools/openspec`,
+    })
+  })
+
+  it("is the Linux path without OSTYPE when the home has no Library/Caches", () => {
+    deepEqual(userCache({HOME: "/home/u", OSTYPE: undefined}), {
+      status: 0,
+      value: "/home/u/.cache/JetBrains/monorepo-tools/openspec",
+    })
+  })
+
+  it("parses and runs under dash, which accio.cmd, kotlin.cmd and jbdu.cmd may run in", {skip: !dash && "no dash"}, () => {
+    const parse = spawnSync("dash", ["-n", join(toolsDir, "polyglot-wrapper.sh")], {encoding: "utf8"})
+    equal(parse.status, 0, parse.stderr)
+    deepEqual(userCache({HOME: "/home/u"}, {shell: "dash"}), {
+      status: 0,
+      value: "/home/u/.cache/JetBrains/monorepo-tools/openspec",
+    })
+  })
+})
+
 describe("jscpd without Bazel", () => {
   it("exits 78 when the pin file has no version line", async () => {
     const checkout = join(scratch, "no-version")
@@ -144,6 +235,30 @@ describe("jscpd without Bazel", () => {
     const result = bash([join(checkout, "tools", "jscpd.cmd"), "--version"], {cwd: checkout})
     equal(result.status, 78)
     match(result.stderr, /^jscpd: found no JSCPD_VERSION line in /)
+  })
+
+  it("runs the path that another checkout wrote to the user cache, with no Bazel", async () => {
+    const checkout = join(scratch, "user-cache-hit")
+    await mkdir(join(checkout, "tools"), {recursive: true})
+    for (const name of ["jscpd.cmd", "polyglot-wrapper.sh"]) {
+      await copyFile(join(toolsDir, name), join(checkout, "tools", name))
+    }
+    await writeFile(join(checkout, "tools", "jscpd.MODULE.bazel"), 'JSCPD_VERSION = "9.9.9"\n')
+    // The checkout has no `bazel.cmd`, so a run that asks Bazel fails.
+    const home = join(scratch, "user-cache-home")
+    const env = {HOME: home}
+    const locate = `. "${toolsDir}/polyglot-wrapper.sh"; root=/unused; polyglot_user_cache jscpd;` +
+      ` printf "%s/jscpd-9.9.9-%s-%s" "$user_cache" "$OSTYPE" "$HOSTTYPE"`
+    const located = bash(["-c", locate], {env})
+    equal(located.status, 0, located.stderr)
+    const binary = await writeExecutable(scratch, "cached-jscpd", 'for a in "$@"; do printf "%s\\n" "$a"; done')
+    await mkdir(dirname(located.stdout), {recursive: true})
+    await writeFile(located.stdout, `${binary}\n`)
+    const result = bash([join(checkout, "tools", "jscpd.cmd"), "x", "y z"], {cwd: checkout, env})
+    equal(result.status, 0, result.stderr)
+    deepEqual(result.stdout.split("\n").filter(Boolean), ["x", "y z"])
+    equal(result.stderr, "")
+    equal(existsSync(join(checkout, "out")), false)
   })
 })
 
@@ -214,6 +329,18 @@ describe("the build step", () => {
     equal(result.status, 0, result.stderr)
     deepEqual(result.stdout.split("\n").filter(Boolean), [root, "x", "y z"])
     equal(result.stderr, "bazel noise\n")
+  })
+
+  it("bt gets the wall time of its build from the build metrics, and an empty value without them", async () => {
+    const {tools} = await checkout("build-time", ["bt.cmd"])
+    const binary = await fakeBinary("build-time", "bt", 'printf "[%s]\\n" "$BT_SELF_BUILD_MS"')
+    const metrics = '{"id":{"buildMetrics":{}},"buildMetrics":{"timingMetrics":{"cpuTimeInMs":"700","wallTimeInMs":"2150"}}}'
+    const timed = bash([join(tools, "bt.cmd")], {env: {STUB_BAZEL_EVENTS: [namedSetOfFiles([binary]), metrics].join("\n")}})
+    equal(timed.status, 0, timed.stderr)
+    equal(timed.stdout, "[2150]\n")
+    const untimed = bash([join(tools, "bt.cmd")], {env: {STUB_BAZEL_EVENTS: namedSetOfFiles([binary])}})
+    equal(untimed.status, 0, untimed.stderr)
+    equal(untimed.stdout, "[]\n")
   })
 
   it("bt exits 6 when the build fails, and 6 when the event file names no binary", async () => {

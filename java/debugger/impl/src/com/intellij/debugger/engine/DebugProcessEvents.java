@@ -12,9 +12,12 @@ import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.engine.events.DebuggerCommandImpl;
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
 import com.intellij.debugger.engine.jdi.ThreadReferenceProxy;
+import com.intellij.debugger.engine.requests.EmulatedReturnValueWatcher;
 import com.intellij.debugger.engine.requests.LocatableEventRequestor;
-import com.intellij.debugger.engine.requests.MethodReturnValueWatcher;
+import com.intellij.debugger.engine.requests.NativeReturnValueWatcher;
+import com.intellij.debugger.engine.requests.OverheadReportingWatcher;
 import com.intellij.debugger.engine.requests.RequestManagerImpl;
+import com.intellij.debugger.engine.requests.ReturnValueWatcher;
 import com.intellij.debugger.impl.DebuggerSession;
 import com.intellij.debugger.impl.DebuggerUtilsAsync;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
@@ -50,12 +53,7 @@ import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.xdebugger.BreakpointErrorData;
-import com.intellij.xdebugger.DapMode;
-import com.intellij.xdebugger.XBreakpointBehaviorPolicy;
-import com.intellij.xdebugger.XBreakpointBehaviorPolicy.BreakpointErrorAction;
 import com.intellij.xdebugger.XDebugSession;
-import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.intellij.xdebugger.impl.XDebuggerManagerImpl;
@@ -124,7 +122,25 @@ public class DebugProcessEvents extends DebugProcessImpl {
   protected @NotNull VirtualMachineProxyImpl commitVM(final VirtualMachine vm) {
     VirtualMachineProxyImpl proxy = super.commitVM(vm);
     if (vm != null) {
-      if (!vmAttached(proxy)) {
+      boolean attached;
+      try {
+        attached = vmAttached(proxy);
+      }
+      catch (Throwable e) {
+        // A stop can cancel vmAttached after it switched the process to ATTACHED. The stop then disposes the VM
+        // and waits for its disconnect event, which only the event thread delivers.
+        if (isAttached() && !myEventThreads.containsKey(vm)) {
+          LOG.debug("VM attach failed after the process was attached, starting the event thread", e);
+          try {
+            startEventThread(vm);
+          }
+          catch (Throwable t) {
+            e.addSuppressed(t);
+          }
+        }
+        throw e;
+      }
+      if (!attached) {
         // A stop that overlapped this attach has detached already, maybe before the proxy was set, so nobody else
         // disposes this VM, and an event thread would wait on its event queue forever.
         LOG.debug("VM attached after the process was stopped, disposing it");
@@ -138,14 +154,24 @@ public class DebugProcessEvents extends DebugProcessImpl {
         }
         return proxy;
       }
-      if (vm.canBeModified()) {
-        DebuggerManagerThreadImpl managerThread = DebuggerManagerThreadImpl.getCurrentThread();
-        DebuggerEventThread eventThread = myEventThreads.computeIfAbsent(vm, _ -> new DebuggerEventThread(managerThread));
-        ApplicationManager.getApplication().executeOnPooledThread(
-          ConcurrencyUtil.underThreadNameRunnable("DebugProcessEvents", eventThread));
-      }
+      startEventThread(vm);
     }
     return proxy;
+  }
+
+  private void startEventThread(@NotNull VirtualMachine vm) {
+    if (vm.canBeModified()) {
+      DebuggerManagerThreadImpl managerThread = DebuggerManagerThreadImpl.getCurrentThread();
+      DebuggerEventThread eventThread = myEventThreads.computeIfAbsent(vm, _ -> new DebuggerEventThread(managerThread));
+      ApplicationManager.getApplication().executeOnPooledThread(
+        ConcurrencyUtil.underThreadNameRunnable("DebugProcessEvents", eventThread));
+    }
+  }
+
+  @Override
+  boolean wakeEventReaderForRelease(@NotNull VirtualMachine vm) {
+    DebuggerEventThread eventThread = myEventThreads.get(vm);
+    return eventThread != null && eventThread.wakeForRelease();
   }
 
   private static void showStatusText(DebugProcessEvents debugProcess, Event event) {
@@ -193,9 +219,29 @@ public class DebugProcessEvents extends DebugProcessImpl {
     }
 
     private boolean myIsStopped = false;
+    private boolean myReleaseWakeUp;
+    private @Nullable Thread myThread;
 
     public synchronized void stopListening() {
       myIsStopped = true;
+    }
+
+    /** Makes the reader call {@link DebugProcessImpl#commitRelease()} after its current set; false if it has stopped. */
+    synchronized boolean wakeForRelease() {
+      if (myIsStopped) {
+        return false;
+      }
+      myReleaseWakeUp = true;
+      if (myThread != null) {
+        myThread.interrupt();
+      }
+      return true;
+    }
+
+    private synchronized boolean takeReleaseWakeUp() {
+      boolean wakeUp = myReleaseWakeUp;
+      myReleaseWakeUp = false;
+      return wakeUp;
     }
 
     private synchronized boolean isStopped() {
@@ -204,10 +250,25 @@ public class DebugProcessEvents extends DebugProcessImpl {
 
     @Override
     public void run() {
+      synchronized (this) {
+        myThread = Thread.currentThread();
+      }
       try {
         EventQueue eventQueue = myVmProxy.getVirtualMachine().eventQueue();
         while (!isStopped()) {
           try {
+            if (takeReleaseWakeUp()) {
+              myDebuggerManagerThread.invokeAndWait(new DebuggerCommandImpl(PrioritizedTask.Priority.HIGH) {
+                @Override
+                protected void action() {
+                  if (commitRelease()) {
+                    myEventThreads.remove(myVmProxy.getVirtualMachine());
+                    stopListening();
+                  }
+                }
+              });
+              continue;
+            }
             final EventSet eventSet = eventQueue.remove();
 
             myDebuggerManagerThread.invokeAndWait(new DebuggerCommandImpl(PrioritizedTask.Priority.HIGH) {
@@ -215,11 +276,9 @@ public class DebugProcessEvents extends DebugProcessImpl {
               protected void action() {
                 int processed = 0;
                 for (Event event : eventSet) {
-                  if (myReturnValueWatcher != null && myReturnValueWatcher.isTrackingEnabled()) {
-                    if (myReturnValueWatcher.processEvent(event)) {
-                      processed++;
-                      continue;
-                    }
+                  if (myReturnValueWatcher != null && myReturnValueWatcher.processEvent(event)) {
+                    processed++;
+                    continue;
                   }
                   Consumer<? super Event> handler = getEventRequestHandler(event);
                   if (handler != null) {
@@ -259,7 +318,7 @@ public class DebugProcessEvents extends DebugProcessImpl {
                 ReferenceType lastPreparedClass = null;
 
                 for (Event event : eventSet) {
-                  if (getEventRequestHandler(event) != null) { // handled before
+                  if (getEventRequestHandler(event) != null || ReturnValueWatcher.isWatcherEvent(event)) { // handled before
                     getSuspendManager().voteResume(suspendContext);
                     continue;
                   }
@@ -338,7 +397,9 @@ public class DebugProcessEvents extends DebugProcessImpl {
 
             });
           }
-          catch (InterruptedException | ProcessCanceledException | VMDisconnectedException e) {
+          catch (InterruptedException ignored) { // only a release wakes the reader: the loop top commits it
+          }
+          catch (ProcessCanceledException | VMDisconnectedException e) {
             throw e;
           }
           catch (Throwable e) {
@@ -346,10 +407,16 @@ public class DebugProcessEvents extends DebugProcessImpl {
           }
         }
       }
-      catch (InterruptedException | VMDisconnectedException e) {
-        invokeVMDeathEvent();
+      catch (VMDisconnectedException e) {
+        if (!isStopped()) {
+          invokeVMDeathEvent();
+        }
       }
       finally {
+        synchronized (this) {
+          myIsStopped = true;
+          myThread = null;
+        }
         Thread.interrupted(); // reset interrupted status
       }
     }
@@ -433,9 +500,7 @@ public class DebugProcessEvents extends DebugProcessImpl {
       if (canBeModified) {
         final EventRequestManager requestManager = machineProxy.eventRequestManager();
 
-        if (machineProxy.canGetMethodReturnValues()) {
-          myReturnValueWatcher = new MethodReturnValueWatcher(requestManager, this);
-        }
+        myReturnValueWatcher = createReturnValueWatcher(machineProxy, requestManager);
 
         enableNonSuspendingRequest(platformThreadsOnly(requestManager.createThreadStartRequest()),
                                    event -> {
@@ -505,7 +570,9 @@ public class DebugProcessEvents extends DebugProcessImpl {
         trackClassRedefinitions();
       }
 
-      showStatusText(JavaDebuggerBundle.message("status.connected", DebuggerUtilsImpl.getConnectionDisplayName(getConnection())));
+      if (!isVirtualMachineAdopted()) {
+        showStatusText(JavaDebuggerBundle.message("status.connected", DebuggerUtilsImpl.getConnectionDisplayName(getConnection())));
+      }
       LOG.debug("leave: processVMStartEvent()");
 
       if (session != null) {
@@ -523,6 +590,25 @@ public class DebugProcessEvents extends DebugProcessImpl {
       return true;
     }
     return false;
+  }
+
+  private @Nullable ReturnValueWatcher createReturnValueWatcher(VirtualMachineProxyImpl machineProxy,
+                                                                EventRequestManager requestManager) {
+    if (!machineProxy.canGetMethodReturnValues()) {
+      return null;
+    }
+    // The emulated watcher reads JVM bytecode. An Android VM has DEX bytecode.
+    boolean canEmulate = machineProxy.canGetBytecodes() && machineProxy.canGetConstantPool() &&
+                         !DebuggerUtils.isAndroidVM(machineProxy.getVirtualMachine());
+    String option = Registry.get("debugger.show.return.values.watcher").getSelectedOption();
+    if (!"native".equals(option) && canEmulate) {
+      return new OverheadReportingWatcher(new EmulatedReturnValueWatcher(requestManager), this);
+    }
+    if ("native".equals(option) || "auto".equals(option)) {
+      return new OverheadReportingWatcher(new NativeReturnValueWatcher(requestManager), this);
+    }
+    // The native watcher slows stepping, so it is opt-in.
+    return null;
   }
 
   private void trackClassRedefinitions() {
@@ -787,31 +873,8 @@ public class DebugProcessEvents extends DebugProcessImpl {
           if (LOG.isDebugEnabled()) {
             LOG.debug(exceptionMessage);
           }
-          String title = ex.getTitle();
-          XBreakpoint<?> xBreakpoint = requestor instanceof Breakpoint<?> breakpoint ? breakpoint.getXBreakpoint() : null;
-          XDebugSession xDebugSession = getSession().getXDebugSession();
-          BreakpointErrorData errorData = new BreakpointErrorData(title, exceptionMessage, ex.getCause());
-          BreakpointErrorAction policyAction = xDebugSession == null || xBreakpoint == null
-                                               ? BreakpointErrorAction.UNHANDLED
-                                               : XBreakpointBehaviorPolicy.doChooseBreakpointErrorAction(xDebugSession, xBreakpoint, errorData);
-
-          final String displayName = DebuggerUtilsImpl.getRequestorStringForUser(requestor);
-          if (policyAction != BreakpointErrorAction.UNHANDLED) {
-            requestHit = policyAction == BreakpointErrorAction.PAUSE;
-          }
-          else {
-            requestHit = DebuggerUtilsImpl.askAboutPauseOnException(getProject(), displayName, exceptionMessage, title);
-          }
-
-          if (xDebugSession != null && xBreakpoint != null) {
-            XDebuggerManagerImpl debuggerManager = (XDebuggerManagerImpl)XDebuggerManager.getInstance(xDebugSession.getProject());
-            debuggerManager.getBreakpointManager().fireBreakpointError(xBreakpoint, xDebugSession, errorData);
-          }
-          // TODO: may be we need to use another approach for letting the user know that the evaluation failed?
-          // TODO: probably report this message via `com.intellij.xdebugger.breakpoints.XBreakpointListener.breakpointError` in the Dap case
-          if (DapMode.isDap()) {
-            printToConsole(JavaDebuggerBundle.message("error.failed.evaluating.breakpoint.condition", displayName, exceptionMessage));
-          }
+          requestHit = DebuggerUtilsImpl.pauseOnBreakpointError(DebugProcessEvents.this, requestor, requestor.getSuspendPolicy(), ex.getTitle(),
+                                                                exceptionMessage, ex.getCause());
           resumePreferred = !requestHit;
         }
         catch (VMDisconnectedException e) {

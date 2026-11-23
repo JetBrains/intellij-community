@@ -5,41 +5,43 @@ import com.intellij.JavaTestUtil;
 import com.intellij.codeInspection.unusedReturnValue.UnusedReturnValue;
 import com.intellij.codeInspection.unusedReturnValue.UnusedReturnValueLocalInspection;
 import com.intellij.psi.util.AccessModifier;
-import com.intellij.testFramework.JavaInspectionTestCase;
+import com.intellij.testFramework.JavaInspectionFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.junit.jupiter.api.Test;
 
-public class UnusedReturnValueLocalTest extends JavaInspectionTestCase {
-  private UnusedReturnValue myGlobal = new UnusedReturnValue();
-  private UnusedReturnValueLocalInspection myTool = new UnusedReturnValueLocalInspection(myGlobal);
+import static com.intellij.testFramework.JavaInspectionFixtureKt.javaInspectionFixture;
+import static com.intellij.testFramework.JavaInspectionFixtureKt.javaInspectionProjectFixture;
 
-  @Override
-  protected String getTestDataPath() {
-    return JavaTestUtil.getJavaTestDataPath() + "/inspection";
-  }
+@TestApplication
+public class UnusedReturnValueLocalTest {
+  private static final TestFixture<LightJavaProject> projectFixture = javaInspectionProjectFixture();
+  private final TestFixture<JavaInspectionFixture> javaInspection = javaInspectionFixture(projectFixture, JavaTestUtil.getJavaTestDataPath() + "/inspection");
+
+  private final UnusedReturnValue myGlobal = new UnusedReturnValue();
+  private final UnusedReturnValueLocalInspection myTool = new UnusedReturnValueLocalInspection(myGlobal);
 
   private void doTest() {
-    doTest("unusedReturnValue/" + getTestName(true), myTool);
+    javaInspection.get().doTest("unusedReturnValue/" + javaInspection.get().getTestName(true), myTool);
   }
 
-
-  @Override
-  protected void tearDown() throws Exception {
-    myGlobal = null;
-    myTool = null;
-    super.tearDown();
-  }
-
+  @Test
   public void testNonLiteral() {
     doTest();
   }
 
+  @Test
   public void testHierarchy() {
     doTest();
   }
 
+  @Test
   public void testMethodReference() {
     doTest();
   }
 
+  @Test
   public void testSimpleSetter() {
     try {
       myGlobal.IGNORE_BUILDER_PATTERN = true;
@@ -50,6 +52,7 @@ public class UnusedReturnValueLocalTest extends JavaInspectionTestCase {
     }
   }
 
+  @Test
   public void testVisibilitySetting() {
     try {
       myGlobal.highestModifier = AccessModifier.PRIVATE;
@@ -60,6 +63,7 @@ public class UnusedReturnValueLocalTest extends JavaInspectionTestCase {
     }
   }
 
+  @Test
   public void testChainMethods() {
     try {
       myGlobal.IGNORE_BUILDER_PATTERN = true;
@@ -70,6 +74,7 @@ public class UnusedReturnValueLocalTest extends JavaInspectionTestCase {
     }
   }
 
+  @Test
   public void testUsedFromGroovy() {
     doTest();
   }

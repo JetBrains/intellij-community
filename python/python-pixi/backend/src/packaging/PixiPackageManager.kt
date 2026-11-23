@@ -2,6 +2,7 @@
 package com.intellij.python.pixi.backend.packaging
 
 import com.intellij.openapi.module.Module
+import com.intellij.python.sdk.backend.PythonInterpreter
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
@@ -22,7 +23,6 @@ import com.intellij.python.pixi.backend.workspace.createPixiRuntime
 import com.intellij.python.pyproject.PyDependencyGroup
 import com.intellij.python.requirements.parser.PyRequirementParser
 import com.intellij.python.sdk.backend.NativePythonInterpreter
-import com.intellij.python.sdk.backend.PythonInterpreter
 import com.intellij.python.sdk.backend.TargetPythonInterpreter
 import com.intellij.python.sdk.backend.resolveExecutable
 import com.intellij.python.sdk.backend.detectedEnvironment
@@ -62,14 +62,14 @@ import kotlin.io.path.exists
 import kotlin.io.path.readText
 
 internal class PixiPackageManagerProvider : PythonPackageManagerProvider {
-  override fun createPackageManager(project: Project, interpreter: PythonInterpreter): PythonPackageManager? {
+  override fun createPackageManager(interpreter: PythonInterpreter): PythonPackageManager? {
     if (interpreter.ref.manager != PixiPyTool.getInstance().fusId) return null
-    return PixiPackageManager(project, interpreter)
+    return PixiPackageManager(interpreter)
   }
 }
 
-internal class PixiPackageManager(project: Project, interpreter: PythonInterpreter) : PythonPackageManager(project, interpreter) {
-  private val pipManager: PythonPackageManager = PipPackageManagerProvider().createPackageManager(project, interpreter).also {
+internal class PixiPackageManager(interpreter: PythonInterpreter) : PythonPackageManager(interpreter) {
+  private val pipManager: PythonPackageManager = PipPackageManagerProvider().createPackageManager(interpreter).also {
     Disposer.register(this, it)
   }
   @Volatile
@@ -445,7 +445,7 @@ internal class PixiPackageManager(project: Project, interpreter: PythonInterpret
       }
       is TargetPythonInterpreter -> readPixiCondaPackagesFromInterpreter(python)
     }.getOr { return it }
-    val metadata = sdk.loadInstalledPackagesMetadata().getOr { return it }
+    val metadata = interpreter.loadInstalledPackagesMetadata().getOr { return it }
     val resolved = if (hasLockFile()) listResolvedPackages(explicit = false).getOrNull().orEmpty() else emptyList()
     return PyResult.success(mergeInstalledPixiPackages(native, metadata, resolved))
   }

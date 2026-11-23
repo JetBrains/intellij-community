@@ -6,8 +6,10 @@ import com.intellij.ide.impl.ProjectUtil
 import com.intellij.ide.trustedProjects.TrustedProjects
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
-import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.diagnostic.thisLogger
+import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.fileEditor.FileEditorOpenMode
+import com.intellij.openapi.fileEditor.FileEditorOpenRequest
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.vfs.VfsUtil
@@ -22,7 +24,6 @@ import com.intellij.pycharm.community.ide.impl.miscProject.TemplateFileName
 import com.intellij.python.community.services.systemPython.SystemPythonService
 import com.intellij.python.pyproject.model.evolution.findMainPythonInterpreter
 import com.intellij.python.sdk.backend.PythonInterpreter
-import com.intellij.python.sdk.backend.getSdkAPI
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.MessageError
@@ -36,7 +37,6 @@ import com.jetbrains.python.sdk.runWithSdkConfigurationLock
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
@@ -45,7 +45,6 @@ import java.nio.file.FileAlreadyExistsException
 import java.nio.file.Path
 import kotlin.io.path.createDirectories
 import kotlin.io.path.createFile
-import kotlin.time.Duration.Companion.milliseconds
 
 internal val miscProjectDefaultPath: Path
   get() = Path.of(ProjectUtil.getBaseDir()).resolve("PyCharmHome")
@@ -98,7 +97,7 @@ suspend fun createMiscProject(
 private suspend fun generateAndOpenFile(projectPath: Path, project: Project, fileType: MiscFileType, pythonInterpreter: PythonInterpreter): PsiFile {
   val generateFile = generateFile(projectPath, fileType.fileName)
   val psiFile = openFile(project, generateFile)
-  fileType.fillFile(psiFile, pythonInterpreter.getSdkAPI())
+  fileType.fillFile(psiFile, pythonInterpreter)
   return psiFile
 }
 
@@ -106,33 +105,15 @@ private suspend fun openFile(project: Project, file: Path): PsiFile {
   val vfsFile = withContext(Dispatchers.IO) {
     VfsUtil.findFile(file, true) ?: error("Can't find VFS $file")
   }
-  // `Navigate` throws `AssertionError` from time to time due to a platform API bug.
-  // We "fix" it by retries
-  return callWithRetry {
-    withContext(Dispatchers.EDT) {
-      val psiFile = readAction { PsiManager.getInstance(project).findFile(vfsFile) } ?: error("Can't find PSI for $vfsFile")
-      psiFile.navigate(true)
+  val psiFile = readAction {
+    PsiManager.getInstance(project).findFile(vfsFile)
+  } ?: error("Can't find PSI for $vfsFile")
 
-      return@withContext psiFile
-    }
-  }
-}
-
-/**
- * Retries  [code] `10` times if it throws [AssertionError]
- */
-private suspend fun <T> callWithRetry(code: suspend () -> T): T {
-  val logger = fileLogger()
-  repeat(10) {
-    try {
-      return code()
-    }
-    catch (e: AssertionError) {
-      logger.warn(e)
-      delay(100.milliseconds)
-    }
-  }
-  return code()
+  FileEditorManager.getInstanceAsync(project).openFile(
+    vfsFile,
+    FileEditorOpenRequest.withFocus(true).withOpenMode(FileEditorOpenMode.DEFAULT),
+  )
+  return psiFile
 }
 
 private suspend fun generateFile(where: Path, templateFileName: TemplateFileName): Path = withContext(Dispatchers.IO) {

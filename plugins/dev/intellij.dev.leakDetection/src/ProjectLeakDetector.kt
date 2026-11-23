@@ -3,10 +3,12 @@ package com.intellij.dev.leakDetection
 
 import com.intellij.ide.IdeEventQueue
 import com.intellij.ide.plugins.PluginManagerCore
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.impl.EditorImpl
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.ex.ProjectEx
 import com.intellij.openapi.project.impl.ProjectImpl
 import com.intellij.openapi.util.Disposer
@@ -21,6 +23,7 @@ import org.jetbrains.annotations.VisibleForTesting
 import java.awt.KeyboardFocusManager
 import java.util.IdentityHashMap
 import java.util.concurrent.TimeUnit
+import java.util.function.Predicate
 import kotlin.time.Duration.Companion.milliseconds
 
 private val LOG = logger<ProjectLeakDetector>()
@@ -28,6 +31,9 @@ private val LOG = logger<ProjectLeakDetector>()
 // Mirrors the traversal bounds used by the test-framework LeakHunter.
 private const val MAX_DEPTH = 1_000
 private const val MAX_QUEUE_SIZE = 1_000_000
+
+// The walk checks for cancellation once per this number of examined values.
+private const val CANCELLATION_CHECK_INTERVAL = 4_096
 
 // When the first pass finds something, wait this long and GC again before re-collecting, to drop transiently-retained objects.
 private const val SETTLE_DELAY_MS = 1_000L
@@ -50,6 +56,8 @@ data class LeakInfo(
   val staleForMs: Long?,
   /** A strong-reference path from a GC root to the leaked instance. */
   val referencePath: String,
+  /** The Disposer parent chain of the first Disposable on [referencePath] that is in the Disposer tree. */
+  val disposerParentChain: String? = null,
 )
 
 /**
@@ -64,7 +72,7 @@ data class LeakInfo(
  *   coroutine frame is invisible. Only thread objects and their thread-locals are reachable, not stack slots.
  * - **Native / JNI global references** — anything pinned from native code (AWT peers, native handles, etc.).
  *
- * [detect] is heavy (forces a full GC and walks the object graph) and must be called off the EDT.
+ * [detect] is heavy (it walks the object graph and, by default, forces a full GC) and must be called off the EDT.
  */
 @ApiStatus.Internal
 class ProjectLeakDetector(
@@ -72,22 +80,33 @@ class ProjectLeakDetector(
   private val editorStaleThresholdMs: Long =
     Registry.intValue(EDITOR_STALE_THRESHOLD_KEY, DEFAULT_EDITOR_STALE_THRESHOLD_MS).toLong(),
 ) {
-  suspend fun detect(): List<LeakInfo> {
-    hardGc()
-    // Give finalizers / soft references a chance to clear before the first scan.
-    delay(200.milliseconds)
-    hardGc()
+  /**
+   * Finds the leaked instances.
+   *
+   * When [forceGc] is false, no GC occurs. Then the pre-check of [LeakCandidateRegistry] can see disposed instances
+   * that the GC did not collect yet, and the object-graph walk runs more often.
+   * The walk is cancellable.
+   */
+  suspend fun detect(forceGc: Boolean = true): List<LeakInfo> {
+    if (forceGc) {
+      hardGc()
+      // Give finalizers / soft references a chance to clear before the first scan.
+      delay(200.milliseconds)
+      hardGc()
+    }
 
     if (!LeakCandidateRegistry.getInstance().hasRetainedDisposedInstances()) {
-      LOG.debug("No disposed Project/Editor retained after GC; skipping the leak object-graph walk")
+      LOG.debug("No disposed Project/Editor retained; skipping the leak object-graph walk")
       return emptyList()
     }
 
     var leaks = collect()
     if (leaks.isNotEmpty()) {
-      // Re-scan after another GC: anything still reachable now is very unlikely to be a transient reference.
+      // Re-scan after a delay: anything still reachable now is very unlikely to be a transient reference.
       delay(SETTLE_DELAY_MS.milliseconds)
-      hardGc()
+      if (forceGc) {
+        hardGc()
+      }
       leaks = collect()
     }
     return leaks
@@ -98,7 +117,7 @@ class ProjectLeakDetector(
       val result = ArrayList<LeakInfo>()
       val roots = buildRoots()
 
-      DebugReflectionUtil.walkObjects(MAX_DEPTH, MAX_QUEUE_SIZE, roots, ProjectImpl::class.java, { true },
+      DebugReflectionUtil.walkObjects(MAX_DEPTH, MAX_QUEUE_SIZE, roots, ProjectImpl::class.java, cancellableExamination(),
                                       PairProcessor { project, backLink ->
                                         if (project.isDisposed && !project.isDefault && !project.isLight) {
                                           result.add(projectLeak(project, backLink))
@@ -106,7 +125,7 @@ class ProjectLeakDetector(
                                         true
                                       })
 
-      DebugReflectionUtil.walkObjects(MAX_DEPTH, MAX_QUEUE_SIZE, roots, EditorImpl::class.java, { true },
+      DebugReflectionUtil.walkObjects(MAX_DEPTH, MAX_QUEUE_SIZE, roots, EditorImpl::class.java, cancellableExamination(),
                                       PairProcessor { editor, backLink ->
                                         val disposedAtNanos = editor.disposalTimestampNanos
                                         if (disposedAtNanos != 0L) {
@@ -118,6 +137,17 @@ class ProjectLeakDetector(
                                         true
                                       })
       result
+    }
+  }
+
+  /** Lets the read action and the coroutine cancel a long walk. */
+  private fun cancellableExamination(): Predicate<Any> {
+    var examined = 0
+    return Predicate {
+      if (++examined % CANCELLATION_CHECK_INTERVAL == 0) {
+        ProgressManager.checkCanceled()
+      }
+      true
     }
   }
 
@@ -230,6 +260,7 @@ class ProjectLeakDetector(
       creationTrace = (project as ProjectEx).creationTrace,
       staleForMs = null,
       referencePath = backLink.toString(),
+      disposerParentChain = disposerParentChain(backLink),
     )
 
   private fun editorLeak(editor: EditorImpl, staleForMs: Long, backLink: DebugReflectionUtil.BackLink<*>): LeakInfo =
@@ -241,7 +272,23 @@ class ProjectLeakDetector(
       creationTrace = null,
       staleForMs = staleForMs,
       referencePath = backLink.toString(),
+      disposerParentChain = disposerParentChain(backLink),
     )
+
+  /** Returns the parent chain of the first Disposable in the tree, from the leaked instance to the root, as `LeakHunter` does. */
+  @Suppress("TestOnlyProblems")
+  private fun disposerParentChain(start: DebugReflectionUtil.BackLink<*>): String? {
+    val tree = Disposer.getTree()
+    var link: DebugReflectionUtil.BackLink<*>? = start
+    while (link != null) {
+      val value = link.value
+      if (value is Disposable) {
+        tree.printParentChainToRoot(value)?.let { return it }
+      }
+      link = link.prev()
+    }
+    return null
+  }
 
   private fun safeToString(o: Any): String =
     try {

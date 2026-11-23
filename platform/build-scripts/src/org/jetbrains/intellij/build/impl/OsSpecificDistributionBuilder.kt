@@ -47,6 +47,7 @@ fun commonExecutableFilePatterns(os: OsFamily): List<String> {
     OsFamily.MACOS -> listOf("bin/*.sh", "bin/fsnotifier", "bin/printenv", "bin/restarter", "MacOS/*")
     OsFamily.LINUX -> listOf("bin/*.sh", "bin/fsnotifier", "bin/restarter")
     OsFamily.WINDOWS -> emptyList()
+    OsFamily.OHOS -> emptyList()
   }
 }
 
@@ -54,8 +55,8 @@ fun commonExecutableFilePatterns(os: OsFamily): List<String> {
  * The native files of `community/bin` that the `bin` directory of a distribution for [os] and [arch] takes, sorted by
  * name within each directory.
  *
- * [OsSpecificDistributionBuilder.copyNativeBinFiles] copies them. The dev distribution plan names the same files, so a
- * split dev distribution places them without build code. [macFileFilter] is `MacDistributionCustomizer.binFilesFilter`.
+ * [OsSpecificDistributionBuilder.copyNativeBinFiles] copies them. The distribution plan names the same files, so a
+ * split distribution places them without build code. [macFileFilter] is `MacDistributionCustomizer.binFilesFilter`.
  * A file whose name starts with a dot is no native file.
  */
 @Internal
@@ -71,6 +72,7 @@ fun nativeBinFiles(
     OsFamily.LINUX -> listOf(binDir.resolve("linux/${arch.dirName}/fsnotifier"))
     // the architecture directory, then the top-level files of `bin/win`: the other architecture's directory is not ours
     OsFamily.WINDOWS -> listNativeBinDir(binDir.resolve("win/${arch.dirName}")) + listNativeBinDir(binDir.resolve("win"))
+    OsFamily.OHOS -> emptyList()
   }
 }
 

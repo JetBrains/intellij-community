@@ -2,7 +2,8 @@
 
 use avl_affected::{air_areas, ui_lane, ui_lane_of_label, ui_lanes};
 use avl_base::{Config, Exit, Refusal, Reporter};
-use bt_core::{ResolutionInputs, Selector, resolve_selector};
+use bt_core::modules::MODULE_NOT_MIGRATED;
+use bt_core::{ResolutionInputs, Runtime, Selector, resolve_selector};
 
 use crate::daemon::run::selector_to_run_request;
 use crate::lane::runtime::bt_runtime;
@@ -35,22 +36,40 @@ pub(crate) fn lane_selection(lane: &str) -> Result<Selection, Refusal> {
     })
 }
 
-/// Resolves a BT selector and refuses anything that is not one IDE UI target.
+/// Resolves a BT selector and refuses anything that is not one IDE UI target. The refusal names the host command, because
+/// such a test needs no guest.
 ///
-/// The runtime it resolves through cannot spawn, so this reaches no Bazel and no VM: the refusal below is decided
-/// from the checkout alone.
+/// The runtime it resolves through spawns nothing but the pinned accio, so this reaches no Bazel and no VM: the
+/// refusal below is decided from the checkout and its accio index.
 pub(crate) fn resolve_selector_selection(settings: &Config, selector: &str, reporter: &Reporter) -> Result<Selection, Refusal> {
     let runtime = bt_runtime(settings.host_repo()?, reporter);
+    resolve_selector_selection_in(&runtime, selector)
+}
+
+/// [`resolve_selector_selection`] through a given runtime, which a test fakes.
+pub(crate) fn resolve_selector_selection_in(runtime: &dyn Runtime, selector: &str) -> Result<Selection, Refusal> {
     let classified = Selector::classify(selector).map_err(as_usage)?;
-    let inputs = ResolutionInputs::new(&runtime, air_areas());
-    let resolution = resolve_selector(&runtime, &classified, &inputs).map_err(as_usage)?;
+    let inputs = ResolutionInputs::new(runtime, air_areas());
+    let resolution = match resolve_selector(runtime, &classified, &inputs) {
+        Ok(resolution) => resolution,
+        // A module whose tests do not run under Bazel holds no UI-lane test either, so the migration that `bt` names
+        // would not let a VM worker run it. The host runs it, and the message of `bt` names how.
+        Err(refused) if refused.code == MODULE_NOT_MIGRATED => {
+            return Err(Refusal::usage(format!(
+                "{selector} is no test of a UI lane; {}. On the host: {}",
+                lane_targets_text(),
+                refused.message
+            )));
+        }
+        Err(refused) => return Err(as_usage(refused)),
+    };
     let label = match resolution.labels.as_slice() {
         [label] if !resolution.multi_target && ui_lane_of_label(label).is_some() => label.clone(),
         labels => {
             return Err(Refusal::usage(format!(
-                "{selector} resolves to {}; a VM worker runs only the IDE UI targets ({})",
+                "{selector} resolves to {}; {}. Run it on the host: ./community/tools/bt.cmd {selector}",
                 labels.join(", "),
-                ui_lanes().iter().map(|lane| lane.label).collect::<Vec<_>>().join(", ")
+                lane_targets_text()
             )));
         }
     };
@@ -72,6 +91,14 @@ pub(crate) fn resolve_selector_selection(settings: &Config, selector: &str, repo
         selectors,
         junit5_filters,
     })
+}
+
+/// The sentence of a refusal of a selector outside the UI lanes that names what a VM worker runs.
+fn lane_targets_text() -> String {
+    format!(
+        "a VM worker runs only the IDE UI targets ({})",
+        ui_lanes().iter().map(|lane| lane.label).collect::<Vec<_>>().join(", ")
+    )
 }
 
 /// Folds a `bt` refusal into the controller's `usage`.

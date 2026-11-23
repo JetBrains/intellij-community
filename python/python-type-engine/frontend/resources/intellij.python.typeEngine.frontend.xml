@@ -40,6 +40,6 @@
                          nonDefaultProject="true"/>
     <statusBarWidgetFactory id="pythonTypeEngineWidget"
                             implementation="com.intellij.python.typeEngine.frontend.PyTypeEngineStatusBarWidgetFactory"
-                            order="after CodeStyleStatusBarWidget, before pythonInterpreterWidget"/>
+                            order="after CodeStyleStatusBarWidget"/>
   </extensions>
 </idea-plugin>

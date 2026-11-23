@@ -16,13 +16,13 @@ import org.junit.jupiter.api.BeforeEach
 /**
  * Builds a Kotlin module with the bundled builder through the Build Tools API.
  *
- * The implementation is not on the test classpath. The test hands the directory of [KotlinBtaImplementation.CURRENT]
+ * The implementation is not on the test classpath. The test hands the directory of [KotlinBtaImplementation.BOOTSTRAP]
  * over to the builder, as the IDE hands it over to the build process.
  */
 abstract class AbstractKotlinJpsBuilderTest : JpsBuildTestBase() {
   @BeforeEach
   fun setUpKotlinJpsBuilderTest() {
-    KotlinBtaImplementation.CURRENT.install()
+    KotlinBtaImplementation.BOOTSTRAP.install()
     System.setProperty(GlobalOptions.DEPENDENCY_GRAPH_ENABLED, "true")
     System.setProperty(IncrementalCompilation.INCREMENTAL_COMPILATION_JVM_PROPERTY, "true")
     CompilerSystemProperties.COMPILE_DAEMON_ENABLED_PROPERTY.clear()
@@ -41,7 +41,7 @@ abstract class AbstractKotlinJpsBuilderTest : JpsBuildTestBase() {
 
   protected fun addKotlinStdlib(module: JpsModule) {
     val library = myProject.addLibrary("kotlin-stdlib", JpsJavaLibraryType.INSTANCE)
-    for (root in KotlinBtaImplementation.CURRENT.stdlibRoots) {
+    for (root in KotlinBtaImplementation.BOOTSTRAP.stdlibRoots) {
       library.addRoot(root.toPath(), JpsOrderRootType.COMPILED)
     }
     module.dependenciesList.addLibraryDependency(library)

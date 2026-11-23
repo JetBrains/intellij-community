@@ -1,0 +1,20 @@
+# Inline rather than `.workspace = true`: BT links this crate through a path dependency, and rules_rs reads the
+# `[package]` and `[dependencies]` of such a crate without its workspace. Keep the values equal to `[workspace.package]`
+# and `[workspace.dependencies]`.
+[package]
+name = "checkout-files"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.99"
+publish = false
+license = "Apache-2.0"
+
+[lints]
+workspace = true
+
+[dependencies]
+anyhow = "1.0.104"
+ignore = "0.4.34"
+
+[dev-dependencies]
+tempfile = "3.27.0"

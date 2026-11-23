@@ -3,10 +3,12 @@ package com.intellij.java.util.indexing
 
 import com.intellij.idea.TestFor
 import com.intellij.openapi.project.getProjectCachePath
+import com.intellij.openapi.util.Disposer
 import com.intellij.psi.PsiManager
 import com.intellij.testFramework.IndexingTestUtil.Companion.waitUntilIndexesAreReady
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.TestModeFlags
+import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase
 import com.intellij.testFramework.registerExtension
 import com.intellij.util.application
@@ -16,8 +18,10 @@ import com.intellij.util.indexing.diagnostic.IndexDiagnosticDumperUtils
 import com.intellij.util.indexing.diagnostic.shouldDumpInUnitTestMode
 import com.intellij.util.indexing.diagnostic.IndexStatisticGroup
 import com.intellij.util.indexing.diagnostic.ProjectDumbIndexingHistory
+import com.intellij.util.indexing.diagnostic.ProjectDumbIndexingHistoryImpl
 import com.intellij.util.indexing.diagnostic.ProjectIndexingActivityHistoryListener
 import com.intellij.util.indexing.diagnostic.ProjectScanningHistory
+import com.intellij.util.indexing.diagnostic.ProjectScanningHistoryImpl
 import com.intellij.util.indexing.diagnostic.ScanningType
 import com.intellij.util.indexing.diagnostic.dto.JsonDateTime
 import com.intellij.util.indexing.diagnostic.dto.JsonDuration
@@ -36,6 +40,10 @@ import com.intellij.util.indexing.diagnostic.dto.JsonProjectScanningHistoryTimes
 import com.intellij.util.indexing.diagnostic.dto.JsonRuntimeInfo
 import com.intellij.util.indexing.diagnostic.dto.JsonScanningStatistics
 import com.intellij.util.indexing.diagnostic.dump.paths.PortableFilePath
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
 import org.junit.Assert
 import tools.jackson.databind.ObjectMapper
 import tools.jackson.module.kotlin.jacksonObjectMapper
@@ -43,7 +51,10 @@ import java.io.BufferedReader
 import java.io.StringReader
 import java.nio.file.Files
 import java.time.ZonedDateTime
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
 import kotlin.io.path.createTempDirectory
+import kotlin.io.path.exists
 import kotlin.io.path.extension
 import kotlin.io.path.name
 import kotlin.io.path.nameWithoutExtension
@@ -99,6 +110,45 @@ class IndexDiagnosticTest : JavaCodeInsightFixtureTestCase() {
 
     val deserialized = deserializeDiagnostic(mapper, indexDiagnostic)
     Assert.assertEquals(indexDiagnostic, deserialized)
+  }
+
+  @TestFor(issues = ["IJPL-260777"])
+  fun `test diagnostic dumps do not block the service dispatcher`(): Unit = timeoutRunBlocking {
+    val diagnosticDirectory = createTempDirectory()
+    TestModeFlags.set(IndexDiagnosticDumperUtils.testDiagnosticPathFlag, diagnosticDirectory, testRootDisposable)
+    val previousDumpInUnitTestMode = shouldDumpInUnitTestMode
+    shouldDumpInUnitTestMode = true
+    try {
+      coroutineScope {
+        val serviceScope = CoroutineScope(coroutineContext + Dispatchers.Default.limitedParallelism(1))
+        val dumper = IndexDiagnosticDumper(serviceScope)
+        Disposer.register(testRootDisposable, dumper)
+
+        synchronized(dumper) {
+          dumper.onScanningFinished(ProjectScanningHistoryImpl(project, "test scan", ScanningType.PARTIAL))
+          dumper.onDumbIndexingFinished(ProjectDumbIndexingHistoryImpl(project))
+
+          val serviceDispatcherIsFree = CountDownLatch(1)
+          serviceScope.launch {
+            serviceDispatcherIsFree.countDown()
+          }
+          assertTrue("Diagnostic dumps must leave the service dispatcher available while waiting for the dumper monitor",
+                     serviceDispatcherIsFree.await(5, TimeUnit.SECONDS))
+        }
+      }
+
+      val projectDirectory = project.getProjectCachePath(IndexDiagnosticDumperUtils.indexingDiagnosticDir)
+      val diagnostics = Files.list(projectDirectory).use { files ->
+        files.filter { it.name.startsWith("diagnostic-") && it.extension == "json" }.toList()
+      }
+      assertEquals(2, diagnostics.size)
+      assertEquals(setOf(IndexStatisticGroup.IndexingActivityType.Scanning, IndexStatisticGroup.IndexingActivityType.DumbIndexing),
+                   diagnostics.map { IndexDiagnosticDumper.readJsonIndexingActivityDiagnostic(it)?.type }.toSet())
+      assertTrue(projectDirectory.resolve("report.html").exists())
+    }
+    finally {
+      shouldDumpInUnitTestMode = previousDumpInUnitTestMode
+    }
   }
 
   fun `test scanning diagnostics json can be deserialized`() {

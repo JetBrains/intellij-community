@@ -6,6 +6,7 @@ import com.jetbrains.python.allure.Components
 import com.jetbrains.python.allure.Layers
 import com.jetbrains.python.allure.Subsystems
 import com.jetbrains.python.documentation.docstrings.DocStringFormat
+import com.jetbrains.python.documentation.docstrings.PyDocStringTypeProvider
 import com.jetbrains.python.fixtures.PyCodeInsightTestCase
 import com.jetbrains.python.numpy.codeInsight.NumpyDocStringTypeProvider
 import org.junit.jupiter.api.Nested
@@ -29,6 +30,23 @@ class PyDocstringTypeTest : PyCodeInsightTestCase() {
           expr = limit
       #   └ TYPE int
       """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-83660"], classes = [PyDocStringTypeProvider::class])
+    fun `docstring of a stub gives no type`() = test(
+      """
+      from mod import f
+
+      expr = f(1)
+      #└ TYPE Unknown
+      """.trimIndent(),
+      "mod.pyi" to """
+        def f(x):
+            ''':type x: int
+            :rtype: int
+            '''
+      """.trimIndent(),
+    )
 
     @Test
     @TestFor(issues = ["PY-3849"])

@@ -34,6 +34,7 @@
 
   <extensions defaultExtensionNs="com.intellij">
     <platform.lsp.integrationProvider implementation="com.intellij.python.pyrefly.lsp.PyreflyLspIntegrationProvider"/>
+    <platform.lsp.integrationProvider implementation="com.intellij.python.pyrefly.lsp.BundledPyreflyLspIntegrationProvider"/>
 
     <statistics.counterUsagesCollector implementationClass="com.intellij.python.pyrefly.PyreflyUsageCollector"/>
 
@@ -51,6 +52,7 @@
 
     <python.lsp.typeEngineConfigurable implementation="com.intellij.python.pyrefly.PyreflyPyTypeEngineProvider"/>
     <projectSettings service="com.intellij.python.pyrefly.PyreflyConfiguration"/>
+    <projectSettings service="com.intellij.python.pyrefly.PyreflyTypeEngineConfiguration"/>
     <python.pytools.pyTool implementation="com.intellij.python.pyrefly.PyreflyPyTool"/>
   </extensions>
 

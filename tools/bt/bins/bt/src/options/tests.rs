@@ -15,14 +15,14 @@ fn run(argv: &[&str]) -> Args {
 fn parse_options_separates_positionals_flags_values_and_passthrough() {
     let args = run(&["FooTest", "--shards", "3", "--json", "--", "--test_arg=--x"]);
     assert_eq!(args.selector.as_deref(), Some("FooTest"));
-    assert!(args.json);
+    assert!(args.shared.json);
     assert_eq!(args.shards, Some(3));
     assert_eq!(args.max_failures, 3, "the default");
     // Everything past `--` is bazel's, including a token that looks like one of ours.
     assert_eq!(args.passthrough, ["--test_arg=--x"]);
 
     let passthrough = run(&["--lane", "fast", "--", "--json", "-k"]);
-    assert!(!passthrough.json);
+    assert!(!passthrough.shared.json);
     assert_eq!(passthrough.passthrough, ["--json", "-k"]);
 }
 
@@ -73,14 +73,12 @@ fn a_repeated_boolean_flag_is_accepted() {
         "--json",
         "--dry-run",
         "--dry-run",
-        "--list",
-        "--list",
         "--verbose",
         "--verbose",
         "--no-cache",
         "--no-cache",
     ]);
-    assert!(args.json && args.dry_run && args.list && args.verbose && args.no_cache);
+    assert!(args.shared.json && args.shared.dry_run && args.shared.verbose && args.no_cache);
 }
 
 /// A bazel-style `-k` can legitimately be a value, so only a long flag is taken for a missing one.

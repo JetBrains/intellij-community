@@ -14,6 +14,7 @@ import com.intellij.ide.scratch.ScratchUtil;
 import com.intellij.lang.Language;
 import com.intellij.model.SideEffectGuard;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -34,9 +35,11 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeConsumer;
 import com.intellij.openapi.fileTypes.FileTypeEvent;
 import com.intellij.openapi.fileTypes.FileTypeFactory;
+import com.intellij.openapi.fileTypes.FileTypeListener;
 import com.intellij.openapi.fileTypes.FileTypesBundle;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.fileTypes.PlainTextFileType;
+import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.fileTypes.UnknownFileType;
 import com.intellij.openapi.fileTypes.UserBinaryFileType;
 import com.intellij.openapi.fileTypes.UserFileType;
@@ -131,6 +134,8 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   @ApiStatus.Internal
   public static final ExtensionPointName<FileTypeBean> EP_NAME = new ExtensionPointName<>("com.intellij.fileType");
   private static final Logger LOG = Logger.getInstance(FileTypeManagerImpl.class);
+  @SuppressWarnings("deprecation")
+  private static final FileTypeListener STD_FILE_TYPES_UPDATER = new StdFileTypes.StdFileTypesUpdater();
 
   // You must update all existing default configurations accordingly
   @ApiStatus.Internal
@@ -179,6 +184,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   // maps pluginId -> duplicates for this plugin
   private final Map<PluginDescriptor, Set<FileTypeWithDescriptor>> fileTypesPerPlugin = new ConcurrentHashMap<>();
   private final MutableSharedFlow<Unit> checkDuplicatedAlarm;
+  private @Nullable List<FileTypeEvent> myDeferredFileTypeEvents;
 
   private @Nullable Consumer<? super ConflictingFileTypeMappingTracker.ResolveConflictResult> conflictResultConsumer;
 
@@ -1290,7 +1296,47 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   private void fireFileTypesChanged(@NotNull FileTypeEvent event) {
     detectionService.clearCaches();
     CachedFileType.clearCache();
-    ApplicationManager.getApplication().getMessageBus().syncPublisher(TOPIC).fileTypesChanged(event);
+    List<FileTypeEvent> deferred = myDeferredFileTypeEvents;
+    if (deferred == null) {
+      ApplicationManager.getApplication().getMessageBus().syncPublisher(TOPIC).fileTypesChanged(event);
+    }
+    else {
+      STD_FILE_TYPES_UPDATER.fileTypesChanged(event);
+      deferred.add(event);
+    }
+  }
+
+  /**
+   * Defers file type notifications until the token finishes.
+   * File type cache invalidation and legacy field updates remain immediate.
+   * Call this method and finish the token in an EDT write action.
+   */
+  @ApiStatus.Internal
+  public @NotNull AccessToken deferFileTypesChanged() {
+    ThreadingAssertions.assertEventDispatchThread();
+    ThreadingAssertions.assertWriteAccess();
+    if (myDeferredFileTypeEvents != null) {
+      return AccessToken.EMPTY_ACCESS_TOKEN;
+    }
+    List<FileTypeEvent> deferred = new ArrayList<>();
+    myDeferredFileTypeEvents = deferred;
+    return AccessToken.create(() -> {
+      ThreadingAssertions.assertEventDispatchThread();
+      ThreadingAssertions.assertWriteAccess();
+      if (myDeferredFileTypeEvents != deferred) {
+        return;
+      }
+      myDeferredFileTypeEvents = null;
+      try {
+        FileTypeListener publisher = ApplicationManager.getApplication().getMessageBus().syncPublisher(TOPIC);
+        for (FileTypeEvent event : deferred) {
+          publisher.fileTypesChanged(event);
+        }
+      }
+      finally {
+        deferred.clear();
+      }
+    });
   }
 
   @Override

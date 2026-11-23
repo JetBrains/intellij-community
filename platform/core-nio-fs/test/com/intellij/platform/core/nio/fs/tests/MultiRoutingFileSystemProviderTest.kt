@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.core.nio.fs.tests
 
 import com.intellij.platform.core.nio.fs.MultiRoutingFileSystem
@@ -27,10 +27,12 @@ import java.net.URI
 import java.nio.file.FileSystem
 import java.nio.file.FileSystems
 import java.nio.file.Files
+import java.nio.file.LinkOption
 import java.nio.file.OpenOption
 import java.nio.file.Path
 import java.nio.file.StandardOpenOption.APPEND
 import java.nio.file.StandardOpenOption.READ
+import java.nio.file.attribute.BasicFileAttributeView
 import java.nio.file.spi.FileSystemProvider
 import java.util.concurrent.ThreadLocalRandom
 import java.util.zip.ZipOutputStream
@@ -92,6 +94,31 @@ class MultiRoutingFileSystemProviderTest {
         assertSame(backend, actual.initialDelegate.fileSystem)
         assertEquals(fs.getPath(localPath.toString()), actual)
       }
+    }
+  }
+
+  @Test
+  fun `a relative path stays local when its absolute form routes to a remote backend`() {
+    val provider = MultiRoutingFileSystemProvider(defaultSunNioFs.provider())
+    val fs = provider.theOnlyFileSystem
+
+    val remoteProvider = mockk<FileSystemProvider>(relaxed = true)
+    val remoteFs = mockk<FileSystem>(relaxed = true) {
+      every { provider() } returns remoteProvider
+    }
+
+    // A remote working directory routes the absolute form of a relative path to the remote backend.
+    val relativeName = "a-relative-sentinel-name"
+    val absolute = MultiRoutingFileSystem.sanitizeRoot(defaultSunNioFs.getPath(relativeName).toAbsolutePath().toString())
+    fs.setBackendProvider({ local, path -> if (path == absolute) remoteFs else local }, null, null)
+
+    val relativePath = fs.getPath(relativeName)
+    relativePath.shouldBeInstanceOf<MultiRoutingFsPath>()
+
+    // The relative path has no root. The provider must keep it on the local backend.
+    provider.getFileAttributeView(relativePath, BasicFileAttributeView::class.java)
+    verify(exactly = 0) {
+      remoteProvider.getFileAttributeView(any<Path>(), any<Class<BasicFileAttributeView>>(), *anyVararg<LinkOption>())
     }
   }
 
@@ -209,6 +236,89 @@ class MultiRoutingFileSystemProviderTest {
       val options = setOf(READ, unknownOption)
       provider.newByteChannel(provider.theOnlyFileSystem.getPath(localPath.toString()), options)
       verify { backendProvider.newByteChannel(any(), options, *anyVararg()) }
+    }
+
+    @Test
+    fun `delegating local backend drops unknown open options and handles custom copy options`() {
+      val customCopyOption = object : java.nio.file.CopyOption {}
+      var copiedWithCustomOption = false
+      var movedWithCustomOption = false
+
+      val delegatingLocalFs = TestLocalDelegatingProvider(
+        defaultSunNioFs.provider(),
+        customCopyOption,
+        onCopyWithCustomOption = { copiedWithCustomOption = true },
+        onMoveWithCustomOption = { movedWithCustomOption = true },
+      ).wrapDelegateFileSystem(defaultSunNioFs)
+      provider.theOnlyFileSystem.setBackendProvider({ _, _ -> delegatingLocalFs }, null, null)
+
+      val tempDir = defaultSunNioFs.getPath(System.getProperty("java.io.tmpdir"))
+      val file = createTempFile(tempDir, "MultiRoutingFileSystemProviderTest-delegating", ".txt")
+      val copiedFile = file.resolveSibling("${file.fileName}.copied")
+      val movedFile = file.resolveSibling("${file.fileName}.moved")
+      try {
+        file.writeText("hello")
+        val path = provider.getPath(file.toUri())
+        val copiedPath = provider.getPath(copiedFile.toUri())
+        val movedPath = provider.getPath(movedFile.toUri())
+
+        provider.theOnlyFileSystem.isRoutable(path) shouldBe false
+        path.currentDelegate shouldBe file
+
+        provider.newInputStream(path, unknownOption).use { it.readAllBytes().decodeToString() shouldBe "hello" }
+
+        provider.copy(path, copiedPath, customCopyOption)
+        copiedWithCustomOption shouldBe true
+        copiedFile.readText() shouldBe "hello"
+
+        provider.move(copiedPath, movedPath, customCopyOption)
+        movedWithCustomOption shouldBe true
+        movedFile.readText() shouldBe "hello"
+      }
+      finally {
+        file.deleteIfExists()
+        copiedFile.deleteIfExists()
+        movedFile.deleteIfExists()
+      }
+    }
+  }
+
+  private class TestLocalDelegatingFs(
+    private val localProvider: TestLocalDelegatingProvider,
+    private val delegateFs: FileSystem,
+  ) : com.intellij.platform.core.nio.fs.DelegatingFileSystem<TestLocalDelegatingProvider>() {
+    override fun getDelegate(): FileSystem = delegateFs
+    override fun provider(): TestLocalDelegatingProvider = localProvider
+  }
+
+  private class TestLocalDelegatingProvider(
+    private val delegateProvider: FileSystemProvider,
+    private val customCopyOption: java.nio.file.CopyOption,
+    private val onCopyWithCustomOption: () -> Unit,
+    private val onMoveWithCustomOption: () -> Unit,
+  ) : com.intellij.platform.core.nio.fs.DelegatingFileSystemProvider<TestLocalDelegatingProvider, TestLocalDelegatingFs>() {
+    override fun wrapDelegateFileSystem(delegateFs: FileSystem): TestLocalDelegatingFs = TestLocalDelegatingFs(this, delegateFs)
+    override fun getDelegate(path1: Path?, path2: Path?): FileSystemProvider = delegateProvider
+    override fun wrapDelegatePath(delegatePath: Path?): Path? = delegatePath
+    override fun toDelegatePath(path: Path?): Path? = path
+    override fun canHandleRouting(path: Path): Boolean = false
+
+    override fun copy(source: Path, target: Path, vararg options: java.nio.file.CopyOption) {
+      if (customCopyOption in options) {
+        onCopyWithCustomOption()
+        super.copy(source, target, *options.filter { it !== customCopyOption }.toTypedArray())
+        return
+      }
+      super.copy(source, target, *options)
+    }
+
+    override fun move(source: Path, target: Path, vararg options: java.nio.file.CopyOption) {
+      if (customCopyOption in options) {
+        onMoveWithCustomOption()
+        super.move(source, target, *options.filter { it !== customCopyOption }.toTypedArray())
+        return
+      }
+      super.move(source, target, *options)
     }
   }
 

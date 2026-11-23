@@ -56,6 +56,9 @@ internal class TextFonts private constructor(
   /** The editor font of each ASCII char in each style, for [fontRenderContext]. See [editorAsciiFont]. */
   private val editorAsciiFonts = arrayOfNulls<FontInfo>(STYLE_COUNT * FIRST_NON_ASCII)
 
+  /** The common editor font of the printable ASCII chars in each style, for [fontRenderContext]. See [printableAsciiFont]. */
+  private val editorPrintableAsciiFonts = arrayOfNulls<CommonFont>(STYLE_COUNT)
+
   @Volatile private var maxPrintableAsciiWidth = -1f
 
   private val ascent: Int = families.maxOfOrNull { family -> family.fonts.maxOf { fontAscent(it) } } ?: 0
@@ -102,6 +105,26 @@ internal class TextFonts private constructor(
       return editorAsciiFont(text[start].code, style)
     }
     return editorFontLookup.fontAbleToDisplay(text, start, end, style, context)
+  }
+
+  /**
+   * Returns `null` for a render context other than the context of this instance.
+   */
+  override fun printableAsciiFont(@FontStyle style: Int, context: FontRenderContext?): FontInfo? {
+    if (context !== fontRenderContext) {
+      return null
+    }
+    val validStyle = validStyle(style)
+    if (families.isNotEmpty()) {
+      return familyFont(0, validStyle, context)
+    }
+    val cached = editorPrintableAsciiFonts[validStyle]
+    if (cached != null) {
+      return cached.font
+    }
+    val font = commonEditorAsciiFont(validStyle)
+    editorPrintableAsciiFonts[validStyle] = CommonFont(font)
+    return font
   }
 
   /**
@@ -202,6 +225,19 @@ internal class TextFonts private constructor(
     }
     val font = editorFontLookup.fontAbleToDisplay(codePoint, validStyle, fontRenderContext)
     editorAsciiFonts[index] = font
+    return font
+  }
+
+  /**
+   * Returns the editor font of all printable ASCII chars in [style], or `null` when two of these chars have different fonts.
+   */
+  private fun commonEditorAsciiFont(@FontStyle style: Int): FontInfo? {
+    val font = editorAsciiFont(FIRST_PRINTABLE_ASCII, style)
+    for (codePoint in FIRST_PRINTABLE_ASCII + 1..LAST_PRINTABLE_ASCII) {
+      if (editorAsciiFont(codePoint, style) != font) {
+        return null
+      }
+    }
     return font
   }
 
@@ -330,6 +366,11 @@ internal class TextFonts private constructor(
     val letterSpacing: Float,
     val fonts: List<FontInfo>,
   )
+
+  /**
+   * The common font of a set of chars, or `null` when the chars have no common font.
+   */
+  private class CommonFont(val font: FontInfo?)
 
   private class WidthCaches {
     /**

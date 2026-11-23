@@ -1,63 +1,76 @@
 package org.intellij.plugins.markdown.editor.tables
 
 import com.intellij.application.options.CodeStyle
-import com.intellij.testFramework.LightPlatformCodeInsightTestCase
-import org.intellij.plugins.markdown.editor.MarkdownCodeInsightSettingsRule
-import org.junit.Rule
-import org.junit.Test
-import org.junit.runner.RunWith
-import org.junit.runners.JUnit4
+import com.intellij.openapi.application.EDT
+import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightModuleFixture
+import com.intellij.testFramework.common.timeoutRunBlocking
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.fixture.projectFixture
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import org.intellij.plugins.markdown.editor.executeAction
+import org.intellij.plugins.markdown.editor.markdownCodeInsightSettingsFixture
+import org.junit.jupiter.api.Test
 
-@RunWith(JUnit4::class)
+@TestApplication
 @Suppress("MarkdownIncorrectTableFormatting", "MarkdownNoTableBorders")
-class TableCellNavigationWithDisabledSmartKeysTest: LightPlatformCodeInsightTestCase() {
-  @get:Rule
-  val rule = MarkdownCodeInsightSettingsRule {
+class TableCellNavigationWithDisabledSmartKeysTest {
+  companion object {
+    private val projectFixture = projectFixture(openAfterCreation = true)
+  }
+
+  private val myFixture by codeInsightModuleFixture(projectFixture)
+
+  private val settings = markdownCodeInsightSettingsFixture {
     it.reformatTablesOnType = false
     it.useTableCellNavigation = false
   }
 
   private val tabSize
-    get() = CodeStyle.getSettings(file).getIndentSize(file.fileType)
+    get() = CodeStyle.getSettings(myFixture.file).getIndentSize(myFixture.file.fileType)
 
   private val tab
     get() = " ".repeat(tabSize)
 
   @Test
-  fun `test single tab forward`() {
+  fun `test single tab forward`(): Unit = timeoutRunBlocking {
     // language=Markdown
     val content = """
     | none | none |
     |------|------|
     | so<caret>me | some |
     """.trimIndent()
-    configureFromFileText("some.md", content)
+    myFixture.configureByText("some.md", content)
     // language=Markdown
     val expected = """
     | none | none |
     |------|------|
     | so$tab<caret>me | some |
     """.trimIndent()
-    executeAction("EditorTab")
-    checkResultByText(expected)
+    withContext(Dispatchers.EDT) {
+      myFixture.executeAction("EditorTab")
+      myFixture.checkResult(expected)
+    }
   }
 
   @Test
-  fun `test single tab backward`() {
+  fun `test single tab backward`(): Unit = timeoutRunBlocking {
     // language=Markdown
     val content = """
     | none | none |
     |------|------|
     | some | so<caret>me |
     """.trimIndent()
-    configureFromFileText("some.md", content)
+    myFixture.configureByText("some.md", content)
     // language=Markdown
     val expected = """
     | none | none |
     |------|------|
     | some | so<caret>me |
     """.trimIndent()
-    executeAction("EditorUnindentSelection")
-    checkResultByText(expected)
+    withContext(Dispatchers.EDT) {
+      myFixture.executeAction("EditorUnindentSelection")
+      myFixture.checkResult(expected)
+    }
   }
 }

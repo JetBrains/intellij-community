@@ -42,7 +42,7 @@ class EapBuildExpirationTest {
 
   @Test
   fun aBuildDatedInTheFutureDoesNotEither() {
-    // What the dev distribution used to stamp: an epoch chosen to outrun the expiration period, which the licensing
+    // What the distribution used to stamp: an epoch chosen to outrun the expiration period, which the licensing
     // code reads as a tampered clock and rejects just as hard.
     val problem = eapBuildExpirationProblem(buildTime = utc(2038, 1, 1, 0), now = now)
 
@@ -71,7 +71,7 @@ class EapBuildExpirationTest {
 
   @Test
   fun aDescriptorWithoutAStampedDateNeverExpires() {
-    // The dev-distribution shape: `ApplicationInfoImpl.readBuildInfo` leaves `buildTime` unset for the placeholder and
+    // The shape of the distribution: `ApplicationInfoImpl.readBuildInfo` leaves `buildTime` unset for the placeholder and
     // `getBuildTime()` answers the startup time, so there is nothing to run out.
     assertThat(appInfoExpirationProblem(appInfoXml = appInfoXml(eap = true, date = "__BUILD_DATE__"), now = now)).isNull()
     assertThat(appInfoExpirationProblem(appInfoXml = appInfoXml(eap = true, date = null), now = now)).isNull()
@@ -99,7 +99,7 @@ class EapBuildExpirationTest {
 
   @Test
   fun aDistributionThatStampsNoBuildDateStarts(@TempDir tempDir: Path) {
-    // What a dev distribution ships, and the reason the UI lanes cannot expire.
+    // What the distribution ships, and the reason the UI lanes cannot expire.
     val home = distributionWith(tempDir, "intellij.idea.ultimate.customization.jar" to appInfoXml(eap = true, date = "__BUILD_DATE__"))
 
     assertThat(distributionExpirationProblem(distributionHome = home, now = now)).isNull()

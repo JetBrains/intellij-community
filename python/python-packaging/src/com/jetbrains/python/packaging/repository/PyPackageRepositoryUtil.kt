@@ -5,7 +5,6 @@ package com.jetbrains.python.packaging.repository
 
 import com.intellij.openapi.components.service
 import com.intellij.python.requirements.PyPackageVersionComparator
-import com.intellij.util.io.HttpRequests
 import com.intellij.util.io.RequestBuilder
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.getOrNull
@@ -30,18 +29,6 @@ internal fun RequestBuilder.withBasicAuthorization(repository: PyPackageReposito
   val credentials = Base64.getEncoder().encode("${login}:${password}".toByteArray()).toString(StandardCharsets.UTF_8)
   this.tuner { connection -> connection.setRequestProperty("Authorization", "Basic $credentials") }
   return this
-}
-
-@ApiStatus.Experimental
-@ApiStatus.Internal
-fun PyPackageRepository.checkValid(): Boolean {
-  val url = repositoryUrl.ifEmpty { return false }
-  return HttpRequests
-    .request(url)
-    .withBasicAuthorization(this)
-    .connectTimeout(3000)
-    .throwStatusCodeException(false)
-    .tryConnect() == 200
 }
 
 @ApiStatus.Experimental

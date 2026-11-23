@@ -2,6 +2,9 @@
 package com.jetbrains.python.sdk.pipenv
 
 import com.intellij.notification.NotificationGroupManager
+import com.intellij.python.sdk.backend.sitePackagesDirectory
+import com.intellij.python.pyproject.model.evolution.getInterpreter
+import com.intellij.python.sdk.backend.PythonInterpreter
 import com.intellij.notification.NotificationListener
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.application.EDT
@@ -21,9 +24,7 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.ide.progress.withBackgroundProgress
-import com.intellij.python.pyproject.model.evolution.getInterpreter
 import com.intellij.python.sdk.backend.associatedModuleDir
-import com.intellij.python.sdk.backend.sitePackagesDirectory
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.errorProcessing.ErrorSink
 import com.jetbrains.python.errorProcessing.emit
@@ -119,7 +120,7 @@ internal class PipEnvPipFileWatcher : EditorFactoryListener {
         }
 
         withContext(Dispatchers.IO) {
-          interpreter.sitePackagesDirectory(module.project)?.refresh(true, true)
+          interpreter.sitePackagesDirectory()?.refresh(true, true)
           // `Pipfile.lock` may not be there yet, and a plain refresh never looks for a name VFS has not seen — see
           // the note on `PythonPackageManagerAction`'s own refresh, which this mirrors (PY-92487).
           interpreter.associatedModuleDir?.let { VfsUtil.markDirtyAndRefresh(true, false, true, it) }

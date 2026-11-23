@@ -19,7 +19,7 @@ import java.util.concurrent.ConcurrentHashMap
  * descriptor take `separate-jar="true"`.
  *
  * Public, and taking the library dependencies as an argument, because two callers need one body: the assembly asks
- * through [JarPackagerDependencyHelper], which caches the dependency list, and the dev-distribution descriptor plan
+ * through [JarPackagerDependencyHelper], which caches the dependency list, and the distribution descriptor plan
  * asks during generation so that a produced descriptor needs no project model. A reproduction in the generator would
  * be a second spelling of two branches, and a drift between the two is a wrong attribute in a shipped descriptor.
  */

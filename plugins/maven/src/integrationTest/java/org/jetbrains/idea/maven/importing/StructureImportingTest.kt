@@ -706,7 +706,7 @@ class StructureImportingTest(mavenVersion: String, modelVersion: String) {
             </pluginRepository>
             <pluginRepository>
               <id>central</id>
-              <url>https://cache-redirector.jetbrains.com/repo1.maven.org/maven2</url>
+              <url>https://cache-redirector.jetbrains.com/maven-central</url>
             </pluginRepository>
           </pluginRepositories>
         </profile>

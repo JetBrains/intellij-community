@@ -10,11 +10,8 @@ import java.io.File
 import java.nio.file.Path
 
 object KotlinGradlePluginDownloader {
-    private const val kotlinBootstrapRepositoryUrl =
-        "https://cache-redirector.jetbrains.com/maven.pkg.jetbrains.space/kotlin/p/kotlin/bootstrap"
-
     private const val intellijDependenciesRepositoryUrl =
-        "https://cache-redirector.jetbrains.com/intellij-dependencies"
+        "https://cache-redirector.jetbrains.com/maven/ultimate-public"
 
     private const val mavenCentralRepositoryUrl =
         "https://cache-redirector.jetbrains.com/repo.maven.apache.org/maven2/"
@@ -25,7 +22,6 @@ object KotlinGradlePluginDownloader {
         val repositories = listOf(
             RemoteRepository.Builder("mavenLocal", "default", "file://" + mavenLocalDir.absolutePath).build(),
             RemoteRepository.Builder("mavenCentral", "default", mavenCentralRepositoryUrl).build(),
-            RemoteRepository.Builder("bootstrap", "default", kotlinBootstrapRepositoryUrl).build(),
             RemoteRepository.Builder("intellij-dependencies", "default", intellijDependenciesRepositoryUrl).build()
         )
 

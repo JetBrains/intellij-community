@@ -6,22 +6,28 @@ import com.intellij.ui.scale.JBUIScale
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import java.awt.Canvas
 import java.awt.Graphics
-import java.awt.Graphics2D
 import java.awt.Rectangle
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReference
 import javax.swing.JRootPane
 import javax.swing.SwingUtilities
 
-internal class EditorSkeletonCanvas : Canvas(), EditorSkeletonRenderer {
+/**
+ * Renders the skeleton on `Dispatchers.Default` through a heavyweight [Canvas], while the canvas is displayable.
+ * The canvas turns on AWT mixing.
+ */
+internal class EditorSkeletonCanvas(private val frames: EditorSkeletonFrames) : Canvas(), EditorSkeletonRenderer {
   override val component: Canvas
     get() = this
 
   private val renderingStarted = AtomicBoolean()
+  private val displayable = MutableStateFlow(false)
   private val removedArea = AtomicReference<RemovedArea?>()
   private val backBuffer = EditorSkeletonBackBuffer()
 
@@ -30,33 +36,49 @@ internal class EditorSkeletonCanvas : Canvas(), EditorSkeletonRenderer {
     ignoreRepaint = true
   }
 
+  override fun addNotify() {
+    super.addNotify()
+    displayable.value = true
+  }
+
   override fun removeNotify() {
+    val rootPane = SwingUtilities.getRootPane(this)
+    if (rootPane != null) {
+      removedArea.set(RemovedArea(rootPane, SwingUtilities.convertRectangle(this, Rectangle(width, height), rootPane)))
+    }
+    displayable.value = false
     super.removeNotify()
-    val rootPane = SwingUtilities.getRootPane(this) ?: return
-    removedArea.set(RemovedArea(rootPane, SwingUtilities.convertRectangle(this, Rectangle(width, height), rootPane)))
   }
 
   override fun paint(g: Graphics) {}
 
   override fun update(g: Graphics) {}
 
-  override fun startRendering(cs: CoroutineScope, paintFrame: (Graphics2D, Int, Int, Float) -> Unit) {
+  override fun startRendering(cs: CoroutineScope) {
     if (!renderingStarted.compareAndSet(false, true)) return
     cs.launch(Dispatchers.Default) {
       try {
         while (isActive) {
-          renderFrame(paintFrame)
-          delay(EditorSkeletonRenderer.TICK_MS)
+          displayable.first { it }
+          while (displayable.value) {
+            renderFrame()
+            delay(EditorSkeletonRenderer.TICK_MS)
+          }
+          releaseResources()
         }
       }
       finally {
-        backBuffer.release()
-        removedArea.set(null)
+        releaseResources()
       }
     }
   }
 
-  private fun renderFrame(paintFrame: (Graphics2D, Int, Int, Float) -> Unit) {
+  private fun releaseResources() {
+    backBuffer.release()
+    removedArea.set(null)
+  }
+
+  private fun renderFrame() {
     val w = width
     val h = height
     val gc = graphicsConfiguration
@@ -67,7 +89,7 @@ internal class EditorSkeletonCanvas : Canvas(), EditorSkeletonRenderer {
 
     val buffer = backBuffer.createOrUpdateImageBuffer(gc, w, h)
     buffer.createGraphics().use { g ->
-      paintFrame(g, w, h, JBUIScale.scale(1f))
+      frames.paint(g, w, h, JBUIScale.scale(1f), frames.colorsAt(System.currentTimeMillis()))
     }
 
     if (buffer.contentsLost()) return
@@ -76,7 +98,9 @@ internal class EditorSkeletonCanvas : Canvas(), EditorSkeletonRenderer {
     removedArea.getAndSet(null)?.repaintBounds()
   }
 
-  private data class RemovedArea(private val rootPane: JRootPane, private val bounds: Rectangle) {
-    fun repaintBounds() = rootPane.repaint(bounds)
+  private class RemovedArea(private val rootPane: JRootPane, private val bounds: Rectangle) {
+    fun repaintBounds() {
+      rootPane.repaint(bounds)
+    }
   }
 }

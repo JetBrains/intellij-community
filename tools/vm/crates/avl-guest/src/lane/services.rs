@@ -22,7 +22,6 @@ use crate::reply::{AgentRefusal, AgentRefusalExt};
 pub(crate) mod cloud;
 pub(crate) mod codex;
 pub(crate) mod control;
-pub(crate) mod encoding;
 pub(crate) mod feedback;
 pub(crate) mod http;
 pub(crate) mod registry;
@@ -30,7 +29,6 @@ pub(crate) mod registry;
 pub(crate) mod testing;
 #[cfg(test)]
 mod tests;
-pub(crate) mod websocket;
 
 /// The refusal code of a listener that cannot bind its port.
 pub(crate) const BIND_CODE: &str = "lane_service_bind";

@@ -110,20 +110,23 @@ internal class UnifiedPluginMarketplaceDataProviderTest {
         staffPicksLoaded = true
         UnifiedPluginMarketplaceFetchResult(listOf(staffPick))
       },
+      loadMarketplaceResults = { UnifiedPluginMarketplaceFetchResult(emptyList()) },
     ).toList()
 
     assertThat(projectSuggestionsLoaded).isTrue()
     assertThat(staffPicksLoaded).isTrue()
-    assertThat(results.last().models).containsExactly(staffPick)
-    assertThat(results.last().error).isNull()
+    assertThat(results.single().models).containsExactly(staffPick)
+    assertThat(results.single().error).isNull()
   }
 
   @Test
-  fun `merged suggestions keep project priority and partial errors`() = runTest {
+  fun `merged suggestions keep source priority and partial errors`() = runTest {
     val projectDuplicate = plugin("duplicate.plugin", "Project suggestion")
     val projectOnly = plugin("project.plugin", "Project only")
     val staffDuplicate = plugin("duplicate.plugin", "Staff Pick")
     val staffOnly = plugin("staff.plugin", "Staff only")
+    val marketplaceDuplicate = plugin("staff.plugin", "Marketplace duplicate")
+    val marketplaceOnly = plugin("marketplace.plugin", "Marketplace only")
 
     val result = loadMergedSuggestedPlugins(
       loadProjectSuggestions = {
@@ -132,10 +135,13 @@ internal class UnifiedPluginMarketplaceDataProviderTest {
       loadStaffPicks = {
         UnifiedPluginMarketplaceFetchResult(listOf(staffDuplicate, staffOnly), "staff source failed partially")
       },
+      loadMarketplaceResults = {
+        UnifiedPluginMarketplaceFetchResult(listOf(marketplaceDuplicate, marketplaceOnly), "Marketplace search failed partially")
+      },
     ).toList().last()
 
-    assertThat(result.models).containsExactly(projectDuplicate, projectOnly, staffOnly)
-    assertThat(result.error).isEqualTo("project source failed partially; staff source failed partially")
+    assertThat(result.models).containsExactly(projectDuplicate, projectOnly, staffOnly, marketplaceOnly)
+    assertThat(result.error).isEqualTo("project source failed partially; staff source failed partially; Marketplace search failed partially")
   }
 
   @Test
@@ -169,6 +175,7 @@ internal class UnifiedPluginMarketplaceDataProviderTest {
     val result = loadMergedSuggestedPlugins(
       loadProjectSuggestions = { error("project source unavailable") },
       loadStaffPicks = { UnifiedPluginMarketplaceFetchResult(listOf(staffPick)) },
+      loadMarketplaceResults = { UnifiedPluginMarketplaceFetchResult(emptyList()) },
       onFailure = { sourceName, cause -> failures.add(sourceName to cause) },
     ).toList().last()
 
@@ -178,27 +185,33 @@ internal class UnifiedPluginMarketplaceDataProviderTest {
   }
 
   @Test
-  fun `Staff Picks publish while project suggestions are still loading`() = runTest {
+  fun `project suggestions publish first even when Staff Picks load first`() = runTest {
     val projectSuggestions = CompletableDeferred<UnifiedPluginMarketplaceFetchResult>()
     val staffPick = plugin("staff.plugin", "Staff Pick")
     val projectSuggestion = plugin("project.plugin", "Project Suggestion")
     val results = ArrayList<UnifiedPluginMarketplaceFetchResult>()
+    var staffPicksLoaded = false
 
     backgroundScope.launch {
       loadMergedSuggestedPlugins(
         loadProjectSuggestions = { projectSuggestions.await() },
-        loadStaffPicks = { UnifiedPluginMarketplaceFetchResult(listOf(staffPick)) },
+        loadStaffPicks = {
+          staffPicksLoaded = true
+          UnifiedPluginMarketplaceFetchResult(listOf(staffPick))
+        },
+        loadMarketplaceResults = { UnifiedPluginMarketplaceFetchResult(emptyList()) },
       ).toList(results)
     }
     runCurrent()
 
-    assertThat(results).hasSize(1)
-    assertThat(results.single().models).containsExactly(staffPick)
+    assertThat(staffPicksLoaded).isTrue()
+    assertThat(results).isEmpty()
 
     projectSuggestions.complete(UnifiedPluginMarketplaceFetchResult(listOf(projectSuggestion)))
     runCurrent()
 
-    assertThat(results.last().models).containsExactly(projectSuggestion, staffPick)
+    assertThat(results.map(UnifiedPluginMarketplaceFetchResult::models))
+      .containsExactly(listOf(projectSuggestion), listOf(projectSuggestion, staffPick))
   }
 
   @Test

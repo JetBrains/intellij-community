@@ -312,6 +312,11 @@ public final class CodeEditUtil {
     return result;
   }
 
+  /**
+   * Whether the formatter reformats the node when it is added to another file. A node that is not generated keeps its whitespace.
+   *
+   * @see com.intellij.psi.impl.PsiFileFactoryImpl#markGenerated
+   */
   public static boolean isNodeGenerated(ASTNode node) {
     return node == null || node.getCopyableUserData(GENERATED_FLAG) != null;
   }

@@ -749,15 +749,25 @@ class GroovyImporterTest(mavenVersion: String, modelVersion: String) {
           )
 
           edtWriteAction {
-              val a = MavenRootModelAdapter(
-                  MavenRootModelAdapterLegacyImpl(
-                      maven.projectsTree.findProject(maven.projectPom)!!,
-                      maven.getModule("project"),
-                      ProjectDataManager.getInstance().createModifiableModelsProvider(maven.project)
+              val modelsProvider = ProjectDataManager.getInstance().createModifiableModelsProvider(maven.project)
+              var committed = false
+              try {
+                  val adapter = MavenRootModelAdapter(
+                      MavenRootModelAdapterLegacyImpl(
+                          maven.projectsTree.findProject(maven.projectPom)!!,
+                          maven.getModule("project"),
+                          modelsProvider
+                      )
                   )
-              )
-              a.unregisterAll("${maven.projectPath}/target", true, true)
-              a.rootModel.commit()
+                  adapter.unregisterAll("${maven.projectPath}/target", true, true)
+                  modelsProvider.commit()
+                  committed = true
+              }
+              finally {
+                  if (!committed) {
+                      modelsProvider.dispose()
+                  }
+              }
           }
 
           maven.assertSources("project", "src/main/groovy", "src/main/java")

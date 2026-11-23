@@ -65,6 +65,7 @@ public final class WrapElementMeasuringIterator extends WrapElementIterator {
   private final EditorFontResolver fontResolver;
   private final @Nullable CharacterGrid grid;
   private final List<Inlay<?>> inlineInlays;
+  private final int[] inlineInlayOffsets;
   private final List<Inlay<?>> afterLineEndInlays;
 
   private int inlineInlayIndex;
@@ -89,6 +90,7 @@ public final class WrapElementMeasuringIterator extends WrapElementIterator {
     lastFonts = fontResolver.editorFonts();
     grid = view.getEditor().getCharacterGrid();
     this.inlineInlays = inlineInlays;
+    inlineInlayOffsets = inlineInlays.stream().mapToInt(Inlay::getOffset).toArray();
     this.afterLineEndInlays = afterLineEndInlays;
   }
 
@@ -160,14 +162,14 @@ public final class WrapElementMeasuringIterator extends WrapElementIterator {
   }
 
   private int getInlaysWidthForOffset(int offset) {
-    while (inlineInlayIndex < inlineInlays.size() && inlineInlays.get(inlineInlayIndex).getOffset() < offset) {
+    while (inlineInlayIndex < inlineInlayOffsets.length && inlineInlayOffsets[inlineInlayIndex] < offset) {
       inlineInlayIndex++;
     }
-    while (inlineInlayIndex > 0 && inlineInlays.get(inlineInlayIndex - 1).getOffset() >= offset) {
+    while (inlineInlayIndex > 0 && inlineInlayOffsets[inlineInlayIndex - 1] >= offset) {
       inlineInlayIndex--;
     }
     int width = 0;
-    while (inlineInlayIndex < inlineInlays.size() && inlineInlays.get(inlineInlayIndex).getOffset() == offset) {
+    while (inlineInlayIndex < inlineInlayOffsets.length && inlineInlayOffsets[inlineInlayIndex] == offset) {
       width += inlineInlays.get(inlineInlayIndex++).getWidthInPixels();
     }
     return width;

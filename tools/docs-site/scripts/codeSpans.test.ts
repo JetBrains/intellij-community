@@ -41,7 +41,7 @@ const SCRIPTS: Record<string, string> = {
   'build/BUILD.bazel': '',
   'MODULE.bazel': '',
   'community/build/intellij_dev.bzl': '',
-  'community/build/dev-dist-tools/crates/fscopy/src/lib.rs': '',
+  'community/build/dist-tools/crates/fscopy/src/lib.rs': '',
   'build/docs/guides/local.rs': '',
 }
 
@@ -50,7 +50,7 @@ describe('unresolvedCodeSpans', () => {
     const root = temporaryTree('code-spans-', SCRIPTS)
     const body = [
       'Run `./build/jpsModelToBazel.cmd`, read `build/BUILD.bazel`, `MODULE.bazel`, and `community/build/intellij_dev.bzl`.',
-      'The copy is `community/build/dev-dist-tools/crates/fscopy/src/lib.rs`, next to `local.rs` and `./local.rs`.',
+      'The copy is `community/build/dist-tools/crates/fscopy/src/lib.rs`, next to `local.rs` and `./local.rs`.',
       'A missing `../missing.rs`, `./tests.cmd`, and `bin/<base>.cmd` stay code.',
     ].join('\n')
     assert.deepEqual(unresolvedCodeSpans('', 'build/docs/guides/g.md', body, existsIn(root)), new Map([
@@ -58,7 +58,7 @@ describe('unresolvedCodeSpans', () => {
       ['build/BUILD.bazel', 'build/BUILD.bazel'],
       ['MODULE.bazel', 'MODULE.bazel'],
       ['community/build/intellij_dev.bzl', 'community/build/intellij_dev.bzl'],
-      ['community/build/dev-dist-tools/crates/fscopy/src/lib.rs', 'community/build/dev-dist-tools/crates/fscopy/src/lib.rs'],
+      ['community/build/dist-tools/crates/fscopy/src/lib.rs', 'community/build/dist-tools/crates/fscopy/src/lib.rs'],
       ['../missing.rs', null],
       ['./tests.cmd', null],
     ]))
@@ -136,6 +136,22 @@ describe('gitIgnoredPaths', () => {
     git(root, 'init', '-q')
     assert.deepEqual(gitIgnoredPaths(root, ['out/a.json', 'b.json']), new Set(['out/a.json']))
     assert.deepEqual(gitIgnoredPaths(root, []), new Set())
+  })
+
+  it('names no tracked file that an ignore rule matches, and no folder that holds one', { skip: !HAS_GIT }, () => {
+    const root = temporaryTree('code-spans-', {
+      '.gitignore': 'generated/\n',
+      'generated/kept.json': '{}\n',
+      'generated/[kept].json': '{}\n',
+      'generated/local.json': '{}\n',
+      'generated/sub/local.json': '{}\n',
+    })
+    git(root, 'init', '-q')
+    git(root, 'add', '.gitignore')
+    git(root, 'add', '-f', 'generated/kept.json', 'generated/[kept].json')
+    const tracked = ['generated', 'generated/kept.json', 'generated/[kept].json']
+    const untracked = ['generated/local.json', 'generated/sub', 'generated/sub/local.json']
+    assert.deepEqual(gitIgnoredPaths(root, [...tracked, ...untracked]), new Set(untracked))
   })
 
   it('answers for a path below a symbolic link with the link', { skip: !HAS_GIT }, () => {

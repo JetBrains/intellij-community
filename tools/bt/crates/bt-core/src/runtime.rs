@@ -8,7 +8,8 @@ use std::ffi::OsString;
 use std::io;
 use std::path::{Path, PathBuf};
 use std::thread;
-use std::time::Duration;
+
+use refusal::Refusal;
 
 /// The platform whose conventions a path or a command line follows.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
@@ -61,13 +62,10 @@ pub struct CheckoutTree {
     pub changed: Vec<String>,
 }
 
-/// The exit code of a child that [`Runtime::spawn_watched`] stopped, as the `timeout` command answers it.
-pub const STOPPED_IDLE: i32 = 124;
-
 /// Called with the elapsed milliseconds every 30 s while a child runs, so a long bazel run does not look hung.
 pub type Heartbeat<'a> = &'a (dyn Fn(u64) + Sync);
 
-/// The injection point. `Sync`, because the tree scan and the suite reads call it from worker threads.
+/// The injection point. `Sync`, because a directory walk and the suite reads call it from worker threads.
 pub trait Runtime: Sync {
     /// The checkout root. Every path this crate builds is relative to it, never to the process working directory:
     /// under the runfiles tree of a `bazel run` launcher the two differ, and a target pattern is repo-relative
@@ -111,8 +109,9 @@ pub trait Runtime: Sync {
     /// Answers for a directory as well as a file: every test source root this crate probes is a directory.
     fn exists(&self, path: &Path) -> bool;
 
-    /// The content of the checkout now, or `None` when the checkout root is not a linked work tree of git. Only a
-    /// linked work tree, such as a lease of Branch Deck, is landed by `brd lease pick`, so only it needs the tree.
+    /// The content of the checkout now, or `None` when the checkout root is not a linked work tree of git or is a host
+    /// slot of `brd-host`. Only a linked work tree, such as a lease of Branch Deck, is landed by `brd lease pick`, so only
+    /// it needs the tree. No pick lands a host slot.
     ///
     /// It changes neither the index nor the work tree of the checkout. It writes the blobs and the trees of the local
     /// changes into the object database, so a later reader can compare two trees.
@@ -124,6 +123,10 @@ pub trait Runtime: Sync {
     /// The path of a file in the git directory of the checkout, as `git rev-parse --git-path` gives it. A linked work
     /// tree gives its own directory under `.git/worktrees/`.
     fn git_path(&self, name: &str) -> io::Result<PathBuf>;
+
+    /// The path of a file in the common git directory of the checkout, as `git rev-parse --git-common-dir` gives it, or
+    /// `None` for a checkout outside git. The main checkout and each of its linked work trees give the same path.
+    fn git_common_path(&self, name: &str) -> io::Result<Option<PathBuf>>;
 
     /// Runs a child to completion and never fails: a command that could not start is a [`SpawnResult`] with exit
     /// code 127, a run outcome the classifier can reason about rather than an error to re-classify.
@@ -137,16 +140,15 @@ pub trait Runtime: Sync {
     /// to the host, and the host stops the run.
     fn spawn_streaming(&self, command: &[OsString]) -> SpawnResult;
 
-    /// Runs a child to completion with `input` on its stdin, and answers its stdout and stderr merged. Never fails, as
-    /// [`Runtime::spawn`]. The input stays off the command line, so a secret in it shows in no process list.
-    fn spawn_with_input(&self, command: &[OsString], input: &str) -> SpawnResult;
-
-    /// Runs a child as [`Runtime::spawn`] does, and stops it with its process group when it writes nothing for
-    /// `idle`. A stopped child answers [`STOPPED_IDLE`]. Never fails.
+    /// The stdout of one call of the pinned accio of the checkout, as `--format json` prints it. `args` are the
+    /// command and its arguments, such as `["symbol", "FooTest", "--kind", "class"]`. The runtime adds the project
+    /// and the format.
     ///
-    /// For a child that can stall without an end, such as an ssh or a git push that waits for a dead link or a key
-    /// agent: its options bound the link, and this bounds the rest.
-    fn spawn_watched(&self, command: &[OsString], idle: Duration) -> SpawnResult;
+    /// The production runtime runs the wrapper `community/tools/accio.cmd`, or `tools/accio.cmd` in a community
+    /// checkout, never an accio of the PATH. It does not go through [`Runtime::spawn`], so a runtime that refuses to
+    /// spawn still answers it. A call that cannot start or that exits with another code than 0 is a refusal with
+    /// exit 6.
+    fn accio(&self, args: &[&str]) -> Result<String, Refusal>;
 
     /// A fresh path for a temporary file. The caller owns it and removes it with [`Runtime::remove`], from a guard
     /// that runs even when the run blows up: a leaked BEP file is tens of MB for a lane run.
@@ -166,12 +168,14 @@ pub trait Runtime: Sync {
     /// The home directory of the user, when the platform names one.
     fn home_dir(&self) -> Option<PathBuf>;
 
-    /// Asks the person at the terminal a yes or no question, on the stderr. Answers `None` when the stdin is not a
-    /// terminal, so a script or an agent never answers it, and `Some(true)` only for a yes.
-    fn confirm(&self, question: &str) -> Option<bool>;
-
     /// Wall-clock milliseconds. Only differences are used, so a fake can start anywhere.
     fn now_ms(&self) -> u64;
+
+    /// How long the wrapper built this binary before it started it, in milliseconds, or `None` when the wrapper named
+    /// no time. `bt.cmd` names it in `BT_SELF_BUILD_MS`, from the build metrics of its `bazel build`.
+    fn self_build_ms(&self) -> Option<u64> {
+        None
+    }
 
     /// The digest's destination. [`Runtime::write_error`] takes progress and diagnostics; the split is the whole
     /// reason `--json` stdout stays machine-clean.
@@ -180,15 +184,15 @@ pub trait Runtime: Sync {
     fn write_error(&self, text: &str);
 }
 
-/// The fan-out bound of the tree scan and the document reads.
+/// The fan-out bound of a directory walk and of the document reads.
 ///
-/// The Air tree holds ~1200 unpruned directories and ~180 .iml files; walking them one at a time is latency-bound,
-/// while an unbounded fan-out would want more descriptors at once than the default macOS `ulimit -n` of 256.
+/// Walking a tree one directory at a time is latency-bound, while an unbounded fan-out would want more descriptors at
+/// once than the default macOS `ulimit -n` of 256.
 const IO_CONCURRENCY: usize = 32;
 
 /// Maps `items` with bounded parallelism, answering results in input order.
 ///
-/// Order is restored by index rather than by completion, and that is load-bearing: the scan's listings are zipped
+/// Order is restored by index rather than by completion, and that is load-bearing: the listings of a walk are zipped
 /// back against the frontier that produced them, and a resolution that reads several files must not depend on
 /// which read finished first.
 pub fn par_map<T: Sync, R: Send>(items: &[T], transform: impl Fn(&T) -> R + Sync) -> Vec<R> {
@@ -224,6 +228,50 @@ pub fn par_map<T: Sync, R: Send>(items: &[T], transform: impl Fn(&T) -> R + Sync
 /// The file of a repo-relative path. `/` is a separator on every platform, Windows included.
 pub fn repo_file(runtime: &dyn Runtime, relative: &str) -> PathBuf {
     runtime.repo_root().join(relative)
+}
+
+/// The simple name of a Kotlin or Java source path.
+pub fn source_simple_name(path: &str) -> Option<&str> {
+    crate::regex!(r"([^/]+)\.(?:kt|java)$")
+        .captures(path)
+        .and_then(|found| found.get(1))
+        .map(|name| name.as_str())
+}
+
+/// A repo-relative directory's listing, or `None` when it cannot be read. An empty directory is a real listing,
+/// distinct from an unreadable one.
+pub fn read_dir_or_none(runtime: &dyn Runtime, dir: &str) -> Option<Vec<DirEntry>> {
+    runtime.read_dir(&repo_file(runtime, dir)).ok()
+}
+
+/// A repo-relative file that may legitimately not exist, saving the extra stat an `exists` probe would cost.
+pub fn read_text_or_none(runtime: &dyn Runtime, file: &str) -> Option<String> {
+    runtime.read_text_file(&repo_file(runtime, file)).ok()
+}
+
+/// A repo-relative file that must be readable.
+pub fn read_text(runtime: &dyn Runtime, file: &str) -> Result<String, Refusal> {
+    runtime
+        .read_text_file(&repo_file(runtime, file))
+        .map_err(|error| crate::exit::fail_infra(format!("{file} is unreadable: {error}")))
+}
+
+/// Walks the repo-relative directories breadth first, with one concurrent listing pass per level.
+///
+/// `visit` gets each readable directory with its entries, and pushes the subdirectories to walk into `next`. A
+/// directory that cannot be read is skipped.
+pub fn walk_dirs(runtime: &dyn Runtime, roots: Vec<String>, mut visit: impl FnMut(&str, Vec<DirEntry>, &mut Vec<String>)) {
+    let mut frontier = roots;
+    while !frontier.is_empty() {
+        let listings = par_map(&frontier, |dir| read_dir_or_none(runtime, dir));
+        let mut next = Vec::new();
+        for (dir, entries) in frontier.iter().zip(listings) {
+            if let Some(entries) = entries {
+                visit(dir, entries, &mut next);
+            }
+        }
+        frontier = next;
+    }
 }
 
 #[cfg(test)]

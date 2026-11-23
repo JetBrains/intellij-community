@@ -6,6 +6,7 @@ import com.intellij.build.events.BuildEvent;
 import com.intellij.build.events.Failure;
 import com.intellij.build.events.OutputBuildEvent;
 import com.intellij.build.events.OutputReferenceEvent;
+import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ExecutionConsole;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.ApiStatus;
@@ -25,7 +26,7 @@ public interface BuildConsoleViewStrategy {
    */
   @NotNull ExecutionConsole createRootConsoleView(@NotNull Project project,
                                                   @NotNull ExecutionNode rootNode,
-                                                  @NotNull ExecutionConsole executionConsole);
+                                                  @NotNull ConsoleView consoleView);
 
   @TestOnly
   @NotNull ExecutionConsole resolveNodeConsole(@NotNull Project project,

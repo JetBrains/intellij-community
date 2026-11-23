@@ -6,21 +6,27 @@ import com.intellij.execution.wsl.WSLDistribution
 import com.intellij.execution.wsl.WslDistributionManager
 import com.intellij.execution.wsl.WslIjentManager
 import com.intellij.icons.AllIcons
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileChooser.universal.FileWatcherAdapter
 import com.intellij.openapi.fileChooser.universal.UniversalFileChooserContributor
 import com.intellij.openapi.fileChooser.universal.UniversalFileChooserContributor.Companion.getFilteredSystemRoots
 import com.intellij.openapi.fileChooser.universal.UniversalFileChooserContributor.MountStatus
 import com.intellij.openapi.fileChooser.universal.UniversalFileChooserContributor.Presentation
 import com.intellij.openapi.fileChooser.universal.UniversalFileChooserContributor.Root
+import com.intellij.openapi.vfs.impl.wsl.WslConstants
 import com.intellij.platform.eel.impl.fileChooser.EelFileWatcherAdapter
 import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.ide.impl.wsl.WslEelDescriptor
 import com.intellij.ui.BadgeIconSupplier
+import com.intellij.util.system.WindowsRegistry
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.future.await
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.Nls
 import java.nio.file.Path
+import java.util.TreeSet
 import kotlin.io.path.pathString
 
 internal class WslFileChooserContributor : UniversalFileChooserContributor {
@@ -32,8 +38,15 @@ internal class WslFileChooserContributor : UniversalFileChooserContributor {
     val systemRootPaths = systemRoots.mapNotNull { it.path }
 
     val distributions = runCatching {
-      WslDistributionManager.getInstance().installedDistributionsFuture.await()
+      withContext(Dispatchers.IO) {
+        WslDistributionManager.getInstance().installedDistributionsFuture.await()
+      }
+    }.onFailure {
+      if (it is CancellationException) {
+        ensureActive()
+      }
     }.getOrDefault(emptyList())
+    val busyNames = withContext(Dispatchers.IO) { loadBusyDistributionNames() }
 
     val roots = mutableListOf<Root>()
     val handledIds = mutableSetOf<String>()
@@ -42,6 +55,7 @@ internal class WslFileChooserContributor : UniversalFileChooserContributor {
       val uncRoot = distribution.getUNCRootPath()
       val id = canonicalRootId(uncRoot.pathString)
       handledIds += id
+      if (distribution.msId in busyNames) continue
 
       val isMounted = WslIjentManager.getInstance().isIjentInitialized(distribution)
       val mountedRealPath = systemRootPaths.firstOrNull { canonicalRootId(it.pathString) == id }
@@ -58,7 +72,8 @@ internal class WslFileChooserContributor : UniversalFileChooserContributor {
     // Preserve any WSL system roots that were not reported by WslDistributionManager (e.g. cache mismatch).
     for (root in systemRoots) {
       val path = root.path ?: continue
-      if (canonicalRootId(path.pathString) !in handledIds) {
+      val id = canonicalRootId(path.pathString)
+      if (id !in handledIds && distributionIdFromRootId(id) !in busyNames) {
         roots += root
       }
     }
@@ -131,19 +146,41 @@ internal class WslFileChooserContributor : UniversalFileChooserContributor {
    */
   private fun canonicalRootId(pathString: String): String {
     val normalized = pathString.replace('/', '\\').trimEnd('\\')
-    val prefixes = listOf("\\\\wsl.localhost\\", "\\\\wsl\$\\")
-    for (prefix in prefixes) {
+    for (prefix in WSL_UNC_PREFIXES) {
       if (normalized.startsWith(prefix)) {
-        return "\\\\wsl.localhost\\" + normalized.removePrefix(prefix)
+        return WSL_LOCALHOST_UNC_PREFIX + normalized.removePrefix(prefix)
       }
     }
     return normalized
   }
 
+  /**
+   * Returns the names of the distributions that WSL uninstalls or converts now.
+   * The `State` registry value does not depend on the locale, unlike the `STATE` column of `wsl --list --verbose`.
+   */
+  private fun loadBusyDistributionNames(): Set<String> {
+    val names = TreeSet(String.CASE_INSENSITIVE_ORDER)
+    try {
+      val guids = WindowsRegistry.subKeys(WindowsRegistry.Hive.CURRENT_USER, LXSS_KEY) ?: return names
+      for (guid in guids) {
+        val key = "$LXSS_KEY\\$guid"
+        val state = WindowsRegistry.getInt(WindowsRegistry.Hive.CURRENT_USER, key, "State") ?: continue
+        if (state !in BUSY_STATES) continue
+        LOG.debug("Busy state found for: ${key}")
+        val name = WindowsRegistry.getString(WindowsRegistry.Hive.CURRENT_USER, key, "DistributionName") ?: continue
+        LOG.info("${name} is in busy state ${state}")
+        names += name
+      }
+    }
+    catch (e: WindowsRegistry.RegistryException) {
+      LOG.warn("Cannot read the states of the WSL distributions", e)
+    }
+    return names
+  }
+
   private fun distributionIdFromRootId(id: String): String? {
     val normalized = id.replace('/', '\\').trimEnd('\\')
-    val prefixes = listOf("\\\\wsl.localhost\\", "\\\\wsl\$\\")
-    for (prefix in prefixes) {
+    for (prefix in WSL_UNC_PREFIXES) {
       if (normalized.startsWith(prefix, ignoreCase = true)) {
         val rest = normalized.substring(prefix.length)
         return rest.substringBefore('\\').takeIf { it.isNotEmpty() }
@@ -153,6 +190,18 @@ internal class WslFileChooserContributor : UniversalFileChooserContributor {
   }
 }
 
+private val LOG = logger<WslFileChooserContributor>()
+
+/** The default UNC prefix of the WSL file system. */
+private const val WSL_LOCALHOST_UNC_PREFIX = "\\\\wsl.localhost\\"
+
+/** The UNC prefixes of the WSL file system: the default one, then the legacy [WslConstants.UNC_PREFIX]. */
+private val WSL_UNC_PREFIXES = listOf(WSL_LOCALHOST_UNC_PREFIX, WslConstants.UNC_PREFIX)
+
+private const val LXSS_KEY = "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Lxss"
+
+/** The `State` registry values of a distribution that WSL uninstalls (3) or converts to another WSL version (4). */
+private val BUSY_STATES = setOf(3, 4)
 
 /** Linux (WSL) icon with a green live-indicator dot, shown for mounted (initialized) WSL distributions. */
 private val MOUNTED_DISTRIBUTION_ICON = BadgeIconSupplier(AllIcons.Linux.Linux).liveIndicatorIcon

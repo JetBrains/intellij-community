@@ -22,6 +22,7 @@ import com.intellij.psi.PsiKeyword;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiPrimitiveType;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.PsiType;
@@ -52,6 +53,7 @@ import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.CharTable;
 import com.intellij.util.IncorrectOperationException;
@@ -151,6 +153,10 @@ public class PsiDocMethodOrFieldRef extends CompositePsiElement implements PsiDo
     final List<PsiMethod> candidates = new ArrayList<>(Arrays.asList(allMethods));
     final Set<PsiMethod> filteredMethods = new HashSet<>();
 
+    int[] indexesWithTypeToReplace = methodSignature == null
+                                     ? null
+                                     : getIndexesToReplace(methodSignature);
+
     for (PsiMethod method : candidates) {
       if (filteredMethods.contains(method)) {
         continue;
@@ -169,9 +175,12 @@ public class PsiDocMethodOrFieldRef extends CompositePsiElement implements PsiDo
           return false;
         });
 
+        MethodSignature candidateSignature = method.getSignature(substitutor);
+        MethodSignature alternativeSignature = createJavadocSignature(methodSignature, candidateSignature, indexesWithTypeToReplace);
+
         boolean equals = followStrictSignature
-                         ? MethodSignatureUtil.areSignaturesEqual(method.getSignature(substitutor), methodSignature)
-                         : MethodSignatureUtil.areSignaturesErasureEqual(method.getSignature(substitutor), methodSignature);
+                         ? MethodSignatureUtil.areSignaturesEqual(candidateSignature, alternativeSignature)
+                         : MethodSignatureUtil.areSignaturesErasureEqual(candidateSignature, alternativeSignature);
 
         if (!equals) {
           filteredMethods.add(method);
@@ -185,6 +194,41 @@ public class PsiDocMethodOrFieldRef extends CompositePsiElement implements PsiDo
 
     candidates.removeAll(filteredMethods);
     return candidates.toArray(PsiMethod.EMPTY_ARRAY);
+  }
+
+  /// {@return fake signature with the types to ignore replaced with the ones from the target function}
+  ///
+  private static MethodSignature createJavadocSignature(@NotNull MethodSignature javadocMethod,
+                                                        @NotNull MethodSignature candidate,
+                                                        int @NotNull [] typesIndexesToReplace) {
+    PsiType[] candidateTypes = candidate.getParameterTypes();
+    PsiType[] methodTypes = javadocMethod.getParameterTypes();
+    if (candidateTypes.length != methodTypes.length) return javadocMethod;
+
+    PsiType[] newTypes = ArrayUtil.copyOf(methodTypes);
+    for (int typeIndex : typesIndexesToReplace) {
+      newTypes[typeIndex] = candidateTypes[typeIndex];
+    }
+
+    return MethodSignatureUtil.createMethodSignature(
+      candidate.getName(), newTypes, candidate.getTypeParameters(), candidate.getSubstitutor(), candidate.isConstructor());
+  }
+
+  /// {@return the indexes of the types to ignore when comparing methods links in javadoc}
+  ///
+  /// Index to replace correspond to types which do not exist (eg {@link Math#abs(veryRealType)})
+  private static int[] getIndexesToReplace(MethodSignature methodSignature) {
+    PsiType[] types = methodSignature.getParameterTypes();
+    List<Integer> indexesToReplace = new ArrayList<>(types.length);
+
+    for (int i = 0; i < types.length; i++) {
+      PsiType type = types[i].getDeepComponentType();
+      if (type instanceof PsiPrimitiveType) continue;
+      if ((!(type instanceof PsiClassType) || ((PsiClassType)type).resolve() == null)) {
+        indexesToReplace.add(i);
+      }
+    }
+    return indexesToReplace.stream().mapToInt(i -> i).toArray();
   }
 
   public static PsiMethod @NotNull [] getAllMethods(PsiClass scope, PsiElement place) {

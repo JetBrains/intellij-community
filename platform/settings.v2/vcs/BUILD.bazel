@@ -1,0 +1,51 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
+
+### auto-generated section `dev intellij.platform.settings.v2.vcs` start
+content_module_jar(module = ":vcs")
+### auto-generated section `dev intellij.platform.settings.v2.vcs` end
+
+### auto-generated section `build intellij.platform.settings.v2.vcs` start
+jvm_library(
+    name = "vcs",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.platform.settings.v2.vcs",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        "//platform/vcs-impl",
+        "//platform/backend",
+    ],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//platform/core-api:core",
+        "//platform/ide-core",
+        "//platform/util",
+        "//platform/vcs-api:vcs",
+        "//platform/settings.v2",
+        "//platform/settings.v2/shared",
+    ],
+)
+### auto-generated section `build intellij.platform.settings.v2.vcs` end
+
+### auto-generated section `iml intellij.platform.settings.v2.vcs` start
+exports_files(
+    [
+        "intellij.platform.settings.v2.vcs.iml",
+        "resources/intellij.platform.settings.v2.vcs.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.platform.settings.v2.vcs` end

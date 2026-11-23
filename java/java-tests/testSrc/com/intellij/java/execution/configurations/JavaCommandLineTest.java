@@ -15,6 +15,8 @@ import com.intellij.util.io.IdeUtilIoBundle;
 import com.intellij.util.lang.JavaVersion;
 import org.junit.Test;
 
+import java.nio.charset.StandardCharsets;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -105,6 +107,27 @@ public class JavaCommandLineTest extends BareTestFixtureTestCase {
     int i = commandLineString.indexOf(consoleEncoding);
     assertTrue(i > 0);
     assertFalse(commandLineString.indexOf(consoleEncoding, i + consoleEncoding.length()) > 0);
+  }
+
+  @Test
+  public void testWithStdinEncoding() throws CantRunException {
+    JavaParameters parameters = new JavaParameters();
+    parameters.setMainClass("FakeMain");
+    parameters.setCharset(StandardCharsets.UTF_8);
+    parameters.setJdk(IdeaTestUtil.getMockJdk(JavaVersion.compose(25)));
+    String commandLineString = parameters.toCommandLine().getCommandLineString();
+    assertTrue(commandLineString, commandLineString.contains("-Dstdin.encoding=UTF-8"));
+
+    parameters.setJdk(IdeaTestUtil.getMockJdk(JavaVersion.compose(24)));
+    commandLineString = parameters.toCommandLine().getCommandLineString();
+    assertFalse(commandLineString, commandLineString.contains("-Dstdin.encoding="));
+
+    parameters.setJdk(IdeaTestUtil.getMockJdk(JavaVersion.compose(25)));
+    String stdinEncoding = "-Dstdin.encoding=windows-1252";
+    parameters.getVMParametersList().add(stdinEncoding);
+    commandLineString = parameters.toCommandLine().getCommandLineString();
+    assertTrue(commandLineString, commandLineString.contains(stdinEncoding));
+    assertFalse(commandLineString, commandLineString.contains("-Dstdin.encoding=UTF-8"));
   }
 
   private static boolean containsClassPath(String commandLineString) {

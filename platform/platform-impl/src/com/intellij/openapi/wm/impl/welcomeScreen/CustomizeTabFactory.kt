@@ -222,11 +222,13 @@ private class CustomizeTab(val parentDisposable: Disposable) : DefaultWelcomeScr
 
       header(IdeBundle.message("welcome.screen.color.theme.header"), true)
       row(IdeBundle.message("combobox.look.and.feel")) {
-        val themeBuilder = comboBox(LafComboBoxModelWrapper { laf.lafComboBoxModel })
+        val lafComboBoxModelWrapper = LafComboBoxModelWrapper { laf.lafComboBoxModel }
+        val themeBuilder = comboBox(lafComboBoxModelWrapper)
           .bindItem(lafProperty)
           .accessibleName(IdeBundle.message("welcome.screen.color.theme.header"))
         themeBuilder.component.isSwingPopup = false
         themeBuilder.component.renderer = laf.getLookAndFeelCellRenderer(themeBuilder.component)
+        lafComboBoxModelWrapper.comboBoxComponent = themeBuilder.component
 
         colorThemeComboBox = themeBuilder.component
         val checkBox = checkBox(IdeBundle.message("preferred.theme.autodetect.selector"))
@@ -329,10 +331,7 @@ private class CustomizeTab(val parentDisposable: Disposable) : DefaultWelcomeScr
   }
 
   private fun updateLafs() {
-    colorThemeComboBox?.apply {
-      model = laf.lafComboBoxModel
-      selectedItem = lafProperty.get()
-    }
+    colorThemeComboBox?.selectedItem = lafProperty.get()
   }
 
   private fun Panel.createColorBlindnessSettingBlock() {

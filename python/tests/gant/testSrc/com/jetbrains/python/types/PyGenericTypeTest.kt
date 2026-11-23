@@ -2,11 +2,18 @@
 package com.jetbrains.python.types
 
 import com.intellij.idea.TestFor
+import com.intellij.openapi.application.runReadActionBlocking
+import com.intellij.python.community.testFramework.fixme
 import com.jetbrains.python.allure.Components
 import com.jetbrains.python.allure.Layers
 import com.jetbrains.python.allure.Subsystems
 import com.jetbrains.python.fixtures.PyCodeInsightTestCase
 import com.jetbrains.python.psi.LanguageLevel
+import com.jetbrains.python.psi.PyFile
+import com.jetbrains.python.psi.types.PyTypeChecker
+import com.jetbrains.python.psi.types.TypeEvalContext
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 
@@ -288,7 +295,7 @@ class PyGenericTypeTest : PyCodeInsightTestCase() {
       """.trimIndent())
 
     @Test
-    @TestCaseOptions(languageLevel = LanguageLevel.PYTHON35, assertRecursionPrevention = false)
+    @TestCaseOptions(languageLevel = LanguageLevel.PYTHON35)
     fun `homogeneous tuple substitution`() = test("""
       from typing import TypeVar, Tuple
       T = TypeVar('T')
@@ -746,7 +753,6 @@ class PyGenericTypeTest : PyCodeInsightTestCase() {
 
     @Test
     @TestFor(issues = ["PY-20057"])
-    @TestCaseOptions(assertRecursionPrevention = false)
     fun `function returns type of instance`() = test("""
       from typing import Type, TypeVar
       
@@ -1160,7 +1166,7 @@ class PyGenericTypeTest : PyCodeInsightTestCase() {
 
     @Test
     @TestFor(issues = ["PY-36008", "PY-26061"])
-    @TestCaseOptions(languageLevel = LanguageLevel.PYTHON36, assertRecursionPrevention = false)
+    @TestCaseOptions(languageLevel = LanguageLevel.PYTHON36)
     fun `unresolved generic replacement`() = test("""
       from typing import TypeVar, Generic
       
@@ -1226,7 +1232,6 @@ class PyGenericTypeTest : PyCodeInsightTestCase() {
       """.trimIndent())
 
     @Test
-    @TestCaseOptions(assertRecursionPrevention = false)
     fun `TypeVar constraints with legacy syntax`() = test("""
       from typing import TypeVar
       
@@ -1244,7 +1249,6 @@ class PyGenericTypeTest : PyCodeInsightTestCase() {
       """.trimIndent())
 
     @Test
-    @TestCaseOptions(assertRecursionPrevention = false)
     fun `TypeVar constraints with PEP695 syntax`() = test("""
       def concat[AnyStr: (str, bytes)](x: AnyStr, y: AnyStr) -> AnyStr:
           return x + y
@@ -1311,6 +1315,88 @@ class PyGenericTypeTest : PyCodeInsightTestCase() {
       d.get("str")
       d.get(1)
       #     └ WARNING No overload of 'get' matches the arguments. Argument types: (Literal[1]). Expected one of: (key: str), (key: str, default: str), (key: str, default: _T)
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-92229"])
+    fun `type var with incompatible lower and upper bounds from a contravariant class`() = test("""
+      class Sink[T]:
+          def put(self, x: T) -> None: ...
+
+      def lower_first[T](a: T, b: Sink[T]) -> T: ...
+      def upper_first[T](b: Sink[T], a: T) -> T: ...
+      def two_sinks[T](a: Sink[T], b: Sink[T]) -> None: ...
+
+      lower_first(1, Sink[int]())
+      lower_first(True, Sink[int]())
+      lower_first("", Sink[int]()) # WARNING Expected type 'Sink[Literal[""]]' (matched generic type 'Sink[T]'), got 'Sink[int]' instead
+      upper_first(Sink[object](), "")
+      upper_first(Sink[int](), "") # WARNING Expected type 'int' (matched generic type 'T'), got 'Literal[""]' instead
+      two_sinks(Sink[int](), Sink[str]())
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-92229"])
+    fun `type var with incompatible lower and upper bounds from a callable parameter`() = test("""
+      from typing import Callable
+
+      def lower_first[T](x: T, cb: Callable[[T], None]) -> None: ...
+      def upper_first[T](cb: Callable[[T], None], x: T) -> None: ...
+      def takes_int(x: int) -> None: ...
+      def takes_object(x: object) -> None: ...
+
+      lower_first(1, takes_int)
+      lower_first("", takes_object)
+      lower_first("", takes_int) # WARNING Expected type '(str) -> None' (matched generic type '(T) -> None'), got '(x: int) -> None' instead
+      upper_first(takes_object, "")
+      upper_first(takes_int, "") # WARNING Expected type 'int' (matched generic type 'T'), got 'Literal[""]' instead
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-92229"])
+    fun `type var with compatible bounds from nested and alternative positions`() = test("""
+      from typing import Callable, Iterable, overload
+
+      class Sink[T]:
+          def put(self, x: T) -> None: ...
+
+      def takes_int(x: int) -> None: ...
+      def takes_objects(xs: Iterable[object]) -> None: ...
+      def takes_sink_str(s: Sink[str]) -> None: ...
+
+      @overload
+      def takes_int_or_str(x: int) -> None: ...
+      @overload
+      def takes_int_or_str(x: str) -> None: ...
+      def takes_int_or_str(x): ...
+
+      def generic_in_callable[T](f: Callable[[T], None], g: Callable[[Iterable[T]], None]) -> None: ...
+      def sink_in_callable[T](x: T, g: Callable[[Sink[T]], None]) -> None: ...
+      def union_member[T](x: T | list[T], cb: Callable[[T], None]) -> None: ...
+      def widened_after_overload[T](cb: Callable[[T], None], x: T, y: Sink[T]) -> None: ...
+      def tuple_in_callable[T](cb: Callable[[tuple[T]], None], x: T) -> None: ...
+      def takes_int_or_str_tuple(x: tuple[int] | tuple[str]) -> None: ...
+
+      generic_in_callable(takes_int, takes_objects)
+      sink_in_callable(1, takes_sink_str)
+      union_member([1], takes_int)
+      widened_after_overload(takes_int_or_str, "", Sink[str]())
+      tuple_in_callable(takes_int_or_str_tuple, "")
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-92229"])
+    fun `constrained type var with incompatible lower and upper bounds`() = test("""
+      from typing import Callable
+
+      def takes_bytes(x: bytes) -> None: ...
+      def takes_str(x: str) -> None: ...
+
+      def lower_first[S: (str, bytes)](x: S, cb: Callable[[S], None]) -> None: ...
+
+      lower_first("", takes_str)
+      lower_first("", takes_bytes)
+      #               ^^^^^^^^^^^ WARNING Expected type '(str) -> None' (matched generic type '(S ≤: str | bytes) -> None'), got '(x: bytes) -> None' instead
       """.trimIndent())
 
     @Test
@@ -1955,4 +2041,20 @@ class PyGenericTypeTest : PyCodeInsightTestCase() {
     # └ WARNING Expected type 'type[T ≤: A | B]', got 'type[C]' instead
     """.trimIndent())
 
+  @Test
+  @TestFor(issues = ["PY-92768"], classes = [PyTypeChecker::class])
+  fun `generic definition type of a class object is the class form`() {
+    val file = myFixture.configureByText("a.py", """
+      class Box[T]:
+          pass
+    """.trimIndent()) as PyFile
+    runReadActionBlocking {
+      val context = TypeEvalContext.codeAnalysis(file.project, file)
+      val box = file.findTopLevelClass("Box")!!
+      assertFalse(PyTypeChecker.findGenericDefinitionType(box, false, context)!!.isDefinition)
+      fixme<AssertionError>("PY-92768 findGenericDefinitionType drops the class form", "expected: <true> but was: <false>") {
+        assertTrue(PyTypeChecker.findGenericDefinitionType(box, true, context)!!.isDefinition)
+      }
+    }
+  }
 }

@@ -2,10 +2,10 @@
 package com.jetbrains.python.extensions
 
 import com.intellij.openapi.module.Module
+import com.intellij.python.sdk.backend.languageLevel
+import com.intellij.python.sdk.backend.PythonInterpreter
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ModuleRootManager
-import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiDirectory
@@ -14,10 +14,10 @@ import com.intellij.psi.PsiManager
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.util.QualifiedName
 import com.intellij.python.pyproject.model.evolution.findEvoPyProjectIfReady
-import com.intellij.python.sdk.backend.findPythonInterpreterIfReady
-import com.intellij.python.sdk.backend.getSdkAPI
+import com.intellij.python.sdk.backend.PythonInterpreterRoots
 import com.jetbrains.python.PyNames
 import com.jetbrains.python.psi.PyClass
+import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.psi.PyFile
 import com.jetbrains.python.psi.resolve.PyQualifiedNameResolveContext
 import com.jetbrains.python.psi.resolve.fromModule
@@ -26,23 +26,27 @@ import com.jetbrains.python.psi.resolve.resolveModuleAt
 import com.jetbrains.python.psi.resolve.resolveQualifiedName
 import com.jetbrains.python.psi.stubs.PyModuleNameIndex
 import com.jetbrains.python.psi.types.TypeEvalContext
-import com.jetbrains.python.sdk.PySdkUtil
+import org.jetbrains.annotations.ApiStatus
 import java.util.Collections
 
 
+/** Where a qualified name is resolved: the project, the interpreter, the roots and the scope. */
+@ApiStatus.Internal
 interface ContextAnchor {
-  val sdk: Sdk?
+  /** The interpreter whose roots and language level the resolve uses, or `null` without one. */
+  val interpreter: PythonInterpreter?
   val project: Project
   val qualifiedNameResolveContext: PyQualifiedNameResolveContext?
   val scope: GlobalSearchScope
-  fun getRoots(): Array<VirtualFile> {
-    return sdk?.rootProvider?.getFiles(OrderRootType.CLASSES) ?: emptyArray()
-  }
+
+  /** The class roots of [interpreter]. An anchor adds its own content and source roots. */
+  fun getRoots(): Array<VirtualFile> =
+    interpreter?.let { PythonInterpreterRoots.getInstance(project).classRoots(it).toTypedArray() } ?: emptyArray()
 }
 
+@ApiStatus.Internal
 class ModuleBasedContextAnchor(val module: Module) : ContextAnchor {
-  @Suppress("DEPRECATION") // The anchor still answers an SDK.
-  override val sdk: Sdk? = module.findEvoPyProjectIfReady()?.interpreter?.getSdkAPI()
+  override val interpreter: PythonInterpreter? = module.findEvoPyProjectIfReady()?.interpreter
   override val project: Project = module.project
   override val qualifiedNameResolveContext: PyQualifiedNameResolveContext = fromModule(module)
   override val scope: GlobalSearchScope = module.moduleContentScope
@@ -52,10 +56,10 @@ class ModuleBasedContextAnchor(val module: Module) : ContextAnchor {
   }
 }
 
-class ProjectSdkContextAnchor(override val project: Project, override val sdk: Sdk?) : ContextAnchor {
-  // A run configuration still names its interpreter by an SDK, so this looks up the interpreter of the project for it.
-  override val qualifiedNameResolveContext: PyQualifiedNameResolveContext? =
-    sdk?.let { project.findPythonInterpreterIfReady(it) }?.let { fromInterpreter(project, it) }
+/** The anchor of a run configuration without a module: its project and its [interpreter]. */
+@ApiStatus.Internal
+class ProjectContextAnchor(override val project: Project, override val interpreter: PythonInterpreter?) : ContextAnchor {
+  override val qualifiedNameResolveContext: PyQualifiedNameResolveContext? = interpreter?.let { fromInterpreter(project, it) }
   override val scope: GlobalSearchScope = GlobalSearchScope.projectScope(project) //TODO: Check if project scope includes SDK
   override fun getRoots(): Array<VirtualFile> {
     val manager = ProjectRootManager.getInstance(project)
@@ -64,12 +68,11 @@ class ProjectSdkContextAnchor(override val project: Project, override val sdk: S
 }
 
 
+@ApiStatus.Internal
 data class QNameResolveContext(
   val contextAnchor: ContextAnchor,
-  /**
-   * Used for language level etc
-   */
-  val sdk: Sdk? = contextAnchor.sdk,
+  /** The interpreter whose language level the resolve uses. */
+  val interpreter: PythonInterpreter? = contextAnchor.interpreter,
 
   val evalContext: TypeEvalContext,
   /**
@@ -97,6 +100,7 @@ fun QualifiedName.getRelativeNameTo(root: QualifiedName): QualifiedName? {
  * Shortcut for [getElementAndResolvableName]
  * @see [getElementAndResolvableName]
  */
+@ApiStatus.Internal
 fun QualifiedName.resolveToElement(context: QNameResolveContext, stopOnFirstFail: Boolean = false): PsiElement? {
   return getElementAndResolvableName(context, stopOnFirstFail)?.element
 }
@@ -109,6 +113,7 @@ data class NameAndElement(val name: QualifiedName, val element: PsiElement)
  * @return element and longest name that was resolved successfully.
  * @see [resolveToElement]
  */
+@ApiStatus.Internal
 fun QualifiedName.getElementAndResolvableName(context: QNameResolveContext, stopOnFirstFail: Boolean = false): NameAndElement? {
   var currentName = QualifiedName.fromComponents(this.components)
 
@@ -120,7 +125,8 @@ fun QualifiedName.getElementAndResolvableName(context: QNameResolveContext, stop
   var psiDirectory: PsiDirectory? = null
 
   var resolveContext = context.contextAnchor.qualifiedNameResolveContext?.copyWithMembers() ?: return null
-  if (PySdkUtil.getLanguageLevelForSdk(context.sdk).isPy3K || context.allowInaccurateResult) {
+  val languageLevel = context.interpreter?.languageLevel ?: LanguageLevel.getDefault()
+  if (languageLevel.isPy3K || context.allowInaccurateResult) {
     resolveContext = resolveContext.copyWithPlainDirectories()
   }
 

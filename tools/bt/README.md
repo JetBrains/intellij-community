@@ -11,15 +11,16 @@ Run a test target from the ultimate root. From `community/`, drop the `@communit
 
 | Crate | Content | Bazel test target |
 |---|---|---|
-| `crates/bt-core` | The areas of `bt.json` and their lane tables, selector resolution, the suite catalog, the bazel command line, the shard plan, BEP and `test.xml` reading, and the exit codes of `bt`. `fake` is the in-memory runtime the tests share. | `@community//tools/bt/crates/bt-core:bt-core_test` |
+| `crates/bt-core` | The areas of `bt.json` and their lane tables, selector resolution through accio, the suite catalog, the bazel command line, the shard plan, BEP and `test.xml` reading, and the exit codes of `bt`. `fake` is the in-memory runtime the tests share. | `@community//tools/bt/crates/bt-core:bt-core_test` |
 | `crates/bt-junit` | The JUnit XML reader: a scanner that keeps the cases of a truncated `test.xml`, and the simple-name class pattern. | `@community//tools/bt/crates/bt-junit:bt-junit_test` |
 | `crates/refusal` | The refusal of a person- or agent-facing CLI: a stable code, a message, the exit code, and the details as JSON text. It has no dependency, and each tool keeps its own exit codes. | `@community//tools/bt/crates/refusal:refusal_test` |
 | `bins/bt` | The binary: the command line and the help, one invocation end to end, the text digest, the `--json` payload, and the process boundary. | `@community//tools/bt/bins/bt:bt_test` |
 
 `bt_rust_crate` in `defs.bzl` declares each crate: its library or binary, its `<crate>_test` and its `<crate>-clippy`.
 It binds `rust_tool_crate`, the shared macro core in `community/build/rust-tools/defs.bzl`, to the `@bt` hub. bt-core
-takes the slash-path rules from `distpath` of the dev-dist tools through a path dependency. `_CROSS_MODULE_CRATES` in
-`defs.bzl` maps it to its target in this module, so Bazel builds it once.
+takes the slash-path rules from `distpath` and the file listing of a checkout from `checkout-files`, two crates of the
+distribution tools, through path dependencies. `_CROSS_MODULE_CRATES` in `defs.bzl` maps them to their targets in this
+module, so Bazel builds each once.
 `optimized_binary` of the core declares a shipped binary: one file, and always optimized. `defs.bzl` re-exports it for
 the Air UI-lane workspace. The spec of a Rust tool workspace is `community/build/rust-tools/README.md`.
 
@@ -32,10 +33,35 @@ the Air UI-lane workspace. The spec of a Rust tool workspace is `community/build
 
 ## Areas
 
-`bt.json` at the checkout root names each area: a repo-relative directory that resolution scans, and the lane table
-of that directory. `crates/bt-core/src/areas.rs` and `crates/bt-core/src/lanes.rs` give the two shapes. A checkout
-without `bt.json` has no area: a label and a pattern resolve, and a name, a package, a flow or a suite selector
-refuses. The ultimate checkout names `plugins/air`, with its lane table `plugins/air/tests/integration/lanes.json`.
+`bt.json` at the checkout root names each area: a repo-relative directory, and the lane table of that directory.
+`crates/bt-core/src/areas.rs` and `crates/bt-core/src/lanes.rs` give the two shapes. `--lane` reads the lane tables, a
+flow or a suite selector reads the suite catalog of one area, and a module inside an area runs without the migrated
+list. A checkout without `bt.json` has no area: a label, a pattern, a directory, a class and a module resolve, and a
+flow or a suite selector refuses. The ultimate checkout names `plugins/air`, with its lane table
+`plugins/air/tests/integration/lanes.json`.
+
+## Classes
+
+A class name or an FQN resolves in the whole repository, through the pinned accio of the checkout:
+`community/tools/accio.cmd`, or `tools/accio.cmd` in a community checkout. bt never runs an accio of the PATH.
+`crates/bt-core/src/selector.rs` resolves it, and `crates/bt-core/src/accio.rs` reads the answers.
+
+1. The committed suite documents give the classes of the UI lanes. Such a class runs in the lane of its document.
+2. `accio symbol <name> --kind class --limit 200` gives the other classes. A name with more classes than the limit is
+   refused: pass the FQN.
+3. `accio modules --paths <file>...` gives the module root of each class. The JPS module whose test source root holds
+   the file owns the class. A class outside every test source root is no test class.
+4. The test target and the module rule are the ones of `--module`, below, for the owner.
+5. Two classes of one simple name are refused with both FQNs and their labels.
+
+The filter is `<FQN>[#method]`. The runner finds an `@Nested` class only through its outer class, so a nested class
+without a method runs through its outer class, and a `note` line says so. bt passes no `--no-build`, so accio builds
+or refreshes its index by itself. bt sets `ACCIO_WAIT` to 1800 s, because the 90 s default of accio is too short for a
+slot without an index under a high load. A failed call of accio is exit 6 with the code `accio_failed`. Its message
+names the last lines of the stderr and of the stdout of accio, because accio writes its error to stdout.
+
+A package is no selector, and neither is a JPS module name: both are dotted lower-case words. Run a package with
+`--module <module> --filter <package>`.
 
 ## Shards
 
@@ -63,17 +89,28 @@ stopped, and that test is not a failure. The `--json` payload lists the shard in
 such a target in the run want more than two shards, bt raises its record in the plan, so the next run makes it a
 heavy target.
 
+The digest of a test run ends with a `time` line: the build of bt by `bt.cmd` (`BT_SELF_BUILD_MS`, from the build
+metrics of its `bazel build`), the two reads of the check record, and the bazel commands with the analysis phase that
+bazel reports. A narrow cached run is almost all of that, so the line shows where its time went without a profile. A
+part of 10 s or more gets a `note` line with its cause and what to do.
+
+A test run whose build failed counts the tests that its other invocations ran, names each target that did not build,
+and keeps the output of bazel in `bazel-output.log` of a run directory under `out/bt-runs`, which a `bazel` line names.
+A build error without a located diagnostic, such as a crash of the compiler, is the `ERROR:` line of the failed action:
+the BUILD file, the kind of the action and its target, the exit code, and the first message of the action.
+
 ## Modules
 
 `--module <jps module>` runs the test target of a JPS module. `crates/bt-core/src/modules.rs` resolves it. A test
 target is a `jps_test`, or a `starter_test` of `//build:starter_test.bzl`, the macro that wraps `jps_test` for an IDE
-Starter test. bt reads the rule kind from the text of the `BUILD.bazel`, not from `bazel query`.
+Starter test. accio reads the rule kind from the text of the `BUILD.bazel`, not from `bazel query`.
 
 1. `.idea/modules.xml` at the checkout root gives the directory of the module's `.iml`.
-2. The `BUILD.bazel` of that directory gives the test target whose `runtime_deps` name a library of the module or its
-   `_test_lib`. A library belongs to the module when its `module_name` is the module, or when it sits in the
-   `build <module>` section that the BUILD generator writes. One directory can hold several modules, so each module
-   gets its own target, or none.
+2. `accio modules --paths <dir>` gives the targets of the `BUILD.bazel` of that directory. The test target is the one
+   whose `runtime_deps` name a library of the module or its `_test_lib`. A library belongs to the module when accio
+   gives it the module: its `module_name`, or the `build <module>` section that the BUILD generator writes. One
+   directory can hold several modules, so each module gets its own target, or none. A target that pins
+   `JB_TEST_JUNIT5_FILTERS` runs only when the module has no unfiltered target.
 3. The label is `//<dir>:<name>`. In an ultimate root, a directory under `community/` gives
    `@community//<rest>:<name>`.
 
@@ -86,10 +123,15 @@ label for an explicit run. A module without a target of its own gets the code `m
 label of that target for an explicit run.
 
 `--filter` takes an FQN, `FQN#method` or a package, as for a label. A package is a dotted name whose segments start
-with a lower-case letter. bt gives every other value to bazel too. The JUnit runner reads `--test_filter` as one class
-name prefix or one `Class#method`, so a wildcard, a regex and a list run no test. For a NO TESTS run with `--filter`,
-the `hint` line of the digest names the form that works, see `no_tests_hint` in `bt-core`. The hint does not change the
-status or the exit code.
+with a lower-case letter. The JUnit runner reads `--test_filter` as one class name prefix or one `Class#method`, and it
+reads the value only when the test JVM starts, after the build. So bt reads the value first, in `canonical_filter` of
+`bt-core`. It changes a value with a clear meaning into the form of the runner, and a `note` line names the change:
+`pkg.Class.method`, a simple `Class#method` (accio gives the FQN), `pkg.Outer.Inner`, and `pkg.*`. It refuses a regex, a
+list and another wildcard with exit 2. For a NO TESTS run with `--filter`, the `hint` line of the digest names what the
+filter selects, see `no_tests_hint`. The hint does not change the status or the exit code.
+
+When the runner stops before its first test, Bazel writes only `exited with error code N`. The digest then adds the last
+exception of the runner log and its frames.
 
 ## Builds
 
@@ -116,15 +158,19 @@ A green run records the tree of the checkout that it saw, for `brd lease pick` o
 bt is the only writer. `bins/bt/src/check.rs` holds the rules:
 
 1. Only a linked work tree records, such as a lease of Branch Deck: its `.git` is a file. The main checkout pays one
-   stat and records nothing, because no pick lands it.
+   stat and records nothing, because no pick lands it. A host slot of `brd-host` records nothing either: the agent
+   sets `BD_HOST_RUN` for its command, no pick lands the slot, and the client records the commit (rule 5).
 2. The tree is `HEAD^{tree}` of a clean work tree. With local changes, it is the tree that `git add -A` would give,
    which `Runtime::checkout_tree` writes from a copy of the index. The index of the work tree stays as it was. An
    untracked nested checkout is left out, and a directory replaced by a symbolic link gives a warning and no record.
 3. A local run reads the tree before its first bazel spawn and again after a green result. It records only when both
-   are the same tree. A red run, a dry run and a run during which the files changed record nothing.
+   are the same tree. A red run, a dry run and a run during which the files changed record nothing. Each read is one
+   `git status --untracked-files=all`. Git keeps its untracked cache only for the mode of `status.showUntrackedFiles`,
+   so in the monorepo a read takes about 1.5 s with `status.showUntrackedFiles=all` and 17-49 s without it.
 4. A record of a tree with local changes names those paths on the stderr. The pick finds the record only for a commit
    of the same files, so commit or delete scratch files before the last check.
-5. A `--host` run records the tree of the commit that the report of `brd-host` names as the one that ran.
+5. A `--host` run records the tree of the commit that the report of `brd-host` names as the one that ran, and the
+   HEAD that the report names. That commit holds the local changes of the checkout, so rule 4 applies to it too.
 6. The file is `bd-checks.jsonl` in the git directory (`git rev-parse --git-path bd-checks.jsonl`), so each linked work
    tree has its own. Each write replaces the file in one step. It keeps the last 100 records, one JSON object a line:
 
@@ -143,29 +189,32 @@ that took only some classes. For a `--host` run it holds the arguments of bt on 
 before or after the selector. `bins/bt/src/remote.rs` starts `brd-host` of Branch Deck, and the agent `brd-host serve`
 on the host does the rest. bt finds `brd-host` on the PATH, else at `~/.local/bin/brd-host`, where `brd install` links
 it. Without it, bt refuses with 6 and `host_not_installed`, and the message names `brd install`. The contract of
-`brd-host` is `spec/cli/host.spec.md` of Branch Deck. No step of a run uses ssh. The command line is:
+`brd-host` is `openspec/specs/cli/host/spec.md` of Branch Deck. No step of a run uses ssh. The command line is:
 
 ```sh
-brd-host run <alias> --head --fetch out/bt-runs [--repo <path>] --report-fd 3 -- ./community/tools/bt.cmd <args>
+brd-host run <alias> --nice 0 --no-outputs --fetch out/bt-runs [--repo <path>] --report-fd 3 -- ./community/tools/bt.cmd <args>
 ```
 
-1. `brd-host` refuses a checkout with local changes, untracked files included, because only the commit reaches the
-   host.
+1. `brd-host` writes HEAD and the local changes as one commit, untracked files included and ignored files left out.
+   The index, the files and the refs of the checkout stay as they are, and no ref names the commit. A clean checkout
+   ships HEAD itself.
 2. `brd-host` sends the git objects that the host lacks, as a thin pack, to the main repository of the host.
-   `--host-repo` or `BT_HOST_REPO` names that repository. Without them, the host file of `--prepare` names it.
+   `--host-repo` or `BT_HOST_REPO` names that repository. Without them, the host file that `brd-host setup` writes
+   names it.
 3. The agent checks out the commit in a host slot, and runs `./community/tools/bt.cmd` there with the same arguments,
    less `--host`. Its stderr and the lines of `brd-host` stream here as they come. The stdout of `brd-host` is the
    digest or the `--json` payload, and bt reads it. `brd-host` writes one JSON report of the run to the descriptor 3:
    the exit code of the command, the commit, the fetched files, or a refusal code. The exit code of the command is the
    exit code here. A refusal of `brd-host` is 6, with the code `host_<code>` and the exit code of `brd-host` in the
-   details (`{"brd_host_exit": 75}` when the command did not run). Local changes are 2.
+   details (`{"brd_host_exit": 75}` when the command did not run). bt never runs the command locally after a
+   refusal: `heavy_timeout` and `superseded` also exit 75, and their run belongs on the host.
 4. The new run directories of `out/bt-runs` come back to `out/bt-runs` here, and the digest names each local copy.
 5. The run lives on the agent, not on the connection, and `brd-host` follows it again after a lost connection.
    `brd-host` stays in the process group of bt, so Ctrl+C reaches it, and bt only waits. Ctrl+C cancels the run on the
    host and shows its output to the end. A second Ctrl+C leaves at once with 6, and with `--json` it writes the payload
    of an infrastructure outcome.
-6. A host that has none of the commits near HEAD would need the whole history. bt refuses that with `host_behind`,
-   and `--prepare` moves the master of the host.
+6. A host that has none of the commits near HEAD would need the whole history. `brd-host` refuses that, and bt
+   passes the refusal on as `host_behind` with the message of `brd-host`.
 
 ### The host slots
 
@@ -173,41 +222,6 @@ The host lends each run a host slot of Branch Deck for that run only: the slot t
 one used longest ago, else the run waits in a queue, one line a minute. `brd-host` names the affinity of a checkout
 from its path. The host keeps a fixed set of warm slots, so two checkouts never make it clone and nothing returns a
 slot by hand.
-
-### Prepare a host
-
-`bt --host <alias> --prepare` makes a machine of the user ready for `--host` runs. The user runs it in a terminal.
-Each step is idempotent and prints `ok`, `done` or `missing`. An optional tool prints `absent`. `--dry-run` changes
-nothing. `bins/bt/src/prepare.rs` holds the steps, and `bins/bt/src/ssh.rs` bounds each ssh call:
-
-1. ssh: the alias answers in batch mode. Otherwise the step names the `~/.ssh/config` settings to check
-   (`AddressFamily inet`, and `IdentitiesOnly yes` only with an `IdentityFile`), and the other steps do not run.
-2. The repository (`--host-repo`): a missing one is created with `feature.manyFiles`, `core.untrackedCache` and
-   `core.fsmonitor=true`. Then the local master goes to `refs/heads/sync` there, and `checkout -B master sync` makes
-   it the master. The step warns about the size first, because the whole history crosses the network. An existing
-   master moves to the local master only when it is clean and an ancestor. An existing repository without
-   `core.fsmonitor=true` gets it, and the step says what the value was. The give-back of a host slot runs one
-   `status` after each run, and without fsmonitor it reads every file: 18-19 s on the Studio, against 2.5 s.
-3. PATH: `~/.local/bin` goes on the PATH in `~/.zshenv`. `brd-host` lives there, and the agent reads the login
-   environment through it. The host needs no `brd`, because the agent links the lease pool of Branch Deck.
-4. Tools: git, Xcode, rustup, docker and tmux. The step only reports them, and it never installs one.
-5. The agent: `brd-host setup <alias> --repo <repo> --name 'bt on <host name>'`. Over ssh, it copies the local
-   `brd-host` to `~/.local/bin/brd-host` on the host when the host has another build, adds this client to the allow list
-   of the agent, and starts the LaunchAgent `com.jetbrains.brd-host`. The host file
-   `~/.config/brd-host/hosts/<alias>.json` here pins the agent. Then the agent must answer a hello, and an agent of
-   another build gets the hint `brd-host upgrade <alias>`. With `--dry-run`, the step only asks the agent for its
-   hello.
-6. Credentials: the host must have the `~/.netrc` entries of the Bazel remote services (the hosts that `.bazelrc` and
-   its imports name), the `~/.m2/settings.xml` servers of the `.idea/jarRepositories.xml` repositories on the Space
-   package host, and the expiry marker of the token of each such server. `IJPrivatePackagesAuthorizer` names that
-   marker by the hash of the token and keeps the expiry as its modification time, so the copy keeps that time. A local
-   marker that is missing or in the past means that the local token must be renewed first. The step prints host names
-   and server ids only, never a value. It copies a missing entry only after a yes at the terminal, or with `--yes`.
-   Without a terminal it refuses, so an agent cannot start the copy. `credentials.rs` merges each entry into the host
-   file and writes the file through the stdin of ssh, atomically and with mode 600. Then the remote cache must answer
-   404, not 401.
-
-A run without `--prepare` copies no credential.
 
 ## Links into the Air UI-lane workspace
 

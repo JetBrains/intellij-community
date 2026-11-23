@@ -2,18 +2,17 @@
 package com.jetbrains.python.venv.sdk.configuration
 
 import com.intellij.openapi.application.readAction
+import com.intellij.python.sdk.backend.writeRequirementsPath
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.module.Module
 import com.intellij.python.community.common.tools.ToolId
 import com.intellij.python.sdk.backend.PythonInterpreter
-import com.intellij.python.sdk.backend.getSdkAPI
 import com.intellij.python.venv.PY_REQ_TOOL_ID
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.packaging.PyPackageUtil
 import com.jetbrains.python.packaging.management.PythonPackageManager
-import com.jetbrains.python.packaging.requirementsTxt.PythonRequirementTxtSdkUtils
 import com.jetbrains.python.packaging.setupPy.SetupPyHelpers.SETUP_PY
 import com.jetbrains.python.project.PyProject
 import com.jetbrains.python.project.project
@@ -61,10 +60,10 @@ internal class PyRequirementsTxtOrSetupPySdkConfiguration : PyProjectSdkConfigur
     val isRequirements = requirementsTxtOrSetupPyFile.name != SETUP_PY
 
     if (isRequirements) {
-      PythonRequirementTxtSdkUtils.saveRequirementsTxtPath(project, pythonInterpreter.getSdkAPI(), requirementsTxtOrSetupPyFile.toNioPath())
+      pythonInterpreter.writeRequirementsPath(requirementsTxtOrSetupPyFile.toNioPath())
     }
 
-    return PythonPackageManager.forPythonInterpreter(project, pythonInterpreter).syncLocked().mapSuccess { pythonInterpreter }
+    return PythonPackageManager.forPythonInterpreter(pythonInterpreter).syncLocked().mapSuccess { pythonInterpreter }
   }
 
   // Reads the module and not the project: both finders walk the module's source roots, which a base dir does not state.

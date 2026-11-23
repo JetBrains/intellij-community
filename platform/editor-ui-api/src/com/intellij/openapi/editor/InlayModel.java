@@ -340,6 +340,10 @@ public interface InlayModel {
   abstract class SimpleAdapter implements Listener {
     @Override
     public void onAdded(@NotNull Inlay<?> inlay) {
+      onDefaultUpdated(inlay);
+    }
+
+    private void onDefaultUpdated(@NotNull Inlay<?> inlay) {
       onUpdated(inlay, ChangeFlags.WIDTH_CHANGED |
                        ChangeFlags.HEIGHT_CHANGED |
                        (inlay.getGutterIconRenderer() == null ? 0 : ChangeFlags.GUTTER_ICON_PROVIDER_CHANGED));
@@ -347,9 +351,7 @@ public interface InlayModel {
 
     @Override
     public void onRemoved(@NotNull Inlay<?> inlay) {
-      onUpdated(inlay, ChangeFlags.WIDTH_CHANGED |
-                       ChangeFlags.HEIGHT_CHANGED |
-                       (inlay.getGutterIconRenderer() == null ? 0 : ChangeFlags.GUTTER_ICON_PROVIDER_CHANGED));
+      onDefaultUpdated(inlay);
     }
   }
 

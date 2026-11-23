@@ -5,7 +5,6 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.Splitter
 import com.intellij.openapi.ui.ValidationInfo
@@ -13,6 +12,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.ui.ColoredListCellRenderer
 import com.intellij.ui.JBCardLayout
 import com.intellij.ui.components.DialogPanel
+import com.intellij.python.sdk.backend.PythonInterpreter
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.sdk.DialogAction
 import com.jetbrains.python.sdk.ModuleOrProject
@@ -40,7 +40,7 @@ import kotlin.coroutines.cancellation.CancellationException
 internal class PyAddSdkDialog private constructor(
   private val project: Project,
   private val module: Module?,
-  private val sdkAddedCallback: Consumer<Sdk>,
+  private val interpreterSetCallback: Consumer<PythonInterpreter>,
 ) : DialogWrapper(project) {
 
   private val dialogActions: List<DialogAction>
@@ -49,9 +49,7 @@ internal class PyAddSdkDialog private constructor(
     title = PyBundle.message("python.sdk.add.python.interpreter.title")
 
     val moduleOrProject = module?.let { ModuleOrProject.ModuleAndProject(it) } ?: ModuleOrProject.ProjectOnly(project)
-    dialogActions = collectAddInterpreterActions(moduleOrProject) {
-      sdkAddedCallback.accept(it)
-    }
+    dialogActions = collectAddInterpreterActions(moduleOrProject, interpreterSetCallback)
 
     init()
   }
@@ -147,8 +145,8 @@ internal class PyAddSdkDialog private constructor(
 
     @JvmStatic
     @ApiStatus.Internal
-    fun show(project: Project, module: Module?, sdkAddedCallback: Consumer<Sdk>) {
-      val dialog = PyAddSdkDialog(project = project, module = module, sdkAddedCallback)
+    fun show(project: Project, module: Module?, interpreterSetCallback: Consumer<PythonInterpreter>) {
+      val dialog = PyAddSdkDialog(project = project, module = module, interpreterSetCallback)
       dialog.show()
     }
   }

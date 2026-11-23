@@ -1,7 +1,7 @@
 import java.awt.event.ActionEvent
 import java.awt.event.ActionListener
 
-def x=new <error descr="Method 'foo' is not implemented">ActionListener</error>() {
+def x=new ActionListener() {
   def actionPerformed(ActionEvent e) {
 
   }

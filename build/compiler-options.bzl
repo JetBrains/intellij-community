@@ -38,7 +38,6 @@ def create_kotlinc_options(
         api_version = "2.5",
         language_version = "2.5",
         opt_in = [],
-        plugin_options = [],
         progressive = True,
         warn = "off",
         x_allow_kotlin_package = False,
@@ -64,7 +63,7 @@ def create_kotlinc_options(
         x_wasm_generate_closed_world_multimodule = False,
         x_wasm_kclass_fqn = False,
         x_when_guards = False,
-        x_x_language = ["+AllowEagerSupertypeAccessibilityChecks", "-WrapContinuationForTailCallFunctions"]):
+        x_x_language = ["+AllowEagerSupertypeAccessibilityChecks"]):
     if x_jvm_default != None:
         jvm_default = _normalize_legacy_jvm_default(x_jvm_default)
 
@@ -74,7 +73,6 @@ def create_kotlinc_options(
         api_version = api_version,
         language_version = language_version,
         x_optin = opt_in,
-        plugin_options = plugin_options,
         progressive = progressive,
         visibility = ["//visibility:public"],
         warn = warn,

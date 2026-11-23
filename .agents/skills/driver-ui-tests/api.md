@@ -1,7 +1,5 @@
 # The API Of A Driver Test
 
-Read this file when you need the call for an action, a wait or a startup flag.
-
 ## Opening Files
 
 Use `openFile` instead of UI-based file navigation:
@@ -31,7 +29,6 @@ ui.x { byJavaClass("com.intellij.openapi.options.newEditor.SettingsEditor") }.sh
 ```
 
 **Rule**: Use `now = true` when the next step is keyboard input to prevent input going to the wrong component.
-**Rule**: Use `now = false` when you expect to the UI dialog to appear.
 
 ## Custom Wait Conditions
 

@@ -1,16 +1,21 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.streams.exec.breakpoint
 
-import com.intellij.debugger.streams.core.testFramework.TraceExecutionTestHelper
-import com.intellij.debugger.streams.test.TraceExecutionTestCase
-import com.intellij.xdebugger.XDebugSession
+import com.intellij.debugger.streams.test.BreakpointBasedExecutionTestCaseHelper
+import com.intellij.debugger.streams.test.traceExecutionFixture
+import com.intellij.testFramework.junit5.TestApplication
+import org.junit.jupiter.api.Test
 
-class BreakpointEngineMatchTest : TraceExecutionTestCase() {
-  override fun getHelper(session: XDebugSession): TraceExecutionTestHelper = breakpointEngineHelper(session)
+@TestApplication
+class BreakpointEngineMatchTest {
+  private val traceFixture by traceExecutionFixture(::BreakpointBasedExecutionTestCaseHelper)
 
-  fun testAllMatchNoExtraCalls(): Unit = doTest(false)
+  @Test
+  fun testAllMatchNoExtraCalls(): Unit = traceFixture.doTest(false)
 
-  fun testAnyMatchNoExtraCalls(): Unit = doTest(false)
+  @Test
+  fun testAnyMatchNoExtraCalls(): Unit = traceFixture.doTest(false)
 
-  fun testNoneMatchNoExtraCalls(): Unit = doTest(false)
+  @Test
+  fun testNoneMatchNoExtraCalls(): Unit = traceFixture.doTest(false)
 }

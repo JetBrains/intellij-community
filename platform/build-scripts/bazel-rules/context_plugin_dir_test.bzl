@@ -3,7 +3,7 @@ executable list, and the refusals. The tests of the composer check the content o
 
 load("@bazel_skylib//lib:unittest.bzl", "analysistest", "asserts")
 load(":context_plugin_dir.bzl", "ContextPluginInfo", "context_plugin_dir")
-load(":intellij_dev_dist.bzl", "DevDistPlacementInfo", "IntellijDevFragmentInfo")
+load(":intellij_dist.bzl", "DistPlacementInfo", "IntellijDevFragmentInfo")
 
 _MODULE = "test.context.plugin"
 
@@ -44,7 +44,7 @@ def _fake_component_impl(ctx):
     ctx.actions.write(manifest, "")
     return [
         DefaultInfo(files = depset(outputs)),
-        DevDistPlacementInfo(files = files, trees = trees, executables = ctx.attr.executables),
+        DistPlacementInfo(files = files, trees = trees, executables = ctx.attr.executables),
         IntellijDevFragmentInfo(name = _MODULE, manifest = manifest, payload = None, plugin_classpath_part = None, plugin_classpath_prefix = None),
     ]
 

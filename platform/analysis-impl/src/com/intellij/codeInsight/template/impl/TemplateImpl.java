@@ -557,8 +557,10 @@ public class TemplateImpl extends TemplateBase implements SchemeElement {
   }
 
   /**
-   * Wraps an expression so that when its {@link Expression#calculateResult} returns {@code null},
-   * the default-value expression is tried as a fallback.
+   * Wraps an expression so that when its {@link Expression#calculateResult} returns {@code null} or empty text,
+   * the default-value expression is tried as a fallback; a default without text keeps the original result.
+   * An empty expression string parses to {@code ConstantNode("")}, so a variable with only a default value
+   * (e.g. {@code expression="" defaultValue="\"i\""}) gets its default this way.
    * <p>
    * This mirrors the fallback logic that {@code TemplateState.recalcSegment()} already applies
    * for the interactive template session — the ModCommand/preview path needs the same behaviour.
@@ -569,7 +571,11 @@ public class TemplateImpl extends TemplateBase implements SchemeElement {
       @Override
       public @Nullable Result calculateResult(ExpressionContext context) {
         Result result = expression.calculateResult(context);
-        return result != null ? result : defaultValue.calculateResult(context);
+        PsiElement element = context.getPsiElementAtStartOffset();
+        if (!isNullOrEmpty(result, element)) return result;
+        // An empty default (`ConstantNode("")`) must not replace a result without text, e.g. the `InvokeActionResult` of `complete()`.
+        Result defaultResult = defaultValue.calculateResult(context);
+        return isNullOrEmpty(defaultResult, element) ? result : defaultResult;
       }
 
       @Override
@@ -582,6 +588,10 @@ public class TemplateImpl extends TemplateBase implements SchemeElement {
         return expression.getLookupFocusDegree();
       }
     };
+  }
+
+  private static boolean isNullOrEmpty(@Nullable Result result, @Nullable PsiElement element) {
+    return result == null || result.equalsToText("", element);
   }
 
   private static @Nullable RangeMarker resolveEndMarker(

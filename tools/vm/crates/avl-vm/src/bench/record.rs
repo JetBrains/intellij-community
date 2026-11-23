@@ -13,6 +13,7 @@ use super::files;
 use super::fus;
 use super::idealog;
 use super::load::HostLoad;
+use super::memory::{self, MEMORY_FILE};
 use super::pluginlog::{self, Owner, PluginLog, Tally};
 use super::profile::{self, EdtProfile, ExcludedSamples, FrameSamples, GATE_PROFILE, ProfileScope, WHOLE_PROFILE};
 use super::session::{CLASS_LOAD_LOG, TRACE_FILE};
@@ -70,13 +71,14 @@ pub(crate) const QUIT_ANCHOR: &str = "quit";
 
 /// The anchors of the class counts, in the order of the start-up. Each one except [`QUIT_ANCHOR`] is a metric in
 /// milliseconds from the process start. A run has the metric [`named_at`] for each anchor that it has.
-pub(crate) const CLASS_ANCHORS: [&str; 7] = [
+pub(crate) const CLASS_ANCHORS: [&str; 8] = [
     FRAME_BECAME_VISIBLE,
     EMPTY_STATE_BUILT,
     WELCOME_BECAME_VISIBLE,
     WELCOME_SCREEN_PAINTED,
     CARGO_SYNC_STARTED,
     EDITOR_HIGHLIGHTED,
+    FIND_IN_FILES_END,
     QUIT_ANCHOR,
 ];
 
@@ -205,6 +207,159 @@ pub(crate) const CARGO_SYNC_STARTED: &str = "cargoSyncStarted";
 /// is the value of `rust_duration_from_start_to_cargo_sync` of the perf test.
 pub(crate) const CARGO_SYNC_LOG_MS: &str = "cargoSyncStarted.ideaLog";
 
+/// The script of the performance plugin in a run directory of the find-in-files arm. The launch writes it, and the IDE
+/// reads it through `testscript.filename`. The record reads the queries of the run back from it, see [`FindScript`].
+pub(crate) const FIND_SCRIPT_FILE: &str = "find-in-files.ijperf";
+
+/// The command of the performance plugin that runs Find in Files over the project scope, `FindInFilesCommand`. It
+/// takes the queries separated by `;`.
+const FIND_COMMAND: &str = "%findInFiles";
+
+/// The separator of the queries of [`FIND_COMMAND`]. A query cannot hold it.
+pub(crate) const FIND_QUERY_SEPARATOR: char = ';';
+
+/// The prefix of the span of one search of [`FIND_COMMAND`]: `findInFiles#search: <query>`. The span starts at the
+/// open of the dialog with the query and ends when the search finishes. Its tag [`FIND_RESULTS_TAG`] counts the results.
+/// The metric of each search is the span name, with its duration.
+pub(crate) const FIND_SEARCH_PREFIX: &str = "findInFiles#search: ";
+
+/// The prefix of the span of one search of [`FIND_COMMAND`] with the option [`FIND_DIRECTORY_OPTION`]:
+/// `findInFiles#searchInDirectory: <query>`. It is the span of a search of a directory and its subdirectories.
+pub(crate) const FIND_DIRECTORY_PREFIX: &str = "findInFiles#searchInDirectory: ";
+
+/// The option of [`FIND_COMMAND`] that searches the directory `<path>` and its subdirectories in place of the project
+/// scope. The first space ends the path.
+const FIND_DIRECTORY_OPTION: &str = "-directory=";
+
+/// The option of [`FIND_COMMAND`] that runs each search without the popup, to its last usage. The popup search of
+/// JetBrains Light does not finish in a bench run, and the headless search runs the same search engines.
+const FIND_HEADLESS_OPTION: &str = "-headless";
+
+/// The option of [`FIND_COMMAND`] that searches in the open project whose base path is `<path>`, and waits for it to
+/// open. The script starts in the first project that opens. JetBrains Light opens a folder as a member project of a
+/// workspace after the host project, and the frame gives the member project to Find in Files. The first space ends the
+/// path.
+const FIND_PROJECT_OPTION: &str = "-project=";
+
+/// The span of [`FIND_COMMAND`] that opens the dialog with an empty query before the searches.
+pub(crate) const FIND_DIALOG_SPAN: &str = "findInFiles#openDialog";
+
+/// The tag of a search span with the count of its results.
+const FIND_RESULTS_TAG: &str = "resultsCount";
+
+/// The metric key of the find-in-files arm: the sum of the durations of its search spans.
+pub(crate) const FIND_IN_FILES: &str = "findInFiles.search";
+
+/// The sum of the durations of the directory searches, see [`FIND_DIRECTORY_PREFIX`].
+pub(crate) const FIND_IN_DIRECTORY: &str = "findInFiles.searchInDirectory";
+
+/// The milliseconds from the process start to the end of the last search span, on the clock of the anchors.
+pub(crate) const FIND_IN_FILES_END: &str = "findInFiles.end";
+
+/// The warning of `FindInProjectTask` in `idea.log` when a `FindInProjectDirectoriesProvider` gives no directory for
+/// the project. Find in Files then takes another path than in the product: the project pass does not walk the project
+/// directories, and the directory pass walks the whole tree of its directory. JetBrains Light gives the directories of
+/// a project of a workspace. With `ijlight.workspace.enabled=false`, it opens the project outside a workspace and
+/// gives none.
+pub(crate) const NO_PROJECT_DIRECTORY_LOG_LINE: &str = "No project directory found for search";
+
+/// The metric key of the result count of the search span `span`, such as `findInFiles#search: FindModel results`.
+pub(crate) fn find_results(span: &str) -> String {
+    format!("{span} results")
+}
+
+/// What a run of the find-in-files arm searches: the queries in their order, over the project scope, and then over
+/// `directory` when the run has one.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub(crate) struct FindScript {
+    /// The absolute project directory: the searches run in the open project with this base path, see
+    /// [`FIND_PROJECT_OPTION`]. A script of a session before the option has none, and searched in the project of the
+    /// script.
+    pub(crate) project: Option<String>,
+    pub(crate) queries: Vec<String>,
+    /// The absolute directory of the second pass, with its subdirectories.
+    pub(crate) directory: Option<String>,
+}
+
+impl FindScript {
+    /// The text of [`FIND_SCRIPT_FILE`]: one line of [`FIND_COMMAND`] for the project scope, and one with
+    /// [`FIND_DIRECTORY_OPTION`] for the directory, each with [`FIND_HEADLESS_OPTION`] and [`FIND_PROJECT_OPTION`].
+    pub(crate) fn text(&self) -> String {
+        let queries = self.queries.join(&FIND_QUERY_SEPARATOR.to_string());
+        let mut options = format!("{FIND_COMMAND} {FIND_HEADLESS_OPTION}");
+        if let Some(project) = &self.project {
+            options.push_str(&format!(" {FIND_PROJECT_OPTION}{project}"));
+        }
+        let mut text = format!("{options} {queries}\n");
+        if let Some(directory) = &self.directory {
+            text.push_str(&format!("{options} {FIND_DIRECTORY_OPTION}{directory} {queries}\n"));
+        }
+        text
+    }
+
+    /// The script of a text of [`FIND_SCRIPT_FILE`], or `None` for a text of another shape.
+    pub(crate) fn parse(text: &str) -> Option<Self> {
+        let mut lines = text.lines();
+        let (project, directory, queries) = Self::parse_line(lines.next()?)?;
+        if directory.is_some() {
+            return None;
+        }
+        let queries: Vec<String> = queries.split(FIND_QUERY_SEPARATOR).map(str::to_owned).collect();
+        if queries.iter().any(String::is_empty) {
+            return None;
+        }
+        let directory = match lines.next() {
+            None => None,
+            Some(line) => {
+                let (line_project, directory, _) = Self::parse_line(line)?;
+                if line_project != project {
+                    return None;
+                }
+                Some(directory?)
+            }
+        };
+        Some(Self {
+            project,
+            queries,
+            directory,
+        })
+    }
+
+    /// One line of [`FIND_COMMAND`] with [`FIND_HEADLESS_OPTION`]: the path of [`FIND_PROJECT_OPTION`], the path of
+    /// [`FIND_DIRECTORY_OPTION`] and the queries, in the order that [`Self::text`] writes them.
+    fn parse_line(line: &str) -> Option<(Option<String>, Option<String>, &str)> {
+        let mut rest = line
+            .strip_prefix(FIND_COMMAND)?
+            .strip_prefix(' ')?
+            .strip_prefix(FIND_HEADLESS_OPTION)?
+            .strip_prefix(' ')?;
+        let mut option = |prefix: &str| -> Option<String> {
+            let (path, after) = rest.strip_prefix(prefix)?.split_once(' ')?;
+            rest = after;
+            Some(path.to_owned())
+        };
+        let project = option(FIND_PROJECT_OPTION);
+        let directory = option(FIND_DIRECTORY_OPTION);
+        Some((project, directory, rest))
+    }
+
+    /// The prefix of the search spans of each pass, and the metric of its sum.
+    fn passes(&self) -> Vec<(&'static str, &'static str)> {
+        let directory = self.directory.as_ref().map(|_| (FIND_DIRECTORY_PREFIX, FIND_IN_DIRECTORY));
+        std::iter::once((FIND_SEARCH_PREFIX, FIND_IN_FILES)).chain(directory).collect()
+    }
+
+    /// The name of the span that the run ends with: the search of the last query in the last pass.
+    pub(crate) fn last_span(&self) -> String {
+        let prefix = if self.directory.is_some() {
+            FIND_DIRECTORY_PREFIX
+        } else {
+            FIND_SEARCH_PREFIX
+        };
+        format!("{prefix}{}", self.queries.last().map_or("", String::as_str))
+    }
+}
+
 /// The prefix of the spans of the Air empty-state composer. Each span is a metric with its duration, and the digest
 /// shows each one.
 pub(crate) const EMPTY_STATE_PREFIX: &str = "air.emptyState.";
@@ -259,6 +414,10 @@ pub(crate) struct LaunchFacts {
     /// wrote one, has none.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub(crate) thread_dump_failure: Option<String>,
+    /// Why the run wrote no memory sample after its gate, see [`MEMORY_FILE`]. A run before the sample, and a run that
+    /// wrote one, has none.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub(crate) memory_failure: Option<String>,
 }
 
 /// One run.
@@ -277,7 +436,7 @@ pub(crate) struct RunRecord {
     pub(crate) reason: Option<String>,
     /// What the run lacks without a failure: a missing file, a truncated trace.
     pub(crate) notes: Vec<String>,
-    /// Milliseconds, or a count for the class metrics.
+    /// Milliseconds, a count for the class metrics and the process counts, or MB for the memory metrics.
     pub(crate) metrics: BTreeMap<String, f64>,
     /// The names of the spans of the Air empty-state composer, see [`EMPTY_STATE_PREFIX`], in the order of their first
     /// span: by the start, and the longer span first at one start. So a span comes before the spans inside it, and the
@@ -562,6 +721,9 @@ fn measure(run_dir: &Path, record: &mut RunRecord) -> Result<(), String> {
         metrics.insert(metric.to_owned(), process_ms);
         metrics.insert(log_metric.to_owned(), log_ms);
     }
+    if gate == Gate::FindInFiles {
+        find_in_files_gate(run_dir, trace.as_ref(), metrics)?;
+    }
     if record.arm.kind == ArmKind::OpenProject {
         open_project_metrics(record.launch.open_request_us, trace.as_ref(), stats.as_ref(), metrics)?;
     }
@@ -605,7 +767,34 @@ fn measure(run_dir: &Path, record: &mut RunRecord) -> Result<(), String> {
     });
     class_metrics(record, plugin_log.as_ref(), class_log.as_ref(), stats.as_ref(), quit_ms);
     profile_metrics(run_dir, record);
+    memory_metrics(run_dir, record);
     Ok(())
+}
+
+/// Reads the memory sample of a run, see [`memory`]. A run that wrote none has a note with the reason, and a run from
+/// before the sample has no note. A sample of another shape is a note too.
+fn memory_metrics(run_dir: &Path, record: &mut RunRecord) {
+    if let Some(failure) = &record.launch.memory_failure {
+        record.notes.push(format!("no {MEMORY_FILE}: {failure}"));
+        return;
+    }
+    let sample = match files::read_optional(&run_dir.join(MEMORY_FILE)) {
+        Ok(Some(text)) => memory::parse(&text),
+        Ok(None) => return,
+        Err(error) => Err(error),
+    };
+    match sample {
+        Ok(sample) => {
+            if let Some(responsible) = sample.foreign_responsible() {
+                record.notes.push(format!(
+                    "{MEMORY_FILE}: the IDE {} names the responsible process {responsible}, so the sample has no WebKit process",
+                    sample.pid
+                ));
+            }
+            record.metrics.extend(sample.metrics());
+        }
+        Err(error) => record.notes.push(format!("{MEMORY_FILE}: {error:#}")),
+    }
 }
 
 /// Reads the profile of a run: [`GATE_PROFILE`], else [`WHOLE_PROFILE`] with a note that names why the run did not stop
@@ -840,6 +1029,62 @@ fn span_gate(trace: Option<&Trace>, name: &str, missing: &str) -> Result<(), Str
         return Err(format!(
             "the {name} span did not end before the {QUIT_SPAN} span started, so the quit cut it short"
         ));
+    }
+    Ok(())
+}
+
+/// The find-in-files gate: a search span for each query of [`FIND_SCRIPT_FILE`] in each pass, none with an error and
+/// each before the quit, and no [`NO_PROJECT_DIRECTORY_LOG_LINE`] in `log/idea.log`. It adds the duration and the result
+/// count of each search, the sum of each pass, [`FIND_IN_FILES`] and [`FIND_IN_DIRECTORY`], the end of the last search
+/// [`FIND_IN_FILES_END`] and the duration of [`FIND_DIALOG_SPAN`].
+fn find_in_files_gate(run_dir: &Path, trace: Option<&Trace>, metrics: &mut BTreeMap<String, f64>) -> Result<(), String> {
+    let script = files::read_optional(&run_dir.join(FIND_SCRIPT_FILE))
+        .map_err(|error| format!("{error:#}"))?
+        .ok_or_else(|| format!("no {FIND_SCRIPT_FILE}, so the run has no queries"))?;
+    let script = FindScript::parse(&script).ok_or_else(|| format!("{FIND_SCRIPT_FILE} holds no {FIND_COMMAND} line"))?;
+    let log = files::read_optional(&run_dir.join("log").join("idea.log")).map_err(|error| format!("{error:#}"))?;
+    if log.is_some_and(|log| log.contains(NO_PROJECT_DIRECTORY_LOG_LINE)) {
+        return Err(format!(
+            "log/idea.log holds \"{NO_PROJECT_DIRECTORY_LOG_LINE}\": the IDE gave no project directory, so Find in Files \
+             took another path than in the product; JetBrains Light gives them for a project of a workspace, so do not \
+             pass ijlight.workspace.enabled=false"
+        ));
+    }
+    let Some(trace) = trace else {
+        return Err(format!("no {TRACE_FILE}, so no search span"));
+    };
+    let origin = trace.origin_us();
+    let mut end: Option<f64> = None;
+    for (prefix, sum_metric) in script.passes() {
+        let mut sum = 0.0;
+        for query in &script.queries {
+            let name = format!("{prefix}{query}");
+            span_gate(
+                Some(trace),
+                &name,
+                "the IDE has no performance plugin, or the search did not finish",
+            )?;
+            let Some(span) = trace.first(&name) else {
+                return Err(format!("no {name} span in {TRACE_FILE}"));
+            };
+            let ms = micros_to_ms(span.duration);
+            sum += ms;
+            metrics.insert(name.clone(), ms);
+            if let Some(results) = span.number_tag(FIND_RESULTS_TAG) {
+                metrics.insert(find_results(&name), results);
+            }
+            if let Some(origin) = origin {
+                let span_end = span.end_ms(origin);
+                end = Some(end.map_or(span_end, |last: f64| last.max(span_end)));
+            }
+        }
+        metrics.insert(sum_metric.to_owned(), tenth(sum));
+    }
+    if let Some(end) = end {
+        metrics.insert(FIND_IN_FILES_END.to_owned(), end);
+    }
+    if let Some(dialog) = trace.first(FIND_DIALOG_SPAN) {
+        metrics.insert(FIND_DIALOG_SPAN.to_owned(), micros_to_ms(dialog.duration));
     }
     Ok(())
 }

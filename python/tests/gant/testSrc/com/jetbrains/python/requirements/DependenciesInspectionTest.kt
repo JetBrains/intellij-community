@@ -154,7 +154,7 @@ class DependenciesInspectionTest : PythonDependencyTestCase() {
     val warning = highlights.single()
     assertEquals(HighlightSeverity.WARNING, warning.severity)
     assertEquals(PyPsiBundle.message("INSP.package.requirements.requirements.file.empty"), warning.description)
-    assertContainsElements(myFixture.availableIntentions.map { it.text }, PyBundle.message("QFIX.NAME.export.dependencies"))
+    assertContainsElements(myFixture.availableIntentions.map { it.text }, PyPsiBundle.message("QFIX.add.imported.packages.to.requirements"))
   }
 
   fun testAFileOfWhitespaceIsReportedAsEmpty() {
@@ -183,7 +183,7 @@ class DependenciesInspectionTest : PythonDependencyTestCase() {
   }
 
   private fun packageManager(): PythonPackageManager =
-    PythonPackageManager.forPythonInterpreter(myFixture.project, findPythonInterpreterForTests(myFixture.module)!!)
+    PythonPackageManager.forPythonInterpreter(findPythonInterpreterForTests(myFixture.module)!!)
 
   /** The same reload a package operation and a background SDK update perform. */
   private fun reloadPackages() {

@@ -4,25 +4,25 @@ load("@bazel_skylib//lib:unittest.bzl", "analysistest", "asserts", "unittest")
 load("@rules_java//java:defs.bzl", "JavaInfo", "java_common")
 load("@rules_kotlin//kotlin/internal:defs.bzl", _KtJvmInfo = "KtJvmInfo")
 load(":content_module_jar.bzl", "ContentModuleJarInfo", "content_module_jar", "content_module_jar_target_name")
-load(":dev_dist_content.bzl", "DevDistContentInfo")
-load(":dev_dist_plugin.bzl", "dev_dist_plugin", "dev_dist_plugin_component_target_name")
+load(":dev_plugin.bzl", "DistRuntimeLayoutInfo", "dev_plugin")
+load(":dist_content.bzl", "DistContentInfo")
+load(":dist_plugin.bzl", "dist_plugin", "dist_plugin_component_target_name")
 load(
-    ":dev_dist_plugin_descriptor.bzl",
-    "DevDistPluginClasspathDescriptorInfo",
-    "DevDistPluginDescriptorInfo",
-    "dev_dist_plugin_descriptor",
-    "dev_dist_plugin_descriptor_group",
-    "dev_dist_plugin_descriptor_target_name",
+    ":dist_plugin_descriptor.bzl",
+    "DistPluginClasspathDescriptorInfo",
+    "DistPluginDescriptorInfo",
+    "dist_plugin_descriptor",
+    "dist_plugin_descriptor_group",
+    "dist_plugin_descriptor_target_name",
 )
-load(":dev_plugin.bzl", "DevDistRuntimeLayoutInfo", "dev_plugin")
-load(":intellij_dev_dist.bzl", "DevDistPlacementInfo", "IntellijDevFragmentInfo")
+load(":intellij_dist.bzl", "DistPlacementInfo", "IntellijDevFragmentInfo")
 
 # The application info of the fixture product, an EAP product without a release date.
 
 # The suite's package and name are fixed: a test rule's configuration names the product info target by label.
 _PACKAGE = "//platform/build-scripts/bazel-rules/dev-plugin-tests"
 _SUITE = "dev_plugin_tests"
-_STAMP_CLASS_FLAG = str(Label("//build:dev_dist_stamp_class"))
+_STAMP_CLASS_FLAG = str(Label("//build:dist_stamp_class"))
 _TRACE_SPANS = str(Label("//platform/build-scripts/bazel-rules:trace_spans"))
 _EMPTY_JAR = "PK\005\006" + ("\000" * 18)
 _MAIN_MODULE = "test.dev.plugin"
@@ -154,7 +154,7 @@ def _dev_plugin_test_impl(ctx):
     asserts.true(env, "--kind=" + _MAIN_MODULE in collect.argv)
     asserts.equals(env, [], [argument for argument in collect.argv if argument.startswith("--os=") or argument.startswith("--arch=")])
     asserts.equals(env, _MAIN_MODULE, fragment.name)
-    asserts.equals(env, [fragment.plugin_classpath_part], groups.dev_dist_plugin_classpath.to_list())
+    asserts.equals(env, [fragment.plugin_classpath_part], groups.dist_plugin_classpath.to_list())
     asserts.equals(env, 4, len(groups.file_metadata.to_list()))
     asserts.equals(env, 4 if ctx.attr.spans else 0, len(groups.trace_spans.to_list()))
 
@@ -225,7 +225,7 @@ def _dev_plugin_test_impl(ctx):
     asserts.equals(
         env,
         ["plugins/dev-plugin/bin/helper.sh", "plugins/dev-plugin/helpers/nested/second.txt"],
-        target[DevDistPlacementInfo].executables,
+        target[DistPlacementInfo].executables,
     )
     asserts.equals(env, copied_helper[0].path, spec["files"][0]["source"])
     asserts.true(env, spec["files"][1]["source"].endswith("/" + resources["first.txt"].short_path.removeprefix("../")), spec["files"][1]["source"])
@@ -234,7 +234,7 @@ def _dev_plugin_test_impl(ctx):
 
     # The layout part states the jars in `classpath_jars` order and keeps the merge order of their members. So the reused
     # jar comes first here, marked, with the members its own target merged.
-    layout = target[DevDistRuntimeLayoutInfo]
+    layout = target[DistRuntimeLayoutInfo]
     asserts.equals(env, spec["descriptor"], layout.descriptor.path)
     parts = [action for action in actions if layout.part in action.outputs.to_list()]
     asserts.equals(env, 1, len(parts))
@@ -256,7 +256,7 @@ def _dev_plugin_test_impl(ctx):
 
     # The raw content: every merged module jar, the members of the reused content module jar, and every library the
     # plugin names, the jar file token included. Neutral, like the packed inputs and the component itself.
-    raw_content = target[DevDistContentInfo]
+    raw_content = target[DistContentInfo]
     asserts.equals(
         env,
         sorted([jar.short_path for jar in module_jars] + [ctx.file.test_jar.short_path] + [jar.short_path for jar in content.member_jars]),
@@ -442,22 +442,22 @@ _mode_test = analysistest.make(
 
 def _classpath_descriptor_test_impl(ctx):
     env = analysistest.begin(ctx)
-    classpath = analysistest.target_under_test(env)[DevDistPluginClasspathDescriptorInfo]
-    leaf = ctx.attr.leaf[DevDistPluginDescriptorInfo]
+    classpath = analysistest.target_under_test(env)[DistPluginClasspathDescriptorInfo]
+    leaf = ctx.attr.leaf[DistPluginDescriptorInfo]
     group = ctx.attr.descriptor_group
-    actions = [action for action in analysistest.target_actions(env) if action.mnemonic == "DevDistPluginClasspathDescriptor"]
+    actions = [action for action in analysistest.target_actions(env) if action.mnemonic == "DistPluginClasspathDescriptor"]
     asserts.equals(env, "", classpath.stamp_class)
     asserts.equals(env, classpath.descriptor.owner, leaf.classpath_descriptor.owner)
     asserts.equals(env, classpath.descriptor.basename, leaf.classpath_descriptor.basename)
     asserts.equals(env, 1, len(actions))
     asserts.equals(env, [classpath.descriptor], actions[0].outputs.to_list())
-    asserts.equals(env, 2, len(group[OutputGroupInfo]._dev_dist_descriptor_metadata.to_list()))
+    asserts.equals(env, 2, len(group[OutputGroupInfo]._dist_descriptor_metadata.to_list()))
     asserts.equals(env, [leaf.descriptor.basename], [file.basename for file in group[DefaultInfo].files.to_list()])
     return analysistest.end(env)
 
 _CLASSPATH_DESCRIPTOR_TEST_ATTRS = {
     "descriptor_group": attr.label(mandatory = True),
-    "leaf": attr.label(mandatory = True, providers = [DevDistPluginDescriptorInfo]),
+    "leaf": attr.label(mandatory = True, providers = [DistPluginDescriptorInfo]),
 }
 
 _classpath_descriptor_frontend_test = analysistest.make(
@@ -502,14 +502,14 @@ _declaration_test = unittest.make(
 def _stale_macro_test(name):
     """A stale module name in `jars` warns and declares no component. The descriptor is still declared.
 
-    The case lives in this package, and not beside the other macro tests in `dev_dist_content_test.bzl`, because the
+    The case lives in this package, and not beside the other macro tests in `dist_content_test.bzl`, because the
     warning must not print in a dist analysis. Every dist loads the `bazel-rules` package for `:trace_spans`.
     """
     stale_owner = name + "_stale_owner"
     stale_source = name + "_stale_descriptor"
     _fixture_module(name = stale_owner, module_name = "intellij.test.stale")
     _fixture_xml(name = stale_source)
-    dev_dist_plugin(
+    dist_plugin(
         main_module = "intellij.test.stale",
         module_targets = {"intellij.test.stale": [":" + stale_owner + ".jar"]},
         descriptor = stale_source,
@@ -520,14 +520,14 @@ def _stale_macro_test(name):
         name = test,
         actual = json.encode([
             native.existing_rule("intellij.test.stale_dev_plugin") == None,
-            native.existing_rule(dev_dist_plugin_descriptor_target_name("intellij.test.stale")) != None,
+            native.existing_rule(dist_plugin_descriptor_target_name("intellij.test.stale")) != None,
         ]),
         expected = json.encode([True, True]),
     )
     return test
 
 def _copies_macro_test(name, helper_token, resources_token, resources_prefix, tree_token):
-    """`dev_dist_plugin` forwards `files`, `file_prefixes`, `executables` and `tree_files` to the component it declares."""
+    """`dist_plugin` forwards `files`, `file_prefixes`, `executables` and `tree_files` to the component it declares."""
     main_module = "intellij.test.copied"
     copied_owner = name + "_copied_owner"
     copied_source = name + "_copied_descriptor"
@@ -537,7 +537,7 @@ def _copies_macro_test(name, helper_token, resources_token, resources_prefix, tr
     file_prefixes = {"helpers": resources_prefix}
     executables = ["bin/helper.sh"]
     tree_files = ["web"]
-    dev_dist_plugin(
+    dist_plugin(
         main_module = main_module,
         module_targets = {main_module: [":" + copied_owner + ".jar"]},
         descriptor = copied_source,
@@ -547,7 +547,7 @@ def _copies_macro_test(name, helper_token, resources_token, resources_prefix, tr
         executables = executables,
         tree_files = tree_files,
     )
-    component = native.existing_rule(dev_dist_plugin_component_target_name(main_module))
+    component = native.existing_rule(dist_plugin_component_target_name(main_module))
     test = name + "_copies_macro_test"
     _declaration_test(
         name = test,
@@ -590,21 +590,21 @@ def dev_plugin_test_suite(name):
 
     source = name + "_descriptor_source"
     _fixture_xml(name = source)
-    dev_dist_plugin_descriptor(
+    dist_plugin_descriptor(
         main_module = _MAIN_MODULE,
         descriptor = ":" + source,
     )
-    descriptor = ":" + dev_dist_plugin_descriptor_target_name(_MAIN_MODULE)
+    descriptor = ":" + dist_plugin_descriptor_target_name(_MAIN_MODULE)
     modules = {":" + owner: _MAIN_MODULE, ":" + split: _SPLIT_MODULE}
 
     classpath_main_module = "test.dev.plugin.classpath"
-    dev_dist_plugin_descriptor(
+    dist_plugin_descriptor(
         main_module = classpath_main_module,
         descriptor = ":" + source,
         embed_content_modules = False,
         mode_refused_content_modules = {"frontend": [_MAIN_MODULE]},
     )
-    classpath_leaf = ":" + dev_dist_plugin_descriptor_target_name(classpath_main_module)
+    classpath_leaf = ":" + dist_plugin_descriptor_target_name(classpath_main_module)
     classpath_target = classpath_leaf + "_classpath"
     classpath_groups = {}
 
@@ -612,14 +612,14 @@ def dev_plugin_test_suite(name):
     for mode in ["frontend", "monolith"]:
         group_name = name + "_classpath_" + mode + "_group"
         classpath_groups[mode] = ":" + group_name
-        dev_dist_plugin_descriptor_group(
+        dist_plugin_descriptor_group(
             name = group_name,
             descriptors = [classpath_leaf],
             stamp_class = mode,
             tags = ["manual"],
         )
 
-    # A single file copy and a directory copy. The filegroup stands for the package's `:dev_dist_resources`, and the
+    # A single file copy and a directory copy. The filegroup stands for the package's `:dist_resources`, and the
     # prefix is the repository-relative directory the copy takes, as `source_tree_prefixes` of the chain states it.
     helper = name + "_helper"
     _fixture_script(name = helper)
@@ -752,7 +752,7 @@ def dev_plugin_test_suite(name):
     for case, files, file_prefixes, executables, message in [
         ("many_files", {"bin/helper": resources_token}, {}, [], "copies one file"),
         ("jar_collision", {"lib/x.jar": helper_token}, {}, [], "is both stated in `jars` and copied by `files`"),
-        ("executable_outside_the_subset", {"bin/helper.sh": helper_token}, {}, ["bin/helper.s?"], "glob \"bin/helper.s?\": the dev-dist plan supports only *, ** and {a,b}, but the pattern has '?' at 12"),
+        ("executable_outside_the_subset", {"bin/helper.sh": helper_token}, {}, ["bin/helper.s?"], "glob \"bin/helper.s?\": the distribution plan supports only *, ** and {a,b}, but the pattern has '?' at 12"),
         ("executable_nested_group", {"bin/helper.sh": helper_token}, {}, ["bin/{a,{b}}"], "the pattern has a nested '{' at 7"),
         ("empty_directory", {"helpers": resources_token}, {"helpers": "nowhere/at/all"}, [], "has no declared File below nowhere/at/all"),
         ("file_under_directory", {"helpers": resources_token, "helpers/extra.txt": helper_token}, {"helpers": resources_prefix}, [], "is below 'helpers', which `file_prefixes` copies as a whole"),
@@ -823,7 +823,7 @@ def dev_plugin_test_suite(name):
     # places the mixed `lib/mode.jar` whole, places no `lib/split.jar`, and places no reused member jar.
     mode_owner = name + "_mode_owner"
     _fixture_module(name = mode_owner, module_name = _MODE_MODULE)
-    dev_dist_plugin_descriptor(
+    dist_plugin_descriptor(
         main_module = _MODE_MODULE,
         descriptor = ":" + source,
         mode_refused_content_modules = {"frontend": [_SPLIT_MODULE, _MEMBER_MODULE]},
@@ -832,7 +832,7 @@ def dev_plugin_test_suite(name):
     dev_plugin(
         name = mode_component,
         main_module = _MODE_MODULE,
-        descriptor = ":" + dev_dist_plugin_descriptor_target_name(_MODE_MODULE),
+        descriptor = ":" + dist_plugin_descriptor_target_name(_MODE_MODULE),
         plugin_directory = "plugins/mode",
         modules = {":" + mode_owner: _MODE_MODULE, ":" + split: _SPLIT_MODULE},
         libraries = [library_token],
@@ -859,7 +859,7 @@ def dev_plugin_test_suite(name):
         dev_plugin(
             name = mismatch,
             main_module = _MODE_MODULE,
-            descriptor = ":" + dev_dist_plugin_descriptor_target_name(_MODE_MODULE),
+            descriptor = ":" + dist_plugin_descriptor_target_name(_MODE_MODULE),
             plugin_directory = "plugins/mode",
             modules = {":" + mode_owner: _MODE_MODULE},
             jars = {"lib/mode.jar": [_MODE_MODULE]},

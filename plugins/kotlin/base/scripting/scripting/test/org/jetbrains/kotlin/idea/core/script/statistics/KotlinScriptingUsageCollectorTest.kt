@@ -10,7 +10,6 @@ import org.jetbrains.kotlin.idea.compiler.configuration.KotlinIdePlugin
 import org.jetbrains.kotlin.idea.core.script.configurations.KotlinScriptService
 import org.jetbrains.kotlin.idea.core.script.definitions.KotlinScriptDefinitionsProviderId
 import org.jetbrains.kotlin.idea.core.script.definitions.ScriptDefinitionProviderImpl
-import org.jetbrains.kotlin.idea.core.script.definitions.ScriptDefinitionsModificationTracker
 import org.jetbrains.kotlin.idea.core.script.settings.KotlinScriptingSettings
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import kotlin.script.experimental.api.KotlinType
@@ -36,6 +35,7 @@ class KotlinScriptingUsageCollectorTest : KotlinLightCodeInsightFixtureTestCase(
     }
 
     fun `test definition counts sum to all provided definitions and report disabled ones`() {
+        runBlocking { ScriptDefinitionProviderImpl.getInstance(project).awaitLoading() }
         val definitions = ScriptDefinitionProviderImpl.getInstance(project).cachedProvidedDefinitions
         val disabled = definitions.first()
 
@@ -96,7 +96,7 @@ class KotlinScriptingUsageCollectorTest : KotlinLightCodeInsightFixtureTestCase(
             },
             testRootDisposable,
         )
-        ScriptDefinitionsModificationTracker.getInstance(project).incModificationCount()
+        runBlocking { ScriptDefinitionProviderImpl.getInstance(project).awaitLoading() }
 
         val provided = ScriptDefinitionProviderImpl.getInstance(project).cachedProvidedDefinitions.filter { it.reportedProviderId() == "other" }
         KotlinScriptingSettings.getInstance(project).update {
@@ -169,7 +169,7 @@ class KotlinScriptingUsageCollectorTest : KotlinLightCodeInsightFixtureTestCase(
             },
             testRootDisposable,
         )
-        ScriptDefinitionsModificationTracker.getInstance(project).incModificationCount()
+        runBlocking { ScriptDefinitionProviderImpl.getInstance(project).awaitLoading() }
     }
 
     companion object {

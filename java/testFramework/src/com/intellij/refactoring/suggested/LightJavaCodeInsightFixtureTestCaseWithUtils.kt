@@ -8,6 +8,10 @@ import com.intellij.psi.PsiDocumentManager
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import com.intellij.testFramework.utils.coroutines.waitCoroutinesBlocking
 
+/**
+ * Use [suggestedRefactoringFixture] in a JUnit 5 test. Its members replace the editing helpers of this class.
+ */
+@Deprecated("Use suggestedRefactoringFixture in a JUnit 5 test")
 abstract class LightJavaCodeInsightFixtureTestCaseWithUtils : LightJavaCodeInsightFixtureTestCase() {
   protected fun deleteTextAtCaret(text: String) = editAction {
     val offset = editor.caretModel.offset

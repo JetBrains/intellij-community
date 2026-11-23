@@ -428,9 +428,14 @@ public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx
     if (snapshotStorage != null) {
       return snapshotStorage.overlappingIterator(startOffset, endOffset, tastePreference);
     }
+    RangeHighlighterTree lineHighlighterTree = Objects.requireNonNull(myHighlighterTreeForLines);
+    ProperTextRange range = new ProperTextRange(startOffset, endOffset);
+    TextRange lineRange = lineHighlighterTree.size() == 0
+                          ? range
+                          : roundToLineBoundaries(getDocument(), startOffset, endOffset);
     return IntervalTreeImpl.mergingOverlappingIterator(
-      Objects.requireNonNull(myHighlighterTree), new ProperTextRange(startOffset, endOffset),
-      Objects.requireNonNull(myHighlighterTreeForLines), roundToLineBoundaries(getDocument(), startOffset, endOffset),
+      Objects.requireNonNull(myHighlighterTree), range,
+      lineHighlighterTree, lineRange,
       tastePreference, RangeHighlighterEx.BY_AFFECTED_START_OFFSET
     );
   }

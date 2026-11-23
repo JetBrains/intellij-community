@@ -9,18 +9,18 @@ platform resources and the native launcher read `product-info.json`.
 """
 
 load("@bazel_skylib//lib:unittest.bzl", "asserts", "unittest")
-load("//build/dev-dist-content:dev_dist_content_sets.bzl", "DEV_DIST_PLUGIN_COMPONENTS")
-load("//platform/build-scripts/bazel-rules:dev_dist_product_files.bzl", "build_txt_destination", "home_prefix", "product_info_destination")
-load(":dev_dist_plan.bzl", "DEV_DIST_PLANS")
+load("//build/dist-content:dist_content_sets.bzl", "DIST_PLUGIN_COMPONENTS")
+load("//platform/build-scripts/bazel-rules:dist_product_files.bzl", "build_txt_destination", "home_prefix", "product_info_destination")
 load(":dev_server_run_configurations.bzl", "DEV_RUN_CONFIGURATIONS")
+load(":dist_plan.bzl", "DIST_PLANS")
 load(
     ":intellij_dev_community.bzl",
-    "dev_dist_platform_fragments",
     "dev_run_configuration_check_plan",
     "dev_run_distribution_groups",
+    "dist_platform_fragments",
 )
 
-# Every product of `DEV_DIST_PRODUCTS` in `dev_dist_products.bzl`.
+# Every product of `DIST_PRODUCTS` in `dist_products.bzl`.
 _PLANNED_PRODUCTS = [
     "Idea",
     "AndroidStudio",
@@ -33,15 +33,15 @@ _FRAGMENT_NAMES = [
 ]
 
 _IDEA_FRAGMENTS = [
-    "//build:idea_community_dev_platform_resources",
-    "//build:idea_community_dev_platform_platform_packed_content_modules",
-    "//build:idea_community_dev_platform_assets",
+    "//build:idea_community_platform_resources",
+    "//build:idea_community_platform_platform_packed_content_modules",
+    "//build:idea_community_platform_assets",
 ]
 
 _ANDROID_STUDIO_FRAGMENTS = [
-    "//build:android_studio_dev_platform_resources",
-    "//build:android_studio_dev_platform_platform_packed_content_modules",
-    "//build:android_studio_dev_platform_assets",
+    "//build:android_studio_platform_resources",
+    "//build:android_studio_platform_platform_packed_content_modules",
+    "//build:android_studio_platform_assets",
 ]
 
 def _check_plan_test_impl(ctx):
@@ -50,7 +50,7 @@ def _check_plan_test_impl(ctx):
         asserts.equals(env, None, dev_run_configuration_check_plan("x", product), product + " has a generated plan")
         asserts.false(
             env,
-            getattr(DEV_DIST_PLANS[product], "runtime_module_repository", False),
+            getattr(DIST_PLANS[product], "runtime_module_repository", False),
             "%s has no runtime module repository, so the community half declares no project model tree" % product,
         )
     return unittest.end(env)
@@ -60,7 +60,7 @@ check_plan_test = unittest.make(_check_plan_test_impl)
 def _additional_modules_test_impl(ctx):
     env = unittest.begin(ctx)
     for name, row in DEV_RUN_CONFIGURATIONS.items():
-        tiers = DEV_DIST_PLUGIN_COMPONENTS[row.product]
+        tiers = DIST_PLUGIN_COMPONENTS[row.product]
         for module in getattr(row, "additional_modules", []):
             asserts.true(
                 env,
@@ -84,7 +84,7 @@ distribution_name_test = unittest.make(_distribution_name_test_impl)
 
 def _idea_platform_fragments_test_impl(ctx):
     env = unittest.begin(ctx)
-    platform = dev_dist_platform_fragments("Idea")
+    platform = dist_platform_fragments("Idea")
     asserts.equals(env, _IDEA_FRAGMENTS, platform.fragments)
     asserts.equals(env, _FRAGMENT_NAMES, platform.fragment_names)
     return unittest.end(env)
@@ -93,7 +93,7 @@ idea_platform_fragments_test = unittest.make(_idea_platform_fragments_test_impl)
 
 def _android_studio_platform_fragments_test_impl(ctx):
     env = unittest.begin(ctx)
-    platform = dev_dist_platform_fragments("AndroidStudio")
+    platform = dist_platform_fragments("AndroidStudio")
     asserts.equals(env, _ANDROID_STUDIO_FRAGMENTS, platform.fragments)
     asserts.equals(env, _FRAGMENT_NAMES, platform.fragment_names)
     return unittest.end(env)

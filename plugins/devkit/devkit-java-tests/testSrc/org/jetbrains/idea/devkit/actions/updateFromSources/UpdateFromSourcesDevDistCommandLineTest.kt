@@ -16,7 +16,7 @@ internal class UpdateFromSourcesDevDistCommandLineTest {
 
   private fun devIdeaHome(): Path {
     val home = tempDir.resolve("idea")
-    home.resolve("build").createDirectories().resolve("dev-dist.cmd").createFile()
+    home.resolve("build").createDirectories().resolve("dist.cmd").createFile()
     return home
   }
 
@@ -36,7 +36,7 @@ internal class UpdateFromSourcesDevDistCommandLineTest {
       logFile = logFile,
     )
 
-    assertThat(commandLine.exePath).isEqualTo(devIdeaHome.resolve("build/dev-dist.cmd").pathString)
+    assertThat(commandLine.exePath).isEqualTo(devIdeaHome.resolve("build/dist.cmd").pathString)
     assertThat(commandLine.workingDirectory).isEqualTo(devIdeaHome)
     assertThat(commandLine.parametersList.list).containsExactly(
       "update-ide",
@@ -115,7 +115,7 @@ internal class UpdateFromSourcesDevDistCommandLineTest {
     val result = parseDevDistUpdateResult("""
       {
         "version": 1,
-        "apply": ["/tmp/IDEA.app.dev-dist", "update-ide", "--apply-staged", "--home=/tmp/IDEA.app/Contents"],
+        "apply": ["/tmp/IDEA.app.dist", "update-ide", "--apply-staged", "--home=/tmp/IDEA.app/Contents"],
         "repository": "/idea/out/update-from-sources/plugins/plugins.xml",
         "skippedPlugins": ["unknown"],
         "fingerprint": "v5:abc",
@@ -123,7 +123,7 @@ internal class UpdateFromSourcesDevDistCommandLineTest {
       }
     """.trimIndent())
 
-    assertThat(result.apply).containsExactly("/tmp/IDEA.app.dev-dist", "update-ide", "--apply-staged", "--home=/tmp/IDEA.app/Contents")
+    assertThat(result.apply).containsExactly("/tmp/IDEA.app.dist", "update-ide", "--apply-staged", "--home=/tmp/IDEA.app/Contents")
     assertThat(result.repository).isEqualTo("/idea/out/update-from-sources/plugins/plugins.xml")
     assertThat(result.skippedPlugins).containsExactly("unknown")
     assertThat(result.fingerprint).isEqualTo("v5:abc")

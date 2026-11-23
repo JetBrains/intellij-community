@@ -5,8 +5,6 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.slicer
 import com.intellij.analysis.AnalysisScope
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.wm.ToolWindowId
-import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.psi.PsiElement
 import com.intellij.slicer.DuplicateMap
 import com.intellij.slicer.SliceAnalysisParams
@@ -14,6 +12,7 @@ import com.intellij.slicer.SlicePanel
 import com.intellij.slicer.SliceRootNode
 import com.intellij.usageView.UsageInfo
 import com.intellij.usageView.UsageViewBundle
+import com.intellij.usageView.UsageViewContentManager
 import com.intellij.usages.PsiElementUsageTarget
 import com.intellij.usages.UsageContextPanel
 import com.intellij.usages.UsageView
@@ -49,7 +48,7 @@ sealed class KotlinUsageContextDataFlowPanelBase(presentation: UsageViewPresenta
 
     protected fun createPanel(element: PsiElement, dataFlowToThis: Boolean): JPanel {
         val project = element.project
-        val toolWindow = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.FIND) ?: error("Can't find ToolWindowId.FIND")
+        val toolWindow = UsageViewContentManager.getInstance(project).toolWindow
         val params = createParams(element)
 
         val rootNode = SliceRootNode(project, DuplicateMap(), KotlinSliceUsage(element, params))

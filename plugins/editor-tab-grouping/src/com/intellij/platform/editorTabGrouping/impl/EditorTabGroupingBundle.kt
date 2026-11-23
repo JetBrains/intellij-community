@@ -9,5 +9,5 @@ private const val BUNDLE = "messages.EditorTabGroupingBundle"
 
 internal object EditorTabGroupingBundle : DynamicBundle(EditorTabGroupingBundle::class.java, BUNDLE) {
   @Nls
-  fun message(@PropertyKey(resourceBundle = BUNDLE) key: String): String = getMessage(key)
+  fun message(@PropertyKey(resourceBundle = BUNDLE) key: String, vararg params: Any): String = getMessage(key, *params)
 }

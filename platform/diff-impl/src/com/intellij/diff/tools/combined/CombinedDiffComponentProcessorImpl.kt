@@ -69,7 +69,7 @@ class CombinedDiffComponentProcessorImpl(
   override val component: JComponent get() = mainUi.getComponent()
 
   override val filesToRefresh: List<VirtualFile> get() = emptyList()
-  override val embeddedEditors: List<Editor> get() = combinedViewer?.editors.orEmpty()
+  override val embeddedEditors: List<Editor> get() = combinedViewer?.highlightEditors.orEmpty()
 
   override val context: DiffContext get() = model.context
   override val blocks: List<CombinedBlockProducer> get() = model.requests

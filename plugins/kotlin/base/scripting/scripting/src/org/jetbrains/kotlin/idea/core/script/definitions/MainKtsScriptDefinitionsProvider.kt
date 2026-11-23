@@ -6,8 +6,9 @@ package org.jetbrains.kotlin.idea.core.script.definitions
 import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifacts
 import org.jetbrains.kotlin.idea.core.script.definition.kotlinScriptTemplate
-import java.nio.file.Path
+import org.jetbrains.kotlin.idea.core.script.definition.loadDefinitionsFromTemplates
 import kotlin.script.experimental.api.ScriptCompilationConfiguration
+import kotlin.script.experimental.api.ScriptEvaluationConfiguration
 import kotlin.script.experimental.api.dependenciesSources
 import kotlin.script.experimental.api.hostConfiguration
 import kotlin.script.experimental.api.ide
@@ -17,43 +18,53 @@ import kotlin.script.experimental.host.ScriptingHostConfiguration
 import kotlin.script.experimental.host.shouldResolveDependencies
 import kotlin.script.experimental.intellij.ScriptDefinitionsProvider
 import kotlin.script.experimental.jvm.JvmDependency
+import kotlin.script.experimental.jvm.defaultJvmScriptingHostConfiguration
 
 class MainKtsScriptDefinitionsProvider(val project: Project) : ScriptDefinitionsProvider {
     override val id: String = KotlinScriptDefinitionsProviderId.MAIN_KTS.id
 
-    override fun getTemplateClasspath(): List<Path> = listOf(
-        KotlinArtifacts.ideKotlinMainKtsPath,
-        KotlinArtifacts.kotlinStdlibPath,
-        KotlinArtifacts.kotlinScriptRuntimePath,
-        KotlinArtifacts.kotlinReflectPath,
-    )
+    /**
+     * The bundled jars do not change in a session, so the template class loads once and not on each load of the definitions.
+     * A failed load gives no definition, so the next load tries again.
+     */
+    private var definitions: List<ScriptDefinition> = emptyList()
 
-    // Without discovery, because the plugin build drops the directory entries of the jar.
-    override fun getDefinitionClasses(): List<String> = listOf("org.jetbrains.kotlin.mainKts.MainKtsScript")
+    private fun loadDefinitions(): List<ScriptDefinition> =
+        loadDefinitionsFromTemplates(
+            // Without discovery, because the plugin build drops the directory entries of the jar.
+            templateClassNames = listOf("org.jetbrains.kotlin.mainKts.MainKtsScript"),
+            templateClasspath = listOf(
+                KotlinArtifacts.ideKotlinMainKtsPath,
+                KotlinArtifacts.kotlinStdlibPath,
+                KotlinArtifacts.kotlinScriptRuntimePath,
+                KotlinArtifacts.kotlinReflectPath,
+            ),
+        ).map { definition ->
+            val compilationConfiguration = definition.compilationConfiguration.with {
+                ide.dependenciesSources(JvmDependency(KotlinArtifacts.kotlinStdlibSources))
+                kotlinScriptTemplate {
+                    id = "main-kts"
+                    title = ".main.kts"
+                    templateName = "Kotlin Script MainKts"
+                    @Suppress("HardCodedStringLiteral")
+                    description = "Standalone script, supports @file:DependsOn for external library imports."
+                }
 
-    override fun useDiscovery(): Boolean = false
+                hostConfiguration(
+                    ScriptingHostConfiguration(this[ScriptCompilationConfiguration.hostConfiguration] ?: defaultJvmScriptingHostConfiguration) {
+                        shouldResolveDependencies(false)
+                    }
+                )
+            }
+
+            ScriptDefinition(compilationConfiguration, definition.evaluationConfiguration ?: ScriptEvaluationConfiguration.Default)
+        }.toList()
 
     override fun provideDefinitions(
         baseHostConfiguration: ScriptingHostConfiguration,
         loadedScriptDefinitions: List<ScriptDefinition>,
-    ): List<ScriptDefinition> = loadedScriptDefinitions.map { definition ->
-        val compilationConfiguration = definition.compilationConfiguration.with {
-            ide.dependenciesSources(JvmDependency(KotlinArtifacts.kotlinStdlibSources))
-            kotlinScriptTemplate {
-                id = "main-kts"
-                title = ".main.kts"
-                templateName = "Kotlin Script MainKts"
-                @Suppress("HardCodedStringLiteral")
-                description = "Standalone script, supports @file:DependsOn for external library imports."
-            }
-
-            hostConfiguration(
-                ScriptingHostConfiguration(this[ScriptCompilationConfiguration.hostConfiguration] ?: baseHostConfiguration) {
-                    shouldResolveDependencies(false)
-                }
-            )
-        }
-
-        ScriptDefinition(compilationConfiguration, definition.evaluationConfiguration)
+    ): List<ScriptDefinition> {
+        if (definitions.isEmpty()) definitions = loadDefinitions()
+        return definitions
     }
 }

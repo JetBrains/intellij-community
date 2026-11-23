@@ -18,10 +18,10 @@ import org.junit.runner.RunWith;
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
 @TestMetadata("testData/intentions/injected")
-public abstract class K2IntentionInInjectionTestGenerated extends AbstractK2IntentionInInjectionTest {
+public abstract class K2IntentionInInjectionTestGenerated extends AbstractK2IntentionTest {
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/intentions/injected/specifyType")
-    public static class SpecifyType extends AbstractK2IntentionInInjectionTest {
+    public static class SpecifyType extends AbstractK2IntentionTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }

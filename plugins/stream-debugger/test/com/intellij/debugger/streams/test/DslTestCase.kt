@@ -4,48 +4,71 @@ package com.intellij.debugger.streams.test
 import com.intellij.debugger.streams.core.trace.dsl.CodeContext
 import com.intellij.debugger.streams.core.trace.dsl.Dsl
 import com.intellij.debugger.streams.core.trace.dsl.impl.TextExpression
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
+import com.intellij.testFramework.PlatformTestUtil
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.TestInfo
+import org.junit.jupiter.api.assertThrows
 
 /**
  * @author Vitaliy.Bibaev
  */
-abstract class DslTestCase(private val dsl: Dsl) : LightJavaCodeInsightFixtureTestCase() {
+abstract class DslTestCase(private val dsl: Dsl) {
+  private lateinit var testName: String
+
+  /**
+   * Returns the directory of the expected `.out` files.
+   */
+  protected abstract fun getTestDataPath(): String
+
+  @BeforeEach
+  fun setUpTestName(testInfo: TestInfo) {
+    testName = PlatformTestUtil.getTestName(testInfo.testMethod.get().name, true)
+  }
+
+  @Test
   fun testCall() {
     doTest {
       call("this".expr, "method")
     }
   }
 
+  @Test
   fun testCallOneArg() {
     doTest {
       call("this".expr, "method", "10".expr)
     }
   }
 
+  @Test
   fun testCallManyArgs() {
     doTest {
       call("this".expr, "method", "10".expr, "20".expr, "30".expr)
     }
   }
 
+  @Test
   fun testDeclareMutableVariable() {
     doTest {
       declare(variable(types.INT, "a"), true)
     }
   }
 
+  @Test
   fun testDeclareImmutableVariable() {
     doTest {
       declare(variable(types.INT, "a"), true)
     }
   }
 
+  @Test
   fun testDeclareVariableAndInit() {
     doTest {
       declare(variable(types.INT, "a"), "10".expr, false)
     }
   }
 
+  @Test
   fun testUseVariable() {
     doTest {
       declare(variable(types.INT, "a"), "100".expr, true)
@@ -53,6 +76,7 @@ abstract class DslTestCase(private val dsl: Dsl) : LightJavaCodeInsightFixtureTe
     }
   }
 
+  @Test
   fun testMergeCodeBlocks() {
     val block = dsl.block {
       declare(variable(types.INT, "b"), "20".expr, false)
@@ -64,6 +88,7 @@ abstract class DslTestCase(private val dsl: Dsl) : LightJavaCodeInsightFixtureTe
     }
   }
 
+  @Test
   fun testMergeCodeBlocksReversed() {
     val block = dsl.block {
       declare(variable(types.INT, "a"), "10".expr, false)
@@ -75,6 +100,7 @@ abstract class DslTestCase(private val dsl: Dsl) : LightJavaCodeInsightFixtureTe
     }
   }
 
+  @Test
   fun testScope() {
     doTest {
       scope {
@@ -83,6 +109,7 @@ abstract class DslTestCase(private val dsl: Dsl) : LightJavaCodeInsightFixtureTe
     }
   }
 
+  @Test
   fun testNestedScopes() {
     doTest {
       scope {
@@ -94,6 +121,7 @@ abstract class DslTestCase(private val dsl: Dsl) : LightJavaCodeInsightFixtureTe
     }
   }
 
+  @Test
   fun testIf() {
     doTest {
       ifBranch("true".expr) {
@@ -102,6 +130,7 @@ abstract class DslTestCase(private val dsl: Dsl) : LightJavaCodeInsightFixtureTe
     }
   }
 
+  @Test
   fun testIfElse() {
     doTest {
       ifBranch("false".expr) {
@@ -112,6 +141,7 @@ abstract class DslTestCase(private val dsl: Dsl) : LightJavaCodeInsightFixtureTe
     }
   }
 
+  @Test
   fun testIfElseIf() {
     doTest {
       ifBranch("false".expr) {
@@ -122,6 +152,7 @@ abstract class DslTestCase(private val dsl: Dsl) : LightJavaCodeInsightFixtureTe
     }
   }
 
+  @Test
   fun testIfElseIfElse() {
     doTest {
       ifBranch("false".expr) {
@@ -134,6 +165,7 @@ abstract class DslTestCase(private val dsl: Dsl) : LightJavaCodeInsightFixtureTe
     }
   }
 
+  @Test
   fun testForEach() {
     doTest {
       val objects = declare(variable(types.list(types.ANY), "objects"), "getObjects()".expr, false)
@@ -143,6 +175,7 @@ abstract class DslTestCase(private val dsl: Dsl) : LightJavaCodeInsightFixtureTe
     }
   }
 
+  @Test
   fun testForLoop() {
     doTest {
       val objects = declare(variable(types.list(types.ANY), "objects"), "getObjects()".expr, false)
@@ -153,6 +186,7 @@ abstract class DslTestCase(private val dsl: Dsl) : LightJavaCodeInsightFixtureTe
     }
   }
 
+  @Test
   fun testLoopWithBreak() {
     doTest {
       val objects = declare(variable(types.list(types.ANY), "objects"), "getObjects()".expr, false)
@@ -162,6 +196,7 @@ abstract class DslTestCase(private val dsl: Dsl) : LightJavaCodeInsightFixtureTe
     }
   }
 
+  @Test
   fun testLoopWithNestedBreak() {
     doTest {
       val objects = declare(variable(types.list(types.ANY), "objects"), "getObjects()".expr, false)
@@ -173,6 +208,7 @@ abstract class DslTestCase(private val dsl: Dsl) : LightJavaCodeInsightFixtureTe
     }
   }
 
+  @Test
   fun testLambdaWithExpression() {
     doTest {
       +lambda("x") {
@@ -181,6 +217,7 @@ abstract class DslTestCase(private val dsl: Dsl) : LightJavaCodeInsightFixtureTe
     }
   }
 
+  @Test
   fun testLambdaWithCodeBlock() {
     doTest {
       +lambda("y") {
@@ -190,6 +227,7 @@ abstract class DslTestCase(private val dsl: Dsl) : LightJavaCodeInsightFixtureTe
     }
   }
 
+  @Test
   fun testCodeBlockReturn() {
     doTest {
       val a = declare(variable(types.INT, "a"), "10".expr, true)
@@ -197,6 +235,7 @@ abstract class DslTestCase(private val dsl: Dsl) : LightJavaCodeInsightFixtureTe
     }
   }
 
+  @Test
   fun testLambdaExpressionReturn() {
     doTest {
       +lambda("y") {
@@ -206,6 +245,7 @@ abstract class DslTestCase(private val dsl: Dsl) : LightJavaCodeInsightFixtureTe
     }
   }
 
+  @Test
   fun testLambdaBlockReturn() {
     doTest {
       +lambda("y") {
@@ -215,6 +255,7 @@ abstract class DslTestCase(private val dsl: Dsl) : LightJavaCodeInsightFixtureTe
     }
   }
 
+  @Test
   fun testAssignment() {
     doTest {
       val a = declare(variable(types.INT, "a"), true)
@@ -222,6 +263,7 @@ abstract class DslTestCase(private val dsl: Dsl) : LightJavaCodeInsightFixtureTe
     }
   }
 
+  @Test
   fun testNestedAssignment() {
     doTest {
       val a = declare(variable(types.INT, "a"), true)
@@ -233,6 +275,7 @@ abstract class DslTestCase(private val dsl: Dsl) : LightJavaCodeInsightFixtureTe
     }
   }
 
+  @Test
   fun testProperties() {
     doTest {
       val a = variable(types.INT, "a")
@@ -240,6 +283,7 @@ abstract class DslTestCase(private val dsl: Dsl) : LightJavaCodeInsightFixtureTe
     }
   }
 
+  @Test
   fun testNegation() {
     doTest {
       val lst = list(types.INT, "lst")
@@ -247,18 +291,21 @@ abstract class DslTestCase(private val dsl: Dsl) : LightJavaCodeInsightFixtureTe
     }
   }
 
+  @Test
   fun testMapDeclaration() {
     doTest {
       declare(map(types.INT, types.BOOLEAN, "map"), false)
     }
   }
 
+  @Test
   fun testLinkedMapDeclaration() {
     doTest {
       declare(linkedMap(types.INT, types.BOOLEAN, "map"), true)
     }
   }
 
+  @Test
   fun testMapGet() {
     doTest {
       val map = map(types.INT, types.ANY, "map")
@@ -266,6 +313,7 @@ abstract class DslTestCase(private val dsl: Dsl) : LightJavaCodeInsightFixtureTe
     }
   }
 
+  @Test
   fun testMapPut() {
     doTest {
       val map = map(types.INT, types.ANY, "map")
@@ -273,6 +321,7 @@ abstract class DslTestCase(private val dsl: Dsl) : LightJavaCodeInsightFixtureTe
     }
   }
 
+  @Test
   fun testMapContains() {
     doTest {
       val map = map(types.INT, types.ANY, "map")
@@ -280,18 +329,21 @@ abstract class DslTestCase(private val dsl: Dsl) : LightJavaCodeInsightFixtureTe
     }
   }
 
+  @Test
   fun testMapInitialization() {
     doTest {
       declare(map(types.INT, types.INT, "map").defaultDeclaration(true))
     }
   }
 
+  @Test
   fun testLinkedMapInitialization() {
     doTest {
       declare(linkedMap(types.INT, types.BOOLEAN, "map").defaultDeclaration(false))
     }
   }
 
+  @Test
   fun testMapComputeIfAbsent() {
     doTest {
       val map = map(types.INT, types.ANY, "map")
@@ -301,12 +353,14 @@ abstract class DslTestCase(private val dsl: Dsl) : LightJavaCodeInsightFixtureTe
     }
   }
 
+  @Test
   fun testListDeclaration() {
     doTest {
       declare(list(types.INT, "lst"), true)
     }
   }
 
+  @Test
   fun testListOperations() {
     doTest {
       val lst = list(types.LONG, "lst")
@@ -318,6 +372,7 @@ abstract class DslTestCase(private val dsl: Dsl) : LightJavaCodeInsightFixtureTe
     }
   }
 
+  @Test
   fun testNewList() {
     doTest {
       val variable = list(types.INT, "lst")
@@ -325,12 +380,14 @@ abstract class DslTestCase(private val dsl: Dsl) : LightJavaCodeInsightFixtureTe
     }
   }
 
+  @Test
   fun testArrayDeclaration() {
     doTest {
       declare(array(types.INT, "a"), false)
     }
   }
 
+  @Test
   fun testArrayElementUsage() {
     doTest {
       val array = array(types.INT, "a")
@@ -339,6 +396,7 @@ abstract class DslTestCase(private val dsl: Dsl) : LightJavaCodeInsightFixtureTe
     }
   }
 
+  @Test
   fun testArrayElementAssignment() {
     doTest {
       val array = array(types.INT, "a")
@@ -347,6 +405,7 @@ abstract class DslTestCase(private val dsl: Dsl) : LightJavaCodeInsightFixtureTe
     }
   }
 
+  @Test
   fun testArrayDefaultDeclaration() {
     doTest {
       val a = array(types.INT, "array")
@@ -354,6 +413,7 @@ abstract class DslTestCase(private val dsl: Dsl) : LightJavaCodeInsightFixtureTe
     }
   }
 
+  @Test
   fun testArrayCreateFromElements() {
     doTest {
       val a = array(types.DOUBLE, "array")
@@ -361,6 +421,7 @@ abstract class DslTestCase(private val dsl: Dsl) : LightJavaCodeInsightFixtureTe
     }
   }
 
+  @Test
   fun testMapConvertToArray() {
     doTest {
       val map = map(types.INT, types.ANY, "map")
@@ -368,6 +429,7 @@ abstract class DslTestCase(private val dsl: Dsl) : LightJavaCodeInsightFixtureTe
     }
   }
 
+  @Test
   fun testNullableTypes() {
     doTest {
       declare(variable(types.ANY, "usualType"), false)
@@ -379,6 +441,7 @@ abstract class DslTestCase(private val dsl: Dsl) : LightJavaCodeInsightFixtureTe
     }
   }
 
+  @Test
   fun testTryBlock() {
     doTest {
       tryBlock {
@@ -389,21 +452,24 @@ abstract class DslTestCase(private val dsl: Dsl) : LightJavaCodeInsightFixtureTe
     }
   }
 
+  @Test
   fun testTryWithUnspecifiedCatch() {
-    assertThrows(IllegalStateException::class.java) {
-        doTest {
-          tryBlock {
-          }
+    assertThrows<IllegalStateException> {
+      doTest {
+        tryBlock {
         }
       }
+    }
   }
 
+  @Test
   fun testTimeVariableDeclaration() {
     doTest {
       declare(timeDeclaration())
     }
   }
 
+  @Test
   fun testSizedArrayCreation() {
     doTest {
       +newSizedArray(types.STRING, 100)
@@ -415,7 +481,6 @@ abstract class DslTestCase(private val dsl: Dsl) : LightJavaCodeInsightFixtureTe
   }
 
   private fun check(actualText: String) {
-    val testName = getTestName(true)
-    assertSameLinesWithFile("$testDataPath/$testName.out", actualText, false)
+    PlatformTestUtil.assertSameLinesWithFile("${getTestDataPath()}/$testName.out", actualText, false)
   }
 }

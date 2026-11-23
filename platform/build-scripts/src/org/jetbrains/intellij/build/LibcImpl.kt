@@ -9,6 +9,7 @@ interface LibcImpl {
       OsFamily.MACOS -> MacLibcImpl.DEFAULT
       OsFamily.WINDOWS -> WindowsLibcImpl.DEFAULT
       OsFamily.LINUX -> LinuxLibcImpl.GLIBC
+      OsFamily.OHOS -> OhosLibcImpl.DEFAULT
     }
   }
 }
@@ -40,5 +41,14 @@ enum class LinuxLibcImpl : LibcImpl {
     val ALL: List<LinuxLibcImpl> = listOf(*LinuxLibcImpl.entries.toTypedArray())
 
     val current: LinuxLibcImpl = if (JdkDownloader.isLinuxMusl()) MUSL else GLIBC
+  }
+}
+
+enum class OhosLibcImpl : LibcImpl {
+  DEFAULT;
+
+  companion object {
+    @JvmField
+    val ALL: List<OhosLibcImpl> = listOf(*OhosLibcImpl.entries.toTypedArray())
   }
 }

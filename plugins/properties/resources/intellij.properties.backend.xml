@@ -89,6 +89,8 @@
     <automaticRenamerFactory implementation="com.intellij.lang.properties.refactoring.rename.ResourceBundleRenamerFactory"/>
     <renamePsiElementProcessor implementation="com.intellij.lang.properties.refactoring.rename.RenamePropertyProcessor"/>
     <headlessRenamePsiElementProcessor implementation="com.intellij.lang.properties.refactoring.rename.RenamePropertyProcessor"/>
+    <refactoring.modPlanRenameProvider
+      implementation="com.intellij.lang.properties.refactoring.rename.RenamePropertyProcessor$ModPlanRenamePropertyProvider"/>
     <headlessRenameSupportedLanguage language="Properties"/>
     <stubElementTypeHolder class="com.intellij.lang.properties.parsing.PropertiesElementTypes"/>
     <stubIndex implementation="com.intellij.lang.properties.psi.PropertyKeyIndex"/>

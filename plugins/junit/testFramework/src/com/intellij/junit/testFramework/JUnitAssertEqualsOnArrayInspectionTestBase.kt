@@ -9,6 +9,11 @@ import com.intellij.testFramework.LightProjectDescriptor
 
 private val descriptor = JUnitProjectDescriptor(HIGHEST, JUNIT5)
 
+/**
+ * @deprecated Use [junitProjectFixture] and [junitAssertEqualsOnArrayInspectionFixture] in a JUnit 5 test.
+ */
+@Suppress("DEPRECATION")
+@Deprecated("Use junitProjectFixture and junitAssertEqualsOnArrayInspectionFixture in a JUnit 5 test")
 abstract class JUnitAssertEqualsOnArrayInspectionTestBase : JvmInspectionTestBase() {
   override val inspection: JUnitAssertEqualsOnArrayInspection = JUnitAssertEqualsOnArrayInspection()
   override fun getProjectDescriptor(): LightProjectDescriptor = descriptor

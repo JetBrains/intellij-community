@@ -164,6 +164,10 @@ open class JEditorUiComponent(data: ComponentData) : UiComponent(data) {
     driver.invokeAction("ExpandAllRegions", component = component)
   }
 
+  fun scrollHorizontally(scrollTo: Int) {
+    interact { editor.getScrollingModel().scrollHorizontally(scrollTo) }
+  }
+
   val foldRegions: List<FoldRegion>
     get() = driver.withContext(OnDispatcher.EDT) { editor.getFoldingModel().getAllFoldRegions().toList() }
 
@@ -331,7 +335,7 @@ open class JEditorUiComponent(data: ComponentData) : UiComponent(data) {
   }
 
   fun getLineText(line: Int): String = text.lines().getOrElse(line - 1) { "" }
-  
+
   fun <T> interact(block: Editor.() -> T): T {
     return driver.withContext(OnDispatcher.EDT, semantics = LockSemantics.READ_ACTION) {
       block.invoke(editor)

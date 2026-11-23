@@ -96,4 +96,34 @@ object EelSystemFolderUtils {
     )
     return EelPath.parse(systemPath, eel.descriptor).asNioPath()
   }
+
+  /**
+   * Creates an [EelPathUtils.TransferTarget] that stages transferred content under
+   * `<systemFolder>/[relativeDirectory]/<source.fileName>` on [descriptor], or returns the original local source path
+   * when [descriptor] is [LocalEelDescriptor].
+   */
+  @JvmStatic
+  @JvmOverloads
+  fun createTransferTarget(
+    descriptor: EelDescriptor,
+    relativeDirectory: Path,
+    resyncOnEachCall: Boolean = false,
+  ): EelPathUtils.TransferTarget {
+    require(!relativeDirectory.isAbsolute) { "relativeDirectory must be relative: $relativeDirectory" }
+    return EelPathUtils.TransferTarget.Explicit(descriptor, resyncOnEachCall) { source: Path ->
+      if (descriptor === LocalEelDescriptor) {
+        // Staging into the local system folder would only copy content that is already on this machine.
+        return@Explicit source
+      }
+      val fileName = source.fileName?.toString() ?: error("Source path must have a file or directory name: $source")
+      var targetDir = getSystemFolder(descriptor)
+      for (part in relativeDirectory) {
+        val partName = part.toString()
+        if (partName.isNotEmpty()) {
+          targetDir = targetDir.resolve(partName)
+        }
+      }
+      targetDir.resolve(fileName)
+    }
+  }
 }

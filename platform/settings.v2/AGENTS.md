@@ -9,6 +9,7 @@ layers supply the values. The vault resolves and stores them.
 | `intellij.platform.settings.v2.shared`  | `shared/`  |
 | `intellij.platform.settings.v2.backend.baseline` | `backend/baseline/` |
 | `intellij.platform.settings.v2.backend` | `backend/` |
+| `intellij.platform.settings.v2.vcs` | `vcs/` |
 | `intellij.platform.settings.v2.test`    | `test/`    |
 | `intellij.platform.settings.v2.testKeys` | `testKeys/` |
 | `intellij.platform.settings.v2.testKeys.plugin` | `testKeys/plugin/` |
@@ -51,6 +52,10 @@ A sentence is moved to its home, never dropped.
 - The tests of `intellij.platform.settings.v2.test` run only under Bazel. `tests.cmd` refuses the module. Run them
   from the ultimate root with `./bazel.cmd test @community//platform/settings.v2/test:test_test`, and from the
   community root with `//platform/settings.v2/test:test_test`. Add `--test_filter=<FQN>` for one class.
+- More tests of the feature exist only in the ultimate repository: the split-mode tests, and the tests of the light
+  modes and of their upgrades. [`remote-dev/settings/v2/AGENTS.md`](../../../remote-dev/settings/v2/AGENTS.md) says
+  where each kind is. Look there before you say that no test covers a product mode. The link resolves only in the
+  ultimate repository.
 
 ## Specs
 
@@ -60,7 +65,7 @@ override it.
 - A spec is `spec/<feature>.spec.md`. Keep the folder flat until it needs subfolders by area.
 - Every spec declares `style: plain-1`.
 - Paths in `targets` and `[@test]` are relative to the spec file: `../src/...`, `../shared/src/...`,
-  `../backend/baseline/src/...`, `../backend/src/...`, `../testKeys/src/...`, `../test/src/...`.
+  `../backend/baseline/src/...`, `../backend/src/...`, `../vcs/src/...`, `../testKeys/src/...`, `../test/src/...`.
 - A main target file carries a backlink in its header, relative to that file. From
   `src/com/intellij/platform/settings/v2/` it is `// @spec ../../../../../../spec/<feature>.spec.md`.
 - Only a Kotlin or a Java target carries a backlink. An XML target, such as a module descriptor, has none. A spec or
@@ -91,6 +96,9 @@ override it.
   branch. Such a failure is expected until the user accepts the ADR.
 - A `Proposed` ADR that amends or supersedes another ADR does not change the status of that ADR. The old status
   changes when the new ADR is accepted.
+- The rules below about an accepted ADR apply to an ADR that is in master: its file exists in `origin/master`. An
+  ADR that is not in master yet belongs to the branch. Edit it in place, merge it with another ADR of the branch, or
+  drop it, whatever its status is. Never amend or supersede it with a new ADR in the same branch.
 - An accepted ADR keeps its decision. You may reword it, clarify it, or add details to it, when the decision stays
   the same. A missed detail or a wrong statement about the code is fixed in place. You may also add a missed
   consequence or rejected alternative.
@@ -153,5 +161,5 @@ decision with its reason. A merge only reorganizes what the ADRs already say. It
    - An older ADR that names the merged ADR can read as if it came later. Write
      `the key identity rule ([ADR 0124](...))`, not `[ADR 0124](...) allowed`.
    - An ADR that named two ADRs of the chain now names the merged ADR twice. Keep one.
-6. Run `SettingsDocsTest`. Every check must pass. Commit one chain per commit. The subject names the decision and
+6. Run `./community/tools/bt.cmd --module intellij.platform.settings.v2.test --filter com.intellij.platform.settings.v2.docs.SettingsDocsTest`. Every check must pass. Commit one chain per commit. The subject names the decision and
    the merged number, and the message lists the folded numbers.

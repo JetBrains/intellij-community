@@ -1,11 +1,22 @@
 package com.intellij.codeInspection.tests.kotlin.logging
 
-import com.intellij.jvm.analysis.internal.testFramework.logging.LoggingPlaceholderCountMatchesArgumentCountInspectionTestBase
+import com.intellij.jvm.analysis.internal.testFramework.logging.loggingPlaceholderCountMatchesArgumentCountInspectionFixture
 import com.intellij.jvm.analysis.testFramework.JvmLanguage
+import com.intellij.jvm.analysis.testFramework.jvmProjectFixture
+import com.intellij.testFramework.junit5.TestApplication
+import org.junit.jupiter.api.Test
 
-abstract class KotlinLoggingPlaceholderCountMatchesArgumentCountInspectionLog4J2Test : LoggingPlaceholderCountMatchesArgumentCountInspectionTestBase() {
+@TestApplication
+abstract class KotlinLoggingPlaceholderCountMatchesArgumentCountInspectionLog4J2Test {
+  companion object {
+    private val projectFixture = jvmProjectFixture()
+  }
+
+  protected val myFixture by loggingPlaceholderCountMatchesArgumentCountInspectionFixture(projectFixture)
+
   
 
+  @Test
   fun `test log4j2 with text variables`() {
     myFixture.testHighlighting(JvmLanguage.KOTLIN, """
           import org.apache.logging.log4j.LogManager
@@ -32,6 +43,7 @@ abstract class KotlinLoggingPlaceholderCountMatchesArgumentCountInspectionLog4J2
           """.trimIndent())
   }
 
+  @Test
   fun `test log4j2`() {
     myFixture.testHighlighting(JvmLanguage.KOTLIN, """
           import org.apache.logging.log4j.*;
@@ -60,6 +72,7 @@ abstract class KotlinLoggingPlaceholderCountMatchesArgumentCountInspectionLog4J2
         """.trimIndent())
   }
 
+  @Test
   fun `test log4j2 builder`() {
     myFixture.testHighlighting(JvmLanguage.KOTLIN, """
         import org.apache.logging.log4j.*;
@@ -89,6 +102,7 @@ abstract class KotlinLoggingPlaceholderCountMatchesArgumentCountInspectionLog4J2
         """.trimIndent())
   }
 
+  @Test
   fun `test log4j2LogBuilder 2`() {
     myFixture.testHighlighting(JvmLanguage.KOTLIN, """
         import org.apache.logging.log4j.LogManager
@@ -108,6 +122,7 @@ abstract class KotlinLoggingPlaceholderCountMatchesArgumentCountInspectionLog4J2
       """.trimIndent())
   }
 
+  @Test
   fun `test formatted log4j`() {
     myFixture.testHighlighting(JvmLanguage.KOTLIN, """
       import org.apache.logging.log4j.*;
@@ -127,6 +142,7 @@ abstract class KotlinLoggingPlaceholderCountMatchesArgumentCountInspectionLog4J2
       """.trimIndent())
   }
 
+  @Test
   fun `test Log4j2 with exception in suppliers`() {
     myFixture.testHighlighting(JvmLanguage.KOTLIN, """
         import org.apache.logging.log4j.LogManager
@@ -167,6 +183,7 @@ abstract class KotlinLoggingPlaceholderCountMatchesArgumentCountInspectionLog4J2
       """.trimIndent())
   }
 
+  @Test
   fun `test formatted log4j with partial known strings`() {
     myFixture.testHighlighting(JvmLanguage.KOTLIN, """
         import org.apache.logging.log4j.LogManager
@@ -189,6 +206,7 @@ abstract class KotlinLoggingPlaceholderCountMatchesArgumentCountInspectionLog4J2
       """.trimIndent())
   }
 
+  @Test
   fun `test log4j with partial known strings`() {
     myFixture.testHighlighting(JvmLanguage.KOTLIN, """
         import org.apache.logging.log4j.LogManager

@@ -1,0 +1,13 @@
+// COMPILER_ARGUMENTS: -Xcompanion-blocks
+
+class Foo {
+    companion {
+        fun helper(x: Int): Int = x
+    }
+
+    class Bar {
+        <caret>companion {
+            fun moved(xs: List<Int>) = xs.map(::helper)
+        }
+    }
+}

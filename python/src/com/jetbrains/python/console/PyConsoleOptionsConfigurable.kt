@@ -32,12 +32,7 @@ class PyConsoleOptionsConfigurable(private val myProject: Project) : SearchableC
 
   private var myPanel: DialogPanel? = null
 
-  /**
-   * The former "Python Console" child page. Its settings now live on this page.
-   *
-   * Recreated for every [createComponent] call: the panel owns a one-shot [com.intellij.openapi.Disposable]
-   * for its SDK-table subscription, so a reused instance would subscribe to a disposed parent.
-   */
+  /** The former "Python Console" child page. Its settings now live on this page. */
   private var myPythonConsolePanel: PyConsoleSpecificOptionsPanel? = null
 
   override fun getId(): String = "pyconsole"
@@ -84,7 +79,6 @@ class PyConsoleOptionsConfigurable(private val myProject: Project) : SearchableC
 
   override fun disposeUIResources() {
     myPanel = null
-    myPythonConsolePanel?.disposeUIResources()
     myPythonConsolePanel = null
     super.disposeUIResources()
   }
@@ -135,7 +129,6 @@ class PyConsoleOptionsConfigurable(private val myProject: Project) : SearchableC
       override fun isModified(): Boolean = panel.isModified
       override fun apply() = panel.apply()
       override fun reset() = panel.reset()
-      override fun disposeUIResources() = panel.disposeUIResources()
     }
   }
 }

@@ -82,7 +82,7 @@ private suspend fun runInstall(
     editable = editable,
     dependencyGroup = dependencyGroup?.takeIf { it.name.isNotEmpty() },
   )
-  val managerUI = PythonPackageManagerUI.forPythonInterpreter(moduleOrProject.project, interpreter)
+  val managerUI = PythonPackageManagerUI.forPythonInterpreter(interpreter)
   val cliArgs = options.toCliArgs(interpreter, moduleOrProject)
   val module = (moduleOrProject as? ModuleOrProject.ModuleAndProject)?.module
   // Group flag already baked into cliArgs via toCliArgs; skip the separate [dependencyGroup] hook

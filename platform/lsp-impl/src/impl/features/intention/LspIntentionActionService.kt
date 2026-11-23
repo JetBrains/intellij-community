@@ -1,9 +1,6 @@
 package com.intellij.platform.lsp.impl.features.intention
 
-import com.intellij.codeInsight.intention.IntentionActionDelegate
-import com.intellij.codeInsight.intention.IntentionManager
 import com.intellij.injected.editor.EditorWindow
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.thisLogger
@@ -32,14 +29,33 @@ import org.eclipse.lsp4j.WorkspaceEdit
 import org.eclipse.lsp4j.jsonrpc.messages.Either
 
 @Service(Service.Level.PROJECT)
-internal class LspIntentionActionService(private val project: Project) : Disposable {
+internal class LspIntentionActionService(private val project: Project) {
   companion object {
     fun getInstance(project: Project): LspIntentionActionService = project.service()
   }
 
   private val intentionActionsCache = LspPerFileCache<Pair<Int, Int>, List<LspIntentionAction>>(project)
 
-  fun getIntentionActions(editor: Editor): List<LspIntentionAction> {
+  // The project-level store of the resolved actions. The app-level `LspIntentionActionWrapper` is stateless.
+  // The platform disposes this service, so the store clears when the project closes. It keeps no stale project data.
+  @Volatile
+  private var lastResolvedActions: List<LspIntentionAction> = emptyList()
+
+  /**
+   * Resolves the action for [index], stores the resolved list, and returns the action or `null`.
+   * The caller is [LspIntentionActionWrapper.isAvailable]. The other wrapper functions read the stored
+   * list with [resolvedIntentionAction].
+   */
+  fun resolveIntentionAction(editor: Editor, index: Int): LspIntentionAction? {
+    val actions = getIntentionActions(editor)
+    lastResolvedActions = actions
+    return actions.getOrNull(index)
+  }
+
+  /** Returns the last resolved action for [index], or `null`. See [resolveIntentionAction]. */
+  fun resolvedIntentionAction(index: Int): LspIntentionAction? = lastResolvedActions.getOrNull(index)
+
+  private fun getIntentionActions(editor: Editor): List<LspIntentionAction> {
     if (editor is EditorWindow) {
       thisLogger().error("EditorWindow not expected here")
       return emptyList()
@@ -102,16 +118,6 @@ internal class LspIntentionActionService(private val project: Project) : Disposa
       }
     }
     return result
-  }
-
-  override fun dispose() {
-    IntentionManager.getInstance().intentionActions
-      .map { IntentionActionDelegate.unwrap(it) }
-      .filterIsInstance<LspIntentionActionWrapper>()
-      .forEach {
-        // IntentionActions are app-level entities, need to drop project-specific caches
-        it.lspIntentionAction = null
-      }
   }
 }
 

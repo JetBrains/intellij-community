@@ -2,11 +2,13 @@
 package com.intellij.platform.settings.v2
 
 import com.intellij.openapi.application.readAction
+import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.vfs.JarFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
-import com.intellij.platform.settings.v2.impl.VirtualFileSettingsContext
+import com.intellij.platform.settings.v2.impl.SettingsRootsCache
+import com.intellij.platform.settings.v2.impl.FileSettingsContext
 import com.intellij.platform.settings.v2.impl.topmostContentRoots
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.VfsTestUtil
@@ -14,14 +16,20 @@ import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.fixture.moduleFixture
 import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.testFramework.junit5.fixture.sourceRootFixture
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.async
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withTimeout
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import java.io.ByteArrayOutputStream
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
+import kotlin.time.Duration.Companion.seconds
 
 /**
  * Pins that a file context anchors on the **topmost** content root. A module content root can hold another one, and a
@@ -45,7 +53,7 @@ class SettingsNestedRootsTest {
     val file = VfsTestUtil.createFile(outer, "module/src/main/a/Sample.java")
     addContentRoot(readAction { file.parent })
 
-    val context = readAction { SettingsContext.file(file, project) } as VirtualFileSettingsContext
+    val context = readAction { SettingsContext.file(file, project) } as FileSettingsContext
 
     assertEquals(sourceRoot.url, context.rootUrl)
     assertEquals("outer/module/src/main/a/Sample.java", context.relativePath)
@@ -99,6 +107,46 @@ class SettingsNestedRootsTest {
     assertEquals(listOf(sourceRoot.url, sibling.url), roots)
   }
 
+  @Test
+  fun `a change of the roots signals the roots cache and the cache gives the new roots`(): Unit = runBlocking {
+    val cache = SettingsRootsCache.getInstance(project)
+    val before = readAction { cache.rootUrls() }
+    val added = VfsTestUtil.createDir(readAction { sourceRoot.parent }, "${sourceRoot.name}-signalled")
+    val signal = async(start = CoroutineStart.UNDISPATCHED) { cache.rootsChanged.first() }
+
+    addContentRoot(added)
+    try {
+      withTimeout(10.seconds) { signal.await() }
+      assertEquals((before + added.url).sorted(), readAction { cache.rootUrls() })
+    }
+    finally {
+      // The project is shared by the class, and an extra topmost root breaks the exact root lists of the other tests.
+      writeIntentReadAction { PsiTestUtil.removeContentEntry(moduleFixture.get(), added) }
+    }
+  }
+
+  @Test
+  fun `a renamed root gives the new url and a file under it anchors on the new url`(): Unit = runBlocking {
+    val cache = SettingsRootsCache.getInstance(project)
+    val root = VfsTestUtil.createDir(readAction { sourceRoot.parent }, "${sourceRoot.name}-before-rename")
+    val file = VfsTestUtil.createFile(root, "Sample.txt")
+    addContentRoot(root)
+    try {
+      readAction { cache.rootUrls() }
+
+      writeAction { root.rename(this, "${sourceRoot.name}-after-rename") }
+
+      assertTrue(root.url in readAction { cache.rootUrls() })
+      val context = readAction { SettingsContext.file(file, project) } as FileSettingsContext
+      assertEquals(root.url, context.rootUrl)
+      assertEquals("Sample.txt", context.relativePath)
+    }
+    finally {
+      // The project is shared by the class, and an extra topmost root breaks the exact root lists of the other tests.
+      writeIntentReadAction { PsiTestUtil.removeContentEntry(moduleFixture.get(), root) }
+    }
+  }
+
   /** Registers [dir] as one more content root of the module. */
   private suspend fun addContentRoot(dir: VirtualFile) {
     writeIntentReadAction { PsiTestUtil.addContentRoot(moduleFixture.get(), dir) }
@@ -116,7 +164,7 @@ class SettingsNestedRootsTest {
   }
 
   private fun fileIdentity(relativePath: String): String =
-    VirtualFileSettingsContext(projectId = project.locationHash,
+    FileSettingsContext(projectId = project.locationHash,
                                rootUrl = sourceRoot.url,
                                relativePath = relativePath).identity
 }

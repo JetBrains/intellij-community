@@ -2,6 +2,7 @@
 package com.jetbrains.python.debugger;
 
 import com.intellij.python.sdk.backend.PythonInterpreter;
+import com.intellij.python.sdk.backend.PythonInterpreterDetails;
 import com.intellij.python.sdk.backend.PythonInterpreterExtKt;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.RunManager;
@@ -28,7 +29,6 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtil;
-import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsContexts.DialogMessage;
@@ -219,9 +219,9 @@ public final class PyDebugNotificationForCythonExtension {
       if (selectedConfiguration != null) {
         RunConfiguration runConfiguration = selectedConfiguration.getConfiguration();
         if (runConfiguration instanceof PythonRunConfiguration) {
-          Sdk pythonSdk = ((PythonRunConfiguration)runConfiguration ).getSdk();
-          if (pythonSdk != null) {
-            String versionString = pythonSdk.getVersionString();
+          PythonInterpreter interpreter = ((PythonRunConfiguration)runConfiguration).getPythonInterpreter();
+          if (interpreter != null) {
+            String versionString = PythonInterpreterDetails.getInstance(project).version(interpreter);
             if (versionString != null && versionString.length() > pythonStringLength) {
               version = versionString.substring(pythonStringLength, versionString.lastIndexOf('.'));
             }

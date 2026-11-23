@@ -37,10 +37,9 @@ public abstract class ForkedSplitter<T> extends ForkedByModuleSplitter {
       if (repeatCount != null && myForkMode.equals("repeat")) {
         return TestsRepeater.repeat(RepeatCount.getCount(repeatCount),
                                     false,
-                                    null,
                                     new TestsRepeater.TestRun() {
                                       @Override
-                                      public int execute(String parentId, boolean sendTree) throws Exception {
+                                      public int execute(boolean sendTree) throws Exception {
                                         return startChildFork(createChildArgs(myRootDescription), null, classpath, moduleOptions, null);
                                       }
                                     });

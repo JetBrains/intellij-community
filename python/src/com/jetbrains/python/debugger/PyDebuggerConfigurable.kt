@@ -167,8 +167,8 @@ class PyDebuggerConfigurable(private val myProject: Project) : SearchableConfigu
    */
   private fun isDebugpyAvailable(): Boolean {
     if (!isPythonDapPluginInstalledAndEnabled()) return false
-    val sdk = getEffectiveSdk(myProject) ?: return true
-    return isDebugpyAvailableForSdk(sdk, myProject)
+    val interpreter = getEffectiveInterpreter(myProject) ?: return true
+    return isDebugpyAvailable(interpreter)
   }
 
   override fun isModified(): Boolean = myMainPanel?.isModified() == true

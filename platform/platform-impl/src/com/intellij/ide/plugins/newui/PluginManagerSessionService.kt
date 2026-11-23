@@ -69,6 +69,13 @@ class PluginManagerSession(val sessionId: String) {
   var isUiDisposedWithApply: Boolean = false
 
   val errorPluginsToDisable: MutableSet<PluginId> = ConcurrentCollectionFactory.createConcurrentSet()
+
+  /**
+   * Implementation-detail plugins that the user disables directly.
+   * Apply disables only these implementation-detail plugins.
+   * An implementation-detail plugin that a dependency change disables stays enabled.
+   */
+  val implementationDetailsToDisable: MutableSet<PluginId> = ConcurrentCollectionFactory.createConcurrentSet()
   val uninstalledPlugins: MutableSet<PluginId> = ConcurrentCollectionFactory.createConcurrentSet()
   val pluginStates: MutableMap<PluginId, PluginEnabledState?> = mutableMapOf()
   val statesDiff: MutableMap<IdeaPluginDescriptor, Pair<PluginEnableDisableAction, PluginEnabledState>> = ConcurrentHashMap()

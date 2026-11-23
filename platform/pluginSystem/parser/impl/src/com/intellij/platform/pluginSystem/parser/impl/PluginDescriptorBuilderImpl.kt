@@ -7,6 +7,7 @@ import com.intellij.platform.pluginSystem.parser.impl.elements.DependenciesEleme
 import com.intellij.platform.pluginSystem.parser.impl.elements.DependsElement
 import com.intellij.platform.pluginSystem.parser.impl.elements.ExtensionElement
 import com.intellij.platform.pluginSystem.parser.impl.elements.ModuleVisibilityValue
+import com.intellij.platform.pluginSystem.parser.impl.elements.TechnologyElement
 import com.intellij.util.containers.Java11Shim
 import java.time.LocalDate
 
@@ -89,6 +90,16 @@ internal class PluginDescriptorBuilderImpl : PluginDescriptorBuilder {
   override val incompatibleWith: List<String>
     get() = _incompatibleWith ?: Java11Shim.INSTANCE.listOf()
 
+  private var _technologies: MutableList<TechnologyElement>? = null
+  override fun addTechnology(technology: TechnologyElement) {
+    if (_technologies == null) {
+      _technologies = ArrayList()
+    }
+    _technologies!!.add(technology)
+  }
+  override val technologies: List<TechnologyElement>
+    get() = _technologies ?: Java11Shim.INSTANCE.listOf()
+
   override val appContainerBuilder: ScopedElementsContainerBuilder = ScopedElementsContainerBuilderMemoryOptimized()
   override val projectContainerBuilder: ScopedElementsContainerBuilder = ScopedElementsContainerBuilderMemoryOptimized()
   override val moduleContainerBuilder: ScopedElementsContainerBuilder = ScopedElementsContainerBuilderMemoryOptimized()
@@ -153,6 +164,7 @@ internal class PluginDescriptorBuilderImpl : PluginDescriptorBuilder {
     depends = depends,
     actions = actions,
     incompatibleWith = incompatibleWith,
+    technologies = technologies,
     appElementsContainer = appContainerBuilder.build(),
     projectElementsContainer = projectContainerBuilder.build(),
     moduleElementsContainer = moduleContainerBuilder.build(),

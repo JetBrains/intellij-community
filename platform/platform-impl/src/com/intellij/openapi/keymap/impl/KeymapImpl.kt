@@ -421,20 +421,30 @@ open class KeymapImpl @JvmOverloads constructor(@field:Volatile private var data
         list.addAll(value)
       }
     }
+    val ownCount = list.size
 
-    if (parent != null) {
-      val ids = parent!!.getActionIds(shortcut)
-      if (ids.isNotEmpty()) {
-        for (id in ids) {
-          // add actions from the parent keymap only if they are absent in this keymap
-          if (!actionIdToShortcuts.value.containsKey(id)) {
-            list.add(id)
-          }
-        }
+    val parentIds = parent?.getActionIds(shortcut) ?: java.util.List.of()
+    for (id in parentIds) {
+      // add actions from the parent keymap only if they are absent in this keymap
+      if (!actionIdToShortcuts.value.containsKey(id)) {
+        list.add(id)
       }
     }
-    sortInRegistrationOrder(list)
+    sortActionIds(list = list, ownIds = list.subList(0, ownCount), parentIds = parentIds)
     return list
+  }
+
+  /**
+   * Sorts in registration order, but in a user keymap the ids the user bound to the shortcut go first (IJPL-61225):
+   * the dispatcher runs the first enabled action, so a user shortcut must not lose to a bundled one.
+   */
+  private fun sortActionIds(list: MutableList<String>, ownIds: List<String>, parentIds: List<String>) {
+    // compute before sorting: ownIds may be the list itself or its view
+    val userAdded = if (canModify && parent != null) ownIds.filter { it !in parentIds } else java.util.List.of()
+    sortInRegistrationOrder(list)
+    if (userAdded.isNotEmpty()) {
+      list.sortBy { it !in userAdded }
+    }
   }
 
   final override fun getActionIds(firstKeyStroke: KeyStroke): Array<String> {
@@ -463,6 +473,17 @@ open class KeymapImpl @JvmOverloads constructor(@field:Volatile private var data
           actualBindings.add(id)
           break
         }
+      }
+    }
+    if (actualBindings != null && canModify && parent != null) {
+      // the first-stroke order promotes per first stroke only: move ids the user bound to this exact shortcut first (IJPL-61225)
+      val shortcut = KeyboardShortcut(firstKeyStroke, secondKeyStroke)
+      val actionManager = ActionManagerEx.getInstanceEx()
+      val userAdded = actualBindings.filter {
+        shortcut in getOwnOrBoundShortcuts(it, actionManager) && shortcut !in getParentShortcuts(it, actionBinding)
+      }
+      if (userAdded.isNotEmpty()) {
+        actualBindings.sortBy { it !in userAdded }
       }
     }
     return actualBindings ?: java.util.List.of()
@@ -518,7 +539,8 @@ open class KeymapImpl @JvmOverloads constructor(@field:Volatile private var data
                                shortcutToActionIds: (keymap: KeymapImpl) -> Map<T, MutableList<String>>,
                                convertShortcut: (keymap: KeymapImpl, shortcut: T) -> T): List<String> {
     // first, get keystrokes from our own map
-    var list = shortcutToActionIds(this).get(shortcut)
+    val ownIds = shortcutToActionIds(this).get(shortcut)
+    var list = ownIds
     val parentIds = parent?.getActionIds(shortcut = convertShortcut(this, shortcut),
                                          shortcutToActionIds = shortcutToActionIds,
                                          convertShortcut = convertShortcut) ?: java.util.List.of()
@@ -547,7 +569,7 @@ open class KeymapImpl @JvmOverloads constructor(@field:Volatile private var data
         list.add(id)
       }
     }
-    sortInRegistrationOrder(list ?: return java.util.List.of())
+    sortActionIds(list = list ?: return java.util.List.of(), ownIds = ownIds ?: java.util.List.of(), parentIds = parentIds)
     return list
   }
 

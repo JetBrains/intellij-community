@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gitlab.mergerequest.ui.details.model
 
 import com.intellij.collaboration.async.childScope
@@ -6,10 +6,12 @@ import com.intellij.collaboration.async.mapState
 import com.intellij.collaboration.async.withInitial
 import com.intellij.collaboration.ui.codereview.details.model.CodeReviewBranches
 import com.intellij.collaboration.ui.codereview.details.model.CodeReviewBranchesViewModel
+import com.intellij.collaboration.util.SingleCoroutineLauncher
 import com.intellij.dvcs.DvcsUtil
 import git4idea.remote.GitRemoteUrlCoordinates
 import git4idea.remote.hosting.GitRemoteBranchesUtil
 import git4idea.remote.hosting.changesSignalFlow
+import git4idea.remote.hosting.gitRemotesFlow
 import git4idea.workingTrees.GitWorkingTreesService
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -37,8 +39,13 @@ internal class GitLabMergeRequestBranchesViewModel(
 ) : CodeReviewBranchesViewModel {
 
   private val cs: CoroutineScope = parentCs.childScope(this::class)
+  private val checkoutLauncher = SingleCoroutineLauncher(cs)
+
+  override val isCheckoutInProgress: StateFlow<Boolean> = checkoutLauncher.busy
 
   override val sourceBranch: StateFlow<String> = mergeRequest.details.mapState(cs, ::getSourceBranchName)
+  override val targetBranch: StateFlow<String> = mergeRequest.details.mapState(cs) { it.targetBranch }
+  override val hasRemoteBranch: StateFlow<Boolean> = mergeRequest.details.mapState(cs) { it.sourceProject != null }
 
   private fun getSourceBranchName(details: GitLabMergeRequestFullDetails): String {
     if (details.sourceProject == null) {
@@ -67,19 +74,26 @@ internal class GitLabMergeRequestBranchesViewModel(
 
   override fun fetchAndCheckoutRemoteBranch() {
     GitLabStatistics.logMrActionExecuted(gitRemote.repository.project, GitLabStatistics.MergeRequestAction.BRANCH_CHECKOUT)
-    cs.launch {
+    checkoutLauncher.launch {
       val details = mergeRequest.details.first()
       GitLabMergeRequestBranchUtil.fetchAndCheckoutBranch(gitRemote, details)
     }
   }
 
-  override val canCheckoutInNewWorktree: Boolean
-    // A new worktree can't be created for a branch that is already checked out in the current one.
-    get() = GitWorkingTreesService.isWorktreeCreationSupported(gitRemote.repository) && !isCheckedOut.value
+  // A new worktree can't be created for a branch that is already checked out in the current one.
+  override val canCheckoutInNewWorktree: StateFlow<Boolean> =
+    combine(gitRemotesFlow(gitRemote.repository.project), isCheckedOut) { _, checkedOut ->
+      GitWorkingTreesService.isWorktreeCreationSupported(gitRemote.repository) && !checkedOut
+    }.stateIn(
+      cs,
+      SharingStarted.Eagerly,
+      GitWorkingTreesService.isWorktreeCreationSupported(gitRemote.repository) && !isCheckedOut.value
+    )
 
   override fun checkoutInNewWorktree() {
+    if (!canCheckoutInNewWorktree.value) return
     GitLabStatistics.logMrActionExecuted(gitRemote.repository.project, GitLabStatistics.MergeRequestAction.BRANCH_CHECKOUT)
-    cs.launch {
+    checkoutLauncher.launch {
       val details = mergeRequest.details.first()
       GitLabMergeRequestBranchUtil.fetchAndCheckoutBranchInNewWorktree(gitRemote,
                                                                        details,

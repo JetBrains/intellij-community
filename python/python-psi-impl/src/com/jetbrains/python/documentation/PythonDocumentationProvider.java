@@ -4,7 +4,8 @@ package com.jetbrains.python.documentation;
 import com.intellij.lang.documentation.DocumentationProvider;
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.python.sdk.backend.PythonInterpreterDetails;
+import com.intellij.python.sdk.backend.PythonInterpreter;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.HtmlBuilder;
@@ -169,7 +170,7 @@ public class PythonDocumentationProvider implements DocumentationProvider {
   }
 
   static @NotNull HtmlChunk describeTarget(@NotNull PyTargetExpression target,
-                                           @NotNull PsiElement originalElement,
+                                           @Nullable PsiElement originalElement,
                                            @NotNull TypeEvalContext context) {
     final HtmlBuilder result = new HtmlBuilder();
     result.append(styledSpan(StringUtil.notNullize(target.getName()), DefaultLanguageHighlighterColors.IDENTIFIER));
@@ -234,12 +235,14 @@ public class PythonDocumentationProvider implements DocumentationProvider {
   }
 
   static @NotNull HtmlChunk describeTypeParameter(@NotNull PyTypeParameter typeParameter,
-                                                  @NotNull PsiElement originalElement,
+                                                  @Nullable PsiElement originalElement,
                                                   @NotNull TypeEvalContext context) {
-    return new PyTypeRenderer.RichDocumentation(context, originalElement).describeTypeParameter(typeParameter, originalElement,
-                                                                                                true, true,
-                                                                                                PythonDocumentationProvider::formatTypeWithLinks,
-                                                                                                context);
+    // Without an original element, the declaration itself is the element, as when the caret is on it.
+    PsiElement element = originalElement != null ? originalElement : typeParameter;
+    return new PyTypeRenderer.RichDocumentation(context, element).describeTypeParameter(typeParameter, element,
+                                                                                         true, true,
+                                                                                         PythonDocumentationProvider::formatTypeWithLinks,
+                                                                                         context);
   }
 
   static @NotNull HtmlChunk describeTypeAlias(@NotNull PyTypeAliasStatement typeAliasStatement,
@@ -835,8 +838,8 @@ public class PythonDocumentationProvider implements DocumentationProvider {
   public static @Nullable String getOnlyUrlFor(PsiElement element, PsiElement originalElement) {
     PsiFileSystemItem file = getFile(element);
     if (file == null) return null;
-    final Sdk sdk = PyBuiltinCache.findSdkForFile(file);
-    if (sdk == null) {
+    final PythonInterpreter interpreter = PyBuiltinCache.findInterpreterForFile(file);
+    if (interpreter == null) {
       return null;
     }
     final QualifiedName qName = QualifiedNameFinder.findCanonicalImportPath(element, originalElement);
@@ -844,7 +847,7 @@ public class PythonDocumentationProvider implements DocumentationProvider {
       return null;
     }
     final PythonDocumentationMap map = PythonDocumentationMap.getInstance();
-    final String pyVersion = pyVersion(sdk.getVersionString());
+    final String pyVersion = pyVersion(PythonInterpreterDetails.getInstance(interpreter.getProject()).version(interpreter));
     PsiNamedElement namedElement = getNamedElement(element);
     final String url = map.urlFor(qName, namedElement, pyVersion);
     if (url != null) {

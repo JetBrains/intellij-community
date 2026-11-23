@@ -16,6 +16,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileFilter
 import com.intellij.platform.workspace.jps.entities.LibraryEntity
 import com.intellij.platform.workspace.jps.entities.SdkEntity
+import com.intellij.ui.SimpleColoredComponent
 import com.intellij.ui.tabs.JBTabsBorder
 import com.intellij.ui.tabs.TabInfo
 import com.intellij.ui.tabs.impl.TabListOptions
@@ -103,7 +104,11 @@ internal fun createTestEditorWindow(project: Project, parentDisposable: Disposab
   @Suppress("SSBasedInspection")
   val coroutineScope = CoroutineScope(SupervisorJob())
   Disposer.register(parentDisposable) { coroutineScope.cancel() }
-  return EditorWindow(FileEditorManagerImpl(project, coroutineScope), coroutineScope)
+  val manager = FileEditorManagerImpl(project, coroutineScope)
+  // The constructor registers a listener under the manager itself. Without a parent the manager
+  // stays under the root disposable and the leak check fails after the test class.
+  Disposer.register(parentDisposable, manager)
+  return EditorWindow(manager, coroutineScope)
 }
 
 /**
@@ -187,6 +192,11 @@ internal class TestGroupingJBEditorTabs(
     return visibleInfos.getOrNull(index - 1) ?: visibleInfos.getOrNull(index + 1)
   }
 
+  /** The test window has no editor, so a test sets this to stand for the selection that the window makes at startup. */
+  var windowSelection: Boolean = false
+
+  override fun hasWindowSelection(): Boolean = windowSelection
+
   override fun getVisibleInfos(): List<TabInfo> {
     visibleInfosCallCount++
     return super.getVisibleInfos()
@@ -194,4 +204,9 @@ internal class TestGroupingJBEditorTabs(
 
   fun isDropIndexAllowedForTest(dropIndex: Int, draggedInfo: TabInfo): Boolean = isDropIndexAllowed(dropIndex, draggedInfo)
   fun visibleTabTexts(): List<String> = getVisibleInfos().map { it.text }
+
+  /** The text that each visible tab label shows. It differs from the tab text for a group tab. */
+  fun visibleLabelTexts(): List<String> = getVisibleInfos().map { info ->
+    (info.tabLabel?.labelComponent as SimpleColoredComponent).getCharSequence(false).toString()
+  }
 }

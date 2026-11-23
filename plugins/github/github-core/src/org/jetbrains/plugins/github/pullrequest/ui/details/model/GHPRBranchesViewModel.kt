@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.github.pullrequest.ui.details.model
 
 import com.intellij.collaboration.async.childScope
@@ -7,6 +7,7 @@ import com.intellij.collaboration.async.mapState
 import com.intellij.collaboration.async.withInitial
 import com.intellij.collaboration.ui.codereview.details.model.CodeReviewBranches
 import com.intellij.collaboration.ui.codereview.details.model.CodeReviewBranchesViewModel
+import com.intellij.collaboration.util.SingleCoroutineLauncher
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
@@ -16,6 +17,7 @@ import git4idea.remote.hosting.GitRemoteBranchesUtil
 import git4idea.remote.hosting.HostedGitRepositoryRemote
 import git4idea.remote.hosting.changesSignalFlow
 import git4idea.remote.hosting.createHostedGitRepositoryRemote
+import git4idea.remote.hosting.gitRemotesFlow
 import git4idea.workingTrees.GitWorkingTreesService
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -48,10 +50,13 @@ class GHPRBranchesViewModel internal constructor(
   private val detailsState: StateFlow<GHPullRequest>,
 ) : CodeReviewBranchesViewModel {
   private val cs = parentCs.childScope(this::class)
+  private val checkoutLauncher = SingleCoroutineLauncher(cs)
+
+  override val isCheckoutInProgress: StateFlow<Boolean> = checkoutLauncher.busy
 
   private val gitRepository = mapping.remote.repository
 
-  private val targetBranch: StateFlow<String> = detailsState.mapState(cs) {
+  override val targetBranch: StateFlow<String> = detailsState.mapState(cs) {
     it.baseRefName
   }
 
@@ -76,19 +81,26 @@ class GHPRBranchesViewModel internal constructor(
 
   override fun fetchAndCheckoutRemoteBranch() {
     val details = detailsState.value
-    cs.launch {
+    checkoutLauncher.launch {
       fetchAndCheckoutBranch(mapping.remote, details)
       GHPRStatisticsCollector.logDetailsBranchCheckedOut(project)
     }
   }
 
-  override val canCheckoutInNewWorktree: Boolean
-    // A new worktree can't be created for a branch that is already checked out in the current one.
-    get() = GitWorkingTreesService.isWorktreeCreationSupported(gitRepository) && !isCheckedOut.value
+  // A new worktree can't be created for a branch that is already checked out in the current one.
+  override val canCheckoutInNewWorktree: StateFlow<Boolean> =
+    combine(gitRemotesFlow(project), isCheckedOut) { _, checkedOut ->
+      GitWorkingTreesService.isWorktreeCreationSupported(gitRepository) && !checkedOut
+    }.stateIn(
+      cs,
+      SharingStarted.Eagerly,
+      GitWorkingTreesService.isWorktreeCreationSupported(gitRepository) && !isCheckedOut.value
+    )
 
   override fun checkoutInNewWorktree() {
+    if (!canCheckoutInNewWorktree.value) return
     val details = detailsState.value
-    cs.launch {
+    checkoutLauncher.launch {
       fetchAndCheckoutBranchInNewWorktree(
         remoteUrlCoordinates = mapping.remote,
         details = details,

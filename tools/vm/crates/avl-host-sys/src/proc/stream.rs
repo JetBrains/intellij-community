@@ -199,7 +199,7 @@ impl Runner {
     pub fn spawn_piped(&self, ctx: &Ctx, argv: &[String]) -> Result<PipedChild, Refusal> {
         check_argv(argv)?;
         let started = Instant::now();
-        let mut command = self.command(argv, None, None);
+        let mut command = self.command(argv, None, None, super::Responsibility::Inherited);
         command
             .stdin(std::process::Stdio::piped())
             .stdout(std::process::Stdio::piped())

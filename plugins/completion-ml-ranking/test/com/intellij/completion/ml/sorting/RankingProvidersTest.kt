@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.completion.ml.sorting
 
+import com.intellij.codeInsight.completion.lightCompletionProjectFixture
 import com.intellij.completion.ml.experiments.ExperimentInfo
 import com.intellij.completion.ml.experiments.ExperimentStatus
 import com.intellij.completion.ml.ranker.ExperimentModelProvider
@@ -9,74 +10,83 @@ import com.intellij.internal.ml.DecisionFunction
 import com.intellij.internal.ml.FeatureMapper
 import com.intellij.internal.ml.completion.RankingModelProvider
 import com.intellij.lang.Language
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.testFramework.common.runAll
-import com.intellij.testFramework.replaceService
+import com.intellij.testFramework.junit5.TestApplication
+import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertThrows
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 
-class RankingProvidersTest : MLSortingTestCase() {
-  private lateinit var testLanguage: Language
-
-  override fun customizeSettings(settings: MLRankingSettingsState): MLRankingSettingsState =
-    settings.withRankingEnabled(true).withDiffEnabled(false)
-
-  override fun configureExperimentStatus(actualSettingsState: MLRankingSettingsState) {
-    ApplicationManager.getApplication().replaceService(
-      ExperimentStatus::class.java,
-      object : ExperimentStatus {
-        override fun forLanguage(language: Language): ExperimentInfo =
-          ExperimentInfo(true, 0, actualSettingsState.rankingEnabled, actualSettingsState.diffEnabled, true)
-
-        override fun disable() = Unit
-        override fun isDisabled(): Boolean = false
-      },
-      testRootDisposable
-    )
+@TestApplication
+class RankingProvidersTest {
+  companion object {
+    private val projectFixture = lightCompletionProjectFixture()
   }
 
+  private val sorting by mlSortingFixture(projectFixture, { it.withRankingEnabled(true).withDiffEnabled(false) }) { actualSettingsState ->
+    object : ExperimentStatus {
+      override fun forLanguage(language: Language): ExperimentInfo =
+        ExperimentInfo(true, 0, actualSettingsState.rankingEnabled, actualSettingsState.diffEnabled, true)
+
+      override fun disable() = Unit
+      override fun isDisabled(): Boolean = false
+    }
+  }
+  private lateinit var testLanguage: Language
+
+  @Test
   fun `test no providers registered`() {
     checkActiveProvider(null, 0)
   }
 
+  @Test
   fun `test not matching experiment provider`() {
     registerProviders(experiment(-1))
     checkActiveProvider(null, 0)
   }
 
+  @Test
   fun `test enabled experiment provider`() {
     val expectedProvider = experiment(0)
     registerProviders(expectedProvider)
     checkActiveProvider(expectedProvider, 0)
   }
 
+  @Test
   fun `test experiment provider replace default`() {
     val expectedProvider = experiment(0)
     registerProviders(expectedProvider, default())
     checkActiveProvider(expectedProvider, 0)
   }
 
+  @Test
   fun `test experiment provider should not replace default if not matching`() {
     val expectedProvider = default()
     registerProviders(experiment(-1), expectedProvider)
     checkActiveProvider(expectedProvider, 0)
   }
 
+  @Test
   fun `test default provider used if there is no experiment`() {
     val expectedProvider = default()
     registerProviders(expectedProvider)
     checkActiveProvider(expectedProvider, 0)
   }
 
+  @Test
   fun `test few experiment providers`() {
     val expectedProvider = experiment(0)
     registerProviders(expectedProvider, experiment(-1), experiment(1))
     checkActiveProvider(expectedProvider, 0)
   }
 
+  @Test
   fun `test too many experiment providers`() {
     registerProviders(experiment(0), experiment(0))
     assertThrows(IllegalStateException::class.java) { ExperimentModelProvider.findProvider(testLanguage, 0) }
   }
 
+  @Test
   fun `test too many default providers`() {
     registerProviders(default(), default())
     assertThrows(IllegalStateException::class.java) { ExperimentModelProvider.findProvider(testLanguage, 0) }
@@ -90,19 +100,17 @@ class RankingProvidersTest : MLSortingTestCase() {
   }
 
   private fun registerProviders(vararg providers: RankingModelProvider) {
-    providers.forEach { ExperimentModelProvider.registerProvider(it, testRootDisposable) }
+    providers.forEach { ExperimentModelProvider.registerProvider(it, sorting.completion.fixture.testRootDisposable) }
   }
 
-  override fun setUp() {
-    super.setUp()
+  @BeforeEach
+  fun setUp() {
     testLanguage = TestLanguage()
   }
 
-  override fun tearDown() {
-    runAll(
-      { if (::testLanguage.isInitialized) testLanguage.unregisterLanguage(PluginManagerCore.getPlugin(PluginManagerCore.CORE_ID)!!) },
-      { super.tearDown() }
-    )
+  @AfterEach
+  fun tearDown() {
+    if (::testLanguage.isInitialized) testLanguage.unregisterLanguage(PluginManagerCore.getPlugin(PluginManagerCore.CORE_ID)!!)
   }
 
   private fun experiment(groupNumber: Int): RankingModelProvider = TestExperimentProvider(groupNumber, testLanguage)

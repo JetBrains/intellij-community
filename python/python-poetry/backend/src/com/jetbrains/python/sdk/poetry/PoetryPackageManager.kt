@@ -2,6 +2,7 @@
 package com.jetbrains.python.sdk.poetry
 
 import com.intellij.openapi.module.Module
+import com.intellij.python.sdk.backend.PythonInterpreter
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.platform.eel.EelApi
@@ -13,7 +14,6 @@ import com.intellij.python.pyproject.model.api.getPyProjectTomlFile
 import com.intellij.python.pyproject.model.evolution.findModuleFor
 import com.intellij.python.pyproject.model.spi.ProjectName
 import com.intellij.python.pytools.resolveExecutable
-import com.intellij.python.sdk.backend.PythonInterpreter
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.getOrNull
 import com.jetbrains.python.packaging.PyPackageName
@@ -38,7 +38,6 @@ import com.jetbrains.python.packaging.packageRequirements.packagesUnavailable
 import com.jetbrains.python.packaging.pip.PipRepositoryManager
 import com.jetbrains.python.poetry.POETRY_LOCK
 import com.jetbrains.python.sdk.add.v2.toFileSystem
-import com.jetbrains.python.sdk.pySdkAdditionalData
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
@@ -51,7 +50,7 @@ import java.nio.file.Path
 import kotlin.io.path.readText
 
 @ApiStatus.Internal
-class PoetryPackageManager(project: Project, interpreter: PythonInterpreter) : PythonPackageManager(project, interpreter) {
+class PoetryPackageManager(interpreter: PythonInterpreter) : PythonPackageManager(interpreter) {
   override val workspaceSupport: PythonWorkspaceSupport = PoetryWorkspaceSupport(project, interpreter)
   override val installedPackagesIncludeTransitive: Boolean = true
   override val repositoryManager: PythonRepositoryManager = PipRepositoryManager.getInstance(project)
@@ -62,18 +61,18 @@ class PoetryPackageManager(project: Project, interpreter: PythonInterpreter) : P
   override val treeProvider = cachedDependencyTree(
     lockFileName = POETRY_LOCK.value,
     dependencyFiles = { resolveDependencyFilesTree() },
-  ) { runPoetryWithSdk(sdk, "show", "--tree") }
+  ) { runPoetryWithInterpreter(interpreter, "show", "--tree") }
   override val dependenciesFilesRelativePaths: List<Path>
     get() = listOf(
       Path.of(PY_PROJECT_TOML),
     )
 
   override suspend fun syncLockedCommand(): PyResult<Unit> {
-    return runPoetryWithSdk(sdk, "install").mapSuccess { }
+    return runPoetryWithInterpreter(interpreter, "install").mapSuccess { }
   }
 
   suspend fun updateProject(): PyResult<Unit> {
-    runPoetryWithSdk(sdk, "update", "--sync").getOr {
+    runPoetryWithInterpreter(interpreter, "update", "--sync").getOr {
       return it
     }
     return reloadPackages().mapSuccess { }
@@ -82,7 +81,7 @@ class PoetryPackageManager(project: Project, interpreter: PythonInterpreter) : P
   override fun updateLockedAction(): suspend () -> PyResult<Unit> = ::updateProject
 
   suspend fun lockProject(): PyResult<Unit> {
-    runPoetryWithSdk(sdk, "lock").getOr {
+    runPoetryWithInterpreter(interpreter, "lock").getOr {
       return it
     }
     return reloadPackages().mapSuccess { }
@@ -100,7 +99,7 @@ class PoetryPackageManager(project: Project, interpreter: PythonInterpreter) : P
       is PythonPackageInstallRequest.ByLocation -> {
         val isEditable = "-e" in options
         val locationStr = installRequest.toPoetryArgument()
-        poetryInstallPackage(sdk,
+        poetryInstallPackage(interpreter,
                              listOfNotNull("--editable".takeIf { isEditable }, locationStr),
                              options.filter { it != "-e" }).mapSuccess { }
       }
@@ -111,7 +110,7 @@ class PoetryPackageManager(project: Project, interpreter: PythonInterpreter) : P
       is PythonPackageInstallRequest.ByRepositoryPythonPackageSpecifications ->
         installPackages(installRequest.specifications, options)
       is PythonPackageInstallRequest.ByLocation ->
-        poetryInstallPackageDetached(sdk, listOf(installRequest.location.toString()), options).mapSuccess { }
+        poetryInstallPackageDetached(interpreter, listOf(installRequest.location.toString()), options).mapSuccess { }
     }
 
   override suspend fun updatePackageCommand(vararg specifications: PythonRepositoryPackageSpecification): PyResult<Unit> {
@@ -150,7 +149,7 @@ class PoetryPackageManager(project: Project, interpreter: PythonInterpreter) : P
 
     val allPackages = trees.map { PythonPackage(it.name.name, it.version ?: "", false) }
 
-    val mainOutput = runPoetryWithSdk(sdk, "show", "--only", "main", "--tree")
+    val mainOutput = runPoetryWithInterpreter(interpreter, "show", "--only", "main", "--tree")
                        .getOrNull() ?: return PyResult.success(allPackages)
     val mainNames = TreeParser.parseTrees(mainOutput.lines()).mapTo(mutableSetOf()) { it.name.name }
 
@@ -183,7 +182,7 @@ class PoetryPackageManager(project: Project, interpreter: PythonInterpreter) : P
   private suspend fun uninstallStandalonePackages(packages: List<PyPackageName>): PyResult<Unit> {
     return if (packages.isNotEmpty()) {
       poetryUninstallPackage(
-        sdk = sdk,
+        interpreter = interpreter,
         packages = packages.map { it.name }.toTypedArray()
       ).mapSuccess { }
     }
@@ -198,7 +197,7 @@ class PoetryPackageManager(project: Project, interpreter: PythonInterpreter) : P
   private suspend fun uninstallDeclaredPackages(packages: List<PyPackageName>): PyResult<Unit> {
     return if (packages.isNotEmpty()) {
       poetryRemovePackage(
-        sdk = sdk,
+        interpreter = interpreter,
         packages = packages.map { it.name }.toTypedArray()
       ).mapSuccess { }
     }
@@ -208,7 +207,7 @@ class PoetryPackageManager(project: Project, interpreter: PythonInterpreter) : P
   }
 
   override suspend fun loadPackagesCommand(): PyResult<List<PythonPackage>> {
-    val (installed, _) = poetryListPackages(sdk).getOr { return it }
+    val (installed, _) = poetryListPackages(interpreter).getOr { return it }
     val editablePackages = editablePackagesFromLock()
     val packages = installed.map {
       PythonPackage(it.name, it.version, it.name in editablePackages).also { pkg -> pkg.editableLocation = editablePackages[it.name] }
@@ -217,8 +216,7 @@ class PoetryPackageManager(project: Project, interpreter: PythonInterpreter) : P
   }
 
   private suspend fun editablePackagesFromLock(): Map<String, URI?> {
-    val data = sdk.pySdkAdditionalData
-    val workingDir = data.workingDirectory.takeIf { data.hasValidWorkingDirectory() } ?: return emptyMap()
+    val workingDir = interpreter.ownerDir
     val content = withContext(Dispatchers.IO) {
       try {
         workingDir.resolve(POETRY_LOCK.value).readText()
@@ -247,7 +245,7 @@ class PoetryPackageManager(project: Project, interpreter: PythonInterpreter) : P
     null
   }
 
-  override suspend fun loadOutdatedPackagesCommand(): PyResult<List<PythonOutdatedPackage>> = poetryShowOutdated(sdk).mapSuccess {
+  override suspend fun loadOutdatedPackagesCommand(): PyResult<List<PythonOutdatedPackage>> = poetryShowOutdated(interpreter).mapSuccess {
     it.values.toList()
   }
 
@@ -259,7 +257,7 @@ class PoetryPackageManager(project: Project, interpreter: PythonInterpreter) : P
       it.getPackageWithVersionInPoetryFormat()
     }
 
-    return poetryInstallPackage(sdk, specifications, options).mapSuccess { }
+    return poetryInstallPackage(interpreter, specifications, options).mapSuccess { }
   }
 
   private suspend fun installPackages(
@@ -270,7 +268,7 @@ class PoetryPackageManager(project: Project, interpreter: PythonInterpreter) : P
       it.getPackageWithVersionInPoetryFormat()
     }
 
-    return poetryInstallPackageDetached(sdk, specifications, options).mapSuccess { }
+    return poetryInstallPackageDetached(interpreter, specifications, options).mapSuccess { }
   }
 
   private fun PythonRepositoryPackageSpecification.getPackageWithVersionInPoetryFormat(): String {
@@ -298,7 +296,7 @@ class PoetryPackageManager(project: Project, interpreter: PythonInterpreter) : P
   }
 
   override suspend fun addDependencyImpl(requirement: PyRequirement): Boolean {
-    poetryInstallPackage(sdk, listOf(requirement.presentableText), emptyList()).getOr { return false }
+    poetryInstallPackage(interpreter, listOf(requirement.presentableText), emptyList()).getOr { return false }
     return true
   }
 

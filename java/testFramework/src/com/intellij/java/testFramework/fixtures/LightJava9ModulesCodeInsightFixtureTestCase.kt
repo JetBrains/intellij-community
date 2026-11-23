@@ -14,6 +14,10 @@ import com.intellij.testFramework.createGlobalContextForTool
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import org.intellij.lang.annotations.Language
 
+/**
+ * @deprecated Use [lightJava9ModulesProjectFixture] and [lightJava9ModulesFixture] in a JUnit 5 test.
+ */
+@Deprecated("Use lightJava9ModulesProjectFixture and lightJava9ModulesFixture in a JUnit 5 test")
 abstract class LightJava9ModulesCodeInsightFixtureTestCase : LightJavaCodeInsightFixtureTestCase() {
   override fun getProjectDescriptor(): LightProjectDescriptor = MultiModuleJava9ProjectDescriptor
 

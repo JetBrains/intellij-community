@@ -20,7 +20,7 @@ content_module_jar(module = ":python-pydev")
 
 ### auto-generated section `dev intellij.pycharm.community` start
 filegroup(
-    name = "dev_dist_resources",
+    name = "dist_resources",
     srcs = glob(
         [
             "bundledPyiStubs/**",
@@ -31,7 +31,7 @@ filegroup(
 )
 
 filegroup(
-    name = "dev_dist_resources_helpers",
+    name = "dist_resources_helpers",
     srcs = glob(
         ["helpers/**"],
         exclude = [

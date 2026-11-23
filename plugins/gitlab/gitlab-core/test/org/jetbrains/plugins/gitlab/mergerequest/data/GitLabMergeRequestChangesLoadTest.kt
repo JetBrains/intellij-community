@@ -142,8 +142,7 @@ internal class GitLabMergeRequestChangesLoadTest {
     }
     val changesCs = childScope("GitLabMergeRequestChangesLoadTest")
     val changes = GitLabMergeRequestChangesImpl(changesCs,
-                                                mockk(),
-                                                PROJECT_ID,
+        PROJECT_ID,
                                                 GitLabProjectPath("owner", "repo"),
                                                 createGitRemote(),
                                                 api,

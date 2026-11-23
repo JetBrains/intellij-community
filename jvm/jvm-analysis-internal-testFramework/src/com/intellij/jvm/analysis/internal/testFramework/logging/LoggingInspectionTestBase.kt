@@ -7,6 +7,11 @@ import com.intellij.jvm.analysis.internal.testFramework.logging.LoggingTestUtils
 import com.intellij.jvm.analysis.internal.testFramework.logging.LoggingTestUtils.addSlf4J
 import com.intellij.jvm.analysis.testFramework.JvmInspectionTestBase
 
+/**
+ * @deprecated Use [loggingInspectionFixture] in a JUnit 5 test.
+ */
+@Suppress("DEPRECATION")
+@Deprecated("Use loggingInspectionFixture in a JUnit 5 test")
 abstract class LoggingInspectionTestBase : JvmInspectionTestBase() {
 
   override fun setUp() {

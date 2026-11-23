@@ -29,6 +29,7 @@ import com.intellij.util.ThreeState;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.xdebugger.impl.frame.XValueMarkers;
 import com.intellij.xdebugger.impl.ui.tree.ValueMarkup;
+import com.sun.jdi.IncompatibleThreadStateException;
 import com.sun.jdi.InternalException;
 import com.sun.jdi.InvalidStackFrameException;
 import com.sun.jdi.Location;
@@ -147,7 +148,8 @@ public class StackFrameDescriptorImpl extends NodeDescriptorImpl implements Stac
         Throwable exception = DebuggerUtilsAsync.unwrap(throwable);
         if (exception instanceof EvaluateException) {
           // TODO: simplify when only async method left
-          if (!(exception.getCause() instanceof InvalidStackFrameException)) {
+          if (!(exception.getCause() instanceof InvalidStackFrameException) &&
+              !(exception.getCause() instanceof IncompatibleThreadStateException)) {
             LOG.error(new Exception(exception));
           }
           DebuggerManagerThreadImpl.assertIsManagerThread();

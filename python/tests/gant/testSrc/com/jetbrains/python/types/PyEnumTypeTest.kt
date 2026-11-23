@@ -82,7 +82,6 @@ class PyEnumTypeTest : PyCodeInsightTestCase() {
       """.trimIndent())
 
     @Test
-    @TestCaseOptions(assertRecursionPrevention = false)
     fun `enum member and nonmember`() = test("""
       from enum import Enum, member, nonmember
       
@@ -101,7 +100,6 @@ class PyEnumTypeTest : PyCodeInsightTestCase() {
       """.trimIndent())
 
     @Test
-    @TestCaseOptions(assertRecursionPrevention = false)
     fun `enum member and nonmember from another file`() = test("""
       from enum_members import Example
       
@@ -478,7 +476,6 @@ class PyEnumTypeTest : PyCodeInsightTestCase() {
 
     @Test
     @TestFor(issues = ["PY-54503"])
-    @TestCaseOptions(assertRecursionPrevention = false)
     fun `value type of enum item from __call__`() = test("""
       import enum
       

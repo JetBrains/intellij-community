@@ -24,6 +24,11 @@ public class AutomaticGetterSetterRenamerFactory implements AutomaticRenamerFact
   }
 
   @Override
+  public @NotNull String getOptionId() {
+    return "renameAccessors";
+  }
+
+  @Override
   public boolean isEnabled() {
     return JavaRefactoringSettings.getInstance().isToRenameAccessors();
   }

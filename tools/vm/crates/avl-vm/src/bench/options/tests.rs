@@ -6,7 +6,7 @@ use avl_base::Exit;
 use pretty_assertions::assert_eq;
 
 use super::{ArmChoice, BenchVerb, DEFAULT_TARGET, ProjectArmChoice, ReplayArgs, SpanThread, parse_hold, parse_load};
-use crate::bench::arm::Arm;
+use crate::bench::arm::{Arm, Property};
 use crate::bench::profile::ProfileEvent;
 use crate::cli::{Cmd, Parsed, parse};
 use crate::terminal::{Output, TerminalFacts};
@@ -307,6 +307,116 @@ fn project_takes_the_empty_editor_arm_and_cold_for_it_alone() {
     );
 }
 
+/// The find-in-files arm needs a query, a query needs that arm, and a query holds no `;`. The project opens in place
+/// with --in-place, and --context-plugins names the plugins of each sandbox.
+#[test]
+fn project_takes_the_find_in_files_arm_with_its_queries() {
+    let BenchVerb::Project(args) = verb(&[
+        "project",
+        "idea",
+        "--arm",
+        "find-in-files",
+        "--query",
+        "FindModel",
+        "--query",
+        "create Searcher",
+        "--in-place",
+        "--context-plugins",
+        "//platform/unified:performance_testing_plugin_dir",
+        "--with-property",
+        "ijlight.accio.enabled=false",
+    ]) else {
+        panic!("expected project");
+    };
+    assert_eq!(args.queries, ["FindModel", "create Searcher"]);
+    assert_eq!(args.directory, None);
+    assert!(args.in_place);
+    assert_eq!(args.context_plugins.as_deref(), Some("//platform/unified:performance_testing_plugin_dir"));
+    assert_eq!(
+        args.arms(),
+        Ok(vec![
+            Arm::FIND_IN_FILES,
+            Arm::FIND_IN_FILES.with(&Property::parse("ijlight.accio.enabled=false").expect("a property"))
+        ])
+    );
+    let arms = |argv: &[&str]| {
+        let BenchVerb::Project(args) = verb(argv) else {
+            panic!("expected project");
+        };
+        args.arms()
+    };
+    assert_eq!(
+        arms(&["project", "idea", "--arm", "find-in-files"]),
+        Err("--arm find-in-files needs --query: a run searches for each query".to_owned())
+    );
+    assert_eq!(
+        arms(&["project", "idea", "--query", "FindModel"]),
+        Err("--query needs --arm find-in-files".to_owned())
+    );
+    for query in ["a;b", " a", ""] {
+        assert!(
+            matches!(
+                parsed(&["project", "idea", "--arm", "find-in-files", "--query", query]),
+                Parsed::Refused { .. }
+            ),
+            "{query:?}"
+        );
+    }
+}
+
+/// `--directory` adds the directory pass to the find-in-files arm and stays inside the project. `--property` takes a
+/// value with a `/`, which a twin cannot name, and repeats.
+#[test]
+fn project_takes_a_directory_of_the_find_in_files_arm_and_session_properties() {
+    let BenchVerb::Project(args) = verb(&[
+        "project",
+        "idea",
+        "--arm",
+        "find-in-files",
+        "--query",
+        "createSearcher",
+        "--directory",
+        "platform/lang-impl",
+        "--property",
+        "accio.binary=/opt/accio/bin/accio",
+        "--property",
+        "accio.home=/opt/accio/home",
+    ]) else {
+        panic!("expected project");
+    };
+    assert_eq!(args.directory, Some(PathBuf::from("platform/lang-impl")));
+    assert_eq!(
+        args.launch.properties.iter().map(ToString::to_string).collect::<Vec<_>>(),
+        ["accio.binary=/opt/accio/bin/accio", "accio.home=/opt/accio/home"]
+    );
+    let BenchVerb::Project(args) = verb(&["project", "idea", "--directory", "platform"]) else {
+        panic!("expected project");
+    };
+    assert_eq!(args.arms(), Err("--directory needs --arm find-in-files".to_owned()));
+    for directory in ["/abs", "../up", "a b", ""] {
+        assert!(
+            matches!(
+                parsed(&[
+                    "project",
+                    "idea",
+                    "--arm",
+                    "find-in-files",
+                    "--query",
+                    "a",
+                    "--directory",
+                    directory
+                ]),
+                Parsed::Refused { .. }
+            ),
+            "{directory:?}"
+        );
+    }
+    assert!(matches!(
+        parsed(&["project", "idea", "--property", "novalue"]),
+        Parsed::Refused { .. }
+    ));
+}
+
 /// `--suppress-plugin` adds a twin right after each arm of a welcome or a project session. `--arm` of a verb that reads
 /// a session takes the label of a twin.
 #[test]
@@ -323,7 +433,7 @@ fn suppress_plugin_adds_an_interleaved_twin_to_each_arm() {
         panic!("expected welcome");
     };
     assert_eq!(
-        (args.measure.suppress.plugin.clone(), args.arms()),
+        (args.measure.twins.plugin.clone(), args.arms()),
         (None, vec![Arm::MODAL, Arm::NON_MODAL])
     );
     let kotlin = "org.jetbrains.kotlin";
@@ -525,5 +635,45 @@ fn a_window_bound_is_a_finite_number_of_milliseconds() {
             Parsed::Refused { refusal, .. } => assert_eq!(refusal.code, "usage", "{argv:?}"),
             other => panic!("{argv:?} parsed: {other:?}"),
         }
+    }
+}
+
+/// `--with-property` adds a twin right after each arm, after the twin of `--suppress-plugin`, and its value reads as one
+/// property. A value without `=` is a usage refusal.
+#[test]
+fn with_property_adds_an_interleaved_twin_to_each_arm() {
+    let webview = Property::parse("air.apps.native.webview=true").expect("a property");
+    let BenchVerb::Project(args) = verb(&[
+        "project",
+        "markdown",
+        "--arm",
+        "empty-editor",
+        "--with-property",
+        "air.apps.native.webview=true",
+    ]) else {
+        panic!("expected project");
+    };
+    assert_eq!(args.measure.twins.property, Some(webview.clone()));
+    assert_eq!(args.arms(), Ok(vec![Arm::EMPTY_EDITOR, Arm::EMPTY_EDITOR.with(&webview)]));
+    let kotlin = "org.jetbrains.kotlin";
+    let BenchVerb::Welcome(args) = verb(&[
+        "welcome",
+        "--arm",
+        "modal",
+        "--suppress-plugin",
+        kotlin,
+        "--with-property",
+        "air.apps.native.webview=true",
+    ]) else {
+        panic!("expected welcome");
+    };
+    assert_eq!(args.arms(), vec![Arm::MODAL, Arm::MODAL.without(kotlin), Arm::MODAL.with(&webview)]);
+    let BenchVerb::Classes(args) = verb(&["classes", "s", "--arm", "empty-editor-with-air.apps.native.webview=true"]) else {
+        panic!("expected classes");
+    };
+    assert_eq!(args.arm, Some(Arm::EMPTY_EDITOR.with(&webview)));
+    match parsed(&["project", "markdown", "--with-property", "air.apps.native.webview"]) {
+        Parsed::Refused { refusal, .. } => assert_eq!(refusal.code, "usage"),
+        other => panic!("expected a usage refusal, got {other:?}"),
     }
 }

@@ -53,6 +53,7 @@ public class ExecutionNode extends PresentableNodeDescriptor<ExecutionNode> {
   private static final Icon NODE_ICON_RUNNING = new AnimatedIcon.Default();
 
   private @NotNull Object myId = new Object();
+  private final @Nullable Object myBuildId;
 
   private final List<ExecutionNode> myChildrenList = new ArrayList<>(); // Accessed from the async model thread only.
   private final AtomicInteger myErrors = new AtomicInteger();
@@ -72,10 +73,23 @@ public class ExecutionNode extends PresentableNodeDescriptor<ExecutionNode> {
   private boolean myAlwaysLeaf;
   private boolean myAlwaysVisible;
 
+  public ExecutionNode(Project aProject, @Nullable Object buildId, boolean isAutoExpandNode, @NotNull Supplier<Boolean> isCorrectThread) {
+    this(aProject, null, buildId, isAutoExpandNode, isCorrectThread);
+  }
+
   public ExecutionNode(Project aProject, ExecutionNode parentNode, boolean isAutoExpandNode, @NotNull Supplier<Boolean> isCorrectThread) {
+    this(aProject, parentNode, parentNode != null ? parentNode.myBuildId : null, isAutoExpandNode, isCorrectThread);
+  }
+
+  private ExecutionNode(Project aProject,
+                        @Nullable ExecutionNode parentNode,
+                        @Nullable Object buildId,
+                        boolean isAutoExpandNode,
+                        @NotNull Supplier<Boolean> isCorrectThread) {
     super(aProject, parentNode);
     myName = "";
     myParentNode = parentNode;
+    myBuildId = buildId;
     myAutoExpandNode = isAutoExpandNode;
     myIsCorrectThread = isCorrectThread;
     myHintData = new HintData();
@@ -125,6 +139,10 @@ public class ExecutionNode extends PresentableNodeDescriptor<ExecutionNode> {
 
   public @NotNull Object getId() {
     return myId;
+  }
+
+  private @Nullable Object getBuildId() {
+    return myBuildId;
   }
 
   public void setId(@NotNull Object id) {
@@ -246,6 +264,16 @@ public class ExecutionNode extends PresentableNodeDescriptor<ExecutionNode> {
            (myResult instanceof MessageEventResult result && result.getKind() == MessageEvent.Kind.ERROR);
   }
 
+  @ApiStatus.Internal
+  public @NotNull Status getStatus() {
+    return isRunning() ? Status.RUNNING :
+           isFailed(myResult) ? Status.FAILED :
+           isSkipped(myResult) ? Status.SKIPPED :
+           isFailed() ? Status.FAILED :
+           hasWarnings() ? Status.WARNING :
+           Status.SUCCESS;
+  }
+
   public @Nullable EventResult getResult() {
     return myResult;
   }
@@ -332,17 +360,33 @@ public class ExecutionNode extends PresentableNodeDescriptor<ExecutionNode> {
     if (preferredIconValue != null) {
       return preferredIconValue.getValue();
     }
-    else if (myResult instanceof MessageEventResult result) {
+    if (myResult instanceof MessageEventResult result) {
       return getIcon(result.getKind());
     }
-    else {
-      return isRunning() ? NODE_ICON_RUNNING :
-             isFailed(myResult) ? NODE_ICON_ERROR :
-             isSkipped(myResult) ? NODE_ICON_SKIPPED :
-             myErrors.get() > 0 ? NODE_ICON_ERROR :
-             myWarnings.get() > 0 ? NODE_ICON_WARNING :
-             NODE_ICON_OK;
+
+    var customIcon = getCustomIcon();
+    if (customIcon != null) {
+      return customIcon;
     }
+    else {
+      return switch (getStatus()) {
+        case RUNNING -> NODE_ICON_RUNNING;
+        case FAILED -> NODE_ICON_ERROR;
+        case SKIPPED -> NODE_ICON_SKIPPED;
+        case WARNING -> NODE_ICON_WARNING;
+        case SUCCESS -> NODE_ICON_OK;
+      };
+    }
+  }
+
+  private @Nullable Icon getCustomIcon() {
+    var buildId = getBuildId();
+    if (buildId == null) {
+      return null;
+    }
+    return ExecutionNodePresentationCustomizer.EP_NAME.computeSafeIfAny(
+      customizer -> customizer.getIcon(buildId, this)
+    );
   }
 
   public static boolean isFailed(@Nullable EventResult result) {
@@ -430,5 +474,14 @@ public class ExecutionNode extends PresentableNodeDescriptor<ExecutionNode> {
         return myHint;
       }
     }
+  }
+
+  @ApiStatus.Internal
+  public enum Status {
+    RUNNING,
+    SUCCESS,
+    WARNING,
+    FAILED,
+    SKIPPED,
   }
 }

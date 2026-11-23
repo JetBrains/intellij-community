@@ -20915,9 +20915,19 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
                 runTest("testData/inspectionsLocal/redundantSemicolon/companionWithName.kt");
             }
 
+            @TestMetadata("escapedStringInjection.kt")
+            public void testEscapedStringInjection() throws Exception {
+                runTest("testData/inspectionsLocal/redundantSemicolon/escapedStringInjection.kt");
+            }
+
             @TestMetadata("ifElse.kt")
             public void testIfElse() throws Exception {
                 runTest("testData/inspectionsLocal/redundantSemicolon/ifElse.kt");
+            }
+
+            @TestMetadata("injection.kt")
+            public void testInjection() throws Exception {
+                runTest("testData/inspectionsLocal/redundantSemicolon/injection.kt");
             }
 
             @TestMetadata("localClass.kt")
@@ -25785,9 +25795,19 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
                 runTest("testData/inspectionsLocal/uselessCallOnCollection/FilterTrue.kt");
             }
 
+            @TestMetadata("FilterTrueArrayToList.kt")
+            public void testFilterTrueArrayToList() throws Exception {
+                runTest("testData/inspectionsLocal/uselessCallOnCollection/FilterTrueArrayToList.kt");
+            }
+
             @TestMetadata("FilterTrueOnSequence.kt")
             public void testFilterTrueOnSequence() throws Exception {
                 runTest("testData/inspectionsLocal/uselessCallOnCollection/FilterTrueOnSequence.kt");
+            }
+
+            @TestMetadata("FilterTrueSetToList.kt")
+            public void testFilterTrueSetToList() throws Exception {
+                runTest("testData/inspectionsLocal/uselessCallOnCollection/FilterTrueSetToList.kt");
             }
 
             @TestMetadata("FilterTrueTail.kt")
@@ -25798,6 +25818,16 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
             @TestMetadata("FilterTrueTailOnSequence.kt")
             public void testFilterTrueTailOnSequence() throws Exception {
                 runTest("testData/inspectionsLocal/uselessCallOnCollection/FilterTrueTailOnSequence.kt");
+            }
+
+            @TestMetadata("FilterTrueToList1.kt")
+            public void testFilterTrueToList1() throws Exception {
+                runTest("testData/inspectionsLocal/uselessCallOnCollection/FilterTrueToList1.kt");
+            }
+
+            @TestMetadata("FilterTrueWithArrayReceiver.kt")
+            public void testFilterTrueWithArrayReceiver() throws Exception {
+                runTest("testData/inspectionsLocal/uselessCallOnCollection/FilterTrueWithArrayReceiver.kt");
             }
 
             @TestMetadata("FilterTrueWithLabeledReturn.kt")
@@ -25818,6 +25848,46 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
             @TestMetadata("FilterTrueWithNonLocalLabeledReturnOnSequence.kt")
             public void testFilterTrueWithNonLocalLabeledReturnOnSequence() throws Exception {
                 runTest("testData/inspectionsLocal/uselessCallOnCollection/FilterTrueWithNonLocalLabeledReturnOnSequence.kt");
+            }
+
+            @TestMetadata("FilterTrueWithNonTemporaryReceiver.kt")
+            public void testFilterTrueWithNonTemporaryReceiver() throws Exception {
+                runTest("testData/inspectionsLocal/uselessCallOnCollection/FilterTrueWithNonTemporaryReceiver.kt");
+            }
+
+            @TestMetadata("FilterTrueWithSetReceiver.kt")
+            public void testFilterTrueWithSetReceiver() throws Exception {
+                runTest("testData/inspectionsLocal/uselessCallOnCollection/FilterTrueWithSetReceiver.kt");
+            }
+
+            @TestMetadata("FilterTrueWithTemporaryReceiverCollectionLiteral.kt")
+            public void testFilterTrueWithTemporaryReceiverCollectionLiteral() throws Exception {
+                runTest("testData/inspectionsLocal/uselessCallOnCollection/FilterTrueWithTemporaryReceiverCollectionLiteral.kt");
+            }
+
+            @TestMetadata("FilterTrueWithTemporaryReceiverFilter.kt")
+            public void testFilterTrueWithTemporaryReceiverFilter() throws Exception {
+                runTest("testData/inspectionsLocal/uselessCallOnCollection/FilterTrueWithTemporaryReceiverFilter.kt");
+            }
+
+            @TestMetadata("FilterTrueWithTemporaryReceiverFlatMap.kt")
+            public void testFilterTrueWithTemporaryReceiverFlatMap() throws Exception {
+                runTest("testData/inspectionsLocal/uselessCallOnCollection/FilterTrueWithTemporaryReceiverFlatMap.kt");
+            }
+
+            @TestMetadata("FilterTrueWithTemporaryReceiverMap.kt")
+            public void testFilterTrueWithTemporaryReceiverMap() throws Exception {
+                runTest("testData/inspectionsLocal/uselessCallOnCollection/FilterTrueWithTemporaryReceiverMap.kt");
+            }
+
+            @TestMetadata("FilterTrueWithTemporaryReceiverMapNotNull.kt")
+            public void testFilterTrueWithTemporaryReceiverMapNotNull() throws Exception {
+                runTest("testData/inspectionsLocal/uselessCallOnCollection/FilterTrueWithTemporaryReceiverMapNotNull.kt");
+            }
+
+            @TestMetadata("FilterTrueWithTemporaryReceiverToList.kt")
+            public void testFilterTrueWithTemporaryReceiverToList() throws Exception {
+                runTest("testData/inspectionsLocal/uselessCallOnCollection/FilterTrueWithTemporaryReceiverToList.kt");
             }
 
             @TestMetadata("MapIndexedNotNullTo.kt")

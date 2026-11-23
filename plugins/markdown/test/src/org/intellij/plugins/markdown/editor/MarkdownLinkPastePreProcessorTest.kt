@@ -2,11 +2,22 @@
 package org.intellij.plugins.markdown.editor
 
 import com.intellij.codeInsight.editorActions.CopyPastePreProcessor
-import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixture4TestCase
-import org.junit.Assert.assertEquals
-import org.junit.Test
+import com.intellij.openapi.application.readAction
+import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightModuleFixture
+import com.intellij.testFramework.common.timeoutRunBlocking
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.fixture.projectFixture
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Test
 
-class MarkdownLinkPastePreProcessorTest : LightPlatformCodeInsightFixture4TestCase() {
+@TestApplication
+class MarkdownLinkPastePreProcessorTest {
+  companion object {
+    private val projectFixture = projectFixture(openAfterCreation = true)
+  }
+
+  private val myFixture by codeInsightModuleFixture(projectFixture)
+
   @Test
   fun `creates link in Markdown text`() {
     assertPreprocessedText("Some <selection>text</selection>", "[text](https://example.com)")
@@ -76,13 +87,17 @@ class MarkdownLinkPastePreProcessorTest : LightPlatformCodeInsightFixture4TestCa
     val processor = CopyPastePreProcessor.EP_NAME.extensionList.single {
       it.javaClass.name == "org.intellij.plugins.markdown.editor.MarkdownLinkPastePreProcessor"
     }
-    val actual = processor.preprocessOnPaste(
-      project,
-      myFixture.file,
-      myFixture.editor,
-      "https://example.com",
-      null,
-    )
+    val actual = timeoutRunBlocking {
+      readAction {
+        processor.preprocessOnPaste(
+          myFixture.project,
+          myFixture.file,
+          myFixture.editor,
+          "https://example.com",
+          null,
+        )
+      }
+    }
     assertEquals(expected, actual)
   }
 }

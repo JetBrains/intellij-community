@@ -2,7 +2,15 @@ package org.intellij.plugins.markdown.model
 
 import com.intellij.idea.TestFor
 import com.intellij.openapi.actionSystem.IdeActions
-import com.intellij.testFramework.LightPlatformCodeInsightTestCase
+import com.intellij.openapi.application.EDT
+import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightModuleFixture
+import com.intellij.testFramework.common.timeoutRunBlocking
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.fixture.projectFixture
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import org.intellij.plugins.markdown.editor.executeAction
+import org.junit.jupiter.api.Test
 
 /**
  * Verify that there is a single target to navigate to and navigation to that target works fine.
@@ -11,7 +19,15 @@ import com.intellij.testFramework.LightPlatformCodeInsightTestCase
  * (there will be no caret at expected position).
  */
 @TestFor(issues = ["IDEA-306020"])
-class SingleSymbolGoToDeclarationTest: LightPlatformCodeInsightTestCase() {
+@TestApplication
+class SingleSymbolGoToDeclarationTest {
+  companion object {
+    private val projectFixture = projectFixture(openAfterCreation = true)
+  }
+
+  private val myFixture by codeInsightModuleFixture(projectFixture)
+
+  @Test
   fun `test link label`() {
     // language=Markdown
     val content = """
@@ -28,6 +44,7 @@ class SingleSymbolGoToDeclarationTest: LightPlatformCodeInsightTestCase() {
     doTest(content, after)
   }
 
+  @Test
   fun `test collapsed link label`() {
     // language=Markdown
     val content = """
@@ -44,6 +61,7 @@ class SingleSymbolGoToDeclarationTest: LightPlatformCodeInsightTestCase() {
     doTest(content, after)
   }
 
+  @Test
   fun `test shortcut link label`() {
     // language=Markdown
     val content = """
@@ -60,6 +78,7 @@ class SingleSymbolGoToDeclarationTest: LightPlatformCodeInsightTestCase() {
     doTest(content, after)
   }
 
+  @Test
   fun `test first equivalent declaration wins`() {
     // language=Markdown
     val content = """
@@ -78,6 +97,7 @@ class SingleSymbolGoToDeclarationTest: LightPlatformCodeInsightTestCase() {
     doTest(content, after)
   }
 
+  @Test
   fun `test header reference`() {
     // language=Markdown
     val content = """
@@ -94,9 +114,11 @@ class SingleSymbolGoToDeclarationTest: LightPlatformCodeInsightTestCase() {
     doTest(content, after)
   }
 
-  private fun doTest(content: String, after: String) {
-    configureFromFileText("some.md", content)
-    executeAction(IdeActions.ACTION_GOTO_DECLARATION)
-    checkResultByText(after)
+  private fun doTest(content: String, after: String): Unit = timeoutRunBlocking {
+    myFixture.configureByText("some.md", content)
+    withContext(Dispatchers.EDT) {
+      myFixture.executeAction(IdeActions.ACTION_GOTO_DECLARATION)
+      myFixture.checkResult(after)
+    }
   }
 }

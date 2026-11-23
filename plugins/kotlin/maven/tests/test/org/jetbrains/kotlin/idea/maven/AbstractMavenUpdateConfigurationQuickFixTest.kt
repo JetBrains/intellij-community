@@ -39,7 +39,9 @@ abstract class AbstractMavenUpdateConfigurationQuickFixTest(
     protected suspend fun doTest(intentionName: String, shouldBeAvailable: Boolean = true) {
         val pomVFile = maven.createProjectSubFile("pom.xml", File(getTestDataPath(), "pom.xml").readText())
         val sourceVFile = maven.createProjectSubFile("src/main/kotlin/src.kt", File(getTestDataPath(), "src.kt").readText())
-        RefreshQueue.getInstance().refresh(false, false, null, listOf(pomVFile, sourceVFile))
+        val parentPomFile = File(getTestDataPath(), PARENT_POM_PATH)
+        val parentPomVFile = if (parentPomFile.exists()) maven.createProjectSubFile(PARENT_POM_PATH, parentPomFile.readText()) else null
+        RefreshQueue.getInstance().refresh(false, false, null, listOfNotNull(pomVFile, sourceVFile, parentPomVFile))
         maven.projectPom = pomVFile
         maven.importProjectAsync(pomVFile)
         withContext(Dispatchers.EDT) {
@@ -70,3 +72,5 @@ abstract class AbstractMavenUpdateConfigurationQuickFixTest(
         }
     }
 }
+
+const val PARENT_POM_PATH = "parent/pom.xml"

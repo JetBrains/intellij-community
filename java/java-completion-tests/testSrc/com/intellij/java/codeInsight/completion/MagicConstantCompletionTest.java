@@ -3,136 +3,176 @@ package com.intellij.java.codeInsight.completion;
 
 import com.intellij.codeInsight.completion.CompletionType;
 import com.intellij.codeInsight.lookup.LookupManager;
+import com.intellij.platform.testFramework.junit5.codeInsight.indexing.IndexingModeTemplate;
+import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.NeedsIndex;
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.intellij.lang.annotations.Language;
+import org.junit.jupiter.api.Test;
 
-public class MagicConstantCompletionTest extends LightJavaCodeInsightFixtureTestCase {
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaCodeInsightFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
+@TestApplication
+@IndexingModeTemplate
+public class MagicConstantCompletionTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture = lightJavaCodeInsightFixture(projectFixture);
+
+  @Test
   @NeedsIndex.Full
   public void test_in_method_argument() {
-    addModifierList();
-    myFixture.configureByText("a.java", """
-                                class Foo {
-                                  static void foo(ModifierList ml) {
-                                    ml.hasModifierProperty(<caret>)
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    EdtTestUtil.runInEdtAndWait(() -> {
+      addModifierList();
+      myFixture.configureByText("a.java", """
+                                  class Foo {
+                                    static void foo(ModifierList ml) {
+                                      ml.hasModifierProperty(<caret>)
+                                    }
                                   }
-                                }
-                                """);
-    myFixture.complete(CompletionType.SMART);
-    myFixture.assertPreferredCompletionItems(0, "PROTECTED", "PUBLIC");
+                                  """);
+      myFixture.complete(CompletionType.SMART);
+      myFixture.assertPreferredCompletionItems(0, "PROTECTED", "PUBLIC");
+    });
   }
 
+  @Test
   public void test_nothing_after_dot() {
-    addModifierList();
-    myFixture.configureByText("a.java", """
-                                class Foo {
-                                  static void foo(ModifierList ml) {
-                                    ml.hasModifierProperty(Foo.<caret>)
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    EdtTestUtil.runInEdtAndWait(() -> {
+      addModifierList();
+      myFixture.configureByText("a.java", """
+                                  class Foo {
+                                    static void foo(ModifierList ml) {
+                                      ml.hasModifierProperty(Foo.<caret>)
+                                    }
                                   }
-                                }
-                                """);
-    assertEquals(0, myFixture.complete(CompletionType.SMART).length);
+                                  """);
+      assertEquals(0, myFixture.complete(CompletionType.SMART).length);
+    });
   }
 
+  @Test
   public void testMagicConstantInVariableInitializer() {
-    addMagicConstant();
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    EdtTestUtil.runInEdtAndWait(() -> {
+      addMagicConstant();
 
-    myFixture.configureByText("a.java", """
-      class TestAssignment {
-          interface States {
-              int INIT =0;
-              int RUNNING = 1;
-              int STOPPED = 2;
-          }
-          @org.intellij.lang.annotations.MagicConstant(valuesFromClass = States.class)
-          int state = <caret>;
-          public TestAssignment() {
-              this.state = 0;
-          }
-      }""");
+      myFixture.configureByText("a.java", """
+        class TestAssignment {
+            interface States {
+                int INIT =0;
+                int RUNNING = 1;
+                int STOPPED = 2;
+            }
+            @org.intellij.lang.annotations.MagicConstant(valuesFromClass = States.class)
+            int state = <caret>;
+            public TestAssignment() {
+                this.state = 0;
+            }
+        }""");
 
-    myFixture.complete(CompletionType.SMART);
-    myFixture.assertPreferredCompletionItems(0, "INIT", "RUNNING", "STOPPED");
-    LookupManager.getInstance(getProject()).hideActiveLookup();
+      myFixture.complete(CompletionType.SMART);
+      myFixture.assertPreferredCompletionItems(0, "INIT", "RUNNING", "STOPPED");
+      LookupManager.getInstance(myFixture.getProject()).hideActiveLookup();
 
-    myFixture.complete(CompletionType.BASIC);
-    myFixture.assertPreferredCompletionItems(0, "INIT", "RUNNING", "STOPPED");
+      myFixture.complete(CompletionType.BASIC);
+      myFixture.assertPreferredCompletionItems(0, "INIT", "RUNNING", "STOPPED");
+    });
   }
 
+  @Test
   public void test_magic_constant_in_equality() {
-    addMagicConstant();
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    EdtTestUtil.runInEdtAndWait(() -> {
+      addMagicConstant();
 
-    myFixture.configureByText("a.java", """
-                                class Bar {
-                                  static void foo() {
-                                    if (getConstant() == <caret>) {}
+      myFixture.configureByText("a.java", """
+                                  class Bar {
+                                    static void foo() {
+                                      if (getConstant() == <caret>) {}
+                                    }
+
+                                    @org.intellij.lang.annotations.MagicConstant(flagsFromClass = Foo.class)
+                                    public native int getConstant();
                                   }
 
-                                  @org.intellij.lang.annotations.MagicConstant(flagsFromClass = Foo.class)
-                                  public native int getConstant();
-                                }
+                                  interface Foo {
+                                      int FOO = 1;
+                                      int BAR = 2;
+                                  }
+                                  """);
+      myFixture.complete(CompletionType.SMART);
+      myFixture.assertPreferredCompletionItems(0, "BAR", "FOO");
+      LookupManager.getInstance(myFixture.getProject()).hideActiveLookup();
 
-                                interface Foo {
-                                    int FOO = 1;
-                                    int BAR = 2;
-                                }
-                                """);
-    myFixture.complete(CompletionType.SMART);
-    myFixture.assertPreferredCompletionItems(0, "BAR", "FOO");
-    LookupManager.getInstance(getProject()).hideActiveLookup();
-
-    myFixture.complete(CompletionType.BASIC);
-    myFixture.assertPreferredCompletionItems(0, "BAR", "FOO");
+      myFixture.complete(CompletionType.BASIC);
+      myFixture.assertPreferredCompletionItems(0, "BAR", "FOO");
+    });
   }
 
+  @Test
   @NeedsIndex.ForStandardLibrary
   public void test_completion_in_enum_constructor() {
-    addMagicConstant();
-    myFixture.configureByText("a.java", """
-                                import org.intellij.lang.annotations.MagicConstant;
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    EdtTestUtil.runInEdtAndWait(() -> {
+      addMagicConstant();
+      myFixture.configureByText("a.java", """
+                                  import org.intellij.lang.annotations.MagicConstant;
 
-                                enum MagicConstantTest {
-                                  FOO(<caret>),
-                                  ;
+                                  enum MagicConstantTest {
+                                    FOO(<caret>),
+                                    ;
 
-                                  private final int magicConstant;
+                                    private final int magicConstant;
 
-                                  MagicConstantTest(@MagicConstant(valuesFromClass = MagicConstantIds.class) int magicConstant) {
-                                    this.magicConstant = magicConstant;
+                                    MagicConstantTest(@MagicConstant(valuesFromClass = MagicConstantIds.class) int magicConstant) {
+                                      this.magicConstant = magicConstant;
+                                    }
                                   }
-                                }
-                                class MagicConstantIds {
-                                  static final int ONE = 1;
-                                  static final int TWO = 2;
-                                }
-                                """);
-    myFixture.completeBasic();
-    myFixture.assertPreferredCompletionItems(0, "ONE", "TWO");
+                                  class MagicConstantIds {
+                                    static final int ONE = 1;
+                                    static final int TWO = 2;
+                                  }
+                                  """);
+      myFixture.completeBasic();
+      myFixture.assertPreferredCompletionItems(0, "ONE", "TWO");
+    });
   }
 
+  @Test
   public void test_magic_constant_in_equality_before_another_equality() {
-    addMagicConstant();
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    EdtTestUtil.runInEdtAndWait(() -> {
+      addMagicConstant();
 
-    myFixture.configureByText("a.java", """
-                                class Bar {
-                                  static void foo() {
-                                    if (getConstant() == <caret>getConstant() == 2) {}
+      myFixture.configureByText("a.java", """
+                                  class Bar {
+                                    static void foo() {
+                                      if (getConstant() == <caret>getConstant() == 2) {}
+                                    }
+
+                                    @org.intellij.lang.annotations.MagicConstant(flagsFromClass = Foo.class)
+                                    public native int getConstant();
                                   }
 
-                                  @org.intellij.lang.annotations.MagicConstant(flagsFromClass = Foo.class)
-                                  public native int getConstant();
-                                }
-
-                                interface Foo {
-                                    int FOO = 1;
-                                    int BAR = 2;
-                                }
-                                """);
-    myFixture.complete(CompletionType.SMART);
-    myFixture.assertPreferredCompletionItems(0, "BAR", "FOO");
+                                  interface Foo {
+                                      int FOO = 1;
+                                      int BAR = 2;
+                                  }
+                                  """);
+      myFixture.complete(CompletionType.SMART);
+      myFixture.assertPreferredCompletionItems(0, "BAR", "FOO");
+    });
   }
 
   private void addModifierList() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     addMagicConstant();
 
     myFixture.addClass("""
@@ -153,6 +193,7 @@ public class MagicConstantCompletionTest extends LightJavaCodeInsightFixtureTest
   }
 
   private void addMagicConstant() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.addClass("""
         package org.intellij.lang.annotations;
         public @interface MagicConstant {
@@ -162,76 +203,88 @@ public class MagicConstantCompletionTest extends LightJavaCodeInsightFixtureTest
         """);
   }
 
+  @Test
   public void testVariableAssignedFromMagicMethodEqEq() {
-    addMagicConstant();
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    EdtTestUtil.runInEdtAndWait(() -> {
+      addMagicConstant();
 
-    @Language("JAVA") String s = """
-        class Bar {
-          static void foo() {
-            int flags = getConstant();
-            if (flags == <caret>) {}
+      @Language("JAVA") String s = """
+          class Bar {
+            static void foo() {
+              int flags = getConstant();
+              if (flags == <caret>) {}
+            }
+
+            @org.intellij.lang.annotations.MagicConstant(valuesFromClass = Foo.class)
+            public native int getConstant();
           }
 
-          @org.intellij.lang.annotations.MagicConstant(valuesFromClass = Foo.class)
-          public native int getConstant();
-        }
-
-        interface Foo {
-            int FOO = 1;
-            int BAR = 2;
-        }
-        """;
-    myFixture.configureByText("a.java", s);
-    myFixture.complete(CompletionType.SMART);
-    myFixture.assertPreferredCompletionItems(0, "BAR", "FOO");
+          interface Foo {
+              int FOO = 1;
+              int BAR = 2;
+          }
+          """;
+      myFixture.configureByText("a.java", s);
+      myFixture.complete(CompletionType.SMART);
+      myFixture.assertPreferredCompletionItems(0, "BAR", "FOO");
+    });
   }
 
+  @Test
   @NeedsIndex.ForStandardLibrary
   public void testVarargMethodCall() {
-    addMagicConstant();
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    EdtTestUtil.runInEdtAndWait(() -> {
+      addMagicConstant();
 
-    @Language("JAVA") String s = """
-        import org.intellij.lang.annotations.MagicConstant;
+      @Language("JAVA") String s = """
+          import org.intellij.lang.annotations.MagicConstant;
 
-        public class VarargMethodCall {
-          private static class Constants {
-            public static final int ONE = 1;
-            public static final int TWO = 2;
+          public class VarargMethodCall {
+            private static class Constants {
+              public static final int ONE = 1;
+              public static final int TWO = 2;
+            }
+            public static void testAnnotation2(@MagicConstant(valuesFromClass = Constants.class) int... vars) {
+            }
+            public static void testMethod() {
+              testAnnotation2(<caret>);
+            }
           }
-          public static void testAnnotation2(@MagicConstant(valuesFromClass = Constants.class) int... vars) {
-          }
-          public static void testMethod() {
-            testAnnotation2(<caret>);
-          }
-        }
-        """;
-    myFixture.configureByText("a.java", s);
-    myFixture.complete(CompletionType.SMART);
-    myFixture.assertPreferredCompletionItems(0, "ONE", "TWO");
+          """;
+      myFixture.configureByText("a.java", s);
+      myFixture.complete(CompletionType.SMART);
+      myFixture.assertPreferredCompletionItems(0, "ONE", "TWO");
+    });
   }
 
+  @Test
   @NeedsIndex.ForStandardLibrary
   public void testVarargMethodCall2() {
-    addMagicConstant();
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    EdtTestUtil.runInEdtAndWait(() -> {
+      addMagicConstant();
 
-    @Language("JAVA") String s =
-      """
-        import org.intellij.lang.annotations.MagicConstant;
+      @Language("JAVA") String s =
+        """
+          import org.intellij.lang.annotations.MagicConstant;
 
-        public class VarargMethodCall {
-          private static class Constants {
-            public static final int ONE = 1;
-            public static final int TWO = 2;
+          public class VarargMethodCall {
+            private static class Constants {
+              public static final int ONE = 1;
+              public static final int TWO = 2;
+            }
+            public static void testAnnotation2(@MagicConstant(valuesFromClass = Constants.class) int... vars) {
+            }
+            public static void testMethod() {
+              testAnnotation2(Constants.ONE, <caret>);
+            }
           }
-          public static void testAnnotation2(@MagicConstant(valuesFromClass = Constants.class) int... vars) {
-          }
-          public static void testMethod() {
-            testAnnotation2(Constants.ONE, <caret>);
-          }
-        }
-        """;
-    myFixture.configureByText("a.java", s);
-    myFixture.complete(CompletionType.SMART);
-    myFixture.assertPreferredCompletionItems(0, "ONE", "TWO");
+          """;
+      myFixture.configureByText("a.java", s);
+      myFixture.complete(CompletionType.SMART);
+      myFixture.assertPreferredCompletionItems(0, "ONE", "TWO");
+    });
   }
 }

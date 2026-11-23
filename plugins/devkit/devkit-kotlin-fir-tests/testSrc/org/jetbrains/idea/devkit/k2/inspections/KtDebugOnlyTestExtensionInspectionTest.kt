@@ -2,15 +2,26 @@
 package org.jetbrains.idea.devkit.k2.inspections
 
 import com.intellij.testFramework.TestDataPath
+import com.intellij.testFramework.fixtures.lightJavaProjectFixture
+import com.intellij.testFramework.junit5.TestApplication
 import org.jetbrains.idea.devkit.inspections.DebugOnlyTestExtensionInspection
-import org.jetbrains.idea.devkit.inspections.quickfix.LightDevKitInspectionFixTestBase
+import org.jetbrains.idea.devkit.inspections.quickfix.lightDevKitInspectionFixture
 import org.jetbrains.idea.devkit.kotlin.DevkitKtTestsUtil
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 
 @TestDataPath("\$CONTENT_ROOT/testData/inspections/debugOnlyTestExtension")
-class KtDebugOnlyTestExtensionInspectionTest : LightDevKitInspectionFixTestBase() {
+@TestApplication
+class KtDebugOnlyTestExtensionInspectionTest {
+  companion object {
+    private val projectFixture = lightJavaProjectFixture()
+  }
 
-  override fun setUp() {
-    super.setUp()
+  private val devKit by lightDevKitInspectionFixture(projectFixture, "kt", DevkitKtTestsUtil.TESTDATA_PATH + "inspections/debugOnlyTestExtension")
+  private val myFixture get() = devKit.fixture
+
+  @BeforeEach
+  fun setUp() {
     myFixture.enableInspections(DebugOnlyTestExtensionInspection())
     myFixture.addClass(
       """
@@ -52,31 +63,33 @@ class KtDebugOnlyTestExtensionInspectionTest : LightDevKitInspectionFixTestBase(
     )
   }
 
-  override fun getBasePath(): String = DevkitKtTestsUtil.TESTDATA_PATH + "inspections/debugOnlyTestExtension"
-
-  override fun getFileExtension(): String = "kt"
-
+  @Test
   fun testHighlightsUseInstallerOnClass() {
-    doTest()
+    devKit.doTest()
   }
 
+  @Test
   fun testHighlightsRemoteDevRunOnMethod() {
-    doTest()
+    devKit.doTest()
   }
 
+  @Test
   fun testNoHighlightForRegularExtension() {
-    doTest()
+    devKit.doTest()
   }
 
+  @Test
   fun testQuickFixRemovesSingleLiteralAnnotationAndImports() {
-    doTest("Remove @ExtendWith('UseInstaller')")
+    devKit.doTest("Remove @ExtendWith('UseInstaller')")
   }
 
+  @Test
   fun testQuickFixRemovesOnlyOffendingLiteralWhenMultiple() {
-    doTest("Remove @ExtendWith('UseInstaller')")
+    devKit.doTest("Remove @ExtendWith('UseInstaller')")
   }
 
+  @Test
   fun testIgnoreFixAddsSuppressAnnotation() {
-    doTest("Ignore 'Debug-only JUnit test extension must not be committed'")
+    devKit.doTest("Ignore 'Debug-only JUnit test extension must not be committed'")
   }
 }

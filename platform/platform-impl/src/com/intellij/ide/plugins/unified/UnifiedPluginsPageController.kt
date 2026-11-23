@@ -329,7 +329,8 @@ internal class UnifiedPluginsPageController(
     else {
       previousOrder.pluginIds + newItems.map(PluginItemState::pluginId)
     }
-    val orderedItems = updatedPluginIds.mapNotNull(itemsById::get)
+    val stableItems = updatedPluginIds.mapNotNull(itemsById::get)
+    val orderedItems = if (section.id == PluginSectionId.Suggested) stableItems.sortedBy(PluginItemState::suggestedGroup) else stableItems
     sectionItemOrders[orderKey] = PluginSectionItemOrder(
       pluginIds = updatedPluginIds,
       bundledCategories = updatedCategories,
@@ -367,9 +368,6 @@ internal class UnifiedPluginsPageController(
     selectedRepositoryIds: Set<String>,
   ): Boolean {
     val marketplaceFamilyId = marketplaceSectionId(query)
-    if (section.id is PluginSectionId.CustomRepository && query.normalizedQuery.isEmpty()) {
-      return section.status is PluginSectionStatus.Failed
-    }
     if (section.id is PluginSectionId.CustomRepository && section.id.repositoryId in selectedRepositoryIds) {
       return true
     }

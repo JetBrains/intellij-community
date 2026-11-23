@@ -353,14 +353,14 @@ The generator searches for marker files to find project roots:
 | `build/bazel-generated-file-list.txt` | List of generated files for cleanup |
 
 The generator states the JPS model and nothing more. It reads no table under `community/build/`, it derives no
-dev-distribution jar, and it emits no `content_module_jar`, `dev_dist_plugin` or `dev_dist_plugin_jar` call. The
+distribution jar, and it emits no `content_module_jar`, `dist_plugin` or `dist_plugin_jar` call. The
 `dev <module>` section of a `BUILD.bazel` belongs to `plugin-model-tool`
 (`bazel run //platform/buildScripts:plugin-model-tool`). That tool runs after the generator and reads the JPS index
 for its labels. The generator keeps the load symbols that section names and never rewrites or removes it.
 
 ### bazel-targets.json Structure
 
-The file is the JPS index. It carries no dev-distribution fact.
+The file is the JPS index. It carries no distribution fact.
 
 ```json
 {
@@ -529,10 +529,15 @@ Extracted from `JpsKotlinFacetModuleExtension`:
 
 - `api_version`, `language_version`
 - `opt_in` annotations
-- `plugin_options` for compiler plugins
 - Various `-X` flags
 
 Generates `kt_kotlinc_options` target when options are present.
+
+`-P plugin:<id>:<key>=<value>` options of the facet become one `kt_plugin_cfg` target (rules_kotlin) per compiler
+plugin, listed in the `plugins` attribute of the module's targets. A value that names a file next to the BUILD file is
+passed as `$(location <file>)` with the file in `data`, so the file is an input of the compilation.
+The facet must list the plugin in `pluginClasspaths`: the compiler reads a `-P` option only for a plugin that it loads.
+The generator rejects an option of a plugin that the facet does not list.
 
 ### Java Options
 

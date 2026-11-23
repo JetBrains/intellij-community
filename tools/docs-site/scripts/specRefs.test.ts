@@ -45,7 +45,7 @@ describe('a heading slug', () => {
   it('is the GitHub slug: lower case, letters, digits, hyphens and underscores, each space a hyphen', () => {
     assert.equal(headingSlug('Testing / Local Run'), 'testing--local-run')
     assert.equal(headingSlug('Data & Backend'), 'data--backend')
-    assert.equal(headingSlug('`dev_dist_plugin` macro'), 'dev_dist_plugin-macro')
+    assert.equal(headingSlug('`dist_plugin` macro'), 'dist_plugin-macro')
     assert.equal(headingSlug('ADR 0063: the launcher'), 'adr-0063-the-launcher')
     // a letter outside ASCII stays
     assert.equal(headingSlug('\u00dcberblick'), '\u00fcberblick')

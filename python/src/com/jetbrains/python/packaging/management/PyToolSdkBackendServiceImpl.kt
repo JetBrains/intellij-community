@@ -21,6 +21,8 @@ import com.intellij.python.sdk.backend.findToolExecutable
 import com.intellij.python.sdk.backend.PythonInterpreter
 import com.jetbrains.python.Result
 import com.intellij.python.pyproject.model.evolution.pythonInterpreters
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 internal class PyToolSdkBackendServiceImpl : PyToolSdkBackendService {
   override suspend fun getStates(project: Project, tool: PyTool): List<PyToolSdkStateDto> =
@@ -28,7 +30,7 @@ internal class PyToolSdkBackendServiceImpl : PyToolSdkBackendService {
 
   override suspend fun getDependencyGroups(project: Project, request: PyToolSdkRequest): List<PyToolDependencyGroupDto> {
     val (interpreter, _) = requireInterpreter(project, request.sdk)
-    return PythonPackageManager.forPythonInterpreter(project, interpreter).workspaceSupport
+    return PythonPackageManager.forPythonInterpreter(interpreter).workspaceSupport
       ?.getDependencyGroups(ProjectName(project.name))
       ?.values?.flatten()?.distinct().orEmpty().map { it.toDto() }
   }
@@ -39,7 +41,7 @@ internal class PyToolSdkBackendServiceImpl : PyToolSdkBackendService {
     request: PyToolSdkInstallRequest,
   ): PyToolSdkOperationResultDto {
     val (interpreter, item) = requireInterpreter(project, request.target.sdk)
-    return when (val result = PythonPackageManager.forPythonInterpreter(project, interpreter).installPackages(
+    return when (val result = PythonPackageManager.forPythonInterpreter(interpreter).installPackages(
       tool.packageName.name,
       dependencyGroup = request.dependencyGroup?.toModel(),
     )) {
@@ -49,7 +51,7 @@ internal class PyToolSdkBackendServiceImpl : PyToolSdkBackendService {
   }
 
   private suspend fun interpreterState(tool: PyTool, interpreter: PythonInterpreter, item: PyInterpreterItem): PyToolSdkStateDto {
-    val path = interpreter.findToolExecutable(tool)
+    val path = withContext(Dispatchers.IO) { interpreter.findToolExecutable(tool) }
     val version = path?.let {
       when (val result = tool.validateCustomPath(it)) {
         is Result.Success -> result.result.value

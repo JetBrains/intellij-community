@@ -111,7 +111,9 @@ public class BuildContextImpl implements BuildContext {
     }
 
     List<Pair<String, byte[]>> untrackedInputs = new ArrayList<>();
-    for (String path : unique(flat(map(CLFlags.PLUGIN_CLASSPATH.getValue(flags), cp -> cp.isBlank()? List.of() : asIterable(cp.split(":")))))) {
+    // the compiler plugin jars and the files the plugin options name: a change in any of them changes every output
+    Iterable<String> pluginClasspath = unique(flat(map(CLFlags.PLUGIN_CLASSPATH.getValue(flags), cp -> cp.isBlank()? List.of() : asIterable(cp.split(":")))));
+    for (String path : flat(pluginClasspath, CLFlags.PLUGIN_DATA.getValue(flags))) {
       byte[] digest = digestsMap.get(path);
       if (digest != null) {
         untrackedInputs.add(Pair.create(path, digest));

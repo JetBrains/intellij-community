@@ -2,12 +2,15 @@
 
 package com.intellij.refactoring.openapi.impl;
 
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.refactoring.RefactoringImpl;
 import com.intellij.refactoring.RenameRefactoring;
+import com.intellij.refactoring.modplan.impl.ModPlanFlow;
 import com.intellij.refactoring.rename.RenameProcessor;
 import com.intellij.refactoring.rename.naming.AutomaticRenamerFactory;
 
@@ -32,6 +35,16 @@ public class RenameRefactoringImpl extends RefactoringImpl<RenameProcessor> impl
                                boolean toSearchInComments,
                                boolean toSearchInNonJavaFiles) {
     super(new RenameProcessor(project, element, newName, scope, toSearchInComments, toSearchInNonJavaFiles));
+  }
+
+  @Override
+  public void run() {
+    Application application = ApplicationManager.getApplication();
+    // The ModPlan flow runs on the EDT with no write action, and it has no callback of setInteractive.
+    if (isInteractive() || !application.isDispatchThread() || application.isWriteAccessAllowed() ||
+        myProcessor.runOnModPlan(isPreviewUsages()) == ModPlanFlow.Result.LEGACY) {
+      super.run();
+    }
   }
 
   @Override

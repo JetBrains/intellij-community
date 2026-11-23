@@ -4,49 +4,49 @@ http_file(
     name = "jewel_deps_kotlinpoet",
     downloaded_file_path = "kotlinpoet.jar",
     sha256 = "585b5673a86301e5e06d307a3327d5a73e213cb7600d1c856604ede016f1d656",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/squareup/kotlinpoet-jvm/2.1.0/kotlinpoet-jvm-2.1.0.jar",
+    url = "https://cache-redirector.jetbrains.com/maven-central/com/squareup/kotlinpoet-jvm/2.1.0/kotlinpoet-jvm-2.1.0.jar",
 )
 
 http_file(
     name = "jewel_deps_ktfmt",
     downloaded_file_path = "ktfmt.jar",
     sha256 = "d13324023754112797d828e2f92117196190f7617d16ad1d1765e5be768cc5c2",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/facebook/ktfmt/0.55/ktfmt-0.55-with-dependencies.jar",
+    url = "https://cache-redirector.jetbrains.com/maven-central/com/facebook/ktfmt/0.55/ktfmt-0.55-with-dependencies.jar",
 )
 
 http_file(
     name = "jewel_deps_detekt",
     downloaded_file_path = "detekt.jar",
     sha256 = "dc71f1eb705fa87abac0d63a5ebb51868d6a6e64bc96eaf56cd2c2a889d2491d",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/dev/detekt/detekt-cli/2.0.0-alpha.3/detekt-cli-2.0.0-alpha.3-all.jar",
+    url = "https://cache-redirector.jetbrains.com/maven-central/dev/detekt/detekt-cli/2.0.0-alpha.3/detekt-cli-2.0.0-alpha.3-all.jar",
 )
 
 http_file(
     name = "jewel_deps_nlopez_detekt",
     downloaded_file_path = "nlopez-detekt.jar",
     sha256 = "2582d294c76e45acc3878059fcd6d55e82acaa01ba4b413e614f94c785f351af",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/nlopez/compose/rules/detekt/0.5.8/detekt-0.5.8.jar",
+    url = "https://cache-redirector.jetbrains.com/maven-central/io/nlopez/compose/rules/detekt/0.5.8/detekt-0.5.8.jar",
 )
 
 http_file(
     name = "jewel_deps_nlopez_common_detekt",
     downloaded_file_path = "nlopez-common-detekt.jar",
     sha256 = "195ea5bd60ff80b72e5b51246ce14921e0845355d41a2e05d5bdfff626383428",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/nlopez/compose/rules/common-detekt/0.5.8/common-detekt-0.5.8.jar",
+    url = "https://cache-redirector.jetbrains.com/maven-central/io/nlopez/compose/rules/common-detekt/0.5.8/common-detekt-0.5.8.jar",
 )
 
 http_file(
     name = "jewel_deps_detekt_test",
     downloaded_file_path = "detekt-test.jar",
     sha256 = "150d48aa77f83134ec8e40974ad6031bb78e725242fa1f8623b59e5757ca37fb",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/dev/detekt/detekt-test/2.0.0-alpha.3/detekt-test-2.0.0-alpha.3.jar",
+    url = "https://cache-redirector.jetbrains.com/maven-central/dev/detekt/detekt-test/2.0.0-alpha.3/detekt-test-2.0.0-alpha.3.jar",
 )
 
 http_file(
     name = "jewel_deps_detekt_test_utils",
     downloaded_file_path = "detekt-test-utils.jar",
     sha256 = "b8135c709a0df679e6cf89215d61f04690ab1f0039a2217954eb9287991592b8",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/dev/detekt/detekt-test-utils/2.0.0-alpha.3/detekt-test-utils-2.0.0-alpha.3.jar",
+    url = "https://cache-redirector.jetbrains.com/maven-central/dev/detekt/detekt-test-utils/2.0.0-alpha.3/detekt-test-utils-2.0.0-alpha.3.jar",
 )
 
 # Spectre (JEWEL-1390). Declared here rather than in `lib/MODULE.bazel` so it cannot reach the
@@ -55,28 +55,28 @@ http_file(
     name = "jewel_deps_spectre_core",
     downloaded_file_path = "spectre-core-0.9.0.jar",
     sha256 = "e4ff1def6d2542be8dec6e247a5b97287f948fd2346a0e596cb6a35431fa501d",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/dev/sebastiano/spectre/spectre-core/0.9.0/spectre-core-0.9.0.jar",
+    url = "https://cache-redirector.jetbrains.com/maven-central/dev/sebastiano/spectre/spectre-core/0.9.0/spectre-core-0.9.0.jar",
 )
 
 http_file(
     name = "jewel_deps_spectre_core_sources",
     downloaded_file_path = "spectre-core-0.9.0-sources.jar",
     sha256 = "13588ac252e6bd7b71a5f46dd4c09fbac732dc178deae4e5eeffe733674ff92a",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/dev/sebastiano/spectre/spectre-core/0.9.0/spectre-core-0.9.0-sources.jar",
+    url = "https://cache-redirector.jetbrains.com/maven-central/dev/sebastiano/spectre/spectre-core/0.9.0/spectre-core-0.9.0-sources.jar",
 )
 
 http_file(
     name = "jewel_deps_spectre_testing",
     downloaded_file_path = "spectre-testing-0.9.0.jar",
     sha256 = "f30bf140cab8b84eaa9494a7e1f1effb32f0be2ded1046df0323ead9ba8c8c02",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/dev/sebastiano/spectre/spectre-testing/0.9.0/spectre-testing-0.9.0.jar",
+    url = "https://cache-redirector.jetbrains.com/maven-central/dev/sebastiano/spectre/spectre-testing/0.9.0/spectre-testing-0.9.0.jar",
 )
 
 http_file(
     name = "jewel_deps_spectre_testing_sources",
     downloaded_file_path = "spectre-testing-0.9.0-sources.jar",
     sha256 = "2b64bfea227db7b041646381b2a9d07b3b44b5d7e9d4d92dfaba8e1366400377",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/dev/sebastiano/spectre/spectre-testing/0.9.0/spectre-testing-0.9.0-sources.jar",
+    url = "https://cache-redirector.jetbrains.com/maven-central/dev/sebastiano/spectre/spectre-testing/0.9.0/spectre-testing-0.9.0-sources.jar",
 )
 
 # Compile dependency of spectre-testing; unused by the in-process lane, but must resolve.
@@ -84,7 +84,7 @@ http_file(
     name = "jewel_deps_spectre_agent",
     downloaded_file_path = "spectre-agent-0.9.0.jar",
     sha256 = "dd65832c0695180bf17908e09ce6b57993a1f973067f08ac4d3771bd8008c389",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/dev/sebastiano/spectre/spectre-agent/0.9.0/spectre-agent-0.9.0.jar",
+    url = "https://cache-redirector.jetbrains.com/maven-central/dev/sebastiano/spectre/spectre-agent/0.9.0/spectre-agent-0.9.0.jar",
 )
 
 # The loadable Java agent, supplied by the attaching test JVM and injected into the IDE under test.
@@ -93,14 +93,14 @@ http_file(
     name = "jewel_deps_spectre_agent_runtime",
     downloaded_file_path = "spectre-agent-runtime-0.9.0.jar",
     sha256 = "8180446ea7840e3701cd0f663f39d974386066870bc9dce0e7f2efce68ed4a9d",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/dev/sebastiano/spectre/spectre-agent-runtime/0.9.0/spectre-agent-runtime-0.9.0.jar",
+    url = "https://cache-redirector.jetbrains.com/maven-central/dev/sebastiano/spectre/spectre-agent-runtime/0.9.0/spectre-agent-runtime-0.9.0.jar",
 )
 
 http_file(
     name = "jewel_deps_spectre_agent_sources",
     downloaded_file_path = "spectre-agent-0.9.0-sources.jar",
     sha256 = "06c3ea0389783b5271b6f0cfeb98edd9e91261cb4c9bbd201a708cb76ad2e40a",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/dev/sebastiano/spectre/spectre-agent/0.9.0/spectre-agent-0.9.0-sources.jar",
+    url = "https://cache-redirector.jetbrains.com/maven-central/dev/sebastiano/spectre/spectre-agent/0.9.0/spectre-agent-0.9.0-sources.jar",
 )
 
 # Runtime dependency of spectre-testing.
@@ -108,14 +108,14 @@ http_file(
     name = "jewel_deps_spectre_recording",
     downloaded_file_path = "spectre-recording-0.9.0.jar",
     sha256 = "830a50369134cb6d4de3d98aa605a3cace51cbf5f761983b623cebfadfe4dd9d",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/dev/sebastiano/spectre/spectre-recording/0.9.0/spectre-recording-0.9.0.jar",
+    url = "https://cache-redirector.jetbrains.com/maven-central/dev/sebastiano/spectre/spectre-recording/0.9.0/spectre-recording-0.9.0.jar",
 )
 
 http_file(
     name = "jewel_deps_spectre_recording_sources",
     downloaded_file_path = "spectre-recording-0.9.0-sources.jar",
     sha256 = "9a0b2072159f777e7f72e1917477623c97016654809184ba351caea37912811b",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/dev/sebastiano/spectre/spectre-recording/0.9.0/spectre-recording-0.9.0-sources.jar",
+    url = "https://cache-redirector.jetbrains.com/maven-central/dev/sebastiano/spectre/spectre-recording/0.9.0/spectre-recording-0.9.0-sources.jar",
 )
 
 # Linux helper binary for window capture and real input on Wayland.
@@ -123,7 +123,7 @@ http_file(
     name = "jewel_deps_spectre_recording_linux",
     downloaded_file_path = "spectre-recording-linux-0.9.0.jar",
     sha256 = "59c320d45f1043cfeb87546d36d694c43c9e94f3f224de7aba12b619833026da",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/dev/sebastiano/spectre/spectre-recording-linux/0.9.0/spectre-recording-linux-0.9.0.jar",
+    url = "https://cache-redirector.jetbrains.com/maven-central/dev/sebastiano/spectre/spectre-recording-linux/0.9.0/spectre-recording-linux-0.9.0.jar",
 )
 
 # Dependency of spectre-core: the desktop input coordination that `RobotDriver` loads at construction.
@@ -131,7 +131,7 @@ http_file(
     name = "jewel_deps_spectre_input_coordinator",
     downloaded_file_path = "spectre-input-coordinator-0.9.0.jar",
     sha256 = "3ea621855f025c16ac4d5c957278b51e30ddec74599c6649e862411f08a80184",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/dev/sebastiano/spectre/spectre-input-coordinator/0.9.0/spectre-input-coordinator-0.9.0.jar",
+    url = "https://cache-redirector.jetbrains.com/maven-central/dev/sebastiano/spectre/spectre-input-coordinator/0.9.0/spectre-input-coordinator-0.9.0.jar",
 )
 
 # Runtime dependency of spectre-testing and spectre-agent.
@@ -139,7 +139,7 @@ http_file(
     name = "jewel_deps_spectre_input_coordinator_server",
     downloaded_file_path = "spectre-input-coordinator-server-0.9.0.jar",
     sha256 = "561bd0ffe752e6948ada3c81c2b54a6e17629213ef332625b7da61d992470c6e",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/dev/sebastiano/spectre/spectre-input-coordinator-server/0.9.0/spectre-input-coordinator-server-0.9.0.jar",
+    url = "https://cache-redirector.jetbrains.com/maven-central/dev/sebastiano/spectre/spectre-input-coordinator-server/0.9.0/spectre-input-coordinator-server-0.9.0.jar",
 )
 
 # Runtime dependency of spectre-core, not otherwise in the monorepo.
@@ -155,7 +155,7 @@ http_file(
     name = "jewel_deps_kotlinx_coroutines_swing",
     downloaded_file_path = "kotlinx-coroutines-swing-1.10.2.jar",
     sha256 = "02bdb85f20ec08004429abf6887e8d0e40f3ab637d7462f817f0f8abbe7d1eb5",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlinx/kotlinx-coroutines-swing/1.10.2/kotlinx-coroutines-swing-1.10.2.jar",
+    url = "https://cache-redirector.jetbrains.com/maven-central/org/jetbrains/kotlinx/kotlinx-coroutines-swing/1.10.2/kotlinx-coroutines-swing-1.10.2.jar",
 )
 
 # Entry point of the headful lane. Version must match the JUnit Platform in `lib`.
@@ -163,12 +163,12 @@ http_file(
     name = "jewel_deps_junit_platform_console",
     downloaded_file_path = "junit-platform-console-6.1.3.jar",
     sha256 = "913554ad65b9420936822889a7268a6793a942e5f77ad8b653b8ec05068fa3be",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/junit/platform/junit-platform-console/6.1.3/junit-platform-console-6.1.3.jar",
+    url = "https://cache-redirector.jetbrains.com/maven-central/org/junit/platform/junit-platform-console/6.1.3/junit-platform-console-6.1.3.jar",
 )
 
 http_file(
     name = "jewel_deps_junit_platform_reporting",
     downloaded_file_path = "junit-platform-reporting-6.1.3.jar",
     sha256 = "d584a16cd87da5609af5e35428ed4f40b192681a2487dc59d02ecb62f6c417c2",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/junit/platform/junit-platform-reporting/6.1.3/junit-platform-reporting-6.1.3.jar",
+    url = "https://cache-redirector.jetbrains.com/maven-central/org/junit/platform/junit-platform-reporting/6.1.3/junit-platform-reporting-6.1.3.jar",
 )

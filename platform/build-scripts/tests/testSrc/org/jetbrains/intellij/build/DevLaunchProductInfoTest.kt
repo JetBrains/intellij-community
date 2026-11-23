@@ -13,7 +13,7 @@ import java.nio.file.Path
 import kotlin.io.path.createParentDirectories
 import kotlin.io.path.writeText
 
-/** `DevMainImpl`, `PreBuiltDevMain` and the IDE Starter read `product-info.json` of a dev distribution through `DevLaunchProperties.kt`. */
+/** `DevMainImpl`, `PreBuiltDevMain` and the IDE Starter read `product-info.json` of a distribution through `DevLaunchProperties.kt`. */
 class DevLaunchProductInfoTest {
   @TempDir
   lateinit var home: Path

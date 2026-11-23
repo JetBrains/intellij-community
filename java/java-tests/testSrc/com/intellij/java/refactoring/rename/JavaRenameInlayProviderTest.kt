@@ -6,20 +6,33 @@ import com.intellij.codeInsight.codeVision.settings.CodeVisionSettings
 import com.intellij.codeInsight.codeVision.ui.model.CodeVisionListData
 import com.intellij.codeInsight.codeVision.ui.renderers.CodeVisionInlayRenderer
 import com.intellij.codeInsight.hints.InlayDumpUtil
-import com.intellij.ide.highlighter.JavaFileType
 import com.intellij.openapi.actionSystem.IdeActions
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.service
-import com.intellij.openapi.fileTypes.LanguageFileType
-import com.intellij.openapi.util.Disposer
-import com.intellij.refactoring.suggested.BaseSuggestedRefactoringAvailabilityTest
+import com.intellij.refactoring.suggested.SuggestedRefactoringFixture
 import com.intellij.refactoring.suggested.SuggestedRefactoringProviderImpl
+import com.intellij.refactoring.suggested.suggestedRefactoringFixture
+import com.intellij.testFramework.common.timeoutRunBlocking
+import com.intellij.testFramework.fixtures.lightJavaProjectFixture
+import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.utils.codeVision.CodeVisionTestUtil
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
+import kotlin.time.Duration.Companion.seconds
 
-class JavaRenameInlayProviderTest : BaseSuggestedRefactoringAvailabilityTest() {
+@TestApplication
+class JavaRenameInlayProviderTest {
+  companion object {
+    private val projectFixture = lightJavaProjectFixture()
+  }
 
-  override val fileType: LanguageFileType
-    get() = JavaFileType.INSTANCE
+  private val suggested by suggestedRefactoringFixture(projectFixture)
 
+  @Test
   fun testRenameField() {
     doTest(
       """
@@ -38,6 +51,7 @@ class JavaRenameInlayProviderTest : BaseSuggestedRefactoringAvailabilityTest() {
     }
   }
 
+  @Test
   fun testRenameFieldBack() {
     doTest(
       """
@@ -56,6 +70,7 @@ class JavaRenameInlayProviderTest : BaseSuggestedRefactoringAvailabilityTest() {
     }
   }
 
+  @Test
   fun testRenameClassWithNameErased() {
     doTest(
       """
@@ -75,6 +90,7 @@ class JavaRenameInlayProviderTest : BaseSuggestedRefactoringAvailabilityTest() {
     }
   }
 
+  @Test
   fun testRenameMethodWithNameErased() {
     doTest(
       """
@@ -94,6 +110,7 @@ class JavaRenameInlayProviderTest : BaseSuggestedRefactoringAvailabilityTest() {
     }
   }
 
+  @Test
   fun testRenameLocalWithNameErased() {
     doTest(
       """
@@ -119,6 +136,7 @@ class JavaRenameInlayProviderTest : BaseSuggestedRefactoringAvailabilityTest() {
     }
   }
 
+  @Test
   fun testRenameParameterWithNameErased1() {
     doTest(
       """
@@ -140,6 +158,7 @@ class JavaRenameInlayProviderTest : BaseSuggestedRefactoringAvailabilityTest() {
     }
   }
 
+  @Test
   fun testRenameParameterWithNameErased2() {
     doTest(
       """
@@ -161,6 +180,7 @@ class JavaRenameInlayProviderTest : BaseSuggestedRefactoringAvailabilityTest() {
     }
   }
 
+  @Test
   fun testNotDuplicateMethod() {
     doTest(
       """
@@ -181,6 +201,7 @@ class JavaRenameInlayProviderTest : BaseSuggestedRefactoringAvailabilityTest() {
     }
   }
 
+  @Test
   fun testUnusedLocal() {
     doTest(
       """
@@ -203,6 +224,7 @@ class JavaRenameInlayProviderTest : BaseSuggestedRefactoringAvailabilityTest() {
     }
   }
 
+  @Test
   fun testUndo() {
     doTest(
       """
@@ -228,42 +250,58 @@ class JavaRenameInlayProviderTest : BaseSuggestedRefactoringAvailabilityTest() {
       """.trimIndent(),
     ) {
       type("1")
-      myFixture.launchAction(myFixture.availableIntentions.first { it.familyName == "Suggested Refactoring" }!!)
+      fixture.launchAction(fixture.availableIntentions.first { it.familyName == "Suggested Refactoring" }!!)
       performAction(IdeActions.ACTION_UNDO)
       performAction(IdeActions.ACTION_UNDO)
       type("2")
     }
   }
 
-  override fun setUp() {
-    super.setUp()
+  private val providerStates = mutableMapOf<String, Boolean>()
 
-    val settings = CodeVisionSettings.getInstance()
-    SuggestedRefactoringProviderImpl.getInstance(project)
-    val codeVisionHost = project.service<CodeVisionHost>()
-    codeVisionHost.providers.map { it.groupId }.toSet().forEach { groupId ->
-      val wasEnabled = settings.isProviderEnabled(groupId)
-      Disposer.register(testRootDisposable) { settings.setProviderEnabled(groupId, wasEnabled) }
-      settings.setProviderEnabled(groupId, groupId == "rename")
+  @BeforeEach
+  fun setUpCodeVision(): Unit = timeoutRunBlocking {
+    withContext(Dispatchers.EDT) {
+      val project = suggested.project
+      val settings = CodeVisionSettings.getInstance()
+      SuggestedRefactoringProviderImpl.getInstance(project)
+      val codeVisionHost = project.service<CodeVisionHost>()
+      codeVisionHost.providers.map { it.groupId }.toSet().forEach { groupId ->
+        providerStates[groupId] = settings.isProviderEnabled(groupId)
+        settings.setProviderEnabled(groupId, groupId == "rename")
+      }
     }
   }
 
-  fun doTest(before: String, after: String, editingActions: () ->  Unit) {
-    myFixture.configureByText(fileType, before)
-
-    executeEditingActions(editingActions)
-    myFixture.availableIntentions
-
-    CodeVisionTestUtil.waitForCodeVisionSync(editor, project.service<CodeVisionHost>(), testRootDisposable)
-
-    val actualText = InlayDumpUtil.dumpInlays(
-      file.text,
-      editor,
-      { it.renderer is CodeVisionInlayRenderer },
-      { _, inlay -> inlay.getUserData(CodeVisionListData.KEY)!!.visibleLens.joinToString(prefix = "[", postfix = "]", separator = "   ") { it.longPresentation } }
-    )
-
-    assertEquals(after, actualText)
+  @AfterEach
+  fun restoreCodeVision(): Unit = timeoutRunBlocking {
+    withContext(Dispatchers.EDT) {
+      val settings = CodeVisionSettings.getInstance()
+      for (entry in providerStates) {
+        settings.setProviderEnabled(entry.key, entry.value)
+      }
+    }
   }
 
+  private fun doTest(before: String, after: String, editingActions: SuggestedRefactoringFixture.() -> Unit): Unit = timeoutRunBlocking(60.seconds) {
+    withContext(Dispatchers.EDT) {
+      with(suggested) {
+        fixture.configureByText(fileType, before)
+
+        executeEditingActions(editingActions)
+        fixture.availableIntentions
+
+        CodeVisionTestUtil.waitForCodeVisionSync(editor, project.service<CodeVisionHost>(), fixture.testRootDisposable)
+
+        val actualText = InlayDumpUtil.dumpInlays(
+          file.text,
+          editor,
+          { it.renderer is CodeVisionInlayRenderer },
+          { _, inlay -> inlay.getUserData(CodeVisionListData.KEY)!!.visibleLens.joinToString(prefix = "[", postfix = "]", separator = "   ") { it.longPresentation } }
+        )
+
+        assertEquals(after, actualText)
+      }
+    }
+  }
 }

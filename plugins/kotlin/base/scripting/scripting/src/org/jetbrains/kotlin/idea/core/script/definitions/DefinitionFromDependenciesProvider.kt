@@ -1,7 +1,9 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.core.script.definitions
 
+import com.intellij.ide.trustedProjects.TrustedProjects
 import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
@@ -12,23 +14,27 @@ import com.intellij.openapi.roots.LibraryOrSdkOrderEntry
 import com.intellij.openapi.roots.OrderEnumerator
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.ProjectFileIndex
-import com.intellij.openapi.roots.ProjectRootModificationTracker
 import com.intellij.openapi.util.io.toNioPathOrNull
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.search.GlobalSearchScope
-import org.jetbrains.kotlin.caches.project.cacheByClass
+import com.intellij.util.concurrency.AppExecutorUtil
+import org.jetbrains.kotlin.idea.core.script.definition.loadDefinitionsFromTemplates
 import org.jetbrains.kotlin.idea.core.script.scriptingDebugLog
 import org.jetbrains.kotlin.idea.core.script.scriptingWarnLog
 import org.jetbrains.kotlin.idea.core.script.settings.KotlinScriptingSettings
 import org.jetbrains.kotlin.idea.core.script.settings.parsedClassNames
 import org.jetbrains.kotlin.idea.core.script.settings.parsedClasspath
+import org.jetbrains.kotlin.scripting.definitions.ScriptDefinitionProvider
 import org.jetbrains.kotlin.scripting.definitions.SCRIPT_DEFINITION_MARKERS_EXTENSION_WITH_DOT
 import org.jetbrains.kotlin.scripting.definitions.SCRIPT_DEFINITION_MARKERS_PATH
 import org.jetbrains.kotlin.utils.addIfNotNull
 import java.nio.file.Path
 import kotlin.io.path.absolutePathString
+import kotlin.script.experimental.api.ScriptEvaluationConfiguration
+import kotlin.script.experimental.host.ScriptDefinition
+import kotlin.script.experimental.host.ScriptingHostConfiguration
 import kotlin.script.experimental.intellij.ScriptDefinitionsProvider
 
 data class DefinitionTemplates(
@@ -53,24 +59,39 @@ private const val MAIN_KTS = "org.jetbrains.kotlin.mainKts.MainKtsScript.classna
 class DefinitionFromDependenciesProvider(val project: Project) : ScriptDefinitionsProvider {
     override val id: String = KotlinScriptDefinitionsProviderId.FROM_DEPENDENCIES.id
 
-    override fun getDefinitionClasses(): List<String> = definitionClasses()
+    /** The templates that the last load found. */
+    @Volatile
+    var templates: DefinitionTemplates = DefinitionTemplates(emptyList(), emptyList())
+        private set
 
-    // ScriptTemplatesFromDependenciesCache resolves markers from the project class roots.
-    override fun useDiscovery(): Boolean = false
+    override fun provideDefinitions(
+        baseHostConfiguration: ScriptingHostConfiguration,
+        loadedScriptDefinitions: List<ScriptDefinition>,
+    ): List<ScriptDefinition> {
+        templates = ScriptTemplateDiscovery.discover(project)
+
+        // Nothing in an untrusted project
+        if (!project.isDefault && !TrustedProjects.isProjectTrusted(project)) return emptyList()
+
+        val fqns = definitionClasses()
+        if (fqns.isEmpty()) return emptyList()
+        return loadDefinitionsFromTemplates(fqns, templateClasspath(), baseHostConfiguration = baseHostConfiguration)
+            .map { ScriptDefinition(it.compilationConfiguration, it.evaluationConfiguration ?: ScriptEvaluationConfiguration.Default) }
+            .toList()
+    }
 
     /** Where the marker file of [definitionId] lives, or null when no marker declared it. */
-    internal fun markerOriginFor(definitionId: String): ScriptTemplateMarkerOrigin? =
-        ScriptTemplatesFromDependenciesCache.getOrDiscover(project).markerOrigins[definitionId]
+    internal fun markerOriginFor(definitionId: String): ScriptTemplateMarkerOrigin? = templates.markerOrigins[definitionId]
 
     fun definitionClasses(): List<String> {
         val explicitFqns = KotlinScriptingSettings.getInstance(project).state.parsedClassNames
-        return (explicitFqns + ScriptTemplatesFromDependenciesCache.getOrDiscover(project).fqns).distinct()
+        return (explicitFqns + templates.fqns).distinct()
     }
 
-    override fun getTemplateClasspath(): List<Path> {
+    fun templateClasspath(): List<Path> {
         val settings = KotlinScriptingSettings.getInstance(project).state
         val explicitClasspath = settings.parsedClasspath
-        val discoveredClasspath = ScriptTemplatesFromDependenciesCache.getOrDiscover(project).classpath
+        val discoveredClasspath = templates.classpath
         val autoResolvedClasspath = tryToGuessClasspath(settings.parsedClassNames)
         return buildList {
             addAll(explicitClasspath)
@@ -88,7 +109,7 @@ class DefinitionFromDependenciesProvider(val project: Project) : ScriptDefinitio
         return runReadActionBlocking {
             val dumbService = DumbService.getInstance(project)
             if (dumbService.isDumb) {
-                dumbService.runWhenSmart { ScriptDefinitionsModificationTracker.getInstance(project).incModificationCount() }
+                dumbService.runWhenSmart { ScriptDefinitionProviderImpl.getInstance(project).scheduleLoading() }
                 return@runReadActionBlocking emptyList()
             }
             val javaFacade = JavaPsiFacade.getInstance(project)
@@ -107,21 +128,31 @@ class DefinitionFromDependenciesProvider(val project: Project) : ScriptDefinitio
             classpath.map { it.absolutePathString() }
         }
     }
-}
 
-internal object ScriptTemplatesFromDependenciesCache {
-    fun getOrDiscover(project: Project): DefinitionTemplates = project.cacheByClass(
-        ScriptTemplatesFromDependenciesCache::class.java,
-        ScriptDefinitionsModificationTracker.getInstance(project),
-        ProjectRootModificationTracker.getInstance(project),
-    ) {
-        discover(project)
+    /**
+     * Reloads the definitions when the class roots now declare other templates than the last load found.
+     * It does nothing before the first lookup of a definition.
+     */
+    fun refresh() {
+        val provider = project.serviceIfCreated<ScriptDefinitionProvider>() as? ScriptDefinitionProviderImpl ?: return
+        ReadAction.nonBlocking<Unit> {
+            if (ScriptTemplateDiscovery.discover(project) != templates) {
+                provider.scheduleLoading()
+            }
+        }
+            .coalesceBy(this)
+            .expireWhen { project.isDisposed }
+            .submit(AppExecutorUtil.getAppExecutorService())
     }
 
-    /** True when the class roots now declare other definitions than the cached result, for example after a build. */
-    fun isOutdated(project: Project): Boolean = discover(project) != getOrDiscover(project)
+    companion object {
+        fun getInstance(project: Project): DefinitionFromDependenciesProvider =
+            ScriptDefinitionsProvider.EP_NAME.getExtensionList(project).firstNotNullOf { it as? DefinitionFromDependenciesProvider }
+    }
+}
 
-    private fun discover(project: Project): DefinitionTemplates =
+private object ScriptTemplateDiscovery {
+    fun discover(project: Project): DefinitionTemplates =
         ReadAction.nonBlocking<DefinitionTemplates> { collectDefinitionTemplates(project) }.executeSynchronously()
 
     private fun collectDefinitionTemplates(project: Project): DefinitionTemplates {

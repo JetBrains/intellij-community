@@ -30,6 +30,7 @@ import com.intellij.util.indexing.FileBasedIndex
 import com.intellij.util.indexing.FileBasedIndexEx
 import com.intellij.util.indexing.roots.IndexableEntityProviderMethods
 import com.intellij.util.indexing.roots.kind.ContentOrigin
+import java.util.function.BooleanSupplier
 
 private val LOG = logger<ScopeWalker>()
 
@@ -50,6 +51,11 @@ internal class ScopeWalker(
   /** True when [directoriesToSearchIn] stand for the whole project, whose files are then all non-indexable, as in JetBrains Light. */
   private val directoryStandsForProject: Boolean,
   private val customScope: GlobalSearchScope?,
+  /**
+   * Tells whether the one named directory of [directoriesToSearchIn] lies in a directory of a [FindInProjectDirectoriesProvider],
+   * so it holds only non-indexable files too. [roots] asks only when a reliable searcher covered all candidates.
+   */
+  private val namedDirectoryIsNonIndexable: BooleanSupplier = BooleanSupplier { false },
 ) {
   /**
    * Receives what [expand] finds. Both methods return false when the search stopped; [isStopped] tells it before a lookup.
@@ -82,7 +88,7 @@ internal class ScopeWalker(
     /**
      * False when a project search skips the walk of the non-indexable files: the registry key is off, or a reliable
      * searcher reported [com.intellij.find.FindInProjectSearchEngine.Coverage.ALL_CANDIDATES], also for the directory
-     * that stands for the project; true in every other branch.
+     * that stands for the project and for a named directory in it; true in every other branch.
      * Only a walked plan earns [com.intellij.find.FindInProjectSearchEngine.ScanObserver.nonIndexedScanCompleted].
      */
     val nonIndexableWalked: Boolean,
@@ -120,8 +126,9 @@ internal class ScopeWalker(
       }
     }
     else if (directoriesToSearchIn.isNotEmpty()) {
-      // the directories that stand for the project hold only non-indexable files, so a reliable searcher covers their walk too
-      val skipDirectories = directoryStandsForProject && skipNonIndexableRoots
+      // the directories that stand for the project hold only non-indexable files, and so does a named directory in them,
+      // so a reliable searcher covers their walk too
+      val skipDirectories = skipNonIndexableRoots && (directoryStandsForProject || namedDirectoryIsNonIndexable.asBoolean)
       if (skipDirectories) nonIndexableWalked = false
       for (directory in directoriesToSearchIn) {
         // The directory can lie outside the project. Wrap a persistent VFS directory so the walk does not fill the VFS cache

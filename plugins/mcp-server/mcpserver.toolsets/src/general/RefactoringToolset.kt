@@ -25,8 +25,10 @@ import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.io.toNioPathOrNull
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.newvfs.RefreshQueue
@@ -36,6 +38,15 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiNamedElement
 import com.intellij.psi.SmartPointerManager
 import com.intellij.psi.SmartPsiElementPointer
+import com.intellij.refactoring.modplan.ModPlan
+import com.intellij.refactoring.modplan.ModPlanAnalysisResult
+import com.intellij.refactoring.modplan.ModPlanConflictKind
+import com.intellij.refactoring.modplan.ModPlanExecutionResult
+import com.intellij.refactoring.modplan.ModPlanExecutor
+import com.intellij.refactoring.modplan.ModPlanOptionValues
+import com.intellij.refactoring.modplan.rename.ModPlanRenameOptions
+import com.intellij.refactoring.modplan.rename.ModPlanRenameRefactoring
+import com.intellij.refactoring.rename.HeadlessRenameConflict
 import com.intellij.refactoring.rename.HeadlessRenameFailure
 import com.intellij.refactoring.rename.HeadlessRenameProcessor
 import com.intellij.refactoring.rename.HeadlessRenameResult
@@ -200,6 +211,12 @@ class RefactoringToolset : McpToolset {
     // The search can take long. A person cancels it from the status bar, and a write action restarts it.
     // A person who keeps typing would restart it forever, so it gives up after a few attempts.
     val progressTitle = McpServerBundle.message("tool.activity.renaming.symbol", request.symbolName, newName, pathInProject)
+    when (val modPlan = modPlanRename(project, virtualFile, pathBefore, relativePathBefore, ready, newName, preview, applyAutomaticRenamers,
+                                      searchInComments, searchInText, progressTitle)) {
+      ModPlanRenameOutcome.NotSupported -> {}
+      ModPlanRenameOutcome.Stale -> return null
+      is ModPlanRenameOutcome.Done -> return modPlan.result
+    }
     var attempts = 0
     val analysis = withBackgroundProgress(project, progressTitle, cancellable = true) {
       readAction {
@@ -249,6 +266,108 @@ class RefactoringToolset : McpToolset {
       )
     }
     return outcomeResult(project, outcome, resolvedSymbol)
+  }
+
+  /**
+   * Renames on the ModPlan engine, which writes every file in one command, from the edits that the analysis decides.
+   *
+   * @return [ModPlanRenameOutcome.NotSupported] if the engine does not support the target, so that [HeadlessRenameProcessor] renames it;
+   * [ModPlanRenameOutcome.Stale] if a file of the plan changed on the disk, and the plan has to be made again
+   */
+  private suspend fun modPlanRename(
+    project: Project,
+    virtualFile: VirtualFile,
+    pathBefore: String,
+    relativePathBefore: String,
+    ready: Preparation.Ready,
+    newName: String,
+    preview: Boolean,
+    applyAutomaticRenamers: Boolean,
+    searchInComments: Boolean,
+    searchInText: Boolean,
+    progressTitle: @NlsContexts.ProgressTitle String,
+  ): ModPlanRenameOutcome {
+    val resolvedSymbol = ready.resolvedSymbol
+    var attempts = 0
+    val planned = withBackgroundProgress(project, progressTitle, cancellable = true) {
+      readAction {
+        if (++attempts > MAX_ANALYSIS_ATTEMPTS) return@readAction null
+        val element = ready.element() ?: return@readAction null
+        val renameRequest = ModPlanRenameRefactoring.request(project, element, newName, substitute = true,
+                                                             modPlanOptions(applyAutomaticRenamers, searchInComments, searchInText))
+        val refactoring = ModPlanRenameRefactoring.getInstance()
+        if (!refactoring.isSupported(renameRequest)) return@readAction ModPlanPlanned(null)
+        ModPlanPlanned(refactoring.plan(renameRequest))
+      }
+    } ?: return ModPlanRenameOutcome.Done(staleTarget(resolvedSymbol))
+    val plan = when (val modPlan = planned.plan) {
+      null -> return ModPlanRenameOutcome.NotSupported
+      is ModPlan.RefusedPlan -> {
+        val kind = when (modPlan.reason) {
+          // The engine does not support the target, such as a usage that the legacy rename binds after the write.
+          ModPlanAnalysisResult.RefusedReason.NOT_SUPPORTED -> return ModPlanRenameOutcome.NotSupported
+          ModPlanAnalysisResult.RefusedReason.NOT_APPLICABLE -> HeadlessRenameFailure.TARGET_NOT_RENAMABLE
+          ModPlanAnalysisResult.RefusedReason.EDIT_FAILED -> HeadlessRenameFailure.WRITE_FAILED
+        }
+        return ModPlanRenameOutcome.Done(outcomeResult(project, HeadlessRenameResult.Failed(kind, modPlan.message), resolvedSymbol))
+      }
+      is ModPlan.AcceptedPlan -> modPlan
+    }
+    if (plan.conflicts.needsConfirmation()) {
+      val conflicts = plan.conflicts.conflicts
+        .filter { it.kind != ModPlanConflictKind.NON_CODE_USAGE && it.kind != ModPlanConflictKind.CHANGED_NON_CODE_USAGE }
+        .flatMap { conflict ->
+          conflict.messages.map { HeadlessRenameConflict(StringUtil.removeHtmlTags(it, true), conflict.location?.virtualFile?.path) }
+        }
+      return ModPlanRenameOutcome.Done(outcomeResult(project, HeadlessRenameResult.Refused(conflicts), resolvedSymbol))
+    }
+    val affectedFiles = plan.execution.affectedFiles
+    if (reloadChangedFiles((affectedFiles + virtualFile).distinct())) return ModPlanRenameOutcome.Stale
+    val affects = RenameAffects(files = affectedFiles.size, usages = plan.usages.size)
+    if (preview) {
+      return ModPlanRenameOutcome.Done(RenameResult(ok = true, applied = false, resolvedSymbol = resolvedSymbol, affects = affects))
+    }
+
+    val failure = when (val outcome = withContext(Dispatchers.EDT) { ModPlanExecutor.execute(plan.execution, true, plan.writeEvents) }) {
+      is ModPlanExecutionResult.Applied -> return ModPlanRenameOutcome.Done(RenameResult(
+        ok = true,
+        applied = true,
+        resolvedSymbol = resolvedSymbol,
+        affects = affects,
+        renamedFile = renamedFile(project, virtualFile, pathBefore, relativePathBefore),
+      ))
+      is ModPlanExecutionResult.Stale -> return ModPlanRenameOutcome.Stale
+      is ModPlanExecutionResult.ReadOnly -> HeadlessRenameResult.Failed(HeadlessRenameFailure.READ_ONLY_USAGES, null)
+      is ModPlanExecutionResult.Failed -> HeadlessRenameResult.Failed(HeadlessRenameFailure.WRITE_FAILED, outcome.message)
+    }
+    return ModPlanRenameOutcome.Done(outcomeResult(project, failure, resolvedSymbol))
+  }
+
+  /** The options of a rename of this tool: the automatic renamers run as the settings of the IDE enable them. */
+  private fun modPlanOptions(applyAutomaticRenamers: Boolean, searchInComments: Boolean, searchInText: Boolean): ModPlanOptionValues {
+    val options = ModPlanOptionValues.EMPTY.with(ModPlanRenameOptions.SEARCH_IN_COMMENTS, searchInComments)
+      .with(ModPlanRenameOptions.SEARCH_TEXT_OCCURRENCES, searchInText)
+    return if (applyAutomaticRenamers) {
+      ModPlanRenameOptions.withRenamersOfSettings(options)
+    }
+    else {
+      options
+    }
+  }
+
+  /**
+   * What the ModPlan engine planned, read in the read action of the plan.
+   *
+   * @property plan null if the engine does not support the target
+   */
+  private class ModPlanPlanned(val plan: ModPlan?)
+
+  private sealed interface ModPlanRenameOutcome {
+    object NotSupported : ModPlanRenameOutcome
+
+    object Stale : ModPlanRenameOutcome
+
+    class Done(val result: RenameResult) : ModPlanRenameOutcome
   }
 
   /**

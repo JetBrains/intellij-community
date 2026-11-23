@@ -73,6 +73,9 @@
 - sf:INSTANCE:com.intellij.platform.settings.v2.LongSerializer
 - deserialize(com.intellij.platform.settings.v2.SettingsValue):java.lang.Long
 - serialize(J):com.intellij.platform.settings.v2.SettingsValue
+*f:com.intellij.platform.settings.v2.PerOsSettingsKt
+- *sf:getOS():com.intellij.platform.settings.v2.SettingsKey
+- *sf:getPER_OS_SETTINGS():com.intellij.platform.settings.v2.SettingsMapKey
 *:com.intellij.platform.settings.v2.ProjectAware
 - a:getProject():com.intellij.openapi.project.Project
 *f:com.intellij.platform.settings.v2.ReadOnlySettingsException
@@ -90,6 +93,7 @@
 - a:deserialize(com.intellij.platform.settings.v2.SettingsValue):java.lang.Object
 - a:serialize(java.lang.Object):com.intellij.platform.settings.v2.SettingsValue
 *f:com.intellij.platform.settings.v2.SerializerKt
+- *sf:enumSerializer(java.lang.Class):com.intellij.platform.settings.v2.Serializer
 - *sf:listOf(com.intellij.platform.settings.v2.Serializer):com.intellij.platform.settings.v2.Serializer
 - *sf:mapOf(com.intellij.platform.settings.v2.Serializer):com.intellij.platform.settings.v2.Serializer
 - *sf:nullable(com.intellij.platform.settings.v2.Serializer):com.intellij.platform.settings.v2.Serializer
@@ -206,6 +210,10 @@
 - f:setPrefix(java.lang.String):V
 *f:com.intellij.platform.settings.v2.SettingsKeyPrefixBean$Companion
 - f:getEP_NAME():com.intellij.openapi.extensions.ExtensionPointName
+*:com.intellij.platform.settings.v2.SettingsKeyPromoter
+- *sf:Companion:com.intellij.platform.settings.v2.SettingsKeyPromoter$Companion
+- a:promote(kotlin.jvm.functions.Function1):V
+*f:com.intellij.platform.settings.v2.SettingsKeyPromoter$Companion
 *f:com.intellij.platform.settings.v2.SettingsMapKey
 - com.intellij.platform.settings.v2.SettingsKey
 - <init>(java.lang.String,com.intellij.platform.settings.v2.SettingsKey,com.intellij.platform.settings.v2.SettingsMapKey):V

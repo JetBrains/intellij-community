@@ -12,5 +12,5 @@ sealed interface TerminalHyperlinksInputEvent {
   data class ContentUpdated(val update: TerminalOutputContentUpdateDto) : TerminalHyperlinksInputEvent
 
   @Serializable
-  data class WorkingDirectoryChanged(val workingDirectory: @OsPath String) : TerminalHyperlinksInputEvent
+  data class WorkingDirectoryChanged(val workingDirectory: @OsPath String?) : TerminalHyperlinksInputEvent
 }

@@ -7,7 +7,6 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.extensions.DefaultPluginDescriptor
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.Disposer
-import com.intellij.platform.settings.v2.impl.SettingsKeyPromoter
 import com.intellij.platform.settings.v2.impl.SettingsKeyRegistry
 import com.intellij.platform.settings.v2.impl.withRegistryChecks
 import com.intellij.testFramework.ExtensionTestUtil

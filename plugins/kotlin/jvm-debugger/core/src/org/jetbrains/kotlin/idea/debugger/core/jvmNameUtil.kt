@@ -5,10 +5,10 @@ import com.intellij.debugger.engine.JVMNameUtil
 import com.intellij.util.asSafely
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.annotations.KaAnnotation
 import org.jetbrains.kotlin.analysis.api.annotations.KaAnnotationValue
 import org.jetbrains.kotlin.analysis.api.base.KaConstantValue
-import org.jetbrains.kotlin.analysis.api.components.javaGetterName
-import org.jetbrains.kotlin.analysis.api.components.javaSetterName
+import org.jetbrains.kotlin.analysis.api.javaInterop.javaMethodName
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaConstructorSymbol
@@ -19,6 +19,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaPropertyAccessorSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaPropertyGetterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaPropertySymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaSyntheticJavaPropertySymbol
 import org.jetbrains.kotlin.analysis.api.symbols.containingDeclaration
 import org.jetbrains.kotlin.analysis.api.symbols.containingFile
 import org.jetbrains.kotlin.analysis.api.symbols.containingSymbol
@@ -28,6 +29,7 @@ import org.jetbrains.kotlin.fileClasses.JvmFileClassUtil
 import org.jetbrains.kotlin.fileClasses.javaFileFacadeFqName
 import org.jetbrains.kotlin.idea.debugger.base.util.fqnToInternalName
 import org.jetbrains.kotlin.idea.debugger.base.util.internalNameToFqn
+import org.jetbrains.kotlin.load.java.JvmAbi
 import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.resolve.jvm.JvmClassName
@@ -37,10 +39,7 @@ context(session: KaSession)
 fun methodName(symbol: KaFunctionSymbol): String? = when (symbol) {
     is KaNamedFunctionSymbol -> getByteCodeMethodName(symbol)
     is KaConstructorSymbol -> JVMNameUtil.CONSTRUCTOR_NAME
-    is KaPropertyAccessorSymbol -> {
-        val propertySymbol = symbol.containingSymbol as? KaPropertySymbol
-        (if (symbol is KaPropertyGetterSymbol) propertySymbol?.javaGetterName else propertySymbol?.javaSetterName)?.asString()
-    }
+    is KaPropertyAccessorSymbol -> getByteCodeAccessorName(symbol)
 
     else -> null
 }
@@ -54,16 +53,30 @@ fun getByteCodeMethodName(symbol: KaNamedFunctionSymbol): String {
             .reversed().joinToString("$", postfix = "$")
     } else ""
     // Containing function JvmName annotation does not affect a local function name
-    val jvmName = symbol.annotations
-        .filter { it.classId?.asFqNameString() == "kotlin.jvm.JvmName" }
-        .firstNotNullOfOrNull {
-            it.arguments.singleOrNull { a -> a.name.asString() == "name" }
-                ?.expression?.asSafely<KaAnnotationValue.ConstantValue>()
-                ?.value?.asSafely<KaConstantValue.StringValue>()?.value
-        }
+    val jvmName = symbol.annotations.jvmName()
     val actualName = jvmName ?: symbol.name.asString()
     return "$localFunPrefix$actualName"
 }
+
+/**
+ * Returns the JVM name of [accessor] without the `internal` and the value class mangling, like [getByteCodeMethodName].
+ */
+context(session: KaSession)
+private fun getByteCodeAccessorName(accessor: KaPropertyAccessorSymbol): String? {
+    val property = accessor.containingSymbol as? KaPropertySymbol ?: return null
+    if (property is KaSyntheticJavaPropertySymbol) return accessor.javaMethodName
+    accessor.annotations.jvmName()?.let { return it }
+    val name = property.name.identifierOrNullIfSpecial ?: return null
+    return if (accessor is KaPropertyGetterSymbol) JvmAbi.getterName(name) else JvmAbi.setterName(name)
+}
+
+private fun Iterable<KaAnnotation>.jvmName(): String? = this
+    .filter { it.classId?.asFqNameString() == "kotlin.jvm.JvmName" }
+    .firstNotNullOfOrNull {
+        it.arguments.singleOrNull { a -> a.name.asString() == "name" }
+            ?.expression?.asSafely<KaAnnotationValue.ConstantValue>()
+            ?.value?.asSafely<KaConstantValue.StringValue>()?.value
+    }
 
 @ApiStatus.Internal
 fun isInlineClass(symbol: KaDeclarationSymbol?): Boolean = symbol is KaNamedClassSymbol && symbol.isInline

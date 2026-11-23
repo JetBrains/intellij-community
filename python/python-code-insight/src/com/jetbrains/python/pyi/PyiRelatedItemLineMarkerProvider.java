@@ -14,12 +14,14 @@ import com.intellij.psi.PsiNameIdentifierOwner;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyElement;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.PyTargetExpression;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.Icon;
 import java.util.Collection;
@@ -37,25 +39,27 @@ public final class PyiRelatedItemLineMarkerProvider extends RelatedItemLineMarke
       if (pythonStub != null) {
         PsiElement identifier = ((PsiNameIdentifierOwner)element).getNameIdentifier();
         if (identifier != null) {
-          result.add(createLineMarkerInfo(identifier, pythonStub, "Has stub item"));
+          ContainerUtil.addIfNotNull(result, createLineMarkerInfo(identifier, pythonStub, "Has stub item"));
         }
       }
       final PsiElement originalElement = PyiUtil.getOriginalElement((PyElement)element);
       if (originalElement != null) {
         PsiElement identifier = ((PsiNameIdentifierOwner)element).getNameIdentifier();
         if (identifier != null) {
-          result.add(createLineMarkerInfo(identifier, originalElement, "Stub for item"));
+          ContainerUtil.addIfNotNull(result, createLineMarkerInfo(identifier, originalElement, "Stub for item"));
         }
       }
     }
   }
 
-  private static @NotNull RelatedItemLineMarkerInfo<PsiElement> createLineMarkerInfo(@NotNull PsiElement element,
-                                                                                     @NotNull PsiElement relatedElement,
-                                                                                     @NotNull String itemTitle) {
+  private static @Nullable RelatedItemLineMarkerInfo<PsiElement> createLineMarkerInfo(@NotNull PsiElement element,
+                                                                                      @NotNull PsiElement relatedElement,
+                                                                                      @NotNull String itemTitle) {
+    var relatedFile = relatedElement.getContainingFile();
+    if (relatedFile == null) return null;
     final SmartPointerManager pointerManager = SmartPointerManager.getInstance(element.getProject());
     final SmartPsiElementPointer<PsiElement> relatedElementPointer = pointerManager.createSmartPsiElementPointer(relatedElement);
-    final String stubFileName = relatedElement.getContainingFile().getName();
+    final String stubFileName = relatedFile.getName();
     return new RelatedItemLineMarkerInfo<>(
       element, element.getTextRange(), ICON,
       element1 -> itemTitle + " in " + stubFileName, (e, elt) -> {

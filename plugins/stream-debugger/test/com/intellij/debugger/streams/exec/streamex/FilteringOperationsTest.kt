@@ -1,34 +1,74 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.streams.exec.streamex
 
+import com.intellij.debugger.streams.core.testFramework.TraceExecutionTestHelper
+import com.intellij.debugger.streams.test.ExecutionTestCaseHelper
+import com.intellij.debugger.streams.test.TraceExecutionFixture
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.xdebugger.XDebugSession
+import org.junit.jupiter.api.Test
+
 /**
  * @author Vitaliy.Bibaev
  */
-open class FilteringOperationsTest : StreamExTestCase() {
-  override val packageName: String = "filtering"
+@TestApplication
+open class FilteringOperationsTest {
+  protected val streamEx: StreamExFixture by streamExFixture("filtering", ::getHelper)
 
-  fun testNonNull() = doStreamExWithResultTest()
+  protected open fun getHelper(trace: TraceExecutionFixture, session: XDebugSession): TraceExecutionTestHelper =
+    ExecutionTestCaseHelper(trace, session)
 
-  fun testNonNullKeys() = doStreamExWithResultTest()
-  fun testNonNullValues() = doStreamExWithResultTest()
+  @Test
+  fun testNonNull(): Unit = streamEx.doStreamExWithResultTest()
 
-  fun testWithout() = doStreamExWithResultTest()
+  @Test
+  fun testNonNullKeys(): Unit = streamEx.doStreamExWithResultTest()
 
-  fun testGreater() = doStreamExWithResultTest()
-  fun testAtLeast() = doStreamExWithResultTest()
-  fun testLess() = doStreamExWithResultTest()
-  fun testAtMost() = doStreamExWithResultTest()
+  @Test
+  fun testNonNullValues(): Unit = streamEx.doStreamExWithResultTest()
 
-  fun testFilterBy() = doStreamExWithResultTest()
-  fun testFilterByKeys() = doStreamExWithResultTest()
-  fun testFilterByValues() = doStreamExWithResultTest()
-  fun testFilterByKeyValue() = doStreamExWithResultTest()
+  @Test
+  fun testWithout(): Unit = streamEx.doStreamExWithResultTest()
 
-  fun testSelect() = doStreamExWithResultTest()
-  fun testSelectKeys() = doStreamExWithResultTest()
-  fun testSelectValues() = doStreamExWithResultTest()
+  @Test
+  fun testGreater(): Unit = streamEx.doStreamExWithResultTest()
 
-  fun testTakeWhile() = doStreamExWithResultTest()
-  fun testTakeWhileInclusive() = doStreamExWithResultTest()
-  fun testDropWhile() = doStreamExWithResultTest()
+  @Test
+  fun testAtLeast(): Unit = streamEx.doStreamExWithResultTest()
+
+  @Test
+  fun testLess(): Unit = streamEx.doStreamExWithResultTest()
+
+  @Test
+  fun testAtMost(): Unit = streamEx.doStreamExWithResultTest()
+
+  @Test
+  fun testFilterBy(): Unit = streamEx.doStreamExWithResultTest()
+
+  @Test
+  fun testFilterByKeys(): Unit = streamEx.doStreamExWithResultTest()
+
+  @Test
+  fun testFilterByValues(): Unit = streamEx.doStreamExWithResultTest()
+
+  @Test
+  fun testFilterByKeyValue(): Unit = streamEx.doStreamExWithResultTest()
+
+  @Test
+  fun testSelect(): Unit = streamEx.doStreamExWithResultTest()
+
+  @Test
+  fun testSelectKeys(): Unit = streamEx.doStreamExWithResultTest()
+
+  @Test
+  fun testSelectValues(): Unit = streamEx.doStreamExWithResultTest()
+
+  @Test
+  fun testTakeWhile(): Unit = streamEx.doStreamExWithResultTest()
+
+  @Test
+  fun testTakeWhileInclusive(): Unit = streamEx.doStreamExWithResultTest()
+
+  @Test
+  fun testDropWhile(): Unit = streamEx.doStreamExWithResultTest()
 }

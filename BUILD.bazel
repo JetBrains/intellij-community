@@ -2,7 +2,9 @@ load("@buildifier_prebuilt//:rules.bzl", "buildifier")
 load("@community//build:bazel_targets_json.bzl", "current_bazel_targets_json")
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("@rules_kotlin//kotlin:core.bzl", "kt_plugin_cfg")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("//build:source_tree.bzl", "source_tree_files")
 
 BAZEL_TARGETS_JSON = current_bazel_targets_json()
 
@@ -45,6 +47,15 @@ filegroup(
         ".idea/modules.xml",
     ] + glob([".idea/libraries/*.xml"]),
     visibility = ["//visibility:public"],
+)
+
+# The community skill sources and their Claude Code copies, which `//tests/agentGuidelines` of the ultimate root checks.
+source_tree_files(
+    name = "skills_tree_files",
+    roots = [
+        ".agents/skills",
+        ".claude/skills",
+    ],
 )
 
 create_kotlinc_options(
@@ -332,8 +343,15 @@ exports_files(
 create_kotlinc_options(
     name = "custom_main-tests",
     opt_in = ["kotlin.ExperimentalStdlibApi"],
-    plugin_options = ["plugin:androidx.compose.compiler.plugins.kotlin:featureFlag=-PausableComposition"],
     x_context_parameters = True,
+)
+
+kt_plugin_cfg(
+    name = "compose_plugin_main-tests",
+    options = {
+        "featureFlag": ["-PausableComposition"],
+    },
+    plugin = "@lib//:compose-plugin",
 )
 
 jvm_library(
@@ -349,6 +367,7 @@ jvm_library(
     ),
     kotlinc_opts = ":custom_main-tests",
     module_name = "intellij.idea.community.main.tests",
+    plugins = [":compose_plugin_main-tests"],
     resource_strip_prefix = "tests/main/testData",
     resources = glob(
         ["tests/main/testData/**/*"],
@@ -578,8 +597,8 @@ jvm_library(
         "//plugins/kotlin/gradle/gradle/tests:tests_test_lib",
         "//plugins/kotlin/jvm-debugger/eval4j:kotlin-jvm-debugger-eval4j-tests_test_lib",
         "//plugins/kotlin/jvm-debugger/test/k2:kotlin-jvm-debugger-test_test_lib",
-        "//plugins/kotlin/jvm-debugger/test/k2/testFramework:testFramework_test_lib",
-        "//plugins/kotlin/jvm-debugger/testFramework:testFramework_test_lib",
+        "//plugins/kotlin/jvm-debugger/test/k2/testFramework",
+        "//plugins/kotlin/jvm-debugger/testFramework",
         "//plugins/kotlin/util/test-generator-api:test-generator-api_test_lib",
         "//plugins/kotlin/onboarding:onboarding-tests_test_lib",
         "//plugins/maven/groovy:groovy-tests_test_lib",
@@ -607,6 +626,7 @@ jvm_library(
         "//platform/platform-impl/initial-config-import:ide-initialConfigImport-tests_test_lib",
         "//platform/platform-impl/tab-in-editor:ide-tabInEditor-tests_test_lib",
         "//platform/non-modal-welcome-screen:ide-nonModalWelcomeScreen-tests_test_lib",
+        "//platform/platform-impl/presentation-assistant/tests:tests_test_lib",
         "//platform/build-scripts/usages:buildScripts-usages-tests_test_lib",
         "//platform/ijent:ijent-tests_test_lib",
         "//platform/build-scripts/icons:images-build-tests_test_lib",
