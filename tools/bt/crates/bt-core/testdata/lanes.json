@@ -80,7 +80,7 @@
     "//plugins/air/backend/agent-extensions/hooks:aiagentextensions-hooks-tests_test_lib",
     "//plugins/air/backend/workflows/git:air-backend-workflows-git-tests_test_lib",
     "//plugins/air/backend/workflows:air-backend-workflows-tests_test_lib",
-    "//plugins/air/frontback/worktree:air-backend-worktree-tests_test_lib",
+    "//plugins/air/frontback/worktree:air-worktree-tests_test_lib",
     "//plugins/air/frontend/llm:air-frontend-llm-tests_test_lib",
     "//plugins/air/frontend/llm/analytics/jcp:air-frontend-llm-analytics-jcp-tests_test_lib",
     "//plugins/air/frontend/session/view.gui.showcase:air-frontend-session-view-gui-showcase-tests_test_lib",
