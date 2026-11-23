@@ -2,6 +2,7 @@
 package com.jetbrains.python.psi.types;
 
 import com.intellij.codeInsight.completion.CompletionUtilCoreImpl;
+import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.EmptyRunnable;
@@ -18,6 +19,8 @@ import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.ResolveState;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.ui.IconManager;
+import com.intellij.ui.PlatformIcons;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ProcessingContext;
@@ -40,6 +43,7 @@ import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyElement;
 import com.jetbrains.python.psi.PyElsePart;
 import com.jetbrains.python.psi.PyExpression;
+import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.PyIfStatement;
 import com.jetbrains.python.psi.PyImportedNameDefiner;
 import com.jetbrains.python.psi.PyPsiFacade;
@@ -65,6 +69,7 @@ import com.jetbrains.python.psi.resolve.RatedResolveResult;
 import com.jetbrains.python.pyi.PyiUtil;
 import com.jetbrains.python.refactoring.PyDefUseUtil;
 import com.jetbrains.python.toolbox.Maybe;
+import kotlin.sequences.SequencesKt;
 import one.util.streamex.EntryStream;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
@@ -74,6 +79,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -516,6 +522,11 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
   }
 
   private static final Key<Set<PyClassType>> CTX_VISITED = Key.create("PyClassType.Visited");
+  /**
+   * Collects the {@code __getattr__} names of the whole hierarchy while {@link #getCompletionVariants} recurses.
+   * The call that creates the map adds the names after all real members, so a real attribute anywhere in the hierarchy wins over a name.
+   */
+  private static final Key<Map<String, LookupElement>> CTX_GETATTR_NAMES = Key.create("PyClassType.GetAttrNames");
   public static final Key<Boolean> CTX_SUPPRESS_PARENTHESES = Key.create("PyFunction.SuppressParentheses");
 
   @Override
@@ -527,11 +538,11 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
     final TypeEvalContext typeEvalContext = TypeEvalContext.codeCompletion(myClass.getProject(), origin);
 
     final boolean withinOurClass = withinClass(getPyClass(), location);
-    final Condition<String> nameFilter = name -> {
+    final Condition<String> accessible = name -> {
       if (!withinOurClass && PyUtil.isClassPrivateName(name)) return false;
-      if (!withinOurClass && isClassProtected(name) && prefix == null) return false;
-      return visited.add(name);
+      return withinOurClass || !isClassProtected(name) || prefix != null;
     };
+    final Condition<String> nameFilter = name -> accessible.value(name) && visited.add(name);
 
     final CompletionVariantsProcessor processor =
       new CompletionVariantsProcessor(location, null, nameFilter, false, context.get(CTX_SUPPRESS_PARENTHESES) != null);
@@ -557,21 +568,72 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
       typeEvalContext
     );
 
-    // inherited
-    prepareTypesForProcessingMembers(getSuperClassTypes(typeEvalContext))
-      .flatArray(type -> type.getCompletionVariants(prefix, location, context))
-      .into(result);
+    final Map<String, LookupElement> existingGetAttrNames = context.get(CTX_GETATTR_NAMES);
+    final Map<String, LookupElement> getAttrNames = existingGetAttrNames != null ? existingGetAttrNames : new LinkedHashMap<>();
+    if (existingGetAttrNames == null) context.put(CTX_GETATTR_NAMES, getAttrNames);
+    try {
+      // The attribute access of a class object calls __getattr__ of the metaclass, and the metaclass call below collects those names.
+      if (!isDefinition() && !isInSuperCall(location)) {
+        collectGetAttrLiteralNames(myClass, getAttrNames, accessible, typeEvalContext);
+      }
 
-    processMetaClassMembers(
-      typeType -> ContainerUtil.addAll(result, typeType.getCompletionVariants(prefix, location, context)),
-      typeInstanceAttribute -> {
-        result.add(LookupElementBuilder.create(typeInstanceAttribute));
-        return true;
-      },
-      typeEvalContext
-    );
+      // inherited
+      prepareTypesForProcessingMembers(getSuperClassTypes(typeEvalContext))
+        .flatArray(type -> type.getCompletionVariants(prefix, location, context))
+        .into(result);
+
+      processMetaClassMembers(
+        typeType -> ContainerUtil.addAll(result, typeType.getCompletionVariants(prefix, location, context)),
+        typeInstanceAttribute -> {
+          result.add(LookupElementBuilder.create(typeInstanceAttribute));
+          return true;
+        },
+        typeEvalContext
+      );
+    }
+    finally {
+      if (existingGetAttrNames == null) context.put(CTX_GETATTR_NAMES, null);
+    }
+
+    if (existingGetAttrNames == null) {
+      getAttrNames.forEach((name, element) -> {
+        if (visited.add(name)) result.add(element);
+      });
+    }
 
     return result.toArray();
+  }
+
+  /**
+   * Collects the names that the own {@code __getattr__} of {@code cls} takes as a string {@code Literal}, in all its overloads.
+   * For example, the metaclass {@code ModelBase} of django-stubs declares {@code __getattr__(cls, name: Literal["objects"])}.
+   * A name that a {@code __getattr__} of a subclass already gave keeps its variant, because a subclass is collected before its ancestors.
+   */
+  private static void collectGetAttrLiteralNames(@NotNull PyClass cls,
+                                                 @NotNull Map<String, LookupElement> names,
+                                                 @NotNull Condition<String> accessible,
+                                                 @NotNull TypeEvalContext context) {
+    final PyFunction getAttr = cls.findMethodByName(PyNames.GETATTR, false, context);
+    if (getAttr == null) return;
+    final List<PyFunction> overloads = PyiUtil.getOverloads(getAttr, context);
+    for (PyFunction function : overloads.isEmpty() ? List.of(getAttr) : overloads) {
+      final PyCallableParameter nameParameter = ContainerUtil.find(
+        function.getParameters(context),
+        parameter -> !parameter.isSelf() && !parameter.isPositionOnlySeparator() && !parameter.isKeywordOnlySeparator()
+      );
+      if (nameParameter == null || nameParameter.isPositionalContainer() || nameParameter.isKeywordContainer()) continue;
+      for (PyType type : SequencesKt.asIterable(PyTypeUtil.asUnionSequence(nameParameter.getType(context)))) {
+        if (!(type instanceof PyLiteralType literalType)) continue;
+        final PyClass literalClass = literalType.getPyClass();
+        if (literalClass != PyBuiltinCache.getInstance(literalClass).getClass(PyNames.TYPE_STR)) continue;
+        final String name = literalType.getStringValue();
+        if (name != null && PyNames.isIdentifier(name) && accessible.value(name)) {
+          names.putIfAbsent(name, LookupElementBuilder.createWithSmartPointer(name, function)
+            .withIcon(IconManager.getInstance().getPlatformIcon(PlatformIcons.Field))
+            .withTypeText(cls.getName()));
+        }
+      }
+    }
   }
 
   private boolean isRecursive(@NotNull ProcessingContext context) {
