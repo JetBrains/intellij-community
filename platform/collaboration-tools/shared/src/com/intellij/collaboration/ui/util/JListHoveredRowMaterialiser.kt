@@ -84,7 +84,7 @@ class JListHoveredRowMaterialiser<T> private constructor(private val list: JList
   }
 
   @ApiStatus.Internal
-  var resetCellBoundsOnHover = true
+  var resetCellBoundsOnHover: Boolean = true
 
   private fun materialiseRendererAt(index: Int) {
     if (index < 0 || index > list.model.size - 1) {

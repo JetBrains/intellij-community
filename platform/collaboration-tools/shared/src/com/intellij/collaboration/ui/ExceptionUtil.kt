@@ -40,7 +40,7 @@ sealed interface Either<out A, out B> {
   fun isLeft(): Boolean = this is Left
   fun isRight(): Boolean = this is Right
 
-  fun <A2, B2> bimap(ifLeft: (A) -> A2, ifRight: (B) -> B2) = when (this) {
+  fun <A2, B2> bimap(ifLeft: (A) -> A2, ifRight: (B) -> B2): Either<A2, B2> = when (this) {
     is Left -> Left(ifLeft(value))
     is Right -> Right(ifRight(value))
   }

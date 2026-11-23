@@ -536,7 +536,7 @@ data class PopupConfig(
   val errorPresenter: ErrorStatusPresenter.Text<Throwable>? = null,
 ) {
   companion object {
-    val DEFAULT = PopupConfig()
+    val DEFAULT: PopupConfig = PopupConfig()
   }
 }
 
