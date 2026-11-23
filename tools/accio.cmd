@@ -21,6 +21,8 @@ GOTO :CMDSCRIPT
 #   3. Change TOOL_VERSION, ACCIO_ARCHIVE_VERSION and the checksums in both sections. The .sha256 assets hold them.
 #   4. Copy the body of skill/SKILL.md of the tag v<version> into community/.agents/skills/accio/SKILL.md.
 #      Keep the description, the line on the accio.cmd path and the section "In this repository" there.
+#   5. Copy TOOL_VERSION, ACCIO_ARCHIVE_VERSION and the macOS and Linux checksums into
+#      plugins/air/tests/tools/accio/accio.MODULE.bazel, the pin of the ui-light lane of the Air UI tests.
 #
 # IMPORTANT: After updating TOOL_VERSION or checksums, you MUST run:
 #   TOOL_VERIFY_ALL_PLATFORMS=1 ./community/tools/accio.cmd
