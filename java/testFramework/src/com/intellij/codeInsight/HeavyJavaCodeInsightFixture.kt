@@ -447,6 +447,7 @@ open class HeavyJavaCodeInsightFixture(context: Context, val testDataPath: Strin
     IndexingTestUtil.waitUntilIndexesAreReady(project)
 
     runInEdtAndWait {
+      dispatchEventsBeforeEditorOpen()
       val editors = editorInfos.keys.mapNotNull { newVFile ->
         val psiFile = psiManager.findFile(newVFile)
         if (file == null) file = psiFile
@@ -500,6 +501,7 @@ open class HeavyJavaCodeInsightFixture(context: Context, val testDataPath: Strin
     file = null
     editor = null
     runInEdtAndWait {
+      dispatchEventsBeforeEditorOpen()
       val newEditor = createEditor(virtualFile)
       val document = newEditor.document
       val editorInfo = EditorInfo(document.text)
@@ -537,6 +539,14 @@ open class HeavyJavaCodeInsightFixture(context: Context, val testDataPath: Strin
     val psiFile = checkNotNull(file)
     check(psiFile.virtualFile.fileType == fileType) { "Expected $fileType, actual ${psiFile.virtualFile.fileType}" }
     return psiFile
+  }
+
+  /**
+   * Runs the queued EDT events before the first editor of a configure call opens.
+   * An index wait off the EDT can leave the `exitDumbMode` listeners in the queue, and they restart the daemon.
+   */
+  private fun dispatchEventsBeforeEditorOpen() {
+    PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue()
   }
 
   /**
@@ -754,6 +764,7 @@ open class HeavyJavaCodeInsightFixture(context: Context, val testDataPath: Strin
   fun openEditors(editorInfos: Map<VirtualFile, EditorInfo?>): List<Editor> {
     var editors: List<Editor> = emptyList()
     runInEdtAndWait {
+      dispatchEventsBeforeEditorOpen()
       editors = editorInfos.keys.map { newVFile ->
         val psiFile = psiManager.findFile(newVFile)
         if (file == null) file = psiFile
