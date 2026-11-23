@@ -61,7 +61,7 @@ class WebTypesEmbeddedDefinitionsLoader(private val project: Project) : Disposab
       val packagesEnabledByDefault = HashMap<String, SemVer>()
       for (ep in WebTypesDefinitionsEP.EP_NAME.extensionList) {
         try {
-          val webTypes = ep.instance
+          val webTypes = ep.loadWebTypes()
           val semVer = SemVer.parseFromText(webTypes.version)!!
           if (ep.enableByDefault == true) {
             packagesEnabledByDefault.merge(webTypes.name, semVer) { a, b ->
