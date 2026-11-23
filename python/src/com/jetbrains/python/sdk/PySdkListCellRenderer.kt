@@ -14,8 +14,8 @@ import javax.swing.JList
  * Draws a list of interpreters.
  *
  * The list holds [PyInterpreterItem]s, never SDKs, because a row's label and its `[invalid]` marker are decided by
- * running the interpreter. Build the items off the EDT with
- * [com.intellij.python.sdk.backend.pyInterpreterItems] and set them as the model.
+ * running the interpreter. Build the items off the EDT with [com.intellij.python.sdk.backend.asItem] and set them as
+ * the model.
  *
  * @param nullLabel what the `null` row says. With a [nullItem], it is drawn in grey with the icon of that interpreter.
  * @param nullItem the interpreter the `null` row stands for, usually the project default.

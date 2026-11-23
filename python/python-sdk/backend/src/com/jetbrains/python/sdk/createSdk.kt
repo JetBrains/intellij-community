@@ -7,7 +7,6 @@ import com.intellij.openapi.projectRoots.SdkAdditionalData
 import com.intellij.python.sdk.backend.PySdkBundle
 import com.intellij.python.sdk.backend.PythonInterpreter
 import com.intellij.python.sdk.backend.PythonInterpreterRegistry
-import com.intellij.python.sdk.backend.getSdkAPI
 import com.intellij.python.sdk.backend.registerTarget
 import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.errorProcessing.PyResult
@@ -183,7 +182,7 @@ suspend fun <P : PathHolder> createSdkGuessingTypeByPath(
     suggestedSdkName = suggestedSdkName
   ).getOr { return it }
 
-  moduleOrProject.project.excludeInnerVirtualEnv(newPythonInterpreter.getSdkAPI())
+  moduleOrProject.project.excludeInnerVirtualEnv(newPythonInterpreter)
 
   return PyResult.success(newPythonInterpreter)
 }

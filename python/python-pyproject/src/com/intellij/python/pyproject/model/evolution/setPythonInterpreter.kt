@@ -22,11 +22,10 @@ import com.intellij.python.sdk.backend.PythonInterpreterRegistry
 import com.intellij.python.sdk.backend.isInterpreterLibraryFlowEnabled
 import com.intellij.python.sdk.backend.TargetPythonInterpreter
 import com.intellij.python.sdk.backend.evolution.EvoWorkspace
-import com.intellij.python.sdk.backend.getSdkAPI
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.project.PyProject
 import com.jetbrains.python.project.project
-import com.jetbrains.python.sdk.writePythonSdk
+import com.jetbrains.python.sdk.writePythonInterpreter
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
@@ -69,8 +68,7 @@ suspend fun PyProject.setPythonInterpreter(interpreter: PythonInterpreter?, wait
   }
   else {
     // An older build reads the SDK of the module.
-    @Suppress("DEPRECATION")
-    residesOnModule.writePythonSdk(set?.getSdkAPI())
+    residesOnModule.writePythonInterpreter(set)
   }
   residesOnModule.notifyPythonInterpreterChanged(previous, set)
   previousHome?.let { removeGoneEnvExclusion(it) }

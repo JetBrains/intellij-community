@@ -21,7 +21,6 @@ import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.python.sdk.backend.detectedEnvironment
-import com.intellij.python.sdk.backend.pythonInterpreterResult
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.jps.model.java.JavaSourceRootType
@@ -82,10 +81,10 @@ internal fun updateTransferredRoots(project: Project, sdk: Sdk, oldPaths: Set<Vi
   }
 }
 
-/** Excludes the environment of [sdk] from this module, when the environment is inside it. */
+/** Excludes the environment of [interpreter] from this module, when the environment is inside it. */
 @ApiStatus.Internal
-fun Module.excludeInnerVirtualEnv(sdk: Sdk) {
-  val root = sdk.pythonInterpreterResult(project).successOrNull?.detectedEnvironment?.pythonHomePath?.let {
+fun Module.excludeInnerVirtualEnv(interpreter: PythonInterpreter) {
+  val root = interpreter.detectedEnvironment?.pythonHomePath?.let {
     VirtualFileManager.getInstance().findFileByNioPath(it)
   } ?: return
 
@@ -96,11 +95,11 @@ fun Module.excludeInnerVirtualEnv(sdk: Sdk) {
   }
 }
 
-/** Excludes the environment of [sdk] from the module that holds its binary, when there is one. */
+/** Excludes the environment of [interpreter] from the module that holds its binary, when there is one. */
 @ApiStatus.Internal
-fun Project.excludeInnerVirtualEnv(sdk: Sdk) {
-  val binary = sdk.homeDirectory ?: return
-  ModuleUtil.findModuleForFile(binary, this)?.excludeInnerVirtualEnv(sdk)
+fun Project.excludeInnerVirtualEnv(interpreter: PythonInterpreter) {
+  val binary = interpreter.detectedEnvironment?.pythonBinaryPath?.let { VirtualFileManager.getInstance().findFileByNioPath(it) } ?: return
+  ModuleUtil.findModuleForFile(binary, this)?.excludeInnerVirtualEnv(interpreter)
 }
 
 /**
@@ -122,7 +121,7 @@ internal class PySdkTransferredRootsListener : PythonInterpreterListener {
 
     if (current != null) {
       transferRoots(module, current.sdk)
-      module.excludeInnerVirtualEnv(current.sdk)
+      module.excludeInnerVirtualEnv(current)
     }
   }
 }

@@ -15,10 +15,8 @@ import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.platform.ide.progress.ModalTaskOwner
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
-import com.intellij.python.sdk.backend.pyInterpreterItems
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.python.sdk.common.PyInterpreterItem
 import com.intellij.ui.SimpleColoredComponent
@@ -26,7 +24,6 @@ import com.intellij.ui.SimpleTextAttributes
 import com.jetbrains.python.PyBundle
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
-import javax.swing.JComponent
 
 @Nls
 val noInterpreterMarker: String = "<${PyBundle.message("python.sdk.there.is.no.interpreter")}>"
@@ -40,18 +37,6 @@ val noInterpreterMarker: String = "<${PyBundle.message("python.sdk.there.is.no.i
 enum class PyRenderedSdkType {
   VIRTUALENV, SYSTEM, REMOTE
 }
-
-/**
- * These SDKs as a UI list holds them in [project], read under a progress over [owner], for a Java caller that cannot suspend.
- *
- * Order is kept, so a caller that also holds the SDKs can line the two lists up.
- */
-@ApiStatus.Internal
-@RequiresEdt
-fun List<Sdk>.interpreterItemsUnderProgress(project: Project, owner: JComponent): List<PyInterpreterItem> =
-  runWithModalProgressBlocking(ModalTaskOwner.component(owner), PyBundle.message("python.interpreters.reading.interpreters.progress")) {
-    pyInterpreterItems(project)
-  }
 
 /**
  * The interpreters that [pyProject] owns, or the interpreters of every [PyProject] of [project] when [pyProject] is

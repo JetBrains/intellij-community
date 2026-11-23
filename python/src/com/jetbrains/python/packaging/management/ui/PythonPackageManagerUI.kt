@@ -202,21 +202,5 @@ class PythonPackageManagerUI private constructor(
     fun forPackageManager(
       packageManager: PythonPackageManager,
     ): PythonPackageManagerUI = PythonPackageManagerUI(packageManager, ErrorSink())
-
-    /**
-     * Installs [packages] into the interpreter of [sdk], with a modal progress. For a Java caller on the EDT that holds
-     * only an [Sdk]. The interpreter is detected inside the progress.
-     */
-    @JvmStatic
-    @ApiStatus.Internal
-    @RequiresEdt
-    fun installPackagesWithModalProgressBlocking(project: Project, sdk: Sdk, vararg packages: String): List<PythonPackage>? {
-      val interpreter = runWithModalProgressBlocking(project, PyBundle.message("python.packaging.installing.packages")) {
-        val result = sdk.pythonInterpreterResultAsync(project)
-        result.errorOrNull?.let { ErrorSink().emit(it, project) }
-        result.successOrNull
-      } ?: return null
-      return forPythonInterpreter(interpreter).installPackagesWithModalProgressBlocking(*packages)
-    }
   }
 }

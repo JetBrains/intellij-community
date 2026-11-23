@@ -9,10 +9,10 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.jetbrains.python.module.PyModuleService
 import org.jetbrains.annotations.ApiStatus
-import com.intellij.python.sdk.backend.pythonInterpreter
+import com.intellij.python.sdk.backend.pythonInterpreterResult
 
 /**
- * Writes [newSdk] to this module as an older build reads it. This build never reads the value back: it reads the
+ * Writes the SDK of [interpreter] to this module as an older build reads it. This build never reads the value back: it reads the
  * interpreter library entry. The write only keeps the project usable in an older build. It tells
  * [PythonInterpreterListener] nothing: the caller does that, see [notifyPythonInterpreterChanged].
  *
@@ -22,9 +22,16 @@ import com.intellij.python.sdk.backend.pythonInterpreter
  */
 @ApiStatus.Internal
 @RequiresBackgroundThread(generateAssertion = false)
-fun Module.writePythonSdk(newSdk: Sdk?) {
+fun Module.writePythonInterpreter(interpreter: PythonInterpreter?) {
+  writePythonSdk(interpreter?.sdk)
+}
+
+/** [writePythonInterpreter] with the SDK of the interpreter, for the test support that holds only an SDK. */
+@RequiresBackgroundThread(generateAssertion = false)
+internal fun Module.writePythonSdk(newSdk: Sdk?) {
   thisLogger.info("Setting PythonSDK $newSdk to module $this")
-  newSdk?.pythonInterpreter(project, forceRefresh = true)
+  // Detects the environment again, so the interpreter of the new SDK shows its current version.
+  newSdk?.pythonInterpreterResult(project, forceRefresh = true)
   // The daemon restarts when the snapshot holds the new interpreter. See EvoPyProjectModel.
   ApplicationManager.getApplication().invokeAndWait {
     WriteAction.runAndWait<Throwable> {
@@ -35,7 +42,7 @@ fun Module.writePythonSdk(newSdk: Sdk?) {
 
 /**
  * Tells [PythonInterpreterListener] that this module had [previous] and has [current] now. It runs whether or not the
- * SDK of the module is written, see [writePythonSdk].
+ * SDK of the module is written, see [writePythonInterpreter].
  */
 @ApiStatus.Internal
 fun Module.notifyPythonInterpreterChanged(previous: PythonInterpreter?, current: PythonInterpreter?) {

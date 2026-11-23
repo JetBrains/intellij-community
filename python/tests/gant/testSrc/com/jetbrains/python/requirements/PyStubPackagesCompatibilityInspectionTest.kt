@@ -97,7 +97,7 @@ class PyStubPackagesCompatibilityInspectionTest : PythonDependencyTestCase() {
   private fun doMultiFileTest(filename: String) {
     myFixture.copyDirectoryToProject(this::class.java.simpleName, "")
     myFixture.configureFromTempProjectFile(filename)
-    getPythonSdk(myFixture.file)!!
+    getPythonInterpreter(myFixture.file)!!
     myFixture.enableInspections(PyStubPackagesCompatibilityInspection::class.java)
   }
 

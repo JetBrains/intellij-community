@@ -10,7 +10,6 @@ import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.vfs.VirtualFile
@@ -227,15 +226,6 @@ fun PythonInterpreter.asItem(): PyInterpreterItem = buildItem()
  */
 @Internal
 fun PythonInterpreterKey.asUnavailableItem(): PyInterpreterItem = buildUnavailableItem()
-
-/**
- * Every SDK as a UI list holds it, resolved off the EDT, in order.
- *
- * This is how a list of interpreters is built. The work is detecting each environment, which is local file reads that
- * [Sdk.pythonInterpreterAsync] caches per SDK — so the first list pays for it and later ones do not.
- */
-suspend fun Iterable<Sdk>.pyInterpreterItems(project: Project): List<PyInterpreterItem> =
-  mapNotNull { it.pythonInterpreterResultAsync(project).successOrNull?.asItem() }
 
 /** The flavor this interpreter was set up with. */
 val PythonInterpreter.flavor: PythonSdkFlavor<*>
