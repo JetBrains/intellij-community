@@ -15,11 +15,11 @@
  */
 package com.jetbrains.env.ut;
 
-import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.python.sdk.backend.PythonInterpreter;
+import com.intellij.python.sdk.backend.PythonInterpreterExtKt;
 import com.jetbrains.env.ProcessWithConsoleRunner;
 import com.jetbrains.python.run.targetBasedConfiguration.PyRunTargetVariant;
 import com.jetbrains.python.sdk.flavors.CPythonSdkFlavor;
-import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
 import com.jetbrains.python.testing.PyUnitTestConfiguration;
 import com.jetbrains.python.testing.PyUnitTestFactory;
 import com.jetbrains.python.testing.PythonTestConfigurationType;
@@ -51,8 +51,8 @@ public class PyUnitTestProcessRunner extends PyScriptTestProcessRunner<PyUnitTes
   @Override
   protected void configurationCreatedAndWillLaunch(@NotNull PyUnitTestConfiguration configuration) throws IOException {
     super.configurationCreatedAndWillLaunch(configuration);
-    final Sdk sdk = configuration.getSdk();
-    if (sdk == null || PythonSdkFlavor.getFlavor(sdk) instanceof CPythonSdkFlavor) {
+    final PythonInterpreter interpreter = configuration.getPythonInterpreter();
+    if (interpreter == null || PythonInterpreterExtKt.getFlavor(interpreter) instanceof CPythonSdkFlavor) {
       // -Werror checks we do not use deprecated API in runners, but only works for cpython (not iron nor jython)
       // and we can't use it for pytest/nose, since it is not our responsibility to check them for deprecation api usage
       // while unit is part of stdlib and does not use deprecated api, so only runners are checked

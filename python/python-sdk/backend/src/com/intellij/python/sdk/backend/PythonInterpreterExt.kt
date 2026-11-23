@@ -1,14 +1,15 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.python.sdk.backend
 
+import com.intellij.execution.configuration.AbstractRunConfiguration
 import com.intellij.execution.target.RunConfigurationTargetEnvironmentAdjuster
-import com.intellij.util.PathMappingSettings
-import com.intellij.openapi.Disposable
 import com.intellij.execution.target.TargetedCommandLineBuilder
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.options.SettingsEditor
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.NlsSafe
@@ -24,6 +25,7 @@ import com.intellij.python.sdk.backend.impl.buildUnavailableItem
 import com.intellij.python.sdk.backend.impl.recordedPythonInfo
 import com.intellij.python.sdk.backend.service.ActivatableEnvironmentService
 import com.intellij.python.sdk.common.PyInterpreterItem
+import com.intellij.util.PathMappingSettings
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import com.intellij.util.concurrency.annotations.RequiresReadLockAbsence
@@ -394,6 +396,16 @@ val PythonInterpreter.legacyTableSdkHome: String?
 @Internal
 fun PythonInterpreter.runConfigurationTargetAdjuster(): RunConfigurationTargetEnvironmentAdjuster? =
   RunConfigurationTargetEnvironmentAdjuster.Factory.findTargetEnvironmentRequestAdjuster(sdk)
+
+/**
+ * The run configuration UI of this adjuster for [runConfiguration], which reads the interpreter with [interpreter] each
+ * time. The platform UI reads an SDK, so this is where the interpreter gives it.
+ */
+@Internal
+fun RunConfigurationTargetEnvironmentAdjuster.createRunConfigurationUI(
+  runConfiguration: AbstractRunConfiguration,
+  interpreter: () -> PythonInterpreter?,
+): SettingsEditor<AbstractRunConfiguration>? = createAdditionalRunConfigurationUI(runConfiguration) { interpreter()?.sdk }
 
 /**
  * Sets the Python binary of this interpreter, and what its flavor needs, such as a conda activation, on

@@ -5,7 +5,6 @@ import com.intellij.execution.EnvFilesOptions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.python.sdk.backend.PythonInterpreter;
-import com.intellij.python.sdk.backend.PythonInterpreterExtKt;
 import com.intellij.python.sdk.backend.PythonInterpreterRegistryKt;
 import com.intellij.python.sdk.backend.PythonInterpreterSdkBoundaryKt;
 import com.intellij.util.PathMappingSettings;
@@ -35,17 +34,6 @@ public interface PythonRunParams extends EnvFilesOptions {
   /** Makes {@code interpreter} the interpreter that these parameters name themselves, see {@link #getPythonInterpreter()}. */
   @ApiStatus.Internal
   default void setPythonInterpreter(@Nullable PythonInterpreter interpreter) {
-  }
-
-  /**
-   * The SDK of {@link #getPythonInterpreter()}.
-   *
-   * @deprecated Use {@link #getPythonInterpreter()}. A caller that still needs the SDK gets it from the interpreter.
-   */
-  @Deprecated
-  default @Nullable Sdk getSdk() {
-    final PythonInterpreter interpreter = getPythonInterpreter();
-    return interpreter != null ? PythonInterpreterExtKt.getSdkAPI(interpreter) : null;
   }
 
   /**

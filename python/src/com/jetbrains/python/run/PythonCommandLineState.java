@@ -193,22 +193,6 @@ public abstract class PythonCommandLineState extends CommandLineState {
     return getPythonInterpreter(myConfig.getProject(), myConfig);
   }
 
-  /**
-   * The SDK of {@link #getPythonInterpreter()}.
-   *
-   * @deprecated Use {@link #getPythonInterpreter()}.
-   */
-  @Deprecated
-  public @Nullable Sdk getSdk() {
-    return sdkOf(getPythonInterpreter());
-  }
-
-  /** The SDK of {@code interpreter}, or {@code null}. The one place where this class reads an SDK. */
-  private static @Nullable Sdk sdkOf(@Nullable PythonInterpreter interpreter) {
-    //noinspection deprecation
-    return interpreter != null ? PythonInterpreterExtKt.getSdkAPI(interpreter) : null;
-  }
-
   public AbstractPythonRunConfiguration<?> getConfig() {
     return myConfig;
   }

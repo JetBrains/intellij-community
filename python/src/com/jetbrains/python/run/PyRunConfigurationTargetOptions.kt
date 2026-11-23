@@ -3,9 +3,9 @@ package com.jetbrains.python.run
 
 import com.intellij.execution.target.RunConfigurationTargetEnvironmentAdjuster
 import com.intellij.openapi.options.SettingsEditor
-import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.python.sdk.backend.createRunConfigurationUI
+import com.intellij.python.sdk.backend.runConfigurationTargetAdjuster
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.annotations.TestOnly
 import java.util.WeakHashMap
 
 @ApiStatus.Internal
@@ -13,12 +13,7 @@ class PyRunConfigurationTargetOptions : PyRunConfigurationEditorExtension {
   private val factoriesCache = WeakHashMap<RunConfigurationTargetEnvironmentAdjuster, PyRunConfigurationEditorFactory>()
 
   override fun accepts(configuration: AbstractPythonRunConfiguration<out AbstractPythonRunConfiguration<*>>): PyRunConfigurationEditorFactory? {
-    val sdk = configuration.sdk ?: return null
-    return acceptsForSdk(sdk)
-  }
-
-  private fun acceptsForSdk(sdk: Sdk): PyRunConfigurationEditorFactory? {
-    val adjuster = RunConfigurationTargetEnvironmentAdjuster.Factory.findTargetEnvironmentRequestAdjuster(sdk) ?: return null
+    val adjuster = configuration.pythonInterpreter?.runConfigurationTargetAdjuster() ?: return null
     return if (adjuster.providesAdditionalRunConfigurationUI()) {
       factoriesCache.computeIfAbsent(adjuster) { RunConfigurationsTargetOptionsFactory(adjuster) }
     }
@@ -27,13 +22,10 @@ class PyRunConfigurationTargetOptions : PyRunConfigurationEditorExtension {
     }
   }
 
-  @TestOnly
-  fun accepts(sdk: Sdk): PyRunConfigurationEditorFactory? = acceptsForSdk(sdk)
-
   private class RunConfigurationsTargetOptionsFactory(private val adjuster: RunConfigurationTargetEnvironmentAdjuster) : PyRunConfigurationEditorFactory {
     override fun createEditor(configuration: AbstractPythonRunConfiguration<*>): SettingsEditor<AbstractPythonRunConfiguration<*>> {
-      val adjuster = RunConfigurationTargetEnvironmentAdjuster.Factory.findTargetEnvironmentRequestAdjuster(configuration.sdk!!)!!
-      val runConfigurationEditor = adjuster.createAdditionalRunConfigurationUI(configuration) { configuration.sdk }
+      val adjuster = configuration.pythonInterpreter!!.runConfigurationTargetAdjuster()!!
+      val runConfigurationEditor = adjuster.createRunConfigurationUI(configuration) { configuration.pythonInterpreter }
       @Suppress("UNCHECKED_CAST") // TODO: Express it in the type-safe manner
       return runConfigurationEditor as SettingsEditor<AbstractPythonRunConfiguration<*>>
     }

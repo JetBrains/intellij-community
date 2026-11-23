@@ -1,14 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.statistics
 
-import com.intellij.python.sdk.backend.isDetectedActivatable
-import com.intellij.python.sdk.backend.binaryPathString
-import com.intellij.python.sdk.backend.flavor
-import com.intellij.python.sdk.backend.languageLevel
-import com.intellij.python.sdk.backend.TargetPythonInterpreter
-import com.intellij.python.sdk.backend.NativePythonInterpreter
 import com.intellij.internal.statistic.eventLog.EventLogGroup
-import com.jetbrains.python.configuration.findModuleInterpreterIfReady
 import com.intellij.internal.statistic.eventLog.events.BooleanEventField
 import com.intellij.internal.statistic.eventLog.events.EventField
 import com.intellij.internal.statistic.eventLog.events.EventFields
@@ -19,13 +12,22 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.python.sdk.backend.NativePythonInterpreter
+import com.intellij.python.sdk.backend.PythonInterpreter
+import com.intellij.python.sdk.backend.TargetPythonInterpreter
+import com.intellij.python.sdk.backend.binaryPathString
+import com.intellij.python.sdk.backend.flavor
+import com.intellij.python.sdk.backend.isDetectedActivatable
+import com.intellij.python.sdk.backend.languageLevel
 import com.intellij.util.asSafely
 import com.jetbrains.python.PyInternalExecApi
 import com.jetbrains.python.PythonLanguage
+import com.jetbrains.python.configuration.findModuleInterpreterIfReady
 import com.jetbrains.python.hatch.sdk.isHatch
 import com.jetbrains.python.isCondaVirtualEnv
 import com.jetbrains.python.isNonToolVirtualEnv
 import com.jetbrains.python.psi.LanguageLevel
+import com.jetbrains.python.run.PythonCommandLineState
 import com.jetbrains.python.sdk.PySdkUtil
 import com.jetbrains.python.sdk.PythonSdkAdditionalData
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
@@ -61,7 +63,6 @@ import com.jetbrains.python.statistics.InterpreterType.PYENV
 import com.jetbrains.python.statistics.InterpreterType.REGULAR
 import com.jetbrains.python.statistics.InterpreterType.UV
 import com.jetbrains.python.statistics.InterpreterType.VIRTUALENV
-import com.intellij.python.sdk.backend.PythonInterpreter
 import com.jetbrains.python.target.PyTargetAwareAdditionalData
 import com.jetbrains.python.venvReader.VirtualEnvReader
 import org.jetbrains.annotations.ApiStatus
@@ -208,6 +209,10 @@ private val Sdk.pythonImplementation: String get() = PythonSdkFlavor.getFlavor(t
 @Deprecated("See  PySdkUtil.getLanguageLevelForSdk deprecation message")
 @get:ApiStatus.Internal
 val Sdk?.version: LanguageLevel get() = PySdkUtil.getLanguageLevelForSdk(this)
+
+/** The language level of the interpreter that this state runs, or `null` when it runs none. */
+@get:ApiStatus.Internal
+val PythonCommandLineState.languageLevel: LanguageLevel? get() = pythonInterpreter?.languageLevel
 
 /**
  * **DO NOT USE FOR ANYTHING BUT FUS**

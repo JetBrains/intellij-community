@@ -86,7 +86,8 @@ private class TestDslBuilder(private val executor: (PyTestTask) -> Unit) {
 
         val runConfiguration = settings.configuration as PythonRunConfiguration
         runConfiguration.apply {
-          this.sdk = existingSdk
+          @Suppress("DEPRECATION") // The test environment gives an SDK.
+          setSdk(existingSdk)
           scriptName = "inputRedirection.py"
           workingDirectory = myFixture.tempDirPath
           // Input redirection: use DSL value if provided, default to true and input.txt (to keep older tests working)

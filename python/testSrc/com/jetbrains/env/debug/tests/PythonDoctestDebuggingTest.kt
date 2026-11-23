@@ -97,7 +97,8 @@ class PythonDoctestDebuggingTest : PyEnvTestCase() {
       val runConfiguration = PythonDocTestRunConfiguration(project, factory)
       val runner = ProgramRunner.getRunner(executorId, runConfiguration) as PyDebugRunner?
       val executor = DefaultDebugExecutor.getDebugExecutorInstance()
-      runConfiguration.sdk = existingSdk
+      @Suppress("DEPRECATION") // The test environment gives an SDK.
+      runConfiguration.setSdk(existingSdk)
       runConfiguration.module = myFixture.module
       runConfiguration.workingDirectory = myFixture.tempDirPath
       runConfiguration.scriptName = scriptName

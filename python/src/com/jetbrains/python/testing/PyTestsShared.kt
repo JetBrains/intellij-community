@@ -1,9 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.testing
 
-import com.intellij.python.sdk.backend.PythonInterpreter
-import com.intellij.python.sdk.backend.getSdkAPI
-import com.intellij.python.pyproject.model.evolution.findEvoPyProjectIfReady
 import com.google.gson.Gson
 import com.intellij.execution.ExecutionException
 import com.intellij.execution.Executor
@@ -34,7 +31,6 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.impl.scopes.ModuleWithDependenciesScope
 import com.intellij.openapi.options.SettingsEditor
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.JDOMExternalizerUtil.readField
 import com.intellij.openapi.util.JDOMExternalizerUtil.writeField
 import com.intellij.openapi.util.Pair
@@ -48,9 +44,12 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFileSystemItem
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.util.QualifiedName
+import com.intellij.python.pyproject.model.evolution.findEvoPyProjectIfReady
+import com.intellij.python.sdk.backend.NativePythonInterpreter
+import com.intellij.python.sdk.backend.PythonInterpreter
+import com.intellij.python.sdk.backend.TargetPythonInterpreter
+import com.intellij.python.sdk.backend.pathMappings
 import com.intellij.refactoring.listeners.RefactoringElementListener
-import com.intellij.remote.PathMappingProvider
-import com.intellij.remote.RemoteSdkAdditionalData
 import com.intellij.util.ThreeState
 import com.intellij.util.execution.ParametersListUtil
 import com.jetbrains.python.PyBundle
@@ -84,7 +83,6 @@ import com.jetbrains.python.run.targetBasedConfiguration.TargetWithVariant
 import com.jetbrains.python.run.targetBasedConfiguration.createRefactoringListenerIfPossible
 import com.jetbrains.python.run.targetBasedConfiguration.targetAsPsiElement
 import com.jetbrains.python.sdk.baseDir
-import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 import com.jetbrains.python.testing.doctest.PythonDocTestUtil
 import jetbrains.buildServer.messages.serviceMessages.ServiceMessage
 import jetbrains.buildServer.messages.serviceMessages.TestStdErr
@@ -157,22 +155,15 @@ private fun findConfigurationFactoryFromSettings(module: Module): ConfigurationF
 private val PATH_URL = Pattern.compile("^python<([^<>]+)>$")
 
 
-private fun Sdk.getMapping(project: Project) = (sdkAdditionalData as? RemoteSdkAdditionalData)?.let { data ->
-  PathMappingProvider.getSuitableMappingProviders(data).flatMap { it.getPathMappingSettings(project, data).pathMappings }
-} ?: emptyList()
-
 private fun getFolderFromMatcher(matcher: Matcher, module: Module): String? {
   if (!matcher.matches()) {
     return null
   }
   val folder = matcher.group(1)
-  @Suppress("DEPRECATION") // The path mappings live on the SDK.
-  val sdk = module.findEvoPyProjectIfReady()?.interpreter?.getSdkAPI()
-  if (sdk != null && PythonSdkUtil.isRemote(sdk)) {
-    return sdk.getMapping(module.project).find { it.canReplaceRemote(folder) }?.mapToLocal(folder)
-  }
-  else {
-    return folder
+  // A folder on a target maps to a local one with the path mappings of the target.
+  return when (val interpreter = module.findEvoPyProjectIfReady()?.interpreter) {
+    null, is NativePythonInterpreter -> folder
+    is TargetPythonInterpreter -> interpreter.pathMappings?.pathMappings?.find { it.canReplaceRemote(folder) }?.mapToLocal(folder)
   }
 }
 
