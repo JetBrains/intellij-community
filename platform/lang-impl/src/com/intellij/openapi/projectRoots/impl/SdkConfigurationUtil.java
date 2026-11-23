@@ -7,6 +7,7 @@ import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
+import com.intellij.openapi.fileChooser.NioFileChooserBuilder;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -23,6 +24,7 @@ import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.NioFiles;
 import com.intellij.openapi.vfs.DiskQueryRelay;
 import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -41,6 +43,7 @@ import org.jetbrains.ide.PooledThreadExecutor;
 
 import java.awt.Component;
 import java.nio.file.FileSystems;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -475,11 +478,8 @@ public final class SdkConfigurationUtil {
                                    final @NotNull Consumer<? super String> consumer) {
     if (selectSdkHomeForTests(sdkType, consumer)) return;
 
-    final FileChooserDescriptor descriptor = sdkType.getHomeChooserDescriptor();
-    descriptor.setEnvironmentRestricted(true);
-
-    Future<VirtualFile> sdkRootFuture = PooledThreadExecutor.INSTANCE.submit(() -> getSuggestedSdkRoot(sdkType, path));
-    VirtualFile suggestedSdkRoot = null;
+    Future<Path> sdkRootFuture = PooledThreadExecutor.INSTANCE.submit(() -> getSuggestedSdkRootPath(sdkType, path));
+    Path suggestedSdkRoot = null;
     try {
       suggestedSdkRoot = sdkRootFuture.get(200, TimeUnit.MILLISECONDS);
     }
@@ -489,24 +489,32 @@ public final class SdkConfigurationUtil {
     // passing project instance here seems to be the right idea, but it would make the dialog
     // selecting the last opened project path, instead of the suggested detected JDK home (one of many).
     // The behaviour may also depend on the FileChooser implementations which does not reuse that code
-    FileChooser.chooseFiles(descriptor, project, component, suggestedSdkRoot, chosen -> {
-      final String chosenPath = chosen.get(0).getPath();
-      if (!EelProviderUtil.getEelDescriptor(Path.of(chosenPath)).equals(EelProviderUtil.getEelDescriptor(path))) {
-        Messages.showErrorDialog(
-          component,
-          ProjectBundle.message("sdk.configure.sdk.not.accessible.from.current.environment.error", sdkType.getPresentableName()),
-          ProjectBundle.message("sdk.configure.jdk.environment.mismatch.title", sdkType.getPresentableName())
-        );
-        return;
-      }
-      final String adjustedPath = sdkType.adjustSelectedSdkHome(chosenPath);
-      AtomicBoolean isAdjustedPathValid = new AtomicBoolean(false);
-      ProgressManager.getInstance().runProcessWithProgressSynchronously(
-        () -> isAdjustedPathValid.set(DiskQueryRelay.compute(() -> sdkType.isValidSdkHome(adjustedPath))),
-        ProjectBundle.message("progress.title.checking.sdk.home"), true, null
+    Path chosen = new NioFileChooserBuilder(sdkType.getHomeChooserDescriptor())
+      .withEnvironmentRestricted(true)
+      .chooseFile(project, suggestedSdkRoot, component);
+    if (chosen == null) return;
+    if (!EelProviderUtil.getEelDescriptor(chosen).equals(EelProviderUtil.getEelDescriptor(path))) {
+      Messages.showErrorDialog(
+        component,
+        ProjectBundle.message("sdk.configure.sdk.not.accessible.from.current.environment.error", sdkType.getPresentableName()),
+        ProjectBundle.message("sdk.configure.jdk.environment.mismatch.title", sdkType.getPresentableName())
       );
-      consumer.consume(isAdjustedPathValid.get() ? adjustedPath : chosenPath);
-    });
+      return;
+    }
+    final String chosenPath = FileUtil.toSystemIndependentName(chosen.toString());
+    final String adjustedPath = sdkType.adjustSelectedSdkHome(chosenPath);
+    AtomicBoolean isAdjustedPathValid = new AtomicBoolean(false);
+    ProgressManager.getInstance().runProcessWithProgressSynchronously(
+      () -> isAdjustedPathValid.set(DiskQueryRelay.compute(() -> sdkType.isValidSdkHome(adjustedPath))),
+      ProjectBundle.message("progress.title.checking.sdk.home"), true, null
+    );
+    consumer.consume(isAdjustedPathValid.get() ? adjustedPath : chosenPath);
+  }
+
+  private static @Nullable Path getSuggestedSdkRootPath(@NotNull SdkType sdkType, @NotNull Path path) {
+    String homePath = sdkType.suggestHomePath(path);
+    Path homeDir = homePath == null ? null : NioFiles.toPath(homePath);
+    return homeDir != null && Files.exists(homeDir) ? homeDir : null;
   }
 
   public static @Nullable VirtualFile getSuggestedSdkRoot(@NotNull SdkType sdkType, @NotNull Path path) {
