@@ -214,7 +214,7 @@ class PyInferredVarianceJudgmentTest : PyCodeInsightTestCase() {
 
   @Test
   @TestFor(issues = ["PY-90863"])
-  @TestCaseOptions(additionalSdkRoots = [SdkRoot("packages", OrderRootTypeEnum.CLASSES)])
+  @TestCaseOptions(additionalSdkRoots = [SdkRoot("packages")])
   fun `Generic attrs frozen class`() = test("""
     import attrs
     @attrs.frozen

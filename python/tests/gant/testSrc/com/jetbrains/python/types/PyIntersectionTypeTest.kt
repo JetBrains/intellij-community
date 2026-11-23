@@ -28,7 +28,7 @@ class PyIntersectionTypeTest : PyCodeInsightTestCase() {
 
     @Test
     @TestFor(issues = ["PY-87024"])
-    @TestCaseOptions(additionalSdkRoots = [SdkRoot(TY_EXTENSIONS_ROOT, OrderRootTypeEnum.CLASSES)])
+    @TestCaseOptions(additionalSdkRoots = [SdkRoot(TY_EXTENSIONS_ROOT)])
     fun `Intersection of two members`() = test("""
       from ty_extensions import Intersection
 
@@ -38,7 +38,7 @@ class PyIntersectionTypeTest : PyCodeInsightTestCase() {
 
     @Test
     @TestFor(issues = ["PY-87024"])
-    @TestCaseOptions(additionalSdkRoots = [SdkRoot(TY_EXTENSIONS_ROOT, OrderRootTypeEnum.CLASSES)])
+    @TestCaseOptions(additionalSdkRoots = [SdkRoot(TY_EXTENSIONS_ROOT)])
     fun `Intersection of one member collapses to that member`() = test("""
       from ty_extensions import Intersection
 
@@ -48,7 +48,7 @@ class PyIntersectionTypeTest : PyCodeInsightTestCase() {
 
     @Test
     @TestFor(issues = ["PY-87024"])
-    @TestCaseOptions(additionalSdkRoots = [SdkRoot(TY_EXTENSIONS_ROOT, OrderRootTypeEnum.CLASSES)])
+    @TestCaseOptions(additionalSdkRoots = [SdkRoot(TY_EXTENSIONS_ROOT)])
     fun `Intersection of no members collapses to the top type`() = test("""
       from ty_extensions import Intersection
 

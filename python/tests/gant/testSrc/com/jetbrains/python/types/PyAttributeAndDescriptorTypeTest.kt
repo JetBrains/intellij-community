@@ -575,7 +575,7 @@ class PyAttributeAndDescriptorTypeTest : PyCodeInsightTestCase() {
 
     @Test
     @TestFor(issues = ["PY-26354"])
-    @TestCaseOptions(additionalSdkRoots = [SdkRoot("packages", OrderRootTypeEnum.CLASSES)])
+    @TestCaseOptions(additionalSdkRoots = [SdkRoot("packages")])
     fun `initializing attrs`() = test("""
       import attr
       import typing

@@ -1747,7 +1747,7 @@ class PyInferenceMiscTypeTest : PyCodeInsightTestCase() {
 
     @Test
     @TestFor(issues = ["PY-92230"])
-    @TestCaseOptions(additionalSdkRoots = [SdkRoot("types/unannotatedStubFunction", OrderRootTypeEnum.CLASSES)])
+    @TestCaseOptions(additionalSdkRoots = [SdkRoot("types/unannotatedStubFunction")])
     fun `structural type through unannotated stub function does not parse the stub`() = test("""
       import unannotated_stub
 

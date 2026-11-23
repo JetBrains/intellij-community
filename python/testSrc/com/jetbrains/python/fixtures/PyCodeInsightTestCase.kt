@@ -13,12 +13,10 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.application.WriteIntentReadAction
 import com.intellij.openapi.application.runReadActionBlocking
-import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.impl.EditorHistoryManager
-import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.RecursionManager
 import com.intellij.openapi.util.registry.Registry
@@ -33,7 +31,6 @@ import com.intellij.psi.impl.source.PsiFileImpl
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.findParentOfType
 import com.intellij.python.sdk.backend.PythonInterpreterDetails
-import com.intellij.python.sdk.backend.getSdkAPI
 import com.intellij.python.sdk.backend.skeletonsPath
 import com.intellij.testFramework.IndexingTestUtil
 import com.intellij.testFramework.IndexingTestUtil.Companion.waitUntilIndexesAreReady
@@ -247,18 +244,10 @@ abstract class PyCodeInsightTestCase {
     val destination: String,
   )
 
+  /** A test data directory that the test adds to the paths of the interpreter, so it is a class root of it. */
   annotation class SdkRoot(
     val path: String,
-    val type: OrderRootTypeEnum,
   )
-
-  enum class OrderRootTypeEnum(val orderRootType: OrderRootType) {
-    CLASSES(OrderRootType.CLASSES),
-    SOURCES(OrderRootType.SOURCES),
-
-    @Suppress("unused")
-    DOCUMENTATION(OrderRootType.DOCUMENTATION);
-  }
 
   /** Default inspections to be enabled in tests. Override if required. */
   open val defaultInspections: Set<Class<out LocalInspectionTool>> = setOf(
@@ -446,32 +435,18 @@ abstract class PyCodeInsightTestCase {
     val interpreter = findPythonInterpreterForTests(myFixture.module)!!
     val roots = additionalSdkRoots.map { sdkRoot ->
       val absPath = PythonTestUtil.getTestDataPath() + "/" + sdkRoot.path
-      val testDataDir = StandardFileSystems.local().findFileByPath(absPath) ?: fail("Could not find additional SDK root at $absPath")
-      sdkRoot to testDataDir
+      StandardFileSystems.local().findFileByPath(absPath) ?: fail("Could not find additional SDK root at $absPath")
     }
     // A class root is a path that the user added to the interpreter, as in the interpreter settings: the roots of the
     // interpreter follow its facts, so a class root that the test wrote into the SDK goes with the next refresh.
     val details = PythonInterpreterDetails.getInstance(myFixture.project)
     val addedPaths = details.facts(interpreter).addedPaths.toMutableList()
-    for ([_, root] in roots.filter { it.first.type == OrderRootTypeEnum.CLASSES }) {
+    for (root in roots) {
       if (addElseRemove) addedPaths.add(root.toNioPath()) else addedPaths.remove(root.toNioPath())
     }
     writeAddedPathsForTests(myFixture.project, interpreter, addedPaths)
 
-    val otherRoots = roots.filter { it.first.type != OrderRootTypeEnum.CLASSES }
-    if (otherRoots.isNotEmpty()) {
-      @Suppress("DEPRECATION")
-      val sdk = interpreter.getSdkAPI()
-      runWriteAction {
-        val modificator = sdk.getSdkModificator()
-        for ([sdkRoot, root] in otherRoots) {
-          if (addElseRemove) modificator.addRoot(root, sdkRoot.type.orderRootType)
-          else modificator.removeRoot(root, sdkRoot.type.orderRootType)
-        }
-        modificator.commitChanges()
-      }
-    }
-    // A module reads the roots of its interpreter from its interpreter library, which copies them from the SDK.
+    // A module reads the roots of its interpreter from its interpreter library, which the sync builds from the facts.
     syncPythonInterpreterLibraries()
     IndexingTestUtil.waitUntilIndexesAreReadyInAllOpenedProjects()
   }

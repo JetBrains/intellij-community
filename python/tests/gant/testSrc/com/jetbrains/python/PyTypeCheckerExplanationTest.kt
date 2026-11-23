@@ -190,7 +190,7 @@ class PyTypeCheckerExplanationTest : PyCodeInsightTestCase() {
   /** The required side is the intersection, so every unmet member earns its own arm. */
   @Test
   @TestFor(issues = ["PY-91327"])
-  @TestCaseOptions(additionalSdkRoots = [SdkRoot(TY_EXTENSIONS_ROOT, OrderRootTypeEnum.CLASSES)])
+  @TestCaseOptions(additionalSdkRoots = [SdkRoot(TY_EXTENSIONS_ROOT)])
   fun `an intersection requirement explains each unmet member`() = test("""
     from typing import Protocol
     from ty_extensions import Intersection

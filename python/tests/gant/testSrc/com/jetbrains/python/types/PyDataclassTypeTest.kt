@@ -1037,7 +1037,7 @@ class PyDataclassTypeTest : PyCodeInsightTestCase() {
 
     @Test
     @TestFor(issues = ["PY-55691"])
-    @TestCaseOptions(additionalSdkRoots = [SdkRoot("packages", OrderRootTypeEnum.CLASSES)])
+    @TestCaseOptions(additionalSdkRoots = [SdkRoot("packages")])
     fun `attrs dataclass protocol matching define`() = test("""
       import attrs
 
@@ -1050,7 +1050,7 @@ class PyDataclassTypeTest : PyCodeInsightTestCase() {
 
     @Test
     @TestFor(issues = ["PY-55691"])
-    @TestCaseOptions(additionalSdkRoots = [SdkRoot("packages", OrderRootTypeEnum.CLASSES)])
+    @TestCaseOptions(additionalSdkRoots = [SdkRoot("packages")])
     fun `attrs dataclass protocol matching frozen`() = test("""
       import attrs
 

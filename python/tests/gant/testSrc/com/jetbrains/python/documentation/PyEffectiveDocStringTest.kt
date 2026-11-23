@@ -100,6 +100,6 @@ class PyEffectiveDocStringTest : PyCodeInsightTestCase() {
   }
 
   private companion object {
-    val LIB = arrayOf(SdkRoot("documentation/EffectiveDocString/lib", OrderRootTypeEnum.CLASSES))
+    val LIB = arrayOf(SdkRoot("documentation/EffectiveDocString/lib"))
   }
 }

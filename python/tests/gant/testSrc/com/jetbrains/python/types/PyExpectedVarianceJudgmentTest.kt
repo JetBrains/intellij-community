@@ -351,7 +351,7 @@ class PyExpectedVarianceJudgmentTest : PyCodeInsightTestCase() {
 
   @Test
   @TestFor(issues = ["PY-90863"])
-  @TestCaseOptions(additionalSdkRoots = [SdkRoot("packages", OrderRootTypeEnum.CLASSES)])
+  @TestCaseOptions(additionalSdkRoots = [SdkRoot("packages")])
   fun `Attrs frozen attribute`() = test("""
     import attrs
     @attrs.frozen
