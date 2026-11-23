@@ -539,6 +539,7 @@ object AllIconDescriptors {
     /** 16x16 */ @JvmStatic val Close: IconDescriptor = imageIconDescriptor("expui/general/close.svg", AllIconDescriptors::class.java.classLoader)
     /** 16x16 */ @JvmStatic val CloseSmall: IconDescriptor = imageIconDescriptor("expui/general/closeSmall.svg", AllIconDescriptors::class.java.classLoader)
     /** 16x16 */ @JvmStatic val CloseSmallHovered: IconDescriptor = imageIconDescriptor("expui/general/closeSmallHovered.svg", AllIconDescriptors::class.java.classLoader)
+    /** 16x16 */ @JvmStatic val CodeBrackets: IconDescriptor = imageIconDescriptor("expui/general/codeBrackets.svg", AllIconDescriptors::class.java.classLoader)
     /** 16x16 */ @JvmStatic val CollapseComponent: IconDescriptor = imageIconDescriptor("expui/inline/collapse.svg", AllIconDescriptors::class.java.classLoader)
     /** 16x16 */ @JvmStatic val CollapseComponentHover: IconDescriptor = imageIconDescriptor("expui/inline/collapse.svg", AllIconDescriptors::class.java.classLoader)
     /** 16x16 */ @JvmStatic val ContextHelp: IconDescriptor = imageIconDescriptor("expui/general/questionMark.svg", AllIconDescriptors::class.java.classLoader)

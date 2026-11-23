@@ -3190,6 +3190,7 @@ f:org.jetbrains.jewel.ui.icons.AllIconsKeys$General
 - sf:Close:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:CloseSmall:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:CloseSmallHovered:org.jetbrains.jewel.ui.icon.IntelliJIconKey
+- sf:CodeBrackets:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:CollapseComponent:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:CollapseComponentHover:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:ContextHelp:org.jetbrains.jewel.ui.icon.IntelliJIconKey

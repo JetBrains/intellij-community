@@ -12,7 +12,7 @@ import org.intellij.plugins.markdown.MarkdownBundle
 internal class MarkdownLivePreviewLayoutAction : ToggleAction(
   MarkdownBundle.message("action.Markdown.Layout.LivePreview.text"),
   null,
-  AllIcons.General.LayoutPreviewOnly,
+  AllIcons.Actions.RealIntentionBulb,
 ), DumbAware, ActionRemoteBehaviorSpecification.Frontend {
   override fun isSelected(event: AnActionEvent): Boolean {
     return MarkdownActionUtil.findSplitEditor(event)?.isLivePreviewLayout == true

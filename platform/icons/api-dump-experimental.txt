@@ -516,6 +516,7 @@
 - sf:getClose():com.intellij.platform.icons.IconDescriptor
 - sf:getCloseSmall():com.intellij.platform.icons.IconDescriptor
 - sf:getCloseSmallHovered():com.intellij.platform.icons.IconDescriptor
+- sf:getCodeBrackets():com.intellij.platform.icons.IconDescriptor
 - sf:getCollapseComponent():com.intellij.platform.icons.IconDescriptor
 - sf:getCollapseComponentHover():com.intellij.platform.icons.IconDescriptor
 - sf:getContextHelp():com.intellij.platform.icons.IconDescriptor

@@ -193,6 +193,10 @@ public final class MarkdownEditorWithPreview extends TextEditorWithPreview imple
     }
   }
 
+  public boolean isPreviewAvailable() {
+    return previewAvailable;
+  }
+
   private static boolean isPreviewAvailable(@NotNull MarkdownSettings settings) {
     return settings.getPreviewMode() == MarkdownPreviewMode.JCEF && MarkdownHtmlPanelProvider.hasAvailableProviders();
   }

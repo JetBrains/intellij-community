@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.markdown.frontend.actions
 
+import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -35,5 +36,7 @@ internal class MarkdownEditorOnlyLayoutAction :
     if (e.place == ActionPlaces.ACTION_SEARCH) {
       e.presentation.isEnabledAndVisible = false
     }
+    val editor = MarkdownActionUtil.findSplitEditor(e) ?: return
+    e.presentation.icon = if (editor.isPreviewAvailable) Layout.SHOW_EDITOR.getIcon(editor) else AllIcons.General.CodeBrackets
   }
 }

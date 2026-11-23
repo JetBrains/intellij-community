@@ -1543,6 +1543,9 @@ public final class AllIconsKeys {
     public static final @NotNull IntelliJIconKey CloseSmallHovered = new IntelliJIconKey("expui/general/closeSmallHovered.svg", "expui/general/closeSmallHovered.svg", AllIconsKeys.class);
     /** 16x16 */
     @GeneratedFromIntelliJSources
+    public static final @NotNull IntelliJIconKey CodeBrackets = new IntelliJIconKey("expui/general/codeBrackets.svg", "expui/general/codeBrackets.svg", AllIconsKeys.class);
+    /** 16x16 */
+    @GeneratedFromIntelliJSources
     public static final @NotNull IntelliJIconKey CollapseComponent = new IntelliJIconKey("general/collapseComponent.svg", "expui/inline/collapse.svg", AllIconsKeys.class);
     /** 16x16 */
     @GeneratedFromIntelliJSources

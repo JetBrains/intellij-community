@@ -518,6 +518,7 @@ f:com.intellij.icons.AllIcons$General
 - sf:Close:javax.swing.Icon
 - sf:CloseSmall:javax.swing.Icon
 - sf:CloseSmallHovered:javax.swing.Icon
+- sf:CodeBrackets:javax.swing.Icon
 - sf:CollapseComponent:javax.swing.Icon
 - sf:CollapseComponentHover:javax.swing.Icon
 - sf:ContextHelp:javax.swing.Icon

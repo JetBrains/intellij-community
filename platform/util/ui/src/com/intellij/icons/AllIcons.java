@@ -554,6 +554,7 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon Close = load("expui/general/close.svg", -540869824, 2);
     /** 16x16 */ public static final @NotNull Icon CloseSmall = load("expui/general/closeSmall.svg", 1113795489, 2);
     /** 16x16 */ public static final @NotNull Icon CloseSmallHovered = load("expui/general/closeSmallHovered.svg", -1502078120, 2);
+    /** 16x16 */ public static final @NotNull Icon CodeBrackets = load("expui/general/codeBrackets.svg", 1381311414, 2);
     /** 16x16 */ public static final @NotNull Icon CollapseComponent = load("expui/inline/collapse.svg", "general/collapseComponent.svg", -223599744, 0);
     /** 16x16 */ public static final @NotNull Icon CollapseComponentHover = load("expui/inline/collapse.svg", "general/collapseComponentHover.svg", 304417159, 0);
     /** 16x16 */ public static final @NotNull Icon ContextHelp = load("expui/general/questionMark.svg", "general/contextHelp.svg", -495733641, 0);
