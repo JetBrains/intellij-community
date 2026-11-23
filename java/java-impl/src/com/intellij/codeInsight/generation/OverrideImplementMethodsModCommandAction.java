@@ -8,8 +8,10 @@ import com.intellij.codeInspection.options.OptMultiSelector.OptElement;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.options.OptRegularComponent;
 import com.intellij.codeInspection.options.OptionContainer;
+import com.intellij.codeInspection.options.PropertiesComponentOptionControllerProvider;
 import com.intellij.featureStatistics.ProductivityFeatureNames;
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.util.MemberChooser;
 import com.intellij.java.JavaBundle;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.modcommand.ActionContext;
@@ -17,6 +19,7 @@ import com.intellij.modcommand.ModCommand;
 import com.intellij.modcommand.ModCommandAction;
 import com.intellij.modcommand.ModEditOptions;
 import com.intellij.modcommand.ModTriggerFeatureUsed;
+import com.intellij.modcommand.ModUpdateSystemOptions;
 import com.intellij.modcommand.Presentation;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.JavaPsiFacade;
@@ -56,6 +59,7 @@ import static com.intellij.codeInsight.generation.JavaOverrideImplementMemberCho
  * Thus, the action works in each client that shows a {@link ModEditOptions} form, for example, in LSP.
  * <p>
  * The form has a member selector and the "Copy JavaDoc", "Generate missing JavaDoc" and "Insert @Override" checkboxes.
+ * The form shows the stored values of the JavaDoc checkboxes, and the action stores their new values with {@link ModUpdateSystemOptions}.
  * The override mode lists the methods to override, and also the methods to implement when the user merged the lists in the dialog.
  * The implement mode lists the methods to implement.
  * Unlike {@link JavaOverrideImplementMemberChooser}, the form has no toolbar to sort or to merge the lists.
@@ -69,6 +73,10 @@ import static com.intellij.codeInsight.generation.JavaOverrideImplementMemberCho
  * @see OverrideImplementUtil#chooseAndOverrideOrImplementMethods
  */
 public final class OverrideImplementMethodsModCommandAction implements ModCommandAction {
+  private static final String COPY_JAVADOC_OPTION = PropertiesComponentOptionControllerProvider.applicationBindId(MemberChooser.PROP_COPYJAVADOC);
+  private static final String GENERATE_JAVADOC_OPTION =
+    PropertiesComponentOptionControllerProvider.projectBindId(JavaOverrideImplementMemberChooser.PROP_GENERATE_JAVADOC_OVERRIDE_IMPLEMENT);
+
   private final boolean myToImplement;
   /**
    * The class, the enum constant or the {@code new} expression to implement the methods in, or null to find the class at the caret.
@@ -128,14 +136,28 @@ public final class OverrideImplementMethodsModCommandAction implements ModComman
                              JavaCodeStyleSettings.getInstance(container.file()).INSERT_OVERRIDE_ANNOTATION;
     boolean javadocVisible = container.file().getLanguage().is(JavaLanguage.INSTANCE);
     PsiElement classOrEnumConst = target.element();
+    boolean copyJavadoc = PropertiesComponentOptionControllerProvider.getBoolean(classOrEnumConst, COPY_JAVADOC_OPTION);
+    boolean generateJavadoc = javadocVisible && PropertiesComponentOptionControllerProvider.getBoolean(classOrEnumConst, GENERATE_JAVADOC_OPTION);
     return new ModTriggerFeatureUsed(ProductivityFeatureNames.CODEASSISTS_OVERRIDE_IMPLEMENT)
       .andThen(ModCommand.editOptions(
         classOrEnumConst,
         JavaOverrideImplementMemberChooser.getChooserTitle(myToImplement, container.merge()),
-        () -> new OverrideImplementOptions(members, container.overrideVisible(), javadocVisible, preselection, false, false,
-                                           insertOverride),
+        () -> new OverrideImplementOptions(members, container.overrideVisible(), javadocVisible, preselection, copyJavadoc,
+                                           generateJavadoc, insertOverride),
         true,
-        (element, options) -> generate(element, members, options)));
+        (element, options) -> generate(element, members, options).andThen(storeOptions(element, options))));
+  }
+
+  /**
+   * Stores the values of the checkboxes, so the next form shows them, like {@link JavaOverrideImplementMemberChooser} does.
+   * The command changes only the values that differ from the stored ones.
+   */
+  private static @NotNull ModCommand storeOptions(@NotNull PsiElement context, @NotNull OverrideImplementOptions options) {
+    ModCommand command = PropertiesComponentOptionControllerProvider.setValue(context, COPY_JAVADOC_OPTION, options.copyJavadoc);
+    if (options.myGenerateJavadocVisible) {
+      command = command.andThen(PropertiesComponentOptionControllerProvider.setValue(context, GENERATE_JAVADOC_OPTION, options.generateJavadoc));
+    }
+    return command;
   }
 
   private @NotNull ModCommand generate(@NotNull PsiElement element,

@@ -129,7 +129,11 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
 
   private static final @NonNls String PROP_SORTED = "MemberChooser.sorted";
   private static final @NonNls String PROP_SHOWCLASSES = "MemberChooser.showClasses";
-  private static final @NonNls String PROP_COPYJAVADOC = "MemberChooser.copyJavadoc";
+  /**
+   * The key of the application-level {@link PropertiesComponent} value of the "Copy JavaDoc" checkbox.
+   */
+  @ApiStatus.Internal
+  public static final @NonNls String PROP_COPYJAVADOC = "MemberChooser.copyJavadoc";
 
   public MemberChooser(T[] elements,
                        boolean allowEmptySelection,

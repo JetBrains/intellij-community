@@ -187,6 +187,15 @@ com.intellij.codeInspection.options.OptionContainer
 - a:name():java.lang.String
 - s:rootController(com.intellij.psi.PsiElement):com.intellij.codeInspection.options.OptionController
 - s:setOption(com.intellij.psi.PsiElement,java.lang.String,java.lang.Object):V
+*f:com.intellij.codeInspection.options.PropertiesComponentOptionControllerProvider
+- com.intellij.codeInspection.options.OptionControllerProvider
+- <init>():V
+- s:applicationBindId(java.lang.String):java.lang.String
+- forContext(com.intellij.psi.PsiElement):com.intellij.codeInspection.options.OptionController
+- s:getBoolean(com.intellij.psi.PsiElement,java.lang.String):Z
+- name():java.lang.String
+- s:projectBindId(java.lang.String):java.lang.String
+- s:setValue(com.intellij.psi.PsiElement,java.lang.String,Z):com.intellij.modcommand.ModCommand
 *:com.intellij.formatting.CaretRestorationDecider
 - *sf:Companion:com.intellij.formatting.CaretRestorationDecider$Companion
 - *s:forLanguage(com.intellij.lang.Language):com.intellij.formatting.CaretRestorationDecider
