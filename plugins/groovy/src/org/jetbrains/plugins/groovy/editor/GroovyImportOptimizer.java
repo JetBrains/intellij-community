@@ -174,6 +174,17 @@ public final class GroovyImportOptimizer implements ImportOptimizer {
         }
       }
 
+      for (Object2IntMap.Entry<String> entry : classCountMap.object2IntEntrySet()) {
+        if (entry.getIntValue() >= settings.NAMES_COUNT_TO_USE_IMPORT_ON_DEMAND) {
+          final GrImportStatement imp = factory.createImportStatementFromText(entry.getKey(), true, true, null);
+          String annos = annotations.remove(entry.getKey() + ".*");
+          if (annos != null) {
+            imp.getAnnotationList().replace(factory.createModifierList(annos));
+          }
+          result.add(imp);
+        }
+      }
+
       final List<GrImportStatement> explicated = new ArrayList<>();
       for (String importedClass : importedClasses) {
         final String packageName = StringUtil.getPackageName(importedClass);

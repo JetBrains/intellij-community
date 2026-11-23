@@ -66,6 +66,10 @@ public class GroovyOptimizeImportsTest {
   public void testModuleImports1() { doTest(); }
   @Test
   public void testModuleImports2() { doTest(); }
+  @Test
+  public void testFoldStaticImports() { doTest(); }
+  @Test
+  public void testKeepStaticOnDemandImport() { doTest(); }
 
   @Test
   public void testUtilListMasked() {
