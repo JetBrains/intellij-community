@@ -10,12 +10,13 @@
 //!
 //! - [`options`]: the verbs and their options;
 //! - [`command`]: a `welcome`, an `open-project` or a `project` session from the build to the summary, `replay`, `gc`,
-//!   `trace`, `activities`, `classes`, `triggers`, `compare` and `ls`;
+//!   `trace`, `activities`, `classes`, `triggers`, `causes`, `compare` and `ls`;
 //! - [`timeline`], [`spans`], [`activities`]: the spans of one run in milliseconds from the process start, `trace`,
 //!   which prints the spans of a window, and `activities`, which groups the activities of a window by class and by
 //!   plugin;
 //! - [`classes`]: the loaded classes of one arm by plugin and by module, at an anchor of the run;
 //! - [`triggers`]: the plugin loaders of one run by the frame that triggered each one;
+//! - [`causes`]: the classes of the plugin loaders of one run by the frame that entered each loader;
 //! - [`resolve`], [`stage`], [`gc`]: what Bazel built, the generation, and the removal of old generations;
 //! - [`launch`], [`load`], [`memory`]: the Starter-shaped IDE process and its supervision, the host load at each run
 //!   start, and the memory of the IDE at the gate;
@@ -30,6 +31,7 @@
 mod activities;
 mod arm;
 mod binary;
+mod causes;
 mod classes;
 mod classload;
 mod command;

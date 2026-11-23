@@ -330,8 +330,19 @@ enum Line<'a> {
     Skipped,
 }
 
-/// The class or the thread message of one line.
-fn parse_line(line: &str) -> anyhow::Result<Line<'_>> {
+/// One line of a JVM log with the `uptime`, `tid` and `tags` decorators.
+pub(crate) struct Decorated<'a> {
+    /// Milliseconds on the JVM clock.
+    pub(crate) uptime_ms: f64,
+    /// The thread of the line. A log without the `tid` decorator has none.
+    pub(crate) tid: Option<u64>,
+    pub(crate) tags: &'a str,
+    /// The text after the decorators and their space.
+    pub(crate) message: &'a str,
+}
+
+/// Splits one line of a JVM log into its decorators and its message. A line without an uptime first is an error.
+pub(crate) fn decorated(line: &str) -> anyhow::Result<Decorated<'_>> {
     let Some((uptime, mut rest)) = line.strip_prefix('[').and_then(|line| line.split_once(']')) else {
         bail!("no `[<uptime>]` at the start");
     };
@@ -354,6 +365,22 @@ fn parse_line(line: &str) -> anyhow::Result<Line<'_>> {
     let Some(message) = rest.strip_prefix(' ') else {
         bail!("no space after the decorators");
     };
+    Ok(Decorated {
+        uptime_ms,
+        tid,
+        tags,
+        message,
+    })
+}
+
+/// The class or the thread message of one line.
+fn parse_line(line: &str) -> anyhow::Result<Line<'_>> {
+    let Decorated {
+        uptime_ms,
+        tid,
+        tags,
+        message,
+    } = decorated(line)?;
     if tags == THREAD_TAGS {
         return Ok(Line::Thread(message.trim_end()));
     }

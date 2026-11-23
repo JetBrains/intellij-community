@@ -33,7 +33,7 @@ use super::fus;
 use super::memory::{self, MEMORY_FILE};
 use super::profile::{GATE_PROFILE, ProfileEvent, WHOLE_PROFILE};
 use super::record::{self, EDITOR_HIGHLIGHTED, FindScript, LaunchFacts, RunKind, THREAD_DUMP_FILE};
-use super::session::{CLASS_LOAD_LOG, ProjectPaths, Sandbox, TRACE_FILE};
+use super::session::{CLASS_CAUSE_LOG, CLASS_LOAD_LOG, ProjectPaths, Sandbox, TRACE_FILE};
 use super::stage::{DistConfig, Generation};
 use super::stats;
 use super::trace;
@@ -53,6 +53,43 @@ const SPAN_SETTLE: Duration = Duration::from_secs(10);
 const QUIT_TIMEOUT: Duration = Duration::from_secs(60);
 /// How long the IDE can take after SIGTERM.
 const TERM_TIMEOUT: Duration = Duration::from_secs(15);
+/// How many times longer the waits of a run of `--class-causes` are: the stack of each class load makes a start about
+/// ten times slower.
+const CLASS_CAUSE_SLOWDOWN: u32 = 10;
+
+/// The limits of the waits of one run, see [`Waits::of`].
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(crate) struct Waits {
+    pub(crate) event: Duration,
+    pub(crate) find: Duration,
+    pub(crate) after_report: Duration,
+    pub(crate) settle: Duration,
+    pub(crate) quit: Duration,
+}
+
+impl Waits {
+    /// The limits of a run: the constants above, each [`CLASS_CAUSE_SLOWDOWN`] times longer for a run of
+    /// `--class-causes`.
+    pub(crate) fn of(class_causes: bool) -> Self {
+        let factor = if class_causes { CLASS_CAUSE_SLOWDOWN } else { 1 };
+        Self {
+            event: EVENT_TIMEOUT * factor,
+            find: FIND_TIMEOUT * factor,
+            after_report: AFTER_REPORT_TIMEOUT * factor,
+            settle: SPAN_SETTLE * factor,
+            quit: QUIT_TIMEOUT * factor,
+        }
+    }
+
+    /// How long the wait for `gate` takes at most.
+    pub(crate) const fn gate(&self, gate: Gate) -> Duration {
+        match gate {
+            Gate::FindInFiles => self.find,
+            Gate::Welcome { .. } | Gate::Highlighted | Gate::Span { .. } | Gate::LogLine { .. } => self.event,
+        }
+    }
+}
+
 /// How long the headless scheme run can take.
 const SCHEME_TIMEOUT: Duration = Duration::from_secs(300);
 /// How long the stop of the profiler can take: a `jcmd` JVM and the dump of the profile.
@@ -185,6 +222,24 @@ pub(crate) fn class_load_option(run_dir: &Path) -> Result<String, String> {
         ));
     }
     Ok(format!("-Xlog:class+load,os+thread:file={path}:uptime,tid,tags"))
+}
+
+/// The options that make the JVM write [`CLASS_CAUSE_LOG`]: the Java stack of each class load, with the uptime and the
+/// thread. `LogClassLoadingCauseFor=*` selects every class. The log of a start holds hundreds of MB, so `filecount=0`
+/// turns off the rotation, which would drop its start. A run directory with a `:` is an error, as for
+/// [`class_load_option`].
+pub(crate) fn class_cause_options(run_dir: &Path) -> Result<[String; 2], String> {
+    let path = run_dir.join(CLASS_CAUSE_LOG).display().to_string();
+    if path.contains(':') {
+        return Err(format!(
+            "the run directory {} holds a `:`, which ends the file name of -Xlog:class+load+cause; use a session directory without one",
+            run_dir.display()
+        ));
+    }
+    Ok([
+        "-XX:LogClassLoadingCauseFor=*".to_owned(),
+        format!("-Xlog:class+load+cause=info:file={path}:uptime,tid,tags:filecount=0"),
+    ])
 }
 
 /// The options of a measured start, in order: the sandbox with its home, the files of the run, the asynchronous log, see
@@ -552,6 +607,8 @@ pub(crate) struct Launcher {
     pub(crate) entry_options: Vec<String>,
     pub(crate) profiler: Option<Profiler>,
     pub(crate) hold: Duration,
+    /// Each measured run writes [`CLASS_CAUSE_LOG`], see [`class_cause_options`].
+    pub(crate) class_causes: bool,
 }
 
 impl Launcher {
@@ -587,6 +644,7 @@ impl Launcher {
             entry_options,
             profiler,
             hold,
+            class_causes: false,
         })
     }
 
@@ -612,9 +670,15 @@ impl Launcher {
         }
     }
 
+    /// The limits of the waits of a run of this launcher.
+    fn waits(&self) -> Waits {
+        Waits::of(self.class_causes)
+    }
+
     /// The ceiling of one IDE process of `gate`: every wait of a run, and the hold.
     fn ceiling(&self, gate: Gate) -> Duration {
-        gate_timeout(gate) + EVENT_TIMEOUT + self.hold + QUIT_TIMEOUT * 3 + TERM_TIMEOUT
+        let waits = self.waits();
+        waits.gate(gate) + waits.event + self.hold + waits.quit * 3 + TERM_TIMEOUT
     }
 
     /// Writes the FUS test scheme into the template with one headless run.
@@ -646,7 +710,12 @@ impl Launcher {
     /// Runs the IDE once in `run_dir` and answers what the controller saw. The run waits for the gate of its arm.
     pub(crate) async fn run(&self, ctx: &Ctx, run_dir: &Path, sandbox: &Sandbox, plan: &RunPlan<'_>) -> LaunchFacts {
         let mut facts = LaunchFacts::default();
-        let options = match measure_options(run_dir, sandbox, &plan.arm, self.profiler.as_ref()) {
+        let options = match measure_options(run_dir, sandbox, &plan.arm, self.profiler.as_ref()).and_then(|mut options| {
+            if self.class_causes {
+                options.extend(class_cause_options(run_dir)?);
+            }
+            Ok(options)
+        }) {
             Ok(options) => options,
             Err(failure) => {
                 facts.failure = Some(failure);
@@ -677,14 +746,15 @@ impl Launcher {
         let mut ide = Box::pin(self.runner.checked_to_file(&child, &argv, &log, &spawn_options));
         let mut collector = fus::Collector::default();
         let fus_dir = fus::log_dir(&sandbox.system());
+        let waits = self.waits();
         let mut exited = match plan.arm.gate() {
-            Gate::Welcome { .. } => wait_for_welcome(ctx, &mut ide, run_dir, &fus_dir, &mut collector, &mut facts).await,
-            Gate::Highlighted => wait_for_highlighted(ctx, &mut ide, run_dir, plan.kind == RunKind::Prime, &mut facts).await,
-            Gate::Span { name, missing } => wait_for_span(ctx, &mut ide, run_dir, name, missing, &mut facts).await,
-            Gate::LogLine { line, missing, .. } => wait_for_log_line(ctx, &mut ide, run_dir, line, missing, &mut facts).await,
+            Gate::Welcome { .. } => wait_for_welcome(ctx, &mut ide, run_dir, &fus_dir, &mut collector, &mut facts, waits).await,
+            Gate::Highlighted => wait_for_highlighted(ctx, &mut ide, run_dir, plan.kind == RunKind::Prime, &mut facts, waits).await,
+            Gate::Span { name, missing } => wait_for_span(ctx, &mut ide, run_dir, name, missing, &mut facts, waits).await,
+            Gate::LogLine { line, missing, .. } => wait_for_log_line(ctx, &mut ide, run_dir, line, missing, &mut facts, waits).await,
             Gate::FindInFiles => {
                 if let Some(script) = &find_script {
-                    wait_for_find_in_files(ctx, &mut ide, run_dir, &script.last_span(), &mut facts).await
+                    wait_for_find_in_files(ctx, &mut ide, run_dir, &script.last_span(), &mut facts, waits).await
                 } else {
                     facts.failure = Some("the find-in-files arm has no project to search".to_owned());
                     None
@@ -808,7 +878,7 @@ impl Launcher {
         let request_us = now_us();
         facts.open_request_us = Some(request_us);
         // The request is a second JVM that hands the path to the running IDE and exits; what it answers is in its log.
-        let (request_log, request_options) = (run_dir.join("open.log"), self.logged(QUIT_TIMEOUT, "bench_open_timeout"));
+        let (request_log, request_options) = (run_dir.join("open.log"), self.logged(self.waits().quit, "bench_open_timeout"));
         let request = self.runner.checked_to_file(ctx, &argv, &request_log, &request_options);
         tokio::pin!(request);
         tokio::select! {
@@ -818,7 +888,8 @@ impl Launcher {
                 return Some(ended(&result));
             }
         }
-        let deadline = Instant::now() + EVENT_TIMEOUT;
+        let event_timeout = self.waits().event;
+        let deadline = Instant::now() + event_timeout;
         loop {
             tokio::select! {
                 result = &mut *ide => {
@@ -838,7 +909,7 @@ impl Launcher {
             if Instant::now() >= deadline {
                 facts.failure = Some(format!(
                     "no \"editor highlighting completed\" within {} s after the open request",
-                    EVENT_TIMEOUT.as_secs()
+                    event_timeout.as_secs()
                 ));
                 return None;
             }
@@ -864,7 +935,7 @@ impl Launcher {
             options.push(home_option(sandbox));
             options.push(property("idea.log.path", &run_dir.join("exit-log")));
             if let Ok(argv) = self.argv(&run_dir.join("exit.args"), &options, &["exit".to_owned()]) {
-                let (quit_log, quit_options) = (run_dir.join("exit.log"), self.logged(QUIT_TIMEOUT, "bench_exit_timeout"));
+                let (quit_log, quit_options) = (run_dir.join("exit.log"), self.logged(self.waits().quit, "bench_exit_timeout"));
                 let quit = self.runner.checked_to_file(ctx, &argv, &quit_log, &quit_options);
                 tokio::pin!(quit);
                 tokio::select! {
@@ -872,7 +943,7 @@ impl Launcher {
                     result = &mut ide => return ended(&result),
                 }
             }
-            if let Ok(result) = tokio::time::timeout(QUIT_TIMEOUT, &mut ide).await {
+            if let Ok(result) = tokio::time::timeout(self.waits().quit, &mut ide).await {
                 return ended(&result);
             }
         }
@@ -917,29 +988,6 @@ enum Check {
     Done,
     /// The wait ends with this failure.
     Failed(String),
-}
-
-/// How long the wait for `gate` takes at most.
-pub(crate) const fn gate_timeout(gate: Gate) -> Duration {
-    match gate {
-        Gate::FindInFiles => FIND_TIMEOUT,
-        Gate::Welcome { .. } | Gate::Highlighted | Gate::Span { .. } | Gate::LogLine { .. } => EVENT_TIMEOUT,
-    }
-}
-
-/// [`poll_until_within`] [`EVENT_TIMEOUT`].
-async fn poll_until<F>(
-    ctx: &Ctx,
-    ide: &mut F,
-    facts: &mut LaunchFacts,
-    event: &str,
-    timed_out: String,
-    check: impl FnMut(Instant) -> Check,
-) -> Option<Ended>
-where
-    F: Future<Output = Result<String, ProcError>> + Unpin,
-{
-    poll_until_within(ctx, ide, facts, event, timed_out, EVENT_TIMEOUT, check).await
 }
 
 /// Runs `check` every [`POLL`] until it ends the wait, the IDE exits, the session is interrupted, or `timeout` passes.
@@ -1025,21 +1073,22 @@ async fn wait_for_welcome<F>(
     fus_dir: &Path,
     collector: &mut fus::Collector,
     facts: &mut LaunchFacts,
+    waits: Waits,
 ) -> Option<Ended>
 where
     F: Future<Output = Result<String, ProcError>> + Unpin,
 {
     let event = fus::WELCOME_BECAME_VISIBLE;
-    let mut after_report = AfterReport::new(run_dir, AFTER_REPORT_TIMEOUT);
-    let timed_out = format!("no {event} within {} s", EVENT_TIMEOUT.as_secs());
-    let ended = poll_until(ctx, ide, facts, event, timed_out, |now| {
+    let mut after_report = AfterReport::new(run_dir, waits.after_report);
+    let timed_out = format!("no {event} within {} s", waits.event.as_secs());
+    let ended = poll_until_within(ctx, ide, facts, event, timed_out, waits.event, |now| {
         collector.read(fus_dir);
         if collector.has_event(event) {
             Check::Done
         } else if after_report.passed(now) {
             Check::Failed(format!(
                 "no {event} within {} s after startup-stats.json",
-                AFTER_REPORT_TIMEOUT.as_secs()
+                waits.after_report.as_secs()
             ))
         } else {
             Check::Pending
@@ -1059,20 +1108,27 @@ where
 /// A prime run opens the file from the command line, not from the saved editor state. The report does not wait for
 /// the highlighting of such an editor, so the event lands after the drain of the report and never reaches a file.
 /// The prime run therefore waits for the report only. Its result counts for nothing.
-async fn wait_for_highlighted<F>(ctx: &Ctx, ide: &mut F, run_dir: &Path, prime: bool, facts: &mut LaunchFacts) -> Option<Ended>
+async fn wait_for_highlighted<F>(
+    ctx: &Ctx,
+    ide: &mut F,
+    run_dir: &Path,
+    prime: bool,
+    facts: &mut LaunchFacts,
+    waits: Waits,
+) -> Option<Ended>
 where
     F: Future<Output = Result<String, ProcError>> + Unpin,
 {
     let event = format!("\"{EDITOR_HIGHLIGHTED}\"");
-    let mut after_report = AfterReport::new(run_dir, AFTER_REPORT_TIMEOUT);
-    let timed_out = format!("no {event} within {} s", EVENT_TIMEOUT.as_secs());
-    poll_until(ctx, ide, facts, &event, timed_out, |now| {
+    let mut after_report = AfterReport::new(run_dir, waits.after_report);
+    let timed_out = format!("no {event} within {} s", waits.event.as_secs());
+    poll_until_within(ctx, ide, facts, &event, timed_out, waits.event, |now| {
         if highlighted(run_dir, None) || (prime && after_report.seen(now)) {
             Check::Done
         } else if after_report.passed(now) {
             Check::Failed(format!(
                 "no {event} within {} s after startup-stats.json",
-                AFTER_REPORT_TIMEOUT.as_secs()
+                waits.after_report.as_secs()
             ))
         } else {
             Check::Pending
@@ -1088,16 +1144,24 @@ where
 /// start can therefore reach the file only at the exit. The wait thus also ends [`SPAN_SETTLE`] after
 /// `startup-stats.json`, without a failure, and the record decides the gate from the closed trace. The quit ends a
 /// build that has not finished, so the record also refuses a span that ended with an error or after the quit started.
-async fn wait_for_span<F>(ctx: &Ctx, ide: &mut F, run_dir: &Path, name: &str, missing: &str, facts: &mut LaunchFacts) -> Option<Ended>
+async fn wait_for_span<F>(
+    ctx: &Ctx,
+    ide: &mut F,
+    run_dir: &Path,
+    name: &str,
+    missing: &str,
+    facts: &mut LaunchFacts,
+    waits: Waits,
+) -> Option<Ended>
 where
     F: Future<Output = Result<String, ProcError>> + Unpin,
 {
-    let mut settle = AfterReport::new(run_dir, SPAN_SETTLE);
+    let mut settle = AfterReport::new(run_dir, waits.settle);
     let timed_out = format!(
         "no {name} span and no startup-stats.json within {} s: {missing}",
-        EVENT_TIMEOUT.as_secs()
+        waits.event.as_secs()
     );
-    poll_until(ctx, ide, facts, &format!("the {name} span ended"), timed_out, |now| {
+    poll_until_within(ctx, ide, facts, &format!("the {name} span ended"), timed_out, waits.event, |now| {
         if span_ended(run_dir, name) || settle.passed(now) {
             Check::Done
         } else {
@@ -1109,13 +1173,22 @@ where
 
 /// Waits for the first line of `log/idea.log` that holds `line`, an exit of the IDE, an interrupt or the timeout. An
 /// exit, an interrupt and the timeout set the failure.
-async fn wait_for_log_line<F>(ctx: &Ctx, ide: &mut F, run_dir: &Path, line: &str, missing: &str, facts: &mut LaunchFacts) -> Option<Ended>
+async fn wait_for_log_line<F>(
+    ctx: &Ctx,
+    ide: &mut F,
+    run_dir: &Path,
+    line: &str,
+    missing: &str,
+    facts: &mut LaunchFacts,
+    waits: Waits,
+) -> Option<Ended>
 where
     F: Future<Output = Result<String, ProcError>> + Unpin,
 {
     let log = run_dir.join("log").join("idea.log");
-    let timed_out = format!("no line \"{line}\" in log/idea.log within {} s: {missing}", EVENT_TIMEOUT.as_secs());
-    poll_until(ctx, ide, facts, &format!("the line \"{line}\" of log/idea.log"), timed_out, |_| {
+    let timed_out = format!("no line \"{line}\" in log/idea.log within {} s: {missing}", waits.event.as_secs());
+    let event = format!("the line \"{line}\" of log/idea.log");
+    poll_until_within(ctx, ide, facts, &event, timed_out, waits.event, |_| {
         if files::read_optional(&log).ok().flatten().is_some_and(|text| text.contains(line)) {
             Check::Done
         } else {
@@ -1128,15 +1201,22 @@ where
 /// Waits for the span `name` of the last search, an exit of the IDE, an interrupt or [`FIND_TIMEOUT`]. The performance
 /// plugin runs the searches one after another, so the last span ends after the others. An exit, an interrupt and the
 /// timeout set the failure.
-async fn wait_for_find_in_files<F>(ctx: &Ctx, ide: &mut F, run_dir: &Path, name: &str, facts: &mut LaunchFacts) -> Option<Ended>
+async fn wait_for_find_in_files<F>(
+    ctx: &Ctx,
+    ide: &mut F,
+    run_dir: &Path,
+    name: &str,
+    facts: &mut LaunchFacts,
+    waits: Waits,
+) -> Option<Ended>
 where
     F: Future<Output = Result<String, ProcError>> + Unpin,
 {
     let timed_out = format!(
         "no {name} span within {} s: the IDE has no performance plugin, or a search did not finish",
-        FIND_TIMEOUT.as_secs()
+        waits.find.as_secs()
     );
-    poll_until_within(ctx, ide, facts, &format!("the {name} span ended"), timed_out, FIND_TIMEOUT, |_| {
+    poll_until_within(ctx, ide, facts, &format!("the {name} span ended"), timed_out, waits.find, |_| {
         if span_ended(run_dir, name) { Check::Done } else { Check::Pending }
     })
     .await

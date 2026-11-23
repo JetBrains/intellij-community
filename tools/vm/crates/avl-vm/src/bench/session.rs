@@ -37,6 +37,8 @@ pub(crate) const RESULT_FILE: &str = "result.json";
 pub(crate) const TRACE_FILE: &str = "opentelemetry.json";
 /// The JVM class-load log of a run, which `-Xlog:class+load` writes. See [`super::classload`].
 pub(crate) const CLASS_LOAD_LOG: &str = "class-load.log";
+/// The JVM log of the Java stack of each class load of a run, which `--class-causes` turns on. See [`super::causes`].
+pub(crate) const CLASS_CAUSE_LOG: &str = "class-causes.log";
 pub(crate) const TEMPLATE_DIR: &str = "template";
 
 /// The directory below the runtime root that holds the bench state: `generations/` and `runs/`.

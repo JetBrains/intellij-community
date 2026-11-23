@@ -45,9 +45,15 @@ const GUIDE: &str = "Find what loads the classes of a plugin at start-up, here o
     ./community/tools/vm.cmd bench classes latest --plugin com.intellij.air --at quit --kinds
   3. Read the frame that woke each loader of the plugin.
     ./community/tools/vm.cmd bench triggers latest --plugin com.intellij.air --at quit
-  4. Read the post-startup activities by class and by plugin.
+  4. For the code behind each class of a loader, run a session with --class-causes. The stacks
+    slow it down ten times, so give it ten times the hold, and read it against the session of
+    step 1 as the baseline.
+    ./community/tools/vm.cmd bench project markdown --arm empty-editor --hold 150s --class-causes
+    ./community/tools/vm.cmd bench causes latest --baseline aaaa1111 \\
+      --plugin com.intellij.air --at quit
+  5. Read the post-startup activities by class and by plugin.
     ./community/tools/vm.cmd bench activities latest
-  5. Read the classes that one span loads, such as the build of the Air composer.
+  6. Read the classes that one span loads, such as the build of the Air composer.
     ./community/tools/vm.cmd bench classes latest --span air.emptyState.createContent --thread all
 
 The anchor decides the count:
@@ -194,6 +200,20 @@ pub(crate) enum BenchVerb {
     ///
     /// The help of `bench` states the order of a class attribution.
     Triggers(TriggersArgs),
+    /// Prints the classes of the plugin loaders of one run by the frame that entered the loader of each class. No IDE
+    /// starts.
+    ///
+    /// The run needs class-causes.log, which a session with --class-causes writes: the JVM stack of each class load.
+    /// The entry frame of a class is the frame nearest to the bottom of its stack whose class has the owner of the class.
+    /// So it is the first code of the loader that the thread ran, such as a startup activity, a service constructor or
+    /// the body of a coroutine. A class whose stack has no frame of its loader has the frame of another owner nearest to
+    /// the top instead, as for `triggers`, with the same skipped frames. The caller of a row is the most common frame
+    /// of another owner below its entry frame. A frame keeps its class and method and drops its file and line. A row
+    /// holds an entry frame, its classes before the anchor, its loaders and its first classes. A class of the plugin
+    /// log without a stack in the log is in the row `(no stack)`.
+    ///
+    /// The help of `bench` states the order of a class attribution.
+    Causes(CausesArgs),
     /// Prints the post-startup activities of one run by class and by plugin. No IDE starts.
     ///
     /// An activity is a `run activity` or a `run init activity <name>` span, without its helper twins. The default
@@ -359,6 +379,38 @@ pub(crate) struct TriggersArgs {
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, clap::Args)]
+pub(crate) struct CausesArgs {
+    #[command(flatten)]
+    pub(crate) selection: RunSelection,
+    /// Keeps only the classes of this plugin id. Repeat it for more plugins.
+    #[arg(long = "plugin", value_name = "ID")]
+    pub(crate) plugins: Vec<String>,
+    /// Keeps only the classes of this content module, or of the main module of the plugin id. Repeat it for more
+    /// modules.
+    #[arg(long = "module", value_name = "NAME")]
+    pub(crate) modules: Vec<String>,
+    /// The anchor: a class counts when the JVM loaded it before the anchor. The default is the main anchor of the arm,
+    /// as for `classes`. `quit` is the start of application.exit.
+    #[arg(long, value_name = "ANCHOR", value_parser = clap::builder::PossibleValuesParser::new(CLASS_ANCHORS))]
+    pub(crate) at: Option<String>,
+    /// The rows of the entry table at most.
+    #[arg(long, value_name = "N", default_value_t = DEFAULT_TOP, value_parser = clap::value_parser!(u32).range(1..))]
+    pub(crate) top: u32,
+    /// The session of the same arm without --class-causes whose classes the report attributes. The stacks slow a run
+    /// down, so the run with the stacks can load other classes before the anchor than a normal run. With BASELINE the
+    /// report takes the classes of the baseline run and only the stacks of the run of SESSION, and it counts the
+    /// classes that only one of the two runs loaded.
+    #[arg(long, value_name = "BASELINE")]
+    pub(crate) baseline: Option<String>,
+    /// The first classes of each row at most.
+    #[arg(long, value_name = "N", default_value_t = DEFAULT_CAUSE_CLASSES, value_parser = clap::value_parser!(u32).range(0..))]
+    pub(crate) classes: u32,
+}
+
+/// The first classes of a row of `bench causes` by default.
+pub(crate) const DEFAULT_CAUSE_CLASSES: u32 = 3;
+
+#[derive(Clone, Debug, PartialEq, Eq, clap::Args)]
 pub(crate) struct CompareArgs {
     #[arg(
         value_name = "SESSION",
@@ -462,6 +514,11 @@ pub(crate) struct MeasureArgs {
     /// thread too.
     #[arg(long, value_name = "EVENT", value_enum, default_value_t = ProfileEvent::Cpu, requires = "profile")]
     pub(crate) profile_event: ProfileEvent,
+    /// Makes the JVM of each run write class-causes.log: the Java stack of each class load, for `bench
+    /// causes`. The stacks slow a start down by seconds, so a time of such a session does not compare with a time of
+    /// another session. A class count stays valid.
+    #[arg(long)]
+    pub(crate) class_causes: bool,
     #[command(flatten)]
     pub(crate) twins: TwinArgs,
 }

@@ -4,9 +4,9 @@ use pretty_assertions::assert_eq;
 
 use super::{
     DYNAMIC_AGENT_OPTION, EVENT_TIMEOUT, FIND_TIMEOUT, FORCE_MODAL_PROPERTY, INTEGRATION_TEST_PROPERTY, PREFERENCES_FACTORY,
-    PRODUCT_INFO_FILE, Profiler, RunPlan, SUPPRESSED_PLUGINS_PROPERTY, TRUST_PROPERTY, argfile_text, class_load_option, dist_options,
-    entry_options, gate_timeout, home_option, idea_log_pid, measure_options, preferences_options, product_info_file, profile_stop_argv,
-    quote_argument, sandbox_options, scheme_arguments, span_ended, thread_dump_argv, vm_options_file,
+    PRODUCT_INFO_FILE, Profiler, RunPlan, SUPPRESSED_PLUGINS_PROPERTY, TRUST_PROPERTY, Waits, argfile_text, class_cause_options,
+    class_load_option, dist_options, entry_options, home_option, idea_log_pid, measure_options, preferences_options, product_info_file,
+    profile_stop_argv, quote_argument, sandbox_options, scheme_arguments, span_ended, thread_dump_argv, vm_options_file,
 };
 use crate::bench::arm::{Arm, ArmKind, Property};
 use crate::bench::profile::ProfileEvent;
@@ -176,6 +176,20 @@ fn every_arm_writes_the_class_load_log_and_a_colon_in_the_run_directory_is_a_fai
                 .to_owned()
         )
     );
+}
+
+/// A run of `--class-causes` logs the stack of every class load into its own file, without the rotation that drops
+/// the start of a large log. A `:` in the run directory is an error, as for the class-load log.
+#[test]
+fn the_class_causes_log_every_class_without_a_rotation() {
+    assert_eq!(
+        class_cause_options(Path::new("/s/run")),
+        Ok([
+            "-XX:LogClassLoadingCauseFor=*".to_owned(),
+            "-Xlog:class+load+cause=info:file=/s/run/class-causes.log:uptime,tid,tags:filecount=0".to_owned(),
+        ])
+    );
+    class_cause_options(Path::new("/s/a:b/run")).expect_err("a `:` in the run directory");
 }
 
 /// A profiled run starts the agent with the JVM and allows the dynamic load of the stop. The event of the profile is
@@ -379,8 +393,19 @@ fn the_find_in_files_arm_opens_its_project_where_it_is_and_waits_longer() {
     );
     let other = RunPlan { arm: Arm::PROJECT, ..plan };
     assert_eq!(other.find_script(), None, "only the find-in-files arm has a script");
-    assert_eq!(gate_timeout(Arm::FIND_IN_FILES.gate()), FIND_TIMEOUT);
-    assert_eq!(gate_timeout(Arm::EMPTY_EDITOR.gate()), EVENT_TIMEOUT);
+    assert_eq!(Waits::of(false).gate(Arm::FIND_IN_FILES.gate()), FIND_TIMEOUT);
+    assert_eq!(Waits::of(false).gate(Arm::EMPTY_EDITOR.gate()), EVENT_TIMEOUT);
+}
+
+/// The stack of each class load makes a start about ten times slower, so each wait of a run of `--class-causes` is
+/// ten times longer.
+#[test]
+fn the_waits_of_a_class_causes_run_are_ten_times_longer() {
+    let plain = Waits::of(false);
+    let causes = Waits::of(true);
+    assert_eq!(causes.event, plain.event * 10);
+    assert_eq!(causes.quit, plain.quit * 10);
+    assert_eq!(causes.gate(Arm::EMPTY_EDITOR.gate()), EVENT_TIMEOUT * 10);
 }
 
 /// The poll of a span gate: no trace, a trace without the span, then a trace that the running IDE still writes, with
