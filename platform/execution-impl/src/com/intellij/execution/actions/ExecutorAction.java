@@ -43,6 +43,7 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileWithoutContent;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.util.PsiModificationTracker;
@@ -235,7 +236,8 @@ public class ExecutorAction extends AnAction implements DumbAware, ActionIdProvi
     VirtualFile[] validFiles = Arrays.stream(files).filter(f -> f.isValid()).toArray(VirtualFile[]::new);
     if (validFiles.length == 1) {
       // There's only one visible editor, let's use the file from this editor, even if the editor is not in focus.
-      PsiFile psiFile = PsiManager.getInstance(project).findFile(validFiles[0]);
+      VirtualFile file = validFiles[0];
+      PsiFile psiFile = file instanceof VirtualFileWithoutContent ? null : PsiManager.getInstance(project).findFile(file);
       if (psiFile == null) {
         String tooltip = ExecutionBundle.message("run.button.on.toolbar.tooltip.current.file.not.runnable");
         return RunCurrentFileActionStatus.createDisabled(tooltip, myExecutor.getIcon());
@@ -303,7 +305,7 @@ public class ExecutorAction extends AnAction implements DumbAware, ActionIdProvi
 
   @ApiStatus.Internal
   public static List<RunnerAndConfigurationSettings> getRunConfigsForCurrentFile(@NotNull PsiFile psiFile, boolean resetCache) {
-    if (!psiFile.isValid()) {
+    if (!psiFile.isValid() || psiFile.getVirtualFile() instanceof VirtualFileWithoutContent) {
       return List.of();
     }
     if (resetCache) {
