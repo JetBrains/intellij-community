@@ -2055,7 +2055,37 @@ class PyInferenceMiscTypeTest : PyCodeInsightTestCase() {
     @TestFor(issues = ["PY-79184"])
     fun `or keeps dunder debug on left side`() = test("""
       expr = __debug__ or 1
-      #└ TYPE bool | Literal[1]
+      #└ TYPE Literal[True, 1]
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-94326"])
+    fun `and and or keep the bool literal with the needed truthiness`() = test("""
+      def f(x: bool, y: int):
+          expr = x and y
+      #   └ TYPE Literal[False] | int
+          expr = x or y
+      #   └ TYPE Literal[True] | int
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-94326"])
+    fun `and of comparisons with an unknown operand keeps the weak type`() = test("""
+      def f(x):
+          expr = x >= 0
+      #   └ TYPE UnsafeUnion[bool, Unknown]
+          expr = x >= 0 and x <= 9
+      #   └ TYPE UnsafeUnion[bool, Unknown]
+
+      class C:
+          def __init__(self):
+              self.foo = None
+
+      def g(c: C):
+          expr = c.foo
+      #   └ TYPE UnsafeUnion[None, Unknown]
+          expr = c.foo or 1
+      #   └ TYPE Literal[1] | Unknown
       """.trimIndent())
 
     @Test
