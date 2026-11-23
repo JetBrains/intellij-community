@@ -31,7 +31,10 @@ fun cachedProjectConfiguration(
   return CachedProjectConfiguration(
     testCase = testCase,
     setup = {
-      applyVMOptionsPatch { addSystemProperty("idea.trust.all.projects", true) }
+      applyVMOptionsPatch {
+        addSystemProperty("idea.trust.all.projects", true)
+        addSystemProperty("jdk.auto.setup", false)
+      }
       additionalSetup()
       this
     },
