@@ -1,7 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.threadingModelHelper
 
-import com.intellij.openapi.roots.JdkOrderEntry
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiMethod
@@ -123,7 +122,7 @@ object LockReqDetector {
 
   private fun isJdkClass(psiClass: PsiClass): Boolean {
     val file = psiClass.containingFile?.virtualFile ?: return false
-    return ProjectFileIndex.getInstance(psiClass.project).getOrderEntriesForFile(file).any { it is JdkOrderEntry }
+    return ProjectFileIndex.getInstance(psiClass.project).findContainingSdks(file).isNotEmpty()
   }
 
   context(config: AnalysisConfig, patterns: LockReqRules)
