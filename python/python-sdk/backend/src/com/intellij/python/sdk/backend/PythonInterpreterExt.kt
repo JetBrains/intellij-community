@@ -81,16 +81,6 @@ fun PythonInterpreter.findToolExecutable(tool: PyTool, executableName: String = 
   }
 
 /**
- * The [Sdk] behind this interpreter, for a call site that must reach an `Sdk` API.
- *
- * Deliberately deprecated: it is the only way out, and every use of it is a use of the `Sdk` API that should be a
- * `PythonInterpreter` extension instead. Never put an `Sdk` in a UI list — lists hold
- * [com.intellij.python.sdk.common.PyInterpreterItem].
- */
-@Deprecated("try to avoid Sdk API usage, use PythonInterpreter extensions instead", ReplaceWith("PythonInterpreterExt.kt"))
-fun PythonInterpreter.getSdkAPI(): Sdk = sdk
-
-/**
  * What this interpreter is, from what is already recorded about it.
  *
  * Never runs the interpreter. A virtualenv states its version in `pyvenv.cfg` and a conda environment in its

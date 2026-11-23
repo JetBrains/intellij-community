@@ -147,8 +147,7 @@ class EvoPyProject(
    * `null` while the SDK table is still loading, and a surface then states that a project with an interpreter has none
    * (PY-91871); the snapshot waits instead, once.
    *
-   * A [PythonInterpreter] and not an `Sdk`, so a caller asks the interpreter what it is. A caller that still needs the
-   * `Sdk` API calls [com.intellij.python.sdk.backend.getSdkAPI], whose deprecation marks the work left to do.
+   * A [PythonInterpreter] and not an `Sdk`, so a caller asks the interpreter what it is.
    */
   val interpreter: PythonInterpreter? = interpreter
 }
