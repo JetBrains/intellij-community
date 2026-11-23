@@ -57,18 +57,25 @@ private const val UPLOADS_URL = "https://uploads.jetbrains.com"
 private const val CAPTURE_MEMORY_SNAPSHOT_ACTION_ID = "CaptureMemorySnapShot"
 
 // Volatile parts of a reference-path rendering ignored when deciding whether two paths are the same retention chain
+private val VALUE_REGEX = Regex("""; Value: '.*' of """)
 private val IDENTITY_HASH_REGEX = Regex("@[0-9a-fA-F]+")
 private val ARRAY_INDEX_REGEX = Regex("""\[\d+]""")
+private val LAMBDA_ADDRESS_REGEX = Regex("""/0x[0-9a-fA-F]+""")
 private val IDE_FRAME_REGEX = Regex("""IdeFrameImpl\[frame[0-9]""")
 
 /**
- * Identifies a retention chain of a leak. Two leaks with equal signatures differ only in identity hashes and array indices.
+ * Identifies a retention chain of a leak by the fields and the classes on its reference path.
+ * Two leaks with equal signatures differ only in the field values, identity hashes, array indices and lambda addresses.
  */
 internal fun leakSignature(leak: LeakInfo): String {
-  val path = leak.referencePath
-    .replace(IDENTITY_HASH_REGEX, "@")
-    .replace(ARRAY_INDEX_REGEX, "[]")
-    .replace(IDE_FRAME_REGEX, "IdeFrameImpl[")
+  val path = leak.referencePath.lineSequence().joinToString("\n") { line ->
+    line
+      .replace(VALUE_REGEX, " of ")
+      .replace(IDENTITY_HASH_REGEX, "@")
+      .replace(ARRAY_INDEX_REGEX, "[]")
+      .replace(LAMBDA_ADDRESS_REGEX, "/")
+      .replace(IDE_FRAME_REGEX, "IdeFrameImpl[")
+  }
   return "${leak.kind}\n${leak.className}\n$path"
 }
 
@@ -114,12 +121,17 @@ class LeakReporter(private val coroutineScope: CoroutineScope) {
     notification.notify(project)
   }
 
-  fun buildReport(leaks: List<LeakInfo>): String = buildString {
-    append("IDE state: ").append(ideStateInfo()).append('\n')
-    append("OS: ").append(osInfo()).append("\n\n")
-    append("```\n")
-    append(ideInfo()).append("\n\n")
-    append(buildLeaksReport(leaks).trimEnd('\n')).append("\n```")
+  /** Builds the leak report. The report has [projectNameHash] in place of each project name. */
+  fun buildReport(leaks: List<LeakInfo>): String {
+    val report = buildString {
+      append("IDE state: ").append(ideStateInfo()).append('\n')
+      append("OS: ").append(osInfo()).append("\n\n")
+      append("```\n")
+      append(ideInfo()).append("\n\n")
+      append(buildLeaksReport(leaks).trimEnd('\n')).append("\n```")
+    }
+    val knownNames = ProjectUtilCore.getOpenProjects().map { it.name } + LeakCandidateRegistry.getInstance().projectNames()
+    return maskProjectNames(report, knownNames)
   }
 
   private fun ideStateInfo(): String {

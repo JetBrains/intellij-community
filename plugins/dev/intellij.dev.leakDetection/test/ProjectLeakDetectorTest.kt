@@ -22,7 +22,7 @@ class ProjectLeakDetectorTest {
       LeakInfo(LeakKind.PROJECT, "com.example.FooProject", 0x1234, "Project Foo", "created in test", null, "root -> Foo"),
       LeakInfo(LeakKind.EDITOR, "com.example.BarEditor", 0xabcd, "Editor Bar", null, 12_345L, "root -> Bar"),
     )
-    val report = LeakDetectionRunner.getInstance().reporter().buildReport (leaks)
+    val report = LeakDetectionRunner.getInstance().reporter().buildReport(leaks)
     assertTrue(report.contains("2 leaked instance(s)"))
     assertTrue(report.contains("com.example.FooProject@1234"))
     assertTrue(report.contains("retained for: 12345 ms after disposal"))
@@ -55,8 +55,20 @@ class ProjectLeakDetectorTest {
   fun testBuildReportKeepsDistinctPathsSeparate() {
     // Same class but genuinely different reference paths must not be squashed.
     val leaks = listOf(
-      LeakInfo(LeakKind.EDITOR, "com.example.BarEditor", 0xaaaa, "Editor A", null, 100L, "via 'com.example.One.a'; Value: 'x' of class com.example.One"),
-      LeakInfo(LeakKind.EDITOR, "com.example.BarEditor", 0xbbbb, "Editor B", null, 200L, "via 'com.example.Two.b'; Value: 'y' of class com.example.Two"),
+      LeakInfo(LeakKind.EDITOR,
+               "com.example.BarEditor",
+               0xaaaa,
+               "Editor A",
+               null,
+               100L,
+               "via 'com.example.One.a'; Value: 'x' of class com.example.One"),
+      LeakInfo(LeakKind.EDITOR,
+               "com.example.BarEditor",
+               0xbbbb,
+               "Editor B",
+               null,
+               200L,
+               "via 'com.example.Two.b'; Value: 'y' of class com.example.Two"),
     )
     val report = LeakDetectionRunner.getInstance().reporter().buildReport(leaks)
 
@@ -120,6 +132,7 @@ class ProjectLeakDetectorTest {
     assertTrue(report.contains("  Disposer parent chain:\n    Foo (com.example.Foo)\n      <- ROOT"), report)
   }
 
+  @Suppress("RAW_SCOPE_CREATION")
   @Test
   fun testSameLeakIsSelectedForReportOnce() {
     val service = IdleLeakDetectionService(CoroutineScope(EmptyCoroutineContext))
@@ -131,6 +144,46 @@ class ProjectLeakDetectorTest {
     assertEquals(listOf(listOf(first, same)), service.selectNotReported(listOf(first, same)))
     assertEquals(listOf(listOf(other)), service.selectNotReported(listOf(same, other)))
     assertEquals(emptyList<List<LeakInfo>>(), service.selectNotReported(listOf(first, same, other)))
+  }
+
+  @Test
+  fun testLeakSignatureIgnoresFieldValues() {
+    val first = LeakInfo(LeakKind.EDITOR, "com.example.BarEditor", 0xaaaa, "Editor A", null, 100L,
+                         "via 'com.example.Holder.editor'; Value: 'EditorImpl[/AirPrompt-1176a009.md]' of class com.example.Editor\n" +
+                         "via 'com.example.Draft\$\$Lambda/0x00001c0005d5f000.arg\$1'; Value: 'Project(name=secret, containerState=COMPONENT_CREATED)' of class com.example.Project\n" +
+                         " (root)")
+    val second = first.copy(referencePath = first.referencePath
+      .replace("1176a009", "94b19292")
+      .replace("name=secret", "name=other")
+      .replace("0x00001c0005d5f000", "0x00001c0005971800"))
+    val other = first.copy(referencePath = first.referencePath.replace("Holder.editor", "Holder.other"))
+
+    assertEquals(leakSignature(first), leakSignature(second))
+    assertFalse(leakSignature(first) == leakSignature(other))
+  }
+
+  @Test
+  fun testBuildReportMasksProjectNames() {
+    val leak = LeakInfo(LeakKind.PROJECT,
+                        "com.intellij.openapi.project.impl.ProjectImpl",
+                        0x1234,
+                        "Project(name=matterhorn-secret, containerState=DISPOSE_COMPLETED, componentStore=<redacted>) (disposed)",
+                        null,
+                        null,
+                        "via 'com.example.Frame.title'; Value: 'matterhorn-secret – Foo.kt' of class java.lang.String\n" +
+                        "via 'com.intellij.idea.Holder.project'; Value: 'x' of class com.example.Holder",
+                        "  Project(name=matterhorn-secret, containerState=DISPOSE_COMPLETED, componentStore=<redacted>)\n    <- ROOT")
+    val report = LeakDetectionRunner.getInstance().reporter().buildReport(listOf(leak))
+
+    assertFalse(report.contains("matterhorn-secret"), report)
+    assertTrue(report.contains("Project(name=${projectNameHash("matterhorn-secret")}, containerState="), report)
+    assertTrue(report.contains("'${projectNameHash("matterhorn-secret")} – Foo.kt'"), report)
+  }
+
+  @Test
+  fun testMaskProjectNamesKeepsPartsOfOtherTokens() {
+    val masked = maskProjectNames("com.intellij.idea.Main idea ideas", listOf("idea"))
+    assertEquals("com.intellij.idea.Main ${projectNameHash("idea")} ideas", masked)
   }
 
   @Test
