@@ -67,9 +67,10 @@ class MavenTestNGTestParamTest {
   // ── PACKAGE ──────────────────────────────────────────────────────────────
 
   @Test
-  fun `PACKAGE with package name returns pkg-star pattern`() {
+  fun `PACKAGE with package name returns the pattern of the package and its subpackages`() {
     val d = data(TestType.PACKAGE) { PACKAGE_NAME = "com.example" }
-    assertEquals("com.example.*", buildTestNGTestParam(d))
+    // Not `com.example.*`: Surefire reads a final `.*` as "any file extension" (IDEA-394511).
+    assertEquals("com.example.**", buildTestNGTestParam(d))
   }
 
   @Test

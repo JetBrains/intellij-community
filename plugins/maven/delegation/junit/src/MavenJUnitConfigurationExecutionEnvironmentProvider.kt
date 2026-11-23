@@ -15,6 +15,7 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.idea.maven.execution.MavenRunner
 import org.jetbrains.idea.maven.execution.MavenSurefireConfigurationFactory
 import org.jetbrains.idea.maven.execution.MavenSurefireRunConfiguration
+import org.jetbrains.idea.maven.execution.surefirePackageFilter
 import org.jetbrains.idea.maven.execution.build.MavenExecutionEnvironmentProvider
 import org.jetbrains.idea.maven.model.MavenSource
 import org.jetbrains.idea.maven.project.MavenProject
@@ -101,10 +102,7 @@ private fun buildTestParam(config: JUnitConfiguration, leafProject: MavenProject
       "$className#$methodName"
     }
 
-    JUnitConfiguration.TEST_PACKAGE -> {
-      val pkg = data.packageName
-      if (pkg.isEmpty()) "*" else "$pkg.*"
-    }
+    JUnitConfiguration.TEST_PACKAGE -> surefirePackageFilter(data.packageName)
 
     JUnitConfiguration.TEST_PATTERN -> {
       val patterns = data.patterns
@@ -145,8 +143,8 @@ fun patternToSurefireSpec(pattern: String): String {
 /**
  * Derives a Surefire `-Dtest=` pattern for running all tests under [dirPath].
  *
- * Resolves [dirPath] relative to the Maven project's test source roots; returns
- * `"<package>.*"` for a subdirectory or `"*"` if the directory is the root itself.
+ * Resolves [dirPath] relative to the Maven project's test source roots, and returns the [surefirePackageFilter] of the
+ * package of the directory: the tests of the directory and of its subdirectories.
  * Returns null when [dirPath] is not under any known test source root (fall back to IDE runner).
  */
 private fun packageFromDirectory(dirPath: String, leafProject: MavenProject): String? {
@@ -154,10 +152,10 @@ private fun packageFromDirectory(dirPath: String, leafProject: MavenProject): St
   for (src in leafProject.mavenSources) {
     if (!MavenSource.isTestSource(src)) continue
     val root = Path.of(src.directory).normalize()
-    if (dir == root) return "*"
+    if (dir == root) return surefirePackageFilter("")
     if (dir.startsWith(root)) {
       val pkg = root.relativize(dir).toString().replace('/', '.').replace('\\', '.')
-      return "$pkg.*"
+      return surefirePackageFilter(pkg)
     }
   }
   return null

@@ -17,6 +17,7 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.idea.maven.execution.MavenRunner
 import org.jetbrains.idea.maven.execution.MavenSurefireConfigurationFactory
 import org.jetbrains.idea.maven.execution.MavenSurefireRunConfiguration
+import org.jetbrains.idea.maven.execution.surefirePackageFilter
 import org.jetbrains.idea.maven.execution.build.MavenExecutionEnvironmentProvider
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 
@@ -92,10 +93,7 @@ fun buildTestNGTestParam(data: TestData): String? {
       "$className#$methodName"
     }
 
-    TestType.PACKAGE.type -> {
-      val pkg = data.packageName
-      if (pkg.isEmpty()) "*" else "$pkg.*"
-    }
+    TestType.PACKAGE.type -> surefirePackageFilter(data.packageName)
 
     TestType.PATTERN.type -> {
       val patterns = data.patterns

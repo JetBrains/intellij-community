@@ -193,3 +193,13 @@ private class SurefireProcessProxy(
   override fun detachIsDefault(): Boolean = false
   override fun getProcessInput(): OutputStream? = null
 }
+
+/**
+ * The Surefire `-Dtest=` filter that selects the test classes of [packageName] and of its subpackages, as "All in
+ * package" does in the IDE. The empty package selects all test classes.
+ *
+ * Do not use `<package>.*`: Surefire reads a final `.*` as "any file extension", so `com.example.*` selects the class
+ * `com.example`, and no test runs (IDEA-394511).
+ */
+@ApiStatus.Internal
+fun surefirePackageFilter(packageName: String): String = if (packageName.isEmpty()) "*" else "$packageName.**"

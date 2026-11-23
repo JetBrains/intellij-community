@@ -103,7 +103,7 @@ class MavenTestNGDelegatedTestReactorTest {
   // ── PACKAGE ───────────────────────────────────────────────────────────────
 
   @Test
-  fun `PACKAGE type produces pkg-star filter`() = runBlocking {
+  fun `PACKAGE type produces the filter of the package and its subpackages`() = runBlocking {
     createProject()
     maven.importProjectAsync()
 
@@ -111,7 +111,8 @@ class MavenTestNGDelegatedTestReactorTest {
       persistantData.PACKAGE_NAME = "probe.sub"
     }
 
-    assertTrue(goals.contains("-Dtest=probe.sub.*"), "goals=$goals")
+    // Not `probe.sub.*`: Surefire reads a final `.*` as "any file extension" (IDEA-394511).
+    assertTrue(goals.contains("-Dtest=probe.sub.**"), "goals=$goals")
   }
 
   @Test
