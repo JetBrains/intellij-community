@@ -11,6 +11,7 @@ import com.intellij.platform.syntax.createLexer
 import com.intellij.platform.syntax.lexer.performLexing
 import com.intellij.platform.syntax.parseLazyNode
 import com.intellij.platform.syntax.parser.SyntaxTreeBuilderFactory
+import com.intellij.platform.syntax.tree.SyntaxBuilderFactory
 import com.intellij.platform.syntax.tree.SyntaxNode
 import com.intellij.platform.syntax.tree.parse
 import com.intellij.platform.syntax.util.language.SyntaxElementLanguageProvider
@@ -19,6 +20,7 @@ import com.intellij.yaml.syntax.YamlSyntaxElementTypes
 import com.intellij.yaml.syntax.lexer.YamlLexer
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Assertions.fail
 import org.junit.jupiter.api.Test
@@ -98,6 +100,31 @@ class YamlSyntaxBlockReparseTest {
       node = node.parent()
     }
     return false
+  }
+
+  /**
+   * `KmpSyntaxNode.tryReparse` walks down from the root and stops at the first lazy node that the check refuses.
+   * The first lazy node is the block node of the document, and the check refuses it, because it has no parent key.
+   * So the walk does not get the lexer of the lazy parser, which lexes only the old text of the node.
+   */
+  @Test
+  fun `the reparse of a syntax tree refuses a change in an inner mapping`() {
+    val text = "a:\n  b: 1\n  c: 2\nd: 3\n"
+    val offset = text.indexOf('1')
+    // A replacement of the same length keeps the offsets of the old tree.
+    val newText = text.replaceRange(offset, offset + 1, "2")
+    val inner = findNode(parseYaml(text), 5, YamlSyntaxElementTypes.MAPPING)
+    assertTrue(canReparse(DetachedNode(inner, newText.substring(inner.startOffset, inner.endOffset))), "the inner mapping alone")
+
+    val newTokens = performLexing(newText, YamlLexer(), CANCELLATION, null)
+    val builderFactory = SyntaxBuilderFactory { builderText, tokens, startOffset ->
+      SyntaxTreeBuilderFactory.builder(builderText, tokens, YamlSyntaxDefinition.whitespaces, YamlSyntaxDefinition.comments)
+        .withStartOffset(startOffset)
+        .build()
+    }
+    val root = parse(text, YamlSyntaxDefinition, YAML, LANGUAGES)
+    val suffixLength = newText.length - offset - 1
+    assertNull(root.tryReparse(builderFactory, YamlLexer(), newTokens, newText, offset, suffixLength, CANCELLATION))
   }
 
   /** Two nodes with the same text at other columns: the check of one node gives no parse data to the other node. */

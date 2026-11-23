@@ -5,6 +5,8 @@ import com.intellij.lang.ASTNode
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.command.CommandProcessor
+import com.intellij.openapi.command.WriteCommandAction
+import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiDocumentManager
@@ -15,8 +17,10 @@ import com.intellij.psi.impl.BlockSupportImpl
 import com.intellij.psi.impl.ChangedPsiRangeUtil
 import com.intellij.psi.impl.DebugUtil
 import com.intellij.psi.impl.source.PsiFileImpl
+import com.intellij.psi.impl.source.tree.LazyParseableElement
 import com.intellij.psi.impl.source.tree.SharedImplUtil
 import com.intellij.psi.impl.source.tree.TreeElement
+import com.intellij.psi.text.BlockSupport
 import com.intellij.testFramework.LightVirtualFile
 import com.intellij.testFramework.assertErrorLogged
 import com.intellij.testFramework.common.timeoutRunBlocking
@@ -28,6 +32,8 @@ import org.jetbrains.yaml.YAMLLanguage
 import org.jetbrains.yaml.YamlBlockCollectionType
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.Assertions.assertSame
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import kotlin.time.Duration.Companion.minutes
@@ -101,6 +107,32 @@ class YamlBlockReparseTest {
       }
       assertErrorLogged<Throwable> { chameleon.firstChildNode }
       assertEquals(DebugUtil.psiToString(createNonPhysicalFile(expected), true), DebugUtil.psiToString(file, true))
+    }
+  }
+
+  /**
+   * A clone of a chameleon does not copy its check data.
+   * The merge parses the chameleon in its holder and then moves the children into the old node, so the file never holds the chameleon.
+   * The merge of the whole node after [BlockSupport.DO_NOT_REPARSE_INCREMENTALLY] also moves the children.
+   */
+  @Test
+  fun `the merge of a block reparse keeps no chameleon in the tree`() = timeoutRunBlocking {
+    withContext(Dispatchers.EDT) {
+      val text = "a:\n  b: 1\n  c: 2\nd: 3\n"
+      val newText = TextRange(9, 9).replace(text, "\n  e: 5")
+      for (wholeNode in listOf(false, true)) {
+        val file = createNonPhysicalFile(text) as PsiFileImpl
+        val mapping = findBlockAt(file, 5)
+        val changedRange = ChangedPsiRangeUtil.getChangedPsiRange(file, file.treeElement!!, newText)!!
+        if (wholeNode) file.putUserData(BlockSupport.DO_NOT_REPARSE_INCREMENTALLY, true)
+        val result = BlockSupportImpl.reparse(file, file.treeElement!!, changedRange, newText, EmptyProgressIndicator(), text)
+        assertSame(mapping, result.oldRoot, "the reparsed node, whole node: $wholeNode")
+        WriteCommandAction.runWriteCommandAction(project.get()) { result.log.doActualPsiChange(file) }
+        assertSame(mapping, findBlockAt(file, 5), "the mapping after the merge, whole node: $wholeNode")
+        assertNull(findBlockChameleon(file.node), "a chameleon in the tree, whole node: $wholeNode")
+        val expected = DebugUtil.psiToString(createNonPhysicalFile(newText), true)
+        assertEquals(expected, DebugUtil.psiToString(file, true), "whole node: $wholeNode")
+      }
     }
   }
 
@@ -280,6 +312,17 @@ class YamlBlockReparseTest {
     val newText = range.replace(text, replacement)
     assertEquals(DebugUtil.psiToString(createFile(newText), true), DebugUtil.psiToString(file, true),
                  "change $range to '$replacement' in:\n$text")
+  }
+
+  /** Returns a block mapping or block sequence of the type [LazyParseableElement] in the tree. */
+  private fun findBlockChameleon(node: ASTNode): ASTNode? {
+    if (node is LazyParseableElement && node.elementType is YamlBlockCollectionType) return node
+    var child = node.firstChildNode
+    while (child != null) {
+      findBlockChameleon(child)?.let { return it }
+      child = child.treeNext
+    }
+    return null
   }
 
   private fun createFile(text: String): PsiFile = createFile(project.get(), text)
