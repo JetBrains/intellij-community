@@ -12,6 +12,9 @@
     <module name="intellij.platform.core"/>
     <module name="intellij.platform.core.impl"/>
     <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.credentialStore"/>
+    <module name="intellij.platform.credentialStore.impl"/>
+    <module name="intellij.platform.credentialStore.ui"/>
     <module name="intellij.platform.diff"/>
     <module name="intellij.platform.diff.impl"/>
     <module name="intellij.platform.editor.ex"/>
@@ -21,6 +24,7 @@
     <module name="intellij.platform.ide.core.impl"/>
     <module name="intellij.platform.ide.impl"/>
     <module name="intellij.platform.ide.observable"/>
+    <module name="intellij.platform.ide.progress"/>
     <module name="intellij.platform.lang"/>
     <module name="intellij.platform.lang.impl"/>
     <module name="intellij.platform.projectModel"/>
@@ -31,6 +35,7 @@
     <module name="intellij.platform.vcs"/>
     <module name="intellij.platform.vcs.core"/>
     <module name="intellij.platform.vcs.dvcs.impl.shared"/>
+    <module name="intellij.platform.vcs.impl"/>
     <module name="intellij.platform.vcs.impl.shared"/>
     <module name="intellij.platform.vcs.log.impl"/>
     <module name="intellij.platform.vcs.shared"/>

@@ -1,2 +1,3 @@
 kotlin/Result
 kotlin/jvm/internal/DefaultConstructorMarker
+kotlinx/coroutines/sync/Mutex
