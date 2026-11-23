@@ -31,12 +31,13 @@ public interface GenerateToStringClassFilter {
    * @return a target class with respect to registered filters; null if not found
    */
   static @Nullable PsiClass findTargetClass(@NotNull ActionContext context) {
-    if (!(context.file() instanceof PsiJavaFile javaFile)) return null;
+    //this method is used in groovy, so don't check PsiJavaFile
     PsiClass psiClass = PsiTreeUtil.getParentOfType(context.findLeaf(), PsiClass.class, false);
     while (psiClass instanceof PsiTypeParameter) {
       psiClass = PsiTreeUtil.getParentOfType(psiClass, PsiClass.class);
     }
     if (psiClass == null) {
+      if (!(context.file() instanceof PsiJavaFile javaFile)) return null;
       PsiClass[] classes = javaFile.getClasses();
       if (classes.length != 1 || !(classes[0] instanceof PsiImplicitClass implicitClass) ||
           implicitClass.getFirstChild() == null || !PsiMethodUtil.hasMainMethod(implicitClass)) {
