@@ -40,14 +40,11 @@ public abstract class UsageViewContentManager {
   @RequiresEdt
   public abstract void closeContent(@NotNull Content usageView);
 
-  /**
-   * The Find tool window that shows the contents of this manager. A frame guest has none of its own: its contents go to the
-   * Find tool window of the project that owns its frame.
-   */
+  /** The Find tool window of the project of this manager. It shows the contents of this manager. */
   @ApiStatus.Experimental
   public abstract @NotNull ToolWindow getToolWindow();
 
-  /** A balloon at {@link #getToolWindow()}; the balloon of a frame guest goes away when the guest closes, as its listener may hold the guest. */
+  /** Shows a balloon at {@link #getToolWindow()}. */
   @ApiStatus.Experimental
   @RequiresEdt
   public abstract void notifyByBalloon(@NotNull MessageType type,

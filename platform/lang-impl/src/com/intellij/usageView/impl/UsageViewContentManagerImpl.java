@@ -5,23 +5,17 @@ import com.intellij.find.FindBundle;
 import com.intellij.find.FindUsagesSettings;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.DumbAwareToggleAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectCloseListener;
 import com.intellij.openapi.ui.MessageType;
-import com.intellij.openapi.ui.popup.Balloon;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.openapi.wm.impl.IdeFrameGuests;
 import com.intellij.serviceContainer.NonInjectable;
 import com.intellij.ui.UIBundle;
 import com.intellij.ui.content.Content;
@@ -45,24 +39,14 @@ import javax.swing.event.HyperlinkListener;
 import java.util.Arrays;
 import java.util.List;
 
-/**
- * The tabs of the Find tool window of a project. A frame guest puts its tabs into the Find tool window of its frame owner,
- * the only one its frame shows, see {@link IdeFrameGuests#frameOwnerOf}: there the guest and the owner see only their own
- * tabs as selected, and the guest takes its tabs away when it closes. A guest stays one for its whole life.
- */
-public final class UsageViewContentManagerImpl extends UsageViewContentManager implements Disposable {
-  /** The manager that added a tab, so that the managers sharing one tool window keep to their own tabs. */
-  private static final Key<UsageViewContentManagerImpl> MANAGER_KEY = Key.create("UsageViewContentManagerImpl.MANAGER_KEY");
+public final class UsageViewContentManagerImpl extends UsageViewContentManager {
 
   private final Key<Boolean> REUSABLE_CONTENT_KEY = Key.create("UsageTreeManager.REUSABLE_CONTENT_KEY");
   //todo[myakovlev] dont use it
   private final Key<Boolean> NOT_REUSABLE_CONTENT_KEY = Key.create("UsageTreeManager.NOT_REUSABLE_CONTENT_KEY");
   private final Key<UsageView> NEW_USAGE_VIEW_KEY = Key.create("NEW_USAGE_VIEW_KEY");
-  private final boolean myFrameGuest;
   private final @NotNull ToolWindow myToolWindow;
   private final @NotNull ContentManager myFindContentManager;
-  /** The balloon that a frame guest shows in the tool window of its frame owner, while it is shown. */
-  private @Nullable Balloon myBalloon;
 
   @SuppressWarnings("unused") // instantiated reflectively
   @RequiresEdt
@@ -74,23 +58,9 @@ public final class UsageViewContentManagerImpl extends UsageViewContentManager i
   @NonInjectable
   public UsageViewContentManagerImpl(@NotNull Project project,
                                      @NotNull ToolWindowManager toolWindowManager) {
-    myFrameGuest = IdeFrameGuests.isFrameGuest(project);
-    // a guest shows its tabs in the Find tool window that its frame owner registers and configures, with the gear actions for both
-    ToolWindow toolWindow = myFrameGuest
-                            ? getInstance(IdeFrameGuests.frameOwnerOf(project)).getToolWindow()
-                            : getOrRegisterFindToolWindow(toolWindowManager);
+    ToolWindow toolWindow = getOrRegisterFindToolWindow(toolWindowManager);
     myToolWindow = toolWindow;
     myFindContentManager = toolWindow.getContentManager();
-    if (myFrameGuest) {
-      // before the write action that disposes the guest: removing the last tab can hide a floating tool window
-      ApplicationManager.getApplication().getMessageBus().connect(this).subscribe(ProjectCloseListener.TOPIC, new ProjectCloseListener() {
-        @Override
-        public void projectClosing(@NotNull Project closing) {
-          if (closing == project) removeOwnContents();
-        }
-      });
-      return;
-    }
     toolWindow.setHelpId(UsageViewImpl.HELP_ID);
     toolWindow.setToHideOnEmptyContent(true);
 
@@ -127,9 +97,6 @@ public final class UsageViewContentManagerImpl extends UsageViewContentManager i
         public void setSelected(@NotNull AnActionEvent e, boolean state) {
           UsageViewSettings.getInstance().setSortAlphabetically(state);
           project.getMessageBus().syncPublisher(UsageFilteringRuleProvider.RULES_CHANGED).run();
-          for (Project guest : IdeFrameGuests.frameGuestsOf(project)) {
-            guest.getMessageBus().syncPublisher(UsageFilteringRuleProvider.RULES_CHANGED).run();
-          }
         }
       };
 
@@ -219,7 +186,6 @@ public final class UsageViewContentManagerImpl extends UsageViewContentManager i
     content.setTabName(tabName);
     content.setToolwindowTitle(toolwindowTitle);
     content.putUserData(contentKey, Boolean.TRUE);
-    content.putUserData(MANAGER_KEY, this);
     content.putUserData(ToolWindow.SHOW_CONTENT_ICON, Boolean.TRUE);
 
     myFindContentManager.addContent(content, indexToAdd);
@@ -249,13 +215,9 @@ public final class UsageViewContentManagerImpl extends UsageViewContentManager i
     return selectedContent == null || selectedContent.getUserData(contentKey) == null ? null : selectedContent;
   }
 
-  /** The selected tab, unless another manager sharing the tool window added it. */
   @Override
   public Content getSelectedContent() {
-    Content selectedContent = myFindContentManager.getSelectedContent();
-    if (selectedContent == null) return null;
-    UsageViewContentManagerImpl manager = selectedContent.getUserData(MANAGER_KEY);
-    return manager == null || manager == this ? selectedContent : null;
+    return myFindContentManager.getSelectedContent();
   }
 
   @Override
@@ -274,33 +236,7 @@ public final class UsageViewContentManagerImpl extends UsageViewContentManager i
                               @NlsContexts.PopupContent @NotNull String html,
                               @Nullable Icon icon,
                               @Nullable HyperlinkListener listener) {
-    ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(myToolWindow.getProject());
     //noinspection SSBasedInspection
-    toolWindowManager.notifyByBalloon(myToolWindow.getId(), type, html, icon, listener);
-    if (!myFrameGuest) return;
-    Balloon balloon = toolWindowManager.getToolWindowBalloon(myToolWindow.getId());
-    if (balloon == null) return;
-    myBalloon = balloon;
-    Disposer.register(balloon, () -> {
-      if (myBalloon == balloon) myBalloon = null;
-    });
-  }
-
-  /** A guest that closes without a closing event, such as one that never opened, takes its tabs away here. */
-  @Override
-  public void dispose() {
-    if (myFrameGuest) removeOwnContents();
-  }
-
-  /** A guest takes its tabs and its balloon away from the tool window of its frame owner; those of an owner go with its tool window. */
-  private void removeOwnContents() {
-    Balloon balloon = myBalloon;
-    if (balloon != null) balloon.hide();
-    if (myFindContentManager.isDisposed()) return;
-    for (Content content : myFindContentManager.getContents()) {
-      if (content.getUserData(MANAGER_KEY) == this) {
-        myFindContentManager.removeContent(content, true);
-      }
-    }
+    ToolWindowManager.getInstance(myToolWindow.getProject()).notifyByBalloon(myToolWindow.getId(), type, html, icon, listener);
   }
 }

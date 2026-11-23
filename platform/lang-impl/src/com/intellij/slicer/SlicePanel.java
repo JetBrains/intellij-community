@@ -110,8 +110,7 @@ public abstract class SlicePanel extends JPanel implements UiDataProvider, Dispo
     ThreadingAssertions.assertEventDispatchThread();
     myProject = project;
 
-    // the project of the tool window, which for a frame guest is its frame owner, sends the events of the tool window
-    toolWindow.getProject().getMessageBus().connect(this).subscribe(ToolWindowManagerListener.TOPIC, new ToolWindowManagerListener() {
+    myProject.getMessageBus().connect(this).subscribe(ToolWindowManagerListener.TOPIC, new ToolWindowManagerListener() {
       ToolWindowAnchor myAnchor = toolWindow.getAnchor();
 
       @Override
