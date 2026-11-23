@@ -53,6 +53,7 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicInteger
 import javax.swing.JComponent
 import javax.swing.SwingUtilities
 import javax.swing.event.HyperlinkEvent
@@ -80,7 +81,7 @@ internal class BuildConsoleViewImplV2(
   private val consoleInlayInfos = ConcurrentHashMap<Any, MutableList<ConsoleInlayInfo>>()
 
   /** Count of Swing component inlays added. Extra messages are printed as plain text (IDEA-374341). */
-  @Volatile private var inlayCount = 0
+  private val inlayCount = AtomicInteger()
 
   /** User intent to follow the tail. Only a user scroll gesture changes it, not content growth. Read and written on EDT. */
   private var autoScroll = true
@@ -261,7 +262,7 @@ internal class BuildConsoleViewImplV2(
     // Beyond the registry limit render the message as plain text. Thousands of Swing inlays make the editor layout
     // O(n) on every document change and lag the whole UI (IDEA-374341). Print off the EDT and let the console batch it;
     // a per-message state.access forces an EDT round-trip and a flush, which is the slow part.
-    if (inlayCount >= Registry.intValue("build.console.max.inlays", 100)) {
+    if (inlayCount.getAndIncrement() >= Registry.intValue("build.console.max.inlays", 100)) {
       val contentType = if (inlayInfo.kind == BuildConsoleViewInlay.Kind.ERROR) ConsoleViewContentType.ERROR_OUTPUT
       else ConsoleViewContentType.NORMAL_OUTPUT
       delegate.print(inlayInfo.plainText, contentType)
@@ -269,7 +270,6 @@ internal class BuildConsoleViewImplV2(
     }
     state.addNodeOutputMarkers(nodeId, inlayInfo.outputIds)
     state.access {
-      inlayCount++
       (editor as? EditorEx)?.let { ensureFollowListeners(it) }
       val inlayProperties = InlayProperties()
         .showAbove(true)
