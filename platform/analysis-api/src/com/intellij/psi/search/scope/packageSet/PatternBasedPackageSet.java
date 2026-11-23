@@ -3,16 +3,16 @@ package com.intellij.psi.search.scope.packageSet;
 
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.roots.JdkOrderEntry;
-import com.intellij.openapi.roots.LibraryOrderEntry;
-import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.platform.workspace.jps.entities.LibraryEntity;
+import com.intellij.platform.workspace.jps.entities.SdkEntity;
+import com.intellij.platform.workspace.jps.serialization.impl.LibraryNameGenerator;
+import com.intellij.workspaceModel.ide.LibraryEntities;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
-import java.util.List;
 import java.util.regex.Pattern;
 
 public abstract class PatternBasedPackageSet extends PackageSetBase {
@@ -91,21 +91,18 @@ public abstract class PatternBasedPackageSet extends PackageSetBase {
                                           final VirtualFile file,
                                           final ProjectFileIndex fileIndex) {
     if (libPattern != null) {
-      final List<OrderEntry> entries = fileIndex.getOrderEntriesForFile(file);
-      for (OrderEntry orderEntry : entries) {
-        if (orderEntry instanceof LibraryOrderEntry libraryOrderEntry) {
-          final String libraryName = libraryOrderEntry.getLibraryName();
-          if (libraryName != null) {
-            if (libPattern.matcher(libraryName).matches()) return true;
-          } else {
-            final String presentableName = orderEntry.getPresentableName();
-            final String fileName = new File(presentableName).getName();
-            if (libPattern.matcher(fileName).matches()) return true;
-          }
-        } else if (orderEntry instanceof JdkOrderEntry jdkOrderEntry) {
-          final String jdkName = jdkOrderEntry.getJdkName();
-          if (jdkName != null && libPattern.matcher(jdkName).matches()) return true;
+      for (LibraryEntity library : fileIndex.findContainingLibraries(file)) {
+        final String libraryName = LibraryNameGenerator.INSTANCE.getLegacyLibraryName(library.getSymbolicId());
+        if (libraryName != null) {
+          if (libPattern.matcher(libraryName).matches()) return true;
+        } else {
+          final String presentableName = LibraryEntities.getPresentableName(library);
+          final String fileName = new File(presentableName).getName();
+          if (libPattern.matcher(fileName).matches()) return true;
         }
+      }
+      for (SdkEntity sdk : fileIndex.findContainingSdks(file)) {
+        if (libPattern.matcher(sdk.getName()).matches()) return true;
       }
       return false;
     }

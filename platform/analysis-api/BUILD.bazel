@@ -44,6 +44,8 @@ jvm_library(
         "//platform/util/multiplatform",
         "//platform/util/base",
         "//libraries/fastutil",
+        "//platform/workspace/jps",
+        "//platform/workspace/storage",
     ],
 )
 ### auto-generated section `build intellij.platform.analysis` end
