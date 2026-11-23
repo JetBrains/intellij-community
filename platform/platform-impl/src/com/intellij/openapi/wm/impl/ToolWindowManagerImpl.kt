@@ -1404,8 +1404,16 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
    * The state is only in the tool window, not in the layout of this frame guest, see [getRegisteredMutableInfoOrLogError].
    */
   internal fun applyPresented(id: String, visible: Boolean, place: WindowInfo) {
-    val entry = idToEntry.get(id) ?: return
-    val current = entry.readOnlyWindowInfo
+    applyPresented(idToEntry.get(id)?.toolWindow ?: return, visible, place)
+  }
+
+  /**
+   * Sets the state of the presented tool window [toolWindow] of this frame guest, see [applyPresented].
+   * The unregistration of [toolWindow] removes its entry before the detach, so this call takes the tool window.
+   */
+  internal fun applyPresented(toolWindow: ToolWindowImpl, visible: Boolean, place: WindowInfo) {
+    val entry = idToEntry.get(toolWindow.id)?.takeIf { it.toolWindow === toolWindow }
+    val current = toolWindow.windowInfo
     val wasVisible = current.isVisible
     val isSamePlace = current.anchor == place.anchor && current.type == place.type && current.internalType == place.internalType &&
                       current.isSplit == place.isSplit && current.isAutoHide == place.isAutoHide
@@ -1413,7 +1421,8 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
       return
     }
 
-    val info = getRegisteredMutableInfoOrLogError(id)
+    // the info of a presented tool window is a copy, see `getRegisteredMutableInfoOrLogError`
+    val info = (current as WindowInfoImpl).copy()
     info.anchor = place.anchor
     info.type = place.type
     info.internalType = place.internalType
@@ -1422,20 +1431,21 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
     info.isVisible = visible
     if (!visible) {
       info.isActiveOnStart = false
-      activeStack.remove(entry, false)
+      entry?.let { activeStack.remove(it, false) }
     }
-    entry.applyWindowInfo(info.copy())
+    // a presented tool window has no stripe button to update
+    toolWindow.applyWindowInfo(info.copy())
     if (wasVisible == visible) {
       return
     }
 
     if (visible) {
-      entry.toolWindow.scheduleContentInitializationIfNeeded()
-      fireToolWindowShown(entry.toolWindow)
-      fireStateChanged(ToolWindowManagerEventType.ShowToolWindow, entry.toolWindow)
+      toolWindow.scheduleContentInitializationIfNeeded()
+      fireToolWindowShown(toolWindow)
+      fireStateChanged(ToolWindowManagerEventType.ShowToolWindow, toolWindow)
     }
     else {
-      fireStateChanged(ToolWindowManagerEventType.HideToolWindow, entry.toolWindow)
+      fireStateChanged(ToolWindowManagerEventType.HideToolWindow, toolWindow)
     }
   }
 

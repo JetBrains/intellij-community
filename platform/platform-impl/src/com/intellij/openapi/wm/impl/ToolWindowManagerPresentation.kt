@@ -149,7 +149,8 @@ internal class ToolWindowManagerPresentation(private val manager: ToolWindowMana
    *
    * The decorator of [toolWindow] leaves the frame now, before the guest disposes it. When [toolWindow] was the shown one,
    * the tool window of the frame owner selects another project in a later event, see [resolveLater].
-   * The balloon that the frame owner shows for [toolWindow] closes, see [guestBalloonShown].
+   * [toolWindow] hides, and the balloon that the frame owner shows for it closes, see [guestBalloonShown].
+   * The unregistration of [toolWindow] calls this function after it removed the entry of [toolWindow].
    */
   fun detach(toolWindow: ToolWindowImpl) {
     ThreadingAssertions.assertEventDispatchThread()
@@ -157,6 +158,11 @@ internal class ToolWindowManagerPresentation(private val manager: ToolWindowMana
     toolWindow.presentingSlot = null
     if (slot.guestBalloonSource === toolWindow) {
       slot.guestBalloon?.let(Disposer::dispose)
+    }
+    val guestManager = toolWindow.toolWindowManager
+    if (!guestManager.project.isDisposed) {
+      // the frame owner keeps its visible state, and only the tool window that leaves hides
+      guestManager.applyPresented(toolWindow = toolWindow, visible = false, place = toolWindow.windowInfo)
     }
     if (!slot.guests.remove(toolWindow) || isDisposed || slots.get(toolWindow.id) !== slot) {
       return

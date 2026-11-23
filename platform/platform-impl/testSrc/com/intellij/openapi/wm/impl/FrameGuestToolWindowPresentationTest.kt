@@ -893,6 +893,46 @@ internal class FrameGuestToolWindowPresentationTest {
     assertThat(presenting.balloon).isSameAs(secondBalloon)
   }
 
+  @Test
+  @RegistryKey(key = LEGACY_TOOL_WINDOWS_KEY, value = "true")
+  fun `the shown tool window of a frame guest that closes hides once`() = onEdt {
+    checkShownGuestLeaves { managers -> managers.of(second).projectClosing() }
+  }
+
+  @Test
+  @RegistryKey(key = LEGACY_TOOL_WINDOWS_KEY, value = "true")
+  fun `the shown tool window of a frame guest that unregisters it hides once`() = onEdt {
+    checkShownGuestLeaves { managers -> managers.of(second).doUnregisterToolWindow(ID) }
+  }
+
+  /**
+   * Checks that the shown tool window of the second guest hides when [leave] removes it, and that the frame owner keeps
+   * its visible state. A later event selects the first guest.
+   */
+  private fun checkShownGuestLeaves(leave: (Managers) -> Unit) {
+    val managers = createManagers()
+    val firstToolWindow = managers.register(first)
+    val secondToolWindow = managers.register(second)
+    secondToolWindow.show()
+    val presenting = managers.owner.getToolWindow(ID)!!
+    val events = recordEvents(second)
+
+    leave(managers)
+
+    assertThat(secondToolWindow.isVisible).isFalse()
+    assertThat(events).containsExactly(ToolWindowManagerEventType.HideToolWindow.name)
+    assertThat(managers.owner.getToolWindow(ID)).isSameAs(presenting)
+    assertThat(presenting.isVisible).isTrue()
+    assertThat(managers.owner.presentation.selectedProjectOf(ID)).describedAs("a later event selects another project").isNull()
+
+    UIUtil.dispatchAllInvocationEvents()
+
+    assertThat(managers.owner.presentation.selectedProjectOf(ID)).isSameAs(first)
+    assertThat(firstToolWindow.isVisible).isTrue()
+    assertThat(secondToolWindow.isVisible).isFalse()
+    assertThat(events).containsExactly(ToolWindowManagerEventType.HideToolWindow.name)
+  }
+
   private fun balloonOptions(): ToolWindowBalloonShowOptions {
     return ToolWindowBalloonShowOptions(toolWindowId = ID, type = MessageType.INFO, htmlBody = "Done")
   }
