@@ -41,6 +41,7 @@ import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtFunctionTypeReceiver
 import org.jetbrains.kotlin.psi.KtNullableType
+import org.jetbrains.kotlin.psi.KtParameter
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtReferenceExpression
 import org.jetbrains.kotlin.psi.KtSimpleNameExpression
@@ -211,7 +212,13 @@ class TypeAliasUsageReplacementStrategy(val typeAlias: KtTypeAlias) : UsageRepla
 
     private fun inlineIntoType(usage: KtUserType): KtElement? {
         analyze(usage) {
-            val expandedType = usage.getParentOfType<KtTypeReference>(true)?.type?.fullyExpandedType ?: return null
+            val usageTypeReference = usage.getParentOfType<KtTypeReference>(true) ?: return null
+            val parameter = usageTypeReference.parent as? KtParameter
+            val expandedType = if (parameter?.isVarArg == true) {
+                parameter.symbol.returnType.fullyExpandedType
+            } else {
+                usageTypeReference.type.fullyExpandedType
+            }
             val expandedTypeText = expandAliasRenderer().renderToString(expandedType)
             val isFunctionType = expandedType.isFunctionType || expandedType.isSuspendFunctionType
             val nullableType = usage.parent as? KtNullableType

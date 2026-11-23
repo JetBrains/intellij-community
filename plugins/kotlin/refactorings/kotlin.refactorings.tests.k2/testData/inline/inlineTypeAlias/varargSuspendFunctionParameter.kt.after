@@ -1,0 +1,1 @@
+fun takeExtensions(vararg es: suspend String.() -> Int): List<suspend String.() -> Int> = es.toList()

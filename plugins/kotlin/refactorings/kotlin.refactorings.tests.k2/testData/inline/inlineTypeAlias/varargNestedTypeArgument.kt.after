@@ -1,0 +1,1 @@
+fun takeLists(vararg xs: List<String>): List<List<String>> = xs.toList()

@@ -343,6 +343,36 @@ public abstract class KotlinFirInlineTestGenerated extends AbstractKotlinFirInli
         public void testUseSiteVarianceReordered() throws Exception {
             runTest("testData/inline/inlineTypeAlias/useSiteVarianceReordered.kt");
         }
+
+        @TestMetadata("varargArrayParameter.kt")
+        public void testVarargArrayParameter() throws Exception {
+            runTest("testData/inline/inlineTypeAlias/varargArrayParameter.kt");
+        }
+
+        @TestMetadata("varargGenericParameter.kt")
+        public void testVarargGenericParameter() throws Exception {
+            runTest("testData/inline/inlineTypeAlias/varargGenericParameter.kt");
+        }
+
+        @TestMetadata("varargNestedTypeArgument.kt")
+        public void testVarargNestedTypeArgument() throws Exception {
+            runTest("testData/inline/inlineTypeAlias/varargNestedTypeArgument.kt");
+        }
+
+        @TestMetadata("varargNullableParameter.kt")
+        public void testVarargNullableParameter() throws Exception {
+            runTest("testData/inline/inlineTypeAlias/varargNullableParameter.kt");
+        }
+
+        @TestMetadata("varargParameter.kt")
+        public void testVarargParameter() throws Exception {
+            runTest("testData/inline/inlineTypeAlias/varargParameter.kt");
+        }
+
+        @TestMetadata("varargSuspendFunctionParameter.kt")
+        public void testVarargSuspendFunctionParameter() throws Exception {
+            runTest("testData/inline/inlineTypeAlias/varargSuspendFunctionParameter.kt");
+        }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)

@@ -1,0 +1,1 @@
+fun takeStr(vararg ps: String?): List<String?> = ps.toList()

@@ -1,0 +1,3 @@
+fun takeArrays(vararg xs: Array<String>): List<Array<String>> = xs.toList()
+
+fun takeArray(xs: Array<String>): Array<String> = xs
