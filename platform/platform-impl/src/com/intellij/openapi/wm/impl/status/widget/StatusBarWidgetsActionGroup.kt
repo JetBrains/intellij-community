@@ -12,6 +12,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.actionSystem.Separator
+import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
@@ -185,7 +186,10 @@ class StatusBarActionManager(coroutineScope: CoroutineScope) {
 
             val oldAction = actionManager.getAction(actionId)
             if (oldAction == null) {
-              actionManager.registerAction(actionId, ToggleWidgetAction(extension))
+              val action = ToggleWidgetAction(extension)
+              // the actions filter hides the action of a disabled tech by the plugin descriptor of the action
+              action.templatePresentation.putClientProperty(ActionUtil.ACTION_PLUGIN_DESCRIPTOR, pluginDescriptor)
+              actionManager.registerAction(actionId, action)
             }
             else {
               logger<StatusBarWidgetFactory>().debug("Skip $actionId - already registered as $oldAction")
