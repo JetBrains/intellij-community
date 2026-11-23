@@ -902,6 +902,8 @@ object PyTypeUtil {
   /**
    * Keeps only the members of [type] (treated as a union of one or more types) whose truthiness
    * is compatible with [keepTruthy]. Members with undetermined truthiness are always kept.
+   * A `bool` member becomes `Literal[True]` or `Literal[False]`, because only that value has the kept truthiness.
+   * A `bool` member of a weak type, that is a union with Unknown, stays `bool`. The result has the composite kind of [type].
    *
    * Returns:
    *  - `Ref(narrowedType)` with the kept members (the wrapped type may be `null`, meaning unknown);
@@ -920,13 +922,23 @@ object PyTypeUtil {
   ): Ref<PyType?>? {
     if (type == null) return Ref<PyType?>(null)
     val toDrop = if (keepTruthy) ThreeState.NO else ThreeState.YES
-    val members = type.toStream().toList()
-    val kept = members.filter { getTypeTruthiness(it, location, context) != toDrop }
+    val members = type.compositeComponents
+    val isWeak = members.any { it.isUnknown }
+    val kept = members
+      .filter { getTypeTruthiness(it, location, context) != toDrop }
+      .map { if (isWeak) it else narrowBoolByTruthiness(it, keepTruthy, location) }
     return when {
       kept.isEmpty() -> null
-      kept.size == members.size -> Ref<PyType?>(type)
-      else -> Ref(PyUnionType.union(kept))
+      kept == members -> Ref<PyType?>(type)
+      else -> Ref(type.compositeTransform { kept })
     }
+  }
+
+  private fun narrowBoolByTruthiness(type: PyType?, keepTruthy: Boolean, location: PsiElement?): PyType? {
+    if (location == null || type !is PyClassType || type is PyLiteralType || type.isDefinition) return type
+    val boolClass = PyBuiltinCache.getInstance(location).boolType?.pyClass ?: return type
+    if (type.pyClass != boolClass) return type
+    return PyLiteralType.boolLiteral(location, keepTruthy) ?: type
   }
 
   /**
