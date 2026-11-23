@@ -20,6 +20,7 @@ import com.intellij.modcommand.ModTriggerFeatureUsed;
 import com.intellij.modcommand.Presentation;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassOwner;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiEnumConstant;
 import com.intellij.psi.PsiEnumConstantInitializer;
@@ -82,6 +83,9 @@ public final class OverrideImplementMethodsModCommandAction implements ModComman
   }
 
   /**
+   * The target can be in a JVM language other than Java, for example, in Groovy.
+   * A {@link com.intellij.codeInsight.MethodImplementor} of the language generates the methods.
+   *
    * @param target the class or the enum constant to implement the methods in
    * @return the action that implements the methods in {@code target}
    */
@@ -142,7 +146,7 @@ public final class OverrideImplementMethodsModCommandAction implements ModComman
   private @Nullable Target findTarget(@NotNull ActionContext context) {
     if (myTarget != null) {
       PsiElement element = myTarget.getElement();
-      if (element == null || !(element.getContainingFile() instanceof PsiJavaFile) || !BaseIntentionAction.canModify(element)) return null;
+      if (element == null || !(element.getContainingFile() instanceof PsiClassOwner) || !BaseIntentionAction.canModify(element)) return null;
       Target target = element instanceof PsiEnumConstant constant ? enumConstantTarget(constant) :
                       element instanceof PsiClass psiClass ? classTarget(psiClass) :
                       null;

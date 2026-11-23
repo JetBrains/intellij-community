@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.overriding;
 
+import com.intellij.codeInsight.generation.OverrideImplementMethodsModCommandAction;
 import com.intellij.codeInsight.generation.OverrideImplementUtil;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
@@ -272,6 +273,43 @@ public class GroovyOverrideImplementTest {
                               
                                   }
                               
+                                  @Override
+                                  Object getBar() {
+                                      return null
+                                  }
+                              }
+                              """);
+    });
+  }
+
+  @Test
+  public void test_implement_mod_command_action() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    myFixture.addFileToProject("T.groovy", """
+      trait T {
+        abstract foo
+        abstract final bar
+      }
+      """);
+    myFixture.configureByText("classes.groovy", """
+      class <caret>A implements T {
+      }
+      """);
+    EdtTestUtil.runInEdtAndWait(() -> {
+      GrTypeDefinition clazz = (GrTypeDefinition)((PsiClassOwner)myFixture.getFile()).getClasses()[0];
+      myFixture.launchAction(OverrideImplementMethodsModCommandAction.implement(clazz).asIntention());
+      myFixture.checkResult("""
+                              class A implements T {
+                                  @Override
+                                  Object getFoo() {
+                                      return null
+                                  }
+
+                                  @Override
+                                  void setFoo(Object foo) {
+
+                                  }
+
                                   @Override
                                   Object getBar() {
                                       return null
