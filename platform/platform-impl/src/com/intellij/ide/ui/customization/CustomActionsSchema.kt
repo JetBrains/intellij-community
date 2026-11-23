@@ -35,8 +35,12 @@ import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.text.NaturalComparator
 import com.intellij.openapi.wm.ex.WindowManagerEx
 import com.intellij.platform.icons.IconDescriptor
+import com.intellij.platform.icons.design.dp
 import com.intellij.platform.icons.imageFileIconDescriptor
 import com.intellij.platform.icons.imageUrlIconDescriptor
+import com.intellij.platform.icons.modifiers.IconModifier
+import com.intellij.platform.icons.modifiers.scale
+import com.intellij.platform.icons.scale.fitArea
 import com.intellij.ui.ExperimentalUI
 import com.intellij.util.IconUtil
 import com.intellij.util.SmartList
@@ -53,6 +57,7 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.io.File
 import java.io.FileNotFoundException
+import java.io.IOException
 import java.net.MalformedURLException
 import java.net.URI
 import java.net.URISyntaxException
@@ -61,6 +66,7 @@ import java.nio.file.Files
 import java.nio.file.InvalidPathException
 import java.nio.file.Path
 import java.util.Collections
+import java.util.zip.ZipFile
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.CopyOnWriteArrayList
 import javax.swing.Icon
@@ -687,21 +693,17 @@ private fun doLoadCustomIcon(urlString: String): Icon {
 
 /**
  * Descriptor counterpart of [loadCustomIcon]: the icon at [path], a file path or a `file:` or `jar:` URL, for the icons
- * API to load. The image itself is not loaded here.
+ * API to load. The image itself is not loaded here. Like [doLoadCustomIcon], an image larger than 18x18 is fitted into
+ * that size when it is rendered, and a smaller one keeps its size.
  *
- * @return `null` when [path] is none of these, or, like [loadCustomIcon], when the file does not exist (anymore), so
- * that the action keeps its declared icon; whether a `jar:` resource exists is only known when it is rendered
+ * @return `null` when [path] is none of these, or, like [loadCustomIcon], when the file or the entry of a `jar:` URL does
+ * not exist (anymore), so that the action keeps its declared icon
  */
 private fun getCustomIconDescriptor(path: String): IconDescriptor? {
   val (adjustedUrl, rawUrl) = getCustomIconUrls(path)
   // Like loadCustomIcon, prefer the file without the '_dark' and '@2x' suffixes, so that the variant for the current
-  // scale and UI theme is chosen, unless only the file chosen by the user exists. Whether an entry of a jar: URL exists
-  // is not known here, so a jar: URL keeps the file chosen by the user.
-  val url = when {
-    rawUrl.startsWith("jar:") -> rawUrl
-    rawUrl != adjustedUrl && isMissingCustomIconFile(adjustedUrl) -> rawUrl
-    else -> adjustedUrl
-  }
+  // scale and UI theme is chosen, unless only the file chosen by the user exists. For a jar: URL, the entry is checked.
+  val url = if (rawUrl != adjustedUrl && isMissingCustomIconFile(adjustedUrl)) rawUrl else adjustedUrl
   if (isMissingCustomIconFile(url)) {
     LOG.info("Failed to find icon by URL: $url")
     return null
@@ -709,8 +711,8 @@ private fun getCustomIconDescriptor(path: String): IconDescriptor? {
   return try {
     when {
       // a stored jar: URL can have unescaped characters, such as spaces: the URI constructor escapes them
-      url.startsWith("jar:") -> imageUrlIconDescriptor(URI("jar", URLUtil.unescapePercentSequences(url.removePrefix("jar:")), null))
-      else -> imageFileIconDescriptor(customIconFile(url))
+      url.startsWith("jar:") -> imageUrlIconDescriptor(URI("jar", URLUtil.unescapePercentSequences(url.removePrefix("jar:")), null), CUSTOM_ICON_FIT)
+      else -> imageFileIconDescriptor(customIconFile(url), CUSTOM_ICON_FIT)
     }
   }
   catch (e: IllegalArgumentException) {
@@ -726,6 +728,13 @@ private fun getCustomIconDescriptor(path: String): IconDescriptor? {
     null
   }
 }
+
+/** The largest size of a custom action icon, see [doLoadCustomIcon]. */
+private const val CUSTOM_ICON_MAX_SIZE = 18
+
+/** Fits a custom icon larger than [CUSTOM_ICON_MAX_SIZE] into that size; a smaller one keeps its size. */
+private val CUSTOM_ICON_FIT: IconModifier
+  get() = IconModifier.scale(fitArea(CUSTOM_ICON_MAX_SIZE.dp, CUSTOM_ICON_MAX_SIZE.dp, upscale = false))
 
 /**
  * The file of a custom icon at [urlString], a file path or a `file:` URL. Like [doLoadCustomIcon], a `file:` URL can have
@@ -757,12 +766,11 @@ private fun Char.isPathSeparator(): Boolean = this == '/' || this == '\\'
 
 /**
  * Whether the custom icon file at [urlString] does not exist. A [urlString] that is not a valid file path or `file:` URL
- * is missing too. Whether a `jar:` resource exists is only known when it is rendered.
+ * is missing too. For a `jar:` URL, it is the entry in the archive, see [isMissingJarEntry].
  */
 private fun isMissingCustomIconFile(urlString: String): Boolean {
-  if (urlString.startsWith("jar:")) return false
   return try {
-    Files.notExists(customIconFile(urlString))
+    if (urlString.startsWith("jar:")) isMissingJarEntry(urlString) else Files.notExists(customIconFile(urlString))
   }
   catch (e: InvalidPathException) {
     LOG.info("Invalid custom icon path: $urlString: ${e.message}")
@@ -776,6 +784,23 @@ private fun isMissingCustomIconFile(urlString: String): Boolean {
     LOG.info(e.message)
     true
   }
+  catch (e: IOException) {
+    LOG.info("Cannot read the custom icon archive: $urlString: ${e.message}")
+    true
+  }
+}
+
+/**
+ * Whether the entry of the `jar:` URL [urlString], as `jar:file:/icons.jar!/icon.svg`, is missing from its archive. The
+ * archive is a `file:` URL, checked like the file of a custom icon, see [customIconFile].
+ */
+private fun isMissingJarEntry(urlString: String): Boolean {
+  val separator = urlString.indexOf("!/")
+  if (separator < 0) return true
+  val archive = customIconFile(urlString.substring("jar:".length, separator))
+  if (Files.notExists(archive)) return true
+  val entry = URLUtil.unescapePercentSequences(urlString.substring(separator + "!/".length))
+  return ZipFile(archive.toFile()).use { it.getEntry(entry) == null }
 }
 
 internal fun getIconForPath(actionSupplier: (String) -> AnAction?, iconPath: String): Icon? {

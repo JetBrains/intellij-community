@@ -2,6 +2,7 @@
 package com.intellij.platform.icons.impl.intellij
 
 import com.intellij.platform.icons.IconDescriptor
+import com.intellij.platform.icons.design.sRGB
 import com.intellij.platform.icons.IconManager
 import com.intellij.platform.icons.ImageResourceLocation
 import com.intellij.platform.icons.iconDescriptor
@@ -12,6 +13,9 @@ import com.intellij.platform.icons.impl.DefaultLayeredIconDescriptor
 import com.intellij.platform.icons.impl.FileImageResourceLocation
 import com.intellij.platform.icons.impl.UrlImageResourceLocation
 import com.intellij.platform.icons.impl.layers.ImageIconLayer
+import com.intellij.platform.icons.modifiers.IconModifier
+import com.intellij.platform.icons.modifiers.stroke
+import com.intellij.platform.icons.scale.factor
 import com.intellij.platform.icons.swing.createSwingIcon
 import com.intellij.testFramework.junit5.TestApplication
 import java.awt.image.BufferedImage
@@ -20,7 +24,11 @@ import kotlinx.serialization.json.Json
 import java.net.URI
 import java.nio.file.Files
 import java.nio.file.Path
+import java.util.zip.ZipEntry
+import java.util.zip.ZipOutputStream
+import org.junit.jupiter.api.Assertions.assertArrayEquals
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Assumptions.assumeTrue
 import org.junit.jupiter.api.BeforeEach
@@ -141,6 +149,26 @@ class UrlImageResourceTest {
   }
 
   @Test
+  fun `a stroked image in a jar at a three-slash URL is drawn from its stroke variant`() {
+    // a green square, and a stroke variant of another shape: the shape tells which entry was drawn
+    val jar = jar("icons.jar",
+                  "run.svg" to """<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"><rect width="16" height="16" fill="#00FF00"/></svg>""",
+                  "run_stroke.svg" to """<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"><rect width="6" height="6" fill="#000000"/></svg>""")
+    // `Path.toUri` gives `file:///` on every OS
+    val base = URI("jar:${jar.toUri()}!/run.svg")
+    val variant = URI("jar:${jar.toUri()}!/run_stroke.svg")
+    assertTrue(base.toString().startsWith("jar:file:///"), base.toString())
+    val stroke = IconModifier.stroke(sRGB("#FF0000"))
+
+    val stroked = pixels(render(imageUrlIconDescriptor(base, stroke)))
+
+    assertArrayEquals(pixels(render(imageUrlIconDescriptor(variant, stroke))).toIntArray(), stroked.toIntArray(),
+                      "the stroke variant must be drawn")
+    assertFalse(pixels(render(imageUrlIconDescriptor(base))) == pixels(render(imageUrlIconDescriptor(variant))),
+                "precondition: the base entry and the stroke variant look different")
+  }
+
+  @Test
   fun `network URLs are rejected`() {
     for (url in NETWORK_URLS) {
       assertThrows<IllegalArgumentException>("$url must be rejected") { imageUrlIconDescriptor(URI(url)) }
@@ -177,9 +205,41 @@ class UrlImageResourceTest {
     }
   }
 
+  @Test
+  fun `an image file has size variants next to it`() {
+    val file = redSquare()
+    Files.writeString(dir.resolve("red@20x20.svg"), BLUE_SQUARE_20)
+
+    val image = render(imageFileIconDescriptor(file), factor = 1.25f)
+
+    assertEquals(20 * 20, countBlue(image), "the 20x20 variant must be drawn")
+    assertEquals(16 * 16, countRed(render(imageFileIconDescriptor(file))), "the base is drawn at its own size")
+  }
+
+  @Test
+  fun `an image in a jar has size variants next to it`() {
+    val jar = jar("icons.jar", "red.svg" to RED_SQUARE_16, "red@20x20.svg" to BLUE_SQUARE_20)
+
+    val image = render(imageUrlIconDescriptor(URI("jar:${jar.toUri()}!/red.svg")), factor = 1.25f)
+
+    assertEquals(20 * 20, countBlue(image), "the 20x20 variant must be drawn")
+  }
+
   private fun redSquare(folder: Path = dir): Path {
     val file = folder.resolve("red.svg")
-    Files.writeString(file, """<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"><rect width="16" height="16" fill="#FF0000"/></svg>""")
+    Files.writeString(file, RED_SQUARE_16)
+    return file
+  }
+
+  private fun jar(name: String, vararg entries: Pair<String, String>): Path {
+    val file = dir.resolve(name)
+    ZipOutputStream(Files.newOutputStream(file)).use { zip ->
+      for ((entry, text) in entries) {
+        zip.putNextEntry(ZipEntry(entry))
+        zip.write(text.toByteArray())
+        zip.closeEntry()
+      }
+    }
     return file
   }
 
@@ -188,8 +248,8 @@ class UrlImageResourceTest {
     return layer.loader
   }
 
-  private fun render(descriptor: IconDescriptor): BufferedImage {
-    val swingIcon = descriptor.createSwingIcon()
+  private fun render(descriptor: IconDescriptor, factor: Float = 1f): BufferedImage {
+    val swingIcon = descriptor.createSwingIcon().let { if (factor == 1f) it else it.scaled(factor(factor)) }
     val image = BufferedImage(swingIcon.iconWidth, swingIcon.iconHeight, BufferedImage.TYPE_INT_ARGB)
     val g = image.createGraphics()
     try {
@@ -205,11 +265,16 @@ class UrlImageResourceTest {
 
   private fun countRed(image: BufferedImage): Int = pixels(image).count { it == 0xFFFF0000.toInt() }
 
+  private fun countBlue(image: BufferedImage): Int = pixels(image).count { it == 0xFF0000FF.toInt() }
+
   private fun pixels(image: BufferedImage): List<Int> =
     (0 until image.height).flatMap { y -> (0 until image.width).map { x -> image.getRGB(x, y) } }
 }
 
 /** Locations on the network, also inside a remote archive. */
+private const val RED_SQUARE_16 = """<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"><rect width="16" height="16" fill="#FF0000"/></svg>"""
+private const val BLUE_SQUARE_20 = """<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20"><rect width="20" height="20" fill="#0000FF"/></svg>"""
+
 private val NETWORK_URLS = listOf(
   "https://example.com/icon.svg",
   "http://example.com/icon.svg",

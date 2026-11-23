@@ -24,18 +24,33 @@ open class DefaultDeferredIconDescriptor(
 ) : DeferredIconDescriptor {
     @Transient private val listeners = mutableListOf<WeakReference<DeferredIconEventHandler>>()
 
+    /**
+     * The resolved icon, once [markDone] was called. A listener that is added later, for example the renderer of a new
+     * icon for this descriptor, gets it at once: the [placeholder] is gone by then.
+     */
+    @Transient private var resolved: IconDescriptor? = null
+
     @ApiStatus.Internal
     fun addDoneListener(listener: DeferredIconEventHandler) {
-        listeners.add(WeakReference(listener))
+        val resolvedIconDescriptor = synchronized(listeners) {
+            resolved ?: run {
+                listeners.add(WeakReference(listener))
+                return
+            }
+        }
+        listener.whenDone(this, resolvedIconDescriptor)
     }
 
     @ApiStatus.Internal
     fun markDone(resolvedIconDescriptor: IconDescriptor) {
-        this.placeholder = null
-        for (listener in listeners) {
-            listener.get()?.whenDone(this, resolvedIconDescriptor)
+        val toNotify = synchronized(listeners) {
+            this.placeholder = null
+            resolved = resolvedIconDescriptor
+            listeners.mapNotNull { it.get() }.also { listeners.clear() }
         }
-        listeners.clear()
+        for (listener in toNotify) {
+            listener.whenDone(this, resolvedIconDescriptor)
+        }
     }
 }
 

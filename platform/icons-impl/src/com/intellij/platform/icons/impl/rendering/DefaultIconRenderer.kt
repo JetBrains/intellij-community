@@ -44,6 +44,10 @@ class DefaultIconRenderer(val iconInstance: DefaultLayeredIconDescriptor, privat
 
     internal fun consumedSpace(): CompoundDimensions = layers().maxCompoundSize { it.layout.consumedSpace() }
 
+    /** The current layer renderers. A theme change creates them again, see `NestedIconLayerRenderer.layout`. */
+    internal val layerRenderersForLayout: Any
+        get() = layers()
+
     override fun calculateUsedDimensions(scaling: ScalingContext): Dimensions = usedDimensions(layers(), scaling)
 
     private fun usedDimensions(renderers: List<IconLayerRenderer>, scaling: ScalingContext): Dimensions {

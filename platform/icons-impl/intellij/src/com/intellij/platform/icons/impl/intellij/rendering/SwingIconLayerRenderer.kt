@@ -8,6 +8,7 @@ import com.intellij.openapi.application.UI
 import com.intellij.openapi.application.asContextElement
 import com.intellij.ui.DeferredIcon
 import com.intellij.ui.DeferredIconListener
+import com.intellij.ui.scale.JBUIScale
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
@@ -31,11 +32,28 @@ class SwingIconLayerRenderer(
   private val deferredIcon = layer.legacyIcon as? DeferredIcon?
   private var isDone = deferredIcon?.isDone ?: false
   override var image: ImageResource = createImageResource()
+
+  /** The IDE zoom of [layout]. The size of a legacy icon can be fixed, so its design size depends on the zoom. */
+  private var layoutZoom = JBUIScale.scale(1f)
+
   override var layout: LayerLayout = applyLayout(image)
+    get() {
+      refreshForZoom()
+      return field
+    }
+
+  private fun refreshForZoom() {
+    val zoom = JBUIScale.scale(1f)
+    if (zoom == layoutZoom) return
+    layoutZoom = zoom
+    image = createImageResource()
+    layout = applyLayout(image)
+  }
   private val isPending = AtomicBoolean(false)
 
   override fun render(paintingContext: LayerPaintingContext) {
     checkForUpdatesIfNeeded()
+    refreshForZoom()
     super.render(paintingContext)
   }
 

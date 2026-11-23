@@ -91,7 +91,7 @@ object WelcomeUtils {
       return object : Icon {
         private val icon = AllIcons.General.Home
 
-        override fun paintIcon(c: Component, g: Graphics, x: Int, y: Int) {
+        override fun paintIcon(c: Component?, g: Graphics, x: Int, y: Int) {
           icon.paintIcon(c, g, x, y - JBUI.scale(1))
         }
 

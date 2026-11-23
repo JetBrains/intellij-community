@@ -12,15 +12,24 @@ import com.intellij.openapi.actionSystem.visiblePixels
 import com.intellij.openapi.actionSystem.withDarkTheme
 import com.intellij.openapi.util.IconLoader
 import com.intellij.platform.icons.IconDescriptor
+import com.intellij.platform.icons.design.dp
+import com.intellij.platform.icons.imageFileIconDescriptor
 import com.intellij.platform.icons.imageIconDescriptor
 import com.intellij.platform.icons.impl.intellij.IntelliJIconManager
+import com.intellij.platform.icons.modifiers.IconModifier
+import com.intellij.platform.icons.modifiers.scale
+import com.intellij.platform.icons.scale.fitArea
 import com.intellij.platform.icons.swing.createSwingIcon
 import com.intellij.testFramework.junit5.RegistryKey
 import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.ui.scale.JBUIScale
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.io.TempDir
 import java.awt.image.BufferedImage
+import java.nio.file.Files
+import java.nio.file.Path
 import kotlin.test.assertEquals
 import kotlin.test.assertNotEquals
 import kotlin.test.assertNotNull
@@ -55,6 +64,19 @@ class ActionIconDescriptorsTest {
     presentation.iconDescriptor = descriptor
 
     assertSame(descriptor, ActionIconDescriptors.effective(presentation))
+  }
+
+  @Test
+  fun `the disabled variant of an oversized custom icon keeps the fitted size`(@TempDir dir: Path) {
+    val file = dir.resolve("custom36.svg")
+    Files.writeString(file, """<svg xmlns="http://www.w3.org/2000/svg" width="36" height="36"><rect width="36" height="36" fill="#FF0000"/></svg>""")
+    // as CustomActionsSchema fits a custom icon of any size
+    val custom = imageFileIconDescriptor(file, IconModifier.scale(fitArea(18.dp, 18.dp, upscale = false)))
+
+    val disabled = ActionIconDescriptors.disabled(custom).createSwingIcon()
+
+    assertEquals(JBUIScale.scale(18), disabled.iconWidth)
+    assertEquals(JBUIScale.scale(18), disabled.iconHeight)
   }
 
   @Test

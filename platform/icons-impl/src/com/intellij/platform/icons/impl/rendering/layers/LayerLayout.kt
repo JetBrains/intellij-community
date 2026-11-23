@@ -136,6 +136,13 @@ class Placement(val bounds: Bounds, val scale: Float = 1f)
 
 private fun IconScale?.applyTo(dimensions: CompoundDimensions): CompoundDimensions {
     return when (this) {
+        // a limited fit only resizes content beyond the limit, which needs pixels to tell: fit when the scale is known
+        is FitAreaScale if !upscale || !downscale -> {
+            CompoundDimensions(
+                CompoundSize(DeferredFit(dimensions.width, dimensions.height, this, isWidth = true)),
+                CompoundSize(DeferredFit(dimensions.width, dimensions.height, this, isWidth = false)),
+            )
+        }
         is FitAreaScale -> {
             CompoundDimensions(width.compoundSize(), height.compoundSize())
         }
@@ -152,6 +159,12 @@ private fun IconScale?.applyTo(dimensions: CompoundDimensions): CompoundDimensio
 private fun IconScale?.applyTo(dimensions: CompoundDimensions, density: Float, contextScale: Float = 1f): Dimensions {
     val scaling = DefaultScalingContext(density, if (isRelative()) contextScale else 1f)
     if (this == null) return dimensions.asPixels(scaling)
+    if (this is FitAreaScale && (!upscale || !downscale)) {
+        // the area is a limit: the content keeps its own size unless the limit resizes it
+        val content = dimensions.asPixels(DefaultScalingContext(density, contextScale))
+        val factor = toFactor(density, content.width, content.height, contextScale)
+        return Dimensions((content.width * factor).roundToInt(), (content.height * factor).roundToInt())
+    }
     return applyTo(dimensions).asPixels(scaling)
 }
 
@@ -185,24 +198,58 @@ class CompoundSize(
     val pickMaxSet: List<CompoundSize> = emptyList(),
     val multiplier: Float = 1f,
 ) {
+    /** A size that a limited fit computes when the scale is known, see [DeferredFit]. */
+    private var deferredFit: DeferredFit? = null
+
+    internal constructor(deferredFit: DeferredFit) : this(DefaultPixel(0), DefaultDisplayPoint(0.0)) {
+        this.deferredFit = deferredFit
+    }
+
     operator fun plus(other: CompoundSize): CompoundSize =
-        if (other.pickMaxSet.isNotEmpty() || multiplier != 1f || other.multiplier != 1f) {
+        if (
+            other.pickMaxSet.isNotEmpty() ||
+                multiplier != 1f ||
+                other.multiplier != 1f ||
+                deferredFit != null ||
+                other.deferredFit != null
+        ) {
             CompoundSize(0.px, 0.dp, listOf(this, other))
         } else {
             CompoundSize(pixels + other.pixels, dp + other.dp, nestedCompounds + other.nestedCompounds)
         }
 
     operator fun times(other: Float): CompoundSize =
-        CompoundSize(pixels, dp, nestedCompounds, pickMaxSet, multiplier * other)
+        if (deferredFit != null) CompoundSize(0.px, 0.dp, listOf(this), emptyList(), other)
+        else CompoundSize(pixels, dp, nestedCompounds, pickMaxSet, multiplier * other)
 
-    operator fun times(other: Double): CompoundSize =
-        CompoundSize(pixels, dp, nestedCompounds, pickMaxSet, multiplier * other.toFloat())
+    operator fun times(other: Double): CompoundSize = times(other.toFloat())
 
     fun asPixels(scaling: ScalingContext, scale: Float = 1f): Int {
+        deferredFit?.let {
+            return it.asPixels(scaling, scale)
+        }
         val nested = nestedCompounds.sumOf { it.asPixels(scaling, scale) }
         val maxed = pickMaxSet.maxOfOrNull { it.asPixels(scaling, scale) } ?: 0
         return ((pixels.asPixels(scaling, scale) + dp.asPixels(scaling, scale) + nested + maxed) * multiplier)
             .roundToInt()
+    }
+}
+
+/**
+ * One side of the content of [contentWidth] x [contentHeight] fitted by the limited [fit]. The factor of [fit] needs both
+ * sides in pixels, so it is computed only when the scale is known.
+ */
+internal class DeferredFit(
+    private val contentWidth: CompoundSize,
+    private val contentHeight: CompoundSize,
+    private val fit: FitAreaScale,
+    private val isWidth: Boolean,
+) {
+    fun asPixels(scaling: ScalingContext, scale: Float): Int {
+        val width = contentWidth.asPixels(scaling)
+        val height = contentHeight.asPixels(scaling)
+        val factor = fit.toFactor(scaling.displayDensity, width, height, scaling.contextScale)
+        return ((if (isWidth) width else height) * factor * scale).roundToInt()
     }
 }
 

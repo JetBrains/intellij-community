@@ -4,8 +4,10 @@ package com.intellij.platform.icons.impl.intellij.rendering
 import com.intellij.platform.icons.design.Color
 import com.intellij.platform.icons.design.px
 import com.intellij.platform.icons.filters.ColorFilter
+import com.intellij.platform.icons.impl.intellij.rendering.images.IntelliJImageResource
 import com.intellij.platform.icons.impl.intellij.rendering.images.awtImage
 import com.intellij.platform.icons.impl.rendering.DefaultScalingContext
+import com.intellij.platform.icons.impl.rendering.SizeVariants
 import com.intellij.platform.icons.rendering.BitmapImageResource
 import com.intellij.platform.icons.rendering.DrawMode
 import com.intellij.platform.icons.rendering.ImageResource
@@ -147,7 +149,13 @@ class SwingLayerPaintingContext(
     val realWidth = (width ?: image.width)
     val realHeight = (height ?: image.height)
     if (realWidth == null || realHeight == null) return
-    val swingImage = image.scale(scaling.displayDensity, fitArea(realWidth.px, realHeight.px))
+    val fit = fitArea(realWidth.px, realHeight.px)
+    val swingImage = if (image is IntelliJImageResource) {
+      image.scale(scaling.displayDensity, fit, c, SizeVariants.paintedSize(image.width, image.height, realWidth, realHeight, scaling))
+    }
+    else {
+      image.scale(scaling.displayDensity, fit)
+    }
     drawImage(swingImage, x, y, width, height, srcX, srcY, srcWidth, srcHeight, alpha, colorFilter)
   }
 
