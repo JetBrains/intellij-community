@@ -301,9 +301,8 @@ public final class MemoryUsagePanel implements CustomStatusBarWidget, Activatabl
         }
 
         this.memoryDisplay = new MemoryStats(usedMem, allocatedMem, maxMem);
+        repaint();
       }
-
-      repaint();
     }
   }
 
