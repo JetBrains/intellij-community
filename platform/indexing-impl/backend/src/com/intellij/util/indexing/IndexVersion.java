@@ -25,7 +25,7 @@ import java.nio.file.Path;
 
 @ApiStatus.Internal
 public final class IndexVersion {
-  private static final int BASE_VERSION = 15;
+  private static final int BASE_VERSION = 16;
   private static final IndexVersion NON_EXISTING_INDEX_VERSION = new IndexVersion(0, -1, -1);
   private static final int MIN_FS_MODIFIED_TIMESTAMP_RESOLUTION = 2000; // https://en.wikipedia.org/wiki/File_Allocation_Table,
   // 1s for ext3 / hfs+ http://unix.stackexchange.com/questions/11599/determine-file-system-timestamp-accuracy
