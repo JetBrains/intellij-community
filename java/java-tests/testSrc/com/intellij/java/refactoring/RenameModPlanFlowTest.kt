@@ -244,6 +244,7 @@ class RenameModPlanFlowTest : LightJavaCodeInsightFixtureTestCase() {
         project: Project,
         refactoring: ModPlanRefactoring,
         targets: Array<out UsageTarget>,
+        targetsNodeText: String,
         plan: ModPlan.AcceptedPlan,
         nonCodeUsages: Array<UsageInfo>,
         proceed: (previewAgain: Boolean, excludedUsages: Set<SmartPsiFileRange>) -> Unit,

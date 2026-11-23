@@ -3,6 +3,7 @@ package com.intellij.refactoring.modplan.impl
 
 import com.intellij.find.findUsages.PsiElement2UsageTargetAdapter
 import com.intellij.ide.DataManager
+import com.intellij.navigation.NavigationItem
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.project.Project
@@ -35,12 +36,13 @@ import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.util.containers.MultiMap
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.VisibleForTesting
 
 /**
- * The interactive flow of a refactoring on the ModPlan engine, in the steps of the legacy flow: the questions, the search for usages, the
- * conflicts and the write. It is the same for every [ModPlanRefactoring]; its UI is [ModPlanFlowUi], and the questions are the steps of the
- * chain of the refactoring, which [ModPlanUiInterpreter] asks, see [run].
+ * The interactive flow of [refactoring] on the ModPlan engine, in the steps of the legacy flow: the questions, the search for usages, the
+ * conflicts and the write. Its UI is [ModPlanFlowUi], and the questions are the steps of the chain of the refactoring, which
+ * [ModPlanUiInterpreter] asks, see [run]. A subclass changes a step for its refactoring with a protected hook, such as [previewTargets].
  *
  * The questions and the search for usages run in a background read action under a modal progress that the user can cancel, as in the
  * legacy flow, and a write action restarts them. Everything that PSI gives to the EDT is read there, so the EDT only shows and writes: the
@@ -61,7 +63,7 @@ import org.jetbrains.annotations.VisibleForTesting
  * the usages again.
  */
 @ApiStatus.Internal
-object ModPlanFlow {
+open class ModPlanFlow(protected val refactoring: ModPlanRefactoring) {
   enum class Result {
     /** The legacy flow has to run, also after the questions, see the KDoc of [ModPlanFlow]. */
     LEGACY,
@@ -80,6 +82,13 @@ object ModPlanFlow {
   }
 
   /**
+   * The targets of the preview and the text of their node.
+   *
+   * @property elements the targets; an element that is not a navigation item is shown by its navigation element
+   */
+  class PreviewTargets(val elements: List<PsiElement>, val nodeText: @Nls String)
+
+  /**
    * Runs [refactoring] for [request] if the flow handles it.
    *
    * @param interactive whether the user is asked: the questions of the chain, each where the chain needs its answer. Otherwise the options
@@ -87,7 +96,7 @@ object ModPlanFlow {
    * @param onApplied runs after the write, on the EDT
    */
   @RequiresEdt
-  fun run(refactoring: ModPlanRefactoring, request: ModPlanRequest, interactive: Boolean, onApplied: () -> Unit): Result {
+  fun run(request: ModPlanRequest, interactive: Boolean, onApplied: () -> Unit): Result {
     val project = request.project()
     val ui = ModPlanFlowUi.getInstance()
     // An element in a jar, a binary or a compiled file is not supported, so what is left to check before the questions is that the
@@ -97,10 +106,15 @@ object ModPlanFlow {
     } ?: return Result.LEGACY
     if (!ReadonlyStatusHandler.ensureFilesWritable(project, *askedFiles.toTypedArray())) return Result.CANCELLED
 
-    val run = FlowRun(refactoring, request, interactive, ui, askedFiles, onApplied)
+    val run = FlowRun(request, interactive, ui, askedFiles, onApplied)
     val planned = run.plan(request) ?: return Result.CANCELLED
     return run.proceed(planned, confirm = true)
   }
+
+  /** The targets of the preview of [plan]. By default, the subjects of [request] with [ModPlanRefactoring.targetsNodeText]. */
+  @RequiresReadLock
+  protected open fun previewTargets(plan: ModPlan.AcceptedPlan, request: ModPlanRequest): PreviewTargets =
+    PreviewTargets(targetsOf(request).orEmpty(), refactoring.targetsNodeText())
 
   /**
    * The plan, and everything of it that the EDT shows, read in the read action that made the plan. It holds no [PsiElement]: the elements
@@ -110,7 +124,8 @@ object ModPlanFlow {
     class Refused(val refusedPlan: ModPlan.RefusedPlan) : Planned
 
     /**
-     * @property targets the targets of the request, for the preview
+     * @property targets the targets of the preview, see [previewTargets]
+     * @property targetsNodeText the text of the node of [targets]
      * @property conflicts the messages of the conflicts by the element they are about, if the user has to confirm them
      * @property nonCodeUsages the non-code usages of the preview
      * @property files the files that must be writable for the plan, see
@@ -119,30 +134,34 @@ object ModPlanFlow {
     class Ready(
       val plan: ModPlan.AcceptedPlan,
       val targets: Array<out UsageTarget>,
+      val targetsNodeText: @Nls String,
       val conflicts: MultiMap<SmartPsiElementPointer<PsiElement>, String>?,
       val nonCodeUsages: Array<UsageInfo>,
       val files: List<VirtualFile>,
     ) : Planned
+  }
 
-    companion object {
-      @RequiresReadLock
-      fun of(plan: ModPlan, project: Project, request: ModPlanRequest): Planned {
-        val acceptedPlan = when (plan) {
-          is ModPlan.RefusedPlan -> return Refused(plan)
-          is ModPlan.AcceptedPlan -> plan
-        }
-        val targets = targetsOf(request).orEmpty()
-        val conflicts = if (acceptedPlan.conflicts.needsConfirmation()) {
-          conflictsOf(targets.firstOrNull(), acceptedPlan)
-        }
-        else {
-          null
-        }
-        val files = acceptedPlan.execution.writtenFilesAndDirectories
-        return Ready(acceptedPlan, PsiElement2UsageTargetAdapter.convert(targets.toTypedArray(), true), conflicts,
-                     nonCodeUsages(acceptedPlan), files)
-      }
+  /** @return [plan] and everything of it that the EDT shows */
+  @RequiresReadLock
+  private fun planned(plan: ModPlan, request: ModPlanRequest): Planned {
+    val acceptedPlan = when (plan) {
+      is ModPlan.RefusedPlan -> return Planned.Refused(plan)
+      is ModPlan.AcceptedPlan -> plan
     }
+    val conflicts = if (acceptedPlan.conflicts.needsConfirmation()) {
+      conflictsOf(targetsOf(request)?.firstOrNull(), acceptedPlan)
+    }
+    else {
+      null
+    }
+    val files = acceptedPlan.execution.writtenFilesAndDirectories
+    val previewTargets = previewTargets(acceptedPlan, request)
+    // A target can be a wrapper that is not a navigation item, such as a Kotlin function with its base functions.
+    val usageTargets = previewTargets.elements.mapNotNull { target ->
+      (if (target is NavigationItem) target else target.navigationElement).takeIf { it is NavigationItem }
+    }
+    return Planned.Ready(acceptedPlan, PsiElement2UsageTargetAdapter.convert(usageTargets.toTypedArray(), true), previewTargets.nodeText,
+                         conflicts, nonCodeUsages(acceptedPlan), files)
   }
 
   /**
@@ -150,8 +169,7 @@ object ModPlanFlow {
    *
    * @property askedFiles the files that the user already made writable, which are not asked again
    */
-  private class FlowRun(
-    val refactoring: ModPlanRefactoring,
+  private inner class FlowRun(
     val request: ModPlanRequest,
     val interactive: Boolean,
     val ui: ModPlanFlowUi,
@@ -170,13 +188,13 @@ object ModPlanFlow {
     fun plan(answeredRequest: ModPlanRequest): PlannedRun? {
       val title = refactoring.title()
       if (!interactive) {
-        val planned = inBackground(project, title) { Planned.of(refactoring.plan(answeredRequest), project, request) } ?: return null
+        val planned = inBackground(project, title) { planned(refactoring.plan(answeredRequest), request) } ?: return null
         return PlannedRun(planned, answeredRequest.optionValues(), ModPlanFinalStep { refactoring.plan(it) })
       }
       val finished = ModPlanUiInterpreter.getInstance().interpret(title, answeredRequest, refactoring::chain) ?: return null
       // The step of the plan runs here, after every question: the search and the edits that the user waits for.
       val searchStart = System.currentTimeMillis()
-      val planned = inBackground(project, title) { Planned.of(finished.value.run(ModPlanChain.withOptionValues(request, finished.answers)), project, request) }
+      val planned = inBackground(project, title) { planned(finished.value.run(ModPlanChain.withOptionValues(request, finished.answers)), request) }
       RefactoringUsageCollector.USAGES_SEARCHED.log(refactoring.javaClass, planned == null, System.currentTimeMillis() - searchStart)
       return PlannedRun(planned ?: return null, finished.answers, finished.value)
     }
@@ -253,7 +271,8 @@ object ModPlanFlow {
     private fun previewNonCodeUsages(plannedRun: PlannedRun, readyOutcome: Planned.Ready): Boolean {
       if (readyOutcome.conflicts != null) return false
       val commandName = readyOutcome.plan.execution.commandName
-      return ui.previewNonCodeUsages(project, refactoring, commandName, readyOutcome.targets, readyOutcome.nonCodeUsages) { previewAgain ->
+      return ui.previewNonCodeUsages(project, refactoring, commandName, readyOutcome.targets, readyOutcome.targetsNodeText,
+                                     readyOutcome.nonCodeUsages) { previewAgain ->
         if (previewAgain) {
           planAgain(plannedRun.answers)
         }
@@ -273,7 +292,7 @@ object ModPlanFlow {
      */
     @RequiresEdt
     private fun previewUsages(plannedRun: PlannedRun, readyOutcome: Planned.Ready): Boolean {
-      return ui.previewUsages(project, refactoring, readyOutcome.targets, readyOutcome.plan,
+      return ui.previewUsages(project, refactoring, readyOutcome.targets, readyOutcome.targetsNodeText, readyOutcome.plan,
                               readyOutcome.nonCodeUsages) { previewAgain, excludedUsages ->
         when {
           previewAgain -> planAgain(plannedRun.answers)
@@ -287,7 +306,7 @@ object ModPlanFlow {
             val excluded = runReadActionBlocking { ModPlanRefactoring.excludedUsagesOf(excludedUsages) }
             val requestWithoutExcluded =
               ModPlanChain.withOptionValues(request, plannedRun.answers.with(ModPlanRefactoring.EXCLUDED_USAGES, excluded))
-            inBackground(project, refactoring.title()) { Planned.of(plannedRun.finalStep.run(requestWithoutExcluded), project, request) }
+            inBackground(project, refactoring.title()) { planned(plannedRun.finalStep.run(requestWithoutExcluded), request) }
               ?.let { proceed(PlannedRun(it, plannedRun.answers, plannedRun.finalStep), confirm = false) }
           }
         }
@@ -317,21 +336,24 @@ object ModPlanFlow {
    */
   private class PlannedRun(val planned: Planned, val answers: ModPlanOptionValues, val finalStep: ModPlanFinalStep<ModPlan>)
 
-  /** The non-code usages of [acceptedPlan] as the usages of the usage view. */
-  @VisibleForTesting
-  @RequiresReadLock
-  fun nonCodeUsages(acceptedPlan: ModPlan.AcceptedPlan): Array<UsageInfo> =
-    acceptedPlan.conflicts.nonCodeUsages().mapNotNull { nonCodeUsage ->
-      val location = nonCodeUsage.location ?: return@mapNotNull null
-      val file = location.element ?: return@mapNotNull null
-      val range = location.range ?: return@mapNotNull null
-      if (range.startOffset == 0 && range.endOffset == file.textLength) {
-        UsageInfo(file, true)
-      }
-      else {
-        UsageInfo(file, range.startOffset, range.endOffset, true)
-      }
-    }.toTypedArray()
+  companion object {
+    /** The non-code usages of [acceptedPlan] as the usages of the usage view. */
+    @VisibleForTesting
+    @JvmStatic
+    @RequiresReadLock
+    fun nonCodeUsages(acceptedPlan: ModPlan.AcceptedPlan): Array<UsageInfo> =
+      acceptedPlan.conflicts.nonCodeUsages().mapNotNull { nonCodeUsage ->
+        val location = nonCodeUsage.location ?: return@mapNotNull null
+        val file = location.element ?: return@mapNotNull null
+        val range = location.range ?: return@mapNotNull null
+        if (range.startOffset == 0 && range.endOffset == file.textLength) {
+          UsageInfo(file, true)
+        }
+        else {
+          UsageInfo(file, range.startOffset, range.endOffset, true)
+        }
+      }.toTypedArray()
+  }
 
   /** The messages of the conflicts by the element they are about, or [firstTarget] if the conflict has no place. */
   @RequiresReadLock

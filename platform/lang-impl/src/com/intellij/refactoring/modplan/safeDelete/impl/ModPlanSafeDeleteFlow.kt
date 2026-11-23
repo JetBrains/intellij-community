@@ -105,7 +105,7 @@ object ModPlanSafeDeleteFlow {
       val requestOptionValues = if (checkDelegates) { optionValues } else { optionValues.with(ModPlanSafeDeleteOptions.SEARCH_RELATED, false) }
       ModPlanRequest(project, targets.map(SymbolPointer::of), requestOptionValues)
     }
-    val result = ModPlanFlow.run(ModPlanSafeDeleteRefactoring.getInstance(), request, ask) {
+    val result = ModPlanFlow(ModPlanSafeDeleteRefactoring.getInstance()).run(request, ask) {
       afterRefactoring?.run()
       successRunnable?.run()
     }

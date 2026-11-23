@@ -30,6 +30,7 @@ import com.intellij.usages.rules.PsiElementUsage
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.util.containers.MultiMap
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.VisibleForTesting
 import java.awt.event.ActionEvent
 import javax.swing.AbstractAction
@@ -64,11 +65,12 @@ class ModPlanDialogFlowUi : ModPlanFlowUi {
     refactoring: ModPlanRefactoring,
     commandName: @NlsContexts.Command String,
     targets: Array<out UsageTarget>,
+    targetsNodeText: @Nls String,
     usages: Array<UsageInfo>,
     proceed: (previewAgain: Boolean) -> Unit,
   ): Boolean {
     if (!UsageViewUtil.reportNonRegularUsages(usages, project)) return false
-    showUsages(project, refactoring, commandName, targets, usages) { previewAgain, _ -> proceed(previewAgain) }
+    showUsages(project, refactoring, commandName, targets, targetsNodeText, usages) { previewAgain, _ -> proceed(previewAgain) }
     return true
   }
 
@@ -76,6 +78,7 @@ class ModPlanDialogFlowUi : ModPlanFlowUi {
     project: Project,
     refactoring: ModPlanRefactoring,
     targets: Array<out UsageTarget>,
+    targetsNodeText: @Nls String,
     plan: ModPlan.AcceptedPlan,
     nonCodeUsages: Array<UsageInfo>,
     proceed: (previewAgain: Boolean, excludedUsages: Set<SmartPsiFileRange>) -> Unit,
@@ -83,10 +86,10 @@ class ModPlanDialogFlowUi : ModPlanFlowUi {
     val nonCodeLocations = plan.conflicts.changedNonCodeUsages().mapNotNullTo(HashSet()) { it.location }
     val changedUsages = runReadActionBlocking { usagesAt(plan.usages, nonCodeLocations) }
     val allUsages = changedUsages.keys.toTypedArray() + nonCodeUsages
-    if (allUsages.isEmpty()) return false
+    // With no usage, the preview shows the targets alone, as the legacy preview does.
     UsageViewUtil.reportNonRegularUsages(allUsages, project)
     // The non-code usages are not changed, so an excluded one changes nothing.
-    showUsages(project, refactoring, plan.execution.commandName, targets, allUsages) { previewAgain, excludedUsages ->
+    showUsages(project, refactoring, plan.execution.commandName, targets, targetsNodeText, allUsages) { previewAgain, excludedUsages ->
       proceed(previewAgain, excludedUsages.mapNotNullTo(HashSet()) { changedUsages[it] })
     }
     return true
@@ -98,11 +101,12 @@ class ModPlanDialogFlowUi : ModPlanFlowUi {
     refactoring: ModPlanRefactoring,
     commandName: @NlsContexts.Command String,
     targets: Array<out UsageTarget>,
+    targetsNodeText: @Nls String,
     usages: Array<UsageInfo>,
     proceed: (previewAgain: Boolean, excludedUsages: Set<UsageInfo>) -> Unit,
   ) {
     val usageAdapters = UsageInfo2UsageAdapter.convert(usages)
-    val usageView = UsageViewManager.getInstance(project).showUsages(targets, usageAdapters, presentation(refactoring, usageAdapters))
+    val usageView = UsageViewManager.getInstance(project).showUsages(targets, usageAdapters, presentation(refactoring, targetsNodeText, usageAdapters))
     usageView.addPerformOperationAction(
       {
         val notExcludedUsages = UsageViewUtil.getNotExcludedUsageInfos(usageView)
@@ -136,11 +140,11 @@ class ModPlanDialogFlowUi : ModPlanFlowUi {
     return if (accepted) options.nextCommand().apply(container) else null
   }
 
-  private fun presentation(refactoring: ModPlanRefactoring, usages: Array<out Usage>): UsageViewPresentation {
+  private fun presentation(refactoring: ModPlanRefactoring, targetsNodeText: @Nls String, usages: Array<out Usage>): UsageViewPresentation {
     val files = usages.mapNotNullTo(HashSet()) { (it as? PsiElementUsage)?.element?.containingFile }
     return UsageViewPresentation().apply {
       tabText = RefactoringBundle.message("usageView.tabText")
-      targetsNodeText = refactoring.targetsNodeText()
+      this.targetsNodeText = targetsNodeText
       isShowReadOnlyStatusAsRed = true
       isShowCancelButton = true
       codeUsagesString = UsageViewBundle.message(
@@ -192,6 +196,7 @@ open class ModPlanTestFlowUi : ModPlanFlowUi by ModPlanDialogFlowUi() {
     refactoring: ModPlanRefactoring,
     commandName: @NlsContexts.Command String,
     targets: Array<out UsageTarget>,
+    targetsNodeText: @Nls String,
     usages: Array<UsageInfo>,
     proceed: (previewAgain: Boolean) -> Unit,
   ): Boolean = false
@@ -200,6 +205,7 @@ open class ModPlanTestFlowUi : ModPlanFlowUi by ModPlanDialogFlowUi() {
     project: Project,
     refactoring: ModPlanRefactoring,
     targets: Array<out UsageTarget>,
+    targetsNodeText: @Nls String,
     plan: ModPlan.AcceptedPlan,
     nonCodeUsages: Array<UsageInfo>,
     proceed: (previewAgain: Boolean, excludedUsages: Set<SmartPsiFileRange>) -> Unit,

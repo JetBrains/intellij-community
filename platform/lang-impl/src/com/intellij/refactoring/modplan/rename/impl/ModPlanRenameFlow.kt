@@ -8,12 +8,16 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiElement
 import com.intellij.psi.search.SearchScope
 import com.intellij.refactoring.RefactoringSettings
+import com.intellij.refactoring.listeners.RefactoringEventData
+import com.intellij.refactoring.modplan.ModPlan
 import com.intellij.refactoring.modplan.ModPlanOptionValues
 import com.intellij.refactoring.modplan.ModPlanRefactoring
+import com.intellij.refactoring.modplan.ModPlanRequest
 import com.intellij.refactoring.modplan.impl.ModPlanFlow
 import com.intellij.refactoring.modplan.rename.ModPlanRenameOptions
 import com.intellij.refactoring.modplan.rename.ModPlanRenameRefactoring
 import com.intellij.refactoring.modplan.rename.impl.ModPlanRenameFlow.REGISTRY_KEY
+import com.intellij.refactoring.rename.RenameViewDescriptor
 import com.intellij.refactoring.rename.naming.AutomaticRenamerFactory
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import org.jetbrains.annotations.ApiStatus
@@ -21,7 +25,8 @@ import org.jetbrains.annotations.ApiStatus
 /**
  * The rename of the rename dialog and of the inline rename of members on the ModPlan engine: the request of [ModPlanFlow] after the questions
  * that the legacy UI asked, what is renamed and the options, which the request answers; the related renames, the conflicts and the
- * occurrences in comments are asked by the flow. It is on only if the registry key [REGISTRY_KEY] is, and only for elements that the engine
+ * occurrences in comments are asked by the flow. The preview shows every renamed element with the header of the legacy rename, such as
+ * "Function to be renamed to bar". It is on only if the registry key [REGISTRY_KEY] is, and only for elements that the engine
  * supports; the legacy rename runs for everything else.
  */
 @ApiStatus.Internal
@@ -66,6 +71,17 @@ object ModPlanRenameFlow {
     val request = runReadActionBlocking {
       ModPlanRenameRefactoring.request(project, element, newName, substitute = false, optionValues, scope, additionalRenames)
     }
-    return ModPlanFlow.run(ModPlanRenameRefactoring.getInstance(), request, !ApplicationManager.getApplication().isUnitTestMode) {}
+    val interactive = !ApplicationManager.getApplication().isUnitTestMode
+    return RenameFlow().run(request, interactive) {}
+  }
+
+  /** The preview shows every element that the plan renames, with the header of the legacy rename, as `RenameProcessor` does. */
+  private class RenameFlow : ModPlanFlow(ModPlanRenameRefactoring.getInstance()) {
+    override fun previewTargets(plan: ModPlan.AcceptedPlan, request: ModPlanRequest): PreviewTargets {
+      val renames = plan.writeEvents.get().beforeData?.getUserData(RefactoringEventData.RENAMES_KEY)
+      if (renames.isNullOrEmpty()) return super.previewTargets(plan, request)
+      val descriptor = RenameViewDescriptor(LinkedHashMap(renames))
+      return PreviewTargets(descriptor.elements.toList(), descriptor.processedElementsHeader)
+    }
   }
 }

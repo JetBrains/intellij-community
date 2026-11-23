@@ -168,6 +168,7 @@ object SafeDeleteTestSupport {
       refactoring: ModPlanRefactoring,
       commandName: @NlsContexts.Command String,
       targets: Array<out UsageTarget>,
+      targetsNodeText: String,
       usages: Array<UsageInfo>,
       proceed: (previewAgain: Boolean) -> Unit,
     ): Boolean {

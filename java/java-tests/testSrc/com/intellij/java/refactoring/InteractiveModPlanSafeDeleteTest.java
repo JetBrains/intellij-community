@@ -119,7 +119,7 @@ public class InteractiveModPlanSafeDeleteTest {
       ModPlanOptionValues optionValues = ModPlanOptionValues.EMPTY.with(ModPlanSafeDeleteOptions.SEARCH_IN_COMMENTS, true);
       ModPlan.AcceptedPlan acceptedPlan = (ModPlan.AcceptedPlan)ModPlanSafeDeleteRefactoring.getInstance().plan(
         new ModPlanRequest(myFixture.getProject(), List.of(SymbolPointer.of(method)), optionValues));
-      return List.of(ModPlanFlow.INSTANCE.nonCodeUsages(acceptedPlan));
+      return List.of(ModPlanFlow.nonCodeUsages(acceptedPlan));
     });
 
     assertEquals(1, usages.size());

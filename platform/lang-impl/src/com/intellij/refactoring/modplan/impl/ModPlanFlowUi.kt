@@ -16,6 +16,7 @@ import com.intellij.usages.UsageTarget
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.MultiMap
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.Nls
 
 /**
  * Everything that [ModPlanFlow] shows or asks, so that a client that has no dialogs, or a test, replaces it as a service. In unit tests
@@ -44,6 +45,7 @@ interface ModPlanFlowUi {
    * user's choice comes later through [proceed]: false to go on and write, true to plan again and show the preview again.
    *
    * @param commandName the name of the action that goes on
+   * @param targetsNodeText the text of the node of [targets]
    * @return false if there is nothing to show
    */
   @RequiresEdt
@@ -52,6 +54,7 @@ interface ModPlanFlowUi {
     refactoring: ModPlanRefactoring,
     commandName: @NlsContexts.Command String,
     targets: Array<out UsageTarget>,
+    targetsNodeText: @Nls String,
     usages: Array<UsageInfo>,
     proceed: (previewAgain: Boolean) -> Unit,
   ): Boolean
@@ -60,15 +63,16 @@ interface ModPlanFlowUi {
    * Shows the [ModPlan.AcceptedPlan.usages] that [plan] changes and the [nonCodeUsages] that it leaves as they are, as
    * [previewNonCodeUsages] does. A changed usage in a comment, a string or a non-code file, see
    * [com.intellij.refactoring.modplan.ModPlanConflicts.changedNonCodeUsages], is shown apart from the code usages. The user may exclude
-   * changed usages: [proceed] gets them when the user goes on.
+   * changed usages: [proceed] gets them when the user goes on. With no usage, the preview shows only [targets].
    *
-   * @return false if there is nothing to show
+   * @return false if the preview is not shown, as in a unit test
    */
   @RequiresEdt
   fun previewUsages(
     project: Project,
     refactoring: ModPlanRefactoring,
     targets: Array<out UsageTarget>,
+    targetsNodeText: @Nls String,
     plan: ModPlan.AcceptedPlan,
     nonCodeUsages: Array<UsageInfo>,
     proceed: (previewAgain: Boolean, excludedUsages: Set<SmartPsiFileRange>) -> Unit,

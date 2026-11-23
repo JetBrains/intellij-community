@@ -134,7 +134,7 @@ class ModPlanFlowTest : BasePlatformTestCase() {
 
   private fun run(file: PsiFile, refactoring: UpperCaseRefactoring, optionValues: ModPlanOptionValues): ModPlanFlow.Result {
     val request = runReadActionBlocking { ModPlanRequest(project, listOf(SymbolPointer.of(file)), optionValues) }
-    return ModPlanFlow.run(refactoring, request, true) {}
+    return ModPlanFlow(refactoring).run(request, true) {}
   }
 
   /**
@@ -193,6 +193,7 @@ class ModPlanFlowTest : BasePlatformTestCase() {
       project: Project,
       refactoring: ModPlanRefactoring,
       targets: Array<out UsageTarget>,
+      targetsNodeText: String,
       plan: ModPlan.AcceptedPlan,
       nonCodeUsages: Array<UsageInfo>,
       proceed: (previewAgain: Boolean, excludedUsages: Set<SmartPsiFileRange>) -> Unit,
