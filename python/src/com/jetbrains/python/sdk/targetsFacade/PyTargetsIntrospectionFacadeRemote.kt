@@ -37,7 +37,6 @@ import com.jetbrains.python.run.ensureProjectSdkAndModuleDirsAreOnTarget
 import com.jetbrains.python.run.execute
 import com.jetbrains.python.run.prepareHelperScriptExecution
 import com.jetbrains.python.run.target.HelpersAwareTargetEnvironmentRequest
-import com.jetbrains.python.sdk.remoteSourcesLocalPath
 import com.jetbrains.python.target.PyTargetAwareAdditionalData
 import com.jetbrains.python.target.targetWithVfs.TargetWithMappedLocalVfs
 import java.nio.file.Files
