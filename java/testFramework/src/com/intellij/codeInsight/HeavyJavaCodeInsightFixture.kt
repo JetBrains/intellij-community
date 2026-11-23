@@ -18,6 +18,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.actionSystem.TypedAction
 import com.intellij.openapi.editor.impl.EditorImpl
+import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
@@ -502,18 +503,17 @@ open class HeavyJavaCodeInsightFixture(context: Context, val testDataPath: Strin
     editor = null
     runInEdtAndWait {
       dispatchEventsBeforeEditorOpen()
-      val newEditor = createEditor(virtualFile)
-      val document = newEditor.document
+      // the writes come before the editor opens, so no write action cancels the first daemon session of the editor
+      val document = checkNotNull(FileDocumentManager.getInstance().getDocument(virtualFile)) { virtualFile.path }
       val editorInfo = EditorInfo(document.text)
       val newFileText = editorInfo.newFileText
-      WriteAction.run<RuntimeException> {
-        if (document.text != newFileText) {
-          document.setText(newFileText)
-        }
-        file = psiManager.findFile(virtualFile)
-        editor = newEditor
-        editorInfo.applyToEditor(newEditor)
+      if (document.text != newFileText) {
+        WriteAction.run<RuntimeException> { document.setText(newFileText) }
       }
+      val newEditor = createEditor(virtualFile)
+      file = psiManager.findFile(virtualFile)
+      editor = newEditor
+      editorInfo.applyToEditor(newEditor)
       PsiDocumentManager.getInstance(project).commitAllDocuments()
       existingFileConfigured()
     }
