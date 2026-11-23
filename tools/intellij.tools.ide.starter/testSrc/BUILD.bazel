@@ -2,6 +2,13 @@ load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 
+jps_test(
+    name = "tools-ide-starter-tests_test",
+    runtime_deps = [":tools-ide-starter-tests_test_lib"],
+)
+
+### skip generation section `test intellij.tools.ide.starter.tests`
+
 ### auto-generated section `build intellij.tools.ide.starter.tests` start
 create_kotlinc_options(
     name = "custom_tools-ide-starter-tests",
@@ -58,10 +65,3 @@ exports_files(
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.tools.ide.starter.tests` end
-
-### auto-generated section `test intellij.tools.ide.starter.tests` start
-jps_test(
-    name = "tools-ide-starter-tests_test",
-    runtime_deps = [":tools-ide-starter-tests_test_lib"],
-)
-### auto-generated section `test intellij.tools.ide.starter.tests` end
