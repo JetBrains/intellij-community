@@ -210,7 +210,7 @@ class PyiTypeTest : PyCodeInsightTestCase() {
     from lib import MyClass
     
     expr = 42 < MyClass(42) < MyClass('foo')
-    #└ TYPE int
+    #└ TYPE Literal[False] | int
     """.trimIndent(),
     "lib.pyi" to """
       from typing import overload, Generic, TypeVar

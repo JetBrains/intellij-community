@@ -672,6 +672,29 @@ class PyNarrowingTypeTest : PyCodeInsightTestCase() {
       """.trimIndent())
 
     @Test
+    @TestFor(issues = ["PY-94326"], classes = [PyUnreachableCodeInspection::class])
+    fun `a chained comparison is always false only when every result is falsy`() = test("""
+      from typing import Literal
+
+      class AlwaysTrue:
+          def __lt__(self, other: object) -> Literal[True]: ...
+
+      class AlwaysFalse:
+          def __lt__(self, other: object) -> Literal[False]: ...
+
+      def f(t: AlwaysTrue, f: AlwaysFalse, o: object):
+          if o is t < o:
+              print(1)
+          else:
+              print(2)
+          if o is f < o:
+              print(3)
+      #       ^^^^^^^^ WARNING This code is unreachable
+          else:
+              print(4)
+      """.trimIndent())
+
+    @Test
     @TestFor(issues = ["PY-94129"], classes = [PyTypeAssertionEvaluator::class, PyUnreachableCodeInspection::class])
     fun `members of different enums are never equal unless a builtin mixin compares them`() = test("""
       from enum import Enum, IntEnum

@@ -25,6 +25,7 @@ import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import static com.jetbrains.python.ast.PyAstBinaryExpression.getChainedComparisonAwareLeftExpression;
 import static com.jetbrains.python.psi.types.PyTypeUtilKt.isUnknown;
 
 
@@ -74,24 +75,18 @@ public class PyBinaryExpressionImpl extends PyElementImpl implements PyBinaryExp
       if (left == null && right == null) {
         return PyAnyType.getUnknown();
       }
-      // `a or b` evaluates to `a` when `a` is truthy and to `b` otherwise.
-      // `a and b` evaluates to `a` when `a` is falsy and to `b` otherwise.
-      // So `a` contributes only the part of its type with the relevant truthiness (excluding e.g. `None`,
-      // `Literal[False]` or a class whose `__bool__` is `Literal[False]`), and `b` contributes only when it can be reached.
-      final boolean isOr = isOperator(PyNames.OR);
-      final ThreeState leftTruthiness = PyTypeUtil.getTypeTruthiness(leftType, left, context);
-      final Ref<PyType> leftContribution = PyTypeUtil.narrowTypeByTruthiness(leftType, isOr, left, context);
-      final boolean rightReachable = isOr ? leftTruthiness != ThreeState.YES : leftTruthiness != ThreeState.NO;
-      if (leftContribution == null) {
-        // `a` never yields its own value as the result (e.g. an always-falsy `a` in `a or b`).
-        return rightType != null ? rightType : PyAnyType.getUnknown();
-      }
-      if (!rightReachable) {
-        // `b` is never evaluated (e.g. an always-truthy `a` in `a or b`).
-        return leftContribution.get();
-      }
-      return PyUnionType.unionOrUnknown(leftContribution.get(), rightType);
+      return getShortCircuitType(left, leftType, rightType, isOperator(PyNames.OR), context);
     }
+    var pairType = getOperationType(context, key);
+    if (isChainedComparison()) {
+      // `a < b < c` evaluates as `a < b and b < c`, so the chain before the last pair is the left operand of an `and`.
+      var chain = getLeftExpression();
+      return getShortCircuitType(chain, context.getType(chain), pairType, false, context);
+    }
+    return pairType;
+  }
+
+  private @Nullable PyType getOperationType(@NotNull TypeEvalContext context, @NotNull TypeEvalContext.Key key) {
     final String referencedName = getReferencedName();
     if (PyNames.CONTAINS.equals(referencedName) || getOperator() == PyTokenTypes.IS_KEYWORD) {
       final PyClassType boolType = PyBuiltinCache.getInstance(this).getBoolType();
@@ -107,9 +102,37 @@ public class PyBinaryExpressionImpl extends PyElementImpl implements PyBinaryExp
       }
       return callResultType;
     }
-    boolean bothOperandsAreKnown = operandIsKnown(getLeftExpression(), context) && operandIsKnown(getRightExpression(), context);
+    var leftOperand = (PyExpression)getChainedComparisonAwareLeftExpression(this);
+    boolean bothOperandsAreKnown = operandIsKnown(leftOperand, context) && operandIsKnown(getRightExpression(), context);
     // TODO requires weak union. See PyTypeCheckerInspectionTest#testBinaryExpressionWithUnknownOperand
     return bothOperandsAreKnown ? callResultType : PyUnionType.createWeakType(callResultType);
+  }
+
+  private static @Nullable PyType getShortCircuitType(@Nullable PyExpression left,
+                                                      @Nullable PyType leftType,
+                                                      @Nullable PyType rightType,
+                                                      boolean isOr,
+                                                      @NotNull TypeEvalContext context) {
+    // `a or b` evaluates to `a` when `a` is truthy and to `b` otherwise.
+    // `a and b` evaluates to `a` when `a` is falsy and to `b` otherwise.
+    // So `a` contributes only the part of its type with the relevant truthiness (excluding e.g. `None`,
+    // `Literal[False]` or a class whose `__bool__` is `Literal[False]`), and `b` contributes only when it can be reached.
+    final ThreeState leftTruthiness = PyTypeUtil.getTypeTruthiness(leftType, left, context);
+    final Ref<PyType> leftContribution = PyTypeUtil.narrowTypeByTruthiness(leftType, isOr, left, context);
+    final boolean rightReachable = isOr ? leftTruthiness != ThreeState.YES : leftTruthiness != ThreeState.NO;
+    if (leftContribution == null) {
+      // `a` never yields its own value as the result (e.g. an always-falsy `a` in `a or b`).
+      return rightType != null ? rightType : PyAnyType.getUnknown();
+    }
+    if (!rightReachable) {
+      // `b` is never evaluated (e.g. an always-truthy `a` in `a or b`).
+      return leftContribution.get();
+    }
+    return PyUnionType.unionOrUnknown(leftContribution.get(), rightType);
+  }
+
+  private boolean isChainedComparison() {
+    return getChainedComparisonAwareLeftExpression(this) != getLeftExpression();
   }
 
   @Override
