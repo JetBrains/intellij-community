@@ -214,6 +214,8 @@
     <module name="intellij.platform.ide.core" loading="embedded"/>
     <module name="intellij.platform.ide.core.impl" loading="embedded"/>
     <module name="intellij.platform.ide.core.plugins" loading="embedded"/>
+    <module name="intellij.platform.settings.v2" loading="embedded"/>
+    <module name="intellij.platform.settings.v2.shared"/>
     <!-- endregion -->
   </content>
 </idea-plugin>

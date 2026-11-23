@@ -15,8 +15,13 @@ layers supply the values. The vault resolves and stores them.
 | `intellij.platform.settings.v2.testKeys` | `testKeys/` |
 | `intellij.platform.settings.v2.testKeys.plugin` | `testKeys/plugin/` |
 
-The vault module, `intellij.platform.settings.v2.shared`, depends only on modules of the `core.platform` module set
-and of the boot jars. `SettingsV2CoreDependenciesTest` checks it. Code of the vault that needs another module goes to
+The API module, `intellij.platform.settings.v2`, is an embedded module of the `core.platform` module set. So it loads
+in the core class loader, and a module of that set can depend on it. The vault module,
+`intellij.platform.settings.v2.shared`, is a content module of the same set. The other settings modules are in the
+`essential` module set.
+
+The API module and the vault module depend only on modules of `core.platform` and of the boot jars.
+`SettingsV2CoreDependenciesTest` checks it. Code of the vault that needs another module goes to
 `intellij.platform.settings.v2.shared.essential`. See
 [ADR 0181](adr/0181-the-vault-module-depends-only-on-core-platform-modules-and-the-code-that-needs-more-lives-in-the-shared-essential-module.md).
 

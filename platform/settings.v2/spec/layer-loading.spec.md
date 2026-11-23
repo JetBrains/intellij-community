@@ -42,6 +42,9 @@ While a scope reloads, its contexts are dirty: a read still works, but a write w
   vault also starts with no open project. The startup waits only for the creation of the vault, not for its load.
   See [ADR 0116](../adr/0116-the-vault-drives-loading-with-no-timeout-and-a-provider-returns-its-layers.md).
   [@test] ../../../../remote-dev/settings/v2/lambdaTests/src/com/intellij/platform/settings/v2/lambdaTests/SettingsVaultStartTest.kt
+- The vault must start in every product that has the `core.platform` module set, also in a product without the
+  `essential` module set. A module of `core.platform` must be able to read a key there.
+  [@test] ../../build-scripts/tests/testSrc/org/jetbrains/intellij/build/SettingsV2CoreDependenciesTest.kt
 - A caller that uses the vault before `SettingsVaultInitializer` runs must get a working vault. The vault then
   starts at that use.
 - The vault must reload the application scope when it starts, and a project scope when the project opens.

@@ -167,6 +167,10 @@ object CoreModuleSets {
     embeddedModule("intellij.platform.ide.core")
     embeddedModule("intellij.platform.ide.core.impl")
     embeddedModule("intellij.platform.ide.core.plugins")
+
+    // SettingsV2CoreDependenciesTest checks that both settings v2 modules depend only on core.platform and the boot jars
+    embeddedModule("intellij.platform.settings.v2")
+    module("intellij.platform.settings.v2.shared")
   }
 
   /**

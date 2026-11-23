@@ -28,8 +28,7 @@ private val communityModuleSets: List<ModuleSet> by lazy { discoverCommunityModu
  * A module of [CoreModuleSets.corePlatform] must be able to depend on the settings engine. A product that has only
  * [CoreModuleSets.corePlatform] must load the engine. Thus, each production module dependency of a settings module
  * must be a module of [CoreModuleSets.corePlatform] or of its nested module sets. A module of the fixed boot jars
- * ([PLATFORM_FIXED_JAR_MODULES]) is not a content module, and every product has it, so it is also allowed. A settings
- * module may also depend on the other settings module of this check.
+ * ([PLATFORM_FIXED_JAR_MODULES]) is not a content module, and every product has it, so it is also allowed.
  *
  * The dependencies come from the `*.iml` files of the community project.
  */
@@ -38,9 +37,7 @@ class SettingsV2CoreDependenciesTest {
   @ValueSource(strings = [SETTINGS_API_MODULE, SETTINGS_VAULT_MODULE])
   fun `settings module depends only on core modules`(settingsModuleName: String) {
     val corePlatform = CoreModuleSets.corePlatform()
-    val allowedModuleNames = collectModuleNames(corePlatform) +
-                             PLATFORM_FIXED_JAR_MODULES.values.flatten() +
-                             SETTINGS_API_MODULE + SETTINGS_VAULT_MODULE
+    val allowedModuleNames = collectModuleNames(corePlatform) + PLATFORM_FIXED_JAR_MODULES.values.flatten()
     val settingsModule = communityProject.modules.single { it.name == settingsModuleName }
 
     val disallowedDependencies = collectProductionModuleDependencyNames(settingsModule)

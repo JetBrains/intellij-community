@@ -9,7 +9,8 @@ Accepted ([IJPL-228928](https://youtrack.jetbrains.com/issue/IJPL-228928)).
 ## Context
 
 A split-mode lambda test runs its lambdas in the class loader of a wrapper plugin. Without the wrapper, a lambda
-cannot load a content module such as `intellij.platform.settings.v2`. The lambda test framework offers two setups:
+cannot load a content module such as `intellij.platform.settings.v2.shared`. The lambda test framework offers two
+setups:
 
 - One wrapper plugin that loads on both sides: `LambdaTestPluginHolder.allModesPlugin`.
 - One wrapper for each mode (monolith, backend split, frontend split): `LambdaTestPluginHolder.modeSplitPlugins`.
