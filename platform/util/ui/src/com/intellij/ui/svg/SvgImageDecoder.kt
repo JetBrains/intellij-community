@@ -31,16 +31,20 @@ class SvgImageDecoder(
         throw IOException("Cannot load SVG document", e)
       }
 
-      val bi = jSvgDocument.createImage(preferredWidth.takeIf { it > 0 }, preferredHeight.takeIf { it > 0 })
+      val image = jSvgDocument.createImage(preferredWidth.takeIf { it > 0 }, preferredHeight.takeIf { it > 0 })
+      val rasterWidth = image.width
+      val rasterHeight = image.height
+      val colorModel = image.colorModel
+      val scale = (image as? JBHiDPIScaledImage)?.scale ?: 1.0
 
-      setDimensions(bi.width, bi.height)
-      setProperties(Hashtable<String, Any>().apply {
-        put(JBImageToolkit.IMAGE_SCALE_PROPERTY, (bi as? JBHiDPIScaledImage)?.scale ?: 1.0)
+      setDimensions(rasterWidth, rasterHeight)
+      setProperties(Hashtable<String, Double>(2).apply {
+        put(JBImageToolkit.IMAGE_SCALE_PROPERTY, scale)
       })
-      setColorModel(bi.colorModel)
+      setColorModel(colorModel)
 
-      val pixels = bi.raster.getDataElements(0, 0, bi.width, bi.height, null) as IntArray
-      setPixels(0, 0, bi.width, bi.height, bi.colorModel, pixels, 0, bi.width)
+      val pixels = image.raster.getDataElements(0, 0, rasterWidth, rasterHeight, null) as IntArray
+      setPixels(0, 0, rasterWidth, rasterHeight, colorModel, pixels, 0, rasterWidth)
 
       imageComplete(ImageConsumer.STATICIMAGEDONE, true)
     }

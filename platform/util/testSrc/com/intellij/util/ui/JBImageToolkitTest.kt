@@ -17,31 +17,35 @@ import kotlin.math.roundToInt
 @TestApplication
 internal class JBImageToolkitTest {
   @Test
-  fun `SVG keeps its raster pixels and reports its scale`() = forEachScale { scale ->
-    val svg = """
+  fun `SVG keeps its raster pixels and reports its scale`() {
+    val bytes = """
       <svg xmlns="http://www.w3.org/2000/svg" width="17" height="13">
         <rect width="17" height="13" fill="red"/>
       </svg>
-    """.trimIndent()
-    val icon = ImageIcon(JBImageToolkit.createImage(svg.toByteArray()))
+    """.trimIndent().toByteArray()
+    forEachScale { scale ->
+      val icon = ImageIcon(JBImageToolkit.createImage(bytes))
 
-    assertThat(icon.imageLoadStatus).isEqualTo(MediaTracker.COMPLETE)
-    assertThat(icon.iconWidth).isEqualTo((17 * scale).roundToInt())
-    assertThat(icon.iconHeight).isEqualTo((13 * scale).roundToInt())
-    assertThat(icon.image.getProperty(JBImageToolkit.IMAGE_SCALE_PROPERTY, null)).isEqualTo(scale.toDouble())
+      assertThat(icon.imageLoadStatus).isEqualTo(MediaTracker.COMPLETE)
+      assertThat(icon.iconWidth).isEqualTo((17 * scale).roundToInt())
+      assertThat(icon.iconHeight).isEqualTo((13 * scale).roundToInt())
+      assertThat(icon.image.getProperty(JBImageToolkit.IMAGE_SCALE_PROPERTY, null)).isEqualTo(scale.toDouble())
+    }
   }
 
   @Test
-  fun `PNG keeps its native dimensions`() = forEachScale {
+  fun `PNG keeps its native dimensions`() {
     val bytes = ByteArrayOutputStream().apply {
       ImageIO.write(BufferedImage(17, 13, BufferedImage.TYPE_INT_ARGB), "png", this)
     }.toByteArray()
-    val icon = ImageIcon(JBImageToolkit.createImage(bytes))
+    forEachScale {
+      val icon = ImageIcon(JBImageToolkit.createImage(bytes))
 
-    assertThat(icon.imageLoadStatus).isEqualTo(MediaTracker.COMPLETE)
-    assertThat(icon.iconWidth).isEqualTo(17)
-    assertThat(icon.iconHeight).isEqualTo(13)
-    assertThat(icon.image.getProperty(JBImageToolkit.IMAGE_SCALE_PROPERTY, null)).isSameAs(Image.UndefinedProperty)
+      assertThat(icon.imageLoadStatus).isEqualTo(MediaTracker.COMPLETE)
+      assertThat(icon.iconWidth).isEqualTo(17)
+      assertThat(icon.iconHeight).isEqualTo(13)
+      assertThat(icon.image.getProperty(JBImageToolkit.IMAGE_SCALE_PROPERTY, null)).isSameAs(Image.UndefinedProperty)
+    }
   }
 
   private fun forEachScale(test: (Float) -> Unit) {
