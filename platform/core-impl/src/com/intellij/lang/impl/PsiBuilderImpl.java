@@ -1497,6 +1497,18 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
 
     @Override
     public @NotNull ThreeState deepEqual(@NotNull ASTNode oldNode, @NotNull LighterASTNode newNode) {
+      return deepEqual(oldNode, newNode, false);
+    }
+
+    @Override
+    public @NotNull ThreeState deepEqualWithEqualText(@NotNull ASTNode oldNode, @NotNull LighterASTNode newNode) {
+      return deepEqual(oldNode, newNode, true);
+    }
+
+    /**
+     * @param textEqual true if the old node and the new node are known to have the same text, so the texts are not compared again
+     */
+    private @NotNull ThreeState deepEqual(@NotNull ASTNode oldNode, @NotNull LighterASTNode newNode, boolean textEqual) {
       ProgressIndicatorProvider.checkCanceled();
 
       boolean oldIsErrorElement = oldNode instanceof PsiErrorElement && oldNode.getElementType() == TokenType.ERROR_ELEMENT;
@@ -1524,13 +1536,13 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
         if (oldNode instanceof LeafElement) {
           if (type instanceof ForeignLeafType) return ThreeState.NO;
 
-          return ((LeafElement)oldNode).textMatches(token.getText())
+          return textEqual || ((LeafElement)oldNode).textMatches(token.getText())
                  ? ThreeState.YES
                  : ThreeState.NO;
         }
 
         if (type instanceof ILightLazyParseableElementType) {
-          if (((TreeElement)oldNode).textMatches(token.getText())) {
+          if (textEqual || ((TreeElement)oldNode).textMatches(token.getText())) {
             return PsiDocumentManagerBase.isFullReparseInProgress() ? ThreeState.UNSURE : ThreeState.YES;
           }
           return TreeUtil.isCollapsedChameleon(oldNode)
@@ -1540,7 +1552,7 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
 
         if (oldNode.getElementType() instanceof ILazyParseableElementType && type instanceof ILazyParseableElementType ||
             oldNode.getElementType() instanceof ICustomParsingType && type instanceof ICustomParsingType) {
-          return ((TreeElement)oldNode).textMatches(token.getText())
+          return textEqual || ((TreeElement)oldNode).textMatches(token.getText())
                  ? ThreeState.YES
                  : ThreeState.NO;
         }

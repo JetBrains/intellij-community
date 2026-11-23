@@ -32,7 +32,14 @@ internal class MyComparator(
   private val customLanguageASTComparators: List<CustomLanguageASTComparator>,
   private val custom: TripleFunction<ASTNode, LighterASTNode, FlyweightCapableTreeStructure<LighterASTNode>, ThreeState>?,
 ) : ShallowNodeComparator<ASTNode?, LighterASTNode?> {
-  override fun deepEqual(oldNode: ASTNode, newNode: LighterASTNode): ThreeState {
+  override fun deepEqual(oldNode: ASTNode, newNode: LighterASTNode): ThreeState = deepEqual(oldNode, newNode, textEqual = false)
+
+  override fun deepEqualWithEqualText(oldNode: ASTNode, newNode: LighterASTNode): ThreeState = deepEqual(oldNode, newNode, textEqual = true)
+
+  /**
+   * @param textEqual true if the old node and the new node are known to have the same text, so the texts are not compared again
+   */
+  private fun deepEqual(oldNode: ASTNode, newNode: LighterASTNode, textEqual: Boolean): ThreeState {
     ProgressIndicatorProvider.checkCanceled()
 
     val oldIsErrorElement = oldNode is PsiErrorElement && oldNode.getElementType() === TokenType.ERROR_ELEMENT
@@ -61,14 +68,14 @@ internal class MyComparator(
       if (oldNode is LeafElement) {
         if (type is ForeignLeafType) return ThreeState.NO
 
-        return if (oldNode.textMatches(token.getText()))
+        return if (textEqual || oldNode.textMatches(token.getText()))
           ThreeState.YES
         else
           ThreeState.NO
       }
 
       if (type is ILightLazyParseableElementType) {
-        if ((oldNode as TreeElement).textMatches(token.getText())) {
+        if (textEqual || (oldNode as TreeElement).textMatches(token.getText())) {
           return if (PsiDocumentManagerBase.isFullReparseInProgress()) ThreeState.UNSURE else ThreeState.YES
         }
         return if (TreeUtil.isCollapsedChameleon(oldNode))
@@ -80,7 +87,7 @@ internal class MyComparator(
       if (oldNode.getElementType() is ILazyParseableElementType && type is ILazyParseableElementType ||
           oldNode.getElementType() is ICustomParsingType && type is ICustomParsingType
       ) {
-        return if ((oldNode as TreeElement).textMatches(token.getText()))
+        return if (textEqual || (oldNode as TreeElement).textMatches(token.getText()))
           ThreeState.YES
         else
           ThreeState.NO

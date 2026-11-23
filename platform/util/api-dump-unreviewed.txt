@@ -2248,6 +2248,7 @@ com.intellij.util.diff.DiffTreeChangeBuilder
 - a:nodeReplaced(java.lang.Object,java.lang.Object):V
 com.intellij.util.diff.ShallowNodeComparator
 - a:deepEqual(java.lang.Object,java.lang.Object):com.intellij.util.ThreeState
+- deepEqualWithEqualText(java.lang.Object,java.lang.Object):com.intellij.util.ThreeState
 - a:hashCodesEqual(java.lang.Object,java.lang.Object):Z
 - a:typesEqual(java.lang.Object,java.lang.Object):Z
 f:com.intellij.util.execution.ParametersListUtil
