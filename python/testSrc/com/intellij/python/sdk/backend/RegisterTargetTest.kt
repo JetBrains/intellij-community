@@ -30,7 +30,7 @@ import org.junit.jupiter.api.Test
 import java.nio.file.Path
 import javax.swing.Icon
 
-@TestFor(issues = ["PY-93894", "PY-94164"])
+@TestFor(issues = ["PY-93894", "PY-94164", "PY-93079"])
 @Subsystems.RemoteInterpreters
 @Layers.Functional
 @TestApplication
@@ -67,6 +67,32 @@ internal class RegisterTargetTest {
     registerTarget(project, target)
 
     assertThat(TargetEnvironmentsManager.getInstance(project).targets.resolvedConfigs().filter { it.uuid == target.uuid }).hasSize(1)
+  }
+
+  @Test
+  fun `an edit of the target of an SDK replaces the target of the project`() {
+    val project = projectFixture.get()
+    val target = pythonSdkTarget(root = "/srv/app")
+    registerTarget(project, target)
+
+    // The edit dialog edits the target of the SDK in place, and the project holds a copy of it.
+    target.projectRootOnTarget = "/srv/edited"
+    replaceTarget(project, target)
+
+    val targets = TargetEnvironmentsManager.getInstance(project).targets.resolvedConfigs().filter { it.uuid == target.uuid }
+    val replaced = targets.single() as TestTargetConfiguration
+    assertThat(replaced.projectRootOnTarget).isEqualTo("/srv/edited")
+    assertThat(replaced.runtimes.resolvedConfigs()).isEmpty()
+  }
+
+  @Test
+  fun `a replace of a target that the project does not hold registers it`() {
+    val project = projectFixture.get()
+    val target = pythonSdkTarget(root = "/srv/app")
+
+    replaceTarget(project, target)
+
+    assertThat((findTarget(project, target.uuid) as TestTargetConfiguration).projectRootOnTarget).isEqualTo("/srv/app")
   }
 
   @Test

@@ -1,68 +1,40 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.configuration
 
-import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.options.Configurable
-import com.intellij.openapi.project.Project
-import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.openapi.projectRoots.SdkModificator
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.NamedConfigurable
-import com.intellij.python.sdk.backend.PythonInterpreterUpdateRequest
-import com.intellij.python.sdk.backend.PythonInterpreterUpdater
+import com.intellij.python.sdk.backend.PythonInterpreter
+import com.intellij.python.sdk.backend.TargetPythonInterpreter
+import com.intellij.python.sdk.backend.saveEditedTargetConfiguration
 import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.bindText
 import com.intellij.ui.dsl.builder.panel
 import com.jetbrains.python.PyBundle
-import com.jetbrains.python.target.PyTargetAwareAdditionalData
 import javax.swing.JComponent
 
 /**
- * The underlying configurable in [PythonInterpreterDetailsConfigurable] for target-based Python interpreters.
- *
- * Note that the provided [newSdkAdditionalData] might differ from one initially set to [sdk].
- *
- * @param newSdkAdditionalData the additional data for SDK to edit
+ * The underlying configurable in [PythonInterpreterDetailsConfigurable] for target interpreters. It edits the target
+ * configuration of [interpreter] in place, and saves it with [saveEditedTargetConfiguration]. The binary of an
+ * interpreter does not change, so the dialog shows it read-only.
  */
-internal class PythonTargetInterpreterDetailsConfigurable(private val project: Project,
-                                                          private val sdk: Sdk,
-                                                          private var newSdkAdditionalData: PyTargetAwareAdditionalData,
+internal class PythonTargetInterpreterDetailsConfigurable(private val interpreter: TargetPythonInterpreter,
                                                           private val targetConfigurable: Configurable)
-  : NamedConfigurable<Sdk>() {
-  /**
-   * [Sdk.getHomePath] should not be used as [initialPythonInterpreterPath] as it might contain a credentials prefix (f.e. `docker://`),
-   * when the provided `sdkAdditionalData` is converted from `PyRemoteSdkAdditionalData`
-   */
-  private var initialPythonInterpreterPath = newSdkAdditionalData.interpreterPath.orEmpty()
-
-  private var pythonInterpreterPath = initialPythonInterpreterPath
+  : NamedConfigurable<PythonInterpreter>() {
+  private var pythonInterpreterPath = interpreter.pythonBinary.pathString
 
   /**
-   * Contains a text field for editing [pythonInterpreterPath].
-   *
-   * Note that [DialogPanel.apply] must be called to set [pythonInterpreterPath] according to the text field's value.
+   * Contains a text field that shows [pythonInterpreterPath].
    */
   private lateinit var pythonInterpreterDetailsDialogPanel: DialogPanel
 
   override fun isModified(): Boolean = targetConfigurable.isModified || pythonInterpreterDetailsDialogPanel.isModified()
 
   override fun apply() {
-    val targetConfigurableWasModified = targetConfigurable.isModified
     targetConfigurable.apply()
-    // this updates `pythonInterpreterPath`
     pythonInterpreterDetailsDialogPanel.apply()
-    // apply Python interpreter path
-    val sdkModificator = sdk.sdkModificator
-    sdkModificator.sdkAdditionalData = newSdkAdditionalData
-    sdkModificator.updatePythonInterpreterPath(pythonInterpreterPath)
-    if (targetConfigurableWasModified) {
-      newSdkAdditionalData.notifyTargetEnvironmentConfigurationChanged()
-    }
-    // note that after committing the changes `sdkModificator` becomes unusable
-    runWriteAction { sdkModificator.commitChanges() }
-
-    PythonInterpreterUpdater.getInstance(project).request(sdk, PythonInterpreterUpdateRequest(packages = true, background = false))
+    interpreter.saveEditedTargetConfiguration()
   }
 
   override fun getDisplayName(): String = targetConfigurable.displayName
@@ -71,7 +43,7 @@ internal class PythonTargetInterpreterDetailsConfigurable(private val project: P
     // We rely on the separate "Rename" action for changing Python interpreter name
   }
 
-  override fun getEditableObject(): Sdk = sdk
+  override fun getEditableObject(): PythonInterpreter = interpreter
 
   override fun getBannerSlogan(): String = PyBundle.message("python.interpreter.banner.slogan", displayName)
 
@@ -103,10 +75,5 @@ internal class PythonTargetInterpreterDetailsConfigurable(private val project: P
 
   companion object {
     private val LOG = logger<PythonTargetInterpreterDetailsConfigurable>()
-
-    private fun SdkModificator.updatePythonInterpreterPath(pythonInterpreterPath: String) {
-      homePath = pythonInterpreterPath
-      (sdkAdditionalData as? PyTargetAwareAdditionalData)?.interpreterPath = pythonInterpreterPath
-    }
   }
 }

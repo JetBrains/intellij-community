@@ -3,29 +3,25 @@ package com.jetbrains.python.configuration
 
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.ui.DialogWrapper
+import com.intellij.python.sdk.backend.NativePythonInterpreter
 import com.intellij.python.sdk.backend.PythonInterpreter
-import com.intellij.python.sdk.backend.getSdkAPI
-import com.jetbrains.python.target.PyTargetAwareAdditionalData
+import com.intellij.python.sdk.backend.TargetPythonInterpreter
 import org.jetbrains.annotations.ApiStatus
 
 /**
  * Opens the "Interpreter Settings" edit form for the given [PythonInterpreter] as a modal dialog.
  *
- * Only a target-aware SDK ([PyTargetAwareAdditionalData]) has a form: the target-specific one ([PyRemoteInterpreterEditDialog],
- * Docker / SSH / WSL / …). An interpreter keeps its binary, its name and its owner, so a local interpreter has nothing
- * to edit, and a legacy remote SDK whose target info has been lost cannot be edited. [editorFor] returns `null` for
- * both, and the caller skips the open.
+ * Only a target interpreter has a form: the target-specific one ([PyRemoteInterpreterEditDialog], Docker / SSH / WSL /
+ * …). An interpreter keeps its binary, its name and its owner, so a native interpreter has nothing to edit. [editorFor]
+ * returns `null` for it, and the caller skips the open.
  */
 @ApiStatus.Internal
 object PyInterpreterEditDialogLauncher {
 
   @JvmStatic
-  fun editorFor(project: Project, interpreter: PythonInterpreter, parent: Configurable): DialogWrapper? {
-    val sdk: Sdk = interpreter.getSdkAPI()
-    if (sdk.sdkAdditionalData !is PyTargetAwareAdditionalData) return null
-    // `createFor` returns `null` for a legacy remote SDK whose target information has been lost.
-    return PyRemoteInterpreterEditDialog.createFor(project, sdk, parent)
+  fun editorFor(project: Project, interpreter: PythonInterpreter, parent: Configurable): DialogWrapper? = when (interpreter) {
+    is NativePythonInterpreter -> null
+    is TargetPythonInterpreter -> PyRemoteInterpreterEditDialog.createFor(project, interpreter, parent)
   }
 }

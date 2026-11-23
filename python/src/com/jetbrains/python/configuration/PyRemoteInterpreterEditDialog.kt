@@ -7,14 +7,13 @@ import com.intellij.execution.target.getTargetType
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.options.ConfigurationException
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.ui.Messages
-import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.DialogWrapper
+import com.intellij.openapi.ui.Messages
+import com.intellij.python.sdk.backend.TargetPythonInterpreter
 import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.panel
 import com.jetbrains.python.PyBundle
-import com.jetbrains.python.target.PyTargetAwareAdditionalData
 import com.jetbrains.python.target.PythonLanguageRuntimeType
 import java.awt.Dimension
 import javax.swing.JComponent
@@ -24,7 +23,7 @@ import javax.swing.SwingUtilities
 private const val EDIT_DIALOG_MIN_WIDTH: Int = 720
 
 /**
- * "Interpreter Settings" edit dialog for a **remote** target-aware Python SDK — Docker, Docker
+ * "Interpreter Settings" edit dialog for a **remote** target interpreter — Docker, Docker
  * Compose, SSH, WSL, and similar. Renders the same right-side form the classical Project
  * Structure > Modules > Interpreter dialog shows. The interpreter keeps its name, so only the
  * target configuration is editable.
@@ -93,14 +92,9 @@ internal class PyRemoteInterpreterEditDialog private constructor(
 
   companion object {
 
-    /**
-     * Builds the dialog for [sdk] with its target-specific form, or `null` when [sdk] is a legacy
-     * remote SDK whose target information has been lost. The caller (launcher) treats a `null`
-     * return as "not editable", same as it does for a non-target-aware broken SDK.
-     */
-    fun createFor(project: Project, sdk: Sdk, parent: Configurable): PyRemoteInterpreterEditDialog? {
-      val additionalData = sdk.sdkAdditionalData as? PyTargetAwareAdditionalData ?: return null
-      val targetEnvironmentConfiguration = additionalData.targetEnvironmentConfiguration ?: return null
+    /** Builds the dialog for [interpreter] with the form of its target type. */
+    fun createFor(project: Project, interpreter: TargetPythonInterpreter, parent: Configurable): PyRemoteInterpreterEditDialog {
+      val targetEnvironmentConfiguration = interpreter.targetConfiguration
       val targetType: TargetEnvironmentType<TargetEnvironmentConfiguration> = targetEnvironmentConfiguration.getTargetType()
       val targetConfigurable = targetType.createConfigurable(
         project,
@@ -108,7 +102,7 @@ internal class PyRemoteInterpreterEditDialog private constructor(
         PythonLanguageRuntimeType.Helper.getInstance(),
         parent,
       )
-      val detailsConfigurable = PythonTargetInterpreterDetailsConfigurable(project, sdk, additionalData, targetConfigurable)
+      val detailsConfigurable = PythonTargetInterpreterDetailsConfigurable(interpreter, targetConfigurable)
       return PyRemoteInterpreterEditDialog(project, detailsConfigurable)
     }
   }

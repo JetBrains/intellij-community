@@ -164,6 +164,23 @@ fun findTarget(project: Project, targetId: String): TargetEnvironmentConfigurati
 @ApiStatus.Internal
 fun registerTarget(project: Project, target: TargetEnvironmentConfiguration) {
   if (findTarget(project, target.uuid) != null) return
+  addTargetCopy(project, target)
+}
+
+/**
+ * Replaces the target of [project] with the id of [target] by a copy of [target], after the user edited it. It registers
+ * the copy when [project] has no such target, see [registerTarget].
+ */
+@ApiStatus.Internal
+fun replaceTarget(project: Project, target: TargetEnvironmentConfiguration) {
+  val manager = TargetEnvironmentsManager.getInstance(project)
+  val stored = findTarget(project, target.uuid)
+  if (stored === target) return
+  stored?.let { manager.removeTarget(it) }
+  addTargetCopy(project, target)
+}
+
+private fun addTargetCopy(project: Project, target: TargetEnvironmentConfiguration) {
   val state = TargetEnvironmentsManager.OneTargetState().apply {
     loadFromConfiguration(target)
     uuid = target.uuid

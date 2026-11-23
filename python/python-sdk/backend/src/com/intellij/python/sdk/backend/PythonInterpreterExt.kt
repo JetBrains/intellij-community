@@ -28,6 +28,7 @@ import com.intellij.python.sdk.common.PyInterpreterItem
 import com.intellij.util.PathMappingSettings
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.concurrency.annotations.RequiresReadLockAbsence
 import com.jetbrains.python.PyNames
 import com.jetbrains.python.PythonInfo
@@ -232,6 +233,28 @@ fun PythonInterpreterKey.asUnavailableItem(): PyInterpreterItem = buildUnavailab
 /** The flavor this interpreter was set up with. */
 val PythonInterpreter.flavor: PythonSdkFlavor<*>
   get() = sdk.pySdkAdditionalData.flavor
+
+/**
+ * Saves [TargetPythonInterpreter.targetConfiguration] after the user edited it in place, where the flow of this session
+ * keeps it: the target of the project in the interpreter library flow, see [replaceTarget], and the SDK data in the
+ * legacy flow. Then it requests an update of this interpreter.
+ */
+@Internal
+@RequiresEdt
+fun TargetPythonInterpreter.saveEditedTargetConfiguration() {
+  val data = sdk.targetAdditionalData
+  // The SDK data holds the edited configuration too: it keeps a serialized copy, which the legacy flow stores.
+  data?.notifyTargetEnvironmentConfigurationChanged()
+  if (isInterpreterLibraryFlowEnabled()) {
+    replaceTarget(project, targetConfiguration)
+  }
+  else if (data != null) {
+    val modificator = sdk.sdkModificator
+    modificator.sdkAdditionalData = data
+    ApplicationManager.getApplication().runWriteAction { modificator.commitChanges() }
+  }
+  PythonInterpreterUpdater.getInstance(project).request(this, PythonInterpreterUpdateRequest(packages = true, background = false))
+}
 
 /** The target data of this interpreter, or `null` for an interpreter that runs on no target. */
 val PythonInterpreter.targetAdditionalData: PyTargetAwareAdditionalData?
