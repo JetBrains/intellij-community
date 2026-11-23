@@ -205,7 +205,7 @@ internal fun specifyFunctionLiteralTypesExplicitly(codeToInline: MutableCodeToIn
     val functionLiteralExpression = mainExpression.unpackFunctionLiteral(true)
     if (functionLiteralExpression != null) {
         val parameterString = analyze(functionLiteralExpression) { getExplicitLambdaSignature(functionLiteralExpression) }
-        if (parameterString != null) {
+        if (!parameterString.isNullOrEmpty()) {
             codeToInline.addPostInsertionAction(mainExpression) { inlinedExpression ->
                 val lambdaExpr = inlinedExpression.unpackFunctionLiteral(true).sure {
                     "can't find function literal expression for " + inlinedExpression.text

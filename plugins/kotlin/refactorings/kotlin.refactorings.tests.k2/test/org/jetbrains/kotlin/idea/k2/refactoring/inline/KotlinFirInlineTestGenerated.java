@@ -1141,6 +1141,16 @@ public abstract class KotlinFirInlineTestGenerated extends AbstractKotlinFirInli
                 runTest("testData/inline/inlineVariableOrProperty/intMax.kt");
             }
 
+            @TestMetadata("lambdaWithoutParameters.kt")
+            public void testLambdaWithoutParameters() throws Exception {
+                runTest("testData/inline/inlineVariableOrProperty/lambdaWithoutParameters.kt");
+            }
+
+            @TestMetadata("lambdaWithoutParametersAsArgument.kt")
+            public void testLambdaWithoutParametersAsArgument() throws Exception {
+                runTest("testData/inline/inlineVariableOrProperty/lambdaWithoutParametersAsArgument.kt");
+            }
+
             @TestMetadata("lessAndGreaterInCallArgs.kt")
             public void testLessAndGreaterInCallArgs() throws Exception {
                 runTest("testData/inline/inlineVariableOrProperty/lessAndGreaterInCallArgs.kt");
