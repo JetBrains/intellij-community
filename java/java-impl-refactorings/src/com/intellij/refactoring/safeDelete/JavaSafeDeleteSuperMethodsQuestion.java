@@ -2,13 +2,16 @@
 package com.intellij.refactoring.safeDelete;
 
 import com.intellij.ide.util.SuperMethodWarningUtil;
+import com.intellij.java.JavaBundle;
 import com.intellij.model.SymbolPointer;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
-import com.intellij.refactoring.modplan.ModPlanOptionValues;
 import com.intellij.refactoring.modplan.ModPlanOption;
+import com.intellij.refactoring.modplan.ModPlanOptionValues;
 import com.intellij.refactoring.modplan.ModPlanQuestion;
+import com.intellij.refactoring.rename.RenameJavaMethodProcessor;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import org.jetbrains.annotations.NotNull;
@@ -23,15 +26,23 @@ import java.util.Set;
  * The question of the interactive safe delete of a method that overrides some: whether to delete the base methods too. It shows the
  * dialog of the legacy flow, and the answer is the name of the method in {@link ModPlanJavaSafeDeleteOptions#SUPER_METHODS_OF}, chosen for
  * a yes and not chosen for a no. A method is asked about on its own, so the answer of one method does not change the answer of another.
- * {@link ModPlanJavaSafeDeleteOptions#DELETE_SUPER_METHODS} is the general answer of a request, and the dialog does not set it.
+ * {@link ModPlanJavaSafeDeleteOptions#DELETE_SUPER_METHODS} is the general answer of a request or of the {@linkplain #fallback() fallback
+ * form}, and the dialog does not set it.
  */
 final class JavaSafeDeleteSuperMethodsQuestion implements ModPlanQuestion.Custom {
   private final @NotNull SymbolPointer myMethod;
   private final @Nullable String myMethodName;
+  private final @NotNull Form myFallback;
 
   JavaSafeDeleteSuperMethodsQuestion(@NotNull PsiMethod method) {
     myMethod = SymbolPointer.of(method);
     myMethodName = JavaSafeDeleteProcessor.externalNameOf(method);
+    PsiMethod[] superMethods = SuperMethodWarningUtil.getTargetMethodCandidates(method, List.of(method));
+    myFallback = Form.yesNo(
+      ModPlanJavaSafeDeleteOptions.DELETE_SUPER_METHODS,
+      JavaBundle.message("delete.the.base.methods.in.0", StringUtil.join(superMethods, RenameJavaMethodProcessor::classNameOf, ", "),
+                         superMethods.length),
+      JavaBundle.message("delete.only.the.method.in.0", RenameJavaMethodProcessor.classNameOf(method)));
   }
 
   /**
@@ -84,5 +95,11 @@ final class JavaSafeDeleteSuperMethodsQuestion implements ModPlanQuestion.Custom
     boolean deletesSuperMethods = !(chosenMethods.length == 1 && chosenMethods[0] == method);
     return currentValues.withAnswers(ModPlanJavaSafeDeleteOptions.SUPER_METHODS_OF, List.of(myMethodName),
                                      deletesSuperMethods ? List.of(myMethodName) : List.of());
+  }
+
+  /** The form of the general answer {@link ModPlanJavaSafeDeleteOptions#DELETE_SUPER_METHODS}: it answers every method. */
+  @Override
+  public @NotNull Form fallback() {
+    return myFallback;
   }
 }

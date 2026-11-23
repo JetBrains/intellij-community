@@ -2,8 +2,8 @@
 package com.intellij.refactoring.modplan.impl;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.refactoring.modplan.ModPlanOptionValues;
 import com.intellij.refactoring.modplan.ModPlanOption;
+import com.intellij.refactoring.modplan.ModPlanOptionValues;
 import com.intellij.refactoring.modplan.ModPlanQuestion;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import org.jetbrains.annotations.ApiStatus;
@@ -19,9 +19,9 @@ import java.util.function.Function;
  * of one subject does not answer the question of another.
  * <p>
  * The answer is the key of the subject in the keys, chosen for a yes and not chosen for a no, see
- * {@link ModPlanOptionValues#withAnswers}. The switch is the general answer of a request: an explicit value answers the question of every
- * subject, and the dialog does not set it. A request can also name the chosen subjects in the keys, as the dialogs do. A subject with no
- * key answers with the switch, so its answer answers every subject.
+ * {@link ModPlanOptionValues#withAnswers}. The switch is the general answer of a request or of the {@linkplain #fallback() fallback form}:
+ * an explicit value answers the question of every subject, and the dialog does not set it. A request can also name the chosen subjects in
+ * the keys, as the dialogs do. A subject with no key answers with the switch, so its answer answers every subject.
  */
 // TODO IDEA-395594: keeps the answers of each subject as text keys among the up-front options of the request; keep them apart, by subject
 @ApiStatus.Experimental
@@ -30,21 +30,25 @@ public final class ModPlanSubjectConfirmation implements ModPlanQuestion.Custom 
   private final @NotNull ModPlanOption<String> myKeys;
   private final @Nullable String myKey;
   private final @NotNull Function<? super Project, @Nullable Boolean> myConfirm;
+  private final @Nullable Form myFallback;
 
   /**
-   * @param aSwitch the general answer of a request
-   * @param keys    the answers of the subjects: chosen for a yes, not chosen for a no
-   * @param key     the key of this subject, which tells it from the other subjects of one request; null if it has none
-   * @param confirm shows the dialog: true for yes, false for no, null for the cancel
+   * @param aSwitch  the general answer of a request
+   * @param keys     the answers of the subjects: chosen for a yes, not chosen for a no
+   * @param key      the key of this subject, which tells it from the other subjects of one request; null if it has none
+   * @param confirm  shows the dialog: true for yes, false for no, null for the cancel
+   * @param fallback the form of {@code aSwitch} for a client without the dialog; null if such a client takes the current values
    */
   public ModPlanSubjectConfirmation(@NotNull ModPlanOption<Boolean> aSwitch,
                                     @NotNull ModPlanOption<String> keys,
                                     @Nullable String key,
-                                    @NotNull Function<? super Project, @Nullable Boolean> confirm) {
+                                    @NotNull Function<? super Project, @Nullable Boolean> confirm,
+                                    @Nullable Form fallback) {
     mySwitch = aSwitch;
     myKeys = keys;
     myKey = key;
     myConfirm = confirm;
+    myFallback = fallback;
   }
 
   @Override
@@ -77,5 +81,10 @@ public final class ModPlanSubjectConfirmation implements ModPlanQuestion.Custom 
     if (confirmed == null) return null;
     if (myKey == null) return currentValues.with(mySwitch, confirmed);
     return currentValues.withAnswers(myKeys, List.of(myKey), confirmed ? List.of(myKey) : List.of());
+  }
+
+  @Override
+  public @Nullable Form fallback() {
+    return myFallback;
   }
 }

@@ -339,6 +339,24 @@ public sealed interface ModPlanQuestion {
      * @param answers the answers of the user, after OK
      */
     void store(@NotNull ModPlanOptionValues answers);
+
+    /**
+     * @return the storage that starts with every one of {@code keys} chosen in {@code option}, such as the start values of a multi-selector
+     * of a fallback form. It remembers nothing between runs.
+     */
+    static @NotNull Storage chooseAll(@NotNull ModPlanOption<String> option, @NotNull List<String> keys) {
+      List<String> allKeys = List.copyOf(keys);
+      return new Storage() {
+        @Override
+        public @NotNull ModPlanOptionValues load(@NotNull ModPlanOptionValues optionValues) {
+          return optionValues.withChosenKeys(option, allKeys, allKeys);
+        }
+
+        @Override
+        public void store(@NotNull ModPlanOptionValues answers) {
+        }
+      };
+    }
   }
 
   /**

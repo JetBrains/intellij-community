@@ -418,7 +418,8 @@ public class RenameJavaMethodProcessor extends RenameJavaMemberProcessor {
   }
 
   /** @return the qualified name of the class of {@code method}, else its short name */
-  private static @NotNull String classNameOf(@NotNull PsiMethod method) {
+  @ApiStatus.Internal
+  public static @NotNull String classNameOf(@NotNull PsiMethod method) {
     PsiClass containingClass = method.getContainingClass();
     if (containingClass == null) return "";
     return StringUtil.notNullize(containingClass.getQualifiedName(), StringUtil.notNullize(containingClass.getName()));

@@ -899,8 +899,9 @@ c:com.intellij.refactoring.memberPushDown.PushDownProcessor
 - *:<init>(com.intellij.psi.PsiElement,java.util.List,com.intellij.refactoring.util.DocCommentPolicy,Z):V
 *f:com.intellij.refactoring.modplan.impl.ModPlanSubjectConfirmation
 - com.intellij.refactoring.modplan.ModPlanQuestion$Custom
-- <init>(com.intellij.refactoring.modplan.ModPlanOption,com.intellij.refactoring.modplan.ModPlanOption,java.lang.String,java.util.function.Function):V
+- <init>(com.intellij.refactoring.modplan.ModPlanOption,com.intellij.refactoring.modplan.ModPlanOption,java.lang.String,java.util.function.Function,com.intellij.refactoring.modplan.ModPlanQuestion$Form):V
 - ask(com.intellij.openapi.project.Project,com.intellij.refactoring.modplan.ModPlanOptionValues):com.intellij.refactoring.modplan.ModPlanOptionValues
+- fallback():com.intellij.refactoring.modplan.ModPlanQuestion$Form
 - isAnswered(com.intellij.refactoring.modplan.ModPlanOptionValues):Z
 - isConfirmed(com.intellij.refactoring.modplan.ModPlanOptionValues):Z
 - options():java.util.List

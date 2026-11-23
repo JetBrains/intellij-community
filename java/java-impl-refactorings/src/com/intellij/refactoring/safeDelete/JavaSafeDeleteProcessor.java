@@ -98,6 +98,7 @@ import com.intellij.refactoring.modplan.ModPlanChain;
 import com.intellij.refactoring.modplan.ModPlanChainBuilder;
 import com.intellij.refactoring.modplan.ModPlanEdit;
 import com.intellij.refactoring.modplan.ModPlanOptionValues;
+import com.intellij.refactoring.modplan.ModPlanQuestion;
 import com.intellij.refactoring.modplan.ModPlanRequest;
 import com.intellij.refactoring.modplan.ModPlanUiInterpreter;
 import com.intellij.refactoring.modplan.impl.ModPlanSubjectConfirmation;
@@ -352,7 +353,9 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
       ModPlanSafeDeleteOptions.DELETE_HIERARCHY, ModPlanSafeDeleteOptions.HIERARCHY_OF, hierarchyKeyOf(element), project -> {
         int result = Messages.showYesNoCancelDialog(project, message, SafeDeleteHandler.getRefactoringName(), Messages.getQuestionIcon());
         return result == Messages.CANCEL ? null : result == Messages.YES;
-      });
+      }, ModPlanQuestion.Form.yesNo(ModPlanSafeDeleteOptions.DELETE_HIERARCHY,
+                                    RefactoringBundle.message("delete.the.parameter.in.the.whole.hierarchy"),
+                                    RefactoringBundle.message("delete.only.this.parameter")));
     return chainBuilder.ask(hierarchyQuestion, answered -> {
       boolean deletesHierarchy = hierarchyQuestion.isConfirmed(answered.getRequest().optionValues());
       return answered.passValue(List.of(ModPlanSafeDeleteUsageInfoUtil.elementsOf(deletesHierarchy ? hierarchySubjects : elementSubjects)));

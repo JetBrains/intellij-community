@@ -356,6 +356,7 @@
 - storage():com.intellij.refactoring.modplan.ModPlanQuestion$Storage
 - s:yesNo(com.intellij.refactoring.modplan.ModPlanOption,java.lang.String,java.lang.String):com.intellij.refactoring.modplan.ModPlanQuestion$Form
 *:com.intellij.refactoring.modplan.ModPlanQuestion$Storage
+- s:chooseAll(com.intellij.refactoring.modplan.ModPlanOption,java.util.List):com.intellij.refactoring.modplan.ModPlanQuestion$Storage
 - a:load(com.intellij.refactoring.modplan.ModPlanOptionValues):com.intellij.refactoring.modplan.ModPlanOptionValues
 - a:store(com.intellij.refactoring.modplan.ModPlanOptionValues):V
 *:com.intellij.refactoring.modplan.ModPlanRefactoring

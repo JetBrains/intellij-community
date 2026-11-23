@@ -8,6 +8,8 @@ import com.intellij.openapi.util.Key
 import com.intellij.psi.ElementDescriptionUtil
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMethod
+import com.intellij.refactoring.RefactoringBundle
+import com.intellij.refactoring.modplan.ModPlanQuestion
 import com.intellij.refactoring.modplan.impl.ModPlanSubjectConfirmation
 import com.intellij.refactoring.modplan.safeDelete.ModPlanSafeDeleteOptions
 import com.intellij.refactoring.util.RefactoringDescriptionLocation
@@ -37,11 +39,18 @@ internal fun parameterHierarchyQuestion(parameter: KtParameter): ModPlanSubjectC
     )
 
     val key = parameter.ownerDeclaration?.let { "${declarationKey(it)} ${parameter.name}" }
+    val fallback = ModPlanQuestion.Form.yesNo(
+        ModPlanSafeDeleteOptions.DELETE_HIERARCHY,
+        RefactoringBundle.message("delete.the.parameter.in.the.whole.hierarchy"),
+        RefactoringBundle.message("delete.only.this.parameter"),
+    )
     return ModPlanSubjectConfirmation(
-        ModPlanSafeDeleteOptions.DELETE_HIERARCHY, ModPlanSafeDeleteOptions.HIERARCHY_OF, key
-    ) { project ->
-        Messages.showOkCancelDialog(project, message, IdeBundle.message("title.warning"), Messages.getQuestionIcon()) == Messages.OK
-    }
+        ModPlanSafeDeleteOptions.DELETE_HIERARCHY, ModPlanSafeDeleteOptions.HIERARCHY_OF, key,
+        { project ->
+            Messages.showOkCancelDialog(project, message, IdeBundle.message("title.warning"), Messages.getQuestionIcon()) == Messages.OK
+        },
+        fallback,
+    )
 }
 
 internal fun collectParameterHierarchy(parameter: KtParameter): Set<PsiElement> {

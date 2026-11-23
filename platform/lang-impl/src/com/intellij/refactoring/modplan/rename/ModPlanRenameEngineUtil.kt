@@ -346,17 +346,13 @@ private class RelatedRenamesQuestion(
   /** A multi-selector of the suggested renames: the chosen ones are made, the others keep their names. */
   override fun fallback(): ModPlanQuestion.Form {
     val selector = OptPane.multiSelector(ModPlanRenameOptions.RELATED_RENAMES.id, choices, OptMultiSelector.SelectionMode.MULTIPLE_OR_EMPTY)
-    val storage = if (selectedByDefault) { SelectAllChoices(choices.map { it.key }) } else { null }
-    return ModPlanQuestion.Form(OptPane.pane(OptPane.group(description, selector)), listOf(ModPlanRenameOptions.RELATED_RENAMES), storage)
-  }
-
-  /** The start values of the fallback form: every one of [keys] is chosen. Nothing is remembered between runs. */
-  private class SelectAllChoices(private val keys: List<String>) : ModPlanQuestion.Storage {
-    override fun load(optionValues: ModPlanOptionValues): ModPlanOptionValues =
-      optionValues.withChosenKeys(ModPlanRenameOptions.RELATED_RENAMES, keys, keys)
-
-    override fun store(answers: ModPlanOptionValues) {
+    val storage = if (selectedByDefault) {
+      ModPlanQuestion.Storage.chooseAll(ModPlanRenameOptions.RELATED_RENAMES, choices.map { it.key })
     }
+    else {
+      null
+    }
+    return ModPlanQuestion.Form(OptPane.pane(OptPane.group(description, selector)), listOf(ModPlanRenameOptions.RELATED_RENAMES), storage)
   }
 
   @RequiresEdt

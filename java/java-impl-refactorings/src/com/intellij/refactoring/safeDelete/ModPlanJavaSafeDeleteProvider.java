@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.safeDelete;
 
+import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.model.SymbolPointer;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
@@ -8,21 +9,20 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
-import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiPackage;
 import com.intellij.psi.PsiPackageAccessibilityStatement;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.modplan.ModPlanAnalysisResult;
 import com.intellij.refactoring.modplan.ModPlanChain;
-import com.intellij.refactoring.modplan.ModPlanFinalStep;
 import com.intellij.refactoring.modplan.ModPlanChainBuilder;
 import com.intellij.refactoring.modplan.ModPlanConflicts;
 import com.intellij.refactoring.modplan.ModPlanEdit;
+import com.intellij.refactoring.modplan.ModPlanFinalStep;
 import com.intellij.refactoring.modplan.ModPlanOptionValues;
 import com.intellij.refactoring.modplan.ModPlanQuestion;
-import com.intellij.refactoring.modplan.impl.ModPlanSubjectConfirmation;
 import com.intellij.refactoring.modplan.ModPlanRequest;
+import com.intellij.refactoring.modplan.impl.ModPlanSubjectConfirmation;
 import com.intellij.refactoring.modplan.safeDelete.ModPlanLegacySafeDeleteProvider;
 import com.intellij.refactoring.modplan.safeDelete.ModPlanSafeDeleteOptions;
 import com.intellij.refactoring.modplan.safeDelete.ModPlanSafeDeleteProvider;
@@ -156,7 +156,9 @@ final class ModPlanJavaSafeDeleteProvider implements ModPlanSafeDeleteProvider {
       ModPlanJavaSafeDeleteOptions.DELETE_ACCESSORS, ModPlanJavaSafeDeleteOptions.ACCESSORS_OF,
       targetElement == null ? null : JavaSafeDeleteProcessor.externalNameOf(targetElement),
       project -> Messages.showYesNoDialog(project, accessorNote, RefactoringBundle.message("safe.delete.title"),
-                                          Messages.getQuestionIcon()) == Messages.YES);
+                                          Messages.getQuestionIcon()) == Messages.YES,
+      ModPlanQuestion.Form.yesNo(ModPlanJavaSafeDeleteOptions.DELETE_ACCESSORS, JavaRefactoringBundle.message("delete.the.accessors.too"),
+                                 JavaRefactoringBundle.message("keep.the.accessors")));
     return chainBuilder.ask(accessorQuestion, answered -> {
       PsiElement target = targetSubject.element();
       if (target == null) return answered.passValue(DeletionDecision.REFUSED);

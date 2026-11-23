@@ -1,6 +1,8 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.safeDelete;
 
+import com.intellij.codeInspection.options.OptMultiSelector;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.model.SymbolPointer;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
@@ -8,6 +10,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMember;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiParameter;
+import com.intellij.psi.presentation.java.SymbolPresentationUtil;
 import com.intellij.refactoring.modplan.ModPlanOption;
 import com.intellij.refactoring.modplan.ModPlanOptionValues;
 import com.intellij.refactoring.modplan.ModPlanQuestion;
@@ -16,6 +19,7 @@ import com.intellij.refactoring.safeDelete.usageInfo.SafeDeleteOverridingMethodU
 import com.intellij.refactoring.safeDelete.usageInfo.SafeDeleteParameterCallHierarchyUsageInfo;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
+import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
@@ -33,22 +37,26 @@ import java.util.function.Function;
  * names of the chosen elements, one per line, see {@link ModPlanJavaSafeDeleteOptions#OVERRIDERS_TO_DELETE}, and the offered ones that are
  * not chosen, see {@link ModPlanOptionValues#withAnswers}. The names of an earlier answer stay: the answers of several questions add up to
  * one list, so a question is answered when the list answers all of its own elements. The switch, such as
- * {@link ModPlanJavaSafeDeleteOptions#DELETE_OVERRIDERS}, is the general answer of a request, and the dialog does not set it.
+ * {@link ModPlanJavaSafeDeleteOptions#DELETE_OVERRIDERS}, is the general answer of a request, and the dialog does not set it. The
+ * {@linkplain #fallback() fallback form} is a multi-selector of the offered elements.
  */
 final class JavaSafeDeleteSubsetQuestion implements ModPlanQuestion.Custom {
   private final @NotNull ModPlanOption<Boolean> mySwitch;
   private final @NotNull ModPlanOption<String> myNames;
+  /** The elements that the question offers: the key of each one is its external name. */
+  private final @NotNull @Unmodifiable List<Choice> myOfferedChoices;
   /** The external names of the elements that the question offers. */
   private final @NotNull @Unmodifiable List<String> myOfferedNames;
   private final @NotNull Function<Project, @Nullable List<String>> myChoose;
 
   private JavaSafeDeleteSubsetQuestion(@NotNull ModPlanOption<Boolean> aSwitch,
                                        @NotNull ModPlanOption<String> names,
-                                       @NotNull List<String> offeredNames,
+                                       @NotNull List<Choice> offeredChoices,
                                        @NotNull Function<Project, @Nullable List<String>> choose) {
     mySwitch = aSwitch;
     myNames = names;
-    myOfferedNames = offeredNames;
+    myOfferedChoices = List.copyOf(offeredChoices);
+    myOfferedNames = ContainerUtil.map(offeredChoices, Choice::key);
     myChoose = choose;
   }
 
@@ -56,7 +64,8 @@ final class JavaSafeDeleteSubsetQuestion implements ModPlanQuestion.Custom {
   static @NotNull JavaSafeDeleteSubsetQuestion overriders(@NotNull List<SafeDeleteOverridingMethodUsageInfo> overridingUsages) {
     return new JavaSafeDeleteSubsetQuestion(
       ModPlanJavaSafeDeleteOptions.DELETE_OVERRIDERS, ModPlanJavaSafeDeleteOptions.OVERRIDERS_TO_DELETE,
-      ContainerUtil.mapNotNull(overridingUsages, SafeDeleteOverridingMethodUsageInfo::getExternalName), project -> {
+      choicesOf(overridingUsages, SafeDeleteOverridingMethodUsageInfo::getOverridingMethod,
+                SafeDeleteOverridingMethodUsageInfo::getExternalName), project -> {
         List<SafeDeleteOverridingMethodUsageInfo> restoredUsages = ReadAction.computeBlocking(() -> ContainerUtil.filter(
           overridingUsages, usage -> usage.getOverridingMethod() != null && usage.findReferencedElement() instanceof PsiMethod));
         if (restoredUsages.isEmpty()) return null;
@@ -71,7 +80,7 @@ final class JavaSafeDeleteSubsetQuestion implements ModPlanQuestion.Custom {
     SymbolPointer owner = SymbolPointer.of(member);
     return new JavaSafeDeleteSubsetQuestion(
       ModPlanJavaSafeDeleteOptions.DELETE_UNUSED_CALLEES, ModPlanJavaSafeDeleteOptions.CALLEES_TO_DELETE,
-      namesOf(calleeUsages, UsageInfo::getElement), project -> {
+      choicesOf(calleeUsages, UsageInfo::getElement, usage -> externalNameOf(usage.getElement())), project -> {
         if (!(owner.element() instanceof PsiMember currentMember)) return null;
         List<SafeDeleteMemberCalleeUsageInfo> restoredUsages =
           ReadAction.computeBlocking(() -> JavaSafeDeleteProcessor.liveCalleeUsages(calleeUsages));
@@ -100,7 +109,8 @@ final class JavaSafeDeleteSubsetQuestion implements ModPlanQuestion.Custom {
     int parameterIndex = parameter == null || calledMethod == null ? -1 : calledMethod.getParameterList().getParameterIndex(parameter);
     return new JavaSafeDeleteSubsetQuestion(
       ModPlanJavaSafeDeleteOptions.DELETE_PARAMETER_IN_CALLERS, ModPlanJavaSafeDeleteOptions.CALLERS_TO_DELETE_PARAMETER_IN,
-      namesOf(delegatingUsages, SafeDeleteParameterCallHierarchyUsageInfo::getCallerMethod), project -> {
+      choicesOf(delegatingUsages, SafeDeleteParameterCallHierarchyUsageInfo::getCallerMethod,
+                usage -> externalNameOf(usage.getCallerMethod())), project -> {
         List<SafeDeleteParameterCallHierarchyUsageInfo> restoredUsages =
           ReadAction.computeBlocking(() -> JavaSafeDeleteProcessor.liveCallerUsages(delegatingUsages));
         if (restoredUsages.isEmpty() || !(restoredUsages.getFirst().getCalledMethod() instanceof PsiMethod method)) return null;
@@ -136,12 +146,34 @@ final class JavaSafeDeleteSubsetQuestion implements ModPlanQuestion.Custom {
     return ReadAction.compute(() -> {
       List<String> names = new ArrayList<>();
       for (T usage : usages) {
-        PsiElement element = elementOf.apply(usage);
-        String name = element == null ? null : JavaSafeDeleteProcessor.externalNameOf(element);
+        String name = externalNameOf(elementOf.apply(usage));
         if (name != null) names.add(name);
       }
       return names;
     });
+  }
+
+  private static @Nullable String externalNameOf(@Nullable PsiElement element) {
+    return element == null ? null : JavaSafeDeleteProcessor.externalNameOf(element);
+  }
+
+  /**
+   * @return the elements of {@code usages} for the multi-selector of the fallback form: the key is the external name, the text is the name
+   * of the element, and the secondary text is its container. A usage with no element or no name is left out
+   */
+  @RequiresReadLock
+  private static <T extends UsageInfo> @NotNull List<Choice> choicesOf(@NotNull List<? extends T> usages,
+                                                                       @NotNull Function<? super T, @Nullable PsiElement> elementOf,
+                                                                       @NotNull Function<? super T, @Nullable String> nameOf) {
+    List<Choice> choices = new ArrayList<>();
+    for (T usage : usages) {
+      PsiElement element = elementOf.apply(usage);
+      String name = nameOf.apply(usage);
+      if (element == null || name == null) continue;
+      choices.add(new Choice(name, SymbolPresentationUtil.getSymbolPresentableText(element),
+                             SymbolPresentationUtil.getSymbolContainerText(element)));
+    }
+    return choices;
   }
 
   @Override
@@ -179,5 +211,16 @@ final class JavaSafeDeleteSubsetQuestion implements ModPlanQuestion.Custom {
     List<String> chosenNames = myChoose.apply(project);
     if (chosenNames == null) return null;
     return currentValues.withAnswers(myNames, myOfferedNames, chosenNames);
+  }
+
+  /**
+   * A multi-selector of the offered elements: the chosen ones are deleted. It starts with all of them chosen if the switch is true by
+   * default, as the dialog of the overriding methods does, else with none.
+   */
+  @Override
+  public @NotNull Form fallback() {
+    OptMultiSelector selector = OptPane.multiSelector(myNames.getId(), myOfferedChoices, OptMultiSelector.SelectionMode.MULTIPLE_OR_EMPTY);
+    Storage storage = mySwitch.getDefaultValue() ? Storage.chooseAll(myNames, myOfferedNames) : null;
+    return new Form(OptPane.pane(OptPane.group(myNames.getDescription().get(), selector)), List.of(myNames), storage);
   }
 }

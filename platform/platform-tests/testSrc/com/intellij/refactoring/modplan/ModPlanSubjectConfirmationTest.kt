@@ -10,7 +10,7 @@ class ModPlanSubjectConfirmationTest : BasePlatformTestCase() {
 
   /** @param answer what the dialog answers: true for yes, false for no, null for the cancel */
   private fun question(key: String?, answer: Boolean? = true): ModPlanSubjectConfirmation =
-    ModPlanSubjectConfirmation(switch, keys, key) { answer }
+    ModPlanSubjectConfirmation(switch, keys, key, { answer }, null)
 
   fun `test the answer of one subject does not answer another subject`() {
     val answers = question("a", answer = false).ask(project, ModPlanOptionValues.EMPTY)!!
