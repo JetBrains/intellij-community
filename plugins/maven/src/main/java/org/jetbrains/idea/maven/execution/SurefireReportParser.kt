@@ -79,12 +79,14 @@ object SurefireReportParser {
       val durationMs = testcase.getAttributeValue("time")?.toDoubleOrNull()?.let { (it * 1000).toLong() }
 
       // Detect parameterized invocations by the "[" marker Surefire uses for indices.
-      val bracketIdx = name.indexOf('[')
+      val bracketIdx = invocationBracket(name)
+      val phrasedInvocation = if (bracketIdx < 0) PHRASED_INVOCATION.matchEntire(name) else null
       val methodSuite: String?
       val displayName: String
-      val locationHint: String
+      // The method for navigation and for Rerun Failed Tests, without the parameter types.
+      val bareMethod: String
 
-      if (bracketIdx >= 0) {
+      if (bracketIdx > 0) {
         // Parameterized invocation: group under a method-level suite.
         // baseMethod may include parameter types, e.g. "calculateDiscount(int, int, int)".
         val baseMethod = name.substring(0, bracketIdx).trimEnd()
@@ -93,17 +95,24 @@ object SurefireReportParser {
         // Method suite name omits the classname prefix, matching the JPS runner style.
         methodSuite = baseMethod
         displayName = invocationSuffix
-        // Use the bare method name (no param types) for navigation.
-        val bareMethod = baseMethod.substringBefore('(').trimEnd()
-        locationHint = "java:test://${escape(classname)}/${escape(bareMethod)}"
+        bareMethod = baseMethod.substringBefore('(').trimEnd()
+      }
+      else if (phrasedInvocation != null) {
+        // A custom invocation name in a report with Surefire's usePhrasedTestCaseMethodName: the method signature, a
+        // space, and the name, e.g. `sums(int, int) "1" plus "2"`. Group it as a parameterized invocation (IDEA-396297).
+        val invocationName = phrasedInvocation.groupValues[2]
+        methodSuite = name.removeSuffix(invocationName).trimEnd()
+        displayName = invocationName
+        bareMethod = phrasedInvocation.groupValues[1]
       }
       else {
-        // Non-parameterized test: emit directly under the class suite.
+        // Non-parameterized test, or a name with no method in it (a display name): emit directly under the class suite.
         // Omit the classname prefix from the display name, matching the JPS runner style.
         methodSuite = null
         displayName = name
-        locationHint = "java:test://${escape(classname)}/${escape(name)}"
+        bareMethod = name
       }
+      val locationHint = "java:test://${escape(classname)}/${escape(bareMethod)}"
 
       // Close the previous method suite when the current test belongs to a different group.
       if (openMethodSuite != null && openMethodSuite != methodSuite) {
@@ -112,8 +121,7 @@ object SurefireReportParser {
       }
       // Open a new method suite for the first invocation of a parameterized method.
       if (methodSuite != null && openMethodSuite == null) {
-        val bareMethod = name.substring(0, bracketIdx).trimEnd().substringBefore('(').trimEnd()
-        messages += "##teamcity[testSuiteStarted name='${escape(methodSuite)}' locationHint='java:test://${escape(classname)}/${escape(bareMethod)}']"
+        messages += "##teamcity[testSuiteStarted name='${escape(methodSuite)}' locationHint='$locationHint']"
         openMethodSuite = methodSuite
       }
 
@@ -158,6 +166,25 @@ object SurefireReportParser {
 
     messages += "##teamcity[testSuiteFinished name='${escape(suiteName)}']"
   }
+
+  /**
+   * The index of the "[" that starts the invocation suffix of a parameterized test, or -1. In a JUnit 5 name the
+   * search starts after the parameter types, because an array type has brackets too: `join(String[])[1]`.
+   */
+  private fun invocationBracket(name: String): Int {
+    val open = name.indexOf('(')
+    val close = if (open > 0 && METHOD_NAME.matches(name.substring(0, open))) name.indexOf(')', open) else -1
+    return name.indexOf('[', close + 1)
+  }
+
+  private val METHOD_NAME = Regex("""[\w$]+""")
+
+  /**
+   * A custom invocation name of a parameterized JUnit 5 test in a report with Surefire's `usePhrasedTestCaseMethodName`:
+   * the method signature, a space, and the name, e.g. `sums(int, int) "1" plus "2"`. Group 1 is the method, group 2
+   * the name.
+   */
+  private val PHRASED_INVOCATION = Regex("""([\w$]+)\([\w$.\[\], ]*\) (.+)""")
 
   private fun escape(s: String): String = buildString {
     for (c in s) {

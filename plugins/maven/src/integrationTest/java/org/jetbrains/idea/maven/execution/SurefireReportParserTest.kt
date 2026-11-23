@@ -332,6 +332,58 @@ line2</failure>
     assertTrue(msgs.any { "testStarted" in it && "|[2|] b" in it })
   }
 
+  // IDEA-396297: the names that Surefire writes with usePhrasedTestCaseMethodName (Surefire 3.6.0, JUnit 6.0.3).
+  @Test
+  fun `phrased names of parameterized invocations are grouped under their method`() {
+    writeReport("TEST-com.example.SumTest.xml", """
+      <testsuite name="com.example.SumTest">
+        <testcase name="sums(int, int) &quot;1&quot; plus &quot;2&quot;" classname="com.example.SumTest"/>
+        <testcase name="sums(int, int) &quot;3&quot; plus &quot;4&quot;" classname="com.example.SumTest"/>
+        <testcase name="words(String)[1] &quot;alpha&quot;" classname="com.example.SumTest"/>
+        <testcase name="a plain test" classname="com.example.SumTest"/>
+      </testsuite>
+    """)
+
+    val msgs = messages()
+    assertEquals(1, msgs.count { "testSuiteStarted" in it && "name='sums(int, int)'" in it }, msgs.joinToString("\n"))
+    assertTrue(msgs.any { "testSuiteStarted" in it && "name='sums(int, int)' locationHint='java:test://com.example.SumTest/sums'" in it })
+    assertTrue(msgs.any { "testStarted" in it && "name='\"1\" plus \"2\"' locationHint='java:test://com.example.SumTest/sums'" in it })
+    assertTrue(msgs.any { "testStarted" in it && "name='\"3\" plus \"4\"'" in it })
+    assertTrue(msgs.any { "testStarted" in it && "name='|[1|] \"alpha\"' locationHint='java:test://com.example.SumTest/words'" in it })
+    // A display name with no method in it stays a plain test of the class.
+    assertTrue(msgs.any { "testStarted" in it && "name='a plain test'" in it })
+    assertEquals(3, msgs.count { "testSuiteStarted" in it }, msgs.joinToString("\n"))
+  }
+
+  @Test
+  fun `array parameter types do not split the method signature`() {
+    writeReport("TEST-com.example.JoinTest.xml", """
+      <testsuite name="com.example.JoinTest">
+        <testcase name="join(String[])[1]" classname="com.example.JoinTest"/>
+        <testcase name="join(String[]) &quot;a&quot;" classname="com.example.JoinTest"/>
+      </testsuite>
+    """)
+
+    val msgs = messages()
+    assertTrue(msgs.any { "testSuiteStarted" in it && "name='join(String|[|])' locationHint='java:test://com.example.JoinTest/join'" in it },
+               msgs.joinToString("\n"))
+    assertTrue(msgs.any { "testStarted" in it && "name='|[1|]'" in it })
+    assertTrue(msgs.any { "testStarted" in it && "name='\"a\"'" in it })
+  }
+
+  @Test
+  fun `an invocation name with no method is not put under an empty method suite`() {
+    writeReport("TEST-com.example.NoMethodTest.xml", """
+      <testsuite name="com.example.NoMethodTest">
+        <testcase name="[1] alpha" classname="com.example.NoMethodTest"/>
+      </testsuite>
+    """)
+
+    val msgs = messages()
+    assertEquals(1, msgs.count { "testSuiteStarted" in it }, msgs.joinToString("\n"))
+    assertTrue(msgs.any { "testStarted" in it && "name='|[1|] alpha'" in it })
+  }
+
   // ── multiple suites ───────────────────────────────────────────────────────
 
   @Test
