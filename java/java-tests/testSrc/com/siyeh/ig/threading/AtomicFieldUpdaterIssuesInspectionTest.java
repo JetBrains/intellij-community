@@ -195,6 +195,8 @@ public class AtomicFieldUpdaterIssuesInspectionTest {
              }""");
   }
 
+  // The language server does not finish the check in 5 minutes. LSP-2483 tracks the timeout.
+  @AnalysisHostTest(hosts = AnalysisHostTest.Host.IDE)
   @Test
   public void testAvoidNPE() {
     inspectionFixture.get().doTest("""

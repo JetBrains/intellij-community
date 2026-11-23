@@ -39,6 +39,8 @@ public class NewClassNamingConventionInspectionTest {
     inspectionFixture.get().doTest();
   }
 
+  // The language server does not find the JUnit 5 test classes. LSP-2483 tracks the difference.
+  @AnalysisHostTest(hosts = AnalysisHostTest.Host.IDE)
   @Test
   public void testNested() {
     inspectionFixture.get().addEnvironmentClass("package org.junit.platform.commons.annotation; @interface Testable{}");

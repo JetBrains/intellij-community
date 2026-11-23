@@ -17,6 +17,8 @@ public class EqualsWhichDoesntCheckParameterClassInspectionTest {
   private final TestFixture<? extends JavaInspectionFixture> inspectionFixture =
     javaInspectionFixture(projectFixture, () -> new EqualsWhichDoesntCheckParameterClassInspection(), getEnvironmentClasses());
 
+  // The language server gives other warnings. LSP-2483 tracks the difference.
+  @AnalysisHostTest(hosts = AnalysisHostTest.Host.IDE)
   @Test
   public void testEqualsWhichDoesntCheckParameterClass() {
     inspectionFixture.get().doTest();
