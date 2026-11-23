@@ -5,9 +5,10 @@ import com.intellij.openapi.actionSystem.DataKey
 
 object ReviewToolwindowDataKeys {
   @JvmStatic
-  val REVIEW_TOOLWINDOW_PROJECT_VM =
-    DataKey.create<ReviewToolwindowProjectViewModel<*, *>>("com.intellij.collaboration.toolwindow.review.project.vm")
+  val REVIEW_TOOLWINDOW_PROJECT_VM: DataKey<ReviewToolwindowProjectViewModel<*, *>> =
+    DataKey.create("com.intellij.collaboration.toolwindow.review.project.vm")
 
   @JvmStatic
-  val REVIEW_TOOLWINDOW_VM = DataKey.create<ReviewToolwindowViewModel<*>>("com.intellij.collaboration.toolwindow.review.toolwindow.vm")
+  val REVIEW_TOOLWINDOW_VM: DataKey<ReviewToolwindowViewModel<*>> =
+    DataKey.create("com.intellij.collaboration.toolwindow.review.toolwindow.vm")
 }

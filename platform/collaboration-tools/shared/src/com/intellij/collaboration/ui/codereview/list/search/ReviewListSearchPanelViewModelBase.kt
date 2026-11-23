@@ -17,9 +17,9 @@ abstract class ReviewListSearchPanelViewModelBase<S : ReviewListSearchValue, Q: 
   final override val defaultFilter: S,
 ) : ReviewListSearchPanelViewModel<S, Q> {
 
-  final override val searchState = MutableStateFlow(historyModel.lastFilter ?: defaultFilter)
+  final override val searchState: MutableStateFlow<S> = MutableStateFlow(historyModel.lastFilter ?: defaultFilter)
 
-  final override val queryState = searchState.partialState(ReviewListSearchValue::searchQuery) {
+  final override val queryState: MutableStateFlow<String?> = searchState.partialState(ReviewListSearchValue::searchQuery) {
     withQuery(it)
   }
 
