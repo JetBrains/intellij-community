@@ -124,11 +124,11 @@ public abstract class QuickFixFactory {
   /**
    * @param psiElement psiClass or enum constant without class initializer
    */
-  public abstract @NotNull LocalQuickFixAndIntentionActionOnPsiElement createImplementMethodsFix(@NotNull PsiElement psiElement);
+  public abstract @NotNull ModCommandAction createImplementMethodsFix(@NotNull PsiElement psiElement);
 
   public abstract @NotNull IntentionAction createAssignmentToComparisonFix(@NotNull PsiAssignmentExpression expr);
 
-  public abstract @NotNull LocalQuickFixAndIntentionActionOnPsiElement createImplementMethodsFix(@NotNull PsiClass psiElement);
+  public abstract @NotNull ModCommandAction createImplementMethodsFix(@NotNull PsiClass psiElement);
 
   public abstract @NotNull LocalQuickFixAndIntentionActionOnPsiElement createMethodThrowsFix(@NotNull PsiMethod method,
                                                                                              @NotNull PsiClassType exceptionClass,
@@ -239,7 +239,7 @@ public abstract class QuickFixFactory {
 
   public abstract @NotNull IntentionAction createSurroundWithArrayFix(@Nullable PsiCall methodCall, @Nullable PsiExpression expression);
 
-  public abstract @NotNull IntentionAction createImplementAbstractClassMethodsFix(@NotNull PsiElement elementToHighlight);
+  public abstract @NotNull ModCommandAction createImplementAbstractClassMethodsFix(@NotNull PsiElement elementToHighlight);
 
   public abstract @NotNull IntentionAction createMoveClassToSeparateFileFix(@NotNull PsiClass aClass);
 

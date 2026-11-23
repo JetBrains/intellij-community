@@ -56,8 +56,6 @@ import com.intellij.codeInsight.daemon.impl.quickfix.DeleteReturnFix;
 import com.intellij.codeInsight.daemon.impl.quickfix.DeleteSideEffectsAwareFix;
 import com.intellij.codeInsight.daemon.impl.quickfix.EnableOptimizeImportsOnTheFlyFix;
 import com.intellij.codeInsight.daemon.impl.quickfix.ExtendsListModCommandFix;
-import com.intellij.codeInsight.daemon.impl.quickfix.ImplementAbstractClassMethodsFix;
-import com.intellij.codeInsight.daemon.impl.quickfix.ImplementMethodsFix;
 import com.intellij.codeInsight.daemon.impl.quickfix.ImplementOrExtendFix;
 import com.intellij.codeInsight.daemon.impl.quickfix.InitializeFinalFieldInConstructorFix;
 import com.intellij.codeInsight.daemon.impl.quickfix.InsertMethodCallFix;
@@ -120,6 +118,7 @@ import com.intellij.codeInsight.daemon.impl.quickfix.WrapWithAdapterMethodCallFi
 import com.intellij.codeInsight.daemon.impl.quickfix.makefinal.MakeVarEffectivelyFinalFix;
 import com.intellij.codeInsight.daemon.quickFix.CreateClassOrPackageFix;
 import com.intellij.codeInsight.daemon.quickFix.CreateFieldOrPropertyFix;
+import com.intellij.codeInsight.generation.OverrideImplementMethodsModCommandAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.codeInsight.intention.impl.AddMainMethodFix;
@@ -314,13 +313,13 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
   }
 
   @Override
-  public @NotNull LocalQuickFixAndIntentionActionOnPsiElement createImplementMethodsFix(@NotNull PsiClass aClass) {
-    return new ImplementMethodsFix(aClass);
+  public @NotNull ModCommandAction createImplementMethodsFix(@NotNull PsiClass aClass) {
+    return OverrideImplementMethodsModCommandAction.implement(aClass);
   }
 
   @Override
-  public @NotNull LocalQuickFixAndIntentionActionOnPsiElement createImplementMethodsFix(@NotNull PsiElement psiElement) {
-    return new ImplementMethodsFix(psiElement);
+  public @NotNull ModCommandAction createImplementMethodsFix(@NotNull PsiElement psiElement) {
+    return OverrideImplementMethodsModCommandAction.implement(psiElement);
   }
 
   @Override
@@ -554,8 +553,8 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
   }
 
   @Override
-  public @NotNull IntentionAction createImplementAbstractClassMethodsFix(@NotNull PsiElement elementToHighlight) {
-    return new ImplementAbstractClassMethodsFix(elementToHighlight);
+  public @NotNull ModCommandAction createImplementAbstractClassMethodsFix(@NotNull PsiElement elementToHighlight) {
+    return OverrideImplementMethodsModCommandAction.implement(elementToHighlight);
   }
 
   @Override

@@ -105,6 +105,7 @@ public final class OverrideImplementMethodsModCommandAction implements ModComman
   /**
    * The target can be in a JVM language other than Java, for example, in Groovy.
    * A {@link com.intellij.codeInsight.MethodImplementor} of the language generates the methods.
+   * The action is a quick fix with a "Fix all" option.
    *
    * @param target the class, the enum constant or the {@code new} expression to implement the methods in
    * @return the action that implements the methods in {@code target}
@@ -121,7 +122,11 @@ public final class OverrideImplementMethodsModCommandAction implements ModComman
 
   @Override
   public @Nullable Presentation getPresentation(@NotNull ActionContext context) {
-    return findTarget(context) == null ? null : Presentation.of(getFamilyName());
+    if (findTarget(context) == null) return null;
+    Presentation presentation = Presentation.of(getFamilyName());
+    // A quick fix has a target. "Fix all" applies the quick fixes with the methods that the form selects first.
+    return myTarget == null ? presentation : presentation.withFixAllOption(
+      this, action -> action instanceof OverrideImplementMethodsModCommandAction other && other.myTarget != null);
   }
 
   @Override
@@ -259,7 +264,7 @@ public final class OverrideImplementMethodsModCommandAction implements ModComman
   }
 
   /**
-   * Gets the methods to implement like {@link com.intellij.codeInsight.daemon.impl.quickfix.ImplementMethodsFix}.
+   * Gets the methods to implement in an enum constant.
    * An enum constant without a body gets the abstract methods of the enum class, the own methods of the enum class included.
    */
   private static @Nullable Target enumConstantTarget(@NotNull PsiEnumConstant constant) {

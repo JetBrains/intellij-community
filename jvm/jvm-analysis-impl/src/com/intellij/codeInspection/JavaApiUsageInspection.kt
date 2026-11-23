@@ -125,7 +125,7 @@ class JavaApiUsageInspection : AbstractBaseUastLocalInspectionTool() {
               else {
                 JvmAnalysisBundle.message("jvm.inspections.1.8.problem.descriptor", signatures.size, jdkName)
               }
-              holder.registerUProblem(node, message, QuickFixFactory.getInstance().createImplementMethodsFix(javaPsi))
+              holder.registerUProblem(node, message, LocalQuickFix.from(QuickFixFactory.getInstance().createImplementMethodsFix(javaPsi))!!)
             }
           }
         }

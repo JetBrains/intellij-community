@@ -5,5 +5,5 @@ class c {
  }
 }
 interface I<T> {
-  foo(T t);
+  void foo(T t);
 }
