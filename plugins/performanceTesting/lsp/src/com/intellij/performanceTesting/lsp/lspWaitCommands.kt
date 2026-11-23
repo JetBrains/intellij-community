@@ -99,9 +99,13 @@ internal class LspWaitForSemanticTokenCommand(text: String, line: Int) : Playbac
 }
 
 /**
- * Waits until the name at the caret is highlighted as the element under the caret.
+ * Waits until the name at the caret is highlighted as the element under the caret, with at least the given number
+ * of occurrences highlighted in the file. The number shows that the result is the answer of the server for the name.
  *
- * Syntax: `%lspWaitForDocumentHighlight`
+ * The highlighting of the name at the caret before stays until the new one comes. So a test moves the caret
+ * to another name: when the highlighting of the name before covers the caret, the wait ends at once.
+ *
+ * Syntax: `%lspWaitForDocumentHighlight <the least number of highlighted occurrences>`
  */
 internal class LspWaitForDocumentHighlightCommand(text: String, line: Int) : PlaybackCommandCoroutineAdapter(text, line) {
   companion object {
@@ -109,11 +113,12 @@ internal class LspWaitForDocumentHighlightCommand(text: String, line: Int) : Pla
   }
 
   override suspend fun doExecute(context: PlaybackContext) {
-    awaitEditorState(context.project, "the highlighting of the element at the caret") { editor ->
-      editor.highlightInfos().any {
-        (it.type == HighlightInfoType.ELEMENT_UNDER_CARET_READ || it.type == HighlightInfoType.ELEMENT_UNDER_CARET_WRITE) &&
-        editor.isCaretAt(it.startOffset, it.endOffset)
-      }
+    val leastCount = extractCommandArgument(PREFIX).trim().toIntOrNull()
+    requireNotNull(leastCount) { "Expected: $PREFIX <the least number of highlighted occurrences>, got: '$text'" }
+    val what = "the highlighting of the name at the caret with $leastCount occurrences or more"
+    awaitEditorState(context.project, what, stateForFailure = { "It shows: ${it.documentHighlightList()}" }) { editor ->
+      val highlights = editor.documentHighlights()
+      highlights.size >= leastCount && highlights.any { editor.isCaretAt(it.startOffset, it.endOffset) }
     }
   }
 }
@@ -216,6 +221,16 @@ private fun Editor.semanticTokenList(line: Int): List<String> {
 private fun Editor.inlayList(line: Int): List<String> {
   val lineRange = lineRange(line)
   return inlayModel.getInlineElementsInRange(lineRange.first, lineRange.last).map { positionOf(it.offset) }
+}
+
+private fun Editor.documentHighlights(): List<HighlightInfo> =
+  highlightInfos()
+    .filter { it.type == HighlightInfoType.ELEMENT_UNDER_CARET_READ || it.type == HighlightInfoType.ELEMENT_UNDER_CARET_WRITE }
+    .toList()
+
+private fun Editor.documentHighlightList(): String {
+  val highlights = documentHighlights().map { "${positionOf(it.startOffset)}-${positionOf(it.endOffset)}" }
+  return "$highlights, and the caret is at ${positionOf(caretModel.offset)}"
 }
 
 private fun Editor.foldRegionList(): List<String> =
