@@ -507,7 +507,7 @@ public class LightBulbTest {
       EdtTestUtil.runInEdtAndWait(() -> {
         List<HighlightInfo> errors = testDaemon.waitHighlightingSurviveCancellations(file, HighlightSeverity.ERROR);
         assertThat(errors).hasSize(1);
-        HighlightInfo error = errors.get(0);
+        HighlightInfo error = errors.getFirst();
         assertEquals(new TextRange(0, 1), TextRange.create(error));
         assertNotNull(error.findRegisteredQuickFix((descriptor, _) -> descriptor.getAction() instanceof MyDumbFix fix ? fix : null), error.toString());
         assertThat(collected).containsExactlyInAnyOrder(dumbFac);
@@ -592,7 +592,7 @@ public class LightBulbTest {
         EdtTestUtil.runInEdtAndWait(() -> {
           List<HighlightInfo> infos = testDaemon.waitHighlightingSurviveCancellations(file, HighlightSeverity.ERROR);
           assertThat(infos).hasSize(1);
-          assertEquals(MyDumbAnnotator.ERR_MSG, infos.get(0).getDescription());
+          assertEquals(MyDumbAnnotator.ERR_MSG, infos.getFirst().getDescription());
           assertLastHintHasAction(daemon, MyDumbFix.fixText);
         });
 
@@ -603,7 +603,7 @@ public class LightBulbTest {
             daemon.restart(testName);
             List<HighlightInfo> infos2 = testDaemon.waitHighlightingSurviveCancellations(file, HighlightSeverity.ERROR);
             assertThat(infos2).hasSize(1);
-            assertEquals(MyDumbAnnotator.ERR_MSG, infos2.get(0).getDescription());
+            assertEquals(MyDumbAnnotator.ERR_MSG, infos2.getFirst().getDescription());
 
             assertLastHintHasAction(daemon, MyDumbFix.fixText);
           });

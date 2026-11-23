@@ -540,7 +540,7 @@ public class FileStatusMapTest {
 
       FileStatusMap fileStatusMap = fixture.getDaemonCodeAnalyzer().getFileStatusMap();
       String testName = fixture.getTestName(false);
-      ReadAction.run(() -> {
+      ReadAction.runBlocking(() -> {
         assertNull(fileStatusMap.getFileDirtyScopeForAllPassesCombined(document.get()));
         fileStatusMap.markWholeFileScopeDirty(document.get(), testName);
         assertEquals(psiFile.get().getTextRange(), fileStatusMap.getFileDirtyScope(document.get(), psiFile.get(), 0));
@@ -552,7 +552,7 @@ public class FileStatusMapTest {
 
       document.set(getDocument(file));
       psiFile.set(ReadAction.computeBlocking(() -> PsiDocumentManager.getInstance(project).getPsiFile(document.get())));
-      ReadAction.run(() -> {
+      ReadAction.runBlocking(() -> {
         for (int pass = 1; pass<=Pass.LAST_PASS; pass++) {
           fileStatusMap.markFileUpToDate(document.get(), CodeInsightContextUtil.getCodeInsightContext(psiFile.get()), pass, new DaemonProgressIndicator());
         }
@@ -561,7 +561,7 @@ public class FileStatusMapTest {
         }
       });
       TextRange range = new TextRange(1, 2);
-      AppExecutorUtil.getAppExecutorService().submit(() -> ReadAction.run(()->fileStatusMap.markScopeDirty(document.get(), range, testName))).get();
+      AppExecutorUtil.getAppExecutorService().submit(() -> ReadAction.runBlocking(()->fileStatusMap.markScopeDirty(document.get(), range, testName))).get();
       assertEquals(range, ReadAction.computeBlocking(() -> fileStatusMap.getFileDirtyScope(document.get(), psiFile.get(), Pass.EXTERNAL_TOOLS)));
 
       tracking = GCWatcher.tracking(document.get());

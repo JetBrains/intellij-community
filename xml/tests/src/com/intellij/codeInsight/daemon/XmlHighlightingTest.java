@@ -261,7 +261,7 @@ public class XmlHighlightingTest {
 
     fixture.configureByFiles(null, fixture.findVirtualFile(baseName + ".xml"), fixture.findVirtualFile(baseName + ".ent"));
     fixture.doDoTest(true,false);
-    ReadAction.run(() -> fixture.getFile().accept(new XmlRecursiveElementVisitor() {
+    ReadAction.runBlocking(() -> fixture.getFile().accept(new XmlRecursiveElementVisitor() {
       @Override
       public void visitXmlAttributeValue(@NotNull XmlAttributeValue value) {
         final PsiElement[] children = value.getChildren();
@@ -297,7 +297,7 @@ public class XmlHighlightingTest {
 
     fixture.configureByFiles(null, fixture.findVirtualFile(baseName + ".xml"), fixture.findVirtualFile(baseName + ".dtd"), fixture.findVirtualFile(baseName + ".ent"));
     fixture.doDoTest(true,false);
-    ReadAction.run(() -> {
+    ReadAction.runBlocking(() -> {
       final List<PsiReference> refs = new ArrayList<>();
       fixture.getFile().accept(new XmlRecursiveElementVisitor() {
         @Override
@@ -375,7 +375,7 @@ public class XmlHighlightingTest {
     fixture.configureByFiles(null, fixture.findVirtualFile(basePath + ".xsd"), fixture.findVirtualFile(basePath + "_2.xsd"));
     fixture.doDoTest(true,false);
 
-    ReadAction.run(() -> {
+    ReadAction.runBlocking(() -> {
       final List<PsiReference> refs = new ArrayList<>(2);
 
       fixture.getFile().acceptChildren(new XmlRecursiveElementVisitor() {
@@ -584,7 +584,7 @@ public class XmlHighlightingTest {
                      fixture.findVirtualFile(BASE_PATH + fixture.getTestName(false) + ".xsd"));
     fixture.doDoTest(true,false);
 
-    ReadAction.run(() -> {
+    ReadAction.runBlocking(() -> {
       final XmlTag rootTag = ((XmlFile)fixture.getFile()).getDocument().getRootTag();
       final XmlAttributeValue valueElement = rootTag.getAttribute("noNamespaceSchemaLocation", XmlUtil.XML_SCHEMA_INSTANCE_URI).getValueElement();
       final PsiReference[] references = valueElement.getReferences();
@@ -647,7 +647,7 @@ public class XmlHighlightingTest {
     final List<PsiReference> myTypeOrElementRefs = new ArrayList<>(1);
     final List<XmlTag> myTypesAndElementDecls = new ArrayList<>(1);
 
-    ReadAction.run(() -> fixture.getFile().accept(new XmlRecursiveElementVisitor() {
+    ReadAction.runBlocking(() -> fixture.getFile().accept(new XmlRecursiveElementVisitor() {
       @Override public void visitXmlAttributeValue(@NotNull XmlAttributeValue value) {
         final PsiElement parent = value.getParent();
         if (!(parent instanceof XmlAttribute)) return;
@@ -679,7 +679,7 @@ public class XmlHighlightingTest {
       });
     }
 
-    ReadAction.run(() -> {
+    ReadAction.runBlocking(() -> {
       for(PsiReference ref:myTypeOrElementRefs)  {
         assertNull(ref.resolve());
       }
@@ -914,7 +914,7 @@ public class XmlHighlightingTest {
     ExternalResourceManagerExBase.registerResourceTemporarily(url, location, fixture.getTestRootDisposable());
     fixture.doTest(new VirtualFile[] {fixture.findVirtualFile(getFullRelativeTestName()), fixture.findVirtualFile(BASE_PATH + location)}, false, false);
 
-    ReadAction.run(() -> {
+    ReadAction.runBlocking(() -> {
       final XmlTag[] subTags = ((XmlFile)fixture.getFile()).getDocument().getRootTag().getSubTags();
 
       for(XmlTag t:subTags) {
@@ -1012,7 +1012,7 @@ public class XmlHighlightingTest {
     DaemonAnalyzerFixture fixture = daemonFixture.get();
     fixture.configureByFile(BASE_PATH + fixture.getTestName(false) + ".xml");
 
-    ReadAction.run(() -> {
+    ReadAction.runBlocking(() -> {
       final XmlTag root = ((XmlFile)fixture.getFile()).getDocument().getRootTag();
       final XmlTag tag1 = root.getSubTags()[0];
       assert tag1.getLocalName().equals("foo");
@@ -1047,7 +1047,7 @@ public class XmlHighlightingTest {
       false
     );
 
-    ReadAction.run(() -> {
+    ReadAction.runBlocking(() -> {
       XmlTag rootTag = ((XmlFile)fixture.getFile()).getDocument().getRootTag();
       checkOneTagForSchemaAttribute(rootTag, "xmlns:test2", fixture.getTestName(false) + "_2.xsd");
     });
@@ -1055,7 +1055,7 @@ public class XmlHighlightingTest {
     fixture.configureByFiles(null, fixture.findVirtualFile(BASE_PATH + fixture.getTestName(false) + "_2.xsd"),
                      fixture.findVirtualFile(BASE_PATH + fixture.getTestName(false) + "_3.xsd"));
 
-    ReadAction.run(() -> {
+    ReadAction.runBlocking(() -> {
       XmlTag rootTag = ((XmlFile)fixture.getFile()).getDocument().getRootTag();
       final List<XmlTag> tags = new ArrayList<>();
 
@@ -1142,7 +1142,7 @@ public class XmlHighlightingTest {
 
     fixture.doDoTest(true,false);
 
-    ReadAction.run(() -> {
+    ReadAction.runBlocking(() -> {
       final List<XmlTag> tags = new ArrayList<>();
 
       XmlUtil.processXmlElements(
@@ -1180,7 +1180,7 @@ public class XmlHighlightingTest {
   public void testEntityHighlighting() throws Exception {
     DaemonAnalyzerFixture fixture = daemonFixture.get();
     doTest();
-    ReadAction.run(() -> {
+    ReadAction.runBlocking(() -> {
       final XmlTag rootTag = ((XmlFile)fixture.getFile()).getDocument().getRootTag();
       final List<XmlEntityRef> refs = new ArrayList<>();
 
@@ -1519,7 +1519,7 @@ public class XmlHighlightingTest {
       .registerResourceTemporarily(url, UriUtil.findRelativeFile(mainDtdName, virtualFile).getPath(), fixture.getTestRootDisposable());
     fixture.doTest(VfsUtilCore.toVirtualFileArray(files), true, false);
 
-    if (additionalTestAction != null) ReadAction.run(() -> additionalTestAction.run());
+    if (additionalTestAction != null) ReadAction.runBlocking(() -> additionalTestAction.run());
 
   }
 
@@ -2081,7 +2081,7 @@ public class XmlHighlightingTest {
   public void testUnqualifiedAttributePsi() {
     DaemonAnalyzerFixture fixture = daemonFixture.get();
     doTestWithLocations(null, "xml");
-    ReadAction.run(() -> {
+    ReadAction.runBlocking(() -> {
       final List<XmlAttribute> attrs = new ArrayList<>(2);
 
       fixture.getFile().acceptChildren(new XmlRecursiveElementVisitor() {
@@ -2370,7 +2370,7 @@ public class XmlHighlightingTest {
       fixture.configureByFiles(null, fixture.findVirtualFile(BASE_PATH + "AnyAttributeNavigation/test.xml"),
                        fixture.findVirtualFile(BASE_PATH + "AnyAttributeNavigation/test.xsd"),
                        fixture.findVirtualFile(BASE_PATH + "AnyAttributeNavigation/library.xsd"));
-      ReadAction.run(() -> {
+      ReadAction.runBlocking(() -> {
         PsiReference at = fixture.getFile().findReferenceAt(fixture.getEditor().getCaretModel().getOffset());
 
         XmlTag tag = PsiTreeUtil.getParentOfType(at.getElement(), XmlTag.class);
@@ -2448,7 +2448,7 @@ public class XmlHighlightingTest {
     fixture.configureByFile(BASE_PATH + fixture.getTestName(false) + ".xml");
     fixture.doDoTest(true, false);
 
-    ReadAction.run(() -> {
+    ReadAction.runBlocking(() -> {
       List<? extends PsiSymbolReference> list = Registry.is("ide.symbol.url.references")
                                                 ? PlatformTestUtil.collectUrlReferences(fixture.getFile())
                                                 : ContainerUtil.map(
@@ -2472,7 +2472,7 @@ public class XmlHighlightingTest {
     fixture.configureByFiles(null, BASE_PATH + "BillionLaughs.xml");
     XmlFile file = (XmlFile)fixture.getFile();
     int[] count = {0};
-    ReadAction.run(() -> XmlUtil.processXmlElements(file.getRootTag(), element -> {
+    ReadAction.runBlocking(() -> XmlUtil.processXmlElements(file.getRootTag(), element -> {
       count[0]++;
       return true;}, false));
     assertEquals(9, count[0]);

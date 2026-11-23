@@ -697,16 +697,17 @@ open class HeavyJavaCodeInsightFixture(context: Context, val testDataPath: Strin
       val qName = checkNotNull(javaFile.classes[0].qualifiedName) { text }
       val sourceRoots = ModuleRootManager.getInstance(module).sourceRoots
       val dir = if (sourceRoots.isNotEmpty()) {
-        VfsUtilCore.virtualToIoFile(sourceRoots[0])
+        sourceRoots[0]
       }
       else {
-        val vDir = createTempVirtualDir()
-        addSourceContentToRoots(module, vDir)
-        VfsUtilCore.virtualToIoFile(vDir)
+        createTempVirtualDir().also { addSourceContentToRoots(module, it) }
       }
-      val ioFile = File(dir, qName.replace('.', '/') + ".java")
-      FileUtil.createIfDoesntExist(ioFile)
-      val vFile = checkNotNull(LocalFileSystem.getInstance().refreshAndFindFileByIoFile(ioFile)) { ioFile.path }
+      val path = dir.toNioPath().resolve(qName.replace('.', '/') + ".java")
+      Files.createDirectories(path.parent)
+      if (!Files.exists(path)) {
+        Files.createFile(path)
+      }
+      val vFile = checkNotNull(LocalFileSystem.getInstance().refreshAndFindFileByNioFile(path)) { path.toString() }
       VfsUtil.saveText(vFile, text)
       vFile
     }

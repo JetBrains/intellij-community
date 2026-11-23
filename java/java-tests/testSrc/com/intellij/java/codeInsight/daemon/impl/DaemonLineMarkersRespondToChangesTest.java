@@ -342,7 +342,7 @@ public class DaemonLineMarkersRespondToChangesTest {
         assertThat(fixture.waitHighlighting(HighlightSeverity.ERROR)).isEmpty();
         List<LineMarkerInfo<?>> markers = getDisplayedLineMarkers(document, project);
         assertThat(markers).hasSize(1);
-        assertSame(MY_NAVIGATION_HANDLER, markers.get(0).getNavigationHandler());
+        assertSame(MY_NAVIGATION_HANDLER, markers.getFirst().getNavigationHandler());
       }
 
       fixture.type("\n\n\n\n\n\n\n\n\n\n");
@@ -351,7 +351,7 @@ public class DaemonLineMarkersRespondToChangesTest {
         assertThat(fixture.waitHighlighting(HighlightSeverity.ERROR)).isEmpty();
         List<LineMarkerInfo<?>> markers = getDisplayedLineMarkers(document, project);
         assertThat(markers).hasSize(1);
-        assertSame(MY_NAVIGATION_HANDLER, markers.get(0).getNavigationHandler());
+        assertSame(MY_NAVIGATION_HANDLER, markers.getFirst().getNavigationHandler());
       }
       fixture.type("\n\n\n\n\n\n\n\n\n\n");
 
@@ -359,7 +359,7 @@ public class DaemonLineMarkersRespondToChangesTest {
         assertThat(fixture.waitHighlighting(HighlightSeverity.ERROR)).isEmpty();
         List<LineMarkerInfo<?>> markers = getDisplayedLineMarkers(document, project);
         assertThat(markers).hasSize(1);
-        assertSame(MY_NAVIGATION_HANDLER, markers.get(0).getNavigationHandler());
+        assertSame(MY_NAVIGATION_HANDLER, markers.getFirst().getNavigationHandler());
       }
     });
   }

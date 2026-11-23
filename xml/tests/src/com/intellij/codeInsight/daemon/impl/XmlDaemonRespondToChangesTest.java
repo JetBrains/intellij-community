@@ -55,7 +55,7 @@ public class XmlDaemonRespondToChangesTest {
     List<HighlightInfo> afterTyping = ReadAction.computeBlocking(
       () -> DaemonCodeAnalyzerImpl.getHighlights(fixture.getEditor().getDocument(), HighlightSeverity.ERROR, fixture.getProject()));
     assertThat(afterTyping).hasSize(1);
-    HighlightInfo error = afterTyping.get(0);
+    HighlightInfo error = afterTyping.getFirst();
     assertEquals("Element dddddddddd is not allowed here", error.getDescription());
   }
 
@@ -66,7 +66,7 @@ public class XmlDaemonRespondToChangesTest {
 
     List<HighlightInfo> errors = fixture.doHighlighting(HighlightSeverity.ERROR);
     assertThat(errors).hasSize(1);
-    HighlightInfo error = errors.get(0);
+    HighlightInfo error = errors.getFirst();
     assertNotNull(error);
 
     Editor myEditor = fixture.getEditor();
