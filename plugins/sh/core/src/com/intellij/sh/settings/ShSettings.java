@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.sh.settings;
 
 import com.intellij.ide.util.PropertiesComponent;
@@ -44,11 +44,12 @@ public final class ShSettings {
     final var defaultExecutable = findInPath(SystemInfo.isWindows ? SHELLCHECK_WIN_EXECUTABLE : SHELLCHECK_UNIX_EXECUTABLE);
     final var defaultExecutablePath = defaultExecutable != null ? defaultExecutable.getAbsolutePath() : "";
 
-    return PropertiesComponent.getInstance(project).getValue(SHELLCHECK_PATH, defaultExecutablePath);
+    final var storedPath = ShToolsLocalSettings.getInstance(project).getShellcheckPath();
+    return storedPath.isBlank() ? defaultExecutablePath : storedPath;
   }
 
   public static void setShellcheckPath(@NotNull Project project, @Nullable String path) {
-    if (StringUtil.isNotEmpty(path)) PropertiesComponent.getInstance(project).setValue(SHELLCHECK_PATH, path);
+    if (StringUtil.isNotEmpty(path)) ShToolsLocalSettings.getInstance(project).setShellcheckPath(path);
   }
 
   public static @NotNull String getShfmtPath(@NotNull Project project) {
@@ -68,11 +69,12 @@ public final class ShSettings {
     final var defaultExecutable = findInPath(SystemInfo.isWindows ? SHFMT_WIN_EXECUTABLE : SHFMT_UNIX_EXECUTABLE);
     final var defaultExecutablePath = defaultExecutable != null ? defaultExecutable.getAbsolutePath() : "";
 
-    return PropertiesComponent.getInstance(project).getValue(SHFMT_PATH, defaultExecutablePath);
+    final var storedPath = ShToolsLocalSettings.getInstance(project).getShfmtPath();
+    return storedPath.isBlank() ? defaultExecutablePath : storedPath;
   }
 
   public static void setShfmtPath(@NotNull Project project, @Nullable String path) {
-    if (StringUtil.isNotEmpty(path)) PropertiesComponent.getInstance(project).setValue(SHFMT_PATH, path);
+    if (StringUtil.isNotEmpty(path)) ShToolsLocalSettings.getInstance(project).setShfmtPath(path);
   }
 
   public static @NotNull String getSkippedShellcheckVersion() {
