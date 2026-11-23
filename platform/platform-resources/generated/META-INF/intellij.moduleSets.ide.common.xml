@@ -511,6 +511,7 @@
     <module name="intellij.platform.lsp"/>
     <module name="intellij.platform.lsp.impl"/>
     <module name="intellij.platform.lsp.impl.structureView"/>
+    <module name="intellij.platform.lsp.impl.problems"/>
     <!-- endregion -->
     <!-- endregion -->
 

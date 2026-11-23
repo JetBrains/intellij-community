@@ -923,6 +923,8 @@ platform/lsp
 platform/lsp-impl
 platform/lsp-impl/integrationTests
 platform/lsp-impl/integrationTests/idePlugin
+platform/lsp-impl/problems
+platform/lsp-impl/problems/tests
 platform/lsp-impl/structureView
 platform/lsp-impl/tests
 platform/lsp/testFramework

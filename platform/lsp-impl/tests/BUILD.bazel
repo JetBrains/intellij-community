@@ -37,6 +37,7 @@ jvm_library(
         "//xml/plugin",
         "//platform/lsp-impl/structureView",
         "//platform/structure-view-impl/plugin",
+        "//platform/problemsView/plugin",
     ],
     deps = [
         # do not sort,
@@ -44,6 +45,8 @@ jvm_library(
         "//libraries/lsp4j",
         "//libraries/lsp4j/jsonrpc",
         "//platform/lsp",
+        "//platform/lsp-impl/problems",
+        "//platform/problemsView/shared",
         "//platform/lsp/testFramework",
         "//platform/testFramework",
         "//platform/testFramework/junit5",

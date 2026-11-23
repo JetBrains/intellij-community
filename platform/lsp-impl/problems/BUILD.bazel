@@ -1,0 +1,50 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
+
+### auto-generated section `dev intellij.platform.lsp.impl.problems` start
+content_module_jar(module = ":problems")
+### auto-generated section `dev intellij.platform.lsp.impl.problems` end
+
+### auto-generated section `build intellij.platform.lsp.impl.problems` start
+jvm_library(
+    name = "problems",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.platform.lsp.impl.problems",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    runtime_deps = ["//platform/problemsView/collector"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//libraries/lsp4j",
+        "//libraries/lsp4j/jsonrpc",
+        "//libraries/kotlinx/coroutines/core",
+        "//platform/analysis-api:analysis",
+        "//platform/core-api:core",
+        "//platform/editor-ui-api:editor-ui",
+        "//platform/lsp",
+        "//platform/problemsView/shared",
+        "//platform/util",
+    ],
+)
+### auto-generated section `build intellij.platform.lsp.impl.problems` end
+
+### auto-generated section `iml intellij.platform.lsp.impl.problems` start
+exports_files(
+    [
+        "intellij.platform.lsp.impl.problems.iml",
+        "resources/intellij.platform.lsp.impl.problems.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.platform.lsp.impl.problems` end

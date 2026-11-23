@@ -1505,6 +1505,7 @@ DIST_MODULE_SETS = {
             "intellij.platform.lsp",
             "intellij.platform.lsp.impl",
             "intellij.platform.lsp.impl.structureView",
+            "intellij.platform.lsp.impl.problems",
         ],
         nested = [
             "intellij.moduleSets.libraries.lsp4j",
@@ -1512,11 +1513,13 @@ DIST_MODULE_SETS = {
         packed = {
             "intellij.platform.lsp": "//platform/lsp:lsp_content_module_jar",
             "intellij.platform.lsp.impl": "//platform/lsp-impl:lsp-impl_content_module_jar",
+            "intellij.platform.lsp.impl.problems": "//platform/lsp-impl/problems:problems_content_module_jar",
             "intellij.platform.lsp.impl.structureView": "//platform/lsp-impl/structureView:structureView_content_module_jar",
         },
         module_system_loaded = [
             "intellij.platform.lsp",
             "intellij.platform.lsp.impl",
+            "intellij.platform.lsp.impl.problems",
             "intellij.platform.lsp.impl.structureView",
         ],
     ),

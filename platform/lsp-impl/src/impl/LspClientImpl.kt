@@ -156,6 +156,7 @@ class LspClientImpl internal constructor(
   }
 
   internal fun diagnosticsReceived(params: PublishDiagnosticsParams) {
+    eventBroadcaster.diagnosticsPublished(this, params)
     highlightingCacheRegistry.publishDiagnosticsCache.diagnosticsReceived(params)
   }
 
@@ -171,6 +172,7 @@ class LspClientImpl internal constructor(
 
   internal fun fileClosed(file: VirtualFile) {
     highlightingCacheRegistry.fileClosed(file)
+    eventBroadcaster.fileClosed(this, file)
   }
 
   override fun invalidateServerResults() {

@@ -1,0 +1,18 @@
+<idea-plugin visibility="internal">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.libraries.eclipse.lsp4j"/>
+    <module name="intellij.libraries.eclipse.lsp4j.jsonrpc"/>
+    <module name="intellij.libraries.kotlinx.coroutines.core"/>
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.lsp"/>
+    <module name="intellij.platform.problemView.collector"/>
+    <module name="intellij.platform.problemView.shared"/>
+  </dependencies>
+  <!-- endregion -->
+  <extensions defaultExtensionNs="com.intellij">
+    <postStartupActivity implementation="com.intellij.platform.lsp.impl.problems.LspProjectErrorsActivity"/>
+  </extensions>
+</idea-plugin>

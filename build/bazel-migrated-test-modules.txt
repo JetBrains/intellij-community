@@ -247,6 +247,7 @@ intellij.platform.jps.model.serialization.tests
 intellij.platform.jps.model.tests
 intellij.platform.lang.tests
 intellij.platform.langInjection.tests
+intellij.platform.lsp.impl.problems.tests
 intellij.platform.lsp.impl.tests
 intellij.platform.lvcs.impl.tests
 intellij.platform.markdown.utils.tests
