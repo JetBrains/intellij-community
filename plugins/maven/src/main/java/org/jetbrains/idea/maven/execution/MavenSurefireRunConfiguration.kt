@@ -27,6 +27,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.registry.Registry
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.idea.maven.model.MavenExplicitProfiles
 import java.io.OutputStream
 import java.nio.file.Path
 import kotlin.io.path.ExperimentalPathApi
@@ -208,3 +209,12 @@ private class SurefireProcessProxy(
  */
 @ApiStatus.Internal
 fun surefirePackageFilter(packageName: String): String = if (packageName.isEmpty()) "*" else "$packageName.**"
+
+/**
+ * The [MavenRunnerParameters.getProfilesMap] of a delegated test run: `true` for each profile that is checked in the
+ * Maven tool window, `false` for each profile that is cleared. A delegated build gives Maven the same profiles
+ * (IDEA-396099).
+ */
+@ApiStatus.Internal
+fun surefireProfilesMap(profiles: MavenExplicitProfiles): Map<String, Boolean> =
+  profiles.enabledProfiles.associateWith { true } + profiles.disabledProfiles.associateWith { false }

@@ -16,6 +16,7 @@ import org.jetbrains.idea.maven.execution.MavenRunner
 import org.jetbrains.idea.maven.execution.MavenSurefireConfigurationFactory
 import org.jetbrains.idea.maven.execution.MavenSurefireRunConfiguration
 import org.jetbrains.idea.maven.execution.surefirePackageFilter
+import org.jetbrains.idea.maven.execution.surefireProfilesMap
 import org.jetbrains.idea.maven.execution.build.MavenExecutionEnvironmentProvider
 import org.jetbrains.idea.maven.model.MavenSource
 import org.jetbrains.idea.maven.project.MavenProject
@@ -58,6 +59,7 @@ class MavenJUnitConfigurationExecutionEnvironmentProvider : MavenExecutionEnviro
     // Run from root reactor so upstream modules are built fresh.
     runnerParameters.workingDirPath = rootProject.directory
     runnerParameters.pomFileName = rootProject.file.name
+    runnerParameters.profilesMap = surefireProfilesMap(mavenProjectsManager.explicitProfiles)
 
     val goals = ArrayList(runnerParameters.goals)
     // Run from root reactor with --also-make so upstream modules are built fresh;

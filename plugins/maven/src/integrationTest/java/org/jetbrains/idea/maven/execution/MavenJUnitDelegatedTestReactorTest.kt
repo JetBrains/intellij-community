@@ -26,6 +26,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import org.jetbrains.idea.maven.fixtures.execute
+import org.jetbrains.idea.maven.model.MavenExplicitProfiles
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
@@ -163,6 +164,62 @@ class MavenJUnitDelegatedTestReactorTest {
 
     assertTrue(stdout.contains("Running probe.LeafTest"), stdout)
     assertTrue(stdout.contains("Running probe.sub.SubTest"), stdout)
+  }
+
+  // IDEA-396099: a delegated test run must give Maven the profiles that are checked in the Maven tool window, as a
+  // delegated build does. Here only the profile `needed` gives the module `leaf` its dependency on `upstream`, so the
+  // tests of `leaf` do not compile without the profile.
+  @Test
+  fun `delegated JUnit run uses the checked Maven profiles`() = runBlocking {
+    createReactorProject()
+    maven.createModulePom("leaf", """
+      <parent>
+        <groupId>probe</groupId>
+        <artifactId>root</artifactId>
+        <version>1</version>
+      </parent>
+      <artifactId>leaf</artifactId>
+      <dependencies>
+        <dependency>
+          <groupId>junit</groupId>
+          <artifactId>junit</artifactId>
+          <version>4.13.2</version>
+          <scope>test</scope>
+        </dependency>
+      </dependencies>
+      <profiles>
+        <profile>
+          <id>needed</id>
+          <dependencies>
+            <dependency>
+              <groupId>probe</groupId>
+              <artifactId>upstream</artifactId>
+              <version>1</version>
+            </dependency>
+          </dependencies>
+        </profile>
+      </profiles>
+    """.trimIndent())
+    maven.repositoryPath = maven.projectPath.resolve("maven-repository")
+    maven.createProjectSubFile("upstream/src/main/java/probe/Upstream.java", """
+      package probe;
+
+      public class Upstream {
+        public static String value() {
+          return "old";
+        }
+      }
+    """.trimIndent())
+    maven.importProjectAsync()
+    // After the import: the import of the test fixture sets the explicit profiles to none.
+    maven.projectsManager.explicitProfiles = MavenExplicitProfiles(listOf("needed"))
+
+    val stdout = runDelegated {
+      TEST_OBJECT = JUnitConfiguration.TEST_CLASS
+      MAIN_CLASS_NAME = "probe.LeafTest"
+    }
+
+    assertTrue(stdout.contains("Running probe.LeafTest"), stdout)
   }
 
   private suspend fun createPackageProject() {
