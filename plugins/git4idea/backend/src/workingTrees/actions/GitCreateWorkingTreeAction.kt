@@ -39,9 +39,16 @@ internal class GitCreateWorkingTreeAction : DumbAwareAction() {
       return
     }
 
-    e.presentation.isEnabledAndVisible = true
+    e.presentation.isVisible = true
     e.presentation.icon = computeIcon(e)
     val contextRepository = resolveContextRepository(e, status)
+    if (contextRepository != null && contextRepository.isFresh) {
+      e.presentation.isEnabled = false
+      e.presentation.description = GitBundle.message("action.Git.CreateNewWorkingTree.disabled.fresh.description")
+      return
+    }
+    e.presentation.isEnabled = true
+
     val localBranchFromContext = getRefFromContext(e, contextRepository, explicitRefFromCtx)
     if (localBranchFromContext == null) {
       e.presentation.text = GitBundle.message("action.Git.CreateNewWorkingTree.text")
@@ -74,6 +81,7 @@ internal class GitCreateWorkingTreeAction : DumbAwareAction() {
     val project = e.project ?: return
     val status = GitWorkingTreesService.getWorktreeSupportStatus(project)
     val contextRepository = resolveContextRepository(e, status)
+    if (contextRepository != null && contextRepository.isFresh) return
     val refFromContext = getRefFromContext(e, contextRepository)
 
     // When creating from a specific ref, the ref belongs to a specific repository, so no switching is offered.

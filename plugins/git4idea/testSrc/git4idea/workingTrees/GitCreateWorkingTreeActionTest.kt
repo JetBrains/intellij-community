@@ -51,15 +51,35 @@ internal class GitCreateWorkingTreeActionTest {
     assertThat(event.presentation.text).isEqualTo(GitBundle.message("action.Git.CreateNewWorkingTree.from.branch.text", branch.name))
     assertThat(event.presentation.getClientProperty(ActionUtil.SECONDARY_ICON)).isNull()
   }
+}
 
-  private fun GitSingleRepoContext.actionEvent(ref: GitReference?): AnActionEvent {
-    val ctx = DataContext { dataId ->
-      when (dataId) {
-        CommonDataKeys.PROJECT.name -> project
-        GitSingleRefActions.SELECTED_REF_DATA_KEY.name -> ref
-        else -> null
-      }
-    }
-    return AnActionEvent.createEvent(GitCreateWorkingTreeAction(), ctx, null, ActionPlaces.UNKNOWN, ActionUiKind.NONE, null)
+// A fresh repository with no commits needs a dedicated fixture (`makeInitialCommit = false`), so it lives in a
+// separate test class. Two single-repo fixtures in one class initialize concurrently and race on the shared
+// `Executor` current directory, which can fail an unrelated fixture's own `git commit`.
+@TestApplication
+@RegistryKey("git.enable.working.trees.feature", "true")
+internal class GitCreateWorkingTreeActionFreshRepoTest {
+  private val freshContextFixture = gitSingleRepoContextFixture(makeInitialCommit = false)
+  private val freshContext: GitSingleRepoContext get() = freshContextFixture.get()
+
+  @Test
+  fun `test action is disabled in a repository with no commits`(): Unit = with(freshContext) {
+    val event = actionEvent(ref = null)
+    GitCreateWorkingTreeAction().update(event)
+    assertThat(event.presentation.isVisible).isTrue()
+    assertThat(event.presentation.isEnabled).describedAs("The action must be disabled in a fresh repository").isFalse()
+    assertThat(event.presentation.description)
+      .isEqualTo(GitBundle.message("action.Git.CreateNewWorkingTree.disabled.fresh.description"))
   }
+}
+
+private fun GitSingleRepoContext.actionEvent(ref: GitReference?): AnActionEvent {
+  val ctx = DataContext { dataId ->
+    when (dataId) {
+      CommonDataKeys.PROJECT.name -> project
+      GitSingleRefActions.SELECTED_REF_DATA_KEY.name -> ref
+      else -> null
+    }
+  }
+  return AnActionEvent.createEvent(GitCreateWorkingTreeAction(), ctx, null, ActionPlaces.UNKNOWN, ActionUiKind.NONE, null)
 }
