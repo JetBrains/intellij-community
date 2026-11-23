@@ -3,6 +3,8 @@ def foo() {
 }
 -----
 as
+async
+await
 false
 in
 instanceof

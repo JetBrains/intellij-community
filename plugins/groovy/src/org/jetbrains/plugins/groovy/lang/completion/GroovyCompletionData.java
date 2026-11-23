@@ -198,6 +198,9 @@ public final class GroovyCompletionData {
         if (GroovyConfigUtils.isAtLeastGroovy40(position)) {
           consumer.consume(keyword(JavaKeywords.SWITCH, JavaTailTypes.SWITCH_LPARENTH));
         }
+        if (GroovyConfigUtils.isAtLeastGroovy60(position)) {
+          addKeywords(consumer, false, "async", "await");
+        }
       }
 
 

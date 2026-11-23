@@ -1,5 +1,6 @@
 return a i<caret> b
 -----
+await
 in
 instanceof
 interface

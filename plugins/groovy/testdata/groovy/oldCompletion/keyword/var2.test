@@ -12,6 +12,8 @@ class A {
 -----
 abstract
 assert
+async
+await
 boolean
 byte
 char

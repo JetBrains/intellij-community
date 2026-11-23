@@ -4,6 +4,7 @@ class A{
   }
 }
 -----
+await
 in
 instanceof
 switch

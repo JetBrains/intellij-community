@@ -3,6 +3,8 @@ try {}
 -----
 abstract
 assert
+async
+await
 boolean
 byte
 catch

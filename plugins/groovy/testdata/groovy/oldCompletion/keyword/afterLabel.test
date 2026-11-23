@@ -1,6 +1,8 @@
 foo: <caret>
 -----
 assert
+async
+await
 boolean
 byte
 char

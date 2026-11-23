@@ -10,6 +10,8 @@ class BaseLineService {
 String abc = 5
 -----
 assert
+async
+await
 boolean
 byte
 char

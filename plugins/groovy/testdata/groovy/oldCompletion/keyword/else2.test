@@ -9,6 +9,8 @@ class BaseLineService {
 String abc = 5
 -----
 as
+async
+await
 else
 false
 in

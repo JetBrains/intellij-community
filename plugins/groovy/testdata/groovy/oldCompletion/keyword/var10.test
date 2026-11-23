@@ -11,6 +11,8 @@ class A  {
   }
 }
 -----
+async
+await
 boolean
 byte
 char
