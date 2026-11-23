@@ -49,8 +49,8 @@ import com.intellij.refactoring.rename.ModPlanJavaRenameOptions
 import com.intellij.refactoring.rename.RenameProcessor
 import com.intellij.refactoring.rename.RenamePsiDirectoryProcessor
 import com.intellij.refactoring.rename.RenamePsiElementProcessorBase
-import com.intellij.refactoring.rename.naming.AutomaticRenamerFactory
 import com.intellij.refactoring.rename.naming.AutomaticVariableRenamerFactory
+import com.intellij.refactoring.rename.naming.ConstructorParameterOnFieldRenameRenamerFactory
 import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.ModPlanRenameTestSupport
 import com.intellij.testFramework.PlatformTestUtil
@@ -551,7 +551,7 @@ class ModPlanJavaRenameTest : LightJavaCodeInsightFixtureTestCase() {
       }
       """.trimIndent())
 
-    rename(findClass("Foo"), "Bar", relatedOn().with(variablesSwitch(), true))
+    rename(findClass("Foo"), "Bar", variablesOn())
 
     assertEquals("""
       public class User {
@@ -569,10 +569,9 @@ class ModPlanJavaRenameTest : LightJavaCodeInsightFixtureTestCase() {
       }
       """.trimIndent())
     val myFoo = findClass("User").findFieldByName("myFoo", false)!!
-    val chosen = runReadActionBlocking { ModPlanRenameOptions.relatedRename(myFoo, "myBaz") }!!
+    val chosen = runReadActionBlocking { ModPlanRenameOptions.relatedRename(variablesId(), myFoo, "myBaz") }!!
 
-    rename(findClass("Foo"), "Bar", relatedOn().with(variablesSwitch(), true)
-      .with(ModPlanRenameOptions.CHOOSE_RELATED, true).with(ModPlanRenameOptions.RELATED_RENAMES, chosen))
+    rename(findClass("Foo"), "Bar", variablesOn().with(ModPlanRenameOptions.RELATED_RENAMES, chosen))
 
     assertEquals("""
       public class User {
@@ -591,7 +590,7 @@ class ModPlanJavaRenameTest : LightJavaCodeInsightFixtureTestCase() {
       }
       """.trimIndent())
 
-    val ready = assertInstanceOf(plan(findClass("Foo"), "Bar", relatedOn().with(variablesSwitch(), true)), ModPlan.AcceptedPlan::class.java)
+    val ready = assertInstanceOf(plan(findClass("Foo"), "Bar", variablesOn()), ModPlan.AcceptedPlan::class.java)
 
     assertEmpty(ready.conflicts.conflicts)
     assertInstanceOf(ModPlanExecutor.execute(ready.execution, true), ModPlanExecutionResult.Applied::class.java)
@@ -611,7 +610,8 @@ class ModPlanJavaRenameTest : LightJavaCodeInsightFixtureTestCase() {
       }
       """.trimIndent())
 
-    rename(findClass("Point").findFieldByName("x", false)!!, "left", relatedOn())
+    rename(findClass("Point").findFieldByName("x", false)!!, "left",
+           ModPlanRenameTestSupport.withRenamersOf(ConstructorParameterOnFieldRenameRenamerFactory::class.java))
 
     assertEquals("""
       public class Point {
@@ -649,12 +649,12 @@ class ModPlanJavaRenameTest : LightJavaCodeInsightFixtureTestCase() {
       """.trimIndent())
     val request = runReadActionBlocking { ModPlanRenameRefactoring.request(project, findClass("Foo"), "Bar", substitute = true, ModPlanOptionValues.EMPTY) }
 
-    val asked = askedQuestions(request) { option -> option == ModPlanRenameOptions.RENAME_RELATED || option == variablesSwitch() }
+    val asked = askedQuestions(request) { values, option ->
+      if (option == ModPlanRenameOptions.RENAMERS) { ModPlanRenameOptions.withRenamers(values, listOf(variablesId())) } else { withAnswerOff(values, option) }
+    }
 
-    assertContainsElements(asked.filterIsInstance<ModPlanQuestion.Form>().flatMap { it.options() },
-                           ModPlanRenameOptions.RENAME_RELATED, variablesSwitch())
-    assertContainsElements(asked.filterIsInstance<ModPlanQuestion.Custom>().flatMap { it.options() },
-                           ModPlanRenameOptions.CHOOSE_RELATED, ModPlanRenameOptions.RELATED_RENAMES)
+    assertContainsElements(asked.filterIsInstance<ModPlanQuestion.Form>().flatMap { it.options() }, ModPlanRenameOptions.RENAMERS)
+    assertContainsElements(asked.filterIsInstance<ModPlanQuestion.Custom>().flatMap { it.options() }, ModPlanRenameOptions.RELATED_RENAMES)
     assertTrue(asked.indexOfFirst { it is ModPlanQuestion.Custom } > asked.indexOfLast { it is ModPlanQuestion.Form })
   }
 
@@ -1100,7 +1100,7 @@ class ModPlanJavaRenameTest : LightJavaCodeInsightFixtureTestCase() {
       }
       """.trimIndent())
 
-    rename(findClass("Foo"), "Bar", relatedOn().with(variablesSwitch(), true).with(ModPlanRenameOptions.SEARCH_IN_COMMENTS, true))
+    rename(findClass("Foo"), "Bar", variablesOn().with(ModPlanRenameOptions.SEARCH_IN_COMMENTS, true))
 
     assertEquals("""
       public class User {
@@ -1128,7 +1128,7 @@ class ModPlanJavaRenameTest : LightJavaCodeInsightFixtureTestCase() {
       }
       """.trimIndent())
 
-    rename(findClass("Foo"), "FooBar", relatedOn().with(variablesSwitch(), true))
+    rename(findClass("Foo"), "FooBar", variablesOn())
 
     assertEquals("""
       public class User {
@@ -1334,7 +1334,7 @@ class ModPlanJavaRenameTest : LightJavaCodeInsightFixtureTestCase() {
       }
       """.trimIndent())
 
-    rename(findClass("Gear"), "Cog", relatedOn().with(variablesSwitch(), true))
+    rename(findClass("Gear"), "Cog", variablesOn())
 
     assertEquals("""
       public class Box {
@@ -1417,12 +1417,15 @@ class ModPlanJavaRenameTest : LightJavaCodeInsightFixtureTestCase() {
   }
 
   /**
-   * Runs the chain of [request] without a user: each option of a form is answered with [isOn], and an option that the request answers is
+   * Runs the chain of [request] without a user: each option of a form is answered with [answer], and an option that the request answers is
    * not asked. The run stops at the first custom question, which needs a dialog.
    *
    * @return every question that the chain asks, in its order, up to the first custom one
    */
-  private fun askedQuestions(request: ModPlanRequest, isOn: (ModPlanOption<*>) -> Boolean = { false }): List<ModPlanQuestion> {
+  private fun askedQuestions(
+    request: ModPlanRequest,
+    answer: (ModPlanOptionValues, ModPlanOption<*>) -> ModPlanOptionValues = { values, option -> withAnswerOff(values, option) },
+  ): List<ModPlanQuestion> {
     val asked = ArrayList<ModPlanQuestion>()
     val chain = ModPlanRenameRefactoring.getInstance()::chain
     inBackground {
@@ -1431,16 +1434,21 @@ class ModPlanJavaRenameTest : LightJavaCodeInsightFixtureTestCase() {
         val question = result.question
         asked.add(question)
         if (question !is ModPlanQuestion.Form) break
-        val answers = question.options().fold(result.answers) { values, option -> withAnswer(values, option, isOn(option)) }
+        val answers = question.options().fold(result.answers, answer)
         result = ModPlanChain.runAfterAnswers(request, chain, result, answers)
       }
     }
     return asked
   }
 
+  /** @return [values] with [option] off: false for a boolean option, nothing chosen for a text option */
   @Suppress("UNCHECKED_CAST")
-  private fun withAnswer(values: ModPlanOptionValues, option: ModPlanOption<*>, isOn: Boolean): ModPlanOptionValues =
-    values.with(option as ModPlanOption<Boolean>, isOn)
+  private fun withAnswerOff(values: ModPlanOptionValues, option: ModPlanOption<*>): ModPlanOptionValues {
+    if (option.type == String::class.java) {
+      return values.with(option as ModPlanOption<String>, "")
+    }
+    return values.with(option as ModPlanOption<Boolean>, false)
+  }
 
   private fun plan(element: PsiElement, newName: String, options: ModPlanOptionValues = ModPlanOptionValues.EMPTY): ModPlan = inBackground {
     val request = ModPlanRenameRefactoring.request(project, element, newName, substitute = true, options)
@@ -1469,10 +1477,9 @@ class ModPlanJavaRenameTest : LightJavaCodeInsightFixtureTestCase() {
     assertInstanceOf(ModPlanExecutor.execute(ready.execution, true), ModPlanExecutionResult.Applied::class.java)
   }
 
-  private fun relatedOn(): ModPlanOptionValues = ModPlanOptionValues.EMPTY.with(ModPlanRenameOptions.RENAME_RELATED, true)
+  private fun variablesOn(): ModPlanOptionValues = ModPlanRenameTestSupport.withRenamersOf(AutomaticVariableRenamerFactory::class.java)
 
-  private fun variablesSwitch(): ModPlanOption<Boolean> =
-    ModPlanRenameOptions.optionForRenamer(AutomaticRenamerFactory.EP_NAME.findExtensionOrFail(AutomaticVariableRenamerFactory::class.java))!!
+  private fun variablesId(): String = ModPlanRenameTestSupport.renamerIdOf(AutomaticVariableRenamerFactory::class.java)
 
   private fun runMethod(className: String) = findClass(className).findMethodsByName("run", false).single()
 

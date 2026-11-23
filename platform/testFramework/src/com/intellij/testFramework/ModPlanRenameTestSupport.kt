@@ -84,9 +84,19 @@ object ModPlanRenameTestSupport {
     }))
   }
 
-  /** @return [options] with the related renames and the switch of every automatic renamer on, as a legacy test that adds every factory */
+  /** @return [options] with every automatic renamer on, as a legacy test that adds every factory */
   @JvmStatic
   fun withEveryRenamer(options: ModPlanOptionValues): ModPlanOptionValues =
-    buildList { AutomaticRenamerFactory.EP_NAME.forEachExtensionSafe { factory -> ModPlanRenameOptions.optionForRenamer(factory)?.let(::add) } }
-      .fold(options.with(ModPlanRenameOptions.RENAME_RELATED, true)) { result, switch -> result.with(switch, true) }
+    ModPlanRenameOptions.withRenamers(options, ModPlanRenameOptions.renamerIds { true })
+
+  /** @return the options that turn on the automatic renamers of the factories of [factoryClasses] alone */
+  @JvmStatic
+  fun withRenamersOf(vararg factoryClasses: Class<out AutomaticRenamerFactory>): ModPlanOptionValues =
+    ModPlanRenameOptions.withRenamers(ModPlanOptionValues.EMPTY, factoryClasses.map { renamerIdOf(it) })
+
+  /** @return the [AutomaticRenamerFactory.getOptionId] of the registered factory of [factoryClass] */
+  @JvmStatic
+  fun renamerIdOf(factoryClass: Class<out AutomaticRenamerFactory>): String =
+    @Suppress("SplitModeApiUsage")
+    AutomaticRenamerFactory.EP_NAME.findExtensionOrFail(factoryClass).optionId!!
 }

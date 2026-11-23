@@ -12,11 +12,9 @@ import com.intellij.refactoring.modplan.ModPlan
 import com.intellij.refactoring.modplan.ModPlanChain
 import com.intellij.refactoring.modplan.ModPlanExecutionResult
 import com.intellij.refactoring.modplan.ModPlanExecutor
-import com.intellij.refactoring.modplan.ModPlanOption
 import com.intellij.refactoring.modplan.ModPlanOptionValues
 import com.intellij.refactoring.modplan.ModPlanRefactoring
 import com.intellij.refactoring.modplan.ModPlanRequest
-import com.intellij.refactoring.modplan.rename.ModPlanRenameOptions
 import com.intellij.refactoring.modplan.rename.ModPlanRenameRefactoring
 import com.intellij.refactoring.rename.naming.AutomaticRenamerFactory
 import com.intellij.testFramework.ModPlanRenameTestSupport
@@ -89,10 +87,8 @@ abstract class AbstractModPlanKotlinRenameTest : KotlinLightCodeInsightFixtureTe
     protected fun <T> inBackground(action: () -> T): T =
         PlatformTestUtil.waitForFuture(ApplicationManager.getApplication().executeOnPooledThread(Callable { runReadActionBlocking(action) }))
 
-    protected fun relatedOn(): ModPlanOptionValues = ModPlanOptionValues.EMPTY.with(ModPlanRenameOptions.RENAME_RELATED, true)
-
-    protected fun renamerSwitch(factoryClass: Class<out AutomaticRenamerFactory>): ModPlanOption<Boolean> =
-        ModPlanRenameOptions.optionForRenamer(AutomaticRenamerFactory.EP_NAME.findExtensionOrFail(factoryClass))!!
+    protected fun renamersOn(factoryClass: Class<out AutomaticRenamerFactory>): ModPlanOptionValues =
+        ModPlanRenameTestSupport.withRenamersOf(factoryClass)
 
     protected inline fun <reified T : PsiNamedElement> declaration(file: PsiFile, name: String): T =
         PsiTreeUtil.findChildrenOfType(file, T::class.java).single { it.name == name }

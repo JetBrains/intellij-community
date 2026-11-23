@@ -57,17 +57,20 @@ object ModPlanRenameFlow {
     additionalRenames: Map<PsiElement, String>,
   ): ModPlanFlow.Result {
     if (!Registry.`is`(REGISTRY_KEY)) return ModPlanFlow.Result.LEGACY
-    // A factory with no id has no switch, so the request cannot turn it on.
-    if (factories.any { ModPlanRenameOptions.optionForRenamer(it) == null }) return ModPlanFlow.Result.LEGACY
-    // The legacy UI answered every option, the switches that are off too, so the flow does not ask them again.
-    var optionValues = ModPlanOptionValues.EMPTY.with(ModPlanRenameOptions.SEARCH_IN_COMMENTS, searchInComments)
-      .with(ModPlanRenameOptions.SEARCH_TEXT_OCCURRENCES, searchTextOccurrences)
-      .with(ModPlanRenameOptions.RENAME_RELATED, RefactoringSettings.getInstance().RENAME_SHOW_AUTOMATIC_RENAMING_DIALOG)
-      .with(ModPlanRefactoring.PREVIEW, preview)
-    for (factory in AutomaticRenamerFactory.EP_NAME.extensionList) {
-      val renamerOption = ModPlanRenameOptions.optionForRenamer(factory) ?: continue
-      optionValues = optionValues.with(renamerOption, factory in factories || optionValues.get(renamerOption))
+    val renamesRelated = RefactoringSettings.getInstance().RENAME_SHOW_AUTOMATIC_RENAMING_DIALOG
+    // A factory with no id cannot be in RENAMERS, so the request cannot run it.
+    val hasFactoryWithoutId = renamesRelated && runReadActionBlocking {
+      AutomaticRenamerFactory.EP_NAME.extensionList.any { factory ->
+        factory.optionId == null && (factory in factories || factory.optionName == null && factory.isApplicable(element))
+      }
     }
+    if (hasFactoryWithoutId) return ModPlanFlow.Result.LEGACY
+    // The legacy UI answered every option, the renamers that are off too, so the flow does not ask them again.
+    val renamerIds = if (renamesRelated) { ModPlanRenameOptions.renamerIds { it in factories } } else { emptySet() }
+    val optionValues = ModPlanRenameOptions.withRenamers(ModPlanOptionValues.EMPTY, renamerIds)
+      .with(ModPlanRenameOptions.SEARCH_IN_COMMENTS, searchInComments)
+      .with(ModPlanRenameOptions.SEARCH_TEXT_OCCURRENCES, searchTextOccurrences)
+      .with(ModPlanRefactoring.PREVIEW, preview)
     val request = runReadActionBlocking {
       ModPlanRenameRefactoring.request(project, element, newName, substitute = false, optionValues, scope, additionalRenames)
     }

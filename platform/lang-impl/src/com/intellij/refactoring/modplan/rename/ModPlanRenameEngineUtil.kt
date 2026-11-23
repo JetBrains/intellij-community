@@ -10,6 +10,7 @@ import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
+import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiNamedElement
 import com.intellij.psi.util.PsiModificationTracker
@@ -35,6 +36,7 @@ import com.intellij.refactoring.rename.naming.AutomaticRenamerFactory
 import com.intellij.util.IncorrectOperationException
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.concurrency.annotations.RequiresReadLock
+import org.jetbrains.annotations.Nls
 import java.util.IdentityHashMap
 
 /* Helpers of the engine [ModPlanRenameRefactoring], not for providers. */
@@ -129,12 +131,14 @@ internal fun addRelatedRenames(
   val request = chainBuilder.request
   val renamers = renamersOf(request, elements, searches)
   if (renamers.isEmpty()) return chainBuilder.passValue(elements)
-  val questionsToAsk = renamers.filter { it.hasAnythingToRename() }.mapIndexed { index, renamer ->
-    val elementKeys = renamer.elements.filter { renamer.getNewName(it) != null }.mapNotNull { ModPlanRenameOptions.keyOf(it) }
-    val choices = renamer.elements.mapNotNull { element -> renamer.getNewName(element)?.let { relatedRenameChoice(element, it) } }
-    RelatedRenamesQuestion(elementKeys, renamer.dialogDescription, choices, renamer.isSelectedByDefault) { currentValues ->
+  val questionsToAsk = renamers.filter { it.renamer.hasAnythingToRename() }.mapIndexed { index, renamerOfFactory ->
+    val renamer = renamerOfFactory.renamer
+    val factoryId = renamerOfFactory.factoryId
+    val elementKeys = renamer.elements.filter { renamer.getNewName(it) != null }.mapNotNull { ModPlanRenameOptions.keyOf(factoryId, it) }
+    val choices = renamer.elements.mapNotNull { element -> renamer.getNewName(element)?.let { relatedRenameChoice(factoryId, element, it) } }
+    RelatedRenamesQuestion(factoryId, elementKeys, renamer.dialogDescription, choices, renamer.isSelectedByDefault) { currentValues ->
       renamersOf(ModPlanChain.withOptionValues(request, currentValues), elements, searches)
-        .filter { it.hasAnythingToRename() }.getOrNull(index)
+        .filter { it.renamer.hasAnythingToRename() }.getOrNull(index)?.renamer
     }
   }
   return chainBuilder.askAll(questionsToAsk) { afterQuestions ->
@@ -200,26 +204,33 @@ internal fun prepareSubject(chainBuilder: ModPlanChainBuilder, subject: SymbolPo
     }
   }
 
-/** @return the renamer factories that the options of [request] turn on; none if the related renames are off */
+/**
+ * A renamer with the [AutomaticRenamerFactory.getOptionId] of the factory that made it: the lines of
+ * [ModPlanRenameOptions.RELATED_RENAMES] name the renamer by it.
+ */
+private class RenamerOfFactory(val factoryId: String, val renamer: AutomaticRenamer)
+
+/** @return the renamer factories that [ModPlanRenameOptions.RENAMERS] of [request] turns on */
 private fun factoriesOf(request: ModPlanRequest): List<AutomaticRenamerFactory> {
-  if (!request.optionValues().get(ModPlanRenameOptions.RENAME_RELATED)) return emptyList()
+  val renamerIds = ModPlanRenameOptions.renamerIds(request.optionValues())
+  if (renamerIds.isEmpty()) return emptyList()
   val dumbService = DumbService.getInstance(request.project())
   return AutomaticRenamerFactory.EP_NAME.extensionList.filter { factory ->
-    dumbService.isUsableInCurrentContext(factory) &&
-    (factory.optionName == null || ModPlanRenameOptions.optionForRenamer(factory)?.let { request.optionValues().get(it) } == true)
+    dumbService.isUsableInCurrentContext(factory) && factory.optionId in renamerIds
   }
 }
 
 /**
  * @return the renamers of every subject of [elementsForRename] that a factory of [request] is applicable to and that has an owner, see
- * [ModPlanRenameProvider.renamers]. A renamer gets the usages of its subject from [searches]. As in the legacy rename, one with only
- * synthetic elements to rename is not asked about, but it renames them
+ * [ModPlanRenameProvider.renamers]. The owner gets one factory at a time, so that each renamer keeps the id of its factory. A renamer gets
+ * the usages of its subject from [searches]. As in the legacy rename, one with only synthetic elements to rename is not asked about, but
+ * it renames them
  */
 private fun renamersOf(
   request: ModPlanRequest,
   elementsForRename: ElementsForRename,
   searches: ModPlanRenameSearches,
-): List<AutomaticRenamer> {
+): List<RenamerOfFactory> {
   val factories = factoriesOf(request)
   if (factories.isEmpty()) return emptyList()
   val subjectsOfRenamers = elementsForRename.subjects().filter { subject ->
@@ -229,26 +240,28 @@ private fun renamersOf(
   // Every subject is searched before the first renamer is made.
   val usagesOfSubjects = subjectsOfRenamers.map { [subject, owner] -> searches.usagesOf(subject, owner, elementsForRename, request) }
   return subjectsOfRenamers.flatMapIndexed { index, [subject, owner] ->
-    owner.renamers(subject, elementsForRename, factories, usagesOfSubjects[index])
+    factories.flatMap { factory ->
+      owner.renamers(subject, elementsForRename, listOf(factory), usagesOfSubjects[index]).map { RenamerOfFactory(factory.optionId!!, it) }
+    }
   }
 }
 
 /**
  * @return the elements that [renamers] rename with the choice of [request], by their new names: every suggested one, or the chosen ones,
- * see [ModPlanRenameOptions.CHOOSE_RELATED]; not the ones that [elementsForRename] renames already, and not a read-only one, such as
+ * see [ModPlanRenameOptions.RELATED_RENAMES]; not the ones that [elementsForRename] renames already, and not a read-only one, such as
  * an element of a library. An element whose new name collides is in the result: [searchAndPrepareChosenRenames] leaves it out after
  * its search.
  */
 private fun elementsThatRenamersRenameWithChoice(
   request: ModPlanRequest,
   elementsForRename: ElementsForRename,
-  renamers: List<AutomaticRenamer>,
+  renamers: List<RenamerOfFactory>,
 ): ElementsForRename {
   if (renamers.isEmpty()) return ElementsForRename.EMPTY
   renamers.forEach { applyChoiceOfRelatedRenamesToRenamer(it, request.optionValues()) }
   val renamed = elementsForRename.elements() ?: emptyMap()
   var relatedRenames = ElementsForRename.EMPTY
-  for (renamer in renamers) {
+  for (renamer in renamers.map { it.renamer }) {
     for (element in renamer.elements) {
       val newName = renamer.getNewName(element) ?: continue
       if (element !in renamed && !ModPlanRefactoring.isInReadOnlyContainer(element)) {
@@ -260,21 +273,16 @@ private fun elementsThatRenamersRenameWithChoice(
 }
 
 /**
- * Applies the choice of [options] to [renamer]: every suggested name, or the ones of [ModPlanRenameOptions.RELATED_RENAMES]; an element
- * that it has no new name for, or an empty one, keeps its name.
+ * Applies the choice of [options] to the renamer of [renamerOfFactory]: every suggested name if [ModPlanRenameOptions.RELATED_RENAMES] has
+ * no value, else the names of its lines; an element that it has no new name for, or an empty one, keeps its name.
  */
-private fun applyChoiceOfRelatedRenamesToRenamer(renamer: AutomaticRenamer, options: ModPlanOptionValues) {
-  val choosesRelated = if (options.has(ModPlanRenameOptions.CHOOSE_RELATED)) {
-    options.get(ModPlanRenameOptions.CHOOSE_RELATED)
-  }
-  else {
-    options.has(ModPlanRenameOptions.RELATED_RENAMES)
-  }
-  if (!choosesRelated) return
+private fun applyChoiceOfRelatedRenamesToRenamer(renamerOfFactory: RenamerOfFactory, options: ModPlanOptionValues) {
+  if (!options.has(ModPlanRenameOptions.RELATED_RENAMES)) return
   val chosenRenames = ModPlanRenameOptions.relatedRenames(options.get(ModPlanRenameOptions.RELATED_RENAMES))
+  val renamer = renamerOfFactory.renamer
   for (element in renamer.elements) {
     if (renamer.getNewName(element) == null) continue
-    val newName = ModPlanRenameOptions.keyOf(element)?.let { chosenRenames[it] }
+    val newName = ModPlanRenameOptions.keyOf(renamerOfFactory.factoryId, element)?.let { chosenRenames[it] }
     if (newName.isNullOrEmpty()) {
       renamer.doNotRename(element)
     }
@@ -289,11 +297,20 @@ private fun applyChoiceOfRelatedRenamesToRenamer(renamer: AutomaticRenamer, opti
  * [ModPlanRenameOptions.RELATED_RENAMES]; null if the element has no file
  */
 @RequiresReadLock
-private fun relatedRenameChoice(element: PsiElement, newName: String): ModPlanQuestion.Choice? {
-  val line = ModPlanRenameOptions.relatedRename(element, newName) ?: return null
+private fun relatedRenameChoice(factoryId: String, element: PsiElement, newName: String): ModPlanQuestion.Choice? {
+  val line = ModPlanRenameOptions.relatedRename(factoryId, element, newName) ?: return null
   val oldName = (element as? PsiNamedElement)?.name.orEmpty()
   return ModPlanQuestion.Choice(line, RefactoringBundle.message("modplan.rename.related.rename.0.to.1", oldName, newName),
-                                element.containingFile?.name)
+                                locationOf(element))
+}
+
+/** @return the name of the file of [element] and the 1-based number of its line, or only the file name if the file has no document */
+@RequiresReadLock
+private fun locationOf(element: PsiElement): @Nls String? {
+  val file = element.containingFile ?: return null
+  val document = PsiDocumentManager.getInstance(file.project).getDocument(file) ?: return file.name
+  val lineNumber = (document.getLineNumber(element.textOffset) + 1).toString()
+  return RefactoringBundle.message("modplan.rename.related.rename.file.0.line.1", file.name, lineNumber)
 }
 
 /**
@@ -304,25 +321,26 @@ private fun relatedRenameChoice(element: PsiElement, newName: String): ModPlanQu
  * The question keeps no renamer, as a renamer holds PSI: [ask] makes it again with [findRenamer], in a modal progress. [findRenamer]
  * uses the usages of the searches of the chain, and searches again only if PSI changed since them.
  *
+ * @property factoryId the [AutomaticRenamerFactory.getOptionId] of the factory of the renamer
  * @property elementKeys the keys of the elements that the renamer suggests a new name for
  * @property description the description of the dialog of the renamer, the label of the fallback form
  * @property choices the suggested renames of the renamer, for the fallback form
  * @property selectedByDefault whether the fallback form starts with all [choices] chosen, as [AutomaticRenamingDialog] does
  */
 private class RelatedRenamesQuestion(
+  private val factoryId: String,
   private val elementKeys: List<String>,
   private val description: @NlsContexts.Label String,
   private val choices: List<ModPlanQuestion.Choice>,
   private val selectedByDefault: Boolean,
   private val findRenamer: (ModPlanOptionValues) -> AutomaticRenamer?,
 ) : ModPlanQuestion.Custom {
-  override fun options(): List<ModPlanOption<*>> = listOf(ModPlanRenameOptions.CHOOSE_RELATED, ModPlanRenameOptions.RELATED_RENAMES)
+  override fun options(): List<ModPlanOption<*>> = listOf(ModPlanRenameOptions.RELATED_RENAMES)
 
-  /** Answered if the answers decide about every element of the renamer, as another renamer answers the same options. */
+  /** Answered if the answers decide about every element of the renamer, as another renamer answers the same option. */
   override fun isAnswered(currentValues: ModPlanOptionValues): Boolean {
     val answeredElementKeys = currentValues.answeredKeys(ModPlanRenameOptions.RELATED_RENAMES).map { it.substringBeforeLast('	') }
-    return (currentValues.has(ModPlanRenameOptions.CHOOSE_RELATED) || currentValues.has(ModPlanRenameOptions.RELATED_RENAMES)) &&
-           answeredElementKeys.containsAll(elementKeys)
+    return currentValues.has(ModPlanRenameOptions.RELATED_RENAMES) && answeredElementKeys.containsAll(elementKeys)
   }
 
   /** A multi-selector of the suggested renames: the chosen ones are made, the others keep their names. */
@@ -348,9 +366,11 @@ private class RelatedRenamesQuestion(
     } ?: return currentValues
     val accepted = AutomaticRenamingDialog(project, renamer).showAndGet()
     val lines = runReadActionBlocking {
-      renamer.elements.mapNotNull { ModPlanRenameOptions.relatedRename(it, if (accepted) renamer.getNewName(it).orEmpty() else "") }
+      renamer.elements.mapNotNull {
+        ModPlanRenameOptions.relatedRename(factoryId, it, if (accepted) renamer.getNewName(it).orEmpty() else "")
+      }
     }
     val allLines = (currentValues.get(ModPlanRenameOptions.RELATED_RENAMES).lines().filter { it.isNotEmpty() } + lines).distinct()
-    return currentValues.with(ModPlanRenameOptions.CHOOSE_RELATED, true).with(ModPlanRenameOptions.RELATED_RENAMES, allLines.joinToString("\n"))
+    return currentValues.with(ModPlanRenameOptions.RELATED_RENAMES, allLines.joinToString("\n"))
   }
 }

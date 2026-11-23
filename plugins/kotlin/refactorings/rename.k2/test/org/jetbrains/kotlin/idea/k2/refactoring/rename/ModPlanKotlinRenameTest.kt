@@ -95,7 +95,7 @@ class ModPlanKotlinRenameTest : AbstractModPlanKotlinRenameTest() {
 
     fun testOverloadIsRenamedByItsOption() {
         val tool = myFixture.addFileToProject("Tool.kt", "fun tool() {}\nfun tool(count: Int) {}")
-        val options = relatedOn().with(renamerSwitch(AutomaticOverloadsRenamerFactory::class.java), true)
+        val options = renamersOn(AutomaticOverloadsRenamerFactory::class.java)
 
         ModPlanRenameTestSupport.renameOnModPlan(project, overloads(tool).first(), "work", options)
 
@@ -109,9 +109,9 @@ class ModPlanKotlinRenameTest : AbstractModPlanKotlinRenameTest() {
             class Square : Base() { override fun draw(size: Int) {} }
             """.trimIndent())
         val circleParameter = parameterOf(shapes, "Circle")
-        val chosen = runReadActionBlocking { ModPlanRenameOptions.relatedRename(circleParameter, "width") }!!
-        val options = relatedOn().with(renamerSwitch(AutomaticParameterRenamerFactory::class.java), true)
-            .with(ModPlanRenameOptions.CHOOSE_RELATED, true).with(ModPlanRenameOptions.RELATED_RENAMES, chosen)
+        val renamerId = ModPlanRenameTestSupport.renamerIdOf(AutomaticParameterRenamerFactory::class.java)
+        val chosen = runReadActionBlocking { ModPlanRenameOptions.relatedRename(renamerId, circleParameter, "width") }!!
+        val options = renamersOn(AutomaticParameterRenamerFactory::class.java).with(ModPlanRenameOptions.RELATED_RENAMES, chosen)
 
         ModPlanRenameTestSupport.renameOnModPlan(project, parameterOf(shapes, "Base"), "width", options)
 

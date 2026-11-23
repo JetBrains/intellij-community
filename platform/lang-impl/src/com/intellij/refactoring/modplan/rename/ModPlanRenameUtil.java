@@ -1,6 +1,8 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.modplan.rename;
 
+import com.intellij.codeInspection.options.OptMultiSelector;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
@@ -16,7 +18,6 @@ import com.intellij.psi.SmartPsiFileRange;
 import com.intellij.psi.impl.source.resolve.reference.impl.PsiMultiReference;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReference;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceSet;
-import com.intellij.refactoring.RefactoringSettings;
 import com.intellij.refactoring.modplan.ModPlanEdit;
 import com.intellij.refactoring.modplan.ModPlanOption;
 import com.intellij.refactoring.modplan.ModPlanOptionValues;
@@ -42,6 +43,7 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 /**
@@ -58,9 +60,9 @@ public final class ModPlanRenameUtil {
    * @param searchStorage keeps the answers about the search in comments and in text occurrences, as the rename dialog does; null if no
    *                      setting keeps them
    * @return the standard questions of the rename of {@code target}, as the rename dialog shows them: one form of the search in comments,
-   * and in text occurrences where they can be searched; then, if a factory renames something with the target, the general switch of the related
-   * renames and one switch for the factories of one option, kept in their settings. Which elements a renamer renames, the engine asks
-   * later, with one {@code RelatedRenamesQuestion} for each renamer
+   * and in text occurrences where they can be searched; then, if a factory with a checkbox renames something with the target, one form
+   * that chooses the factories, see {@link ModPlanRenameOptions#RENAMERS}, kept in their settings. Which elements a renamer renames, the
+   * engine asks later, with one {@code RelatedRenamesQuestion} for each renamer
    */
   @RequiresReadLock
   public static @NotNull @Unmodifiable List<ModPlanQuestion> renameQuestions(@NotNull PsiElement target,
@@ -71,20 +73,20 @@ public final class ModPlanRenameUtil {
                                            : List.of(ModPlanRenameOptions.SEARCH_IN_COMMENTS);
     questions.add(ModPlanQuestion.Form.of(searchOptions, searchStorage));
     DumbService dumbService = DumbService.getInstance(target.getProject());
-    List<AutomaticRenamerFactory> applicableFactories = ContainerUtil.filter(
-      AutomaticRenamerFactory.EP_NAME.getExtensionList(), factory -> dumbService.isUsableInCurrentContext(factory) && factory.isApplicable(target));
-    if (applicableFactories.isEmpty()) return List.copyOf(questions);
-    questions.add(ModPlanQuestion.Form.of(List.of(ModPlanRenameOptions.RENAME_RELATED), RelatedStorage.INSTANCE));
-    Map<ModPlanOption<Boolean>, List<AutomaticRenamerFactory>> factoriesByOption = new LinkedHashMap<>();
-    for (AutomaticRenamerFactory factory : applicableFactories) {
-      ModPlanOption<Boolean> renamerOption = ModPlanRenameOptions.optionForRenamer(factory);
-      if (renamerOption != null) {
-        factoriesByOption.computeIfAbsent(renamerOption, _ -> new ArrayList<>()).add(factory);
-      }
+    List<AutomaticRenamerFactory> factoriesWithCheckbox = ContainerUtil.filter(
+      AutomaticRenamerFactory.EP_NAME.getExtensionList(),
+      factory -> factory.getOptionId() != null && factory.getOptionName() != null && dumbService.isUsableInCurrentContext(factory) &&
+                 factory.isApplicable(target));
+    if (factoriesWithCheckbox.isEmpty()) return List.copyOf(questions);
+    Map<String, ModPlanQuestion.Choice> choicesById = new LinkedHashMap<>();
+    for (AutomaticRenamerFactory factory : factoriesWithCheckbox) {
+      String id = Objects.requireNonNull(factory.getOptionId());
+      choicesById.putIfAbsent(id, new ModPlanQuestion.Choice(id, Objects.requireNonNull(factory.getOptionName()), null));
     }
-    factoriesByOption.forEach((renamerOption, factories) -> {
-      questions.add(ModPlanQuestion.Form.of(List.of(renamerOption), new RenamerStorage(renamerOption, List.copyOf(factories))));
-    });
+    OptPane pane = OptPane.pane(OptPane.multiSelector(ModPlanRenameOptions.RENAMERS.getId(), List.copyOf(choicesById.values()),
+                                                      OptMultiSelector.SelectionMode.MULTIPLE_OR_EMPTY));
+    questions.add(new ModPlanQuestion.Form(pane, List.of(ModPlanRenameOptions.RENAMERS),
+                                           new RenamersStorage(List.copyOf(choicesById.keySet()), factoriesWithCheckbox)));
     return List.copyOf(questions);
   }
 
@@ -265,33 +267,27 @@ public final class ModPlanRenameUtil {
     return List.copyOf(result);
   }
 
-  /** Keeps the general switch of the related renames in the setting with which the legacy rename leaves them. */
-  private enum RelatedStorage implements ModPlanQuestion.Storage {
-    INSTANCE;
-
-    @Override
-    public @NotNull ModPlanOptionValues load(@NotNull ModPlanOptionValues options) {
-      return options.with(ModPlanRenameOptions.RENAME_RELATED, RefactoringSettings.getInstance().RENAME_SHOW_AUTOMATIC_RENAMING_DIALOG);
-    }
-
-    @Override
-    public void store(@NotNull ModPlanOptionValues answers) {
-      RefactoringSettings.getInstance().RENAME_SHOW_AUTOMATIC_RENAMING_DIALOG = answers.get(ModPlanRenameOptions.RENAME_RELATED);
-    }
-  }
-
-  /** Keeps a switch in the settings of its factories, as the checkbox of the rename dialog does. */
-  private record RenamerStorage(@NotNull ModPlanOption<Boolean> renamerOption, @NotNull List<AutomaticRenamerFactory> factories)
+  /**
+   * Keeps the choice of the factories in their settings, as the checkboxes of the rename dialog do. The start value also turns on the
+   * factories with no checkbox, which the form does not show.
+   *
+   * @param askedIds  the ids that the form shows
+   * @param factories the factories with a checkbox of the form
+   */
+  private record RenamersStorage(@NotNull List<String> askedIds, @NotNull List<AutomaticRenamerFactory> factories)
     implements ModPlanQuestion.Storage {
     @Override
     public @NotNull ModPlanOptionValues load(@NotNull ModPlanOptionValues options) {
-      return options.with(renamerOption, factories.getFirst().isEnabled());
+      Set<String> enabledIds = ModPlanRenameOptions.renamerIds(AutomaticRenamerFactory::isEnabled);
+      ModPlanOptionValues withEnabledIds = ModPlanRenameOptions.withRenamers(options, enabledIds);
+      return withEnabledIds.withChosenKeys(ModPlanRenameOptions.RENAMERS, askedIds, ContainerUtil.filter(askedIds, enabledIds::contains));
     }
 
     @Override
     public void store(@NotNull ModPlanOptionValues answers) {
+      Set<String> chosenIds = ModPlanRenameOptions.renamerIds(answers);
       for (AutomaticRenamerFactory factory : factories) {
-        factory.setEnabled(answers.get(renamerOption));
+        factory.setEnabled(chosenIds.contains(factory.getOptionId()));
       }
     }
   }

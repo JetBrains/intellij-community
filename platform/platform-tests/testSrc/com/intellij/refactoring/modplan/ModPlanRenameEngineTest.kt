@@ -28,6 +28,7 @@ import com.intellij.refactoring.rename.naming.AutomaticRenamer
 import com.intellij.refactoring.rename.naming.AutomaticRenamerFactory
 import com.intellij.usageView.UsageInfo
 import com.intellij.testFramework.ExtensionTestUtil
+import com.intellij.testFramework.ModPlanRenameTestSupport
 import com.intellij.testFramework.ModPlanTestUtil
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.intellij.util.ProcessingContext
@@ -602,7 +603,7 @@ class ModPlanRenameEngineTest : BasePlatformTestCase() {
     installRenamerFactories(FakeRenamerFactory(file, null))
 
     val ready = plan(file, newName = "a.txt",
-                     options = ModPlanOptionValues.EMPTY.with(ModPlanRenameOptions.RENAME_RELATED, true)) as ModPlan.AcceptedPlan
+                     options = ModPlanRenameTestSupport.withEveryRenamer(ModPlanOptionValues.EMPTY)) as ModPlan.AcceptedPlan
 
     assertTrue(ready.execution.command.isEmpty)
     assertEmpty(ready.execution.affectedFiles)
@@ -665,7 +666,7 @@ class ModPlanRenameEngineTest : BasePlatformTestCase() {
     install(usagesOf = { if (it == file) listOf(usage) else emptyList() })
     installRenamerFactories(FakeRenamerFactory(file, null), FakeRenamerFactory(file, null))
 
-    val ready = plan(file, options = ModPlanOptionValues.EMPTY.with(ModPlanRenameOptions.RENAME_RELATED, true)) as ModPlan.AcceptedPlan
+    val ready = plan(file, options = ModPlanRenameTestSupport.withEveryRenamer(ModPlanOptionValues.EMPTY)) as ModPlan.AcceptedPlan
 
     assertEquals(listOf("search a.txt"), log.filter { it.startsWith("search") })
     assertEquals(listOf("renamers a.txt with 1"), log.filter { it.startsWith("renamers") }.distinct())
@@ -684,7 +685,7 @@ class ModPlanRenameEngineTest : BasePlatformTestCase() {
     install(usagesOf = { if (it == file) listOf(usage) else emptyList() })
     installRenamerFactories(FakeRenamerFactory(file, related))
 
-    val ready = plan(file, options = ModPlanOptionValues.EMPTY.with(ModPlanRenameOptions.RENAME_RELATED, true)) as ModPlan.AcceptedPlan
+    val ready = plan(file, options = ModPlanRenameTestSupport.withEveryRenamer(ModPlanOptionValues.EMPTY)) as ModPlan.AcceptedPlan
 
     assertEquals(listOf("search a.txt", "search b.txt", "search a.txt"), log.filter { it.startsWith("search") })
     assertEquals(listOf("edits a.txt to renamed.txt with 1", "edits b.txt to related.txt with 0"), log.filter { it.startsWith("edits") })
@@ -696,7 +697,7 @@ class ModPlanRenameEngineTest : BasePlatformTestCase() {
     val usage = myFixture.addFileToProject("usage.txt", "u")
     install(usagesOf = { listOf(usage) })
     installRenamerFactories(FakeRenamerFactory(file, null))
-    val request = requestOf(file, options = ModPlanOptionValues.EMPTY.with(ModPlanRenameOptions.RENAME_RELATED, true))
+    val request = requestOf(file, options = ModPlanRenameTestSupport.withEveryRenamer(ModPlanOptionValues.EMPTY))
     val finalStep = inBackground {
       ModPlanTestUtil.runAnswering(request, ModPlanRenameRefactoring.getInstance()::chain) { _, currentValues -> currentValues }
     }

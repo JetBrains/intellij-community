@@ -3,6 +3,7 @@ package com.intellij.refactoring.rename;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.ide.util.SuperMethodWarningUtil;
+import com.intellij.java.JavaBundle;
 import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.model.SymbolPointer;
 import com.intellij.openapi.diagnostic.Logger;
@@ -12,6 +13,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pass;
 import com.intellij.openapi.util.ThrowableComputable;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.JavaResolveResult;
@@ -51,8 +53,6 @@ import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.JavaRefactoringSettings;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
-import com.intellij.refactoring.modplan.ModPlanChain;
-import com.intellij.refactoring.modplan.ModPlanChainBuilder;
 import com.intellij.refactoring.modplan.ModPlanOption;
 import com.intellij.refactoring.modplan.ModPlanOptionValues;
 import com.intellij.refactoring.modplan.ModPlanQuestion;
@@ -402,39 +402,36 @@ public class RenameJavaMethodProcessor extends RenameJavaMemberProcessor {
   }
 
   /**
-   * The question about the base method of an override, then the method to rename, as {@link #substituteElementToRename} with no editor.
-   * The ModPlan provider runs it.
-   *
-   * @return the chain that ends with the subject to rename; null refuses the rename
+   * @return the question about the base method of {@code method}, if the rename asks it, as {@link SuperMethodWarningUtil#checkSuperMethods}
+   * does: the method has a base method, or a sibling method that a subclass inherits for it; else null
    */
-  @ApiStatus.Internal
-  public static @NotNull ModPlanChain<@Nullable SymbolPointer> methodToRename(@NotNull ModPlanChainBuilder chainBuilder,
-                                                                             @NotNull SymbolPointer subject) {
-    if (!(subject.element() instanceof PsiMethod method)) return chainBuilder.passValue(null);
-    ModPlanQuestion question = asksForBaseMethod(method) ? new BaseMethodQuestion(subject) : null;
-    return chainBuilder.ask(question, afterBaseMethod -> {
-      if (!(subject.element() instanceof PsiMethod current)) return afterBaseMethod.passValue(null);
-      boolean renameBaseMethod = afterBaseMethod.getRequest().optionValues().get(ModPlanJavaRenameOptions.RENAME_BASE_METHOD);
-      PsiElement renamed = substituteElementToRename(current, null, false, renameBaseMethod);
-      return afterBaseMethod.passValue(renamed == null ? null : renamed == current ? subject : SymbolPointer.of(renamed));
-    });
+  private static @Nullable ModPlanQuestion baseMethodQuestion(@NotNull SymbolPointer subject, @NotNull PsiMethod method) {
+    if (method.isConstructor() || JavaPsiRecordUtil.getRecordComponentForAccessor(method) != null) return null;
+    PsiMethod[] candidates = SuperMethodWarningUtil.getTargetMethodCandidates(method, List.of());
+    if (candidates.length == 1 && candidates[0] == method) return null;
+    String baseClassNames = StringUtil.join(candidates, RenameJavaMethodProcessor::classNameOf, ", ");
+    ModPlanQuestion.Form fallback = ModPlanQuestion.Form.yesNo(
+      ModPlanJavaRenameOptions.RENAME_BASE_METHOD,
+      JavaBundle.message("rename.the.base.methods.in.0", baseClassNames, candidates.length),
+      JavaBundle.message("rename.only.the.method.in.0", classNameOf(method)));
+    return new BaseMethodQuestion(subject, fallback);
   }
 
-  /**
-   * @return whether the rename of {@code method} asks about its base method, as {@link SuperMethodWarningUtil#checkSuperMethods} does: the
-   * method has a base method, or a sibling method that a subclass inherits for it
-   */
-  private static boolean asksForBaseMethod(@NotNull PsiMethod method) {
-    if (method.isConstructor() || JavaPsiRecordUtil.getRecordComponentForAccessor(method) != null) return false;
-    PsiMethod[] candidates = SuperMethodWarningUtil.getTargetMethodCandidates(method, List.of());
-    return candidates.length != 1 || candidates[0] != method;
+  /** @return the qualified name of the class of {@code method}, else its short name */
+  private static @NotNull String classNameOf(@NotNull PsiMethod method) {
+    PsiClass containingClass = method.getContainingClass();
+    if (containingClass == null) return "";
+    return StringUtil.notNullize(containingClass.getQualifiedName(), StringUtil.notNullize(containingClass.getName()));
   }
 
   /**
    * The question "the method overrides a method, rename the base method instead?", in the dialog of the legacy rename. Its answer is
    * {@link ModPlanJavaRenameOptions#RENAME_BASE_METHOD}.
+   *
+   * @param fallback the form for a client without the dialog of the legacy rename
    */
-  private record BaseMethodQuestion(@NotNull SymbolPointer subject) implements ModPlanQuestion.Custom {
+  private record BaseMethodQuestion(@NotNull SymbolPointer subject, @NotNull ModPlanQuestion.Form fallback)
+    implements ModPlanQuestion.Custom {
     @Override
     public @NotNull List<ModPlanOption<?>> options() {
       return List.of(ModPlanJavaRenameOptions.RENAME_BASE_METHOD);
@@ -602,7 +599,8 @@ public class RenameJavaMethodProcessor extends RenameJavaMemberProcessor {
 
     @Override
     protected @NotNull List<ModPlanQuestion> substitutionQuestions(@NotNull SymbolPointer subject, @NotNull PsiElement element) {
-      return element instanceof PsiMethod method && asksForBaseMethod(method) ? List.of(new BaseMethodQuestion(subject)) : List.of();
+      ModPlanQuestion question = element instanceof PsiMethod method ? baseMethodQuestion(subject, method) : null;
+      return question == null ? List.of() : List.of(question);
     }
 
     @Override

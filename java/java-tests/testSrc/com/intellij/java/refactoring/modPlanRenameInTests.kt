@@ -16,7 +16,14 @@ import junit.framework.TestCase.assertTrue
  * the element to RenameProcessor, which renames it without the question about its base method, and runs the automatic renamers.
  */
 internal fun renameOnModPlanInTests(project: Project, target: PsiElement, newName: String, options: ModPlanOptionValues) {
-  val alone = options.with(ModPlanJavaRenameOptions.RENAME_BASE_METHOD, false).with(ModPlanRenameOptions.RENAME_RELATED, true)
+  // RenameProcessor runs the factories with no checkbox always.
+  val withRenamers = if (options.has(ModPlanRenameOptions.RENAMERS)) {
+    options
+  }
+  else {
+    ModPlanRenameOptions.withRenamers(options, ModPlanRenameOptions.renamerIds { false })
+  }
+  val alone = withRenamers.with(ModPlanJavaRenameOptions.RENAME_BASE_METHOD, false)
   ModPlanRenameTestSupport.renameOnModPlan(project, target, newName, alone)
 }
 

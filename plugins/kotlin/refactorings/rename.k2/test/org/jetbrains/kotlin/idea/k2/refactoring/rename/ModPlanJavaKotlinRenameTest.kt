@@ -75,7 +75,7 @@ class ModPlanJavaKotlinRenameTest : AbstractModPlanKotlinRenameTest() {
             }
             """.trimIndent())
         val user = myFixture.addFileToProject("User.kt", "fun f(bean: Bean) {\n    bean.count++\n}")
-        val options = relatedOn().with(renamerSwitch(AutomaticGetterSetterRenamerFactory::class.java), true)
+        val options = renamersOn(AutomaticGetterSetterRenamerFactory::class.java)
         val plan = plan(declaration<PsiField>(bean, "count"), "hits", options)
 
         assertSize(1, placesAt(plan, user, user.text.indexOf("count")))
@@ -95,7 +95,7 @@ class ModPlanJavaKotlinRenameTest : AbstractModPlanKotlinRenameTest() {
     fun testCommentThatNamesAJavaClassAndItsKotlinInheritorGetsBothNewNames() {
         val shape = myFixture.addFileToProject("Shape.java", "public class Shape {}")
         val shapes = myFixture.addFileToProject("Shapes.kt", "// Shape and RoundShape\nclass RoundShape : Shape()")
-        val options = relatedOn().with(renamerSwitch(AutomaticInheritorRenamerFactory::class.java), true)
+        val options = renamersOn(AutomaticInheritorRenamerFactory::class.java)
             .with(ModPlanRenameOptions.SEARCH_IN_COMMENTS, true)
 
         execute { plan(declaration<PsiClass>(shape, "Shape"), "Figure", options) }

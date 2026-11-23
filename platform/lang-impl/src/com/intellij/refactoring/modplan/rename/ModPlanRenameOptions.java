@@ -1,8 +1,10 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.modplan.rename;
 
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.refactoring.RefactoringBundle;
@@ -14,8 +16,14 @@ import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collection;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.function.Predicate;
 
 /**
  * The rename options that every language may read.
@@ -43,23 +51,18 @@ public final class ModPlanRenameOptions {
   public static final @NotNull ModPlanOption<Boolean> SUBSTITUTE_TARGET =
     ModPlanOption.bool("substituteTarget", true, RefactoringBundle.messagePointer("rename.title"));
   /**
-   * Whether the related elements are renamed at all, such as the variables named after a renamed class: off, no automatic renamer runs,
-   * not even one with no {@link #optionForRenamer option}. Off by default, so a caller with no user renames the element alone; the IDE
-   * keeps it in {@code RefactoringSettings.RENAME_SHOW_AUTOMATIC_RENAMING_DIALOG}, without which the legacy rename leaves them too.
+   * The automatic renamers that run, such as the one of the variables named after a renamed class: the
+   * {@link AutomaticRenamerFactory#getOptionId ids} of their factories, one per line. A factory runs only if its id is here. This is
+   * also true for a factory with no checkbox in the rename dialog. Factories of several languages share an id, such as the variables of
+   * Java and Kotlin. With no value, no automatic renamer runs, so a caller with no user renames the element alone. A line with the
+   * prefix {@code -} is an id that is off, see {@link ModPlanOptionValues#withChosenKeys}.
    */
-  public static final @NotNull ModPlanOption<Boolean> RENAME_RELATED =
-    ModPlanOption.bool("renameRelated", false, RefactoringBundle.messagePointer("rename.related.elements.option.name"));
+  public static final @NotNull ModPlanOption<String> RENAMERS =
+    ModPlanOption.text("renamers", "", RefactoringBundle.messagePointer("rename.related.elements.option.name"));
   /**
-   * The answer of the choice of the related renames, such as the variables named after a renamed class: on, only the ones of
-   * {@link #RELATED_RENAMES} are made; off, every suggested one is, as the legacy rename does in a unit test. With no explicit value, a
-   * value of {@link #RELATED_RENAMES} turns it on: the fallback form of a client such as LSP sets only that option.
-   */
-  public static final @NotNull ModPlanOption<Boolean> CHOOSE_RELATED =
-    ModPlanOption.bool("chooseRelated", false, RefactoringBundle.messagePointer("automatic.renaming.dialog.rename.selected.title"));
-  /**
-   * The chosen related renames, one per line: {@link #relatedRename} of the element and its new name, empty for an element that keeps its
-   * name. A line with the prefix {@code -} also keeps the name, see {@link ModPlanOptionValues#withChosenKeys}. Set by a custom question,
-   * see {@link #CHOOSE_RELATED}.
+   * The chosen related renames, one per line: {@link #relatedRename} of the renamer, the element and its new name. With a value, only
+   * these renames are made: an element with no line, with an empty new name or with the prefix {@code -} keeps its name, see
+   * {@link ModPlanOptionValues#withChosenKeys}. With no value, every suggested rename is made, as the legacy rename does in a unit test.
    */
   public static final @NotNull ModPlanOption<String> RELATED_RENAMES =
     ModPlanOption.text("relatedRenames", "", RefactoringBundle.messagePointer("automatic.renamer.rename.to.column"));
@@ -73,38 +76,64 @@ public final class ModPlanRenameOptions {
   private ModPlanRenameOptions() {
   }
 
-  /**
-   * @return the option that turns on the renamers of {@code factory}, as its checkbox in the rename dialog does; off by default. Null if the
-   * factory has no option, which runs it always, or it has no {@link AutomaticRenamerFactory#getOptionId id}, which never runs it here
-   */
-  public static @Nullable ModPlanOption<Boolean> optionForRenamer(@NotNull AutomaticRenamerFactory factory) {
-    String id = factory.getOptionId();
-    if (id == null || factory.getOptionName() == null) return null;
-    return ModPlanOption.bool(id, false, () -> StringUtil.notNullize(factory.getOptionName()));
+  /** @return the ids of the factories that {@link #RENAMERS} of {@code options} turns on */
+  public static @NotNull Set<String> renamerIds(@NotNull ModPlanOptionValues options) {
+    return options.chosenKeys(RENAMERS);
   }
 
   /**
-   * @return {@code options} with {@link #RENAME_RELATED} and the {@link #optionForRenamer option} of every factory as the settings of the
-   * IDE keep them, as the inline rename runs the factories
+   * @param isOn whether the checkbox of a factory in the rename dialog is on
+   * @return the ids of the factories whose checkbox is on, and of the factories with no checkbox, which run always in the legacy rename.
+   * A factory with no checkbox follows the checkbox of a factory with the same id, such as the Kotlin variables of a Java class follow the
+   * variables of Java. A factory with no {@link AutomaticRenamerFactory#getOptionId id} cannot run, so it has none here
    */
-  public static @NotNull ModPlanOptionValues withRenamersOfSettings(@NotNull ModPlanOptionValues options) {
-    ModPlanOptionValues result = options.with(RENAME_RELATED, RefactoringSettings.getInstance().RENAME_SHOW_AUTOMATIC_RENAMING_DIALOG);
+  public static @NotNull Set<String> renamerIds(@NotNull Predicate<? super AutomaticRenamerFactory> isOn) {
+    Set<String> idsWithCheckbox = new HashSet<>();
+    Set<String> idsWithoutCheckbox = new LinkedHashSet<>();
+    Set<String> result = new LinkedHashSet<>();
     for (AutomaticRenamerFactory factory : AutomaticRenamerFactory.EP_NAME.getExtensionList()) {
-      ModPlanOption<Boolean> renamerOption = optionForRenamer(factory);
-      if (renamerOption != null) {
-        result = result.with(renamerOption, factory.isEnabled());
+      String id = factory.getOptionId();
+      if (id == null) continue;
+      if (factory.getOptionName() == null) {
+        idsWithoutCheckbox.add(id);
+      }
+      else {
+        idsWithCheckbox.add(id);
+        if (isOn.test(factory)) {
+          result.add(id);
+        }
+      }
+    }
+    for (String id : idsWithoutCheckbox) {
+      if (!idsWithCheckbox.contains(id)) {
+        result.add(id);
       }
     }
     return result;
   }
 
+  /** @return {@code options} with {@link #RENAMERS} that turns on the factories of {@code renamerIds} */
+  public static @NotNull ModPlanOptionValues withRenamers(@NotNull ModPlanOptionValues options, @NotNull Collection<String> renamerIds) {
+    return options.with(RENAMERS, String.join("\n", renamerIds));
+  }
+
   /**
-   * @return the line of {@link #RELATED_RENAMES} that renames {@code element} to {@code newName}: the path of its file and its offset, then
-   * the new name, after a tab; null if the element has no file
+   * @return {@code options} with {@link #RENAMERS} as the settings of the IDE keep the checkboxes of the factories, as the inline rename
+   * runs them. With {@code RefactoringSettings.RENAME_SHOW_AUTOMATIC_RENAMING_DIALOG} off, no factory runs, as in the legacy rename
+   */
+  public static @NotNull ModPlanOptionValues withRenamersOfSettings(@NotNull ModPlanOptionValues options) {
+    if (!RefactoringSettings.getInstance().RENAME_SHOW_AUTOMATIC_RENAMING_DIALOG) return withRenamers(options, List.of());
+    return withRenamers(options, renamerIds(AutomaticRenamerFactory::isEnabled));
+  }
+
+  /**
+   * @param renamerId the {@link AutomaticRenamerFactory#getOptionId id} of the factory of the renamer that suggests the rename
+   * @return the line of {@link #RELATED_RENAMES} that renames {@code element} to {@code newName}: the renamer id, the path of the file and
+   * the 1-based line and column of the element, then the new name, after a tab; null if the element has no file or no document
    */
   @RequiresReadLock
-  public static @Nullable String relatedRename(@NotNull PsiElement element, @NotNull String newName) {
-    String key = keyOf(element);
+  public static @Nullable String relatedRename(@NotNull String renamerId, @NotNull PsiElement element, @NotNull String newName) {
+    String key = keyOf(renamerId, element);
     return key == null ? null : key + "\t" + newName;
   }
 
@@ -120,10 +149,19 @@ public final class ModPlanRenameOptions {
     return result;
   }
 
+  /**
+   * @return the key of a line of {@link #RELATED_RENAMES}, see {@link #relatedRename}. It has no tab, because the option trims every line,
+   * and a line with an empty new name ends with the tab
+   */
   @RequiresReadLock
-  static @Nullable String keyOf(@NotNull PsiElement element) {
+  static @Nullable String keyOf(@NotNull String renamerId, @NotNull PsiElement element) {
     PsiFile file = element.getContainingFile();
     VirtualFile virtualFile = file == null ? null : file.getVirtualFile();
-    return virtualFile == null ? null : virtualFile.getPath() + ":" + element.getTextOffset();
+    Document document = file == null ? null : PsiDocumentManager.getInstance(file.getProject()).getDocument(file);
+    if (virtualFile == null || document == null) return null;
+    int offset = element.getTextOffset();
+    int line = document.getLineNumber(offset);
+    int column = offset - document.getLineStartOffset(line);
+    return renamerId + " " + virtualFile.getPath() + ":" + (line + 1) + ":" + (column + 1);
   }
 }

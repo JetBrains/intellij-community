@@ -916,17 +916,18 @@ c:com.intellij.refactoring.memberPushDown.PushDownProcessor
 - p:substitute(com.intellij.psi.PsiElement,com.intellij.refactoring.modplan.ModPlanOptionValues):com.intellij.psi.PsiElement
 - p:usagesOf(com.intellij.psi.PsiElement,java.lang.String,com.intellij.refactoring.modplan.ModPlanRequest,java.util.Map):java.util.List
 *f:com.intellij.refactoring.modplan.rename.ModPlanRenameOptions
-- sf:CHOOSE_RELATED:com.intellij.refactoring.modplan.ModPlanOption
 - sf:NEW_NAME:com.intellij.refactoring.modplan.ModPlanOption
 - sf:RELATED_RENAMES:com.intellij.refactoring.modplan.ModPlanOption
-- sf:RENAME_RELATED:com.intellij.refactoring.modplan.ModPlanOption
+- sf:RENAMERS:com.intellij.refactoring.modplan.ModPlanOption
 - sf:SEARCH_IN_COMMENTS:com.intellij.refactoring.modplan.ModPlanOption
 - sf:SEARCH_TEXT_OCCURRENCES:com.intellij.refactoring.modplan.ModPlanOption
 - sf:SKIP_READ_ONLY_USAGES:com.intellij.refactoring.modplan.ModPlanOption
 - sf:SUBSTITUTE_TARGET:com.intellij.refactoring.modplan.ModPlanOption
 - s:newNameOfSubject(I):com.intellij.refactoring.modplan.ModPlanOption
-- s:optionForRenamer(com.intellij.refactoring.rename.naming.AutomaticRenamerFactory):com.intellij.refactoring.modplan.ModPlanOption
-- s:relatedRename(com.intellij.psi.PsiElement,java.lang.String):java.lang.String
+- s:relatedRename(java.lang.String,com.intellij.psi.PsiElement,java.lang.String):java.lang.String
+- s:renamerIds(com.intellij.refactoring.modplan.ModPlanOptionValues):java.util.Set
+- s:renamerIds(java.util.function.Predicate):java.util.Set
+- s:withRenamers(com.intellij.refactoring.modplan.ModPlanOptionValues,java.util.Collection):com.intellij.refactoring.modplan.ModPlanOptionValues
 - s:withRenamersOfSettings(com.intellij.refactoring.modplan.ModPlanOptionValues):com.intellij.refactoring.modplan.ModPlanOptionValues
 *:com.intellij.refactoring.modplan.rename.ModPlanRenameProvider
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
