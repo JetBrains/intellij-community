@@ -8,7 +8,6 @@ import com.intellij.openapi.application.ApplicationBundle
 import com.intellij.openapi.extensions.BaseExtensionPointName
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.options.BoundCompositeSearchableConfigurable
-import com.intellij.openapi.options.BoundConfigurable
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.options.SearchableConfigurable
 import com.intellij.openapi.options.UnnamedConfigurable
@@ -61,7 +60,8 @@ internal class CompletionConfigurable : BoundCompositeSearchableConfigurable<Unn
 
 
   private fun Panel.createConfigurableLinkPanel(): Panel = panel {
-    allConfigurables.filterIsInstance<BoundConfigurable>().forEach { configurable ->
+    val configurableParent: SearchableConfigurable.Parent = this@CompletionConfigurable
+    configurableParent.configurables.forEach { configurable ->
       row {
          link(configurable.displayName) { e ->
           val component = e.source as? JComponent ?: return@link
