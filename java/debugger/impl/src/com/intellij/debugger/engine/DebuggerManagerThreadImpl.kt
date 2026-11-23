@@ -205,22 +205,23 @@ class DebuggerManagerThreadImpl @ApiStatus.Internal constructor(
    * calls terminateCommand
    */
   fun terminateAndInvoke(command: DebuggerCommandImpl, terminateTimeoutMillis: Int) {
-    val currentCommand = myEvents.currentEvent
+    val request = currentRequest
+    val eventNumber = request.currentEventNumber
 
     schedule(command)
 
-    if (currentCommand != null) {
+    if (eventNumber != 0L) {
       AppExecutorUtil.getAppScheduledExecutorService().schedule(
         {
-          if (currentCommand === myEvents.currentEvent) {
-            // if current command is still in progress, cancel it
-            val request = currentRequest
-            request.requestStop()
+          synchronized(this) {
+            if (request !== currentRequest || eventNumber != request.currentEventNumber) return@schedule
             // after close the stopped worker drains the queue itself, and a new worker would outlive the work job
             if (!myDisposed && !myClosed.get()) {
               startNewWorkerThread(request, COMMAND_TIMEOUT.toLong())
+              return@schedule
             }
           }
+          request.requestStop()
         }, terminateTimeoutMillis.toLong(), TimeUnit.MILLISECONDS)
     }
   }

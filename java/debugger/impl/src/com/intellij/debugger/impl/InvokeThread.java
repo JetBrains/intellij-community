@@ -50,6 +50,7 @@ public abstract class InvokeThread<E extends PrioritizedTask> {
     private final long myPreviousRequestTimeoutMillis;
     private volatile boolean myStarted;
     private final CountDownLatch myExited = new CountDownLatch(1);
+    private volatile long myCurrentEventNumber;
 
     WorkerThreadRequest(InvokeThread<E> owner,
                         @NotNull Job workJob,
@@ -65,7 +66,7 @@ public abstract class InvokeThread<E extends PrioritizedTask> {
     public void run() {
       myStarted = true;
       try {
-        awaitPreviousRequest();
+        stopAndAwaitPreviousRequest();
         runWorker();
       }
       finally {
@@ -73,11 +74,12 @@ public abstract class InvokeThread<E extends PrioritizedTask> {
       }
     }
 
-    private void awaitPreviousRequest() {
+    private void stopAndAwaitPreviousRequest() {
       WorkerThreadRequest<?> previous = myPreviousRequest;
       if (previous == null) {
         return;
       }
+      previous.requestStop();
       try {
         previous.join(myPreviousRequestTimeoutMillis);
       }
@@ -130,6 +132,12 @@ public abstract class InvokeThread<E extends PrioritizedTask> {
       final Future<?> future = myRequestFuture;
       assert future != null;
       return myProgressIndicator.isCanceled() || future.isCancelled() || future.isDone();
+    }
+
+    /** Returns zero when this worker has no event to interrupt. */
+    @ApiStatus.Internal
+    public long getCurrentEventNumber() {
+      return myCurrentEventNumber;
     }
 
     @ApiStatus.Internal
@@ -253,6 +261,9 @@ public abstract class InvokeThread<E extends PrioritizedTask> {
     WorkerThreadRequest<?> currentRequest = thread.getCurrentRequest();
     WorkerThreadRequest<?> threadRequest = getCurrentThreadRequest();
     if (currentRequest != threadRequest) {
+      if (currentRequest.myPreviousRequest == threadRequest) {
+        return false;
+      }
       String message =
         "Expected worker request " + threadRequest + " instead of " + currentRequest + " closed=" + thread.myEvents.isClosed();
       reportCommandError(new IllegalStateException(message)); // do not throw AssertionError in tests, we need to return false here
@@ -269,6 +280,7 @@ public abstract class InvokeThread<E extends PrioritizedTask> {
   private void run(final @NotNull WorkerThreadRequest<?> threadRequest) {
     try {
       DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode(() -> ProgressManager.getInstance().runProcess(() -> {
+        long eventNumber = 0;
         while (true) {
           try {
             if (threadRequest.isStopRequested()) {
@@ -279,7 +291,9 @@ public abstract class InvokeThread<E extends PrioritizedTask> {
               break;
             }
 
-            doProcessEvent(myEvents.get());
+            E event = myEvents.get();
+            threadRequest.myCurrentEventNumber = ++eventNumber;
+            doProcessEvent(event);
           }
           catch (VMDisconnectedException | EventQueueClosedException ignored) {
             break;
@@ -300,6 +314,9 @@ public abstract class InvokeThread<E extends PrioritizedTask> {
           }
           catch (Throwable e) {
             reportCommandError(e);
+          }
+          finally {
+            threadRequest.myCurrentEventNumber = 0;
           }
         }
       }, threadRequest.myProgressIndicator));
@@ -368,6 +385,7 @@ public abstract class InvokeThread<E extends PrioritizedTask> {
     synchronized (this) {
       currentThreadRequest = getCurrentThreadRequest();
       LOG.assertTrue(currentThreadRequest != null);
+      newRequest.myCurrentEventNumber = 0;
       myCurrentRequest = newRequest;
       if (LOG.isDebugEnabled()) {
         LOG.debug("Switched current request from " + currentThreadRequest + " to " + newRequest);
