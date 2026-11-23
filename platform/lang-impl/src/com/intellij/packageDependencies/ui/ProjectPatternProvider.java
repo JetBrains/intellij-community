@@ -13,17 +13,19 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.JdkOrderEntry;
-import com.intellij.openapi.roots.LibraryOrSdkOrderEntry;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packageDependencies.DependencyUISettings;
+import com.intellij.platform.workspace.jps.entities.LibraryEntity;
+import com.intellij.platform.workspace.jps.entities.SdkEntity;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.scope.packageSet.FilePatternPackageSet;
 import com.intellij.psi.search.scope.packageSet.PackageSet;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.workspaceModel.ide.LibraryEntities;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
@@ -100,12 +102,15 @@ public final class ProjectPatternProvider extends PatternDialectProvider {
         final Module module = ModuleUtilCore.findModuleForFile(vDir, project);
         if (module == null) {
           projectFiles = false;
-          modulePattern = ProjectFileIndex.getInstance(project)
-            .getOrderEntriesForFile(vDir).stream()
-            .filter(entry -> entry instanceof LibraryOrSdkOrderEntry)
-            .findFirst()
-            .map(entry -> entry instanceof JdkOrderEntry ? ((JdkOrderEntry)entry).getJdkName() : entry.getPresentableName())
-            .orElse(null);
+          ProjectFileIndex fileIndex = ProjectFileIndex.getInstance(project);
+          LibraryEntity library = ContainerUtil.getFirstItem(fileIndex.findContainingLibraries(vDir));
+          if (library != null) {
+            modulePattern = LibraryEntities.getPresentableName(library);
+          }
+          else {
+            SdkEntity sdk = ContainerUtil.getFirstItem(fileIndex.findContainingSdks(vDir));
+            modulePattern = sdk == null ? null : sdk.getName();
+          }
         }
         else {
           modulePattern = module.getName();
