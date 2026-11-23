@@ -228,6 +228,10 @@ object AllIconDescriptors {
     /** 16x16 */ @JvmStatic val Words: IconDescriptor = imageIconDescriptor("expui/inline/exactWords.svg", AllIconDescriptors::class.java.classLoader)
     /** 16x16 */ @JvmStatic val WordsHovered: IconDescriptor = imageIconDescriptor("expui/inline/exactWords.svg", AllIconDescriptors::class.java.classLoader)
     /** 16x16 */ @JvmStatic val WordsSelected: IconDescriptor = imageIconDescriptor("expui/inline/exactWords.svg", AllIconDescriptors::class.java.classLoader)
+
+    @Deprecated("to be removed without replacement")
+    @ApiStatus.ScheduledForRemoval
+    /** 16x16 */ @JvmStatic val EnableNewUi: IconDescriptor = imageIconDescriptor("actions/enableNewUi.svg", AllIconDescriptors::class.java.classLoader)
   }
 
   object Breakpoints {
@@ -671,6 +675,14 @@ object AllIconDescriptors {
     /** 20x20 */ @JvmStatic val WindowsMenu_20x20: IconDescriptor = imageIconDescriptor("expui/general/windowsMenu@20x20.svg", AllIconDescriptors::class.java.classLoader)
     /** 16x16 */ @JvmStatic val ZoomIn: IconDescriptor = imageIconDescriptor("general/zoomIn.svg", AllIconDescriptors::class.java.classLoader)
     /** 16x16 */ @JvmStatic val ZoomOut: IconDescriptor = imageIconDescriptor("general/zoomOut.svg", AllIconDescriptors::class.java.classLoader)
+
+    @Deprecated("to be removed, use Badge.beta instead")
+    @ApiStatus.ScheduledForRemoval
+    /** 32x15 */ @JvmStatic val Beta: IconDescriptor = imageIconDescriptor("general/beta.svg", AllIconDescriptors::class.java.classLoader)
+
+    @Deprecated("to be removed, use Badge.new/Badge.newBadge instead")
+    @ApiStatus.ScheduledForRemoval
+    /** 38x16 */ @JvmStatic val New_badge: IconDescriptor = imageIconDescriptor("general/new_badge.svg", AllIconDescriptors::class.java.classLoader)
   }
 
   object Graph {
@@ -1629,4 +1641,6 @@ object AllIconDescriptors {
     /** 16x16 */ @JvmStatic val Html_id: IconDescriptor = imageIconDescriptor("expui/xml/id.svg", AllIconDescriptors::class.java.classLoader)
   }
 
+  @Deprecated("use ProductIcons.getInstance().getProductIcon() instead")
+  @JvmStatic val Icon: IconDescriptor = imageIconDescriptor("icon.png", AllIconDescriptors::class.java.classLoader)
 }

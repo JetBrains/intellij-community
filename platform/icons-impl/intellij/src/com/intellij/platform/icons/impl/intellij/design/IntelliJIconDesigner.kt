@@ -8,8 +8,7 @@ import com.intellij.platform.icons.impl.layers.SwingIconLayer
 import javax.swing.Icon
 
 class IntelliJIconDesigner: DefaultIconDesigner() {
-  override fun image(path: String, classLoader: ClassLoader?, modifier: IconModifier) {
-    if (classLoader == null) error("Specifying classloader for icon image is required in IntelliJ.")
+  override fun image(path: String, classLoader: ClassLoader, modifier: IconModifier) {
     image(ModuleImageResourceLocation.fromClassLoader(path, classLoader), modifier)
   }
 

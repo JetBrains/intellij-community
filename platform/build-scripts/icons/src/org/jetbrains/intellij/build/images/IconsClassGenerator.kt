@@ -3,6 +3,7 @@ package org.jetbrains.intellij.build.images
 
 import com.dynatrace.hash4j.hashing.Hashing
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.ui.icons.iconDescriptorClassName
 import com.intellij.ui.icons.loadRasterImage
 import com.intellij.ui.svg.getSvgDocumentSize
 import com.intellij.util.LineSeparator
@@ -102,7 +103,7 @@ internal open class IconsClassGenerator(
         val jewelPackageName = "org.jetbrains.jewel.ui.icons"
         val kotlinPackageName = "com.intellij.platform.icons"
         val className = "AllIcons"
-        val kotlinClassName = "AllIconDescriptors"
+        val kotlinClassName = iconDescriptorClassName(className)
 
         val dir = utilUi.getSourceRoots(JavaSourceRootType.SOURCE).first().path.toAbsolutePath().resolve("com/intellij/icons")
         val outFile = dir.resolve("$className.java")
@@ -139,9 +140,9 @@ internal open class IconsClassGenerator(
         val (studioImages, studioMappings) = imageCollector.mergeImages(imagesS, module)
 
         return listOf(
-          IconClassInfo(packageName, "AndroidIcons", sourceRoot.resolve("icons/AndroidIcons.java"), composeSourceRoot.resolve("icons/AndroidIconsCompose.java"), imagesA, kotlinClassName = "AndroidIconDescriptors"),
-          IconClassInfo(packageName, "StudioIcons", sourceRoot.resolve("icons/StudioIcons.java"), composeSourceRoot.resolve("icons/StudioIconsCompose.java"), studioImages, studioMappings, kotlinClassName = "StudioIconDescriptors"),
-          IconClassInfo(packageName, "StudioIllustrations", sourceRoot.resolve("icons/StudioIllustrations.java"), composeSourceRoot.resolve("icons/StudioIllustrationsCompose.java"), imagesI, kotlinClassName = "StudioIllustrationDescriptors"),
+          IconClassInfo(packageName, "AndroidIcons", sourceRoot.resolve("icons/AndroidIcons.java"), composeSourceRoot.resolve("icons/AndroidIconsCompose.java"), imagesA),
+          IconClassInfo(packageName, "StudioIcons", sourceRoot.resolve("icons/StudioIcons.java"), composeSourceRoot.resolve("icons/StudioIconsCompose.java"), studioImages, studioMappings),
+          IconClassInfo(packageName, "StudioIllustrations", sourceRoot.resolve("icons/StudioIllustrations.java"), composeSourceRoot.resolve("icons/StudioIllustrationsCompose.java"), imagesI),
         )
       }
       else -> {
@@ -173,7 +174,7 @@ internal open class IconsClassGenerator(
         val className = moduleConfig?.className
                         ?: existingIconsClass?.className
                         ?: "${directoryName(module).removeSuffix("Icons")}Icons"
-        val kotlinClassName = className.replace("Icons", "IconDescriptors")
+        val kotlinClassName = iconDescriptorClassName(className)
         val outFile = targetRoot.resolve("$className.java")
         val jewelOutFile = targetRoot.resolve("${className}Keys.java")
         // the descriptor class name is derived from the icon class name (see `amendIconClassName`); it lives in the same package/root
@@ -473,10 +474,6 @@ internal open class IconsClassGenerator(
   ) {
     val file = image.basicFile ?: return
     if (!image.phantom && !isIcon(file)) {
-      return
-    }
-
-    if (!iconClassSpecificsGenerator.includeImage(image)) {
       return
     }
 

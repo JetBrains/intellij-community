@@ -1,13 +1,14 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.images
 
+import com.intellij.ui.icons.iconDescriptorClassName
 import java.nio.file.Path
 
 internal object KotlinNewApiIconClassSpecificsGenerator : IconClassSpecificsGenerator {
   override val classAnnotation: String = "@ApiStatus.Experimental"
 
   private fun getKotlinClassName(iconClassInfo: IconClassInfo): String =
-    iconClassInfo.kotlinClassName ?: iconClassInfo.className.replace("Icons", "IconDescriptors")
+    iconClassInfo.kotlinClassName ?: iconDescriptorClassName(iconClassInfo.className)
 
   override fun generateIconClassName(iconClassInfo: IconClassInfo): String = getKotlinClassName(iconClassInfo)
 
@@ -24,9 +25,6 @@ internal object KotlinNewApiIconClassSpecificsGenerator : IconClassSpecificsGene
     generator.append(result, " * Using these descriptors requires the IconManager to be initialized.", 0)
   }
 
-  // Drop deprecated icons. The descriptor class holds only current icons.
-  override fun includeImage(image: ImageInfo): Boolean = !image.deprecated
-
   override fun appendCustomImports(generator: IconsClassGenerator, result: StringBuilder) {
     generator.append(result, "import org.jetbrains.annotations.ApiStatus", 0)
   }
@@ -40,7 +38,7 @@ internal object KotlinNewApiIconClassSpecificsGenerator : IconClassSpecificsGene
   }
 
   override fun appendScheduledForRemovalImport(generator: IconsClassGenerator, result: StringBuilder) {
-    // Kotlin uses a fully-qualified annotation. No import is needed.
+    // Kotlin uses `@ApiStatus.ScheduledForRemoval`, and `ApiStatus` is always imported.
   }
 
   override fun appendTopLevelTypeDeclaration(generator: IconsClassGenerator, result: StringBuilder, info: IconClassInfo, realClassName: String) {
@@ -51,8 +49,17 @@ internal object KotlinNewApiIconClassSpecificsGenerator : IconClassSpecificsGene
     generator.append(result, "object $className {", level)
   }
 
+  // Mirrors the Java `@Deprecated` and `@ScheduledForRemoval` of the legacy class, with the deprecation comment as the message.
   override fun appendMemberAnnotations(generator: IconsClassGenerator, result: StringBuilder, image: ImageInfo, level: Int) {
-    // The descriptor class carries no annotations.
+    val deprecation = image.deprecation ?: return
+    // if first in block, do not add yet another extra newline
+    if (result[result.length - 1] != '\n' || result[result.length - 2] != '\n') {
+      result.append('\n')
+    }
+    generator.append(result, deprecatedAnnotation(deprecation.comment, deprecation.replacementReference), level)
+    if (image.scheduledForRemoval) {
+      generator.append(result, "@ApiStatus.ScheduledForRemoval", level)
+    }
   }
 
   override fun appendIconProperty(generator: IconsClassGenerator, result: StringBuilder, topLevelClass: String, javaDoc: String, image: ImageInfo, iconName: CharSequence, key: Int, mappings: Map<String, String>?, level: Int) {
@@ -64,14 +71,28 @@ internal object KotlinNewApiIconClassSpecificsGenerator : IconClassSpecificsGene
   }
 
   override fun appendDeprecatedIconPropertyMapping(generator: IconsClassGenerator, result: StringBuilder, javaDoc: String, oldName: String, iconName: CharSequence, level: Int) {
-    // The descriptor class holds no deprecated icon aliases.
+    generator.append(result, "${javaDoc}${deprecatedAnnotation("Use $iconName", iconName.toString())} @JvmStatic val $oldName: IconDescriptor = $iconName", level)
   }
 
   override fun appendDeprecationReplacementClass(generator: IconsClassGenerator, result: StringBuilder, iconName: CharSequence, deprecation: DeprecationData, level: Int) {
-    // Deprecated icons are dropped, so this is never called.
+    // the Java class loads the replacement relative to the context class; a class loader resolves it from the root
+    val path = deprecation.replacement!!.removePrefix("/")
+    generator.append(
+      result, "@JvmStatic val $iconName: IconDescriptor = imageIconDescriptor(\"$path\", ${deprecation.replacementContextClazz}::class.java.classLoader)", level
+    )
   }
 
   override fun appendDeprecationReplacementReferenceClass(generator: IconsClassGenerator, result: StringBuilder, iconName: CharSequence, deprecation: DeprecationData, level: Int) {
-    // Deprecated icons are dropped, so this is never called.
+    generator.append(result, "@JvmStatic val $iconName: IconDescriptor = ${deprecation.replacementReference}", level)
   }
+
+  private fun deprecatedAnnotation(comment: String?, replacementReference: String?): String {
+    // `{@link #X}` is Javadoc syntax, a Kotlin message names the field plainly
+    val message = (comment ?: "Deprecated icon").replace(Regex("""\{@link #([^}]+)}"""), "$1")
+    val replaceWith = if (replacementReference == null) "" else ", ReplaceWith(${kotlinString(replacementReference)})"
+    return "@Deprecated(${kotlinString(message)}$replaceWith)"
+  }
+
+  private fun kotlinString(value: String): String =
+    "\"" + value.replace("\\", "\\\\").replace("\"", "\\\"").replace("$", "\\$") + "\""
 }

@@ -1,9 +1,14 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jewel.ui.icon
 
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.decodeToImageBitmap
+import androidx.compose.ui.graphics.drawscope.DrawScope
+import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.unit.Density
 import com.intellij.platform.icons.ImageResourceLocation
+import com.intellij.platform.icons.impl.FileImageResourceLocation
+import com.intellij.platform.icons.impl.UrlImageResourceLocation
 import com.intellij.platform.icons.impl.patchers.DefaultSvgPatcher
 import com.intellij.platform.icons.impl.patchers.SvgPatchOperation
 import com.intellij.platform.icons.impl.patchers.authoredStrokeSvgPatcher
@@ -14,11 +19,14 @@ import com.intellij.platform.icons.rendering.ImageModifiers
 import com.intellij.platform.icons.rendering.ImageResource
 import com.intellij.platform.icons.rendering.ImageResourceProvider
 import java.io.ByteArrayInputStream
+import java.io.IOException
+import java.net.URI
 import javax.xml.XMLConstants
 import javax.xml.parsers.DocumentBuilderFactory
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.compose.resources.decodeToSvgPainter
 import org.jetbrains.jewel.foundation.InternalJewelApi
+import org.jetbrains.jewel.foundation.util.JewelLogger
 import org.jetbrains.jewel.ui.painter.writeToString
 import org.w3c.dom.Element
 
@@ -27,21 +35,111 @@ import org.w3c.dom.Element
 @ApiStatus.Internal
 public class ComposeImageResourceProvider : ImageResourceProvider {
     override fun loadImage(location: ImageResourceLocation, imageModifiers: ImageModifiers?): ImageResource {
-        if (location is PathImageResourceLocation) {
-            val extension = location.path.substringAfterLast(".").lowercase()
-            val resolved = location.resolve(imageModifiers)
-            return when (extension) {
-                "svg" ->
-                    ComposePainterImageResource(
-                        patchSvg(imageModifiers, resolved).decodeToSvgPainter(Density(1f)),
-                        imageModifiers,
-                    )
-                // "xml" -> loader.loadData().decodeToImageVector()
-                else -> ComposeBitmapImageResource(resolved.data.decodeToImageBitmap())
-            }
-        } else {
-            error("Unsupported loader: $location")
+        return when (location) {
+            is PathImageResourceLocation -> load(location.path, location.resolve(imageModifiers), imageModifiers)
+            is UrlImageResourceLocation -> loadUrl(location.url, imageModifiers)
+            // the path is resolved only here, so a relative path is kept as it is in the location
+            is FileImageResourceLocation -> loadFile(location, imageModifiers)
+            else -> error("Unsupported loader: $location")
         }
+    }
+
+    private fun loadFile(location: FileImageResourceLocation, imageModifiers: ImageModifiers?): ImageResource {
+        val url = location.toUrl()
+        if (url == null) {
+            // a path on a network share: images are not loaded from the network
+            JewelLogger.getInstance("ComposeImageResourceProvider").warn("Cannot read the image at $location")
+            return ComposePainterImageResource(EmptyPainter, imageModifiers)
+        }
+        return loadUrl(url, imageModifiers)
+    }
+
+    @Suppress("TooGenericExceptionCaught") // the decoders throw various exceptions for bad data
+    private fun loadUrl(url: String, imageModifiers: ImageModifiers?): ImageResource {
+        val resolved = resolveUrlImage(url, imageModifiers)
+        if (resolved == null) {
+            // e.g. a custom icon file that was moved or deleted: draw nothing instead of failing the draw
+            JewelLogger.getInstance("ComposeImageResourceProvider").warn("Cannot read the image at $url")
+            return ComposePainterImageResource(EmptyPainter, imageModifiers)
+        }
+        // the file is chosen by the user, so it can be any file: draw nothing instead of failing the draw
+        return try {
+            load(urlPath(url), resolved, imageModifiers)
+        } catch (e: Exception) {
+            JewelLogger.getInstance("ComposeImageResourceProvider").warn("Cannot decode the image at $url", e)
+            ComposePainterImageResource(EmptyPainter, imageModifiers)
+        }
+    }
+
+    private fun load(path: String, resolved: ResolvedImageResource, imageModifiers: ImageModifiers?): ImageResource =
+        when (path.substringAfterLast(".").lowercase()) {
+            "svg" ->
+                ComposePainterImageResource(
+                    patchSvg(imageModifiers, resolved).decodeToSvgPainter(Density(1f)),
+                    imageModifiers,
+                )
+            // "xml" -> loader.loadData().decodeToImageVector()
+            else -> ComposeBitmapImageResource(resolved.data.decodeToImageBitmap())
+        }
+}
+
+/**
+ * Reads the image at [url], picking its variant like [PathImageResourceLocation.resolve]: a stroked image prefers its
+ * hand-drawn `_stroke` file and otherwise takes the light base file, a dark one prefers its `_dark` file.
+ *
+ * @return `null` when no file can be read, e.g. when it no longer exists
+ */
+internal fun resolveUrlImage(url: String, imageModifiers: ImageModifiers?): ResolvedImageResource? {
+    val knownModifiers = imageModifiers as? DefaultImageModifiers
+    val stroked = knownModifiers?.stroke != null
+    if (stroked) {
+        readUrl(variantUrl(url, "_stroke"))?.let {
+            return ResolvedImageResource(it, isAuthoredStrokeVariant = true)
+        }
+    } else if (knownModifiers?.isDark == true) {
+        readUrl(variantUrl(url, "_dark"))?.let {
+            return ResolvedImageResource(it, isAuthoredStrokeVariant = false)
+        }
+    }
+    return readUrl(url)?.let { ResolvedImageResource(it, isAuthoredStrokeVariant = false) }
+}
+
+/**
+ * The path of [url], without its query and fragment, for example `file:/icons/run.svg` for `file:/icons/run.svg?v=2`.
+ * The extension of the path names the image format.
+ */
+private fun urlPath(url: String): String = url.substringBefore('#').substringBefore('?')
+
+/**
+ * [url] with [suffix] before the extension of its file name, e.g. `file:/icons/run.svg` → `file:/icons/run_dark.svg`.
+ * The suffix goes into the path of [url]: a query or a fragment, such as `#v2.0`, stays after it.
+ */
+private fun variantUrl(url: String, suffix: String): String {
+    val path = urlPath(url)
+    val queryAndFragment = url.substring(path.length)
+    val nameStart = path.lastIndexOf('/') + 1
+    val dot = path.lastIndexOf('.')
+    val variantPath = if (dot < nameStart) path + suffix else path.substring(0, dot) + suffix + path.substring(dot)
+    return variantPath + queryAndFragment
+}
+
+/**
+ * The bytes at [url], or `null` when they cannot be read, for example when the file does not exist. [url] is a valid
+ * URI: [UrlImageResourceLocation] accepts no other.
+ */
+private fun readUrl(url: String): ByteArray? =
+    try {
+        URI(url).toURL().openStream().use { it.readBytes() }
+    } catch (_: IOException) {
+        null
+    }
+
+/** Draws nothing and has no size: the image of a location that cannot be read. */
+private object EmptyPainter : Painter() {
+    override val intrinsicSize: Size = Size.Zero
+
+    override fun DrawScope.onDraw() {
+        // nothing to draw
     }
 }
 

@@ -22,6 +22,7 @@ import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import java.awt.image.BufferedImage
 import kotlin.test.assertEquals
+import kotlin.test.assertNotEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertSame
@@ -49,8 +50,9 @@ class ActionIconDescriptorsTest {
   fun `effective returns the presentation descriptor`() {
     val descriptor = executeDescriptor()
     val presentation = Presentation()
-    presentation.iconDescriptor = descriptor
+    // a presentation with both sets the icon first, because a later icon replaces the descriptor
     presentation.icon = AllIcons.General.Add
+    presentation.iconDescriptor = descriptor
 
     assertSame(descriptor, ActionIconDescriptors.effective(presentation))
   }
@@ -61,13 +63,12 @@ class ActionIconDescriptorsTest {
   }
 
   @Test
-  fun `effective returns the unknown marker when only a legacy icon is set`() {
-    val first = Presentation().apply { icon = AllIcons.General.Add }
-    val second = Presentation().apply { icon = AllIcons.General.Remove }
+  fun `effective returns the bridged descriptor when only a legacy icon is set`() {
+    val presentation = Presentation().apply { icon = AllIcons.General.Add }
 
-    val marker = assertNotNull(ActionIconDescriptors.effective(first))
-    assertSame(marker, ActionIconDescriptors.effective(second))
-    assertEquals(unknownMarkerPixels(), marker.paint().visiblePixels(), "effective did not return the unknown marker")
+    val bridged = assertNotNull(ActionIconDescriptors.effective(presentation))
+    assertSame(presentation.iconDescriptor, bridged)
+    assertNotEquals(unknownMarkerPixels(), bridged.paint().visiblePixels(), "effective returned the unknown marker")
   }
 
   @Test
