@@ -340,26 +340,26 @@ public final class DiffTree<OldNode, NewNode> {
     int cursorDelta = Integer.MIN_VALUE;
     int oldCursor = 0;
     int newCursor = 0;
+    if (oldParentStart >= 0 && newParentStart >= 0) {
+      cursorDelta = 0;
+      oldCursor = step > 0 ? oldParentStart : oldParentStart + myOldTree.getTextLength(oldParent);
+      newCursor = step > 0 ? newParentStart : newParentStart + myNewTree.getTextLength(newParent);
+    }
     int delta = 0;
     while (delta != maxLength * step) {
       OldNode oldChild = oldChildren[oldIndex + delta];
       NewNode newChild = newChildren[newIndex + delta];
 
-      CompareResult c11 = looksEqual(oldChild, newChild);
-
-      if (c11 == CompareResult.DRILL_DOWN_NEEDED) {
-        if (cursorDelta == Integer.MIN_VALUE) {
-          if (oldParentStart >= 0 && newParentStart >= 0) {
-            cursorDelta = 0;
-            oldCursor = step > 0 ? oldParentStart : oldParentStart + myOldTree.getTextLength(oldParent);
-            newCursor = step > 0 ? newParentStart : newParentStart + myNewTree.getTextLength(newParent);
-          }
-          else {
-            cursorDelta = delta;
-            oldCursor = (step > 0 ? myOldTree.getStartOffset(oldChild) : myOldTree.getEndOffset(oldChild)) - myOldTreeStart;
-            newCursor = (step > 0 ? myNewTree.getStartOffset(newChild) : myNewTree.getEndOffset(newChild)) - myNewTreeStart;
-          }
+      CompareResult c11 = null;
+      if (cursorDelta == Integer.MIN_VALUE) {
+        c11 = looksEqual(oldChild, newChild);
+        if (c11 == CompareResult.DRILL_DOWN_NEEDED) {
+          cursorDelta = delta;
+          oldCursor = (step > 0 ? myOldTree.getStartOffset(oldChild) : myOldTree.getEndOffset(oldChild)) - myOldTreeStart;
+          newCursor = (step > 0 ? myNewTree.getStartOffset(newChild) : myNewTree.getEndOffset(newChild)) - myNewTreeStart;
         }
+      }
+      if (cursorDelta != Integer.MIN_VALUE) {
         while (cursorDelta != delta) {
           oldCursor += step * myOldTree.getTextLength(oldChildren[oldIndex + cursorDelta]);
           newCursor += step * myNewTree.getTextLength(newChildren[newIndex + cursorDelta]);
@@ -369,13 +369,18 @@ public final class DiffTree<OldNode, NewNode> {
         int newLength = myNewTree.getTextLength(newChild);
         int oldStart = step > 0 ? oldCursor : oldCursor - oldLength;
         int newStart = step > 0 ? newCursor : newCursor - newLength;
-        if (step < 0 && newStart != oldStart && haveSameStart(oldParent, oldParentStart, newParent, newParentStart) &&
-              isInEqualPrefix(Math.min(oldStart + oldLength, newStart + newLength))) {
-          // the prefix match keeps the child at the same offset
-          break;
+        if (c11 == null) {
+          c11 = looksEqual(oldChild, newChild);
         }
-        c11 = drillDownIfTextMatches(oldChild, oldStart, oldLength, newChild, newStart, newLength, level);
-        assert c11 != CompareResult.DRILL_DOWN_NEEDED;
+        if (c11 == CompareResult.DRILL_DOWN_NEEDED) {
+          if (step < 0 && newStart != oldStart && haveSameStart(oldParent, oldParentStart, newParent, newParentStart) &&
+              isInEqualPrefix(Math.min(oldStart + oldLength, newStart + newLength))) {
+            // the prefix match keeps the child at the same offset
+            break;
+          }
+          c11 = drillDownIfTextMatches(oldChild, oldStart, oldLength, newChild, newStart, newLength, level);
+          assert c11 != CompareResult.DRILL_DOWN_NEEDED;
+        }
       }
       if (c11 != CompareResult.EQUAL) {
         break;
