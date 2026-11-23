@@ -21,6 +21,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.JTree;
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.VarHandle;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -28,6 +30,16 @@ import java.util.List;
 
 @ApiStatus.Internal
 public class SliceNode extends AbstractTreeNode<SliceUsage> implements DuplicateNodeRenderer.DuplicatableNode<SliceNode>, MyColoredTreeCellRenderer {
+  private static final VarHandle CACHED_CHILDREN_HANDLE;
+  static {
+    try {
+      CACHED_CHILDREN_HANDLE = MethodHandles.lookup().findVarHandle(SliceNode.class, "myCachedChildren", List.class);
+    }
+    catch (NoSuchFieldException | IllegalAccessException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
   protected volatile List<SliceNode> myCachedChildren;
   boolean dupNodeCalculated;
   protected SliceNode duplicate;
@@ -65,12 +77,8 @@ public class SliceNode extends AbstractTreeNode<SliceUsage> implements Duplicate
         nodes = doGetChildren();
       }
 
-      synchronized (nodes) {
-        if (myCachedChildren != null) {
-          nodes = myCachedChildren;
-        } else {
-          myCachedChildren = nodes;
-        }
+      if (!CACHED_CHILDREN_HANDLE.compareAndSet(this, null, nodes)) {
+        nodes = myCachedChildren;
       }
       return nodes;
     }
