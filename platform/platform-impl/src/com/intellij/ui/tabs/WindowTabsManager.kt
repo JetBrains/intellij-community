@@ -9,6 +9,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.impl.IdeFrameImpl
 import com.intellij.openapi.wm.impl.executeOnCancelInEdt
+import com.intellij.ui.ExperimentalUI
 import kotlinx.coroutines.CoroutineScope
 import java.awt.BorderLayout
 import java.awt.Frame
@@ -39,7 +40,7 @@ internal object WindowTabsManager : ProjectTabsHandler {
    * Is `true` when the `ide.project.with.tabs.enabled` registry key is on.
    * The value does not change until the IDE restarts.
    */
-  val enabled = Registry.`is`("ide.project.with.tabs.enabled", false)
+  val enabled = ExperimentalUI.isNewUI() && Registry.`is`("ide.project.with.tabs.enabled", false)
 
   fun createAndInstallHandlerComponent(rootPane: JRootPane): JComponent {
     val tabsContainer = object : JPanel(BorderLayout()) {

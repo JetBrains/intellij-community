@@ -75,6 +75,7 @@ import com.intellij.ui.scale.ScaleContext
 import com.intellij.ui.tabs.JBTabPainter
 import com.intellij.ui.tabs.JBTabsPosition
 import com.intellij.ui.tabs.ProjectTabsComponent
+import com.intellij.ui.tabs.WindowTabsManager
 import com.intellij.ui.tabs.impl.JBEditorTabs
 import com.intellij.ui.tabs.impl.JBTabsImpl
 import com.intellij.ui.tabs.impl.TabLabel
@@ -522,7 +523,7 @@ class IslandsUICustomization : InternalUICustomization() {
         val isIslands = isManyIslandEnabled
         val gap = JBUI.getInt("Islands.emptyGap", 4)
 
-        if (SystemInfo.isMac) {
+        if (SystemInfo.isMac || WindowTabsManager.enabled) {
           UIUtil.getRootPane(toolWindowPaneParent)?.let { rootPane ->
             val tabContainer = rootPane.getClientProperty("WINDOW_TABS_CONTAINER_KEY")
             if (tabContainer is JComponent) {
