@@ -15,7 +15,9 @@ import org.jetbrains.intellij.build.dependencies.extractToCacheLocation
 import java.io.IOException
 import java.net.SocketException
 import java.net.URI
+import java.net.http.HttpClient
 import java.net.http.HttpRequest
+import java.net.http.HttpResponse
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardCopyOption
@@ -151,6 +153,15 @@ private fun downloadFileIsRetryAllowed(failure: Exception): Boolean {
   return failure !is SocketException || failure.message?.contains("Operation not permitted") != true
 }
 
+/**
+ * Returns true when the protocol rejects a body that ends too early: an HTTP/2 stream or a chunked HTTP/1.1 body.
+ * A close-delimited HTTP/1.1 body ends at any connection close, so a truncated body looks complete.
+ */
+private fun isTruncationDetectable(response: HttpResponse<*>): Boolean {
+  return response.version() == HttpClient.Version.HTTP_2 ||
+         response.headers().allValues("Transfer-Encoding").any { it.contains("chunked", ignoreCase = true) }
+}
+
 private fun downloadFileToCacheLocation(
   url: String,
   communityRoot: BuildDependenciesCommunityRoot,
@@ -203,13 +214,18 @@ private fun downloadFileToCacheLocation(
             client.consume(request, authentication) { response ->
               if (response.statusCode() != 200) throw httpStatusException(response)
               check(response.headers().firstValue("Content-Encoding").isEmpty) { "Content-Encoding is not allowed for cached downloads: $url" }
-              val contentLength = response.headers().firstValue("Content-Length").orElse(null)?.toLongOrNull() ?: -1
-              check(contentLength > 0) { "Header 'Content-Length' is missing or zero for $url" }
+              val contentLength = response.headers().firstValue("Content-Length").orElse(null)?.toLongOrNull()
+              check(contentLength != null || isTruncationDetectable(response)) {
+                "The response for $url has neither 'Content-Length' nor chunked encoding"
+              }
               Files.newOutputStream(temporary, StandardOpenOption.WRITE, StandardOpenOption.TRUNCATE_EXISTING).use { output ->
                 response.body().copyTo(output)
               }
               val fileSize = Files.size(temporary)
-              check(fileSize == contentLength) { "Wrong file length after downloading '$url': expected $contentLength, got $fileSize" }
+              check(contentLength == null || fileSize == contentLength) {
+                "Wrong file length after downloading '$url': expected $contentLength, got $fileSize"
+              }
+              check(fileSize > 0) { "Empty response body for $url" }
             }
             checkHttpInterrupted()
             Files.move(temporary, target, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING)

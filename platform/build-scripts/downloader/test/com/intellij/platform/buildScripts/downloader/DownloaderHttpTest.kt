@@ -21,6 +21,9 @@ import org.junit.jupiter.api.io.TempDir
 import org.junit.jupiter.api.parallel.ResourceLock
 import org.junit.jupiter.api.parallel.Resources
 import java.io.ByteArrayOutputStream
+import java.net.InetAddress
+import java.net.ServerSocket
+import java.net.SocketException
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.Base64
@@ -195,19 +198,84 @@ class DownloaderHttpTest {
   }
 
   @Test
-  fun `a missing content length does not publish a cache file`() {
+  fun `a chunked response without content length publishes a cache file`() {
     val requests = AtomicInteger()
     DownloadHttpServer { exchange ->
-      if (requests.incrementAndGet() == 1) {
-        exchange.sendResponseHeaders(200, 0)
-        exchange.responseBody.write("chunked".toByteArray())
-      }
-      else exchange.respond("accepted")
+      requests.incrementAndGet()
+      exchange.sendResponseHeaders(200, 0)
+      exchange.responseBody.use { it.write("chunked".toByteArray()) }
     }.use { server ->
       val file = downloadFileToCacheLocation(server.uri.toString(), root)
-      assertThat(Files.readString(file)).isEqualTo("accepted")
-      assertThat(requests.get()).isEqualTo(2)
+      assertThat(Files.readString(file)).isEqualTo("chunked")
+      assertThat(requests.get()).isEqualTo(1)
       assertCacheContainsOnly(file)
+    }
+  }
+
+  @Test
+  fun `a truncated chunked body is retried and does not publish a cache file`() {
+    // the first response has one chunk and no last chunk
+    assertRawFirstResponseIsRetried("HTTP/1.1 200 OK\r\nTransfer-Encoding: chunked\r\nConnection: close\r\n\r\n5\r\npart1\r\n")
+  }
+
+  @Test
+  fun `a close-delimited body is retried and does not publish a cache file`() {
+    assertRawFirstResponseIsRetried("HTTP/1.1 200 OK\r\nConnection: close\r\n\r\nany length")
+  }
+
+  /** The first connection gets [firstResponse] and a close. Each next connection gets a complete chunked body. */
+  private fun assertRawFirstResponseIsRetried(firstResponse: String) {
+    val requests = AtomicInteger()
+    ServerSocket(0, 0, InetAddress.getByName("127.0.0.1")).use { serverSocket ->
+      val serverThread = Thread.ofVirtual().start {
+        while (true) {
+          val socket = try {
+            serverSocket.accept()
+          }
+          catch (_: SocketException) {
+            break
+          }
+          socket.use {
+            val input = it.getInputStream().bufferedReader(Charsets.ISO_8859_1)
+            while (!input.readLine().isNullOrEmpty()) {
+            }
+            val response = if (requests.incrementAndGet() == 1) firstResponse
+            else "HTTP/1.1 200 OK\r\nTransfer-Encoding: chunked\r\nConnection: close\r\n\r\n8\r\ncomplete\r\n0\r\n\r\n"
+            it.getOutputStream().apply {
+              write(response.toByteArray(Charsets.ISO_8859_1))
+              flush()
+            }
+          }
+        }
+      }
+      try {
+        BuildHttpSession(initialRetryDelay = Duration.ZERO).use { session ->
+          val file = downloadFileToCacheLocation("http://127.0.0.1:${serverSocket.localPort}/file", root, session)
+          assertThat(Files.readString(file)).isEqualTo("complete")
+          assertCacheContainsOnly(file)
+        }
+        assertThat(requests.get()).isEqualTo(2)
+      }
+      finally {
+        serverSocket.close()
+        serverThread.join(5000)
+      }
+    }
+  }
+
+  @Test
+  fun `an empty body does not publish a cache file`() {
+    val requests = AtomicInteger()
+    DownloadHttpServer { exchange ->
+      if (requests.incrementAndGet() == 1) exchange.respond("")
+      else exchange.respond("accepted")
+    }.use { server ->
+      BuildHttpSession(initialRetryDelay = Duration.ZERO).use { session ->
+        val file = downloadFileToCacheLocation(server.uri.toString(), root, session)
+        assertThat(Files.readString(file)).isEqualTo("accepted")
+        assertCacheContainsOnly(file)
+      }
+      assertThat(requests.get()).isEqualTo(2)
     }
   }
 
