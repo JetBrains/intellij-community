@@ -771,7 +771,6 @@ a:com.jetbrains.python.run.PythonCommandLineState
 - pf:getDefaultPythonProcessStarter():com.jetbrains.python.run.PythonCommandLineState$PythonProcessStarter
 - s:getInterpreterPath(com.intellij.openapi.project.Project,com.jetbrains.python.run.PythonRunParams):java.lang.String
 - p:getPythonExecutionWorkingDir(com.intellij.execution.target.TargetEnvironmentRequest):java.util.function.Function
-- getSdk():com.intellij.openapi.projectRoots.Sdk
 - getSdkFlavor():com.jetbrains.python.sdk.flavors.PythonSdkFlavor
 - p:getTargetPath(com.intellij.execution.target.TargetEnvironmentRequest,java.nio.file.Path):java.util.function.Function
 - s:initPythonPath(com.intellij.execution.configurations.GeneralCommandLine,Z,java.util.List,java.lang.String):V
@@ -893,7 +892,6 @@ com.jetbrains.python.run.PythonRunParams
 - a:getInterpreterOptions():java.lang.String
 - a:getMappingSettings():com.intellij.util.PathMappingSettings
 - a:getModuleName():java.lang.String
-- getSdk():com.intellij.openapi.projectRoots.Sdk
 - a:getWorkingDirectory():java.lang.String
 - a:isPassParentEnvs():Z
 - a:isUseModuleSdk():Z
@@ -1006,7 +1004,6 @@ f:com.jetbrains.python.sdk.PythonSdkType
 - setupSdkPaths(com.intellij.openapi.projectRoots.Sdk):V
 - setupSdkPaths(com.intellij.openapi.projectRoots.Sdk,com.intellij.openapi.projectRoots.SdkModel):Z
 - suggestSdkName(java.lang.String,java.lang.String):java.lang.String
-- supportsCustomCreateUI():Z
 f:com.jetbrains.python.sdk.flavors.VirtualEnvSdkFlavor
 - sf:getInstance():com.intellij.python.venv.sdk.flavors.VirtualEnvSdkFlavor
 a:com.jetbrains.python.testing.AbstractPythonLegacyTestRunConfiguration
