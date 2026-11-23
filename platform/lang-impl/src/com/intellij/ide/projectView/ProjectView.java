@@ -29,6 +29,10 @@ public abstract class ProjectView {
     return project.getService(ProjectView.class);
   }
 
+  public static @Nullable ProjectView getInstanceIfCreated(@NotNull Project project) {
+    return project.getServiceIfCreated(ProjectView.class);
+  }
+
   public abstract void select(Object element, VirtualFile file, boolean requestFocus);
 
   public abstract @NotNull ActionCallback selectCB(Object element, VirtualFile file, boolean requestFocus);

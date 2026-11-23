@@ -2916,6 +2916,7 @@ a:com.intellij.ide.projectView.ProjectView
 - a:getCurrentViewId():java.lang.String
 - a:getDefaultViewId():java.lang.String
 - s:getInstance(com.intellij.openapi.project.Project):com.intellij.ide.projectView.ProjectView
+- s:getInstanceIfCreated(com.intellij.openapi.project.Project):com.intellij.ide.projectView.ProjectView
 - a:getPaneIds():java.util.Collection
 - a:getProjectViewPaneById(java.lang.String):com.intellij.ide.projectView.impl.AbstractProjectViewPane
 - a:getSelectInTargets():java.util.Collection

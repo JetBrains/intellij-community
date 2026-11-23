@@ -107,17 +107,19 @@ internal class SelectFileActionServiceImpl : SelectFileActionService {
     return Selector(target, context)
   }
 
-  private fun getView(event: AnActionEvent): View? =
-    if (isProjectViewSplit()) {
+  private fun getView(event: AnActionEvent): View? {
+    return if (isProjectViewSplit()) {
       event.project
         ?.let { project -> SelectInSplitProjectView.getInstance(project) }
         ?.let { impl -> SplitView(impl) }
     }
     else {
+      // do not force init of ProjectView from action update
       event.project
-        ?.let { project -> ProjectView.getInstance(project) as? ProjectViewImpl }
+        ?.let { project -> ProjectView.getInstanceIfCreated(project) as? ProjectViewImpl }
         ?.let { impl -> LegacyView(impl) }
     }
+  }
 
   private fun getActionId(event: AnActionEvent) =
     when (event.getData(TOOL_WINDOW)?.id) {
