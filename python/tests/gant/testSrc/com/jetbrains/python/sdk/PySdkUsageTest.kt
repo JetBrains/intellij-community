@@ -16,6 +16,8 @@ import com.jetbrains.python.allure.Subsystems
 import com.jetbrains.python.tools.sdkTools.PythonMockSdk
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.io.TempDir
+import java.nio.file.Path
 
 /**
  * A background process asks for an update of an interpreter whenever something changes under its paths. Such an update
@@ -93,12 +95,13 @@ internal class PySdkUsageTest {
   }
 
   @Test
-  fun `an interpreter stops being in use when the Python project moves to another one`(): Unit = timeoutRunBlocking {
+  fun `an interpreter stops being in use when the Python project moves to another one`(@TempDir root: Path): Unit = timeoutRunBlocking {
     val project = projectFixture.get()
     val pyProject = pyProjectFixture.get()
     val registry = PythonInterpreterRegistry.getInstance(project)
-    val first = registry.addMockPythonInterpreter(pyProject, PythonMockSdk.create())
-    val second = registry.addMockPythonInterpreter(pyProject, PythonMockSdk.create())
+    // Two mock SDKs at one path are one interpreter, so each one has its own path.
+    val first = registry.addMockPythonInterpreter(pyProject, PythonMockSdk.create(root.resolve("first").toString()))
+    val second = registry.addMockPythonInterpreter(pyProject, PythonMockSdk.create(root.resolve("second").toString()))
     try {
       pyProject.setPythonInterpreter(first)
       pyProject.setPythonInterpreter(second)

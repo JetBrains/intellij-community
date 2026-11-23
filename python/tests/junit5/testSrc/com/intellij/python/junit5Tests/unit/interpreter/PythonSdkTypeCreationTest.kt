@@ -26,12 +26,15 @@ internal class PythonSdkTypeCreationTest {
   }
 }
 
-/** In the legacy flow, the user adds a Python SDK in the SDK combos, as an older build does. */
+/**
+ * In the legacy flow too, the SDK combos do not offer the user to add a Python SDK: the SDK of a module or a project is
+ * never a Python SDK. The interpreter UI of Python adds an interpreter.
+ */
 @RegistryKeyAppLevel(key = "python.interpreter.library.entries", value = "false")
 @TestApplication
 internal class PythonSdkTypeCreationLegacyFlowTest {
   @Test
-  fun `the user can add a Python SDK`() {
-    assertThat(PythonSdkType.getInstance().allowCreationByUser()).isTrue()
+  fun `the user cannot add a Python SDK`() {
+    assertThat(PythonSdkType.getInstance().allowCreationByUser()).isFalse()
   }
 }
