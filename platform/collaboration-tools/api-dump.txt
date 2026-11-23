@@ -1,18 +1,3 @@
-a:com.intellij.collaboration.file.ComplexPathVirtualFileWithoutContent
-- com.intellij.testFramework.LightVirtualFileBase
-- com.intellij.openapi.vfs.VirtualFilePathWrapper
-- com.intellij.openapi.vfs.VirtualFileWithoutContent
-- <init>(java.lang.String):V
-- contentsToByteArray():java.lang.Void
-- enforcePresentableName():Z
-- equals(java.lang.Object):Z
-- a:getFileSystem():com.intellij.vcs.editor.ComplexPathVirtualFileSystem
-- getFileType():com.intellij.openapi.fileTypes.FileType
-- getInputStream():java.lang.Void
-- getLength():J
-- getOutputStream(java.lang.Object,J,J):java.lang.Void
-- pf:getSessionId():java.lang.String
-- hashCode():I
 f:com.intellij.collaboration.util.ProgressIndicatorsProvider
 - com.intellij.openapi.Disposable
 - <init>():V

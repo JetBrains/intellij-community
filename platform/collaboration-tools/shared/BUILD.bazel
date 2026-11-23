@@ -65,6 +65,7 @@ jvm_library(
         "//platform/dvcs-impl/shared",
         "//platform/vcs-impl",
         "//platform/vcs-impl/shared",
+        "//platform/vcs-log/api:vcs-log",
         "//platform/vcs-log/impl",
         "//platform/vcs-api/shared",
         "//libraries/jsoup",
