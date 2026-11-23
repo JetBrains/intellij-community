@@ -36,7 +36,12 @@ import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.fail
+import java.io.FileInputStream
+import java.io.FileOutputStream
+import java.io.FilterInputStream
+import java.io.FilterOutputStream
 import java.io.InputStream
+import java.io.OutputStream
 import java.net.InetAddress
 import java.net.InetSocketAddress
 import java.net.ServerSocket
@@ -44,6 +49,7 @@ import java.net.Socket
 import java.net.SocketAddress
 import java.nio.ByteBuffer
 import java.nio.channels.ByteChannel
+import java.nio.channels.FileChannel
 import java.nio.channels.SocketChannel
 import java.util.concurrent.CopyOnWriteArrayList
 import kotlin.coroutines.AbstractCoroutineContextElement
@@ -161,6 +167,22 @@ internal class EelChannelInterruptionTest {
   }
 
   @Test
+  fun `EelReceiveChannel from Process raw FileChannel`(): Unit = timeoutRunBlocking(20.seconds) {
+    bodyLimitedCoroutineScope {
+      val process = startProcess()
+
+      val channel = extractRawProcessChannel(process.inputStream).consumeAsEelChannel()
+
+      val job = launchAndWaitUntilActualIoStarts {
+        tryToReadFromEmptyChannel(channel)
+      }
+      withTimeout(cancellationTimeout) {
+        job.cancelAndJoin()
+      }
+    }
+  }
+
+  @Test
   fun `EelReceiveChannel from non-interruptible InputStream`(): Unit = timeoutRunBlocking(20.seconds) {
     bodyLimitedCoroutineScope {
       val channel = NonInterruptibleInputStream().consumeAsEelChannel()
@@ -248,6 +270,22 @@ internal class EelChannelInterruptionTest {
   }
 
   @Test
+  fun `EelSendChannel from Process raw FileChannel`(): Unit = timeoutRunBlocking(20.seconds) {
+    bodyLimitedCoroutineScope {
+      val process = startProcess()
+
+      val channel = extractRawProcessChannel(process.outputStream).asEelChannel()
+
+      val job = launchAndWaitUntilActualIoStarts {
+        tryToWriteToBlockedChannel(channel)
+      }
+      withTimeout(cancellationTimeout) {
+        job.cancelAndJoin()
+      }
+    }
+  }
+
+  @Test
   fun `EelSendChannel from non-interruptible OutputStream`(): Unit = timeoutRunBlocking(20.seconds) {
     bodyLimitedCoroutineScope {
       val channel = NonInterruptibleOutputStream().asEelChannel()
@@ -322,6 +360,8 @@ internal class EelChannelInterruptionTest {
 
   private suspend fun CoroutineScope.launchAndWaitUntilActualIoStarts(body: suspend () -> Unit): Job {
     return launchAndWaitUntilNewMatchingCoroutineAppears(
+      "FileDispatcherImpl.read0",
+      "FileDispatcherImpl.write0",
       "FileInputStream.readBytes",
       "FileOutputStream.writeBytes",
       "sun.nio.ch.SelectorImpl.select",
@@ -431,6 +471,24 @@ internal class EelChannelInterruptionTest {
     }
     return process
   }
+
+  private tailrec fun extractRawProcessChannel(stream: InputStream): FileChannel =
+    when (stream) {
+      is FileInputStream -> stream.channel
+      is FilterInputStream -> extractRawProcessChannel(
+        FilterInputStream::class.java.getDeclaredField("in").apply { isAccessible = true }.get(stream) as InputStream,
+      )
+      else -> error("Unexpected stream type: ${stream.javaClass}")
+    }
+
+  private tailrec fun extractRawProcessChannel(stream: OutputStream): FileChannel =
+    when (stream) {
+      is FileOutputStream -> stream.channel
+      is FilterOutputStream -> extractRawProcessChannel(
+        FilterOutputStream::class.java.getDeclaredField("out").apply { isAccessible = true }.get(stream) as OutputStream,
+      )
+      else -> error("Unexpected stream type: ${stream.javaClass}")
+    }
 
   private fun CoroutineScope.startSocketServer(): SocketAddress {
     val serverSocket = ServerSocket()

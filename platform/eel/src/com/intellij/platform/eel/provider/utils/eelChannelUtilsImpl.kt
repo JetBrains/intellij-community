@@ -2,6 +2,7 @@
 package com.intellij.platform.eel.provider.utils
 
 import com.intellij.platform.eel.EelLowLevelObjectsPool
+import com.intellij.platform.eel.EelOsFamily
 import com.intellij.platform.eel.ReadResult
 import com.intellij.platform.eel.channels.EelDelicateApi
 import com.intellij.platform.eel.channels.EelReceiveChannel
@@ -10,6 +11,7 @@ import com.intellij.platform.eel.channels.EelSendApi
 import com.intellij.platform.eel.channels.EelSendChannel
 import com.intellij.platform.eel.channels.EelSendChannelException
 import com.intellij.platform.eel.channels.sendWholeBuffer
+import com.intellij.platform.eel.provider.LocalEelDescriptor
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.NonCancellable
@@ -34,7 +36,6 @@ import java.nio.ByteBuffer
 import java.nio.channels.AsynchronousSocketChannel
 import java.nio.channels.DatagramChannel
 import java.nio.channels.FileChannel
-import java.nio.channels.InterruptibleChannel
 import java.nio.channels.Pipe
 import java.nio.channels.ReadableByteChannel
 import java.nio.channels.SelectableChannel
@@ -81,7 +82,7 @@ internal class NioReadToEelAdapter(
           while (read == 0)
         }
         else {
-          read = computeMaybeDetached(readableByteChannel is InterruptibleChannel, dispatcher) {
+          read = computeMaybeDetached(undispatched = supportsThreadInterruption(readableByteChannel), dispatcher) {
             try {
               runInterruptible {
                 readableByteChannel.read(dst)
@@ -168,7 +169,7 @@ internal class NioWriteToEelAdapter(
           while (writableByteChannel.write(src) == 0)
         }
         else {
-          computeMaybeDetached(writableByteChannel is InterruptibleChannel, dispatcher) {
+          computeMaybeDetached(undispatched = supportsThreadInterruption(writableByteChannel), dispatcher) {
             try {
               runInterruptible {
                 writableByteChannel.write(src)
@@ -439,6 +440,19 @@ private fun selectorForNioChannel(channel: java.nio.channels.Channel): Selector?
   }
   return if (channel is SelectableChannel) selectorPool.borrow() else null
 }
+
+/**
+ * Returns `true` when `Thread.interrupt()` wakes a blocked `read` or `write` on [channel] without blocking the caller.
+ *
+ * In the JDK, only `sun.nio.ch.FileChannelImpl` on POSIX sends an interrupt signal to the blocked thread.
+ * On Windows, `NativeThread.signal()` does not wake a synchronous `ReadFile` or `WriteFile` on a pipe.
+ * `FileChannelImpl.implCloseChannel()` then blocks the interrupting thread in `NativeThreadSet.signalAndWait()`.
+ */
+private fun supportsThreadInterruption(channel: java.nio.channels.Channel): Boolean =
+  when (LocalEelDescriptor.osFamily) {
+    EelOsFamily.Posix -> channel is FileChannel && channel.javaClass.name == "sun.nio.ch.FileChannelImpl"
+    EelOsFamily.Windows -> false
+  }
 
 @OptIn(DelicateCoroutinesApi::class)
 private suspend fun <T> computeMaybeDetached(undispatched: Boolean, dispatcher: CoroutineContext, action: suspend () -> T): T {
