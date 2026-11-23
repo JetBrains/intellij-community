@@ -11,6 +11,7 @@ import com.intellij.ui.tree.AsyncTreeModel;
 import com.intellij.ui.tree.StructureTreeModel;
 import com.intellij.ui.tree.TreeVisitor;
 import com.intellij.ui.treeStructure.treetable.TreeTableModel;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.SortableColumnModel;
 import com.intellij.util.ui.tree.AbstractTreeModel;
@@ -74,6 +75,15 @@ final class CoverageTableModel extends AbstractTreeModel implements TreeTableMod
   @Override
   public Object getRoot() {
     return myAsyncModel.getRoot();
+  }
+
+  @RequiresEdt
+  void addTreeModelListenerWithCurrentRoot(@NotNull TreeModelListener listener) {
+    Object root = getRoot();
+    addTreeModelListener(listener);
+    if (root != null) {
+      listener.treeStructureChanged(createTreeModelEvent(new TreePath(root), null, null));
+    }
   }
 
   @Override

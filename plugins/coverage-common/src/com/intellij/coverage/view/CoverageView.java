@@ -259,7 +259,7 @@ public class CoverageView extends BorderLayoutPanel implements UiDataProvider, D
 
   private void setUpShowRootNode(ActionToolbar actionToolbar) {
     final var showFull = new Ref<>(false);
-    myModel.addTreeModelListener(new TreeModelListener() {
+    myModel.addTreeModelListenerWithCurrentRoot(new TreeModelListener() {
       private volatile boolean called = false;
 
       @Override
