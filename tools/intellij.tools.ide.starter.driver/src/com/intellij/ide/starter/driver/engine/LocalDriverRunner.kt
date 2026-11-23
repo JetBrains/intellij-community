@@ -59,22 +59,30 @@ class LocalDriverRunner : DriverRunner {
     val runResult = scopeForProcesses.async {
       Allure.getLifecycle().setCurrentTestCase(currentStep.orElse(UUID.randomUUID().toString()))
       try {
-        context.runIdeSuspending(
-          commandLine = commandLine,
-          commands = commands,
-          runTimeout = runTimeout,
-          useStartupScript = useStartupScript,
-          launchName = launchName,
-          expectedKill = expectedKill,
-          expectedExitCode = expectedExitCode,
-          collectNativeThreads = collectNativeThreads,
-        ) {
-          provideDriverProperties(driverOptions)
-          // in split mode RemDevDriverRunner already enabled it for the frontend and the backend together
-          if (!context.isRemDevContext()) {
-            addVMOptionsPatch { enableFocusRequestsLog() }
+        withWaylandDisplayIfNecessary(context.paths.testHome.resolve(launchName).resolve("log")) { waylandEnvironment ->
+          context.runIdeSuspending(
+            commandLine = commandLine,
+            commands = commands,
+            runTimeout = runTimeout,
+            useStartupScript = useStartupScript,
+            launchName = launchName,
+            expectedKill = expectedKill,
+            expectedExitCode = expectedExitCode,
+            collectNativeThreads = collectNativeThreads,
+          ) {
+            if (waylandEnvironment != null) {
+              addVMOptionsPatch {
+                waylandEnvironment.forEach { entry -> withEnv(entry.key, entry.value) }
+                excludeEnv("DISPLAY")
+              }
+            }
+            provideDriverProperties(driverOptions)
+            // in split mode RemDevDriverRunner already enabled it for the frontend and the backend together
+            if (!context.isRemDevContext()) {
+              addVMOptionsPatch { enableFocusRequestsLog() }
+            }
+            configure()
           }
-          configure()
         }
       }
       catch (e: Throwable) {

@@ -42,6 +42,7 @@ class LinuxIdeDistribution : IdeDistribution() {
 
     fun linuxCommandLine(xvfbRunLog: Path, vmOptions: VMOptions): List<String> {
       if (vmOptions.hasHeadlessMode()) return listOf()
+      if (vmOptions.environmentVariables["WAYLAND_DISPLAY"] != null) return listOf()
       val windowManagerCommandLine = listOf("/bin/sh", "-c", windowManagerScript, "sh",
                                             xvfbRunLog.resolveSibling(FLUXBOX_LOG_NAME).toAbsolutePath().toString())
       return when {

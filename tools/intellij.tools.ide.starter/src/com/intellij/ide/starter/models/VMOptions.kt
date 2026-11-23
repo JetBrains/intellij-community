@@ -29,6 +29,7 @@ data class VMOptions(
   private val ide: InstalledIde,
   private var data: List<String>,
   private var env: Map<String, String>,
+  private var excludedEnv: Set<String> = emptySet(),
 ) {
   companion object {
     const val ALLOW_SKIPPING_FULL_SCANNING_ON_STARTUP_OPTION: String = "full.scanning.on.startup.can.be.skipped"
@@ -60,6 +61,14 @@ data class VMOptions(
 
   val environmentVariables: Map<String, String>
     get() = env
+
+  /** Excludes [key] from the IDE process environment, including inherited values. */
+  fun excludeEnv(key: String) {
+    excludedEnv += key
+  }
+
+  internal fun environmentForProcess(inheritedEnvironment: Map<String, String>): Map<String, String> =
+    (inheritedEnvironment + environmentVariables) - excludedEnv
 
   fun addSystemProperty(key: String, value: Boolean): Unit = addSystemProperty(key, value.toString())
 

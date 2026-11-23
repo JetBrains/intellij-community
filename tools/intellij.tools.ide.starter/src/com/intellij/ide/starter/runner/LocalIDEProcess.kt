@@ -73,7 +73,7 @@ class LocalIDEProcess : IDEProcess {
           }
         }
 
-        val mergedEnvVariables = (startConfig.environmentVariables + vmOptions.environmentVariables).toMutableMap()
+        val processEnvironment = vmOptions.environmentForProcess(startConfig.environmentVariables)
 
         logDisabledPlugins(paths)
         logStartupInfo(vmOptions)
@@ -93,7 +93,7 @@ class LocalIDEProcess : IDEProcess {
           ProcessExecutor(
             presentableName = processPresentableName,
             workDir = startConfig.workDir,
-            environmentVariables = mergedEnvVariables,
+            environmentVariables = processEnvironment,
             timeout = runTimeout,
             args = finalArgs,
             errorDiagnosticFiles = startConfig.errorDiagnosticFiles,
