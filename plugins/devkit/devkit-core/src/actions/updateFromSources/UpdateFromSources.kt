@@ -67,13 +67,13 @@ import kotlin.io.path.writeText
 
 private val LOG = Logger.getInstance("org.jetbrains.idea.devkit.actions.updateFromSources.UpdateFromSourcesKt")
 
-private const val DEV_DIST_REGISTRY_KEY = "devkit.update.from.sources.dev.dist"
+private const val BAZEL_REGISTRY_KEY = "devkit.update.from.sources.bazel"
 
 /**
- * When `true`, the action installs the dev distribution through `build/dist.cmd update-ide`,
+ * When `true`, the action installs the distribution that Bazel builds through `build/dist.cmd update-ide`,
  * and not the output of the build scripts.
  */
-internal fun isDevDistUpdateEnabled(): Boolean = RegistryManager.getInstance().`is`(DEV_DIST_REGISTRY_KEY)
+internal fun isBazelUpdateEnabled(): Boolean = RegistryManager.getInstance().`is`(BAZEL_REGISTRY_KEY)
 
 @ApiStatus.Internal
 fun updateFromSources(project: Project, beforeRestart: () -> Unit, restartAutomatically: Boolean) {
@@ -96,7 +96,7 @@ fun updateFromSources(project: Project, beforeRestart: () -> Unit, restartAutoma
     return showError(project, DevKitBundle.message("action.UpdateIdeFromSourcesAction.error.config.or.system.directory.under.home", workIdeHome, PathManager.PROPERTY_SYSTEM_PATH))
   }
 
-  if (isDevDistUpdateEnabled()) {
+  if (isBazelUpdateEnabled()) {
     return runDevDistUpdate(project, devIdeaHome, workIdeHome, state.buildDisabledPlugins, restartAutomatically, beforeRestart)
   }
 

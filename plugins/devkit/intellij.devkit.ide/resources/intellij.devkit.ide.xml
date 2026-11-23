@@ -179,8 +179,8 @@
     <!-- actions support -->
     <applicationService serviceImplementation="org.jetbrains.idea.devkit.actions.updateFromSources.UpdateFromSourcesSettings"/>
     <applicationSettings service="org.jetbrains.idea.devkit.actions.updateFromSources.UpdateFromSourcesSettings"/>
-    <registryKey key="devkit.update.from.sources.dev.dist" defaultValue="false"
-                 description="Update IDE from Sources installs the distribution that build/dist.cmd update-ide builds, not the output of the build scripts"/>
+    <registryKey key="devkit.update.from.sources.bazel" defaultValue="true"
+                 description="Update IDE from Sources installs the distribution that Bazel builds through build/dist.cmd update-ide. Off: the action runs the build scripts"/>
     <registryKey key="devkit.obsolete.new.file.actions.enabled" defaultValue="false"
                  description="Enables old-fashioned File-New actions for plugin modules"/>
   </extensions>

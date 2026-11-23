@@ -129,7 +129,7 @@ fun Panel.optionsPanel(project: Project, state: UpdateFromSourcesSettingsState):
           state.additionalVmOptionsHistory.add(0, value)
         }
       }
-  }.visible(!isDevDistUpdateEnabled())
+  }.visible(!isBazelUpdateEnabled())
   row {
     checkBox(DevKitBundle.message("action.UpdateIdeFromSourcesAction.settings.enabled.plugins.only"))
       .bindSelected({ !state.buildDisabledPlugins }, { state.buildDisabledPlugins = !it })
