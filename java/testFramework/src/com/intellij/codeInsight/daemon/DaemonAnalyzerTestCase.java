@@ -344,12 +344,17 @@ public abstract class DaemonAnalyzerTestCase extends JavaCodeInsightTestCase {
     return infos;
   }
 
+  /**
+   * @deprecated Use the top-level {@link com.intellij.codeInsight.daemon.CanChangeDocumentDuringHighlighting}.
+   */
+  @Deprecated
   @Retention(RetentionPolicy.RUNTIME)
   @Target({ElementType.METHOD, ElementType.TYPE})
   public @interface CanChangeDocumentDuringHighlighting {}
 
   private boolean canChangeDocumentDuringHighlighting() {
-    return annotatedWith(CanChangeDocumentDuringHighlighting.class);
+    return annotatedWith(com.intellij.codeInsight.daemon.CanChangeDocumentDuringHighlighting.class) ||
+           annotatedWith(CanChangeDocumentDuringHighlighting.class);
   }
 
   public static @NotNull @Unmodifiable List<HighlightInfo> filter(@NotNull List<? extends HighlightInfo> infos, @NotNull HighlightSeverity minSeverity) {

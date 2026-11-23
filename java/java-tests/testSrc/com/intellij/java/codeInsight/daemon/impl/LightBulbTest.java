@@ -5,7 +5,7 @@ import com.intellij.codeHighlighting.EditorBoundHighlightingPass;
 import com.intellij.codeHighlighting.TextEditorHighlightingPass;
 import com.intellij.codeHighlighting.TextEditorHighlightingPassFactory;
 import com.intellij.codeHighlighting.TextEditorHighlightingPassRegistrar;
-import com.intellij.codeInsight.daemon.DaemonAnalyzerTestCase;
+import com.intellij.codeInsight.daemon.CanChangeDocumentDuringHighlighting;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
 import com.intellij.codeInsight.daemon.impl.BackgroundUpdateHighlightersUtil;
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerEx;
@@ -100,7 +100,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * test light bulb behaviour, intention action update and application
  */
 @SkipSlowTestLocally
-@DaemonAnalyzerTestCase.CanChangeDocumentDuringHighlighting
+@CanChangeDocumentDuringHighlighting
 @TestApplication
 public class LightBulbTest {
   private static final Logger LOG = Logger.getInstance(LightBulbTest.class);

@@ -5,7 +5,7 @@ import com.intellij.codeHighlighting.Pass;
 import com.intellij.codeHighlighting.TextEditorHighlightingPass;
 import com.intellij.codeHighlighting.TextEditorHighlightingPassFactory;
 import com.intellij.codeHighlighting.TextEditorHighlightingPassRegistrar;
-import com.intellij.codeInsight.daemon.DaemonAnalyzerTestCase;
+import com.intellij.codeInsight.daemon.CanChangeDocumentDuringHighlighting;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerEx;
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl;
@@ -93,7 +93,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * tests general daemon behaviour/interruptibility/restart during highlighting
  */
 @SkipSlowTestLocally
-@DaemonAnalyzerTestCase.CanChangeDocumentDuringHighlighting
+@CanChangeDocumentDuringHighlighting
 @TestApplication
 public class FileStatusMapTest {
   private static final Logger LOG = Logger.getInstance(FileStatusMapTest.class);

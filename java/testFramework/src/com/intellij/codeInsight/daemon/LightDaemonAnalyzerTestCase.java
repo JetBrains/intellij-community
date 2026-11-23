@@ -149,7 +149,8 @@ public abstract class LightDaemonAnalyzerTestCase extends LightJavaCodeInsightTe
   }
 
   private boolean canChangeDocumentDuringHighlighting() {
-    return annotatedWith(DaemonAnalyzerTestCase.CanChangeDocumentDuringHighlighting.class);
+    return annotatedWith(CanChangeDocumentDuringHighlighting.class) ||
+           annotatedWith(DaemonAnalyzerTestCase.CanChangeDocumentDuringHighlighting.class);
   }
 
   protected final @Unmodifiable List<HighlightInfo> doHighlighting(HighlightSeverity minSeverity) {

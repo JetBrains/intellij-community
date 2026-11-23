@@ -15,6 +15,7 @@
  */
 package com.intellij.java.psi;
 
+import com.intellij.codeInsight.daemon.CanChangeDocumentDuringHighlighting;
 import com.intellij.codeInsight.daemon.DaemonAnalyzerTestCase;
 import com.intellij.codeInsight.daemon.LightDaemonAnalyzerTestCase;
 import com.intellij.openapi.application.ApplicationManager;
@@ -26,7 +27,7 @@ import com.intellij.util.ref.GCUtil;
 import org.intellij.lang.annotations.Language;
 
 @SkipSlowTestLocally
-@DaemonAnalyzerTestCase.CanChangeDocumentDuringHighlighting
+@CanChangeDocumentDuringHighlighting
 public class JavaSOEOnReparseTest extends LightDaemonAnalyzerTestCase {
   private StringBuilder getHugeExpr() {
     int N = 100_000;

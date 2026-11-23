@@ -2,8 +2,8 @@
 package com.intellij.java.codeInsight.daemon.impl;
 
 import com.intellij.codeHighlighting.Pass;
+import com.intellij.codeInsight.daemon.CanChangeDocumentDuringHighlighting;
 import com.intellij.codeInsight.daemon.DaemonAnalyzerFixture;
-import com.intellij.codeInsight.daemon.DaemonAnalyzerTestCase;
 import com.intellij.codeInsight.daemon.GutterIconNavigationHandler;
 import com.intellij.codeInsight.daemon.LineMarkerInfo;
 import com.intellij.codeInsight.daemon.LineMarkerProvider;
@@ -62,7 +62,7 @@ import static org.junit.jupiter.api.Assertions.assertSame;
  * tests general daemon behaviour/interruptibility/restart during highlighting
  */
 @SkipSlowTestLocally
-@DaemonAnalyzerTestCase.CanChangeDocumentDuringHighlighting
+@CanChangeDocumentDuringHighlighting
 @TestApplication
 public class DaemonLineMarkersRespondToChangesTest {
   private final TestFixture<DaemonRespondToChangesFixture> daemonFixture = daemonRespondToChangesFixture();

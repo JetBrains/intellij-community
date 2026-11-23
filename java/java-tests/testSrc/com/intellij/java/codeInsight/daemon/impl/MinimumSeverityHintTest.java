@@ -2,8 +2,8 @@
 package com.intellij.java.codeInsight.daemon.impl;
 
 import com.intellij.JavaTestUtil;
+import com.intellij.codeInsight.daemon.CanChangeDocumentDuringHighlighting;
 import com.intellij.codeInsight.daemon.DaemonAnalyzerFixture;
-import com.intellij.codeInsight.daemon.DaemonAnalyzerTestCase;
 import com.intellij.codeInsight.daemon.impl.DaemonProgressIndicator;
 import com.intellij.codeInsight.daemon.impl.MainPassesRunner;
 import com.intellij.codeInspection.LocalInspectionToolSession;
@@ -29,7 +29,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @TestApplication
-@DaemonAnalyzerTestCase.CanChangeDocumentDuringHighlighting
+@CanChangeDocumentDuringHighlighting
 public class MinimumSeverityHintTest {
   private static volatile HighlightSeverity MY_CRAZY_SEVERITY;
 

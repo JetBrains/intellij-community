@@ -5,7 +5,7 @@ import com.intellij.analysis.AnalysisScope
 import com.intellij.analysis.problemsView.toolWindow.ProblemsViewContextVisibility
 import com.intellij.codeInsight.HeavyJavaCodeInsightFixture.Companion.heavyJavaCodeInsightSubFixture
 import com.intellij.codeInsight.daemon.DaemonAnalyzerFixture
-import com.intellij.codeInsight.daemon.DaemonAnalyzerTestCase.CanChangeDocumentDuringHighlighting
+import com.intellij.codeInsight.daemon.CanChangeDocumentDuringHighlighting
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.codeInsight.daemon.ProductionDaemonTestUtil
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerEx

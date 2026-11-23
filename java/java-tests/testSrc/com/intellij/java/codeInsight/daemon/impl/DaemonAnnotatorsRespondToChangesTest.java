@@ -2,7 +2,7 @@
 package com.intellij.java.codeInsight.daemon.impl;
 
 import com.intellij.analysis.AnalysisScope;
-import com.intellij.codeInsight.daemon.DaemonAnalyzerTestCase;
+import com.intellij.codeInsight.daemon.CanChangeDocumentDuringHighlighting;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerEx;
@@ -103,7 +103,7 @@ import static org.junit.jupiter.api.Assertions.fail;
  */
 @TestApplication
 @SkipSlowTestLocally
-@DaemonAnalyzerTestCase.CanChangeDocumentDuringHighlighting
+@CanChangeDocumentDuringHighlighting
 public class DaemonAnnotatorsRespondToChangesTest {
   private static final Logger LOG = Logger.getInstance(DaemonAnnotatorsRespondToChangesTest.class);
 

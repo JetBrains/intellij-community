@@ -3,7 +3,6 @@ package com.intellij.codeInsight.daemon
 
 import com.intellij.codeHighlighting.Pass
 import com.intellij.codeInsight.HeavyJavaCodeInsightFixture
-import com.intellij.codeInsight.daemon.DaemonAnalyzerTestCase.CanChangeDocumentDuringHighlighting
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerEx
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl
 import com.intellij.codeInsight.daemon.impl.HighlightInfo
@@ -75,7 +74,9 @@ open class DaemonAnalyzerFixture(
   /**
    * When `true`, the highlighting can change the document. The test method or its class sets it with [CanChangeDocumentDuringHighlighting].
    */
-  var isCanChangeDocumentDuringHighlighting: Boolean = annotatedWith(CanChangeDocumentDuringHighlighting::class.java)
+  var isCanChangeDocumentDuringHighlighting: Boolean =
+    annotatedWith(CanChangeDocumentDuringHighlighting::class.java) ||
+    @Suppress("DEPRECATION") annotatedWith(DaemonAnalyzerTestCase.CanChangeDocumentDuringHighlighting::class.java)
 
   /**
    * When `true`, [doHighlighting] also runs the line marker passes. It is `doTestLineMarkers()` of [DaemonAnalyzerTestCase].

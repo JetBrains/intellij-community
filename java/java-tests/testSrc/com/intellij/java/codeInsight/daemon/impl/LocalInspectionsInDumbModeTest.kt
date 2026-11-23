@@ -4,7 +4,7 @@ package com.intellij.java.codeInsight.daemon.impl
 import com.intellij.codeHighlighting.HighlightDisplayLevel
 import com.intellij.JavaTestUtil
 import com.intellij.codeInsight.daemon.DaemonAnalyzerFixture.Companion.daemonAnalyzerFixture
-import com.intellij.codeInsight.daemon.DaemonAnalyzerTestCase.CanChangeDocumentDuringHighlighting
+import com.intellij.codeInsight.daemon.CanChangeDocumentDuringHighlighting
 import com.intellij.codeInspection.GlobalInspectionTool
 import com.intellij.codeInspection.InspectionEP
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerEx

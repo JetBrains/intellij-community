@@ -2,7 +2,7 @@
 package com.intellij.java.codeInsight.daemon.impl;
 
 import com.intellij.codeHighlighting.RainbowHighlighter;
-import com.intellij.codeInsight.daemon.DaemonAnalyzerTestCase;
+import com.intellij.codeInsight.daemon.CanChangeDocumentDuringHighlighting;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
@@ -76,7 +76,7 @@ import static org.junit.jupiter.api.Assertions.fail;
  * tests {@link HighlightVisitor} behaviour during highlighting
  */
 @SkipSlowTestLocally
-@DaemonAnalyzerTestCase.CanChangeDocumentDuringHighlighting
+@CanChangeDocumentDuringHighlighting
 @TestApplication
 public class DaemonHighlightVisitorRespondToChangesTest {
   private static final Logger LOG = Logger.getInstance(DaemonHighlightVisitorRespondToChangesTest.class);
