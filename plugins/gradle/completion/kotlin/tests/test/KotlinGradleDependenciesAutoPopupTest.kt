@@ -23,8 +23,6 @@ import com.intellij.util.application
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
 import org.gradle.util.GradleVersion
-import org.jetbrains.kotlin.idea.framework.KotlinSdkType
-import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
@@ -68,11 +66,6 @@ class KotlinGradleDependenciesAutoPopupTest(gradleVersion: GradleVersion) {
   fun setUp() {
     autoPopupTester = CompletionAutoPopupTester(codeInsightFixture)
     application.replaceService(DependencyCompletionService::class.java, testCompletionService, codeInsightFixture.testRootDisposable)
-  }
-
-  @AfterEach
-  fun tearDown() {
-    KotlinSdkType.removeKotlinSdkInTests()
   }
 
   private fun runTest(test: () -> Unit) {

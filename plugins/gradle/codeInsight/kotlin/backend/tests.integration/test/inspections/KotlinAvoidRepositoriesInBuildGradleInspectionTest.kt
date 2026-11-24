@@ -20,10 +20,8 @@ import com.intellij.gradle.testFramework.util.writeTextAndCommit
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture
 import org.gradle.util.GradleVersion
-import org.jetbrains.kotlin.idea.framework.KotlinSdkType
 import org.jetbrains.plugins.gradle.frameworkSupport.GradleDsl
 import org.jetbrains.plugins.gradle.util.GradleConstants
-import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
@@ -31,11 +29,6 @@ import org.junit.jupiter.params.ParameterizedClass
 
 @GradleImmutableProjectTestApplication
 class KotlinAvoidRepositoriesInBuildGradleInspectionTest {
-
-  @AfterEach
-  fun tearDown() {
-    KotlinSdkType.removeKotlinSdkInTests()
-  }
 
   @Nested
   @ParameterizedClass

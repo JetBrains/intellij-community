@@ -15,8 +15,6 @@ import com.intellij.platform.eel.provider.LocalEelDescriptor
 import com.intellij.testFramework.replaceService
 import com.intellij.util.application
 import org.gradle.util.GradleVersion
-import org.jetbrains.kotlin.idea.framework.KotlinSdkType
-import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
@@ -48,11 +46,6 @@ class KotlinGradleDependencyCompletionFusPositionTest(gradleVersion: GradleVersi
     Disposer.register(codeInsightFixture.testRootDisposable) {
       settings.AUTOCOMPLETE_ON_CODE_COMPLETION = autocompleteOnCodeCompletion
     }
-  }
-
-  @AfterEach
-  fun tearDown() {
-    KotlinSdkType.removeKotlinSdkInTests()
   }
 
   private fun runTest(expression: String, expectedPosition: GradleScriptDependencyCompletionPosition) {

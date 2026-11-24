@@ -12,7 +12,6 @@ import com.intellij.gradle.testFramework.annotations.CsvCrossProductSource
 import com.intellij.gradle.testFramework.annotations.GradleTestSource
 import com.intellij.gradle.testFramework.fixtures.application.GradleImmutableProjectTestApplication
 import com.intellij.gradle.testFramework.util.writeTextAndCommit
-import com.intellij.idea.IJIgnore
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.repository.search.completion.api.DependencyArtifactCompletionRequest
 import com.intellij.repository.search.completion.api.DependencyCompletionContributionSource.LOCAL
@@ -31,8 +30,6 @@ import kotlinx.coroutines.flow.flowOf
 import org.assertj.core.api.Assertions.assertThat
 import org.gradle.util.GradleVersion
 import org.jetbrains.kotlin.idea.base.codeInsight.contributorClass
-import org.jetbrains.kotlin.idea.framework.KotlinSdkType
-import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
@@ -55,7 +52,6 @@ private const val DEPENDENCY_CONFIGURATIONS_AND_NOTATIONS = """
   \"customSourceSetImplementation\"
 """
 
-@IJIgnore(issue = "KT-88180")
 @GradleImmutableProjectTestApplication
 internal class KotlinGradleDependenciesCompletionTest {
 
@@ -68,11 +64,6 @@ internal class KotlinGradleDependenciesCompletionTest {
         DependencyCompletionEvent.Item(DependencyCompletionResult("fooGroup", "compileArtifact", "barVersion", null, LOCAL)),
       )
     }
-  }
-
-  @AfterEach
-  fun tearDown() {
-    KotlinSdkType.removeKotlinSdkInTests()
   }
 
   @Nested

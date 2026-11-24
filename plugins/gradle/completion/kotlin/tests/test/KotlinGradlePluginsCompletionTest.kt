@@ -7,8 +7,6 @@ import com.intellij.gradle.testFramework.annotations.BaseGradleVersionSource
 import com.intellij.gradle.testFramework.fixtures.application.GradleImmutableProjectTestApplication
 import org.assertj.core.api.Assertions.assertThat
 import org.gradle.util.GradleVersion
-import org.jetbrains.kotlin.idea.framework.KotlinSdkType
-import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedClass
 
@@ -19,11 +17,6 @@ import org.junit.jupiter.params.ParameterizedClass
 internal class KotlinGradlePluginsCompletionTest(gradleVersion: GradleVersion) {
 
   private val codeInsightFixture by versionCatalogsGradleCodeInsightFixture(gradleVersion)
-
-  @AfterEach
-  fun tearDown() {
-    KotlinSdkType.removeKotlinSdkInTests()
-  }
 
   @Test
   fun `test completion for an empty input`() {

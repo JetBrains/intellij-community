@@ -21,8 +21,6 @@ import com.intellij.util.application
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
 import org.gradle.util.GradleVersion
-import org.jetbrains.kotlin.idea.framework.KotlinSdkType
-import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.params.ParameterizedClass
 import org.junit.jupiter.params.ParameterizedTest
 
@@ -35,11 +33,6 @@ private const val tomlPath = "gradle/libs.versions.toml"
 internal class KotlinGradleTomlCompletionTest(gradleVersion: GradleVersion) {
 
   private val codeInsightFixture by customConfigurationsGradleCodeInsightFixture(gradleVersion)
-
-  @AfterEach
-  fun tearDown() {
-    KotlinSdkType.removeKotlinSdkInTests()
-  }
 
   @ParameterizedTest
   @CsvCrossProductSource(

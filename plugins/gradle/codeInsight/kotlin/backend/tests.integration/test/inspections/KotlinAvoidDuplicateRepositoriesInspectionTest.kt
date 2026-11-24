@@ -10,8 +10,6 @@ import com.intellij.gradle.testFramework.fixtures.application.GradleImmutablePro
 import com.intellij.gradle.testFramework.util.DEPENDENCY_RESOLUTION_MANAGEMENT_SUPPORTED_VERSIONS
 import com.intellij.gradle.testFramework.util.KOTLIN_DSL_SCRIPTS_MODEL_IMPORT_SUPPORTED_VERSIONS
 import org.gradle.util.GradleVersion
-import org.jetbrains.kotlin.idea.framework.KotlinSdkType
-import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
@@ -19,11 +17,6 @@ import org.junit.jupiter.params.ParameterizedClass
 
 @GradleImmutableProjectTestApplication
 class KotlinAvoidDuplicateRepositoriesInspectionTest {
-
-  @AfterEach
-  fun tearDown() {
-    KotlinSdkType.removeKotlinSdkInTests()
-  }
 
   @Nested
   @ParameterizedClass

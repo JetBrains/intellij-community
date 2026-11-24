@@ -61,7 +61,6 @@ jvm_library(
         "//plugins/gradle/java",
         "//plugins/gradle/testFramework",
         "//plugins/kotlin/base/scripting/scripting",
-        "//plugins/kotlin/base/facet",
     ],
 )
 ### auto-generated section `build intellij.gradle.codeInsight.kotlin.backend.tests.integration` end

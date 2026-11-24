@@ -12,8 +12,6 @@ import com.intellij.platform.eel.provider.LocalEelDescriptor
 import com.intellij.testFramework.replaceService
 import com.intellij.util.application
 import org.gradle.util.GradleVersion
-import org.jetbrains.kotlin.idea.framework.KotlinSdkType
-import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedClass
 
@@ -23,11 +21,6 @@ import org.junit.jupiter.params.ParameterizedClass
 class KotlinGradleLocalDependencyCompletionTest(gradleVersion: GradleVersion) {
 
   private val codeInsightFixture by customConfigurationsGradleCodeInsightFixture(gradleVersion)
-
-  @AfterEach
-  fun tearDown() {
-    KotlinSdkType.removeKotlinSdkInTests()
-  }
 
   private fun configureLocalIndex(vararg gavArgs: String) {
     application.replaceService(
