@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.monitoring;
 
 import com.intellij.internal.statistic.eventLog.EventLogGroup;
@@ -43,7 +43,9 @@ public final class VfsUsageCollector extends CounterUsagesCollector {
   private static final RoundedIntEventField FIELD_BG_REFRESH_EVENTS = EventFields.RoundedInt("events");
 
   private static final EventId3<Long, Integer, Integer> EVENT_BACKGROUND_REFRESH = GROUP_VFS.registerEvent(
-    "background_refresh", EventFields.DurationMs, FIELD_BG_REFRESH_SESSIONS, FIELD_BG_REFRESH_EVENTS);
+    "background_refresh",
+    EventFields.DurationMs, FIELD_BG_REFRESH_SESSIONS, FIELD_BG_REFRESH_EVENTS
+  );
 
   /* ================== EVENT_REFRESH_SESSION: ====================================================== */
 
@@ -67,7 +69,7 @@ public final class VfsUsageCollector extends CounterUsagesCollector {
   private static final IntEventField FIELD_REFRESH_PARTIAL_SCANS = EventFields.Int("partial_scans");
   private static final IntEventField FIELD_REFRESH_RETRIES = EventFields.Int("retries");
 
-  /** Utilization fields hold an integer percentage in the range 0..100 */
+  /// Utilization fields hold an integer percentage in the range 0..100
   private static final IntEventField FIELD_REFRESH_THREAD_UTILIZATION = EventFields.Int("thread_utilization_percent");
   private static final IntEventField FIELD_REFRESH_IO_UTILIZATION = EventFields.Int("io_utilization_percent");
   private static final IntEventField FIELD_REFRESH_WASTED_UTILIZATION = EventFields.Int("wasted_utilization_percent");
@@ -94,13 +96,13 @@ public final class VfsUsageCollector extends CounterUsagesCollector {
 
   /* ================== EVENT_VFS_INITIALIZATION: ====================================================== */
 
-  /** What causes VFS rebuild (if any) */
+  /// What causes VFS rebuild (if any)
   private static final EnumEventField<VFSInitKind> FIELD_INITIALIZATION_KIND = EventFields.Enum("init_kind", VFSInitKind.class);
-  /** A number of attempts to init VFS. Usually =1, but could be more if VFS was rebuilt. */
+  /// A number of attempts to init VFS. Usually =1, but could be more if VFS was rebuilt.
   private static final IntEventField FIELD_INITIALIZATION_ATTEMPTS = EventFields.Int("init_attempts");
-  /** Timestamp current VFS was created & initialized (ms, unix origin) */
+  /// Timestamp current VFS was created & initialized (ms, Unix origin)
   private static final LongEventField FIELD_CREATION_TIMESTAMP = EventFields.Long("creation_timestamp");
-  /** Current VFS implementation version, see {@link com.intellij.openapi.vfs.newvfs.persistent.FSRecordsImpl#getVersion()} */
+  /// Current VFS implementation version, see [com.intellij.openapi.vfs.newvfs.persistent.FSRecordsImpl#getVersion()]
   private static final IntEventField FIELD_IMPL_VERSION = EventFields.Int("impl_version");
   private static final LongEventField FIELD_TOTAL_INIT_DURATION_MS = EventFields.Long("init_duration_ms");
   private static final StringListEventField FIELD_ERRORS_HAPPENED = EventFields.StringList(
@@ -116,102 +118,71 @@ public final class VfsUsageCollector extends CounterUsagesCollector {
 
   /* ================== EVENT_VFS_HEALTH_CHECK: ====================================================== */
 
-  /** ={@link FSRecords#getCreationTimestamp()} */
+  /// =[FSRecords#getCreationTimestamp()]
   private static final LongEventField FIELD_HEALTH_CHECK_VFS_CREATION_TIMESTAMP_MS = EventFields.Long("vfs_creation_timestamp_ms");
-  /** How long the check have taken */
+  /// How long the check have taken
   private static final LongEventField FIELD_HEALTH_CHECK_DURATION_MS = EventFields.Long("check_duration_ms");
-
   private static final IntEventField FIELD_HEALTH_CHECK_FILE_RECORDS_CHECKED = EventFields.Int("file_records_checked");
   private static final IntEventField FIELD_HEALTH_CHECK_FILE_RECORDS_DELETED = EventFields.Int("file_records_deleted");
   private static final IntEventField FIELD_HEALTH_CHECK_FILE_RECORDS_NAME_NULL = EventFields.Int("file_records_name_null");
-  /** Number of file-records there nameId can't be resolved against NamesEnumerator */
+  /// Number of file-records there nameId can't be resolved against NamesEnumerator
   private static final IntEventField FIELD_HEALTH_CHECK_FILE_RECORDS_NAME_UNRESOLVABLE = EventFields.Int("file_records_name_unresolvable");
   private static final IntEventField FIELD_HEALTH_CHECK_FILE_RECORDS_ATTRIBUTE_ID_UNRESOLVABLE = EventFields.Int("file_records_attribute_unresolvable");
   private static final IntEventField FIELD_HEALTH_CHECK_FILE_RECORDS_CONTENT_NOT_NULL = EventFields.Int("file_records_content_not_null");
-  /** Number of file-records there contentId can't be resolved against NamesEnumerator */
+  /// Number of file-records there contentId can't be resolved against NamesEnumerator
   private static final IntEventField FIELD_HEALTH_CHECK_FILE_RECORDS_CONTENT_UNRESOLVABLE = EventFields.Int("file_records_content_unresolvable");
   private static final IntEventField FIELD_HEALTH_CHECK_FILE_RECORDS_NULL_PARENTS = EventFields.Int("file_records_null_parents");
   private static final IntEventField FIELD_HEALTH_CHECK_FILE_RECORDS_CHILDREN_CHECKED = EventFields.Int("file_records_children_checked");
-  /** Number of file-records with children.parent != this */
+  /// Number of file-records with `children.parent != this`
   private static final IntEventField FIELD_HEALTH_CHECK_FILE_RECORDS_CHILDREN_INCONSISTENT = EventFields.Int("file_records_children_inconsistent");
-  /** Total errors in file-records */
+  /// Total errors in file-records
   private static final IntEventField FIELD_HEALTH_CHECK_FILE_RECORDS_GENERAL_ERRORS = EventFields.Int("file_records_general_errors");
-
-  /** Total records from NamesEnumerator checked */
+  /// Total records from NamesEnumerator checked
   private static final IntEventField FIELD_HEALTH_CHECK_NAMES_CHECKED = EventFields.Int("names_checked");
-  /** Number of names from enumerator that doesn't resolve against the same enumerator */
+  /// Number of names from enumerator that doesn't resolve against the same enumerator
   private static final IntEventField FIELD_HEALTH_CHECK_NAMES_RESOLVED_TO_NULL = EventFields.Int("names_resolved_to_null");
-  /** Number of ids from enumerator that doesn't resolve against the same enumerator */
+  /// Number of ids from enumerator that doesn't resolve against the same enumerator
   private static final IntEventField FIELD_HEALTH_CHECK_NAMES_IDS_RESOLVED_TO_NULL = EventFields.Int("names_ids_resolved_to_null");
-  /** Number of (name -> id -> name') resolutions there (name!=name') */
+  /// Number of (name -> id -> name') resolutions there (name!=name')
   private static final IntEventField FIELD_HEALTH_CHECK_NAMES_INCONSISTENT_RESOLUTIONS = EventFields.Int("names_inconsistent_resolution");
-  /** General errors in a name resolution */
+  /// General errors in a name resolution
   private static final IntEventField FIELD_HEALTH_CHECK_NAMES_GENERAL_ERRORS = EventFields.Int("names_general_errors");
-
   private static final IntEventField FIELD_HEALTH_CHECK_CONTENTS_CHECKED = EventFields.Int("contents_checked");
   private static final IntEventField FIELD_HEALTH_CHECK_CONTENTS_ERRORS = EventFields.Int("contents_errors");
-
   private static final IntEventField FIELD_HEALTH_CHECK_ROOTS_CHECKED = EventFields.Int("roots_checked");
   private static final IntEventField FIELD_HEALTH_CHECK_ROOTS_WITH_PARENTS = EventFields.Int("roots_with_parents");
-  /** root.isDeleted=true, but record is still in ROOTS catalog */
+  /// root.isDeleted=true, but record is still in ROOTS catalog
   private static final IntEventField FIELD_HEALTH_CHECK_ROOTS_DELETED_BUT_NOT_REMOVED = EventFields.Int("roots_deleted_but_not_removed");
   private static final IntEventField FIELD_HEALTH_CHECK_ROOTS_ERRORS = EventFields.Int("roots_errors");
-
   private static final IntEventField FIELD_HEALTH_CHECK_ATTRIBUTES_ERRORS = EventFields.Int("attributes_errors");
 
   private static final VarargEventId EVENT_VFS_HEALTH_CHECK = GROUP_VFS.registerVarargEvent(
     "health_check",
-    FIELD_HEALTH_CHECK_VFS_CREATION_TIMESTAMP_MS,
-
-    FIELD_HEALTH_CHECK_DURATION_MS,
-
-    FIELD_HEALTH_CHECK_FILE_RECORDS_CHECKED,
-    FIELD_HEALTH_CHECK_FILE_RECORDS_DELETED,
-    FIELD_HEALTH_CHECK_FILE_RECORDS_NAME_NULL,
-    FIELD_HEALTH_CHECK_FILE_RECORDS_NAME_UNRESOLVABLE,
-    FIELD_HEALTH_CHECK_FILE_RECORDS_ATTRIBUTE_ID_UNRESOLVABLE,
-    FIELD_HEALTH_CHECK_FILE_RECORDS_CONTENT_NOT_NULL,
-    FIELD_HEALTH_CHECK_FILE_RECORDS_CONTENT_UNRESOLVABLE,
-    FIELD_HEALTH_CHECK_FILE_RECORDS_NULL_PARENTS,
-    FIELD_HEALTH_CHECK_FILE_RECORDS_CHILDREN_CHECKED,
-    FIELD_HEALTH_CHECK_FILE_RECORDS_CHILDREN_INCONSISTENT,
-    FIELD_HEALTH_CHECK_FILE_RECORDS_GENERAL_ERRORS,
-
-    FIELD_HEALTH_CHECK_NAMES_CHECKED,
-    FIELD_HEALTH_CHECK_NAMES_IDS_RESOLVED_TO_NULL,
-    FIELD_HEALTH_CHECK_NAMES_RESOLVED_TO_NULL,
-    FIELD_HEALTH_CHECK_NAMES_INCONSISTENT_RESOLUTIONS,
-    FIELD_HEALTH_CHECK_NAMES_GENERAL_ERRORS,
-
-    FIELD_HEALTH_CHECK_CONTENTS_CHECKED,
-    FIELD_HEALTH_CHECK_CONTENTS_ERRORS,
-
-    FIELD_HEALTH_CHECK_ROOTS_CHECKED,
-    FIELD_HEALTH_CHECK_ROOTS_WITH_PARENTS,
-    FIELD_HEALTH_CHECK_ROOTS_DELETED_BUT_NOT_REMOVED,
-    FIELD_HEALTH_CHECK_ROOTS_ERRORS,
-
+    FIELD_HEALTH_CHECK_VFS_CREATION_TIMESTAMP_MS, FIELD_HEALTH_CHECK_DURATION_MS, FIELD_HEALTH_CHECK_FILE_RECORDS_CHECKED,
+    FIELD_HEALTH_CHECK_FILE_RECORDS_DELETED, FIELD_HEALTH_CHECK_FILE_RECORDS_NAME_NULL, FIELD_HEALTH_CHECK_FILE_RECORDS_NAME_UNRESOLVABLE,
+    FIELD_HEALTH_CHECK_FILE_RECORDS_ATTRIBUTE_ID_UNRESOLVABLE, FIELD_HEALTH_CHECK_FILE_RECORDS_CONTENT_NOT_NULL,
+    FIELD_HEALTH_CHECK_FILE_RECORDS_CONTENT_UNRESOLVABLE, FIELD_HEALTH_CHECK_FILE_RECORDS_NULL_PARENTS,
+    FIELD_HEALTH_CHECK_FILE_RECORDS_CHILDREN_CHECKED, FIELD_HEALTH_CHECK_FILE_RECORDS_CHILDREN_INCONSISTENT,
+    FIELD_HEALTH_CHECK_FILE_RECORDS_GENERAL_ERRORS, FIELD_HEALTH_CHECK_NAMES_CHECKED, FIELD_HEALTH_CHECK_NAMES_IDS_RESOLVED_TO_NULL,
+    FIELD_HEALTH_CHECK_NAMES_RESOLVED_TO_NULL, FIELD_HEALTH_CHECK_NAMES_INCONSISTENT_RESOLUTIONS, FIELD_HEALTH_CHECK_NAMES_GENERAL_ERRORS,
+    FIELD_HEALTH_CHECK_CONTENTS_CHECKED, FIELD_HEALTH_CHECK_CONTENTS_ERRORS, FIELD_HEALTH_CHECK_ROOTS_CHECKED,
+    FIELD_HEALTH_CHECK_ROOTS_WITH_PARENTS, FIELD_HEALTH_CHECK_ROOTS_DELETED_BUT_NOT_REMOVED, FIELD_HEALTH_CHECK_ROOTS_ERRORS,
     FIELD_HEALTH_CHECK_ATTRIBUTES_ERRORS
   );
 
   /* ================== EVENT_VFS_ACCUMULATED_ERRORS: ====================================================== */
 
-  /**
-   * Not any errors, but errors that are likely internal VFS errors, i.e., corruptions or code bugs.
-   * E.g., error due to illegal argument passed from the outside is not counted.
-   */
+  /// Not any errors, but errors that are likely internal VFS errors, i.e., corruptions or code bugs.
+  /// E.g., error due to illegal argument passed from the outside is not counted.
   private static final IntEventField FIELD_ACCUMULATED_VFS_ERRORS = EventFields.Int("accumulated_errors");
   private static final LongEventField FIELD_TIME_SINCE_STARTUP = EventFields.Long("time_since_startup_ms");
 
   private static final VarargEventId EVENT_VFS_INTERNAL_ERRORS = GROUP_VFS.registerVarargEvent(
     "internal_errors",
-    FIELD_HEALTH_CHECK_VFS_CREATION_TIMESTAMP_MS,
-    FIELD_TIME_SINCE_STARTUP,
-    FIELD_ACCUMULATED_VFS_ERRORS
+    FIELD_HEALTH_CHECK_VFS_CREATION_TIMESTAMP_MS, FIELD_TIME_SINCE_STARTUP, FIELD_ACCUMULATED_VFS_ERRORS
   );
 
   /* ==================================================================================================== */
-
 
   @Override
   public EventLogGroup getGroup() {
@@ -228,34 +199,30 @@ public final class VfsUsageCollector extends CounterUsagesCollector {
     }
   }
 
-  public static void logRefreshSession(boolean recursive, int lfsRoots, int arcRoots, int otherRoots, boolean cancelled,
-                                       long wait, long duration, int tries, @NotNull RefreshScanPriority priority) {
+  public static void logRefreshSession(
+    boolean recursive, int lfsRoots, int arcRoots, int otherRoots, boolean cancelled,
+    long wait, long duration, int tries, @NotNull RefreshScanPriority priority
+  ) {
     if (duration >= DURATION_THRESHOLD_MS) {
       EVENT_REFRESH_SESSION.log(
-        FIELD_REFRESH_RECURSIVE.with(recursive),
-        FIELD_REFRESH_LOCAL_ROOTS.with(lfsRoots),
-        FIELD_REFRESH_ARCHIVE_ROOTS.with(arcRoots),
-        FIELD_REFRESH_OTHER_ROOTS.with(otherRoots),
-        FIELD_REFRESH_CANCELLED.with(cancelled),
-        FIELD_WAIT_MS.with(wait),
-        EventFields.DurationMs.with(duration),
-        FIELD_REFRESH_TRIES.with(tries),
-        FIELD_REFRESH_PRIORITY.with(priority));
+        FIELD_REFRESH_RECURSIVE.with(recursive), FIELD_REFRESH_LOCAL_ROOTS.with(lfsRoots), FIELD_REFRESH_ARCHIVE_ROOTS.with(arcRoots),
+        FIELD_REFRESH_OTHER_ROOTS.with(otherRoots), FIELD_REFRESH_CANCELLED.with(cancelled), FIELD_WAIT_MS.with(wait),
+        EventFields.DurationMs.with(duration), FIELD_REFRESH_TRIES.with(tries), FIELD_REFRESH_PRIORITY.with(priority)
+      );
     }
   }
 
   public static void logRefreshScan(@NotNull RefreshScanStats stats) {
     if (stats.durationMs() >= DURATION_THRESHOLD_MS) {
       EVENT_REFRESH_SCAN.log(
-        FIELD_REFRESH_FULL_SCANS.with(stats.fullScans()),
-        FIELD_REFRESH_PARTIAL_SCANS.with(stats.partialScans()),
-        FIELD_REFRESH_RETRIES.with(stats.retries()),
-        EventFields.DurationMs.with(stats.durationMs()),
+        FIELD_REFRESH_FULL_SCANS.with(stats.fullScans()), FIELD_REFRESH_PARTIAL_SCANS.with(stats.partialScans()),
+        FIELD_REFRESH_RETRIES.with(stats.retries()), EventFields.DurationMs.with(stats.durationMs()),
         FIELD_REFRESH_THREAD_UTILIZATION.with(toPercent(stats.threadUtilization())),
         FIELD_REFRESH_IO_UTILIZATION.with(toPercent(stats.ioUtilization())),
         FIELD_REFRESH_WASTED_UTILIZATION.with(toPercent(stats.wastedUtilization())),
         FIELD_REFRESH_POOL_UTILIZATION.with(toPercent(stats.threadPoolUtilization())),
-        FIELD_REFRESH_READ_LOCK_WAIT_UTILIZATION.with(toPercent(stats.readLockWaitingUtilization())));
+        FIELD_REFRESH_READ_LOCK_WAIT_UTILIZATION.with(toPercent(stats.readLockWaitingUtilization()))
+      );
     }
   }
 
@@ -270,57 +237,56 @@ public final class VfsUsageCollector extends CounterUsagesCollector {
         FIELD_EVENT_LISTENERS_MS.with(listenerTime),
         FIELD_EVENT_TRIES.with(listenerTries),
         EventFields.DurationMs.with(edtTime),
-        FIELD_EVENT_NUMBER.with(events));
+        FIELD_EVENT_NUMBER.with(events)
+      );
     }
   }
 
-  public static void logVfsInitialization(int vfsImplementationVersion,
-                                          long vfsCreationTimestamp,
-                                          @NotNull VFSInitKind initKind,
-                                          @NotNull List<VFSInitException.ErrorCategory> errorsHappened,
-                                          int initializationAttempts,
-                                          long totalInitializationDurationMs) {
+  public static void logVfsInitialization(
+    int vfsImplementationVersion,
+    long vfsCreationTimestamp,
+    @NotNull VFSInitKind initKind,
+    @NotNull List<VFSInitException.ErrorCategory> errorsHappened,
+    int initializationAttempts,
+    long totalInitializationDurationMs
+  ) {
     EVENT_VFS_INITIALIZATION.log(
-      FIELD_INITIALIZATION_KIND.with(initKind),
-      FIELD_CREATION_TIMESTAMP.with(vfsCreationTimestamp),
-      FIELD_INITIALIZATION_ATTEMPTS.with(initializationAttempts),
-      FIELD_IMPL_VERSION.with(vfsImplementationVersion),
+      FIELD_INITIALIZATION_KIND.with(initKind), FIELD_CREATION_TIMESTAMP.with(vfsCreationTimestamp),
+      FIELD_INITIALIZATION_ATTEMPTS.with(initializationAttempts), FIELD_IMPL_VERSION.with(vfsImplementationVersion),
       FIELD_ERRORS_HAPPENED.with(ContainerUtil.map(errorsHappened, Enum::name)),
       FIELD_TOTAL_INIT_DURATION_MS.with(totalInitializationDurationMs)
     );
   }
 
-  public static void logVfsHealthCheck(long creationTimestampMs,
-                                       long checkDurationMs,
-                                       int fileRecordsChecked,
-                                       int fileRecordsDeleted,
-                                       int fileRecordsNameIdsNull,
-                                       int fileRecordsNameIdsUnresolvable,
-                                       int fileRecordsAttributeIdUnresolvable,
-                                       int fileRecordsContentIdsNotNull,
-                                       int fileRecordsContentIdsUnresolvable,
-                                       int fileRecordsNullParents,
-                                       int fileRecordsChildrenChecked,
-                                       int fileRecordsInconsistentParentChildRelationships,
-                                       int fileRecordsGeneralErrors,
-
-                                       int namesChecked,
-                                       int namesResolvedToNull,
-                                       int namesIdsResolvedToNull,
-                                       int namesInconsistentResolution,
-                                       int namesGeneralErrors,
-
-                                       int rootsChecked,
-                                       int rootsWithParents,
-                                       int rootsDeletedButNotRemoved,
-                                       int rootsGeneralErrors,
-
-                                       int contentRecordsChecked,
-                                       int contentGeneralErrors) {
+  public static void logVfsHealthCheck(
+    long creationTimestampMs,
+    long checkDurationMs,
+    int fileRecordsChecked,
+    int fileRecordsDeleted,
+    int fileRecordsNameIdsNull,
+    int fileRecordsNameIdsUnresolvable,
+    int fileRecordsAttributeIdUnresolvable,
+    int fileRecordsContentIdsNotNull,
+    int fileRecordsContentIdsUnresolvable,
+    int fileRecordsNullParents,
+    int fileRecordsChildrenChecked,
+    int fileRecordsInconsistentParentChildRelationships,
+    int fileRecordsGeneralErrors,
+    int namesChecked,
+    int namesResolvedToNull,
+    int namesIdsResolvedToNull,
+    int namesInconsistentResolution,
+    int namesGeneralErrors,
+    int rootsChecked,
+    int rootsWithParents,
+    int rootsDeletedButNotRemoved,
+    int rootsGeneralErrors,
+    int contentRecordsChecked,
+    int contentGeneralErrors
+  ) {
     EVENT_VFS_HEALTH_CHECK.log(
       FIELD_HEALTH_CHECK_VFS_CREATION_TIMESTAMP_MS.with(creationTimestampMs),
       FIELD_HEALTH_CHECK_DURATION_MS.with(checkDurationMs),
-
       FIELD_HEALTH_CHECK_FILE_RECORDS_CHECKED.with(fileRecordsChecked),
       FIELD_HEALTH_CHECK_FILE_RECORDS_DELETED.with(fileRecordsDeleted),
       FIELD_HEALTH_CHECK_FILE_RECORDS_NAME_NULL.with(fileRecordsNameIdsNull),
@@ -332,26 +298,21 @@ public final class VfsUsageCollector extends CounterUsagesCollector {
       FIELD_HEALTH_CHECK_FILE_RECORDS_CHILDREN_CHECKED.with(fileRecordsChildrenChecked),
       FIELD_HEALTH_CHECK_FILE_RECORDS_CHILDREN_INCONSISTENT.with(fileRecordsInconsistentParentChildRelationships),
       FIELD_HEALTH_CHECK_FILE_RECORDS_GENERAL_ERRORS.with(fileRecordsGeneralErrors),
-
       FIELD_HEALTH_CHECK_NAMES_CHECKED.with(namesChecked),
       FIELD_HEALTH_CHECK_NAMES_RESOLVED_TO_NULL.with(namesResolvedToNull),
       FIELD_HEALTH_CHECK_NAMES_IDS_RESOLVED_TO_NULL.with(namesIdsResolvedToNull),
       FIELD_HEALTH_CHECK_NAMES_INCONSISTENT_RESOLUTIONS.with(namesInconsistentResolution),
       FIELD_HEALTH_CHECK_NAMES_GENERAL_ERRORS.with(namesGeneralErrors),
-
       FIELD_HEALTH_CHECK_ROOTS_CHECKED.with(rootsChecked),
       FIELD_HEALTH_CHECK_ROOTS_WITH_PARENTS.with(rootsWithParents),
       FIELD_HEALTH_CHECK_ROOTS_DELETED_BUT_NOT_REMOVED.with(rootsDeletedButNotRemoved),
       FIELD_HEALTH_CHECK_ROOTS_ERRORS.with(rootsGeneralErrors),
-
       FIELD_HEALTH_CHECK_CONTENTS_CHECKED.with(contentRecordsChecked),
       FIELD_HEALTH_CHECK_CONTENTS_ERRORS.with(contentGeneralErrors)
     );
   }
 
-  public static void logVfsInternalErrors(long vfsCreationTimestamp,
-                                          long sinceStartupMs,
-                                          int errorsAccumulatedSinceStartup) {
+  public static void logVfsInternalErrors(long vfsCreationTimestamp, long sinceStartupMs, int errorsAccumulatedSinceStartup) {
     EVENT_VFS_INTERNAL_ERRORS.log(
       FIELD_HEALTH_CHECK_VFS_CREATION_TIMESTAMP_MS.with(vfsCreationTimestamp),
       FIELD_TIME_SINCE_STARTUP.with(sinceStartupMs),
