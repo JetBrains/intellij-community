@@ -19,9 +19,11 @@ IDEA-12345 <subject>              # a change with a ticket: the id, then one sen
 ```
 
 - A behavioral change needs a YouTrack ticket. If you are unsure whether it is behavioral, it is.
+- Write the subject after the id or the label as an imperative sentence. The body stays declarative.
 - With a ticket, the subject is the id and one sentence that says what the change does or decides. Do not add a label
-  or a subsystem: the id already names the area. `IDEA-12345 the inspection skips a generated file`, not
-  `IDEA-12345 fix inspections: generated files`. A test, a docs, or a cleanup commit of a ticket takes the same form;
+  or a subsystem: the id already names the area. `IDEA-12345 skip a generated file in the inspection`, not
+  `IDEA-12345 the inspection skips a generated file` or `IDEA-12345 fix inspections: generated files`.
+  A test, a docs, or a cleanup commit of a ticket takes the same form;
   the body says that it is a test or a docs change. A module `AGENTS.md` can require a subsystem, and its rule wins.
 - With no ticket, the label is one of `tests`, `cleanup`, `refactor`, `docs`, `format`, `style`, `setup`, `misc`.
 - With a Branch Deck prefix, the subject is `(branch) <the form above>`. Branch Deck removes the prefix at the push, so
@@ -66,7 +68,7 @@ Do not write the message to a file outside the workspace, such as `/tmp`: that a
 ## Examples
 
 ```text
-IJAI-3334 the published-surface wait of the editor service test names its step and dumps the state
+IJAI-3334 name the step of the published-surface wait in the editor service test and dump the state
 
 The test failed once on TeamCity with no log line in its 10 s window, and 208 local runs did not reproduce it.
 The helper now waits for the subscription and then for the apply, under one deadline, and a failure adds the
@@ -76,7 +78,7 @@ state of the test backend and a coroutine dump. No product code changes.
 A change with no ticket, with a Branch Deck prefix:
 
 ```text
-(dev-dist-cache) setup build: the dev dist launch model writes the pinned Qodana build date
+(dev-dist-cache) setup build: write the pinned Qodana build date into the dev dist launch model
 
 QD-16701 added -Dqodana.build.date=<yyyyMMddHHmm> to the qodana command of the production product-info.json.
 `computeProductLaunchModel` gave no date to `QodanaProductProperties`, so the dev dist model had no such argument.
