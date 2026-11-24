@@ -52,6 +52,8 @@ import com.intellij.execution.ui.RunContentManager
 import com.intellij.execution.ui.RunContentManagerExtension
 import com.intellij.execution.ui.layout.impl.RunnerLayoutSettings
 import com.intellij.ide.SaveAndSyncHandler
+import com.intellij.ide.TrustedFiles
+import com.intellij.ide.trustedProjects.TrustedProjects
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.internal.statistic.StructuredIdeActivity
 import com.intellij.lang.LangBundle
@@ -782,12 +784,10 @@ open class ExecutionManagerImpl(private val project: Project, coroutineScope: Co
       val project = environment.project
       val runner = environment.runner
 
-      val untrustedFile = ExecutionSafeMode.findUntrustedTargetFile(project, environment.runProfile)
-      if (untrustedFile != null) {
-        handleProgramRunnerExecutionError(
-          project, environment,
-          ExecutionException(ExecutionBundle.message("run.configuration.untrusted.target.file", untrustedFile.name)),
-          runnerAndConfigurationSettings?.configuration)
+      val safeModeMessage = findSafeModeMessage(project, environment.runProfile)
+      if (safeModeMessage != null) {
+        handleProgramRunnerExecutionError(project, environment, ExecutionException(safeModeMessage),
+                                          runnerAndConfigurationSettings?.configuration)
         processNotStarted(environment, null)
         return@withEnvironmentDataContext
       }
@@ -843,6 +843,20 @@ open class ExecutionManagerImpl(private val project: Project, coroutineScope: Co
 
       executeConfiguration(environment, runner, assignNewId, project, runnerAndConfigurationSettings)
     }
+  }
+
+  /**
+   * Returns the reason why [profile] must not run in [project] in safe mode, or `null` if execution may proceed.
+   *
+   * In a project that is not trusted, no run configuration runs.
+   * In a trusted project, a configuration with an untrusted target file does not run.
+   */
+  private fun findSafeModeMessage(project: Project, profile: RunProfile?): @Nls String? {
+    if (Registry.`is`(TrustedFiles.SAFE_MODE_REGISTRY_KEY, false) && !project.isDefault && !TrustedProjects.isProjectTrusted(project)) {
+      return ExecutionBundle.message("run.configuration.untrusted.project")
+    }
+    val untrustedFile = ExecutionSafeMode.findUntrustedTargetFile(project, profile) ?: return null
+    return ExecutionBundle.message("run.configuration.untrusted.target.file", untrustedFile.name)
   }
 
   private fun editConfigurationUntilSuccess(environment: ExecutionEnvironment, assignNewId: Boolean) {
