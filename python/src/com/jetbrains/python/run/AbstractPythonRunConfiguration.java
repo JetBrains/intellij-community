@@ -15,7 +15,6 @@ import com.intellij.execution.configurations.RuntimeConfigurationException;
 import com.intellij.execution.testframework.sm.runner.GeneralIdBasedToSMTRunnerEventsConvertor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.options.SettingsEditorGroup;
 import com.intellij.openapi.project.Project;
@@ -31,7 +30,7 @@ import com.intellij.util.PathMappingSettings;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.xmlb.annotations.Transient;
 import com.jetbrains.python.PyBundle;
-import com.jetbrains.python.PythonModuleTypeBase;
+import com.jetbrains.python.module.PyModuleServiceKt;
 import com.intellij.python.pyproject.model.evolution.PyRunConfigurationInterpreter;
 import com.intellij.python.sdk.backend.PythonInterpreterExtKt;
 import com.intellij.python.sdk.backend.PythonInterpreterSdkBoundaryKt;
@@ -521,7 +520,7 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractPythonRun
   @Override
   public boolean isExcludeCompileBeforeLaunchOption() {
     final Module module = getModule();
-    return module == null || ModuleType.get(module) instanceof PythonModuleTypeBase;
+    return module == null || PyModuleServiceKt.isPythonModule(module);
   }
 
   public boolean canRunWithCoverage() {

@@ -5,9 +5,7 @@ import com.intellij.facet.FacetManager
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceOrNull
-import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.module.ModuleType
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ModuleRootManager
@@ -18,29 +16,19 @@ import com.jetbrains.python.PyInternalExecApi
 import com.jetbrains.python.PyNames
 import com.jetbrains.python.facet.PythonFacetSettings
 import com.jetbrains.python.project.impl.PyProjectService
-import com.jetbrains.python.sdk.internal.PYTHON_MODULE_ID
 
 internal class PyModuleServiceImpl(val project: Project) : PyModuleService {
 
   @PyInternalExecApi
   @RequiresWriteLock
   override fun setPythonSdk(module: Module, sdk: Sdk?) {
-    val facetSdkSetter = if (!module.isPyModuleType) {
-      ApplicationManager.getApplication().serviceOrNull<PySdkToFacetSetter>().also {
-        if (it == null) {
-          fileLogger().warn("Module $module is not python, but no facet setter registered, setting sdk to module directly")
-        }
-      }
-    }
-    else {
-      null
-    }
-
-    if (facetSdkSetter != null) {
+    // A module that has a Python SDK keeps it there, because findPythonSdk reads the module SDK first. A module of
+    // another language keeps its own SDK, and the facet gets the Python SDK. PyCharm registers no facet setter.
+    val facetSdkSetter = ApplicationManager.getApplication().serviceOrNull<PySdkToFacetSetter>()
+    if (facetSdkSetter != null && !module.hasPythonModuleSdk) {
       facetSdkSetter.setPythonSdkToFacet(module, sdk)
     }
     else {
-      // For python modules we set SDK directly
       ModuleRootModificationUtil.setModuleSdk(module, sdk)
     }
   }
@@ -69,6 +57,7 @@ internal class PyModuleServiceImpl(val project: Project) : PyModuleService {
     ApplicationManager.getApplication().service<PyProjectService>().isPyProject(module)
 
   private companion object {
-    val Module.isPyModuleType: Boolean get() = ModuleType.get(this).id == PYTHON_MODULE_ID
+    val Module.hasPythonModuleSdk: Boolean
+      get() = ModuleRootManager.getInstance(this).sdk?.let { PyNames.PYTHON_SDK_ID_NAME == it.sdkType.name } == true
   }
 }

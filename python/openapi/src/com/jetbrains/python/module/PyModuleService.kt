@@ -28,9 +28,8 @@ interface PyModuleService {
   fun forAllFacets(module: Module, facetConsumer: Consumer<Any>)
 
   /**
-   * Whether [module] is a Python project: of the Python type, with the Python facet, any module with a content root in
-   * PyCharm, or a module that names an interpreter. It is the rule of `PyProject.asPyProject`, read from the current
-   * workspace model, so a module of GoLand with only an interpreter is one too.
+   * Whether [module] is a Python project, see [Module.isPythonModule]. It is the rule of `PyProject.asPyProject`, read
+   * from the current workspace model.
    */
   @ApiStatus.Internal
   fun isPythonModule(module: Module): Boolean
@@ -48,3 +47,12 @@ interface PyModuleService {
     fun getInstance(project: Project): PyModuleService = project.service<PyModuleService>()
   }
 }
+
+/**
+ * Whether this module is a Python project: every module in PyCharm, a module that the `pyproject.toml` model made, or a
+ * module that names an interpreter. A module of GoLand with only an interpreter is one too. The module type and the
+ * Python facet do not count. The answer comes from the current workspace model, so it needs no IO.
+ */
+@get:ApiStatus.Internal
+val Module.isPythonModule: Boolean
+  get() = PyModuleService.getInstance(project).isPythonModule(this)

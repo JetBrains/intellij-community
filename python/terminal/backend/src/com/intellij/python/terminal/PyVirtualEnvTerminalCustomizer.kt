@@ -4,6 +4,7 @@ package com.intellij.python.terminal
 import com.intellij.python.sdk.backend.activationEnvironment
 import com.intellij.python.sdk.backend.TargetPythonInterpreter
 import com.intellij.openapi.diagnostic.fileLogger
+import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.guessProjectDir
@@ -27,7 +28,7 @@ import com.intellij.python.terminal.shared.PyVirtualEnvTerminalSettings
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.jetbrains.python.orLogException
 import com.jetbrains.python.sdk.ShellType
-import com.jetbrains.python.sdk.internal.PYTHON_MODULE_ID
+import com.jetbrains.python.module.isPythonModule
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.plugins.terminal.TerminalOptionsProvider
@@ -226,7 +227,7 @@ fun pyTerminalDefaultWorkingDirectory(project: Project, file: VirtualFile?): Pat
   } ?: return null
 
   // Follow the module only if it's a Python module; otherwise keep the platform default.
-  return if (module.type?.name == PYTHON_MODULE_ID) contentRoot.toNioPathOrNull() else null
+  return if (ModuleManager.getInstance(project).findModuleByName(module.name)?.isPythonModule == true) contentRoot.toNioPathOrNull() else null
 }
 
 private val MutableShellExecOptions.shell: ShellType?

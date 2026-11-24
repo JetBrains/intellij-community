@@ -51,6 +51,7 @@ import com.intellij.python.pyproject.PyProjectToml
 import com.intellij.python.pyproject.model.internal.PY_PROJECT_SYSTEM_ID
 import com.intellij.python.pyproject.model.internal.PyProjectTomlBundle
 import com.intellij.python.pyproject.model.internal.notifyModelRebuilt
+import com.intellij.python.pyproject.model.internal.pyProject.PyProjectImpl
 import com.intellij.python.pyproject.model.internal.pyProjectToml.FSWalkInfoWithToml
 import com.intellij.python.pyproject.model.internal.pyProjectToml.getDependenciesFromToml
 import com.intellij.python.pyproject.model.spi.ProjectName
@@ -292,7 +293,7 @@ private suspend fun tryRebuildProjectModel(project: Project, files: FSWalkInfoWi
 
   // Existing Python module names keyed by their content root directory.
   val existingPythonNames: Map<Path, String> =
-    currentSnapshot.entities<ModuleEntity>().filter { it.type == PYTHON_MODULE_TYPE_ID }.mapNotNull { module ->
+    currentSnapshot.entities<ModuleEntity>().filter { PyProjectImpl.isPythonProject(it) }.mapNotNull { module ->
       val moduleRootPath = module.contentRoots.singleOrNull()?.url?.toPath()
       moduleRootPath?.let { it to module.name }
     }.toMap()
@@ -398,10 +399,10 @@ private fun matchEntriesToModules(
   val matched = LinkedHashMap<PyProjectTomlBasedEntryImpl, ModuleEntity>()
   val claimedModules = mutableSetOf<ModuleEntity>()
 
-  // First pass: match by location against Python-typed modules (adopts non-pyproject Python modules at the same root)
+  // First pass: match by location against Python modules (adopts non-pyproject Python modules at the same root)
   // This is the primary and most reliable matching strategy.
-  val pythonTypedModules = allModules.filter { it.type == PYTHON_MODULE_TYPE_ID }
-  val moduleAnchors = pythonTypedModules.associateWith { ModuleAnchor(it) }
+  val pythonModules = allModules.filter { PyProjectImpl.isPythonProject(it) }
+  val moduleAnchors = pythonModules.associateWith { ModuleAnchor(it) }
   for (entry in entries) {
     val entryRootUrl = entry.root.toVirtualFileUrl(virtualFileUrlManager)
     val entryTomlDirUrl = entry.tomlFile.parent.toVirtualFileUrl(virtualFileUrlManager)

@@ -5,12 +5,11 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.DirectoryProjectConfigurator;
-import com.jetbrains.python.PythonModuleTypeBase;
+import com.jetbrains.python.module.PyModuleServiceKt;
 import com.jetbrains.python.ReSTService;
 import com.jetbrains.python.defaultProjectAwareService.PyDefaultProjectAwareModuleConfiguratorImpl;
 import com.jetbrains.python.defaultProjectAwareService.PyDefaultProjectAwareService;
@@ -50,7 +49,7 @@ final class PyDefaultProjectAwareServiceConfigurator implements DirectoryProject
     }
 
     for (final Module module : ModuleManager.getInstance(project).getModules()) {
-      if (ModuleType.get(module) instanceof PythonModuleTypeBase) {
+      if (PyModuleServiceKt.isPythonModule(module)) {
         updateServices(module, isProjectCreatedWithWizard);
         break;
       }
