@@ -25,6 +25,7 @@ import org.jetbrains.annotations.Async;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.CountDownLatch;
@@ -33,9 +34,11 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 
 public abstract class InvokeThread<E extends PrioritizedTask> {
   private static final Logger LOG = Logger.getInstance(InvokeThread.class);
+  private static final Object UNTRACKED_EVENT = new Object();
 
   private static final ThreadLocal<WorkerThreadRequest<?>> ourWorkerRequest = new ThreadLocal<>();
   private static final AtomicInteger ourWorkerCounter = new AtomicInteger(1);
@@ -49,8 +52,9 @@ public abstract class InvokeThread<E extends PrioritizedTask> {
     private final @Nullable WorkerThreadRequest<?> myPreviousRequest;
     private final long myPreviousRequestTimeoutMillis;
     private volatile boolean myStarted;
+    private boolean myProcessingFinished;
     private final CountDownLatch myExited = new CountDownLatch(1);
-    private volatile long myCurrentEventNumber;
+    private final AtomicReference<@Nullable Object> myCurrentEventToken = new AtomicReference<>();
 
     WorkerThreadRequest(InvokeThread<E> owner,
                         @NotNull Job workJob,
@@ -122,10 +126,18 @@ public abstract class InvokeThread<E extends PrioritizedTask> {
     }
 
     public void requestStop() {
-      final Future<?> future = myRequestFuture;
-      assert future != null;
       myProgressIndicator.cancel();
-      future.cancel(true);
+      synchronized (this) {
+        if (!myProcessingFinished) {
+          assert myRequestFuture != null;
+          myRequestFuture.cancel(true);
+        }
+      }
+    }
+
+    private synchronized void finishEventProcessing() {
+      myProcessingFinished = true;
+      Thread.interrupted(); // The worker must run cancellation callbacks with a clear interrupt status.
     }
 
     public boolean isStopRequested() {
@@ -134,10 +146,15 @@ public abstract class InvokeThread<E extends PrioritizedTask> {
       return myProgressIndicator.isCanceled() || future.isCancelled() || future.isDone();
     }
 
-    /** Returns zero when this worker has no event to interrupt. */
+    /** Stop requests share this token until the event ends or resumes after a fork. An idle worker returns null. */
     @ApiStatus.Internal
-    public long getCurrentEventNumber() {
-      return myCurrentEventNumber;
+    public @Nullable Object trackCurrentEvent() {
+      return myCurrentEventToken.updateAndGet(token -> token == UNTRACKED_EVENT ? new Object() : token);
+    }
+
+    @ApiStatus.Internal
+    public boolean isCurrentEvent(@NotNull Object token) {
+      return myCurrentEventToken.get() == token;
     }
 
     @ApiStatus.Internal
@@ -280,7 +297,6 @@ public abstract class InvokeThread<E extends PrioritizedTask> {
   private void run(final @NotNull WorkerThreadRequest<?> threadRequest) {
     try {
       DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode(() -> ProgressManager.getInstance().runProcess(() -> {
-        long eventNumber = 0;
         while (true) {
           try {
             if (threadRequest.isStopRequested()) {
@@ -292,7 +308,7 @@ public abstract class InvokeThread<E extends PrioritizedTask> {
             }
 
             E event = myEvents.get();
-            threadRequest.myCurrentEventNumber = ++eventNumber;
+            threadRequest.myCurrentEventToken.set(UNTRACKED_EVENT);
             doProcessEvent(event);
           }
           catch (VMDisconnectedException | EventQueueClosedException ignored) {
@@ -316,16 +332,14 @@ public abstract class InvokeThread<E extends PrioritizedTask> {
             reportCommandError(e);
           }
           finally {
-            threadRequest.myCurrentEventNumber = 0;
+            threadRequest.myCurrentEventToken.set(null);
           }
         }
       }, threadRequest.myProgressIndicator));
     }
     finally {
-      // ensure that all scheduled events are processed
-      if (threadRequest == getCurrentRequest()) {
-        processRemaining();
-      }
+      threadRequest.finishEventProcessing();
+      finishWorker(threadRequest);
 
       if (LOG.isDebugEnabled()) {
         LOG.debug("Request " + threadRequest + " exited");
@@ -333,8 +347,25 @@ public abstract class InvokeThread<E extends PrioritizedTask> {
     }
   }
 
+  private void finishWorker(WorkerThreadRequest<?> request) {
+    List<E> remaining;
+    synchronized (this) {
+      if (request != myCurrentRequest) return;
+      if (!myEvents.isClosed()) {
+        startNewWorkerThread();
+        return;
+      }
+      remaining = myEvents.clearQueue();
+    }
+    processRemaining(remaining);
+  }
+
   public void processRemaining() {
-    for (E event : myEvents.clearQueue()) {
+    processRemaining(myEvents.clearQueue());
+  }
+
+  private void processRemaining(List<E> remaining) {
+    for (E event : remaining) {
       try {
         processEvent(event);
       }
@@ -380,12 +411,16 @@ public abstract class InvokeThread<E extends PrioritizedTask> {
     }
   }
 
-  protected void switchToRequest(WorkerThreadRequest newRequest) {
-    WorkerThreadRequest currentThreadRequest;
+  protected boolean trySwitchToRequest(@NotNull WorkerThreadRequest<E> newRequest) {
+    WorkerThreadRequest<?> currentThreadRequest = getCurrentThreadRequest();
+    LOG.assertTrue(currentThreadRequest != null);
     synchronized (this) {
-      currentThreadRequest = getCurrentThreadRequest();
-      LOG.assertTrue(currentThreadRequest != null);
-      newRequest.myCurrentEventNumber = 0;
+      if (currentThreadRequest != myCurrentRequest || myEvents.isClosed() || myEvents.hasPendingTermination()) {
+        return false;
+      }
+      if (newRequest.myCurrentEventToken.get() != null) {
+        newRequest.myCurrentEventToken.set(UNTRACKED_EVENT);
+      }
       myCurrentRequest = newRequest;
       if (LOG.isDebugEnabled()) {
         LOG.debug("Switched current request from " + currentThreadRequest + " to " + newRequest);
@@ -393,6 +428,7 @@ public abstract class InvokeThread<E extends PrioritizedTask> {
     }
 
     currentThreadRequest.requestStop();
+    return true;
   }
 
   public WorkerThreadRequest<E> getCurrentRequest() {
@@ -405,7 +441,7 @@ public abstract class InvokeThread<E extends PrioritizedTask> {
     return ourWorkerRequest.get();
   }
 
-  public void close() {
+  public synchronized void close() {
     myEvents.close();
     LOG.debug("Closing evaluation");
   }

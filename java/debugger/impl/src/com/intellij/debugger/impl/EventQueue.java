@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -27,6 +28,7 @@ public class EventQueue<E> {
   private volatile boolean myIsClosed = false;
 
   private int myAsyncCommandsCounter = 0;
+  private boolean myMayHavePendingTermination;
 
   public EventQueue(int countPriorities) {
     myLock = new ReentrantLock();
@@ -75,6 +77,21 @@ public class EventQueue<E> {
     return true;
   }
 
+  public boolean putTermination(@NotNull E event, int priority) {
+    myLock.lock();
+    try {
+      if (!put(event, priority)) return false;
+      // A null entry marks the termination that follows it.
+      LinkedList<E> events = getEventsList(priority);
+      events.add(events.size() - 1, null);
+      myMayHavePendingTermination = true;
+      return true;
+    }
+    finally {
+      myLock.unlock();
+    }
+  }
+
   private LinkedList<E> getEventsList(final int priority) {
     return (LinkedList<E>)myEvents[priority];
   }
@@ -98,8 +115,10 @@ public class EventQueue<E> {
           throw new EventQueueClosedException();
         }
         for (int i = 0; i < myEvents.length; i++) {
-          E event = getEventsList(i).poll();
-          if (event != null) {
+          LinkedList<E> events = getEventsList(i);
+          if (!events.isEmpty()) {
+            E event = events.removeFirst();
+            if (event == null) event = events.removeFirst();
             processRemove(event);
             return event;
           }
@@ -126,6 +145,18 @@ public class EventQueue<E> {
     return myIsClosed;
   }
 
+  public boolean hasPendingTermination() {
+    myLock.lock();
+    try {
+      if (!myMayHavePendingTermination) return false;
+      myMayHavePendingTermination = ContainerUtil.exists(myEvents, events -> events.contains(null));
+      return myMayHavePendingTermination;
+    }
+    finally {
+      myLock.unlock();
+    }
+  }
+
   public E getCurrentEvent() {
     return myCurrentEvent;
   }
@@ -138,6 +169,10 @@ public class EventQueue<E> {
         LinkedList<E> eventList = getEventsList(i);
         allEvents.addAll(eventList);
         eventList.clear();
+      }
+      if (myMayHavePendingTermination) {
+        allEvents.removeIf(Objects::isNull);
+        myMayHavePendingTermination = false;
       }
       allEvents.forEach(this::processRemove);
       return allEvents;

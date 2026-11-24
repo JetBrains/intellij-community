@@ -57,6 +57,7 @@ import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.TestOnly
 import java.util.ArrayDeque
 import java.util.concurrent.CompletableFuture
+import java.util.concurrent.Executor
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.coroutines.CoroutineContext
@@ -199,30 +200,37 @@ class DebuggerManagerThreadImpl @ApiStatus.Internal constructor(
     return scheduled
   }
 
-  /**
-   * waits COMMAND_TIMEOUT milliseconds
-   * if worker thread is still processing the same command
-   * calls terminateCommand
-   */
+  /** Interrupts the current event if it still runs when the timeout expires. */
   fun terminateAndInvoke(command: DebuggerCommandImpl, terminateTimeoutMillis: Int) {
-    val request = currentRequest
-    val eventNumber = request.currentEventNumber
+    terminateAndInvoke(command, Executor { check ->
+      AppExecutorUtil.getAppScheduledExecutorService().schedule(check, terminateTimeoutMillis.toLong(), TimeUnit.MILLISECONDS)
+    })
+  }
 
-    schedule(command)
-
-    if (eventNumber != 0L) {
-      AppExecutorUtil.getAppScheduledExecutorService().schedule(
-        {
-          synchronized(this) {
-            if (request !== currentRequest || eventNumber != request.currentEventNumber) return@schedule
-            // after close the stopped worker drains the queue itself, and a new worker would outlive the work job
-            if (!myDisposed && !myClosed.get()) {
-              startNewWorkerThread(request, COMMAND_TIMEOUT.toLong())
-              return@schedule
-            }
+  @JvmName("terminateAndInvoke")
+  internal fun terminateAndInvoke(command: DebuggerCommandImpl, timeout: Executor) {
+    val priority = command.priority.ordinal
+    setCommandManagerThread(command)
+    val request: WorkerThreadRequest<*>
+    val token: Any?
+    val accepted: Boolean
+    synchronized(this) {
+      request = currentRequest
+      token = request.trackCurrentEvent()
+      accepted = coroutineScope.isActive && myEvents.putTermination(command, priority)
+    }
+    if (!accepted) command.notifyCancelled()
+    if (token != null) {
+      timeout.execute {
+        synchronized(this) {
+          if (request !== currentRequest || !request.isCurrentEvent(token)) return@execute
+          if (!myEvents.isClosed) {
+            startNewWorkerThread(request, COMMAND_TIMEOUT.toLong())
+            return@execute
           }
-          request.requestStop()
-        }, terminateTimeoutMillis.toLong(), TimeUnit.MILLISECONDS)
+        }
+        request.requestStop()
+      }
     }
   }
 
@@ -288,31 +296,36 @@ class DebuggerManagerThreadImpl @ApiStatus.Internal constructor(
 
   fun startLongProcessAndFork(process: Runnable) {
     assertIsManagerThread()
-    startNewWorkerThread()
+    val request = synchronized(this) {
+      val original = currentRequest
+      if (getCurrentThreadRequest() !== original || myEvents.isClosed) throw VMDisconnectedException()
+      startNewWorkerThread()
+      original
+    }
 
     try {
       process.run()
     }
     finally {
-      val request = getCurrentThreadRequest()
-
       LOG.debug { "Switching back to $request" }
 
-      var cancelled = false
       super.invokeAndWait(object : DebuggerCommandImpl() {
+        override var priority = PrioritizedTask.Priority.LOW
+
         override fun action() {
-          switchToRequest(request)
+          if (trySwitchToRequest(request)) return
+          priority = PrioritizedTask.Priority.LOWEST
+          hold()
+          schedule(this)
         }
 
         override fun commandCancelled() {
-          cancelled = true
           LOG.debug { "Event queue was closed, killing request $request" }
           request.requestStop()
         }
       })
 
-      // the queue is already closed - we need to stop asap
-      if (cancelled) {
+      if (request.isStopRequested) {
         throw VMDisconnectedException()
       }
     }
@@ -357,6 +370,7 @@ class DebuggerManagerThreadImpl @ApiStatus.Internal constructor(
   }
 
   @ApiStatus.Internal
+  @Synchronized
   fun restartIfNeeded() {
     if (!myDisposed && myClosed.compareAndSet(true, false)) {
       myEvents.reopen()
