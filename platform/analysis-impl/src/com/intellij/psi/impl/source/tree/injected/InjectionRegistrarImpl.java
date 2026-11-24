@@ -65,6 +65,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import java.lang.ref.Reference;
 import java.util.HashMap;
@@ -173,7 +174,7 @@ public final class InjectionRegistrarImpl implements MultiHostRegistrar {
     cleared = false;
     String nnPrefix = StringUtil.isEmpty(prefix) ? "" : prefix; // intern empty strings too to reduce gc
     String nnSuffix = StringUtil.isEmpty(suffix) ? "" : suffix; // intern empty strings too to reduce gc
-    PlaceInfo info = new PlaceInfo(nnPrefix, nnSuffix, host, rangeInsideHost, host.getText());
+    PlaceInfo info = new PlaceInfo(nnPrefix, nnSuffix, host, rangeInsideHost, hostText(host, placeInfos));
     placeInfos.add(info);
 
     return this;
@@ -199,6 +200,15 @@ public final class InjectionRegistrarImpl implements MultiHostRegistrar {
       throw new IllegalStateException(
         "Wow, you must not start injecting in one thread (" + currentThread + ") and finish in the other (" + Thread.currentThread() + ")");
     }
+  }
+
+  /**
+   * Returns the host text of the previous place when that place has the same host, so that the places of one host share one text.
+   */
+  @VisibleForTesting
+  public static @NotNull String hostText(@NotNull PsiLanguageInjectionHost host, @NotNull List<PlaceInfo> placeInfos) {
+    PlaceInfo previous = ContainerUtil.getLastItem(placeInfos);
+    return previous != null && previous.getHost() == host ? previous.getHostText() : host.getText();
   }
 
   private static void decode(@NotNull PlaceInfo info, @NotNull StringBuilder outChars) {
@@ -681,7 +691,7 @@ public final class InjectionRegistrarImpl implements MultiHostRegistrar {
       TextRange rangeInsideHost = TextRange.create(hostInjectionRange).shiftLeft(newInjectionHostRange.getStartOffset());
 
       PlaceInfo info = new PlaceInfo(shred.getPrefix(), shred.getSuffix(), newDummyInjectionHost, rangeInsideHost,
-                                     newDummyInjectionHost.getText());
+                                     hostText(newDummyInjectionHost, placeInfos));
       placeInfos.add(info);
       info.setNewInjectionHostRange(newInjectionHostRange);
 
@@ -691,7 +701,7 @@ public final class InjectionRegistrarImpl implements MultiHostRegistrar {
       TextRange rangeInHostElementPSI = info.getRangeInHostElement();
 
       newDocumentText.append(shred.getPrefix());
-      newDocumentText.append(newDummyInjectionHost.getText(), rangeInHostElementPSI.getStartOffset(), rangeInHostElementPSI.getEndOffset());
+      newDocumentText.append(info.getHostText(), rangeInHostElementPSI.getStartOffset(), rangeInHostElementPSI.getEndOffset());
       newDocumentText.append(shred.getSuffix());
     }
     // newDocumentText can be shorter if decode failed
