@@ -97,6 +97,33 @@ else:
         return iterate()
 
 
+# JetBrains extension (PY-92233): the sorted code lines of a file, by its path, with the size and the mtime of the
+# file they were read from.
+_sorted_code_lines_cache = {}
+
+
+def _get_sorted_code_lines(path):
+    """
+    The sorted line numbers of the code in the file at `path`, as `_get_code_lines` finds them.
+
+    JetBrains extension (PY-92233): `_get_code_lines` compiles the whole file, and a `setBreakpoints` request calls
+    `add_breakpoint` once per breakpoint of the file, so a file with N breakpoints was compiled N times on every
+    request, which stalled the adapter for seconds on a large file. The lines are kept per file until the file
+    changes on disk.
+    """
+    try:
+        file_stat = os.stat(path)
+        file_key = (file_stat.st_mtime_ns, file_stat.st_size)
+    except OSError:
+        return sorted(_get_code_lines(path))
+    cached = _sorted_code_lines_cache.get(path)
+    if cached is not None and cached[0] == file_key:
+        return cached[1]
+    lines = sorted(_get_code_lines(path))
+    _sorted_code_lines_cache[path] = (file_key, lines)
+    return lines
+
+
 class PyDevdAPI(object):
     class VariablePresentation(object):
         def __init__(self, special="group", function="group", class_="group", protected="inline"):
@@ -548,7 +575,7 @@ class PyDevdAPI(object):
             if adjust_line and not translated_absolute_filename.startswith("<"):
                 # Validate file_to_line_to_breakpoints and adjust their positions.
                 try:
-                    lines = sorted(_get_code_lines(translated_absolute_filename))
+                    lines = _get_sorted_code_lines(translated_absolute_filename)
                 except Exception:
                     pass
                 else:
