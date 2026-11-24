@@ -7,8 +7,6 @@ import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.testframework.JavaAwareTestConsoleProperties;
 import com.intellij.execution.testframework.JavaSMTRunnerTestTreeView;
 import com.intellij.execution.testframework.TestConsoleProperties;
-import com.intellij.execution.testframework.sm.SMCustomMessagesParsing;
-import com.intellij.execution.testframework.sm.runner.OutputToGeneralTestEventsConverter;
 import com.intellij.execution.testframework.sm.runner.SMTRunnerConsoleProperties;
 import com.intellij.execution.testframework.sm.runner.SMTestLocator;
 import com.intellij.execution.testframework.sm.runner.ui.SMTRunnerTestTreeView;
@@ -17,7 +15,6 @@ import com.intellij.java.JavaBundle;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.Separator;
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfiguration;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.pom.Navigatable;
 import com.intellij.util.config.BooleanProperty;
@@ -36,7 +33,7 @@ import static com.intellij.execution.testframework.JavaAwareTestConsolePropertie
 /**
  * @author Vladislav.Soroka
  */
-public class GradleConsoleProperties extends SMTRunnerConsoleProperties implements SMTRunnerTestTreeViewProvider, SMCustomMessagesParsing {
+public class GradleConsoleProperties extends SMTRunnerConsoleProperties implements SMTRunnerTestTreeViewProvider {
   public static final BooleanProperty SHOW_INTERNAL_TEST_NODES = new BooleanProperty("showInternalTestNodes", false);
   public static final SMTestLocator GRADLE_TEST_LOCATOR = GradleTestLocator.INSTANCE;
 
@@ -90,20 +87,6 @@ public class GradleConsoleProperties extends SMTRunnerConsoleProperties implemen
   @Override
   public boolean isEditable() {
     return true;
-  }
-
-  @Override
-  public OutputToGeneralTestEventsConverter createTestEventsConverter(
-    @NotNull String testFrameworkName,
-    @NotNull TestConsoleProperties consoleProperties
-  ) {
-    return new OutputToGeneralTestEventsConverter(testFrameworkName, consoleProperties) {
-      @Override
-      public void process(String text, Key outputType) {
-        // the test events come from the Gradle test runner,
-        // the process output is the build output and is shown in the build tool window
-      }
-    };
   }
 
   private @NotNull ToggleBooleanProperty createShowInternalNodesAction(TestConsoleProperties target) {

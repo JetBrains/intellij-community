@@ -164,10 +164,10 @@ class GradleTestExecutionTest(private val singleConsole: Boolean) : GradleTestEx
         assertThat(it.consoleText).contains(": Executing")
         assertThat(it.consoleText).contains(": Execution finished")
       }
-      assertTestConsoleDoesNotContain("buildscript \n" + "output\n" + "\n" + "text\n")
-      assertTestConsoleDoesNotContain("script output text without eol")
-      assertTestConsoleDoesNotContain(": Executing")
-      assertTestConsoleDoesNotContain(": Execution finished")
+      assertTestConsoleContains("buildscript \n" + "output\n" + "\n" + "text\n")
+      assertTestConsoleContains("script output text without eol")
+      assertTestConsoleContains(": Executing")
+      assertTestConsoleContains(": Execution finished")
       assertTestConsoleContains("test \n" + "output\n" + "\n" + "text\n")
     }
   }
@@ -662,8 +662,8 @@ class GradleTestExecutionTest(private val singleConsole: Boolean) : GradleTestEx
         assertThat(it.consoleText).contains("Attempt to resolve configuration")
         assertThat(it.consoleText).doesNotContain("Attempt to resolve configuration too early")
       }
-      assertTestConsoleDoesNotContain("Green light to resolve configuration")
-      assertTestConsoleDoesNotContain("Attempt to resolve configuration")
+      assertTestConsoleContains("Green light to resolve configuration")
+      assertTestConsoleContains("Attempt to resolve configuration")
       assertTestConsoleDoesNotContain("Attempt to resolve configuration too early")
     }
   }
@@ -805,7 +805,7 @@ class GradleTestExecutionTest(private val singleConsole: Boolean) : GradleTestEx
       assertBuildViewNode(buildView, "successful") {
         assertThat(it.consoleText).contains("The max parallel fork was [$parallelForks]")
       }
-      assertTestConsoleDoesNotContain("The max parallel fork was [$parallelForks]")
+      assertTestConsoleContains("The max parallel fork was [$parallelForks]")
     }
   }
 

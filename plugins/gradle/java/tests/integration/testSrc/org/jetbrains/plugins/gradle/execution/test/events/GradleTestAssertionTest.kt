@@ -1921,7 +1921,7 @@ class GradleTestAssertionTest : GradleTestExecutionTestCase() {
 
       executeTasks(":test", isRunAsTest = true)
       assertTestConsoleDoesNotContain("DAEMON_CLASSPATH: " + projectRoot.toNioPath())
-      assertTestConsoleDoesNotContain("TEST_CLASSPATH: " + projectRoot.toNioPath())
+      assertTestConsoleContains("TEST_CLASSPATH: " + projectRoot.toNioPath())
 
       assertBuildViewNode(buildView, ":test") {
         assertThat(it.consoleText).contains("TEST_CLASSPATH: " + projectRoot.toNioPath())

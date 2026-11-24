@@ -3,6 +3,7 @@ package org.jetbrains.plugins.gradle.execution.test.runner.events;
 
 import com.intellij.build.BuildViewSettingsProvider;
 import com.intellij.execution.process.ProcessHandler;
+import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsSafe;
@@ -36,6 +37,7 @@ public final class GradleTestsExecutionConsoleOutputProcessor {
           processHandler.notifyTextAvailable(output.text, processOutputType);
         }
         else {
+          executionConsole.print(output.text, ConsoleViewContentType.getConsoleViewType(processOutputType));
           executionConsole.printToBuildView(output.text, processOutputType);
         }
       }
