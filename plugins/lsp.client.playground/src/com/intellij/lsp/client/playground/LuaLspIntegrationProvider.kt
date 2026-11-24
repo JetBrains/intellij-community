@@ -10,6 +10,11 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.lsp.api.LspClient
 import com.intellij.platform.lsp.api.LspIntegrationProvider
 import com.intellij.platform.lsp.api.ProjectWideLspClientDescriptor
+import com.intellij.platform.lsp.api.customization.LspCustomization
+import com.intellij.platform.lsp.api.customization.LspFormattingCustomizer
+import com.intellij.platform.lsp.api.customization.LspFormattingSupport
+import com.intellij.platform.lsp.api.customization.LspOnTypeFormattingCustomizer
+import com.intellij.platform.lsp.api.customization.LspOnTypeFormattingSupport
 import com.intellij.platform.lsp.api.lsWidget.LspClientWidgetItem
 import javax.swing.Icon
 
@@ -29,6 +34,20 @@ class LuaLspIntegrationProvider : LspIntegrationProvider {
 
 class LuaLspServerDescriptor(project: Project) : ProjectWideLspClientDescriptor(project, "Lua") {
   override fun isSupportedFile(file: VirtualFile): Boolean = isLuaLspFile(file)
+
+  override val lspCustomization: LspCustomization = object : LspCustomization() {
+    // lua-language-server offers formatting in its static capabilities, which the default does not take
+    // as a wish of the server to format a file; the IDE has no formatter of its own for Lua
+    override val formattingCustomizer: LspFormattingCustomizer = object : LspFormattingSupport() {
+      override fun shouldFormatThisFileExclusivelyByServer(
+        file: VirtualFile,
+        ideCanFormatThisFileItself: Boolean,
+        serverExplicitlyWantsToFormatThisFile: Boolean,
+      ): Boolean = !ideCanFormatThisFileItself
+    }
+
+    override val onTypeFormattingCustomizer: LspOnTypeFormattingCustomizer = LspOnTypeFormattingSupport()
+  }
 
   override fun createCommandLine(): GeneralCommandLine {
     val luaLanguageServerPath = findLuaLanguageServerPath()
