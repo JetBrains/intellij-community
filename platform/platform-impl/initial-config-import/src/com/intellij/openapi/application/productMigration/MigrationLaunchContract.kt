@@ -2,6 +2,7 @@
 package com.intellij.openapi.application.productMigration
 
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.util.SystemProperties
 import org.jetbrains.annotations.ApiStatus
 import java.io.IOException
 import java.nio.file.Path
@@ -91,6 +92,32 @@ fun migrationLaunchArguments(reason: MigrationLaunchReason, sourceProduct: Strin
 @ApiStatus.Internal
 fun macOpenCommand(app: Path, arguments: List<String>): List<String> =
   listOf("/usr/bin/open", "-n", "-a", app.toString(), "--args") + arguments
+
+/** The command that runs [launcher], the launcher of the installed application, with [arguments]. Each value is a separate argument. */
+@ApiStatus.Internal
+fun migrationLauncherCommand(launcher: Path, arguments: List<String>): List<String> = listOf(launcher.toString()) + arguments
+
+/**
+ * Starts [launcher] directly with [arguments] and logs the start. A failure is logged and gives `null`.
+ * The process is the Unified IDE, and it continues after the exit of this process.
+ * So it gets no pipe for its output, and its working directory is the user home and not a folder of this IDE.
+ */
+@ApiStatus.Internal
+fun startMigrationLauncher(launcher: Path, arguments: List<String>): Process? {
+  val command = migrationLauncherCommand(launcher, arguments)
+  LOG.info("starting the Unified IDE: ${command}")
+  try {
+    return ProcessBuilder(command)
+      .directory(Path.of(SystemProperties.getUserHome()).toFile())
+      .redirectOutput(ProcessBuilder.Redirect.DISCARD)
+      .redirectError(ProcessBuilder.Redirect.DISCARD)
+      .start()
+  }
+  catch (e: IOException) {
+    LOG.warn("cannot start the Unified IDE", e)
+    return null
+  }
+}
 
 /**
  * Starts [command] and logs it. With [inheritIO], the process gets the standard streams of this process.

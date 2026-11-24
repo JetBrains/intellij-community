@@ -5,6 +5,7 @@ import com.intellij.openapi.application.productMigration.MigrationLaunchParamete
 import com.intellij.openapi.application.productMigration.MigrationLaunchReason
 import com.intellij.openapi.application.productMigration.macOpenCommand
 import com.intellij.openapi.application.productMigration.migrationLaunchArguments
+import com.intellij.openapi.application.productMigration.migrationLauncherCommand
 import com.intellij.openapi.application.productMigration.readMigrationLaunchParameters
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
@@ -85,6 +86,18 @@ class MigrationLaunchContractTest {
     val command = macOpenCommand(Path.of("/Users/me/Applications/Unified IDE.app"), listOf("-Da=b", "/Users/me/my project"))
     assertEquals(listOf("/usr/bin/open", "-n", "-a", "/Users/me/Applications/Unified IDE.app", "--args", "-Da=b", "/Users/me/my project"),
                  command)
+  }
+
+  @Test
+  fun `launcher command runs the launcher with the arguments of the contract first`() {
+    val launcher = Path.of("C:\\Users\\John Smith\\AppData\\Local\\Programs\\JetBrains\\bin\\jetbrains64.exe")
+    val arguments = migrationLaunchArguments(MigrationLaunchReason.MIGRATE, "GO", listOf("C:\\Users\\John Smith\\my project"))
+    assertEquals(listOf(launcher.toString(),
+                        "-Dide.migration.version=1",
+                        "-Dide.migration.reason=migrate",
+                        "-Dide.migration.source.product=GO",
+                        "C:\\Users\\John Smith\\my project"),
+                 migrationLauncherCommand(launcher, arguments))
   }
 }
 
