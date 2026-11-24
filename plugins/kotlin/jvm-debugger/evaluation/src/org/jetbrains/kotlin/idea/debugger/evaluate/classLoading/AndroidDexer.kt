@@ -2,11 +2,11 @@
 
 package org.jetbrains.kotlin.idea.debugger.evaluate.classLoading
 
-import org.jetbrains.kotlin.extensions.ProjectExtensionDescriptor
+import org.jetbrains.kotlin.idea.util.ProjectExtensionDescriptor
 
 interface AndroidDexer {
     companion object : ProjectExtensionDescriptor<AndroidDexer>(
-        "org.jetbrains.kotlin.androidDexer", AndroidDexer::class.java
+        "org.jetbrains.kotlin.androidDexer"
     )
 
     fun dex(classes: Collection<ClassToLoad>): ByteArray?
