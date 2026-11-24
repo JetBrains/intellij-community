@@ -33,6 +33,7 @@ jvm_library(
         "//platform/platform-impl/os-certificates",
         "//platform/platform-resources-file-types:resources-fileTypes",
         "//platform/platform-resources-en-file-templates:resources-en-fileTemplates",
+        "//platform/settings.v2/shared",
     ],
     deps = [
         # do not sort,

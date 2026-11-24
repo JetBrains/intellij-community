@@ -45,5 +45,6 @@
     <orderEntry type="module" module-name="intellij.platform.buildScripts.downloader" />
     <orderEntry type="module" module-name="intellij.platform.workspace.storage" />
     <orderEntry type="module" module-name="intellij.platform.backend.workspace" />
+    <orderEntry type="module" module-name="intellij.platform.settings.v2.shared" scope="RUNTIME" />
   </component>
 </module>
