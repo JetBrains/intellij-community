@@ -199,6 +199,19 @@ class SeSearchProjectsTest {
   }
 
   @Test
+  fun onlyTheSearchOfAnotherProjectIsMarkedAsSuch() = timeoutRunBlocking {
+    val holder = holder(TestSearchProjects(listOf(popupProject, otherProject), SEARCHED_ID))
+
+    holder.items(SEARCHED_ID)
+
+    val searched = createdProviders.filter { it.id == SEARCHED_ID }
+    assertEquals(listOf(false), searched.single { it.project === popupProject }.otherProjectMarks,
+                 "the search of the popup project keeps the saved settings of the popup")
+    assertEquals(listOf(true), searched.single { it.project === otherProject }.otherProjectMarks,
+                 "the search of another project keeps the saved settings of that project")
+  }
+
+  @Test
   fun aSlowSearchProjectDelaysNoItemOfAnother() = timeoutRunBlocking {
     val gate = CompletableDeferred<Unit>()
     val holder = holder(TestSearchProjects(listOf(popupProject, otherProject), SEARCHED_ID, gateOfOther = gate))
@@ -351,12 +364,16 @@ class SeSearchProjectsTest {
     /** For each search: whether each forked task of a read action saw the mark of [project]. A goto model forks so. */
     val searchMarks = CopyOnWriteArrayList<Boolean>()
 
+    /** For each search: whether it ran as the search of another project than the popup project. */
+    val otherProjectMarks = CopyOnWriteArrayList<Boolean>()
+
     @Volatile
     var isDisposed = false
 
     override val displayName: String get() = id
 
     override suspend fun collectItems(params: SeParams, collector: SeItemsProvider.Collector) {
+      otherProjectMarks.add(SeSearchProjectContext.isSearchOfOtherProject(currentCoroutineContext()))
       searchMarks.add(readAction {
         blockingContextToIndicator {
           val marks = CopyOnWriteArrayList<Boolean>()

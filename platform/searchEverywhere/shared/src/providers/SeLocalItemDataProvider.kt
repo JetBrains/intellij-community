@@ -230,7 +230,7 @@ class SeLocalItemDataProvider(
       for (searched in holders.searched(params.filter)) {
         if (popupProjectOnly && !searched.isPopupProject) continue
         // A provider that reaches several projects in one run then searches its own project only, see [SeSearchProjectContext].
-        val mark = if (marksSearch) SeSearchProjectContext(searched.key) else EmptyCoroutineContext
+        val mark = if (marksSearch) SeSearchProjectContext(searched.key, searched.isPopupProject) else EmptyCoroutineContext
         launch(mark) {
           val searchedProvider = if (searched.isPopupProject) provider else searched.awaitHolder()?.get(id, isAllTab)?.provider
           searchedProvider?.let { collectOwnedItems(it, searched.key, params, operationDisposable) }

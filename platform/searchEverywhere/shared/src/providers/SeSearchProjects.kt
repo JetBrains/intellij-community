@@ -114,9 +114,14 @@ class SeSearchProjectHolder(val project: Project, private val creation: Deferred
  * no mark: Go to Class of the platform, or a popup that searches one project.
  *
  * The mark holds the key of the project, not the project, so a computation that it reaches retains no project.
+ * [isPopupProject] tells whether the search runs in the project of the popup. The search of another project applies
+ * the filter of the popup, but it keeps the saved settings of that project, see [isSearchOfOtherProject].
  */
 @ApiStatus.Internal
-class SeSearchProjectContext(private val projectKey: String) : AbstractCoroutineContextElement(Key), IntelliJContextElement {
+class SeSearchProjectContext(
+  private val projectKey: String,
+  private val isPopupProject: Boolean = true,
+) : AbstractCoroutineContextElement(Key), IntelliJContextElement {
   /** A child computation searches the same project, also one that runs on another thread. */
   override fun produceChildElement(parentContext: CoroutineContext, isStructured: Boolean): IntelliJContextElement = this
 
@@ -124,5 +129,8 @@ class SeSearchProjectContext(private val projectKey: String) : AbstractCoroutine
     /** Whether the current thread runs the search of [project] that a popup runs in each of its search projects. */
     fun isSearchOf(project: Project): Boolean =
       currentThreadContext()[Key]?.projectKey == SeSearchProjectHolder.keyOf(project)
+
+    /** Whether [context] runs the search of a search project other than the project of the popup. */
+    fun isSearchOfOtherProject(context: CoroutineContext): Boolean = context[Key]?.isPopupProject == false
   }
 }
