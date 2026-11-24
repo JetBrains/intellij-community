@@ -89,8 +89,16 @@ public class PsiSnippetDocTagImpl extends CompositePsiElement implements PsiSnip
     return true;
   }
 
+  /**
+   * Returns the ranges of the snippet body lines in this tag, without the leading asterisks and the common indent.
+   */
   @Contract(pure = true)
   public @NotNull List<@NotNull TextRange> getContentRanges() {
+    return computeContentRanges();
+  }
+
+  @Contract(pure = true)
+  private @NotNull List<@NotNull TextRange> computeContentRanges() {
     boolean isMarkdown = PsiUtil.isInMarkdownDocComment(this);
     final PsiSnippetDocTagValue valueElement = getValueElement();
     if (valueElement == null) return Collections.emptyList();
