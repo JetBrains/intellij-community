@@ -3,6 +3,7 @@ package com.jetbrains.python.fixtures
 
 import com.intellij.openapi.application.WriteAction
 import com.intellij.python.sdk.backend.languageLevel
+import com.jetbrains.python.project.asPyProjectCandidate
 import kotlin.time.Duration.Companion.minutes
 import com.jetbrains.python.sdk.add.v2.PathHolder
 import com.intellij.python.sdk.common.PyInterpreterRef
@@ -35,7 +36,6 @@ import com.jetbrains.python.packaging.management.PythonPackageStubs
 import com.jetbrains.python.packaging.management.TestPythonPackageManager
 import com.jetbrains.python.packaging.management.awaitDerivedRootsForTests
 import com.jetbrains.python.packaging.utils.PyPackageCoroutine
-import com.jetbrains.python.project.PyProject.Companion.asPyProject
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.psi.impl.awaitPythonLanguageLevelsForTests
 import com.jetbrains.python.psi.impl.describePythonLanguageLevelsForTests
@@ -145,7 +145,8 @@ fun findLanguageLevelForTests(module: Module): LanguageLevel {
 fun setPythonInterpreterForTests(module: Module, interpreter: PythonInterpreter?) {
   val job = PyPackageCoroutine.getScope(module.project).launch {
     withTimeout(DEFAULT_TEST_TIMEOUT) {
-      val pyProject = checkNotNull(module.asPyProject()) { "${module.name} is not a Python project" }
+      // A candidate: the interpreter makes the module a Python project, also in an IDE where its type does not.
+      val pyProject = checkNotNull(module.asPyProjectCandidate()) { "${module.name} has no content root" }
       pyProject.setPythonInterpreter(interpreter).orThrow()
     }
   }
@@ -162,7 +163,8 @@ fun addMockPythonInterpreterForTests(module: Module, sdk: Sdk): PythonInterprete
   var result: PythonInterpreter? = null
   val job = PyPackageCoroutine.getScope(module.project).launch {
     withTimeout(DEFAULT_TEST_TIMEOUT) {
-      val pyProject = checkNotNull(module.asPyProject()) { "${module.name} is not a Python project" }
+      // A candidate: the interpreter makes the module a Python project, also in an IDE where its type does not.
+      val pyProject = checkNotNull(module.asPyProjectCandidate()) { "${module.name} has no content root" }
       val interpreter = PythonInterpreterRegistry.getInstance(module.project).addMockPythonInterpreter(pyProject, sdk)
       result = pyProject.setPythonInterpreter(interpreter).orThrow()
     }
@@ -184,7 +186,8 @@ fun addRealPythonInterpreterForTests(module: Module, pythonBinary: Path): Python
   var result: PythonInterpreter? = null
   val job = PyPackageCoroutine.getScope(module.project).launch {
     withTimeout(timeout) {
-      val pyProject = checkNotNull(module.asPyProject()) { "${module.name} is not a Python project" }
+      // A candidate: the interpreter makes the module a Python project, also in an IDE where its type does not.
+      val pyProject = checkNotNull(module.asPyProjectCandidate()) { "${module.name} has no content root" }
       val ref = PyInterpreterRef.native(PIP_MANAGER, pathEnvRef(PathHolder.Eel(pythonBinary), pyProject.baseDir))
       val built = PythonInterpreterRegistry.getInstance(module.project).build(pyProject, ref).orThrow()
       val interpreter = checkNotNull(pyProject.setPythonInterpreter(built).orThrow()) { "No interpreter for ${module.name}" }

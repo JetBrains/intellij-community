@@ -8,6 +8,7 @@ import com.intellij.testFramework.junit5.fixture.moduleFixture
 import com.intellij.testFramework.junit5.fixture.testFixture
 import com.jetbrains.python.project.PyProject
 import com.jetbrains.python.project.PyProject.Companion.asPyProject
+import com.jetbrains.python.project.asPyProjectCandidate
 import com.jetbrains.python.sdk.internal.PYTHON_MODULE_ID
 import org.jetbrains.annotations.TestOnly
 import java.nio.file.Path
@@ -58,8 +59,9 @@ fun TestFixture<Project>.pyModuleFixture(
 @TestOnly
 fun TestFixture<Module>.pyProjectFixture(): TestFixture<PyProject> = testFixture("pyProject") {
   val module = this@pyProjectFixture.init()
-  val pyProject = requireNotNull(module.asPyProject()) {
-    "Module ${module.name} is not a Python project. Build it on a path fixture, so it has a content root."
+  // A candidate: outside PyCharm the module becomes a Python project only with its interpreter, see setPythonInterpreter.
+  val pyProject = requireNotNull(module.asPyProjectCandidate()) {
+    "Module ${module.name} has no content root. Build it on a path fixture."
   }
   initialized(pyProject) {}
 }
@@ -109,7 +111,8 @@ suspend fun Project.pyProjectAt(path: Path): PyProject {
   val module = edtWriteAction { ModuleManager.getInstance(this).newModule(path, PYTHON_MODULE_ID) }
   val root = withContext(Dispatchers.IO) { VfsUtil.findFile(path, true) } ?: error("No $path in VFS")
   ModuleRootModificationUtil.updateModel(module) { it.addContentEntry(root).addSourceFolder(root, false) }
-  return requireNotNull(module.asPyProject()) { "Module ${module.name} with a content root is not a Python project" }
+  // A candidate: outside PyCharm the module becomes a Python project only with its interpreter, see setPythonInterpreter.
+  return requireNotNull(module.asPyProjectCandidate()) { "Module ${module.name} has no content root" }
 }
 
 /** The [PyProject] of the module [moduleName] that the project already has, for example after an import. */

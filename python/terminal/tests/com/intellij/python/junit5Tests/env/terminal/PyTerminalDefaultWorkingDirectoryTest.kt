@@ -9,7 +9,6 @@ import com.intellij.python.junit5Tests.framework.pyProjectFixture
 import com.intellij.python.terminal.pyTerminalDefaultWorkingDirectory
 import com.intellij.python.test.env.junit5.pyVenvFixture
 import com.intellij.testFramework.common.timeoutRunBlocking
-import com.intellij.testFramework.junit5.fixture.moduleFixture
 import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.testFramework.junit5.fixture.tempPathFixture
 import kotlinx.coroutines.Dispatchers
@@ -29,7 +28,7 @@ import kotlin.time.Duration.Companion.seconds
 /**
  * [pyTerminalDefaultWorkingDirectory] should point a new terminal at the content root of the **Python**
  * module that owns the currently opened file, regardless of whether that module has a Python SDK (PY-90039).
- * Files in non-Python modules are skipped so the default terminal working directory is kept.
+ * The test JVM is PyCharm, where each module is a Python module, so a file of a non-Python module cannot be built here.
  */
 @PyEnvTestCase
 class PyTerminalDefaultWorkingDirectoryTest {
@@ -48,10 +47,6 @@ class PyTerminalDefaultWorkingDirectoryTest {
   // A module without any Python SDK.
   private val moduleWithoutSdkDir = tempPathFixture(prefix = "subproject_without_venv")
   private val pyProjectWithoutSdk = projectFixture.pyProjectFixture(moduleWithoutSdkDir)
-
-  // A module that is not a Python module (default empty module type).
-  private val nonPythonModuleDir = tempPathFixture(prefix = "subproject_non_python")
-  private val nonPythonModule = projectFixture.moduleFixture(nonPythonModuleDir, addPathToSourceRoot = true)
 
   private suspend fun createFile(dir: Path, name: String) = withContext(Dispatchers.IO) {
     val path = dir.resolve(name)
@@ -78,16 +73,6 @@ class PyTerminalDefaultWorkingDirectoryTest {
     val result = pyTerminalDefaultWorkingDirectory(projectFixture.get(), file)
     assertEquals(dir.toRealPath(), result?.toRealPath(),
                  "Terminal should start in the module content root even without a Python SDK")
-  }
-
-  @Test
-  fun fileInNonPythonModuleIsSkipped(): Unit = timeoutRunBlocking {
-    nonPythonModule.get() // ensure the module exists
-    val dir = nonPythonModuleDir.get()
-    val file = createFile(dir, "app.py")
-
-    val result = pyTerminalDefaultWorkingDirectory(projectFixture.get(), file)
-    assertNull(result, "Non-Python modules must be skipped so the default terminal working directory is kept")
   }
 
   @Test
