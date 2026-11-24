@@ -27,6 +27,33 @@ internal class GitMergeDialogCustomizerTest {
     assertThat(getSingleMergeBranchName(listOf(repo))).isEqualTo("master")
   }
 
+  // IJPL-259872: a single local branch at the commit of the merged remote branch must not replace it.
+  @Test
+  fun `test merged remote branch name wins over a local branch at the same commit`(): Unit = with(context) {
+    repo.prepareConflict(initialBranch = "master", featureBranch = "feature", conflictingFile = "c.txt")
+    git("remote add origin http://example.git")
+    git("update-ref refs/remotes/origin/master master")
+    git("branch -f master master~1") // local 'master' is behind 'origin/master'
+    git("branch copy origin/master") // only 'copy' points at the same commit as 'origin/master'
+    git("merge origin/master", true) // conflicts on 'feature'
+    repo.update()
+
+    assertThat(getSingleMergeBranchName(listOf(repo))).isEqualTo("origin/master")
+  }
+
+  // IJPL-259872: several local branches at the commit of the merged remote branch must not hide it.
+  @Test
+  fun `test merged remote branch name wins over several local branches at the same commit`(): Unit = with(context) {
+    repo.prepareConflict(initialBranch = "master", featureBranch = "feature", conflictingFile = "c.txt")
+    git("remote add origin http://example.git")
+    git("update-ref refs/remotes/origin/master master")
+    git("branch copy origin/master") // 'master' and 'copy' point at the same commit as 'origin/master'
+    git("merge origin/master", true) // conflicts on 'feature'
+    repo.update()
+
+    assertThat(getSingleMergeBranchName(listOf(repo))).isEqualTo("origin/master")
+  }
+
   // IJPL-253755: the rebase onto branch must never be read from MERGE_MSG. During a rebase git writes the replayed
   // commit message to MERGE_MSG, so a branch quoted there is unrelated to the onto branch. This guards
   // resolveRebaseOntoBranch against gaining the MERGE_MSG tie-breaker that the merge path uses.

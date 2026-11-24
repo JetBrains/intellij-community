@@ -34,7 +34,6 @@ import com.intellij.vcs.log.impl.HashImpl
 import com.intellij.vcs.log.impl.VcsCommitMetadataImpl
 import com.intellij.vcs.log.ui.details.MultipleCommitInfoDialog
 import com.intellij.vcs.log.util.VcsLogUtil
-import git4idea.GitBranch
 import git4idea.GitRevisionNumber
 import git4idea.GitUtil.CHERRY_PICK_HEAD
 import git4idea.GitUtil.HEAD
@@ -287,7 +286,7 @@ private fun resolveMergeBranchOrCherryPick(repository: GitRepository): String? {
 
 private fun resolveMergeBranch(repository: GitRepository): RefInfo? {
   val mergeHead = tryResolveRef(repository, MERGE_HEAD) ?: return null
-  return resolveBranchName(repository, mergeHead, preferredName = { readMergedRefName(repository) })
+  return resolveBranchName(repository, mergeHead, preferredName = readMergedRefName(repository))
 }
 
 private fun resolveRebaseOntoBranch(repository: GitRepository): RefInfo? {
@@ -301,22 +300,23 @@ private fun resolveRebaseOntoBranch(repository: GitRepository): RefInfo? {
 /**
  * Resolves [hash] to the name of a branch that points at it.
  *
- * A single branch is unambiguous. When several branches share the commit, the lookup by hash cannot choose, so
- * [preferredName] breaks the tie with the branch that git recorded for the operation.
+ * [preferredName] is the branch that git recorded for the operation. It wins when a local or remote branch with this
+ * name points at [hash]. Otherwise a single local branch at [hash] gives the name, then a single remote branch.
  */
-private fun resolveBranchName(repository: GitRepository, hash: Hash, preferredName: () -> String? = { null }): RefInfo {
-  var branches: Collection<GitBranch> = repository.branches.findLocalBranchesByHash(hash)
-  if (branches.isEmpty()) branches = repository.branches.findRemoteBranchesByHash(hash)
-  val name = branches.singleOrNull()?.name
-             ?: preferredName()?.let { preferred -> branches.firstOrNull { it.name == preferred }?.name }
+private fun resolveBranchName(repository: GitRepository, hash: Hash, preferredName: String? = null): RefInfo {
+  val branches = repository.branches
+  val localBranches = branches.findLocalBranchesByHash(hash)
+  val remoteBranches = branches.findRemoteBranchesByHash(hash)
+  val name = (localBranches + remoteBranches).firstOrNull { it.name == preferredName }?.name
+             ?: localBranches.ifEmpty { remoteBranches }.singleOrNull()?.name
   return RefInfo(hash, name)
 }
 
 /**
  * Reads the branch name that git recorded in MERGE_MSG for the merge in progress.
  *
- * git writes the ref you asked to merge, for example `Merge branch 'main' into feature`. The commit hash cannot
- * identify that branch when several branches share the commit, so the caller uses this name to break the tie.
+ * git writes the ref you asked to merge, for example `Merge remote-tracking branch 'origin/main' into feature`.
+ * The commit hash cannot identify that branch when other branches share the commit, so the caller prefers this name.
  * The caller resolves MERGE_HEAD to one commit. A normal merge records one branch. An octopus merge records its
  * branches in head order, so the first name matches that commit.
  */
