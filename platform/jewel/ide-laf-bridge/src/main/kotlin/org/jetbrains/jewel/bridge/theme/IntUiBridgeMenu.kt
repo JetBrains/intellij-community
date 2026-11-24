@@ -112,7 +112,7 @@ internal fun readMenuStyle(): MenuStyle {
                                 Dp.Unspecified
                             },
                     ),
-                submenuMetrics = SubmenuMetrics(offset = DpOffset(0.dp, (-8).dp)),
+                submenuMetrics = SubmenuMetrics(offset = DpOffset(2.dp, (-7).dp)),
             ),
         icons = MenuIcons(submenuChevron = AllIconsKeys.General.ChevronRight),
     )

@@ -20,8 +20,9 @@ internal fun Modifier.popupShadowAndBorder(
     shadowColor: Color,
     borderWidth: Dp,
     borderColor: Color,
+    borderAlignment: Stroke.Alignment = Stroke.Alignment.Inside,
 ): Modifier =
     thenIf(!JewelFlags.useCustomPopupRenderer) {
         dropShadow(shape, Shadow(radius = shadowSize, color = shadowColor, offset = DpOffset(0.dp, shadowSize / 2)))
-            .border(Stroke.Alignment.Inside, borderWidth, borderColor, shape)
+            .border(borderAlignment, borderWidth, borderColor, shape)
     }

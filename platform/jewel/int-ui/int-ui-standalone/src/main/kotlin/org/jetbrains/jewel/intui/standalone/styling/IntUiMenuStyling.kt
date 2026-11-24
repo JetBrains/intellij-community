@@ -194,7 +194,7 @@ public fun MenuItemMetrics.Companion.defaults(
     )
 
 /** Creates an Int UI default [SubmenuMetrics] with the provided parameters. */
-public fun SubmenuMetrics.Companion.defaults(offset: DpOffset = DpOffset(0.dp, (-8).dp)): SubmenuMetrics =
+public fun SubmenuMetrics.Companion.defaults(offset: DpOffset = DpOffset(2.dp, (-7).dp)): SubmenuMetrics =
     SubmenuMetrics(offset)
 
 /** Creates an Int UI default [MenuIcons] with the provided parameters. */

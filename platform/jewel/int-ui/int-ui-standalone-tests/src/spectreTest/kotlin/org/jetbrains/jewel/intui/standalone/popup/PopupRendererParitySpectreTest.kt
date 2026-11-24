@@ -329,6 +329,30 @@ private val CASES =
             MenuWithSubmenuAwayFromOrigin()
         },
         Case(
+            name = "submenuAlignment",
+            open = { a, _ ->
+                a.click(a.waitForNode(tag = OPEN_TAG))
+                a.waitForNode(tag = MENU_TAG)
+            },
+            keys = listOf(KeyEvent.VK_DOWN, KeyEvent.VK_RIGHT),
+            measure = { a ->
+                val parentMenu = a.findByTestTag(MENU_TAG).firstOrNull()?.boundsOnScreen
+                val parentItem = a.findByText("Open submenu").firstOrNull()?.boundsOnScreen
+                val subItem = a.findByText("Sub item").firstOrNull()?.boundsOnScreen
+                if (parentMenu == null || parentItem == null || subItem == null) {
+                    "missing"
+                } else {
+                    val verticalDelta = subItem.y - parentItem.y
+                    val submenuLeft = subItem.x - (parentItem.x - parentMenu.x)
+                    val horizontalDelta = submenuLeft - (parentMenu.x + parentMenu.width)
+                    "verticalDelta=$verticalDelta horizontalDelta=$horizontalDelta"
+                }
+            },
+            expect = "verticalDelta=0 horizontalDelta=0",
+        ) {
+            MenuWithSubmenu()
+        },
+        Case(
             name = "speedSearchCombo(escape#1)",
             open = { a, _ ->
                 a.click(a.waitForNode(tag = OPEN_TAG))

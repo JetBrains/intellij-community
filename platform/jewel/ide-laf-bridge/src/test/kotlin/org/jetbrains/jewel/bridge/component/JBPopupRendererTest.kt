@@ -818,6 +818,144 @@ public class JBPopupRendererTest {
     }
 
     @Test
+    public fun `bridge menu style submenu offset matches menu content padding`() {
+        val menuMetrics = readMenuStyle().metrics
+        val contentPadding = menuMetrics.contentPadding
+        val offset = menuMetrics.submenuMetrics.offset
+        assertEquals(contentPadding.calculateLeftPadding(LayoutDirection.Ltr), offset.x)
+        assertEquals(contentPadding.calculateRightPadding(LayoutDirection.Ltr), offset.x)
+        assertEquals(-contentPadding.calculateTopPadding(), offset.y)
+    }
+
+    @Test
+    public fun `roundToAwtSymmetric rounds negative and positive odd pixel deltas identically`() {
+        assertEquals(90, roundToAwtSymmetric(179, 2.0f))
+        assertEquals(-90, roundToAwtSymmetric(-179, 2.0f))
+        assertEquals(91, roundToAwtSymmetric(181, 2.0f))
+        assertEquals(-91, roundToAwtSymmetric(-181, 2.0f))
+        assertEquals(0, roundToAwtSymmetric(0, 2.0f))
+    }
+
+    @Test
+    public fun `adjustLocationForBorderChrome compensates only for non-zero parent and child insets`() {
+        val ownerScreenBounds = Rectangle(201, 101, 100, 80)
+        val childSize = Dimension(90, 60)
+
+        // Zero insets (macOS, Windows 11, Wayland): parent window coincides with owner.
+        val zeroChromeParent = Rectangle(201, 101, 100, 80)
+        assertEquals(
+            Point(301, 101),
+            adjustLocationForBorderChrome(
+                location = Point(301, 101),
+                size = childSize,
+                ownerScreenBounds = ownerScreenBounds,
+                parentWindowScreenBounds = zeroChromeParent,
+                childBorderInsets = Insets(0, 0, 0, 0),
+            ),
+        )
+        assertEquals(
+            Point(111, 101),
+            adjustLocationForBorderChrome(
+                location = Point(111, 101),
+                size = childSize,
+                ownerScreenBounds = ownerScreenBounds,
+                parentWindowScreenBounds = zeroChromeParent,
+                childBorderInsets = Insets(0, 0, 0, 0),
+            ),
+        )
+
+        // 1 dp border insets on all sides (Linux X11, Windows 10): share a single 1 dp border horizontally.
+        val borderedParent = Rectangle(200, 100, 102, 82)
+        val childInsets = Insets(1, 1, 1, 1)
+        assertEquals(
+            Point(302, 101),
+            adjustLocationForBorderChrome(
+                location = Point(301, 101),
+                size = childSize,
+                ownerScreenBounds = ownerScreenBounds,
+                parentWindowScreenBounds = borderedParent,
+                childBorderInsets = childInsets,
+            ),
+        )
+        assertEquals(
+            Point(110, 101),
+            adjustLocationForBorderChrome(
+                location = Point(111, 101),
+                size = childSize,
+                ownerScreenBounds = ownerScreenBounds,
+                parentWindowScreenBounds = borderedParent,
+                childBorderInsets = childInsets,
+            ),
+        )
+
+        // Asymmetric insets (e.g. only parent or only child has 1 dp border chrome) also avoid overlapping borders.
+        assertEquals(
+            Point(302, 101),
+            adjustLocationForBorderChrome(
+                location = Point(301, 101),
+                size = childSize,
+                ownerScreenBounds = ownerScreenBounds,
+                parentWindowScreenBounds = borderedParent,
+                childBorderInsets = Insets(0, 0, 0, 0),
+            ),
+        )
+        assertEquals(
+            Point(110, 101),
+            adjustLocationForBorderChrome(
+                location = Point(111, 101),
+                size = childSize,
+                ownerScreenBounds = ownerScreenBounds,
+                parentWindowScreenBounds = borderedParent,
+                childBorderInsets = Insets(0, 0, 0, 0),
+            ),
+        )
+        assertEquals(
+            Point(302, 101),
+            adjustLocationForBorderChrome(
+                location = Point(301, 101),
+                size = childSize,
+                ownerScreenBounds = ownerScreenBounds,
+                parentWindowScreenBounds = zeroChromeParent,
+                childBorderInsets = childInsets,
+            ),
+        )
+        assertEquals(
+            Point(110, 101),
+            adjustLocationForBorderChrome(
+                location = Point(111, 101),
+                size = childSize,
+                ownerScreenBounds = ownerScreenBounds,
+                parentWindowScreenBounds = zeroChromeParent,
+                childBorderInsets = childInsets,
+            ),
+        )
+
+        // Vertical popup below anchor inside a bordered parent must not shift horizontally.
+        assertEquals(
+            Point(201, 181),
+            adjustLocationForBorderChrome(
+                location = Point(201, 181),
+                size = childSize,
+                ownerScreenBounds = ownerScreenBounds,
+                parentWindowScreenBounds = borderedParent,
+                childBorderInsets = childInsets,
+            ),
+        )
+
+        // Root popup (no parent popup window) must not shift.
+        assertEquals(
+            Point(301, 101),
+            adjustLocationForBorderChrome(
+                location = Point(301, 101),
+                size = childSize,
+                ownerScreenBounds = ownerScreenBounds,
+                parentWindowScreenBounds = null,
+                childBorderInsets = childInsets,
+            ),
+        )
+    }
+
+    @Test
     public fun `clicking a menu combo box with a selected item keeps the popup open`() {
         val previousFlag = JewelFlags.useCustomPopupRenderer
         JewelFlags.useCustomPopupRenderer = true

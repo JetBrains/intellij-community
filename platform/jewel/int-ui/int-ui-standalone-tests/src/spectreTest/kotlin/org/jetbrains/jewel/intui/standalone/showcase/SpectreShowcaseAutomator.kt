@@ -1,7 +1,12 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:OptIn(InternalSpectreApi::class)
+
 package org.jetbrains.jewel.intui.standalone.showcase
 
 import dev.sebastiano.spectre.core.ComposeAutomator
+import dev.sebastiano.spectre.core.InternalSpectreApi
+import java.awt.Rectangle
+import org.jetbrains.jewel.e2e.ScreenBounds
 import org.jetbrains.jewel.e2e.ShowcaseAutomator
 
 /**
@@ -39,6 +44,27 @@ internal class SpectreShowcaseAutomator(private val automator: ComposeAutomator)
 
     override suspend fun waitForIdle() {
         automator.waitForIdle()
+    }
+
+    override suspend fun boundsByText(text: String): ScreenBounds? {
+        automator.refreshWindows()
+        return automator.findByText(text).firstOrNull()?.boundsOnScreen?.toScreenBounds()
+    }
+
+    override suspend fun popupRootBoundsContainingText(text: String): ScreenBounds? {
+        automator.refreshWindows()
+        var node = automator.findByText(text).firstOrNull() ?: return null
+        while (true) {
+            node = node.parent ?: break
+        }
+        val surfaceBounds =
+            automator.windowIdentities().firstOrNull { it.surfaceId == node.surfaceId }?.surfaceBoundsOnScreen
+        return (surfaceBounds ?: node.boundsOnScreen).toScreenBounds()
+    }
+
+    override suspend fun isFractionalDisplayScale(): Boolean {
+        automator.refreshWindows()
+        return automator.windowIdentities().any { it.scaleX % 1.0 != 0.0 || it.scaleY % 1.0 != 0.0 }
     }
 
     override suspend fun clickByContentDescription(description: String) {
@@ -80,3 +106,5 @@ internal class SpectreShowcaseAutomator(private val automator: ComposeAutomator)
 // Spectre clamps empty clipped bounds to 1x1 px in composeBoundsToAwtRectangle; require more than that
 // so partially or fully clipped nodes are scrolled into view before clicking.
 private const val MIN_CLIPPED_BOUNDS_PX = 4
+
+private fun Rectangle.toScreenBounds(): ScreenBounds = ScreenBounds(x = x, y = y, width = width, height = height)
