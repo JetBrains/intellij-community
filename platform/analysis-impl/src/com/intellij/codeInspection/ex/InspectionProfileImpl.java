@@ -592,28 +592,7 @@ public class InspectionProfileImpl extends NewInspectionProfile {
     Map<String, List<String>> dependencies = new HashMap<>();
     for (InspectionToolWrapper<?, ?> toolWrapper : tools) {
       addTool(project, toolWrapper, dependencies);
-
-      if (toolWrapper instanceof LocalInspectionToolWrapper local && local.isDynamicGroup() &&
-          // some settings were read for the tool, so it must be initialized, otherwise no dynamic tools are expected
-          toolWrapper.isInitialized()) {
-        ToolsImpl parent = myTools.get(toolWrapper.getShortName());
-        if (parent.isEnabled()) {
-          List<LocalInspectionToolWrapper> children = ((DynamicGroupTool)toolWrapper.getTool()).getChildren();
-          Set<@NotNull String> childNames = ContainerUtil.map2Set(children, wrapper -> wrapper.getShortName());
-          if (ContainerUtil.all(tools, tool -> !childNames.contains(tool.getShortName()))) {
-            boolean isLocked = myLockedProfile;
-            myLockedProfile = false;
-            for (LocalInspectionToolWrapper wrapper : children) {
-              addTool(project, wrapper, dependencies);
-              String shortName = wrapper.getShortName();
-              if (InspectionElementsMerger.getMerger(shortName) == null) {
-                InspectionElementsMerger.addMerger(shortName, new MyInspectionElementsMerger(shortName, wrapper));
-              }
-            }
-            myLockedProfile = isLocked;
-          }
-        }
-      }
+      addDynamicGroupChildren(project, toolWrapper, tools, dependencies);
     }
 
     // initialize is invoked in synchronized block, so we can publish the new value of myDisposable here
@@ -642,6 +621,49 @@ public class InspectionProfileImpl extends NewInspectionProfile {
   }
 
   protected void copyToolsConfigurations(@Nullable Project project) {
+  }
+
+  /** Whether {@code toolWrapper} is a {@link DynamicGroupTool} that can have children. */
+  private static boolean isDynamicGroup(@NotNull InspectionToolWrapper<?, ?> toolWrapper) {
+    return toolWrapper instanceof LocalInspectionToolWrapper local && local.isDynamicGroup() &&
+           // some settings were read for the tool, so it must be initialized, otherwise no dynamic tools are expected
+           toolWrapper.isInitialized();
+  }
+
+  /**
+   * The children that the profile holds together with their {@link DynamicGroupTool}.
+   * Empty when {@code toolWrapper} is no group tool, or when {@code suppliedTools} has a child, because the child then has its own entry.
+   */
+  private static @NotNull List<LocalInspectionToolWrapper> getDynamicGroupChildren(
+    @NotNull InspectionToolWrapper<?, ?> toolWrapper,
+    @NotNull List<InspectionToolWrapper<?, ?>> suppliedTools
+  ) {
+    if (!isDynamicGroup(toolWrapper)) return List.of();
+    List<LocalInspectionToolWrapper> children = ((DynamicGroupTool)toolWrapper.getTool()).getChildren();
+    Set<@NotNull String> childNames = ContainerUtil.map2Set(children, wrapper -> wrapper.getShortName());
+    return ContainerUtil.all(suppliedTools, tool -> !childNames.contains(tool.getShortName())) ? children : List.of();
+  }
+
+  /** Adds the children of {@code toolWrapper} when it is an enabled {@link DynamicGroupTool} of the profile. */
+  private void addDynamicGroupChildren(@Nullable Project project,
+                                       @NotNull InspectionToolWrapper<?, ?> toolWrapper,
+                                       @NotNull List<InspectionToolWrapper<?, ?>> suppliedTools,
+                                       @Nullable Map<? super String, List<String>> dependencies) {
+    if (!isDynamicGroup(toolWrapper)) return;
+    ToolsImpl group = myTools.get(toolWrapper.getShortName());
+    if (group == null || !group.isEnabled()) return;
+    List<LocalInspectionToolWrapper> children = getDynamicGroupChildren(toolWrapper, suppliedTools);
+    if (children.isEmpty()) return;
+    boolean isLocked = myLockedProfile;
+    myLockedProfile = false;
+    for (LocalInspectionToolWrapper wrapper : children) {
+      addTool(project, wrapper, dependencies);
+      String shortName = wrapper.getShortName();
+      if (InspectionElementsMerger.getMerger(shortName) == null) {
+        InspectionElementsMerger.addMerger(shortName, new MyInspectionElementsMerger(shortName, wrapper));
+      }
+    }
+    myLockedProfile = isLocked;
   }
 
   public final void addTool(@Nullable Project project,
