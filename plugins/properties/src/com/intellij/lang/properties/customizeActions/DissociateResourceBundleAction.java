@@ -16,7 +16,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFileSystemItem;
-import com.intellij.ui.treeStructure.ProjectViewUpdateCause;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -73,7 +72,7 @@ public class DissociateResourceBundleAction extends AnAction {
     AbstractProjectViewPane currentProjectViewPane = ProjectView.getInstance(project).getCurrentProjectViewPane();
     if (currentProjectViewPane != null) {
       for (PsiFileSystemItem item : toUpdateInProjectView) {
-        currentProjectViewPane.updateFrom(item, false, true, ProjectViewUpdateCause.PLUGIN_PROPERTIES);
+        currentProjectViewPane.updateFrom(item, false, true);
       }
     }
   }

@@ -105,7 +105,6 @@ import com.intellij.ui.content.ContentManagerEvent;
 import com.intellij.ui.content.ContentManagerListener;
 import com.intellij.ui.switcher.QuickActionProvider;
 import com.intellij.ui.tree.TreeVisitor;
-import com.intellij.ui.treeStructure.ProjectViewUpdateCause;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.IJSwingUtilities;
@@ -157,7 +156,6 @@ import java.util.function.Supplier;
 import static com.intellij.application.options.OptionId.PROJECT_VIEW_SHOW_VISIBILITY_ICONS;
 import static com.intellij.ide.projectView.impl.SelectInProjectViewImplKt.selectInProjectViewLog;
 import static com.intellij.ide.scratch.ScratchTreeStructureProvider.SCRATCHES_NODE_SETTING;
-import static com.intellij.ui.tree.project.ProjectViewUpdateCauseUtilKt.guessProjectViewUpdateCauseByCaller;
 import static com.intellij.ui.treeStructure.Tree.AUTO_SCROLL_FROM_SOURCE_BLOCKED;
 
 @State(name = "ProjectView", storages = @Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE), getStateRequiresEdt = true)
@@ -1234,7 +1232,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
       public void settingChanged() {
         var pane = getCurrentProjectViewPane();
         if (pane != null) {
-          pane.updateFromRoot(true, ProjectViewUpdateCause.SETTINGS);
+          pane.updateFromRoot(true);
         }
       }
     });
@@ -1502,17 +1500,11 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
 
   @Override
   public void refresh() {
-    refresh(guessProjectViewUpdateCauseByCaller(ProjectViewImpl.class));
-  }
-
-  @ApiStatus.Internal
-  @Override
-  public void refresh(@NotNull ProjectViewUpdateCause cause) {
     AbstractProjectViewPane currentProjectViewPane = getCurrentProjectViewPane();
     if (currentProjectViewPane != null) {
       // may be null for e.g. default project
       IconDeferrer.getInstance().clearCache(); // icons may have changed
-      currentProjectViewPane.updateFromRoot(false, cause);
+      currentProjectViewPane.updateFromRoot(false);
     }
   }
 
@@ -2264,7 +2256,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
         if (withComparator) {
           pane.installComparator();
         }
-        pane.updateFromRoot(false, ProjectViewUpdateCause.SETTINGS);
+        pane.updateFromRoot(false);
         if (info != null) {
           info.apply(pane);
         }

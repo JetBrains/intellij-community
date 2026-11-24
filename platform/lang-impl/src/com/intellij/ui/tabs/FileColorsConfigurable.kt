@@ -41,7 +41,6 @@ import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.hover.TableHoverListener
 import com.intellij.ui.layout.selected
 import com.intellij.ui.table.JBTable
-import com.intellij.ui.treeStructure.ProjectViewUpdateCause
 import com.intellij.util.ui.EditableModel
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.RegionPaintIcon
@@ -49,8 +48,20 @@ import com.intellij.util.ui.RegionPainter
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.PropertyKey
-import java.awt.*
-import javax.swing.*
+import java.awt.Color
+import java.awt.Component
+import java.awt.Graphics
+import java.awt.Graphics2D
+import java.awt.Rectangle
+import javax.swing.DefaultCellEditor
+import javax.swing.DefaultListCellRenderer
+import javax.swing.Icon
+import javax.swing.JCheckBox
+import javax.swing.JComponent
+import javax.swing.JLabel
+import javax.swing.JList
+import javax.swing.JTable
+import javax.swing.SwingConstants
 import javax.swing.table.AbstractTableModel
 import javax.swing.table.DefaultTableCellRenderer
 
@@ -104,7 +115,7 @@ internal class FileColorsConfigurable(private val project: Project) : BoundSearc
   override fun apply() {
     super.apply()
     UISettings.getInstance().fireUISettingsChanged()
-    ProjectView.getInstance(project).currentProjectViewPane?.updateFromRoot(true, ProjectViewUpdateCause.SETTINGS)
+    ProjectView.getInstance(project).currentProjectViewPane?.updateFromRoot(true)
   }
 }
 

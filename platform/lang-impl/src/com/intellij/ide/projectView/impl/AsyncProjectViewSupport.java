@@ -20,7 +20,6 @@ import com.intellij.ui.tree.TreeCollector;
 import com.intellij.ui.tree.TreeVisitor;
 import com.intellij.ui.tree.project.ProjectFileNode;
 import com.intellij.ui.tree.project.ProjectFileNodeUpdater;
-import com.intellij.ui.treeStructure.ProjectViewUpdateCause;
 import com.intellij.util.SmartList;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -28,7 +27,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.JTree;
 import javax.swing.tree.TreePath;
-import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
@@ -37,7 +35,6 @@ import java.util.concurrent.CompletableFuture;
 @ApiStatus.Internal
 public final class AsyncProjectViewSupport extends ProjectViewPaneSupport {
   private static final Logger LOG = Logger.getInstance(AsyncProjectViewSupport.class);
-  private final @NotNull Project project;
   private final StructureTreeModel myStructureTreeModel;
   private final AsyncTreeModel myAsyncTreeModel;
 
@@ -45,15 +42,13 @@ public final class AsyncProjectViewSupport extends ProjectViewPaneSupport {
                           @NotNull Project project,
                           @NotNull AbstractTreeStructure structure,
                           @NotNull Comparator<NodeDescriptor<?>> comparator) {
-    this.project = project;
     myStructureTreeModel = new StructureTreeModel<>(structure, comparator, parent);
     myAsyncTreeModel = new AsyncTreeModel(myStructureTreeModel, parent);
     myNodeUpdater = new ProjectFileNodeUpdater(project, myStructureTreeModel.getInvoker()) {
       @Override
       protected void updateStructure(boolean fromRoot, @NotNull Set<? extends VirtualFile> updatedFiles) {
         if (fromRoot) {
-          getAndClearUpdateByFileCauses(); // update from root takes priority, smaller requests are no longer relevant
-          updateAll(null, getAndClearUpdateFromRootCauses());
+          updateAll(null);
         }
         else {
           long time = System.currentTimeMillis();
@@ -65,8 +60,7 @@ public final class AsyncProjectViewSupport extends ProjectViewPaneSupport {
           }
           List<VirtualFile> roots = collector.get();
           LOG.debug("found ", roots.size(), " roots in ", System.currentTimeMillis() - time, "ms");
-          var causes = getAndClearUpdateByFileCauses();
-          roots.forEach(root -> updateByFile(root, true, causes));
+          roots.forEach(root -> updateByFile(root, true));
         }
       }
     };
@@ -160,30 +154,28 @@ public final class AsyncProjectViewSupport extends ProjectViewPaneSupport {
   }
 
   @Override
-  public void updateAll(@Nullable Runnable onDone, @NotNull Collection<ProjectViewUpdateCause> causes) {
+  public void updateAll(@Nullable Runnable onDone) {
     LOG.debug(new RuntimeException("reload a whole tree"));
-    var request = ProjectViewPerformanceMonitor.getInstance(project).beginUpdateAll(causes);
-    CompletableFuture<?> future = myStructureTreeModel.invalidateAsync(request);
+    CompletableFuture<?> future = myStructureTreeModel.invalidateAsync();
     if (onDone != null) {
       future.thenRun(() -> myAsyncTreeModel.onValidThread(onDone));
     }
   }
 
   @Override
-  public void update(@NotNull TreePath path, boolean structure, @NotNull Collection<ProjectViewUpdateCause> causes) {
-    var request = ProjectViewPerformanceMonitor.getInstance(project).beginUpdatePath(path, structure, causes);
-    myStructureTreeModel.invalidate(path, structure, request);
+  public void update(@NotNull TreePath path, boolean structure) {
+    myStructureTreeModel.invalidate(path, structure);
   }
 
   @Override
   protected void acceptAndUpdate(
     @NotNull TreeVisitor visitor,
     @Nullable List<? extends TreePath> presentations,
-    @Nullable List<? extends TreePath> structures,
-    @NotNull Collection<ProjectViewUpdateCause> causes) {
+    @Nullable List<? extends TreePath> structures
+  ) {
     myAsyncTreeModel.accept(visitor, false).onSuccess(path -> {
-      if (presentations != null) update(presentations, false, causes);
-      if (structures != null) update(structures, true, causes);
+      if (presentations != null) update(presentations, false);
+      if (structures != null) update(structures, true);
     });
   }
 

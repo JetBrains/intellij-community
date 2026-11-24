@@ -23,7 +23,6 @@ import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.ClientProperty;
 import com.intellij.ui.tree.TreeVisitor;
 import com.intellij.ui.tree.project.ProjectFileNodeUpdater;
-import com.intellij.ui.treeStructure.ProjectViewUpdateCause;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.SmartList;
 import com.intellij.util.messages.MessageBusConnection;
@@ -35,7 +34,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.JTree;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreePath;
-import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
 
@@ -50,9 +48,7 @@ public abstract class ProjectViewPaneSupport {
 
   protected void setupListeners(@NotNull Disposable parent, @NotNull Project project, @NotNull AbstractTreeStructure structure) {
     MessageBusConnection connection = project.getMessageBus().connect(parent);
-    connection.subscribe(BookmarksListener.TOPIC, new FileBookmarksListener(file -> {
-      updateByFile(file, !file.isDirectory(), List.of(ProjectViewUpdateCause.BOOKMARKS));
-    }));
+    connection.subscribe(BookmarksListener.TOPIC, new FileBookmarksListener(file -> updateByFile(file, !file.isDirectory())));
     PsiManager.getInstance(project).addPsiTreeChangeListener(new ProjectViewPsiTreeChangeListener(project) {
       @Override
       protected boolean isFlattenPackages() {
@@ -65,18 +61,18 @@ public abstract class ProjectViewPaneSupport {
       }
 
       @Override
-      protected void addSubtreeToUpdateByRoot(@NotNull ProjectViewUpdateCause cause) {
-        myNodeUpdater.updateFromRoot(cause);
+      protected void addSubtreeToUpdateByRoot() {
+        myNodeUpdater.updateFromRoot();
       }
 
       @Override
-      protected boolean addSubtreeToUpdateByElement(@NotNull PsiElement element, @NotNull ProjectViewUpdateCause cause) {
+      protected boolean addSubtreeToUpdateByElement(@NotNull PsiElement element) {
         VirtualFile file = PsiUtilCore.getVirtualFile(element);
         if (file != null) {
-          myNodeUpdater.updateFromFile(file, cause);
+          myNodeUpdater.updateFromFile(file);
         }
         else {
-          updateByElement(element, true, List.of(cause));
+          updateByElement(element, true);
         }
         return true;
       }
@@ -84,26 +80,24 @@ public abstract class ProjectViewPaneSupport {
     FileStatusManager.getInstance(project).addFileStatusListener(new FileStatusListener() {
       @Override
       public void fileStatusesChanged() {
-        updateAllPresentations(ProjectViewUpdateCause.FILE_STATUSES);
+        updateAllPresentations();
       }
 
       @Override
       public void fileStatusChanged(@NotNull VirtualFile file) {
-        updateByFile(file, false, List.of(ProjectViewUpdateCause.FILE_STATUS));
+        updateByFile(file, false);
       }
     }, parent);
-    CopyPasteUtil.addDefaultListener(parent, element -> {
-      updateByElement(element, false, List.of(ProjectViewUpdateCause.CLIPBOARD));
-    });
+    CopyPasteUtil.addDefaultListener(parent, element -> updateByElement(element, false));
     project.getMessageBus().connect(parent).subscribe(ProblemListener.TOPIC, new ProblemListener() {
       @Override
       public void problemsAppeared(@NotNull VirtualFile file) {
-        updatePresentationsFromRootTo(file, ProjectViewUpdateCause.PROBLEMS_APPEARED);
+        updatePresentationsFromRootTo(file);
       }
 
       @Override
       public void problemsDisappeared(@NotNull VirtualFile file) {
-        updatePresentationsFromRootTo(file, ProjectViewUpdateCause.PROBLEMS_DISAPPEARED);
+        updatePresentationsFromRootTo(file);
       }
     });
     project.getMessageBus().connect(parent).subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new FileEditorManagerListener() {
@@ -112,12 +106,12 @@ public abstract class ProjectViewPaneSupport {
 
       @Override
       public void fileOpened(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
-        updateByFile(file, true, List.of(ProjectViewUpdateCause.FILE_OPENED));
+        updateByFile(file, true);
       }
 
       @Override
       public void fileClosed(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
-        updateByFile(file, true, List.of(ProjectViewUpdateCause.FILE_CLOSED));
+        updateByFile(file, true);
       }
     });
   }
@@ -130,32 +124,31 @@ public abstract class ProjectViewPaneSupport {
     myMultiSelectionEnabled = enabled;
   }
 
-  public abstract void updateAll(@Nullable Runnable onDone, @NotNull Collection<ProjectViewUpdateCause> causes);
+  public abstract void updateAll(@Nullable Runnable onDone);
 
-  public void update(@NotNull List<? extends TreePath> list, boolean structure, @NotNull Collection<ProjectViewUpdateCause> causes) {
-    for (TreePath path : list) update(path, structure, causes);
+  public void update(@NotNull List<? extends TreePath> list, boolean structure) {
+    for (TreePath path : list) update(path, structure);
   }
 
-  public abstract void update(@NotNull TreePath path, boolean structure, @NotNull Collection<ProjectViewUpdateCause> causes);
+  public abstract void update(@NotNull TreePath path, boolean structure);
 
-  public void updateByFile(@NotNull VirtualFile file, boolean structure, @NotNull Collection<ProjectViewUpdateCause> causes) {
+  public void updateByFile(@NotNull VirtualFile file, boolean structure) {
     LOG.debug(structure ? "updateChildrenByFile: " : "updatePresentationByFile: ", file);
-    update(null, file, structure, causes);
+    update(null, file, structure);
   }
 
-  public void updateByElement(@NotNull PsiElement element, boolean structure, @NotNull Collection<ProjectViewUpdateCause> causes) {
+  public void updateByElement(@NotNull PsiElement element, boolean structure) {
     LOG.debug(structure ? "updateChildrenByElement: " : "updatePresentationByElement: ", element);
-    update(element, null, structure, causes);
+    update(element, null, structure);
   }
 
-  protected void update(@Nullable PsiElement element, @Nullable VirtualFile file, boolean structure, @NotNull Collection<ProjectViewUpdateCause> causes) {
+  protected void update(@Nullable PsiElement element, @Nullable VirtualFile file, boolean structure) {
     SmartList<TreePath> list = new SmartList<>();
     TreeVisitor visitor = AbstractProjectViewPane.createVisitor(element, file, list);
-    if (visitor != null) acceptAndUpdate(visitor, structure ? null : list, structure ? list : null, causes);
+    if (visitor != null) acceptAndUpdate(visitor, structure ? null : list, structure ? list : null);
   }
 
-  @SuppressWarnings("SameParameterValue") // really, one value now, maybe we'll need more later
-  private void updateAllPresentations(@NotNull ProjectViewUpdateCause cause) {
+  private void updateAllPresentations() {
     SmartList<TreePath> list = new SmartList<>();
     acceptAndUpdate(new TreeVisitor() {
       @Override
@@ -163,10 +156,10 @@ public abstract class ProjectViewPaneSupport {
         list.add(path);
         return Action.CONTINUE;
       }
-    }, list, null, List.of(cause));
+    }, list, null);
   }
 
-  protected void updatePresentationsFromRootTo(@NotNull VirtualFile file, @NotNull ProjectViewUpdateCause cause) {
+  protected void updatePresentationsFromRootTo(@NotNull VirtualFile file) {
     // find first valid parent for removed file
     while (!file.isValid()) {
       file = file.getParent();
@@ -182,14 +175,13 @@ public abstract class ProjectViewPaneSupport {
         return action;
       }
     };
-    acceptAndUpdate(visitor, presentations, structures, List.of(cause));
+    acceptAndUpdate(visitor, presentations, structures);
   }
 
   protected abstract void acceptAndUpdate(
     @NotNull TreeVisitor visitor,
     @Nullable List<? extends TreePath> presentations,
-    @Nullable List<? extends TreePath> structures,
-    @NotNull Collection<ProjectViewUpdateCause> causes
+    @Nullable List<? extends TreePath> structures
   );
 
   public abstract @NotNull ActionCallback select(@NotNull JTree tree, @Nullable Object object, @Nullable VirtualFile file);

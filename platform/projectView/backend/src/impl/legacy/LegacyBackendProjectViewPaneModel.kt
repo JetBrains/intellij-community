@@ -85,7 +85,6 @@ import com.intellij.ui.tree.AsyncTreeModel
 import com.intellij.ui.tree.RestoreSelectionListener
 import com.intellij.ui.tree.buildTreeNodeDescriptorPresentation
 import com.intellij.ui.treeStructure.CachingTreePath
-import com.intellij.ui.treeStructure.ProjectViewUpdateCause
 import com.intellij.ui.treeStructure.TreeNodePresentation
 import com.intellij.ui.treeStructure.TreeNodePresentationBuilder
 import com.intellij.util.concurrency.annotations.RequiresEdt
@@ -837,7 +836,7 @@ private class AbstractProjectViewPaneStateManager(
     val impl = ProjectViewImpl.getInstance(project) as ProjectViewImpl
     impl.setUseFileNestingRules(fileNesting.isFileNestingOn)
     ProjectViewFileNestingService.getInstance().setRules(fileNesting.nestingRules)
-    impl.currentProjectViewPane?.updateFromRoot(true, ProjectViewUpdateCause.SETTINGS)
+    impl.currentProjectViewPane?.updateFromRoot(true)
     updateActionStates()
   }
 

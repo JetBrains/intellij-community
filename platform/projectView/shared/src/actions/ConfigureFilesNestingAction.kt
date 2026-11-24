@@ -15,7 +15,6 @@ import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.platform.projectView.settings.FileNestingStateDTO
 import com.intellij.platform.projectView.settings.NestingRuleDTO
 import com.intellij.platform.projectView.settings.toDTO
-import com.intellij.ui.treeStructure.ProjectViewUpdateCause
 
 internal class ConfigureFilesNestingAction : DumbAwareAction(), ActionRemoteBehaviorSpecification {
   override fun getBehavior(): ActionRemoteBehavior? {
@@ -55,7 +54,7 @@ internal class ConfigureFilesNestingAction : DumbAwareAction(), ActionRemoteBeha
       if (dialog.showAndGet()) {
         val view = ProjectView.getInstance(project)
         dialog.apply { view.setUseFileNestingRules(it) }
-        view.currentProjectViewPane?.updateFromRoot(true, ProjectViewUpdateCause.SETTINGS)
+        view.currentProjectViewPane?.updateFromRoot(true)
       }
       return
     }

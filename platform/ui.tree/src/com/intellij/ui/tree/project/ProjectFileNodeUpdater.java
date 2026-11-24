@@ -21,26 +21,19 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiTreeChangeAdapter;
 import com.intellij.psi.PsiTreeChangeEvent;
 import com.intellij.psi.PsiWhiteSpace;
-import com.intellij.ui.treeStructure.ProjectViewUpdateCause;
 import com.intellij.util.concurrency.EdtExecutorService;
 import com.intellij.util.concurrency.Invoker;
 import com.intellij.util.containers.SmartHashSet;
 import com.intellij.util.messages.MessageBusConnection;
 import kotlinx.coroutines.CoroutineScope;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 
 import static com.intellij.openapi.vfs.VirtualFileManager.VFS_CHANGES_BG;
 import static com.intellij.psi.util.PsiUtilCore.getVirtualFile;
-import static com.intellij.ui.tree.project.ProjectViewUpdateCauseUtilKt.guessProjectViewUpdateCauseByCaller;
 
 public abstract class ProjectFileNodeUpdater {
   private static final Logger LOG = Logger.getInstance(ProjectFileNodeUpdater.class);
@@ -49,8 +42,6 @@ public abstract class ProjectFileNodeUpdater {
   private volatile boolean root;
   private volatile long time;
   private volatile int size;
-  private final Set<ProjectViewUpdateCause> updateFromRootCauses = ConcurrentHashMap.newKeySet();
-  private final Set<ProjectViewUpdateCause> updateByFileCauses = ConcurrentHashMap.newKeySet();
 
   public ProjectFileNodeUpdater(@NotNull Project project, @NotNull Invoker invoker) {
     this(project, new ProjectFileNodeUpdaterLegacyInvoker(invoker));
@@ -66,37 +57,37 @@ public abstract class ProjectFileNodeUpdater {
     connection.subscribe(ModuleRootListener.TOPIC, new ModuleRootListener() {
       @Override
       public void rootsChanged(@NotNull ModuleRootEvent event) {
-        updateFromRoot(ProjectViewUpdateCause.ROOTS_MODULE);
+        updateFromRoot();
       }
     });
     connection.subscribe(
       AdditionalLibraryRootsListener.TOPIC,
       (presentableLibraryName, oldRoots, newRoots, libraryNameForDebug) ->
-        updateFromRoot(ProjectViewUpdateCause.ROOTS_LIBRARY)
+        updateFromRoot()
     );
     connection.subscribe(VFS_CHANGES_BG, new BulkFileListenerBackgroundable() {
       @Override
       public void after(@NotNull List<? extends @NotNull VFileEvent> events) {
         for (VFileEvent event : events) {
           if (event instanceof VFileCreateEvent create) {
-            updateFromFile(create.getParent(), ProjectViewUpdateCause.VFS_CREATE);
+            updateFromFile(create.getParent());
           }
           else if (event instanceof VFileCopyEvent copy) {
-            updateFromFile(copy.getNewParent(), ProjectViewUpdateCause.VFS_COPY);
+            updateFromFile(copy.getNewParent());
           }
           else if (event instanceof VFileMoveEvent move) {
-            updateFromFile(move.getNewParent(), ProjectViewUpdateCause.VFS_MOVE);
-            updateFromFile(move.getOldParent(), ProjectViewUpdateCause.VFS_MOVE);
-            updateFromFile(move.getFile(), ProjectViewUpdateCause.VFS_MOVE);
+            updateFromFile(move.getNewParent());
+            updateFromFile(move.getOldParent());
+            updateFromFile(move.getFile());
           }
           else {
             VirtualFile file = event.getFile();
             if (file != null) {
               if (event instanceof VFileDeleteEvent) {
                 VirtualFile parent = file.getParent();
-                if (parent != null) updateFromFile(parent, ProjectViewUpdateCause.VFS_DELETE);
+                if (parent != null) updateFromFile(parent);
               }
-              updateFromFile(file, ProjectViewUpdateCause.VFS);
+              updateFromFile(file);
             }
           }
         }
@@ -123,99 +114,58 @@ public abstract class ProjectFileNodeUpdater {
 
       @Override
       public void childrenChanged(@NotNull PsiTreeChangeEvent event) {
-        updateFromElement(event.getParent(), ProjectViewUpdateCause.PSI_CHILDREN);
+        updateFromElement(event.getParent());
       }
 
       @Override
       public void childMoved(@NotNull PsiTreeChangeEvent event) {
-        updateFromElement(event.getOldParent(), ProjectViewUpdateCause.PSI_MOVE);
-        updateFromElement(event.getNewParent(), ProjectViewUpdateCause.PSI_MOVE);
+        updateFromElement(event.getOldParent());
+        updateFromElement(event.getNewParent());
       }
     }, invoker);
-    RootType.ROOT_EP.addChangeListener(() -> updateFromRoot(ProjectViewUpdateCause.ROOTS_EP), invoker);
+    RootType.ROOT_EP.addChangeListener(this::updateFromRoot, invoker);
     connection.subscribe(VirtualFileAppearanceListener.TOPIC, new VirtualFileAppearanceListener() {
       @Override
       public void virtualFileAppearanceChanged(@NotNull VirtualFile virtualFile) {
-        updateFromFile(virtualFile, ProjectViewUpdateCause.FILE_APPEARANCE);
+        updateFromFile(virtualFile);
       }
     });
   }
 
   /**
    * Notifies that project roots are changed.
-   * <p>
    * The {@link #onInvokerThread} method will be executed with a small delay
    * after calling of this method.
-   * </p>
-   * <p>
-   *   This method is for plugin developers only. For internal use, call {@link #updateFromRoot(ProjectViewUpdateCause)}
-   *   and specify the update cause explicitly.
-   * </p>
    *
    * @see #getUpdatingDelay
    */
   public void updateFromRoot() {
-    updateFromRootCauses.add(guessProjectViewUpdateCauseByCaller(ProjectFileNodeUpdater.class));
-    updateLater(null);
-  }
-
-  @ApiStatus.Internal
-  public void updateFromRoot(@NotNull ProjectViewUpdateCause cause) {
-    updateFromRootCauses.add(cause);
     updateLater(null);
   }
 
   /**
    * Notifies that the specified file (or folder) is changed.
-   * <p>
    * The {@link #onInvokerThread} method will be executed with a small delay
    * after last calling of this method,
    * i.e. a bunch of modified files will be reported together.
-   * </p>
-   * <p>
-   *   This method is for plugin developers only. For internal use, call {@link #updateFromFile(VirtualFile, ProjectViewUpdateCause)}
-   *   and specify the update cause explicitly.
-   * </p>
    *
    * @param file a modified virtual file
    * @see #getUpdatingDelay
    */
   public void updateFromFile(@Nullable VirtualFile file) {
-    if (file != null) {
-      updateByFileCauses.add(guessProjectViewUpdateCauseByCaller(ProjectFileNodeUpdater.class));
-      updateLater(file);
-    }
-  }
-
-  @ApiStatus.Internal
-  public void updateFromFile(@Nullable VirtualFile file, @NotNull ProjectViewUpdateCause cause) {
-    if (file != null) {
-      updateByFileCauses.add(cause);
-      updateLater(file);
-    }
+    if (file != null) updateLater(file);
   }
 
   /**
    * Notifies that the specified PSI element is changed.
-   * <p>
    * If this element corresponds to a virtual file,
    * it will be marked as changed.
-   * </p>
-   * <p>
-   *   This method is for plugin developers only. For internal use, call {@link #updateFromElement(PsiElement, ProjectViewUpdateCause)}
-   *   and specify the update cause explicitly.
-   * </p>
    *
    * @param element a modified PSI element
    * @see #updateFromFile
    */
   public void updateFromElement(@Nullable PsiElement element) {
     updateFromFile(getVirtualFile(element));
-  }
-
-  @ApiStatus.Internal
-  public void updateFromElement(@Nullable PsiElement element, @NotNull ProjectViewUpdateCause cause) {
-    updateFromFile(getVirtualFile(element), cause);
   }
 
   /**
@@ -291,30 +241,6 @@ public abstract class ProjectFileNodeUpdater {
       LOG.debug("spent ", System.currentTimeMillis() - startedAt, "ms to collect ", size, " files to update @ ", invoker);
       invoker.invoke(() -> updateStructure(fromRoot, files));
     }
-  }
-
-  @ApiStatus.Internal
-  protected Collection<ProjectViewUpdateCause> getAndClearUpdateFromRootCauses() {
-    return getAndClear(updateFromRootCauses);
-  }
-
-  @ApiStatus.Internal
-  protected Collection<ProjectViewUpdateCause> getAndClearUpdateByFileCauses() {
-    return getAndClear(updateByFileCauses);
-  }
-
-  private static @NotNull HashSet<ProjectViewUpdateCause> getAndClear(Set<ProjectViewUpdateCause> causes) {
-    var result = new HashSet<ProjectViewUpdateCause>();
-    // We're not very interested in consistency here, as it's for statistics only.
-    // But it's still nice not to miss a value in the case it's added a moment after this call.
-    // So instead of copy-then-clear, we copy and remove values one-by-one,
-    // ensuring that only the values we have read are removed.
-    for (Iterator<ProjectViewUpdateCause> iterator = causes.iterator(); iterator.hasNext(); ) {
-      ProjectViewUpdateCause cause = iterator.next();
-      result.add(cause);
-      iterator.remove();
-    }
-    return result;
   }
 
   /**

@@ -29,7 +29,6 @@ import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.util.PsiUtilCore;
-import com.intellij.ui.treeStructure.ProjectViewUpdateCause;
 import org.intellij.lang.xpath.xslt.associations.FileAssociationsManager;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -123,7 +122,7 @@ final class FileAssociationsManagerImpl extends FileAssociationsManager implemen
     if (!myTempCopy) {
       final ProjectView view = ProjectView.getInstance(myProject);
       if (view != null) {
-        view.refresh(ProjectViewUpdateCause.PLUGIN_XPATH);
+        view.refresh();
       }
     }
   }

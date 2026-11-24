@@ -5,20 +5,11 @@ import com.intellij.openapi.extensions.PluginId
 import org.jetbrains.annotations.ApiStatus
 
 /**
- * Specifies the cause why the Project View is going to be updated
+ * The cause of a Project View update.
  *
- * The cause is used to monitor Project View performance and is passed to functions that cause Project View updates.
- *
- * A cause has an id ([ProjectViewUpdateCauseId]) which determines the type of the cause.
- *
- * There are standard types available as companion object members.
- * For new use cases, new enum values can be added and registered as new members here.
- * **Don't forget to increment the group version in `com.intellij.ide.projectView.impl.ProjectViewPerformanceCollector` (`"project.view.performance"`).**
- *
- * For 3rd party plugins, the ID will be [ProjectViewUpdateCauseId.PLUGIN_3RD_PARTY] and the necessary information about the plugin
- * will be detected automatically from the call stack. This means that function overloads that don't accept a cause should not be called
- * internally because the plugin detection will fail and will be logged. For example, to refresh the Project View from monorepo code,
- * call `refresh(ProjectViewUpdateCause)` on the Project View and not just `refresh()`.
+ * The Project View ignores the cause.
+ * This class stays only for the deprecated overloads of `com.intellij.ide.projectView.impl.AbstractProjectViewPane` that take a cause.
+ * Do not use it in new code. Call the overloads without a cause instead.
  */
 @ApiStatus.Internal
 sealed class ProjectViewUpdateCause : Comparable<ProjectViewUpdateCause> {

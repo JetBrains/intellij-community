@@ -13,7 +13,6 @@ import com.intellij.openapi.editor.colors.impl.AppEditorFontOptions
 import com.intellij.openapi.fileEditor.TextEditorWithPreview
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.getOpenedProjects
-import com.intellij.ui.treeStructure.ProjectViewUpdateCause
 import com.intellij.util.application
 import com.intellij.util.messages.Topic
 import kotlinx.coroutines.Dispatchers
@@ -132,7 +131,7 @@ class MarkdownSettings private constructor(private val legacyProject: Project?):
     publisher.settingsChanged(this)
     if (wasFileGroupingEnabled != isFileGroupingEnabled) {
       for (project in getOpenedProjects()) {
-        ProjectView.getInstance(project).refresh(ProjectViewUpdateCause.SETTINGS)
+        ProjectView.getInstance(project).refresh()
       }
     }
   }

@@ -15,7 +15,6 @@ import com.intellij.psi.PsiTreeChangeAdapter;
 import com.intellij.psi.PsiTreeChangeEvent;
 import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.util.PsiModificationTracker;
-import com.intellij.ui.treeStructure.ProjectViewUpdateCause;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -70,7 +69,7 @@ abstract class ProjectViewPsiTreeChangeListener extends PsiTreeChangeAdapter {
 
   protected void childrenChanged(PsiElement parent, final boolean stopProcessingForThisModificationCount) {
     if (parent instanceof PsiDirectory && isFlattenPackages()){
-      addSubtreeToUpdateByRoot(ProjectViewUpdateCause.PSI_FLATTEN_PACKAGES);
+      addSubtreeToUpdateByRoot();
       return;
     }
 
@@ -92,11 +91,11 @@ abstract class ProjectViewPsiTreeChangeListener extends PsiTreeChangeAdapter {
       }
       else if (parent instanceof PsiDirectory &&
                ScratchUtil.isScratch(((PsiDirectory)parent).getVirtualFile())) {
-        addSubtreeToUpdateByRoot(ProjectViewUpdateCause.PSI_SCRATCH);
+        addSubtreeToUpdateByRoot();
         break;
       }
 
-      if (addSubtreeToUpdateByElementFile(parent, ProjectViewUpdateCause.PSI_CHILDREN)) {
+      if (addSubtreeToUpdateByElementFile(parent)) {
         break;
       }
 
@@ -111,33 +110,33 @@ abstract class ProjectViewPsiTreeChangeListener extends PsiTreeChangeAdapter {
     PsiElement element = event.getElement();
     switch (propertyName) {
       case PsiTreeChangeEvent.PROP_ROOTS, PsiTreeChangeEvent.PROP_FILE_TYPES, PsiTreeChangeEvent.PROP_UNLOADED_PSI -> 
-        addSubtreeToUpdateByRoot(ProjectViewUpdateCause.PSI_PROPERTY);
+        addSubtreeToUpdateByRoot();
       case PsiTreeChangeEvent.PROP_WRITABLE -> {
-        if (!addSubtreeToUpdateByElementFile(element, ProjectViewUpdateCause.PSI_PROPERTY) && element instanceof PsiFile) {
-          addSubtreeToUpdateByElementFile(((PsiFile)element).getContainingDirectory(), ProjectViewUpdateCause.PSI_PROPERTY);
+        if (!addSubtreeToUpdateByElementFile(element) && element instanceof PsiFile) {
+          addSubtreeToUpdateByElementFile(((PsiFile)element).getContainingDirectory());
         }
       }
       case PsiTreeChangeEvent.PROP_FILE_NAME, PsiTreeChangeEvent.PROP_DIRECTORY_NAME -> {
         if (element instanceof PsiDirectory && isFlattenPackages()) {
-          addSubtreeToUpdateByRoot(ProjectViewUpdateCause.PSI_FLATTEN_PACKAGES);
+          addSubtreeToUpdateByRoot();
           return;
         }
         final PsiElement parent = element.getParent();
-        if (parent == null || !addSubtreeToUpdateByElementFile(parent, ProjectViewUpdateCause.PSI_PROPERTY)) {
-          addSubtreeToUpdateByElementFile(element, ProjectViewUpdateCause.PSI_PROPERTY);
+        if (parent == null || !addSubtreeToUpdateByElementFile(parent)) {
+          addSubtreeToUpdateByElementFile(element);
         }
       }
     }
   }
 
-  protected void addSubtreeToUpdateByRoot(@NotNull ProjectViewUpdateCause cause) {
+  protected void addSubtreeToUpdateByRoot() {
   }
 
-  protected boolean addSubtreeToUpdateByElement(@NotNull PsiElement element, @NotNull ProjectViewUpdateCause cause) {
+  protected boolean addSubtreeToUpdateByElement(@NotNull PsiElement element) {
     return false;
   }
 
-  private boolean addSubtreeToUpdateByElementFile(PsiElement element, @NotNull ProjectViewUpdateCause cause) {
-    return element != null && addSubtreeToUpdateByElement(notNull(element.getContainingFile(), element), cause);
+  private boolean addSubtreeToUpdateByElementFile(PsiElement element) {
+    return element != null && addSubtreeToUpdateByElement(notNull(element.getContainingFile(), element));
   }
 }

@@ -44,7 +44,6 @@ import com.intellij.ui.CommonActionsPanel;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.ui.UIBundle;
-import com.intellij.ui.treeStructure.ProjectViewUpdateCause;
 import com.intellij.util.IconUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.xmlb.annotations.XCollection;
@@ -242,7 +241,7 @@ public final class ScopeChooserConfigurable implements SearchableConfigurable, M
         fileEditorManager.updateFilePresentation(openVirtualFile);
       }
 
-      ProjectView.getInstance(myProject).refresh(ProjectViewUpdateCause.SCOPE_CHOOSER);
+      ProjectView.getInstance(myProject).refresh();
     }
 
     private void checkForPredefinedNames() throws ConfigurationException {

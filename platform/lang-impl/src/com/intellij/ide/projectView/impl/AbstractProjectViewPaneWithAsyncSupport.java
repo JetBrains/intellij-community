@@ -48,10 +48,8 @@ import java.awt.Color;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 import java.util.Comparator;
-import java.util.List;
 
 import static com.intellij.ide.projectView.ProjectViewSelectionTopicKt.PROJECT_VIEW_SELECTION_TOPIC;
-import static com.intellij.ui.tree.project.ProjectViewUpdateCauseUtilKt.guessProjectViewUpdateCauseByCaller;
 
 public abstract class AbstractProjectViewPaneWithAsyncSupport extends AbstractProjectViewPane
   implements AbstractProjectViewPane.ProjectViewPaneWithAsyncSelect {
@@ -198,10 +196,7 @@ public abstract class AbstractProjectViewPaneWithAsyncSupport extends AbstractPr
     afterUpdate = cb.createSetDoneRunnable();
     if (myAsyncSupport != null) {
       myProject.getMessageBus().syncPublisher(ProjectViewListener.TOPIC).paneUpdateScheduled(this);
-      var cause = updateFromRootCause != null
-                  ? updateFromRootCause
-                  : guessProjectViewUpdateCauseByCaller(AbstractProjectViewPaneWithAsyncSupport.class);
-      myAsyncSupport.updateAll(afterUpdate, List.of(cause));
+      myAsyncSupport.updateAll(afterUpdate);
     }
     else {
       return ActionCallback.REJECTED;

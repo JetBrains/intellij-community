@@ -11,7 +11,6 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiManager;
-import com.intellij.ui.treeStructure.ProjectViewUpdateCause;
 import com.jetbrains.python.FoldersComponentTools;
 import com.jetbrains.python.PyLanguageFacade;
 import com.jetbrains.python.psi.LanguageLevel;
@@ -127,7 +126,7 @@ public final class PyNamespacePackagesService {
   private void refreshView() {
     if (!ApplicationManager.getApplication().isWriteIntentLockAcquired()) return;
     Project project = myModule.getProject();
-    ProjectView.getInstance(project).refresh(ProjectViewUpdateCause.PLUGIN_PYTHON);
+    ProjectView.getInstance(project).refresh();
     PsiManager.getInstance(project).dropPsiCaches();
     DaemonCodeAnalyzer.getInstance(project).restart(this);
   }

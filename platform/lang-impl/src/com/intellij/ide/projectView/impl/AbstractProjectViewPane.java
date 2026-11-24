@@ -137,7 +137,6 @@ import static com.intellij.ide.projectView.impl.ProjectViewUtilKt.getSelectedLib
 import static com.intellij.ide.projectView.impl.ProjectViewUtilKt.moduleContext;
 import static com.intellij.ide.projectView.impl.ProjectViewUtilKt.moduleContexts;
 import static com.intellij.ide.projectView.impl.ProjectViewUtilKt.unloadedModules;
-import static com.intellij.ui.tree.project.ProjectViewUpdateCauseUtilKt.guessProjectViewUpdateCauseByCaller;
 
 /**
  * Allows to add additional panes to the Project view.
@@ -177,8 +176,6 @@ public abstract class AbstractProjectViewPane implements UiCompatibleDataProvide
   private DnDTarget myDropTarget;
   private DnDSource myDragSource;
 
-  @Nullable ProjectViewUpdateCause updateFromRootCause;
-
   protected AbstractProjectViewPane(@NotNull Project project) {
     myProject = project;
     Disposer.register(project, this);
@@ -208,7 +205,7 @@ public abstract class AbstractProjectViewPane implements UiCompatibleDataProvide
   }
 
   private void rebuildCompletely(boolean wait) {
-    ActionCallback callback = updateFromRoot(true, ProjectViewUpdateCause.EXTENSIONS_CHANGED);
+    ActionCallback callback = updateFromRoot(true);
     if (wait) {
       callback.waitFor(5000);
     }
@@ -304,51 +301,45 @@ public abstract class AbstractProjectViewPane implements UiCompatibleDataProvide
     myTreeStructure = null;
   }
 
-  @ApiStatus.Internal
-  public @NotNull ActionCallback updateFromRoot(boolean restoreExpandedPaths, @NotNull ProjectViewUpdateCause cause) {
-    updateFromRootCause = cause;
-    try {
-      return updateFromRoot(restoreExpandedPaths);
-    }
-    finally {
-      updateFromRootCause = null;
-    }
-  }
-
   /**
    * Refreshes the entire tree asynchronously.
-   * <p>
-   *   Note: this method is for plugin developers only. For internal use,
-   *   call {@link #updateFromRoot(boolean, ProjectViewUpdateCause)} and specify the update cause explicitly.
-   * </p>
    * @param restoreExpandedPaths determines whether the currently expanded paths should be preserved after refresh if possible
    * @return a callback that will be invoked when the refresh is done
    */
   public abstract @NotNull ActionCallback updateFromRoot(boolean restoreExpandedPaths);
 
   /**
+   * @deprecated The Project View ignores the update cause. Call {@link #updateFromRoot(boolean)} instead.
+   */
+  @ApiStatus.Internal
+  @Deprecated
+  public @NotNull ActionCallback updateFromRoot(boolean restoreExpandedPaths, @NotNull ProjectViewUpdateCause cause) {
+    return updateFromRoot(restoreExpandedPaths);
+  }
+
+  /**
    * Refreshes the specified node asynchronously.
-   * <p>
-   *   Note: this method is for plugin developers only. For internal use,
-   *   call {@link #updateFrom(Object, boolean, boolean, ProjectViewUpdateCause)} and specify the update cause explicitly.
-   * </p>
    * @param forceResort not used, kept for compatibility reasons
    * @param updateStructure if {@code true}, then all children are updated recursively as well
    */
   public void updateFrom(Object element, boolean forceResort, boolean updateStructure) {
-    updateFrom(element, forceResort, updateStructure, guessProjectViewUpdateCauseByCaller(AbstractProjectViewPane.class));
-  }
-
-  @ApiStatus.Internal
-  public void updateFrom(Object element, boolean forceResort, boolean updateStructure, @NotNull ProjectViewUpdateCause cause) {
     if (element instanceof PsiElement) {
       var support = getAsyncSupport();
-      if (support != null) support.updateByElement((PsiElement)element, updateStructure, List.of(cause));
+      if (support != null) support.updateByElement((PsiElement)element, updateStructure);
     }
     else if (element instanceof TreePath) {
       var support = getAsyncSupport();
-      if (support != null) support.update((TreePath)element, updateStructure, List.of(cause));
+      if (support != null) support.update((TreePath)element, updateStructure);
     }
+  }
+
+  /**
+   * @deprecated The Project View ignores the update cause. Call {@link #updateFrom(Object, boolean, boolean)} instead.
+   */
+  @ApiStatus.Internal
+  @Deprecated
+  public void updateFrom(Object element, boolean forceResort, boolean updateStructure, @NotNull ProjectViewUpdateCause cause) {
+    updateFrom(element, forceResort, updateStructure);
   }
 
   public abstract void select(Object element, VirtualFile file, boolean requestFocus);

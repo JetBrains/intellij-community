@@ -24,7 +24,6 @@ import com.intellij.ui.tree.TreeStructureDomainModelAdapter
 import com.intellij.ui.tree.TreeVisitor
 import com.intellij.ui.tree.project.ProjectFileNode.findArea
 import com.intellij.ui.tree.project.ProjectFileNodeUpdater
-import com.intellij.ui.treeStructure.ProjectViewUpdateCause
 import com.intellij.ui.treeStructure.TreeNodeViewModel
 import com.intellij.ui.treeStructure.TreeSwingModel
 import com.intellij.ui.treeStructure.TreeViewModel
@@ -79,11 +78,11 @@ internal class CoroutineProjectViewSupport(
     domainModel.comparator = comparator
   }
 
-  override fun updateAll(afterUpdate: Runnable?, causes: Collection<ProjectViewUpdateCause>) {
+  override fun updateAll(afterUpdate: Runnable?) {
     updateImpl(null, true, afterUpdate)
   }
 
-  override fun update(path: TreePath, updateStructure: Boolean, causes: MutableCollection<ProjectViewUpdateCause>) {
+  override fun update(path: TreePath, updateStructure: Boolean) {
     updateImpl(path, updateStructure)
   }
 
@@ -97,16 +96,11 @@ internal class CoroutineProjectViewSupport(
     }
   }
 
-  override fun acceptAndUpdate(
-    visitor: TreeVisitor,
-    presentations: List<TreePath?>?,
-    structures: List<TreePath?>?,
-    causes: MutableCollection<ProjectViewUpdateCause>,
-  ) {
+  override fun acceptAndUpdate(visitor: TreeVisitor, presentations: List<TreePath?>?, structures: List<TreePath?>?) {
     coroutineScope.launch(CoroutineName("Updating ${presentations?.size} presentations and ${structures?.size} structures after accepting $visitor")) {
       swingModel.accept(visitor, false).await()
-      if (presentations != null) update(presentations, false, causes)
-      if (structures != null) update(structures, true, causes)
+      if (presentations != null) update(presentations, false)
+      if (structures != null) update(structures, true)
     }
   }
 
@@ -227,7 +221,7 @@ internal class CoroutineProjectViewSupport(
   private inner class Updater(project: Project, coroutineScope: CoroutineScope) : ProjectFileNodeUpdater(project, coroutineScope) {
     override fun updateStructure(fromRoot: Boolean, updatedFiles: Set<VirtualFile>) {
       if (fromRoot) {
-        updateAll(null, emptyList())
+        updateAll(null)
         return
       }
       coroutineScope.launch(CoroutineName("Updating ${updatedFiles.size} files")) {
@@ -240,7 +234,7 @@ internal class CoroutineProjectViewSupport(
           collector.get()
         }
         for (root in roots) {
-          updateByFile(root, true, emptyList())
+          updateByFile(root, true)
         }
       }
     }
