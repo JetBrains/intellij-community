@@ -35,6 +35,7 @@ import com.intellij.platform.searchEverywhere.providers.target.SeTypeVisibilityS
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.channels.ProducerScope
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.buffer
@@ -209,6 +210,10 @@ class SeLocalItemDataProvider(
   /**
    * The items of every provider that [params] asks, each with the key of its search project.
    * The key is `null` when the popup searches one project.
+   *
+   * The provider of this id in each search project that the filter picks searches on its own, see
+   * [SeSearchProjectHolders.searched]. So a search project waits only for its own holder. With [popupProjectOnly],
+   * the other search projects are left out.
    */
   private fun itemsRawChannelFlow(
     params: SeParams,
@@ -216,21 +221,19 @@ class SeLocalItemDataProvider(
     popupProjectOnly: Boolean = false,
   ): Flow<OwnedItem> {
     return channelFlow {
-      val marksSearch = searchProjectHolders?.searchesSeveralProjects == true
-      for ((provider, searchProjectKey) in searchedProviders(params, popupProjectOnly)) {
+      val holders = searchProjectHolders
+      if (holders == null) {
+        launch { collectOwnedItems(provider, null, params, operationDisposable) }
+        return@channelFlow
+      }
+      val marksSearch = holders.searchesSeveralProjects
+      for (searched in holders.searched(params.filter)) {
+        if (popupProjectOnly && !searched.isPopupProject) continue
         // A provider that reaches several projects in one run then searches its own project only, see [SeSearchProjectContext].
-        val mark = if (marksSearch && searchProjectKey != null) SeSearchProjectContext(searchProjectKey) else EmptyCoroutineContext
+        val mark = if (marksSearch) SeSearchProjectContext(searched.key) else EmptyCoroutineContext
         launch(mark) {
-          try {
-            collectItemsWithRetry(provider, params, operationDisposable) { item ->
-              send(OwnedItem(item, searchProjectKey))
-              coroutineContext.isActive
-            }
-          }
-          catch (e: Throwable) {
-            rethrowControlFlowException(e)
-            SeLog.warn("Error while collecting items from ${provider.id}($logLabel) provider: ${e.message}")
-          }
+          val searchedProvider = if (searched.isPopupProject) provider else searched.awaitHolder()?.get(id, isAllTab)?.provider
+          searchedProvider?.let { collectOwnedItems(it, searched.key, params, operationDisposable) }
         }
       }
     }.buffer(0, onBufferOverflow = BufferOverflow.SUSPEND).onCompletion {
@@ -238,20 +241,21 @@ class SeLocalItemDataProvider(
     }
   }
 
-  /**
-   * The providers that [params] asks, each with the key of its search project: [provider] alone, or the provider of
-   * this id in each search project that the filter picks, see [SeSearchProjectHolders.searched].
-   * With [popupProjectOnly], the other search projects are left out.
-   */
-  private suspend fun searchedProviders(params: SeParams, popupProjectOnly: Boolean): List<Pair<SeItemsProvider, String?>> {
-    val holders = searchProjectHolders ?: return listOf(provider to null)
-    return holders.searched(params.filter).mapNotNull { searched ->
-      val holder = searched.holder
-      when {
-        holder == null -> provider to searched.key
-        popupProjectOnly -> null
-        else -> holder.get(id, isAllTab)?.provider?.let { it to searched.key }
+  private suspend fun ProducerScope<OwnedItem>.collectOwnedItems(
+    provider: SeItemsProvider,
+    searchProjectKey: String?,
+    params: SeParams,
+    operationDisposable: Disposable?,
+  ) {
+    try {
+      collectItemsWithRetry(provider, params, operationDisposable) { item ->
+        send(OwnedItem(item, searchProjectKey))
+        coroutineContext.isActive
       }
+    }
+    catch (e: Throwable) {
+      rethrowControlFlowException(e)
+      SeLog.warn("Error while collecting items from ${provider.id}($logLabel) provider: ${e.message}")
     }
   }
 
@@ -262,7 +266,7 @@ class SeLocalItemDataProvider(
   private fun searchProjectProviderOf(itemData: SeItemData): Pair<SeItemsProvider, Project>? {
     val key = itemData.additionalInfo[SeItemDataKeys.SEARCH_PROJECT] ?: return null
     val searched = searchProjectHolders?.created(key) ?: return null
-    return searched.holder?.get(id, isAllTab)?.provider?.let { it to searched.project }
+    return searched.createdHolder()?.get(id, isAllTab)?.provider?.let { it to searched.project }
   }
 
   private suspend fun collectItemsWithRetry(

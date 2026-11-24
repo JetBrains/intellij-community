@@ -12,6 +12,8 @@ import com.intellij.platform.searchEverywhere.SeFilterState
 import com.intellij.platform.searchEverywhere.SeProviderId
 import com.intellij.platform.searchEverywhere.SeSession
 import com.intellij.psi.search.GlobalSearchScope
+import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import org.jetbrains.annotations.ApiStatus
 import kotlin.coroutines.AbstractCoroutineContextElement
 import kotlin.coroutines.CoroutineContext
@@ -70,18 +72,34 @@ interface SeSearchProjectHolders : Disposable {
   /** Whether the popup has several search projects. Then each search of a project marks itself, see [SeSearchProjectContext]. */
   val searchesSeveralProjects: Boolean
 
-  /** The search projects that a search with [filter] asks, in the order of the product. */
-  suspend fun searched(filter: SeFilterState): List<SeSearchProjectHolder>
+  /**
+   * The search projects that a search with [filter] asks, in the order of the product. It waits for no holder:
+   * the search of each project waits for its own holder, see [SeSearchProjectHolder.awaitHolder].
+   */
+  fun searched(filter: SeFilterState): List<SeSearchProjectHolder>
 
   /** The search project of [key] when [searched] gave it already, see [SeSearchProjectHolder.key]. A found item names its project so. */
   fun created(key: String): SeSearchProjectHolder?
 }
 
-/** A search [project] and its [holder]. [holder] is `null` for the project of the popup, whose providers the popup has. */
+/**
+ * A search [project] and the creation of its holder. [creation] is `null` for the project of the popup, whose
+ * providers the popup has. A creation gives `null` when it failed.
+ */
 @ApiStatus.Internal
-class SeSearchProjectHolder(val project: Project, val holder: SeProvidersHolder?) {
+class SeSearchProjectHolder(val project: Project, private val creation: Deferred<SeProvidersHolder?>?) {
   /** The value that stands for [project] in the data of an item, see `SeItemDataKeys.SEARCH_PROJECT`. */
   val key: String = keyOf(project)
+
+  /** Whether [project] is the project of the popup. */
+  val isPopupProject: Boolean get() = creation == null
+
+  /** Waits for the holder of [project]. `null` for the project of the popup, and when the creation failed. */
+  suspend fun awaitHolder(): SeProvidersHolder? = creation?.await()
+
+  /** The holder of [project] when its creation ended, else `null`. */
+  @OptIn(ExperimentalCoroutinesApi::class)
+  fun createdHolder(): SeProvidersHolder? = creation?.takeIf { it.isCompleted && !it.isCancelled }?.getCompleted()
 
   companion object {
     fun keyOf(project: Project): String = project.projectId().serializeToString()

@@ -36,8 +36,17 @@ import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.TestDisposable
 import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.util.Processor
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.async
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.launch
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -190,6 +199,18 @@ class SeSearchProjectsTest {
   }
 
   @Test
+  fun aSlowSearchProjectDelaysNoItemOfAnother() = timeoutRunBlocking {
+    val gate = CompletableDeferred<Unit>()
+    val holder = holder(TestSearchProjects(listOf(popupProject, otherProject), SEARCHED_ID, gateOfOther = gate))
+
+    val first = holder.get(SeProviderId(SEARCHED_ID), true)!!.getItems(SeParams("query", SeFilterState.Empty)).first()
+
+    assertSame(popupProject, first.project(), "the popup project finds its item while the holder of the other project waits")
+    gate.complete(Unit)
+    assertEquals(setOf(popupProject, otherProject), holder.items(SEARCHED_ID).map { it.project() }.toSet())
+  }
+
+  @Test
   fun aPopupOfOneProjectDoesNotMarkItsSearch() = timeoutRunBlocking {
     val holder = holder(TestSearchProjects(listOf(popupProject), SEARCHED_ID))
 
@@ -256,25 +277,37 @@ class SeSearchProjectsTest {
   private fun pickOf(project: Project): SeFilterState = SeFilterState.Data(mapOf(PICK_KEY to listOf(SeSearchProjectHolder.keyOf(project))))
 
   /** The product: [projects] are the search projects, and the providers of [providerId] search each of them. */
-  private inner class TestSearchProjects(private val projects: List<Project>, providerId: String) : SeSearchProjects {
+  private inner class TestSearchProjects(
+    private val projects: List<Project>,
+    providerId: String,
+    private val gateOfOther: Deferred<Unit>? = null,
+  ) : SeSearchProjects {
     val holders = CopyOnWriteArrayList<TestHolders>()
 
     override val providerIds: Set<SeProviderId> = setOf(SeProviderId(providerId))
 
     override fun createHolders(initEvent: AnActionEvent, session: SeSession): SeSearchProjectHolders =
-      TestHolders(projects, session).also { holders.add(it) }
+      TestHolders(projects, session, gateOfOther).also { holders.add(it) }
   }
 
-  /** Gives each of [projects] but the popup project a holder of its own with the first search that asks it. */
-  private inner class TestHolders(private val projects: List<Project>, private val session: SeSession) : SeSearchProjectHolders {
-    private val holders = ConcurrentHashMap<Project, SeProvidersHolder>()
+  /**
+   * Gives each of [projects] but the popup project a holder of its own with the first search that asks it.
+   * The creation of each holder waits for [gate].
+   */
+  private inner class TestHolders(
+    private val projects: List<Project>,
+    private val session: SeSession,
+    private val gate: Deferred<Unit>?,
+  ) : SeSearchProjectHolders {
+    private val holders = ConcurrentHashMap<Project, Deferred<SeProvidersHolder>>()
+    private val scope = CoroutineScope(SupervisorJob())
 
     @Volatile
     var isDisposed = false
 
     override val searchesSeveralProjects: Boolean get() = projects.size > 1
 
-    override suspend fun searched(filter: SeFilterState): List<SeSearchProjectHolder> {
+    override fun searched(filter: SeFilterState): List<SeSearchProjectHolder> {
       val pickedKeys = filter.get(PICK_KEY)
       val picked = if (pickedKeys == null) projects else projects.filter { SeSearchProjectHolder.keyOf(it) in pickedKeys }
       return picked.map { project -> SeSearchProjectHolder(project, if (project === popupProject) null else holderOf(project)) }
@@ -283,15 +316,18 @@ class SeSearchProjectsTest {
     override fun created(key: String): SeSearchProjectHolder? =
       holders.entries.firstOrNull { SeSearchProjectHolder.keyOf(it.key) == key }?.let { SeSearchProjectHolder(it.key, it.value) }
 
-    private suspend fun holderOf(project: Project): SeProvidersHolder {
-      holders[project]?.let { return it }
-      val holder = SeProvidersHolder.initialize(eventOf(project), project, session, "Test", withAdaptedLegacyContributors = false)
-      return holders.putIfAbsent(project, holder)?.also { Disposer.dispose(holder) } ?: holder
+    private fun holderOf(project: Project): Deferred<SeProvidersHolder> = holders.computeIfAbsent(project) {
+      scope.async {
+        gate?.await()
+        SeProvidersHolder.initialize(eventOf(project), project, session, "Test", withAdaptedLegacyContributors = false)
+      }
     }
 
+    @OptIn(ExperimentalCoroutinesApi::class)
     override fun dispose() {
       isDisposed = true
-      holders.values.forEach { Disposer.dispose(it) }
+      scope.cancel()
+      holders.values.forEach { holder -> holder.invokeOnCompletion { if (it == null) Disposer.dispose(holder.getCompleted()) } }
     }
   }
 
