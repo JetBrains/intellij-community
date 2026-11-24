@@ -90,6 +90,7 @@ data class JdkItem(
   /** there are some JdkList items that are not shown in the downloader but suggested for JdkAuto **/
   val isVisibleOnUI: Boolean,
   val isPreview: Boolean,
+  val isEol: Boolean = false,
 
   val jdkMajorVersion: Int,
   @NlsSafe
@@ -482,6 +483,7 @@ object JdkListParser {
         isDefaultItem = item["default"]?.let { filters.testPredicate(it) == true } ?: false,
         isVisibleOnUI = item["listed"]?.let { filters.testPredicate(it) == true } ?: true,
         isPreview = item["preview"]?.let { filters.testPredicate(it) == true } ?: false,
+        isEol = item["eol"]?.let { filters.testPredicate(it) == true } ?: false,
 
         jdkMajorVersion = (item["jdk_version_major"] as? JsonPrimitive)?.intOrNull ?: return emptyList(),
         jdkVersion = (pkg["version"] as? JsonPrimitive)?.contentOrNull ?: (item["jdk_version"] as? JsonPrimitive)?.contentOrNull

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.projectRoots.impl.jdkDownloader
 
 import com.intellij.openapi.application.ex.PathManagerEx
@@ -211,6 +211,32 @@ class JdkListTest {
     val json = loadTestData("feed-v1.json")
     assertSingleItemForEachOS(json.patchEveryProduct { it.putObject("listed").buildRange(until = "192.1") }) {
       this.returns(false) { it.isVisibleOnUI }
+    }
+  }
+
+  @Test
+  fun `eol is missing`() {
+    val json = loadTestData("feed-v1.json")
+    assertSingleItemForEachOS(json) { this.returns(false) { it.isEol } }
+  }
+
+  @Test
+  fun `eol is true`() {
+    val json = loadTestData("feed-v1.json")
+    assertSingleItemForEachOS(json.patchEveryProduct { it.put("eol", true) }) { this.returns(true) { it.isEol } }
+  }
+
+  @Test
+  fun `eol is false`() {
+    val json = loadTestData("feed-v1.json")
+    assertSingleItemForEachOS(json.patchEveryProduct { it.put("eol", false) }) { this.returns(false) { it.isEol } }
+  }
+
+  @Test
+  fun `eol is buildRange`() {
+    val json = loadTestData("feed-v1.json")
+    assertSingleItemForEachOS(json.patchEveryProduct { it.putObject("eol").buildRange(since = "192.1") }) {
+      this.returns(true) { it.isEol }
     }
   }
 
