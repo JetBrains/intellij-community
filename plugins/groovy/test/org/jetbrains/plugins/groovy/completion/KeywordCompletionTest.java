@@ -120,6 +120,8 @@ public class KeywordCompletionTest {
   @Test public void testNoVarInFrontOfMethod() { doTest(); }
   @Test public void testNoVarInFrontOfMethod2() { doTest(); }
   @Test public void testImportAlias() { doTest(); }
+  @Test public void testYieldReturn() { doTest(); }
+  @Test public void testDefer() { doTest(); }
 
   @BeforeEach
   void setUp() {

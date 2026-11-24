@@ -1,0 +1,8 @@
+def cleaned = false
+def task = async {
+    de<caret>
+    throw new RuntimeException('save failed')
+}
+
+-----
+defer

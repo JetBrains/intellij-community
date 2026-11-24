@@ -63,6 +63,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrCaseSection;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrTraditionalForClause;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrApplicationStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAsyncExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinaryExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCommandArgumentList;
@@ -86,6 +87,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTraitTypeD
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinitionBody;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAnnotationMethod;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMember;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.packaging.GrPackageDefinition;
@@ -202,7 +204,9 @@ public final class GroovyCompletionData {
           addKeywords(consumer, false, "async", "await");
         }
       }
-
+      if (isInAsyncExpression(position)) {
+        addKeywords(consumer, true, "yield return", "defer");
+      }
 
       if (isAfterForParameter(position)) {
         consumer.consume(keyword("in", TailTypes.humbleSpaceBeforeWordType()));
@@ -597,6 +601,11 @@ public final class GroovyCompletionData {
     return condition == null || !PsiTreeUtil.isAncestor(condition, context, false);
   }
 
+  private static boolean isInAsyncExpression(PsiElement context) {
+    GrAsyncExpression asyncExpression = PsiTreeUtil.getParentOfType(context, GrAsyncExpression.class, true, GrMember.class, PsiFile.class);
+    return asyncExpression != null && GroovyCompletionUtil.isNewStatement(context, true);
+  }
+
   private static boolean afterTry(PsiElement context) {
     if (context != null &&
         GroovyCompletionUtil.nearestLeftSibling(context) instanceof GrTryCatchStatement tryStatement &&
@@ -666,7 +675,7 @@ public final class GroovyCompletionData {
     psiElement(GroovyElementTypes.NL)
   );
 
-  private static final  ElementPattern<PsiElement>  WHILE_KEYWORD_POSITION = StandardPatterns.or(
+  private static final  ElementPattern<PsiElement> WHILE_KEYWORD_POSITION = StandardPatterns.or(
     psiElement()
       .withSuperParent(2, GrDoWhileStatement.class)
       .afterLeafSkipping(SKIP_CONDITION, psiElement(GroovyElementTypes.T_RBRACE)),
