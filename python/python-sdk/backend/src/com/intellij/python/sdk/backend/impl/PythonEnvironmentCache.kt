@@ -11,14 +11,14 @@ import com.intellij.python.sdk.backend.detectPythonEnvironment
 import com.intellij.python.sdk.backend.PySdkBundle.message
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil.isPythonSdk
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil.isRemote
-import com.intellij.python.sdk.backend.pythonInterpreter
+import com.intellij.python.sdk.backend.pythonInterpreterResult
 import java.nio.file.InvalidPathException
 import java.nio.file.Path
 
 private val PYTHON_ENVIRONMENT_RESULT_KEY = Key.create<PyResult<PythonEnvironment>>("PYTHON_ENVIRONMENT_RESULT")
 
 /**
- * Internal cache primitive backing [PythonInterpreter]; call [pythonInterpreter] from outside this file.
+ * Internal cache primitive backing [PythonInterpreter]; call [pythonInterpreterResult] from outside this file.
  *
  * Detects the [PythonEnvironment] from the file system layout around this SDK's home path and
  * stores the result in the SDK's [UserData][com.intellij.openapi.util.UserDataHolder]. Performs

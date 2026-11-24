@@ -2,7 +2,6 @@
 package com.intellij.python.junit5Tests.env.pixi
 
 import com.intellij.execution.target.TargetEnvironmentType
-import com.intellij.python.sdk.backend.PythonInterpreter
 import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.util.Disposer
@@ -12,8 +11,9 @@ import com.intellij.python.pixi.backend.add.PixiAddInterpreterProvider
 import com.intellij.python.pixi.backend.packaging.PixiPackageManager
 import com.intellij.python.pixi.backend.packaging.PixiPackageManagerProvider
 import com.intellij.python.pixi.backend.sdk.PixiSdkFlavor
+import com.intellij.python.sdk.backend.PythonInterpreter
 import com.intellij.python.sdk.backend.TargetPythonInterpreter
-import com.intellij.python.sdk.backend.pythonInterpreterResultAsync
+import com.intellij.python.sdk.backend.buildInterpreterForTests
 import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
@@ -55,7 +55,7 @@ internal class PixiTargetManagerProviderTest {
         commitChanges()
       }
     }
-    val interpreter = sdk.pythonInterpreterResultAsync(project.get()).getOrThrow()
+    val interpreter = sdk.buildInterpreterForTests(project.get()).getOrThrow()
 
     assertThat(interpreter).isInstanceOf(TargetPythonInterpreter::class.java)
     assertThat(interpreter.ref.envRef.value).isEqualTo("docs")

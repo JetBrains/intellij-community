@@ -24,7 +24,7 @@ import com.intellij.platform.eel.provider.localEel
 import com.intellij.python.pyproject.model.evolution.interpreterSourceRootUrls
 import com.intellij.python.sdk.backend.PythonInterpreter
 import com.intellij.python.sdk.backend.PythonInterpreterDetails
-import com.intellij.python.sdk.backend.pythonInterpreterResultAsync
+import com.intellij.python.sdk.backend.buildInterpreterForTests
 import com.intellij.python.sdk.backend.setPythonSdkForTests
 import com.intellij.python.venv.sdk.flavors.VirtualEnvSdkFlavor
 import com.intellij.testFramework.ApplicationRule
@@ -527,7 +527,7 @@ internal class PySdkPathsTest {
 
   private fun interpreterOf(sdk: Sdk): PythonInterpreter {
     awaitPythonInterpreters(projectModel.project)
-    return checkNotNull(runBlockingMaybeCancellable { sdk.pythonInterpreterResultAsync(projectModel.project) }.successOrNull) { "$sdk names no interpreter" }
+    return checkNotNull(runBlockingMaybeCancellable { sdk.buildInterpreterForTests(projectModel.project) }.successOrNull) { "$sdk names no interpreter" }
   }
 
   /**

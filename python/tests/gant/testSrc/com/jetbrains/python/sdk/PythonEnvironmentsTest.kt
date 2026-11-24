@@ -8,7 +8,7 @@ import com.intellij.python.sdk.backend.PythonEnvironmentKey
 import com.intellij.python.sdk.backend.PythonEnvironmentStep
 import com.intellij.python.sdk.backend.PythonEnvironments
 import com.intellij.python.sdk.backend.PythonInterpreter
-import com.intellij.python.sdk.backend.pythonInterpreterResultAsync
+import com.intellij.python.sdk.backend.buildInterpreterForTests
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.TestDisposable
@@ -37,7 +37,7 @@ internal class PythonEnvironmentsTest {
 
   /** The interpreter of a new mock SDK. Each mock SDK has one home path, so all of them run one environment. */
   private suspend fun mockInterpreter(): PythonInterpreter =
-    PythonMockSdk.create().pythonInterpreterResultAsync(projectFixture.get()).getOrThrow()
+    PythonMockSdk.create().buildInterpreterForTests(projectFixture.get()).getOrThrow()
 
   /** The environments that [CountingStep] updated, in their order. */
   private val updated = CopyOnWriteArrayList<PythonEnvironmentKey>()

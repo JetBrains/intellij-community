@@ -8,6 +8,7 @@ import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
@@ -21,6 +22,7 @@ import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.workspaceModel.ide.legacyBridge.findModuleEntity
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.project.PyProject
+import com.jetbrains.python.sdk.InvalidSdkException
 import com.jetbrains.python.sdk.PythonSdkAdditionalData
 import com.jetbrains.python.sdk.add.v2.PathHolder
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil
@@ -207,3 +209,23 @@ private fun <T> Module.blockingForTests(action: suspend () -> T): T =
 /** The last computation of the interpreter list against the records, for the report of a test wait that does not end. */
 @TestOnly
 fun PythonInterpreterRegistry.describeForTests(): String = store.describeForTests()
+
+/**
+ * The interpreter of this SDK in [project], built as the registry builds it, see [pythonInterpreterResultAsync]. For a
+ * test that makes its SDK itself and needs no registry, such as a test of a mock SDK. A failure when the SDK names no
+ * interpreter. A test that sets the interpreter on a project uses [setPythonSdkForTests] instead.
+ */
+@TestOnly
+suspend fun Sdk.buildInterpreterForTests(project: Project, forceRefresh: Boolean = false): PyResult<PythonInterpreter> =
+  pythonInterpreterResultAsync(project, forceRefresh)
+
+/** [buildInterpreterForTests] for a test that cannot suspend. */
+@TestOnly
+@RequiresBackgroundThread(generateAssertion = false)
+fun Sdk.buildInterpreterForTestsBlocking(project: Project): PyResult<PythonInterpreter> = pythonInterpreterResult(project)
+
+/** [buildInterpreterForTestsBlocking] for a Java test. It throws [InvalidSdkException] when the SDK names no interpreter. */
+@TestOnly
+@RequiresBackgroundThread(generateAssertion = false)
+@Throws(InvalidSdkException::class)
+fun Sdk.buildInterpreterOrThrowForTests(project: Project): PythonInterpreter = pythonInterpreterOrThrow(project)

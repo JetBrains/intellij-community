@@ -2,13 +2,13 @@
 package com.jetbrains.python.packaging.pythonPackageManager
 
 import com.intellij.openapi.application.edtWriteAction
-import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.openapi.projectRoots.impl.ProjectJdkImpl
 import com.intellij.python.sdk.backend.PySdkBundle
-import com.intellij.python.sdk.backend.pythonInterpreterResultAsync
+import com.intellij.python.sdk.backend.buildInterpreterForTests
 import com.intellij.python.venv.sdk.flavors.VirtualEnvSdkFlavor
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.jetbrains.python.Result
 import com.jetbrains.python.allure.Layers
 import com.jetbrains.python.allure.Subsystems
@@ -36,21 +36,21 @@ internal class PythonPackageManagerNullAdditionalDataTest {
   fun `an SDK with null additional data names no interpreter`(@TempDir home: Path): Unit = timeoutRunBlocking {
     val sdk = pythonSdk(home, data = null)
 
-    assertBrokenConfiguration(sdk.pythonInterpreterResultAsync(projectFixture.get()), sdk.name)
+    assertBrokenConfiguration(sdk.buildInterpreterForTests(projectFixture.get()), sdk.name)
   }
 
   @Test
   fun `an SDK with no home path names no interpreter`(@TempDir home: Path): Unit = timeoutRunBlocking {
     val sdk = pythonSdk(homePath = null, data = venvData(home))
 
-    assertBrokenConfiguration(sdk.pythonInterpreterResultAsync(projectFixture.get()), sdk.name)
+    assertBrokenConfiguration(sdk.buildInterpreterForTests(projectFixture.get()), sdk.name)
   }
 
   @Test
   fun `an SDK with a home path and data names an interpreter`(@TempDir home: Path): Unit = timeoutRunBlocking {
     val sdk = pythonSdk(home, venvData(home))
 
-    val interpreter = sdk.pythonInterpreterResultAsync(projectFixture.get()).orThrow()
+    val interpreter = sdk.buildInterpreterForTests(projectFixture.get()).orThrow()
 
     assertThat(interpreter.ownerDir).isEqualTo(home)
   }

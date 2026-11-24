@@ -3,7 +3,7 @@ package com.jetbrains.env.python.testing;
 import com.google.common.collect.ImmutableList;
 import java.util.Objects;
 import com.jetbrains.python.packaging.PyPackage;
-import com.intellij.python.sdk.backend.PythonInterpreterKt;
+import com.intellij.python.sdk.backend.PythonInterpreterTestSupportKt;
 import com.jetbrains.env.PyEnvTestPackages;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.RunManager;
@@ -929,7 +929,7 @@ public final class PythonPyTestingTest extends PyEnvTestCase {
       @Override
       public void runTestOn(@NotNull String sdkHome, @Nullable Sdk existingSdk) throws InvalidSdkException, ExecutionException {
         Sdk sdk = createTempSdk(sdkHome, SdkCreationType.SDK_PACKAGES_ONLY);
-        PyEnvTestPackages.reloadInstalledPackages(myFixture.getProject(), PythonInterpreterKt.pythonInterpreterOrThrow(sdk, myFixture.getProject(), false));
+        PyEnvTestPackages.reloadInstalledPackages(myFixture.getProject(), PythonInterpreterTestSupportKt.buildInterpreterOrThrowForTests(sdk, myFixture.getProject()));
         var runnerService = TestRunnerService.getInstance(myFixture.getModule());
         runnerService.setSelectedFactory(PythonTestConfigurationType.getInstance().getAutoDetectFactory());
         ApplicationManager.getApplication().invokeAndWait(() -> PyTestFixtureAndParametrizedTest.Companion.testInspectionStatic(myFixture));

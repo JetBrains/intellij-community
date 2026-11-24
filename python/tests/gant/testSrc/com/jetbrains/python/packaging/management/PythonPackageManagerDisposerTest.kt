@@ -3,16 +3,16 @@ package com.jetbrains.python.packaging.management
 
 import com.intellij.openapi.util.Disposer
 import com.intellij.python.sdk.backend.PythonInterpreter
-import com.intellij.python.sdk.backend.pythonInterpreterResultAsync
+import com.intellij.python.sdk.backend.buildInterpreterForTests
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.jetbrains.python.allure.Layers
 import com.jetbrains.python.allure.Subsystems
-import com.jetbrains.python.sdk.PythonSdkType
-import org.junit.jupiter.api.Test
 import com.jetbrains.python.psi.LanguageLevel
+import com.jetbrains.python.sdk.PythonSdkType
 import com.jetbrains.python.tools.sdkTools.PythonMockSdk
+import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
 import java.nio.file.Path
 
@@ -40,7 +40,7 @@ class PythonPackageManagerDisposerTest {
   fun `a fresh manager is absent from the Disposer tree`(): Unit = timeoutRunBlocking {
     val project = projectFixture.get()
     val sdk = PythonMockSdk.create("PY-90829 test SDK", tempDir.toString(), PythonSdkType.getInstance(), LanguageLevel.getLatest())
-    val interpreter = sdk.pythonInterpreterResultAsync(project).orThrow()
+    val interpreter = sdk.buildInterpreterForTests(project).orThrow()
 
     val manager = TestPythonPackageManager(interpreter)
 

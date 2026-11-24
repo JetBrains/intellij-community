@@ -1,9 +1,8 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.python.junit5Tests.env.pixi
 
-import com.intellij.execution.configurations.GeneralCommandLine
-import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.execution.Platform
+import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.target.BaseTargetEnvironmentRequest
 import com.intellij.execution.target.LanguageRuntimeType
 import com.intellij.execution.target.TargetEnvironment
@@ -24,37 +23,37 @@ import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.python.community.execService.Args
 import com.intellij.python.community.execService.ExecService
-import com.intellij.python.community.execService.execGetStdout
 import com.intellij.python.community.execService.ZeroCodeStdoutTransformer
+import com.intellij.python.community.execService.execGetStdout
 import com.intellij.python.community.execService.impl.TargetEnvironmentRequestHandler
 import com.intellij.python.junit5Tests.framework.LeakedProcessReporterExtension
-import com.intellij.python.pixi.backend.workspace.createPixiRuntime
-import com.intellij.python.pixi.backend.packaging.resolvePixiPackageLocation
-import com.intellij.python.pixi.backend.packaging.relativeToWorkspace
-import com.intellij.python.pixi.backend.packaging.resolvePixiSourceName
 import com.intellij.python.pixi.backend.packaging.executeBundledPixiPip
 import com.intellij.python.pixi.backend.packaging.readPixiCondaPackagesFromInterpreter
+import com.intellij.python.pixi.backend.packaging.relativeToWorkspace
+import com.intellij.python.pixi.backend.packaging.resolvePixiPackageLocation
+import com.intellij.python.pixi.backend.packaging.resolvePixiSourceName
 import com.intellij.python.pixi.backend.sdk.PixiSdkFlavor
+import com.intellij.python.pixi.backend.workspace.createPixiRuntime
 import com.intellij.python.pixi.test.env.PixiPyEnvironment
 import com.intellij.python.pixi.test.env.pixiEnvironment
+import com.intellij.python.sdk.backend.TargetPythonInterpreter
+import com.intellij.python.sdk.backend.buildInterpreterForTests
 import com.intellij.python.test.env.core.PyEnvironmentFactory
 import com.intellij.python.test.env.junit5.PythonFactoryExtension
-import com.intellij.python.sdk.backend.pythonInterpreterResultAsync
-import com.intellij.python.sdk.backend.TargetPythonInterpreter
 import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.fixture.disposableFixture
-import com.intellij.util.ui.EmptyIcon
+import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.util.io.Compressor
-import com.sun.net.httpserver.HttpServer
+import com.intellij.util.ui.EmptyIcon
 import com.jetbrains.python.allure.Layers
 import com.jetbrains.python.allure.Subsystems
 import com.jetbrains.python.getOrThrow
 import com.jetbrains.python.isSuccess
 import com.jetbrains.python.run.target.HelpersAwareTargetEnvironmentRequest
-import com.jetbrains.python.run.target.PythonHelpersMappings
 import com.jetbrains.python.run.target.PathPythonHelpersMapping
+import com.jetbrains.python.run.target.PythonHelpersMappings
 import com.jetbrains.python.run.target.getPythonHelpers
 import com.jetbrains.python.sdk.PythonSdkType
 import com.jetbrains.python.sdk.add.v2.FileSystemFactory
@@ -62,20 +61,21 @@ import com.jetbrains.python.sdk.add.v2.PathHolder
 import com.jetbrains.python.sdk.flavors.PyFlavorAndData
 import com.jetbrains.python.sdk.flavors.PyFlavorData
 import com.jetbrains.python.target.PyTargetAwareAdditionalData
+import com.sun.net.httpserver.HttpServer
+import org.apache.tuweni.toml.Toml
 import org.assertj.core.api.Assertions.assertThat
 import org.jdom.Element
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
 import org.junit.jupiter.api.io.TempDir
 import org.junit.jupiter.params.ParameterizedTest
-import org.junit.jupiter.params.provider.ValueSource
 import org.junit.jupiter.params.provider.EnumSource
-import org.apache.tuweni.toml.Toml
+import org.junit.jupiter.params.provider.ValueSource
+import java.net.InetSocketAddress
+import java.net.URI
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardCopyOption.REPLACE_EXISTING
-import java.net.InetSocketAddress
-import java.net.URI
 import java.util.concurrent.atomic.AtomicInteger
 import javax.swing.Icon
 import kotlin.io.path.createDirectories
@@ -237,7 +237,7 @@ internal class PixiTargetRuntimeTest {
         commitChanges()
       }
     }
-    val interpreter = sdk.pythonInterpreterResultAsync(projectFixture.get()).getOrThrow()
+    val interpreter = sdk.buildInterpreterForTests(projectFixture.get()).getOrThrow()
     assertThat(interpreter).isInstanceOf(TargetPythonInterpreter::class.java)
     val links = temporaryDirectory.resolve("private target wheels").createDirectories()
     val arguments = if (useFindLinks) {

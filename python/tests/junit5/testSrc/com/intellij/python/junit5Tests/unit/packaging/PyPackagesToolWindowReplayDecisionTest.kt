@@ -2,16 +2,16 @@
 package com.intellij.python.junit5Tests.unit.packaging
 
 import com.intellij.python.sdk.backend.PythonInterpreter
-import com.intellij.testFramework.junit5.fixture.projectFixture
-import com.intellij.python.sdk.backend.pythonInterpreterResult
-import com.jetbrains.python.packaging.toolwindow.shouldReplayBoundInterpreter
-import org.junit.jupiter.api.Assertions.assertFalse
-import org.junit.jupiter.api.Assertions.assertTrue
-import org.junit.jupiter.api.Test
+import com.intellij.python.sdk.backend.buildInterpreterForTestsBlocking
 import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.fixture.projectFixture
+import com.jetbrains.python.packaging.toolwindow.shouldReplayBoundInterpreter
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.sdk.PythonSdkType
 import com.jetbrains.python.tools.sdkTools.PythonMockSdk
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
 import java.nio.file.Path
 
@@ -35,7 +35,7 @@ internal class PyPackagesToolWindowReplayDecisionTest {
   /** An interpreter of its own: its SDK is at its own path, so its ref differs from every other one. */
   private fun interpreterAt(name: String): PythonInterpreter =
     PythonMockSdk.create(name, root.resolve(name).toString(), PythonSdkType.getInstance(), LanguageLevel.getLatest())
-      .pythonInterpreterResult(projectFixture.get()).orThrow()
+      .buildInterpreterForTestsBlocking(projectFixture.get()).orThrow()
 
   @Test
   fun `replays when the binding is the interpreter to open on`() {

@@ -3,7 +3,7 @@ package com.jetbrains.python.tools.sdkTools;
 
 import com.intellij.execution.ExecutionException;
 import com.intellij.python.sdk.backend.PythonInterpreter;
-import com.intellij.python.sdk.backend.PythonInterpreterKt;
+import com.intellij.python.sdk.backend.PythonInterpreterTestSupportKt;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
@@ -121,7 +121,7 @@ public final class PySdkTools {
 
     final SdkModificator modificator = sdk.getSdkModificator();
 
-    final PythonInterpreter interpreter = PythonInterpreterKt.pythonInterpreterOrThrow(sdk, project, false);
+    final PythonInterpreter interpreter = PythonInterpreterTestSupportKt.buildInterpreterOrThrowForTests(sdk, project);
     for (final String path : PyTargetsIntrospectionFacade.create(interpreter).getInterpreterPaths()) {
       addTestSdkRoot(modificator, path);
     }
