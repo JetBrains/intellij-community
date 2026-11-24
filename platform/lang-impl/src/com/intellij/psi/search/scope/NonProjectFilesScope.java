@@ -2,6 +2,7 @@
 package com.intellij.psi.search.scope;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.TrustedFiles;
 import com.intellij.ide.scratch.ScratchUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.NonPhysicalFileSystem;
@@ -35,6 +36,8 @@ public final class NonProjectFilesScope extends NamedScope {
     // do not include fake-files e.g. fragment-editors, etc.
     if (file.getFileSystem() instanceof NonPhysicalFileSystem) return false;
     if (ScratchUtil.isScratch(file)) return false;
+    // the welcome project has no content of its own, so the file trust decides the verdict
+    if (project.isWelcomeProject()) return !TrustedFiles.isTrusted(file, project);
     return !ProjectScope.getProjectScope(project).contains(file);
   }
 
