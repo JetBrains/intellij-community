@@ -23,6 +23,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.platform.testFramework.core.FileComparisonFailedError;
 import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.testFramework.fixtures.EditorTestFixture;
 import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.intellij.util.ui.ImageUtil;
 import org.jetbrains.annotations.NotNull;
@@ -152,7 +153,8 @@ public abstract class ImmediatePainterTestCase {
       editorComponent.paint(graphics);
       ((EditorImpl)editor).processKeyTypedImmediately(c, graphics, dataContext);
       immediateImage = copy(image);
-      ((EditorImpl)editor).processKeyTypedNormally(c, dataContext);
+      EditorTestFixture.runLetterTyping(c, editor, myFixture.getProject(),
+                                        () -> ((EditorImpl)editor).processKeyTypedNormally(c, dataContext));
       editorComponent.paint(graphics);
     }
     finally {

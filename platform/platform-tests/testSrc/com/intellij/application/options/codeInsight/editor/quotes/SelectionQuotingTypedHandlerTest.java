@@ -10,6 +10,7 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
+import com.intellij.testFramework.fixtures.EditorTestFixture;
 import com.intellij.util.ThrowableRunnable;
 import org.jetbrains.annotations.NotNull;
 
@@ -120,13 +121,16 @@ public class SelectionQuotingTypedHandlerTest extends BasePlatformTestCase {
     EditorActionManager.getInstance();
     final TypedAction typedAction = TypedAction.getInstance();
 
-    performAction(myFixture.getProject(), () -> {
-      for (int i = 0, max = cs.length(); i < max; i++) {
-        final char c = cs.charAt(i);
-        typedAction.actionPerformed(myFixture.getEditor(), c, ((EditorEx)myFixture.getEditor()).getDataContext());
-      }
-    });
+    for (int i = 0, max = cs.length(); i < max; i++) {
+      type(typedAction, cs.charAt(i));
+    }
     myFixture.checkResult(expected);
+  }
+
+  private void type(@NotNull TypedAction typedAction, char c) {
+    Runnable typing = () -> typedAction.actionPerformed(myFixture.getEditor(), c, ((EditorEx)myFixture.getEditor()).getDataContext());
+    EditorTestFixture.runLetterTyping(c, myFixture.getEditor(), myFixture.getProject(), typing,
+                                      () -> performAction(myFixture.getProject(), typing));
   }
 
   public void testRuby7852ErrantEditor() {
@@ -141,10 +145,8 @@ public class SelectionQuotingTypedHandlerTest extends BasePlatformTestCase {
     myFixture.checkResult("'aaa'\nbbb\n\n");
 
     myFixture.getEditor().getCaretModel().moveToOffset(myFixture.getEditor().getDocument().getLineStartOffset(3));
-    performAction(myFixture.getProject(), () -> {
-      typedAction.actionPerformed(myFixture.getEditor(), 'A', ((EditorEx)myFixture.getEditor()).getDataContext());
-      typedAction.actionPerformed(myFixture.getEditor(), 'B', ((EditorEx)myFixture.getEditor()).getDataContext());
-    });
+    type(typedAction, 'A');
+    type(typedAction, 'B');
     myFixture.checkResult("'aaa'\nbbb\n\nAB");
   }
 }

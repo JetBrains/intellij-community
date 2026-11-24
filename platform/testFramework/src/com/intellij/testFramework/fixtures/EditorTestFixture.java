@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework.fixtures;
 
 import com.intellij.codeInsight.TargetElementUtil;
@@ -100,7 +100,7 @@ public class EditorTestFixture {
       // TODO make LOG.error
       LOG.warn("type() must not be in WA");
     }
-    ApplicationManager.getApplication().invokeAndWait(() -> {
+    Runnable r = () -> {
       int keyCode = KeyEvent.getExtendedKeyCodeForChar(c);
       KeyEvent keyEvent = new KeyEvent(getEditor().getContentComponent(), KeyEvent.KEY_PRESSED, -1, 0, keyCode, c);
       if (!Character.isLetterOrDigit(keyEvent.getKeyChar()) || ClientProperty.get(
@@ -117,7 +117,28 @@ public class EditorTestFixture {
       ActionManagerEx.getInstanceEx().fireBeforeEditorTyping(c, getEditorDataContext());
       TypedAction.getInstance().actionPerformed(myEditor, c, getEditorDataContext());
       ActionManagerEx.getInstanceEx().fireAfterEditorTyping(c, getEditorDataContext());
-    });
+    };
+    runLetterTyping(c, myEditor, myProject, r, () -> ApplicationManagerEx.getApplicationEx().invokeAndWait(r));
+  }
+
+  /**
+   * Runs {@code typing}, the typing of {@code c} in {@code editor}, on EDT and waits for it.
+   * The test helpers type a character with this method, so that the typing of the tests has one entry point.
+   */
+  public static void runLetterTyping(char c, @NotNull Editor editor, @Nullable Project project, @NotNull Runnable typing) {
+    runLetterTyping(c, editor, project, typing, typing);
+  }
+
+  /**
+   * Runs {@code fallback} on EDT and waits for it.
+   * This function is a placeholder that will be adjusted when lock-free typing is enabled.
+   */
+  public static void runLetterTyping(char c,
+                                     @NotNull Editor editor,
+                                     @Nullable Project project,
+                                     @NotNull Runnable typing,
+                                     @NotNull Runnable fallback) {
+    EdtTestUtil.runInEdtAndWait(() -> fallback.run());
   }
 
   public void type(@NotNull String s) {

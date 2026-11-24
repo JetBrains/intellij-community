@@ -31,6 +31,7 @@ import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.awaitPendingNavigationAndEditorOpenIfEnabled
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture
 import com.intellij.testFramework.fixtures.EditorMouseFixture
+import com.intellij.testFramework.fixtures.EditorTestFixture
 import com.intellij.testFramework.junit5.fixture.TestFixture
 import com.intellij.testFramework.junit5.fixture.testFixture
 import com.intellij.testFramework.runInEdtAndWait
@@ -299,15 +300,20 @@ class EditorModelFixture internal constructor(
   /**
    * Types [c], as `LightPlatformCodeInsightTestCase.type` does.
    * A line feed runs the Enter action in a command. Other characters go to the typed action.
+   * The typed action runs with [EditorTestFixture.runLetterTyping].
    */
   fun type(c: Char) {
     if (c == '\n') {
       executeAction(IdeActions.ACTION_EDITOR_ENTER)
     }
     else {
-      @Suppress("DEPRECATION") // LightPlatformCodeInsightTestCase.type uses the same data context
-      TypedAction.getInstance().actionPerformed(editor, c, DataManager.getInstance().dataContext)
+      EditorTestFixture.runLetterTyping(c, editor, project) { typeWithTypedAction(c) }
     }
+  }
+
+  private fun typeWithTypedAction(c: Char) {
+    @Suppress("DEPRECATION") // LightPlatformCodeInsightTestCase.type uses the same data context
+    TypedAction.getInstance().actionPerformed(editor, c, DataManager.getInstance().dataContext)
   }
 
   fun backspace(): Unit = executeAction(IdeActions.ACTION_EDITOR_BACKSPACE)

@@ -49,6 +49,7 @@ import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageEditorUtil;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.testFramework.common.EditorCaretTestUtil;
+import com.intellij.testFramework.fixtures.EditorTestFixture;
 import com.intellij.util.ThrowableRunnable;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -552,10 +553,14 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
       executeAction(IdeActions.ACTION_EDITOR_ENTER, editor, project);
     }
     else {
-      DataContext dataContext = DataManager.getInstance().getDataContext();
-      TypedAction action = TypedAction.getInstance();
-      action.actionPerformed(editor, c, dataContext);
+      EditorTestFixture.runLetterTyping(c, editor, project, () -> typeWithTypedAction(c, editor));
     }
+  }
+
+  private static void typeWithTypedAction(char c, @NotNull Editor editor) {
+    DataContext dataContext = DataManager.getInstance().getDataContext();
+    TypedAction action = TypedAction.getInstance();
+    action.actionPerformed(editor, c, dataContext);
   }
 
   protected void backspace() {

@@ -47,6 +47,7 @@ import com.intellij.testFramework.LightPlatformCodeInsightTestCase
 import com.intellij.testFramework.LightPlatformTestCase
 import com.intellij.testFramework.PerformanceUnitTest
 import com.intellij.testFramework.PlatformTestUtil
+import com.intellij.testFramework.fixtures.EditorTestFixture
 import com.intellij.testFramework.registerExtension
 import com.intellij.tools.ide.metrics.benchmark.Benchmark
 import com.intellij.util.Alarm
@@ -186,7 +187,7 @@ class ConsoleViewImplTest : LightPlatformTestCase() {
     EditorActionManager.getInstance()
     val dataContext = DataManager.getInstance().getDataContext(console.component)
     val action = TypedAction.getInstance()
-    action.actionPerformed(consoleEditor, 'h', dataContext)
+    EditorTestFixture.runLetterTyping('h', consoleEditor, consoleEditor.project) { action.actionPerformed(consoleEditor, 'h', dataContext) }
     assertEquals(1, console.contentSize)
   }
 
@@ -1357,7 +1358,7 @@ class ConsoleViewImplTest : LightPlatformTestCase() {
       val action = TypedAction.getInstance()
       val dataContext = (editor as EditorEx).dataContext
 
-      action.actionPerformed(editor, c, dataContext)
+      EditorTestFixture.runLetterTyping(c, editor, editor.project) { action.actionPerformed(editor, c, dataContext) }
     }
   }
 }

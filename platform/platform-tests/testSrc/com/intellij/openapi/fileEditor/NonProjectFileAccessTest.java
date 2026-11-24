@@ -30,6 +30,7 @@ import com.intellij.testFramework.EditorTestUtil;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.ServiceContainerUtil;
+import com.intellij.testFramework.fixtures.EditorTestFixture;
 import com.intellij.ui.EditorNotifications;
 import com.intellij.ui.EditorNotificationsImpl;
 import com.intellij.util.NullableFunction;
@@ -416,7 +417,8 @@ public class NonProjectFileAccessTest extends HeavyFileEditorManagerTestCase {
 
   private void typeInChar(Editor e, char c) {
     getActionManager();
-    TypedAction.getInstance().actionPerformed(e, c, createDataContextFor(e));
+    EditorTestFixture.runLetterTyping(c, e, getProject(),
+                                      () -> TypedAction.getInstance().actionPerformed(e, c, createDataContextFor(e)));
   }
 
   private DataContext createDataContextFor(final Editor editor) {

@@ -23,6 +23,7 @@ import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.EditorTestUtil;
 import com.intellij.testFramework.PsiTestUtil;
+import com.intellij.testFramework.fixtures.EditorTestFixture;
 import com.intellij.util.DocumentUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -78,7 +79,9 @@ public abstract class UndoTestCase extends JavaCodeInsightTestCase {
 
   void typeInChar(@NotNull Editor e, char c) {
     EditorActionManager.getInstance();
-    TypedAction.getInstance().actionPerformed(e, c, createDataContextFor(e));
+    EditorTestFixture.runLetterTyping(c, e, myProject, () -> {
+      TypedAction.getInstance().actionPerformed(e, c, createDataContextFor(e));
+    });
   }
 
   protected void typeInText(@NotNull Editor editor, String text) {

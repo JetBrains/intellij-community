@@ -71,6 +71,7 @@ import com.intellij.testFramework.TestFrameworkUtil
 import com.intellij.testFramework.VfsTestUtil
 import com.intellij.testFramework.awaitPendingNavigationAndEditorOpenIfEnabled
 import com.intellij.testFramework.common.runAll
+import com.intellij.testFramework.fixtures.EditorTestFixture
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl
 import com.intellij.testFramework.junit5.fixture.TestFixture
 import com.intellij.testFramework.junit5.fixture.projectFixture
@@ -580,14 +581,16 @@ open class HeavyJavaCodeInsightFixture(context: Context, val testDataPath: Strin
 
   /**
    * Types [c] in [editor]. For `'\n'`, it runs the enter action in a command.
+   * Other characters go to the typed action with [EditorTestFixture.runLetterTyping].
    */
   fun type(c: Char) {
     if (c == '\n') {
       executeAction(IdeActions.ACTION_EDITOR_ENTER)
     }
     else {
-      runInEdtAndWait {
-        TypedAction.getInstance().actionPerformed(editor!!, c, DataManager.getInstance().dataContext)
+      val currentEditor = editor!!
+      EditorTestFixture.runLetterTyping(c, currentEditor, project) {
+        TypedAction.getInstance().actionPerformed(currentEditor, c, DataManager.getInstance().dataContext)
       }
     }
   }

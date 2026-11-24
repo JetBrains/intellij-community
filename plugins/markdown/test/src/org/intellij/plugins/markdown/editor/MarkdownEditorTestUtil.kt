@@ -9,6 +9,7 @@ import com.intellij.openapi.editor.actionSystem.TypedAction
 import com.intellij.testFramework.EditorTestUtil
 import com.intellij.testFramework.awaitPendingNavigationAndEditorOpenIfEnabled
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture
+import com.intellij.testFramework.fixtures.EditorTestFixture
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import org.jetbrains.annotations.TestOnly
 
@@ -17,6 +18,7 @@ import org.jetbrains.annotations.TestOnly
  *
  * A `'\n'` runs [IdeActions.ACTION_EDITOR_ENTER] with [executeAction].
  * Each other char goes to [TypedAction] with the default data context.
+ * The typed action runs with [EditorTestFixture.runLetterTyping].
  * [CodeInsightTestFixture.type] is different. It tries the keymap shortcut of the char first, and it fires the typing events.
  */
 @RequiresEdt
@@ -27,7 +29,10 @@ fun CodeInsightTestFixture.typeInEditor(text: String) {
       executeAction(IdeActions.ACTION_EDITOR_ENTER)
     }
     else {
-      TypedAction.getInstance().actionPerformed(editor, c, DataManager.getInstance().dataContext)
+      val editor = editor
+      EditorTestFixture.runLetterTyping(c, editor, project) {
+        TypedAction.getInstance().actionPerformed(editor, c, DataManager.getInstance().dataContext)
+      }
     }
   }
 }

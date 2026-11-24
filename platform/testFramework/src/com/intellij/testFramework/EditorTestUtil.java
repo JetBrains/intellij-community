@@ -80,6 +80,7 @@ import com.intellij.testFramework.common.EditorCaretTestUtil;
 import com.intellij.testFramework.common.EditorCaretTestUtil.CaretAndSelectionState;
 import com.intellij.testFramework.common.EditorCaretTestUtil.CaretInfo;
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.EditorTestFixture;
 import com.intellij.util.SmartList;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.concurrency.AppExecutorUtil;
@@ -148,9 +149,13 @@ public final class EditorTestUtil {
       executeAction(editor, IdeActions.ACTION_EDITOR_ENTER);
     }
     else {
-      TypedAction action = TypedAction.getInstance();
-      action.actionPerformed(editor, c, DataManager.getInstance().getDataContext(editor.getContentComponent()));
+      EditorTestFixture.runLetterTyping(c, editor, editor.getProject(), () -> typeWithTypedAction(editor, c));
     }
+  }
+
+  private static void typeWithTypedAction(@NotNull Editor editor, char c) {
+    TypedAction action = TypedAction.getInstance();
+    action.actionPerformed(editor, c, DataManager.getInstance().getDataContext(editor.getContentComponent()));
   }
 
   /**

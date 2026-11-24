@@ -150,6 +150,7 @@ import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.SkipSlowTestLocally;
 import com.intellij.testFramework.TestLoggerFactory;
 import com.intellij.testFramework.UITestUtil;
+import com.intellij.testFramework.fixtures.EditorTestFixture;
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
 import com.intellij.testFramework.junit5.TestApplication;
 import com.intellij.testFramework.junit5.fixture.TestFixture;
@@ -302,7 +303,7 @@ public class DaemonRespondToChangesTest {
     TypedAction action = TypedAction.getInstance();
     DataContext dataContext = ((EditorEx)alienEditor).getDataContext();
 
-    action.actionPerformed(alienEditor, c, dataContext);
+    EditorTestFixture.runLetterTyping(c, alienEditor, alienEditor.getProject(), () -> action.actionPerformed(alienEditor, c, dataContext));
   }
 
   @Test
