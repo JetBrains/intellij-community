@@ -36,6 +36,7 @@ import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
 import org.jetbrains.plugins.terminal.ShellStartupOptions
 import org.jetbrains.plugins.terminal.TerminalToolWindowFactory
+import org.jetbrains.plugins.terminal.TerminalToolWindowManager
 import org.jetbrains.plugins.terminal.runner.LocalOptionsConfigurer
 import org.jetbrains.plugins.terminal.runner.LocalTerminalStartCommandBuilder
 import org.jetbrains.plugins.terminal.session.guessShellName
@@ -54,7 +55,8 @@ import kotlin.time.Duration.Companion.seconds
  *
  * It serves the Markdown code-fence runner through [ShSelectedTerminalRunner] and the Run File action and the Shell Script run
  * configuration through [run], which [ShTerminalRunRequestListener] calls for every [com.intellij.sh.run.ShRunner] request.
- * Only the reworked terminal engine is supported.
+ * New tabs always use the reworked terminal engine. A command can also go to an open tab of the Classic Terminal, for example
+ * the SSH Session tab, but only when no shell is requested.
  */
 internal class ShFrontendTerminalRunner : ShSelectedTerminalRunner {
   override fun run(
@@ -107,7 +109,12 @@ internal class ShFrontendTerminalRunner : ShSelectedTerminalRunner {
     command: String,
     @NlsContexts.TabTitle title: String,
   ): Boolean {
-    val terminalView = content.getTerminalTab()?.view ?: return false
+    val terminalView = content.getTerminalTab()?.view
+    if (terminalView == null) {
+      val classicWidget = TerminalToolWindowManager.findWidgetByContent(content) ?: return false
+      classicWidget.sendCommandToExecute(command)
+      return true
+    }
     enqueueCommand(content, terminalView, command)
     terminalView.title.change {
       if (userDefinedTitle == null || userDefinedTitle == content.getUserData(LAST_AUTOMATIC_TITLE)) {
@@ -297,7 +304,8 @@ internal class ShFrontendTerminalRunner : ShSelectedTerminalRunner {
   }
 
   private fun isTerminal(content: Content, shell: String?): Boolean {
-    val tab = content.getTerminalTab() ?: return false
+    // The shell of a Classic Terminal tab is unknown, so such a tab is accepted only when no shell is requested.
+    val tab = content.getTerminalTab() ?: return shell == null && TerminalToolWindowManager.findWidgetByContent(content) != null
     if (shell == null) return true
     val options = tab.view.startupOptionsDeferred.getNow() ?: return false
     return options.processType == TerminalProcessType.SHELL && options.guessShellName().value == shell
