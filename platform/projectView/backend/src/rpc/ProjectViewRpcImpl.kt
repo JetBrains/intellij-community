@@ -7,7 +7,9 @@ import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.vfs.resolveFromRootOrRelative
 import com.intellij.platform.project.ProjectId
 import com.intellij.platform.project.findProject
+import com.intellij.platform.projectView.ProjectViewPanesImpl
 import com.intellij.platform.projectView.actions.EditorChoice
+import com.intellij.platform.projectView.backend.impl.BackendProjectViewImpl
 import com.intellij.platform.projectView.backend.pane.BackendProjectViewPaneService
 import com.intellij.platform.projectView.impl.FileUpdateDTO
 import com.intellij.platform.projectView.impl.ProjectViewUpdateRequestsService
@@ -18,6 +20,7 @@ import com.intellij.platform.projectView.pane.ProjectViewPaneRequest
 import com.intellij.platform.projectView.pane.ProjectViewPaneStateEventDTO
 import com.intellij.platform.projectView.pane.SelectInRequestDTO
 import com.intellij.platform.projectView.rpc.ProjectViewRpc
+import com.intellij.platform.projectView.rpc.SelectPaneRequestDTO
 import com.intellij.platform.rpc.backend.RemoteApiProvider
 import fleet.rpc.remoteApiDescriptor
 import kotlinx.coroutines.channels.SendChannel
@@ -75,6 +78,18 @@ internal class ProjectViewRpcImpl : ProjectViewRpc {
 
   override suspend fun getFileUpdateRequestChannel(projectId: ProjectId): SendChannel<FileUpdateDTO> {
     return ProjectViewUpdateRequestsService.getInstance(projectId.findProject()).createRpcChannel()
+  }
+
+  override suspend fun getPanesChannel(projectId: ProjectId): SendChannel<ProjectViewPanesImpl> {
+    return BackendProjectViewImpl.getInstance(projectId.findProject()).createPanesChannel()
+  }
+
+  override suspend fun getSelectPaneRequestFlow(projectId: ProjectId): Flow<SelectPaneRequestDTO?> {
+    return BackendProjectViewImpl.getInstance(projectId.findProject()).getSelectPaneRequestFlow()
+  }
+
+  override suspend fun completeSelectPaneRequest(projectId: ProjectId, requestId: Long, isSelected: Boolean) {
+    BackendProjectViewImpl.getInstance(projectId.findProject()).completeSelectPaneRequest(requestId, isSelected)
   }
 
   override suspend fun getFileInFirstContentRoot(projectId: ProjectId, relativePath: String): VirtualFileId {

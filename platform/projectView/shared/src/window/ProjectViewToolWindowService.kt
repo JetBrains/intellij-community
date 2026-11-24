@@ -4,6 +4,7 @@ package com.intellij.platform.projectView.window
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.ToolWindow
+import com.intellij.platform.projectView.ProjectView
 import com.intellij.platform.projectView.actions.ProjectViewActionSupport
 import com.intellij.platform.projectView.pane.ProjectViewNodePath
 import com.intellij.platform.projectView.pane.ProjectViewPaneDescriptorImpl
@@ -12,7 +13,7 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 
 @ApiStatus.Internal
-interface ProjectViewToolWindowService {
+interface ProjectViewToolWindowService : ProjectView {
   companion object {
     @JvmStatic fun getInstance(project: Project): ProjectViewToolWindowService = project.service()
   }

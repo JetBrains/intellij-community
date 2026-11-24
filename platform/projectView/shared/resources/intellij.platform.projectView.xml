@@ -34,6 +34,10 @@
     <remote.customDataContextSerializer implementation="com.intellij.platform.projectView.pane.ProjectViewPaneIdDataContextSerializer" />
     <remote.customDataContextSerializer implementation="com.intellij.platform.projectView.pane.ProjectViewSelectedNodeIdsDataContextSerializer" />
     <projectService
+      serviceInterface="com.intellij.platform.projectView.ProjectView"
+      serviceImplementation="com.intellij.platform.projectView.impl.ProjectViewImpl"
+    />
+    <projectService
       serviceInterface="com.intellij.ide.projectView.actions.SelectFileActionService"
       serviceImplementation="com.intellij.platform.projectView.actions.SelectFileActionServiceImpl"
     />

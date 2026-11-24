@@ -20,10 +20,7 @@ internal class ProjectViewToolWindowFactory : MultiProjectToolWindowFactory, Dum
   override val icon: Icon
     get() = AllIcons.Toolwindows.ToolWindowProject
 
-  override suspend fun isApplicableAsync(project: Project): Boolean {
-    return !serviceAsync<ProjectFrameCapabilitiesService>().has(project, ProjectFrameCapability.SUPPRESS_PROJECT_VIEW) &&
-           isProjectViewSplitAsync()
-  }
+  override suspend fun isApplicableAsync(project: Project): Boolean = isSplitProjectViewApplicable(project)
 
   override fun createToolWindowContent(project: Project, toolWindow: ToolWindow) {
     ProjectViewToolWindowService.getInstance(project).setupToolWindow(toolWindow)
@@ -34,4 +31,12 @@ internal class ProjectViewToolWindowFactory : MultiProjectToolWindowFactory, Dum
       ProjectViewToolWindowService.getInstance(toolWindow.project).manageToolWindow(toolWindow)
     }
   }
+}
+
+/**
+ * Returns `true` if the project has the split Project View tool window.
+ */
+internal suspend fun isSplitProjectViewApplicable(project: Project): Boolean {
+  return !serviceAsync<ProjectFrameCapabilitiesService>().has(project, ProjectFrameCapability.SUPPRESS_PROJECT_VIEW) &&
+         isProjectViewSplitAsync()
 }

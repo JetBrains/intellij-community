@@ -34,6 +34,9 @@ import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.ex.ProjectFrameCapabilitiesService
 import com.intellij.openapi.wm.impl.content.ToolWindowContentUi
+import com.intellij.platform.ide.productMode.IdeProductMode
+import com.intellij.platform.projectView.ProjectViewPanes
+import com.intellij.platform.projectView.ProjectViewPanesImpl
 import com.intellij.platform.projectView.actions.ProjectViewActionSupport
 import com.intellij.platform.projectView.frontend.actions.ProjectViewActionSupportImpl
 import com.intellij.platform.projectView.frontend.actions.ProjectViewToolbarActionGroup
@@ -56,6 +59,7 @@ import com.intellij.platform.projectView.runSafelyCancellable
 import com.intellij.platform.projectView.window.ProjectViewToolWindowService
 import com.intellij.ui.content.Content
 import com.intellij.ui.content.ContentFactory
+import com.intellij.ui.content.ContentManager
 import com.intellij.ui.content.ContentManagerEvent
 import com.intellij.ui.content.ContentManagerListener
 import com.intellij.util.AwaitCancellationAndInvoke
@@ -64,14 +68,15 @@ import com.intellij.util.concurrency.annotations.RequiresEdt
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalForInheritanceCoroutinesApi
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.flow.FlowCollector
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -87,8 +92,10 @@ import org.jdom.Element
 import java.util.concurrent.CancellationException
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.CopyOnWriteArraySet
+import kotlin.concurrent.atomics.AtomicLong
 import kotlin.concurrent.atomics.AtomicReference
 import kotlin.concurrent.atomics.ExperimentalAtomicApi
+import kotlin.concurrent.atomics.incrementAndFetch
 import kotlin.coroutines.resume
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
@@ -108,11 +115,36 @@ internal class ProjectViewToolWindowServiceImpl(
   private lateinit var defaultSelection: ProjectViewPaneId
   private val paneSelectJob = CompletableDeferred<Unit>()
   private val persistentState = ProjectViewToolWindowServiceState()
-  private val currentPaneMutableFlow = MutableStateFlow<FrontendProjectViewPane?>(null)
-  val currentPaneFlow: StateFlow<FrontendProjectViewPane?> = currentPaneMutableFlow.asStateFlow()
-  val panes: Map<ProjectViewPaneId, FrontendProjectViewPane>
-    field = ConcurrentHashMap<ProjectViewPaneId, FrontendProjectViewPane>()
+  /**
+   * The panes of the tool window and its current pane.
+   * Only [publishPanes] changes it.
+   */
+  val panesSnapshot: StateFlow<PanesSnapshot>
+    field = MutableStateFlow(PanesSnapshot.EMPTY)
+  val currentPaneFlow: StateFlow<FrontendProjectViewPane?> = panesSnapshot.mapState { it.currentPane }
+  override val panes: StateFlow<ProjectViewPanes> = panesSnapshot.mapState { it.apiValue }
   private val activePanes = ConcurrentHashMap.newKeySet<ProjectViewPaneId>()
+  /**
+   * Counts the pane selection requests.
+   * A request is a call of [selectPane], or a pane selection that this service doesn't make itself.
+   * A call of [selectPane] selects its pane only if no other request comes before it.
+   */
+  private val paneSelectionRequestCount = AtomicLong(0)
+  /**
+   * Completes when the tool window has added the panes of the first non-empty list of pane descriptors.
+   */
+  private val initialPanesAdded = CompletableDeferred<Unit>()
+  /**
+   * The depth of the content changes that this service makes itself.
+   * The selection changes inside them are not pane selection requests.
+   * Accessed only on the EDT.
+   */
+  private var internalContentChangeDepth = 0
+  /**
+   * The content manager of the managed tool window, or `null` if no tool window is managed.
+   * Accessed only on the EDT.
+   */
+  private var activePaneContentManager: PaneContentManager? = null
   /**
    * Restores the state of a pane when it becomes selected and saves it when it becomes unselected.
    *
@@ -125,12 +157,17 @@ internal class ProjectViewToolWindowServiceImpl(
       val pane = event.content.getUserData(PANE_KEY)
       when (event.operation) {
         ContentManagerEvent.ContentOperation.add -> {
+          val isSelectionRequest = internalContentChangeDepth == 0
+          if (isSelectionRequest) {
+            val requestNumber = paneSelectionRequestCount.incrementAndFetch()
+            LOG.debug { "The pane ${pane?.id} is selected by the user or by other code, request $requestNumber" }
+          }
           if (pane != null) {
             loadPaneState(pane)
           }
-          val oldPane = currentPaneMutableFlow.value
-          currentPaneMutableFlow.value = pane
-          currentPaneChanged(oldPane, pane)
+          if (isSelectionRequest) {
+            publishPanes() // a content change of this service publishes the panes when it ends
+          }
         }
         ContentManagerEvent.ContentOperation.remove -> {
           if (pane != null) {
@@ -145,10 +182,10 @@ internal class ProjectViewToolWindowServiceImpl(
       }
     }
   }
-  private val optionService = ProjectViewActionSupportImpl(currentPaneMutableFlow)
+  private val optionService = ProjectViewActionSupportImpl(currentPaneFlow)
 
   override val currentPaneDescriptor: ProjectViewPaneDescriptorImpl?
-    get() = currentPaneMutableFlow.value?.descriptorImpl
+    get() = currentPaneFlow.value?.descriptorImpl
 
   private val orderedDescriptors = MutableStateFlow<List<ProjectViewPaneDescriptorImpl>>(emptyList())
   
@@ -202,7 +239,9 @@ internal class ProjectViewToolWindowServiceImpl(
     val content = ContentFactory.getInstance().createContent(pane.component, presentableName, false)
     content.setPreferredFocusedComponent { pane.componentToFocus }
     content.putUserData(CACHED_PANE_KEY, pane)
-    toolWindow.contentManager.addContent(content)
+    changeContentsInternally {
+      toolWindow.contentManager.addContent(content)
+    }
     ProjectViewInitNotifier.getInstance(project).initCachedNodesLoaded()
     LOG.info("Added the cached pane $paneId")
   }
@@ -214,7 +253,7 @@ internal class ProjectViewToolWindowServiceImpl(
   override suspend fun manageToolWindow(toolWindow: ToolWindow) {
     supervisorScope {
       val paneContentManager = withContext(Dispatchers.UI) {
-        PaneContentManager(toolWindow)
+        PaneContentManager(toolWindow).also { activePaneContentManager = it }
       }
       launch(CoroutineName("Managing PV TW content")) {
         paneContentManager.manageContent()
@@ -294,6 +333,14 @@ internal class ProjectViewToolWindowServiceImpl(
           for ((manager, _) in activeJobs) {
             manager.awaitInitialization()
           }
+          if (paneDescriptors.isNotEmpty() && initialPanesAdded.complete(Unit)) {
+            LOG.debug { "The initial panes have been added: ${paneDescriptors.map { it.id }}" }
+          }
+        }
+      }
+      if (IdeProductMode.isFrontend) {
+        launch(CoroutineName("PV pane selection sync with the backend")) {
+          syncPaneSelectionWithBackend(project, this@ProjectViewToolWindowServiceImpl)
         }
       }
       launch(CoroutineName("Always select opened file")) {
@@ -327,6 +374,24 @@ internal class ProjectViewToolWindowServiceImpl(
       get() = manager.descriptor
   }
   
+  /**
+   * Publishes the panes and the current pane of the content manager to [panesSnapshot].
+   * Calls [currentPaneChanged] if the current pane changes.
+   */
+  @RequiresEdt
+  private fun publishPanes() {
+    val contentManager = activePaneContentManager?.contentManager ?: return
+    val panes = contentManager.contents.mapNotNull { it.getUserData(PANE_KEY) }
+    val currentPane = contentManager.selectedContent?.getUserData(PANE_KEY)?.takeIf { it in panes }
+    val oldSnapshot = panesSnapshot.value
+    val newSnapshot = PanesSnapshot(panes, currentPane)
+    if (newSnapshot == oldSnapshot) return
+    panesSnapshot.value = newSnapshot
+    if (oldSnapshot.currentPane !== currentPane) {
+      currentPaneChanged(oldSnapshot.currentPane, currentPane)
+    }
+  }
+
   private fun currentPaneChanged(
     oldPane: FrontendProjectViewPane?,
     newPane: FrontendProjectViewPane?,
@@ -371,14 +436,14 @@ internal class ProjectViewToolWindowServiceImpl(
   }
 
   override suspend fun selectNode(nodePath: ProjectViewNodePath) {
-    val currentPane = currentPaneMutableFlow.value
+    val currentPane = currentPaneFlow.value
     val pane: FrontendProjectViewPane? = if (currentPane?.id == nodePath.paneId) {
       currentPane
     }
     else {
       LOG.debug { "To select $nodePath, need to change the pane from ${currentPane?.id} to ${nodePath.paneId}" }
       withContext(Dispatchers.UI) {
-        selectPane(nodePath.paneId)
+        selectPaneContent(nodePath.paneId)
       }
     }
     if (pane == null) {
@@ -393,13 +458,37 @@ internal class ProjectViewToolWindowServiceImpl(
     pane.selectNode(nodePath)
   }
 
-  @RequiresEdt
-  fun selectDefaultPane() {
-    selectPane(defaultSelection)
+  override suspend fun selectPane(paneId: ProjectViewPaneId): Boolean {
+    val requestNumber = paneSelectionRequestCount.incrementAndFetch()
+    if (!isSplitProjectViewApplicable(project)) {
+      LOG.debug { "Not selecting the pane $paneId, because the split Project View is not applicable" }
+      return false
+    }
+    initialPanesAdded.await()
+    return withContext(Dispatchers.UI) {
+      if (paneSelectionRequestCount.load() != requestNumber) {
+        LOG.debug { "Not selecting the pane $paneId, because another request came after this one" }
+        return@withContext false
+      }
+      val paneContentManager = activePaneContentManager
+      if (paneContentManager == null) {
+        LOG.debug { "Not selecting the pane $paneId, because the tool window is no longer managed" }
+        return@withContext false
+      }
+      paneContentManager.selectRequestedPane(paneId)
+    }
   }
 
   @RequiresEdt
-  private fun selectPane(paneId: ProjectViewPaneId): FrontendProjectViewPane? {
+  fun selectDefaultPane() {
+    selectPaneContent(defaultSelection)
+  }
+
+  /**
+   * Selects the pane as a pane selection request, the same as the user does.
+   */
+  @RequiresEdt
+  private fun selectPaneContent(paneId: ProjectViewPaneId): FrontendProjectViewPane? {
     val toolWindow = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.PROJECT_VIEW)
     if (toolWindow == null) {
       LOG.error("The Project View tool window is not found")
@@ -414,6 +503,25 @@ internal class ProjectViewToolWindowServiceImpl(
     }
     contentManager.setSelectedContent(content)
     return content.getUserData(PANE_KEY)
+  }
+
+  /**
+   * Runs [action], which changes the contents of the tool window, as one transaction.
+   * The selection changes that [action] makes are not pane selection requests.
+   * When the outermost transaction ends, it publishes the panes.
+   */
+  @RequiresEdt
+  private inline fun <T> changeContentsInternally(action: () -> T): T {
+    internalContentChangeDepth++
+    try {
+      return action()
+    }
+    finally {
+      internalContentChangeDepth--
+      if (internalContentChangeDepth == 0) {
+        publishPanes()
+      }
+    }
   }
 
   override suspend fun save() {
@@ -528,7 +636,10 @@ internal class ProjectViewToolWindowServiceImpl(
           if (mustSelectThisPane && paneSelectJob.complete(Unit)) {
             // Another pane can be added and selected by the content manager before this one, so select this pane explicitly.
             // A pane that arrives late keeps the current selection: the user may already work with the shown pane.
-            if (paneContentManager.canTakeOverSelection()) {
+            if (paneSelectionRequestCount.load() != 0L) {
+              LOG.info("The pane ${pane.id} is the one to select, but a pane selection request came earlier, keeping the current selection")
+            }
+            else if (paneContentManager.canTakeOverSelection()) {
               paneContentManager.setSelectedContent(paneContent)
             }
             else {
@@ -547,7 +658,7 @@ internal class ProjectViewToolWindowServiceImpl(
         LOG.debug { "Obtaining the pane aggregator to manage the pane ${pane.id}" }
         val aggregator = FrontendProjectViewPaneAggregator.getInstance(project)
         launch(CoroutineName("Pane ${pane.id} state updates")) {
-          currentPaneMutableFlow
+          currentPaneFlow
             .map { it == pane }
             .distinctUntilChanged()
             .debounce { isCurrent -> if (isCurrent) Duration.ZERO else 60.seconds }
@@ -630,8 +741,11 @@ internal class ProjectViewToolWindowServiceImpl(
       initialized.await()
     }
 
+    /**
+     * Adds the content of the pane, or replaces the content with the same ID, in one transaction.
+     */
     @RequiresEdt
-    private fun addOrReplaceContent(): PaneContent? {
+    private fun addOrReplaceContent(): PaneContent? = changeContentsInternally {
       paneContentManager.ensureContentsOrdered()
 
       var wasSelected = false
@@ -644,13 +758,13 @@ internal class ProjectViewToolWindowServiceImpl(
         paneContentManager.removeAndDisposeContent(oldPaneContent)
       }
 
-      val newContent = paneContentManager.createAndAddContent(pane) ?: return null
+      val newContent = paneContentManager.createAndAddContent(pane)
 
-      if (wasSelected) {
+      if (newContent != null && wasSelected) {
         LOG.debug { "The previous pane with ID = ${pane.id} was selected, therefore selecting the new one with the same ID" }
         paneContentManager.setSelectedContent(newContent)
       }
-      return newContent
+      newContent
     }
   }
   
@@ -663,7 +777,7 @@ internal class ProjectViewToolWindowServiceImpl(
   }
 
   private inner class PaneContentManager @RequiresEdt constructor(toolWindow: ToolWindow) {
-    private val contentManager = toolWindow.contentManager
+    val contentManager: ContentManager = toolWindow.contentManager
     // Written only in createAndAddContent on the EDT, read from any thread.
     @Volatile private var firstContentAddedAt: TimeMark? = null
 
@@ -677,6 +791,9 @@ internal class ProjectViewToolWindowServiceImpl(
         launch(Dispatchers.UI + CoroutineName("Pane selection listener")) {
           awaitCancellationAndInvoke {
             contentManager.removeContentManagerListener(paneSelectionListener)
+            if (activePaneContentManager === this@PaneContentManager) {
+              activePaneContentManager = null
+            }
           }
         }
         launch(Dispatchers.UI + CoroutineName("Content ordering")) {
@@ -702,8 +819,28 @@ internal class ProjectViewToolWindowServiceImpl(
       return contentManager.isSelected(paneContent.content)
     }
 
+    /**
+     * Selects the pane for a call of [selectPane].
+     *
+     * @return `true` if the pane is selected
+     */
     @RequiresEdt
-    fun createAndAddContent(pane: FrontendProjectViewPane): PaneContent? {
+    fun selectRequestedPane(paneId: ProjectViewPaneId): Boolean {
+      val paneContent = findContent(paneId)
+      if (paneContent == null) {
+        LOG.debug { "The requested pane $paneId is not found" }
+        return false
+      }
+      if (!isSelected(paneContent)) {
+        setSelectedContent(paneContent)
+      }
+      val isSelected = isSelected(paneContent)
+      LOG.debug { "The requested pane $paneId is ${if (isSelected) "selected" else "not selected"}" }
+      return isSelected
+    }
+
+    @RequiresEdt
+    fun createAndAddContent(pane: FrontendProjectViewPane): PaneContent? = changeContentsInternally {
       val newContent = ContentFactory.getInstance().createContent(
         /* component = */ pane.component,
         /* displayName = */ pane.descriptorImpl.presentableName,
@@ -711,7 +848,7 @@ internal class ProjectViewToolWindowServiceImpl(
       )
       newContent.setPreferredFocusedComponent { pane.componentToFocus }
       newContent.putUserData(PANE_KEY, pane)
-      val index = findSuitableIndex(pane) ?: return null
+      val index = findSuitableIndex(pane) ?: return@changeContentsInternally null
       if (firstContentAddedAt == null) {
         // Before the first real pane, the tool window can have only the cached pane.
         LOG.debug { "Removing ${contentManager.contentCount} contents before adding the first real pane ${pane.id}" }
@@ -721,9 +858,8 @@ internal class ProjectViewToolWindowServiceImpl(
       if (firstContentAddedAt == null) {
         firstContentAddedAt = TimeSource.Monotonic.markNow()
       }
-      panes[pane.id] = pane
       LOG.info("Added pane ${pane.id}, descriptor ${pane.descriptor}")
-      return PaneContent(pane, newContent)
+      PaneContent(pane, newContent)
     }
 
     /**
@@ -764,13 +900,17 @@ internal class ProjectViewToolWindowServiceImpl(
 
     @RequiresEdt
     fun setSelectedContent(newContent: PaneContent) {
-      contentManager.setSelectedContent(newContent.content)
+      changeContentsInternally {
+        contentManager.setSelectedContent(newContent.content)
+      }
     }
 
     @RequiresEdt
     fun removeAndDisposeContent(paneContent: PaneContent) {
-      if (contentManager.removeContent(paneContent.content, true)) {
-        panes -= paneContent.id
+      val isRemoved = changeContentsInternally {
+        contentManager.removeContent(paneContent.content, true)
+      }
+      if (isRemoved) {
         LOG.info("Removed pane ${paneContent.id}, descriptor ${paneContent.descriptor}")
       }
     }
@@ -788,6 +928,13 @@ internal class ProjectViewToolWindowServiceImpl(
         }
       }
       if (currentDescriptorOrder.isSorted()) return
+      changeContentsInternally {
+        reorderContents()
+      }
+    }
+
+    @RequiresEdt
+    private fun reorderContents() {
       val contentsBeforeSelected = mutableListOf<Content>()
       val contentsAfterSelected = mutableListOf<Content>()
       val selectedContent = contentManager.selectedContent
@@ -815,7 +962,7 @@ internal class ProjectViewToolWindowServiceImpl(
   }
 
   override suspend fun awaitInitialization() {
-    currentPaneMutableFlow.first { it != null } as TreeBasedFrontendProjectViewPane
+    currentPaneFlow.first { it != null } as TreeBasedFrontendProjectViewPane
   }
 }
 
@@ -905,6 +1052,46 @@ private const val PRESENTABLE_NAME_ATTRIBUTE = "presentableName"
 
 private val FrontendProjectViewPane.descriptorImpl: ProjectViewPaneDescriptorImpl
   get() = descriptor as ProjectViewPaneDescriptorImpl
+
+/**
+ * The panes of the tool window in the order of the contents, and the current pane.
+ *
+ * [currentPane] is `null` or one of [panes].
+ */
+internal data class PanesSnapshot(
+  val panes: List<FrontendProjectViewPane>,
+  val currentPane: FrontendProjectViewPane?,
+) {
+  val apiValue: ProjectViewPanes = ProjectViewPanesImpl(panes.map { it.id }, currentPane?.id)
+
+  companion object {
+    val EMPTY: PanesSnapshot = PanesSnapshot(emptyList(), null)
+  }
+}
+
+/**
+ * Returns a view of this flow that applies [transform] to each value.
+ * The view runs no coroutine, so its value always matches the value of this flow.
+ */
+private fun <T, R> StateFlow<T>.mapState(transform: (T) -> R): StateFlow<R> = MappedStateFlow(this, transform)
+
+@OptIn(ExperimentalForInheritanceCoroutinesApi::class)
+private class MappedStateFlow<T, R>(
+  private val source: StateFlow<T>,
+  private val transform: (T) -> R,
+) : StateFlow<R> {
+  override val value: R
+    get() = transform(source.value)
+
+  override val replayCache: List<R>
+    get() = listOf(value)
+
+  override suspend fun collect(collector: FlowCollector<R>): Nothing {
+    // Two source values can map to equal values, and a state flow emits only distinct values.
+    source.map(transform).distinctUntilChanged().collect(collector)
+    awaitCancellation() // unreachable, because the source never completes
+  }
+}
 
 /**
  * Calls [FrontendProjectViewPane.restoreStateFrom] and logs an exception instead of throwing it.

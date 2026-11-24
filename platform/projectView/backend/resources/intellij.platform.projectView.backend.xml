@@ -34,6 +34,10 @@
   <extensions defaultExtensionNs="com.intellij">
     <platform.rpc.backend.remoteApiProvider implementation="com.intellij.platform.projectView.backend.rpc.ProjectViewRpcProvider"
                                             apiInterfaces="com.intellij.platform.projectView.rpc.ProjectViewRpc"/>
+    <projectService
+      serviceInterface="com.intellij.platform.projectView.impl.BackendProjectView"
+      serviceImplementation="com.intellij.platform.projectView.backend.impl.BackendProjectViewImpl"
+    />
     <project.view.pane.model.backend implementation="com.intellij.platform.projectView.backend.impl.project.BackendProjectPaneProvider"/>
     <project.view.pane.model.backend implementation="com.intellij.platform.projectView.backend.impl.scope.ScopePaneProvider"/>
     <project.view.pane.model.backend implementation="com.intellij.platform.projectView.backend.impl.legacy.LegacyBackendProjectViewPaneProvider"/>

@@ -3,6 +3,7 @@ package com.intellij.platform.projectView.rpc
 
 import com.intellij.ide.vfs.VirtualFileId
 import com.intellij.platform.project.ProjectId
+import com.intellij.platform.projectView.ProjectViewPanesImpl
 import com.intellij.platform.projectView.actions.EditorChoice
 import com.intellij.platform.projectView.impl.FileUpdateDTO
 import com.intellij.platform.projectView.pane.ProjectViewNodePathImpl
@@ -34,6 +35,25 @@ interface ProjectViewRpc : RemoteApi<Unit> {
   suspend fun findNodeForSelectIn(projectId: ProjectId, selectInRequest: SelectInRequestDTO): ProjectViewNodePathImpl?
 
   suspend fun getFileUpdateRequestChannel(projectId: ProjectId): SendChannel<FileUpdateDTO>
+
+  /**
+   * Returns a new channel to which the frontend sends the panes of its tool window.
+   * The new channel replaces the previous one.
+   * When a channel closes, the backend keeps the last panes that it received.
+   */
+  suspend fun getPanesChannel(projectId: ProjectId): SendChannel<ProjectViewPanesImpl>
+
+  /**
+   * Returns the pending pane selection request of the backend, or `null` if no request is pending.
+   * A new collector gets the current value first.
+   */
+  suspend fun getSelectPaneRequestFlow(projectId: ProjectId): Flow<SelectPaneRequestDTO?>
+
+  /**
+   * Gives the result of the request [requestId] to the backend.
+   * The backend ignores the result of a request that is not pending.
+   */
+  suspend fun completeSelectPaneRequest(projectId: ProjectId, requestId: Long, isSelected: Boolean)
 
   /**
    * Exists solely to support RD test API hacks.

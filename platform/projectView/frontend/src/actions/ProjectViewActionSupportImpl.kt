@@ -12,12 +12,12 @@ import com.intellij.platform.projectView.settings.ProjectViewPaneOptionDTO
 import com.intellij.platform.projectView.settings.ProjectViewPaneSettingsStateDTO
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flatMapLatest
 
 internal class ProjectViewActionSupportImpl(
-  private val currentPane: MutableStateFlow<FrontendProjectViewPane?>
+  private val currentPane: StateFlow<FrontendProjectViewPane?>
 ) : ProjectViewActionSupport {
   override fun getActionState(): ProjectViewPaneSettingsStateDTO? = currentPane.value?.getOptionSupport()?.getActionState()
 
