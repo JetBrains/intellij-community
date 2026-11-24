@@ -14,8 +14,10 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -31,8 +33,17 @@ import java.util.function.Predicate;
 public record OptPane(@NotNull List<@NotNull OptRegularComponent> components, @Nullable String helpId) {
   public OptPane {
     Set<String> ids = new HashSet<>();
+    Map<String, Set<String>> radioKeys = new HashMap<>();
     traverse(components, comp -> {
-      if (comp instanceof OptControl ctl && !ids.add(ctl.bindId())) {
+      if (comp instanceof OptRadioButton radio) {
+        if (ids.contains(radio.bindId())) {
+          throw new IllegalArgumentException("Repeating control identifier inside the pane: " + radio.bindId());
+        }
+        if (!radioKeys.computeIfAbsent(radio.bindId(), _ -> new HashSet<>()).add(radio.key())) {
+          throw new IllegalArgumentException("Repeating radio button key inside the pane: " + radio.bindId() + "=" + radio.key());
+        }
+      }
+      else if (comp instanceof OptControl ctl && (radioKeys.containsKey(ctl.bindId()) || !ids.add(ctl.bindId()))) {
         throw new IllegalArgumentException("Repeating control identifier inside the pane: " + ctl.bindId());
       }
       return true;
@@ -180,6 +191,40 @@ public record OptPane(@NotNull List<@NotNull OptRegularComponent> components, @N
                                               @NotNull @NlsContexts.Label String label,
                                               @NotNull OptRegularComponent @NotNull ... children) {
     return new OptCheckbox(bindId, LocMessage.of(label), List.of(children), null);
+  }
+
+  /**
+   * @param bindId   identifier of binding variable; the corresponding variable is expected to be a string or boolean.
+   *                 Several radio buttons with the same bindId form a group.
+   * @param key      key to assign to the variable when the radio button is selected
+   * @param label    label to display next to a radio button
+   * @param children optional list of children controls to display next to radio button. They are disabled if radio button is unselected
+   * @return a radio button
+   * @see #radioButton(String, Enum, String, OptRegularComponent...)
+   */
+  @Contract(pure = true)
+  public static @NotNull OptRadioButton radioButton(@Language("jvm-field-name") @NotNull String bindId,
+                                                    @NotNull @NonNls String key,
+                                                    @NotNull @NlsContexts.RadioButton String label,
+                                                    @NotNull OptRegularComponent @NotNull ... children) {
+    return new OptRadioButton(bindId, LocMessage.of(label), key, List.of(children), null);
+  }
+
+  /**
+   * @param bindId   identifier of binding variable; the corresponding variable is expected to be an enum.
+   *                 Several radio buttons with the same bindId form a group.
+   * @param key      enum constant to assign to the variable when the radio button is selected
+   * @param label    label to display next to a radio button
+   * @param children optional list of children controls to display next to radio button. They are disabled if radio button is unselected
+   * @return a radio button
+   * @see #radioButton(String, String, String, OptRegularComponent...)
+   */
+  @Contract(pure = true)
+  public static @NotNull OptRadioButton radioButton(@Language("jvm-field-name") @NotNull String bindId,
+                                                    @NotNull Enum<?> key,
+                                                    @NotNull @NlsContexts.RadioButton String label,
+                                                    @NotNull OptRegularComponent @NotNull ... children) {
+    return new OptRadioButton(bindId, LocMessage.of(label), key.name(), List.of(children), null);
   }
 
   /**
@@ -463,7 +508,7 @@ public record OptPane(@NotNull List<@NotNull OptRegularComponent> components, @N
   /**
    * @param tabs tabs description
    * @return set of tabs
-   * @see #tab(String, OptComponent...)
+   * @see #tab(String, OptRegularComponent...)
    * @see #asTab(String) 
    */
   @Contract(pure = true)

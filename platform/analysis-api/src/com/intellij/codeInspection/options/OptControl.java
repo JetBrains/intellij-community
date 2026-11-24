@@ -8,11 +8,12 @@ import org.jetbrains.annotations.Nullable;
  * Basic interface for all the controls
  */
 public sealed interface OptControl extends OptComponent
-  permits OptCheckbox, OptDropdown, OptExpandableString, OptMultiSelector, OptNumber, OptString, OptStringList, OptTableColumn {
+  permits OptCheckbox, OptDropdown, OptExpandableString, OptMultiSelector, OptNumber, OptRadioButton, OptString, OptStringList,
+          OptTableColumn {
   /**
    * @return identifier of control, and at the same time the name of the binding variable used by inspection 
    * acceptable by {@link OptionContainer#getOptionController()}
-   * (name of the field by default). The bindId must be unique within single option pane. 
+   * (name of the field by default). The bindId must be unique within single option pane (except for radio buttons).
    * For {@link OptCustom} control, it's not required to have a corresponding field,
    * but the bindId still must unique identify the control. 
    */

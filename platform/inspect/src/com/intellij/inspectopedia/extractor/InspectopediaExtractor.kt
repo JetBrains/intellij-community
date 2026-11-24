@@ -15,6 +15,7 @@ import com.intellij.codeInspection.options.OptExpandableString
 import com.intellij.codeInspection.options.OptGroup
 import com.intellij.codeInspection.options.OptNumber
 import com.intellij.codeInspection.options.OptPane
+import com.intellij.codeInspection.options.OptRadioButton
 import com.intellij.codeInspection.options.OptSettingLink
 import com.intellij.codeInspection.options.OptString
 import com.intellij.codeInspection.options.OptStringList
@@ -180,6 +181,7 @@ private val LOG = logger<InspectopediaExtractor>()
 private fun getMyText(cmp: OptComponent): LocMessage? {
   return when (cmp) {
     is OptCheckbox -> cmp.label
+    is OptRadioButton -> cmp.label
     is OptString -> cmp.splitLabel
     is OptNumber -> cmp.splitLabel
     is OptExpandableString -> cmp.label

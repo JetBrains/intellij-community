@@ -19,6 +19,7 @@ import com.intellij.codeInspection.options.OptHorizontalStack
 import com.intellij.codeInspection.options.OptMultiSelector
 import com.intellij.codeInspection.options.OptNumber
 import com.intellij.codeInspection.options.OptPane
+import com.intellij.codeInspection.options.OptRadioButton
 import com.intellij.codeInspection.options.OptRegularComponent
 import com.intellij.codeInspection.options.OptSeparator
 import com.intellij.codeInspection.options.OptSettingLink
@@ -55,6 +56,7 @@ import com.intellij.ui.UIBundle
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.JBList
+import com.intellij.ui.components.JBRadioButton
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.components.JBTabbedPane
 import com.intellij.ui.components.JBTextField
@@ -79,14 +81,15 @@ import com.intellij.util.applyIf
 import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil.setEnabledRecursively
-import com.intellij.util.ui.components.BorderLayoutPanel
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.awt.EventQueue
 import java.util.function.Supplier
+import javax.swing.ButtonGroup
 import javax.swing.ComboBoxModel
 import javax.swing.DefaultComboBoxModel
 import javax.swing.JComponent
+import javax.swing.JToggleButton
 import javax.swing.ListSelectionModel
 import javax.swing.SwingConstants
 import kotlin.math.max
@@ -104,6 +107,20 @@ class UiDslOptPaneRenderer : OptionPaneRenderer {
                                      val refreshPane: Runnable) {
     fun getOption(bindId: String): Any? = controller.getOption(bindId)
     fun setOption(bindId: String, value: Any) = controller.setOption(bindId, value)
+
+    /** The radio buttons of the pane by bindId. [groupRadioButtons] joins the buttons of each bindId. */
+    val radioButtons: MutableMap<String, MutableList<JBRadioButton>> = LinkedHashMap()
+
+    /**
+     * Puts the radio buttons of each bindId into one [ButtonGroup].
+     * Call it after the whole pane is built, because UI DSL assigns its own button group to each radio button in the end.
+     */
+    fun groupRadioButtons() {
+      for (buttons in radioButtons.values) {
+        val group = ButtonGroup()
+        buttons.forEach(group::add)
+      }
+    }
   }
 
   override fun render(controller: OptionController,
@@ -130,6 +147,7 @@ class UiDslOptPaneRenderer : OptionPaneRenderer {
           render(component, context, i == 0, component.hasBottomGap)
         }
       }
+      context.groupRadioButtons()
     }
     renderContent()
     return holder
@@ -146,6 +164,9 @@ class UiDslOptPaneRenderer : OptionPaneRenderer {
                            isFirst: Boolean = false,
                            withBottomGap: Boolean = false) {
     when (component) {
+      // UI DSL requires a buttons group around a radio button. RendererContext.groupRadioButtons groups the radio buttons later.
+      is OptRadioButton -> buttonsGroup { renderOptRow(component, context, withBottomGap) }
+
       is OptControl, is OptTable, is OptSettingLink, is OptCustom -> {
         renderOptRow(component, context, withBottomGap)
       }
@@ -179,7 +200,7 @@ class UiDslOptPaneRenderer : OptionPaneRenderer {
           .resizableRow()
       }
 
-      is OptHorizontalStack -> {
+      is OptHorizontalStack -> buttonsGroup {
         row {
           component.children.forEach { child ->
             val splitLabel = child.splitLabel
@@ -263,7 +284,7 @@ class UiDslOptPaneRenderer : OptionPaneRenderer {
       .layout(RowLayout.PARENT_GRID)
       .applyIf(withBottomGap) { bottomGap(BottomGap.SMALL) }
       .applyIf(component.hasResizableRow) { resizableRow() }
-      .applyIf(component is OptNumber || component is OptString || component is OptCheckbox) {
+      .applyIf(component is OptNumber || component is OptString || component is OptCheckbox || component is OptRadioButton) {
         (component as OptDescribedComponent).description()?.let {
           cell.contextHelp(HtmlBuilder().append(it).toString())
         }
@@ -273,7 +294,7 @@ class UiDslOptPaneRenderer : OptionPaneRenderer {
         nestedInRow?.let { nested ->
           val checkbox = cell.component as JBCheckBox
           renderOptCell(nested, context)
-            .enabledIf(checkboxPredicate(checkbox))
+            .enabledIf(toggleButtonPredicate(checkbox))
         }
       }
 
@@ -284,16 +305,17 @@ class UiDslOptPaneRenderer : OptionPaneRenderer {
         controlsToRender
           .forEachIndexed { i, component -> render(component, context, i == 0) }
       }
-      if (controlsToRender.isNotEmpty() && cell.component is JBCheckBox) {
-        group.enabledIf(checkboxPredicate(cell.component as JBCheckBox))
+      val button = cell.component
+      if (controlsToRender.isNotEmpty() && button is JToggleButton) {
+        group.enabledIf(toggleButtonPredicate(button))
       }
     }
   }
 
-  private fun checkboxPredicate(checkbox: JBCheckBox) = object : ComponentPredicate() {
-    override fun invoke(): Boolean = checkbox.isSelected && checkbox.isEnabled
+  private fun toggleButtonPredicate(button: JToggleButton) = object : ComponentPredicate() {
+    override fun invoke(): Boolean = button.isSelected && button.isEnabled
     override fun addListener(listener: (Boolean) -> Unit) {
-      checkbox.addChangeListener { listener(invoke()) }
+      button.addChangeListener { listener(invoke()) }
     }
   }
 
@@ -303,6 +325,15 @@ class UiDslOptPaneRenderer : OptionPaneRenderer {
           checkBox(component.label.label())
             .selected(context.getOption(component.bindId) as Boolean)
             .onChanged { context.setOption(component.bindId, it.isSelected) }
+        }
+
+        is OptRadioButton -> {
+          val value = context.getOption(component.bindId)
+            ?: throw NullPointerException("OptRadioButton value can't be initialized with 'null'.")
+          radioButton(component.label.label())
+            .selected(component.isSelectedFor(value))
+            .applyToComponent { context.radioButtons.getOrPut(component.bindId) { mutableListOf() }.add(this) }
+            .onChanged { if (it.isSelected) context.setOption(component.bindId, convertItem(component.key, value.javaClass)) }
         }
 
         is OptString -> {
@@ -565,6 +596,7 @@ class UiDslOptPaneRenderer : OptionPaneRenderer {
   private val OptComponent.nestedControls: List<OptRegularComponent>?
     get() = when(this) {
       is OptCheckbox -> children
+      is OptRadioButton -> children
       else -> null
     }
 

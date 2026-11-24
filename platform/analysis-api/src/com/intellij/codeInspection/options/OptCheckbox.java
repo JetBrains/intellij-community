@@ -13,7 +13,7 @@ import java.util.List;
 /**
  * Represents a two-state check-box (checked or unchecked)
  *
- * @param bindId identifier of binding variable used by inspection; the corresponding variable is expected to be boolean
+ * @param bindId identifier of binding variable; the corresponding variable is expected to be boolean
  * @param label label to display next to a checkbox
  * @param children optional list of children controls to display next to checkbox. They are disabled if checkbox is unchecked
  * @param description if specified, an additional description of the item (may contain simple HTML formatting only, 

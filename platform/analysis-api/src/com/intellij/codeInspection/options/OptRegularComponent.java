@@ -8,7 +8,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public sealed interface OptRegularComponent extends OptComponent
   permits OptCheckbox, OptCheckboxPanel, OptCustom, OptDropdown, OptExpandableString, OptGroup, OptHorizontalStack, OptMultiSelector,
-          OptNumber, OptSeparator, OptSettingLink, OptString, OptStringList, OptTabSet, OptTable {
+          OptNumber, OptRadioButton, OptSeparator, OptSettingLink, OptString, OptStringList, OptTabSet, OptTable {
 
   @Override
   default @NotNull OptRegularComponent prefix(@NotNull String bindPrefix) {

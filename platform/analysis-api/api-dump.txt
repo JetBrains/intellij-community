@@ -1094,6 +1094,25 @@ f:com.intellij.codeInspection.options.OptPane
 - s:checkboxPanel(com.intellij.codeInspection.options.OptCheckbox[]):com.intellij.codeInspection.options.OptCheckboxPanel
 - s:horizontalStack(com.intellij.codeInspection.options.OptRegularComponent[]):com.intellij.codeInspection.options.OptHorizontalStack
 - s:pane(com.intellij.codeInspection.options.OptRegularComponent[]):com.intellij.codeInspection.options.OptPane
+- s:radioButton(java.lang.String,java.lang.Enum,java.lang.String,com.intellij.codeInspection.options.OptRegularComponent[]):com.intellij.codeInspection.options.OptRadioButton
+- s:radioButton(java.lang.String,java.lang.String,java.lang.String,com.intellij.codeInspection.options.OptRegularComponent[]):com.intellij.codeInspection.options.OptRadioButton
+f:com.intellij.codeInspection.options.OptRadioButton
+- java.lang.Record
+- com.intellij.codeInspection.options.OptControl
+- com.intellij.codeInspection.options.OptDescribedComponent
+- com.intellij.codeInspection.options.OptRegularComponent
+- <init>(java.lang.String,com.intellij.codeInspection.options.LocMessage,java.lang.String,java.util.List,com.intellij.openapi.util.text.HtmlChunk):V
+- bindId():java.lang.String
+- children():java.util.List
+- description():com.intellij.openapi.util.text.HtmlChunk
+- description(com.intellij.openapi.util.text.HtmlChunk):com.intellij.codeInspection.options.OptRadioButton
+- description(java.lang.String):com.intellij.codeInspection.options.OptRadioButton
+- f:equals(java.lang.Object):Z
+- f:hashCode():I
+- isSelectedFor(java.lang.Object):Z
+- key():java.lang.String
+- label():com.intellij.codeInspection.options.LocMessage
+- prefix(java.lang.String):com.intellij.codeInspection.options.OptRadioButton
 com.intellij.codeInspection.options.OptRegularComponent
 - com.intellij.codeInspection.options.OptComponent
 - prefix(java.lang.String):com.intellij.codeInspection.options.OptRegularComponent

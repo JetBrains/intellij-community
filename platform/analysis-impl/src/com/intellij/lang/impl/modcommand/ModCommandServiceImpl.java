@@ -85,14 +85,14 @@ public final class ModCommandServiceImpl implements ModCommandService {
     OptionController oldController = inspection.getOptionController();
     OptionController newController = copiedTool.getOptionController();
     List<ModUpdateSystemOptions.ModifiedOption> modifiedOptions = new ArrayList<>();
-    for (OptControl control : controls) {
-      Object oldValue = oldController.getOption(control.bindId());
-      Object newValue = newController.getOption(control.bindId());
+    controls.stream().map(OptControl::bindId).distinct().forEach(id -> {
+      Object oldValue = oldController.getOption(id);
+      Object newValue = newController.getOption(id);
       if (oldValue != null && newValue != null && !oldValue.equals(newValue)) {
-        String bindId = "currentProfile." + inspection.getShortName() + ".options." + control.bindId();
+        String bindId = "currentProfile." + inspection.getShortName() + ".options." + id;
         modifiedOptions.add(new ModUpdateSystemOptions.ModifiedOption(bindId, oldValue, newValue));
       }
-    }
+    });
     return modifiedOptions.isEmpty() ? ModCommand.nop() : new ModUpdateSystemOptions(modifiedOptions);
   }
 

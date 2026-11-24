@@ -6,15 +6,20 @@ import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Test;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import static com.intellij.codeInspection.options.OptPane.checkbox;
 import static com.intellij.codeInspection.options.OptPane.group;
 import static com.intellij.codeInspection.options.OptPane.number;
 import static com.intellij.codeInspection.options.OptPane.pane;
+import static com.intellij.codeInspection.options.OptPane.radioButton;
+import static com.intellij.codeInspection.options.OptPane.string;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class OptControlTest {
@@ -80,6 +85,89 @@ public class OptControlTest {
                   (bindId, value) -> options.put(bindId, (Boolean)value))
         .onValue("valueDouble", () -> valueDouble / 2, val -> valueDouble = 2 * val);
     }
+  }
+
+  private enum Mode {FIRST, SECOND, THIRD}
+
+  private static class MyRadioInspection extends LocalInspectionTool {
+    public Mode mode = Mode.SECOND;
+    public String name = "";
+    public boolean flag = true;
+
+    @Override
+    public @NotNull OptPane getOptionsPane() {
+      return pane(
+        radioButton("mode", Mode.FIRST, "First"),
+        group("Other",
+              radioButton("mode", Mode.SECOND, "Second", string("name", "Name")),
+              radioButton("mode", Mode.THIRD, "Third")),
+        radioButton("flag", "true", "Yes"),
+        radioButton("flag", "false", "No")
+      );
+    }
+  }
+
+  @Test
+  public void radioButtonReadWrite() {
+    MyRadioInspection inspection = new MyRadioInspection();
+    OptPane pane = inspection.getOptionsPane();
+    List<OptControl> controls = pane.allControls();
+    assertEquals(List.of("mode", "mode", "name", "mode", "flag", "flag"), controls.stream().map(OptControl::bindId).toList());
+    OptRadioButton first = (OptRadioButton)controls.get(0);
+    OptRadioButton second = (OptRadioButton)controls.get(1);
+    assertSame(first, pane.findControl("mode"));
+    assertEquals("FIRST", first.key());
+    assertEquals("SECOND", second.key());
+    assertEquals("name", ((OptString)second.children().getFirst()).bindId());
+    assertEquals(Mode.SECOND, first.getValue(inspection));
+    assertFalse(first.isSelectedFor(first.getValue(inspection)));
+    assertTrue(second.isSelectedFor(second.getValue(inspection)));
+    first.setValue(inspection, Mode.THIRD);
+    assertEquals(Mode.THIRD, inspection.mode);
+    assertTrue(((OptRadioButton)controls.get(3)).isSelectedFor(inspection.mode));
+
+    OptRadioButton yes = (OptRadioButton)controls.get(4);
+    OptRadioButton no = (OptRadioButton)controls.get(5);
+    assertTrue(yes.isSelectedFor(inspection.flag));
+    assertFalse(no.isSelectedFor(inspection.flag));
+    assertFalse(yes.isSelectedFor(null));
+  }
+
+  @Test
+  public void radioButtonPrefix() {
+    //noinspection InjectedReferences
+    OptPane pane = pane(
+      radioButton("mode", Mode.FIRST, "First", checkbox("check", "Check")),
+      radioButton("mode", Mode.SECOND, "Second")
+    ).prefix("adv");
+    assertEquals(List.of("adv.mode", "adv.check", "adv.mode"), pane.allControls().stream().map(OptControl::bindId).toList());
+    OptRadioButton radio = (OptRadioButton)pane.findControl("adv.mode");
+    assertEquals("FIRST", radio.key());
+    assertEquals("First", radio.label().label());
+  }
+
+  @Test
+  public void radioButtonDescription() {
+    OptRadioButton radio = radioButton("mode", Mode.FIRST, "First").description("Description");
+    assertEquals("Description", radio.description().toString());
+    assertThrows(IllegalStateException.class, () -> radio.description("Other"));
+  }
+
+  @Test
+  @SuppressWarnings("InjectedReferences")
+  public void radioButtonWrongIdentifiers() {
+    assertThrows(IllegalArgumentException.class, () -> pane(
+      radioButton("mode", Mode.FIRST, "First"),
+      radioButton("mode", Mode.FIRST, "First again")
+    ));
+    assertThrows(IllegalArgumentException.class, () -> pane(
+      radioButton("mode", Mode.FIRST, "First"),
+      checkbox("mode", "Mode")
+    ));
+    assertThrows(IllegalArgumentException.class, () -> pane(
+      checkbox("mode", "Mode"),
+      radioButton("mode", Mode.FIRST, "First")
+    ));
   }
 
   @Test

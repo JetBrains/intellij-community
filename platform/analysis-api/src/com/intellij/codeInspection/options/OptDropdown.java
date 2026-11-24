@@ -11,7 +11,7 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * @param bindId identifier of binding variable used by inspection; the corresponding variable is expected to be a string, boolean, or enum
+ * @param bindId identifier of binding variable; the corresponding variable is expected to be a string, boolean, or enum
  * @param splitLabel label to display around the control
  * @param options drop-down options; must have no repeating keys
  */

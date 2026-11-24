@@ -56,7 +56,8 @@ public interface OptionController {
   /**
    * @param bindId control ID to lookup
    * @return an {@link OptPane} and the corresponding control to create UI that allows to change the option addressed by a bindId;
-   * null if there's no pane which changes this particular option, or option is invalid.
+   * null if there's no pane which changes this particular option, or option is invalid. For radio buttons,
+   * it returns the first radio button that controls the given bindId.
    */
   default @Nullable OptionControlInfo findControl(@NotNull String bindId) {
     return null;
