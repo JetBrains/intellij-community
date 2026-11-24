@@ -20,6 +20,7 @@ import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtConstructorCalleeExpression
 import org.jetbrains.kotlin.psi.KtInstanceExpressionWithLabel
 import org.jetbrains.kotlin.psi.KtIntersectionType
+import org.jetbrains.kotlin.psi.KtOperationReferenceExpression
 import org.jetbrains.kotlin.psi.KtSimpleNameExpression
 import org.jetbrains.kotlin.psi.KtTypeReference
 import org.jetbrains.kotlin.psi.KtUserType
@@ -45,6 +46,9 @@ internal class KotlinTypeSemanticAnalyzer(holder: HighlightInfoHolder, session: 
 
     private fun highlightSimpleNameExpression(expression: KtSimpleNameExpression): Unit = context(session) {
         if (expression.isCalleeExpression()) return
+
+        if (expression is KtOperationReferenceExpression) return
+
         val parent = expression.parent
 
         if (parent is KtInstanceExpressionWithLabel) {
