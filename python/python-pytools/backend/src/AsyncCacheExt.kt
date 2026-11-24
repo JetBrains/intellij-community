@@ -31,7 +31,7 @@ suspend fun <K : Any, V : Any> AsyncCache<K, V>.getOrLoad(key: K, scope: Corouti
     future.whenComplete { value, error ->
       when (error) {
         null -> continuation.resume(value)
-        // The future of an async cache wraps the exception of the load.
+        // A load that runs through a dependent stage gives its exception wrapped in a CompletionException.
         is CompletionException -> continuation.resumeWithException(error.cause ?: error)
         else -> continuation.resumeWithException(error)
       }
