@@ -19,6 +19,8 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.application.ApplicationManager.getApplication
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.changes.Change
@@ -37,6 +39,7 @@ import com.intellij.util.ui.update.Activatable
 import com.intellij.util.ui.update.DebouncedUpdates
 import com.intellij.vcs.VcsDisposable
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.CalledInAny
 import java.awt.event.FocusAdapter
@@ -156,7 +159,7 @@ open class TreeHandlerChangesTreeTracker(
     if (updateWhileShown) {
       DiffUtil.installShowNotifyListener(editorViewer.component, object : Activatable {
         override fun showNotify() {
-          updatePreviewLater(UpdateType.FULL)
+          fullUpdatePreviewNow()
         }
 
         override fun hideNotify() {
@@ -165,7 +168,20 @@ open class TreeHandlerChangesTreeTracker(
       })
     }
     else {
-      updatePreviewLater(UpdateType.FULL)
+      fullUpdatePreviewNow()
+    }
+  }
+
+  /**
+   * We do not update in sync because we might be in `Dispatchers.UI` while diff might need to take a read lock.
+   *
+   * The [DebouncedUpdates] does not support flush, so we handle this outside.
+   */
+  private fun fullUpdatePreviewNow() {
+    updatePreviewQueue.cancelPending()
+    val modalityState = ModalityState.stateForComponent(editorViewer.component)
+    queueScope.launch(Dispatchers.EDT + modalityState.asContextElement()) {
+      updatePreview(UpdateType.FULL)
     }
   }
 
