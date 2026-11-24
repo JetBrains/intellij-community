@@ -4,7 +4,9 @@ package com.intellij.platform.editorTabGrouping.impl
 import com.intellij.ide.ui.UISettings
 import com.intellij.mock.MockProjectEx
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionPlaces
+import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.fileEditor.FileEditorManagerListener
@@ -592,6 +594,40 @@ class GroupTabCollapseBehaviorTest {
 
       assertEquals(listOf("beta1", "beta2", "alpha1"), tabs.visibleLabelTexts())
       assertFalse(animation.isRunning)
+    }
+  }
+
+  @Test
+  fun `the popup of a group tab has no close actions`(): Unit = timeoutRunBlocking {
+    withContext(Dispatchers.EDT) {
+      val tabs = makeTabsWithAlphaGroup()
+      val closeGroup = ActionManager.getInstance().getAction("CloseEditorsGroup")
+      val other = DefaultActionGroup()
+      tabs.setPopupGroup(DefaultActionGroup(closeGroup, other), ActionPlaces.EDITOR_TAB_POPUP, false)
+      val beta1 = tabs.tabByText("beta1")
+      tabs.select(beta1, false)
+
+      tabs.popupInfo = tabs.collapsedGroupTabForTest(isPinned = false, groupKey = "/project/Alpha")
+      assertEquals(listOf<AnAction>(other), tabs.popupGroup!!.getChildren(null).toList())
+
+      tabs.popupInfo = beta1
+      assertEquals(listOf(closeGroup, other), tabs.popupGroup!!.getChildren(null).toList())
+    }
+  }
+
+  @Test
+  fun `the tooltip of a group tab lists the tabs of the group under the group name`(): Unit = timeoutRunBlocking {
+    withContext(Dispatchers.EDT) {
+      val tabs = makeTabsWithAlphaGroup()
+      tabs.select(tabs.tabByText("beta1"), false)
+      val groupTab = tabs.collapsedGroupTabForTest(isPinned = false, groupKey = "/project/Alpha")!!
+      assertEquals("Tab Group: Alpha<br/>alpha1<br/>alpha2<br/>alpha3", groupTab.tabLabel!!.toolTipText)
+
+      tabs.tabByText("alpha2").setText("renamed")
+      assertEquals("Tab Group: Alpha<br/>alpha1<br/>renamed<br/>alpha3", groupTab.tabLabel!!.toolTipText)
+
+      tabs.select(groupTab, false)
+      assertEquals("Tab Group: Alpha", groupTab.tabLabel!!.toolTipText)
     }
   }
 

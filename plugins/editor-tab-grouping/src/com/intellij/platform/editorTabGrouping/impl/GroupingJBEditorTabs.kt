@@ -4,6 +4,7 @@ package com.intellij.platform.editorTabGrouping.impl
 import com.intellij.ide.setToolTipText
 import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.FileEditorManagerListener
 import com.intellij.openapi.fileEditor.impl.EditorTabs
@@ -18,6 +19,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.ClientProperty
 import com.intellij.ui.IslandsState
 import com.intellij.ui.scale.JBUIScale
+import com.intellij.ui.tabs.JBTabs
 import com.intellij.ui.tabs.TabInfo
 import com.intellij.ui.tabs.TabsListener
 import com.intellij.ui.tabs.impl.TabListOptions
@@ -25,6 +27,7 @@ import com.intellij.util.ui.JBUI
 import java.awt.Graphics
 import java.util.Collections
 import java.util.IdentityHashMap
+import java.util.function.Supplier
 import javax.swing.UIManager
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.TestOnly
@@ -138,8 +141,14 @@ internal open class GroupingJBEditorTabs(
       }
       val header = EditorTabGroupingBundle.message("tab.tooltip.group", group.name)
       val builder = HtmlBuilder().append(HtmlChunk.text(header))
-      // A group tab stands for the whole group, so it does not show the tooltip of its file.
-      if (!collapser.isGroupTab(info)) info.tooltipHtmlText?.let { builder.append(HtmlChunk.br()).append(it) }
+      val collapsedMembers = collapser.collapsedMembers(info)
+      if (collapsedMembers == null) {
+        info.tooltipHtmlText?.let { builder.append(HtmlChunk.br()).append(it) }
+      }
+      else {
+        // A group tab stands for the whole group, so it lists the tabs of the group and not the tooltip of its file.
+        for (member in collapsedMembers) builder.append(HtmlChunk.br()).append(HtmlChunk.text(member.text))
+      }
       label.setToolTipText(builder.toFragment())
     }
   }
@@ -519,6 +528,15 @@ internal open class GroupingJBEditorTabs(
 
   internal fun isGroupingActive(excluding: TabInfo? = null): Boolean {
     return snapshot.isActive(settings.groupByDirectory, excluding)
+  }
+
+  override fun setPopupGroup(popupGroup: Supplier<out ActionGroup>, place: String, addNavigationGroup: Boolean): JBTabs =
+    super.setPopupGroup(Supplier { popupGroupFor(popupGroup.get()) }, place, addNavigationGroup)
+
+  /** Returns [group] for the tab of the popup. The platform sets that tab before it asks for the group. */
+  private fun popupGroupFor(group: ActionGroup): ActionGroup {
+    val info = popupInfo
+    return if (info != null && collapser.isGroupTab(info)) GroupTabPopupGroup(group) else group
   }
 
   override fun select(info: TabInfo, requestFocus: Boolean): ActionCallback {

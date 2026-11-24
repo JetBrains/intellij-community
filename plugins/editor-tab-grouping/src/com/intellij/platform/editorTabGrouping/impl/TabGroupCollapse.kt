@@ -1,11 +1,20 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.editorTabGrouping.impl
 
+import com.intellij.openapi.actionSystem.ActionGroup
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.ActionUpdateThread
+import com.intellij.openapi.actionSystem.ActionWrapperUtil
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.SimpleColoredText
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.tabs.TabInfo
 import java.util.IdentityHashMap
+
+private const val CLOSE_ACTIONS_GROUP_ID = "CloseEditorsGroup"
 
 /** The pinned state and the key of a tab group. */
 internal typealias TabGroupKey = Pair<Boolean, String>
@@ -78,7 +87,10 @@ internal class TabGroupCollapser(private val host: TabGroupCollapseHost) {
 
   fun groupTab(key: TabGroupKey): TabInfo? = collapsedGroups[key]?.groupTab
 
-  fun isGroupTab(info: TabInfo): Boolean = collapsedGroups.values.any { it.groupTab === info }
+  fun isGroupTab(info: TabInfo): Boolean = collapsedMembers(info) != null
+
+  /** Returns the tabs of the collapsed group that [groupTab] stands for, or null when it is no group tab. */
+  fun collapsedMembers(groupTab: TabInfo): List<TabInfo>? = collapsedGroups.values.firstOrNull { it.groupTab === groupTab }?.members
 
   fun tabSelected(info: TabInfo) {
     selectionOrder[info] = ++selectionCount
@@ -282,6 +294,19 @@ internal class TabGroupCollapser(private val host: TabGroupCollapseHost) {
       if (members.size > 1) snapshot.groups[members.first()]?.let { result.putIfAbsent(key.second, it) }
     }
     return result.values.toList()
+  }
+}
+
+/**
+ * The popup of a group tab: the [delegate] without the group of the close actions.
+ * A close action there closes the one file of the group tab, and the user does not see which file it is.
+ */
+internal class GroupTabPopupGroup(private val delegate: ActionGroup) : ActionGroup(), DumbAware {
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
+
+  override fun getChildren(e: AnActionEvent?): Array<AnAction> {
+    val actionManager = ActionManager.getInstance()
+    return ActionWrapperUtil.getChildren(e, this, delegate).filter { actionManager.getId(it) != CLOSE_ACTIONS_GROUP_ID }.toTypedArray()
   }
 }
 
