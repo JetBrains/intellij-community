@@ -35,11 +35,11 @@ class ModPlanEditTest : BasePlatformTestCase() {
   /** The directory of the project: an anchor that has no file, so the engine takes the file of the first edit. */
   private fun root(): PsiElement = PsiManager.getInstance(project).findDirectory(myFixture.tempDirFixture.getFile("/")!!)!!
 
-  private fun toCommand(vararg edits: ModPlanEdit): ModCommand? {
+  private fun toCommand(vararg edits: ModPlanEdit, anchor: PsiElement? = null): ModCommand? {
     return PlatformTestUtil.waitForFuture(ApplicationManager.getApplication().executeOnPooledThread(Callable {
       runCatching {
         runReadActionBlocking {
-          val plan = ModPlan.createPlan(edits.toList(), ModPlanConflicts(emptyList()), "test", "test", root(), false)
+          val plan = ModPlan.createPlan(edits.toList(), ModPlanConflicts(emptyList()), "test", "test", anchor ?: root(), false)
           (plan as? ModPlan.AcceptedPlan)?.execution?.command
         }
       }
@@ -241,6 +241,18 @@ class ModPlanEditTest : BasePlatformTestCase() {
 
     assertNotNull(command)
     assertEquals(setOf("directory", "file"), logEntries.toSet())
+  }
+
+  fun `test an update with a binary anchor file uses the file of the first update`() {
+    val binaryFile = myFixture.tempDirFixture.createFile("a.zip", "a")
+    val a = myFixture.addFileToProject("a.txt", "a")
+    val anchor = PsiManager.getInstance(project).findFile(binaryFile)!!
+    assertTrue(binaryFile.fileType.isBinary)
+
+    val command = toCommand(ModPlanEdit.update(a) { logEntries.add("file") }, anchor = anchor)
+
+    assertNotNull(command)
+    assertEquals(listOf("file"), logEntries)
   }
 
   fun `test an edit built earlier still applies after another edit in the file`() {

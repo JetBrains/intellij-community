@@ -122,8 +122,8 @@ sealed interface ModPlan {
      * replacements, then the [ModPlanRefactoringListener]s run on the changed files; the file edits follow as file writes. An edit inside
      * a deleted file is skipped.
      *
-     * @param anchor the element the refactoring was invoked on; the command is built for its file, or for the file of the first edit that
-     * has one
+     * @param anchor the element the refactoring was invoked on; the command is built for its file; if it has no file or a binary file, for
+     * the file of the first edit that has one
      * @return the file writes as one command; null if an edit cannot be written
      */
     @RequiresReadLock
@@ -187,7 +187,7 @@ sealed interface ModPlan {
         }
       }
 
-      val anchorFile = anchor.containingFile
+      val anchorFile = anchor.containingFile?.takeUnless { it.fileType.isBinary }
                        ?: psiWrites.firstNotNullOfOrNull { write -> write.elements.firstNotNullOfOrNull { it.containingFile } }
                        ?: textWrites.firstOrNull()?.file
       val psiCommand = psiCommand(psiWrites, textWrites, anchorFile) ?: return null
