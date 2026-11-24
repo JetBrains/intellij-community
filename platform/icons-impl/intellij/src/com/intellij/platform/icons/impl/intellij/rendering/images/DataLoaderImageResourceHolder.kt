@@ -7,6 +7,7 @@ import com.intellij.platform.icons.impl.rendering.SizeVariants
 import com.intellij.platform.icons.modifiers.SizeVariantPolicy
 import com.intellij.platform.icons.rendering.Dimensions
 import com.intellij.platform.icons.rendering.ImageModifiers
+import com.intellij.platform.icons.rendering.ThemeContext
 import com.intellij.ui.icons.ImageDataLoader
 import com.intellij.ui.icons.findIconLoaderByPath
 import com.intellij.ui.scale.ScaleContext
@@ -41,22 +42,25 @@ internal class DataLoaderImageResourceHolder(
     scale: ScaleContext,
     painted: PaintedSize?,
     imageModifiers: ImageModifiers?,
+    theme: ThemeContext,
     component: Component?,
   ): Image? {
     val variant = painted?.let { sizeVariant(scale, it, imageModifiers) }
     val (loader, loaderScale) = variant ?: (dataLoader to scale)
+    // the theme inputs are read now, so the digest of the theme is part of the key
     val key = ImageKey(
       loader = loader,
       objScale = loaderScale.getScale(ScaleType.OBJ_SCALE),
       usrScale = loaderScale.getScale(ScaleType.USR_SCALE),
       sysScale = loaderScale.getScale(ScaleType.SYS_SCALE),
       imageModifiers = imageModifiers,
+      themeDigest = theme.digest(),
       modificationCount = loader.modificationCount,
     )
     synchronized(images) {
       images[key]?.get()?.let { return it }
     }
-    val image = loader.loadImage(parameters = imageModifiers.toLoadParameters(), scaleContext = loaderScale)?.image ?: return null
+    val image = loader.loadImage(parameters = imageModifiers.toLoadParameters(theme), scaleContext = loaderScale)?.image ?: return null
     synchronized(images) {
       images[key] = SoftReference(image)
     }
@@ -113,7 +117,7 @@ internal class DataLoaderImageResourceHolder(
 private data class Artwork(val isDark: Boolean, val isStroke: Boolean) {
   companion object {
     fun of(imageModifiers: ImageModifiers?): Artwork =
-      imageModifiers.toLoadParameters().let { Artwork(it.isDark, it.isStroke) }
+      imageModifiers.toLoadParameters(rootPatcher = null, globalFilter = null).let { Artwork(it.isDark, it.isStroke) }
   }
 }
 
@@ -126,17 +130,18 @@ private data class ImageKey(
   val usrScale: Double,
   val sysScale: Double,
   val imageModifiers: ImageModifiers?,
+  val themeDigest: String,
   val modificationCount: Int,
 )
-
 private val UNIT_SCALE: ScaleContext
   get() = ScaleContext.of(arrayOf(ScaleType.OBJ_SCALE.of(1.0), ScaleType.USR_SCALE.of(1.0), ScaleType.SYS_SCALE.of(1.0)))
 
 /**
  * The size of the image that [loader] loads with [imageModifiers] at the unit scale. The modifiers can select an artwork
- * of another size, for example the dark one.
+ * of another size, for example the dark one. The theme inputs do not change the size, so they are not applied.
  */
 private fun designSize(loader: ImageDataLoader, imageModifiers: ImageModifiers?): Dimensions {
-  val image = loader.loadImage(imageModifiers.toLoadParameters(), UNIT_SCALE)?.image ?: return Dimensions(0, 0)
+  val image = loader.loadImage(imageModifiers.toLoadParameters(rootPatcher = null, globalFilter = null), UNIT_SCALE)?.image
+    ?: return Dimensions(0, 0)
   return Dimensions(image.getWidth(null), image.getHeight(null))
 }

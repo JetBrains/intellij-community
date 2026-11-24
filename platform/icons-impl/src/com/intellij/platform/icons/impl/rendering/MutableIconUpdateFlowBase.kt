@@ -3,13 +3,25 @@ package com.intellij.platform.icons.impl.rendering
 
 import com.intellij.platform.icons.rendering.MutableIconUpdateFlow
 import java.util.concurrent.atomic.AtomicInteger
+import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.FlowCollector
 import kotlinx.coroutines.flow.MutableSharedFlow
 
+/**
+ * An update flow that limits its updates to one in [minimalUpdateMillis]. An update in that time is not lost: it comes
+ * at the end of that time, so the last update always reaches the collectors.
+ */
 abstract class MutableIconUpdateFlowBase : MutableIconUpdateFlow {
     private val updateCounter = AtomicInteger()
-    private val underlayingFlow = MutableSharedFlow<Int>()
-    protected var stopwatch: Long = System.currentTimeMillis()
+
+    /**
+     * The updates. The flow keeps the last update, so an update does not wait for a collector, and a collector that
+     * starts later still gets it. For example, a Compose icon starts to collect after its first measure.
+     */
+    private val underlyingFlow = MutableSharedFlow<Int>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+
+    /** The time of the last update. It starts at 0, so the first update is not limited. */
+    protected var stopwatch: Long = 0L
     protected val minimalUpdateMillis: Long = 1000L / 60L // Use actual fps?
 
     protected fun handleRateLimiting(): Boolean {
@@ -19,18 +31,23 @@ abstract class MutableIconUpdateFlowBase : MutableIconUpdateFlow {
     }
 
     override fun triggerUpdate() {
-        if (handleRateLimiting()) return
+        if (handleRateLimiting()) {
+            // a delayed update checks the limit again, so the updates in one limit come as one update at its end
+            val elapsed = System.currentTimeMillis() - stopwatch
+            triggerDelayedUpdate((minimalUpdateMillis - elapsed).coerceAtLeast(1L))
+            return
+        }
         val updateId = updateCounter.incrementAndGet()
-        underlayingFlow.tryEmit(updateId)
+        underlyingFlow.tryEmit(updateId)
     }
 
     override fun triggerDelayedUpdate(delay: Long) {
-        underlayingFlow.emitDelayed(delay, updateCounter.incrementAndGet())
+        underlyingFlow.emitDelayed(delay, updateCounter.incrementAndGet())
     }
 
     protected abstract fun MutableSharedFlow<Int>.emitDelayed(delay: Long, value: Int)
 
     override suspend fun collect(collector: FlowCollector<Int>) {
-        underlayingFlow.collect(collector)
+        underlyingFlow.collect(collector)
     }
 }

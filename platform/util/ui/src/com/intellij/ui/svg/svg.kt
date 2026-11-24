@@ -118,7 +118,9 @@ fun loadSvgMaybeWithShape(
   }!!
 }
 
-internal fun colorPatcherDigestShim(colorPatcherProvider: SVGLoader.SvgElementColorPatcherProvider?): LongArray {
+/** The digest of [colorPatcherProvider], also for an older provider implementation that has no `digest`. */
+@Internal
+fun colorPatcherDigestShim(colorPatcherProvider: SVGLoader.SvgElementColorPatcherProvider?): LongArray {
   if (colorPatcherProvider == null) {
     return ArrayUtilRt.EMPTY_LONG_ARRAY
   }

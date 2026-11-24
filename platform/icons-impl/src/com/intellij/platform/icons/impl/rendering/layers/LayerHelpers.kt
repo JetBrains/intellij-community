@@ -3,26 +3,47 @@ package com.intellij.platform.icons.impl.rendering.layers
 
 import com.intellij.platform.icons.impl.layers.findModifier
 import com.intellij.platform.icons.impl.modifiers.ColorFilterModifier
+import com.intellij.platform.icons.impl.modifiers.DarkStateModifier
+import com.intellij.platform.icons.impl.modifiers.ForceDarkVariantModifier
 import com.intellij.platform.icons.impl.modifiers.SizeVariantModifier
 import com.intellij.platform.icons.impl.modifiers.StrokeModifier
 import com.intellij.platform.icons.impl.modifiers.SvgPatcherModifier
 import com.intellij.platform.icons.impl.rendering.DefaultImageModifiers
 import com.intellij.platform.icons.impl.rendering.DefaultRenderingContext
+import com.intellij.platform.icons.impl.rendering.darkState
+import com.intellij.platform.icons.impl.rendering.legacyImageModifiers
 import com.intellij.platform.icons.layers.IconLayer
 import com.intellij.platform.icons.modifiers.SizeVariantPolicy
 import com.intellij.platform.icons.rendering.ScalingContext
 import kotlin.math.ceil
 
+/**
+ * The image modifiers of this layer: its own modifiers, else the ones it inherits from [renderingContext].
+ *
+ * The dark state is the innermost explicit one: a [ForceDarkVariantModifier] of this layer, else a [DarkStateModifier]
+ * of this layer, else the inherited [DefaultImageModifiers.forcedDark]. Without one, it is the dark state of the theme ([darkState]), read now. A
+ * theme that does not supply a dark state leaves the inherited [DefaultImageModifiers.isDark]. The renderers call this
+ * when they are built, and an icon renderer rebuilds them when the theme digest changes, so the dark state follows the
+ * theme.
+ *
+ * The other theme inputs (the color palette and the global filter) are not part of the image modifiers. The image
+ * loaders read them from the theme of the rendering context.
+ */
 fun IconLayer.generateImageModifiers(renderingContext: DefaultRenderingContext? = null): DefaultImageModifiers {
-    val theme = renderingContext?.theme?.imageModifiers() as? DefaultImageModifiers
+    val theme = renderingContext?.theme
     val caller = renderingContext?.defaultImageModifiers
+    val legacy = theme?.legacyImageModifiers()
     return DefaultImageModifiers(
-        colorFilter = findModifier<ColorFilterModifier>()?.colorFilter ?: caller?.colorFilter ?: theme?.colorFilter,
-        svgPatcher = findModifier<SvgPatcherModifier>()?.svgPatcher ?: caller?.svgPatcher ?: theme?.svgPatcher,
-        isDark = theme?.isDark ?: caller?.isDark ?: false,
-        stroke = findModifier<StrokeModifier>()?.color ?: caller?.stroke ?: theme?.stroke,
-        sizeVariantPolicy = findModifier<SizeVariantModifier>()?.policy ?: caller?.sizeVariantPolicy ?: theme?.sizeVariantPolicy
+        colorFilter = findModifier<ColorFilterModifier>()?.colorFilter ?: caller?.colorFilter ?: legacy?.colorFilter,
+        svgPatcher = findModifier<SvgPatcherModifier>()?.svgPatcher ?: caller?.svgPatcher ?: legacy?.svgPatcher,
+        isDark = theme?.darkState() ?: caller?.isDark ?: false,
+        stroke = findModifier<StrokeModifier>()?.color ?: caller?.stroke ?: legacy?.stroke,
+        sizeVariantPolicy = findModifier<SizeVariantModifier>()?.policy ?: caller?.sizeVariantPolicy ?: legacy?.sizeVariantPolicy
             ?: SizeVariantPolicy.Exact,
+        forcedDark = findModifier<ForceDarkVariantModifier>()?.isDark
+            ?: findModifier<DarkStateModifier>()?.isDark
+            ?: caller?.forcedDark
+            ?: legacy?.forcedDark,
     )
 }
 

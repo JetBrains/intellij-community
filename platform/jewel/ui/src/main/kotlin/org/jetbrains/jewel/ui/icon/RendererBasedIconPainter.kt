@@ -16,8 +16,10 @@ import androidx.compose.ui.node.DrawModifierNode
 import androidx.compose.ui.node.LayoutModifierNode
 import androidx.compose.ui.node.ModifierNodeElement
 import androidx.compose.ui.node.invalidateDraw
+import androidx.compose.ui.node.invalidateMeasurement
 import androidx.compose.ui.unit.Constraints
 import com.intellij.platform.icons.impl.rendering.resolve
+import com.intellij.platform.icons.rendering.Dimensions
 import com.intellij.platform.icons.rendering.IconRenderer
 import com.intellij.platform.icons.rendering.MutableIconUpdateFlow
 import com.intellij.platform.icons.scale.IconScale
@@ -56,8 +58,23 @@ private class IconRenderNode(
 
     private var job: Job? = null
 
+    /** The dimensions of the last measure, or `null` before the first measure. */
+    private var measured: Dimensions? = null
+
     override fun onAttach() {
-        job = coroutineScope.launch { updateFlow.collect { invalidateDraw() } }
+        job = coroutineScope.launch { updateFlow.collect { onIconUpdate() } }
+    }
+
+    /**
+     * An update can change the size of the icon, for example a theme change or a resolved deferred icon. Then the node
+     * measures again. Otherwise it only draws again.
+     */
+    private fun onIconUpdate() {
+        val last = measured
+        if (last != null && renderer.resolve(density, scale).finalDimensions != last) {
+            invalidateMeasurement()
+        }
+        invalidateDraw()
     }
 
     override fun onDetach() {
@@ -85,6 +102,7 @@ private class IconRenderNode(
 
     override fun MeasureScope.measure(measurable: Measurable, constraints: Constraints): MeasureResult {
         val expected = renderer.resolve(density, scale).finalDimensions
+        measured = expected
         val wrappedConstraints =
             Constraints(
                 minWidth = expected.width,

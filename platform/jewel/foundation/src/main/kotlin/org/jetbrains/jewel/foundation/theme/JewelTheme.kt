@@ -9,8 +9,10 @@ import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 import java.util.UUID
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.jewel.foundation.GlobalColors
 import org.jetbrains.jewel.foundation.GlobalMetrics
+import org.jetbrains.jewel.foundation.InternalJewelApi
 import org.jetbrains.jewel.foundation.LocalDisabledAppearanceValues
 import org.jetbrains.jewel.foundation.LocalGlobalColors
 import org.jetbrains.jewel.foundation.LocalGlobalMetrics
@@ -53,7 +55,9 @@ public interface JewelTheme {
 
         /** Whether the current theme is a dark theme. */
         public val isDark: Boolean
-            @Composable @ReadOnlyComposable get() = LocalIsDarkTheme.current
+            @Composable
+            @ReadOnlyComposable
+            get() = LocalIsDarkTheme.current ?: error("No IsDarkTheme provided. Have you forgotten the theme?")
 
         /** Whether Swing compatibility mode is enabled, which disables hover and press state changes. */
         public val isSwingCompatMode: Boolean
@@ -97,6 +101,7 @@ public fun JewelTheme(theme: ThemeDefinition, content: @Composable () -> Unit) {
         LocalGlobalMetrics provides theme.globalMetrics,
         LocalDisabledAppearanceValues provides theme.disabledAppearanceValues,
         LocalIsIslandsTheme provides theme.isIslands,
+        LocalForcedIconVariant provides ForcedIconVariant.of(theme.isDark),
         content = content,
     )
 }
@@ -124,9 +129,30 @@ public val LocalContentColor: ProvidableCompositionLocal<Color> = staticComposit
     error("No ContentColor provided. Have you forgotten the theme?")
 }
 
-internal val LocalIsDarkTheme: ProvidableCompositionLocal<Boolean> = staticCompositionLocalOf {
-    error("No IsDarkTheme provided. Have you forgotten the theme?")
+/** Whether the current theme is dark, or `null` outside a theme. [JewelTheme.isDark] fails outside a theme. */
+internal val LocalIsDarkTheme: ProvidableCompositionLocal<Boolean?> = staticCompositionLocalOf { null }
+
+/** The artwork that an icon from an icon descriptor uses, see [LocalForcedIconVariant]. */
+@InternalJewelApi
+@ApiStatus.Internal
+public enum class ForcedIconVariant(public val isDark: Boolean) {
+    Light(isDark = false),
+    Dark(isDark = true);
+
+    public companion object {
+        /** The variant for a theme that is dark if [isDark] is `true`. */
+        public fun of(isDark: Boolean): ForcedIconVariant = if (isDark) Dark else Light
+    }
 }
+
+/**
+ * The artwork that an icon from an icon descriptor uses, or `null` when the icon follows the IDE theme. [JewelTheme]
+ * sets it from the dark state of its theme. `SwingBridgeTheme` resets it to `null`, so the icons follow the IDE theme
+ * as the Swing icons around them do. [OverrideDarkMode] sets it when it changes the dark state.
+ */
+@InternalJewelApi
+@get:ApiStatus.Internal
+public val LocalForcedIconVariant: ProvidableCompositionLocal<ForcedIconVariant?> = staticCompositionLocalOf { null }
 
 internal val LocalSwingCompatMode: ProvidableCompositionLocal<Boolean> = staticCompositionLocalOf {
     // By default, Swing compat is not enabled
@@ -176,5 +202,12 @@ internal val LocalIsIslandsTheme: ProvidableCompositionLocal<Boolean> = staticCo
  */
 @Composable
 public fun OverrideDarkMode(isDark: Boolean, content: @Composable () -> Unit) {
-    CompositionLocalProvider(LocalIsDarkTheme provides isDark, content = content)
+    // an icon that follows the IDE theme keeps following it when the dark state stays the same, for example in a popup
+    val followsIdeTheme = LocalForcedIconVariant.current == null && LocalIsDarkTheme.current == isDark
+    val forcedIconVariant = if (followsIdeTheme) null else ForcedIconVariant.of(isDark)
+    CompositionLocalProvider(
+        LocalIsDarkTheme provides isDark,
+        LocalForcedIconVariant provides forcedIconVariant,
+        content = content,
+    )
 }

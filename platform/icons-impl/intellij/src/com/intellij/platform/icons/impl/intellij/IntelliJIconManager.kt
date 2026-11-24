@@ -22,9 +22,7 @@ import com.intellij.platform.icons.impl.intellij.rendering.IntelliJIconRendererM
 import com.intellij.platform.icons.impl.intellij.rendering.SwingIcon
 import com.intellij.platform.icons.impl.layers.SwingIconLayer
 import com.intellij.platform.icons.modifiers.IconModifier
-import com.intellij.platform.icons.modifiers.scale
 import com.intellij.platform.icons.rendering.IconRendererManager
-import com.intellij.platform.icons.scale.FactorScale
 import com.intellij.platform.icons.scale.IconScale
 import com.intellij.platform.icons.swing.ScalableSwingIcon
 import com.intellij.ui.AnimatedIcon
@@ -67,9 +65,17 @@ class IntelliJIconManager : DefaultIconManager() {
     return SwingIcon(iconDescriptor, scale)
   }
 
+  /**
+   * Adds [swingIcon] as a layer with [modifier]. A [SwingIcon] adds its descriptor, with its scale and its dark state (see
+   * [SwingIcon.stateModifier]). Without a [modifier], they are the modifier of the one layer. Else the icon is nested
+   * in the layer of [modifier], so the dark state of the icon stays inside and wins over a dark state that [modifier]
+   * forces, and [modifier] applies to the whole scaled icon.
+   */
   override fun addSwingLayer(designer: IconDesigner, swingIcon: Icon, modifier: IconModifier) {
     if (swingIcon is SwingIcon) {
-      return designer.icon(swingIcon.iconDescriptor, modifier)
+      val state = swingIcon.stateModifier() ?: return designer.icon(swingIcon.iconDescriptor, modifier)
+      if (modifier == IconModifier) return designer.icon(swingIcon.iconDescriptor, state)
+      return designer.icon(swingIcon.toDescriptor(), modifier)
     }
     if (designer !is IntelliJIconDesigner) {
       error("Only IntelliJIconDesigner can handle swing icons.")
@@ -77,19 +83,20 @@ class IntelliJIconManager : DefaultIconManager() {
     designer.addSwingLayer(swingIcon, modifier)
   }
 
+  /**
+   * The descriptor of [swingIcon]. A [SwingIcon] gives its descriptor with its scale and its dark state, see
+   * [SwingIcon.toDescriptor]. Its constructor reads them back, so a round trip gives an equal icon and does not nest the
+   * descriptor deeper. An icon without a scale and a dark state gives its descriptor itself: an update that sets the icon
+   * of `Presentation.getIcon()` back keeps its descriptor.
+   */
   override fun toIconDescriptor(swingIcon: Icon): IconDescriptor {
-    // the identity scale is no scale: an update() that sets the icon of Presentation.getIcon() back keeps its descriptor
-    if (swingIcon is SwingIcon && swingIcon.iconScale.isIdentity()) return swingIcon.iconDescriptor
-    return if (swingIcon is SwingIcon) {
-      unpackSwingIcon(swingIcon)
-    } else {
-      convertLegacyIcon(swingIcon) ?: iconDescriptor {
-        addSwingLayer(
-          this,
-          swingIcon,
-          IconModifier
-        )
-      }
+    if (swingIcon is SwingIcon) return swingIcon.toDescriptor()
+    return convertLegacyIcon(swingIcon) ?: iconDescriptor {
+      addSwingLayer(
+        this,
+        swingIcon,
+        IconModifier
+      )
     }
   }
 
@@ -100,18 +107,6 @@ class IntelliJIconManager : DefaultIconManager() {
         }
       else -> null
     }
-  }
-
-  private fun unpackSwingIcon(swingIcon: SwingIcon): IconDescriptor {
-    return if (swingIcon.iconScale != null) {
-      iconDescriptor {
-        addSwingLayer(
-          this,
-          swingIcon,
-          IconModifier.scale(swingIcon.iconScale)
-        )
-      }
-    } else swingIcon.iconDescriptor
   }
 
   override fun markDeferredIconUnused(id: IconIdentifier) {
@@ -170,5 +165,3 @@ interface DeferredIconListener {
     val TOPIC: Topic<DeferredIconListener> = Topic(DeferredIconListener::class.java, BroadcastDirection.NONE)
   }
 }
-
-private fun IconScale?.isIdentity(): Boolean = this == null || (this is FactorScale && factor == 1.0)

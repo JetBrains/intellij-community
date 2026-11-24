@@ -8,6 +8,7 @@ import com.intellij.platform.icons.design.IconAlign
 import com.intellij.platform.icons.design.dp
 import com.intellij.platform.icons.iconDescriptor
 import com.intellij.platform.icons.imageIconDescriptor
+import com.intellij.platform.icons.impl.DefaultLayeredIconDescriptor
 import com.intellij.platform.icons.impl.intellij.rendering.SwingIcon
 import com.intellij.platform.icons.modifiers.IconModifier
 import com.intellij.platform.icons.modifiers.align
@@ -16,18 +17,23 @@ import com.intellij.platform.icons.rendering.IconRendererManager
 import com.intellij.platform.icons.scale.factor
 import com.intellij.platform.icons.scale.fitArea
 import com.intellij.platform.icons.impl.intellij.rendering.withZoom
+import com.intellij.platform.icons.impl.layers.SwingIconLayer
 import com.intellij.platform.icons.swing.createSwingIcon
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.runInEdtAndWait
+import com.intellij.ui.DeferredIcon
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import java.awt.Color
+import java.awt.Component
+import java.awt.Graphics
 import java.awt.Rectangle
 import java.awt.image.BufferedImage
 import javax.swing.Icon
+import javax.swing.ImageIcon
 
 /**
  * A `SwingIcon` that wraps its descriptor in a nested icon: the stroke icon, and a factor on a limited fit.
@@ -164,6 +170,35 @@ class NestedSwingIconTest {
     assertEquals(Rectangle(16, 16, 96, 32), paint(inRow))
     assertEquals(32 to 64, inColumn.iconWidth to inColumn.iconHeight)
     assertEquals(Rectangle(16, 16, 32, 96), paint(inColumn))
+  }
+
+  /** A bridged deferred icon that resolves after the measure and before the paint makes the icon measure again. */
+  @Test
+  fun `a bridged deferred icon that resolves before the paint updates the size`() = runInEdtAndWait {
+    val deferred = ResolvedLater(placeholder = BufferedImage(16, 16, BufferedImage.TYPE_INT_ARGB), result = BufferedImage(24, 12, BufferedImage.TYPE_INT_ARGB))
+    val icon = SwingIcon(DefaultLayeredIconDescriptor(listOf(SwingIconLayer(deferred, IconModifier))))
+    assertEquals(16 to 16, icon.iconWidth to icon.iconHeight, "the placeholder")
+
+    deferred.isDone = true
+    paint(icon)
+
+    PlatformTestUtil.waitWithEventsDispatching("the icon was not measured again", { icon.iconWidth == 24 }, 10)
+    assertEquals(12, icon.iconHeight)
+  }
+
+  /** A deferred icon that is resolved when [isDone] is set. */
+  private class ResolvedLater(placeholder: BufferedImage, result: BufferedImage) : DeferredIcon {
+    override val baseIcon: Icon = ImageIcon(placeholder)
+    private val result: Icon = ImageIcon(result)
+    override var isDone: Boolean = false
+    private val current: Icon get() = if (isDone) result else baseIcon
+
+    override fun evaluate(): Icon = result
+    override fun notifyPaint(c: Component, x: Int, y: Int) = Unit
+    override fun getModificationCount(): Long = if (isDone) 1 else 0
+    override fun paintIcon(c: Component?, g: Graphics, x: Int, y: Int) = current.paintIcon(c, g, x, y)
+    override fun getIconWidth(): Int = current.iconWidth
+    override fun getIconHeight(): Int = current.iconHeight
   }
 
   /** The bounds of the opaque pixels after painting [icon] at density 2. */

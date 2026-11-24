@@ -8,7 +8,6 @@ import com.intellij.openapi.application.UI
 import com.intellij.openapi.application.asContextElement
 import com.intellij.ui.DeferredIcon
 import com.intellij.ui.DeferredIconListener
-import com.intellij.ui.scale.JBUIScale
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
@@ -24,6 +23,8 @@ import com.intellij.platform.icons.impl.rendering.layers.LayerLayout
 import com.intellij.platform.icons.impl.rendering.layers.compoundSize
 import com.intellij.platform.icons.impl.intellij.rendering.images.cachedImageIcon
 import com.intellij.platform.icons.impl.intellij.rendering.images.legacySize
+import com.intellij.ui.scale.JBUIScale
+import com.intellij.platform.icons.impl.intellij.rendering.images.measuredIn
 import com.intellij.platform.icons.design.dp
 import java.util.concurrent.atomic.AtomicBoolean
 import javax.swing.Icon
@@ -62,10 +63,10 @@ class SwingIconLayerRenderer(
   /**
    * The layout of the legacy icon at its size, see [legacySize]. The renderer applies the IDE zoom to a design size. A
    * logical size already contains the zoom, so the renderer takes the zoom of its context out of it: an icon of a fixed
-   * odd size keeps that size.
+   * odd size keeps that size. It is the size of the artwork that the image modifiers select, as the image paints it.
    */
   private fun legacyLayout(): LayerLayout {
-    val size = legacySize(layer.legacyIcon)
+    val size = legacySize(layer.legacyIcon.measuredIn(layer.generateImageModifiers(renderingContext)))
     if (size.width <= 0 || size.height <= 0) return applyLayout(image)
     val width = size.width.dp.compoundSize()
     val height = size.height.dp.compoundSize()
@@ -97,6 +98,8 @@ class SwingIconLayerRenderer(
           isDone = true
           image = createImageResource()
           layout = legacyLayout()
+          // the icon was measured with the placeholder, so it is measured again
+          renderingContext.updateFlow.triggerUpdate()
         }
       }
     }
@@ -105,7 +108,7 @@ class SwingIconLayerRenderer(
   private fun createImageResource(): ImageResource {
     val provider = renderingContext.imageResourceProvider as? DefaultImageResourceProvider
     if (provider == null) error("Swing Icon fallback is only supported with DefaultImageResourceProvider")
-    return provider.fromSwingIcon(layer.legacyIcon, layer.generateImageModifiers(renderingContext))
+    return provider.fromSwingIcon(layer.legacyIcon, layer.generateImageModifiers(renderingContext), renderingContext.theme)
   }
 
   private suspend fun suspendUntilDeferredIconIsDone() {

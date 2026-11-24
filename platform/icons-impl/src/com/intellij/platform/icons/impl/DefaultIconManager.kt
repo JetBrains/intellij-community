@@ -28,6 +28,8 @@ import com.intellij.platform.icons.impl.modifiers.ApplyableIconModifier
 import com.intellij.platform.icons.impl.modifiers.ColorFilterModifier
 import com.intellij.platform.icons.impl.modifiers.CombinedIconModifier
 import com.intellij.platform.icons.impl.modifiers.CutoutMarginModifier
+import com.intellij.platform.icons.impl.modifiers.DarkStateModifier
+import com.intellij.platform.icons.impl.modifiers.ForceDarkVariantModifier
 import com.intellij.platform.icons.impl.modifiers.MarginIconModifier
 import com.intellij.platform.icons.impl.modifiers.RootIconModifier
 import com.intellij.platform.icons.impl.modifiers.ScaleModifier
@@ -135,6 +137,8 @@ abstract class DefaultIconManager : IconManager {
         iconModifier(ColorFilterModifier::class, ColorFilterModifier.serializer())
         iconModifier(CombinedIconModifier::class, CombinedIconModifier.serializer())
         iconModifier(CutoutMarginModifier::class, CutoutMarginModifier.serializer())
+        iconModifier(DarkStateModifier::class, DarkStateModifier.serializer())
+        iconModifier(ForceDarkVariantModifier::class, ForceDarkVariantModifier.serializer())
         iconModifier(MarginIconModifier::class, MarginIconModifier.serializer())
         iconModifier(RootIconModifier::class, RootIconModifier.serializer())
         iconModifier(ScaleModifier::class, ScaleModifier.serializer())

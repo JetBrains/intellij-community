@@ -13,9 +13,15 @@ import com.intellij.platform.icons.rendering.IconRenderer
 import com.intellij.platform.icons.rendering.LayerPaintingContext
 import com.intellij.platform.icons.rendering.RenderingContext
 import com.intellij.platform.icons.rendering.ScalingContext
+import org.jetbrains.annotations.ApiStatus
 
 class DefaultIconRenderer(val iconInstance: DefaultLayeredIconDescriptor, private val context: RenderingContext) : IconRenderer {
     override val iconDescriptor: IconDescriptor = iconInstance
+
+    /** The rendering context of this renderer: the caller modifiers and the theme. Debugging tools read it. */
+    @get:ApiStatus.Internal
+    val renderingContext: RenderingContext
+        get() = context
     private var lastThemeDigest: String = context.theme.digest()
     private var layerRenderers = createRenderers()
 
@@ -34,14 +40,18 @@ class DefaultIconRenderer(val iconInstance: DefaultLayeredIconDescriptor, privat
         }
     }
 
-  private fun layers(): List<IconLayerRenderer> {
-    val themeDigest = context.theme.digest()
-    if (lastThemeDigest != themeDigest) {
-      layerRenderers = createRenderers()
-      lastThemeDigest = themeDigest
+    /**
+     * The layer renderers for the current theme: they are created again when the theme changed. It runs before each
+     * measure too, not only before a paint, because a theme change can change the size.
+     */
+    private fun layers(): List<IconLayerRenderer> {
+        val themeDigest = context.theme.digest()
+        if (lastThemeDigest != themeDigest) {
+            layerRenderers = createRenderers()
+            lastThemeDigest = themeDigest
+        }
+        return layerRenderers
     }
-    return layerRenderers
-  }
 
     internal fun consumedSpace(): CompoundDimensions = layers().maxCompoundSize { it.layout.consumedSpace() }
 

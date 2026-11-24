@@ -19,6 +19,7 @@ import com.intellij.platform.icons.modifiers.IconModifier
 import com.intellij.platform.icons.modifiers.SizeVariantPolicy
 import com.intellij.platform.icons.rendering.IconRendererManager
 import com.intellij.platform.icons.rendering.ImageModifiers
+import com.intellij.platform.icons.rendering.ThemeContext
 import com.intellij.platform.icons.scale.factor
 import com.intellij.platform.icons.swing.createSwingIcon
 import com.intellij.testFramework.junit5.TestApplication
@@ -150,7 +151,7 @@ class SizeVariantLookupTest {
 
   private fun SwingImageResourceHolder.image(objScale: Double, painted: Double, modifiers: ImageModifiers): Image? {
     val scale = ScaleContext.of(arrayOf(ScaleType.OBJ_SCALE.of(objScale), ScaleType.USR_SCALE.of(1.0), ScaleType.SYS_SCALE.of(1.0)))
-    return getImage(scale, PaintedSize(painted, painted), modifiers)
+    return getImage(scale, PaintedSize(painted, painted), modifiers, THEME)
   }
 
   private fun paint(icon: Icon): BufferedImage {
@@ -188,5 +189,8 @@ class SizeVariantLookupTest {
     const val RED = 0xFFFF0000.toInt()
     const val BLUE = 0xFF0000FF.toInt()
     const val YELLOW = 0xFFFFFF00.toInt()
+    val THEME = object : ThemeContext {
+      override fun digest(): String = "test"
+    }
   }
 }
