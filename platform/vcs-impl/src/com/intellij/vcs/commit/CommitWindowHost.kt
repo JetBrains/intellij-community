@@ -36,22 +36,21 @@ private const val DIMENSION_KEY = "Vcs.Commit.Window"
  */
 internal class CommitWindowHost(private val project: Project) : CommitUiHost {
   /**
-   * The window, built on the first show and kept until the project goes away.
+   * The window, built on the first show and kept until the commit mode stops offering its tab, or the project goes away.
    *
    * It is kept because its tab registers itself on the commit interface, and the interface refuses a second registration. Hiding and
    * showing the same window also keeps the tree and its listeners as they were.
    */
   private var window: CommitWindow? = null
 
-  /** Whether the commit mode changed under the window, which leaves it holding the tab of the mode before. */
-  private var isWindowStale = false
-
   init {
-    // The Commit tool window builds its tabs again when the commit mode changes, for example when the Git staging area is turned off.
-    // This window holds one of those tabs, so the next show builds it again from the extension that applies by then. The window is kept
-    // until that show, because taking it away takes the changes view with it, and a commit that is running still reads that view.
+    // The Commit tool window removes a tab as soon as the commit mode stops offering it, for example the changes view when the Git
+    // staging area is turned on. This window goes away at the same moment, so the next show builds the tab that applies by then.
     val connection = project.messageBus.connect(VcsDisposable.getInstance(project))
-    CommitModeManager.subscribeOnCommitModeChange(connection, CommitModeManager.CommitModeListener { isWindowStale = true })
+    CommitModeManager.subscribeOnCommitModeChange(connection, CommitModeManager.CommitModeListener {
+      val window = window ?: return@CommitModeListener
+      if (findCommitTabEp(project, window.content.tabName) == null) Disposer.dispose(window.frame)
+    })
   }
 
   /** Always ready: the window is built on demand, so there is nothing that can be missing the way a tool window can. */
@@ -70,11 +69,6 @@ internal class CommitWindowHost(private val project: Project) : CommitUiHost {
    * It does nothing when no such tab is offered, or when the window holds another tab.
    */
   fun showWindow(tabName: String, onShown: (JComponent) -> Unit) {
-    if (isWindowStale) {
-      isWindowStale = false
-      window?.let { Disposer.dispose(it.frame) }
-    }
-
     val shown = window
     if (shown == null) {
       val created = createWindow(tabName) ?: return
@@ -155,15 +149,19 @@ internal class CommitWindowHost(private val project: Project) : CommitUiHost {
 private class CommitWindow(@JvmField val frame: FrameWrapper, @JvmField val content: Content)
 
 /**
- * Builds the [tabName] tab that the Commit tool window of [project] would show.
+ * Finds the extension of the [tabName] tab that the Commit tool window of [project] would show.
  *
  * The tool window fills its tabs from [ChangesViewContentEP]. The extension of the tab must go to the Commit tool window, and its own
  * predicate must accept the project. Returns null when no such tab is offered.
  */
-private fun createCommitTab(project: Project, tabName: String): Content? {
-  val ep = ChangesViewContentEP.EP_NAME.findFirstSafe(project) {
+private fun findCommitTabEp(project: Project, tabName: String): ChangesViewContentEP? =
+  ChangesViewContentEP.EP_NAME.findFirstSafe(project) {
     it.tabName == tabName && it.isInCommitToolWindow && it.newPredicateInstance(project)?.test(project) != false
-  } ?: return null
+  }
+
+/** Builds the [tabName] tab that the Commit tool window of [project] would show. Returns null when no such tab is offered. */
+private fun createCommitTab(project: Project, tabName: String): Content? {
+  val ep = findCommitTabEp(project, tabName) ?: return null
   val provider = ep.getInstance(project) ?: return null
 
   // The window carries its own title, so the tab keeps the name the extension gives it, and no name when it gives none.
