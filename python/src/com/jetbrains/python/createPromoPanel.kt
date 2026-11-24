@@ -18,7 +18,6 @@ import com.jetbrains.python.icons.PythonIcons
 import com.intellij.python.community.common.promotion.PyFrameworkPromoProvider
 import org.jetbrains.annotations.Nls
 import java.awt.BorderLayout
-import javax.swing.JButton
 import javax.swing.JPanel
 
 /**
@@ -79,10 +78,9 @@ fun createPromoPanel(
 
   val bottomPanel = panel {
     row {
-      button(actionButtonText) { event ->
+      button(actionButtonText) {
         if (onAction != null) {
           onAction()
-          if (showTrial) (event.source as? JButton)?.isEnabled = false
         }
         else {
           BrowserLauncher.instance.open("https://www.jetbrains.com/pycharm/buy/?utm_source=product&utm_medium=referral&utm_campaign=pycharm&utm_content=pro_upgrade&section=commercial&billing=yearly")
