@@ -532,7 +532,10 @@ internal class UnifiedPluginsPageRealRowsTest {
     assertThat(factory.keyboardOrder).containsSubsequence(categoryHeader, bundledRow.component)
     assertThat(factory.keyboardOrder).doesNotContain(categoryAction, promotionButton, bundledRow.actionButton)
     assertThat(factory.keyboardOrder.filterIsInstance<JToggleButton>().map { it.accessibleContext.accessibleName })
-      .contains(IdeBundle.message("plugin.manager.tab.installed"), IdeBundle.message("plugins.configurable.bundled"))
+      .contains(
+        "${IdeBundle.message("plugin.manager.tab.installed")}, 4, ${IdeBundle.message("plugins.configurable.show.less")}",
+        "${IdeBundle.message("plugins.configurable.bundled")}, 4, ${IdeBundle.message("plugins.configurable.show.less")}",
+      )
 
     controller.selectOccurrences(installedItems.take(2).map { PluginOccurrenceId(PluginSectionId.Installed, it.pluginId) })
     view.render(controller.state.value)

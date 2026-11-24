@@ -995,11 +995,15 @@ internal class UnifiedPluginsPageView @RequiresEdt constructor(
       }
       expanded = section.expanded
       renderedQueryRevision = queryRevision
-      fullHeaderButton.setPresentation(section.canExpand, section.expanded, title)
       val expansionText = IdeBundle.message(
         if (section.expanded) "plugins.configurable.show.less" else "plugins.configurable.show.more",
       )
       val expansionIcon = if (section.expanded) AllIcons.General.ChevronUp else AllIcons.General.ChevronDown
+      val headerAccessibleName = listOfNotNull(
+        statusLabel.text.takeIf { it.isNotEmpty() },
+        expansionText.takeIf { section.canExpand },
+      ).fold(title) { name, part -> IdeBundle.message("plugins.configurable.section.header.accessible.name", name, part) }
+      fullHeaderButton.setPresentation(section.canExpand, section.expanded, headerAccessibleName)
       expansionTextLabel.text = expansionText
       expansionChevronLabel.icon = expansionIcon
       val showExpansionRow = section.canExpand && (!section.expanded || id != PluginSectionId.Suggested)

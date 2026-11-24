@@ -351,6 +351,8 @@ internal class UnifiedPluginsPageViewTest {
       expansionTextLabel.run { y * 2 + height } - expansionChevronLabel.run { y * 2 + height },
     ).isBetween(-1, 1)
     assertThat(expansionControl.isOpaque).isFalse()
+    assertThat(headerButton.accessibleContext.accessibleName)
+      .isEqualTo("${IdeBundle.message("plugin.manager.tab.installed")}, 5, ${IdeBundle.message("plugins.configurable.show.more")}")
 
     headerButton.doClick()
     assertThat(expansionChanges).containsExactly(PluginSectionId.Installed to true)
@@ -361,6 +363,8 @@ internal class UnifiedPluginsPageViewTest {
     assertThat(expansionTextLabel.text).isEqualTo(IdeBundle.message("plugins.configurable.show.less"))
     assertThat(expansionChevronLabel.icon).isSameAs(AllIcons.General.ChevronUp)
     assertAlignedHeaderText(JBUI.scale(40) + 1)
+    assertThat(headerButton.accessibleContext.accessibleName)
+      .isEqualTo("${IdeBundle.message("plugin.manager.tab.installed")}, 5, ${IdeBundle.message("plugins.configurable.show.less")}")
 
     headerButton.doClick()
     assertThat(expansionChanges).containsExactly(
