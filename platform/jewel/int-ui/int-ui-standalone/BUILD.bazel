@@ -1,6 +1,12 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 
+filegroup(
+    name = "generated_themes",
+    srcs = glob(["generated/theme/org/jetbrains/jewel/intui/core/theme/*"]),
+    visibility = ["//visibility:public"],
+)
+
 ### auto-generated section `build intellij.platform.jewel.intUi.standalone` start
 create_kotlinc_options(
     name = "custom_jewel-intUi-standalone",

@@ -16,6 +16,7 @@ import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicBoolean
 import javax.swing.SwingUtilities
+import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.jewel.foundation.util.myLogger
 
 internal interface MacScrollbarPreferences {
@@ -29,8 +30,11 @@ internal interface MacScrollbarPreferences {
 internal object FfmMacScrollbarPreferences : MacScrollbarPreferences {
     private val observers = ConcurrentHashMap<Long, Observer>()
 
-    override fun getPreferredStyle(): Long = withAutoreleasePool {
-        Bindings.sendLong.invokeExact(Bindings.scroller, Bindings.preferredStyle) as Long
+    override fun getPreferredStyle(): Long = getPreferredStyle(Bindings.scroller)
+
+    @VisibleForTesting
+    internal fun getPreferredStyle(scrollerClass: MemorySegment): Long = withAutoreleasePool {
+        Bindings.sendLong.invokeExact(scrollerClass, Bindings.preferredStyle) as Long
     }
 
     override fun isJumpToSpot(): Boolean = withAutoreleasePool {

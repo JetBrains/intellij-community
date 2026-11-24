@@ -1,6 +1,8 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jewel.intui.core.theme
 
+import com.intellij.platform.bazel.runfiles.BazelLabel
+import com.intellij.platform.bazel.runfiles.BazelRunfiles
 import java.io.File
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
@@ -9,10 +11,8 @@ import org.junit.jupiter.api.Test
 internal class GeneratedThemeUpToDateTest {
     @Test
     fun `should have the right major version in the light file header`() {
-        val currentDir = File("").canonicalFile.takeIf { it.isDirectory } ?: error("Cannot find current directory")
-        val majorBuildNumber = getMajorIjpVersion(currentDir)
-
-        val themesDir = findThemesDir(currentDir)
+        val majorBuildNumber = getMajorIjpVersion()
+        val themesDir = findThemesDir()
 
         val themeFile = themesDir.resolve(LIGHT_THEME_FILENAME)
         assertTrue(themeFile.isFile, "The light theme file does not exist")
@@ -27,10 +27,8 @@ internal class GeneratedThemeUpToDateTest {
 
     @Test
     fun `should have the right major version in the dark file header`() {
-        val currentDir = File("").canonicalFile.takeIf { it.isDirectory } ?: error("Cannot find current directory")
-        val majorBuildNumber = getMajorIjpVersion(currentDir)
-
-        val themesDir = findThemesDir(currentDir)
+        val majorBuildNumber = getMajorIjpVersion()
+        val themesDir = findThemesDir()
 
         val themeFile = themesDir.resolve(DARK_THEME_FILENAME)
         assertTrue(themeFile.isFile, "The dark theme file does not exist")
@@ -43,12 +41,22 @@ internal class GeneratedThemeUpToDateTest {
         )
     }
 
-    private fun getMajorIjpVersion(currentDir: File): String {
-        val communityRoot = findCommunityRoot(currentDir) ?: error("Could not find the IJ community root directory")
-        val buildNumber = communityRoot.resolve("build.txt").readText().trim()
+    private fun getMajorIjpVersion(): String {
+        val buildNumberFile = findBuildNumberFile()
+        val buildNumber = buildNumberFile.readText().trim()
         check(validateBuildNumber(buildNumber)) { "The build number in build.txt does not seem valid: '$buildNumber'" }
 
         return buildNumber.substringBefore(".")
+    }
+
+    private fun findBuildNumberFile(): File {
+        if (BazelRunfiles.isRunningFromBazel) {
+            return BazelRunfiles.getFileByLabel(BazelLabel.fromString(COMMUNITY_BUILD_TXT_LABEL)).toFile()
+        }
+
+        val currentDir = File("").canonicalFile.takeIf { it.isDirectory } ?: error("Cannot find current directory")
+        val communityRoot = findCommunityRoot(currentDir) ?: error("Could not find the IJ community root directory")
+        return communityRoot.resolve("build.txt")
     }
 
     private fun findCommunityRoot(base: File): File? {
@@ -86,8 +94,17 @@ internal class GeneratedThemeUpToDateTest {
         }
     }
 
-    private fun findThemesDir(currentDir: File): File {
-        val resolved = currentDir.resolve(GENERATED_THEMES_DIR_PATH).absoluteFile
+    private fun findThemesDir(): File {
+        val resolved =
+            if (BazelRunfiles.isRunningFromBazel) {
+                BazelRunfiles.findRunfilesDirectoryUnderCommunityOrUltimate(GENERATED_THEMES_RELATIVE_PATH).toFile()
+            } else {
+                val currentDir =
+                    File("").canonicalFile.takeIf { it.isDirectory } ?: error("Cannot find current directory")
+                val communityRoot =
+                    findCommunityRoot(currentDir) ?: error("Could not find the IJ community root directory")
+                communityRoot.resolve(GENERATED_THEMES_RELATIVE_PATH)
+            }
         val themesDir =
             resolved.takeIf { it.isDirectory } ?: error("Cannot find themes directory at ${resolved.canonicalPath}")
         assertEquals(2, themesDir.listFiles()?.size, "Number of generated theme files")
@@ -111,8 +128,9 @@ internal class GeneratedThemeUpToDateTest {
     }
 }
 
-private const val GENERATED_THEMES_DIR_PATH =
-    "../int-ui-standalone/generated/theme/org/jetbrains/jewel/intui/core/theme/"
+private const val COMMUNITY_BUILD_TXT_LABEL = "@community//:build.txt"
+private const val GENERATED_THEMES_RELATIVE_PATH =
+    "platform/jewel/int-ui/int-ui-standalone/generated/theme/org/jetbrains/jewel/intui/core/theme"
 private const val DARK_THEME_FILENAME = "IntUiDarkTheme.kt"
 private const val LIGHT_THEME_FILENAME = "IntUiLightTheme.kt"
 
