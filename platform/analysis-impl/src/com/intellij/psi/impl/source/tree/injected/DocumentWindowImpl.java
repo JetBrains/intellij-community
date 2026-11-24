@@ -15,6 +15,7 @@ import com.intellij.openapi.editor.ex.EditReadOnlyListener;
 import com.intellij.openapi.editor.ex.LineIterator;
 import com.intellij.openapi.editor.ex.RangeMarkerEx;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.openapi.util.Segment;
@@ -880,17 +881,10 @@ public final class DocumentWindowImpl extends UserDataHolderBase implements Disp
     return ReadActionCache.getInstance().allowInWriteAction(
       () -> {
         // can grab PsiLock in SmartPsiPointer.restore()
-        // will check the 0th element manually (to avoid getting .getHost() twice)
-        for (int i = 1; i < shreds.size(); i++) {
-          PsiLanguageInjectionHost.Shred shred = shreds.get(i);
-          if (!shred.isValid()) return false;
-        }
-
-        PsiLanguageInjectionHost.Shred firstShred = shreds.get(0);
-        PsiLanguageInjectionHost host = firstShred.getHost();
-        if (host == null || firstShred.getHostRangeMarker() == null) return false;
+        if (!shreds.isValid()) return false;
+        Project project = shreds.getHostPointer().getProject();
         VirtualFile virtualFile = FileDocumentManager.getInstance().getFile(this);
-        return virtualFile != null && ((PsiManagerEx)host.getManager()).getFileManager().findCachedViewProvider(virtualFile) != null;
+        return virtualFile != null && PsiManagerEx.getInstanceEx(project).getFileManager().findCachedViewProvider(virtualFile) != null;
       });
   }
 
