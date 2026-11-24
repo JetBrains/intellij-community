@@ -6,7 +6,7 @@ import com.intellij.mcpserver.McpServerBundle
 import com.intellij.mcpserver.impl.IJ_MCP_AUTH_TOKEN
 import com.intellij.mcpserver.settings.McpServerSettings
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.UiImmediate
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.ui.Messages
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -30,7 +30,7 @@ internal suspend fun notifyUnauthorizedMcpRequest(port: Int) {
   val settings = McpServerSettings.getInstance()
   if (!settings.notifyOnUnauthorizedAccess) return
   if (!shownThisSession.compareAndSet(false, true)) return
-  withContext(Dispatchers.UiImmediate) {
+  withContext(Dispatchers.EDT) { // TODO IJPL-262703
     val pressed = Messages.showDialog(
       ProjectUtil.getActiveProject(),
       McpServerBundle.message("dialog.message.mcp.server.unauthorized", port, IJ_MCP_AUTH_TOKEN),
