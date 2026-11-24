@@ -60,6 +60,7 @@ class PyStdKnownDecoratorProvider : PyKnownDecoratorProvider {
       PyKnownDecorator.ENUM_MEMBER,
       PyKnownDecorator.ENUM_NONMEMBER,
       PyKnownDecorator.ENUM_UNIQUE,
+      PyKnownDecorator.ENUM_PROPERTY,
       PyKnownDecorator.DISJOINT_BASE,
       PyKnownDecorator.DISJOINT_BASE_EXT,
     )

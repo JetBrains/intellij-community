@@ -2907,7 +2907,7 @@ class PyInferenceMiscTypeTest : PyCodeInsightTestCase() {
         """.trimIndent())
 
     @Test
-    @TestFor(issues = ["PY-85200"])
+    @TestFor(issues = ["PY-85200", "PY-94105"])
     fun `descriptor re-exported through a type-checking guard keeps the return type of its __get__`() = test(
       """
       from cache_api import cached_property
@@ -2919,7 +2919,7 @@ class PyInferenceMiscTypeTest : PyCodeInsightTestCase() {
 
       def f(h: Holder):
           expr = h.value
-      #   └ TYPE Unknown FIXME int # PY-94105
+      #   └ TYPE int
       """.trimIndent(),
       // Flattened mirror of `propcache`'s own chain, which is what `yarl.URL.query` is decorated with:
       //   propcache.api          -> from ._helpers import cached_property

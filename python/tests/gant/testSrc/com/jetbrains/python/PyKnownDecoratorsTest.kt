@@ -216,8 +216,86 @@ class PyKnownDecoratorsTest : PyCodeInsightTestCase() {
     }
   }
 
+  @Test
+  @TestFor(issues = ["PY-94384"])
+  fun `name that the imported module defines itself is not known`() {
+    addFile("mod.py", """
+      class CachedProperty: ...
+
+      cached_property = CachedProperty
+      """)
+    val decorator = firstDecoratorOf("""
+      from mod import cached_property
+
+      @cached_property
+      def f(): ...
+      """)
+    runReadActionBlocking {
+      assertTrue(PyKnownDecoratorUtil.knownDecoratorsOf(decorator, stubOnlyContext()).asList().isEmpty())
+    }
+  }
+
+  @Test
+  @TestFor(issues = ["PY-94384"])
+  fun `name that a package re-exports by a relative import is known`() {
+    addFile("pkg/__init__.py", "from ._impl import cached_property")
+    addFile("pkg/_impl.py", "from functools import cached_property")
+    val decorator = firstDecoratorOf("""
+      from pkg import cached_property
+
+      @cached_property
+      def f(): ...
+      """)
+    runReadActionBlocking {
+      val candidates = PyKnownDecoratorUtil.knownDecoratorsOf(decorator, stubOnlyContext())
+      assertEquals(listOf(PyKnownDecorator.FUNCTOOLS_CACHED_PROPERTY), candidates.asList())
+    }
+  }
+
+  @Test
+  @TestFor(issues = ["PY-94384"])
+  fun `name that a package binds by an absolute and a relative import is known`() {
+    addFile("pkg/__init__.py", """
+      import sys
+
+      if sys.version_info >= (3, 8):
+          from functools import cached_property
+      else:
+          from ._backport import cached_property
+      """)
+    addFile("pkg/_backport.py", "class cached_property: ...")
+    val decorator = firstDecoratorOf("""
+      from pkg import cached_property
+
+      @cached_property
+      def f(): ...
+      """)
+    runReadActionBlocking {
+      val candidates = PyKnownDecoratorUtil.knownDecoratorsOf(decorator, stubOnlyContext())
+      assertEquals(listOf(PyKnownDecorator.FUNCTOOLS_CACHED_PROPERTY), candidates.asList())
+    }
+  }
+
+  @Test
+  @TestFor(issues = ["PY-94384"])
+  fun `name from a module that cannot be found matches by its short name`() {
+    val decorator = firstDecoratorOf("""
+      from missing import cached_property
+
+      @cached_property
+      def f(): ...
+      """)
+    runReadActionBlocking {
+      assertTrue(PyKnownDecoratorUtil.knownDecoratorsOf(decorator, stubOnlyContext()).contains(PyKnownDecorator.FUNCTOOLS_CACHED_PROPERTY))
+    }
+  }
+
   private fun decoratorOfF(): PyDecorator =
     (myFixture.file as PyFile).findTopLevelFunction("f")!!.decoratorList!!.decorators.first()
+
+  private fun addFile(path: String, text: String) {
+    runInEdtAndWait { myFixture.addFileToProject(path, text.trimIndent()) }
+  }
 
   private fun configure(text: String): PyFile {
     myFixture.configureByText("a.py", text.trimIndent())

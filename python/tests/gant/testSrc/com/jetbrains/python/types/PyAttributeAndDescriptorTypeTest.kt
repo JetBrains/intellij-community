@@ -1343,6 +1343,46 @@ class PyAttributeAndDescriptorTypeTest : PyCodeInsightTestCase() {
       "propcache_api.py" to (DESCRIPTOR_MODULE + "\n\ncached_property = under_cached_property\n"))
 
     @Test
+    @TestFor(issues = ["PY-94384"])
+    fun `descriptor class aliased to the name cached_property in another module is not a property`() = test("""
+      from mod import cached_property, CachedProperty
+
+      class A:
+          @cached_property
+          def a(self) -> int:
+              return 1
+
+          @CachedProperty
+          def b(self) -> int:
+              return 1
+
+          def use(self):
+              self.a
+      #            └ TYPE int
+              self.b
+      #            └ TYPE int
+      """.trimIndent(),
+      "mod.py" to """
+        from typing import Any, Callable, Self, overload
+
+        class CachedProperty[T]:
+            def __init__(self, fget: Callable[[Any], T]):
+                self.fget = fget
+
+            @overload
+            def __get__(self, obj: None, objtype: type[Any] | None = None) -> Self: ...
+            @overload
+            def __get__(self, obj: object, objtype: type[Any] | None = None) -> T: ...
+            def __get__(self, obj, objtype=None):
+                if obj is None:
+                    return self
+                value = obj.__dict__[self.fget.__name__] = self.fget(obj)
+                return value
+
+        cached_property = CachedProperty
+        """.trimIndent())
+
+    @Test
     @TestFor(issues = ["PY-85200"])
     fun `descriptor class named cached_property is not a property`() = test("""
       from typing import Any, Callable, Mapping, Protocol, Self, overload

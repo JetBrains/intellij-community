@@ -988,6 +988,7 @@ c:com.jetbrains.python.psi.PyKnownDecorator
 - sf:DISJOINT_BASE_EXT:com.jetbrains.python.psi.PyKnownDecorator
 - sf:ENUM_MEMBER:com.jetbrains.python.psi.PyKnownDecorator
 - sf:ENUM_NONMEMBER:com.jetbrains.python.psi.PyKnownDecorator
+- sf:ENUM_PROPERTY:com.jetbrains.python.psi.PyKnownDecorator
 - sf:ENUM_UNIQUE:com.jetbrains.python.psi.PyKnownDecorator
 - sf:FUNCTOOLS_CACHED_PROPERTY:com.jetbrains.python.psi.PyKnownDecorator
 - sf:FUNCTOOLS_LRU_CACHE:com.jetbrains.python.psi.PyKnownDecorator
