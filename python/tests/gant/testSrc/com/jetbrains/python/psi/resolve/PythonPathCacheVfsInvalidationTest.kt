@@ -2,24 +2,18 @@
 package com.jetbrains.python.psi.resolve
 
 import com.intellij.idea.TestFor
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.util.QualifiedName
-import com.intellij.testFramework.junit5.TestDisposable
 import com.jetbrains.python.allure.Layers
 import com.jetbrains.python.allure.Subsystems
-import com.jetbrains.python.codeInsight.PyCodeInsightCounters
-import com.jetbrains.python.codeInsight.PyCodeInsightCounters.Counter
 import com.jetbrains.python.fixtures.PyCodeInsightTestCase
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertNull
-import org.junit.jupiter.api.Assertions.assertTrue
-import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
 import java.nio.file.Files
@@ -29,17 +23,14 @@ import kotlin.io.path.deleteExisting
 import kotlin.io.path.writeText
 
 /**
+ * A creation, a deletion, a move, a copy and a rename drop the path cache. A content change does not.
  * A VFS refresh can bring thousands of file events, for example when a tool deletes or creates a virtual environment.
- * A path cache walks its tables only on the first event of a batch. The later events find the cache empty.
- * A creation, a deletion, a move, a copy and a rename clear the cache. A content change does not.
+ * The cache checks the VFS structure count when it is read, so no event walks the cache.
  */
-@TestFor(classes = [PythonPathCache::class, PythonModulePathCache::class, PythonSdkPathCache::class], issues = ["PY-93901"])
+@TestFor(classes = [PythonPathCache::class, PythonSdkPathCache::class], issues = ["PY-93901"])
 @Subsystems.CodeInsight
 @Layers.Functional
 class PythonPathCacheVfsInvalidationTest : PyCodeInsightTestCase() {
-
-  @TestDisposable
-  lateinit var testDisposable: Disposable
 
   @TempDir
   lateinit var tempDir: Path
@@ -47,27 +38,24 @@ class PythonPathCacheVfsInvalidationTest : PyCodeInsightTestCase() {
   private val cachedName = QualifiedName.fromComponents("cached")
 
   private val moduleCache: PythonPathCache
-    get() = runReadActionBlocking { PythonModulePathCache.getInstance(myFixture.module) }
+    get() = runReadActionBlocking { PythonPathCache.getInstance(myFixture.module) }
 
-  @BeforeEach
-  fun enableCounters() {
-    PyCodeInsightCounters.enable(testDisposable)
+  @Test
+  fun `a refresh that finds many new files drops the path cache`() {
+    val dir = tempDir.resolve("many")
+    val vDir = loadDirectory(dir)
+    writeModules(dir, 50)
+    assertClearedBy { refresh(vDir) }
   }
 
   @Test
-  fun `a refresh that finds many new files clears each path cache once`() {
-    val clearsForOneFile = clearsOfRefreshThatCreates(tempDir.resolve("one"), 1)
-    val clearsForManyFiles = clearsOfRefreshThatCreates(tempDir.resolve("many"), 50)
-    assertTrue(clearsForOneFile > 0, "clears for one file: $clearsForOneFile")
-    assertEquals(clearsForOneFile, clearsForManyFiles)
-  }
-
-  @Test
-  fun `a refresh that finds many deleted files clears each path cache once`() {
-    val clearsForOneFile = clearsOfRefreshThatDeletes(tempDir.resolve("one"), 1)
-    val clearsForManyFiles = clearsOfRefreshThatDeletes(tempDir.resolve("many"), 50)
-    assertTrue(clearsForOneFile > 0, "clears for one file: $clearsForOneFile")
-    assertEquals(clearsForOneFile, clearsForManyFiles)
+  fun `a refresh that finds many deleted files drops the path cache`() {
+    val dir = tempDir.resolve("many")
+    val vDir = loadDirectory(dir)
+    val files = writeModules(dir, 50)
+    refresh(vDir)
+    files.forEach { it.deleteExisting() }
+    assertClearedBy { refresh(vDir) }
   }
 
   @Test
@@ -111,21 +99,6 @@ class PythonPathCacheVfsInvalidationTest : PyCodeInsightTestCase() {
     return vDir.findChild(name)!!
   }
 
-  private fun clearsOfRefreshThatCreates(dir: Path, fileCount: Int): Long {
-    val vDir = loadDirectory(dir)
-    writeModules(dir, fileCount)
-    return countClears { refresh(vDir) }
-  }
-
-  private fun clearsOfRefreshThatDeletes(dir: Path, fileCount: Int): Long {
-    val vDir = loadDirectory(dir)
-    val files = writeModules(dir, fileCount)
-    refresh(vDir)
-    assertEquals(fileCount, vDir.children.size)
-    files.forEach { it.deleteExisting() }
-    return countClears { refresh(vDir) }
-  }
-
   private fun fillModuleCache() {
     moduleCache.put(cachedName, emptyList())
     assertNotNull(moduleCache.get(cachedName))
@@ -144,12 +117,5 @@ class PythonPathCacheVfsInvalidationTest : PyCodeInsightTestCase() {
   private fun refresh(vDir: VirtualFile) {
     VfsUtil.markDirtyAndRefresh(false, true, true, vDir)
     assertEquals(Files.list(vDir.toNioPath()).use { it.count() }.toInt(), vDir.children.size)
-  }
-
-  private fun countClears(action: () -> Unit): Long {
-    fillModuleCache()
-    val before = PyCodeInsightCounters.snapshot()
-    action()
-    return (PyCodeInsightCounters.snapshot() - before)[Counter.PATH_CACHE_CLEARS]
   }
 }

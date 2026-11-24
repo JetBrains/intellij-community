@@ -104,7 +104,7 @@ public final class QualifiedNameFinder {
   }
 
   public static @Nullable String findShortestImportableName(Module module, @NotNull VirtualFile vfile) {
-    final PythonPathCache cache = PythonModulePathCache.getInstance(module);
+    final PythonPathCache cache = PythonPathCache.getInstance(module);
     List<QualifiedName> names = cache.getNames(vfile);
     if (names == null) {
       final PathChoosingVisitor visitor = new PathChoosingVisitor(vfile);

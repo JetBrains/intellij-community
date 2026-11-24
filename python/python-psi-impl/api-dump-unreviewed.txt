@@ -1949,32 +1949,19 @@ f:com.jetbrains.python.psi.resolve.PyResolveUtil
 - s:scopeCrawlUp(com.intellij.psi.scope.PsiScopeProcessor,com.intellij.psi.PsiElement,java.lang.String,com.intellij.psi.PsiElement):V
 - s:scopeCrawlUp(com.intellij.psi.scope.PsiScopeProcessor,com.jetbrains.python.codeInsight.controlflow.ScopeOwner,com.jetbrains.python.codeInsight.controlflow.ScopeOwner,java.lang.String,com.intellij.psi.PsiElement):V
 - s:scopeCrawlUp(com.intellij.psi.scope.PsiScopeProcessor,com.jetbrains.python.codeInsight.controlflow.ScopeOwner,java.lang.String,com.intellij.psi.PsiElement):V
-f:com.jetbrains.python.psi.resolve.PythonModulePathCache
-- com.jetbrains.python.psi.resolve.PythonPathCache
-- <init>(com.intellij.openapi.module.Module):V
-- s:getInstance(com.intellij.openapi.module.Module):com.jetbrains.python.psi.resolve.PythonPathCache
-a:com.jetbrains.python.psi.resolve.PythonPathCache
+f:com.jetbrains.python.psi.resolve.PythonPathCache
 - <init>():V
 - clearCache():V
 - get(com.intellij.psi.util.QualifiedName):java.util.List
+- s:getInstance(com.intellij.openapi.module.Module):com.jetbrains.python.psi.resolve.PythonPathCache
 - getNames(com.intellij.openapi.vfs.VirtualFile):java.util.List
 - put(com.intellij.psi.util.QualifiedName,java.util.List):V
 - putNames(com.intellij.openapi.vfs.VirtualFile,java.util.List):V
-pc:com.jetbrains.python.psi.resolve.PythonPathCache$MyVirtualFileListener
-- com.intellij.openapi.vfs.VirtualFileListener
-- p:<init>(com.jetbrains.python.psi.resolve.PythonPathCache):V
-- fileCopied(com.intellij.openapi.vfs.VirtualFileCopyEvent):V
-- fileCreated(com.intellij.openapi.vfs.VirtualFileEvent):V
-- fileDeleted(com.intellij.openapi.vfs.VirtualFileEvent):V
-- fileMoved(com.intellij.openapi.vfs.VirtualFileMoveEvent):V
-- propertyChanged(com.intellij.openapi.vfs.VirtualFilePropertyEvent):V
-c:com.jetbrains.python.psi.resolve.PythonSdkPathCache
-- com.jetbrains.python.psi.resolve.PythonPathCache
-- com.intellij.openapi.Disposable
-- clearBuiltins():V
-- dispose():V
+f:com.jetbrains.python.psi.resolve.PythonSdkPathCache
+- com.intellij.openapi.util.UserDataHolderBase
 - getBuiltins():com.jetbrains.python.psi.impl.PyBuiltinCache
 - s:getInstance(com.intellij.openapi.project.Project,com.intellij.python.sdk.backend.PythonInterpreter):com.jetbrains.python.psi.resolve.PythonSdkPathCache
+- getPathCache():com.jetbrains.python.psi.resolve.PythonPathCache
 f:com.jetbrains.python.psi.resolve.QualifiedNameFinder
 - <init>():V
 - s:canonizeQualifiedName(com.intellij.psi.PsiElement,com.intellij.psi.util.QualifiedName,com.intellij.psi.PsiElement):com.intellij.psi.util.QualifiedName

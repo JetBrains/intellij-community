@@ -354,12 +354,13 @@ fun resolveInRoot(name: QualifiedName, root: VirtualFile, context: PyQualifiedNa
 
 @ApiStatus.Internal
 fun findCache(context: PyQualifiedNameResolveContext): PythonPathCache? {
+  val module = context.module
   return when {
     context.visitAllModules -> null
-    context.module != null -> PythonModulePathCache.getInstance(context.module)
+    module != null -> PythonPathCache.getInstance(module)
     context.footholdFile != null -> {
       val interpreter = PyBuiltinCache.findInterpreterForNonModuleFile(context.footholdFile!!)
-      if (interpreter != null) PythonSdkPathCache.getInstance(context.project, interpreter) else null
+      if (interpreter != null) PythonSdkPathCache.getInstance(context.project, interpreter).pathCache else null
     }
     else -> null
   }

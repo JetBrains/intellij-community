@@ -34,9 +34,7 @@ import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.psi.FilePropertyKey;
 import com.intellij.psi.FilePropertyKeyImpl;
 import com.intellij.psi.SingleRootFileViewProvider;
-import com.intellij.python.pyproject.model.evolution.EvoPyProjectModelKt;
 import com.intellij.python.sdk.backend.PythonInterpreterExtKt;
-import com.intellij.python.sdk.backend.evolution.EvoPyProject;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.TreeNodeProcessingResult;
@@ -49,7 +47,7 @@ import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.codeInsight.typing.PyTypeShed;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyUtil;
-import com.jetbrains.python.psi.resolve.PythonSdkPathCache;
+import com.jetbrains.python.psi.resolve.PyResolveCachesInvalidator;
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -172,7 +170,7 @@ public final class PythonLanguageLevelPusher implements FilePropertyPusher<Langu
       PushedFilePropertiesUpdater.getInstance(project).filePropertiesChanged(fileOrDir, PythonLanguageLevelPusher::isPythonFile);
     }
     if (fileOrDir.isDirectory() || isPythonFile(fileOrDir)) {
-      clearSdkPathCache(fileOrDir);
+      dropPathCaches(fileOrDir);
     }
 
     VirtualFilePyLanguageLevelListener publisher = project.getMessageBus().syncPublisher(VirtualFilePyLanguageLevelListener.TOPIC);
@@ -189,13 +187,10 @@ public final class PythonLanguageLevelPusher implements FilePropertyPusher<Langu
     return PythonFileType.INSTANCE.equals(FileTypeRegistry.getInstance().getFileTypeByFileName(child.getNameSequence()));
   }
 
-  private static void clearSdkPathCache(final @NotNull VirtualFile child) {
-    final Project[] projects = ProjectManager.getInstance().getOpenProjects();
-    for (Project project : projects) {
-      final Module module = ModuleUtilCore.findModuleForFile(child, project);
-      final PythonInterpreter interpreter = module == null ? null : findModuleInterpreter(module);
-      if (interpreter != null) {
-        PythonSdkPathCache.getInstance(project, interpreter).clearCache();
+  private static void dropPathCaches(final @NotNull VirtualFile child) {
+    for (Project project : ProjectManager.getInstance().getOpenProjects()) {
+      if (ModuleUtilCore.findModuleForFile(child, project) != null) {
+        PyResolveCachesInvalidator.getInstance(project).dropPathCaches();
       }
     }
   }
@@ -240,12 +235,6 @@ public final class PythonLanguageLevelPusher implements FilePropertyPusher<Langu
         PythonCodeStyleService.getInstance().reparseOpenEditorFiles(project);
       });
     }
-  }
-
-  /** The interpreter of [module] in the current snapshot, or {@code null}. */
-  private static @Nullable PythonInterpreter findModuleInterpreter(@NotNull Module module) {
-    final EvoPyProject evoPyProject = EvoPyProjectModelKt.findEvoPyProjectIfReady(module);
-    return evoPyProject == null ? null : evoPyProject.getInterpreter();
   }
 
   private List<Runnable> getRootUpdateTasks(@NotNull Project project, @NotNull PythonLanguageLevelLayout layout) {

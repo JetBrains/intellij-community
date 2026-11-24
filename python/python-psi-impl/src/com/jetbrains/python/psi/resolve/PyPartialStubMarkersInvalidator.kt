@@ -7,7 +7,6 @@ import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.fileEditor.FileDocumentManager
-import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.startup.ProjectActivity
@@ -17,7 +16,6 @@ import com.intellij.openapi.vfs.newvfs.BulkFileListener
 import com.intellij.openapi.vfs.newvfs.events.VFileCopyEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent
-import com.intellij.python.pyproject.model.evolution.pythonInterpreters
 import com.intellij.util.asDisposable
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.FlowPreview
@@ -39,12 +37,13 @@ class PyPartialStubMarkersInvalidator(
   fun subscribe() {
     val invalidationRequests = MutableSharedFlow<Unit>(extraBufferCapacity = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
     val parentDisposable = coroutineScope.asDisposable()
+    val resolveCachesInvalidator = PyResolveCachesInvalidator.getInstance(project)
 
     coroutineScope.launch {
       invalidationRequests
         .debounce(INVALIDATION_DELAY)
         .collectLatest {
-          clearPathCaches(project)
+          resolveCachesInvalidator.dropPathCaches()
         }
     }
 
@@ -64,18 +63,6 @@ class PyPartialStubMarkersInvalidator(
         }
       }
     }, parentDisposable)
-  }
-
-  private suspend fun clearPathCaches(project: Project) {
-    if (project.isDisposed) return
-    for (module in ModuleManager.getInstance(project).modules) {
-      PythonModulePathCache.getInstance(module).clearCache()
-    }
-
-    // Debounced on a coroutine, so it can await the structure. The set holds the main interpreter too.
-    for (interpreter in project.pythonInterpreters()) {
-      PythonSdkPathCache.getInstance(project, interpreter).clearCache()
-    }
   }
 
   private fun isPartialStubMarkerFileName(fileName: String?): Boolean {

@@ -25,7 +25,6 @@ import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.resolve.PyQualifiedNameResolveContext;
 import com.jetbrains.python.psi.resolve.PyResolveImportUtil;
-import com.jetbrains.python.psi.resolve.PythonModulePathCache;
 import com.jetbrains.python.psi.resolve.PythonPathCache;
 import org.jetbrains.annotations.NotNull;
 
@@ -174,7 +173,7 @@ public class PyRelativeImportResolveTest extends PyMultiFileResolveTestCase {
 
     runWithSourceRoots(List.of(inLib.getVirtualFile().getParent()), () -> {
       IndexingTestUtil.waitUntilIndexesAreReady(myFixture.getProject());
-      PythonPathCache cache = PythonModulePathCache.getInstance(myFixture.getModule());
+      PythonPathCache cache = PythonPathCache.getInstance(myFixture.getModule());
 
       cache.clearCache();
       List<String> cold = resolveModulePaths("mod", inRoot);

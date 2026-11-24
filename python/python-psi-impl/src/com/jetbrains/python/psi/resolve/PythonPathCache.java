@@ -1,13 +1,11 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.psi.resolve;
 
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileCopyEvent;
-import com.intellij.openapi.vfs.VirtualFileEvent;
-import com.intellij.openapi.vfs.VirtualFileListener;
-import com.intellij.openapi.vfs.VirtualFileMoveEvent;
-import com.intellij.openapi.vfs.VirtualFilePropertyEvent;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.QualifiedName;
 import com.jetbrains.python.codeInsight.PyCodeInsightCounters;
 import org.jetbrains.annotations.NotNull;
@@ -20,8 +18,20 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+/**
+ * The resolve results of qualified names and the importable names of files, for one module or one interpreter.
+ * See {@link #getInstance(Module)} and {@link PythonSdkPathCache#getPathCache()}.
+ */
+public final class PythonPathCache {
+  /**
+   * The cache of {@code module}. The module keeps it in its user data until a dependency changes, see
+   * {@link PyResolveCachesInvalidator#getPathCacheDependencies()}.
+   */
+  public static @NotNull PythonPathCache getInstance(@NotNull Module module) {
+    return CachedValuesManager.getManager(module.getProject()).getCachedValue(module, () -> CachedValueProvider.Result.create(
+      new PythonPathCache(), PyResolveCachesInvalidator.getInstance(module.getProject()).getPathCacheDependencies()));
+  }
 
-public abstract class PythonPathCache {
   private final Map<QualifiedName, SoftReference<List<PsiElement>>> myCache = new ConcurrentHashMap<>();
   private final Map<String, List<QualifiedName>> myQNameCache = new ConcurrentHashMap<>();
 
@@ -64,34 +74,5 @@ public abstract class PythonPathCache {
 
   public void putNames(VirtualFile vFile, List<QualifiedName> qNames) {
     myQNameCache.put(vFile.getUrl(), new ArrayList<>(qNames));
-  }
-
-  protected class MyVirtualFileListener implements VirtualFileListener {
-    @Override
-    public void fileCreated(@NotNull VirtualFileEvent event) {
-      clearCache();
-    }
-
-    @Override
-    public void fileDeleted(@NotNull VirtualFileEvent event) {
-      clearCache();
-    }
-
-    @Override
-    public void fileMoved(@NotNull VirtualFileMoveEvent event) {
-      clearCache();
-    }
-
-    @Override
-    public void fileCopied(@NotNull VirtualFileCopyEvent event) {
-      clearCache();
-    }
-
-    @Override
-    public void propertyChanged(@NotNull VirtualFilePropertyEvent event) {
-      if (event.getPropertyName().equals(VirtualFile.PROP_NAME)) {
-        clearCache();
-      }
-    }
   }
 }

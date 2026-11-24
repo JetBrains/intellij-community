@@ -1,49 +1,32 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.psi.resolve;
 
-import com.intellij.openapi.Disposable;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.util.UserDataHolderBase;
+import com.intellij.psi.util.CachedValue;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.python.sdk.backend.PythonInterpreter;
-import com.intellij.python.sdk.backend.PythonInterpreterExtKt;
-import com.intellij.util.messages.MessageBusConnection;
-import com.jetbrains.python.PythonPluginDisposable;
-import com.jetbrains.python.packaging.common.PythonPackageManagementListener;
-import com.jetbrains.python.packaging.management.PythonPackageManager;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * The resolve cache of the roots of one interpreter in one project, and its {@link PyBuiltinCache}. The project keeps one
- * per interpreter, see {@link #getInstance(Project, PythonInterpreter)}.
+ * per interpreter until a snapshot or the roots of an interpreter change, see {@link #getInstance(Project, PythonInterpreter)}.
  */
-public class PythonSdkPathCache extends PythonPathCache implements Disposable {
-  private static final Key<Map<PythonInterpreter, PythonSdkPathCache>> KEY = Key.create("PythonPathCache");
+public final class PythonSdkPathCache extends UserDataHolderBase {
+  private static final Key<CachedValue<Map<PythonInterpreter, PythonSdkPathCache>>> KEY = Key.create("PythonSdkPathCaches");
 
-  public static PythonSdkPathCache getInstance(@NotNull Project project, @NotNull PythonInterpreter interpreter) {
-    synchronized (KEY) {
-      Map<PythonInterpreter, PythonSdkPathCache> cacheMap = project.getUserData(KEY);
-      if (cacheMap == null) {
-        cacheMap = new HashMap<>();
-        project.putUserData(KEY, cacheMap);
-      }
-      PythonSdkPathCache cache = cacheMap.get(interpreter);
-      if (cache == null) {
-        cache = new PythonSdkPathCache(project, interpreter);
-        cacheMap.put(interpreter, cache);
-      }
-      return cache;
-    }
+  public static @NotNull PythonSdkPathCache getInstance(@NotNull Project project, @NotNull PythonInterpreter interpreter) {
+    final Map<PythonInterpreter, PythonSdkPathCache> caches = CachedValuesManager.getManager(project).getCachedValue(
+      project, KEY, () -> CachedValueProvider.Result.create(
+        new ConcurrentHashMap<>(), PyResolveCachesInvalidator.getInstance(project).getModificationTracker()), false);
+    return caches.computeIfAbsent(interpreter, it -> new PythonSdkPathCache(project, it));
   }
 
   private final Project myProject;
@@ -53,57 +36,12 @@ public class PythonSdkPathCache extends PythonPathCache implements Disposable {
   private PythonSdkPathCache(final @NotNull Project project, final @NotNull PythonInterpreter interpreter) {
     myProject = project;
     myInterpreter = interpreter;
-    if (project.isDisposed()) {
-      return;
-    }
-    // The cache ends with the interpreter. A change of its roots comes from PythonInterpreterRoots, see PyResolveCachesInvalidator.
-    final Disposable lifetime = PythonInterpreterExtKt.getLifetime(interpreter);
-    Disposer.register(lifetime != null ? lifetime : PythonPluginDisposable.getInstance(project), this);
-    final MessageBusConnection connection = project.getMessageBus().connect(this);
-    connection.subscribe(PythonPackageManager.Companion.getPACKAGE_MANAGEMENT_TOPIC(), new PythonPackageManagementListener() {
-      @Override
-      public void packagesChanged(@NotNull PythonInterpreter changed) {
-        if (changed.equals(myInterpreter)) {
-          clearCache();
-        }
-      }
-    });
-    VirtualFileManager.getInstance().addVirtualFileListener(new MyVirtualFileListener(), this);
   }
 
-  /**
-   * Drops what was resolved against the old roots of the interpreters of {@code project}, when
-   * {@link com.intellij.python.sdk.backend.PythonInterpreterDetails} reports a change of them.
-   */
-  static void onInterpreterDetailsChanged(@NotNull Project project) {
-    final List<PythonSdkPathCache> caches;
-    synchronized (KEY) {
-      final Map<PythonInterpreter, PythonSdkPathCache> cacheMap = project.getUserData(KEY);
-      caches = cacheMap != null ? new ArrayList<>(cacheMap.values()) : List.of();
-    }
-    for (PythonSdkPathCache cache : caches) cache.onRootsChanged();
-  }
-
-  /** Drops what was resolved against the old roots of the interpreter. */
-  private void onRootsChanged() {
-    clearCache();
-    if (!myProject.isDisposed()) {
-      final Module[] modules = ModuleManager.getInstance(myProject).getModules();
-      for (Module module : modules) {
-        PythonModulePathCache.getInstance(module).clearCache();
-      }
-    }
-    myBuiltins.set(null);
-  }
-
-  @Override
-  public void dispose() {
-    synchronized (KEY) {
-      final Map<PythonInterpreter, PythonSdkPathCache> cacheMap = myProject.getUserData(KEY);
-      if (cacheMap != null) {
-        cacheMap.remove(myInterpreter, this);
-      }
-    }
+  /** The resolve cache of the roots of the interpreter, for a file outside every module. */
+  public @NotNull PythonPathCache getPathCache() {
+    return CachedValuesManager.getManager(myProject).getCachedValue(this, () -> CachedValueProvider.Result.create(
+      new PythonPathCache(), PyResolveCachesInvalidator.getInstance(myProject).getPathCacheDependencies()));
   }
 
   public @NotNull PyBuiltinCache getBuiltins() {
@@ -119,9 +57,5 @@ public class PythonSdkPathCache extends PythonPathCache implements Disposable {
         return pyBuiltinCache;
       }
     }
-  }
-
-  public void clearBuiltins() {
-    myBuiltins.set(null);
   }
 }
