@@ -10,6 +10,7 @@ import com.intellij.util.ObjectUtilsRt
 import com.intellij.util.Processor
 import com.intellij.util.containers.ConcurrentLongLongMap
 import com.intellij.util.containers.Java11Shim
+import it.unimi.dsi.fastutil.longs.Long2LongOpenHashMap
 import org.jetbrains.annotations.TestOnly
 import java.util.ArrayDeque
 import java.util.IdentityHashMap
@@ -153,6 +154,27 @@ class PMarkerDirectRoot private constructor(
       result = editor.insert(result, entry)
     }
     editor.finish(result, resolutionUpdate = insertionResolutionUpdate())
+  }
+
+  /** Builds a tree from sorted entries whose ranges and handles have already been checked. */
+  internal fun buildFromSortedEntries(entries: List<MarkerEntry>): PMarkerDirectRoot = keepingRootAlive {
+    check(isEmpty())
+    if (entries.isEmpty()) return@keepingRootAlive this
+    val editor = Editor()
+    val result = editor.finish(editor.build(entries, 0, entries.size))
+    val resolutions = Long2LongOpenHashMap(entries.size)
+    resolutions.defaultReturnValue(PMarkerResolution.UNRESOLVED)
+    for (entry in entries) {
+      resolutions.put(entry.handle.id, TextRangeScalarUtil.toScalarRange(entry.nodeStart, entry.nodeEnd))
+    }
+    result.cachedResolutions = ResolutionCache(-1, PMarkerResolution.UNRESOLVED, resolutions)
+    result
+  }
+
+  internal fun checkNewHandle(handle: SnapshotMarkerReference<*>) {
+    val existing = state(handle)
+    require(existing == null || existing is PMarkerValidNode && !isValid(handle)) { "The marker already exists" }
+    assert(!isRemoved(handle)) { "The marker handle must not be reused" }
   }
 
   private fun insertionResolutionUpdate(): PMarkerResolutionUpdate =
@@ -593,20 +615,24 @@ class PMarkerDirectRoot private constructor(
   private data class Frame(val node: PMarkerNode, val delta: Int)
 
   /** Stores the first resolution directly and allocates a map for other marker IDs. Metadata changes share this cache. */
-  private class ResolutionCache(private val firstId: Long, private val firstResolution: Long) {
+  private class ResolutionCache(
+    private val firstId: Long,
+    private val firstResolution: Long,
+    private val completeResolutions: Long2LongOpenHashMap? = null,
+  ) {
     /**
      * A full traversal sets this flag after it caches every valid marker's absolute offsets and completes normally.
      * The volatile write publishes those offsets, so later traversals and lookups can skip cache writes.
      * Metadata changes preserve this flag. Changes to marker offsets or membership use a new cache.
      */
     @Volatile
-    var allMarkersCached: Boolean = false
+    var allMarkersCached: Boolean = completeResolutions != null
 
     @Volatile
     private var additionalResolutions: ConcurrentLongLongMap? = null
 
     operator fun get(id: Long): Long =
-      if (id == firstId) firstResolution else additionalResolutions?.get(id) ?: PMarkerResolution.UNRESOLVED
+      if (id == firstId) firstResolution else completeResolutions?.get(id) ?: additionalResolutions?.get(id) ?: PMarkerResolution.UNRESOLVED
 
     fun put(id: Long, resolution: Long) {
       if (id == firstId || allMarkersCached) return
@@ -724,11 +750,7 @@ class PMarkerDirectRoot private constructor(
      */
     fun insert(root: PMarkerNode?, entry: MarkerEntry): PMarkerNode {
       require(entry.nodeStart >= 0 && entry.nodeEnd >= entry.nodeStart) { "The marker range is invalid" }
-      val handle = entry.handle
-      var existing = state(handle)
-      if (existing is PMarkerValidNode && !isValid(handle)) existing = null
-      require(existing == null) { "The marker already exists" }
-      assert(!isRemoved(handle)) { "The marker handle must not be reused" }
+      checkNewHandle(entry.handle)
       return insertNode(root, entry)
     }
 

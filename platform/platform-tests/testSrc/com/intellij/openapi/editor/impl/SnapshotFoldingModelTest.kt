@@ -10,6 +10,7 @@ import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.FoldRegion
 import com.intellij.openapi.editor.ex.DocumentPatch
 import com.intellij.openapi.editor.ex.FoldingListener
+import com.intellij.openapi.editor.impl.marker.PMarkerDirectRoot
 import com.intellij.openapi.editor.impl.marker.PMarkerInsertionRoot
 import com.intellij.openapi.editor.impl.marker.PMarkerResolution
 import com.intellij.openapi.editor.impl.marker.PMarkerRoot
@@ -34,6 +35,43 @@ import java.awt.geom.Rectangle2D
 @TestApplication
 @UsePMarkerImplementation
 class SnapshotFoldingModelTest {
+  @Test
+  fun `new folds stay visible during a nested batch and after an exception`(): Unit = timeoutRunBlocking {
+    withEditor("0123456789") { editor ->
+      val model = editor.foldingModel
+      val store = model.rootStore()
+      val document = editor.document as DocumentImpl
+      val snapshot = document.core.snapshot()
+      lateinit var first: FoldRegion
+      lateinit var second: FoldRegion
+      lateinit var earlierRoot: PMarkerRoot
+
+      val failure = runCatching {
+        model.runBatchFoldingOperation {
+          first = model.addFoldRegion(1, 3, "...")!!
+          earlierRoot = store.root(snapshot)!!
+          model.runBatchFoldingOperation {
+            val region = model.addFoldRegion(3, 5, "...")!!
+            second = region
+            region.isExpanded = false
+            assertThat(model.getFoldRegion(3, 5)).isSameAs(region)
+            assertThat(model.addFoldRegion(3, 5, "...")).isNull()
+            assertThat(model.getRegionsOverlappingWith(2, 4)).containsExactly(first, second)
+          }
+          error("test failure")
+        }
+      }.exceptionOrNull()
+
+      assertThat(failure).hasMessage("test failure")
+      assertThat(earlierRoot.isValid((first as SnapshotRangeMarkerImpl).markerHandle)).isTrue()
+      assertThat(earlierRoot.isValid((second as SnapshotRangeMarkerImpl).markerHandle)).isFalse()
+      assertThat(store.root(snapshot)).isInstanceOf(PMarkerDirectRoot::class.java)
+      assertThat(model.allFoldRegions).containsExactly(first, second)
+      document.insertString(0, "x")
+      assertThat(model.getFoldRegion(4, 6)).isSameAs(second)
+    }
+  }
+
   @Test
   fun `caret batch preserves fold snapshots and finishes after an exception`(): Unit = timeoutRunBlocking {
     val state = withEditor("0123456789\n0123456789\n0123456789") { editor ->

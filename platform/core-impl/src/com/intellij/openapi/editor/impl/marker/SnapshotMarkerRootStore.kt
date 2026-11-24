@@ -228,6 +228,22 @@ class SnapshotMarkerRootStore<T : SnapshotRangeMarkerImpl> @JvmOverloads constru
     }
   }
 
+  /** Buffers ordered, disjoint new markers in an empty root. Queries see each marker as soon as it is added. */
+  @ApiStatus.Internal
+  fun runInAppendBatch(runnable: Runnable) {
+    val started = updateCurrentRoot { root ->
+      if (root is PMarkerDirectRoot && root.isEmpty()) PMarkerAppendRoot(root) else root
+    } != null
+    try {
+      runnable.run()
+    }
+    finally {
+      if (started) {
+        updateCurrentRoot { root -> if (root is PMarkerAppendRoot) root.materialize() else root }
+      }
+    }
+  }
+
   /**
    * Applies [update] to the root for [snapshot], creating the root entry when necessary.
    * The update retries on concurrent root changes. [update] must have no side effects.

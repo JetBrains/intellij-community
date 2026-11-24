@@ -504,7 +504,12 @@ public final class FoldingModelImpl extends InlayModel.SimpleAdapter
 
     myIsBatchFoldingProcessing = true;
     try {
-      operation.run();
+      if (oldBatchFlag) {
+        operation.run();
+      }
+      else {
+        myRegionStorage.runInFoldingBatch(operation);
+      }
     }
     finally {
       if (!oldBatchFlag) {

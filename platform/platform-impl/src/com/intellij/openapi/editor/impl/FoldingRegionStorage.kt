@@ -51,6 +51,11 @@ internal interface FoldingRegionStorage {
 
   fun size(): Int
 
+  /** Buffers eligible new regions and keeps them visible to queries during [runnable]. */
+  fun runInFoldingBatch(runnable: Runnable) {
+    runnable.run()
+  }
+
   /**
    * Runs [runnable] with deferred marker updates when supported.
    * Marker queries and document callbacks remain available during the action.

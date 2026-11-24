@@ -112,6 +112,15 @@ internal class SnapshotFoldingRegionStorage(
 
   override fun size(): Int = registeredRegions.size
 
+  override fun runInFoldingBatch(runnable: Runnable) {
+    if (registeredRegions.isEmpty()) {
+      rootStore.runInAppendBatch(runnable)
+    }
+    else {
+      runnable.run()
+    }
+  }
+
   /** Uses [SnapshotMarkerRootStore.runInBatch] for registered regions. Empty stores run [runnable] directly. */
   override fun runInBatch(runnable: Runnable) {
     if (registeredRegions.isEmpty()) {
