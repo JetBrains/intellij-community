@@ -7,7 +7,9 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import org.eclipse.lsp4j.InitializeResult
+import org.eclipse.lsp4j.ProgressParams
 import org.eclipse.lsp4j.TextDocumentIdentifier
+import org.eclipse.lsp4j.jsonrpc.messages.Either
 import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.CompletableFuture
 
@@ -87,6 +89,54 @@ interface LspClient {
    * @see LspClientDescriptor.lsp4jServerClass
    */
   suspend fun <Lsp4jResponse> sendRequest(lsp4jSender: (Lsp4jServer) -> CompletableFuture<Lsp4jResponse>): Lsp4jResponse?
+
+  /**
+   * Sends a request to the LSP server and reports the
+   * [partial results](https://microsoft.github.io/language-server-protocol/specification/#partialResults) of that request
+   * to [partialResultConsumer].
+   *
+   * This [LspClient] makes a token that no other of its requests uses and gives it to [lsp4jSender]. The sender must put the token
+   * into the params that it builds. A standard params class that implements [org.eclipse.lsp4j.PartialResultParams] takes it in
+   * `partialResultToken`.
+   *
+   * Example:
+   *
+   *    val locations = lspClient.sendRequestWithPartialResults(::addLocationsFrom) { server, partialResultToken ->
+   *      val params = ReferenceParams(documentId, position, ReferenceContext(true))
+   *      params.partialResultToken = partialResultToken
+   *      server.textDocumentService.references(params)
+   *    }
+   *
+   * Every `$/progress` notification that carries the token goes to [partialResultConsumer]. The client forgets the token when the
+   * request completes, when it fails, and when the calling coroutine is cancelled. A notification that arrives after that goes to
+   * the work-done progress handling, as a notification of an unknown token does.
+   *
+   * [partialResultConsumer] gets the notification as it arrived. The payload is in `value.right`. The `lsp4j` library reads it as a
+   * `com.google.gson.JsonElement`, because the protocol declares no type for it. A caller that also sends the token as the
+   * `workDoneToken` gets the [org.eclipse.lsp4j.WorkDoneProgressNotification] values in `value.left`, and the IDE then shows no
+   * progress indicator for them.
+   *
+   * [partialResultConsumer] runs on the thread that reads the messages of the server, in the order that the server sent them.
+   * It must not block, and it must not wait for the result of this function. An exception of the consumer goes to the IDE log
+   * and does not stop the server.
+   *
+   * In every other way this function behaves like [sendRequest]: it has no timeout, it returns `null` when the server is not
+   * running or answers `null`, and a cancellation of the calling coroutine sends `$/cancelRequest`.
+   *
+   * @throws org.eclipse.lsp4j.jsonrpc.ResponseErrorException if the LSP server responds with an error.
+   *         The error does not appear in the IDE logs.
+   * @see sendRequest
+   * @see LspClientDescriptor.lsp4jServerClass
+   */
+  @ApiStatus.Experimental
+  suspend fun <Lsp4jResponse> sendRequestWithPartialResults(
+    partialResultConsumer: (ProgressParams) -> Unit,
+    lsp4jSender: (Lsp4jServer, partialResultToken: Either<String, Int>) -> CompletableFuture<Lsp4jResponse>,
+  ): Lsp4jResponse? =
+    // The default sends the request and delivers no partial results: the token reaches no router, so every
+    // `$/progress` of the request goes to the work-done handling. It keeps an implementation of this interface
+    // outside `lsp-impl` compiling and behaviorally unchanged; the real client overrides it.
+    sendRequest { server -> lsp4jSender(server, Either.forLeft("ij-partial-results-unrouted")) }
 
   /**
    * Sends a request to the LSP server and waits for the response synchronously.

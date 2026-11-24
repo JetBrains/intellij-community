@@ -9,6 +9,8 @@ import com.intellij.util.ConcurrencyUtil
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import kotlinx.coroutines.future.await
+import org.eclipse.lsp4j.ProgressParams
+import org.eclipse.lsp4j.jsonrpc.messages.Either
 import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ExecutionException
@@ -36,6 +38,28 @@ abstract class LspRequestExecutorBase(private val lspClient: LspClientImpl) {
   internal suspend fun <Lsp4jResponse> sendRequest(lsp4jSender: (Lsp4jServer) -> CompletableFuture<Lsp4jResponse>): Lsp4jResponse? {
     return doSendRequestAsync(lsp4jSender)
       ?.await()
+  }
+
+  /**
+   * Registers [partialResultConsumer] for a new token, and then sends the request that [lsp4jSender] builds around that token.
+   * The `finally` covers every end of the request: the response, an error, and a cancellation of the calling coroutine.
+   *
+   * @see com.intellij.platform.lsp.api.LspClient.sendRequestWithPartialResults
+   */
+  internal suspend fun <Lsp4jResponse> sendRequestWithPartialResults(
+    partialResultConsumer: (ProgressParams) -> Unit,
+    lsp4jSender: (Lsp4jServer, Either<String, Int>) -> CompletableFuture<Lsp4jResponse>,
+  ): Lsp4jResponse? {
+    val partialResults = lspClient.partialResults
+    val token = partialResults.newToken()
+    partialResults.register(token, partialResultConsumer)
+    try {
+      return doSendRequestAsync { lsp4jSender(it, Either.forLeft(token)) }
+        ?.await()
+    }
+    finally {
+      partialResults.unregister(token)
+    }
   }
 
   @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)

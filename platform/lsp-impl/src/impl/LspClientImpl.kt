@@ -36,9 +36,11 @@ import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.util.text.nullize
 import org.eclipse.lsp4j.ClientCapabilities
 import org.eclipse.lsp4j.InitializeResult
+import org.eclipse.lsp4j.ProgressParams
 import org.eclipse.lsp4j.PublishDiagnosticsParams
 import org.eclipse.lsp4j.ServerCapabilities
 import org.eclipse.lsp4j.TextDocumentIdentifier
+import org.eclipse.lsp4j.jsonrpc.messages.Either
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.VisibleForTesting
@@ -79,6 +81,7 @@ class LspClientImpl internal constructor(
   val requestExecutor: LspRequestExecutor = LspRequestExecutor(this, documentMapping)
   internal val globMatcher: LspGlobMatcher = LspGlobMatcher()
   internal val dynamicCapabilities: LspDynamicCapabilities = LspDynamicCapabilities()
+  internal val partialResults: LspPartialResults = LspPartialResults()
   internal val serverNotificationsHandler: LspServerNotificationsHandlerImpl = LspServerNotificationsHandlerImpl(this)
 
   internal val documentSyncManager = LspDocumentSyncManager(this)
@@ -125,6 +128,12 @@ class LspClientImpl internal constructor(
 
   override suspend fun <Lsp4jResponse> sendRequest(lsp4jSender: (Lsp4jServer) -> CompletableFuture<Lsp4jResponse>): Lsp4jResponse? =
     requestExecutor.sendRequest(lsp4jSender)
+
+  override suspend fun <Lsp4jResponse> sendRequestWithPartialResults(
+    partialResultConsumer: (ProgressParams) -> Unit,
+    lsp4jSender: (Lsp4jServer, partialResultToken: Either<String, Int>) -> CompletableFuture<Lsp4jResponse>,
+  ): Lsp4jResponse? =
+    requestExecutor.sendRequestWithPartialResults(partialResultConsumer, lsp4jSender)
 
   @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   override fun <Lsp4jResponse> sendRequestSync(
@@ -316,6 +325,8 @@ class LspClientImpl internal constructor(
       requestExecutor.shutdownNow()
       serverNotificationsHandler.cancelAllProgress()
       serverNotificationsHandler.releasePendingMessageRequests()
+      // A request in flight gets no answer any more, so it never reaches the unregister of its own partial result token
+      partialResults.clear()
 
       highlightingCacheRegistry.clearCache()
 

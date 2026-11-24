@@ -291,6 +291,10 @@ internal class LspServerNotificationsHandlerImpl(private val lspClient: LspClien
   override fun notifyProgress(params: ProgressParams) {
     if (project.isDisposed) return
 
+    // A request that runs with a partialResultToken takes every notification of its own token.
+    // See LspClient.sendRequestWithPartialResults; a token of any other origin falls through to the work-done progress below.
+    if (lspClient.partialResults.dispatch(params)) return
+
     val token = params.token
     val tokenId = token.map({ it }, { it.toString() })
 
