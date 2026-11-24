@@ -39,6 +39,7 @@ import kotlinx.coroutines.withTimeoutOrNull
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Timeout
+import java.awt.Component
 import javax.swing.JComponent
 import javax.swing.JPanel
 import kotlin.time.Duration.Companion.milliseconds
@@ -176,10 +177,10 @@ internal class SettingsFrameProjectsTest {
       val tabs = UIUtil.findComponentOfType(editor.content, SingleHeightTabs::class.java)!!
 
       waitFor("the application-level page") { editor.selectedConfigurable === appPage }
-      assertThat(tabs.isVisible).isFalse()
+      assertThat(isVisibleIn(editor.content, tabs)).isFalse()
 
       editor.treeView.select(projectPage)
-      waitFor("the selector above the project-level page") { tabs.isVisible }
+      waitFor("the selector above the project-level page") { isVisibleIn(editor.content, tabs) }
       assertThat(tabs.tabs.map { it.text }).containsExactly(owner.name, guest.name)
       assertThat(ConfigurableWrapper.cast(FrameProjectsTestProjectPage::class.java, projectPage)).isSameAs(pageOf(owner))
 
@@ -189,7 +190,7 @@ internal class SettingsFrameProjectsTest {
       assertThat(pageOf(guest).resets).describedAs("The editor shows the page of the selected project").isEqualTo(1)
 
       editor.treeView.select(appPage)
-      waitFor("no selector above the application-level page") { !tabs.isVisible }
+      waitFor("no selector above the application-level page") { !isVisibleIn(editor.content, tabs) }
     }
   }
 
@@ -308,6 +309,11 @@ private class FrameProjectsTestProjectPage(project: Project) : Configurable {
 private val pagesByProject = HashMap<Project, FrameProjectsTestProjectPage>()
 
 private fun pageOf(project: Project): FrameProjectsTestProjectPage = pagesByProject.getValue(project)
+
+/** `true` when [component] and each of its parents up to [root] are visible. */
+private fun isVisibleIn(root: Component, component: Component): Boolean {
+  return generateSequence(component) { if (it === root) null else it.parent }.all { it.isVisible }
+}
 
 /** Puts [component] into a container that counts as showing, as a window would. */
 private fun markAsShowing(component: JComponent) {

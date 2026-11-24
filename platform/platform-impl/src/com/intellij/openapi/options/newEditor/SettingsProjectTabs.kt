@@ -6,18 +6,25 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationBundle
 import com.intellij.openapi.project.Project
 import com.intellij.toolWindow.emptyTabComponent
+import com.intellij.ui.GuiUtils
 import com.intellij.ui.tabs.JBTabsBorder
 import com.intellij.ui.tabs.TabInfo
 import com.intellij.ui.tabs.TabsListener
 import com.intellij.ui.tabs.impl.JBDefaultTabsBorder
 import com.intellij.ui.tabs.impl.SingleHeightTabs
+import com.intellij.ui.tabs.impl.TabLabel
+import com.intellij.util.ui.JBFont
+import com.intellij.util.ui.JBUI
+import java.awt.BorderLayout
 import javax.swing.JComponent
+import javax.swing.JPanel
 
 /**
  * The project selector of a Settings window that configures several projects: one tab for each project of [projects].
  *
  * The tabs show the selection of [projects] and change it. They use the common tab painter, as the tabs of a dialog do,
- * so they follow the Islands theme when it is on.
+ * so they follow the Islands theme when it is on. The row is higher and its font is larger than in an editor tab row,
+ * because the row selects the project of the whole page.
  */
 internal class SettingsProjectTabs(private val projects: SettingsFrameProjects, parentDisposable: Disposable) {
   private val tabs = ProjectTabs(projects.frameOwner, parentDisposable)
@@ -25,8 +32,12 @@ internal class SettingsProjectTabs(private val projects: SettingsFrameProjects, 
   /** `true` while [update] changes the tabs. The tabs select a tab on their own then, and that is no request of the user. */
   private var isUpdating = false
 
-  val component: JComponent
-    get() = tabs.component
+  /** The tab row with an empty space above and below it. */
+  val component: JComponent = JPanel(BorderLayout()).apply {
+    isOpaque = false
+    border = JBUI.Borders.empty(ROW_TOP_GAP, 0, ROW_BOTTOM_GAP, 0)
+    add(tabs.component, BorderLayout.CENTER)
+  }
 
   init {
     // the tabs keep the order of the projects, whatever the setting of the editor tabs says
@@ -76,4 +87,35 @@ internal class SettingsProjectTabs(private val projects: SettingsFrameProjects, 
 
 private class ProjectTabs(project: Project, parentDisposable: Disposable) : SingleHeightTabs(project, parentDisposable) {
   override fun createTabBorder(): JBTabsBorder = JBDefaultTabsBorder(this)
+
+  override fun createTabLabel(info: TabInfo): TabLabel = ProjectLabel(info)
+
+  private inner class ProjectLabel(info: TabInfo) : SingleHeightLabel(this@ProjectTabs, info) {
+    init {
+      updateFont()
+    }
+
+    override fun updateUI() {
+      super.updateUI()
+      updateFont()
+    }
+
+    /** The label component of the tab is a child, so each child gets the font. */
+    private fun updateFont() {
+      val font = JBFont.label().biggerOn(FONT_SIZE_INCREASE)
+      GuiUtils.iterateChildren(this, { it.font = font })
+    }
+
+    override fun getPreferredHeight(): Int = JBUI.scale(TAB_HEIGHT)
+  }
 }
+
+/** The height of a tab, unscaled. An editor tab row is [SingleHeightTabs.UNSCALED_PREF_HEIGHT] high. */
+private const val TAB_HEIGHT = 36
+
+/** The points that the font of a tab adds to the label font. */
+private const val FONT_SIZE_INCREASE = 2f
+
+private const val ROW_TOP_GAP = 6
+
+private const val ROW_BOTTOM_GAP = 6
