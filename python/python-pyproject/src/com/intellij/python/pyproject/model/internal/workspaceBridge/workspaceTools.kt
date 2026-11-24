@@ -28,7 +28,6 @@ import com.intellij.platform.workspace.jps.entities.ModuleDependency
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.platform.workspace.jps.entities.ModuleId
 import com.intellij.platform.workspace.jps.entities.ModuleSourceDependency
-import com.intellij.platform.workspace.jps.entities.ModuleTypeId
 import com.intellij.platform.workspace.jps.entities.SourceRootEntity
 import com.intellij.platform.workspace.jps.entities.SourceRootEntityBuilder
 import com.intellij.platform.workspace.jps.entities.SourceRootTypeId
@@ -65,7 +64,6 @@ import com.intellij.workspaceModel.ide.legacyBridge.LegacyBridgeJpsEntitySourceF
 import com.intellij.workspaceModel.ide.toPath
 import com.jetbrains.python.project.PyProject
 import com.jetbrains.python.project.PyProject.Companion.getPyProjects
-import com.jetbrains.python.sdk.internal.PYTHON_MODULE_ID
 import com.jetbrains.python.venvReader.Directory
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.sync.Mutex
@@ -496,7 +494,6 @@ private fun updateModule(
   val needsModuleModify =
     module.name != entry.name.name
     || module.entitySource != entitySource
-    || module.type != PYTHON_MODULE_TYPE_ID
     || existingContentRoot == null
     || existingPyProjectToml == null
     || existingExModuleOptions == null
@@ -510,7 +507,6 @@ private fun updateModule(
     projectStorage.modifyModuleEntity(module) {
       this.name = entry.name.name
       this.entitySource = entitySource
-      this.type = PYTHON_MODULE_TYPE_ID
 
       if (isModuleDependenciesChanged) {
         // Replacing `dependencies` wipes the SdkDependency item and the interpreter library entry — save and restore them.
@@ -590,7 +586,6 @@ private fun addNewModule(
     contentRoots = listOf(ContentRootEntity(entryRootUrl, emptyList(), entitySource) {
       sourceRoots = entry.sourceRoots.map { pyProjectSourceRoot(it.toVirtualFileUrl(virtualFileUrlManager), entitySource) }
     })
-    type = PYTHON_MODULE_TYPE_ID
     pyProjectTomlEntity = PyProjectTomlWorkspaceEntity(participatedTools, tomlDirUrl, entitySource)
     exModuleOptions = ExternalSystemModuleOptionsEntity(entitySource) {
       externalSystem = PY_PROJECT_SYSTEM_ID.id
@@ -990,8 +985,6 @@ private sealed interface PyProjectTomlToolRelation {
 
 private val changeWorkspaceMutex = Mutex()
 
-private val PYTHON_MODULE_TYPE_ID: ModuleTypeId = ModuleTypeId(PYTHON_MODULE_ID)
-
 internal val EntitySource.isPythonEntity: Boolean get() = (this as? JpsImportedEntitySource)?.externalSystemId == PY_PROJECT_SYSTEM_ID.id
 
 /**
@@ -1050,7 +1043,6 @@ private fun preserveRootModule(
       usedNames = storage.entities<ModuleEntity>().map { it.name }.toSet(),
     )
     storage.addEntity(ModuleEntity(moduleName, emptyList(), entitySource) {
-      type = PYTHON_MODULE_TYPE_ID
       contentRoots = listOf(ContentRootEntity(rootUrl, emptyList(), entitySource))
     })
     logger.debug { "Root module recreated with $root" }

@@ -7,11 +7,14 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
+import com.intellij.openapi.module.ModuleTypeManager;
+import com.intellij.openapi.module.ModuleWithNameAlreadyExists;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.SdkTypeId;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.DirectoryProjectGenerator;
 import com.intellij.python.sdk.backend.PythonInterpreter;
@@ -19,9 +22,11 @@ import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PythonModuleTypeBase;
 import com.jetbrains.python.configuration.PyModuleInterpreterSetter;
 import com.jetbrains.python.sdk.PythonSdkType;
+import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.Objects;
 
@@ -57,6 +62,20 @@ class PythonModuleBuilderBase extends ModuleBuilder {
   @Override
   public ModuleType<?> getModuleType() {
     return PythonModuleTypeBase.getInstance();
+  }
+
+  /**
+   * The wizard shows this builder as Python, and the new module gets the default type of the IDE: the interpreter makes a
+   * module a Python project, not its type.
+   */
+  @Override
+  public @NotNull Module createModule(@NotNull ModifiableModuleModel moduleModel)
+    throws InvalidDataException, IOException, ModuleWithNameAlreadyExists, ConfigurationException, JDOMException {
+    String moduleFilePath = getModuleFilePath();
+    deleteModuleFile(moduleFilePath);
+    Module module = moduleModel.newModule(moduleFilePath, ModuleTypeManager.getInstance().getDefaultModuleType().getId());
+    setupModule(module);
+    return module;
   }
 
   /** The interpreter that the user picked for the new module, or {@code null} for none. */

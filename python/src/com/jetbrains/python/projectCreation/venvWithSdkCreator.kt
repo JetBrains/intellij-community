@@ -8,6 +8,7 @@ import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
+import com.intellij.openapi.module.ModuleTypeManager
 import com.intellij.openapi.project.ProjectBundle
 import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.project.modules
@@ -31,7 +32,6 @@ import com.intellij.python.venv.createVenv
 import com.intellij.python.venv.createVenvAdditionalData
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PythonBinary
-import com.jetbrains.python.PythonModuleTypeBase
 import com.jetbrains.python.Result
 import com.jetbrains.python.mapResult
 import com.jetbrains.python.errorProcessing.MessageError
@@ -116,7 +116,7 @@ suspend fun createVenvAndSdk(
     edtWriteAction {
       val projectPath = vfsPath.toNioPath()
       val file = projectPath.resolve("${projectPath.fileName}.iml")
-      ModuleManager.getInstance(project).newModule(file, PythonModuleTypeBase.getInstance().id)
+      ModuleManager.getInstance(project).newModule(file, ModuleTypeManager.getInstance().defaultModuleType.id)
     }
   }
   val module = moduleOrProject.moduleIfExists ?: project.modules.first()
