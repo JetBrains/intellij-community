@@ -3,7 +3,6 @@ package com.intellij.mcpserver.util
 
 import com.intellij.ide.impl.ProjectUtil
 import com.intellij.mcpserver.McpServerBundle
-import com.intellij.mcpserver.impl.IJ_MCP_AUTH_TOKEN
 import com.intellij.mcpserver.settings.McpServerSettings
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
@@ -33,7 +32,7 @@ internal suspend fun notifyUnauthorizedMcpRequest(port: Int) {
   withContext(Dispatchers.EDT) { // TODO IJPL-262703
     val pressed = Messages.showDialog(
       ProjectUtil.getActiveProject(),
-      McpServerBundle.message("dialog.message.mcp.server.unauthorized", port, IJ_MCP_AUTH_TOKEN),
+      McpServerBundle.message("dialog.message.mcp.server.unauthorized", port.toString()),
       McpServerBundle.message("dialog.title.mcp.server.unauthorized"),
       arrayOf(
         McpServerBundle.message("dialog.mcp.server.unauthorized.ok"),
