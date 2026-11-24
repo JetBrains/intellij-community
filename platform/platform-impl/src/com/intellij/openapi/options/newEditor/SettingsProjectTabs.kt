@@ -10,6 +10,7 @@ import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.toolWindow.emptyTabComponent
+import com.intellij.ui.Gray
 import com.intellij.ui.JBColor
 import com.intellij.ui.paint.RectanglePainter2D
 import com.intellij.ui.paint.useCopy
@@ -34,6 +35,7 @@ import java.awt.FontMetrics
 import java.awt.Graphics
 import java.awt.Graphics2D
 import java.awt.Rectangle
+import javax.swing.BorderFactory
 import javax.swing.JComponent
 import javax.swing.JPanel
 
@@ -43,7 +45,8 @@ import javax.swing.JPanel
  *
  * The tabs show the selection of [projects] and change it. Each tab is a pill. The selected pill has the colors of a selected
  * editor tab of the Islands theme. The first pill starts at the left edge of the breadcrumbs and of the page. A long project
- * name ends with an ellipsis. The row scrolls when the tabs do not fit, and its chevron lists all tabs.
+ * name ends with an ellipsis. The row scrolls when the tabs do not fit, and its chevron lists all tabs. A separator
+ * divides the row from the page.
  */
 internal class SettingsProjectTabs(private val projects: SettingsFrameProjects, parentDisposable: Disposable) {
   private val tabs = ProjectTabs(projects.frameOwner, parentDisposable)
@@ -54,10 +57,17 @@ internal class SettingsProjectTabs(private val projects: SettingsFrameProjects, 
   /** The page below the selector, or `null` before the first project-level page. */
   private var page: FrameProjectConfigurable? = null
 
-  /** The tab row with an empty space around it. */
+  /** The tab row with an empty space around it and a separator below it. */
   val component: JComponent = JPanel(BorderLayout()).apply {
     isOpaque = false
-    border = JBUI.Borders.empty(ROW_TOP_GAP, PAGE_LEFT_INSET, ROW_BOTTOM_GAP, ROW_RIGHT_INSET)
+    // the separator runs from the left edge of the page to the right edge of the history toolbar of the header
+    border = BorderFactory.createCompoundBorder(
+      JBUI.Borders.empty(ROW_TOP_GAP, PAGE_LEFT_INSET, 0, HEADER_RIGHT_INSET),
+      BorderFactory.createCompoundBorder(
+        JBUI.Borders.customLineBottom(SEPARATOR_COLOR),
+        JBUI.Borders.empty(0, 0, SEPARATOR_GAP, ROW_RIGHT_INSET - HEADER_RIGHT_INSET),
+      ),
+    )
     add(tabs.component, BorderLayout.CENTER)
   }
 
@@ -69,7 +79,8 @@ internal class SettingsProjectTabs(private val projects: SettingsFrameProjects, 
     tabs.setUiDecorator(object : UiDecorator {
       override fun getDecoration(): UiDecoration = UiDecoration(
         labelFont = tabFont(),
-        labelInsets = JBUI.insets(0, PILL_SIDE_PADDING),
+        // the gap after a pill belongs to its label, so the first pill keeps its left edge
+        labelInsets = JBUI.insets(0, PILL_SIDE_PADDING, 0, PILL_SIDE_PADDING + TAB_GAP),
         contentInsetsSupplier = { JBUI.insets(0, PILL_SIDE_PADDING) },
         iconTextGap = JBUI.scale(ICON_TEXT_GAP),
       )
@@ -182,7 +193,7 @@ private class PillPainterAdapter : TabPainterAdapter {
     g.useCopy { g2 ->
       GraphicsUtil.setupAAPainting(g2)
       val arc = JBUI.CurrentTheme.MainToolbar.Button.hoverArc().float.toDouble()
-      val width = label.width.toDouble()
+      val width = (label.width - JBUI.scale(TAB_GAP)).toDouble()
       val height = label.height.toDouble()
       g2.color = fill
       RectanglePainter2D.FILL.paint(g2, 0.0, 0.0, width, height, arc)
@@ -198,6 +209,9 @@ private val SELECTED_BACKGROUND = JBColor.namedColor("EditorTabs.underlinedTabBa
 
 private val SELECTED_BORDER = JBColor.namedColor("EditorTabs.underlinedBorderColor", JBColor(0x7F99C3, 0x7F99C3))
 
+/** The color of a group separator, as in `TitledSeparator`. */
+private val SEPARATOR_COLOR = JBColor.namedColor("Group.separatorColor", JBColor(Gray.xCD, Gray.x51))
+
 private val HOVER_BACKGROUND = JBColor.namedColor("EditorTabs.hoverBackground",
                                                   JBColor(Color(0xE5, 0xEE, 0xFF, 0x80), Color(0x34, 0x3E, 0x51, 0x80)))
 
@@ -208,6 +222,9 @@ private const val PILL_HEIGHT = 24
 private const val PILL_SIDE_PADDING = 4
 
 private const val ICON_TEXT_GAP = 4
+
+/** The space between a pill and the next tab, unscaled. */
+private const val TAB_GAP = 6
 
 /** The widest text of a tab, unscaled. A longer project name ends with an ellipsis. */
 private const val MAX_TITLE_WIDTH = 120
@@ -221,8 +238,12 @@ private const val FONT_SIZE_INCREASE = 1f
  */
 private const val PAGE_LEFT_INSET = 16
 
+/** The right inset of the header, unscaled. See `SettingsEditor.createHeaderPanel`. */
+private const val HEADER_RIGHT_INSET = 10
+
 private const val ROW_RIGHT_INSET = 16
 
 private const val ROW_TOP_GAP = 8
 
-private const val ROW_BOTTOM_GAP = 4
+/** The space between the pills and the separator below them, unscaled. */
+private const val SEPARATOR_GAP = 12
