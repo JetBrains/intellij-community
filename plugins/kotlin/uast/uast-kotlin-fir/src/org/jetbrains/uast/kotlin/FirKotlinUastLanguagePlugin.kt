@@ -52,21 +52,23 @@ class FirKotlinUastLanguagePlugin : UastLanguagePlugin {
         else -> false
     }
 
-    private val PsiElement.isSupportedElement: Boolean
-        get() {
-            val containingPhysicalFile = (containingFile?.context ?: this).containingFile
-            val ktFile = containingPhysicalFile?.let(::unwrapFakeFileForLightClass) as? KtFile ?: return false
-            return ApplicationManager.getApplication().service<FirKotlinUastResolveProviderService>().isSupportedFile(ktFile)
-        }
+    private fun PsiElement.isSupportedElement(requiredTypes: Array<out Class<out UElement>>): Boolean {
+        if (!canConvert(this, requiredTypes)) return false
+        val containingPhysicalFile = (containingFile?.context ?: this).containingFile
+        val ktFile = containingPhysicalFile?.let(::unwrapFakeFileForLightClass) as? KtFile ?: return false
+        return ApplicationManager.getApplication().service<FirKotlinUastResolveProviderService>().isSupportedFile(ktFile)
+    }
 
     override fun convertElement(element: PsiElement, parent: UElement?, requiredType: Class<out UElement>?): UElement? {
-        if (parent == null && !element.isSupportedElement) return null
-        return convertDeclarationOrElement(element, parent, elementTypes(requiredType))
+        val requiredTypes = elementTypes(requiredType)
+        if (parent == null && !element.isSupportedElement(requiredTypes)) return null
+        return convertDeclarationOrElement(element, parent, requiredTypes)
     }
 
     override fun convertElementWithParent(element: PsiElement, requiredType: Class<out UElement>?): UElement? {
-        if (!element.isSupportedElement) return null
-        return convertDeclarationOrElement(element, null, elementTypes(requiredType))
+        val requiredTypes = elementTypes(requiredType)
+        if (!element.isSupportedElement(requiredTypes)) return null
+        return convertDeclarationOrElement(element, null, requiredTypes)
     }
 
     override fun getPossiblePsiSourceTypes(vararg uastTypes: Class<out UElement>): ClassSet<PsiElement> =
@@ -78,14 +80,14 @@ class FirKotlinUastLanguagePlugin : UastLanguagePlugin {
 
     @Suppress("UNCHECKED_CAST")
     override fun <T : UElement> convertElementWithParent(element: PsiElement, requiredTypes: Array<out Class<out T>>): T? {
-        if (!element.isSupportedElement) return null
         val nonEmptyRequiredTypes = requiredTypes.nonEmptyOr(DEFAULT_TYPES_LIST)
+        if (!element.isSupportedElement(nonEmptyRequiredTypes)) return null
         return convertDeclarationOrElement(element, null, nonEmptyRequiredTypes) as? T
     }
 
     @Suppress("UNCHECKED_CAST")
     override fun <T : UElement> convertToAlternatives(element: PsiElement, requiredTypes: Array<out Class<out T>>): Sequence<T> {
-        if (!element.isSupportedElement) return emptySequence()
+        if (!element.isSupportedElement(requiredTypes.nonEmptyOr(DEFAULT_TYPES_LIST))) return emptySequence()
         return when {
             element is KtFile ->
                 FirKotlinConverter.convertKtFile(element, null, requiredTypes) as Sequence<T>

@@ -38,6 +38,9 @@ interface UMultiResolvable {
   fun multiResolve(): Iterable<ResolveResult>
 }
 
-fun UResolvable.resolveToUElement(): UElement? = resolve().toUElement()
+fun UResolvable.resolveToUElement(): UElement? {
+  val resolve = resolve()
+  return (resolve as? UElement) ?: resolve.toUElement()
+}
 
 inline fun <reified T : UElement> UResolvable.resolveToUElementOfType(): T? = resolveToUElement() as? T
