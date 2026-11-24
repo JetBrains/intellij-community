@@ -36,6 +36,10 @@ interface SeSearchProjectsProvider {
 
     /** The answer of the first extension that has one for [project]. */
     fun find(project: Project): SeSearchProjects? = EP_NAME.computeSafeIfAny { it.getSearchProjects(project) }
+
+    /** The open projects that a popup of [project] searches: the [SeSearchProjects.projects] of [find], else [project] alone. */
+    fun searchProjectsOf(project: Project): List<Project> =
+      find(project)?.projects?.filter { !it.isDisposed }?.ifEmpty { null } ?: listOf(project)
   }
 }
 
@@ -49,6 +53,12 @@ interface SeSearchProjectsProvider {
 @ApiStatus.Internal
 interface SeSearchProjects {
   val providerIds: Set<SeProviderId>
+
+  /**
+   * The search projects of the popup now, the project of the popup too. A tab that a project can lack, such as
+   * Classes, shows when one of them has it. An empty list stands for the project of the popup alone.
+   */
+  val projects: List<Project>
 
   /**
    * The scope of a search with [filter] for a provider that reaches every search project in one run of the project of

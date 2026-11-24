@@ -12,6 +12,7 @@ import com.intellij.platform.searchEverywhere.SeSession
 import com.intellij.platform.searchEverywhere.frontend.SeEssentialTabFactory
 import com.intellij.platform.searchEverywhere.frontend.SeTab
 import com.intellij.platform.searchEverywhere.frontend.resultsProcessing.SeTabDelegate
+import com.intellij.platform.searchEverywhere.providers.SeSearchProjectsProvider
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus
 
@@ -21,15 +22,16 @@ class SeSymbolsTabFactory : SeEssentialTabFactory {
   override val name: String get() = SeSymbolsTab.NAME
   override val priority: Int get() = SeSymbolsTab.PRIORITY
 
+  /** A search project of the popup that has a contributor is enough, see [SeSearchProjectsProvider.searchProjectsOf]. */
   override fun isAvailable(project: Project?): Boolean =
     project != null &&
     !WelcomeScreenProjectProvider.isWelcomeScreenProject(project) &&
-    GotoContributorsAvailabilityService.getInstance(project).hasSymbolContributors()
+    SeSearchProjectsProvider.searchProjectsOf(project).any { GotoContributorsAvailabilityService.getInstance(it).hasSymbolContributors() }
 
   override suspend fun getTab(scope: CoroutineScope, project: Project?, session: SeSession, initEvent: AnActionEvent, registerShortcut: (AnAction) -> Unit): SeTab? {
     project ?: return null
     if (!isAvailable(project)) return null
-    if (!GotoContributorsAvailabilityService.getInstance(project).awaitHasSymbolContributors()) return null
+    if (SeSearchProjectsProvider.searchProjectsOf(project).none { GotoContributorsAvailabilityService.getInstance(it).awaitHasSymbolContributors() }) return null
 
     val delegate = SeTabDelegate.create(project,
                                         session,

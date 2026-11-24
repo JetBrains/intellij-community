@@ -181,6 +181,8 @@ class SeTextItemsProviderTest {
       override fun getSearchProjects(project: Project): SeSearchProjects = object : SeSearchProjects {
         override val providerIds: Set<SeProviderId> get() = emptySet()
 
+        override val projects: List<Project> get() = listOf(project)
+
         override fun scopeOf(filter: SeFilterState, everywhereScope: GlobalSearchScope?): GlobalSearchScope? {
           scopeFilter.set(filter)
           everywhereScopes.set(everywhereScope)

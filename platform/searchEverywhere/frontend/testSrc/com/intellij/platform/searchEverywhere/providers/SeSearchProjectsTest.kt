@@ -224,6 +224,29 @@ class SeSearchProjectsTest {
   }
 
   @Test
+  fun aContributorOfAnotherSearchProjectOnlyGivesThePopupAProvider() = timeoutRunBlocking {
+    val factory = TestContributorFactory(contributorProjects) { it === otherProject }
+    ExtensionTestUtil.maskExtensions(SearchEverywhereContributor.EP_NAME, listOf(factory), disposable)
+    val holder = holder(TestSearchProjects(listOf(popupProject, otherProject), WRAPPED_ID))
+
+    val items = holder.items(WRAPPED_ID)
+
+    assertTrue(otherProject in items.map { it.project() }, "the popup asks the project that has the contributor")
+    assertEquals(setOf(popupProject, otherProject), contributorProjects.toSet(),
+                 "the popup creates the contributor that only another search project has")
+  }
+
+  @Test
+  fun aContributorOfNoSearchProjectGivesNoProvider() = timeoutRunBlocking {
+    val factory = TestContributorFactory(contributorProjects) { false }
+    ExtensionTestUtil.maskExtensions(SearchEverywhereContributor.EP_NAME, listOf(factory), disposable)
+    val holder = holder(TestSearchProjects(listOf(popupProject, otherProject), WRAPPED_ID))
+
+    assertNull(holder.get(SeProviderId(WRAPPED_ID), true))
+    assertEquals(emptyList<Project>(), contributorProjects.toList())
+  }
+
+  @Test
   fun aPopupOfOneProjectDoesNotMarkItsSearch() = timeoutRunBlocking {
     val holder = holder(TestSearchProjects(listOf(popupProject), SEARCHED_ID))
 
@@ -291,7 +314,7 @@ class SeSearchProjectsTest {
 
   /** The product: [projects] are the search projects, and the providers of [providerId] search each of them. */
   private inner class TestSearchProjects(
-    private val projects: List<Project>,
+    override val projects: List<Project>,
     providerId: String,
     private val gateOfOther: Deferred<Unit>? = null,
   ) : SeSearchProjects {
@@ -415,9 +438,14 @@ class SeSearchProjectsTest {
       TestProvider(id, project!!, (legacyContributor as TestContributor).project).also { createdProviders.add(it) }
   }
 
-  private class TestContributorFactory(private val contributorProjects: MutableList<Project>) : SearchEverywhereContributorFactory<Any> {
+  private class TestContributorFactory(
+    private val contributorProjects: MutableList<Project>,
+    private val isAvailableIn: (Project) -> Boolean = { true },
+  ) : SearchEverywhereContributorFactory<Any> {
     override fun createContributor(initEvent: AnActionEvent): SearchEverywhereContributor<Any> =
       TestContributor(initEvent.project!!).also { contributorProjects.add(it.project) }
+
+    override fun isAvailable(project: Project): Boolean = isAvailableIn(project)
   }
 
   /** Records the project of each replaced contributor and the project of the event that the replacement reads. */
