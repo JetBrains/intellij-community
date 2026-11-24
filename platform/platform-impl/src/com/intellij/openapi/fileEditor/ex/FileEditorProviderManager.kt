@@ -38,4 +38,9 @@ interface FileEditorProviderManager {
    * @return `null` if no provider with specified `editorTypeId` exists.
    */
   fun getProvider(editorTypeId: String): FileEditorProvider?
+
+  /**
+   * @return `null` if no provider with specified `editorTypeId` exists, or it is currently not available.
+   */
+  fun getProvider(project: Project, editorTypeId: String): FileEditorProvider?
 }

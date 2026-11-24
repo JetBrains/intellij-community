@@ -209,17 +209,26 @@ class FileEditorProviderManagerImpl
   }
 
   override fun getProvider(editorTypeId: String): FileEditorProvider? {
+    val bean = getProviderBean(editorTypeId) ?: return null
+    return bean.instance
+  }
+
+  override fun getProvider(project: Project, editorTypeId: String): FileEditorProvider? {
+    val bean = getProviderBean(editorTypeId) ?: return null
+    if (!TechnologyFilter.getInstance().isApplicable(bean.pluginDescriptor, project)) return null
+    return bean.instance
+  }
+
+  private fun getProviderBean(editorTypeId: String): FileEditorProviderBean? {
     val beans = FileEditorProviderBean.EP_NAME.extensionList
-    beans.firstOrNull { it.id == editorTypeId }?.let {
-      return it.instance
-    }
+    beans.firstOrNull { it.id == editorTypeId }?.let { return it }
 
     // check only the declarations without an id
     for (bean in beans) {
       if (bean.id == null) {
         val provider = bean.instance
         if (provider.editorTypeId == editorTypeId) {
-          return provider
+          return bean
         }
       }
     }

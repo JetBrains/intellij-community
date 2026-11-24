@@ -241,7 +241,7 @@ private fun CoroutineScope.computeFileEditorProviders(
     span("editor provider resolving") {
       val fileEditorProviderManager = serviceAsync<FileEditorProviderManager>()
       val list = fileEntry.providers.keys.mapNotNullTo(ArrayList(fileEntry.providers.size)) {
-        fileEditorProviderManager.getProvider(it)
+        fileEditorProviderManager.getProvider(project = project, editorTypeId = it)
       }
       // if some provider is not found, compute without taking cache in an account
       if (fileEntry.providers.size == list.size && list.isNotEmpty()) {

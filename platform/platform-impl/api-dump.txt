@@ -3131,6 +3131,7 @@ f:com.intellij.openapi.fileEditor.ex.FileEditorManagerEx$Companion
 com.intellij.openapi.fileEditor.ex.FileEditorProviderManager
 - sf:Companion:com.intellij.openapi.fileEditor.ex.FileEditorProviderManager$Companion
 - s:getInstance():com.intellij.openapi.fileEditor.ex.FileEditorProviderManager
+- a:getProvider(com.intellij.openapi.project.Project,java.lang.String):com.intellij.openapi.fileEditor.FileEditorProvider
 - a:getProvider(java.lang.String):com.intellij.openapi.fileEditor.FileEditorProvider
 - a:getProviderList(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile):java.util.List
 - getProviders(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile):com.intellij.openapi.fileEditor.FileEditorProvider[]
