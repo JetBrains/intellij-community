@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.projectRoots.impl.jdkDownloader
 
 import com.intellij.idea.TestFor
@@ -147,6 +147,16 @@ class JdkRequirementTest : LightPlatformTestCase() {
 
   @Test
   fun test_custom2() = doFailedTest("myjava sdk")
+
+  @Test
+  fun test_has_vendor() {
+    Assert.assertFalse(JdkRequirements.parseRequirement("11")!!.hasVendor)
+    Assert.assertFalse(JdkRequirements.parseRequirement("1.8")!!.hasVendor)
+    Assert.assertTrue(JdkRequirements.parseRequirement("openjdk-11")!!.hasVendor)
+    Assert.assertTrue(JdkRequirements.parseRequirement("corretto-11.0.4")!!.hasVendor)
+    Assert.assertFalse(JdkRequirements.parseRequirement("11", null, null)!!.hasVendor)
+    Assert.assertTrue(JdkRequirements.parseRequirement("openjdk-11", null, null)!!.hasVendor)
+  }
 
   private fun doFailedTest(text: String) {
     Assert.assertNull(JdkRequirements.parseRequirement(text))

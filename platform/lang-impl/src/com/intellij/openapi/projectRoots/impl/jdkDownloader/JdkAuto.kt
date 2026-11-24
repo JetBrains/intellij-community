@@ -38,6 +38,7 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.JarFileSystem
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.eel.EelApi
 import com.intellij.platform.eel.provider.LocalEelDescriptor
 import com.intellij.platform.eel.provider.equalsMayBeUsingMachine
 import com.intellij.platform.eel.provider.getEelDescriptor
@@ -52,6 +53,7 @@ import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NotNull
+import org.jetbrains.annotations.TestOnly
 import org.jetbrains.jps.model.java.JdkVersionDetector
 import java.nio.file.Path
 import kotlin.io.path.isDirectory
@@ -128,6 +130,40 @@ class JdkAuto : UnknownSdkResolver {
   private class ServiceScope(val coroutineScope: CoroutineScope)
 
   fun createResolverImpl(project: Project?, indicator: ProgressIndicator): UnknownSdkLookup? {
+    return createLookup(project, indicator) { eel ->
+      indicator.pushState()
+      indicator.text = ProjectBundle.message("progress.text.downloading.jdk.list")
+      try {
+        val jdkPredicate = JdkPredicate.forEel(eel.getValue())
+        JdkListDownloader.getInstance().downloadModelForJdkInstaller(indicator, jdkPredicate)
+      }
+      catch (e: ProcessCanceledException) {
+        throw e
+      }
+      catch (t: Throwable) {
+        LOG.warn("JdkAuto has failed to download the list of available JDKs. " + t.message, t)
+        listOf()
+      }
+      finally {
+        indicator.popState()
+      }
+    }
+  }
+
+  @TestOnly
+  fun createResolverImpl(
+    project: Project?,
+    indicator: ProgressIndicator,
+    jdkListProvider: () -> List<JdkItem>,
+  ): UnknownSdkLookup? {
+    return createLookup(project, indicator) { jdkListProvider() }
+  }
+
+  private fun createLookup(
+    project: Project?,
+    indicator: ProgressIndicator,
+    jdkListProvider: suspend (SuspendingLazy<EelApi>) -> List<JdkItem>,
+  ): UnknownSdkLookup? {
     val sdkType = SdkType.getAllTypeList()
                     .asSequence()
                     .filter(notSimpleJavaSdkTypeIfAlternativeExistsAndNotDependentSdkType()::value)
@@ -146,22 +182,7 @@ class JdkAuto : UnknownSdkResolver {
       val eel = coroutineScope.suspendingLazy { projectEelDescriptor.toEelApi() }
 
       val lazyDownloadModel: SuspendingLazy<List<JdkItem>> = coroutineScope.suspendingLazy {
-        indicator.pushState()
-        indicator.text = ProjectBundle.message("progress.text.downloading.jdk.list")
-        try {
-          val jdkPredicate = JdkPredicate.forEel(eel.getValue())
-          JdkListDownloader.getInstance().downloadModelForJdkInstaller(indicator, jdkPredicate)
-        }
-        catch (e: ProcessCanceledException) {
-          throw e
-        }
-        catch (t: Throwable) {
-          LOG.warn("JdkAuto has failed to download the list of available JDKs. " + t.message, t)
-          listOf()
-        }
-        finally {
-          indicator.popState()
-        }
+        jdkListProvider(eel)
       }
 
       private fun resolveHint(sdk: UnknownSdk): JdkAutoHint? {
@@ -244,10 +265,18 @@ class JdkAuto : UnknownSdkResolver {
             else null
           }
 
-        val matchingJdks = jdks.filter { req.matches(it.first) }
+        val allMatchingJdks = jdks.filter { req.matches(it.first) }.toList()
+        // `openjdk-11` -> openjdk 11 shouldn't be filtered
+        val matchingJdks = if (req.hasVendor) {
+          allMatchingJdks
+        }
+        // `11` -> filter eol download options if possible
+        else {
+          allMatchingJdks.filter { !it.first.isEol || it.first.suggestedSdkName == sdk.sdkName }.ifEmpty { allMatchingJdks }
+        }
         val jdkToDownload = matchingJdks.singleOrNull() ?: jdks.singleOrNull { it.first.suggestedSdkName == sdk.sdkName }
 
-        if (matchingJdks.count() == 0 && jdkToDownload == null) {
+        if (matchingJdks.isEmpty() && jdkToDownload == null) {
           return null
         }
 
@@ -285,10 +314,10 @@ class JdkAuto : UnknownSdkResolver {
 
       private fun multipleJdksDownloadFix(
         jarConfigurator: JarSdkConfigurator,
-        jdksToDownload: Sequence<Pair<JdkItem, JavaVersion>>,
+        jdksToDownload: List<Pair<JdkItem, JavaVersion>>,
         lookupReason: @Nls String?,
       ): UnknownSdkDownloadableSdkFix = object : UnknownSdkMultipleDownloadsFix<JdkItem>, UnknownSdkFixConfigurator by jarConfigurator {
-        private val items = jdksToDownload.map { it.first }.toList()
+        private val items = jdksToDownload.map { it.first }
         private var item = items.first()
         private var homeDir: Path? = null
 

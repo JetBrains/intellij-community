@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.projectRoots.impl.jdkDownloader
 
 import com.intellij.openapi.diagnostic.logger
@@ -11,6 +11,8 @@ import java.util.function.Predicate
 
 @Internal
 interface JdkRequirement {
+  val hasVendor: Boolean get() = false
+
   fun matches(sdk: Sdk): Boolean
   fun matches(sdk: JdkItem): Boolean
   fun matches(sdk: UnknownSdkLocalSdkFix): Boolean
@@ -59,6 +61,9 @@ object JdkRequirements {
     }
 
     return object : JdkRequirement {
+      override val hasVendor: Boolean
+        get() = nameFilter?.hasVendor == true
+
       override fun matches(sdk: Sdk): Boolean {
         if (nameFilter != null) {
           if (!nameFilter.matches(sdk)) return false
@@ -149,6 +154,8 @@ object JdkRequirements {
         val matcher = versionMatcher(javaVersion)
 
         return object : VersionRequirement(matcher) {
+          override val hasVendor: Boolean = true
+
           fun matchesVendor(home: String): Boolean {
             return JdkInstaller.getInstance().findJdkItemForInstalledJdk(home)?.matchesVendor(vendor) == true ||
                    SdkVersionUtil.getJdkVersionInfo(home)?.variant?.prefix == vendor
