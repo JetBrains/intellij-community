@@ -244,7 +244,7 @@ public class LaterInvocatorTest extends HeavyPlatformTestCase {
         //assertEquals(dump.toString(), 3, dump.size());
 
         LaterInvocator.leaveModal(myWindow2);
-        flushSwingQueue();
+        PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
         assertTrue(LaterInvocator.isInModalContext());
 
         checkOrder(0);
@@ -253,6 +253,7 @@ public class LaterInvocatorTest extends HeavyPlatformTestCase {
         flushSwingQueue();
         assertFalse(LaterInvocator.isInModalContext());
 
+        PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
         checkOrder(1);
 
         LaterInvocator.leaveAllModals();
