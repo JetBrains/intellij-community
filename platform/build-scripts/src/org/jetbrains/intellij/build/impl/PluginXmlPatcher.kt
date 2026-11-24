@@ -179,7 +179,6 @@ internal fun patchPluginXml(
     xIncludeResolver = xIncludeResolver,
     embedContentModules = { element ->
       val dependencyHelper = (context as BuildContextImpl).jarPackagerDependencyHelper
-      val frontendModuleFilter = context.getFrontendModuleFilter()
       filterAndProcessContentModules(rootElement = element, pluginMainModuleName = pluginLayout.mainModule, context = context) { moduleElement, moduleName, _, refused ->
         // A refused module has no jar in the distribution, so the run time reads its descriptor here to exclude it.
         if (!embedsContentModules && !refused) {
@@ -193,7 +192,6 @@ internal fun patchPluginXml(
           moduleName = moduleName,
           dependencyHelper = dependencyHelper,
           pluginLayout = pluginLayout,
-          frontendModuleFilter = frontendModuleFilter,
           outputProvider = context.outputProvider,
         )
       }

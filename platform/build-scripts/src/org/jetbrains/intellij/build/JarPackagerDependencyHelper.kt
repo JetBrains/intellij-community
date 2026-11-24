@@ -26,16 +26,9 @@ import java.util.concurrent.ConcurrentHashMap
 fun isPluginModulePackedIntoSeparateJar(
   module: JpsModule,
   layout: PluginLayout,
-  frontendModuleFilter: FrontendModuleFilter,
   productionLibraryDependencies: List<JpsLibraryDependency>,
 ): Boolean {
-  if (hasOwnModuleLibraries(productionLibraryDependencies, librariesKeptOut = layout.getModulesWithExcludedModuleLibraries().contains(module.name))) {
-    return true
-  }
-  if (!frontendModuleFilter.isModuleCompatibleWithFrontend(layout.mainModule) && frontendModuleFilter.isModuleCompatibleWithFrontend(module.name)) {
-    return true
-  }
-  return false
+  return hasOwnModuleLibraries(productionLibraryDependencies, librariesKeptOut = layout.getModulesWithExcludedModuleLibraries().contains(module.name))
 }
 
 /** [isPluginModulePackedIntoSeparateJar]'s dependency argument, for a caller with no [JarPackagerDependencyHelper]. */
@@ -55,12 +48,11 @@ internal class JarPackagerDependencyHelper(private val outputProvider: ModuleOut
     return outputProvider.findRequiredModule(moduleName).getProductionModuleDependencies(withTests = false).map { it.moduleReference.moduleName }
   }
 
-  fun isPluginModulePackedIntoSeparateJar(module: JpsModule, layout: PluginLayout, frontendModuleFilter: FrontendModuleFilter): Boolean {
+  fun isPluginModulePackedIntoSeparateJar(module: JpsModule, layout: PluginLayout): Boolean {
     val dependencies = getLibraryDependencies(module = module, withTests = false)
     return isPluginModulePackedIntoSeparateJar(
       module = module,
       layout = layout,
-      frontendModuleFilter = frontendModuleFilter,
       productionLibraryDependencies = dependencies,
     )
   }

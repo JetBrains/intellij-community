@@ -11,9 +11,8 @@ import java.util.concurrent.ConcurrentHashMap
 /**
  * Whether a module reaches none of [incompatibleRootModules] through its production runtime dependencies.
  *
- * The one walk of the product-mode match. [JpsProductModeMatcher] asks it for the packer, and the distribution
- * derivation asks it through `FrontendCompatibility`. Each caller chooses the roots itself. Concurrent callers may share
- * one instance.
+ * The one walk of the product-mode match. [JpsProductModeMatcher] asks it for the packer. Each caller chooses the
+ * roots itself. Concurrent callers may share one instance.
  */
 @ApiStatus.Internal
 class ModuleRootMatcher(private val incompatibleRootModules: Set<String>) {

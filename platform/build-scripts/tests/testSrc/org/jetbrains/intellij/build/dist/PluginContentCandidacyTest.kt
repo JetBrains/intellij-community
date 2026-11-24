@@ -3,7 +3,6 @@ package org.jetbrains.intellij.build.dist
 
 import com.intellij.platform.buildScripts.pluginModelTool.DerivedPluginCandidacy
 import com.intellij.platform.buildScripts.pluginModelTool.EMBEDDED_LOADING_RULE
-import com.intellij.platform.buildScripts.pluginModelTool.FrontendCompatibility
 import com.intellij.platform.buildScripts.pluginModelTool.PluginContentResidue
 import com.intellij.platform.buildScripts.pluginModelTool.WalkedContentModules
 import com.intellij.platform.buildScripts.pluginModelTool.derivePluginContentCandidacy
@@ -107,7 +106,6 @@ class PluginContentCandidacyTest {
       mainModule = MAIN_MODULE,
       mainJarName = "demo.jar",
       findModule = findModule,
-      frontend = FrontendCompatibility(roots = emptySet(), findModule = findModule),
       residue = residue,
       closure = closure,
     )

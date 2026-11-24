@@ -10,14 +10,14 @@ import org.jetbrains.jps.model.module.JpsModuleReference
  * the module by a path of its own.
  *
  * This is the one jar-path rule. The packer applies it in `autoLayout.kt`, and the distribution derivation applies
- * it in its projection and its candidacy. Each caller reads the facts itself: the packer from the patched descriptor and
- * the product's frontend filter, the derivation from the source descriptor and its own model walk. The packaging gate
+ * it in its projection and its candidacy. Each caller reads the facts itself: the packer from the patched descriptor
+ * and the derivation from the source descriptor and its own model walk. The packaging gate
  * compares the two outputs, so it still catches a wrong fact, and the rule itself cannot drift between them.
  *
  * An embedded module gets `<module>.jar`. Any other module gets `modules/<module>.jar` when its descriptor declares no
  * `package` or [packedIntoSeparateJar] holds; the main jar cannot load it then. A module that stays is co-packed into
- * [mainJarName], or into `<main>-frontend.jar` for a frontend member of a plugin whose main module is not one. A module
- * with [hasCustomPath] gets no path from this rule. The facts are functions, so a caller reads only what the rule asks.
+ * [mainJarName]. A module with [hasCustomPath] gets no path from this rule. The facts are functions, so a caller reads
+ * only what the rule asks.
  */
 @ApiStatus.Internal
 fun contentModuleJarPath(
@@ -27,7 +27,6 @@ fun contentModuleJarPath(
   mainJarName: String,
   hasPackageAttribute: () -> Boolean,
   packedIntoSeparateJar: () -> Boolean,
-  frontendSplit: () -> Boolean,
 ): String? {
   if (loadingRule == "embedded") {
     return if (hasCustomPath) null else "$moduleName.jar"
@@ -35,17 +34,8 @@ fun contentModuleJarPath(
   return when {
     !hasPackageAttribute() || packedIntoSeparateJar() -> "modules/$moduleName.jar"
     hasCustomPath -> null
-    else -> pluginDefaultJarName(mainJarName, frontendSplit())
+    else -> mainJarName
   }
-}
-
-/**
- * The jar a plugin co-packs a module into: [mainJarName], or `<main>-frontend.jar` for a frontend member of a plugin
- * whose main module is not frontend-compatible, see [frontendSplit].
- */
-@ApiStatus.Internal
-fun pluginDefaultJarName(mainJarName: String, frontendSplit: Boolean): String {
-  return if (frontendSplit) mainJarName.removeSuffix(".jar") + "-frontend.jar" else mainJarName
 }
 
 /**

@@ -47,7 +47,6 @@ internal class AutoLayoutTest {
       mainJarName = "intellij.test.plugin.jar",
       hasPackageAttribute = { hasPackageAttribute },
       packedIntoSeparateJar = { false },
-      frontendSplit = { false },
     )
   }
 }

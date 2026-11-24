@@ -12,7 +12,6 @@ import org.jetbrains.intellij.build.impl.PluginDescriptorFileCache
 import org.jetbrains.intellij.build.impl.PluginLayout
 import org.jetbrains.intellij.build.impl.collectCompatiblePluginsToPublish
 import org.jetbrains.intellij.build.impl.createPlatformLayout
-import org.jetbrains.intellij.build.impl.frontendIncompatibleRootModuleNames
 import org.jetbrains.intellij.build.impl.getBundledPluginModules
 import org.jetbrains.intellij.build.impl.getPluginLayoutsByJpsModuleNames
 import org.jetbrains.intellij.build.mapConcurrent
@@ -24,7 +23,6 @@ import org.jetbrains.jps.model.JpsProject
 import java.time.Instant
 import java.util.TreeMap
 import java.util.TreeSet
-import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.LongAdder
 
 /**
@@ -233,9 +231,6 @@ private fun reportPluginPackingStats(span: Span, start: Instant, stats: PluginPa
  *
  * The layout facts of a plugin are the union over every layout of its main module in [products]. What the platform or
  * another plugin's layout packs, an `auto` layout leaves out. [platformJars] supplies the source-derived platform members.
- *
- * Only a product with an embedded frontend root module evaluates the frontend module filter. Without such a product
- * the filter is empty, and then no member is frontend-compatible.
  */
 @ApiStatus.Internal
 fun derivePluginJars(
@@ -245,11 +240,7 @@ fun derivePluginJars(
   outputProvider: ModuleOutputProvider,
 ): DerivedPluginJars {
   val layoutsByMainModule = TreeMap<String, MutableList<PluginLayout>>()
-  var frontendProduct = false
   for (properties in products) {
-    if (properties.embeddedFrontendRootModule != null) {
-      frontendProduct = true
-    }
     for (layout in properties.productLayout.pluginLayouts.value) {
       layoutsByMainModule.computeIfAbsent(layout.mainModule) { ArrayList() }.add(layout)
     }
@@ -261,7 +252,6 @@ fun derivePluginJars(
     outputProvider = outputProvider,
   )
 
-  val frontendRoots = if (frontendProduct) frontendIncompatibleRootModuleNames() else emptyList()
   val platformMembers = platformJars.platformJars.flatMapTo(HashSet()) { it.members }
   val layoutMemberOwners = HashMap<String, MutableSet<String>>()
   for ((owner, layouts) in layoutsByMainModule) {
@@ -274,8 +264,6 @@ fun derivePluginJars(
 
   // Each plugin is derived on its own, and the list keeps the population order. Every input the workers read is
   // complete before the first one starts.
-  // One frontend filter per project serves every plugin, because its answers depend on the project alone.
-  val frontends = ConcurrentHashMap<JpsProject, FrontendCompatibility>()
   val cache = PluginPackingCache()
   val plugins = spanBuilder("derive plugin jars").setAttribute("populationSize", population.size.toLong()).use { span ->
     // Only a recorded span gets the phase times.
@@ -292,9 +280,7 @@ fun derivePluginJars(
         facts = facts,
         project = project,
         outputProvider = outputProvider,
-        frontendRoots = frontendRoots,
         isPackedElsewhere = { name -> name in platformMembers || layoutMemberOwners.get(name)?.any { it != mainModule } == true },
-        frontend = frontends.computeIfAbsent(project) { FrontendCompatibility(roots = frontendRoots.toSet(), findModule = it::findModuleByName) },
         stats = stats,
         cache = cache,
       )

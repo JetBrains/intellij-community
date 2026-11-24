@@ -3,7 +3,6 @@ package com.intellij.platform.buildScripts.distGenerator
 
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.intellij.build.ContentModuleFilter
-import org.jetbrains.intellij.build.FrontendModuleFilter
 import org.jetbrains.intellij.build.JvmArchitecture
 import org.jetbrains.intellij.build.ModuleOutputProvider
 import org.jetbrains.intellij.build.OsFamily
@@ -18,12 +17,10 @@ import org.jetbrains.intellij.build.impl.PluginLayout
 import org.jetbrains.intellij.build.impl.SupportedDistribution
 import com.intellij.platform.productMode.ProductMode
 import org.jetbrains.intellij.build.impl.createContentModuleFilter
-import org.jetbrains.intellij.build.impl.createFrontendModuleFilter
 import org.jetbrains.intellij.build.impl.createProductModeContentModuleFilter
 import org.jetbrains.intellij.build.impl.distHostPlatform
 import org.jetbrains.intellij.build.impl.distHostPlatformArch
 import org.jetbrains.intellij.build.impl.distHostPlatformOs
-import org.jetbrains.intellij.build.impl.emptyFrontendModuleFilter
 import org.jetbrains.intellij.build.impl.isProductContentModuleScrambled
 import org.jetbrains.intellij.build.impl.osArchDescriptorMarker
 import org.jetbrains.intellij.build.isPluginModulePackedIntoSeparateJar
@@ -436,19 +433,6 @@ internal fun collectPluginDescriptorPlan(
   // them under that mode, and the run time excludes them. The product filter stays for the product descriptor.
   val pluginContentModuleFilter = pluginContentModuleFilter(properties, contentModuleFilter)
   val modeContentModuleFilters = refusingModes.associateTo(TreeMap()) { mode -> mode.id to createProductModeContentModuleFilter(project, mode) }
-  // The distribution keeps `BuildOptions.enableEmbeddedFrontend` at its default `true`. So the only question left
-  // is whether the product declares an embedded frontend root module, and `BuildOptions` is never read here. A frontend
-  // product takes the same filter, so it plans every plugin as its monolith does.
-  val frontendModuleFilter = when {
-    properties.embeddedFrontendRootModule != null || properties.productMode == ProductMode.FRONTEND -> createFrontendModuleFilter(project)
-    else -> {
-      check(properties.frontendModuleFilter == null) {
-        "Product '$platformPrefix' declares no embeddedFrontendRootModule yet states a frontendModuleFilter factory," +
-        " which takes a BuildContext this generator does not have"
-      }
-      emptyFrontendModuleFilter()
-    }
-  }
   // A frontend product writes no root descriptor of its own. It packs the embedded descriptor of the product that embeds
   // its frontend, see `DistEmbeddedFrontendClasses`.
   val embeddedFrontend = half.embeddedFrontend
@@ -460,7 +444,6 @@ internal fun collectPluginDescriptorPlan(
       properties = properties,
       platformPrefix = platformPrefix,
       outputProvider = outputProvider,
-      frontendModuleFilter = frontendModuleFilter,
       embeddedClasses = embeddedClasses,
       generatedClosureOf = generatedClosureOf,
     )
@@ -501,7 +484,6 @@ internal fun collectPluginDescriptorPlan(
         bazelTargets = bazelTargets,
         contentModuleFilter = pluginContentModuleFilter,
         modeContentModuleFilters = modeContentModuleFilters,
-        frontendModuleFilter = frontendModuleFilter,
         testPlugin = testPluginsByMainModule.get(mainModule),
         embeddedProductDescriptor = embeddedDescriptor?.plan.takeIf { mainModule == embeddedFrontend?.pluginMainModule },
         closureOf = closureOf,
@@ -995,7 +977,6 @@ private fun planEntry(
   contentModuleFilter: ContentModuleFilter,
   /** The filter of each refusing mode, keyed by the mode id, see [PluginDescriptorEntry.modeRefusedContentModules]. */
   modeContentModuleFilters: Map<String, ContentModuleFilter>,
-  frontendModuleFilter: FrontendModuleFilter,
   testPlugin: TestPluginSpec?,
   embeddedProductDescriptor: EmbeddedProductDescriptorPlan?,
   closureOf: (
@@ -1101,7 +1082,6 @@ private fun planEntry(
         layout = layout,
         closure = closure,
         outputProvider = outputProvider,
-        frontendModuleFilter = frontendModuleFilter,
       )
       else -> emptyList()
     },
@@ -1177,7 +1157,6 @@ private fun collectEmbeddedProductDescriptor(
   properties: ProductProperties,
   platformPrefix: String,
   outputProvider: ModuleOutputProvider,
-  frontendModuleFilter: FrontendModuleFilter,
   embeddedClasses: DistEmbeddedFrontendClasses,
   generatedClosureOf: (
     mainModule: String,
@@ -1229,7 +1208,6 @@ private fun collectEmbeddedProductDescriptor(
       layout = PluginLayout.pluginAuto(support.descriptorModule) {},
       closure = closure,
       outputProvider = outputProvider,
-      frontendModuleFilter = frontendModuleFilter,
     ).sorted(),
     frontendApplicationInfo = frontendApplicationInfo,
   )
@@ -1288,7 +1266,6 @@ private fun separateJarContentModules(
   layout: PluginLayout,
   closure: PluginDescriptorClosure,
   outputProvider: ModuleOutputProvider,
-  frontendModuleFilter: FrontendModuleFilter,
 ): List<String> {
   return closure.contentModules.filter { contentModule ->
     // A name that holds a `/` names a descriptor of another module, and the assembly refuses the attribute for it.
@@ -1305,7 +1282,6 @@ private fun separateJarContentModules(
     isPluginModulePackedIntoSeparateJar(
       module = module,
       layout = layout,
-      frontendModuleFilter = frontendModuleFilter,
       productionLibraryDependencies = getProductionLibraryDependencies(module),
     )
   }

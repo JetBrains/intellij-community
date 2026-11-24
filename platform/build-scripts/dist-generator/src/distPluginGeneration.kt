@@ -30,7 +30,6 @@ import org.jetbrains.intellij.build.dist.JarSourceRecipe
 import org.jetbrains.intellij.build.impl.LibraryEntriesLayoutPatcher
 import org.jetbrains.intellij.build.impl.PluginLayout
 import org.jetbrains.intellij.build.impl.SUPPORTED_DISTRIBUTIONS
-import org.jetbrains.intellij.build.impl.frontendIncompatibleRootModuleNames
 import org.jetbrains.intellij.build.impl.getLibNameBySourceFile
 import org.jetbrains.intellij.build.isTestModule
 import org.jetbrains.intellij.build.mapConcurrent
@@ -1416,8 +1415,6 @@ private fun descriptorFacts(
     pluginXmlInput = "unbound",
     moduleDescriptors = moduleDescriptors,
     isPluginXmlFinal = true,
-    // A frontend product takes the roots too, so it plans every plugin as its monolith does.
-    frontendRoots = if (properties.embeddedFrontendRootModule == null && properties.productMode != ProductMode.FRONTEND) emptySet() else frontendIncompatibleRootModuleNames().toSet(),
     packedElsewhere = packedElsewhere,
   )
 }

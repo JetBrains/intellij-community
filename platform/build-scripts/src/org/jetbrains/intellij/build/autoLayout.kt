@@ -15,7 +15,6 @@ import org.jetbrains.intellij.build.impl.contentModuleJarPath
 import org.jetbrains.intellij.build.impl.contentModuleNameToDescriptorFileName
 import org.jetbrains.intellij.build.impl.isAutoLayoutChild
 import org.jetbrains.intellij.build.impl.isOptionalLoadingRule
-import org.jetbrains.intellij.build.impl.pluginDefaultJarName
 import org.jetbrains.jps.model.module.JpsModule
 
 internal fun inferModuleSources(
@@ -27,7 +26,6 @@ internal fun inferModuleSources(
   searchableOptionSet: SearchableOptionSetDescriptor?,
   context: BuildContext,
 ) {
-  val frontendModuleFilter = context.getFrontendModuleFilter()
   val children = inferredAutoLayoutChildren(
     layout = layout,
     directDependencies = helper.getModuleDependencies(layout.mainModule),
@@ -36,7 +34,7 @@ internal fun inferModuleSources(
     pluginLayouts = context.productProperties.productLayout.pluginLayouts.value,
   )
   for (name in children) {
-    val moduleItem = ModuleItem(moduleName = name, relativeOutputFile = getDefaultJarName(layout, name, frontendModuleFilter), reason = "<- ${layout.mainModule}")
+    val moduleItem = ModuleItem(moduleName = name, relativeOutputFile = layout.getMainJarName(), reason = "<- ${layout.mainModule}")
     jarPackager.computeSourcesForModule(item = moduleItem, layout = layout, searchableOptionSet = searchableOptionSet)
   }
 }
@@ -123,7 +121,6 @@ internal fun computeModuleSourcesByContent(
     }
   }
 
-  val frontendModuleFilter = context.getFrontendModuleFilter()
   val contentModuleFilter = context.getContentModuleFilter()
   val refusedModules = LinkedHashSet<String>()
   val descriptorCacheWriter = pluginCachedDescriptorContainer.write()
@@ -142,7 +139,6 @@ internal fun computeModuleSourcesByContent(
       loadingRule = loadingRule,
       modulesWithCustomPath = modulesWithCustomPath,
       pluginLayout = pluginLayout,
-      frontendModuleFilter = frontendModuleFilter,
       helper = helper,
       context = context,
       pluginCachedDescriptorContainer = pluginCachedDescriptorContainer,
@@ -174,7 +170,6 @@ private fun computeOutputJarPath(
   loadingRule: String?,
   modulesWithCustomPath: Set<String>,
   pluginLayout: PluginLayout,
-  frontendModuleFilter: FrontendModuleFilter,
   helper: JarPackagerDependencyHelper,
   context: BuildContext,
   pluginCachedDescriptorContainer: ScopedCachedDescriptorContainer,
@@ -200,11 +195,7 @@ private fun computeOutputJarPath(
       }
       readXmlAsModel(descriptorData).getAttributeValue("package") != null
     },
-    packedIntoSeparateJar = { helper.isPluginModulePackedIntoSeparateJar(module, pluginLayout, frontendModuleFilter) },
-    frontendSplit = {
-      !frontendModuleFilter.isModuleCompatibleWithFrontend(pluginLayout.mainModule) &&
-      frontendModuleFilter.isModuleCompatibleWithFrontend(moduleName)
-    },
+    packedIntoSeparateJar = { helper.isPluginModulePackedIntoSeparateJar(module, pluginLayout) },
   )
 }
 
@@ -229,12 +220,6 @@ private fun findContentModuleDescriptorData(
   ) ?: return null
   descriptorCacheWriter.put(descriptorFileName, descriptorData)
   return descriptorData
-}
-
-private fun getDefaultJarName(layout: PluginLayout, moduleName: String, frontendModuleFilter: FrontendModuleFilter): String {
-  val frontendSplit = !frontendModuleFilter.isModuleCompatibleWithFrontend(layout.mainModule) &&
-                      frontendModuleFilter.isModuleCompatibleWithFrontend(moduleName)
-  return pluginDefaultJarName(layout.getMainJarName(), frontendSplit)
 }
 
 private fun isIncludedIntoAnotherPlugin(

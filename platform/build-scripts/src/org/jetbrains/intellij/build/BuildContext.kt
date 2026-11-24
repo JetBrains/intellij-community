@@ -152,8 +152,6 @@ interface BuildContext : CompilationContext {
     proprietaryBuildTools.signTool.signFiles(files = files, context = this, options = options)
   }
 
-  fun getFrontendModuleFilter(): FrontendModuleFilter
-
   /**
    * Creates a copy of this context with [org.jetbrains.intellij.build.ProductProperties] changed to a frontend variant (JetBrains Client) properties.
    * This is necessary to generate launchers and other data for the embedded frontend process in a distribution of the full IDE.

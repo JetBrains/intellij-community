@@ -240,11 +240,6 @@ class PluginJarDerivationTest {
     assertThat(derivePath(hasPackageAttribute = true, hasModuleLibraries = true)).isEqualTo("modules/$MEMBER.jar")
   }
 
-  @Test
-  fun `a frontend member of a plugin that is not frontend-compatible splits`() {
-    assertThat(derivePath(hasPackageAttribute = true, frontendSplit = true)).isEqualTo("modules/$MEMBER.jar")
-  }
-
   /** One demo plugin's jars, from the facts [composeDerivedPluginJars] takes and a fixed placement. */
   private fun derive(
     memberNames: List<String>,
@@ -280,14 +275,12 @@ class PluginJarDerivationTest {
     loadingRule: String? = null,
     hasPackageAttribute: Boolean = false,
     hasModuleLibraries: Boolean = false,
-    frontendSplit: Boolean = false,
   ): String = deriveMemberJarPath(
     moduleName = MEMBER,
     loadingRule = loadingRule,
     hasPackageAttribute = hasPackageAttribute,
     hasModuleLibraries = hasModuleLibraries,
     mainJarName = "demo.jar",
-    frontendSplit = frontendSplit,
   )
 
   private companion object {

@@ -56,7 +56,6 @@ data class PluginSymbolicDescriptorFacts(
   @JvmField val pluginXml: String?,
   @JvmField val pluginXmlInput: String,
   @JvmField val moduleDescriptors: Map<String, PluginSymbolicModuleDescriptor?>,
-  @JvmField val frontendRoots: Set<String> = emptySet(),
   @JvmField val packedElsewhere: Set<String> = emptySet(),
   /** The input already contains all descriptor callbacks and version patches. */
   @JvmField val isPluginXmlFinal: Boolean = false,

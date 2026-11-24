@@ -23,7 +23,6 @@ import org.jetbrains.intellij.build.BuiltinModulesFileData
 import org.jetbrains.intellij.build.CompilationContext
 import org.jetbrains.intellij.build.ContentModuleFilter
 import org.jetbrains.intellij.build.DistFile
-import org.jetbrains.intellij.build.FrontendModuleFilter
 import org.jetbrains.intellij.build.JarPackagerDependencyHelper
 import org.jetbrains.intellij.build.JvmArchitecture
 import org.jetbrains.intellij.build.LibcImpl
@@ -322,18 +321,6 @@ class BuildContextImpl internal constructor(
   override fun notifyArtifactBuilt(artifactPath: Path) {
     compilationContext.notifyArtifactBuilt(artifactPath)
   }
-
-  private val _frontendModuleFilter = sharedLazy(lifetime, "frontend module filter") {
-    val rootModule = productProperties.embeddedFrontendRootModule
-    if (rootModule != null && options.enableEmbeddedFrontend) {
-      FrontendModuleFilterImpl.createFrontendModuleFilter(project = project)
-    }
-    else {
-      productProperties.frontendModuleFilter?.invoke(this@BuildContextImpl) ?: EmptyFrontendModuleFilter
-    }
-  }
-
-  override fun getFrontendModuleFilter(): FrontendModuleFilter = _frontendModuleFilter.get()
 
   private val embeddedFrontendProductContext = sharedLazy(lifetime, "embedded frontend product context") {
     if (options.enableEmbeddedFrontend) {

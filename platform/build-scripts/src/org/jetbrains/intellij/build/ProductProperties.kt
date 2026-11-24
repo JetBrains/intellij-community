@@ -244,8 +244,6 @@ abstract class ProductProperties {
 
   /**
    * Specifies the main module of a frontend variant (JetBrains Client) which distribution should be embedded into the IDE's distribution.
-   * If it is set to a non-null value and [BuildOptions.enableEmbeddedFrontend] is set to `true`,
-   * `product-modules.xml` from the specified module is used to compute [FrontendModuleFilter].
    */
   @ApiStatus.Experimental
   var embeddedFrontendRootModule: String? = null
@@ -321,11 +319,6 @@ abstract class ProductProperties {
    * and the stdio MCP runner. A product that starts none of them sets it to `false`.
    */
   var launcherCustomCommands: Boolean = true
-
-  /**
-   * Custom frontend module filter
-   */
-  var frontendModuleFilter: ((BuildContext) -> FrontendModuleFilter)? = null
 
   /**
    * Maps each native library name (as extracted by `getLibNameBySourceFile`) to its output folder name under `lib/`.

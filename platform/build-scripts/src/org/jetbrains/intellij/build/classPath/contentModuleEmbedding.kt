@@ -28,7 +28,6 @@ import org.jdom.Namespace
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.DescriptorDependencyWalk
 import org.jetbrains.intellij.build.DescriptorSearchPass
-import org.jetbrains.intellij.build.FrontendModuleFilter
 import org.jetbrains.intellij.build.JarPackagerDependencyHelper
 import org.jetbrains.intellij.build.ModuleOutputProvider
 import org.jetbrains.intellij.build.PLUGIN_XML_RELATIVE_PATH
@@ -101,7 +100,6 @@ internal fun embedContentModules(
   xIncludeResolver: XIncludeElementResolverImpl,
   context: BuildContext,
 ) {
-  val frontendModuleFilter = context.getFrontendModuleFilter()
   val dependencyHelper = (context as BuildContextImpl).jarPackagerDependencyHelper
   for (contentElement in rootElement.getChildren("content")) {
     for (moduleElement in contentElement.getChildren("module")) {
@@ -113,7 +111,6 @@ internal fun embedContentModules(
         moduleName = moduleName,
         dependencyHelper = dependencyHelper,
         pluginLayout = pluginLayout,
-        frontendModuleFilter = frontendModuleFilter,
         outputProvider = context.outputProvider,
       )
     }
@@ -250,7 +247,6 @@ internal fun resolveAndCacheDescriptorForEmbeddedProduct(
         moduleName = moduleName,
         dependencyHelper = (context as BuildContextImpl).jarPackagerDependencyHelper,
         pluginLayout = pluginLayout,
-        frontendModuleFilter = context.getFrontendModuleFilter(),
         outputProvider = context.outputProvider,
       )
     }
@@ -275,7 +271,6 @@ internal fun embedContentModule(
   moduleName: String,
   dependencyHelper: JarPackagerDependencyHelper,
   pluginLayout: PluginLayout,
-  frontendModuleFilter: FrontendModuleFilter,
   outputProvider: ModuleOutputProvider,
 ) {
   resolveAndEmbedContentModuleDescriptor(
@@ -294,7 +289,6 @@ internal fun embedContentModule(
           dependencyHelper.isPluginModulePackedIntoSeparateJar(
             module = outputProvider.findRequiredModule(jpsModuleName),
             layout = pluginLayout,
-            frontendModuleFilter = frontendModuleFilter,
           )) {
         descriptor.setAttribute("separate-jar", "true")
       }

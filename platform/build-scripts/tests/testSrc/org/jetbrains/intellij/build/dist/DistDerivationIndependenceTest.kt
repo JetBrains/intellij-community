@@ -74,7 +74,7 @@ private class Forbidden(val name: String, val pattern: Regex) {
  * The derivation may read the `PluginLayout` and `PlatformLayout` accessors, such as `includedModules`,
  * `getMainJarName`, `directoryName`, `getIncludedProjectLibraries`, `getIncludedModuleLibraries`,
  * `getModulesWithExcludedModuleLibraries`, `getExcludedModuleLibraries`, `getResourceGeneratorProjectLibraries`,
- * `pathsToScramble` and `mainModule`. It may read `frontendIncompatibleRootModuleNames()` as a list, the JPS model,
+ * `pathsToScramble` and `mainModule`. It may read the JPS model,
  * a `ModuleOutputProvider`, and a descriptor file under a module source root. None of those is in this list.
  */
 private val FORBIDDEN: List<Forbidden> = listOf(
@@ -90,9 +90,6 @@ private val FORBIDDEN: List<Forbidden> = listOf(
   Forbidden("isPluginModulePackedIntoSeparateJar"),
   Forbidden("JarPackagerDependencyHelper"),
   Forbidden("JpsProductModeMatcher"),
-  Forbidden("FrontendModuleFilterImpl"),
-  Forbidden("createFrontendModuleFilter"),
-  Forbidden("FrontendModuleFilter"),
   Forbidden("XIncludeElementResolverImpl"),
   Forbidden("PluginXmlPatcher"),
   Forbidden("JarPackager"),

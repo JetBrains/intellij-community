@@ -5,7 +5,6 @@ package com.intellij.platform.buildScripts.pluginModelTool
 
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.intellij.build.ModuleOutputProvider
-import org.jetbrains.intellij.build.impl.pluginDefaultJarName
 import org.jetbrains.jps.model.JpsProject
 import org.jetbrains.jps.model.module.JpsModule
 import java.util.concurrent.ConcurrentHashMap
@@ -198,9 +197,6 @@ private inline fun <T> timed(counter: LongAdder?, block: () -> T): T {
  * `null` for a module the project does not hold. A module with no `META-INF/plugin.xml` in a production resource root
  * has an empty closure, so its members are the ones [facts] state, and its main jar holds the main module.
  *
- * [frontendRoots] are the modules a frontend-compatible module must not reach; see [FrontendCompatibility]. An empty
- * list is a product without an embedded frontend. [frontend] is the filter over them, which the plugins of one run can share.
- *
  * [stats] gets the time of each phase. A `null` [stats] measures nothing. [cache] holds the answers the packings of one run share.
  */
 @ApiStatus.Internal
@@ -209,13 +205,10 @@ fun derivePluginPacking(
   facts: PluginLayoutFacts,
   project: JpsProject,
   outputProvider: ModuleOutputProvider,
-  frontendRoots: List<String>,
   isPackedElsewhere: (String) -> Boolean = { false },
-  frontend: FrontendCompatibility = FrontendCompatibility(roots = frontendRoots.toSet(), findModule = project::findModuleByName),
   stats: PluginPackingStats? = null,
   cache: PluginPackingCache = PluginPackingCache(),
 ): DerivedPluginPacking? {
-  require(frontend.roots == frontendRoots.toSet()) { "The frontend filter has other roots than $frontendRoots" }
   val module = outputProvider.findModule(mainModule) ?: return null
   val findModule: (String) -> JpsModule? = outputProvider::findModule
   val closure = timed(stats?.closureNanos) {
@@ -231,7 +224,7 @@ fun derivePluginPacking(
       val packedByPlugin = closureMembers + facts.memberJars.keys
       val children = autoLayoutChildren(module = module, isPackedElsewhere = { it in packedByPlugin || isPackedElsewhere(it) })
       if (children.isNotEmpty()) {
-        effectiveResidue += autoLayoutResidue(mainModule = mainModule, mainJarName = facts.mainJarName, children = children, frontend = frontend)
+        effectiveResidue += autoLayoutResidue(mainModule = mainModule, mainJarName = facts.mainJarName, children = children)
       }
     }
   }
@@ -246,7 +239,6 @@ fun derivePluginPacking(
       mainModule = mainModule,
       mainJarName = facts.mainJarName,
       findModule = findModule,
-      frontend = frontend,
       residue = effectiveResidue,
       closure = closure,
       readMemberDescriptor = cache::memberDescriptorOf,
@@ -287,9 +279,7 @@ fun derivePluginPacking(
           facts = variant,
           project = project,
           outputProvider = outputProvider,
-          frontendRoots = frontendRoots,
           isPackedElsewhere = isPackedElsewhere,
-          frontend = frontend,
           cache = cache,
         ))
         for (jar in packing.jars) {
@@ -340,21 +330,13 @@ private fun coPackedMembers(memberJars: Map<String, Set<String>>, closureMembers
 }
 
 /**
- * The `auto` children of a plugin as members, with the `-frontend.jar` stated for a child the frontend filter splits.
+ * The `auto` children of a plugin as members.
  *
- * A child goes where a plain `withModule(name)` item goes: the main jar, or the plugin's `-frontend.jar` when the child
- * is frontend-compatible and the main module is not. The main jar is the default of the composition, so only the
- * frontend jar is a [PluginContentResidue.memberJars] row.
+ * A child goes where a plain `withModule(name)` item goes: the main jar.
+ * The main jar is the default of the composition.
  */
-private fun autoLayoutResidue(mainModule: String, mainJarName: String, children: List<String>, frontend: FrontendCompatibility): PluginContentResidue {
-  val frontendJarName = pluginDefaultJarName(mainJarName, frontendSplit = true)
-  val memberJars = LinkedHashMap<String, Set<String>>()
-  for (child in children) {
-    if (frontend.isSplit(mainModule = mainModule, member = child)) {
-      memberJars.put(child, setOf(frontendJarName))
-    }
-  }
-  return PluginContentResidue(extraMembers = children.toSet(), memberJars = memberJars)
+private fun autoLayoutResidue(mainModule: String, mainJarName: String, children: List<String>): PluginContentResidue {
+  return PluginContentResidue(extraMembers = children.toSet())
 }
 
 /**

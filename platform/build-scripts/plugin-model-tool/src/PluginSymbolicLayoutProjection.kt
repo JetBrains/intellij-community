@@ -23,7 +23,6 @@ import org.jetbrains.intellij.build.impl.hasOwnModuleLibraries
 import org.jetbrains.intellij.build.impl.isAutoLayoutChild
 import org.jetbrains.intellij.build.impl.isSeparateLibraryJar
 import org.jetbrains.intellij.build.impl.nameToJarFileName
-import org.jetbrains.intellij.build.impl.pluginDefaultJarName
 import org.jetbrains.intellij.build.impl.removeVersionFromJar
 import org.jetbrains.intellij.build.productLayout.util.getProductionModuleDependencies
 import org.jetbrains.intellij.build.productLayout.util.isProductionRuntimeDependency
@@ -73,7 +72,6 @@ private class SymbolicLayoutProjector(
   private val libraries = catalogue.libraries.associateBy { it.moduleName to it.libraryName }
   private val libraryFileCounts = catalogue.libraries.filter { it.id != null }.associate { requireNotNull(it.id) to it.files.size }
 
-  private val frontend = cache.frontend(descriptors.frontendRoots)
   private val assembly = PluginSymbolicJarAssembly()
   private val copiedFiles = HashSet<Pair<String, String>>()
   private val effects = LinkedHashMap<String, PluginSymbolicPreparedEffect>()
@@ -211,7 +209,7 @@ private class SymbolicLayoutProjector(
       for (dependency in mainModule?.getProductionModuleDependencies(withTests = false).orEmpty()) {
         val name = dependency.moduleReference.moduleName
         if (isAutoLayoutChild(mainModule = layout.mainModule, moduleName = name) && added.add(name) && name !in descriptors.packedElsewhere) {
-          result.add(ModuleItem(name, defaultJar(name), reason = null))
+          result.add(ModuleItem(name, layout.getMainJarName(), reason = null))
         }
       }
     }
@@ -240,14 +238,9 @@ private class SymbolicLayoutProjector(
         hasOwnModuleLibraries(
           productionLibraryDependencies = libraryDependencies(requireNotNull(module), withTests = false),
           librariesKeptOut = name in layout.getModulesWithExcludedModuleLibraries(),
-        ) || frontend.isSplit(layout.mainModule, name)
+        )
       },
-      frontendSplit = { frontend.isSplit(layout.mainModule, name) },
     )
-  }
-
-  private fun defaultJar(moduleName: String): String {
-    return pluginDefaultJarName(layout.getMainJarName(), frontend.isSplit(layout.mainModule, moduleName))
   }
 
   private fun addModule(item: ModuleItem) {

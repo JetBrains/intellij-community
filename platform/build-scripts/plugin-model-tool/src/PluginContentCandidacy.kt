@@ -76,7 +76,6 @@ fun derivePluginContentCandidacy(
   mainModule: String,
   mainJarName: String,
   findModule: (String) -> JpsModule?,
-  frontend: FrontendCompatibility,
   residue: PluginContentResidue,
   closure: WalkedContentModules?,
   /** Reads a member's own descriptor; see [memberDescriptor]. */
@@ -110,7 +109,6 @@ fun derivePluginContentCandidacy(
       mainModule = mainModule,
       mainJarName = mainJarName,
       libraries = ::librariesOf,
-      frontend = frontend,
       librariesKeptOut = member.name in residue.unmergedMembers,
       readMemberDescriptor = readMemberDescriptor,
     )
@@ -142,7 +140,6 @@ fun derivePluginContentCandidacy(
       mainModule = mainModule,
       mainJarName = mainJarName,
       libraries = ::librariesOf,
-      frontend = frontend,
       librariesKeptOut = member.name in residue.unmergedMembers,
       readMemberDescriptor = readMemberDescriptor,
     )
@@ -195,8 +192,6 @@ fun deriveMemberJarPath(
   hasPackageAttribute: Boolean,
   hasModuleLibraries: Boolean,
   mainJarName: String,
-  /** Whether the member is compatible with the frontend while the plugin's main module is not. */
-  frontendSplit: Boolean = false,
 ): String {
   return checkNotNull(contentModuleJarPath(
     moduleName = moduleName,
@@ -204,8 +199,7 @@ fun deriveMemberJarPath(
     hasCustomPath = false,
     mainJarName = mainJarName,
     hasPackageAttribute = { hasPackageAttribute },
-    packedIntoSeparateJar = { hasModuleLibraries || frontendSplit },
-    frontendSplit = { frontendSplit },
+    packedIntoSeparateJar = { hasModuleLibraries },
   ))
 }
 
@@ -289,7 +283,6 @@ private fun readMemberJar(
   mainModule: String,
   mainJarName: String,
   libraries: (JpsModule) -> MergedMemberLibraries,
-  frontend: FrontendCompatibility,
   librariesKeptOut: Boolean,
   readMemberDescriptor: (JpsModule) -> MemberDescriptorFacts?,
 ): DerivedMemberJar? {
@@ -303,7 +296,6 @@ private fun readMemberJar(
     libraries = merged.names,
     isStated = merged.isStated,
     mainJarName = mainJarName,
-    frontendSplit = frontend.isSplit(mainModule = mainModule, member = member.name),
   )
 }
 
@@ -325,7 +317,6 @@ fun deriveMemberJar(
   libraries: Set<String>?,
   isStated: Boolean,
   mainJarName: String,
-  frontendSplit: Boolean = false,
   hasModuleLibraries: Boolean = libraries == null || libraries.isNotEmpty(),
 ): DerivedMemberJar {
   val relativeOutputFile = deriveMemberJarPath(
@@ -334,7 +325,6 @@ fun deriveMemberJar(
     hasPackageAttribute = hasPackageAttribute,
     hasModuleLibraries = hasModuleLibraries,
     mainJarName = mainJarName,
-    frontendSplit = frontendSplit,
   )
   if (libraries == null) {
     return DerivedMemberJar(relativeOutputFile = relativeOutputFile, offer = null)
