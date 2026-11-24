@@ -91,7 +91,10 @@ interface SeSearchProjectHolders : Disposable {
    */
   fun searched(filter: SeFilterState): List<SeSearchProjectHolder>
 
-  /** The search project of [key] when [searched] gave it already, see [SeSearchProjectHolder.key]. A found item names its project so. */
+  /**
+   * The search project of [key] when [searched] gave it already, see [SeSearchProjectHolder.key]. A found item names its project so.
+   * The project of the popup is always known. `null` for a project that closed or that no search asked.
+   */
   fun created(key: String): SeSearchProjectHolder?
 }
 

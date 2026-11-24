@@ -259,14 +259,20 @@ class SeLocalItemDataProvider(
     }
   }
 
-  /** The provider that gave [itemData]: the provider of its search project, else [provider]. */
-  fun providerOf(itemData: SeItemData): SeItemsProvider = searchProjectProviderOf(itemData)?.first ?: provider
+  /**
+   * The provider that gave [itemData]: the provider of its search project, else [provider].
+   * `null` when another search project gave [itemData] and its provider is gone, for example after its project closed.
+   */
+  fun providerOf(itemData: SeItemData): SeItemsProvider? = ownerOf(itemData)?.provider
 
-  /** The provider and the project of another search project that gave [itemData]. */
-  private fun searchProjectProviderOf(itemData: SeItemData): Pair<SeItemsProvider, Project>? {
-    val key = itemData.additionalInfo[SeItemDataKeys.SEARCH_PROJECT] ?: return null
-    val searched = searchProjectHolders?.created(key) ?: return null
-    return searched.createdHolder()?.get(id, isAllTab)?.provider?.let { it to searched.project }
+  /** The provider that gave [itemData] and the project of a search project, see [providerOf]. */
+  private fun ownerOf(itemData: SeItemData): ItemOwner? {
+    val key = itemData.additionalInfo[SeItemDataKeys.SEARCH_PROJECT] ?: return ItemOwner(provider, null)
+    val holders = searchProjectHolders ?: return ItemOwner(provider, null)
+    val searched = holders.created(key) ?: return null
+    if (searched.isPopupProject) return ItemOwner(provider, null)
+    val searchedProvider = searched.createdHolder()?.get(id, isAllTab)?.provider ?: return null
+    return ItemOwner(searchedProvider, searched.project)
   }
 
   private suspend fun collectItemsWithRetry(
@@ -342,8 +348,9 @@ class SeLocalItemDataProvider(
     modifiers: Int,
     searchText: String,
   ): Boolean {
+    val provider = providerOf(itemData) ?: return false
     val item = itemData.fetchItemIfExists() ?: return false
-    return providerOf(itemData).itemSelected(item, modifiers, searchText)
+    return provider.itemSelected(item, modifiers, searchText)
   }
 
   suspend fun getSearchScopesInfo(): SearchScopesInfo? = provider.getSearchScopesInfo()
@@ -358,19 +365,19 @@ class SeLocalItemDataProvider(
   }
 
   suspend fun performExtendedAction(itemData: SeItemData): Boolean {
+    val provider = providerOf(itemData) ?: return false
     val item = itemData.fetchItemIfExists() ?: return false
-    val provider = providerOf(itemData)
     return withContext(Dispatchers.EDT) {
       provider.performExtendedAction(item)
     }
   }
 
   suspend fun getPreviewInfo(itemData: SeItemData, project: Project): SePreviewInfo? {
+    val owner = ownerOf(itemData) ?: return null
     val item = itemData.fetchItemIfExists() ?: return null
 
     // An item of another search project gets its preview from the provider and the project that found it.
-    val owner = searchProjectProviderOf(itemData)
-    return ((owner?.first ?: provider) as? SeItemsPreviewProvider)?.getPreviewInfo(item, owner?.second ?: project)
+    return (owner.provider as? SeItemsPreviewProvider)?.getPreviewInfo(item, owner.project ?: project)
   }
 
   override fun dispose() {
@@ -381,3 +388,6 @@ class SeLocalItemDataProvider(
 
 /** A found [item] and the key of the search project that gave it, see [SeItemDataKeys.SEARCH_PROJECT]. */
 private data class OwnedItem(val item: SeItem, val searchProjectKey: String?)
+
+/** The [provider] that found an item, and the [project] of its search project, or `null` for the project of the popup. */
+private class ItemOwner(val provider: SeItemsProvider, val project: Project?)

@@ -144,6 +144,38 @@ class SeSearchProjectsTest {
   }
 
   @Test
+  fun anItemOfThePopupProjectGoesToTheProviderOfThePopup() = timeoutRunBlocking {
+    val holder = holder(TestSearchProjects(listOf(popupProject, otherProject), SEARCHED_ID))
+    val dataProvider = holder.get(SeProviderId(SEARCHED_ID), true)!!
+    val itemOfPopup = holder.items(SEARCHED_ID).single { it.project() === popupProject }
+
+    dataProvider.itemSelected(itemOfPopup, 0, "query")
+
+    assertEquals(SeSearchProjectHolder.keyOf(popupProject), itemOfPopup.additionalInfo[SeItemDataKeys.SEARCH_PROJECT])
+    assertSame(dataProvider.provider, dataProvider.providerOf(itemOfPopup))
+    assertEquals(listOf(itemOfPopup.fetchItemIfExists()), (dataProvider.provider as TestProvider).selectedItems)
+  }
+
+  @Test
+  fun anItemOfAClosedSearchProjectGoesToNoProvider() = timeoutRunBlocking {
+    val searchProjects = TestSearchProjects(listOf(popupProject, otherProject), SEARCHED_ID)
+    val holder = holder(searchProjects)
+    val dataProvider = holder.get(SeProviderId(SEARCHED_ID), true)!!
+    val itemOfOther = holder.items(SEARCHED_ID).single { it.project() === otherProject }
+
+    searchProjects.holders.single().close(otherProject)
+
+    assertNull(dataProvider.providerOf(itemOfOther))
+    assertFalse(dataProvider.itemSelected(itemOfOther, 0, "query"), "an item of a closed search project is not selected")
+    assertFalse(dataProvider.performExtendedAction(itemOfOther))
+    assertNull(dataProvider.getPreviewInfo(itemOfOther, popupProject))
+    val popupProvider = dataProvider.provider as TestProvider
+    assertEquals(emptyList<SeItem>(), popupProvider.selectedItems.toList(), "the provider of the popup gets no item of another project")
+    assertEquals(emptyList<SeItem>(), popupProvider.extendedItems.toList())
+    assertEquals(emptyList<Project>(), popupProvider.previewProjects.toList())
+  }
+
+  @Test
   fun theHolderOfASearchProjectAsksNoSearchProjectsOfItsOwn() = timeoutRunBlocking {
     val factory = TestContributorFactory(contributorProjects) { it === popupProject }
     ExtensionTestUtil.maskExtensions(SearchEverywhereContributor.EP_NAME, listOf(factory), disposable)
@@ -366,8 +398,18 @@ class SeSearchProjectsTest {
       return picked.map { project -> SeSearchProjectHolder(project, if (project === popupProject) null else holderOf(project)) }
     }
 
-    override fun created(key: String): SeSearchProjectHolder? =
-      holders.entries.firstOrNull { SeSearchProjectHolder.keyOf(it.key) == key }?.let { SeSearchProjectHolder(it.key, it.value) }
+    override fun created(key: String): SeSearchProjectHolder? {
+      if (SeSearchProjectHolder.keyOf(popupProject) == key) return SeSearchProjectHolder(popupProject, null)
+      return holders.entries.firstOrNull { SeSearchProjectHolder.keyOf(it.key) == key }?.let { SeSearchProjectHolder(it.key, it.value) }
+    }
+
+    /** Forgets [project] and disposes its holder, the way a product does when the project closes. */
+    @OptIn(ExperimentalCoroutinesApi::class)
+    suspend fun close(project: Project) {
+      val holder = checkNotNull(holders.remove(project))
+      holder.await()
+      Disposer.dispose(holder.getCompleted())
+    }
 
     private fun holderOf(project: Project): Deferred<SeProvidersHolder> = holders.computeIfAbsent(project) {
       scope.async {
@@ -399,6 +441,7 @@ class SeSearchProjectsTest {
 
   private class TestProvider(override val id: String, val project: Project, val contributorProject: Project? = null) : SeItemsProvider, SeItemsPreviewProvider {
     val selectedItems = CopyOnWriteArrayList<SeItem>()
+    val extendedItems = CopyOnWriteArrayList<SeItem>()
     val previewProjects = CopyOnWriteArrayList<Project>()
 
     /** For each search: whether each forked task of a read action saw the mark of [project]. A goto model forks so. */
@@ -428,6 +471,11 @@ class SeSearchProjectsTest {
 
     override suspend fun itemSelected(item: SeItem, modifiers: Int, searchText: String): Boolean {
       selectedItems.add(item)
+      return true
+    }
+
+    override suspend fun performExtendedAction(item: SeItem): Boolean {
+      extendedItems.add(item)
       return true
     }
 
