@@ -113,32 +113,27 @@ class NotRoamableUiSettings @Internal constructor(): SerializablePersistentState
   }
 
   internal fun fixFontSettings() {
-    val state = state
-
-    // 1. Sometimes system font cannot display standard ASCII symbols.
-    // If so, we have to find any other suitable font withing "preferred" fonts first.
-    if (state.fontFace == null || FontUtil.isValidFont(Font(state.fontFace, Font.PLAIN, 1).deriveFont(state.fontSize))) {
-      return
-    }
-
-    var fontIsValid = false
-    for (preferredFont in arrayOf("dialog", "Arial", "Tahoma")) {
-      if (FontUtil.isValidFont(Font(preferredFont, Font.PLAIN, 1).deriveFont(state.fontSize))) {
-        updateState { it.copy(fontFace = preferredFont) }
-        fontIsValid = true
-        break
-      }
-    }
-
-    // 2. If all preferred fonts are not valid in the current environment,
-    // we have to find the first valid font (if any)
-    if (!fontIsValid) {
-      val fontNames = FontUtil.getValidFontNames(false)
-      if (fontNames.isNotEmpty()) {
-        updateState { it.copy(fontFace = fontNames[0]) }
-      }
+    val fontFace = state.fontFace ?: return
+    val validFontFace = findValidFontFace(fontFace, state.fontSize)
+    if (validFontFace != fontFace) {
+      updateState { it.copy(fontFace = validFontFace) }
     }
   }
+}
+
+/**
+ * Returns [fontFace] when its font can display the standard ASCII symbols at [fontSize]. A system font sometimes
+ * cannot. Then returns the first valid font of the preferred fonts, else the first valid font of the environment.
+ *
+ * @return [fontFace] also when no font of the environment is valid
+ */
+internal fun findValidFontFace(fontFace: String, fontSize: Float): String {
+  fun isValid(face: String): Boolean = FontUtil.isValidFont(Font(face, Font.PLAIN, 1).deriveFont(fontSize))
+
+  if (isValid(fontFace)) {
+    return fontFace
+  }
+  return arrayOf("dialog", "Arial", "Tahoma").firstOrNull(::isValid) ?: FontUtil.getValidFontNames(false).firstOrNull() ?: fontFace
 }
 
 @ConsistentCopyVisibility
