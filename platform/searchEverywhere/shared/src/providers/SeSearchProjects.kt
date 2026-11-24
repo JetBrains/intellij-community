@@ -51,9 +51,11 @@ interface SeSearchProjects {
   /**
    * The scope of a search with [filter] for a provider that reaches every search project in one run of the project of
    * the popup: the text search. Such a provider is not in [providerIds].
+   * [everywhereScope] is the "All Places" scope of the project of the popup when [filter] asks for every place, else
+   * `null`. The result then adds the places outside the search projects.
    * `null` when the product has no such scope. The provider then searches in its own scope.
    */
-  fun scopeOf(filter: SeFilterState): GlobalSearchScope? = null
+  fun scopeOf(filter: SeFilterState, everywhereScope: GlobalSearchScope?): GlobalSearchScope? = null
 
   /**
    * The holders of the search projects for one popup, which opens with [initEvent] and [session].

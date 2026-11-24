@@ -32,6 +32,7 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertNotEquals
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertSame
@@ -173,13 +174,17 @@ class SeTextItemsProviderTest {
     val project = project
     val scopeOfSearchProjects = GlobalSearchScope.fileScope(project, haystack)
     val scopeFilter = AtomicReference<SeFilterState>()
+    val everywhereScopes = AtomicReference<GlobalSearchScope?>()
+    // The answer of the product for every place: `null` keeps the everywhere scope of the platform.
+    val everywhereAnswer = AtomicReference<GlobalSearchScope?>()
     ExtensionTestUtil.maskExtensions(SeSearchProjectsProvider.EP_NAME, listOf(object : SeSearchProjectsProvider {
       override fun getSearchProjects(project: Project): SeSearchProjects = object : SeSearchProjects {
         override val providerIds: Set<SeProviderId> get() = emptySet()
 
-        override fun scopeOf(filter: SeFilterState): GlobalSearchScope {
+        override fun scopeOf(filter: SeFilterState, everywhereScope: GlobalSearchScope?): GlobalSearchScope? {
           scopeFilter.set(filter)
-          return scopeOfSearchProjects
+          everywhereScopes.set(everywhereScope)
+          return if (everywhereScope == null) scopeOfSearchProjects else everywhereAnswer.get()
         }
 
         override fun createHolders(initEvent: AnActionEvent, session: SeSession): SeSearchProjectHolders = throw UnsupportedOperationException()
@@ -196,6 +201,11 @@ class SeTextItemsProviderTest {
       assertEquals(2, provider.search("needle", textFilter).size)
       assertEquals(emptyList<String>(), provider.search("eedafea0f30d", allTabFilter), "the All tab searches in the scope of the search projects")
       assertEquals(1, provider.search("eedafea0f30d", everywhereFilter).size, "the everywhere flag searches everywhere")
+      assertNotNull(everywhereScopes.get(), "the product gets the everywhere scope of the platform for every place")
+
+      everywhereAnswer.set(scopeOfSearchProjects)
+      assertEquals(emptyList<String>(), provider.search("eedafea0f30d", everywhereFilter),
+                   "for every place, the scope of the product holds, so a pick of the product holds too")
     }
   }
 
