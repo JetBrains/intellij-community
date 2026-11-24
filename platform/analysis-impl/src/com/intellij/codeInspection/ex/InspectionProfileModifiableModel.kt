@@ -87,8 +87,9 @@ open class InspectionProfileModifiableModel(val source: InspectionProfileImpl)
 
   fun resetToEmpty(project: Project) {
     initInspectionTools(project)
+    // every tool of the profile, also a tool that the techs of the project hide
     for (toolWrapper in getInspectionTools(null)) {
-      setToolEnabled(toolWrapper.shortName, false, project, /*fireEvents =*/ false)
+      setToolEnabled(toolWrapper.shortName, false, null, /*fireEvents =*/ false)
     }
   }
 

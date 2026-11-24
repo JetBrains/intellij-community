@@ -467,19 +467,21 @@ public class InspectionProfileImpl extends NewInspectionProfile {
 
   public InspectionToolWrapper<?, ?> getToolById(@NotNull String id, @NotNull PsiElement element) {
     initInspectionTools();
+    Project filterProject = getReadFilterProject(element.getProject());
     for (Tools toolList : myTools.values()) {
       InspectionToolWrapper<?, ?> tool = toolList.getInspectionTool(element);
-      if (id.equals(tool.getID())) return tool;
+      if (id.equals(tool.getID()) && (filterProject == null || isApplicableToProject(tool, filterProject))) return tool;
     }
     return null;
   }
 
   public @Unmodifiable @NotNull List<InspectionToolWrapper<?, ?>> findToolsById(@NotNull String id, @NotNull PsiElement element) {
     initInspectionTools();
+    Project filterProject = getReadFilterProject(element.getProject());
     List<InspectionToolWrapper<?, ?>> result = null;
     for (Tools toolList : myTools.values()) {
       InspectionToolWrapper<?, ?> tool = toolList.getInspectionTool(element);
-      if (id.equals(tool.getID())) {
+      if (id.equals(tool.getID()) && (filterProject == null || isApplicableToProject(tool, filterProject))) {
         if (result == null) {
           result = new ArrayList<>();
         }
@@ -533,9 +535,13 @@ public class InspectionProfileImpl extends NewInspectionProfile {
   @Override
   public @NotNull List<InspectionToolWrapper<?, ?>> getInspectionTools(@Nullable PsiElement element) {
     initInspectionTools();
+    Project filterProject = getReadFilterProject(element == null ? null : element.getProject());
     List<InspectionToolWrapper<?, ?>> result = new ArrayList<>(myTools.size());
     for (Tools toolList : myTools.values()) {
-      result.add(toolList.getInspectionTool(element));
+      InspectionToolWrapper<?, ?> tool = toolList.getInspectionTool(element);
+      if (filterProject == null || isApplicableToProject(tool, filterProject)) {
+        result.add(tool);
+      }
     }
     return result;
   }
@@ -547,11 +553,15 @@ public class InspectionProfileImpl extends NewInspectionProfile {
     List<Tools> result = new ArrayList<>();
     Set<String> projectTypes = ProjectTypeService.getProjectTypeIds(project);
     boolean isTests = ApplicationManager.getApplication().isUnitTestMode();
+    Project filterProject = getReadFilterProject(project);
 
     for (ToolsImpl toolList : myTools.values()) {
       if (toolList.isEnabled()) {
         InspectionToolWrapper<?, ?> toolWrapper = toolList.getTool();
         if (!isTests && !toolWrapper.isApplicable(projectTypes)) {
+          continue;
+        }
+        if (filterProject != null && !isApplicableToProject(toolWrapper, filterProject)) {
           continue;
         }
 
@@ -607,7 +617,7 @@ public class InspectionProfileImpl extends NewInspectionProfile {
       return;
     }
     // The inspections are application-level extensions, applicable to a project when the project has their techs enabled.
-    // A profile of one project holds only the applicable tools. A shared profile holds every tool.
+    // A profile of one project holds only the applicable tools. A shared profile holds every tool, see `getReadFilterProject`.
     Project ownerProject = getDefaultProject();
     if (ownerProject != null && TechnologyFilter.getInstance().isRestricted(ownerProject)) {
       tools = ContainerUtil.filter(tools, tool -> isApplicableToProject(tool, ownerProject));
@@ -666,6 +676,16 @@ public class InspectionProfileImpl extends NewInspectionProfile {
   private static boolean isApplicableToProject(@NotNull InspectionToolWrapper<?, ?> toolWrapper, @NotNull Project project) {
     PluginDescriptor module = toolWrapper.getRegistrantModule();
     return module == null || TechnologyFilter.getInstance().isApplicable(module, project);
+  }
+
+  /**
+   * The project whose techs filter a read of this profile, or {@code null} when the read takes every tool of the profile.
+   * A profile of one project holds only the applicable tools, so its reads do not filter.
+   * A shared profile serves many projects and holds every tool, so each read for a restricted {@code project} filters.
+   */
+  private @Nullable Project getReadFilterProject(@Nullable Project project) {
+    if (project == null || getDefaultProject() != null) return null;
+    return TechnologyFilter.getInstance().isRestricted(project) ? project : null;
   }
 
   /** Whether {@code toolWrapper} is a {@link DynamicGroupTool} that can have children. */
@@ -778,14 +798,12 @@ public class InspectionProfileImpl extends NewInspectionProfile {
       return;
     }
 
-    HighlightDisplayLevel baseLevel = myBaseProfile != null && myBaseProfile.getToolsOrNull(shortName, project) != null
-                                      ? myBaseProfile.getErrorLevel(key, project)
-                                      : HighlightDisplayLevel.DO_NOT_SHOW;
+    // the base profile gives the defaults of the tool, whatever the techs of `project`
+    ToolsImpl baseTools = myBaseProfile != null ? myBaseProfile.getToolsOrNull(shortName, null) : null;
+    HighlightDisplayLevel baseLevel = baseTools != null ? baseTools.getLevel() : HighlightDisplayLevel.DO_NOT_SHOW;
     HighlightDisplayLevel defaultLevel = toolWrapper.getDefaultLevel();
     HighlightDisplayLevel level = baseLevel.getSeverity().compareTo(defaultLevel.getSeverity()) > 0 ? baseLevel : defaultLevel;
-    boolean enabled = myBaseProfile != null && myBaseProfile.getToolsOrNull(shortName, project) != null
-                      ? myBaseProfile.isToolEnabled(key)
-                      : toolWrapper.isEnabledByDefault();
+    boolean enabled = baseTools != null ? baseTools.isEnabled(null) : toolWrapper.isEnabledByDefault();
     ToolsImpl toolsList = new ToolsImpl(toolWrapper, level, !myLockedProfile && enabled, enabled, null);
     Element element = myUninitializedSettings.remove(shortName);
     try {
@@ -880,10 +898,6 @@ public class InspectionProfileImpl extends NewInspectionProfile {
     }
   }
 
-  private @NotNull HighlightDisplayLevel getErrorLevel(@NotNull HighlightDisplayKey key, @Nullable Project project) {
-    return getTools(key.getShortName(), project).getLevel();
-  }
-
   @TestOnly
   public @NotNull InspectionProfileModifiableModel getModifiableModel() {
     return new InspectionProfileModifiableModel(this);
@@ -964,8 +978,9 @@ public class InspectionProfileImpl extends NewInspectionProfile {
   @Override
   public boolean isExecutable(@Nullable Project project) {
     initInspectionTools();
-    for (Tools tools : myTools.values()) {
-      if (tools.isEnabled()) return true;
+    Project filterProject = getReadFilterProject(project);
+    for (ToolsImpl tools : myTools.values()) {
+      if (tools.isEnabled() && (filterProject == null || isApplicableToProject(tools.getTool(), filterProject))) return true;
     }
     return false;
   }
@@ -1063,11 +1078,15 @@ public class InspectionProfileImpl extends NewInspectionProfile {
     return result;
   }
 
-  public @NotNull List<ScopeToolState> getDefaultStates(@SuppressWarnings("unused") @Nullable Project project) {
+  public @NotNull List<ScopeToolState> getDefaultStates(@Nullable Project project) {
     initInspectionTools();
+    Project filterProject = getReadFilterProject(project);
     List<ScopeToolState> result = new ArrayList<>();
     for (Tools tools : myTools.values()) {
-      result.add(tools.getDefaultState());
+      ScopeToolState state = tools.getDefaultState();
+      if (filterProject == null || isApplicableToProject(state.getTool(), filterProject)) {
+        result.add(state);
+      }
     }
     return result;
   }
@@ -1203,9 +1222,16 @@ public class InspectionProfileImpl extends NewInspectionProfile {
       () -> "Can't find tools for \"" + name + "\" in the profile \"" + getName() + "\"");
   }
 
+  /**
+   * The tools of the profile for the short name {@code name}.
+   * {@code null} when the profile has no such tool, or when the techs of {@code project} hide the tool of a shared profile.
+   */
   public @Nullable ToolsImpl getToolsOrNull(@NotNull String name, @Nullable Project project) {
     initInspectionTools();
-    return myTools.get(name);
+    ToolsImpl tools = myTools.get(name);
+    if (tools == null) return null;
+    Project filterProject = getReadFilterProject(project);
+    return filterProject == null || isApplicableToProject(tools.getTool(), filterProject) ? tools : null;
   }
 
   public @NotNull Collection<ToolsImpl> getTools() {
@@ -1213,15 +1239,17 @@ public class InspectionProfileImpl extends NewInspectionProfile {
     return myTools.values();
   }
 
-  public void enableAllTools(@NotNull Project project) {
+  /** Enables every tool of the profile, also a tool that the techs of {@code project} hide. */
+  public void enableAllTools(@SuppressWarnings("unused") @NotNull Project project) {
     for (InspectionToolWrapper<?, ?> entry : getInspectionTools(null)) {
-      enableTool(entry.getShortName(), project);
+      setToolEnabled(entry.getShortName(), true);
     }
   }
 
-  public void disableAllTools(@NotNull Project project) {
+  /** Disables every tool of the profile, also a tool that the techs of {@code project} hide. */
+  public void disableAllTools(@SuppressWarnings("unused") @NotNull Project project) {
     for (InspectionToolWrapper<?, ?> entry : getInspectionTools(null)) {
-      setToolEnabled(entry.getShortName(), false, project);
+      setToolEnabled(entry.getShortName(), false);
     }
   }
 

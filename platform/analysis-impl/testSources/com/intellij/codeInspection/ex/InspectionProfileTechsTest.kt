@@ -24,12 +24,16 @@ import com.intellij.testFramework.junit5.TestDisposable
 import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.testFramework.registerOrReplaceServiceInstance
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 
 /**
- * An inspection profile of a project holds only the tools of the modules that [TechnologyFilter] accepts.
+ * An inspection profile gives a project only the tools of the modules that [TechnologyFilter] accepts.
+ * A profile of one project holds only these tools. A shared profile holds every tool and filters at each read.
  */
 @TestApplication
 internal class InspectionProfileTechsTest {
@@ -100,6 +104,50 @@ internal class InspectionProfileTechsTest {
   }
 
   @Test
+  fun `a shared profile holds every tool and filters at each read`() {
+    val filter = installFilter(applicable = setOf(plainModule.pluginId))
+    val profile = sharedProfile(listOf(extensionTool(PLAIN_TOOL, plainModule), extensionTool(JAVA_TOOL, javaModule)))
+    // the restricted project is the first caller
+    profile.initInspectionTools(project)
+
+    assertEquals(setOf(PLAIN_TOOL, JAVA_TOOL), shortNames(profile.tools))
+    assertEquals(setOf(PLAIN_TOOL, JAVA_TOOL), profile.getInspectionTools(null).mapTo(HashSet()) { it.shortName })
+
+    assertNull(profile.getToolsOrNull(JAVA_TOOL, project))
+    assertNotNull(profile.getToolsOrNull(PLAIN_TOOL, project))
+    assertEquals(setOf(PLAIN_TOOL), shortNames(profile.getAllEnabledInspectionTools(project)))
+    assertEquals(setOf(PLAIN_TOOL), profile.getDefaultStates(project).mapTo(HashSet()) { it.tool.shortName })
+
+    assertNotNull(profile.getToolsOrNull(JAVA_TOOL, otherProject))
+    assertEquals(setOf(PLAIN_TOOL, JAVA_TOOL), shortNames(profile.getAllEnabledInspectionTools(otherProject)))
+    assertEquals(setOf(PLAIN_TOOL, JAVA_TOOL), profile.getDefaultStates(otherProject).mapTo(HashSet()) { it.tool.shortName })
+
+    // a read follows the filter without an event
+    filter.applicable = setOf(plainModule.pluginId, javaModule.pluginId)
+    assertNotNull(profile.getToolsOrNull(JAVA_TOOL, project))
+    assertEquals(setOf(PLAIN_TOOL, JAVA_TOOL), shortNames(profile.getAllEnabledInspectionTools(project)))
+  }
+
+  @Test
+  fun `a bulk change of a shared profile takes also the hidden tools`() {
+    installFilter(applicable = setOf(plainModule.pluginId))
+    val profile = sharedProfile(listOf(extensionTool(PLAIN_TOOL, plainModule), extensionTool(JAVA_TOOL, javaModule)))
+
+    profile.disableAllTools(project)
+    assertFalse(profile.getTools(JAVA_TOOL, null).isEnabled)
+    assertFalse(profile.getTools(PLAIN_TOOL, null).isEnabled)
+
+    profile.enableAllTools(project)
+    assertTrue(profile.getTools(JAVA_TOOL, null).isEnabled)
+
+    val model = InspectionProfileModifiableModel(profile)
+    model.resetToEmpty(project)
+    assertFalse(model.getTools(JAVA_TOOL, null).isEnabled)
+    assertEquals(setOf(PLAIN_TOOL), model.getDefaultStates(project).mapTo(HashSet()) { it.tool.shortName })
+    assertEquals(setOf(PLAIN_TOOL, JAVA_TOOL), shortNames(model.tools))
+  }
+
+  @Test
   fun `a tool of a tool provider follows the module of its provider`() {
     val registrar = InspectionToolRegistrar.getInstance()
     ApplicationManager.getApplication().extensionArea
@@ -142,6 +190,13 @@ internal class InspectionProfileTechsTest {
     val profile = InspectionProfileImpl("of project", supplier, ProjectInspectionProfileManager.getInstance(project), base, null)
     profile.initInspectionTools(project)
     // the profile stops its listeners, so it does not answer the filter change of a later test
+    Disposer.register(testDisposable) { profile.cleanup(project) }
+    return profile
+  }
+
+  /** A profile that no project owns, as an IDE-level profile. */
+  private fun sharedProfile(tools: List<InspectionToolWrapper<*, *>>): InspectionProfileImpl {
+    val profile = InspectionProfileImpl("shared", InspectionToolsSupplier.Simple(tools), appProfileManager, null, null)
     Disposer.register(testDisposable) { profile.cleanup(project) }
     return profile
   }
