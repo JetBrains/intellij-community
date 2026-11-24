@@ -22,6 +22,7 @@ import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -268,7 +269,12 @@ public class PsiSnippetDocTagImpl extends CompositePsiElement implements PsiSnip
 
         int i = 0;
         boolean decoded = false;
-        for (TextRange range : ranges) {
+        // the comparator never returns 0, so the search gives the insertion index: the first range at or after the start
+        final int start = rangeInsideHost.getStartOffset();
+        final int first = -ObjectUtils.binarySearch(0, ranges.size(), index -> ranges.get(index).getStartOffset() < start ? -1 : 1) - 1;
+        for (int rangeIndex = first; rangeIndex < ranges.size(); rangeIndex++) {
+          final TextRange range = ranges.get(rangeIndex);
+          if (range.getStartOffset() > rangeInsideHost.getEndOffset()) break;
           if (!rangeInsideHost.contains(range)) continue;
 
           for (int j = 0; j < range.getLength(); j++) {
