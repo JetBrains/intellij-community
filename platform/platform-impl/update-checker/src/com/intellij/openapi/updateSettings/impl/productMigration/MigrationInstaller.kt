@@ -38,7 +38,7 @@ private const val CODESIGN_DISPLAY_TIMEOUT_MS = 60 * 1000
 private const val CODESIGN = "/usr/bin/codesign"
 private const val CODESIGN_INVALID = 1
 private const val CODESIGN_REQUIREMENT_FAILED = 3
-private const val ALLOW_UNSIGNED_PROPERTY = "ide.update.migration.allow.unsigned"
+internal const val ALLOW_UNSIGNED_PROPERTY: String = "ide.update.migration.allow.unsigned"
 private const val TEAM_ID_PREFIX = "TeamIdentifier="
 private val TEAM_ID = Regex("[A-Z0-9]{10}")
 
@@ -336,5 +336,5 @@ private fun deleteLogged(path: Path) {
 private fun checksumError(logMessage: String, cause: Throwable?): MigrationInstallException =
   MigrationInstallException(IdeBundle.message("updates.migration.error.checksum"), logMessage, cause)
 
-private fun installError(reason: String, cause: Throwable? = null): MigrationInstallException =
+internal fun installError(reason: String, cause: Throwable? = null): MigrationInstallException =
   MigrationInstallException(IdeBundle.message("updates.migration.error.install"), reason, cause)
