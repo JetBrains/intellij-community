@@ -29,6 +29,7 @@ class ConvertReceiverParameterToContextParameterIntention : SelfTargetingIntenti
     override fun isApplicableTo(element: KtTypeReference, caretOffset: Int): Boolean {
         if (!element.languageVersionSettings.supportsFeature(LanguageFeature.ContextParameters)) return false
         val callable = element.parent as? KtCallableDeclaration ?: return false
+        if (callable is KtNamedFunction && callable.name == null) return false
         return callable.receiverTypeReference == element && (callable is KtNamedFunction || callable is KtProperty)
     }
 

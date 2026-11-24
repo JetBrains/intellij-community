@@ -16138,6 +16138,11 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
 
+            @TestMetadata("anonymousFunction.kt")
+            public void testAnonymousFunction() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/contextParameters/receiverToContextParameter/anonymousFunction.kt");
+            }
+
             @TestMetadata("argumentPosition.kt")
             public void testArgumentPosition() throws Exception {
                 runTest("../../../idea/tests/testData/intentions/contextParameters/receiverToContextParameter/argumentPosition.kt");
