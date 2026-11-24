@@ -7,6 +7,7 @@ import com.intellij.codeInspection.LocalInspectionTool
 import com.intellij.codeInspection.ex.InspectionProfileImpl
 import com.intellij.idea.TestFor
 import com.intellij.lang.annotation.HighlightSeverity
+import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.application.runReadActionBlocking
@@ -18,6 +19,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.RecursionManager
+import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.StandardFileSystems
@@ -26,6 +28,8 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiLanguageInjectionHost
+import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.impl.source.PsiFileImpl
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.findParentOfType
@@ -844,7 +848,9 @@ abstract class PyCodeInsightTestCase {
   }
 
   private fun createActualAssertionsForNonInspections(expectedAssertion: PyTestAssertion): PyTestAssertion {
-    val element = PsiTreeUtil.getParentOfType(myFixture.file.findElementAt(expectedAssertion.codeOffsetStart), PsiElement::class.java)
+    val injectionManager = InjectedLanguageManager.getInstance(myFixture.project)
+    val leaf = findInjectedLeaf(expectedAssertion) ?: myFixture.file.findElementAt(expectedAssertion.codeOffsetStart)
+    val element = PsiTreeUtil.getParentOfType(leaf, PsiElement::class.java)
     if (element == null) {
       val msg = if (expectedAssertion.isInlineAssertion())
         "No element found in line ${expectedAssertion.codeLineStart}"
@@ -855,9 +861,11 @@ abstract class PyCodeInsightTestCase {
       return actualAssertion
     }
 
+    fun hostRange(element: PsiElement): TextRange = injectionManager.injectedToHost(element, element.textRange)
+
     var parent: PsiElement = element
     if (expectedAssertion.codeColumnEnd > 0) {
-      while (parent.textRange.endOffset < expectedAssertion.codeOffsetStart - expectedAssertion.codeColumnStart + expectedAssertion.codeColumnEnd) {
+      while (hostRange(parent).endOffset < expectedAssertion.codeOffsetStart - expectedAssertion.codeColumnStart + expectedAssertion.codeColumnEnd) {
         parent = parent.parent ?: break
       }
     }
@@ -885,6 +893,23 @@ abstract class PyCodeInsightTestCase {
     val fixmeContent = if (expectedAssertion.fixmeContent == actualContent) "You fixed it!" else expectedAssertion.fixmeContent
     val actualAssertion = expectedAssertion.withContent(actualContent, fixmeContent)
     return actualAssertion
+  }
+
+  /**
+   * Returns the leaf of an injected fragment at the marker. For an inline assertion, returns the first leaf of a fragment
+   * on the line when the line starts inside an injection host, as a line of a doctest does. An assertion there checks the
+   * element of the fragment, not the host string.
+   */
+  private fun findInjectedLeaf(expectedAssertion: PyTestAssertion): PsiElement? {
+    val injectionManager = InjectedLanguageManager.getInstance(myFixture.project)
+    val file = myFixture.file
+    if (!expectedAssertion.isInlineAssertion()) return injectionManager.findInjectedElementAt(file, expectedAssertion.codeOffsetStart)
+    val lineStart = file.findElementAt(expectedAssertion.codeOffsetStart)
+    if (PsiTreeUtil.getParentOfType(lineStart, PsiLanguageInjectionHost::class.java, false) == null) return null
+    val lineEnd = file.fileDocument.getLineEndOffset(expectedAssertion.codeLineStart)
+    return (expectedAssertion.codeOffsetStart until lineEnd).firstNotNullOfOrNull { offset ->
+      injectionManager.findInjectedElementAt(file, offset)?.takeIf { it !is PsiWhiteSpace }
+    }
   }
 
   /** Asserts the declared or inferred type of a given typable element. */
