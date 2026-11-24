@@ -378,6 +378,34 @@ class WebBrowserManagerStateTest {
     assertEquals(chromeId, load("""<state chromiumBasedBrowser="${UUID.randomUUID()}" />""").chromiumBasedBrowser.id)
   }
 
+  @Test
+  fun `picked search engine survives reload`() {
+    val manager = WebBrowserManager()
+    assertEquals(SearchEngine.DUCKDUCKGO, manager.searchEngine)
+    manager.searchEngine = SearchEngine.GOOGLE
+
+    assertEquals("""<state searchEngine="google" />""", write(manager))
+    assertEquals(SearchEngine.GOOGLE, reload(manager).searchEngine)
+  }
+
+  @Test
+  fun `changed search engine changes the modification count`() {
+    val manager = WebBrowserManager()
+    val count = manager.modificationCount
+    manager.searchEngine = SearchEngine.BING
+    assertTrue(manager.modificationCount > count)
+  }
+
+  @Test
+  fun `search engine reads the name in any case`() {
+    assertEquals(SearchEngine.GOOGLE, load("""<state searchEngine="GOOGLE" />""").searchEngine)
+  }
+
+  @Test
+  fun `unknown search engine gives the default search engine`() {
+    assertEquals(SearchEngine.DUCKDUCKGO, load("""<state searchEngine="unknown" />""").searchEngine)
+  }
+
   @Suppress("DEPRECATION")
   @Test
   fun `deprecated policy getter reports the system default or a browser of the list`() {
