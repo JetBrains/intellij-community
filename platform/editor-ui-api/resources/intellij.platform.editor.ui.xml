@@ -82,6 +82,7 @@
     <applicationService serviceImplementation="com.intellij.ide.ui.NotRoamableUiSettings" />
     <applicationService serviceImplementation="com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorCustomizer" open="true"/>
     <applicationSettings service="com.intellij.ide.ui.NotRoamableUiSettings"/>
+    <settings.v2.keyPromoter implementation="com.intellij.ide.ui.UISettingsKeysPromoter"/>
     <applicationService serviceImplementation="com.intellij.openapi.editor.EditorCoroutineScopeService"/>
     <projectService serviceImplementation="com.intellij.openapi.editor.EditorCoroutineScopeService"/>
     <applicationService serviceInterface="com.intellij.openapi.editor.registry.EditorRegistryService"
