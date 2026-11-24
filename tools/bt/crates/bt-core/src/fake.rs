@@ -60,6 +60,7 @@ pub fn timing(label: &str, classes: &[(&str, f64)]) -> crate::result::TargetTimi
     crate::result::TargetTiming {
         label: label.to_owned(),
         class_seconds: classes.iter().map(|(class, seconds)| ((*class).to_owned(), *seconds)).collect(),
+        fixed_seconds: None,
     }
 }
 

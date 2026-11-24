@@ -261,3 +261,24 @@ fn a_shard_timeout_raises_the_record_only_when_the_target_becomes_heavy() {
     assert!(plan.record_lower_bound(&timing("//b:t", &[("com.E", 300.0)])));
     assert_eq!(plan.shards_of("//b:t"), 4);
 }
+
+/// The fixed seconds of a target travel in a line of their own, which an older bt skips.
+#[test]
+fn the_fixed_seconds_of_a_target_read_back_and_a_record_without_them_keeps_the_old_value() {
+    let mut plan = ShardPlan::default();
+    plan.record(&TargetTiming {
+        fixed_seconds: Some(8.5),
+        ..timing("//a:t", &[("com.A", 1.0)])
+    });
+    assert!(
+        plan.render().contains("class\t//a:t\tcom.A\t1.000\nfixed\t//a:t\t8.500\n"),
+        "{}",
+        plan.render()
+    );
+    assert_eq!(ShardPlan::parse(&plan.render()), plan);
+    assert_eq!(plan.fixed_of("//a:t"), Some(8.5));
+
+    plan.record(&timing("//a:t", &[("com.A", 2.0)]));
+    assert_eq!(plan.fixed_of("//a:t"), Some(8.5));
+    assert_eq!(ShardPlan::parse("fixed\t//a:t\tmany\nfixed\t//a:t\n").fixed_of("//a:t"), None);
+}

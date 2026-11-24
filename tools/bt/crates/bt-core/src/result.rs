@@ -40,6 +40,14 @@ pub struct TargetResult {
     /// The target's own wall time: its slowest shard, since shards run concurrently. Their sum would report a 30 s
     /// target as costing three minutes.
     pub duration_ms: u64,
+    /// The fixed cost of a shard: the median over the shards of the shard wall time less the seconds of its test
+    /// classes. It is the start of the JVM and the work outside the classes. `None` without a shard that ran and passed.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub fixed_ms: Option<u64>,
+    /// The seconds of the test classes of the shards that ran and passed, summed. A nested class counts once, inside
+    /// its outer class.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub test_ms: Option<u64>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub log_path: Option<String>,
     /// The runner's own exit code, when bazel had to synthesize the report because the runner wrote none. 42 is
@@ -115,6 +123,33 @@ pub struct RunResult {
 pub struct TargetTiming {
     pub label: String,
     pub class_seconds: BTreeMap<String, f64>,
+    /// The fixed seconds of a shard of the target, see [`TargetResult::fixed_ms`].
+    pub fixed_seconds: Option<f64>,
+}
+
+/// The seconds of the classes, less each nested class whose outer class has a record. The suite of a class lasts until
+/// its nested classes end, so the record of the outer class holds them already.
+pub fn outer_class_seconds(class_seconds: &BTreeMap<String, f64>) -> f64 {
+    class_seconds
+        .iter()
+        .filter(|(class, _)| {
+            !class
+                .match_indices('$')
+                .any(|(position, _)| class_seconds.contains_key(&class[..position]))
+        })
+        .map(|(_, seconds)| seconds)
+        .sum()
+}
+
+/// The median of the values, the mean of the two middle values for an even count. `None` for no value.
+fn median(mut values: Vec<f64>) -> Option<f64> {
+    values.sort_by(f64::total_cmp);
+    let middle = values.len() / 2;
+    match values.len() {
+        0 => None,
+        count if count % 2 == 1 => Some(values[middle]),
+        _ => Some(f64::midpoint(values[middle - 1], values[middle])),
+    }
 }
 
 /// The per-target counters, summed.
@@ -238,6 +273,8 @@ struct Aggregate {
     /// Whether every shard ran and passed, and its test.xml was read: only then are the class times whole.
     timed: bool,
     class_seconds: BTreeMap<String, f64>,
+    /// The wall seconds and the outer class seconds of each shard that ran, passed and ran a test class.
+    shard_costs: Vec<(f64, f64)>,
     /// The shard plan digest of each shard whose test.xml was read, `None` for a report without one.
     plan_digests: BTreeSet<Option<String>>,
     /// The shards that timed out, as [`ShardTimeout`] without the shard count, which is known only at the end.
@@ -286,6 +323,7 @@ pub fn collect_results(runtime: &dyn Runtime, bep: &BepSummary, duration_ms: u64
                 wrapper_exit_code: None,
                 timed: true,
                 class_seconds: BTreeMap::new(),
+                shard_costs: Vec::new(),
                 plan_digests: BTreeSet::new(),
                 timeouts: Vec::new(),
             });
@@ -325,6 +363,7 @@ pub fn collect_results(runtime: &dyn Runtime, bep: &BepSummary, duration_ms: u64
         }
 
         let mut interrupted = Vec::new();
+        let mut shard_seconds = BTreeMap::new();
         for suite in suites {
             if suite.empty_stub {
                 continue;
@@ -335,6 +374,7 @@ pub fn collect_results(runtime: &dyn Runtime, bep: &BepSummary, duration_ms: u64
                 continue;
             }
             *target.class_seconds.entry(suite.name.clone()).or_default() += suite.time_seconds;
+            *shard_seconds.entry(suite.name.clone()).or_default() += suite.time_seconds;
             target.tests += suite.tests;
             target.skipped += suite.skipped;
             // In a shard that timed out, a test that had not ended is the place where the shard stopped, not a failure.
@@ -374,6 +414,12 @@ pub fn collect_results(runtime: &dyn Runtime, bep: &BepSummary, duration_ms: u64
             }));
             target.flaky += u32::try_from(retried.len()).unwrap_or(u32::MAX);
             flaky.extend(retried);
+        }
+
+        if passed && !last.cached && !shard_seconds.is_empty() {
+            #[expect(clippy::cast_precision_loss, reason = "a shard lasts far less than 2^52 ms")]
+            let wall = last.duration_ms as f64 / 1000.0;
+            target.shard_costs.push((wall, outer_class_seconds(&shard_seconds)));
         }
 
         if timed_out {
@@ -443,6 +489,8 @@ pub fn collect_results(runtime: &dyn Runtime, bep: &BepSummary, duration_ms: u64
     let mut targets: Vec<TargetResult> = targets
         .into_iter()
         .map(|target| TargetResult {
+            fixed_ms: fixed_seconds(&target.shard_costs).map(seconds_to_ms),
+            test_ms: (!target.shard_costs.is_empty()).then(|| seconds_to_ms(target.shard_costs.iter().map(|(_, seconds)| seconds).sum())),
             label: target.label,
             tests: target.tests,
             failed: target.failed,
@@ -503,8 +551,24 @@ fn take_class_timings(targets: &mut [Aggregate], selects: impl Fn(&Aggregate) ->
         .map(|target| TargetTiming {
             label: target.label.clone(),
             class_seconds: std::mem::take(&mut target.class_seconds),
+            fixed_seconds: fixed_seconds(&target.shard_costs),
         })
         .collect()
+}
+
+/// The median over the shards of the wall seconds less the class seconds, at least 0.
+fn fixed_seconds(shard_costs: &[(f64, f64)]) -> Option<f64> {
+    median(shard_costs.iter().map(|(wall, classes)| (wall - classes).max(0.0)).collect())
+}
+
+fn seconds_to_ms(seconds: f64) -> u64 {
+    #[expect(
+        clippy::cast_possible_truncation,
+        clippy::cast_sign_loss,
+        reason = "a nonnegative time far below u64::MAX"
+    )]
+    let ms = (seconds * 1000.0).round().max(0.0) as u64;
+    ms
 }
 
 /// Whether the runner marked the case as failed because it had not ended when the runner was stopped.

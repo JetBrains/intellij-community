@@ -338,6 +338,8 @@ fn a_lane_run_records_the_class_times_of_the_targets_that_passed() {
                 &format!("class\t{CORE_LABEL}\tcom.A\t72.000"),
                 &format!("class\t{CORE_LABEL}\tcom.A$Inner\t2.000"),
                 &format!("class\t{CORE_LABEL}\tcom.B\t30.000"),
+                // the fake shards report no wall time, so their class seconds leave no fixed seconds
+                &format!("fixed\t{CORE_LABEL}\t0.000"),
                 "",
             ]
             .join("\n")
@@ -1038,6 +1040,7 @@ fn a_run_records_the_class_times_in_the_shared_plan_and_in_the_checkout_copy() {
         &format!("class\t{OTHER_LABEL}\tcom.B\t120.000"),
         &format!("target\t{CORE_LABEL}\t1"),
         &format!("class\t{CORE_LABEL}\tcom.air.RecordedTest\t40.000"),
+        &format!("fixed\t{CORE_LABEL}\t0.000"),
         &format!("target\t{OLD_LABEL}\t1"),
         &format!("class\t{OLD_LABEL}\tcom.Old\t7.000"),
         "",

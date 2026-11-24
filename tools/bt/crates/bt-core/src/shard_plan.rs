@@ -103,6 +103,8 @@ const SECONDS_PER_SHARD: f64 = 90.0;
 #[derive(Clone, Debug, Default, PartialEq)]
 pub struct ShardPlan {
     targets: BTreeMap<String, BTreeMap<String, f64>>,
+    /// The fixed seconds of a shard of each target, see [`TargetTiming::fixed_seconds`].
+    fixed: BTreeMap<String, f64>,
 }
 
 /// The targets of a planned run that run in an invocation of their own, each group in the order of the labels.
@@ -165,10 +167,18 @@ impl ShardPlan {
         let mut plan = Self::default();
         for line in text.lines() {
             let fields: Vec<&str> = line.split('\t').collect();
-            if let ["class", label, class, seconds] = fields[..]
-                && let Ok(seconds) = seconds.parse::<f64>()
-            {
-                plan.targets.entry(label.to_owned()).or_default().insert(class.to_owned(), seconds);
+            match fields[..] {
+                ["class", label, class, seconds] => {
+                    if let Ok(seconds) = seconds.parse::<f64>() {
+                        plan.targets.entry(label.to_owned()).or_default().insert(class.to_owned(), seconds);
+                    }
+                }
+                ["fixed", label, seconds] => {
+                    if let Ok(seconds) = seconds.parse::<f64>() {
+                        plan.fixed.insert(label.to_owned(), seconds);
+                    }
+                }
+                _ => {}
             }
         }
         plan
@@ -183,15 +193,26 @@ impl ShardPlan {
         for (label, classes) in &other.targets {
             if !self.targets.contains_key(label) {
                 self.targets.insert(label.clone(), classes.clone());
+                if let Some(fixed) = other.fixed.get(label) {
+                    self.fixed.insert(label.clone(), *fixed);
+                }
                 added = true;
             }
         }
         added
     }
 
-    /// Replaces the class times of the target of a finished run.
+    /// Replaces the class times of the target of a finished run, and its fixed seconds when the run measured them.
     pub fn record(&mut self, timing: &TargetTiming) {
         self.targets.insert(timing.label.clone(), timing.class_seconds.clone());
+        if let Some(fixed) = timing.fixed_seconds {
+            self.fixed.insert(timing.label.clone(), fixed);
+        }
+    }
+
+    /// The recorded fixed seconds of a shard of the target with this label.
+    pub fn fixed_of(&self, label: &str) -> Option<f64> {
+        self.fixed.get(label).copied()
     }
 
     /// Raises the class times of a target with a shard timeout to the times of this run, when the raise makes it a heavy
@@ -293,6 +314,9 @@ impl ShardPlan {
             let _ = writeln!(text, "target\t{label}\t{}", self.shards_of(label));
             for (class, seconds) in classes {
                 let _ = writeln!(text, "class\t{label}\t{class}\t{seconds:.3}");
+            }
+            if let Some(fixed) = self.fixed.get(label) {
+                let _ = writeln!(text, "fixed\t{label}\t{fixed:.3}");
             }
         }
         text

@@ -418,6 +418,44 @@ pub(crate) fn render_cost(targets: &[TargetResult]) -> Option<String> {
     Some(format!("cost   {}", parts.join(" · ")))
 }
 
+/// The fixed seconds of a shard above which a target is named in the fixed cost note.
+const FIXED_COST_NOTE_MS: u64 = 30_000;
+
+/// The targets with the most fixed seconds of a shard, at most three, each above [`FIXED_COST_NOTE_MS`]. A target
+/// without test seconds, such as a Rust test wrapper, is no candidate: its whole time is outside a test class.
+pub(crate) fn render_fixed_cost(targets: &[TargetResult]) -> Option<String> {
+    let mut heavy: Vec<(&TargetResult, u64)> = targets
+        .iter()
+        .filter(|target| target.test_ms.is_some_and(|ms| ms > 0))
+        .filter_map(|target| target.fixed_ms.filter(|ms| *ms > FIXED_COST_NOTE_MS).map(|fixed| (target, fixed)))
+        .collect();
+    if heavy.is_empty() {
+        return None;
+    }
+    heavy.sort_by(|(left, left_fixed), (right, right_fixed)| right_fixed.cmp(left_fixed).then_with(|| left.label.cmp(&right.label)));
+    let parts: Vec<String> = heavy
+        .iter()
+        .take(3)
+        .map(|(target, fixed)| {
+            format!(
+                "{} {} s of {} s",
+                target_name(&target.label),
+                whole_seconds(*fixed),
+                whole_seconds(target.duration_ms)
+            )
+        })
+        .collect();
+    Some(format!(
+        "note   fixed cost: {}; this time is outside the test classes",
+        parts.join(", ")
+    ))
+}
+
+/// Milliseconds as whole seconds, rounded.
+const fn whole_seconds(milliseconds: u64) -> u64 {
+    milliseconds.saturating_add(500) / 1000
+}
+
 /// `//plugins/air/shared/core:air-shared-core-tests_test` as `air-shared-core-tests_test`.
 fn target_name(label: &str) -> &str {
     label.rsplit_once(':').map_or(label, |(_, name)| name)
@@ -629,6 +667,9 @@ pub(crate) fn render_digest(result: &RunResult, options: &RenderOptions) -> Stri
     }
     if let Some(cost) = render_cost(&result.targets) {
         out.push(cost);
+    }
+    if let Some(fixed) = render_fixed_cost(&result.targets) {
+        out.push(fixed);
     }
     if let Some(time) = &options.time {
         out.extend(render_time(time));

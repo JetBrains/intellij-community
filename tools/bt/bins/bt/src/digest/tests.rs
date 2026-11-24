@@ -1017,3 +1017,46 @@ fn a_runner_crash_shows_the_exception_of_its_log() {
         ]
     );
 }
+
+/// The note names the three targets with the most fixed seconds above 30 s, and skips a target without test seconds.
+#[test]
+fn the_fixed_cost_note_names_the_targets_with_the_most_time_outside_the_test_classes() {
+    let timed = |label: &str, duration_ms: u64, fixed_ms: u64, test_ms: u64| TargetResult {
+        fixed_ms: Some(fixed_ms),
+        test_ms: Some(test_ms),
+        ..target(label, 1, false, duration_ms)
+    };
+    let targets = [
+        timed("//p:a_test", 138_000, 89_000, 49_000),
+        timed("//p:b_test", 101_000, 76_400, 25_000),
+        timed("//p:c_test", 60_000, 31_000, 29_000),
+        timed("//p:d_test", 90_000, 40_000, 50_000),
+        timed("//p:short_test", 40_000, 30_000, 10_000),
+        timed("//p:rust_test", 200_000, 200_000, 0),
+    ];
+    assert_eq!(
+        render_fixed_cost(&targets).as_deref(),
+        Some("note   fixed cost: a_test 89 s of 138 s, b_test 76 s of 101 s, d_test 40 s of 90 s; this time is outside the test classes")
+    );
+    assert_eq!(render_fixed_cost(&targets[4..]), None);
+
+    let digest = render_digest(
+        &digest_result(|result| result.targets = targets.to_vec()),
+        &RenderOptions::default(),
+    );
+    assert!(digest.contains("note   fixed cost: a_test 89 s"), "{digest}");
+}
+
+/// The payload names the fixed and the test milliseconds of a target, and leaves them out when they are unknown.
+#[test]
+fn the_payload_of_a_target_has_its_fixed_and_test_milliseconds() {
+    let timed = TargetResult {
+        fixed_ms: Some(8_000),
+        test_ms: Some(40_000),
+        ..target("//p:t", 2, false, 30_000)
+    };
+    let wire = serde_json::to_value(&timed).expect("encodes");
+    assert_eq!((wire["fixedMs"].as_u64(), wire["testMs"].as_u64()), (Some(8_000), Some(40_000)));
+    let wire = serde_json::to_value(target("//p:t", 2, true, 30_000)).expect("encodes");
+    assert!(wire.get("fixedMs").is_none() && wire.get("testMs").is_none(), "{wire}");
+}
