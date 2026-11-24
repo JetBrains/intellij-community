@@ -31,7 +31,12 @@ import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.TestDisposable
 import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.util.Processor
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.awaitCancellation
+import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.flow.toList
+import kotlinx.coroutines.launch
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNull
@@ -155,8 +160,26 @@ class SeSearchProjectsTest {
     assertTrue(providers.all { it.isDisposed }, "the providers of each search project go away with the holder")
   }
 
-  private suspend fun holder(searchProjects: SeSearchProjects?): SeProvidersHolder {
-    val factories = listOf(TestFactory(SEARCHED_ID, createdProviders), TestFactory(SINGLE_ID, createdProviders), TestWrappedFactory(createdProviders))
+  @Test
+  fun aCanceledFirstSearchDisposesTheProvidersThatItCreated() = timeoutRunBlocking {
+    val blockedFactory = BlockedFactory(popupProject, createdProviders)
+    val holder = holder(SeSearchProjects(listOf(popupProject, otherProject), setOf(SeProviderId(SEARCHED_ID), SeProviderId(BLOCKED_ID))),
+                        blockedFactory)
+    val search = launch(start = CoroutineStart.UNDISPATCHED) { holder.items(SEARCHED_ID) }
+    blockedFactory.isBlocked.await()
+    val providerOfOther = createdProviders.single { it.id == SEARCHED_ID && it.project === otherProject }
+    assertFalse(providerOfOther.isDisposed)
+
+    search.cancelAndJoin()
+
+    assertTrue(providerOfOther.isDisposed, "a canceled search leaves no provider of another project behind")
+    assertEquals(setOf(popupProject, otherProject), holder.items(SEARCHED_ID).map { it.project() }.toSet(),
+                 "the next search creates the providers again")
+  }
+
+  private suspend fun holder(searchProjects: SeSearchProjects?, vararg extraFactories: SeItemsProviderFactory): SeProvidersHolder {
+    val factories = listOf(TestFactory(SEARCHED_ID, createdProviders), TestFactory(SINGLE_ID, createdProviders), TestWrappedFactory(createdProviders)) +
+                    extraFactories
     ExtensionTestUtil.maskExtensions(SeItemsProviderFactory.EP_NAME, factories, disposable)
     ExtensionTestUtil.maskExtensions(SeSearchProjectsProvider.EP_NAME, listOf(object : SeSearchProjectsProvider {
       override fun getSearchProjects(project: Project): SeSearchProjects? = searchProjects.takeIf { project === popupProject }
@@ -222,6 +245,18 @@ class SeSearchProjectsTest {
       TestProvider(id, project!!).also { createdProviders.add(it) }
   }
 
+  /** Gives a provider to [popupProject]. For another project, the first creation suspends until its search is canceled. */
+  private class BlockedFactory(private val popupProject: Project, private val createdProviders: MutableList<TestProvider>) : SeItemsProviderFactory {
+    override val id: String get() = BLOCKED_ID
+
+    val isBlocked = CompletableDeferred<Unit>()
+
+    override suspend fun getItemsProvider(project: Project?, dataContext: DataContext): SeItemsProvider {
+      if (project !== popupProject && isBlocked.complete(Unit)) awaitCancellation()
+      return TestProvider(id, project!!).also { createdProviders.add(it) }
+    }
+  }
+
   private class TestWrappedFactory(private val createdProviders: MutableList<TestProvider>) : SeWrappedLegacyContributorItemsProviderFactory {
     override val id: String get() = WRAPPED_ID
 
@@ -248,5 +283,6 @@ class SeSearchProjectsTest {
     const val SEARCHED_ID = "SeSearchProjectsTest.searched"
     const val SINGLE_ID = "SeSearchProjectsTest.single"
     const val WRAPPED_ID = "SeSearchProjectsTest.wrapped"
+    const val BLOCKED_ID = "SeSearchProjectsTest.blocked"
   }
 }

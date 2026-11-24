@@ -82,8 +82,17 @@ class SeSearchProjectProviders internal constructor(
 
   private suspend fun createMembers(): List<Member> {
     val factories = SeItemsProviderFactory.EP_NAME.extensionList.filter { SeProviderId(it.id) in searchProjects.providerIds }
+    val created = ArrayList<Member>()
     try {
-      return searchProjects.projects.filter { it !== popupProject && !it.isDisposed }.distinct().map { createMember(it, factories) }
+      for (project in searchProjects.projects.filter { it !== popupProject && !it.isDisposed }.distinct()) {
+        created += createMember(project, factories)
+      }
+      return created
+    }
+    catch (e: Throwable) {
+      // [members] stays `null`, so [dispose] does not see these members.
+      created.forEach { Disposer.dispose(it.disposable) }
+      throw e
     }
     finally {
       // The creation of the legacy contributors of another project saved the event of that project.
@@ -95,31 +104,40 @@ class SeSearchProjectProviders internal constructor(
     val event = initEvent.withDataContext(DataContext { dataId -> if (CommonDataKeys.PROJECT.`is`(dataId)) project else null })
     val legacyContributors = mutableMapOf<SeProviderId, SearchEverywhereContributor<Any>>()
     val separateTabLegacyContributors = mutableMapOf<SeProviderId, SearchEverywhereContributor<Any>>()
-    if (factories.any { it is SeWrappedLegacyContributorItemsProviderFactory }) {
-      SeProvidersHolder.initializeLegacyContributors(event, project, legacyContributors, separateTabLegacyContributors)
-      // A legacy contributor of another id serves no provider of this project.
-      val unused = (legacyContributors.filterKeys { it !in searchProjects.providerIds }.values +
-                    separateTabLegacyContributors.filterKeys { it !in searchProjects.providerIds }.values).distinct()
-      unused.forEach { Disposer.dispose(it) }
-      legacyContributors.keys.retainAll(searchProjects.providerIds)
-      separateTabLegacyContributors.keys.retainAll(searchProjects.providerIds)
-    }
-
     val key = SeSearchProjectsFilter.keyOf(project)
     val allTabProviders = mutableMapOf<SeProviderId, SeSearchProjectItemsProvider>()
     val separateTabProviders = mutableMapOf<SeProviderId, SeSearchProjectItemsProvider>()
-    for (factory in factories) {
-      val (provider, separateTabProvider) =
-        SeProvidersHolder.createProviders(factory, project, event.dataContext, legacyContributors, separateTabLegacyContributors, logLabel) { it() }
-      provider?.let { allTabProviders[SeProviderId(it.id)] = SeSearchProjectItemsProvider(project, key, it) }
-      separateTabProvider?.let { separateTabProviders[SeProviderId(it.id)] = SeSearchProjectItemsProvider(project, key, it) }
-    }
-
-    val disposable = Disposer.newDisposable("Search Everywhere providers of ${project.name}")
-    Disposer.register(disposable) {
+    fun disposeCreated() {
       (allTabProviders.values + separateTabProviders.values).forEach { Disposer.dispose(it.provider) }
       (legacyContributors.values + separateTabLegacyContributors.values).distinct().forEach { Disposer.dispose(it) }
     }
+
+    try {
+      if (factories.any { it is SeWrappedLegacyContributorItemsProviderFactory }) {
+        SeProvidersHolder.initializeLegacyContributors(event, project, legacyContributors, separateTabLegacyContributors)
+        // A legacy contributor of another id serves no provider of this project.
+        val unused = (legacyContributors.filterKeys { it !in searchProjects.providerIds }.values +
+                      separateTabLegacyContributors.filterKeys { it !in searchProjects.providerIds }.values).distinct()
+        unused.forEach { Disposer.dispose(it) }
+        legacyContributors.keys.retainAll(searchProjects.providerIds)
+        separateTabLegacyContributors.keys.retainAll(searchProjects.providerIds)
+      }
+
+      for (factory in factories) {
+        val (provider, separateTabProvider) =
+          SeProvidersHolder.createProviders(factory, project, event.dataContext, legacyContributors, separateTabLegacyContributors, logLabel) { it() }
+        provider?.let { allTabProviders[SeProviderId(it.id)] = SeSearchProjectItemsProvider(project, key, it) }
+        separateTabProvider?.let { separateTabProviders[SeProviderId(it.id)] = SeSearchProjectItemsProvider(project, key, it) }
+      }
+    }
+    catch (e: Throwable) {
+      // A canceled search leaves no owner for the providers and the legacy contributors that it created.
+      disposeCreated()
+      throw e
+    }
+
+    val disposable = Disposer.newDisposable("Search Everywhere providers of ${project.name}")
+    Disposer.register(disposable) { disposeCreated() }
     // A project that closed in the meantime takes no child, and its providers go away at once.
     if (!Disposer.tryRegister(project, disposable)) Disposer.dispose(disposable)
     return Member(project, allTabProviders, separateTabProviders, disposable)
