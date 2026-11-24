@@ -65,6 +65,15 @@ class LinkDestinationCompletionTest {
   }
 
   @Test
+  fun `closed link completes a file with the caret before an underscore`() {
+    myFixture.addFileToProject("scratch_1.md", "")
+    myFixture.addFileToProject("scratch_2.md", "")
+    myFixture.configureByText("some.md", "[Test](scratch<caret>_)")
+    val variants = myFixture.completeBasic().orEmpty().map { it.lookupString }
+    assertThat(variants).contains("scratch_1.md", "scratch_2.md")
+  }
+
+  @Test
   fun `text after a stray bracket and parenthesis gets no file variants`() {
     myFixture.addFileToProject("foo.txt", "")
     myFixture.configureByText("some.md", "foo](bar fo<caret>")

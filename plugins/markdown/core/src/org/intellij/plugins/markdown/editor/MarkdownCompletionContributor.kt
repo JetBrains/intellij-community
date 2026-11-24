@@ -12,6 +12,7 @@ import com.intellij.psi.util.elementType
 import com.intellij.util.text.CharArrayUtil
 import org.intellij.plugins.markdown.lang.MarkdownTokenTypes
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownInlineLink
+import org.intellij.plugins.markdown.lang.psi.impl.MarkdownLinkDestination
 import org.intellij.plugins.markdown.lang.supportsMarkdown
 
 class MarkdownCompletionContributor: CompletionContributor() {
@@ -24,7 +25,10 @@ class MarkdownCompletionContributor: CompletionContributor() {
     if (context.dummyIdentifier != CompletionInitializationContext.DUMMY_IDENTIFIER) return
     if (closeUnclosedLinkDestination(context)) return
     val element = PsiUtilCore.getElementAtOffset(context.file, context.startOffset)
-    if (CodeFenceLanguageListCompletionProvider.isInMiddleOfUnCollapsedFence(element, context.startOffset)) {
+    if (PsiTreeUtil.getParentOfType(element, MarkdownLinkDestination::class.java) != null) {
+      context.dummyIdentifier = CompletionInitializationContext.DUMMY_IDENTIFIER_TRIMMED
+    }
+    else if (CodeFenceLanguageListCompletionProvider.isInMiddleOfUnCollapsedFence(element, context.startOffset)) {
       context.dummyIdentifier = fenceDummyIdentifier
     }
   }

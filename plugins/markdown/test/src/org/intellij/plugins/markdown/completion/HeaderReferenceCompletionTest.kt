@@ -57,6 +57,18 @@ class HeaderReferenceCompletionTest {
   }
 
   @Test
+  fun testCaretBeforeHyphen() {
+    myFixture.configureByText("test.md", """
+      # What is this
+      # What else
+
+      [Test](#what<caret>-is)
+    """.trimIndent())
+    val variants = myFixture.completeBasic().orEmpty().map { it.lookupString }
+    assertThat(variants).contains("what-is-this", "what-else")
+  }
+
+  @Test
   fun testMultipleHeaders() {
     myFixture.testCompletionVariants(getBeforeFileName(),
                                      "environment-variables",
