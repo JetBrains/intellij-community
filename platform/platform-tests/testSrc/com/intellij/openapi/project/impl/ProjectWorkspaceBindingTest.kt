@@ -19,6 +19,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.util.Key
+import com.intellij.openapi.workspace.LegacyWorkspaceHostApi
 import com.intellij.openapi.workspace.ProjectWorkspace
 import com.intellij.openapi.workspace.impl.ProjectWorkspaceComponentManager
 import com.intellij.openapi.workspace.impl.ProjectWorkspaceFactory
@@ -64,6 +65,7 @@ internal class ProjectWorkspaceBindingTest {
   }
 
   @Test
+  @OptIn(LegacyWorkspaceHostApi::class)
   fun `a guest of a plain owner has a workspace of its own`(): Unit = timeoutRunBlocking {
     val owner = openOwner("owner")
     val guest = openGuest("guest", owner)
@@ -72,9 +74,11 @@ internal class ProjectWorkspaceBindingTest {
     assertThat(workspace).isInstanceOf(WorkspaceAsProject::class.java)
     assertThat(workspace).isNotSameAs(owner.workspace)
     assertThat(workspace.projects).containsExactly(guest)
+    assertThat(workspace.hostProject).isSameAs(guest)
   }
 
   @Test
+  @OptIn(LegacyWorkspaceHostApi::class)
   fun `a guest has the workspace of its owner from its creation to its dispose`(): Unit = timeoutRunBlocking {
     registerHostFactory()
     val owner = openOwner("owner")
@@ -92,6 +96,7 @@ internal class ProjectWorkspaceBindingTest {
 
     val ownerWorkspace = owner.workspace
     assertThat(ownerWorkspace).isInstanceOf(TestHostWorkspace::class.java)
+    assertThat(ownerWorkspace.hostProject).isSameAs(owner)
     assertThat(atBeforeInit).containsExactly(ownerWorkspace)
     assertThat(atDispose).containsExactly(ownerWorkspace)
   }
@@ -201,6 +206,9 @@ private class TestHostWorkspace(project: Project) : ProjectWorkspace, Delegating
     get() = container
 
   override val projects: List<Project> = listOf(project)
+
+  @OptIn(LegacyWorkspaceHostApi::class)
+  override val hostProject: Project = project
 
   init {
     container.initForWorkspace(this)

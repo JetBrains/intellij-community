@@ -5,6 +5,7 @@ import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.components.DelegatingComponentManagerEx
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
+import com.intellij.openapi.workspace.LegacyWorkspaceHostApi
 import com.intellij.openapi.workspace.ProjectWorkspace
 import org.jetbrains.annotations.ApiStatus
 
@@ -17,6 +18,9 @@ class WorkspaceAsProject(project: Project) : ProjectWorkspace, DelegatingCompone
     get() = container
 
   override val projects: List<Project> = listOf(project)
+
+  @OptIn(LegacyWorkspaceHostApi::class)
+  override val hostProject: Project = project
 
   init {
     container.initForWorkspace(this)

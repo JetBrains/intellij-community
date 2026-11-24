@@ -27,4 +27,14 @@ interface ProjectWorkspace : ComponentManager {
    * Member projects appear after they open.
    */
   val projects: List<Project>
+
+  /**
+   * The host project of this workspace. It is the first of [projects] while the host is open.
+   *
+   * This property is an adapter for a legacy consumer: workspace code that calls an API that takes a `Project`.
+   * New code must not use it. Use the project of the element that the code handles, or a workspace service.
+   */
+  @LegacyWorkspaceHostApi
+  @get:ApiStatus.Internal
+  val hostProject: Project
 }
