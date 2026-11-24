@@ -36,6 +36,7 @@ import com.intellij.platform.backend.presentation.TargetPresentation
 import com.intellij.platform.ide.productMode.IdeProductMode
 import com.intellij.platform.productMode.ProductMode
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFile
 import com.intellij.psi.impl.FakePsiElement
 import com.intellij.psi.impl.search.registerSearcherForTesting
 import com.intellij.psi.search.GlobalSearchScope
@@ -148,16 +149,33 @@ class DumbModeFindUsagesAndHierarchyTest {
   }
 
   @Test
-  fun `in the dumb mode, a hierarchy action skips the providers that are not dumb-aware`() {
-    val dumbAware = registerHierarchyProviders()
-    assertSame(dumbAware, inDumbMode { findHierarchyProvider() })
+  fun `in the dumb mode, a hierarchy action is enabled for a dumb-aware provider`() {
+    LanguageCallHierarchy.INSTANCE.addExplicitExtension(TestLanguage, DumbAwareHierarchyProvider(), disposable)
+    assertTrue(inDumbMode { updateCallHierarchy() }.isEnabledAndVisible)
   }
 
   @Test
-  fun `in the smart mode, a hierarchy action uses every provider`() {
-    registerHierarchyProviders()
+  fun `in the dumb mode, a hierarchy action in a context menu is disabled for a provider that is not dumb-aware`() {
+    LanguageCallHierarchy.INSTANCE.addExplicitExtension(TestLanguage, TestHierarchyProvider(), disposable)
+    assertFalse(inDumbMode { updateCallHierarchy() }.isEnabled)
+  }
+
+  @Test
+  fun `in the smart mode, a hierarchy action is enabled for a provider that is not dumb-aware`() {
+    LanguageCallHierarchy.INSTANCE.addExplicitExtension(TestLanguage, TestHierarchyProvider(), disposable)
     waitForSmartMode()
-    assertFalse(findHierarchyProvider() is DumbAware)
+    assertTrue(updateCallHierarchy().isEnabledAndVisible)
+  }
+
+  /** A caller such as the MCP call hierarchy runs in the dumb mode itself and reports a partial result. */
+  @Test
+  fun `in the dumb mode, the public provider lookup still considers every provider`() {
+    val provider = TestHierarchyProvider()
+    LanguageCallHierarchy.INSTANCE.addExplicitExtension(TestLanguage, provider, disposable)
+    val dataContext = SimpleDataContext.getProjectContext(project.get())
+    assertSame(provider, inDumbMode {
+      BrowseHierarchyActionBase.findBestHierarchyProvider(LanguageCallHierarchy.INSTANCE, TestElement(), dataContext)
+    })
   }
 
   private fun <T> inDumbMode(computable: () -> T): T = DumbModeTestUtils.computeInDumbModeSynchronously(project.get(), computable)
@@ -194,18 +212,7 @@ class DumbModeFindUsagesAndHierarchyTest {
     return buildQuery(project.get(), target, options).findAll().toList()
   }
 
-  /** Registers a provider that is not dumb-aware before a dumb-aware one, and returns the dumb-aware one. */
-  private fun registerHierarchyProviders(): HierarchyProvider {
-    val dumbAware = DumbAwareHierarchyProvider()
-    LanguageCallHierarchy.INSTANCE.addExplicitExtension(TestLanguage, TestHierarchyProvider(), disposable)
-    LanguageCallHierarchy.INSTANCE.addExplicitExtension(TestLanguage, dumbAware, disposable)
-    return dumbAware
-  }
-
-  private fun findHierarchyProvider(): HierarchyProvider? {
-    val dataContext = SimpleDataContext.getProjectContext(project.get())
-    return BrowseHierarchyActionBase.findBestHierarchyProvider(LanguageCallHierarchy.INSTANCE, TestElement(), dataContext)
-  }
+  private fun updateCallHierarchy(): Presentation = update(BrowseCallHierarchyAction(), CommonDataKeys.PSI_ELEMENT, TestElement())
 
   private open class TestUsageTarget : UsageTarget {
     override fun getName(): String = "word"
@@ -252,10 +259,13 @@ class DumbModeFindUsagesAndHierarchyTest {
   private class TestElement : FakePsiElement() {
     override fun getParent(): PsiElement? = null
     override fun getLanguage(): Language = TestLanguage
+    /** Valid and in no file without a parent, so that the data context keeps it as [CommonDataKeys.PSI_ELEMENT]. */
+    override fun isValid(): Boolean = true
+    override fun getContainingFile(): PsiFile? = null
   }
 
   private open class TestHierarchyProvider : HierarchyProvider {
-    override fun getTarget(dataContext: DataContext): PsiElement? = null
+    override fun getTarget(dataContext: DataContext): PsiElement? = CommonDataKeys.PSI_ELEMENT.getData(dataContext)
     override fun createHierarchyBrowser(target: PsiElement): HierarchyBrowser = throw UnsupportedOperationException()
     override fun browserActivated(hierarchyBrowser: HierarchyBrowser) {}
   }

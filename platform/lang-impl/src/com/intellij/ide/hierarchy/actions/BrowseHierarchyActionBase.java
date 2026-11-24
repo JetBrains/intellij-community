@@ -124,7 +124,7 @@ public abstract class BrowseHierarchyActionBase extends AnAction {
       Project project = e.getProject();
       boolean enabled = isEnabled(e) ||
                         project != null && DumbService.isDumb(project) && !IdeProductMode.isLight() && !e.isFromContextMenu() &&
-                        getProvider(e, false) != null;
+                        getProvider(e, ProviderChoice.FIRST) != null;
       if (e.isFromContextMenu() || IdeProductMode.isLight()) {
         e.getPresentation().setVisible(enabled);
       }
@@ -149,47 +149,48 @@ public abstract class BrowseHierarchyActionBase extends AnAction {
   }
 
   private @Nullable HierarchyProvider getProvider(@NotNull AnActionEvent e) {
-    return getProvider(e, true);
+    return getProvider(e, ProviderChoice.USABLE);
   }
 
-  private @Nullable HierarchyProvider getProvider(@NotNull AnActionEvent e, boolean usableOnly) {
+  private @Nullable HierarchyProvider getProvider(@NotNull AnActionEvent e, @NotNull ProviderChoice choice) {
     PsiElement psiElement = e.getData(CommonDataKeys.PSI_ELEMENT);
-    return findProvider(myExtension, psiElement, e.getData(CommonDataKeys.PSI_FILE), e.getDataContext(), usableOnly);
+    return findProvider(myExtension, psiElement, e.getData(CommonDataKeys.PSI_FILE), e.getDataContext(), choice);
   }
 
+  /**
+   * Considers every provider, also in the dumb mode: a caller that runs in the dumb mode handles it itself,
+   * as the MCP call hierarchy reports a partial result. The hierarchy actions use only the dumb-aware providers there.
+   */
   public static @Nullable HierarchyProvider findProvider(@NotNull LanguageExtension<HierarchyProvider> extension,
                                                          @Nullable PsiElement psiElement,
                                                          @Nullable PsiFile psiFile,
                                                          @NotNull DataContext dataContext) {
-    return findProvider(extension, psiElement, psiFile, dataContext, true);
+    return findProvider(extension, psiElement, psiFile, dataContext, ProviderChoice.ANY);
   }
 
   private static @Nullable HierarchyProvider findProvider(@NotNull LanguageExtension<HierarchyProvider> extension,
                                                           @Nullable PsiElement psiElement,
                                                           @Nullable PsiFile psiFile,
                                                           @NotNull DataContext dataContext,
-                                                          boolean usableOnly) {
-    HierarchyProvider provider = findBestHierarchyProvider(extension, psiElement, dataContext, usableOnly);
+                                                          @NotNull ProviderChoice choice) {
+    HierarchyProvider provider = findBestHierarchyProvider(extension, psiElement, dataContext, choice);
     if (provider == null) {
-      return findBestHierarchyProvider(extension, psiFile, dataContext, usableOnly);
+      return findBestHierarchyProvider(extension, psiFile, dataContext, choice);
     }
     return provider;
   }
 
+  /** Considers every provider, also in the dumb mode, as {@link #findProvider} does. */
   public static @Nullable HierarchyProvider findBestHierarchyProvider(LanguageExtension<HierarchyProvider> extension,
                                                                       @Nullable PsiElement element,
                                                                       DataContext dataContext) {
-    return findBestHierarchyProvider(extension, element, dataContext, true);
+    return findBestHierarchyProvider(extension, element, dataContext, ProviderChoice.ANY);
   }
 
-  /**
-   * @param usableOnly whether to skip the providers that are not dumb-aware in the dumb mode.
-   *                   Without it, the method does not ask a provider for its target: the target can need the indexes.
-   */
   private static @Nullable HierarchyProvider findBestHierarchyProvider(LanguageExtension<HierarchyProvider> extension,
                                                                        @Nullable PsiElement element,
                                                                        DataContext dataContext,
-                                                                       boolean usableOnly) {
+                                                                       @NotNull ProviderChoice choice) {
     if (element == null) return null;
     List<HierarchyProvider> providers;
     if (element instanceof PsiFile) {
@@ -198,12 +199,14 @@ public abstract class BrowseHierarchyActionBase extends AnAction {
     else {
       providers = extension.allForLanguage(element.getLanguage());
     }
-    if (!usableOnly) {
+    if (choice == ProviderChoice.FIRST) {
       return ContainerUtil.getFirstItem(providers);
     }
-    Project project = CommonDataKeys.PROJECT.getData(dataContext);
-    DumbService dumbService = DumbService.getInstance(project != null ? project : element.getProject());
-    providers = ContainerUtil.filter(providers, dumbService::isUsableInCurrentContext);
+    if (choice == ProviderChoice.USABLE) {
+      Project project = CommonDataKeys.PROJECT.getData(dataContext);
+      DumbService dumbService = DumbService.getInstance(project != null ? project : element.getProject());
+      providers = ContainerUtil.filter(providers, dumbService::isUsableInCurrentContext);
+    }
     for (HierarchyProvider provider : providers) {
       PsiElement target = provider.getTarget(dataContext);
       if (target != null) {
@@ -211,5 +214,15 @@ public abstract class BrowseHierarchyActionBase extends AnAction {
       }
     }
     return ContainerUtil.getFirstItem(providers);
+  }
+
+  /** Which providers {@link #findBestHierarchyProvider} considers. */
+  private enum ProviderChoice {
+    /** Every provider: the first that finds its target, else the first one. */
+    ANY,
+    /** As {@link #ANY}, but in the dumb mode only the dumb-aware providers. */
+    USABLE,
+    /** The first provider, without asking it for its target: the target can need the indexes. */
+    FIRST,
   }
 }
