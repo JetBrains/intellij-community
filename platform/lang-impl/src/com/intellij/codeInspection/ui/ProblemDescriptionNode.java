@@ -47,11 +47,7 @@ public class ProblemDescriptionNode extends SuppressableInspectionTreeNode {
     super(presentation, parent);
     myElement = element;
     myDescriptor = descriptor;
-    myLevel = ObjectUtils.notNull(calculatePreciseLevel(element, descriptor, presentation), () -> {
-      String shortName = presentation.getToolWrapper().getShortName();
-      InspectionProfileImpl profile = presentation.getContext().getCurrentProfile();
-      return profile.getTools(shortName, presentation.getContext().getProject()).getLevel();
-    });
+    myLevel = ObjectUtils.notNull(calculatePreciseLevel(element, descriptor, presentation), () -> getProfileLevel(presentation));
     myLineNumber = myDescriptor instanceof ProblemDescriptor
                    ? ((ProblemDescriptor)myDescriptor).getLineNumber()
                    : lineNumberCounter == null ? -1 : lineNumberCounter.getAsInt();
@@ -61,9 +57,8 @@ public class ProblemDescriptionNode extends SuppressableInspectionTreeNode {
                                                              @Nullable CommonProblemDescriptor descriptor,
                                                              @NotNull InspectionToolPresentation presentation) {
     if (element == null) return null;
-    InspectionProfileImpl profile = presentation.getContext().getCurrentProfile();
-    String shortName = presentation.getToolWrapper().getShortName();
     if (descriptor instanceof ProblemDescriptor) {
+      InspectionProfileImpl profile = presentation.getContext().getCurrentProfile();
       InspectionProfileManager inspectionProfileManager = profile.getProfileManager();
       RefElement refElement = (RefElement)element;
       SeverityRegistrar severityRegistrar = inspectionProfileManager.getSeverityRegistrar();
@@ -74,8 +69,14 @@ public class ProblemDescriptionNode extends SuppressableInspectionTreeNode {
       return HighlightDisplayLevel.find(highlightSeverity);
     }
     else {
-      return profile.getTools(shortName, presentation.getContext().getProject()).getLevel();
+      return getProfileLevel(presentation);
     }
+  }
+
+  private static @NotNull HighlightDisplayLevel getProfileLevel(@NotNull InspectionToolPresentation presentation) {
+    String shortName = presentation.getToolWrapper().getShortName();
+    InspectionProfileImpl profile = presentation.getContext().getCurrentProfile();
+    return profile.getTools(shortName, presentation.getContext().getProject()).getLevel();
   }
 
   public boolean needCalculateTooltip() {
