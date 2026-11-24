@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.ui.table
 
+import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.vcs.log.CommitId
 import com.intellij.vcs.log.VcsCommitMetadata
 import com.intellij.vcs.log.VcsFullCommitDetails
@@ -19,7 +20,8 @@ class CommitSelectionImpl(private val logData: VcsLogData,
   override val ids: List<VcsLogCommitStorageIndex> get() = rows.lazyMap(::getIdAtRow)
 
   override val commits: List<CommitId>
-    get() = lazyMap { id -> logData.getCommitId(id)!! }
+    // logData.getCommitId returns null when the storage is disposed or corrupted; treat that as a cancelled computation.
+    get() = lazyMap { id -> logData.getCommitId(id) ?: throw ProcessCanceledException() }
   override val cachedMetadata: List<VcsCommitMetadata>
     get() = lazyMap(logData.miniDetailsGetter::getCachedDataOrPlaceholder)
   override val cachedFullDetails: List<VcsFullCommitDetails>
