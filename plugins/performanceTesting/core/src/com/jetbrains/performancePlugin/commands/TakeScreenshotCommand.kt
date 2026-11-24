@@ -101,7 +101,9 @@ private fun writeScreenshot(image: BufferedImage, formatName: String, file: File
  *
  * The IDE can encode a screenshot while a separate test process collects attachments.
  * Encoding uses a `.tmp` file. An atomic rename publishes the completed image at [file].
- * Screenshot collectors must ignore `.tmp` files. See [AT-5703](https://youtrack.jetbrains.com/issue/AT-5703).
+ * Screenshot collectors must ignore `.tmp` files and `~` backups.
+ * IDE Starter's `com.intellij.ide.starter.report.TimeoutAnalyzer` follows this convention for timeout screenshots.
+ * See [AT-5703](https://youtrack.jetbrains.com/issue/AT-5703).
  *
  * [ImageIO.write] returns `false` when no registered writer supports [formatName] and the image type.
  * It can also throw an [IOException] during encoding.

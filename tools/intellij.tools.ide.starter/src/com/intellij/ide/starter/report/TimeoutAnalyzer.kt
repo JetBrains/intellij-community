@@ -13,6 +13,8 @@ import com.intellij.tools.ide.util.common.replaceSpecialCharactersWithHyphens
 import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.io.path.exists
+import kotlin.io.path.isDirectory
+import kotlin.io.path.isRegularFile
 import kotlin.io.path.listDirectoryEntries
 import kotlin.io.path.name
 import kotlin.io.path.pathString
@@ -113,18 +115,25 @@ object TimeoutAnalyzer {
     }
   }
 
-  private fun getLastScreenshots(runContext: IDERunContext): List<Path> {
-    val logs = runContext.lastIdeReportingData.logsDir
+  private fun getLastScreenshots(runContext: IDERunContext): List<Path> =
+    getLastScreenshots(runContext.lastIdeReportingData.logsDir)
+
+  /** Selects the latest published screenshot files for timeout diagnostics. */
+  internal fun getLastScreenshots(logs: Path): List<Path> {
     logOutput("Try to find the latest screenshot at ${logs.pathString}")
 
-    val beforeKillScreenshot = Files.find(logs, 10, { path, _ -> path.name == beforeKillScreenshotName }).findFirst().orElse(null)
+    val beforeKillScreenshot = Files.find(logs, 10, { path, attributes ->
+      attributes.isRegularFile && path.name == beforeKillScreenshotName
+    }).use { it.findFirst().orElse(null) }
     if (beforeKillScreenshot != null) {
       return listOf(beforeKillScreenshot)
     }
 
-    val beforeIdeClosedScreenshotDir = Files.find(logs, 10, { path, _ -> path.name == "beforeIdeClosed" }).findFirst().orElse(null)
+    val beforeIdeClosedScreenshotDir = Files.find(logs, 10, { path, attributes ->
+      attributes.isDirectory && path.name == "beforeIdeClosed"
+    }).use { it.findFirst().orElse(null) }
     beforeIdeClosedScreenshotDir?.let {
-      it.listDirectoryEntries("*").maxByOrNull { it.name }?.let {
+      publishedScreenshotFiles(it).maxByOrNull { it.name }?.let {
         return listOf(it)
       }
     }
@@ -133,10 +142,27 @@ object TimeoutAnalyzer {
     val screenshotsFolder = logs.resolve("screenshots").takeIf { it.exists() }
                             ?: return emptyList()
 
-    val lastHeartbeat = screenshotsFolder.listDirectoryEntries("heartbeat*").sortedBy { it.name }.lastOrNull { it.listDirectoryEntries().isNotEmpty() }
-                        ?: return emptyList()
+    return screenshotsFolder.listDirectoryEntries("heartbeat*")
+      .filter { it.isDirectory() }
+      .sortedByDescending { it.name }
+      .asSequence()
+      .map(::publishedScreenshotFiles)
+      .firstOrNull { it.isNotEmpty() }
+      ?: emptyList()
+  }
 
-    return lastHeartbeat.listDirectoryEntries()
+  private fun publishedScreenshotFiles(directory: Path): List<Path> =
+    directory.listDirectoryEntries().filter(::isPublishedScreenshot)
+
+  /**
+   * Rejects `.tmp` outputs and `~` backups from [com.intellij.util.io.PreemptiveSafeFileOutputStream].
+   * The IDE's `writeScreenshotAtomically` in `TakeScreenshotCommand.kt` uses this stream to publish each image.
+   * An abruptly terminated IDE can leave these files behind. See [AT-5703](https://youtrack.jetbrains.com/issue/AT-5703).
+   */
+  private fun isPublishedScreenshot(file: Path): Boolean {
+    val isTemporaryOutput = file.name.endsWith(".tmp")
+    val isBackup = file.name.endsWith("~")
+    return file.isRegularFile() && !isTemporaryOutput && !isBackup
   }
 
   private fun getLastThreadDump(runContext: IDERunContext): String? {
