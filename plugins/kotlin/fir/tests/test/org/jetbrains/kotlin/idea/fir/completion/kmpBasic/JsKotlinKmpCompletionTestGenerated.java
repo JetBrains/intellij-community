@@ -2765,6 +2765,21 @@ public abstract class JsKotlinKmpCompletionTestGenerated extends AbstractKotlinK
             runTest("../../completion/testData/basic/common/parameterNameAndType/NotImportedJava.kt");
         }
 
+        @TestMetadata("NotInBlockCommentAfterFunctionParameter.kt")
+        public void testNotInBlockCommentAfterFunctionParameter() throws Exception {
+            runTest("../../completion/testData/basic/common/parameterNameAndType/NotInBlockCommentAfterFunctionParameter.kt");
+        }
+
+        @TestMetadata("NotInCommentAfterConstructorParameter.kt")
+        public void testNotInCommentAfterConstructorParameter() throws Exception {
+            runTest("../../completion/testData/basic/common/parameterNameAndType/NotInCommentAfterConstructorParameter.kt");
+        }
+
+        @TestMetadata("NotInCommentAfterFunctionParameter.kt")
+        public void testNotInCommentAfterFunctionParameter() throws Exception {
+            runTest("../../completion/testData/basic/common/parameterNameAndType/NotInCommentAfterFunctionParameter.kt");
+        }
+
         @TestMetadata("ParametersInFile.kt")
         public void testParametersInFile() throws Exception {
             runTest("../../completion/testData/basic/common/parameterNameAndType/ParametersInFile.kt");

@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.util.positionContext
 
+import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiErrorElement
 import com.intellij.psi.util.parentOfType
@@ -286,6 +287,7 @@ object KotlinPositionContextDetector {
     }
 
     private fun detectForPositionWithoutReference(position: PsiElement): KotlinRawPositionContext? {
+        if (position is PsiComment) return null
         val parent = position.parent ?: return null
         val grandparent = parent.parent
         return when (parent) {
