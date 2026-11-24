@@ -79,7 +79,8 @@
     <codeFoldingOptionsProvider instance="com.intellij.json.editor.folding.JsonFoldingOptionsProvider" id="JSON" order="after Android,after C++,after General,after Go,after Handlebars,after JAVA,after JavaScript,after JPAQL,after ObjectiveC"/>
     <rdct.remoteSettingProvider implementation="com.intellij.json.editor.JSONRemoteSettingInfoProvider"/>
 
-    <editorSmartKeysConfigurable instance="com.intellij.json.editor.JsonSmartKeysConfigurable" id="editor.preferences.jsonOptions"/>
+    <editorSmartKeysConfigurable instance="com.intellij.json.editor.JsonSmartKeysConfigurable" id="editor.preferences.jsonOptions"
+                                 bundle="messages.JsonBundle" key="configurable.JsonSmartKeysConfigurable.display.name"/>
 
     <statementUpDownMover implementation="com.intellij.json.editor.lineMover.JsonLineMover" id="JSON" order="before line"/>
     <extendWordSelectionHandler implementation="com.intellij.json.editor.selection.JsonStringLiteralSelectionHandler"/>

@@ -242,7 +242,8 @@
                          instance="org.intellij.plugins.markdown.settings.MarkdownSettingsConfigurable"/>
 
     <editorSmartKeysConfigurable instance="org.intellij.plugins.markdown.settings.MarkdownSmartKeysConfigurable"
-                                 id="editor.preferences.markdownOptions"/>
+                                 id="Settings.Markdown.SmartKeys"
+                                 bundle="messages.MarkdownBundle" key="markdown.smart.keys.configurable.name"/>
 
     <applicationService serviceImplementation="org.intellij.plugins.markdown.settings.MarkdownCodeFoldingSettings" />
     <applicationService serviceImplementation="org.intellij.plugins.markdown.settings.MarkdownCodeInsightSettings" />
