@@ -90,4 +90,64 @@ internal class PyModuleDetailsModelTest {
   }
 
   //endregion
+
+  //region pick / selectionFor
+
+  /** PY-94284: the combo reads its rows again each time it is shown, and the pick of the user must stay. */
+  @Test
+  fun `a read again keeps the pick of the user`() {
+    val model = PyModuleDetailsModel<String>(initialSdkName = null)
+    assertEquals("Python 3.14", model.selectionFor("Python 3.14"))
+
+    model.pick("Python 3.10")
+
+    assertEquals("Python 3.10", model.selectionFor("Python 3.14"))
+    assertEquals("Python 3.10", model.selectionFor("Python 3.14"))
+    assertTrue(model.isSdkChanged("Python 3.10"))
+  }
+
+  @Test
+  fun `a pick of the module interpreter is no pick`() {
+    val model = PyModuleDetailsModel<String>(initialSdkName = null)
+    model.selectionFor("Python 3.14")
+    model.pick("Python 3.10")
+    model.pick("Python 3.14")
+
+    assertEquals("Python 3.12", model.selectionFor("Python 3.12"))
+  }
+
+  @Test
+  fun `a change outside the page keeps the pick of the user`() {
+    val model = PyModuleDetailsModel<String>(initialSdkName = null)
+    model.selectionFor("Python 3.14")
+    model.pick("Python 3.10")
+
+    assertEquals("Python 3.10", model.selectionFor("Python 3.12"))
+    assertEquals("Python 3.12", model.initialSdkName)
+  }
+
+  @Test
+  fun `the pick ends when the module gets it`() {
+    val model = PyModuleDetailsModel<String>(initialSdkName = null)
+    model.selectionFor("Python 3.14")
+    model.pick("Python 3.10")
+    model.selectionFor("Python 3.10")
+
+    assertEquals("Python 3.12", model.selectionFor("Python 3.12"))
+  }
+
+  @Test
+  fun `apply and reset drop the pick`() {
+    val model = PyModuleDetailsModel<String>(initialSdkName = null)
+    model.selectionFor("Python 3.14")
+    model.pick("Python 3.10")
+    model.markSdkApplied("Python 3.10")
+    assertEquals("Python 3.12", model.selectionFor("Python 3.12"))
+
+    model.pick("Python 3.11")
+    model.dropPick()
+    assertEquals("Python 3.12", model.selectionFor("Python 3.12"))
+  }
+
+  //endregion
 }

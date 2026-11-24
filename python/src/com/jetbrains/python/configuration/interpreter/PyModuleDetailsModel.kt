@@ -7,7 +7,9 @@ import com.intellij.util.concurrency.annotations.RequiresEdt
 import org.jetbrains.annotations.ApiStatus
 
 /**
- * The "was the interpreter changed since apply" state of [PyModuleDetailsPane]: [isSdkChanged] and [markSdkApplied].
+ * The interpreter state of [PyModuleDetailsPane]: the interpreter of the module as the baseline, see [isSdkChanged] and
+ * [markSdkApplied], and the pick of the user that is not applied yet, see [pick]. The combo selects what [selectionFor]
+ * gives after each read of its rows, so a read again, such as when the combo is shown again, keeps the pick.
  *
  * @param initialSdkName the interpreter the module has when the editor opens, or `null` when it has none.
  */
@@ -20,9 +22,36 @@ class PyModuleDetailsModel<T : Any>(initialSdkName: T?) {
   /** `true` when [chosenSdkName] differs from the current baseline [initialSdkName]. */
   fun isSdkChanged(chosenSdkName: T?): Boolean = chosenSdkName != initialSdkName
 
-  /** Records [appliedSdkName] as the new baseline after the caller has persisted the change. */
+  /** The interpreter that the user picked and did not apply yet, or `null` for no pick, see [pick]. */
+  private var picked: T? = null
+
+  /** Records [appliedSdkName] as the new baseline after the caller has persisted the change. The pick is applied then. */
   fun markSdkApplied(appliedSdkName: T?) {
     initialSdkName = appliedSdkName
+    dropPick()
+  }
+
+  /**
+   * Records [chosen], the interpreter that the user selected. A pick of the baseline is no pick, and so is `null`: the
+   * combo has no row for no interpreter, and it selects nothing only while it replaces its rows.
+   */
+  fun pick(chosen: T?) {
+    picked = chosen.takeIf { it != initialSdkName }
+  }
+
+  /**
+   * Makes [moduleSdk], the interpreter that the module has now, the baseline, and returns the interpreter to select: the
+   * pick of the user, else [moduleSdk].
+   */
+  fun selectionFor(moduleSdk: T?): T? {
+    initialSdkName = moduleSdk
+    if (picked == moduleSdk) dropPick()
+    return picked ?: moduleSdk
+  }
+
+  /** Drops the pick of the user, for a reset of the page. */
+  fun dropPick() {
+    picked = null
   }
 
   /**

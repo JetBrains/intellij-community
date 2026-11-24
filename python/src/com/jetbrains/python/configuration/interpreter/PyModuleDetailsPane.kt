@@ -83,12 +83,14 @@ internal class PyModuleDetailsPane(
   val component: JComponent
 
   init {
-    sdkCombo.addSelectionListener { refreshPackages() }
-    component = buildLayout()
-    sdkCombo.reload { moduleInterpreter ->
-      model.markSdkApplied(moduleInterpreter)
-      moduleInterpreter
+    sdkCombo.addSelectionListener {
+      model.pick(selectedInterpreter())
+      refreshPackages()
+      // Settings checks the page again only after an event in its editor, and the popup of the combo is not one.
+      Settings.KEY.getData(DataManager.getInstance().getDataContext(component))?.checkModified(PY_WORKSPACE_CONFIGURABLE_ID)
     }
+    component = buildLayout()
+    sdkCombo.reload(model::selectionFor)
   }
 
   fun isModified(): Boolean {
@@ -98,7 +100,8 @@ internal class PyModuleDetailsPane(
   }
 
   fun reset() {
-    sdkCombo.reload { it }
+    model.dropPick()
+    sdkCombo.reload(model::selectionFor)
     sourcesConfigurable.reset()
     projectLinksPane.reset()
     refreshPackages()
@@ -106,15 +109,11 @@ internal class PyModuleDetailsPane(
 
   /**
    * Reads the interpreter of the module again, and rebuilds only the SDK combo. For a change outside this page, such as
-   * a pick in the widget. A selection that the user made here and has not applied stays when the combo still holds it.
-   * Without such a selection the combo follows the module, so the change does not look like an edit of the user.
+   * a pick in the widget. A pick that the user made here and has not applied stays, see [PyModuleDetailsModel.pick].
+   * Without such a pick the combo follows the module, so the change does not look like an edit of the user.
    */
   fun refreshModuleSdk() {
-    sdkCombo.reload { moduleInterpreter ->
-      val pendingSelection = selectedInterpreter().takeIf { model.isSdkChanged(it) }
-      model.markSdkApplied(moduleInterpreter)
-      pendingSelection ?: moduleInterpreter
-    }
+    sdkCombo.reload(model::selectionFor)
   }
 
   /** Rebuilds only the combo, for an interpreter that was added or removed outside this page. The selection stays. */
