@@ -4,7 +4,10 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jps_test(
     name = "service_test",
-    tags = ["gradle-tests"],
+    tags = [
+        "gradle-integration-tests",
+        "gradle-tests",
+    ],
     runtime_deps = [":service_test_lib"],
 )
 ### skip generation section `test intellij.gradle.java.tests.integration.service`

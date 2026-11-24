@@ -2,9 +2,23 @@
 # One pattern per line: a module name, or a prefix with one trailing '*'. Only letters, digits, '.', '-' and '_'.
 # A line that starts with '#' is a comment. No whitespace around a pattern. BazelMigratedTestModulesTest checks the file.
 
+intellij.gradle.codeInsight.groovy.backend.tests.integration
+intellij.gradle.codeInsight.properties.backend.tests.integration
+intellij.gradle.codeInsight.toml.backend.tests.integration
+intellij.gradle.completion.toml.tests
+intellij.gradle.java.coverage.tests
+intellij.gradle.java.tests.integration
+intellij.gradle.java.tests.integration.eel
+intellij.gradle.properties.tests.integration
+intellij.gradle.tests.integration
+intellij.gradle.tests.integration.eel
 intellij.gradle.toolingExtension.tests
+intellij.gradle.toolingExtension.tests.integration
+intellij.gradle.toolingProxy.tests
 intellij.html.tools.tests
 intellij.java.compiler.tests
+intellij.javaee.gradle.tests
+intellij.javaee.web.gradle.tests
 intellij.json.tests.js
 intellij.platform.images.build.tests.smoke
 intellij.platform.testFramework.tests.smoke

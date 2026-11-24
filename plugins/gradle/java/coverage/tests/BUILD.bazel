@@ -2,6 +2,13 @@ load("@community//build:jps_module.bzl", "jps_module")
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+jps_test(
+    name = "tests_test",
+    tags = ["gradle-integration-tests"],
+    runtime_deps = [":tests_test_lib"],
+)
+### skip generation section `test intellij.gradle.java.coverage.tests`
+
 ### auto-generated section `build intellij.gradle.java.coverage.tests` start
 jvm_library(
     name = "tests_test_lib",
@@ -56,10 +63,3 @@ jps_module(
     target = "tests_test_lib",
 )
 ### auto-generated section `iml intellij.gradle.java.coverage.tests` end
-
-### auto-generated section `test intellij.gradle.java.coverage.tests` start
-jps_test(
-    name = "tests_test",
-    runtime_deps = [":tests_test_lib"],
-)
-### auto-generated section `test intellij.gradle.java.coverage.tests` end

@@ -2,6 +2,13 @@ load("@community//build:jps_module.bzl", "jps_module")
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+jps_test(
+    name = "eel_test",
+    tags = ["gradle-integration-tests"],
+    runtime_deps = [":eel_test_lib"],
+)
+### skip generation section `test intellij.gradle.java.tests.integration.eel`
+
 ### auto-generated section `build intellij.gradle.java.tests.integration.eel` start
 jvm_library(
     name = "eel_test_lib",
@@ -114,10 +121,3 @@ jps_module(
     target = "eel_test_lib",
 )
 ### auto-generated section `iml intellij.gradle.java.tests.integration.eel` end
-
-### auto-generated section `test intellij.gradle.java.tests.integration.eel` start
-jps_test(
-    name = "eel_test",
-    runtime_deps = [":eel_test_lib"],
-)
-### auto-generated section `test intellij.gradle.java.tests.integration.eel` end

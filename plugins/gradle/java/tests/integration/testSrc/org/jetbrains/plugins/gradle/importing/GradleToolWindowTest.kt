@@ -16,6 +16,7 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager.Companion.getInstance
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.PsiTestUtil
+import com.intellij.testFramework.common.BazelTestUtil
 import com.intellij.testFramework.runInEdtAndWait
 import com.intellij.toolWindow.ToolWindowHeadlessManagerImpl
 import groovy.util.Node
@@ -344,9 +345,15 @@ include 'p1:leaf', 'p2:leaf'
 
   protected open val path: String
     get() {
-      val communityPath = PlatformTestUtil.getCommunityPath().replace(File.separatorChar, '/')
+      val testDataPath = if (BazelTestUtil.isUnderBazelTest) {
+        BazelTestUtil.getFileFromBazelRuntime("@community//plugins/gradle/java:testData").toString()
+      }
+      else {
+        val communityPath = PlatformTestUtil.getCommunityPath().replace(File.separatorChar, '/')
+        "$communityPath/plugins/gradle/java/testData"
+      }
       var testName = getTestName(true)
       testName = getTestName(testName, true)
-      return "$communityPath/plugins/gradle/java/testData/toolWindow/$testName.test"
+      return "$testDataPath/toolWindow/$testName.test"
     }
 }

@@ -2,6 +2,13 @@ load("@community//build:jps_module.bzl", "jps_module")
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+jps_test(
+    name = "integration_test",
+    tags = ["gradle-integration-tests"],
+    runtime_deps = [":integration_test_lib"],
+)
+### skip generation section `test intellij.gradle.toolingExtension.tests.integration`
+
 ### auto-generated section `build intellij.gradle.toolingExtension.tests.integration` start
 jvm_library(
     name = "integration_test_lib",
@@ -78,10 +85,3 @@ jps_module(
     target = "integration_test_lib",
 )
 ### auto-generated section `iml intellij.gradle.toolingExtension.tests.integration` end
-
-### auto-generated section `test intellij.gradle.toolingExtension.tests.integration` start
-jps_test(
-    name = "integration_test",
-    runtime_deps = [":integration_test_lib"],
-)
-### auto-generated section `test intellij.gradle.toolingExtension.tests.integration` end

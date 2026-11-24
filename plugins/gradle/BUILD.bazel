@@ -9,13 +9,22 @@ filegroup(
     visibility = ["//visibility:public"],
 )
 
+filegroup(
+    name = "jvmCompatibilityData",
+    srcs = ["generated/GradleJvmSupportDefaultData.kt"],
+    visibility = ["//visibility:public"],
+)
+
 ### auto-generated section `dev intellij.gradle` start
 content_module_jar(module = ":gradle")
 ### auto-generated section `dev intellij.gradle` end
 
 jps_test(
     name = "gradle-tests_test",
-    tags = ["gradle-tests"],
+    tags = [
+        "gradle-integration-tests",
+        "gradle-tests",
+    ],
     runtime_deps = [":gradle-tests_test_lib"],
 )
 ### skip generation section `test intellij.gradle.tests`

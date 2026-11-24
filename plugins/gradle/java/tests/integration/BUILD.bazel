@@ -1,6 +1,23 @@
 load("@community//build:jps_module.bzl", "jps_module")
+load("@community//build:bazel_targets_json.bzl", "current_bazel_targets_json")
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+BAZEL_TARGETS_JSON = current_bazel_targets_json()
+
+jps_test(
+    name = "integration_test",
+    data = [
+        "@community//plugins/gradle/java:testData_files",
+        BAZEL_TARGETS_JSON,
+    ],
+    jvm_flags = [
+        "-Dintellij.build.bazel.targets.json.file=$(rlocationpath %s)" % BAZEL_TARGETS_JSON,
+    ],
+    tags = ["gradle-integration-tests"],
+    runtime_deps = [":integration_test_lib"],
+)
+### skip generation section `test intellij.gradle.java.tests.integration`
 
 ### auto-generated section `build intellij.gradle.java.tests.integration` start
 jvm_library(
@@ -114,10 +131,3 @@ jps_module(
     target = "integration_test_lib",
 )
 ### auto-generated section `iml intellij.gradle.java.tests.integration` end
-
-### auto-generated section `test intellij.gradle.java.tests.integration` start
-jps_test(
-    name = "integration_test",
-    runtime_deps = [":integration_test_lib"],
-)
-### auto-generated section `test intellij.gradle.java.tests.integration` end

@@ -6,7 +6,10 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 jps_test(
     name = "jps-tests_test",
     timeout = "short",
-    tags = ["community-compiler-test"],
+    tags = [
+        "community-compiler-test",
+        "gradle-integration-tests",
+    ],
     runtime_deps = [":jps-tests_test_lib"],
 )
 ### skip generation section `test intellij.gradle.jps.tests`

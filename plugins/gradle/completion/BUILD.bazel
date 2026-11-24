@@ -8,7 +8,10 @@ jps_test(
     name = "completion-tests_test",
     timeout = "moderate",
     sandbox = True,
-    tags = ["community-aggregator"],
+    tags = [
+        "community-aggregator",
+        "gradle-integration-tests",
+    ],
     runtime_deps = [":completion-tests_test_lib"],
 )
 ### skip generation section `test intellij.gradle.completion.tests`

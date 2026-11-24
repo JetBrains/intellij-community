@@ -4,6 +4,7 @@ package org.jetbrains.plugins.gradle.jvmcompat
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.PathManager
 import com.intellij.testFramework.LightPlatformTestCase
+import com.intellij.testFramework.common.BazelTestUtil
 import java.io.File
 import java.nio.file.Files
 import kotlin.io.path.deleteIfExists
@@ -20,9 +21,13 @@ class GradleJvmCompatibilityUpToDateTest : LightPlatformTestCase() {
 
   fun `test ensures generated file is up to date to compatibility json`() {
     val tempFile = Files.createTempFile(getTestName(true), "")
-    val gradleJvmSupportFile = File(PathManager.getCommunityHomePath(), "plugins/gradle/generated/GradleJvmSupportDefaultData.kt").also {
-      assertTrue("GradleJvmSupportDefaultData.kt should be generated", it.exists())
+    val gradleJvmSupportFile = if (BazelTestUtil.isUnderBazelTest) {
+      BazelTestUtil.getFileFromBazelRuntime("@community//plugins/gradle:generated/GradleJvmSupportDefaultData.kt").toFile()
     }
+    else {
+      File(PathManager.getCommunityHomePath(), "plugins/gradle/generated/GradleJvmSupportDefaultData.kt")
+    }
+    assertTrue("GradleJvmSupportDefaultData.kt should be generated", gradleJvmSupportFile.exists())
     val copyrightLine = gradleJvmSupportFile.readLines().first()
     assertTrue(copyrightLine.startsWith("//"))
     generateJvmSupportMatrices(compatibilityJsonData, tempFile, ApplicationInfo.getInstance().fullVersion, copyrightLine)

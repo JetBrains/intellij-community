@@ -9,6 +9,13 @@ content_module_jar(module = ":toml")
 
 ### auto-generated section `iml intellij.gradle.toml` end
 
+jps_test(
+    name = "gradle-completion-toml-tests_test",
+    tags = ["gradle-integration-tests"],
+    runtime_deps = [":gradle-completion-toml-tests_test_lib"],
+)
+### skip generation section `test intellij.gradle.completion.toml.tests`
+
 ### auto-generated section `build intellij.gradle.completion.toml` start
 jvm_library(
     name = "toml",
@@ -112,10 +119,3 @@ jps_module(
     target = "gradle-completion-toml-tests_test_lib",
 )
 ### auto-generated section `iml intellij.gradle.completion.toml.tests` end
-
-### auto-generated section `test intellij.gradle.completion.toml.tests` start
-jps_test(
-    name = "gradle-completion-toml-tests_test",
-    runtime_deps = [":gradle-completion-toml-tests_test_lib"],
-)
-### auto-generated section `test intellij.gradle.completion.toml.tests` end

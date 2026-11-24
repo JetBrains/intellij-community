@@ -6,6 +6,12 @@ load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_mod
 
 BAZEL_TARGETS_JSON = current_bazel_targets_json()
 
+filegroup(
+    name = "testData_files",
+    srcs = glob(["testData/**"]),
+    visibility = ["//visibility:public"],
+)
+
 ### auto-generated section `dev intellij.gradle.java` start
 content_module_jar(module = ":java")
 ### auto-generated section `dev intellij.gradle.java` end
@@ -21,7 +27,10 @@ jps_test(
     jvm_flags = [
         "-Dintellij.build.bazel.targets.json.file=$(rlocationpath %s)" % BAZEL_TARGETS_JSON,
     ],
-    tags = ["gradle-tests"],
+    tags = [
+        "gradle-integration-tests",
+        "gradle-tests",
+    ],
     runtime_deps = [":java-tests_test_lib"],
 )
 ### skip generation section `test intellij.gradle.java.tests`

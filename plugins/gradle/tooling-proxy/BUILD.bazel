@@ -2,6 +2,13 @@ load("@community//build:jps_module.bzl", "jps_module")
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+jps_test(
+    name = "toolingProxy-tests_test",
+    tags = ["gradle-integration-tests"],
+    runtime_deps = [":toolingProxy-tests_test_lib"],
+)
+### skip generation section `test intellij.gradle.toolingProxy.tests`
+
 ### auto-generated section `build intellij.gradle.toolingProxy` start
 jvm_library(
     name = "tooling-proxy",
@@ -81,10 +88,3 @@ jps_module(
     target = "toolingProxy-tests_test_lib",
 )
 ### auto-generated section `iml intellij.gradle.toolingProxy.tests` end
-
-### auto-generated section `test intellij.gradle.toolingProxy.tests` start
-jps_test(
-    name = "toolingProxy-tests_test",
-    runtime_deps = [":toolingProxy-tests_test_lib"],
-)
-### auto-generated section `test intellij.gradle.toolingProxy.tests` end
