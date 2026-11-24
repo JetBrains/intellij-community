@@ -1,5 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.system;
+import com.intellij.util.SystemProperties;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -10,6 +11,8 @@ import java.lang.foreign.Linker;
 import java.lang.foreign.MemorySegment;
 import java.lang.invoke.MethodHandle;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.InvalidPathException;
+import java.nio.file.Path;
 import java.util.UUID;
 
 import static java.lang.foreign.ValueLayout.ADDRESS;
@@ -46,6 +49,32 @@ public final class WindowsShell {
     }
     catch (Throwable t) {
       throw new IllegalStateException(t);
+    }
+  }
+
+  /**
+   * @return the folder for the programs of the current user, {@code %LOCALAPPDATA%\Programs}, or {@code null} when it is unknown.
+   * When the shell gives no path for {@link #FOLDERID_USER_PROGRAM_FILES}, the result is {@code Programs} in the local application data folder.
+   */
+  public static @Nullable Path userProgramFilesDir() {
+    var programs = toPath(knownFolderPath(FOLDERID_USER_PROGRAM_FILES));
+    if (programs != null) {
+      return programs;
+    }
+    var localAppData = toPath(knownFolderPath(FOLDERID_LOCAL_APP_DATA));
+    if (localAppData == null) {
+      var userHome = toPath(SystemProperties.getUserHome());
+      localAppData = userHome != null ? userHome.resolve("AppData/Local") : null;
+    }
+    return localAppData != null ? localAppData.resolve("Programs") : null;
+  }
+
+  private static @Nullable Path toPath(@Nullable String path) {
+    try {
+      return path != null ? Path.of(path) : null;
+    }
+    catch (InvalidPathException e) {
+      return null;
     }
   }
 

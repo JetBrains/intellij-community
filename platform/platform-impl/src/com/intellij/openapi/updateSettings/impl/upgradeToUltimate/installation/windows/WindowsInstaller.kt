@@ -11,7 +11,6 @@ import com.intellij.openapi.updateSettings.impl.upgradeToUltimate.installation.i
 import com.intellij.openapi.updateSettings.impl.upgradeToUltimate.installation.install.isPycharmProfessional
 import com.intellij.openapi.updateSettings.impl.upgradeToUltimate.installation.install.runCommand
 import com.intellij.openapi.util.io.toNioPathOrNull
-import com.intellij.util.SystemProperties
 import com.intellij.util.applyIf
 import com.intellij.util.io.delete
 import com.intellij.util.system.WindowsShell
@@ -98,12 +97,7 @@ internal class WindowsInstaller(scope: CoroutineScope, project: Project) : Ultim
     return runCommand(command)
   }
   
-  override fun getUltimateInstallationDirectory(): Path? {
-    WindowsShell.knownFolderPath(WindowsShell.FOLDERID_USER_PROGRAM_FILES)?.toNioPathOrNull()?.let { return it }
-    val localAppData = WindowsShell.knownFolderPath(WindowsShell.FOLDERID_LOCAL_APP_DATA)?.toNioPathOrNull()
-                       ?: SystemProperties.getUserHome().toNioPathOrNull()?.resolve("AppData/Local")
-    return localAppData?.resolve("Programs")
-  }
+  override fun getUltimateInstallationDirectory(): Path? = WindowsShell.userProgramFilesDir()
 }
 
 private data class PathInfo(
