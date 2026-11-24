@@ -47,7 +47,11 @@ class MavenDependencySmartCompletionTest(mavenVersion: String, modelVersion: Str
                        </dependencies>
                        """.trimIndent())
 
-    maven.assertCompletionVariantsInclude(maven.projectPom, maven.RENDERING_TEXT, "junit:junit")
+    maven.assertCompletionVariantsInclude(maven.projectPom,
+                                          maven.RENDERING_TEXT,
+                                          "junit:junit:4.0",
+                                          "junit:junit:3.8.2",
+                                          "junit:junit:3.8.1")
   }
 
 
@@ -65,8 +69,8 @@ class MavenDependencySmartCompletionTest(mavenVersion: String, modelVersion: Str
 
     maven.configTest(maven.projectPom)
     val elements = maven.fixture.completeBasic()
-    maven.assertCompletionVariants(maven.fixture, maven.RENDERING_TEXT, "junit:junit")
-    assertSize(1, elements)
+    maven.assertCompletionVariants(maven.fixture, maven.RENDERING_TEXT, "junit:junit:4.0", "junit:junit:3.8.2", "junit:junit:3.8.1")
+    assertSize(3, elements)
 
     withContext(Dispatchers.EDT) {
       maven.fixture.finishLookup('\n')
@@ -81,7 +85,7 @@ class MavenDependencySmartCompletionTest(mavenVersion: String, modelVersion: Str
                                            <dependency>
                                                <groupId>junit</groupId>
                                                <artifactId>junit</artifactId>
-                                               <version><caret></version>
+                                               <version><caret>3.8.1</version>
                                                <scope>test</scope>
                                            </dependency>
                                          </dependencies>
@@ -110,7 +114,7 @@ class MavenDependencySmartCompletionTest(mavenVersion: String, modelVersion: Str
 
     maven.configTest(maven.projectPom)
     maven.fixture.complete(CompletionType.BASIC)
-    maven.assertCompletionVariants(maven.fixture, maven.RENDERING_TEXT, "junit:junit")
+    maven.assertCompletionVariants(maven.fixture, maven.RENDERING_TEXT, "junit:junit:4.0", "junit:junit:3.8.2", "junit:junit:3.8.1")
     withContext(Dispatchers.EDT) {
       maven.fixture.finishLookup('\n')
     }
@@ -167,7 +171,7 @@ class MavenDependencySmartCompletionTest(mavenVersion: String, modelVersion: Str
     maven.configTest(maven.projectPom)
 
     val elements = maven.fixture.completeBasic()
-    assertSize(1, elements)
+    assertSize(3, elements)
 
     withContext(Dispatchers.EDT) {
       maven.fixture.finishLookup('\n')
