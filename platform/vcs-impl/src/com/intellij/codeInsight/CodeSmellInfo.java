@@ -41,10 +41,14 @@ public final class CodeSmellInfo {
   }
 
   public int getStartLine() {
-    return getDocument().getLineNumber(getTextRange().getStartOffset());
+    return getDocument().getLineNumber(getStartOffset());
   }
 
   public int getStartColumn() {
-    return getTextRange().getStartOffset() - getDocument().getLineStartOffset(getStartLine());
+    return getStartOffset() - getDocument().getLineStartOffset(getStartLine());
+  }
+
+  private int getStartOffset() {
+    return Math.max(0, Math.min(getTextRange().getStartOffset(), getDocument().getTextLength()));
   }
 }
