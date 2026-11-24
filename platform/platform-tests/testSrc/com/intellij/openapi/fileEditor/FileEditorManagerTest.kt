@@ -5,6 +5,7 @@ import com.intellij.ide.IdeBundle
 import com.intellij.ide.IdeEventQueue
 import com.intellij.ide.actions.OpenInRightSplitAction
 import com.intellij.ide.actions.Switcher
+import com.intellij.ide.dnd.LinuxDragAndDropSupport.uriListFlavor
 import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.UISettingsState
@@ -26,6 +27,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory
+import com.intellij.openapi.editor.FileDropManager
 import com.intellij.openapi.editor.FoldRegion
 import com.intellij.openapi.editor.FoldingModel
 import com.intellij.openapi.extensions.ExtensionPointName
@@ -155,6 +157,8 @@ import java.awt.AWTEvent
 import java.awt.Component
 import java.awt.EventQueue
 import java.awt.Window
+import java.awt.datatransfer.DataFlavor
+import java.awt.datatransfer.Transferable
 import java.awt.event.InputEvent
 import java.awt.event.KeyEvent
 import java.awt.event.MouseEvent
@@ -1689,6 +1693,28 @@ class FileEditorManagerTest {
   @Test
   fun testFileEditorOpenRequestUsesManagedMode() {
     assertThat(FileEditorOpenRequest.defaults().openMode).isEqualTo(FileEditorOpenMode.MANAGED)
+  }
+
+  @ParameterizedTest
+  @ValueSource(booleans = [false, true])
+  fun testDropOpensFilesInTargetWindow(explicitWindow: Boolean): Unit = timeoutRunBlocking {
+    val first = getSourceFile("1.txt")
+    val last = getSourceFile("2.txt")
+    val target = withContext(Dispatchers.EDT) {
+      openSourceFile("Test.java")
+      val current = currentWindow()
+      if (explicitWindow) createVerticalSplitter(current).also { manager.currentWindow = current } else current
+    }
+    val drop = object : Transferable {
+      override fun getTransferDataFlavors() = arrayOf(uriListFlavor)
+      override fun isDataFlavorSupported(flavor: DataFlavor) = flavor == uriListFlavor
+      override fun getTransferData(flavor: DataFlavor) = listOf(first, last).joinToString("\r\n") { it.toNioPath().toUri().toASCIIString() }
+    }
+    project.service<FileDropManager>().handleDrop(drop, editor = null, editorWindowCandidate = target.takeIf { explicitWindow })
+    withContext(Dispatchers.EDT) {
+      assertThat(target.fileList).containsSubsequence(first, last)
+      assertThat(target.selectedFile).isEqualTo(last)
+    }
   }
 
   @ParameterizedTest

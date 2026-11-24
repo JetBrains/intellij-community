@@ -1,9 +1,8 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor
 
-import com.intellij.ide.dnd.FileCopyPasteUtil
 import com.intellij.ide.TrustedFiles
-import com.intellij.ide.util.PsiNavigationSupport
+import com.intellij.ide.dnd.FileCopyPasteUtil
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.Service
@@ -13,13 +12,15 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.fileEditor.FileEditorOpenRequest
 import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.fileEditor.impl.EditorWindow
-import com.intellij.openapi.fileEditor.impl.FileEditorOpenOptions
 import com.intellij.openapi.fileEditor.impl.NonProjectFileWritingAccessProvider
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.StandardFileSystems
+import com.intellij.platform.ide.navigation.NavigationOptions
+import com.intellij.platform.navigateToFile
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -116,18 +117,16 @@ class FileDropManager(
         .onEach(TrustedFiles::markExternallyOpened)
     }
 
-    withContext(Dispatchers.EDT) {
-      for (vFile in vFiles) {
-        if (editorWindow != null && !editorWindow.isDisposed) {
-          val fileEditorManager = FileEditorManager.getInstance(project) as FileEditorManagerEx
-          val pair = fileEditorManager.openFile(vFile, editorWindow, FileEditorOpenOptions(requestFocus = true))
-          if (pair.allEditors.isNotEmpty()) {
-            continue
-          }
+    for (vFile in vFiles) {
+      if (editorWindow != null && !editorWindow.isDisposed) {
+        val fileEditorManager = FileEditorManagerEx.getInstanceExAsync(project)
+        val composite = fileEditorManager.openFileInWindow(vFile, editorWindow, FileEditorOpenRequest.withFocus(true))
+        if (composite.allEditors.isNotEmpty()) {
+          continue
         }
-
-        PsiNavigationSupport.getInstance().createNavigatable(project, vFile, -1).navigate(true)
       }
+
+      navigateToFile(project, vFile, line = -1, column = -1, options = NavigationOptions.requestFocus().recordAsBackHistory(false))
     }
   }
 }
