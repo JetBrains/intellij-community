@@ -783,6 +783,9 @@ a:com.intellij.psi.filters.position.PositionElementFilter
 com.intellij.psi.impl.AnyPsiChangeListener
 - afterPsiChanged(Z):V
 - beforePsiChanged(Z):V
+com.intellij.psi.impl.AnyPsiChangeListenerBackgroundable
+- com.intellij.psi.impl.AnyPsiChangeListener
+- sf:TOPIC:com.intellij.util.messages.Topic
 f:com.intellij.psi.impl.CheckUtil
 - s:checkDelete(com.intellij.openapi.vfs.VirtualFile):V
 - s:checkWritable(com.intellij.psi.PsiElement):V
