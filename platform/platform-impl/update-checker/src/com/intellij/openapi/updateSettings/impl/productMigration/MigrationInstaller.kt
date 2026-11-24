@@ -267,7 +267,7 @@ private fun macCodeSatisfies(app: Path, requirement: String, indicator: Progress
       LOG.info("${app} fails the signature check: exit code ${output.exitCode}, ${output.stderr.trim()}")
       false
     }
-    else -> throw commandError(command, output)
+    else -> throw commandError(command.commandLineString, output)
   }
 }
 
@@ -284,7 +284,7 @@ private fun runningAppBundle(): Path? {
 private fun runCommand(command: GeneralCommandLine, indicator: ProgressIndicator) {
   val output = runProcess(command, indicator)
   if (output.exitCode != 0) {
-    throw commandError(command, output)
+    throw commandError(command.commandLineString, output)
   }
 }
 
@@ -292,23 +292,32 @@ private fun runCommand(command: GeneralCommandLine, indicator: ProgressIndicator
 private fun runProcess(command: GeneralCommandLine, indicator: ProgressIndicator): ProcessOutput {
   val commandLine = command.commandLineString
   LOG.info("running ${commandLine}")
-  val output = try {
-    CapturingProcessHandler(command).runProcessWithProgressIndicator(indicator, PROCESS_TIMEOUT_MS)
+  val handler = try {
+    CapturingProcessHandler(command)
   }
   catch (e: ExecutionException) {
     throw installError("cannot run ${commandLine}: ${e.message}", e)
   }
+  return runProcess(handler, commandLine, indicator, PROCESS_TIMEOUT_MS)
+}
+
+/**
+ * Waits for the process of [handler]. A cancel of [indicator] and the time limit end the process tree.
+ * The time limit gives the usual install error. It does not check the exit code.
+ */
+internal fun runProcess(handler: CapturingProcessHandler, commandLine: String, indicator: ProgressIndicator, timeoutMs: Int): ProcessOutput {
+  val output = handler.runProcessWithProgressIndicator(indicator, timeoutMs)
   if (output.isCancelled) {
     throw ProcessCanceledException()
   }
   if (output.isTimeout) {
-    throw commandError(command, output)
+    throw commandError(commandLine, output)
   }
   return output
 }
 
-private fun commandError(command: GeneralCommandLine, output: ProcessOutput): MigrationInstallException =
-  installError("${command.commandLineString} failed: exit code ${output.exitCode}, timeout ${output.isTimeout}, ${output.stderr.trim()}")
+private fun commandError(commandLine: String, output: ProcessOutput): MigrationInstallException =
+  installError("${commandLine} failed: exit code ${output.exitCode}, timeout ${output.isTimeout}, ${output.stderr.trim()}")
 
 private fun detach(mountPoint: Path) {
   try {
