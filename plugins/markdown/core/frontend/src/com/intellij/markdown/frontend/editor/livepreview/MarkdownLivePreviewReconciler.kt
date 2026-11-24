@@ -30,7 +30,6 @@ import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.withContext
 import org.intellij.plugins.markdown.editor.livepreview.MarkdownLivePreviewSpecSet
 import org.intellij.plugins.markdown.editor.livepreview.isLivePreviewEnabled
@@ -94,30 +93,12 @@ class MarkdownLivePreviewReconciler private constructor(
     })
   }
 
-  /**
-   * Hands over the specs computed for one state of the document and brings the editor in line with them.
-   * The fold preparation runs on a background thread. Then the EDT applies the folds.
-   */
+  /** Hands over the specs computed for one state of the document and brings the editor in line with them. */
   suspend fun publishSpecs(specSet: MarkdownLivePreviewSpecSet?) {
-    if (specSet == null) {
-      withContext(Dispatchers.EDT) { applySpecs(null, emptyList()) }
-      return
+    withContext(Dispatchers.EDT) {
+      val presentation = if (specSet == null) null else prepareSpecs(specSet) ?: return@withContext
+      applySpecs(presentation)
     }
-    val (presentation, jobs) = withContext(Dispatchers.EDT) {
-      val presentation = prepareSpecs(specSet) ?: return@withContext null
-      presentation to presentation.elements.flatMap { it.folds }.mapNotNull { it.prepare() }
-    } ?: return
-    val actions = if (jobs.isEmpty()) {
-      emptyList()
-    } else {
-      withContext(Dispatchers.Default) {
-        jobs.map { job ->
-          ensureActive()
-          job.get()
-        }
-      }
-    }
-    withContext(Dispatchers.EDT) { applySpecs(presentation, actions) }
   }
 
   private fun prepareSpecs(specSet: MarkdownLivePreviewSpecSet): MarkdownLivePreviewPresentation? {
@@ -130,11 +111,10 @@ class MarkdownLivePreviewReconciler private constructor(
     return presentationFactory.create(specSet)
   }
 
-  private fun applySpecs(presentation: MarkdownLivePreviewPresentation?, actions: List<Runnable>) {
+  private fun applySpecs(presentation: MarkdownLivePreviewPresentation?) {
     ThreadingAssertions.assertEventDispatchThread()
     if (editor.isDisposed || disposed) return
     if (presentation?.documentVersion?.matches(editor.document, project) == false) return
-    actions.forEach { it.run() }
     this@MarkdownLivePreviewReconciler.presentation = presentation
     revealedElements = emptySet()
     reconcileNow()
@@ -402,8 +382,13 @@ class MarkdownLivePreviewReconciler private constructor(
     }
     updating = true
     try {
-      if (editor.scrollingModel.visibleAreaOnScrollingFinished.y == 0) update.run()
-      else EditorScrollingPositionKeeper.perform(editor, false, update)
+      if (editor.scrollingModel.visibleAreaOnScrollingFinished.y == 0) {
+        update.run()
+        editor.scrollingModel.scrollVertically(0)
+      }
+      else {
+        EditorScrollingPositionKeeper.perform(editor, false, update)
+      }
     }
     finally {
       updating = false

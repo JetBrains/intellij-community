@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.markdown.frontend.editor.livepreview
 
+import com.intellij.codeInsight.documentation.render.DocRenderItemUpdater
 import com.intellij.ide.IdeEventQueue
 import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.Disposable
@@ -15,7 +16,6 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.editor.Caret
 import com.intellij.openapi.editor.CustomFoldRegion
-import com.intellij.openapi.editor.CustomFoldRegionRenderer
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorCustomElementRenderer
 import com.intellij.openapi.editor.FoldRegion
@@ -67,7 +67,6 @@ import java.awt.event.InputEvent
 import java.awt.event.MouseEvent
 import java.awt.geom.Rectangle2D
 import java.util.concurrent.ConcurrentHashMap
-import java.util.function.Supplier
 import javax.swing.SwingUtilities
 import javax.swing.text.AttributeSet
 import javax.swing.text.Element
@@ -110,18 +109,20 @@ internal class MarkdownLivePreviewHeadingRenderer(private val editor: EditorEx) 
 
   override fun reconcile(presentation: MarkdownLivePreviewPresentation?) {
     val wanted = HashSet<RevealedHeadingKey>()
+    val outdated = ArrayList<CustomFoldRegion>()
     for (element in presentation?.elements.orEmpty()) {
       val fold = element.folds.singleOrNull() as? HeadingFold ?: continue
       val range = fold.range
       val region = editor.foldingModel.getFoldRegion(range.startOffset, range.endOffset)
       if (region is CustomFoldRegion) {
-        if ((region.renderer as? HeadingPainter)?.needsLayout() == true) region.update()
+        if ((region.renderer as? HeadingPainter)?.needsUpdate() == true) outdated += region
         continue
       }
       val painter = fold.painter()
       val sourceLines = editor.offsetToVisualLine(range.endOffset, true) - editor.offsetToVisualLine(range.startOffset, false) + 1
       wanted += RevealedHeadingKey(range, painter, maxOf(0, painter.height() - sourceLines * editor.lineHeight))
     }
+    if (outdated.isNotEmpty()) DocRenderItemUpdater.getInstance().updateFoldRegions(outdated, true)
     val kept = ArrayList<RevealedHeading>()
     val obsolete = ArrayList<RevealedHeading>()
     for (heading in revealedHeadings) {
@@ -199,21 +200,10 @@ internal class MarkdownLivePreviewHeadingRenderer(private val editor: EditorEx) 
       return foldingModel.addCustomLinesFolding(line, line, painter())
     }
 
-    override fun prepare(): Supplier<Runnable>? {
-      val region = editor.foldingModel.getFoldRegion(range.startOffset, range.endOffset)
-      if (region != null && isSame(region)) return null
-      val look = look()
-      val width = wrapWidth(editor)
-      return Supplier<Runnable> {
-        val headingPainter = HeadingPainter(editor, look, width, styleSheets)
-        Runnable { painter = headingPainter }
-      }
-    }
-
     /** The painter for the current look. A reveal and a refold in one presentation reuse it. */
     fun painter(): HeadingPainter {
       val look = look()
-      return painter?.takeIf { it.look == look } ?: HeadingPainter(editor, look, wrapWidth(editor), styleSheets).also { painter = it }
+      return painter?.takeIf { it.look == look } ?: HeadingPainter(editor, look, styleSheets).also { painter = it }
     }
 
     /** The look of the JCEF preview: bold, the default foreground, and the info foreground for h6. */
@@ -280,30 +270,32 @@ private data class HeadingLook(
 
 /**
  * Paints one heading with its own [JBHtmlPane]. The layout is cached for the current wrap width.
- * The constructor lays out the pane at [width]. It needs no EDT, so a background thread can create the painter.
+ * [DocRenderItemUpdater] creates the pane on the EDT. Until then, the fold takes one line and paints nothing.
  */
 private class HeadingPainter(
   private val editor: EditorEx,
   val look: HeadingLook,
-  width: Int?,
   private val styleSheets: ConcurrentHashMap<String, StyleSheet>,
-) : CustomFoldRegionRenderer, CustomHighlighterRenderer {
-  private val pane = createPane()
+) : DocRenderItemUpdater.Renderer, CustomHighlighterRenderer {
+  private var pane: JBHtmlPane? = null
   private var layoutWidth: Int? = null
   private var isWrapped = false
 
-  init { layout(width) }
-
-  fun needsLayout(): Boolean = layoutWidth != wrapWidth(editor)
+  fun needsUpdate(): Boolean = pane == null || layoutWidth != wrapWidth(editor)
 
   fun height(): Int = maxOf(editor.lineHeight, layout().height)
 
-  override fun calcWidthInPixels(region: CustomFoldRegion): Int = look.indent + layout().width
+  override fun invalidate(recreateContent: Boolean) {
+    if (recreateContent) pane()
+  }
 
-  override fun calcHeightInPixels(region: CustomFoldRegion): Int = height()
+  override fun calcWidthInPixels(region: CustomFoldRegion): Int = look.indent + if (pane == null) 0 else layout().width
 
-  override fun paint(region: CustomFoldRegion, g: Graphics2D, targetRegion: Rectangle2D, textAttributes: TextAttributes) =
-    paintPane(g, targetRegion)
+  override fun calcHeightInPixels(region: CustomFoldRegion): Int = if (pane == null) editor.lineHeight else height()
+
+  override fun paint(region: CustomFoldRegion, g: Graphics2D, targetRegion: Rectangle2D, textAttributes: TextAttributes) {
+    if (pane != null) paintPane(g, targetRegion)
+  }
 
   override fun paint(editor: Editor, highlighter: RangeHighlighter, g: Graphics) {
     if (editor !is EditorImpl || !editor.isStickyLinePainting || !highlighter.isValid) return
@@ -319,6 +311,7 @@ private class HeadingPainter(
   override fun getOrder(): CustomHighlighterOrder = CustomHighlighterOrder.AFTER_TEXT
 
   private fun paintPane(g: Graphics2D, targetRegion: Rectangle2D) {
+    val pane = pane()
     val isStickyLine = (editor as? EditorImpl)?.isStickyLinePainting == true
     val wrapWidth = layoutWidth
     val isWrapped = isWrapped
@@ -346,6 +339,7 @@ private class HeadingPainter(
    * Returns null when the point has no source range, and the platform then handles the click.
    */
   fun sourceOffsetAt(region: CustomFoldRegion, point: Point): Int? {
+    val pane = pane()
     val document = pane.document as? HTMLDocument ?: return null
     val position = pane.viewToModel2D(Point(point.x - look.indent, point.y - paneY(region.heightInPixels)))
     if (position < 0) return null
@@ -365,11 +359,13 @@ private class HeadingPainter(
   }
 
   private fun layout(): Dimension {
-    if (needsLayout()) layout(wrapWidth(editor))
+    val pane = pane()
+    if (needsUpdate()) layout(wrapWidth(editor))
     return pane.size
   }
 
   private fun layout(width: Int?) {
+    val pane = pane()
     val paneWidth = width?.let { (it - look.indent).coerceAtLeast(1) }
     pane.setSize(paneWidth ?: 10_000_000, 10_000_000)
     val preferred = pane.preferredSize
@@ -378,7 +374,12 @@ private class HeadingPainter(
     isWrapped = paneWidth != null && preferred.width > paneWidth
   }
 
-  private fun paneY(regionHeight: Int): Int = ((regionHeight - pane.height) / 2).coerceAtLeast(0)
+  private fun paneY(regionHeight: Int): Int = ((regionHeight - pane().height) / 2).coerceAtLeast(0)
+
+  private fun pane(): JBHtmlPane = pane ?: createPane().also {
+    pane = it
+    layout(wrapWidth(editor))
+  }
 
   private fun createPane(): JBHtmlPane {
     val weight = if (look.font.isBold) "bold" else "normal"

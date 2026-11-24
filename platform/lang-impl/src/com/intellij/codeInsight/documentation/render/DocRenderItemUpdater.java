@@ -4,6 +4,7 @@ package com.intellij.codeInsight.documentation.render;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.Service;
 import com.intellij.openapi.editor.CustomFoldRegion;
+import com.intellij.openapi.editor.CustomFoldRegionRenderer;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.VisualPosition;
 import com.intellij.openapi.editor.ex.util.EditorScrollingPositionKeeper;
@@ -27,7 +28,16 @@ public final class DocRenderItemUpdater implements Runnable {
   private static final long MAX_UPDATE_DURATION_MS = 50;
   private final Map<CustomFoldRegion, Boolean> myQueue = new HashMap<>();
 
-  static DocRenderItemUpdater getInstance() {
+  /** A renderer of a fold region that this updater updates in chunks, nearest to the viewport first. */
+  public interface Renderer extends CustomFoldRegionRenderer {
+    /**
+     * Drops the cached size, and also the cached content when {@code recreateContent} is true.
+     * Then the updater calls {@link CustomFoldRegion#update()}.
+     */
+    void invalidate(boolean recreateContent);
+  }
+
+  public static DocRenderItemUpdater getInstance() {
     return ApplicationManager.getApplication().getService(DocRenderItemUpdater.class);
   }
 
@@ -56,7 +66,7 @@ public final class DocRenderItemUpdater implements Runnable {
     if (wasEmpty) processChunk(onAfterDone);
   }
 
-  void updateFoldRegions(@NotNull Collection<? extends CustomFoldRegion> foldRegions, boolean recreateContent) {
+  public void updateFoldRegions(@NotNull Collection<? extends CustomFoldRegion> foldRegions, boolean recreateContent) {
     if (foldRegions.isEmpty()) return;
     boolean wasEmpty = myQueue.isEmpty();
     for (CustomFoldRegion foldRegion : foldRegions) {
@@ -84,11 +94,12 @@ public final class DocRenderItemUpdater implements Runnable {
     do {
       CustomFoldRegion region = toProcess.remove(toProcess.size() - 1);
       boolean updateContent = myQueue.remove(region);
-      if (region.isValid()) {
+      if (region.isValid() && region.getRenderer() instanceof Renderer renderer) {
         Editor editor = region.getEditor();
         keepPosition(keepers, editor);
         var tasks = editorTasks.computeIfAbsent(editor, e -> new ArrayList<>());
-        ((DocRenderer)region.getRenderer()).update(true, updateContent, tasks);
+        renderer.invalidate(updateContent);
+        tasks.add(region::update);
         if (tasks.size() > 20) {
           runFoldingTasks(editor, tasks);
         }

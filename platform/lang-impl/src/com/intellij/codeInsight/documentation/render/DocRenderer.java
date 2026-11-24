@@ -20,7 +20,6 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.CustomFoldRegion;
-import com.intellij.openapi.editor.CustomFoldRegionRenderer;
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -89,7 +88,7 @@ import static com.intellij.lang.documentation.DocumentationMarkup.CLASS_SECTION;
 import static com.intellij.lang.documentation.DocumentationMarkup.CLASS_SECTIONS;
 
 @ApiStatus.Internal
-public final class DocRenderer implements CustomFoldRegionRenderer {
+public final class DocRenderer implements DocRenderItemUpdater.Renderer {
   private static final Logger LOG = Logger.getInstance(DocRenderer.class);
   private static final Key<EditorInlineHtmlPane> CACHED_LOADING_PANE = Key.create("cached.loading.pane");
   private static final DocRendererMemoryManager MEMORY_MANAGER = new DocRendererMemoryManager();
@@ -137,10 +136,11 @@ public final class DocRenderer implements CustomFoldRegionRenderer {
     CustomFoldRegion foldRegion = myItem.getFoldRegion();
     if (foldRegion != null) {
       if (updateSize) {
-        myCachedWidth = -1;
-        myCachedHeight = -1;
+        invalidate(updateContent);
       }
-      myContentUpdateNeeded = updateContent;
+      else {
+        myContentUpdateNeeded = updateContent;
+      }
       Runnable task = () -> foldRegion.update();
       if (foldingTasks == null) {
         task.run();
@@ -149,6 +149,13 @@ public final class DocRenderer implements CustomFoldRegionRenderer {
         foldingTasks.add(task);
       }
     }
+  }
+
+  @Override
+  public void invalidate(boolean recreateContent) {
+    myCachedWidth = -1;
+    myCachedHeight = -1;
+    myContentUpdateNeeded = recreateContent;
   }
 
   @Override
