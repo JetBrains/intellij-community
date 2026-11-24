@@ -17,6 +17,7 @@
 
   psiImplUtilClass = 'com.intellij.json.psi.impl.JsonPsiImplUtils'
   tokenTypeClass = 'com.intellij.json.JsonTokenType'
+  tokenTypeFactory = 'com.intellij.json.JsonElementFactory.getTokenType'
 
   implements("value") = "com.intellij.json.psi.JsonElement"
   extends("value") = "com.intellij.json.psi.impl.JsonElementImpl"

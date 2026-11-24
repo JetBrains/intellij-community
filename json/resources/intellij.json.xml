@@ -48,6 +48,8 @@
               language="JSON Lines"/>
 
     <registryKey defaultValue="true" description="Enable lazy parsing of JSON" key="json.lazy.parsing" restartRequired="true"/>
+    <registryKey key="json.reparse.leaves" defaultValue="true"
+                 description="Gives a JSON string, number, identifier or comment leaf the new text without a reparse of the file, if the tokens stay the same"/>
     <json.lazyParsingVetoer implementation="com.intellij.json.JsonRegistryLazyParsingVetoer"/>
 
     <lang.parserDefinition language="JSON" implementationClass="com.intellij.json.JsonParserDefinition"/>

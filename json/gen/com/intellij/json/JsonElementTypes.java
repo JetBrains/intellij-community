@@ -19,21 +19,21 @@ public interface JsonElementTypes {
   IElementType STRING_LITERAL = new JsonElementType("STRING_LITERAL");
   IElementType VALUE = new JsonElementType("VALUE");
 
-  IElementType BLOCK_COMMENT = new JsonTokenType("BLOCK_COMMENT");
-  IElementType COLON = new JsonTokenType(":");
-  IElementType COMMA = new JsonTokenType(",");
-  IElementType DOUBLE_QUOTED_STRING = new JsonTokenType("DOUBLE_QUOTED_STRING");
-  IElementType FALSE = new JsonTokenType("false");
-  IElementType IDENTIFIER = new JsonTokenType("IDENTIFIER");
-  IElementType LINE_COMMENT = new JsonTokenType("LINE_COMMENT");
-  IElementType L_BRACKET = new JsonTokenType("[");
-  IElementType L_CURLY = new JsonTokenType("{");
-  IElementType NULL = new JsonTokenType("null");
-  IElementType NUMBER = new JsonTokenType("NUMBER");
-  IElementType R_BRACKET = new JsonTokenType("]");
-  IElementType R_CURLY = new JsonTokenType("}");
-  IElementType SINGLE_QUOTED_STRING = new JsonTokenType("SINGLE_QUOTED_STRING");
-  IElementType TRUE = new JsonTokenType("true");
+  IElementType BLOCK_COMMENT = JsonElementFactory.getTokenType("BLOCK_COMMENT");
+  IElementType COLON = JsonElementFactory.getTokenType(":");
+  IElementType COMMA = JsonElementFactory.getTokenType(",");
+  IElementType DOUBLE_QUOTED_STRING = JsonElementFactory.getTokenType("DOUBLE_QUOTED_STRING");
+  IElementType FALSE = JsonElementFactory.getTokenType("false");
+  IElementType IDENTIFIER = JsonElementFactory.getTokenType("IDENTIFIER");
+  IElementType LINE_COMMENT = JsonElementFactory.getTokenType("LINE_COMMENT");
+  IElementType L_BRACKET = JsonElementFactory.getTokenType("[");
+  IElementType L_CURLY = JsonElementFactory.getTokenType("{");
+  IElementType NULL = JsonElementFactory.getTokenType("null");
+  IElementType NUMBER = JsonElementFactory.getTokenType("NUMBER");
+  IElementType R_BRACKET = JsonElementFactory.getTokenType("]");
+  IElementType R_CURLY = JsonElementFactory.getTokenType("}");
+  IElementType SINGLE_QUOTED_STRING = JsonElementFactory.getTokenType("SINGLE_QUOTED_STRING");
+  IElementType TRUE = JsonElementFactory.getTokenType("true");
 
   class Factory {
     public static PsiElement createElement(ASTNode node) {

@@ -2,10 +2,12 @@
 package com.intellij.json;
 
 import com.intellij.psi.tree.IElementType;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-public final class JsonTokenType extends IElementType {
+@ApiStatus.NonExtendable
+public class JsonTokenType extends IElementType {
   public JsonTokenType(@NotNull @NonNls String debugName) {
     super(debugName, JsonLanguage.INSTANCE);
   }

@@ -4,6 +4,7 @@ package com.intellij.json
 import com.intellij.json.psi.impl.JsonLazyArrayImpl
 import com.intellij.json.psi.impl.JsonLazyObjectImpl
 import com.intellij.json.syntax.JsonLazyParsing
+import com.intellij.json.syntax.JsonSyntaxElementTypes
 import com.intellij.json.syntax.JsonSyntaxLexer
 import com.intellij.json.syntax.isArrayReparseable
 import com.intellij.json.syntax.isObjectReparseable
@@ -35,6 +36,18 @@ object JsonElementFactory {
     "OBJECT" -> if (JsonLazyParsing) LAZY_OBJECT else OBJECT
     "ARRAY" -> if (JsonLazyParsing) LAZY_ARRAY else ARRAY
     else -> throw IllegalArgumentException(name)
+  }
+
+  /** Returns the token type of [name]. A string, number, identifier or comment token can get a new text without a reparse of the file. */
+  @JvmStatic
+  fun getTokenType(name: String): IElementType = when (name) {
+    "DOUBLE_QUOTED_STRING" -> JsonReparseableTokenType(name, JsonSyntaxElementTypes.DOUBLE_QUOTED_STRING)
+    "SINGLE_QUOTED_STRING" -> JsonReparseableTokenType(name, JsonSyntaxElementTypes.SINGLE_QUOTED_STRING)
+    "NUMBER" -> JsonReparseableTokenType(name, JsonSyntaxElementTypes.NUMBER)
+    "IDENTIFIER" -> JsonReparseableTokenType(name, JsonSyntaxElementTypes.IDENTIFIER)
+    "LINE_COMMENT" -> JsonReparseableTokenType(name, JsonSyntaxElementTypes.LINE_COMMENT)
+    "BLOCK_COMMENT" -> JsonReparseableTokenType(name, JsonSyntaxElementTypes.BLOCK_COMMENT)
+    else -> JsonTokenType(name)
   }
 
   private val LAZY_OBJECT: IElementType = lazyElementType(
@@ -97,7 +110,8 @@ object JsonElementFactory {
     if (psi != null) JsonDialectUtil.getLanguageOrDefaultJson(psi)
     else fallback as? JsonLanguage ?: JsonLanguage.INSTANCE
 
-  private fun findLexer(fileLanguage: Language): Lexer {
+  /** Returns the lexer of [fileLanguage], or a plain JSON lexer with an error log if the language has no syntax definition. */
+  internal fun findLexer(fileLanguage: Language): Lexer {
     val definition = LanguageSyntaxDefinitions.INSTANCE.forLanguage(fileLanguage) ?: run {
       thisLogger().error("No syntax definition found for language $fileLanguage")
       return JsonSyntaxLexer()
