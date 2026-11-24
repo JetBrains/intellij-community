@@ -11,15 +11,19 @@ import com.intellij.openapi.editor.LogicalPosition
 import com.intellij.openapi.editor.VisualPosition
 import com.intellij.openapi.editor.event.CaretEvent
 import com.intellij.openapi.editor.event.CaretListener
+import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable
+import com.intellij.openapi.editor.ex.PrioritizedDocumentListener
 import com.intellij.openapi.editor.impl.EditorModelFixture.Companion.SURROGATE_PAIR
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightModuleFixture
 import com.intellij.testFramework.callUnderOwnClassLoader
 import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.fixture.TestFixture
 import com.intellij.testFramework.junit5.fixture.projectFixture
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
@@ -31,13 +35,14 @@ import org.junit.jupiter.api.Test
 import java.awt.Color
 import kotlin.test.assertFailsWith
 
+@Suppress("SuspiciousPackagePrivateAccess")
 @TestApplication
 class CaretModelImplTest {
   companion object {
-    private val projectFixture = projectFixture(openAfterCreation = true)
+    private val projectFixture: TestFixture<Project> = projectFixture(openAfterCreation = true)
   }
 
-  private val fixture by editorModelFixture(codeInsightModuleFixture(projectFixture))
+  private val fixture: EditorModelFixture by editorModelFixture(codeInsightModuleFixture(projectFixture))
 
   @Test
   fun `test a removed caret keeps no class loader of the code that removed it`(): Unit = fixture.runTest {
@@ -651,6 +656,37 @@ class CaretModelImplTest {
     assertEquals(LogicalPosition(0, 3), primaryCaret.logicalPosition)
     assertEquals(0, movementEvents)
     assertTrue(primaryCaret.isUpToDate)
+  }
+
+  @Test
+  fun `test focus mode refreshes after selection collapses during document update`(): Unit = fixture.runTest {
+    initText("aa\nbb\ncc\n")
+    val model = (editor as EditorImpl).focusModeModel
+    model.createFocusRegion(0, 8)
+    model.createFocusRegion(3, 5)
+
+    val caret = primaryCaret
+    caret.moveToOffset(4)
+    caret.setSelection(1, 4)
+    val position = caret.visualPosition
+    assertEquals(TextRange(0, 6), model.focusModeRange?.textRange)
+
+    val document = editor.document
+    val listener = object : PrioritizedDocumentListener {
+      override fun getPriority(): Int = EditorDocumentPriorities.CARET_MODEL - 1
+
+      override fun beforeDocumentChange(event: DocumentEvent) {
+        assertFalse(caret.isUpToDate)
+        caret.setSelection(position, 4, position, 4, false)
+        assertEquals(TextRange(0, 6), model.focusModeRange?.textRange)
+      }
+    }
+    document.addDocumentListener(listener, testRootDisposable)
+    runWriteCommand {
+      document.insertString(document.textLength, "x")
+    }
+
+    assertEquals(TextRange(3, 6), model.focusModeRange?.textRange)
   }
 
   @Test

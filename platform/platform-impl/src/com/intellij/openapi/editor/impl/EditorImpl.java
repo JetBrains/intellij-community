@@ -2246,6 +2246,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       myScrollingPositionKeeper.restorePosition(true);
     }
     myMarkupRepainter.applyBlockedRequest();
+    myFocusModeModel.applyPendingFocusMode();
   }
 
   private void beforeChangedUpdate(@NotNull DocumentEvent e) {
@@ -2319,6 +2320,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       myScrollingPositionKeeper.restorePosition(true);
     }
     myMarkupRepainter.applyBlockedRequest();
+    myFocusModeModel.applyPendingFocusMode();
   }
 
   /**

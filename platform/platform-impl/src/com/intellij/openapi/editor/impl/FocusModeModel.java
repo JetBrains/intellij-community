@@ -51,6 +51,7 @@ public final class FocusModeModel implements Disposable {
   private final List<RangeHighlighter> myFocusModeMarkup = new SmartList<>();
   private final @NotNull EditorImpl myEditor;
   private RangeMarker myFocusModeRange;
+  private boolean myFocusModeUpdatePending;
 
   private final List<FocusModeModelListener> mySegmentListeners = new SmartList<>();
   private final @Nullable RangeMarkerTree<RangeMarkerEx> myFocusMarkerTree;
@@ -110,6 +111,10 @@ public final class FocusModeModel implements Disposable {
   void applyFocusMode(@NotNull Caret caret) {
     // Focus mode should not be applied when idea is used as rd server (for example, centaur mode).
     if (ApplicationManager.getApplication().isHeadlessEnvironment() && !ApplicationManager.getApplication().isUnitTestMode()) return;
+    if (!caret.isUpToDate()) {
+      myFocusModeUpdatePending = true;
+      return;
+    }
 
     RangeMarkerEx[] startRange = new RangeMarkerEx[1];
     RangeMarkerEx[] endRange = new RangeMarkerEx[1];
@@ -132,7 +137,14 @@ public final class FocusModeModel implements Disposable {
     }
   }
 
+  void applyPendingFocusMode() {
+    if (myFocusModeUpdatePending) {
+      myEditor.applyFocusMode();
+    }
+  }
+
   void clearFocusMode() {
+    myFocusModeUpdatePending = false;
     myFocusModeMarkup.forEach(myEditor.getMarkupModel()::removeHighlighter);
     myFocusModeMarkup.clear();
     if (myFocusModeRange != null) {
