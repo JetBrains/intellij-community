@@ -111,6 +111,8 @@ private val IGNORED_FIELDS = setOf(
   "com.intellij.testFramework.HeavyPlatformTestCase.myEditorListenerTracker",
   "com.intellij.testFramework.HeavyPlatformTestCase.myProject",
 
+  "org.mockito.internal.util.MockUtil.defaultMockMaker", // mocks
+
   "com.intellij.testFramework.junit5.showcase.JUnit5ModuleFixtureTest.seenModule", // can be disposed
   "com.intellij.platform.testFramework.junit5.codeInsight.fixture.CodeInsightModuleFixtureTest.previousModule",
 
