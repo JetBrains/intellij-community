@@ -199,14 +199,15 @@ private fun listDirectories(directory: Path): List<Path> {
  *
  * A declaration keeps the labels of its entry in the recorded form. [planLabel] spells them for a package of the half
  * of the run when a leaf renders, see [DistBazelIndex.planLabel]. The header of [half] opens each package file.
- * [bridgeLabel] gives the entry of a module name in the descriptor index of the bridge of [half], see
- * [bridgeDescriptorLabel]. A leaf states no row that it derives from that index.
+ * [conventionalLabel] gives the conventional descriptor label of a module name, see
+ * [DistBazelIndex.conventionalDescriptorLabel]. A leaf states the conventional row of each content module in the
+ * recorded form.
  */
 internal fun collectCrossHalfDescriptorPackages(
   verdicts: DistToolVerdicts,
   classes: Map<String, DescriptorResidueClasses>,
   planLabel: (String) -> String,
-  bridgeLabel: (moduleName: String) -> String?,
+  conventionalLabel: (moduleName: String) -> String?,
   half: DistHalf,
 ): CrossHalfDescriptorPackages {
   val targetsByPackage = TreeMap<String, MutableList<CrossHalfDescriptorTarget>>()
@@ -237,7 +238,9 @@ internal fun collectCrossHalfDescriptorPackages(
   }
   val files = LinkedHashMap<String, List<String>>()
   for ((path, targets) in targetsByPackage) {
-    files.put(path, targets.sortedBy { it.declaration.entry.variant }.map { it.render(planLabel = planLabel, bridgeLabel = bridgeLabel) })
+    files.put(path, targets.sortedBy { it.declaration.entry.variant }.map {
+      it.render(planLabel = planLabel, conventionalLabel = conventionalLabel)
+    })
   }
   return CrossHalfDescriptorPackages(
     planLabel = planLabel,
@@ -314,13 +317,12 @@ private fun renderCrossHalfPackage(
   append("# call.\n")
   if (descriptorTargets.isNotEmpty()) {
     append("#\n")
-    append("# A descriptor leaf derives its conventional descriptor rows from the bridge index of its half.\n")
+    append("# A descriptor leaf states every descriptor row. The label of a conventional row is in the recorded form.\n")
   }
   append("\n")
-  // The bridge of the half exports `dist_plugin_descriptor` bound to its descriptor index.
   val loads = ArrayList<Pair<String, String>>()
   if (descriptorTargets.isNotEmpty()) {
-    loads.add("@${half.jpsBridge}//:targets.bzl" to "dist_plugin_descriptor")
+    loads.add(planLabel(DIST_PLUGIN_DESCRIPTOR_RULE) to "dist_plugin_descriptor")
   }
   if (pluginTarget != null) {
     loads.add(planLabel(DEV_PLUGIN_RULE) to "dev_plugin")
@@ -348,8 +350,8 @@ private fun renderCrossHalfPackage(
 }
 
 /**
- * The `dev_plugin` target of a cross-half simple plugin. Every label is explicit, because the ultimate package has no
- * JPS bridge map for community modules. Every label is spelled for a package of the half of [index], see
+ * The `dev_plugin` target of a cross-half simple plugin. Every label is explicit, because `dev_plugin` takes no module
+ * map. Every label is spelled for a package of the half of [index], see
  * [DistBazelIndex.planLabel]. The component index names this target. [contentModuleJarLabel] gives the label of the
  * jar of a reused module, which is a label of the product package of the ultimate half for a relocated call, see
  * [DistBuildSections.relocatedContentModuleJarCalls].
@@ -420,16 +422,15 @@ private class CrossHalfDescriptorTarget(entry: PluginDescriptorEntry, product: S
   )
 
   /**
-   * The leaf with every label spelled by [planLabel].
+   * The leaf with every label spelled by [planLabel], except the label of a conventional row.
    *
-   * The leaf names the declared content modules of the plugin. It derives the row of each one [bridgeLabel] knows, so
-   * `descriptors` states only the other rows, see [isBridgeDerivedDescriptor].
+   * `descriptors` states the conventional row of each declared content module of the plugin in the recorded form, see
+   * [withConventionalDescriptorRows]. [conventionalLabel] gives that label.
    */
-  fun render(planLabel: (String) -> String, bridgeLabel: (moduleName: String) -> String?): String = buildString {
+  fun render(planLabel: (String) -> String, conventionalLabel: (moduleName: String) -> String?): String = buildString {
     val entry = declaration.entry
     val contentModules = entry.contentModules.mapTo(TreeSet()) { it.name }
     append("dist_plugin_descriptor(\n")
-    appendStarlarkStringList(name = "content_modules", values = contentModules.toList())
     if (entry.descriptorInTestOutput) {
       appendStarlarkString(name = "descriptor_entry", value = entry.descriptor)
       appendStarlarkString(name = "descriptor_jar", value = planLabel(entry.moduleTarget + ".jar"))
@@ -443,9 +444,21 @@ private class CrossHalfDescriptorTarget(entry: PluginDescriptorEntry, product: S
     )
     val statedDescriptors = entry.descriptors.filterNot { declared ->
       declared.testOutput ||
-      isBridgeDerivedDescriptor(label = declared.label, loadPath = declared.loadPath, contentModules = contentModules, bridgeLabel = bridgeLabel)
+      isConventionalDescriptorRow(
+        label = declared.label,
+        loadPath = declared.loadPath,
+        modules = contentModules,
+        conventionalLabel = conventionalLabel,
+      )
     }
-    appendStarlarkStringDict(name = "descriptors", rows = statedDescriptors.associate { planLabel(it.label) to it.loadPath })
+    appendStarlarkStringDict(
+      name = "descriptors",
+      rows = withConventionalDescriptorRows(
+        rows = statedDescriptors.associate { planLabel(it.label) to it.loadPath },
+        modules = contentModules,
+        conventionalLabel = conventionalLabel,
+      ),
+    )
     if (!entry.embedsContentModules) {
       append("    embed_content_modules = False,\n")
     }

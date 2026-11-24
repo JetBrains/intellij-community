@@ -37,6 +37,16 @@ _TABLE = {
     _G: struct(modules = ["g1"], nested = [_DECLARED]),
 }
 
+def _table_with_descriptors(descriptors):
+    """`_TABLE` where each set states the descriptor label of each own member that `descriptors` names."""
+    return {
+        set_name: struct(
+            descriptors = {module: descriptors[module] for module in module_set.modules if module in descriptors},
+            **{key: getattr(module_set, key) for key in ["modules", "nested", "alias", "loading", "required_if_available"] if hasattr(module_set, key)}
+        )
+        for set_name, module_set in _TABLE.items()
+    }
+
 def _rows(module_sets, **kwargs):
     return product_content_rows(module_sets = module_sets, module_set_table = _TABLE, **kwargs)
 
@@ -137,7 +147,7 @@ _additional_rows_test = unittest.make(_additional_rows_test_impl)
 
 def _derived_descriptors_test_impl(ctx):
     env = unittest.begin(ctx)
-    index = {
+    member_descriptors = {
         "a1": "//a:a1.xml",
         "a2": "//a:a2.xml",
         "refused": "//r:refused.xml",
@@ -149,7 +159,7 @@ def _derived_descriptors_test_impl(ctx):
         "//m:META-INF/include.xml": "META-INF/include.xml",
     }
 
-    # `a1` wins by label and `a2` by load path. `b1` is not in the index, and `refused` is refused.
+    # `a1` wins by label and `a2` by load path. No set states a descriptor of `b1`, and `refused` is refused.
     asserts.equals(
         env,
         {
@@ -158,7 +168,7 @@ def _derived_descriptors_test_impl(ctx):
             "//other:a2.xml": "a2.xml",
             "//x:x.xml": "x.xml",
         },
-        derived_descriptor_rows(["a1", "a2", "b1", "refused", "x"], index, explicit, ["refused"]),
+        derived_descriptor_rows(["a1", "a2", "b1", "refused", "x"], member_descriptors, explicit, ["refused"]),
     )
     return unittest.end(env)
 
@@ -176,7 +186,6 @@ def _attributes(**kwargs):
         "private_content_modules": [],
         "content_module_loading": {},
         "content_module_required_if_available": {},
-        "descriptor_index": {},
         "descriptors": {},
     }
     arguments.update(kwargs)
@@ -187,9 +196,9 @@ def _attributes_test_impl(ctx):
     attributes = _attributes(
         includes = {"/META-INF/optional.xml": "optional", "/META-INF/required.xml": "required"},
         module_sets = [_C],
-        module_set_table = _TABLE,
+        module_set_table = _table_with_descriptors({"c1": "//c:c1.xml"}),
         content_modules = ["x"],
-        descriptor_index = {"c1": "//c:c1.xml", "x": "//x:x.xml"},
+        descriptors = {"//x:x.xml": "x.xml"},
     )
     asserts.equals(
         env,
@@ -313,8 +322,8 @@ def _product_content_form_test_impl(ctx):
         "--refused-content-module=intellij.fixture.refused",
     ], _stripped(arguments))
 
-    # The index answers `a1`, `c1` and two additional modules. The explicit row wins for `a1`, and `refused` gets no row.
-    # The rows are sorted by label.
+    # The table states `a1` and `c1`, and the call states the row of an additional module. The explicit row wins for
+    # `a1`. The rows are sorted by label.
     asserts.equals(
         env,
         ["c1.xml", "a1.xml", "intellij.fixture.extra.xml", "META-INF/required.xml"],
@@ -356,11 +365,10 @@ def _rule_tests(name):
     tests = []
     explicit_a1 = _fixture_descriptor(name + "_explicit_a1")
     required_include = _fixture_descriptor(name + "_required_include")
-    index = {
+    descriptor_files = {
         "a1": _fixture_descriptor(name + "_a1"),
         "c1": _fixture_descriptor(name + "_c1"),
         "intellij.fixture.extra": _fixture_descriptor(name + "_extra"),
-        "intellij.fixture.refused": _fixture_descriptor(name + "_refused"),
     }
 
     content_form = name + "_content_form"
@@ -371,13 +379,16 @@ def _rule_tests(name):
         aliases = ["com.intellij.modules.fixture"],
         includes = {"/META-INF/optional.xml": "optional", "/META-INF/required.xml": "required"},
         module_sets = [_A, _B],
-        module_set_table = _TABLE,
+        module_set_table = _table_with_descriptors({"a1": descriptor_files["a1"], "c1": descriptor_files["c1"]}),
         loading_overrides = {"b2": "required"},
         content_modules = ["intellij.fixture.extra", "intellij.fixture.private", "intellij.fixture.refused"],
         private_content_modules = ["intellij.fixture.private"],
         content_module_loading = {"intellij.fixture.extra": "embedded"},
-        descriptor_index = index,
-        descriptors = {explicit_a1: "a1.xml", required_include: "META-INF/required.xml"},
+        descriptors = {
+            explicit_a1: "a1.xml",
+            descriptor_files["intellij.fixture.extra"]: "intellij.fixture.extra.xml",
+            required_include: "META-INF/required.xml",
+        },
         refused_content_modules = ["intellij.fixture.refused"],
     )
     tests.append(content_form + "_test")
@@ -390,10 +401,9 @@ def _rule_tests(name):
         aliases = ["com.intellij.modules.fixture"],
         includes = {"/META-INF/required.xml": "required"},
         module_sets = [_C],
-        module_set_table = _TABLE,
+        module_set_table = _table_with_descriptors({"c1": descriptor_files["c1"]}),
         content_modules = ["intellij.fixture.extra"],
         content_module_loading = {"intellij.fixture.extra": "embedded"},
-        descriptor_index = {"c1": index["c1"]},
         descriptors = {required_include: "META-INF/required.xml"},
         separate_jar = ["c1"],
     )

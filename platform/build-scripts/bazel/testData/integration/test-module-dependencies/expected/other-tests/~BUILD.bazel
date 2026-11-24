@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
@@ -22,11 +23,10 @@ jvm_library(
 ### auto-generated section `build intellij.module.other.tests` end
 
 ### auto-generated section `iml intellij.module.other.tests` start
-exports_files(
-    [
-        "intellij.module.other.tests.iml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.module.other.tests",
+    resources = False,
+    target = "module-other-tests_test_lib",
 )
 ### auto-generated section `iml intellij.module.other.tests` end
 

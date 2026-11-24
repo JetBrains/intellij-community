@@ -47,12 +47,14 @@ Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
 diff --git a/platform/testFramework/monorepo/BUILD.bazel b/platform/testFramework/monorepo/BUILD.bazel
 --- a/platform/testFramework/monorepo/BUILD.bazel	(revision 65d9fd06454a6c1ff4925723fc5f944dbd7eda60)
 +++ b/platform/testFramework/monorepo/BUILD.bazel	(date 1782307657152)
-@@ -9,7 +9,8 @@
+@@ -9,9 +9,10 @@
      name = "monorepo-tests_test",
-     data = ALL_COMMUNITY_TARGETS + [BAZEL_TARGETS_JSON],
+     data = [
+         "//build:all_community_targets",
+         BAZEL_TARGETS_JSON,
+     ],
      jvm_flags = [
--        "-Dintellij.build.bazel.targets.json.file=$(rlocationpath %s)" % BAZEL_TARGETS_JSON,
-+        "-Dintellij.build.bazel.targets.json.file=$(rlocationpath %s)" % BAZEL_TARGETS_JSON_COMMUNITY,
+         "-Dintellij.build.bazel.targets.json.file=$(rlocationpath %s)" % BAZEL_TARGETS_JSON,
 +        "-Dapi.dump.test.update.files=true",
      ],
      runtime_deps = [":monorepo-tests_test_lib"],

@@ -190,8 +190,8 @@ jobs:
       - uses: actions/checkout@v7.0.1
         name: Check out repository
 
-      # Bazel reads the whole JPS model, including the android modules, so the subrepo must be present
-      # even though the API check itself only looks at community modules.
+      # The API check takes //build:all_community_targets, which names the records of the android modules in android/.
+      # So the subrepo must be present, although the API check itself only looks at community modules.
       - uses: actions/checkout@v7.0.1
         name: Checkout JetBrains/android submodule
         with:
@@ -287,8 +287,8 @@ jobs:
       - uses: actions/checkout@v7.0.1
         name: Check out repository
 
-      # Jewel depends on Compose, and Compose depends on //plugins/skiko/plugin. That package loads
-      # @jps_dynamic_deps_community, which reads every .iml in .idea/modules.xml, including the android ones.
+      # This job filters out the bridge e2e tests, the users of //build:all_community_targets. So no known target of
+      # this job needs the android checkout, but nobody has proven that the job passes without it.
       - uses: actions/checkout@v7.0.1
         name: Checkout JetBrains/android submodule
         with:
@@ -345,8 +345,8 @@ jobs:
       - uses: actions/checkout@v7.0.1
         name: Check out repository
 
-      # Jewel depends on Compose, and Compose depends on //plugins/skiko/plugin. That package loads
-      # @jps_dynamic_deps_community, which reads every .iml in .idea/modules.xml, including the android ones.
+      # This job filters out the bridge e2e tests, the users of //build:all_community_targets. So no known target of
+      # this job needs the android checkout, but nobody has proven that the job passes without it.
       - uses: actions/checkout@v7.0.1
         name: Checkout JetBrains/android submodule
         with:
@@ -396,7 +396,8 @@ jobs:
       - uses: actions/checkout@v7.0.1
         name: Check out repository
 
-      # The IDE end-to-end test loads the JPS module graph, which includes the android modules.
+      # The IDE end-to-end test takes //build:all_community_targets, which names the records of the android modules
+      # in android/.
       - uses: actions/checkout@v7.0.1
         name: Checkout JetBrains/android submodule
         with:
@@ -458,7 +459,8 @@ jobs:
       - uses: actions/checkout@v7.0.1
         name: Check out repository
 
-      # The IDE end-to-end test loads the JPS module graph, which includes the android modules.
+      # The IDE end-to-end test takes //build:all_community_targets, which names the records of the android modules
+      # in android/.
       - uses: actions/checkout@v7.0.1
         name: Checkout JetBrains/android submodule
         with:

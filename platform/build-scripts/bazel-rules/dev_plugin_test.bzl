@@ -511,7 +511,7 @@ def _stale_macro_test(name):
     _fixture_xml(name = stale_source)
     dist_plugin(
         main_module = "intellij.test.stale",
-        module_targets = {"intellij.test.stale": [":" + stale_owner + ".jar"]},
+        module_labels = {"intellij.test.stale": ":" + stale_owner},
         descriptor = stale_source,
         jars = {"lib/test-stale.jar": ["intellij.test.stale", "intellij.test.gone"]},
     )
@@ -539,7 +539,7 @@ def _copies_macro_test(name, helper_token, resources_token, resources_prefix, tr
     tree_files = ["web"]
     dist_plugin(
         main_module = main_module,
-        module_targets = {main_module: [":" + copied_owner + ".jar"]},
+        module_labels = {main_module: ":" + copied_owner},
         descriptor = copied_source,
         jars = {"lib/test-copied.jar": [main_module]},
         files = files,

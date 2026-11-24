@@ -1,31 +1,12 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.bazel
 
-import java.nio.file.Files
 import java.nio.file.Path
-import java.nio.file.StandardCopyOption
-import kotlin.io.path.createDirectories
-import kotlin.io.path.deleteIfExists
-import kotlin.io.path.isRegularFile
-import kotlin.io.path.moveTo
-import kotlin.io.path.readText
-import kotlin.io.path.writeText
 
 internal fun generateCompilerOptionsBzl(communityRoot: Path, defaults: KotlincProjectDefaults) {
   val file = communityRoot.resolve("build/compiler-options.bzl")
-  val newContent = renderCompilerOptionsBzl(defaults)
-  if (file.isRegularFile() && file.readText() == newContent) {
-    return
-  }
-
-  println("Writing $file")
-  file.parent.createDirectories()
-  val tempFile = Files.createTempFile(file.parent, file.fileName.toString(), ".tmp")
-  try {
-    tempFile.writeText(newContent)
-    tempFile.moveTo(file, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING)
-  } finally {
-    tempFile.deleteIfExists()
+  if (writeGeneratedFile(file = file, content = renderCompilerOptionsBzl(defaults))) {
+    println("Writing $file")
   }
 }
 

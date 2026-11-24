@@ -8,10 +8,7 @@ set -eu
 script_dir="$(cd "$(dirname "$0")"; pwd)"
 root="$script_dir/../../../.."
 
-# Prevent reusing the server on TeamCity
-# jps_dynamic_deps_community_extension and jps_dynamic_deps_ultimate_extension module extensions don't pass any TeamCity-specific options
-# https://youtrack.jetbrains.com/issue/MRI-4075
-# TODO: https://youtrack.jetbrains.com/issue/MRI-3612
+# On TeamCity the converter runs in batch mode, so the run leaves no Bazel server on the agent (MRI-4075).
 startup_opts=""
 if [ -n "${TEAMCITY_VERSION:-}" ]; then
   startup_opts="--batch"

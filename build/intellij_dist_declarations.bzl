@@ -1072,7 +1072,7 @@ def intellij_dist_declarations(tables):
     - `product(key)`: the product entry, with its `platform_set`. It fails for an unknown product.
     - `platform_lib_fragment`, `runtime_module_repository_fragment`: the payload names of the input tables.
     - `platform_lib_payload(product)`: the `struct(packed, module_system_loaded)` of the packing targets of the `lib/`
-      jars, as `dist_packed_labels` returns it.
+      jars, as `packed_labels` returns it.
     - `bazel_targets_json`, `project_model_tree`, `runtime_module_facts`, `collector`, `composer`: the labels of the
       shared inputs and tools.
     - `build_package`: the package that declares the platform sets, for example `//build`.

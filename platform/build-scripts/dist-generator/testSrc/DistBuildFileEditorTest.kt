@@ -5,47 +5,52 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
 class DistBuildFileEditorTest {
-  private val bridge = "@jps_dynamic_deps_ultimate//:targets.bzl"
+  private val otherFile = "//build:intellij_dev_ultimate.bzl"
   private val macroFile = "@community//platform/build-scripts/bazel-rules:dist_plugin.bzl"
 
   @Test
   fun `a symbol the sections take from one file leaves every other file`() {
     val manager = BazelLoadStatementManager()
-    manager.insert(mapOf(bridge to setOf("dist_plugin")))
-    manager.insert("""load("$macroFile", "dist_plugin")""")
-    manager.insert("""load("$bridge", "MODULE_TARGETS")""")
+    manager.insert(mapOf(macroFile to setOf("dist_plugin")))
+    manager.insert("""load("$otherFile", "intellij_dev_run_configuration", "dist_plugin")""")
 
-    manager.keepOneOrigin(mapOf(bridge to setOf("dist_plugin")))
+    manager.keepOneOrigin(mapOf(macroFile to setOf("dist_plugin")))
 
-    assertThat(manager.getResult()).isEqualTo("""load("$bridge", "MODULE_TARGETS", "dist_plugin")""")
+    assertThat(manager.getResult()).isEqualTo(
+      """load("$macroFile", "dist_plugin")""" + "\n" + """load("$otherFile", "intellij_dev_run_configuration")""",
+    )
   }
 
   @Test
   fun `the result binds a moved symbol once`() {
     val editor = DistBuildFileEditor(
       """
-      load("$macroFile", "dist_plugin")
-      load("$bridge", "MODULE_TARGETS")
+      load("$otherFile", "dist_plugin")
 
       ### auto-generated section `dev intellij.sample` start
       dist_plugin(
           main_module = "intellij.sample",
-          module_targets = MODULE_TARGETS,
       )
       ### auto-generated section `dev intellij.sample` end
       """.trimIndent(),
     )
-    editor.setSection("dev intellij.sample", "dist_plugin(\n    main_module = \"intellij.sample\",\n)")
+    editor.setSection(
+      "dev intellij.sample",
+      "dist_plugin(\n    main_module = \"intellij.sample\",\n    module_labels = {\n        \"intellij.sample\": \"//sample:sample\",\n    },\n)",
+    )
 
-    val result = editor.result(mapOf(bridge to setOf("dist_plugin")))
+    val result = editor.result(mapOf(macroFile to setOf("dist_plugin")))
 
     assertThat(result).isEqualTo(
       """
-      load("$bridge", "dist_plugin")
+      load("$macroFile", "dist_plugin")
 
       ### auto-generated section `dev intellij.sample` start
       dist_plugin(
           main_module = "intellij.sample",
+          module_labels = {
+              "intellij.sample": "//sample:sample",
+          },
       )
       ### auto-generated section `dev intellij.sample` end
       """.trimIndent() + "\n",

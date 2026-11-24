@@ -467,7 +467,7 @@ internal fun computeDistPlan(
   val indexProducts = distIndexProducts(plannedIndexProducts, communityProducts, upstreamIndexProducts)
   val fileContents = buildSpan("distribution plan: render files") { renderSpan ->
     val contents = buildList {
-      add(DIST_DESCRIPTORS_RELATIVE_PATH to renderDescriptors(collected.files, half))
+      add(DIST_DESCRIPTORS_RELATIVE_PATH to renderDescriptors(collected.files, half, index))
       add(DIST_PRODUCT_INFO_RELATIVE_PATH to renderProductInfo(collected.pluginDescriptorPlans.filter { it.platformPrefix !in communityProducts }, half))
       add(DIST_PLAN_RELATIVE_PATH to renderPartition(sortedProducts, half, communityProducts))
       if (DistCapability.REFERENCE_PLAN in half.capabilities) {
@@ -697,7 +697,7 @@ private data class FragmentPayload(
    *
    * [collectFragmentPlan] fills the whole handover set. [collectDescriptorFiles] then keeps only the labels no
    * referenced module set carries, see [sharePackedLabels]: a set member's label lives in [ModuleSetData.packed], and
-   * the binder unions the two halves back at load time with `dist_packed_labels`.
+   * the binder unions the two halves back at load time with `packed_labels`.
    */
   @JvmField val packedContentModuleJars: List<String> = emptyList(),
   @JvmField val residualJars: Map<String, ResidualPlatformJar> = emptyMap(),
@@ -767,6 +767,11 @@ internal data class ModuleSetData(
   @JvmField val requiredIfAvailable: Map<String, String> = emptyMap(),
   /** The plugin alias of the set, or `null` when it declares none. */
   @JvmField val alias: String? = null,
+  /**
+   * The conventional descriptor label of each own member that has one, in the recorded form, keyed by member. The product
+   * descriptor macros take the row of a member from it, see [DistBazelIndex.conventionalDescriptorLabel].
+   */
+  @JvmField val descriptors: Map<String, String> = emptyMap(),
 )
 
 private data class ProductFragmentPlan(
@@ -1249,6 +1254,7 @@ private fun collectDescriptorFiles(
   val packedTable = moduleSets.values.map { set ->
     val packed = set.modules.mapNotNull { module -> verdicts.contentModuleJarLabels.get(module)?.let { module to it.label } }.toMap(TreeMap())
     set.copy(
+      descriptors = set.modules.mapNotNull { module -> index.conventionalDescriptorLabel(module)?.let { module to it } }.toMap(TreeMap()),
       packed = packed,
       modeRefused = modeFilters.entries
         .mapNotNull { (mode, filter) ->
@@ -1381,7 +1387,7 @@ internal fun moduleSetModuleSystemLoaded(table: List<ModuleSetData>, payloads: L
  * The labels of [moduleSystemLoaded] that no module set of one `platform_lib` payload carries, sorted.
  *
  * The Bazel side rebuilds [moduleSystemLoaded] as the union of the result and the labels of the walked sets, see
- * `dist_packed_labels`. Both sides skip a set member that [productMode] refuses. The union is exact only when every
+ * `packed_labels`. Both sides skip a set member that [productMode] refuses. The union is exact only when every
  * other set label is in [moduleSystemLoaded], so this function fails for a set member that the module system of
  * [product] does not load.
  */
@@ -1671,8 +1677,8 @@ private fun collectFragmentPlan(
     // The `lib/`-owning payload hands jars over to another producer, and `dist_platform_payload` needs the handover
     // set. See `FragmentPayload.packedContentModuleJars`.
     val packed = run {
-      // Every module the payload holds at *analysis* time, not just the ones it names here. `_expand_module_sets` in
-      // `jps_dynamic_deps_ultimate.bzl` folds a referenced set's membership into `modules` on the Bazel side, and a
+      // Every module the payload holds at *analysis* time, not just the ones it names here. `packed_labels` in
+      // `community/build/packed_labels.bzl` folds a referenced set's members in on the Bazel side, and a
       // module that reaches the payload only through a set packs its `lib/` jar exactly like one named directly - so
       // walking the sets here is what keeps the handover set complete. Skipping the walk produced 18 labels where the
       // payload hands over 416 jars, and the fragment would have packed the other 398 itself while their packing
@@ -2082,8 +2088,8 @@ private fun checkBundledPluginsHaveComponents(
  *
  * The fragment dry-builds every bundled plugin descriptor the runtime repository generator reads, including the extra
  * frontend-only plugins of the embedded frontend. The tree takes the conventional descriptors, and the others from the
- * `DIST_EXTRA_DESCRIPTOR_FILES` of the flat walk. The converter drops a listed file that the package of its module
- * does not hold, so such a file is missing from the tree as well.
+ * `DIST_EXTRA_DESCRIPTOR_FILES` of the flat walk. The generator drops a listed file that the package of its module
+ * does not hold, in `renderDescriptors`, so such a file is missing from the tree as well.
  */
 private fun checkRuntimeModuleRepositoryDescriptors(
   outputProvider: ModuleOutputProvider,
@@ -3289,26 +3295,30 @@ internal class DescriptorCollector(
   }
 }
 
-private fun renderDescriptors(files: List<DescriptorFile>, half: DistHalf): String = buildString {
+/**
+ * The labels of the extra descriptor files. A file on the other repository half or outside the package of its module
+ * gives no label, see [DistBazelIndex.moduleFileLabel].
+ */
+private fun renderDescriptors(files: List<DescriptorFile>, half: DistHalf, index: DistBazelIndex): String = buildString {
   append(half.generatedByHeader)
   append("#\n")
   append("# The shared project model tree carries every content module descriptor and every bundled plugin descriptor,\n")
   append("# so a reader of the tree reads files instead of opening module jars. Only the runtime module facts action\n")
   append("# and the references read the tree - see `intellij_project_model_tree`.\n")
   append("#\n")
-  append("# Bazel finds most of them by convention: `<moduleName>.xml` and `META-INF/plugin.xml` at a production\n")
-  append("# resource root. This file is the remainder - descriptors reached only through an `xi:include`, whose name\n")
-  append("# the convention cannot predict. Listing the conventional ones here too would make this a 3000-line file\n")
-  append("# that every model change rewrites, and a standing merge conflict for everyone.\n")
+  append("# The JPS-to-Bazel converter writes the conventional descriptors into the record of each module:\n")
+  append("# `<moduleName>.xml` and `META-INF/plugin.xml` at a production resource root. This file is the remainder.\n")
+  append("# It holds the descriptors that a module reaches only through an `xi:include`, because the convention cannot\n")
+  append("# predict their names.\n")
   append("#\n")
-  append("# Each entry is (project-relative path, JPS module name). The module names the Bazel package that\n")
-  append("# exports the file, which only the JPS-to-Bazel converter knows.\n")
+  append("# Each entry is the label of the file in the package of its JPS module. The generator leaves out a file on\n")
+  append("# the other repository half or outside the package of its module.\n")
   append("#\n")
-  append("# A stale entry here is dropped rather than an error: this list is probed during module-extension\n")
-  append("# evaluation, so failing would make the very tool that regenerates it unbuildable.\n")
+  append("# The targets JSON does not read this list. So a stale entry breaks only the readers of the tree, and the\n")
+  append("# generator still runs to fix it.\n")
   append("DIST_EXTRA_DESCRIPTOR_FILES = [\n")
-  for (file in files) {
-    append("    (\"").append(file.relativePath).append("\", \"").append(file.moduleName).append("\"),\n")
+  for (label in files.mapNotNullTo(TreeSet()) { index.moduleFileLabel(module = it.moduleName, projectRelativePath = it.relativePath)?.let(index::planLabel) }) {
+    append("    \"").append(label).append("\",\n")
   }
   append("]\n")
 }
@@ -3470,9 +3480,9 @@ private fun renderReferencePlan(products: List<ProductFragmentPlan>, half: DistH
   append(half.generatedByHeader)
   append("#\n")
   append("# The facts of every split product that only the reference fragments of the `jars`, `replay` and `runtime-repo`\n")
-  append("# gates read. No distribution reads them. `build_modules` are the modules whose product properties the reference\n")
-  append("# assembler evaluates. `platform_asset_archives` are the archives that a reference does not preload, because the\n")
-  append("# `platform_assets` component places their files.\n")
+  append("# gates read. No distribution reads them. `platform_asset_archives` are the archives that a reference does not\n")
+  append("# preload, because the `platform_assets` component places their files. The labels of the build modules are in\n")
+  append("# `dist_reference_inputs.bzl`.\n")
   append("#\n")
   append("# Products with equal facts share one private `_REFERENCE_PLAN_<first product>` struct.\n")
   val owners = LinkedHashMap<String, MutableList<String>>()
@@ -3503,7 +3513,6 @@ private fun renderReferencePlan(products: List<ProductFragmentPlan>, half: DistH
 }
 
 private fun renderReferencePlanFields(product: ProductFragmentPlan, indent: String): String = buildString {
-  appendNameList("build_modules", product.buildModules, indent = indent)
   appendNameList("platform_asset_archives", product.platformAssets.archives, indent = indent)
 }
 
@@ -3681,8 +3690,8 @@ private fun renderFragmentInputs(products: List<ProductFragmentPlan>, half: Dist
   append("# `modules`, `project_libraries`, `module_sets` and `runtime_classpath_modules` are names. The binder reads this\n")
   append("# file at load time, and no module extension loads it.")
   if (DistCapability.REFERENCE_PLAN in half.capabilities) {
-    append(" The reference macro resolves the repository root\n")
-    append("# through the module target index at load time.")
+    append(" `dist_reference_inputs.bzl` holds the labels of\n")
+    append("# the build modules, the runtime classpath and the runtime module repository payload.")
   }
   append("\n")
   append("# `packed_content_module_jars` is labels: whether a module packs a `lib/` jar is a target of its own, and only the\n")
@@ -3692,7 +3701,7 @@ private fun renderFragmentInputs(products: List<ProductFragmentPlan>, half: Dist
   append("# and are shared by every product referencing that set, so this file carries only what no set covers.\n")
   append("# The same holds for the packing labels: the label of a set member lives in the `packed` dict of its set, and\n")
   append("# `packed_content_module_jars` names only the labels of the modules no set covers. The binder unions the set\n")
-  append("# labels into the payload at load time with `dist_packed_labels`.\n")
+  append("# labels into the payload at load time with `packed_labels`.\n")
   append("#\n")
   append("# `module_system_loaded` names the packed jars that the module system loads, as labels, and only the ones no\n")
   append("# set carries in its own `module_system_loaded`. The payload puts every other packed direct child of `lib/` on\n")
@@ -3821,6 +3830,9 @@ private fun renderModuleSets(moduleSets: List<ModuleSetData>, half: DistHalf): S
   append("# the module it states, and `alias` is the plugin alias of the set. `dist_product_descriptor` and\n")
   append("# `dist_embedded_product_descriptor` walk the sets in DSL order with these facts and compose the product content.\n")
   append("#\n")
+  append("# `descriptors` maps each member to the label of its conventional descriptor `<module>.xml`, in the form of the\n")
+  append("# targets JSON. The product descriptor macros take the descriptor row of a member from it.\n")
+  append("#\n")
   append("# `packed` maps each member that owns a `content_module_jar` target to that label, written once per set. A\n")
   append("# product's `platform_lib` payload in `dist_fragment_inputs.bzl` names only the labels no set carries.\n")
   append("# Every product that references a set hands over the labels of its members, less the ones its mode refuses.\n")
@@ -3843,6 +3855,7 @@ private fun renderModuleSets(moduleSets: List<ModuleSetData>, half: DistHalf): S
     moduleSet.alias?.let { alias ->
       append("        alias = \"").append(alias).append("\",\n")
     }
+    appendStringDict("descriptors", moduleSet.descriptors)
     if (moduleSet.packed.isNotEmpty()) {
       append("        packed = {\n")
       for ((module, label) in moduleSet.packed) {

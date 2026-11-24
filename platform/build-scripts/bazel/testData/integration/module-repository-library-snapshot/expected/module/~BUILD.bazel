@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build module` start
@@ -14,10 +15,9 @@ jvm_library(
 ### auto-generated section `build module` end
 
 ### auto-generated section `iml module` start
-exports_files(
-    [
-        "module.iml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "module",
+    resources = False,
+    target = "module",
 )
 ### auto-generated section `iml module` end

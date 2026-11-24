@@ -76,10 +76,10 @@ internal class UndeclaredDevDistMessageTest {
     val text = message(product = "Rider", legacyEngineReason = "the Bazel dev distribution of 'Rider' has known gaps")
     assertTrue(text.contains("  product: Rider\n"), text)
     assertTrue(text.contains("The test needs the legacy engine, because the Bazel dev distribution of 'Rider' has known gaps. "), text)
-    assertTrue(text.contains("  data = ALL_ULTIMATE_TARGETS + [BAZEL_TARGETS_JSON],\n"), text)
+    assertTrue(text.contains("  data = [\"//build:all_ultimate_targets\", BAZEL_TARGETS_JSON],\n"), text)
     assertTrue(text.contains("  jvm_flags = [\"-Dintellij.build.bazel.targets.json.file=${'$'}(rlocationpath %s)\" % BAZEL_TARGETS_JSON],\n"), text)
     assertFalse(text.contains("_ide_config"), text)
-    assertTrue(text.contains("the standalone community build cannot load '@jps_dynamic_deps_ultimate'. "), text)
+    assertTrue(text.contains("the standalone community build has no '//build:all_ultimate_targets'. "), text)
   }
 
   @Test

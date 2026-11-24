@@ -1,4 +1,12 @@
 load("@rules_java//java:defs.bzl", "java_import")
+load("//:library_jars.bzl", "library_jars")
+
+### auto-generated section `library jars` start
+library_jars(
+    name = "library_jars",
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `library jars` end
 
 ### auto-generated section `local-libs` start
 java_import(

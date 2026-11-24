@@ -79,7 +79,6 @@ single_version_override(
     version = "0.7.1",
 )
 
-bazel_dep(name = "xml.bzl", version = "0.2.3")
 bazel_dep(name = "lib")
 local_path_override(
     module_name = "lib",
@@ -170,6 +169,27 @@ use_repo(osx, "macos_sdk")
 
 bazel_dep(name = "rules_python", version = "1.8.0")
 
+# The groups of the JPS modules of the community half, read from `.idea/modules.xml`. The record of each module is in its
+# package. `packages` and `imls` mirror `DEFAULT_CUSTOM_MODULES` and the skipped modules of the JPS-to-Bazel converter.
+jps_modules = use_repo_rule("//build:jps_modules.bzl", "jps_modules")
+
+jps_modules(
+    name = "jps_modules_community",
+    generated_file_lists = {
+        "//build:bazel-generated-file-list.txt": "",
+    },
+    imls = {
+        "intellij.platform.buildScripts.bazel": "@jps_to_bazel//:intellij.platform.buildScripts.bazel.iml",
+    },
+    modules_xml = "//:.idea/modules.xml",
+    packages = {
+        "intellij.idea.community.build.zip": "build",
+        "intellij.platform.jps.build.dependencyGraph": "build",
+        "intellij.platform.jps.build.javac.rt": "build",
+    },
+    repository = "@community//",
+)
+
 kotlin_test_deps = use_repo_rule("//plugins/kotlin:kotlin_test_dependencies.bzl", "kotlin_test_deps")
 
 kotlin_test_deps(name = "kotlin_test_deps")
@@ -225,13 +245,6 @@ http_archive(
 override_repo(
     use_extension("@rules_java//java:extensions.bzl", "toolchains"),
     remote_java_tools_windows = "remote_java_tools_windows_with_vc_redist",
-)
-
-# Register the extension that runs jps-to-bazel converter and provides target lists for dev-build.
-# This creates the @jps_dynamic_deps_community repository.
-use_repo(
-    use_extension("//build:jps_dynamic_deps_community.bzl", "jps_dynamic_deps_community_extension"),
-    "jps_dynamic_deps_community",
 )
 
 # OpenedPackages.txt as Starlark. This creates the @intellij_add_opens repository.

@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
 ### auto-generated section `build intellij.module` start
@@ -27,10 +28,8 @@ jvm_library(
 ### auto-generated section `build intellij.module` end
 
 ### auto-generated section `iml intellij.module` start
-exports_files(
-    [
-        "intellij.module.iml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.module",
+    target = "module_test_lib",
 )
 ### auto-generated section `iml intellij.module` end

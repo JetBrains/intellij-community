@@ -506,11 +506,9 @@ class BazelModuleOutputProvider(
    *
    * A generator keys a library by its container target. `libraryContainerLabel` of the plan generator and a library
    * token of `jars` write that key. The label carries no artifact version, so a Maven bump does not change it. Two
-   * producers write jars instead. The platform payload: the bridge derives its project and module libraries from
-   * library XML while loading, in `_add_payload_input_targets`, and a library XML yields jar file labels. A container's
-   * target name comes from the library's *name* through the branchy derivation in `dependency.kt:130-290`. A payload
-   * that lives in no checked-in file causes no churn, so a Starlark mirror of that derivation is not worth its cost.
-   * And a plugin plan whose library shares a jar with another library of the same jar: the plan names the jars the
+   * producers write jars instead. The platform payload names the jar file labels of its libraries. A container's
+   * target name comes from the library's *name* through the branchy derivation in `dependency.kt:130-290`, and only
+   * the converter has it. And a plugin plan whose library shares a jar with another library of the same jar: the plan names the jars the
    * library still contributes, each by its own label, and the shared jar is declared under the other container.
    *
    * So the rule is the one the message states: the container is a key, or every jar is declared. A jar is declared by

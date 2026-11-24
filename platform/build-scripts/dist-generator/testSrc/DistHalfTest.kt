@@ -171,6 +171,46 @@ class DistHalfTest {
   }
 
   @Test
+  fun `a module file label is in the package of its module and on its half`() {
+    val monorepoIndex = syntheticIndex(
+      dir,
+      "intellij.c" to "@community//plugins/c:c.jar",
+      "intellij.u" to "//plugins/u:u.jar",
+      "intellij.c.root" to "@community//:c-root.jar",
+      "intellij.u.root" to "//:u-root.jar",
+    )
+    val communityRoot = CommunityDistHalf.root(dir)
+    val communityIndex = DistBazelIndex(
+      targets = monorepoIndex.targets,
+      projectRoot = communityRoot,
+      communityRoot = communityRoot,
+      planPackageIsCommunity = true,
+    )
+
+    assertThat(monorepoIndex.moduleFileLabel("intellij.c", "community/plugins/c/resources/x.xml")).isEqualTo("@community//plugins/c:resources/x.xml")
+    assertThat(monorepoIndex.moduleFileLabel("intellij.u", "plugins/u/resources/x.xml")).isEqualTo("//plugins/u:resources/x.xml")
+    // A module in the root package of its half.
+    assertThat(monorepoIndex.moduleFileLabel("intellij.c.root", "community/resources/x.xml")).isEqualTo("@community//:resources/x.xml")
+    assertThat(monorepoIndex.moduleFileLabel("intellij.u.root", "resources/x.xml")).isEqualTo("//:resources/x.xml")
+    // A file on the other repository half.
+    assertThat(monorepoIndex.moduleFileLabel("intellij.u", "community/plugins/u/resources/x.xml")).isNull()
+    assertThat(monorepoIndex.moduleFileLabel("intellij.u.root", "community/resources/x.xml")).isNull()
+    assertThat(monorepoIndex.moduleFileLabel("intellij.c", "plugins/c/resources/x.xml")).isNull()
+    // A file outside the package of its module, and a module that the JSON does not place.
+    assertThat(monorepoIndex.moduleFileLabel("intellij.c", "community/plugins/other/x.xml")).isNull()
+    assertThat(monorepoIndex.moduleFileLabel("intellij.u", "plugins/other/x.xml")).isNull()
+    assertThat(monorepoIndex.moduleFileLabel("intellij.unknown", "plugins/u/resources/x.xml")).isNull()
+
+    // The community run takes a path relative to the community checkout. Its label keeps the recorded form, and the
+    // plan label is the spelling of a community package.
+    val communityLabel = checkNotNull(communityIndex.moduleFileLabel("intellij.c", "plugins/c/resources/x.xml"))
+    assertThat(communityLabel).isEqualTo("@community//plugins/c:resources/x.xml")
+    assertThat(communityIndex.planLabel(communityLabel)).isEqualTo("//plugins/c:resources/x.xml")
+    assertThat(communityIndex.moduleFileLabel("intellij.c.root", "resources/x.xml")).isEqualTo("@community//:resources/x.xml")
+    assertThat(communityIndex.moduleFileLabel("intellij.u", "plugins/u/resources/x.xml")).isNull()
+  }
+
+  @Test
   fun `a community path that reaches the monorepo root package has no label`() {
     Files.writeString(dir.resolve("BUILD.bazel"), "")
     val monorepoIndex = syntheticIndex(dir)
@@ -184,7 +224,7 @@ class DistHalfTest {
     val context = DevSectionContext(
       mainModule = "intellij.c",
       isCommunity = true,
-      index = syntheticIndex(dir, "intellij.c" to "@community//plugins/c:c.jar"),
+      index = syntheticIndex(dir, "intellij.c" to "@community//plugins/c:c.jar", "intellij.c.frontend" to "@community//plugins/c/frontend:frontend.jar"),
       outputProvider = SourceRootModuleOutputProvider(project),
       warn = {},
     )
@@ -215,11 +255,104 @@ class DistHalfTest {
 
     val body = draft.render(packaging = null).body
     assertThat(body).contains("mode_refused_content_modules")
-    // The leaf derives the conventional row of every content module, so the section states no row for it.
     assertThat(body).contains("content_modules = [\"intellij.c.frontend\"]")
+    // The section states the label of each module that it names. No module has a conventional descriptor, so no row.
+    assertThat(body).contains(
+      "    module_labels = {\n" +
+      "        \"intellij.c\": \"@community//plugins/c:c\",\n" +
+      "        \"intellij.c.frontend\": \"@community//plugins/c/frontend:frontend\",\n" +
+      "    },\n",
+    )
     assertThat(body).doesNotContain("descriptor_modules")
     assertThat(body).doesNotContain("descriptors =")
   }
+
+  @Test
+  fun `a module without a production jar leaves the section with a warning, and the run goes on`() {
+    val index = syntheticIndex(
+      dir,
+      "intellij.c" to "@community//plugins/c:c.jar",
+      "intellij.c.frontend" to "@community//plugins/c/frontend:frontend.jar",
+      testTargets = mapOf("intellij.c.tests" to "@community//plugins/c/tests:tests_test_lib.jar"),
+    )
+    val testOnly = BazelTargetsInfo.TargetsFileModuleDescription(
+      productionTargets = emptyList(),
+      productionJars = emptyList(),
+      testTargets = listOf("@community//plugins/c/tests:tests_test_lib.jar"),
+      testJars = emptyList(),
+      moduleLibraries = emptyMap(),
+    )
+    val targets = BazelTargetsInfo.TargetsFile(
+      modules = index.targets.modules + ("intellij.c.tests" to testOnly),
+      projectLibraries = emptyMap(),
+      pluginDistributionTargets = emptyMap(),
+    )
+    val warnings = ArrayList<String>()
+    val context = DevSectionContext(
+      mainModule = "intellij.c",
+      isCommunity = true,
+      index = DistBazelIndex(targets = targets, projectRoot = dir),
+      outputProvider = SourceRootModuleOutputProvider(JpsElementFactory.getInstance().createModel().project),
+      warn = { warnings.add(it) },
+    )
+
+    // A member without a production jar leaves the content modules.
+    assertThat(sectionContentModuleNames(context, listOf("intellij.c.frontend", "intellij.c.tests"))).containsExactly("intellij.c.frontend")
+    assertThat(warnings).containsExactly("WARN: intellij.c content modules: no production jar target for member module intellij.c.tests")
+
+    // A jar token without a production jar drops the packaging, so the section declares no component.
+    warnings.clear()
+    val packaging = DistSimplePackaging(
+      mainModule = "intellij.c",
+      pluginDirectory = "c",
+      jars = mapOf("lib/c.jar" to listOf("intellij.c", "intellij.c.tests")),
+      moduleJarPaths = emptyMap(),
+      reusedModules = emptyList(),
+      crossHalf = false,
+      contentModuleJarLabels = emptyMap(),
+      classpathJars = emptyList(),
+      files = emptyMap(),
+      filePrefixes = emptyMap(),
+      executables = emptyList(),
+      treeFiles = emptyList(),
+      testModules = emptyList(),
+    )
+    val draft = PendingDevSection(
+      context = context,
+      content = PluginContentModules(listOf("intellij.c.frontend")),
+      descriptors = listOf(pluginDescriptorLeaf()),
+      record = DevSectionRecord(descriptorTargets = emptyMap()),
+      loadStatements = emptyList(),
+    )
+    val body = draft.render(packaging = packaging).body
+    assertThat(body).doesNotContain("jars =")
+    // The section states a label for each module that it names, in the form `<package>:<target>`, and for no other.
+    assertThat(body).contains(
+      "    module_labels = {\n" +
+      "        \"intellij.c\": \"@community//plugins/c:c\",\n" +
+      "        \"intellij.c.frontend\": \"@community//plugins/c/frontend:frontend\",\n" +
+      "    },\n",
+    )
+    assertThat(warnings).containsExactly("WARN: intellij.c packaging: no production jar target for [intellij.c.tests], so the section declares no component")
+  }
+
+  private fun pluginDescriptorLeaf(): PluginDescriptorLeaf = PluginDescriptorLeaf(
+    variant = "",
+    descriptor = "resources/META-INF/plugin.xml",
+    descriptors = emptyMap(),
+    libraryDescriptors = emptyMap(),
+    refusedContentModules = emptyList(),
+    modeRefusedContentModules = emptyMap(),
+    separateJar = emptyList(),
+    markers = emptyList(),
+    versionSuffix = "",
+    compatibleBuildRange = null,
+    directoryName = "",
+    embedContentModules = true,
+    exactVersion = false,
+    retainProductDescriptor = false,
+    embeddedProductDescriptor = null,
+  )
 
   @Test
   fun `the community rows of the monorepo targets JSON drop every row that the community model does not name`() {

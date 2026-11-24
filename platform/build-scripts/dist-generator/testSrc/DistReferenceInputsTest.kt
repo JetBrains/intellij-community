@@ -7,8 +7,8 @@ import org.jetbrains.intellij.build.impl.BazelTargetsInfo
 import org.junit.jupiter.api.Test
 
 /**
- * The labels of `build/dist_reference_inputs.bzl`: the generator resolves the runtime classpath seeds through the
- * targets JSON, and it refuses a name that the reference macro cannot resolve at load time.
+ * The labels of `build/dist_reference_inputs.bzl`: the generator resolves the build modules, the runtime classpath seeds
+ * and the runtime module repository payload through the targets JSON, and it refuses a name without production labels.
  */
 class DistReferenceInputsTest {
   private fun module(name: String, vararg moduleLibraryJars: String): Pair<String, BazelTargetsInfo.TargetsFileModuleDescription> {
@@ -52,7 +52,7 @@ class DistReferenceInputsTest {
     DistReferencePayload(modules = modules, projectLibraries = projectLibraries, moduleSets = moduleSets)
 
   @Test
-  fun `the runtime classpath is the closure of the seeds with the libraries of each module`() {
+  fun `the build modules and the repository root give their outputs and the runtime classpath is the closure of the seeds`() {
     val inputs = resolveDistReferenceInputs(
       products = listOf(
         DistReferenceProduct(
@@ -70,8 +70,13 @@ class DistReferenceInputsTest {
       ),
       model = model,
     )
-    // The reference macro resolves the build modules and the repository root, so the generator states no label of them.
-    assertThat(inputs.getValue("ide")).isEqualTo(DistReferenceInputs(runtimeClasspath = emptyList()))
+    // A build module gives only its production outputs, also when it has libraries.
+    assertThat(inputs.getValue("ide")).isEqualTo(DistReferenceInputs(
+      buildModules = listOf("//build:build.jar", "//core:core.jar"),
+      runtimeModuleRepository = listOf("//frontend.root:frontend.root.jar"),
+    ))
+    assertThat(inputs.getValue("server").buildModules).containsExactly("//build:build.jar")
+    assertThat(inputs.getValue("server").runtimeModuleRepository).isEmpty()
     assertThat(inputs.getValue("server").runtimeClasspath).containsExactly(
       "//core:core.jar",
       "//dependency:dependency.jar",
@@ -112,7 +117,7 @@ class DistReferenceInputsTest {
         model = model,
       )
     }
-      .hasMessageContaining("The reference macro resolves a module name only")
+      .hasMessageContaining("The generator gives a module of the runtime module repository payload only its production labels")
       .hasMessageContaining("product 'ide', payload 'platform_runtime_module_repository': module set 'top'")
       .hasMessageContaining("product 'ide', payload 'platform_runtime_module_repository': project library 'guava'")
   }
@@ -130,35 +135,50 @@ class DistReferenceInputsTest {
         model = model,
       )
     }
-      .hasMessageContaining("The reference macro resolves a module name only")
+      .hasMessageContaining("The generator gives a module of the runtime module repository payload only its production labels")
       .hasMessageContaining("product 'ide', payload 'platform_runtime_module_repository': module 'core' has libraries")
       .hasMessageContaining("product 'ide', payload 'platform_runtime_module_repository': module 'frontend.core' has libraries")
       .hasMessageNotContaining("'frontend.root'")
   }
 
   @Test
-  fun `the labels that every row states are one constant and a product without a runtime classpath has no row`() {
+  fun `the labels that every row states in a field are one constant and a product without a label has no row`() {
     val text = renderDistReferenceInputs(
       inputs = linkedMapOf(
-        "a" to DistReferenceInputs(runtimeClasspath = listOf("//x:x.jar", "//y:y.jar")),
-        "b" to DistReferenceInputs(runtimeClasspath = listOf("//x:x.jar")),
-        "c" to DistReferenceInputs(runtimeClasspath = emptyList()),
+        "a" to DistReferenceInputs(
+          buildModules = listOf("//b:b.jar", "//c:c.jar"),
+          runtimeClasspath = listOf("//x:x.jar", "//y:y.jar"),
+          runtimeModuleRepository = listOf("//r:r.jar"),
+        ),
+        "b" to DistReferenceInputs(buildModules = listOf("//b:b.jar"), runtimeClasspath = listOf("//x:x.jar")),
+        "c" to DistReferenceInputs(),
       ),
       generatedByHeader = "# header\n",
     )
-    // The body after the comment block of the header.
+    // The body after the comment block of the header. One row states `runtime_module_repository`, so it has no constant.
     assertThat(text.substringAfter("has no meaning.\n")).isEqualTo("""
+      |_BUILD_MODULES = [
+      |    "//b:b.jar",
+      |]
+      |
       |_RUNTIME_CLASSPATH = [
       |    "//x:x.jar",
       |]
       |
       |DIST_REFERENCE_INPUTS = {
       |    "a": struct(
+      |        build_modules = _BUILD_MODULES + [
+      |            "//c:c.jar",
+      |        ],
       |        runtime_classpath = _RUNTIME_CLASSPATH + [
       |            "//y:y.jar",
       |        ],
+      |        runtime_module_repository = [
+      |            "//r:r.jar",
+      |        ],
       |    ),
       |    "b": struct(
+      |        build_modules = _BUILD_MODULES,
       |        runtime_classpath = _RUNTIME_CLASSPATH,
       |    ),
       |}

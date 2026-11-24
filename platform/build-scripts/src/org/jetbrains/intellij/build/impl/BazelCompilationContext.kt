@@ -170,6 +170,11 @@ class BazelTargetsInfo {
     @JvmField val testTargets: List<String>,
     @JvmField val testJars: List<String>,
     @JvmField val moduleLibraries: Map<String, LibraryDescription>,
+    /**
+     * The label of `<module name>.xml` at the first plain production resource root of the module, or `null`. It is the
+     * conventional descriptor label of the module, which the dist generator writes into the descriptor rows.
+     */
+    @JvmField val moduleDescriptor: String? = null,
   )
 
   @Serializable

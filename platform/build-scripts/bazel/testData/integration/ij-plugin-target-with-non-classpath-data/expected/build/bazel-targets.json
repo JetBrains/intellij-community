@@ -9,7 +9,8 @@
       ],
       "testTargets": [],
       "testJars": [],
-      "moduleLibraries": {}
+      "moduleLibraries": {},
+      "moduleDescriptor": "@community//module:resources/intellij.module.xml"
     },
     "intellij.module2": {
       "productionTargets": [
@@ -20,7 +21,8 @@
       ],
       "testTargets": [],
       "testJars": [],
-      "moduleLibraries": {}
+      "moduleLibraries": {},
+      "moduleDescriptor": "@community//module2:resources/intellij.module2.xml"
     },
     "intellij.plugin": {
       "productionTargets": [

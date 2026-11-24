@@ -74,8 +74,8 @@ def _dev_build_inputs_impl(ctx):
         # The keys must be byte-identical to the ones the generated name table produced, because `DevDistMain` asks
         # for exactly those strings through `BazelBuildInputs.resolve` and an unknown key is a hard error there.
         #
-        # A module's production label is the *rule* label plus `.jar` (`compute_module_targets`,
-        # `@community//build:jps_target_derivation.bzl:410-420`), and the rule's jar output is `%{name}.jar`
+        # A module's production label is the *rule* label plus `.jar` (`generateBuildTargets` of the JPS-to-Bazel
+        # converter, `BazelBuildFileGenerator.kt`), and the rule's jar output is `%{name}.jar`
         # (`jvm-rules/rules/common-attrs.bzl:129-132`) - so the jar file's owner is the rule and `owner + ".jar"`
         # reproduces the label. The generator writes the same labels from `build/bazel-targets.json`.
         for jar in content.module_jars.to_list():

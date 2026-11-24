@@ -189,7 +189,7 @@ java_binary(
   name = "local_idea_ultimate_run_tests_build_target",
   runtime_deps = [":build"],
   main_class = "LocalIdeaUltimateRunTestsBuildTarget",
-  data = ALL_ULTIMATE_TARGETS + [BAZEL_TARGETS_JSON_ULTIMATE],
+  data = [":all_ultimate_targets", BAZEL_TARGETS_JSON_ULTIMATE],
   jvm_flags = [
     "-Dintellij.build.console.exporter.to.temp.file=true",
     "-Dintellij.build.console.messages.verbose=false",

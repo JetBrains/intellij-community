@@ -404,18 +404,18 @@ internal class DistBuildSections private constructor(
       val isCommunity = index.isCommunity(mainModule) ?: error("Plugin '$mainModule' has no Bazel package, so its section cannot hold a call")
       pluginExecutionCalls.put(mainModule, text)
       val loads = sectionLoadStatements.computeIfAbsent(mainModule) { ArrayList() }
-      val remainderRule = if (isCommunity) "//" + DEV_PLUGIN_REMAINDER_RULE.removePrefix(COMMUNITY_REPOSITORY_PREFIX) else DEV_PLUGIN_REMAINDER_RULE
-      loads.add(LoadStatement(remainderRule, listOf("dist_complex_plugin")))
-      // A product that embeds the frontend declares its helper targets beside the complex plugin call. The bridge of the
-      // half exports the embedded descriptor macro bound to its descriptor index, and the macro reads the module-set table.
+      // A package loads each macro file in the spelling of its half.
+      fun macroFile(file: String): String = index.respellLibraryLabel(file, dependentIsCommunity = isCommunity)
+      loads.add(LoadStatement(macroFile(DEV_PLUGIN_REMAINDER_RULE), listOf("dist_complex_plugin")))
+      // A product that embeds the frontend declares its helper targets beside the complex plugin call. The embedded
+      // descriptor macro reads the module-set table.
       if (mainModule == half.embeddedFrontend?.pluginMainModule) {
         if ("dist_embedded_product_descriptor(" in text) {
-          val bridge = "@jps_dynamic_deps_${if (isCommunity) "community" else "ultimate"}//:targets.bzl"
-          loads.add(LoadStatement(bridge, listOf("dist_embedded_product_descriptor")))
+          loads.add(LoadStatement(macroFile(DIST_EMBEDDED_PRODUCT_DESCRIPTOR_RULE), listOf("dist_embedded_product_descriptor")))
           loads.add(LoadStatement(DIST_MODULE_SETS_BZL, listOf(DIST_MODULE_SETS_SYMBOL)))
         }
         if ("dist_frontend_application_info(" in text) {
-          loads.add(LoadStatement(DIST_FRONTEND_APPLICATION_INFO_RULE, listOf("dist_frontend_application_info")))
+          loads.add(LoadStatement(macroFile(DIST_FRONTEND_APPLICATION_INFO_RULE), listOf("dist_frontend_application_info")))
         }
       }
     }
@@ -662,7 +662,7 @@ internal class DistBuildSections private constructor(
             verdicts = verdicts,
             classes = inputs.residueClasses,
             planLabel = index::planLabel,
-            bridgeLabel = { moduleName -> inputs.outputProvider.findModule(moduleName)?.let { bridgeDescriptorLabel(module = it, index = index) } },
+            conventionalLabel = index::conventionalDescriptorLabel,
             half = inputs.half,
           )
         }
@@ -1183,6 +1183,19 @@ internal const val DEV_PLUGIN_REMAINDER_RULE: String = "@community//platform/bui
 
 /** The `.bzl` file that exports `dev_plugin`. A product package loads it for a simple plugin. */
 internal const val DEV_PLUGIN_RULE: String = "@community//platform/build-scripts/bazel-rules:dev_plugin.bzl"
+
+/** The `.bzl` file that exports `dist_plugin`. The `dev` section of a plugin loads it in the spelling of its half. */
+internal const val DIST_PLUGIN_RULE: String = "@community//platform/build-scripts/bazel-rules:dist_plugin.bzl"
+
+/** The `.bzl` file that exports `dist_plugin_descriptor`. A product package loads it for a cross-half descriptor leaf. */
+internal const val DIST_PLUGIN_DESCRIPTOR_RULE: String = "@community//platform/build-scripts/bazel-rules:dist_plugin_descriptor.bzl"
+
+/**
+ * The `.bzl` file that exports `dist_embedded_product_descriptor`. The `dev` section of the plugin that embeds the
+ * frontend loads it.
+ */
+internal const val DIST_EMBEDDED_PRODUCT_DESCRIPTOR_RULE: String =
+  "@community//platform/build-scripts/bazel-rules:dist_embedded_product_descriptor.bzl"
 
 /** The `.bzl` file that exports `dist_frontend_application_info` for the helper of a divergent product that embeds the frontend. */
 internal const val DIST_FRONTEND_APPLICATION_INFO_RULE: String =

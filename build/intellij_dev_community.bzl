@@ -4,17 +4,18 @@ The file binds `intellij_dist_declarations` to the generated tables of the commu
 macros. `build/intellij_dev_ultimate.bzl` of the ultimate checkout is the twin of this file.
 """
 
-load("@jps_dynamic_deps_community//:targets.bzl", "BAZEL_TARGETS_JSON_COMMUNITY")
+load("//build:bazel_targets_json.bzl", "BAZEL_TARGETS_JSON_COMMUNITY")
 load("//build/dist-content:dist_content_sets.bzl", "DIST_PLUGIN_COMPONENTS")
 load("//platform/build-scripts/bazel-rules:dist_runtime_module_repository.bzl", "dist_runtime_module_facts")
 load("//platform/build-scripts/bazel-rules:intellij_dist.bzl", "intellij_project_model_tree")
 load(":dist_fragment_inputs.bzl", "DIST_FRAGMENT_INPUTS")
 load(":dist_module_sets.bzl", "DIST_MODULE_SETS")
-load(":dist_packed_labels.bzl", "dist_packed_labels")
 load(":dist_plan.bzl", "DIST_APPLICATION_INFOS", "DIST_LAUNCH_MODELS", "DIST_PLANS", "DIST_PLATFORM_JAR_ORDERS")
 load(":dist_product_info.bzl", "DIST_PRODUCT_INFO")
 load(":dist_products.bzl", "DIST_PRODUCTS", "dist_product")
+load(":fragment_names.bzl", "PLATFORM_LIB_FRAGMENT", "PLATFORM_RUNTIME_MODULE_REPOSITORY_FRAGMENT")
 load(":intellij_dist_declarations.bzl", "intellij_dist_declarations")
+load(":packed_labels.bzl", "packed_labels")
 
 # The checkout files a dev assembly of a community product reads that the JPS project model does not name. The
 # product's own files are in the `extra_project_files` of its `DIST_PRODUCTS` entry.
@@ -34,17 +35,11 @@ _PROJECT_MODEL_TREE = "//build:project_model_tree"
 # The runtime module facts of that tree, declared next to it. The runtime module repository actions read them.
 _RUNTIME_MODULE_FACTS = "//build:runtime_module_facts"
 
-# The payload key of the platform `lib/` jars, and the component of the runtime module repository. The ultimate
-# bridge exports the same two names.
-_PLATFORM_LIB_FRAGMENT = "platform_lib"
-
-_PLATFORM_RUNTIME_MODULE_REPOSITORY_FRAGMENT = "platform_runtime_module_repository"
-
 def _platform_lib_payload(product):
     info = DIST_PRODUCT_INFO.get(product)
     if info == None:
         fail("No generated distribution product info for product '%s', so its product mode is unknown" % product)
-    return dist_packed_labels(DIST_FRAGMENT_INPUTS, DIST_MODULE_SETS, product, info.mode)
+    return packed_labels(DIST_FRAGMENT_INPUTS, DIST_MODULE_SETS, product, info.mode)
 
 def _product_mode(product):
     return DIST_PRODUCT_INFO[product].mode
@@ -59,8 +54,8 @@ _DECLARATIONS = intellij_dist_declarations(struct(
     fragment_inputs = DIST_FRAGMENT_INPUTS,
     plugin_components = DIST_PLUGIN_COMPONENTS,
     product = dist_product,
-    platform_lib_fragment = _PLATFORM_LIB_FRAGMENT,
-    runtime_module_repository_fragment = _PLATFORM_RUNTIME_MODULE_REPOSITORY_FRAGMENT,
+    platform_lib_fragment = PLATFORM_LIB_FRAGMENT,
+    runtime_module_repository_fragment = PLATFORM_RUNTIME_MODULE_REPOSITORY_FRAGMENT,
     platform_lib_payload = _platform_lib_payload,
     bazel_targets_json = BAZEL_TARGETS_JSON_COMMUNITY,
     project_model_tree = _PROJECT_MODEL_TREE,

@@ -33,9 +33,6 @@ interface DistHalf {
   /** The `.bzl` file that exports `intellij_dev_run_configurations` to the generated rows file of the half. */
   val macrosBzl: String
 
-  /** The JPS bridge extension of the half, which resolves a module name of a generated file to a label. */
-  val jpsBridge: String
-
   /** The command that regenerates the files of the half. The header of each generated file names it, see [generatedByHeader]. */
   val generatorCommand: String
 

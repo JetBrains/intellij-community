@@ -30,19 +30,21 @@ private fun renderProductDescriptorBuildFile(plans: List<ProductDescriptorPlan>,
   append("# A target states the Product DSL content of its product: the aliases, the deprecated includes, the top-level module\n")
   append("# sets with their loading overrides, and the additional modules. The macro walks `DIST_MODULE_SETS` as\n")
   append("# `processAndGetProductPluginContentModules` inlines the sets, and the descriptor writer composes the content. The\n")
-  append("# macro derives the descriptor row of each content module from the bridge index of the half, so `descriptors`\n")
-  append("# states only the other rows. Every target is `manual`, which the macros add.\n")
+  append("# macro takes the descriptor row of each set member from the table. `descriptors` states the other rows, and the\n")
+  append("# label of a conventional row is in the recorded form. Every target is `manual`, which the macros add.\n")
   if (plans.isEmpty()) {
     return@buildString
   }
   append("\n")
-  // The bridge of the half exports `dist_product_descriptor` bound to its descriptor index. The load lines are in
-  // the order buildifier sorts them: a file of an explicit repository before a file of this one.
+  // The load lines in the order buildifier sorts them: a file of an explicit repository before a file of this one.
   val loads = ArrayList<LoadStatement>()
-  if (plans.any(ProductDescriptorPlan::hasApplicationInfo)) {
-    loads.add(LoadStatement(index.planLabel(PRODUCT_DESCRIPTOR_RULE), listOf("dist_product_application_info")))
+  val productDescriptorSymbols = if (plans.any(ProductDescriptorPlan::hasApplicationInfo)) {
+    listOf("dist_product_application_info", "dist_product_descriptor")
   }
-  loads.add(LoadStatement("@${half.jpsBridge}//:targets.bzl", listOf("dist_product_descriptor")))
+  else {
+    listOf("dist_product_descriptor")
+  }
+  loads.add(LoadStatement(index.planLabel(PRODUCT_DESCRIPTOR_RULE), productDescriptorSymbols))
   loads.add(LoadStatement(DIST_MODULE_SETS_BZL, listOf(DIST_MODULE_SETS_SYMBOL)))
   val loadOrder = BazelLabelComparator(forLoadStatements = true)
   for (load in loads.sortedWith { a, b -> loadOrder.compare(a.bzlFile, b.bzlFile) }) {
@@ -52,8 +54,14 @@ private fun renderProductDescriptorBuildFile(plans: List<ProductDescriptorPlan>,
     append("\n")
     // `name` first, then the attributes in buildifier's alphabetical order, so a regenerate leaves the file unchanged.
     val attributes = TreeMap(plan.content.attributes(DIST_MODULE_SETS_SYMBOL))
-    if (plan.descriptors.isNotEmpty()) {
-      attributes.put("descriptors", plan.descriptors.entries.associateTo(LinkedHashMap()) { index.planLabel(it.key) to it.value })
+    val descriptors = productDescriptorRows(
+      stated = plan.descriptors.entries.associate { index.planLabel(it.key) to it.value },
+      content = plan.content,
+      refused = plan.refusedContentModules,
+      index = index,
+    )
+    if (descriptors.isNotEmpty()) {
+      attributes.put("descriptors", LinkedHashMap(descriptors))
     }
     if (plan.libraryDescriptors.isNotEmpty()) {
       attributes.put("library_descriptors", plan.libraryDescriptors.entries.associateTo(LinkedHashMap()) { index.planLabel(it.key) to it.value })
@@ -83,7 +91,7 @@ private fun renderProductDescriptorBuildFile(plans: List<ProductDescriptorPlan>,
   }
 }
 
-/** The `.bzl` file that exports `dist_product_application_info`. */
+/** The `.bzl` file that exports `dist_product_descriptor` and `dist_product_application_info`. */
 private const val PRODUCT_DESCRIPTOR_RULE: String = "@community//platform/build-scripts/bazel-rules:dist_product_descriptor.bzl"
 
 /**

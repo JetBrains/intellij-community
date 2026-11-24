@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.libraries.refused` start
@@ -17,11 +18,9 @@ jvm_library(
 ### auto-generated section `build intellij.libraries.refused` end
 
 ### auto-generated section `iml intellij.libraries.refused` start
-exports_files(
-    [
-        "intellij.libraries.refused.iml",
-        "resources/intellij.libraries.refused.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.libraries.refused",
+    descriptors = ["resources/intellij.libraries.refused.xml"],
+    target = "refused",
 )
 ### auto-generated section `iml intellij.libraries.refused` end

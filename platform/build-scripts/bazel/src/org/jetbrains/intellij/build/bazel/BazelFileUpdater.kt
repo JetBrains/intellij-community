@@ -65,6 +65,9 @@ internal class BazelFileUpdater(private val file: Path, preloadedOriginalContent
     return originalContent.substring(startIndex + startToken.length, endIndex).trim()
   }
 
+  /** The content of the file with the changes, or `null` if the file has no content. */
+  fun content(): String? = fileContent
+
   fun isSectionSkipped(sectionName: String): Boolean {
     val fileContent = fileContent ?: return false
     return fileContent.contains("### skip generation section `$sectionName`")

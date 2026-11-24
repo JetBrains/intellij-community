@@ -1,6 +1,6 @@
-module
-module-tests
-other-tests
-test-data
-test-framework
-util
+module intellij.module
+module-tests intellij.module.tests
+other-tests intellij.module.other.tests
+test-data intellij.module.testData
+test-framework intellij.module.testFramework
+util intellij.module.util

@@ -242,7 +242,7 @@ internal fun classifySimplePluginPackaging(
   val labelTokens = jars.values.flatten().filter(::isLabelToken)
   val relocatedReuse = reused.filter { it in relocatedModules }.sorted()
   val declaredTestModules = moduleTokens.filter { it in testModules }
-  // The own section derives module labels from the production bridge map, and that map holds no test jar.
+  // The own section states the production label of each module, and a test module has no production jar.
   val crossHalf = declaredTestModules.isNotEmpty() ||
                   !ownDescriptorDeclared ||
                   reusedSet != sectionReuse ||

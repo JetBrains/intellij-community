@@ -145,6 +145,7 @@ kt_jvm_library(
     kotlinc_opts = ":jps_to_bazel_kotlinc_options",
     deps = [
         ":kotlin_stdlib",
+        "@j2b_maven//:com_jetbrains_intellij_platform_jps_model",
         "@j2b_maven//:junit_junit",
         "@j2b_maven//:net_bytebuddy_byte_buddy",
         "@j2b_maven//:org_assertj_assertj_core",
@@ -217,6 +218,13 @@ java_test(
     name = "bazel-load-statement-manager-tests",
     size = "small",
     test_class = "org.jetbrains.intellij.build.bazel.BazelLoadStatementManagerTest",
+    runtime_deps = [":bazel-generator-integration-tests-lib"],
+)
+
+java_test(
+    name = "module-descriptor-label-tests",
+    size = "small",
+    test_class = "org.jetbrains.intellij.build.bazel.ModuleDescriptorLabelTest",
     runtime_deps = [":bazel-generator-integration-tests-lib"],
 )
 

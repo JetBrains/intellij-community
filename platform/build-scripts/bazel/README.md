@@ -33,7 +33,8 @@ JPS Project Model (XML/IML files)
 │    ├─ BUILD.bazel (per module)  │
 │    ├─ lib/MODULE.bazel          │
 │    ├─ lib/BUILD.bazel           │
-│    └─ build/bazel-targets.json  │
+│    ├─ build/bazel-targets.json  │
+│    └─ jps_module records        │
 └─────────────────────────────────┘
 ```
 
@@ -145,7 +146,7 @@ Loads the complete JPS model including:
 
 For each JPS module:
 
-1. **Locate BUILD.bazel directory**: Walk up from `.iml` directory until finding a parent containing all content roots
+1. **Locate BUILD.bazel directory**: Walk up from `.iml` directory until finding a parent containing all content roots. The record of the module needs the `.iml` directory, so another directory fails the run, except for a custom module
 2. **Determine community/ultimate**: Check if path starts with `communityRoot`
 3. **Compute source roots**: Create glob patterns (`**/*.kt`, `**/*.java`, `**/*.form`)
 4. **Compute resource roots**: Extract base directory and output path mappings
@@ -214,7 +215,17 @@ resourcegroup(
     srcs = glob(["resources/**/*"]),
     strip_prefix = "resources",
 )
+
+# The record of the module, in the `iml <module>` section
+jps_module(
+    name = "intellij.platform.core",
+    target = "platform-core",
+)
 ```
+
+The record states only the facts that the convention does not give. The package of a module must be the directory of
+its `.iml` file, except for a custom module, and the converter fails otherwise. The `jps_modules` repository rule
+reads `.idea/modules.xml` and finds each record by the module name and the package.
 
 ### Phase 6: Library Generation
 
@@ -332,7 +343,7 @@ Libraries tracked in VCS under `lib/` directory:
 |----------|-------------|
 | `BUILD_WORKSPACE_DIRECTORY` | Override workspace detection |
 | `RUN_WITHOUT_ULTIMATE_ROOT` | Force community-only mode |
-| `JPS_TO_BAZEL_TREAT_KOTLIN_DEV_VERSION_AS_SNAPSHOT` | Treat Kotlin dev versions as snapshots |
+| `JPS_TO_BAZEL_TREAT_KOTLIN_DEV_VERSION_AS_SNAPSHOT` | Treat Kotlin dev versions as snapshots. The `jps_modules_<half>` repository also reads it from the environment of the Bazel client and gives it in its `defs.bzl` |
 | `MAVEN_REPOSITORY` | Maven local repository path |
 
 ### Root Detection
@@ -350,6 +361,8 @@ The generator searches for marker files to find project roots:
 | `lib/MODULE.bazel` | `http_file` rules for Maven dependencies with SHA256 |
 | `lib/BUILD.bazel` | `jvm_import` and `java_import` library targets |
 | `build/bazel-targets.json` | The JPS index: module labels and jars, `imlTargets`, `projectLibraries`, `pluginDistributionTargets` |
+| `BUILD.bazel`, `iml <module>` section | The record of the module, a `jps_module` call of `@community//build:jps_module.bzl`. It states only the facts that the convention does not give. The `jps_modules_<half>` repository reads `.idea/modules.xml` and builds the groups of the modules from the records. Both converters write the same community records |
+| `lib/BUILD.bazel`, root and library packages | The `library_jars` call of `@lib//:library_jars.bzl`. `<repository>//:library_jars` has every jar of the library repository |
 | `build/bazel-generated-file-list.txt` | List of generated files for cleanup |
 
 The generator states the JPS model and nothing more. It reads no table under `community/build/`, it derives no
@@ -371,7 +384,8 @@ The file is the JPS index. It carries no distribution fact.
       "productionJars": ["bazel-out/.../core.jar"],
       "testTargets": ["@community//platform/core:core_test_lib"],
       "testJars": ["bazel-out/.../core_test_lib.jar"],
-      "moduleLibraries": {}
+      "moduleLibraries": {},
+      "moduleDescriptor": "@community//platform/core:resources/intellij.platform.core.xml"
     }
   },
   "projectLibraries": {
@@ -560,11 +574,18 @@ Predefined in `DEFAULT_CUSTOM_MODULES`:
 | `intellij.platform.jps.build.dependencyGraph` | `@community//build:dependency-graph` |
 | `intellij.platform.jps.build.javac.rt` | `@community//build:build-javac-rt` |
 
+The record of a custom module is in `@community//build`. The `packages` attribute of the `jps_modules` call in each
+`MODULE.bazel` must name these modules with their package. The converter checks each `MODULE.bazel` once per run, and
+it fails and gives the expected value.
+
 ### Skipped Modules
 
 - `intellij.platform.buildScripts.bazel` (the generator itself)
 - `intellij.tools.build.bazel.jvmIncBuilder`
 - `intellij.tools.build.bazel.jvmIncBuilderTests`
+
+A skipped module of `.idea/modules.xml` has no record. The `imls` attribute of the `jps_modules` call in each
+`MODULE.bazel` must name its `.iml` label. The converter checks it with the `packages` attribute.
 
 ### Provided Dependencies
 

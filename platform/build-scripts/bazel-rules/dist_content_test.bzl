@@ -6,7 +6,7 @@ load("@rules_kotlin//kotlin/internal:defs.bzl", _KtJvmInfo = "KtJvmInfo")
 load(":content_module_jar.bzl", "ContentModuleJarInfo", "DistPlatformJarInfo")
 load(":content_module_jar_test.bzl", "content_module_jar_test_suite")
 load(":dist_content.bzl", "DistContentInfo", "DistPlatformPayloadInfo", "dist_platform_payload", "dist_plugin_content")
-load(":dist_plugin.bzl", "dist_plugin")
+load(":dist_plugin.bzl", "dist_plugin", "resolve_module_labels")
 load(":dist_plugin_descriptor.bzl", "dist_plugin_descriptor_target_name")
 load(":dist_runtime_module_repository.bzl", "dist_runtime_module_repository")
 load(
@@ -630,6 +630,31 @@ def _fake_descriptor_impl(ctx):
 
 _fake_descriptor = rule(implementation = _fake_descriptor_impl)
 
+def _resolve_module_labels_test_impl(ctx):
+    env = unittest.begin(ctx)
+    names = ["test.plugin", "test.member", "test.member"]
+    resolved = resolve_module_labels("test.plugin", names, {"test.member": "//m:m", "test.plugin": "//p:p"})
+    asserts.equals(env, {"test.member": "//m:m", "test.plugin": "//p:p"}, resolved.labels)
+    asserts.equals(env, [], resolved.stale)
+    asserts.equals(env, [], resolved.messages)
+
+    # A missing and a malformed label make the name stale, and an extra label gets its own warning.
+    resolved = resolve_module_labels("test.plugin", names + ["test.other"], {"test.member": "//m", "test.plugin": "//p:p", "test.stranger": "//s:s"})
+    asserts.equals(env, {"test.plugin": "//p:p"}, resolved.labels)
+    asserts.equals(env, ["test.member", "test.other"], resolved.stale)
+    asserts.equals(
+        env,
+        [
+            "WARN: dist_plugin 'test.plugin' omits modules without a label in `module_labels`: test.member, test.other. Regenerate the dev sections.",
+            "WARN: dist_plugin 'test.plugin' states labels of modules that it does not name: test.stranger. Regenerate the dev sections.",
+        ],
+        resolved.messages,
+    )
+    return unittest.end(env)
+
+# A missing, a malformed and an extra label. The function is the one place that tells them apart.
+_resolve_module_labels_test = unittest.make(_resolve_module_labels_test_impl)
+
 def _plugin_macro_tests(name):
     owner = name + "_macro_owner"
     member = name + "_macro_member"
@@ -639,9 +664,9 @@ def _plugin_macro_tests(name):
     _fake_descriptor(name = source)
     dist_plugin(
         main_module = "test.plugin",
-        module_targets = {
-            "test.member": [":" + member + ".jar"],
-            "test.plugin": [":" + owner + ".jar"],
+        module_labels = {
+            "test.member": ":" + member,
+            "test.plugin": ":" + owner,
         },
         content_modules = ["test.member"],
         descriptor = source,
@@ -660,33 +685,30 @@ def _plugin_macro_tests(name):
         ]),
     )
 
-    # The descriptor leaf derives a row for the main module and each member the index knows. A module outside the plugin
-    # gets no row. An explicit row wins by load path, so the second member keeps its own label.
+    # The descriptor leaf takes the rows that the call states, the conventional rows included, sorted by label.
     indexed = {
         role: name + "_macro_indexed_" + role
-        for role in ["owner", "first", "second", "source", "main_xml", "first_xml", "second_xml", "explicit_xml", "stranger_xml"]
+        for role in ["owner", "first", "second", "source", "main_xml", "first_xml", "explicit_xml"]
     }
     _fake_module(name = indexed["owner"], module_name = "test.indexed")
     _fake_module(name = indexed["first"], module_name = "test.indexed.first")
     _fake_module(name = indexed["second"], module_name = "test.indexed.second")
-    for role in ["source", "main_xml", "first_xml", "second_xml", "explicit_xml", "stranger_xml"]:
+    for role in ["source", "main_xml", "first_xml", "explicit_xml"]:
         _fake_descriptor(name = indexed[role])
     dist_plugin(
         main_module = "test.indexed",
-        module_targets = {
-            "test.indexed": [":" + indexed["owner"] + ".jar"],
-            "test.indexed.first": [":" + indexed["first"] + ".jar"],
-            "test.indexed.second": [":" + indexed["second"] + ".jar"],
-        },
-        descriptor_index = {
-            "test.indexed": ":" + indexed["main_xml"],
-            "test.indexed.first": ":" + indexed["first_xml"],
-            "test.indexed.second": ":" + indexed["second_xml"],
-            "test.stranger": ":" + indexed["stranger_xml"],
+        module_labels = {
+            "test.indexed": ":" + indexed["owner"],
+            "test.indexed.first": ":" + indexed["first"],
+            "test.indexed.second": ":" + indexed["second"],
         },
         content_modules = ["test.indexed.first", "test.indexed.second"],
         descriptor = indexed["source"],
-        descriptors = {":" + indexed["explicit_xml"]: "test.indexed.second.xml"},
+        descriptors = {
+            ":" + indexed["main_xml"]: "test.indexed.xml",
+            ":" + indexed["first_xml"]: "test.indexed.first.xml",
+            ":" + indexed["explicit_xml"]: "test.indexed.second.xml",
+        },
     )
     indexed_descriptors = native.existing_rule(dist_plugin_descriptor_target_name("test.indexed"))["descriptors"]
     indexed_test = name + "_plugin_macro_indexed_test"
@@ -714,10 +736,10 @@ def _plugin_macro_tests(name):
     _fake_descriptor(name = packed_source)
     dist_plugin(
         main_module = "intellij.test.packed",
-        module_targets = {
-            "intellij.test.packed": [":" + packed_owner + ".jar"],
-            "intellij.test.packed.member": [":" + packed_member + ".jar"],
-            "intellij.test.packed.split": [":" + packed_split + ".jar"],
+        module_labels = {
+            "intellij.test.packed": ":" + packed_owner,
+            "intellij.test.packed.member": ":" + packed_member,
+            "intellij.test.packed.split": ":" + packed_split,
         },
         content_modules = ["intellij.test.packed.split", "intellij.test.packed.member"],
         descriptor = packed_source,
@@ -772,10 +794,10 @@ def _plugin_macro_tests(name):
     _fake_descriptor(name = relocated_source)
     dist_plugin(
         main_module = "intellij.test.relocated",
-        module_targets = {
-            "intellij.test.relocated": [":" + relocated_owner + ".jar"],
-            "intellij.test.relocated.kept": [":" + relocated_kept + ".jar"],
-            "intellij.test.relocated.member": [":" + relocated_member + ".jar"],
+        module_labels = {
+            "intellij.test.relocated": ":" + relocated_owner,
+            "intellij.test.relocated.kept": ":" + relocated_kept,
+            "intellij.test.relocated.member": ":" + relocated_member,
         },
         content_modules = ["intellij.test.relocated.member", "intellij.test.relocated.kept"],
         content_module_jar_labels = {"intellij.test.relocated.member": ":" + relocated_jar},
@@ -1123,6 +1145,8 @@ def dist_content_test_suite(name):
     _manifest_test(name = tests[-1], target_under_test = ":" + empty_inputs, expected_suffix = ".bazel-inputs")
 
     tests.extend(_plugin_macro_tests(name))
+    _resolve_module_labels_test(name = name + "_resolve_module_labels_test")
+    tests.append(name + "_resolve_module_labels_test")
     content_module_jar_test_suite(name = name + "_production")
     tests.append(name + "_production")
     native.test_suite(name = name, tests = tests)

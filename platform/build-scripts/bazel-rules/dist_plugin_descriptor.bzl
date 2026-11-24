@@ -907,22 +907,18 @@ def dist_plugin_descriptor(
         descriptor = "",
         descriptor_jar = None,
         descriptor_entry = "",
-        content_modules = [],
-        descriptor_index = {},
         variant = "",
         tags = [],
         visibility = ["//visibility:public"],
         **kwargs):
     """`_dist_plugin_descriptor` with what every plugin says the same way filled in.
 
-    Three things the macro derives rather than have them restated once per plugin. `name` comes from `main_module`, the
-    way `content_module_jar` derives its own. The conventional `descriptors` rows come from `descriptor_index`. And
-    `manual` is added, for `content_module_jar`'s reason: these are per-plugin targets of a measurement, and
-    `bazel build //...` must not run all of them.
+    Two things the macro derives rather than have them restated once per plugin. `name` comes from `main_module`, the
+    way `content_module_jar` derives its own. And `manual` is added, for `content_module_jar`'s reason: these are
+    per-plugin targets of a measurement, and `bazel build //...` must not run all of them.
 
-    A row is derived for each name in `content_modules` that the index knows. A name the index does not know is a
-    merged member, a `sub/module` name or a module whose row the caller states. The macro skips it. An explicit row wins
-    by label and by load path, because the descriptor writer refuses a load path declared twice.
+    `descriptors` states every row, the conventional row of each content module included. The generator writes the
+    conventional label of a module from the targets JSON.
 
     A leaf that embeds no content module also gets a `<name>_classpath` target. That target writes the classpath
     descriptor in the neutral product configuration.
@@ -932,8 +928,6 @@ def dist_plugin_descriptor(
         descriptor: the label of the plugin's `META-INF/plugin.xml`, package-relative or full.
         descriptor_jar: the jar that holds the plugin descriptor, in place of `descriptor`.
         descriptor_entry: the plugin descriptor path inside `descriptor_jar`.
-        content_modules: the module names whose conventional descriptors the patch can reach.
-        descriptor_index: the conventional descriptor label of each module, from the JPS bridge of this half.
         variant: the layout variant, which joins the target's name and the output's directory.
         tags: extra tags. `manual` is added.
         visibility: public by default.
@@ -943,13 +937,7 @@ def dist_plugin_descriptor(
         fail("dist_plugin_descriptor requires exactly one descriptor source")
     source = descriptor or None
 
-    descriptors = dict(kwargs.pop("descriptors", {}))
-    stated_load_paths = {path: True for path in descriptors.values()}
-    for module_name in content_modules:
-        label = descriptor_index.get(module_name)
-        if label == None or label in descriptors or (module_name + ".xml") in stated_load_paths:
-            continue
-        descriptors[label] = module_name + ".xml"
+    descriptors = kwargs.pop("descriptors", {})
     if descriptors:
         kwargs["descriptors"] = {label: descriptors[label] for label in sorted(descriptors)}
     name = dist_plugin_descriptor_target_name(main_module, variant)

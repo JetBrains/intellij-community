@@ -36,7 +36,8 @@ intellij_add_opens_repo = repository_rule(
 def _extension_impl(module_ctx):
     intellij_add_opens_repo(name = "intellij_add_opens")
 
-    # A pure function of the checkout: keep the extension out of MODULE.bazel.lock (see jps_dynamic_deps_community.bzl).
+    # A pure function of the checkout: keep the extension out of MODULE.bazel.lock, so a change of the files it reads
+    # never rewrites the lockfile.
     return module_ctx.extension_metadata(reproducible = True)
 
 intellij_add_opens_extension = module_extension(

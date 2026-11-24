@@ -8,6 +8,7 @@ import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toPersistentList
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
+import org.assertj.core.api.Assertions.entry
 import org.jetbrains.intellij.build.ApplicationInfoProperties
 import org.jetbrains.intellij.build.JvmArchitecture
 import org.jetbrains.intellij.build.ModuleOutputProvider
@@ -542,7 +543,7 @@ class DistUnplannablePluginsTest {
     val plans = listOf<PluginDescriptorPlan>(descriptorPlan("idea", plainLayout("intellij.x")), descriptorPlan("server", plainLayout("intellij.x")))
 
     val classes = computeDescriptorResidueClasses(plans, productOrder = listOf("idea", "server"))
-    val packages = collectCrossHalfDescriptorPackages(verdicts(ownLeaf = null), classes, planLabel = { it }, bridgeLabel = { null }, half = CommunityDistHalf)
+    val packages = collectCrossHalfDescriptorPackages(verdicts(ownLeaf = null), classes, planLabel = { it }, conventionalLabel = { null }, half = CommunityDistHalf)
 
     val residue = classes.getValue("intellij.x")
     assertThat(residue.classes.size).isEqualTo(1)
@@ -558,7 +559,7 @@ class DistUnplannablePluginsTest {
   }
 
   @Test
-  fun `a cross-half leaf names its content modules and states only the rows the bridge index does not give`() {
+  fun `a cross-half leaf states the conventional row of each content module in the recorded form`() {
     val plain = descriptorEntry(plainLayout("intellij.x"))
     val a = "@community//plugins/x/a:resources/intellij.x.a.xml"
     val entry = PluginDescriptorEntry(
@@ -588,7 +589,7 @@ class DistUnplannablePluginsTest {
       layout = plain.layout,
       contentModules = listOf(DeclaredContentModule("intellij.x.b", isOptional = false), DeclaredContentModule("intellij.x.a", isOptional = true)),
     )
-    val bridgeLabels = mapOf(
+    val conventionalLabels = mapOf(
       "intellij.x.a" to a,
       "intellij.x.b" to "@community//plugins/x/b:resources/intellij.x.b.xml",
       "intellij.y" to "@community//plugins/y:resources/intellij.y.xml",
@@ -598,27 +599,63 @@ class DistUnplannablePluginsTest {
       verdicts = verdicts(ownLeaf = null),
       classes = classes,
       planLabel = { it.replace("@community//", "//") },
-      bridgeLabel = bridgeLabels::get,
+      conventionalLabel = conventionalLabels::get,
       half = CommunityDistHalf,
     )
 
     val text = packages.files(pluginTargets = mapOf(pluginPackage to "dev_plugin(name = \"intellij.x_dev_plugin\")\n")).getValue(pluginPackage)
-    // The bridge of the half binds the leaf, and buildifier sorts a file of an explicit repository first.
+    // The package loads the macro files in the spelling of its half, and buildifier sorts the load lines by label.
     assertThat(text).contains(
-      "load(\"@jps_dynamic_deps_community//:targets.bzl\", \"dist_plugin_descriptor\")\n" +
-      "load(\"//platform/build-scripts/bazel-rules:dev_plugin.bzl\", \"dev_plugin\")\n",
+      "load(\"//platform/build-scripts/bazel-rules:dev_plugin.bzl\", \"dev_plugin\")\n" +
+      "load(\"//platform/build-scripts/bazel-rules:dist_plugin_descriptor.bzl\", \"dist_plugin_descriptor\")\n",
     )
+    // `intellij.x.a` gets its conventional row in the recorded form. `intellij.x.b` keeps the row at its load path, and
+    // `intellij.y` is no content module, so its row stays as the closure gives it.
     assertThat(text).contains(
       "dist_plugin_descriptor(\n" +
-      "    content_modules = [\n        \"intellij.x.a\",\n        \"intellij.x.b\",\n    ],\n" +
       "    descriptor = \"//plugins/x:resources/META-INF/plugin.xml\",\n" +
       "    descriptors = {\n" +
       "        \"//plugins/x/b:other/intellij.x.b.xml\": \"intellij.x.b.xml\",\n" +
       "        \"//plugins/x:resources/META-INF/x-extra.xml\": \"META-INF/x-extra.xml\",\n" +
       "        \"//plugins/y:resources/intellij.y.xml\": \"intellij.y.xml\",\n" +
+      "        \"@community//plugins/x/a:resources/intellij.x.a.xml\": \"intellij.x.a.xml\",\n" +
       "    },\n",
     )
-    assertThat(text).doesNotContain("descriptor_module").doesNotContain("intellij.x.a.xml\"")
+    assertThat(text).doesNotContain("content_modules")
+  }
+
+  @Test
+  fun `a conventional row is the row of a content module at its conventional descriptor label`() {
+    val moduleName = "intellij.test.content"
+    val label = "@community//plugins/test/content:first/$moduleName.xml"
+    val conventionalLabel: (String) -> String? = { if (it == moduleName) label else null }
+
+    assertThat(isConventionalDescriptorRow(label, "$moduleName.xml", listOf(moduleName), conventionalLabel)).isTrue()
+    // Another label, another load path, or a module outside the content modules keeps the row as it is.
+    assertThat(isConventionalDescriptorRow("@community//plugins/test/content:second/$moduleName.xml", "$moduleName.xml", listOf(moduleName), conventionalLabel)).isFalse()
+    assertThat(isConventionalDescriptorRow(label, "META-INF/$moduleName.xml", listOf(moduleName), conventionalLabel)).isFalse()
+    assertThat(isConventionalDescriptorRow(label, "$moduleName.xml", listOf("intellij.test.other"), conventionalLabel)).isFalse()
+    assertThat(isConventionalDescriptorRow(label, moduleName, listOf(moduleName), conventionalLabel)).isFalse()
+  }
+
+  @Test
+  fun `a stated row wins over the conventional row by label and by load path`() {
+    val conventionalLabels = mapOf(
+      "intellij.a" to "//a:resources/intellij.a.xml",
+      "intellij.b" to "//b:resources/intellij.b.xml",
+      "intellij.c" to "//c:resources/intellij.c.xml",
+    )
+    val stated = mapOf(
+      "//a:resources/intellij.a.xml" to "META-INF/a.xml",
+      "//other:intellij.b.xml" to "intellij.b.xml",
+    )
+
+    assertThat(withConventionalDescriptorRows(stated, listOf("intellij.a", "intellij.b", "intellij.c", "intellij.d"), conventionalLabels::get))
+      .containsExactly(
+        entry("//a:resources/intellij.a.xml", "META-INF/a.xml"),
+        entry("//c:resources/intellij.c.xml", "intellij.c.xml"),
+        entry("//other:intellij.b.xml", "intellij.b.xml"),
+      )
   }
 
   @Test
@@ -629,7 +666,7 @@ class DistUnplannablePluginsTest {
     val serverPackage = "build/dist-descriptors/intellij.x/server/BUILD.bazel"
 
     val classes = computeDescriptorResidueClasses(plans, productOrder = listOf("idea", "server"))
-    val packages = collectCrossHalfDescriptorPackages(verdicts(ownLeaf = null), classes, planLabel = { it }, bridgeLabel = { null }, half = CommunityDistHalf)
+    val packages = collectCrossHalfDescriptorPackages(verdicts(ownLeaf = null), classes, planLabel = { it }, conventionalLabel = { null }, half = CommunityDistHalf)
 
     val residue = classes.getValue("intellij.x")
     assertThat(residue.classes.size).isEqualTo(2)
@@ -649,7 +686,7 @@ class DistUnplannablePluginsTest {
     assertThat(packages.productDeclaration("server", serverEntry)?.label).isEqualTo("//build/dist-descriptors/intellij.x/server:intellij.x_dev_descriptor")
 
     // A plugin whose own package declares the leaf keeps that leaf for the baseline, and the product home is the same.
-    val ownPackages = collectCrossHalfDescriptorPackages(verdicts(ownLeaf = "@community//plugins/x:intellij.x_dev_descriptor"), classes, planLabel = { it }, bridgeLabel = { null }, half = CommunityDistHalf)
+    val ownPackages = collectCrossHalfDescriptorPackages(verdicts(ownLeaf = "@community//plugins/x:intellij.x_dev_descriptor"), classes, planLabel = { it }, conventionalLabel = { null }, half = CommunityDistHalf)
     assertThat(ownPackages.files(emptyMap()).keys).containsExactly(serverPackage)
     assertThat(ownPackages.sharedDeclaration(ideaEntry)).isNull()
     assertThat(ownPackages.productDeclaration("server", serverEntry)?.label).isEqualTo("//build/dist-descriptors/intellij.x/server:intellij.x_dev_descriptor")
@@ -731,7 +768,7 @@ class DistUnplannablePluginsTest {
   fun `the sweep names every descriptor package on disk that the run does not write`() {
     val plans = listOf<PluginDescriptorPlan>(descriptorPlan("idea", plainLayout("intellij.x")))
     val classes = computeDescriptorResidueClasses(plans, productOrder = listOf("idea"))
-    val packages = collectCrossHalfDescriptorPackages(verdicts(ownLeaf = null), classes, planLabel = { it }, bridgeLabel = { null }, half = CommunityDistHalf)
+    val packages = collectCrossHalfDescriptorPackages(verdicts(ownLeaf = null), classes, planLabel = { it }, conventionalLabel = { null }, half = CommunityDistHalf)
     // On disk: the root package, the written plugin package, and a file that is no package. Also a product that left
     // the split products, and a plugin that left the population with a product package of its own.
     for (relativePath in listOf("BUILD.bazel", "intellij.x/BUILD.bazel", "intellij.x/gone/BUILD.bazel", "intellij.y/BUILD.bazel", "intellij.y/idea/BUILD.bazel", "intellij.z/notes.txt")) {

@@ -1,7 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.buildScripts.distGenerator
 
-import com.intellij.platform.buildScripts.pluginModelTool.descriptorFiles
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.intellij.build.ContentModuleFilter
 import org.jetbrains.intellij.build.FrontendModuleFilter
@@ -32,7 +31,6 @@ import org.jetbrains.intellij.build.productLayout.ProductModulesContentSpec
 import org.jetbrains.intellij.build.productLayout.TestPluginSpec
 import org.jetbrains.intellij.build.productLayout.buildProductContentXml
 import org.jetbrains.jps.model.JpsProject
-import org.jetbrains.jps.model.module.JpsModule
 import java.util.TreeMap
 import kotlin.io.path.invariantSeparatorsPathString
 
@@ -251,8 +249,8 @@ internal data class EmbeddedProductDescriptorPlan(
   /** The Product DSL content of the embedded frontend, which the macro composes over the module-set table. */
   @JvmField val content: ProductContentPlan,
   /**
-   * Descriptor file label to resolver load path, in label order. The macro derives the row of every set member and
-   * additional module that the bridge index knows, so these are only the other rows.
+   * Descriptor file label to resolver load path, in label order, less the conventional rows. The call adds the row of
+   * each additional module, see [productDescriptorRows].
    */
   @JvmField val descriptors: Map<String, String>,
   /** Java container label to space-separated resolver load paths, in label order. */
@@ -282,8 +280,8 @@ internal data class ProductDescriptorPlan(
   /** The entry of the product descriptor in the jar: `META-INF/plugin.xml` or `META-INF/<prefix>Plugin.xml`. */
   @JvmField val descriptorPath: String,
   /**
-   * Descriptor file label to resolver load path, in label order. The macro derives the row of every set member and
-   * additional module that the bridge index knows, less the refused ones, so these are only the other rows.
+   * Descriptor file label to resolver load path, in label order, less the conventional rows. The call adds the row of
+   * each additional module that the product does not refuse, see [productDescriptorRows].
    */
   @JvmField val descriptors: Map<String, String>,
   /** Java container label to space-separated resolver load paths, in label order. */
@@ -584,21 +582,20 @@ private fun renderProductContentForComposition(spec: ProductModulesContentSpec, 
 }
 
 /**
- * The plan of a product content: the content attributes, the self-check of the composition, and the closure rows that
- * the macro does not derive.
+ * The plan of a product content: the content attributes, the self-check of the composition, and the closure rows.
  *
  * The self-check composes the content over the set rows of the Product DSL content, as the macro and the descriptor
  * writer do, and compares the element structure with the Kotlin rendering [xml], see [checkProductContent]. The closure
- * walk starts from the same rendering. A row of a set member or an additional module at its bridge index entry is left out, because the
- * macro derives it, see [isBridgeDerivedDescriptor].
+ * walk starts from the same rendering. The plan leaves out the conventional row of a set member and of an additional
+ * module, see [isConventionalDescriptorRow]. The module-set table states the first, and the call states the second.
  */
 private class ProductContentFacts(
   @JvmField val content: ProductContentPlan,
   @JvmField val moduleSets: Map<String, ModuleSetData>,
   @JvmField val xml: String,
 ) {
-  /** The module names whose descriptor row the macro derives: every set member and additional module, less [refused]. */
-  fun derivedModules(refused: Collection<String>): Set<String> {
+  /** Every set member and additional module, less [refused]. */
+  fun contentModuleNames(refused: Collection<String>): Set<String> {
     val composed = composeProductContent(content, moduleSets)
     val refusedNames = refused.toHashSet()
     return composed.blocks.asSequence().flatMap { it.rows }.map { it.name }.filterNotTo(HashSet()) { it in refusedNames }
@@ -613,20 +610,41 @@ private fun productContentFacts(spec: ProductModulesContentSpec, outputProvider:
   return ProductContentFacts(content = content, moduleSets = moduleSets, xml = xml)
 }
 
-/** [labels] less the rows that the macro derives for [derivedModules] from the bridge index of the half. */
+/**
+ * [labels] less the conventional row of each of [conventionalModules]. The module-set table states the row of a set
+ * member, and the call states the row of an additional module, see [productDescriptorRows].
+ */
 private fun statedDescriptorRows(
   labels: Map<String, String>,
-  derivedModules: Set<String>,
+  conventionalModules: Set<String>,
   index: DistBazelIndex,
-  outputProvider: ModuleOutputProvider,
 ): Map<String, String> {
-  val bridgeLabels = HashMap<String, String?>()
-  val bridgeLabel: (String) -> String? = { moduleName ->
-    bridgeLabels.getOrPut(moduleName) { outputProvider.findModule(moduleName)?.let { bridgeDescriptorLabel(module = it, index = index) } }
-  }
   return labels.filterTo(TreeMap()) { (label, loadPath) ->
-    !isBridgeDerivedDescriptor(label = label, loadPath = loadPath, contentModules = derivedModules, bridgeLabel = bridgeLabel)
+    !isConventionalDescriptorRow(
+      label = label,
+      loadPath = loadPath,
+      modules = conventionalModules,
+      conventionalLabel = index::conventionalDescriptorLabel,
+    )
   }
+}
+
+/**
+ * The `descriptors` attribute of a product descriptor call: [stated] and the conventional row of each additional module
+ * of [content] that [refused] does not name. The module-set table states the rows of the set members.
+ */
+internal fun productDescriptorRows(
+  stated: Map<String, String>,
+  content: ProductContentPlan,
+  refused: Collection<String>,
+  index: DistBazelIndex,
+): Map<String, String> {
+  val refusedNames = refused.toHashSet()
+  return withConventionalDescriptorRows(
+    rows = stated,
+    modules = content.contentModules.filterNot { it in refusedNames },
+    conventionalLabel = index::conventionalDescriptorLabel,
+  )
 }
 
 /**
@@ -687,9 +705,8 @@ private fun collectProductDescriptor(
     descriptorPath = descriptorPath,
     descriptors = statedDescriptorRows(
       labels = labels.descriptors,
-      derivedModules = facts.derivedModules(refused = closure.refusedContentModules),
+      conventionalModules = facts.contentModuleNames(refused = closure.refusedContentModules),
       index = index,
-      outputProvider = outputProvider,
     ),
     libraryDescriptors = labels.libraryDescriptors,
     refusedContentModules = closure.refusedContentModules,
@@ -1204,9 +1221,8 @@ private fun collectEmbeddedProductDescriptor(
     content = facts.content,
     descriptors = statedDescriptorRows(
       labels = labels.descriptors,
-      derivedModules = facts.derivedModules(refused = emptyList()),
+      conventionalModules = facts.contentModuleNames(refused = emptyList()),
       index = index,
-      outputProvider = outputProvider,
     ),
     libraryDescriptors = labels.libraryDescriptors,
     separateJar = separateJarContentModules(
@@ -1311,50 +1327,45 @@ internal fun conventionalDescriptor(descriptor: ReachedDescriptor, contentModule
 }
 
 /**
- * The entry of [module] in the descriptor index `MODULE_DESCRIPTORS` of the JPS bridge, in the recorded form, or `null`
- * when the index has no entry for the module.
+ * Whether the row [label] to [loadPath] is the conventional row of one of [modules]: the load path is `<module name>.xml`,
+ * and [conventionalLabel] gives [label] for that module, see [DistBazelIndex.conventionalDescriptorLabel].
  *
- * `compute_module_descriptor_target` of `jps_target_derivation.bzl` is the Starlark twin. The rule takes the first
- * production resource root in `.iml` order that the jar takes at its own root and that holds `<module name>.xml`. The
- * file must lie inside the Bazel package of the module, and on the repository half of the module.
+ * A plan drops such a row, and the call states it again in the recorded form, see [withConventionalDescriptorRows]. A
+ * row whose label has another spelling is not such a row. It stays, and its load path then holds the conventional row
+ * out.
  */
-internal fun bridgeDescriptorLabel(module: JpsModule, index: DistBazelIndex): String? {
-  val moduleTarget = moduleRuleTarget(module = module.name, targets = index.targets) ?: return null
-  val isCommunity = index.isCommunity(module.name) ?: return null
-  val packageDirectory = index.packageDirectory(moduleTarget)
-  val projectRoot = index.projectRoot.normalize()
-  val communityRoot = index.communityRoot.normalize()
-  for (file in descriptorFiles(module = module, loadPath = module.name + ".xml")) {
-    val normalized = file.normalize()
-    if (normalized.startsWith(communityRoot) != isCommunity || !normalized.startsWith(projectRoot)) {
-      continue
-    }
-    val relativePath = projectRoot.relativize(normalized).invariantSeparatorsPathString
-    val insidePackage = when {
-      packageDirectory.isEmpty() -> relativePath
-      relativePath.startsWith("$packageDirectory/") -> relativePath.removePrefix("$packageDirectory/")
-      else -> continue
-    }
-    return moduleTarget.substringBeforeLast(':') + ":" + insidePackage
-  }
-  return null
+internal fun isConventionalDescriptorRow(
+  label: String,
+  loadPath: String,
+  modules: Collection<String>,
+  conventionalLabel: (moduleName: String) -> String?,
+): Boolean {
+  val moduleName = loadPath.removeSuffix(".xml")
+  return moduleName != loadPath && moduleName in modules && conventionalLabel(moduleName) == label
 }
 
 /**
- * Whether the descriptor leaf derives the row [label] to [loadPath] itself, so the generator states nothing for it.
+ * [rows] and the conventional row of each of [modules], sorted by label. A conventional row maps the label that
+ * [conventionalLabel] gives to `<module name>.xml`, see [DistBazelIndex.conventionalDescriptorLabel].
  *
- * The leaf derives one row for each of its [contentModules] that the bridge index knows, at the load path
- * `<module name>.xml`. [bridgeLabel] gives the index entry of a module name, see [bridgeDescriptorLabel]. A row of a
- * module outside [contentModules] stays explicit, because the leaf derives no row for it.
+ * A module without a conventional descriptor gets no row. A row of [rows] wins by label and by load path, because the
+ * descriptor writer refuses a load path that two rows declare. The label stays in the recorded form in both halves.
  */
-internal fun isBridgeDerivedDescriptor(
-  label: String,
-  loadPath: String,
-  contentModules: Collection<String>,
-  bridgeLabel: (moduleName: String) -> String?,
-): Boolean {
-  val moduleName = loadPath.removeSuffix(".xml")
-  return moduleName != loadPath && moduleName in contentModules && bridgeLabel(moduleName) == label
+internal fun withConventionalDescriptorRows(
+  rows: Map<String, String>,
+  modules: Iterable<String>,
+  conventionalLabel: (moduleName: String) -> String?,
+): Map<String, String> {
+  val result = TreeMap(rows)
+  val statedLoadPaths = rows.values.toHashSet()
+  for (module in modules) {
+    val label = conventionalLabel(module) ?: continue
+    val loadPath = "$module.xml"
+    if (!result.containsKey(label) && loadPath !in statedLoadPaths) {
+      result.put(label, loadPath)
+    }
+  }
+  return result
 }
 
 /**

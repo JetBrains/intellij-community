@@ -1,13 +1,17 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@community//build:tests-options.bzl", "jps_test")
 load("@intellij_add_opens//:intellij_add_opens.bzl", "INTELLIJ_ADD_OPENS")
-load("@jps_dynamic_deps_community//:targets.bzl", "ALL_COMMUNITY_TARGETS", "BAZEL_TARGETS_JSON_COMMUNITY")
 load("@rules_java//java:defs.bzl", "java_binary")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//build:bazel_targets_json.bzl", "BAZEL_TARGETS_JSON_COMMUNITY")
 
 java_binary(
     name = "mps_builder",
     add_opens = INTELLIJ_ADD_OPENS,
-    data = ALL_COMMUNITY_TARGETS + [BAZEL_TARGETS_JSON_COMMUNITY],
+    data = [
+        "//build:all_community_targets",
+        BAZEL_TARGETS_JSON_COMMUNITY,
+    ],
     jvm_flags = [
         "-Dintellij.build.bazel.targets.json.file=$(rlocationpath %s)" % BAZEL_TARGETS_JSON_COMMUNITY,
     ],
@@ -51,12 +55,10 @@ jvm_library(
 ### auto-generated section `build intellij.mps.build` end
 
 ### auto-generated section `iml intellij.mps.build` start
-exports_files(
-    [
-        "intellij.mps.build.iml",
-        "build/manifests/java-impl.jar/META-INF/plugin.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.mps.build",
+    target = "build",
+    exports = ["build/manifests/java-impl.jar/META-INF/plugin.xml"],
 )
 ### auto-generated section `iml intellij.mps.build` end
 
@@ -93,11 +95,9 @@ jvm_library(
 ### auto-generated section `build intellij.mps.build.tests` end
 
 ### auto-generated section `iml intellij.mps.build.tests` start
-exports_files(
-    [
-        "intellij.mps.build.tests.iml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.mps.build.tests",
+    target = "build-tests_test_lib",
 )
 ### auto-generated section `iml intellij.mps.build.tests` end
 

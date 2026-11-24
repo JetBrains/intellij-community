@@ -1,0 +1,9 @@
+load("//:library_jars.bzl", "library_jars")
+
+### auto-generated section `library jars` start
+library_jars(
+    name = "library_jars",
+    srcs = ["//snapshots:library_jars"],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `library jars` end

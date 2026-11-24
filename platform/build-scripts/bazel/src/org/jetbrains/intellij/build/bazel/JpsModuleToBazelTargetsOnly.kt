@@ -25,12 +25,6 @@ internal class JpsModuleToBazelTargetsOnly {
       var manifest: Path? = null
       var defaultCustomModules = "true"
       var output: Path? = null
-      var noStarlarkTargets = false
-      val starlarkProduction = mutableListOf<String>()
-      val starlarkTest = mutableListOf<String>()
-      val starlarkLibrary = mutableListOf<String>()
-      val starlarkIml = mutableListOf<String>()
-      val starlarkPluginDistribution = mutableListOf<String>()
 
       for (arg in expandedArgs) {
         when {
@@ -40,18 +34,6 @@ internal class JpsModuleToBazelTargetsOnly {
             defaultCustomModules = arg.substringAfter("=")
           arg.startsWith("--output=") ->
             output = Path.of(arg.substringAfter("="))
-          arg == "--no-starlark-targets" ->
-            noStarlarkTargets = true
-          arg.startsWith("--starlark-production=") ->
-            starlarkProduction.add(arg.substringAfter("="))
-          arg.startsWith("--starlark-test=") ->
-            starlarkTest.add(arg.substringAfter("="))
-          arg.startsWith("--starlark-library=") ->
-            starlarkLibrary.add(arg.substringAfter("="))
-          arg.startsWith("--starlark-iml=") ->
-            starlarkIml.add(arg.substringAfter("="))
-          arg.startsWith("--starlark-plugin-distribution=") ->
-            starlarkPluginDistribution.add(arg.substringAfter("="))
           else -> error("Unknown argument: $arg")
         }
       }
@@ -59,14 +41,6 @@ internal class JpsModuleToBazelTargetsOnly {
       val outputFile = (requireNotNull(output) { "Missing required --output=<path> argument" })
         .absolute()
       check(manifest != null) { "Missing required --manifest=<path> argument" }
-      val hasStarlarkTargets = starlarkProduction.isNotEmpty() || starlarkTest.isNotEmpty() || starlarkLibrary.isNotEmpty() ||
-                               starlarkIml.isNotEmpty() || starlarkPluginDistribution.isNotEmpty()
-      check(hasStarlarkTargets || noStarlarkTargets) {
-        "Either --starlark-* targets or --no-starlark-targets must be provided"
-      }
-      check(!(hasStarlarkTargets && noStarlarkTargets)) {
-        "Both --starlark-* targets and --no-starlark-targets are provided which is not allowed"
-      }
 
       val projectDir = Files.createTempDirectory("project")
 
@@ -154,8 +128,7 @@ internal class JpsModuleToBazelTargetsOnly {
           communityTargets + generator.generateModuleTargets(moduleList, manuallyWrittenAttributes, isCommunity = false)
         }
 
-        val targets = JpsModuleToBazel.saveTargets(
-          file = outputFile,
+        val targetsFile = JpsModuleToBazel.computeTargetsFile(
           targets = allTargets,
           moduleList = moduleList,
           libs = if (ultimateRoot == null) generator.communityOnlyLibraries else generator.allLibraries,
@@ -165,14 +138,11 @@ internal class JpsModuleToBazelTargetsOnly {
           assertAllModuleOutputsExist = false,
           bazelOutputBase = null,
         )
+        JpsModuleToBazel.saveTargets(file = outputFile, targetsFile = targetsFile)
 
         val m2RepoFiles = m2Repo.walk().toList()
         if (m2RepoFiles.isNotEmpty()) {
           error("M2 repo should be empty, but contains $m2RepoFiles")
-        }
-
-        if (hasStarlarkTargets) {
-          assertStarlarkParity(targets, starlarkProduction, starlarkTest, starlarkLibrary, starlarkIml, starlarkPluginDistribution)
         }
       }
       finally {
@@ -196,56 +166,6 @@ internal class JpsModuleToBazelTargetsOnly {
           }
       }
       return args.toList()
-    }
-
-    private fun assertStarlarkParity(
-      targets: JpsModuleToBazel.Companion.TargetsFile,
-      starlarkProduction: List<String>,
-      starlarkTest: List<String>,
-      starlarkLibrary: List<String>,
-      starlarkIml: List<String>,
-      starlarkPluginDistribution: List<String>,
-    ) {
-      val jsonProduction = targets.modules.values.flatMap { it.productionTargets }.sorted()
-      val jsonTest = targets.modules.values.flatMap { it.testTargets }.sorted()
-      val jsonLibrary = (targets.modules.values.flatMap { it.moduleLibraries.values }.flatMap { it.jarTargets } +
-        targets.projectLibraries.values.flatMap { it.jarTargets }).sorted()
-
-      assertTargetsEqual("production", starlarkProduction.sorted(), jsonProduction.sorted(), allowDuplicates = false)
-      assertTargetsEqual("test", starlarkTest.sorted(), jsonTest.sorted(), allowDuplicates = false)
-      assertTargetsEqual("library", starlarkLibrary.sorted(), jsonLibrary.sorted().toList(), allowDuplicates = true)
-      assertTargetsEqual("imlTargets", starlarkIml.sorted(), targets.imlTargets.sorted(), allowDuplicates = false)
-      assertTargetsEqual(
-        "pluginDistributionTargets",
-        starlarkPluginDistribution.sorted(),
-        targets.pluginDistributionTargets.values.map { it.target }.sorted(),
-        allowDuplicates = false,
-      )
-    }
-
-    private fun assertTargetsEqual(kind: String, starlarkTargets: List<String>, jsonTargets: List<String>, allowDuplicates: Boolean) {
-      if (starlarkTargets == jsonTargets) return
-
-      if (!allowDuplicates && starlarkTargets.distinct() != starlarkTargets) {
-        error("Starlark $kind targets contain duplicates: ${starlarkTargets.groupBy { it }.filter { it.value.size > 1 }.keys}")
-      }
-
-      if (!allowDuplicates && jsonTargets.distinct() != jsonTargets) {
-        error("jps2bazel $kind targets contain duplicates: ${jsonTargets.groupBy { it }.filter { it.value.size > 1 }.keys}")
-      }
-
-      val starlarkSet = starlarkTargets.toHashSet()
-      val jsonSet = jsonTargets.toHashSet()
-      val onlyStarlark = starlarkTargets.filter { it !in jsonSet }.sorted()
-      val onlyJson = jsonTargets.filter { it !in starlarkSet }.sorted()
-
-      if (onlyStarlark.isNotEmpty() || onlyJson.isNotEmpty()) {
-        error(
-          "Starlark vs JSON $kind target mismatch!\n" +
-          "  Only in Starlark (${onlyStarlark.size}): ${onlyStarlark.take(20)}\n" +
-          "  Only in JSON (${onlyJson.size}): ${onlyJson.take(20)}"
-        )
-      }
     }
   }
 }

@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@community//platform/build-scripts/bazel-rules:ij_plugin_module.bzl", "ij_plugin_module")
 
 ### auto-generated section `build intellij.libraries.example` start
@@ -19,11 +20,10 @@ ij_plugin_module(
 ### auto-generated section `build intellij.libraries.example` end
 
 ### auto-generated section `iml intellij.libraries.example` start
-exports_files(
-    [
-        "intellij.libraries.example.iml",
-        "resources/intellij.libraries.example.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.libraries.example",
+    descriptors = ["resources/intellij.libraries.example.xml"],
+    libraries = ["//libs:library.jar"],
+    target = "libraries-example",
 )
 ### auto-generated section `iml intellij.libraries.example` end

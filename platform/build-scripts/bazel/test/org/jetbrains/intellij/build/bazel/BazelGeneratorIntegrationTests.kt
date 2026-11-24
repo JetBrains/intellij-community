@@ -37,6 +37,7 @@ class BazelGeneratorIntegrationTests {
 
     /** The BUILD file of the Starter test row, as buildifier formats it. */
     private val STARTER_TEST_BUILD_FILE = """
+      |load("@community//build:jps_module.bzl", "jps_module")
       |load("@rules_jvm//:jvm.bzl", "jvm_library")
       |load("//build:starter_test.bzl", "starter_test")
       |
@@ -60,11 +61,10 @@ class BazelGeneratorIntegrationTests {
       |### auto-generated section `build intellij.ultimate.starter.tests` end
       |
       |### auto-generated section `iml intellij.ultimate.starter.tests` start
-      |exports_files(
-      |    [
-      |        "intellij.ultimate.starter.tests.iml",
-      |    ],
-      |    visibility = ["//visibility:public"],
+      |jps_module(
+      |    name = "intellij.ultimate.starter.tests",
+      |    resources = False,
+      |    target = "starter-tests_test_lib",
       |)
       |### auto-generated section `iml intellij.ultimate.starter.tests` end
       |
@@ -172,6 +172,7 @@ class BazelGeneratorIntegrationTests {
       ### skip generation section `test intellij.module`
       exports_files(["BUILD.bazel"], visibility = ["//allowed:__pkg__"])
       filegroup(name = "module", srcs = ["module.jar"])
+      jps_module(name = "intellij.module", target = "module")
     """.trimIndent()
     buildFile.writeText(handwritten + "\n")
 
@@ -179,6 +180,64 @@ class BazelGeneratorIntegrationTests {
 
     assertEquals(handwritten + "\n", buildFile.readText())
     projectDir.deleteRecursively()
+  }
+
+  /** The `jps_modules` repository rule names the record of each module, so a skipped `iml` section must declare it by hand. */
+  @Test
+  fun `a skipped iml section without a hand-written record fails the converter`() {
+    val projectDir = createMetadataProject()
+    projectDir.resolve("module/BUILD.bazel").writeText("### skip generation section `iml intellij.module`\n")
+
+    val exception = assertThrows(IllegalStateException::class.java) {
+      generateMetadataProject(projectDir)
+    }
+    softly.assertThat(exception.message)
+      .contains("skips the section `iml intellij.module`")
+      .contains("declares no `jps_module(name = \"intellij.module\", ...)` record")
+    if (softly.wasSuccess()) projectDir.deleteRecursively()
+  }
+
+  /**
+   * Two modules of one package share a resource root. Each file of the root is exported once: the record of the first
+   * module exports it, and the second record names its descriptor in `hand_exports`.
+   */
+  @Test
+  fun `two modules of one package that share a resource root export each file once`() {
+    val projectDir = createMetadataProject()
+    for (name in listOf("intellij.first", "intellij.second")) {
+      addTargetsModule(projectDir, "shared", name, roots = listOf("src" to "", "resources" to "java-resource"))
+    }
+    for (path in listOf("resources/intellij.first.xml", "resources/intellij.second.xml", "resources/META-INF/extra.xml")) {
+      projectDir.resolve("shared").resolve(path).createParentDirectories().writeText("<idea-plugin/>")
+    }
+
+    generateMetadataProject(projectDir)
+
+    val buildFile = projectDir.resolve("shared/BUILD.bazel").readText()
+    for (path in listOf("resources/intellij.first.xml", "resources/intellij.second.xml", "resources/META-INF/extra.xml")) {
+      softly.assertThat(Regex(Regex.escape("\"$path\"")).findAll(buildFile.substringBefore("### auto-generated section `iml intellij.second`")).count())
+        .describedAs("The exports of $path by the first record")
+        .isEqualTo(1)
+    }
+    softly.assertThat(buildFile)
+      .contains("jps_module(\n    name = \"intellij.second\",\n    descriptors = [\"resources/intellij.second.xml\"],\n    hand_exports = [\"resources/intellij.second.xml\"],")
+      .doesNotContain("exports_files(")
+    if (softly.wasSuccess()) projectDir.deleteRecursively()
+  }
+
+  /** A target that has the name of a target of a module record, such as `<module>_jars`, fails the converter. */
+  @Test
+  fun `a target with the name of a record target fails the converter`() {
+    val projectDir = createMetadataProject()
+    projectDir.resolve("module/BUILD.bazel").writeText("filegroup(name = \"intellij.module_jars\")\n")
+
+    val exception = assertThrows(IllegalStateException::class.java) {
+      generateMetadataProject(projectDir)
+    }
+    softly.assertThat(exception.message)
+      .contains("declares [intellij.module_jars]")
+      .contains("the `jps_module` record of the module declares a target of that name")
+    if (softly.wasSuccess()) projectDir.deleteRecursively()
   }
 
   @Test
@@ -267,6 +326,167 @@ class BazelGeneratorIntegrationTests {
     generateMetadataProject(communityDir)
     assertEquals(pluginBuildFileContent, pluginBuildFile.readText())
     if (softly.wasSuccess()) projectDir.deleteRecursively()
+  }
+
+  /**
+   * Both converters write the community BUILD files, so they write the same record of a community module. A community
+   * module that only the ultimate model has gets its record from the ultimate run.
+   */
+  @Test
+  fun `the ultimate run and the community run write the same community records`() {
+    val projectDir = Files.createTempDirectory("jps-module-records-identity")
+    projectDir.resolve(".ultimate.root.marker").writeText("")
+    val communityDir = projectDir.resolve("community")
+    getTestDataPath("ij-plugin-target").resolve("project").copyToRecursively(communityDir, followLinks = true, overwrite = false)
+    communityDir.resolve(".idea").copyToRecursively(projectDir.resolve(".idea"), followLinks = true, overwrite = false)
+    val modulesFile = projectDir.resolve(".idea/modules.xml")
+    modulesFile.writeText(modulesFile.readText().replace("\$PROJECT_DIR\$/", "\$PROJECT_DIR\$/community/"))
+    // a community module that only the ultimate model registers
+    addMetadataModule(projectDir, "community/extra", "intellij.community.extra", communityDir)
+    addMetadataModule(projectDir, "ultimate/split", "intellij.ultimate.split", communityDir)
+
+    generateMetadataProject(projectDir, communityOnly = false)
+    val communityBuildFiles = listOf("module/BUILD.bazel", "plugin/BUILD.bazel").map(communityDir::resolve)
+    val fromUltimateRun = communityBuildFiles.map { it.readText() }
+    val extraFromUltimateRun = communityDir.resolve("extra/BUILD.bazel").readText()
+
+    generateMetadataProject(communityDir)
+    assertEquals(fromUltimateRun, communityBuildFiles.map { it.readText() })
+
+    softly.assertThat(fromUltimateRun[0]).contains(
+      "jps_module(\n    name = \"intellij.module\",\n    descriptors = [\"resources/intellij.module.xml\"],\n    target = \"module\",\n)"
+    )
+    softly.assertThat(fromUltimateRun[1]).contains("jps_module(\n    name = \"intellij.plugin\",").contains("    plugin = True,\n")
+    softly.assertThat(extraFromUltimateRun).contains("jps_module(\n    name = \"intellij.community.extra\",")
+    softly.assertThat(projectDir.resolve("ultimate/split/BUILD.bazel").readText()).contains("jps_module(\n    name = \"intellij.ultimate.split\",")
+    if (softly.wasSuccess()) projectDir.deleteRecursively()
+  }
+
+  /**
+   * The `jps_modules` repository rule finds the record of each module of `modules.xml` in the BUILD file of the
+   * directory of its `.iml` file. The skipped module has no record, and the `imls` attribute of the rule names it.
+   */
+  @Test
+  fun `each module of modules xml has its record in the directory of its iml file`() {
+    val projectDir = createUltimateTargetsProject()
+
+    generateMetadataProject(projectDir, communityOnly = false)
+
+    for (modulesXml in listOf(projectDir.resolve(".idea/modules.xml"), projectDir.resolve("community/.idea/modules.xml"))) {
+      val root = modulesXml.parent.parent
+      val imlPaths = Regex("filepath=\"\\\$PROJECT_DIR\\\$/([^\"]+)\"").findAll(modulesXml.readText()).map { it.groupValues[1] }.toList()
+      softly.assertThat(imlPaths).isNotEmpty()
+      for (imlPath in imlPaths) {
+        val name = imlPath.substringAfterLast('/').removeSuffix(".iml")
+        if (name == "intellij.platform.buildScripts.bazel") {
+          continue
+        }
+        val buildFile = root.resolve(imlPath).parent.resolve("BUILD.bazel")
+        softly.assertThat(buildFile.readText())
+          .describedAs("The record of $name in $buildFile")
+          .contains("### auto-generated section `iml $name` start\njps_module(\n    name = \"$name\",")
+      }
+    }
+    if (softly.wasSuccess()) projectDir.deleteRecursively()
+  }
+
+  /** The `imls` attribute of `jps_modules` in `MODULE.bazel` must name the skipped module, else the converter fails. */
+  @Test
+  fun `a jps_modules call that does not name the skipped module fails the converter`() {
+    val projectDir = createUltimateTargetsProject()
+    projectDir.resolve("MODULE.bazel").writeText("""
+      |jps_modules(
+      |    name = "jps_modules_ultimate",
+      |    modules_xml = "//:.idea/modules.xml",
+      |    repository = "@//",
+      |)
+      |""".trimMargin())
+
+    val exception = assertThrows(IllegalStateException::class.java) {
+      generateMetadataProject(projectDir, communityOnly = false)
+    }
+    softly.assertThat(exception.message)
+      .contains("The `imls` attribute of `jps_modules`")
+      .contains("intellij.platform.buildScripts.bazel=@jps_to_bazel//:intellij.platform.buildScripts.bazel.iml")
+    if (softly.wasSuccess()) projectDir.deleteRecursively()
+  }
+
+  /**
+   * An ultimate project over the community project of `ij-plugin-target`, with a skipped module. `intellij.ultimate.build` depends on
+   * `intellij.ultimate.lib`, on the skipped `intellij.platform.buildScripts.bazel`, on the project library `local-lib`,
+   * and in the runtime scope on `intellij.ultimate.runtimeOnly`. `intellij.ultimate.lib` has a resource root with its
+   * descriptor and depends on the community `intellij.module`. `intellij.ultimate.tests` has a test resource root.
+   */
+  private fun createUltimateTargetsProject(): Path {
+    val projectDir = Files.createTempDirectory("jps-targets-ultimate")
+    projectDir.resolve(".ultimate.root.marker").writeText("")
+    val communityDir = projectDir.resolve("community")
+    getTestDataPath("ij-plugin-target").resolve("project").copyToRecursively(communityDir, followLinks = true, overwrite = false)
+    communityDir.resolve(".idea").copyToRecursively(projectDir.resolve(".idea"), followLinks = true, overwrite = false)
+    val modulesFile = projectDir.resolve(".idea/modules.xml")
+    modulesFile.writeText(modulesFile.readText().replace("\$PROJECT_DIR\$/", "\$PROJECT_DIR\$/community/"))
+
+    projectDir.resolve(".idea/libraries/local_lib.xml").createParentDirectories().writeText("""
+      <component name="libraryTable">
+        <library name="local-lib">
+          <CLASSES>
+            <root url="jar://${'$'}PROJECT_DIR${'$'}/lib/local-lib.jar!/" />
+          </CLASSES>
+          <JAVADOC />
+          <SOURCES />
+        </library>
+      </component>
+    """.trimIndent())
+    projectDir.resolve("lib/local-lib.jar").createParentDirectories().writeText("")
+
+    val bazelDirectory = "community/platform/build-scripts/bazel"
+    addTargetsModule(projectDir, bazelDirectory, "intellij.platform.buildScripts.bazel")
+    projectDir.resolve("$bazelDirectory/BUILD.bazel").writeText("filegroup(name = \"handwritten\")\n")
+    addTargetsModule(projectDir, "ultimate/runtimeOnly", "intellij.ultimate.runtimeOnly")
+    addTargetsModule(projectDir, "ultimate/lib", "intellij.ultimate.lib", roots = listOf("src" to "", "resources" to "java-resource"), dependencies = listOf(
+      """<orderEntry type="module" module-name="intellij.module" />""",
+    ))
+    projectDir.resolve("ultimate/lib/resources/intellij.ultimate.lib.xml").createParentDirectories().writeText("<idea-plugin/>")
+    addTargetsModule(projectDir, "ultimate/tests", "intellij.ultimate.tests", roots = listOf("testResources" to "java-test-resource"))
+    projectDir.resolve("ultimate/tests/testResources/intellij.ultimate.tests.xml").createParentDirectories().writeText("<idea-plugin/>")
+    addTargetsModule(projectDir, "ultimate/build", "intellij.ultimate.build", roots = listOf("src" to ""), dependencies = listOf(
+      """<orderEntry type="module" module-name="intellij.ultimate.lib" />""",
+      """<orderEntry type="module" module-name="intellij.platform.buildScripts.bazel" />""",
+      """<orderEntry type="module" module-name="intellij.ultimate.runtimeOnly" scope="RUNTIME" />""",
+      """<orderEntry type="library" name="local-lib" level="project" />""",
+    ))
+    return projectDir
+  }
+
+  private fun addTargetsModule(
+    projectDir: Path,
+    directory: String,
+    moduleName: String,
+    roots: List<Pair<String, String>> = emptyList(),
+    dependencies: List<String> = emptyList(),
+  ) {
+    val relativePath = "$directory/$moduleName.iml"
+    // An empty type is a production source root.
+    val sourceFolders = roots.joinToString(separator = "") { (path, type) ->
+      val typeAttribute = if (type.isEmpty()) "isTestSource=\"false\"" else "type=\"$type\""
+      "      <sourceFolder url=\"file://\$MODULE_DIR\$/$path\" $typeAttribute />\n"
+    }
+    val orderEntries = dependencies.joinToString(separator = "") { "    $it\n" }
+    projectDir.resolve(relativePath).createParentDirectories().writeText(
+      "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
+      "<module type=\"JAVA_MODULE\" version=\"4\">\n" +
+      "  <component name=\"NewModuleRootManager\" inherit-compiler-output=\"true\">\n" +
+      "    <exclude-output />\n" +
+      "    <content url=\"file://\$MODULE_DIR\$\">\n" +
+      sourceFolders +
+      "    </content>\n" +
+      "    <orderEntry type=\"jdk\" jdkName=\"jbr-17\" jdkType=\"JavaSDK\" />\n" +
+      "    <orderEntry type=\"sourceFolder\" forTests=\"false\" />\n" +
+      orderEntries +
+      "  </component>\n" +
+      "</module>\n"
+    )
+    registerModule(projectDir, relativePath)
   }
 
   /**
@@ -413,7 +633,7 @@ class BazelGeneratorIntegrationTests {
     repeat(2) {
       generateMetadataProject(projectDir)
       assertEquals("filegroup(name = \"handwritten\")\n", owner.readText())
-      assertEquals("module", manifest.readText())
+      assertEquals("module intellij.module", manifest.readText())
       assertTrue("The generator must still delete an obsolete owner", !Files.exists(obsoleteOwner))
     }
     projectDir.deleteRecursively()
@@ -426,7 +646,7 @@ class BazelGeneratorIntegrationTests {
     val owner = projectDir.resolve("module/BUILD.bazel")
     val original = owner.readText()
     val manifest = projectDir.resolve(BAZEL_GENERATED_FILE_LIST_RELATIVE_PATH)
-    assertEquals("module", manifest.readText())
+    assertEquals("module intellij.module", manifest.readText())
 
     val newName = "intellij.platform.buildScripts.bazel.iml"
     projectDir.resolve("module/intellij.module.iml").moveTo(projectDir.resolve("module/$newName"))
@@ -522,7 +742,6 @@ class BazelGeneratorIntegrationTests {
         "--manifest=${createManifest(tempDir)}",
         "--default-custom-modules=$defaultCustomModules",
         "--output=$bazelTargetsBeforeRunningGenerator",
-        "--no-starlark-targets",
       )
     )
 
@@ -558,7 +777,6 @@ class BazelGeneratorIntegrationTests {
         "--manifest=${createManifest(tempDir)}",
         "--default-custom-modules=$defaultCustomModules",
         "--output=$bazelTargetsAfterRunningGenerator",
-        "--no-starlark-targets",
       )
     )
 

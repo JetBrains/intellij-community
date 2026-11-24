@@ -16,8 +16,8 @@ See platform/jewel/docs/e2e-tests.md.
 """
 
 load("@community//build:tests-options.bzl", "jps_test")
-load("@jps_dynamic_deps_community//:targets.bzl", "ALL_COMMUNITY_TARGETS", "BAZEL_TARGETS_JSON_COMMUNITY")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//build:bazel_targets_json.bzl", "BAZEL_TARGETS_JSON_COMMUNITY")
 
 SPECTRE_AGENT_RUNTIME_JAR = "//platform/jewel:spectre-agent-runtime-jar"
 
@@ -97,7 +97,8 @@ def bridge_e2e_test(
         name = name,
         # The IDE under test is built from sources at run time, so the whole community target graph
         # has to be present as runfiles, along with the manifest mapping modules to those targets.
-        data = data + ALL_COMMUNITY_TARGETS + [
+        data = data + [
+            "@community//build:all_community_targets",
             BAZEL_TARGETS_JSON_COMMUNITY,
             SPECTRE_AGENT_RUNTIME_JAR,
         ],

@@ -51,7 +51,8 @@
           ],
           "sourceJars": []
         }
-      }
+      },
+      "moduleDescriptor": "@community//content:resources/intellij.libraries.example.xml"
     },
     "intellij.libraries.refused": {
       "productionTargets": [
@@ -62,7 +63,8 @@
       ],
       "testTargets": [],
       "testJars": [],
-      "moduleLibraries": {}
+      "moduleLibraries": {},
+      "moduleDescriptor": "@community//refused:resources/intellij.libraries.refused.xml"
     }
   },
   "imlTargets": [

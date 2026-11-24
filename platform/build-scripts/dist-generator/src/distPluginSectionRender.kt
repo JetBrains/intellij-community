@@ -19,8 +19,8 @@ import kotlin.io.path.relativeTo
  * The `dev <main module>` section of one plugin, rendered as the converter renders it.
  *
  * [body] holds one `dist_plugin(...)` call.
- * [loadStatements] names the `dist_plugin` of the plugin's JPS bridge. The section writer merges the load into
- * the file head.
+ * [loadStatements] names `dist_plugin` of `dist_plugin.bzl` in the spelling of the plugin's half. The section writer
+ * merges the load into the file head.
  */
 internal class DevSectionRender(
   @JvmField val body: String,
@@ -99,9 +99,18 @@ internal fun computeDevSection(
   val entries = descriptorEntries.sortedBy { it.variant }
   check(entries.map { it.variant }.distinct().size == entries.size) { "Plugin '$mainModule' has two baseline entries of one variant" }
   val contentModuleNames = sectionContentModuleNames(context = context, memberNames = packing.content.memberNames)
-  // `dist_plugin` passes the main module and the content modules to the leaf, and the leaf derives their rows.
-  val descriptors = computePluginDescriptors(context = context, entries = entries, derivedModules = setOf(mainModule) + contentModuleNames)
-  val statesSection = contentModuleNames.isNotEmpty() || descriptors.isNotEmpty()
+  // The section states the conventional row of the main module and of each content module, see `renderBody`.
+  val descriptors = computePluginDescriptors(
+    context = context,
+    entries = entries,
+    conventionalModules = setOf(mainModule) + contentModuleNames,
+  )
+  // A main module without a production jar gets no section, so the run still repairs every other plugin.
+  val hasMainLabel = index.productionModuleLabel(mainModule) != null
+  if (!hasMainLabel) {
+    warn("WARN: $mainModule dev section: no production jar target for the main module, so the plugin gets no section")
+  }
+  val statesSection = hasMainLabel && (contentModuleNames.isNotEmpty() || descriptors.isNotEmpty())
   val content = if (statesSection) PluginContentModules(contentModuleNames = contentModuleNames) else null
   val packagePrefix = index.bazelPackagePrefix(mainModule) ?: error("Plugin '$mainModule' has no Bazel package prefix")
   val descriptorTargets = TreeMap<String, String>()
@@ -109,12 +118,9 @@ internal fun computeDevSection(
     descriptorTargets.put(descriptor.variant, "$packagePrefix:${index.pluginDescriptorTargetName(mainModule, descriptor.variant)}")
   }
   val record = DevSectionRecord(descriptorTargets = descriptorTargets)
-  // The bridge of the plugin's repository half exports `dist_plugin` bound to its own module map and descriptor
-  // index, so the section states neither map and loads nothing else.
-  val loadStatements = listOf(LoadStatement(
-    bzlFile = "@jps_dynamic_deps_${if (context.isCommunity) "community" else "ultimate"}//:targets.bzl",
-    symbols = listOf("dist_plugin"),
-  ))
+  // The section states the labels of its own modules, so it loads the macro file and no target list.
+  val macroFile = index.respellLibraryLabel(DIST_PLUGIN_RULE, dependentIsCommunity = context.isCommunity)
+  val loadStatements = listOf(LoadStatement(bzlFile = macroFile, symbols = listOf("dist_plugin")))
   return DevSectionOutcome(
     draft = if (statesSection) PendingDevSection(context, content, descriptors, record, loadStatements) else null,
     record = record,
@@ -154,12 +160,17 @@ internal class PluginContentModules(
  * The content modules the section states, in order.
  *
  * A community section cannot name an ultimate member, so this function skips the member. The packed components state it.
+ * A member without a production jar is skipped with a warning, because the section states a label for each member.
  */
-private fun sectionContentModuleNames(context: DevSectionContext, memberNames: Collection<String>): List<String> {
+internal fun sectionContentModuleNames(context: DevSectionContext, memberNames: Collection<String>): List<String> {
   val contentModuleNames = LinkedHashSet<String>()
   for (memberName in memberNames) {
     if (!context.isKnown(memberName)) {
       context.warn("WARN: ${context.mainModule} content modules: no Bazel target for member module $memberName")
+      continue
+    }
+    if (context.index.productionModuleLabel(memberName) == null) {
+      context.warn("WARN: ${context.mainModule} content modules: no production jar target for member module $memberName")
       continue
     }
     if (context.isCommunity && context.index.isCommunity(memberName) == false) {
@@ -177,7 +188,7 @@ private fun sectionContentModuleNames(context: DevSectionContext, memberNames: C
 internal class PluginDescriptorLeaf(
   @JvmField val variant: String,
   @JvmField val descriptor: String,
-  /** Label to load path, in label order. The leaf derives every conventional row, so this map holds only the other rows. */
+  /** Label to load path, in label order, less the conventional rows. The section adds them, see `renderBody`. */
   @JvmField val descriptors: Map<String, String>,
   /** Container label to space-joined load paths, in first-appearance order. */
   @JvmField val libraryDescriptors: Map<String, String>,
@@ -198,7 +209,8 @@ internal class PluginDescriptorLeaf(
 /**
  * One leaf per variant, or an empty list when the plugin gets no descriptor leaf.
  *
- * A leaf states no row that it derives itself from [derivedModules] and the bridge index, see [isBridgeDerivedDescriptor].
+ * A leaf holds no conventional row of [conventionalModules], see [isConventionalDescriptorRow]. The section adds each one
+ * in the recorded form.
  *
  * Empty when the plugin is outside the population. Empty when the plugin's own package holds no `META-INF/plugin.xml`.
  * Empty when a community plugin would have to name an ultimate label, and that case discards every variant, the leaves
@@ -207,13 +219,10 @@ internal class PluginDescriptorLeaf(
 private fun computePluginDescriptors(
   context: DevSectionContext,
   entries: List<PluginDescriptorEntry>,
-  derivedModules: Set<String>,
+  conventionalModules: Set<String>,
 ): List<PluginDescriptorLeaf> {
   if (entries.isEmpty()) {
     return emptyList()
-  }
-  fun bridgeLabel(moduleName: String): String? {
-    return context.outputProvider.findModule(moduleName)?.let { bridgeDescriptorLabel(module = it, index = context.index) }
   }
   val mainModule = context.jpsModule(context.mainModule)
   val descriptorPath = descriptorPackagePaths(context = context, module = mainModule, loadPath = PLUGIN_XML_LOAD_PATH).firstOrNull() ?: return emptyList()
@@ -224,7 +233,12 @@ private fun computePluginDescriptors(
     val libraryLabels = libraryDescriptorLabels(context = context, entry = entry) ?: return emptyList()
     val descriptors = TreeMap(contentLabels + rowLabels)
     descriptors.entries.removeIf { (label, loadPath) ->
-      isBridgeDerivedDescriptor(label = label, loadPath = loadPath, contentModules = derivedModules, bridgeLabel = ::bridgeLabel)
+      isConventionalDescriptorRow(
+        label = label,
+        loadPath = loadPath,
+        modules = conventionalModules,
+        conventionalLabel = context.index::conventionalDescriptorLabel,
+      )
     }
     result.add(PluginDescriptorLeaf(
       variant = entry.variant,
@@ -431,14 +445,20 @@ private fun renderBody(
   }
   val descriptor = commonPluginDescriptor(mainModule = context.mainModule, descriptors = descriptors)
   val call = Target("dist_plugin")
-  val declaredPackaging = packaging?.takeIf { !it.crossHalf }
+  val declaredPackaging = packaging?.takeIf { !it.crossHalf && packedModulesHaveLabels(context, it) }
   // The attributes in alphabetical order, each only where it states something.
   declaredPackaging?.classpathJars?.ifNotEmpty { call.option("classpath_jars", it.unsorted()) }
   descriptor?.compatibleBuildRange?.let { call.option("compatible_build_range", it) }
   declaredPackaging?.contentModuleJarLabels?.ifNotEmpty { call.option("content_module_jar_labels", LinkedHashMap(it)) }
   content?.contentModuleNames?.ifNotEmpty { call.option("content_modules", it.unsorted()) }
   descriptor?.descriptor?.ifNotEmpty { call.option("descriptor", it) }
-  descriptor?.descriptors?.ifNotEmpty { call.option("descriptors", LinkedHashMap(it)) }
+  descriptor?.let { leaf ->
+    withConventionalDescriptorRows(
+      rows = leaf.descriptors,
+      modules = listOf(context.mainModule) + content?.contentModuleNames.orEmpty(),
+      conventionalLabel = context.index::conventionalDescriptorLabel,
+    )
+  }?.ifNotEmpty { call.option("descriptors", LinkedHashMap(it)) }
   descriptor?.directoryName?.ifNotEmpty { call.option("directory_name", it) }
   if (descriptor != null && !descriptor.embedContentModules) {
     call.option("embed_content_modules", false)
@@ -462,6 +482,7 @@ private fun renderBody(
     call.option("mode_refused_content_modules", LinkedHashMap(refusals.toSortedMap().mapValues { NestedStringList(it.value) }))
   }
   declaredPackaging?.moduleJarPaths?.ifNotEmpty { call.option("module_jar_paths", LinkedHashMap(it)) }
+  call.option("module_labels", moduleLabelsOption(context = context, content = content, packaging = declaredPackaging))
   descriptor?.refusedContentModules?.ifNotEmpty { call.option("refused_content_modules", it) }
   if (descriptor?.retainProductDescriptor == true) {
     call.option("retain_product_descriptor", true)
@@ -472,6 +493,43 @@ private fun renderBody(
   descriptor?.versionSuffix?.ifNotEmpty { call.option("version_suffix", it) }
 
   return call.render().trim()
+}
+
+/**
+ * The `module_labels` attribute: the production label of the main module, of each content module and of each module
+ * token of `jars`, sorted by module name. Each label is in the recorded form of the targets JSON. The section and its
+ * packaging leave out a module without a production jar, so each name has a label.
+ */
+private fun moduleLabelsOption(
+  context: DevSectionContext,
+  content: PluginContentModules?,
+  packaging: DistSimplePackaging?,
+): LinkedHashMap<String, String> {
+  val names = sortedSetOf(context.mainModule)
+  content?.contentModuleNames?.let(names::addAll)
+  packaging?.jars?.values?.forEach { tokens -> tokens.filterNotTo(names, ::isLabelToken) }
+  return names.associateWithTo(LinkedHashMap()) { name ->
+    checkNotNull(context.index.productionModuleLabel(name)) {
+      "Plugin '${context.mainModule}' names the module '$name' without a production jar, and the section filters such a name"
+    }
+  }
+}
+
+/**
+ * Whether each module token of [packaging] has a production jar. A token without one drops the packaging with a
+ * warning, so the section declares the descriptor and no component, and the run still repairs every other plugin.
+ */
+private fun packedModulesHaveLabels(context: DevSectionContext, packaging: DistSimplePackaging): Boolean {
+  val missing = packaging.jars.values.asSequence()
+    .flatten()
+    .filterNot(::isLabelToken)
+    .filter { context.index.productionModuleLabel(it) == null }
+    .toSortedSet()
+  if (missing.isEmpty()) {
+    return true
+  }
+  context.warn("WARN: ${context.mainModule} packaging: no production jar target for $missing, so the section declares no component")
+  return false
 }
 
 /** The `jars` attribute: each destination with its ordered source tokens, labels spelled for this package's half. */

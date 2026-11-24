@@ -20,9 +20,6 @@ object CommunityDistHalf : DistHalf {
   override val macrosBzl: String
     get() = "//build:intellij_dev_community.bzl"
 
-  override val jpsBridge: String
-    get() = "jps_dynamic_deps_community"
-
   /**
    * The community binary, see `CommunityDistGenerator`. The label is valid in both roots, because the community module
    * is `community`. The ultimate tool writes the same bytes, because it runs this half in the same way.

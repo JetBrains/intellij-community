@@ -1,5 +1,5 @@
-dependent
-exported
-module
-module-tests
-provided
+dependent intellij.module.dependent
+exported intellij.module.exported
+module intellij.module
+module-tests intellij.module.tests
+provided intellij.module.provided

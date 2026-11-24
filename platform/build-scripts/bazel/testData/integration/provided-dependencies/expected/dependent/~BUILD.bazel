@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library")
 
 ### auto-generated section `build intellij.module.dependent` start
@@ -29,10 +30,9 @@ jvm_library(
 ### auto-generated section `build intellij.module.dependent` end
 
 ### auto-generated section `iml intellij.module.dependent` start
-exports_files(
-    [
-        "intellij.module.dependent.iml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.module.dependent",
+    resources = False,
+    target = "dependent",
 )
 ### auto-generated section `iml intellij.module.dependent` end

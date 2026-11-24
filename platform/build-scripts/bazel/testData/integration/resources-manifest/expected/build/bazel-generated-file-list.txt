@@ -1,1 +1,1 @@
-module
+module intellij.module

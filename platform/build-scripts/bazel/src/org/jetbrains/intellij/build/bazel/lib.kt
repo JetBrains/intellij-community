@@ -479,11 +479,18 @@ internal fun mavenCoordinatesToFileName(mavenCoordinates: MavenCoordinates, grou
 internal fun fileToHttpRuleFile(coordinates: MavenCoordinates): String =
   mavenCoordinatesToHttpRuleRepoName(coordinates) + "//file"
 
-internal fun generateLocalLibs(libs: Collection<LocalLibrary>, isLibraryProvided: (Library) -> Boolean, fileToUpdater: MutableMap<Path, BazelFileUpdater>) {
+internal fun generateLocalLibs(
+  libs: Collection<LocalLibrary>,
+  isLibraryProvided: (Library) -> Boolean,
+  fileToUpdater: MutableMap<Path, BazelFileUpdater>,
+  libraryContainers: List<LibraryContainer>,
+) {
+  val libraryJarsCalls = libraryJarsCalls(libraryContainers = libraryContainers, localLibraries = libs, fileToUpdater = fileToUpdater)
   for ((dir, libs) in libs.sortedBy { it.target.targetName }.groupBy { it.bazelBuildFileDir }) {
     val bazelFileUpdater = fileToUpdater.computeIfAbsent(dir.resolve("BUILD.bazel")) { BazelFileUpdater(it) }
     bazelFileUpdater.removeSections("local-libraries")
     val loadSymbols = mutableMapOf<String, MutableSet<String>>()
+    libraryJarsCalls.remove(dir.normalize())?.write(bazelFileUpdater, loadSymbols)
     buildFile(bazelFileUpdater, "local-libs") {
       loadSymbols.getOrPut("@rules_java//java:defs.bzl", ::mutableSetOf) += "java_import"
       for (lib in libs) {
@@ -513,4 +520,67 @@ internal fun generateLocalLibs(libs: Collection<LocalLibrary>, isLibraryProvided
     }
     bazelFileUpdater.appendLoadSymbols(loadSymbols)
   }
+  // A package without a local library: the root package of a repository with Maven libraries only.
+  for ((dir, call) in libraryJarsCalls) {
+    val bazelFileUpdater = fileToUpdater.computeIfAbsent(dir.resolve("BUILD.bazel")) { BazelFileUpdater(it) }
+    val loadSymbols = mutableMapOf<String, MutableSet<String>>()
+    call.write(bazelFileUpdater, loadSymbols)
+    bazelFileUpdater.appendLoadSymbols(loadSymbols)
+  }
+}
+
+/** The name of the `library_jars` target of a package of a library repository. */
+internal const val LIBRARY_JARS_TARGET_NAME: String = "library_jars"
+
+/** The `library jars` section of one package of a library repository, see [libraryJarsCalls]. */
+private class LibraryJarsCall(private val bzlFile: String, private val srcs: List<String>) {
+  fun write(bazelFileUpdater: BazelFileUpdater, loadSymbols: MutableMap<String, MutableSet<String>>) {
+    loadSymbols.getOrPut(bzlFile, ::mutableSetOf).add("library_jars")
+    buildFile(bazelFileUpdater, "library jars") {
+      target("library_jars") {
+        option("name", LIBRARY_JARS_TARGET_NAME)
+        if (srcs.isNotEmpty()) {
+          option("srcs", srcs)
+        }
+        visibility(arrayOf("//visibility:public"))
+      }
+    }
+  }
+}
+
+/**
+ * The `library_jars` call of each package of a library repository, by the directory of the package: the root package
+ * of each repository with a library, and each package of the repository with a local library. The call of the root
+ * package names the calls of the other packages, so `<repository>//:library_jars` has every jar of the repository.
+ * The macro of `@lib//:library_jars.bzl` finds the jars of its package.
+ *
+ * A local library outside the library repository is a module library in a module package. The record of its module
+ * names its jars.
+ */
+private fun libraryJarsCalls(
+  libraryContainers: List<LibraryContainer>,
+  localLibraries: Collection<LocalLibrary>,
+  fileToUpdater: Map<Path, BazelFileUpdater>,
+): MutableMap<Path, LibraryJarsCall> {
+  val result = LinkedHashMap<Path, LibraryJarsCall>()
+  for (container in libraryContainers) {
+    val rootDir = container.buildFile.parent.normalize()
+    val libraryDirs = localLibraries.asSequence()
+      .filter { it.target.container == container }
+      .map { it.bazelBuildFileDir.normalize() }
+      .filter { it.startsWith(rootDir) }
+      .toSet()
+    if (libraryDirs.isEmpty() && !fileToUpdater.containsKey(container.buildFile)) {
+      continue
+    }
+
+    val bzlFile = if (container.repoLabel == "@lib") "//:library_jars.bzl" else "@lib//:library_jars.bzl"
+    // Not `libraryDirs - rootDir`: a path is an `Iterable<Path>`, so that would subtract its name elements.
+    val packageDirs = libraryDirs.filter { it != rootDir }.map { it.relativeTo(rootDir).invariantSeparatorsPathString }.sorted()
+    result.put(rootDir, LibraryJarsCall(bzlFile = bzlFile, srcs = packageDirs.map { "//$it:$LIBRARY_JARS_TARGET_NAME" }))
+    for (packageDir in packageDirs) {
+      result.put(rootDir.resolve(packageDir), LibraryJarsCall(bzlFile = bzlFile, srcs = emptyList()))
+    }
+  }
+  return result
 }

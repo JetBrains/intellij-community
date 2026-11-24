@@ -166,6 +166,21 @@ class DistBazelIndex(
     return location(module)?.absolutePackage
   }
 
+  /**
+   * The label of the production `jvm_library` target of [module] in the recorded form, or `null` when the converter
+   * records no single production jar for the module. A `dev` section states it in `module_labels`.
+   */
+  fun productionModuleLabel(module: String): String? {
+    return targets.modules.get(module)?.productionTargets?.singleOrNull()?.takeIf { it.endsWith(".jar") }?.removeSuffix(".jar")
+  }
+
+  /**
+   * The label of the conventional descriptor `<module name>.xml` of [module] in the recorded form, or `null` when the
+   * module has none. The converter writes it into the targets JSON as `moduleDescriptor`, and the generator copies it into
+   * each descriptor row that it states for the module, see [withConventionalDescriptorRows].
+   */
+  fun conventionalDescriptorLabel(module: String): String? = targets.modules.get(module)?.moduleDescriptor
+
   /** The name of the `content_module_jar` target of [module]. The macro derives it, nothing writes it as `name =`. */
   fun contentModuleJarTargetName(module: String): String? = targetName(module)?.let { it + CONTENT_MODULE_JAR_TARGET_SUFFIX }
 
@@ -236,6 +251,27 @@ class DistBazelIndex(
       insideCommunity.isEmpty() -> communityDirectory
       else -> "$communityDirectory/$insideCommunity"
     }
+  }
+
+  /**
+   * The label of the file at [projectRelativePath] in the package of [module], in the recorded form. It is `null` when
+   * the JSON does not place the module, when the file is outside the package, or when it is on the other repository half.
+   *
+   * A community path of an ultimate module is on the other half: `community` is a `.bazelignore` entry of the ultimate
+   * root, so a main-repository label never materializes the file. See [containingPackageLabel].
+   */
+  fun moduleFileLabel(module: String, projectRelativePath: String): String? {
+    val location = location(module) ?: return null
+    if ((communityRelativePath(projectRelativePath) != null) != (location.half == RepositoryHalf.COMMUNITY)) {
+      return null
+    }
+    val packageDirectory = packageDirectory(location.absolutePackage + ":" + location.targetName)
+    val insidePackage = when {
+      packageDirectory.isEmpty() -> projectRelativePath
+      projectRelativePath.startsWith("$packageDirectory/") -> projectRelativePath.removePrefix("$packageDirectory/")
+      else -> return null
+    }
+    return location.absolutePackage + ":" + insidePackage
   }
 
   /**

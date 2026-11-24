@@ -7,7 +7,7 @@ import org.jetbrains.intellij.build.impl.BazelTargetsInfo
 import java.util.TreeMap
 import java.util.TreeSet
 
-/** The runtime classpath that the reference fragments declare, relative to the root of the half. Only the reference macros load it. */
+/** The labels that the reference fragments declare, relative to the root of the half. Only the reference macros load it. */
 internal const val DIST_REFERENCE_INPUTS_RELATIVE_PATH: String = "build/dist_reference_inputs.bzl"
 
 /** The runtime module repository payload of a product as `dist_fragment_inputs.bzl` states it: JPS names, not labels. */
@@ -30,9 +30,17 @@ internal class DistReferenceProduct(
   @JvmField val runtimeModuleRepository: DistReferencePayload?,
 )
 
-/** The labels that the reference fragments of one product take from the generator. The list is sorted and distinct. */
+/**
+ * The labels that the reference fragments of one product take from the generator. Each list is sorted and distinct.
+ *
+ * [buildModules] are the production outputs of the build modules. [runtimeClasspath] is the runtime classpath of a
+ * platform patch. [runtimeModuleRepository] are the production outputs of the modules of the runtime module repository
+ * payload.
+ */
 internal data class DistReferenceInputs(
-  @JvmField val runtimeClasspath: List<String>,
+  @JvmField val buildModules: List<String> = emptyList(),
+  @JvmField val runtimeClasspath: List<String> = emptyList(),
+  @JvmField val runtimeModuleRepository: List<String> = emptyList(),
 )
 
 /**
@@ -61,15 +69,14 @@ internal class DistReferenceInputModel(
 }
 
 /**
- * Resolves the runtime classpath of [products] to labels, keyed by product, and checks the names that the reference
- * macro resolves.
+ * Resolves the build modules, the runtime classpath and the runtime module repository payload of [products] to labels,
+ * keyed by product.
  *
  * The runtime classpath is the closure of the non-test module dependencies of the seeds. It is a superset of the JPS
  * runtime classpath, which leaves a provided-scope dependency out.
  *
- * The reference macro resolves a build module and a module of the runtime module repository payload through the module
- * target index at load time. That index gives the production labels of a module only. So the run fails on a payload
- * that names a module set, a project library, or a module with libraries.
+ * A build module and a module of the runtime module repository payload give only the production outputs of the module.
+ * So the run fails on a payload that names a module set, a project library, or a module with libraries.
  *
  * The run also fails on a name that the targets JSON does not have. The converter runs before the generator, so such a
  * name is a stale targets JSON or a generator defect. Each message names every such name.
@@ -107,37 +114,55 @@ internal fun resolveDistReferenceInputs(
     return targets
   }
 
-  fun checkRuntimeModuleRepository(prefix: String, payload: DistReferencePayload) {
+  fun runtimeModuleRepository(prefix: String, payload: DistReferencePayload): Set<String> {
     val context = "product '$prefix', payload '$RUNTIME_MODULE_REPOSITORY_PAYLOAD'"
     payload.moduleSets.mapTo(refused) { "$context: module set '$it'" }
     payload.projectLibraries.mapTo(refused) { "$context: project library '$it'" }
+    val targets = TreeSet<String>()
     for (module in payload.modules) {
-      if (model.moduleOutputs(module) == null) {
+      val outputs = model.moduleOutputs(module)
+      if (outputs == null) {
         unknown.add("$context: unknown module '$module'")
       }
       else if (model.moduleLibraryTargets(module).isNotEmpty()) {
         refused.add("$context: module '$module' has libraries")
       }
+      else {
+        targets.addAll(outputs)
+      }
     }
+    return targets
+  }
+
+  fun buildModules(prefix: String, modules: List<String>): Set<String> {
+    val targets = TreeSet<String>()
+    for (module in modules) {
+      val outputs = model.moduleOutputs(module)
+      if (outputs == null) {
+        unknown.add("product '$prefix', build modules: unknown module '$module'")
+      }
+      else {
+        targets.addAll(outputs)
+      }
+    }
+    return targets
   }
 
   val result = TreeMap<String, DistReferenceInputs>()
   for (product in products) {
     val prefix = product.platformPrefix
-    for (module in product.buildModules) {
-      if (model.moduleOutputs(module) == null) {
-        unknown.add("product '$prefix', build modules: unknown module '$module'")
-      }
-    }
-    product.runtimeModuleRepository?.let { checkRuntimeModuleRepository(prefix, it) }
-    result.put(prefix, DistReferenceInputs(runtimeClasspath = runtimeClasspath(product).toList()))
+    result.put(prefix, DistReferenceInputs(
+      buildModules = buildModules(prefix, product.buildModules).toList(),
+      runtimeClasspath = runtimeClasspath(product).toList(),
+      runtimeModuleRepository = product.runtimeModuleRepository?.let { runtimeModuleRepository(prefix, it) }.orEmpty().toList(),
+    ))
   }
   check(unknown.isEmpty()) {
     "The reference inputs name ${unknown.size} name(s) that the targets JSON does not have. " +
     "Run the JPS-to-Bazel converter, then the generator again:\n  " + unknown.joinToString("\n  ")
   }
   check(refused.isEmpty()) {
-    "The reference macro resolves a module name only, and gets the production labels of the module. " +
+    "The generator gives a module of the runtime module repository payload only its production labels. " +
     "Move these ${refused.size} name(s) out of the runtime module repository payload:\n  " + refused.joinToString("\n  ")
   }
   return result
@@ -148,37 +173,45 @@ private const val PLATFORM_LIB_PAYLOAD: String = "platform_lib"
 private const val RUNTIME_MODULE_REPOSITORY_PAYLOAD: String = "platform_runtime_module_repository"
 
 /**
- * `build/dist_reference_inputs.bzl` of [inputs], keyed by product in key order. Only a product with a runtime
- * classpath has a row.
+ * `build/dist_reference_inputs.bzl` of [inputs], keyed by product in key order. A product with no label has no row, and
+ * a row omits an empty field.
  *
- * The labels that every row states are one private constant `_RUNTIME_CLASSPATH`, when two or more rows exist. A row
- * then states the constant and adds its own labels.
+ * The labels that every row states in a field are one private constant of that field, when two or more rows state the
+ * field. The field of a row then states the constant and adds its own labels.
  */
 internal fun renderDistReferenceInputs(inputs: Map<String, DistReferenceInputs>, generatedByHeader: String): String = buildString {
   append(generatedByHeader)
   append("#\n")
-  append("# The runtime classpath that a platform patch of a product loads, as labels. Only the reference fragments of the\n")
-  append("# `jars`, `replay` and `runtime-repo` gates read it, and no distribution reads it. The generator resolves the\n")
-  append("# `runtime_classpath_modules` seeds of `dist_fragment_inputs.bzl` through the targets JSON. Only the reference\n")
-  append("# macros load this file, so a change here does not run the JPS bridge again.\n")
+  append("# The labels that the reference fragments of the `jars`, `replay` and `runtime-repo` gates declare as their inputs.\n")
+  append("# No distribution reads them. The generator resolves the names of `dist_reference_plan.bzl` and of\n")
+  append("# `dist_fragment_inputs.bzl` through the targets JSON. Only the reference macros load this file, so a change here\n")
+  append("# re-keys only the reference fragments.\n")
   append("#\n")
-  append("# `runtime_classpath` holds the outputs and the libraries of the non-test dependency closure of the seeds. A\n")
-  append("# product without a row has an empty runtime classpath. The reference macro takes the platform from the platform\n")
-  append("# payload, and it resolves the build modules and the repository root through the module target index.\n")
+  append("# `build_modules` holds the production outputs of the modules whose product properties the reference assembler\n")
+  append("# evaluates. `runtime_classpath` holds the outputs and the libraries of the non-test dependency closure of the\n")
+  append("# `runtime_classpath_modules` seeds. `runtime_module_repository` holds the production outputs of the modules of the\n")
+  append("# runtime module repository payload. A row omits an empty field, and a product without a label has no row.\n")
   append("#\n")
-  append("# The labels that every row states are one private constant `_RUNTIME_CLASSPATH`, when two or more rows exist.\n")
-  append("# A row states the constant and adds its own labels. The reference macros take the union of the lists, so the\n")
-  append("# order of the labels has no meaning.\n")
-  val rows = inputs.filterValues { it.runtimeClasspath.isNotEmpty() }
-  val shared = if (rows.size < 2) {
-    emptySet()
+  append("# The labels that every row states in a field are one private constant of that field, when two or more rows state\n")
+  append("# the field. The field of a row states the constant and adds its own labels. The reference macros take the union of\n")
+  append("# the lists, so the order of the labels has no meaning.\n")
+  val rows = inputs.filterValues { row -> REFERENCE_INPUT_FIELDS.any { it.labels(row).isNotEmpty() } }
+  val shared = REFERENCE_INPUT_FIELDS.associateWith { field ->
+    val lists = rows.values.map(field.labels).filter { it.isNotEmpty() }
+    if (lists.size < 2) {
+      emptySet()
+    }
+    else {
+      lists.drop(1).fold(TreeSet(lists.first())) { result, list -> result.apply { retainAll(list.toSet()) } }
+    }
   }
-  else {
-    rows.values.drop(1).fold(TreeSet(rows.values.first().runtimeClasspath)) { result, row -> result.apply { retainAll(row.runtimeClasspath.toSet()) } }
-  }
-  if (shared.isNotEmpty()) {
-    append("_RUNTIME_CLASSPATH = [\n")
-    for (label in shared) {
+  for (field in REFERENCE_INPUT_FIELDS) {
+    val labels = shared.getValue(field)
+    if (labels.isEmpty()) {
+      continue
+    }
+    append(field.constant).append(" = [\n")
+    for (label in labels) {
       append(INDENT).append(quoteStarlarkString(label)).append(",\n")
     }
     append("]\n\n")
@@ -190,23 +223,44 @@ internal fun renderDistReferenceInputs(inputs: Map<String, DistReferenceInputs>,
   append("DIST_REFERENCE_INPUTS = {\n")
   for ((product, row) in rows) {
     append(INDENT).append(quoteStarlarkString(product)).append(": struct(\n")
-    append(INDENT).append(INDENT).append("runtime_classpath = ")
-    val own = row.runtimeClasspath.filterNot { it in shared }
-    if (shared.isNotEmpty()) {
-      append("_RUNTIME_CLASSPATH")
+    for (field in REFERENCE_INPUT_FIELDS) {
+      val labels = field.labels(row)
+      if (labels.isEmpty()) {
+        continue
+      }
+      val constant = shared.getValue(field)
+      append(INDENT).append(INDENT).append(field.name).append(" = ")
+      val own = labels.filterNot { it in constant }
+      if (constant.isNotEmpty()) {
+        append(field.constant)
+        if (own.isNotEmpty()) {
+          append(" + ")
+        }
+      }
       if (own.isNotEmpty()) {
-        append(" + ")
+        append("[\n")
+        for (label in own) {
+          append(INDENT).append(INDENT).append(INDENT).append(quoteStarlarkString(label)).append(",\n")
+        }
+        append(INDENT).append(INDENT).append("]")
       }
+      append(",\n")
     }
-    if (own.isNotEmpty()) {
-      append("[\n")
-      for (label in own) {
-        append(INDENT).append(INDENT).append(INDENT).append(quoteStarlarkString(label)).append(",\n")
-      }
-      append(INDENT).append(INDENT).append("]")
-    }
-    append(",\n")
     append(INDENT).append("),\n")
   }
   append("}\n")
 }
+
+/** A label list of a row of `build/dist_reference_inputs.bzl`: its field, the name of its shared constant, and its labels. */
+private class ReferenceInputField(
+  @JvmField val name: String,
+  @JvmField val labels: (DistReferenceInputs) -> List<String>,
+) {
+  @JvmField val constant: String = "_" + name.uppercase()
+}
+
+private val REFERENCE_INPUT_FIELDS: List<ReferenceInputField> = listOf(
+  ReferenceInputField("build_modules") { it.buildModules },
+  ReferenceInputField("runtime_classpath") { it.runtimeClasspath },
+  ReferenceInputField("runtime_module_repository") { it.runtimeModuleRepository },
+)

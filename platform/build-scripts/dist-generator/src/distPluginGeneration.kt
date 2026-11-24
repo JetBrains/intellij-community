@@ -1112,7 +1112,7 @@ private fun renderPluginCall(
     variants.add(rendered)
     labels.put(variant, rendered.componentLabel)
   }
-  val helpers = owner.half.embeddedFrontend?.let { renderEmbeddedFrontendHelpers(it, entry, descriptorPlan) }.orEmpty()
+  val helpers = owner.half.embeddedFrontend?.let { renderEmbeddedFrontendHelpers(it, entry, descriptorPlan, owner.index) }.orEmpty()
   val callText = renderDistPluginExecutionCalls(entry.mainModule, variants)
   return RenderedPluginCall(text = if (helpers.isEmpty()) callText else helpers + "\n" + callText, labels = labels, planPackages = planPackages)
 }
@@ -1138,6 +1138,7 @@ private fun renderEmbeddedFrontendHelpers(
   support: DistEmbeddedFrontendSupport,
   entry: DistPluginPlanEntry,
   descriptorPlan: PluginDescriptorPlan,
+  index: DistBazelIndex,
 ): String {
   if (entry.mainModule != support.pluginMainModule) {
     return ""
@@ -1149,7 +1150,12 @@ private fun renderEmbeddedFrontendHelpers(
   val isBaseline = product == support.baselineProduct
   val calls = ArrayList<String>()
   if (embedded.home == product) {
-    calls.add(renderEmbeddedProductDescriptorCall(support = support, embedded = embedded, product = product.takeUnless { isBaseline }))
+    calls.add(renderEmbeddedProductDescriptorCall(
+      support = support,
+      embedded = embedded,
+      product = product.takeUnless { isBaseline },
+      index = index,
+    ))
   }
   if (!isBaseline) {
     val frontend = requireNotNull(embedded.frontendApplicationInfo) {
@@ -1167,18 +1173,20 @@ private fun renderEmbeddedFrontendHelpers(
 
 /**
  * The `dist_embedded_product_descriptor` call of one class home. [product] is the home, or `null` for the baseline
- * product, which keeps the unsuffixed target name. The macro composes the content over the module-set table and derives
- * the conventional descriptor rows, so the call states only the other rows.
+ * product, which keeps the unsuffixed target name. The macro composes the content over the module-set table and takes the
+ * descriptor row of each set member from the table, so the call states the other rows, see [productDescriptorRows].
  */
 private fun renderEmbeddedProductDescriptorCall(
   support: DistEmbeddedFrontendSupport,
   embedded: EmbeddedProductDescriptorPlan,
   product: String?,
+  index: DistBazelIndex,
 ): String {
   // The attributes in buildifier's alphabetical order, so a regenerate leaves the section unchanged.
   val attributes = TreeMap(embedded.content.attributes(DIST_MODULE_SETS_SYMBOL))
-  if (embedded.descriptors.isNotEmpty()) {
-    attributes.put("descriptors", LinkedHashMap(embedded.descriptors))
+  val descriptors = productDescriptorRows(stated = embedded.descriptors, content = embedded.content, refused = emptyList(), index = index)
+  if (descriptors.isNotEmpty()) {
+    attributes.put("descriptors", LinkedHashMap(descriptors))
   }
   if (embedded.libraryDescriptors.isNotEmpty()) {
     attributes.put("library_descriptors", LinkedHashMap(embedded.libraryDescriptors))

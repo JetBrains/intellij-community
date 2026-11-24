@@ -68,7 +68,7 @@ def product_content_rows(
     Args:
         module_sets: the top-level set names, `intellij.moduleSets.<name>`, in DSL order.
         module_set_table: `DIST_MODULE_SETS` of the half. A set has `modules` and `nested`, and optionally
-            `loading`, `required_if_available` and `alias`.
+            `loading`, `required_if_available`, `alias` and `descriptors`.
         loading_overrides: the loading rule of a member, which a top-level set states for its own members.
         content_modules: the additional modules, in DSL order.
         private_content_modules: the additional modules without a namespace.
@@ -77,10 +77,12 @@ def product_content_rows(
         aliases: the product aliases.
 
     Returns:
-        `struct(aliases, content_rows, additional_rows, members, additional)`. `aliases` is sorted and includes the set
-        aliases. `members` and `additional` are the module names of the rows, in row order.
+        `struct(aliases, content_rows, additional_rows, members, additional, member_descriptors)`. `aliases` is sorted
+        and includes the set aliases. `members` and `additional` are the module names of the rows, in row order.
+        `member_descriptors` maps each member to the conventional descriptor label that its set states.
     """
     rows = []
+    member_descriptors = {}
     rows_of_set = {}
     alias_sources = {}
     module_sources = {}
@@ -123,6 +125,7 @@ def product_content_rows(
                 _record_alias(alias_sources, alias, "the module set '%s'" % set_name)
             set_loading = getattr(module_set, "loading", {})
             set_required_if_available = getattr(module_set, "required_if_available", {})
+            set_descriptors = getattr(module_set, "descriptors", {})
             for module_name in module_set.modules:
                 _record_module(module_sources, module_name, "the module set '%s'" % set_name)
                 rule = overrides[module_name] if module_name in overrides else set_loading.get(module_name)
@@ -131,6 +134,8 @@ def product_content_rows(
                     "loading": _loading(rule),
                     "required_if_available": set_required_if_available.get(module_name),
                 })
+                if module_name in set_descriptors:
+                    member_descriptors[module_name] = set_descriptors[module_name]
             rows.extend(own_rows)
             stack.extend([(nested, False, "the module set '%s'" % set_name) for nested in reversed(module_set.nested)])
         if stack:
@@ -162,18 +167,19 @@ def product_content_rows(
         ],
         members = [row["name"] for row in rows],
         additional = list(content_modules),
+        member_descriptors = member_descriptors,
     )
 
-def derived_descriptor_rows(module_names, descriptor_index, descriptors = {}, refused_content_modules = []):
-    """Adds the conventional `descriptors` row of each module that the index knows to the explicit rows.
+def derived_descriptor_rows(module_names, member_descriptors, descriptors = {}, refused_content_modules = []):
+    """Adds the conventional `descriptors` row of each set member that states a descriptor to the explicit rows.
 
-    The guards are the ones of `dist_plugin_descriptor`. A name the index does not know is skipped. A refused name
-    gets no row. An explicit row wins by label and by load path, because the descriptor writer refuses a load path that
-    two rows declare.
+    A member that `member_descriptors` does not name is skipped. A refused name gets no row. An explicit row wins by
+    label and by load path, because the descriptor writer refuses a load path that two rows declare. The rows of the
+    additional modules are explicit, because no set states them.
 
     Args:
-        module_names: the module names whose descriptors the content can reach.
-        descriptor_index: the conventional descriptor label of each module, from the JPS bridge of this half.
+        module_names: the set members whose descriptors the content can reach.
+        member_descriptors: the conventional descriptor label of each set member, from the module-set table.
         descriptors: the explicit rows, keyed by label and valued by load path.
         refused_content_modules: the modules that the content module filter of the product refuses.
 
@@ -186,7 +192,7 @@ def derived_descriptor_rows(module_names, descriptor_index, descriptors = {}, re
     for module_name in module_names:
         if module_name in refused:
             continue
-        label = descriptor_index.get(module_name)
+        label = member_descriptors.get(module_name)
         if label == None or label in rows or (module_name + ".xml") in stated_load_paths:
             continue
         rows[label] = module_name + ".xml"
@@ -203,11 +209,10 @@ def product_content_attributes(
         private_content_modules,
         content_module_loading,
         content_module_required_if_available,
-        descriptor_index,
         descriptors,
         refused_content_modules = []):
     """Returns the content attributes of a product descriptor rule: the rows of `product_content_rows` and the derived
-    `descriptors` rows.
+    `descriptors` rows of the set members.
 
     A target that states no alias, no include, no set and no additional module fails, because the descriptor writer
     refuses a request without a composition flag.
@@ -223,8 +228,7 @@ def product_content_attributes(
         private_content_modules: see `product_content_rows`.
         content_module_loading: see `product_content_rows`.
         content_module_required_if_available: see `product_content_rows`.
-        descriptor_index: see `derived_descriptor_rows`.
-        descriptors: the explicit `descriptors` rows.
+        descriptors: the explicit `descriptors` rows, the conventional rows of the additional modules included.
         refused_content_modules: see `derived_descriptor_rows`.
 
     Returns:
@@ -252,8 +256,8 @@ def product_content_attributes(
         "additional_rows": content.additional_rows,
     }
     rows = derived_descriptor_rows(
-        content.members + content.additional,
-        descriptor_index,
+        content.members,
+        content.member_descriptors,
         descriptors,
         refused_content_modules,
     )

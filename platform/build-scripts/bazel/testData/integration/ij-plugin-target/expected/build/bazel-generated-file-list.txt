@@ -1,2 +1,2 @@
-module
-plugin
+module intellij.module
+plugin intellij.plugin

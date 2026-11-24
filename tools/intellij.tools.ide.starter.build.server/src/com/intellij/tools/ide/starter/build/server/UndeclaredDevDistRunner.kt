@@ -192,10 +192,9 @@ private fun StringBuilder.appendLegacyEngineInputs(reason: String) {
   append("The test needs the legacy engine, because $reason. The Bazel dev distribution does not support this yet. ")
   append("Give the legacy engine its Bazel inputs, as `//codeInsight:ultimate-codeInsight-tests_test` does (AT-5301):\n")
   append("  load(\"@community//build:bazel_targets_json.bzl\", \"current_bazel_targets_json\")\n")
-  append("  load(\"@jps_dynamic_deps_ultimate//:targets.bzl\", \"ALL_ULTIMATE_TARGETS\")\n")
   append("  BAZEL_TARGETS_JSON = current_bazel_targets_json()\n")
-  append("  data = ALL_ULTIMATE_TARGETS + [BAZEL_TARGETS_JSON],\n")
+  append("  data = [\"//build:all_ultimate_targets\", BAZEL_TARGETS_JSON],\n")
   append("  jvm_flags = [\"-D$BAZEL_TARGETS_JSON_FILE_PROPERTY=\$(rlocationpath %s)\" % BAZEL_TARGETS_JSON],\n")
-  append("These inputs are in the ultimate repository, and the standalone community build cannot load '@jps_dynamic_deps_ultimate'. ")
+  append("These inputs are in the ultimate repository, and the standalone community build has no '//build:all_ultimate_targets'. ")
   append("So a test target of the community repository moves to the ultimate repository first.\n")
 }

@@ -1,12 +1,11 @@
 """The packing labels of the `lib/` jars of one split product, from the generated tables.
 
-Data only: this file loads nothing, so a unit test can read it without analysis.
+Data only: this file loads only the fragment names, so a unit test can read it without analysis.
 """
 
-# The payload key of the platform `lib/` jars in the generated fragment inputs.
-_PLATFORM_LIB_FRAGMENT = "platform_lib"
+load(":fragment_names.bzl", "PLATFORM_LIB_FRAGMENT")
 
-def dist_packed_labels(fragment_inputs, module_sets, product, product_mode):
+def packed_labels(fragment_inputs, module_sets, product, product_mode):
     """Returns the packing labels of the `lib/` jars of `product`, from its `platform_lib` payload and its module sets.
 
     The result is `struct(packed, module_system_loaded)`. Both lists are sorted.
@@ -24,16 +23,16 @@ def dist_packed_labels(fragment_inputs, module_sets, product, product_mode):
     plan generator splits it the same way (`shareModuleSystemLoadedLabels`). A name without a `packed` label fails.
 
     A set name that `module_sets` does not have fails, and the message names the product and the sets. One generator
-    run writes both tables, so the bootstrap tolerance of the bridge does not apply here. The failure stops the load of
+    run writes both tables, so a stale set name is a generator error. The failure stops the load of
     the `build` package, which the data of both generators reach. The IDE run configuration "Generate Product Layouts"
     loads no Bazel package, so it recovers after the converter.
     """
     inputs = fragment_inputs.get(product)
     if inputs == None:
         fail("No generated distribution fragment inputs for product '%s'" % product)
-    payload = inputs.get(_PLATFORM_LIB_FRAGMENT)
+    payload = inputs.get(PLATFORM_LIB_FRAGMENT)
     if payload == None:
-        fail("The generated distribution fragment inputs of '%s' have no '%s' payload" % (product, _PLATFORM_LIB_FRAGMENT))
+        fail("The generated distribution fragment inputs of '%s' have no '%s' payload" % (product, PLATFORM_LIB_FRAGMENT))
 
     packed = {label: True for label in getattr(payload, "packed_content_module_jars", [])}
     module_system_loaded = {label: True for label in getattr(payload, "module_system_loaded", [])}
@@ -67,7 +66,7 @@ def dist_packed_labels(fragment_inputs, module_sets, product, product_mode):
             next_frontier.extend(getattr(module_set, "nested", []))
         frontier = next_frontier
     if frontier:
-        fail("Module set nesting did not settle for the '%s' payload of product '%s'" % (_PLATFORM_LIB_FRAGMENT, product))
+        fail("Module set nesting did not settle for the '%s' payload of product '%s'" % (PLATFORM_LIB_FRAGMENT, product))
     if stale:
         fail("The distribution plan of '%s' references unknown module sets: %s. Regenerate the tables with the converter and the Generate Product Layouts run configuration." % (product, ", ".join(sorted(stale))))
     return struct(packed = sorted(packed.keys()), module_system_loaded = sorted(module_system_loaded.keys()))

@@ -1,2 +1,2 @@
-module
-module-tests
+module intellij.module
+module-tests intellij.module.tests

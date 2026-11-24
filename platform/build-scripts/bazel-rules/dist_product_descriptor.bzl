@@ -144,7 +144,6 @@ def dist_product_descriptor(
         private_content_modules = [],
         content_module_loading = {},
         content_module_required_if_available = {},
-        descriptor_index = {},
         descriptors = {},
         tags = [],
         visibility = ["//visibility:public"],
@@ -152,8 +151,8 @@ def dist_product_descriptor(
     """Declares one product descriptor action. The target is `manual`, like every packing target.
 
     The content of the product comes from the module-set table, see `product_content_rows`. The macro derives the
-    `descriptors` row of each set member and additional module that the index knows, less the refused modules. An
-    explicit row wins by label and by load path.
+    `descriptors` row of each set member whose set states a descriptor, less the refused modules. An explicit row wins
+    by label and by load path.
 
     Args:
         name: the target name.
@@ -166,8 +165,8 @@ def dist_product_descriptor(
         private_content_modules: the additional modules without a namespace.
         content_module_loading: the loading rule of an additional module.
         content_module_required_if_available: the `required-if-available` module of an additional module.
-        descriptor_index: the conventional descriptor label of each module, from the JPS bridge of this half.
-        descriptors: the explicit descriptor rows, keyed by label and valued by load path.
+        descriptors: the explicit descriptor rows, keyed by label and valued by load path. The conventional row of each
+            additional module is explicit too.
         tags: extra tags. `manual` is added.
         visibility: public by default.
         **kwargs: see `_dist_product_descriptor`.
@@ -184,7 +183,6 @@ def dist_product_descriptor(
         private_content_modules = private_content_modules,
         content_module_loading = content_module_loading,
         content_module_required_if_available = content_module_required_if_available,
-        descriptor_index = descriptor_index,
         descriptors = descriptors,
         refused_content_modules = kwargs.get("refused_content_modules", []),
     ))

@@ -12,18 +12,13 @@ import org.jdom.Element
 import org.jetbrains.jps.model.serialization.JpsMavenSettings
 import java.nio.file.Files
 import java.nio.file.Path
-import java.nio.file.StandardCopyOption
 import java.util.TreeMap
 import kotlin.io.path.createDirectories
-import kotlin.io.path.deleteIfExists
 import kotlin.io.path.exists
 import kotlin.io.path.invariantSeparatorsPathString
 import kotlin.io.path.isRegularFile
-import kotlin.io.path.moveTo
 import kotlin.io.path.readLines
-import kotlin.io.path.readText
 import kotlin.io.path.relativeTo
-import kotlin.io.path.writeText
 
 /**
  To enable debug logging in Bazel: --sandbox_debug --verbose_failures --define=kt_trace=1
@@ -110,6 +105,19 @@ internal class JpsModuleToBazel {
         kotlincDefaults = kotlincDefaults,
       )
       val moduleList = generator.computeModuleList(m2RepoPath, skipGenerationOfPluginTargets)
+      for ((moduleFile, root) in listOfNotNull(ultimateRoot?.let { it.resolve("MODULE.bazel") to it }, communityRoot.resolve("MODULE.bazel") to communityRoot)) {
+        checkJpsModulesCall(
+          moduleFile = moduleFile,
+          projectRoot = root,
+          modules = if (root == communityRoot) moduleList.allModules.filter { it.isCommunity } else moduleList.allModules,
+          skippedModules = moduleList.skippedModules.toSet(),
+          customModules = generator.customModules.keys,
+          // Only the ultimate half reads `dev-build.json`, and every product needs the default build module.
+          buildModules = if (root == communityRoot) emptyList() else listOf(DEFAULT_BUILD_MODULE),
+          communityRoot = communityRoot,
+          ultimateRoot = ultimateRoot,
+        )
+      }
       // Only ultimate has the hand input: a community checkout gets no `starter_test`.
       val starterTestTargets = ultimateRoot?.let { root ->
         readStarterBazelTests(root.resolve(STARTER_BAZEL_TESTS_RELATIVE_PATH))
@@ -144,6 +152,7 @@ internal class JpsModuleToBazel {
           .filter { it != communityRoot }
           .sortedBy { communityRoot.relativize(it).invariantSeparatorsPathString }
           .toSet(),
+        moduleNames = communityResult.moduleNamesByBuildFileDir,
         currentBuildFileDirs = communityResult.moduleBuildFiles.keys,
       )
 
@@ -154,6 +163,7 @@ internal class JpsModuleToBazel {
             .filter { it != ultimateRoot }
             .sortedBy { ultimateRoot.relativize(it).invariantSeparatorsPathString }
             .toSet(),
+          moduleNames = ultimateResult.moduleNamesByBuildFileDir,
           currentBuildFileDirs = ultimateResult.moduleBuildFiles.keys,
         )
       }
@@ -161,10 +171,9 @@ internal class JpsModuleToBazel {
       if (ultimateRoot != null) {
         check(bazelWorkspaceRoot == null || bazelWorkspaceRoot == ultimateRoot) { "Bazel workspace ($bazelWorkspaceRoot) root must be ultimate root ($ultimateRoot)" }
 
-        val ultimateTargetsFile = ultimateRoot.resolve("build/bazel-targets.json")
-        saveTargets(
-          file = ultimateTargetsFile,
-          targets = communityResult.moduleTargets + ultimateResult.moduleTargets,
+        val moduleTargets = communityResult.moduleTargets + ultimateResult.moduleTargets
+        val targetsFile = computeTargetsFile(
+          targets = moduleTargets,
           moduleList = moduleList,
           libs = generator.allLibraries,
           communityRoot = communityRoot,
@@ -173,13 +182,12 @@ internal class JpsModuleToBazel {
           assertAllModuleOutputsExist = assertAllModuleOutputsExist,
           bazelOutputBase = if (bazelWorkspaceRoot == ultimateRoot) bazelOutputBase else null,
         )
+        saveTargets(file = ultimateRoot.resolve("build/bazel-targets.json"), targetsFile = targetsFile)
       }
       else {
         check(bazelWorkspaceRoot == null || bazelWorkspaceRoot == communityRoot) { "Bazel workspace root ($bazelWorkspaceRoot) must be community root ($communityRoot)" }
 
-        val communityTargetsFile = communityRoot.resolve("build/bazel-targets.json")
-        saveTargets(
-          file = communityTargetsFile,
+        val targetsFile = computeTargetsFile(
           targets = communityResult.moduleTargets,
           moduleList = moduleList,
           libs = generator.communityOnlyLibraries,
@@ -189,6 +197,7 @@ internal class JpsModuleToBazel {
           assertAllModuleOutputsExist = assertAllModuleOutputsExist,
           bazelOutputBase = if (bazelWorkspaceRoot == communityRoot) bazelOutputBase else null,
         )
+        saveTargets(file = communityRoot.resolve("build/bazel-targets.json"), targetsFile = targetsFile)
       }
     }
 
@@ -251,6 +260,11 @@ internal class JpsModuleToBazel {
       val testTargets: List<String>,
       val testJars: List<String>,
       val moduleLibraries: Map<String, LibraryDescription>,
+      /**
+       * The label of the descriptor of the module, see [moduleDescriptorLabel]. The dist generator copies it into
+       * the descriptor rows that it writes. The JSON omits the key when the module has none.
+       */
+      val moduleDescriptor: String? = null,
     )
 
     /**
@@ -274,8 +288,14 @@ internal class JpsModuleToBazel {
       val pluginDistributionTargets: Map<String, PluginDistributionTargetDescription>,
     )
 
-    fun saveTargets(
-      file: Path,
+    fun saveTargets(file: Path, targetsFile: TargetsFile) {
+      writeGeneratedFile(
+        file = file,
+        content = jsonSerializer.encodeToString(serializer = jsonSerializer.serializersModule.serializer(), value = targetsFile),
+      )
+    }
+
+    fun computeTargetsFile(
       targets: List<BazelBuildFileGenerator.ModuleTargets>,
       moduleList: ModuleList,
       libs: Collection<Library>,
@@ -285,11 +305,6 @@ internal class JpsModuleToBazel {
       assertAllModuleOutputsExist: Boolean,
       bazelOutputBase: Path?,
     ): TargetsFile {
-      fun makeImlTarget(module: ModuleDescriptor): String {
-        val relativeImlPath = module.imlFile.relativeTo(module.bazelBuildFileDir).invariantSeparatorsPathString
-        return "${bazelPackagePrefix(module = module, communityRoot = communityRoot, ultimateRoot = ultimateRoot)}:$relativeImlPath"
-      }
-
       fun makeJarPath(library: Library, file: MavenFileDescription): String {
         val path = "external/" +
                    library.target.container.repoLabel.removePrefix("@") +
@@ -399,6 +414,7 @@ internal class JpsModuleToBazel {
             testJars = moduleTarget.testJars.map { adjustOutputPath(it) },
             moduleLibraries = module2Libraries[moduleName]
                                 ?.associateTo(TreeMap()) { it.target.jpsName to makeLibraryDescription(it) } ?: emptyMap(),
+            moduleDescriptor = moduleDescriptorLabel(module = moduleTarget.moduleDescriptor, communityRoot = communityRoot, ultimateRoot = ultimateRoot),
           ).also {
             if (assertAllModuleOutputsExist) {
               for (outputPath in it.productionJars + it.testJars) {
@@ -410,7 +426,7 @@ internal class JpsModuleToBazel {
         } + skippedModules.associateWith { emptyModule },
 
         imlTargets = moduleList.allModules.asSequence()
-          .map { makeImlTarget(it) }
+          .map { imlTargetLabel(module = it, communityRoot = communityRoot, ultimateRoot = ultimateRoot) }
           .distinct()
           .sorted()
           .toList(),
@@ -431,24 +447,6 @@ internal class JpsModuleToBazel {
             .sortedBy { it.first }
             .toMap(),
       )
-
-      val fileContent = jsonSerializer.encodeToString(
-        serializer = jsonSerializer.serializersModule.serializer(),
-        value = targetsFileValue,
-      )
-
-      if (file.isRegularFile() && file.readText() == fileContent) {
-        return targetsFileValue
-      }
-
-      file.parent.createDirectories()
-      val tempFile = Files.createTempFile(file.parent, file.fileName.toString(), ".tmp")
-      try {
-        tempFile.writeText(fileContent)
-        tempFile.moveTo(file, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING)
-      } finally {
-        tempFile.deleteIfExists()
-      }
 
       return targetsFileValue
     }
@@ -475,13 +473,13 @@ internal class JpsModuleToBazel {
   }
 }
 
-private fun deleteOldFiles(projectDir: Path, generatedFiles: Set<Path>, currentBuildFileDirs: Set<Path>) {
+private fun deleteOldFiles(projectDir: Path, generatedFiles: Set<Path>, moduleNames: Map<Path, List<String>>, currentBuildFileDirs: Set<Path>) {
   val fileListFile = projectDir.resolve(BAZEL_GENERATED_FILE_LIST_RELATIVE_PATH)
   // `plugin-model-tool` owns the cross-half descriptor packages and deletes an absent one itself, so an old entry of that
   // directory is neither deleted nor carried into the new list.
   val oldFiles = if (Files.exists(fileListFile)) {
     Files.readAllLines(fileListFile)
-      .map { it.trim() }
+      .map { it.trim().substringBefore(' ') }
       .filterNot { it.startsWith("$CROSS_HALF_DESCRIPTOR_PACKAGE_ROOT/") }
       .map { projectDir.resolve(it) }
   }
@@ -501,10 +499,16 @@ private fun deleteOldFiles(projectDir: Path, generatedFiles: Set<Path>, currentB
   }
 
   fileListFile.parent.createDirectories()
-  Files.writeString(fileListFile, generatedFiles.joinToString("\n") { projectDir.relativize(it).invariantSeparatorsPathString })
+  Files.writeString(fileListFile, generatedFiles.joinToString("\n") { dir ->
+    (listOf(projectDir.relativize(dir).invariantSeparatorsPathString) + moduleNames.get(dir).orEmpty().sorted()).joinToString(" ")
+  })
 }
 
-/** Which directories one repository half's last conversion generated, one project-relative directory per line. */
+/**
+ * Which directories one repository half's last conversion generated, one project-relative directory per line, followed
+ * by the modules whose records the conversion wrote there, separated by spaces. The `jps_modules` repository rule reads
+ * the module names to tell a module without a record.
+ */
 internal const val BAZEL_GENERATED_FILE_LIST_RELATIVE_PATH: String = "build/bazel-generated-file-list.txt"
 
 /** Where `collectCrossHalfDescriptorPackages` of `distCrossHalfDescriptorPackage.kt` writes such a package. */
@@ -513,8 +517,8 @@ private const val CROSS_HALF_DESCRIPTOR_PACKAGE_ROOT: String = "build/dist-descr
 /**
  * The Bazel package a module's generated targets and exported files live in, as a label prefix.
  *
- * Top-level rather than local to [JpsModuleToBazel.Companion.saveTargets], because the parity check in
- * [JpsModuleToBazelTargetsOnly] has to name files in the same package and the two must not compute it differently.
+ * Top-level rather than local to [JpsModuleToBazel.Companion.computeTargetsFile], because [modulePackage] names the
+ * descriptor files of a module in the same package, and the two must not compute it differently.
  */
 internal fun bazelPackagePrefix(module: ModuleDescriptor, communityRoot: Path, ultimateRoot: Path?): String {
   fun makePackagePrefix(repoName: String, relativePath: String): String {

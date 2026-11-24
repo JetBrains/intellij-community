@@ -1,8 +1,10 @@
 load("@bazel_skylib//rules:common_settings.bzl", "bool_flag", "string_flag")
+load("@community//build:jps_module.bzl", "jps_module")
 load("@intellij_add_opens//:intellij_add_opens.bzl", "INTELLIJ_ADD_OPENS")
-load("@jps_dynamic_deps_community//:targets.bzl", "ALL_COMMUNITY_IML_TARGETS", "ALL_COMMUNITY_MODULE_DESCRIPTOR_TARGETS", "ALL_COMMUNITY_PLUGIN_DISTRIBUTION_TARGETS", "ALL_COMMUNITY_TARGETS", "ALL_LIBRARY_COMMUNITY_TARGETS", "ALL_PRODUCTION_COMMUNITY_TARGETS", "ALL_TEST_COMMUNITY_TARGETS", "BAZEL_TARGETS_JSON_COMMUNITY", "JPS_TO_BAZEL_TREAT_KOTLIN_DEV_VERSION_AS_SNAPSHOT")
+load("@jps_modules_community//:defs.bzl", "JPS_TO_BAZEL_TREAT_KOTLIN_DEV_VERSION_AS_SNAPSHOT")
 load("@rules_java//java:defs.bzl", "java_binary")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//build:bazel_targets_json.bzl", "BAZEL_TARGETS_JSON_COMMUNITY")
 load("//build:community_build_target.bzl", "community_build_target")
 load("//build:dist_local_launch_test.bzl", "dist_local_launch_test")
 load("//build:dist_products.bzl", "DIST_PRODUCTS")
@@ -12,8 +14,7 @@ load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_mod
 load(":dev_run_configuration_test.bzl", "dev_run_configuration_test_suite")
 load(":downloads_test.bzl", "downloads_test_suite")
 load(":intellij_add_opens_test.bzl", "intellij_add_opens_test_suite")
-load(":jps_library_derivation_pipeline_test.bzl", "jps_library_derivation_pipeline_test_suite")
-load(":jps_library_derivation_test.bzl", "jps_library_derivation_test_suite")
+load(":jps_modules_test.bzl", "jps_modules_test_suite")
 load(":tests-options.bzl", "jps_test")
 
 # The macOS app icons that the `platform_resources` component of a split distribution places in
@@ -26,11 +27,11 @@ exports_files(
     visibility = ["//visibility:public"],
 )
 
-jps_library_derivation_test_suite(name = "jps_library_derivation_test")
-
 downloads_test_suite(name = "downloads_test")
 
 intellij_add_opens_test_suite(name = "intellij_add_opens_test")
+
+jps_modules_test_suite(name = "jps_modules_test")
 
 dev_run_configuration_test_suite(name = "dev_run_configuration_test")
 
@@ -73,8 +74,6 @@ exports_files(
     visibility = ["//tools/intellij.tools.ide.starter.build.server:__pkg__"],
 )
 
-jps_library_derivation_pipeline_test_suite(name = "jps_library_derivation_pipeline_test")
-
 # The IDEA Community branding images, read from the checkout while a distribution is laid out (`imagesDirectoryPath`
 # of `IdeaCommunityProperties`). Android Studio inherits them, so the ultimate `//build` package reads the group too.
 filegroup(
@@ -92,13 +91,24 @@ string_flag(
     visibility = ["//visibility:public"],
 )
 
-# The JPS project model of the community half, named once: the targets-json generator and the project model tree
-# of `intellij_project_model_tree_community` read exactly this set.
+# The JPS project model of the community half, named once: the `.iml` file and the descriptors of each module record.
+# The targets-json generator and the project model tree of `intellij_project_model_tree_community` read exactly this set.
 filegroup(
     name = "community_project_model_files",
     srcs = [
         "//:jps_to_bazel_community_model_root_files",
-    ] + ALL_COMMUNITY_IML_TARGETS + ALL_COMMUNITY_MODULE_DESCRIPTOR_TARGETS,
+        "@jps_modules_community//:model_files",
+    ],
+    visibility = ["//visibility:public"],
+)
+
+# Every jar of the community target set, named once: the jars of the module records and of the library repository.
+filegroup(
+    name = "all_community_targets",
+    srcs = [
+        "@jps_modules_community//:jars",
+        "@lib//:library_jars",
+    ],
     visibility = ["//visibility:public"],
 )
 
@@ -108,11 +118,6 @@ jps_to_bazel_targets_json(
     srcs = [":community_project_model_files"],
     jps_to_bazel_treat_kotlin_dev_version_as_snapshot = JPS_TO_BAZEL_TREAT_KOTLIN_DEV_VERSION_AS_SNAPSHOT,
     mode = "community",
-    starlark_iml_targets = ALL_COMMUNITY_IML_TARGETS,
-    starlark_library_targets = ALL_LIBRARY_COMMUNITY_TARGETS,
-    starlark_plugin_distribution_targets = ALL_COMMUNITY_PLUGIN_DISTRIBUTION_TARGETS,
-    starlark_production_targets = ALL_PRODUCTION_COMMUNITY_TARGETS,
-    starlark_test_targets = ALL_TEST_COMMUNITY_TARGETS,
     tool = "@jps_to_bazel//:jps-to-bazel-targets-only",
     visibility = ["//visibility:public"],
 )
@@ -178,7 +183,10 @@ community_build_target(
 java_binary(
     name = "run_tests_build_target",
     add_opens = INTELLIJ_ADD_OPENS,
-    data = ALL_COMMUNITY_TARGETS + [BAZEL_TARGETS_JSON_COMMUNITY],
+    data = [
+        ":all_community_targets",
+        BAZEL_TARGETS_JSON_COMMUNITY,
+    ],
     jvm_flags = [
         # Reduce output which is not strictly required to run tests, but keep it discoverable
         # see org.jetbrains.intellij.build.telemetry.ConsoleSpanExporter.Companion.getTempFile
@@ -195,7 +203,10 @@ java_binary(
 java_binary(
     name = "update_from_sources",
     add_opens = INTELLIJ_ADD_OPENS,
-    data = ALL_COMMUNITY_TARGETS + [BAZEL_TARGETS_JSON_COMMUNITY],
+    data = [
+        ":all_community_targets",
+        BAZEL_TARGETS_JSON_COMMUNITY,
+    ],
     jvm_flags = [
         # Reduce output which is not strictly required to run tests, but keep it discoverable
         # see org.jetbrains.intellij.build.telemetry.ConsoleSpanExporter.Companion.getTempFile
@@ -215,7 +226,10 @@ java_binary(
 java_binary(
     name = "dist_generator",
     add_opens = INTELLIJ_ADD_OPENS,
-    data = ALL_COMMUNITY_TARGETS + [BAZEL_TARGETS_JSON_COMMUNITY],
+    data = [
+        ":all_community_targets",
+        BAZEL_TARGETS_JSON_COMMUNITY,
+    ],
     jvm_flags = [
         "-Dintellij.build.bazel.targets.json.file=$(rlocationpath %s)" % BAZEL_TARGETS_JSON_COMMUNITY,
     ],
@@ -227,7 +241,10 @@ java_binary(
 # `DistCommunityHalfIdentityTest` in `//build:ultimate-build-tests_test`, because only the monorepo has both JSON files.
 jps_test(
     name = "dist_generator_identity_test",
-    data = ALL_COMMUNITY_TARGETS + [BAZEL_TARGETS_JSON_COMMUNITY],
+    data = [
+        ":all_community_targets",
+        BAZEL_TARGETS_JSON_COMMUNITY,
+    ],
     env = {
         "JB_TEST_JUNIT5_FILTERS": "include-classname=com.intellij.platform.buildScripts.distGenerator.CommunityDistGeneratorTest",
     },
@@ -246,7 +263,11 @@ java_binary(
 java_binary(
     name = "jewel_standalone_maven_artifacts",
     add_opens = INTELLIJ_ADD_OPENS,
-    data = ALL_PRODUCTION_COMMUNITY_TARGETS + ALL_LIBRARY_COMMUNITY_TARGETS + [BAZEL_TARGETS_JSON_COMMUNITY],
+    data = [
+        "@jps_modules_community//:production_jars",
+        "@lib//:library_jars",
+        BAZEL_TARGETS_JSON_COMMUNITY,
+    ],
     jvm_flags = [
         "-Dintellij.build.bazel.targets.json.file=$(rlocationpath %s)" % BAZEL_TARGETS_JSON_COMMUNITY,
     ],
@@ -257,7 +278,11 @@ java_binary(
 java_binary(
     name = "standalone_maven_artifacts",
     add_opens = INTELLIJ_ADD_OPENS,
-    data = ALL_PRODUCTION_COMMUNITY_TARGETS + ALL_LIBRARY_COMMUNITY_TARGETS + [BAZEL_TARGETS_JSON_COMMUNITY],
+    data = [
+        "@jps_modules_community//:production_jars",
+        "@lib//:library_jars",
+        BAZEL_TARGETS_JSON_COMMUNITY,
+    ],
     jvm_flags = [
         "-Dintellij.build.bazel.targets.json.file=$(rlocationpath %s)" % BAZEL_TARGETS_JSON_COMMUNITY,
     ],
@@ -380,11 +405,10 @@ jvm_library(
 ### auto-generated section `build intellij.idea.community.build` end
 
 ### auto-generated section `iml intellij.idea.community.build` start
-exports_files(
-    [
-        "intellij.idea.community.build.iml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.idea.community.build",
+    resources = False,
+    target = "build",
 )
 ### auto-generated section `iml intellij.idea.community.build` end
 
@@ -405,11 +429,11 @@ jvm_library(
 ### auto-generated section `build intellij.idea.community.build.zip` end
 
 ### auto-generated section `iml intellij.idea.community.build.zip` start
-exports_files(
-    [
-        "jvm-rules/zip/intellij.idea.community.build.zip.iml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.idea.community.build.zip",
+    iml = "jvm-rules/zip/intellij.idea.community.build.zip.iml",
+    resources = False,
+    target = "zip",
 )
 ### auto-generated section `iml intellij.idea.community.build.zip` end
 
@@ -436,12 +460,12 @@ jvm_library(
 ### auto-generated section `build intellij.platform.jps.build.dependencyGraph` end
 
 ### auto-generated section `iml intellij.platform.jps.build.dependencyGraph` start
-exports_files(
-    [
-        "jvm-rules/dependency-graph/intellij.platform.jps.build.dependencyGraph.iml",
-        "jvm-rules/dependency-graph/resources/intellij.platform.jps.build.dependencyGraph.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.platform.jps.build.dependencyGraph",
+    descriptors = ["jvm-rules/dependency-graph/resources/intellij.platform.jps.build.dependencyGraph.xml"],
+    iml = "jvm-rules/dependency-graph/intellij.platform.jps.build.dependencyGraph.iml",
+    resources = False,
+    target = "dependency-graph",
 )
 ### auto-generated section `iml intellij.platform.jps.build.dependencyGraph` end
 
@@ -467,11 +491,11 @@ jvm_library(
 ### auto-generated section `build intellij.platform.jps.build.javac.rt` end
 
 ### auto-generated section `iml intellij.platform.jps.build.javac.rt` start
-exports_files(
-    [
-        "jvm-rules/jps-builders-6/intellij.platform.jps.build.javac.rt.iml",
-        "jvm-rules/jps-builders-6/resources/intellij.platform.jps.build.javac.rt.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.platform.jps.build.javac.rt",
+    descriptors = ["jvm-rules/jps-builders-6/resources/intellij.platform.jps.build.javac.rt.xml"],
+    iml = "jvm-rules/jps-builders-6/intellij.platform.jps.build.javac.rt.iml",
+    resources = False,
+    target = "build-javac-rt",
 )
 ### auto-generated section `iml intellij.platform.jps.build.javac.rt` end

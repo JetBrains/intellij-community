@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@community//platform/build-scripts/bazel-rules:ij_plugin_module.bzl", "ij_plugin_module")
 load("@rules_pkg//pkg:mappings.bzl", "pkg_files")
 
@@ -25,11 +26,9 @@ ij_plugin_module(
 ### auto-generated section `build intellij.module` end
 
 ### auto-generated section `iml intellij.module` start
-exports_files(
-    [
-        "intellij.module.iml",
-        "resources/intellij.module.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.module",
+    descriptors = ["resources/intellij.module.xml"],
+    target = "module",
 )
 ### auto-generated section `iml intellij.module` end

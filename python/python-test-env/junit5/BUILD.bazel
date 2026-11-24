@@ -1,6 +1,7 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@community//build:tests-options.bzl", "jps_test")
-load("@jps_dynamic_deps_community//:targets.bzl", "BAZEL_TARGETS_JSON_COMMUNITY")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//build:bazel_targets_json.bzl", "BAZEL_TARGETS_JSON_COMMUNITY")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 
 jps_test(
@@ -89,10 +90,8 @@ jvm_library(
 ### auto-generated section `build intellij.python.test.env.junit5` end
 
 ### auto-generated section `iml intellij.python.test.env.junit5` start
-exports_files(
-    [
-        "intellij.python.test.env.junit5.iml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.python.test.env.junit5",
+    target = "junit5_test_lib",
 )
 ### auto-generated section `iml intellij.python.test.env.junit5` end
