@@ -67,6 +67,8 @@ A sentence is moved to its home, never dropped.
   modes and of their upgrades. [`remote-dev/settings/v2/AGENTS.md`](../../../remote-dev/settings/v2/AGENTS.md) says
   where each kind is. Look there before you say that no test covers a product mode. The link resolves only in the
   ultimate repository.
+- In the unit-test mode no migration check starts by itself. A unit test of the engine starts a check itself, and a
+  unit test of a migration calls the migration.
 
 ## Specs
 

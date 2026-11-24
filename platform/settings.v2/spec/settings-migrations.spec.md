@@ -60,6 +60,7 @@ not list, and records each migration that ends with success.
   [ADR 0170](../adr/0170-the-platform-runs-each-migration-once-per-scope-and-the-migration-ledger-records-each-success.md)
   and [ADR 0160](../adr/0160-a-reload-installs-the-layers-kind-by-kind.md).
   [@test] ../test/src/com/intellij/platform/settings/v2/SettingsMigrationTest.kt
+  [@test] ../../../../remote-dev/settings/v2/lambdaTests/src/com/intellij/platform/settings/v2/lambdaTests/SettingsMigrationStartTest.kt
 - After a reload installs the layers of the project kind, the platform must run each project migration that the
   migration ledger of the project context does not list.
   [@test] ../test/src/com/intellij/platform/settings/v2/SettingsMigrationTest.kt
@@ -82,6 +83,11 @@ not list, and records each migration that ends with success.
   [@test] ../test/src/com/intellij/platform/settings/v2/SettingsMigrationTest.kt
 - When the extensions of a migration point change, the platform must run the check again, with no reload. See
   [ADR 0170](../adr/0170-the-platform-runs-each-migration-once-per-scope-and-the-migration-ledger-records-each-success.md).
+  [@test] ../../../../remote-dev/settings/v2/lambdaTests/src/com/intellij/platform/settings/v2/lambdaTests/SettingsMigrationStartTest.kt
+- In the unit-test mode, the platform must start no check by itself: not after a reload, and not after a change of
+  the extensions. No switch turns it on. This requirement wins over the other requirements of this section that
+  start a check. See
+  [ADR 0183](../adr/0183-the-platform-starts-no-migration-check-by-itself-in-the-unit-test-mode.md).
   [@test] ../test/src/com/intellij/platform/settings/v2/SettingsMigrationTest.kt
 - A check must wait until its scope context is ready.
 - A reload of the application scope must also run the project migrations of each open project.
@@ -89,6 +95,7 @@ not list, and records each migration that ends with success.
 - A migration that no ledger lists after a reload must run again. For example, a user removes its entry, or a branch
   switch brings a config with another ledger.
   [@test] ../test/src/com/intellij/platform/settings/v2/SettingsMigrationTest.kt
+  [@test] ../../../../remote-dev/settings/v2/lambdaTests/src/com/intellij/platform/settings/v2/lambdaTests/SettingsMigrationStartTest.kt
 
 ### Migration ledger
 
