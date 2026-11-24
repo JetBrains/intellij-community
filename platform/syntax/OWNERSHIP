@@ -1,1 +1,10 @@
 owner 'IJPL'
+
+# The test roots have their owner here, not in an OWNERSHIP file of their own.
+# The multiplatform Syntax API build copies several test roots into one source set, and two OWNERSHIP files there are a duplicate.
+/syntax-api/test/
+/syntax-extensions/test/
+/syntax-i18n/testJvm/
+/syntax-psi-tests/
+/syntax-util/test/
+owner 'IJPL Unit Tests'
