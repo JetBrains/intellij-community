@@ -61,6 +61,11 @@ public abstract class ConfigurableVisitor implements Predicate<Configurable> {
    * The answer is exact for a node that exists, and it is a name comparison for a declaration.
    */
   private static boolean matchesDeclaredType(@NotNull Class<? extends Configurable> type, @NotNull Configurable configurable) {
+    if (configurable instanceof FrameProjectConfigurable frameProject) {
+      // a page of several projects is of the type of its page of the selected project
+      Configurable delegate = frameProject.getSelectedDelegate();
+      return delegate != null && matchesDeclaredType(type, delegate);
+    }
     if (configurable instanceof ConfigurableWrapper wrapper) {
       UnnamedConfigurable page = wrapper.getRawConfigurable();
       if (page != null) {

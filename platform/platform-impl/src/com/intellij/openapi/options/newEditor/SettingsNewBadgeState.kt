@@ -6,6 +6,7 @@ import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.options.UnnamedConfigurable
 import com.intellij.openapi.options.ex.ConfigurableVisitor
 import com.intellij.openapi.options.ex.ConfigurableWrapper
+import com.intellij.openapi.options.ex.FrameProjectConfigurable
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
 
@@ -56,6 +57,7 @@ class SettingsNewBadgeState {
    * A configurable component that no extension point declares cannot hold a new option.
    */
   private fun isNewOptions(configurable: Configurable): Boolean {
-    return configurable is ConfigurableWrapper && configurable.extensionPoint.newOptions
+    val declared = (configurable as? FrameProjectConfigurable)?.representative ?: configurable
+    return declared is ConfigurableWrapper && declared.extensionPoint.newOptions
   }
 }

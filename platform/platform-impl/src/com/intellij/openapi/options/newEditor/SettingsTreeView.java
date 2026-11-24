@@ -27,6 +27,7 @@ import com.intellij.openapi.options.UnnamedConfigurable;
 import com.intellij.openapi.options.ex.ConfigurableExtensionPointUtil;
 import com.intellij.openapi.options.ex.ConfigurableVisitor;
 import com.intellij.openapi.options.ex.ConfigurableWrapper;
+import com.intellij.openapi.options.ex.FrameProjectConfigurable;
 import com.intellij.openapi.options.ex.SortedConfigurableGroup;
 import com.intellij.openapi.options.ex.Weighted;
 import com.intellij.openapi.project.Project;
@@ -448,6 +449,10 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
 
   private static @Nullable Project findConfigurableProject(@NotNull MyNode node) {
     Configurable configurable = node.myConfigurable;
+    if (configurable instanceof FrameProjectConfigurable frameProject) {
+      // the project of the node is the project at the build of the tree, and the page shows the selected project
+      return frameProject.getProject();
+    }
     Project project = node.getProject();
     // Do not instantiate a not-yet-created configurable here, as its construction may block the EDT
     // (for example, on a persistent state read over IJent/WSL).
@@ -646,10 +651,11 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
     public @Nullable ConfigurableTreeRenderer getRenderer() {
       if (myPrepareRenderer) {
         myPrepareRenderer = false;
-        if (myConfigurable instanceof ConfigurableTreeRenderer) {
-          myRenderer = (ConfigurableTreeRenderer)myConfigurable;
+        Configurable declared = declarationOf(myConfigurable);
+        if (declared instanceof ConfigurableTreeRenderer) {
+          myRenderer = (ConfigurableTreeRenderer)declared;
         }
-        else if (myConfigurable instanceof ConfigurableWrapper wrapper) {
+        else if (declared instanceof ConfigurableWrapper wrapper) {
           UnnamedConfigurable configurable = wrapper.getRawConfigurable();
           if (configurable instanceof ConfigurableTreeRenderer) {
             myRenderer = (ConfigurableTreeRenderer)configurable;
@@ -883,6 +889,9 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
       if (visible) {
         ConfigurableTreeRenderer renderer = node.getRenderer();
         if (renderer != null) {
+          if (configurable instanceof FrameProjectConfigurable frameProject) {
+            configurable = frameProject.getRepresentative();
+          }
           if (configurable instanceof ConfigurableWrapper) {
             configurable = ((ConfigurableWrapper)configurable).getRawConfigurable();
           }
@@ -951,12 +960,18 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
     }
   }
 
+  /** The page that holds the declaration of {@code c}: a page of several projects has the declaration of one of its pages. */
+  private static @Nullable Configurable declarationOf(@Nullable Configurable c) {
+    return c instanceof FrameProjectConfigurable frameProject ? frameProject.getRepresentative() : c;
+  }
+
   /**
    * The declaration is the only source of the badge, so the answer costs no class load and no construction.
    * A configurable component that carries {@code Configurable.Beta} and declares no attribute shows no badge.
    * A child that a parent page builds itself has no wrapper, so it answers through {@link BetaConfigurable}.
    */
   private static boolean isBeta(@Nullable Configurable c) {
+    c = declarationOf(c);
     if (c instanceof ConfigurableWrapper wrapper) {
       return wrapper.getExtensionPoint().beta;
     }
@@ -969,7 +984,7 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
    * A configurable component that carries {@code Configurable.Promo} and declares no attribute shows no badge.
    */
   private static @Nullable Icon getPromoIcon(@Nullable Configurable c) {
-    if (!(c instanceof ConfigurableWrapper wrapper)) {
+    if (!(declarationOf(c) instanceof ConfigurableWrapper wrapper)) {
       return null;
     }
     ConfigurableEP<?> ep = wrapper.getExtensionPoint();

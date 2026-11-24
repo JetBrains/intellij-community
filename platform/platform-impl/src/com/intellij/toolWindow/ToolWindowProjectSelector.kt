@@ -118,8 +118,8 @@ internal class ToolWindowProjectSelectorTabs(project: Project, parentDisposable:
   }
 }
 
-/** A tab shows no component of its own: the tool window below the selector shows the content of the project. */
-private fun emptyTabComponent(): JComponent {
+/** The component of a tab of a project selector. The tab shows nothing itself: the UI below the selector shows the content of the project. */
+internal fun emptyTabComponent(): JComponent {
   return JPanel(null).also {
     it.isOpaque = false
     it.preferredSize = Dimension(0, 0)

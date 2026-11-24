@@ -29,9 +29,12 @@ import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.options.ex.ConfigurableVisitor;
 import com.intellij.openapi.options.ex.ConfigurableWrapper;
+import com.intellij.openapi.options.ex.FrameProjectConfigurable;
+import com.intellij.openapi.options.ex.FrameProjectsConfigurableGroup;
 import com.intellij.openapi.options.ex.MutableConfigurableGroup;
 import com.intellij.openapi.options.ex.Settings;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectCloseListener;
 import com.intellij.openapi.ui.LoadingDecorator;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.ActionCallback;
@@ -54,6 +57,7 @@ import com.intellij.ui.treeStructure.SimpleNode;
 import com.intellij.internal.statistic.collectors.fus.ui.SettingsCounterUsagesCollector;
 import com.intellij.internal.statistic.collectors.fus.ui.SettingsOpeningTracker;
 import com.intellij.util.concurrency.EdtScheduler;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.xmlb.XmlSerializer;
@@ -121,6 +125,10 @@ public final class SettingsEditor extends AbstractEditor implements UiDataProvid
   private final @Nullable AnAction myExtraHeaderAction;
   private final Map<Configurable, ConfigurableController> controllers = new HashMap<>();
   private ConfigurableController lastController;
+  /** The tree of a window that configures several projects, or {@code null} for the tree of one project. */
+  private final @Nullable FrameProjectsConfigurableGroup myFrameProjectsGroup;
+  /** The project selector above the header of a project-level page, or {@code null} for the tree of one project. */
+  private final @Nullable JComponent myProjectTabs;
 
   /**
    * Snapshots of backing {@link PersistentStateComponent} states, captured when the window loses focus
@@ -181,6 +189,8 @@ public final class SettingsEditor extends AbstractEditor implements UiDataProvid
     myOpening = SettingsOpeningTracker.takeOpening(project);
     myUseLeaveState = useLeaveState;
     myExtraHeaderAction = extraHeaderAction;
+    myFrameProjectsGroup = (FrameProjectsConfigurableGroup)ContainerUtil.find(groups, group -> group instanceof FrameProjectsConfigurableGroup);
+    myProjectTabs = myFrameProjectsGroup == null ? null : new SettingsProjectTabs(myFrameProjectsGroup.getProjects(), this).getComponent();
     properties = PropertiesComponent.getInstance(project);
     settings = new Settings(groups) {
       @Override
@@ -415,7 +425,7 @@ public final class SettingsEditor extends AbstractEditor implements UiDataProvid
     left.add(BorderLayout.CENTER, treeView);
     JPanel right = detached ? new DetachedPanel() : new JPanel(new BorderLayout());
     right.add(BorderLayout.CENTER, loadingDecorator.getComponent());
-    right.add(BorderLayout.NORTH, withHistoryToolbar(myBanner, detached ? right : this));
+    right.add(BorderLayout.NORTH, withProjectTabs(withHistoryToolbar(myBanner, detached ? right : this)));
     left.add(BorderLayout.NORTH, searchPanel);
     mySidebar = left;
     myContent = right;
@@ -466,6 +476,63 @@ public final class SettingsEditor extends AbstractEditor implements UiDataProvid
         Disposer.register(this, mutable);
         mutable.addListener(createReloadListener(groups));
       }
+    }
+    if (myFrameProjectsGroup != null) {
+      listenToFrameProjects(myFrameProjectsGroup);
+    }
+  }
+
+  /** Puts the project selector above {@code header}. The selector is hidden until a project-level page is selected. */
+  private @NotNull JComponent withProjectTabs(@NotNull JComponent header) {
+    if (myProjectTabs == null) {
+      return header;
+    }
+    myProjectTabs.setVisible(false);
+    JPanel panel = new JPanel(new BorderLayout());
+    panel.setOpaque(false);
+    panel.add(BorderLayout.NORTH, myProjectTabs);
+    panel.add(BorderLayout.CENTER, header);
+    return panel;
+  }
+
+  private void listenToFrameProjects(@NotNull FrameProjectsConfigurableGroup group) {
+    SettingsFrameProjects projects = group.getProjects();
+    projects.addListener(new SettingsFrameProjects.Listener() {
+      @Override
+      public void selectionChanged() {
+        updateController(filter.context.getCurrentConfigurable());
+      }
+
+      @Override
+      public void projectsChanged() {
+        updateController(filter.context.getCurrentConfigurable());
+      }
+    }, this);
+    ApplicationManager.getApplication().getMessageBus().connect(this).subscribe(ProjectCloseListener.TOPIC, new ProjectCloseListener() {
+      @Override
+      public void projectClosing(@NotNull Project project) {
+        if (projects.getProjects().contains(project)) {
+          // the pages of the project go first, while the project is alive, and then the selection moves to another project
+          group.forget(project);
+          projects.remove(project);
+        }
+      }
+    });
+  }
+
+  /** Shows the project selector for a page of several projects, and the page of the selected project in that page. */
+  private void updateFrameProject(@Nullable Configurable configurable) {
+    if (myProjectTabs == null || myFrameProjectsGroup == null) {
+      return;
+    }
+    if (configurable instanceof FrameProjectConfigurable frameProject) {
+      frameProject.showSelectedProject();
+    }
+    boolean visible = configurable instanceof FrameProjectConfigurable && !myFrameProjectsGroup.getProjects().getProjects().isEmpty();
+    if (myProjectTabs.isVisible() != visible) {
+      myProjectTabs.setVisible(visible);
+      myContent.revalidate();
+      myContent.repaint();
     }
   }
 
@@ -891,6 +958,7 @@ public final class SettingsEditor extends AbstractEditor implements UiDataProvid
       lastController = controller;
       controller.setBanner(myBanner);
     }
+    updateFrameProject(configurable);
     updateStatus(configurable);
   }
 

@@ -121,7 +121,19 @@ public class ConfigurableWrapper implements SearchableConfigurable, Weighted, Hi
     return false;
   }
 
+  /**
+   * A page of several projects answers a cast with its page of the selected project,
+   * unless the page itself is of the type.
+   */
+  private static @Nullable UnnamedConfigurable unwrapFrameProject(@NotNull Class<?> type, @Nullable UnnamedConfigurable configurable) {
+    if (configurable instanceof FrameProjectConfigurable frameProject && !type.isInstance(configurable)) {
+      return frameProject.getSelectedDelegate();
+    }
+    return configurable;
+  }
+
   public static @Nullable <T> T cast(@NotNull Class<T> type, @Nullable UnnamedConfigurable configurable) {
+    configurable = unwrapFrameProject(type, configurable);
     if (configurable instanceof ConfigurableWrapper wrapper) {
       if (wrapper.myConfigurable == null) {
         Class<?> configurableType = wrapper.getExtensionPoint().getConfigurableType();
@@ -145,6 +157,7 @@ public class ConfigurableWrapper implements SearchableConfigurable, Weighted, Hi
    */
   @ApiStatus.Internal
   public static @Nullable <T> T castIfCreated(@NotNull Class<T> type, @Nullable UnnamedConfigurable configurable) {
+    configurable = unwrapFrameProject(type, configurable);
     if (configurable instanceof ConfigurableWrapper wrapper) {
       if (wrapper.myConfigurable == null) {
         return null;
@@ -493,6 +506,20 @@ public class ConfigurableWrapper implements SearchableConfigurable, Weighted, Hi
 
     public void setFilter(Predicate<? super Configurable> filter) {
       myFilter = filter;
+    }
+
+    /**
+     * The children that the grouping by the parent id added to this page, see {@link #addChild}.
+     * After {@link #getConfigurables()} the answer is every child.
+     */
+    Configurable @NotNull [] getAddedConfigurables() {
+      return myKids;
+    }
+
+    /** Makes {@code kids} the children of this page, in their order. The page then builds no child itself. */
+    void setConfigurables(Configurable @NotNull [] kids) {
+      myKids = kids;
+      isInitialized = true;
     }
   }
 }

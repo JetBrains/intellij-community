@@ -88,6 +88,14 @@ enum class ProjectFrameCapability {
    * `FUSProjectHotStartUpMeasurer.firstOpenedEditorOfGuest`. The project open of the owner reports neither.
    */
   GUEST_STARTUP_EDITORS,
+
+  /**
+   * Marks a frame owner that has no project-level settings of its own.
+   *
+   * The project selector of the Settings window lists only the frame guests. A frame without a frame guest shows the settings
+   * of the frame owner.
+   */
+  SUPPRESS_OWN_PROJECT_SETTINGS,
 }
 
 /**
