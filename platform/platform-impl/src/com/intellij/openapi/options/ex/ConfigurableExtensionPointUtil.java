@@ -157,6 +157,18 @@ public final class ConfigurableExtensionPointUtil {
    * @return the root configurable group that represents a tree of settings
    */
   public static @Nullable ConfigurableGroup getConfigurableGroup(@NotNull List<? extends Configurable> configurables, @Nullable Project project) {
+    SortedConfigurableGroup root = buildGroupTree(configurables, project);
+    if (root != null) {
+      compactGroups(root);
+    }
+    return root;
+  }
+
+  /**
+   * The same tree as {@link #getConfigurableGroup(List, Project)}, before {@link #compactGroups}.
+   * No group of the tree has built its children yet, so the caller can change the children of a group.
+   */
+  static @Nullable SortedConfigurableGroup buildGroupTree(@NotNull List<? extends Configurable> configurables, @Nullable Project project) {
     Map<String, List<Configurable>> map = groupConfigurables(configurables);
     Map<String, Node<SortedConfigurableGroup>> tree = new HashMap<>();
     for (Map.Entry<String, List<Configurable>> entry : map.entrySet()) {
@@ -168,12 +180,14 @@ public final class ConfigurableExtensionPointUtil {
       LOG.warn("ignore groups: " + tree.keySet());
     }
 
-    if (root != null && root.myList != null) {
-      if (Registry.is("ide.settings.replace.group.with.single.configurable")) {
-        replaceGroupWithSingleConfigurable(root.myList);
-      }
-    }
     return root;
+  }
+
+  /** Replaces each group of the tree of {@code root} that holds one page with that page, when the registry asks for it. */
+  static void compactGroups(@NotNull SortedConfigurableGroup root) {
+    if (root.myList != null && Registry.is("ide.settings.replace.group.with.single.configurable")) {
+      replaceGroupWithSingleConfigurable(root.myList);
+    }
   }
 
   private static void replaceGroupWithSingleConfigurable(List<Configurable> list) {
