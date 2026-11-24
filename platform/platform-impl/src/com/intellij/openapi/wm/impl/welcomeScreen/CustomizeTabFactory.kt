@@ -15,7 +15,6 @@ import com.intellij.ide.ui.LafManager
 import com.intellij.ide.ui.LafManagerListener
 import com.intellij.ide.ui.LafReference
 import com.intellij.ide.ui.LanguageAndRegionUi
-import com.intellij.ide.ui.NotRoamableUiSettings
 import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.UISettingsListener
 import com.intellij.ide.ui.laf.LafManagerImpl
@@ -142,10 +141,9 @@ private class CustomizeTab(val parentDisposable: Disposable) : DefaultWelcomeScr
     ideFontProperty.afterChange(parentDisposable) {
       if (settings.fontSize2D == it) return@afterChange
       settings.fontFace = getIdeFontName()
-      NotRoamableUiSettings.getInstance().overrideLafFonts = true
+      settings.overrideLafFonts = true
       WelcomeScreenEventCollector.logIdeFontChanged(settings.fontSize2D, it)
       settings.fontSize2D = it
-      updateFontSettingsLater()
     }
     keymapProperty.afterChange(parentDisposable) {
       if (keymapManager.activeKeymap == it) return@afterChange
@@ -190,13 +188,6 @@ private class CustomizeTab(val parentDisposable: Disposable) : DefaultWelcomeScr
       DefaultColorSchemesManager.getInstance().reload()
       (EditorColorsManager.getInstance() as EditorColorsManagerImpl).schemeChangedOrSwitched(null)
     })
-  }
-
-  private fun updateFontSettingsLater() {
-    ApplicationManager.getApplication().invokeLater {
-      laf.updateUI()
-      settings.fireUISettingsChanged()
-    }
   }
 
   private fun <T> updateProperty(property: GraphProperty<T>, settingGetter: () -> T) {

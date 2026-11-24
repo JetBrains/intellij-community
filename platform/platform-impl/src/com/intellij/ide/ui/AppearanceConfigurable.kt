@@ -267,7 +267,7 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
         val useCustomCheckbox = checkBox(message("checkbox.override.default.laf.fonts"))
           .gap(RightGap.SMALL)
           .bindSelected(settings::overrideLafFonts) {
-            NotRoamableUiSettings.getInstance().overrideLafFonts = it
+            settings.overrideLafFonts = it
             if (!it) {
               getDefaultFont().let { defaultFont ->
                 settings.fontFace = defaultFont.family

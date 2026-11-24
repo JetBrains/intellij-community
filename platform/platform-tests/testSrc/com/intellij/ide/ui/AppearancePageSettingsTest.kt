@@ -1,11 +1,13 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui
 
+import com.intellij.ide.IdeBundle
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.ui.FontComboBox
 import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -13,6 +15,7 @@ import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import javax.swing.JCheckBox
 import javax.swing.JComponent
 import kotlin.time.Duration.Companion.seconds
 
@@ -51,6 +54,24 @@ class AppearancePageSettingsTest {
     assertEquals(emptyList<AntialiasingType>(), storedUISettingsValues(UISettingsKeyIdentities.EDITOR_ANTIALIASING),
                  "an untouched input writes nothing")
   }
+
+  @Test
+  fun `an Apply that enables the custom font stores the font that the inputs show`(): Unit = timeoutRunBlocking(60.seconds) {
+    val shownFontFace = withContext(Dispatchers.EDT) {
+      val page = configurable.createComponent()!!
+      page.customFontCheckBox().isSelected = true
+      val shownFontFace = UIUtil.findComponentOfType(page, FontComboBox::class.java)!!.fontName
+      configurable.apply()
+      shownFontFace
+    }
+
+    waitUntilUISettingsKeyStores(UISettingsKeyIdentities.CUSTOM_FONT_ENABLED, true)
+    waitUntilUISettingsKeyStores(UISettingsKeyIdentities.CUSTOM_FONT_FACE, shownFontFace)
+  }
+
+  /** Returns the check box of this page that turns the custom font on. */
+  private fun JComponent.customFontCheckBox(): JCheckBox =
+    UIUtil.findComponentsOfType(this, JCheckBox::class.java).single { it.text == IdeBundle.message("checkbox.override.default.laf.fonts") }
 
   /** Returns the antialiasing inputs of this page: the input of the IDE, then the input of the editor. */
   private fun JComponent.antialiasingInputs(): List<ComboBox<*>> =

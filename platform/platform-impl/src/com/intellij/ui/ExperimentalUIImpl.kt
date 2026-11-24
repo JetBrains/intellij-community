@@ -11,7 +11,6 @@ import com.intellij.ide.plugins.cl.PluginAwareClassLoader
 import com.intellij.ide.ui.IconMapLoader
 import com.intellij.ide.ui.LafManager
 import com.intellij.ide.ui.NotPatchedIconRegistry
-import com.intellij.ide.ui.NotRoamableUiSettings
 import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.laf.darcula.DarculaLaf
 import com.intellij.ide.util.PropertiesComponent
@@ -192,7 +191,7 @@ private fun patchUiDefaultsForNewUi() {
   if (SystemInfo.isJetBrainsJvm && EarlyAccessRegistryManager.getBoolean("ide.experimental.ui.inter.font")) {
     if (UISettings.getInstance().overrideLafFonts) {
       //todo[kb] add RunOnce
-      NotRoamableUiSettings.getInstance().overrideLafFonts = false
+      UISettings.getInstance().overrideLafFonts = false
     }
   }
 }

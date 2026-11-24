@@ -44,6 +44,7 @@ import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval
 import java.awt.Graphics
 import java.awt.Graphics2D
 import java.awt.RenderingHints
+import java.util.concurrent.ConcurrentHashMap
 import javax.swing.JComponent
 import javax.swing.SwingConstants
 import javax.swing.SwingUtilities
@@ -482,32 +483,55 @@ class UISettings private constructor(
       state.maxLookupListHeight = value
     }
 
+  /**
+   * Tells whether the IDE uses the custom font, the value of [UISettingsKeys.CUSTOM_FONT_ENABLED]. A write is
+   * asynchronous. See [UISettings].
+   */
   var overrideLafFonts: Boolean
-    get() = notRoamableOptions.state.overrideLafFonts
+    get() = readSetting(UISettingsKeys.CUSTOM_FONT_ENABLED) { notRoamableOptions.state.overrideLafFonts }
     set(value) {
-      notRoamableOptions.overrideLafFonts = value
+      writeSetting(UISettingsKeys.CUSTOM_FONT_ENABLED, value) { notRoamableOptions.overrideLafFonts = value }
     }
 
+  /**
+   * Holds the name of the custom font, the value of [UISettingsKeys.CUSTOM_FONT_FACE]. A font that cannot display the
+   * standard ASCII symbols reads as a valid fallback font. No value reads as the system font. A write is asynchronous.
+   * See [UISettings].
+   */
   var fontFace: @NlsSafe String?
     get() {
-      return notRoamableOptions.fontFace
+      if (!usesKeys) {
+        return notRoamableOptions.fontFace
+      }
+      val fontFace = UISettingsKeys.CUSTOM_FONT_FACE.getValue() ?: return JBUIScale.getSystemFontDataIfInitialized()?.first
+      return validFontFaces.computeIfAbsent(fontFace) { findValidFontFace(it, fontSize2D) }
     }
     set(value) {
-      notRoamableOptions.fontFace = value
+      writeSetting(UISettingsKeys.CUSTOM_FONT_FACE, value) { notRoamableOptions.fontFace = value }
     }
 
+  /** Holds [fontSize2D] rounded to an integer. A write is asynchronous. See [UISettings]. */
   var fontSize: Int
     get() {
-      return (notRoamableOptions.fontSize + 0.5).toInt()
+      return (fontSize2D + 0.5).toInt()
     }
     set(value) {
-      notRoamableOptions.fontSize = value.toFloat()
+      fontSize2D = value.toFloat()
     }
 
+  /**
+   * Holds the size of the custom font, the value of [UISettingsKeys.CUSTOM_FONT_SIZE]. A size of `0` or less reads as
+   * the default font size. A write is asynchronous. See [UISettings].
+   */
   var fontSize2D: Float
-    get() = notRoamableOptions.fontSize
+    get() {
+      if (!usesKeys) {
+        return notRoamableOptions.fontSize
+      }
+      return UISettingsKeys.CUSTOM_FONT_SIZE.getValue().takeIf { it > 0 } ?: getDefaultFontSize()
+    }
     set(value) {
-      notRoamableOptions.fontSize = value
+      writeSetting(UISettingsKeys.CUSTOM_FONT_SIZE, value) { notRoamableOptions.fontSize = value }
     }
 
   var fontScale: Float
@@ -672,6 +696,9 @@ class UISettings private constructor(
 
     @Volatile
     private var cachedInstance: UISettings? = null
+
+    /** Maps a custom font face to the valid face that [fontFace] reads for it, so each face is checked once. */
+    private val validFontFaces = ConcurrentHashMap<String, String>()
 
     @JvmStatic
     fun getInstance(): UISettings {
@@ -999,7 +1026,7 @@ class UISettings private constructor(
   private fun migrateOldFontSettings(): Boolean {
     var migrated = false
     if (state.fontSize != 0) {
-      fontSize2D = restoreFontSize(state.fontSize.toFloat(), state.fontScale)
+      notRoamableOptions.fontSize = restoreFontSize(state.fontSize.toFloat(), state.fontScale)
       state.fontSize = 0
       migrated = true
     }
@@ -1009,7 +1036,7 @@ class UISettings private constructor(
       migrated = true
     }
     if (state.fontFace != null) {
-      fontFace = state.fontFace
+      notRoamableOptions.fontFace = state.fontFace
       state.fontFace = null
       migrated = true
     }
