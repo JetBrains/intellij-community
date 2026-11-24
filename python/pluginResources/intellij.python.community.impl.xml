@@ -700,6 +700,9 @@
                     dynamic="true"/>
     <extensionPoint qualifiedName="Pythonid.pythonDebugBackendRunner" interface="com.jetbrains.python.debugger.PyDebugBackendRunner"
                     dynamic="true"/>
+    <extensionPoint qualifiedName="Pythonid.pythonAttachToProcessBackend"
+                    interface="com.jetbrains.python.debugger.attach.PyAttachToProcessBackend"
+                    dynamic="true"/>
 
     <extensionPoint qualifiedName="Pythonid.interpreterTargetEnvironmentFactory"
                     interface="com.jetbrains.python.run.PythonInterpreterTargetEnvironmentFactory"
@@ -764,6 +767,7 @@
     <consoleLexerDetector implementation="com.jetbrains.python.console.PyPydevConsoleLexerDetector"/>
     <pyRunToolProvider implementation="com.jetbrains.python.sdk.uv.run.UvRunToolProvider"/>
     <pythonDebugBackendRunner implementation="com.jetbrains.python.debugger.PydevdDebugBackendRunner"/>
+    <pythonAttachToProcessBackend implementation="com.jetbrains.python.debugger.attach.PydevdAttachToProcessBackend"/>
     <pyRunToolProvider implementation="com.jetbrains.python.hatch.run.HatchRunToolProvider"/>
 
     <evoEnvironmentProvider id="UvEvoProvider"

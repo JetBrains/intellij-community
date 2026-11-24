@@ -10,7 +10,7 @@ import org.jetbrains.annotations.ApiStatus
 import java.io.OutputStream
 
 @ApiStatus.Internal
-class SimpleProcessHandler : ProcessHandler(), KillableProcess, ColoredTextAcceptor {
+class SimpleProcessHandler(private val detachByDefault: Boolean = false) : ProcessHandler(), KillableProcess, ColoredTextAcceptor {
   private val myAnsiEscapeDecoder = AnsiEscapeDecoder()
 
   /**
@@ -45,7 +45,7 @@ class SimpleProcessHandler : ProcessHandler(), KillableProcess, ColoredTextAccep
     notifyProcessDetached()
   }
 
-  override fun detachIsDefault(): Boolean = false
+  override fun detachIsDefault(): Boolean = detachByDefault
 
   override fun getProcessInput(): OutputStream? = null
 

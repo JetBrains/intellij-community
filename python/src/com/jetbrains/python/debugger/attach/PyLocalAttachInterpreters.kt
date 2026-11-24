@@ -3,6 +3,7 @@ package com.jetbrains.python.debugger.attach
 
 import com.intellij.openapi.project.Project
 import com.intellij.python.pyproject.model.evolution.EvoPyProjectModel
+import com.intellij.python.pyproject.model.evolution.findMainEvoPyProjectIfReady
 import com.intellij.python.sdk.backend.NativePythonInterpreter
 import com.intellij.python.sdk.backend.PythonInterpreter
 import com.intellij.python.sdk.backend.PythonInterpreterRegistry
@@ -29,6 +30,10 @@ internal fun findLocalAttachInterpreter(project: Project, binaryPath: String): P
   return projectInterpretersIfReady(project)
     .firstOrNull { it.isLocal() && it.binaryPathString == binaryPath }
 }
+
+/** The interpreter of the main Python project of [project]. `null` before the first snapshot. */
+internal fun mainProjectInterpreterIfReady(project: Project): PythonInterpreter? =
+  project.findMainEvoPyProjectIfReady()?.interpreter
 
 /** The name of the attach debugger of [interpreter]: the Python version and the path of the binary. */
 internal fun attachDebuggerName(interpreter: PythonInterpreter): String {
