@@ -1406,3 +1406,13 @@ f:com.intellij.platform.workspace.jps.entities.SourceRootTypeId
 - equals(java.lang.Object):Z
 - f:getName():java.lang.String
 - hashCode():I
+f:com.intellij.util.descriptors.ConfigFileItem
+- <init>(java.lang.String,java.lang.String):V
+- f:component1():java.lang.String
+- f:component2():java.lang.String
+- f:copy(java.lang.String,java.lang.String):com.intellij.util.descriptors.ConfigFileItem
+- bs:copy$default(com.intellij.util.descriptors.ConfigFileItem,java.lang.String,java.lang.String,I,java.lang.Object):com.intellij.util.descriptors.ConfigFileItem
+- equals(java.lang.Object):Z
+- f:getId():java.lang.String
+- f:getUrl():java.lang.String
+- hashCode():I
