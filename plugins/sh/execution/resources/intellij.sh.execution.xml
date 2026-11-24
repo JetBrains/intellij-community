@@ -2,6 +2,7 @@
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.backend.baseline"/>
     <module name="intellij.platform.consoleView"/>
     <module name="intellij.platform.core"/>
     <module name="intellij.platform.core.impl"/>
@@ -18,4 +19,15 @@
     <module name="intellij.sh.core"/>
   </dependencies>
   <!-- endregion -->
+
+  <!-- The DevKit inspection does not know the backend baseline marker module, hence each suppression of SplitModeXmlApiUsage below. -->
+  <extensions defaultExtensionNs="com.intellij">
+    <configurationType implementation="com.intellij.sh.run.ShConfigurationType"/>
+    <!--suppress SplitModeXmlApiUsage -->
+    <runConfigurationProducer implementation="com.intellij.sh.run.ShRunConfigurationProducer"/>
+    <!--suppress SplitModeXmlApiUsage -->
+    <programRunner implementation="com.intellij.sh.run.ShRunProgramRunner"/>
+    <!--suppress SplitModeXmlApiUsage -->
+    <runConfigurationBeforeRunProviderDelegate implementation="com.intellij.sh.run.ShBeforeRunProviderDelegate"/>
+  </extensions>
 </idea-plugin>

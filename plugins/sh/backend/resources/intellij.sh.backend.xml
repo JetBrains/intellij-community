@@ -49,10 +49,6 @@
     <lang.elementManipulator forClass="com.intellij.sh.psi.ShLiteral" implementationClass="com.intellij.sh.psi.manipulator.ShLiteralManipulator" />
     <lang.floatingToolbar language="Shell Script" minimal="true"/>
     <targetElementEvaluator language="Shell Script" implementationClass="com.intellij.sh.backend.codeInsight.ShTargetElementEvaluator"/>
-    <configurationType implementation="com.intellij.sh.run.ShConfigurationType"/>
-    <runConfigurationProducer implementation="com.intellij.sh.backend.run.ShRunConfigurationProducer"/>
-    <programRunner implementation="com.intellij.sh.backend.run.ShRunProgramRunner"/>
-    <runConfigurationBeforeRunProviderDelegate implementation="com.intellij.sh.run.ShBeforeRunProviderDelegate"/>
     <editorNotificationProvider implementation="com.intellij.sh.backend.shellcheck.ShellcheckSetupNotificationProvider"/>
     <formattingService implementation="com.intellij.sh.backend.formatter.ShExternalFormatter"/>
     <highlightUsagesHandlerFactory implementation="com.intellij.sh.backend.highlighting.ShOccurrencesHighlightingFactory"/>

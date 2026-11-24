@@ -28,5 +28,6 @@
     <orderEntry type="module" module-name="intellij.platform.lang.impl" />
     <orderEntry type="module" module-name="intellij.platform.consoleView" />
     <orderEntry type="module" module-name="intellij.java.guiForms.rt" />
+    <orderEntry type="module" module-name="intellij.platform.backend.baseline" scope="RUNTIME" />
   </component>
 </module>

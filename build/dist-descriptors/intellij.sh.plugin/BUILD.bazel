@@ -33,6 +33,7 @@ dist_plugin_descriptor(
     main_module = "intellij.sh.plugin",
     mode_refused_content_modules = {
         "frontend": [
+            "intellij.sh.execution",
             "intellij.sh.backend",
             "intellij.sh.copyright",
             "intellij.sh.python",

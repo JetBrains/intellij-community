@@ -23,7 +23,11 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
-    runtime_deps = ["//platform/editor-ui-api:editor-ui"],
+    runtime_deps = [
+        # do not sort,
+        "//platform/editor-ui-api:editor-ui",
+        "//platform/backend/baseline",
+    ],
     deps = [
         # do not sort,
         "//plugins/sh/core",
