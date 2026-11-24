@@ -68,7 +68,7 @@ public class OwnBufferLeafPsiElement extends LeafElement implements PsiElement {
   @Override
   public PsiFile getContainingFile() {
     PsiFile file = SharedImplUtil.getContainingFile(this);
-    if (file == null || !file.isValid()) throw new PsiInvalidElementAccessException(this);
+    if (file == null) throw new PsiInvalidElementAccessException(this);
     return file;
   }
 

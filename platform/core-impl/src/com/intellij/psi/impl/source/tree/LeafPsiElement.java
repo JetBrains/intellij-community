@@ -75,7 +75,7 @@ public class LeafPsiElement extends LeafElement implements PsiElement, Navigatio
   @Override
   public PsiFile getContainingFile() {
     PsiFile file = SharedImplUtil.getContainingFile(this);
-    if (file == null || !file.isValid()) invalid();
+    if (file == null) invalid();
     return file;
   }
 
