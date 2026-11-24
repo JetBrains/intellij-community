@@ -51,6 +51,7 @@ import kotlin.time.Duration.Companion.milliseconds
 
 private const val MAX_ALLOWED_INLAY_HINT_LENGTH = 100
 private const val MIN_ALLOWED_INLAY_HINT_LENGTH = 1
+private const val INLAY_HINT_PADDING = 4
 
 /**
  * Reads the cached inlay hints for [virtualFile] across all clients that have it open, as [LspInlayItem]s.
@@ -94,7 +95,11 @@ private class LspInlayHintItem(
   private var resolvedHint: InlayHint? = null
   private var resolveRequest: Deferred<InlayHint?>? = null
 
-  override val identity: Any = LspInlayHintIdentity(lspClient.descriptor, inlayHint.label, maxChars, supportsResolve)
+  override val identity = LspInlayHintIdentity(
+    lspClient.descriptor, inlayHint.label, maxChars, supportsResolve,
+    leftPadding = if (inlayHint.paddingLeft == true) INLAY_HINT_PADDING else 0,
+    rightPadding = if (inlayHint.paddingRight == true) INLAY_HINT_PADDING else 0,
+  )
 
   override fun buildPresentation(editor: Editor, factory: PresentationFactory): InlayPresentation {
     val hint = synchronized(hintLock) { inlayHint }
@@ -102,7 +107,8 @@ private class LspInlayHintItem(
                                             tooltipListener = { partIndex -> TooltipListener(editor, factory, partIndex) }) { partIndex ->
       navigateToLabelPart(editor, partIndex)
     }
-    return factory.roundWithBackground(presentation)
+    val background = factory.roundWithBackground(presentation)
+    return factory.inset(background, left = identity.leftPadding, right = identity.rightPadding)
   }
 
   override fun updateFrom(newItem: LspInlayItem) {
@@ -209,7 +215,7 @@ private class LspInlayHintItem(
 }
 
 /**
- * The rendered identity of an inlay hint: everything [buildInlayPresentation] reads, and nothing else.
+ * The rendered identity of an inlay hint: everything [LspInlayHintItem.buildPresentation] reads, and nothing else.
  *
  * Deliberately excludes the text range / [InlayHint.position]: an edit that only shifts a hint's offset moves the
  * existing inlay automatically, so it must still match (and be reused) rather than be recreated. [Either] and
@@ -220,6 +226,8 @@ private data class LspInlayHintIdentity(
   val label: Either<String, List<InlayHintLabelPart>>,
   val maxChars: Int,
   val supportsResolve: Boolean,
+  val leftPadding: Int,
+  val rightPadding: Int,
 )
 
 private fun buildInlayPresentation(

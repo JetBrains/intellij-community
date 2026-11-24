@@ -320,6 +320,45 @@ internal class LspInlayHintTest {
     }
 
     @Test
+    fun `refresh updates the gap on each side of an inlay hint`(): Unit = timeoutRunBlocking {
+      val serverSession = inlayHintSession(fileName = "inlayPadding.txt")
+      val fileUri = serverSession.fileUri(codeInsightFixture.file.virtualFile)
+      checkInlaysRetrying("hello world", "hello/*<# [target] #>*/ world")
+
+      suspend fun checkPadding(left: Int, right: Int) {
+        waitUntilAssertSucceeds(message = "Expected outer padding of $left pixels on the left and $right on the right") {
+          withContext(Dispatchers.EDT) {
+            val renderer = managedInlayAt(5).renderer as PresentationRenderer
+            val padding = renderer.presentation as? InsetPresentation
+            assertEquals(left, padding?.left ?: 0)
+            assertEquals(right, padding?.right ?: 0)
+          }
+        }
+      }
+
+      suspend fun refresh(paddingLeft: Boolean, paddingRight: Boolean) {
+        serverSession.expectRequest(serverSession.INLAY_HINT, { it.textDocument.uri == fileUri }) {
+          listOf(inlayHint("target").apply {
+            this.paddingLeft = paddingLeft
+            this.paddingRight = paddingRight
+          })
+        }
+        serverSession.sendRequest(serverSession.INLAY_HINT_REFRESH) { }
+      }
+
+      checkPadding(0, 0)
+      refresh(paddingLeft = true, paddingRight = false)
+      checkPadding(4, 0)
+      refresh(paddingLeft = true, paddingRight = true)
+      checkPadding(4, 4)
+      refresh(paddingLeft = false, paddingRight = true)
+      checkPadding(0, 4)
+      refresh(paddingLeft = false, paddingRight = false)
+      checkPadding(0, 0)
+      serverSession.awaitExpected()
+    }
+
+    @Test
     fun `refresh re-requests hints without an edit`(): Unit = timeoutRunBlocking {
       (codeInsightFixture as CodeInsightTestFixtureImpl).canChangeDocumentDuringHighlighting(true)
 
