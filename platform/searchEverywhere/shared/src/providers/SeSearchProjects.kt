@@ -76,7 +76,10 @@ interface SeSearchProjects {
   fun createHolders(initEvent: AnActionEvent, session: SeSession): SeSearchProjectHolders
 }
 
-/** The providers holders of the search projects of one popup. The product creates them and disposes them. */
+/**
+ * The providers holders of the search projects of one popup. The product creates them and disposes them.
+ * The product creates each holder with [SeProvidersHolder.initializeSearchProject].
+ */
 @ApiStatus.Internal
 interface SeSearchProjectHolders : Disposable {
   /** Whether the popup has several search projects. Then each search of a project marks itself, see [SeSearchProjectContext]. */

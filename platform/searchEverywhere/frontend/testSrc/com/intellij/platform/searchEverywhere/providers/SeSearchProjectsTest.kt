@@ -144,6 +144,23 @@ class SeSearchProjectsTest {
   }
 
   @Test
+  fun theHolderOfASearchProjectAsksNoSearchProjectsOfItsOwn() = timeoutRunBlocking {
+    val factory = TestContributorFactory(contributorProjects) { it === popupProject }
+    ExtensionTestUtil.maskExtensions(SearchEverywhereContributor.EP_NAME, listOf(factory), disposable)
+    // The product answers for each search project, as JetBrains Light does for each member project.
+    val searchProjects = TestSearchProjects(listOf(popupProject, otherProject), WRAPPED_ID)
+    maskSearchProjects { searchProjects }
+    maskFactories()
+    val holder = openHolder(popupProject)
+
+    holder.items(WRAPPED_ID)
+
+    assertEquals(1, searchProjects.holders.size, "only the popup creates the holders of the search projects")
+    assertEquals(listOf(popupProject), contributorProjects.toList(),
+                 "the holder of another project creates no contributor that only the popup project has")
+  }
+
+  @Test
   fun aWrappedProviderGetsTheLegacyContributorOfItsProject() = timeoutRunBlocking {
     ExtensionTestUtil.maskExtensions(SearchEverywhereContributor.EP_NAME, listOf(TestContributorFactory(contributorProjects)), disposable)
     val holder = holder(TestSearchProjects(listOf(popupProject, otherProject), WRAPPED_ID))
@@ -355,7 +372,7 @@ class SeSearchProjectsTest {
     private fun holderOf(project: Project): Deferred<SeProvidersHolder> = holders.computeIfAbsent(project) {
       scope.async {
         gate?.await()
-        SeProvidersHolder.initialize(eventOf(project), project, session, "Test", withAdaptedLegacyContributors = false)
+        SeProvidersHolder.initializeSearchProject(eventOf(project), project, session, "Test")
       }
     }
 

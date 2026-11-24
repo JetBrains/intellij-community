@@ -82,11 +82,33 @@ class SeProvidersHolder(
       logLabel: String,
       withAdaptedLegacyContributors: Boolean,
     ): SeProvidersHolder {
-      val legacyContributors = mutableMapOf<SeProviderId, SearchEverywhereContributor<Any>>()
-      val separateTabLegacyContributors = mutableMapOf<SeProviderId, SearchEverywhereContributor<Any>>()
-
       // The providers of an id that the product names search every search project of the popup, see [SeSearchProjects].
       val searchProjects = project?.let { SeSearchProjectsProvider.find(it) }
+      return initialize(initEvent, project, session, logLabel, withAdaptedLegacyContributors, searchProjects)
+    }
+
+    /**
+     * The holder of one search [project] for [SeSearchProjectHolders]. The popup asks its providers directly.
+     * So it asks no [SeSearchProjectsProvider], and it creates no contributor of another project and no holder of its own.
+     */
+    suspend fun initializeSearchProject(
+      initEvent: AnActionEvent,
+      project: Project,
+      session: SeSession,
+      logLabel: String,
+    ): SeProvidersHolder =
+      initialize(initEvent, project, session, logLabel, withAdaptedLegacyContributors = false, searchProjects = null)
+
+    private suspend fun initialize(
+      initEvent: AnActionEvent,
+      project: Project?,
+      session: SeSession,
+      logLabel: String,
+      withAdaptedLegacyContributors: Boolean,
+      searchProjects: SeSearchProjects?,
+    ): SeProvidersHolder {
+      val legacyContributors = mutableMapOf<SeProviderId, SearchEverywhereContributor<Any>>()
+      val separateTabLegacyContributors = mutableMapOf<SeProviderId, SearchEverywhereContributor<Any>>()
 
       initializeLegacyContributors(initEvent, project, searchProjects, legacyContributors, separateTabLegacyContributors)
 
