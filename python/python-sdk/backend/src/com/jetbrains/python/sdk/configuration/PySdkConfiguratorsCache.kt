@@ -1,25 +1,25 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk.configuration
 
-import com.jetbrains.python.sdk.PythonInterpreterListener
-import com.intellij.python.sdk.backend.PythonInterpreter
-import com.github.benmanes.caffeine.cache.AsyncCache
-import com.github.benmanes.caffeine.cache.Caffeine
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.Key
+import com.intellij.python.sdk.backend.PythonInterpreter
 import com.intellij.serviceContainer.AlreadyDisposedException
-import com.intellij.openapi.application.ApplicationManager
 import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.PythonPluginDisposable
 import com.jetbrains.python.project.PyProject
-import com.intellij.python.pytools.backend.getOrLoad
+import com.jetbrains.python.sdk.PythonInterpreterListener
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.async
 import org.jetbrains.annotations.ApiStatus
-import java.util.concurrent.TimeUnit
 import kotlin.time.Duration.Companion.seconds
+import kotlin.time.TimeMark
+import kotlin.time.TimeSource
 
 /**
  * What the SDK configurators say about one project: the virtualenvs found in it, and the options they
@@ -38,6 +38,16 @@ data class PyProjectConfigurators(
 /** How long a project's detected configurators are reused. Matches the interpreter notification's own cache. */
 private val TTL = 20.seconds
 
+/** The probe of a module, which the module keeps in its user data. [ended] is set when the probe succeeds. */
+private class ConfiguratorsEntry(val probe: Deferred<PyProjectConfigurators>) {
+  @Volatile
+  var ended: TimeMark? = null
+
+  val isExpired: Boolean get() = ended?.let { it.elapsedNow() >= TTL } ?: false
+}
+
+private val ENTRY_KEY = Key.create<ConfiguratorsEntry>("PySdkConfiguratorsCache.entry")
+
 /**
  * The one place the SDK configurators are asked what they can do for a project.
  *
@@ -48,6 +58,8 @@ private val TTL = 20.seconds
  * configured" notification, the Add Interpreter dialog's tool preselection, the MCP environment tool,
  * and the auto-configuration that runs when a project opens. Before this cache each of them paid for
  * its own probe, so opening one poetry project ran `poetry check --lock` several times over.
+ *
+ * The module of a project keeps the probe in its user data, so the answer ends with the module.
  *
  * Callers that need an answer which is true *right now* must not come here — see
  * [PyProjectSdkConfigurationExtension.findAllSorted], which stays uncached for exactly that.
@@ -67,44 +79,47 @@ internal class PySdkConfiguratorsCache(private val project: Project, private val
     })
   }
 
-  // Keyed by the module a project resides on, and not by the project itself: the module is the [Disposable] the entry
-  // is registered on, and the one identity `PythonInterpreterListener` reports a change for.
-  private val cache: AsyncCache<Module, PyProjectConfigurators> = Caffeine.newBuilder()
-    .expireAfterWrite(TTL.inWholeSeconds, TimeUnit.SECONDS)
-    .buildAsync()
+  private val lock = Any()
 
   /**
-   * The cached answer for [pyProject], probing only if no live or recent one exists.
+   * The cached answer for [pyProject], probing only if no running or recent probe exists.
    *
    * The callers that arrive together while a project opens share a single probe rather than each starting one.
-   * The load runs on this service's scope, so whichever caller happened to trigger it can be cancelled without
-   * killing it for the rest (see [getOrLoad]).
+   * The probe runs on this service's scope, so a cancelled caller stops to wait, and the probe continues for the rest.
+   * A probe that fails is not kept, and the next caller starts a new one.
    */
-  suspend fun get(pyProject: PyProject): PyProjectConfigurators =
-    cache.getOrLoad(pyProject.residesOnModule, scope) { key ->
-      // Break the strong reference chain from a cached value to a disposed module: the options hold
-      // creator closures that capture the project (and WillInstallTool holds a pathPersister that does
-      // too), and a project holds its module, which would otherwise keep a closed project alive until
-      // the TTL ran out.
-      //
-      // Registering is also how a disposed module is recognized, in one step that cannot race: the automatic
-      // configuration walks every project on a scope of its own and a project can close under it, so a caller can
-      // arrive with a module that has just gone. Such a module is not probed — that would run every configurator's
-      // tool for something that no longer exists — and the refusal is the cancellation the rest of that walk already
-      // handles, rather than the IncorrectOperationException plain `register` raises (PY-91964).
-      @Suppress("IncorrectParentDisposable")
-      if (!Disposer.tryRegister(key) { invalidate(key) }) {
-        throw AlreadyDisposedException("Module $key is disposed, its configurators are not probed")
-      }
-      probe(pyProject)
-    }
+  suspend fun get(pyProject: PyProject): PyProjectConfigurators = probeOf(pyProject).await()
 
   /** Drops [module]'s entry, for a caller that has just changed what a probe would find (installing a tool). */
   fun invalidate(module: Module) {
-    cache.synchronous().invalidate(module)
+    synchronized(lock) { module.putUserData(ENTRY_KEY, null) }
+  }
+
+  private fun probeOf(pyProject: PyProject): Deferred<PyProjectConfigurators> {
+    val module = pyProject.residesOnModule
+    synchronized(lock) {
+      module.getUserData(ENTRY_KEY)?.takeUnless { it.isExpired }?.let { return it.probe }
+      val entry = ConfiguratorsEntry(scope.async { probe(pyProject) })
+      module.putUserData(ENTRY_KEY, entry)
+      entry.probe.invokeOnCompletion { error ->
+        if (error == null) entry.ended = TimeSource.Monotonic.markNow() else drop(module, entry)
+      }
+      return entry.probe
+    }
+  }
+
+  private fun drop(module: Module, entry: ConfiguratorsEntry) {
+    synchronized(lock) {
+      if (module.getUserData(ENTRY_KEY) === entry) module.putUserData(ENTRY_KEY, null)
+    }
   }
 
   private suspend fun probe(pyProject: PyProject): PyProjectConfigurators {
+    // The automatic configuration walks every project on a scope of its own, and a project can close under it. A
+    // disposed module is not probed: that would run the tool of each configurator for something that is gone. The
+    // refusal is the cancellation that the walk handles.
+    val module = pyProject.residesOnModule
+    if (module.isDisposed) throw AlreadyDisposedException("Module $module is disposed, its configurators are not probed")
     val venvs = pyProject.findPythonVirtualEnvironments()
     return PyProjectConfigurators(venvs, PyProjectSdkConfigurationExtension.findAllSorted(pyProject, venvs))
   }
