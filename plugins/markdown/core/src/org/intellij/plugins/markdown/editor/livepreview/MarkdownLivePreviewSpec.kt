@@ -216,9 +216,9 @@ sealed interface MarkdownLivePreviewSpec {
   ) : MarkdownLivePreviewSpec
 
   /**
-   * Widens the indent of one logical line of a nested list item. The [range] is empty and sits at the line start.
-   * [depth] is the nesting depth of the list item that holds the first non-blank character of the line, at least 2.
-   * The frontend adds one indent unit per level above the first.
+   * Widens the indent of one logical line of a list item. The [range] is empty and sits at the line start.
+   * [depth] is the nesting depth of the list item that holds the first non-blank character of the line, at least 1.
+   * The frontend adds the top-level list indent, and one indent unit per level above the first.
    */
   @Serializable
   data class ListIndent(

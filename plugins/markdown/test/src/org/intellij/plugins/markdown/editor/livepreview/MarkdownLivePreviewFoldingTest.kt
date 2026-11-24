@@ -968,15 +968,17 @@ class MarkdownLivePreviewFoldingTest {
   }
 
   @Test
-  fun testNestedListLinesGetIndentInlaysAndTopLevelLinesDoNot(): Unit = timeoutRunBlocking {
+  fun testListLinesGetIndentInlaysByDepthAndParagraphsDoNot(): Unit = timeoutRunBlocking {
     withContext(Dispatchers.EDT) {
       val content = "- one\n  * two\n    + three\n- four\n\ntail"
       configure("$content<caret>")
       val document = myFixture.editor.document
       val inlays = listIndentInlays()
-      assertEquals(listOf(document.getLineStartOffset(1), document.getLineStartOffset(2)), inlays.map { it.offset })
+      assertEquals((0..3).map { document.getLineStartOffset(it) }, inlays.map { it.offset })
       assertTrue(inlays[0].widthInPixels > 0)
-      assertEquals(inlays[0].widthInPixels * 2, inlays[1].widthInPixels)
+      assertTrue(inlays[1].widthInPixels > inlays[0].widthInPixels)
+      assertEquals(inlays[1].widthInPixels - inlays[0].widthInPixels, inlays[2].widthInPixels - inlays[1].widthInPixels)
+      assertEquals(inlays[0].widthInPixels, inlays[3].widthInPixels)
       assertEquals(listOf("-", "*", "+", "-"), concealed())
     }
   }
@@ -986,16 +988,16 @@ class MarkdownLivePreviewFoldingTest {
     withContext(Dispatchers.EDT) {
       val content = "- one\n  * two\n\ntail"
       configure("$content<caret>")
-      val inlay = listIndentInlays().single()
       val lineStart = content.indexOf("  * two")
+      val inlay = listIndentInlays().single { it.offset == lineStart }
 
       moveCaretTo(lineStart)
       assertEquals(listOf("-", "*"), concealed())
-      assertSame(inlay, listIndentInlays().single())
+      assertSame(inlay, listIndentInlays().single { it.offset == lineStart })
 
       moveCaretTo(lineStart + 2)
       assertEquals(listOf("-"), concealed())
-      assertSame(inlay, listIndentInlays().single())
+      assertSame(inlay, listIndentInlays().single { it.offset == lineStart })
       assertTrue(inlay.isValid)
     }
   }
@@ -2504,7 +2506,7 @@ class MarkdownLivePreviewFoldingTest {
       val specs = computeLivePreviewSpecs(myFixture.file, editor, configuration)
       val folds = concealedLivePreviewRegions(editor)
       val checkbox = checkboxInlays().single()
-      val indent = listIndentInlays().single()
+      val indents = listIndentInlays()
       val rule = thematicBreakHighlighters().single()
       val image = imageInlays().single()
 
@@ -2517,14 +2519,14 @@ class MarkdownLivePreviewFoldingTest {
       assertThat(imageInlays()).isEmpty()
       assertTrue(folds.all { !it.isValid })
       assertFalse(checkbox.isValid)
-      assertFalse(indent.isValid)
+      assertTrue(indents.none { it.isValid })
       assertFalse(rule.isValid)
       assertFalse(image.isValid)
 
       reconciler.publishSpecsAndWait(specs)
       assertEquals(5, concealed().size)
       assertEquals(1, checkboxInlays().size)
-      assertEquals(1, listIndentInlays().size)
+      assertEquals(2, listIndentInlays().size)
       assertEquals(1, thematicBreakHighlighters().size)
       assertEquals(1, imageInlays().size)
 
@@ -2555,16 +2557,19 @@ class MarkdownLivePreviewFoldingTest {
         }
       }, myFixture.testRootDisposable)
 
+      assertEquals(items, listIndentInlays().size)
       reconciler.publishSpecsAndWait(specs)
       assertEquals(0, batches, "A publish that keeps every bullet must not start an inlay batch")
 
       reconciler.publishSpecsAndWait(null)
       assertThat(bulletInlays()).isEmpty()
-      assertEquals(1, batches, "The removal of the bullets must take one inlay batch")
+      assertThat(listIndentInlays()).isEmpty()
+      assertEquals(2, batches, "The removal of the bullets and of the list indents must take one inlay batch each")
 
       reconciler.publishSpecsAndWait(specs)
       assertEquals(items, bulletInlays().size)
-      assertEquals(2, batches, "The creation of the bullets must take one inlay batch")
+      assertEquals(items, listIndentInlays().size)
+      assertEquals(4, batches, "The creation of the bullets and of the list indents must take one inlay batch each")
     }
   }
 
@@ -2827,7 +2832,7 @@ class MarkdownLivePreviewFoldingTest {
     waitForImageInlay()
     assertEquals(5, concealed().size)
     assertEquals(1, checkboxInlays().size)
-    assertEquals(1, listIndentInlays().size)
+    assertEquals(2, listIndentInlays().size)
     assertEquals(1, thematicBreakHighlighters().size)
   }
 

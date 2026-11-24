@@ -12,10 +12,11 @@ import org.intellij.plugins.markdown.editor.livepreview.MarkdownLivePreviewSpec
 import org.jetbrains.annotations.ApiStatus
 
 /**
- * Widens the indent of each nested list line with an invisible inline inlay at the line start.
+ * Widens the indent of each list line with an invisible inline inlay at the line start.
  * The inlay is not a fold, so a caret at the line start keeps the indent.
  * The soft-wrap engine counts an inline inlay on a leading whitespace character as indent of the original line,
  * so a wrapped continuation line starts after the inlay too.
+ * On a marker line with no indent, the soft-wrap painter of live preview gives that indent.
  */
 internal class MarkdownLivePreviewListIndentRenderer(private val editor: EditorEx) : MarkdownLivePreviewElementRenderer {
   private val inlays = ArrayList<Inlay<MarkdownLivePreviewListIndentInlayRenderer>>()
@@ -63,7 +64,7 @@ internal class MarkdownLivePreviewListIndentRenderer(private val editor: EditorE
   }
 }
 
-/** Reserves the extra indent of one nested list line */
+/** Reserves the extra indent of one list line */
 @ApiStatus.Internal
 class MarkdownLivePreviewListIndentInlayRenderer internal constructor(
   private val editor: Editor,
@@ -73,9 +74,13 @@ class MarkdownLivePreviewListIndentInlayRenderer internal constructor(
   var depth: Int = depth
     internal set
 
-  override fun calcWidthInPixels(inlay: Inlay<*>): Int = (depth - 1) * SPACES_PER_LEVEL * EditorUtil.getPlainSpaceWidth(editor)
+  override fun calcWidthInPixels(inlay: Inlay<*>): Int =
+    (TOP_LEVEL_SPACES + (depth - 1) * SPACES_PER_LEVEL) * EditorUtil.getPlainSpaceWidth(editor)
 
   private companion object {
+    /** Two spaces of the UI font are about 0.5em. A top-level list marker moves right by that amount from the paragraph text. */
+    private const val TOP_LEVEL_SPACES = 2
+
     /** Six spaces of the UI font are about 1.5em, so a two-space source level gets about 2em in all, same as JCEF preview. */
     private const val SPACES_PER_LEVEL = 6
   }

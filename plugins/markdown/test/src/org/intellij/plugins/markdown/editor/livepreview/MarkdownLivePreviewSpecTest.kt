@@ -460,35 +460,40 @@ class MarkdownLivePreviewSpecTest {
 
   @Test
   fun testOrderedListMarkersAreNotConcealed() {
-    assertThat(elements("1. ordered")).isEmpty()
+    assertThat(elements("1. ordered").filterNot { it is MarkdownLivePreviewSpec.ListIndent }).isEmpty()
   }
 
   @Test
-  fun testNestedListLinesGetIndentSpecsWithTheirDepth() {
-    assertEquals(listOf(1 to 2, 2 to 3, 3 to 2), listIndents("- one\n  * two\n    + three\n  * two again"))
+  fun testListLinesGetIndentSpecsWithTheirDepth() {
+    assertEquals(listOf(0 to 1, 1 to 2, 2 to 3, 3 to 2), listIndents("- one\n  * two\n    + three\n  * two again"))
+  }
+
+  @Test
+  fun testTopLevelListLinesGetIndentSpecsAndParagraphsDoNot() {
+    assertEquals(listOf(2 to 1, 3 to 1, 4 to 1), listIndents("text\n\n1. one\n   continuation\n2. two\n\ntext"))
   }
 
   @Test
   fun testNestedItemContinuationLinesGetTheDepthOfTheirItem() {
     val content = "- one\n  - two\n    continuation\n\n    second paragraph\n  - three"
-    assertEquals(listOf(1 to 2, 2 to 2, 4 to 2, 5 to 2), listIndents(content))
+    assertEquals(listOf(0 to 1, 1 to 2, 2 to 2, 4 to 2, 5 to 2), listIndents(content))
   }
 
   @Test
   fun testOrderedNestedListsGetIndentSpecs() {
-    assertEquals(listOf(1 to 2, 2 to 3), listIndents("1. one\n   1. two\n      - three"))
+    assertEquals(listOf(0 to 1, 1 to 2, 2 to 3), listIndents("1. one\n   1. two\n      - three"))
   }
 
   @Test
-  fun testTopLevelLazyAndQuoteMarkedLinesGetNoIndentSpec() {
-    assertThat(listIndents("- one\n  continuation\n\n- two")).isEmpty()
-    assertEquals(listOf(1 to 2), listIndents("- one\n  - two\nlazy"))
+  fun testLazyAndQuoteMarkedLinesGetNoIndentSpec() {
+    assertEquals(listOf(0 to 1, 1 to 1, 3 to 1), listIndents("- one\n  continuation\n\n- two"))
+    assertEquals(listOf(0 to 1, 1 to 2), listIndents("- one\n  - two\nlazy"))
     assertThat(listIndents("> - a\n>   - b")).isEmpty()
   }
 
   @Test
   fun testLineThatStartsInAnOuterItemGetsTheDepthOfThatItem() {
-    assertEquals(listOf(1 to 2, 2 to 2), listIndents("- a\n  - b\n    > - c"))
+    assertEquals(listOf(0 to 1, 1 to 2, 2 to 2), listIndents("- a\n  - b\n    > - c"))
   }
 
   @Test

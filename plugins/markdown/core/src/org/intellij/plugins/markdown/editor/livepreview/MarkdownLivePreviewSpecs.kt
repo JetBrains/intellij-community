@@ -75,7 +75,7 @@ private const val BULLET_PLACEHOLDERS = "•◦▪"
 /**
  * The live-preview spec set for [file] in [editor], sorted by element start offset.
  *
- * Collects the markup to hide, the lines of nested list items and the code for the code font.
+ * Collects the markup to hide, the lines of list items and the code for the code font.
  * Skips the subtrees named in [NoDescendTypes], and the elements that [configuration] prohibits.
  */
 @ApiStatus.Internal
@@ -214,14 +214,15 @@ private class LineIndex(private val source: CharSequence, private val document: 
   }
 
   /**
-   * One spec per indented line of a nested list [item], for the lines whose first non-blank character is in [item].
+   * One spec per line of a list [item], for the lines whose first non-blank character is in [item].
    * A line whose content starts in a nested item gets its spec from that item.
-   * A line with no indent gets no spec, because an inlay before a non-blank character is not part of the soft-wrap indent.
+   * A line with no indent gets a spec only when the marker of [item] starts the line.
+   * An inlay before a non-blank character is not part of the soft-wrap indent.
+   * The soft-wrap painter of live preview gives the wrap indent of a marker line instead.
    * So a lazy continuation line, and a line that starts with the `>` of a top-level blockquote, keep the source indent.
    */
   fun listIndentSpecs(item: PsiElement): List<MarkdownLivePreviewSpec.ListIndent> {
     val depth = item.listItemDepth()
-    if (depth < 2) return emptyList()
     val range = item.textRange
     val file = item.containingFile
     val firstLine = document.getLineNumber(range.startOffset)
@@ -229,7 +230,8 @@ private class LineIndex(private val source: CharSequence, private val document: 
     return (firstLine..lastLine).mapNotNull { line ->
       val lineStart = document.getLineStartOffset(line)
       val contentStart = contentStarts[line]
-      if (contentStart <= lineStart) return@mapNotNull null
+      if (contentStart < lineStart) return@mapNotNull null
+      if (contentStart == lineStart && contentStart != range.startOffset) return@mapNotNull null
       if (PsiTreeUtil.getParentOfType(file.findElementAt(contentStart), MarkdownListItem::class.java) != item) return@mapNotNull null
       MarkdownLivePreviewSpec.ListIndent(MarkdownLivePreviewRange(lineStart, lineStart), depth)
     }
