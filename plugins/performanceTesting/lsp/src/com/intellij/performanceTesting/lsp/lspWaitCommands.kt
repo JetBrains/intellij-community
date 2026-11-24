@@ -170,6 +170,32 @@ private suspend fun awaitInlineInlay(context: PlaybackContext, args: PositionArg
 }
 
 /**
+ * Waits until a line of the document of the selected editor is the given text, with its indentation,
+ * or with `false`, until no line is. The command looks at every line, because a formatting can add
+ * or remove lines above the one that a test expects. So the text names one line: pick a text that only
+ * the expected change makes.
+ *
+ * Syntax: `%lspWaitForLine <true|false> <the text of the line>`
+ */
+internal class LspWaitForLineCommand(text: String, line: Int) : PlaybackCommandCoroutineAdapter(text, line) {
+  companion object {
+    const val PREFIX: String = CMD_PREFIX + "lspWaitForLine"
+  }
+
+  override suspend fun doExecute(context: PlaybackContext) {
+    val args = extractCommandArgument(PREFIX)
+    // the text keeps its indentation: only one space separates it from the first argument
+    val present = args.substringBefore(' ').toBooleanStrict()
+    val lineText = args.substringAfter(' ', missingDelimiterValue = "")
+    require(lineText.isNotBlank()) { "Expected: $PREFIX <true|false> <the text of the line>, got: '$text'" }
+    val what = if (present) "the line '$lineText'" else "rid of the line '$lineText'"
+    awaitEditorState(context.project, what, stateForFailure = { "Its lines like it: ${it.linesLike(lineText)}" }) { editor ->
+      editor.lines().any { it == lineText } == present
+    }
+  }
+}
+
+/**
  * Waits until a code lens with the given title shows in the given line of the selected editor, or with `false`,
  * until none with that title shows there. Lines start with 1, as in `%goto`. The client shows a code lens
  * as a Code Vision entry, so the command takes the text entries of Code Vision, except for its placeholders.
@@ -283,6 +309,14 @@ private fun Editor.documentHighlights(): List<HighlightInfo> =
 private fun Editor.documentHighlightList(): String {
   val highlights = documentHighlights().map { "${positionOf(it.startOffset)}-${positionOf(it.endOffset)}" }
   return "$highlights, and the caret is at ${positionOf(caretModel.offset)}"
+}
+
+private fun Editor.lines(): Sequence<String> = document.charsSequence.lineSequence()
+
+/** The lines with the longest word of [lineText], with their numbers, for the message of a failure. */
+private fun Editor.linesLike(lineText: String): List<String> {
+  val word = lineText.split(Regex("\\W+")).maxBy { it.length }
+  return lines().withIndex().filter { word in it.value }.map { "${it.index + 1}: '${it.value}'" }.toList()
 }
 
 private data class CodeLens(val line: Int, val title: String) {

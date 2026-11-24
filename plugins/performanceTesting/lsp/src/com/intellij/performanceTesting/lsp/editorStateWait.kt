@@ -8,6 +8,8 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.FoldRegion
 import com.intellij.openapi.editor.Inlay
 import com.intellij.openapi.editor.InlayModel
+import com.intellij.openapi.editor.event.DocumentEvent
+import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.editor.ex.FoldingListener
 import com.intellij.openapi.editor.ex.FoldingModelEx
 import com.intellij.openapi.editor.ex.MarkupModelEx
@@ -37,7 +39,8 @@ internal suspend fun selectedEditor(project: Project): Editor = withContext(Disp
 /**
  * Waits until [condition] holds for the selected editor, and fails when it doesn't within [timeout].
  *
- * The check runs when the highlighters of the document or of the editor, its inlays or its fold regions change.
+ * The check runs when the text or the highlighters of the document, the highlighters of the editor, its inlays
+ * or its fold regions change.
  * So the wait ends when the result is on screen, whichever way it got there: the daemon passes apply some of
  * the server results, and the LSP client applies others on its own.
  * The condition is about the state of the editor, not about an event, so a result that is on screen before
@@ -68,6 +71,11 @@ internal suspend fun awaitEditorState(
       }
       (DocumentMarkupModel.forDocument(editor.document, project, true) as MarkupModelEx).addMarkupModelListener(listeners, markupListener)
       (editor.markupModel as MarkupModelEx).addMarkupModelListener(listeners, markupListener)
+      editor.document.addDocumentListener(object : DocumentListener {
+        override fun documentChanged(event: DocumentEvent) {
+          changes.trySend(Unit)
+        }
+      }, listeners)
       editor.inlayModel.addListener(object : InlayModel.Listener {
         override fun onAdded(inlay: Inlay<*>) {
           changes.trySend(Unit)
