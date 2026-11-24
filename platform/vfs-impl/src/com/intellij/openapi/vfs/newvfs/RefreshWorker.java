@@ -301,7 +301,7 @@ final class RefreshWorker {
         }
 
         if (roots.contains(file)) {
-          var attributes = timeMeasuredFS.attrs(fs, file);
+          var attributes = rootAttributes(fs, file);
           if (attributes == null) {
             scheduleDeletion(events, file);
             markScanned(file);
@@ -854,6 +854,26 @@ final class RefreshWorker {
     }
 
     return false;
+  }
+
+  /**
+   * Returns the attributes of a refresh root, or {@code null} when the root does not exist.
+   * A rename or a move changes the file in its file system before it changes the {@link VirtualFile}.
+   * A lookup in between does not find the file by the path of the VFS.
+   * A read action waits for the rename or the move, so the method looks the root up again when its path has changed.
+   */
+  private @Nullable FileAttributes rootAttributes(NewVirtualFileSystem fs, VirtualFile root) throws FileStateUnknownException {
+    while (true) {
+      var path = root.getPath();
+      var attributes = timeMeasuredFS.attrs(fs, root);
+      if (attributes != null) {
+        return attributes;
+      }
+      var pathChanged = readAction(() -> root.isValid() && !root.getPath().equals(path));
+      if (!pathChanged) {
+        return null;
+      }
+    }
   }
 
   /// Runs the action under a blocking read action. Measures only the time spent waiting for the lock, not the action itself.

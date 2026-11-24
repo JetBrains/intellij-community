@@ -521,6 +521,25 @@ class RefreshSessionTest {
   }
 
   @Test
+  fun `refresh of a root that is being renamed does not delete the renamed file`(): Unit = timeoutRunBlocking {
+    val fileSystem = RefreshingRenameTempFileSystem()
+    val parent = createTempDirectory(fileSystem)
+    try {
+      val file = writeAction { parent.createChildData(this@RefreshSessionTest, "before.txt") }
+
+      writeAction { file.rename(this@RefreshSessionTest, "after.txt") }
+
+      assertThat(fileSystem.refreshFinished.await(10, TimeUnit.SECONDS)).isTrue()
+      assertThat(file.isValid).isTrue()
+      assertThat(file.name).isEqualTo("after.txt")
+      assertThat(parent.children).containsExactly(file)
+    }
+    finally {
+      deleteTempDirectory(parent)
+    }
+  }
+
+  @Test
   fun `session ignores files that do not exist`(@TempDir tempDir: Path) {
     val parentPath = Files.createDirectory(tempDir.resolve("parent"))
     val parent = checkNotNull(LocalFileSystem.getInstance().refreshAndFindFileByNioFile(parentPath))
@@ -569,5 +588,34 @@ private class CaseInsensitiveTempFileSystem : TempFileSystem() {
     val parent = file.parent ?: return file
     val actualName = list(parent).firstOrNull { it.equals(file.name, ignoreCase = true) } ?: return file
     return if (actualName == file.name) file else FakeVirtualFile(parent, actualName)
+  }
+}
+
+/** Starts a refresh of the renamed file after the rename in the file system, and waits until the refresh looks the file up. */
+private class RefreshingRenameTempFileSystem : TempFileSystem() {
+  private val protocol = "refresh-session-renaming-${System.identityHashCode(this)}"
+
+  @Volatile
+  private var renamedFile: VirtualFile? = null
+  private val renamedFileNotFound = CountDownLatch(1)
+  val refreshFinished = CountDownLatch(1)
+
+  override fun getProtocol(): String = protocol
+
+  override fun renameFile(requestor: Any?, file: VirtualFile, newName: String) {
+    super.renameFile(requestor, file, newName)
+    renamedFile = file
+    RefreshQueue.getInstance().createSession(true, false, Runnable { refreshFinished.countDown() }).apply {
+      addFile(file)
+    }.launch()
+    check(renamedFileNotFound.await(10, TimeUnit.SECONDS)) { "The refresh did not look up $file" }
+  }
+
+  override fun getAttributes(file: VirtualFile): FileAttributes? {
+    val attributes = super.getAttributes(file)
+    if (attributes == null && file == renamedFile) {
+      renamedFileNotFound.countDown()
+    }
+    return attributes
   }
 }
