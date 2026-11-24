@@ -187,7 +187,7 @@ private fun registerToolProvider(
       try {
         val constructor = aClass.getDeclaredConstructor()
         constructor.isAccessible = true
-        InspectionWrapperUtil.wrapTool(constructor.newInstance())
+        InspectionWrapperUtil.wrapTool(constructor.newInstance()).also { it.setProviderModule(pluginDescriptor) }
       }
       catch (e: ProcessCanceledException) {
         throw e

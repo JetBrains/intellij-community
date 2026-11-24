@@ -11,6 +11,7 @@ import com.intellij.diagnostic.PluginException;
 import com.intellij.l10n.LocalizationUtil;
 import com.intellij.lang.Language;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
@@ -44,6 +45,7 @@ public abstract class InspectionToolWrapper<T extends InspectionProfileEntry, E 
   public final E myEP;
   private @Nullable HighlightDisplayKey myDisplayKey;
   private volatile @Nullable Element myToolSettings;
+  private volatile @Nullable PluginDescriptor myProviderModule;
 
   private volatile Set<String> applicableToLanguages; // lazy initialized
 
@@ -64,6 +66,7 @@ public abstract class InspectionToolWrapper<T extends InspectionProfileEntry, E 
   /** Copy ctor */
   protected InspectionToolWrapper(@NotNull InspectionToolWrapper<T, ? extends E> other) {
     myEP = other.myEP;
+    myProviderModule = other.myProviderModule;
     synchronized (other) {
       Element settings = other.myToolSettings;
       myToolSettings = settings == null ? null : settings.clone();
@@ -289,6 +292,19 @@ public abstract class InspectionToolWrapper<T extends InspectionProfileEntry, E 
 
   public final E getExtension() {
     return myEP;
+  }
+
+  /**
+   * The module that registered the tool: the module of its extension, or the module of its {@code inspectionToolProvider}.
+   * {@code null} when code registered the tool, for example a test.
+   */
+  final @Nullable PluginDescriptor getRegistrantModule() {
+    return myEP != null ? myEP.getPluginDescriptor() : myProviderModule;
+  }
+
+  /** Sets the module of the {@code inspectionToolProvider} that gave the tool. */
+  final void setProviderModule(@NotNull PluginDescriptor module) {
+    myProviderModule = module;
   }
 
   @Override
