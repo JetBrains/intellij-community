@@ -621,7 +621,7 @@ open class FileEditorManagerImpl(
     refreshIcons()
 
     val fileToProviders = HashMap<kotlin.Pair<VirtualFile, Set<String>>, List<FileEditorProvider>>()
-    val filesToClose = mutableListOf<VirtualFile>()
+    val compositesToClose = mutableListOf<kotlin.Pair<EditorComposite, Set<String>>>()
     val providerChanges = openedComposites.toList().mapNotNull { composite ->
       withContext(composite.clientId.asContextElement()) {
         val file = composite.file
@@ -639,7 +639,7 @@ open class FileEditorManagerImpl(
         val editorTypeIdsToRemove = oldEditorTypeIds.filter { !editorTypeIds.contains(it) }
         when {
           providers.isEmpty() -> {
-            filesToClose.add(file)
+            compositesToClose.add(composite to oldEditorTypeIds)
             null
           }
           newProviders.isEmpty() && editorTypeIdsToRemove.isEmpty() -> null
@@ -651,10 +651,24 @@ open class FileEditorManagerImpl(
     for (item in providerChanges) {
       updateFileEditorProviders(item)
     }
-    if (filesToClose.isNotEmpty()) {
+
+    if (compositesToClose.isNotEmpty()) {
       withContext(Dispatchers.EDT) {
-        for (file in filesToClose) {
-          closeFile(file = file, moveFocus = false, closeAllCopies = true)
+        for ((composite, expectedEditorTypeIds) in compositesToClose) {
+          if (composite.isDisposed()) continue
+
+          val file = composite.file
+          val window = windows.firstOrNull { it.getComposite(file) === composite } ?: continue
+
+          if (getEditorTypeIds(composite) != expectedEditorTypeIds) {
+            providersChanged.tryEmit(Unit)
+            continue
+          }
+
+          openFileSetModificationCount.increment()
+          runBulkTabChangeInEdt(window.owner) {
+            window.owner.closeFileInWindows(file, listOf(window), moveFocus = false)
+          }
         }
       }
     }

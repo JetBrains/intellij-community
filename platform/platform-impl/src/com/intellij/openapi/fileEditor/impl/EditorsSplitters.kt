@@ -1055,7 +1055,7 @@ open class EditorsSplitters internal constructor(
     closeFileInWindows(file = file, windows = windows, moveFocus = moveFocus)
   }
 
-  private fun closeFileInWindows(file: VirtualFile, windows: List<EditorWindow>, moveFocus: Boolean) {
+  internal fun closeFileInWindows(file: VirtualFile, windows: List<EditorWindow>, moveFocus: Boolean) {
     if (windows.isEmpty()) {
       return
     }
