@@ -2,10 +2,13 @@
 package com.intellij.collaboration.ui.codereview
 
 import com.intellij.collaboration.ui.SimpleHtmlPane
+import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.ui.ColorUtil
+import com.intellij.ui.JBColor
+import com.intellij.ui.ScrollPaneFactory
 import com.intellij.util.text.DateFormatUtil
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.StyleSheetUtil
@@ -13,6 +16,7 @@ import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.Nls
 import java.util.Date
 import javax.swing.JComponent
+import javax.swing.JScrollPane
 import javax.swing.border.Border
 
 object CodeReviewTimelineUIUtil {
@@ -60,4 +64,15 @@ object CodeReviewTimelineUIUtil {
 
     return builder.toString()
   }
+
+  fun createTimelineScrollPane(timelinePanel: JComponent): JScrollPane =
+    ScrollPaneFactory.createScrollPane(timelinePanel, true).apply {
+      horizontalScrollBarPolicy = JScrollPane.HORIZONTAL_SCROLLBAR_NEVER
+      isOpaque = false
+      viewport.isOpaque = true
+      viewport.background = JBColor.lazy {
+        val scheme = EditorColorsManager.getInstance().globalScheme
+        scheme.defaultBackground
+      }
+    }
 }

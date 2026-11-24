@@ -25,14 +25,11 @@ import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.diagnostic.thisLogger
-import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.ui.ColorUtil
-import com.intellij.ui.JBColor
 import com.intellij.ui.PopupHandler
-import com.intellij.ui.ScrollPaneFactory
 import com.intellij.ui.components.panels.ListLayout
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.util.ui.JBUI.Borders
@@ -64,7 +61,6 @@ import org.jetbrains.plugins.gitlab.ui.comment.submitAsDraftActionIn
 import org.jetbrains.plugins.gitlab.util.GitLabBundle
 import org.jetbrains.plugins.gitlab.util.GitLabStatistics
 import javax.swing.JComponent
-import javax.swing.JScrollPane
 
 internal object GitLabMergeRequestTimelineComponentFactory {
   fun create(project: Project,
@@ -112,15 +108,7 @@ internal object GitLabMergeRequestTimelineComponentFactory {
       }
     }
 
-    return ScrollPaneFactory.createScrollPane(timelinePanel, true).apply {
-      horizontalScrollBarPolicy = JScrollPane.HORIZONTAL_SCROLLBAR_NEVER
-      isOpaque = false
-      viewport.isOpaque = true
-      viewport.background = JBColor.lazy {
-        val scheme = EditorColorsManager.getInstance().globalScheme
-        scheme.defaultBackground
-      }
-    }
+    return CodeReviewTimelineUIUtil.createTimelineScrollPane(timelinePanel)
   }
 
   private fun CoroutineScope.createNewNoteField(project: Project,

@@ -255,6 +255,7 @@ f:com.intellij.collaboration.api.json.JsonHttpApiHelperKt
 - sf:ITEM_VERT_PADDING:I
 - sf:VERTICAL_GAP:I
 - sf:VERT_PADDING:I
+- f:createTimelineScrollPane(javax.swing.JComponent):javax.swing.JScrollPane
 - f:createTitleTextPane(java.lang.String,java.lang.String,java.util.Date):javax.swing.JComponent
 - f:getITEM_BORDER():javax.swing.border.Border
 *f:com.intellij.collaboration.ui.codereview.CodeReviewTimelineUIUtil$Thread
