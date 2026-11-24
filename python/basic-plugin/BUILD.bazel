@@ -1,4 +1,5 @@
 load("@community//build:jps_module.bzl", "jps_module")
+load("@community//platform/build-scripts/bazel-rules:ij_plugin.bzl", "ij_plugin")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:dist_plugin.bzl", "dist_plugin")
 
@@ -65,10 +66,27 @@ jvm_library(
 )
 ### auto-generated section `build intellij.python.basic.plugin` end
 
+### auto-generated section `plugin intellij.python.basic.plugin` start
+ij_plugin(
+    name = "basic-plugin_plugin",
+    descriptor_module = ":basic-plugin",
+    content_modules = [
+        # do not sort,
+        "//python/python-parser:parser",
+        "//python/python-ast:ast",
+        "//python/python-syntax-core:syntax-core",
+        "//python/python-syntax:syntax",
+        "//python/python-syntax-core/frontend",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `plugin intellij.python.basic.plugin` end
+
 ### auto-generated section `iml intellij.python.basic.plugin` start
 jps_module(
     name = "intellij.python.basic.plugin",
     descriptors = ["resources/META-INF/plugin.xml"],
+    plugin = True,
     target = "basic-plugin",
 )
 ### auto-generated section `iml intellij.python.basic.plugin` end
