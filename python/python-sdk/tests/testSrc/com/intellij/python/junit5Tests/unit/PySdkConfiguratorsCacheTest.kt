@@ -35,6 +35,7 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import java.util.concurrent.atomic.AtomicInteger
+import kotlin.coroutines.cancellation.CancellationException
 
 
 /**
@@ -56,6 +57,9 @@ internal class PySdkConfiguratorsCacheTest {
   /** When set, a probe blocks on it, so callers can be made to arrive while one is still running. */
   private var gate: CompletableDeferred<Unit>? = null
 
+  /** Completes when the first probe starts. */
+  private val probeStarted = CompletableDeferred<Unit>()
+
   private val countingConfigurator by extensionPointFixture(PyProjectSdkConfigurationExtension.EP_NAME) {
     object : PyProjectSdkConfigurationExtension {
       override val toolId: ToolId = ToolId("counting-test-tool")
@@ -63,6 +67,7 @@ internal class PySdkConfiguratorsCacheTest {
 
       override suspend fun checkEnvironmentAndPrepareSdkCreator(pyProject: PyProject, venvs: List<PythonBinary>): CreateInterpreterInfo {
         calls.incrementAndGet()
+        probeStarted.complete(Unit)
         gate?.await()
         return CreateInterpreterInfo.ExistingEnv(PythonInfo(LanguageLevel.PYTHON312), "counting") { Result.localizedError("not used") }
       }
@@ -156,6 +161,23 @@ internal class PySdkConfiguratorsCacheTest {
       runBlocking { PyProjectSdkConfigurationExtension.findAllSortedCached(doomed) }
     }
     assertEquals(0, calls.get(), "a disposed module must not be probed")
+  }
+
+  /**
+   * The removal of a module cancels its running probe, so the probe does not run the tools for a module that is gone,
+   * and does not keep the module.
+   */
+  @Test
+  fun testRemovedModuleCancelsItsProbe(): Unit = runBlocking {
+    val pyProject = pyProject()
+    gate = CompletableDeferred()
+    val caller = async(Dispatchers.Default) { PyProjectSdkConfigurationExtension.findAllSortedCached(pyProject) }
+    probeStarted.await()
+
+    WriteAction.runAndWait<RuntimeException> { ModuleManager.getInstance(module.project).disposeModule(module) }
+
+    assertThrows<CancellationException> { runBlocking { caller.await() } }
+    assertEquals(1, calls.get())
   }
 
   @Test

@@ -29,8 +29,12 @@ suspend fun <K : Any, V : Any> AsyncCache<K, V>.getOrLoad(key: K, scope: Corouti
   val future = get(key) { k, _ -> scope.future { load(k) } }
   return suspendCancellableCoroutine { continuation ->
     future.whenComplete { value, error ->
-      if (error == null) continuation.resume(value)
-      else continuation.resumeWithException((error as? CompletionException)?.cause ?: error)
+      when (error) {
+        null -> continuation.resume(value)
+        // The future of an async cache wraps the exception of the load.
+        is CompletionException -> continuation.resumeWithException(error.cause ?: error)
+        else -> continuation.resumeWithException(error)
+      }
     }
   }
 }

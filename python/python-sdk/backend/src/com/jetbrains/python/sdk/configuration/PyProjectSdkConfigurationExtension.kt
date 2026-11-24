@@ -79,14 +79,14 @@ interface PyProjectSdkConfigurationExtension {
      * lock, or straight after installing a tool — and in a test that changes the project on disk and asks again.
      */
     suspend fun findAllSortedCached(pyProject: PyProject): PyProjectConfigurators =
-      PySdkConfiguratorsCache.getInstance(pyProject.project).get(pyProject)
+      PySdkConfiguratorsCache.get(pyProject)
 
     /**
      * Drops what [findAllSortedCached] remembers about [pyProject], for a caller that has just changed what a
      * probe would find — installing one of the tools, which turns a "will install" option into a creatable one.
      */
     fun invalidateCached(pyProject: PyProject) {
-      PySdkConfiguratorsCache.getInstance(pyProject.project).invalidate(pyProject.residesOnModule)
+      PySdkConfiguratorsCache.invalidate(pyProject)
     }
 
     /**
