@@ -88,7 +88,7 @@ class PyExpectedTypeJudgmentTest : PyCodeInsightTestCase() {
 
   @Test
   @TestFor(issues = ["PY-93538"])
-  @TestCaseOptions(additionalSdkRoots = [SdkRoot("types/sdkWithoutNoneType", OrderRootTypeEnum.CLASSES)])
+  @TestCaseOptions(additionalSdkRoots = [SdkRoot("types/sdkWithoutNoneType")])
   fun `Start index in slice when NoneType does not resolve`() = test("""
     a: list[int]
     a[start:] = [1]
