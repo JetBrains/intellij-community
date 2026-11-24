@@ -8,6 +8,7 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.fileEditor.FileEditorOpenRequest
 import com.intellij.openapi.project.Project
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import kotlinx.coroutines.Dispatchers
@@ -33,14 +34,14 @@ class GitLabMergeRequestsFilesControllerImpl(
     val fs = GitLabVirtualFileSystem.getInstance()
     val path = fs.getPath(connection.id, project, connection.repo.repository, mrIid)
     val file = fs.refreshAndFindFileByPath(path) ?: return
-    FileEditorManager.getInstance(project).openFile(file, focus)
+    FileEditorManager.getInstance(project).requestOpenFile(file, FileEditorOpenRequest.withFocus(focus))
   }
 
   override fun openDiff(mrIid: String, focus: Boolean) {
     val fs = GitLabVirtualFileSystem.getInstance()
     val path = fs.getPath(connection.id, project, connection.repo.repository, mrIid, true)
     val file = fs.refreshAndFindFileByPath(path) ?: return
-    DiffEditorTabFilesManager.getInstance(project).showDiffFile(file, focus)
+    DiffEditorTabFilesManager.getInstance(project).requestShowDiffFile(file, FileEditorOpenRequest.withFocus(focus))
   }
 
   override suspend fun closeAllFiles() {

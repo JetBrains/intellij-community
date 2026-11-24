@@ -8,6 +8,7 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileEditor.FileEditorOpenRequest;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -37,6 +38,6 @@ public class OpenDiffInEditorAction extends DumbAwareAction {
     if (request == null) return;
 
     VirtualFile file = new SimpleDiffVirtualFile(request);
-    FileEditorManager.getInstance(project).openFile(file, true);
+    FileEditorManager.getInstance(project).requestOpenFile(file, FileEditorOpenRequest.withFocus(true));
   }
 }

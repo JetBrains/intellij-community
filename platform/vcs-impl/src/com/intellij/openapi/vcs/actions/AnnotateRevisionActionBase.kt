@@ -27,6 +27,9 @@ import com.intellij.util.diff.Diff
 import com.intellij.util.diff.FilesTooBigForDiffException
 import com.intellij.vcs.VcsDisposable
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.future.await
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
@@ -106,16 +109,7 @@ internal abstract class AnnotateRevisionActionBase : DumbAwareAction {
 
         val oldContent = editor?.document?.getImmutableCharSequence()
 
-        val annotationJob = launch {
-          computeAnnotation(vcs, file, annotationProvider, fileRevision, annotatedLine, oldContent)
-        }
-
-        // We want to let the background task open the editor if it was fast enough.
-        // This will remove blinking on editor opening (step 1 - editor opens, step 2 - annotations are shown).
-        val annotationSlow = withTimeoutOrNull(ProgressUIUtil.DEFAULT_PROGRESS_DELAY_MILLIS.milliseconds) { annotationJob.join() } == null
-        if (annotationSlow) {
-          openEditor(vcs.project, file, oldContent, annotatedLine)
-        }
+        computeAnnotation(vcs, file, annotationProvider, fileRevision, annotatedLine, oldContent)
       }
     }
 
@@ -132,14 +126,20 @@ internal abstract class AnnotateRevisionActionBase : DumbAwareAction {
       withContext(Dispatchers.EDT) {
         actionLock.lock()
         try {
-          val (annotation, line) = withContext(Dispatchers.Default) {
-            withBackgroundProgress(project, VcsBundle.message("retrieving.annotations")) {
-              val fileAnnotation = annotationProvider.annotate(file, fileRevision)
-              val newLine = if (annotatedLine < 0) -1 else translateLine(oldContent, fileAnnotation.annotatedContent, annotatedLine)
-              fileAnnotation to newLine
+          val (annotation, line) = coroutineScope {
+            val result = async(Dispatchers.Default) {
+              withBackgroundProgress(project, VcsBundle.message("retrieving.annotations")) {
+                val fileAnnotation = annotationProvider.annotate(file, fileRevision)
+                val newLine = if (annotatedLine < 0) -1 else translateLine(oldContent, fileAnnotation.annotatedContent, annotatedLine)
+                fileAnnotation to newLine
+              }
             }
+            if (withTimeoutOrNull(ProgressUIUtil.DEFAULT_PROGRESS_DELAY_MILLIS.milliseconds) { result.join() } == null) {
+              openEditor(project, file, oldContent, annotatedLine)
+            }
+            result.await()
           }
-          AbstractVcsHelper.getInstance(vcs.project).showAnnotation(annotation, file, vcs, line)
+          AbstractVcsHelper.getInstance(vcs.project).showAnnotationAsync(annotation, file, vcs, line).await()
         }
         catch (e: VcsException) {
           AbstractVcsHelper.getInstance(vcs.project).showError(e, VcsBundle.message("operation.name.annotate"))

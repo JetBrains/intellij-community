@@ -8,6 +8,7 @@ import com.intellij.diff.tools.combined.CombinedDiffVirtualFileImpl
 import com.intellij.diff.tools.combined.CombinedPathBlockId
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.fileEditor.FileEditorOpenRequest
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.VcsBundle
@@ -44,7 +45,7 @@ internal class ShowCombinedDiffAction : DumbAwareAction() {
 
       val allInOneDiffFile = CombinedDiffVirtualFileImpl(project, producers, VcsBundle.message("changes.combined.diff"))
 
-      DiffEditorTabFilesManager.getInstance(project).showDiffFile(allInOneDiffFile, true)
+      DiffEditorTabFilesManager.getInstance(project).requestShowDiffFile(allInOneDiffFile, FileEditorOpenRequest.withFocus(true))
     }
   }
 }

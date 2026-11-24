@@ -13,7 +13,6 @@ import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
@@ -21,6 +20,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.VcsApplicationSettings;
 import com.intellij.openapi.vcs.VcsBundle;
+import com.intellij.openapi.vcs.VcsFileNavigation;
 import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vcs.changes.IgnoredFileContentProvider;
 import com.intellij.openapi.vcs.changes.IgnoredFileGenerator;
@@ -138,7 +138,7 @@ public class IgnoredFileGeneratorImpl implements IgnoredFileGenerator {
     ApplicationManager.getApplication().invokeLater(() -> {
       VirtualFile vFile = VfsUtil.findFileByIoFile(file, true);
       if (vFile == null) return;
-      new OpenFileDescriptor(myProject, vFile).navigate(true);
+      VcsFileNavigation.requestNavigateToVcsFile(myProject, vFile);
     });
   }
 

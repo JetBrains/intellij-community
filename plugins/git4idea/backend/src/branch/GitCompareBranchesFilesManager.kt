@@ -5,6 +5,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.fileEditor.FileEditorOpenRequest
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.vcs.log.VcsLogRangeFilter
@@ -23,7 +24,7 @@ internal class GitCompareBranchesFilesManager(private val project: Project) : Di
     val file = openedFiles.getOrPut(path, {
       GitCompareBranchesFile(name, path) { compareBranchesUi }
     })
-    FileEditorManager.getInstance(project).openFile(file, focus)
+    FileEditorManager.getInstance(project).requestOpenFile(file, FileEditorOpenRequest.withFocus(focus))
   }
 
   fun findOrCreateFile(path: GitCompareBranchesVirtualFileSystem.ComplexPath): VirtualFile {

@@ -7,7 +7,8 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.application.runUndoTransparentWriteAction
-import com.intellij.openapi.fileEditor.OpenFileDescriptor
+import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.fileEditor.FileEditorOpenRequest
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
@@ -79,7 +80,7 @@ fun writeIgnoreFileEntries(project: Project,
                            ignoreEntryRoot: VirtualFile? = null) {
   addNewElements(project, ignoreFile, ignored, vcs?.keyInstanceMethod, ignoreEntryRoot)
   VcsDirtyScopeManager.getInstance(project).markEverythingDirty()
-  OpenFileDescriptor(project, ignoreFile).navigate(true)
+  FileEditorManager.getInstance(project).requestOpenFile(ignoreFile, FileEditorOpenRequest.withFocus(true).withReuseOpen(true))
 }
 
 internal fun getIgnoredFileBeans(e: AnActionEvent, ignoreFileRoot: VirtualFile, vcs: AbstractVcs): List<IgnoredFileBean> {

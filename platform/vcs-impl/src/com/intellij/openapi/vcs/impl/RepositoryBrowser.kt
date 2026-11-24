@@ -22,6 +22,7 @@ import com.intellij.openapi.fileChooser.ex.FileSystemTreeImpl
 import com.intellij.openapi.fileChooser.tree.FileRefresher
 import com.intellij.openapi.fileChooser.tree.FileTreeModel
 import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.fileEditor.FileEditorOpenRequest
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil
 import com.intellij.openapi.fileTypes.FileTypeManager
@@ -142,7 +143,7 @@ class RepositoryBrowserPanel(
     fileSystemTree.addOkAction {
       val files = fileSystemTree.selectedFiles
       for (file in files) {
-        FileEditorManager.getInstance(project).openFile(file, true)
+        FileEditorManager.getInstance(project).requestOpenFile(file, FileEditorOpenRequest.withFocus(true))
       }
     }
 

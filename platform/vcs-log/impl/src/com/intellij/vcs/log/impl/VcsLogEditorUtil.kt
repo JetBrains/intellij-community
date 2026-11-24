@@ -29,12 +29,6 @@ object VcsLogEditorUtil {
     return editors.asSequence().flatMap { VcsLogUiHolder.getLogUis(it.component) }.filterIsInstance(clazz).firstOrNull()
   }
 
-  internal fun selectLogUi(project: Project, ui: VcsLogUi): Boolean {
-    val fileEditorManager = FileEditorManager.getInstance(project)
-    val editor = fileEditorManager.findLogFile(ui) ?: return false
-    return fileEditorManager.openFile(editor, true, true).isNotEmpty()
-  }
-
   internal fun updateTabName(project: Project, ui: VcsLogUiEx) {
     val fileEditorManager = FileEditorManagerEx.getInstanceEx(project)
     fileEditorManager.findLogFile(ui)?.let { fileEditorManager.updateFilePresentation(it) }

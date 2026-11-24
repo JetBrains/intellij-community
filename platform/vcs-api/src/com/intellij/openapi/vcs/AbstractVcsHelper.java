@@ -19,6 +19,7 @@ import com.intellij.openapi.vcs.merge.MergeProvider;
 import com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -27,6 +28,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 
 /**
  * Component which provides means to invoke different VCS-related services.
@@ -60,6 +62,12 @@ public abstract class AbstractVcsHelper {
   public abstract void showAnnotation(FileAnnotation annotation, VirtualFile file, AbstractVcs vcs);
 
   public abstract void showAnnotation(FileAnnotation annotation, VirtualFile file, AbstractVcs vcs, int line);
+
+  @ApiStatus.Internal
+  public @NotNull CompletableFuture<Void> showAnnotationAsync(FileAnnotation annotation, VirtualFile file, AbstractVcs vcs, int line) {
+    showAnnotation(annotation, file, vcs, line);
+    return CompletableFuture.completedFuture(null);
+  }
 
   public abstract void showChangesListBrowser(@NotNull CommittedChangeList changelist, @Nullable @NlsContexts.DialogTitle String title);
 

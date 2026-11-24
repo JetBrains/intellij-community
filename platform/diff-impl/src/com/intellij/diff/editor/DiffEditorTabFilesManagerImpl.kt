@@ -165,14 +165,15 @@ internal class EditorTabDiffPreviewAdvancedSettingsListener : AdvancedSettingsCh
         }
       }
 
-      // Reopen in the client that owned the diff. The reopen reads the host setting through showDiffFile.
       for ((clientId, files) in filesByClient) {
-        ClientId.withExplicitClientId(clientId).use {
-          val (toFocus, theRest) = files.headTail()
-          for (file in theRest) {
-            diffEditorManager.showDiffFile(file, false)
+        val (toFocus, theRest) = files.headTail()
+        var reopen = CompletableFuture.completedFuture(emptyList<FileEditor>())
+        for (file in theRest + toFocus) {
+          reopen = reopen.thenCompose {
+            ClientId.withExplicitClientId(clientId).use {
+              diffEditorManager.requestShowDiffFile(file, FileEditorOpenRequest.withFocus(file == toFocus))
+            }
           }
-          diffEditorManager.showDiffFile(toFocus, true)
         }
       }
     }

@@ -12,6 +12,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileEditor.FileEditorOpenRequest;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -98,21 +99,31 @@ public final class AnnotateLocalFileAction {
         editor = null;
       }
 
-      if (editor == null) {
-        editor = FileEditorManager.getInstance(project).openTextEditor(new OpenFileDescriptor(project, selectedFile), false);
-        if (editor == null) {
+      String place = e.getPlace();
+      boolean fromContextMenu = e.isFromContextMenu();
+      if (editor != null) {
+        doAnnotate(editor, project, place, fromContextMenu);
+        return;
+      }
+
+      var descriptor = new OpenFileDescriptor(project, selectedFile);
+      var request = FileEditorOpenRequest.fromDescriptor(descriptor).withRequestFocus(false);
+      FileEditorManager.getInstance(project).requestOpenTextEditor(descriptor, request).thenAccept(openedEditor -> {
+        if (project.isDisposed()) return;
+        if (openedEditor == null) {
           Messages.showErrorDialog(project,
                                    VcsBundle.message("dialog.message.can.t.create.text.editor.for", selectedFile.getPresentableUrl()),
                                    VcsBundle.message("message.title.annotate"));
-          return;
         }
-      }
-
-      doAnnotate(editor, e, project);
+        else if (!openedEditor.isDisposed() && !VcsAnnotateUtil.getBackgroundableLock(project, selectedFile).isLocked() &&
+                 !AnnotateToggleAction.hasVcsAnnotations(openedEditor)) {
+          doAnnotate(openedEditor, project, place, fromContextMenu);
+        }
+      });
     }
   }
 
-  private static void doAnnotate(final @NotNull Editor editor, AnActionEvent e, final @NotNull Project project) {
+  private static void doAnnotate(@NotNull Editor editor, @NotNull Project project, String place, boolean fromContextMenu) {
     StructuredIdeActivity activity = ANNOTATE_ACTIVITY.started(project);
     final VirtualFile file = FileDocumentManager.getInstance().getFile(editor.getDocument());
     if (file == null) return;
@@ -164,9 +175,8 @@ public final class AnnotateLocalFileAction {
           AnnotateToggleAction.doAnnotate(editor, project, fileAnnotationRef.get(), vcs);
         }
         List<EventPair<?>> eventData = new ArrayList<>();
-        String place = e.getPlace();
         eventData.add(EventFields.ActionPlace.with(place));
-        eventData.add(ActionsEventLogGroup.CONTEXT_MENU.with(e.isFromContextMenu()));
+        eventData.add(ActionsEventLogGroup.CONTEXT_MENU.with(fromContextMenu));
         activity.finished(() -> eventData);
       }
 

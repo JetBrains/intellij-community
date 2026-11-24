@@ -71,7 +71,7 @@ internal class IdeVcsProjectLog(
   }
 
   override fun openLogTab(filters: VcsLogFilterCollection): MainVcsLogUi? {
-    return logManager?.openNewLogTab(VcsLogTabLocation.TOOL_WINDOW, filters)
+    return logManager?.openNewLogTab(filters)
   }
 
   override fun showRevisionAsync(root: VirtualFile, hash: Hash, filePath: FilePath?): Deferred<Boolean> =

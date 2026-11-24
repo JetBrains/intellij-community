@@ -8,6 +8,7 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.fileEditor.FileEditorOpenRequest
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.project.Project
 import kotlinx.coroutines.Dispatchers
@@ -30,7 +31,7 @@ internal class GHPRFilesManagerImpl(
   override fun createAndOpenTimelineFile(prId: GHPRIdentifier, requestFocus: Boolean) {
     val path = fs.getPath(id, project, repository, prId, false)
     fs.refreshAndFindFileByPath(path)?.let {
-      FileEditorManager.getInstance(project).openFile(it, requestFocus)
+      FileEditorManager.getInstance(project).requestOpenFile(it, FileEditorOpenRequest.withFocus(requestFocus))
       GHPRStatisticsCollector.logTimelineOpened(project)
     }
   }
@@ -42,7 +43,7 @@ internal class GHPRFilesManagerImpl(
         GHPRStatisticsCollector.logDiffOpened(project)
       }
       it?.let {
-        DiffEditorTabFilesManager.getInstance(project).showDiffFile(it, requestFocus)
+        DiffEditorTabFilesManager.getInstance(project).requestShowDiffFile(it, FileEditorOpenRequest.withFocus(requestFocus))
       }
     }
   }

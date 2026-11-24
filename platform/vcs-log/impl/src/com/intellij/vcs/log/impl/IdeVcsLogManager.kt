@@ -98,13 +98,17 @@ internal class IdeVcsLogManager(
   }
 
   @RequiresEdt
-  fun openNewLogTab(location: VcsLogTabLocation, filters: VcsLogFilterCollection): MainVcsLogUi {
-    return tabsManager.openAnotherLogTab(filters, location)
+  fun openNewLogTab(location: VcsLogTabLocation, filters: VcsLogFilterCollection) {
+    when (location) {
+      VcsLogTabLocation.EDITOR -> tabsManager.openAnotherEditorLogTab(filters)
+      VcsLogTabLocation.TOOL_WINDOW -> openNewLogTab(filters)
+      VcsLogTabLocation.STANDALONE -> error("Only log in editor or tool window is supported")
+    }
   }
 
   @RequiresEdt
   fun openNewLogTab(filters: VcsLogFilterCollection): MainVcsLogUi {
-    return tabsManager.openAnotherLogTab(filters, VcsLogTabLocation.TOOL_WINDOW)
+    return tabsManager.openAnotherToolWindowLogTab(filters)
   }
 
   override fun getLogUis(): List<VcsLogUi> {
@@ -273,7 +277,7 @@ internal class IdeVcsLogManager(
         }
       }
 
-    val ui = openNewLogTab(VcsLogTabLocation.TOOL_WINDOW, VcsLogFilterObject.EMPTY_COLLECTION)
+    val ui = openNewLogTab(VcsLogFilterObject.EMPTY_COLLECTION)
     if (!ui.showCommit(hash, root, false)) return null
 
     toolWindow.activateOrShow(requestFocus)

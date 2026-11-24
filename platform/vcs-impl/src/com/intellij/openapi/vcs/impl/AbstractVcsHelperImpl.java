@@ -16,6 +16,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileEditor.FileEditorOpenRequest;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -101,6 +102,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 import java.util.function.Supplier;
 
 import static com.intellij.openapi.ui.Messages.getQuestionIcon;
@@ -367,6 +369,12 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
 
   @Override
   public void showAnnotation(FileAnnotation annotation, VirtualFile file, AbstractVcs vcs, int line) {
+    showAnnotationAsync(annotation, file, vcs, line);
+  }
+
+  @Override
+  @ApiStatus.Internal
+  public @NotNull CompletableFuture<Void> showAnnotationAsync(FileAnnotation annotation, VirtualFile file, AbstractVcs vcs, int line) {
     TextEditor textFileEditor;
     FileEditor fileEditor = FileEditorManager.getInstance(myProject).getSelectedEditor(file);
     if (fileEditor instanceof TextEditor te) {
@@ -376,22 +384,23 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
       textFileEditor = ContainerUtil.findInstance(FileEditorManager.getInstance(myProject).getEditorList(file), TextEditor.class);
     }
 
-    Editor editor;
     if (textFileEditor != null) {
-      editor = textFileEditor.getEditor();
-    }
-    else {
-      OpenFileDescriptor openFileDescriptor = new OpenFileDescriptor(myProject, file, line, 0);
-      editor = FileEditorManager.getInstance(myProject).openTextEditor(openFileDescriptor, true);
+      AnnotateToggleAction.doAnnotate(textFileEditor.getEditor(), myProject, annotation, vcs);
+      return CompletableFuture.completedFuture(null);
     }
 
-    if (editor == null) {
-      Messages.showMessageDialog(VcsBundle.message("message.text.cannot.open.editor", file.getPresentableUrl()),
-                                 VcsBundle.message("message.title.cannot.open.editor"), Messages.getInformationIcon());
-      return;
-    }
-
-    AnnotateToggleAction.doAnnotate(editor, myProject, annotation, vcs);
+    var descriptor = new OpenFileDescriptor(myProject, file, line, 0);
+    var request = FileEditorOpenRequest.fromDescriptor(descriptor).withRequestFocus(true);
+    return FileEditorManager.getInstance(myProject).requestOpenTextEditor(descriptor, request).thenAccept(editor -> {
+      if (myProject.isDisposed()) return;
+      if (editor == null) {
+        Messages.showMessageDialog(VcsBundle.message("message.text.cannot.open.editor", file.getPresentableUrl()),
+                                   VcsBundle.message("message.title.cannot.open.editor"), Messages.getInformationIcon());
+      }
+      else {
+        AnnotateToggleAction.doAnnotate(editor, myProject, annotation, vcs);
+      }
+    });
   }
 
   private ChangesBrowserDialog createChangesBrowserDialog(CommittedChangesTableModel changelists,

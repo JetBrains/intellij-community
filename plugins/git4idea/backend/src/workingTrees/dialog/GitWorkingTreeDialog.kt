@@ -3,7 +3,6 @@ package git4idea.workingTrees.dialog
 
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
-import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.observable.properties.GraphProperty
 import com.intellij.openapi.observable.properties.PropertyGraph
 import com.intellij.openapi.observable.util.whenDocumentChanged
@@ -17,6 +16,7 @@ import com.intellij.openapi.ui.validation.WHEN_GRAPH_PROPAGATION_FINISHED
 import com.intellij.openapi.ui.validation.WHEN_PROPERTY_CHANGED
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.vcs.VcsFileNavigation
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.ui.ColoredListCellRenderer
@@ -117,7 +117,7 @@ internal class GitWorkingTreeDialog(
     configCategoriesPanel = GitWorktreeConfigCategoriesPanel(propertyGraph, savedState, data.project, ::getCurrentRepository, setupScriptPanel) { file ->
       worktreeIncludeFile = file
       close(CREATE_WORKTREE_INCLUDE_EXIT_CODE)
-      OpenFileDescriptor(data.project, file).navigate(true)
+      VcsFileNavigation.requestNavigateToVcsFile(data.project, file)
     }
     projectName = propertyGraph.property(savedState?.projectName ?: suggestProjectName())
     parentPath = propertyGraph.property(savedState?.parentPath ?: data.initialParentPath ?: "")

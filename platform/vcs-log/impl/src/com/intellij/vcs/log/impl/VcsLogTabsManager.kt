@@ -5,9 +5,9 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.FileEditorManagerListener
+import com.intellij.openapi.fileEditor.FileEditorOpenRequest
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
@@ -23,7 +23,6 @@ import com.intellij.vcs.log.VcsLogFilterCollection
 import com.intellij.vcs.log.impl.VcsLogContentUtil.getToolWindow
 import com.intellij.vcs.log.impl.VcsLogContentUtil.openLogTab
 import com.intellij.vcs.log.impl.VcsLogContentUtil.updateLogUiName
-import com.intellij.vcs.log.impl.VcsLogEditorUtil.findVcsLogUi
 import com.intellij.vcs.log.ui.MainVcsLogUi
 import com.intellij.vcs.log.ui.editor.DefaultVcsLogFile
 import com.intellij.vcs.log.ui.editor.VcsLogVirtualFileSystem
@@ -60,7 +59,7 @@ internal class VcsLogTabsManager(
       invokeLater(ModalityState.nonModal()) {
         if (logManager.isDisposed) return@invokeLater
         LOG.debug("Reopening editor tabs with ids: $editorTabs")
-        editorTabs.forEach { openEditorLogTab(it, false, null) }
+        editorTabs.forEach { requestOpenEditorLogTab(it, false, null) }
       }
     }
 
@@ -123,28 +122,29 @@ internal class VcsLogTabsManager(
     futureToolWindow.complete(toolWindow)
   }
 
-  @RequiresEdt
-  fun openAnotherLogTab(filters: VcsLogFilterCollection, location: VcsLogTabLocation): MainVcsLogUi {
+  private fun newTabId(): String {
     require(!isDisposed) { "Already disposed" }
-    val tabId = logManager.generateNewLogId()
-    uiProperties.resetState(tabId)
-    if (location === VcsLogTabLocation.EDITOR) {
-      val editors = openEditorLogTab(tabId, true, filters)
-      return findVcsLogUi(editors, MainVcsLogUi::class.java)!!
-    }
-    else if (location === VcsLogTabLocation.TOOL_WINDOW) {
-      val toolWindow = VcsLogContentUtil.getToolWindowOrThrow(project)
-      futureToolWindow.complete(toolWindow)
-      return openToolWindowLogTab(toolWindow, tabId, true, filters)
-    }
-    throw UnsupportedOperationException("Only log in editor or tool window is supported")
+    return logManager.generateNewLogId().also { uiProperties.resetState(it) }
   }
 
-  private fun openEditorLogTab(tabId: String, focus: Boolean, filters: VcsLogFilterCollection?): Array<FileEditor> {
+  @RequiresEdt
+  fun openAnotherEditorLogTab(filters: VcsLogFilterCollection) {
+    requestOpenEditorLogTab(newTabId(), true, filters)
+  }
+
+  @RequiresEdt
+  fun openAnotherToolWindowLogTab(filters: VcsLogFilterCollection): MainVcsLogUi {
+    val tabId = newTabId()
+    val toolWindow = VcsLogContentUtil.getToolWindowOrThrow(project)
+    futureToolWindow.complete(toolWindow)
+    return openToolWindowLogTab(toolWindow, tabId, true, filters)
+  }
+
+  private fun requestOpenEditorLogTab(tabId: String, focus: Boolean, filters: VcsLogFilterCollection?) {
     val file = VcsLogVirtualFileSystem.Holder.getInstance().createVcsLogFile(project, tabId, filters)
     installFilesListener()
     uiProperties.addTab(tabId, VcsLogTabLocation.EDITOR)
-    return FileEditorManager.getInstance(project).openFile(file, focus, true)
+    FileEditorManager.getInstance(project).requestOpenFile(file, FileEditorOpenRequest.withFocus(focus).withReuseOpen(true))
   }
 
   private fun installFilesListener() {

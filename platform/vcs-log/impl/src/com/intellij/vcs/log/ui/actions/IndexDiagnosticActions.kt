@@ -3,11 +3,11 @@ package com.intellij.vcs.log.ui.actions
 
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.util.NlsActions
 import com.intellij.openapi.util.ThrowableComputable
+import com.intellij.openapi.vcs.VcsFileNavigation
 import com.intellij.openapi.vcs.VcsNotifier
 import com.intellij.testFramework.LightVirtualFile
 import com.intellij.util.text.DateFormatUtil
@@ -65,7 +65,7 @@ internal abstract class IndexDiagnosticActionBase(dynamicText: Supplier<@NlsActi
 
     val reportFile = LightVirtualFile(VcsLogBundle.message("vcs.log.index.diagnostic.report.title", DateFormatUtil.formatDateTime(Date())),
                                       report.toString())
-    OpenFileDescriptor(project, reportFile, 0).navigate(true)
+    VcsFileNavigation.requestNavigateToVcsFile(project, reportFile, 0)
   }
 
   abstract fun update(e: AnActionEvent, logManager: VcsLogManager)

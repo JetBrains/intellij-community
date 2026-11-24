@@ -31,6 +31,7 @@ import com.intellij.diff.tools.simple.SimpleDiffTool
 import com.intellij.diff.util.DiffUtil
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.diff.DiffBundle
+import com.intellij.openapi.fileEditor.FileEditorOpenRequest
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.WindowWrapper
@@ -80,7 +81,7 @@ open class DiffManagerImpl : DiffManagerEx() {
         hints.windowConsumer == null
     ) {
       val diffFile = ChainDiffVirtualFile(requests, DiffBundle.message("label.default.diff.editor.tab.name"))
-      diffEditorTabFilesManager.showDiffFile(diffFile, true)
+      diffEditorTabFilesManager.requestShowDiffFile(diffFile, FileEditorOpenRequest.withFocus(true))
       return
     }
     DiffWindow(project, requests, hints).show()

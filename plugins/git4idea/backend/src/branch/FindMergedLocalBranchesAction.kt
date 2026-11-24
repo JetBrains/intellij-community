@@ -3,10 +3,10 @@ package git4idea.branch
 
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.application.EDT
 import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.fileEditor.FileEditorOpenRequest
 import com.intellij.openapi.fileTypes.PlainTextFileType
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.coroutineToIndicator
@@ -31,9 +31,7 @@ import git4idea.i18n.GitBundle
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryManager
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 import java.util.Collections
@@ -240,9 +238,7 @@ internal class FindMergedLocalBranchesAction : DumbAwareAction() {
   private fun openResultFile(project: Project, cs: CoroutineScope, text: @NonNls String) {
     cs.launch {
       val vf = LightVirtualFile("MergedLocalBranches.txt", PlainTextFileType.INSTANCE, text)
-      withContext(Dispatchers.EDT) {
-        FileEditorManager.getInstance(project).openFile(vf, true)
-      }
+      FileEditorManager.getInstanceAsync(project).openFile(vf, FileEditorOpenRequest.withFocus(true))
     }
   }
 

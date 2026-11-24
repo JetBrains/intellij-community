@@ -3,6 +3,7 @@ package org.jetbrains.plugins.gitlab.mergerequest.util
 
 import com.intellij.openapi.components.service
 import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.fileEditor.FileEditorOpenRequest
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFileManager
@@ -23,7 +24,8 @@ internal class GitLabBackendNoteLinkHandler(private val project: Project) : GitL
       val path = link.removePrefix(OPEN_FILE_LINK_PREFIX)
       val file = VirtualFileManager.getInstance().findFileByNioPath(Path.of(path)) ?: return
       if (!file.exists()) return
-      FileEditorManager.getInstance(project).openTextEditor(OpenFileDescriptor(project, file), true)
+      val descriptor = OpenFileDescriptor(project, file)
+      FileEditorManager.getInstance(project).requestOpenTextEditor(descriptor, FileEditorOpenRequest.fromDescriptor(descriptor).withRequestFocus(true))
     }
     else if (link.startsWith(OPEN_MR_LINK_PREFIX)) {
       val mrIid = link.removePrefix(OPEN_MR_LINK_PREFIX)

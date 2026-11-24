@@ -9,6 +9,9 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.platform.backend.navigation.NavigationRequest;
+import com.intellij.platform.ide.navigation.NavigationOptions;
+import com.intellij.platform.ide.navigation.NavigationService;
 import com.intellij.pom.Navigatable;
 import com.intellij.util.diff.Diff;
 import com.intellij.util.diff.FilesTooBigForDiffException;
@@ -65,14 +68,23 @@ public abstract class DocumentContentBase extends DiffContentBase implements Doc
 
     @Override
     public void navigate(boolean requestFocus) {
+      NavigationService.getInstance(myProject).requestNavigate(this, NavigationOptions.defaultOptions().requestFocus(requestFocus));
+    }
+
+    @Override
+    public @Nullable NavigationRequest navigationRequest() {
+      if (!myTargetFile.isValid()) return null;
       Document targetDocument = FileDocumentManager.getInstance().getDocument(myTargetFile);
+      if (targetDocument == null) return NavigationRequest.sourceNavigationRequest(myProject, myTargetFile, -1);
+
       LineCol targetPosition = translatePosition(myDocument, targetDocument, myPosition);
-      Navigatable descriptor = targetDocument != null
-                               ? PsiNavigationSupport.getInstance().createNavigatable(myProject, myTargetFile,
-                                                                                      targetPosition
-                                                                                        .toOffset(targetDocument))
-                               : new OpenFileDescriptor(myProject, myTargetFile, targetPosition.line, targetPosition.column);
-      if (descriptor.canNavigate()) descriptor.navigate(true);
+      int offset = targetPosition.toOffset(targetDocument);
+      Navigatable target = PsiNavigationSupport.getInstance().createNavigatable(myProject, myTargetFile, offset);
+      if (target.getClass() == OpenFileDescriptor.class) {
+        ((OpenFileDescriptor)target).dispose();
+        return NavigationRequest.sourceNavigationRequest(myProject, myTargetFile, offset);
+      }
+      return target.navigationRequest();
     }
 
     @Override
@@ -80,9 +92,8 @@ public abstract class DocumentContentBase extends DiffContentBase implements Doc
       return myTargetFile.isValid();
     }
 
-    private static @NotNull LineCol translatePosition(@NotNull Document fromDocument, @Nullable Document toDocument, @NotNull LineCol position) {
+    private static @NotNull LineCol translatePosition(@NotNull Document fromDocument, @NotNull Document toDocument, @NotNull LineCol position) {
       try {
-        if (toDocument == null) return position;
         int targetLine = Diff.translateLine(fromDocument.getCharsSequence(), toDocument.getCharsSequence(), position.line, true);
         return new LineCol(targetLine, position.column);
       }

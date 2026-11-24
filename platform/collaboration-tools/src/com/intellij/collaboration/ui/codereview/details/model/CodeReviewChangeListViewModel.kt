@@ -8,8 +8,8 @@ import com.intellij.collaboration.util.ChangesSelection
 import com.intellij.collaboration.util.RefComparisonChange
 import com.intellij.collaboration.util.filePath
 import com.intellij.openapi.actionSystem.DataKey
-import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.vcs.VcsFileNavigation
 import com.intellij.util.EventDispatcher
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import kotlinx.coroutines.CoroutineScope
@@ -59,7 +59,7 @@ interface CodeReviewChangeListViewModel {
 
   fun startEditing(change: RefComparisonChange) {
     val file = change.filePath.virtualFile ?: return
-    OpenFileDescriptor(project, file).navigate(true)
+    VcsFileNavigation.requestNavigateToVcsFile(project, file)
   }
 
   interface WithDetails : CodeReviewChangeListViewModel {

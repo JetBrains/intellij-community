@@ -4,11 +4,11 @@ package git4idea.ignore.actions
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
-import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.VcsBundle
+import com.intellij.openapi.vcs.VcsFileNavigation
 import com.intellij.openapi.vcs.changes.ChangeListManager
 import com.intellij.openapi.vcs.changes.IgnoredBeanFactory
 import com.intellij.openapi.vcs.changes.actions.ScheduleForAdditionAction
@@ -92,12 +92,8 @@ class OpenGitExcludeAction : DefaultGitExcludeAction(
 
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.getData(CommonDataKeys.PROJECT) ?: return
-    val excludeToOpen = GitUtil.getRepositories(project).map { it.repositoryFiles.excludeFile }
-    for (gitExclude in excludeToOpen) {
-      VfsUtil.findFileByIoFile(gitExclude, true)?.let { excludeVf ->
-        OpenFileDescriptor(project, excludeVf).navigate(true)
-      }
-    }
+    val files = GitUtil.getRepositories(project).mapNotNull { VfsUtil.findFileByIoFile(it.repositoryFiles.excludeFile, true) }
+    VcsFileNavigation.requestNavigateToVcsFiles(project, files)
   }
 
 }

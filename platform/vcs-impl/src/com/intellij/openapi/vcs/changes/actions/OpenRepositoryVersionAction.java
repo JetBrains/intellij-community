@@ -6,19 +6,20 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
-import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsDataKeys;
+import com.intellij.openapi.vcs.VcsFileNavigation;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.changes.committed.CommittedChangesBrowserUseCase;
 import com.intellij.openapi.vcs.vfs.ContentRevisionVirtualFile;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.pom.Navigatable;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.ArrayList;
 
 public final class OpenRepositoryVersionAction extends AnAction implements DumbAware {
   public OpenRepositoryVersionAction() {
@@ -55,14 +56,14 @@ public final class OpenRepositoryVersionAction extends AnAction implements DumbA
   }
 
   private static void openRepositoryVersion(@NotNull Project project, Change @NotNull [] changes) {
+    var files = new ArrayList<VirtualFile>();
     for (Change change : changes) {
       ContentRevision revision = change.getAfterRevision();
 
       if (revision == null || revision.getFile().isDirectory()) continue;
 
-      VirtualFile vFile = ContentRevisionVirtualFile.create(revision);
-      Navigatable navigatable = new OpenFileDescriptor(project, vFile);
-      navigatable.navigate(true);
+      files.add(ContentRevisionVirtualFile.create(revision));
     }
+    VcsFileNavigation.requestNavigateToVcsFiles(project, files);
   }
 }
