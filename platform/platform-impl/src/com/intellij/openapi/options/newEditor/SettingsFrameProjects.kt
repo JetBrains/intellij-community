@@ -17,7 +17,9 @@ import org.jetbrains.annotations.ApiStatus
  * The projects that the Settings window of one frame configures, and the project that the window shows now.
  *
  * A frame with frame guests shows several projects. The Settings window of such a frame belongs to the frame owner, and its
- * project selector lists [projects]. A project-level page shows the settings of [selected], and all pages share that
+ * project selector lists [projects]. A frame owner with [ProjectFrameCapability.SUPPRESS_OWN_PROJECT_SETTINGS] gets a selection
+ * also when [projects] is empty, so that its window can take the projects that join later.
+ * With an empty [projects], [selected] is the frame owner. A project-level page shows the settings of [selected], and all pages share that
  * selection. The frame owner stores the selection, so the next Settings window opens on the same project.
  *
  * [projects] and [selected] change on the EDT.
@@ -38,7 +40,7 @@ class SettingsFrameProjects internal constructor(val frameOwner: Project, projec
   var projects: List<Project> = projects
     private set
 
-  var selected: Project = storedSelection(frameOwner, projects) ?: projects.first()
+  var selected: Project = storedSelection(frameOwner, projects) ?: projects.firstOrNull() ?: frameOwner
     private set
 
   fun addListener(listener: Listener, parentDisposable: Disposable) {
@@ -103,15 +105,22 @@ class SettingsFrameProjects internal constructor(val frameOwner: Project, projec
      */
     @JvmStatic
     fun listProjects(frameOwner: Project): List<Project> {
-      val suppressesOwner = service<ProjectFrameCapabilitiesService>().has(frameOwner, ProjectFrameCapability.SUPPRESS_OWN_PROJECT_SETTINGS)
+      val suppressesOwner = suppressesOwnSettings(frameOwner)
       return IdeFrameGuests.orderedProjectsOf(frameOwner).filter { project ->
         if (project === frameOwner) !suppressesOwner else !project.isDisposed && project.isInitialized
       }
     }
 
+    /** `true` when [frameOwner] has [ProjectFrameCapability.SUPPRESS_OWN_PROJECT_SETTINGS]. */
+    @JvmStatic
+    fun suppressesOwnSettings(frameOwner: Project): Boolean {
+      return service<ProjectFrameCapabilitiesService>().has(frameOwner, ProjectFrameCapability.SUPPRESS_OWN_PROJECT_SETTINGS)
+    }
+
     /**
      * The selection of the Settings window of the frame of [frameOwner], or `null` when that window needs no project selector:
-     * the frame owner is the only project to configure.
+     * the frame owner is the only project to configure. A frame owner that suppresses its own settings always gets a selection,
+     * also with no project to configure.
      */
     @JvmStatic
     fun create(frameOwner: Project): SettingsFrameProjects? {
@@ -119,7 +128,7 @@ class SettingsFrameProjects internal constructor(val frameOwner: Project, projec
         return null
       }
       val projects = listProjects(frameOwner)
-      if (projects.isEmpty() || projects.size == 1 && projects[0] === frameOwner) {
+      if (!suppressesOwnSettings(frameOwner) && (projects.isEmpty() || projects.size == 1 && projects[0] === frameOwner)) {
         return null
       }
       return SettingsFrameProjects(frameOwner, projects)

@@ -90,6 +90,35 @@ internal class SettingsFrameProjectsTest {
   }
 
   @Test
+  fun `a frame owner without settings of its own and without an open frame guest gets only the application-level pages`(): Unit = inFrame { disposable ->
+    suppressSettingsOfOwner(disposable)
+    WindowManagerEx.getInstanceEx().removeFrameGuest(guest)
+
+    val projects = SettingsFrameProjects.create(owner)!!
+    val group = createGroup(projects, disposable)
+
+    assertThat(projects.projects).isEmpty()
+    assertThat(projects.selected).isSameAs(owner)
+    assertThat(findPages(group, APP_PAGE_ID)).hasSize(1)
+    assertThat(findPages(group, PROJECT_PAGE_ID)).describedAs("The frame owner shows no project-level page of its own").isEmpty()
+    assertThat(group.canJoin()).isTrue()
+
+    WindowManagerEx.getInstanceEx().addFrameGuest(owner, guest)
+    var hasNewNodes = false
+    SettingsFrameGuestJoins.join(group, guest) { hasNewNodes = it }
+
+    assertThat(hasNewNodes).isTrue()
+    assertThat(projects.projects).containsExactly(guest)
+    assertThat(projects.selected).isSameAs(guest)
+    assertThat(findPages(group, APP_PAGE_ID)).describedAs("The application-level page stays one page").hasSize(1)
+    val page = projectPage(group)
+    assertThat(page.projectsWithPage).containsExactly(guest)
+    assertThat(ConfigurableCardPanel.createConfigurableComponent(page)).isNotNull()
+    assertThat(ConfigurableWrapper.cast(FrameProjectsTestProjectPage::class.java, page)).isSameAs(pageOf(guest))
+    page.disposeUIResources()
+  }
+
+  @Test
   fun `the frame owner stores the selection for the next window`(): Unit = inFrame {
     SettingsFrameProjects.create(owner)!!.select(guest)
 

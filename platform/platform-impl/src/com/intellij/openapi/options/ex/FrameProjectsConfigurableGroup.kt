@@ -22,6 +22,9 @@ import java.util.IdentityHashMap
  * of all the projects. So a change of an application-level page has one state, and each project keeps its own changes.
  * A project-level page that only some of the projects have is in the tree too.
  *
+ * When no project of the selector is open, the tree is the tree of the frame owner. A frame owner that suppresses its own
+ * settings gets only the application-level pages then, see [SettingsFrameProjects.suppressesOwnSettings].
+ *
  * A change of an extension point builds the tree again, as for the tree of one project. The new tree holds new pages.
  * A frame guest that opens while the window is open joins the tree, see [join]. A window that opened with the tree of one
  * project has no such root, and a frame guest that opens later gets no page in it.
@@ -74,8 +77,9 @@ class FrameProjectsConfigurableGroup private constructor(
    * Adds the pages of [project] to the tree, because [project] joins the frame. [memberTree] is the tree of [project], see
    * [buildMemberTree]. A page with an id that the tree has already gets the page of [project], so the pending changes of the
    * other projects stay. Returns `true` when the tree got a new node, so that the tree view must show the tree again.
-   * Returns `false` and adds nothing when the tree is the tree of the frame owner alone, which the build makes when every
-   * project of the selector closed.
+   * Returns `false` and adds nothing when the tree is the tree of the frame owner alone, which the build makes when no project
+   * of the selector is open. The tree of the application-level pages of a frame owner that suppresses its own settings takes
+   * a join.
    */
   @RequiresEdt
   fun join(project: Project, memberTree: SortedConfigurableGroup): Boolean = tree.join(project, memberTree)
@@ -135,7 +139,7 @@ class FrameProjectsConfigurableGroup private constructor(
  * The compaction replaces a group of one page with that page, so a join merges into the stored structure and compacts again.
  */
 private class MergedTree(private val projects: SettingsFrameProjects) {
-  /** The root of the merged tree, or `null` for the tree of the frame owner alone. */
+  /** The root of the merged tree, or `null` for the tree of the frame owner alone, which takes no join. */
   @Volatile
   private var root: SortedConfigurableGroup? = null
 
@@ -151,8 +155,15 @@ private class MergedTree(private val projects: SettingsFrameProjects) {
       FrameProjectsConfigurableGroup.buildMemberTree(project)?.let { project to it }
     }
     if (roots.isEmpty()) {
-      // every project of the selector closed: the tree of the frame owner is the one tree that is left
       val frameOwner = projects.frameOwner
+      if (SettingsFrameProjects.suppressesOwnSettings(frameOwner)) {
+        // the project-level pages of the frame owner must not show: the application-level pages wait for a project to join
+        val root = checkNotNull(ConfigurableExtensionPointUtil.buildGroupTree(ConfigurableExtensionPointUtil.getConfigurables(null, true), null))
+        compact(root)
+        this.root = root
+        return root
+      }
+      // no project of the selector is open: the tree of the frame owner is the one tree that is left
       return checkNotNull(ConfigurableExtensionPointUtil.getConfigurableGroup(ConfigurableExtensionPointUtil.getConfigurables(frameOwner, true), frameOwner))
     }
     val root = FrameProjectTreeMerger(projects).merge(roots, isParentProjectLevel = false) as SortedConfigurableGroup
