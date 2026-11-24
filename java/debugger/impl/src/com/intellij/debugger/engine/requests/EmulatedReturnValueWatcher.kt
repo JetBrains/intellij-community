@@ -71,8 +71,9 @@ class EmulatedReturnValueWatcher(private val requestManager: EventRequestManager
       baseMethod = startLocation.method()
       baseDepth = thread.frameCount()
 
-      // A void base method has no return value to record.
-      baseReturnBreakpointRequests = if (DebuggerUtilsEx.isVoid(baseMethod)) emptyList() else newReturnBreakpointRequests(baseMethod)
+      // A step out of a void base method records no value, so it needs no base return breakpoint requests.
+      baseReturnBreakpointRequests =
+        if (scope == CaptureScope.BASE_FRAME && DebuggerUtilsEx.isVoid(baseMethod)) emptyList() else newReturnBreakpointRequests(baseMethod)
 
       // A breakpoint request at the start location never fires, so a capture that starts at a return instruction waits for the exit.
       if (baseReturnBreakpointRequests.isNotEmpty() && baseMethod.returnsAt(startLocation.codeIndex())) {
@@ -139,6 +140,8 @@ class EmulatedReturnValueWatcher(private val requestManager: EventRequestManager
         is State.IgnoreCall if event is BreakpointEvent -> Unit
 
         is State.RecordBase if event is MethodExitEvent && event.method() == baseMethod -> {
+          // Callee values belong to the base frame, so a void base method leaves no value.
+          clear()
           record(event)
           endCapture()
         }
