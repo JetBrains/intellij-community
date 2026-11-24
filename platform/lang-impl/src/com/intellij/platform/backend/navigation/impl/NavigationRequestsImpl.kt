@@ -8,6 +8,7 @@ import com.intellij.codeInsight.multiverse.isSharedSourceSupportEnabled
 import com.intellij.codeInsight.navigation.shouldOpenAsNative
 import com.intellij.ide.ui.UISettings
 import com.intellij.ide.util.EditSourceUtil
+import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.openapi.editor.LazyRangeMarkerFactory
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileEditorManager
@@ -143,7 +144,8 @@ internal class NavigationRequestsImpl : NavigationRequests {
           navigationElement.textOffset to navigationElement.textRange
         }
         val context = if (isSharedSourceSupportEnabled(project)) {
-          val navigationFileViewProvider = navigationElement.containingFile?.viewProvider
+          // The navigation opens the host file of an injected element, so the request carries the context of the host file.
+          val navigationFileViewProvider = InjectedLanguageManager.getInstance(project).getTopLevelFile(navigationElement)?.viewProvider
           if (navigationFileViewProvider != null) {
             CodeInsightContextManager.getInstance(navigationElement.project).getCodeInsightContext(navigationFileViewProvider)
           }
