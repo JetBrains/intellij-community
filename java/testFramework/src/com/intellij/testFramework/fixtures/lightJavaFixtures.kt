@@ -13,6 +13,7 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.ModuleListener
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ExportableOrderEntry
 import com.intellij.openapi.roots.LanguageLevelModuleExtension
 import com.intellij.openapi.roots.LanguageLevelProjectExtension
@@ -49,6 +50,7 @@ import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.TestOnly
 import java.nio.file.Path
 import java.util.function.Function
+import java.util.function.Supplier
 import kotlin.io.path.createDirectories
 import kotlin.io.path.deleteIfExists
 import kotlin.io.path.deleteRecursively
@@ -231,6 +233,21 @@ private fun snapshot(module: Module): List<String> {
     FacetManager.getInstance(module).allFacets.mapTo(this) { "facet=${it.typeId}:${it.name}" }
   }
 }
+
+/**
+ * Returns a descriptor of a Java module with [languageLevel] and the SDK of [sdk], for [lightJavaProjectFixture].
+ * From Java 8, the module gets the type-use JetBrains annotations. Below Java 8, it gets the old JetBrains annotations.
+ * This is the module of a [com.intellij.testFramework.LightJavaCodeInsightTestCase] test. The default SDK is the mock JDK 1.8.
+ */
+@TestOnly
+@JvmOverloads
+fun lightJavaTestDescriptor(
+  languageLevel: LanguageLevel = LanguageLevel.HIGHEST,
+  sdk: Supplier<Sdk> = Supplier { IdeaTestUtil.getMockJdk18() },
+): LightProjectDescriptor =
+  object : LightJavaCodeInsightFixtureTestCase.ProjectDescriptor(languageLevel) {
+    override fun getSdk(): Sdk = sdk.get()
+  }
 
 /**
  * Creates the project and the module that the tests of one class share, as the light project of

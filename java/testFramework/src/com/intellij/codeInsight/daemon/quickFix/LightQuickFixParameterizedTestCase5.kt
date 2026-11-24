@@ -3,32 +3,37 @@ package com.intellij.codeInsight.daemon.quickFix
 
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.codeInsight.intention.impl.preview.IntentionPreviewPopupUpdateProcessor
+import com.intellij.lang.injection.InjectedLanguageManager
+import com.intellij.modcommand.ActionContext
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.application.impl.NonBlockingReadActionImpl
-import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.application.runReadActionBlocking
+import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.util.Comparing
+import com.intellij.psi.PsiFile
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageEditorUtil
 import com.intellij.psi.util.PsiUtil
 import com.intellij.psi.util.PsiUtilBase
 import com.intellij.testFramework.FileBasedArgumentProvider
 import com.intellij.testFramework.FileBasedTestCaseHelperEx
 import com.intellij.testFramework.LightProjectDescriptor
+import com.intellij.testFramework.UsefulTestCase.assertSameLinesWithFile
 import com.intellij.testFramework.fixtures.CodeInsightTestUtil
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase5
-import com.intellij.testFramework.UsefulTestCase.assertSameLinesWithFile
+import com.intellij.testFramework.runInEdtAndGet
 import com.intellij.testFramework.runInEdtAndWait
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.TestOnly
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.fail
-import java.nio.file.Files
-import java.nio.file.Path
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.ArgumentsSource
+import java.nio.file.Files
+import java.nio.file.Path
 
 /**
  * @deprecated Use [LightQuickFixFileBasedTest] with [com.intellij.testFramework.fixtures.lightJavaCodeInsightFixture] in a JUnit 5 test.
@@ -67,27 +72,35 @@ abstract class LightQuickFixParameterizedTestCase5(projectDescriptor: LightProje
  * For a `-preview` hint, it also compares the intention preview with the `preview` file, or with the result when no `preview` file exists.
  * The action must have a family name that is not blank.
  * When [exactMatch] is false, the hint text is a prefix of the action text.
- * It runs off the EDT.
+ * When the caret is in an injected fragment, the hint, the action context, and the preview use the host editor and the host file.
+ * It runs off the EDT. It finds and checks the action on the EDT.
  */
 @TestOnly
 @JvmOverloads
 fun doLightQuickFixFileTest(fixture: JavaCodeInsightTestFixture, testDataPath: String, fileName: String, exactMatch: Boolean = true) {
   val filePath = LightQuickFixTestCase.BEFORE_PREFIX + fileName
-  val file = fixture.configureByFile(filePath)
-  val (hint, context) = runReadAction { ActionHint.parse(file, file.text, exactMatch) to fixture.actionContext }
-  val action = hint.findAndCheck(fixture.availableIntentions, context) {
-    """
-           Test: $testDataPath/$filePath
-           Language level: ${PsiUtil.getLanguageLevel(fixture.project)}
-           SDK: ${ModuleRootManager.getInstance(ModuleUtilCore.findModuleForFile(fixture.file)!!).sdk}
-           Infos: ${LightQuickFixTestCase.getCurrentHighlightingInfo(fixture.doHighlighting())}
-           """.trimIndent()
+  val configuredFile = fixture.configureByFile(filePath)
+  val (editor, file) = runReadActionBlocking {
+    InjectedLanguageEditorUtil.getTopLevelEditor(fixture.editor) to
+      InjectedLanguageManager.getInstance(fixture.project).getTopLevelFile(configuredFile)
+  }
+  val hint = runReadActionBlocking { ActionHint.parse(file, file.text, exactMatch) }
+  val intentions = fixture.availableIntentions
+  val action = runInEdtAndGet {
+    hint.findAndCheck(intentions, ActionContext.from(editor, file)) {
+      """
+             Test: $testDataPath/$filePath
+             Language level: ${PsiUtil.getLanguageLevel(fixture.project)}
+             SDK: ${ModuleRootManager.getInstance(ModuleUtilCore.findModuleForFile(file)!!).sdk}
+             Infos: ${LightQuickFixTestCase.getCurrentHighlightingInfo(fixture.doHighlighting())}
+             """.trimIndent()
+    }
   }
   if (action != null) {
     val text = action.text
-    val element = runReadAction { PsiUtilBase.getElementAtCaret(fixture.editor) }
+    val element = runReadActionBlocking { PsiUtilBase.getElementAtCaret(editor) }
     if (hint.shouldCheckPreview()) {
-      checkPreviewAndLaunchAction(fixture, action, testDataPath, LightQuickFixTestCase.PREVIEW_PREFIX + fileName)
+      checkPreviewAndLaunchAction(fixture, action, file, editor, testDataPath, LightQuickFixTestCase.PREVIEW_PREFIX + fileName)
     }
     else {
       fixture.launchAction(action)
@@ -95,9 +108,9 @@ fun doLightQuickFixFileTest(fixture: JavaCodeInsightTestFixture, testDataPath: S
 
     runInEdtAndWait { UIUtil.dispatchAllInvocationEvents() }
 
-    val intentions = fixture.availableIntentions
-    val afterAction = CodeInsightTestUtil.findIntentionByText(intentions, text)
-    if (afterAction != null && Comparing.equal(element, runReadAction { PsiUtilBase.getElementAtCaret(fixture.editor) })) {
+    val afterIntentions = fixture.availableIntentions
+    val afterAction = CodeInsightTestUtil.findIntentionByText(afterIntentions, text)
+    if (afterAction != null && Comparing.equal(element, runReadActionBlocking { PsiUtilBase.getElementAtCaret(editor) })) {
       fail("Action '$text' is still available after its invocation in test $filePath")
     }
     runInEdtAndWait { NonBlockingReadActionImpl.waitForAsyncTaskCompletion() }
@@ -108,10 +121,11 @@ fun doLightQuickFixFileTest(fixture: JavaCodeInsightTestFixture, testDataPath: S
   }
 }
 
-private fun checkPreviewAndLaunchAction(fixture: JavaCodeInsightTestFixture, action: IntentionAction, testDataPath: String, previewFilePath: String) {
+private fun checkPreviewAndLaunchAction(fixture: JavaCodeInsightTestFixture, action: IntentionAction, file: PsiFile, editor: Editor,
+                                        testDataPath: String, previewFilePath: String) {
   // Run in a background thread to catch accidental write actions during the preview generation
   val previewContent = ReadAction.nonBlocking<String> {
-    IntentionPreviewPopupUpdateProcessor.getPreviewContent(fixture.project, action, fixture.file, fixture.editor)
+    IntentionPreviewPopupUpdateProcessor.getPreviewContent(fixture.project, action, file, editor)
   }.submit(AppExecutorUtil.getAppExecutorService()).get()
   fixture.launchAction(action)
   runInEdtAndWait { NonBlockingReadActionImpl.waitForAsyncTaskCompletion() }
@@ -123,6 +137,6 @@ private fun checkPreviewAndLaunchAction(fixture: JavaCodeInsightTestFixture, act
     if (previewContent.isEmpty()) {
       fail("No preview was generated for '${action.text}'")
     }
-    assertEquals(runReadActionBlocking { fixture.file.text }, previewContent)
+    assertEquals(runReadActionBlocking { file.text }, previewContent)
   }
 }
