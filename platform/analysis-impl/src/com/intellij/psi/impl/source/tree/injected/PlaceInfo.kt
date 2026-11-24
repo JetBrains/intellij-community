@@ -1,52 +1,37 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.psi.impl.source.tree.injected;
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.psi.impl.source.tree.injected
 
-import com.intellij.lang.injection.MultiHostRegistrar;
-import com.intellij.openapi.util.ProperTextRange;
-import com.intellij.openapi.util.Segment;
-import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.LiteralTextEscaper;
-import com.intellij.psi.PsiLanguageInjectionHost;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.lang.injection.MultiHostRegistrar
+import com.intellij.openapi.util.ProperTextRange
+import com.intellij.openapi.util.Segment
+import com.intellij.openapi.util.TextRange
+import com.intellij.psi.LiteralTextEscaper
+import com.intellij.psi.PsiLanguageInjectionHost
 
 /**
- * stores injection registration info temporarily
- * from the {@link MultiHostRegistrar#startInjecting(com.intellij.lang.Language)} call
- * to the moment of {@link MultiHostRegistrar#doneInjecting()}
+ * Stores injection registration info temporarily
+ * from the [MultiHostRegistrar.startInjecting] call
+ * to the moment of [MultiHostRegistrar.doneInjecting].
  */
-class PlaceInfo {
-  final @NotNull String prefix;
-  final @NotNull String suffix;
-  final @NotNull PsiLanguageInjectionHost host;
-  final @NotNull TextRange registeredRangeInsideHost;
-  final @NotNull LiteralTextEscaper<? extends PsiLanguageInjectionHost> myEscaper;
-  final @NotNull String myHostText;
-  ProperTextRange rangeInDecodedPSI;
-  TextRange rangeInHostElement;
-  Segment newInjectionHostRange;
+internal class PlaceInfo(
+  val prefix: String,
+  val suffix: String,
+  val host: PsiLanguageInjectionHost,
+  val registeredRangeInsideHost: TextRange,
+) {
+  val escaper: LiteralTextEscaper<out PsiLanguageInjectionHost> = host.createLiteralTextEscaper()
+  val hostText: String = host.text
+  var rangeInDecodedPSI: ProperTextRange? = null
+  var rangeInHostElement: TextRange? = null
+  var newInjectionHostRange: Segment? = null
 
-  PlaceInfo(@NotNull String prefix,
-            @NotNull String suffix,
-            @NotNull PsiLanguageInjectionHost host,
-            @NotNull TextRange registeredRangeInsideHost) {
-    this.prefix = prefix;
-    this.suffix = suffix;
-    this.host = host;
-    this.registeredRangeInsideHost = registeredRangeInsideHost;
-    myEscaper = host.createLiteralTextEscaper();
-    myHostText = host.getText();
-  }
-
-  @Override
-  public String toString() {
+  override fun toString(): String {
     return "Shred " +
-           (prefix.isEmpty() ? "" : "prefix='"+prefix+"' ") +
-           (suffix.isEmpty() ? "" : "suffix='"+suffix+"' ") +
-           "in " + host + " with range " + host.getTextRange()+" ("+host.getClass()+") "+
-           "inside range " + registeredRangeInsideHost;
+           (if (prefix.isEmpty()) "" else "prefix='$prefix' ") +
+           (if (suffix.isEmpty()) "" else "suffix='$suffix' ") +
+           "in $host with range ${host.textRange} (${host.javaClass}) " +
+           "inside range $registeredRangeInsideHost"
   }
 
-  TextRange getRelevantRangeInsideHost() {
-    return myEscaper.getRelevantTextRange().intersection(registeredRangeInsideHost);
-  }
+  fun getRelevantRangeInsideHost(): TextRange? = escaper.relevantTextRange.intersection(registeredRangeInsideHost)
 }

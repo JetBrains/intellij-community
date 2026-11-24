@@ -58,21 +58,21 @@ final class LeafPatcher extends RecursiveTreeElementWalkingVisitor {
     boolean firstTimer = false;
     PlaceInfo currentPlace = myPlaceInfos.get(shredNo);
     if (hostText == null) {
-      hostText = currentPlace.myHostText;
+      hostText = currentPlace.getHostText();
       rangeInHost = currentPlace.getRelevantRangeInsideHost();
-      currentTextEscaper = currentPlace.myEscaper;
+      currentTextEscaper = currentPlace.getEscaper();
       firstTimer = true;
     }
 
     StringBuilder text = tempLeafBuffer;
     text.setLength(0);
     while (startOffset < endOffset) {
-      TextRange shredRange = currentPlace.rangeInDecodedPSI;
-      String prefix = currentPlace.prefix;
+      TextRange shredRange = currentPlace.getRangeInDecodedPSI();
+      String prefix = currentPlace.getPrefix();
       if (startOffset >= shredRange.getEndOffset()) {
         currentPlace = myPlaceInfos.get(++shredNo);
-        hostText = currentPlace.myHostText;
-        currentTextEscaper = currentPlace.myEscaper;
+        hostText = currentPlace.getHostText();
+        currentTextEscaper = currentPlace.getEscaper();
         rangeInHost = currentPlace.getRelevantRangeInsideHost();
         firstTimer = true;
         continue;
@@ -86,7 +86,7 @@ final class LeafPatcher extends RecursiveTreeElementWalkingVisitor {
         continue;
       }
 
-      String suffix = currentPlace.suffix;
+      String suffix = currentPlace.getSuffix();
       if (startOffset < shredRange.getEndOffset() - suffix.length()) {
         // inside host body, cut out from the host text
         int startOffsetInHost = currentTextEscaper.getOffsetInHost(startOffset - shredRange.getStartOffset() - prefix.length(), rangeInHost);
@@ -101,8 +101,8 @@ final class LeafPatcher extends RecursiveTreeElementWalkingVisitor {
         else {
           LOG.error("Text escaper " + currentTextEscaper +" ("+currentTextEscaper.getClass()+") " +
                     "returned -1 in 'getOffsetInHost("+(endOffsetCut - shredRange.getStartOffset() - prefix.length())+", new TextRange"+rangeInHost+")' " +
-                    "for "+currentPlace.host.getClass(),
-                    new Attachment("host", StringUtil.first(currentPlace.host.getText(), 100, true)));
+                    "for "+currentPlace.getHost().getClass(),
+                    new Attachment("host", StringUtil.first(currentPlace.getHost().getText(), 100, true)));
         }
 
         continue;
@@ -135,7 +135,7 @@ final class LeafPatcher extends RecursiveTreeElementWalkingVisitor {
       "\nLeaf texts concatenated:'" + catLeafs + "';" +
       "\nFile root: " + parsedNode +
       "\nLanguage: " + parsedNode.getPsi().getLanguage() +
-      "\nHost file: " + placeInfos.get(0).host.getContainingFile().getVirtualFile();
+      "\nHost file: " + placeInfos.get(0).getHost().getContainingFile().getVirtualFile();
     DebugUtil.performPsiModification("injection leaf patching", () -> {
       for (Map.Entry<LeafElement, String> entry : newTexts.entrySet()) {
         LeafElement leaf = entry.getKey();
