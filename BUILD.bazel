@@ -741,7 +741,6 @@ jvm_library(
         "//platform/testFramework",
         "//platform/kernel/rpc.tests:rpc.tests_test_lib",
         "//platform/core-impl:core-impl-tests_test_lib",
-        "//java/debugger/impl:java-debugger-impl-tests_test_lib",
         "//plugins/devkit/devkit-java-tests:java-tests_test_lib",
         "//plugins/devkit/devkit-kotlin-tests:kotlin-tests_test_lib",
         "//platform/platform-impl/file-chooser-universal:ide-fileChooser-universal-tests_test_lib",

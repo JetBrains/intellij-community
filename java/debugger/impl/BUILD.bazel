@@ -1,17 +1,5 @@
-load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
-
-jps_test(
-    name = "java-debugger-impl-tests_test",
-    sandbox = True,
-    tags = [
-        "debugger-tests",
-    ],
-    runtime_deps = [":java-debugger-impl-tests_test_lib"],
-)
-
-### skip generation section `test intellij.java.debugger.impl.tests`
 
 ### auto-generated section `build intellij.java.debugger.impl` start
 create_kotlinc_options(
@@ -122,62 +110,3 @@ exports_files(
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.java.debugger.impl` end
-
-### auto-generated section `build intellij.java.debugger.impl.tests` start
-create_kotlinc_options(
-    name = "custom_java-debugger-impl-tests",
-    x_context_parameters = True,
-)
-
-jvm_library(
-    name = "java-debugger-impl-tests_test_lib",
-    testonly = True,
-    srcs = glob(
-        [
-            "test/**/*.kt",
-            "test/**/*.java",
-            "test/**/*.form",
-        ],
-        allow_empty = True,
-    ),
-    kotlinc_opts = ":custom_java-debugger-impl-tests",
-    module_name = "intellij.java.debugger.impl.tests",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        "//community-resources:customization",
-        "//platform/main/intellij.platform.monolith.main:monolith-main",
-    ],
-    deps = [
-        # do not sort,
-        "//java/execution/openapi:java-execution",
-        "//platform/analysis-api:analysis",
-        "//platform/core-api:core",
-        "//platform/ide-core",
-        "//platform/platform-impl:ide-impl",
-        "//platform/projectModel-api:projectModel",
-        "//platform/util",
-        "@lib//:java-debugger-impl-tests-sa-jdwp",
-        "//platform/core-impl",
-        "//platform/platform-util-io:ide-util-io",
-        "//platform/util-ex",
-        "//java/debugger/shared",
-        "//platform/testFramework",
-        "//platform/testFramework/common",
-        "//platform/testFramework/junit5",
-        "//libraries/junit6",
-        "//platform/bazel-runfiles",
-        "//platform/execution",
-        "//java/debugger/impl",
-    ],
-)
-### auto-generated section `build intellij.java.debugger.impl.tests` end
-
-### auto-generated section `iml intellij.java.debugger.impl.tests` start
-exports_files(
-    [
-        "intellij.java.debugger.impl.tests.iml",
-    ],
-    visibility = ["//visibility:public"],
-)
-### auto-generated section `iml intellij.java.debugger.impl.tests` end
