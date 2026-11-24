@@ -1,7 +1,6 @@
 // "Create secondary constructor" "true"
 // K2_ACTION: "Add primary constructor to 'A'" "true"
 // K2_ERROR: NONE_APPLICABLE
-// K2_ERROR: NO_VALUE_FOR_PARAMETER
 
 open class A {
     constructor(x: Int, y: Int)
