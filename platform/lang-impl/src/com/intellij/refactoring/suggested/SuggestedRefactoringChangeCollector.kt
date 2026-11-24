@@ -94,7 +94,7 @@ class SuggestedRefactoringChangeCollector(
       .coalesceBy(this)
       .inSmartMode(project)
       .expireWhen {
-        synchronized(stateLock) { state !== initialState }
+        synchronized(stateLock) { state !== initialState } || !anchor.isValid
       }
       .expireWith(project)
       .submit(AppExecutorUtil.getAppExecutorService())

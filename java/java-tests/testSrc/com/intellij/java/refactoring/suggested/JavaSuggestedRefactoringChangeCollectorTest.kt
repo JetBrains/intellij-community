@@ -5,6 +5,8 @@ package com.intellij.java.refactoring.suggested
 import com.intellij.ide.highlighter.JavaFileType
 import com.intellij.lang.java.JavaLanguage
 import com.intellij.openapi.actionSystem.IdeActions
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.impl.NonBlockingReadActionImpl
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.command.executeCommand
 import com.intellij.psi.PsiClass
@@ -15,11 +17,20 @@ import com.intellij.psi.PsiJavaFile
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.PsiParameter
 import com.intellij.psi.PsiTypeElement
-import com.intellij.refactoring.suggested.suggestedRefactoringChangeCollectorFixture
+import com.intellij.refactoring.suggested.SuggestedRefactoringAvailabilityIndicator
+import com.intellij.refactoring.suggested.SuggestedRefactoringChangeCollector
+import com.intellij.refactoring.suggested.SuggestedRefactoringSupport
 import com.intellij.refactoring.suggested.SuggestedRefactoringSupport.Parameter
 import com.intellij.refactoring.suggested.SuggestedRefactoringSupport.Signature
+import com.intellij.refactoring.suggested.suggestedRefactoringChangeCollectorFixture
+import com.intellij.testFramework.PlatformTestUtil
+import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.fixtures.lightJavaProjectFixture
 import com.intellij.testFramework.junit5.TestApplication
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertSame
 import org.junit.jupiter.api.Test
 
 @TestApplication
@@ -72,6 +83,36 @@ class JavaSuggestedRefactoringChangeCollectorTest {
 
   private fun createTypeElement(text: String): PsiTypeElement =
     PsiElementFactory.getInstance(collector.project).createTypeElementFromText(text, null)
+
+  @Test
+  fun testBackgroundAmendmentSkipsInvalidAnchor(): Unit = timeoutRunBlocking {
+    withContext(Dispatchers.EDT) {
+      val file = collector.fixture.configureByText(JavaFileType.INSTANCE, "class C { public void foo() {} }") as PsiJavaFile
+      val method = file.classes.single().methods.single()
+      val project = collector.project
+      val document = collector.editor.document
+      val changeCollector = SuggestedRefactoringChangeCollector(SuggestedRefactoringAvailabilityIndicator(project))
+      changeCollector._amendStateInBackgroundEnabled = true
+      val support = SuggestedRefactoringSupport.forLanguage(JavaLanguage.INSTANCE)!!
+      try {
+        executeCommand(project) {
+          runWriteAction {
+            changeCollector.editingStarted(method, support)
+            document.deleteString(0, document.textLength)
+            PsiDocumentManager.getInstance(project).commitDocument(document)
+            assertFalse(method.isValid)
+          }
+        }
+        val initialState = checkNotNull(changeCollector.state)
+        NonBlockingReadActionImpl.waitForAsyncTaskCompletion()
+        PlatformTestUtil.dispatchAllEventsInIdeEventQueue()
+        assertSame(initialState, changeCollector.state)
+      }
+      finally {
+        changeCollector.reset()
+      }
+    }
+  }
 
   @Test
   fun testAddParameter() {
