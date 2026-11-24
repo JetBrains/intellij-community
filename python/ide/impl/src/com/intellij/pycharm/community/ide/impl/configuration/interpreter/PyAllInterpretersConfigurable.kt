@@ -104,22 +104,7 @@ internal class PyAllInterpretersConfigurable(private val project: Project) : Sea
    */
   @Volatile private var currentlySelectedInterpreter: PythonInterpreter? = null
 
-  private val interpretersList: JBList<PythonInterpreter> = object : JBList<PythonInterpreter>(listModel) {
-    // Track the viewport width so long paths do not push the list wider than its scroll pane and cause the
-    // parent Settings row to expand and clip content when the filter/search changes the row count.
-    override fun getScrollableTracksViewportWidth(): Boolean = true
-  }.apply {
-    selectionMode = ListSelectionModel.SINGLE_SELECTION
-    cellRenderer = PyInterpreterNameAndVersionRenderer(this, rowActionsState)
-    emptyText.text = PyBundle.message("configurable.PyAllInterpretersConfigurable.empty.text")
-    selectionBackground = background
-    visibleRowCount = DEFAULT_VISIBLE_ROWS
-    ListHoverListener.DEFAULT.addTo(this)
-    addListSelectionListener { currentlySelectedInterpreter = selectedValue }
-    val handler = RowActionsMouseHandler(this, rowActionsState, ::copyInterpreterPath)
-    addMouseListener(handler)
-    addMouseMotionListener(handler)
-  }
+  private lateinit var interpretersList: JBList<PythonInterpreter>
 
   /** Snapshot of interpreters after the "hide other projects" filter, before the search-field filter. */
   private var currentSnapshot: List<PythonInterpreter> = emptyList()
@@ -138,6 +123,8 @@ internal class PyAllInterpretersConfigurable(private val project: Project) : Sea
   override fun getDisplayName(): String = PyBundle.message("configurable.PyAllInterpretersConfigurable.display.name")
 
   override fun createComponent(): JComponent {
+    currentlySelectedInterpreter = null
+    interpretersList = createInterpretersList()
     val hintText = PyBundle.message(
       "configurable.PyAllInterpretersConfigurable.hint",
       PyBundle.message(
@@ -168,6 +155,23 @@ internal class PyAllInterpretersConfigurable(private val project: Project) : Sea
     }
     rootComponent = component
     return component
+  }
+
+  private fun createInterpretersList(): JBList<PythonInterpreter> = object : JBList<PythonInterpreter>(listModel) {
+    // Track the viewport width so long paths do not push the list wider than its scroll pane and cause the
+    // parent Settings row to expand and clip content when the filter/search changes the row count.
+    override fun getScrollableTracksViewportWidth(): Boolean = true
+  }.apply {
+    selectionMode = ListSelectionModel.SINGLE_SELECTION
+    cellRenderer = PyInterpreterNameAndVersionRenderer(this, rowActionsState)
+    emptyText.text = PyBundle.message("configurable.PyAllInterpretersConfigurable.empty.text")
+    selectionBackground = background
+    visibleRowCount = DEFAULT_VISIBLE_ROWS
+    ListHoverListener.DEFAULT.addTo(this)
+    addListSelectionListener { currentlySelectedInterpreter = selectedValue }
+    val handler = RowActionsMouseHandler(this, rowActionsState, ::copyInterpreterPath)
+    addMouseListener(handler)
+    addMouseMotionListener(handler)
   }
 
   private fun isMultiModule(): Boolean = ModuleManager.getInstance(project).modules.size > 1
