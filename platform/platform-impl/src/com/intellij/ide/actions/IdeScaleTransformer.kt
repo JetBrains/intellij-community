@@ -10,6 +10,7 @@ import com.intellij.ide.ui.UISettingsListener
 import com.intellij.ide.ui.UISettingsUtils
 import com.intellij.ide.ui.percentStringValue
 import com.intellij.ide.ui.percentValue
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
@@ -116,6 +117,26 @@ internal class IdeScaleTransformer {
         }
 
         return null
+      }
+
+      /**
+       * Makes [comboBox] show [UISettings.presentationModeIdeScale] when [isPresentation] is `true`, else
+       * [UISettings.ideScale], after each change of that scale, unless it shows that scale already. So an edit of the user
+       * that means the same scale stays. The listener lives as long as [disposable].
+       */
+      fun followScale(comboBox: ComboBox<String>, isPresentation: Boolean, disposable: Disposable) {
+        val showScale = { scale: Float ->
+          if (scaleFromPercentStringValue(comboBox.item, isPresentation)?.percentValue != scale.percentValue) {
+            comboBox.selectedItem = scale.percentStringValue
+          }
+        }
+        val settings = UISettings.getInstance()
+        if (isPresentation) {
+          settings.addPresentationModeIdeScaleListener(disposable, showScale)
+        }
+        else {
+          settings.addIdeScaleListener(disposable, showScale)
+        }
       }
 
       fun scaleFromPercentStringValue(stringValue: String?, isPresentation: Boolean?): Float? {

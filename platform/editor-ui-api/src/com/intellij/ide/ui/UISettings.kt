@@ -60,8 +60,9 @@ private val LOG = logger<UISettings>()
  *
  * To react to the new value of one such property, use its value listener, such as [addEditorAntialiasingListener]. A
  * value listener gets the new value as the getter reads it. It runs on the EDT, in any modality. It is not called when
- * the value equals the value of its previous call. It lives until its coroutine scope is cancelled. An instance over a
- * given component registers no value listener. To react to several values, use [UISettingsListener].
+ * the value equals the value of its previous call. A value listener that gets a coroutine scope lives until the scope is
+ * cancelled. A value listener that gets a disposable lives until the disposable is disposed. An instance over a given
+ * component registers no value listener. To react to several values, use [UISettingsListener].
  */
 @State(
   name = "UISettings",
@@ -435,16 +436,30 @@ class UISettings private constructor(
       state.presentationMode = value
     }
 
+  /**
+   * Holds the editor font size in the presentation mode, from [presentationModeIdeScale]. A write is asynchronous. See
+   * [UISettings].
+   */
   var presentationModeFontSize: Int
     get() = UISettingsUtils.with(this).presentationModeFontSize.toInt()
     set(value) {
       UISettingsUtils.with(this).presentationModeFontSize = value.toFloat()
     }
 
+  /**
+   * Holds the scale of the IDE in the presentation mode, the value of [UISettingsKeys.PRESENTATION_MODE_IDE_SCALE].
+   * No value reads as the default scale of the presentation mode. A write returns before it applies.
+   * [addPresentationModeIdeScaleListener] follows the value.
+   */
   var presentationModeIdeScale: Float
-    get() = notRoamableOptions.presentationModeIdeScale
+    get() {
+      if (!usesKeys) {
+        return notRoamableOptions.presentationModeIdeScale
+      }
+      return UISettingsKeys.PRESENTATION_MODE_IDE_SCALE.getValue() ?: UISettingsUtils.defaultScale(isPresentation = true)
+    }
     set(value) {
-      notRoamableOptions.presentationModeIdeScale = value
+      writeSetting(UISettingsKeys.PRESENTATION_MODE_IDE_SCALE, value) { notRoamableOptions.presentationModeIdeScale = value }
     }
 
   var editorTabPlacement: Int
@@ -540,10 +555,20 @@ class UISettings private constructor(
       notRoamableOptions.fontScale = value
     }
 
+  /**
+   * Holds the scale of the IDE, the value of [UISettingsKeys.IDE_SCALE]. A scale of `0` or less reads as the default font
+   * size, as the load of [NotRoamableUiSettings] repairs it. A write is asynchronous. See [UISettings].
+   * [addIdeScaleListener] follows the value.
+   */
   var ideScale: Float
-    get() = notRoamableOptions.ideScale
+    get() {
+      if (!usesKeys) {
+        return notRoamableOptions.ideScale
+      }
+      return UISettingsKeys.IDE_SCALE.getValue().takeIf { it > 0 } ?: getDefaultFontSize()
+    }
     set(value) {
-      notRoamableOptions.ideScale = value
+      writeSetting(UISettingsKeys.IDE_SCALE, value) { notRoamableOptions.ideScale = value }
     }
 
   var showDirectoryForNonUniqueFilenames: Boolean
@@ -650,8 +675,12 @@ class UISettings private constructor(
       state.showBreakpointsOverLineNumbers = value
     }
 
+  /**
+   * Holds the scale of the IDE now: the scale of [runWithIdeScale] while its action runs, else [presentationModeIdeScale]
+   * in the presentation mode, else [ideScale]. A write goes to the key of the mode and is asynchronous. See [UISettings].
+   */
   var currentIdeScale: Float
-    get() = if (presentationMode) presentationModeIdeScale else ideScale
+    get() = temporaryIdeScale ?: if (presentationMode) presentationModeIdeScale else ideScale
     set(scale) {
       when {
         scale.percentValue == currentIdeScale.percentValue -> return
@@ -659,6 +688,26 @@ class UISettings private constructor(
         else -> ideScale = scale
       }
     }
+
+  /**
+   * Holds the scale of [runWithIdeScale] while its action runs, else `null`.
+   */
+  private var temporaryIdeScale: Float? = null
+
+  /**
+   * Runs [action] while [currentIdeScale] reads [scale]. The call stores nothing and does not change the settings of the
+   * user. Only the synchronous code of [action] can rely on the scale.
+   */
+  @Internal
+  fun runWithIdeScale(scale: Float, action: () -> Unit) {
+    temporaryIdeScale = scale
+    try {
+      action()
+    }
+    finally {
+      temporaryIdeScale = null
+    }
+  }
 
   var showPreviewInSearchEverywhere: Boolean
     get() = state.showPreviewInSearchEverywhere
@@ -869,6 +918,19 @@ class UISettings private constructor(
   /** Calls [listener] with the new [editorAAType] after it changes, until [coroutineScope] is cancelled. See [UISettings]. */
   fun addEditorAntialiasingListener(coroutineScope: CoroutineScope, listener: (AntialiasingType) -> Unit) {
     addValueListener(UISettingsKeys.EDITOR_ANTIALIASING, coroutineScope.asDisposable(), { editorAAType }, listener)
+  }
+
+  /** Calls [listener] with the new [ideScale] after it changes, until [parentDisposable] is disposed. See [UISettings]. */
+  fun addIdeScaleListener(parentDisposable: Disposable, listener: (Float) -> Unit) {
+    addValueListener(UISettingsKeys.IDE_SCALE, parentDisposable, { ideScale }, listener)
+  }
+
+  /**
+   * Calls [listener] with the new [presentationModeIdeScale] after it changes, until [parentDisposable] is disposed. See
+   * [UISettings].
+   */
+  fun addPresentationModeIdeScaleListener(parentDisposable: Disposable, listener: (Float) -> Unit) {
+    addValueListener(UISettingsKeys.PRESENTATION_MODE_IDE_SCALE, parentDisposable, { presentationModeIdeScale }) { listener(it!!) }
   }
 
   /**

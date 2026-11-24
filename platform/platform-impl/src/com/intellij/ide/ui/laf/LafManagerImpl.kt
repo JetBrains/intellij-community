@@ -772,14 +772,15 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
 
   override fun applyDensity() {
     val uiSettings = UISettings.getInstance()
-    val ideScale = uiSettings.currentIdeScale
 
     // need to temporarily reset this to correctly apply new size values
-    uiSettings.currentIdeScale = 1f
-    uiSettings.fireUISettingsChanged()
-    setCurrentLookAndFeel(currentTheme!!, true)
+    uiSettings.runWithIdeScale(1f) {
+      uiSettings.fireUISettingsChanged()
+      setCurrentLookAndFeel(currentTheme!!, true)
+      updateUI()
+    }
+    // The temporary scale changes no used UI option, so the listener does not update the UI back to the real scale.
     updateUI()
-    uiSettings.currentIdeScale = ideScale
     uiSettings.fireUISettingsChanged()
 
     if (SystemInfo.isMac) {

@@ -130,7 +130,6 @@ internal class QuickChangeIdeScaleAction : QuickSwitchSchemeAction(), ActionRemo
       if (shouldLog) logIdeZoomChanged(scale)
 
       UISettingsUtils.getInstance().setCurrentIdeScale(scale)
-      UISettings.getInstance().fireUISettingsChanged()
     }
 
     private const val SELECTION_THROTTLING_MS = 500

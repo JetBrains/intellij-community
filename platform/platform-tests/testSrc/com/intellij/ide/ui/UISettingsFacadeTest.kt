@@ -71,6 +71,68 @@ class UISettingsFacadeTest {
   }
 
   @Test
+  fun `the scale setters store the keys and the getters read them`(): Unit = timeoutRunBlocking(60.seconds) {
+    settings.ideScale = 1.25f
+    settings.presentationModeIdeScale = 2.5f
+
+    waitUntilUISettingsKeyStores(UISettingsKeyIdentities.IDE_SCALE, 1.25f)
+    waitUntilUISettingsKeyStores(UISettingsKeyIdentities.PRESENTATION_MODE_IDE_SCALE, 2.5f)
+    assertEquals(1.25f, settings.ideScale)
+    assertEquals(2.5f, settings.presentationModeIdeScale)
+    assertEquals(1.25f, settings.currentIdeScale)
+  }
+
+  @Test
+  fun `no presentation mode scale reads as the default scale of the presentation mode`() {
+    assertEquals(UISettingsUtils.defaultScale(isPresentation = true), settings.presentationModeIdeScale)
+  }
+
+  @Test
+  fun `an IDE scale of zero or less reads as the default font size`(): Unit = timeoutRunBlocking(60.seconds) {
+    settings.ideScale = 0f
+
+    waitUntilUISettingsKeyStores(UISettingsKeyIdentities.IDE_SCALE, 0f)
+    assertEquals(UISettings.getDefFontSize(), settings.ideScale)
+  }
+
+  @Test
+  fun `a write over a stored scale reads back after it applies`(): Unit = timeoutRunBlocking(60.seconds) {
+    settings.ideScale = 1.25f
+    waitUntilUISettingsKeyStores(UISettingsKeyIdentities.IDE_SCALE, 1.25f)
+
+    settings.ideScale = 1.5f
+
+    waitUntilUISettingsKeyStores(UISettingsKeyIdentities.IDE_SCALE, 1.5f)
+    assertEquals(1.5f, settings.ideScale)
+  }
+
+  @Test
+  fun `the current scale writes the key of the mode`(): Unit = timeoutRunBlocking(60.seconds) {
+    val presentationModeBeforeTest = settings.presentationMode
+    try {
+      settings.currentIdeScale = 1.5f
+      waitUntilUISettingsKeyStores(UISettingsKeyIdentities.IDE_SCALE, 1.5f)
+
+      settings.presentationMode = true
+      settings.currentIdeScale = 3f
+      waitUntilUISettingsKeyStores(UISettingsKeyIdentities.PRESENTATION_MODE_IDE_SCALE, 3f)
+      assertEquals(listOf(1.5f), storedUISettingsValues(UISettingsKeyIdentities.IDE_SCALE))
+    }
+    finally {
+      settings.presentationMode = presentationModeBeforeTest
+    }
+  }
+
+  @Test
+  fun `a temporary scale is the current scale and stores nothing`(): Unit = timeoutRunBlocking(60.seconds) {
+    settings.runWithIdeScale(3f) {
+      assertEquals(3f, settings.currentIdeScale)
+    }
+    assertEquals(emptyList<Float>(), storedUISettingsValues(UISettingsKeyIdentities.IDE_SCALE))
+    assertEquals(1f, settings.currentIdeScale)
+  }
+
+  @Test
   fun `an instance over a given component reads the component and not the keys`(): Unit = timeoutRunBlocking(60.seconds) {
     settings.ideAAType = AntialiasingType.OFF
     settings.fontSize2D = 21f
@@ -82,4 +144,5 @@ class UISettingsFacadeTest {
     assertEquals(component.ideAAType, instance.ideAAType)
     assertEquals(component.fontSize, instance.fontSize2D)
   }
+
 }

@@ -2,7 +2,6 @@
 package com.intellij.ide.actions
 
 import com.intellij.ide.actions.ui.ideScaleIndicator.IdeScaleIndicatorManager
-import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.UISettingsUtils
 import com.intellij.ide.ui.percentValue
 import com.intellij.openapi.actionSystem.ActionManager
@@ -21,10 +20,10 @@ abstract class ZoomIdeAction : AnAction(), DumbAware, ActionRemoteBehaviorSpecif
 
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
-  protected fun fireUISettingsChanged() {
-    IdeScaleIndicatorManager.indicateIfChanged {
-      UISettings.getInstance().fireUISettingsChanged()
-    }
+  /** Sets [scale] as the current scale of the IDE, and shows the zoom indicator when the scale changes. */
+  protected fun zoomTo(scale: Float) {
+    IdeScaleIndicatorManager.indicateNextScaleChange()
+    settingsUtils.setCurrentIdeScale(scale)
   }
 }
 
@@ -35,8 +34,7 @@ internal class ZoomInIdeAction : ZoomIdeAction() {
   }
   override fun actionPerformed(e: AnActionEvent) {
     IdeScaleTransformer.Settings.increasedScale()?.let {
-      settingsUtils.setCurrentIdeScale(it)
-      fireUISettingsChanged()
+      zoomTo(it)
     }
   }
 }
@@ -49,8 +47,7 @@ internal class ZoomOutIdeAction : ZoomIdeAction() {
 
   override fun actionPerformed(e: AnActionEvent) {
     IdeScaleTransformer.Settings.decreasedScale()?.let {
-      settingsUtils.setCurrentIdeScale(it)
-      fireUISettingsChanged()
+      zoomTo(it)
     }
   }
 }
@@ -63,8 +60,7 @@ internal class ResetIdeScaleAction : ZoomIdeAction() {
   }
 
   override fun actionPerformed(e: AnActionEvent) {
-    settingsUtils.setCurrentIdeScale(settingsUtils.currentDefaultScale)
-    fireUISettingsChanged()
+    zoomTo(settingsUtils.currentDefaultScale)
   }
 }
 

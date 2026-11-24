@@ -6,9 +6,11 @@ import com.intellij.ide.ui.UISettingsUtils
 import com.intellij.ide.ui.percentValue
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.wm.WindowManager
@@ -102,6 +104,8 @@ internal class IdeScaleIndicatorManager(private val project: Project, coroutineS
       updateScaleHelper.saveScaleAndRunIfChanged {
         if (shouldIndicate) {
           showIndicator()
+          // Each open project shows its indicator for the same change, so the request ends after this event.
+          ApplicationManager.getApplication().invokeLater({ shouldIndicate = false }, ModalityState.any())
         }
       }
     })
@@ -114,14 +118,13 @@ internal class IdeScaleIndicatorManager(private val project: Project, coroutineS
 
     fun getInstance(project: Project): IdeScaleIndicatorManager = project.service<IdeScaleIndicatorManager>()
 
-    fun indicateIfChanged(update: () -> Unit) {
-      shouldIndicate = true
-      try {
-        update()
-      }
-      finally {
-        shouldIndicate = false
-      }
+    /**
+     * Makes the next change of the scale show the indicator. A scale write applies later, so the indicator waits for the
+     * change of the look and feel that follows it. Only an open project shows the indicator and ends the request, so
+     * with no open project nothing is requested.
+     */
+    fun indicateNextScaleChange() {
+      shouldIndicate = ProjectManager.getInstance().openProjects.isNotEmpty()
     }
   }
 }

@@ -495,6 +495,8 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
             .bindItem({ settings.presentationModeIdeScale.percentStringValue }, { })
             .applyToComponent {
               isEditable = true
+              IdeScaleTransformer.Settings.followScale(this, isPresentation = true,
+                                                       disposable = checkNotNull(disposable) { "The UI of the configurable is not created" })
             }
             .validationOnInput {
               IdeScaleTransformer.Settings.validatePercentScaleInput(this, it, true)
@@ -505,9 +507,6 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
               IdeScaleTransformer.Settings.scaleFromPercentStringValue(it.item, true)?.let { scale ->
                 logIdeZoomChanged(scale, true)
                 settings.presentationModeIdeScale = scale
-                if (settings.presentationMode) {
-                  settings.fireUISettingsChanged()
-                }
               }
             }
         }

@@ -6,6 +6,7 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.testFramework.common.timeoutRunBlocking
+import com.intellij.testFramework.common.waitUntil
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.ui.FontComboBox
 import com.intellij.util.ui.UIUtil
@@ -68,6 +69,20 @@ class AppearancePageSettingsTest {
     waitUntilUISettingsKeyStores(UISettingsKeyIdentities.CUSTOM_FONT_ENABLED, true)
     waitUntilUISettingsKeyStores(UISettingsKeyIdentities.CUSTOM_FONT_FACE, shownFontFace)
   }
+
+  @Test
+  fun `a presentation mode scale written through the setter appears in the open page`(): Unit = timeoutRunBlocking(60.seconds) {
+    val scaleInput = withContext(Dispatchers.EDT) { configurable.createComponent()!!.presentationModeScaleInput() }
+
+    UISettings.getInstance().presentationModeIdeScale = 2.5f
+
+    waitUntil("the input shows the written scale") { withContext(Dispatchers.EDT) { scaleInput.item == 2.5f.percentStringValue } }
+  }
+
+  /** Returns the input of the IDE scale in the presentation mode. Only its options hold the scale `2.5`. */
+  private fun JComponent.presentationModeScaleInput(): ComboBox<*> =
+    UIUtil.findComponentsOfType(this, ComboBox::class.java)
+      .single { it.isEditable && (0 until it.model.size).any { index -> it.model.getElementAt(index) == 2.5f.percentStringValue } }
 
   /** Returns the check box of this page that turns the custom font on. */
   private fun JComponent.customFontCheckBox(): JCheckBox =

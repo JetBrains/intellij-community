@@ -19,7 +19,6 @@ import com.intellij.notification.NotificationAnnouncingMode
 import com.intellij.notification.impl.NotificationsConfigurationImpl
 import com.intellij.notification.impl.isNotificationAnnouncerFeatureAvailable
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.EditorFactory
@@ -101,14 +100,12 @@ internal class AccessibilityConfigurable : BoundSearchableConfigurable(
               logIdeZoomChanged(scale, false)
               resetZoom.visible(scale.percentValue != defaultScale.percentValue)
               settings.ideScale = scale
-              invokeLater {
-                // Invoke later to avoid NPE in JComboBox.repaint()
-                settings.fireUISettingsChanged()
-              }
             }
           }
           .applyToComponent {
             isEditable = true
+            IdeScaleTransformer.Settings.followScale(this, isPresentation = false,
+                                                     disposable = checkNotNull(disposable) { "The UI of the configurable is not created" })
           }
           .commentRight(getScaleComment())
           .validationOnInput {

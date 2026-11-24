@@ -1,11 +1,13 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui
 
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.EDT
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.common.waitUntil
 import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.TestDisposable
 import com.intellij.util.ui.EDT
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -38,6 +40,16 @@ class UISettingsValueListenerTest {
     settings.editorAAType = newValue
 
     assertEquals(listOf(Call(newValue, onEdt = true)), calls.waitForCalls(1))
+  }
+
+  @Test
+  fun `a key change that no setter made calls the listener with the new value`(@TestDisposable disposable: Disposable): Unit = timeoutRunBlocking(60.seconds) {
+    val calls = CopyOnWriteArrayList<Float>()
+    settings.addIdeScaleListener(disposable) { calls.add(it) }
+
+    writeUISettingsKey(UISettingsKeyIdentities.IDE_SCALE, 1.5f)
+
+    assertEquals(listOf(1.5f), calls.waitForCalls(1))
   }
 
   @Test
