@@ -769,7 +769,7 @@ public final class TemplateState extends TemplateStateBase implements Disposable
       return;
     }
     if (defaultValue != null && resultIsNullOrEmpty) {
-      result = defaultValue.calculateResult(context);
+      result = isQuick ? defaultValue.calculateQuickResult(context) : defaultValue.calculateResult(context);
     }
     if (element != null && commitDocument) {
       PsiUtilCore.ensureValid(element);
