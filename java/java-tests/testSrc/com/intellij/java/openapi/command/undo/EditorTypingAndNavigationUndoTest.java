@@ -288,11 +288,11 @@ public class EditorTypingAndNavigationUndoTest extends EditorUndoTestCase {
     ApplicationManager.getApplication().runWriteAction(() -> document.setText("test"));
 
     moveCaret(4, RIGHT, false);
-    WriteCommandAction.runWriteCommandAction(getProject(), () -> {
+    CommandProcessor.getInstance().executeCommand(getProject(), () -> {
       moveCaret(2, LEFT, false);
       checkEditorState("test", 2, 0, 0);
       typeInText("test");
-    });
+    }, null, null);
     checkEditorState("tetestst", 6, 0, 0);
     undoFirstEditor();
     checkEditorState("test", 4, 0, 0);

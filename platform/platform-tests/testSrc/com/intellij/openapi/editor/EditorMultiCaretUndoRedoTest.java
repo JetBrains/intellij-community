@@ -77,7 +77,9 @@ public class EditorMultiCaretUndoRedoTest {
                some<caret> text<caret>
                some <selection><caret>other</selection> <selection>text<caret></selection>
                <selection>ano<caret>ther</selection> line""");
-        myFixture.type('A');
+      });
+      myFixture.type('A');
+      WriteAction.run(()-> {
         myFixture.executeAction("EditorDelete");
         myFixture.mouse().clickAt(0, 1);
         undo();
@@ -108,7 +110,9 @@ public class EditorMultiCaretUndoRedoTest {
         init("a");
         ((EditorEx)myFixture.getEditor()).setColumnMode(true);
         myFixture.mouse().clickAt(0, 2);
-        myFixture.type('b');
+      });
+      myFixture.type('b');
+      WriteAction.run(()-> {
         undo();
         myFixture.executeAction("EditorRightWithSelection");
         myFixture.verifyCaretsAndSelections(0, 3, 2, 3);
@@ -123,7 +127,9 @@ public class EditorMultiCaretUndoRedoTest {
         init("a");
         ((EditorEx)myFixture.getEditor()).setColumnMode(true);
         myFixture.mouse().pressAt(0, 0).dragTo(0, 2).release();
-        myFixture.type('b');
+      });
+      myFixture.type('b');
+      WriteAction.run(() -> {
         undo();
         myFixture.verifyCaretsAndSelections(0, 2, 0, 2);
       });

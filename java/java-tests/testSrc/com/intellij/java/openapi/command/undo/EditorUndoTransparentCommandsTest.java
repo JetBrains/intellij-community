@@ -75,7 +75,7 @@ public class EditorUndoTransparentCommandsTest extends EditorUndoTestCase {
     String initial = getFirstEditor().getDocument().getText();
 
     typeInText("a");
-    executeTransparently(() -> typeInText("b"));
+    CommandProcessor.getInstance().runUndoTransparentAction(() -> typeInText("b"));
     typeInText("c");
     executeTransparently(() -> {
     });
