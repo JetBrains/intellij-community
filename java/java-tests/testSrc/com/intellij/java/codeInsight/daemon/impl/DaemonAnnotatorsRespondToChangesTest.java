@@ -150,6 +150,7 @@ public class DaemonAnnotatorsRespondToChangesTest {
         ExternalLanguageAnnotators.INSTANCE.addExplicitExtension(JavaLanguage.INSTANCE, annotator, fixture.getTestRootDisposable());
 
         long start = System.currentTimeMillis();
+        fixture.getDaemonCodeAnalyzer().restart(fixture.getTestName(false));
         List<HighlightInfo> errors = fixture.getTestDaemonCodeAnalyzer().waitHighlighting(fixture.getFile(), HighlightSeverity.ERROR);
         long elapsed = System.currentTimeMillis() - start;
 
@@ -582,6 +583,7 @@ public class DaemonAnnotatorsRespondToChangesTest {
       TestDaemonCodeAnalyzerImpl testDaemonCodeAnalyzer = fixture.getTestDaemonCodeAnalyzer();
       useAnnotatorsIn(PlainTextLanguage.INSTANCE, new MyRecordingAnnotator[]{new MiddleOfTextAnnotator()}, ()->{
         MiddleOfTextAnnotator.doAnnotate = true;
+        fixture.getDaemonCodeAnalyzer().restart(fixture.getTestName(false));
         List<HighlightInfo> infos = testDaemonCodeAnalyzer.waitHighlighting(fixture.getFile(), HighlightSeverity.INFORMATION);
         assertThat(infos).hasSize(1);
         assertEquals("warning", infos.getFirst().getDescription());
@@ -706,6 +708,7 @@ public class DaemonAnnotatorsRespondToChangesTest {
 
         // both annos should produce their results
         useAnnotatorsIn(annotatorsByLanguage, () -> {
+          fixture.getDaemonCodeAnalyzer().restart(fixture.getTestName(false));
           List<HighlightInfo> infos = testDaemonCodeAnalyzer.waitHighlighting(fixture.getFile(), HighlightSeverity.WARNING);
           assertTrue(ContainerUtil.exists(infos, i -> i.getDescription().equals(MyFieldSlowAnnotator.fieldWarningText.get())), infos.toString());
           assertTrue(ContainerUtil.exists(infos, i -> i.getDescription().equals(MyCommentFastAnnotator.fastToolText)), infos.toString());
@@ -719,15 +722,14 @@ public class DaemonAnnotatorsRespondToChangesTest {
       MyFieldSlowAnnotator.fieldWarningText.set("Aha, field, finally!");
       MyFieldSlowAnnotator.stallMs.set(100);
       EdtTestUtil.runInEdtAndWait(() -> {
-        // type another comment which will cause the warning about the first comment (by MyCommentFastAnnotator) to disappear
-        // and check that as soon as MyCommentFastAnnotator is finished, it removed its own obsolete warnings, whereas MyFieldSlowAnnotator continues to run
-        fixture.type("// another comment");
         MyCommentFastAnnotator.finished.set(false);
         MyFieldSlowAnnotator.finished.set(false);
-        DaemonRespondToChangesTest.makeWholeEditorWindowVisible((EditorImpl)fixture.getEditor()); // get "visible area first" optimization out of the way
-        LOG.trace("start waiting for fast/slow tools");
         try {
           useAnnotatorsIn(annotatorsByLanguage, () -> {
+            // The second comment removes the warning about the first comment.
+            fixture.type("// another comment");
+            DaemonRespondToChangesTest.makeWholeEditorWindowVisible((EditorImpl)fixture.getEditor()); // get "visible area first" optimization out of the way
+            LOG.trace("start waiting for fast/slow tools");
             // now when the highlighting is restarted, we should get back our anno result very fast, despite very slow processing of every other element
             AtomicBoolean fastToolFinishedFaster = new AtomicBoolean();
             testDaemonCodeAnalyzer.waitForDaemonToFinish(fixture.getFile(), () -> {
@@ -926,10 +928,9 @@ public class DaemonAnnotatorsRespondToChangesTest {
   public void testFileLevelAnnotationDoesNotDuplicateOnTyping() {
     DaemonRespondToChangesFixture fixture = daemonFixture.get();
     fixture.runTest(() -> EdtTestUtil.runInEdtAndWait(() -> {
-      fixture.configureByText(PlainTextFileType.INSTANCE, "text<caret>");
-      TestDaemonCodeAnalyzerImpl testDaemonCodeAnalyzer = fixture.getTestDaemonCodeAnalyzer();
-
       useAnnotatorsIn(PlainTextLanguage.INSTANCE, new MyRecordingAnnotator[]{new MyFileLevelAnnotator()}, () -> {
+        fixture.configureByText(PlainTextFileType.INSTANCE, "text<caret>");
+        TestDaemonCodeAnalyzerImpl testDaemonCodeAnalyzer = fixture.getTestDaemonCodeAnalyzer();
         for (int i=0; i<100; i++) {
           assertEquals(MyFileLevelAnnotator.MSG, getOnlyHighlight(
             testDaemonCodeAnalyzer.waitHighlighting(fixture.getFile(), HighlightSeverity.ERROR)).getDescription());
@@ -968,10 +969,9 @@ public class DaemonAnnotatorsRespondToChangesTest {
   public void testFileLevelAnnotationDoesNotDuplicateOnTypingEventWhenItsDescriptionIsConstantlyChanging() {
     DaemonRespondToChangesFixture fixture = daemonFixture.get();
     fixture.runTest(() -> EdtTestUtil.runInEdtAndWait(() -> {
-      fixture.configureByText(PlainTextFileType.INSTANCE, "<caret>");
-      TestDaemonCodeAnalyzerImpl testDaemonCodeAnalyzer = fixture.getTestDaemonCodeAnalyzer();
-
       useAnnotatorsIn(PlainTextLanguage.INSTANCE, new MyRecordingAnnotator[]{new MyFileLevelAnnotatorWithConstantlyChangingDescription()}, () -> {
+        fixture.configureByText(PlainTextFileType.INSTANCE, "<caret>");
+        TestDaemonCodeAnalyzerImpl testDaemonCodeAnalyzer = fixture.getTestDaemonCodeAnalyzer();
         for (int i=0; i<100; i++) {
           assertTrue(MyFileLevelAnnotatorWithConstantlyChangingDescription.isMine(getOnlyHighlight(
             testDaemonCodeAnalyzer.waitHighlighting(fixture.getFile(), HighlightSeverity.ERROR))));

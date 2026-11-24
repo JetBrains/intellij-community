@@ -765,9 +765,9 @@ public class DaemonHighlightVisitorRespondToChangesTest {
       fixture.getProject().getExtensionArea().getExtensionPoint(HighlightVisitor.EP_HIGHLIGHT_VISITOR).registerExtension(visitor, fixture.getTestRootDisposable());
       TestDaemonCodeAnalyzerImpl testDaemon = fixture.getTestDaemonCodeAnalyzer();
       EdtTestUtil.runInEdtAndWait(() -> {
-        fixture.configureByText(JavaFileType.INSTANCE, text);
         MyCheckingCallsVisitor.VISIT_CALLED = false;
         MyCheckingCallsVisitor.ANALYZE_CALLED = false;
+        fixture.configureByText(JavaFileType.INSTANCE, text);
         testDaemon.waitHighlighting(fixture.getFile(), HighlightSeverity.INFORMATION);
       });
       assertTrue(MyCheckingCallsVisitor.ANALYZE_CALLED);

@@ -2838,14 +2838,14 @@ public class DaemonRespondToChangesTest {
                                                                                            Runnable repairingChange // the change which is supposed to fix the invalid PSI highlight
   ) {
     DaemonRespondToChangesFixture fixture = daemonFixture.get();
-    fixture.configureByText(JavaFileType.INSTANCE, text);
-    Editor editor = fixture.getEditor();
-    Project project = fixture.getProject();
-    PsiFile psiFile = fixture.getFile();
-    TestDaemonCodeAnalyzerImpl testDaemonCodeAnalyzer = fixture.getTestDaemonCodeAnalyzer();
-    EdtTestUtil.runInEdtAndWait(() -> makeEditorWindowVisible(new Point(0, 1000), editor));
     MyVerySlowAnnotator.wait.set(false);
     DaemonAnnotatorsRespondToChangesTest.useAnnotatorsIn(JavaFileType.INSTANCE.getLanguage(), new DaemonAnnotatorsRespondToChangesTest.MyRecordingAnnotator[]{new MyVerySlowAnnotator()}, ()->{
+      fixture.configureByText(JavaFileType.INSTANCE, text);
+      Editor editor = fixture.getEditor();
+      Project project = fixture.getProject();
+      PsiFile psiFile = fixture.getFile();
+      TestDaemonCodeAnalyzerImpl testDaemonCodeAnalyzer = fixture.getTestDaemonCodeAnalyzer();
+      EdtTestUtil.runInEdtAndWait(() -> makeEditorWindowVisible(new Point(0, 1000), editor));
       MarkupModel markupModel = EdtTestUtil.runInEdtAndGet(() -> DocumentMarkupModel.forDocument(editor.getDocument(), project, true));
       fixture.waitHighlighting(HighlightSeverity.ERROR);
       assertThat(read(() -> highlightsWithDescription(markupModel, errorDescription))).isNotEmpty();
