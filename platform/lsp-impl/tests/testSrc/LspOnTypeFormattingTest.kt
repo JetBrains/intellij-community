@@ -1,15 +1,18 @@
 package com.intellij.platform.lsp
 
+import com.intellij.application.options.CodeStyle
 import com.intellij.codeInsight.template.TemplateManager
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.fileTypes.PlainTextFileType
 import com.intellij.openapi.project.Project
 import com.intellij.platform.lsp.api.customization.LspCustomization
 import com.intellij.platform.lsp.api.customization.LspOnTypeFormattingSupport
 import com.intellij.platform.lsp.common.fakeLspIntegrationFixture
 import com.intellij.platform.lsp.impl.LspCoroutineScopeService
 import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightFixture
+import com.intellij.psi.codeStyle.CodeStyleSettingsManager
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
@@ -76,6 +79,35 @@ class LspOnTypeFormattingTest {
 
       awaitLspJobs(project)
       codeInsightFixture.checkResult("  line1\n")
+    }
+
+    @Test
+    fun `on type formatting request has the indent size as its tab size`(): Unit = timeoutRunBlocking {
+      // before the file opens: its document keeps the indent options that it gets then
+      val settingsManager = CodeStyleSettingsManager.getInstance(project)
+      settingsManager.createTemporarySettings().getIndentOptions(PlainTextFileType.INSTANCE).apply {
+        INDENT_SIZE = 3
+        TAB_SIZE = 4
+        USE_TAB_CHARACTER = false
+      }
+      try {
+        val virtualFile = codeInsightFixture.configureByText("test_indent_size.txt", "line1<caret>").virtualFile
+        val serverSession = fakeLspIntegration.serverSession(virtualFile)
+        check(CodeStyle.getIndentOptions(project, virtualFile).INDENT_SIZE == 3) { "The temporary code style is not in effect" }
+        serverSession.expectRequest(serverSession.ON_TYPE_FORMATTING, {
+          it.textDocument.uri == serverSession.fileUri(virtualFile) && it.options.tabSize == 3 && it.options.isInsertSpaces
+        }) { listOf(TextEdit(Range(Position(0, 0), Position(0, 0)), "   ")) }
+
+        withContext(Dispatchers.EDT) {
+          codeInsightFixture.performEditorAction(IdeActions.ACTION_EDITOR_ENTER)
+        }
+
+        awaitLspJobs(project)
+        codeInsightFixture.checkResult("   line1\n")
+      }
+      finally {
+        settingsManager.dropTemporarySettings()
+      }
     }
 
     @Test

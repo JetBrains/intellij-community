@@ -121,7 +121,8 @@ private fun createParams(client: LspClientImpl, virtualFile: VirtualFile, editor
 
   val indentOptions = CodeStyle.getIndentOptions(project, virtualFile)
   val formattingOptions = FormattingOptions().apply {
-    tabSize = indentOptions.TAB_SIZE
+    // a server indents by `tabSize` spaces, so it gets the indent size, as in the formatting of a file
+    tabSize = indentOptions.INDENT_SIZE
     isInsertSpaces = !indentOptions.USE_TAB_CHARACTER
   }
 
