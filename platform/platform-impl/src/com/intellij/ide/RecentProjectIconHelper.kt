@@ -48,6 +48,7 @@ import java.util.Locale
 import java.util.concurrent.atomic.AtomicInteger
 import javax.swing.Icon
 import kotlin.math.abs
+import kotlin.math.roundToInt
 
 @Internal
 fun unscaledProjectIconSize(): Int = Registry.intValue("ide.project.icon.size", 20)
@@ -349,6 +350,7 @@ private data class ProjectIcon(
 /**
  * Paints [darkIconData] in a dark theme and [iconData] otherwise.
  * [getDarkIcon] returns a copy that paints one variant regardless of the theme.
+ * [scale] returns a copy that applies the object scale to the size of the icon.
  */
 @Internal
 class ProjectFileIcon private constructor(
@@ -374,48 +376,58 @@ class ProjectFileIcon private constructor(
   private var cachedIconData: IconData? = null
   private var cachedIconSysScale: Float? = null
   private var cachedIconPixScale: Float? = null
+  private var cachedIconObjScale: Float? = null
 
   override fun paintIcon(c: Component?, g: Graphics, x: Int, y: Int) {
     g as Graphics2D
     val sysScale = JBUIScale.sysScale(g)
     val pixScale = JBUI.pixScale(g.deviceConfiguration)
+    val objScale = scale
     val iconData = currentIconData
     val cachedIcon = this.cachedIcon
     val delegate: Icon
     if (cachedIcon != null &&
         cachedIconData === iconData &&
         cachedIconSysScale == sysScale &&
-        cachedIconPixScale == pixScale) {
+        cachedIconPixScale == pixScale &&
+        cachedIconObjScale == objScale) {
       delegate = cachedIcon
     }
     else {
       delegate = try {
-        iconData.getScaledIcon(sysScale, pixScale)
+        iconData.getScaledIcon(sysScale, pixScale, objScale)
       }
       catch (e: Throwable) {
         logger<IconData>().warn("Cannot render $iconData", e)
-        createEmptyIcon(iconData.iconSize, pixScale)
+        createEmptyIcon(iconData.iconSize, pixScale * objScale)
       }
 
       this.cachedIcon = delegate
       cachedIconData = iconData
       cachedIconSysScale = sysScale
       cachedIconPixScale = pixScale
+      cachedIconObjScale = objScale
     }
     withTxAndClipAligned(g = g, x = x, y = y, width = delegate.iconWidth, height = delegate.iconHeight) { ag ->
       delegate.paintIcon(c, ag, 0, 0)
     }
   }
 
-  override fun getIconWidth(): Int = JBUIScale.scale(iconData.iconSize)
+  override fun getIconWidth(): Int = scaleIconSize(iconData.iconSize, scale)
 
-  override fun getIconHeight(): Int = JBUIScale.scale(iconData.iconSize)
+  override fun getIconHeight(): Int = scaleIconSize(iconData.iconSize, scale)
 
-  override fun copy(): ProjectFileIcon = ProjectFileIcon(iconData, darkIconData, isDark)
+  override fun copy(): ProjectFileIcon = copy(isDark)
 
   override fun getDarkIcon(isDark: Boolean): Icon {
     if (darkIconData == null || this.isDark == isDark) return this
-    return ProjectFileIcon(iconData, darkIconData, isDark)
+    return copy(isDark)
+  }
+
+  private fun copy(isDark: Boolean?): ProjectFileIcon {
+    val copy = ProjectFileIcon(iconData, darkIconData, isDark)
+    copy.updateContextFrom(this)
+    return copy
   }
 
   /**
@@ -455,7 +467,10 @@ private fun loadIcon(data: ByteArray, svg: Boolean, size: Int = unscaledProjectI
 
 @Internal
 sealed class IconData(val iconSize: Int = unscaledProjectIconSize()) {
-  abstract fun getScaledIcon(sysScale: Float, pixScale: Float): Icon
+  /**
+   * @param objScale the object scale of the icon, applied on top of [pixScale]
+   */
+  abstract fun getScaledIcon(sysScale: Float, pixScale: Float, objScale: Float): Icon
 }
 
 @Internal
@@ -468,16 +483,16 @@ val ImageIconData.isSvg: Boolean
   get() = this is SvgIconData
 
 private abstract class SvgIconData(iconSize: Int = unscaledProjectIconSize()) : ImageIconData(iconSize) {
-  override fun getScaledIcon(sysScale: Float, pixScale: Float): Icon {
-    val userSize = JBUIScale.scale(iconSize)
+  override fun getScaledIcon(sysScale: Float, pixScale: Float, objScale: Float): Icon {
+    val userSize = scaleIconSize(iconSize, objScale)
     return JBImageIcon(loadWithSizes(sizes = listOf(userSize), data = getData(), scale = sysScale).first())
   }
 }
 
 private abstract class PngIconData(private val sourceImage: BufferedImage,
                                    iconSize: Int = unscaledProjectIconSize()) : ImageIconData(iconSize) {
-  override fun getScaledIcon(sysScale: Float, pixScale: Float): Icon {
-    val targetSize = ((iconSize * pixScale) + 0.5f).toInt()
+  override fun getScaledIcon(sysScale: Float, pixScale: Float, objScale: Float): Icon {
+    val targetSize = ((iconSize * pixScale * objScale) + 0.5f).toInt()
     val image = Scalr.resize(sourceImage, Scalr.Method.ULTRA_QUALITY, targetSize)
     return toRetinaAwareIcon(image = image, sysScale = sysScale)
   }
@@ -494,10 +509,12 @@ private class PngIconDataImpl(val file: Path, sourceImage: BufferedImage,
 }
 
 private class EmptyIconData(iconSize: Int = unscaledProjectIconSize()) : IconData(iconSize) {
-  override fun getScaledIcon(sysScale: Float, pixScale: Float): Icon {
-    return createEmptyIcon(iconSize, pixScale)
+  override fun getScaledIcon(sysScale: Float, pixScale: Float, objScale: Float): Icon {
+    return createEmptyIcon(iconSize, pixScale * objScale)
   }
 }
+
+private fun scaleIconSize(iconSize: Int, objScale: Float): Int = JBUIScale.scale(iconSize * objScale).roundToInt()
 
 private fun createEmptyIcon(iconSize: Int, pixScale: Float) = EmptyIcon.create(((iconSize * pixScale) + 0.5f).toInt())
 
