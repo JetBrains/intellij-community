@@ -17,6 +17,7 @@ import com.intellij.psi.javadoc.PsiSnippetDocTag;
 import com.intellij.psi.javadoc.PsiSnippetDocTagBody;
 import com.intellij.psi.javadoc.PsiSnippetDocTagValue;
 import com.intellij.psi.tree.TokenSet;
+import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.text.CharArrayUtil;
@@ -91,10 +92,11 @@ public class PsiSnippetDocTagImpl extends CompositePsiElement implements PsiSnip
 
   /**
    * Returns the ranges of the snippet body lines in this tag, without the leading asterisks and the common indent.
+   * The list is cached until the next PSI change.
    */
   @Contract(pure = true)
   public @NotNull List<@NotNull TextRange> getContentRanges() {
-    return computeContentRanges();
+    return CachedValuesManager.getProjectPsiDependentCache(this, tag -> Collections.unmodifiableList(tag.computeContentRanges()));
   }
 
   @Contract(pure = true)
