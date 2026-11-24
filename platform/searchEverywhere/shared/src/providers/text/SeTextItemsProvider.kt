@@ -49,6 +49,7 @@ import com.intellij.platform.searchEverywhere.SeSearchScopesProvider
 import com.intellij.platform.searchEverywhere.presentations.SeItemPresentation
 import com.intellij.platform.searchEverywhere.presentations.SeTextSearchItemPresentation
 import com.intellij.platform.searchEverywhere.providers.SeEverywhereFilterImpl
+import com.intellij.platform.searchEverywhere.providers.SeSearchProjectsProvider
 import com.intellij.platform.searchEverywhere.providers.SeTextFilter
 import com.intellij.platform.searchEverywhere.providers.target.SeTargetScopes
 import com.intellij.platform.searchEverywhere.providers.target.SeTargetScopesProvider
@@ -131,6 +132,7 @@ class SeTextItemsProvider(
     val textFilter = SeTextFilter.from(filter)
     val isEverywhere = SeEverywhereFilterImpl.isEverywhere(filter)
     val scopes = scopes.getValue()
+    val searchProjectsScope = SeSearchProjectsProvider.find(project)?.let { it.scopeOf(it.selectedProjects(filter)) }
 
     var isScopeSelectedByUser = false
     val scope: ScopeDescriptor? = when {
@@ -138,6 +140,9 @@ class SeTextItemsProvider(
       // The recent-files scope holds the editor history plus the open files, which is the only useful set there.
       WelcomeScreenProjectProvider.isWelcomeScreenProject(project) ->
         scopes.byName(PredefinedSearchScopeProviderImpl.getRecentlyViewedFilesScopeName())
+      isEverywhere == true -> scopes.byId[true]
+      // One run of this project reaches the files of every search project of the popup. The product gives the scope of the picked ones.
+      searchProjectsScope != null -> ScopeDescriptor(searchProjectsScope)
       isEverywhere != null -> scopes.byId[isEverywhere]
       else -> textFilter?.selectedScopeId?.let { scopes.byId[it] }?.also { isScopeSelectedByUser = true }
               ?: scopes.info?.selectedScopeId?.let { scopes.byId[it] }

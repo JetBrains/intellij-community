@@ -519,6 +519,22 @@ class SeNonIndexableFilesProviderTest {
   }
 
   @Test
+  fun `a filter with the everywhere flag keeps its hidden types`(): Unit = timeoutRunBlocking {
+    val root = baseDir.newVirtualDirectory("dir1")
+    val file1 = baseDir.newVirtualFile("dir1/file1")
+    addNonIndexableRoots(root)
+    val hiddenTypeName = readAction { FileTypeRef.forFileType(file1.fileType).displayName }
+    // The filter of a product that sets the flag in the Files tab, see `SeTabsCustomizer.customizeFilterEditor`.
+    val everywhere = mapOf(SeEverywhereFilterImpl.KEY_IS_EVERYWHERE to listOf(true.toString()))
+
+    val visible = searchNonIndexableFiles("file1", filesTabFilter().plus(everywhere)).map { it.name }
+    val hidden = searchNonIndexableFiles("file1", filesTabFilter(hiddenTypes = listOf(hiddenTypeName)).plus(everywhere))
+
+    assertThat(visible).containsExactly("file1")
+    assertThat(hidden).isEmpty()
+  }
+
+  @Test
   fun `search everywhere with slashes`(): Unit = timeoutRunBlocking {
     val root = baseDir.newVirtualDirectory("dir1")
     baseDir.newVirtualFile("dir1/file1")
@@ -588,6 +604,10 @@ class SeNonIndexableFilesProviderTest {
 
   private class CollectedItem(val item: SeItem, val psiItem: PsiFileSystemItem)
 }
+
+/** This state with [keys] on top. */
+private fun SeFilterState.plus(keys: Map<String, List<String>>): SeFilterState =
+  SeFilterState.Data(this.keys.associateWith { get(it).orEmpty() } + keys)
 
 private fun filesTabFilter(scopeId: String? = null, hiddenTypes: List<String> = emptyList()): SeFilterState =
   SeTargetsFilter(scopeId, isAutoTogglePossible = false, mapOf(SeTypeFilterKeys.DEFAULT to hiddenTypes)).toState()

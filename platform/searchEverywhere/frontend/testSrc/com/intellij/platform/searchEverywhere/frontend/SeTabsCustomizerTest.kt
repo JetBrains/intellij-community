@@ -3,7 +3,11 @@ package com.intellij.platform.searchEverywhere.frontend
 
 import com.intellij.ide.actions.searcheverywhere.SearchHistoryList
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.project.Project
+import com.intellij.platform.searchEverywhere.SeFilterState
 import com.intellij.platform.searchEverywhere.SeItemData
 import com.intellij.platform.searchEverywhere.SeParams
 import com.intellij.platform.searchEverywhere.SePreviewInfo
@@ -22,9 +26,12 @@ import com.intellij.testFramework.replaceService
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.first
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertSame
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import java.util.UUID
@@ -75,6 +82,26 @@ class SeTabsCustomizerTest {
     }
   }
 
+  @Test
+  fun `customizer replaces the filter editor of a tab`(): Unit = timeoutRunBlocking {
+    val popupScope = childScope("SeTabsCustomizerTest")
+    try {
+      val editorOfTab = TestFilterEditor(emptyList())
+      val vm = createPopupVm(popupScope, listOf(TestTab(FILTERED_ID, 300, editorOfTab), TestTab("a", 200, editorOfTab)))
+      val filtered = vm.tabsModel.sortedTabVms.single { it.tabId == FILTERED_ID }
+      val plain = vm.tabsModel.sortedTabVms.single { it.tabId == "a" }
+
+      val editor = filtered.filterEditor.getValue()
+
+      assertSame(TestTabsCustomizer.autoToggleAction, editor?.getHeaderActions()?.single(), "the popup shows the editor of the customizer")
+      assertSame(TestTabsCustomizer.autoToggleAction, filtered.getAutoToggleAction(), "the auto toggle comes from the shown editor")
+      assertSame(editorOfTab, plain.filterEditor.getValue(), "a tab that the customizer leaves keeps its editor")
+    }
+    finally {
+      popupScope.cancel()
+    }
+  }
+
   private fun createPopupVm(
     scope: CoroutineScope,
     tabs: List<SeTab>,
@@ -105,6 +132,7 @@ class SeTabsCustomizerTest {
     const val RENAMED_ID = "renamed"
     const val HIDDEN_ID = "hidden"
     const val MOVED_ID = "moved"
+    const val FILTERED_ID = "filtered"
 
     /** [MOVED_ID] goes first with its new priority, [RENAMED_ID] gets its new name, and [HIDDEN_ID] is not there. */
     val EXPECTED_TABS = listOf("$MOVED_ID:$MOVED_ID:1000", "a:a:300", "$RENAMED_ID:Renamed:200")
@@ -117,13 +145,30 @@ class SeTabsCustomizerTest {
       HIDDEN_ID -> null
       else -> info
     }
+
+    override fun customizeFilterEditor(tabId: String, project: Project?, editor: SeFilterEditor, coroutineScope: CoroutineScope): SeFilterEditor =
+      if (tabId == FILTERED_ID) TestFilterEditor(listOf(autoToggleAction)) else editor
+
+    companion object {
+      val autoToggleAction: AnAction = TestAutoToggleAction()
+    }
   }
 
-  private class TestTab(override val id: String, override val priority: Int) : SeTab {
+  private class TestAutoToggleAction : AnAction(), AutoToggleAction {
+    override fun actionPerformed(e: AnActionEvent) {}
+    override fun autoToggle(everywhere: Boolean): Boolean = false
+  }
+
+  private class TestFilterEditor(private val headerActions: List<AnAction>) : SeFilterEditor {
+    override val resultFlow: StateFlow<SeFilterState> = MutableStateFlow(SeFilterState.Empty)
+    override fun getHeaderActions(): List<AnAction> = headerActions
+  }
+
+  private class TestTab(override val id: String, override val priority: Int, private val filterEditor: SeFilterEditor? = null) : SeTab {
     override val name: String get() = id
 
     override fun getItems(params: SeParams): Flow<SeResultEvent> = emptyFlow()
-    override suspend fun getFilterEditor(): SeFilterEditor? = null
+    override suspend fun getFilterEditor(): SeFilterEditor? = filterEditor
     override suspend fun itemSelected(item: SeItemData, modifiers: Int, searchText: String): Boolean = false
     override suspend fun canBeShownInFindResults(): Boolean = false
     override suspend fun performExtendedAction(item: SeItemData): Boolean = false

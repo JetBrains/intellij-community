@@ -3,15 +3,21 @@ package com.intellij.platform.searchEverywhere.providers.text
 
 import com.intellij.find.FindManager
 import com.intellij.find.FindSettings
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.platform.searchEverywhere.SeFilterState
 import com.intellij.platform.searchEverywhere.SeParams
 import com.intellij.platform.searchEverywhere.providers.SeEverywhereFilterImpl
+import com.intellij.platform.searchEverywhere.providers.SeSearchProjects
+import com.intellij.platform.searchEverywhere.providers.SeSearchProjectsProvider
 import com.intellij.platform.searchEverywhere.providers.SeTextFilter
+import com.intellij.psi.search.GlobalSearchScope
+import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.IndexingTestUtil
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.TestDisposable
 import com.intellij.testFramework.junit5.fixture.moduleFixture
 import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.testFramework.junit5.fixture.sourceRootFixture
@@ -28,6 +34,7 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import java.awt.Font
+import java.util.concurrent.atomic.AtomicReference
 
 /**
  * [SeTextItemsProvider] finds the lines of the text search.
@@ -45,6 +52,9 @@ class SeTextItemsProviderTest {
     ffc9fc9e-b527-44f6-85ea-eedafea0f30d
     c8a1f836-5198-41b5-a906-793bd9d0d241
   """.trimIndent())
+
+  @TestDisposable
+  private lateinit var disposable: Disposable
 
   private val project: Project get() = projectFixture.get()
 
@@ -147,6 +157,36 @@ class SeTextItemsProviderTest {
       provider.search("Needle", filter.toState())
 
       assertNull(sharedModel.directoryName, "the scope of the Text tab must not intersect with the old directory")
+    }
+  }
+
+  @Test
+  fun theSearchRunsInTheScopeOfTheSearchProjects() = timeoutRunBlocking {
+    val haystack = fileFixture.get()
+    uuidFileFixture.get()
+    IndexingTestUtil.suspendUntilIndexesAreReady(project)
+    val project = project
+    val scopeOfSearchProjects = GlobalSearchScope.fileScope(project, haystack)
+    val selectedProjects = AtomicReference<List<Project>>()
+    ExtensionTestUtil.maskExtensions(SeSearchProjectsProvider.EP_NAME, listOf(object : SeSearchProjectsProvider {
+      override fun getSearchProjects(project: Project): SeSearchProjects = object : SeSearchProjects(listOf(project), emptySet()) {
+        override fun scopeOf(selected: List<Project>): GlobalSearchScope {
+          selectedProjects.set(selected)
+          return scopeOfSearchProjects
+        }
+      }
+    }), disposable)
+
+    withProvider { provider ->
+      val textFilter = SeTextFilter(null, selectedType = null, isCaseSensitive = false, isWholeWordsOnly = false, isRegex = false).toState()
+      val allTabFilter = SeEverywhereFilterImpl(isAllTab = true, isEverywhere = false, disabledProviderIds = emptyList()).toState()
+      val everywhereFilter = SeEverywhereFilterImpl(isAllTab = true, isEverywhere = true, disabledProviderIds = emptyList()).toState()
+
+      assertEquals(emptyList<String>(), provider.search("eedafea0f30d", textFilter), "the Text tab searches in the scope of the search projects")
+      assertEquals(listOf(project), selectedProjects.get(), "a filter without a pick picks each search project")
+      assertEquals(2, provider.search("needle", textFilter).size)
+      assertEquals(emptyList<String>(), provider.search("eedafea0f30d", allTabFilter), "the All tab searches in the scope of the search projects")
+      assertEquals(1, provider.search("eedafea0f30d", everywhereFilter).size, "the everywhere flag searches everywhere")
     }
   }
 

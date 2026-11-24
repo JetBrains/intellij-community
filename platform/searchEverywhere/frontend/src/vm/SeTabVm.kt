@@ -38,6 +38,7 @@ import com.intellij.platform.searchEverywhere.frontend.SeSelectionResultKeep
 import com.intellij.platform.searchEverywhere.frontend.SeSelectionResultText
 import com.intellij.platform.searchEverywhere.frontend.SeTab
 import com.intellij.platform.searchEverywhere.frontend.SeTabInfo
+import com.intellij.platform.searchEverywhere.frontend.SeTabsCustomizer
 import com.intellij.platform.searchEverywhere.frontend.ml.SeMlService
 import com.intellij.platform.searchEverywhere.frontend.tabs.SeAdaptedTab
 import com.intellij.platform.searchEverywhere.frontend.ui.SePopupHeaderPane
@@ -128,7 +129,9 @@ class SeTabVmImpl(
   override val priority: Int get() = customizedTabInfo.priority
 
   override val searchResults: StateFlow<SeSearchContext?> get() = _searchResults.asStateFlow()
-  override val filterEditor: SuspendLazyProperty<SeFilterEditor?> = initAsync(coroutineScope) { tab.getFilterEditor() }
+  override val filterEditor: SuspendLazyProperty<SeFilterEditor?> = initAsync(coroutineScope) {
+    tab.getFilterEditor()?.let { SeTabsCustomizer.getInstance().customizeFilterEditor(tab.id, project, it, coroutineScope) }
+  }
   override val reportableTabId: String =
     if (SearchEverywhereUsageTriggerCollector.isReportable(tab)) tabId
     else SearchEverywhereUsageTriggerCollector.NOT_REPORTABLE_ID
@@ -362,7 +365,7 @@ class SeTabVmImpl(
   }
 
   override suspend fun getAutoToggleAction(): AutoToggleAction? =
-    tab.getFilterEditor()?.getHeaderActions()?.filterIsInstance<AutoToggleAction>()?.firstOrNull()
+    filterEditor.getValue()?.getHeaderActions()?.filterIsInstance<AutoToggleAction>()?.firstOrNull()
     ?: (tab as? SeAdaptedTab)?.autoToggleAction
 
   override suspend fun getUpdatedPresentation(item: SeItemData): SeItemPresentation? {

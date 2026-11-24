@@ -83,7 +83,7 @@ class SeFuzzyFileSearchProvider(
     if (query.isBlank()) return@coroutineScope
 
     val (scopeDescriptor, hiddenTypes) = SeEverywhereFilterImpl.isEverywhere(params.filter)?.let { isEverywhere ->
-      scopeById.getValue()[isEverywhere] to null
+      scopeById.getValue()[isEverywhere] to SeTargetsFilter.from(params.filter).hiddenTypes[SeTypeFilterKeys.DEFAULT]
     } ?: run {
       val targetsFilter = SeTargetsFilter.from(params.filter)
 

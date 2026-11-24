@@ -295,7 +295,8 @@ class SeTargetItemsProvider<T> private constructor(
     // The first search of a session builds the scope list here, so this can dominate its latency.
     val (scopeDescriptor, hiddenTypes) = stats.measure(stats.scopeResolveNanos) {
       SeEverywhereFilterImpl.isEverywhere(params.filter)?.let { isEverywhere ->
-        scopeOf(isEverywhere) to null
+        // The filter of the All tab holds no types. A filter that holds the flag and the types keeps the types.
+        scopeOf(isEverywhere) to SeTargetsFilter.from(params.filter).hiddenTypes.takeIf { it.isNotEmpty() }
       } ?: run {
         val targetsFilter = SeTargetsFilter.from(params.filter)
 

@@ -6,6 +6,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.platform.project.projectId
 import com.intellij.platform.searchEverywhere.SeFilterState
 import com.intellij.platform.searchEverywhere.SeProviderId
+import com.intellij.psi.search.GlobalSearchScope
 import org.jetbrains.annotations.ApiStatus
 
 /**
@@ -35,9 +36,26 @@ interface SeSearchProjectsProvider {
  * The popup creates one provider of each id in [providerIds] for each project. A provider of another id searches the
  * project of the popup only: an application provider, such as the actions, gives the same items for each project.
  * The project of the popup is searched only when [projects] holds it.
+ *
+ * A scope chooser lists the scopes of one project, so a tab that searches several projects shows none. The product
+ * gives such a tab its own control, see `SeTabsCustomizer.customizeFilterEditor`, and that control picks some of
+ * [projects] with [SeSearchProjectsFilter].
  */
 @ApiStatus.Internal
-class SeSearchProjects(val projects: List<Project>, val providerIds: Set<SeProviderId>)
+open class SeSearchProjects(val projects: List<Project>, val providerIds: Set<SeProviderId>) {
+  /**
+   * The scope that holds the files of [selected], some of [projects]. A provider that reaches every search project in
+   * one run of the project of the popup searches in it: the text search. Such a provider is not in [providerIds].
+   * `null` when the product has no such scope. The provider then searches in its own scope.
+   */
+  open fun scopeOf(selected: List<Project>): GlobalSearchScope? = null
+
+  /** The projects of [projects] that [state] picks, see [SeSearchProjectsFilter]. A pick of no search project picks each of them. */
+  fun selectedProjects(state: SeFilterState): List<Project> {
+    val selectedKeys = SeSearchProjectsFilter.selectedKeys(state) ?: return projects
+    return projects.filter { SeSearchProjectsFilter.keyOf(it) in selectedKeys }.ifEmpty { projects }
+  }
+}
 
 /**
  * The part of a filter state that picks some of the [SeSearchProjects] of a popup.

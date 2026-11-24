@@ -92,12 +92,9 @@ class SeNonIndexableFilesProvider(
   }
 
   private suspend fun scopeAndHiddenTypes(filter: SeFilterState): Pair<ScopeDescriptor?, Set<FileTypeRef>> {
-    SeEverywhereFilterImpl.isEverywhere(filter)?.let { isEverywhere ->
-      return scopeById.getValue()[isEverywhere] to emptySet()
-    }
-
     val targetsFilter = SeTargetsFilter.from(filter)
-    val scope = targetsFilter.selectedScopeId?.let { scopeById.getValue()[it] }
+    val isEverywhere = SeEverywhereFilterImpl.isEverywhere(filter)
+    val scope = if (isEverywhere != null) scopeById.getValue()[isEverywhere] else targetsFilter.selectedScopeId?.let { scopeById.getValue()[it] }
     val hiddenTypeNames = targetsFilter.hiddenTypes[SeTypeFilterKeys.DEFAULT].orEmpty().toSet()
     val hiddenTypes = if (hiddenTypeNames.isEmpty()) emptySet()
     else FileSearchEverywhereContributor.getAllFileTypes().filterTo(HashSet()) { it.displayName in hiddenTypeNames }
