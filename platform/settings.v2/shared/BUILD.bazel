@@ -38,7 +38,6 @@ jvm_library(
         "//libraries/kotlinx/serialization/protobuf",
         "//platform/analysis-api:analysis",
         "//platform/ide-core",
-        "//platform/editor-ui-api:editor-ui",
         "//platform/core-ui",
     ],
 )
