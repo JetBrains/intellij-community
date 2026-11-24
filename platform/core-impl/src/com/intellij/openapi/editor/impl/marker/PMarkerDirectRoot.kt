@@ -434,9 +434,10 @@ class PMarkerDirectRoot private constructor(
       val [before, fromStart] = editor.split(root, start, false)
       val [middle, after] = editor.split(fromStart, end, true)
       val updatedBefore = editor.updateBefore(before, start, transform)
-      val rebuilt = editor.rebuild(middle, transform)
+      val rebuilt = editor.rebuild(middle, transform, minStart = start, maxStart = start + length)
       result = editor.join(editor.join(updatedBefore, rebuilt), editor.shift(after, length - (end - start)))
     }
+    result = editor.insertRelocated(result)
     if (start == end && patch.moveOffset() != start) {
       val moveStart = patch.moveOffset()
       val moved = ArrayList<MarkerEntry>()
@@ -717,6 +718,12 @@ class PMarkerDirectRoot private constructor(
     var firstChangedEnd: Int = Int.MAX_VALUE
       private set
 
+    /**
+     * Holds entries that need new positions in the tree. Their offsets refer to the edited document.
+     * The list is null until [deferRelocation] adds the first entry.
+     */
+    private var relocatedEntries: ArrayList<MarkerEntry>? = null
+
     /** Reuses an unchanged node or creates a node in this editor's version. */
     fun make(
       entry: MarkerEntry,
@@ -869,7 +876,7 @@ class PMarkerDirectRoot private constructor(
       return make(left.entry, left.left, right, source = left)
     }
 
-    /** Transforms markers around an edit that has no marker starts in its range and preserves their order. */
+    /** Transforms markers around the edit and defers entries whose starts change. */
     fun updateOutsideStarts(
       initial: PMarkerNode?,
       start: Int,
@@ -882,37 +889,60 @@ class PMarkerDirectRoot private constructor(
       val node = push(initial)
       val left = updateOutsideStarts(node.left, start, end, delta, transform)
       val right = updateOutsideStarts(node.right, start, end, delta, transform)
-      val entry = if (node.entry.nodeStart > end) node.entry.shifted(delta)
-      else {
-        val result = transform.transform(node.entry)
-        if (!result.isValid) return join(left, right)
-        check(result.startOffset == node.entry.nodeStart) { "An edit changed a marker start before the edit" }
-        result.applyTo(node.entry)
+      val entry = node.entry
+      if (entry.nodeStart > end) return join(left, entry.shifted(delta), right, node)
+      val result = transform.transform(entry)
+      if (!result.isValid) return join(left, right)
+      val updated = result.applyTo(entry)
+      if (updated.nodeStart != entry.nodeStart) {
+        deferRelocation(updated)
+        return join(left, right)
       }
-      return join(left, entry, right, node)
+      return join(left, updated, right, node)
     }
 
-    /**
-     * Transforms the prefix whose markers start before [start], skipping subtrees that end before the edit.
-     * A valid result must preserve each marker's start offset.
-     */
+    /** Transforms the prefix whose markers start before [start], skipping subtrees that end before the edit. */
     fun updateBefore(initial: PMarkerNode?, start: Int, transform: MarkerTransformer): PMarkerNode? =
       updateOutsideStarts(initial, start, Int.MAX_VALUE, 0, transform)
 
-    /** Transforms a subtree and builds a balanced tree from valid results, sorting them when their order changes. */
-    fun rebuild(node: PMarkerNode?, transform: MarkerTransformer): PMarkerNode? {
+    /**
+     * Builds a balanced tree from valid transformed entries with starts in the inclusive range from [minStart] to [maxStart].
+     * Defers valid entries with starts outside that range.
+     */
+    fun rebuild(node: PMarkerNode?, transform: MarkerTransformer, minStart: Int = 0, maxStart: Int = Int.MAX_VALUE): PMarkerNode? {
       if (node == null) return null
       val valid = ArrayList<MarkerEntry>()
       processAll(node, 0) { storedEntry, delta ->
         val entry = storedEntry.shifted(delta)
         val result = transform.transform(entry)
-        if (result.isValid) valid.add(result.applyTo(entry))
+        if (result.isValid) {
+          val updated = result.applyTo(entry)
+          if (updated.nodeStart in minStart..maxStart) valid.add(updated)
+          else deferRelocation(updated)
+        }
         true
       }
       if ((1 until valid.size).any { compare(valid[it - 1], valid[it]) > 0 }) {
         valid.sortWith { first, second -> compare(first, second) }
       }
       return build(valid, 0, valid.size)
+    }
+
+    /** Queues a valid transformed [entry] for [insertRelocated]. */
+    private fun deferRelocation(entry: MarkerEntry) {
+      val entries = relocatedEntries ?: ArrayList<MarkerEntry>().also { relocatedEntries = it }
+      entries.add(entry)
+    }
+
+    /**
+     * Inserts each deferred entry into [initial] by its new start offset and handle ID.
+     * Call once after the edit updates and joins the remaining subtrees.
+     */
+    fun insertRelocated(initial: PMarkerNode?): PMarkerNode? {
+      val entries = relocatedEntries ?: return initial
+      var node = initial
+      for (entry in entries) node = insertNode(node, entry)
+      return node
     }
 
     /** Builds a balanced tree from entries sorted by start offset and handle ID in `[from, to)`. */

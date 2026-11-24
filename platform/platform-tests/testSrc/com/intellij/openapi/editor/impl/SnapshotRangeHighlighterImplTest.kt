@@ -2,9 +2,11 @@
 package com.intellij.openapi.editor.impl
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.ex.DocumentPatch
 import com.intellij.openapi.editor.ex.DocumentText
+import com.intellij.openapi.editor.ex.MarkupModelEx
 import com.intellij.openapi.editor.ex.PrioritizedDocumentListener
 import com.intellij.openapi.editor.ex.RangeHighlighterEx
 import com.intellij.openapi.editor.impl.event.MarkupModelListener
@@ -454,6 +456,46 @@ class SnapshotRangeHighlighterImplTest {
       Assertions.assertThat(model.allHighlighters).isEmpty()
       val removedRoot = checkNotNull(model.rootStore().root(document.core.snapshot()))
       Assertions.assertThat(PMarkerResolution.isAbsent(removedRoot.resolve((highlighter as SnapshotRangeMarkerImpl).markerHandle))).isTrue()
+    }
+    finally {
+      model.dispose()
+    }
+  }
+
+  @Test
+  fun `a persistent line highlighter can move past a highlighter before the edit`() {
+    val document = EditorFactory.getInstance().createDocument("    \ntext", false, true)
+    val model = DocumentMarkupModel.forDocument(document, null, true) as MarkupModelEx
+    try {
+      val persistent = checkNotNull(model.addPersistentLineHighlighter(null, 0, 1))
+      val point = model.addRangeHighlighter(null, 1, 1, 1, HighlighterTargetArea.LINES_IN_RANGE)
+
+      document.replaceString(2, 3, "xy")
+
+      Assertions.assertThat(persistent.textRange).isEqualTo(TextRange(2, 5))
+      Assertions.assertThat(point.textRange).isEqualTo(TextRange(1, 1))
+      val overlapping: List<RangeHighlighter> = model.overlappingIterator(0, document.textLength).use { it.asSequence().toList() }
+      Assertions.assertThat(overlapping).containsExactly(point, persistent)
+    }
+    finally {
+      model.dispose()
+    }
+  }
+
+  @Test
+  fun `a persistent line highlighter can move past a highlighter after the edit`() {
+    val document = EditorFactory.getInstance().createDocument("a  b\ntext", false, true)
+    val model = DocumentMarkupModel.forDocument(document, null, true) as MarkupModelEx
+    try {
+      val persistent = checkNotNull(model.addPersistentLineHighlighter(null, 0, 1))
+      val point = model.addRangeHighlighter(null, 2, 2, 1, HighlighterTargetArea.LINES_IN_RANGE)
+
+      document.deleteString(0, 1)
+
+      Assertions.assertThat(persistent.textRange).isEqualTo(TextRange(2, 3))
+      Assertions.assertThat(point.textRange).isEqualTo(TextRange(1, 1))
+      val overlapping: List<RangeHighlighter> = model.overlappingIterator(0, document.textLength).use { it.asSequence().toList() }
+      Assertions.assertThat(overlapping).containsExactly(point, persistent)
     }
     finally {
       model.dispose()
