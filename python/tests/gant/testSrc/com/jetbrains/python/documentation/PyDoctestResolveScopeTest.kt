@@ -35,4 +35,13 @@ class PyDoctestResolveScopeTest : PyCodeInsightTestCase() {
         '''
         local = 1
     """)
+
+  @Test
+  fun `doctest name of an annotated parameter of the documented function has no type`() = test("""
+    def func(param: int):
+        '''
+        >>> param # WARNING FIXME Unresolved reference 'param'
+        #   └ TYPE Type mismatch for code analysis context ('Any') and user initiated context ('int') FIXME Unknown
+        '''
+    """)
 }

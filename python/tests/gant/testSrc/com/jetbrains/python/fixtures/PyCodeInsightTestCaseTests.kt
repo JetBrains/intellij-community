@@ -159,6 +159,38 @@ class PyCodeInsightTestCaseComputeAssertionsTest : PyCodeInsightTestCase() {
     """)
 
   @Test
+  fun `TYPE at a marker in a doctest uses the injected element`() = test("""
+    def func():
+        '''
+        >>> x = 1
+        #   └ TYPE Literal[1]
+        '''
+    """)
+
+  @Test
+  fun `TYPE inline in a doctest uses the first injected element of the line`() = test("""
+    def func():
+        '''
+        >>> x = 1 # TYPE Literal[1]
+        '''
+    """)
+
+  @Test
+  fun `TYPE at a span in a doctest uses the injected element that covers the span`() = test("""
+    def func():
+        '''
+        >>> y = [1, 2]
+        #       ^^^^^^ TYPE list[int]
+        '''
+    """)
+
+  @Test
+  fun `TYPE inline after an injected regex checks the host element`() = test("""
+    import re
+    p = re.compile("abc") # TYPE Pattern[str]
+    """)
+
+  @Test
   fun `registry options enable a key and disable a key until the test ends`(@TestDisposable testDisposable: Disposable) {
     val keysDisposable = Disposer.newDisposable(testDisposable, "registry keys")
     setRegistryKeys(
