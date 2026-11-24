@@ -22,8 +22,12 @@ import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.application.impl.TestOnlyThreading;
 import com.intellij.openapi.project.Project;
+import com.intellij.testFramework.PlatformTestUtil;
 import com.jetbrains.python.run.AbstractPythonRunConfiguration;
+import com.jetbrains.python.run.PythonCommandLineState;
+import com.jetbrains.python.run.PythonRunner;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.Assert;
@@ -49,6 +53,8 @@ import java.util.List;
  */
 public abstract class ConfigurationBasedProcessRunner<CONF_T extends AbstractPythonRunConfiguration<?>>
   extends ProcessWithConsoleRunner {
+  private static final int START_TIMEOUT_SECONDS = 5 * 60;
+
   @NotNull
   private final Class<CONF_T> myExpectedConfigurationType;
 
@@ -107,8 +113,7 @@ public abstract class ConfigurationBasedProcessRunner<CONF_T extends AbstractPyt
         }
       }
     }
-    ExecutionResult executionResult =
-      executionEnvironment.getState().execute(executionEnvironment.getExecutor(), executionEnvironment.getRunner());
+    ExecutionResult executionResult = execute(executionEnvironment);
     ProcessHandler handler = executionResult.getProcessHandler();
 
     handler.addProcessListener(new ProcessListener() {
@@ -122,6 +127,37 @@ public abstract class ConfigurationBasedProcessRunner<CONF_T extends AbstractPyt
     assert component != null;
     myLastProcessDescriptor = descriptor;
     handler.startNotify();
+  }
+
+  /**
+   * Starts the process of {@code environment}.
+   * A {@link PythonCommandLineState} starts it in {@link PythonCommandLineState#execute(Executor)} on a background thread,
+   * as {@link PythonRunner} calls it.
+   */
+  private static @NotNull ExecutionResult execute(@NotNull ExecutionEnvironment environment) throws ExecutionException {
+    var state = environment.getState();
+    if (!(state instanceof PythonCommandLineState pythonState)) {
+      assert state != null : "No state for " + environment.getRunProfile();
+      return state.execute(environment.getExecutor(), environment.getRunner());
+    }
+    var future = ApplicationManager.getApplication().executeOnPooledThread(() -> pythonState.execute(environment.getExecutor()));
+    TestOnlyThreading.releaseTheAcquiredWriteIntentLockThenExecuteActionAndTakeWriteIntentLockBack(
+      () -> PlatformTestUtil.waitWithEventsDispatching("The state did not start the process in time", future::isDone, START_TIMEOUT_SECONDS));
+    ExecutionResult result;
+    try {
+      result = future.get();
+    }
+    catch (InterruptedException e) {
+      throw new ExecutionException(e);
+    }
+    catch (java.util.concurrent.ExecutionException e) {
+      if (e.getCause() instanceof ExecutionException cause) {
+        throw cause;
+      }
+      throw new ExecutionException(e.getCause());
+    }
+    assert result != null : "The state did not start a process";
+    return result;
   }
 
   /**
