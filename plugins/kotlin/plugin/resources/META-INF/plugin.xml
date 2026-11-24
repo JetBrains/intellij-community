@@ -184,6 +184,7 @@
     <module name="intellij.kotlin.base.indices" required-if-available="intellij.platform.backend"/>
     <module name="intellij.kotlin.base.psi" required-if-available="intellij.platform.backend"/>
     <module name="intellij.kotlin.base.projectStructure" required-if-available="intellij.platform.backend"/>
+    <module name="intellij.kotlin.base.facetModel" required-if-available="intellij.platform.backend"/>
     <module name="intellij.kotlin.base.facet" required-if-available="intellij.platform.backend"/>
     <module name="intellij.kotlin.base.serialization" required-if-available="intellij.platform.backend"/>
     <module name="kotlin.scripting" required-if-available="intellij.platform.backend"/>

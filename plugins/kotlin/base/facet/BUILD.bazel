@@ -32,8 +32,6 @@ jvm_library(
             "src/**/*.kt",
             "src/**/*.java",
             "src/**/*.form",
-            "gen/**/*.kt",
-            "gen/**/*.java",
         ],
         allow_empty = True,
     ),
@@ -44,6 +42,7 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
+    exports = ["//plugins/kotlin/base/facet-model"],
     runtime_deps = ["//plugins/kotlin/base/project-model"],
     deps = [
         # do not sort,
@@ -76,6 +75,7 @@ jvm_library(
         "//platform/backend/workspace",
         "//platform/ide-core",
         "//libraries/gson",
+        "//plugins/kotlin/base/facet-model",
     ],
 )
 ### auto-generated section `build intellij.kotlin.base.facet` end

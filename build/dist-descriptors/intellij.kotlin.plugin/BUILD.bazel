@@ -56,6 +56,7 @@ dist_plugin_descriptor(
         "@community//plugins/kotlin/base/compiler-configuration-ui:resources/intellij.kotlin.base.compilerConfiguration.ui.xml": "intellij.kotlin.base.compilerConfiguration.ui.xml",
         "@community//plugins/kotlin/base/compiler-configuration:resources/intellij.kotlin.base.compilerConfiguration.xml": "intellij.kotlin.base.compilerConfiguration.xml",
         "@community//plugins/kotlin/base/external-build-system:resources/intellij.kotlin.base.externalSystem.xml": "intellij.kotlin.base.externalSystem.xml",
+        "@community//plugins/kotlin/base/facet-model:resources/intellij.kotlin.base.facetModel.xml": "intellij.kotlin.base.facetModel.xml",
         "@community//plugins/kotlin/base/facet:resources/intellij.kotlin.base.facet.xml": "intellij.kotlin.base.facet.xml",
         "@community//plugins/kotlin/base/fir/analysis-api-platform:resources/intellij.kotlin.analysis.platform.xml": "intellij.kotlin.analysis.platform.xml",
         "@community//plugins/kotlin/base/fir/code-insight:resources/intellij.kotlin.codeInsight.base.xml": "intellij.kotlin.codeInsight.base.xml",

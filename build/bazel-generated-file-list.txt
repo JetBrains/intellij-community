@@ -1553,6 +1553,7 @@ plugins/kotlin/base/compiler-configuration intellij.kotlin.base.compilerConfigur
 plugins/kotlin/base/compiler-configuration-ui intellij.kotlin.base.compilerConfiguration.ui
 plugins/kotlin/base/external-build-system intellij.kotlin.base.externalSystem
 plugins/kotlin/base/facet intellij.kotlin.base.facet
+plugins/kotlin/base/facet-model intellij.kotlin.base.facetModel
 plugins/kotlin/base/facet/tests intellij.kotlin.base.facet.tests
 plugins/kotlin/base/fir/analysis-api-platform intellij.kotlin.analysis.platform intellij.kotlin.analysis.platform.tests
 plugins/kotlin/base/fir/code-insight intellij.kotlin.codeInsight.base

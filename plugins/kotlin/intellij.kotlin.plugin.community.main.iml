@@ -41,6 +41,7 @@
     <orderEntry type="module" module-name="intellij.kotlin.base.scripting.scratch.definition" exported="" />
     <orderEntry type="module" module-name="intellij.kotlin.base.analysis.utils" exported="" />
     <orderEntry type="module" module-name="intellij.kotlin.base.facet" exported="" />
+    <orderEntry type="module" module-name="intellij.kotlin.base.facetModel" exported="" />
     <orderEntry type="module" module-name="intellij.kotlin.base.codeInsight" exported="" />
     <orderEntry type="module" module-name="intellij.kotlin.base.jps" exported="" />
     <orderEntry type="module" module-name="intellij.kotlin.base.externalSystem" exported="" />

@@ -906,6 +906,7 @@
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/base/external-build-system/intellij.kotlin.base.externalSystem.iml" filepath="$PROJECT_DIR$/plugins/kotlin/base/external-build-system/intellij.kotlin.base.externalSystem.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/base/facet/intellij.kotlin.base.facet.iml" filepath="$PROJECT_DIR$/plugins/kotlin/base/facet/intellij.kotlin.base.facet.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/base/facet/tests/intellij.kotlin.base.facet.tests.iml" filepath="$PROJECT_DIR$/plugins/kotlin/base/facet/tests/intellij.kotlin.base.facet.tests.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/base/facet-model/intellij.kotlin.base.facetModel.iml" filepath="$PROJECT_DIR$/plugins/kotlin/base/facet-model/intellij.kotlin.base.facetModel.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/base/indices/intellij.kotlin.base.indices.iml" filepath="$PROJECT_DIR$/plugins/kotlin/base/indices/intellij.kotlin.base.indices.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/base/indices/tests/intellij.kotlin.base.indices.tests.iml" filepath="$PROJECT_DIR$/plugins/kotlin/base/indices/tests/intellij.kotlin.base.indices.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/base/jps/intellij.kotlin.base.jps.iml" filepath="$PROJECT_DIR$/plugins/kotlin/base/jps/intellij.kotlin.base.jps.iml" />

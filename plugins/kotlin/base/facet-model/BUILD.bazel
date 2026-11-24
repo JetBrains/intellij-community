@@ -1,0 +1,55 @@
+load("@community//build:jps_module.bzl", "jps_module")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
+
+### auto-generated section `dev intellij.kotlin.base.facetModel` start
+content_module_jar(module = ":facet-model")
+### auto-generated section `dev intellij.kotlin.base.facetModel` end
+
+### auto-generated section `build intellij.kotlin.base.facetModel` start
+create_kotlinc_options(
+    name = "custom_facet-model",
+    x_context_parameters = True,
+)
+
+jvm_library(
+    name = "facet-model",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+            "gen/**/*.kt",
+            "gen/**/*.java",
+        ],
+        allow_empty = True,
+    ),
+    kotlinc_opts = ":custom_facet-model",
+    module_name = "intellij.kotlin.base.facetModel",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//libraries/gson",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
+        "//plugins/kotlin/jps/util/runtime",
+        "//platform/util",
+        "//platform/util/base/multiplatform",
+        "//platform/workspace/jps",
+        "//platform/workspace/storage",
+    ],
+)
+### auto-generated section `build intellij.kotlin.base.facetModel` end
+
+### auto-generated section `iml intellij.kotlin.base.facetModel` start
+jps_module(
+    name = "intellij.kotlin.base.facetModel",
+    descriptors = ["resources/intellij.kotlin.base.facetModel.xml"],
+    target = "facet-model",
+)
+### auto-generated section `iml intellij.kotlin.base.facetModel` end

@@ -6,14 +6,15 @@
     <module name="intellij.java.psi"/>
     <module name="intellij.java.syntax"/>
     <module name="intellij.kotlin.base.compilerConfiguration"/>
+    <module name="intellij.kotlin.base.facetModel"/>
     <module name="intellij.kotlin.base.platforms"/>
     <module name="intellij.kotlin.base.plugin"/>
     <module name="intellij.kotlin.base.projectModel"/>
     <module name="intellij.kotlin.base.resources"/>
     <module name="intellij.kotlin.base.util"/>
+    <module name="intellij.kotlin.jps.util.runtime"/>
     <module name="intellij.libraries.gson"/>
     <module name="intellij.libraries.kotlinc.kotlin.compiler.common"/>
-    <module name="intellij.kotlin.jps.util.runtime"/>
     <module name="intellij.platform.backend.workspace"/>
     <module name="intellij.platform.core"/>
     <module name="intellij.platform.core.impl"/>

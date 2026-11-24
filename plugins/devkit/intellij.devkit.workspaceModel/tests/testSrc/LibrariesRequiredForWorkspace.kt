@@ -65,8 +65,8 @@ internal object LibrariesRequiredForWorkspace {
       "intellij.rider.rdclient.dotnet" -> {
         listOf(rdFramework, rdCore, riderModelGenerated, rdIdeModelGenerated)
       }
-      "intellij.kotlin.base.facet" -> {
-        listOf(intellijJava, kotlinJpsCommon)
+      "intellij.kotlin.base.facetModel" -> {
+        listOf(kotlinJpsCommon)
       }
       "intellij.kotlin.base.scripting" -> {
         listOf(kotlinScriptingCommon)

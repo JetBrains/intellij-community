@@ -435,6 +435,9 @@
             "module": "intellij.kotlin.base.projectStructure"
         },
         {
+            "module": "intellij.kotlin.base.facetModel"
+        },
+        {
             "module": "intellij.kotlin.base.facet"
         },
         {
