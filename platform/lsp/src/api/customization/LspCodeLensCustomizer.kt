@@ -6,6 +6,7 @@ import com.intellij.platform.lsp.api.LspClient
 import com.intellij.platform.lsp.api.LspServer
 import org.eclipse.lsp4j.CodeLens
 import org.eclipse.lsp4j.Command
+import org.jetbrains.annotations.ApiStatus
 import java.awt.event.MouseEvent
 
 /**
@@ -21,9 +22,29 @@ open class LspCodeLensSupport : LspCodeLensCustomizer() {
   open fun shouldAskServerForCodeLenses(file: VirtualFile): Boolean = true
 
   /**
-   * Returns true if the given code lens should be displayed in the editor.
+   * The commands whose code lenses the IDE renders as gutter action icons instead of Code Vision entries.
+   *
+   * The default is the empty set, so the feature is off and every lens stays a Code Vision entry.
+   * An integration that names a command here gets one gutter icon per line for the lenses of that command; several such lenses
+   * on one line share one icon and a click opens a list of them. A click runs the lens through [codeLensClicked], exactly like
+   * a click on a Code Vision entry, so a command needs no second handler.
+   *
+   * The names are the command ids of [Command.getCommand], not the lens titles.
+   * The default [shouldDisplayCodeLens] hides these lenses from Code Vision, so the same lens never renders twice.
    */
-  open fun shouldDisplayCodeLens(file: VirtualFile, codeLens: CodeLens): Boolean = true
+  @ApiStatus.Experimental
+  open val gutterLensCommands: Set<String> = emptySet()
+
+  /**
+   * Returns true if the given code lens should be displayed in the editor.
+   *
+   * The default hides a lens whose command is in [gutterLensCommands], because the gutter icon of that lens shows it already.
+   * An override that answers without calling `super` owns that decision, and can render one lens in both places.
+   */
+  open fun shouldDisplayCodeLens(file: VirtualFile, codeLens: CodeLens): Boolean {
+    val command = codeLens.command?.command ?: return true
+    return command !in gutterLensCommands
+  }
 
   /**
    * Called when the user clicks on a code lens (code vision item) in the editor.

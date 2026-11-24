@@ -44,5 +44,11 @@ internal class LspCodeLensCache(private val lspClient: LspClientImpl) : LspHighl
 
   override suspend fun onResponseReceived(file: VirtualFile) {
     LspFeaturesRefreshing.refreshCodeLenses(lspClient.project)
+    // The allowlisted lenses are gutter line markers, and only a daemon restart makes the next LineMarkersPass read this cache.
+    // An integration without an allowlist pays nothing: the default of gutterLensCommands is empty.
+    val customizer = lspClient.descriptor.lspCustomization.codeLensCustomizer
+    if (customizer is LspCodeLensSupport && customizer.gutterLensCommands.isNotEmpty()) {
+      LspFeaturesRefreshing.refreshLineMarkers(lspClient.project, file)
+    }
   }
 }

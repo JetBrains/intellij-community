@@ -84,6 +84,8 @@
     <codeInsight.codeVisionProvider implementation="com.intellij.platform.lsp.impl.features.codeLens.LspCodeVisionProvider"/>
     <codeInsight.lineMarkerProvider language=""
                                     implementationClass="com.intellij.platform.lsp.impl.features.lineMarkers.LspInheritanceLineMarkerProvider"/>
+    <codeInsight.lineMarkerProvider language=""
+                                    implementationClass="com.intellij.platform.lsp.impl.features.lineMarkers.LspCodeLensLineMarkerProvider"/>
     <config.codeVisionGroupSettingProvider implementation="com.intellij.platform.lsp.impl.features.codeLens.LspCodeVisionGroupSettingProvider"/>
     <codeInsight.inlayProviderFactory implementation="com.intellij.platform.lsp.impl.features.inlayCommon.LspInlayHintsProviderFactory"/>
     <codeInsight.parameterInfo id="LspParameterInfoHandler" language=""
