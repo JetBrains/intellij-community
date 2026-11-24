@@ -385,4 +385,8 @@
     <extensionPoint qualifiedName="com.intellij.java.createClassActionAvailabilityOverride"
                     interface="com.intellij.ide.actions.CreateJavaClassActionAvailabilityOverride" dynamic="true"/>
   </extensionPoints>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <actionConfigurationCustomizer implementation="com.intellij.ide.actions.JavaNewDirActionCustomizer"/>
+  </extensions>
 </idea-plugin>
