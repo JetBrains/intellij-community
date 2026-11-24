@@ -5,6 +5,7 @@ package com.intellij.codeInspection.ui;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
+import com.intellij.codeInspection.ex.ToolsImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -27,7 +28,8 @@ public class InspectionNode extends InspectionTreeNode {
   @Override
   public @Nullable String getTailText() {
     String shortName = getToolWrapper().getShortName();
-    return myProfile.getTools(shortName, null).isEnabled() ? null : InspectionsBundle.message("inspection.node.disabled.state");
+    ToolsImpl tools = myProfile.getToolsOrNull(shortName, null);
+    return tools != null && tools.isEnabled() ? null : InspectionsBundle.message("inspection.node.disabled.state");
   }
 
   @Override

@@ -9,6 +9,7 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemDescriptorUtil;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
+import com.intellij.codeInspection.ex.ToolsImpl;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.lang.annotation.HighlightSeverity;
@@ -73,10 +74,14 @@ public class ProblemDescriptionNode extends SuppressableInspectionTreeNode {
     }
   }
 
+  /**
+   * The level of the tool in the current profile, or the default level of the tool when the profile has no such tool.
+   */
   private static @NotNull HighlightDisplayLevel getProfileLevel(@NotNull InspectionToolPresentation presentation) {
-    String shortName = presentation.getToolWrapper().getShortName();
+    InspectionToolWrapper<?, ?> toolWrapper = presentation.getToolWrapper();
     InspectionProfileImpl profile = presentation.getContext().getCurrentProfile();
-    return profile.getTools(shortName, presentation.getContext().getProject()).getLevel();
+    ToolsImpl tools = profile.getToolsOrNull(toolWrapper.getShortName(), presentation.getContext().getProject());
+    return tools != null ? tools.getLevel() : toolWrapper.getDefaultLevel();
   }
 
   public boolean needCalculateTooltip() {

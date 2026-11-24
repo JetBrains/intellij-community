@@ -6,6 +6,7 @@ import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.actions.RunInspectionAction;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
+import com.intellij.codeInspection.ex.ToolsImpl;
 import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.diagnostic.PluginException;
 import com.intellij.openapi.diagnostic.Logger;
@@ -50,7 +51,8 @@ public final class InspectionNodeInfo extends JPanel {
     InspectionToolWrapper<?, ?> toolWrapper = tree.getSelectedToolWrapper(false);
     LOG.assertTrue(toolWrapper != null);
     InspectionProfileImpl currentProfile = InspectionProjectProfileManager.getInstance(project).getCurrentProfile();
-    boolean enabled = currentProfile.getTools(toolWrapper.getShortName(), project).isEnabled();
+    ToolsImpl tools = currentProfile.getToolsOrNull(toolWrapper.getShortName(), project);
+    boolean enabled = tools != null && tools.isEnabled();
 
     JPanel titlePanel = new JPanel();
     titlePanel.setLayout(new BoxLayout(titlePanel, BoxLayout.LINE_AXIS));
@@ -87,7 +89,7 @@ public final class InspectionNodeInfo extends JPanel {
                                new JBInsets(0, 10, 0, 0), 0, 0));
 
     JButton enableButton = null;
-    if (currentProfile.getSingleTool() != null) {
+    if (currentProfile.getSingleTool() != null && tools != null) {
       if (enabled) {
         enableButton = new JButton(InspectionsBundle.message("disable.inspection.btn.text"));
       }
