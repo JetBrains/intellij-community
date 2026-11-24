@@ -4,6 +4,8 @@ version = "0"
 description = "Adds runtime docstrings of compiled definitions to the bundled typeshed stdlib"
 requires-python = ">=3.10"
 dependencies = [
+    # The version of the black hook in typeshed/.pre-commit-config.yaml, so that black changes only the new docstrings.
+    "black==26.5.1",
     "docstring-adder",
 ]
 
