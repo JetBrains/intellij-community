@@ -482,21 +482,34 @@ private fun registerEpListeners(manager: ToolWindowManagerImpl) {
     }
   })
 
-  TECH_AWARE_TOOL_WINDOW_EP.addChangeListener(manager.coroutineScope) { _ ->
-    for (item in ToolWindowEP.EP_NAME.filterableLazySequence()) {
-      val bean = item.instance ?: continue
-      if (manager.isToolWindowRegistrationSuppressed(bean.id)) {
-        continue
-      }
-      val isApplicable = TechnologyFilter.getInstance().isApplicable(bean.pluginDescriptor, manager.project)
-      val registered = manager.getToolWindow(bean.id) as? ToolWindowImpl
-      if (registered != null) {
-        registered.setDisabledByTech(!isApplicable)
-      }
-      else if (isApplicable) {
-        manager.coroutineScope.launch {
-          manager.initToolWindow(bean, item.pluginDescriptor)
-        }
+  TECH_AWARE_TOOL_WINDOW_EP.addChangeListener(manager.coroutineScope) { changed ->
+    if (changed == null || changed === manager.project) {
+      updateToolWindowsOfTechs(manager)
+    }
+  }
+
+  // registerEpListeners is registered late, and we might have missed some events
+  if (TechnologyFilter.getInstance().isRestricted(manager.project)) {
+    manager.coroutineScope.launch(Dispatchers.EDT) {
+      updateToolWindowsOfTechs(manager)
+    }
+  }
+}
+
+private fun updateToolWindowsOfTechs(manager: ToolWindowManagerImpl) {
+  for (item in ToolWindowEP.EP_NAME.filterableLazySequence()) {
+    val bean = item.instance ?: continue
+    if (manager.isToolWindowRegistrationSuppressed(bean.id)) {
+      continue
+    }
+    val isApplicable = TechnologyFilter.getInstance().isApplicable(bean.pluginDescriptor, manager.project)
+    val registered = manager.getToolWindow(bean.id) as? ToolWindowImpl
+    if (registered != null) {
+      registered.setDisabledByTech(!isApplicable)
+    }
+    else if (isApplicable) {
+      manager.coroutineScope.launch {
+        manager.initToolWindow(bean, item.pluginDescriptor)
       }
     }
   }
