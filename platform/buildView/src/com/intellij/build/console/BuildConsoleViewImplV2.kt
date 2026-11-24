@@ -13,8 +13,8 @@ import com.intellij.build.events.OutputId
 import com.intellij.build.events.OutputReferenceEvent
 import com.intellij.codeWithMe.ClientId
 import com.intellij.execution.impl.ConsoleViewImpl
+import com.intellij.execution.process.ProcessOutputType
 import com.intellij.execution.ui.ConsoleView
-import com.intellij.execution.ui.ConsoleViewContentType
 import com.intellij.execution.ui.ConsoleViewWithDelegate
 import com.intellij.execution.ui.ExecutionConsole
 import com.intellij.execution.ui.ObservableConsoleView
@@ -256,17 +256,17 @@ internal class BuildConsoleViewImplV2(
   }
 
   private fun addConsoleInlay(nodeId: Any, inlayInfo: ConsoleInlayInfo) {
-    if (recordNodeText) {
-      consoleInlayInfos.computeIfAbsent(nodeId) { CopyOnWriteArrayList() }.add(inlayInfo)
-    }
     // Beyond the registry limit render the message as plain text. Thousands of Swing inlays make the editor layout
     // O(n) on every document change and lag the whole UI (IDEA-374341). Print off the EDT and let the console batch it;
     // a per-message state.access forces an EDT round-trip and a flush, which is the slow part.
     if (inlayCount.getAndIncrement() >= Registry.intValue("build.console.max.inlays", 100)) {
-      val contentType = if (inlayInfo.kind == BuildConsoleViewInlay.Kind.ERROR) ConsoleViewContentType.ERROR_OUTPUT
-      else ConsoleViewContentType.NORMAL_OUTPUT
-      delegate.print(inlayInfo.plainText, contentType)
+      val outputId = Any()
+      BuildTextConsoleView.print(consoleView, inlayInfo.plainText, inlayInfo.getProcessOutputType(), outputId)
+      state.addNodeOutputMarkers(nodeId, listOf(outputId))
       return
+    }
+    if (recordNodeText) {
+      consoleInlayInfos.computeIfAbsent(nodeId) { CopyOnWriteArrayList() }.add(inlayInfo)
     }
     state.addNodeOutputMarkers(nodeId, inlayInfo.outputIds)
     state.access {
@@ -320,6 +320,13 @@ internal class BuildConsoleViewImplV2(
 
     fun withHyperlinkListener(hyperlinkListener: HyperlinkListener): ConsoleInlayInfo =
       copy(hyperlinkListener = hyperlinkListener)
+
+    fun getProcessOutputType(): ProcessOutputType = if (kind == BuildConsoleViewInlay.Kind.ERROR) {
+      ProcessOutputType.STDERR
+    }
+    else {
+      ProcessOutputType.STDOUT
+    }
   }
 
   private class ConsoleViewState(private val consoleView: ConsoleViewImpl) {
