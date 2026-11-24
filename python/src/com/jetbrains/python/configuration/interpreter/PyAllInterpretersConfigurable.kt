@@ -107,29 +107,7 @@ internal class PyAllInterpretersConfigurable(private val project: Project) : Sea
    */
   @Volatile private var currentlySelectedRow: PyInterpreterRow? = null
 
-  private val interpretersList: JBList<PyInterpreterRow> = object : JBList<PyInterpreterRow>(listModel) {
-    // Track the viewport width so long paths do not push the list wider than its scroll pane and cause the
-    // parent Settings row to expand and clip content when the filter/search changes the row count.
-    override fun getScrollableTracksViewportWidth(): Boolean = true
-
-    // A group header is not a row: a click on it selects nothing.
-    override fun processMouseEvent(e: MouseEvent) {
-      if (isOnGroupHeader(this, e.point)) return
-      // The context menu acts on the selected row, so a right click selects the row under the mouse first.
-      if (e.id == MouseEvent.MOUSE_PRESSED && SwingUtilities.isRightMouseButton(e)) {
-        locationToIndex(e.point).takeIf { it >= 0 && getCellBounds(it, it)?.contains(e.point) == true }?.let { selectedIndex = it }
-      }
-      super.processMouseEvent(e)
-    }
-  }.apply {
-    selectionMode = ListSelectionModel.SINGLE_SELECTION
-    cellRenderer = PyInterpreterNameAndVersionRenderer()
-    emptyText.text = PyBundle.message("configurable.PyAllInterpretersConfigurable.empty.text")
-    selectionBackground = background
-    visibleRowCount = DEFAULT_VISIBLE_ROWS
-    ListHoverListener.DEFAULT.addTo(this)
-    addListSelectionListener { currentlySelectedRow = selectedValue }
-  }
+  private lateinit var interpretersList: JBList<PyInterpreterRow>
 
   /** Snapshot of interpreters after the "hide other projects" filter, before the search-field filter. */
   private var currentSnapshot: List<PyInterpreterRow> = emptyList()
@@ -144,9 +122,7 @@ internal class PyAllInterpretersConfigurable(private val project: Project) : Sea
   private lateinit var rootComponent: JComponent
 
   /** Says that the SDK table has SDKs that name no interpreter, and removes them. Only the legacy flow has such SDKs. */
-  private val brokenSdksBanner: InlineBanner = InlineBanner(status = EditorNotificationPanel.Status.Warning)
-    .showCloseButton(false)
-    .addAction(PyBundle.message("configurable.PyAllInterpretersConfigurable.broken.sdks.remove")) { removeBrokenSdks() }
+  private lateinit var brokenSdksBanner: InlineBanner
 
   private lateinit var brokenSdksRow: Row
 
@@ -155,6 +131,9 @@ internal class PyAllInterpretersConfigurable(private val project: Project) : Sea
   override fun getDisplayName(): String = PyBundle.message("configurable.PyAllInterpretersConfigurable.display.name")
 
   override fun createComponent(): JComponent {
+    currentlySelectedRow = null
+    interpretersList = createInterpretersList()
+    brokenSdksBanner = createBrokenSdksBanner()
     val hintText = PyBundle.message(
       "configurable.PyAllInterpretersConfigurable.hint",
       PyBundle.message(
@@ -189,6 +168,34 @@ internal class PyAllInterpretersConfigurable(private val project: Project) : Sea
     rootComponent = component
     return component
   }
+
+  private fun createInterpretersList(): JBList<PyInterpreterRow> = object : JBList<PyInterpreterRow>(listModel) {
+    // Track the viewport width so long paths do not push the list wider than its scroll pane and cause the
+    // parent Settings row to expand and clip content when the filter/search changes the row count.
+    override fun getScrollableTracksViewportWidth(): Boolean = true
+
+    // A group header is not a row: a click on it selects nothing.
+    override fun processMouseEvent(e: MouseEvent) {
+      if (isOnGroupHeader(this, e.point)) return
+      // The context menu acts on the selected row, so a right click selects the row under the mouse first.
+      if (e.id == MouseEvent.MOUSE_PRESSED && SwingUtilities.isRightMouseButton(e)) {
+        locationToIndex(e.point).takeIf { it >= 0 && getCellBounds(it, it)?.contains(e.point) == true }?.let { selectedIndex = it }
+      }
+      super.processMouseEvent(e)
+    }
+  }.apply {
+    selectionMode = ListSelectionModel.SINGLE_SELECTION
+    cellRenderer = PyInterpreterNameAndVersionRenderer()
+    emptyText.text = PyBundle.message("configurable.PyAllInterpretersConfigurable.empty.text")
+    selectionBackground = background
+    visibleRowCount = DEFAULT_VISIBLE_ROWS
+    ListHoverListener.DEFAULT.addTo(this)
+    addListSelectionListener { currentlySelectedRow = selectedValue }
+  }
+
+  private fun createBrokenSdksBanner(): InlineBanner = InlineBanner(status = EditorNotificationPanel.Status.Warning)
+    .showCloseButton(false)
+    .addAction(PyBundle.message("configurable.PyAllInterpretersConfigurable.broken.sdks.remove")) { removeBrokenSdks() }
 
   private fun isMultiModule(): Boolean = ModuleManager.getInstance(project).modules.size > 1
 
