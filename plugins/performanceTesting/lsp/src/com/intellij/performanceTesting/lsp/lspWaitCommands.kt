@@ -138,12 +138,34 @@ internal class LspWaitForInlayHintCommand(text: String, line: Int) : PlaybackCom
   }
 
   override suspend fun doExecute(context: PlaybackContext) {
-    val args = positionArguments(PREFIX, extractCommandArgument(PREFIX))
-    val what = args.what("inlay hint")
-    awaitEditorState(context.project, what, stateForFailure = { "Its line has inlays at: ${it.inlayList(args.line)}" }) { editor ->
-      val offset = editor.offsetOf(args.line, args.column)
-      editor.inlayModel.getInlineElementsInRange(offset, offset).isNotEmpty() == args.present
-    }
+    awaitInlineInlay(context, positionArguments(PREFIX, extractCommandArgument(PREFIX)), "inlay hint")
+  }
+}
+
+/**
+ * Waits until the selected editor shows a document color at the given position, or with `false` at the end,
+ * until it shows none there. Lines and columns start with 1, as in `%goto`.
+ * The client shows a color as a swatch: an inline inlay at the start of the range of the color, before the character
+ * of that column. The command checks for an inline inlay there, not for the color, which is inside the presentation
+ * of the inlay. So pick a position where nothing but a color has an inlay, like the start of a string.
+ *
+ * Syntax: `%lspWaitForDocumentColor <line> <column> [true|false]`
+ */
+internal class LspWaitForDocumentColorCommand(text: String, line: Int) : PlaybackCommandCoroutineAdapter(text, line) {
+  companion object {
+    const val PREFIX: String = CMD_PREFIX + "lspWaitForDocumentColor"
+  }
+
+  override suspend fun doExecute(context: PlaybackContext) {
+    awaitInlineInlay(context, positionArguments(PREFIX, extractCommandArgument(PREFIX)), "document color")
+  }
+}
+
+/** Waits for an inline inlay at the position of [args], or with `present` `false`, for none there. */
+private suspend fun awaitInlineInlay(context: PlaybackContext, args: PositionArguments, noun: String) {
+  awaitEditorState(context.project, args.what(noun), stateForFailure = { "Its line has inlays at: ${it.inlayList(args.line)}" }) { editor ->
+    val offset = editor.offsetOf(args.line, args.column)
+    editor.inlayModel.getInlineElementsInRange(offset, offset).isNotEmpty() == args.present
   }
 }
 
