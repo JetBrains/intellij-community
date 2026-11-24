@@ -50,7 +50,7 @@ cache.getOrLoad(key, scope) { key -> load(key) }
 
 Do not write `cache.get(key) { _, _ -> scope.future { ... } }.await()`. All callers of one key share one future.
 `CompletionStage.await()` cancels that future when its caller is cancelled, so one cancelled caller stops the load
-for all other callers. `getOrLoad` waits through `asDeferred()`, which does not cancel the future.
+for all other callers. `getOrLoad` waits with a completion callback, which does not cancel the future.
 
 ## Tests
 

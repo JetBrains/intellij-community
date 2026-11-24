@@ -7,6 +7,7 @@ import com.intellij.python.pytools.backend.getOrLoad
 import com.intellij.testFramework.common.timeoutRunBlocking
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.async
 import kotlinx.coroutines.cancel
@@ -15,6 +16,7 @@ import kotlinx.coroutines.job
 import kotlinx.coroutines.launch
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
+import java.util.concurrent.CancellationException
 import java.util.concurrent.atomic.AtomicInteger
 
 /**
@@ -74,4 +76,24 @@ internal class AsyncCacheGetOrLoadTest {
     assertEquals(2, loads.get())
     loadScope.cancel()
   }
+
+  @Test
+  fun `a load that ended before the call gives its own exception`(): Unit = timeoutRunBlocking {
+    // An unconfined load runs in the call, so its future is done before the caller waits for it.
+    val loadScope = CoroutineScope(Dispatchers.Unconfined + SupervisorJob(coroutineContext.job))
+    val load: suspend (String) -> String = { throw RefusedException() }
+
+    val failure = try {
+      cache.getOrLoad("key", loadScope, load)
+      null
+    }
+    catch (e: CancellationException) {
+      e
+    }
+    assertEquals(RefusedException::class.java, failure?.javaClass, "the caller must get the exception of the load")
+    loadScope.cancel()
+  }
+
+  /** A refusal of the load, as a disposed key gives: a cancellation of its own type. */
+  private class RefusedException : CancellationException("refused")
 }

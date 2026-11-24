@@ -3,9 +3,12 @@ package com.intellij.python.pytools.backend
 
 import com.github.benmanes.caffeine.cache.AsyncCache
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.future.asDeferred
 import kotlinx.coroutines.future.future
+import kotlinx.coroutines.suspendCancellableCoroutine
 import org.jetbrains.annotations.ApiStatus
+import java.util.concurrent.CompletionException
+import kotlin.coroutines.resume
+import kotlin.coroutines.resumeWithException
 
 /**
  * Returns the value of [key]. When the cache has no value and no load for [key], starts [load] on [scope] and keeps
@@ -15,12 +18,19 @@ import org.jetbrains.annotations.ApiStatus
  * continues for the other callers, because it runs on [scope] and not on the caller.
  *
  * Use this function, and not `get(key) { ... }.await()`: `CompletionStage.await()` cancels the future when its caller
- * is cancelled, and that cancels the shared load for all callers. This function waits through `asDeferred()`, which
- * does not cancel the future.
+ * is cancelled, and that cancels the shared load for all callers. This function waits with a completion callback,
+ * which does not cancel the future.
  *
  * A load that fails or is cancelled is not kept: Caffeine removes a future that completes exceptionally, and the next
- * caller starts a new load.
+ * caller starts a new load. The caller gets the exception of the load, also when the load ended before the call.
  */
 @ApiStatus.Internal
-suspend fun <K : Any, V : Any> AsyncCache<K, V>.getOrLoad(key: K, scope: CoroutineScope, load: suspend (K) -> V): V =
-  get(key) { k, _ -> scope.future { load(k) } }.asDeferred().await()
+suspend fun <K : Any, V : Any> AsyncCache<K, V>.getOrLoad(key: K, scope: CoroutineScope, load: suspend (K) -> V): V {
+  val future = get(key) { k, _ -> scope.future { load(k) } }
+  return suspendCancellableCoroutine { continuation ->
+    future.whenComplete { value, error ->
+      if (error == null) continuation.resume(value)
+      else continuation.resumeWithException((error as? CompletionException)?.cause ?: error)
+    }
+  }
+}
