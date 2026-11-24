@@ -177,7 +177,8 @@ impl DefaultLaunchConfiguration {
     }
 
     /// Locates the Java runtime and returns a path to the standard launcher (`bin/java` or `bin\\java.exe`).
-    /// The lookup sequence is described in the [support article](https://intellij-support.jetbrains.com/hc/en-us/articles/206544879-Selecting-the-JDK-version-the-IDE-will-run-under).
+    /// The lookup sequence is described in the
+    /// [support article](https://intellij-support.jetbrains.com/hc/en-us/articles/206544879-Selecting-the-JDK-version-the-IDE-will-run-under).
     fn locate_runtime(&self) -> Result<PathBuf> {
         debug!("[1] Looking for runtime at product-specific environment variable");
         let product_env_var = self.env_var_base_name.to_owned() + "_JDK";
