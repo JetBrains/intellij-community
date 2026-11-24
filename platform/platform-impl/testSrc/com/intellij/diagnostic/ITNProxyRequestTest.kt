@@ -31,6 +31,8 @@ internal class ITNProxyRequestTest {
     val skippedNote: String? = attachments.firstOrNull { it.first == ITNProxy.SKIPPED_ATTACHMENTS_NAME }?.second?.toString(StandardCharsets.UTF_8)
 
     val skipped: List<String> = skippedNote?.lines()?.filter(String::isNotEmpty)?.map { it.substringBefore(':') }.orEmpty()
+
+    fun field(key: String): String = form.single { it.first == key }.second
   }
 
   @Test
@@ -95,6 +97,30 @@ internal class ITNProxyRequestTest {
   }
 
   @Test
+  fun `a report keeps the head of a long stack trace`() {
+    val throwable = RuntimeException("top")
+    repeat(2000) { throwable.addSuppressed(RuntimeException("suppressed $it " + "x".repeat(1000))) }
+    val fullText = IdeaLoggingEvent("message", throwable).throwableText
+    assertThat(fullText.length).isGreaterThan(ITNProxy.MAX_TEXT_FIELD_LENGTH)
+
+    val stacktrace = request(emptyList(), throwable = throwable).field("error.stacktrace")
+
+    val head = stacktrace.substringBeforeLast("\n\t... ")
+    assertThat(head.length).isLessThanOrEqualTo(ITNProxy.MAX_TEXT_FIELD_LENGTH)
+    assertThat(fullText).startsWith("$head\n")
+    assertThat(stacktrace).endsWith("\n\t... ${fullText.length - head.length} chars truncated before sending")
+  }
+
+  @Test
+  fun `a report cuts a long message and keeps a short one`() {
+    assertThat(request(emptyList()).field("error.message")).isEqualTo("message")
+
+    val message = request(emptyList(), message = "line\n".repeat(ITNProxy.MAX_TEXT_FIELD_LENGTH)).field("error.message")
+    assertThat(message.length).isLessThanOrEqualTo(ITNProxy.MAX_TEXT_FIELD_LENGTH + 100)
+    assertThat(message).endsWith(" chars truncated before sending")
+  }
+
+  @Test
   fun `a canceled report stops building its request`() {
     val job = Job().apply { cancel() }
     assertThrows<CancellationException> {
@@ -109,8 +135,10 @@ internal class ITNProxyRequestTest {
     attachments: List<Attachment>,
     maxSize: Long = Long.MAX_VALUE,
     textOnly: Boolean = false,
+    message: String = "message",
+    throwable: Throwable = RuntimeException("boom"),
   ): Request {
-    val event = IdeaLoggingEvent("message", RuntimeException("boom"), attachments, null, null, UnhandledExceptionKind.HANDLED)
+    val event = IdeaLoggingEvent(message, throwable, attachments, null, null, UnhandledExceptionKind.HANDLED)
     val bean = ITNProxy.ErrorBean(event, null, null, null, null, null, false)
     val body = ITNProxy.createRequest(event, bean, maxSize = maxSize, textOnly = textOnly)
     val text = unpackReportForm(body)

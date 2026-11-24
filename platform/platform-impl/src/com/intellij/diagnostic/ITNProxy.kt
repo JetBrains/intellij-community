@@ -82,6 +82,8 @@ object ITNProxy {
   internal const val SKIPPED_ATTACHMENTS_NAME = "skipped-attachments.txt"
   // the room for the skipped-attachments note and the fields after the attachments
   private const val SKIPPED_ATTACHMENTS_RESERVE = 16L * 1024
+  @VisibleForTesting
+  internal const val MAX_TEXT_FIELD_LENGTH = 1024 * 1024
 
   private typealias Endpoint = Pair<URI, ByteArray?>
 
@@ -362,6 +364,13 @@ object ITNProxy {
     return request
   }
 
+  /** Keeps the first [MAX_TEXT_FIELD_LENGTH] chars of [text], and cuts at a line end. */
+  private fun truncate(text: String): String {
+    if (text.length <= MAX_TEXT_FIELD_LENGTH) return text
+    val end = text.lastIndexOf('\n', MAX_TEXT_FIELD_LENGTH).takeIf { it > 0 } ?: MAX_TEXT_FIELD_LENGTH
+    return text.substring(0, end) + "\n\t... ${text.length - end} chars truncated before sending"
+  }
+
   private fun isJfrSnapshot(attachment: Attachment): Boolean = attachment.name.endsWith(".jfr")
 
   @Throws(Exception::class)
@@ -391,8 +400,8 @@ object ITNProxy {
         appendEarlyAppData(builder)
       }
 
-      append(builder, "error.message", event.message?.trim { it <= ' ' } ?: "")
-      append(builder, "error.stacktrace", event.throwableText)
+      append(builder, "error.message", truncate(event.message?.trim { it <= ' ' } ?: ""))
+      append(builder, "error.stacktrace", truncate(event.throwableText))
       // The event carries the kind, because an entry hands over the cause and drops the wrapper. See IJPL-254578.
       val interactiveKey = when (event.unhandledExceptionKind) {
         UnhandledExceptionKind.INTERACTIVE -> true
