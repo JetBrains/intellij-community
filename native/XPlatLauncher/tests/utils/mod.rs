@@ -325,10 +325,10 @@ fn layout_launcher(
             "lib/boot-macos.jar"
         ],
         vec![
-            (&shared_env.launcher_path, launcher_rel_path),
             (&shared_env.app_jar_path, "lib/app.jar")
         ],
         vec![
+            (&shared_env.launcher_path, launcher_rel_path),
             (&shared_env.vm_options_path, "bin/xplat.vmoptions"),
             (&shared_env.product_info_path, "Resources/product-info.json"),
             (&info_plist_path, "Info.plist")
