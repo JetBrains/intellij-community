@@ -10,6 +10,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.ui.playback.PlaybackContext
 import com.intellij.openapi.ui.playback.commands.PlaybackCommandCoroutineAdapter
+import com.intellij.util.io.PreemptiveSafeFileOutputStream
 import com.intellij.util.system.OS
 import com.intellij.util.ui.ImageUtil
 import com.intellij.util.ui.StartupUiUtil
@@ -84,7 +85,7 @@ private fun captureScreenWithAwtRobot(): BufferedImage? {
 
 private fun writeScreenshot(image: BufferedImage, formatName: String, file: File) {
   try {
-    ImageIO.write(image, formatName, file)
+    writeScreenshotAtomically(image, formatName, file)
     if (file.exists()) {
       LOG.info("Screenshot saved: ${file.absolutePath}")
     }
@@ -92,6 +93,36 @@ private fun writeScreenshot(image: BufferedImage, formatName: String, file: File
   catch (e: IOException) {
     LOG.info("Exceptions occurs at attempt to write screenshot to file")
     LOG.info(e)
+  }
+}
+
+/**
+ * Publishes the image only after encoding succeeds. Aborts the temporary output if encoding fails.
+ *
+ * The IDE can encode a screenshot while a separate test process collects attachments.
+ * Encoding uses a `.tmp` file. An atomic rename publishes the completed image at [file].
+ * Screenshot collectors must ignore `.tmp` files. See [AT-5703](https://youtrack.jetbrains.com/issue/AT-5703).
+ *
+ * [ImageIO.write] returns `false` when no registered writer supports [formatName] and the image type.
+ * It can also throw an [IOException] during encoding.
+ *
+ * Concurrent calls must use different target paths. Callers must serialize writes to the same [file].
+ */
+internal fun writeScreenshotAtomically(image: BufferedImage, formatName: String, file: File) {
+  val output = PreemptiveSafeFileOutputStream(file.toPath())
+  var complete = false
+  try {
+    val encoded = ImageIO.write(image, formatName, output)
+    if (encoded) {
+      complete = true
+    }
+    else {
+      throw IOException("No image writer for $formatName")
+    }
+  }
+  finally {
+    if (complete) output.close()
+    else output.abort()
   }
 }
 
@@ -144,7 +175,7 @@ suspend fun captureComponent(component: Component, file: File) {
   component.paint(g)
   withContext(Dispatchers.IO) {
     try {
-      ImageIO.write(image, "png", file)
+      writeScreenshotAtomically(image, "png", file)
     }
     catch (e: IOException) {
       LOG.info(e)
