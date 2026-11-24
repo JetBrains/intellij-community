@@ -411,7 +411,7 @@ class ToolWindowDragHelper(parent: Disposable, @JvmField val dragSourcePane: Too
         val dropToSide = sideDropTarget?.isSplit ?: (targetStripe.getDropToSide() == true)
         val anchor = ToolWindowMoveAction.Anchor.getAnchor(targetStripe.anchor, dropToSide)
         val title = getDropTooltipTitle(targetStripe.anchor, dropToSide, sideDropTarget?.isVertical == false)
-        if (title != lastDropTooltipTitle) {
+        if (title != lastDropTooltipTitle || dropTooltipPopup?.isDisposed != false) {
           clearDropTooltip()
           lastDropTooltipTitle = title
 
