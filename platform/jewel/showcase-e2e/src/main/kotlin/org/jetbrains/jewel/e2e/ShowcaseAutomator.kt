@@ -47,6 +47,18 @@ public interface ShowcaseAutomator {
     /** Waits for the UI to settle, so a check does not race a recomposition or an animation. */
     public suspend fun waitForIdle()
 
+    /** Returns the screen-space bounds of the first node with exact [text], or `null` if absent. */
+    public suspend fun boundsByText(text: String): ScreenBounds?
+
+    /**
+     * Returns the screen-space bounds of the popup surface containing [text] (falling back to the root semantics node
+     * bounds if surface bounds are unavailable), or `null` if absent.
+     */
+    public suspend fun popupRootBoundsContainingText(text: String): ScreenBounds?
+
+    /** Whether the host display uses a non-integer DPI scale (e.g., 125%, 150%, 175%). */
+    public suspend fun isFractionalDisplayScale(): Boolean
+
     /** Waits until a node with [tag] exists, failing if it does not appear in time. */
     public suspend fun waitForNode(tag: String) {
         waitUntil("a node tagged '$tag' to appear") { isPresent(tag) }
@@ -91,3 +103,13 @@ public suspend fun ShowcaseAutomator.runIsolated(
 
 private val WAIT_BUDGET: Duration = 10.seconds
 private val POLL_INTERVAL: Duration = 200.milliseconds
+
+/**
+ * Screen-space axis-aligned bounds in logical AWT units.
+ *
+ * @property x The horizontal coordinate of the left edge in screen coordinates.
+ * @property y The vertical coordinate of the top edge in screen coordinates.
+ * @property width The width in logical AWT units.
+ * @property height The height in logical AWT units.
+ */
+public data class ScreenBounds(public val x: Int, public val y: Int, public val width: Int, public val height: Int)

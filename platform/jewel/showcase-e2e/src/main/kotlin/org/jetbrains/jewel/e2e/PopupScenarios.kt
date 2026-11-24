@@ -2,6 +2,7 @@
 package org.jetbrains.jewel.e2e
 
 import java.awt.event.KeyEvent
+import kotlin.math.abs
 
 /**
  * Test tags the scenarios address. Both hosts must expose the same ones for a scenario to run in both.
@@ -112,6 +113,12 @@ public object PopupScenarios {
             "Keyboard navigation opens and closes nested Submenus in PopupMenu",
             ::closeLeftoverSubmenuPopup,
             ::submenuPopupMenuRoutesKeysAndCloses,
+        )
+        automator.runIsolated(
+            failures,
+            "Nested Submenus in PopupMenu align vertically and sit flush horizontally",
+            ::closeLeftoverSubmenuPopup,
+            ::submenuPopupMenuAlignsWithParentItem,
         )
     }
 
@@ -336,5 +343,99 @@ public object PopupScenarios {
                 onSuccess = { null },
                 onFailure = { "the submenu PopupMenu stayed open after Escape" },
             )
+    }
+
+    /**
+     * Nested submenus in a PopupMenu must align vertically with their parent item and open flush horizontally
+     * against the parent popup window without overlapping or gapping.
+     */
+    public suspend fun submenuPopupMenuAlignsWithParentItem(automator: ShowcaseAutomator): String? {
+        automator.click(ShowcaseE2eTags.SUBMENU_MENU_BUTTON)
+        automator.waitForNode(ShowcaseE2eTags.SUBMENU_MENU_POPUP)
+        automator.waitForIdle()
+
+        // Navigate down to "More Options" and press Right to open the first-level submenu.
+        automator.pressKey(KeyEvent.VK_DOWN)
+        automator.waitForIdle()
+        automator.pressKey(KeyEvent.VK_DOWN)
+        automator.waitForIdle()
+        automator.pressKey(KeyEvent.VK_RIGHT)
+        automator.waitUntil("first submenu item 'Submenu Item 1' to appear") {
+            automator.boundsByText("Submenu Item 1") != null
+        }
+        automator.waitForIdle()
+
+        val isFractionalScale = automator.isFractionalDisplayScale()
+
+        verifySubmenuAlignment(
+            automator = automator,
+            levelName = "first submenu",
+            anchorText = "More Options",
+            subItemText = "Submenu Item 1",
+            isFractionalScale = isFractionalScale,
+        )?.let { return it }
+
+        // Navigate down to "Nested Submenu" (3rd item in first submenu) and press Right to open the nested submenu.
+        automator.pressKey(KeyEvent.VK_DOWN)
+        automator.waitForIdle()
+        automator.pressKey(KeyEvent.VK_DOWN)
+        automator.waitForIdle()
+        automator.pressKey(KeyEvent.VK_DOWN)
+        automator.waitForIdle()
+        automator.pressKey(KeyEvent.VK_RIGHT)
+        automator.waitUntil("nested submenu item 'Nested Item 1' to appear") {
+            automator.boundsByText("Nested Item 1") != null
+        }
+        automator.waitForIdle()
+
+        verifySubmenuAlignment(
+            automator = automator,
+            levelName = "nested submenu",
+            anchorText = "Nested Submenu",
+            subItemText = "Nested Item 1",
+            isFractionalScale = isFractionalScale,
+        )?.let { return it }
+
+        automator.pressKey(KeyEvent.VK_ESCAPE)
+        return runCatching { automator.waitUntilGone(ShowcaseE2eTags.SUBMENU_MENU_POPUP) }
+            .fold(
+                onSuccess = { null },
+                onFailure = { "the submenu PopupMenu stayed open after Escape" },
+            )
+    }
+
+    private suspend fun verifySubmenuAlignment(
+        automator: ShowcaseAutomator,
+        levelName: String,
+        anchorText: String,
+        subItemText: String,
+        isFractionalScale: Boolean,
+    ): String? {
+        val anchorItem = automator.boundsByText(anchorText) ?: return "$levelName: missing anchor item '$anchorText'"
+        val subItem = automator.boundsByText(subItemText) ?: return "$levelName: missing submenu item '$subItemText'"
+        val parentRoot =
+            automator.popupRootBoundsContainingText(anchorText)
+                ?: return "$levelName: missing parent popup root for '$anchorText'"
+        val submenuRoot =
+            automator.popupRootBoundsContainingText(subItemText)
+                ?: return "$levelName: missing submenu popup root for '$subItemText'"
+
+        val context = "parentRoot=$parentRoot, submenuRoot=$submenuRoot, anchor=$anchorItem, subItem=$subItem"
+        val verticalDelta = abs(subItem.y - anchorItem.y)
+        val maxVerticalDelta = if (isFractionalScale) 1 else 0
+        if (verticalDelta > maxVerticalDelta) {
+            return "$levelName: vertical misalignment ($context)"
+        }
+        val isAlignedHorizontally =
+            if (submenuRoot.x < parentRoot.x) {
+                (submenuRoot.x + submenuRoot.width) in (parentRoot.x - 1)..parentRoot.x
+            } else {
+                val parentRight = parentRoot.x + parentRoot.width
+                submenuRoot.x in parentRight..(parentRight + 1)
+            }
+        if (!isAlignedHorizontally) {
+            return "$levelName: horizontal misalignment ($context)"
+        }
+        return null
     }
 }

@@ -63,6 +63,7 @@ import java.awt.Component
 import java.awt.Container
 import java.awt.Dimension
 import java.awt.GraphicsEnvironment
+import java.awt.Insets
 import java.awt.Point
 import java.awt.Rectangle
 import java.awt.Window
@@ -214,7 +215,7 @@ private fun JBPopup(
                                         popupRectangle.value = rectangle
                                         val currentPopup = popupRef.get()
                                         if (currentPopup?.canApplyPreShowBounds(owner) == true) {
-                                            applyPopupBounds(currentPopup, wrapper, owner, rectangle)
+                                            applyPopupBounds(currentPopup, wrapper, owner, rootOwner, rectangle)
                                             lastAppliedRectangle = rectangle
                                         }
                                     },
@@ -402,12 +403,33 @@ private fun JBPopup(
         }
         val rectangle = popupRectangle.value ?: return@LaunchedEffect
         if (rectangle != lastAppliedRectangle) {
-            applyPopupBounds(popup, jewelComposePanelWrapper, owner, rectangle)
+            applyPopupBounds(popup, jewelComposePanelWrapper, owner, rootOwner, rectangle)
             lastAppliedRectangle = rectangle
         }
         if (!isPopupShown) {
             isPopupShown = true
-            popup.showInScreenCoordinates(owner, rectangle.location.fromCurrentScreenToGlobal(owner))
+            val rawGlobalLocation = rectangle.location.fromCurrentScreenToGlobal(owner)
+            val globalSize = rectangle.size.withSystemDensity(owner)
+            val initialLocation =
+                adjustPopupLocationForBorderChrome(
+                    popup = popup,
+                    owner = owner,
+                    rootOwner = rootOwner,
+                    location = rawGlobalLocation,
+                    size = globalSize,
+                )
+            popup.showInScreenCoordinates(owner, initialLocation)
+            val finalLocation =
+                adjustPopupLocationForBorderChrome(
+                    popup = popup,
+                    owner = owner,
+                    rootOwner = rootOwner,
+                    location = rawGlobalLocation,
+                    size = globalSize,
+                )
+            if (finalLocation != initialLocation) {
+                popup.setSize(finalLocation, globalSize)
+            }
             (popup as? AbstractPopup)?.popupWindow?.configureNonFocusablePopupWindow()
         }
     }
@@ -431,13 +453,70 @@ private fun applyPopupBounds(
     popup: JBPopup,
     wrapper: JewelComposePanelWrapper,
     owner: Component,
+    rootOwner: Component,
     rectangle: Rectangle,
 ) {
-    val globalLocation = rectangle.location.fromCurrentScreenToGlobal(owner)
     val globalSize = rectangle.size.withSystemDensity(owner)
+    val globalLocation =
+        adjustPopupLocationForBorderChrome(
+            popup = popup,
+            owner = owner,
+            rootOwner = rootOwner,
+            location = rectangle.location.fromCurrentScreenToGlobal(owner),
+            size = globalSize,
+        )
     wrapper.preferredSize = globalSize
     wrapper.composePanel.preferredSize = globalSize
     popup.setSize(globalLocation, globalSize)
+}
+
+private fun adjustPopupLocationForBorderChrome(
+    popup: JBPopup,
+    owner: Component,
+    rootOwner: Component,
+    location: Point,
+    size: Dimension,
+): Point {
+    if (owner === rootOwner || !owner.isShowing || owner.width <= 0) return location
+    val parentWindow = SwingUtilities.getWindowAncestor(owner)?.takeIf { it.isShowing } ?: return location
+    val ownerScreenBounds = Rectangle(owner.locationOnScreen, owner.size)
+    val childInsets = (popup as? AbstractPopup)?.content?.insets ?: Insets(0, 0, 0, 0)
+    return adjustLocationForBorderChrome(
+        location = location,
+        size = size,
+        ownerScreenBounds = ownerScreenBounds,
+        parentWindowScreenBounds = parentWindow.bounds,
+        childBorderInsets = childInsets,
+    )
+}
+
+internal fun adjustLocationForBorderChrome(
+    location: Point,
+    size: Dimension,
+    ownerScreenBounds: Rectangle,
+    parentWindowScreenBounds: Rectangle?,
+    childBorderInsets: Insets,
+): Point {
+    if (parentWindowScreenBounds == null) return location
+
+    val parentLeftChrome = (ownerScreenBounds.x - parentWindowScreenBounds.x).coerceAtLeast(0)
+    val parentRightChrome =
+        ((parentWindowScreenBounds.x + parentWindowScreenBounds.width) -
+                (ownerScreenBounds.x + ownerScreenBounds.width))
+            .coerceAtLeast(0)
+
+    // AbstractPopup.setBounds shifts the window outward by insets.left/top on bordered popups (Win 10 / X11).
+    // Taking maxOf shares a single 1 dp border between parent and child chrome instead of stacking both borders.
+    val ownerRight = ownerScreenBounds.x + ownerScreenBounds.width
+    val adjustedX =
+        when {
+            location.x >= ownerRight -> location.x + maxOf(parentRightChrome, childBorderInsets.left)
+            location.x + size.width <= ownerScreenBounds.x ->
+                location.x - maxOf(parentLeftChrome, childBorderInsets.right)
+            else -> location.x
+        }
+
+    return if (adjustedX == location.x) location else Point(adjustedX, location.y)
 }
 
 private fun Window.configureNonFocusablePopupWindow() {
@@ -553,9 +632,12 @@ private fun Point.fromCurrentScreenToGlobal(owner: Component): Point {
     val point =
         Point(x - (ownerLocation.x * density).fastRoundToInt(), y - (ownerLocation.y * density).fastRoundToInt())
 
-    return RelativePoint(owner, Point((point.x / density).fastRoundToInt(), (point.y / density).fastRoundToInt()))
+    return RelativePoint(owner, Point(roundToAwtSymmetric(point.x, density), roundToAwtSymmetric(point.y, density)))
         .screenPoint
 }
+
+internal fun roundToAwtSymmetric(px: Int, density: Float): Int =
+    if (px < 0) -(-px / density).fastRoundToInt() else (px / density).fastRoundToInt()
 
 /**
  * Gets the screen size of the monitor that the component is currently on. It already takes into account the system

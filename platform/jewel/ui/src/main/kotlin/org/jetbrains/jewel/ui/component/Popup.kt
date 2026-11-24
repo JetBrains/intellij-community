@@ -19,11 +19,13 @@ import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.unit.Density
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntRect
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.LayoutDirection
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Popup as ComposePopup
 import androidx.compose.ui.window.PopupPositionProvider
 import androidx.compose.ui.window.PopupProperties
@@ -619,14 +621,13 @@ internal data class AnchorHorizontalMenuPositionProvider(
             )
 
         // The content offset specified using the dropdown offset parameter.
-        val contentOffsetX =
-            with(density) { contentOffset.x.roundToPx() * if (layoutDirection == LayoutDirection.Ltr) 1 else -1 }
-        val contentOffsetY = with(density) { contentOffset.y.roundToPx() }
-
-        // Compute horizontal position.
-        val y = anchorBounds.top + alignment.align(popupContentSize.height, anchorBounds.height) + contentOffsetY
+        val contentOffsetX = with(density) { roundToPxSymmetric(contentOffset.x) }
+        val contentOffsetY = with(density) { roundToPxSymmetric(contentOffset.y) }
 
         // Compute vertical position.
+        val y = anchorBounds.top + alignment.align(popupContentSize.height, anchorBounds.height) + contentOffsetY
+
+        // Compute horizontal position.
         val leftSpacing = anchorBounds.left - contentOffsetX - windowSpaceBounds.left
         val rightSpacing = windowSpaceBounds.right - anchorBounds.right - contentOffsetX
 
@@ -643,6 +644,8 @@ internal data class AnchorHorizontalMenuPositionProvider(
         return IntOffset(popupBounds.left, popupBounds.top)
     }
 }
+
+private fun Density.roundToPxSymmetric(dp: Dp): Int = if (dp < 0.dp) -(-dp).roundToPx() else dp.roundToPx()
 
 internal fun IntRect.constrainedIn(rect: IntRect): IntRect {
     var x = left

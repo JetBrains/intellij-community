@@ -5,6 +5,8 @@ package org.jetbrains.jewel.bridge.e2e
 
 import dev.sebastiano.spectre.agent.AttachedAutomator
 import dev.sebastiano.spectre.agent.ExperimentalSpectreAgentApi
+import dev.sebastiano.spectre.agent.transport.RectDto
+import org.jetbrains.jewel.e2e.ScreenBounds
 import org.jetbrains.jewel.e2e.ShowcaseAutomator
 
 /**
@@ -42,6 +44,34 @@ internal class AttachedShowcaseAutomator(
         attached.waitForIdle()
     }
 
+    override suspend fun boundsByText(text: String): ScreenBounds? =
+        attached.findByText(text).firstOrNull()?.bounds?.toScreenBounds()
+
+    override suspend fun popupRootBoundsContainingText(text: String): ScreenBounds? {
+        val nodes = attached.allNodes()
+        var node = nodes.firstOrNull { text in it.texts || it.editableText == text } ?: return null
+        val byKey = nodes.associateBy { it.key }
+        val visited = hashSetOf(node.key)
+        while (true) {
+            val parentKey = node.parentKey ?: break
+            if (!visited.add(parentKey)) return null
+            node = byKey[parentKey] ?: return null
+        }
+        val surfaceBounds =
+            attached
+                .windowIdentities()
+                .filter { identity ->
+                    identity.surfaceId.isNotEmpty() &&
+                        (node.key == identity.surfaceId || node.key.startsWith("${identity.surfaceId}:"))
+                }
+                .maxByOrNull { it.surfaceId.length }
+                ?.surfaceBoundsOnScreen
+        return (surfaceBounds ?: node.bounds).toScreenBounds()
+    }
+
+    override suspend fun isFractionalDisplayScale(): Boolean =
+        attached.windowIdentities().any { it.scaleX % 1.0 != 0.0 || it.scaleY % 1.0 != 0.0 }
+
     override suspend fun clickByContentDescription(description: String) {
         waitUntil("a node described as '$description' to appear") {
             attached.findByContentDescription(description).isNotEmpty()
@@ -76,3 +106,5 @@ internal class AttachedShowcaseAutomator(
 // Spectre clamps empty clipped bounds to 1x1 px in composeBoundsToAwtRectangle; require more than that
 // so partially or fully clipped nodes are scrolled into view before clicking.
 private const val MIN_CLIPPED_BOUNDS_PX = 4
+
+private fun RectDto.toScreenBounds(): ScreenBounds = ScreenBounds(x = x, y = y, width = width, height = height)

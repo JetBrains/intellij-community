@@ -27,6 +27,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.window.PopupPositionProvider
 import androidx.compose.ui.window.PopupProperties
+import org.jetbrains.jewel.foundation.Stroke
 import org.jetbrains.jewel.foundation.modifier.thenIf
 import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.foundation.theme.OverrideDarkMode
@@ -337,6 +338,7 @@ private fun PopupContainerImpl(
                         shadowColor = colors.shadow,
                         borderWidth = style.metrics.borderWidth,
                         borderColor = colors.border,
+                        borderAlignment = Stroke.Alignment.Outside,
                     )
                     .background(colors.background, popupShape)
                     .clip(popupShape)

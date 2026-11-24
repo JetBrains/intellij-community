@@ -458,10 +458,17 @@ private fun JPopupImpl(
             composePanel.preferredSize = null
             composePanel.preferredSize
         }
-        val rectangle = popupRectangle?.withDensity(awtWindow.density()) ?: return@LaunchedEffect
-        val location = rectangle.location.fromCurrentScreenToGlobal(window)
-        composePanel.preferredSize = rectangle.size
-        awtWindow.bounds = Rectangle(location, rectangle.size)
+        val rawRectangle = popupRectangle ?: return@LaunchedEffect
+        if (!component.isShowing) return@LaunchedEffect
+        val awtBounds =
+            popupBoundsToAwt(
+                popupRectPx = rawRectangle,
+                ownerLocationOnDisplay = component.locationOnDisplay(),
+                ownerLocationOnScreen = component.locationOnScreen,
+                density = component.density(),
+            )
+        composePanel.preferredSize = awtBounds.size
+        awtWindow.bounds = awtBounds
         if (!awtWindow.isVisible) {
             val shouldRequestFocus = currentProperties.focusable && !keyboardFocusRequested
             if (shouldRequestFocus) {
@@ -817,16 +824,25 @@ private fun IntSize.Companion.screenSize(window: Component): IntSize {
 }
 
 /**
- * Updates the rectangle values to be relative to the current density. Needs to use floor() conversion here to avoid
- * rounding up pixel sizes that cause a visual glitch
+ * Converts pixel popup bounds on the owner's monitor into AWT coordinates relative to the owner component.
+ *
+ * Flooring relative offsets and sizes keeps the window from exceeding Compose's painted surface on odd pixel counts and
+ * aligns adjacent submenu edges at integer and fractional scale factors.
  */
-private fun Rectangle.withDensity(density: Float): Rectangle =
-    Rectangle(
-        floor(x / density).toInt(),
-        floor(y / density).toInt(),
-        floor(width / density).toInt(),
-        floor(height / density).toInt(),
-    )
+internal fun popupBoundsToAwt(
+    popupRectPx: Rectangle,
+    ownerLocationOnDisplay: Point,
+    ownerLocationOnScreen: Point,
+    density: Float,
+): Rectangle {
+    val ownerPxX = (ownerLocationOnDisplay.x * density).fastRoundToInt()
+    val ownerPxY = (ownerLocationOnDisplay.y * density).fastRoundToInt()
+    val relX = ((popupRectPx.x - ownerPxX) / density).toInt()
+    val relY = ((popupRectPx.y - ownerPxY) / density).toInt()
+    val width = floor(popupRectPx.width / density).toInt()
+    val height = floor(popupRectPx.height / density).toInt()
+    return Rectangle(ownerLocationOnScreen.x + relX, ownerLocationOnScreen.y + relY, width, height)
+}
 
 /** Returns the screen density of the component's current monitor. */
 private fun Component.density(): Float =
@@ -870,20 +886,6 @@ private fun Component.locationOnDisplay(): Point {
     val relativeY = globalLocation.y - screenBounds.y
 
     return Point(relativeX, relativeY)
-}
-
-/**
- * Same as `fromRelativeToScreen`, but performs the inverse operation. Converts the point relative to the component's
- * current monitor screen coordinates to the global screen coordinates.
- *
- * @return A `Point` representing the point in the component's current monitor screen coordinates, to be used in the
- *   JDialog position update.
- */
-private fun Point.fromCurrentScreenToGlobal(window: Window): Point {
-    val ownerLocation = window.locationOnDisplay()
-    val point = Point(x - ownerLocation.x, y - ownerLocation.y)
-    SwingUtilities.convertPointToScreen(point, window)
-    return point
 }
 
 private val isWaylandToolkit: Boolean by lazy {
