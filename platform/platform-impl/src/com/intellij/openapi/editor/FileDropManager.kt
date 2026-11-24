@@ -21,8 +21,11 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.platform.ide.navigation.NavigationOptions
 import com.intellij.platform.navigateToFile
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
@@ -69,6 +72,9 @@ class FileDropManager(
         it.handleDrop(event)
       }
       catch (e: Exception) {
+        if (e is CancellationException) {
+          currentCoroutineContext().ensureActive()
+        }
         LOG.error("Unable to handle drop event in $it", e)
         false
       }
