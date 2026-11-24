@@ -132,20 +132,33 @@ internal class SettingsFrameProjectsTest {
   }
 
   @Test
-  fun `a project without the page of another project gets an empty page`(): Unit = inFrame(projectsWithPage = { listOf(guest) }) { disposable ->
+  fun `a page shows the first project that has it while the selected project has none`(): Unit = inFrame(projectsWithPage = { listOf(guest) }) { disposable ->
     val projects = SettingsFrameProjects.create(owner)!!
     val page = findPages(createGroup(projects, disposable), PROJECT_PAGE_ID).single() as FrameProjectConfigurable
 
+    assertThat(page.projectsWithPage).containsExactly(guest)
     val component = ConfigurableCardPanel.createConfigurableComponent(page)!!
-    assertThat(UIUtil.findComponentOfType(component, JBPanelWithEmptyText::class.java)).isNotNull()
-    assertThat(ConfigurableWrapper.cast(FrameProjectsTestProjectPage::class.java, page)).isNull()
-
-    projects.select(guest)
-    page.showSelectedProject()
-
-    assertThat(ConfigurableWrapper.cast(FrameProjectsTestProjectPage::class.java, page)).isSameAs(pageOf(guest))
+    assertThat(projects.selected).describedAs("The selection stays").isSameAs(owner)
+    assertThat(page.shownProject).isSameAs(guest)
     assertThat(UIUtil.findComponentOfType(component, JBPanelWithEmptyText::class.java)).isNull()
+    assertThat(ConfigurableWrapper.cast(FrameProjectsTestProjectPage::class.java, page)).isSameAs(pageOf(guest))
     page.disposeUIResources()
+  }
+
+  @Test
+  fun `the selector above a page has no tab for a project without that page`(): Unit = inFrame(projectsWithPage = { listOf(guest) }) { disposable ->
+    withForcedRespectIsShowingClientProperty {
+      val projects = SettingsFrameProjects.create(owner)!!
+      val group = createGroup(projects, disposable)
+      val page = projectPage(group)
+      val editor = createEditor(group, page, disposable)
+      val tabs = UIUtil.findComponentOfType(editor.content, SingleHeightTabs::class.java)!!
+
+      waitFor("the selector above the project-level page") { isVisibleIn(editor.content, tabs) }
+      assertThat(tabs.tabs.map { it.text }).containsExactly(guest.name)
+      assertThat(tabs.selectedInfo?.`object`).isSameAs(guest)
+      assertThat(projects.selected).isSameAs(owner)
+    }
   }
 
   @Test

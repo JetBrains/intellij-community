@@ -129,7 +129,7 @@ public final class SettingsEditor extends AbstractEditor implements UiDataProvid
   /** The tree of a window that configures several projects, or {@code null} for the tree of one project. */
   private final @Nullable FrameProjectsConfigurableGroup myFrameProjectsGroup;
   /** The project selector above the header of a project-level page, or {@code null} for the tree of one project. */
-  private final @Nullable JComponent myProjectTabs;
+  private final @Nullable SettingsProjectTabs myProjectTabs;
 
   /**
    * Snapshots of backing {@link PersistentStateComponent} states, captured when the window loses focus
@@ -191,7 +191,7 @@ public final class SettingsEditor extends AbstractEditor implements UiDataProvid
     myUseLeaveState = useLeaveState;
     myExtraHeaderAction = extraHeaderAction;
     myFrameProjectsGroup = (FrameProjectsConfigurableGroup)ContainerUtil.find(groups, group -> group instanceof FrameProjectsConfigurableGroup);
-    myProjectTabs = myFrameProjectsGroup == null ? null : new SettingsProjectTabs(myFrameProjectsGroup.getProjects(), this).getComponent();
+    myProjectTabs = myFrameProjectsGroup == null ? null : new SettingsProjectTabs(myFrameProjectsGroup.getProjects(), this);
     properties = PropertiesComponent.getInstance(project);
     settings = new Settings(groups) {
       @Override
@@ -488,10 +488,10 @@ public final class SettingsEditor extends AbstractEditor implements UiDataProvid
     if (myProjectTabs == null) {
       return header;
     }
-    myProjectTabs.setVisible(false);
+    myProjectTabs.getComponent().setVisible(false);
     JPanel panel = new JPanel(new BorderLayout());
     panel.setOpaque(false);
-    panel.add(BorderLayout.NORTH, myProjectTabs);
+    panel.add(BorderLayout.NORTH, myProjectTabs.getComponent());
     panel.add(BorderLayout.CENTER, header);
     return panel;
   }
@@ -587,17 +587,23 @@ public final class SettingsEditor extends AbstractEditor implements UiDataProvid
     updateStatus(filter.context.getCurrentConfigurable());
   }
 
-  /** Shows the project selector for a page of several projects, and the page of the selected project in that page. */
+  /**
+   * Shows the project selector for a page of several projects, and the page of the shown project in that page.
+   * The selector lists only the projects that have the page, and it hides when no project has the page.
+   */
   private void updateFrameProject(@Nullable Configurable configurable) {
     if (myProjectTabs == null || myFrameProjectsGroup == null) {
       return;
     }
+    boolean visible = false;
     if (configurable instanceof FrameProjectConfigurable frameProject) {
       frameProject.showSelectedProject();
+      myProjectTabs.show(frameProject);
+      visible = !frameProject.getProjectsWithPage().isEmpty();
     }
-    boolean visible = configurable instanceof FrameProjectConfigurable && !myFrameProjectsGroup.getProjects().getProjects().isEmpty();
-    if (myProjectTabs.isVisible() != visible) {
-      myProjectTabs.setVisible(visible);
+    JComponent tabs = myProjectTabs.getComponent();
+    if (tabs.isVisible() != visible) {
+      tabs.setVisible(visible);
       myContent.revalidate();
       myContent.repaint();
     }

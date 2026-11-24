@@ -22,7 +22,8 @@ import javax.swing.JPanel
  * selected project. It keeps the page of each project that it showed, so a change of a project waits for Apply while the
  * window shows another project. [isModified], [apply], [reset] and [cancel] cover the pages of all the projects.
  *
- * A project that has no page with the id gets an empty page.
+ * The page shows only the projects that have a page with the id, see [projectsWithPage]. When the selected project has no
+ * such page, the page shows the first project that has one, and the selection stays.
  */
 @ApiStatus.Internal
 open class FrameProjectConfigurable internal constructor(
@@ -39,14 +40,25 @@ open class FrameProjectConfigurable internal constructor(
   private val pages = LinkedHashMap<Project, JComponent>()
   private var container: JPanel? = null
 
-  /** The page of the selected project, or `null` when that project has no page with the id. */
+  /** The projects of the selector that have a page with the id, in the order of the selector. */
+  val projectsWithPage: List<Project>
+    get() = projects.projects.filter { it in delegates }
+
+  /**
+   * The project that the page shows: the selected project when it has a page with the id, else the first of [projectsWithPage].
+   * When no project has a page with the id, it is the selected project, and the page is empty.
+   */
+  val shownProject: Project
+    get() = projects.selected.takeIf { it in delegates } ?: projectsWithPage.firstOrNull() ?: projects.selected
+
+  /** The page of [shownProject], or `null` when no project has a page with the id. */
   val selectedDelegate: Configurable?
-    get() = delegates.get(projects.selected)
+    get() = delegates.get(shownProject)
 
   private val createdDelegates: List<Pair<Project, Configurable>>
     get() = pages.keys.mapNotNull { project -> delegates.get(project)?.let { project to it } }
 
-  override fun getProject(): Project = projects.selected
+  override fun getProject(): Project = shownProject
 
   override fun getId(): String = id
 
@@ -65,7 +77,7 @@ open class FrameProjectConfigurable internal constructor(
 
   override fun getPreferredFocusedComponent(): JComponent? {
     val delegate = selectedDelegate ?: return null
-    if (projects.selected !in pages) {
+    if (shownProject !in pages) {
       return null
     }
     return ConfigurableWrapper.castIfCreated(Configurable::class.java, delegate)?.preferredFocusedComponent
@@ -76,23 +88,23 @@ open class FrameProjectConfigurable internal constructor(
   }
 
   /**
-   * Returns `null` when the page of the selected project has no component. The Settings editor then shows its default page.
-   * The page of the selected project gets its component here and its reset from [reset], outside the read action of this call.
+   * Returns `null` when the page of [shownProject] has no component. The Settings editor then shows its default page.
+   * The page of [shownProject] gets its component here and its reset from [reset], outside the read action of this call.
    */
   override fun createComponent(): JComponent? {
     val delegate = selectedDelegate
     val page = if (delegate == null) createEmptyPage() else ConfigurableCardPanel.createDecoratedComponent(delegate) ?: return null
-    pages.put(projects.selected, page)
+    pages.put(shownProject, page)
     val panel = JPanel(BorderLayout())
     panel.add(page, BorderLayout.CENTER)
     container = panel
     return panel
   }
 
-  /** Shows the page of the selected project. The first call for a project creates the page of the project. */
+  /** Shows the page of [shownProject]. The first call for a project creates the page of the project. */
   fun showSelectedProject() {
     val container = container ?: return
-    val page = pages.getOrPut(projects.selected) {
+    val page = pages.getOrPut(shownProject) {
       selectedDelegate?.let { ConfigurableCardPanel.createConfigurableComponent(it) } ?: createEmptyPage()
     }
     if (container.componentCount == 1 && container.getComponent(0) === page) {
@@ -185,7 +197,7 @@ open class FrameProjectConfigurable internal constructor(
   }
 
   private fun createEmptyPage(): JComponent {
-    return JBPanelWithEmptyText().withEmptyText(ApplicationBundle.message("settings.frame.project.no.page", projects.selected.name))
+    return JBPanelWithEmptyText().withEmptyText(ApplicationBundle.message("settings.frame.project.no.page", shownProject.name))
   }
 
   override fun toString(): String = displayName

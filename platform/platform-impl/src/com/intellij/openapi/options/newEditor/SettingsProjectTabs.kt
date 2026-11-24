@@ -4,6 +4,7 @@ package com.intellij.openapi.options.newEditor
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationBundle
+import com.intellij.openapi.options.ex.FrameProjectConfigurable
 import com.intellij.openapi.project.Project
 import com.intellij.toolWindow.emptyTabComponent
 import com.intellij.ui.GuiUtils
@@ -20,7 +21,8 @@ import javax.swing.JComponent
 import javax.swing.JPanel
 
 /**
- * The project selector of a Settings window that configures several projects: one tab for each project of [projects].
+ * The project selector of a Settings window that configures several projects. The selector shows above one page, see [show].
+ * It has one tab for each project that has that page, see [FrameProjectConfigurable.projectsWithPage].
  *
  * The tabs show the selection of [projects] and change it. They use the common tab painter, as the tabs of a dialog do,
  * so they follow the Islands theme when it is on. The row is higher and its font is larger than in an editor tab row,
@@ -31,6 +33,9 @@ internal class SettingsProjectTabs(private val projects: SettingsFrameProjects, 
 
   /** `true` while [update] changes the tabs. The tabs select a tab on their own then, and that is no request of the user. */
   private var isUpdating = false
+
+  /** The page below the selector, or `null` before the first project-level page. */
+  private var page: FrameProjectConfigurable? = null
 
   /** The tab row with an empty space above and below it. */
   val component: JComponent = JPanel(BorderLayout()).apply {
@@ -61,12 +66,20 @@ internal class SettingsProjectTabs(private val projects: SettingsFrameProjects, 
     update()
   }
 
+  /** Shows the projects of [page]. */
+  fun show(page: FrameProjectConfigurable) {
+    this.page = page
+    update()
+  }
+
   private fun update() {
+    val page = page ?: return
+    val pageProjects = page.projectsWithPage
     isUpdating = true
     try {
-      if (tabs.tabs.map { it.`object` } != projects.projects) {
+      if (tabs.tabs.map { it.`object` } != pageProjects) {
         tabs.removeAllTabs()
-        for (project in projects.projects) {
+        for (project in pageProjects) {
           tabs.addTab(TabInfo(emptyTabComponent())
                         .setText(project.name)
                         .setIcon(AllIcons.Nodes.Folder)
@@ -74,7 +87,8 @@ internal class SettingsProjectTabs(private val projects: SettingsFrameProjects, 
                         .setObject(project))
         }
       }
-      val selectedTab = tabs.tabs.firstOrNull { it.`object` === projects.selected }
+      val shownProject = page.shownProject
+      val selectedTab = tabs.tabs.firstOrNull { it.`object` === shownProject }
       if (selectedTab != null && tabs.selectedInfo !== selectedTab) {
         tabs.select(selectedTab, false)
       }
