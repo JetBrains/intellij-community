@@ -43,6 +43,19 @@ class PyTypeInferenceCspTest : PyCodeInsightTestCase() {
   }
 
   @Test
+  @TestFor(issues = ["PY-94328"])
+  fun `Callable parameter with an Any bound and the bound of a nested generic call`() = test("""
+    from typing import Any, Callable
+
+    def f(x: Any) -> None: ...
+    def mkf[I]() -> Callable[[I], None]: ...
+    def outer[P](a: Callable[[P], None], b: Callable[[P], None]) -> P: ...
+
+    r1 = outer(f, mkf())
+    #└ TYPE Any
+    """.trimIndent())
+
+  @Test
   fun `Simple union via arguments`() = test("""
     def bar[U](a: U, b: U) -> U:
       return None

@@ -1679,6 +1679,7 @@ private object TypeBoundResolver {
     if (types.size == 1) return Ref.create(types.first())
 
     val nonAnyTypes = types.filter { it !is PyAnyType }
+    if (nonAnyTypes.isEmpty()) return Ref.create(types.first())
     val it = nonAnyTypes.iterator()
     var candidate = it.next()
     while (it.hasNext()) {
