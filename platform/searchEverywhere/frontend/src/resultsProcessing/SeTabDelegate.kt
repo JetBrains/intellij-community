@@ -36,6 +36,7 @@ import com.intellij.platform.searchEverywhere.frontend.SeFrontendItemDataProvide
 import com.intellij.platform.searchEverywhere.frontend.SeFrontendOnlyItemsProviderFactory
 import com.intellij.platform.searchEverywhere.frontend.SeFrontendService
 import com.intellij.platform.searchEverywhere.frontend.SeSeparateTabOnlyItemsProviderFactory
+import com.intellij.platform.searchEverywhere.frontend.SeTabsCustomizer
 import com.intellij.platform.searchEverywhere.frontend.tabs.target.SeTargetsFilterEditor
 import com.intellij.platform.searchEverywhere.impl.SeFindToolWindowManager
 import com.intellij.platform.searchEverywhere.impl.SeRemoteApi
@@ -46,8 +47,6 @@ import com.intellij.platform.searchEverywhere.providers.SeLocalItemDataProvider
 import com.intellij.platform.searchEverywhere.providers.SeLog
 import com.intellij.platform.searchEverywhere.providers.SeLog.ITEM_EMIT
 import com.intellij.platform.searchEverywhere.providers.SeProvidersHolder
-import com.intellij.platform.searchEverywhere.providers.SeSearchProjects
-import com.intellij.platform.searchEverywhere.providers.SeSearchProjectsProvider
 import com.intellij.platform.searchEverywhere.providers.areCommandsSupported
 import com.intellij.platform.searchEverywhere.providers.isExtendedInfoEnabled
 import com.intellij.platform.searchEverywhere.providers.isPreviewEnabled
@@ -152,24 +151,17 @@ class SeTabDelegate(
     }
   }
 
-  @ApiStatus.Internal
-  fun shouldHaveScopesFilter(): Boolean =
-    offersScopes(project) &&
-    // The scopes of a chooser belong to one project. The product gives the scope control of a tab that searches several projects.
-    !searchesSeveralProjects()
-
   /**
-   * Whether a provider of the tab searches the [SeSearchProjects] of the popup: a provider that the product names, or
-   * the text provider, which searches them in one run, see [SeSearchProjects.scopeOf].
+   * Whether the tab shows the scope control of the platform. A tab that names its [tabId] also asks the product,
+   * see [SeTabsCustomizer.isScopeFilterEnabled].
    */
-  private fun searchesSeveralProjects(): Boolean {
-    val searchProjects = project?.let { SeSearchProjectsProvider.find(it) } ?: return false
-    return providerIds.any { it.isWildcard || it.value == SeProviderIdUtils.TEXT_ID || it in searchProjects.providerIds }
-  }
+  @ApiStatus.Internal
+  fun shouldHaveScopesFilter(tabId: String? = null): Boolean =
+    offersScopes(project) && (tabId == null || SeTabsCustomizer.getInstance().isScopeFilterEnabled(tabId, project))
 
   @ApiStatus.Internal
-  suspend fun getSearchScopesInfos(): List<SearchScopesInfo> {
-    if (!shouldHaveScopesFilter()) return emptyList()
+  suspend fun getSearchScopesInfos(tabId: String? = null): List<SearchScopesInfo> {
+    if (!shouldHaveScopesFilter(tabId)) return emptyList()
     return providers.getValue().getSearchScopesInfos()
   }
 
@@ -193,7 +185,7 @@ class SeTabDelegate(
   ): SeFilterEditor =
     SeTargetsFilterEditor(project,
                           tabId,
-                          getSearchScopesInfos().firstOrNull(),
+                          getSearchScopesInfos(tabId).firstOrNull(),
                           getTypeVisibilityStates(),
                           hasPreviewAction = hasPreviewAction,
                           persistScopeIfAvailable = persistScopeIfAvailable)

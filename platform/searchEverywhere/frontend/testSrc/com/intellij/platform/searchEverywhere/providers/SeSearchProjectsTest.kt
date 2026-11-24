@@ -25,6 +25,7 @@ import com.intellij.platform.searchEverywhere.SeItemsProviderFactory
 import com.intellij.platform.searchEverywhere.SeParams
 import com.intellij.platform.searchEverywhere.SePreviewInfo
 import com.intellij.platform.searchEverywhere.SeProviderId
+import com.intellij.platform.searchEverywhere.SeSession
 import com.intellij.platform.searchEverywhere.SeSessionImpl
 import com.intellij.platform.searchEverywhere.impl.SeItemRegistry
 import com.intellij.platform.searchEverywhere.presentations.SeAdaptedItemEmptyPresentation
@@ -35,11 +36,7 @@ import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.TestDisposable
 import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.util.Processor
-import kotlinx.coroutines.CompletableDeferred
-import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.awaitCancellation
-import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.launch
@@ -50,28 +47,27 @@ import org.junit.jupiter.api.Assertions.assertSame
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import java.util.UUID
+import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.CopyOnWriteArrayList
 import javax.swing.DefaultListCellRenderer
 import javax.swing.ListCellRenderer
 
 /**
- * A popup asks the providers of each project that [SeSearchProjectsProvider] names, see [SeSearchProjects].
+ * A popup asks the providers of each project that the product names, see [SeSearchProjects] and [SeSearchProjectHolders].
  *
  * The popup belongs to the first project. The stub providers give one item each, and the item names the project of its
- * provider.
+ * provider. [TestHolders] stands for the product: it gives each other project a holder of its own.
  */
 @TestApplication
 class SeSearchProjectsTest {
   private val popupProjectFixture = projectFixture()
   private val otherProjectFixture = projectFixture()
-  private val thirdProjectFixture = projectFixture()
 
   @TestDisposable
   private lateinit var disposable: Disposable
 
   private val popupProject: Project get() = popupProjectFixture.get()
   private val otherProject: Project get() = otherProjectFixture.get()
-  private val thirdProject: Project get() = thirdProjectFixture.get()
 
   private val createdProviders = CopyOnWriteArrayList<TestProvider>()
 
@@ -90,7 +86,7 @@ class SeSearchProjectsTest {
 
   @Test
   fun aNamedProviderAsksEachSearchProject() = timeoutRunBlocking {
-    val holder = holder(SeSearchProjects(listOf(popupProject, otherProject), setOf(SeProviderId(SEARCHED_ID))))
+    val holder = holder(TestSearchProjects(listOf(popupProject, otherProject), SEARCHED_ID))
 
     assertEquals(setOf(popupProject, otherProject), holder.items(SEARCHED_ID).map { it.project() }.toSet())
     assertEquals(listOf(popupProject), holder.items(SINGLE_ID).map { it.project() }, "a provider that the product does not name asks the popup project only")
@@ -98,40 +94,32 @@ class SeSearchProjectsTest {
 
   @Test
   fun aSeparateTabAsksEachSearchProjectToo() = timeoutRunBlocking {
-    val holder = holder(SeSearchProjects(listOf(popupProject, otherProject), setOf(SeProviderId(SEARCHED_ID))))
+    val holder = holder(TestSearchProjects(listOf(popupProject, otherProject), SEARCHED_ID))
 
     assertEquals(setOf(popupProject, otherProject), holder.items(SEARCHED_ID, isAllTab = false).map { it.project() }.toSet())
   }
 
   @Test
-  fun theFilterPicksOneSearchProject() = timeoutRunBlocking {
-    val holder = holder(SeSearchProjects(listOf(popupProject, otherProject), setOf(SeProviderId(SEARCHED_ID))))
+  fun theProductPicksTheSearchProjectsOfASearch() = timeoutRunBlocking {
+    val holder = holder(TestSearchProjects(listOf(popupProject, otherProject), SEARCHED_ID))
 
-    val ofOther = holder.items(SEARCHED_ID, SeSearchProjectsFilter.withSelected(SeFilterState.Empty, listOf(otherProject)))
-    val ofPopup = holder.items(SEARCHED_ID, SeSearchProjectsFilter.withSelected(SeFilterState.Empty, listOf(popupProject)))
+    val ofOther = holder.items(SEARCHED_ID, pickOf(otherProject))
+    val ofPopup = holder.items(SEARCHED_ID, pickOf(popupProject))
 
     assertEquals(listOf(otherProject), ofOther.map { it.project() })
     assertEquals(listOf(popupProject), ofPopup.map { it.project() })
   }
 
   @Test
-  fun aPickOfNoSearchProjectAsksEachSearchProject() = timeoutRunBlocking {
-    val holder = holder(SeSearchProjects(listOf(popupProject, otherProject), setOf(SeProviderId(SEARCHED_ID))))
-    val staleFilter = SeFilterState.Data(mapOf(SeSearchProjectsFilter.KEY to listOf("a project that closed")))
-
-    assertEquals(setOf(popupProject, otherProject), holder.items(SEARCHED_ID, staleFilter).map { it.project() }.toSet())
-  }
-
-  @Test
   fun aPopupProjectOutsideTheSearchProjectsIsNotSearched() = timeoutRunBlocking {
-    val holder = holder(SeSearchProjects(listOf(otherProject), setOf(SeProviderId(SEARCHED_ID))))
+    val holder = holder(TestSearchProjects(listOf(otherProject), SEARCHED_ID))
 
     assertEquals(listOf(otherProject), holder.items(SEARCHED_ID).map { it.project() })
   }
 
   @Test
   fun theProviderOfTheOwnerHandlesAFoundItem() = timeoutRunBlocking {
-    val holder = holder(SeSearchProjects(listOf(popupProject, otherProject), setOf(SeProviderId(SEARCHED_ID))))
+    val holder = holder(TestSearchProjects(listOf(popupProject, otherProject), SEARCHED_ID))
     val dataProvider = holder.get(SeProviderId(SEARCHED_ID), true)!!
     val itemOfOther = holder.items(SEARCHED_ID).single { it.project() === otherProject }
     val providerOfOther = createdProviders.single { it.id == SEARCHED_ID && it.project === otherProject }
@@ -149,7 +137,7 @@ class SeSearchProjectsTest {
   @Test
   fun aWrappedProviderGetsTheLegacyContributorOfItsProject() = timeoutRunBlocking {
     ExtensionTestUtil.maskExtensions(SearchEverywhereContributor.EP_NAME, listOf(TestContributorFactory(contributorProjects)), disposable)
-    val holder = holder(SeSearchProjects(listOf(popupProject, otherProject), setOf(SeProviderId(WRAPPED_ID))))
+    val holder = holder(TestSearchProjects(listOf(popupProject, otherProject), WRAPPED_ID))
 
     val items = holder.items(WRAPPED_ID)
 
@@ -159,8 +147,9 @@ class SeSearchProjectsTest {
   }
 
   @Test
-  fun theHolderDisposesTheProvidersOfEachSearchProject() = timeoutRunBlocking {
-    val holder = holder(SeSearchProjects(listOf(popupProject, otherProject), setOf(SeProviderId(SEARCHED_ID))))
+  fun theHolderDisposesTheHoldersOfTheSearchProjects() = timeoutRunBlocking {
+    val searchProjects = TestSearchProjects(listOf(popupProject, otherProject), SEARCHED_ID)
+    val holder = holder(searchProjects)
     holder.items(SEARCHED_ID)
     val providers = createdProviders.filter { it.id == SEARCHED_ID }
     assertEquals(setOf(popupProject, otherProject), providers.map { it.project }.toSet())
@@ -168,52 +157,25 @@ class SeSearchProjectsTest {
 
     Disposer.dispose(holder)
 
+    assertTrue(searchProjects.holders.single().isDisposed, "the holder of the popup disposes the holders of the product")
     assertTrue(providers.all { it.isDisposed }, "the providers of each search project go away with the holder")
   }
 
   @Test
-  fun aSearchOfOneFolderCreatesOnlyTheProviderOfThatProjectAndId() = timeoutRunBlocking {
-    ExtensionTestUtil.maskExtensions(SearchEverywhereContributor.EP_NAME, listOf(TestContributorFactory(contributorProjects)), disposable)
-    val searchedIds = setOf(SeProviderId(SEARCHED_ID), SeProviderId(WRAPPED_ID), SeProviderId(TAB_AWARE_ID))
-    val holder = holder(SeSearchProjects(listOf(popupProject, otherProject, thirdProject), searchedIds))
-    val initialProviders = createdProviders.toList()
-    val initialContributors = contributorProjects.toList()
+  fun theFindToolWindowGetsTheItemsOfThePopupProjectOnly() = timeoutRunBlocking {
+    val holder = holder(TestSearchProjects(listOf(popupProject, otherProject), SEARCHED_ID))
+    val dataProvider = holder.get(SeProviderId(SEARCHED_ID), true)!!
 
-    val ofPopup = holder.items(SEARCHED_ID, SeSearchProjectsFilter.withSelected(SeFilterState.Empty, listOf(popupProject)))
-    assertEquals(listOf(popupProject), ofPopup.map { it.project() })
-    assertEquals(initialProviders, createdProviders.toList(), "a search of the popup project creates no provider of another project")
+    val exported = dataProvider.getRawItemsWithOperationLifetime(SeParams("query", SeFilterState.Empty), disposable).toList()
+    val exportedOfOther = dataProvider.getRawItemsWithOperationLifetime(SeParams("query", pickOf(otherProject)), disposable).toList()
 
-    val ofOther = holder.items(SEARCHED_ID, SeSearchProjectsFilter.withSelected(SeFilterState.Empty, listOf(otherProject)))
-    assertEquals(listOf(otherProject), ofOther.map { it.project() })
-    assertEquals(listOf(SEARCHED_ID to otherProject), (createdProviders - initialProviders.toSet()).map { it.id to it.project },
-                 "a search of one folder creates the provider of the asked id in that project only")
-    assertEquals(initialContributors, contributorProjects.toList(), "a provider that wraps no legacy contributor creates no legacy contributor")
-
-    holder.items(WRAPPED_ID, SeSearchProjectsFilter.withSelected(SeFilterState.Empty, listOf(otherProject)))
-    assertEquals(listOf(otherProject), contributorProjects - initialContributors.toSet(),
-                 "the legacy contributors come for the project that a wrapped provider searches")
-    assertTrue(createdProviders.none { it.project === thirdProject }, "a project that no search picks has no provider")
-  }
-
-  @Test
-  fun aCanceledFirstSearchDisposesTheProvidersThatItCreated() = timeoutRunBlocking {
-    val blockedFactory = BlockedTabAwareFactory(popupProject, createdProviders)
-    val holder = holder(SeSearchProjects(listOf(popupProject, otherProject), setOf(SeProviderId(TAB_AWARE_ID))), tabAwareFactory = blockedFactory)
-    val search = launch(start = CoroutineStart.UNDISPATCHED) { holder.items(TAB_AWARE_ID) }
-    blockedFactory.isBlocked.await()
-    val providerOfOther = createdProviders.single { it.id == TAB_AWARE_ID && it.project === otherProject }
-    assertFalse(providerOfOther.isDisposed)
-
-    search.cancelAndJoin()
-
-    assertTrue(providerOfOther.isDisposed, "a canceled search leaves no provider of another project behind")
-    assertEquals(setOf(popupProject, otherProject), holder.items(TAB_AWARE_ID).map { it.project() }.toSet(),
-                 "the next search creates the providers again")
+    assertEquals(listOf(popupProject), exported.map { (it as TestItem).project }, "the Find tool window shows the items in the popup project")
+    assertEquals(emptyList<SeItem>(), exportedOfOther, "a pick of another project exports no item")
   }
 
   @Test
   fun eachSearchOfAProjectOfSeveralIsMarkedWithItsProject() = timeoutRunBlocking {
-    val holder = holder(SeSearchProjects(listOf(popupProject, otherProject), setOf(SeProviderId(SEARCHED_ID))))
+    val holder = holder(TestSearchProjects(listOf(popupProject, otherProject), SEARCHED_ID))
 
     holder.items(SEARCHED_ID)
     holder.items(SINGLE_ID)
@@ -221,12 +183,15 @@ class SeSearchProjectsTest {
     val searched = createdProviders.filter { it.id == SEARCHED_ID }
     assertEquals(setOf(popupProject, otherProject), searched.map { it.project }.toSet())
     assertTrue(searched.all { it.searchMarks.single() }, "the search of each project is marked, also on a forked thread")
-    assertFalse(createdProviders.single { it.id == SINGLE_ID }.searchMarks.single(), "a provider of the popup project only is not marked")
+    val single = createdProviders.filter { it.id == SINGLE_ID }
+    assertFalse(single.single { it.project === popupProject }.searchMarks.single(), "a provider of the popup project only is not marked")
+    assertEquals(emptyList<Boolean>(), single.single { it.project === otherProject }.searchMarks,
+                 "the holder of another project has a provider of each id, and no search asks the ids that the product does not name")
   }
 
   @Test
   fun aPopupOfOneProjectDoesNotMarkItsSearch() = timeoutRunBlocking {
-    val holder = holder(SeSearchProjects(listOf(popupProject), setOf(SeProviderId(SEARCHED_ID))))
+    val holder = holder(TestSearchProjects(listOf(popupProject), SEARCHED_ID))
 
     holder.items(SEARCHED_ID)
 
@@ -234,41 +199,34 @@ class SeSearchProjectsTest {
   }
 
   @Test
-  fun concurrentPopupsGiveEachSeparateTabReplacementTheEventOfItsProject() = timeoutRunBlocking {
+  fun concurrentHoldersGiveEachSeparateTabReplacementTheEventOfItsProject() = timeoutRunBlocking {
     ExtensionTestUtil.maskExtensions(SearchEverywhereContributor.EP_NAME, listOf(TestContributorFactory(contributorProjects)), disposable)
     val replacement = RecordingReplacement()
     ExtensionTestUtil.maskExtensions(SearchEverywhereMlContributorReplacement.EP_NAME, listOf(replacement), disposable)
     val projects = listOf(popupProject, otherProject)
-    maskSearchProjects { project -> SeSearchProjects(projects, setOf(SeProviderId(WRAPPED_ID))).takeIf { project in projects } }
-
+    maskSearchProjects { null }
     maskFactories()
 
-    // A popup of each project opens, and its search creates the legacy contributors of the other project.
+    // The holders of the search projects of a popup initialize at the same time.
     coroutineScope {
-      repeat(CONCURRENT_POPUPS) { index ->
-        launch(Dispatchers.Default) {
-          openHolder(projects[index % projects.size]).items(WRAPPED_ID, isAllTab = false)
-        }
+      repeat(CONCURRENT_HOLDERS) { index ->
+        launch(Dispatchers.Default) { openHolder(projects[index % projects.size]) }
       }
     }
 
-    assertEquals(CONCURRENT_POPUPS * projects.size, replacement.seen.size, "each popup replaced the contributor of each project")
+    assertEquals(CONCURRENT_HOLDERS, replacement.seen.size, "each holder replaced the contributor of its project")
     assertEquals(emptyList<Pair<Project, Project?>>(), replacement.seen.filter { (contributor, event) -> contributor !== event },
-                 "a replacement reads the event of the project of its contributor, not the event of another popup")
+                 "a replacement reads the event of the project of its contributor, not the event of another holder")
   }
 
-  private suspend fun holder(
-    searchProjects: SeSearchProjects?,
-    tabAwareFactory: SeItemsProviderFactory = TestTabAwareFactory(createdProviders),
-  ): SeProvidersHolder {
+  private suspend fun holder(searchProjects: SeSearchProjects?): SeProvidersHolder {
     maskSearchProjects { project -> searchProjects.takeIf { project === popupProject } }
-    maskFactories(tabAwareFactory)
+    maskFactories()
     return openHolder(popupProject)
   }
 
-  private fun maskFactories(tabAwareFactory: SeItemsProviderFactory = TestTabAwareFactory(createdProviders)) {
-    val factories = listOf(TestFactory(SEARCHED_ID, createdProviders), TestFactory(SINGLE_ID, createdProviders),
-                           TestWrappedFactory(createdProviders), tabAwareFactory)
+  private fun maskFactories() {
+    val factories = listOf(TestFactory(SEARCHED_ID, createdProviders), TestFactory(SINGLE_ID, createdProviders), TestWrappedFactory(createdProviders))
     ExtensionTestUtil.maskExtensions(SeItemsProviderFactory.EP_NAME, factories, disposable)
   }
 
@@ -280,15 +238,61 @@ class SeSearchProjectsTest {
 
   /** A popup of [popupProject] with the masked factories. The test disposable disposes it. */
   private suspend fun openHolder(popupProject: Project): SeProvidersHolder {
-    val dataContext = DataContext { dataId -> if (CommonDataKeys.PROJECT.`is`(dataId)) popupProject else null }
-    val initEvent = AnActionEvent.createEvent(dataContext, null, "", ActionUiKind.NONE, null)
     val session = SeSessionImpl(UUID.randomUUID().toString())
-    val holder = SeProvidersHolder.initialize(initEvent, popupProject, session, "Test", withAdaptedLegacyContributors = false)
+    val holder = SeProvidersHolder.initialize(eventOf(popupProject), popupProject, session, "Test", withAdaptedLegacyContributors = false)
     Disposer.register(disposable) {
       Disposer.dispose(holder)
       SeItemRegistry.getInstance().closeSession(session)
     }
     return holder
+  }
+
+  private fun eventOf(project: Project): AnActionEvent {
+    val dataContext = DataContext { dataId -> if (CommonDataKeys.PROJECT.`is`(dataId)) project else null }
+    return AnActionEvent.createEvent(dataContext, null, "", ActionUiKind.NONE, null)
+  }
+
+  /** A filter state that makes [TestHolders] search [project] only. */
+  private fun pickOf(project: Project): SeFilterState = SeFilterState.Data(mapOf(PICK_KEY to listOf(SeSearchProjectHolder.keyOf(project))))
+
+  /** The product: [projects] are the search projects, and the providers of [providerId] search each of them. */
+  private inner class TestSearchProjects(private val projects: List<Project>, providerId: String) : SeSearchProjects {
+    val holders = CopyOnWriteArrayList<TestHolders>()
+
+    override val providerIds: Set<SeProviderId> = setOf(SeProviderId(providerId))
+
+    override fun createHolders(initEvent: AnActionEvent, session: SeSession): SeSearchProjectHolders =
+      TestHolders(projects, session).also { holders.add(it) }
+  }
+
+  /** Gives each of [projects] but the popup project a holder of its own with the first search that asks it. */
+  private inner class TestHolders(private val projects: List<Project>, private val session: SeSession) : SeSearchProjectHolders {
+    private val holders = ConcurrentHashMap<Project, SeProvidersHolder>()
+
+    @Volatile
+    var isDisposed = false
+
+    override val searchesSeveralProjects: Boolean get() = projects.size > 1
+
+    override suspend fun searched(filter: SeFilterState): List<SeSearchProjectHolder> {
+      val pickedKeys = filter.get(PICK_KEY)
+      val picked = if (pickedKeys == null) projects else projects.filter { SeSearchProjectHolder.keyOf(it) in pickedKeys }
+      return picked.map { project -> SeSearchProjectHolder(project, if (project === popupProject) null else holderOf(project)) }
+    }
+
+    override fun created(key: String): SeSearchProjectHolder? =
+      holders.entries.firstOrNull { SeSearchProjectHolder.keyOf(it.key) == key }?.let { SeSearchProjectHolder(it.key, it.value) }
+
+    private suspend fun holderOf(project: Project): SeProvidersHolder {
+      holders[project]?.let { return it }
+      val holder = SeProvidersHolder.initialize(eventOf(project), project, session, "Test", withAdaptedLegacyContributors = false)
+      return holders.putIfAbsent(project, holder)?.also { Disposer.dispose(holder) } ?: holder
+    }
+
+    override fun dispose() {
+      isDisposed = true
+      holders.values.forEach { Disposer.dispose(it) }
+    }
   }
 
   private suspend fun SeProvidersHolder.items(
@@ -351,28 +355,6 @@ class SeSearchProjectsTest {
       TestProvider(id, project!!).also { createdProviders.add(it) }
   }
 
-  private class TestTabAwareFactory(private val createdProviders: MutableList<TestProvider>) : SeTabAwareItemsProviderFactory {
-    override val id: String get() = TAB_AWARE_ID
-
-    override suspend fun getItemsProvider(project: Project?, dataContext: DataContext, isAllTab: Boolean): SeItemsProvider =
-      TestProvider(id, project!!).also { createdProviders.add(it) }
-  }
-
-  /**
-   * Gives the providers of [TAB_AWARE_ID] in place of [TestTabAwareFactory]. For another project than [popupProject], the
-   * first creation of the separate tab provider suspends until its search is canceled.
-   */
-  private class BlockedTabAwareFactory(private val popupProject: Project, private val createdProviders: MutableList<TestProvider>) : SeTabAwareItemsProviderFactory {
-    override val id: String get() = TAB_AWARE_ID
-
-    val isBlocked = CompletableDeferred<Unit>()
-
-    override suspend fun getItemsProvider(project: Project?, dataContext: DataContext, isAllTab: Boolean): SeItemsProvider {
-      if (!isAllTab && project !== popupProject && isBlocked.complete(Unit)) awaitCancellation()
-      return TestProvider(id, project!!).also { createdProviders.add(it) }
-    }
-  }
-
   private class TestWrappedFactory(private val createdProviders: MutableList<TestProvider>) : SeWrappedLegacyContributorItemsProviderFactory {
     override val id: String get() = WRAPPED_ID
 
@@ -410,8 +392,8 @@ class SeSearchProjectsTest {
     const val SEARCHED_ID = "SeSearchProjectsTest.searched"
     const val SINGLE_ID = "SeSearchProjectsTest.single"
     const val WRAPPED_ID = "SeSearchProjectsTest.wrapped"
-    const val TAB_AWARE_ID = "SeSearchProjectsTest.tabAware"
-    const val CONCURRENT_POPUPS = 40
+    const val PICK_KEY = "SeSearchProjectsTest.pick"
+    const val CONCURRENT_HOLDERS = 40
     const val FORKED_TASKS = 8
   }
 }

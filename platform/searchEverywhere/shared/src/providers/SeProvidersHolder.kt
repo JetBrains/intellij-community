@@ -38,7 +38,7 @@ class SeProvidersHolder(
   private val allTabProviders: Map<SeProviderId, SeLocalItemDataProvider>,
   private val separateTabProviders: Map<SeProviderId, SeLocalItemDataProvider>,
   val legacyContributors: SeLegacyContributors,
-  private val searchProjectProviders: SeSearchProjectProviders? = null,
+  private val searchProjectHolders: SeSearchProjectHolders? = null,
 ) : Disposable {
   fun adaptedAllTabProviders(withPresentation: Boolean): Set<SeProviderId> =
     allTabProviders.values.mapNotNull { it.takeIf { it.isAdapted && (it.isAdaptedWithPresentation == withPresentation) }?.id }.toSet()
@@ -59,7 +59,7 @@ class SeProvidersHolder(
     separateTabProviders.values.forEach { Disposer.dispose(it) }
     legacyContributors.allTab.values.forEach { Disposer.dispose(it) }
     legacyContributors.separateTab.values.forEach { Disposer.dispose(it) }
-    searchProjectProviders?.let { Disposer.dispose(it) }
+    searchProjectHolders?.let { Disposer.dispose(it) }
   }
 
   fun getLegacyContributor(providerId: SeProviderId, isAllTab: Boolean): SearchEverywhereContributor<Any>? {
@@ -95,19 +95,52 @@ class SeProvidersHolder(
       val openingId = session.id
 
       // The providers of an id that the product names search every search project of the popup, see [SeSearchProjects].
-      val searchProjectProviders = project?.let { popupProject ->
-        SeSearchProjectsProvider.find(popupProject)?.let { SeSearchProjectProviders(popupProject, it, initEvent, logLabel) }
+      val searchProjects = project?.let { SeSearchProjectsProvider.find(it) }
+      val searchProjectHolders = searchProjects?.createHolders(initEvent, session)
+      val searchedProviderIds = searchProjects?.providerIds.orEmpty()
+
+      fun dataProvider(provider: SeItemsProvider, isAllTab: Boolean): SeLocalItemDataProvider {
+        val holders = searchProjectHolders.takeIf { SeProviderId(provider.id) in searchedProviderIds }
+        return SeLocalItemDataProvider(provider, session, logLabel, holders, isAllTab)
       }
 
-      fun dataProvider(provider: SeItemsProvider, isAllTab: Boolean): SeLocalItemDataProvider =
-        SeLocalItemDataProvider(provider, session, logLabel, searchProjectProviders?.sourceOf(SeProviderId(provider.id), isAllTab))
-
       SeItemsProviderFactory.EP_NAME.extensionList.forEach { providerFactory ->
+        val provider: SeItemsProvider?
+        val separateTabProvider: SeItemsProvider?
+
+        val providerFactoryId = SeProviderId(providerFactory.id)
         val pluginId = PluginManager.getPluginByClass(providerFactory.javaClass)?.pluginId?.idString
-        val (provider, separateTabProvider) =
-          createProviders(providerFactory, project, dataContext, legacyContributors, separateTabLegacyContributors, logLabel) { initializer ->
-            initializationGuard.initialize(providerFactory.id, openingId, pluginId, logLabel, initializer)
+
+        if (providerFactory is SeWrappedLegacyContributorItemsProviderFactory) {
+          provider = legacyContributors[providerFactoryId]?.let {
+            initializationGuard.initialize(providerFactory.id, openingId, pluginId, logLabel) {
+              providerFactory.getItemsProviderCatchingOrNull(project, it, isAllTab = true, dataContext = dataContext)
+            }
           }
+          separateTabProvider = separateTabLegacyContributors[providerFactoryId]?.let {
+            initializationGuard.initialize(providerFactory.id, openingId, pluginId, logLabel) {
+              providerFactory.getItemsProviderCatchingOrNull(project, it, isAllTab = false, dataContext = dataContext)
+            }
+          }
+        }
+        else if (providerFactory is SeTabAwareItemsProviderFactory) {
+          provider = initializationGuard.initialize(providerFactory.id, openingId, pluginId, logLabel) {
+            providerFactory.getItemsProviderCatchingOrNull(project, dataContext, isAllTab = true)
+          }
+          separateTabProvider = initializationGuard.initialize(providerFactory.id, openingId, pluginId, logLabel) {
+            providerFactory.getItemsProviderCatchingOrNull(project, dataContext, isAllTab = false)
+          }
+        }
+        else {
+          provider = initializationGuard.initialize(providerFactory.id, openingId, pluginId, logLabel) {
+            providerFactory.getItemsProviderCatchingOrNull(project, dataContext)
+          }
+          separateTabProvider = null
+
+          if (provider?.id != providerFactory.id) {
+            SeLog.log { "Provider ID ($logLabel) doesn't match their factory ID: ${provider?.id} != ${providerFactory.id}" }
+          }
+        }
 
         provider?.let {
           allTabProviders[SeProviderId(it.id)] = dataProvider(it, isAllTab = true)
@@ -129,61 +162,8 @@ class SeProvidersHolder(
       return SeProvidersHolder(allTabProviders,
                                separateTabProviders,
                                SeLegacyContributors(legacyContributors, separateTabLegacyContributors),
-                               searchProjectProviders)
+                               searchProjectHolders)
     }
-
-    /**
-     * The providers that [providerFactory] gives [project]: the one of the All tab first, then the one of the separate tab.
-     * The second one is `null` for a factory that makes one provider for both. [initialize] runs each creation.
-     */
-    internal suspend fun createProviders(
-      providerFactory: SeItemsProviderFactory,
-      project: Project?,
-      dataContext: DataContext,
-      legacyContributors: Map<SeProviderId, SearchEverywhereContributor<Any>>,
-      separateTabLegacyContributors: Map<SeProviderId, SearchEverywhereContributor<Any>>,
-      logLabel: String,
-      initialize: suspend (suspend () -> SeItemsProvider?) -> SeItemsProvider?,
-    ): Pair<SeItemsProvider?, SeItemsProvider?> {
-      val providerFactoryId = SeProviderId(providerFactory.id)
-      when (providerFactory) {
-        is SeWrappedLegacyContributorItemsProviderFactory -> {
-          val provider = legacyContributors[providerFactoryId]?.let {
-            initialize { providerFactory.getItemsProviderCatchingOrNull(project, it, isAllTab = true, dataContext = dataContext) }
-          }
-          val separateTabProvider = disposingOnFailure(provider) {
-            separateTabLegacyContributors[providerFactoryId]?.let {
-              initialize { providerFactory.getItemsProviderCatchingOrNull(project, it, isAllTab = false, dataContext = dataContext) }
-            }
-          }
-          return provider to separateTabProvider
-        }
-        is SeTabAwareItemsProviderFactory -> {
-          val provider = initialize { providerFactory.getItemsProviderCatchingOrNull(project, dataContext, isAllTab = true) }
-          val separateTabProvider = disposingOnFailure(provider) {
-            initialize { providerFactory.getItemsProviderCatchingOrNull(project, dataContext, isAllTab = false) }
-          }
-          return provider to separateTabProvider
-        }
-        else -> {
-          val provider = initialize { providerFactory.getItemsProviderCatchingOrNull(project, dataContext) }
-          if (provider?.id != providerFactory.id) {
-            SeLog.log { "Provider ID ($logLabel) doesn't match their factory ID: ${provider?.id} != ${providerFactory.id}" }
-          }
-          return provider to null
-        }
-      }
-    }
-
-    /** Runs [block], and disposes [created] when [block] fails or is canceled: then no caller gets [created]. */
-    private inline fun <T> disposingOnFailure(created: SeItemsProvider?, block: () -> T): T =
-      try {
-        block()
-      }
-      catch (e: Throwable) {
-        created?.let { Disposer.dispose(it) }
-        throw e
-      }
 
     private fun createAdaptedProvidersIfNecessary(legacyContributors: Map<SeProviderId, SearchEverywhereContributor<Any>>,
                                                   supportedProviders: Map<SeProviderId, SeLocalItemDataProvider>,
@@ -199,11 +179,10 @@ class SeProvidersHolder(
      * Creates the legacy contributors of [project] into [allContributors] and [separateTabContributors].
      *
      * Both steps run in one EDT block. A replacement of a separate tab contributor reads the event that
-     * [SearchEverywhereManagerImpl.createContributors] saves in [SearchEverywhereMlContributorReplacement]. No other
-     * popup can save its own event between the two steps. The maps hold the contributors also when the caller is
-     * canceled after the block, so the caller can dispose them.
+     * [SearchEverywhereManagerImpl.createContributors] saves in [SearchEverywhereMlContributorReplacement]. The holders
+     * of several search projects initialize at the same time, and none can save its own event between the two steps.
      */
-    internal suspend fun initializeLegacyContributors(
+    private suspend fun initializeLegacyContributors(
       initEvent: AnActionEvent,
       project: Project?,
       allContributors: MutableMap<SeProviderId, SearchEverywhereContributor<Any>>,

@@ -132,7 +132,7 @@ class SeTextItemsProvider(
     val textFilter = SeTextFilter.from(filter)
     val isEverywhere = SeEverywhereFilterImpl.isEverywhere(filter)
     val scopes = scopes.getValue()
-    val searchProjectsScope = SeSearchProjectsProvider.find(project)?.let { it.scopeOf(it.selectedProjects(filter)) }
+    val searchProjectsScope = SeSearchProjectsProvider.find(project)?.scopeOf(filter)
 
     var isScopeSelectedByUser = false
     val scope: ScopeDescriptor? = when {

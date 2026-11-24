@@ -18,7 +18,7 @@ object SeItemDataKeys {
   const val TARGET_INDEX: String = "SeItemDataKeys.TargetIndex"
 
   /**
-   * The search project that gave the item, see `SeSearchProjectsFilter.keyOf`.
+   * The search project that gave the item, see `SeSearchProjectHolder.key`.
    * Only an item of a provider that searches several projects has it.
    */
   const val SEARCH_PROJECT: String = "SeItemDataKeys.SearchProject"

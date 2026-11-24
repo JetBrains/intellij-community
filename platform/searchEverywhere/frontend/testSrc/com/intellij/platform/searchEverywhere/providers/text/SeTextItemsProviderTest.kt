@@ -4,11 +4,15 @@ package com.intellij.platform.searchEverywhere.providers.text
 import com.intellij.find.FindManager
 import com.intellij.find.FindSettings
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.platform.searchEverywhere.SeFilterState
 import com.intellij.platform.searchEverywhere.SeParams
+import com.intellij.platform.searchEverywhere.SeProviderId
+import com.intellij.platform.searchEverywhere.SeSession
 import com.intellij.platform.searchEverywhere.providers.SeEverywhereFilterImpl
+import com.intellij.platform.searchEverywhere.providers.SeSearchProjectHolders
 import com.intellij.platform.searchEverywhere.providers.SeSearchProjects
 import com.intellij.platform.searchEverywhere.providers.SeSearchProjectsProvider
 import com.intellij.platform.searchEverywhere.providers.SeTextFilter
@@ -30,6 +34,7 @@ import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotEquals
 import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.Assertions.assertSame
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -167,13 +172,17 @@ class SeTextItemsProviderTest {
     IndexingTestUtil.suspendUntilIndexesAreReady(project)
     val project = project
     val scopeOfSearchProjects = GlobalSearchScope.fileScope(project, haystack)
-    val selectedProjects = AtomicReference<List<Project>>()
+    val scopeFilter = AtomicReference<SeFilterState>()
     ExtensionTestUtil.maskExtensions(SeSearchProjectsProvider.EP_NAME, listOf(object : SeSearchProjectsProvider {
-      override fun getSearchProjects(project: Project): SeSearchProjects = object : SeSearchProjects(listOf(project), emptySet()) {
-        override fun scopeOf(selected: List<Project>): GlobalSearchScope {
-          selectedProjects.set(selected)
+      override fun getSearchProjects(project: Project): SeSearchProjects = object : SeSearchProjects {
+        override val providerIds: Set<SeProviderId> get() = emptySet()
+
+        override fun scopeOf(filter: SeFilterState): GlobalSearchScope {
+          scopeFilter.set(filter)
           return scopeOfSearchProjects
         }
+
+        override fun createHolders(initEvent: AnActionEvent, session: SeSession): SeSearchProjectHolders = throw UnsupportedOperationException()
       }
     }), disposable)
 
@@ -183,7 +192,7 @@ class SeTextItemsProviderTest {
       val everywhereFilter = SeEverywhereFilterImpl(isAllTab = true, isEverywhere = true, disabledProviderIds = emptyList()).toState()
 
       assertEquals(emptyList<String>(), provider.search("eedafea0f30d", textFilter), "the Text tab searches in the scope of the search projects")
-      assertEquals(listOf(project), selectedProjects.get(), "a filter without a pick picks each search project")
+      assertSame(textFilter, scopeFilter.get(), "the product gets the filter of the search, so it resolves its own pick")
       assertEquals(2, provider.search("needle", textFilter).size)
       assertEquals(emptyList<String>(), provider.search("eedafea0f30d", allTabFilter), "the All tab searches in the scope of the search projects")
       assertEquals(1, provider.search("eedafea0f30d", everywhereFilter).size, "the everywhere flag searches everywhere")

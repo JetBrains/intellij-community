@@ -45,7 +45,7 @@ class SeAllTab(delegate: SeTabDelegate) : SeDefaultTabBase(delegate) {
 
   override val id: String get() = ID
   private val filterEditor: SuspendLazyProperty<SeFilterEditor> = initAsync(delegate.scope) {
-    SeAllFilterEditor(delegate.getProvidersIdToName(), delegate.shouldHaveScopesFilter())
+    SeAllFilterEditor(delegate.getProvidersIdToName(), delegate.shouldHaveScopesFilter(ID))
   }
 
   override fun getItems(params: SeParams): Flow<SeResultEvent> {

@@ -3,11 +3,14 @@ package com.intellij.platform.searchEverywhere.providers
 
 import com.intellij.concurrency.IntelliJContextElement
 import com.intellij.concurrency.currentThreadContext
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
 import com.intellij.platform.project.projectId
 import com.intellij.platform.searchEverywhere.SeFilterState
 import com.intellij.platform.searchEverywhere.SeProviderId
+import com.intellij.platform.searchEverywhere.SeSession
 import com.intellij.psi.search.GlobalSearchScope
 import org.jetbrains.annotations.ApiStatus
 import kotlin.coroutines.AbstractCoroutineContextElement
@@ -22,7 +25,7 @@ import kotlin.coroutines.CoroutineContext
  */
 @ApiStatus.Internal
 interface SeSearchProjectsProvider {
-  /** The projects that a popup of [project] searches, or `null` when the popup searches [project] only. */
+  /** The search projects of a popup of [project], or `null` when the popup searches [project] only. */
   fun getSearchProjects(project: Project): SeSearchProjects?
 
   companion object {
@@ -35,52 +38,51 @@ interface SeSearchProjectsProvider {
 }
 
 /**
- * The [projects] that a popup searches, in the order of the product, and the [providerIds] that search each of them.
+ * The projects that a popup searches. The product owns the list of the projects, the pick of a search and the
+ * providers of each project. The popup only asks them.
  *
- * The popup creates one provider of each id in [providerIds] for each project. A provider of another id searches the
- * project of the popup only: an application provider, such as the actions, gives the same items for each project.
- * The project of the popup is searched only when [projects] holds it.
- *
- * A scope chooser lists the scopes of one project, so a tab that searches several projects shows none. The product
- * gives such a tab its own control, see `SeTabsCustomizer.customizeFilterEditor`, and that control picks some of
- * [projects] with [SeSearchProjectsFilter].
+ * A provider of an id in [providerIds] searches each search project. A provider of another id searches the project of
+ * the popup only: an application provider, such as the actions, gives the same items for each project.
  */
 @ApiStatus.Internal
-open class SeSearchProjects(val projects: List<Project>, val providerIds: Set<SeProviderId>) {
+interface SeSearchProjects {
+  val providerIds: Set<SeProviderId>
+
   /**
-   * The scope that holds the files of [selected], some of [projects]. A provider that reaches every search project in
-   * one run of the project of the popup searches in it: the text search. Such a provider is not in [providerIds].
+   * The scope of a search with [filter] for a provider that reaches every search project in one run of the project of
+   * the popup: the text search. Such a provider is not in [providerIds].
    * `null` when the product has no such scope. The provider then searches in its own scope.
    */
-  open fun scopeOf(selected: List<Project>): GlobalSearchScope? = null
+  fun scopeOf(filter: SeFilterState): GlobalSearchScope? = null
 
-  /** The projects of [projects] that [state] picks, see [SeSearchProjectsFilter]. A pick of no search project picks each of them. */
-  fun selectedProjects(state: SeFilterState): List<Project> {
-    val selectedKeys = SeSearchProjectsFilter.selectedKeys(state) ?: return projects
-    return projects.filter { SeSearchProjectsFilter.keyOf(it) in selectedKeys }.ifEmpty { projects }
-  }
+  /**
+   * The holders of the search projects for one popup, which opens with [initEvent] and [session].
+   * The providers holder of the popup disposes the result.
+   */
+  fun createHolders(initEvent: AnActionEvent, session: SeSession): SeSearchProjectHolders
 }
 
-/**
- * The part of a filter state that picks some of the [SeSearchProjects] of a popup.
- *
- * A state without the key picks every search project. A filter editor of the product adds the key.
- */
+/** The providers holders of the search projects of one popup. The product creates them and disposes them. */
 @ApiStatus.Internal
-object SeSearchProjectsFilter {
-  const val KEY: String = "SEARCH_PROJECTS"
+interface SeSearchProjectHolders : Disposable {
+  /** Whether the popup has several search projects. Then each search of a project marks itself, see [SeSearchProjectContext]. */
+  val searchesSeveralProjects: Boolean
 
-  /** The value that stands for [project] in the filter state and in the data of an item. */
-  fun keyOf(project: Project): String = project.projectId().serializeToString()
+  /** The search projects that a search with [filter] asks, in the order of the product. */
+  suspend fun searched(filter: SeFilterState): List<SeSearchProjectHolder>
 
-  /** The keys of the picked projects, or `null` when [state] picks every search project. */
-  fun selectedKeys(state: SeFilterState): Set<String>? = state.get(KEY)?.toSet()
+  /** The search project of [key] when [searched] gave it already, see [SeSearchProjectHolder.key]. A found item names its project so. */
+  fun created(key: String): SeSearchProjectHolder?
+}
 
-  /** [state] with a pick of [projects], or without a pick when [projects] is `null`. */
-  fun withSelected(state: SeFilterState, projects: List<Project>?): SeFilterState {
-    val map = state.keys.associateWithTo(LinkedHashMap()) { state.get(it).orEmpty() }
-    if (projects == null) map.remove(KEY) else map[KEY] = projects.map(::keyOf)
-    return SeFilterState.Data(map)
+/** A search [project] and its [holder]. [holder] is `null` for the project of the popup, whose providers the popup has. */
+@ApiStatus.Internal
+class SeSearchProjectHolder(val project: Project, val holder: SeProvidersHolder?) {
+  /** The value that stands for [project] in the data of an item, see `SeItemDataKeys.SEARCH_PROJECT`. */
+  val key: String = keyOf(project)
+
+  companion object {
+    fun keyOf(project: Project): String = project.projectId().serializeToString()
   }
 }
 
@@ -101,6 +103,6 @@ class SeSearchProjectContext(private val projectKey: String) : AbstractCoroutine
   companion object Key : CoroutineContext.Key<SeSearchProjectContext> {
     /** Whether the current thread runs the search of [project] that a popup runs in each of its search projects. */
     fun isSearchOf(project: Project): Boolean =
-      currentThreadContext()[Key]?.projectKey == SeSearchProjectsFilter.keyOf(project)
+      currentThreadContext()[Key]?.projectKey == SeSearchProjectHolder.keyOf(project)
   }
 }

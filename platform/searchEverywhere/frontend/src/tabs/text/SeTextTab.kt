@@ -22,7 +22,7 @@ class SeTextTab(delegate: SeTabDelegate, registerShortcut: (AnAction) -> Unit) :
   override val priority: Int get() = PRIORITY
   private val filterEditorDisposable = Disposer.newDisposable()
   private val filterEditor: SuspendLazyProperty<SeTextFilterEditor> = initAsync(delegate.scope) {
-    SeTextFilterEditor(delegate.project, delegate.getSearchScopesInfos().firstOrNull(),
+    SeTextFilterEditor(delegate.project, delegate.getSearchScopesInfos(ID).firstOrNull(),
                        getTextSearchOptions(), filterEditorDisposable, registerShortcut)
   }
 
