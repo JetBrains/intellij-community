@@ -11,6 +11,7 @@ val spectreTest = sourceSets.create("spectreTest") { java.srcDir("src/spectreTes
 dependencies {
     api(projects.intUi.intUiStandalone)
 
+    testImplementation(projects.bazelRunfiles)
     testImplementation(projects.foundation)
     testImplementation(projects.ui)
     testImplementation(kotlin("test"))

@@ -40,6 +40,7 @@
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.coroutines.test" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.jewel.ui" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.compose.foundation.desktop" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.bazel.runfiles" scope="TEST" />
   </component>
   <component name="TestModuleProperties" production-module="intellij.platform.jewel.intUi.standalone" />
 </module>

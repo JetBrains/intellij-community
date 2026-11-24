@@ -56,9 +56,7 @@ internal class IntelliJCodeHighlighter(
         val language = mimeType?.toLanguageOrNull() ?: return flowOf(AnnotatedString(code))
         val fileExtension = language.associatedFileType?.defaultExtension ?: return flowOf(AnnotatedString(code))
         val virtualFile = LightVirtualFile("markdown_code_block_${code.hashCode()}.$fileExtension", language, code)
-        val highlighter =
-            SyntaxHighlighterFactory.getSyntaxHighlighter(language, project, virtualFile)
-                ?: return flowOf(AnnotatedString(code))
+        val highlighter = SyntaxHighlighterFactory.getSyntaxHighlighter(language, project, virtualFile)
 
         return flow {
             highlightAndEmit(highlighter, code, colorScheme)
@@ -125,7 +123,7 @@ internal class IntelliJCodeHighlighter(
         val virtualFile =
             guessed.extension?.let { LightVirtualFile("markdown_code_block_${code.hashCode()}.$it", language, code) }
 
-        return SyntaxHighlighterFactory.getSyntaxHighlighter(language, project, virtualFile)?.takeIf {
+        return SyntaxHighlighterFactory.getSyntaxHighlighter(language, project, virtualFile).takeIf {
             it.highlightingLexer !is EmptyLexer
         }
     }
@@ -145,7 +143,7 @@ internal class IntelliJCodeHighlighter(
 
         val virtualFile = LightVirtualFile("markdown_code_block_${code.hashCode()}.$extension", textMateLanguage, code)
 
-        return SyntaxHighlighterFactory.getSyntaxHighlighter(textMateLanguage, project, virtualFile)?.takeIf {
+        return SyntaxHighlighterFactory.getSyntaxHighlighter(textMateLanguage, project, virtualFile).takeIf {
             it.highlightingLexer !is EmptyLexer
         }
     }

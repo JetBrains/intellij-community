@@ -47,6 +47,17 @@ standalone_e2e_test(
     ],
 )
 
+jps_test(
+    name = "jewel-intUi-standalone-tests_test",
+    data = [
+        "//platform/jewel/int-ui/int-ui-standalone:generated_themes",
+        "@community//:build.txt",
+    ],
+    runtime_deps = [":jewel-intUi-standalone-tests_test_lib"],
+)
+
+### skip generation section `test intellij.platform.jewel.intUi.standalone.tests`
+
 ### auto-generated section `build intellij.platform.jewel.intUi.standalone.tests` start
 create_kotlinc_options(
     name = "custom_jewel-intUi-standalone-tests",
@@ -88,6 +99,7 @@ jvm_library(
         "//libraries/kotlinx/coroutines/test",
         "//platform/jewel/ui",
         "//libraries/compose-foundation-desktop",
+        "//platform/bazel-runfiles",
     ],
 )
 ### auto-generated section `build intellij.platform.jewel.intUi.standalone.tests` end
@@ -100,10 +112,3 @@ exports_files(
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.platform.jewel.intUi.standalone.tests` end
-
-### auto-generated section `test intellij.platform.jewel.intUi.standalone.tests` start
-jps_test(
-    name = "jewel-intUi-standalone-tests_test",
-    runtime_deps = [":jewel-intUi-standalone-tests_test_lib"],
-)
-### auto-generated section `test intellij.platform.jewel.intUi.standalone.tests` end

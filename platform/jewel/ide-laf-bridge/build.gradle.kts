@@ -1,5 +1,5 @@
-import org.jetbrains.intellij.platform.gradle.TestFrameworkType
 import java.net.URI
+import org.jetbrains.intellij.platform.gradle.TestFrameworkType
 
 plugins {
     jewel
@@ -38,6 +38,7 @@ dependencies {
         testFramework(TestFrameworkType.Platform)
 
         bundledPlugin("org.jetbrains.plugins.textmate")
+        testBundledPlugin("com.intellij.xml")
     }
 
     implementation(libs.kotlinx.serialization.core)
@@ -49,6 +50,7 @@ dependencies {
         exclude(group = "org.jetbrains.compose.material")
         excludeCoroutines()
     }
+    testRuntimeOnly(libs.intellijPlatform.java.rt)
 }
 
 fun ModuleDependency.excludeCoroutines() {
@@ -58,4 +60,28 @@ fun ModuleDependency.excludeCoroutines() {
 
 sourceSets { test { kotlin { srcDirs("ide-laf-bridge-tests/src/test/kotlin") } } }
 
-tasks.withType<Test>().configureEach { jvmArgs("--enable-native-access=ALL-UNNAMED") }
+// IntelliJ Platform's product-info.json injects -Dskiko.library.path pointing at the IDE's bundled Skiko binaries,
+// which can mismatch the compose.desktop.currentOs Skiko version on the test classpath.
+class StripSkikoLibraryPathArgumentProvider(
+    @get:Nested val delegate: CommandLineArgumentProvider,
+) : CommandLineArgumentProvider {
+    override fun asArguments(): Iterable<String> =
+        delegate.asArguments().filterNot { it.startsWith("-Dskiko.library.path=") }
+}
+
+fun Test.stripSkikoLibraryPath() {
+    systemProperties.remove("skiko.library.path")
+    val wrappedProviders =
+        jvmArgumentProviders.map {
+            it as? StripSkikoLibraryPathArgumentProvider ?: StripSkikoLibraryPathArgumentProvider(it)
+        }
+    jvmArgumentProviders.clear()
+    jvmArgumentProviders.addAll(wrappedProviders)
+}
+
+tasks.withType<Test>().configureEach {
+    jvmArgs("--enable-native-access=ALL-UNNAMED")
+    stripSkikoLibraryPath()
+}
+
+afterEvaluate { tasks.withType<Test>().configureEach { stripSkikoLibraryPath() } }
