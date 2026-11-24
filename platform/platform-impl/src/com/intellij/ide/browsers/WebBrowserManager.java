@@ -70,12 +70,14 @@ public final class WebBrowserManager extends SimpleModificationTracker implement
 
   public static final ReloadMode BROWSER_RELOAD_MODE_DEFAULT = ReloadMode.RELOAD_ON_SAVE;
   public static final ReloadMode PREVIEW_RELOAD_MODE_DEFAULT = ReloadMode.RELOAD_ON_SAVE;
+  private static final SearchEngine SEARCH_ENGINE_DEFAULT = SearchEngine.DUCKDUCKGO;
 
   private static final String BROWSER_TAG = "browser";
   private static final String BROWSERS_TAG = "browsers";
   private static final String ACTIVE_TAG = "active";
   private static final String INACTIVE_TAG = "inactive";
   private static final String CHROMIUM_BASED_BROWSER_ATTR = "chromiumBasedBrowser";
+  private static final String SEARCH_ENGINE_ATTR = "searchEngine";
 
   /**
    * The order of the inactive browsers: the predefined browsers in their default order, then the custom browsers by name.
@@ -122,6 +124,8 @@ public final class WebBrowserManager extends SimpleModificationTracker implement
   private @Nullable UUID defaultBrowserId;
   /** The id of the Chromium-based browser that the developer picked, see {@link #getChromiumBasedBrowser()}. */
   private @NotNull UUID chromiumBasedBrowserId = PREDEFINED_CHROME_ID;
+  /** The search engine that the developer picked. The IDE Browser reads it on a CEF thread. */
+  private volatile @NotNull SearchEngine searchEngine = SEARCH_ENGINE_DEFAULT;
   ReloadMode webServerReloadMode = BROWSER_RELOAD_MODE_DEFAULT;
   ReloadMode webPreviewReloadMode = PREVIEW_RELOAD_MODE_DEFAULT;
 
@@ -257,6 +261,9 @@ public final class WebBrowserManager extends SimpleModificationTracker implement
     }
     if (showBrowserHoverXml) {
       state.setAttribute("showHoverXml", "true");
+    }
+    if (searchEngine != SEARCH_ENGINE_DEFAULT) {
+      state.setAttribute(SEARCH_ENGINE_ATTR, StringUtil.toLowerCase(searchEngine.name()));
     }
 
     // the migration in loadState() needs the attribute when the state has a browser list, also for the predefined Chrome
@@ -450,6 +457,7 @@ public final class WebBrowserManager extends SimpleModificationTracker implement
 
     showBrowserHover = !"false".equals(element.getAttributeValue("showHover"));
     showBrowserHoverXml = "true".equals(element.getAttributeValue("showHoverXml"));
+    searchEngine = readSearchEngine(element);
 
     setList(element.getChildren(BROWSER_TAG).isEmpty() ? readBrowsers(element) : readLegacyBrowsers(element));
     if (defaultBrowser == null) {
@@ -876,6 +884,26 @@ public final class WebBrowserManager extends SimpleModificationTracker implement
   public void setChromiumBasedBrowserId(@NotNull UUID id) {
     chromiumBasedBrowserId = id;
     incModificationCount();
+  }
+
+  private static @NotNull SearchEngine readSearchEngine(@NotNull Element element) {
+    String value = element.getAttributeValue(SEARCH_ENGINE_ATTR);
+    SearchEngine engine = value == null ? null : ContainerUtil.find(SearchEngine.getEntries(), it -> it.name().equalsIgnoreCase(value));
+    return engine == null ? SEARCH_ENGINE_DEFAULT : engine;
+  }
+
+  /** Returns the search engine that the developer picked, see {@link SearchEngine}. */
+  @ApiStatus.Internal
+  public @NotNull SearchEngine getSearchEngine() {
+    return searchEngine;
+  }
+
+  @ApiStatus.Internal
+  public void setSearchEngine(@NotNull SearchEngine searchEngine) {
+    if (this.searchEngine != searchEngine) {
+      this.searchEngine = searchEngine;
+      incModificationCount();
+    }
   }
 
   /**

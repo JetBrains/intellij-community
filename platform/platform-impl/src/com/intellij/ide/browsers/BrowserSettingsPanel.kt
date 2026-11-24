@@ -86,6 +86,7 @@ internal data class BrowserChoice(val id: UUID, @NlsSafe val name: String, val i
  * It keeps the result while it is open.
  * The "Default Browser" dropdown offers each installed browser that no browser of the list opens, see [InstalledBrowser.isSameAs].
  * The "JavaScript Debugger" dropdown does the same for the Chromium-based browsers, see [WebBrowserManager.getChromiumBasedBrowser].
+ * The "Search Engine" dropdown picks the [SearchEngine] of [WebBrowserManager.getSearchEngine].
  *
  * The "Edit Browser…" icon button of a dropdown opens [BrowserDialog] for the selected browser of the list or installed browser.
  * The "Custom Path or Command…" item of a dropdown opens [BrowserDialog] for a new browser.
@@ -100,6 +101,7 @@ internal class BrowserSettingsConfigurable : UnnamedConfigurable {
 
   private val defaultBrowserModel = BrowserChoiceModel(isChromiumBased = false)
   private val chromiumBasedBrowserModel = BrowserChoiceModel(isChromiumBased = true)
+  private val searchEngineModel = CollectionComboBoxModel(SearchEngine.entries)
   private lateinit var showBrowserHover: JBCheckBox
   private lateinit var showBrowserHoverXml: JBCheckBox
   private lateinit var installedBrowsersGroup: CollapsibleRow
@@ -393,6 +395,11 @@ internal class BrowserSettingsConfigurable : UnnamedConfigurable {
 
       browserChoiceRow(IdeBundle.message("settings.browsers.default.browser"), defaultBrowserModel)
       browserChoiceRow(IdeBundle.message("settings.browsers.chromium.based.browser"), chromiumBasedBrowserModel)
+      row(IdeBundle.message("settings.browsers.search.engine")) {
+        comboBox(searchEngineModel, SearchEngineRenderer())
+          .widthGroup(CHOICE_WIDTH_GROUP)
+          .applyToComponent { isSwingPopup = false }
+      }
 
       sections = ConfigurableWrapper.createConfigurables(WebBrowserSettingsSectionEP.EP_NAME)
       for (section in sections) {
@@ -428,7 +435,7 @@ internal class BrowserSettingsConfigurable : UnnamedConfigurable {
   /** A dropdown of [model] with the "Edit Browser…" icon button, see [editBrowser]. */
   private fun Panel.browserChoiceRow(@NlsContexts.Label label: String, model: BrowserChoiceModel) {
     row(label) {
-      val comboBox = comboBox(model, browserChoiceRenderer(model)).component
+      val comboBox = comboBox(model, browserChoiceRenderer(model)).widthGroup(CHOICE_WIDTH_GROUP).component
       val editAction = DumbAwareAction.create(IdeBundle.message("settings.browsers.edit.browser"), AllIcons.Actions.Edit) {
         editBrowser(model)
       }
@@ -451,6 +458,7 @@ internal class BrowserSettingsConfigurable : UnnamedConfigurable {
         chromiumBasedBrowserChoice != storedChromiumBasedChoice(browserManager) ||
         browserManager.isShowBrowserHover != showBrowserHover.isSelected ||
         browserManager.isShowBrowserHoverXml != showBrowserHoverXml.isSelected ||
+        browserManager.searchEngine != searchEngineModel.selected ||
         sections.any { it.isModified }) {
       return true
     }
@@ -470,6 +478,7 @@ internal class BrowserSettingsConfigurable : UnnamedConfigurable {
     val chromiumBasedBrowserId = idOf(chromiumBasedChoice)
     browserManager.isShowBrowserHover = showBrowserHover.isSelected
     browserManager.isShowBrowserHoverXml = showBrowserHoverXml.isSelected
+    searchEngineModel.selected?.let { browserManager.searchEngine = it }
     browserManager.list = browsersEditor.apply()
     // the manager resolves the default browser in the new list
     browserManager.setDefaultBrowserId(defaultBrowserId)
@@ -485,6 +494,7 @@ internal class BrowserSettingsConfigurable : UnnamedConfigurable {
     val browserManager = WebBrowserManager.getInstance()
     showBrowserHover.isSelected = browserManager.isShowBrowserHover
     showBrowserHoverXml.isSelected = browserManager.isShowBrowserHoverXml
+    searchEngineModel.selectedItem = browserManager.searchEngine
     browsersEditor.reset(browserManager.list)
     updateBrowserChoices()
     defaultBrowserModel.selectedItem = storedChoice(browserManager)
@@ -515,6 +525,8 @@ internal class BrowserSettingsConfigurable : UnnamedConfigurable {
   }
 
   companion object {
+    private const val CHOICE_WIDTH_GROUP = "BrowserSettingsChoice"
+
     private val PATH_COLUMN_INFO: EditableColumnInfo<ConfigurableWebBrowser, String> = object : EditableColumnInfo<ConfigurableWebBrowser, String>(
       IdeBundle.message("settings.browsers.column.path")) {
       override fun valueOf(item: ConfigurableWebBrowser): String? {

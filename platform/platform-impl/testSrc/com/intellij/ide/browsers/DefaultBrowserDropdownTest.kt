@@ -25,7 +25,7 @@ import javax.swing.Icon
 import javax.swing.JComboBox
 
 /**
- * Tests the "Default Browser" and "JavaScript Debugger" dropdowns of [BrowserSettingsConfigurable].
+ * Tests the "Default Browser", "JavaScript Debugger" and "Search Engine" dropdowns of [BrowserSettingsConfigurable].
  */
 @TestApplication
 class DefaultBrowserDropdownTest {
@@ -170,6 +170,45 @@ class DefaultBrowserDropdownTest {
     assertEquals(chromeId, WebBrowserManager.getInstance().chromiumBasedBrowser.id)
   }
 
+  @Test
+  fun `search engine dropdown offers every engine and selects the stored one`() {
+    loadState("""<state searchEngine="bing" />""")
+
+    withSearchEngineDropdown { page, comboBox ->
+      assertEquals(SearchEngine.entries, (0 until comboBox.itemCount).map { comboBox.getItemAt(it) })
+      assertEquals(SearchEngine.BING, comboBox.selectedItem)
+      assertFalse(page.isModified)
+    }
+  }
+
+  @Test
+  fun `apply stores the picked search engine`() {
+    loadState("""<state />""")
+
+    withSearchEngineDropdown { page, comboBox ->
+      comboBox.selectedItem = SearchEngine.GOOGLE
+      assertTrue(page.isModified)
+      page.apply()
+      assertFalse(page.isModified)
+    }
+
+    assertEquals(SearchEngine.GOOGLE, WebBrowserManager.getInstance().searchEngine)
+  }
+
+  @Test
+  fun `reset restores the stored search engine`() {
+    loadState("""<state />""")
+
+    withSearchEngineDropdown { page, comboBox ->
+      comboBox.selectedItem = SearchEngine.GOOGLE
+      page.reset()
+      assertEquals(SearchEngine.DUCKDUCKGO, comboBox.selectedItem)
+      assertFalse(page.isModified)
+    }
+
+    assertEquals(SearchEngine.DUCKDUCKGO, WebBrowserManager.getInstance().searchEngine)
+  }
+
   private fun withProvidedBrowser(id: UUID = PROVIDED_BROWSER_ID): WebBrowser {
     val providedBrowser = object : EditorTabWebBrowser() {
       override fun getName(): String = "Provided"
@@ -195,15 +234,23 @@ class DefaultBrowserDropdownTest {
     WebBrowserManager.getInstance().loadState(JDOMUtil.load(state))
   }
 
-  @Suppress("UNCHECKED_CAST")
   private fun withPage(dropdownIndex: Int = DEFAULT_BROWSER_DROPDOWN, action: (BrowserSettingsConfigurable, JComboBox<BrowserChoice>) -> Unit) {
+    withDropdown(dropdownIndex, action)
+  }
+
+  private fun withSearchEngineDropdown(action: (BrowserSettingsConfigurable, JComboBox<SearchEngine>) -> Unit) {
+    withDropdown(SEARCH_ENGINE_DROPDOWN, action)
+  }
+
+  @Suppress("UNCHECKED_CAST")
+  private fun <T> withDropdown(dropdownIndex: Int, action: (BrowserSettingsConfigurable, JComboBox<T>) -> Unit) {
     runInEdtAndWait {
       val page = BrowserSettingsConfigurable()
       val component = page.createComponent()!!
       page.reset()
       try {
-        // the "Default Browser" and "JavaScript Debugger" dropdowns are the first combo boxes of the page
-        val comboBox = UIUtil.findComponentsOfType(component, JComboBox::class.java)[dropdownIndex] as JComboBox<BrowserChoice>
+        // the "Default Browser", "JavaScript Debugger" and "Search Engine" dropdowns are the first combo boxes of the page
+        val comboBox = UIUtil.findComponentsOfType(component, JComboBox::class.java)[dropdownIndex] as JComboBox<T>
         action(page, comboBox)
       }
       finally {
@@ -215,6 +262,7 @@ class DefaultBrowserDropdownTest {
   private companion object {
     const val DEFAULT_BROWSER_DROPDOWN = 0
     const val CHROMIUM_BASED_BROWSER_DROPDOWN = 1
+    const val SEARCH_ENGINE_DROPDOWN = 2
     val operaId: UUID = UUID.fromString("53E2F627-B1A7-4DFA-BFA7-5B83CC034776")
     val PROVIDED_BROWSER_ID: UUID = UUID.fromString("7c1d2e3f-4a5b-4c6d-8e9f-0a1b2c3d4e5f")
   }
