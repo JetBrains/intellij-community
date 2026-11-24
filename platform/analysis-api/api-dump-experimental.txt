@@ -178,8 +178,6 @@ com.intellij.codeInsight.template.TemplateBuilder
 - sf:SINGLE_OR_EMPTY:com.intellij.codeInspection.options.OptMultiSelector$SelectionMode
 - s:valueOf(java.lang.String):com.intellij.codeInspection.options.OptMultiSelector$SelectionMode
 - s:values():com.intellij.codeInspection.options.OptMultiSelector$SelectionMode[]
-com.intellij.codeInspection.options.OptionContainer
-- *:getFallbackOptionsPane():com.intellij.codeInspection.options.OptPane
 *:com.intellij.codeInspection.options.OptionControllerProvider
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - a:forContext(com.intellij.psi.PsiElement):com.intellij.codeInspection.options.OptionController

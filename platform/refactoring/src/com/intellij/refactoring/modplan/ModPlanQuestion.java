@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.modplan;
 
+import com.intellij.codeInspection.options.CustomComponentExtension;
 import com.intellij.codeInspection.options.OptControl;
 import com.intellij.codeInspection.options.OptCustom;
 import com.intellij.codeInspection.options.OptDropdown;
@@ -53,8 +54,8 @@ public sealed interface ModPlanQuestion {
 
   /**
    * Asks {@code question} in a dialog. The pane of a custom question holds one {@link OptCustom} with the id {@link Custom#COMPONENT_ID},
-   * and the IDE shows the UI of the question for it. Batch execution, and a client that cannot show the custom component, take
-   * {@code initialValues}.
+   * and the IDE shows the UI of the question for it. A product without that UI, such as LSP, gets the {@linkplain Custom#fallback()
+   * fallback form} instead. Batch execution, and a client that can show neither, take {@code initialValues}.
    *
    * @param title         the title of the dialog
    * @param initialValues the answers that are already known; they are the initial values of the dialog
@@ -88,7 +89,8 @@ public sealed interface ModPlanQuestion {
 
   /**
    * @return the options of the dialog of {@code question}: the question itself, and the answers so far, which its UI replaces.
-   * The controls of the {@linkplain Custom#fallback() fallback form} bind to the ids of its options. The fallback form starts with the
+   * A product without the renderer of {@link Custom#COMPONENT_ID}, such as LSP, gets the {@linkplain Custom#fallback() fallback form} as
+   * the pane instead; its controls bind to the ids of its options. The fallback form starts with the
    * values that its {@linkplain Form#storage() storage} loads, as the dialog of a form does.
    */
   private static @NotNull OptionContainer customAnswers(@NotNull Custom question, @NotNull ModPlanOptionValues currentValues) {
@@ -97,14 +99,13 @@ public sealed interface ModPlanQuestion {
       private @NotNull ModPlanOptionValues myValues = currentValues;
       private boolean myFallbackValuesLoaded;
 
+      /** @return the UI of the question where a product registers its renderer, such as the IDE; else the fallback form */
       @Override
       public @NotNull OptPane getOptionsPane() {
-        return OptPane.pane(new OptCustom(Custom.COMPONENT_ID));
-      }
-
-      @Override
-      public @Nullable OptPane getFallbackOptionsPane() {
-        return fallback == null ? null : fallback.pane();
+        if (fallback == null || CustomComponentExtension.find(Custom.COMPONENT_ID) != null) {
+          return OptPane.pane(new OptCustom(Custom.COMPONENT_ID));
+        }
+        return fallback.pane();
       }
 
       @Override
