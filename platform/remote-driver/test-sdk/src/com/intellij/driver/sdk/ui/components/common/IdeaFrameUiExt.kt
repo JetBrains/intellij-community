@@ -28,8 +28,6 @@ fun IdeaFrameUI.runToolWindow(action: ToolWindowUiComponent.() -> Unit = {}): To
 
 fun IdeaFrameUI.notificationsToolWindow(action: ToolWindowUiComponent.() -> Unit = {}): ToolWindowUiComponent = toolWindow("Notifications", action)
 
-fun IdeaFrameUI.structureToolWindow(action: ToolWindowUiComponent.() -> Unit = {}): ToolWindowUiComponent = toolWindow("Structure", action)
-
 fun IdeaFrameUI.commitToolWindow(action: CommitToolWindowUi.() -> Unit = {}): CommitToolWindowUi =
   x(CommitToolWindowUi::class.java) { and(byAccessibleName("Commit Tool Window"), byType(TOOL_WINDOW_ROOT_COMPONENT_CLASS)) }.apply(action)
 
