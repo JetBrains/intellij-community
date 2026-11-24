@@ -5,6 +5,7 @@ import com.intellij.diff.FrameDiffTool
 import com.intellij.diff.chains.DiffRequestProducer
 import com.intellij.diff.impl.DiffEditorViewer
 import com.intellij.diff.requests.DiffRequest
+import com.intellij.diff.util.DiffUserDataKeys
 import com.intellij.openapi.ListSelection
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.project.Project
@@ -15,6 +16,7 @@ import com.intellij.openapi.vcs.changes.ChangeViewDiffRequestProcessor.ChangeWra
 import com.intellij.openapi.vcs.changes.ChangeViewDiffRequestProcessor.Wrapper
 import com.intellij.openapi.vcs.changes.actions.diff.GoToChangePopupController
 import com.intellij.openapi.vcs.changes.actions.diff.PresentableGoToChangePopupAction
+import com.intellij.openapi.vcs.changes.isCommitHostedInWindow
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode
 import com.intellij.openapi.vcs.changes.ui.ChangesTree
 import com.intellij.openapi.vcs.changes.ui.ChangesTreeDiffPreviewHandler
@@ -39,6 +41,8 @@ class GitStageDiffRequestProcessor(val stageTree: GitStageTree,
   : TreeHandlerDiffRequestProcessor("Stage", stageTree, GitStageDiffPreviewHandler) {
 
   init {
+    // A project that commits from a window has no frame of its own, so it has no editor to open the source in.
+    if (project.isCommitHostedInWindow) putContextUserData(DiffUserDataKeys.GO_TO_SOURCE_DISABLE, true)
     GitStagingProcessorTracker(tracker, stageTree, this, handler).track()
   }
 

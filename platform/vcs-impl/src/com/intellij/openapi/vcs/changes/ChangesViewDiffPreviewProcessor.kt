@@ -82,6 +82,8 @@ class ChangesViewDiffPreviewProcessor(
   init {
     putContextUserData(DiffUserDataKeysEx.LAST_REVISION_WITH_LOCAL, true)
     if (isInEditor) putContextUserData(STRUCTURAL_PREVIEW_CONTEXT, true)
+    // A project that commits from a window has no frame of its own, so it has no editor to open the source in.
+    if (project.isCommitHostedInWindow) putContextUserData(DiffUserDataKeys.GO_TO_SOURCE_DISABLE, true)
 
     val busConnection = project.messageBus.connect(this)
     busConnection.subscribe(LineStatusTrackerSettingListener.TOPIC, MyLineStatusTrackerSettingsListener())
