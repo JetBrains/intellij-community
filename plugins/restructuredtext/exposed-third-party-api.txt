@@ -1,0 +1,2 @@
+com/intellij/spellchecker/tokenizer/SpellcheckingStrategy
+com/intellij/spellchecker/tokenizer/Tokenizer

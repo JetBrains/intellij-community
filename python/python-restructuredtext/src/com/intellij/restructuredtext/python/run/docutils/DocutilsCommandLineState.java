@@ -9,6 +9,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.restructuredtext.python.run.RestCommandLineState;
 import com.jetbrains.python.HelperPackage;
 import com.jetbrains.python.PythonHelper;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -37,6 +38,7 @@ public class DocutilsCommandLineState extends RestCommandLineState {
   }
 
   @Override
+  @ApiStatus.Internal
   protected HelperPackage getRunner() {
     return PythonHelper.REST_RUNNER;
   }

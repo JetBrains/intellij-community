@@ -1,0 +1,353 @@
+f:com.intellij.restructuredtext.RestBundle
+- s:message(java.lang.String,java.lang.Object[]):java.lang.String
+- s:messagePointer(java.lang.String,java.lang.Object[]):java.util.function.Supplier
+c:com.intellij.restructuredtext.RestColorsPage
+- com.intellij.openapi.options.colors.ColorSettingsPage
+- <init>():V
+- getAdditionalHighlightingTagToDescriptorMap():java.util.Map
+- getAttributeDescriptors():com.intellij.openapi.options.colors.AttributesDescriptor[]
+- getColorDescriptors():com.intellij.openapi.options.colors.ColorDescriptor[]
+- getDemoText():java.lang.String
+- getDisplayName():java.lang.String
+- getHighlighter():com.intellij.openapi.fileTypes.SyntaxHighlighter
+- getIcon():javax.swing.Icon
+f:com.intellij.restructuredtext.RestEditorHighlighter
+- com.intellij.openapi.editor.ex.util.LayeredLexerEditorHighlighter
+- <init>(com.intellij.openapi.editor.colors.EditorColorsScheme,com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile):V
+f:com.intellij.restructuredtext.RestEditorHighlighterProvider
+- com.intellij.openapi.fileTypes.EditorHighlighterProvider
+- <init>():V
+- getEditorHighlighter(com.intellij.openapi.project.Project,com.intellij.openapi.fileTypes.FileType,com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.editor.colors.EditorColorsScheme):com.intellij.openapi.editor.highlighter.EditorHighlighter
+c:com.intellij.restructuredtext.RestElementType
+- com.intellij.psi.tree.IElementType
+- <init>(java.lang.String):V
+com.intellij.restructuredtext.RestElementTypes
+- sf:DIRECTIVE_BLOCK:com.intellij.restructuredtext.RestElementType
+- sf:FIELD_LIST:com.intellij.restructuredtext.RestElementType
+- sf:INLINE_BLOCK:com.intellij.restructuredtext.RestElementType
+- sf:LINE_TEXT:com.intellij.restructuredtext.RestElementType
+- sf:REFERENCE_TARGET:com.intellij.restructuredtext.RestElementType
+- sf:REST_FILE:com.intellij.psi.tree.IFileElementType
+c:com.intellij.restructuredtext.RestFile
+- com.intellij.psi.impl.source.PsiFileImpl
+- <init>(com.intellij.psi.FileViewProvider):V
+- accept(com.intellij.psi.PsiElementVisitor):V
+- getFileType():com.intellij.openapi.fileTypes.FileType
+f:com.intellij.restructuredtext.RestFileType
+- com.intellij.openapi.fileTypes.LanguageFileType
+- sf:DEFAULT_EXTENSION:java.lang.String
+- sf:INSTANCE:com.intellij.restructuredtext.RestFileType
+- getDefaultExtension():java.lang.String
+- getDescription():java.lang.String
+- getIcon():javax.swing.Icon
+- getName():java.lang.String
+c:com.intellij.restructuredtext.RestGotoProvider
+- com.intellij.codeInsight.navigation.actions.GotoDeclarationHandlerBase
+- <init>():V
+- getGotoDeclarationTarget(com.intellij.psi.PsiElement,com.intellij.openapi.editor.Editor):com.intellij.psi.PsiElement
+c:com.intellij.restructuredtext.RestHighlighterFactory
+- com.intellij.openapi.fileTypes.SyntaxHighlighterFactory
+- <init>():V
+- getSyntaxHighlighter(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile):com.intellij.openapi.fileTypes.SyntaxHighlighter
+f:com.intellij.restructuredtext.RestLanguage
+- com.intellij.lang.Language
+- com.intellij.psi.templateLanguages.TemplateLanguage
+- sf:INSTANCE:com.intellij.restructuredtext.RestLanguage
+- getAnnotators():java.util.Set
+- getAssociatedFileType():com.intellij.restructuredtext.RestFileType
+- getDisplayName():java.lang.String
+c:com.intellij.restructuredtext.RestSyntaxHighlighter
+- com.intellij.openapi.fileTypes.SyntaxHighlighterBase
+- com.intellij.restructuredtext.RestTokenTypes
+- sf:REST_BOLD:com.intellij.openapi.editor.colors.TextAttributesKey
+- sf:REST_COMMENT:com.intellij.openapi.editor.colors.TextAttributesKey
+- sf:REST_EXPLICIT:com.intellij.openapi.editor.colors.TextAttributesKey
+- sf:REST_FIELD:com.intellij.openapi.editor.colors.TextAttributesKey
+- sf:REST_FIXED:com.intellij.openapi.editor.colors.TextAttributesKey
+- sf:REST_INLINE:com.intellij.openapi.editor.colors.TextAttributesKey
+- sf:REST_INTERPRETED:com.intellij.openapi.editor.colors.TextAttributesKey
+- sf:REST_ITALIC:com.intellij.openapi.editor.colors.TextAttributesKey
+- sf:REST_REF_NAME:com.intellij.openapi.editor.colors.TextAttributesKey
+- sf:REST_SECTION_HEADER:com.intellij.openapi.editor.colors.TextAttributesKey
+- <init>():V
+- getHighlightingLexer():com.intellij.lexer.Lexer
+- getTokenHighlights(com.intellij.psi.tree.IElementType):com.intellij.openapi.editor.colors.TextAttributesKey[]
+com.intellij.restructuredtext.RestTokenTypes
+- sf:ANONYMOUS_HYPERLINK:com.intellij.restructuredtext.RestElementType
+- sf:BOLD:com.intellij.restructuredtext.RestElementType
+- sf:CITATION:com.intellij.restructuredtext.RestElementType
+- sf:COMMENT:com.intellij.restructuredtext.RestElementType
+- sf:CUSTOM_DIRECTIVE:com.intellij.restructuredtext.RestElementType
+- sf:DIRECTIVE:com.intellij.restructuredtext.RestElementType
+- sf:DIRECT_HYPERLINK:com.intellij.restructuredtext.RestElementType
+- sf:DJANGO_LINE:com.intellij.restructuredtext.RestElementType
+- sf:ERROR:com.intellij.restructuredtext.RestElementType
+- sf:EXPLISIT_MARKUP_START:com.intellij.restructuredtext.RestElementType
+- sf:FIELD:com.intellij.restructuredtext.RestElementType
+- sf:FIXED:com.intellij.restructuredtext.RestElementType
+- sf:FOOTNOTE:com.intellij.restructuredtext.RestElementType
+- sf:HYPERLINK:com.intellij.restructuredtext.RestElementType
+- sf:INLINE_LINE:com.intellij.restructuredtext.RestElementType
+- sf:INTERPRETED:com.intellij.restructuredtext.RestElementType
+- sf:ITALIC:com.intellij.restructuredtext.RestElementType
+- sf:JAVASCRIPT_LINE:com.intellij.restructuredtext.RestElementType
+- sf:LINE:com.intellij.restructuredtext.RestElementType
+- sf:LITERAL_BLOCK_START:com.intellij.restructuredtext.RestElementType
+- sf:PYTHON_LINE:com.intellij.restructuredtext.RestElementType
+- sf:REFERENCE_NAME:com.intellij.restructuredtext.RestElementType
+- sf:REST_DJANGO_INJECTION:com.intellij.psi.tree.IElementType
+- sf:REST_INJECTION:com.intellij.psi.tree.IElementType
+- sf:SPEC_SYMBOL:com.intellij.restructuredtext.RestElementType
+- sf:SUBSTITUTION:com.intellij.restructuredtext.RestElementType
+- sf:TITLE:com.intellij.restructuredtext.RestElementType
+- sf:TITLE_TEXT:com.intellij.restructuredtext.RestElementType
+- sf:WHITESPACE:com.intellij.restructuredtext.RestElementType
+f:com.intellij.restructuredtext.RestUtil
+- sf:PREDEFINED_ROLES:java.util.Set
+- s:SPHINX_DIRECTIVES:java.lang.String[]
+- sf:SPHINX_ROLES:java.util.Set
+- s:getDirectiveOptions(java.lang.String):java.lang.String[]
+- s:getDirectives():java.util.Set
+f:com.intellij.restructuredtext.RestructuredtextIcons
+- <init>():V
+c:com.intellij.restructuredtext.actions.RestFillParagraphHandler
+- com.intellij.codeInsight.editorActions.fillParagraph.ParagraphFillHandler
+- <init>():V
+- p:appendPostfix(com.intellij.psi.PsiElement,java.lang.String,java.lang.StringBuilder):V
+- p:atWhitespaceToken(com.intellij.psi.PsiElement):Z
+- p:getPostfix(com.intellij.psi.PsiElement):java.lang.String
+- p:getPrefix(com.intellij.psi.PsiElement):java.lang.String
+- p:isAvailableForFile(com.intellij.psi.PsiFile):Z
+- p:isBunchOfElement(com.intellij.psi.PsiElement):Z
+c:com.intellij.restructuredtext.completion.DirectiveCompletionContributor
+- com.intellij.codeInsight.completion.CompletionContributor
+- sf:DIRECTIVE_PATTERN:com.intellij.patterns.PsiElementPattern$Capture
+- <init>():V
+c:com.intellij.restructuredtext.completion.OptionCompletionContributor
+- com.intellij.codeInsight.completion.CompletionContributor
+- sf:OPTION_PATTERN:com.intellij.patterns.PsiElementPattern$Capture
+- <init>():V
+c:com.intellij.restructuredtext.completion.ReferenceCompletionContributor
+- com.intellij.codeInsight.completion.CompletionContributor
+- sf:PATTERN:com.intellij.patterns.PsiElementPattern$Capture
+- sf:REFERENCE_PATTERN:com.intellij.patterns.PsiElementPattern$Capture
+- <init>():V
+- s:getPrefix(I,com.intellij.psi.PsiFile):java.lang.String
+f:com.intellij.restructuredtext.completion.SphinxDirectiveCompletionContributor
+- com.intellij.codeInsight.completion.CompletionContributor
+- com.intellij.openapi.project.DumbAware
+- sf:DIRECTIVE_PATTERN:com.intellij.patterns.PsiElementPattern$Capture
+- <init>():V
+c:com.intellij.restructuredtext.editor.RestEditorProvider
+- com.intellij.openapi.fileEditor.FileEditorProvider
+- com.intellij.openapi.project.DumbAware
+- <init>():V
+- accept(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile):Z
+- acceptRequiresReadAction():Z
+- createEditor(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile):com.intellij.openapi.fileEditor.FileEditor
+- getEditorTypeId():java.lang.String
+- getPolicy():com.intellij.openapi.fileEditor.FileEditorPolicy
+c:com.intellij.restructuredtext.formatter.RestBlock
+- com.intellij.formatting.ASTBlock
+- <init>(com.intellij.lang.ASTNode,com.intellij.formatting.Alignment,com.intellij.formatting.Indent,com.intellij.formatting.Wrap):V
+- getAlignment():com.intellij.formatting.Alignment
+- getChildAttributes(I):com.intellij.formatting.ChildAttributes
+- getIndent():com.intellij.formatting.Indent
+- getNode():com.intellij.lang.ASTNode
+- getSpacing(com.intellij.formatting.Block,com.intellij.formatting.Block):com.intellij.formatting.Spacing
+- getSubBlocks():java.util.List
+- getTextRange():com.intellij.openapi.util.TextRange
+- getWrap():com.intellij.formatting.Wrap
+- isIncomplete():Z
+- isLeaf():Z
+c:com.intellij.restructuredtext.formatter.RestFormattingModelBuilder
+- com.intellij.formatting.CustomFormattingModelBuilder
+- com.intellij.formatting.FormattingModelBuilder
+- <init>():V
+- createModel(com.intellij.formatting.FormattingContext):com.intellij.formatting.FormattingModel
+- getRangeAffectingIndent(com.intellij.psi.PsiFile,I,com.intellij.lang.ASTNode):com.intellij.openapi.util.TextRange
+- isEngagedToFormat(com.intellij.psi.PsiElement):Z
+a:com.intellij.restructuredtext.inspections.RestInspection
+- com.intellij.codeInspection.LocalInspectionTool
+- <init>():V
+- getBatchSuppressActions(com.intellij.psi.PsiElement):com.intellij.codeInspection.SuppressQuickFix[]
+- getGroupDisplayName():java.lang.String
+- getShortName():java.lang.String
+- isSuppressedFor(com.intellij.psi.PsiElement):Z
+a:com.intellij.restructuredtext.inspections.RestInspectionVisitor
+- com.intellij.restructuredtext.validation.RestElementVisitor
+- <init>(com.intellij.codeInspection.ProblemsHolder):V
+- pf:registerProblem(com.intellij.psi.PsiElement,java.lang.String,com.intellij.codeInspection.LocalQuickFix):V
+f:com.intellij.restructuredtext.lexer.RestFlexLexer
+- com.intellij.lexer.MergingLexerAdapter
+- sf:TOKENS_TO_MERGE:com.intellij.psi.tree.TokenSet
+- <init>():V
+c:com.intellij.restructuredtext.lexer._RestFlexLexer
+- com.intellij.lexer.FlexLexer
+- com.intellij.restructuredtext.RestTokenTypes
+- sf:FIELD_IN_INLINE:I
+- sf:FIELD_LINE:I
+- sf:HYPERLINK_TEXT:I
+- sf:INDENTED:I
+- sf:INIT:I
+- sf:IN_BODY:I
+- sf:IN_COMMENT:I
+- sf:IN_EXPLISIT_MARKUP:I
+- sf:IN_FOOTNOTE:I
+- sf:IN_HIGHLIGHT:I
+- sf:IN_INLINE:I
+- sf:IN_LINE:I
+- sf:IN_LINEBEGIN:I
+- sf:IN_TITLE_TEXT:I
+- sf:IN_VALUE:I
+- sf:PRE_INDENTED:I
+- sf:PRE_QUOTED:I
+- sf:QUOTED:I
+- sf:YYEOF:I
+- sf:YYINITIAL:I
+- p:yycolumn:I
+- <init>(java.io.Reader):V
+- advance():com.intellij.psi.tree.IElementType
+- f:getTokenEnd():I
+- f:getTokenStart():I
+- reset(java.lang.CharSequence,I,I,I):V
+- f:yybegin(I):V
+- f:yycharat(I):C
+- f:yylength():I
+- yypushback(I):V
+- f:yystate():I
+- f:yytext():java.lang.CharSequence
+c:com.intellij.restructuredtext.parsing.RestParser
+- com.intellij.lang.PsiParser
+- <init>():V
+- parse(com.intellij.psi.tree.IElementType,com.intellij.lang.PsiBuilder):com.intellij.lang.ASTNode
+c:com.intellij.restructuredtext.parsing.RestParserDefinition
+- com.intellij.lang.ParserDefinition
+- com.intellij.restructuredtext.RestTokenTypes
+- <init>():V
+- createElement(com.intellij.lang.ASTNode):com.intellij.psi.PsiElement
+- createFile(com.intellij.psi.FileViewProvider):com.intellij.psi.PsiFile
+- createLexer(com.intellij.openapi.project.Project):com.intellij.lexer.Lexer
+- createParser(com.intellij.openapi.project.Project):com.intellij.lang.PsiParser
+- getCommentTokens():com.intellij.psi.tree.TokenSet
+- getFileNodeType():com.intellij.psi.tree.IFileElementType
+- getStringLiteralElements():com.intellij.psi.tree.TokenSet
+- getWhitespaceTokens():com.intellij.psi.tree.TokenSet
+- spaceExistenceTypeBetweenTokens(com.intellij.lang.ASTNode,com.intellij.lang.ASTNode):com.intellij.lang.ParserDefinition$SpaceRequirements
+c:com.intellij.restructuredtext.psi.RestASTFactory
+- com.intellij.restructuredtext.RestElementTypes
+- com.intellij.restructuredtext.RestTokenTypes
+- <init>():V
+- create(com.intellij.lang.ASTNode):com.intellij.psi.PsiElement
+c:com.intellij.restructuredtext.psi.RestDirectiveBlock
+- com.intellij.restructuredtext.psi.RestElement
+- <init>(com.intellij.lang.ASTNode):V
+- getDirectiveName():java.lang.String
+c:com.intellij.restructuredtext.psi.RestElement
+- com.intellij.extapi.psi.ASTWrapperPsiElement
+- com.intellij.psi.NavigatablePsiElement
+- <init>(com.intellij.lang.ASTNode):V
+- accept(com.intellij.psi.PsiElementVisitor):V
+- p:acceptRestVisitor(com.intellij.restructuredtext.validation.RestElementVisitor):V
+c:com.intellij.restructuredtext.psi.RestFieldList
+- com.intellij.restructuredtext.psi.RestElement
+- <init>(com.intellij.lang.ASTNode):V
+c:com.intellij.restructuredtext.psi.RestInlineBlock
+- com.intellij.restructuredtext.psi.RestElement
+- <init>(com.intellij.lang.ASTNode):V
+- p:acceptRestVisitor(com.intellij.restructuredtext.validation.RestElementVisitor):V
+- validBlock():Z
+c:com.intellij.restructuredtext.psi.RestLine
+- com.intellij.restructuredtext.psi.RestElement
+- com.intellij.psi.PsiLanguageInjectionHost
+- <init>(com.intellij.lang.ASTNode):V
+- createLiteralTextEscaper():com.intellij.psi.LiteralTextEscaper
+- isValidHost():Z
+- updateText(java.lang.String):com.intellij.psi.PsiLanguageInjectionHost
+c:com.intellij.restructuredtext.psi.RestLineManipulator
+- com.intellij.psi.AbstractElementManipulator
+- <init>():V
+- handleContentChange(com.intellij.restructuredtext.psi.RestLine,com.intellij.openapi.util.TextRange,java.lang.String):com.intellij.restructuredtext.psi.RestLine
+c:com.intellij.restructuredtext.psi.RestReference
+- com.intellij.restructuredtext.psi.RestElement
+- <init>(com.intellij.lang.ASTNode):V
+- p:acceptRestVisitor(com.intellij.restructuredtext.validation.RestElementVisitor):V
+- getReferenceText():java.lang.String
+- resolve():com.intellij.restructuredtext.psi.RestElement
+c:com.intellij.restructuredtext.psi.RestReferenceTarget
+- com.intellij.restructuredtext.psi.RestElement
+- <init>(com.intellij.lang.ASTNode):V
+- p:acceptRestVisitor(com.intellij.restructuredtext.validation.RestElementVisitor):V
+- getReferenceName():java.lang.String
+- getReferenceName(Z):java.lang.String
+- hasReference():Z
+c:com.intellij.restructuredtext.psi.RestRole
+- com.intellij.restructuredtext.psi.RestElement
+- <init>(com.intellij.lang.ASTNode):V
+- p:acceptRestVisitor(com.intellij.restructuredtext.validation.RestElementVisitor):V
+- getRoleName():java.lang.String
+c:com.intellij.restructuredtext.psi.RestTitle
+- com.intellij.restructuredtext.psi.RestElement
+- <init>(com.intellij.lang.ASTNode):V
+- p:acceptRestVisitor(com.intellij.restructuredtext.validation.RestElementVisitor):V
+- getAdornments():com.intellij.openapi.util.Pair
+- getName():java.lang.String
+- getOverline():java.lang.String
+- getUnderline():java.lang.String
+c:com.intellij.restructuredtext.spellchecker.RestSpellcheckerStrategy
+- com.intellij.spellchecker.tokenizer.SpellcheckingStrategy
+- com.intellij.openapi.project.DumbAware
+- <init>():V
+- getTokenizer(com.intellij.psi.PsiElement):com.intellij.spellchecker.tokenizer.Tokenizer
+c:com.intellij.restructuredtext.structureView.RestStructureViewElement
+- com.intellij.ide.structureView.impl.common.PsiTreeElementBase
+- <init>(com.intellij.psi.NavigatablePsiElement):V
+- getChildrenBase():java.util.Collection
+- getIcon(Z):javax.swing.Icon
+- getPresentableText():java.lang.String
+c:com.intellij.restructuredtext.structureView.RestStructureViewFactory
+- com.intellij.lang.PsiStructureViewFactory
+- <init>():V
+- getStructureViewBuilder(com.intellij.psi.PsiFile):com.intellij.ide.structureView.StructureViewBuilder
+c:com.intellij.restructuredtext.structureView.RestStructureViewModel
+- com.intellij.ide.structureView.StructureViewModelBase
+- com.intellij.ide.structureView.StructureViewModel$ElementInfoProvider
+- <init>(com.intellij.psi.PsiFile,com.intellij.openapi.editor.Editor):V
+- isAlwaysLeaf(com.intellij.ide.structureView.StructureViewTreeElement):Z
+- isAlwaysShowsPlus(com.intellij.ide.structureView.StructureViewTreeElement):Z
+c:com.intellij.restructuredtext.validation.RestAnnotatingVisitor
+- com.intellij.lang.annotation.Annotator
+- <init>():V
+- annotate(com.intellij.psi.PsiElement,com.intellij.lang.annotation.AnnotationHolder):V
+a:com.intellij.restructuredtext.validation.RestAnnotator
+- com.intellij.restructuredtext.validation.RestElementVisitor
+- <init>():V
+- annotateElement(com.intellij.psi.PsiElement,com.intellij.lang.annotation.AnnotationHolder):V
+- getHolder():com.intellij.lang.annotation.AnnotationHolder
+- setHolder(com.intellij.lang.annotation.AnnotationHolder):V
+c:com.intellij.restructuredtext.validation.RestElementVisitor
+- com.intellij.psi.PsiElementVisitor
+- <init>():V
+- visitDirectiveBlock(com.intellij.restructuredtext.psi.RestDirectiveBlock):V
+- visitInlineBlock(com.intellij.restructuredtext.psi.RestInlineBlock):V
+- visitReference(com.intellij.restructuredtext.psi.RestReference):V
+- visitReferenceTarget(com.intellij.restructuredtext.psi.RestReferenceTarget):V
+- visitRestElement(com.intellij.restructuredtext.psi.RestElement):V
+- visitRole(com.intellij.restructuredtext.psi.RestRole):V
+- visitTitle(com.intellij.restructuredtext.psi.RestTitle):V
+c:com.intellij.restructuredtext.validation.RestHyperlinksAnnotator
+- com.intellij.restructuredtext.validation.RestAnnotator
+- <init>():V
+- visitReference(com.intellij.restructuredtext.psi.RestReference):V
+c:com.intellij.restructuredtext.validation.RestInlineBlockAnnotator
+- com.intellij.restructuredtext.validation.RestAnnotator
+- <init>():V
+- visitInlineBlock(com.intellij.restructuredtext.psi.RestInlineBlock):V
+c:com.intellij.restructuredtext.validation.RestReferenceTargetAnnotator
+- com.intellij.restructuredtext.validation.RestAnnotator
+- <init>():V
+- visitReferenceTarget(com.intellij.restructuredtext.psi.RestReferenceTarget):V
+c:com.intellij.restructuredtext.validation.RestTitleAnnotator
+- com.intellij.restructuredtext.validation.RestAnnotator
+- <init>():V
+- visitTitle(com.intellij.restructuredtext.psi.RestTitle):V

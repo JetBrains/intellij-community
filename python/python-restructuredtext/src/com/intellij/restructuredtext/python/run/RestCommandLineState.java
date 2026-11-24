@@ -21,6 +21,7 @@ import com.jetbrains.python.run.PythonScriptExecution;
 import com.jetbrains.python.run.PythonScriptTargetedCommandLineBuilder;
 import com.jetbrains.python.run.PythonScripts;
 import com.jetbrains.python.run.target.HelpersAwareTargetEnvironmentRequest;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -137,6 +138,7 @@ public abstract class RestCommandLineState extends PythonCommandLineState {
     return null;
   }
 
+  @ApiStatus.Internal
   protected abstract HelperPackage getRunner();
 
   protected abstract String getTask();

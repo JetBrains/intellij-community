@@ -7,6 +7,7 @@ import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import com.intellij.restructuredtext.python.run.RestCommandLineState;
 import com.jetbrains.python.HelperPackage;
 import com.jetbrains.python.PythonHelper;
+import org.jetbrains.annotations.ApiStatus;
 
 import java.util.Collections;
 
@@ -30,6 +31,7 @@ public class SphinxCommandLineState extends RestCommandLineState {
   }
 
   @Override
+  @ApiStatus.Internal
   protected HelperPackage getRunner() {
     return PythonHelper.SPHINX_RUNNER;
   }
