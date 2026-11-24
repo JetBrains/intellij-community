@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.engine.requests
 
+import com.intellij.debugger.engine.DebuggerUtils
 import com.intellij.debugger.impl.DebuggerUtilsAsync
 import com.intellij.debugger.impl.DebuggerUtilsEx
 import com.intellij.debugger.jdi.MethodBytecodeUtil
@@ -117,7 +118,8 @@ class EmulatedReturnValueWatcher(private val requestManager: EventRequestManager
         is State.FollowBase if event is BreakpointEvent -> transitionTo(State.RecordBase(newExitRequest()))
 
         is State.FollowCall if event is BreakpointEvent -> when (event.depth) {
-          baseDepth + 1 if DebuggerUtilsEx.isVoid(s.callee) -> transitionTo(State.FollowBase(newEntryRequest()))
+          baseDepth + 1 if (DebuggerUtilsEx.isVoid(s.callee) || isJvmInternal(s.callee)) ->
+            transitionTo(State.FollowBase(newEntryRequest()))
           baseDepth + 1 -> transitionTo(State.RecordCall(s.callee, newExitRequest()))
           // The base frame returns, so an exception popped the callee.
           baseDepth -> transitionTo(State.RecordBase(newExitRequest()))
@@ -203,6 +205,22 @@ class EmulatedReturnValueWatcher(private val requestManager: EventRequestManager
   }
 
   private fun Method.returnsAt(codeIndex: Long): Boolean = returnLocationsOf(this).any { it.codeIndex() == codeIndex }
+
+  /**
+   * Returns true for JVM-internal callees whose return values are noise.
+   * All matched methods are non-native, so [State.FollowCall] handles them.
+   * Requires both owner and method to be non-public in java.lang.invoke so public API overrides stay visible.
+   */
+  private fun isJvmInternal(method: Method): Boolean {
+    val owner = method.declaringType()
+    val ownerName = owner.name()
+    if (ownerName.startsWith("java.lang.invoke.")) return !owner.isPublic && !method.isPublic
+    if (ownerName == "sun.instrument.InstrumentationImpl") return method.name() == "transform"
+    if (method.name() == "loadClass" && method.signature() == "(Ljava/lang/String;)Ljava/lang/Class;") {
+      return DebuggerUtils.instanceOf(owner, "java.lang.ClassLoader")
+    }
+    return false
+  }
 
   private fun newEntryRequest(): EventRequest = requestManager.createMethodEntryRequest().register { addThreadFilter(thread) }
 
