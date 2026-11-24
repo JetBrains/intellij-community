@@ -88,6 +88,13 @@ impl<'a> TestEnvironment<'a> {
         overlay
     }
 
+    pub fn create_dev_launch_marker(&self) -> PathBuf {
+        let product_info_dir = if cfg!(target_os = "macos") { self.dist_root.join("Resources") } else { self.dist_root.clone() };
+        let marker = product_info_dir.join(".dev-launch");  // `DEV_LAUNCH_MARKER_NAME`
+        Self::create_file(&marker, "");
+        marker
+    }
+
     fn create_file(file: &Path, content: &str) {
         fs::create_dir_all(file.parent().unwrap())
             .unwrap_or_else(|_| panic!("Cannot create: {:?}", file));

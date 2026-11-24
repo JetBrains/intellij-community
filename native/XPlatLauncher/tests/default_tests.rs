@@ -513,4 +513,30 @@ mod tests {
         assert!(!result.stdout.contains(expected_jdwp), "'{expected_jdwp}' is in the output:\n{result:?}");
         assert!(result.stderr.contains(expected_jdwp), "'{expected_jdwp}' is not in the error:\n{result:?}");
     }
+
+    #[test]
+    fn dev_mode_vm_options_test() {
+        let test = prepare_test_env(LauncherLocation::Standard);
+        test.create_dev_launch_marker();
+        let env = HashMap::from([("IJ_JAVA_OPTIONS", "-Ddev.mode.order=env")]);
+        let args = &["--dev-mode-jvm-option=-Ddev.mode.order=arg", "arguments-test-123"];
+        let dump = run_launcher_ext(&test, LauncherRunSpec::standard().with_dump().with_args(args).with_env(&env).assert_status()).dump();
+
+        let env_index = dump.vmOptions.iter().position(|o| o == "-Ddev.mode.order=env").unwrap();
+        let arg_index = dump.vmOptions.iter().position(|o| o == "-Ddev.mode.order=arg").unwrap();
+        let prod_index = dump.vmOptions.iter().position(|o| o == "-Didea.paths.selector=XPlatLauncherTest").unwrap();
+        assert!(env_index < arg_index, "A dev-mode option must come after IJ_JAVA_OPTIONS: {:?}", dump.vmOptions);
+        assert!(arg_index < prod_index, "A dev-mode option must come before product options: {:?}", dump.vmOptions);
+        assert_eq!(dump.cmdArguments[3..], ["arguments-test-123".to_string()], "The launcher must remove the dev-mode arguments");
+    }
+
+    #[test]
+    fn dev_mode_vm_options_rejection_test() {
+        let test = prepare_test_env(LauncherLocation::Standard);
+        let args = ["--dev-mode-jvm-option=whatever"];
+
+        let result = run_launcher_ext(&test, LauncherRunSpec::standard().with_args(&args));
+        assert!(!result.exit_status.success(), "Expected to fail: {result:?}");
+        assert!(result.stderr.contains("Dev mode arguments are only allowed in the dev mode"), "The error is missing: {result:?}");
+    }
 }
