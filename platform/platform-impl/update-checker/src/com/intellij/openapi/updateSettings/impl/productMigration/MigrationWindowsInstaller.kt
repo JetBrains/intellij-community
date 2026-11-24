@@ -206,7 +206,9 @@ private fun runWindowsUninstaller(uninstaller: Path, target: Path) {
     val output = CapturingProcessHandler(startWithoutOutput(command, uninstaller.parent), Charsets.UTF_8, commandLine)
       .runProcess(UNINSTALLER_TIMEOUT_MS)
     if (output.isTimeout || output.exitCode != 0) {
+      // no copy of the uninstaller works then, so the folder does not go
       LOG.info("${commandLine}: exit code ${output.exitCode}, timeout ${output.isTimeout}")
+      return
     }
   }
   catch (e: IOException) {
