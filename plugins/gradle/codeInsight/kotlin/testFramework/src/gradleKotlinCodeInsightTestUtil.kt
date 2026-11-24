@@ -2,6 +2,7 @@
 package com.intellij.gradle.codeInsight.kotlin.testFramework
 
 import com.intellij.codeInsight.daemon.impl.HighlightVisitor
+import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.gradle.testFramework.util.getProjectFile
 import com.intellij.gradle.testFramework.util.writeTextAndCommit
 import com.intellij.gradle.toolingExtension.util.GradleVersionUtil
@@ -90,6 +91,49 @@ fun JavaCodeInsightTestFixture.configureGradleScript(
   timeoutRunBlocking(timeout = 2.minutes, context = Dispatchers.EDT) {
     configureFromExistingVirtualFile(project.getProjectFile(relativePath))
     action()
+  }
+}
+
+/**
+ * Writes [text] into the script at [relativePath], invokes the basic completion at the `<caret>` of [text],
+ * and runs [action] on the EDT.
+ *
+ * [action] gets the lookup elements. The value is null when the completion inserted the single suggestion
+ * or found no suggestion.
+ */
+fun JavaCodeInsightTestFixture.completeGradleScript(
+  text: String,
+  relativePath: String = KOTLIN_DSL_SCRIPT_NAME,
+  action: JavaCodeInsightTestFixture.(lookupElements: Array<LookupElement>?) -> Unit,
+) {
+  configureGradleScript(text, relativePath) {
+    action(completeBasic())
+  }
+}
+
+/**
+ * Writes [text] into the build script, invokes the basic completion at the `<caret>` of [text], and checks
+ * that the lookup strings are equal to [expectedLookupStrings] in any order.
+ */
+fun JavaCodeInsightTestFixture.checkGradleScriptCompletion(text: String, vararg expectedLookupStrings: String) {
+  completeGradleScript(text) { lookupElements ->
+    assertThat(lookupElements)
+      .withFailMessage("The completion inserted the single suggestion or found no suggestion. Use checkGradleScriptAutoCompletion().")
+      .isNotNull()
+    assertThat(lookupElements!!.map { it.lookupString }).containsExactlyInAnyOrder(*expectedLookupStrings)
+  }
+}
+
+/**
+ * Writes [before] into the build script, invokes the basic completion at the `<caret>` of [before], and checks
+ * that the completion inserted its single suggestion, so that the script is equal to [after].
+ */
+fun JavaCodeInsightTestFixture.checkGradleScriptAutoCompletion(before: String, after: String) {
+  completeGradleScript(before) { lookupElements ->
+    assertThat(lookupElements)
+      .withFailMessage { "The completion did not insert a single suggestion. Lookup: ${lookupElements?.map { it.lookupString }}" }
+      .isNull()
+    checkResult(after)
   }
 }
 

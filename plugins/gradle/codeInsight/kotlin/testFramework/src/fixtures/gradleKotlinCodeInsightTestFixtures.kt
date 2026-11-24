@@ -57,3 +57,29 @@ fun customConfigurationsGradleCodeInsightFixture(gradleVersion: GradleVersion): 
       )
     }
   }
+
+/**
+ * Provides a code-insight fixture on a Kotlin JVM project with the custom source set `customSourceSet` and two
+ * empty version catalogs: the default catalog `libs` and the catalog `customLibs` from `customPath/customLibs.toml`.
+ * A test writes the catalog entries that it needs.
+ */
+fun versionCatalogsGradleCodeInsightFixture(gradleVersion: GradleVersion): TestFixture<JavaCodeInsightTestFixture> =
+  gradleCodeInsightFixture(gradleVersion, "with-version-catalogs") {
+    simpleSettingsFile {
+      addCode(
+        """
+        dependencyResolutionManagement {
+            versionCatalogs {
+                create("customLibs") { from(files("customPath/customLibs.toml")) }
+            }
+        }
+        """.trimIndent()
+      )
+    }
+    buildFile {
+      withKotlinJvmPlugin()
+      withPrefix { code("sourceSets.register(\"customSourceSet\")") }
+    }
+    file("gradle/libs.versions.toml", "")
+    file("customPath/customLibs.toml", "")
+  }

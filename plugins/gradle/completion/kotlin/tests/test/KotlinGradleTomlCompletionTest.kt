@@ -2,8 +2,11 @@
 package com.intellij.gradle.completion.kotlin.tests.integration
 
 import com.intellij.codeInsight.lookup.Lookup
+import com.intellij.gradle.codeInsight.kotlin.testFramework.completeGradleScript
+import com.intellij.gradle.codeInsight.kotlin.testFramework.fixtures.customConfigurationsGradleCodeInsightFixture
 import com.intellij.gradle.testFramework.annotations.BaseGradleVersionSource
-import com.intellij.gradle.testFramework.fixtures.application.GradleProjectTestApplication
+import com.intellij.gradle.testFramework.annotations.CsvCrossProductSource
+import com.intellij.gradle.testFramework.fixtures.application.GradleImmutableProjectTestApplication
 import com.intellij.repository.search.completion.api.DependencyArtifactCompletionRequest
 import com.intellij.repository.search.completion.api.DependencyCompletionContributionSource.LOCAL
 import com.intellij.repository.search.completion.api.DependencyCompletionEvent
@@ -14,27 +17,38 @@ import com.intellij.repository.search.completion.api.DependencyGroupCompletionRe
 import com.intellij.repository.search.completion.api.DependencyPartCompletionResult
 import com.intellij.repository.search.completion.api.DependencyVersionCompletionRequest
 import com.intellij.testFramework.replaceService
-import com.intellij.testFramework.runInEdtAndWait
 import com.intellij.util.application
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
 import org.gradle.util.GradleVersion
-import org.jetbrains.kotlin.idea.testFramework.gradle.KotlinGradleProjectTestCase
+import org.jetbrains.kotlin.idea.framework.KotlinSdkType
+import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.params.ParameterizedClass
 import org.junit.jupiter.params.ParameterizedTest
 
-private var libraries = "[libraries]\n"
+private const val libraries = "[libraries]\n"
 private const val tomlPath = "gradle/libs.versions.toml"
 
-@GradleProjectTestApplication
-internal class KotlinGradleTomlCompletionTest : AbstractKotlinGradleCompletionTest() {
+@GradleImmutableProjectTestApplication
+@ParameterizedClass
+@BaseGradleVersionSource
+internal class KotlinGradleTomlCompletionTest(gradleVersion: GradleVersion) {
+
+  private val codeInsightFixture by customConfigurationsGradleCodeInsightFixture(gradleVersion)
+
+  @AfterEach
+  fun tearDown() {
+    KotlinSdkType.removeKotlinSdkInTests()
+  }
+
   @ParameterizedTest
-  @BaseGradleVersionSource(
+  @CsvCrossProductSource(
     """
       my-lib.module = "<caret>",
       my-lib = { module = "<caret>"<comma> version = "1" }
     """
   )
-  fun `test module completion`(gradleVersion: GradleVersion, completionEscaped: String) {
+  fun `test module completion`(completionEscaped: String) {
     val textBefore = libraries + completionEscaped.unescape()
     val textAfter = textBefore.replace("<caret>", "org.example.p:my-long-artifact-id")
     application.replaceService(DependencyCompletionService::class.java, object : DependencyCompletionService {
@@ -54,30 +68,25 @@ internal class KotlinGradleTomlCompletionTest : AbstractKotlinGradleCompletionTe
           )),
         )
       }
-    }, testRootDisposable)
-    test(gradleVersion, KotlinGradleProjectTestCase.KOTLIN_PROJECT) {
-      val file = writeTextAndCommit(tomlPath, textBefore)
-      runInEdtAndWait {
-        codeInsightFixture.configureFromExistingVirtualFile(file)
-        codeInsightFixture.completeBasic()
-        codeInsightFixture.lookup.currentItem =
-          codeInsightFixture.lookupElements!!.find {
-            it.lookupString.contains("org.example.p:my-long-artifact-id")
-          }
-        codeInsightFixture.finishLookup(Lookup.REPLACE_SELECT_CHAR)
-        codeInsightFixture.checkResult(textAfter)
-      }
+    }, codeInsightFixture.testRootDisposable)
+    codeInsightFixture.completeGradleScript(textBefore, tomlPath) { lookupElements ->
+      lookup.currentItem =
+        lookupElements!!.find {
+          it.lookupString.contains("org.example.p:my-long-artifact-id")
+        }
+      finishLookup(Lookup.REPLACE_SELECT_CHAR)
+      checkResult(textAfter)
     }
   }
 
   @ParameterizedTest
-  @BaseGradleVersionSource(
+  @CsvCrossProductSource(
     """
       my-lib = { group = "<caret>" },
       my-lib = { group = "<caret>"<comma> name = ""<comma> version = "1" }
     """
   )
-  fun `test group completion`(gradleVersion: GradleVersion, completionEscaped: String) {
+  fun `test group completion`(completionEscaped: String) {
     val textBefore = libraries + completionEscaped.unescape()
     val textAfter = textBefore.replace("<caret>", "org.example.p")
     application.replaceService(DependencyCompletionService::class.java, object : DependencyCompletionService {
@@ -87,30 +96,25 @@ internal class KotlinGradleTomlCompletionTest : AbstractKotlinGradleCompletionTe
           DependencyCompletionEvent.Item(DependencyPartCompletionResult("org.example.p2", source = LOCAL))
         )
       }
-    }, testRootDisposable)
-    test(gradleVersion, KotlinGradleProjectTestCase.KOTLIN_PROJECT) {
-      val file = writeTextAndCommit(tomlPath, textBefore)
-      runInEdtAndWait {
-        codeInsightFixture.configureFromExistingVirtualFile(file)
-        codeInsightFixture.completeBasic()
-        codeInsightFixture.lookup.currentItem =
-          codeInsightFixture.lookupElements!!.find {
-            it.lookupString.contains("org.example.p")
-          }
-        codeInsightFixture.finishLookup(Lookup.REPLACE_SELECT_CHAR)
-        codeInsightFixture.checkResult(textAfter)
-      }
+    }, codeInsightFixture.testRootDisposable)
+    codeInsightFixture.completeGradleScript(textBefore, tomlPath) { lookupElements ->
+      lookup.currentItem =
+        lookupElements!!.find {
+          it.lookupString.contains("org.example.p")
+        }
+      finishLookup(Lookup.REPLACE_SELECT_CHAR)
+      checkResult(textAfter)
     }
   }
 
   @ParameterizedTest
-  @BaseGradleVersionSource(
+  @CsvCrossProductSource(
     """
       my-lib = { name = "<caret>" },
       my-lib = { group = ""<comma> name = "<caret>"<comma> version = "1" }
     """
   )
-  fun `test artifact completion`(gradleVersion: GradleVersion, completionEscaped: String) {
+  fun `test artifact completion`(completionEscaped: String) {
     val textBefore = libraries + completionEscaped.unescape()
     val textAfter = textBefore.replace("<caret>", "org.example.p")
     application.replaceService(DependencyCompletionService::class.java, object : DependencyCompletionService {
@@ -120,29 +124,24 @@ internal class KotlinGradleTomlCompletionTest : AbstractKotlinGradleCompletionTe
           DependencyCompletionEvent.Item(DependencyPartCompletionResult("org.example.p2", source = LOCAL))
         )
       }
-    }, testRootDisposable)
-    test(gradleVersion, KotlinGradleProjectTestCase.KOTLIN_PROJECT) {
-      val file = writeTextAndCommit(tomlPath, textBefore)
-      runInEdtAndWait {
-        codeInsightFixture.configureFromExistingVirtualFile(file)
-        codeInsightFixture.completeBasic()
-        codeInsightFixture.lookup.currentItem =
-          codeInsightFixture.lookupElements!!.find {
-            it.lookupString.contains("org.example.p")
-          }
-        codeInsightFixture.finishLookup(Lookup.REPLACE_SELECT_CHAR)
-        codeInsightFixture.checkResult(textAfter)
-      }
+    }, codeInsightFixture.testRootDisposable)
+    codeInsightFixture.completeGradleScript(textBefore, tomlPath) { lookupElements ->
+      lookup.currentItem =
+        lookupElements!!.find {
+          it.lookupString.contains("org.example.p")
+        }
+      finishLookup(Lookup.REPLACE_SELECT_CHAR)
+      checkResult(textAfter)
     }
   }
 
   @ParameterizedTest
-  @BaseGradleVersionSource(
+  @CsvCrossProductSource(
     """
       my-lib = { group = "g"<comma> name = "a"<comma> version = "<caret>" }
     """
   )
-  fun `test version completion`(gradleVersion: GradleVersion, completionEscaped: String) {
+  fun `test version completion`(completionEscaped: String) {
     val textBefore = libraries + completionEscaped.unescape()
     val textAfter = textBefore.replace("<caret>", "org.example.p")
     application.replaceService(DependencyCompletionService::class.java, object : DependencyCompletionService {
@@ -152,30 +151,25 @@ internal class KotlinGradleTomlCompletionTest : AbstractKotlinGradleCompletionTe
           DependencyCompletionEvent.Item(DependencyPartCompletionResult("org.example.p2", source = LOCAL))
         )
       }
-    }, testRootDisposable)
-    test(gradleVersion, KotlinGradleProjectTestCase.KOTLIN_PROJECT) {
-      val file = writeTextAndCommit(tomlPath, textBefore)
-      runInEdtAndWait {
-        codeInsightFixture.configureFromExistingVirtualFile(file)
-        codeInsightFixture.completeBasic()
-        codeInsightFixture.lookup.currentItem =
-          codeInsightFixture.lookupElements!!.find {
-            it.lookupString.contains("org.example.p")
-          }
-        codeInsightFixture.finishLookup(Lookup.REPLACE_SELECT_CHAR)
-        codeInsightFixture.checkResult(textAfter)
-      }
+    }, codeInsightFixture.testRootDisposable)
+    codeInsightFixture.completeGradleScript(textBefore, tomlPath) { lookupElements ->
+      lookup.currentItem =
+        lookupElements!!.find {
+          it.lookupString.contains("org.example.p")
+        }
+      finishLookup(Lookup.REPLACE_SELECT_CHAR)
+      checkResult(textAfter)
     }
   }
 
   @ParameterizedTest
-  @BaseGradleVersionSource(
+  @CsvCrossProductSource(
     """
       my-lib = "<caret>",
       my-lib-module = "<caret>"
     """
   )
-  fun `test coordinates completion`(gradleVersion: GradleVersion, completionEscaped: String) {
+  fun `test coordinates completion`(completionEscaped: String) {
     val textBefore = libraries + completionEscaped.unescape()
     val textAfter = textBefore.replace("<caret>", "org.example.p:my-long-artifact-id:2.7.0")
     application.replaceService(DependencyCompletionService::class.java, object : DependencyCompletionService {
@@ -195,23 +189,14 @@ internal class KotlinGradleTomlCompletionTest : AbstractKotlinGradleCompletionTe
           )),
         )
       }
-    }, testRootDisposable)
-    test(gradleVersion, KotlinGradleProjectTestCase.KOTLIN_PROJECT) {
-      val file = writeTextAndCommit(tomlPath, textBefore)
-      runInEdtAndWait {
-        codeInsightFixture.configureFromExistingVirtualFile(file)
-        codeInsightFixture.completeBasic()
-        codeInsightFixture.lookup.currentItem =
-          codeInsightFixture.lookupElements!!.find {
-            it.lookupString.contains("org.example.p:my-long-artifact-id:2.7.0")
-          }
-        codeInsightFixture.finishLookup(Lookup.REPLACE_SELECT_CHAR)
-        codeInsightFixture.checkResult(textAfter)
-      }
+    }, codeInsightFixture.testRootDisposable)
+    codeInsightFixture.completeGradleScript(textBefore, tomlPath) { lookupElements ->
+      lookup.currentItem =
+        lookupElements!!.find {
+          it.lookupString.contains("org.example.p:my-long-artifact-id:2.7.0")
+        }
+      finishLookup(Lookup.REPLACE_SELECT_CHAR)
+      checkResult(textAfter)
     }
   }
-
-  private fun String.unescape(): String = this
-    .replace("<colon>", ":")
-    .replace("<comma>", ",")
 }

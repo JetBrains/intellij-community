@@ -60,7 +60,6 @@ jvm_library(
         "//platform/testFramework/junit5",
         "//java/testFramework",
         "//plugins/gradle/testFramework",
-        "//plugins/kotlin/gradle/gradle-java/tests.shared:tests.shared_test_lib",
         "//plugins/groovy",
         "//plugins/kotlin/base/testFramework",
         "@lib//:kotlinc-kotlin-compiler-tests",
@@ -75,6 +74,8 @@ jvm_library(
         "//libraries/junit6",
         "//libraries/junit6-params",
         "//platform/scratch/plugin",
+        "//plugins/gradle/codeInsight/kotlin/testFramework",
+        "//plugins/kotlin/base/facet",
     ],
 )
 ### auto-generated section `build intellij.gradle.completion.kotlin.tests` end
