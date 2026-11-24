@@ -12,6 +12,8 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.containers.ContainerUtil;
 import com.sun.jdi.ObjectCollectedException;
 import com.sun.jdi.ThreadReference;
+import com.sun.jdi.event.ClassPrepareEvent;
+import com.sun.jdi.event.Event;
 import com.sun.jdi.event.EventSet;
 import com.sun.jdi.event.StepEvent;
 import com.sun.jdi.request.EventRequest;
@@ -122,7 +124,8 @@ public class SuspendManagerImpl implements SuspendManager {
     }
 
     if (DebuggerUtils.isAlwaysSuspendThreadBeforeSwitch()) {
-      List<SuspendContextImpl> suspendAllContexts = getSuspendAllContexts();
+      List<SuspendContextImpl> suspendAllContexts =
+        ContainerUtil.filter(getSuspendAllContexts(), context -> !isClassPrepareInDebuggerThread(context.getEventSet()));
       if (suspendAllContexts.size() > 1) {
         logError("More than one suspend all context: " + suspendAllContexts);
       }
@@ -400,6 +403,19 @@ public class SuspendManagerImpl implements SuspendManager {
 
   DebugProcessImpl getDebugProcess() {
     return myDebugProcess;
+  }
+
+  /**
+   * Checks whether the JVM prepared a class in one of its own threads, for example in the JDWP thread for `ArrayType.newInstance`.
+   * Such class prepare events have no thread, and the JVM suspends all threads for them, whatever the policy of their requests.
+   * Thus, the event set is not a new stop of the application. The class prepare requestors resume it after they run.
+   */
+  static boolean isClassPrepareInDebuggerThread(@Nullable EventSet eventSet) {
+    if (eventSet == null || eventSet.suspendPolicy() != EventRequest.SUSPEND_ALL || eventSet.isEmpty()) return false;
+    for (Event event : eventSet) {
+      if (!(event instanceof ClassPrepareEvent classPrepareEvent) || classPrepareEvent.thread() != null) return false;
+    }
+    return true;
   }
 
   void resumeAllSuspendAllContexts(@Nullable EventSet eventSet) {

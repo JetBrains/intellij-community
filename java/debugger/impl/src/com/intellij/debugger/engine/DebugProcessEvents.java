@@ -298,7 +298,7 @@ public class DebugProcessEvents extends DebugProcessImpl {
                   return;
                 }
 
-                if (eventSet.suspendPolicy() == EventRequest.SUSPEND_ALL) {
+                if (eventSet.suspendPolicy() == EventRequest.SUSPEND_ALL && !SuspendManagerImpl.isClassPrepareInDebuggerThread(eventSet)) {
                   // This `if` is necessary in the first place for resume-only current thread stepping.
                   // For other cases it would be just a workaround for possible problems, it reports them.
 
