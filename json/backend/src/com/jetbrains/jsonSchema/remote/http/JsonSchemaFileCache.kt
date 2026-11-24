@@ -79,7 +79,7 @@ class JsonSchemaFileCache : SchemaContentCache {
     null -> null
   }
 
-  override fun load(url: SchemaUrl): Boolean {
+  override suspend fun load(url: SchemaUrl): Boolean {
     ThreadingAssertions.assertNoReadAccess()
     return locks.getLock(url).withLockMaybeCancellable {
       val previous = entries[url]
@@ -89,7 +89,7 @@ class JsonSchemaFileCache : SchemaContentCache {
     }
   }
 
-  override fun write(url: SchemaUrl, result: DownloadResult) {
+  override suspend fun write(url: SchemaUrl, result: DownloadResult) {
     ThreadingAssertions.assertNoReadAccess()
     locks.getLock(url).withLockMaybeCancellable {
       val status = when (result) {
@@ -149,7 +149,7 @@ class JsonSchemaFileCache : SchemaContentCache {
     }
   }
 
-  override fun refreshTimestamp(url: SchemaUrl) {
+  override suspend fun refreshTimestamp(url: SchemaUrl) {
     ThreadingAssertions.assertNoReadAccess()
     locks.getLock(url).withLockMaybeCancellable {
       val rejectedPaths = paths(url)

@@ -134,13 +134,13 @@ interface SchemaContentCache {
    *
    * @return `true` when the memory entry of [url] changed.
    */
-  fun load(url: SchemaUrl): Boolean = false
+  suspend fun load(url: SchemaUrl): Boolean = false
 
   /** Stores [result] for [url]. Does IO, so the caller must not hold read access. */
-  fun write(url: SchemaUrl, result: DownloadResult)
+  suspend fun write(url: SchemaUrl, result: DownloadResult)
 
   /** Marks the cached content of [url] as fresh. Does IO, so the caller must not hold read access. */
-  fun refreshTimestamp(url: SchemaUrl) {}
+  suspend fun refreshTimestamp(url: SchemaUrl) {}
 }
 
 @ApiStatus.Internal

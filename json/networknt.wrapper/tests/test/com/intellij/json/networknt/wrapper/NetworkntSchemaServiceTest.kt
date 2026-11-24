@@ -301,7 +301,7 @@ class NetworkntSchemaServiceTest : BasePlatformTestCase() {
 
     override fun readStatus(url: SchemaUrl): CachedStatus? = null
 
-    override fun write(url: SchemaUrl, result: DownloadResult) {}
+    override suspend fun write(url: SchemaUrl, result: DownloadResult) {}
 
     override suspend fun download(url: SchemaUrl): DownloadResult {
       downloads.incrementAndGet()

@@ -212,7 +212,7 @@ class JsonSchemaRemoteDownloadAnnotatorTest {
       null -> null
     }
 
-    override fun write(url: SchemaUrl, result: DownloadResult) {
+    override suspend fun write(url: SchemaUrl, result: DownloadResult) {
       when (result) {
         is DownloadResult.Success -> cached = CachedSchema.Content(result.content)
         is DownloadResult.Error -> cached = CachedSchema.Unavailable(result.code, result.message)

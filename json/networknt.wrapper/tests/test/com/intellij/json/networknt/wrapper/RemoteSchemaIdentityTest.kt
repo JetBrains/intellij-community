@@ -26,6 +26,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.runBlocking
 import java.nio.file.Files
 import java.util.concurrent.ConcurrentHashMap
 
@@ -66,7 +67,7 @@ class RemoteSchemaIdentityTest : BasePlatformTestCase() {
     }
   }
 
-  fun `test cached root retrieved as YAML is compiled as YAML`() {
+  fun `test cached root retrieved as YAML is compiled as YAML`() = runBlocking {
     val requested = SchemaUrl.parse("https://example.com/request/root")
     cache.write(requested, DownloadResult.Success(SchemaContent("type: string".toByteArray()), null, null,
                                                   "https://example.com/schemas/root.yaml"))
@@ -77,7 +78,7 @@ class RemoteSchemaIdentityTest : BasePlatformTestCase() {
     assertNotNull(NetworkntSchemaService.getInstance(project).getNetworkntSchema(rootFile, VERSION))
   }
 
-  fun `test relative child ref resolves against the retrieval url`() {
+  fun `test relative child ref resolves against the retrieval url`() = runBlocking {
     val requested = SchemaUrl.parse("https://example.com/request/root.json")
     val childUrl = SchemaUrl.parse("https://example.com/schemas/child.json")
     val wrongChildUrl = SchemaUrl.parse("https://example.com/request/child.json")
@@ -114,13 +115,13 @@ class RemoteSchemaIdentityTest : BasePlatformTestCase() {
       return delegate.lookupFile(url)
     }
 
-    override fun load(url: SchemaUrl): Boolean = delegate.load(url)
+    override suspend fun load(url: SchemaUrl): Boolean = delegate.load(url)
 
-    override fun write(url: SchemaUrl, result: DownloadResult) {
+    override suspend fun write(url: SchemaUrl, result: DownloadResult) {
       delegate.write(url, result)
     }
 
-    override fun refreshTimestamp(url: SchemaUrl) {
+    override suspend fun refreshTimestamp(url: SchemaUrl) {
       delegate.refreshTimestamp(url)
     }
   }

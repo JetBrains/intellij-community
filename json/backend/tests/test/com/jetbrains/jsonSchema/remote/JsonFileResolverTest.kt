@@ -114,7 +114,7 @@ class JsonFileResolverTest {
 
     override fun read(url: SchemaUrl): CachedSchema? = cached
 
-    override fun write(url: SchemaUrl, result: DownloadResult) {
+    override suspend fun write(url: SchemaUrl, result: DownloadResult) {
       if (result is DownloadResult.Success) cached = CachedSchema.Content(result.content)
       written.countDown()
     }

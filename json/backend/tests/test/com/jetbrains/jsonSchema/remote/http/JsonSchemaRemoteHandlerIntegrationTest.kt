@@ -9,6 +9,7 @@ import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.LightVirtualFile
+import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.TestDisposable
 import com.intellij.testFramework.junit5.fixture.projectFixture
@@ -150,7 +151,7 @@ class JsonSchemaRemoteHandlerIntegrationTest {
   @Test
   fun `stale cache entry is revalidated via conditional GET, a 304 keeps content and refreshes staleness`(
     @TestDisposable disposable: Disposable,
-  ) {
+  ): Unit = timeoutRunBlocking {
     installService(disposable)
     val path = "/etag-schema.json"
     val body = """{"original":true}"""

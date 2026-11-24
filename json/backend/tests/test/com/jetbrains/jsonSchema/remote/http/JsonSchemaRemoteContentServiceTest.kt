@@ -820,9 +820,9 @@ class JsonSchemaRemoteContentServiceTest {
       cachedFile = value
     }
 
-    override fun load(url: SchemaUrl): Boolean = loadChangesMemory
+    override suspend fun load(url: SchemaUrl): Boolean = loadChangesMemory
 
-    override fun write(url: SchemaUrl, result: DownloadResult) {
+    override suspend fun write(url: SchemaUrl, result: DownloadResult) {
       writtenUrls.add(url)
       when (result) {
         is DownloadResult.Success -> cached = CachedSchema.Content(result.content)
@@ -833,7 +833,7 @@ class JsonSchemaRemoteContentServiceTest {
       written.countDown()
     }
 
-    override fun refreshTimestamp(url: SchemaUrl) {
+    override suspend fun refreshTimestamp(url: SchemaUrl) {
       cached = (cached as? CachedSchema.Content)?.copy(isStale = false)
       refreshed.countDown()
     }
@@ -936,7 +936,7 @@ class JsonSchemaRemoteContentServiceTest {
   private class ThrowingWriteCache : SchemaContentCache {
     override fun read(url: SchemaUrl): CachedSchema? = null
 
-    override fun write(url: SchemaUrl, result: DownloadResult) {
+    override suspend fun write(url: SchemaUrl, result: DownloadResult) {
       throw IOException("disk is full")
     }
   }

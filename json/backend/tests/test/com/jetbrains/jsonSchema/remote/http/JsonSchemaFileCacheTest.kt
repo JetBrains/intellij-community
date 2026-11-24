@@ -5,6 +5,7 @@ import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.diagnostic.RuntimeExceptionWithAttachments
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.testFramework.junit5.TestApplication
+import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
@@ -40,7 +41,7 @@ class JsonSchemaFileCacheTest {
   }
 
   @Test
-  fun testRoundTripUsesNormalizedUrlKey() {
+  fun testRoundTripUsesNormalizedUrlKey(): Unit = runBlocking {
     val cache = JsonSchemaFileCache()
     val writtenUrl = SchemaUrl.parse("HTTPS://Example.COM:443/a/../schema.json#definition")
     val readUrl = SchemaUrl.parse("https://example.com/schema.json")
@@ -71,7 +72,7 @@ class JsonSchemaFileCacheTest {
   }
 
   @Test
-  fun testMetadataUrlMismatchIsRejected() {
+  fun testMetadataUrlMismatchIsRejected(): Unit = runBlocking {
     val cache = JsonSchemaFileCache()
     val url = SchemaUrl.parse("https://example.com/schema.json")
     cache.write(url, DownloadResult.Success(SchemaContent("schema".toByteArray()), null, null, url.value))
@@ -83,7 +84,7 @@ class JsonSchemaFileCacheTest {
   }
 
   @Test
-  fun testCorruptMetadataDeletesContentPair() {
+  fun testCorruptMetadataDeletesContentPair(): Unit = runBlocking {
     val cache = JsonSchemaFileCache()
     val url = SchemaUrl.parse("https://example.com/schema.json")
     cache.write(url, DownloadResult.Success(SchemaContent("schema".toByteArray()), null, null, url.value))
@@ -95,7 +96,7 @@ class JsonSchemaFileCacheTest {
   }
 
   @Test
-  fun testWritePublishesContentAndMetadataAtomically() {
+  fun testWritePublishesContentAndMetadataAtomically(): Unit = runBlocking {
     val cache = JsonSchemaFileCache()
     val url = SchemaUrl.parse("https://example.com/schema.json")
 
@@ -106,7 +107,7 @@ class JsonSchemaFileCacheTest {
   }
 
   @Test
-  fun testCachedErrorExpiresAfterFourHours() {
+  fun testCachedErrorExpiresAfterFourHours(): Unit = runBlocking {
     val cache = JsonSchemaFileCache()
     val url = SchemaUrl.parse("https://example.com/missing.json")
     cache.write(url, DownloadResult.Error(404, "Not Found"))
@@ -119,7 +120,7 @@ class JsonSchemaFileCacheTest {
   }
 
   @Test
-  fun testStaleContentRemainsAvailableForRefreshFallback() {
+  fun testStaleContentRemainsAvailableForRefreshFallback(): Unit = runBlocking {
     val cache = JsonSchemaFileCache()
     val url = SchemaUrl.parse("https://example.com/schema.json")
     cache.write(url, DownloadResult.Success(SchemaContent("schema".toByteArray()), null, null, url.value))
@@ -132,7 +133,7 @@ class JsonSchemaFileCacheTest {
   }
 
   @Test
-  fun testNotModifiedRefreshUpdatesTimestampWithoutReplacingContent() {
+  fun testNotModifiedRefreshUpdatesTimestampWithoutReplacingContent(): Unit = runBlocking {
     val cache = JsonSchemaFileCache()
     val url = SchemaUrl.parse("https://example.com/schema.json")
     cache.write(url, DownloadResult.Success(SchemaContent("schema".toByteArray()), "etag", "yesterday", url.value))
@@ -151,7 +152,7 @@ class JsonSchemaFileCacheTest {
   }
 
   @Test
-  fun testRetrievalUrlSurvivesTimestampRefresh() {
+  fun testRetrievalUrlSurvivesTimestampRefresh(): Unit = runBlocking {
     val cache = JsonSchemaFileCache()
     val url = SchemaUrl.parse("https://example.com/root.json")
     cache.write(url, DownloadResult.Success(SchemaContent("{}".toByteArray()), "etag", null,
@@ -164,7 +165,7 @@ class JsonSchemaFileCacheTest {
   }
 
   @Test
-  fun testAdoptedFileKeepsRequestAndRetrievalUrls() {
+  fun testAdoptedFileKeepsRequestAndRetrievalUrls(): Unit = runBlocking {
     val cache = JsonSchemaFileCache()
     val url = SchemaUrl.parse("HTTPS://Example.com:443/root.json")
     val retrievalUrl = SchemaUrl.parse("https://cdn.example.com/schemas/root.json").value
@@ -187,7 +188,7 @@ class JsonSchemaFileCacheTest {
   }
 
   @Test
-  fun testLookupFileReturnsTheFileAndStaleness() {
+  fun testLookupFileReturnsTheFileAndStaleness(): Unit = runBlocking {
     val cache = JsonSchemaFileCache()
     val url = SchemaUrl.parse("https://example.com/schema.json")
     cache.write(url, DownloadResult.Success(SchemaContent("{}".toByteArray()), null, null, url.value))
@@ -199,7 +200,7 @@ class JsonSchemaFileCacheTest {
   }
 
   @Test
-  fun testColdCacheMissesWithoutTouchingTheDiskUntilLoad() {
+  fun testColdCacheMissesWithoutTouchingTheDiskUntilLoad(): Unit = runBlocking {
     val url = SchemaUrl.parse("https://example.com/schema.json")
     JsonSchemaFileCache().write(url, DownloadResult.Success(SchemaContent("schema".toByteArray()), "etag", null, url.value))
     val cold = JsonSchemaFileCache()
@@ -226,14 +227,14 @@ class JsonSchemaFileCacheTest {
     val url = SchemaUrl.parse("https://example.com/schema.json")
     val success = DownloadResult.Success(SchemaContent("{}".toByteArray()), null, null, url.value)
 
-    assertThrows(RuntimeExceptionWithAttachments::class.java) { runReadActionBlocking { cache.write(url, success) } }
-    assertThrows(RuntimeExceptionWithAttachments::class.java) { runReadActionBlocking { cache.load(url) } }
-    assertThrows(RuntimeExceptionWithAttachments::class.java) { runReadActionBlocking { cache.refreshTimestamp(url) } }
+    assertThrows(RuntimeExceptionWithAttachments::class.java) { runReadActionBlocking { runBlocking { cache.write(url, success) } } }
+    assertThrows(RuntimeExceptionWithAttachments::class.java) { runReadActionBlocking { runBlocking { cache.load(url) } } }
+    assertThrows(RuntimeExceptionWithAttachments::class.java) { runReadActionBlocking { runBlocking { cache.refreshTimestamp(url) } } }
     assertEquals(0, Files.list(root).use { it.count() })
   }
 
   @Test
-  fun testLookupFileMissesAfterTheAdoptedFileBecomesInvalid() {
+  fun testLookupFileMissesAfterTheAdoptedFileBecomesInvalid(): Unit = runBlocking {
     val cache = JsonSchemaFileCache()
     val url = SchemaUrl.parse("https://example.com/schema.json")
     cache.write(url, DownloadResult.Success(SchemaContent("{}".toByteArray()), null, null, url.value))
@@ -248,7 +249,7 @@ class JsonSchemaFileCacheTest {
   }
 
   @Test
-  fun testExtensionFollowsTheRetrievalUrlNotTheRequestUrl() {
+  fun testExtensionFollowsTheRetrievalUrlNotTheRequestUrl(): Unit = runBlocking {
     val cache = JsonSchemaFileCache()
     val url = SchemaUrl.parse("https://example.com/schemas/config")
     cache.write(url, DownloadResult.Success(SchemaContent("type: object".toByteArray()), null, null,
@@ -261,7 +262,7 @@ class JsonSchemaFileCacheTest {
   }
 
   @Test
-  fun testJsonRetrievalUrlKeepsJsonExtension() {
+  fun testJsonRetrievalUrlKeepsJsonExtension(): Unit = runBlocking {
     val cache = JsonSchemaFileCache()
     val url = SchemaUrl.parse("https://example.com/schemas/config.json")
     cache.write(url, DownloadResult.Success(SchemaContent("{}".toByteArray()), null, null, url.value))
@@ -271,7 +272,7 @@ class JsonSchemaFileCacheTest {
   }
 
   @Test
-  fun testExtensionlessRetrievalUrlFallsBackToJson() {
+  fun testExtensionlessRetrievalUrlFallsBackToJson(): Unit = runBlocking {
     val cache = JsonSchemaFileCache()
     val url = SchemaUrl.parse("https://example.com/schemas/config")
     cache.write(url, DownloadResult.Success(SchemaContent("{}".toByteArray()), null, null, url.value))
@@ -281,7 +282,7 @@ class JsonSchemaFileCacheTest {
   }
 
   @Test
-  fun testLegacyEntryWithoutARetrievalUrlIsRejectedEvenWhenTheNameStillMatches() {
+  fun testLegacyEntryWithoutARetrievalUrlIsRejectedEvenWhenTheNameStillMatches(): Unit = runBlocking {
     val url = SchemaUrl.parse("https://example.com/schemas/root.json")
     val key = sha256Hex(url.value)
     Files.writeString(root.resolve("$key.json"), "type: object")
@@ -295,7 +296,7 @@ class JsonSchemaFileCacheTest {
   }
 
   @Test
-  fun testChangingExtensionOnRefreshLeavesNoOrphan() {
+  fun testChangingExtensionOnRefreshLeavesNoOrphan(): Unit = runBlocking {
     val cache = JsonSchemaFileCache()
     val url = SchemaUrl.parse("https://example.com/schemas/config")
     cache.write(url, DownloadResult.Success(SchemaContent("{}".toByteArray()), null, null, url.value))
@@ -311,7 +312,7 @@ class JsonSchemaFileCacheTest {
   }
 
   @Test
-  fun testOriginalUrlIsRecoveredFromSidecar() {
+  fun testOriginalUrlIsRecoveredFromSidecar(): Unit = runBlocking {
     val cache = JsonSchemaFileCache()
     val url = SchemaUrl.parse("https://example.com/schemas/config.yaml")
     cache.write(url, DownloadResult.Success(SchemaContent("type: object".toByteArray()), null, null,
@@ -326,7 +327,7 @@ class JsonSchemaFileCacheTest {
   }
 
   @Test
-  fun testLookupFileReportsStaleAfterTtl() {
+  fun testLookupFileReportsStaleAfterTtl(): Unit = runBlocking {
     val cache = JsonSchemaFileCache()
     val url = SchemaUrl.parse("https://example.com/schema.json")
     cache.write(url, DownloadResult.Success(SchemaContent("{}".toByteArray()), null, null, url.value))
@@ -337,7 +338,7 @@ class JsonSchemaFileCacheTest {
   }
 
   @Test
-  fun testLookupFileDistinguishesAnUnavailableEntryFromAMiss() {
+  fun testLookupFileDistinguishesAnUnavailableEntryFromAMiss(): Unit = runBlocking {
     val cache = JsonSchemaFileCache()
     val cached = SchemaUrl.parse("https://example.com/gone.json")
     val never = SchemaUrl.parse("https://example.com/never-fetched.json")
@@ -348,7 +349,7 @@ class JsonSchemaFileCacheTest {
   }
 
   @Test
-  fun testLookupFileRejectsAndReportsAMissWhenTheContentIsGone() {
+  fun testLookupFileRejectsAndReportsAMissWhenTheContentIsGone(): Unit = runBlocking {
     val cache = JsonSchemaFileCache()
     val url = SchemaUrl.parse("https://example.com/schema.json")
     cache.write(url, DownloadResult.Success(SchemaContent("{}".toByteArray()), null, null, url.value))
@@ -361,7 +362,7 @@ class JsonSchemaFileCacheTest {
   }
 
   @Test
-  fun testReadStatusReportsValidators() {
+  fun testReadStatusReportsValidators(): Unit = runBlocking {
     val cache = JsonSchemaFileCache()
     val url = SchemaUrl.parse("https://example.com/schema.json")
     cache.write(url, DownloadResult.Success(SchemaContent("{}".toByteArray()), "etag-1", "yesterday", url.value))
@@ -373,7 +374,7 @@ class JsonSchemaFileCacheTest {
   }
 
   @Test
-  fun testMissingContentFileWithValidMetadataIsRejectedAndCleaned() {
+  fun testMissingContentFileWithValidMetadataIsRejectedAndCleaned(): Unit = runBlocking {
     val cache = JsonSchemaFileCache()
     val url = SchemaUrl.parse("https://example.com/schema.json")
     cache.write(url, DownloadResult.Success(SchemaContent("schema".toByteArray()), null, null, url.value))
@@ -386,7 +387,7 @@ class JsonSchemaFileCacheTest {
   }
 
   @Test
-  fun testDifferentUrlsProduceIndependentCacheEntries() {
+  fun testDifferentUrlsProduceIndependentCacheEntries(): Unit = runBlocking {
     val cache = JsonSchemaFileCache()
     val url1 = SchemaUrl.parse("https://example.com/alpha.json")
     val url2 = SchemaUrl.parse("https://example.com/beta.json")
@@ -398,7 +399,7 @@ class JsonSchemaFileCacheTest {
   }
 
   @Test
-  fun testConcurrentWritesToSameUrlNeverExposeTornContent() {
+  fun testConcurrentWritesToSameUrlNeverExposeTornContent(): Unit = runBlocking {
     val cache = JsonSchemaFileCache()
     val url = SchemaUrl.parse("https://example.com/schema.json")
     val threadCount = 8
@@ -413,7 +414,7 @@ class JsonSchemaFileCacheTest {
           barrier.await()
           for (i in 0 until iterations) {
             val tag = "t$t-i$i"
-            cache.write(url, DownloadResult.Success(SchemaContent(tag.toByteArray()), tag, null, url.value))
+            runBlocking { cache.write(url, DownloadResult.Success(SchemaContent(tag.toByteArray()), tag, null, url.value)) }
             val cached = cache.read(url) as? CachedSchema.Content ?: continue
             if (!tagPattern.matches(String(cached.content.bytes))) torn.incrementAndGet()
           }
@@ -431,7 +432,7 @@ class JsonSchemaFileCacheTest {
   }
 
   /** Builds a new cache with an empty memory and loads [url] from the disk, as after a restart. */
-  private fun reloaded(url: SchemaUrl): JsonSchemaFileCache = JsonSchemaFileCache().also { it.load(url) }
+  private suspend fun reloaded(url: SchemaUrl): JsonSchemaFileCache = JsonSchemaFileCache().also { it.load(url) }
 
   private fun sha256Hex(value: String): String =
     MessageDigest.getInstance("SHA-256").digest(value.toByteArray(StandardCharsets.UTF_8)).joinToString("") { "%02x".format(it) }

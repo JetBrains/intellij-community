@@ -26,7 +26,7 @@ class IntelliJSchemaLoaderFileProtocolTest : BasePlatformTestCase() {
 
   private object UnusedCache : SchemaContentCache {
     override fun read(url: SchemaUrl): CachedSchema? = error("remote content is denied")
-    override fun write(url: SchemaUrl, result: DownloadResult): Unit = error("remote content is denied")
+    override suspend fun write(url: SchemaUrl, result: DownloadResult): Unit = error("remote content is denied")
   }
 
   private object UnusedTransport : SchemaHttpTransport {

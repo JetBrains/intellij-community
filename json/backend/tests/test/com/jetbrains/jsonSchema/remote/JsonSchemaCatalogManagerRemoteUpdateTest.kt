@@ -109,7 +109,7 @@ class JsonSchemaCatalogManagerRemoteUpdateTest {
 
     override fun read(url: SchemaUrl): CachedSchema? = cached[url]
 
-    override fun write(url: SchemaUrl, result: DownloadResult) {
+    override suspend fun write(url: SchemaUrl, result: DownloadResult) {
       if (result is DownloadResult.Success) cached[url] = CachedSchema.Content(result.content)
       written.countDown()
     }
