@@ -1611,8 +1611,8 @@ class PyOverloadTypeTest : PyCodeInsightTestCase() {
       def g(x: int | bytes) -> int | bytes: ...
 
       covered: Callable[[int | str], int | str] = f
-      not_covered: Callable[[int | str], int | str] = g # WARNING Expected type '(int | str) -> int | str', got 'Overload[(x: int) -> int, (x: bytes) -> bytes]' instead
-      return_not_assignable: Callable[[int | str], int] = f # WARNING Expected type '(int | str) -> int', got 'Overload[(x: int) -> int, (x: str) -> str]' instead
+      not_covered: Callable[[int | str], int | str] = g # WARNING Expected type '(int | str) -> int | str', got 'Overload[def g(x: int) -> int, def g(x: bytes) -> bytes]' instead
+      return_not_assignable: Callable[[int | str], int] = f # WARNING Expected type '(int | str) -> int', got 'Overload[def f(x: int) -> int, def f(x: str) -> str]' instead
       """.trimIndent())
 
     @Test
@@ -1625,7 +1625,7 @@ class PyOverloadTypeTest : PyCodeInsightTestCase() {
       def f(x: str, y: str) -> None: ...
       def f(x: int | str, y: int | str) -> None: ...
 
-      diagonal: Callable[[int | str, int | str], None] = f # WARNING Expected type '(int | str, int | str) -> None', got 'Overload[(x: int, y: int) -> None, (x: str, y: str) -> None]' instead
+      diagonal: Callable[[int | str, int | str], None] = f # WARNING Expected type '(int | str, int | str) -> None', got 'Overload[def f(x: int, y: int) -> None, def f(x: str, y: str) -> None]' instead
       """.trimIndent())
 
     @Test
@@ -1648,7 +1648,7 @@ class PyOverloadTypeTest : PyCodeInsightTestCase() {
       def g(x: int | bytes) -> int | bytes: ...
 
       covered: Handler = f
-      not_covered: Handler = g # WARNING Expected type 'Handler', got 'Overload[(x: int) -> int, (x: bytes) -> bytes]' instead
+      not_covered: Handler = g # WARNING Expected type 'Handler', got 'Overload[def g(x: int) -> int, def g(x: bytes) -> bytes]' instead
       """.trimIndent())
 
     @Test
@@ -1677,7 +1677,7 @@ class PyOverloadTypeTest : PyCodeInsightTestCase() {
       def f(a: int | str, b: int | str, c: int | str, d: int | str, e: int | str = 0) -> None: ...
 
       in_limit: Callable[[int | str, int | str, int | str, int | str], None] = f
-      above_limit: Callable[[int | str, int | str, int | str, int | str, int | str], None] = f # WARNING Expected type '(int | str, int | str, int | str, int | str, int | str) -> None', got 'Overload[(a: int, b: int | str, c: int | str, d: int | str, e: int | str) -> None, (a: str, b: int | str, c: int | str, d: int | str, e: int | str) -> None]' instead
+      above_limit: Callable[[int | str, int | str, int | str, int | str, int | str], None] = f # WARNING Expected type '(int | str, int | str, int | str, int | str, int | str) -> None', got 'Overload[def f(a: int, b: int | str, c: int | str, d: int | str, e: int | str = ...) -> None, def f(a: str, b: int | str, c: int | str, d: int | str, e: int | str = ...) -> None]' instead
       """.trimIndent())
   }
 }
