@@ -4,12 +4,9 @@ package com.intellij.gradle.codeInsight.kotlin.backend.tests.integration.inspect
 import com.intellij.codeInsight.intention.IntentionActionDelegate
 import com.intellij.codeInsight.intention.PriorityAction
 import com.intellij.gradle.codeInsight.kotlin.testFramework.configureGradleScript
+import com.intellij.gradle.codeInsight.kotlin.testFramework.fixtures.customConfigurationsGradleCodeInsightFixture
 import com.intellij.gradle.testFramework.annotations.BaseGradleVersionSource
 import com.intellij.gradle.testFramework.fixtures.application.GradleImmutableProjectTestApplication
-import com.intellij.gradle.testFramework.fixtures.gradleCodeInsightFixture
-import com.intellij.gradle.testFramework.projectInfo.buildFile
-import com.intellij.gradle.testFramework.projectInfo.directory
-import com.intellij.gradle.testFramework.projectInfo.simpleSettingsFile
 import com.intellij.gradle.testFramework.util.getProjectFile
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.VfsTestUtil
@@ -29,15 +26,7 @@ import org.junit.jupiter.params.ParameterizedClass
 @BaseGradleVersionSource
 class KotlinGradlePropertyMethodCallQuickFixTest(gradleVersion: GradleVersion) {
 
-  private val codeInsightFixture by gradleCodeInsightFixture(gradleVersion, "kotlin-plugin-project") {
-    simpleSettingsFile()
-    buildFile {
-      withKotlinJvmPlugin()
-      withJUnit()
-    }
-    directory("src/main/kotlin")
-    directory("src/test/kotlin")
-  }
+  private val codeInsightFixture by customConfigurationsGradleCodeInsightFixture(gradleVersion)
 
   @BeforeEach
   fun setUp() {

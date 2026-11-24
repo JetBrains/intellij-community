@@ -6,7 +6,6 @@ import com.intellij.gradle.codeInsight.kotlin.testFramework.checkGradleScriptHig
 import com.intellij.gradle.codeInsight.kotlin.testFramework.checkGradleScriptIntention
 import com.intellij.gradle.codeInsight.kotlin.testFramework.checkNoGradleScriptIntentions
 import com.intellij.gradle.codeInsight.kotlin.testFramework.disableBuiltInKotlinHighlighters
-import com.intellij.gradle.codeInsight.kotlin.testFramework.fixtures.customConfigurationsAndVersionCatalogsGradleCodeInsightFixture
 import com.intellij.gradle.codeInsight.kotlin.testFramework.fixtures.customConfigurationsGradleCodeInsightFixture
 import com.intellij.gradle.codeInsight.kotlin.testFramework.isMissingDeprecationAnnotationAddedToKotlinDsl
 import com.intellij.gradle.testFramework.annotations.AllGradleVersionsSource
@@ -755,7 +754,7 @@ class KotlinAvoidDuplicateDependenciesInspectionTest {
   @TargetVersions(VERSION_CATALOGS_SUPPORTED_VERSIONS)
   inner class VersionCatalogs(private val gradleVersion: GradleVersion) {
 
-    private val codeInsightFixture by customConfigurationsAndVersionCatalogsGradleCodeInsightFixture(gradleVersion)
+    private val codeInsightFixture by customConfigurationsGradleCodeInsightFixture(gradleVersion)
 
     @BeforeEach
     fun setUp() {
