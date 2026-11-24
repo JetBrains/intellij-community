@@ -3,6 +3,7 @@ package com.intellij.platform.icons.impl.rendering
 
 import com.intellij.platform.icons.IconDescriptor
 import com.intellij.platform.icons.impl.DefaultLayeredIconDescriptor
+import com.intellij.platform.icons.impl.rendering.debug.IconRenderDebugger
 import com.intellij.platform.icons.impl.rendering.layers.CompoundDimensions
 import com.intellij.platform.icons.impl.rendering.layers.IconLayerManager
 import com.intellij.platform.icons.impl.rendering.layers.IconLayerRenderer
@@ -32,10 +33,27 @@ class DefaultIconRenderer(val iconInstance: DefaultLayeredIconDescriptor, privat
     override fun render(paintingContext: LayerPaintingContext) {
         val renderers = layers()
         val usedDimensions = usedDimensions(renderers, paintingContext.scaling)
-        for (layer in renderers) {
+        if (IconRenderDebugger.isActive) {
+            IconRenderDebugger.traceRender(this, paintingContext, usedDimensions) {
+                renderLayers(renderers, paintingContext, usedDimensions)
+            }
+        }
+        else {
+            renderLayers(renderers, paintingContext, usedDimensions)
+        }
+    }
+
+    private fun renderLayers(renderers: List<IconLayerRenderer>, paintingContext: LayerPaintingContext, usedDimensions: Dimensions) {
+        for (index in renderers.indices) {
+            val layer = renderers[index]
             val nested =
                 paintingContext.createNestedLayer(slotWidth = usedDimensions.width, slotHeight = usedDimensions.height)
-            layer.render(nested)
+            if (IconRenderDebugger.isActive) {
+                IconRenderDebugger.traceLayer(layer, iconInstance.layers.getOrNull(index), nested)
+            }
+            else {
+                layer.render(nested)
+            }
         }
     }
 

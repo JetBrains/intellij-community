@@ -1328,6 +1328,7 @@ plugins/devkit/intellij.devkit.gradle intellij.devkit.gradle intellij.devkit.gra
 plugins/devkit/intellij.devkit.gradle.toml intellij.devkit.gradle.toml
 plugins/devkit/intellij.devkit.gradle.tooling intellij.devkit.gradle.tooling
 plugins/devkit/intellij.devkit.i18n intellij.devkit.i18n intellij.devkit.i18n.tests
+plugins/devkit/intellij.devkit.icons.inspector intellij.devkit.icons.inspector intellij.devkit.icons.inspector.tests
 plugins/devkit/intellij.devkit.ide intellij.devkit.ide intellij.devkit.ide.tests
 plugins/devkit/intellij.devkit.intelliLang intellij.devkit.intelliLang
 plugins/devkit/intellij.devkit.mcp intellij.devkit.mcp

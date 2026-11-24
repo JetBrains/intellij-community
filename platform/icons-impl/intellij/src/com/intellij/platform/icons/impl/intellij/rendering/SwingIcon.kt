@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.icons.impl.intellij.rendering
 
+import com.intellij.platform.icons.impl.intellij.debug.InspectableSwingIcon
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.ScalableIcon
@@ -20,6 +21,8 @@ import com.intellij.platform.icons.modifiers.stroke
 import com.intellij.platform.icons.impl.rendering.DefaultImageModifiers
 import com.intellij.ui.icons.StrokeIconProvider
 import com.intellij.platform.icons.impl.rendering.ResolvedScalingContext
+import com.intellij.platform.icons.impl.rendering.debug.IconRenderDebugger
+import com.intellij.platform.icons.impl.rendering.debug.SwingPaintInfo
 import com.intellij.platform.icons.rendering.IconRendererManager
 import com.intellij.platform.icons.rendering.RenderingContext
 import com.intellij.platform.icons.impl.rendering.resolve
@@ -57,10 +60,10 @@ import kotlin.math.roundToInt
  * replaced. The [IconLoader.getDarkIcon] protocol ([DarkIconProvider]) sets [dark].
  */
 internal class SwingIcon(
-  val iconDescriptor: IconDescriptor,
+  override val iconDescriptor: IconDescriptor,
   scale: IconScale? = null,
-  val dark: Boolean? = null,
-): Icon, ScalableSwingIcon, ScalableIcon, StrokeIconProvider, DarkIconProvider, MenuBarIconProvider {
+  override val dark: Boolean? = null,
+): Icon, ScalableSwingIcon, ScalableIcon, StrokeIconProvider, DarkIconProvider, MenuBarIconProvider, InspectableSwingIcon {
   /**
    * The identity factor scale ([IconScale.Default] == `factor(1)`) carries no size change, so normalize it to `null`.
    * This lets [com.intellij.platform.icons.impl.intellij.IntelliJIconManager.toIconDescriptor] unwrap back to the native
@@ -69,7 +72,9 @@ internal class SwingIcon(
    * identity ScaleModifier - which grows the descriptor without bound and buries the native image so the toolbar look's
    * enlargement never reaches a clean descriptor.
    */
-  val iconScale: IconScale? = scale?.takeUnless { it is FactorScale && it.factor == 1.0 }
+  override val iconScale: IconScale? = scale?.takeUnless { it is FactorScale && it.factor == 1.0 }
+
+  override fun withIconDescriptor(descriptor: IconDescriptor): Icon = SwingIcon(descriptor, iconScale, dark)
 
   internal val users = WeakHashMap<Component, Boolean>()
 
@@ -168,7 +173,14 @@ internal class SwingIcon(
         0,
         scaling = scaling.context
       )
-      renderer.render(swingApi)
+      if (IconRenderDebugger.isActive) {
+        val finalSize = scaling.finalDimensions
+        val info = SwingPaintInfo(c?.javaClass?.name, x, y, scaling.context.displayDensity, iconScale?.toString(), finalSize.width, finalSize.height)
+        IconRenderDebugger.traceSwingPaint(renderer, iconDescriptor, c, info) { renderer.render(swingApi) }
+      }
+      else {
+        renderer.render(swingApi)
+      }
     }
   }
 
