@@ -44,6 +44,7 @@ jvm_library(
         "//platform/util/base",
         "//platform/core-ui",
         "//platform/icons-api",
+        "//platform/settings.v2",
     ],
 )
 ### auto-generated section `build intellij.platform.editor.ui` end

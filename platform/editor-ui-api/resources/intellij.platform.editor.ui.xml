@@ -9,6 +9,7 @@
     <module name="intellij.platform.icons.api"/>
     <module name="intellij.platform.indexing"/>
     <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.settings.v2"/>
     <module name="intellij.platform.util.ui"/>
   </dependencies>
   <!-- endregion -->
