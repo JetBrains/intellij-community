@@ -1638,6 +1638,7 @@
     <defaultToolWindowLayout implementation="com.intellij.openapi.options.newEditor.SettingsToolWindowLayoutExtension" order="last"/>
     <fileEditorProvider id="settings-editor" implementation="com.intellij.openapi.options.newEditor.SettingsFileEditorProvider"/>
     <fileIconProvider order="first" implementation="com.intellij.openapi.options.newEditor.SettingsFileIconProvider"/>
+    <postStartupActivity implementation="com.intellij.openapi.options.newEditor.SettingsFrameGuestActivity"/>
     <editorAutoClosingHandler implementation="com.intellij.openapi.options.newEditor.SettingsTabAutoClosingHandler"/>
     <virtualFilePreCloseCheck implementation="com.intellij.openapi.options.newEditor.SettingsTabPreCloseCheck"/>
     <advancedSetting id="ide.ui.simplified.splash.image" default="false" groupKey="group.advanced.settings.ui"

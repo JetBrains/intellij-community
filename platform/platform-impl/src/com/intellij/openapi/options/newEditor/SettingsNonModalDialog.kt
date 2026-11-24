@@ -397,7 +397,10 @@ open class SettingsNonModalDialog @ApiStatus.Internal constructor(
     val pm = ProjectManager.getInstance()
     val vetoer = object : VetoableProjectManagerListener {
       override fun canClose(p: Project): Boolean {
-        if (p != project) return true
+        if (p != project) {
+          // a frame guest of the window keeps its changes in its own pages, so the question covers only these pages
+          return SettingsFrameGuestClose.canClose(editor, p, ::askUnsavedChanges).also { if (!it) bringToFront() }
+        }
         return promptUnsavedChangesOrCancel(
           ApplicationBundle.message("settings.close.project.unsaved.message", p.name))
       }
@@ -451,15 +454,7 @@ open class SettingsNonModalDialog @ApiStatus.Internal constructor(
       return UnsavedChangesResult.NOT_MODIFIED
     }
 
-    return when (MessageDialogBuilder.yesNoCancel(
-      ApplicationBundle.message("settings.switch.project.unsaved.title"),
-      message,
-    ).yesText(ApplicationBundle.message("settings.switch.project.button.apply"))
-      .noText(ApplicationBundle.message("settings.switch.project.button.dont.save"))
-      .cancelText(CommonBundle.getCancelButtonText())
-      .asWarning()
-      .invocationPlace("Non-modal settings unsaved changes")
-      .show(parentComponent = activeWindow)) {
+    return when (askUnsavedChanges(message)) {
       Messages.YES -> {
         if (!applyWithWriteIntent()) return UnsavedChangesResult.APPLY_FAILED
         SaveAndSyncHandler.getInstance().scheduleSave(SaveAndSyncHandler.SaveTask(null, true))
@@ -471,6 +466,19 @@ open class SettingsNonModalDialog @ApiStatus.Internal constructor(
       }
       else -> UnsavedChangesResult.CANCELED
     }
+  }
+
+  /** Shows the Apply / Don't Save / Cancel question, and gives [Messages.YES], [Messages.NO] or [Messages.CANCEL]. */
+  private fun askUnsavedChanges(@NlsContexts.DialogMessage message: String): Int {
+    return MessageDialogBuilder.yesNoCancel(
+      ApplicationBundle.message("settings.switch.project.unsaved.title"),
+      message,
+    ).yesText(ApplicationBundle.message("settings.switch.project.button.apply"))
+      .noText(ApplicationBundle.message("settings.switch.project.button.dont.save"))
+      .cancelText(CommonBundle.getCancelButtonText())
+      .asWarning()
+      .invocationPlace("Non-modal settings unsaved changes")
+      .show(parentComponent = activeWindow)
   }
 
   private fun navigateTo(configurable: Configurable?, filter: String?) {
@@ -516,14 +524,18 @@ open class SettingsNonModalDialog @ApiStatus.Internal constructor(
       UnsavedChangesResult.DISCARDED -> true
       UnsavedChangesResult.APPLY_FAILED,
       UnsavedChangesResult.CANCELED -> {
-        // After Cancel the IDE-close veto returns; on Windows the IDE main frame reclaims
-        // focus, hiding the independent Settings JFrame (Window mode). Restore it on top.
-        EventQueue.invokeLater {
-          activeWindow.toFront()
-          activeWindow.requestFocus()
-        }
+        bringToFront()
         false
       }
+    }
+  }
+
+  private fun bringToFront() {
+    // After Cancel the IDE-close veto returns; on Windows the IDE main frame reclaims
+    // focus, hiding the independent Settings JFrame (Window mode). Restore it on top.
+    EventQueue.invokeLater {
+      activeWindow.toFront()
+      activeWindow.requestFocus()
     }
   }
 

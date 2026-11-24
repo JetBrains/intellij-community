@@ -45,7 +45,6 @@ import com.intellij.openapi.ui.DialogWrapperDialog
 import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.NlsContexts
-import com.intellij.openapi.wm.impl.IdeFrameGuests
 import com.intellij.platform.ide.CoreUiCoroutineScopeHolder
 import com.intellij.ui.navigation.Place
 import com.intellij.util.asSafely
@@ -173,26 +172,14 @@ open class ShowSettingsUtilImpl : ShowSettingsUtil() {
     SettingsDialogPerformanceTracker.markOpeningStarted()
     val windowProject = project?.let(::settingsWindowProject)
     SettingsOpeningTracker.trackOpening(windowProject, entry) {
-      doShow(windowProject, { buildConfigurableGroups(windowProject) }, { groups ->
+      doShow(windowProject, { FrameProjectsConfigurableGroup.buildSettingsWindowGroups(windowProject) }, { groups ->
         // the caller names a project, so the window shows that project, also before [toSelect] casts a page
         if (project != null) {
-          SettingsFrameProjects.of(groups)?.select(project)
+          selectRequester(groups, project)
         }
         toSelect(groups)
       }, filter)
     }
-  }
-
-  /**
-   * Builds the tree of the Settings window of [project]. A frame that shows several projects gets the tree of all of them,
-   * see [FrameProjectsConfigurableGroup].
-   */
-  private fun buildConfigurableGroups(project: Project?): List<ConfigurableGroup> {
-    val frameProjects = project?.let { SettingsFrameProjects.create(settingsWindowProject(it)) }
-    if (frameProjects != null) {
-      return listOf(FrameProjectsConfigurableGroup.create(frameProjects))
-    }
-    return listOf(ConfigurableExtensionPointUtil.getConfigurableGroup(project, /* withIdeSettings = */true))
   }
 
   private fun isModalRequired(project: Project?): Boolean {
@@ -252,16 +239,20 @@ open class ShowSettingsUtilImpl : ShowSettingsUtil() {
     // but actually rework the invocation to be performed not in EDT.
     ThreadingAssertions.assertBackgroundThread()/**/
     SettingsDialogPerformanceTracker.markOpeningStarted()
-    val project = settingsWindowProject(project)
+    val requester = project
+    val project = settingsWindowProject(requester)
 
     // only the Settings action and the macOS application menu call this method, after the wait for the project startup
     SettingsOpeningTracker.trackOpening(project, OpeningEntry.ACTION) {
       // an open window of the same project already holds a tree, so no tree is built for this call
-      if (withContext(Dispatchers.EDT) { showOpenSettings(project) }) {
+      if (withContext(Dispatchers.EDT) { showOpenSettings(requester) }) {
         return
       }
 
-      showSettingsDialog(project, buildConfigurableGroups(project))
+      val groups = FrameProjectsConfigurableGroup.buildSettingsWindowGroups(project)
+      // the window of a frame with several projects shows the project that asked for it
+      selectRequester(groups, requester)
+      showSettingsDialog(project, groups)
     }
   }
 
@@ -477,20 +468,24 @@ open class ShowSettingsUtilImpl : ShowSettingsUtil() {
 }
 
 /**
- * Shows the Settings of [project] in the open non-modal window or in the Settings tool window, and returns `true`.
+ * Shows the Settings of [requester] in the open non-modal window or in the Settings tool window, and returns `true`.
+ * The window of a frame with several projects shows [requester].
  * Returns `false` when neither holds a tree, so that the caller builds a tree only then.
  */
-private fun showOpenSettings(project: Project): Boolean {
-  val project = settingsWindowProject(project)
-  return SettingsNonModalDialog.navigateOpenDialog(project, null) { null } || SettingsToolWindowManager.showIfCreated(project)
+private fun showOpenSettings(requester: Project): Boolean {
+  val project = settingsWindowProject(requester)
+  val toSelect: (List<ConfigurableGroup>) -> Configurable? = { groups ->
+    selectRequester(groups, requester)
+    null
+  }
+  return SettingsNonModalDialog.navigateOpenDialog(project, null, toSelect) || SettingsToolWindowManager.showIfCreated(project, toSelect)
 }
 
-/**
- * The project that owns the Settings window of [project]: the owner of the frame that shows [project].
- * So a frame has one Settings window, whatever project of the frame opens it.
- */
-private fun settingsWindowProject(project: Project): Project {
-  return if (project.isDefault || project.isDisposed) project else IdeFrameGuests.frameOwnerOf(project)
+private fun settingsWindowProject(project: Project): Project = FrameProjectsConfigurableGroup.settingsWindowProject(project)
+
+/** Makes the Settings window of [groups] show [requester], when the project selector of the window lists it. */
+internal fun selectRequester(groups: List<ConfigurableGroup>, requester: Project) {
+  SettingsFrameProjects.of(groups)?.select(requester)
 }
 
 private fun getDialogWrapperFor(component: Component): DialogWrapper? {

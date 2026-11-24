@@ -33,8 +33,8 @@ import com.intellij.openapi.fileEditor.FileEditorManagerListener
 import com.intellij.openapi.fileEditor.FileEditorOpenRequest
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.options.ConfigurableGroup
-import com.intellij.openapi.options.ex.ConfigurableExtensionPointUtil
 import com.intellij.openapi.options.ex.ConfigurableVisitor
+import com.intellij.openapi.options.ex.FrameProjectsConfigurableGroup
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
@@ -105,13 +105,14 @@ internal class SettingsToolWindowManager(private val project: Project, private v
     /**
      * Shows the Settings of [project] when they have a tree already, and returns `true`.
      * Returns `false` when the tree is not built yet, so that the caller builds it only then.
+     * [toSelect] receives the groups of the tree, as in [show].
      */
     @RequiresEdt
-    fun showIfCreated(project: Project): Boolean {
+    fun showIfCreated(project: Project, toSelect: (List<ConfigurableGroup>) -> Configurable? = { null }): Boolean {
       if (!isEnabled(project)) {
         return false
       }
-      return project.serviceIfCreated<SettingsToolWindowManager>()?.showIfCreated(filter = null) { null } == true
+      return project.serviceIfCreated<SettingsToolWindowManager>()?.showIfCreated(filter = null, toSelect) == true
     }
 
     /** Returns the manager whose Settings tab shows [file]. */
@@ -134,6 +135,10 @@ internal class SettingsToolWindowManager(private val project: Project, private v
   private var editor: SettingsEditor? = null
   private var groups: List<ConfigurableGroup> = emptyList()
   private var editorJob: Job? = null
+
+  /** The groups of the tree, or an empty list before the tree is built. */
+  internal val configurableGroups: List<ConfigurableGroup>
+    @VisibleForTesting get() = groups
 
   /** Whether a page has a change that waits for Apply. */
   val isModified: Boolean
@@ -187,8 +192,9 @@ internal class SettingsToolWindowManager(private val project: Project, private v
     }
     editorJob = coroutineScope.launch {
       (project.serviceAsync<StartupManager>() as StartupManagerEx).waitForInitProjectActivities(null)
-      // the filter reads `configurables` of every group, so it stays on the background thread
-      val groups = listOf(ConfigurableExtensionPointUtil.getConfigurableGroup(project, true)).filter { it.configurables.isNotEmpty() }
+      // the filter reads `configurables` of every group, so it stays on the background thread.
+      // The tool window belongs to the frame owner, so a frame with frame guests gets the tree of all its projects
+      val groups = FrameProjectsConfigurableGroup.buildSettingsWindowGroups(project).filter { it.configurables.isNotEmpty() }
       withContext(Dispatchers.EDT) {
         if (editor == null) {
           createEditor(groups, configurable = null, filter = null)
@@ -304,8 +310,14 @@ internal class SettingsToolWindowManager(private val project: Project, private v
 
     val projectManager = ProjectManager.getInstance()
     val vetoer = VetoableProjectManagerListener { closingProject ->
-      closingProject != project ||
-      resolveUnsavedChanges(ApplicationBundle.message("settings.close.project.unsaved.message", project.name))
+      if (closingProject != project) {
+        // a frame guest of the window keeps its changes in its own pages, so the question covers only these pages
+        val editor = editor
+        editor == null || SettingsFrameGuestClose.canClose(editor, closingProject, ::askUnsavedChanges)
+      }
+      else {
+        resolveUnsavedChanges(ApplicationBundle.message("settings.close.project.unsaved.message", project.name))
+      }
     }
     projectManager.addProjectManagerListener(vetoer)
     Disposer.register(this) { projectManager.removeProjectManagerListener(vetoer) }
@@ -425,13 +437,7 @@ internal class SettingsToolWindowManager(private val project: Project, private v
       editor.reset()
       return true
     }
-    val answer = MessageDialogBuilder.yesNoCancel(ApplicationBundle.message("settings.switch.project.unsaved.title"), message)
-      .yesText(ApplicationBundle.message("settings.switch.project.button.apply"))
-      .noText(ApplicationBundle.message("settings.switch.project.button.dont.save"))
-      .cancelText(CommonBundle.getCancelButtonText())
-      .asWarning()
-      .show(project)
-    return when (answer) {
+    return when (askUnsavedChanges(message)) {
       Messages.YES -> apply()
       Messages.NO -> {
         editor.reset()
@@ -439,6 +445,16 @@ internal class SettingsToolWindowManager(private val project: Project, private v
       }
       else -> false
     }
+  }
+
+  /** Shows the Apply / Don't Save / Cancel question, and gives [Messages.YES], [Messages.NO] or [Messages.CANCEL]. */
+  private fun askUnsavedChanges(@NlsContexts.DialogMessage message: String): Int {
+    return MessageDialogBuilder.yesNoCancel(ApplicationBundle.message("settings.switch.project.unsaved.title"), message)
+      .yesText(ApplicationBundle.message("settings.switch.project.button.apply"))
+      .noText(ApplicationBundle.message("settings.switch.project.button.dont.save"))
+      .cancelText(CommonBundle.getCancelButtonText())
+      .asWarning()
+      .show(project)
   }
 
   /** Applies the changes of every page. Returns `false` when a page rejects its values: then the tree selects that page. */

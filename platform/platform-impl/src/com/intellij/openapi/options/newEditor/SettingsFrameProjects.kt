@@ -59,7 +59,7 @@ class SettingsFrameProjects internal constructor(val frameOwner: Project, projec
 
   /**
    * Removes [project] from the selector, because the project closes. The selection moves to the next project of the selector.
-   * The last project stays selected, and the selector then lists no project.
+   * When the selector lists no project after the call, [frameOwner] is selected, so no closed project stays selected.
    */
   fun remove(project: Project) {
     val index = projects.indexOf(project)
@@ -67,8 +67,26 @@ class SettingsFrameProjects internal constructor(val frameOwner: Project, projec
       return
     }
     projects = projects - project
-    if (selected === project && projects.isNotEmpty()) {
-      selected = projects[index.coerceAtMost(projects.lastIndex)]
+    if (selected === project) {
+      selected = if (projects.isEmpty()) frameOwner else projects[index.coerceAtMost(projects.lastIndex)]
+    }
+    for (listener in listeners) {
+      listener.projectsChanged()
+    }
+  }
+
+  /**
+   * Adds [project] to the selector, because the project joins the frame. The selector keeps the order of [listProjects].
+   * When the selector lists no project before the call, [project] becomes the selected project.
+   */
+  fun add(project: Project) {
+    if (project in projects) {
+      return
+    }
+    val order = listProjects(frameOwner)
+    projects = (projects + project).sortedBy { order.indexOf(it).let { index -> if (index < 0) Int.MAX_VALUE else index } }
+    if (selected !in projects) {
+      selected = project
     }
     for (listener in listeners) {
       listener.projectsChanged()

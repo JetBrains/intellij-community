@@ -71,4 +71,14 @@ public class SortedConfigurableGroup
   public @NlsContexts.DetailedDescription String getDescription() {
     return myDescription;
   }
+
+  /**
+   * Makes {@code children} the children of this group, also after {@link #getConfigurables()}.
+   * The next call of {@link #getConfigurables()} sorts them again.
+   */
+  void setChildren(@NotNull List<@NotNull Configurable> children) {
+    myList = new ArrayList<>(children);
+    // drops the children that the group built already
+    super.disposeUIResources();
+  }
 }

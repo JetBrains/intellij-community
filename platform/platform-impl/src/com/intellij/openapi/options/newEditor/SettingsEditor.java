@@ -20,6 +20,7 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.UiDataProvider;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.WriteIntentReadAction;
 import com.intellij.openapi.options.BackedByPersistentState;
 import com.intellij.openapi.options.NoAutomaticReset;
 import com.intellij.openapi.options.Configurable;
@@ -515,9 +516,75 @@ public final class SettingsEditor extends AbstractEditor implements UiDataProvid
           // the pages of the project go first, while the project is alive, and then the selection moves to another project
           group.forget(project);
           projects.remove(project);
+          checkFrameProjectPages();
         }
       }
     });
+    SettingsFrameGuestJoins.follow(group, coroutineScope, this, hasNewNodes -> {
+      if (hasNewNodes) {
+        // the tree shows the new nodes. The filter keeps its context, so the modified marks stay
+        treeView.reloadWithSelection(filter.context.getCurrentConfigurable());
+        settings.reload();
+      }
+    });
+  }
+
+  /** The tree of a window that configures several projects, or {@code null} for the tree of one project. */
+  @Nullable FrameProjectsConfigurableGroup getFrameProjectsGroup() {
+    return myFrameProjectsGroup;
+  }
+
+  /**
+   * Applies the changes of the pages of {@code project}, for example before {@code project} closes.
+   * Returns {@code false} when a page rejects its values. Then the tree selects that page, and the page shows the error.
+   */
+  boolean applyFrameProject(@NotNull Project project) {
+    if (myFrameProjectsGroup == null) {
+      return true;
+    }
+    Set<String> modifiedIds = new HashSet<>();
+    for (FrameProjectConfigurable page : myFrameProjectsGroup.modifiedPagesOf(project)) {
+      try {
+        // a click on a Swing button holds no write-intent lock, and some pages apply in a write action
+        WriteIntentReadAction.runThrowable(() -> page.apply(project));
+        modifiedIds.add(page.getId());
+      }
+      catch (ConfigurationException e) {
+        checkFrameProjectPages();
+        Map<Configurable, ConfigurationException> errors = new HashMap<>(filter.context.getErrors());
+        errors.put(page, e);
+        filter.context.fireErrorsChanged(errors, null);
+        treeView.select(page);
+        return false;
+      }
+    }
+    checkFrameProjectPages();
+    if (!modifiedIds.isEmpty()) {
+      ApplicationManager.getApplication().getMessageBus().syncPublisher(SettingsDialogListener.TOPIC).afterApply(this, modifiedIds);
+    }
+    return true;
+  }
+
+  /** Drops the changes of the pages of {@code project}, for example before {@code project} closes. */
+  void cancelFrameProject(@NotNull Project project) {
+    if (myFrameProjectsGroup == null) {
+      return;
+    }
+    for (FrameProjectConfigurable page : myFrameProjectsGroup.modifiedPagesOf(project)) {
+      filter.context.fireReset(page);
+    }
+    myFrameProjectsGroup.cancel(project);
+    checkFrameProjectPages();
+  }
+
+  /** Checks each page of several projects for changes again, because the pages of one project changed or left. */
+  private void checkFrameProjectPages() {
+    for (Configurable configurable : new ArrayList<>(filter.context.getModified())) {
+      if (configurable instanceof FrameProjectConfigurable) {
+        checkModifiedInternal(configurable);
+      }
+    }
+    updateStatus(filter.context.getCurrentConfigurable());
   }
 
   /** Shows the project selector for a page of several projects, and the page of the selected project in that page. */

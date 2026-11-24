@@ -143,6 +143,39 @@ open class FrameProjectConfigurable internal constructor(
     container = null
   }
 
+  /** `true` when the page of [project] has a change that waits for Apply. */
+  fun isModified(project: Project): Boolean = createdDelegateOf(project)?.isModified == true
+
+  /** Applies the page of [project] when it has a change. A failed page makes [project] the selected project, as [apply] does. */
+  @Throws(ConfigurationException::class)
+  fun apply(project: Project) {
+    val delegate = createdDelegateOf(project) ?: return
+    if (!delegate.isModified) {
+      return
+    }
+    try {
+      delegate.apply()
+    }
+    catch (e: ConfigurationException) {
+      projects.select(project)
+      throw e
+    }
+  }
+
+  /** Drops the change of the page of [project], and shows the saved values again. */
+  fun cancel(project: Project) {
+    val delegate = createdDelegateOf(project) ?: return
+    delegate.cancel()
+    delegate.reset()
+  }
+
+  /** Adds the page of [project], because [project] joins the Settings window. A project that has a page keeps it. */
+  internal fun addDelegate(project: Project, delegate: Configurable) {
+    delegates.putIfAbsent(project, delegate)
+  }
+
+  private fun createdDelegateOf(project: Project): Configurable? = if (project in pages) delegates.get(project) else null
+
   /** Drops the page of [project], because the project closes. A change of that page that waits for Apply is lost. */
   internal fun forget(project: Project) {
     val delegate = delegates.remove(project)
@@ -163,7 +196,8 @@ internal class FrameProjectCompositeConfigurable(
   projects: SettingsFrameProjects,
   id: String,
   delegates: Map<Project, Configurable>,
-  private val children: Array<Configurable>,
+  /** A project that joins the Settings window adds its child pages here, see [FrameProjectsConfigurableGroup.join]. */
+  var children: Array<Configurable>,
 ) : FrameProjectConfigurable(projects, id, delegates), Configurable.Composite {
   override fun getConfigurables(): Array<Configurable> = children
 }

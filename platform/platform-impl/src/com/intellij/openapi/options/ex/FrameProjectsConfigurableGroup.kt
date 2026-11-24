@@ -4,12 +4,16 @@ package com.intellij.openapi.options.ex
 import com.intellij.ide.ui.search.getConfigurablesSafely
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.options.ConfigurableGroup
+import com.intellij.openapi.options.ConfigurationException
 import com.intellij.openapi.options.newEditor.SettingsDialogPerformanceTracker
 import com.intellij.openapi.options.newEditor.SettingsFrameProjects
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.wm.impl.IdeFrameGuests
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import org.jetbrains.annotations.ApiStatus
+import java.util.IdentityHashMap
 
 /**
  * The root of the Settings tree of a window that configures several projects, see [SettingsFrameProjects].
@@ -19,11 +23,13 @@ import org.jetbrains.annotations.ApiStatus
  * A project-level page that only some of the projects have is in the tree too.
  *
  * A change of an extension point builds the tree again, as for the tree of one project. The new tree holds new pages.
- * The tree lists the projects of [projects] at the time of the build: a frame guest that opens later gets no page.
+ * A frame guest that opens while the window is open joins the tree, see [join]. A window that opened with the tree of one
+ * project has no such root, and a frame guest that opens later gets no page in it.
  */
 @ApiStatus.Internal
 class FrameProjectsConfigurableGroup private constructor(
   val projects: SettingsFrameProjects,
+  private val tree: MergedTree,
   private val group: MutableConfigurableGroup,
 ) : MutableConfigurableGroup {
   override fun getDisplayName(): @NlsContexts.ConfigurableName String = group.displayName
@@ -43,32 +49,162 @@ class FrameProjectsConfigurableGroup private constructor(
     ConfigurableVisitor.collect({ (it as? FrameProjectConfigurable)?.forget(project) }, configurables)
   }
 
+  /** `true` when a page of [project] has a change that waits for Apply. */
+  fun isModified(project: Project): Boolean = frameProjectPages().any { it.isModified(project) }
+
+  /** Applies the changes of the pages of [project]. A failed page makes [project] the selected project. */
+  @Throws(ConfigurationException::class)
+  fun apply(project: Project) {
+    for (page in frameProjectPages()) {
+      page.apply(project)
+    }
+  }
+
+  /** Drops the changes of the pages of [project], and shows the saved values again. */
+  fun cancel(project: Project) {
+    for (page in frameProjectPages()) {
+      page.cancel(project)
+    }
+  }
+
+  /** The pages of the tree that have a page of [project] with a change that waits for Apply. */
+  fun modifiedPagesOf(project: Project): List<FrameProjectConfigurable> = frameProjectPages().filter { it.isModified(project) }
+
+  /**
+   * Adds the pages of [project] to the tree, because [project] joins the frame. [memberTree] is the tree of [project], see
+   * [buildMemberTree]. A page with an id that the tree has already gets the page of [project], so the pending changes of the
+   * other projects stay. Returns `true` when the tree got a new node, so that the tree view must show the tree again.
+   * Returns `false` and adds nothing when the tree is the tree of the frame owner alone, which the build makes when every
+   * project of the selector closed.
+   */
+  @RequiresEdt
+  fun join(project: Project, memberTree: SortedConfigurableGroup): Boolean = tree.join(project, memberTree)
+
+  /** `true` when [join] can add the pages of a project to the tree. */
+  fun canJoin(): Boolean = tree.canJoin()
+
+  private fun frameProjectPages(): List<FrameProjectConfigurable> {
+    return ConfigurableVisitor.findAll({ it is FrameProjectConfigurable }, listOf(this)).filterIsInstance<FrameProjectConfigurable>()
+  }
+
   companion object {
     /** Builds the tree for [projects]. This is as heavy as the build of the tree of each project, so it must not run on the EDT. */
     @JvmStatic
     fun create(projects: SettingsFrameProjects): FrameProjectsConfigurableGroup {
+      val tree = MergedTree(projects)
       val group = SettingsDialogPerformanceTracker.measureConfigurableTreeBuild {
-        EpBasedConfigurableGroup(projects.frameOwner) { buildMergedTree(projects) }
+        EpBasedConfigurableGroup(projects.frameOwner) { tree.build() }
       }
-      return FrameProjectsConfigurableGroup(projects, group)
+      return FrameProjectsConfigurableGroup(projects, tree, group)
+    }
+
+    /** Builds the tree of [project] for [join]. This is heavy, so it must not run on the EDT. */
+    @JvmStatic
+    fun buildMemberTree(project: Project): SortedConfigurableGroup? {
+      // no tree gets a project: the name of a group must not hold the name of one of the projects
+      return ConfigurableExtensionPointUtil.buildGroupTree(ConfigurableExtensionPointUtil.getConfigurables(project, true), null)
+    }
+
+    /**
+     * The project that owns the Settings window of [project]: the owner of the frame that shows [project].
+     * So a frame has one Settings window, whatever project of the frame opens it.
+     */
+    @JvmStatic
+    fun settingsWindowProject(project: Project): Project {
+      return if (project.isDefault || project.isDisposed) project else IdeFrameGuests.frameOwnerOf(project)
+    }
+
+    /**
+     * Builds the tree of the Settings window of [project]. The window belongs to [settingsWindowProject].
+     * A frame that shows several projects gets the tree of all of them. This is heavy, so it must not run on the EDT.
+     */
+    @JvmStatic
+    fun buildSettingsWindowGroups(project: Project?): List<ConfigurableGroup> {
+      val windowProject = project?.let(::settingsWindowProject)
+      val frameProjects = windowProject?.let { SettingsFrameProjects.create(it) }
+      if (frameProjects != null) {
+        return listOf(create(frameProjects))
+      }
+      return listOf(ConfigurableExtensionPointUtil.getConfigurableGroup(windowProject, /* withIdeSettings = */ true))
     }
   }
 }
 
-private fun buildMergedTree(projects: SettingsFrameProjects): ConfigurableGroup {
-  // no tree gets a project: the name of a group must not hold the name of one of the projects
-  val roots = projects.projects.filter { !it.isDisposed }.mapNotNull { project ->
-    val configurables = ConfigurableExtensionPointUtil.getConfigurables(project, /* withIdeSettings = */ true)
-    ConfigurableExtensionPointUtil.buildGroupTree(configurables, null)?.let { project to it }
+/**
+ * The merged tree of [projects] and its structure before the group compaction, see [ConfigurableExtensionPointUtil.compactGroups].
+ * The compaction replaces a group of one page with that page, so a join merges into the stored structure and compacts again.
+ */
+private class MergedTree(private val projects: SettingsFrameProjects) {
+  /** The root of the merged tree, or `null` for the tree of the frame owner alone. */
+  @Volatile
+  private var root: SortedConfigurableGroup? = null
+
+  /** The children of each group of the tree before the compaction. */
+  private val children = IdentityHashMap<SortedConfigurableGroup, List<Configurable>>()
+
+  /** The weight of each child of a group before the compaction. The compaction gives a page the weight of the group it replaces. */
+  private val weights = IdentityHashMap<Configurable, Int>()
+
+  fun build(): ConfigurableGroup {
+    root = null
+    val roots = projects.projects.filter { !it.isDisposed }.mapNotNull { project ->
+      FrameProjectsConfigurableGroup.buildMemberTree(project)?.let { project to it }
+    }
+    if (roots.isEmpty()) {
+      // every project of the selector closed: the tree of the frame owner is the one tree that is left
+      val frameOwner = projects.frameOwner
+      return checkNotNull(ConfigurableExtensionPointUtil.getConfigurableGroup(ConfigurableExtensionPointUtil.getConfigurables(frameOwner, true), frameOwner))
+    }
+    val root = FrameProjectTreeMerger(projects).merge(roots, isParentProjectLevel = false) as SortedConfigurableGroup
+    compact(root)
+    this.root = root
+    return root
   }
-  if (roots.isEmpty()) {
-    // every project of the selector closed: the tree of the frame owner is the one tree that is left
-    val frameOwner = projects.frameOwner
-    return checkNotNull(ConfigurableExtensionPointUtil.getConfigurableGroup(ConfigurableExtensionPointUtil.getConfigurables(frameOwner, true), frameOwner))
+
+  fun canJoin(): Boolean = root != null
+
+  fun join(project: Project, memberTree: SortedConfigurableGroup): Boolean {
+    val root = root ?: return false
+    restore()
+    val merger = FrameProjectTreeMerger(projects)
+    merger.merge(listOf(null to root, project to memberTree), isParentProjectLevel = false)
+    compact(root)
+    return merger.hasNewNodes
   }
-  val root = FrameProjectTreeMerger(projects).merge(roots, isParentProjectLevel = false) as SortedConfigurableGroup
-  ConfigurableExtensionPointUtil.compactGroups(root)
-  return root
+
+  private fun compact(root: SortedConfigurableGroup) {
+    children.clear()
+    weights.clear()
+    record(root)
+    ConfigurableExtensionPointUtil.compactGroups(root)
+  }
+
+  private fun record(group: SortedConfigurableGroup) {
+    val list = group.myList ?: return
+    children.put(group, ArrayList(list))
+    for (child in list) {
+      when (child) {
+        is SortedConfigurableGroup -> {
+          weights.put(child, child.myWeight)
+          record(child)
+        }
+        is ConfigurableWrapper -> weights.put(child, child.myWeight)
+      }
+    }
+  }
+
+  /** Gives each group its children and each child its weight from before the compaction. */
+  private fun restore() {
+    for ((group, list) in children) {
+      group.setChildren(list)
+    }
+    for ((child, weight) in weights) {
+      when (child) {
+        is SortedConfigurableGroup -> child.myWeight = weight
+        is ConfigurableWrapper -> child.myWeight = weight
+      }
+    }
+  }
 }
 
 /**
@@ -76,10 +212,17 @@ private fun buildMergedTree(projects: SettingsFrameProjects): ConfigurableGroup 
  *
  * The pages of the trees with one id under one parent become one page. An application-level page is the page of the first tree
  * that has it, with the children of all the trees. The project-level pages become one [FrameProjectConfigurable].
+ *
+ * A node of a pair with no project is a node of a merged tree. It goes first, and the nodes of the other projects merge into it.
+ * A non-composite [FrameProjectConfigurable] takes no child pages from a project that joins.
  */
 private class FrameProjectTreeMerger(private val projects: SettingsFrameProjects) {
+  /** `true` when a node of a project came under a node of the merged tree that had no node with its id. */
+  var hasNewNodes: Boolean = false
+    private set
+
   /** [nodes] holds the pages with one id under one parent: one page for each project that has it, in the order of the projects. */
-  fun merge(nodes: List<Pair<Project, Configurable>>, isParentProjectLevel: Boolean): Configurable {
+  fun merge(nodes: List<Pair<Project?, Configurable>>, isParentProjectLevel: Boolean): Configurable {
     val first = nodes.first().second
     if (isProjectLevel(first, isParentProjectLevel)) {
       return mergeProjectLevel(nodes)
@@ -88,7 +231,7 @@ private class FrameProjectTreeMerger(private val projects: SettingsFrameProjects
       is SortedConfigurableGroup -> {
         val children = nodes.map { (project, node) -> project to ((node as? SortedConfigurableGroup)?.myList ?: emptyList()) }
         if (first.myList != null) {
-          first.myList = mergeChildren(children, isParentProjectLevel = false)
+          first.setChildren(mergeChildren(children, isParentProjectLevel = false))
         }
       }
       is ConfigurableWrapper.CompositeWrapper -> {
@@ -103,24 +246,44 @@ private class FrameProjectTreeMerger(private val projects: SettingsFrameProjects
     return first
   }
 
-  private fun mergeProjectLevel(nodes: List<Pair<Project, Configurable>>): Configurable {
+  private fun mergeProjectLevel(nodes: List<Pair<Project?, Configurable>>): Configurable {
+    val (firstProject, first) = nodes.first()
+    if (firstProject == null) {
+      return joinProjectLevel(first, nodes.drop(1))
+    }
     val delegates = LinkedHashMap<Project, Configurable>()
     for ((project, node) in nodes) {
-      delegates.putIfAbsent(project, node)
+      delegates.putIfAbsent(project!!, node)
     }
-    val id = ConfigurableVisitor.getId(nodes.first().second)
+    val id = ConfigurableVisitor.getId(first)
     if (nodes.none { it.second is Configurable.Composite }) {
       return FrameProjectConfigurable(projects, id, delegates)
     }
-    val children = nodes.map { (project, node) ->
-      project to ((node as? Configurable.Composite)?.getConfigurablesSafely()?.asList() ?: emptyList())
+    return FrameProjectCompositeConfigurable(projects, id, delegates, mergeChildren(childrenOf(nodes), isParentProjectLevel = true).toTypedArray())
+  }
+
+  /** Adds the pages of the projects of [joining] to the page [merged] of a merged tree. */
+  private fun joinProjectLevel(merged: Configurable, joining: List<Pair<Project?, Configurable>>): Configurable {
+    if (merged !is FrameProjectConfigurable) {
+      return merged
     }
-    return FrameProjectCompositeConfigurable(projects, id, delegates, mergeChildren(children, isParentProjectLevel = true).toTypedArray())
+    for ((project, node) in joining) {
+      merged.addDelegate(project!!, node)
+    }
+    if (merged is FrameProjectCompositeConfigurable) {
+      val children = listOf(null to merged.children.asList()) + childrenOf(joining)
+      merged.children = mergeChildren(children, isParentProjectLevel = true).toTypedArray()
+    }
+    return merged
+  }
+
+  private fun childrenOf(nodes: List<Pair<Project?, Configurable>>): List<Pair<Project?, List<Configurable>>> {
+    return nodes.map { (project, node) -> project to ((node as? Configurable.Composite)?.getConfigurablesSafely()?.asList() ?: emptyList()) }
   }
 
   /** [children] holds the children of one page in each project. The answer keeps the order of the first project. */
-  private fun mergeChildren(children: List<Pair<Project, List<Configurable>>>, isParentProjectLevel: Boolean): MutableList<Configurable> {
-    val nodesByKey = LinkedHashMap<String, MutableList<Pair<Project, Configurable>>>()
+  private fun mergeChildren(children: List<Pair<Project?, List<Configurable>>>, isParentProjectLevel: Boolean): MutableList<Configurable> {
+    val nodesByKey = LinkedHashMap<String, MutableList<Pair<Project?, Configurable>>>()
     for ((project, configurables) in children) {
       val counts = HashMap<String, Int>()
       for (configurable in configurables) {
@@ -131,12 +294,16 @@ private class FrameProjectTreeMerger(private val projects: SettingsFrameProjects
         nodesByKey.getOrPut(key) { ArrayList() }.add(project to configurable)
       }
     }
+    if (children.any { it.first == null } && nodesByKey.values.any { nodes -> nodes.none { it.first == null } }) {
+      hasNewNodes = true
+    }
     return nodesByKey.values.mapTo(ArrayList()) { merge(it, isParentProjectLevel) }
   }
 
   /** A page without a declaration, which a parent page builds itself, is of the level of its parent, as in `SettingsTreeView`. */
   private fun isProjectLevel(configurable: Configurable, isParentProjectLevel: Boolean): Boolean {
     return when (configurable) {
+      is FrameProjectConfigurable -> true
       is ConfigurableWrapper -> configurable.project != null
       is SortedConfigurableGroup -> false
       else -> isParentProjectLevel
