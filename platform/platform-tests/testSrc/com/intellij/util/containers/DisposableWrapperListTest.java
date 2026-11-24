@@ -18,9 +18,15 @@ package com.intellij.util.containers;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.IncorrectOperationException;
 import org.junit.Test;
 
 import java.util.Arrays;
+import java.util.concurrent.CyclicBarrier;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.ThreadLocalRandom;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -94,5 +100,42 @@ public class DisposableWrapperListTest {
     assertEquals(1, l.size());
     Disposer.dispose(d1);
     assertTrue(l.isEmpty());
+  }
+
+  @Test
+  public void testParentDisposedConcurrentlyWithAdd() throws Exception {
+    DisposableWrapperList<String> l = new DisposableWrapperList<>();
+    ExecutorService executor = Executors.newSingleThreadExecutor();
+    try {
+      for (int i = 0; i < 100_000; i++) {
+        Disposable parent = Disposer.newDisposable();
+        CyclicBarrier barrier = new CyclicBarrier(2);
+        int delay = ThreadLocalRandom.current().nextInt(200);
+        Future<?> disposal = executor.submit(() -> {
+          barrier.await();
+          spin(delay);
+          Disposer.dispose(parent);
+          return null;
+        });
+        barrier.await();
+        try {
+          l.add("a", parent);
+        }
+        catch (IncorrectOperationException ignored) {
+          // The parent was disposed before the registration.
+        }
+        disposal.get();
+        assertTrue("The element stays in the list after the parent disposal, iteration " + i, l.isEmpty());
+      }
+    }
+    finally {
+      executor.shutdownNow();
+    }
+  }
+
+  private static void spin(int iterations) {
+    for (int i = 0; i < iterations; i++) {
+      Thread.onSpinWait();
+    }
   }
 }

@@ -70,6 +70,7 @@ public final class DisposableWrapperList<E> extends AbstractList<E> {
   public @NotNull Disposable add(@NotNull E element, @NotNull Disposable parentDisposable) {
     DisposableWrapper disposableWrapper = createDisposableWrapper(element, parentDisposable);
     myWrappedList.add(disposableWrapper);
+    removeIfDisposed(disposableWrapper);
     return disposableWrapper;
   }
 
@@ -85,6 +86,7 @@ public final class DisposableWrapperList<E> extends AbstractList<E> {
   public @NotNull Disposable add(int index, @NotNull E element, @NotNull Disposable parentDisposable) {
     DisposableWrapper disposableWrapper = createDisposableWrapper(element, parentDisposable);
     myWrappedList.add(index, disposableWrapper);
+    removeIfDisposed(disposableWrapper);
     return disposableWrapper;
   }
 
@@ -254,6 +256,16 @@ public final class DisposableWrapperList<E> extends AbstractList<E> {
     DisposableWrapper disposableWrapper = new DisposableWrapper(element, true);
     Disposer.register(parentDisposable, disposableWrapper);
     return disposableWrapper;
+  }
+
+  /**
+   * Removes the wrapper from the list when another thread disposed its parent
+   * after {@link #createDisposableWrapper} and before the wrapper was added to the list.
+   */
+  private void removeIfDisposed(@NotNull DisposableWrapper disposableWrapper) {
+    if (disposableWrapper.isUnique()) {
+      myWrappedList.remove(disposableWrapper);
+    }
   }
 
   private @NotNull Collection<DisposableWrapper> wrapAll(@NotNull Collection<? extends E> collection) {
