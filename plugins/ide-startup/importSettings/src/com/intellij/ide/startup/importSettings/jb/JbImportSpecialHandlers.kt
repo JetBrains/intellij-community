@@ -11,6 +11,7 @@ import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.JDOMUtil
+import com.intellij.toolWindow.SingleStripeHelper
 import com.intellij.util.io.fileSizeSafe
 import com.intellij.util.xmlb.JdomAdapter
 import org.jdom.Element
@@ -72,9 +73,11 @@ private object OtherXmlHandler : JbImportXmlHandler {
   }
 
   fun processExperimentalToolbar() {
+    // The settings v2 import can still read the imported component, so the component is reset too.
     if (NotRoamableUiSettings.getInstance().experimentalSingleStripe) {
       NotRoamableUiSettings.getInstance().experimentalSingleStripe = false
     }
+    SingleStripeHelper.setSingleStripeEnabled(false)
   }
 }
 

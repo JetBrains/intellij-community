@@ -18,6 +18,8 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.platform.settings.v2.SettingsKey
+import com.intellij.platform.settings.v2.getValue
 import com.intellij.serviceContainer.NonInjectable
 import com.intellij.ui.JreHiDpiUtil
 import com.intellij.ui.NewUiValue
@@ -37,14 +39,37 @@ import javax.swing.SwingUtilities
 
 private val LOG = logger<UISettings>()
 
+/**
+ * Holds the UI settings of the IDE.
+ *
+ * Some properties hold the value of a settings v2 key, and their KDoc names the key. A write of such a property is
+ * asynchronous. The setter launches the write of the key and returns before the write applies. So a read right after
+ * the write can still return the old value. To react to the new value, use [UISettingsListener].
+ */
 @State(
   name = "UISettings",
   storages = [(Storage("ui.lnf.xml", usePathMacroManager = false))],
   useLoadedStateAsExisting = false,
   category = SettingsCategory.UI,
 )
-class UISettings @NonInjectable constructor(private val notRoamableOptions: NotRoamableUiSettings) : PersistentStateComponentWithModificationTracker<UISettingsState> {
-  constructor() : this(ApplicationManager.getApplication().service<NotRoamableUiSettings>())
+class UISettings private constructor(
+  private val notRoamableOptions: NotRoamableUiSettings,
+  /**
+   * Tells which of two kinds this instance is. The application service reads and writes the keys of [UISettingsKeys].
+   * An instance over a given component reads and writes only [notRoamableOptions], and never touches the keys.
+   *
+   * The second kind serves [shadowInstance] before the settings store is initialized. Then no settings vault exists,
+   * so no key can be read. The instance holds a new component that was never loaded, so it gives the default values of
+   * [NotRoamableUiOptions]. It must not read or change the real settings of the user.
+   */
+  private val usesKeys: Boolean,
+) : PersistentStateComponentWithModificationTracker<UISettingsState> {
+  /** Creates an instance over [notRoamableOptions] that never touches the keys. See [usesKeys]. */
+  @NonInjectable
+  constructor(notRoamableOptions: NotRoamableUiSettings) : this(notRoamableOptions, usesKeys = false)
+
+  /** Creates the application service, which reads and writes the keys. See [usesKeys]. */
+  constructor() : this(ApplicationManager.getApplication().service<NotRoamableUiSettings>(), usesKeys = true)
 
   private var state = UISettingsState()
 
@@ -80,11 +105,29 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
       state.useContrastScrollBars = value
     }
 
+  /**
+   * Tells whether the tool windows hide their stripes. It is `true` also with [experimentalSingleStripe]. A write of
+   * `false` also turns off [experimentalSingleStripe], and that part is asynchronous. See [UISettings].
+   */
   var hideToolStripes: Boolean
-    get() = state.hideToolStripes || notRoamableOptions.experimentalSingleStripe
+    get() = state.hideToolStripes || experimentalSingleStripe
     set(value) {
       state.hideToolStripes = value
-      if (!value) notRoamableOptions.experimentalSingleStripe = false
+      if (!value) {
+        experimentalSingleStripe = false
+      }
+    }
+
+  /**
+   * Tells whether the tool windows show their buttons in one stripe, the value of [UISettingsKeys.SINGLE_STRIPE]. A
+   * write is asynchronous. See [UISettings].
+   */
+  @get:Internal
+  @set:Internal
+  var experimentalSingleStripe: Boolean
+    get() = readSetting(UISettingsKeys.SINGLE_STRIPE) { notRoamableOptions.experimentalSingleStripe }
+    set(value) {
+      writeSetting(UISettingsKeys.SINGLE_STRIPE, value) { notRoamableOptions.experimentalSingleStripe = value }
     }
 
   val hideNavigationOnFocusLoss: Boolean
@@ -628,8 +671,9 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
       }
 
     /**
-     * Use this method if you are not sure whether the application is initialized.
-     * @return persisted UISettings instance or default values.
+     * Holds the application service once the settings store is initialized. Before that, it holds a new instance over a
+     * new component, which gives the default values. Early startup code, such as the early frame and the frame headers,
+     * reads it. See [UISettings.usesKeys].
      */
     @JvmStatic
     val shadowInstance: UISettings
@@ -794,6 +838,21 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
 
       ApplicationManager.getApplication().messageBus.syncPublisher(UISettingsListener.TOPIC).uiSettingsChanged(this)
     }
+  }
+
+  /**
+   * Returns the value of [key] at the application context. An instance over a given component returns
+   * [componentValue] instead.
+   */
+  private inline fun <T> readSetting(key: SettingsKey<T>, componentValue: () -> T): T =
+    if (usesKeys) key.getValue() else componentValue()
+
+  /**
+   * Launches a write of [value] for [key], as [UISettingsKeys.setAsync] does. An instance over a given component
+   * writes [value] with [writeComponent] instead.
+   */
+  private inline fun <T> writeSetting(key: SettingsKey<T>, value: T, writeComponent: () -> Unit) {
+    if (usesKeys) UISettingsKeys.setAsync(key, value) else writeComponent()
   }
 
   @Internal

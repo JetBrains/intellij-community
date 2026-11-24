@@ -16,10 +16,13 @@ import com.intellij.platform.settings.v2.SettingsKeyPromoter
 import com.intellij.platform.settings.v2.SettingsValue
 import com.intellij.platform.settings.v2.StringSerializer
 import com.intellij.platform.settings.v2.enumSerializer
+import com.intellij.platform.settings.v2.getValue
 import com.intellij.platform.settings.v2.nullable
+import com.intellij.platform.settings.v2.setValue
 import com.intellij.util.asDisposable
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus.Internal
@@ -73,6 +76,24 @@ object UISettingsKeys {
   )
 
   /**
+   * Launches an asynchronous update of these keys, for a caller that cannot suspend, such as an action on the EDT.
+   *
+   * @param update writes the keys, for example `KEY.setValue(value)`
+   * @return the job of the update
+   */
+  fun updateAsync(update: suspend () -> Unit): Job = service<UISettingsKeysScope>().launchUpdate(update)
+
+  /**
+   * Launches an asynchronous write of [value] for [key], unless [key] already resolves to [value]. So the write never
+   * stores a value that the key already has, such as its default.
+   */
+  fun <T> setAsync(key: SettingsKey<T>, value: T) {
+    if (key.getValue() != value) {
+      updateAsync { key.setValue(value) }
+    }
+  }
+
+  /**
    * Creates the service of these keys, unless it exists. From its creation the service makes each change of these keys
    * call [UISettings.fireUISettingsChanged] on the EDT, so each [UISettingsListener] sees it. Changes that come close
    * together fire one event.
@@ -82,9 +103,17 @@ object UISettingsKeys {
   }
 }
 
-/** Holds the coroutine scope of the forward of the changes of [UISettingsKeys]. */
+/** Holds the coroutine scope of the writes of [UISettingsKeys] and of the forward of their changes. */
 @Service
 private class UISettingsKeysScope(private val coroutineScope: CoroutineScope) {
+  /**
+   * Launches [update] in the modality of the caller.
+   *
+   * @return the job of [update]
+   */
+  fun launchUpdate(update: suspend () -> Unit): Job =
+    coroutineScope.launch(ModalityState.defaultModalityState().asContextElement()) { update() }
+
   init {
     val keyChanges = Channel<Unit>(Channel.CONFLATED)
     // Any modality, because a modal dialog such as Settings can write a key.

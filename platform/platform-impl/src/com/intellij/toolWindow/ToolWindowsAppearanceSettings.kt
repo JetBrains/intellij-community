@@ -1,7 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.toolWindow
 
-import com.intellij.ide.ui.NotRoamableUiSettings
 import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.util.registry.RegistryManager
 import com.intellij.util.PlatformUtils
@@ -30,7 +29,7 @@ data class ToolWindowsAppearanceSettings(
       wideScreenSupport = settings.wideScreenSupport,
       showToolWindowsNames = settings.showToolWindowsNames,
       hideToolStripes = settings.state.hideToolStripes,
-      experimentalSingleStripe = NotRoamableUiSettings.getInstance().experimentalSingleStripe,
+      experimentalSingleStripe = SingleStripeHelper.isSingleStripeEnabled(),
       rememberSizeForEachToolWindowNewUI = settings.rememberSizeForEachToolWindowNewUI,
     )
 
@@ -45,7 +44,10 @@ data class ToolWindowsAppearanceSettings(
     )
   }
 
-  /** Applies the non-null flags to [settings] and notifies the listeners if a flag changes. */
+  /**
+   * Applies the non-null flags to [settings] and notifies the listeners if a flag of [settings] changes. The single
+   * stripe flag is a key, which notifies the listeners by itself.
+   */
   internal fun applyTo(settings: UISettings) {
     val previousSettings = fromSettings(settings)
     leftHorizontalSplit?.let { settings.leftHorizontalSplit = it }
@@ -56,7 +58,7 @@ data class ToolWindowsAppearanceSettings(
     // DataGrip enables this flag in DataGripPluginConfigurator.enableSingleStripe().
     // See dbe/datagrip/frontend/customization/src/DataGripFrontendPluginConfigurator.kt.
     if (PlatformUtils.isDataGrip()) {
-      experimentalSingleStripe?.let { NotRoamableUiSettings.getInstance().experimentalSingleStripe = it }
+      experimentalSingleStripe?.let { SingleStripeHelper.setSingleStripeEnabled(it) }
     }
     rememberSizeForEachToolWindowNewUI?.let { settings.rememberSizeForEachToolWindowNewUI = it }
     if (previousSettings.showToolWindowsNames != settings.showToolWindowsNames) {

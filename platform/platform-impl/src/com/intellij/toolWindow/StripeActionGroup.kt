@@ -6,7 +6,7 @@ import com.intellij.icons.AllIcons
 import com.intellij.ide.HelpTooltip
 import com.intellij.ide.actions.ActivateToolWindowAction
 import com.intellij.ide.actions.ToolWindowsGroup
-import com.intellij.ide.ui.NotRoamableUiSettings
+import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.customization.CustomActionsSchema
 import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.Disposable
@@ -82,7 +82,7 @@ class StripeActionGroup: ActionGroup(), DumbAware {
 
   override fun update(e: AnActionEvent) {
     super.update(e)
-    val hide = ActionPlaces.isMainMenuOrActionSearch(e.place) || !NotRoamableUiSettings.getInstance().experimentalSingleStripe
+    val hide = ActionPlaces.isMainMenuOrActionSearch(e.place) || !SingleStripeHelper.isSingleStripeEnabled()
     e.presentation.apply {
       isEnabled = isEnabled && !hide
       isVisible = isVisible && !hide
@@ -364,11 +364,12 @@ object SingleStripeHelper {
 
   const val STRIPE_ACTION_GROUP_ID: String = "TopStripeActionGroup"
 
+  /** Launches a write of [enabled] to [UISettings.experimentalSingleStripe] and returns. The write notifies the consumers. */
   fun setSingleStripeEnabled(enabled: Boolean) {
-    NotRoamableUiSettings.getInstance().experimentalSingleStripe = enabled
+    UISettings.getInstance().experimentalSingleStripe = enabled
   }
 
-  fun isSingleStripeEnabled(): Boolean = NotRoamableUiSettings.getInstance().experimentalSingleStripe
+  fun isSingleStripeEnabled(): Boolean = UISettings.getInstance().experimentalSingleStripe
 
   @ApiStatus.Internal
   fun pinButton(toolWindowId: String, pinned: Boolean) {
