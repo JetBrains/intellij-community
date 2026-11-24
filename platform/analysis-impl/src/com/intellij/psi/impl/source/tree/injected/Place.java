@@ -4,6 +4,7 @@ package com.intellij.psi.impl.source.tree.injected;
 
 import com.intellij.psi.PsiLanguageInjectionHost;
 import com.intellij.psi.SmartPsiElementPointer;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Unmodifiable;
 
@@ -23,12 +24,7 @@ public class Place extends AbstractList<PsiLanguageInjectionHost.Shred> {
   }
 
   boolean isValid() {
-    for (PsiLanguageInjectionHost.Shred shred : this) {
-      if (!shred.isValid()) {
-        return false;
-      }
-    }
-    return true;
+    return ContainerUtil.all(this, shred -> shred.isValid());
   }
 
   void dispose() {
