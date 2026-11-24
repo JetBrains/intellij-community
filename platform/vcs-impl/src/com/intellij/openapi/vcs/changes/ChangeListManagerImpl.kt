@@ -218,6 +218,9 @@ class ChangeListManagerImpl(
             @Suppress("TestOnlyProblems")
             waitEverythingDoneInTestMode()
           }
+          // Stop the queue before we cancel the refresh.
+          // A refresh cancelled while the queue is not yet stopped logs a spurious error for its waiters.
+          updateRequestsQueue.stop()
           // Can't use Project disposable - it will be called after pending tasks are finished
           Disposer.dispose(updateDisposable)
         }
