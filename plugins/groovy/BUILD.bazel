@@ -37,6 +37,7 @@ dist_plugin(
         "intellij.groovy.langInjection",
         "intellij.groovy.structuralSearch",
         "intellij.groovy.spock",
+        "intellij.groovy.spock.rt",
         "intellij.libraries.hamcrest",
         "intellij.libraries.junit4",
         "intellij.libraries.opentest4j",
@@ -44,7 +45,6 @@ dist_plugin(
         "intellij.groovy.psi",
         "intellij.groovy.rt",
         "intellij.groovy.rt.classLoader",
-        "intellij.groovy.spock.rt",
     ],
     main_module = "intellij.groovy",
     module_labels = {

@@ -24,6 +24,7 @@
     <module name="intellij.groovy.langInjection"/>
     <module name="intellij.groovy.structuralSearch"/>
     <module name="intellij.groovy.spock"/>
+    <module name="intellij.groovy.spock.rt"/>
   </content>
   <content>
     <module name="intellij.libraries.hamcrest" loading="embedded"/>

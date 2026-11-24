@@ -37,6 +37,7 @@ dist_plugin_descriptor(
         "@community//plugins/groovy/intellij.groovy.copyright:resources/intellij.groovy.copyright.xml": "intellij.groovy.copyright.xml",
         "@community//plugins/groovy/jps-plugin:resources/intellij.groovy.jps.xml": "intellij.groovy.jps.xml",
         "@community//plugins/groovy/langInjection:resources/intellij.groovy.langInjection.xml": "intellij.groovy.langInjection.xml",
+        "@community//plugins/groovy/spock-rt:resources/intellij.groovy.spock.rt.xml": "intellij.groovy.spock.rt.xml",
         "@community//plugins/groovy/spock:resources/intellij.groovy.spock.xml": "intellij.groovy.spock.xml",
         "@community//plugins/groovy/structuralsearch-groovy:resources/intellij.groovy.structuralSearch.xml": "intellij.groovy.structuralSearch.xml",
     },
@@ -69,6 +70,7 @@ dev_plugin(
         "//plugins/groovy/intellij.groovy.copyright:copyright_content_module_jar",
         "//plugins/groovy/jps-plugin:jps_content_module_jar",
         "//plugins/groovy/langInjection:langInjection_content_module_jar",
+        "//plugins/groovy/spock-rt:spock-rt_content_module_jar",
         "//plugins/groovy/spock:spock_content_module_jar",
         "//plugins/groovy/structuralsearch-groovy:structuralSearch_content_module_jar",
     ],
@@ -94,9 +96,6 @@ dev_plugin(
         "lib/groovy-rt.jar": [
             "intellij.groovy.rt",
         ],
-        "lib/groovy-spock-rt.jar": [
-            "intellij.groovy.spock.rt",
-        ],
         "lib/groovy-rt-class-loader.jar": [
             "intellij.groovy.rt.classLoader",
         ],
@@ -118,7 +117,6 @@ dev_plugin(
         "//plugins/groovy/rt": "intellij.groovy.rt",
         "//plugins/groovy/rt-constants:constants-rt": "intellij.groovy.constants.rt",
         "//plugins/groovy/rt/classLoader": "intellij.groovy.rt.classLoader",
-        "//plugins/groovy/spock-rt": "intellij.groovy.spock.rt",
     },
     plugin_directory = "plugins/groovy",
     stamp_class_modes = [

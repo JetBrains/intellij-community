@@ -3,6 +3,7 @@
   <dependencies>
     <plugin id="JUnit"/>
     <plugin id="org.intellij.groovy"/>
+    <module name="intellij.groovy.spock.rt"/>
     <module name="intellij.java.execution.impl"/>
     <module name="intellij.java.impl"/>
     <module name="intellij.java.psi"/>

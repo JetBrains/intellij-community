@@ -703,7 +703,6 @@ fun groovyPlugin(additionalModules: List<String> = emptyList(), addition: ((Plug
       )
     )
     spec.withModule("intellij.groovy.rt", "groovy-rt.jar")
-    spec.withModule("intellij.groovy.spock.rt", "groovy-spock-rt.jar")
     spec.withModule("intellij.groovy.rt.classLoader", "groovy-rt-class-loader.jar")
     spec.withModule("intellij.groovy.constants.rt", "groovy-constants-rt.jar")
     spec.withModules(additionalModules)

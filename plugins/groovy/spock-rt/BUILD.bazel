@@ -1,12 +1,12 @@
 load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
+
+### auto-generated section `dev intellij.groovy.spock.rt` start
+content_module_jar(module = ":spock-rt")
+### auto-generated section `dev intellij.groovy.spock.rt` end
 
 ### auto-generated section `build intellij.groovy.spock.rt` start
-jvm_provided_library(
-    name = "plugins_junit-rt_provided",
-    lib = "//plugins/junit_rt:junit-rt",
-)
-
 jvm_provided_library(
     name = "libraries_junit4_provided",
     lib = "//libraries/junit4",
@@ -24,11 +24,15 @@ jvm_library(
     ),
     kotlinc_opts = "@community//:k8",
     module_name = "intellij.groovy.spock.rt",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
     visibility = ["//visibility:public"],
     deps = [
         # do not sort,
+        "//plugins/junit_rt:junit-rt",
         "@lib//:groovy-spock-rt-spockframework-spock-core-provided",
-        ":plugins_junit-rt_provided",
         ":libraries_junit4_provided",
     ],
 )
@@ -37,7 +41,7 @@ jvm_library(
 ### auto-generated section `iml intellij.groovy.spock.rt` start
 jps_module(
     name = "intellij.groovy.spock.rt",
-    resources = False,
+    descriptors = ["resources/intellij.groovy.spock.rt.xml"],
     target = "spock-rt",
 )
 ### auto-generated section `iml intellij.groovy.spock.rt` end
