@@ -93,7 +93,7 @@ fun migrationLaunchArguments(reason: MigrationLaunchReason, sourceProduct: Strin
 fun macOpenCommand(app: Path, arguments: List<String>): List<String> =
   listOf("/usr/bin/open", "-n", "-a", app.toString(), "--args") + arguments
 
-/** The command that runs [launcher], the launcher of the installed application, with [arguments]. Each value is a separate argument. */
+/** The command that runs [launcher], the launcher of the installed application, with [arguments]. */
 @ApiStatus.Internal
 fun migrationLauncherCommand(launcher: Path, arguments: List<String>): List<String> = listOf(launcher.toString()) + arguments
 
