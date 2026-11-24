@@ -13,7 +13,9 @@ comment
     HTML_COMMENT => DEFAULT_LINE_COMMENT
 -->
     HTML_COMMENT => DEFAULT_LINE_COMMENT
-\n\n
+\n
+    HTML_CODE => TEXT
+\n
     HTML_CODE => TEXT
 Trailing␣text.
     MARKDOWN_TEXT => TEXT

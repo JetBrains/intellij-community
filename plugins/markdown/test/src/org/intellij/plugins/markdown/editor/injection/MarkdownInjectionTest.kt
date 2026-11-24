@@ -25,12 +25,14 @@ import com.intellij.openapi.editor.actionSystem.TypedAction
 import com.intellij.openapi.util.TextRange
 import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightModuleFixture
 import com.intellij.psi.PsiDocumentManager
+import com.intellij.psi.PsiElement
 import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.psi.impl.DebugUtil
 import com.intellij.psi.impl.source.PsiFileImpl
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageEditorUtil
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil
 import com.intellij.psi.util.PsiTreeUtil
+import com.intellij.psi.xml.XmlTag
 import com.intellij.testFramework.EditorTestUtil
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
@@ -831,6 +833,29 @@ class MarkdownInjectionTest {
       assertTrue(htmlTree.contains("MARKDOWN_OUTER_BLOCK"), htmlTree)
       assertFalse(htmlTree.contains("HtmlTag:b"), htmlTree)
       assertTrue(htmlTree.contains("HtmlTag:table"), htmlTree)
+    }
+  }
+
+  @Test
+  fun `test html script keeps markdown line breaks`(): Unit = timeoutRunBlocking {
+    val text = """
+      <script setup>
+      import { useData } from 'vitepress'
+
+      const { theme, page, frontmatter } = useData()
+      </script>
+    """.trimIndent()
+    myFixture.configureByText("test.md", text)
+
+    readAction {
+      val htmlFile = myFixture.file.viewProvider.getPsi(HTMLLanguage.INSTANCE)
+      assertNotNull(htmlFile)
+      val scriptTag = PsiTreeUtil.findChildOfType(htmlFile, XmlTag::class.java)
+      assertNotNull(scriptTag)
+      val scriptTagElement = scriptTag!!
+      assertTrue(scriptTagElement.value.text.contains("import { useData } from 'vitepress'\n\nconst"))
+      assertFalse(PsiTreeUtil.findChildrenOfType(scriptTagElement, PsiElement::class.java)
+                    .any { it.node.elementType == MarkdownElementTypes.MARKDOWN_OUTER_BLOCK })
     }
   }
 

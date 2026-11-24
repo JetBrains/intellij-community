@@ -8,15 +8,13 @@ HtmlFile:a.md
       XmlToken:XML_NAME('table')
       XmlToken:XML_TAG_END('>')
       XmlText
-        PsiElement(MARKDOWN_OUTER_BLOCK)('\n')
-        PsiWhiteSpace('  ')
+        PsiWhiteSpace('\n  ')
       HtmlTag:tr
         XmlToken:XML_START_TAG_START('<')
         XmlToken:XML_NAME('tr')
         XmlToken:XML_TAG_END('>')
         XmlText
-          PsiElement(MARKDOWN_OUTER_BLOCK)('\n')
-          PsiWhiteSpace('    ')
+          PsiWhiteSpace('\n    ')
         HtmlTag:th
           XmlToken:XML_START_TAG_START('<')
           XmlToken:XML_NAME('th')
@@ -29,8 +27,7 @@ HtmlFile:a.md
           XmlToken:XML_NAME('th')
           XmlToken:XML_TAG_END('>')
         XmlText
-          PsiElement(MARKDOWN_OUTER_BLOCK)('\n')
-          PsiWhiteSpace('    ')
+          PsiWhiteSpace('\n    ')
         HtmlTag:th
           XmlToken:XML_START_TAG_START('<')
           XmlToken:XML_NAME('th')
@@ -43,21 +40,18 @@ HtmlFile:a.md
           XmlToken:XML_NAME('th')
           XmlToken:XML_TAG_END('>')
         XmlText
-          PsiElement(MARKDOWN_OUTER_BLOCK)('\n')
-          PsiWhiteSpace('  ')
+          PsiWhiteSpace('\n  ')
         XmlToken:XML_END_TAG_START('</')
         XmlToken:XML_NAME('tr')
         XmlToken:XML_TAG_END('>')
       XmlText
-        PsiElement(MARKDOWN_OUTER_BLOCK)('\n')
-        PsiWhiteSpace('  ')
+        PsiWhiteSpace('\n  ')
       HtmlTag:tr
         XmlToken:XML_START_TAG_START('<')
         XmlToken:XML_NAME('tr')
         XmlToken:XML_TAG_END('>')
         XmlText
-          PsiElement(MARKDOWN_OUTER_BLOCK)('\n')
-          PsiWhiteSpace('    ')
+          PsiWhiteSpace('\n    ')
         HtmlTag:td
           XmlToken:XML_START_TAG_START('<')
           XmlToken:XML_NAME('td')
@@ -74,8 +68,7 @@ HtmlFile:a.md
           XmlToken:XML_NAME('td')
           XmlToken:XML_TAG_END('>')
         XmlText
-          PsiElement(MARKDOWN_OUTER_BLOCK)('\n')
-          PsiWhiteSpace('    ')
+          PsiWhiteSpace('\n    ')
         HtmlTag:td
           XmlToken:XML_START_TAG_START('<')
           XmlToken:XML_NAME('td')
@@ -92,21 +85,18 @@ HtmlFile:a.md
           XmlToken:XML_NAME('td')
           XmlToken:XML_TAG_END('>')
         XmlText
-          PsiElement(MARKDOWN_OUTER_BLOCK)('\n')
-          PsiWhiteSpace('  ')
+          PsiWhiteSpace('\n  ')
         XmlToken:XML_END_TAG_START('</')
         XmlToken:XML_NAME('tr')
         XmlToken:XML_TAG_END('>')
       XmlText
-        PsiElement(MARKDOWN_OUTER_BLOCK)('\n')
-        PsiWhiteSpace('  ')
+        PsiWhiteSpace('\n  ')
       HtmlTag:tr
         XmlToken:XML_START_TAG_START('<')
         XmlToken:XML_NAME('tr')
         XmlToken:XML_TAG_END('>')
         XmlText
-          PsiElement(MARKDOWN_OUTER_BLOCK)('\n')
-          PsiWhiteSpace('    ')
+          PsiWhiteSpace('\n    ')
         HtmlTag:td
           XmlToken:XML_START_TAG_START('<')
           XmlToken:XML_NAME('td')
@@ -123,8 +113,7 @@ HtmlFile:a.md
           XmlToken:XML_NAME('td')
           XmlToken:XML_TAG_END('>')
         XmlText
-          PsiElement(MARKDOWN_OUTER_BLOCK)('\n')
-          PsiWhiteSpace('    ')
+          PsiWhiteSpace('\n    ')
         HtmlTag:td
           XmlToken:XML_START_TAG_START('<')
           XmlToken:XML_NAME('td')
@@ -141,17 +130,17 @@ HtmlFile:a.md
           XmlToken:XML_NAME('td')
           XmlToken:XML_TAG_END('>')
         XmlText
-          PsiElement(MARKDOWN_OUTER_BLOCK)('\n')
-          PsiWhiteSpace('  ')
+          PsiWhiteSpace('\n  ')
         XmlToken:XML_END_TAG_START('</')
         XmlToken:XML_NAME('tr')
         XmlToken:XML_TAG_END('>')
-      PsiElement(MARKDOWN_OUTER_BLOCK)('\n')
+      XmlText
+        PsiWhiteSpace('\n')
       XmlToken:XML_END_TAG_START('</')
       XmlToken:XML_NAME('table')
       XmlToken:XML_TAG_END('>')
+    PsiWhiteSpace('\n\n')
     XmlText
-      PsiElement(MARKDOWN_OUTER_BLOCK)('\n\n')
       PsiElement(XML_COMMENT)
         XmlToken:XML_COMMENT_START('<!--')
         XmlToken:XML_COMMENT_CHARACTERS(' This is an HTML comment ')

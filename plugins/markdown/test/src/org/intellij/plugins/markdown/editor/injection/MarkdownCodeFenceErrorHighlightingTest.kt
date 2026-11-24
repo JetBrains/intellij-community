@@ -71,7 +71,7 @@ class MarkdownCodeFenceErrorHighlightingTest {
       """.trimIndent(),
     )
 
-    assertNotNull(myFixture.getAvailableIntention("Hide problems in code fences"))
+    assertNotNull(myFixture.getAvailableIntention("Hide errors in code fences"))
   }
 
   @AfterEach

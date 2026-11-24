@@ -1,12 +1,15 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.plugins.markdown.lang;
 
+import com.intellij.lexer.Lexer;
 import com.intellij.psi.templateLanguages.TemplateDataElementType;
+import com.intellij.psi.templateLanguages.TemplateLanguageFileViewProvider;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.IFileElementType;
 import com.intellij.psi.tree.OuterLanguageElementType;
 import org.intellij.markdown.flavours.gfm.GFMElementTypes;
 import org.intellij.markdown.flavours.gfm.GFMTokenTypes;
+import org.intellij.plugins.markdown.lang.lexer.MarkdownHtmlBlockMergingLexer;
 import org.intellij.plugins.markdown.lang.parser.MarkdownParserDefinition;
 import org.intellij.plugins.markdown.lang.parser.at.MarkdownAtPathElementTypes;
 import org.intellij.plugins.markdown.lang.parser.blocks.AdmonitionMarkerProvider;
@@ -15,6 +18,7 @@ import org.intellij.plugins.markdown.lang.parser.blocks.DefinitionListMarkerProv
 import org.intellij.plugins.markdown.lang.parser.blocks.frontmatter.FrontMatterHeaderMarkerProvider;
 import org.intellij.plugins.markdown.lang.parser.testlink.TestLinkElementTypes;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
 
 import static org.intellij.plugins.markdown.lang.MarkdownElementType.platformType;
 import static org.intellij.plugins.markdown.lang.MarkdownTokenTypes.HTML_BLOCK_CONTENT;
@@ -71,7 +75,12 @@ public interface MarkdownElementTypes {
   IElementType MARKDOWN_OUTER_BLOCK = new OuterLanguageElementType("MARKDOWN_OUTER_BLOCK", MarkdownLanguage.INSTANCE);
 
   TemplateDataElementType MARKDOWN_TEMPLATE_DATA =
-    new TemplateDataElementType("MARKDOWN_TEMPLATE_DATA", MarkdownLanguage.INSTANCE, HTML_BLOCK_CONTENT, MARKDOWN_OUTER_BLOCK);
+    new TemplateDataElementType("MARKDOWN_TEMPLATE_DATA", MarkdownLanguage.INSTANCE, HTML_BLOCK_CONTENT, MARKDOWN_OUTER_BLOCK) {
+      @Override
+      protected @NotNull Lexer createBaseLexer(@NotNull TemplateLanguageFileViewProvider viewProvider) {
+        return new MarkdownHtmlBlockMergingLexer(super.createBaseLexer(viewProvider));
+      }
+    };
 
   /**
    * CommonMark autolinks are wrapped with <> brackets, so parser creates a composite node:

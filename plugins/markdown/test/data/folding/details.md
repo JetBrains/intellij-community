@@ -1,5 +1,5 @@
-<fold text='▶ The <b>bo</b>ld & plain<br>summary &lt; <b> 2 < 3 and 5 > 4'><details
- title=">"<fold text='...'>>
+<fold text='▶ The <b>bo</b>ld & plain<br>summary &lt; <b> 2 < 3 and 5 > 4'><details<fold text='...'>
+ title=">">
 <summary title=">">The <b>bo</b>ld <fold text='&'>&amp;</fold> plain<br>summary <fold text='&'>&amp;</fold>lt; <fold text='<'>&lt;</fold>b<fold text='>'>&gt;</fold> 2 < 3 and 5 > 4</summary>
 <!--<fold text='...'>
 <details></details>
