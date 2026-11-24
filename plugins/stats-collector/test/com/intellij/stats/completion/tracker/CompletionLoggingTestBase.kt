@@ -28,6 +28,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.assertj.core.api.Assertions
 import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.BeforeEach
 import org.mockito.ArgumentMatchers.anyBoolean
 import org.mockito.Mockito
@@ -56,6 +57,13 @@ fun List<LogEvent>.assertOrder(vararg actions: Action) {
 abstract class CompletionLoggingTestBase {
   companion object {
     private val projectFixture = projectFixture(openAfterCreation = true)
+
+    @BeforeAll
+    @JvmStatic
+    fun registerCompletionLogger() {
+      val project = projectFixture.get()
+      project.messageBus.connect(project).subscribe(LookupManagerListener.TOPIC, CompletionLoggerInitializer())
+    }
   }
 
   private val tempDirFixture = tempPathFixture()
@@ -100,7 +108,6 @@ abstract class CompletionLoggingTestBase {
     myFixture.addClass(runnableInterface)
     myFixture.configureByText(JavaFileType.INSTANCE, testText)
 
-    project.messageBus.connect(testRootDisposable).subscribe(LookupManagerListener.TOPIC, CompletionLoggerInitializer())
     CompletionFactorsInitializer.isEnabledInTests = true
   }
 
