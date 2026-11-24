@@ -19,6 +19,14 @@ object CodeVisionMessageBundle {
     return instance.messageOrNull(key, *params) ?: ""
   }
 
+  @Nls
+  fun messageOrNull(
+    @PropertyKey(resourceBundle = BUNDLE) key: String,
+    vararg params: Any,
+  ): String? {
+    return instance.messageOrNull(key, *params)
+  }
+
   fun messagePointer(
     @PropertyKey(resourceBundle = BUNDLE) key: String,
     vararg params: Any,
