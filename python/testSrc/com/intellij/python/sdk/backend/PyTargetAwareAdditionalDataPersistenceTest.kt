@@ -13,6 +13,7 @@ import com.jetbrains.python.allure.Layers
 import com.jetbrains.python.allure.Subsystems
 import com.jetbrains.python.sdk.flavors.PyFlavorAndData
 import com.jetbrains.python.sdk.flavors.PyFlavorData
+import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
 import com.jetbrains.python.sdk.flavors.UnixPythonSdkFlavor
 import com.jetbrains.python.target.PyTargetAwareAdditionalData
 import org.assertj.core.api.Assertions.assertThat
@@ -45,12 +46,22 @@ internal class PyTargetAwareAdditionalDataPersistenceTest {
   @Test
   fun `the data stored with a flavor that no plugin registers needs no migration and keeps the flavor`() {
     val element = savedTargetSdkData()
-    element.getChildren("setting").single { it.getAttributeValue("name") == "FLAVOR_ID" }.setAttribute("value", "NoSuchFlavor")
+    element.flavorIdSetting().setAttribute("value", "NoSuchFlavor")
 
     val loaded = targetSdkData(null).apply { load(element) }
 
     assertThat(loaded.migrateAdditionalData(null)).isFalse()
     assertThat(JDOMUtil.write(Element("sdk-data").also { loaded.save(it) })).isEqualTo(JDOMUtil.write(element))
+  }
+
+  @Test
+  fun `the data stored with the unknown flavor is migrated to the Unix flavor`() {
+    val element = savedTargetSdkData()
+    element.flavorIdSetting().setAttribute("value", PythonSdkFlavor.UnknownFlavor.INSTANCE.uniqueId)
+
+    val migrated = assertMigratesOnce(element)
+
+    assertThat(migrated.flavorIdSetting().getAttributeValue("value")).isEqualTo(UnixPythonSdkFlavor.getInstance().uniqueId)
   }
 
   @Test
@@ -102,6 +113,8 @@ internal class PyTargetAwareAdditionalDataPersistenceTest {
     }
     return Element("sdk-data").also { data.save(it) }
   }
+
+  private fun Element.flavorIdSetting(): Element = getChildren("setting").single { it.getAttributeValue("name") == "FLAVOR_ID" }
 
   private fun targetSdkData(target: TargetEnvironmentConfiguration?): PyTargetAwareAdditionalData =
     PyTargetAwareAdditionalData(PyFlavorAndData(PyFlavorData.Empty, UnixPythonSdkFlavor.getInstance()), Path.of(""), target).apply {

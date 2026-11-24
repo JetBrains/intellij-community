@@ -283,6 +283,16 @@ public class PythonSdkAdditionalData implements SdkAdditionalData {
     myUnresolvedFlavorData = source.myUnresolvedFlavorData;
   }
 
+  /**
+   * Replaces a stored {@link PythonSdkFlavor.UnknownFlavor} with {@code flavorAndData} and asks for a migration. A stored flavor that no
+   * registered flavor has stays.
+   */
+  @ApiStatus.Internal
+  protected final void replaceStoredUnknownFlavor(@NotNull PyFlavorAndData<?, ?> flavorAndData) {
+    if (myFlavorAndData.getFlavor() != PythonSdkFlavor.UnknownFlavor.INSTANCE || myUnresolvedFlavorId != null) return;
+    setFlavorAndDataFromLegacy(flavorAndData);
+  }
+
   @ApiStatus.Internal
   @PyInternalExecApi
   protected final void markMigrationRequired() {
@@ -384,6 +394,9 @@ public class PythonSdkAdditionalData implements SdkAdditionalData {
         var flavor = PythonSdkFlavor.findFlavorById(flavorId);
         if (flavor != null) {
           setFlavorFromConfig(element, flavor);
+        }
+        else if (flavorId.equals(PythonSdkFlavor.UnknownFlavor.INSTANCE.getUniqueId())) {
+          myFlavorAndData = UNKNOWN_DATA;
         }
         else {
           myFlavorAndData = new PyFlavorAndData<>(PyFlavorData.Empty.INSTANCE, PythonSdkFlavor.UnknownFlavor.INSTANCE);
