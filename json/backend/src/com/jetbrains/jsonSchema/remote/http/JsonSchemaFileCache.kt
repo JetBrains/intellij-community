@@ -9,7 +9,10 @@ import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.eel.fs.EelFiles
 import com.intellij.util.concurrency.ThreadingAssertions
-import com.intellij.util.progress.withLockMaybeCancellable
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.withContext
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import org.jetbrains.annotations.ApiStatus
@@ -25,7 +28,6 @@ import java.nio.file.StandardCopyOption.ATOMIC_MOVE
 import java.nio.file.StandardCopyOption.REPLACE_EXISTING
 import java.security.MessageDigest
 import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.locks.ReentrantLock
 import kotlin.time.Clock
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.hours
@@ -50,6 +52,7 @@ class JsonSchemaFileCache : SchemaContentCache {
   private val root: Path = cacheRoot()
   private val locks = StripedMutex()
   private val entries = ConcurrentHashMap<SchemaUrl, Entry>()
+  private val ioDispatcher = Dispatchers.IO.limitedParallelism(16, "JsonSchemaFileCache")
 
   override fun read(url: SchemaUrl): CachedSchema? = when (val entry = liveEntry(url)) {
     is Entry.Available -> {
@@ -81,47 +84,51 @@ class JsonSchemaFileCache : SchemaContentCache {
 
   override suspend fun load(url: SchemaUrl): Boolean {
     ThreadingAssertions.assertNoReadAccess()
-    return locks.getLock(url).withLockMaybeCancellable {
-      val previous = entries[url]
-      val entry = loadFromDisk(url)
-      if (entry == null) entries.remove(url) else entries[url] = entry
-      entry != previous
+    return locks.getLock(url).withLock {
+      withContext(ioDispatcher) {
+        val previous = entries[url]
+        val entry = loadFromDisk(url)
+        if (entry == null) entries.remove(url) else entries[url] = entry
+        entry != previous
+      }
     }
   }
 
   override suspend fun write(url: SchemaUrl, result: DownloadResult) {
     ThreadingAssertions.assertNoReadAccess()
-    locks.getLock(url).withLockMaybeCancellable {
-      val status = when (result) {
-        is DownloadResult.Success -> CacheMetadata.Status.OK
-        is DownloadResult.Error -> CacheMetadata.Status.Error(result.code, result.message)
-        else -> return@withLockMaybeCancellable
-      }
-      Files.createDirectories(root)
-      val key = digestKey(url)
-      val paths = paths(url, (result as? DownloadResult.Success)?.finalUrl)
-      for (extension in listOf("json", "yaml")) {
-        val stale = root.resolve("$key.$extension")
-        if (stale != paths.content) Files.deleteIfExists(stale)
-      }
-      val metadata = CacheMetadata(
-        url = url.value,
-        status = status,
-        timestamp = Clock.System.now().toEpochMilliseconds(),
-        etag = (result as? DownloadResult.Success)?.etag,
-        lastModified = (result as? DownloadResult.Success)?.lastModified,
-        finalUrl = (result as? DownloadResult.Success)?.finalUrl,
-      )
-      if (result is DownloadResult.Success) {
-        writeAtomically(paths.content, result.content.bytes)
-      }
-      else {
-        Files.deleteIfExists(paths.content)
-      }
-      writeAtomically(paths.metadata, json.encodeToString(metadata).toByteArray(StandardCharsets.UTF_8))
-      entries[url] = when (status) {
-        CacheMetadata.Status.OK -> Entry.Available(metadata, paths.content, adopt(paths.content, metadata.url, metadata.finalUrl!!, reloadContent = true))
-        is CacheMetadata.Status.Error -> Entry.Unavailable(metadata, status.code, status.message)
+    locks.getLock(url).withLock {
+      withContext(ioDispatcher) {
+        val status = when (result) {
+          is DownloadResult.Success -> CacheMetadata.Status.OK
+          is DownloadResult.Error -> CacheMetadata.Status.Error(result.code, result.message)
+          else -> return@withContext
+        }
+        Files.createDirectories(root)
+        val key = digestKey(url)
+        val paths = paths(url, (result as? DownloadResult.Success)?.finalUrl)
+        for (extension in listOf("json", "yaml")) {
+          val stale = root.resolve("$key.$extension")
+          if (stale != paths.content) Files.deleteIfExists(stale)
+        }
+        val metadata = CacheMetadata(
+          url = url.value,
+          status = status,
+          timestamp = Clock.System.now().toEpochMilliseconds(),
+          etag = (result as? DownloadResult.Success)?.etag,
+          lastModified = (result as? DownloadResult.Success)?.lastModified,
+          finalUrl = (result as? DownloadResult.Success)?.finalUrl,
+        )
+        if (result is DownloadResult.Success) {
+          writeAtomically(paths.content, result.content.bytes)
+        }
+        else {
+          Files.deleteIfExists(paths.content)
+        }
+        writeAtomically(paths.metadata, json.encodeToString(metadata).toByteArray(StandardCharsets.UTF_8))
+        entries[url] = when (status) {
+          CacheMetadata.Status.OK -> Entry.Available(metadata, paths.content, adopt(paths.content, metadata.url, metadata.finalUrl!!, reloadContent = true))
+          is CacheMetadata.Status.Error -> Entry.Unavailable(metadata, status.code, status.message)
+        }
       }
     }
   }
@@ -151,24 +158,26 @@ class JsonSchemaFileCache : SchemaContentCache {
 
   override suspend fun refreshTimestamp(url: SchemaUrl) {
     ThreadingAssertions.assertNoReadAccess()
-    locks.getLock(url).withLockMaybeCancellable {
-      val rejectedPaths = paths(url)
-      if (!Files.isRegularFile(rejectedPaths.metadata)) return@withLockMaybeCancellable
-      val metadata = try {
-        json.decodeFromString<CacheMetadata>(EelFiles.readString(rejectedPaths.metadata))
-      }
-      catch (e: Exception) {
-        logger<JsonSchemaFileCache>().debug("Discarding corrupt remote schema cache entry for ${url.value}", e)
-        reject(rejectedPaths)
-        entries.remove(url)
-        return@withLockMaybeCancellable
-      }
-      val paths = paths(url, metadata.finalUrl)
-      if (!Files.isRegularFile(paths.content) || metadata.url != url.value || metadata.status != CacheMetadata.Status.OK) return@withLockMaybeCancellable
-      val refreshed = metadata.copy(timestamp = Clock.System.now().toEpochMilliseconds())
-      writeAtomically(paths.metadata, json.encodeToString(refreshed).toByteArray(StandardCharsets.UTF_8))
-      entries.computeIfPresent(url) { _, entry ->
-        if (entry is Entry.Available && entry.content == paths.content) entry.copy(metadata = refreshed) else entry
+    locks.getLock(url).withLock {
+      withContext(ioDispatcher) {
+        val rejectedPaths = paths(url)
+        if (!Files.isRegularFile(rejectedPaths.metadata)) return@withContext
+        val metadata = try {
+          json.decodeFromString<CacheMetadata>(EelFiles.readString(rejectedPaths.metadata))
+        }
+        catch (e: Exception) {
+          logger<JsonSchemaFileCache>().debug("Discarding corrupt remote schema cache entry for ${url.value}", e)
+          reject(rejectedPaths)
+          entries.remove(url)
+          return@withContext
+        }
+        val paths = paths(url, metadata.finalUrl)
+        if (!Files.isRegularFile(paths.content) || metadata.url != url.value || metadata.status != CacheMetadata.Status.OK) return@withContext
+        val refreshed = metadata.copy(timestamp = Clock.System.now().toEpochMilliseconds())
+        writeAtomically(paths.metadata, json.encodeToString(refreshed).toByteArray(StandardCharsets.UTF_8))
+        entries.computeIfPresent(url) { _, entry ->
+          if (entry is Entry.Available && entry.content == paths.content) entry.copy(metadata = refreshed) else entry
+        }
       }
     }
   }
@@ -358,8 +367,8 @@ private data class CacheMetadata(
   }
 }
 
-private class StripedMutex(stripeCount: Int = 32) {
-  private val locks = Array(stripeCount) { ReentrantLock() }
+private class StripedMutex(stripeCount: Int = 64) {
+  private val locks = Array(stripeCount) { Mutex() }
   private val mask = stripeCount - 1
 
   init {
@@ -367,5 +376,5 @@ private class StripedMutex(stripeCount: Int = 32) {
     require(stripeCount and mask == 0) { "Stripe count must be a power of two" }
   }
 
-  fun getLock(url: SchemaUrl): ReentrantLock = locks[url.value.hashCode() and Int.MAX_VALUE and mask]
+  fun getLock(url: SchemaUrl): Mutex = locks[url.value.hashCode() and Int.MAX_VALUE and mask]
 }
