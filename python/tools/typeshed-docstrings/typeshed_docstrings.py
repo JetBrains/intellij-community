@@ -5,8 +5,8 @@ The typeshed update bot in the TeamCity configuration runs the script after each
 then shows the docstrings for every stub definition, also without the interpreter sources and without binary skeletons.
 
 The script runs docstring-adder (https://github.com/astral-sh/docstring-adder), the tool that ty uses for its vendored
-typeshed. It runs docstring-adder with Python 3.15 to 3.10, the newest version first. docstring-adder never replaces a
-docstring, so the newest text wins, and an older version only fills the branches gated to it.
+typeshed. It runs docstring-adder with Python versions from `python_versions.py`, the newest version first.
+docstring-adder never replaces a docstring, so the newest text wins, and an older version only fills the branches gated to it.
 
 docstring-adder writes each docstring as the runtime gives it, so the lines after the first start at column 0, also
 inside a class. The script then formats the stubs with the black version and configuration of typeshed, as ty does:

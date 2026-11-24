@@ -1365,7 +1365,7 @@ class PyInferenceMiscTypeTest : PyCodeInsightTestCase() {
               return 42
           finally:
               return "str"
-      #       ^^^^^^^^^^^^ ERROR Python version 3.15 does not support 'return' inside 'finally' clause
+      #       ^^^^^^^^^^^^ ERROR Python version 3.16 does not support 'return' inside 'finally' clause
 
           return True
 
@@ -1380,7 +1380,7 @@ class PyInferenceMiscTypeTest : PyCodeInsightTestCase() {
               return 42
           finally:
               return "foo"
-      #       ^^^^^^^^^^^^ ERROR Python version 3.15 does not support 'return' inside 'finally' clause
+      #       ^^^^^^^^^^^^ ERROR Python version 3.16 does not support 'return' inside 'finally' clause
       expr = f()
       #└ TYPE Literal["foo"]
       """.trimIndent())
@@ -1393,7 +1393,7 @@ class PyInferenceMiscTypeTest : PyCodeInsightTestCase() {
           finally:
               if p:
                   return "foo"
-      #           ^^^^^^^^^^^^ ERROR Python version 3.15 does not support 'return' inside 'finally' clause
+      #           ^^^^^^^^^^^^ ERROR Python version 3.16 does not support 'return' inside 'finally' clause
       expr = f()
       #│       └ WARNING Parameter 'p' unfilled
       #└ TYPE Literal["foo", 42]
@@ -3501,7 +3501,7 @@ class PyInferenceMiscTypeTest : PyCodeInsightTestCase() {
     fun `backtick repr expression`() = test("""
       a = 1
       expr = `a`
-      #      ^^^ ERROR Python version 3.15 does not support backquotes, use repr() instead
+      #      ^^^ ERROR Python version 3.16 does not support backquotes, use repr() instead
       #      └ TYPE Unknown
       """.trimIndent())
 

@@ -74,11 +74,10 @@ class UvSystemPythonMappingTest {
     assertEquals(listOf(LanguageLevel.PYTHON313), pythons.map { it.languageLevel })
   }
 
-  /** `LanguageLevel.fromPythonVersion` gives `PYTHON310` for `3.16`, so the entry was listed as 3.10. */
   @Test
   fun `a version that the IDE has no level for is not offered`(@TempDir tmp: Path) {
     val pythons = listOf(
-      entry("3.16.0a1", Triple(3, 16, 0), interpreterAt(tmp / "a" / "python3.16")),
+      entry("3.17.0a1", Triple(3, 17, 0), interpreterAt(tmp / "a" / "python3.17")),
       entry("3.14.5", Triple(3, 14, 5), interpreterAt(tmp / "b" / "python3.14")),
     ).toSystemPythons(uvPythonDir = null)
 

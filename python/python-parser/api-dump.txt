@@ -5,6 +5,8 @@ com.jetbrains.python.PyElementTypes
 - sf:KEY_VALUE_EXPRESSIONS:com.intellij.psi.tree.TokenSet
 - sf:TARGET_EXPRESSIONS:com.intellij.psi.tree.TokenSet
 - sf:TYPE_PARAMETERS:com.intellij.psi.tree.TokenSet
+e:com.jetbrains.python.psi.LanguageLevel
+- sf:PYTHON316:com.jetbrains.python.psi.LanguageLevel
 c:com.jetbrains.python.psi.PyElementType
 - com.jetbrains.python.psi.PyPsiCreatingElementType
 - s:viaFactory(java.lang.String,java.util.function.Function):com.jetbrains.python.psi.PyElementType

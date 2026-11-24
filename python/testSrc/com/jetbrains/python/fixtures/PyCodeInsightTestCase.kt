@@ -231,7 +231,7 @@ abstract class PyCodeInsightTestCase {
     val enableWarnings: Boolean = true,
     val enableWeakWarnings: Boolean = true,
     val enableInfos: Boolean = false,
-    val languageLevel: LanguageLevel = LanguageLevel.PYTHON315,
+    val languageLevel: LanguageLevel = LanguageLevel.PYTHON316,
     val assertRecursionPrevention: Boolean = true,
     val assertSdkRootsNotParsed: Boolean = true,
     val enablePyAnyType: Boolean = true,
