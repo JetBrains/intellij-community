@@ -16,4 +16,10 @@ object SeItemDataKeys {
 
   /** The position of a target item in the order of its goto model. The diagnostics of the result list show it. */
   const val TARGET_INDEX: String = "SeItemDataKeys.TargetIndex"
+
+  /**
+   * The search project that gave the item, see `SeSearchProjectsFilter.keyOf`.
+   * Only an item of a provider that searches several projects has it.
+   */
+  const val SEARCH_PROJECT: String = "SeItemDataKeys.SearchProject"
 }

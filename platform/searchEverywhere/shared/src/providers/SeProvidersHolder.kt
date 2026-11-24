@@ -36,7 +36,8 @@ import org.jetbrains.annotations.Nls
 class SeProvidersHolder(
   private val allTabProviders: Map<SeProviderId, SeLocalItemDataProvider>,
   private val separateTabProviders: Map<SeProviderId, SeLocalItemDataProvider>,
-  val legacyContributors: SeLegacyContributors
+  val legacyContributors: SeLegacyContributors,
+  private val searchProjectProviders: SeSearchProjectProviders? = null,
 ) : Disposable {
   fun adaptedAllTabProviders(withPresentation: Boolean): Set<SeProviderId> =
     allTabProviders.values.mapNotNull { it.takeIf { it.isAdapted && (it.isAdaptedWithPresentation == withPresentation) }?.id }.toSet()
@@ -57,6 +58,7 @@ class SeProvidersHolder(
     separateTabProviders.values.forEach { Disposer.dispose(it) }
     legacyContributors.allTab.values.forEach { Disposer.dispose(it) }
     legacyContributors.separateTab.values.forEach { Disposer.dispose(it) }
+    searchProjectProviders?.let { Disposer.dispose(it) }
   }
 
   fun getLegacyContributor(providerId: SeProviderId, isAllTab: Boolean): SearchEverywhereContributor<Any>? {
@@ -91,50 +93,27 @@ class SeProvidersHolder(
       val initializationGuard = SeProviderInitializationGuard.getInstance()
       val openingId = session.id
 
+      // The providers of an id that the product names search every search project of the popup, see [SeSearchProjects].
+      val searchProjectProviders = project?.let { popupProject ->
+        SeSearchProjectsProvider.find(popupProject)?.let { SeSearchProjectProviders(popupProject, it, initEvent, logLabel) }
+      }
+
+      fun dataProvider(provider: SeItemsProvider, isAllTab: Boolean): SeLocalItemDataProvider =
+        SeLocalItemDataProvider(provider, session, logLabel, searchProjectProviders?.sourceOf(SeProviderId(provider.id), isAllTab))
+
       SeItemsProviderFactory.EP_NAME.extensionList.forEach { providerFactory ->
-        val provider: SeItemsProvider?
-        val separateTabProvider: SeItemsProvider?
-
-        val providerFactoryId = SeProviderId(providerFactory.id)
         val pluginId = PluginManager.getPluginByClass(providerFactory.javaClass)?.pluginId?.idString
-
-        if (providerFactory is SeWrappedLegacyContributorItemsProviderFactory) {
-          provider = legacyContributors[providerFactoryId]?.let {
-            initializationGuard.initialize(providerFactory.id, openingId, pluginId, logLabel) {
-              providerFactory.getItemsProviderCatchingOrNull(project, it, isAllTab = true, dataContext = dataContext)
-            }
+        val (provider, separateTabProvider) =
+          createProviders(providerFactory, project, dataContext, legacyContributors, separateTabLegacyContributors, logLabel) { initializer ->
+            initializationGuard.initialize(providerFactory.id, openingId, pluginId, logLabel, initializer)
           }
-          separateTabProvider = separateTabLegacyContributors[providerFactoryId]?.let {
-            initializationGuard.initialize(providerFactory.id, openingId, pluginId, logLabel) {
-              providerFactory.getItemsProviderCatchingOrNull(project, it, isAllTab = false, dataContext = dataContext)
-            }
-          }
-        }
-        else if (providerFactory is SeTabAwareItemsProviderFactory) {
-          provider = initializationGuard.initialize(providerFactory.id, openingId, pluginId, logLabel) {
-            providerFactory.getItemsProviderCatchingOrNull(project, dataContext, isAllTab = true)
-          }
-          separateTabProvider = initializationGuard.initialize(providerFactory.id, openingId, pluginId, logLabel) {
-            providerFactory.getItemsProviderCatchingOrNull(project, dataContext, isAllTab = false)
-          }
-        }
-        else {
-          provider = initializationGuard.initialize(providerFactory.id, openingId, pluginId, logLabel) {
-            providerFactory.getItemsProviderCatchingOrNull(project, dataContext)
-          }
-          separateTabProvider = null
-
-          if (provider?.id != providerFactory.id) {
-            SeLog.log { "Provider ID ($logLabel) doesn't match their factory ID: ${provider?.id} != ${providerFactory.id}" }
-          }
-        }
 
         provider?.let {
-          allTabProviders[SeProviderId(it.id)] = SeLocalItemDataProvider(it, session, logLabel)
+          allTabProviders[SeProviderId(it.id)] = dataProvider(it, isAllTab = true)
         }
 
         separateTabProvider?.let {
-          separateTabProviders[SeProviderId(it.id)] = SeLocalItemDataProvider(it, session, logLabel)
+          separateTabProviders[SeProviderId(it.id)] = dataProvider(it, isAllTab = false)
         }
       }
 
@@ -148,7 +127,47 @@ class SeProvidersHolder(
 
       return SeProvidersHolder(allTabProviders,
                                separateTabProviders,
-                               SeLegacyContributors(legacyContributors, separateTabLegacyContributors))
+                               SeLegacyContributors(legacyContributors, separateTabLegacyContributors),
+                               searchProjectProviders)
+    }
+
+    /**
+     * The providers that [providerFactory] gives [project]: the one of the All tab first, then the one of the separate tab.
+     * The second one is `null` for a factory that makes one provider for both. [initialize] runs each creation.
+     */
+    internal suspend fun createProviders(
+      providerFactory: SeItemsProviderFactory,
+      project: Project?,
+      dataContext: DataContext,
+      legacyContributors: Map<SeProviderId, SearchEverywhereContributor<Any>>,
+      separateTabLegacyContributors: Map<SeProviderId, SearchEverywhereContributor<Any>>,
+      logLabel: String,
+      initialize: suspend (suspend () -> SeItemsProvider?) -> SeItemsProvider?,
+    ): Pair<SeItemsProvider?, SeItemsProvider?> {
+      val providerFactoryId = SeProviderId(providerFactory.id)
+      when (providerFactory) {
+        is SeWrappedLegacyContributorItemsProviderFactory -> {
+          val provider = legacyContributors[providerFactoryId]?.let {
+            initialize { providerFactory.getItemsProviderCatchingOrNull(project, it, isAllTab = true, dataContext = dataContext) }
+          }
+          val separateTabProvider = separateTabLegacyContributors[providerFactoryId]?.let {
+            initialize { providerFactory.getItemsProviderCatchingOrNull(project, it, isAllTab = false, dataContext = dataContext) }
+          }
+          return provider to separateTabProvider
+        }
+        is SeTabAwareItemsProviderFactory -> {
+          val provider = initialize { providerFactory.getItemsProviderCatchingOrNull(project, dataContext, isAllTab = true) }
+          val separateTabProvider = initialize { providerFactory.getItemsProviderCatchingOrNull(project, dataContext, isAllTab = false) }
+          return provider to separateTabProvider
+        }
+        else -> {
+          val provider = initialize { providerFactory.getItemsProviderCatchingOrNull(project, dataContext) }
+          if (provider?.id != providerFactory.id) {
+            SeLog.log { "Provider ID ($logLabel) doesn't match their factory ID: ${provider?.id} != ${providerFactory.id}" }
+          }
+          return provider to null
+        }
+      }
     }
 
     private fun createAdaptedProvidersIfNecessary(legacyContributors: Map<SeProviderId, SearchEverywhereContributor<Any>>,
@@ -161,7 +180,7 @@ class SeProvidersHolder(
       }
     }
 
-    private suspend fun initializeLegacyContributors(
+    internal suspend fun initializeLegacyContributors(
       initEvent: AnActionEvent,
       project: Project?,
       allContributors: MutableMap<SeProviderId, SearchEverywhereContributor<Any>>,

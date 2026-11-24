@@ -56,6 +56,10 @@
     <extensionPoint name="searchEverywhere.itemsEqualityProvider"
                     interface="com.intellij.platform.searchEverywhere.equalityProviders.SeItemsEqualityProvider"
                     dynamic="true"/>
+
+    <extensionPoint name="searchEverywhere.searchProjectsProvider"
+                    interface="com.intellij.platform.searchEverywhere.providers.SeSearchProjectsProvider"
+                    dynamic="true"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">

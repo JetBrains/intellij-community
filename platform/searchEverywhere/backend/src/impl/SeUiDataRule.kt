@@ -23,7 +23,7 @@ class SeUiDataRule: UiDataRule {
 
     val items = selectedItems.mapNotNull {
       val item = it.fetchItemIfExists() ?: return@mapNotNull null
-      val provider = backendService.tryGetProvider(it.providerId, isAllTab, session) ?: return@mapNotNull null
+      val provider = backendService.tryGetProvider(it, isAllTab, session) ?: return@mapNotNull null
       SeItemWithProvider(item, provider)
     }
 

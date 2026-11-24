@@ -40,10 +40,12 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.buffer
 import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.yield
 import org.jetbrains.annotations.ApiStatus
@@ -113,6 +115,11 @@ class SeLocalItemDataProvider(
   val provider: SeItemsProvider,
   private val session: SeSession,
   private val logLabel: String = "Local",
+  /**
+   * The providers of the same id in the other search projects of the popup, or `null` when the popup searches one project.
+   * [provider] stays the provider of the project of the popup, and it answers every question about the provider itself.
+   */
+  private val searchProjectProviders: SeSearchProjectProviders.Source? = null,
 ) : Disposable {
   val id: SeProviderId
     get() = SeProviderId(provider.id)
@@ -183,9 +190,10 @@ class SeLocalItemDataProvider(
   fun createRawItemsFlow(
     params: SeParams,
     counter: AtomicInt,
-  ): Flow<SeItemData> = getRawItems(params).mapNotNull { item ->
+  ): Flow<SeItemData> = getOwnedRawItems(params).mapNotNull { (item, searchProjectKey) ->
     // A provider can find a command item. The selection of such an item sets the search text to the command.
-    val additionalInfo = if (item is SeCommandItem) infoWithReportableId + (SeItemDataKeys.IS_COMMAND to "true") else infoWithReportableId
+    var additionalInfo = if (item is SeCommandItem) infoWithReportableId + (SeItemDataKeys.IS_COMMAND to "true") else infoWithReportableId
+    if (searchProjectKey != null) additionalInfo = additionalInfo + (SeItemDataKeys.SEARCH_PROJECT to searchProjectKey)
     val itemData = SeItemDataFactory().createItemData(session, UUID.randomUUID().toString(), item, id, additionalInfo)
     itemData?.also {
       SeLog.log(SeLog.ITEM_EMIT) {
@@ -195,24 +203,53 @@ class SeLocalItemDataProvider(
     }
   }.buffer(0, onBufferOverflow = BufferOverflow.SUSPEND)
 
-  private fun itemsRawChannelFlow(params: SeParams, operationDisposable: Disposable?): Flow<SeItem> {
+  /**
+   * The items of every provider that [params] asks, each with the key of its search project.
+   * The key is `null` when the popup searches one project.
+   */
+  private fun itemsRawChannelFlow(params: SeParams, operationDisposable: Disposable?): Flow<OwnedItem> {
     return channelFlow {
-      try {
-        collectItemsWithRetry(params, operationDisposable) { item ->
-          send(item)
-          coroutineContext.isActive
+      for ((provider, searchProjectKey) in searchedProviders(params)) {
+        launch {
+          try {
+            collectItemsWithRetry(provider, params, operationDisposable) { item ->
+              send(OwnedItem(item, searchProjectKey))
+              coroutineContext.isActive
+            }
+          }
+          catch (e: Throwable) {
+            rethrowControlFlowException(e)
+            SeLog.warn("Error while collecting items from ${provider.id}($logLabel) provider: ${e.message}")
+          }
         }
-      }
-      catch (e: Throwable) {
-        rethrowControlFlowException(e)
-        SeLog.warn("Error while collecting items from ${provider.id}($logLabel) provider: ${e.message}")
       }
     }.buffer(0, onBufferOverflow = BufferOverflow.SUSPEND).onCompletion {
       SeLog.log(SeLog.ITEM_EMIT) { "Item data provider flow completed - $logLabel - ${id.value}" }
     }
   }
 
+  /**
+   * The providers that [params] asks: [provider] alone, or the providers of the search projects that the filter picks,
+   * see [SeSearchProjectsFilter]. A pick that names no search project of the popup asks every search project: the
+   * picked project closed after the filter took it.
+   */
+  private suspend fun searchedProviders(params: SeParams): List<Pair<SeItemsProvider, String?>> {
+    val source = searchProjectProviders ?: return listOf(provider to null)
+    val all = listOfNotNull(source.popupProjectKey?.let { provider to it }) + source.providers().map { it.provider to it.key }
+    val selectedKeys = SeSearchProjectsFilter.selectedKeys(params.filter) ?: return all
+    return all.filter { (_, key) -> key in selectedKeys }.ifEmpty { all }
+  }
+
+  /** The provider that gave [itemData]: the provider of its search project, else [provider]. */
+  fun providerOf(itemData: SeItemData): SeItemsProvider = searchProjectProviderOf(itemData)?.provider ?: provider
+
+  private fun searchProjectProviderOf(itemData: SeItemData): SeSearchProjectItemsProvider? {
+    val key = itemData.additionalInfo[SeItemDataKeys.SEARCH_PROJECT] ?: return null
+    return searchProjectProviders?.createdProviders()?.firstOrNull { it.key == key }
+  }
+
   private suspend fun collectItemsWithRetry(
+    provider: SeItemsProvider,
     params: SeParams,
     operationDisposable: Disposable?,
     collector: SeItemsProvider.Collector,
@@ -222,7 +259,7 @@ class SeLocalItemDataProvider(
     while (true) {
       attempt++
       try {
-        collectItemsOnce(params, operationDisposable, collector)
+        collectItemsOnce(provider, params, operationDisposable, collector)
         return
       }
       catch (e: ProcessCanceledException) {
@@ -244,6 +281,7 @@ class SeLocalItemDataProvider(
   }
 
   private suspend fun collectItemsOnce(
+    provider: SeItemsProvider,
     params: SeParams,
     operationDisposable: Disposable?,
     collector: SeItemsProvider.Collector,
@@ -264,11 +302,12 @@ class SeLocalItemDataProvider(
     if (provider.shouldTreatQueryAsCommandWithArg(params.inputQuery) && !provider.areCommandsSupported()) {
       return emptyFlow()
     }
-    return itemsRawChannelFlow(params, operationDisposable)
+    return itemsRawChannelFlow(params, operationDisposable).map { it.item }
   }
 
-  @OptIn(ExperimentalAtomicApi::class)
-  fun getRawItems(params: SeParams): Flow<SeItem> {
+  fun getRawItems(params: SeParams): Flow<SeItem> = getOwnedRawItems(params).map { it.item }
+
+  private fun getOwnedRawItems(params: SeParams): Flow<OwnedItem> {
     if (provider.shouldTreatQueryAsCommandWithArg(params.inputQuery) && !provider.areCommandsSupported()) {
       return emptyFlow()
     }
@@ -282,7 +321,7 @@ class SeLocalItemDataProvider(
     searchText: String,
   ): Boolean {
     val item = itemData.fetchItemIfExists() ?: return false
-    return provider.itemSelected(item, modifiers, searchText)
+    return providerOf(itemData).itemSelected(item, modifiers, searchText)
   }
 
   suspend fun getSearchScopesInfo(): SearchScopesInfo? = provider.getSearchScopesInfo()
@@ -298,6 +337,7 @@ class SeLocalItemDataProvider(
 
   suspend fun performExtendedAction(itemData: SeItemData): Boolean {
     val item = itemData.fetchItemIfExists() ?: return false
+    val provider = providerOf(itemData)
     return withContext(Dispatchers.EDT) {
       provider.performExtendedAction(item)
     }
@@ -306,7 +346,9 @@ class SeLocalItemDataProvider(
   suspend fun getPreviewInfo(itemData: SeItemData, project: Project): SePreviewInfo? {
     val item = itemData.fetchItemIfExists() ?: return null
 
-    return (provider as? SeItemsPreviewProvider)?.getPreviewInfo(item, project)
+    // An item of another search project gets its preview from the provider and the project that found it.
+    val owner = searchProjectProviderOf(itemData)
+    return ((owner?.provider ?: provider) as? SeItemsPreviewProvider)?.getPreviewInfo(item, owner?.project ?: project)
   }
 
   override fun dispose() {
@@ -314,3 +356,6 @@ class SeLocalItemDataProvider(
     Disposer.dispose(provider)
   }
 }
+
+/** A found [item] and the key of the search project that gave it, see [SeItemDataKeys.SEARCH_PROJECT]. */
+private data class OwnedItem(val item: SeItem, val searchProjectKey: String?)

@@ -166,8 +166,9 @@ class SeBackendService(val project: Project, private val coroutineScope: Corouti
     return SeSortedProviderIds.create(allProviderIds, providersHolder, session)
   }
 
-  fun tryGetProvider(id: SeProviderId, isAllTab: Boolean, session: SeSession): SeItemsProvider? {
-    return getCachedProviderOrNull(session)?.get(id, isAllTab)?.provider
+  /** The provider that gave [itemData]. An item of another search project of the popup has the provider of that project. */
+  fun tryGetProvider(itemData: SeItemData, isAllTab: Boolean, session: SeSession): SeItemsProvider? {
+    return getCachedProviderOrNull(session)?.get(itemData.providerId, isAllTab)?.providerOf(itemData)
   }
 
   private suspend fun getProvidersHolder(
