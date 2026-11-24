@@ -34,6 +34,7 @@ object SeTypeVisibilityStateProviderDelegate {
     contributor: SearchEverywhereContributor<Any>,
     hiddenTypes: Map<String, List<String>>?,
     filterKeys: List<String> = listOf(SeTypeFilterKeys.DEFAULT),
+    keepSavedState: Boolean = false,
   ) {
     if (hiddenTypes == null) return
     val searchEverywhereFiltersActions: List<SearchEverywhereFiltersAction<T>> = contributor.allFilterActions()
@@ -41,6 +42,7 @@ object SeTypeVisibilityStateProviderDelegate {
     if (searchEverywhereFiltersActions.isNotEmpty()) {
       searchEverywhereFiltersActions.forEachIndexed { index, action ->
         val filter = action.filter
+        if (keepSavedState) filter.keepSelectionInMemory()
         val elements = filter.allElements
         val hiddenTypesSet = filterKeys.getOrNull(index)?.let { hiddenTypes[it] }.orEmpty().toSet()
 

@@ -4,17 +4,21 @@ package com.intellij.ide.actions.searcheverywhere;
 import com.intellij.ide.util.TypeVisibilityStateHolder;
 import com.intellij.ide.util.gotoByName.ChooseByNameFilterConfiguration;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.Icon;
 import java.util.List;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 
 public final class PersistentSearchEverywhereContributorFilter<T> {
 
-  private final TypeVisibilityStateHolder<? super T> myVisibilityStateHolder;
+  private final AtomicReference<TypeVisibilityStateHolder<? super T>> myVisibilityStateHolder;
   private final List<T> myElements;
   private final Function<? super T, @Nls String> myTextExtractor;
   private final Function<? super T, ? extends Icon> myIconExtractor;
@@ -31,7 +35,7 @@ public final class PersistentSearchEverywhereContributorFilter<T> {
                                                      Function<? super T, @Nls String> textExtractor,
                                                      Function<? super T, ? extends Icon> iconExtractor) {
     myElements = elements;
-    myVisibilityStateHolder = visibilityStateHolder;
+    myVisibilityStateHolder = new AtomicReference<>(visibilityStateHolder);
     myTextExtractor = textExtractor;
     myIconExtractor = iconExtractor;
   }
@@ -41,15 +45,25 @@ public final class PersistentSearchEverywhereContributorFilter<T> {
   }
 
   public @Unmodifiable List<T> getSelectedElements() {
-    return ContainerUtil.filter(myElements, type -> myVisibilityStateHolder.isVisible(type));
+    return ContainerUtil.filter(myElements, type -> myVisibilityStateHolder.get().isVisible(type));
   }
 
   public boolean isSelected(T element) {
-    return myVisibilityStateHolder.isVisible(element);
+    return myVisibilityStateHolder.get().isVisible(element);
   }
 
   public void setSelected(T element, boolean selected) {
-    myVisibilityStateHolder.setVisible(element, selected);
+    myVisibilityStateHolder.get().setVisible(element, selected);
+  }
+
+  /**
+   * Keeps the selection of this filter in memory from now on, so {@link #setSelected} no longer changes the saved state.
+   * The in-memory selection starts as a copy of the saved state.
+   */
+  @ApiStatus.Internal
+  public void keepSelectionInMemory() {
+    myVisibilityStateHolder.updateAndGet(
+      holder -> holder instanceof InMemoryVisibilityState ? holder : new InMemoryVisibilityState<>(myElements, holder));
   }
 
   public void setSelectedToAllElements(boolean selected) {
@@ -62,5 +76,30 @@ public final class PersistentSearchEverywhereContributorFilter<T> {
 
   public Icon getElementIcon(T element) {
     return myIconExtractor.apply(element);
+  }
+
+  private static final class InMemoryVisibilityState<T> implements TypeVisibilityStateHolder<T> {
+    private final Set<T> myHidden = ConcurrentHashMap.newKeySet();
+
+    InMemoryVisibilityState(List<T> elements, TypeVisibilityStateHolder<? super T> savedState) {
+      for (T element : elements) {
+        if (!savedState.isVisible(element)) myHidden.add(element);
+      }
+    }
+
+    @Override
+    public void setVisible(T type, boolean value) {
+      if (value) {
+        myHidden.remove(type);
+      }
+      else {
+        myHidden.add(type);
+      }
+    }
+
+    @Override
+    public boolean isVisible(T type) {
+      return !myHidden.contains(type);
+    }
   }
 }

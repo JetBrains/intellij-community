@@ -24,10 +24,12 @@ import com.intellij.platform.searchEverywhere.providers.AsyncProcessorWithExactM
 import com.intellij.platform.searchEverywhere.providers.ScopeChooserActionProviderDelegate
 import com.intellij.platform.searchEverywhere.providers.SeAsyncContributorWrapper
 import com.intellij.platform.searchEverywhere.providers.SeEverywhereFilterImpl
+import com.intellij.platform.searchEverywhere.providers.SeSearchProjectContext
 import com.intellij.platform.searchEverywhere.providers.SeTypeVisibilityStateProviderDelegate
 import com.intellij.platform.searchEverywhere.providers.getExtendedInfo
 import com.intellij.psi.PsiDirectory
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.awt.event.InputEvent
@@ -68,16 +70,18 @@ class SeTargetsProviderDelegate(
     val inputQuery = SeTargetItemsProvider.normalizeQuery(params.inputQuery)
     val defaultMatchers = createDefaultMatchers(inputQuery)
 
+    // The search of another search project applies the filter of the popup, and keeps the saved filter of that project.
+    val keepSavedState = SeSearchProjectContext.isSearchOfOtherProject(currentCoroutineContext())
     scopeProviderDelegate?.let { scopeProviderDelegate ->
       SeEverywhereFilterImpl.isEverywhere(params.filter)?.let { isEverywhere ->
         // The filter of the All tab holds no types. A filter that holds the flag and the types keeps the types.
         SeTargetsFilter.from(params.filter).hiddenTypes.takeIf { it.isNotEmpty() }?.let {
-          SeTypeVisibilityStateProviderDelegate.applyTypeVisibilityStates<T>(contributor, it, filterKeys)
+          SeTypeVisibilityStateProviderDelegate.applyTypeVisibilityStates<T>(contributor, it, filterKeys, keepSavedState)
         }
         scopeProviderDelegate.applyScope(isEverywhere, false)
       } ?: run {
         val targetsFilter = SeTargetsFilter.from(params.filter)
-        SeTypeVisibilityStateProviderDelegate.applyTypeVisibilityStates<T>(contributor, targetsFilter.hiddenTypes, filterKeys)
+        SeTypeVisibilityStateProviderDelegate.applyTypeVisibilityStates<T>(contributor, targetsFilter.hiddenTypes, filterKeys, keepSavedState)
         scopeProviderDelegate.applyScope(targetsFilter.selectedScopeId, targetsFilter.isAutoTogglePossible)
       }
     }
