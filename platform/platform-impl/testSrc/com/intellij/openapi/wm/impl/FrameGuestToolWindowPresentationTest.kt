@@ -60,6 +60,7 @@ import com.intellij.util.ui.StatusText
 import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.yield
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Test
@@ -216,7 +217,7 @@ internal class FrameGuestToolWindowPresentationTest {
     assertThat(secondToolWindow.decorator!!.parent).describedAs("the decorator of the guest left the frame").isNull()
     assertThat(managers.owner.presentation.selectedProjectOf(ID)).describedAs("a later event selects another project").isNull()
 
-    UIUtil.dispatchAllInvocationEvents()
+    yield()
 
     assertThat(managers.owner.presentation.selectedProjectOf(ID)).isSameAs(first)
     assertThat(firstToolWindow.isVisible).isTrue()
@@ -233,7 +234,7 @@ internal class FrameGuestToolWindowPresentationTest {
     // as the close of the frame owner and as an exit: every project of the frame closes in one event
     managers.of(second).projectClosing()
     managers.of(first).projectClosing()
-    UIUtil.dispatchAllInvocationEvents()
+    yield()
 
     assertThat(createdContent).describedAs("the tool window of the first project was never shown").containsExactly(second.name)
     assertThat(managers.owner.getToolWindow(ID)).isNull()
@@ -248,7 +249,7 @@ internal class FrameGuestToolWindowPresentationTest {
 
     // the frame guest goes away without the close event
     Disposer.dispose(managers.of(second).getEntry(ID)!!.disposable)
-    UIUtil.dispatchAllInvocationEvents()
+    yield()
 
     assertThat(managers.owner.presentation.entriesOf(ID)).containsExactly(first)
     assertThat(managers.owner.presentation.selectedProjectOf(ID)).isSameAs(first)
@@ -909,7 +910,7 @@ internal class FrameGuestToolWindowPresentationTest {
    * Checks that the shown tool window of the second guest hides when [leave] removes it, and that the frame owner keeps
    * its visible state. A later event selects the first guest.
    */
-  private fun checkShownGuestLeaves(leave: (Managers) -> Unit) {
+  private suspend fun checkShownGuestLeaves(leave: (Managers) -> Unit) {
     val managers = createManagers()
     val firstToolWindow = managers.register(first)
     val secondToolWindow = managers.register(second)
@@ -925,7 +926,7 @@ internal class FrameGuestToolWindowPresentationTest {
     assertThat(presenting.isVisible).isTrue()
     assertThat(managers.owner.presentation.selectedProjectOf(ID)).describedAs("a later event selects another project").isNull()
 
-    UIUtil.dispatchAllInvocationEvents()
+    yield()
 
     assertThat(managers.owner.presentation.selectedProjectOf(ID)).isSameAs(first)
     assertThat(firstToolWindow.isVisible).isTrue()
