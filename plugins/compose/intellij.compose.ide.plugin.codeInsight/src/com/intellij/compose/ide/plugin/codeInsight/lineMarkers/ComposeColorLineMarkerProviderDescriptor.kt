@@ -66,6 +66,9 @@ internal class ComposeColorLineMarkerProviderDescriptor : LineMarkerProviderDesc
   override fun getLineMarkerInfo(element: PsiElement): LineMarkerInfo<*>? {
     if (!ENABLE_OPTION.isEnabled) return null
     if (element.elementType != KtTokens.IDENTIFIER) return null
+    val callExpression = element.parent.parent as? KtCallExpression ?: return null
+    val callee = callExpression.calleeExpression as? KtNameReferenceExpression ?: return null
+    if (callee.getReferencedName() != COLOR_METHOD) return null
 
     val module = ModuleUtilCore.findModuleForPsiElement(element) ?: return null
     if (!isComposeEnabledInModule(module)) return null
@@ -74,8 +77,7 @@ internal class ComposeColorLineMarkerProviderDescriptor : LineMarkerProviderDesc
     // i.e., Android modules with an available Android Facet
     if (hasAndroidComposeColorLineMarkerProviderDescriptorAvailable(element.project) && isAndroidModule(module)) return null
 
-    val callExpression = element.parent.parent as? KtCallExpression ?: return null
-    if (!callExpression.isColorCall()) return null
+    if (callExpression.callReturnTypeFqName()?.asString() != COMPOSE_COLOR_CLASS) return null
 
     val color = getColor(callExpression) ?: return null
     val iconRenderer = ColorIconRenderer(callExpression, color)
@@ -89,14 +91,6 @@ internal class ComposeColorLineMarkerProviderDescriptor : LineMarkerProviderDesc
       { ComposeIdeBundle.message("compose.color.picker.tooltip") },
     )
   }
-
-  private fun KtCallExpression.isColorCall() =
-    COLOR_METHOD == (calleeExpression as? KtNameReferenceExpression)?.getReferencedName() &&
-    // Resolve the MethodCall expression after the faster checks
-    run {
-      val returnTypeFqName = callReturnTypeFqName()
-      returnTypeFqName?.asString() == COMPOSE_COLOR_CLASS
-    }
 
   private fun getColor(callExpression: KtCallExpression): Color? {
     val arguments = callExpression.valueArguments
