@@ -124,7 +124,7 @@ public abstract class BrowseHierarchyActionBase extends AnAction {
       Project project = e.getProject();
       boolean enabled = isEnabled(e) ||
                         project != null && DumbService.isDumb(project) && !IdeProductMode.isLight() && !e.isFromContextMenu() &&
-                        getProvider(e, ProviderChoice.FIRST) != null;
+                        hasAnyProvider(e);
       if (e.isFromContextMenu() || IdeProductMode.isLight()) {
         e.getPresentation().setVisible(enabled);
       }
@@ -149,12 +149,14 @@ public abstract class BrowseHierarchyActionBase extends AnAction {
   }
 
   private @Nullable HierarchyProvider getProvider(@NotNull AnActionEvent e) {
-    return getProvider(e, ProviderChoice.USABLE);
+    PsiElement psiElement = e.getData(CommonDataKeys.PSI_ELEMENT);
+    return findProvider(myExtension, psiElement, e.getData(CommonDataKeys.PSI_FILE), e.getDataContext(), true);
   }
 
-  private @Nullable HierarchyProvider getProvider(@NotNull AnActionEvent e, @NotNull ProviderChoice choice) {
-    PsiElement psiElement = e.getData(CommonDataKeys.PSI_ELEMENT);
-    return findProvider(myExtension, psiElement, e.getData(CommonDataKeys.PSI_FILE), e.getDataContext(), choice);
+  /** Whether a provider serves the element or the file of {@code e}, without asking it for its target: the target can need the indexes. */
+  private boolean hasAnyProvider(@NotNull AnActionEvent e) {
+    return !providersFor(myExtension, e.getData(CommonDataKeys.PSI_ELEMENT)).isEmpty() ||
+           !providersFor(myExtension, e.getData(CommonDataKeys.PSI_FILE)).isEmpty();
   }
 
   /**
@@ -165,17 +167,17 @@ public abstract class BrowseHierarchyActionBase extends AnAction {
                                                          @Nullable PsiElement psiElement,
                                                          @Nullable PsiFile psiFile,
                                                          @NotNull DataContext dataContext) {
-    return findProvider(extension, psiElement, psiFile, dataContext, ProviderChoice.ANY);
+    return findProvider(extension, psiElement, psiFile, dataContext, false);
   }
 
   private static @Nullable HierarchyProvider findProvider(@NotNull LanguageExtension<HierarchyProvider> extension,
                                                           @Nullable PsiElement psiElement,
                                                           @Nullable PsiFile psiFile,
                                                           @NotNull DataContext dataContext,
-                                                          @NotNull ProviderChoice choice) {
-    HierarchyProvider provider = findBestHierarchyProvider(extension, psiElement, dataContext, choice);
+                                                          boolean dumbAwareOnly) {
+    HierarchyProvider provider = findBestHierarchyProvider(extension, psiElement, dataContext, dumbAwareOnly);
     if (provider == null) {
-      return findBestHierarchyProvider(extension, psiFile, dataContext, choice);
+      return findBestHierarchyProvider(extension, psiFile, dataContext, dumbAwareOnly);
     }
     return provider;
   }
@@ -184,25 +186,21 @@ public abstract class BrowseHierarchyActionBase extends AnAction {
   public static @Nullable HierarchyProvider findBestHierarchyProvider(LanguageExtension<HierarchyProvider> extension,
                                                                       @Nullable PsiElement element,
                                                                       DataContext dataContext) {
-    return findBestHierarchyProvider(extension, element, dataContext, ProviderChoice.ANY);
+    return findBestHierarchyProvider(extension, element, dataContext, false);
   }
 
+  /**
+   * The first provider that finds its target, else the first one.
+   *
+   * @param dumbAwareOnly whether to skip the providers that are not dumb-aware in the dumb mode.
+   */
   private static @Nullable HierarchyProvider findBestHierarchyProvider(LanguageExtension<HierarchyProvider> extension,
                                                                        @Nullable PsiElement element,
                                                                        DataContext dataContext,
-                                                                       @NotNull ProviderChoice choice) {
+                                                                       boolean dumbAwareOnly) {
     if (element == null) return null;
-    List<HierarchyProvider> providers;
-    if (element instanceof PsiFile) {
-      providers = extension.allForLanguageOrAny(element.getLanguage());
-    }
-    else {
-      providers = extension.allForLanguage(element.getLanguage());
-    }
-    if (choice == ProviderChoice.FIRST) {
-      return ContainerUtil.getFirstItem(providers);
-    }
-    if (choice == ProviderChoice.USABLE) {
+    List<HierarchyProvider> providers = providersFor(extension, element);
+    if (dumbAwareOnly) {
       Project project = CommonDataKeys.PROJECT.getData(dataContext);
       DumbService dumbService = DumbService.getInstance(project != null ? project : element.getProject());
       providers = ContainerUtil.filter(providers, dumbService::isUsableInCurrentContext);
@@ -216,13 +214,11 @@ public abstract class BrowseHierarchyActionBase extends AnAction {
     return ContainerUtil.getFirstItem(providers);
   }
 
-  /** Which providers {@link #findBestHierarchyProvider} considers. */
-  private enum ProviderChoice {
-    /** Every provider: the first that finds its target, else the first one. */
-    ANY,
-    /** As {@link #ANY}, but in the dumb mode only the dumb-aware providers. */
-    USABLE,
-    /** The first provider, without asking it for its target: the target can need the indexes. */
-    FIRST,
+  private static @NotNull List<HierarchyProvider> providersFor(@NotNull LanguageExtension<HierarchyProvider> extension,
+                                                               @Nullable PsiElement element) {
+    if (element == null) return List.of();
+    return element instanceof PsiFile
+           ? extension.allForLanguageOrAny(element.getLanguage())
+           : extension.allForLanguage(element.getLanguage());
   }
 }
