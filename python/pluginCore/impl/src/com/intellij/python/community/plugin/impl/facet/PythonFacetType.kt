@@ -15,13 +15,11 @@ import org.jetbrains.annotations.ApiStatus
 import javax.swing.Icon
 
 /**
- * The Python facet of a module of another type, such as a Java module of IntelliJ IDEA or a module of GoLand. It makes
- * the module a Python project. IntelliJ IDEA and the other IDEs with the Python plugin share it. PyCharm has none: each
- * module there is a Python module.
+ * The Python facet of the legacy flow: it holds the Python SDK of a module of another type, such as a Java module of
+ * IntelliJ IDEA or a module of GoLand. IntelliJ IDEA and the other IDEs with the Python plugin share it. PyCharm has none.
  *
- * In the interpreter library flow the facet holds nothing: the interpreter library entry of the module names its
- * interpreter, and its tab sets it, see [PythonInterpreterEditorTab]. A module with an interpreter and without a saved
- * facet gets the facet in memory, see `PyInterpreterLibrarySync`.
+ * The interpreter library flow has no Python facet. The interpreter library entry of a module names its interpreter, and
+ * the migration of an older project removes the facet, see `migrateSdkReferences`.
  */
 @OptIn(PyInternalExecApi::class)
 @ApiStatus.Internal

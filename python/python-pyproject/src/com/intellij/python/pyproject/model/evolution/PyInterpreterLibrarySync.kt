@@ -11,12 +11,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.platform.backend.workspace.storeAndGet
 import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.platform.workspace.jps.entities.ContentRootEntity
-import com.intellij.facet.FacetType
 import com.intellij.platform.workspace.jps.entities.ExcludeUrlEntity
-import com.intellij.platform.workspace.jps.entities.FacetEntity
-import com.intellij.platform.workspace.jps.entities.FacetEntityTypeId
-import com.intellij.platform.workspace.jps.entities.modifyFacetEntity
-import com.intellij.platform.workspace.jps.entities.modifyModuleEntity
 import com.intellij.platform.workspace.jps.entities.LibraryEntity
 import com.intellij.platform.workspace.jps.entities.LibraryPropertiesEntity
 import com.intellij.platform.workspace.jps.entities.LibraryRoot
@@ -34,7 +29,6 @@ import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.entities
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import com.intellij.python.sdk.backend.PY_INTERPRETER_LIBRARY_KIND_ID
-import com.jetbrains.python.sdk.internal.PYTHON_FACET_ID
 import com.intellij.python.sdk.backend.PyInterpreterLibraryName
 import com.intellij.python.sdk.backend.PyInterpreterLibraryProperties
 import com.intellij.python.sdk.backend.PythonInterpreterRoots
@@ -117,33 +111,6 @@ class PyInterpreterLibrarySync(private val project: Project, private val scope: 
     if (!isInterpreterLibraryFlowEnabled()) return
     syncLibraries(evoPyProjects)
     syncSourceRoots(evoPyProjects)
-    syncFacets()
-  }
-
-  /**
-   * Gives each module that names an interpreter the Python facet in memory, see [inMemoryFacetChanges], so Project
-   * Structure shows it as a Python module, and the `.iml` keeps only the interpreter library entry. A facet that the user
-   * adds with "+" is saved by Project Structure, and moves to memory when the module gets its interpreter. Only an IDE
-   * with the Python facet type has it: PyCharm has none.
-   */
-  private suspend fun syncFacets() {
-    if (FacetType.EP_NAME.extensionList.none { it.stringId == PYTHON_FACET_ID }) return
-    val workspaceModel = project.workspaceModel
-    val planned = inMemoryFacetChanges(workspaceModel.currentSnapshot, PyInterpreterLibraryEntitySource)
-    if (planned.modulesToAdd.isEmpty() && planned.facetsToRemove.isEmpty() && planned.facetsToMove.isEmpty()) return
-    workspaceModel.update("Give the Python modules their Python facet") { storage ->
-      // Planned again on the storage of the update, which can be newer than the snapshot above.
-      val changes = inMemoryFacetChanges(storage, PyInterpreterLibraryEntitySource)
-      changes.facetsToRemove.forEach(storage::removeEntity)
-      for (facet in changes.facetsToMove) storage.modifyFacetEntity(facet) { entitySource = PyInterpreterLibraryEntitySource }
-      for (module in changes.modulesToAdd) {
-        storage.modifyModuleEntity(module) {
-          moduleSettings += FacetEntity(PYTHON_FACET_NAME, FacetEntityTypeId(PYTHON_FACET_ID), PyInterpreterLibraryEntitySource) {
-            configurationXmlTag = IN_MEMORY_FACET_CONFIGURATION
-          }
-        }
-      }
-    }
   }
 
   private suspend fun syncLibraries(evoPyProjects: Sequence<EvoPyProject>) {

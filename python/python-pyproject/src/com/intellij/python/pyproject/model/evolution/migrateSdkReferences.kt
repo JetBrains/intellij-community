@@ -10,7 +10,6 @@ import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.platform.workspace.jps.entities.ModuleId
 import com.intellij.platform.workspace.jps.entities.ProjectSettingsEntity
 import com.intellij.platform.workspace.jps.entities.SdkDependency
-import com.intellij.platform.workspace.jps.entities.modifyFacetEntity
 import com.intellij.platform.workspace.jps.entities.modifyModuleEntity
 import com.intellij.platform.workspace.jps.entities.modifyProjectSettingsEntity
 import com.intellij.platform.workspace.storage.EntityStorage
@@ -20,6 +19,7 @@ import com.intellij.python.pyproject.model.internal.pyProject.PyProjectImpl
 import com.intellij.python.sdk.backend.PythonInterpreterRegistry
 import com.jetbrains.python.PyNames
 import com.jetbrains.python.sdk.internal.PYTHON_FACET_ID
+import com.jetbrains.python.sdk.internal.PYTHON_MODULE_ID
 import com.jetbrains.python.sdk.legacy.importTableSdk
 import com.jetbrains.python.sdk.legacy.transferredPathsOfTableSdk
 import java.nio.file.Path
@@ -47,6 +47,9 @@ private val logger = fileLogger()
  * that names the interpreter, and a removed entry does not come back. An SDK whose environment is gone gives an entry,
  * and its interpreter appears when the environment comes back.
  *
+ * The Python module type and the Python facet are legacy carriers of a Python module, see [PyProjectImpl.baseDirOf]. Each
+ * module with a content root loses both. A facet that names an SDK goes only after its SDK gave the module an entry.
+ *
  * The model calls this function on each pass, so a module that an older build gives an SDK later is migrated too.
  */
 internal suspend fun migrateSdkReferences(project: Project) {
@@ -57,7 +60,7 @@ internal suspend fun migrateSdkReferences(project: Project) {
     val sdkName = ownSdkReferenceOf(module) ?: projectSdkName?.takeIf { inheritsProjectSdk(module) }
     sdkName?.let { module to it }
   }.toList()
-  if (references.isEmpty() && projectSdkName == null) return
+  if (references.isEmpty() && projectSdkName == null && storage.entities<ModuleEntity>().none { it.hasLegacyPythonCarrier() }) return
 
   val registry = PythonInterpreterRegistry.getInstance(project)
   val lost = mutableListOf<MigratedModule>()
@@ -80,14 +83,19 @@ internal suspend fun migrateSdkReferences(project: Project) {
         if (entry != null && interpreterLibraryOf(module) == null) dependencies.setPyInterpreterDependency(entry)
         dependencies.removeAll { it is SdkDependency && it.sdk.type == PyNames.PYTHON_SDK_ID_NAME }
       }
-      for (facet in module.facets.filter { it.isPythonFacetWithSdk() }) {
-        mutable.modifyFacetEntity(facet) { configurationXmlTag = configurationXmlTag?.let(::withoutFacetSdkName) }
-      }
       // The legacy flow wrote the in-project paths of the SDK to the `.iml` as source roots. This flow derives them, see
       // PyInterpreterLibrarySync, so the stored ones go.
       val transferred = module.contentRoots.flatMap { it.sourceRoots }
         .filter { it.url.url in transferredUrls && it.entitySource != PyInterpreterLibraryEntitySource }
       transferred.forEach(mutable::removeEntity)
+    }
+    val migrated = migrations.mapTo(HashSet()) { it.moduleId }
+    for (module in mutable.entities<ModuleEntity>().filter { it.hasLegacyPythonCarrier() }.toList()) {
+      // Another writer can have given the module a facet with an SDK since the read. That facet waits for the next pass.
+      val facets = module.facets.filter { it.isPythonFacet() }
+        .filter { it.facetSdkName() == null || module.symbolicId in migrated || interpreterLibraryOf(module) != null }
+      facets.forEach(mutable::removeEntity)
+      if (module.type?.name == PYTHON_MODULE_ID) mutable.resolve(module.symbolicId)?.let { mutable.modifyModuleEntity(it) { type = null } }
     }
     // Another writer can have changed the project SDK since the read.
     val settings = mutable.entities<ProjectSettingsEntity>().firstOrNull()
@@ -132,6 +140,11 @@ private data class MigratedModule(
 internal fun libraryNameOf(projectDir: Path, interpreter: PythonInterpreter): PyInterpreterLibraryName =
   PyInterpreterLibraryName.of(projectDir, PythonInterpreterKey(interpreter.ownerDir, interpreter.ref))
 
-private fun FacetEntity.isPythonFacetWithSdk(): Boolean =
-  typeId.name == PYTHON_FACET_ID && configurationXmlTag?.let(::facetSdkName) != null
+private fun FacetEntity.isPythonFacet(): Boolean = typeId.name == PYTHON_FACET_ID
+
+private fun FacetEntity.facetSdkName(): String? = configurationXmlTag?.let(::facetSdkName)
+
+/** Whether [this] module has a content root and the Python module type or a Python facet, which the migration removes. */
+private fun ModuleEntity.hasLegacyPythonCarrier(): Boolean =
+  contentRoots.isNotEmpty() && (type?.name == PYTHON_MODULE_ID || facets.any { it.isPythonFacet() })
 

@@ -54,9 +54,3 @@ private val FACET_SDK_NAME = Regex("""\b$FACET_SDK_NAME_ATTRIBUTE\s*=\s*"([^"]*)
 internal fun facetSdkName(configuration: String): String? =
   FACET_SDK_NAME.find(configuration)?.groupValues?.get(1)?.let(StringUtil::unescapeXmlEntities)?.takeIf { it.isNotEmpty() }
 
-/**
- * [configuration] with an empty `sdkName`, so the facet names no SDK. The facet itself writes an empty value for no SDK,
- * so its next save does not change the configuration again.
- */
-internal fun withoutFacetSdkName(configuration: String): String =
-  FACET_SDK_NAME.replace(configuration, "$FACET_SDK_NAME_ATTRIBUTE=\"\"")
