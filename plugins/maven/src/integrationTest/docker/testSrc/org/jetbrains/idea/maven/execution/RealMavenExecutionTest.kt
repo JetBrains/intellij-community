@@ -6,6 +6,7 @@ import com.intellij.build.events.BuildEvent
 import com.intellij.build.events.EventResult
 import com.intellij.build.events.FailureResult
 import com.intellij.build.events.FinishBuildEvent
+import com.intellij.build.events.FinishEvent
 import com.intellij.build.events.OutputBuildEvent
 import com.intellij.build.events.SuccessResult
 import com.intellij.execution.ExecutionListener
@@ -41,6 +42,7 @@ import org.jetbrains.idea.maven.MavenCustomNioRepositoryHelper
 import org.jetbrains.idea.maven.fixtures.ExecutionInfo
 import org.jetbrains.idea.maven.fixtures.checkUpdatingExcludedFoldersAfterExecution
 import org.jetbrains.idea.maven.fixtures.execute
+import org.jetbrains.idea.maven.externalSystemIntegration.output.parsers.MavenTaskFailedResultImpl
 import org.jetbrains.idea.maven.project.MavenWorkspaceSettingsComponent
 import org.jetbrains.idea.maven.project.MavenWrapper
 import org.jetbrains.idea.maven.utils.MavenLog
@@ -58,6 +60,7 @@ import java.nio.file.Path
 import java.util.Properties
 import java.util.concurrent.CopyOnWriteArrayList
 import kotlin.io.path.absolutePathString
+import kotlin.time.Duration.Companion.minutes
 import kotlin.io.path.exists
 import kotlin.io.path.isRegularFile
 import kotlin.io.path.listDirectoryEntries
@@ -121,6 +124,26 @@ class RealMavenExecutionTest(mavenVersion: String, modelVersion: String) {
     assertTrue(maven.projectPath.resolve("target").exists())
   }
 
+
+  /**
+   * Runs `test` on a project with a failing test, and checks the failed `test` node and its error text.
+   * The error text comes from the Maven spy, so a spy that throws at runtime makes this test fail.
+   */
+  @Test
+  fun testFailingTestReportsErrorInMojoNode() = runBlocking {
+    useProject("mavenProjectWithFailingTest")
+    maven.importProjectAsync()
+    val executionInfo = maven.execute(
+      MavenRunnerParameters(true, maven.projectPath.toCanonicalPath(), null as String?, mutableListOf("test"), emptyList()),
+      maxTimeToWait = 5.minutes)
+    assertExecFailed()
+    val failedMojo = myEvents.filterIsInstance<FinishEvent>()
+      .firstOrNull { it.message == "test" && it.result is MavenTaskFailedResultImpl }
+    assertNotNull(failedMojo, "No failed `test` node. Maven stdout (tail):\n${executionInfo.stdout.takeLast(6000)}")
+    val error = (failedMojo!!.result as MavenTaskFailedResultImpl).createDefaultResult()
+      .let { (it as FailureResult).failures.mapNotNull { failure -> failure.message }.joinToString("; ") }
+    assertTrue(error.contains("test failures", true), "The failed `test` node has no error text: '$error'")
+  }
 
   @Test
   fun testProjectWithVmOptionsWithoutVMOptions() = runBlocking {

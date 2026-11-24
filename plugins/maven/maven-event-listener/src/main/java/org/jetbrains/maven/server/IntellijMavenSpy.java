@@ -1,8 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.maven.server;
 
-import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.maven.eventspy.AbstractEventSpy;
 import org.apache.maven.execution.ExecutionEvent;
 import org.apache.maven.execution.MavenSession;
@@ -112,10 +110,13 @@ public class IntellijMavenSpy extends AbstractEventSpy {
   }
 
   private static String getErrorMessage(Exception exception) {
-    String baseMessage = exception.getMessage();
-    Throwable rootCause = ExceptionUtils.getRootCause(exception);
-    String rootMessage = rootCause != null ? rootCause.getMessage() : StringUtils.EMPTY;
-    return StringUtils.isNotEmpty(rootMessage) ? rootMessage : baseMessage;
+    Throwable rootCause = exception;
+    //guard a cyclic cause chain with a hop limit, as commons-lang does
+    for (int i = 0; i < 1000 && rootCause.getCause() != null && rootCause.getCause() != rootCause; i++) {
+      rootCause = rootCause.getCause();
+    }
+    String rootMessage = rootCause.getMessage();
+    return rootMessage != null && !rootMessage.isEmpty() ? rootMessage : exception.getMessage();
   }
 
   private void printSessionStartedEventAndReactorData(ExecutionEvent event, String projectId) {
