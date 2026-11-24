@@ -8,6 +8,7 @@ import com.intellij.diagnostic.StartUpMeasurer.startActivity
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.highlighter.ModuleFileType
 import com.intellij.ide.highlighter.ProjectFileType
+import com.intellij.ide.lightEdit.LightEdit
 import com.intellij.ide.trustedProjects.TrustedProjects
 import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
@@ -424,12 +425,14 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
     else {
       childActivity = childActivity?.endAndStart("loading untrusted project")
 
-      serviceAsync<NotificationGroupManager>()
-        .getNotificationGroup("Project Loading Error")
-        .createNotification(ProjectBundle.message("notification.title.error.loading.project"),
-                            IdeBundle.message("untrusted.jps.project.not.loaded.notification"),
-                            NotificationType.WARNING)
-        .notify(project)
+      if (!LightEdit.owns(project)) {
+        serviceAsync<NotificationGroupManager>()
+          .getNotificationGroup("Project Loading Error")
+          .createNotification(ProjectBundle.message("notification.title.error.loading.project"),
+                              IdeBundle.message("untrusted.jps.project.not.loaded.notification"),
+                              NotificationType.WARNING)
+          .notify(project)
+      }
 
       // this should be not a "base path", but a folder that the user selected in the file chooser.
       // this works (at the moment) because: if the user selected a folder with .idea or .ipr inside, then basePath is pointing
