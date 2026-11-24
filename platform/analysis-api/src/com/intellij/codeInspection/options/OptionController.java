@@ -100,8 +100,7 @@ public interface OptionController {
    * and delegates to this controller for any other bindId.
    */
   @Contract(pure = true)
-  default <T> @NotNull OptionController onValue(@NotNull String bindId, @NotNull Supplier<@NotNull T> getter,
-                                                @NotNull Consumer<@NotNull T> setter) {
+  default <T> @NotNull OptionController onValue(@NotNull String bindId, @NotNull Supplier<T> getter, @NotNull Consumer<T> setter) {
     OptionController controller = this;
     return new OptionController() {
       @Override
