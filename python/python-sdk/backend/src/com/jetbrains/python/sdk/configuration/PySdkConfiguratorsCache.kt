@@ -55,6 +55,12 @@ private val TTL = 20.seconds
  */
 @Service(Service.Level.PROJECT)
 internal class PySdkConfiguratorsCache(private val project: Project, private val scope: CoroutineScope) {
+  // Keyed by the module that a project resides on: the one identity that `PythonInterpreterListener` and
+  // `ModuleListener` report a change for. Declared above `init`, because the listeners of `init` read it.
+  private val cache: AsyncCache<Module, PyProjectConfigurators> = Caffeine.newBuilder()
+    .expireAfterWrite(TTL.inWholeSeconds, TimeUnit.SECONDS)
+    .buildAsync()
+
   init {
     val disposable = PythonPluginDisposable.getInstance(project)
     // An SDK appearing is the one event that makes every answer here obsolete at once: with an SDK the
@@ -73,12 +79,6 @@ internal class PySdkConfiguratorsCache(private val project: Project, private val
       }
     })
   }
-
-  // Keyed by the module that a project resides on: the one identity that `PythonInterpreterListener` and
-  // `ModuleListener` report a change for.
-  private val cache: AsyncCache<Module, PyProjectConfigurators> = Caffeine.newBuilder()
-    .expireAfterWrite(TTL.inWholeSeconds, TimeUnit.SECONDS)
-    .buildAsync()
 
   private suspend fun load(pyProject: PyProject): PyProjectConfigurators =
     cache.getOrLoad(pyProject.residesOnModule, scope) { module ->
