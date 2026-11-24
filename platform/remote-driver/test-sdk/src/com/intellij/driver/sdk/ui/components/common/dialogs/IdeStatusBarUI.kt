@@ -6,18 +6,17 @@ import com.intellij.driver.model.OnDispatcher
 import com.intellij.driver.sdk.remoteDev.BeControlBuilder
 import com.intellij.driver.sdk.remoteDev.BeControlClass
 import com.intellij.driver.sdk.remoteDev.BeControlComponentBase
-import com.intellij.driver.sdk.ui.Finder
 import com.intellij.driver.sdk.ui.UiText.Companion.asString
 import com.intellij.driver.sdk.ui.components.ComponentData
 import com.intellij.driver.sdk.ui.components.UiComponent
+import com.intellij.driver.sdk.ui.components.common.IdeaFrameUI
 import com.intellij.driver.sdk.ui.remote.Component
 import com.intellij.driver.sdk.ui.should
 import com.intellij.driver.sdk.ui.xQuery
-import org.intellij.lang.annotations.Language
 import kotlin.time.Duration.Companion.minutes
 
-fun Finder.ideStatusBar(@Language("xpath") xpath: String = "//div[@class='IdeStatusBarImpl']", action: IdeStatusBarUI.() -> Unit = {}): IdeStatusBarUI {
-  return x(xpath, IdeStatusBarUI::class.java).apply(action)
+fun IdeaFrameUI.ideStatusBar(action: IdeStatusBarUI.() -> Unit = {}): IdeStatusBarUI {
+  return x(IdeStatusBarUI::class.java) { byJavaClass("com.intellij.openapi.wm.impl.status.IdeStatusBarImpl") }.apply(action)
 }
 
 class IdeStatusBarUI(data: ComponentData) : UiComponent(data) {
