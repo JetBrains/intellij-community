@@ -105,6 +105,7 @@ open class PyTargetAwareAdditionalData private constructor(
     targetEnvironmentConfiguration = null
 
     super.load(element) // load `INTERPRETER_PATH`, `HELPERS_PATH`, etc
+    replaceStoredUnknownFlavor(PyFlavorAndData(PyFlavorData.Empty, UnixPythonSdkFlavor.getInstance()))
     b.load(element) // the state that contains information of the target, as for now the target configuration is embedded into the additional data
     val loadedConfiguration = loadTargetConfiguration(element) // add Python language runtime for the loaded configuration
     if (loadedConfiguration != null) {
