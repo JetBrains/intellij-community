@@ -197,7 +197,7 @@ internal class SettingsVaultImpl(private val scope: CoroutineScope) : SettingsVa
   private val appCache = if (isSnapshotCacheEnabled()) SettingsSnapshotCache(SettingsCacheStorage.appCacheFile(), project = null) else null
 
   /** Runs the settings migrations after a reload installs the layers of their kind. See [installBucket]. */
-  private val migrationRunner = SettingsMigrationRunner(scope, this)
+  internal val migrationRunner: SettingsMigrationRunner = SettingsMigrationRunner(scope, this)
 
   init {
     scope.launch {
@@ -384,7 +384,8 @@ internal class SettingsVaultImpl(private val scope: CoroutineScope) : SettingsVa
    * not supply it again. A layer with a pending save is not stale, because an unpersisted mutation must survive until
    * the disk catches up. The install, the sweep and the readiness change run under one [vaultWriteMutex] hold, so the
    * bucket swaps in atomically, and the change events deliver once. The caller holds the reload mutex of [kind]
-   * (ADR 0162). After the install, the [migrationRunner] starts the migration check of [kind].
+   * (ADR 0162). After the install, the [migrationRunner] starts the migration check of [kind], except in the unit-test
+   * mode.
    *
    * @param answers the answer of each provider whose range of context kinds contains [kind], or `null` for a provider
    *   that failed. The vault does not sweep a failed provider.

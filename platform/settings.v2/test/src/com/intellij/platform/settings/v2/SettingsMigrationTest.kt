@@ -14,6 +14,7 @@ import com.intellij.platform.settings.v2.impl.APP_MIGRATION_LEDGER
 import com.intellij.platform.settings.v2.impl.PROJECT_MIGRATION_LEDGER
 import com.intellij.platform.settings.v2.impl.SettingsMigrationIdentity
 import com.intellij.platform.settings.v2.impl.SettingsMigrationLedger
+import com.intellij.platform.settings.v2.impl.runMigrationCheck
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.TestDisposable
 import com.intellij.testFramework.junit5.fixture.projectFixture
@@ -21,6 +22,7 @@ import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
@@ -33,11 +35,14 @@ import java.time.Instant
 import java.util.UUID
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.atomic.AtomicInteger
+import kotlin.time.Duration.Companion.seconds
 
 /**
- * Checks how the platform runs the settings migrations and records them in the migration ledger. A test registers a
- * migration as a plugin descriptor does: by the class name and an `id`, with no instance. The registration starts
- * the migration check, and a reload starts it again.
+ * Checks how the migration check runs the settings migrations and records them in the migration ledger. A test
+ * registers a migration as a plugin descriptor does: by the class name and an `id`, with no instance. In the unit-test
+ * mode neither the registration nor a reload starts a check, so a test starts each check with [runMigrationCheck]. The
+ * lambda test `SettingsMigrationStartTest` in `remote-dev/settings/v2/lambdaTests/` checks that a reload and a
+ * registration start the check outside the unit-test mode.
  *
  * The application ledger and the ledger of the shared project outlive a test, so each test takes a new migration id.
  *
@@ -71,17 +76,6 @@ class SettingsMigrationTest {
   }
 
   /**
-   * Waits for the checks that an earlier reload started, such as the reload of the project at its open. Otherwise, such
-   * a check can launch a migration of the test a second time.
-   */
-  @BeforeEach
-  fun awaitEarlierChecks(): Unit = runBlocking {
-    SettingsVault.getInstance().awaitReady(projectContext)
-    awaitApplicationCheckEnd()
-    awaitProjectCheckEnd()
-  }
-
-  /**
    * Writes the pending ledger saves. Otherwise, a save outlives the test: it can put the application ledger into the
    * config of a later test, or reach the VFS after the project closes.
    */
@@ -95,6 +89,7 @@ class SettingsMigrationTest {
   fun `a project migration runs once for the project and gets its context`(): Unit = runBlocking {
     val id = newMigrationId()
     registerProjectMigration<RecordingMigration>(id)
+    runMigrationCheck(projectContext)
 
     awaitEquals(true) { migration(id).ledgerEntryKey in PROJECT_MIGRATION_LEDGER[projectContext].completed }
     val context = RecordingMigration.contexts.single()
@@ -103,22 +98,35 @@ class SettingsMigrationTest {
     Instant.parse(PROJECT_MIGRATION_LEDGER[projectContext].completed.getValue(migration(id).ledgerEntryKey))
 
     reloadAfterSaves(projectContext)
-    awaitProjectCheckEnd()
+    runProjectCheckWithMarker()
     assertEquals(1, RecordingMigration.contexts.size)
     assertEquals(1, RecordingMigration.instances.get())
+  }
+
+  @Test
+  fun `in the unit-test mode a registration and a reload start no check`(): Unit = runBlocking {
+    val id = newMigrationId()
+    registerMigration<RecordingMigration>(SettingsMigration.APP_EP_NAME, id)
+    reloadAfterSaves(appContext)
+
+    // A started check would create the migration within this time.
+    delay(1.seconds)
+    assertEquals(0, RecordingMigration.instances.get())
+    assertFalse(migration(id).ledgerEntryKey in APP_MIGRATION_LEDGER[appContext].completed)
   }
 
   @Test
   fun `an application migration runs once for the application`(): Unit = runBlocking {
     val id = newMigrationId()
     registerMigration<RecordingMigration>(SettingsMigration.APP_EP_NAME, id)
+    runMigrationCheck(appContext)
 
     awaitEquals(true) { migration(id).ledgerEntryKey in APP_MIGRATION_LEDGER[appContext].completed }
     assertEquals(appContext.identity, RecordingMigration.contexts.single().identity)
     assertFalse(migration(id).ledgerEntryKey in PROJECT_MIGRATION_LEDGER[projectContext].completed)
 
     reloadAfterSaves(appContext)
-    awaitApplicationCheckEnd()
+    runApplicationCheckWithMarker()
     assertEquals(1, RecordingMigration.contexts.size)
   }
 
@@ -128,7 +136,7 @@ class SettingsMigrationTest {
     PROJECT_MIGRATION_LEDGER[projectContext] = PROJECT_MIGRATION_LEDGER[projectContext].withCompleted(migration(id))
 
     registerProjectMigration<RecordingMigration>(id)
-    awaitProjectCheckEnd()
+    runProjectCheckWithMarker()
 
     assertEquals(0, RecordingMigration.instances.get())
   }
@@ -150,36 +158,40 @@ class SettingsMigrationTest {
                "the team ledger lists the migration")
 
     registerProjectMigration<RecordingMigration>(id)
-    awaitProjectCheckEnd()
+    runProjectCheckWithMarker()
 
     assertEquals(0, RecordingMigration.instances.get())
   }
 
   @Test
-  fun `a migration that throws is logged, is not recorded, and runs again after a reload`(): Unit = runBlocking {
+  fun `a migration that throws is logged, is not recorded, and runs again at the next check`(): Unit = runBlocking {
     val id = newMigrationId()
     collectingErrors { loggedErrors ->
       registerProjectMigration<FailingOnceMigration>(id)
+      runMigrationCheck(projectContext)
       // The run logs its failure as its last step. A new check would run the migration again, so none starts before the assert.
       awaitEquals(true) { loggedErrors.any { FailingOnceMigration.FAILURE in it } }
       assertFalse(migration(id).ledgerEntryKey in PROJECT_MIGRATION_LEDGER[projectContext].completed)
     }
 
     reloadAfterSaves(projectContext)
+    runMigrationCheck(projectContext)
 
     awaitEquals(true) { migration(id).ledgerEntryKey in PROJECT_MIGRATION_LEDGER[projectContext].completed }
     assertEquals(2, FailingOnceMigration.runs.get())
   }
 
   @Test
-  fun `a cancelled migration is not recorded, logs no error, and runs again after a reload`(): Unit = runBlocking {
+  fun `a cancelled migration is not recorded, logs no error, and runs again at the next check`(): Unit = runBlocking {
     val id = newMigrationId()
     val (_, errors) = collectingErrors {
       registerProjectMigration<CancelledOnceMigration>(id)
+      runMigrationCheck(projectContext)
       CancelledOnceMigration.cancelled.await()
       assertFalse(migration(id).ledgerEntryKey in PROJECT_MIGRATION_LEDGER[projectContext].completed)
 
       reloadAfterSaves(projectContext)
+      runMigrationCheck(projectContext)
 
       awaitEquals(true) { migration(id).ledgerEntryKey in PROJECT_MIGRATION_LEDGER[projectContext].completed }
     }
@@ -188,14 +200,16 @@ class SettingsMigrationTest {
   }
 
   @Test
-  fun `a migration whose ledger entry is removed runs again after a reload`(): Unit = runBlocking {
+  fun `a migration whose ledger entry is removed runs again at the next check`(): Unit = runBlocking {
     val id = newMigrationId()
     registerProjectMigration<RecordingMigration>(id)
+    runMigrationCheck(projectContext)
     awaitEquals(true) { migration(id).ledgerEntryKey in PROJECT_MIGRATION_LEDGER[projectContext].completed }
 
     val ledger = PROJECT_MIGRATION_LEDGER[projectContext]
     PROJECT_MIGRATION_LEDGER[projectContext] = ledger.copy(completed = ledger.completed - migration(id).ledgerEntryKey)
     reloadAfterSaves(projectContext)
+    runMigrationCheck(projectContext)
 
     awaitEquals(2) { RecordingMigration.contexts.size }
     awaitEquals(true) { migration(id).ledgerEntryKey in PROJECT_MIGRATION_LEDGER[projectContext].completed }
@@ -210,10 +224,12 @@ class SettingsMigrationTest {
     }
 
     registerProjectMigration<RecordingMigration>(id)
+    runMigrationCheck(projectContext)
     awaitEquals(true) { migration(id).ledgerEntryKey in PROJECT_MIGRATION_LEDGER[projectContext].completed }
 
     // The entry of the core plugin is in the ledger now, and it must not count for the other plugin.
     registerProjectMigration<RecordingMigration>(id, plugin = otherPlugin)
+    runMigrationCheck(projectContext)
     awaitEquals(true) { migration(id, otherPlugin).ledgerEntryKey in PROJECT_MIGRATION_LEDGER[projectContext].completed }
     assertEquals(2, RecordingMigration.contexts.size)
   }
@@ -224,7 +240,7 @@ class SettingsMigrationTest {
       val registration = Disposer.newDisposable(disposable, "migration with no id")
       try {
         registerProjectMigration<RecordingMigration>(id = null, registration)
-        awaitProjectCheckEnd()
+        runProjectCheckWithMarker()
       }
       finally {
         Disposer.dispose(registration)
@@ -243,6 +259,7 @@ class SettingsMigrationTest {
       // One check launches both, so no second check launches the blocked migration again.
       registerMigrations(SettingsMigration.PROJECT_EP_NAME, listOf(BlockingMigration::class.java to blockedId,
                                                                   RecordingMigration::class.java to otherId))
+      runMigrationCheck(projectContext)
       BlockingMigration.started.await()
 
       awaitEquals(true) { migration(otherId).ledgerEntryKey in PROJECT_MIGRATION_LEDGER[projectContext].completed }
@@ -262,9 +279,10 @@ class SettingsMigrationTest {
     val failingId = newMigrationId()
     collectingErrors { loggedErrors ->
       try {
-        // One registration call starts one check, which launches both migrations.
+        // One check launches both migrations.
         registerMigrations(SettingsMigration.PROJECT_EP_NAME, listOf(BlockingMigration::class.java to blockedId,
                                                                     FailingWhileBlockedMigration::class.java to failingId))
+        runMigrationCheck(projectContext)
         awaitEquals(true) { loggedErrors.any { FailingWhileBlockedMigration.FAILURE in it } }
         assertFalse(migration(blockedId).ledgerEntryKey in PROJECT_MIGRATION_LEDGER[projectContext].completed)
       }
@@ -315,8 +333,7 @@ class SettingsMigrationTest {
 
   /**
    * Registers [migrations] as extensions of [extensionPoint] in [plugin], as a plugin descriptor does: by the class
-   * name, with no instance. One call notifies the listeners once, so one migration check covers all [migrations]. The
-   * registration ends with [parentDisposable].
+   * name, with no instance. The registration ends with [parentDisposable].
    *
    * @param migrations the implementation class and the `id` of each extension
    */
@@ -341,29 +358,30 @@ class SettingsMigrationTest {
     }
   }
 
-  /** Waits for the end of a project migration check. See [awaitCheckEnd]. */
-  private suspend fun awaitProjectCheckEnd() {
-    awaitCheckEnd(SettingsMigration.PROJECT_EP_NAME, PROJECT_MIGRATION_LEDGER, projectContext)
+  /** Runs a project migration check and waits for its marker. See [runCheckWithMarker]. */
+  private suspend fun runProjectCheckWithMarker() {
+    runCheckWithMarker(SettingsMigration.PROJECT_EP_NAME, PROJECT_MIGRATION_LEDGER, projectContext)
   }
 
-  /** Waits for the end of an application migration check. See [awaitCheckEnd]. */
-  private suspend fun awaitApplicationCheckEnd() {
-    awaitCheckEnd(SettingsMigration.APP_EP_NAME, APP_MIGRATION_LEDGER, appContext)
+  /** Runs an application migration check and waits for its marker. See [runCheckWithMarker]. */
+  private suspend fun runApplicationCheckWithMarker() {
+    runCheckWithMarker(SettingsMigration.APP_EP_NAME, APP_MIGRATION_LEDGER, appContext)
   }
 
   /**
-   * Waits until a migration check of [scopeContext] that sees a new marker migration has launched its migrations. It
-   * registers the marker in [extensionPoint] and waits for it in [ledger]. That check also covers every migration
-   * that is registered now. A skipped migration is never launched, but a launched one runs in parallel with the
-   * marker. So the wait proves a skip, not the end of another run.
+   * Registers a new marker migration in [extensionPoint], runs the check of [scopeContext], and waits for the entry of
+   * the marker in [ledger]. The check also covers every migration that is registered now. A skipped migration is never
+   * launched, but a launched one runs in parallel with the marker. So the wait proves a skip, not the end of another
+   * run.
    */
-  private suspend fun awaitCheckEnd(
+  private suspend fun runCheckWithMarker(
     extensionPoint: ExtensionPointName<SettingsMigration>,
     ledger: SettingsKey<SettingsMigrationLedger>,
     scopeContext: SettingsContext,
   ) {
     val id = newMigrationId()
     registerMigration<CheckEndMarkerMigration>(extensionPoint, id)
+    runMigrationCheck(scopeContext)
     awaitEquals(true) { migration(id).ledgerEntryKey in ledger[scopeContext].completed }
   }
 }
@@ -473,7 +491,7 @@ internal class CancelledOnceMigration : SettingsMigration {
 }
 
 /**
- * Does nothing. `SettingsMigrationTest.awaitCheckEnd` waits for its ledger entry to see the end of a migration check.
+ * Does nothing. `SettingsMigrationTest.runCheckWithMarker` waits for its ledger entry to see the end of a migration check.
  * Two checks can run it twice, so nothing counts its runs.
  */
 internal class CheckEndMarkerMigration : SettingsMigration {

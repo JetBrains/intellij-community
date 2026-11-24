@@ -23,7 +23,8 @@ import org.jetbrains.annotations.ApiStatus.Internal
  * migration ledger of the scope lists it. A changed config, for example after a branch switch, can make it run again,
  * so a repeated run must give a correct result. The platform creates the instance only to run it (ADR 0168,
  * ADR 0170). The migrations run in parallel and in no order, so two steps that depend on each other are one
- * migration. A write does not wait for a migration (ADR 0171).
+ * migration. A write does not wait for a migration (ADR 0171). In the unit-test mode the platform runs no migration by
+ * itself, so a unit test of a migration calls [migrate].
  *
  * A migration must be fast. A reload does not cancel a migration that runs. So when the config changes during a run,
  * for example at a branch switch, the migration still writes the values that it read from the old config. The

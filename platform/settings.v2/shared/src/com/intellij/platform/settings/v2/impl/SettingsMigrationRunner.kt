@@ -1,9 +1,12 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Internal
+
 package com.intellij.platform.settings.v2.impl
 
 // @spec ../../../../../../../../spec/settings-migrations.spec.md
 
 import com.intellij.diagnostic.PluginException
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
@@ -21,6 +24,8 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import org.jetbrains.annotations.ApiStatus.Internal
+import org.jetbrains.annotations.TestOnly
 
 /**
  * Runs the [SettingsMigration]s that the migration ledger of a scope does not list, and records each one that ends
@@ -33,6 +38,8 @@ import kotlinx.coroutines.sync.withLock
  * - A check merges the ledgers of all localities. An update writes the closest one (ADR 0172).
  * - Two checks close together can launch one migration twice at the same time, which is accepted: a migration is
  *   fast, and a repeated run gives a correct result.
+ * - In the unit-test mode, a reload and a change of the extensions start no check. A unit test of the engine starts
+ *   a check with [runMigrationCheck].
  *
  * @param applicationCoroutineScope the coroutine scope of the application migrations and of the extension point listeners
  * @param vault the vault that owns this runner. The runner gets it directly, because the vault service is not
@@ -54,7 +61,7 @@ internal class SettingsMigrationRunner(private val applicationCoroutineScope: Co
     for (migrationKind in MigrationKind.entries) {
       // A change listener gets no extension instance, so the load of a plugin creates no migration.
       migrationKind.extensionPoint.addChangeListener(applicationCoroutineScope) {
-        migrationKind.loadedScopeContexts().forEach { checkMigrations(migrationKind, it) }
+        migrationKind.loadedScopeContexts().forEach { startCheck(migrationKind, it) }
       }
     }
   }
@@ -66,20 +73,44 @@ internal class SettingsMigrationRunner(private val applicationCoroutineScope: Co
   fun layersInstalled(reloadScopeContext: SettingsContext, installedKind: SettingsContextKind) {
     val migrationKind = MigrationKind.entries.find { it.contextKind == installedKind } ?: return
     for (scopeContext in migrationKind.loadedScopeContexts()) {
-      if (reloadScopeContext.isAncestorOf(scopeContext, strict = false)) checkMigrations(migrationKind, scopeContext)
+      if (reloadScopeContext.isAncestorOf(scopeContext, strict = false)) startCheck(migrationKind, scopeContext)
     }
   }
 
   /**
-   * Starts the check of [scopeContext] in the coroutine scope of its target, so the migrations of a project stop when
-   * the project closes. The check waits until [scopeContext] is ready, so it reads a loaded ledger.
+   * Starts the [check] of [scopeContext] in the coroutine scope of its target, so the migrations of a project stop
+   * when the project closes. In the unit-test mode it starts nothing.
    */
-  private fun checkMigrations(migrationKind: MigrationKind, scopeContext: SettingsContext) {
+  private fun startCheck(migrationKind: MigrationKind, scopeContext: SettingsContext) {
+    if (ApplicationManager.getApplication().isUnitTestMode) return
     val migrationsCoroutineScope = migrationsCoroutineScopeOf(scopeContext) ?: return
-    migrationsCoroutineScope.launch {
-      vault.awaitReady(scopeContext)
-      launchPendingMigrations(migrationsCoroutineScope, migrationKind, scopeContext)
+    migrationsCoroutineScope.launch { check(migrationKind, scopeContext, migrationsCoroutineScope) }
+  }
+
+  /**
+   * Runs the check of [scopeContext], as a reload does outside the unit-test mode, and returns when the check has
+   * launched the pending migrations. It does not wait for their end.
+   *
+   * @throws IllegalStateException when [scopeContext] is of a kind that has no migrations, or its project is not open
+   */
+  @TestOnly
+  suspend fun checkByHand(scopeContext: SettingsContext) {
+    val migrationKind = checkNotNull(MigrationKind.entries.find { it.contextKind == scopeContext.kind }) {
+      "The context '${scopeContext.identity}' is of a kind that has no migrations"
     }
+    val migrationsCoroutineScope = checkNotNull(migrationsCoroutineScopeOf(scopeContext)) {
+      "The project of '${scopeContext.identity}' is not open"
+    }
+    check(migrationKind, scopeContext, migrationsCoroutineScope)
+  }
+
+  /**
+   * Waits until [scopeContext] is ready, so the check reads a loaded ledger. Then launches the pending migrations of
+   * [migrationKind] in [migrationsCoroutineScope]. See [launchPendingMigrations].
+   */
+  private suspend fun check(migrationKind: MigrationKind, scopeContext: SettingsContext, migrationsCoroutineScope: CoroutineScope) {
+    vault.awaitReady(scopeContext)
+    launchPendingMigrations(migrationsCoroutineScope, migrationKind, scopeContext)
   }
 
   /**
@@ -182,6 +213,16 @@ internal class SettingsMigrationRunner(private val applicationCoroutineScope: Co
   private companion object {
     private val LOG = logger<SettingsMigrationRunner>()
   }
+}
+
+/**
+ * Runs the migration check of [scopeContext], the application context or the context of an open project. It returns
+ * when the check has launched the migrations that no ledger of [scopeContext] lists, and does not wait for their end.
+ * In the unit-test mode the engine starts no check by itself, so a unit test of the engine calls this function.
+ */
+@TestOnly
+suspend fun runMigrationCheck(scopeContext: SettingsContext) {
+  (SettingsVault.getInstance() as SettingsVaultImpl).migrationRunner.checkByHand(scopeContext)
 }
 
 /** Holds the coroutine scope of the project migrations of its project. The scope ends when the project closes. */
