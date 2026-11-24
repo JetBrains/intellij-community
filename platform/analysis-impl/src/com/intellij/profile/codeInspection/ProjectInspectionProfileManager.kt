@@ -21,6 +21,8 @@ import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.extensions.TechnologyFilter
+import com.intellij.openapi.extensions.TechnologyFilterListener
 import com.intellij.openapi.options.SchemeManager
 import com.intellij.openapi.options.SchemeManagerFactory
 import com.intellij.openapi.project.Project
@@ -103,6 +105,7 @@ open class ProjectInspectionProfileManager(final override val project: Project) 
   override fun initializeComponent() {
     val app = ApplicationManager.getApplication()
     if (!project.isDirectoryBased || app.isUnitTestMode) {
+      listenToTechnologyFilter()
       return
     }
 
@@ -110,6 +113,7 @@ open class ProjectInspectionProfileManager(final override val project: Project) 
       schemeManager.loadSchemes()
       currentProfile.initInspectionTools(project)
     }
+    listenToTechnologyFilter()
 
     StartupManager.getInstance(project).runAfterOpened {
       project.messageBus.syncPublisher(ProfileChangeAdapter.TOPIC).profilesInitialized()
@@ -123,6 +127,24 @@ open class ProjectInspectionProfileManager(final override val project: Project) 
       scopesManager.addScopeListener(projectScopeListener, project)
       NamedScopeManager.getInstance(project).addScopeListener(projectScopeListener, project)
     }
+  }
+
+  /**
+   * Reports a tech change of the project for a current profile that the application owns.
+   * Such a profile holds every tool and filters at each read, so it has no change to report on its own.
+   * A profile of this project follows the techs of the project without this listener.
+   * The listener reads the current profile, so the caller starts it after the load of the schemes.
+   */
+  private fun listenToTechnologyFilter() {
+    val connection = ApplicationManager.getApplication().messageBus.connect(this)
+    connection.subscribe(TechnologyFilter.TOPIC, TechnologyFilterListener { changedProject ->
+      if (changedProject === project) {
+        val profile = currentProfile
+        if (profile.profileManager !== this) {
+          fireProfileChanged(profile)
+        }
+      }
+    })
   }
 
   override fun dispose() {

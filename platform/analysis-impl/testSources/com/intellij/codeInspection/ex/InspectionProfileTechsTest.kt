@@ -3,6 +3,7 @@ package com.intellij.codeInspection.ex
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel
 import com.intellij.codeInsight.daemon.HighlightDisplayKey
+import com.intellij.codeInspection.InspectionProfile
 import com.intellij.codeInspection.InspectionToolProvider
 import com.intellij.codeInspection.LocalInspectionEP
 import com.intellij.codeInspection.LocalInspectionTool
@@ -15,8 +16,10 @@ import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.extensions.TechnologyFilter
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
+import com.intellij.profile.ProfileChangeAdapter
 import com.intellij.profile.codeInspection.BaseInspectionProfileManager
 import com.intellij.profile.codeInspection.InspectionProfileManager
+import com.intellij.profile.codeInspection.PROJECT_DEFAULT_PROFILE_NAME
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
@@ -27,6 +30,7 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.Assertions.assertSame
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -145,6 +149,28 @@ internal class InspectionProfileTechsTest {
     assertFalse(model.getTools(JAVA_TOOL, null).isEnabled)
     assertEquals(setOf(PLAIN_TOOL), model.getDefaultStates(project).mapTo(HashSet()) { it.tool.shortName })
     assertEquals(setOf(PLAIN_TOOL, JAVA_TOOL), shortNames(model.tools))
+  }
+
+  @Test
+  fun `the project reports a filter change for its shared profile`() {
+    val manager = ProjectInspectionProfileManager.getInstance(project)
+    val sharedProfile = appProfileManager.currentProfile
+    manager.useApplicationProfile(sharedProfile.name)
+    Disposer.register(testDisposable) { manager.setRootProfile(PROJECT_DEFAULT_PROFILE_NAME) }
+    assertSame(sharedProfile, manager.currentProfile)
+
+    val changed = ArrayList<InspectionProfile>()
+    project.messageBus.connect(testDisposable).subscribe(ProfileChangeAdapter.TOPIC, object : ProfileChangeAdapter {
+      override fun profileChanged(profile: InspectionProfile) {
+        changed.add(profile)
+      }
+    })
+
+    publishFilterChange(otherProject)
+    assertEquals(emptyList<InspectionProfile>(), changed)
+
+    publishFilterChange(project)
+    assertEquals(listOf<InspectionProfile>(sharedProfile), changed)
   }
 
   @Test
