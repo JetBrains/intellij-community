@@ -67,6 +67,11 @@ public abstract class K2CodeFragmentCompletionTestGenerated extends AbstractK2Co
                 runTest("../../completion/testData/basic/codeFragments/runtimeType/k2/notImportedExtension.kt");
             }
 
+            @TestMetadata("overrideInGenericClass.kt")
+            public void testOverrideInGenericClass() throws Exception {
+                runTest("../../completion/testData/basic/codeFragments/runtimeType/k2/overrideInGenericClass.kt");
+            }
+
             @TestMetadata("runtimeCast.kt")
             public void testRuntimeCast() throws Exception {
                 runTest("../../completion/testData/basic/codeFragments/runtimeType/k2/runtimeCast.kt");

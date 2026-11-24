@@ -62,6 +62,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaSyntheticJavaPropertySymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.containingSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.fakeOverrideOriginal
+import org.jetbrains.kotlin.analysis.api.symbols.isSubClassOf
 import org.jetbrains.kotlin.analysis.api.symbols.receiverType
 import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.analysis.api.types.KaErrorType
@@ -70,6 +71,7 @@ import org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.classId
 import org.jetbrains.kotlin.analysis.api.types.defaultType
+import org.jetbrains.kotlin.analysis.api.types.expandedSymbol
 import org.jetbrains.kotlin.analysis.api.types.isDenotable
 import org.jetbrains.kotlin.analysis.api.types.isSubtypeOf
 import org.jetbrains.kotlin.analysis.api.types.lowerBoundIfFlexible
@@ -77,6 +79,7 @@ import org.jetbrains.kotlin.analysis.api.types.semanticallyEquals
 import org.jetbrains.kotlin.analysis.api.types.symbol
 import org.jetbrains.kotlin.analysis.api.types.withNullability
 import org.jetbrains.kotlin.config.LanguageFeature
+import org.jetbrains.kotlin.idea.base.analysis.api.utils.allOverriddenSymbolsWithSelf
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.collectReceiverTypesForExplicitReceiverExpression
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.isIgnoredExpectDeclaration
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.isJavaSourceOrLibrary
@@ -498,7 +501,13 @@ internal abstract class K2AbstractCallableCompletionContributor<P : KotlinNameRe
             typesOfPossibleReceiver = listOfNotNull(if (forRuntimeType) context.runtimeType else receiverType),
             forRuntimeType = forRuntimeType
         )
-        yieldAll(callablesWithMetadata)
+        if (forRuntimeType) {
+            yieldAll(
+                callablesWithMetadata.filterNot { it.signature.symbol.isOrOverridesMemberOf(receiverType) }
+            )
+        } else {
+            yieldAll(callablesWithMetadata)
+        }
 
         val smartCastInfo = explicitReceiver.smartCastInfo
             ?: return@sequence
@@ -552,6 +561,19 @@ internal abstract class K2AbstractCallableCompletionContributor<P : KotlinNameRe
 
         yieldAll(nonExtensionMembers)
         yieldAll(extensionNonMembers)
+    }
+
+    /**
+     * Returns true if [this] member of the runtime type is, or overrides, a member of the class of [declaredType].
+     */
+    context(_: KaSession)
+    private fun KaCallableSymbol.isOrOverridesMemberOf(declaredType: KaType): Boolean {
+        if (isExtension) return false
+        val declaredClass = declaredType.lowerBoundIfFlexible().expandedSymbol ?: return false
+        return allOverriddenSymbolsWithSelf.any { symbol ->
+            val containingClass = symbol.containingSymbol as? KaClassSymbol ?: return@any false
+            containingClass == declaredClass || declaredClass.isSubClassOf(containingClass)
+        }
     }
 
     context(_: KaSession, context: K2CompletionSectionContext<P>)
