@@ -5,6 +5,9 @@ import com.intellij.diagnostic.LoadingState
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.components.PersistentStateComponentWithModificationTracker
 import com.intellij.openapi.components.SettingsCategory
 import com.intellij.openapi.components.State
@@ -18,6 +21,7 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.platform.settings.v2.SettingsContext
 import com.intellij.platform.settings.v2.SettingsKey
 import com.intellij.platform.settings.v2.getValue
 import com.intellij.serviceContainer.NonInjectable
@@ -25,9 +29,16 @@ import com.intellij.ui.JreHiDpiUtil
 import com.intellij.ui.NewUiValue
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ComponentTreeEventDispatcher
+import com.intellij.util.asDisposable
+import com.intellij.util.cancelOnDispose
 import com.intellij.util.ui.EDT
 import com.intellij.util.ui.GraphicsUtil
 import com.intellij.util.ui.UIUtil
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.job
+import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval
 import java.awt.Graphics
@@ -44,7 +55,12 @@ private val LOG = logger<UISettings>()
  *
  * Some properties hold the value of a settings v2 key, and their KDoc names the key. A write of such a property is
  * asynchronous. The setter launches the write of the key and returns before the write applies. So a read right after
- * the write can still return the old value. To react to the new value, use [UISettingsListener].
+ * the write can still return the old value.
+ *
+ * To react to the new value of one such property, use its value listener, such as [addEditorAntialiasingListener]. A
+ * value listener gets the new value as the getter reads it. It runs on the EDT, in any modality. It is not called when
+ * the value equals the value of its previous call. It lives until its coroutine scope is cancelled. An instance over a
+ * given component registers no value listener. To react to several values, use [UISettingsListener].
  */
 @State(
   name = "UISettings",
@@ -75,16 +91,24 @@ class UISettings private constructor(
 
   private val treeDispatcher = ComponentTreeEventDispatcher.create(UISettingsListener::class.java)
 
+  /**
+   * Holds the antialiasing of the text in the IDE, the value of [UISettingsKeys.IDE_ANTIALIASING]. A write is
+   * asynchronous. See [UISettings]. [addIdeAntialiasingListener] follows the value.
+   */
   var ideAAType: AntialiasingType
-    get() = notRoamableOptions.ideAAType
+    get() = readSetting(UISettingsKeys.IDE_ANTIALIASING) { notRoamableOptions.ideAAType }
     set(value) {
-      notRoamableOptions.ideAAType = value
+      writeSetting(UISettingsKeys.IDE_ANTIALIASING, value) { notRoamableOptions.ideAAType = value }
     }
 
+  /**
+   * Holds the antialiasing of the text in the editor, the value of [UISettingsKeys.EDITOR_ANTIALIASING]. A write is
+   * asynchronous. See [UISettings]. [addEditorAntialiasingListener] follows the value.
+   */
   var editorAAType: AntialiasingType
-    get() = notRoamableOptions.editorAAType
+    get() = readSetting(UISettingsKeys.EDITOR_ANTIALIASING) { notRoamableOptions.editorAAType }
     set(value) {
-      notRoamableOptions.editorAAType = value
+      writeSetting(UISettingsKeys.EDITOR_ANTIALIASING, value) { notRoamableOptions.editorAAType = value }
     }
 
   val allowMergeButtons: Boolean
@@ -810,6 +834,16 @@ class UISettings private constructor(
     ApplicationManager.getApplication().messageBus.connect(parentDisposable).subscribe(UISettingsListener.TOPIC, listener)
   }
 
+  /** Calls [listener] with the new [ideAAType] after it changes, until [coroutineScope] is cancelled. See [UISettings]. */
+  fun addIdeAntialiasingListener(coroutineScope: CoroutineScope, listener: (AntialiasingType) -> Unit) {
+    addValueListener(UISettingsKeys.IDE_ANTIALIASING, coroutineScope.asDisposable(), { ideAAType }, listener)
+  }
+
+  /** Calls [listener] with the new [editorAAType] after it changes, until [coroutineScope] is cancelled. See [UISettings]. */
+  fun addEditorAntialiasingListener(coroutineScope: CoroutineScope, listener: (AntialiasingType) -> Unit) {
+    addValueListener(UISettingsKeys.EDITOR_ANTIALIASING, coroutineScope.asDisposable(), { editorAAType }, listener)
+  }
+
   /**
    * Notifies all registered listeners that UI settings have been changed.
    */
@@ -853,6 +887,30 @@ class UISettings private constructor(
    */
   private inline fun <T> writeSetting(key: SettingsKey<T>, value: T, writeComponent: () -> Unit) {
     if (usesKeys) UISettingsKeys.setAsync(key, value) else writeComponent()
+  }
+
+  /**
+   * Calls [listener] on the EDT, in any modality, after each change of [key] at the application context, until
+   * [parentDisposable] is disposed. [listener] gets the value that [readValue] returns at that time. It is not called
+   * when that value equals the value of its previous call, or, before the first call, the value at the registration.
+   * An instance over a given component adds no listener.
+   */
+  private fun <T> addValueListener(key: SettingsKey<T>, parentDisposable: Disposable, readValue: () -> T, listener: (T) -> Unit) {
+    if (!usesKeys) return
+    val coroutineScope = service<UISettingsKeysScope>().coroutineScope
+    val listenerJob = SupervisorJob(coroutineScope.coroutineContext.job)
+    listenerJob.cancelOnDispose(parentDisposable)
+    var reportedValue = readValue()
+    key.addListener(parentDisposable, SettingsContext.app()) { _, _ ->
+      // Any modality, because a modal dialog such as Settings can write a key.
+      coroutineScope.launch(listenerJob + Dispatchers.EDT + ModalityState.any().asContextElement()) {
+        val value = readValue()
+        if (value != reportedValue) {
+          reportedValue = value
+          listener(value)
+        }
+      }
+    }
   }
 
   @Internal
@@ -912,11 +970,11 @@ class UISettings private constructor(
   @Suppress("DEPRECATION")
   private fun migrateOldSettings() {
     if (state.ideAAType != AntialiasingType.SUBPIXEL) {
-      ideAAType = state.ideAAType
+      notRoamableOptions.ideAAType = state.ideAAType
       state.ideAAType = AntialiasingType.SUBPIXEL
     }
     if (state.editorAAType != AntialiasingType.SUBPIXEL) {
-      editorAAType = state.editorAAType
+      notRoamableOptions.editorAAType = state.editorAAType
       state.editorAAType = AntialiasingType.SUBPIXEL
     }
     if (!state.allowMergeButtons) {

@@ -67,7 +67,6 @@ import com.intellij.ui.layout.and
 import com.intellij.ui.layout.not
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.ui.treeStructure.Tree
-import com.intellij.util.ui.GraphicsUtil
 import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.RestartDialogImpl
 import com.intellij.util.ui.UIUtil
@@ -75,7 +74,6 @@ import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.Nls
 import java.awt.Font
 import java.awt.RenderingHints
-import java.awt.Window
 import javax.swing.ComboBoxModel
 import javax.swing.DefaultComboBoxModel
 import javax.swing.JComponent
@@ -555,13 +553,6 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
               .label(message("label.text.antialiasing.scope.ide"))
               .bindItem(settings::ideAAType.toNullableProperty())
               .accessibleName(message("label.text.antialiasing.scope.ide"))
-              .onApply {
-                for (w in Window.getWindows()) {
-                  for (c in UIUtil.uiTraverser(w).filter(JComponent::class.java)) {
-                    GraphicsUtil.setAntialiasingType(c, AntialiasingType.getAATextInfoForSwingComponent())
-                  }
-                }
-              }
           },
           {
             val editorAAOptions =

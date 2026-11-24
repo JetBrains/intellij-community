@@ -22,6 +22,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.platform.testFramework.core.FileComparisonFailedError;
 import com.intellij.testFramework.EdtTestUtil;
+import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.intellij.util.ui.ImageUtil;
 import org.jetbrains.annotations.NotNull;
@@ -94,7 +95,7 @@ public abstract class ImmediatePainterTestCase {
 
       setFont(Font.MONOSPACED, 14);
       setLineSpacing(1.3F);
-      UISettings.getInstance().setEditorAAType(AntialiasingType.GREYSCALE);
+      setEditorAntialiasing(AntialiasingType.GREYSCALE);
     });
   }
 
@@ -106,7 +107,7 @@ public abstract class ImmediatePainterTestCase {
       getDefaultColorScheme().setLineSpacing(myDefaultLineSpacing);
       getDefaultColorScheme().setColor(EditorColors.CARET_COLOR, myDefaultCaretColor);
       KeyboardFocusManager.setCurrentKeyboardFocusManager(myDefaultFocusManager);
-      UISettings.getInstance().setEditorAAType(myDefaultAntiAliasing);
+      setEditorAntialiasing(myDefaultAntiAliasing);
 
       com.intellij.openapi.editor.ex.EditorSettingsExternalizable settings =
         com.intellij.openapi.editor.ex.EditorSettingsExternalizable.getInstance();
@@ -114,6 +115,16 @@ public abstract class ImmediatePainterTestCase {
       settings.setSmoothCaretMovement(myDefaultSmoothCaretMovement);
       settings.setRoundedHighlightingOption(myDefaultRoundedHighlighting);
     });
+  }
+
+  /**
+   * Sets the editor antialiasing through {@link UISettings}, and waits on the EDT until it reads it. The setter launches
+   * a write of a settings key, which applies later. The events of the wait let the editors react to the change.
+   */
+  private static void setEditorAntialiasing(@NotNull AntialiasingType antialiasing) {
+    UISettings.getInstance().setEditorAAType(antialiasing);
+    PlatformTestUtil.waitWithEventsDispatching("UISettings reads the editor antialiasing " + antialiasing,
+                                               () -> UISettings.getInstance().getEditorAAType() == antialiasing, 10);
   }
 
   protected @NotNull String getName() {

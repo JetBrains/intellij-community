@@ -103,9 +103,12 @@ object UISettingsKeys {
   }
 }
 
-/** Holds the coroutine scope of the writes of [UISettingsKeys] and of the forward of their changes. */
+/**
+ * Holds the coroutine scope of the writes of [UISettingsKeys], of the forward of their changes, and of the calls of
+ * the value listeners of [UISettings].
+ */
 @Service
-private class UISettingsKeysScope(private val coroutineScope: CoroutineScope) {
+internal class UISettingsKeysScope(val coroutineScope: CoroutineScope) {
   /**
    * Launches [update] in the modality of the caller.
    *

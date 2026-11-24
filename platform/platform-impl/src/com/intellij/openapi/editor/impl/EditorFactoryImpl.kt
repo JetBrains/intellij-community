@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl
 
+import com.intellij.ide.ui.UISettings
 import com.intellij.injected.editor.DocumentWindow
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
@@ -91,6 +92,7 @@ class EditorFactoryImpl(private val coroutineScope: CoroutineScope) : EditorFact
       }
     })
     connection.subscribe(EditorColorsManager.TOPIC, EditorColorsListener { refreshAllEditorsAfterColorsSchemeChange() })
+    UISettings.getInstance().addEditorAntialiasingListener(coroutineScope) { refreshAllEditors() }
     connection.subscribe(AdvancedSettingsChangeListener.TOPIC, object : AdvancedSettingsChangeListener {
       override fun advancedSettingChanged(id: String, oldValue: Any, newValue: Any) {
         if (id == EditorGutterComponentImpl.DISTRACTION_FREE_MARGIN || id == EditorPainter.EDITOR_TAB_PAINTING || id == EDITOR_SHOW_SPECIAL_CHARS) {

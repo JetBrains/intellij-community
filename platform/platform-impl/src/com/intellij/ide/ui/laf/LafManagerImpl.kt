@@ -105,12 +105,14 @@ import com.intellij.util.PlatformUtils
 import com.intellij.util.SVGLoader.colorPatcherProvider
 import com.intellij.util.concurrency.SynchronizedClearableLazy
 import com.intellij.util.ui.EDT
+import com.intellij.util.ui.GraphicsUtil
 import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.RawSwingDispatcher
 import com.intellij.util.ui.StartupUiUtil
+import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
@@ -294,6 +296,9 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
       }
     }, coroutineScope)
 
+    // A Swing component keeps the antialiasing of its text in a client property, so a change of the antialiasing sets it
+    // again.
+    UISettings.getInstance().addIdeAntialiasingListener(coroutineScope) { applyIdeAntialiasingToAllComponents() }
     @Suppress("ObjectLiteralToLambda")
     ApplicationManager.getApplication().messageBus.connect(coroutineScope).subscribe(UISettingsListener.TOPIC, object : UISettingsListener {
       override fun uiSettingsChanged(uiSettings: UISettings) {
@@ -1570,6 +1575,15 @@ internal fun initFontDefaults(defaults: UIDefaults, uiFont: FontUIResource) {
   defaults.put("TextArea.font", monoFont)
   defaults.put("TextPane.font", textFont)
   defaults.put("EditorPane.font", textFont)
+}
+
+/** Sets the antialiasing of [UISettings.ideAAType] to each component of each window. */
+private fun applyIdeAntialiasingToAllComponents() {
+  for (window in Window.getWindows()) {
+    for (component in UIUtil.uiTraverser(window).filter(JComponent::class.java)) {
+      GraphicsUtil.setAntialiasingType(component, AntialiasingType.getAATextInfoForSwingComponent())
+    }
+  }
 }
 
 private fun computeValuesOfUsedUiOptions(): List<Any?> {

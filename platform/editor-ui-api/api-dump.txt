@@ -309,6 +309,8 @@ f:com.intellij.ide.ui.UISettings
 - sf:TABS_NONE:I
 - <init>():V
 - <init>(com.intellij.ide.ui.NotRoamableUiSettings):V
+- f:addEditorAntialiasingListener(kotlinx.coroutines.CoroutineScope,kotlin.jvm.functions.Function1):V
+- f:addIdeAntialiasingListener(kotlinx.coroutines.CoroutineScope,kotlin.jvm.functions.Function1):V
 - f:addUISettingsListener(com.intellij.ide.ui.UISettingsListener,com.intellij.openapi.Disposable):V
 - f:fireUISettingsChanged():V
 - f:getActiveRightEditorOnClose():Z
