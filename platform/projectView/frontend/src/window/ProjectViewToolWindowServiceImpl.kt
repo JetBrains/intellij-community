@@ -202,6 +202,7 @@ internal class ProjectViewToolWindowServiceImpl(
     if (action != null) toolWindow.setTitleActions(listOf(ProjectViewToolbarActionGroup(action)))
     toolWindow.setAdditionalGearActions(menuActionGroup)
     toolWindow.component.putClientProperty(ToolWindowContentUi.HIDE_ID_LABEL, "true")
+    PROJECT_VIEW_TOOL_WINDOW_CUSTOMIZER_EP.forEachExtensionSafe { it.customize(toolWindow) }
     try {
       addCachedPaneContent(toolWindow)
     }

@@ -26,6 +26,7 @@
   <extensionPoints>
     <extensionPoint qualifiedName="com.intellij.project.view.pane.model.frontend" interface="com.intellij.platform.projectView.pane.ProjectViewPaneProvider" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.project.view.pane.pure.ui" interface="com.intellij.platform.projectView.frontend.pane.PureUiProjectViewPaneProvider" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.project.view.tool.window.customizer" interface="com.intellij.platform.projectView.frontend.window.ProjectViewToolWindowCustomizer" dynamic="true"/>
   </extensionPoints>
   <extensions defaultExtensionNs="com.intellij">
     <toolWindow id="Project" anchor="left" icon="AllIcons.Toolwindows.ToolWindowProject"
