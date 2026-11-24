@@ -843,7 +843,7 @@ class PyEnumTypeTest : PyCodeInsightTestCase() {
         """.trimIndent())
 
     @Test
-    @TestFor(issues = ["PY-93792"])
+    @TestFor(issues = ["PY-93792", "PY-92631", "PY-94384"])
     fun `value override in source code keeps the declared type`() = test("""
       import enum
 
@@ -856,7 +856,7 @@ class PyEnumTypeTest : PyCodeInsightTestCase() {
           ONE = 1
 
       expr = I.ONE.value
-      # └ TYPE Unknown FIXME int # PY-92631
+      # └ TYPE int
       """.trimIndent())
   }
 

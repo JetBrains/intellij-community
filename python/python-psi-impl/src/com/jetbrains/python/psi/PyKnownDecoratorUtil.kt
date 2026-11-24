@@ -7,6 +7,8 @@ import com.jetbrains.python.FunctionParameter
 import com.jetbrains.python.PyNames
 import com.jetbrains.python.psi.resolve.PyResolveContext
 import com.jetbrains.python.psi.resolve.PyResolveUtil
+import com.jetbrains.python.psi.resolve.fromFoothold
+import com.jetbrains.python.psi.resolve.resolveQualifiedName
 import com.jetbrains.python.psi.types.TypeEvalContext
 import com.jetbrains.python.pyi.PyiFile
 import one.util.streamex.StreamEx
@@ -72,38 +74,61 @@ object PyKnownDecoratorUtil {
   /**
    * Returns the known decorators that [qualifiedName], as it is written in [file], can point to.
    *
-   * The method reads the import statements of the file and resolves nothing, so it stays inside the stubs of the file.
+   * The method reads the import statements of the file and resolves no name in a scope, so it reads stubs only.
    * It sees a top-level import only, which includes an import under `if TYPE_CHECKING:`.
    *
    * An import gives the module of a name, but the file cannot tell where that module takes the name from.
    * A decorator of the same top-level package matches first.
-   * If the package holds no such decorator, the module can re-export one, as `propcache._helpers_py` re-exports
-   * `functools.cached_property`, so the short name matches.
-   * A relative import comes from the package of the file, which holds no known decorator, so the name is not one.
+   * If the package holds no such decorator, the method reads the imports of that module in the same way, and there it
+   * also follows a relative import into the package of that module. So a module that re-exports a decorator, as
+   * `propcache._helpers_py` re-exports `functools.cached_property`, gives it, and a module that defines a name of its
+   * own, as `cached_property = CachedProperty`, gives none.
+   * Only when a module cannot be found does the short name match.
+   * A relative import of the file itself comes from the package of the file, which holds no known decorator, so the
+   * name is not one.
    * A name that the file itself defines belongs to the module of the file, as `classmethod` does in `builtins.pyi`.
    * For any other name the short name is all the file gives. This covers a builtin, a name from a star import,
    * an import inside a function, and a member of a local object as in `@my_property.expression`.
    */
   private fun asKnownDecoratorsInFile(qualifiedName: QualifiedName, file: PyFile): List<PyKnownDecorator> {
     return PyUtil.getParameterizedCachedValue(file, qualifiedName) { name ->
-      computeKnownDecoratorsInFile(name, file)
+      computeKnownDecoratorsInFile(name, file, mutableSetOf(), imported = false) ?: emptyList()
     }
   }
 
-  private fun computeKnownDecoratorsInFile(qualifiedName: QualifiedName, file: PyFile): List<PyKnownDecorator> {
+  /**
+   * Returns the known decorators that [qualifiedName] points to in [file].
+   * For a module that a name is [imported] from, returns `null` when a module on the way cannot be found.
+   */
+  private fun computeKnownDecoratorsInFile(
+    qualifiedName: QualifiedName,
+    file: PyFile,
+    visited: MutableSet<Pair<PyFile, QualifiedName>>,
+    imported: Boolean,
+  ): List<PyKnownDecorator>? {
+    // Two modules can import a name from each other, and two imports can reach one module. The first visit tells.
+    if (!visited.add(file to qualifiedName)) return null
     val firstName = qualifiedName.firstComponent ?: return emptyList()
     val tail = qualifiedName.removeHead(1)
     // A star import keeps the name and gives no imported name, so the short name still finds the decorator further down.
-    val importedNames = importedQualifiedNames(qualifiedName, file) ?: return emptyList()
+    val (importedNames, boundByRelativeImport) = collectImportedNames(qualifiedName, file)
+    if (boundByRelativeImport && !imported) return emptyList()
 
-    if (importedNames.isNotEmpty()) {
-      return importedNames.flatMap { importedName ->
-        val byQualifiedName = findByQualifiedName(importedName)
-        if (byQualifiedName != null) return@flatMap listOf(byQualifiedName)
-        val byShortName = findByShortName(importedName.lastComponent!!)
-        byShortName.filter { it.qualifiedName.firstComponent == importedName.firstComponent }.ifEmpty { byShortName }
+    val known = importedNames.flatMap { importedName ->
+      val byQualifiedName = findByQualifiedName(importedName)
+      if (byQualifiedName != null) return@flatMap listOf(byQualifiedName)
+      val byShortName = findByShortName(importedName.lastComponent!!)
+      if (byShortName.isEmpty()) return@flatMap emptyList()
+      byShortName.filter { it.qualifiedName.firstComponent == importedName.firstComponent }.ifEmpty {
+        knownDecoratorsInModule(importedName, file, visited) ?: byShortName
       }
     }
+    if (boundByRelativeImport) {
+      // A module can bind the name by an absolute import in one branch and by a relative one in another
+      val relative = knownDecoratorsOfRelativeImport(qualifiedName, file, visited)
+      return if (relative == null && importedNames.isEmpty()) null else (known + relative.orEmpty()).distinct()
+    }
+    if (importedNames.isNotEmpty()) return known
     val defined = definedName(file, firstName)
     if (defined != null) {
       val definedQName = (defined as? PyQualifiedNameOwner)?.qualifiedName ?: return emptyList()
@@ -121,9 +146,19 @@ object PyKnownDecoratorUtil {
   @ApiStatus.Internal
   @JvmStatic
   fun importedQualifiedNames(qualifiedName: QualifiedName, file: PyFile): List<QualifiedName>? {
-    val firstName = qualifiedName.firstComponent ?: return emptyList()
+    val (importedNames, boundByRelativeImport) = collectImportedNames(qualifiedName, file)
+    return if (boundByRelativeImport) null else importedNames
+  }
+
+  /**
+   * Returns the absolute names that the top-level imports of [file] give to [qualifiedName],
+   * and whether a relative import binds the first component of [qualifiedName] too.
+   */
+  private fun collectImportedNames(qualifiedName: QualifiedName, file: PyFile): Pair<List<QualifiedName>, Boolean> {
+    val firstName = qualifiedName.firstComponent ?: return emptyList<QualifiedName>() to false
     val tail = qualifiedName.removeHead(1)
     val importedNames = mutableListOf<QualifiedName>()
+    var boundByRelativeImport = false
 
     for (importElement in file.importTargets) {
       val importedQName = importElement.importedQName ?: continue
@@ -139,7 +174,10 @@ object PyKnownDecoratorUtil {
     for (fromImport in file.fromImports) {
       if (fromImport.isStarImport) continue
       if (fromImport.importElements.none { it.visibleName == firstName }) continue
-      if (fromImport.relativeLevel != 0) return null
+      if (fromImport.relativeLevel != 0) {
+        boundByRelativeImport = true
+        continue
+      }
       val source = fromImport.importSourceQName ?: continue
       for (importElement in fromImport.importElements) {
         if (importElement.visibleName == firstName) {
@@ -147,7 +185,54 @@ object PyKnownDecoratorUtil {
         }
       }
     }
-    return importedNames
+    return importedNames to boundByRelativeImport
+  }
+
+  /**
+   * Returns the known decorators that the module of [importedName] gives to its last component,
+   * or `null` when the module cannot be found from [file].
+   */
+  private fun knownDecoratorsInModule(
+    importedName: QualifiedName,
+    file: PyFile,
+    visited: MutableSet<Pair<PyFile, QualifiedName>>,
+  ): List<PyKnownDecorator>? {
+    if (importedName.componentCount < 2) return null
+    val modules = resolveQualifiedName(importedName.removeLastComponent(), fromFoothold(file))
+      .mapNotNull { PyUtil.turnDirIntoInit(it) as? PyFile }
+    val name = QualifiedName.fromComponents(importedName.lastComponent!!)
+    return knownDecoratorsInModules(modules.map { it to name }, visited)
+  }
+
+  /**
+   * Returns the known decorators that the relative imports of [file] give to [qualifiedName],
+   * or `null` when the module of such an import cannot be found.
+   */
+  private fun knownDecoratorsOfRelativeImport(
+    qualifiedName: QualifiedName,
+    file: PyFile,
+    visited: MutableSet<Pair<PyFile, QualifiedName>>,
+  ): List<PyKnownDecorator>? {
+    val firstName = qualifiedName.firstComponent ?: return emptyList()
+    val tail = qualifiedName.removeHead(1)
+    val names = file.fromImports
+      .filter { !it.isStarImport && it.relativeLevel != 0 }
+      .flatMap { fromImport ->
+        val elements = fromImport.importElements.filter { it.visibleName == firstName }
+        if (elements.isEmpty()) return@flatMap emptyList()
+        val modules = fromImport.resolveImportSourceCandidates().mapNotNull { PyUtil.turnDirIntoInit(it) as? PyFile }
+        modules.flatMap { module -> elements.mapNotNull { element -> element.importedQName?.let { module to it.append(tail) } } }
+      }
+    return knownDecoratorsInModules(names, visited)
+  }
+
+  /** Returns the known decorators of the names in their modules, or `null` when no module tells. */
+  private fun knownDecoratorsInModules(
+    names: List<Pair<PyFile, QualifiedName>>,
+    visited: MutableSet<Pair<PyFile, QualifiedName>>,
+  ): List<PyKnownDecorator>? {
+    val results = names.mapNotNull { (module, name) -> computeKnownDecoratorsInFile(name, module, visited, imported = true) }
+    return if (results.isEmpty()) null else results.flatten().distinct()
   }
 
   private fun definedName(file: PyFile, name: String): PsiElement? {
