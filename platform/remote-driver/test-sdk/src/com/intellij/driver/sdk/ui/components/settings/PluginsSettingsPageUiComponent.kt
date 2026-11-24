@@ -505,15 +505,19 @@ class PluginsSettingsPageUiComponent(data: ComponentData) : LoadablePluginsUiCom
 
   fun getAllPluginsFromSection(sectionName: PluginsSections): List<ListPluginComponent> =
     xx(
-      "//[@javaclass='javax.swing.JPanel' and @accessiblename='${sectionName.title}']" +
-      "//[@javaclass='com.intellij.ide.plugins.newui.ListPluginComponent']",
+      xQuery { and(byType(JPanel::class.java), byAccessibleName(sectionName.title)) } +
+      xQuery { byType("com.intellij.ide.plugins.newui.ListPluginComponent") },
       ListPluginComponent::class.java
     ).list()
 
-  fun getPluginFromList(pluginName: String, action: ListPluginComponent.() -> Unit = {}): ListPluginComponent =
-    x(ListPluginComponent::class.java, readableName = "Plugin '$pluginName' in a list") {
-      and(byType("com.intellij.ide.plugins.newui.ListPluginComponent"), byAccessibleName(pluginName))
-    }.apply(action)
+  /**
+   * Returns the first row that shows the plugin [pluginName] in all sections.
+   * The unified page can show one plugin in more than one section at the same time.
+   */
+  fun getPluginFromList(pluginName: String, action: ListPluginComponent.() -> Unit = {}): ListPluginComponent {
+    val rowQuery = xQuery { and(byType("com.intellij.ide.plugins.newui.ListPluginComponent"), byAccessibleName(pluginName)) }
+    return x("($rowQuery)[1]", ListPluginComponent::class.java, "Plugin '$pluginName' in a list").apply(action)
+  }
 
   fun isPluginPresentInList(pluginName: String): Boolean =
     getPluginFromList(pluginName).present()
