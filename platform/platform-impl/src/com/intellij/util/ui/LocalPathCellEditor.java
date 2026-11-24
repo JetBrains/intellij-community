@@ -1,18 +1,15 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.ui;
 
-import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
+import com.intellij.openapi.fileChooser.NioFileChooserBuilder;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.NlsContexts.DialogTitle;
 import com.intellij.openapi.util.NlsSafe;
-import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.io.OSAgnosticPathUtil;
+import com.intellij.openapi.util.io.NioFiles;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.StandardFileSystems;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.PathUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -22,6 +19,7 @@ import javax.swing.JTextField;
 import java.awt.Component;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.nio.file.Path;
 
 public class LocalPathCellEditor extends AbstractTableCellEditor {
   private final @DialogTitle String myTitle;
@@ -79,14 +77,12 @@ public class LocalPathCellEditor extends AbstractTableCellEditor {
         if (StringUtil.isEmpty(initial)) {
           initial = getDefaultPath();
         }
-        VirtualFile initialFile = StringUtil.isNotEmpty(initial) ? StandardFileSystems.local().findFileByPath(initial) : null;
-        FileChooser.chooseFile(getFileChooserDescriptor(), myProject, table, initialFile, file -> {
-          String path = file.getPresentableUrl();
-          if (SystemInfo.isWindows && path.length() == 2 && OSAgnosticPathUtil.startsWithWindowsDrive(path)) {
-            path += "\\"; // make path absolute
-          }
-          myComponent.getChildComponent().setText(path);
-        });
+        Path initialPath = StringUtil.isNotEmpty(initial) ? NioFiles.toPath(initial) : null;
+        Path toSelect = initialPath != null && initialPath.isAbsolute() ? initialPath : null;
+        Path chosen = new NioFileChooserBuilder(getFileChooserDescriptor()).chooseFile(myProject, toSelect, table);
+        if (chosen != null) {
+          myComponent.getChildComponent().setText(chosen.toString());
+        }
       }
     };
   }
