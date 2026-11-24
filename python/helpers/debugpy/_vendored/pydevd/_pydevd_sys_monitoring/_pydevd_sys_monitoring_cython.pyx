@@ -820,6 +820,12 @@ cdef bint _enable_code_tracing(py_db, PyDBAdditionalThreadInfo additional_info, 
     is_stepping = step_cmd != -1
     code_tracing_added = False
 
+    if not is_stepping and py_db.show_return_values and _caller_can_stop_on_breakpoint(frame):
+        # JetBrains extension (PY-87501): the caller can pause on a breakpoint of its own, so it records the
+        # return of this call for its Return Values group, as pydevd does. A step enables the return tracing below.
+        _enable_return_tracing(code)
+        code_tracing_added = True
+
     if func_code_info.always_filtered_out:
         # if DEBUG:
         #     print('disable (always filtered out)')
@@ -1096,6 +1102,26 @@ cdef _remove_return_values(py_db, frame):
 
 # fmt: off
 # IFDEF CYTHON -- DONT EDIT THIS FILE (it is automatically generated)
+cdef bint _caller_can_stop_on_breakpoint(frame):
+    cdef FuncCodeInfo func_code_info
+# ELSE
+# def _caller_can_stop_on_breakpoint(frame):
+# ENDIF
+# fmt: on
+    """
+    JetBrains extension (PY-87501): whether the frame that made this call has a breakpoint of its own, so that the
+    user can pause in it and read the return of the call in its Return Values group. pydevd records every return;
+    this tracer recorded a return only during a step, so a value the frame got before the pause was missing
+    until the next step.
+    """
+    f_back = frame.f_back
+    if f_back is None:
+        return False
+    func_code_info = _get_func_code_info(f_back.f_code, f_back)
+    return func_code_info is not None and func_code_info.breakpoint_found
+
+# fmt: off
+# IFDEF CYTHON -- DONT EDIT THIS FILE (it is automatically generated)
 cdef _return_event(code, instruction, retval):
     cdef ThreadInfo thread_info
     cdef FuncCodeInfo func_code_info
@@ -1132,6 +1158,10 @@ cdef _return_event(code, instruction, retval):
 
     step_cmd = info.pydev_step_cmd
     if step_cmd == -1:
+        # JetBrains extension (PY-87501): without a step, the return of a call made from a frame with a breakpoint
+        # still goes to the Return Values group of that frame.
+        if py_db.show_return_values and _caller_can_stop_on_breakpoint(frame):
+            _show_return_values(frame, retval)
         return
 
     if info.suspend_type != PYTHON_SUSPEND:
