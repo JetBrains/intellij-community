@@ -20,7 +20,7 @@ object AllureHelper {
     JSON("text/json", ".json"),
     HTML("text/html", ".html"),
     JAVA("text/x-java-source", ".java"),
-    PNG("image/jpeg", ".png"),
+    PNG("image/png", ".png"),
     JPEG("image/jpeg", ".jpeg"),
     SVG("image/svg+xml", ".svg"),
     XML("application/xml", ".xml"),
