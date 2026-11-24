@@ -3,6 +3,7 @@ package com.intellij.ide.starter.buildTool
 import com.intellij.ide.starter.ide.IDETestContext
 import com.intellij.ide.starter.process.findAndKillProcessesByName
 import com.intellij.ide.starter.runner.events.IdeAfterLaunchEvent
+import com.intellij.ide.starter.utils.FileSystem.deleteRecursivelyQuietly
 import com.intellij.ide.starter.utils.HttpClient
 import com.intellij.openapi.diagnostic.LogLevel
 import com.intellij.tools.ide.performanceTesting.commands.dto.MavenArchetypeInfo
@@ -67,6 +68,17 @@ open class MavenBuildTool(testContext: IDETestContext) : BuildTool(BuildToolType
       }
     }
 
+    return this
+  }
+
+  /**
+   * Deletes the projects trees that the IDE saves in `MavenProjectsManager.getProjectsTreesDir()`.
+   * [IDETestContext.wipeProjectsDir] keeps them, because they are outside the `projects` directory.
+   */
+  fun removeProjectsTrees(): MavenBuildTool {
+    val projectsTreesDir = testContext.paths.systemDir.resolve("Maven").resolve("Projects")
+    logOutput("Removing Maven projects trees in $projectsTreesDir ...")
+    projectsTreesDir.deleteRecursivelyQuietly()
     return this
   }
 
