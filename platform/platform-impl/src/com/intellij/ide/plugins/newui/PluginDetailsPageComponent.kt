@@ -46,7 +46,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.JBPopupFactory
-import com.intellij.openapi.updateSettings.impl.PluginUpdateExclusionService
 import com.intellij.openapi.updateSettings.impl.PluginUpdateSource
 import com.intellij.openapi.updateSettings.impl.getPresentableName
 import com.intellij.openapi.util.Disposer
@@ -251,6 +250,7 @@ class PluginDetailsPageComponent private constructor(
   private var sourceCodeUrl: LinkPanel? = null
   private var suggestedFeatures: SuggestedComponent? = null
   private var unknownUpdateSourceBanner: UpdateSourceBanner? = null
+  private var isUnknownUpdateSourceWarningRequested = false
   private var updateSourceInitializedBanner: UpdateSourceBanner? = null
   private lateinit var bottomScrollPane: JBScrollPane
   private val scrollPanes = ArrayList<JBScrollPane>()
@@ -638,7 +638,7 @@ class PluginDetailsPageComponent private constructor(
     nameAndButtons.addButtonComponent(enableDisableController!!.uninstallButton.also { myUninstallButton = it })
 
     val autoUpdateEnabledProvider = pluginsAutoUpdateEnabledProvider
-    if (PluginUpdateExclusionService.isFunctionalitySupported() && autoUpdateEnabledProvider != null) {
+    if (pluginModel.isPluginUpdateExclusionSupported() && autoUpdateEnabledProvider != null) {
       val updateButton = PluginUpdateModeButton(
         pluginIdProvider = { plugin?.pluginId },
         pluginModel = pluginModel,
@@ -1501,6 +1501,7 @@ class PluginDetailsPageComponent private constructor(
     val currentPlugin = plugin
     if (currentPlugin == null || forceHideUpdateSourceUi || !UiPluginManager.getInstance().isPluginUpdateSourceVisibleInUI()) {
       myPluginUpdateSourcePanel?.isVisible = false
+      isUnknownUpdateSourceWarningRequested = false
       unknownUpdateSourceBanner?.isVisible = false
       updateSourceInitializedBanner?.isVisible = false
       return
@@ -1510,10 +1511,17 @@ class PluginDetailsPageComponent private constructor(
 
     val isPluginUpdateSourceVisible: Boolean = (!isMarketplace && currentPlugin.isUpdateable) || installedDescriptorForMarketplace != null
     myPluginUpdateSourcePanel?.isVisible = isPluginUpdateSourceVisible
-    unknownUpdateSourceBanner?.isVisible = isPluginUpdateSourceVisible &&
-                                           pluginUpdateSource == null &&
-                                           UiPluginManager.getInstance().isMissingUpdateSourceWarningEnabled()
+    isUnknownUpdateSourceWarningRequested = isPluginUpdateSourceVisible &&
+                                            pluginUpdateSource == null &&
+                                            UiPluginManager.getInstance().isMissingUpdateSourceWarningEnabled()
+    updateUnknownUpdateSourceBanner(pluginModel.isPluginUpdateAllowed(currentPlugin.pluginId))
     updateSourceInitializedBanner?.isVisible = false
+  }
+
+  internal fun updateUnknownUpdateSourceBanner(isPluginUpdateAllowed: Boolean) {
+    plugin?.pluginId ?: return
+    unknownUpdateSourceBanner?.isVisible = isUnknownUpdateSourceWarningRequested &&
+                                           isPluginUpdateAllowed
   }
 
   private fun setPluginUpdateSource(pluginUpdateSource: PluginUpdateSource?, component: DropDownLink<PluginUpdateSource?>?) {

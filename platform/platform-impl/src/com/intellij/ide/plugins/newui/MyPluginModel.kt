@@ -40,6 +40,7 @@ import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.MessageDialogBuilder.Companion.okCancel
 import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.updateSettings.impl.PluginUpdateExclusionService.Exclusion
 import com.intellij.openapi.updateSettings.impl.PluginUpdateSource
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.FUSEventSource
 import com.intellij.openapi.util.text.HtmlChunk
@@ -1300,6 +1301,26 @@ open class MyPluginModel @JvmOverloads constructor(
     }
     myMarketplacePluginComponentMap[pluginId]?.forEach { listComponent ->
       listComponent.updateUnknownUpdateSourceWarning(isUnknown)
+    }
+  }
+
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  fun updateUiAfterUpdateExclusionChange(
+    pluginId: PluginId,
+    pluginUpdateExclusion: Exclusion?,
+    isMissingUpdateSourceWarningEnabled: Boolean,
+  ) {
+    val isPluginUpdateAllowed = pluginUpdateExclusion != Exclusion.FromUpdate
+    forEachDetailPanel { pageComponent ->
+      if (pageComponent.isShowingPlugin(pluginId)) {
+        pageComponent.updateUnknownUpdateSourceBanner(isPluginUpdateAllowed)
+      }
+    }
+    myInstalledPluginComponentMap[pluginId]?.forEach { listComponent ->
+      listComponent.updateUnknownUpdateSourceWarning(isMissingUpdateSourceWarningEnabled, isPluginUpdateAllowed)
+    }
+    myMarketplacePluginComponentMap[pluginId]?.forEach { listComponent ->
+      listComponent.updateUnknownUpdateSourceWarning(isMissingUpdateSourceWarningEnabled, isPluginUpdateAllowed)
     }
   }
 

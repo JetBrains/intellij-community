@@ -1039,7 +1039,11 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
     return PluginUpdateSourceService.getInstance().getAllSources()
   }
 
-  override suspend fun getPluginUpdateExclusion(sessionId: String, pluginId: PluginId): Exclusion? {
+  override fun isPluginUpdateExclusionSupported(): Boolean {
+    return PluginUpdateExclusionService.isFunctionalitySupported()
+  }
+
+  override fun getPluginUpdateExclusion(sessionId: String, pluginId: PluginId): Exclusion? {
     val session = findSession(sessionId) ?: return null
     return session.pluginUpdateExclusionStates[pluginId]?.value
   }

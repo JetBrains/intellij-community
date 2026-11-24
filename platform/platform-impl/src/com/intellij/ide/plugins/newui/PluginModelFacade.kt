@@ -248,7 +248,19 @@ open class PluginModelFacade(private val pluginModel: MyPluginModel) {
     pluginModel.updateSourceFilter.sourcePersisted(pluginId)
   }
 
-  suspend fun getPluginUpdateExclusion(pluginId: PluginId): Exclusion? {
+  fun isMissingUpdateSourceWarningEnabled(): Boolean {
+    return UiPluginManager.getInstance().isMissingUpdateSourceWarningEnabled()
+  }
+
+  fun isPluginUpdateExclusionSupported(): Boolean {
+    return UiPluginManager.getInstance().isPluginUpdateExclusionSupported()
+  }
+
+  fun isPluginUpdateAllowed(pluginId: PluginId): Boolean {
+    return getPluginUpdateExclusion(pluginId) != Exclusion.FromUpdate
+  }
+
+  fun getPluginUpdateExclusion(pluginId: PluginId): Exclusion? {
     return UiPluginManager.getInstance().getPluginUpdateExclusion(pluginModel.sessionId, pluginId)
   }
 

@@ -321,7 +321,11 @@ class UiPluginManager {
     return getController().getAllPluginUpdateSources()
   }
 
-  suspend fun getPluginUpdateExclusion(sessionId: String, pluginId: PluginId): Exclusion? {
+  fun isPluginUpdateExclusionSupported(): Boolean {
+    return getController().isPluginUpdateExclusionSupported()
+  }
+
+  fun getPluginUpdateExclusion(sessionId: String, pluginId: PluginId): Exclusion? {
     return getController().getPluginUpdateExclusion(sessionId, pluginId)
   }
 

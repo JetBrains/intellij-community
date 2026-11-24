@@ -17,6 +17,7 @@ import com.intellij.ui.dsl.listCellRenderer.listCellRenderer
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.Nls
 import java.awt.Dimension
 import javax.swing.DefaultListSelectionModel
@@ -113,6 +114,14 @@ internal class PluginUpdateModeButton(
     val pluginId = pluginIdProvider() ?: return
     coroutineScope.launch(Dispatchers.IO) {
       pluginModel.persistPluginUpdateExclusion(pluginId, exclusion)
+      val isMissingUpdateSourceWarningEnabled = pluginModel.isMissingUpdateSourceWarningEnabled()
+      withContext(Dispatchers.EDT) {
+        pluginModel.getModel().updateUiAfterUpdateExclusionChange(
+          pluginId,
+          pluginUpdateExclusion = pluginModel.getPluginUpdateExclusion(pluginId),
+          isMissingUpdateSourceWarningEnabled = isMissingUpdateSourceWarningEnabled,
+        )
+      }
     }
   }
 }

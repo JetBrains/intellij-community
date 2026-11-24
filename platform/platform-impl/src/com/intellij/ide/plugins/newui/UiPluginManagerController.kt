@@ -122,7 +122,8 @@ interface UiPluginManagerController {
   fun isPluginUpdateSourceVisibleInUI(): Boolean
   fun isMissingUpdateSourceWarningEnabled(): Boolean
   suspend fun getAllPluginUpdateSources(): List<PluginUpdateSource>
-  suspend fun getPluginUpdateExclusion(sessionId: String, pluginId: PluginId): Exclusion?
+  fun isPluginUpdateExclusionSupported(): Boolean
+  fun getPluginUpdateExclusion(sessionId: String, pluginId: PluginId): Exclusion?
   suspend fun persistPluginUpdateExclusion(sessionId: String, pluginId: PluginId, exclusion: Exclusion?)
 
   companion object {

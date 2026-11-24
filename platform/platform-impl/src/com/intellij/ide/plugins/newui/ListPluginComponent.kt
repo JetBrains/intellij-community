@@ -295,6 +295,7 @@ class ListPluginComponent private constructor(
   private var myErrorPanel: JPanel? = null
   private var myErrorComponent: ErrorComponent? = null
   private var myUnknownUpdateSourceWarningPane: JTextComponent? = null
+  private var myIsUpdateSourceUnknown = false
   private var myIndicator: ProgressIndicatorEx? = null
   private var myIndicatorReadOnly = false
   private var myEventHandler: EventHandler? = null
@@ -990,11 +991,23 @@ class ListPluginComponent private constructor(
   }
 
   internal fun updateUnknownUpdateSourceWarning(isUnknown: Boolean) {
+    myIsUpdateSourceUnknown = isUnknown
+    updateUnknownUpdateSourceWarning(
+      isMissingUpdateSourceWarningEnabled = UiPluginManager.getInstance().isMissingUpdateSourceWarningEnabled(),
+      isPluginUpdateAllowed = myModelFacade.isPluginUpdateAllowed(myPlugin.pluginId),
+    )
+  }
+
+  internal fun updateUnknownUpdateSourceWarning(
+    isMissingUpdateSourceWarningEnabled: Boolean,
+    isPluginUpdateAllowed: Boolean,
+  ) {
     val isVisible = when {
-      !UiPluginManager.getInstance().isMissingUpdateSourceWarningEnabled() -> false
-      !isUnknown -> false
+      !isMissingUpdateSourceWarningEnabled -> false
+      !myIsUpdateSourceUnknown -> false
       !myPlugin.isUpdateable -> false
       myMarketplace && myInstalledDescriptorForMarketplace == null -> false
+      !isPluginUpdateAllowed -> false
       else -> true
     }
     myUnknownUpdateSourceWarningPane?.isVisible = isVisible

@@ -49,6 +49,7 @@ targets:
   - ../../testSrc/com/intellij/ide/plugins/newui/PluginDetailsPageComponentTest.kt
   - ../../testSrc/com/intellij/ide/plugins/newui/PluginImagesComponentTest.kt
   - ../../testSrc/com/intellij/ide/plugins/newui/PluginRowRenderKeyTest.kt
+  - ../../testSrc/com/intellij/ide/plugins/newui/PluginUnknownUpdateSourceWarningTest.kt
   - ../../testSrc/com/intellij/ide/plugins/newui/PluginUpdateModeButtonTest.kt
   - ../../testSrc/com/intellij/ide/plugins/unified/LegacyPluginRowFactoryTest.kt
   - ../../testSrc/com/intellij/ide/plugins/unified/UnifiedPluginInternalSourceCoordinatorTest.kt
@@ -899,6 +900,7 @@ Untested: No focused test verifies text selection and copying in Additional Info
 - Unified installed plugin details must show an update-mode action.
 - The update-mode action must be hidden when the plugin is not installed or is pending uninstall.
 - The update-mode action must be hidden when plugin update exclusions are not supported.
+- Plugin update exclusions must be disabled in the split frontend.
 - The popup must show Manual Update and Ignore Updates.
 - The popup must show Auto-Update only when automatic plugin updates are enabled.
 - Ignore Updates is the No Updates mode.
@@ -909,6 +911,23 @@ Untested: No focused test verifies text selection and copying in Additional Info
     `marketplace details hide the update mode action for a plugin that is not installed`;
     `unified details hide the update mode action for a plugin that is pending uninstall`;
     `update mode popup offers auto update only when automatic updates are enabled`
+  )
+  [@test] ../../testSrc/com/intellij/ide/plugins/newui/PluginUnknownUpdateSourceWarningTest.kt (
+    `update mode is disabled in split frontend`
+  )
+
+- The unknown update source warning must appear in a plugin row only when the selected plugin can be updated.
+- The unknown update source banner must appear in plugin details only when the selected plugin can be updated.
+- A plugin can be updated when it is not bundled, or when it is bundled and bundled updates are allowed.
+- Ignore Updates must hide the warning and the banner.
+- A change of the update mode must update the warning and the banner for the plugin.
+- Manual Update and Auto-Update must keep the warning and the banner as the update source requires.
+  [@test] ../../testSrc/com/intellij/ide/plugins/newui/PluginUnknownUpdateSourceWarningTest.kt (
+    `details show the unknown update source banner only when the plugin can be updated`;
+    `list row shows the unknown update source warning only when the plugin can be updated`;
+    `details follow the update mode for the unknown update source banner`;
+    `list row follows the update mode for the unknown update source warning`;
+    `list row keeps the warning hidden for an ignored plugin after an update source change`
   )
 
 - The screenshot carousel must fit inside both details insets so that its controls remain available.
