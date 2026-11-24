@@ -112,7 +112,9 @@ public final class PySearchScopeBuilder {
     Project project = myModuleOrProject.getProject();
     GlobalSearchScope scope;
     if (myModuleOrProject instanceof ModuleOrProject.ModuleAndProject moduleAndProject) {
-      scope = GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(moduleAndProject.getModule());
+      Module module = moduleAndProject.getModule();
+      scope = GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module)
+        .union(module.getModuleContentWithDependenciesScope());
     }
     else {
       scope = GlobalSearchScope.allScope(project);
