@@ -111,6 +111,7 @@ jvm_library(
         "//platform/testFramework/junit5",
         "//platform/testFramework",
         "//platform/core-api:core",
+        "//platform/core-impl",
         "//platform/core-ui",
         "//platform/lang-impl",
         "//platform/editor-ui-api:editor-ui",

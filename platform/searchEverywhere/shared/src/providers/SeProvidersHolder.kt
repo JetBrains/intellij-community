@@ -5,6 +5,7 @@ import com.intellij.ide.actions.searcheverywhere.EssentialContributor
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributor
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereHeader
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereManagerImpl
+import com.intellij.ide.actions.searcheverywhere.SearchEverywhereMlContributorReplacement
 import com.intellij.ide.actions.searcheverywhere.TabsCustomizationStrategy
 import com.intellij.ide.plugins.PluginManager
 import com.intellij.openapi.Disposable
@@ -150,14 +151,18 @@ class SeProvidersHolder(
           val provider = legacyContributors[providerFactoryId]?.let {
             initialize { providerFactory.getItemsProviderCatchingOrNull(project, it, isAllTab = true, dataContext = dataContext) }
           }
-          val separateTabProvider = separateTabLegacyContributors[providerFactoryId]?.let {
-            initialize { providerFactory.getItemsProviderCatchingOrNull(project, it, isAllTab = false, dataContext = dataContext) }
+          val separateTabProvider = disposingOnFailure(provider) {
+            separateTabLegacyContributors[providerFactoryId]?.let {
+              initialize { providerFactory.getItemsProviderCatchingOrNull(project, it, isAllTab = false, dataContext = dataContext) }
+            }
           }
           return provider to separateTabProvider
         }
         is SeTabAwareItemsProviderFactory -> {
           val provider = initialize { providerFactory.getItemsProviderCatchingOrNull(project, dataContext, isAllTab = true) }
-          val separateTabProvider = initialize { providerFactory.getItemsProviderCatchingOrNull(project, dataContext, isAllTab = false) }
+          val separateTabProvider = disposingOnFailure(provider) {
+            initialize { providerFactory.getItemsProviderCatchingOrNull(project, dataContext, isAllTab = false) }
+          }
           return provider to separateTabProvider
         }
         else -> {
@@ -170,6 +175,16 @@ class SeProvidersHolder(
       }
     }
 
+    /** Runs [block], and disposes [created] when [block] fails or is canceled: then no caller gets [created]. */
+    private inline fun <T> disposingOnFailure(created: SeItemsProvider?, block: () -> T): T =
+      try {
+        block()
+      }
+      catch (e: Throwable) {
+        created?.let { Disposer.dispose(it) }
+        throw e
+      }
+
     private fun createAdaptedProvidersIfNecessary(legacyContributors: Map<SeProviderId, SearchEverywhereContributor<Any>>,
                                                   supportedProviders: Map<SeProviderId, SeLocalItemDataProvider>,
                                                   presentationProviders: Map<SeProviderId, SeLegacyItemPresentationProvider>,
@@ -180,6 +195,14 @@ class SeProvidersHolder(
       }
     }
 
+    /**
+     * Creates the legacy contributors of [project] into [allContributors] and [separateTabContributors].
+     *
+     * Both steps run in one EDT block. A replacement of a separate tab contributor reads the event that
+     * [SearchEverywhereManagerImpl.createContributors] saves in [SearchEverywhereMlContributorReplacement]. No other
+     * popup can save its own event between the two steps. The maps hold the contributors also when the caller is
+     * canceled after the block, so the caller can dispose them.
+     */
     internal suspend fun initializeLegacyContributors(
       initEvent: AnActionEvent,
       project: Project?,
@@ -188,21 +211,19 @@ class SeProvidersHolder(
     ) {
       withContext(Dispatchers.EDT) {
         SearchEverywhereManagerImpl.createContributors(initEvent, project, true, false)
-      }.filterIsInstance<SearchEverywhereContributor<Any>>().forEach {
-        allContributors[SeProviderId(it.searchProviderId)] = it
-      }
+          .filterIsInstance<SearchEverywhereContributor<Any>>()
+          .forEach { allContributors[SeProviderId(it.searchProviderId)] = it }
 
-      // From com.intellij.ide.actions.searcheverywhere.SearchEverywhereHeader.createTabs
-      (runCatching {
-        withContext(Dispatchers.EDT) {
+        // From com.intellij.ide.actions.searcheverywhere.SearchEverywhereHeader.createTabs
+        (runCatching {
           TabsCustomizationStrategy.getInstance().getSeparateTabContributors(allContributors.values.toList())
             .filterIsInstance<SearchEverywhereContributor<Any>>()
             .associateBy { SeProviderId(it.searchProviderId) }
+        }.getOrHandleException { t ->
+          Logger.getInstance(SearchEverywhereHeader::class.java).error(t)
+        } ?: allContributors.filter { it.value.isShownInSeparateTab }).forEach {
+          separateTabContributors[it.key] = it.value
         }
-      }.getOrHandleException { t ->
-        Logger.getInstance(SearchEverywhereHeader::class.java).error(t)
-      } ?: allContributors.filter { it.value.isShownInSeparateTab }).forEach {
-        separateTabContributors[it.key] = it.value
       }
     }
   }

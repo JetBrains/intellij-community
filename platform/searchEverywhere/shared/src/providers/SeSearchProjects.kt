@@ -1,6 +1,8 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.searchEverywhere.providers
 
+import com.intellij.concurrency.IntelliJContextElement
+import com.intellij.concurrency.currentThreadContext
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
 import com.intellij.platform.project.projectId
@@ -8,6 +10,8 @@ import com.intellij.platform.searchEverywhere.SeFilterState
 import com.intellij.platform.searchEverywhere.SeProviderId
 import com.intellij.psi.search.GlobalSearchScope
 import org.jetbrains.annotations.ApiStatus
+import kotlin.coroutines.AbstractCoroutineContextElement
+import kotlin.coroutines.CoroutineContext
 
 /**
  * Names the projects that one Search Everywhere popup searches.
@@ -77,5 +81,26 @@ object SeSearchProjectsFilter {
     val map = state.keys.associateWithTo(LinkedHashMap()) { state.get(it).orEmpty() }
     if (projects == null) map.remove(KEY) else map[KEY] = projects.map(::keyOf)
     return SeFilterState.Data(map)
+  }
+}
+
+/**
+ * Marks the search of one project that a popup runs in each of its [SeSearchProjects].
+ *
+ * The popup asks the providers of each search project, so the search of one project must not also search the other
+ * projects. A provider that reaches several projects in one run reads [isSearchOf]. A search outside such a popup has
+ * no mark: Go to Class of the platform, or a popup that searches one project.
+ *
+ * The mark holds the key of the project, not the project, so a computation that it reaches retains no project.
+ */
+@ApiStatus.Internal
+class SeSearchProjectContext(private val projectKey: String) : AbstractCoroutineContextElement(Key), IntelliJContextElement {
+  /** A child computation searches the same project, also one that runs on another thread. */
+  override fun produceChildElement(parentContext: CoroutineContext, isStructured: Boolean): IntelliJContextElement = this
+
+  companion object Key : CoroutineContext.Key<SeSearchProjectContext> {
+    /** Whether the current thread runs the search of [project] that a popup runs in each of its search projects. */
+    fun isSearchOf(project: Project): Boolean =
+      currentThreadContext()[Key]?.projectKey == SeSearchProjectsFilter.keyOf(project)
   }
 }

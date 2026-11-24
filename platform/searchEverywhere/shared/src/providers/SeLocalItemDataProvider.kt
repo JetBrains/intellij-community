@@ -51,6 +51,7 @@ import kotlinx.coroutines.yield
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.util.UUID
+import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.concurrent.atomics.AtomicInt
 import kotlin.concurrent.atomics.ExperimentalAtomicApi
 import kotlin.concurrent.atomics.incrementAndFetch
@@ -209,8 +210,12 @@ class SeLocalItemDataProvider(
    */
   private fun itemsRawChannelFlow(params: SeParams, operationDisposable: Disposable?): Flow<OwnedItem> {
     return channelFlow {
+      val source = searchProjectProviders
       for ((provider, searchProjectKey) in searchedProviders(params)) {
-        launch {
+        // A provider that reaches several projects in one run then searches its own project only, see [SeSearchProjectContext].
+        val mark = if (source != null && source.marksSearchOfProject && searchProjectKey != null) SeSearchProjectContext(searchProjectKey)
+        else EmptyCoroutineContext
+        launch(mark) {
           try {
             collectItemsWithRetry(provider, params, operationDisposable) { item ->
               send(OwnedItem(item, searchProjectKey))
@@ -230,14 +235,11 @@ class SeLocalItemDataProvider(
 
   /**
    * The providers that [params] asks: [provider] alone, or the providers of the search projects that the filter picks,
-   * see [SeSearchProjectsFilter]. A pick that names no search project of the popup asks every search project: the
-   * picked project closed after the filter took it.
+   * see [SeSearchProjectsFilter] and [SeSearchProjectProviders.Source.providers].
    */
   private suspend fun searchedProviders(params: SeParams): List<Pair<SeItemsProvider, String?>> {
     val source = searchProjectProviders ?: return listOf(provider to null)
-    val all = listOfNotNull(source.popupProjectKey?.let { provider to it }) + source.providers().map { it.provider to it.key }
-    val selectedKeys = SeSearchProjectsFilter.selectedKeys(params.filter) ?: return all
-    return all.filter { (_, key) -> key in selectedKeys }.ifEmpty { all }
+    return source.providers(params.filter, provider).map { it.provider to it.key }
   }
 
   /** The provider that gave [itemData]: the provider of its search project, else [provider]. */
