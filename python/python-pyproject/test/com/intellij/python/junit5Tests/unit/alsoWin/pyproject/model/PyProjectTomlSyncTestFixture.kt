@@ -202,8 +202,8 @@ internal class PyProjectTomlSyncTestFixture(val project: Project, val root: Virt
     assertThat(pythonModule)
       .describedAs("Bystander Python module '$BYSTANDER_PYTHON' must still exist")
       .isNotNull
-    assertThat(pythonModule!!.type).isEqualTo(ModuleTypeId(PYTHON))
-    assertThat(pythonModule.contentRoots.single().url.toPath().fileName?.toString()).isEqualTo(BYSTANDER_PYTHON)
+    // Its Python module type can be gone: the migration removes it, see migrateSdkReferences.
+    assertThat(pythonModule!!.contentRoots.single().url.toPath().fileName?.toString()).isEqualTo(BYSTANDER_PYTHON)
     assertThat(pythonModule.pyProjectTomlEntity)
       .describedAs("Bystander Python module must NOT have a pyProjectTomlEntity")
       .isNull()
@@ -295,7 +295,8 @@ internal class PyProjectTomlSyncTestFixture(val project: Project, val root: Virt
         .isNotEmpty
     }
 
-    // Verify module type and pyproject entity consistency per expected module.
+    // Verify the pyproject entity consistency per expected module. The model writes no module type, so a Python module has
+    // whatever type the IDE gave it.
     val expectedMap = expectedModules.associateBy { it.name }
     for (entity in moduleEntities) {
       if (entity.name == BYSTANDER_JAVA || entity.name == BYSTANDER_PYTHON) continue
@@ -306,9 +307,6 @@ internal class PyProjectTomlSyncTestFixture(val project: Project, val root: Virt
         .isNotNull
       when (expected!!.type) {
         PYPROJECT -> {
-          assertThat(entity.type)
-            .describedAs("PyProject module '${entity.name}' must have PYTHON_MODULE type")
-            .isEqualTo(ModuleTypeId(PYTHON))
           assertThat(isPyProjectBased)
             .describedAs("PyProject module '${entity.name}' must be pyproject-based")
             .isTrue()
@@ -333,9 +331,6 @@ internal class PyProjectTomlSyncTestFixture(val project: Project, val root: Virt
           }
         }
         PYTHON -> {
-          assertThat(entity.type)
-            .describedAs("Python module '${entity.name}' must have PYTHON_MODULE type")
-            .isEqualTo(ModuleTypeId(PYTHON))
           assertThat(isPyProjectBased)
             .describedAs("Python module '${entity.name}' must NOT be pyproject-based")
             .isFalse()

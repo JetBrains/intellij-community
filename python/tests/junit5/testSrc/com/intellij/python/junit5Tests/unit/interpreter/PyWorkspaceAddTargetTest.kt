@@ -21,8 +21,9 @@ import kotlin.io.path.Path
 import kotlin.io.path.createDirectories
 
 /**
- * Without a Python project, the Python > Workspace page lists the module that the user opened, as in GoLand, WebStorm,
- * DataGrip and RustRover: the module of the project directory, not an attached one. Its pane adds the first interpreter.
+ * The first interpreter of a project goes to the module that the user opened: the module of the project directory, not an
+ * attached one. The test JVM is PyCharm, where each module is a Python module, so the list of a page without a Python
+ * project, as in GoLand, cannot be built here.
  */
 @TestApplication
 internal class PyWorkspaceAddTargetTest {
@@ -30,13 +31,11 @@ internal class PyWorkspaceAddTargetTest {
   private val primaryFixture = projectFixture.moduleFixture(projectFixture.directoryInProjectFixture(Path("")), addPathToSourceRoot = true)
   private val attachedFixture = projectFixture.moduleFixture(projectFixture.directoryInProjectFixture(Path("attached")), addPathToSourceRoot = true)
 
-  // The page lists every module only in IDEA. The tests name the product, so they do not depend on the one they run in.
   @Test
   fun `the first interpreter goes to the module of the project directory`() {
     val primary = primaryFixture.get()
     attachedFixture.get()
     assertThat(workspaceAddTargetOf(projectFixture.get())).isEqualTo(primary)
-    assertThat(workspaceModulesOf(projectFixture.get(), listsEveryModule = false)).containsExactly(primary)
   }
 
   @Test

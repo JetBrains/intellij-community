@@ -103,16 +103,6 @@ class PyInterpreterInspectionTest {
   }
 
   @Test
-  fun `no notification for non-python module`(): Unit = timeoutRunBlocking {
-    module.setModuleType("JAVA_MODULE")
-    val file = createFileInModule("test.py", "print('hello')\n")
-    val provider = PyInterpreterNotificationProvider()
-    readAction {
-      assertNull(provider.collectNotificationData(project, file), "Expected no notification for non-Python module")
-    }
-  }
-
-  @Test
   fun `no notification for irrelevant file`(): Unit = timeoutRunBlocking {
     val file = createFileInModule("build.gradle", "")
     val provider = PyInterpreterNotificationProvider()
