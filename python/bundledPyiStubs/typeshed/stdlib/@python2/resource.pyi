@@ -36,6 +36,7 @@ if sys.platform != "win32":
         ru_nsignals: int
         ru_nvcsw: int
         ru_nivcsw: int
+
     def getrusage(who: int) -> _RUsage: ...
     def getpagesize() -> int: ...
     RUSAGE_SELF: int

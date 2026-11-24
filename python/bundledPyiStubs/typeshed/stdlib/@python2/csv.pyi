@@ -39,6 +39,7 @@ class DictReader(Generic[_T], Iterator[_DictReadMapping[_T, str]]):
     reader: _reader
     dialect: _DialectLike
     line_num: int
+
     @overload
     def __init__(
         self,
@@ -61,6 +62,7 @@ class DictReader(Generic[_T], Iterator[_DictReadMapping[_T, str]]):
         *args: Any,
         **kwds: Any,
     ) -> None: ...
+
     def __iter__(self) -> DictReader[_T]: ...
     def next(self) -> _DictReadMapping[_T, str]: ...
 

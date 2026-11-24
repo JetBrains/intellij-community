@@ -104,21 +104,23 @@ class Marshaller:
     dispatch: Mapping[type, Callable[[Marshaller, str, Callable[[str], None]], None]]
     def dumps(
         self,
-        values: Iterable[
-            None
-            | int
-            | bool
-            | long
-            | float
-            | str
-            | unicode
-            | list[Any]
-            | tuple[Any, ...]
-            | Mapping[Any, Any]
-            | datetime
-            | InstanceType
-        ]
-        | Fault,
+        values: (
+            Iterable[
+                None
+                | int
+                | bool
+                | long
+                | float
+                | str
+                | unicode
+                | list[Any]
+                | tuple[Any, ...]
+                | Mapping[Any, Any]
+                | datetime
+                | InstanceType
+            ]
+            | Fault
+        ),
     ) -> str: ...
     def dump_nil(self, value: None, write: Callable[[str], None]) -> None: ...
     def dump_int(self, value: int, write: Callable[[str], None]) -> None: ...

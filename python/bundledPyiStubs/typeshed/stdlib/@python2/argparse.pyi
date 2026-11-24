@@ -102,6 +102,7 @@ class ArgumentParser(_AttributeHolder, _ActionsContainer):
         conflict_handler: Text = ...,
         add_help: bool = ...,
     ) -> None: ...
+
     # The type-ignores in these overloads should be temporary.  See:
     # https://github.com/python/typeshed/pull/2643#issuecomment-442280277
     @overload
@@ -114,6 +115,7 @@ class ArgumentParser(_AttributeHolder, _ActionsContainer):
     def parse_args(self, *, namespace: None) -> Namespace: ...  # type: ignore[misc]
     @overload
     def parse_args(self, *, namespace: _N) -> _N: ...
+
     def add_subparsers(
         self,
         *,

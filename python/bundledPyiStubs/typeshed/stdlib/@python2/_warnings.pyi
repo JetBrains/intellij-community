@@ -9,6 +9,7 @@ filters: list[tuple[Any, ...]]
 def warn(message: str, category: type[Warning] | None = ..., stacklevel: int = ...) -> None: ...
 @overload
 def warn(message: Warning, category: Any = ..., stacklevel: int = ...) -> None: ...
+
 @overload
 def warn_explicit(
     message: str,

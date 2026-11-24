@@ -15,6 +15,7 @@ else:
 
     class DupFd:
         """Wrapper for fd which can be used at any time."""
+
         def __init__(self, fd: int) -> None: ...
         def detach(self) -> int:
             """Get the fd.  This should only be called once."""

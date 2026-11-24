@@ -12,6 +12,7 @@ if sys.platform == "win32":
         # Don't exist at runtime
         __new__: None  # type: ignore[assignment]
         __init__: None  # type: ignore[assignment]
+
     # Actual typename Summary, not exposed by the implementation
     class _Summary:
         def GetProperty(self, propid: int) -> str | bytes | None: ...
@@ -21,6 +22,7 @@ if sys.platform == "win32":
         # Don't exist at runtime
         __new__: None  # type: ignore[assignment]
         __init__: None  # type: ignore[assignment]
+
     # Actual typename Database, not exposed by the implementation
     class _Database:
         def OpenView(self, sql: str) -> _View: ...
@@ -30,6 +32,7 @@ if sys.platform == "win32":
         # Don't exist at runtime
         __new__: None  # type: ignore[assignment]
         __init__: None  # type: ignore[assignment]
+
     # Actual typename Record, not exposed by the implementation
     class _Record:
         def GetFieldCount(self) -> int: ...
@@ -42,6 +45,7 @@ if sys.platform == "win32":
         # Don't exist at runtime
         __new__: None  # type: ignore[assignment]
         __init__: None  # type: ignore[assignment]
+
     def UuidCreate() -> str: ...
     def FCICreate(cabname: str, files: list[str]) -> None: ...
     def OpenDatabase(name: str, flags: int) -> _Database: ...

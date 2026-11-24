@@ -47,6 +47,7 @@ if sys.platform != "linux" and sys.platform != "win32":
             data: Any = ...,
             udata: Any = ...,
         ) -> None: ...
+
     # BSD only
     class kqueue(object):
         closed: bool
@@ -58,6 +59,7 @@ if sys.platform != "linux" and sys.platform != "win32":
         def fileno(self) -> int: ...
         @classmethod
         def fromfd(cls, __fd: FileDescriptorLike) -> kqueue: ...
+
     KQ_EV_ADD: int
     KQ_EV_CLEAR: int
     KQ_EV_DELETE: int
@@ -109,6 +111,7 @@ if sys.platform == "linux":
         def poll(self, timeout: float | None = ..., maxevents: int = ...) -> list[tuple[int, int]]: ...
         @classmethod
         def fromfd(cls, __fd: FileDescriptorLike) -> epoll: ...
+
     EPOLLERR: int
     EPOLLET: int
     EPOLLHUP: int
