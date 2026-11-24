@@ -11,6 +11,7 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.psi.codeStyle.CodeStyleSettings
 import com.intellij.psi.impl.source.codeStyle.PostFormatProcessor
+import com.intellij.python.community.testFramework.fixme
 import com.intellij.testFramework.junit5.TestDisposable
 import com.jetbrains.python.PythonFileType
 import com.jetbrains.python.allure.Layers
@@ -18,6 +19,7 @@ import com.jetbrains.python.allure.Subsystems
 import com.jetbrains.python.fixtures.PyCodeInsightTestCase
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
+import org.opentest4j.AssertionFailedError
 
 @Subsystems.Formatter
 @Layers.Functional
@@ -66,6 +68,53 @@ class PyTrailingCommasPostFormatProcessorTest : PyCodeInsightTestCase() {
       )
     """.trimIndent(), myFixture.file.text.trimEnd())
     assertEquals(1, counter.processedElements)
+  }
+
+  @Test
+  fun `a trailing comma follows a multi-line last argument`() = assertReformattedWithTrailingCommas("""
+    print(
+        1,
+        [
+            2,
+        ]
+    )
+  """, """
+    print(
+        1,
+        [
+            2,
+        ],
+    )
+  """)
+
+  @TestFor(issues = ["PY-86792"])
+  @Test
+  fun `no trailing comma follows a sole generator argument`() =
+    fixme<AssertionFailedError>("PY-86792 the formatter adds a comma after the generator, which is a syntax error", "range(3),") {
+      assertReformattedWithTrailingCommas("""
+        print(
+            x
+            for x in range(3)
+        )
+      """, """
+        print(
+            x
+            for x in range(3)
+        )
+      """)
+    }
+
+  /** Reformats [before] with trailing commas in argument lists on, and compares the text with [after]. */
+  private fun assertReformattedWithTrailingCommas(before: String, after: String) {
+    myFixture.configureByText(PythonFileType.INSTANCE, before.trimIndent())
+    val settings = CodeStyle.createTestSettings()
+    settings.getCustomSettings(PyCodeStyleSettings::class.java).USE_TRAILING_COMMA_IN_ARGUMENTS_LIST = true
+    CodeStyle.doWithTemporarySettings(myFixture.project, settings, Runnable {
+      WriteCommandAction.runWriteCommandAction(myFixture.project, Runnable {
+        CodeStyleManager.getInstance(myFixture.project).reformat(myFixture.file)
+      })
+    })
+    assertEquals(after.trimIndent(), myFixture.file.text.trimEnd())
   }
 
   /**
