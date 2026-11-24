@@ -1,4 +1,5 @@
 load("@community//build:tests-options.bzl", "jps_test")
+load("@community//platform/build-scripts/bazel-rules:ij_plugin.bzl", "ij_plugin")
 load("@jps_dynamic_deps_community//:targets.bzl", "dist_plugin")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
@@ -130,6 +131,29 @@ jvm_library(
     ],
 )
 ### auto-generated section `build intellij.completionMlRankingModels` end
+
+### auto-generated section `plugin intellij.completionMlRankingModels` start
+ij_plugin(
+    name = "completion-ml-ranking-models_plugin",
+    descriptor_module = ":completion-ml-ranking-models",
+    content_modules = [
+        # do not sort,
+        "//plugins/completion-ml-ranking-models/libraries:libraries_plugin_module",
+        "//libraries/completion-ranking-cpp:completion-ranking-cpp_plugin_module",
+        "//libraries/completion-ranking-go:completion-ranking-go_plugin_module",
+        "//libraries/completion-ranking-java:completion-ranking-java_plugin_module",
+        "//libraries/completion-ranking-js:completion-ranking-js_plugin_module",
+        "//libraries/completion-ranking-kotlin:completion-ranking-kotlin_plugin_module",
+        "//libraries/completion-ranking-php:completion-ranking-php_plugin_module",
+        "//libraries/completion-ranking-ruby:completion-ranking-ruby_plugin_module",
+        "//libraries/completion-ranking-rust:completion-ranking-rust_plugin_module",
+        "//libraries/completion-ranking-sh:completion-ranking-sh_plugin_module",
+        "//libraries/completion-ranking-swift:completion-ranking-swift_plugin_module",
+        "//libraries/completion-ranking-typescript:completion-ranking-typescript_plugin_module",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `plugin intellij.completionMlRankingModels` end
 
 ### auto-generated section `iml intellij.completionMlRankingModels` start
 exports_files(

@@ -1,13 +1,21 @@
-load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("@community//platform/build-scripts/bazel-rules:ij_plugin_module.bzl", "ij_plugin_module")
 
 ### auto-generated section `build intellij.completionMlRankingModels.libraries` start
-jvm_library(
+ij_plugin_module(
     name = "libraries",
     srcs = glob(
         [],
         allow_empty = True,
     ),
     module_name = "intellij.completionMlRankingModels.libraries",
+    packed_deps = [
+        # do not sort,
+        "@lib//:completion_ml_ranking_models-libraries-completion-ranking-css-exp",
+        "@lib//:completion_ml_ranking_models-libraries-completion-ranking-dart-exp",
+        "@lib//:completion_ml_ranking_models-libraries-completion-ranking-html-exp",
+        "@lib//:completion_ml_ranking_models-libraries-completion-ranking-python-exp",
+        "@lib//:completion_ml_ranking_models-libraries-completion-ranking-scala-exp",
+    ],
     resource_strip_prefix = "resources",
     resources = glob(
         ["resources/**/*"],
