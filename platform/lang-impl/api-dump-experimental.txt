@@ -905,6 +905,40 @@ c:com.intellij.refactoring.memberPushDown.PushDownProcessor
 - isAnswered(com.intellij.refactoring.modplan.ModPlanOptionValues):Z
 - isConfirmed(com.intellij.refactoring.modplan.ModPlanOptionValues):Z
 - options():java.util.List
+*:com.intellij.refactoring.modplan.move.ModPlanMoveFileHandler
+- sf:NOTHING:com.intellij.refactoring.modplan.move.ModPlanMoveFileHandler
+- a:analyze(com.intellij.psi.PsiFile,com.intellij.refactoring.modplan.move.ModPlanMovePlaces,com.intellij.refactoring.modplan.ModPlanRequest):com.intellij.refactoring.modplan.ModPlanAnalysisResult
+*f:com.intellij.refactoring.modplan.move.ModPlanMoveOptions
+- sf:SEARCH_FOR_TEXT:com.intellij.refactoring.modplan.ModPlanOption
+- sf:SEARCH_IN_COMMENTS:com.intellij.refactoring.modplan.ModPlanOption
+- sf:TARGET_DIRECTORY:com.intellij.refactoring.modplan.ModPlanOption
+*f:com.intellij.refactoring.modplan.move.ModPlanMovePlaces
+- futurePathOf(com.intellij.openapi.vfs.VirtualFile):java.lang.String
+*e:com.intellij.refactoring.modplan.move.ModPlanMoveProblem
+- java.lang.Enum
+- sf:ALREADY_IN_DESTINATION:com.intellij.refactoring.modplan.move.ModPlanMoveProblem
+- sf:INVALID_DESTINATION:com.intellij.refactoring.modplan.move.ModPlanMoveProblem
+- sf:INVALID_SUBJECT:com.intellij.refactoring.modplan.move.ModPlanMoveProblem
+- sf:MOVE_INTO_ITSELF:com.intellij.refactoring.modplan.move.ModPlanMoveProblem
+- sf:TARGET_EXISTS:com.intellij.refactoring.modplan.move.ModPlanMoveProblem
+- message():java.lang.String
+- s:valueOf(java.lang.String):com.intellij.refactoring.modplan.move.ModPlanMoveProblem
+- s:values():com.intellij.refactoring.modplan.move.ModPlanMoveProblem[]
+*f:com.intellij.refactoring.modplan.move.ModPlanMoveRefactoring
+- com.intellij.refactoring.modplan.ModPlanRefactoring
+- *sf:Companion:com.intellij.refactoring.modplan.move.ModPlanMoveRefactoring$Companion
+- <init>():V
+- chain(com.intellij.refactoring.modplan.ModPlanChainBuilder):com.intellij.refactoring.modplan.ModPlanChain
+- *sf:checkPlacement(com.intellij.openapi.project.Project,java.util.List,java.lang.String):com.intellij.refactoring.modplan.move.ModPlanMoveProblem
+- *sf:getInstance():com.intellij.refactoring.modplan.move.ModPlanMoveRefactoring
+- id():java.lang.String
+- isSupported(com.intellij.refactoring.modplan.ModPlanRequest):Z
+- *sf:request(com.intellij.openapi.project.Project,java.util.Collection,java.lang.String,com.intellij.refactoring.modplan.ModPlanOptionValues):com.intellij.refactoring.modplan.ModPlanRequest
+- title():java.lang.String
+*f:com.intellij.refactoring.modplan.move.ModPlanMoveRefactoring$Companion
+- f:checkPlacement(com.intellij.openapi.project.Project,java.util.List,java.lang.String):com.intellij.refactoring.modplan.move.ModPlanMoveProblem
+- f:getInstance():com.intellij.refactoring.modplan.move.ModPlanMoveRefactoring
+- f:request(com.intellij.openapi.project.Project,java.util.Collection,java.lang.String,com.intellij.refactoring.modplan.ModPlanOptionValues):com.intellij.refactoring.modplan.ModPlanRequest
 *c:com.intellij.refactoring.modplan.rename.ModPlanBridgeRenameProvider
 - com.intellij.refactoring.modplan.rename.ModPlanRenameProviderBase
 - p:<init>(java.lang.Class):V
@@ -1061,6 +1095,8 @@ c:com.intellij.refactoring.memberPushDown.PushDownProcessor
 - f:getInstance():com.intellij.refactoring.modplan.safeDelete.ModPlanSafeDeleteRefactoring
 *:com.intellij.refactoring.modplan.safeDelete.ModPlanSafeDeleteUsage
 - a:asModPlanEdit():com.intellij.refactoring.modplan.ModPlanEdit
+a:com.intellij.refactoring.move.moveFilesOrDirectories.MoveFileHandler
+- *:asModPlan():com.intellij.refactoring.modplan.move.ModPlanMoveFileHandler
 *f:com.intellij.refactoring.rename.HeadlessRenameConflict
 - <init>(java.lang.String,java.lang.String):V
 - f:component1():java.lang.String
