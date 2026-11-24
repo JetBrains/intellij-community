@@ -110,9 +110,9 @@ fun deleteMigrationState(file: Path) {
   deleteLogged(migrationRedirectContentFile(file))
 }
 
-/** The data of the `product-info.json` of an installed IDE. [macLauncher] is an executable file inside the IDE. */
+/** The data of the `product-info.json` of an installed IDE. [launcher] is an executable file inside the IDE. */
 @ApiStatus.Internal
-class InstalledProductInfo(val productCode: String?, val macLauncher: Path?)
+class InstalledProductInfo(val productCode: String?, val launcher: Path?)
 
 /**
  * Returns the `product-info.json` data of the installed IDE [app], or `null` when the file does not exist or is not valid.

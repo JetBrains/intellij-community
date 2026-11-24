@@ -152,7 +152,7 @@ fun loadMigrationRedirect(
     val state = validateMigrationState(unchecked, stateFile, info) ?: return null
     if (start.waits) {
       LOG.info("a start that waits for the result, ${state.app} starts with no window")
-      return MigrationRedirect(state, waits = true, content = null, launcher = info?.macLauncher)
+      return MigrationRedirect(state, waits = true, content = null, launcher = info?.launcher)
     }
     val content = readMigrationRedirectContent(migrationRedirectContentFile(stateFile))
     if (content == null) {

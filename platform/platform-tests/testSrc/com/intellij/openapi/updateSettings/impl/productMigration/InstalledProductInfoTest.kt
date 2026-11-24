@@ -63,29 +63,29 @@ class InstalledProductInfoTest {
     assertEquals(app.resolve("Contents/MacOS/light"), launcher)
     val info = readInstalledProductInfo(app)!!
     assertEquals("JB", info.productCode)
-    assertEquals(launcher, info.macLauncher)
+    assertEquals(launcher, info.launcher)
   }
 
   @Test
   fun `no launcher without a macOS record`() {
     write("Contents/Resources/product-info.json", """{ "productCode": "JB" }""")
-    assertNull(readInstalledProductInfo(app)!!.macLauncher)
+    assertNull(readInstalledProductInfo(app)!!.launcher)
     write("Contents/Resources/product-info.json", """{ "productCode": "JB", "launch": [{ "os": "Linux", "launcherPath": "../MacOS/light" }] }""")
-    assertNull(readInstalledProductInfo(app)!!.macLauncher)
+    assertNull(readInstalledProductInfo(app)!!.launcher)
   }
 
   @Test
   fun `no launcher outside the application`() {
     IoTestUtil.assumeUnix()
     writeMacLauncher(app, launcherPath = "../../../outside")
-    assertNull(readInstalledProductInfo(app)!!.macLauncher)
+    assertNull(readInstalledProductInfo(app)!!.launcher)
   }
 
   @Test
   fun `no launcher that is not executable`() {
     IoTestUtil.assumeUnix()
     writeMacLauncher(app).setPosixFilePermissions(PosixFilePermissions.fromString("rw-r--r--"))
-    assertNull(readInstalledProductInfo(app)!!.macLauncher)
+    assertNull(readInstalledProductInfo(app)!!.launcher)
   }
 
   private fun write(relativePath: String, text: String) {
