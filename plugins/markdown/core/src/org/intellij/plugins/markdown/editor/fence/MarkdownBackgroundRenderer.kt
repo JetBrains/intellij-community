@@ -7,6 +7,7 @@ import com.intellij.openapi.editor.colors.EditorColors
 import com.intellij.openapi.editor.colors.EditorFontType
 import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.openapi.editor.ex.EditorEx
+import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.editor.markup.CustomHighlighterOrder
 import com.intellij.openapi.editor.markup.CustomHighlighterRenderer
 import com.intellij.openapi.editor.markup.RangeHighlighter
@@ -50,10 +51,10 @@ enum class MarkdownBackgroundRenderer(
     val color = getColor(editor) ?: return
     if (isHiddenByFold(editor, highlighter)) return
     graphics.color = color
-    val startX = editor.offsetToXY(highlighter.startOffset).x
     when (this) {
-      CODE_FENCE -> paintCodeFence(editor, highlighter, graphics, startX)
+      CODE_FENCE -> paintCodeFence(editor, highlighter, graphics, editor.offsetToXY(highlighter.startOffset).x)
       BLOCK_QUOTE -> {
+        val startX = editor.offsetToXY(highlighter.startOffset).x
         val rows = visualLines(editor, highlighter.startOffset, highlighter.endOffset, graphics.clipBounds)
           .map { Row(minOf(startX, getTextStart(editor, it)), it.top, it.bottom) }
         fillRows(editor, graphics, rows, getRightVisibleEdge(editor), roundLeft = false)
@@ -137,16 +138,21 @@ private fun visualLines(editor: Editor, start: Int, end: Int, clip: Rectangle?):
   val document = editor.document
   val firstLine = editor.offsetToVisualLine(start, false)
   val lastLine = editor.offsetToVisualLine(end, true)
-  val fromLine = if (clip == null) firstLine else maxOf(firstLine, editor.yToVisualLine(clip.y) - 1)
-  val toLine = if (clip == null) lastLine else minOf(lastLine, editor.yToVisualLine(clip.y + clip.height) + 1)
+  val fromLine = if (clip == null || editor.visualLineToY(firstLine) >= clip.y) firstLine
+                 else maxOf(firstLine, editor.yToVisualLine(clip.y) - 1)
+  val toLine = if (clip == null || editor.visualLineToY(lastLine) <= clip.y + clip.height) lastLine
+               else minOf(lastLine, editor.yToVisualLine(clip.y + clip.height) + 1)
   return (fromLine..toLine).map { line ->
-    val lineStart = maxOf(start, editor.visualPositionToOffset(VisualPosition(line, 0)))
-    val nextLineStart = editor.visualPositionToOffset(VisualPosition(line + 1, 0))
+    val lineStart = maxOf(start, visualLineStart(editor, line))
+    val nextLineStart = visualLineStart(editor, line + 1)
     val lineEnd = minOf(end, document.getLineEndOffset(document.getLineNumber(lineStart)), nextLineStart)
     val bottom = if (line < lastLine) editor.visualLineToY(line + 1) else editor.visualLineToYRange(line)[1]
     VisualLine(lineStart, lineEnd, editor.visualLineToY(line), bottom)
   }
 }
+
+private fun visualLineStart(editor: Editor, line: Int): Int =
+  if (editor is EditorImpl) editor.visualLineStartOffset(line) else editor.visualPositionToOffset(VisualPosition(line, 0))
 
 private fun getTextStart(editor: Editor, line: VisualLine): Int =
   editor.offsetToXY(CharArrayUtil.shiftForward(editor.document.charsSequence, line.start, line.end, " \t"), true, false).x

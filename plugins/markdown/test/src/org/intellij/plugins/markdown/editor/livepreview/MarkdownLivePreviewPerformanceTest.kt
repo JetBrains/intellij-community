@@ -9,9 +9,11 @@ import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.EditorKind
 import com.intellij.openapi.editor.event.EditorFactoryEvent
 import com.intellij.openapi.editor.event.EditorFactoryListener
+import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightModuleFixture
 import com.intellij.psi.PsiManager
+import com.intellij.testFramework.EditorTestUtil
 import com.intellij.testFramework.PerformanceUnitTest
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.TestDataPath
@@ -20,6 +22,7 @@ import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.TestDisposable
 import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.tools.ide.metrics.benchmark.Benchmark
+import com.intellij.util.ui.ImageUtil
 import kotlinx.coroutines.Dispatchers
 import org.junit.jupiter.api.Assertions.assertNotEquals
 import org.junit.jupiter.api.Assertions.assertTrue
@@ -27,6 +30,7 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.TestInfo
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.EnumSource
+import java.awt.image.BufferedImage
 import java.lang.reflect.Method
 import kotlin.time.Duration.Companion.minutes
 
@@ -112,6 +116,29 @@ internal class MarkdownLivePreviewPerformanceTest {
 
   @ParameterizedTest(name = "{0}")
   @EnumSource(Sample::class)
+  fun `scroll through the file with live preview`(sample: Sample): Unit = onEdt {
+    val editor = open(sample) as EditorImpl
+    EditorTestUtil.setEditorVisibleSizeInPixels(editor, EDITOR_WIDTH_PX, PAINT_HEIGHT_PX)
+    PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue()
+    val editorHeight = editor.preferredHeight
+    val image = ImageUtil.createImage(EDITOR_WIDTH_PX, PAINT_HEIGHT_PX, BufferedImage.TYPE_INT_RGB)
+    benchmark("${sample.file}: scroll") {
+      for (y in 0 until editorHeight step PAINT_HEIGHT_PX) {
+        val g = image.createGraphics()
+        try {
+          g.translate(0, -y)
+          g.clipRect(0, y, EDITOR_WIDTH_PX, PAINT_HEIGHT_PX)
+          editor.contentComponent.paintComponent(g)
+        }
+        finally {
+          g.dispose()
+        }
+      }
+    }
+  }
+
+  @ParameterizedTest(name = "{0}")
+  @EnumSource(Sample::class)
   fun `change the font`(sample: Sample): Unit = onEdt {
     val editor = open(sample)
     val livePreviewFont = editor.colorsScheme.editorFontName
@@ -176,5 +203,7 @@ internal class MarkdownLivePreviewPerformanceTest {
     private val projectFixture = projectFixture(openAfterCreation = true)
     private val TIMEOUT = 10.minutes
     private const val ZOOM_STEPS = 5
+    private const val EDITOR_WIDTH_PX = 1000
+    private const val PAINT_HEIGHT_PX = 1000
   }
 }
