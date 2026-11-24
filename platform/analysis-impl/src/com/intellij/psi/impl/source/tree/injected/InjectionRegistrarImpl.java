@@ -173,7 +173,7 @@ public final class InjectionRegistrarImpl implements MultiHostRegistrar {
     cleared = false;
     String nnPrefix = StringUtil.isEmpty(prefix) ? "" : prefix; // intern empty strings too to reduce gc
     String nnSuffix = StringUtil.isEmpty(suffix) ? "" : suffix; // intern empty strings too to reduce gc
-    PlaceInfo info = new PlaceInfo(nnPrefix, nnSuffix, host, rangeInsideHost);
+    PlaceInfo info = new PlaceInfo(nnPrefix, nnSuffix, host, rangeInsideHost, host.getText());
     placeInfos.add(info);
 
     return this;
@@ -680,7 +680,8 @@ public final class InjectionRegistrarImpl implements MultiHostRegistrar {
       }
       TextRange rangeInsideHost = TextRange.create(hostInjectionRange).shiftLeft(newInjectionHostRange.getStartOffset());
 
-      PlaceInfo info = new PlaceInfo(shred.getPrefix(), shred.getSuffix(), newDummyInjectionHost, rangeInsideHost);
+      PlaceInfo info = new PlaceInfo(shred.getPrefix(), shred.getSuffix(), newDummyInjectionHost, rangeInsideHost,
+                                     newDummyInjectionHost.getText());
       placeInfos.add(info);
       info.setNewInjectionHostRange(newInjectionHostRange);
 

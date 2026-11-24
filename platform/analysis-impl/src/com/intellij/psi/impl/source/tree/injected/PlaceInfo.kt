@@ -18,9 +18,9 @@ internal class PlaceInfo(
   val suffix: String,
   val host: PsiLanguageInjectionHost,
   val registeredRangeInsideHost: TextRange,
+  val hostText: String,
 ) {
   val escaper: LiteralTextEscaper<out PsiLanguageInjectionHost> = host.createLiteralTextEscaper()
-  val hostText: String = host.text
   var rangeInDecodedPSI: ProperTextRange? = null
   var rangeInHostElement: TextRange? = null
   var newInjectionHostRange: Segment? = null
