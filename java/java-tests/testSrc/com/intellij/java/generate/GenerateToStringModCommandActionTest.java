@@ -8,6 +8,7 @@ import com.intellij.codeInspection.options.OptMultiSelector;
 import com.intellij.codeInspection.options.OptRegularComponent;
 import com.intellij.codeInspection.options.OptionContainer;
 import com.intellij.codeInspection.options.OptionController;
+import com.intellij.codeInspection.options.OptionControllerProvider;
 import com.intellij.modcommand.ActionContext;
 import com.intellij.modcommand.ModChooseAction;
 import com.intellij.modcommand.ModCommand;
@@ -17,6 +18,8 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.ThrowableComputable;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
 import com.intellij.testFramework.fixtures.LightJavaProject;
@@ -24,7 +27,9 @@ import com.intellij.testFramework.junit5.TestApplication;
 import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.java.generate.GenerateToStringContext;
 import org.jetbrains.java.generate.GenerateToStringModCommandAction;
+import org.jetbrains.java.generate.config.Config;
 import org.jetbrains.java.generate.template.TemplateResource;
 import org.jetbrains.java.generate.template.TemplatesManager;
 import org.jetbrains.java.generate.template.toString.ToStringTemplatesManager;
@@ -33,6 +38,7 @@ import org.junit.jupiter.api.Test;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaCodeInsightFixture;
 import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
@@ -48,11 +54,23 @@ public final class GenerateToStringModCommandActionTest {
 
   private static final String CONCAT_TEMPLATE = "String concat (+)";
   private static final String CUSTOM_TEMPLATE = "Custom template";
+  private static final String BUILDER_TEMPLATE = "StringBuilder (JDK 1.5)";
+  private static final String GUAVA_TEMPLATE = "MoreObjects.toStringHelper (Guava 18+)";
+  private static final String DEFAULT_TEMPLATE_BIND_ID = "TemplatesManager.ToStringTemplates.defaultTemplateName";
   private static final String BEFORE = """
     class Point {
         private int x;
         private int y;
         <caret>
+    }
+    """;
+
+  private static final String FIELDS_AND_METHOD = """
+    class Point {
+        private int <caret>x;
+        private int y;
+
+        void move() {}
     }
     """;
 
@@ -70,7 +88,7 @@ public final class GenerateToStringModCommandActionTest {
       OptDropdown dropdown = assertInstanceOf(OptDropdown.class, stack.children().getFirst());
       Map<String, String> labels = ContainerUtil.map2Map(dropdown.options(), option -> Pair.create(option.key(), option.label().label()));
       assertEquals(CONCAT_TEMPLATE, labels.get(CONCAT_TEMPLATE));
-      assertEquals("MoreObjects.toStringHelper (Guava 18+) (incompatible)", labels.get("MoreObjects.toStringHelper (Guava 18+)"));
+      assertEquals(GUAVA_TEMPLATE + " (incompatible)", labels.get(GUAVA_TEMPLATE));
       assertInstanceOf(OptCheckbox.class, components.get(2));
     });
   }
@@ -87,8 +105,7 @@ public final class GenerateToStringModCommandActionTest {
 
         templatesManager.addTemplate(new TemplateResource(CUSTOM_TEMPLATE, "public String toString() { return \"\"; }", false, null));
         assertEquals(CUSTOM_TEMPLATE, dropdownLabels(container).get(CUSTOM_TEMPLATE));
-        assertEquals("MoreObjects.toStringHelper (Guava 18+) (incompatible)",
-                     dropdownLabels(container).get("MoreObjects.toStringHelper (Guava 18+)"));
+        assertEquals(GUAVA_TEMPLATE + " (incompatible)", dropdownLabels(container).get(GUAVA_TEMPLATE));
 
         OptionController controller = container.getOptionController();
         controller.setOption("template", CUSTOM_TEMPLATE);
@@ -100,6 +117,91 @@ public final class GenerateToStringModCommandActionTest {
     finally {
       templatesManager.setTemplates(savedTemplates);
     }
+  }
+
+  @Test
+  public void incompatibleDefaultTemplateIsNotSelected() {
+    LightJavaCodeInsightTestFixture fixture = configure(BEFORE);
+    TemplatesManager templatesManager = ToStringTemplatesManager.getInstance();
+    String savedDefault = templatesManager.getState().defaultTemplateName;
+    try {
+      templatesManager.getState().defaultTemplateName = GUAVA_TEMPLATE;
+      ReadAction.runBlocking(() -> {
+        OptionContainer container = perform(fixture).containerSupplier().get();
+        assertEquals(CONCAT_TEMPLATE, container.getOptionController().getOption("template"));
+      });
+    }
+    finally {
+      templatesManager.getState().defaultTemplateName = savedDefault;
+    }
+  }
+
+  @Test
+  public void selectedTemplateBecomesDefault() {
+    LightJavaCodeInsightTestFixture fixture = configure(BEFORE);
+    TemplatesManager templatesManager = ToStringTemplatesManager.getInstance();
+    String savedDefault = templatesManager.getState().defaultTemplateName;
+    try {
+      execute(fixture, () -> perform(fixture).applyOptions(Map.of("template", BUILDER_TEMPLATE, "insertOverride", true)));
+      assertEquals(BUILDER_TEMPLATE, templatesManager.getDefaultTemplate().getFileName());
+      ReadAction.runBlocking(() -> {
+        assertEquals(BUILDER_TEMPLATE, OptionControllerProvider.getOption(fixture.getFile(), DEFAULT_TEMPLATE_BIND_ID));
+        assertEquals(BUILDER_TEMPLATE, perform(fixture).containerSupplier().get().getOptionController().getOption("template"));
+      });
+    }
+    finally {
+      templatesManager.getState().defaultTemplateName = savedDefault;
+    }
+  }
+
+  @Test
+  public void formShowsChangedMembers() {
+    LightJavaCodeInsightTestFixture fixture = configure("""
+      class Point {
+          private int x;
+          private int y;
+          private int z;
+          <caret>
+      }
+      """);
+    Config savedConfig = GenerateToStringContext.getConfig();
+    try {
+      GenerateToStringContext.setConfig(configExcluding("z"));
+      ReadAction.runBlocking(() -> {
+        OptionContainer container = perform(fixture).containerSupplier().get();
+        assertEquals(List.of("x: int", "y: int"), memberTexts(container));
+        OptionController controller = container.getOptionController();
+        controller.setOption("members", List.of(assertInstanceOf(List.class, controller.getOption("members")).get(1)));
+
+        // The template settings change the filter: the new member of the class becomes selected.
+        GenerateToStringContext.setConfig(configExcluding("x"));
+        assertEquals(List.of("y: int", "z: int"), memberTexts(container));
+        assertEquals(List.of("y: int", "z: int"), selectedTexts(controller));
+
+        GenerateToStringContext.setConfig(configExcluding("y"));
+        assertEquals(List.of("x: int", "z: int"), memberTexts(container));
+        assertEquals(List.of("z: int", "x: int"), selectedTexts(controller));
+      });
+    }
+    finally {
+      GenerateToStringContext.setConfig(savedConfig);
+    }
+  }
+
+  private static @NotNull Config configExcluding(@NotNull String fieldName) {
+    Config config = new Config();
+    config.getFilterPattern().setFieldName(fieldName);
+    return config;
+  }
+
+  private static @NotNull List<String> selectedTexts(@NotNull OptionController controller) {
+    List<?> selection = assertInstanceOf(List.class, controller.getOption("members"));
+    return ContainerUtil.map(selection, member -> ((OptMultiSelector.OptElement)member).getText());
+  }
+
+  private static @NotNull List<String> memberTexts(@NotNull OptionContainer container) {
+    OptMultiSelector selector = assertInstanceOf(OptMultiSelector.class, container.getOptionsPane().components().getFirst());
+    return ContainerUtil.map(selector.elements(), OptMultiSelector.OptElement::getText);
   }
 
   private static @NotNull Map<String, String> dropdownLabels(@NotNull OptionContainer container) {
@@ -154,6 +256,57 @@ public final class GenerateToStringModCommandActionTest {
                       "y=" + y +
                       '}';
           }
+      }
+      """);
+  }
+
+  @Test
+  public void fieldElementInsertsAtEndOfClass() {
+    LightJavaCodeInsightTestFixture fixture = configure(FIELDS_AND_METHOD);
+    execute(fixture, () -> {
+      PsiField field = Objects.requireNonNull(PsiTreeUtil.getParentOfType(fixture.getFile().findElementAt(fixture.getCaretOffset()),
+                                                                          PsiField.class));
+      // The fix of FieldNotUsedInToStringInspection has this context: the element is the name of the field.
+      ActionContext context = ActionContext.from(fixture.getEditor(), fixture.getFile()).withElement(field.getNameIdentifier());
+      return assertInstanceOf(ModEditOptions.class, myAction.perform(context))
+        .applyOptions(Map.of("template", CONCAT_TEMPLATE, "insertOverride", true));
+    });
+    fixture.checkResult("""
+      class Point {
+          private int x;
+          private int y;
+
+          void move() {}
+
+          @Override
+          public String toString() {
+              return "Point{" +
+                      "x=" + x +
+                      ", y=" + y +
+                      '}';
+          }
+      }
+      """);
+  }
+
+  @Test
+  public void caretInFieldInsertsAtCaret() {
+    LightJavaCodeInsightTestFixture fixture = configure(FIELDS_AND_METHOD);
+    execute(fixture, () -> perform(fixture).applyOptions(Map.of("template", CONCAT_TEMPLATE, "insertOverride", true)));
+    fixture.checkResult("""
+      class Point {
+          @Override
+          public String toString() {
+              return "Point{" +
+                      "x=" + x +
+                      ", y=" + y +
+                      '}';
+          }
+
+          private int x;
+          private int y;
+
+          void move() {}
       }
       """);
   }

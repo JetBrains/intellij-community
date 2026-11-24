@@ -19,6 +19,7 @@ import com.intellij.modcommand.ModCommandAction;
 import com.intellij.modcommand.ModEditOptions;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.Presentation;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.CommonClassNames;
@@ -26,6 +27,8 @@ import com.intellij.psi.JVMElementFactories;
 import com.intellij.psi.JVMElementFactory;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiJavaFile;
 import com.intellij.psi.PsiMember;
 import com.intellij.psi.PsiMethod;
@@ -34,6 +37,7 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
@@ -62,6 +66,8 @@ import java.util.Set;
  * <p>
  * The form has a member selector, a template drop-down, the button for the template settings, and the "Insert @Override" checkbox.
  * The drop-down adds the "(incompatible)" suffix to a template that the class cannot use.
+ * The drop-down initially selects the default template, or the first compatible template if the class cannot use the default template.
+ * The action makes the selected template the default one.
  */
 public final class GenerateToStringModCommandAction implements ModCommandAction {
   @Override
@@ -79,12 +85,9 @@ public final class GenerateToStringModCommandAction implements ModCommandAction 
     PsiClass psiClass = GenerateToStringClassFilter.findTargetClass(context);
     if (psiClass == null) return ModCommand.nop();
 
-    List<PsiElementClassMember<?>> members = List.of(JavaGenerateToStringActionHandler.buildMembersToShow(psiClass));
-    List<PsiElementClassMember<?>> preselection = ContainerUtil.filter(members, m -> m.getElement().getContainingClass() == psiClass);
-
     TemplatesManager templatesManager = ToStringTemplatesManager.getInstance();
     Set<String> unavailableClasses = findUnavailableClasses(psiClass, templatesManager.getAllTemplates());
-    String defaultTemplate = templatesManager.getDefaultTemplate().getFileName();
+    String defaultTemplate = chooseTemplate(templatesManager, unavailableClasses);
 
     boolean annotationsAvailable = PsiUtil.isAvailable(JavaFeature.ANNOTATIONS, psiClass);
     boolean insertOverride = annotationsAvailable &&
@@ -93,10 +96,22 @@ public final class GenerateToStringModCommandAction implements ModCommandAction 
     return ModCommand.editOptions(
       psiClass,
       getFamilyName(),
-      () -> new ToStringOptions(members, unavailableClasses, annotationsAvailable, psiClass.getLanguage(), preselection, defaultTemplate,
-                                insertOverride),
+      () -> new ToStringOptions(psiClass, unavailableClasses, annotationsAvailable, defaultTemplate, insertOverride),
       true,
-      (cls, options) -> generate(context, cls, members, options));
+      (cls, options) -> templatesManager.updateDefaultTemplate(cls, options.template).andThen(generate(context, cls, options)));
+  }
+
+  /**
+   * @return the file name of the default template if the class can use it.
+   * Otherwise, the file name of the first template that the class can use.
+   * If the class can use no template, the file name of the default template.
+   */
+  private static @NotNull String chooseTemplate(@NotNull TemplatesManager templatesManager, @NotNull Set<String> unavailableClasses) {
+    TemplateResource defaultTemplate = templatesManager.getDefaultTemplate();
+    if (!unavailableClasses.contains(defaultTemplate.getClassName())) return defaultTemplate.getFileName();
+    TemplateResource compatible =
+      ContainerUtil.find(templatesManager.getAllTemplates(), template -> !unavailableClasses.contains(template.getClassName()));
+    return (compatible == null ? defaultTemplate : compatible).getFileName();
   }
 
   /**
@@ -129,7 +144,6 @@ public final class GenerateToStringModCommandAction implements ModCommandAction 
 
   private static @NotNull ModCommand generate(@NotNull ActionContext context,
                                               @NotNull PsiClass psiClass,
-                                              @NotNull List<PsiElementClassMember<?>> allMembers,
                                               @NotNull ToStringOptions options) {
     TemplateResource template = ToStringTemplatesManager.getInstance().findTemplateByName(options.template);
     if (template == null || !template.isValidTemplate()) {
@@ -137,7 +151,7 @@ public final class GenerateToStringModCommandAction implements ModCommandAction 
     }
     Config config = GenerateToStringContext.getConfig();
     List<? extends PsiElementClassMember<?>> selected =
-      config.getSortElements() == 0 ? options.members : ContainerUtil.filter(allMembers, options.members::contains);
+      config.getSortElements() == 0 ? options.members : ContainerUtil.filter(options.myAllMembers, options.members::contains);
     List<PsiMember> members = GenerationUtil.convertClassMembersToPsiMembers(selected);
 
     GeneratedToString generated;
@@ -151,7 +165,7 @@ public final class GenerateToStringModCommandAction implements ModCommandAction 
       return ModCommand.error(JavaBundle.message("hint.text.tostring.method.could.not.be.created.from.template", template.getFileName()));
     }
 
-    int offset = context.offset();
+    int offset = findInsertionOffset(context, psiClass);
     boolean insertOverride = options.insertOverride;
     PsiMethod existingMethod = generated.existingMethod();
     if (existingMethod == null) {
@@ -173,6 +187,19 @@ public final class GenerateToStringModCommandAction implements ModCommandAction 
           JavaBundle.message("generate.tostring.method.duplicate", existingMethod.getName()),
           (method, updater) -> insert(method.getContainingClass(), null, generated, offset, insertOverride, updater)));
     };
+  }
+
+  /**
+   * Finds the offset for the "at caret" placement.
+   * When the context element is in a field of the class, the offset is the offset of the class name.
+   * Thus, the method goes to the end of the class, as for an action that starts from the class name.
+   * For example, the context element of the fix of {@code FieldNotUsedInToStringInspection} is the name of the field.
+   */
+  private static int findInsertionOffset(@NotNull ActionContext context, @NotNull PsiClass psiClass) {
+    PsiField field = PsiTreeUtil.getParentOfType(context.element(), PsiField.class, false, PsiClass.class);
+    if (field == null || field.getContainingClass() != psiClass) return context.offset();
+    PsiElement nameIdentifier = psiClass.getNameIdentifier();
+    return nameIdentifier != null ? nameIdentifier.getTextOffset() : psiClass.getTextOffset();
   }
 
   /**
@@ -239,44 +266,65 @@ public final class GenerateToStringModCommandAction implements ModCommandAction 
   /**
    * The state of the form. The default option controller binds a control to the field with the name of its bind ID.
    * <p>
-   * The constructor gets the data of the form from a read action.
-   * Thus, {@link #getOptionsPane()} needs no PSI access, and the IDE can call it on the EDT.
-   * <p>
-   * {@link #getOptionsPane()} reads the current templates.
+   * {@link #getOptionsPane()} reads the current templates and builds the current member list.
    * Thus, the form shows the changes of the template settings after the renderer refreshes the pane.
+   * For example, the member list shows the changes of the filter and of the "Enable getters in code generation" option.
+   * The IDE can call {@link #getOptionsPane()} on the EDT, so it builds the member list in a read action.
    */
   private static final class ToStringOptions implements OptionContainer {
-    private final @NotNull List<? extends OptMultiSelector.OptElement> myAllMembers;
+    private final @NotNull PsiClass myClass;
     private final @NotNull Set<String> myUnavailableClasses;
     private final boolean myAnnotationsAvailable;
     private final @NotNull Language myLanguage;
+    private @NotNull List<PsiElementClassMember<?>> myAllMembers = List.of();
 
-    @SuppressWarnings("FieldMayBeFinal") private @NotNull List<? extends PsiElementClassMember<?>> members;
+    private @NotNull List<? extends PsiElementClassMember<?>> members = List.of();
     private @NotNull String template;
     @SuppressWarnings("FieldMayBeFinal") private boolean insertOverride;
 
-    private ToStringOptions(@NotNull List<PsiElementClassMember<?>> allMembers,
+    private ToStringOptions(@NotNull PsiClass psiClass,
                             @NotNull Set<String> unavailableClasses,
-                            boolean annotationsAvailable, @NotNull Language language,
-                            @NotNull List<PsiElementClassMember<?>> members,
+                            boolean annotationsAvailable,
                             @NotNull String template,
                             boolean insertOverride) {
-      myAllMembers = allMembers;
+      myClass = psiClass;
       myUnavailableClasses = unavailableClasses;
       myAnnotationsAvailable = annotationsAvailable;
-      myLanguage = language;
-      this.members = new ArrayList<>(members);
+      myLanguage = psiClass.getLanguage();
       this.template = template;
       this.insertOverride = insertOverride;
+      updateMembers();
+    }
+
+    /**
+     * Builds the member list again.
+     * The selection keeps the selected members that the new list has.
+     * The selection also gets the new members of the class itself, as the initial selection does.
+     */
+    private void updateMembers() {
+      ReadAction.runBlocking(() -> {
+        if (!myClass.isValid()) return;
+        List<PsiElementClassMember<?>> allMembers = List.of(JavaGenerateToStringActionHandler.buildMembersToShow(myClass));
+        if (allMembers.equals(myAllMembers)) return;
+        List<PsiElementClassMember<?>> selection = new ArrayList<>(ContainerUtil.filter(members, allMembers::contains));
+        for (PsiElementClassMember<?> member : allMembers) {
+          if (!myAllMembers.contains(member) && member.getElement().getContainingClass() == myClass) {
+            selection.add(member);
+          }
+        }
+        myAllMembers = allMembers;
+        members = selection;
+      });
     }
 
     @Override
     public @NotNull OptPane getOptionsPane() {
+      updateMembers();
       TemplatesManager templatesManager = ToStringTemplatesManager.getInstance();
       List<OptDropdown.Option> templateOptions = createTemplateOptions(templatesManager.getAllTemplates(), myUnavailableClasses);
       if (!ContainerUtil.exists(templateOptions, option -> option.key().equals(template))) {
         // The template settings removed or renamed the selected template.
-        template = templatesManager.getDefaultTemplate().getFileName();
+        template = chooseTemplate(templatesManager, myUnavailableClasses);
       }
       List<OptRegularComponent> components = new ArrayList<>();
       if (!myAllMembers.isEmpty()) {

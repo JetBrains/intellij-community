@@ -20,6 +20,7 @@ import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.openapi.diagnostic.Logger;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.java.generate.GenerateToStringModCommandAction;
 
 /**
  * Base class for inspection support.
@@ -33,6 +34,6 @@ public abstract class AbstractToStringInspection extends LocalInspectionTool {
     }
 
     protected static LocalQuickFix[] createFixes() {
-        return new LocalQuickFix[]{GenerateToStringQuickFix.getInstance()};
+        return new LocalQuickFix[]{LocalQuickFix.from(new GenerateToStringModCommandAction())};
     }
 }

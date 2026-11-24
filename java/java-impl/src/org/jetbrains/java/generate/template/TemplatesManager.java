@@ -1,7 +1,11 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.java.generate.template;
 
+import com.intellij.codeInspection.options.OptionController;
+import com.intellij.codeInspection.options.OptionControllerProvider;
+import com.intellij.modcommand.ModCommand;
 import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.State;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
@@ -9,10 +13,12 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.PsiTypes;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.java.generate.element.FieldElement;
@@ -28,11 +34,28 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.ConcurrentMap;
 
 public abstract class TemplatesManager implements PersistentStateComponent<TemplatesState> {
   public static final Key<Map<String, PsiType>> TEMPLATE_IMPLICITS = Key.create("TEMPLATE_IMPLICITS");
 
+  private static final @NonNls String PROVIDER_NAME = "TemplatesManager";
+  private static final @NonNls String DEFAULT_TEMPLATE_NAME = "defaultTemplateName";
+
+  /**
+   * The created template managers. The key is the name of the {@link State} annotation.
+   * The map does not keep a manager from garbage collection, for example, after the unload of its plugin.
+   */
+  private static final ConcurrentMap<String, TemplatesManager> ourManagers = ContainerUtil.createConcurrentWeakValueMap();
+
   private TemplatesState myState = new TemplatesState();
+
+  protected TemplatesManager() {
+    State state = getClass().getAnnotation(State.class);
+    if (state != null) {
+      ourManagers.put(state.name(), this);
+    }
+  }
 
   public abstract @NotNull List<TemplateResource> getDefaultTemplates();
 
@@ -110,6 +133,26 @@ public abstract class TemplatesManager implements PersistentStateComponent<Templ
     myState.defaultTemplateName = resource.getFileName();
   }
 
+  /**
+   * Creates a command that makes {@code templateName} the default template.
+   * Thus, a {@link ModCommand} action can remember the template that the user selects.
+   *
+   * @param context      the context element of the command
+   * @param templateName the file name of the template
+   * @return the command, or a no-op command when the template is already the default one, or when no template has this name
+   * @throws IllegalStateException when the class of this manager has no {@link State} annotation
+   */
+  public @NotNull ModCommand updateDefaultTemplate(@NotNull PsiElement context, @NotNull String templateName) {
+    if (findTemplateByName(templateName) == null || templateName.equals(getDefaultTemplate().getFileName())) {
+      return ModCommand.nop();
+    }
+    State state = getClass().getAnnotation(State.class);
+    if (state == null) {
+      throw new IllegalStateException(getClass().getName() + " has no @State annotation");
+    }
+    return ModCommand.updateOption(context, PROVIDER_NAME + "." + state.name() + "." + DEFAULT_TEMPLATE_NAME, templateName);
+  }
+
   public void setTemplates(@NotNull List<? extends TemplateResource> items) {
     myState.templates.clear();
     for (TemplateResource item : items) {
@@ -150,5 +193,31 @@ public abstract class TemplatesManager implements PersistentStateComponent<Templ
     final String text = "interface " + elementClass.getSimpleName() + " {\n" + StringUtil.join(methodNames, "\n") + "}";
     final PsiClass aClass = JavaPsiFacade.getElementFactory(project).createClassFromText(text, null).getInnerClasses()[0];
     return JavaPsiFacade.getElementFactory(project).createType(aClass);
+  }
+
+  /**
+   * Provides the options of all the created template managers.
+   * The bindId of the default template is {@code TemplatesManager.<name>.defaultTemplateName}.
+   * Here, {@code <name>} is the name of the {@link State} annotation of the manager, for example, {@code ToStringTemplates}.
+   * The value is the file name of the template.
+   *
+   * @see #updateDefaultTemplate(PsiElement, String)
+   */
+  public static final class Provider implements OptionControllerProvider {
+    @Override
+    public @NotNull OptionController forContext(@NotNull PsiElement context) {
+      return OptionController.empty().onPrefixes(name -> {
+        TemplatesManager manager = ourManagers.get(name);
+        return manager == null ? null : OptionController.empty().onValue(
+          DEFAULT_TEMPLATE_NAME,
+          () -> StringUtil.notNullize(manager.myState.defaultTemplateName),
+          (String value) -> manager.myState.defaultTemplateName = value);
+      });
+    }
+
+    @Override
+    public @NotNull String name() {
+      return PROVIDER_NAME;
+    }
   }
 }
