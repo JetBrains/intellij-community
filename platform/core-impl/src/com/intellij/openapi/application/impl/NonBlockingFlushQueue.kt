@@ -319,8 +319,13 @@ class NonBlockingFlushQueue(private val threadingSupport: ThreadingSupport) {
         require(currentWriteIntentLockMode == WriteIntentLockMode.ALL) {
           "Execution of Write-Intent-Locked runnables is not allowed in UI_ONLY mode"
         }
+        val isWriteIntentActionAllowedHere = threadingSupport.isWriteAccessAllowed() || // if we hold WA, we can proceed with WIRA directly
+                                             !(threadingSupport.isWriteActionPending() || // if WA is pending, we don't want to proceed with WIRA
+                                               threadingSupport.isWriteActionInProgress() ||  // if WA is running in background, we don't want to proceed with WIRA
+                                               threadingSupport.getLockingProhibitedAdvice() != null // if locks are disallowed on the current thread, we don't want to try WIRA
+                                              )
         // let's try to execute the runnable
-        val success = (threadingSupport.isWriteAccessAllowed() || !(threadingSupport.isWriteActionPending() || threadingSupport.isWriteActionInProgress()) )&& threadingSupport.tryRunWriteIntentReadAction {
+        val success = isWriteIntentActionAllowedHere && threadingSupport.tryRunWriteIntentReadAction {
           synchronized(lockObject) {
             writeIntentQueue.pollFirst() // remove runnable from writeIntentQueue
           }

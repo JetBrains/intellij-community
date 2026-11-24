@@ -5,11 +5,13 @@ import com.intellij.ide.IdeEventQueue
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.UI
+import com.intellij.openapi.application.UiWithModelAccess
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.application.backgroundWriteAction
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.TestDisposable
+import com.intellij.util.application
 import com.intellij.util.ui.EDT
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
@@ -29,7 +31,9 @@ import org.junit.jupiter.api.Test
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
+import java.util.concurrent.atomic.AtomicReference
 import javax.swing.SwingUtilities
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -84,6 +88,24 @@ class NonBlockingFlushQueueTest {
 
   fun pushNonModalWIExpired(runnable: Runnable) {
     flushQueue.push(ModalityState.nonModal(), runnable, true) { true }
+  }
+
+  /**
+   * Takes the flush requests of [flushQueue] out of the AWT queue, so that the test can run them on its own terms.
+   */
+  fun interceptFlushRequests(disposable: Disposable): AtomicReference<Runnable?> {
+    val flushRequest = AtomicReference<Runnable?>()
+    IdeEventQueue.getInstance().addPostEventListener({ event ->
+      val runnable = InvocationUtil.extractRunnable(event)
+      if (runnable != null && flushQueue.isFlushNow(runnable)) {
+        flushRequest.set(runnable)
+        true
+      }
+      else {
+        false
+      }
+    }, disposable)
+    return flushRequest
   }
 
   suspend fun spinQueue() {
@@ -199,6 +221,50 @@ class NonBlockingFlushQueueTest {
     // Pump again to process the delayed WI
     spinQueue()
     withContext(Dispatchers.UI) {
+      assertEquals(listOf("UI", "WI"), order)
+    }
+  }
+
+  @Test
+  fun `WI event is deferred while locks are prohibited on EDT`(@TestDisposable disposable: Disposable): Unit = timeoutRunBlocking {
+    val order = ArrayList<String>()
+    val flushRequest = interceptFlushRequests(disposable)
+
+    withContext(Dispatchers.UiWithModelAccess) {
+      pushNonModalWI { order.add("WI") }
+      pushNonModalUI { order.add("UI") }
+
+      val flush = flushRequest.getAndSet(null)!!
+      application.threadingSupport.withLocksProhibited("no locks in this test") {
+        flush.run()
+      }
+      // the WI event must not try to take the lock, so only the UI event runs
+      assertEquals(listOf("UI"), order)
+
+      // without the prohibition, the WI event runs on the next flush
+      flushRequest.getAndSet(null)!!.run()
+      assertEquals(listOf("UI", "WI"), order)
+    }
+  }
+
+  @Test
+  fun `WI event is deferred while locks are softly prohibited on EDT`(@TestDisposable disposable: Disposable): Unit = timeoutRunBlocking {
+    val order = ArrayList<String>()
+    val reported = AtomicBoolean(false)
+    val flushRequest = interceptFlushRequests(disposable)
+
+    withContext(Dispatchers.UiWithModelAccess) {
+      pushNonModalWI { order.add("WI") }
+      pushNonModalUI { order.add("UI") }
+
+      val flush = flushRequest.getAndSet(null)!!
+      application.threadingSupport.withLocksSoftlyProhibited("no locks in this test", { reported.set(true) }) {
+        flush.run()
+      }
+      assertEquals(listOf("UI"), order)
+      assertFalse(reported.get())
+
+      flushRequest.getAndSet(null)!!.run()
       assertEquals(listOf("UI", "WI"), order)
     }
   }
