@@ -2,16 +2,26 @@
 package com.intellij.platform.icons.impl.intellij.rendering
 
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.ScalableIcon
 import com.intellij.platform.icons.IconDescriptor
+import com.intellij.platform.icons.IconManager
 import com.intellij.platform.icons.iconDescriptor
+import com.intellij.platform.icons.impl.DefaultLayeredIconDescriptor
+import com.intellij.platform.icons.impl.layers.NestedIconLayer
+import com.intellij.platform.icons.impl.modifiers.ApplyableIconModifier
+import com.intellij.platform.icons.impl.modifiers.CombinedIconModifier
+import com.intellij.platform.icons.impl.modifiers.ForceDarkVariantModifier
+import com.intellij.platform.icons.impl.modifiers.RootIconModifier
 import com.intellij.platform.icons.modifiers.IconModifier
 import com.intellij.platform.icons.modifiers.scale
 import com.intellij.platform.icons.design.sRGB
 import com.intellij.platform.icons.modifiers.stroke
+import com.intellij.platform.icons.impl.rendering.DefaultImageModifiers
 import com.intellij.ui.icons.StrokeIconProvider
 import com.intellij.platform.icons.impl.rendering.ResolvedScalingContext
 import com.intellij.platform.icons.rendering.IconRendererManager
+import com.intellij.platform.icons.rendering.RenderingContext
 import com.intellij.platform.icons.impl.rendering.resolve
 import com.intellij.platform.icons.rendering.Dimensions
 import com.intellij.platform.icons.scale.FactorScale
@@ -20,7 +30,13 @@ import com.intellij.platform.icons.scale.IconScale
 import com.intellij.platform.icons.scale.factor
 import com.intellij.platform.icons.scale.fitArea
 import com.intellij.platform.icons.swing.ScalableSwingIcon
+import com.intellij.openapi.util.SystemInfoRt
+import com.intellij.ui.icons.DarkIconProvider
+import com.intellij.ui.icons.MenuBarIconProvider
 import com.intellij.ui.scale.JBUIScale
+import com.intellij.util.JBHiDPIScaledImage
+import com.intellij.util.ui.MultiResolutionImageProvider
+import javax.swing.ImageIcon
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.awt.Component
@@ -32,10 +48,19 @@ import java.lang.ref.SoftReference
 import javax.swing.Icon
 import kotlin.math.roundToInt
 
+/**
+ * A Swing [Icon] that renders [iconDescriptor].
+ *
+ * [dark] is the explicit dark state of the icon: `true` for the dark artwork, `false` for the light artwork. `null`
+ * follows the theme. It is an explicit dark state of the rendering context, so a dark state set inside [iconDescriptor]
+ * wins over it. Only a dark state that [iconDescriptor] sets on another descriptor as a whole (see [withDarkState]) is
+ * replaced. The [IconLoader.getDarkIcon] protocol ([DarkIconProvider]) sets [dark].
+ */
 internal class SwingIcon(
   val iconDescriptor: IconDescriptor,
-  scale: IconScale? = null
-): Icon, ScalableSwingIcon, ScalableIcon, StrokeIconProvider {
+  scale: IconScale? = null,
+  val dark: Boolean? = null,
+): Icon, ScalableSwingIcon, ScalableIcon, StrokeIconProvider, DarkIconProvider, MenuBarIconProvider {
   /**
    * The identity factor scale ([IconScale.Default] == `factor(1)`) carries no size change, so normalize it to `null`.
    * This lets [com.intellij.platform.icons.impl.intellij.IntelliJIconManager.toIconDescriptor] unwrap back to the native
@@ -58,21 +83,53 @@ internal class SwingIcon(
       size > SCALED_VARIANT_LIMIT
   }
 
-  private val renderer by lazy {
+  // [getDarkIcon] runs on the paint path too (e.g. the main toolbar on a dark header on every repaint).
+  @Volatile
+  private var darkVariant: SwingIcon? = null
+
+  @Volatile
+  private var lightVariant: SwingIcon? = null
+
+  /** The icon that [getDarkIcon] made this icon from, so that the variants of one icon are not nested. */
+  private var darkOrigin: SwingIcon? = null
+
+  private val renderingContext: RenderingContext by lazy {
     val flow = IconRendererManager.createUpdateFlow(null) {
+      // an update can change the size, for example when a deferred icon is resolved
+      measured = null
       withContext(Dispatchers.EDT) {
         for (user in users.keys) {
           user.repaint()
         }
       }
     }
-    val context = IconRendererManager.createRenderingContext(flow)
-    IconRendererManager.getInstance().createRenderer(iconDescriptor, context)
+    IconRendererManager.createRenderingContext(flow, dark?.let { DefaultImageModifiers(forcedDark = it) })
   }
 
-  /** The size at the current IDE zoom and theme. It is measured on each call, so a zoom or a theme change applies. */
+  private val renderer by lazy {
+    // [dark] replaces a dark state that the descriptor only sets on another descriptor, as in [getDarkIcon]
+    val descriptor = if (dark != null) iconDescriptor.withoutDarkState() else iconDescriptor
+    IconRendererManager.getInstance().createRenderer(descriptor, renderingContext)
+  }
+
+  /**
+   * The size of the last measure, at its IDE zoom and theme digest. It is measured again after a zoom change, and after a
+   * theme change, which can change the size, for example when a theme patches the path of an icon.
+   */
+  @Volatile
+  private var measured: Measured? = null
+
+  private class Measured(val zoom: Float, val themeDigest: String, val dimensions: Dimensions)
+
   private val dimensions: Dimensions
-    get() = renderer.resolve(1f, iconScale, ideZoom()).finalDimensions
+    get() {
+      val zoom = ideZoom()
+      val themeDigest = renderingContext.theme.digest()
+      measured?.let { if (it.zoom == zoom && it.themeDigest == themeDigest) return it.dimensions }
+      val dimensions = renderer.resolve(1f, iconScale, zoom).finalDimensions
+      measured = Measured(zoom, themeDigest, dimensions)
+      return dimensions
+    }
 
   override fun scaled(scale: IconScale): ScalableSwingIcon {
     val mergedScale = if (this.iconScale != null) {
@@ -83,7 +140,7 @@ internal class SwingIcon(
         // a limited fit cannot absorb the factor (a 16px icon in a 2x larger "at most" area stays 16px): fit, then scale
         is FactorScale if this.iconScale is FitAreaScale && (!this.iconScale.upscale || !this.iconScale.downscale) -> {
           val fit = this.iconScale
-          return SwingIcon(iconDescriptor { icon(this@SwingIcon.iconDescriptor, IconModifier.scale(fit)) }, scale)
+          return SwingIcon(iconDescriptor { icon(this@SwingIcon.iconDescriptor, IconModifier.scale(fit)) }, scale, dark)
         }
         is FactorScale if this.iconScale is FitAreaScale -> {
           fitArea(this.iconScale.width * scale.factor, this.iconScale.height * scale.factor, this.iconScale.relative)
@@ -95,7 +152,7 @@ internal class SwingIcon(
     } else {
       scale
     }
-    return SwingIcon(iconDescriptor, mergedScale)
+    return SwingIcon(iconDescriptor, mergedScale, dark)
   }
 
   override fun paintIcon(c: Component?, g: Graphics, x: Int, y: Int) {
@@ -156,23 +213,27 @@ internal class SwingIcon(
   }
 
   /**
-   * Icons of the same descriptor and scale render the same, so they are equal. For example, `Presentation.getIcon` creates
+   * Icons of the same descriptor, scale and dark state render the same, so they are equal. For example, `Presentation.getIcon` creates
    * an icon on each call, and its callers compare the icons of two calls. The identity scale `factor(1)` is equal to no scale.
    */
   override fun equals(other: Any?): Boolean {
     if (this === other) return true
     if (other !is SwingIcon) return false
-    return iconDescriptor == other.iconDescriptor && iconScale == other.iconScale
+    return iconDescriptor == other.iconDescriptor && iconScale == other.iconScale && dark == other.dark
   }
 
-  override fun hashCode(): Int = 31 * iconDescriptor.hashCode() + (iconScale?.hashCode() ?: 0)
+  override fun hashCode(): Int = 31 * (31 * iconDescriptor.hashCode() + (iconScale?.hashCode() ?: 0)) + (dark?.hashCode() ?: 0)
 
   /**
    * Shows the descriptor, with its layers and image paths, for example in the UI Inspector, the debugger and logs.
    * It does not load or measure the icon.
    */
-  override fun toString(): String =
-    if (iconScale == null) "SwingIcon($iconDescriptor)" else "SwingIcon($iconDescriptor, scale=$iconScale)"
+  override fun toString(): String = buildString {
+    append("SwingIcon(").append(iconDescriptor)
+    if (iconScale != null) append(", scale=").append(iconScale)
+    if (dark != null) append(", dark=").append(dark)
+    append(")")
+  }
 
   /**
    * Legacy [ScalableIcon] bridge. Platform call sites that resize a Swing [Icon] - most notably the main toolbar's
@@ -203,10 +264,42 @@ internal class SwingIcon(
     // ScalableIcon.scale is absolute relative to the origin, so build from the unscaled descriptor, not via scaled().
     synchronized(scaledVariants) {
       scaledVariants[scaleFactor]?.get()?.let { return it }
-      val icon = SwingIcon(iconDescriptor, factor(scaleFactor))
+      val icon = SwingIcon(iconDescriptor, factor(scaleFactor), dark)
       scaledVariants[scaleFactor] = SoftReference(icon)
       return icon
     }
+  }
+
+  /**
+   * Legacy [DarkIconProvider] bridge, so [IconLoader.getDarkIcon] works for this icon. Platform call sites use it for
+   * dark or light areas of the UI, for example the main toolbar on a dark header, menus and the editor toolbar.
+   * The result renders the same [iconDescriptor] at the same [iconScale] with the dark state [isDark]. It is created once
+   * for each dark state and reused.
+   *
+   * As the legacy icons do, the result replaces the dark state of the icon. If [iconDescriptor] only sets a dark state
+   * on another descriptor (see [withDarkState]), the result renders that other descriptor. So a repeated round trip
+   * through [com.intellij.platform.icons.IconManager.toIconDescriptor] does not nest the descriptor deeper.
+   */
+  override fun getDarkIcon(isDark: Boolean): SwingIcon {
+    if (dark == isDark) return this
+    return (darkOrigin ?: this).darkVariant(isDark)
+  }
+
+  /**
+   * Legacy [MenuBarIconProvider] bridge for the native menu bar, as `CachedImageIcon.getMenuBarIcon` does it. The icon is
+   * rasterized with the dark state [isDark] at the user scale 1: without the IDE zoom and without the [iconScale] of this
+   * icon. On macOS, the raster has the system scale of the default screen and comes as a multi-resolution image. Elsewhere,
+   * it has the scale 1.
+   */
+  override fun getMenuBarIcon(isDark: Boolean): Icon {
+    val useMultiResolution = SystemInfoRt.isMac
+    val sysScale = if (useMultiResolution) JBUIScale.sysScale().toDouble() else 1.0
+    val origin = getDarkIcon(isDark).let { if (it.iconScale == null) it else SwingIcon(it.iconDescriptor, null, it.dark) }
+    val raster = origin.rasterizeAtUserScaleOne(sysScale.toFloat())
+    if (useMultiResolution) {
+      return ImageIcon(MultiResolutionImageProvider.convertFromJBImage(JBHiDPIScaledImage(raster, sysScale)))
+    }
+    return ImageIcon(raster)
   }
 
   /**
@@ -217,6 +310,80 @@ internal class SwingIcon(
     val stroke = sRGB(resultColor.red / 255f, resultColor.green / 255f, resultColor.blue / 255f, resultColor.alpha / 255f)
     return SwingIcon(iconDescriptor { icon(this@SwingIcon.iconDescriptor, IconModifier.stroke(stroke)) }, iconScale)
   }
+
+  /**
+   * This icon rendered at [density] and the user scale 1, as `CachedImageIcon.getMenuBarIcon` renders it: without the IDE
+   * zoom and without the [iconScale]. The renderer paints into the image directly. It measures at the same scale, so the
+   * size is the design size times [density], rounded once.
+   */
+  @Suppress("UndesirableClassUsage")
+  private fun rasterizeAtUserScaleOne(density: Float): BufferedImage {
+    val scaling = renderer.resolve(density, null, 1f)
+    val width = scaling.finalDimensions.width.coerceAtLeast(1)
+    val height = scaling.finalDimensions.height.coerceAtLeast(1)
+    val image = BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB)
+    val g = image.createGraphics()
+    try {
+      val context = SwingLayerPaintingContext(null, g, 0, 0, scaling = scaling.context)
+      context.ideZoom = 1f
+      renderer.render(context)
+    }
+    finally {
+      g.dispose()
+    }
+    return image
+  }
+
+  private fun darkVariant(isDark: Boolean): SwingIcon {
+    if (dark == isDark) return this
+    val cached = if (isDark) darkVariant else lightVariant
+    if (cached != null) return cached
+    val variant = SwingIcon(iconDescriptor.withoutDarkState(), iconScale, isDark)
+    variant.darkOrigin = this
+    if (isDark) darkVariant = variant else lightVariant = variant
+    return variant
+  }
+}
+
+/**
+ * [descriptor] with the dark state [dark]: `true` for the dark artwork, `false` for the light artwork. A dark state that
+ * [descriptor] itself sets inside wins over it.
+ */
+internal fun withDarkState(descriptor: IconDescriptor, dark: Boolean): IconDescriptor =
+  DefaultLayeredIconDescriptor(listOf(NestedIconLayer(descriptor, IconManager.modifiers().forceDarkVariant(isDark = dark))))
+
+/**
+ * This descriptor without the dark state that it sets on another descriptor as a whole (see [withDarkState]). The dark
+ * state can share the modifier with other modifiers, for example with the scale of a scaled dark icon after
+ * `IconManager.toIconDescriptor`: then the other modifiers are kept. A dark state inside the other descriptor is kept.
+ */
+internal fun IconDescriptor.withoutDarkState(): IconDescriptor {
+  val layer = (this as? DefaultLayeredIconDescriptor)?.layers?.singleOrNull() as? NestedIconLayer ?: return this
+  val modifier = layer.modifier as? ApplyableIconModifier ?: return this
+  if (!modifier.hasForcedVariant()) return this
+  val rest = modifier.withoutForcedVariant()
+  return if (rest == null || rest == RootIconModifier) layer.iconDescriptor else DefaultLayeredIconDescriptor(listOf(NestedIconLayer(layer.iconDescriptor, rest)))
+}
+
+private fun ApplyableIconModifier.hasForcedVariant(): Boolean = when (this) {
+  is ForceDarkVariantModifier -> true
+  is CombinedIconModifier -> root.hasForcedVariant() || other.hasForcedVariant()
+  else -> false
+}
+
+/** This modifier without its [ForceDarkVariantModifier]s, or `null` if nothing else remains. */
+private fun ApplyableIconModifier.withoutForcedVariant(): ApplyableIconModifier? = when (this) {
+  is ForceDarkVariantModifier -> null
+  is CombinedIconModifier -> {
+    val root = root.withoutForcedVariant()
+    val other = other.withoutForcedVariant()
+    when {
+      root == null -> other
+      other == null -> root
+      else -> CombinedIconModifier(root, other)
+    }
+  }
+  else -> this
 }
 
 /**

@@ -7,22 +7,32 @@ import com.intellij.platform.icons.ImageResourceLocation
 import com.intellij.platform.icons.impl.FileImageResourceLocation
 import com.intellij.platform.icons.impl.UrlImageResourceLocation
 import com.intellij.platform.icons.impl.intellij.ModuleImageResourceLocation
+import com.intellij.platform.icons.impl.intellij.rendering.intelliJThemeContext
 import com.intellij.platform.icons.impl.rendering.DefaultImageResourceProvider
+import com.intellij.platform.icons.rendering.ThemeContext
 import javax.swing.Icon
 
+/**
+ * Loads images with the IntelliJ image loaders. The theme inputs come from the theme of the load. A load without a
+ * theme takes the theme of the IDE.
+ */
 class IntelliJImageResourceProvider: DefaultImageResourceProvider() {
-  override fun loadImage(location: ImageResourceLocation, imageModifiers: ImageModifiers?): ImageResource {
-    val loader = when (location) {
-      is ModuleImageResourceLocation -> ModuleImageResourceLoader()
-      is UrlImageResourceLocation -> UrlImageResourceLoader()
-      is FileImageResourceLocation -> FileImageResourceLoader()
-      else -> null
+  override fun loadImage(location: ImageResourceLocation, imageModifiers: ImageModifiers?): ImageResource =
+    loadImage(location, imageModifiers, intelliJThemeContext)
+
+  override fun loadImage(location: ImageResourceLocation, imageModifiers: ImageModifiers?, theme: ThemeContext): ImageResource {
+    return when (location) {
+      is ModuleImageResourceLocation -> ModuleImageResourceLoader().loadImage(location, imageModifiers, theme)
+      is UrlImageResourceLocation -> UrlImageResourceLoader().loadImage(location, imageModifiers, theme)
+      is FileImageResourceLocation -> FileImageResourceLoader().loadImage(location, imageModifiers, theme)
+      else -> error("Cannot find loader for location: $location")
     }
-    if (loader == null) error("Cannot find loader for location: $location")
-    return loader.loadGenericImage(location, imageModifiers) ?: error("Cannot load image for location: $location")
   }
 
-  override fun fromSwingIcon(icon: Icon, imageModifiers: ImageModifiers?): ImageResource {
-    return IntelliJImageResource(LegacyIconImageResourceHolder(icon), imageModifiers)
+  override fun fromSwingIcon(icon: Icon, imageModifiers: ImageModifiers?): ImageResource =
+    fromSwingIcon(icon, imageModifiers, intelliJThemeContext)
+
+  override fun fromSwingIcon(icon: Icon, imageModifiers: ImageModifiers?, theme: ThemeContext): ImageResource {
+    return IntelliJImageResource(LegacyIconImageResourceHolder(icon), imageModifiers, theme)
   }
 }

@@ -17,7 +17,7 @@ import com.intellij.platform.icons.impl.rendering.DefaultRenderingContext
 @Suppress("UNCHECKED_CAST")
 class IntelliJIconRendererManager: DefaultIconRendererManager() {
   private val imageProvider = IntelliJImageResourceProvider()
-  private val themeContext = IntelliJThemeContext()
+  private val themeContext = intelliJThemeContext
 
   override fun createRenderer(layer: IconLayer, renderingContext: RenderingContext): IconLayerRenderer {
     if (layer is SwingIconLayer) {
@@ -28,10 +28,12 @@ class IntelliJIconRendererManager: DefaultIconRendererManager() {
   }
 
   override fun createUpdateFlow(scope: CoroutineScope?, onUpdate: (suspend (Int) -> Unit)?): MutableIconUpdateFlow {
+    // Swing icons paint again on `updateUI` after a LaF change. A Compose icon caches its drawing, so its update flow
+    // also emits after a LaF change.
     if (scope != null) {
-      return CoroutineBasedMutableIconUpdateFlow(scope, onUpdate)
+      return ThemeAwareIconUpdateFlow(CoroutineBasedMutableIconUpdateFlow(scope, onUpdate))
     } else {
-      return IntelliJMutableIconUpdateFlowImpl(onUpdate)
+      return ThemeAwareIconUpdateFlow(IntelliJMutableIconUpdateFlowImpl(onUpdate))
     }
   }
 

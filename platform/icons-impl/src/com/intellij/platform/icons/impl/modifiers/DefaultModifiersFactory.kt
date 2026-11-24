@@ -25,6 +25,8 @@ object DefaultModifiersFactory : ModifiersFactory {
 
     override fun colorFilter(colorFilter: ColorFilter): IconModifier = ColorFilterModifier(colorFilter)
 
+    override fun forceDarkVariant(isDark: Boolean): IconModifier = ForceDarkVariantModifier(isDark)
+
     override fun cutoutMargin(size: IconUnit): IconModifier = CutoutMarginModifier(size)
 
     override fun margin(left: IconUnit, top: IconUnit, right: IconUnit, bottom: IconUnit): IconModifier =
@@ -35,6 +37,7 @@ object DefaultModifiersFactory : ModifiersFactory {
     override fun scale(scale: IconScale): IconModifier = ScaleModifier(scale)
 
     override fun sizeVariants(policy: SizeVariantPolicy): IconModifier = SizeVariantModifier(policy)
+
 
     override fun patchSvg(svgPatcher: SvgPatcher): IconModifier =
         SvgPatcherModifier(svgPatcher as? DefaultSvgPatcher ?: error("Unsupported svgPatcher: $svgPatcher"))

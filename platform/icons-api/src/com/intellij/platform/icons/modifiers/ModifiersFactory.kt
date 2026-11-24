@@ -19,6 +19,8 @@ interface ModifiersFactory {
 
     fun colorFilter(colorFilter: ColorFilter): IconModifier
 
+    fun forceDarkVariant(isDark: Boolean): IconModifier
+
     fun cutoutMargin(size: IconUnit): IconModifier
 
     fun margin(left: IconUnit, top: IconUnit, right: IconUnit, bottom: IconUnit): IconModifier
@@ -30,4 +32,5 @@ interface ModifiersFactory {
     fun patchSvg(svgPatcher: SvgPatcher): IconModifier
 
     fun sizeVariants(policy: SizeVariantPolicy): IconModifier
+
 }

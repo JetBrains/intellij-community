@@ -10,6 +10,7 @@ import com.intellij.platform.icons.modifiers.SizeVariantPolicy
 import com.intellij.util.SVGLoader
 import com.intellij.platform.icons.rendering.Dimensions
 import com.intellij.platform.icons.rendering.ImageModifiers
+import com.intellij.platform.icons.rendering.ThemeContext
 import com.intellij.platform.icons.swing.toAwtColor
 import com.intellij.ui.RetrievableIcon
 import com.intellij.ui.icons.CachedImageIcon
@@ -50,10 +51,32 @@ internal class LegacyIconImageResourceHolder(
     return Dimensions((backingLegacyIcon.iconWidth / zoom).roundToInt(), (backingLegacyIcon.iconHeight / zoom).roundToInt())
   }
 
-  override fun getImage(scale: ScaleContext, painted: PaintedSize?, imageModifiers: ImageModifiers?, component: Component?): Image? {
-    val params = imageModifiers.toLoadParameters()
+  /**
+   * The legacy icon applies its own color patcher (the theme palette, as a rule) and the global filter itself. They come
+   * from the global theme state of the legacy icons, not from [theme]. [theme] does not apply to a bridged legacy icon:
+   * the icon follows the global legacy state, also for its dark state. Only an explicit dark state in [imageModifiers],
+   * `IconModifier.forceDarkVariant` or `IconModifier.forceLightVariant`, replaces it.
+   */
+  override fun getImage(
+    scale: ScaleContext,
+    painted: PaintedSize?,
+    imageModifiers: ImageModifiers?,
+    theme: ThemeContext,
+    component: Component?,
+  ): Image? {
     val (source, sourceScale) = painted?.let { sizeVariant(scale, it, imageModifiers.sizeVariantPolicy()) } ?: (backingLegacyIcon to scale)
-    val icon = patched(source, params, imageModifiers)
+    // `createWithPatcher` replaces the own patcher of the legacy icon, so our patches run on top of it.
+    val rootPatcher = (patchTarget(source) as? CachedImageIcon)?.svgColorPatcher
+    val svgPatcher = imageModifiers.ownColorPatcher(rootPatcher = rootPatcher)
+    val params = imageModifiers.toLoadParameters(rootPatcher = rootPatcher, globalFilter = null, ownPatcher = svgPatcher)
+    // Without an explicit dark state, the legacy icon keeps its own one. It follows the theme unless it is set.
+    // A stroked icon loads the light artwork, see `toLoadParameters`.
+    val forcedDark = (imageModifiers as? DefaultImageModifiers)?.forcedDark?.takeUnless { params.isStroke }
+    val icon = when {
+      svgPatcher != null -> patched(source, svgPatcher, params, imageModifiers, forcedDark)
+      forcedDark != null -> IconLoader.getDarkIcon(source, forcedDark)
+      else -> source
+    }
     val filtered = if (params.filters.isNotEmpty()) {
         IconLoader.filterIcon(icon = icon, filterSupplier = object : RgbImageFilterSupplier {
             override fun getFilter() = params.filters.first() as RGBImageFilter
@@ -95,21 +118,29 @@ internal class LegacyIconImageResourceHolder(
   }
 }
 
+/** The icon that the patches apply to: for a `RetrievableIcon` that is no `CachedImageIcon`, the icon it retrieves. */
+private fun patchTarget(source: Icon): Icon = if (source !is CachedImageIcon && source is RetrievableIcon) source.retrieveIcon() else source
+
 /**
- * [source] with the SVG patcher of [params]. A `CachedImageIcon` takes the patcher itself. A legacy composite, such as a
- * `RowIcon`, a `LayeredIcon` or a `LazyIcon`, is patched in each `CachedImageIcon` in it, as the legacy `toStrokeIcon` and
- * `colorPatchedIcon` do. A `RetrievableIcon` is patched in the icon it retrieves.
+ * [source] with [svgPatcher] and the dark state [forcedDark]. A `CachedImageIcon` takes the patcher itself. A legacy
+ * composite, such as a `RowIcon`, a `LayeredIcon` or a `LazyIcon`, is patched in each `CachedImageIcon` in it, as the
+ * legacy `toStrokeIcon` and `colorPatchedIcon` do. A `RetrievableIcon` is patched in the icon it retrieves, see
+ * [patchTarget].
  */
-private fun patched(source: Icon, params: LoadIconParameters, imageModifiers: ImageModifiers?): Icon {
-  val svgPatcher = params.colorPatcher ?: return source
-  // the global palette alone: the legacy icon applies it itself
-  if (svgPatcher === SVGLoader.colorPatcherProvider) return source
-  val target = if (source !is CachedImageIcon && source is RetrievableIcon) source.retrieveIcon() else source
+private fun patched(
+  source: Icon,
+  svgPatcher: SVGLoader.SvgElementColorPatcherProvider,
+  params: LoadIconParameters,
+  imageModifiers: ImageModifiers?,
+  forcedDark: Boolean?,
+): Icon {
+  val target = patchTarget(source)
   if (target is CachedImageIcon) {
-    return target.createWithPatcher(svgPatcher, isDark = params.isDark, useStroke = params.isStroke)
+    return target.createWithPatcher(svgPatcher, isDark = if (params.isStroke) false else forcedDark, useStroke = params.isStroke)
   }
   val stroke = (imageModifiers as? DefaultImageModifiers)?.stroke
-  return if (stroke != null) toStrokeIcon(target, stroke.toAwtColor()) else colorPatchedIcon(target, svgPatcher)
+  if (stroke != null) return toStrokeIcon(target, stroke.toAwtColor())
+  return colorPatchedIcon(forcedDark?.let { IconLoader.getDarkIcon(target, it) } ?: target, svgPatcher)
 }
 
 /** This icon at the unit scale with the object scale [objScale]: its design size times [objScale]. */

@@ -16,6 +16,7 @@ import com.intellij.platform.icons.rendering.RescalableImageResource
 import com.intellij.platform.icons.rendering.ScalingContext
 import com.intellij.platform.icons.scale.fitArea
 import com.intellij.platform.icons.swing.toAwtColor
+import com.intellij.ui.scale.JBUIScale
 import java.awt.AlphaComposite
 import java.awt.Component
 import java.awt.Graphics
@@ -42,6 +43,12 @@ class SwingLayerPaintingContext(
   override val offsetX: Int = customX ?: x
   override val offsetY: Int = customY ?: y
 
+  /**
+   * The IDE zoom that the context scale of [scaling] contains. The images take it as the user scale, which selects their
+   * size variants. The menu bar icon renders at the user scale 1, without the zoom.
+   */
+  internal var ideZoom: Float = JBUIScale.scale(1f)
+
   override fun createNestedLayer(
     x: Int?,
     y: Int?,
@@ -63,7 +70,7 @@ class SwingLayerPaintingContext(
         overrideColorFilter ?: this.overrideColorFilter,
         alpha * this.alpha,
         DefaultScalingContext(scaling.displayDensity, scaling.contextScale * scale)
-    )
+    ).also { it.ideZoom = ideZoom }
   }
 
   override fun drawCircle(color: Color, x: Int, y: Int, radius: Float, alpha: Float, mode: DrawMode) {
@@ -151,7 +158,7 @@ class SwingLayerPaintingContext(
     if (realWidth == null || realHeight == null) return
     val fit = fitArea(realWidth.px, realHeight.px)
     val swingImage = if (image is IntelliJImageResource) {
-      image.scale(scaling.displayDensity, fit, c, SizeVariants.paintedSize(image.width, image.height, realWidth, realHeight, scaling))
+      image.scale(scaling.displayDensity, fit, c, SizeVariants.paintedSize(image.width, image.height, realWidth, realHeight, scaling), ideZoom)
     }
     else {
       image.scale(scaling.displayDensity, fit)
