@@ -11,20 +11,27 @@ import com.intellij.notification.NotificationAction;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.AccessToken;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.LowMemoryWatcher;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager;
+import com.intellij.platform.eel.fs.EelFiles;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.VisibleForTesting;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayDeque;
 import java.util.Queue;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.intellij.openapi.util.LowMemoryWatcher.LowMemoryWatcherType.ONLY_AFTER_GC;
 import static com.intellij.platform.diagnostic.telemetry.PlatformScopesKt.PlatformMetrics;
@@ -45,6 +52,7 @@ public final class LowMemoryNotifier implements Disposable {
   private static final Logger LOG = Logger.getInstance(LowMemoryNotifier.class);
 
   private static final Set<MemoryKind> notifications = ConcurrentCollectionFactory.createConcurrentSet();
+  private static final AtomicInteger runningMemoryAnalysisCount = new AtomicInteger();
 
   private static final long SUMMARISING_WINDOW_MS = getLongProperty("LowMemoryNotifier.SUMMARISING_WINDOW_MS", MINUTES.toMillis(15));
   private static final long THROTTLING_PERIOD_MS = getLongProperty("LowMemoryNotifier.THROTTLING_PERIOD_MS", SECONDS.toMillis(20));
@@ -64,6 +72,10 @@ public final class LowMemoryNotifier implements Disposable {
 
     watcher = LowMemoryWatcher.register(
       () -> {
+        if (isMemoryAnalysisRunning()) {
+          LOG.info("Skipped a low memory signal because a memory analysis runs");
+          return;
+        }
         // We use low-memory notification to form a recommendation for the user to extend HEAP.
         // The problem is: raw low-memory notifications could come frequently, if a short-but-intensive spike of activity is
         // underway -- like indexing, or huge find usage, etc. -- but such short spikes of low-memory conditions are not enough
@@ -89,6 +101,62 @@ public final class LowMemoryNotifier implements Disposable {
   @Override
   public void dispose() {
     watcher.stop();
+    // A normal exit does not wait for a running analysis, so its marker must not stay.
+    if (isMemoryAnalysisRunning()) {
+      deleteMemoryAnalysisMarker();
+    }
+  }
+
+  /**
+   * Marks a running heap dump analysis until the token closes.
+   * During the analysis, the IDE shows no low memory notification for the heap, because it offers a heap dump of the analysis itself.
+   * A marker file stays on the disk if the IDE stops during the analysis, for example, after a native crash or the Linux OOM killer.
+   */
+  public static synchronized @NotNull AccessToken markMemoryAnalysisRunning() {
+    if (runningMemoryAnalysisCount.get() == 0) {
+      try {
+        EelFiles.write(memoryAnalysisMarker(), new byte[0]);
+      }
+      catch (IOException e) {
+        LOG.warn("Cannot create the memory analysis marker", e);
+      }
+    }
+    runningMemoryAnalysisCount.incrementAndGet();
+    return AccessToken.create(LowMemoryNotifier::memoryAnalysisFinished);
+  }
+
+  private static synchronized void memoryAnalysisFinished() {
+    if (runningMemoryAnalysisCount.decrementAndGet() == 0) {
+      deleteMemoryAnalysisMarker();
+    }
+  }
+
+  /**
+   * Deletes the marker of a heap dump analysis that did not finish in the previous session.
+   *
+   * @return {@code true} if the previous session stopped during a heap dump analysis
+   */
+  public static synchronized boolean deletePreviousMemoryAnalysisMarker() {
+    return !isMemoryAnalysisRunning() && deleteMemoryAnalysisMarker();
+  }
+
+  @ApiStatus.Internal
+  public static boolean isMemoryAnalysisRunning() {
+    return runningMemoryAnalysisCount.get() > 0;
+  }
+
+  private static synchronized boolean deleteMemoryAnalysisMarker() {
+    try {
+      return Files.deleteIfExists(memoryAnalysisMarker());
+    }
+    catch (IOException e) {
+      LOG.warn("Cannot delete the memory analysis marker", e);
+      return false;
+    }
+  }
+
+  private static @NotNull Path memoryAnalysisMarker() {
+    return Path.of(PathManager.getSystemPath(), "memory-analysis-running");
   }
 
   static void showNotificationFromCrashAnalysis() {

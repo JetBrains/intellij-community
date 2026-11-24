@@ -27,7 +27,7 @@
                         serviceImplementation="com.intellij.diagnostic.hprof.action.HeapDumpAnalyzerImpl"/>
     <postStartupActivity implementation="com.intellij.diagnostic.AnalyzePendingSnapshotActivity"/>
     <notificationGroup id="Heap Dump Analysis" displayType="STICKY_BALLOON" bundle="messages.DiagnosticBundle"
-                       key="notification.group.heap.dump.analysis" notificationIds="memory.analysis.complete"/>
+                       key="notification.group.heap.dump.analysis" notificationIds="memory.analysis.complete;memory.analysis.failed;memory.analysis.interrupted"/>
   </extensions>
 
   <actions>

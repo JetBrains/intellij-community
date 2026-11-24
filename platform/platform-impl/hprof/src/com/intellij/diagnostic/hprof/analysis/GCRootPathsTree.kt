@@ -27,8 +27,8 @@ import com.intellij.diagnostic.hprof.util.TruncatingPrintBuffer
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.containers.CollectionFactory
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap
+import it.unimi.dsi.fastutil.ints.IntCollection
 import it.unimi.dsi.fastutil.ints.IntIterators
-import it.unimi.dsi.fastutil.ints.IntSet
 import java.util.ArrayDeque
 import java.util.BitSet
 import java.util.concurrent.Callable
@@ -59,6 +59,11 @@ class GCRootPathsTree(
   // One bitmap can therefore replace the sets in all regular nodes.
   private val registeredObjectsBits = BitSet(analysisContext.navigator.instanceCount.toInt() + 1)
   private var countOfIgnoredObjects = 0
+
+  // The ignored count of each class that registerObjectsOfClass registers.
+  // The summary names the classes with too-deep paths in a tree of several classes.
+  private val countsOfIgnoredObjectsByClass = HashMap<ClassDefinition, Int>()
+  private var countOfRegisteredClasses = 0
 
   // registerObject runs once per nominated object. Reuse one map probe and one
   // single-object batch to keep the allocation rate low.
@@ -152,16 +157,23 @@ class GCRootPathsTree(
   }
 
   // Reuses one size strategy for all instances of the specified class.
-  fun registerObjectsOfClass(objectIds: IntSet, classDefinition: ClassDefinition) {
+  fun registerObjectsOfClass(objectIds: IntCollection, classDefinition: ClassDefinition) {
     val classObjectSizeStrategy =
       ObjectSizeCalculationStrategy.getBestStrategyForClass(classDefinition)
+    val countOfIgnoredObjectsBefore = countOfIgnoredObjects
     if (objectIds.size >= MINIMUM_OBJECTS_FOR_PARALLEL_WALK && PARALLELISM >= 2 &&
         treeDisplayOptions.maximumTreeDepth <= MAXIMUM_TREE_DEPTH_FOR_PARALLEL_WALK) {
       registerObjectsWithParallelWalk(objectIds, classObjectSizeStrategy)
-      return
     }
-    objectIds.forEach { objectId ->
-      registerObject(objectId, classObjectSizeStrategy)
+    else {
+      objectIds.forEach { objectId ->
+        registerObject(objectId, classObjectSizeStrategy)
+      }
+    }
+    countOfRegisteredClasses++
+    val countOfIgnoredObjectsOfClass = countOfIgnoredObjects - countOfIgnoredObjectsBefore
+    if (countOfIgnoredObjectsOfClass > 0) {
+      countsOfIgnoredObjectsByClass.merge(classDefinition, countOfIgnoredObjectsOfClass, Int::plus)
     }
   }
 
@@ -177,6 +189,7 @@ class GCRootPathsTree(
     private val maxElements = capacity * (maxTreeDepth + 1)
     val elementIds: IntArray = IntArray(maxElements)
     val elementRefs: ByteArray = ByteArray(maxElements)
+    // The subtree sizes as unsigned DWORD counts, copied from the sizes list.
     val elementSizes: IntArray = IntArray(maxElements)
     val elementClassIndexes: IntArray = IntArray(maxElements)
     val elementDisposed: BooleanArray = BooleanArray(maxElements)
@@ -259,7 +272,7 @@ class GCRootPathsTree(
       val size = objectSizeStrategy.calculateObjectSize(nav, batch.objectIds[i])
       val rootIndex = end - 1
       var currentNode = topNode.addEdge(
-        batch.elementIds[rootIndex], size, batch.elementSizes[rootIndex], classForWalkedElement(batch, rootIndex),
+        batch.elementIds[rootIndex], size, batch.elementSizes[rootIndex].toUInt().toLong(), classForWalkedElement(batch, rootIndex),
         batch.elementRefs[rootIndex], batch.elementDisposed[rootIndex])
       for (e in rootIndex - 1 downTo start) {
         val objectId = batch.elementIds[e]
@@ -268,7 +281,7 @@ class GCRootPathsTree(
         probeEdge.disposed = batch.elementDisposed[e]
         val isFirstRegistration = !registeredObjectsBits.get(objectId)
         registeredObjectsBits.set(objectId)
-        currentNode = currentNode.addEdge(isFirstRegistration, size, batch.elementSizes[e], probeEdge)
+        currentNode = currentNode.addEdge(isFirstRegistration, size, batch.elementSizes[e].toUInt().toLong(), probeEdge)
       }
     }
   }
@@ -277,7 +290,7 @@ class GCRootPathsTree(
   // insertions on this thread in submission order. The order and the report
   // stay identical to the sequential registration. The lists of the analysis
   // context must support concurrent reads.
-  private fun registerObjectsWithParallelWalk(objectIds: IntSet,
+  private fun registerObjectsWithParallelWalk(objectIds: IntCollection,
                                               objectSizeStrategy: ObjectSizeCalculationStrategy) {
     val executor = AppExecutorUtil.getAppExecutorService()
     val maxPendingBatches = PARALLELISM + 1
@@ -304,6 +317,8 @@ class GCRootPathsTree(
     finally {
       // Cancel the queued walks and wait for the running ones, so no worker
       // reads the mapped lists after this method returns.
+      // NOTE: This does not wait for a running walk: cancel(false) does not stop it,
+      //       and get() of a canceled future returns at once.
       pending.forEach { it.cancel(false); runCatching { it.get() } }
     }
   }
@@ -318,7 +333,14 @@ class GCRootPathsTree(
   fun printTree(): String {
     val result = StringBuilder()
     if (countOfIgnoredObjects > 0) {
-      result.append("Ignored ${countOfIgnoredObjects} too-deep objects\n")
+      result.append("Ignored ${countOfIgnoredObjects} too-deep objects")
+      // The header of a one-class tree already names the class.
+      if (countOfRegisteredClasses > 1 && countsOfIgnoredObjectsByClass.isNotEmpty()) {
+        countsOfIgnoredObjectsByClass.entries
+          .sortedByDescending { it.value }
+          .joinTo(result, prefix = ": ") { "${it.value} ${it.key.prettyName}" }
+      }
+      result.append("\n")
     }
     val rootReasonGetter = { id: Int ->
       (analysisContext.navigator.getRootReasonForObjectId(id.toLong())?.description ?: "<Couldn't find root description>")
@@ -351,13 +373,13 @@ class GCRootPathsTree(
     // In regular nodes paths are grouped by class definition
     var edges: MutableMap<Edge, RegularNode>? = null
     var pathsCount: Int = 0
-    var pathsSize: Int = 0
-    var totalSizeInDwords: Int = 0
+    var pathsSize: Long = 0
+    var totalSizeInDwords: Long = 0
     var instanceCount: Int = 0
 
     fun addEdge(isFirstRegistration: Boolean,
                 objectSize: Int,
-                subgraphSizeInDwords: Int,
+                subgraphSizeInDwords: Long,
                 probe: Edge): RegularNode {
       var localEdges = edges
       if (localEdges == null) {
@@ -370,21 +392,11 @@ class GCRootPathsTree(
         localEdges[probe.copy()] = node
       }
       node.pathsCount++
-      if (node.pathsSize + objectSize.toLong() > Int.MAX_VALUE) {
-        node.pathsSize = Int.MAX_VALUE
-      }
-      else {
-        node.pathsSize += objectSize
-      }
+      node.pathsSize += objectSize
 
       if (isFirstRegistration) {
         node.instanceCount++
-        if (node.totalSizeInDwords + subgraphSizeInDwords.toLong() > Int.MAX_VALUE) {
-          node.totalSizeInDwords = Int.MAX_VALUE
-        }
-        else {
-          node.totalSizeInDwords += subgraphSizeInDwords
-        }
+        node.totalSizeInDwords += subgraphSizeInDwords
       }
       return node
     }
@@ -412,7 +424,7 @@ class GCRootPathsTree(
 
     fun addEdge(objectId: Int,
                 objectSize: Int,
-                subgraphSizeInDwords: Int,
+                subgraphSizeInDwords: Long,
                 classDefinition: ClassDefinition,
                 refIndex: Byte,
                 disposed: Boolean): RegularNode {
@@ -431,12 +443,7 @@ class GCRootPathsTree(
         node.totalSizeInDwords = subgraphSizeInDwords
       }
       node.pathsCount++
-      if (node.pathsSize + objectSize.toLong() > Int.MAX_VALUE) {
-        node.pathsSize = Int.MAX_VALUE
-      }
-      else {
-        node.pathsSize += objectSize
-      }
+      node.pathsSize += objectSize
 
       return node
     }
@@ -503,7 +510,7 @@ class GCRootPathsTree(
                           rootNode.pathsCount,
                           rootPercent,
                           rootNode.pathsSize,
-                          rootNode.totalSizeInDwords.toLong() * 4,
+                          rootNode.totalSizeInDwords * 4,
                           1,
                           Status.getStatus(RefIndexUtil.ROOT, false, false),
                           false,
@@ -527,7 +534,7 @@ class GCRootPathsTree(
                               node.pathsCount,
                               (100.0 * node.pathsCount / totalInstanceCount).toInt(),
                               node.pathsSize,
-                              node.totalSizeInDwords.toLong() * 4,
+                              node.totalSizeInDwords * 4,
                               node.instanceCount,
                               Status.getStatus(refIndex, node.edges == null, disposed),
                               disposed,
@@ -544,7 +551,7 @@ class GCRootPathsTree(
                     index == 0 ||
                     e.value.pathsCount >= minimumObjectsForReport ||
                     e.value.pathsSize >= treeDisplayOptions.minimumObjectSize ||
-                    e.value.totalSizeInDwords.toLong() * 4 >= treeDisplayOptions.minimumSubgraphSize
+                    e.value.totalSizeInDwords * 4 >= treeDisplayOptions.minimumSubgraphSize
                   }
                   .asReversed()
 
@@ -623,11 +630,11 @@ class GCRootPathsTree(
         compareByDescending<Triple<Int, Edge, RegularNode>> { it.third.totalSizeInDwords }
           .thenBy { it.first }
       )
-      val largestRootSize = sortedRoots.firstOrNull()?.third?.totalSizeInDwords?.toLong() ?: 0L
+      val largestRootSize = sortedRoots.firstOrNull()?.third?.totalSizeInDwords ?: 0L
       // Absolute limits hide useful roots in small dumps. Compare all roots with the largest root instead.
       val rootsToReport = sortedRoots.asSequence().filterIndexed { index, (_, _, node) ->
         index < treeDisplayOptions.minimumPaths ||
-        node.totalSizeInDwords.toLong() * 100 >= largestRootSize * MergedReportLimits.MINIMUM_ROOT_PERCENT
+        node.totalSizeInDwords * 100 >= largestRootSize * MergedReportLimits.MINIMUM_ROOT_PERCENT
       }.take(MergedReportLimits.MAXIMUM_ROOT_COUNT)
         .toList()
 
@@ -645,7 +652,7 @@ class GCRootPathsTree(
                         rootNode.pathsCount,
                         rootPercent,
                         rootNode.pathsSize,
-                        rootNode.totalSizeInDwords.toLong() * 4,
+                        rootNode.totalSizeInDwords * 4,
                         1,
                         Status.getStatus(RefIndexUtil.ROOT, false, false),
                         false,
@@ -674,7 +681,7 @@ class GCRootPathsTree(
       val proportionalBudget =
         if (largestRootSize == 0L) MergedReportLimits.PROPORTIONAL_TREE_NODE_BUDGET_BASIS
         else (MergedReportLimits.PROPORTIONAL_TREE_NODE_BUDGET_BASIS.toLong() *
-              root.totalSizeInDwords.toLong() / largestRootSize).toInt()
+              root.totalSizeInDwords / largestRootSize).toInt()
       return MergedReportLimits.FIXED_TREE_NODE_BUDGET_PER_ROOT + proportionalBudget
     }
 
@@ -689,7 +696,7 @@ class GCRootPathsTree(
         MergedReportLimits.SUBGRAPH_PERCENT_FOR_LARGEST_ROOT +
         (MergedReportLimits.SUBGRAPH_PERCENT_AT_MINIMUM_ROOT_SIZE -
          MergedReportLimits.SUBGRAPH_PERCENT_FOR_LARGEST_ROOT) * interpolation
-      val rootSizeInBytes = root.totalSizeInDwords.toLong() * 4
+      val rootSizeInBytes = root.totalSizeInDwords * 4
       return maxOf(MergedReportLimits.MINIMUM_SUBGRAPH_SIZE_BYTES,
                    (rootSizeInBytes.toDouble() * relativeSubgraphPercent / 100.0).toLong())
     }
@@ -762,7 +769,7 @@ class GCRootPathsTree(
                         node.pathsCount,
                         (100.0 * node.pathsCount / totalInstanceCount).toInt(),
                         node.pathsSize,
-                        node.totalSizeInDwords.toLong() * 4,
+                        node.totalSizeInDwords * 4,
                         node.instanceCount,
                         Status.getStatus(java.lang.Byte.toUnsignedInt(chainEndEdge.refIndex),
                                          chainEndNode.edges.isNullOrEmpty(),
@@ -841,7 +848,7 @@ class GCRootPathsTree(
       if (sortedChildren.isEmpty()) return emptyList()
 
       val globallySignificantChildren =
-        sortedChildren.filter { it.value.totalSizeInDwords.toLong() * 4 >= minimumSignificantSubgraphSize }
+        sortedChildren.filter { it.value.totalSizeInDwords * 4 >= minimumSignificantSubgraphSize }
       val significantChildren = mutableListOf<Map.Entry<Edge, RegularNode>>()
       var selectedChildrenSize = 0L
       for (child in globallySignificantChildren) {
@@ -850,7 +857,7 @@ class GCRootPathsTree(
         // Prefer enough largest children to represent the parent, but keep a hard fan-out limit.
         if (significantChildren.size >= MergedReportLimits.MAXIMUM_LOCAL_CHILD_COUNT ||
             selectedChildrenSize * 100 >=
-            node.totalSizeInDwords.toLong() * MergedReportLimits.MINIMUM_LOCAL_CHILDREN_SIZE_PERCENT) {
+            node.totalSizeInDwords * MergedReportLimits.MINIMUM_LOCAL_CHILDREN_SIZE_PERCENT) {
           break
         }
       }
@@ -886,7 +893,7 @@ class GCRootPathsTree(
                                 treeDisplayOptions: AnalysisConfig.TreeDisplayOptions,
                                 pathsCount: Int?,
                                 percent: Int?,
-                                instanceSize: Int?,
+                                instanceSize: Long?,
                                 subgraphSize: Long?,
                                 instanceCount: Int?,
                                 status: Status,
@@ -896,7 +903,7 @@ class GCRootPathsTree(
                                 text: String) {
       val pathsCountString = (pathsCount?.let { toShortStringAsCount(it.toLong()) } ?: "").padStart(STRING_PADDING_FOR_COUNT)
       val percentString = (percent?.let { "$it%" } ?: "").padStart(4)
-      val instanceSizeString = (instanceSize?.let { toShortStringAsSize(it.toLong()) } ?: "").padStart(STRING_PADDING_FOR_SIZE)
+      val instanceSizeString = (instanceSize?.let { toShortStringAsSize(it) } ?: "").padStart(STRING_PADDING_FOR_SIZE)
       val instanceCountString = (instanceCount ?: "").toString().padStart(10)
       val fieldNameString = if (fieldName != null) "$fieldName: " else ""
       val disposedString = if (disposed == true) " (disposed)" else ""

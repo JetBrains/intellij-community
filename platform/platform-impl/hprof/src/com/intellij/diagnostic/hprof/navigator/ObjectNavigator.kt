@@ -107,12 +107,12 @@ abstract class ObjectNavigator(val classStore: ClassStore, val instanceCount: Lo
 
       parser.accept(createAuxiliaryFilesVisitor, "auxFiles")
 
-      val auxBuffer = auxChannel.map(FileChannel.MapMode.READ_ONLY, 0, auxChannel.size())
+      val auxBuffers = ObjectNavigatorOnAuxFiles.mapAuxBuffers(auxChannel)
       val auxOffsetsBuffer =
         auxOffsetsChannel.map(FileChannel.MapMode.READ_ONLY, 0, auxOffsetsChannel.size())
 
-      return ObjectNavigatorOnAuxFiles(hprofMetadata.roots, auxOffsetsBuffer, auxBuffer, hprofMetadata.classStore, instanceCount,
-                                       parser.idSize)
+      return ObjectNavigatorOnAuxFiles(hprofMetadata.roots, auxOffsetsBuffer, auxBuffers, createAuxiliaryFilesVisitor.getAuxOffsetWrapIds(),
+                                       hprofMetadata.classStore, instanceCount, parser.idSize)
     }
   }
 

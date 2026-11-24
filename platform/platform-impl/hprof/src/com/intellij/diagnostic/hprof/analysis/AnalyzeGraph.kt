@@ -69,7 +69,10 @@ open class AnalyzeGraph(protected val analysisContext: AnalysisContext, private 
     return parentList[objectId.toInt()].toLong()
   }
 
-  private val nominatedInstances = HashMap<ClassDefinition, IntSet>()
+  // The traverse visits each object once, so a list holds no duplicates.
+  // A list takes less memory than a hash set and keeps the ids in visit order,
+  // so the registration in GCRootPathsTree reads the mapped files mostly in order.
+  private val nominatedInstances = HashMap<ClassDefinition, IntArrayList>()
 
   open fun analyze(progress: ProgressIndicator): AnalysisReport = AnalysisReport().apply {
     val includePerClassSection = analysisContext.config.perClassOptions.classNames.isNotEmpty()
@@ -259,7 +262,7 @@ open class AnalyzeGraph(protected val analysisContext: AnalysisContext, private 
     val nominatedClassNames = config.perClassOptions.classNames
     nominatedClassNames.forEach {
       classStore.getClassIfExists(it)?.also { classDefinition ->
-        nominatedInstances[classDefinition] = IntOpenHashSet()
+        nominatedInstances[classDefinition] = IntArrayList()
       }
     }
 
@@ -425,7 +428,7 @@ open class AnalyzeGraph(protected val analysisContext: AnalysisContext, private 
         visitedList[visitedCount++] = id
 
         // Store size of the object. Later pass will update the size by adding sizes of children
-        // Size in DWORDs to support graph sizes up to 10GB.
+        // Size in DWORDs as an unsigned Int to support graph sizes up to 16 GB.
         var sizeDivBy4 = (size + 3) / 4
         if (sizeDivBy4 == 0) sizeDivBy4 = 1
         sizesList.set(id, sizeDivBy4)
@@ -519,7 +522,8 @@ open class AnalyzeGraph(protected val analysisContext: AnalysisContext, private 
             phantomReferenceIdToParentMap.trim()
           }
           WalkGraphPhase.DisposerTree -> {
-            if (analysisContext.disposerTreeObjectId != 0) {
+            // Without disposer relationships, the earlier phases already visited the disposer tree.
+            if (includeDisposerRelationships && analysisContext.disposerTreeObjectId != 0) {
               toVisit.add(analysisContext.disposerTreeObjectId)
             }
           }
@@ -580,7 +584,9 @@ open class AnalyzeGraph(protected val analysisContext: AnalysisContext, private 
       val id = visitedList[index]
       val parentId = parentList[id]
       if (id != parentId) {
-        sizesList[parentId] += sizesList[id]
+        // A subtree above 16 GB keeps the maximum size, so it still ranks as the largest.
+        val subtreeSize = sizesList[parentId].toUInt().toLong() + sizesList[id].toUInt().toLong()
+        sizesList[parentId] = minOf(subtreeSize, MAX_SIZE_IN_DWORDS).toInt()
       }
       index--
     }
@@ -610,7 +616,7 @@ open class AnalyzeGraph(protected val analysisContext: AnalysisContext, private 
           if (unreachableChildren.contains(id)) {
             return@forEach
           }
-          buffer.println(" * ${nav.getClassForObjectId(id.toLong()).name} (${toShortStringAsSize(sizesList.get(id.toInt()).toLong() * 4)})")
+          buffer.println(" * ${nav.getClassForObjectId(id.toLong()).name} (${toShortStringAsSize(sizesList.get(id.toInt()).toUInt().toLong() * 4)})")
         }
       }
     }
@@ -946,18 +952,21 @@ open class AnalyzeGraph(protected val analysisContext: AnalysisContext, private 
 
     retainedSizesStopwatch.start()
     val retainedSizes = outgoingCardListOffsets // reuse this buffer, it is no longer needed
+    // The buffer holds unsigned DWORD counts. A size above 16 GB keeps the maximum.
+    fun retainedSize(ponum: Int): Long = retainedSizes[ponum].toUInt().toLong()
     for (i in 1 until maxPonum) {
       retainedSizes[i] = sizesList[postorderList[i]]
     }
     for (i in 1 until maxPonum) {
-      retainedSizes[idomList[i]] += retainedSizes[i]
+      val idom = idomList[i]
+      retainedSizes[idom] = minOf(retainedSize(idom) + retainedSize(i), MAX_SIZE_IN_DWORDS).toInt()
     }
     retainedSizesStopwatch.stop()
 
     flameGraphStopwatch.start()
     val idomTreeChildren = mutableMapOf<Int, MutableList<Int>>()
     for (i in 1 until maxPonum) {
-      if (retainedSizes[i] * 4L >= config.dominatorTreeOptions.minNodeSize) {
+      if (retainedSize(i) * 4 >= config.dominatorTreeOptions.minNodeSize) {
         idomTreeChildren.computeIfAbsent(idomList[i]) { mutableListOf() }.add(i)
       }
     }
@@ -995,15 +1004,16 @@ open class AnalyzeGraph(protected val analysisContext: AnalysisContext, private 
       val signatureIndex = addStringToPool(signatureFor(poNumber))
       val children = idomTreeChildren[poNumber]
       if (depth < config.dominatorTreeOptions.maxDepth && children != null) {
-        val childrenSize = children.sumOf { p -> retainedSizes[p] }
-        appendLine("$signatureIndex ${retainedSizes[poNumber] - childrenSize} ${children.size}")
+        val childrenSize = children.sumOf { p -> retainedSize(p) }
+        // The children of a node at the maximum size can sum above it.
+        appendLine("$signatureIndex ${maxOf(0L, retainedSize(poNumber) - childrenSize)} ${children.size}")
         renderedNodes++
-        children.sortedByDescending { p -> retainedSizes[p] }.forEach { p ->
+        children.sortedByDescending { p -> retainedSize(p) }.forEach { p ->
           if (renderedNodes >= config.dominatorTreeOptions.headLimit) return@forEach
           dumpCompressedFlameGraph(p, depth + 1)
         }
       } else {
-        appendLine("$signatureIndex ${retainedSizes[poNumber]} 0")
+        appendLine("$signatureIndex ${retainedSize(poNumber)} 0")
         renderedNodes++
       }
     }
@@ -1101,5 +1111,8 @@ open class AnalyzeGraph(protected val analysisContext: AnalysisContext, private 
 
   companion object {
     private val LOG = Logger.getInstance(AnalyzeGraph::class.java)
+
+    // The largest size in DWORDs that an unsigned Int holds: 16 GB.
+    private const val MAX_SIZE_IN_DWORDS = 0xFFFF_FFFFL
   }
 }

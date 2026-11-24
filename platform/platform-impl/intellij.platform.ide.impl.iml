@@ -173,5 +173,6 @@
     <orderEntry type="module" module-name="intellij.java.guiForms.rt" />
     <orderEntry type="library" scope="RUNTIME" name="jetbrains.intellij.deps.java.atk.wrapper.linux" level="project" />
     <orderEntry type="module" module-name="intellij.platform.eel.nioFs.impl" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.eel.nioFs" />
   </component>
 </module>

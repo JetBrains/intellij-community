@@ -18,27 +18,32 @@ package com.intellij.diagnostic.hprof.navigator
 import com.intellij.diagnostic.hprof.classstore.ClassDefinition
 import com.intellij.diagnostic.hprof.classstore.ClassStore
 import com.intellij.diagnostic.hprof.parser.Type
+import com.intellij.diagnostic.hprof.util.FileBackedHashMap
 import it.unimi.dsi.fastutil.longs.Long2ObjectMap
 import it.unimi.dsi.fastutil.longs.LongArrayList
 import it.unimi.dsi.fastutil.longs.LongList
 import org.jetbrains.annotations.ApiStatus
 import java.nio.ByteBuffer
+import java.nio.channels.FileChannel
 import kotlin.experimental.and
 
 @ApiStatus.Internal
 class ObjectNavigatorOnAuxFiles(
   private val roots: Long2ObjectMap<RootReason>,
   private val auxOffsets: ByteBuffer,
-  private val aux: ByteBuffer,
+  private val auxBuffers: Array<ByteBuffer>,
+  private val auxOffsetWrapIds: IntArray,
   classStore: ClassStore,
   instanceCount: Long,
   private val idSize: Int
 ) : ObjectNavigator(classStore, instanceCount) {
+  // The aux buffer that holds the record of the current object.
+  private var aux: ByteBuffer = auxBuffers[0]
+
   override fun getClass(): ClassDefinition = currentClass!!
 
   override fun getClassForObjectId(id: Long): ClassDefinition {
-    auxOffsets.position((id * 4).toInt())
-    aux.position(auxOffsets.int)
+    positionAux(id)
     val classId = readId(aux)
     return if (classId == 0) classStore.classClass else classStore[classId]
   }
@@ -80,8 +85,7 @@ class ObjectNavigatorOnAuxFiles(
   }
 
   override fun goTo(id: Long, referenceResolution: ReferenceResolution) {
-    auxOffsets.position((id * 4).toInt())
-    aux.position(auxOffsets.int)
+    positionAux(id)
     currentObjectId = id
     references.clear()
     softWeakReferenceId = 0L
@@ -157,6 +161,20 @@ class ObjectNavigatorOnAuxFiles(
     return extraData
   }
 
+  private fun positionAux(id: Long) {
+    val auxOffset = getAuxOffset(id)
+    aux = auxBuffers[(auxOffset ushr AUX_BUFFER_SHIFT).toInt()]
+    aux.position((auxOffset and AUX_BUFFER_MASK).toInt())
+  }
+
+  private fun getAuxOffset(id: Long): Long {
+    var highBits = 0
+    while (highBits < auxOffsetWrapIds.size && id >= auxOffsetWrapIds[highBits]) {
+      highBits++
+    }
+    return (highBits.toLong() shl 32) or (auxOffsets.getInt((id * 4).toInt()).toLong() and 0xFFFFFFFFL)
+  }
+
   private fun preloadPrimitiveArray(referenceResolution: ReferenceResolution) {
     arraySize = readNonNegativeLEB128Int(aux)
     // A size query does not need the array content.
@@ -164,8 +182,13 @@ class ObjectNavigatorOnAuxFiles(
       arrayData = null
       return
     }
-    val size = Type.getType(getClass().name).size
-    arrayData = ByteArray(arraySize * size)
+    val byteCount = arraySize.toLong() * Type.getType(getClass().name).size
+    // The content of an array above 1 GB can extend past the aux buffer. Skip the content.
+    if (byteCount > aux.remaining()) {
+      arrayData = null
+      return
+    }
+    arrayData = ByteArray(byteCount.toInt())
     aux.get(arrayData)
   }
 
@@ -312,6 +335,17 @@ class ObjectNavigatorOnAuxFiles(
       }
     }
     return rootReason
+  }
+
+  companion object {
+    // An aux buffer starts at each 1 GB boundary and holds up to 2 GB of the aux file.
+    // The overlap keeps a record of up to 1 GB in the buffer where the record starts.
+    private const val AUX_BUFFER_SHIFT = 30
+    private const val AUX_BUFFER_MASK = (1L shl AUX_BUFFER_SHIFT) - 1
+
+    fun mapAuxBuffers(auxChannel: FileChannel): Array<ByteBuffer> {
+      return FileBackedHashMap.mapBuffers(auxChannel, FileChannel.MapMode.READ_ONLY, 1L shl AUX_BUFFER_SHIFT, Int.MAX_VALUE.toLong())
+    }
   }
 }
 

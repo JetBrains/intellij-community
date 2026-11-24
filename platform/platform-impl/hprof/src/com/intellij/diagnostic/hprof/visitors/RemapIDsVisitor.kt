@@ -133,7 +133,11 @@ abstract class RemapIDsVisitor : HProfVisitor() {
 
 
     fun isSupported(instanceCount: Long): Boolean {
-      return FileBackedHashMap.isSupported(instanceCount, KEY_SIZE, VALUE_SIZE)
+      return FileBackedHashMap.isSupported(instanceCount)
+    }
+
+    fun getFileSize(instanceCount: Long): Long {
+      return FileBackedHashMap.getFileSize(instanceCount, KEY_SIZE, VALUE_SIZE)
     }
 
     private const val KEY_SIZE = 8

@@ -32,6 +32,7 @@ import com.intellij.diagnostic.hprof.util.PartialProgressIndicator
 import com.intellij.diagnostic.hprof.visitors.RemapIDsVisitor
 import com.intellij.openapi.progress.ProgressIndicator
 import org.jetbrains.annotations.NonNls
+import java.io.IOException
 import java.nio.channels.FileChannel
 import java.nio.file.Files
 import java.nio.file.Path
@@ -52,6 +53,17 @@ class HProfAnalysis(private val hprofFileChannel: FileChannel,
   )
 
   private val tempFiles = mutableListOf<TempFile>()
+
+  /**
+   * The cause of a histogram-only report.
+   * The report prints [text] after [SIMPLIFIED_REPORT_REASON_PREFIX], and Diogen groups the reports by it.
+   * Do not change an existing [text].
+   */
+  private enum class SimplifiedReportReason(@NonNls val text: String) {
+    TOO_MANY_OBJECTS("too many objects"),
+    NOT_ENOUGH_DISK_SPACE("not enough disk space for temp files"),
+    AUX_FILES_NOT_MAPPED("failed to map auxiliary files"),
+  }
 
   private var includeMetaInfo = true
 
@@ -111,10 +123,18 @@ class HProfAnalysis(private val hprofFileChannel: FileChannel,
       // Currently, there is a maximum count of supported instances. Produce simplified report
       // (histogram only), if the count exceeds maximum.
       if (!isSupported(histogram.instanceCount)) {
-        return prepareSimplifiedReport(result, histogram)
+        return prepareSimplifiedReport(result, histogram, SimplifiedReportReason.TOO_MANY_OBJECTS)
       }
 
       val idMappingChannel = openTempEmptyFileChannel("id-mapping")
+
+      // The temp files of a large heap need many GB. Produce simplified report, if the disk cannot hold them.
+      // Use the directory: on Unix, DELETE_ON_CLOSE deletes the temp file when it opens.
+      val tempDirectory = tempFiles.last().path.toAbsolutePath().parent
+      if (!hasDiskSpaceForTempFiles(tempDirectory, histogram.instanceCount)) {
+        return prepareSimplifiedReport(result, histogram, SimplifiedReportReason.NOT_ENOUGH_DISK_SPACE)
+      }
+
       val remapIDsVisitor = RemapIDsVisitor.createFileBased(
         idMappingChannel,
         histogram.instanceCount)
@@ -137,17 +157,8 @@ class HProfAnalysis(private val hprofFileChannel: FileChannel,
         )
       }
       catch (e: IllegalArgumentException) {
-        // Aux channels can exceed 2GB despite the relatively small number
-        // of supported instances.
-        // It's possible to use a buffer with a sliding window,
-        // but there are certain complications, so let's keep
-        // it simplified for the time being
-        return prepareSimplifiedReport(result, histogram)
-      }
-
-      // The interleaved records keep the per-object fields of one GC path step on one page.
-      if (!FileBackedObjectMetaList.isSupported(navigator.instanceCount + 1)) {
-        return prepareSimplifiedReport(result, histogram)
+        // A map of the aux offsets file can still fail. Produce the simplified report then.
+        return prepareSimplifiedReport(result, histogram, SimplifiedReportReason.AUX_FILES_NOT_MAPPED)
       }
 
       prepareFilesStopwatch.stop()
@@ -204,15 +215,32 @@ class HProfAnalysis(private val hprofFileChannel: FileChannel,
     return result.toString()
   }
 
-  private fun prepareSimplifiedReport(result: StringBuilder, histogram: Histogram): String {
+  private fun prepareSimplifiedReport(result: StringBuilder, histogram: Histogram, reason: SimplifiedReportReason): String {
+    result.appendLine("$SIMPLIFIED_REPORT_REASON_PREFIX ${reason.text}")
     result.appendLine(histogram.prepareReport("All", 50))
     return result.toString()
   }
 
   private fun isSupported(instanceCount: Long): Boolean {
-    // Limitation due to FileBackedHashMap in RemapIDsVisitor. Many other components
-    // assume instanceCount <= Int.MAX_VALUE.
-    return RemapIDsVisitor.isSupported(instanceCount) && instanceCount <= Int.MAX_VALUE
+    // The aux offsets and the visited list keep 4 bytes per object in one buffer.
+    return RemapIDsVisitor.isSupported(instanceCount) && (instanceCount + 1) * Int.SIZE_BYTES <= Int.MAX_VALUE
+  }
+
+  private fun hasDiskSpaceForTempFiles(tempDirectory: Path, instanceCount: Long): Boolean {
+    val objectCount = instanceCount + 1
+    val tempFilesSize = RemapIDsVisitor.getFileSize(instanceCount) + // id-mapping
+                        objectCount * Int.SIZE_BYTES + // auxOffset
+                        hprofFileChannel.size() + // aux, which stays below the heap dump size
+                        FileBackedObjectMetaList.getFileSize(objectCount) + // objectMeta
+                        objectCount * Int.SIZE_BYTES // visited
+    val usableSpace = try {
+      Files.getFileStore(tempDirectory).usableSpace
+    }
+    catch (ignored: IOException) {
+      // An unknown free space does not stop the analysis.
+      return true
+    }
+    return usableSpace - tempFilesSize > DISK_SPACE_THRESHOLD
   }
 
   private fun closeAndDeleteTemporaryFiles() {
@@ -229,5 +257,12 @@ class HProfAnalysis(private val hprofFileChannel: FileChannel,
       }
     }
     tempFiles.clear()
+  }
+
+  private companion object {
+    // The free space to keep after the temp files, the same as the default of the dominator tree check.
+    const val DISK_SPACE_THRESHOLD = 500_000_000L
+
+    const val SIMPLIFIED_REPORT_REASON_PREFIX = "Histogram-only reason:"
   }
 }

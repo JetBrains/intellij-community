@@ -27,6 +27,7 @@ import com.intellij.diagnostic.hprof.parser.Type
 import com.intellij.diagnostic.hprof.util.FileChannelBackedWriteBuffer
 import com.intellij.diagnostic.hprof.util.HProfReadBufferSlidingWindow
 import com.intellij.openapi.diagnostic.Logger
+import it.unimi.dsi.fastutil.ints.IntArrayList
 import java.nio.channels.FileChannel
 
 internal class CreateAuxiliaryFilesVisitor(
@@ -43,6 +44,7 @@ internal class CreateAuxiliaryFilesVisitor(
   private var directByteBufferFdOffset: Int = 0
   private var stringClass: ClassDefinition? = null
   private var stringCoderOffset: Int = -1
+  private val auxOffsetWrapIds = IntArrayList()
 
   companion object {
     private val LOG = Logger.getInstance(CreateAuxiliaryFilesVisitor::class.java)
@@ -57,6 +59,7 @@ internal class CreateAuxiliaryFilesVisitor(
 
     offsets = FileChannelBackedWriteBuffer(auxOffsetsChannel)
     aux = FileChannelBackedWriteBuffer(auxChannel)
+    auxOffsetWrapIds.clear()
 
     directByteBufferClass = null
     val dbbClass = classStore.getClassIfExists("java.nio.DirectByteBuffer")
@@ -86,11 +89,17 @@ internal class CreateAuxiliaryFilesVisitor(
     offsets.close()
   }
 
+  /**
+   * Returns the id of the first object after each 4 GB step of the aux file.
+   * The aux offsets file holds only the low 32 bits of each offset.
+   */
+  fun getAuxOffsetWrapIds(): IntArray = auxOffsetWrapIds.toIntArray()
+
   override fun visitPrimitiveArrayDump(arrayObjectId: Long, stackTraceSerialNumber: Long, numberOfElements: Long, elementType: Type, primitiveArrayData: HProfReadBufferSlidingWindow) {
     assert(arrayObjectId <= Int.MAX_VALUE)
-    assert(offsets.position() / 4 == arrayObjectId.toInt())
+    assert(offsets.position() / 4 == arrayObjectId)
 
-    offsets.writeInt(aux.position())
+    writeAuxOffset(arrayObjectId)
 
     aux.writeId(classStore.getClassForPrimitiveArray(elementType)!!.id.toInt())
 
@@ -108,9 +117,9 @@ internal class CreateAuxiliaryFilesVisitor(
                               staticFields: Array<StaticFieldEntry>,
                               instanceFields: Array<InstanceFieldEntry>) {
     assert(classId <= Int.MAX_VALUE)
-    assert(offsets.position() / 4 == classId.toInt())
+    assert(offsets.position() / 4 == classId)
 
-    offsets.writeInt(aux.position())
+    writeAuxOffset(classId)
 
     aux.writeId(0) // Special value for class definitions, to differentiate from regular java.lang.Class instances
   }
@@ -118,9 +127,9 @@ internal class CreateAuxiliaryFilesVisitor(
   override fun visitObjectArrayDump(arrayObjectId: Long, stackTraceSerialNumber: Long, arrayClassObjectId: Long, objects: LongArray) {
     assert(arrayObjectId <= Int.MAX_VALUE)
     assert(arrayClassObjectId <= Int.MAX_VALUE)
-    assert(offsets.position() / 4 == arrayObjectId.toInt())
+    assert(offsets.position() / 4 == arrayObjectId)
 
-    offsets.writeInt(aux.position())
+    writeAuxOffset(arrayObjectId)
 
     aux.writeId(arrayClassObjectId.toInt())
     val nonNullElementsCount = objects.count { it != 0L }
@@ -142,9 +151,9 @@ internal class CreateAuxiliaryFilesVisitor(
   override fun visitInstanceDump(objectId: Long, stackTraceSerialNumber: Long, classObjectId: Long, bytes: HProfReadBufferSlidingWindow) {
     assert(objectId <= Int.MAX_VALUE)
     assert(classObjectId <= Int.MAX_VALUE)
-    assert(offsets.position() / 4 == objectId.toInt())
+    assert(offsets.position() / 4 == objectId)
 
-    offsets.writeInt(aux.position())
+    writeAuxOffset(objectId)
 
     aux.writeId(classObjectId.toInt())
 
@@ -203,6 +212,14 @@ internal class CreateAuxiliaryFilesVisitor(
         aux.writeByte(bytes.get(stringCoderOffset))
       }
     }
+  }
+
+  private fun writeAuxOffset(objectId: Long) {
+    val auxOffset = aux.position()
+    while (auxOffset ushr 32 > auxOffsetWrapIds.size) {
+      auxOffsetWrapIds.add(objectId.toInt())
+    }
+    offsets.writeInt(auxOffset.toInt())
   }
 
   private fun FileChannelBackedWriteBuffer.writeId(id: Int) {

@@ -54,6 +54,8 @@ class DialogAppender : Handler() {
     if (event.level.intValue() < Level.SEVERE.intValue() || loggerBroken.get()) return
 
     val throwable = event.thrown ?: return
+    // Check here, not in processEvent(): the queue runs later, possibly after the analysis ends.
+    if (DefaultIdeaErrorLogger.getOOMErrorKind(throwable) == VMOptions.MemoryKind.HEAP && LowMemoryNotifier.isMemoryAnalysisRunning()) return
     // `JulLogger` drops the `UnhandledException` wrapper and puts the kind here. See IJPL-254578.
     val kind = (event as? IdeaLogRecord)?.unhandledExceptionKind ?: UnhandledExceptionKind.HANDLED
     val entry = Entry(event.message, throwable, kind)

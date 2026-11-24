@@ -27,7 +27,7 @@ class FileChannelBackedWriteBuffer(
 ) : Closeable {
   private val tempBuf = ByteBuffer.allocateDirect(70 * 1024)
 
-  private var position: Int = 0
+  private var position: Long = 0
   private var closed = false
 
   override fun close() {
@@ -129,7 +129,7 @@ class FileChannelBackedWriteBuffer(
     }
   }
 
-  fun position(): Int {
+  fun position(): Long {
     return position
   }
 

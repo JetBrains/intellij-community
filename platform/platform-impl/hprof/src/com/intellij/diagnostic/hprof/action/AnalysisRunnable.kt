@@ -15,9 +15,12 @@
  */
 package com.intellij.diagnostic.hprof.action
 
+import com.intellij.diagnostic.DefaultIdeaErrorLogger
 import com.intellij.diagnostic.DiagnosticBundle
 import com.intellij.diagnostic.ExceptionAutoReportUtil
 import com.intellij.diagnostic.HeapDumpAnalysisSupport
+import com.intellij.diagnostic.LowMemoryNotifier
+import com.intellij.diagnostic.VMOptions
 import com.intellij.diagnostic.hprof.analysis.HProfAnalysis
 import com.intellij.diagnostic.hprof.analysis.analyzeGraph
 import com.intellij.diagnostic.hprof.util.HeapDumpAnalysisNotificationGroup
@@ -79,16 +82,25 @@ internal class AnalysisRunnable(
   inner class AnalysisTask : Task.Backgroundable(null, DiagnosticBundle.message("heap.dump.analysis.task.title"), false) {
 
     override fun onThrowable(error: Throwable) {
-      thisLogger().error(error)
-
       HeapDumpAnalysisSupport.getInstance().analysisFailed(heapProperties)
 
-      val notification = HeapDumpAnalysisNotificationGroup.GROUP.createNotification(DiagnosticBundle.message("heap.dump.analysis.exception"),
-                                                                                    NotificationType.INFORMATION)
-      if (ShowLogAction.isSupported()) {
-        notification.addAction(ShowLogAction.notificationAction())
+      if (DefaultIdeaErrorLogger.getOOMErrorKind(error) == VMOptions.MemoryKind.HEAP) {
+        // An error shows the low memory notification, which offers a heap dump of the analysis itself.
+        thisLogger().warn("Not enough heap space for heap dump analysis", error)
+        HeapDumpAnalysisNotificationGroup.GROUP.createNotification(DiagnosticBundle.message("heap.dump.analysis.out.of.memory"),
+                                                                   NotificationType.WARNING)
+          .setDisplayId("memory.analysis.failed")
+          .notify(null)
       }
-      notification.notify(null)
+      else {
+        thisLogger().error(error)
+        val notification = HeapDumpAnalysisNotificationGroup.GROUP.createNotification(DiagnosticBundle.message("heap.dump.analysis.exception"),
+                                                                                      NotificationType.INFORMATION)
+        if (ShowLogAction.isSupported()) {
+          notification.addAction(ShowLogAction.notificationAction())
+        }
+        notification.notify(null)
+      }
       if (deleteAfterAnalysis) {
         deleteHprofFileAsync()
       }
@@ -99,6 +111,12 @@ internal class AnalysisRunnable(
     }
 
     override fun run(indicator: ProgressIndicator) {
+      LowMemoryNotifier.markMemoryAnalysisRunning().use {
+        analyze(indicator)
+      }
+    }
+
+    private fun analyze(indicator: ProgressIndicator) {
       indicator.isIndeterminate = false
       indicator.text = DiagnosticBundle.message("heap.dump.analysis.indicator.title")
       indicator.fraction = 0.0

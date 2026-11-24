@@ -223,6 +223,7 @@ jvm_library(
         "//platform/runtime/product",
         "//libraries/rd/core",
         "//platform/forms_rt:java-guiForms-rt",
+        "//platform/eel-nioFs",
     ],
 )
 ### auto-generated section `build intellij.platform.ide.impl` end

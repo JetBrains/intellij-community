@@ -6,9 +6,11 @@ import com.google.gson.stream.JsonReader
 import com.google.gson.stream.JsonWriter
 import com.intellij.diagnostic.hprof.action.AnalysisRunnable
 import com.intellij.diagnostic.hprof.action.getHeapDumpReportText
+import com.intellij.diagnostic.hprof.util.HeapDumpAnalysisNotificationGroup
 import com.intellij.diagnostic.report.HeapReportProperties
 import com.intellij.diagnostic.report.MemoryReportReason
 import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector
+import com.intellij.notification.NotificationType
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.components.Service
@@ -104,6 +106,14 @@ internal class AnalyzePendingSnapshotActivity: ProjectActivity {
   }
 
   override suspend fun execute(project: Project) {
+    if (LowMemoryNotifier.deletePreviousMemoryAnalysisMarker()) {
+      LifecycleUsageTriggerCollector.onMemoryReportFailed()
+      HeapDumpAnalysisNotificationGroup.GROUP.createNotification(DiagnosticBundle.message("heap.dump.analysis.interrupted"),
+                                                                 NotificationType.WARNING)
+        .setDisplayId("memory.analysis.interrupted")
+        .notify(null)
+    }
+
     val jsonPath = Path.of(PathManager.getSystemPath(), "pending-snapshot.json")
     if (!jsonPath.isRegularFile()) {
       return
