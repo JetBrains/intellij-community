@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.ex
 
+import com.intellij.codeHighlighting.HighlightDisplayLevel
 import com.intellij.codeInsight.daemon.HighlightDisplayKey
 import com.intellij.codeInspection.InspectionToolProvider
 import com.intellij.codeInspection.LocalInspectionEP
@@ -81,6 +82,21 @@ internal class InspectionProfileTechsTest {
     filter.applicable = setOf(plainModule.pluginId)
     publishFilterChange(otherProject)
     assertEquals(setOf(PLAIN_TOOL, JAVA_TOOL), shortNames(profile.tools))
+  }
+
+  @Test
+  fun `a removed tool keeps its changed settings until the tech is enabled again`() {
+    val filter = installFilter(applicable = setOf(plainModule.pluginId, javaModule.pluginId))
+    val profile = projectProfile(listOf(extensionTool(PLAIN_TOOL, plainModule), extensionTool(JAVA_TOOL, javaModule)))
+    profile.setErrorLevel(HighlightDisplayKey.find(JAVA_TOOL)!!, HighlightDisplayLevel.ERROR, project)
+
+    filter.applicable = setOf(plainModule.pluginId)
+    publishFilterChange(project)
+    assertNull(profile.getToolsOrNull(JAVA_TOOL, project))
+
+    filter.applicable = setOf(plainModule.pluginId, javaModule.pluginId)
+    publishFilterChange(project)
+    assertEquals(HighlightDisplayLevel.ERROR, profile.getTools(JAVA_TOOL, project).level)
   }
 
   @Test

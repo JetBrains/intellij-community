@@ -336,32 +336,40 @@ public class InspectionProfileImpl extends NewInspectionProfile {
 
       ToolsImpl toolList = myTools.get(toolName);
       LOG.assertTrue(toolList != null);
-      var unchangedSettings = toolList.getUnchangedSettings();
-      if (unchangedSettings != null) {
-        element.addContent(unchangedSettings.clone());
-        continue;
-      }
-
-      if (!myLockedProfile && !changedToolNames.contains(toolName)) {
-        markSettingsMerged(toolName, element);
-        continue;
-      }
-
-      Element inspectionElement = new Element(INSPECTION_TOOL_TAG);
-      inspectionElement.setAttribute(CLASS_TAG, toolName);
-      try {
-        toolList.writeExternal(inspectionElement);
-      }
-      catch (WriteExternalException e) {
-        LOG.error(e);
-        continue;
-      }
-
-      if (!areSettingsMerged(toolName, inspectionElement)) {
-        element.addContent(inspectionElement);
-      }
+      writeToolSettings(toolName, toolList, changedToolNames.contains(toolName), element);
     }
     getPathMacroManager().collapsePaths(element);
+  }
+
+  /**
+   * Adds to {@code element} what the profile saves for {@code toolList}: its settings, or the marker of a merge.
+   * Adds nothing when a load restores the settings without them. {@code isChanged} tells that the settings differ from the base profile.
+   */
+  private void writeToolSettings(@NotNull String toolName, @NotNull ToolsImpl toolList, boolean isChanged, @NotNull Element element) {
+    var unchangedSettings = toolList.getUnchangedSettings();
+    if (unchangedSettings != null) {
+      element.addContent(unchangedSettings.clone());
+      return;
+    }
+
+    if (!myLockedProfile && !isChanged) {
+      markSettingsMerged(toolName, element);
+      return;
+    }
+
+    Element inspectionElement = new Element(INSPECTION_TOOL_TAG);
+    inspectionElement.setAttribute(CLASS_TAG, toolName);
+    try {
+      toolList.writeExternal(inspectionElement);
+    }
+    catch (WriteExternalException e) {
+      LOG.error(e);
+      return;
+    }
+
+    if (!areSettingsMerged(toolName, inspectionElement)) {
+      element.addContent(inspectionElement);
+    }
   }
 
   protected static void writeVersion(@NotNull Element element) {
@@ -719,12 +727,29 @@ public class InspectionProfileImpl extends NewInspectionProfile {
         changed = true;
       }
       else if (!isApplicable && existing != null) {
+        keepSettingsOfRemovedTool(shortName, existing);
         removeTool(existing.getTool());
         changed = true;
       }
     }
     if (changed) {
+      myChangedToolNames = null;
       myProfileManager.fireProfileChanged(this);
+    }
+  }
+
+  /**
+   * Puts what {@link #writeExternal} writes for {@code tools} into {@link #myUninitializedSettings}.
+   * Then the profile keeps the settings without the tool, and {@link #addTool} restores them.
+   * A tool with the settings of the base profile leaves no settings.
+   */
+  private void keepSettingsOfRemovedTool(@NotNull String shortName, @NotNull ToolsImpl tools) {
+    if (myBaseProfile == null) return;
+    var written = new Element(PROFILE);
+    writeToolSettings(shortName, tools, !Comparing.equal(myBaseProfile.myTools.get(shortName), tools), written);
+    getPathMacroManager().collapsePaths(written);
+    for (Element toolElement : written.getChildren(INSPECTION_TOOL_TAG)) {
+      myUninitializedSettings.put(toolElement.getAttributeValue(CLASS_TAG), JDOMUtil.internElement(toolElement));
     }
   }
 
