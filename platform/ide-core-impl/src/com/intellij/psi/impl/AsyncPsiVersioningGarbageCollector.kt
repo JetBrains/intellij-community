@@ -7,10 +7,12 @@ import com.intellij.psi.impl.source.tree.mvcc.PsiVersionCleanable
 import com.intellij.psi.impl.source.tree.mvcc.PsiVersioningGarbageCollector
 import com.intellij.util.containers.ConcurrentLongObjectMap
 import com.intellij.util.containers.Java11Shim
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.job
+import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
 import java.lang.ref.WeakReference
 import java.util.concurrent.ConcurrentLinkedQueue
@@ -30,27 +32,28 @@ internal class AsyncPsiVersioningGarbageCollector(val scope: CoroutineScope) : P
     Java11Shim.createConcurrentLongObjectMap()
 
   private val latestBarrier: AtomicReference<Long> = AtomicReference()
-  private val timeoutQueue: Channel<Unit> = Channel()
+  private val cleanupRequests: Channel<CompletableDeferred<Unit>?> = Channel()
 
-  private val actualCleanupScope = scope.childScope("Actual stale version cleaner")
+  private val actualCleanupScope: CoroutineScope = scope.childScope("Actual stale version cleaner")
 
   init {
     scope.launch {
       while (true) {
         delay(1.seconds)
-        timeoutQueue.send(Unit)
+        cleanupRequests.send(null)
       }
     }
 
     scope.launch {
       while (true) {
-        timeoutQueue.receive()
+        val cleanupScheduled = cleanupRequests.receive()
         val currentLiveVersions = latestBarrier.getAndSet(null)
         if (currentLiveVersions != null) {
           actualCleanupScope.launch {
             cleanupReferences(currentLiveVersions)
           }
         }
+        cleanupScheduled?.complete(Unit)
       }
     }
   }
@@ -60,10 +63,10 @@ internal class AsyncPsiVersioningGarbageCollector(val scope: CoroutineScope) : P
   }
 
   override suspend fun awaitCleanup() {
-    timeoutQueue.send(Unit)
-    for (job in actualCleanupScope.coroutineContext.job.children.toList()) {
-      job.join()
-    }
+    val cleanupScheduled = CompletableDeferred<Unit>()
+    cleanupRequests.send(cleanupScheduled)
+    cleanupScheduled.await()
+    actualCleanupScope.coroutineContext.job.children.toList().joinAll()
   }
 
   override fun registerCleanablesForVersion(version: Long, cleanables: Collection<PsiVersionCleanable>) {
