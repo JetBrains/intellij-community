@@ -48,6 +48,7 @@ jvm_library(
         "//platform/ide-core",
         "//platform/util:util-ui",
         "//platform/project-frame",
+        "//platform/util/coroutines",
     ],
 )
 ### auto-generated section `build intellij.platform.projectView.frontend` end

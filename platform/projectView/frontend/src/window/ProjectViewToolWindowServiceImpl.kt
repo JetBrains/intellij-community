@@ -57,6 +57,7 @@ import com.intellij.platform.projectView.pane.ProjectViewPaneKind
 import com.intellij.platform.projectView.pane.projectViewPaneId
 import com.intellij.platform.projectView.runSafelyCancellable
 import com.intellij.platform.projectView.window.ProjectViewToolWindowService
+import com.intellij.platform.util.coroutines.flow.mapState
 import com.intellij.ui.content.Content
 import com.intellij.ui.content.ContentFactory
 import com.intellij.ui.content.ContentManager
@@ -68,13 +69,11 @@ import com.intellij.util.concurrency.annotations.RequiresEdt
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.ExperimentalForInheritanceCoroutinesApi
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.flow.FlowCollector
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collectLatest
@@ -1066,30 +1065,6 @@ internal data class PanesSnapshot(
 
   companion object {
     val EMPTY: PanesSnapshot = PanesSnapshot(emptyList(), null)
-  }
-}
-
-/**
- * Returns a view of this flow that applies [transform] to each value.
- * The view runs no coroutine, so its value always matches the value of this flow.
- */
-private fun <T, R> StateFlow<T>.mapState(transform: (T) -> R): StateFlow<R> = MappedStateFlow(this, transform)
-
-@OptIn(ExperimentalForInheritanceCoroutinesApi::class)
-private class MappedStateFlow<T, R>(
-  private val source: StateFlow<T>,
-  private val transform: (T) -> R,
-) : StateFlow<R> {
-  override val value: R
-    get() = transform(source.value)
-
-  override val replayCache: List<R>
-    get() = listOf(value)
-
-  override suspend fun collect(collector: FlowCollector<R>): Nothing {
-    // Two source values can map to equal values, and a state flow emits only distinct values.
-    source.map(transform).distinctUntilChanged().collect(collector)
-    awaitCancellation() // unreachable, because the source never completes
   }
 }
 

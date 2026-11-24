@@ -3,17 +3,20 @@ package com.intellij.platform.util.coroutines.flow
 
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.ExperimentalForInheritanceCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.FlowCollector
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flow
@@ -254,6 +257,35 @@ fun <T, M> StateFlow<T>.mapStateIn(
   transform: (value: T) -> M
 ): StateFlow<M> {
   return map(transform).stateIn(coroutineScope, started = started, initialValue = transform(value))
+}
+
+/**
+ * Returns a view of this flow that applies [transform] to each value.
+ *
+ * Unlike [mapStateIn], the view runs no coroutine, so the result is kind of a "cold state flow" if such thing existed:
+ * [value] applies the transform on the fly, and [collect] runs the source collector in-place, applying the transform to every value.
+ *
+ * It follows that the transform must be idempotent and free of side effects.
+ */
+@ApiStatus.Experimental
+fun <T, R> StateFlow<T>.mapState(transform: (T) -> R): StateFlow<R> = MappedStateFlow(this, transform)
+
+@OptIn(ExperimentalForInheritanceCoroutinesApi::class)
+private class MappedStateFlow<T, R>(
+  private val source: StateFlow<T>,
+  private val transform: (T) -> R,
+) : StateFlow<R> {
+  override val value: R
+    get() = transform(source.value)
+
+  override val replayCache: List<R>
+    get() = listOf(value)
+
+  override suspend fun collect(collector: FlowCollector<R>): Nothing {
+    // Two source values can map to equal values, and a state flow emits only distinct values.
+    source.map(transform).distinctUntilChanged().collect(collector)
+    awaitCancellation() // unreachable, because the source never completes
+  }
 }
 
 /**
