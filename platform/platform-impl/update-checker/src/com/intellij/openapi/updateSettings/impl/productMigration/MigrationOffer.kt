@@ -230,16 +230,20 @@ internal fun startMigrationUpdate(project: Project?, content: MigrationOfferCont
 @RequiresEdt
 internal fun showMigrationReady(project: Project?, ready: MigrationReadyTexts?, forceNotification: Boolean = false) {
   setMigrationRestartState()
-  if (!forceNotification && IdeUpdateWidgetState.isWidgetShown()) {
-    return
+  val notify = {
+    val title = ready?.title?.let { StringUtil.escapeXmlEntities(it) } ?: IdeBundle.message("update.ready.message")
+    UpdateChecker.getNotificationGroupForIdeUpdateResults()
+      .createNotification(title, "", NotificationType.INFORMATION)
+      .addAction(NotificationAction.createSimpleExpiring(migrationReadyActionText(ready), MIGRATION_RESTART_ACTION))
+      .setDisplayId("ide.migration.suggest.restart")
+      .notify(project)
   }
-
-  val title = ready?.title?.let { StringUtil.escapeXmlEntities(it) } ?: IdeBundle.message("update.ready.message")
-  UpdateChecker.getNotificationGroupForIdeUpdateResults()
-    .createNotification(title, "", NotificationType.INFORMATION)
-    .addAction(NotificationAction.createSimpleExpiring(migrationReadyActionText(ready), MIGRATION_RESTART_ACTION))
-    .setDisplayId("ide.migration.suggest.restart")
-    .notify(project)
+  if (forceNotification) {
+    notify()
+  }
+  else {
+    IdeUpdateWidgetState.getInstance().runIfWidgetNotShown(notify)
+  }
 }
 
 /** The text of the notification action. A text with the `<html>` prefix gives the generic text, and `&` and `_` are not mnemonics. */

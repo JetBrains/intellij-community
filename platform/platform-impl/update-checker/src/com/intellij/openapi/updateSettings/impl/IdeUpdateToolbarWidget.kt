@@ -317,7 +317,10 @@ private class UpdateButtonWrapper(private val onClick: (JComponent) -> Unit) : J
     // applied once synchronously, so the toolbar lays the button out with its final text right away, and then tracked while shown
     applyStatus(IdeUpdateWidgetState.getInstance().status.value)
     button.launchOnShow("IdeUpdateButton") {
-      IdeUpdateWidgetState.getInstance().status.collect(::applyStatus)
+      val state = IdeUpdateWidgetState.getInstance()
+      state.whileWidgetShown {
+        state.status.collect(::applyStatus)
+      }
     }
     updateColorState()
 

@@ -1046,24 +1046,26 @@ private fun showResults(
                                                              incompatiblePluginNames,
                                                              updatesForPlugins)
 
-    // Disable notification when IdeUpdateWidgetState
-    if (showNotification && !IdeUpdateWidgetState.isWidgetShown()) {
-      IdeUpdateUsageTriggerCollector.NOTIFICATION_SHOWN.log(project)
-      val message = IdeBundle.message(
-        "updates.new.build.notification.title",
-        ApplicationNamesInfo.getInstance().fullProductName,
-        platformUpdates.newBuild.version,
-      )
-      showNotification(
-        project = project,
-        kind = NotificationKind.PLATFORM,
-        displayId = "ide.update.available",
-        title = "",
-        message = message,
-        actions = listOf(NotificationAction.createSimpleExpiring(IdeBundle.message("updates.notification.update.action")) {
-          IdeUpdateUsageTriggerCollector.NOTIFICATION_CLICKED.log(project)
-          showUpdateDialog()
-        }))
+    // the widget announces the update, so the notification shows only when the user does not see the widget
+    if (showNotification) {
+      IdeUpdateWidgetState.getInstance().runIfWidgetNotShown {
+        IdeUpdateUsageTriggerCollector.NOTIFICATION_SHOWN.log(project)
+        val message = IdeBundle.message(
+          "updates.new.build.notification.title",
+          ApplicationNamesInfo.getInstance().fullProductName,
+          platformUpdates.newBuild.version,
+        )
+        showNotification(
+          project = project,
+          kind = NotificationKind.PLATFORM,
+          displayId = "ide.update.available",
+          title = "",
+          message = message,
+          actions = listOf(NotificationAction.createSimpleExpiring(IdeBundle.message("updates.notification.update.action")) {
+            IdeUpdateUsageTriggerCollector.NOTIFICATION_CLICKED.log(project)
+            showUpdateDialog()
+          }))
+      }
     }
   }
 }

@@ -3,24 +3,34 @@ package com.intellij.openapi.updateSettings.impl
 
 import com.intellij.ide.ActivityTracker
 import com.intellij.ide.util.PropertiesComponent
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeoutOrNull
 import org.jetbrains.annotations.ApiStatus
 import kotlin.time.Duration.Companion.days
 import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.seconds
 
 private const val REMIND_LATER_TIME = "IdeUpdateWidget.RemindLaterTime"
 private val REMIND_LATER_TIMEOUT = 3.days
+private val WIDGET_SHOW_TIMEOUT = 3.seconds
 
 @ApiStatus.Internal
 @Service(Service.Level.APP)
-class IdeUpdateWidgetState {
+class IdeUpdateWidgetState(private val coroutineScope: CoroutineScope) {
 
   enum class Status {
     /**
@@ -62,9 +72,10 @@ class IdeUpdateWidgetState {
 
     /**
      * Whether the user sees the button.
+     * The button is not shown when the main toolbar is hidden, for example, in the distraction-free mode.
      */
     @JvmStatic
-    fun isWidgetShown(): Boolean = isUpdateAvailable() && WelcomeFrame.getInstance() == null
+    fun isWidgetShown(): Boolean = isUpdateAvailable() && getInstance().shownWidgets.value > 0
 
     /**
      * Whether an update must not be announced, because the user has asked to be reminded later.
@@ -81,6 +92,11 @@ class IdeUpdateWidgetState {
   }
 
   private val mutableStatus = MutableStateFlow(Status.NONE)
+
+  /**
+   * The number of the buttons that are on the screen now.
+   */
+  private val shownWidgets = MutableStateFlow(0)
 
   val status: StateFlow<Status> = mutableStatus.asStateFlow()
 
@@ -146,6 +162,32 @@ class IdeUpdateWidgetState {
     LOG.info("remindMeLater")
 
     PropertiesComponent.getInstance().setValue(REMIND_LATER_TIME, System.currentTimeMillis().toString())
+  }
+
+  /**
+   * The button runs [block] while it is on the screen, so [isWidgetShown] knows that the user sees the button.
+   */
+  suspend fun whileWidgetShown(block: suspend () -> Unit) {
+    shownWidgets.update { it + 1 }
+    try {
+      block()
+    }
+    finally {
+      shownWidgets.update { it - 1 }
+    }
+  }
+
+  /**
+   * Runs [action] on the EDT when the user does not see the button.
+   * The toolbar adds the button some time after a status change, so the check waits for [WIDGET_SHOW_TIMEOUT].
+   */
+  fun runIfWidgetNotShown(action: () -> Unit) {
+    coroutineScope.launch(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+      val shown = isUpdateAvailable() && withTimeoutOrNull(WIDGET_SHOW_TIMEOUT) { shownWidgets.first { it > 0 } } != null
+      if (!shown) {
+        action()
+      }
+    }
   }
 
   fun isClickable(): Boolean = when (status.value) {
