@@ -42,6 +42,7 @@ import org.junit.jupiter.api.Timeout
 import java.awt.Component
 import javax.swing.JComponent
 import javax.swing.JPanel
+import javax.swing.JScrollPane
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 
@@ -155,6 +156,34 @@ internal class SettingsFrameProjectsTest {
     assertThat(projects.selected).isSameAs(owner)
     assertThat(page.isModified).describedAs("The change of the closed project is gone").isFalse()
     assertThat(ConfigurableWrapper.cast(FrameProjectsTestProjectPage::class.java, page)).isSameAs(pageOf(owner))
+    page.disposeUIResources()
+  }
+
+  @Test
+  fun `the first page is reset once outside the creation of its component and keeps its decoration`(): Unit = inFrame { disposable ->
+    val page = findPages(createGroup(SettingsFrameProjects.create(owner)!!, disposable), PROJECT_PAGE_ID).single() as FrameProjectConfigurable
+
+    val component = ConfigurableCardPanel.createConfigurableComponent(page)!!
+
+    assertThat(pageOf(owner).resets).isEqualTo(1)
+    assertThat(pageOf(owner).resetsInsideCreate).describedAs("The reset runs outside the read action of the creation").isZero()
+    assertThat(UIUtil.findComponentOfType(component, JScrollPane::class.java)).describedAs("The page keeps its scroll pane").isNotNull()
+    page.disposeUIResources()
+  }
+
+  @Test
+  fun `a page that shows again is not reset again`(): Unit = inFrame { disposable ->
+    val projects = SettingsFrameProjects.create(owner)!!
+    val page = findPages(createGroup(projects, disposable), PROJECT_PAGE_ID).single() as FrameProjectConfigurable
+    assertThat(ConfigurableCardPanel.createConfigurableComponent(page)).isNotNull()
+
+    for (project in listOf(guest, owner, guest)) {
+      projects.select(project)
+      page.showSelectedProject()
+    }
+
+    assertThat(pageOf(owner).resets).isEqualTo(1)
+    assertThat(pageOf(guest).resets).isEqualTo(1)
     page.disposeUIResources()
   }
 
@@ -285,6 +314,9 @@ private class FrameProjectsTestProjectPage(project: Project) : Configurable {
   var applies = 0
   var resets = 0
 
+  /** The resets that ran while the page of several projects created its component, so inside the read action of the creation. */
+  var resetsInsideCreate = 0
+
   init {
     pagesByProject.put(project, this)
   }
@@ -302,6 +334,9 @@ private class FrameProjectsTestProjectPage(project: Project) : Configurable {
 
   override fun reset() {
     resets++
+    if (Thread.currentThread().stackTrace.any { it.className == FrameProjectConfigurable::class.java.name && it.methodName == "createComponent" }) {
+      resetsInsideCreate++
+    }
   }
 }
 

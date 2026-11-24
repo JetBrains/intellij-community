@@ -39,9 +39,6 @@ open class FrameProjectConfigurable internal constructor(
   private val pages = LinkedHashMap<Project, JComponent>()
   private var container: JPanel? = null
 
-  /** The card panel resets a page after it creates the component. [createComponent] did that for the first page already. */
-  private var skipsNextReset = false
-
   /** The page of the selected project, or `null` when that project has no page with the id. */
   val selectedDelegate: Configurable?
     get() = delegates.get(projects.selected)
@@ -78,15 +75,17 @@ open class FrameProjectConfigurable internal constructor(
     selectedDelegate?.focusOn(label)
   }
 
-  /** Returns `null` when the page of the selected project has no component. The Settings editor then shows its default page. */
+  /**
+   * Returns `null` when the page of the selected project has no component. The Settings editor then shows its default page.
+   * The page of the selected project gets its component here and its reset from [reset], outside the read action of this call.
+   */
   override fun createComponent(): JComponent? {
     val delegate = selectedDelegate
-    val page = if (delegate == null) createEmptyPage() else ConfigurableCardPanel.createConfigurableComponent(delegate) ?: return null
+    val page = if (delegate == null) createEmptyPage() else ConfigurableCardPanel.createDecoratedComponent(delegate) ?: return null
     pages.put(projects.selected, page)
     val panel = JPanel(BorderLayout())
     panel.add(page, BorderLayout.CENTER)
     container = panel
-    skipsNextReset = true
     return panel
   }
 
@@ -125,10 +124,6 @@ open class FrameProjectConfigurable internal constructor(
   }
 
   override fun reset() {
-    if (skipsNextReset) {
-      skipsNextReset = false
-      return
-    }
     for ((_, delegate) in createdDelegates) {
       delegate.reset()
     }
@@ -146,7 +141,6 @@ open class FrameProjectConfigurable internal constructor(
     }
     pages.clear()
     container = null
-    skipsNextReset = false
   }
 
   /** Drops the page of [project], because the project closes. A change of that page that waits for Apply is lost. */

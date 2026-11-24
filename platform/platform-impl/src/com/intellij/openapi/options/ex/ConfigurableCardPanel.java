@@ -27,6 +27,7 @@ import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -131,6 +132,21 @@ public class ConfigurableCardPanel extends CardLayoutPanel<Configurable, Configu
    * this method adds a scroll bars for created component.
    */
   public static JComponent createConfigurableComponent(@Nullable Configurable configurable) {
+    JComponent decorated = createDecoratedComponent(configurable);
+    if (decorated == null) return null;
+
+    // reset() may show a modal progress, which is forbidden under the read lock of the creation,
+    // here we may have WIL acquired, it still allows us to start modal progress
+    reset(configurable);
+    return decorated;
+  }
+
+  /**
+   * Creates the UI component for {@code configurable} as {@link #createConfigurableComponent} does, but does not reset the configurable.
+   * The caller must reset it outside the read action of this call.
+   */
+  @ApiStatus.Internal
+  public static @Nullable JComponent createDecoratedComponent(@Nullable Configurable configurable) {
     if (configurable == null) return null;
 
     ThreadingAssertions.softAssertAwtOperationsThread();
@@ -150,11 +166,7 @@ public class ConfigurableCardPanel extends CardLayoutPanel<Configurable, Configu
     });
     if (component == null) return null;
 
-    JComponent decorated = decorate(configurable, component);
-    // reset() may show a modal progress, which is forbidden under the read lock above,
-    // here we may have WIL acquired, it still allows us to start modal progress
-    reset(configurable);
-    return decorated;
+    return decorate(configurable, component);
   }
 
   private static @NotNull JComponent decorate(@NotNull Configurable configurable, @NotNull JComponent component) {
