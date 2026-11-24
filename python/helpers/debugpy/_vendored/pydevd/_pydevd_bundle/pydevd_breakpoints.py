@@ -1,3 +1,5 @@
+import sys
+
 from _pydev_bundle import pydev_log
 from _pydevd_bundle import pydevd_import_class
 from _pydevd_bundle.pydevd_frame_utils import exception_on_frame
@@ -174,7 +176,61 @@ def stop_on_unhandled_exception(py_db, thread, additional_info, arg):
 
     pydev_log.debug("Handling post-mortem stop on exception breakpoint %s" % (exception_breakpoint.qname,))
 
+    # JetBrains extension (PY-94301): the Console shows the traceback while the session is paused, as with pydevd.
+    print_unhandled_exception_once(arg)
     py_db.do_stop_on_unhandled_exception(thread, user_frame, frames_byid, arg)
+
+
+# JetBrains extension (PY-94301): an exception printed at its stop carries this attribute, so the exit hooks skip it.
+_TRACEBACK_PRINTED_ATTR = "__pydevd_traceback_printed__"
+
+# The `sys.excepthook` and `threading.excepthook` the program had before `_wrap_exit_hooks`, or None.
+_exit_hooks = None
+
+
+def _wrap_exit_hooks():
+    """
+    Replaces the exit hooks once with wrappers that skip an exception marked by `print_unhandled_exception_once`
+    and pass any other to the hooks the program had. Returns those hooks.
+    """
+    global _exit_hooks
+    if _exit_hooks is None:
+        sys_excepthook, threading_excepthook = sys.excepthook, threading.excepthook
+
+        def skip_printed_sys_excepthook(exctype, value, tb):
+            if not getattr(value, _TRACEBACK_PRINTED_ATTR, False):
+                sys_excepthook(exctype, value, tb)
+
+        def skip_printed_threading_excepthook(args):
+            if not getattr(args.exc_value, _TRACEBACK_PRINTED_ATTR, False):
+                threading_excepthook(args)
+
+        sys.excepthook = skip_printed_sys_excepthook
+        threading.excepthook = skip_printed_threading_excepthook
+        _exit_hooks = (sys_excepthook, threading_excepthook)
+    return _exit_hooks
+
+
+def print_unhandled_exception_once(arg):
+    """
+    JetBrains extension (PY-94301): prints the traceback of an unhandled exception at its stop, through the
+    `sys.excepthook` the program had, so the Console shows it while the session is paused; pydevd prints it the
+    same way before it suspends. The exception is marked and the exit hooks skip a marked one, so the interpreter
+    does not print it a second time when the exception ends the thread after the resume.
+    """
+    exctype, value, tb = arg
+    if getattr(value, _TRACEBACK_PRINTED_ATTR, False):
+        return
+    try:
+        setattr(value, _TRACEBACK_PRINTED_ATTR, True)
+    except Exception:
+        # An exception that takes no attribute cannot be told apart at exit: leave the printing to the exit.
+        return
+    sys_excepthook, _ = _wrap_exit_hooks()
+    try:
+        sys_excepthook(exctype, value, tb)
+    except Exception:
+        pydev_log.exception("Error printing the unhandled exception %s.", exctype)
 
 
 def get_exception_class(kls):
