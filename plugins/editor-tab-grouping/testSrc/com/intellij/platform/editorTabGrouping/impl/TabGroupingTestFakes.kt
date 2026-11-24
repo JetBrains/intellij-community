@@ -24,6 +24,7 @@ import com.intellij.util.ui.JBUI
 import java.awt.Component
 import java.awt.Graphics
 import java.awt.Insets
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
@@ -111,25 +112,47 @@ internal fun createTestEditorWindow(project: Project, parentDisposable: Disposab
   return EditorWindow(manager, coroutineScope)
 }
 
+/** Resolves the groups at once, or after the [gate] completes. */
+internal class TestGroupResolver(private val project: MockProjectEx) : DirectoryGroupResolver(project) {
+  var gate: CompletableDeferred<Unit>? = null
+
+  override suspend fun resolve(files: List<VirtualFile>): Map<VirtualFile, TabGroup?> {
+    gate?.await()
+    return files.associateWith { EditorTabGroupingProvider.resolveDirectoryGroup(it, project) }
+  }
+}
+
 /**
  * A [GroupingJBEditorTabs] subclass that opens the internal state to a test.
  *
  * It counts the work that the performance fixes remove from a hot path.
  */
-internal class TestGroupingJBEditorTabs(
+internal class TestGroupingJBEditorTabs private constructor(
   project: MockProjectEx,
   parentDisposable: Disposable,
   coroutineScope: CoroutineScope,
   tabListOptions: TabListOptions,
   isIslandsTheme: Boolean,
+  private val testResolver: TestGroupResolver,
 ) : GroupingJBEditorTabs(
   project, parentDisposable, coroutineScope, tabListOptions, createTestEditorWindow(project, parentDisposable),
   isIslandsTheme = { isIslandsTheme },
-  resolver = object : DirectoryGroupResolver(project) {
-    override suspend fun resolve(files: List<VirtualFile>): Map<VirtualFile, TabGroup?> =
-      files.associateWith { EditorTabGroupingProvider.resolveDirectoryGroup(it, project) }
-  },
+  resolver = testResolver,
 ) {
+  constructor(
+    project: MockProjectEx,
+    parentDisposable: Disposable,
+    coroutineScope: CoroutineScope,
+    tabListOptions: TabListOptions,
+    isIslandsTheme: Boolean,
+  ) : this(project, parentDisposable, coroutineScope, tabListOptions, isIslandsTheme, TestGroupResolver(project))
+
+  /** While it is set and not complete, the groups of new tabs stay unresolved, as they do in the IDE for a moment. */
+  var resolutionGate: CompletableDeferred<Unit>?
+    get() = testResolver.gate
+    set(value) {
+      testResolver.gate = value
+    }
 
   var groupNamesBuildCount: Int = 0
     private set

@@ -546,6 +546,8 @@ internal open class GroupingJBEditorTabs(
     override val hasWindowSelection: Boolean get() = hasWindowSelection()
     override val visibleTabs: List<TabInfo> get() = getVisibleInfos()
 
+    override fun isGroupResolved(info: TabInfo): Boolean = (info.`object` as? VirtualFile)?.let(controller::isResolved) ?: true
+
     override fun applyOrder(order: List<TabInfo>) = sortTabsTo(order)
 
     override fun groupChanging(groupTab: TabInfo, members: List<TabInfo>, collapsing: Boolean) =

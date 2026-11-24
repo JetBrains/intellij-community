@@ -21,6 +21,7 @@ import com.intellij.ui.tabs.impl.TabLabel.ActionsPosition
 import com.intellij.ui.tabs.impl.TabListOptions
 import java.awt.Dimension
 import javax.swing.JLabel
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.currentCoroutineContext
@@ -525,6 +526,72 @@ class GroupTabCollapseBehaviorTest {
       assertEquals(listOf(false), hiddenStates)
       assertEquals(listOf("Alpha (2)", "gamma"), tabs.visibleLabelTexts())
       assertFalse(tabs.collapseAnimationForTest().isRunning)
+    }
+  }
+
+  @Test
+  fun `a new tab in the selected group changes no group and starts no animation`(): Unit = timeoutRunBlocking {
+    withContext(Dispatchers.EDT) {
+      val tabs = makeTabsWithAlphaGroup()
+      val animation = tabs.collapseAnimationForTest()
+      tabs.select(tabs.tabByText("beta1"), false)
+      tabs.select(tabs.tabByText("alpha1"), false)
+      animation.finishNow()
+      tabs.doLayout()
+      assertEquals(listOf("alpha1", "alpha2", "alpha3", "Beta (2)"), tabs.visibleLabelTexts())
+      val added = tab("alpha4", "/project/Alpha/Alpha4.kt")
+      val gate = CompletableDeferred<Unit>()
+      tabs.resolutionGate = gate
+
+      // The editor window adds the tab and selects it. The group of the tab resolves later.
+      tabs.addTabSilently(added, tabs.tabCount)
+      tabs.select(added, false)
+      assertEquals(listOf("alpha1", "alpha2", "alpha3", "Beta (2)", "alpha4"), tabs.visibleLabelTexts())
+      assertFalse(animation.isRunning)
+      gate.complete(Unit)
+      tabs.awaitGroupResolution()
+
+      assertEquals(listOf("alpha1", "alpha2", "alpha3", "alpha4", "Beta (2)"), tabs.visibleLabelTexts())
+      assertFalse(animation.isRunning)
+    }
+  }
+
+  @Test
+  fun `a new tab in a collapsed group expands the group with an animation`(): Unit = timeoutRunBlocking {
+    withContext(Dispatchers.EDT) {
+      val tabs = makeTabsWithAlphaGroup()
+      val animation = tabs.collapseAnimationForTest()
+      tabs.select(tabs.tabByText("beta1"), false)
+      animation.finishNow()
+      tabs.doLayout()
+      val added = tab("alpha4", "/project/Alpha/Alpha4.kt")
+      val gate = CompletableDeferred<Unit>()
+      tabs.resolutionGate = gate
+
+      tabs.addTabSilently(added, tabs.tabCount)
+      tabs.select(added, false)
+      gate.complete(Unit)
+      tabs.awaitGroupResolution()
+
+      assertEquals(listOf("alpha1", "alpha2", "alpha3", "alpha4", "Beta (2)"), tabs.visibleLabelTexts())
+      assertTrue(animation.isRunning)
+    }
+  }
+
+  @Test
+  fun `a removed tab changes the groups without an animation`(): Unit = timeoutRunBlocking {
+    withContext(Dispatchers.EDT) {
+      val tabs = makeTabsWithAlphaGroup()
+      val animation = tabs.collapseAnimationForTest()
+      tabs.select(tabs.tabByText("beta1"), false)
+      animation.finishNow()
+      tabs.doLayout()
+
+      tabs.removeTab(tabs.tabByText("alpha3"))
+      tabs.removeTab(tabs.tabByText("alpha2"))
+
+      assertEquals(listOf("beta1", "beta2", "alpha1"), tabs.visibleLabelTexts())
+      assertFalse(animation.isRunning)
     }
   }
 
