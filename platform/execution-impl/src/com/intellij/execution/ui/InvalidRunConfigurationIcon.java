@@ -36,7 +36,8 @@ public final class InvalidRunConfigurationIcon extends IconWithOverlay {
       // It could be a custom SVG file optimized for a larger size, for example.
       // Because this thing is only for one place in the platform, and the shape calculation assumes the size of 16x16 anyway,
       // we can use "poor man's getScale()" here to compute the effective scale.
-      float scale = (float) getIconWidth() / 16.0f;
+      // Use the height: a run configuration icon can be wider than high
+      float scale = (float) getIconHeight() / 16.0f;
       return new Rectangle2D.Float(x + scale * (16 - 7), y, 7 * scale, 7 * scale);
     }
     return null;
