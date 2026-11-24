@@ -27,6 +27,10 @@ import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.RefactoringSettings;
 import com.intellij.refactoring.copy.CopyFilesOrDirectoriesHandler;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
+import com.intellij.refactoring.modplan.ModPlanEdit;
+import com.intellij.refactoring.modplan.move.ModPlanMovePlaces;
+import com.intellij.refactoring.modplan.move.ModPlanMoveUsage;
+import com.intellij.refactoring.modplan.move.impl.ModPlanFileReferenceUpdates;
 import com.intellij.refactoring.move.FileReferenceContextUtil;
 import com.intellij.refactoring.move.MoveCallback;
 import com.intellij.refactoring.move.MoveHandler;
@@ -635,12 +639,17 @@ public final class MoveFilesOrDirectoriesUtil {
     }
   }
 
+  /**
+   * A reference to a moved file or directory, which the move updates. The move on the ModPlan engine also makes one for a reference in a
+   * moved file to an item that stays.
+   */
   @ApiStatus.Internal
-  private static final class MovedFileOrDirectoryUsageInfo extends UsageInfo {
+  public static final class MovedFileOrDirectoryUsageInfo extends UsageInfo implements ModPlanMoveUsage {
     private final PsiElement myTarget;
     private final PsiReference myReference;
 
-    MovedFileOrDirectoryUsageInfo(@NotNull PsiReference reference, @NotNull PsiElement target) {
+    /** @param target the item that {@code reference} refers to: a moved item, or an item that stays for a reference in a moved file */
+    public MovedFileOrDirectoryUsageInfo(@NotNull PsiReference reference, @NotNull PsiElement target) {
       super(reference);
       myReference = reference;
       myTarget = target;
@@ -648,5 +657,11 @@ public final class MoveFilesOrDirectoriesUtil {
 
     public PsiElement getTarget() { return myTarget; }
     public PsiReference getUpdatedReference() { return myReference; }
+
+    /** Only a file reference relative to the directory of its file gets an edit, see {@link ModPlanFileReferenceUpdates#updateOf}. */
+    @Override
+    public @Nullable ModPlanEdit asModPlanEdit(@NotNull ModPlanMovePlaces places) {
+      return ModPlanFileReferenceUpdates.updateOf(myReference, myTarget, places);
+    }
   }
 }

@@ -33,6 +33,7 @@ import com.intellij.refactoring.modplan.ModPlanFinalStep
 import com.intellij.refactoring.modplan.ModPlanOptionValues
 import com.intellij.refactoring.modplan.ModPlanRefactoring
 import com.intellij.refactoring.modplan.ModPlanRequest
+import com.intellij.refactoring.modplan.move.impl.ModPlanFileReferenceUpdates
 import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFileHandler
 import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectoriesUtil
 import com.intellij.util.IncorrectOperationException
@@ -94,17 +95,19 @@ class ModPlanMoveRefactoring : ModPlanRefactoring {
         is ModPlanAnalysisResult.Found -> analysis
       }
     }
+    val referenceUpdates = ModPlanFileReferenceUpdates.analyze(items, places, request)
 
     val edits = buildList {
       analyses.flatMapTo(this) { it.edits }
+      addAll(referenceUpdates.edits)
       createdDirectoriesOf(target).mapTo(this) { ModPlanEdit.CreateDirectory(it) }
       items.mapTo(this) { ModPlanEdit.Move(it.virtualFile, target, it.name) }
     }
-    val conflicts = analyses.fold(ModPlanConflicts.EMPTY) { mergedConflicts, analysis -> mergedConflicts.merge(analysis.conflicts) }
+    val conflicts = analyses.fold(referenceUpdates.conflicts) { mergedConflicts, analysis -> mergedConflicts.merge(analysis.conflicts) }
       .merge(ModPlanConflicts.builder().unloadedModules(items).build())
     return try {
       ModPlan.createPlan(edits, conflicts, RefactoringBundle.message("move.title"), REFACTORING_ID, items.first(), false,
-                         emptyList(), writeEventsOf(items, target))
+                         referenceUpdates.usages, writeEventsOf(items, target))
     }
     catch (e: IncorrectOperationException) {
       ModPlan.RefusedPlan(ModPlanAnalysisResult.RefusedReason.EDIT_FAILED, items.first(), e.message)
