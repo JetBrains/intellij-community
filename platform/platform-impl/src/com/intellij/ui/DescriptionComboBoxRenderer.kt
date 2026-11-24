@@ -1,14 +1,14 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.ide.browsers
+package com.intellij.ui
 
 import com.intellij.ide.setToolTipText
-import com.intellij.openapi.ui.popup.ListSeparator
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.text.HtmlChunk
-import com.intellij.ui.GroupedComboBoxRenderer
-import com.intellij.ui.SimpleColoredComponent
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.panels.NonOpaquePanel
+import com.intellij.util.ui.EmptyIcon
 import com.intellij.util.ui.JBUI
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.awt.BorderLayout
 import java.awt.Component
@@ -16,23 +16,32 @@ import javax.swing.BorderFactory
 import javax.swing.JComponent
 import javax.swing.JList
 
-private const val DESCRIPTION_WIDTH = 340
-
 /**
- * Shows the [SearchEngine.hint] in gray under the name of an engine in the popup, and the [SearchEngine.tooltip] as the tooltip.
- * The collapsed combo box shows only the name of the selected engine.
+ * A [GroupedComboBoxRenderer] that shows a gray description under the text of an item of the popup.
+ * The description starts under the text, after the icon.
+ * When [getIcon] gives an icon for an item of the popup, an item without an icon gets an empty icon, so the texts stay aligned.
+ * The collapsed combo box shows only the icon and the text of the selected item.
+ *
+ * @param descriptionWidth the maximum width of the description in unscaled pixels. A longer description wraps.
  */
-internal class SearchEngineRenderer : GroupedComboBoxRenderer<SearchEngine?>() {
+@ApiStatus.Internal
+abstract class DescriptionComboBoxRenderer<T>(
+  component: JComponent? = null,
+  private val descriptionWidth: Int = 340,
+) : GroupedComboBoxRenderer<T>(component) {
   private lateinit var texts: NonOpaquePanel
   private lateinit var description: JBLabel
   private var descriptionText: @Nls String? = null
 
-  override fun getText(item: SearchEngine?): String = item?.displayName ?: ""
+  /** `true` when [getIcon] gives an icon for an item of the rendered list. */
+  private var listHasIcons = false
 
-  override fun separatorFor(value: SearchEngine?): ListSeparator? = null
+  abstract fun getDescription(item: T): @Nls String?
+
+  open fun getToolTipText(item: T): @NlsContexts.Tooltip String? = null
 
   override fun layout() {
-    // no fixed row height, because an engine with a hint takes two rows
+    // no fixed row height, because an item with a description takes two rows
     myRendererComponent.add(mySeparatorComponent, BorderLayout.NORTH)
     myRendererComponent.add(NonOpaquePanel(itemComponent), BorderLayout.CENTER)
   }
@@ -46,26 +55,31 @@ internal class SearchEngineRenderer : GroupedComboBoxRenderer<SearchEngine?>() {
   }
 
   override fun getListCellRendererComponent(
-    list: JList<out SearchEngine?>?,
-    value: SearchEngine?,
+    list: JList<out T>?,
+    value: T,
     index: Int,
     isSelected: Boolean,
     cellHasFocus: Boolean,
   ): Component {
+    val model = list?.model
+    listHasIcons = model != null && (0 until model.size).any { getIcon(model.getElementAt(it)) != null }
     val component = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus)
-    myRendererComponent.setToolTipText(if (index >= 0) value?.tooltip?.let(HtmlChunk::text) else null)
+    myRendererComponent.setToolTipText(if (index >= 0) getToolTipText(value)?.let(HtmlChunk::text) else null)
     return component
   }
 
   override fun customize(
     item: SimpleColoredComponent,
-    value: SearchEngine?,
+    value: T,
     index: Int,
     isSelected: Boolean,
     cellHasFocus: Boolean,
   ) {
     super.customize(item, value, index, isSelected, cellHasFocus)
-    val text = value?.hint
+    if (index >= 0 && listHasIcons && item.icon == null) {
+      item.icon = EmptyIcon.ICON_16
+    }
+    val text = getDescription(value)
     descriptionText = text
     description.isVisible = index >= 0 && text != null
     if (index < 0 || text == null) {
@@ -74,9 +88,15 @@ internal class SearchEngineRenderer : GroupedComboBoxRenderer<SearchEngine?>() {
     }
 
     texts.border = JBUI.Borders.empty(4, 0)
-    description.border = BorderFactory.createEmptyBorder(JBUI.scale(2), item.insets.left + item.ipad.left, 0, 0)
+    val iconWidth = item.icon?.let { it.iconWidth + item.iconTextGap } ?: 0
+    description.border = BorderFactory.createEmptyBorder(
+      JBUI.scale(2),
+      item.insets.left + item.ipad.left + iconWidth,
+      0,
+      0,
+    )
     description.foreground = JBUI.CurrentTheme.ContextHelp.FOREGROUND
-    val maxWidth = JBUI.scale(DESCRIPTION_WIDTH)
+    val maxWidth = JBUI.scale(descriptionWidth)
     val body = if (description.getFontMetrics(description.font).stringWidth(text) <= maxWidth) {
       HtmlChunk.text(text)
     }

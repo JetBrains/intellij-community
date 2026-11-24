@@ -13,10 +13,12 @@ import com.intellij.openapi.options.UnnamedConfigurable
 import com.intellij.openapi.options.ex.ConfigurableWrapper
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.DialogPanel
+import com.intellij.openapi.ui.popup.ListSeparator
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.ui.CollectionComboBoxModel
 import com.intellij.ui.ColoredTableCellRenderer
+import com.intellij.ui.DescriptionComboBoxRenderer
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.dsl.builder.Align
@@ -396,7 +398,19 @@ internal class BrowserSettingsConfigurable : UnnamedConfigurable {
       browserChoiceRow(IdeBundle.message("settings.browsers.default.browser"), defaultBrowserModel)
       browserChoiceRow(IdeBundle.message("settings.browsers.chromium.based.browser"), chromiumBasedBrowserModel)
       row(IdeBundle.message("settings.browsers.search.engine")) {
-        comboBox(searchEngineModel, SearchEngineRenderer())
+        comboBox(searchEngineModel, object : DescriptionComboBoxRenderer<SearchEngine?>() {
+          override fun getText(item: SearchEngine?): String =
+            item?.displayName ?: ""
+
+          override fun getDescription(item: SearchEngine?): String? =
+            item?.hint
+
+          override fun getToolTipText(item: SearchEngine?): String? =
+            item?.tooltip
+
+          override fun separatorFor(value: SearchEngine?): ListSeparator? =
+            null
+        })
           .widthGroup(CHOICE_WIDTH_GROUP)
           .applyToComponent { isSwingPopup = false }
       }
