@@ -91,7 +91,26 @@ public abstract class PsiManagerEx extends PsiManager {
   public abstract void addTreeChangePreprocessorBackgroundable(@NotNull PsiTreeChangePreprocessor preprocessor,
                                                                @NotNull Disposable parentDisposable);
 
+  /**
+   * Publishes the start of a PSI change on {@link AnyPsiChangeListenerBackgroundable#TOPIC} and on
+   * {@link PsiManagerImpl#ANY_PSI_CHANGE_TOPIC}. These topics are read-only, so this method and {@link #afterChange} are the only way
+   * to publish on them.
+   * <p>
+   * The backgroundable topic gets the event first, in place.
+   * The legacy topic gets a physical change on the EDT when the thread holds the write lock. Otherwise, it gets the event in place.
+   * <p>
+   * To drop the resolve caches without a PSI change, call {@link #dropResolveCaches()}.
+   *
+   * @param isPhysical whether the change is in a physical PSI file
+   */
   public abstract void beforeChange(boolean isPhysical);
 
+  /**
+   * Publishes the end of a PSI change on {@link PsiManagerImpl#ANY_PSI_CHANGE_TOPIC} and on
+   * {@link AnyPsiChangeListenerBackgroundable#TOPIC}. The backgroundable topic gets the event last.
+   * The threads are the same as for {@link #beforeChange}.
+   *
+   * @param isPhysical whether the change is in a physical PSI file
+   */
   public abstract void afterChange(boolean isPhysical);
 }
