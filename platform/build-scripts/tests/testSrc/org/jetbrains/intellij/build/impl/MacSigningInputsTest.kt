@@ -30,15 +30,30 @@ class MacSigningInputsTest {
     assertThat(inputs.binaries).containsExactlyInAnyOrder(tool, library)
     assertThat(inputs.archives).containsExactly(archive)
   }
+
+  @Test
+  fun `a Mach-O executable, library or bundle is a binary, and an object file is not`(@TempDir root: Path) {
+    val executable = root.resolve("bin/gdb").also { it.parent.createDirectories(); it.writeBytes(machOHeader(MH_EXECUTE)) }
+    val library = root.resolve("lib/libpython3.12.dylib").also { it.parent.createDirectories(); it.writeBytes(machOHeader(MH_DYLIB)) }
+    val bundle = root.resolve("lib/_ctypes.so").also { it.writeBytes(machOHeader(MH_BUNDLE)) }
+    root.resolve("lib/config-3.12-darwin/python.o").also { it.parent.createDirectories(); it.writeBytes(machOHeader(MH_OBJECT)) }
+
+    assertThat(collectMacSigningInputs(root).binaries).containsExactlyInAnyOrder(executable, library, bundle)
+  }
 }
 
-/** The header of a thin 64-bit arm64 executable with no load commands. */
-private fun machOHeader(): ByteArray {
+private const val MH_OBJECT = 1
+private const val MH_EXECUTE = 2
+private const val MH_DYLIB = 6
+private const val MH_BUNDLE = 8
+
+/** The header of a thin 64-bit arm64 Mach-O file of [fileType] with no load commands. */
+private fun machOHeader(fileType: Int = MH_EXECUTE): ByteArray {
   val buffer = ByteBuffer.allocate(32).order(ByteOrder.LITTLE_ENDIAN)
   buffer.putInt(0xFEEDFACF.toInt()) // MH_MAGIC_64
   buffer.putInt(0x0100000C) // CPU_TYPE_ARM64
   buffer.putInt(0) // CPU_SUBTYPE_ARM64_ALL
-  buffer.putInt(2) // MH_EXECUTE
+  buffer.putInt(fileType)
   buffer.putInt(0) // ncmds
   buffer.putInt(0) // sizeofcmds
   buffer.putInt(0) // flags
