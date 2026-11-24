@@ -266,6 +266,8 @@ jvm_library(
         "//platform/platform-tests/testFramework",
         "//platform/scratch/plugin",
         "//libraries/kotlinx/coroutines/test",
+        "//platform/settings.v2",
+        "//platform/settings.v2/shared",
     ],
 )
 ### auto-generated section `build intellij.platform.tests` end

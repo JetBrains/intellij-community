@@ -217,5 +217,7 @@
     <orderEntry type="module" module-name="intellij.platform.scratch.plugin" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.tests.jcef" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.coroutines.test" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.settings.v2" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.settings.v2.shared" scope="TEST" />
   </component>
 </module>
