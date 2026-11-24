@@ -1,5 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 @file:JvmName("UpdateData")
+@file:OptIn(LowLevelLocalMachineAccess::class)
+
 package com.intellij.openapi.updateSettings.impl
 
 import com.intellij.openapi.application.ApplicationInfo
@@ -11,6 +13,9 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.util.system.CpuArch
+import com.intellij.util.system.LowLevelLocalMachineAccess
+import com.intellij.util.system.NativeAccess
+import com.intellij.util.system.OS
 import org.jdom.Element
 import org.jdom.JDOMException
 import org.jetbrains.annotations.ApiStatus.Internal
@@ -102,7 +107,29 @@ class PatchInfo internal constructor(node: Element) {
 class DistributionInfo(val product: String, val manifestUrl: String, val fileUrl: String)
 
 private const val MIGRATION_OS = "mac"
-private val ARCH_SUFFIX: String = if (CpuArch.isArm64()) "aarch64" else if (CpuArch.isIntel64()) "x64" else "unknown"
+private val ARCH_SUFFIX: String by lazy { distributionArchSuffix() }
+
+/**
+ * The `arch` value of the distribution file for this machine.
+ * On Windows, it is the CPU of the machine and not the CPU of the JVM, because the installer for another CPU does not run.
+ * [windowsNativeArch] gives the CPU of a Windows machine, or `null` when it is unknown.
+ */
+@Internal
+fun distributionArchSuffix(
+  os: OS = OS.CURRENT,
+  jvmArch: CpuArch = CpuArch.CURRENT,
+  windowsNativeArch: () -> CpuArch? = { NativeAccess.getInstance().windowsNativeArch },
+): String {
+  val arch = when (os) {
+    OS.Windows -> windowsNativeArch() ?: jvmArch
+    OS.macOS, OS.Linux, OS.FreeBSD, OS.OHOS, OS.Other -> jvmArch
+  }
+  return when (arch) {
+    CpuArch.ARM64 -> "aarch64"
+    CpuArch.X86_64 -> "x64"
+    CpuArch.X86, CpuArch.ARM32, CpuArch.OTHER, CpuArch.UNKNOWN -> "unknown"
+  }
+}
 
 /**
  * Returns `null` when [isMigrationDisabled] is true, when the element is not valid, when [os] is not macOS,

@@ -3,11 +3,14 @@ package com.intellij.ide.updates
 
 import com.intellij.openapi.updateSettings.impl.ChannelStatus
 import com.intellij.openapi.updateSettings.impl.UpdateChannel
+import com.intellij.openapi.updateSettings.impl.distributionArchSuffix
 import com.intellij.openapi.updateSettings.impl.parseDistribution
 import com.intellij.openapi.updateSettings.impl.parseUpdateData
 import com.intellij.openapi.updateSettings.impl.productMigration.distributionXml
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.io.IoTestUtil
+import com.intellij.util.system.CpuArch
+import com.intellij.util.system.OS
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
@@ -200,6 +203,26 @@ class UpdateInfoParsingTest {
       </distribution>""".trimIndent())
     assertNull(parseDistribution(distribution, os = "win", arch = "x64"))
     assertNull(parseDistribution(distribution, os = "unix", arch = "x64"))
+  }
+
+  @Test
+  fun distributionFileOnWindowsIsForTheCpuOfTheMachine() {
+    // an x64 IDE on an Arm machine: the installer for x64 does not run there
+    assertEquals("aarch64", distributionArchSuffix(OS.Windows, CpuArch.X86_64) { CpuArch.ARM64 })
+    assertEquals("x64", distributionArchSuffix(OS.Windows, CpuArch.X86_64) { CpuArch.X86_64 })
+    assertEquals("aarch64", distributionArchSuffix(OS.Windows, CpuArch.ARM64) { CpuArch.ARM64 })
+    // an unknown CPU of the machine gives the CPU of the JVM
+    assertEquals("x64", distributionArchSuffix(OS.Windows, CpuArch.X86_64) { null })
+    assertEquals("aarch64", distributionArchSuffix(OS.Windows, CpuArch.ARM64) { null })
+  }
+
+  @Test
+  fun distributionFileOnOtherSystemsIsForTheCpuOfTheJvm() {
+    // an x64 IDE under Rosetta gets the x64 file
+    assertEquals("x64", distributionArchSuffix(OS.macOS, CpuArch.X86_64) { error("only Windows asks") })
+    assertEquals("aarch64", distributionArchSuffix(OS.macOS, CpuArch.ARM64) { error("only Windows asks") })
+    assertEquals("x64", distributionArchSuffix(OS.Linux, CpuArch.X86_64) { error("only Windows asks") })
+    assertEquals("unknown", distributionArchSuffix(OS.Linux, CpuArch.OTHER) { error("only Windows asks") })
   }
 
   @Test
