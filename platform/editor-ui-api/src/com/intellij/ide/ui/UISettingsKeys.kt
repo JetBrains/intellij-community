@@ -1,9 +1,15 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui
 
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.asContextElement
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
 import com.intellij.platform.settings.v2.DoubleSerializer
 import com.intellij.platform.settings.v2.KeyLocality
 import com.intellij.platform.settings.v2.Serializer
+import com.intellij.platform.settings.v2.SettingsContext
 import com.intellij.platform.settings.v2.SettingsContextFilters
 import com.intellij.platform.settings.v2.SettingsKey
 import com.intellij.platform.settings.v2.SettingsKeyPromoter
@@ -11,6 +17,11 @@ import com.intellij.platform.settings.v2.SettingsValue
 import com.intellij.platform.settings.v2.StringSerializer
 import com.intellij.platform.settings.v2.enumSerializer
 import com.intellij.platform.settings.v2.nullable
+import com.intellij.util.asDisposable
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus.Internal
 
 /**
@@ -60,6 +71,33 @@ object UISettingsKeys {
     PRESENTATION_MODE_IDE_SCALE,
     SINGLE_STRIPE,
   )
+
+  /**
+   * Creates the service of these keys, unless it exists. From its creation the service makes each change of these keys
+   * call [UISettings.fireUISettingsChanged] on the EDT, so each [UISettingsListener] sees it. Changes that come close
+   * together fire one event.
+   */
+  internal fun ensureServiceCreated() {
+    service<UISettingsKeysScope>()
+  }
+}
+
+/** Holds the coroutine scope of the forward of the changes of [UISettingsKeys]. */
+@Service
+private class UISettingsKeysScope(private val coroutineScope: CoroutineScope) {
+  init {
+    val keyChanges = Channel<Unit>(Channel.CONFLATED)
+    // Any modality, because a modal dialog such as Settings can write a key.
+    coroutineScope.launch(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+      for (change in keyChanges) {
+        UISettings.getInstance().fireUISettingsChanged()
+      }
+    }
+    val listenersDisposable = coroutineScope.asDisposable()
+    for (key in UISettingsKeys.ALL_KEYS) {
+      key.addListener(listenersDisposable, SettingsContext.app()) { _, _ -> keyChanges.trySend(Unit) }
+    }
+  }
 }
 
 /**

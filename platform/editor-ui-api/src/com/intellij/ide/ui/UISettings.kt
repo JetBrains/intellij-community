@@ -800,6 +800,11 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
   override fun getState(): UISettingsState = state
 
   @Internal
+  override fun initializeComponent() {
+    UISettingsKeys.ensureServiceCreated()
+  }
+
+  @Internal
   override fun noStateLoaded() {
     migrateFontParameters()
     migrateSearchEverywherePreview()

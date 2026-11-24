@@ -7,7 +7,11 @@ import org.jetbrains.annotations.NotNull;
 import java.util.EventListener;
 
 /**
- * A listener for {@code UISettings} changes.
+ * A listener for {@code UISettings} changes. An event says that some UI setting changed. It does not say which one.
+ * <p>
+ * Use this listener only when the reaction depends on several values. When the reaction depends on one value, and
+ * {@link UISettings} has a value listener for it, use that value listener. An example is
+ * {@link UISettings#addEditorAntialiasingListener}.
  * <p>
  * <em>NOTE:</em> The main {@code UISettings} instance pushes its events down the UI components hierarchy,
  * so there's no need to add a {@code JComponent} as a listener.
