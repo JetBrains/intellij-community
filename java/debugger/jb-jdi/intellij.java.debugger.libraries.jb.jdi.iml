@@ -9,19 +9,19 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module-library" exported="">
       <library name="jb-jdi" type="repository">
-        <properties maven-id="org.jetbrains.intellij.deps:jb-jdi:2.48">
+        <properties maven-id="org.jetbrains.intellij.deps:jb-jdi:2.49">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/jb-jdi/2.48/jb-jdi-2.48.jar">
-              <sha256sum>1425780dfe2a559a63b895add874597fee465572ff8ab3f8508cf5f61799dba2</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/jb-jdi/2.49/jb-jdi-2.49.jar">
+              <sha256sum>6da216e7b90a59176809a0dfa5811f2a83c86bdbd66cdc33de95b629438832b9</sha256sum>
             </artifact>
           </verification>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/jb-jdi/2.48/jb-jdi-2.48.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/jb-jdi/2.49/jb-jdi-2.49.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/jb-jdi/2.48/jb-jdi-2.48-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/jb-jdi/2.49/jb-jdi-2.49-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
