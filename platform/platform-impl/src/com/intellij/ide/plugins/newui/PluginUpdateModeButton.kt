@@ -5,7 +5,10 @@ package com.intellij.ide.plugins.newui
 import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.setToolTipText
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.PopupChooserBuilder
@@ -38,13 +41,13 @@ internal class PluginUpdateModeButton(
     isVisible = true
     val component = this
     addActionListener {
-      coroutineScope.launch(Dispatchers.EDT) {
+      ApplicationManager.getApplication().invokeLater({
         createPopup().showUnderneathOf(component)
-      }
+    }, ModalityState.current())
     }
   }
 
-  private suspend fun createPopup(): JBPopup {
+  private fun createPopup(): JBPopup {
     val selectedItem = getSelectedPopupItem()
     val defaultItem = getDefaultPopupItem()
     val modeItems = getPluginUpdateModePopupItems(pluginsAutoUpdateEnabledProvider())
@@ -86,7 +89,7 @@ internal class PluginUpdateModeButton(
       .createPopup()
   }
 
-  private suspend fun getSelectedPopupItem(): PluginUpdateModePopupItem {
+  private fun getSelectedPopupItem(): PluginUpdateModePopupItem {
     val pluginId = pluginIdProvider() ?: return PluginUpdateModePopupItem.MANUAL_UPDATE
     val exclusion = pluginModel.getPluginUpdateExclusion(pluginId)
     return when (exclusion) {
@@ -112,7 +115,8 @@ internal class PluginUpdateModeButton(
       PluginUpdateModePopupItem.IGNORE_UPDATES -> Exclusion.FromUpdate
     }
     val pluginId = pluginIdProvider() ?: return
-    coroutineScope.launch(Dispatchers.IO) {
+    val modalityState = ModalityState.current()
+    coroutineScope.launch(Dispatchers.IO + modalityState.asContextElement()) {
       pluginModel.persistPluginUpdateExclusion(pluginId, exclusion)
       val isMissingUpdateSourceWarningEnabled = pluginModel.isMissingUpdateSourceWarningEnabled()
       withContext(Dispatchers.EDT) {
