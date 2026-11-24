@@ -70,6 +70,10 @@ class SeTargetsProviderDelegate(
 
     scopeProviderDelegate?.let { scopeProviderDelegate ->
       SeEverywhereFilterImpl.isEverywhere(params.filter)?.let { isEverywhere ->
+        // The filter of the All tab holds no types. A filter that holds the flag and the types keeps the types.
+        SeTargetsFilter.from(params.filter).hiddenTypes.takeIf { it.isNotEmpty() }?.let {
+          SeTypeVisibilityStateProviderDelegate.applyTypeVisibilityStates<T>(contributor, it, filterKeys)
+        }
         scopeProviderDelegate.applyScope(isEverywhere, false)
       } ?: run {
         val targetsFilter = SeTargetsFilter.from(params.filter)
