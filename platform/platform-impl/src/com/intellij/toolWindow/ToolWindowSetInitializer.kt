@@ -604,6 +604,9 @@ private suspend fun addExtraTasks(
     }
 
     for (bean in provider.getTasks(project)) {
+      if (!TechnologyFilter.getInstance().isApplicable(bean.pluginDescriptor, project)) {
+        continue
+      }
       val task = beanToTask(
         project = project,
         bean = bean,

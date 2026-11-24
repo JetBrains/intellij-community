@@ -7,12 +7,15 @@ import com.intellij.facet.ProjectFacetManager
 import com.intellij.facet.ProjectWideFacetAdapter
 import com.intellij.facet.ProjectWideFacetListenersRegistry
 import com.intellij.facet.ui.FacetDependentToolWindow
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.extensions.ExtensionPointListener
 import com.intellij.openapi.extensions.PluginDescriptor
+import com.intellij.openapi.extensions.TechnologyFilter
+import com.intellij.openapi.extensions.TechnologyFilterListener
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.ToolWindowEP
 import com.intellij.openapi.wm.ToolWindowManager
@@ -89,9 +92,24 @@ private fun projectOpened(project: Project, projectWideFacetListenersRegistry: P
     }
   }, project)
 
+  ApplicationManager.getApplication().messageBus.connect(project).subscribe(TechnologyFilter.TOPIC, TechnologyFilterListener { changed ->
+    if (changed != project) return@TechnologyFilterListener
+
+    for (extension in FacetDependentToolWindow.EXTENSION_POINT_NAME.extensionList) {
+      if (TechnologyFilter.getInstance().isApplicable(extension.pluginDescriptor, project)) {
+        initToolWindowIfNeeded(extension, project)
+      }
+      else {
+        ToolWindowManager.getInstance(project).getToolWindow(extension.id)?.remove()
+      }
+    }
+  })
+
   FacetDependentToolWindow.EXTENSION_POINT_NAME.addExtensionPointListener(object : ExtensionPointListener<FacetDependentToolWindow> {
     override fun extensionAdded(extension: FacetDependentToolWindow, pluginDescriptor: PluginDescriptor) {
-      initToolWindowIfNeeded(extension, project)
+      if (TechnologyFilter.getInstance().isApplicable(extension.pluginDescriptor, project)) {
+        initToolWindowIfNeeded(extension, project)
+      }
     }
 
     override fun extensionRemoved(extension: FacetDependentToolWindow, pluginDescriptor: PluginDescriptor) {

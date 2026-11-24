@@ -8,6 +8,8 @@ import com.intellij.openapi.application.smartReadAction
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.extensions.ExtensionPointListener
 import com.intellij.openapi.extensions.PluginDescriptor
+import com.intellij.openapi.extensions.TechnologyFilter
+import com.intellij.openapi.extensions.TechnologyFilterListener
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.AdditionalLibraryRootsListener
 import com.intellij.openapi.roots.ModuleRootEvent
@@ -54,6 +56,11 @@ internal class LibraryDependentToolWindowManager : ProjectActivity {
                              AdditionalLibraryRootsListener { _: String?, _: Collection<VirtualFile?>?, _: Collection<VirtualFile?>?, _: String? ->
                                check(checkRequests.tryEmit(null))
                              })
+        ApplicationManager.getApplication().messageBus.connect(this).subscribe(TechnologyFilter.TOPIC, TechnologyFilterListener { changed ->
+          if (changed == project) {
+            check(checkRequests.tryEmit(null))
+          }
+        })
         LibraryDependentToolWindow.EXTENSION_POINT_NAME.addExtensionPointListener(
           object : ExtensionPointListener<LibraryDependentToolWindow> {
             override fun extensionAdded(extension: LibraryDependentToolWindow, pluginDescriptor: PluginDescriptor) {
@@ -101,6 +108,10 @@ private suspend fun checkToolWindowStatuses(project: Project, extensionId: Strin
       extensions = extensions.filter { it.id == extensionId }
     }
     val existing = extensions.filterTo(HashSet()) { toolWindow ->
+      // a tool window of a disabled tech is removed, as for a missing library
+      if (!TechnologyFilter.getInstance().isApplicable(toolWindow.pluginDescriptor, project)) {
+        return@filterTo false
+      }
       val helper = toolWindow.librarySearchHelper
       helper != null && helper.isLibraryExists(project)
     }
