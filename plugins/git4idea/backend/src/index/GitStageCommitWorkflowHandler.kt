@@ -18,6 +18,7 @@ import com.intellij.vcs.commit.CommitToAmend
 import com.intellij.vcs.commit.NonModalAmendCommitHandler
 import com.intellij.vcs.commit.NonModalCommitWorkflowHandler
 import com.intellij.vcs.commit.NonModalCommitWorkflowUi
+import com.intellij.vcs.commit.VcsToolWindowTabs
 import com.intellij.vcs.commit.fixUnderscoreMnemonic
 import git4idea.i18n.GitBundle
 import git4idea.index.ui.GitStageCommitPanel
@@ -65,6 +66,7 @@ internal class GitStageCommitWorkflowHandler(
     super.beforeCommitChecksEnded(sessionInfo, result)
     if (result.shouldCommit) {
       workflow.commitState = workflow.commitState.copy(commitMessage = getCommitMessage())
+      VcsToolWindowTabs.hideCommitTabOnCommit(project)
     }
   }
 

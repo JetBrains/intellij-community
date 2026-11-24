@@ -106,6 +106,16 @@ object VcsToolWindowTabs {
   }
 
   /**
+   * Puts away the tab the user commits from, once a commit from it starts.
+   *
+   * Only a window goes away, because it belongs to the commit alone. A tool window stays as it is.
+   */
+  fun hideCommitTabOnCommit(project: Project) {
+    val host = CommitUiHostHolder.getInstance(project).current
+    if (host.hidesOnCommit) host.hide(isOnCommit = true)
+  }
+
+  /**
    * Activates the tool window that holds the [tabName] tab, selects the tab, and gives [onShown] the component of that tab.
    *
    * It does nothing when the project has no such tool window.
