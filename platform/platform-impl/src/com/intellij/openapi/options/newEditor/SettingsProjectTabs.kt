@@ -114,7 +114,7 @@ private class ProjectTabs(project: Project, parentDisposable: Disposable) : Sing
 private const val TAB_HEIGHT = 36
 
 /** The points that the font of a tab adds to the label font. */
-private const val FONT_SIZE_INCREASE = 2f
+private const val FONT_SIZE_INCREASE = 1f
 
 private const val ROW_TOP_GAP = 6
 
