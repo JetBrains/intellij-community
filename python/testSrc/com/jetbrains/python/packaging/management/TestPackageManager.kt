@@ -23,7 +23,6 @@ import com.jetbrains.python.packaging.common.toPythonPackages
 import com.jetbrains.python.packaging.setupPy.SetupPyHelpers
 import com.jetbrains.python.pipenv.getPipFileDependenciesMap
 import com.jetbrains.python.psi.PyFile
-import kotlinx.coroutines.runBlocking
 import org.jetbrains.annotations.TestOnly
 import org.toml.lang.psi.TomlFile
 import java.nio.file.Path
@@ -193,9 +192,9 @@ class TestPythonPackageManager(interpreter: PythonInterpreter) :
    * Makes [packages] what the environment holds, and reloads them as a real package manager does after an install: a
    * change publishes `packagesChanged`, see [PythonPackageManager.PACKAGE_MANAGEMENT_TOPIC], so the readers follow.
    */
-  fun installPackages(packages: List<PythonPackage>) {
+  suspend fun installPackages(packages: List<PythonPackage>) {
     environmentPackages = packages
-    runBlocking { reloadPackages() }
+    reloadPackages()
   }
 
   fun withOutdatedPackages(packages: List<PythonOutdatedPackage>): TestPythonPackageManager {

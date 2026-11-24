@@ -266,7 +266,12 @@ fun installPackagesWithBundledStubsForTests(module: Module, packages: List<Pytho
 private fun installPackagesForTests(module: Module, manager: TestPythonPackageManager, packages: List<PythonPackage>) {
   // First, so it follows the packages that the install publishes: a change that comes before it is there is lost.
   PythonInterpreterRoots.getInstance(module.project)
-  manager.installPackages(packages)
+  val job = PyPackageCoroutine.getScope(module.project).launch {
+    withTimeout(DEFAULT_TEST_TIMEOUT) { manager.installPackages(packages) }
+  }
+  job.asPromise().waitForPromiseAndPumpEdt(DEFAULT_TEST_TIMEOUT)
+  // The wait on the EDT returns null for a job that failed, so the test would go on with the old packages.
+  check(!job.isCancelled) { "The install of ${packages.map { it.name }} in ${module.name} failed or did not end in $DEFAULT_TEST_TIMEOUT" }
   awaitDerivedRoots(module.project)
   syncPythonInterpreterLibraries()
   IndexingTestUtil.waitUntilIndexesAreReadyInAllOpenedProjects()
