@@ -3,6 +3,7 @@ package com.intellij.tasks.impl;
 
 import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.configurationStore.XmlSerializer;
+import com.intellij.ide.trustedProjects.TrustedProjects;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
@@ -801,7 +802,7 @@ public final class TaskManagerImpl extends TaskManager implements PersistentStat
     myCacheRefreshTimer = TimerUtil.createNamedTimer("TaskManager refresh", myConfig.updateInterval * 60 * 1000, new ActionListener() {
       @Override
       public void actionPerformed(@NotNull ActionEvent e) {
-        if (myConfig.updateEnabled && !myUpdating) {
+        if (myConfig.updateEnabled && !myUpdating && TrustedProjects.isProjectTrusted(myProject)) {
           LOG.debug("Updating issues cache (every " + myConfig.updateInterval + " min)");
           updateIssues(null);
         }
