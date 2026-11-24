@@ -483,7 +483,10 @@ public final class SettingsEditor extends AbstractEditor implements UiDataProvid
     }
   }
 
-  /** Puts the project selector above {@code header}. The selector is hidden until a project-level page is selected. */
+  /**
+   * Puts the project selector below {@code header}, outside the scrolled page. The selector is hidden until a project-level
+   * page is selected.
+   */
   private @NotNull JComponent withProjectTabs(@NotNull JComponent header) {
     if (myProjectTabs == null) {
       return header;
@@ -491,8 +494,8 @@ public final class SettingsEditor extends AbstractEditor implements UiDataProvid
     myProjectTabs.getComponent().setVisible(false);
     JPanel panel = new JPanel(new BorderLayout());
     panel.setOpaque(false);
-    panel.add(BorderLayout.NORTH, myProjectTabs.getComponent());
-    panel.add(BorderLayout.CENTER, header);
+    panel.add(BorderLayout.NORTH, header);
+    panel.add(BorderLayout.CENTER, myProjectTabs.getComponent());
     return panel;
   }
 

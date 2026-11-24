@@ -23,6 +23,7 @@ import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.TestDialog
 import com.intellij.openapi.ui.TestDialogManager
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.wm.ex.ProjectFrameCapabilitiesProvider
 import com.intellij.openapi.wm.ex.ProjectFrameCapabilitiesService
 import com.intellij.openapi.wm.ex.ProjectFrameCapability
@@ -184,7 +185,7 @@ internal class SettingsFrameProjectsTest {
       val tabs = UIUtil.findComponentOfType(editor.content, SingleHeightTabs::class.java)!!
 
       waitFor("the selector above the project-level page") { isVisibleIn(editor.content, tabs) }
-      assertThat(tabs.tabs.map { it.text }).containsExactly(guest.name)
+      assertThat(tabs.tabs.map { it.`object` }).containsExactly(guest)
       assertThat(tabs.selectedInfo?.`object`).isSameAs(guest)
       assertThat(projects.selected).isSameAs(owner)
     }
@@ -367,7 +368,7 @@ internal class SettingsFrameProjectsTest {
       WindowManagerEx.getInstanceEx().addFrameGuest(owner, third)
       SettingsFrameGuestJoins.guestOpened(third)
 
-      waitFor("the tab of the frame guest that joined") { tabs.tabs.map { it.text } == listOf(owner.name, guest.name, third.name) }
+      waitFor("the tab of the frame guest that joined") { tabs.tabs.map { it.`object` } == listOf(owner, guest, third) }
       assertThat(findPages(group, PROJECT_PAGE_ID)).describedAs("The tree keeps its page").containsExactly(page)
       tabs.select(tabs.tabs[2], false)
       waitFor("the page of the frame guest that joined") {
@@ -437,7 +438,11 @@ internal class SettingsFrameProjectsTest {
 
       editor.treeView.select(projectPage)
       waitFor("the selector above the project-level page") { isVisibleIn(editor.content, tabs) }
-      assertThat(tabs.tabs.map { it.text }).containsExactly(owner.name, guest.name)
+      assertThat(tabs.tabs.map { it.`object` }).containsExactly(owner, guest)
+      // a fixture project has a long name, so the tab shows its start with an ellipsis and the tooltip shows all of it
+      assertThat(tabs.tabs[0].text).endsWith(StringUtil.ELLIPSIS)
+      assertThat(owner.name).startsWith(tabs.tabs[0].text.removeSuffix(StringUtil.ELLIPSIS))
+      assertThat(tabs.tabs[0].tooltipHtmlText.toString()).contains(owner.name)
       assertThat(ConfigurableWrapper.cast(FrameProjectsTestProjectPage::class.java, projectPage)).isSameAs(pageOf(owner))
 
       tabs.select(tabs.tabs[1], false)
