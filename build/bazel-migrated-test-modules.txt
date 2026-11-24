@@ -49,6 +49,7 @@ intellij.completionMlRanking.tests
 intellij.completionMlRankingModels.tests
 intellij.compose.ide.plugin.codeInsight.tests
 intellij.compose.ide.plugin.projectStructureTests
+intellij.compose.ide.plugin.resources.tests
 intellij.configurationScript.test.java
 intellij.configurationScript.tests
 intellij.copyright.tests
@@ -91,6 +92,7 @@ intellij.gradle.java.tests
 intellij.gradle.java.tests.benchmark
 intellij.gradle.java.tests.integration.service
 intellij.gradle.java.toml.tests
+intellij.gradle.jps.tests
 intellij.gradle.native.tooling.tests
 intellij.gradle.properties.tests
 intellij.gradle.testFramework.tests
@@ -101,6 +103,7 @@ intellij.gradle.toolingExtension.tests.compatibility
 intellij.gradle.toolingExtension.tests.util
 intellij.grazie.markdown.specification.tests
 intellij.grazie.tests
+intellij.groovy.jps.tests
 intellij.groovy.propertyBased.tests
 intellij.groovy.structuralSearch.tests
 intellij.groovy.tests
@@ -148,6 +151,8 @@ intellij.java.ui.tests
 intellij.javaFX.community.tests
 intellij.javaFX.tests
 intellij.javaee.appServers.weblogic.jps.tests
+intellij.javaee.jpa.jps.tests
+intellij.javaee.jps.tests
 intellij.javascript.tests.ex.exploratory
 intellij.javascript.tests.exploratory
 intellij.json.networknt.wrapper.tests
@@ -203,6 +208,7 @@ intellij.platform.core.impl.tests
 intellij.platform.core.nio.fs.tests
 intellij.platform.coverage.tests
 intellij.platform.credentialStore.impl.tests
+intellij.platform.credentialStore.impl.kwallet.tests
 intellij.platform.daemon.lambdaTests
 intellij.platform.debugger.impl.frontend.tests
 intellij.platform.debugger.impl.tests
@@ -251,6 +257,7 @@ intellij.platform.jps.model.serialization.tests
 intellij.platform.jps.model.tests
 intellij.platform.lang.tests
 intellij.platform.langInjection.tests
+intellij.platform.langInjection.tests.compiler
 intellij.platform.lsp.impl.problems.tests
 intellij.platform.lsp.impl.tests
 intellij.platform.lvcs.impl.tests
@@ -296,6 +303,7 @@ intellij.platform.testFramework.selfContainedProjects.tests
 intellij.platform.testFramework.tests
 intellij.platform.testRunner.tests
 intellij.platform.tests
+intellij.platform.tests.concurrency
 intellij.platform.tests.debugger
 intellij.platform.threadDumpParser.tests
 intellij.platform.uast.tests
@@ -341,6 +349,7 @@ intellij.relaxng.tests
 intellij.remoteControl.tests
 intellij.remoteDev.util.tests
 intellij.repository.search.completion.tests
+intellij.rt.debugger.agent.tests
 intellij.searchEverywhereLucene.backend.tests
 intellij.searchEverywhereMl.ranking.core.tests
 intellij.searchEverywhereMl.tests
