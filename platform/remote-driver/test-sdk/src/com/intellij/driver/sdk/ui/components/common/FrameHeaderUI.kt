@@ -14,7 +14,7 @@ import java.awt.Point
 import java.awt.Rectangle
 import kotlin.time.Duration.Companion.seconds
 
-val Finder.toolbarHeader: FrameHeaderUI
+val IdeaFrameUI.toolbarHeader: FrameHeaderUI
   get() = x(xQuery {
     or(byClass("MacToolbarFrameHeader"),  byClass("ToolbarFrameHeader"))
   }, FrameHeaderUI::class.java)
@@ -25,11 +25,11 @@ class FrameHeaderUI(data: ComponentData) : UiComponent(data) {
   val appIcon: UiComponent get() = x("//div[@accessiblename='Application icon']")
 }
 
-fun Finder.openMenuItem(vararg items: String) {
+fun IdeaFrameUI.openMenuItem(vararg items: String) {
   openMenuItem(false, true, *items)
 }
 
-fun Finder.openMenuItem(clickOnFirst: Boolean = false, fullMatch: Boolean = true, vararg items: String) {
+fun IdeaFrameUI.openMenuItem(clickOnFirst: Boolean = false, fullMatch: Boolean = true, vararg items: String) {
   if (isLinux) {
     x("//div[@tooltiptext='Main Menu']").click()
   } else {
