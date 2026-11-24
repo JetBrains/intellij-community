@@ -1,4 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:OptIn(LowLevelLocalMachineAccess::class)
+
 package com.intellij.openapi.application.productMigration
 
 import com.intellij.openapi.application.PathManager
@@ -7,6 +9,8 @@ import com.intellij.openapi.application.impl.ApplicationInfoImpl
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.util.io.PreemptiveSafeFileOutputStream
+import com.intellij.util.system.LowLevelLocalMachineAccess
+import com.intellij.util.system.OS
 import org.jetbrains.annotations.ApiStatus
 import tools.jackson.core.JsonParser
 import tools.jackson.core.JsonToken
@@ -24,8 +28,6 @@ private val LOG: Logger
 /** The config import skips this file, because it is about the IDE that wrote it. */
 internal const val MIGRATION_STATE_FILE_NAME: String = "migration.json"
 private const val FORMAT_VERSION = 1
-// the `os` value of a macOS record in the `launch` array of `product-info.json`
-private const val MAC_OS_NAME = "macOS"
 
 @ApiStatus.Internal
 enum class MigrationStatus(val id: String) {
@@ -117,10 +119,10 @@ class InstalledProductInfo(val productCode: String?, val launcher: Path?)
 /**
  * Returns the `product-info.json` data of the installed IDE [app], or `null` when the file does not exist or is not valid.
  * The startup calls it before the services exist, so it uses the path rule of `IdeProductInfo.loadProductInfo` and not the service.
- * The launcher is the `launcherPath` of the first `macOS` record of `launch`, relative to the folder of the file.
+ * The launcher is the `launcherPath` of the first `launch` record of [os], relative to the folder of the file.
  */
 @ApiStatus.Internal
-fun readInstalledProductInfo(app: Path): InstalledProductInfo? {
+fun readInstalledProductInfo(app: Path, os: OS = OS.CURRENT): InstalledProductInfo? {
   val file = productInfoFile(app)
   val text = try {
     Files.readString(file)
@@ -133,13 +135,14 @@ fun readInstalledProductInfo(app: Path): InstalledProductInfo? {
     return null
   }
 
+  val osName = launchOsName(os)
   var productCode: String? = null
   var launcherPath: String? = null
   try {
     parseMigrationJson(text) { parser, name ->
       when (name) {
         "productCode" -> productCode = parser.stringOrNull()
-        "launch" -> launcherPath = readMacLauncherPath(parser)
+        "launch" -> launcherPath = readLauncherPath(parser, osName)
         else -> parser.skipChildren()
       }
     }
@@ -202,8 +205,19 @@ private fun formatMigrationState(state: MigrationState): String = formatMigratio
   writeStringProperty("product", state.product)
 }
 
-/** Reads the `launch` array at the current token of [parser], and returns the `launcherPath` of its first `macOS` record. */
-private fun readMacLauncherPath(parser: JsonParser): String? {
+/** The `os` value of the `launch` records of [os] in `product-info.json`, or `null` when no distribution has a record of [os]. */
+private fun launchOsName(os: OS): String? = when (os) {
+  OS.Windows -> "Windows"
+  OS.macOS -> "macOS"
+  OS.Linux -> "Linux"
+  OS.FreeBSD, OS.OHOS, OS.Other -> null
+}
+
+/**
+ * Reads the `launch` array at the current token of [parser].
+ * Returns the `launcherPath` of its first record with the `os` value [osName].
+ */
+private fun readLauncherPath(parser: JsonParser, osName: String?): String? {
   if (parser.currentToken() != JsonToken.START_ARRAY) invalidMigrationJson("'launch' is not an array")
   var result: String? = null
   while (parser.nextToken() != JsonToken.END_ARRAY) {
@@ -216,7 +230,7 @@ private fun readMacLauncherPath(parser: JsonParser): String? {
         else -> recordParser.skipChildren()
       }
     }
-    if (result == null && os == MAC_OS_NAME) result = launcherPath
+    if (result == null && osName != null && os == osName) result = launcherPath
   }
   return result
 }

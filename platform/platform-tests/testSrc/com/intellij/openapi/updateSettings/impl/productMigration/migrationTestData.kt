@@ -1,9 +1,14 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:OptIn(LowLevelLocalMachineAccess::class)
+
 package com.intellij.openapi.updateSettings.impl.productMigration
 
 import com.intellij.openapi.application.productMigration.MigrationImageData
 import com.intellij.openapi.application.productMigration.MigrationRedirectContent
 import com.intellij.openapi.application.productMigration.MigrationRedirectTexts
+import com.intellij.util.system.LowLevelLocalMachineAccess
+import com.intellij.util.system.OS
+import java.nio.file.FileSystems
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.attribute.PosixFilePermissions
@@ -55,15 +60,44 @@ internal fun writeProductInfo(app: Path, productCode: String? = "JB", extra: Str
   productInfo.writeText("""{ ${productCode?.let { "\"productCode\": \"${it}\"," } ?: ""} "name": "Unified IDE"${extra} }""")
 }
 
+/** The `os` value of a `launch` record of `product-info.json` for the OS of the test machine. */
+internal fun currentLaunchOsName(): String = when (OS.CURRENT) {
+  OS.Windows -> "Windows"
+  OS.macOS -> "macOS"
+  OS.Linux, OS.FreeBSD, OS.OHOS, OS.Other -> "Linux"
+}
+
 /**
  * Writes a macOS `product-info.json` with the product code `JB` into [app], and the launcher [script] at [launcherPath].
- * Returns the launcher. It needs POSIX file permissions.
+ * The `launch` record has the `os` value [osName]. Returns the launcher. It needs POSIX file permissions.
  */
-internal fun writeMacLauncher(app: Path, script: String = "#!/bin/sh\nexit 0\n", launcherPath: String = "../MacOS/light"): Path {
-  writeProductInfo(app, extra = """, "launch": [{ "os": "macOS", "arch": "aarch64", "launcherPath": "${launcherPath}" }]""")
+internal fun writeMacLauncher(
+  app: Path,
+  script: String = "#!/bin/sh\nexit 0\n",
+  launcherPath: String = "../MacOS/light",
+  osName: String = "macOS",
+): Path {
+  writeProductInfo(app, extra = """, "launch": [{ "os": "${osName}", "arch": "aarch64", "launcherPath": "${launcherPath}" }]""")
   val launcher = app.resolve("Contents/Resources").resolve(launcherPath).normalize()
   launcher.parent.createDirectories()
   launcher.writeText(script)
   launcher.setPosixFilePermissions(PosixFilePermissions.fromString("rwxr-xr-x"))
+  return launcher
+}
+
+/**
+ * Writes a `product-info.json` with [productCode] into the root of [app], as a Windows or a Linux distribution has it.
+ * Its `launch` record has the `os` value [osName] and the launcher [launcherPath]. Returns the launcher, which is an executable file.
+ */
+internal fun writeRootLauncher(app: Path, osName: String, launcherPath: String, productCode: String = "JB"): Path {
+  app.createDirectories()
+  app.resolve("product-info.json").writeText(
+    """{ "productCode": "${productCode}", "launch": [{ "os": "${osName}", "arch": "amd64", "launcherPath": "${launcherPath}" }] }""")
+  val launcher = app.resolve(launcherPath)
+  launcher.parent.createDirectories()
+  launcher.writeText("the launcher")
+  if (FileSystems.getDefault().supportedFileAttributeViews().contains("posix")) {
+    launcher.setPosixFilePermissions(PosixFilePermissions.fromString("rwxr-xr-x"))
+  }
   return launcher
 }

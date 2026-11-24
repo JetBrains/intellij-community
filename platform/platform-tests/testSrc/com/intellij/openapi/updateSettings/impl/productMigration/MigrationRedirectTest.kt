@@ -294,7 +294,8 @@ class MigrationRedirectTest {
   @Test
   fun `waiting launch returns the exit code of the child`() {
     IoTestUtil.assumeUnix()
-    val launcher = writeMacLauncher(app, script = "#!/bin/sh\nexit 3\n")
+    // the redirect reads the launcher of the OS of the test machine
+    val launcher = writeMacLauncher(app, script = "#!/bin/sh\nexit 3\n", osName = currentLaunchOsName())
     writeState(MigrationStatus.MOVED)
     val redirect = load(MigrationRedirectStart.OPEN_AND_WAIT)!!
     assertEquals(launcher, redirect.launcher)

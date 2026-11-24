@@ -3,6 +3,7 @@ package com.intellij.openapi.updateSettings.impl.productMigration
 
 import com.intellij.openapi.application.productMigration.readInstalledProductInfo
 import com.intellij.openapi.util.io.IoTestUtil
+import com.intellij.util.system.OS
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Rule
@@ -61,31 +62,65 @@ class InstalledProductInfoTest {
     IoTestUtil.assumeUnix()
     val launcher = writeMacLauncher(app)
     assertEquals(app.resolve("Contents/MacOS/light"), launcher)
-    val info = readInstalledProductInfo(app)!!
+    val info = readInstalledProductInfo(app, OS.macOS)!!
     assertEquals("JB", info.productCode)
     assertEquals(launcher, info.launcher)
   }
 
   @Test
-  fun `no launcher without a macOS record`() {
+  fun `launcher of a Windows application`() {
+    val launcher = writeRootLauncher(app, osName = "Windows", launcherPath = "bin/jetbrains64.exe")
+    val info = readInstalledProductInfo(app, OS.Windows)!!
+    assertEquals("JB", info.productCode)
+    assertEquals(launcher, info.launcher)
+  }
+
+  @Test
+  fun `launcher of a Linux application`() {
+    val launcher = writeRootLauncher(app, osName = "Linux", launcherPath = "bin/jetbrains")
+    assertEquals(launcher, readInstalledProductInfo(app, OS.Linux)!!.launcher)
+  }
+
+  @Test
+  fun `launcher is the first record of the OS`() {
+    val launcher = writeRootLauncher(app, osName = "Windows", launcherPath = "bin/jetbrains64.exe")
+    write("product-info.json", """{ "productCode": "JB", "launch": [
+      { "os": "Linux", "launcherPath": "bin/jetbrains" },
+      { "os": "Windows", "launcherPath": "bin/jetbrains64.exe" },
+      { "os": "Windows", "launcherPath": "bin/other.exe" }] }""")
+    assertEquals(launcher, readInstalledProductInfo(app, OS.Windows)!!.launcher)
+  }
+
+  @Test
+  fun `no launcher without a record of the OS`() {
     write("Contents/Resources/product-info.json", """{ "productCode": "JB" }""")
-    assertNull(readInstalledProductInfo(app)!!.launcher)
+    assertNull(readInstalledProductInfo(app, OS.macOS)!!.launcher)
     write("Contents/Resources/product-info.json", """{ "productCode": "JB", "launch": [{ "os": "Linux", "launcherPath": "../MacOS/light" }] }""")
-    assertNull(readInstalledProductInfo(app)!!.launcher)
+    assertNull(readInstalledProductInfo(app, OS.macOS)!!.launcher)
+  }
+
+  @Test
+  fun `no launcher of another OS`() {
+    writeRootLauncher(app, osName = "Windows", launcherPath = "bin/jetbrains64.exe")
+    for (os in listOf(OS.macOS, OS.Linux, OS.FreeBSD, OS.Other)) {
+      val info = readInstalledProductInfo(app, os)!!
+      assertEquals("JB", info.productCode)
+      assertNull(os.name, info.launcher)
+    }
   }
 
   @Test
   fun `no launcher outside the application`() {
     IoTestUtil.assumeUnix()
     writeMacLauncher(app, launcherPath = "../../../outside")
-    assertNull(readInstalledProductInfo(app)!!.launcher)
+    assertNull(readInstalledProductInfo(app, OS.macOS)!!.launcher)
   }
 
   @Test
   fun `no launcher that is not executable`() {
     IoTestUtil.assumeUnix()
     writeMacLauncher(app).setPosixFilePermissions(PosixFilePermissions.fromString("rw-r--r--"))
-    assertNull(readInstalledProductInfo(app)!!.launcher)
+    assertNull(readInstalledProductInfo(app, OS.macOS)!!.launcher)
   }
 
   private fun write(relativePath: String, text: String) {
