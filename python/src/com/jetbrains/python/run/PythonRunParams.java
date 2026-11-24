@@ -5,7 +5,7 @@ import com.intellij.execution.EnvFilesOptions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.python.sdk.backend.PythonInterpreter;
-import com.intellij.python.sdk.backend.PythonInterpreterRegistryKt;
+import com.intellij.python.sdk.backend.PythonInterpreterExtKt;
 import com.intellij.python.sdk.backend.PythonInterpreterSdkBoundaryKt;
 import com.intellij.util.PathMappingSettings;
 import org.jetbrains.annotations.ApiStatus;
@@ -34,6 +34,19 @@ public interface PythonRunParams extends EnvFilesOptions {
   /** Makes {@code interpreter} the interpreter that these parameters name themselves, see {@link #getPythonInterpreter()}. */
   @ApiStatus.Internal
   default void setPythonInterpreter(@Nullable PythonInterpreter interpreter) {
+  }
+
+  /**
+   * The SDK of {@link #getPythonInterpreter()}. It stays for code outside the Python plugin that sets an SDK with the
+   * Kotlin property {@code sdk}, which needs a getter too.
+   *
+   * @deprecated Use {@link #getPythonInterpreter()}.
+   */
+  @Deprecated
+  default @Nullable Sdk getSdk() {
+    final PythonInterpreter interpreter = getPythonInterpreter();
+    //noinspection deprecation
+    return interpreter != null ? PythonInterpreterExtKt.getSdkAPI(interpreter) : null;
   }
 
   /**

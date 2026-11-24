@@ -83,7 +83,8 @@ fun PythonInterpreter.findToolExecutable(tool: PyTool, executableName: String = 
 
 /**
  * The [Sdk] behind this interpreter, only for the deprecated APIs that external plugins still call:
- * `com.jetbrains.python.sdk.PythonSdkUtil.findPythonSdk` and `Project.pythonSdk`. They return an `Sdk` by contract.
+ * `com.jetbrains.python.sdk.PythonSdkUtil.findPythonSdk`, `Project.pythonSdk` and `PythonRunParams.getSdk`. They
+ * return an `Sdk` by contract.
  *
  * Do not add a caller. Every other code uses the extensions of this file, and only this module reads the SDK.
  */

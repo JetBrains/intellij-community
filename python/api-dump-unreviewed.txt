@@ -892,6 +892,7 @@ com.jetbrains.python.run.PythonRunParams
 - a:getInterpreterOptions():java.lang.String
 - a:getMappingSettings():com.intellij.util.PathMappingSettings
 - a:getModuleName():java.lang.String
+- getSdk():com.intellij.openapi.projectRoots.Sdk
 - a:getWorkingDirectory():java.lang.String
 - a:isPassParentEnvs():Z
 - a:isUseModuleSdk():Z
