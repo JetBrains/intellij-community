@@ -182,6 +182,25 @@ public class FileDocumentManagerImplTest extends HeavyPlatformTestCase {
     );
   }
 
+  public void testRegisterDocumentFiresBindingEventOnlyWhenBindingChanges() {
+    LightVirtualFile file = new LightVirtualFile("light.txt", "test");
+    LightVirtualFile otherFile = new LightVirtualFile("other.txt", "test");
+    Document document = EditorFactory.getInstance().createDocument("test");
+    List<VirtualFile> oldFiles = new ArrayList<>();
+    ApplicationManager.getApplication().getMessageBus().connect(getTestRootDisposable())
+      .subscribe(FileDocumentBindingListener.TOPIC, (doc, oldFile, newFile) -> {
+        if (doc == document) oldFiles.add(oldFile);
+      });
+
+    FileDocumentManagerBase.registerDocument(document, file);
+    FileDocumentManagerBase.registerDocument(document, file);
+    assertEquals(Collections.singletonList(null), oldFiles);
+
+    FileDocumentManagerBase.registerDocument(document, otherFile);
+    assertEquals(Arrays.asList(null, file), oldFiles);
+    assertSame(document, myDocumentManager.getCachedDocument(otherFile));
+  }
+
   public void testGetUnsavedDocuments_NoDocuments() {
     final Document[] unsavedDocuments = myDocumentManager.getUnsavedDocuments();
     assertEquals(0, unsavedDocuments.length);

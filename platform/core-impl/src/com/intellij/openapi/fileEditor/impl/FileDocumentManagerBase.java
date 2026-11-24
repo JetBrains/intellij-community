@@ -31,6 +31,7 @@ import org.jetbrains.annotations.TestOnly;
 import java.nio.charset.Charset;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.function.Consumer;
 
@@ -166,6 +167,11 @@ public abstract class FileDocumentManagerBase extends FileDocumentManager {
       throw new IllegalArgumentException(
         "Hard-coding file<->document association is permitted for non-physical files only (see FileViewProvider.isPhysical())" +
         " to avoid memory leaks. virtualFile=" + virtualFile);
+    }
+     if (Objects.equals(document.getUserData(FILE_KEY), virtualFile) &&
+        virtualFile.getUserData(HARD_REF_TO_DOCUMENT_KEY) == document &&
+        nonPhysicalFilesDocumentsCache.containsKey(document)) {
+      return;
     }
     VirtualFile oldFile;
     synchronized (lock) {
