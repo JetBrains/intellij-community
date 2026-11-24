@@ -4,7 +4,9 @@ package com.intellij.codeInspection.ex;
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.impl.SeverityRegistrar;
+import com.intellij.codeInspection.InspectionEP;
 import com.intellij.codeInspection.InspectionProfileEntry;
+import com.intellij.codeInspection.LocalInspectionEP;
 import com.intellij.codeInspection.options.OptionController;
 import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.configurationStore.SchemeDataHolder;
@@ -14,6 +16,9 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
+import com.intellij.openapi.extensions.PluginDescriptor;
+import com.intellij.openapi.extensions.TechnologyAwareExtensionPointName;
+import com.intellij.openapi.extensions.TechnologyFilter;
 import com.intellij.openapi.options.SchemeState;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
@@ -72,6 +77,11 @@ public class InspectionProfileImpl extends NewInspectionProfile {
   static final String CLASS_TAG = "class";
 
   protected static final Logger LOG = Logger.getInstance(InspectionProfileImpl.class);
+
+  private static final TechnologyAwareExtensionPointName<LocalInspectionEP> LOCAL_INSPECTIONS =
+    new TechnologyAwareExtensionPointName<>(LocalInspectionEP.LOCAL_INSPECTION);
+  private static final TechnologyAwareExtensionPointName<InspectionEP> GLOBAL_INSPECTIONS =
+    new TechnologyAwareExtensionPointName<>(InspectionEP.GLOBAL_INSPECTION);
 
   private static final String VALID_VERSION = "1.0";
   private static final String VERSION_TAG = "version";
@@ -588,6 +598,12 @@ public class InspectionProfileImpl extends NewInspectionProfile {
     catch (ProcessCanceledException ignored) {
       return;
     }
+    // The inspections are application-level extensions, applicable to a project when the project has their techs enabled.
+    // A profile of one project holds only the applicable tools. A shared profile holds every tool.
+    Project ownerProject = getDefaultProject();
+    if (ownerProject != null && TechnologyFilter.getInstance().isRestricted(ownerProject)) {
+      tools = ContainerUtil.filter(tools, tool -> isApplicableToProject(tool, ownerProject));
+    }
 
     Map<String, List<String>> dependencies = new HashMap<>();
     for (InspectionToolWrapper<?, ?> toolWrapper : tools) {
@@ -600,6 +616,7 @@ public class InspectionProfileImpl extends NewInspectionProfile {
     myToolSupplier.addListener(new InspectionToolsSupplier.Listener() {
       @Override
       public void toolAdded(@NotNull InspectionToolWrapper<?, ?> inspectionTool) {
+        if (ownerProject != null && !isApplicableToProject(inspectionTool, ownerProject)) return;
         addTool(project, inspectionTool, null);
         myProfileManager.fireProfileChanged(InspectionProfileImpl.this);
       }
@@ -610,6 +627,16 @@ public class InspectionProfileImpl extends NewInspectionProfile {
         myProfileManager.fireProfileChanged(InspectionProfileImpl.this);
       }
     }, myDisposable);
+    if (ownerProject != null) {
+      // the tools applicable to the project follow its techs and the loaded plugins alike: one recompute for both causes
+      TechnologyAwareExtensionPointName.ApplicableExtensionsListener listener = changedProject -> {
+        if (changedProject == null || changedProject == ownerProject) {
+          applyApplicableToolsChange(ownerProject);
+        }
+      };
+      LOCAL_INSPECTIONS.addChangeListener(myDisposable, listener);
+      GLOBAL_INSPECTIONS.addChangeListener(myDisposable, listener);
+    }
 
     copyToolsConfigurations(project);
 
@@ -621,6 +648,16 @@ public class InspectionProfileImpl extends NewInspectionProfile {
   }
 
   protected void copyToolsConfigurations(@Nullable Project project) {
+  }
+
+  /**
+   * Whether the inspection of {@code toolWrapper} is applicable to {@code project}: the module that registered the tool applies there,
+   * see {@link TechnologyFilter}. The module is the one of the extension of the tool, or the one of its {@code inspectionToolProvider}.
+   * A tool that code registered, for example a test, is applicable.
+   */
+  private static boolean isApplicableToProject(@NotNull InspectionToolWrapper<?, ?> toolWrapper, @NotNull Project project) {
+    PluginDescriptor module = toolWrapper.getRegistrantModule();
+    return module == null || TechnologyFilter.getInstance().isApplicable(module, project);
   }
 
   /** Whether {@code toolWrapper} is a {@link DynamicGroupTool} that can have children. */
@@ -664,6 +701,31 @@ public class InspectionProfileImpl extends NewInspectionProfile {
       }
     }
     myLockedProfile = isLocked;
+  }
+
+  /**
+   * Adds the tools that became applicable to {@code project} and removes the ones that stopped being applicable: the difference
+   * between the tools the supplier gives now and the ones of the profile. The supplier reports a dynamically loaded or unloaded tool
+   * on its own too, and this recompute finds nothing left to do then.
+   */
+  private synchronized void applyApplicableToolsChange(@NotNull Project project) {
+    boolean changed = false;
+    for (InspectionToolWrapper<?, ?> toolWrapper : myToolSupplier.createTools()) {
+      boolean isApplicable = isApplicableToProject(toolWrapper, project);
+      String shortName = toolWrapper.getShortName();
+      ToolsImpl existing = myTools.get(shortName);
+      if (isApplicable && existing == null) {
+        addTool(project, toolWrapper, null);
+        changed = true;
+      }
+      else if (!isApplicable && existing != null) {
+        removeTool(existing.getTool());
+        changed = true;
+      }
+    }
+    if (changed) {
+      myProfileManager.fireProfileChanged(this);
+    }
   }
 
   public final void addTool(@Nullable Project project,
@@ -913,10 +975,12 @@ public class InspectionProfileImpl extends NewInspectionProfile {
       for (InspectionToolWrapper<?, ?> toolWrapper : inspectionProfile.getInspectionTools(null)) {
         HighlightDisplayKey key = HighlightDisplayKey.find(toolWrapper.getShortName());
         try {
+          // this profile has no tool that the techs of the project hide
+          ToolsImpl tools = getToolsOrNull(toolWrapper.getShortName(), project);
+          if (tools == null) continue;
           InspectionToolWrapper<?, ?> toolWrapperCopy = copyToolSettings(toolWrapper);
           HighlightDisplayLevel errorLevel = inspectionProfile.getErrorLevel(Objects.requireNonNull(key), null, project);
-          getTools(toolWrapper.getShortName(), project)
-            .addTool(scope, toolWrapperCopy, inspectionProfile.isToolEnabled(key), errorLevel);
+          tools.addTool(scope, toolWrapperCopy, inspectionProfile.isToolEnabled(key), errorLevel);
         }
         catch (Exception e) {
           LOG.error(e);
