@@ -185,7 +185,7 @@
     <registryKey
             key="kotlin.gradle.parallelModelFetch.enabled"
             description="Fetch the Kotlin Gradle models in parallel. The IDE fetches the models one after another when this key is off."
-            defaultValue="false"
+            defaultValue="true"
             restartRequired="false"/>
     <registryKey
             key="gradle.daemon.jvm.criteria.suggest.migration"
