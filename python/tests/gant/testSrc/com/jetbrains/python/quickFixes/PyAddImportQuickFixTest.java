@@ -17,11 +17,13 @@ package com.jetbrains.python.quickFixes;
 
 import com.intellij.idea.TestFor;
 import com.intellij.lang.injection.InjectedLanguageManager;
+import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
@@ -497,6 +499,28 @@ public class PyAddImportQuickFixTest extends PyQuickFixTestCase {
   @TestFor(issues = "PY-91528")
   public void testParentPackageReexportPreferredOverSibling() {
     doMultiFileAutoImportTest("Import 'pkg.Something'");
+  }
+
+  // A new project has no source root. Its files are only in a content root.
+  @TestFor(issues = "PY-93870")
+  public void testImportFromContentRootWithoutSourceRoot() {
+    runWithoutSourceRoots(() -> doMultiFileAutoImportTest("Import 'module_a.function_a'"));
+  }
+
+  private void runWithoutSourceRoots(@NotNull Runnable runnable) {
+    var module = myFixture.getModule();
+    var sourceRoots = ModuleRootManager.getInstance(module).getSourceRoots();
+    for (VirtualFile root : sourceRoots) {
+      PsiTestUtil.removeSourceRoot(module, root);
+    }
+    try {
+      runnable.run();
+    }
+    finally {
+      for (VirtualFile root : sourceRoots) {
+        PsiTestUtil.addSourceRoot(module, root);
+      }
+    }
   }
 
   private void doTestProposedImportsOrdering(String @NotNull ... expected) {

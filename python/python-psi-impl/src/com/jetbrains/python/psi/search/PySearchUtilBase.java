@@ -18,7 +18,8 @@ public class PySearchUtilBase {
   /**
    * Creates a scope most suitable for suggesting symbols and files to a user, i.e. in auto-importing or "extended" completion.
    * <p>
-   * This scope covers the project's own sources and its libraries, but excludes
+   * This scope covers the content of the module of {@code anchor}, the content of its module dependencies, and the libraries.
+   * It excludes
    * <ul>
    *   <li>Standard library tests</li>
    *   <li>Stubs for third-party packages in Typeshed</li>
