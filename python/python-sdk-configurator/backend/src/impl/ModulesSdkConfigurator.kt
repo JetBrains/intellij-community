@@ -1,60 +1,61 @@
 package com.intellij.python.sdkConfigurator.backend.impl
 
-import com.jetbrains.python.project.PyProject.Companion.asPyProject
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.python.pyproject.model.api.CreateSdkNotFilesResult
 import com.intellij.python.pyproject.model.api.InterpreterConfigurationResult
 import com.intellij.python.pyproject.model.api.autoConfigureSdkDoNotCreateFiles
-import com.intellij.python.pyproject.model.api.autoConfigureSdkExistingOnly
 import com.intellij.python.pyproject.model.api.configureSdkIfNeeded
-import com.jetbrains.python.module.PyModuleService
-import com.jetbrains.python.sdk.configuration.CreateInterpreterInfo
+import com.intellij.python.pyproject.model.evolution.EvoPyProjectModel
+import com.intellij.python.pyproject.model.evolution.setOnWorkspace
+import com.intellij.python.sdk.backend.PythonInterpreter
+import com.intellij.python.sdk.backend.evolution.EvoWorkspace
+import com.jetbrains.python.project.PyProject.Companion.getPyProjects
+import com.jetbrains.python.onFailure
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.supervisorScope
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 
+/**
+ * Gives each workspace of [project] without an interpreter the environment that already exists for it, such as the
+ * `.venv` of its root. It creates no files. Only the root of a workspace is configured, see [EvoWorkspace]. Every member
+ * follows the root, with no detection of its own, see [setOnWorkspace].
+ */
 @ApiStatus.Internal // Opened for tests only: we can't put tests here because configurators are in communuty.impl
 suspend fun configureSdkAutomatically(project: Project): Unit = withContext(Dispatchers.Default) {
-  val moduleService = PyModuleService.getInstance(project)
-  val pythonModules = ModuleManager.getInstance(project).modules.filter { moduleService.isPythonModule(it) }
-  when (pythonModules.size) {
-    0 -> Unit
-    1 -> {
-      val module = pythonModules.first()
-      module.asPyProject()?.configureSdkIfNeeded { autoConfigureSdkDoNotCreateFiles() }?.run {
-        log(module) { error ->
+  // The snapshot follows the modules asynchronously, so wait for one that holds each Python project of this walk. A
+  // module that goes away meanwhile starts a new snapshot, and the next check skips it.
+  val pyProjects = project.getPyProjects()
+  val snapshot = EvoPyProjectModel.getInstance(project).snapshotFlow().first { snapshot ->
+    pyProjects.all { snapshot.forPyProject(it) != null || it.residesOnModule.isDisposed }
+  }
+  supervisorScope {
+    for (workspace in snapshot.workspaces) {
+      // If module is disposed, the coroutine gets cancelled, but we still need to configure other workspaces
+      launch {
+        val result = workspace.pyProject.configureSdkIfNeeded { autoConfigureSdkDoNotCreateFiles() } ?: return@launch
+        result.log(workspace.module) { error ->
           when (error) {
             is CreateSdkNotFilesResult.NoFiles -> "No files found on disk"
             is CreateSdkNotFilesResult.SdkCreationError -> "SDK creation error ${error.error}"
           }
         }
-      }
-    }
-    else -> {
-      supervisorScope {
-        for (module in pythonModules) {
-          // If module is disposed, the coroutine gets cancelled, but we still need to configure other modules
-          launch {
-            module.asPyProject()?.configureSdkIfNeeded { autoConfigureSdkExistingOnly() }?.run {
-              log(module) { error ->
-                when (val r = error.createSdkInfo) {
-                  is CreateInterpreterInfo.ExistingEnv -> "Files exist on disk, but no SDK configured"
-                  is CreateInterpreterInfo.WillCreateEnv -> "Files must be created with ${r.intentionName}"
-                }
-              }
-            }
-          }
-        }
+        if (result is InterpreterConfigurationResult.Configured) workspace.followRoot(result.interpreter)
       }
     }
   }
+}
+
+/** Makes [interpreter], the one of the root, the interpreter of every member, when a member has another one or none. */
+private suspend fun EvoWorkspace.followRoot(interpreter: PythonInterpreter) {
+  if (members.all { it.interpreter == interpreter }) return
+  setOnWorkspace(interpreter).onFailure { logger.warn("Cannot give the members of $baseDir the interpreter of their root: $it") }
 }
 
 private fun <T : Any> InterpreterConfigurationResult<T>.log(module: Module, logForConfigError: (err: T) -> @NlsSafe String) {
