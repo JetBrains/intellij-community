@@ -60,7 +60,7 @@ internal class InspectionProfileTechsTest {
     Disposer.register(testDisposable) {
       @Suppress("TestOnlyProblems")
       InspectionProfileImpl.INIT_INSPECTIONS = false
-      for (shortName in listOf(PLAIN_TOOL, JAVA_TOOL, PROVIDER_TOOL)) {
+      for (shortName in listOf(PLAIN_TOOL, JAVA_TOOL, PROVIDER_TOOL, GROUP_TOOL, GROUP_CHILD)) {
         HighlightDisplayKey.unregister(shortName)
       }
     }
@@ -117,6 +117,24 @@ internal class InspectionProfileTechsTest {
     assertEquals(setOf(PLAIN_TOOL, PROVIDER_TOOL), shortNames(profile.tools))
   }
 
+  @Test
+  fun `the children of a dynamic group tool follow their group tool`() {
+    val filter = installFilter(applicable = setOf(plainModule.pluginId, javaModule.pluginId))
+    val groupTool = LocalInspectionToolWrapper(GroupTool()).also { it.setProviderModule(javaModule) }
+    val profile = projectProfile(listOf(extensionTool(PLAIN_TOOL, plainModule), groupTool))
+    assertEquals(setOf(PLAIN_TOOL, GROUP_TOOL, GROUP_CHILD), shortNames(profile.tools))
+    profile.setErrorLevel(HighlightDisplayKey.find(GROUP_CHILD)!!, HighlightDisplayLevel.ERROR, project)
+
+    filter.applicable = setOf(plainModule.pluginId)
+    publishFilterChange(project)
+    assertEquals(setOf(PLAIN_TOOL), shortNames(profile.tools))
+
+    filter.applicable = setOf(plainModule.pluginId, javaModule.pluginId)
+    publishFilterChange(project)
+    assertEquals(setOf(PLAIN_TOOL, GROUP_TOOL, GROUP_CHILD), shortNames(profile.tools))
+    assertEquals(HighlightDisplayLevel.ERROR, profile.getTools(GROUP_CHILD, project).level)
+  }
+
   /** A profile that the manager of [project] owns. Its base profile is a shared profile with the same tools. */
   private fun projectProfile(tools: List<InspectionToolWrapper<*, *>>): InspectionProfileImpl {
     val supplier = InspectionToolsSupplier.Simple(tools)
@@ -162,6 +180,8 @@ internal class InspectionProfileTechsTest {
 private const val PLAIN_TOOL = "TechsPlainTool"
 private const val JAVA_TOOL = "TechsJavaTool"
 private const val PROVIDER_TOOL = "TechsProviderTool"
+private const val GROUP_TOOL = "TechsGroupTool"
+private const val GROUP_CHILD = "TechsGroupChild"
 
 /** Restricts [project] to the modules of [applicable]. */
 private class FakeFilter(private val project: Project, @Volatile var applicable: Set<PluginId>) : TechnologyFilter {
@@ -182,3 +202,9 @@ private open class NamedTool(private val name: String) : LocalInspectionTool() {
 }
 
 private class ProviderTool : NamedTool(PROVIDER_TOOL)
+
+private class GroupChild : NamedTool(GROUP_CHILD)
+
+private class GroupTool : NamedTool(GROUP_TOOL), DynamicGroupTool {
+  override fun getChildren(): List<LocalInspectionToolWrapper> = listOf(LocalInspectionToolWrapper(GroupChild()))
+}

@@ -711,22 +711,38 @@ public class InspectionProfileImpl extends NewInspectionProfile {
     myLockedProfile = isLocked;
   }
 
+  /** Removes the children of {@code group} when it is a {@link DynamicGroupTool}, and keeps their settings. */
+  private void removeDynamicGroupChildren(@NotNull ToolsImpl group, @NotNull List<InspectionToolWrapper<?, ?>> suppliedTools) {
+    for (LocalInspectionToolWrapper child : getDynamicGroupChildren(group.getTool(), suppliedTools)) {
+      String shortName = child.getShortName();
+      ToolsImpl existing = myTools.get(shortName);
+      if (existing != null) {
+        keepSettingsOfRemovedTool(shortName, existing);
+        removeTool(existing.getTool());
+      }
+    }
+  }
+
   /**
    * Adds the tools that became applicable to {@code project} and removes the ones that stopped being applicable: the difference
    * between the tools the supplier gives now and the ones of the profile. The supplier reports a dynamically loaded or unloaded tool
    * on its own too, and this recompute finds nothing left to do then.
+   * The children of a {@link DynamicGroupTool} follow their group tool, as in {@link #initialize}.
    */
   private synchronized void applyApplicableToolsChange(@NotNull Project project) {
+    List<InspectionToolWrapper<?, ?>> suppliedTools = myToolSupplier.createTools();
     boolean changed = false;
-    for (InspectionToolWrapper<?, ?> toolWrapper : myToolSupplier.createTools()) {
+    for (InspectionToolWrapper<?, ?> toolWrapper : suppliedTools) {
       boolean isApplicable = isApplicableToProject(toolWrapper, project);
       String shortName = toolWrapper.getShortName();
       ToolsImpl existing = myTools.get(shortName);
       if (isApplicable && existing == null) {
         addTool(project, toolWrapper, null);
+        addDynamicGroupChildren(project, toolWrapper, suppliedTools, null);
         changed = true;
       }
       else if (!isApplicable && existing != null) {
+        removeDynamicGroupChildren(existing, suppliedTools);
         keepSettingsOfRemovedTool(shortName, existing);
         removeTool(existing.getTool());
         changed = true;
