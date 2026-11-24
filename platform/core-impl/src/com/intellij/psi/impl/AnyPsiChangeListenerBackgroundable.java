@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl;
 
+import com.intellij.util.messages.ReadOnlyTopic;
 import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.ApiStatus;
 
@@ -16,7 +17,10 @@ import org.jetbrains.annotations.ApiStatus;
 @ApiStatus.Experimental
 public interface AnyPsiChangeListenerBackgroundable extends AnyPsiChangeListener {
 
+  /**
+   * Only {@link PsiManagerImpl} publishes on this topic. To report a PSI change, call {@link PsiManagerEx#beforeChange} and
+   * {@link PsiManagerEx#afterChange}.
+   */
   @Topic.ProjectLevel
-  Topic<AnyPsiChangeListenerBackgroundable> TOPIC =
-    new Topic<>("psi.AnyPsiChangeListenerBackgroundable", AnyPsiChangeListenerBackgroundable.class, Topic.BroadcastDirection.TO_PARENT);
+  Topic<AnyPsiChangeListenerBackgroundable> TOPIC = new ReadOnlyTopic<>(PsiManagerImpl.PUBLISHING_ANY_PSI_CHANGE_BACKGROUNDABLE_TOPIC);
 }

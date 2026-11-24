@@ -81,6 +81,10 @@ public final class PsiManagerImpl extends PsiManagerEx implements Disposable {
   @Topic.ProjectLevel
   public static final Topic<AnyPsiChangeListener> ANY_PSI_CHANGE_TOPIC = new Topic<>(AnyPsiChangeListener.class, Topic.BroadcastDirection.TO_PARENT);
 
+  /** The publishing side of {@link AnyPsiChangeListenerBackgroundable#TOPIC}. Only this class publishes on it. */
+  static final Topic<AnyPsiChangeListenerBackgroundable> PUBLISHING_ANY_PSI_CHANGE_BACKGROUNDABLE_TOPIC =
+    new Topic<>("psi.AnyPsiChangeListenerBackgroundable", AnyPsiChangeListenerBackgroundable.class, Topic.BroadcastDirection.TO_PARENT);
+
   public PsiManagerImpl(@NotNull Project project) {
     // we need to initialize PsiBuilderFactory service, so it won't initialize under PsiLock from ChameleonTransform
     PsiBuilderFactory.getInstance();
@@ -444,7 +448,7 @@ public final class PsiManagerImpl extends PsiManagerEx implements Disposable {
       ThreadingAssertions.assertWriteAccess();
     }
     if (isBeforeEvent) {
-      myProject.getMessageBus().syncPublisher(AnyPsiChangeListenerBackgroundable.TOPIC).beforePsiChanged(true);
+      myProject.getMessageBus().syncPublisher(PUBLISHING_ANY_PSI_CHANGE_BACKGROUNDABLE_TOPIC).beforePsiChanged(true);
     }
     if (isRealTreeChange) {
       LOG.assertTrue(!myTreeChangeEventIsFiring, "Changes to PSI are not allowed inside event processing");
@@ -513,7 +517,7 @@ public final class PsiManagerImpl extends PsiManagerEx implements Disposable {
       }
     }
     if (!isBeforeEvent) {
-      myProject.getMessageBus().syncPublisher(AnyPsiChangeListenerBackgroundable.TOPIC).afterPsiChanged(true);
+      myProject.getMessageBus().syncPublisher(PUBLISHING_ANY_PSI_CHANGE_BACKGROUNDABLE_TOPIC).afterPsiChanged(true);
     }
   }
 
@@ -595,14 +599,14 @@ public final class PsiManagerImpl extends PsiManagerEx implements Disposable {
 
   @Override
   public void beforeChange(boolean isPhysical) {
-    myProject.getMessageBus().syncPublisher(AnyPsiChangeListenerBackgroundable.TOPIC).beforePsiChanged(isPhysical);
+    myProject.getMessageBus().syncPublisher(PUBLISHING_ANY_PSI_CHANGE_BACKGROUNDABLE_TOPIC).beforePsiChanged(isPhysical);
     runLegacyAnyPsiChange(isPhysical, () -> myProject.getMessageBus().syncPublisher(ANY_PSI_CHANGE_TOPIC).beforePsiChanged(isPhysical));
   }
 
   @Override
   public void afterChange(boolean isPhysical) {
     runLegacyAnyPsiChange(isPhysical, () -> myProject.getMessageBus().syncPublisher(ANY_PSI_CHANGE_TOPIC).afterPsiChanged(isPhysical));
-    myProject.getMessageBus().syncPublisher(AnyPsiChangeListenerBackgroundable.TOPIC).afterPsiChanged(isPhysical);
+    myProject.getMessageBus().syncPublisher(PUBLISHING_ANY_PSI_CHANGE_BACKGROUNDABLE_TOPIC).afterPsiChanged(isPhysical);
   }
 
   /**
