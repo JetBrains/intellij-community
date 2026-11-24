@@ -904,6 +904,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
       myUninitializedPaneState.put(idToRemove, oldPaneState);
     }
     uninitializedPanes.remove(pane);
+    mySelectInTargets.remove(idToRemove);
 
     if (isBackendMode) {
       idToPane.remove(idToRemove);
@@ -919,7 +920,6 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
       }
     }
     idToPane.remove(idToRemove);
-    mySelectInTargets.remove(idToRemove);
     viewSelectionChanged();
   }
 
