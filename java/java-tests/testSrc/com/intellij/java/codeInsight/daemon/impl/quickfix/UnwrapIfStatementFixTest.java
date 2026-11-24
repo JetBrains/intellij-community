@@ -2,31 +2,42 @@
 
 package com.intellij.java.codeInsight.daemon.impl.quickfix;
 
-import com.intellij.codeInsight.daemon.quickFix.LightQuickFixParameterizedTestCase;
-import com.intellij.codeInspection.LocalInspectionTool;
+import com.intellij.JavaTestUtil;
+import com.intellij.codeInsight.daemon.quickFix.LightQuickFixFileBasedTest;
 import com.intellij.codeInspection.dataFlow.ConstantValueInspection;
 import com.intellij.codeInspection.dataFlow.DataFlowInspection;
-import com.intellij.testFramework.LightProjectDescriptor;
+import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.jetbrains.annotations.NotNull;
+import org.junit.jupiter.api.BeforeEach;
+
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaCodeInsightFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
 
 /**
  * @see SimplifyBooleanExpressionFixTest -- more tests for the same quickfix
  */
-public class UnwrapIfStatementFixTest extends LightQuickFixParameterizedTestCase {
-  @Override
-  protected LocalInspectionTool @NotNull [] configureLocalInspectionTools() {
-    return new LocalInspectionTool[]{new DataFlowInspection(), new ConstantValueInspection()};
-  }
-
-  @NotNull
-  @Override
-  protected LightProjectDescriptor getProjectDescriptor() {
-    return LightJavaCodeInsightFixtureTestCase.JAVA_19;
-  }
+@TestApplication
+public class UnwrapIfStatementFixTest extends LightQuickFixFileBasedTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(LightJavaCodeInsightFixtureTestCase.JAVA_19);
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture = lightJavaCodeInsightFixture(projectFixture);
 
   @Override
-  protected String getBasePath() {
-    return "/codeInsight/daemonCodeAnalyzer/quickFix/unwrapIfStatement";
+  public @NotNull JavaCodeInsightTestFixture getFixture() {
+    return codeInsightFixture.get();
+  }
+
+  @Override
+  public @NotNull String getTestDataPath() {
+    return JavaTestUtil.getJavaTestDataPath() + "/codeInsight/daemonCodeAnalyzer/quickFix/unwrapIfStatement";
+  }
+
+  @BeforeEach
+  void setUpInspections() {
+    getFixture().enableInspections(new DataFlowInspection(), new ConstantValueInspection());
   }
 }

@@ -15,25 +15,32 @@
  */
 package com.intellij.codeInsight;
 
-import com.intellij.codeInsight.daemon.quickFix.LightQuickFixParameterizedTestCase;
+import com.intellij.codeInsight.daemon.quickFix.LightQuickFixFileBasedTest;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.jetbrains.annotations.NotNull;
 
-public class ConvertToThreadLocalIntention6Test extends LightQuickFixParameterizedTestCase {
-  @Override
-  protected String getBasePath() {
-    return "/intentions/threadLocal6";
-  }
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaCodeInsightFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaTestDescriptor;
 
-  @NotNull
-  @Override
-  protected String getTestDataPath() {
-    return PlatformTestUtil.getCommunityPath() + "/java/typeMigration/testData";
-  }
+@TestApplication
+public class ConvertToThreadLocalIntention6Test extends LightQuickFixFileBasedTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(lightJavaTestDescriptor(LanguageLevel.JDK_1_7));
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture = lightJavaCodeInsightFixture(projectFixture);
 
   @Override
-  protected LanguageLevel getLanguageLevel() {
-    return LanguageLevel.JDK_1_7;
+  public @NotNull JavaCodeInsightTestFixture getFixture() {
+    return codeInsightFixture.get();
+  }
+
+  @Override
+  public @NotNull String getTestDataPath() {
+    return PlatformTestUtil.getCommunityPath() + "/java/typeMigration/testData" + "/intentions/threadLocal6";
   }
 }

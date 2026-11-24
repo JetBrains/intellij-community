@@ -1,29 +1,39 @@
 package com.intellij.codeInsight.daemon.quickFix;
 
-import com.intellij.codeInspection.LocalInspectionTool;
-import com.intellij.codeInspection.htmlInspections.RequiredAttributesInspection;
 import com.intellij.codeInsight.XmlTestUtil;
+import com.intellij.codeInspection.htmlInspections.RequiredAttributesInspection;
+import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.intellij.xml.util.CheckEmptyTagInspection;
 import org.jetbrains.annotations.NotNull;
+import org.junit.jupiter.api.BeforeEach;
 
-public class ReplaceTagEmptyEndWithEmptyBodyTest extends LightQuickFixParameterizedTestCase {
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaCodeInsightFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaTestDescriptor;
+
+@TestApplication
+public class ReplaceTagEmptyEndWithEmptyBodyTest extends LightQuickFixFileBasedTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(lightJavaTestDescriptor());
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture = lightJavaCodeInsightFixture(projectFixture);
+
+  @Override
+  public @NotNull JavaCodeInsightTestFixture getFixture() {
+    return codeInsightFixture.get();
+  }
+
   @Override
   public @NotNull String getTestDataPath() {
-    return XmlTestUtil.getXmlTestDataPath();
+    return XmlTestUtil.getXmlTestDataPath() + "/quickFix/replaceTagEmptyEndWithEmptyBody";
   }
 
-  @Override
-  protected LocalInspectionTool @NotNull [] configureLocalInspectionTools() {
-    return new LocalInspectionTool[]{
-      new RequiredAttributesInspection(),
-      new CheckEmptyTagInspection()
-    };
+  @BeforeEach
+  void setUpInspections() {
+    getFixture().enableInspections(new RequiredAttributesInspection(), new CheckEmptyTagInspection());
   }
   
-
-  @Override
-  protected String getBasePath() {
-    return "/quickFix/replaceTagEmptyEndWithEmptyBody";
-  }
 
 }

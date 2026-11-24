@@ -15,20 +15,31 @@
  */
 package com.intellij.xml.actions;
 
-import com.intellij.codeInsight.daemon.LightIntentionActionTestCase;
+import com.intellij.codeInsight.daemon.quickFix.LightQuickFixFileBasedTest;
 import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.jetbrains.annotations.NotNull;
 
-public class XmlSplitJoinAttributesActionTest extends LightIntentionActionTestCase {
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaCodeInsightFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaTestDescriptor;
+
+@TestApplication
+public class XmlSplitJoinAttributesActionTest extends LightQuickFixFileBasedTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(lightJavaTestDescriptor());
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture = lightJavaCodeInsightFixture(projectFixture);
 
   @Override
-  protected String getBasePath() {
-    return "";
+  public @NotNull JavaCodeInsightTestFixture getFixture() {
+    return codeInsightFixture.get();
   }
 
   @Override
-  @NotNull
-  protected String getTestDataPath() {
+  public @NotNull String getTestDataPath() {
     return PlatformTestUtil.getCommunityPath() + "/xml/tests/testData/intentions/splitJoinAttributes";
   }
 }

@@ -15,21 +15,45 @@
  */
 package com.intellij.java.codeInspection.java18api;
 
-import com.intellij.codeInsight.daemon.quickFix.LightQuickFixParameterizedTestCase;
+import com.intellij.JavaTestUtil;
+import com.intellij.codeInsight.daemon.quickFix.LightQuickFixFileBasedTest;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.java18api.Java8MapForEachInspection;
+import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.jetbrains.annotations.NotNull;
+import org.junit.jupiter.api.BeforeEach;
 
-public class Java8MapForEachInspectionTest extends LightQuickFixParameterizedTestCase {
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaCodeInsightFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaTestDescriptor;
+
+@TestApplication
+public class Java8MapForEachInspectionTest extends LightQuickFixFileBasedTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(lightJavaTestDescriptor());
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture = lightJavaCodeInsightFixture(projectFixture);
+
   @Override
-  protected LocalInspectionTool @NotNull [] configureLocalInspectionTools() {
-    Java8MapForEachInspection inspection = new Java8MapForEachInspection();
-    inspection.DO_NOT_HIGHLIGHT_LOOP = false;
-    return new LocalInspectionTool[]{inspection};
+  public @NotNull JavaCodeInsightTestFixture getFixture() {
+    return codeInsightFixture.get();
   }
 
   @Override
-  protected String getBasePath() {
-    return "/inspection/java8MapForEach";
+  public @NotNull String getTestDataPath() {
+    return JavaTestUtil.getJavaTestDataPath() + "/inspection/java8MapForEach";
+  }
+
+  @BeforeEach
+  void setUpInspections() {
+    getFixture().enableInspections(createInspections());
+  }
+
+  private static LocalInspectionTool @NotNull [] createInspections() {
+    Java8MapForEachInspection inspection = new Java8MapForEachInspection();
+    inspection.DO_NOT_HIGHLIGHT_LOOP = false;
+    return new LocalInspectionTool[]{inspection};
   }
 }

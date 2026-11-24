@@ -15,21 +15,45 @@
  */
 package com.intellij.java.codeInspection;
 
-import com.intellij.codeInsight.daemon.quickFix.LightQuickFixParameterizedTestCase;
+import com.intellij.JavaTestUtil;
+import com.intellij.codeInsight.daemon.quickFix.LightQuickFixFileBasedTest;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.deprecation.DeprecationInspection;
+import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.jetbrains.annotations.NotNull;
+import org.junit.jupiter.api.BeforeEach;
 
-public class DeprecationInspectionFixTest extends LightQuickFixParameterizedTestCase {
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaCodeInsightFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaTestDescriptor;
+
+@TestApplication
+public class DeprecationInspectionFixTest extends LightQuickFixFileBasedTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(lightJavaTestDescriptor());
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture = lightJavaCodeInsightFixture(projectFixture);
+
   @Override
-  protected LocalInspectionTool @NotNull [] configureLocalInspectionTools() {
-    DeprecationInspection inspection = new DeprecationInspection();
-    inspection.IGNORE_IN_SAME_OUTERMOST_CLASS = false;
-    return new LocalInspectionTool[]{inspection};
+  public @NotNull JavaCodeInsightTestFixture getFixture() {
+    return codeInsightFixture.get();
   }
 
   @Override
-  protected String getBasePath() {
-    return "/inspection/deprecation/quickFix";
+  public @NotNull String getTestDataPath() {
+    return JavaTestUtil.getJavaTestDataPath() + "/inspection/deprecation/quickFix";
+  }
+
+  @BeforeEach
+  void setUpInspections() {
+    getFixture().enableInspections(createInspections());
+  }
+
+  private static LocalInspectionTool @NotNull [] createInspections() {
+    DeprecationInspection inspection = new DeprecationInspection();
+    inspection.IGNORE_IN_SAME_OUTERMOST_CLASS = false;
+    return new LocalInspectionTool[]{inspection};
   }
 }

@@ -4,39 +4,36 @@
 package com.siyeh.ig.internationalization;
 
 import com.intellij.JavaTestUtil;
-import com.intellij.codeInsight.daemon.quickFix.LightQuickFixParameterizedTestCase;
-import com.intellij.codeInspection.LocalInspectionTool;
-import com.intellij.pom.java.LanguageLevel;
-import com.intellij.testFramework.LightProjectDescriptor;
+import com.intellij.codeInsight.daemon.quickFix.LightQuickFixFileBasedTest;
+import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.jetbrains.annotations.NotNull;
+import org.junit.jupiter.api.BeforeEach;
 
 import static com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase.JAVA_8;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaCodeInsightFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
 
-public class StringConcatenationInspectionFixTest extends LightQuickFixParameterizedTestCase {
-  @Override
-  protected String getBasePath() {
-    return "/com/siyeh/igtest/internationalization/string_concatenation";
-  }
-
-  @NotNull
-  @Override
-  protected String getTestDataPath() {
-    return JavaTestUtil.getJavaTestDataPath() + "/ig";
-  }
+@TestApplication
+public class StringConcatenationInspectionFixTest extends LightQuickFixFileBasedTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(JAVA_8);
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture = lightJavaCodeInsightFixture(projectFixture);
 
   @Override
-  protected LanguageLevel getLanguageLevel() {
-    return LanguageLevel.JDK_1_8;
-  }
-
-  @NotNull
-  @Override
-  protected LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_8;
+  public @NotNull JavaCodeInsightTestFixture getFixture() {
+    return codeInsightFixture.get();
   }
 
   @Override
-  protected LocalInspectionTool @NotNull [] configureLocalInspectionTools() {
-    return new LocalInspectionTool[] {new StringConcatenationInspection()};
+  public @NotNull String getTestDataPath() {
+    return JavaTestUtil.getJavaTestDataPath() + "/ig" + "/com/siyeh/igtest/internationalization/string_concatenation";
+  }
+
+  @BeforeEach
+  void setUpInspections() {
+    getFixture().enableInspections(new StringConcatenationInspection());
   }
 }

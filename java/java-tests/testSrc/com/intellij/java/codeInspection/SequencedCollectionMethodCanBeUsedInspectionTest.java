@@ -15,27 +15,38 @@
  */
 package com.intellij.java.codeInspection;
 
-import com.intellij.codeInsight.daemon.quickFix.LightQuickFixParameterizedTestCase;
-import com.intellij.codeInspection.LocalInspectionTool;
+import com.intellij.JavaTestUtil;
+import com.intellij.codeInsight.daemon.quickFix.LightQuickFixFileBasedTest;
 import com.intellij.codeInspection.SequencedCollectionMethodCanBeUsedInspection;
-import com.intellij.testFramework.LightProjectDescriptor;
+import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.jetbrains.annotations.NotNull;
+import org.junit.jupiter.api.BeforeEach;
 
 import static com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase.JAVA_21;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaCodeInsightFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
 
-public class SequencedCollectionMethodCanBeUsedInspectionTest extends LightQuickFixParameterizedTestCase {
+@TestApplication
+public class SequencedCollectionMethodCanBeUsedInspectionTest extends LightQuickFixFileBasedTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(JAVA_21);
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture = lightJavaCodeInsightFixture(projectFixture);
+
   @Override
-  protected @NotNull LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_21;
+  public @NotNull JavaCodeInsightTestFixture getFixture() {
+    return codeInsightFixture.get();
   }
 
   @Override
-  protected LocalInspectionTool @NotNull [] configureLocalInspectionTools() {
-    return new LocalInspectionTool[]{new SequencedCollectionMethodCanBeUsedInspection()};
+  public @NotNull String getTestDataPath() {
+    return JavaTestUtil.getJavaTestDataPath() + "/inspection/sequencedCollectionMethod";
   }
 
-  @Override
-  protected String getBasePath() {
-    return "/inspection/sequencedCollectionMethod";
+  @BeforeEach
+  void setUpInspections() {
+    getFixture().enableInspections(new SequencedCollectionMethodCanBeUsedInspection());
   }
 }

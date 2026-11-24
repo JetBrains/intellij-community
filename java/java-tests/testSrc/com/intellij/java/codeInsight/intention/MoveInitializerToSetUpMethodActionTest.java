@@ -15,18 +15,27 @@
  */
 package com.intellij.java.codeInsight.intention;
 
-import com.intellij.codeInsight.daemon.LightIntentionActionTestCase;
+import com.intellij.JavaTestUtil;
+import com.intellij.codeInsight.daemon.quickFix.LightQuickFixFileBasedTest;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.project.IntelliJProjectConfiguration;
-import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor;
+import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
-public class MoveInitializerToSetUpMethodActionTest extends LightIntentionActionTestCase {
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaCodeInsightFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+
+@TestApplication
+public class MoveInitializerToSetUpMethodActionTest extends LightQuickFixFileBasedTest {
   private final static DefaultLightProjectDescriptor ourProjectDescriptor = new DefaultLightProjectDescriptor() {
     @Override
     public void configureModule(@NotNull Module module, @NotNull ModifiableRootModel model, @NotNull ContentEntry contentEntry) {
@@ -36,15 +45,16 @@ public class MoveInitializerToSetUpMethodActionTest extends LightIntentionAction
     }
   };
 
-  @NotNull
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(ourProjectDescriptor);
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture = lightJavaCodeInsightFixture(projectFixture);
+
   @Override
-  protected LightProjectDescriptor getProjectDescriptor() {
-    return ourProjectDescriptor;
+  public @NotNull JavaCodeInsightTestFixture getFixture() {
+    return codeInsightFixture.get();
   }
 
-
   @Override
-  protected String getBasePath() {
-    return "/codeInsight/daemonCodeAnalyzer/quickFix/moveInitializerToSetUp";
+  public @NotNull String getTestDataPath() {
+    return JavaTestUtil.getJavaTestDataPath() + "/codeInsight/daemonCodeAnalyzer/quickFix/moveInitializerToSetUp";
   }
 }

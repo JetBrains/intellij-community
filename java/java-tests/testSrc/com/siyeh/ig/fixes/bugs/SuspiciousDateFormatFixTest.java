@@ -2,33 +2,37 @@
 package com.siyeh.ig.fixes.bugs;
 
 import com.intellij.JavaTestUtil;
-import com.intellij.codeInsight.daemon.quickFix.LightQuickFixParameterizedTestCase;
-import com.intellij.codeInspection.LocalInspectionTool;
-import com.intellij.testFramework.LightProjectDescriptor;
+import com.intellij.codeInsight.daemon.quickFix.LightQuickFixFileBasedTest;
+import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.siyeh.ig.bugs.SuspiciousDateFormatInspection;
 import org.jetbrains.annotations.NotNull;
+import org.junit.jupiter.api.BeforeEach;
 
 import static com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase.JAVA_21;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaCodeInsightFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
 
-public class SuspiciousDateFormatFixTest extends LightQuickFixParameterizedTestCase {
+@TestApplication
+public class SuspiciousDateFormatFixTest extends LightQuickFixFileBasedTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(JAVA_21);
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture = lightJavaCodeInsightFixture(projectFixture);
+
   @Override
-  protected LocalInspectionTool @NotNull [] configureLocalInspectionTools() {
-    return new LocalInspectionTool[]{new SuspiciousDateFormatInspection()};
+  public @NotNull JavaCodeInsightTestFixture getFixture() {
+    return codeInsightFixture.get();
   }
 
   @Override
-  protected String getBasePath() {
-    return "/com/siyeh/igfixes/bugs/suspicious_date_format";
+  public @NotNull String getTestDataPath() {
+    return JavaTestUtil.getJavaTestDataPath() + "/ig/" + "/com/siyeh/igfixes/bugs/suspicious_date_format";
   }
 
-  @Override
-  protected @NotNull LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_21;
-  }
-
-  @NotNull
-  @Override
-  protected String getTestDataPath() {
-    return JavaTestUtil.getJavaTestDataPath() + "/ig/";
+  @BeforeEach
+  void setUpInspections() {
+    getFixture().enableInspections(new SuspiciousDateFormatInspection());
   }
 }
