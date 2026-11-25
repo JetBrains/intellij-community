@@ -250,14 +250,20 @@ open class ShowSettingsUtilImpl : ShowSettingsUtil() {
       }
 
       val groups = FrameProjectsConfigurableGroup.buildSettingsWindowGroups(project)
-      // the window of a frame with several projects shows the project that asked for it
-      selectRequester(groups, requester)
-      showSettingsDialog(project, groups)
+      showSettingsDialog(project, groups, requester)
     }
   }
 
   @ApiStatus.Internal
   override suspend fun showSettingsDialog(project: Project, groups: List<ConfigurableGroup>) {
+    showSettingsDialog(project, groups, requester = null)
+  }
+
+  /**
+   * Shows [groups] in the Settings window of [project]. With a [requester], the window of a frame with several projects
+   * shows the project that asked for it.
+   */
+  private suspend fun showSettingsDialog(project: Project, groups: List<ConfigurableGroup>, requester: Project?) {
     // We want to ensure that clients don’t simply replace one API with another,
     // but actually rework the invocation to be performed not in EDT.
     ThreadingAssertions.assertBackgroundThread()
@@ -268,6 +274,10 @@ open class ShowSettingsUtilImpl : ShowSettingsUtil() {
       // the filter reads `configurables` of every group, so it stays on the background thread
       val filteredGroups = filterEmptyGroups(groups)
       withContext(Dispatchers.EDT) {
+        if (requester != null) {
+          // the selection of the window changes on the EDT
+          selectRequester(filteredGroups, requester)
+        }
         if (!isModal) {
           if (SettingsToolWindowManager.isEnabled(project)) {
             SettingsToolWindowManager.getInstance(project).show({ filteredGroups }, { null }, null)
