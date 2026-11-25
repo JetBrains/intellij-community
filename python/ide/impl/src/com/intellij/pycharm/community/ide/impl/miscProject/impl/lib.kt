@@ -4,7 +4,6 @@ package com.intellij.pycharm.community.ide.impl.miscProject.impl
 import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.ide.impl.ProjectUtil
 import com.intellij.ide.trustedProjects.TrustedProjects
-import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.fileEditor.FileEditorManager
@@ -33,7 +32,7 @@ import com.jetbrains.python.mapResult
 import com.jetbrains.python.projectCreation.SystemPythonRequirements
 import com.jetbrains.python.projectCreation.createVenvAndSdk
 import com.jetbrains.python.sdk.ModuleOrProject
-import com.jetbrains.python.sdk.runWithSdkConfigurationLock
+import com.jetbrains.python.sdk.withSdkConfigurationLock
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -156,11 +155,11 @@ private suspend fun createOrOpenProjectAndSdk(
 
   val vfsProjectPath = createProjectDir(projectPath).getOr { return it }
   // Even if the misc project might be already opened, it might not have sdk (if it was opened as a welcome project)
-  val sdkResult = withContext(Dispatchers.EDT) {
-    runWithSdkConfigurationLock(project) {
-      val systemPythonRequirements = SystemPythonRequirements.ByVersionSpecifier(systemPythonService, confirmInstallation = confirmInstallation)
-      createVenvAndSdk(ModuleOrProject.ProjectOnly(project), systemPythonRequirements, vfsProjectPath)
-    }
+  // A background progress, not a modal one: the interpreter waits for the Python project model, and a modal progress would
+  // hold back each write that the model needs.
+  val sdkResult = withSdkConfigurationLock(project) {
+    val systemPythonRequirements = SystemPythonRequirements.ByVersionSpecifier(systemPythonService, confirmInstallation = confirmInstallation)
+    createVenvAndSdk(ModuleOrProject.ProjectOnly(project), systemPythonRequirements, vfsProjectPath)
   }
   val sdk = sdkResult.getOr(PyBundle.message("project.error.cant.venv")) { return it }
   return Result.success(Pair(project, sdk))
