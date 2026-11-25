@@ -3,6 +3,7 @@
 
 package com.intellij.openapi.options.newEditor
 
+import com.intellij.ide.actions.ShowSettingsUtilImpl
 import com.intellij.ide.actions.selectRequester
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.Disposable
@@ -13,6 +14,7 @@ import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.options.ConfigurableEP
+import com.intellij.openapi.options.ConfigurableGroup
 import com.intellij.openapi.options.ex.ConfigurableCardPanel
 import com.intellij.openapi.options.ex.ConfigurableVisitor
 import com.intellij.openapi.options.ex.ConfigurableWrapper
@@ -445,6 +447,36 @@ internal class SettingsFrameProjectsTest {
     selectRequester(groups, guest)
 
     assertThat(projects.selected).isSameAs(guest)
+  }
+
+  @Test
+  fun `a frame guest that asks for a page without an id gets the tree of the frame`(): Unit = inFrame { disposable ->
+    var windowProject: Project? = null
+    var shownGroups: List<ConfigurableGroup> = emptyList()
+    var selectedPage: Configurable? = null
+    val util = object : ShowSettingsUtilImpl() {
+      override fun doShow(
+        project: Project?,
+        groups: () -> List<ConfigurableGroup>,
+        toSelect: (List<ConfigurableGroup>) -> Configurable?,
+        filter: String?,
+      ) {
+        windowProject = project
+        shownGroups = groups()
+        shownGroups.filterIsInstance<Disposable>().forEach { Disposer.register(disposable, it) }
+        selectedPage = toSelect(shownGroups)
+      }
+    }
+    val pageWithoutId = FrameProjectsTestAppPage()
+
+    util.showSettingsDialog(guest, pageWithoutId)
+
+    assertThat(windowProject).describedAs("The window belongs to the frame owner").isSameAs(owner)
+    val projects = SettingsFrameProjects.of(shownGroups)
+    assertThat(projects).describedAs("The window shows the tree of all the projects of the frame").isNotNull()
+    assertThat(projects!!.projects).containsExactly(owner, guest)
+    assertThat(projects.selected).isSameAs(guest)
+    assertThat(selectedPage).isSameAs(pageWithoutId)
   }
 
   @Test

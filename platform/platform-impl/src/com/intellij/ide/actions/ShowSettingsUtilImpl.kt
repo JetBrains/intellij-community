@@ -333,14 +333,12 @@ open class ShowSettingsUtilImpl : ShowSettingsUtil() {
   }
 
   override fun showSettingsDialog(project: Project, toSelect: Configurable?) {
-    // the id keeps the target findable in any tree, so an open dialog needs no new one
+    // the id keeps the target findable in any tree, so an open dialog needs no new one.
+    // A page without an id gets the tree of the window too: the window of a frame with several projects shows all of them
     val id = (toSelect as? SearchableConfigurable)?.id
-    if (id == null) {
-      val groups = listOf(ConfigurableExtensionPointUtil.getConfigurableGroup(project,  /* withIdeSettings = */true))
-      showSettings(project, groups, toSelect)
-      return
+    showSettingsDialogLazily(project, filter = null, if (id == null) OpeningEntry.OTHER else OpeningEntry.BY_ID) { groups ->
+      id?.let { ConfigurableVisitor.findById(it, groups) } ?: toSelect
     }
-    showSettingsDialogLazily(project, filter = null, OpeningEntry.BY_ID) { groups -> ConfigurableVisitor.findById(id, groups) ?: toSelect }
   }
 
   override fun editConfigurable(project: Project?, configurable: Configurable): Boolean {
