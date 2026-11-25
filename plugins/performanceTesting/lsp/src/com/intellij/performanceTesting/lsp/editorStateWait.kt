@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.performanceTesting.lsp
 
+import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerEx
 import com.intellij.codeInsight.daemon.impl.HighlightInfo
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
@@ -120,12 +121,19 @@ internal suspend fun awaitEditorState(
 /**
  * The highlighting of the document, which all editors of a file share, and of this editor alone.
  * The highlighting of the element under the caret is of the second kind.
+ *
+ * The highlighting comes from an iteration over each markup model, as the editor paints it, not from `getAllHighlighters`.
+ * The markup model caches that list, and a read that computes it while another thread adds a highlighter can store
+ * a list without that highlighter, which stays until the next change of the markup model.
  */
 internal fun Editor.highlightInfos(): Sequence<HighlightInfo> {
-  val documentHighlighters = DocumentMarkupModel.forDocument(document, project, false)?.allHighlighters.orEmpty()
-  return (documentHighlighters.asSequence() + markupModel.allHighlighters.asSequence())
-    .filter { it.isValid }
-    .mapNotNull { HighlightInfo.fromRangeHighlighter(it) }
+  val project = project ?: return emptySequence()
+  val infos = ArrayList<HighlightInfo>()
+  for (markupModel in listOf(DocumentMarkupModel.forDocument(document, project, false), markupModel)) {
+    if (markupModel !is MarkupModelEx) continue
+    DaemonCodeAnalyzerEx.processHighlights(markupModel, project, null, 0, document.textLength) { infos.add(it) }
+  }
+  return infos.asSequence()
 }
 
 /** `true` for the caret inside the range and at either of its ends: after typing a name, the caret is at the end of it. */
