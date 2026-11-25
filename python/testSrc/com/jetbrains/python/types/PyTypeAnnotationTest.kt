@@ -2649,6 +2649,29 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
     """.trimIndent())
 
   @Test
+  @TestFor(issues = ["PY-94318"])
+  fun `new-style TypeVarTuple default that refers to another type parameter`() = test("""
+    class TsSelf[*Ts = *Ts]: ...
+    #                   ^^ WARNING Default type of type parameter 'Ts' refers to itself
+    class TsSelfNested[*Ts = *tuple[*Ts]]: ...
+    #                                ^^ WARNING Default type of type parameter 'Ts' refers to itself
+    class TsEarlier[T = int, *Ts = *tuple[T, str]]: ...
+    type ATsEarlier[T = int, *Ts = *tuple[T, str]] = tuple[*Ts]
+    a: TsSelf
+    print(a)
+    #     └ TYPE TsSelf[*Ts]
+    b: TsSelfNested
+    print(b)
+    #     └ TYPE TsSelfNested[*Ts]
+    c: TsEarlier
+    print(c)
+    #     └ TYPE TsEarlier[int, int, str]
+    d: ATsEarlier
+    print(d)
+    #     └ TYPE tuple[int, str]
+    """.trimIndent())
+
+  @Test
   @TestFor(issues = ["PY-92893"])
   fun `new-style default that refers to an outer type parameter`() = test("""
     class Outer[T]:
