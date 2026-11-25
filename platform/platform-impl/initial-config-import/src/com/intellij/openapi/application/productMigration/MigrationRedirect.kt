@@ -359,7 +359,7 @@ private class MigrationRedirectWindow(
                                     JComponent.WHEN_IN_FOCUSED_WINDOW)
     // the getter creates the context; the protected AWT field of the same name stays null until then
     getAccessibleContext().accessibleDescription = texts.body
-    // the native title bar follows the dark look and feel, not the macOS appearance
+    // on macOS, the native title bar follows the dark look and feel, not the appearance of the system; Windows keeps its title bar
     ComponentUtil.decorateWindowHeader(rootPane)
     pack()
     setLocationRelativeTo(null)

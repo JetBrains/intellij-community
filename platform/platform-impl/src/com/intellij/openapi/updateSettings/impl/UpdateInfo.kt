@@ -117,7 +117,8 @@ class PatchInfo internal constructor(node: Element) {
 @Internal
 class DistributionInfo(val product: String, val manifestUrl: String, val fileUrl: String)
 
-private const val MIGRATION_OS = "mac"
+// the `os` values of the systems where the IDE can install and start the distribution: macOS and Windows
+private val MIGRATION_OS = setOf("mac", "win")
 private val ARCH_SUFFIX: String by lazy { distributionArchSuffix() }
 
 /**
@@ -143,7 +144,7 @@ fun distributionArchSuffix(
 }
 
 /**
- * Returns `null` when [isMigrationDisabled] is true, when the element is not valid, when [os] is not macOS,
+ * Returns `null` when [isMigrationDisabled] is true, when the element is not valid, when [os] is not macOS or Windows,
  * or when the element has no file for [os] and [arch].
  * The update then works as if the element did not exist.
  */
@@ -160,7 +161,7 @@ fun parseDistribution(
   }
 
   if (isMigrationDisabled) return null
-  if (os != MIGRATION_OS) return invalid("the migration works only on macOS")
+  if (os !in MIGRATION_OS) return invalid("the migration works only on macOS and Windows")
   val product = node.getAttributeValue("product")?.takeIf { it.isNotBlank() } ?: return invalid("no 'product'")
   val manifestUrl = node.getAttributeValue("manifest")?.takeIf { it.isNotBlank() } ?: return invalid("no 'manifest'")
   val fileUrl = node.getChildren("file")

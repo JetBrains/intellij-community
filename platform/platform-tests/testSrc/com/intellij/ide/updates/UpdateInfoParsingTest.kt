@@ -146,7 +146,7 @@ class UpdateInfoParsingTest {
   @Test
   fun distribution() {
     // the test gives the OS, because only some systems read the <distribution> element
-    val builds = parseUpdateData(JDOMUtil.load("""
+    val updateData = JDOMUtil.load("""
       <products>
         <product name="GoLand">
           <code>GO</code>
@@ -157,14 +157,19 @@ class UpdateInfoParsingTest {
             <build number="263.200" version="2026.3.2"/>
           </channel>
         </product>
-      </products>""".trimIndent()), "GO", distributionOs = "mac")!!.channels[0].builds
+      </products>""".trimIndent())
+    for ((os, extension) in listOf("mac" to ".dmg", "win" to ".exe")) {
+      val builds = parseUpdateData(updateData, "GO", distributionOs = os)!!.channels[0].builds
 
-    val distribution = builds[0].distribution!!
-    assertEquals("JB", distribution.product)
-    assertEquals("https://www.jetbrains.com/go-to-unified.json", distribution.manifestUrl)
-    assertTrue(distribution.fileUrl, distribution.fileUrl.startsWith("https://download.jetbrains.com/unified-ide/unified-ide-"))
+      val distribution = builds[0].distribution!!
+      assertEquals("JB", distribution.product)
+      assertEquals("https://www.jetbrains.com/go-to-unified.json", distribution.manifestUrl)
+      assertTrue(distribution.fileUrl, distribution.fileUrl.startsWith("https://download.jetbrains.com/unified-ide/unified-ide-"))
+      assertTrue(distribution.fileUrl, distribution.fileUrl.endsWith(extension))
 
-    assertNull(builds[1].distribution)
+      assertNull(builds[1].distribution)
+    }
+    assertNull(parseUpdateData(updateData, "GO", distributionOs = "unix")!!.channels[0].builds[0].distribution)
   }
 
   @Test
@@ -194,14 +199,27 @@ class UpdateInfoParsingTest {
   }
 
   @Test
+  fun distributionOnWindows() {
+    val distribution = JDOMUtil.load("""
+      <distribution product="JB" manifest="https://www.jetbrains.com/m.json">
+        <file os="mac" arch="x64" url="https://download.jetbrains.com/unified-ide.dmg"/>
+        <file os="win" arch="x64" url="https://download.jetbrains.com/unified-ide.exe"/>
+        <file os="win" arch="aarch64" url="https://download.jetbrains.com/unified-ide-aarch64.exe"/>
+      </distribution>""".trimIndent())
+    assertEquals("https://download.jetbrains.com/unified-ide.exe", parseDistribution(distribution, os = "win", arch = "x64")?.fileUrl)
+    assertEquals("https://download.jetbrains.com/unified-ide-aarch64.exe",
+                 parseDistribution(distribution, os = "win", arch = "aarch64")?.fileUrl)
+  }
+
+  @Test
   fun distributionIsIgnoredOnOtherSystems() {
     val distribution = JDOMUtil.load("""
       <distribution product="JB" manifest="https://www.jetbrains.com/m.json">
         <file os="win" arch="x64" url="https://download.jetbrains.com/unified-ide.exe"/>
         <file os="unix" arch="x64" url="https://download.jetbrains.com/unified-ide.tar.gz"/>
       </distribution>""".trimIndent())
-    assertNull(parseDistribution(distribution, os = "win", arch = "x64"))
     assertNull(parseDistribution(distribution, os = "unix", arch = "x64"))
+    assertNull(parseDistribution(distribution, os = "unknown", arch = "x64"))
   }
 
   @Test
