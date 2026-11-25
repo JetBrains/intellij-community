@@ -7,8 +7,8 @@ Two following XML extension points can be used: `applicationConfigurable` for se
 They differ only in the constructor implementation. Classes for IDE settings must have a default constructor with no arguments, while classes for project settings must declare a constructor with a single argument of the `Project` type.
 
 ```
-<projectConfigurable id="preferences.sourceCode" groupId="editor" bundle="messages.IdeBundle" key="configurable.CodeStyle.display.name" dynamic="true" 
-                     instance="com.intellij.application.options.CodeStyleSchemesConfigurable" />
+<projectConfigurable groupId="tools" id="tasks" displayName="Tasks" nonDefaultProject="true"
+                     instance="com.intellij.tasks.config.TaskConfigurable" />
 ```
 
 IDEA tries to use a background thread to instantiate a custom implementation of the `Configurable` interface registered in the `plugin.xml` file.
@@ -79,8 +79,17 @@ The default weight is `0`. If one child in a group or a parent configurable comp
 
 ### `dynamic`
 
-This attribute states that your configurable component implements the `Configurable.Composite` interface and its children are dynamically calculated by calling the `getConfigurables` method. 
-It is needed to improve performance, because we do not want to load any additional classes during the building of a setting tree.
+Set this attribute when the configurable component implements `Configurable.Composite` and provides its child components from `getConfigurables()`.
+
+The settings tree gets those children when it builds the tree, before the user opens the page.
+The tree creates the component on each build to get its children. Keep its constructor fast and free of UI work.
+
+For an `instance=` declaration, the tree loads the class to check its type.
+For a `provider=` declaration, `ConfigurableProvider.getConfigurableType()` can give the type without creating the component.
+Without a type hint, the tree creates the provider's component to check its type.
+For any other component, it adds no children, but the tree still checks its type.
+
+Prefer `parentId`, a nested `configurable` tag, or `childrenEPName` when these XML declarations can state the children.
 
 ### `childrenEPName`
 

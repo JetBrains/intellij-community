@@ -140,9 +140,20 @@ public class ConfigurableEP<T extends UnnamedConfigurable> implements PluginAwar
   public String childrenEPName;
 
   /**
-   * This attribute states that a custom configurable component implements the {@link Configurable.Composite} interface
-   * and its children are dynamically calculated by calling the {@link Configurable.Composite#getConfigurables()} method.
-   * It is needed to improve performance, because we do not want to load any additional classes during the building a setting tree.
+   * Set this attribute when the configurable component implements {@link Configurable.Composite}
+   * and provides its child components from {@link Configurable.Composite#getConfigurables()}.
+   * <p>
+   * The settings tree gets those children when it builds the tree, before the user opens the page.
+   * The tree creates the component on each build to get its children. Keep its constructor fast and free of UI work.
+   * <p>
+   * For an {@code instance=} declaration, the tree loads the class to check its type.
+   * For a {@code provider=} declaration, {@link ConfigurableProvider#getConfigurableType()} can give the type
+   * without creating the component.
+   * Without a type hint, the tree creates the provider's component to check its type.
+   * For any other component, it adds no children, but the tree still checks its type.
+   * <p>
+   * Prefer {@link #parentId}, a nested {@code configurable} tag, or {@link #childrenEPName}
+   * when these XML declarations can state the children.
    */
   @Attribute("dynamic")
   public boolean dynamic;

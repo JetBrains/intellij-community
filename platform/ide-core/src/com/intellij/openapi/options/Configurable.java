@@ -111,9 +111,8 @@ import java.util.Collection;
  *   all children will be sorted descending by their weight. And if the weights are equal,
  *   the components will be sorted ascending by their display name.</dd>
  *   <dt>{@link ConfigurableEP#dynamic dynamic}</dt>
- *   <dd>This attribute states that a custom configurable component implements the {@link Composite} interface
- *   and its children are dynamically calculated by calling the {@code getConfigurables} method.
- *   It is needed to improve performance, because we do not want to load any additional classes during the building a setting tree.</dd>
+ *   <dd>This attribute marks a configurable component that implements {@link Composite} and provides its child pages in code.
+ *   See {@link ConfigurableEP#dynamic} for its cost and use.</dd>
  *   <dt>{@link ConfigurableEP#childrenEPName childrenEPName}</dt>
  *   <dd>This attribute specifies a name of the extension point that will be used to calculate children.</dd>
  *   <dt>{@link ConfigurableEP#children configurable}</dt>
