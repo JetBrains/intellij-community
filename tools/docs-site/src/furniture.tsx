@@ -16,7 +16,6 @@ import {Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectVal
 import {ToggleGroup, ToggleGroupItem} from './components/ui/toggle-group'
 import {cn} from './lib/utils'
 import {PageCrumbRow, usePageChrome, type PageMeasure} from './pageLayout'
-import {ADR_STATUSES, type AdrStatus} from '../scripts/docMeta'
 import {repoPathOf} from '../scripts/sourcePaths'
 import {site} from './site'
 import {sourceHref} from './sourceRef'
@@ -73,7 +72,7 @@ export function NotFoundPage({ kind, name, backHref, backLabel }: { kind: string
   return usePageChrome().layout === 'canvas' ? <div className="min-h-0 flex-1">{page}</div> : page
 }
 
-/** End-of-content reference to the markdown file behind a prose page (guides, ADRs, specs). */
+/** End-of-content reference to the markdown file behind a prose page (guides, decisions, specs). */
 export function SourceFooter({ path }: { path: string }) {
   const { href, external } = sourceHref(path)
   return (
@@ -88,33 +87,13 @@ export function SourceFooter({ path }: { path: string }) {
   )
 }
 
-const DECISION_STATUS_CLASS: Record<AdrStatus, string> = {
-  'accepted': 'text-muted-foreground',
-  'proposed': 'border-sidebar-primary text-foreground',
-  'partly-superseded': 'border-warning/60 text-foreground',
-  'superseded': 'border-dashed text-muted-foreground',
-}
-
-/** Decision record status badge; the accepted status is the norm, so it stays quiet. */
-export function DecisionStatusBadge({ status, className }: { status: AdrStatus, className?: string }) {
-  return (
-    <Badge
-      variant={status === 'accepted' ? 'secondary' : 'outline'}
-      className={cn('decision-status', DECISION_STATUS_CLASS[status], className)}
-      data-status={status}
-    >
-      {ADR_STATUSES.find(entry => entry.id === status)?.label ?? status}
-    </Badge>
-  )
-}
-
-/** One outline chip of a record header: a status, a date, a topic, an issue. With `href` it is a link. */
+/** One outline chip of a record header: a date, a topic, an issue. With `href` it is a link. */
 export function RecordChip({ href, external = false, className, children, ...rest }: {
   href?: string
   external?: boolean
   className?: string
   children: ReactNode
-  /** A marker attribute for the e2e suite, such as the status of a record. */
+  /** A marker attribute for the e2e suite. */
   'data-status'?: string
 }) {
   return (

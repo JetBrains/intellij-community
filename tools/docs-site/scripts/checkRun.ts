@@ -7,9 +7,9 @@
 //
 // The gate on bun loads this file, so it imports nothing from npm.
 
-import { checkDecisionRecords, type DecisionRecord } from './adrFiles.ts'
+import { checkDecisions } from './decisionFiles.ts'
 import { checkDiagramFiles, type DiagramFiles } from './diagramFiles.ts'
-import { repoRoot } from './paths.ts'
+import { type OpenSpecArchiveDesign, repoRoot } from './paths.ts'
 import { checkProse } from './proseLint.ts'
 import type { SiteConfig } from './siteConfig.ts'
 import { checkSpecRefs, type SpecRefs } from './specRefs.ts'
@@ -19,8 +19,8 @@ import { checkVocabulary } from './vocabulary.ts'
 export interface CheckRun {
   readonly config: SiteConfig
   readonly root: string
-  /** The decision check (adrFiles.ts): the records. */
-  decisions: () => DecisionRecord[]
+  /** The decision check (decisionFiles.ts): the designs of the archived changes. */
+  decisions: () => OpenSpecArchiveDesign[]
   /** The diagram check (diagramFiles.ts): the diagrams and the fences. */
   diagramFiles: () => DiagramFiles
   /** The prose check (proseLint.ts): the number of files read. */
@@ -42,7 +42,7 @@ export function createCheckRun(config: SiteConfig, root: string = repoRoot): Che
   return {
     config,
     root,
-    decisions: once(() => checkDecisionRecords(config, root)),
+    decisions: once(() => checkDecisions(config, root)),
     diagramFiles: once(() => checkDiagramFiles(config, root)),
     prose: once(() => checkProse(config, root)),
     vocabulary: once(() => checkVocabulary(config, undefined, root)),

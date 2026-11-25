@@ -12,9 +12,8 @@ follows [`AGENTS.md`](AGENTS.md).
 
 - [`docs/`](docs) holds the guide to the UI lanes, `vm-ui-tests.md`, and the notes on the Linux guest, the Windows
   lane and the open work.
-- [`docs/decisions/`](docs/decisions) holds the older ADRs of the controller and takes no new record.
-- [`openspec/`](openspec/README.md) is the OpenSpec root of the workspace. A new decision is the `design.md` of a
-  change there, and the archive keeps it as the decision record.
+- [`openspec/`](openspec/README.md) is the OpenSpec root of the workspace. A decision is the `design.md` of a change
+  there, and the archive `openspec/changes/archive/` keeps it.
 - [`spec/`](spec) holds the specs of the controller and the recorder. Its [`README.md`](spec/README.md) states the
   path conventions and the gate.
 
@@ -226,7 +225,7 @@ loaded before the anchor.
 The trigger frame of a module is the frame nearest to the top of its stack whose class has another owner. The search
 skips the frames of the runtime, the language libraries, the service container, the extension points and the message
 bus. A class without an owner in the log is a platform class. A log from a distribution before this shape has no time
-and no stack, so the tables print `-` and say so. The decision record
+and no stack, so the tables print `-` and say so. The decision
 [The bench names the trigger of each plugin loader](openspec/changes/archive/2026-10-19-the-bench-names-the-trigger-of-each-plugin-loader/design.md)
 states the rule.
 

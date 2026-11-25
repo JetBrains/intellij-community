@@ -17,15 +17,15 @@ function node(id: string, col: string, row: number, extra: Partial<HarvestedDiag
     line: null,
     module: null,
     spec: null,
-    adr: null,
+    decision: null,
     concept: null,
     planned: null,
     dashed: false,
     detail: null,
     symbolRef: null,
     sourceRef: null,
-    adrTitle: null,
-    adrPath: null,
+    decisionTitle: null,
+    decisionPath: null,
     ...extra,
   }
 }

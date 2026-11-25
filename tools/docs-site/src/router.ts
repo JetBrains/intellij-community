@@ -9,7 +9,6 @@ import {
   stripBase,
   type AnyRoute,
   type DecisionPaths,
-  type DecisionStatusFilter,
   type KernelRoute,
   type LaunchRoute,
   type PageLayout,
@@ -20,7 +19,7 @@ import {
 } from './routeTable.ts'
 
 export { catalogAnchor, isCatalogAnchor } from './routeTable.ts'
-export type { AnyRoute, DecisionStatusFilter, KernelRoute, LaunchRoute, PageLayout, RouteParent, SourceLineSelection } from './routeTable.ts'
+export type { AnyRoute, KernelRoute, LaunchRoute, PageLayout, RouteParent, SourceLineSelection } from './routeTable.ts'
 
 /** The event that `navigate` sends. The shell reads the new route on it. */
 export const ROUTE_CHANGE_EVENT = 'docs-site-route-change'
@@ -78,12 +77,12 @@ export function parentOf(route: AnyRoute): RouteParent | null {
   return routes().table.entryFor(route).parent
 }
 
-/** True for the content-relative path of a decision record. */
+/** True for the content-relative path of a decision: the design of an archived change. */
 export function isDecisionPath(path: string): boolean {
   return routes().decisions.isDecisionPath(path)
 }
 
-/** The `decision` route slug of a decision record path: the file name without `.md`. */
+/** The `decision` route slug of a decision path: the change id. */
 export function decisionSlug(path: string): string {
   return routes().decisions.decisionSlug(path)
 }
@@ -135,16 +134,15 @@ export function sourceRoute(path: string, selection?: SourceLineSelection | numb
 }
 
 export interface DecisionsRouteOptions {
-  status?: DecisionStatusFilter | null
   topic?: string | null
 }
 
-/** The Decisions index; `topic` null hides the records of the hidden topic, `all` shows every topic. */
+/** The Decisions index; `topic` null hides the decisions of the hidden topic, `all` shows every topic. */
 export function decisionsRoute(anchor?: string, options: DecisionsRouteOptions = {}): string {
-  return kernelHref({ page: 'decisions', anchor: anchor ?? null, status: options.status ?? null, topic: options.topic ?? null })
+  return kernelHref({ page: 'decisions', anchor: anchor ?? null, topic: options.topic ?? null })
 }
 
-/** One decision record by its content-relative path. */
+/** One decision by the content-relative path of its design. */
 export function decisionRoute(path: string, anchor?: string): string {
   return kernelHref({ page: 'decision', slug: decisionSlug(path), anchor: anchor ?? null })
 }

@@ -138,7 +138,7 @@ describe('the spec reference check', () => {
       'spec/a.spec.md': spec('Short.\n', 'targets:\n  - ../src/A.kt'),
       'openspec/changes/archive/2026-11-20-one-channel/design.md': '# The host keeps one channel\n\nSee [the gone design](../2026-11-19-gone/design.md).\n',
       // a design without an x-topic wrote its links for the folder of the active change
-      'openspec/changes/archive/2026-11-22-no-heading/design.md': 'See [the decisions](../../docs/decisions/gone.md).\n',
+      'openspec/changes/archive/2026-11-22-no-heading/design.md': 'See [the guide](../../docs/guides/gone.md).\n',
     })
     const { proseDocs, findings } = specRefFindings(openspec, root)
     assert.deepEqual(proseDocs, ['docs/guides/guide.md', 'openspec/changes/archive/2026-11-20-one-channel/design.md'])

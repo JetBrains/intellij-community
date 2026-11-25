@@ -252,13 +252,13 @@ function entries(dir: string, suffix: string): string[] {
 }
 
 /**
- * The files of the site that the check reads: the docs that the doc harvest reads, the designs of the archived changes,
- * the specs, and the diagrams. Each file is read once, in this order.
+ * The files of the site that the check reads: the docs that the doc harvest reads, the extra folders, the designs of the
+ * archived changes, the specs, and the diagrams. Each file is read once, in this order.
  */
 export function readVocabularyTexts(config: Omit<VocabularyConfig, 'vocabulary'>, root: string = repoRoot): VocabularyText[] {
   const content = contentDir(config, root)
   const docs: string[] = []
-  const { home, notes, guides, explainers, glossary, decisions, extraReadmes, diagrams } = config.docs
+  const { home, notes, guides, explainers, glossary, extraFolders = [], extraReadmes, diagrams } = config.docs
   if (home !== null) {
     docs.push(home)
   }
@@ -266,7 +266,7 @@ export function readVocabularyTexts(config: Omit<VocabularyConfig, 'vocabulary'>
     // AGENTS.md instructs an agent, not a reader
     docs.push(...entries(join(content, notes), '.md').filter(entry => entry !== 'AGENTS.md').map(entry => `${notes}/${entry}`))
   }
-  for (const folder of [guides, explainers, ...decisions]) {
+  for (const folder of [guides, explainers, ...extraFolders]) {
     docs.push(...entries(join(content, folder), '.md').map(entry => `${folder}/${entry}`))
   }
   if (glossary !== null) {

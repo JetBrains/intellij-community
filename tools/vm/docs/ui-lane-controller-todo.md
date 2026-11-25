@@ -9,8 +9,8 @@ retired the Tart Linux worker. The sealed-macOS backend has no open list either 
 retired on 2026-08-23 once the golden was rebuilt and the lane measured on it, and what survived it lives
 in the [VM guide](vm-ui-tests.md) under `## Parity gate`. Why the daemon exists at all is
 [The lane daemon of the guest agent is the only runner of the Air UI lanes](../openspec/changes/archive/2026-10-19-the-lane-daemon-is-the-only-runner-of-the-air-ui-lanes/design.md). **This file is only the open list.**
-A closed item leaves this file. The commit that closed it, named by its subject, and the ADRs under
-[`decisions/`](../../../../plugins/air/docs/decisions/) are the record.
+A closed item leaves this file. The commit that closed it, named by its subject, and the archived designs of
+[`openspec/`](../openspec/README.md) are the record.
 
 Every item below was found by running something, and says so. Where a measurement is quoted it was taken on
 `air-linux-1` on 2026-08-23 unless stated otherwise.

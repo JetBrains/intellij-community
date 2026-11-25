@@ -47,7 +47,7 @@ export function defineKernelSuite({ test, expect, config, sitePage }: KernelSuit
   const app = (path: string): string => `${config.base}${path.replace(/^\//, '')}`
   /** The slug of a doc path: the change id of a design of an archived change, else the file name without `.md`. */
   const slugOf = (path: string): string =>
-    harvest.docs.find(doc => doc.path === path)?.adr?.change ?? path.slice(path.lastIndexOf('/') + 1, -'.md'.length)
+    harvest.docs.find(doc => doc.path === path)?.decision?.change ?? path.slice(path.lastIndexOf('/') + 1, -'.md'.length)
   const harvestedMarkdown = (path: string): string => readFileSync(join(generated, 'markdown', harvestedFileOf(path)), 'utf8')
 
   async function open(page: Page, href: string, ready: 'content' | 'none' = 'content'): Promise<void> {
@@ -149,7 +149,7 @@ export function defineKernelSuite({ test, expect, config, sitePage }: KernelSuit
       assert.ok(await section.locator(`a[href="${app(`/guides/${slugOf(guide.path)}`)}"]`).count() >= 1)
     })
 
-    test('the guides index lists no decision record and folds the historical notes', async ({ page }) => {
+    test('the guides index lists no decision and folds the historical notes', async ({ page }) => {
       await open(page, app('/guides'))
       assert.strictEqual(await page.locator(`.doc-list a[href^="${app('/decisions/')}"]`).count(), 0)
       const historical = harvest.docs.filter(doc => doc.kind === 'note' && doc.state === 'historical')
@@ -242,17 +242,17 @@ export function defineKernelSuite({ test, expect, config, sitePage }: KernelSuit
       await expect(page.locator('.section-nav[data-probe="kept"]')).toHaveCount(1)
     })
 
-    test('a decision page marks its record in the tree of the topics', async ({ page }) => {
-      const record = harvest.docs.find(doc => doc.adr !== undefined)
-      assert.ok(record, 'no decision record is harvested')
+    test('a decision page marks its decision in the tree of the topics', async ({ page }) => {
+      const record = harvest.docs.find(doc => doc.decision !== undefined && doc.decision.topic !== null)
+      assert.ok(record, 'no decision with a topic is harvested')
       await open(page, app(`/decisions/${slugOf(record.path)}`))
       await expect(currentTreeLink(page)).toHaveAttribute('href', app(`/decisions/${slugOf(record.path)}`))
-      const topic = config.decisions.topics.find(entry => entry.id === record.adr!.topic)!
+      const topic = config.decisions.topics.find(entry => entry.id === record.decision!.topic)!
       await expect(page.locator(`.section-tree-group[data-group="${topic.id}"] button`)).toHaveAttribute('aria-expanded', 'true')
     })
 
     test('a doc page has no section tree, and a tool page is one column across the page', async ({ page }) => {
-      const doc = harvest.docs.find(entry => !entry.path.startsWith(`${config.docs.root}/`) && entry.adr === undefined && entry.kind !== 'explainer')
+      const doc = harvest.docs.find(entry => !entry.path.startsWith(`${config.docs.root}/`) && entry.decision === undefined && entry.kind !== 'explainer')
       if (doc !== undefined) {
         await open(page, app(`/doc/${encodeURIComponent(doc.path)}`))
         await expect(page.locator('.doc-article')).toBeVisible()
@@ -474,12 +474,13 @@ export function defineKernelSuite({ test, expect, config, sitePage }: KernelSuit
   })
 
   describe('decisions', () => {
-    const decisions = harvest.docs.filter(doc => doc.adr !== undefined)
+    const decisions = harvest.docs.filter(doc => doc.decision !== undefined)
     const decisionRouteOf = (path: string) => app(`/decisions/${slugOf(path)}`)
+    const newest = decisions.toSorted((a, b) => b.decision!.change.localeCompare(a.decision!.change))
 
-    test('the index hides the records of the hidden topic until the reader asks for them', async ({ page }) => {
+    test('the index hides the decisions of the hidden topic until the reader asks for them', async ({ page }) => {
       await open(page, app('/decisions'))
-      const hidden = decisions.filter(doc => doc.adr!.topic === config.decisions.hiddenTopic).length
+      const hidden = decisions.filter(doc => doc.decision!.topic === config.decisions.hiddenTopic).length
       await expect(page.locator('.decision-row')).toHaveCount(decisions.length - hidden)
       if (hidden === 0) {
         return
@@ -489,56 +490,47 @@ export function defineKernelSuite({ test, expect, config, sitePage }: KernelSuit
       await expect(page.locator('.decision-row')).toHaveCount(decisions.length)
     })
 
-    test('the status filter lives in the query, and a superseded row links its successor', async ({ page }) => {
-      await open(page, app('/decisions?status=superseded&topic=all'))
-      const superseded = decisions.filter(doc => doc.adr!.status === 'superseded')
-      await expect(page.locator('.decision-row')).toHaveCount(superseded.length)
-      const withSuccessor = superseded.find(doc => doc.adr!.supersededBy !== null)
-      if (withSuccessor === undefined) {
-        return // no superseded record of this site links its successor
-      }
-      const row = page.locator('.decision-row', { has: page.locator(`a.decision-title[href="${decisionRouteOf(withSuccessor.path)}"]`) })
-      assert.strictEqual(await row.locator(`a[href="${decisionRouteOf(withSuccessor.adr!.supersededBy!)}"]`).count(), 1)
+    test('the index lists the newest decision first, and the topic filter lives in the query', async ({ page }) => {
+      await open(page, app('/decisions?topic=all'))
+      await expect(page.locator('.decision-row a.decision-title').first()).toHaveAttribute('href', decisionRouteOf(newest[0].path))
+      const topic = config.decisions.topics.find(entry => decisions.some(doc => doc.decision!.topic === entry.id))
+      assert.ok(topic, 'no decision names a topic of the site')
+      await open(page, app(`/decisions?topic=${topic.id}`))
+      await expect(page.locator('.decision-row')).toHaveCount(decisions.filter(doc => doc.decision!.topic === topic.id).length)
     })
 
-    test('a superseded record names its successor above the body', async ({ page }) => {
-      const record = decisions.find(doc => doc.adr!.status === 'superseded' && doc.adr!.supersededBy !== null)
-      if (record === undefined) {
-        return // no superseded record of this site links its successor
-      }
-      await open(page, decisionRouteOf(record.path))
-      await expect(page.locator('.decision-superseded a')).toHaveAttribute('href', decisionRouteOf(record.adr!.supersededBy!))
-      await expect(page.locator('.decision-facts .decision-status')).toHaveAttribute('data-status', 'superseded')
-    })
-
-    // a dated record has no number (adrFiles.ts of the kernel); the oldest numbered one stands for the numbered records
-    const numbered = decisions.filter(doc => doc.adr!.number !== null)
-    const lastNumbered = numbered[numbered.length - 1]
-
-    test('a record header shows the title, the status and date chips, and the status as a callout', async ({ page }) => {
-      const record = decisions.find(doc => doc.adr!.date !== null && /^(## Status\n+\S|Status: )/m.test(harvestedMarkdown(doc.path)))
-      assert.ok(record, 'no dated decision record with a status is harvested')
-      await open(page, decisionRouteOf(record.path))
-      await expect(page.locator('.record-header h1')).toHaveText(record.title)
-      // the header replaces the first heading and the Date line of the body
+    test('a decision header shows the title and the date chip, and the links of the body', async ({ page }) => {
+      const decision = newest.find(doc => doc.decision!.topic !== null) ?? newest[0]
+      assert.ok(decision, 'no decision is harvested')
+      await open(page, decisionRouteOf(decision.path))
+      await expect(page.locator('.record-header h1')).toHaveText(decision.title)
+      // the header replaces the first heading of the body
       await expect(page.locator('.markdown-body h1')).toHaveCount(0)
-      await expect(page.locator('.record-chips time')).toHaveAttribute('datetime', record.adr!.date!)
-      await expect(page.locator('.markdown-body blockquote').first()).toContainText(record.adr!.statusText.replace(/\.$/, ''))
-      const linked = /\]\([^)]*\.md\)/.test(harvestedMarkdown(record.path))
-      if (linked) {
+      await expect(page.locator('.record-chips time')).toHaveAttribute('datetime', decision.decision!.date)
+      if (/\]\([^)]*\.md\)/.test(harvestedMarkdown(decision.path))) {
         await expect(page.locator('.toc-aside .record-links a').first()).toBeVisible()
       }
     })
 
-    test('an old doc link to a decision record opens the decision page', async ({ page }) => {
-      assert.ok(lastNumbered, 'no numbered decision record is harvested')
-      await open(page, app(`/doc/${encodeURIComponent(lastNumbered.path)}`))
-      await expect(page.locator('.decision-facts')).toContainText(`ADR ${lastNumbered.adr!.number}`)
+    test('an old doc link to a design and a former id open the decision page', async ({ page }) => {
+      const decision = newest[0]
+      assert.ok(decision, 'no decision is harvested')
+      await open(page, app(`/doc/${encodeURIComponent(decision.path)}`))
+      await expect(page.locator('.record-header h1')).toHaveText(decision.title)
       await expect(page.locator('.route-outlet .page-breadcrumb')).toContainText('Decisions')
+      // a change id wins over a former id of another decision
+      const changes = new Set(decisions.map(doc => doc.decision!.change))
+      const former = decisions.find(doc => doc.decision!.formerIds.some(id => !changes.has(id)))
+      if (former === undefined) {
+        return // no decision of this site has a former id
+      }
+      await open(page, app(`/decisions/${former.decision!.formerIds.find(id => !changes.has(id))}`))
+      await page.waitForURL(url => url.pathname === decisionRouteOf(former.path))
+      await expect(page.locator('.record-header h1')).toHaveText(former.title)
     })
 
     test('a design of an OpenSpec root outside the content root opens as a decision page', async ({ page }) => {
-      const design = decisions.find(doc => doc.path.startsWith('../') && doc.adr!.change !== undefined)
+      const design = decisions.find(doc => doc.path.startsWith('../'))
       if (design === undefined) {
         return // every OpenSpec root of this site is inside its content root
       }
@@ -547,12 +539,13 @@ export function defineKernelSuite({ test, expect, config, sitePage }: KernelSuit
       await expect(page.locator('.markdown-body').first()).not.toBeEmpty()
     })
 
-    test('the palette finds a decision record by its number', async ({ page }) => {
-      assert.ok(lastNumbered, 'no numbered decision record is harvested')
+    test('the palette finds a decision by its title', async ({ page }) => {
+      const decision = newest[0]
+      assert.ok(decision, 'no decision is harvested')
       await open(page, app('/guides'))
       await page.keyboard.press('/')
-      await page.fill('.palette input', String(Number(lastNumbered.adr!.number)))
-      await expect(paletteItems(page).filter({ hasText: lastNumbered.title }).first()).toBeVisible()
+      await page.fill('.palette input', decision.title.slice(0, 40))
+      await expect(paletteItems(page).filter({ hasText: decision.title }).first()).toBeVisible()
     })
   })
 

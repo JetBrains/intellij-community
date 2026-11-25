@@ -81,7 +81,7 @@ const KERNEL_PAGES: { [P in Exclude<KernelRoute['page'] | LaunchRoute['page'], '
   'guide': route => <GuidePage slug={route.slug} anchor={route.anchor} />,
   'explainers': route => <ExplainersPage anchor={route.anchor} />,
   'explainer': route => <ExplainerPage slug={route.slug} chapter={route.chapter} step={route.step} node={route.node} />,
-  'decisions': route => <DecisionsPage anchor={route.anchor} status={route.status} topic={route.topic} />,
+  'decisions': route => <DecisionsPage anchor={route.anchor} topic={route.topic} />,
   'decision': route => <DecisionPage slug={route.slug} anchor={route.anchor} />,
   'source': route => (
     <Suspense fallback={<DocPageShell className="text-muted-foreground">Loading source…</DocPageShell>}>

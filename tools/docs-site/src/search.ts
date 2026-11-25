@@ -2,7 +2,6 @@
 // gives the providers of the docs, the specs, and the code symbols, and a site puts its own providers around them.
 // The provider order is the result order and the group order of the palette.
 
-import { ADR_STATUSES, adrLabel, adrNumberedTitle } from '../scripts/docMeta.ts'
 import type { SiteConfig } from '../scripts/siteConfig.ts'
 import { OPENSPEC_SPEC_FILE } from '../scripts/sourcePaths.ts'
 import { decisionRoute, docRoute, explainerRoute, guideRoute, launchRoute } from './router'
@@ -29,25 +28,23 @@ export interface SearchProvider {
   search(needle: string): SearchResult[]
 }
 
-/** The explainers, the guides, the decision records, and the other bundled docs. */
+/** The explainers, the guides, the decisions, and the other bundled docs. */
 export const docSearch: SearchProvider = {
   kinds: ['Explainer', 'Guide', 'Decision', 'Doc'],
   search(needle) {
     const results: SearchResult[] = []
     const docsRoot = `${site().config.docs.root}/`
     for (const doc of site().index.data.docs) {
-      if (doc.kind !== 'guide' && doc.kind !== 'note' && doc.kind !== 'adr' && doc.kind !== 'explainer') {
+      if (doc.kind !== 'guide' && doc.kind !== 'note' && doc.kind !== 'decision' && doc.kind !== 'explainer') {
         continue
       }
-      if (doc.adr) {
-        const bare = needle.replace(/^adr\s*/, '')
-        const byNumber = doc.adr.number !== null && (bare === doc.adr.number || bare === String(Number(doc.adr.number)))
-        if (byNumber || `${doc.title} ${doc.path}`.toLowerCase().includes(needle)) {
+      if (doc.decision) {
+        if (`${doc.title} ${doc.decision.change}`.toLowerCase().includes(needle)) {
           results.push({
             ref: `doc:${doc.path}`,
             kind: 'Decision',
-            title: adrNumberedTitle(doc.adr, doc.title),
-            detail: `${adrLabel(doc.adr)} · ${ADR_STATUSES.find(status => status.id === doc.adr?.status)?.label ?? doc.adr.status}`,
+            title: doc.title,
+            detail: doc.decision.date,
             route: decisionRoute(doc.path),
           })
         }

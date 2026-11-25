@@ -43,7 +43,7 @@ function anchorIdOf(href: string): string {
   return decodeURIComponent(href.split('/').pop() ?? '')
 }
 
-/** The table of contents; `extra` is a block under the list, such as the links of a decision record. */
+/** The table of contents; `extra` is a block under the list, such as the links of a decision. */
 export function TocAside({ items, extra }: { items: TocItem[], extra?: ReactNode }) {
   const ref = useRef<HTMLElement>(null)
   const reading = usePageChrome().layout === 'reading'

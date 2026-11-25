@@ -4,7 +4,6 @@
 
 import { ChevronRightIcon, PanelLeftIcon } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
-import { StatusDot } from './StatusDot'
 import { Button } from './ui/button'
 import { ScrollArea } from './ui/scroll-area'
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from './ui/sheet'
@@ -72,7 +71,6 @@ function TreeLinks({ tree, currentHref }: { tree: SectionTree, currentHref: stri
                     aria-current={link === active ? 'page' : undefined}
                     className={cn(ROW, 'pl-6 text-muted-foreground', link === active && 'bg-sidebar-accent font-medium text-sidebar-accent-foreground')}
                   >
-                    {link.status !== undefined && <StatusDot status={link.status} />}
                     {link.detail !== undefined && <span className="flex-none font-mono text-xs text-muted-foreground tabular-nums">{link.detail}</span>}
                     <span className="min-w-0 flex-1 truncate">{link.label}</span>
                   </a>

@@ -220,7 +220,7 @@ export interface OpenSpecArchiveDesign {
   slug: string
   /** The `x-topic` field of `.openspec.yaml`, or null when the change names no topic. */
   topic: string | null
-  /** The `x-adr` field of `.openspec.yaml`: the ids of the old decision records of the change. */
+  /** The `x-adr` field of `.openspec.yaml`: the earlier ids of the decision, which old text can still name. */
   adr: string[]
 }
 

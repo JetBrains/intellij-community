@@ -7,7 +7,6 @@
 // The shell shows no in-page crumb on a canvas route, and an index page returns []: the top nav already names the
 // section.
 
-import { adrNumberedTitle } from '../scripts/docMeta.ts'
 import { repoPathOf } from '../scripts/sourcePaths.ts'
 import { catalogAnchor, guidesRoute, hrefForRoute, parentOf } from './router'
 import type { AnyRoute, KernelRoute } from './routeTable.ts'
@@ -36,7 +35,7 @@ const LEAVES: { [P in KernelPage]?: (route: KernelRouteOf<P>) => RouteCrumb[] } 
   },
   'decision': route => {
     const doc = site().index.docForDecisionSlug(route.slug)
-    return [doc ? { label: adrNumberedTitle(doc.adr, doc.title) } : { label: route.slug, mono: true }]
+    return [doc ? { label: doc.title } : { label: route.slug, mono: true }]
   },
   'doc': route => {
     const doc = site().index.docsByPath.get(route.path)

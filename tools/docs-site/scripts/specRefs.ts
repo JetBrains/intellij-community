@@ -1,6 +1,6 @@
 // The reference check and the style check of the specs of a site. The spec roots, the spec style, and the template
-// sections come from `specs` of the site config. The prose docs are the guides, the explainers, the decision records,
-// the designs of the archived changes with an `x-topic`, and the extra docs of `docs`.
+// sections come from `specs` of the site config. The prose docs are the guides, the explainers, the extra folders, the
+// decisions (the designs of the archived changes with an `x-topic`), and the extra docs of `docs`.
 //
 // The reference rules apply to every site:
 //   - targets: the `targets:` frontmatter list of a spec is not empty, and each entry names an existing file. An entry
@@ -494,15 +494,15 @@ function entries(dir: string, suffix: string): string[] {
 }
 
 /**
- * The absolute paths of the prose docs: the guides, the explainers, the decision records, the designs of the archived
+ * The absolute paths of the prose docs: the guides, the explainers, the extra folders, the designs of the archived
  * changes of the OpenSpec roots, and the extra docs. A design counts when its `.openspec.yaml` names an `x-topic`. A
  * design without one wrote its relative links for the folder of the active change, before the archive moved it.
  */
 export function proseDocFiles(config: SpecRefsConfig, root: string = repoRoot): string[] {
   const content = contentDir(config, root)
-  const { guides, explainers, decisions, extraReadmes } = config.docs
+  const { guides, explainers, extraFolders = [], extraReadmes } = config.docs
   const files = new Set<string>()
-  for (const folder of [guides, explainers, ...decisions]) {
+  for (const folder of [guides, explainers, ...extraFolders]) {
     for (const entry of entries(join(content, folder), '.md')) {
       files.add(join(content, folder, entry))
     }
@@ -571,7 +571,7 @@ export function specRefFindings(config: SpecRefsConfig, root: string = repoRoot)
     findings.push(`${[...openspecRoots, ...config.specs.roots].join(', ')}: no spec file; the scan is broken`)
   }
   if (proseDocs.length === 0) {
-    findings.push(`${config.docs.guides}: no guide, explainer, decision record or extra doc; the scan is broken`)
+    findings.push(`${config.docs.guides}: no guide, explainer, decision or extra doc; the scan is broken`)
   }
 
   const linkTargets = new Set<string>()

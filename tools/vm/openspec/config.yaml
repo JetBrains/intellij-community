@@ -12,19 +12,18 @@ context: |
   A contract sentence goes into a spec, and a rationale sentence into the design.md of an OpenSpec change. One
   sentence has one home.
   A decision lives in the design.md of its change. After the archive,
-  community/tools/vm/openspec/changes/archive/<YYYY-MM-DD>-<id>/design.md is the decision record.
-  community/tools/vm/docs/decisions/ takes no new record.
+  community/tools/vm/openspec/changes/archive/<YYYY-MM-DD>-<id>/design.md keeps it.
   Run OpenSpec from community/tools/vm/ as `../../../tools/openspec.cmd`, never as a global `openspec`.
   Work happens in a lease of `brd`. The change, its code, its tests and its archive land in one commit.
-  Search the sources with accio. A search for code leaves the archive out: accio locate '<text>' --scope '!**/openspec/changes/archive/**'.
-  A search for a rationale covers the archive: accio locate '<text>' --scope 'community/tools/vm/openspec/changes/archive/'.
+  Search the sources with accio. accio leaves the archive out of a search by default.
+  A search for a rationale names the archive as the scope: accio locate '<text>' --scope 'community/tools/vm/openspec/changes/archive/'.
 
 rules:
   proposal:
     - The change id is `<issue>-<slug>` in lowercase (`ijai-1228-macos-lane`) or a `<slug>`, unique among the changes and the archive.
     - Name the capabilities that the change touches by their ids, and state what is out of scope.
   design:
-    - The design is the decision record of the change. Its H1 states the decision in one sentence.
+    - The design is the decision of the change. Its H1 states the decision in one sentence.
     - The sections are `## Context`, `## Decisions`, `## Alternatives rejected` and `## Consequences`.
     - The design holds the rationale and no contract sentence. It links each requirement that it explains.
     - "The `.openspec.yaml` of the change has `x-topic: testing`, the topic of the UI lanes on the Air docs site."
@@ -50,5 +49,5 @@ operations:
     guidance:
       - Before the archive, an independent reviewer agent reviews the whole change.
       - Archive in the commit of the code, so the specs of master describe the code.
-      - The archived design.md stays as the decision record. Only a later change that replaces or amends its decision edits or deletes it.
+      - The archived design.md stays as the decision. Only a later change that replaces or amends its decision edits or deletes it.
       - Run `../../../tools/openspec.cmd validate --archived --strict` from community/tools/vm/, then commit.

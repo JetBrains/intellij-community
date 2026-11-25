@@ -22,7 +22,7 @@ export function testSiteConfig(overrides: Partial<SiteConfig> = {}): SiteConfig 
       explainers: 'docs/explainers',
       diagrams: 'docs/diagrams',
       glossary: null,
-      decisions: ['docs/decisions'],
+      extraFolders: ['docs/history'],
       extraReadmes: ['README.md'],
       skipDirs: [],
     },
@@ -31,13 +31,10 @@ export function testSiteConfig(overrides: Partial<SiteConfig> = {}): SiteConfig 
     github: { repoBase: 'https://github.com/example/repo/blob/master/', pathPrefix: '' },
     themeStorageKey: 'test-docs-theme',
     decisions: {
-      folders: ['docs/decisions'],
-      lastFrozenNumber: 9,
       referenceRoots: ['docs'],
       skipDirs: [],
       topics: [{ id: 'docs-site', label: 'Docs site' }],
       hiddenTopic: null,
-      allowDuplicateNumbers: [],
     },
     guideGroups: [{ id: 'docs', label: 'Docs' }],
     diagram: {

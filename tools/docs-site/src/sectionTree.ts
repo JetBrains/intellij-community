@@ -1,8 +1,7 @@
 // The section tree of a reading page: the left column of the reading layout, as a stock sidebar menu. A tree
-// lists the pages of one section in groups: the guides by group, the decision records by topic. A site adds the trees
+// lists the pages of one section in groups: the guides by group, the decisions by topic. A site adds the trees
 // of its own sections through the `sectionTrees` part of `createSite`.
 
-import type { AdrStatus } from '../scripts/docMeta.ts'
 import { routeForDoc } from './docRoute'
 import { decisionRoute, decisionsRoute, guidesRoute } from './router'
 import { site } from './site.ts'
@@ -12,10 +11,8 @@ import type { HarvestedDoc } from './siteData.ts'
 export interface SectionTreeLink {
   href: string
   label: string
-  /** A short dim prefix, for example the number of a decision record. */
+  /** A short dim prefix, for example the date of a run. */
   detail?: string
-  /** The status of a decision record, which the tree shows as a dot. */
-  status?: AdrStatus
 }
 
 /** One group of a section tree, for example the guides of one guide group. */
@@ -107,8 +104,8 @@ export function decisionsTree(): SectionTree {
     id: topic.id,
     label: topic.label,
     links: index.decisionDocs
-      .filter(doc => (doc.adr.topic ?? NO_TOPIC.id) === topic.id)
-      .map(doc => ({ href: decisionRoute(doc.path), label: doc.title, detail: doc.adr.number ?? undefined, status: doc.adr.status })),
+      .filter(doc => (doc.decision.topic ?? NO_TOPIC.id) === topic.id)
+      .map(doc => ({ href: decisionRoute(doc.path), label: doc.title })),
   }))
   return { id: 'decisions', label: 'Decisions', href: decisionsRoute(), groups: groups.filter(group => group.links.length > 0) }
 }

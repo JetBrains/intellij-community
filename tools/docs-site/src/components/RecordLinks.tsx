@@ -1,5 +1,5 @@
-// "Linked from this record": the links of a decision record body, under its table of contents. The links come from the
-// rendered body, so they resolve as the body links do: another record, a doc, a source file, an issue.
+// "Linked from this decision": the links of the body of a decision, under its table of contents. The links come from the
+// rendered body, so they resolve as the body links do: another decision, a doc, a source file, an issue.
 
 import { ExternalLinkIcon, FileCodeIcon, FileTextIcon, ScrollTextIcon } from 'lucide-react'
 import { useMemo, type ComponentType } from 'react'
@@ -44,7 +44,7 @@ export function recordLinks(source: string, baseDir: string, selfHref: string): 
   return links.slice(0, LINK_LIMIT)
 }
 
-/** The block of the links of a record, or nothing when the body links nothing. */
+/** The block of the links of a decision, or nothing when the body links nothing. */
 export function RecordLinks({ source, baseDir, selfHref }: { source: string, baseDir: string, selfHref: string }) {
   const links = useMemo(() => recordLinks(source, baseDir, selfHref), [source, baseDir, selfHref])
   if (links.length === 0) {
@@ -52,7 +52,7 @@ export function RecordLinks({ source, baseDir, selfHref }: { source: string, bas
   }
   return (
     <div className="record-links mt-6 grid gap-0.5">
-      <div className="px-1.5 pb-1 text-xs text-muted-foreground">Linked from this record</div>
+      <div className="px-1.5 pb-1 text-xs text-muted-foreground">Linked from this decision</div>
       {links.map(link => (
         <a
           key={link.href}

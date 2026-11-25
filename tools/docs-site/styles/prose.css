@@ -108,8 +108,7 @@
   line-height: inherit;
 }
 
-/* A quote is a callout: the info surface of a status Alert, its icon, and no rule. The first paragraph of the status
-   section of a decision record is a quote too (decisionBody of DecisionPage.tsx), with the history icon. */
+/* A quote is a callout: the info surface of a status Alert, its icon, and no rule. */
 .markdown-body blockquote {
   position: relative;
   margin-block: 0 1rem;
@@ -133,11 +132,6 @@
   background: var(--info);
   /* lucide info */
   mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='10'/%3E%3Cpath d='M12 16v-4'/%3E%3Cpath d='M12 8h.01'/%3E%3C/svg%3E") center / contain no-repeat;
-}
-
-.markdown-body h2#status + blockquote::before {
-  /* lucide history */
-  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8'/%3E%3Cpath d='M3 3v5h5'/%3E%3Cpath d='M12 7v5l4 2'/%3E%3C/svg%3E");
 }
 
 .markdown-body blockquote p {

@@ -82,8 +82,8 @@ describe('the prose of an explainer', () => {
     assert.match(findings[0].excerpt, /^"IJAI-3663" in/)
   })
 
-  it('passes a link to a decision record', () => {
-    assert.deepStrictEqual(checkExplainerProse('x.md', 'The [record](../decisions/0197-a-session-is-state.md) holds the reason.\n', LIMITS), [])
+  it('passes a link to a decision', () => {
+    assert.deepStrictEqual(checkExplainerProse('x.md', 'The [decision](../../openspec/changes/archive/2026-10-02-a-session-is-state/design.md) holds the reason.\n', LIMITS), [])
   })
 
   it('reports a count that rots, and not a schema number', () => {

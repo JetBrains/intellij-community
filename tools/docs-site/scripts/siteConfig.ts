@@ -94,8 +94,11 @@ export interface SiteConfig {
     diagrams: string
     /** The glossary doc, or null when the site has none. */
     glossary: string | null
-    /** The folders whose markdown files the harvest reads as decision records. */
-    decisions: string[]
+    /**
+     * The folders whose markdown files the spec and vocabulary checks read as prose docs, beside the guides and the
+     * explainers, or absent. The harvest does not read them.
+     */
+    extraFolders?: string[]
     /** The extra docs that the site bundles but no index lists. */
     extraReadmes: string[]
     /** The directory names under the doc and spec roots that hold no authored markdown. */
@@ -134,22 +137,16 @@ export interface SiteConfig {
   }
   /** The localStorage key of the theme mode. */
   themeStorageKey: string
-  /** The decision records. */
+  /** The decisions: the designs of the archived changes of the OpenSpec roots (`specs.openspec`). */
   decisions: {
-    /** The folders that hold the records, relative to the repository root. */
-    folders: string[]
-    /** The highest frozen record number. A numbered file name above it must take a date. */
-    lastFrozenNumber: number
-    /** The folders whose markdown and sources cite the records, relative to the repository root. */
+    /** The folders whose markdown and sources cite the decisions, relative to the repository root. */
     referenceRoots: string[]
     /** The directory names that the reference walk does not enter, in addition to the tool outputs. */
     skipDirs: string[]
-    /** The topics of a record, in the order of the Decisions page filter. */
+    /** The topics of a decision (`x-topic` of `.openspec.yaml`), in the order of the Decisions page filter. */
     topics: LabeledId[]
     /** The topic that the Decisions page hides until the reader asks for it, or null. */
     hiddenTopic: string | null
-    /** The frozen numbers that two records can share. A bare `ADR NNNN` mention of a shared number is ambiguous. */
-    allowDuplicateNumbers: string[]
   }
   /** The groups of the Guides page, in page order. */
   guideGroups: LabeledId[]

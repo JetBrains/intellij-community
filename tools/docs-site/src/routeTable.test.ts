@@ -7,7 +7,6 @@ import { createRouteTable, decisionPaths, kernelRouteEntries, type LaunchRoute, 
 
 const CONFIG = {
   contentRoot: 'plugins/air',
-  docs: { decisions: ['docs/decisions'] },
   specs: { openspec: { roots: ['plugins/air/openspec'] } },
   launchPicker: { defaultName: 'IDEA', explainChapter: null },
 } as Parameters<typeof kernelRouteEntries>[0]
@@ -23,8 +22,8 @@ const SAMPLES: readonly (readonly [KernelRoute | LaunchRoute, string])[] = [
   [{ page: 'explainers', anchor: null }, '/explain'],
   [{ page: 'explainer', slug: 'the-session-host-model', chapter: null, step: null, node: null }, '/explain/the-session-host-model'],
   [{ page: 'explainer', slug: 'the-session-host-model', chapter: 'a-channel', step: 2, node: 'store' }, '/explain/the-session-host-model/a-channel?step=2&node=store'],
-  [{ page: 'decisions', anchor: null, status: 'proposed', topic: 'all' }, '/decisions?status=proposed&topic=all'],
-  [{ page: 'decision', slug: '0197-a-session-is-state', anchor: 'context' }, '/decisions/0197-a-session-is-state/context'],
+  [{ page: 'decisions', anchor: null, topic: 'all' }, '/decisions?topic=all'],
+  [{ page: 'decision', slug: '2026-10-02-a-session-is-state', anchor: 'context' }, '/decisions/2026-10-02-a-session-is-state/context'],
   [{ page: 'source', path: 'docs/src/router.ts', selection: { start: 3, end: 9 } }, '/source/docs/src/router.ts?line=3-9'],
   [{ page: 'doc', path: 'spec/README.md', anchor: 'layout' }, '/doc/spec%2FREADME.md/layout'],
   [{ page: 'launch', q: 'IDEA Community' }, '/launch?q=IDEA+Community'],
@@ -48,11 +47,10 @@ test('the samples cover every canonical entry', () => {
 const ALIASES: readonly (readonly [string, string])[] = [
   ['#/guides', '/guides'],
   ['/doc/spec/README.md', '/doc/spec%2FREADME.md'],
-  ['/doc/docs%2Fdecisions%2F0197-a.md', '/decisions/0197-a'],
-  ['/doc/docs%2Fdecisions%2F0197-a.md/context', '/decisions/0197-a/context'],
-  ['/doc/docs/decisions/0197-a.md', '/decisions/0197-a'],
   ['/doc/openspec%2Fchanges%2Farchive%2F2026-11-20-one-channel%2Fdesign.md', '/decisions/2026-11-20-one-channel'],
-  ['/decisions?status=bogus', '/decisions'],
+  ['/doc/openspec%2Fchanges%2Farchive%2F2026-11-20-one-channel%2Fdesign.md/context', '/decisions/2026-11-20-one-channel/context'],
+  ['/doc/openspec/changes/archive/2026-11-20-one-channel/design.md', '/decisions/2026-11-20-one-channel'],
+  ['/decisions?status=accepted', '/decisions'],
   ['/decisions/group-x/y', '/decisions/group-x'],
   ['/doc/README.md/x/y', '/doc/README.md/x'],
   ['/source', '/'],
@@ -74,9 +72,9 @@ test('the app route heads are the first literal of every entry', () => {
   assert.deepEqual(table.heads().toSorted(), ['decisions', 'doc', 'explain', 'guides', 'launch', 'source'])
 })
 
-test('a doc route to a decision record builds the decision page', () => {
-  assert.equal(build({ page: 'doc', path: 'docs/decisions/0197-a.md', anchor: 'context' }), '/decisions/0197-a/context')
-  assert.equal(build({ page: 'doc', path: 'docs/decisions/sub/x.md', anchor: null }), '/doc/docs%2Fdecisions%2Fsub%2Fx.md')
+test('a doc route to the design of an archived change builds the decision page', () => {
+  assert.equal(build({ page: 'doc', path: 'openspec/changes/archive/2026-11-20-one-channel/design.md', anchor: 'context' }), '/decisions/2026-11-20-one-channel/context')
+  assert.equal(build({ page: 'doc', path: 'openspec/changes/archive/2026-11-20-one-channel/proposal.md', anchor: null }), '/doc/openspec%2Fchanges%2Farchive%2F2026-11-20-one-channel%2Fproposal.md')
 })
 
 test('a source line range puts the lower line first and drops an invalid line', () => {
@@ -91,7 +89,7 @@ test('the base prefix round-trips', () => {
   assert.deepEqual(parse('/build', '/build'), { page: 'home' })
   assert.deepEqual(parse('/build/', '/build'), { page: 'home' })
   assert.equal(build(parse('#/guides', '/build') as KernelRoute, '/build'), '/build/guides')
-  assert.equal(build(parse('https://example.org/build/decisions/0001-x', '/build') as KernelRoute, '/build'), '/build/decisions/0001-x')
+  assert.equal(build(parse('https://example.org/build/decisions/2026-11-20-x', '/build') as KernelRoute, '/build'), '/build/decisions/2026-11-20-x')
 })
 
 test('only home and source have no nav section, and the crumb head comes from the building entry', () => {
@@ -152,8 +150,7 @@ test('a path value keeps its slashes in the build, and any value parses back', (
 
 test('the design of an archived change is a decision path, and its slug is the change id', () => {
   const { isDecisionPath, decisionSlug } = decisionPaths(CONFIG)
-  assert.equal(isDecisionPath('docs/decisions/0197-a.md'), true)
-  assert.equal(decisionSlug('docs/decisions/0197-a.md'), '0197-a')
+  assert.equal(isDecisionPath('docs/decisions/0197-a.md'), false)
   assert.equal(isDecisionPath('openspec/changes/archive/2026-11-20-one-channel/design.md'), true)
   assert.equal(decisionSlug('openspec/changes/archive/2026-11-20-one-channel/design.md'), '2026-11-20-one-channel')
   assert.equal(isDecisionPath('openspec/changes/archive/2026-11-20-one-channel/proposal.md'), false)

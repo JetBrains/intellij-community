@@ -4,7 +4,7 @@ import { decisionRoute, docRoute, explainerRoute, guideRoute, isDecisionPath } f
 import { site } from './site.ts'
 import { guideSlug, type HarvestedDoc } from './siteData.ts'
 
-/** Route for a bundled doc: a decision record has its own page, guides and notes under the docs root get pretty slugs, the rest use /doc. */
+/** Route for a bundled doc: a decision has its own page, guides and notes under the docs root get pretty slugs, the rest use /doc. */
 export function routeForDoc(doc: HarvestedDoc): string {
   if (isDecisionPath(doc.path)) {
     return decisionRoute(doc.path)

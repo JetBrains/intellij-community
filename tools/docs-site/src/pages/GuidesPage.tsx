@@ -1,5 +1,6 @@
-// Guides index (decision 2026-10-12-decision-records-are-named-by-date-and-slug-and-have-a-page): the guides in their topic groups (frontmatter `group:`), then the working
-// notes. A historical note folds away, and the decision records have their own page.
+// Guides index (decision 2026-10-12-decision-records-are-named-by-date-and-slug-and-have-a-page): the guides in their
+// topic groups (frontmatter `group:`), then the working notes. A historical note folds away, and the decisions have
+// their own page.
 
 import { routeForDoc } from '../docRoute'
 import { EntryCardLink, HeadingAnchor, LinkList, LinkListItem, PageHeader } from '../furniture'

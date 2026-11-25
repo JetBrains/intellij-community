@@ -1,4 +1,4 @@
-// The page of one bundled markdown doc (a guide, a decision record, a doc under /doc): an optional
+// The page of one bundled markdown doc (a guide, a decision, a doc under /doc): an optional
 // header in place of the first heading of the body, an optional slot above the body, the body, and the
 // source footer, with a table of contents of the body's h2 headings.
 

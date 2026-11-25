@@ -58,7 +58,7 @@ function historyPattern(limits: ProseLimits): RegExp {
   const pattern = limits.historyPattern ?? DEFAULT_HISTORY
   return pattern.global ? pattern : new RegExp(pattern.source, `${pattern.flags}g`)
 }
-/** A count of parts that rots. A number that names a schema, a version, a phase, or an ADR is no count. */
+/** A count of parts that rots. A number that names a schema, a version, a phase, or an ADR of another set is no count. */
 const ROTTING_COUNT = /(?<!\b(?:[Ss]chema|[Vv]ersion|[Pp]hase|ADR) )\b\d+ (?:actions|event types|values|reactions|lines|files)\b/
 const CODE_SPAN = /(`+)([\s\S]*?[^`])\1(?!`)/g
 const LINK_TARGET = /]\([^)]*\)/g
