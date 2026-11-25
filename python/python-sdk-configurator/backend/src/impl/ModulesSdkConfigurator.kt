@@ -13,6 +13,7 @@ import com.intellij.python.pyproject.model.evolution.EvoPyProjectModel
 import com.intellij.python.pyproject.model.evolution.setOnWorkspace
 import com.intellij.python.sdk.backend.PythonInterpreter
 import com.intellij.python.sdk.backend.evolution.EvoWorkspace
+import com.jetbrains.python.project.PyProject.Companion.asPyProject
 import com.jetbrains.python.project.PyProject.Companion.getPyProjects
 import com.jetbrains.python.onFailure
 import kotlinx.coroutines.Dispatchers
@@ -20,7 +21,9 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.supervisorScope
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeoutOrNull
 import org.jetbrains.annotations.ApiStatus
+import kotlin.time.Duration.Companion.seconds
 
 /**
  * Gives each workspace of [project] without an interpreter the environment that already exists for it, such as the
@@ -30,11 +33,15 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal // Opened for tests only: we can't put tests here because configurators are in communuty.impl
 suspend fun configureSdkAutomatically(project: Project): Unit = withContext(Dispatchers.Default) {
   // The snapshot follows the modules asynchronously, so wait for one that holds each Python project of this walk. A
-  // module that goes away meanwhile starts a new snapshot, and the next check skips it.
+  // module that goes away or stops being a Python project meanwhile is skipped. Such a module can leave the snapshot
+  // equal, and then no new snapshot comes. So the wait has a limit, and the current snapshot is used after it.
   val pyProjects = project.getPyProjects()
-  val snapshot = EvoPyProjectModel.getInstance(project).snapshotFlow().first { snapshot ->
-    pyProjects.all { snapshot.forPyProject(it) != null || it.residesOnModule.isDisposed }
-  }
+  val model = EvoPyProjectModel.getInstance(project)
+  val snapshot = withTimeoutOrNull(SNAPSHOT_TIMEOUT) {
+    model.snapshotFlow().first { snapshot ->
+      pyProjects.all { snapshot.forPyProject(it) != null || it.residesOnModule.isDisposed || it.residesOnModule.asPyProject() == null }
+    }
+  } ?: model.snapshot().also { logger.warn("No snapshot holds each Python project after $SNAPSHOT_TIMEOUT, use the current one") }
   supervisorScope {
     for (workspace in snapshot.workspaces) {
       // If module is disposed, the coroutine gets cancelled, but we still need to configure other workspaces
@@ -77,3 +84,6 @@ private fun <T : Any> InterpreterConfigurationResult<T>.log(module: Module, logF
 }
 
 private val logger = fileLogger()
+
+/** How long [configureSdkAutomatically] waits for the snapshot. A recompute takes milliseconds, so this is only a guard. */
+private val SNAPSHOT_TIMEOUT = 30.seconds
