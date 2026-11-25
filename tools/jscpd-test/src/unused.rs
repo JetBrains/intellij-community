@@ -2,10 +2,11 @@
 
 //! The runner of `accio_unused_test` (`defs.bzl`): a Bazel test that fails on a declaration that nothing uses.
 //!
-//! The test has one case. It runs `accio unused` over the scope of the target and fails on each candidate that accio
-//! lists, as `<path>:<line> <kind> <name>`. A declaration that stays without a use carries the mark of its language
-//! that `accio unused --help` names, such as `@Suppress("unused")` or `#[expect(dead_code, reason = "…")]`, and accio
-//! then leaves it out.
+//! The test runs `accio unused` over the scope of the target. Its own case fails when accio gives no complete answer,
+//! and each candidate that accio lists is a failed case of its own, named `<path> <kind> <parent>.<name>`. The name
+//! holds no line, so a candidate keeps its case, its history and its mute on CI while the code above it moves. A
+//! declaration that stays without a use carries the mark of its language that `accio unused --help` names, such as
+//! `@Suppress("unused")` or `#[expect(dead_code, reason = "…")]`, and accio then leaves it out.
 //!
 //! The test always reads the checkout that holds its anchor file, a file of the package of the target: the runner
 //! resolves the link of the anchor in the runfiles to the checkout. It runs the `community/tools/accio.cmd` of that
@@ -16,6 +17,7 @@
 use crate::{Case, env_var, finish, resolve, root_of};
 use runfiles::Runfiles;
 use serde::Deserialize;
+use std::collections::HashSet;
 use std::error::Error;
 use std::fmt::Write as _;
 use std::io;
@@ -72,11 +74,12 @@ pub(crate) fn run() -> Result<bool, Box<dyn Error>> {
     let entries: Vec<String> = serde_json::from_str(&env_var(SCOPES_ENV_VAR)?)?;
     let scopes = scope_args(base, &entries);
     let guide = std::env::var(GUIDE_ENV_VAR).unwrap_or_default();
-    let case = Case {
-        name: env_var(CASE_ENV_VAR)?,
-        failure: unused_failure(&accio, &root, &scopes, &guide),
+    let case = env_var(CASE_ENV_VAR)?;
+    let cases = match ask(&accio, &root, &scopes) {
+        Ok(json) => cases_of(&json, &case, &guide),
+        Err(error) => vec![Case { name: case, failure: Some(error.to_string()) }],
     };
-    Ok(finish(&env_var(CLASS_ENV_VAR)?, &[case])?)
+    Ok(finish(&env_var(CLASS_ENV_VAR)?, &cases)?)
 }
 
 /// The `--scope` arguments of the scope entries. A path entry is absolute under `base`; an entry that starts with `!`
@@ -93,14 +96,6 @@ pub(crate) fn scope_args(base: &Path, entries: &[String]) -> Vec<String> {
             ["--scope".to_owned(), scope]
         })
         .collect()
-}
-
-/// The failure of the case: accio failed, or it lists a declaration that nothing uses.
-fn unused_failure(accio: &Path, root: &Path, scopes: &[String], guide: &str) -> Option<String> {
-    match ask(accio, root, scopes) {
-        Ok(json) => failure_of(&json, guide),
-        Err(error) => Some(error.to_string()),
-    }
 }
 
 /// Runs `accio unused` in `root`. A failed first run, such as one without an index, builds the index and runs again.
@@ -148,40 +143,46 @@ fn failed(what: &str, output: &Output) -> io::Error {
     ))
 }
 
-/// The failure of an answer of `accio unused --format json`: an answer that is not available or not complete, or each
-/// listed declaration as `<path>:<line> <kind> <parent>.<name>`.
-pub(crate) fn failure_of(json: &str, guide: &str) -> Option<String> {
+/// The cases of an answer of `accio unused --format json`. The case `case` fails on an answer that is not available
+/// or not complete, and passes otherwise. Each listed declaration is a failed case named `<path> <kind> <parent>.<name>`;
+/// a name that two declarations share gets the line of the later one.
+pub(crate) fn cases_of(json: &str, case: &str, guide: &str) -> Vec<Case> {
     let answer: Answer = match serde_json::from_str(json) {
         Ok(answer) => answer,
-        Err(error) => return Some(format!("accio unused printed no answer ({error}):\n{json}")),
+        Err(error) => return vec![failed_case(case, format!("accio unused printed no answer ({error}):\n{json}"))],
     };
     let note = answer.note.as_deref().unwrap_or_default();
     if answer.available == Some(false) {
-        return Some(format!("accio unused has no answer: {note}"));
+        return vec![failed_case(case, format!("accio unused has no answer: {note}"))];
     }
     if answer.complete == Some(false) {
-        return Some(format!("the answer of accio unused is not complete: {note}"));
+        return vec![failed_case(case, format!("the answer of accio unused is not complete: {note}"))];
     }
-    if answer.hits.is_empty() {
-        return None;
-    }
-    let mut message = format!(
-        "accio unused lists {} declarations that nothing uses. Delete each one, or keep it with the mark of its \
-         language that `accio unused --help` names.",
-        answer.hits.len()
-    );
+    let mut advice = "Nothing uses it. Delete it, or keep it with the mark of its language that `accio unused --help` \
+                      names."
+        .to_owned();
     if !guide.is_empty() {
-        message.push(' ');
-        message.push_str(guide);
+        advice.push(' ');
+        advice.push_str(guide);
     }
+    let mut cases = vec![Case { name: case.to_owned(), failure: None }];
+    let mut names = HashSet::new();
     for hit in &answer.hits {
-        let _ = write!(message, "\n{}:{} {} ", hit.file, hit.line, hit.kind);
+        let mut name = format!("{} {} ", hit.file, hit.kind);
         if let Some(parent) = &hit.parent {
-            let _ = write!(message, "{parent}.");
+            let _ = write!(name, "{parent}.");
         }
-        message.push_str(&hit.name);
+        name.push_str(&hit.name);
+        if !names.insert(name.clone()) {
+            let _ = write!(name, " (line {})", hit.line);
+        }
+        cases.push(failed_case(&name, format!("{}:{}: {advice}", hit.file, hit.line)));
     }
-    Some(message)
+    cases
+}
+
+fn failed_case(name: &str, failure: String) -> Case {
+    Case { name: name.to_owned(), failure: Some(failure) }
 }
 
 #[cfg(test)]

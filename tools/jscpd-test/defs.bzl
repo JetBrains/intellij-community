@@ -3,8 +3,9 @@
 - `jscpd_test` fails on a copy-paste clone. It runs the binary of this package with the pinned jscpd of
   `//tools:jscpd`, and the binary writes a JUnit report with two cases.
 - `accio_unused_test` fails on a declaration that nothing uses. It runs the same binary, which runs
-  `community/tools/accio.cmd` of the checkout, and writes a JUnit report with one case. The flag
-  `//tools/jscpd-test:unused` turns it on; it is off by default.
+  `community/tools/accio.cmd` of the checkout, and writes a JUnit report with a case that fails when accio gives no
+  complete answer and a failed case for each declaration that accio lists. The flag `//tools/jscpd-test:unused` turns
+  it on; it is off by default.
 
 The module documentation of `src/main.rs` and `src/unused.rs` describes the runs.
 """
@@ -192,16 +193,17 @@ def accio_unused_test(
 
     The test reads the checkout that holds `anchor`, with the index home of the user, so it gets the tags `external`
     and `no-sandbox`. A declaration that stays without a use carries the mark of its language that `accio unused --help`
-    names, and accio leaves it out. The target is incompatible unless `//tools/jscpd-test:unused` is on, so
-    `bazel test //...` skips it.
+    names, and accio leaves it out. Each listed declaration is a failed case named `<path> <kind> <parent>.<name>`,
+    without its line, so a CI history and a mute stay with it. The target is incompatible unless
+    `//tools/jscpd-test:unused` is on, so `bazel test //...` skips it.
 
     Args:
       name: the name of the test target.
       anchor: a file of the package, such as its jscpd configuration; the test finds the checkout through it.
       scopes: the `--scope` entries: a path relative to the directory of `anchor`, or a pattern of accio, such as
         `!**/generated/**`, as it is.
-      junit_class: the class name of the case in the JUnit report.
-      case: the name of the case.
+      junit_class: the class name of the cases in the JUnit report.
+      case: the name of the case that fails when accio gives no complete answer.
       guide: one sentence that a failure prints, such as the path of the guide to removing dead code.
       tags: the tags of the test.
       **kwargs: the common attributes of a test, such as `size` or `timeout`.
@@ -249,7 +251,7 @@ def code_gates(
       name: the name of the system, the prefix of both targets.
       jscpd_config: the jscpd configuration file of the system.
       junit_class: the class name of the cases of the copy-paste test in the JUnit report.
-      unused_junit_class: the class name of the case of the unused test in the JUnit report.
+      unused_junit_class: the class name of the cases of the unused test in the JUnit report.
       unused_scopes: the scope entries of the unused test, relative to the directory of `jscpd_config`.
       srcs: the scanned files of a hermetic copy-paste test.
       working_copy: the copy-paste test scans the checkout instead of the runfiles.
@@ -257,7 +259,7 @@ def code_gates(
         target keeps its name and its history.
       clone_case: the name of the clone case of the copy-paste test.
       marker_case: the name of the marker case of the copy-paste test.
-      unused_case: the name of the case of the unused test.
+      unused_case: the name of the case of the unused test that fails when accio gives no complete answer.
       guide: one sentence that a failure of the copy-paste test prints.
       unused_guide: one sentence that a failure of the unused test prints.
       size: the size of the copy-paste test.
