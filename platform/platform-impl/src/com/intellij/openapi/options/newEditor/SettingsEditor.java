@@ -516,7 +516,10 @@ public final class SettingsEditor extends AbstractEditor implements UiDataProvid
     ApplicationManager.getApplication().getMessageBus().connect(this).subscribe(ProjectCloseListener.TOPIC, new ProjectCloseListener() {
       @Override
       public void projectClosing(@NotNull Project project) {
-        forgetFrameProject(project);
+        // the window closes with the frame owner, so its tree needs no change for that close
+        if (project != projects.getFrameOwner()) {
+          forgetFrameProject(project);
+        }
       }
     });
     SettingsFrameGuestJoins.follow(group, coroutineScope, this, hasNewNodes -> {
