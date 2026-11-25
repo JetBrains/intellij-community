@@ -16,6 +16,7 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
@@ -497,7 +498,9 @@ class SettingsSyncBridge(
               is SyncSettingsEvent.DeleteServerData -> {
                 mergeAndPushAfterProcessingEvents = false
                 stopSyncingAndRollback(previousState)
-                deleteServerData(event.afterDeleting)
+                withContext(NonCancellable) {
+                  deleteServerData(event.afterDeleting)
+                }
               }
               SyncSettingsEvent.DeletedOnCloud -> {
                 mergeAndPushAfterProcessingEvents = false
