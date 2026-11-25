@@ -3,11 +3,14 @@ package com.jetbrains.python;
 
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.completion.impl.CamelHumpMatcher;
+import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.idea.TestFor;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.allure.Layers;
 import com.jetbrains.python.allure.Subsystems;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
+import com.jetbrains.python.psi.PyFunction;
 
 import java.util.List;
 
@@ -537,5 +540,17 @@ public class PythonKeywordCompletionTest extends PyTestCase {
   public void testNoLazyBefore315() {
     runWithLanguageLevel(LanguageLevel.PYTHON314, () ->
       assertDoesntContain(doTestByText("<caret>"), PyNames.LAZY));
+  }
+
+  @TestFor(issues = "PY-92672")
+  public void testExecIsNotKeywordInPython3() {
+    myFixture.configureByText(PythonFileType.INSTANCE, "ex<caret>");
+    LookupElement[] variants = myFixture.completeBasic();
+    assertNotNull(variants);
+    List<String> execKinds = ContainerUtil.sorted(ContainerUtil.mapNotNull(variants, v -> {
+      if (!v.getLookupString().equals("exec")) return null;
+      return v.getPsiElement() instanceof PyFunction ? "builtin function" : "keyword";
+    }));
+    assertSameElements(execKinds, "builtin function");
   }
 }
