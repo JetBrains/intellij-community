@@ -128,11 +128,7 @@
     <issueChecker implementation="org.jetbrains.plugins.gradle.issue.GradleDaemonStartupIssueChecker"/>
     <issueChecker implementation="org.jetbrains.plugins.gradle.issue.GradleBuildCancelledIssueChecker"/>
     <issueChecker implementation="org.jetbrains.plugins.gradle.issue.GradleOutOfMemoryIssueChecker"/>
-    <issueChecker implementation="org.jetbrains.plugins.gradle.issue.GradleToolchainDownloadedMismatchCriteriaIssueChecker"/>
-    <issueChecker implementation="org.jetbrains.plugins.gradle.issue.GradleUndefinedDaemonJvmCriteriaIssueChecker"/>
-    <issueChecker implementation="org.jetbrains.plugins.gradle.issue.GradleInvalidDaemonJvmCriteriaIssueChecker"/>
-    <issueChecker implementation="org.jetbrains.plugins.gradle.issue.GradleToolchainDownloadingErrorIssueChecker"/>
-    <issueChecker implementation="org.jetbrains.plugins.gradle.issue.GradleToolchainInstalledNotFoundMatchingCriteriaIssueChecker"/>
+    <issueChecker implementation="org.jetbrains.plugins.gradle.issue.GradleDaemonJvmCriteriaIssueChecker"/>
 
     <issueMerger implementation="org.jetbrains.plugins.gradle.issue.UnresolvedDependencySyncIssueMerger"/>
 
