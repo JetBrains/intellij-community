@@ -260,9 +260,9 @@ internal class IndexMaintenanceOnIdleTest {
         events, 5.minutes,
         backgroundActivities = {
           BackgroundActivities(counters = mapOf(
-            scanning to scanning.modificationCount,
-            indexing to indexing.modificationCount,
-            vfs to vfs.modificationCount,
+            ActivityCounterId.named("scanning") to scanning.modificationCount,
+            ActivityCounterId.named("indexing") to indexing.modificationCount,
+            ActivityCounterId.vfs() to vfs.modificationCount,
           ))
         },
         timeSource = testScheduler.timeSource,
@@ -294,6 +294,36 @@ internal class IndexMaintenanceOnIdleTest {
     assertEquals(0, maintenanceCount, "Maintenance must wait until the next poll")
     runCurrent()
     assertEquals(1, maintenanceCount, "All counters must stay unchanged for a full quiet minute")
+  }
+
+  @Test
+  fun `a new counter between polls resets the quiet period`() = runTest {
+    val events = MutableSharedFlow<Unit>(replay = 1)
+    events.emit(Unit)
+    var counters = mapOf(ActivityCounterId.vfs() to 0L)
+    var maintenanceCount = 0
+    backgroundScope.launch {
+      runMaintenanceOnIdle(
+        events, 5.minutes,
+        backgroundActivities = { BackgroundActivities(counters = counters) },
+        timeSource = testScheduler.timeSource,
+      ) {
+        maintenanceCount++
+        true
+      }
+    }
+
+    advanceTimeBy(4.minutes + 30.seconds)
+    runCurrent()
+    // A project opens between polls, and its scan has not started yet
+    counters = counters + (ActivityCounterId.named("opened project") to 0L)
+    advanceTimeBy(30.seconds)
+    runCurrent()
+    assertEquals(0, maintenanceCount, "A new counter must reset the quiet period even with an unchanged value")
+
+    advanceTimeBy(1.minutes)
+    runCurrent()
+    assertEquals(1, maintenanceCount)
   }
 
   @Test
@@ -414,7 +444,7 @@ internal class IndexMaintenanceOnIdleTest {
     backgroundScope.launch {
       runMaintenanceOnIdle(
         events, 5.minutes, delayMultiplier = 3.0,
-        backgroundActivities = { BackgroundActivities(counters = mapOf(vfs to vfs.modificationCount)) },
+        backgroundActivities = { BackgroundActivities(counters = mapOf(ActivityCounterId.vfs() to vfs.modificationCount)) },
         timeSource = testScheduler.timeSource,
       ) {
         maintenanceCount++

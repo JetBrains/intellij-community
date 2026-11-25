@@ -12,8 +12,8 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.util.PotemkinProgress
 import com.intellij.openapi.project.DumbService
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.UnindexedFilesScannerExecutor
-import com.intellij.openapi.util.ModificationTracker
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.newvfs.RefreshQueueImpl
 import com.intellij.platform.util.io.storages.database.spi.metrics.DatabaseMetrics
@@ -34,6 +34,7 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.TestOnly
 import org.jetbrains.annotations.VisibleForTesting
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
@@ -298,9 +299,8 @@ class IndexMaintenanceService(scope: CoroutineScope) : IndexMaintenance<DurableD
 
   private fun fetchBackgroundActivity(): BackgroundActivities {
     var activity: String? = null
-    val counters = HashMap<ModificationTracker, Long>()
-    val fileManager = VirtualFileManager.getInstance()
-    counters[fileManager] = fileManager.modificationCount
+    val counters = HashMap<ActivityCounterId, Long>()
+    counters[ActivityCounterId.vfs()] = VirtualFileManager.getInstance().modificationCount
     if (RefreshQueueImpl.isRefreshInProgress || RefreshQueueImpl.isEventProcessingInProgress) {
       activity = "VFS refresh"
     }
@@ -309,8 +309,8 @@ class IndexMaintenanceService(scope: CoroutineScope) : IndexMaintenance<DurableD
       val scanner = UnindexedFilesScannerExecutor.getInstance(project)
       val dumbService = DumbService.getInstance(project)
       // Scans that schedule indexing advance the dumb-mode tracker instead
-      counters[scanner.modificationTracker] = scanner.modificationTracker.modificationCount
-      counters[dumbService.modificationTracker] = dumbService.modificationTracker.modificationCount
+      counters[ActivityCounterId.projectScanning(project)] = scanner.modificationTracker.modificationCount
+      counters[ActivityCounterId.projectDumbMode(project)] = dumbService.modificationTracker.modificationCount
       if (activity == null && (scanner.isRunning.value || scanner.hasQueuedTasks)) {
         activity = "scanning in project '${project.name}'"
       }
@@ -370,7 +370,34 @@ fun shouldRunMaintenance(current: MaintenanceMetrics, baseline: MaintenanceMetri
 
 /** Keeps counters for different modification trackers */
 @ApiStatus.Internal
-data class BackgroundActivities(val description: String? = null, val counters: Map<ModificationTracker, Long> = emptyMap())
+data class BackgroundActivities(val description: String? = null, val counters: Map<ActivityCounterId, Long> = emptyMap())
+
+/**
+ * Identifies one modification counter in [BackgroundActivities.counters].
+ *
+ * The counters usually originates from some [ModificationTracker], but the tracker itself is a bad key, since it can hold
+ * something like [Project], creating a leak -> [ActivityCounterId] works around it.
+ */
+@ApiStatus.Internal
+@JvmInline
+value class ActivityCounterId private constructor(private val id: String) {
+  override fun toString(): String = id
+
+  companion object {
+    /** => [VirtualFileManager.getModificationCount] */
+    fun vfs(): ActivityCounterId = ActivityCounterId("vfs")
+
+    /** => [UnindexedFilesScannerExecutor.modificationTracker] of the [project] */
+    fun projectScanning(project: Project): ActivityCounterId = ActivityCounterId("scanning:${project.locationHash}")
+
+    /** => [DumbService.modificationTracker] of the [project] */
+    fun projectDumbMode(project: Project): ActivityCounterId = ActivityCounterId("dumb-mode:${project.locationHash}")
+
+    /** A counter that no IDE service owns */
+    @TestOnly
+    fun named(name: String): ActivityCounterId = ActivityCounterId("named:$name")
+  }
+}
 
 /**
  * Long-running task: runs maintenance rounds if there is long enough period of idleness: no user activity, and no important background
