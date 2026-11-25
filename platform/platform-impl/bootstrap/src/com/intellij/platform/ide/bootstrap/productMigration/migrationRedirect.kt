@@ -119,8 +119,10 @@ internal fun scheduleMigrationRedirect(
 
     val sourceProduct = appInfoDeferred.await().build.productCode
     val arguments = migrationRedirectArguments(args)
-    // Finder and the Dock give the files and the URLs of a start with no arguments as Apple events
-    val openRequests = if (arguments.isEmpty()) {
+    // Finder and the Dock give the files and the URLs of a start with no arguments as Apple events.
+    // Another OS gives them only as arguments, and it has no Dock icon.
+    val isMac = OS.CURRENT == OS.macOS
+    val openRequests = if (isMac && arguments.isEmpty()) {
       span("migration redirect events") {
         collectOpenRequests(initAwtToolkitJob)
       }
@@ -129,7 +131,7 @@ internal fun scheduleMigrationRedirect(
     val exitCode = try {
       span("migration redirect launch") {
         launchMigrationRedirect(redirect, sourceProduct, arguments + (openRequests?.toArguments() ?: emptyList()),
-                                onStart = { hideDockIcon(initAwtToolkitJob) })
+                                onStart = { if (isMac) hideDockIcon(initAwtToolkitJob) })
       }
     }
     catch (e: Throwable) {
