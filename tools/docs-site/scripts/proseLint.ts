@@ -121,7 +121,8 @@ function splitSentences(block: LinedText): { text: string, line: number }[] {
     }
     start = end
   }
-  const end = /[.!?][)"'\]”’]*(?=\s|$)/g
+  // a closing bracket, quote or emphasis mark stays with its sentence: `**A lead-in.** The text.` is two sentences
+  const end = /[.!?][)"'\]”’*_]*(?=\s|$)/g
   for (const match of block.text.matchAll(end)) {
     const stop = match.index + match[0].length
     const word = /[\p{L}.]*$/u.exec(block.text.slice(start, stop))?.[0] ?? ''

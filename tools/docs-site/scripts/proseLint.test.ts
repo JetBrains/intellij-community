@@ -45,6 +45,14 @@ describe('the prose of an explainer', () => {
     assert.equal(findings[0].line, 1)
   })
 
+  it('ends a sentence after a bold lead-in', () => {
+    const lead = words(15).slice(0, -1)
+    assert.deepStrictEqual(checkExplainerProse('x.md', `**${lead}.** ${words(15)}
+`, LIMITS), [])
+    assert.deepStrictEqual(rules(checkExplainerProse('x.md', `**${lead}** ${words(15)}
+`, LIMITS)), ['sentence-length'])
+  })
+
   it('ends a sentence at the end of a list item', () => {
     const item = words(20).slice(0, -1)
     assert.deepStrictEqual(checkExplainerProse('x.md', `- ${item}\n- ${item}\n`, LIMITS), [])
