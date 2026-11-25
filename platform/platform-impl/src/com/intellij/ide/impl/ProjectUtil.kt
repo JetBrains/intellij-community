@@ -596,6 +596,10 @@ object ProjectUtil {
   }
 
   suspend fun openOrImportFilesAsync(list: List<Path>, location: String, projectToClose: Project? = null): Project? {
+    if (list.size > 1) {
+      MultipleFileOpener.openExternalFiles(list, projectToClose, forceOpenInNewFrame = true)?.let { return it.project }
+    }
+
     for (file in list) {
       FUSProjectHotStartUpMeasurer.withProjectContextElement(file) {
         openOrImportAsync(file = file, options = OpenProjectTask {

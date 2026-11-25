@@ -3,6 +3,7 @@ package com.intellij.ide
 
 import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector
 import com.intellij.ide.actions.ShowLogAction
+import com.intellij.ide.impl.MultipleFileOpener
 import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.ide.impl.ProjectUtil
 import com.intellij.ide.lightEdit.LightEdit
@@ -390,6 +391,13 @@ object CommandLineProcessor {
       }
     }
 
+    plainPathsOfSeveralCommands(commands)?.let { files ->
+      val answer = MultipleFileOpener.openExternalFiles(files, projectToClose = null, forceOpenInNewFrame = false)
+      if (answer != null) {
+        return CommandLineProcessorResult(answer.project, OK_FUTURE)
+      }
+    }
+
     var result: CommandLineProcessorResult? = null
     for (command in commands) {
         result = when (command) {
@@ -418,6 +426,18 @@ object CommandLineProcessor {
         }
     }
     return result ?: error("Parsing result shouldn't be null at this point; args are not empty")
+  }
+
+  private fun plainPathsOfSeveralCommands(commands: List<ParsingResult>): List<Path>? {
+    if (commands.size < 2) {
+      return null
+    }
+    return commands.map { command ->
+      val isPlainPath = command is OpenProjectResult &&
+                        command.line == -1 && command.column == -1 &&
+                        !command.tempProject && !command.shouldWait && !command.lightEditMode
+      if (isPlainPath) command.file else return null
+    }
   }
 
   @ApiStatus.Internal
