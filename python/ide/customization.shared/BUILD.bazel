@@ -1,4 +1,5 @@
 load("@community//build:jps_module.bzl", "jps_module")
+load("@community//platform/build-scripts/bazel-rules:ij_plugin.bzl", "ij_plugin")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.pycharm.community.customization.shared` start
@@ -26,10 +27,37 @@ jvm_library(
 )
 ### auto-generated section `build intellij.pycharm.community.customization.shared` end
 
+### auto-generated section `plugin intellij.pycharm.community.customization.shared` start
+ij_plugin(
+    name = "customization.shared_plugin",
+    descriptor_module = ":customization.shared",
+    content_modules = [
+        # do not sort,
+        "//python/ide/impl",
+        "//python/ide/customization.frontend",
+        "//python/ide/implTraining/intellij.pycharm.community.ide.implTraining:pycharm-community-ide-implTraining",
+        "//platform/whatsNew",
+        "//platform/non-modal-welcome-screen",
+        "//platform/non-modal-welcome-screen/backend",
+        "//platform/non-modal-welcome-screen/frontend",
+        "//python/ide/newUiOnboarding",
+        "//python/ide/customization.scratch",
+        "//python/ide/customization.backend",
+    ] + select({
+        "@community//build:is_inside_ultimate": [
+            "@@//python/common-frontend",
+        ],
+        "//conditions:default": [],
+    }),
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `plugin intellij.pycharm.community.customization.shared` end
+
 ### auto-generated section `iml intellij.pycharm.community.customization.shared` start
 jps_module(
     name = "intellij.pycharm.community.customization.shared",
     descriptors = ["resources/META-INF/plugin.xml"],
+    plugin = True,
     target = "customization.shared",
 )
 ### auto-generated section `iml intellij.pycharm.community.customization.shared` end
