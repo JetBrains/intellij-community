@@ -68,6 +68,61 @@ class PyTrailingCommasPostFormatProcessorTest : PyCodeInsightTestCase() {
     assertEquals(1, counter.processedElements)
   }
 
+  @TestFor(issues = ["PY-86792"])
+  @Test
+  fun `no trailing comma follows a sole generator argument`() = assertReformattedWithTrailingCommas("""
+    print(
+        x
+        for x in range(3)
+    )
+  """, """
+    print(
+        x
+        for x in range(3)
+    )
+  """)
+
+  @TestFor(issues = ["PY-86792"])
+  @Test
+  fun `no trailing comma follows a sole generator argument with star unpacking`() = assertReformattedWithTrailingCommas("""
+    print(
+        *x
+        for x in [[1], [2]]
+    )
+  """, """
+    print(
+        *x
+        for x in [[1], [2]]
+    )
+  """)
+
+  @TestFor(issues = ["PY-86792"])
+  @Test
+  fun `a trailing comma follows a sole parenthesized generator argument`() = assertReformattedWithTrailingCommas("""
+    print(
+        (x
+         for x in range(3))
+    )
+  """, """
+    print(
+        (x
+         for x in range(3)),
+    )
+  """)
+
+  /** Reformats [before] with trailing commas in argument lists on, and compares the text with [after]. */
+  private fun assertReformattedWithTrailingCommas(before: String, after: String) {
+    myFixture.configureByText(PythonFileType.INSTANCE, before.trimIndent())
+    val settings = CodeStyle.createTestSettings()
+    settings.getCustomSettings(PyCodeStyleSettings::class.java).USE_TRAILING_COMMA_IN_ARGUMENTS_LIST = true
+    CodeStyle.doWithTemporarySettings(myFixture.project, settings, Runnable {
+      WriteCommandAction.runWriteCommandAction(myFixture.project, Runnable {
+        CodeStyleManager.getInstance(myFixture.project).reformat(myFixture.file)
+      })
+    })
+    assertEquals(after.trimIndent(), myFixture.file.text.trimEnd())
+  }
+
   /**
    * Counts the element reformats that run the post-format processors.
    * The processor is whitespace-only, so also a whitespace-only reformat runs it.
