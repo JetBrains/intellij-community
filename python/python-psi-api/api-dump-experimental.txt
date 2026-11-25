@@ -102,6 +102,7 @@ com.jetbrains.python.psi.types.PyType
 *e:com.jetbrains.python.psi.types.PyTypeRendererFeature
 - java.lang.Enum
 - sf:BARE_LITERAL:com.jetbrains.python.psi.types.PyTypeRendererFeature
+- sf:CALLBACK_PROTOCOL_AS_CALLABLE:com.jetbrains.python.psi.types.PyTypeRendererFeature
 - sf:TYPE_VAR_BOUNDS:com.jetbrains.python.psi.types.PyTypeRendererFeature
 - sf:USE_FQN:com.jetbrains.python.psi.types.PyTypeRendererFeature
 - s:getEntries():kotlin.enums.EnumEntries
