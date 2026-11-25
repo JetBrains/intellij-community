@@ -17,6 +17,15 @@ import com.intellij.platform.workspace.storage.entities
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import com.intellij.python.pyproject.model.internal.platformBridge.PendingRebuild
 import com.intellij.python.pyproject.model.internal.platformBridge.toRebuildRequest
+import com.intellij.python.pyproject.model.internal.workspaceBridge.PyProjectTomlKeptModuleEntitySource
+import com.intellij.python.pyproject.model.internal.workspaceBridge.PyProjectTomlWorkspaceEntity
+import com.intellij.python.pyproject.model.internal.workspaceBridge.pyProjectTomlEntity
+import com.intellij.python.pytools.common.FusId
+import com.intellij.python.sdk.backend.PyInterpreterLibraryName
+import com.intellij.python.sdk.backend.PyInterpreterOwnerDir
+import com.intellij.python.sdk.backend.setPyInterpreterDependency
+import com.intellij.python.sdk.common.PyEnvRef
+import com.intellij.python.sdk.common.PyInterpreterRef
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.fixture.projectFixture
@@ -219,6 +228,67 @@ internal class PyWsmTriggerTest {
     val request = assertInstanceOf(PendingRebuild.Directories::class.java, event.toRebuildRequest(pathFixture.get()))
     assertThat(request.directoriesToLoad).isEmpty()
     assertThat(request.reason).contains("renamed")
+  }
+
+  @Test
+  fun testRenamingAKeptModuleRequestsARebuild(): Unit = timeoutRunBlocking {
+    markAsKept("second")
+    val event = captureEvent {
+      workspaceModel.update("the user renames the kept module") { storage ->
+        storage.modifyModuleEntity(storage.entities<ModuleEntity>().single { it.name == "second" }) { name = "renamed" }
+      }
+    }
+    val request = assertInstanceOf(PendingRebuild.Directories::class.java, event.toRebuildRequest(pathFixture.get()))
+    assertThat(request.reason).contains("renamed")
+  }
+
+  @Test
+  fun testAUserExclusionOnAKeptModuleRequestsARebuild(): Unit = timeoutRunBlocking {
+    markAsKept("second")
+    val event = captureEvent { exclude("second", "second/sub") }
+    val request = assertInstanceOf(PendingRebuild.Directories::class.java, event.toRebuildRequest(pathFixture.get()))
+    assertThat(request.reason).contains("newly excluded")
+  }
+
+  @Test
+  fun testExcludingTheInterpreterEnvironmentStartsNoBuild(): Unit = timeoutRunBlocking {
+    markAsKept("second")
+    val venv = PyInterpreterRef.native(FusId("uv"), PyEnvRef("second/.venv"))
+    workspaceModel.update("set the interpreter") { storage ->
+      storage.modifyModuleEntity(storage.entities<ModuleEntity>().single { it.name == "second" }) {
+        dependencies.setPyInterpreterDependency(PyInterpreterLibraryName(PyInterpreterOwnerDir.ROOT, venv))
+      }
+    }
+    val event = captureEvent { exclude("second", "second/.venv") }
+    assertThat(event.toRebuildRequest(pathFixture.get()))
+      .describedAs("the model excludes the environment of the interpreter, so it must start no build")
+      .isNull()
+  }
+
+  /** Makes [module] a module of the user that the model syncs outside PyCharm. */
+  private suspend fun markAsKept(module: String) {
+    workspaceModel.update("mark the module as kept") { storage ->
+      val entity = storage.entities<ModuleEntity>().single { it.name == module }
+      storage.modifyModuleEntity(entity) {
+        pyProjectTomlEntity = PyProjectTomlWorkspaceEntity(
+          participatedTools = emptyMap(),
+          dirWithToml = entity.contentRoots.single().url,
+          dependencies = emptyList(),
+          sourceRoots = emptyList(),
+          addedDependencies = emptyList(),
+          addedSourceRoots = emptyList(),
+          entitySource = PyProjectTomlKeptModuleEntitySource,
+        )
+      }
+    }
+  }
+
+  /** Excludes the directory [name] of the project in the content root of [module], with the entity source of the user. */
+  private suspend fun exclude(module: String, name: String) {
+    val url = workspaceModel.getVirtualFileUrlManager().getOrCreateFromUrl("file://" + pathFixture.get().resolve(name).createDirectories())
+    workspaceModel.update("exclude $name") { storage ->
+      storage.modifyContentRootEntity(storage.contentRootOf(module)) { excludedUrls = excludedUrls + ExcludeUrlEntity(url, source) }
+    }
   }
 
   private fun com.intellij.platform.workspace.storage.MutableEntityStorage.contentRootOf(module: String): ContentRootEntity =

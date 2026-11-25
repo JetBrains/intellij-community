@@ -10,6 +10,7 @@ import com.intellij.python.sdk.common.PyInterpreterRef
 import kotlin.io.path.exists
 import kotlin.io.path.invariantSeparatorsPathString
 import com.intellij.workspaceModel.ide.legacyBridge.findModuleEntity
+import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.platform.workspace.jps.entities.modifyModuleEntity
 import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.ide.projectView.actions.MarkRootsManager
@@ -113,6 +114,16 @@ private suspend fun PyProject.writeInterpreterLibraryEntry(name: PyInterpreterLi
 private fun homeOf(key: PythonInterpreterKey): Path? = when (key.ref.mode) {
   PyInterpreterRef.Mode.Native -> resolveHomeEnvRef(key.ownerDir, key.ref.env.envRef)
   is PyInterpreterRef.Mode.Target -> null
+}
+
+/**
+ * The home of the native environment that the interpreter library entry of [module] names, see [homeOf], or `null`.
+ * [projectDir] is the directory of the project, see [interpreterOwnerProjectDir]. [excludeInnerVirtualEnv] excludes
+ * this directory.
+ */
+internal fun interpreterEnvironmentHomeOf(module: ModuleEntity, projectDir: Path): Path? {
+  val name = interpreterLibraryOf(module) ?: return null
+  return homeOf(PythonInterpreterKey(name.ownerDir.resolveIn(projectDir), name.ref))
 }
 
 /**
