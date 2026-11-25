@@ -26,10 +26,14 @@ internal interface PyProjectTomlWorkspaceEntity : WorkspaceEntity {
   /** The source roots that the `pyproject.toml` gives. */
   val sourceRoots: List<VirtualFileUrl>
 
-  /** The names of the modules that the model added as dependencies. Empty in PyCharm. */
-  val addedDependencies: List<String>
+  /**
+   * The modules that the model added as dependencies. One that the user then removed stays here while the
+   * `pyproject.toml` declares it, so the model does not add it again. An id follows a rename of its module. Empty in
+   * PyCharm.
+   */
+  val addedDependencies: List<ModuleId>
 
-  /** The source roots that the model added. Empty in PyCharm. */
+  /** The source roots that the model added, with the same rule for a removed one as [addedDependencies]. Empty in PyCharm. */
   val addedSourceRoots: List<VirtualFileUrl>
 
   @Parent

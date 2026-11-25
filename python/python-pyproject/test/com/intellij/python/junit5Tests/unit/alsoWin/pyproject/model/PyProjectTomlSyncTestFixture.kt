@@ -292,8 +292,18 @@ internal class PyProjectTomlSyncTestFixture(
     return module.contentRoots.flatMap { it.excludedUrls }.map { rootPath.relativize(it.url.toPath()).toString().ifEmpty { "." } }
   }
 
-  /** Returns the names of all module dependencies for the given module. */
-  fun moduleDeps(moduleName: String): List<String> {
+  /**
+   * The names of the modules that the `pyproject.toml` of the module depends on, as the model records them in
+   * [pyProjectTomlEntity]. Empty for a module without a `pyproject.toml`. The model writes module dependencies only
+   * with `PY_PROJECT_MODEL_WRITES_MODULE_DEPENDENCIES_KEY`, see [writtenModuleDeps].
+   */
+  fun tomlDeps(moduleName: String): List<String> {
+    val module = project.workspaceModel.currentSnapshot.resolve(ModuleId(moduleName))!!
+    return module.pyProjectTomlEntity?.dependencies.orEmpty()
+  }
+
+  /** The names of the modules that the module depends on in the workspace model. */
+  fun writtenModuleDeps(moduleName: String): List<String> {
     val module = project.workspaceModel.currentSnapshot.resolve(ModuleId(moduleName))!!
     return module.dependencies.filterIsInstance<ModuleDependency>().map { it.module.name }
   }
@@ -398,9 +408,9 @@ internal class PyProjectTomlSyncTestFixture(
       }
     }
 
-    // Verify module dependencies.
+    // Verify the dependencies that the model records for each pyproject.toml.
     for (expected in expectedModules) {
-      val actualDeps = moduleDeps(expected.name)
+      val actualDeps = tomlDeps(expected.name)
       assertThat(actualDeps)
         .describedAs("Module '${expected.name}' dependencies")
         .containsExactlyInAnyOrderElementsOf(expected.deps)

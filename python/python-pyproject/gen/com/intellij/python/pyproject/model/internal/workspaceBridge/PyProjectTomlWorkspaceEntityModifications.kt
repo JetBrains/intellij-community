@@ -22,7 +22,7 @@ internal interface PyProjectTomlWorkspaceEntityBuilder : WorkspaceEntityBuilder<
   var dirWithToml: VirtualFileUrl
   var dependencies: MutableList<String>
   var sourceRoots: MutableList<VirtualFileUrl>
-  var addedDependencies: MutableList<String>
+  var addedDependencies: MutableList<ModuleId>
   var addedSourceRoots: MutableList<VirtualFileUrl>
   var module: ModuleEntityBuilder
 }
@@ -35,7 +35,7 @@ internal object PyProjectTomlWorkspaceEntityType : EntityType<PyProjectTomlWorks
     dirWithToml: VirtualFileUrl,
     dependencies: List<String>,
     sourceRoots: List<VirtualFileUrl>,
-    addedDependencies: List<String>,
+    addedDependencies: List<ModuleId>,
     addedSourceRoots: List<VirtualFileUrl>,
     entitySource: EntitySource,
     init: (PyProjectTomlWorkspaceEntityBuilder.() -> Unit)? = null,
@@ -68,7 +68,7 @@ internal fun PyProjectTomlWorkspaceEntity(
   dirWithToml: VirtualFileUrl,
   dependencies: List<String>,
   sourceRoots: List<VirtualFileUrl>,
-  addedDependencies: List<String>,
+  addedDependencies: List<ModuleId>,
   addedSourceRoots: List<VirtualFileUrl>,
   entitySource: EntitySource,
   init: (PyProjectTomlWorkspaceEntityBuilder.() -> Unit)? = null,

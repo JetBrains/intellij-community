@@ -2,11 +2,15 @@
 package com.intellij.python.pyproject.model.internal.platformBridge
 
 import com.intellij.openapi.components.service
+import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.python.pyproject.model.internal.workspaceBridge.collectExcludedPaths
+import com.intellij.python.pyproject.model.internal.workspaceBridge.pyProjectTomlEntity
+import com.intellij.workspaceModel.ide.legacyBridge.findModuleEntity
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
@@ -18,6 +22,15 @@ import org.jetbrains.annotations.TestOnly
 suspend fun rebuildPyProjectModelForTest(project: Project) {
   project.service<PyProjectModelSyncService>().rebuildForTest()
 }
+
+/**
+ * The names of the modules that the `pyproject.toml` of [module] depends on, for a test. The model records them in its
+ * entity, also when it writes no module dependency. Empty for a module without a `pyproject.toml`.
+ */
+@TestOnly
+@ApiStatus.Internal
+fun pyProjectTomlDependenciesForTest(module: Module): List<String> =
+  module.findModuleEntity(module.project.workspaceModel.currentSnapshot)?.pyProjectTomlEntity?.dependencies.orEmpty()
 
 /** Loads the project tree into the VFS, so the filename index sees a file that a test wrote with `java.nio`. */
 @TestOnly

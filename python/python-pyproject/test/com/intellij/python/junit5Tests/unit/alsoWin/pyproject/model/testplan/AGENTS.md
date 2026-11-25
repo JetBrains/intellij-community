@@ -51,7 +51,10 @@ internal class MySampleTest {
   by `PyDefaultTestApplication` is `PYTHON` — reference it as
   `ExpectedModule(f.implicitModuleName, type = PYTHON, ...)`.
 - Module names must match the `[project].name` in the sample's `pyproject.toml`.
-- Module deps come from every declared dependency: `[project].dependencies`,
+- `deps` are the dependencies that the model records in `PyProjectTomlWorkspaceEntity`, not the module
+  dependencies of the workspace model. The model writes module dependencies only with the registry key
+  `python.pyproject.model.writes.module.dependencies`.
+- The deps come from every declared dependency: `[project].dependencies`,
   the PEP 621 extras in `[project.optional-dependencies]` (PY-91629), and the
   PEP 735 `[dependency-groups]`. Entries that appear only in `[tool.uv.sources]`
   do NOT produce a module dep — see `UvWorkspaceCodeInsightCheckTest.kt`.

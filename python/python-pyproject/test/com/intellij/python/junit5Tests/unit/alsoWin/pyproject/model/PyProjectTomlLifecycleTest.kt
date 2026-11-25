@@ -14,6 +14,7 @@ import com.intellij.openapi.module.ModuleTypeManager
 import com.intellij.openapi.module.UnknownModuleType
 import com.intellij.openapi.module.impl.ModuleTypeManagerImpl
 import com.intellij.openapi.project.modules
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.writeText
 import com.intellij.platform.ImportNewProjectAttachProcessor
@@ -36,6 +37,7 @@ import com.intellij.python.pyproject.model.api.ModelRebuiltListener
 import com.intellij.python.pyproject.model.internal.MODEL_REBUILD
 import com.intellij.python.pyproject.model.internal.platformBridge.toRebuildRequest
 import com.intellij.python.pyproject.model.internal.workspaceBridge.PY_PROJECT_MODEL_OWNS_MODULES_KEY
+import com.intellij.python.pyproject.model.internal.workspaceBridge.PY_PROJECT_MODEL_WRITES_MODULE_DEPENDENCIES_KEY
 import com.intellij.python.pyproject.model.internal.workspaceBridge.pyProjectTomlEntity
 import com.intellij.python.sdk.backend.PIP_MANAGER
 import com.intellij.python.sdk.backend.PyInterpreterLibraryName
@@ -332,7 +334,11 @@ internal abstract class PyProjectTomlLifecycleTest {
    * is preserved across the dependency update.
    */
   @Test
-  fun `dependencies updated when pyproject dependency direction reverses`(): Unit = timeoutRunBlocking(30.seconds) {
+  fun `dependencies updated when pyproject dependency direction reverses`(
+    @TestDisposable disposable: Disposable,
+  ): Unit = timeoutRunBlocking(30.seconds) {
+    // The write of the module dependencies replaces the dependency list, and that must keep the interpreter entry.
+    Registry.get(PY_PROJECT_MODEL_WRITES_MODULE_DEPENDENCIES_KEY).setValue(true, disposable)
     val aDir = edtWriteAction { f.root.createDirectory("a") }
     val bDir = edtWriteAction { f.root.createDirectory("b") }
     val bUri = bDir.toNioPath().toUri()

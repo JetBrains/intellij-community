@@ -497,7 +497,7 @@ private fun updateModule(
   val desiredModuleDeps = entry.dependencies.map { it.name }.toSet()
   val desiredModuleDepIds = entry.dependencies.map { it.name }
   val existingModuleDeps = module.dependencies.filterIsInstance<ModuleDependency>().map { it.module.name }.toSet()
-  val isModuleDependenciesChanged = existingModuleDeps != desiredModuleDeps
+  val isModuleDependenciesChanged = modelWritesModuleDependencies() && existingModuleDeps != desiredModuleDeps
 
   // At most ONE modifyModuleEntity call per module to avoid "persistent id already exists" errors
   // and UI flicker from multiple change events.
@@ -606,8 +606,10 @@ private fun addNewModule(
 
   projectStorage addEntity ModuleEntity(entry.name.name, emptyList(), entitySource) {
     dependencies += ModuleSourceDependency
-    for (depName in entry.dependencies) {
-      dependencies += ModuleDependency(ModuleId(depName.name), true, DependencyScope.COMPILE, false)
+    if (modelWritesModuleDependencies()) {
+      for (depName in entry.dependencies) {
+        dependencies += ModuleDependency(ModuleId(depName.name), true, DependencyScope.COMPILE, false)
+      }
     }
     contentRoots = listOf(ContentRootEntity(entryRootUrl, emptyList(), entitySource) {
       sourceRoots = entry.sourceRoots.map { pyProjectSourceRoot(it.toVirtualFileUrl(virtualFileUrlManager), entitySource) }
@@ -706,8 +708,6 @@ private fun MutableEntityStorage.addRelocatedRoots(buckets: RelocationBuckets) {
 }
 
 /**
- * Give each entity of [oldSource] the [newSource], when the model adopts a module. [oldSource] is the source of the `.iml`
-/**
  * Whether this source is the `.iml` file of one module, so each entity that has it belongs to that module. The platform
  * makes a new [JpsProjectFileEntitySource.FileInDirectory] for each file.
  */
@@ -715,6 +715,8 @@ private val EntitySource.isFileOfOneModule: Boolean
   get() = this is JpsProjectFileEntitySource.FileInDirectory ||
           (this as? JpsImportedEntitySource)?.internalFile is JpsProjectFileEntitySource.FileInDirectory
 
+/**
+ * Give each entity of [oldSource] the [newSource], when the model adopts a module. [oldSource] is the source of the `.iml`
  * file of that module, see [isFileOfOneModule], so all its entities belong to the module. An entity that kept [oldSource]
  * would name no file, and the save would delete the `.iml` that [newSource] now writes. `ModuleImlFileEntity` is such a
  * child.

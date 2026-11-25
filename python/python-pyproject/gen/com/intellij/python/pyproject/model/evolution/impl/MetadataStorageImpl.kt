@@ -122,7 +122,25 @@ internal object MetadataStorageImpl : MetadataStorageBase() {
                                                                           isOpen = false,
                                                                           name = "addedDependencies",
                                                                           valueType = ValueTypeMetadata.ParameterizedType(generics = listOf(
-                                                                            primitiveTypeStringNotNullable),
+                                                                            ValueTypeMetadata.SimpleType.CustomType(isNullable = false,
+                                                                                                                    typeMetadata = FinalClassMetadata.ClassMetadata(
+                                                                                                                      fqName = "com.intellij.platform.workspace.jps.entities.ModuleId",
+                                                                                                                      properties = listOf(
+                                                                                                                        OwnPropertyMetadata(
+                                                                                                                          isComputable = false,
+                                                                                                                          isKey = false,
+                                                                                                                          isOpen = false,
+                                                                                                                          name = "name",
+                                                                                                                          valueType = primitiveTypeStringNotNullable,
+                                                                                                                          withDefault = false),
+                                                                                                                        OwnPropertyMetadata(
+                                                                                                                          isComputable = false,
+                                                                                                                          isKey = false,
+                                                                                                                          isOpen = false,
+                                                                                                                          name = "presentableName",
+                                                                                                                          valueType = primitiveTypeStringNotNullable,
+                                                                                                                          withDefault = false)),
+                                                                                                                      supertypes = listOf("com.intellij.platform.workspace.storage.SymbolicEntityId")))),
                                                                                                                           primitive = primitiveTypeListNotNullable),
                                                                           withDefault = false),
                                                       OwnPropertyMetadata(isComputable = false,
@@ -159,7 +177,7 @@ internal object MetadataStorageImpl : MetadataStorageBase() {
 
   override fun initializeMetadataHash() {
     addMetadataHash(typeFqn = "com.intellij.python.pyproject.model.internal.workspaceBridge.PyProjectTomlWorkspaceEntity",
-                    metadataHash = 1560627040)
+                    metadataHash = 1560627041)
     addMetadataHash(typeFqn = "com.intellij.python.community.common.tools.ToolId", metadataHash = -1960368624)
     addMetadataHash(typeFqn = "com.intellij.platform.workspace.jps.entities.ModuleId", metadataHash = 369441961)
     addMetadataHash(typeFqn = "com.intellij.platform.workspace.storage.EntitySource", metadataHash = -1306802946)

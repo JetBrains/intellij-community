@@ -9,15 +9,18 @@ import com.intellij.platform.workspace.storage.ConnectionId
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.GeneratedCodeImplVersion
+import com.intellij.platform.workspace.storage.SymbolicEntityId
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.WorkspaceEntityBuilder
 import com.intellij.platform.workspace.storage.WorkspaceEntityInternalApi
 import com.intellij.platform.workspace.storage.impl.EntityLink
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
+import com.intellij.platform.workspace.storage.impl.SoftLinkable
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityData
 import com.intellij.platform.workspace.storage.impl.containers.MutableWorkspaceList
 import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspaceList
+import com.intellij.platform.workspace.storage.impl.indices.WorkspaceMutableIndex
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
 import com.intellij.platform.workspace.storage.instrumentation.instrumentation
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
@@ -57,7 +60,7 @@ internal class PyProjectTomlWorkspaceEntityImpl(private val dataSource: PyProjec
       readField("sourceRoots")
       return dataSource.sourceRoots
     }
-  override val addedDependencies: List<String>
+  override val addedDependencies: List<ModuleId>
     get() {
       readField("addedDependencies")
       return dataSource.addedDependencies
@@ -217,10 +220,10 @@ internal class PyProjectTomlWorkspaceEntityImpl(private val dataSource: PyProjec
         getEntityData(true).sourceRoots = value
         sourceRootsUpdater.invoke(value)
       }
-    private val addedDependenciesUpdater: (value: List<String>) -> Unit = { value ->
+    private val addedDependenciesUpdater: (value: List<ModuleId>) -> Unit = { value ->
       changedProperty.add("addedDependencies")
     }
-    override var addedDependencies: MutableList<String>
+    override var addedDependencies: MutableList<ModuleId>
       get() {
         val collection_addedDependencies = getEntityData().addedDependencies
         if (collection_addedDependencies !is MutableWorkspaceList) return collection_addedDependencies
@@ -269,12 +272,12 @@ internal class PyProjectTomlWorkspaceEntityImpl(private val dataSource: PyProjec
 }
 
 @OptIn(WorkspaceEntityInternalApi::class)
-internal class PyProjectTomlWorkspaceEntityData : WorkspaceEntityData<PyProjectTomlWorkspaceEntity>() {
+internal class PyProjectTomlWorkspaceEntityData : WorkspaceEntityData<PyProjectTomlWorkspaceEntity>(), SoftLinkable {
   lateinit var participatedTools: Map<ToolId, ModuleId?>
   lateinit var dirWithToml: VirtualFileUrl
   lateinit var dependencies: MutableList<String>
   lateinit var sourceRoots: MutableList<VirtualFileUrl>
-  lateinit var addedDependencies: MutableList<String>
+  lateinit var addedDependencies: MutableList<ModuleId>
   lateinit var addedSourceRoots: MutableList<VirtualFileUrl>
   internal fun isParticipatedToolsInitialized(): Boolean = ::participatedTools.isInitialized
   internal fun isDirWithTomlInitialized(): Boolean = ::dirWithToml.isInitialized
@@ -282,6 +285,55 @@ internal class PyProjectTomlWorkspaceEntityData : WorkspaceEntityData<PyProjectT
   internal fun isSourceRootsInitialized(): Boolean = ::sourceRoots.isInitialized
   internal fun isAddedDependenciesInitialized(): Boolean = ::addedDependencies.isInitialized
   internal fun isAddedSourceRootsInitialized(): Boolean = ::addedSourceRoots.isInitialized
+  override fun getLinks(): Set<SymbolicEntityId<*>> {
+    val result = HashSet<SymbolicEntityId<*>>()
+    for (item in addedDependencies) {
+      result.add(item)
+    }
+    return result
+  }
+
+  override fun index(index: WorkspaceMutableIndex<SymbolicEntityId<*>>) {
+    for (item in addedDependencies) {
+      index.index(this, item)
+    }
+  }
+
+  override fun updateLinksIndex(prev: Set<SymbolicEntityId<*>>, index: WorkspaceMutableIndex<SymbolicEntityId<*>>) {
+    val mutablePreviousSet = HashSet(prev)
+    for (item in addedDependencies) {
+      val removedItem_item = mutablePreviousSet.remove(item)
+      if (!removedItem_item) {
+        index.index(this, item)
+      }
+    }
+    for (removed in mutablePreviousSet) {
+      index.remove(this, removed)
+    }
+  }
+
+  override fun updateLink(oldLink: SymbolicEntityId<*>, newLink: SymbolicEntityId<*>): Boolean {
+    var changed = false
+    val addedDependencies_data = addedDependencies.map {
+      val it_data = if (it == oldLink) {
+        changed = true
+        newLink as ModuleId
+      }
+      else {
+        null
+      }
+      if (it_data != null) {
+        it_data
+      }
+      else {
+        it
+      }
+    }
+
+    addedDependencies = addedDependencies_data.toMutableWorkspaceList()
+    return changed
+  }
+
   override fun newInstance(): PyProjectTomlWorkspaceEntity = PyProjectTomlWorkspaceEntityImpl(this)
   override fun newBuilderInstance(): ModifiableWorkspaceEntityBase<PyProjectTomlWorkspaceEntity, *> =
     PyProjectTomlWorkspaceEntityImpl.Builder(null)
