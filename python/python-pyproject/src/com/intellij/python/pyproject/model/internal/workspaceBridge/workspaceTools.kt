@@ -16,6 +16,7 @@ import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ProjectModelExternalSource
 import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.platform.workspace.jps.JpsImportedEntitySource
+import com.intellij.platform.workspace.jps.JpsProjectFileEntitySource
 import com.intellij.platform.workspace.jps.entities.ContentRootEntity
 import com.intellij.platform.workspace.jps.entities.customSourceRootProperties
 import com.intellij.platform.workspace.jps.entities.modifyCustomSourceRootPropertiesEntity
@@ -555,7 +556,8 @@ private fun updateModule(
     }
   }
 
-  if (module.entitySource != entitySource) {
+  // Another importer, such as Bazel, can give one source to all its modules. Then only the known children move, see below.
+  if (module.entitySource != entitySource && module.entitySource.isFileOfOneModule) {
     projectStorage.moveToEntitySource(module.entitySource, entitySource)
   }
 
@@ -705,8 +707,17 @@ private fun MutableEntityStorage.addRelocatedRoots(buckets: RelocationBuckets) {
 
 /**
  * Give each entity of [oldSource] the [newSource], when the model adopts a module. [oldSource] is the source of the `.iml`
- * file of that module, so all its entities belong to the module. An entity that kept [oldSource] would name no file, and
- * the save would delete the `.iml` that [newSource] now writes. `ModuleImlFileEntity` is such a child.
+/**
+ * Whether this source is the `.iml` file of one module, so each entity that has it belongs to that module. The platform
+ * makes a new [JpsProjectFileEntitySource.FileInDirectory] for each file.
+ */
+private val EntitySource.isFileOfOneModule: Boolean
+  get() = this is JpsProjectFileEntitySource.FileInDirectory ||
+          (this as? JpsImportedEntitySource)?.internalFile is JpsProjectFileEntitySource.FileInDirectory
+
+ * file of that module, see [isFileOfOneModule], so all its entities belong to the module. An entity that kept [oldSource]
+ * would name no file, and the save would delete the `.iml` that [newSource] now writes. `ModuleImlFileEntity` is such a
+ * child.
  */
 private fun MutableEntityStorage.moveToEntitySource(oldSource: EntitySource, newSource: EntitySource) {
   for (entity in entitiesBySource { it == oldSource }.toList()) {
