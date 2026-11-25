@@ -708,6 +708,11 @@ Untested: No focused test verifies Shift-selection across sections.
     `result announcements describe loading completion and errors`
   )
 
+- When the end of an expanded section is visible, the next section must follow its last row or footer with the standard gap.
+  [@test] ../../testSrc/com/intellij/ide/plugins/unified/UnifiedPluginsPageRealRowsTest.kt (
+    `suggested follows the last Bundled row after scrolling through the section`
+  )
+
 - The current section header must remain visible while its rows scroll.
 - The next section header must replace it without duplicating its controls.
 - A sticky expansion control must remain functional.

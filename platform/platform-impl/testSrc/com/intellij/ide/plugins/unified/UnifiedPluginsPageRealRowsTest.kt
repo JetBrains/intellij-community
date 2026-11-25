@@ -341,6 +341,46 @@ internal class UnifiedPluginsPageRealRowsTest {
     }
 
   @Test
+  fun `suggested follows the last Bundled row after scrolling through the section`(): Unit =
+    timeoutRunBlocking(context = Dispatchers.UI) {
+      val factory = RecordingRowFactory()
+      val bundled = (1..150).map { item("bundled.$it", "Languages") }
+      val suggested = item("suggested.plugin")
+      val controller = UnifiedPluginsPageController(
+        listOf(PluginSectionState(PluginSectionId.Bundled, items = bundled), section(PluginSectionId.Suggested, suggested))
+      )
+      createView(factory).use { view ->
+        view.render(controller.state.value)
+        prepareForScrolling(view)
+        controller.setSectionExpanded(PluginSectionId.Bundled, true)
+        view.render(controller.state.value)
+
+        val scrollPane = componentsOfType(view.component, JBScrollPane::class.java).single()
+        val sectionsPanel = scrollPane.viewport.view as JComponent
+        sectionsPanel.addNotify()
+        try {
+          sectionsPanel.validate()
+          assertThat(factory.activeRows).hasSize(101)
+
+          val firstRow = factory.activeRows.values.first().component
+          val rowsTop = SwingUtilities.convertPoint(firstRow.parent, Point(), scrollPane.viewport.view).y
+          scrollPane.viewport.viewPosition = Point(0, rowsTop + 130 * ROW_HEIGHT)
+          assertThat(factory.activeRows).hasSize(151)
+
+          val lastBundled = controller.state.value.sections.single { it.id == PluginSectionId.Bundled }.items.last()
+          val bundledRow = factory.row(PluginSectionId.Bundled, lastBundled).component
+          val suggestedRow = factory.row(PluginSectionId.Suggested, suggested).component
+          val suggestedSection = suggestedRow.parent.parent as JComponent
+          val gap = componentOffset(scrollPane, suggestedSection) - componentOffset(scrollPane, bundledRow) - bundledRow.height
+          assertThat(gap).isEqualTo(JBUI.scale(8))
+        }
+        finally {
+          sectionsPanel.removeNotify()
+        }
+      }
+    }
+
+  @Test
   fun `render realizes the selected occurrence in an expanded section`(): Unit = timeoutRunBlocking(context = Dispatchers.UI) {
     val factory = RecordingRowFactory()
     val details = RecordingDetailsPresenter()

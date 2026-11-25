@@ -1087,7 +1087,11 @@ internal class UnifiedPluginsPageView @RequiresEdt constructor(
                               unrealizedGapCount.toLong() * JBUI.scale(ROW_GAP))
         .coerceAtMost(Int.MAX_VALUE.toLong())
         .toInt()
-      unrealizedItemsSpacer.preferredSize = Dimension(0, unrealizedHeight)
+      val spacerSize = Dimension(0, unrealizedHeight)
+      if (unrealizedItemsSpacer.preferredSize != spacerSize) {
+        unrealizedItemsSpacer.preferredSize = spacerSize
+        unrealizedItemsSpacer.revalidate()
+      }
     }
 
     private fun estimatedItemsHeight(itemCount: Int, rowHeight: Int): Long {
