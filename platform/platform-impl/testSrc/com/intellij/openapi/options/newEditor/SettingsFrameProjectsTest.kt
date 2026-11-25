@@ -56,6 +56,9 @@ import kotlin.time.Duration.Companion.seconds
 private const val APP_PAGE_ID = "settingsFrameProjectsTest.app"
 private const val PROJECT_PAGE_ID = "settingsFrameProjectsTest.project"
 
+/** An application-level page below the project-level page. */
+private const val APP_CHILD_PAGE_ID = "settingsFrameProjectsTest.appChild"
+
 /**
  * The Settings window of a frame that shows several projects, see [SettingsFrameProjects] and [FrameProjectsConfigurableGroup].
  * A unit test has no frame, so the record of the test window manager makes `guest` a frame guest of `owner`.
@@ -116,6 +119,63 @@ internal class SettingsFrameProjectsTest {
     assertThat(page.projectsWithPage).containsExactly(guest)
     assertThat(ConfigurableCardPanel.createConfigurableComponent(page)).isNotNull()
     assertThat(ConfigurableWrapper.cast(FrameProjectsTestProjectPage::class.java, page)).isSameAs(pageOf(guest))
+    page.disposeUIResources()
+  }
+
+  @Test
+  fun `a frame guest that joins a window with no project adds no second application-level child page`(): Unit = inFrame(withAppChildPage = true) { disposable ->
+    suppressSettingsOfOwner(disposable)
+    WindowManagerEx.getInstanceEx().removeFrameGuest(guest)
+    val group = createGroup(SettingsFrameProjects.create(owner)!!, disposable)
+    val parent = projectPage(group)
+    assertThat(parent.projectsWithPage).describedAs("The parent of the application-level page has no page of a project").isEmpty()
+    assertThat(findPages(group, APP_CHILD_PAGE_ID)).hasSize(1)
+
+    WindowManagerEx.getInstanceEx().addFrameGuest(owner, guest)
+    SettingsFrameGuestJoins.join(group, guest) {}
+
+    assertThat(findPages(group, APP_CHILD_PAGE_ID)).describedAs("The application-level child page stays one page").hasSize(1)
+    assertThat(projectPage(group)).describedAs("The tree keeps its page").isSameAs(parent)
+    assertThat(parent.projectsWithPage).containsExactly(guest)
+  }
+
+  @Test
+  fun `a page that only the closed project has leaves the tree and a join brings it back`(): Unit = inFrame(projectsWithPage = { listOf(guest) }) { disposable ->
+    val projects = SettingsFrameProjects.create(owner)!!
+    val group = createGroup(projects, disposable)
+    val page = projectPage(group)
+
+    val removed = group.forget(guest)
+    projects.remove(guest)
+
+    assertThat(removed).containsExactly(page)
+    assertThat(findPages(group, PROJECT_PAGE_ID)).isEmpty()
+    assertThat(findPages(group, APP_PAGE_ID)).hasSize(1)
+
+    var hasNewNodes = false
+    SettingsFrameGuestJoins.join(group, guest) { hasNewNodes = it }
+
+    assertThat(hasNewNodes).isTrue()
+    assertThat(projectPage(group).projectsWithPage).containsExactly(guest)
+    assertThat(findPages(group, APP_PAGE_ID)).describedAs("The application-level page stays one page").hasSize(1)
+  }
+
+  @Test
+  fun `a page that no project has stays in the tree as the parent of an application-level page`(): Unit = inFrame(withAppChildPage = true) { disposable ->
+    suppressSettingsOfOwner(disposable)
+    val projects = SettingsFrameProjects.create(owner)!!
+    val group = createGroup(projects, disposable)
+    val page = projectPage(group)
+
+    val removed = group.forget(guest)
+    projects.remove(guest)
+
+    assertThat(removed).isEmpty()
+    assertThat(projectPage(group)).isSameAs(page)
+    assertThat(page.projectsWithPage).isEmpty()
+    assertThat(findPages(group, APP_CHILD_PAGE_ID)).hasSize(1)
+    val component = ConfigurableCardPanel.createConfigurableComponent(page)!!
+    assertThat(UIUtil.findComponentOfType(component, JBPanelWithEmptyText::class.java)).isNotNull()
     page.disposeUIResources()
   }
 
@@ -411,7 +471,7 @@ internal class SettingsFrameProjectsTest {
   }
 
   @Test
-  fun `the last frame guest that closes leaves the frame owner selected and hides the tabs`(): Unit = inFrame { disposable ->
+  fun `the last frame guest that closes takes its pages out of the tree and leaves the frame owner selected`(): Unit = inFrame { disposable ->
     suppressSettingsOfOwner(disposable)
     withForcedRespectIsShowingClientProperty {
       val projects = SettingsFrameProjects.create(owner)!!
@@ -421,11 +481,15 @@ internal class SettingsFrameProjectsTest {
       val tabs = UIUtil.findComponentOfType(editor.content, SingleHeightTabs::class.java)!!
       waitFor("the selector above the project-level page") { isVisibleIn(editor.content, tabs) }
 
-      group.forget(guest)
-      projects.remove(guest)
+      editor.forgetFrameProject(guest)
 
       assertThat(projects.projects).isEmpty()
       assertThat(projects.selected).describedAs("No closed project stays selected").isSameAs(owner)
+      assertThat(findPages(group, PROJECT_PAGE_ID)).describedAs("No project has the page").isEmpty()
+      assertThat(findPages(group, APP_PAGE_ID)).hasSize(1)
+      waitFor("the application-level page in place of the page that left the tree") {
+        editor.selectedConfigurable?.let { ConfigurableVisitor.getId(it) } == APP_PAGE_ID
+      }
       waitFor("no selector without a project") { !isVisibleIn(editor.content, tabs) }
       assertThat(ConfigurableWrapper.cast(FrameProjectsTestProjectPage::class.java, page)).isNull()
     }
@@ -473,15 +537,20 @@ internal class SettingsFrameProjectsTest {
 
   /**
    * Runs [block] on the EDT with `guest` as a frame guest of `owner`. Each project of [projectsWithPage] has the project-level
-   * test page. The context is `Dispatchers.EDT`, because a settings page is created under the write-intent lock.
+   * test page. With [withAppChildPage], an application-level page is a child of that page. The context is `Dispatchers.EDT`,
+   * because a settings page is created under the write-intent lock.
    */
-  private fun inFrame(projectsWithPage: () -> List<Project> = { listOf(owner, guest, third) }, block: suspend (Disposable) -> Unit) {
+  private fun inFrame(
+    projectsWithPage: () -> List<Project> = { listOf(owner, guest, third) },
+    withAppChildPage: Boolean = false,
+    block: suspend (Disposable) -> Unit,
+  ) {
     timeoutRunBlocking(context = Dispatchers.EDT) {
       val disposable = Disposer.newDisposable()
       val windowManager = WindowManagerEx.getInstanceEx()
       windowManager.addFrameGuest(owner, guest)
       try {
-        maskPages(projectsWithPage(), disposable)
+        maskPages(projectsWithPage(), withAppChildPage, disposable)
         block(disposable)
       }
       finally {
@@ -540,7 +609,7 @@ internal class SettingsFrameProjectsTest {
     return ConfigurableVisitor.findAll({ ConfigurableVisitor.getId(it) == id }, listOf(group))
   }
 
-  private fun maskPages(projectsWithPage: List<Project>, disposable: Disposable) {
+  private fun maskPages(projectsWithPage: List<Project>, withAppChildPage: Boolean, disposable: Disposable) {
     val descriptor = DefaultPluginDescriptor(
       PluginId.getId("com.intellij.openapi.options.settingsFrameProjectsTest"),
       SettingsFrameProjectsTest::class.java.classLoader,
@@ -550,7 +619,13 @@ internal class SettingsFrameProjectsTest {
       displayName = "Application Page"
       instanceClass = FrameProjectsTestAppPage::class.java.name
     }
-    ExtensionTestUtil.maskExtensions(Configurable.APPLICATION_CONFIGURABLE, listOf(appPage), disposable)
+    val appChildPage = ConfigurableEP<Configurable>(descriptor).apply {
+      id = APP_CHILD_PAGE_ID
+      parentId = PROJECT_PAGE_ID
+      displayName = "Application Child Page"
+      instanceClass = FrameProjectsTestAppPage::class.java.name
+    }
+    ExtensionTestUtil.maskExtensions(Configurable.APPLICATION_CONFIGURABLE, listOfNotNull(appPage, appChildPage.takeIf { withAppChildPage }), disposable)
     for (project in listOf(owner, guest, third)) {
       val projectPage = ConfigurableEP<Configurable>(project).apply {
         pluginDescriptor = descriptor

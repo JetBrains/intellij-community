@@ -23,7 +23,8 @@ import javax.swing.JPanel
  * window shows another project. [isModified], [apply], [reset] and [cancel] cover the pages of all the projects.
  *
  * The page shows only the projects that have a page with the id, see [projectsWithPage]. When the selected project has no
- * such page, the page shows the first project that has one, and the selection stays.
+ * such page, the page shows the first project that has one, and the selection stays. When no project has such a page, the
+ * page is in the tree only as the parent of its child pages, and it shows an empty text.
  */
 @ApiStatus.Internal
 open class FrameProjectConfigurable internal constructor(
@@ -50,6 +51,9 @@ open class FrameProjectConfigurable internal constructor(
 
   /** The component of each project that this page showed. */
   private val pages = LinkedHashMap<Project, JComponent>()
+
+  /** The component that the page shows while no project has a page with the id. */
+  private var emptyPage: JComponent? = null
   private var container: JPanel? = null
 
   /** The projects of the selector that have a page with the id, in the order of the selector. */
@@ -66,6 +70,9 @@ open class FrameProjectConfigurable internal constructor(
   /** The page of [shownProject], or `null` when no project has a page with the id. */
   val selectedDelegate: Configurable?
     get() = delegates.get(shownProject)
+
+  /** The page of [project], or `null` when [project] has no page with the id. */
+  internal fun pageOf(project: Project): Configurable? = delegates.get(project)
 
   private val createdDelegates: List<Pair<Project, Configurable>>
     get() = pages.keys.mapNotNull { project -> delegates.get(project)?.let { project to it } }
@@ -105,8 +112,12 @@ open class FrameProjectConfigurable internal constructor(
    */
   override fun createComponent(): JComponent? {
     val delegate = selectedDelegate
-    val page = if (delegate == null) createEmptyPage() else ConfigurableCardPanel.createDecoratedComponent(delegate) ?: return null
-    pages.put(shownProject, page)
+    val page = if (delegate == null) {
+      getEmptyPage()
+    }
+    else {
+      (ConfigurableCardPanel.createDecoratedComponent(delegate) ?: return null).also { pages.put(shownProject, it) }
+    }
     val panel = JPanel(BorderLayout())
     panel.add(page, BorderLayout.CENTER)
     container = panel
@@ -116,8 +127,13 @@ open class FrameProjectConfigurable internal constructor(
   /** Shows the page of [shownProject]. The first call for a project creates the page of the project. */
   fun showSelectedProject() {
     val container = container ?: return
-    val page = pages.getOrPut(shownProject) {
-      selectedDelegate?.let { ConfigurableCardPanel.createConfigurableComponent(it) } ?: createEmptyPage()
+    val delegate = selectedDelegate
+    val page = if (delegate == null) {
+      getEmptyPage()
+    }
+    else {
+      // a page that gives no component shows nothing
+      pages.getOrPut(shownProject) { ConfigurableCardPanel.createConfigurableComponent(delegate) ?: JPanel() }
     }
     if (container.componentCount == 1 && container.getComponent(0) === page) {
       return
@@ -164,6 +180,7 @@ open class FrameProjectConfigurable internal constructor(
       delegate.disposeUIResources()
     }
     pages.clear()
+    emptyPage = null
     container = null
   }
 
@@ -208,8 +225,8 @@ open class FrameProjectConfigurable internal constructor(
     container?.remove(page)
   }
 
-  private fun createEmptyPage(): JComponent {
-    return JBPanelWithEmptyText().withEmptyText(ApplicationBundle.message("settings.frame.project.no.page", shownProject.name))
+  private fun getEmptyPage(): JComponent {
+    return emptyPage ?: JBPanelWithEmptyText().withEmptyText(ApplicationBundle.message("settings.frame.project.no.page")).also { emptyPage = it }
   }
 
   override fun toString(): String = displayName

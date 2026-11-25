@@ -13,6 +13,7 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.wm.impl.IdeFrameGuests
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import org.jetbrains.annotations.ApiStatus
+import java.util.Collections
 import java.util.IdentityHashMap
 
 /**
@@ -20,10 +21,11 @@ import java.util.IdentityHashMap
  *
  * The tree holds each application-level page once, and one [FrameProjectConfigurable] for the project-level pages with one id
  * of all the projects. So a change of an application-level page has one state, and each project keeps its own changes.
- * A project-level page that only some of the projects have is in the tree too.
+ * A project-level page that only some of the projects have is in the tree too. A project-level page that no project has
+ * is in the tree only while it has a child page, for example an application-level page that a plugin puts below it.
  *
  * When no project of the selector is open, the tree is the tree of the frame owner. A frame owner that suppresses its own
- * settings gets only the application-level pages then, see [SettingsFrameProjects.suppressesOwnSettings].
+ * settings gets its tree without its project-level pages then, see [SettingsFrameProjects.suppressesOwnSettings].
  *
  * A change of an extension point builds the tree again, as for the tree of one project. The new tree holds new pages.
  * A frame guest that opens while the window is open joins the tree, see [join]. A window that opened with the tree of one
@@ -47,49 +49,48 @@ class FrameProjectsConfigurableGroup private constructor(
     Disposer.dispose(group)
   }
 
-  /** Drops the pages of [project] from the tree, because the project closes, see [FrameProjectConfigurable.forget]. */
-  fun forget(project: Project) {
-    ConfigurableVisitor.collect({ (it as? FrameProjectConfigurable)?.forget(project) }, configurables)
-  }
+  /**
+   * Drops the pages of [project] from the tree, because the project closes, see [FrameProjectConfigurable.forget].
+   * A page that no project has after the call leaves the tree, unless it has a child page. A group that has no page after
+   * the call leaves the tree too. Returns the nodes that left the tree. When it is not empty, the tree view must show the
+   * tree again.
+   */
+  @RequiresEdt
+  fun forget(project: Project): Set<Configurable> = tree.forget(project)
 
   /** `true` when a page of [project] has a change that waits for Apply. */
-  fun isModified(project: Project): Boolean = frameProjectPages().any { it.isModified(project) }
+  fun isModified(project: Project): Boolean = tree.pages.any { it.isModified(project) }
 
   /** Applies the changes of the pages of [project]. A failed page makes [project] the selected project. */
   @Throws(ConfigurationException::class)
   fun apply(project: Project) {
-    for (page in frameProjectPages()) {
+    for (page in tree.pages) {
       page.apply(project)
     }
   }
 
   /** Drops the changes of the pages of [project], and shows the saved values again. */
   fun cancel(project: Project) {
-    for (page in frameProjectPages()) {
+    for (page in tree.pages) {
       page.cancel(project)
     }
   }
 
   /** The pages of the tree that have a page of [project] with a change that waits for Apply. */
-  fun modifiedPagesOf(project: Project): List<FrameProjectConfigurable> = frameProjectPages().filter { it.isModified(project) }
+  fun modifiedPagesOf(project: Project): List<FrameProjectConfigurable> = tree.pages.filter { it.isModified(project) }
 
   /**
    * Adds the pages of [project] to the tree, because [project] joins the frame. [memberTree] is the tree of [project], see
    * [buildMemberTree]. A page with an id that the tree has already gets the page of [project], so the pending changes of the
    * other projects stay. Returns `true` when the tree got a new node, so that the tree view must show the tree again.
    * Returns `false` and adds nothing when the tree is the tree of the frame owner alone, which the build makes when no project
-   * of the selector is open. The tree of the application-level pages of a frame owner that suppresses its own settings takes
-   * a join.
+   * of the selector is open. The tree of a frame owner that suppresses its own settings takes a join.
    */
   @RequiresEdt
   fun join(project: Project, memberTree: SortedConfigurableGroup): Boolean = tree.join(project, memberTree)
 
   /** `true` when [join] can add the pages of a project to the tree. */
   fun canJoin(): Boolean = tree.canJoin()
-
-  private fun frameProjectPages(): List<FrameProjectConfigurable> {
-    return ConfigurableVisitor.findAll({ it is FrameProjectConfigurable }, listOf(this)).filterIsInstance<FrameProjectConfigurable>()
-  }
 
   companion object {
     /** Builds the tree for [projects]. This is as heavy as the build of the tree of each project, so it must not run on the EDT. */
@@ -136,12 +137,18 @@ class FrameProjectsConfigurableGroup private constructor(
 
 /**
  * The merged tree of [projects] and its structure before the group compaction, see [ConfigurableExtensionPointUtil.compactGroups].
- * The compaction replaces a group of one page with that page, so a join merges into the stored structure and compacts again.
+ * The compaction replaces a group of one page with that page, so a join and a removal change the stored structure and
+ * compact it again.
  */
 private class MergedTree(private val projects: SettingsFrameProjects) {
   /** The root of the merged tree, or `null` for the tree of the frame owner alone, which takes no join. */
   @Volatile
   private var root: SortedConfigurableGroup? = null
+
+  /** The pages of several projects of the tree. The tree holds no other project-level page. */
+  @Volatile
+  var pages: List<FrameProjectConfigurable> = emptyList()
+    private set
 
   /** The children of each group of the tree before the compaction. */
   private val children = IdentityHashMap<SortedConfigurableGroup, List<Configurable>>()
@@ -151,23 +158,31 @@ private class MergedTree(private val projects: SettingsFrameProjects) {
 
   fun build(): ConfigurableGroup {
     root = null
-    val roots = projects.projects.filter { !it.isDisposed }.mapNotNull { project ->
+    pages = emptyList()
+    val frameOwner = projects.frameOwner
+    val openProjects = projects.projects.filter { !it.isDisposed }
+    // a frame owner that suppresses its own settings gives its tree without its project-level pages. So the tree is the
+    // same as after the close of the last project, and a project that joins finds the parent of each of its pages
+    val isOwnerTreeOnly = openProjects.isEmpty() && SettingsFrameProjects.suppressesOwnSettings(frameOwner)
+    val roots = (if (isOwnerTreeOnly) listOf(frameOwner) else openProjects).mapNotNull { project ->
       FrameProjectsConfigurableGroup.buildMemberTree(project)?.let { project to it }
     }
     if (roots.isEmpty()) {
-      val frameOwner = projects.frameOwner
-      if (SettingsFrameProjects.suppressesOwnSettings(frameOwner)) {
-        // the project-level pages of the frame owner must not show: the application-level pages wait for a project to join
-        val root = checkNotNull(ConfigurableExtensionPointUtil.buildGroupTree(ConfigurableExtensionPointUtil.getConfigurables(null, true), null))
-        compact(root)
-        this.root = root
-        return root
-      }
       // no project of the selector is open: the tree of the frame owner is the one tree that is left
       return checkNotNull(ConfigurableExtensionPointUtil.getConfigurableGroup(ConfigurableExtensionPointUtil.getConfigurables(frameOwner, true), frameOwner))
     }
-    val root = FrameProjectTreeMerger(projects).merge(roots, isParentProjectLevel = false) as SortedConfigurableGroup
+    val merger = FrameProjectTreeMerger(projects)
+    val root = merger.merge(roots, isParentProjectLevel = false) as SortedConfigurableGroup
+    var pages = merger.newPages.toList()
+    if (isOwnerTreeOnly) {
+      for (page in pages) {
+        page.forget(frameOwner)
+      }
+      val removed = removeEmptyNodes(root)
+      pages = pages.filter { it !in removed }
+    }
     compact(root)
+    this.pages = pages
     this.root = root
     return root
   }
@@ -180,7 +195,70 @@ private class MergedTree(private val projects: SettingsFrameProjects) {
     val merger = FrameProjectTreeMerger(projects)
     merger.merge(listOf(null to root, project to memberTree), isParentProjectLevel = false)
     compact(root)
+    pages += merger.newPages
     return merger.hasNewNodes
+  }
+
+  fun forget(project: Project): Set<Configurable> {
+    val root = root ?: return emptySet()
+    val pagesOfProject = pages.filter { it.pageOf(project) != null }
+    for (page in pagesOfProject) {
+      page.forget(project)
+    }
+    if (pagesOfProject.none { it.declaration == null }) {
+      return emptySet()
+    }
+    restore()
+    val removed = removeEmptyNodes(root)
+    compact(root)
+    pages = pages.filter { it !in removed }
+    return removed
+  }
+
+  /**
+   * Removes each page of several projects that no project has and that has no child page, and each group that has no page
+   * then. [root] has the structure before the compaction. Returns the nodes that left the tree.
+   */
+  private fun removeEmptyNodes(root: SortedConfigurableGroup): Set<Configurable> {
+    val removed = Collections.newSetFromMap(IdentityHashMap<Configurable, Boolean>())
+    removeEmptyChildren(root, removed)
+    return removed
+  }
+
+  /** Returns `false` when [group] has no child after the call. */
+  private fun removeEmptyChildren(group: SortedConfigurableGroup, removed: MutableSet<Configurable>): Boolean {
+    val list = group.myList ?: return true
+    val kept = list.filter { keeps(it, removed) }
+    if (kept.size != list.size) {
+      group.setChildren(kept)
+    }
+    return kept.isNotEmpty()
+  }
+
+  /** `false` when [node] leaves the tree. The call removes the empty nodes below [node] first. */
+  private fun keeps(node: Configurable, removed: MutableSet<Configurable>): Boolean {
+    val keeps = when (node) {
+      is SortedConfigurableGroup -> removeEmptyChildren(node, removed)
+      is FrameProjectCompositeConfigurable -> {
+        node.children = node.children.filter { keeps(it, removed) }.toTypedArray()
+        node.declaration != null || node.children.isNotEmpty()
+      }
+      is FrameProjectConfigurable -> node.declaration != null
+      is ConfigurableWrapper.CompositeWrapper -> {
+        // the merge built the children of each application-level page, so this call creates no page
+        val children = node.configurables
+        val kept = children.filter { keeps(it, removed) }
+        if (kept.size != children.size) {
+          node.setConfigurables(kept.toTypedArray())
+        }
+        true
+      }
+      else -> true
+    }
+    if (!keeps) {
+      removed.add(node)
+    }
+    return keeps
   }
 
   private fun compact(root: SortedConfigurableGroup) {
@@ -232,6 +310,9 @@ private class FrameProjectTreeMerger(private val projects: SettingsFrameProjects
   var hasNewNodes: Boolean = false
     private set
 
+  /** The pages of several projects that this merger created. */
+  val newPages: MutableList<FrameProjectConfigurable> = ArrayList()
+
   /** [nodes] holds the pages with one id under one parent: one page for each project that has it, in the order of the projects. */
   fun merge(nodes: List<Pair<Project?, Configurable>>, isParentProjectLevel: Boolean): Configurable {
     val first = nodes.first().second
@@ -267,10 +348,14 @@ private class FrameProjectTreeMerger(private val projects: SettingsFrameProjects
       delegates.putIfAbsent(project!!, node)
     }
     val id = ConfigurableVisitor.getId(first)
-    if (nodes.none { it.second is Configurable.Composite }) {
-      return FrameProjectConfigurable(projects, id, delegates)
+    val page = if (nodes.none { it.second is Configurable.Composite }) {
+      FrameProjectConfigurable(projects, id, delegates)
     }
-    return FrameProjectCompositeConfigurable(projects, id, delegates, mergeChildren(childrenOf(nodes), isParentProjectLevel = true).toTypedArray())
+    else {
+      FrameProjectCompositeConfigurable(projects, id, delegates, mergeChildren(childrenOf(nodes), isParentProjectLevel = true).toTypedArray())
+    }
+    newPages.add(page)
+    return page
   }
 
   /** Adds the pages of the projects of [joining] to the page [merged] of a merged tree. */

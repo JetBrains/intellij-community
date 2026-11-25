@@ -103,6 +103,8 @@ import java.util.concurrent.ConcurrentHashMap;
 public final class SettingsEditor extends AbstractEditor implements UiDataProvider, Place.Navigator {
   private static final Logger LOG = Logger.getInstance(SettingsEditor.class);
   static final String SELECTED_CONFIGURABLE = "settings.editor.selected.configurable";
+  /** The page that the tree selects when it has no better page to select. */
+  private static final String DEFAULT_CONFIGURABLE_ID = "preferences.lookFeel";
   private static final String SPLITTER_PROPORTION = "settings.editor.splitter.proportion";
   private static final float SPLITTER_PROPORTION_DEFAULT_VALUE = .2f;
 
@@ -457,10 +459,7 @@ public final class SettingsEditor extends AbstractEditor implements UiDataProvid
 
     if (configurable == null) {
       String id = properties.getValue(SELECTED_CONFIGURABLE);
-      configurable = ConfigurableVisitor.findById(id != null ? id : "preferences.lookFeel", groups);
-      if (configurable == null) {
-        configurable = ConfigurableVisitor.find(ConfigurableVisitor.ALL, groups);
-      }
+      configurable = findConfigurableOrFirst(id != null ? id : DEFAULT_CONFIGURABLE_ID, groups);
     }
 
     treeView.select(configurable).onProcessed(it -> this.filter.update(filter));
@@ -515,12 +514,7 @@ public final class SettingsEditor extends AbstractEditor implements UiDataProvid
     ApplicationManager.getApplication().getMessageBus().connect(this).subscribe(ProjectCloseListener.TOPIC, new ProjectCloseListener() {
       @Override
       public void projectClosing(@NotNull Project project) {
-        if (projects.getProjects().contains(project)) {
-          // the pages of the project go first, while the project is alive, and then the selection moves to another project
-          group.forget(project);
-          projects.remove(project);
-          checkFrameProjectPages();
-        }
+        forgetFrameProject(project);
       }
     });
     SettingsFrameGuestJoins.follow(group, coroutineScope, this, hasNewNodes -> {
@@ -530,6 +524,59 @@ public final class SettingsEditor extends AbstractEditor implements UiDataProvid
         settings.reload();
       }
     });
+  }
+
+  /**
+   * Drops the pages of {@code project} from the tree and {@code project} from the project selector, because {@code project}
+   * closes. A page that no project has then leaves the tree, see {@link FrameProjectsConfigurableGroup#forget}.
+   */
+  void forgetFrameProject(@NotNull Project project) {
+    FrameProjectsConfigurableGroup group = myFrameProjectsGroup;
+    if (group == null || !group.getProjects().getProjects().contains(project)) {
+      return;
+    }
+    // the pages of the project go first, while the project is alive, and then the selection moves to another project
+    Set<Configurable> removed = group.forget(project);
+    group.getProjects().remove(project);
+    if (!removed.isEmpty()) {
+      showTreeWithout(group, removed);
+    }
+    checkFrameProjectPages();
+  }
+
+  /**
+   * Shows the tree again after {@code removed} left it. When the current page left, the tree selects its nearest parent
+   * that is in the tree, or else the default page.
+   */
+  private void showTreeWithout(@NotNull FrameProjectsConfigurableGroup group, @NotNull Set<Configurable> removed) {
+    List<ConfigurableGroup> groups = List.of(group);
+    Configurable current = filter.context.getCurrentConfigurable();
+    Configurable toSelect = current;
+    // the group compaction can replace a parent with its last child, so only the new tree tells which page is left
+    while (toSelect != null && !isInTree(toSelect, groups)) {
+      toSelect = filter.context.getParentConfigurable(toSelect);
+    }
+    if (toSelect == null && current != null) {
+      toSelect = findConfigurableOrFirst(DEFAULT_CONFIGURABLE_ID, groups);
+    }
+    for (Configurable node : removed) {
+      filter.context.fireReset(node);
+      controllers.remove(node);
+      myLeaveState.remove(node);
+      myStateSnapshots.remove(node);
+    }
+    treeView.reloadWithSelection(toSelect);
+    settings.reload();
+  }
+
+  private static boolean isInTree(@NotNull Configurable configurable, @NotNull List<? extends ConfigurableGroup> groups) {
+    return ConfigurableVisitor.find(candidate -> candidate == configurable, groups) != null;
+  }
+
+  /** The page with {@code id}, or the first page of the tree when the tree has no such page. */
+  private static @Nullable Configurable findConfigurableOrFirst(@NotNull String id, @NotNull List<? extends ConfigurableGroup> groups) {
+    Configurable configurable = ConfigurableVisitor.findById(id, groups);
+    return configurable != null ? configurable : ConfigurableVisitor.find(ConfigurableVisitor.ALL, groups);
   }
 
   /** The tree of a window that configures several projects, or {@code null} for the tree of one project. */
