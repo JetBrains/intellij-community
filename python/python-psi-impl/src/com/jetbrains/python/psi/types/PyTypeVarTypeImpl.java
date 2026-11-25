@@ -10,6 +10,7 @@ import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyQualifiedNameOwner;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.RatedResolveResult;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -32,8 +33,9 @@ public final class PyTypeVarTypeImpl implements PyTypeVarType {
     this(name, List.of(), bound, null, PyVariance.INVARIANT);
   }
 
-  /** @deprecated use {@link #PyTypeVarTypeImpl(String, List, PyType, Ref, PyVariance)} */
+  /** @deprecated Use {@link #PyTypeVarTypeImpl(String, List, PyType, Ref, PyVariance)} instead. */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval
   public PyTypeVarTypeImpl(@NotNull String name,
                            @NotNull List<@Nullable PyType> constraints,
                            @Nullable PyType bound,
@@ -48,19 +50,6 @@ public final class PyTypeVarTypeImpl implements PyTypeVarType {
                            @Nullable Ref<PyType> defaultType,
                            @NotNull PyVariance variance) {
     this(name, constraints, bound, defaultType, variance, false, null, null);
-  }
-
-  /** @deprecated use {@link #PyTypeVarTypeImpl(String, List, PyType, Ref, PyVariance, boolean, PyQualifiedNameOwner, PyQualifiedNameOwner)} */
-  @Deprecated
-  PyTypeVarTypeImpl(@NotNull String name,
-                    @NotNull List<@Nullable PyType> constraints,
-                    @Nullable PyType bound,
-                    @Nullable Ref<PyType> defaultType,
-                    @NotNull Variance variance,
-                    boolean isDefinition,
-                    @Nullable PyQualifiedNameOwner declarationElement,
-                    @Nullable PyQualifiedNameOwner scopeOwner) {
-    this(name, constraints, bound, defaultType, variance.toPyVariance(), isDefinition, declarationElement, scopeOwner);
   }
 
   PyTypeVarTypeImpl(@NotNull String name,

@@ -31,9 +31,10 @@ import org.jetbrains.annotations.Nullable;
  */
 public interface PyTypeParameterType extends PyType {
   /**
-   * @deprecated Use {@link PyVariance} instead
+   * @deprecated Use {@link PyVariance} and {@link #getVariance()} instead.
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval
   enum Variance {
     COVARIANT, CONTRAVARIANT, INVARIANT, BIVARIANT, INFER_VARIANCE
     ;
