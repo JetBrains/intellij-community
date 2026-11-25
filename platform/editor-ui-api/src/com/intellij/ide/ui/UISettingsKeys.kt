@@ -25,8 +25,8 @@ import com.intellij.platform.settings.v2.setValue
 import com.intellij.util.asDisposable
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.launch
 
 /**
@@ -100,20 +100,15 @@ internal object UISettingsKeys {
   )
 
   /**
-   * Launches an asynchronous update of these keys, for a caller that cannot suspend, such as an action on the EDT.
-   *
-   * @param update writes the keys, for example `KEY.setValue(value)`
-   * @return the job of the update
-   */
-  private fun updateAsync(update: suspend () -> Unit): Job = service<UISettingsKeysScope>().launchUpdate(update)
-
-  /**
-   * Launches an asynchronous write of [value] for [key], unless [key] already resolves to [value]. So the write never
-   * stores a value that the key already has, such as its default.
+   * Queues a write of [value] for [key] and returns, for a caller that cannot suspend, such as an action on the EDT. The
+   * writes apply one by one, in the order of the calls. A write stores nothing when [key] resolves to [value] at its
+   * turn, so it never stores a value that the key already has, such as its default.
    */
   fun <T> setAsync(key: SettingsKey<T>, value: T) {
-    if (key.getValue() != value) {
-      updateAsync { key.setValue(value) }
+    service<UISettingsKeysScope>().writes.trySend {
+      if (key.getValue() != value) {
+        key.setValue(value)
+      }
     }
   }
 
@@ -133,13 +128,15 @@ internal object UISettingsKeys {
  */
 @Service
 internal class UISettingsKeysScope(val coroutineScope: CoroutineScope) {
-  /**
-   * Launches [update] in the modality of the caller.
-   *
-   * @return the job of [update]
-   */
-  fun launchUpdate(update: suspend () -> Unit): Job =
-    coroutineScope.launch(ModalityState.defaultModalityState().asContextElement()) { update() }
+  /** Holds the queue of [UISettingsKeys.setAsync]. One coroutine applies the writes in their order. */
+  val writes: SendChannel<suspend () -> Unit> = Channel<suspend () -> Unit>(Channel.UNLIMITED).also { queue ->
+    coroutineScope.launch {
+      for (write in queue) {
+        // A child job, so a failed write is logged and the next writes still apply.
+        coroutineScope.launch { write() }.join()
+      }
+    }
+  }
 
   init {
     val keyChanges = Channel<Unit>(Channel.CONFLATED)

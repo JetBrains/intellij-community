@@ -141,6 +141,21 @@ class UISettingsFacadeTest {
   }
 
   @Test
+  fun `two quick writes over a stored key apply in their order`(): Unit = timeoutRunBlocking(60.seconds) {
+    settings.ideScale = 1.25f
+    waitUntilUISettingsKeyStores(UISettingsKeyIdentities.IDE_SCALE, 1.25f)
+    val marker = if (settings.editorAAType == AntialiasingType.OFF) AntialiasingType.GREYSCALE else AntialiasingType.OFF
+
+    settings.ideScale = 1.5f
+    settings.ideScale = 1.25f
+    settings.editorAAType = marker
+
+    // The writes apply in the order of the calls, so the scale is final when the marker is stored.
+    waitUntilUISettingsKeyStores(UISettingsKeyIdentities.EDITOR_ANTIALIASING, marker)
+    assertEquals(listOf(1.25f), storedUISettingsValues(UISettingsKeyIdentities.IDE_SCALE))
+  }
+
+  @Test
   fun `an instance over a given component reads the component and not the keys`(): Unit = timeoutRunBlocking(60.seconds) {
     settings.ideAAType = AntialiasingType.OFF
     settings.fontSize2D = 21f
