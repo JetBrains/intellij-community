@@ -3,6 +3,7 @@ package com.intellij.testFramework
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey
 import com.intellij.codeInspection.GlobalInspectionTool
+import com.intellij.codeInspection.LocalInspectionTool
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.util.Disposer
@@ -20,6 +21,8 @@ import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertSame
 import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Test
+
+private const val SHARED_ID = "EnableInspectionToolSharedId"
 
 @TestApplication
 internal class ConfigureInspectionsTest {
@@ -101,6 +104,41 @@ internal class ConfigureInspectionsTest {
         HighlightDisplayKey.unregister(second.shortName)
       }
     }
+  }
+
+  @Test
+  fun `disposal of an enabled tool preserves the ID of a preexisting key`(@TestDisposable parentDisposable: Disposable): Unit = timeoutRunBlocking {
+    withContext(Dispatchers.EDT) {
+      val other = SharedIdInspection("EnableInspectionToolOther")
+      val tool = SharedIdInspection("EnableInspectionToolExisting")
+      val otherKey = HighlightDisplayKey.findOrRegister(other.shortName, other.displayName, SHARED_ID)
+      val key = HighlightDisplayKey.findOrRegister(tool.shortName, tool.displayName, SHARED_ID)
+      val disposable = Disposer.newDisposable(parentDisposable)
+      try {
+        enableInspectionTool(project, tool, disposable)
+
+        Disposer.dispose(disposable)
+
+        assertAll(
+          { assertSame(otherKey, HighlightDisplayKey.find(other.shortName)) },
+          { assertSame(key, HighlightDisplayKey.find(tool.shortName)) },
+          { assertThat(HighlightDisplayKey.findById(SHARED_ID)).isSameAs(key) },
+        )
+      }
+      finally {
+        Disposer.dispose(disposable)
+        HighlightDisplayKey.unregister(tool.shortName)
+        HighlightDisplayKey.unregister(other.shortName)
+      }
+    }
+  }
+
+  private class SharedIdInspection(private val name: String) : LocalInspectionTool() {
+    override fun getShortName(): String = name
+
+    override fun getDisplayName(): String = name
+
+    override fun getID(): String = SHARED_ID
   }
 
   private open class TestInspection(private val name: String) : GlobalInspectionTool() {
