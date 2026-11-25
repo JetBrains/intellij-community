@@ -14,7 +14,7 @@ import java.util.Map;
 public final class GroovyRtJarPaths {
   public static List<String> getGroovyRtRoots(File jpsPluginRoot, boolean addClassLoaderJar) {
     List<String> result = new ArrayList<>();
-    addGroovyRtJarPath(jpsPluginRoot, "groovy-rt.jar",
+    addGroovyRtJarPath(jpsPluginRoot, "intellij.groovy.rt.jar",
                        Collections.singletonList("intellij.groovy.rt"), "groovy-rt", result);
     addGroovyRtJarPath(jpsPluginRoot, "intellij.groovy.constants.rt.jar",
                        Collections.singletonList("intellij.groovy.constants.rt"), "groovy-constants-rt", result);

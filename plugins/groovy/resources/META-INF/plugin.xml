@@ -16,6 +16,7 @@
   <content namespace="jetbrains">
     <module name="intellij.groovy.jps" loading="embedded"/>
     <module name="intellij.groovy.constants.rt" loading="embedded"/>
+    <module name="intellij.groovy.rt" loading="embedded"/>
     <module name="intellij.groovy.duplicates"/>
     <module name="intellij.groovy.duplicatesDetection"/>
     <module name="intellij.groovy.git"/>
