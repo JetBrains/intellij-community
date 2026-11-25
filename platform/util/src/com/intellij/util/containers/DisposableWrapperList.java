@@ -263,7 +263,7 @@ public final class DisposableWrapperList<E> extends AbstractList<E> {
    * after {@link #createDisposableWrapper} and before the wrapper was added to the list.
    */
   private void removeIfDisposed(@NotNull DisposableWrapper disposableWrapper) {
-    if (disposableWrapper.isUnique()) {
+    if (disposableWrapper.disposed) {
       myWrappedList.remove(disposableWrapper);
     }
   }
@@ -291,6 +291,7 @@ public final class DisposableWrapperList<E> extends AbstractList<E> {
   private final class DisposableWrapper extends AtomicBoolean implements Disposable {
     private final @NotNull E delegate;
     private boolean removeFromContainer;
+    private volatile boolean disposed;
 
     DisposableWrapper(@NotNull E obj) {
       this(obj, false);
@@ -305,6 +306,7 @@ public final class DisposableWrapperList<E> extends AbstractList<E> {
     public void dispose() {
       if (removeFromContainer) {
         makeUnique(); // Make sure that exactly this wrapper is removed.
+        disposed = true;
         myWrappedList.remove(this);
       }
     }

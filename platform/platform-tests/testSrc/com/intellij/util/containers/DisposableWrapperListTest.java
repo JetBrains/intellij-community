@@ -18,20 +18,20 @@ package com.intellij.util.containers;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.ArrayUtilRt;
-import com.intellij.util.IncorrectOperationException;
 import org.junit.Test;
+import org.mockito.MockedStatic;
 
 import java.util.Arrays;
-import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.concurrent.ThreadLocalRandom;
+import java.util.concurrent.TimeUnit;
+import java.util.function.BiConsumer;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.mockStatic;
 
 /**
  * Test for {@link DisposableWrapperList}.
@@ -103,39 +103,32 @@ public class DisposableWrapperListTest {
   }
 
   @Test
-  public void testParentDisposedConcurrentlyWithAdd() throws Exception {
-    DisposableWrapperList<String> l = new DisposableWrapperList<>();
+  public void testParentDisposedBeforeAppend() {
+    assertParentDisposalRemovesElement((list, parent) -> list.add("a", parent));
+  }
+
+  @Test
+  public void testParentDisposedBeforeIndexedAdd() {
+    assertParentDisposalRemovesElement((list, parent) -> list.add(0, "a", parent));
+  }
+
+  private static void assertParentDisposalRemovesElement(BiConsumer<DisposableWrapperList<String>, Disposable> add) {
+    DisposableWrapperList<String> list = new DisposableWrapperList<>();
+    Disposable parent = Disposer.newDisposable();
     ExecutorService executor = Executors.newSingleThreadExecutor();
-    try {
-      for (int i = 0; i < 100_000; i++) {
-        Disposable parent = Disposer.newDisposable();
-        CyclicBarrier barrier = new CyclicBarrier(2);
-        int delay = ThreadLocalRandom.current().nextInt(200);
-        Future<?> disposal = executor.submit(() -> {
-          barrier.await();
-          spin(delay);
-          Disposer.dispose(parent);
-          return null;
-        });
-        barrier.await();
-        try {
-          l.add("a", parent);
-        }
-        catch (IncorrectOperationException ignored) {
-          // The parent was disposed before the registration.
-        }
-        disposal.get();
-        assertTrue("The element stays in the list after the parent disposal, iteration " + i, l.isEmpty());
+    try (MockedStatic<Disposer> ignored = mockStatic(Disposer.class, invocation -> {
+      Object result = invocation.callRealMethod();
+      if (invocation.getMethod().getName().equals("register") && invocation.getArgument(0) == parent) {
+        executor.submit(() -> Disposer.dispose(parent)).get(10, TimeUnit.SECONDS);
       }
+      return result;
+    })) {
+      add.accept(list, parent);
+      assertTrue(list.isEmpty());
     }
     finally {
       executor.shutdownNow();
-    }
-  }
-
-  private static void spin(int iterations) {
-    for (int i = 0; i < iterations; i++) {
-      Thread.onSpinWait();
+      Disposer.dispose(parent);
     }
   }
 }
