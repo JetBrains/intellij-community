@@ -61,6 +61,9 @@ class RawPluginDescriptor(
   /** The `<technology>` elements of this descriptor, in the declaration order. */
   val technologies: List<TechnologyElement>,
 
+  /** `true` when this descriptor has the `<technology-neutral/>` element. */
+  val isTechnologyNeutral: Boolean,
+
   val appElementsContainer: ScopedElementsContainer,
   val projectElementsContainer: ScopedElementsContainer,
   val moduleElementsContainer: ScopedElementsContainer,

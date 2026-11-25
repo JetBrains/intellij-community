@@ -1017,6 +1017,23 @@ elements:
                 <technology id="rust" name="Rust" description="The Rust language and Cargo" icon="/icons/rust.svg"/>
                 ```
         - element:
+            name: technology-neutral
+            description: |
+              Makes the plugin or the content module technology-neutral in JetBrains Light.
+              The module gets no technology from its dependencies or from its plugin.
+              It needs only the technologies that it declares with [`<technology>`](#element:idea-plugin__technology).
+              A module that depends on it gets no technology of the dependencies of the neutral module through it.
+            internalNote: This item is internal and should be used only in modules implemented by JetBrains.
+            requirement:
+              required: no
+              details:
+                - A `<depends>` sub-descriptor must not have the element.
+            examples:
+              - |
+                ```xml
+                <technology-neutral/>
+                ```
+        - element:
             name: actions
             references:
               - |

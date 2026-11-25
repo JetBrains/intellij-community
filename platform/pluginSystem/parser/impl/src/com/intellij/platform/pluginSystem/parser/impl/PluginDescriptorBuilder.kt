@@ -61,6 +61,7 @@ interface PluginDescriptorBuilder {
 
   fun addTechnology(technology: TechnologyElement)
   val technologies: List<TechnologyElement>
+  var isTechnologyNeutral: Boolean
 
   val appContainerBuilder: ScopedElementsContainerBuilder
   val projectContainerBuilder: ScopedElementsContainerBuilder

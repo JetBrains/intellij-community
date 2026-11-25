@@ -79,6 +79,8 @@ object PluginXmlConst {
   const val TECHNOLOGY_DESCRIPTION_ATTR: String = "description"
   const val TECHNOLOGY_ICON_ATTR: String = "icon"
 
+  const val TECHNOLOGY_NEUTRAL_ELEM: String = "technology-neutral"
+
   const val ACTIONS_ELEM: String = "actions"
   const val ACTIONS_RESOURCE_BUNDLE_ATTR: String = "resource-bundle"
   const val ACTION_ELEM: String = "action"

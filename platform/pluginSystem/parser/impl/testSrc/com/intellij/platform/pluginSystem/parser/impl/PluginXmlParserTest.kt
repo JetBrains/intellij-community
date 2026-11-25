@@ -104,6 +104,26 @@ class PluginXmlParserTest {
     Assertions.assertThat(parse("<idea-plugin><id>test.plugin</id></idea-plugin>").technologies).isEmpty()
   }
 
+  @Test
+  fun `a technology-neutral element marks the descriptor`() {
+    val xml = """
+      <idea-plugin>
+        <technology-neutral/>
+        <technology id="rust"/>
+      </idea-plugin>
+    """.trimIndent()
+
+    val descriptor = parse(xml)
+
+    Assertions.assertThat(descriptor.isTechnologyNeutral).isTrue()
+    Assertions.assertThat(descriptor.technologies).hasSize(1)
+  }
+
+  @Test
+  fun `a descriptor without a technology-neutral element is not marked`() {
+    Assertions.assertThat(parse("<idea-plugin><technology id=\"rust\"/></idea-plugin>").isTechnologyNeutral).isFalse()
+  }
+
   private fun parse(xml: String): RawPluginDescriptor {
     return parseBytes(xml.toByteArray())
   }

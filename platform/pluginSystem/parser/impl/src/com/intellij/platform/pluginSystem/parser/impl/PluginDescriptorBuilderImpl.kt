@@ -99,6 +99,7 @@ internal class PluginDescriptorBuilderImpl : PluginDescriptorBuilder {
   }
   override val technologies: List<TechnologyElement>
     get() = _technologies ?: Java11Shim.INSTANCE.listOf()
+  override var isTechnologyNeutral: Boolean = false
 
   override val appContainerBuilder: ScopedElementsContainerBuilder = ScopedElementsContainerBuilderMemoryOptimized()
   override val projectContainerBuilder: ScopedElementsContainerBuilder = ScopedElementsContainerBuilderMemoryOptimized()
@@ -165,6 +166,7 @@ internal class PluginDescriptorBuilderImpl : PluginDescriptorBuilder {
     actions = actions,
     incompatibleWith = incompatibleWith,
     technologies = technologies,
+    isTechnologyNeutral = isTechnologyNeutral,
     appElementsContainer = appContainerBuilder.build(),
     projectElementsContainer = projectContainerBuilder.build(),
     moduleElementsContainer = moduleContainerBuilder.build(),

@@ -141,6 +141,13 @@ public interface IdeaPlugin extends DomElement {
   @SubTagList("technology")
   @NotNull List<? extends Technology> getTechnologies();
 
+  /**
+   * {@code <technology-neutral/>}: the plugin or the content module needs no technology of its dependencies, only the
+   * technologies that it declares.
+   */
+  @SubTag(value = "technology-neutral", indicator = true)
+  @NotNull GenericDomValue<Boolean> getTechnologyNeutral();
+
   @Stubbed
   @SubTagList("module")
   @NotNull List<? extends PluginModule> getModules();

@@ -217,6 +217,10 @@ private fun readRootElementChild(
       }
     }
     PluginXmlConst.TECHNOLOGY_ELEM -> readTechnology(reader, builder)
+    PluginXmlConst.TECHNOLOGY_NEUTRAL_ELEM -> {
+      builder.isTechnologyNeutral = true
+      reader.skipElement()
+    }
     PluginXmlConst.APPLICATION_COMPONENTS_ELEM -> readComponents(reader, builder.appContainerBuilder)
     PluginXmlConst.PROJECT_COMPONENTS_ELEM -> readComponents(reader, builder.projectContainerBuilder)
     PluginXmlConst.MODULE_COMPONENTS_ELEM -> readComponents(reader, builder.moduleContainerBuilder)

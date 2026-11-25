@@ -50,6 +50,9 @@ sealed class IdeaPluginDescriptorImpl(
   /** The technologies that this descriptor declares with `<technology>` elements. A content module has its own list. */
   val technologies: List<TechnologyElement> = raw.technologies
 
+  /** `true` when this descriptor has the `<technology-neutral/>` element. A content module has its own mark. */
+  val isTechnologyNeutral: Boolean = raw.isTechnologyNeutral
+
   var isDeleted: Boolean = false
 
   abstract val ownClassPath: List<Path>?
@@ -257,6 +260,7 @@ class DependsSubDescriptor(
       if (raw.dependencies.any { it is DependenciesElement.ModuleDependency }) reporter("<dependencies><module>")
       if (raw.dependencies.any { it is DependenciesElement.PluginDependency }) reporter("<dependencies><plugin>")
       if (raw.technologies.isNotEmpty()) reporter(PluginXmlConst.TECHNOLOGY_ELEM)
+      if (raw.isTechnologyNeutral) reporter(PluginXmlConst.TECHNOLOGY_NEUTRAL_ELEM)
     }
   }
 }
