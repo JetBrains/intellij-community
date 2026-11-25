@@ -19,6 +19,7 @@ import com.intellij.task.ModuleBuildTask;
 import com.intellij.task.ProjectTaskManager;
 import com.intellij.task.impl.ProjectTaskManagerImpl;
 import com.intellij.util.messages.MessageBusConnection;
+import com.jetbrains.performancePlugin.BuildSpans;
 import com.jetbrains.performancePlugin.PerformanceTestSpan;
 import com.jetbrains.performancePlugin.PerformanceTestingBundle;
 import com.jetbrains.performancePlugin.commands.OpenFileCommand;
@@ -48,8 +49,6 @@ public class BuildCommand extends AbstractCommand {
   private static final String BUILD = "BUILD";
   private static final String RECOMPILE_FILES = "RECOMPILE_FILES";
 
-  public static final String SPAN_NAME = "build_compilation_duration";
-
   public BuildCommand(@NotNull String text, int line) {
     super(text, line);
   }
@@ -61,7 +60,7 @@ public class BuildCommand extends AbstractCommand {
     String mode = arguments.remove(0);
     Project project = context.getProject();
     MessageBusConnection connection = project.getMessageBus().connect();
-    SpanBuilder span = PerformanceTestSpan.TRACER.spanBuilder(SPAN_NAME).setParent(PerformanceTestSpan.getContext());
+    SpanBuilder span = PerformanceTestSpan.TRACER.spanBuilder(BuildSpans.SPAN_NAME).setParent(PerformanceTestSpan.getContext());
     Ref<Span> spanRef = new Ref<>();
     Ref<Scope> scopeRef = new Ref<>();
     connection
