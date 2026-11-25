@@ -37,6 +37,9 @@ internal class MockRemoteCommunicator(override val userId: String) : AbstractSer
   @Volatile
   var checkServerStateInterceptor: (() -> Unit)? = null
 
+  @Volatile
+  var writeFileInternalInterceptor: (() -> Unit)? = null
+
   override fun checkServerState(): ServerState {
     checkServerStateInterceptor?.invoke()
     return super.checkServerState()
@@ -71,6 +74,7 @@ internal class MockRemoteCommunicator(override val userId: String) : AbstractSer
 
   override fun writeFileInternal(filePath: String, versionId: String?, content: InputStream): String? {
     ProgressManager.checkCanceled()
+    writeFileInternalInterceptor?.invoke()
     checkConnected()
     val currentVersion = filesAndVersions[filePath]
     if (versionId != null && currentVersion != null && currentVersion.versionId != versionId) {

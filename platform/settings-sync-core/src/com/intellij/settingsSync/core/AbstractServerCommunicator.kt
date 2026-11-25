@@ -149,6 +149,8 @@ abstract class AbstractServerCommunicator : SettingsSyncRemoteCommunicator, Disp
       return SettingsSyncPushResult.Rejected
     }
     catch (e: Throwable) {
+      rethrowControlFlowException(e)
+      LOG.warn("Failed to send settings snapshot", e)
       return SettingsSyncPushResult.Error(e.message ?: defaultMessage)
     }
   }

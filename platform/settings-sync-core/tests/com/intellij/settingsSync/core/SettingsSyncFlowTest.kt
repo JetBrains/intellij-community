@@ -2,6 +2,7 @@ package com.intellij.settingsSync.core
 
 import com.intellij.idea.TestFor
 import com.intellij.openapi.components.SettingsCategory
+import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.settingsSync.core.communicator.SettingsSyncUserData
 import com.intellij.testFramework.LoggedErrorProcessor
 import com.intellij.testFramework.common.timeoutRunBlocking
@@ -44,6 +45,16 @@ internal class SettingsSyncFlowTest : SettingsSyncTestBase() {
   @BeforeEach
   internal fun initFields() {
     ideMediator = MockSettingsSyncIdeMediator()
+  }
+
+  @Test
+  fun `cancelled push propagates cancellation`() {
+    remoteCommunicator.writeFileInternalInterceptor = { throw ProcessCanceledException() }
+    Assertions.assertThrows(ProcessCanceledException::class.java) {
+      remoteCommunicator.push(settingsSnapshot {
+        fileState("options/laf.xml", "Cancelled push")
+      }, force = true, expectedServerVersionId = null)
+    }
   }
 
   private fun CoroutineScope.initSettingsSync(
