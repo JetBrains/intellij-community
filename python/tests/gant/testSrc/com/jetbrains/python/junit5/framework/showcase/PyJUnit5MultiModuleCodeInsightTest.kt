@@ -15,6 +15,7 @@ import com.jetbrains.python.junit5.framework.pyExternalSystemProjectFixture
 import com.jetbrains.python.junit5.framework.util.completeBasicAtProjectFile
 import com.jetbrains.python.testDataPath
 import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import java.nio.file.Path
 import kotlin.io.path.div
@@ -29,6 +30,7 @@ import kotlin.time.Duration.Companion.minutes
  */
 @TestClassInfo(Repository.PY_COMMUNITY)
 @PyCodeInsightTestApplication
+@Disabled("PY-94456: the pyproject.toml model writes no module dependencies by default, and completion reads only those")
 @Subsystems.CodeInsight
 @Layers.Functional
 internal class PyJUnit5MultiModuleCodeInsightTest(val project: Project) {

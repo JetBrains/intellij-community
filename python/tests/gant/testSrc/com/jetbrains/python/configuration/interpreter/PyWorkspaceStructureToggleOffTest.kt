@@ -14,6 +14,7 @@ import com.intellij.project.stateStore
 import com.intellij.python.pyproject.PY_PROJECT_TOML
 import com.intellij.python.pyproject.model.api.isPyProjectTomlBased
 import com.intellij.python.pyproject.model.internal.platformBridge.rebuildPyProjectModelForTest
+import com.intellij.python.pyproject.model.internal.workspaceBridge.PY_PROJECT_MODEL_OWNS_MODULES_KEY
 import com.intellij.python.pyproject.model.usePyprojectToml
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
@@ -52,11 +53,15 @@ internal class PyWorkspaceStructureToggleOffTest {
   // multi-value one, so the whole `[a|b*|c]` list is the value — a bare "on" fails `asEnum`.
   private val pyProjectModelKey = registryKeyFixture("intellij.python.pyproject.model") { setValue("[off|on*|ask]") }
 
+  // The cleanup removes the modules that the model owns, which it does in PyCharm only.
+  private val ownsModulesKey = registryKeyFixture(PY_PROJECT_MODEL_OWNS_MODULES_KEY) { setValue(true) }
+
   private val projectFixture = projectFixture()
 
   @Test
   fun `apply completes the cleanup before the dialog disposes the page`(): Unit = timeoutRunBlocking(2.minutes) {
     pyProjectModelKey.get()
+    ownsModulesKey.get()
     val project = projectFixture.get()
     val baseline = moduleNames(project)
 
