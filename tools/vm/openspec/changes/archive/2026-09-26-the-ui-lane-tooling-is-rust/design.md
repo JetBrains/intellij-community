@@ -141,8 +141,8 @@ programs stays compatible, and a change of that contract changes both ends in on
 - Bazel and cargo verify the workspace. The [README](../../../../README.md#verification) lists the commands.
 - A Mac compiles no Linux-only code. Only the cross builds of the guest binaries and `:clippy-linux-*` check it.
 - Every crate except `avl-guest` builds and tests on Windows. A Windows host runs `vm` and `air-trace` natively and
-  drives the Docker backend only. The
-  [Windows plan](../../../../docs/a-windows-host-runs-the-controller-natively-plan.md) holds that work.
+  drives the Docker backend only. The working note
+  `community/tools/vm/docs/a-windows-host-runs-the-controller-natively-plan.md` holds that work.
 - `rust-toolchain` pins the version of the Bazel toolchain, and `rust-version` in `Cargo.toml` names it. So clippy's
   `incompatible_msrv` flags a newer standard library API under a newer local cargo.
 - A new crate follows the [crate map](../../../../README.md#crates) and the crate decision.

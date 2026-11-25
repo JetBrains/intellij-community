@@ -7,6 +7,7 @@ import { type AdrMeta, adrOrderKey } from '../scripts/docMeta.ts'
 import type { ExplainerChapter } from '../scripts/explainerDoc.ts'
 import type { HarvestedDoc } from '../scripts/harvestDocs.ts'
 import type { SiteConfig } from '../scripts/siteConfig.ts'
+import { docPathOfHarvestedFile } from '../scripts/sourcePaths.ts'
 import { decisionPaths } from './routeTable.ts'
 
 export type { HarvestedDoc } from '../scripts/harvestDocs.ts'
@@ -70,7 +71,7 @@ export interface SiteData {
  * itself, because Vite resolves a glob pattern relative to the file that holds it.
  */
 export function harvestedFiles<T>(glob: Record<string, T>, prefix: string): Record<string, T> {
-  return Object.fromEntries(Object.entries(glob).filter(([key]) => key.startsWith(prefix)).map(([key, value]) => [key.slice(prefix.length), value]))
+  return Object.fromEntries(Object.entries(glob).filter(([key]) => key.startsWith(prefix)).map(([key, value]) => [docPathOfHarvestedFile(key.slice(prefix.length)), value]))
 }
 
 /** Slug of a bundled doc, used in /guides/<slug> and /explain/<slug> routes: the file basename, so a move between folders keeps its URL. */

@@ -14,7 +14,7 @@ import type { HarvestedDiagram } from '../scripts/diagram.ts'
 import type { HarvestedDoc } from '../scripts/harvestDocs.ts'
 import { siteDir } from '../scripts/paths.ts'
 import type { SiteConfig } from '../scripts/siteConfig.ts'
-import { languageForPath } from '../scripts/sourcePaths.ts'
+import { harvestedFileOf, languageForPath } from '../scripts/sourcePaths.ts'
 import type { PlaywrightExpect, PlaywrightTest, SitePage } from './sitePage.ts'
 
 export interface KernelSuiteOptions {
@@ -45,8 +45,10 @@ export function defineKernelSuite({ test, expect, config, sitePage }: KernelSuit
   const harvest = JSON.parse(readFileSync(join(generated, 'arch-data.json'), 'utf8')) as Harvest
   /** The app path of a route path: the base of the site and the path without its leading slash. */
   const app = (path: string): string => `${config.base}${path.replace(/^\//, '')}`
-  const slugOf = (path: string): string => path.slice(path.lastIndexOf('/') + 1, -'.md'.length)
-  const harvestedMarkdown = (path: string): string => readFileSync(join(generated, 'markdown', path), 'utf8')
+  /** The slug of a doc path: the change id of a design of an archived change, else the file name without `.md`. */
+  const slugOf = (path: string): string =>
+    harvest.docs.find(doc => doc.path === path)?.adr?.change ?? path.slice(path.lastIndexOf('/') + 1, -'.md'.length)
+  const harvestedMarkdown = (path: string): string => readFileSync(join(generated, 'markdown', harvestedFileOf(path)), 'utf8')
 
   async function open(page: Page, href: string, ready: 'content' | 'none' = 'content'): Promise<void> {
     await sitePage.openAndReload(page, href)
@@ -533,6 +535,16 @@ export function defineKernelSuite({ test, expect, config, sitePage }: KernelSuit
       await open(page, app(`/doc/${encodeURIComponent(lastNumbered.path)}`))
       await expect(page.locator('.decision-facts')).toContainText(`ADR ${lastNumbered.adr!.number}`)
       await expect(page.locator('.route-outlet .page-breadcrumb')).toContainText('Decisions')
+    })
+
+    test('a design of an OpenSpec root outside the content root opens as a decision page', async ({ page }) => {
+      const design = decisions.find(doc => doc.path.startsWith('../') && doc.adr!.change !== undefined)
+      if (design === undefined) {
+        return // every OpenSpec root of this site is inside its content root
+      }
+      await open(page, decisionRouteOf(design.path))
+      await expect(page.locator('.record-header h1')).toHaveText(design.title)
+      await expect(page.locator('.markdown-body').first()).not.toBeEmpty()
     })
 
     test('the palette finds a decision record by its number', async ({ page }) => {

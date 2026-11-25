@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import { describe, it } from 'node:test'
-import { requirementGroup, resolveSpecPath, SOURCE_PATH_PATTERN, specIdOfRepoPath, specTestFiles, TEST_LINK_LINE, testLinkNames } from './sourcePaths.ts'
+import { docPathOfHarvestedFile, docPathOfRepoPath, harvestedFileOf, requirementGroup, resolveRepoPath, resolveSpecPath, SOURCE_PATH_PATTERN, specIdOfRepoPath, specTestFiles, TEST_LINK_LINE, testLinkNames } from './sourcePaths.ts'
 
 describe('SOURCE_PATH_PATTERN', () => {
   it('takes a Starlark, Bazel, Rust, script, module, properties, or JSON path', () => {
@@ -86,5 +86,29 @@ describe('the group of a requirement heading', () => {
     assert.equal(requirementGroup('Requirement: `brd`: The command prints JSON'), '`brd`')
     assert.equal(requirementGroup('Requirement: A rule without a group'), null)
     assert.equal(requirementGroup('Scenario: A case'), null)
+  })
+})
+
+describe('a doc path outside the content root', () => {
+  const design = 'community/tools/vm/openspec/changes/archive/2026-11-18-one-engine/design.md'
+
+  it('is the content-relative path inside the content root, and climbs with .. segments outside it', () => {
+    assert.equal(docPathOfRepoPath('plugins/air', 'plugins/air/docs/a.md'), 'docs/a.md')
+    assert.equal(docPathOfRepoPath('plugins/air', design), `../../${design}`)
+    assert.equal(docPathOfRepoPath('plugins/air', 'plugins/other/a.md'), '../other/a.md')
+    assert.equal(docPathOfRepoPath('.', design), design)
+  })
+
+  it('is a base folder that a relative link resolves against', () => {
+    const baseDir = docPathOfRepoPath('plugins/air', design).slice(0, -'/design.md'.length)
+    assert.equal(resolveRepoPath('plugins/air', baseDir, '../../../../docs/vm-ui-tests.md'), 'community/tools/vm/docs/vm-ui-tests.md')
+    assert.equal(resolveRepoPath('plugins/air', baseDir, '../../../../../../../plugins/air/docs/a.md'), 'plugins/air/docs/a.md')
+  })
+
+  it('keeps its harvested file inside the folder, and the file gives the doc path back', () => {
+    const docPath = docPathOfRepoPath('plugins/air', design)
+    assert.equal(harvestedFileOf(docPath), `__parent__/__parent__/${design}`)
+    assert.equal(docPathOfHarvestedFile(harvestedFileOf(docPath)), docPath)
+    assert.equal(harvestedFileOf('docs/a.md'), 'docs/a.md')
   })
 })

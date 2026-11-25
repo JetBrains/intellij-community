@@ -20,7 +20,7 @@ import { type ExplainerChapter, splitExplainerChapters } from './explainerDoc.ts
 import type { ModelProvider, SourceLocation } from './modelProvider.ts'
 import { contentDir, openspecArchiveDesigns, posixRelative, repoRoot } from './paths.ts'
 import type { SiteConfig } from './siteConfig.ts'
-import { contentPathOf } from './sourcePaths.ts'
+import { docPathOfRepoPath } from './sourcePaths.ts'
 
 export { slugify } from './explainerDoc.ts'
 
@@ -256,15 +256,13 @@ export function harvestDocs(config: SiteConfig, provider: ModelProvider, options
       harvestDoc(`${folder}/${entry}`, 'adr')
     }
   }
-  // the design of each archived change of an OpenSpec root is a decision document. The site bundles only the files
-  // under its content root, so it skips a root outside it
+  // the design of each archived change of an OpenSpec root is a decision document. A root outside the content root
+  // gives a doc path with `..` segments (docPathOfRepoPath)
   for (const design of openspecArchiveDesigns(config, root)) {
-    const docPath = contentPathOf(config.contentRoot, posixRelative(root, design.file))
-    if (docPath !== null) {
-      const proposalFile = join(dirname(design.file), 'proposal.md')
-      const proposal = existsSync(proposalFile) ? readFileSync(proposalFile, 'utf8') : null
-      harvestDoc(docPath, 'adr', { change: design.id, slug: design.slug, topic: design.topic, proposal })
-    }
+    const docPath = docPathOfRepoPath(config.contentRoot, posixRelative(root, design.file))
+    const proposalFile = join(dirname(design.file), 'proposal.md')
+    const proposal = existsSync(proposalFile) ? readFileSync(proposalFile, 'utf8') : null
+    harvestDoc(docPath, 'adr', { change: design.id, slug: design.slug, topic: design.topic, proposal })
   }
   for (const extra of config.docs.extraReadmes) {
     harvestDoc(extra, 'readme')

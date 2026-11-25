@@ -114,6 +114,19 @@ describe('the doc harvest', () => {
     ])
   })
 
+  it('reads a design of an OpenSpec root outside the content root, with a doc path that climbs out of it', () => {
+    const files = Object.fromEntries(Object.entries({ ...FILES, ...ARCHIVE_FILES }).map(([path, text]) => [path.startsWith('openspec/') ? `tools/vm/${path}` : `site/${path}`, text]))
+    const root = temporaryTree('harvest-docs-', files)
+    const config = testSiteConfig({ contentRoot: 'site' })
+    const openspec = { roots: ['tools/vm/openspec'], templateSections: ['Purpose'] }
+    const site = { ...config, decisions: { ...config.decisions, folders: ['site/docs/decisions'] }, specs: { ...config.specs, openspec } }
+    const harvest = harvestDocs(site, provider(), { root })
+    const design = harvest.docs.find(doc => doc.adr?.change === '2026-11-20-one-channel')
+    assert.equal(design?.path, '../tools/vm/openspec/changes/archive/2026-11-20-one-channel/design.md')
+    assert.equal(design?.title, 'The host keeps one channel')
+    assert.ok(harvest.bodies.get(design.path)?.includes('The host keeps one channel.'))
+  })
+
   it('names the topics of the config for a design with an unknown x-topic', () => {
     const root = temporaryTree('harvest-docs-', { ...FILES, ...ARCHIVE_FILES, 'openspec/changes/archive/2026-11-22-no-heading/.openspec.yaml': 'x-topic: misc\n' })
     assert.throws(() => harvestDocs(withOpenSpecRoot(testSiteConfig()), provider(), { root }),
