@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.importing
 
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
@@ -18,29 +17,23 @@ import org.jetbrains.idea.maven.dom.MavenDomUtil
 import org.jetbrains.idea.maven.dom.MavenPropertyResolver
 import org.jetbrains.idea.maven.project.MavenProject
 import org.jetbrains.idea.maven.utils.MavenLog
+import org.jetbrains.idea.maven.utils.MavenUtil
 import java.io.File
 import java.nio.charset.Charset
 import java.nio.charset.IllegalCharsetNameException
 import java.nio.charset.UnsupportedCharsetException
 
-internal class MavenEncodingConfigurator : MavenWorkspaceConfigurator {
-  private val PREPARED_MAPPER = Key.create<EncodingMapper>("ENCODING_MAPPER")
+private val PREPARED_MAPPER = Key.create<EncodingMapper>("ENCODING_MAPPER")
 
+/**
+ * Collects the source encoding and the resource encoding of each changed Maven project before the model commit.
+ * [MavenEncodingPostTaskConfigurator] applies the encodings after the commit.
+ */
+internal class MavenEncodingConfigurator : MavenWorkspaceConfigurator {
   override fun beforeModelApplied(context: MavenWorkspaceConfigurator.MutableModelContext) {
     val allMavenProjects = context.mavenProjectsWithModules.filter { it.hasChanges() }.map { it.mavenProject }
     val mapper = mapEncodings(allMavenProjects, context.project)
     PREPARED_MAPPER.set(context, mapper)
-  }
-
-  override fun afterModelApplied(context: MavenWorkspaceConfigurator.AppliedModelContext) {
-    val mapper = PREPARED_MAPPER.get(context) ?: return
-    // EncodingProjectManagerImpl.setPointerMapping runs a synchronous modal progress that
-    // walks the VFS; nesting it in the importer's EDT write action freezes EDT. Defer to
-    // after the WA returns.
-    ApplicationManager.getApplication().invokeLater(
-      { mapper.applyCollectedInfo() },
-      context.project.disposed
-    )
   }
 
   private fun mapEncodings(mavenProjects: Sequence<MavenProject>, project: Project): EncodingMapper {
@@ -57,38 +50,6 @@ internal class MavenEncodingConfigurator : MavenWorkspaceConfigurator {
     }
 
     return encodingMapper
-  }
-
-  private class EncodingMapper(project: Project) {
-    private val newPointerMappings = LinkedHashMap<VirtualFilePointer, Charset>()
-    private val encodingManager = (EncodingProjectManager.getInstance(project) as EncodingProjectManagerImpl)
-    private val oldPointerMappings = encodingManager.allPointersMappings
-
-    fun processDir(directory: String, charset: Charset) {
-      val dirVfile = StandardFileSystems.local().findFileByPath(File(directory).absolutePath)
-      val pointer = if (dirVfile != null) {
-        service<VirtualFilePointerManager>().create(dirVfile, encodingManager, null)
-      }
-      else {
-        service<VirtualFilePointerManager>().create(fileToUrl(File(directory).absoluteFile), encodingManager, null)
-      }
-      newPointerMappings[pointer] = charset
-      encodingManager.allPointersMappings.forEach {
-        val filePointer = it.key
-        if (FileUtil.isAncestor(directory, urlToPath(filePointer.url), false)) {
-          newPointerMappings[filePointer] = charset
-        }
-      }
-    }
-
-    fun applyCollectedInfo() {
-      if (newPointerMappings.isEmpty()) {
-        return
-      }
-
-      val pointerMapping = oldPointerMappings + newPointerMappings
-      encodingManager.setPointerMapping(pointerMapping)
-    }
   }
 
   private fun fillResourceEncoding(project: Project,
@@ -118,6 +79,50 @@ internal class MavenEncodingConfigurator : MavenWorkspaceConfigurator {
       MavenLog.LOG.warn("Charset ${name} is illegal")
       return null
     }
+  }
+}
+
+/**
+ * Applies the encodings that [MavenEncodingConfigurator] collected.
+ * The import waits for this configurator, so the encodings are in place when the import ends.
+ */
+internal class MavenEncodingPostTaskConfigurator : MavenAfterImportConfigurator {
+  override fun afterImport(context: MavenAfterImportConfigurator.Context) {
+    val mapper = context.getUserData(PREPARED_MAPPER) ?: return
+    if (mapper.isEmpty()) return
+    // EncodingProjectManagerImpl.setPointerMapping needs the write-intent lock.
+    // It also runs a modal progress that walks the VFS, so it must stay outside the write action of the model commit.
+    MavenUtil.invokeAndWait(context.project) { mapper.applyCollectedInfo() }
+  }
+}
+
+private class EncodingMapper(project: Project) {
+  private val newPointerMappings = LinkedHashMap<VirtualFilePointer, Charset>()
+  private val encodingManager = (EncodingProjectManager.getInstance(project) as EncodingProjectManagerImpl)
+  private val oldPointerMappings = encodingManager.allPointersMappings
+
+  fun processDir(directory: String, charset: Charset) {
+    val dirVfile = StandardFileSystems.local().findFileByPath(File(directory).absolutePath)
+    val pointer = if (dirVfile != null) {
+      service<VirtualFilePointerManager>().create(dirVfile, encodingManager, null)
+    }
+    else {
+      service<VirtualFilePointerManager>().create(fileToUrl(File(directory).absoluteFile), encodingManager, null)
+    }
+    newPointerMappings[pointer] = charset
+    encodingManager.allPointersMappings.forEach {
+      val filePointer = it.key
+      if (FileUtil.isAncestor(directory, urlToPath(filePointer.url), false)) {
+        newPointerMappings[filePointer] = charset
+      }
+    }
+  }
+
+  fun isEmpty(): Boolean = newPointerMappings.isEmpty()
+
+  fun applyCollectedInfo() {
+    val pointerMapping = oldPointerMappings + newPointerMappings
+    encodingManager.setPointerMapping(pointerMapping)
   }
 }
 

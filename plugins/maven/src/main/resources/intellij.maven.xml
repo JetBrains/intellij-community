@@ -755,6 +755,7 @@
       implementation="org.jetbrains.idea.maven.importing.workspaceModel.LegacyToWorkspaceConfiguratorBridgeDynamic"/>
     <importing.workspaceConfigurator
       implementation="org.jetbrains.idea.maven.importing.workspaceModel.LegacyToWorkspaceConfiguratorBridgeStatic"/>
+    <importing.afterImportConfigurator implementation="org.jetbrains.idea.maven.importing.MavenEncodingPostTaskConfigurator"/>
     <importing.afterImportConfigurator implementation="org.jetbrains.idea.maven.importing.MavenShadeFacetGeneratePostTaskConfigurator"/>
     <importing.afterImportConfigurator implementation="org.jetbrains.idea.maven.importing.MavenShadeFacetRemapPostTaskConfigurator"/>
 
