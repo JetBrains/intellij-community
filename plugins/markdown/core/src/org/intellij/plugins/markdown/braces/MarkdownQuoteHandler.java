@@ -43,12 +43,11 @@ public final class MarkdownQuoteHandler implements QuoteHandler {
   @Override
   public boolean isOpeningQuote(@NotNull HighlighterIterator iterator, int offset) {
     final IElementType tokenType = iterator.getTokenType();
+    final CharSequence chars = iterator.getDocument().getCharsSequence();
 
-    if (!QUOTE_TYPES.contains(tokenType)) {
+    if (!QUOTE_TYPES.contains(tokenType) && !(tokenType == MarkdownTokenTypes.TEXT && chars.charAt(offset) == '\'')) {
       return false;
     }
-
-    final CharSequence chars = iterator.getDocument().getCharsSequence();
 
     final boolean isBacktick = chars.charAt(offset) == '`';
     if (isBacktick && isClosingQuote(iterator, offset)) {

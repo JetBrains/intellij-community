@@ -189,4 +189,74 @@ public class MarkdownQuoteHandlerTest {
 
   @Test
   public void testBracketOvertypeInCheckbox() { doTest("- [ <caret>]", ']', "- [ ]<caret>"); }
+
+  @Test
+  public void testDoubleQuoteInsideBraces() {
+    doTest("{<caret>}", '"', "{\"<caret>\"}");
+  }
+
+  @Test
+  public void testClosingDoubleQuoteInsideBraces() {
+    doTest("{\"<caret>\"}", '"', "{\"\"<caret>}");
+  }
+
+  @Test
+  public void testDoubleQuoteAttributeValue() {
+    doTest("{ key=<caret> }", '"', "{ key=\"<caret>\" }");
+  }
+
+  @Test
+  public void testDoubleQuoteAttributeValueBeforeBrace() {
+    doTest("{ key=<caret>}", '"', "{ key=\"<caret>\"}");
+  }
+
+  @Test
+  public void testDoubleQuoteSecondAttributeValue() {
+    doTest("{ id=\"x\" key=<caret> }", '"', "{ id=\"x\" key=\"<caret>\" }");
+  }
+
+  @Test
+  public void testClosingDoubleQuoteAttributeValue() {
+    doTest("{ key=\"value<caret>\" }", '"', "{ key=\"value\"<caret> }");
+  }
+
+  @Test
+  public void testSingleQuoteAttributeValue() {
+    doTest("{ key=<caret> }", '\'', "{ key='<caret>' }");
+  }
+
+  @Test
+  public void testSingleQuoteAfterOpeningParenthesis() {
+    doTest("Test (<caret>)", '\'', "Test ('<caret>')");
+  }
+
+  @Test
+  public void testSingleQuoteInsideBrackets() {
+    doTest("Test [<caret>]", '\'', "Test ['<caret>']");
+  }
+
+  @Test
+  public void testSingleQuoteAfterSpaceInsideBraces() {
+    doTest("{ <caret>}", '\'', "{ '<caret>'}");
+  }
+
+  @Test
+  public void testBacktickInsideBraces() {
+    doTest("{<caret>}", '`', "{`<caret>`}");
+  }
+
+  @Test
+  public void testSingleQuoteInsideBraces() {
+    doTest("{<caret>}", '\'', "{'<caret>'}");
+  }
+
+  @Test
+  public void testSecondSingleQuoteInsideBraces() {
+    doTest("{'<caret>}", '\'', "{''<caret>}");
+  }
+
+  @Test
+  public void testSingleQuoteInsideBracesAfterText() {
+    doTest("text {<caret>}", '\'', "text {'<caret>'}");
+  }
 }
