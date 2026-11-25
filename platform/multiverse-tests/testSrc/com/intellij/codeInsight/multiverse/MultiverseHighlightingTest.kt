@@ -88,6 +88,7 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInfo
 import java.beans.PropertyChangeListener
+import java.lang.ref.Reference
 import javax.swing.JComponent
 import javax.swing.JPanel
 import kotlin.time.Duration.Companion.minutes
@@ -735,16 +736,20 @@ class MultiverseHighlightingTest {
     fixture.configureByText(JavaFileType.INSTANCE, "class C {}")
     val second = FakeContext("second")
     registerOwningProvider(virtualFile, Answer.Contexts(listOf(FakeContext("first"), second)), preferred = second)
-    val editorContextManager = EditorContextManager.getInstance(project)
-    assertEquals(second, readAction { editorContextManager.getEditorContexts(editor).mainContext })
-    val changes = recordPerFileChanges()
 
     withContext(Dispatchers.EDT) {
-      CodeInsightContextManagerImpl.getInstanceImpl(project).requestInvalidationNow(setOf(virtualFile))
-    }
+      val contextManager = CodeInsightContextManagerImpl.getInstanceImpl(project)
+      val cachedContexts = contextManager.getCodeInsightContexts(virtualFile)
+      val editorContextManager = EditorContextManager.getInstance(project)
+      assertEquals(second, editorContextManager.getEditorContexts(editor).mainContext)
+      val changes = recordPerFileChanges()
 
-    assertThat(changes).isEmpty()
-    assertEquals(second, editorContextManager.getCachedEditorContexts(editor)?.mainContext)
+      contextManager.requestInvalidationNow(setOf(virtualFile))
+      Reference.reachabilityFence(cachedContexts)
+
+      assertThat(changes).isEmpty()
+      assertEquals(second, editorContextManager.getCachedEditorContexts(editor)?.mainContext)
+    }
   }
 
   @Test
