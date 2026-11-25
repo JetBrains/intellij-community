@@ -51,6 +51,8 @@ import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestDetails
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestFullDetails
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestState
 import org.jetbrains.plugins.gitlab.mergerequest.diff.GitLabMergeRequestDiffViewModel
+import org.jetbrains.plugins.gitlab.mergerequest.file.GitLabMergeRequestsFilesController
+import org.jetbrains.plugins.gitlab.mergerequest.file.GitLabMergeRequestsFilesControllerImpl
 import org.jetbrains.plugins.gitlab.mergerequest.ui.details.model.GitLabMergeRequestDetailsViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.ui.editor.GitLabMergeRequestEditorReviewViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.ui.filters.GitLabMergeRequestsFiltersHistoryModel
@@ -119,6 +121,8 @@ abstract class GitLabConnectedProjectViewModelBase(
 ) : GitLabConnectedProjectViewModel {
   protected val cs: CoroutineScope = parentCs.childScope(javaClass.name)
 
+  internal val filesController: GitLabMergeRequestsFilesController = GitLabMergeRequestsFilesControllerImpl(project, connection)
+
   override val connectionId: String = connection.id
   override val projectCoordinates: GitLabProjectCoordinates = connection.repo.repository
 
@@ -157,7 +161,7 @@ abstract class GitLabConnectedProjectViewModelBase(
         mapScoped {
           GitLabMergeRequestViewModels(project, this, connection.projectData, connection.repo.remote, avatarIconProvider,
                                        connection.imageLoader, it, connection.currentUser, preferredProjectAndAccount,
-                                       ::openMergeRequestDetails, ::openMergeRequestTimeline, ::openMergeRequestDiff)
+                                       ::openMergeRequestDetails, filesController::openTimeline, filesController::openDiff)
         }
       }
       .shareIn(cs, SharingStarted.WhileSubscribed(0, 0), 1)

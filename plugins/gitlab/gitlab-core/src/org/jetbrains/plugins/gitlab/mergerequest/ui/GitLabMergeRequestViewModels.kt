@@ -8,21 +8,17 @@ import com.intellij.collaboration.ui.util.selectedItem
 import com.intellij.collaboration.util.ResultUtil.runCatchingUser
 import com.intellij.collaboration.util.getOrNull
 import com.intellij.openapi.ListSelection
-import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.platform.util.coroutines.childScope
 import git4idea.remote.GitRemoteUrlCoordinates
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapNotNull
-import kotlinx.coroutines.withContext
 import org.jetbrains.plugins.gitlab.api.GitLabProjectCoordinates
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccount
@@ -61,8 +57,8 @@ internal class GitLabMergeRequestViewModels(
   currentUser: GitLabUserDTO,
   preferredProjectAndAccount: Pair<GitLabProjectCoordinates, GitLabAccount>,
   private val openMergeRequestDetails: (String, GitLabStatistics.ToolWindowOpenTabActionPlace, Boolean) -> Unit,
-  private val openMergeRequestTimeline: (String, Boolean) -> Unit,
-  private val openMergeRequestDiff: (String, Boolean) -> Unit,
+  private val openMergeRequestTimeline: suspend (String, Boolean) -> Unit,
+  private val openMergeRequestDiff: suspend (String, Boolean) -> Unit,
 ) {
 
   private val textCompletionViewModel: GitLabViewModelWithTextCompletion by lazy {
@@ -143,13 +139,11 @@ internal class GitLabMergeRequestViewModels(
     if (!changes.isNullOrEmpty()) {
       _diffVm.showChanges(ListSelection.createAt(changes, 0))
     }
-    withContext(Dispatchers.EDT) {
-      openMergeRequestDiff(mergeRequest.iid, true)
-    }
+    openMergeRequestDiff(mergeRequest.iid, true)
   }
 
   private fun setupDetailsVm(vm: GitLabMergeRequestDetailsViewModelImpl) {
-    cs.launchNow(Dispatchers.EDT) {
+    cs.launchNow {
       vm.showTimelineRequests.collect {
         openMergeRequestTimeline(mergeRequest.iid, true)
       }
@@ -166,7 +160,7 @@ internal class GitLabMergeRequestViewModels(
       }
     }
 
-    cs.launchNow(Dispatchers.EDT) {
+    cs.launchNow {
       changeListVms.collectLatest {
         it.showDiffRequests.collectLatest {
           openMergeRequestDiff(mergeRequest.iid, true)
@@ -179,9 +173,7 @@ internal class GitLabMergeRequestViewModels(
     cs.launchNow {
       vm.diffRequests.collect {
         _diffVm.showChanges(ListSelection.createAt(it.changes, it.selectedIdx), it.location)
-        withContext(Dispatchers.EDT) {
-          openMergeRequestDiff(mergeRequest.iid, true)
-        }
+        openMergeRequestDiff(mergeRequest.iid, true)
       }
     }
   }
@@ -201,9 +193,6 @@ internal class GitLabMergeRequestViewModels(
     cs.launchNow {
       handleDiffRequests { listWithSelection, location ->
         _diffVm.showChanges(listWithSelection, location)
-        runInEdt {
-          openMergeRequestDiff(mergeRequest.iid, true)
-        }
       }
     }
   }

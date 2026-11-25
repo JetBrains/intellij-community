@@ -24,6 +24,7 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.github.pullrequest.config.GithubPullRequestsProjectUISettings
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext
@@ -38,7 +39,7 @@ class GHPRCreateChangesViewModel internal constructor(
   private val baseBranch: GitRemoteBranch,
   private val headBranch: GitBranch,
   private val commits: List<VcsCommitMetadata>,
-  private val openPullRequestDiff: (GHPRIdentifier?, Boolean) -> Unit,
+  private val openPullRequestDiff: suspend (GHPRIdentifier?, Boolean) -> Unit,
 ) : CodeReviewChangesViewModel<VcsCommitMetadata> {
   private val cs = parentCs.childScope(javaClass.name)
 
@@ -114,7 +115,9 @@ class GHPRCreateChangesViewModel internal constructor(
     override val project: Project = this@GHPRCreateChangesViewModel.project
 
     override fun showDiffPreview() {
-      openPullRequestDiff(null, true)
+      cs.launch {
+        openPullRequestDiff(null, true)
+      }
     }
 
     override fun showDiff() {

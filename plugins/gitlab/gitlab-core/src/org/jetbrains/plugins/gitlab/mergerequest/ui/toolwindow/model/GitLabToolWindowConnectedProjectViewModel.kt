@@ -14,13 +14,12 @@ import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.gitlab.GitLabProjectsManager
 import org.jetbrains.plugins.gitlab.api.GitLabProjectConnection
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccountManager
-import org.jetbrains.plugins.gitlab.mergerequest.file.GitLabMergeRequestsFilesController
-import org.jetbrains.plugins.gitlab.mergerequest.file.GitLabMergeRequestsFilesControllerImpl
 import org.jetbrains.plugins.gitlab.mergerequest.ui.GitLabConnectedProjectViewModelBase
 import org.jetbrains.plugins.gitlab.mergerequest.ui.toolwindow.GitLabReviewTab
 import org.jetbrains.plugins.gitlab.util.GitLabStatistics
@@ -34,8 +33,6 @@ internal class GitLabToolWindowConnectedProjectViewModel(
   private val activate: () -> Unit,
 ) : ReviewToolwindowProjectViewModel<GitLabReviewTab, GitLabReviewTabViewModel>,
     GitLabConnectedProjectViewModelBase(parentCs, project, connection, accountManager, projectsManager) {
-
-  private val filesController: GitLabMergeRequestsFilesController = GitLabMergeRequestsFilesControllerImpl(project, connection)
 
   override val projectName: @Nls String = connection.repo.repository.projectPath.name
 
@@ -81,12 +78,16 @@ internal class GitLabToolWindowConnectedProjectViewModel(
 
   @RequiresEdt
   override fun openMergeRequestTimeline(mrIid: String, focus: Boolean) {
-    filesController.openTimeline(mrIid, focus)
+    cs.launch(ModalityState.current().asContextElement()) {
+      filesController.openTimeline(mrIid, focus)
+    }
   }
 
   @RequiresEdt
   override fun openMergeRequestDiff(mrIid: String, focus: Boolean) {
-    filesController.openDiff(mrIid, focus)
+    cs.launch(ModalityState.current().asContextElement()) {
+      filesController.openDiff(mrIid, focus)
+    }
   }
 
   override fun viewMergeRequestList() {

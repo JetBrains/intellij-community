@@ -10,17 +10,14 @@ import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.FileEditorOpenRequest
 import com.intellij.openapi.project.Project
-import com.intellij.util.concurrency.annotations.RequiresEdt
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.plugins.gitlab.api.GitLabProjectConnection
 
 interface GitLabMergeRequestsFilesController {
-  @RequiresEdt
-  fun openTimeline(mrIid: String, focus: Boolean)
+  suspend fun openTimeline(mrIid: String, focus: Boolean)
 
-  @RequiresEdt
-  fun openDiff(mrIid: String, focus: Boolean)
+  suspend fun openDiff(mrIid: String, focus: Boolean)
 
   suspend fun closeAllFiles()
 }
@@ -30,18 +27,18 @@ class GitLabMergeRequestsFilesControllerImpl(
   private val connection: GitLabProjectConnection
 ) : GitLabMergeRequestsFilesController {
 
-  override fun openTimeline(mrIid: String, focus: Boolean) {
+  override suspend fun openTimeline(mrIid: String, focus: Boolean) {
     val fs = GitLabVirtualFileSystem.getInstance()
     val path = fs.getPath(connection.id, project, connection.repo.repository, mrIid)
     val file = fs.refreshAndFindFileByPath(path) ?: return
-    FileEditorManager.getInstance(project).requestOpenFile(file, FileEditorOpenRequest.withFocus(focus))
+    FileEditorManager.getInstanceAsync(project).openFile(file, FileEditorOpenRequest.withFocus(focus))
   }
 
-  override fun openDiff(mrIid: String, focus: Boolean) {
+  override suspend fun openDiff(mrIid: String, focus: Boolean) {
     val fs = GitLabVirtualFileSystem.getInstance()
     val path = fs.getPath(connection.id, project, connection.repo.repository, mrIid, true)
     val file = fs.refreshAndFindFileByPath(path) ?: return
-    DiffEditorTabFilesManager.getInstance(project).requestShowDiffFile(file, FileEditorOpenRequest.withFocus(focus))
+    project.serviceAsync<DiffEditorTabFilesManager>().openDiffFile(file, FileEditorOpenRequest.withFocus(focus))
   }
 
   override suspend fun closeAllFiles() {

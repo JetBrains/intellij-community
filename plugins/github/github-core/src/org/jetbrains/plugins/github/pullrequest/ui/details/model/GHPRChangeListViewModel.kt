@@ -22,6 +22,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.github.api.data.pullrequest.isViewed
 import org.jetbrains.plugins.github.pullrequest.config.GithubPullRequestsProjectUISettings
@@ -58,7 +59,7 @@ internal abstract class GHPRChangeListViewModelBase(
   private val dataContext: GHPRDataContext,
   protected val dataProvider: GHPRDataProvider,
   changeList: CodeReviewChangeList,
-  private val openPullRequestDiff: (GHPRIdentifier?, Boolean) -> Unit,
+  private val openPullRequestDiff: suspend (GHPRIdentifier?, Boolean) -> Unit,
 ) : GHPRChangeListViewModel, CodeReviewChangeListViewModelBase(parentCs, changeList) {
   private val preferences = GithubPullRequestsProjectUISettings.getInstance(project)
   protected val repository: GitRepository get() = dataContext.repositoryDataService.remoteCoordinates.repository
@@ -74,7 +75,9 @@ internal abstract class GHPRChangeListViewModelBase(
   override val grouping: StateFlow<Set<String>> = preferences.changesGroupingState
 
   override fun showDiffPreview() {
-    openPullRequestDiff(dataProvider.id, true)
+    cs.launch {
+      openPullRequestDiff(dataProvider.id, true)
+    }
   }
 
   override fun showDiff() {
@@ -95,7 +98,7 @@ internal class GHPRCommitChangeListViewModelImpl(
   dataContext: GHPRDataContext,
   dataProvider: GHPRDataProvider,
   changeList: CodeReviewChangeList,
-  openPullRequestDiff: (GHPRIdentifier?, Boolean) -> Unit,
+  openPullRequestDiff: suspend (GHPRIdentifier?, Boolean) -> Unit,
 ) : GHPRChangeListViewModelBase(parentCs, project, dataContext, dataProvider, changeList, openPullRequestDiff) {
   override val detailsByChange: StateFlow<Map<RefComparisonChange, CodeReviewChangeDetails>> =
     unresolvedThreadsCountByChange.map { threadsCount ->
@@ -109,7 +112,7 @@ internal class GHPRCumulativeChangeListViewModelImpl(
   dataContext: GHPRDataContext,
   dataProvider: GHPRDataProvider,
   changeList: CodeReviewChangeList,
-  openPullRequestDiff: (GHPRIdentifier?, Boolean) -> Unit,
+  openPullRequestDiff: suspend (GHPRIdentifier?, Boolean) -> Unit,
 ) : GHPRChangeListViewModelBase(parentCs, project, dataContext, dataProvider, changeList, openPullRequestDiff),
     GHPRCumulativeChangeListViewModel {
   private val viewedStateData = dataProvider.viewedStateData

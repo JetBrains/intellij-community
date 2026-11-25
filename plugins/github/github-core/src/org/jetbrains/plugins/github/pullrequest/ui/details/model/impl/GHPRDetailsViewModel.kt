@@ -52,7 +52,7 @@ internal class GHPRDetailsViewModelImpl(
   dataContext: GHPRDataContext,
   dataProvider: GHPRDataProvider,
   details: GHPullRequest,
-  openPullRequestDiff: (GHPRIdentifier?, Boolean) -> Unit,
+  openPullRequestDiff: suspend (GHPRIdentifier?, Boolean) -> Unit,
 ) : GHPRDetailsViewModel {
   private val cs = parentCs.childScope(javaClass.name)
 

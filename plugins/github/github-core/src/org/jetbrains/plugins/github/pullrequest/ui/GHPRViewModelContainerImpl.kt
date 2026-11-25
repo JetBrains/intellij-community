@@ -20,6 +20,7 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.github.ai.GHPRAIReviewExtension
 import org.jetbrains.plugins.github.ai.GHPRAIReviewViewModel
@@ -42,7 +43,6 @@ import org.jetbrains.plugins.github.pullrequest.ui.review.GHPRReviewViewModelHel
 import org.jetbrains.plugins.github.pullrequest.ui.timeline.GHPRTimelineViewModel
 import org.jetbrains.plugins.github.pullrequest.ui.timeline.GHPRTimelineViewModelImpl
 import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.model.GHPRInfoViewModel
-import kotlin.lazy
 
 @ApiStatus.Internal
 internal interface GHPRViewModelContainer {
@@ -64,7 +64,7 @@ internal class GHPRViewModelContainerImpl(
   private val pullRequestId: GHPRIdentifier,
   private val viewPullRequest: (GHPRIdentifier) -> Unit,
   private val viewPullRequestOnCommit: (GHPRIdentifier, String) -> Unit,
-  private val openPullRequestDiff: (GHPRIdentifier?, Boolean) -> Unit,
+  private val openPullRequestDiff: suspend (GHPRIdentifier?, Boolean) -> Unit,
   private val refreshPrOnCurrentBranch: () -> Unit,
 ) : GHPRViewModelContainer {
   private val cs = parentCs.childScope(javaClass.name)
@@ -118,7 +118,9 @@ internal class GHPRViewModelContainerImpl(
   override val editorVm: GHPRReviewInEditorViewModel by lazy {
     GHPRReviewInEditorViewModelImpl(project, cs, settings, dataContext, dataProvider, branchStateVm, threadsVms) {
       diffSelectionRequests.tryEmit(it)
-      openPullRequestDiff(pullRequestId, true)
+      cs.launch {
+        openPullRequestDiff(pullRequestId, true)
+      }
     }
   }
 

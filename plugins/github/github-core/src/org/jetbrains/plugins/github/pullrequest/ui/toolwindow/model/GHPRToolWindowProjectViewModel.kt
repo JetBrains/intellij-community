@@ -4,7 +4,6 @@ package org.jetbrains.plugins.github.pullrequest.ui.toolwindow.model
 import com.intellij.collaboration.ui.toolwindow.ReviewToolwindowProjectViewModel
 import com.intellij.collaboration.ui.toolwindow.ReviewToolwindowTabs
 import com.intellij.collaboration.ui.toolwindow.ReviewToolwindowTabsStateHolder
-import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.components.service
@@ -13,7 +12,6 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.util.concurrency.SynchronizedClearableLazy
 import git4idea.remote.hosting.knownRepositories
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.flow.StateFlow
@@ -24,7 +22,6 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.github.api.GHRepositoryConnection
 import org.jetbrains.plugins.github.pullrequest.GHPRStatisticsCollector
 import org.jetbrains.plugins.github.pullrequest.config.GithubPullRequestsProjectUISettings
-import org.jetbrains.plugins.github.pullrequest.data.GHPRFilesManagerImpl
 import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
 import org.jetbrains.plugins.github.pullrequest.ui.GHPRConnectedProjectViewModel
 import org.jetbrains.plugins.github.pullrequest.ui.GHPRConnectedProjectViewModelBase
@@ -46,7 +43,6 @@ class GHPRToolWindowProjectViewModel internal constructor(
 
   private val repoManager = project.service<GHHostedRepositoriesManager>()
   private val allRepos = repoManager.knownRepositories.map(GHGitRepositoryMapping::repository)
-  private val filesManager = GHPRFilesManagerImpl(project, repository)
   override val projectName: String = GHUIUtil.getRepositoryDisplayName(allRepos, repository)
 
   private val lazyCreateVm = SynchronizedClearableLazy {
@@ -143,14 +139,8 @@ class GHPRToolWindowProjectViewModel internal constructor(
   }
 
   override fun openPullRequestTimeline(id: GHPRIdentifier, requestFocus: Boolean) {
-    cs.launch(Dispatchers.EDT) {
-      filesManager.createAndOpenTimelineFile(id, requestFocus)
-    }
-  }
-
-  override fun openPullRequestDiff(id: GHPRIdentifier?, requestFocus: Boolean) {
-    cs.launch(Dispatchers.EDT) {
-      filesManager.createAndOpenDiffFile(id, requestFocus)
+    cs.launch {
+      filesManager.openTimeline(id, requestFocus)
     }
   }
 }

@@ -28,22 +28,22 @@ internal class GHPRFilesManagerImpl(
 
   private val fs by lazy { GHPRVirtualFileSystem.getInstance() }
 
-  override fun createAndOpenTimelineFile(prId: GHPRIdentifier, requestFocus: Boolean) {
+  override suspend fun openTimeline(prId: GHPRIdentifier, requestFocus: Boolean) {
     val path = fs.getPath(id, project, repository, prId, false)
     fs.refreshAndFindFileByPath(path)?.let {
-      FileEditorManager.getInstance(project).requestOpenFile(it, FileEditorOpenRequest.withFocus(requestFocus))
+      FileEditorManager.getInstanceAsync(project).openFile(it, FileEditorOpenRequest.withFocus(requestFocus))
       GHPRStatisticsCollector.logTimelineOpened(project)
     }
   }
 
-  override fun createAndOpenDiffFile(prId: GHPRIdentifier?, requestFocus: Boolean) {
+  override suspend fun openDiff(prId: GHPRIdentifier?, requestFocus: Boolean) {
     val path = fs.getPath(id, project, repository, prId, true)
     fs.refreshAndFindFileByPath(path).also {
       if (prId != null) {
         GHPRStatisticsCollector.logDiffOpened(project)
       }
       it?.let {
-        DiffEditorTabFilesManager.getInstance(project).requestShowDiffFile(it, FileEditorOpenRequest.withFocus(requestFocus))
+        project.serviceAsync<DiffEditorTabFilesManager>().openDiffFile(it, FileEditorOpenRequest.withFocus(requestFocus))
       }
     }
   }

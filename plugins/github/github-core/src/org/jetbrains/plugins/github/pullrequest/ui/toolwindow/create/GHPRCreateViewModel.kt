@@ -161,7 +161,7 @@ internal class GHPRCreateViewModelImpl(
   private val dataContext: GHPRDataContext,
   private val viewPullRequest: (GHPRIdentifier, Boolean) -> Unit,
   private val closeNewPullRequest: () -> Unit,
-  private val openPullRequestDiff: (GHPRIdentifier?, Boolean) -> Unit,
+  private val openPullRequestDiff: suspend (GHPRIdentifier?, Boolean) -> Unit,
   private val refreshPrOnCurrentBranch: () -> Unit,
 ) : GHPRCreateViewModel, Disposable {
   private val cs = parentCs.childScope(javaClass.name)

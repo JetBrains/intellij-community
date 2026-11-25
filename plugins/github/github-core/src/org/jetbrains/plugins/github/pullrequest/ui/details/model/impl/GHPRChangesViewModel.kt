@@ -53,7 +53,7 @@ internal class GHPRChangesViewModelImpl(
   private val project: Project,
   private val dataContext: GHPRDataContext,
   private val dataProvider: GHPRDataProvider,
-  private val openPullRequestDiff: (GHPRIdentifier?, Boolean) -> Unit,
+  private val openPullRequestDiff: suspend (GHPRIdentifier?, Boolean) -> Unit,
 ) : GHPRChangesViewModel {
   private val cs = parentCs.childScope(this::class)
 

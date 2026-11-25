@@ -36,6 +36,8 @@ import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestShort
 import org.jetbrains.plugins.github.pullrequest.GHPRListViewModel
 import org.jetbrains.plugins.github.pullrequest.GHPRStatisticsCollector
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext
+import org.jetbrains.plugins.github.pullrequest.data.GHPRFilesManager
+import org.jetbrains.plugins.github.pullrequest.data.GHPRFilesManagerImpl
 import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
 import org.jetbrains.plugins.github.pullrequest.ui.details.model.GHPRBranchesViewModel
 import org.jetbrains.plugins.github.pullrequest.ui.diff.GHPRDiffViewModel
@@ -93,7 +95,7 @@ interface GHPRConnectedProjectViewModel {
   fun openPullRequestInfoAndTimeline(number: Long)
   fun openPullRequestInfoAndDiff(id: GHPRIdentifier)
   fun openPullRequestTimeline(id: GHPRIdentifier, requestFocus: Boolean)
-  fun openPullRequestDiff(id: GHPRIdentifier?, requestFocus: Boolean)
+  suspend fun openPullRequestDiff(id: GHPRIdentifier?, requestFocus: Boolean)
 }
 
 private val LOG = logger<GHPRConnectedProjectViewModelBase>()
@@ -109,6 +111,7 @@ abstract class GHPRConnectedProjectViewModelBase(
   override val connectionId: String = connection.id
   override val dataContext: GHPRDataContext = connection.dataContext
   override val repository: GHRepositoryCoordinates = dataContext.repositoryDataService.repositoryCoordinates
+  internal val filesManager: GHPRFilesManager = GHPRFilesManagerImpl(project, repository)
   override val listVm: GHPRListViewModel = GHPRListViewModel(project, cs, connection.dataContext)
 
   private val repoManager: GHHostedRepositoriesManager = project.service<GHHostedRepositoriesManager>()
@@ -207,8 +210,12 @@ abstract class GHPRConnectedProjectViewModelBase(
       val prId = dataContext.detailsService.findPRId(number) ?: return@launch // It's an issue ID or doesn't exist
 
       viewPullRequest(prId, true)
-      openPullRequestTimeline(prId, true)
+      filesManager.openTimeline(prId, requestFocus = true)
     }
+  }
+
+  override suspend fun openPullRequestDiff(id: GHPRIdentifier?, requestFocus: Boolean) {
+    filesManager.openDiff(id, requestFocus)
   }
 
   override fun openPullRequestInfoAndDiff(id: GHPRIdentifier) {
@@ -231,7 +238,7 @@ abstract class GHPRConnectedProjectViewModelBase(
       if (!changes.isNullOrEmpty()) {
         acquireDiffViewModel(id, cs).showDiffFor(ChangesSelection.Precise(changes, 0))
       }
-      openPullRequestDiff(id, true)
+      openPullRequestDiff(id, requestFocus = true)
     }
   }
 

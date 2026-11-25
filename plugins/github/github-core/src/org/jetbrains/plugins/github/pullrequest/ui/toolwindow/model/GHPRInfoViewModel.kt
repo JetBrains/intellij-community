@@ -30,7 +30,7 @@ class GHPRInfoViewModel internal constructor(
   parentCs: CoroutineScope,
   private val dataContext: GHPRDataContext,
   private val dataProvider: GHPRDataProvider,
-  private val openPullRequestDiff: (GHPRIdentifier?, Boolean) -> Unit,
+  private val openPullRequestDiff: suspend (GHPRIdentifier?, Boolean) -> Unit,
 ) : GHPRDetailsLoadingViewModel {
   private val cs = parentCs.childScope(javaClass.name)
 

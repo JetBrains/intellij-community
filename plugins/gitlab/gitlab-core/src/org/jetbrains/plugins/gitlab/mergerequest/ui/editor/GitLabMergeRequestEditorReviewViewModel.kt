@@ -27,7 +27,6 @@ import com.intellij.util.EventDispatcher
 import git4idea.changes.GitTextFilePatchWithHistory
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.flow.Flow
@@ -47,7 +46,6 @@ import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.transformLatest
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.data.GitLabImageLoader
@@ -74,7 +72,7 @@ class GitLabMergeRequestEditorReviewViewModel internal constructor(
   private val avatarIconsProvider: IconsProvider<GitLabUserDTO>,
   private val imageLoader: GitLabImageLoader,
   private val openMergeRequestDetails: (String, GitLabStatistics.ToolWindowOpenTabActionPlace, Boolean) -> Unit,
-  private val openMergeRequestDiff: (String, Boolean) -> Unit,
+  private val openMergeRequestDiff: suspend (String, Boolean) -> Unit,
 ) : GitLabMergeRequestReviewViewModelBase(
   parentCs.childScope("GitLab Merge Request Editor Review VM"),
   project, localRepository, currentUser, mergeRequest,
@@ -289,9 +287,7 @@ class GitLabMergeRequestEditorReviewViewModel internal constructor(
       launchNow {
         vm.showDiffRequests.collect { line ->
           diffRequestsMulticaster.multicaster.onChangesSelectionChanged(changes, line?.let { DiffLineLocation(Side.RIGHT, it) })
-          withContext(Dispatchers.Main) {
-            openMergeRequestDiff(mergeRequestIid, true)
-          }
+          openMergeRequestDiff(mergeRequestIid, true)
         }
       }
     }

@@ -4,6 +4,8 @@ package org.jetbrains.plugins.github.pullrequest.ui.details.model.impl
 import app.cash.turbine.ReceiveTurbine
 import app.cash.turbine.turbineScope
 import com.intellij.collaboration.api.dto.GraphQLNodesDTO
+import com.intellij.collaboration.util.getOrNull
+import com.intellij.openapi.application.EDT
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
@@ -17,10 +19,18 @@ import io.mockk.just
 import io.mockk.mockk
 import io.mockk.mockkObject
 import io.mockk.unmockkAll
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.mapNotNull
+import kotlinx.coroutines.job
+import kotlinx.coroutines.withContext
 import org.jetbrains.plugins.github.api.data.GHCommit
 import org.jetbrains.plugins.github.pullrequest.GHPRStatisticsCollector
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext
@@ -28,6 +38,7 @@ import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDataProvider
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import java.util.Date
@@ -86,6 +97,22 @@ class GHPRChangesViewModelImplTest {
   @AfterEach
   fun tearDown() {
     unmockkAll()
+  }
+
+  @Test
+  fun `closing the changes view cancels a pending diff preview`() = timeoutRunBlocking {
+    val viewScope = childScope("changes view")
+    val started = CompletableDeferred<Job>()
+    val vm = GHPRChangesViewModelImpl(viewScope, project, dataContext, dataProvider) { _, _ ->
+      started.complete(currentCoroutineContext().job)
+      awaitCancellation()
+    }
+    val changes = vm.changeListVm.mapNotNull { it.getOrNull() }.first()
+    withContext(Dispatchers.EDT) { changes.showDiffPreview() }
+    val openJob = started.await()
+    viewScope.cancel()
+    openJob.join()
+    assertTrue(openJob.isCancelled)
   }
 
   @Test
