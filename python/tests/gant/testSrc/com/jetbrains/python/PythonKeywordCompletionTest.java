@@ -551,7 +551,6 @@ public class PythonKeywordCompletionTest extends PyTestCase {
       if (!v.getLookupString().equals("exec")) return null;
       return v.getPsiElement() instanceof PyFunction ? "builtin function" : "keyword";
     }));
-    fixme("PY-92672", AssertionError.class, "expected:<[builtin function]> but was:<[builtin function, keyword]>",
-          () -> assertSameElements(execKinds, "builtin function"));
+    assertSameElements(execKinds, "builtin function");
   }
 }

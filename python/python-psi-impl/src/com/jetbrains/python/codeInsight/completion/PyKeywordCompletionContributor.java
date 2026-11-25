@@ -514,14 +514,14 @@ public final class PyKeywordCompletionContributor extends CompletionContributor 
           final @NotNull ProcessingContext context,
           final @NotNull CompletionResultSet result
         ) {
-          putKeywords(result, TailTypes.spaceType(), PyNames.ASSERT, PyNames.DEL, PyNames.EXEC, PyNames.FROM, PyNames.IMPORT,
-                      PyNames.RAISE);
+          putKeywords(result, TailTypes.spaceType(), PyNames.ASSERT, PyNames.DEL, PyNames.FROM, PyNames.IMPORT, PyNames.RAISE);
           putKeywords(result, TailTypes.noneType(), PyNames.PASS);
         }
       }
     );
 
-    extend(CompletionType.BASIC, inStatement.andNot(PY3K), new PyKeywordCompletionProvider(TailTypes.spaceType(), PyNames.PRINT));
+    extend(CompletionType.BASIC, inStatement.andNot(PY3K),
+           new PyKeywordCompletionProvider(TailTypes.spaceType(), PyNames.EXEC, PyNames.PRINT));
   }
 
   private void addBreak() {
