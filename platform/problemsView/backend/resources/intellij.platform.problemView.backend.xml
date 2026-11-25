@@ -35,8 +35,8 @@
   <extensions defaultExtensionNs="com.intellij">
     <platform.rpc.backend.remoteApi apiInterface="com.intellij.platform.problemsView.shared.ProblemsViewApi"
                                     implementationClass="com.intellij.platform.problemsView.backend.BackendProblemsViewApi"/>
-    <problemsViewPanelProvider implementation="com.intellij.platform.problemsView.backend.BackendProblemsViewHighlightingPanelProvider" order="first"/>
-    <problemsViewPanelProvider implementation="com.intellij.platform.problemsView.backend.BackendProblemsViewProjectErrorsPanelProvider"/>
+    <problemsViewPanelProvider id="backendCurrentFile" implementation="com.intellij.platform.problemsView.backend.BackendProblemsViewHighlightingPanelProvider" order="first"/>
+    <problemsViewPanelProvider id="backendProjectErrors" implementation="com.intellij.platform.problemsView.backend.BackendProblemsViewProjectErrorsPanelProvider" order="first, after backendCurrentFile"/>
     
     <buildProgressListenerRegistrar implementation="com.intellij.platform.problemsView.backend.BuildViewProblemsListenerRegistrar"/>
   </extensions>
