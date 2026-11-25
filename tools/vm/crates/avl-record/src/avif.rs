@@ -7,7 +7,7 @@
 //!
 //! The encoder settings are those of `avifenc` for a still at one thread: the all-intra usage, a fixed quantizer, and
 //! speed [SPEED]. The tuning is `iq`, the default of `avifenc` for a still. The decision record
-//! the design `community/tools/vm/openspec/changes/archive/2026-10-23-a-scenario-with-a-video-takes-lossy-avif-stills/design.md` has the measurement.
+//! decision 2026-10-23-a-scenario-with-a-video-takes-lossy-avif-stills has the measurement.
 
 use std::ffi::{CStr, c_int, c_uint};
 use std::mem::MaybeUninit;

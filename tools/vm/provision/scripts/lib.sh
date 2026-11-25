@@ -70,7 +70,7 @@ air_bazel() {
 #
 # The prerequisite this adds is stated here because here is where it fails: `image validate` and `image build`
 # now need a working `./bazel.cmd` in this checkout, `validate` and not only `build` - Packer's `file`
-# provisioner stats its source during `packer validate`. Why the pipeline took that dependency on is the design `community/tools/vm/openspec/changes/archive/2026-09-26-the-ui-lane-tooling-is-rust/design.md`.
+# provisioner stats its source during `packer validate`. Why the pipeline took that dependency on is decision 2026-09-26-the-ui-lane-tooling-is-rust.
 #
 # Builds, where the controller's own `resolve_agent_binary` deliberately never does: that one runs under a
 # worker's lease-operation lock, where every other step costs seconds. Here there is no lock and the caller is
@@ -80,7 +80,7 @@ air_bazel() {
 # `cquery --output=starlark` and not `--output=files`, and not `out/bazel-bin` either. What `cquery` prints is
 # relative to the execution root, and it is a *symlink* into the transitioned output directory - so the check
 # below follows it, as Packer's upload does, which is what makes the uploaded bytes and the checked file the
-# same file. crates/avl-host-sys/src/guest/agent.rs documents each reading; the design `community/tools/vm/openspec/changes/archive/2026-09-26-the-ui-lane-tooling-is-rust/design.md`'s trap index says what each
+# same file. crates/avl-host-sys/src/guest/agent.rs documents each reading; decision 2026-09-26-the-ui-lane-tooling-is-rust's trap index says what each
 # one cost.
 resolve_guest_agent_binary() {
   # Declared before assignment on purpose: `local x="$(cmd)"` hides a failing command substitution's status

@@ -123,7 +123,8 @@ impl Selector {
         // generated suite id carries.
         //
         // A suite runs all of its scenarios, so neither kind can select one method. One scenario alone is left out
-        // on purpose: a suite's scenarios share one managed-agent chain (ADR 0108).
+        // on purpose: a suite's scenarios share one managed-agent chain
+        // (decision 2026-10-16-a-ui-scenario-runs-a-resolved-program-or-an-authored-body).
         let kind = if is_flow_id(head) {
             Some(SelectorKind::Flow)
         } else if regex!(r"^[a-z][a-z0-9]*(?:-[a-z0-9]+)+$").is_match(head) {

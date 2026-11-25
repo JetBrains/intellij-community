@@ -1420,7 +1420,7 @@ fn the_docker_engine_follows_the_environment_and_the_host() {
 
 /// The version rule of a macOS host that names no engine: macOS 26 or newer on Apple silicon runs Apple `container`.
 /// An older macOS, an Intel Mac and a Mac of unknown release keep the host engine. `DOCKER_BIN` and `DOCKER_HOST`
-/// name the host engine on every release. The design `community/tools/vm/openspec/changes/archive/2026-11-18-the-docker-backend-runs-on-the-host-engine-or-apple-container/design.md` records the rule.
+/// name the host engine on every release. Decision 2026-11-18-the-docker-backend-runs-on-the-host-engine-or-apple-container records the rule.
 #[test]
 fn the_macos_version_chooses_the_engine() {
     let intel_26 = MacosHost {

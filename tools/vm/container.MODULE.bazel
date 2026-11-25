@@ -1,5 +1,5 @@
 # Apple `container`, the engine of the UI-lane controller's Docker backend on a macOS host of macOS 26 or newer
-# (the design `community/tools/vm/openspec/changes/archive/2026-11-18-the-docker-backend-runs-on-the-host-engine-or-apple-container/design.md`). The pin removes the manual install.
+# (decision 2026-11-18-the-docker-backend-runs-on-the-host-engine-or-apple-container). The pin removes the manual install.
 #
 # No `BUILD` file may name `@air_container_darwin_arm64` in `data` or `deps`. The controller asks for the alias with
 # `bazel cquery` at its first command on this engine (`resolve_apple_executable` in

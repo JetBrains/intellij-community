@@ -1,6 +1,6 @@
 //! `read-file <path>`: one guest file on standard output, unchanged, for the controller's pull.
 //!
-//! The Tart and Docker exec channels carry bytes unchanged, which the design `community/tools/vm/openspec/changes/archive/2026-11-08-the-controller-reaches-the-guest-through-the-exec-channel/design.md` and the design `community/tools/vm/openspec/changes/archive/2026-10-08-the-linux-worker-is-a-docker-container-and-the-default/design.md` measured, so the file needs
+//! The Tart and Docker exec channels carry bytes unchanged, which decision 2026-11-08-the-controller-reaches-the-guest-through-the-exec-channel and decision 2026-10-08-the-linux-worker-is-a-docker-container-and-the-default measured, so the file needs
 //! no text encoding on them. Stdout is the file itself, so the verb answers its envelope on stderr, after the last
 //! byte: the success envelope names the size and the SHA-256 of what it wrote ([`FileReceipt`]), and the controller
 //! compares them with what arrived. A refusal is the failure envelope on stderr, as for every other verb, and a file

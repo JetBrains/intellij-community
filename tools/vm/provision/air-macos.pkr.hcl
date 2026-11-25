@@ -36,7 +36,7 @@ variable "node_major" {
 # much as `image build`: Packer's `file` provisioner stats its source during `packer validate`, so no
 # configuration check can skip the binary. `scripts/lib.sh` owns the resolution and states what that costs the
 # operator who has to satisfy it. Why the pipeline took the dependency on, and why the image still contains no
-# Bazel, is the design `community/tools/vm/openspec/changes/archive/2026-09-26-the-ui-lane-tooling-is-rust/design.md` - `community/tools/vm/openspec/changes/archive/2026-09-26-the-ui-lane-tooling-is-rust/design.md`.
+# Bazel, is decision 2026-09-26-the-ui-lane-tooling-is-rust - `community/tools/vm/openspec/changes/archive/2026-09-26-the-ui-lane-tooling-is-rust/design.md`.
 variable "guest_agent_binary" {
   type = string
 }

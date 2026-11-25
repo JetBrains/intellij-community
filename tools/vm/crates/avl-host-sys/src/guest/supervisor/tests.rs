@@ -749,7 +749,7 @@ async fn an_unreachable_daemon_is_judged_executing() {
 // Every status the guest agent can leave with is one this controller names. A refusal's status stays the guest's own,
 // so whatever a guest picks is what `vm` leaves with and what a caller branches on. The 71 and 72 are the numbers the
 // retired `validate-guest.sh` spent on two of its check classes, and this is the check they fail; why a check class
-// must not be a status is the design `community/tools/vm/openspec/changes/archive/2026-09-26-the-ui-lane-tooling-is-rust/design.md`.
+// must not be a status is decision 2026-09-26-the-ui-lane-tooling-is-rust.
 #[test]
 fn every_status_the_guest_agent_leaves_with_is_one_the_controller_names() {
     let named: Vec<(i32, &str)> = vec![

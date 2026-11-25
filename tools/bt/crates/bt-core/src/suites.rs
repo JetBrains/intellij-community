@@ -6,7 +6,7 @@
 //! each generated class, release. The class names were the only handle, and a reader who knows the flow had to look
 //! them up first. The committed suite documents already state which suites tell or walk a flow, so a flow id and a
 //! suite id answer that lookup here, and `vm.cmd run flow-rename-session` and `bt.cmd flow-rename-session` are one
-//! line each. The design `community/tools/vm/openspec/changes/archive/2026-09-24-a-flow-is-a-test-selector/design.md` records the decision.
+//! line each. Decision 2026-09-24-a-flow-is-a-test-selector records the decision.
 //!
 //! # The flow relation has one owner
 //!

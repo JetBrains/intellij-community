@@ -28,7 +28,7 @@ GOTO :CMDSCRIPT
 # 2. **`AIR_VM_BIN` overrides everything on the sh half, checked first.** It names an explicit binary and
 #    skips Bazel entirely: a debugger attaching to it, a hand-built binary, or one binary held for the whole of a
 #    comparison rather than rebuilt between its halves. There is no parity gate behind it any more;
-#    the design `community/tools/vm/openspec/changes/archive/2026-09-26-the-ui-lane-tooling-is-rust/design.md` deleted the Go implementation it compared against. The CMD half reads it the same way (note 7).
+#    decision 2026-09-26-the-ui-lane-tooling-is-rust deleted the Go implementation it compared against. The CMD half reads it the same way (note 7).
 #
 # 3. **No `--refresh`.** There is nothing to drop.
 #

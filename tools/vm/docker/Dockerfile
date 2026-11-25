@@ -8,12 +8,12 @@
 # The image tag is a digest over this file, `air-display`, the base image and the package list.
 # A change to one of them gives a new tag, and the controller then builds the image again.
 # `AIR_IMAGE_REVISION` is that digest. The label holds it, so the controller can check an image it pulled from the
-# registry by its tag before a worker runs on it (the design `community/tools/vm/openspec/changes/archive/2026-09-29-the-worker-image-is-pulled-by-its-content-tag/design.md`).
+# registry by its tag before a worker runs on it (decision 2026-09-29-the-worker-image-is-pulled-by-its-content-tag).
 # The base image has the account `ubuntu` at uid 1000, on Ubuntu 24.04 and 26.04 alike. The worker account `admin`
 # needs that uid, so the build removes `ubuntu` first.
 # The image installs no recommended package. The fluxbox overlay below keeps the style from setting a wallpaper, so
 # fluxbox never runs `fbsetbg`, which needs a wallpaper setter (`feh`) and opens an `xmessage` without one.
-# The design `community/tools/vm/openspec/changes/archive/2026-10-08-the-linux-worker-is-a-docker-container-and-the-default/design.md` records why a Linux worker may be a container.
+# Decision 2026-10-08-the-linux-worker-is-a-docker-container-and-the-default records why a Linux worker may be a container.
 ARG AIR_BASE_IMAGE
 
 # The Node archive is fetched and extracted on the build platform, natively. A publish builds the other platform

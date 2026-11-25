@@ -1,6 +1,6 @@
 //! The Apple `container` engine: the engine of the Docker backend on a macOS host of macOS 26 or newer, on Apple
 //! silicon, that names no other engine ([`avl_base::DockerEngine::AppleContainer`], the decision
-//! the design `community/tools/vm/openspec/changes/archive/2026-11-18-the-docker-backend-runs-on-the-host-engine-or-apple-container/design.md`).
+//! decision 2026-11-18-the-docker-backend-runs-on-the-host-engine-or-apple-container).
 //!
 //! Apple `container` runs each container in a VM of its own. Its CLI has the shape of the Docker CLI, so the backend
 //! keeps its lifecycle and renders each command in the dialect of this CLI (`Dialect` in the Docker module). This

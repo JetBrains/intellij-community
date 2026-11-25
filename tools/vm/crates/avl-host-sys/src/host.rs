@@ -1,6 +1,6 @@
 //! The facts of this host that the settings read and that a portable crate cannot probe.
 //!
-//! `avl-base` links no `libc` and holds no `unsafe` (the design `community/tools/vm/openspec/changes/archive/2026-11-18-the-docker-backend-runs-on-the-host-engine-or-apple-container/design.md`), so the probe lives here, and the caller of
+//! `avl-base` links no `libc` and holds no `unsafe` (decision 2026-11-18-the-docker-backend-runs-on-the-host-engine-or-apple-container), so the probe lives here, and the caller of
 //! `Config::load` hands the answer in as `avl_base::HostFacts`.
 
 #[cfg(test)]

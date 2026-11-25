@@ -38,7 +38,7 @@ const CHUNK: usize = 64 * 1024;
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub(crate) enum Transfer {
     /// The bytes unchanged, through the agent's `read-file`, which names them in a [`FileReceipt`] on stderr. The Tart
-    /// and Docker exec channels carry bytes unchanged, which the design `community/tools/vm/openspec/changes/archive/2026-11-08-the-controller-reaches-the-guest-through-the-exec-channel/design.md` and the design `community/tools/vm/openspec/changes/archive/2026-10-08-the-linux-worker-is-a-docker-container-and-the-default/design.md` measured. The container-linux exec is the
+    /// and Docker exec channels carry bytes unchanged, which decision 2026-11-08-the-controller-reaches-the-guest-through-the-exec-channel and decision 2026-10-08-the-linux-worker-is-a-docker-container-and-the-default measured. The container-linux exec is the
     /// runtime's exec through the skill's script.
     Raw,
     /// The guest's `/usr/bin/base64 -i`, decoded here. No measurement proved the `prlctl exec` channel byte-clean, so

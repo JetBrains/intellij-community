@@ -450,7 +450,7 @@ fn refuse_explicit_only(label: &str, program: &str) -> Result<(), Refusal> {
 /// The jar bytes that one upload connection carries before the push opens another.
 ///
 /// Each upload in flight holds a pooled HTTP connection of its own, and each new connection spawns one relay child in
-/// the guest, which the design `community/tools/vm/openspec/changes/archive/2026-11-08-the-controller-reaches-the-guest-through-the-exec-channel/design.md` measured at 0.65 s on Tart. A new connection pays only for bytes that one connection would
+/// the guest, which decision 2026-11-08-the-controller-reaches-the-guest-through-the-exec-channel measured at 0.65 s on Tart. A new connection pays only for bytes that one connection would
 /// take longer than that to move. So a push of at most 8 MiB uses the one connection of the `/jars` query and opens no
 /// relay more. The throughput of one `tart exec` stream is not measured, so the step is an estimate.
 pub(crate) const BYTES_PER_UPLOAD_CONNECTION: u64 = 8 << 20;
