@@ -47,18 +47,17 @@ dev_plugin(
         "//idea/customization/base:base_content_module_jar",
         "//platform/non-modal-welcome-screen/backend:backend_content_module_jar",
         "//platform/non-modal-welcome-screen/frontend:frontend_content_module_jar",
+        "//platform/non-modal-welcome-screen:non-modal-welcome-screen_content_module_jar",
     ],
     descriptor = "//build/dist-descriptors/intellij.idea.customization.plugin:intellij.idea.customization.plugin_dev_descriptor",
     jars = {
         "lib/idea-customization-plugin.jar": [
             "intellij.idea.customization.plugin",
-            "intellij.platform.ide.nonModalWelcomeScreen",
         ],
     },
     main_module = "intellij.idea.customization.plugin",
     modules = {
         "//idea/customization/plugin": "intellij.idea.customization.plugin",
-        "//platform/non-modal-welcome-screen": "intellij.platform.ide.nonModalWelcomeScreen",
     },
     plugin_directory = "plugins/idea-customization",
     stamp_class_modes = [
