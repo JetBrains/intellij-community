@@ -18,14 +18,15 @@ import com.intellij.openapi.util.NotNullLazyKey;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.vfs.AsyncFileListener;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileCopyEvent;
-import com.intellij.openapi.vfs.VirtualFileEvent;
-import com.intellij.openapi.vfs.VirtualFileListener;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.WritingAccessProvider;
 import com.intellij.openapi.vfs.ex.temp.TempFileSystemMarker;
+import com.intellij.openapi.vfs.newvfs.events.VFileCopyEvent;
+import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent;
+import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.project.ProjectKt;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
@@ -62,7 +63,7 @@ public final class NonProjectFileWritingAccessProvider extends WritingAccessProv
     myProject = project;
 
     if (myInitialized.compareAndSet(false, true)) {
-      VirtualFileManager.getInstance().addVirtualFileListener(new OurVirtualFileListener());
+      VirtualFileManager.getInstance().addAsyncFileListenerBackgroundable(new OurAsyncFileListener(), ApplicationManager.getApplication());
     }
   }
 
@@ -209,19 +210,34 @@ public final class NonProjectFileWritingAccessProvider extends WritingAccessProv
     return ApplicationManager.getApplication();
   }
 
-  private static final class OurVirtualFileListener implements VirtualFileListener {
+  private static final class OurAsyncFileListener implements AsyncFileListener {
     @Override
-    public void fileCreated(@NotNull VirtualFileEvent event) {
-      unlock(event);
-    }
+    public @Nullable ChangeApplier prepareChange(@NotNull List<? extends @NotNull VFileEvent> events) {
+      List<VFileEvent> eventsToUnlock = new ArrayList<>();
+      for (VFileEvent event : events) {
+        if (event.isFromRefresh()) continue;
+        if (event instanceof VFileCreateEvent createEvent && !createEvent.isDirectory()) {
+          eventsToUnlock.add(event);
+        }
+        else if (event instanceof VFileCopyEvent copyEvent && !copyEvent.getFile().isDirectory()) {
+          eventsToUnlock.add(event);
+        }
+      }
+      if (eventsToUnlock.isEmpty()) return null;
 
-    @Override
-    public void fileCopied(@NotNull VirtualFileCopyEvent event) {
-      unlock(event);
-    }
-
-    private static void unlock(@NotNull VirtualFileEvent event) {
-      if (!event.isFromRefresh() && !event.getFile().isDirectory()) allowWriting(Collections.singletonList(event.getFile()));
+      return new ChangeApplier() {
+        @Override
+        public void afterVfsChange() {
+          List<VirtualFile> filesToUnlock = new ArrayList<>();
+          for (VFileEvent event : eventsToUnlock) {
+            VirtualFile file = event instanceof VFileCreateEvent createEvent
+                               ? createEvent.getFile()
+                               : ((VFileCopyEvent)event).findCreatedFile();
+            if (file != null) filesToUnlock.add(file);
+          }
+          allowWriting(filesToUnlock);
+        }
+      };
     }
   }
 }

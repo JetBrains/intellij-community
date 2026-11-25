@@ -34,7 +34,6 @@ import com.intellij.util.concurrency.TransferredWriteActionService;
 import com.intellij.util.concurrency.annotations.RequiresWriteLock;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.URLUtil;
-import com.intellij.util.messages.MessageBus;
 import com.intellij.util.ui.EDT;
 import com.intellij.util.xmlb.annotations.Attribute;
 import kotlin.Unit;
@@ -73,10 +72,6 @@ public class VirtualFileManagerImpl extends VirtualFileManager implements Dispos
   private int refreshCount;
 
   public VirtualFileManagerImpl(@NotNull List<? extends VirtualFileSystem> preCreatedFileSystems) {
-    this(preCreatedFileSystems, ApplicationManager.getApplication().getMessageBus());
-  }
-
-  public VirtualFileManagerImpl(@NotNull List<? extends VirtualFileSystem> preCreatedFileSystems, @NotNull MessageBus bus) {
     myPreCreatedFileSystems = new ArrayList<>(preCreatedFileSystems);
 
     for (VirtualFileSystem fileSystem : preCreatedFileSystems) {
@@ -86,9 +81,36 @@ public class VirtualFileManagerImpl extends VirtualFileManager implements Dispos
       }
     }
 
-    addVirtualFileListener(new LoggingListener());
+    asyncFileListenersBackgroundable.add(new VirtualFileListenerBridge(new LoggingListener()));
 
-    bus.connect().subscribe(VFS_CHANGES, new BulkVirtualFileListenerAdapter(myVirtualFileListenerMulticaster.getMulticaster()));
+    asyncFileListeners.add(new VirtualFileListenerBridge(myVirtualFileListenerMulticaster.getMulticaster()));
+  }
+
+  private static final class VirtualFileListenerBridge implements AsyncFileListener {
+    private final VirtualFileListener myAdapted;
+
+    private VirtualFileListenerBridge(@NotNull VirtualFileListener adapted) {
+      myAdapted = adapted;
+    }
+
+    @Override
+    public @NotNull ChangeApplier prepareChange(@NotNull List<? extends @NotNull VFileEvent> events) {
+      return new ChangeApplier() {
+        @Override
+        public void beforeVfsChange() {
+          for (VFileEvent event : events) {
+            BulkVirtualFileListenerAdapter.fireBefore(myAdapted, event);
+          }
+        }
+
+        @Override
+        public void afterVfsChange() {
+          for (VFileEvent event : events) {
+            BulkVirtualFileListenerAdapter.fireAfter(myAdapted, event);
+          }
+        }
+      };
+    }
   }
 
   public @NotNull List<VirtualFileSystem> getPhysicalFileSystems() {

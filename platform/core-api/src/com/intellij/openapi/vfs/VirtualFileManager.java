@@ -197,8 +197,8 @@ public abstract class VirtualFileManager implements ModificationTracker {
   public abstract void addVirtualFileListener(@NotNull VirtualFileListener listener);
 
   /**
-   * @deprecated When possible, migrate to {@link AsyncFileListener} to process events on a pooled thread.
-   * Otherwise, consider using {@link #VFS_CHANGES} message bus topic to avoid early initialization of {@link VirtualFileManager}.
+   * @deprecated When possible, migrate to {@link #addAsyncFileListenerBackgroundable(AsyncFileListener, Disposable)} to process events on a pooled thread.
+   * Otherwise, consider using {@link #VFS_CHANGES_BG} message bus topic to avoid early initialization of {@link VirtualFileManager}.
    */
   @Deprecated
   public abstract void addVirtualFileListener(@NotNull VirtualFileListener listener, @NotNull Disposable parentDisposable);
@@ -210,10 +210,12 @@ public abstract class VirtualFileManager implements ModificationTracker {
   public abstract void removeVirtualFileListener(@NotNull VirtualFileListener listener);
 
   /**
-   * The listeners registered this way will run on EDT. Consider using {@link VirtualFileManager#addAsyncFileListenerBackgroundable}
+   * The listeners registered this way will run on EDT.
    *
-   * Consider using extension point {@code vfs.asyncListener}.
+   * @deprecated When possible, migrate to {@link #addAsyncFileListenerBackgroundable(AsyncFileListener, Disposable)} to process events on a pooled thread.
+   * Otherwise, consider using {@link #VFS_CHANGES_BG} message bus topic to avoid early initialization of {@link VirtualFileManager}.
    */
+  @Deprecated
   public abstract void addAsyncFileListener(@NotNull AsyncFileListener listener, @NotNull Disposable parentDisposable);
 
   /**
@@ -222,6 +224,13 @@ public abstract class VirtualFileManager implements ModificationTracker {
    */
   public abstract void addAsyncFileListenerBackgroundable(@NotNull AsyncFileListener listener, @NotNull Disposable parentDisposable);
 
+  /**
+   * The listeners registered this way will run on EDT.
+   *
+   * @deprecated When possible, migrate to {@link #addAsyncFileListenerBackgroundable(CoroutineScope, AsyncFileListener)} to process events on a pooled thread.
+   * Otherwise, consider using {@link #VFS_CHANGES_BG} message bus topic to avoid early initialization of {@link VirtualFileManager}.
+   */
+  @Deprecated
   public abstract void addAsyncFileListener(@NotNull CoroutineScope coroutineScope, @NotNull AsyncFileListener listener);
 
   public abstract void addAsyncFileListenerBackgroundable(@NotNull CoroutineScope coroutineScope, @NotNull AsyncFileListener listener);

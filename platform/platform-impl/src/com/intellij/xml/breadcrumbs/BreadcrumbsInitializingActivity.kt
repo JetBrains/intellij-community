@@ -25,11 +25,12 @@ import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.vfs.AsyncFileListener
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapi.vfs.VirtualFileListener
 import com.intellij.openapi.vfs.VirtualFileManager
-import com.intellij.openapi.vfs.VirtualFilePropertyEvent
 import com.intellij.openapi.vfs.impl.http.HttpVirtualFile
+import com.intellij.openapi.vfs.newvfs.events.VFileEvent
+import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -52,7 +53,7 @@ internal class BreadcrumbsInitializingActivity : ProjectActivity {
       }
     })
     FileBreadcrumbsCollector.EP_NAME.getPoint(project).addChangeListener({ reinitBreadcrumbsInAllEditors(project, true) }, project)
-    VirtualFileManager.getInstance().addVirtualFileListener(MyVirtualFileListener(project), project)
+    VirtualFileManager.getInstance().addAsyncFileListenerBackgroundable(MyAsyncFileListener(project), project)
     connection.subscribe(UISettingsListener.TOPIC, UISettingsListener { reinitBreadcrumbsInAllEditors(project, true) })
     connection.subscribe(BreadcrumbsXmlWrapper.FORCE_RELOAD_BREADCRUMBS, Runnable { reinitBreadcrumbsInAllEditors(project, true) })
 
@@ -91,14 +92,29 @@ private class MyFileEditorManagerListener : FileEditorManagerListener {
   }
 }
 
-private class MyVirtualFileListener(private val myProject: Project) : VirtualFileListener {
-  override fun propertyChanged(event: VirtualFilePropertyEvent) {
-    if (VirtualFile.PROP_NAME == event.propertyName && !myProject.isDisposed) {
-      val fileEditorManager = FileEditorManager.getInstance(myProject)
-      val file = event.file
-      if (fileEditorManager.isFileOpen(file)) {
+private class MyAsyncFileListener(private val myProject: Project) : AsyncFileListener {
+  override fun prepareChange(events: List<VFileEvent>): AsyncFileListener.ChangeApplier? {
+    if (myProject.isDisposed) {
+      return null
+    }
+    val renamedFiles = events.mapNotNull { event ->
+      if (event is VFilePropertyChangeEvent && event.propertyName == VirtualFile.PROP_NAME) event.file else null
+    }
+    if (renamedFiles.isEmpty()) {
+      return null
+    }
+    return object : AsyncFileListener.ChangeApplier {
+      override fun afterVfsChange() {
+        if (myProject.isDisposed) {
+          return
+        }
+        val fileEditorManager = FileEditorManager.getInstance(myProject)
         val above = isAbove()
-        reinitBreadcrumbsComponent(fileEditorManager = fileEditorManager, file = file, above = above, allClients = true)
+        for (file in renamedFiles) {
+          if (fileEditorManager.isFileOpen(file)) {
+            reinitBreadcrumbsComponent(fileEditorManager = fileEditorManager, file = file, above = above, allClients = true)
+          }
+        }
       }
     }
   }
