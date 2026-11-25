@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
@@ -37,11 +38,9 @@ jvm_library(
 ### auto-generated section `build intellij.groovy.copyright` end
 
 ### auto-generated section `iml intellij.groovy.copyright` start
-exports_files(
-    [
-        "intellij.groovy.copyright.iml",
-        "resources/intellij.groovy.copyright.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.groovy.copyright",
+    descriptors = ["resources/intellij.groovy.copyright.xml"],
+    target = "copyright",
 )
 ### auto-generated section `iml intellij.groovy.copyright` end

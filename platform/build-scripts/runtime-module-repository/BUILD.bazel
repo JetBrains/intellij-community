@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_java//java:defs.bzl", "java_binary")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
@@ -62,11 +63,10 @@ jvm_library(
 ### auto-generated section `build intellij.platform.buildScripts.runtimeModuleRepository` end
 
 ### auto-generated section `iml intellij.platform.buildScripts.runtimeModuleRepository` start
-exports_files(
-    [
-        "intellij.platform.buildScripts.runtimeModuleRepository.iml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.platform.buildScripts.runtimeModuleRepository",
+    resources = False,
+    target = "runtime-module-repository",
 )
 ### auto-generated section `iml intellij.platform.buildScripts.runtimeModuleRepository` end
 
@@ -100,10 +100,9 @@ jvm_library(
 ### auto-generated section `build intellij.platform.buildScripts.runtimeModuleRepository.tests` end
 
 ### auto-generated section `iml intellij.platform.buildScripts.runtimeModuleRepository.tests` start
-exports_files(
-    [
-        "intellij.platform.buildScripts.runtimeModuleRepository.tests.iml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.platform.buildScripts.runtimeModuleRepository.tests",
+    resources = False,
+    target = "buildScripts-runtimeModuleRepository-tests_test_lib",
 )
 ### auto-generated section `iml intellij.platform.buildScripts.runtimeModuleRepository.tests` end

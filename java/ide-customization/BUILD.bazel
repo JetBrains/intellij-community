@@ -1,7 +1,8 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@community//build:tests-options.bzl", "jps_test")
 load("@community//platform/build-scripts/bazel-rules:ij_plugin.bzl", "ij_plugin")
-load("@jps_dynamic_deps_community//:targets.bzl", "dist_plugin")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:dist_plugin.bzl", "dist_plugin")
 
 jps_test(
     name = "ide-customization-tests_test",
@@ -19,6 +20,10 @@ dist_plugin(
         "intellij.java.ide.customization.backend",
     ],
     descriptor = "resources/META-INF/plugin.xml",
+    descriptors = {
+        "@community//java/ide-customization/backend:resources/intellij.java.ide.customization.backend.xml": "intellij.java.ide.customization.backend.xml",
+        "@community//java/ide-customization/training:resources/intellij.java.ide.customization.training.xml": "intellij.java.ide.customization.training.xml",
+    },
     jars = {
         "lib/java-ide-customization.jar": ["intellij.java.ide.customization"],
     },
@@ -28,6 +33,11 @@ dist_plugin(
             "intellij.java.ide.customization.training",
             "intellij.java.ide.customization.backend",
         ],
+    },
+    module_labels = {
+        "intellij.java.ide.customization": "@community//java/ide-customization:ide-customization",
+        "intellij.java.ide.customization.backend": "@community//java/ide-customization/backend:backend",
+        "intellij.java.ide.customization.training": "@community//java/ide-customization/training:training",
     },
 )
 ### auto-generated section `dev intellij.java.ide.customization` end
@@ -88,12 +98,11 @@ ij_plugin(
 ### auto-generated section `plugin intellij.java.ide.customization` end
 
 ### auto-generated section `iml intellij.java.ide.customization` start
-exports_files(
-    [
-        "intellij.java.ide.customization.iml",
-        "resources/META-INF/plugin.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.java.ide.customization",
+    descriptors = ["resources/META-INF/plugin.xml"],
+    plugin = True,
+    target = "ide-customization",
 )
 ### auto-generated section `iml intellij.java.ide.customization` end
 
@@ -139,10 +148,9 @@ jvm_library(
 ### auto-generated section `build intellij.java.ide.customization.tests` end
 
 ### auto-generated section `iml intellij.java.ide.customization.tests` start
-exports_files(
-    [
-        "intellij.java.ide.customization.tests.iml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.java.ide.customization.tests",
+    resources = False,
+    target = "ide-customization-tests_test_lib",
 )
 ### auto-generated section `iml intellij.java.ide.customization.tests` end

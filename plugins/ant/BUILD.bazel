@@ -1,9 +1,10 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@community//build:tests-options.bzl", "jps_test")
 load("@community//platform/build-scripts/bazel-rules:ij_plugin.bzl", "ij_plugin")
 load("@community//platform/build-scripts/bazel-rules:ij_plugin_module.bzl", "ij_plugin_module")
-load("@jps_dynamic_deps_community//:targets.bzl", "dist_plugin")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("@rules_pkg//pkg:mappings.bzl", "pkg_filegroup", "pkg_files")
+load("//platform/build-scripts/bazel-rules:dist_plugin.bzl", "dist_plugin")
 
 jps_test(
     name = "ant-tests_test",
@@ -17,12 +18,19 @@ jps_test(
 dist_plugin(
     content_modules = ["intellij.ant.jps"],
     descriptor = "resources/META-INF/plugin.xml",
+    descriptors = {
+        "@community//plugins/ant/jps-plugin:resources/intellij.ant.jps.xml": "intellij.ant.jps.xml",
+    },
     jars = {
         "lib/ant.jar": ["intellij.ant"],
     },
     main_module = "intellij.ant",
     module_jar_paths = {
         "intellij.ant.jps": "lib/intellij.ant.jps.jar",
+    },
+    module_labels = {
+        "intellij.ant": "@community//plugins/ant:ant",
+        "intellij.ant.jps": "@community//plugins/ant/jps-plugin:jps",
     },
 )
 ### auto-generated section `dev intellij.ant` end
@@ -143,12 +151,11 @@ ij_plugin(
 ### auto-generated section `plugin intellij.ant` end
 
 ### auto-generated section `iml intellij.ant` start
-exports_files(
-    [
-        "intellij.ant.iml",
-        "resources/META-INF/plugin.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.ant",
+    descriptors = ["resources/META-INF/plugin.xml"],
+    plugin = True,
+    target = "ant",
 )
 ### auto-generated section `iml intellij.ant` end
 
@@ -225,10 +232,9 @@ jvm_library(
 ### auto-generated section `build intellij.ant.tests` end
 
 ### auto-generated section `iml intellij.ant.tests` start
-exports_files(
-    [
-        "intellij.ant.tests.iml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.ant.tests",
+    resources = False,
+    target = "ant-tests_test_lib",
 )
 ### auto-generated section `iml intellij.ant.tests` end

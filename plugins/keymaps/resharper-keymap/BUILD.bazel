@@ -1,6 +1,7 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@community//platform/build-scripts/bazel-rules:ij_plugin.bzl", "ij_plugin")
-load("@jps_dynamic_deps_community//:targets.bzl", "dist_plugin")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:dist_plugin.bzl", "dist_plugin")
 
 ### auto-generated section `dev intellij.keymap.resharper` start
 dist_plugin(
@@ -9,6 +10,9 @@ dist_plugin(
         "lib/keymap-resharper.jar": ["intellij.keymap.resharper"],
     },
     main_module = "intellij.keymap.resharper",
+    module_labels = {
+        "intellij.keymap.resharper": "@community//plugins/keymaps/resharper-keymap:keymap-resharper",
+    },
 )
 ### auto-generated section `dev intellij.keymap.resharper` end
 
@@ -38,13 +42,14 @@ ij_plugin(
 ### auto-generated section `plugin intellij.keymap.resharper` end
 
 ### auto-generated section `iml intellij.keymap.resharper` start
-exports_files(
-    [
-        "intellij.keymap.resharper.iml",
-        "resources/META-INF/plugin.xml",
-        "resources/keymaps/ReSharper OSX.xml",
+jps_module(
+    name = "intellij.keymap.resharper",
+    descriptors = ["resources/META-INF/plugin.xml"],
+    plugin = True,
+    target = "keymap-resharper",
+    exports = [
         "resources/keymaps/ReSharper.xml",
+        "resources/keymaps/ReSharper OSX.xml",
     ],
-    visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.keymap.resharper` end

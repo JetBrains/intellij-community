@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
@@ -39,11 +40,9 @@ jvm_library(
 ### auto-generated section `build intellij.python.community.impl.pipenv.common` end
 
 ### auto-generated section `iml intellij.python.community.impl.pipenv.common` start
-exports_files(
-    [
-        "intellij.python.community.impl.pipenv.common.iml",
-        "resources/intellij.python.community.impl.pipenv.common.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.python.community.impl.pipenv.common",
+    descriptors = ["resources/intellij.python.community.impl.pipenv.common.xml"],
+    target = "common",
 )
 ### auto-generated section `iml intellij.python.community.impl.pipenv.common` end

@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.libraries.maven.resolver.transport` start
@@ -29,11 +30,9 @@ jvm_library(
 ### auto-generated section `build intellij.libraries.maven.resolver.transport` end
 
 ### auto-generated section `iml intellij.libraries.maven.resolver.transport` start
-exports_files(
-    [
-        "intellij.libraries.maven.resolver.transport.iml",
-        "resources/intellij.libraries.maven.resolver.transport.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.libraries.maven.resolver.transport",
+    descriptors = ["resources/intellij.libraries.maven.resolver.transport.xml"],
+    target = "maven-resolver-transport",
 )
 ### auto-generated section `iml intellij.libraries.maven.resolver.transport` end

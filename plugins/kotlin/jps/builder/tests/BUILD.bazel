@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@community//build:tests-options.bzl", "jps_test")
 load("@community//plugins/kotlin:kotlin_test_dependencies.bzl", "all_test_dep_targets")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
@@ -76,10 +77,9 @@ jvm_library(
 ### auto-generated section `build intellij.kotlin.builder.jps.tests` end
 
 ### auto-generated section `iml intellij.kotlin.builder.jps.tests` start
-exports_files(
-    [
-        "intellij.kotlin.builder.jps.tests.iml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.kotlin.builder.jps.tests",
+    resources = False,
+    target = "tests_test_lib",
 )
 ### auto-generated section `iml intellij.kotlin.builder.jps.tests` end

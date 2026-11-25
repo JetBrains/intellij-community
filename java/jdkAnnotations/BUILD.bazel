@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 # The annotation tree as source files. A test finds it in the runfiles through `TestJdkAnnotationsFilesProviderImpl`.
@@ -24,13 +25,14 @@ jvm_library(
 ### auto-generated section `build intellij.java.jdkAnnotations` end
 
 ### auto-generated section `iml intellij.java.jdkAnnotations` start
-exports_files(
-    [
-        "intellij.java.jdkAnnotations.iml",
+jps_module(
+    name = "intellij.java.jdkAnnotations",
+    descriptors = ["resources/intellij.java.jdkAnnotations.xml"],
+    target = "jdkAnnotations",
+    exports = [
         "resources/com/sun/jdi/annotations.xml",
         "resources/com/sun/jdi/event/annotations.xml",
         "resources/com/sun/jdi/request/annotations.xml",
-        "resources/intellij.java.jdkAnnotations.xml",
         "resources/java/awt/annotations.xml",
         "resources/java/awt/datatransfer/annotations.xml",
         "resources/java/awt/dnd/annotations.xml",
@@ -81,6 +83,5 @@ exports_files(
         "resources/javax/xml/bind/annotation/annotations.xml",
         "resources/org/w3c/dom/annotations.xml",
     ],
-    visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.java.jdkAnnotations` end

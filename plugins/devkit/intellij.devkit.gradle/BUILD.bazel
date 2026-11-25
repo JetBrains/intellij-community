@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@community//build:tests-options.bzl", "jps_test")
 load("@community//plugins/kotlin:kotlin_test_dependencies.bzl", "all_test_dep_targets")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
@@ -84,12 +85,10 @@ jvm_library(
 ### auto-generated section `build intellij.devkit.gradle` end
 
 ### auto-generated section `iml intellij.devkit.gradle` start
-exports_files(
-    [
-        "intellij.devkit.gradle.iml",
-        "resources/intellij.devkit.gradle.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.devkit.gradle",
+    descriptors = ["resources/intellij.devkit.gradle.xml"],
+    target = "gradle",
 )
 ### auto-generated section `iml intellij.devkit.gradle` end
 
@@ -165,10 +164,9 @@ jvm_library(
 ### auto-generated section `build intellij.devkit.gradle.tests` end
 
 ### auto-generated section `iml intellij.devkit.gradle.tests` start
-exports_files(
-    [
-        "intellij.devkit.gradle.tests.iml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.devkit.gradle.tests",
+    resources = False,
+    target = "gradle-tests_test_lib",
 )
 ### auto-generated section `iml intellij.devkit.gradle.tests` end

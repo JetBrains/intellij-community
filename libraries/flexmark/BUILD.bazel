@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.libraries.flexmark` start
@@ -19,11 +20,9 @@ jvm_library(
 ### auto-generated section `build intellij.libraries.flexmark` end
 
 ### auto-generated section `iml intellij.libraries.flexmark` start
-exports_files(
-    [
-        "intellij.libraries.flexmark.iml",
-        "resources/intellij.libraries.flexmark.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.libraries.flexmark",
+    descriptors = ["resources/intellij.libraries.flexmark.xml"],
+    target = "flexmark",
 )
 ### auto-generated section `iml intellij.libraries.flexmark` end

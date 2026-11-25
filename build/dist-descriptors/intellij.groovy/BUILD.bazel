@@ -12,25 +12,12 @@
 # the stamps. The component index names the `dev_plugin` target or the component of a `dist_complex_plugin`
 # call.
 #
-# A descriptor leaf derives its conventional descriptor rows from the bridge index of its half.
+# A descriptor leaf states every descriptor row. The label of a conventional row is in the recorded form.
 
-load("@jps_dynamic_deps_community//:targets.bzl", "dist_plugin_descriptor")
 load("//platform/build-scripts/bazel-rules:dev_plugin.bzl", "dev_plugin")
+load("//platform/build-scripts/bazel-rules:dist_plugin_descriptor.bzl", "dist_plugin_descriptor")
 
 dist_plugin_descriptor(
-    content_modules = [
-        "intellij.groovy.ant",
-        "intellij.groovy.byteCodeViewer",
-        "intellij.groovy.copyright",
-        "intellij.groovy.git",
-        "intellij.groovy.jps",
-        "intellij.groovy.langInjection",
-        "intellij.groovy.spock",
-        "intellij.groovy.structuralSearch",
-        "intellij.libraries.hamcrest",
-        "intellij.libraries.junit4",
-        "intellij.libraries.opentest4j",
-    ],
     descriptor = "//plugins/groovy:resources/META-INF/plugin.xml",
     descriptors = {
         "//plugins/groovy:resources/META-INF/gant-support.xml": "META-INF/gant-support.xml",
@@ -41,6 +28,17 @@ dist_plugin_descriptor(
         "//plugins/groovy:resources/META-INF/groovy-intentions.xml": "META-INF/groovy-intentions.xml",
         "//plugins/groovy:resources/META-INF/groovy-logback-support.xml": "META-INF/groovy-logback-support.xml",
         "//plugins/groovy:resources/META-INF/groovy-templates.xml": "META-INF/groovy-templates.xml",
+        "@community//libraries/hamcrest:resources/intellij.libraries.hamcrest.xml": "intellij.libraries.hamcrest.xml",
+        "@community//libraries/junit4:resources/intellij.libraries.junit4.xml": "intellij.libraries.junit4.xml",
+        "@community//libraries/opentest4j:resources/intellij.libraries.opentest4j.xml": "intellij.libraries.opentest4j.xml",
+        "@community//plugins/groovy/ant:resources/intellij.groovy.ant.xml": "intellij.groovy.ant.xml",
+        "@community//plugins/groovy/byteCodeViewer:resources/intellij.groovy.byteCodeViewer.xml": "intellij.groovy.byteCodeViewer.xml",
+        "@community//plugins/groovy/git:resources/intellij.groovy.git.xml": "intellij.groovy.git.xml",
+        "@community//plugins/groovy/intellij.groovy.copyright:resources/intellij.groovy.copyright.xml": "intellij.groovy.copyright.xml",
+        "@community//plugins/groovy/jps-plugin:resources/intellij.groovy.jps.xml": "intellij.groovy.jps.xml",
+        "@community//plugins/groovy/langInjection:resources/intellij.groovy.langInjection.xml": "intellij.groovy.langInjection.xml",
+        "@community//plugins/groovy/spock:resources/intellij.groovy.spock.xml": "intellij.groovy.spock.xml",
+        "@community//plugins/groovy/structuralsearch-groovy:resources/intellij.groovy.structuralSearch.xml": "intellij.groovy.structuralSearch.xml",
     },
     main_module = "intellij.groovy",
     mode_refused_content_modules = {

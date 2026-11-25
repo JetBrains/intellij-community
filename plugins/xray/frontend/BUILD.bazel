@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
@@ -48,10 +49,11 @@ jvm_library(
 ### auto-generated section `build intellij.xray.frontend` end
 
 ### auto-generated section `iml intellij.xray.frontend` start
-exports_files(
-    [
-        "intellij.xray.frontend.iml",
-        "resources/intellij.xray.frontend.xml",
+jps_module(
+    name = "intellij.xray.frontend",
+    descriptors = ["resources/intellij.xray.frontend.xml"],
+    target = "frontend",
+    exports = [
         "resources/xray/defaults/codeVision/defaults.xml",
         "resources/xray/defaults/declarative/defaults_Gradle.xml",
         "resources/xray/defaults/declarative/defaults_JS.xml",
@@ -66,6 +68,5 @@ exports_files(
         "resources/xray/defaults/parameterNames/defaults_TS.xml",
         "resources/xray/defaults/parameterNames/defaults_Vue.xml",
     ],
-    visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.xray.frontend` end

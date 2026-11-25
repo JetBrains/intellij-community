@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
@@ -66,14 +67,14 @@ jvm_library(
 ### auto-generated section `build intellij.sh.backend` end
 
 ### auto-generated section `iml intellij.sh.backend` start
-exports_files(
-    [
-        "intellij.sh.backend.iml",
-        "resources/intellij.sh.backend.xml",
+jps_module(
+    name = "intellij.sh.backend",
+    descriptors = ["resources/intellij.sh.backend.xml"],
+    target = "backend",
+    exports = [
         "resources/liveTemplates/ShellScript.xml",
         "resources/liveTemplates/ShellScriptArray.xml",
         "resources/liveTemplates/ShellScriptHidden.xml",
     ],
-    visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.sh.backend` end

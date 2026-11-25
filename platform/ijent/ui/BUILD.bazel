@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.platform.ijent.community.ui` start
@@ -59,11 +60,9 @@ jvm_library(
 ### auto-generated section `build intellij.platform.ijent.community.ui` end
 
 ### auto-generated section `iml intellij.platform.ijent.community.ui` start
-exports_files(
-    [
-        "intellij.platform.ijent.community.ui.iml",
-        "resources/intellij.platform.ijent.community.ui.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.platform.ijent.community.ui",
+    descriptors = ["resources/intellij.platform.ijent.community.ui.xml"],
+    target = "ui",
 )
 ### auto-generated section `iml intellij.platform.ijent.community.ui` end

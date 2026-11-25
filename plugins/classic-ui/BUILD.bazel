@@ -1,6 +1,7 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@community//platform/build-scripts/bazel-rules:ij_plugin.bzl", "ij_plugin")
-load("@jps_dynamic_deps_community//:targets.bzl", "dist_plugin")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:dist_plugin.bzl", "dist_plugin")
 
 ### auto-generated section `dev intellij.classic.ui` start
 dist_plugin(
@@ -9,6 +10,9 @@ dist_plugin(
         "lib/classic-ui.jar": ["intellij.classic.ui"],
     },
     main_module = "intellij.classic.ui",
+    module_labels = {
+        "intellij.classic.ui": "@community//plugins/classic-ui:classic-ui",
+    },
 )
 ### auto-generated section `dev intellij.classic.ui` end
 
@@ -38,11 +42,10 @@ ij_plugin(
 ### auto-generated section `plugin intellij.classic.ui` end
 
 ### auto-generated section `iml intellij.classic.ui` start
-exports_files(
-    [
-        "intellij.classic.ui.iml",
-        "resources/META-INF/plugin.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.classic.ui",
+    descriptors = ["resources/META-INF/plugin.xml"],
+    plugin = True,
+    target = "classic-ui",
 )
 ### auto-generated section `iml intellij.classic.ui` end

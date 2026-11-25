@@ -1,15 +1,23 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@community//platform/build-scripts/bazel-rules:ij_plugin.bzl", "ij_plugin")
-load("@jps_dynamic_deps_community//:targets.bzl", "dist_plugin")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:dist_plugin.bzl", "dist_plugin")
 
 ### auto-generated section `dev intellij.peek.definition.plugin` start
 dist_plugin(
     content_modules = ["intellij.peek.definition.frontend"],
     descriptor = "resources/META-INF/plugin.xml",
+    descriptors = {
+        "@community//plugins/peek-definition/frontend:resources/intellij.peek.definition.frontend.xml": "intellij.peek.definition.frontend.xml",
+    },
     jars = {
         "lib/peek-definition-plugin.jar": ["intellij.peek.definition.plugin"],
     },
     main_module = "intellij.peek.definition.plugin",
+    module_labels = {
+        "intellij.peek.definition.frontend": "@community//plugins/peek-definition/frontend:frontend",
+        "intellij.peek.definition.plugin": "@community//plugins/peek-definition/plugin:plugin",
+    },
 )
 ### auto-generated section `dev intellij.peek.definition.plugin` end
 
@@ -39,11 +47,10 @@ ij_plugin(
 ### auto-generated section `plugin intellij.peek.definition.plugin` end
 
 ### auto-generated section `iml intellij.peek.definition.plugin` start
-exports_files(
-    [
-        "intellij.peek.definition.plugin.iml",
-        "resources/META-INF/plugin.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.peek.definition.plugin",
+    descriptors = ["resources/META-INF/plugin.xml"],
+    plugin = True,
+    target = "plugin",
 )
 ### auto-generated section `iml intellij.peek.definition.plugin` end

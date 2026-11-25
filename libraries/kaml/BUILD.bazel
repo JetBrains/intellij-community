@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.libraries.kaml` start
@@ -19,11 +20,9 @@ jvm_library(
 ### auto-generated section `build intellij.libraries.kaml` end
 
 ### auto-generated section `iml intellij.libraries.kaml` start
-exports_files(
-    [
-        "intellij.libraries.kaml.iml",
-        "resources/intellij.libraries.kaml.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.libraries.kaml",
+    descriptors = ["resources/intellij.libraries.kaml.xml"],
+    target = "kaml",
 )
 ### auto-generated section `iml intellij.libraries.kaml` end

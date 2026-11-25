@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
@@ -39,11 +40,10 @@ jvm_library(
 ### auto-generated section `build intellij.platform.buildScripts.distGenerator` end
 
 ### auto-generated section `iml intellij.platform.buildScripts.distGenerator` start
-exports_files(
-    [
-        "intellij.platform.buildScripts.distGenerator.iml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.platform.buildScripts.distGenerator",
+    resources = False,
+    target = "dist-generator",
 )
 ### auto-generated section `iml intellij.platform.buildScripts.distGenerator` end
 
@@ -83,11 +83,9 @@ jvm_library(
 ### auto-generated section `build intellij.platform.buildScripts.distGenerator.tests` end
 
 ### auto-generated section `iml intellij.platform.buildScripts.distGenerator.tests` start
-exports_files(
-    [
-        "intellij.platform.buildScripts.distGenerator.tests.iml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.platform.buildScripts.distGenerator.tests",
+    target = "buildScripts-distGenerator-tests_test_lib",
 )
 ### auto-generated section `iml intellij.platform.buildScripts.distGenerator.tests` end
 

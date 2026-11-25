@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@community//fleet/build:fleet.bzl", "fleet_wasmjs_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
@@ -48,11 +49,9 @@ jvm_library(
 ### auto-generated section `build fleet.reporting.api` end
 
 ### auto-generated section `iml fleet.reporting.api` start
-exports_files(
-    [
-        "fleet.reporting.api.iml",
-        "resources/fleet.reporting.api.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "fleet.reporting.api",
+    descriptors = ["resources/fleet.reporting.api.xml"],
+    target = "api",
 )
 ### auto-generated section `iml fleet.reporting.api` end

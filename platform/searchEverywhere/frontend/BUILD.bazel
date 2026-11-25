@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
@@ -71,12 +72,10 @@ jvm_library(
 ### auto-generated section `build intellij.platform.searchEverywhere.frontend` end
 
 ### auto-generated section `iml intellij.platform.searchEverywhere.frontend` start
-exports_files(
-    [
-        "intellij.platform.searchEverywhere.frontend.iml",
-        "resources/intellij.platform.searchEverywhere.frontend.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.platform.searchEverywhere.frontend",
+    descriptors = ["resources/intellij.platform.searchEverywhere.frontend.xml"],
+    target = "frontend",
 )
 ### auto-generated section `iml intellij.platform.searchEverywhere.frontend` end
 
@@ -137,10 +136,9 @@ jvm_library(
 ### auto-generated section `build intellij.platform.searchEverywhere.frontend.tests` end
 
 ### auto-generated section `iml intellij.platform.searchEverywhere.frontend.tests` start
-exports_files(
-    [
-        "intellij.platform.searchEverywhere.frontend.tests.iml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.platform.searchEverywhere.frontend.tests",
+    resources = False,
+    target = "frontend-tests_test_lib",
 )
 ### auto-generated section `iml intellij.platform.searchEverywhere.frontend.tests` end

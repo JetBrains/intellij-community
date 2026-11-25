@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@community//platform/build-scripts/bazel-rules:ij_plugin_module.bzl", "ij_plugin_module")
 
 ### auto-generated section `build intellij.libraries.clikt` start
@@ -20,11 +21,9 @@ ij_plugin_module(
 ### auto-generated section `build intellij.libraries.clikt` end
 
 ### auto-generated section `iml intellij.libraries.clikt` start
-exports_files(
-    [
-        "intellij.libraries.clikt.iml",
-        "resources/intellij.libraries.clikt.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.libraries.clikt",
+    descriptors = ["resources/intellij.libraries.clikt.xml"],
+    target = "clikt",
 )
 ### auto-generated section `iml intellij.libraries.clikt` end

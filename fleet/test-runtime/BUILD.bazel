@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@community//fleet/build:fleet.bzl", "fleet_wasmjs_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
@@ -46,10 +47,8 @@ jvm_library(
 ### auto-generated section `build fleet.test.runtime` end
 
 ### auto-generated section `iml fleet.test.runtime` start
-exports_files(
-    [
-        "fleet.test.runtime.iml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "fleet.test.runtime",
+    target = "test-runtime",
 )
 ### auto-generated section `iml fleet.test.runtime` end

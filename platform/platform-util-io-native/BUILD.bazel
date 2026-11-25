@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
@@ -53,12 +54,10 @@ jvm_library(
 ### auto-generated section `build intellij.platform.ide.util.io.native` end
 
 ### auto-generated section `iml intellij.platform.ide.util.io.native` start
-exports_files(
-    [
-        "intellij.platform.ide.util.io.native.iml",
-        "resources/intellij.platform.ide.util.io.native.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.platform.ide.util.io.native",
+    descriptors = ["resources/intellij.platform.ide.util.io.native.xml"],
+    target = "ide-util-io-native",
 )
 ### auto-generated section `iml intellij.platform.ide.util.io.native` end
 
@@ -94,10 +93,9 @@ jvm_library(
 ### auto-generated section `build intellij.platform.ide.util.io.native.tests` end
 
 ### auto-generated section `iml intellij.platform.ide.util.io.native.tests` start
-exports_files(
-    [
-        "intellij.platform.ide.util.io.native.tests.iml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.platform.ide.util.io.native.tests",
+    resources = False,
+    target = "ide-util-io-native-tests_test_lib",
 )
 ### auto-generated section `iml intellij.platform.ide.util.io.native.tests` end

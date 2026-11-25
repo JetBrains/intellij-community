@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
@@ -64,12 +65,10 @@ jvm_library(
 ### auto-generated section `build intellij.platform.debugger.impl.backend` end
 
 ### auto-generated section `iml intellij.platform.debugger.impl.backend` start
-exports_files(
-    [
-        "intellij.platform.debugger.impl.backend.iml",
-        "resources/intellij.platform.debugger.impl.backend.content.xml",
-        "resources/intellij.platform.debugger.impl.backend.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.platform.debugger.impl.backend",
+    descriptors = ["resources/intellij.platform.debugger.impl.backend.xml"],
+    target = "backend",
+    exports = ["resources/intellij.platform.debugger.impl.backend.content.xml"],
 )
 ### auto-generated section `iml intellij.platform.debugger.impl.backend` end

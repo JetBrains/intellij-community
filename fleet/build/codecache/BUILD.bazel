@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 
@@ -48,10 +49,8 @@ jvm_library(
 ### auto-generated section `build fleet.build.codecache` end
 
 ### auto-generated section `iml fleet.build.codecache` start
-exports_files(
-    [
-        "fleet.build.codecache.iml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "fleet.build.codecache",
+    target = "codecache",
 )
 ### auto-generated section `iml fleet.build.codecache` end

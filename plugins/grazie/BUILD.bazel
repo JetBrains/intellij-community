@@ -1,5 +1,6 @@
-load("@jps_dynamic_deps_community//:targets.bzl", "dist_plugin")
+load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:dist_plugin.bzl", "dist_plugin")
 
 ### auto-generated section `dev intellij.grazie` start
 dist_plugin(
@@ -21,6 +22,22 @@ dist_plugin(
         "intellij.libraries.kotlin.logging",
     ],
     descriptor = "resources/META-INF/plugin.xml",
+    descriptors = {
+        "@community//libraries/ai-grazie-rule-engine:resources/intellij.libraries.ai.grazie.rule.engine.xml": "intellij.libraries.ai.grazie.rule.engine.xml",
+        "@community//libraries/ai-grazie-semantic-engine:resources/intellij.libraries.ai.grazie.semantic.engine.xml": "intellij.libraries.ai.grazie.semantic.engine.xml",
+        "@community//libraries/ai.grazie.spell.gec.engine.local:resources/intellij.libraries.ai.grazie.spell.gec.engine.local.xml": "intellij.libraries.ai.grazie.spell.gec.engine.local.xml",
+        "@community//libraries/kotlin/logging:resources/intellij.libraries.kotlin.logging.xml": "intellij.libraries.kotlin.logging.xml",
+        "@community//plugins/grazie/java:src/main/resources/intellij.grazie.java.xml": "intellij.grazie.java.xml",
+        "@community//plugins/grazie/json:src/main/resources/intellij.grazie.json.xml": "intellij.grazie.json.xml",
+        "@community//plugins/grazie/markdown/specification:src/main/resources/intellij.grazie.markdown.specification.xml": "intellij.grazie.markdown.specification.xml",
+        "@community//plugins/grazie/markdown:src/main/resources/intellij.grazie.markdown.xml": "intellij.grazie.markdown.xml",
+        "@community//plugins/grazie/properties:src/main/resources/intellij.grazie.properties.xml": "intellij.grazie.properties.xml",
+        "@community//plugins/grazie/src:main/resources/intellij.grazie.core.xml": "intellij.grazie.core.xml",
+        "@community//plugins/grazie/todo:src/main/resources/intellij.grazie.todo.xml": "intellij.grazie.todo.xml",
+        "@community//plugins/grazie/vcs:main/resources/intellij.grazie.vcs.xml": "intellij.grazie.vcs.xml",
+        "@community//plugins/grazie/xml:main/resources/intellij.grazie.xml.xml": "intellij.grazie.xml.xml",
+        "@community//plugins/grazie/yaml:main/resources/intellij.grazie.yaml.xml": "intellij.grazie.yaml.xml",
+    },
     jars = {
         "lib/intellij.grazie.core.jar": [
             "intellij.grazie.core",
@@ -80,6 +97,23 @@ dist_plugin(
             "intellij.grazie.properties",
         ],
     },
+    module_labels = {
+        "intellij.grazie": "@community//plugins/grazie:grazie",
+        "intellij.grazie.core": "@community//plugins/grazie/src:core",
+        "intellij.grazie.java": "@community//plugins/grazie/java:java",
+        "intellij.grazie.json": "@community//plugins/grazie/json:json",
+        "intellij.grazie.markdown": "@community//plugins/grazie/markdown:markdown",
+        "intellij.grazie.markdown.specification": "@community//plugins/grazie/markdown/specification:specification",
+        "intellij.grazie.properties": "@community//plugins/grazie/properties:properties",
+        "intellij.grazie.todo": "@community//plugins/grazie/todo:todo",
+        "intellij.grazie.vcs": "@community//plugins/grazie/vcs:vcs",
+        "intellij.grazie.xml": "@community//plugins/grazie/xml:xml",
+        "intellij.grazie.yaml": "@community//plugins/grazie/yaml:yaml",
+        "intellij.libraries.ai.grazie.rule.engine": "@community//libraries/ai-grazie-rule-engine:ai-grazie-rule-engine",
+        "intellij.libraries.ai.grazie.semantic.engine": "@community//libraries/ai-grazie-semantic-engine:ai-grazie-semantic-engine",
+        "intellij.libraries.ai.grazie.spell.gec.engine.local": "@community//libraries/ai.grazie.spell.gec.engine.local:ai.grazie.spell.gec.engine.local",
+        "intellij.libraries.kotlin.logging": "@community//libraries/kotlin/logging:logging",
+    },
 )
 ### auto-generated section `dev intellij.grazie` end
 
@@ -114,11 +148,9 @@ jvm_library(
 ### auto-generated section `build intellij.grazie` end
 
 ### auto-generated section `iml intellij.grazie` start
-exports_files(
-    [
-        "intellij.grazie.iml",
-        "resources/META-INF/plugin.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.grazie",
+    descriptors = ["resources/META-INF/plugin.xml"],
+    target = "grazie",
 )
 ### auto-generated section `iml intellij.grazie` end

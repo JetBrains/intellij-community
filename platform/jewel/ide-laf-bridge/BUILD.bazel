@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
@@ -110,12 +111,10 @@ jvm_library(
 ### auto-generated section `build intellij.platform.jewel.ideLafBridge` end
 
 ### auto-generated section `iml intellij.platform.jewel.ideLafBridge` start
-exports_files(
-    [
-        "intellij.platform.jewel.ideLafBridge.iml",
-        "src/main/resources/intellij.platform.jewel.ideLafBridge.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.platform.jewel.ideLafBridge",
+    descriptors = ["src/main/resources/intellij.platform.jewel.ideLafBridge.xml"],
+    target = "ide-laf-bridge",
 )
 ### auto-generated section `iml intellij.platform.jewel.ideLafBridge` end
 
@@ -176,10 +175,9 @@ jvm_library(
 ### auto-generated section `build intellij.platform.jewel.ideLafBridge.tests` end
 
 ### auto-generated section `iml intellij.platform.jewel.ideLafBridge.tests` start
-exports_files(
-    [
-        "intellij.platform.jewel.ideLafBridge.tests.iml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.platform.jewel.ideLafBridge.tests",
+    resources = False,
+    target = "ideLafBridge-tests_test_lib",
 )
 ### auto-generated section `iml intellij.platform.jewel.ideLafBridge.tests` end

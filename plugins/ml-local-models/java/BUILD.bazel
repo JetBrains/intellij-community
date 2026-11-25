@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.ml.models.local.java` start
@@ -37,11 +38,9 @@ jvm_library(
 ### auto-generated section `build intellij.ml.models.local.java` end
 
 ### auto-generated section `iml intellij.ml.models.local.java` start
-exports_files(
-    [
-        "intellij.ml.models.local.java.iml",
-        "resources/intellij.ml.models.local.java.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.ml.models.local.java",
+    descriptors = ["resources/intellij.ml.models.local.java.xml"],
+    target = "java",
 )
 ### auto-generated section `iml intellij.ml.models.local.java` end

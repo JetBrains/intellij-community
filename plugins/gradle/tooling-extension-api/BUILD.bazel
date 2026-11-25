@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 
@@ -37,11 +38,9 @@ jvm_library(
 ### auto-generated section `build intellij.gradle.toolingExtension` end
 
 ### auto-generated section `iml intellij.gradle.toolingExtension` start
-exports_files(
-    [
-        "intellij.gradle.toolingExtension.iml",
-        "resources/intellij.gradle.toolingExtension.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.gradle.toolingExtension",
+    descriptors = ["resources/intellij.gradle.toolingExtension.xml"],
+    target = "toolingExtension",
 )
 ### auto-generated section `iml intellij.gradle.toolingExtension` end

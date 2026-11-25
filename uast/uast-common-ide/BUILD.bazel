@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
@@ -43,11 +44,9 @@ jvm_library(
 ### auto-generated section `build intellij.platform.uast.ide` end
 
 ### auto-generated section `iml intellij.platform.uast.ide` start
-exports_files(
-    [
-        "intellij.platform.uast.ide.iml",
-        "resources/intellij.platform.uast.ide.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.platform.uast.ide",
+    descriptors = ["resources/intellij.platform.uast.ide.xml"],
+    target = "ide",
 )
 ### auto-generated section `iml intellij.platform.uast.ide` end

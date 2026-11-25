@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.libraries.system.stubs.jupiter` start
@@ -23,11 +24,9 @@ jvm_library(
 ### auto-generated section `build intellij.libraries.system.stubs.jupiter` end
 
 ### auto-generated section `iml intellij.libraries.system.stubs.jupiter` start
-exports_files(
-    [
-        "intellij.libraries.system.stubs.jupiter.iml",
-        "resources/intellij.libraries.system.stubs.jupiter.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.libraries.system.stubs.jupiter",
+    descriptors = ["resources/intellij.libraries.system.stubs.jupiter.xml"],
+    target = "system-stubs-jupiter",
 )
 ### auto-generated section `iml intellij.libraries.system.stubs.jupiter` end

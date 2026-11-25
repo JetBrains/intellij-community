@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 
@@ -48,11 +49,9 @@ jvm_library(
 ### auto-generated section `build intellij.pycharm.community.ide.impl.promotion` end
 
 ### auto-generated section `iml intellij.pycharm.community.ide.impl.promotion` start
-exports_files(
-    [
-        "intellij.pycharm.community.ide.impl.promotion.iml",
-        "resources/intellij.pycharm.community.ide.impl.promotion.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.pycharm.community.ide.impl.promotion",
+    descriptors = ["resources/intellij.pycharm.community.ide.impl.promotion.xml"],
+    target = "pycharm-community-ide-impl-promotion",
 )
 ### auto-generated section `iml intellij.pycharm.community.ide.impl.promotion` end

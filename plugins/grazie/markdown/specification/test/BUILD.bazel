@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
@@ -42,10 +43,8 @@ jvm_library(
 ### auto-generated section `build intellij.grazie.markdown.specification.tests` end
 
 ### auto-generated section `iml intellij.grazie.markdown.specification.tests` start
-exports_files(
-    [
-        "intellij.grazie.markdown.specification.tests.iml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.grazie.markdown.specification.tests",
+    target = "grazie-markdown-specification-tests_test_lib",
 )
 ### auto-generated section `iml intellij.grazie.markdown.specification.tests` end

@@ -12,18 +12,18 @@
 # the stamps. The component index names the `dev_plugin` target or the component of a `dist_complex_plugin`
 # call.
 #
-# A descriptor leaf derives its conventional descriptor rows from the bridge index of its half.
+# A descriptor leaf states every descriptor row. The label of a conventional row is in the recorded form.
 
-load("@jps_dynamic_deps_community//:targets.bzl", "dist_plugin_descriptor")
 load("//platform/build-scripts/bazel-rules:dev_plugin.bzl", "dev_plugin")
+load("//platform/build-scripts/bazel-rules:dist_plugin_descriptor.bzl", "dist_plugin_descriptor")
 
 dist_plugin_descriptor(
-    content_modules = [
-        "intellij.dotenv.java",
-        "intellij.dotenv.kotlin",
-        "intellij.dotenv.python",
-    ],
     descriptor = "//plugins/env-files-support:src/main/resources/META-INF/plugin.xml",
+    descriptors = {
+        "@community//plugins/env-files-support/java:resources/intellij.dotenv.java.xml": "intellij.dotenv.java.xml",
+        "@community//plugins/env-files-support/kotlin:resources/intellij.dotenv.kotlin.xml": "intellij.dotenv.kotlin.xml",
+        "@community//plugins/env-files-support/python:resources/intellij.dotenv.python.xml": "intellij.dotenv.python.xml",
+    },
     main_module = "intellij.dotenv",
     mode_refused_content_modules = {
         "frontend": ["intellij.dotenv.python"],

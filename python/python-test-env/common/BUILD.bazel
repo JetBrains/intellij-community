@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
@@ -61,11 +62,9 @@ jvm_library(
 ### auto-generated section `build intellij.python.test.env.common` end
 
 ### auto-generated section `iml intellij.python.test.env.common` start
-exports_files(
-    [
-        "intellij.python.test.env.common.iml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.python.test.env.common",
+    target = "common_test_lib",
 )
 ### auto-generated section `iml intellij.python.test.env.common` end
 

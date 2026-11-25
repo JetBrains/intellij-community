@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@community//platform/build-scripts/bazel-rules:ij_plugin_module.bzl", "ij_plugin_module")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
@@ -28,11 +29,9 @@ ij_plugin_module(
 ### auto-generated section `build intellij.libraries.hamcrest` end
 
 ### auto-generated section `iml intellij.libraries.hamcrest` start
-exports_files(
-    [
-        "intellij.libraries.hamcrest.iml",
-        "resources/intellij.libraries.hamcrest.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.libraries.hamcrest",
+    descriptors = ["resources/intellij.libraries.hamcrest.xml"],
+    target = "hamcrest",
 )
 ### auto-generated section `iml intellij.libraries.hamcrest` end

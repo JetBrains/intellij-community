@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
@@ -27,11 +28,9 @@ jvm_library(
 ### auto-generated section `build intellij.libraries.protobuf.kotlin` end
 
 ### auto-generated section `iml intellij.libraries.protobuf.kotlin` start
-exports_files(
-    [
-        "intellij.libraries.protobuf.kotlin.iml",
-        "resources/intellij.libraries.protobuf.kotlin.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.libraries.protobuf.kotlin",
+    descriptors = ["resources/intellij.libraries.protobuf.kotlin.xml"],
+    target = "protobuf-kotlin",
 )
 ### auto-generated section `iml intellij.libraries.protobuf.kotlin` end

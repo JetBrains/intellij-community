@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.java.dev` start
@@ -54,11 +55,9 @@ jvm_library(
 ### auto-generated section `build intellij.java.dev` end
 
 ### auto-generated section `iml intellij.java.dev` start
-exports_files(
-    [
-        "intellij.java.dev.iml",
-        "resources/intellij.java.dev.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.java.dev",
+    descriptors = ["resources/intellij.java.dev.xml"],
+    target = "java-dev",
 )
 ### auto-generated section `iml intellij.java.dev` end

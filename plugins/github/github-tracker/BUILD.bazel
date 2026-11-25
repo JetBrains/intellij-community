@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
@@ -50,12 +51,10 @@ jvm_library(
 ### auto-generated section `build intellij.vcs.github.tracker` end
 
 ### auto-generated section `iml intellij.vcs.github.tracker` start
-exports_files(
-    [
-        "intellij.vcs.github.tracker.iml",
-        "resources/intellij.vcs.github.tracker.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.vcs.github.tracker",
+    descriptors = ["resources/intellij.vcs.github.tracker.xml"],
+    target = "vcs-github-tracker",
 )
 ### auto-generated section `iml intellij.vcs.github.tracker` end
 
@@ -87,10 +86,9 @@ jvm_library(
 ### auto-generated section `build intellij.vcs.github.tracker.tests` end
 
 ### auto-generated section `iml intellij.vcs.github.tracker.tests` start
-exports_files(
-    [
-        "intellij.vcs.github.tracker.tests.iml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.vcs.github.tracker.tests",
+    resources = False,
+    target = "vcs-github-tracker-tests_test_lib",
 )
 ### auto-generated section `iml intellij.vcs.github.tracker.tests` end

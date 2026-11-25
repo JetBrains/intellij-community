@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_java//java:defs.bzl", "java_binary")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
@@ -44,11 +45,10 @@ jvm_library(
 ### auto-generated section `build intellij.platform.buildScripts.bazelExecutionReport` end
 
 ### auto-generated section `iml intellij.platform.buildScripts.bazelExecutionReport` start
-exports_files(
-    [
-        "intellij.platform.buildScripts.bazelExecutionReport.iml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.platform.buildScripts.bazelExecutionReport",
+    resources = False,
+    target = "bazel-execution-report",
 )
 ### auto-generated section `iml intellij.platform.buildScripts.bazelExecutionReport` end
 
@@ -82,11 +82,9 @@ jvm_library(
 ### auto-generated section `build intellij.platform.buildScripts.bazelExecutionReport.tests` end
 
 ### auto-generated section `iml intellij.platform.buildScripts.bazelExecutionReport.tests` start
-exports_files(
-    [
-        "intellij.platform.buildScripts.bazelExecutionReport.tests.iml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.platform.buildScripts.bazelExecutionReport.tests",
+    target = "buildScripts-bazelExecutionReport-tests_test_lib",
 )
 ### auto-generated section `iml intellij.platform.buildScripts.bazelExecutionReport.tests` end
 

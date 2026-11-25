@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.libraries.xerial.snappy.java` start
@@ -19,11 +20,9 @@ jvm_library(
 ### auto-generated section `build intellij.libraries.xerial.snappy.java` end
 
 ### auto-generated section `iml intellij.libraries.xerial.snappy.java` start
-exports_files(
-    [
-        "intellij.libraries.xerial.snappy.java.iml",
-        "resources/intellij.libraries.xerial.snappy.java.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.libraries.xerial.snappy.java",
+    descriptors = ["resources/intellij.libraries.xerial.snappy.java.xml"],
+    target = "xerial-snappy-java",
 )
 ### auto-generated section `iml intellij.libraries.xerial.snappy.java` end

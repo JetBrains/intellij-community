@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@community//platform/build-scripts/bazel-rules:ij_plugin_module.bzl", "ij_plugin_module")
 
 ### auto-generated section `build intellij.libraries.kotlinx.document.store.mvstore` start
@@ -20,11 +21,9 @@ ij_plugin_module(
 ### auto-generated section `build intellij.libraries.kotlinx.document.store.mvstore` end
 
 ### auto-generated section `iml intellij.libraries.kotlinx.document.store.mvstore` start
-exports_files(
-    [
-        "intellij.libraries.kotlinx.document.store.mvstore.iml",
-        "resources/intellij.libraries.kotlinx.document.store.mvstore.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.libraries.kotlinx.document.store.mvstore",
+    descriptors = ["resources/intellij.libraries.kotlinx.document.store.mvstore.xml"],
+    target = "libraries-kotlinx-document-store-mvstore",
 )
 ### auto-generated section `iml intellij.libraries.kotlinx.document.store.mvstore` end

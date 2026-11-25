@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
@@ -49,12 +50,10 @@ jvm_library(
 ### auto-generated section `build intellij.platform.ide.tabInEditor` end
 
 ### auto-generated section `iml intellij.platform.ide.tabInEditor` start
-exports_files(
-    [
-        "intellij.platform.ide.tabInEditor.iml",
-        "resources/intellij.platform.ide.tabInEditor.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.platform.ide.tabInEditor",
+    descriptors = ["resources/intellij.platform.ide.tabInEditor.xml"],
+    target = "tab-in-editor",
 )
 ### auto-generated section `iml intellij.platform.ide.tabInEditor` end
 
@@ -99,11 +98,10 @@ jvm_library(
 ### auto-generated section `build intellij.platform.ide.tabInEditor.tests` end
 
 ### auto-generated section `iml intellij.platform.ide.tabInEditor.tests` start
-exports_files(
-    [
-        "intellij.platform.ide.tabInEditor.tests.iml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.platform.ide.tabInEditor.tests",
+    resources = False,
+    target = "ide-tabInEditor-tests_test_lib",
 )
 ### auto-generated section `iml intellij.platform.ide.tabInEditor.tests` end
 

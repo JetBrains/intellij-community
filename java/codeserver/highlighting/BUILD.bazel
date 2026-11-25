@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
@@ -49,12 +50,10 @@ jvm_library(
 ### auto-generated section `build intellij.java.codeserver.highlighting` end
 
 ### auto-generated section `iml intellij.java.codeserver.highlighting` start
-exports_files(
-    [
-        "intellij.java.codeserver.highlighting.iml",
-        "resources/META-INF/JavaCodeServerHighlighting.xml",
-        "resources/intellij.java.codeserver.highlighting.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.java.codeserver.highlighting",
+    descriptors = ["resources/intellij.java.codeserver.highlighting.xml"],
+    target = "highlighting",
+    exports = ["resources/META-INF/JavaCodeServerHighlighting.xml"],
 )
 ### auto-generated section `iml intellij.java.codeserver.highlighting` end

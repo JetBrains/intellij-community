@@ -1,6 +1,7 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@community//build:tests-options.bzl", "jps_test")
-load("@jps_dynamic_deps_community//:targets.bzl", "dist_plugin")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:dist_plugin.bzl", "dist_plugin")
 
 filegroup(
     name = "testdata",
@@ -46,6 +47,25 @@ dist_plugin(
         "intellij.groovy.spock.rt",
     ],
     main_module = "intellij.groovy",
+    module_labels = {
+        "intellij.groovy": "@community//plugins/groovy:groovy",
+        "intellij.groovy.ant": "@community//plugins/groovy/ant:ant",
+        "intellij.groovy.byteCodeViewer": "@community//plugins/groovy/byteCodeViewer:byteCodeViewer",
+        "intellij.groovy.constants.rt": "@community//plugins/groovy/rt-constants:constants-rt",
+        "intellij.groovy.copyright": "@community//plugins/groovy/intellij.groovy.copyright:copyright",
+        "intellij.groovy.git": "@community//plugins/groovy/git:git",
+        "intellij.groovy.jps": "@community//plugins/groovy/jps-plugin:jps",
+        "intellij.groovy.langInjection": "@community//plugins/groovy/langInjection:langInjection",
+        "intellij.groovy.psi": "@community//plugins/groovy/groovy-psi:psi",
+        "intellij.groovy.rt": "@community//plugins/groovy/rt:rt",
+        "intellij.groovy.rt.classLoader": "@community//plugins/groovy/rt/classLoader:classLoader",
+        "intellij.groovy.spock": "@community//plugins/groovy/spock:spock",
+        "intellij.groovy.spock.rt": "@community//plugins/groovy/spock-rt:spock-rt",
+        "intellij.groovy.structuralSearch": "@community//plugins/groovy/structuralsearch-groovy:structuralSearch",
+        "intellij.libraries.hamcrest": "@community//libraries/hamcrest:hamcrest",
+        "intellij.libraries.junit4": "@community//libraries/junit4:junit4",
+        "intellij.libraries.opentest4j": "@community//libraries/opentest4j:opentest4j",
+    },
 )
 ### auto-generated section `dev intellij.groovy` end
 
@@ -142,9 +162,11 @@ jvm_library(
 ### auto-generated section `build intellij.groovy` end
 
 ### auto-generated section `iml intellij.groovy` start
-exports_files(
-    [
-        "intellij.groovy.iml",
+jps_module(
+    name = "intellij.groovy",
+    descriptors = ["resources/META-INF/plugin.xml"],
+    target = "groovy",
+    exports = [
         "resources/META-INF/gant-support.xml",
         "resources/META-INF/geb-support.xml",
         "resources/META-INF/groovy-console.xml",
@@ -153,10 +175,8 @@ exports_files(
         "resources/META-INF/groovy-intentions.xml",
         "resources/META-INF/groovy-logback-support.xml",
         "resources/META-INF/groovy-templates.xml",
-        "resources/META-INF/plugin.xml",
         "resources/org/jetbrains/plugins/groovy/config/groovy.sdk.xml",
     ],
-    visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.groovy` end
 
@@ -260,11 +280,10 @@ jvm_library(
 ### auto-generated section `build intellij.groovy.tests` end
 
 ### auto-generated section `iml intellij.groovy.tests` start
-exports_files(
-    [
-        "intellij.groovy.tests.iml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.groovy.tests",
+    resources = False,
+    target = "groovy-tests_test_lib",
 )
 ### auto-generated section `iml intellij.groovy.tests` end
 
@@ -293,10 +312,8 @@ jvm_library(
 ### auto-generated section `build intellij.groovy.tests.main` end
 
 ### auto-generated section `iml intellij.groovy.tests.main` start
-exports_files(
-    [
-        "intellij.groovy.tests.main.iml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.groovy.tests.main",
+    target = "groovy-tests-main_test_lib",
 )
 ### auto-generated section `iml intellij.groovy.tests.main` end

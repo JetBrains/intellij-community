@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.python.processOutput.lambdaTests.plugin` start
@@ -18,10 +19,8 @@ jvm_library(
 ### auto-generated section `build intellij.python.processOutput.lambdaTests.plugin` end
 
 ### auto-generated section `iml intellij.python.processOutput.lambdaTests.plugin` start
-exports_files(
-    [
-        "intellij.python.processOutput.lambdaTests.plugin.iml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.python.processOutput.lambdaTests.plugin",
+    target = "python-processOutput-lambdaTests-plugin_test_lib",
 )
 ### auto-generated section `iml intellij.python.processOutput.lambdaTests.plugin` end

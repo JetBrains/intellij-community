@@ -12,24 +12,24 @@
 # the stamps. The component index names the `dev_plugin` target or the component of a `dist_complex_plugin`
 # call.
 #
-# A descriptor leaf derives its conventional descriptor rows from the bridge index of its half.
+# A descriptor leaf states every descriptor row. The label of a conventional row is in the recorded form.
 
-load("@jps_dynamic_deps_community//:targets.bzl", "dist_plugin_descriptor")
 load("//platform/build-scripts/bazel-rules:dev_plugin.bzl", "dev_plugin")
+load("//platform/build-scripts/bazel-rules:dist_plugin_descriptor.bzl", "dist_plugin_descriptor")
 
 dist_plugin_descriptor(
-    content_modules = [
-        "intellij.json",
-        "intellij.json.backend",
-        "intellij.json.backend.regexp",
-        "intellij.json.networknt.wrapper",
-        "intellij.json.spellchecker",
-        "intellij.json.structureView",
-        "intellij.json.syntax",
-        "intellij.libraries.joni",
-        "intellij.libraries.jsonSchemaValidator",
-    ],
     descriptor = "//json/plugin:resources/META-INF/plugin.xml",
+    descriptors = {
+        "@community//json/backend/regexp:resources/intellij.json.backend.regexp.xml": "intellij.json.backend.regexp.xml",
+        "@community//json/backend:resources/intellij.json.backend.xml": "intellij.json.backend.xml",
+        "@community//json/networknt.wrapper:resources/intellij.json.networknt.wrapper.xml": "intellij.json.networknt.wrapper.xml",
+        "@community//json/spellchecker:resources/intellij.json.spellchecker.xml": "intellij.json.spellchecker.xml",
+        "@community//json/structureView:resources/intellij.json.structureView.xml": "intellij.json.structureView.xml",
+        "@community//json/syntax:resources/intellij.json.syntax.xml": "intellij.json.syntax.xml",
+        "@community//json:resources/intellij.json.xml": "intellij.json.xml",
+        "@community//libraries/joni:resources/intellij.libraries.joni.xml": "intellij.libraries.joni.xml",
+        "@community//libraries/json-schema-validator:resources/intellij.libraries.jsonSchemaValidator.xml": "intellij.libraries.jsonSchemaValidator.xml",
+    },
     main_module = "intellij.json.plugin",
     mode_refused_content_modules = {
         "frontend": [

@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
@@ -50,11 +51,9 @@ jvm_library(
 ### auto-generated section `build intellij.remoteDev.frontendProcessLauncher` end
 
 ### auto-generated section `iml intellij.remoteDev.frontendProcessLauncher` start
-exports_files(
-    [
-        "intellij.remoteDev.frontendProcessLauncher.iml",
-        "resources/intellij.remoteDev.frontendProcessLauncher.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.remoteDev.frontendProcessLauncher",
+    descriptors = ["resources/intellij.remoteDev.frontendProcessLauncher.xml"],
+    target = "frontendProcessLauncher",
 )
 ### auto-generated section `iml intellij.remoteDev.frontendProcessLauncher` end

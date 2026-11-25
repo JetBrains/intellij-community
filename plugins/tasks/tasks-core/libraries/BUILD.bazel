@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.tasks.core.libraries.commonsDiscovery` start
@@ -19,11 +20,9 @@ jvm_library(
 ### auto-generated section `build intellij.tasks.core.libraries.commonsDiscovery` end
 
 ### auto-generated section `iml intellij.tasks.core.libraries.commonsDiscovery` start
-exports_files(
-    [
-        "intellij.tasks.core.libraries.commonsDiscovery.iml",
-        "resources/intellij.tasks.core.libraries.commonsDiscovery.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.tasks.core.libraries.commonsDiscovery",
+    descriptors = ["resources/intellij.tasks.core.libraries.commonsDiscovery.xml"],
+    target = "tasks-core-libraries-commonsDiscovery",
 )
 ### auto-generated section `iml intellij.tasks.core.libraries.commonsDiscovery` end

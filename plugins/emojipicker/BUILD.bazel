@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
@@ -43,9 +44,11 @@ jvm_library(
 ### auto-generated section `build intellij.emojipicker` end
 
 ### auto-generated section `iml intellij.emojipicker` start
-exports_files(
-    [
-        "intellij.emojipicker.iml",
+jps_module(
+    name = "intellij.emojipicker",
+    descriptors = ["resources/intellij.emojipicker.xml"],
+    target = "emojipicker",
+    exports = [
         "resources/data/cldr/annotations/ar.xml",
         "resources/data/cldr/annotations/bn.xml",
         "resources/data/cldr/annotations/cs.xml",
@@ -79,8 +82,6 @@ exports_files(
         "resources/data/cldr/annotationsDerived/ja.xml",
         "resources/data/cldr/annotationsDerived/ko.xml",
         "resources/data/cldr/annotationsDerived/zh.xml",
-        "resources/intellij.emojipicker.xml",
     ],
-    visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.emojipicker` end

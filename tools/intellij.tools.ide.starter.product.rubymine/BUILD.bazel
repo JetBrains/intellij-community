@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 
@@ -40,10 +41,8 @@ jvm_library(
 ### auto-generated section `build intellij.tools.ide.starter.product.rubymine` end
 
 ### auto-generated section `iml intellij.tools.ide.starter.product.rubymine` start
-exports_files(
-    [
-        "intellij.tools.ide.starter.product.rubymine.iml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.tools.ide.starter.product.rubymine",
+    target = "ide-starter-product-rubymine",
 )
 ### auto-generated section `iml intellij.tools.ide.starter.product.rubymine` end

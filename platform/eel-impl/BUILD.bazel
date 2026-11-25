@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
@@ -57,11 +58,9 @@ jvm_library(
 ### auto-generated section `build intellij.platform.eel.impl` end
 
 ### auto-generated section `iml intellij.platform.eel.impl` start
-exports_files(
-    [
-        "intellij.platform.eel.impl.iml",
-        "resources/intellij.platform.eel.impl.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.platform.eel.impl",
+    descriptors = ["resources/intellij.platform.eel.impl.xml"],
+    target = "eel-impl",
 )
 ### auto-generated section `iml intellij.platform.eel.impl` end

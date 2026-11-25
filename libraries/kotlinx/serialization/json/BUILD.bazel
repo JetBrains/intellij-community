@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
@@ -31,11 +32,9 @@ jvm_library(
 ### auto-generated section `build intellij.libraries.kotlinx.serialization.json` end
 
 ### auto-generated section `iml intellij.libraries.kotlinx.serialization.json` start
-exports_files(
-    [
-        "intellij.libraries.kotlinx.serialization.json.iml",
-        "resources/intellij.libraries.kotlinx.serialization.json.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.libraries.kotlinx.serialization.json",
+    descriptors = ["resources/intellij.libraries.kotlinx.serialization.json.xml"],
+    target = "json",
 )
 ### auto-generated section `iml intellij.libraries.kotlinx.serialization.json` end

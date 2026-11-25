@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
@@ -68,12 +69,10 @@ jvm_library(
 ### auto-generated section `build intellij.platform.whatsNew` end
 
 ### auto-generated section `iml intellij.platform.whatsNew` start
-exports_files(
-    [
-        "intellij.platform.whatsNew.iml",
-        "resources/intellij.platform.whatsNew.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.platform.whatsNew",
+    descriptors = ["resources/intellij.platform.whatsNew.xml"],
+    target = "whatsNew",
 )
 ### auto-generated section `iml intellij.platform.whatsNew` end
 
@@ -120,10 +119,8 @@ jvm_library(
 ### auto-generated section `build intellij.platform.whatsNew.tests` end
 
 ### auto-generated section `iml intellij.platform.whatsNew.tests` start
-exports_files(
-    [
-        "intellij.platform.whatsNew.tests.iml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.platform.whatsNew.tests",
+    target = "whatsNew-tests_test_lib",
 )
 ### auto-generated section `iml intellij.platform.whatsNew.tests` end

@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
@@ -97,11 +98,10 @@ jvm_library(
 ### auto-generated section `build kotlin.project-wizard.tests.gradle` end
 
 ### auto-generated section `iml kotlin.project-wizard.tests.gradle` start
-exports_files(
-    [
-        "kotlin.project-wizard.tests.gradle.iml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "kotlin.project-wizard.tests.gradle",
+    resources = False,
+    target = "gradle_test_lib",
 )
 ### auto-generated section `iml kotlin.project-wizard.tests.gradle` end
 

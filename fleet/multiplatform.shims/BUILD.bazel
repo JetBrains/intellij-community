@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@community//fleet/build:fleet.bzl", "fleet_wasmjs_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
@@ -65,11 +66,9 @@ jvm_library(
 ### auto-generated section `build fleet.multiplatform.shims` end
 
 ### auto-generated section `iml fleet.multiplatform.shims` start
-exports_files(
-    [
-        "fleet.multiplatform.shims.iml",
-        "resources/fleet.multiplatform.shims.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "fleet.multiplatform.shims",
+    descriptors = ["resources/fleet.multiplatform.shims.xml"],
+    target = "multiplatform.shims",
 )
 ### auto-generated section `iml fleet.multiplatform.shims` end

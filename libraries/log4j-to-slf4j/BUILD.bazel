@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
@@ -27,11 +28,9 @@ jvm_library(
 ### auto-generated section `build intellij.libraries.log4j.to.slf4j` end
 
 ### auto-generated section `iml intellij.libraries.log4j.to.slf4j` start
-exports_files(
-    [
-        "intellij.libraries.log4j.to.slf4j.iml",
-        "resources/intellij.libraries.log4j.to.slf4j.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.libraries.log4j.to.slf4j",
+    descriptors = ["resources/intellij.libraries.log4j.to.slf4j.xml"],
+    target = "log4j-to-slf4j",
 )
 ### auto-generated section `iml intellij.libraries.log4j.to.slf4j` end

@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.libraries.objenesis` start
@@ -19,11 +20,9 @@ jvm_library(
 ### auto-generated section `build intellij.libraries.objenesis` end
 
 ### auto-generated section `iml intellij.libraries.objenesis` start
-exports_files(
-    [
-        "intellij.libraries.objenesis.iml",
-        "resources/intellij.libraries.objenesis.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.libraries.objenesis",
+    descriptors = ["resources/intellij.libraries.objenesis.xml"],
+    target = "objenesis",
 )
 ### auto-generated section `iml intellij.libraries.objenesis` end

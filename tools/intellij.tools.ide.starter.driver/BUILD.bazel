@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
@@ -56,12 +57,10 @@ jvm_library(
 ### auto-generated section `build intellij.tools.ide.starter.driver` end
 
 ### auto-generated section `iml intellij.tools.ide.starter.driver` start
-exports_files(
-    [
-        "intellij.tools.ide.starter.driver.iml",
-        "resources/intellij.tools.ide.starter.driver.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.tools.ide.starter.driver",
+    descriptors = ["resources/intellij.tools.ide.starter.driver.xml"],
+    target = "ide-starter-driver",
 )
 ### auto-generated section `iml intellij.tools.ide.starter.driver` end
 
@@ -123,11 +122,9 @@ jvm_library(
 ### auto-generated section `build intellij.tools.ide.starter.driver.tests` end
 
 ### auto-generated section `iml intellij.tools.ide.starter.driver.tests` start
-exports_files(
-    [
-        "intellij.tools.ide.starter.driver.tests.iml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.tools.ide.starter.driver.tests",
+    target = "ide-starter-driver-tests_test_lib",
 )
 ### auto-generated section `iml intellij.tools.ide.starter.driver.tests` end
 

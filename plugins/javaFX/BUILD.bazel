@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
@@ -94,13 +95,11 @@ jvm_library(
 ### auto-generated section `build intellij.javaFX` end
 
 ### auto-generated section `iml intellij.javaFX` start
-exports_files(
-    [
-        "intellij.javaFX.iml",
-        "resources/intellij.javaFX.xml",
-        "resources/org/jetbrains/plugins/javaFX/refactoring/migration/JavaFx8__9.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.javaFX",
+    descriptors = ["resources/intellij.javaFX.xml"],
+    target = "javaFX",
+    exports = ["resources/org/jetbrains/plugins/javaFX/refactoring/migration/JavaFx8__9.xml"],
 )
 ### auto-generated section `iml intellij.javaFX` end
 
@@ -138,12 +137,10 @@ jvm_library(
 ### auto-generated section `build intellij.javaFX.properties` end
 
 ### auto-generated section `iml intellij.javaFX.properties` start
-exports_files(
-    [
-        "intellij.javaFX.properties.iml",
-        "properties/resources/intellij.javaFX.properties.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.javaFX.properties",
+    descriptors = ["properties/resources/intellij.javaFX.properties.xml"],
+    target = "javaFX-properties",
 )
 ### auto-generated section `iml intellij.javaFX.properties` end
 
@@ -193,10 +190,9 @@ jvm_library(
 ### auto-generated section `build intellij.javaFX.tests` end
 
 ### auto-generated section `iml intellij.javaFX.tests` start
-exports_files(
-    [
-        "intellij.javaFX.tests.iml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.javaFX.tests",
+    resources = False,
+    target = "javaFX-tests_test_lib",
 )
 ### auto-generated section `iml intellij.javaFX.tests` end

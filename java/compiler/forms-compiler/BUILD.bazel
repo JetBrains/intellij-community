@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
@@ -46,12 +47,10 @@ jvm_library(
 ### auto-generated section `build intellij.java.guiForms.compiler` end
 
 ### auto-generated section `iml intellij.java.guiForms.compiler` start
-exports_files(
-    [
-        "intellij.java.guiForms.compiler.iml",
-        "resources/intellij.java.guiForms.compiler.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.java.guiForms.compiler",
+    descriptors = ["resources/intellij.java.guiForms.compiler.xml"],
+    target = "java-guiForms-compiler",
 )
 ### auto-generated section `iml intellij.java.guiForms.compiler` end
 
@@ -81,10 +80,9 @@ jvm_library(
 ### auto-generated section `build intellij.java.guiForms.compiler.tests` end
 
 ### auto-generated section `iml intellij.java.guiForms.compiler.tests` start
-exports_files(
-    [
-        "intellij.java.guiForms.compiler.tests.iml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.java.guiForms.compiler.tests",
+    resources = False,
+    target = "java-guiForms-compiler-tests_test_lib",
 )
 ### auto-generated section `iml intellij.java.guiForms.compiler.tests` end

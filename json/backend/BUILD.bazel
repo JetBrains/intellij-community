@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
@@ -85,12 +86,10 @@ jvm_library(
 ### auto-generated section `build intellij.json.backend` end
 
 ### auto-generated section `iml intellij.json.backend` start
-exports_files(
-    [
-        "intellij.json.backend.iml",
-        "resources/intellij.json.backend.xml",
-        "resources/jsonSchema/build.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.json.backend",
+    descriptors = ["resources/intellij.json.backend.xml"],
+    target = "backend",
+    exports = ["resources/jsonSchema/build.xml"],
 )
 ### auto-generated section `iml intellij.json.backend` end

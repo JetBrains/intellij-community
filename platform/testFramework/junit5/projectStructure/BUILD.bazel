@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
@@ -51,12 +52,10 @@ jvm_library(
 ### auto-generated section `build intellij.platform.testFramework.junit5.projectStructure` end
 
 ### auto-generated section `iml intellij.platform.testFramework.junit5.projectStructure` start
-exports_files(
-    [
-        "intellij.platform.testFramework.junit5.projectStructure.iml",
-        "resources/intellij.platform.testFramework.junit5.projectStructure.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.platform.testFramework.junit5.projectStructure",
+    descriptors = ["resources/intellij.platform.testFramework.junit5.projectStructure.xml"],
+    target = "projectStructure",
 )
 ### auto-generated section `iml intellij.platform.testFramework.junit5.projectStructure` end
 
@@ -95,10 +94,9 @@ jvm_library(
 ### auto-generated section `build intellij.platform.testFramework.junit5.projectStructure.tests` end
 
 ### auto-generated section `iml intellij.platform.testFramework.junit5.projectStructure.tests` start
-exports_files(
-    [
-        "intellij.platform.testFramework.junit5.projectStructure.tests.iml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.platform.testFramework.junit5.projectStructure.tests",
+    resources = False,
+    target = "testFramework-junit5-projectStructure-tests_test_lib",
 )
 ### auto-generated section `iml intellij.platform.testFramework.junit5.projectStructure.tests` end

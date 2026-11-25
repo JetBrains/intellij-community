@@ -1,6 +1,7 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@community//platform/build-scripts/bazel-rules:ij_plugin.bzl", "ij_plugin")
-load("@jps_dynamic_deps_community//:targets.bzl", "dist_plugin")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:dist_plugin.bzl", "dist_plugin")
 
 ### auto-generated section `dev intellij.smart.update` start
 dist_plugin(
@@ -9,6 +10,9 @@ dist_plugin(
         "lib/smart-update.jar": ["intellij.smart.update"],
     },
     main_module = "intellij.smart.update",
+    module_labels = {
+        "intellij.smart.update": "@community//platform/smart-update:smart-update",
+    },
 )
 ### auto-generated section `dev intellij.smart.update` end
 
@@ -64,11 +68,10 @@ ij_plugin(
 ### auto-generated section `plugin intellij.smart.update` end
 
 ### auto-generated section `iml intellij.smart.update` start
-exports_files(
-    [
-        "intellij.smart.update.iml",
-        "resources/META-INF/plugin.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.smart.update",
+    descriptors = ["resources/META-INF/plugin.xml"],
+    plugin = True,
+    target = "smart-update",
 )
 ### auto-generated section `iml intellij.smart.update` end

@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
@@ -56,11 +57,9 @@ jvm_library(
 ### auto-generated section `build intellij.java.performancePlugin` end
 
 ### auto-generated section `iml intellij.java.performancePlugin` start
-exports_files(
-    [
-        "intellij.java.performancePlugin.iml",
-        "resources/intellij.java.performancePlugin.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.java.performancePlugin",
+    descriptors = ["resources/intellij.java.performancePlugin.xml"],
+    target = "performancePlugin",
 )
 ### auto-generated section `iml intellij.java.performancePlugin` end

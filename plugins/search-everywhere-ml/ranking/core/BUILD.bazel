@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
@@ -84,12 +85,10 @@ jvm_library(
 ### auto-generated section `build intellij.searchEverywhereMl.ranking.core` end
 
 ### auto-generated section `iml intellij.searchEverywhereMl.ranking.core` start
-exports_files(
-    [
-        "intellij.searchEverywhereMl.ranking.core.iml",
-        "resources/intellij.searchEverywhereMl.ranking.core.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.searchEverywhereMl.ranking.core",
+    descriptors = ["resources/intellij.searchEverywhereMl.ranking.core.xml"],
+    target = "core",
 )
 ### auto-generated section `iml intellij.searchEverywhereMl.ranking.core` end
 
@@ -160,10 +159,9 @@ jvm_library(
 ### auto-generated section `build intellij.searchEverywhereMl.ranking.core.tests` end
 
 ### auto-generated section `iml intellij.searchEverywhereMl.ranking.core.tests` start
-exports_files(
-    [
-        "intellij.searchEverywhereMl.ranking.core.tests.iml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.searchEverywhereMl.ranking.core.tests",
+    resources = False,
+    target = "searchEverywhereMl-ranking-core-tests_test_lib",
 )
 ### auto-generated section `iml intellij.searchEverywhereMl.ranking.core.tests` end

@@ -1,8 +1,9 @@
 load("@community//build:bazel_targets_json.bzl", "current_bazel_targets_json")
+load("@community//build:jps_module.bzl", "jps_module")
 load("@community//build:tests-options.bzl", "jps_test")
 load("@community//platform/build-scripts/bazel-rules:ij_plugin.bzl", "ij_plugin")
-load("@jps_dynamic_deps_community//:targets.bzl", "dist_plugin")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+load("//platform/build-scripts/bazel-rules:dist_plugin.bzl", "dist_plugin")
 
 BAZEL_TARGETS_JSON = current_bazel_targets_json()
 
@@ -26,12 +27,19 @@ jps_test(
 dist_plugin(
     content_modules = ["intellij.java.guiForms.jps"],
     descriptor = "resources/META-INF/plugin.xml",
+    descriptors = {
+        "@community//plugins/ui-designer/jps-plugin:resources/intellij.java.guiForms.jps.xml": "intellij.java.guiForms.jps.xml",
+    },
     jars = {
         "lib/java-guiForms-designer.jar": ["intellij.java.guiForms.designer"],
     },
     main_module = "intellij.java.guiForms.designer",
     mode_refused_content_modules = {
         "frontend": ["intellij.java.guiForms.jps"],
+    },
+    module_labels = {
+        "intellij.java.guiForms.designer": "@community//plugins/ui-designer:java-guiForms-designer",
+        "intellij.java.guiForms.jps": "@community//plugins/ui-designer/jps-plugin:java-guiForms-jps",
     },
 )
 ### auto-generated section `dev intellij.java.guiForms.designer` end
@@ -134,17 +142,18 @@ ij_plugin(
 ### auto-generated section `plugin intellij.java.guiForms.designer` end
 
 ### auto-generated section `iml intellij.java.guiForms.designer` start
-exports_files(
-    [
-        "intellij.java.guiForms.designer.iml",
+jps_module(
+    name = "intellij.java.guiForms.designer",
+    descriptors = ["resources/META-INF/plugin.xml"],
+    plugin = True,
+    target = "java-guiForms-designer",
+    exports = [
         "resources/ClientPropertiesManager.xml",
-        "resources/META-INF/plugin.xml",
         "resources/Palette2.xml",
         "resources/com/intellij/uiDesigner/NewDialog.xml",
         "resources/com/intellij/uiDesigner/NewForm.xml",
         "resources/gui-designer-properties.xml",
     ],
-    visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.java.guiForms.designer` end
 
@@ -251,10 +260,8 @@ jvm_library(
 ### auto-generated section `build intellij.java.guiForms.designer.tests` end
 
 ### auto-generated section `iml intellij.java.guiForms.designer.tests` start
-exports_files(
-    [
-        "intellij.java.guiForms.designer.tests.iml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.java.guiForms.designer.tests",
+    target = "java-guiForms-designer-tests_test_lib",
 )
 ### auto-generated section `iml intellij.java.guiForms.designer.tests` end

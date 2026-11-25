@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
@@ -60,12 +61,10 @@ jvm_library(
 ### auto-generated section `build intellij.searchEverywhereLucene.backend` end
 
 ### auto-generated section `iml intellij.searchEverywhereLucene.backend` start
-exports_files(
-    [
-        "intellij.searchEverywhereLucene.backend.iml",
-        "resources/intellij.searchEverywhereLucene.backend.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.searchEverywhereLucene.backend",
+    descriptors = ["resources/intellij.searchEverywhereLucene.backend.xml"],
+    target = "backend",
 )
 ### auto-generated section `iml intellij.searchEverywhereLucene.backend` end
 
@@ -121,10 +120,9 @@ jvm_library(
 ### auto-generated section `build intellij.searchEverywhereLucene.backend.tests` end
 
 ### auto-generated section `iml intellij.searchEverywhereLucene.backend.tests` start
-exports_files(
-    [
-        "intellij.searchEverywhereLucene.backend.tests.iml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.searchEverywhereLucene.backend.tests",
+    resources = False,
+    target = "searchEverywhereLucene-backend-tests_test_lib",
 )
 ### auto-generated section `iml intellij.searchEverywhereLucene.backend.tests` end

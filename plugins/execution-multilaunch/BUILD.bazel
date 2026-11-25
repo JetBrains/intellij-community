@@ -1,15 +1,23 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@community//platform/build-scripts/bazel-rules:ij_plugin.bzl", "ij_plugin")
-load("@jps_dynamic_deps_community//:targets.bzl", "dist_plugin")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:dist_plugin.bzl", "dist_plugin")
 
 ### auto-generated section `dev intellij.execution.multilaunch.plugin` start
 dist_plugin(
     content_modules = ["intellij.execution.multilaunch.core"],
     descriptor = "resources/META-INF/plugin.xml",
+    descriptors = {
+        "@community//plugins/execution-multilaunch/core:resources/intellij.execution.multilaunch.core.xml": "intellij.execution.multilaunch.core.xml",
+    },
     jars = {
         "lib/execution-multilaunch-plugin.jar": ["intellij.execution.multilaunch.plugin"],
     },
     main_module = "intellij.execution.multilaunch.plugin",
+    module_labels = {
+        "intellij.execution.multilaunch.core": "@community//plugins/execution-multilaunch/core:core",
+        "intellij.execution.multilaunch.plugin": "@community//plugins/execution-multilaunch:execution-multilaunch-plugin",
+    },
 )
 ### auto-generated section `dev intellij.execution.multilaunch.plugin` end
 
@@ -39,11 +47,10 @@ ij_plugin(
 ### auto-generated section `plugin intellij.execution.multilaunch.plugin` end
 
 ### auto-generated section `iml intellij.execution.multilaunch.plugin` start
-exports_files(
-    [
-        "intellij.execution.multilaunch.plugin.iml",
-        "resources/META-INF/plugin.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.execution.multilaunch.plugin",
+    descriptors = ["resources/META-INF/plugin.xml"],
+    plugin = True,
+    target = "execution-multilaunch-plugin",
 )
 ### auto-generated section `iml intellij.execution.multilaunch.plugin` end

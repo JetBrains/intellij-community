@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
@@ -40,11 +41,9 @@ jvm_library(
 ### auto-generated section `build intellij.platform.core.ui` end
 
 ### auto-generated section `iml intellij.platform.core.ui` start
-exports_files(
-    [
-        "intellij.platform.core.ui.iml",
-        "resources/intellij.platform.core.ui.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.platform.core.ui",
+    descriptors = ["resources/intellij.platform.core.ui.xml"],
+    target = "core-ui",
 )
 ### auto-generated section `iml intellij.platform.core.ui` end

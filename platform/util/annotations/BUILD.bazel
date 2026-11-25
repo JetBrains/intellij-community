@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
@@ -28,11 +29,9 @@ jvm_library(
 ### auto-generated section `build intellij.platform.util.annotations` end
 
 ### auto-generated section `iml intellij.platform.util.annotations` start
-exports_files(
-    [
-        "intellij.platform.util.annotations.iml",
-        "resources/intellij.platform.util.annotations.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.platform.util.annotations",
+    descriptors = ["resources/intellij.platform.util.annotations.xml"],
+    target = "annotations",
 )
 ### auto-generated section `iml intellij.platform.util.annotations` end

@@ -1,6 +1,7 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@community//platform/build-scripts/bazel-rules:ij_plugin.bzl", "ij_plugin")
-load("@jps_dynamic_deps_community//:targets.bzl", "dist_plugin")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:dist_plugin.bzl", "dist_plugin")
 
 ### auto-generated section `dev intellij.groovy.live.templates` start
 dist_plugin(
@@ -9,6 +10,9 @@ dist_plugin(
         "lib/groovy-live-templates.jar": ["intellij.groovy.live.templates"],
     },
     main_module = "intellij.groovy.live.templates",
+    module_labels = {
+        "intellij.groovy.live.templates": "@community//plugins/groovy-live-templates:groovy-live-templates",
+    },
 )
 ### auto-generated section `dev intellij.groovy.live.templates` end
 
@@ -57,11 +61,10 @@ ij_plugin(
 ### auto-generated section `plugin intellij.groovy.live.templates` end
 
 ### auto-generated section `iml intellij.groovy.live.templates` start
-exports_files(
-    [
-        "intellij.groovy.live.templates.iml",
-        "resources/META-INF/plugin.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.groovy.live.templates",
+    descriptors = ["resources/META-INF/plugin.xml"],
+    plugin = True,
+    target = "groovy-live-templates",
 )
 ### auto-generated section `iml intellij.groovy.live.templates` end

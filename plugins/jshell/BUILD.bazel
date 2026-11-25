@@ -1,6 +1,7 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@community//platform/build-scripts/bazel-rules:ij_plugin.bzl", "ij_plugin")
-load("@jps_dynamic_deps_community//:targets.bzl", "dist_plugin")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:dist_plugin.bzl", "dist_plugin")
 
 ### auto-generated section `dev intellij.java.jshell` start
 dist_plugin(
@@ -11,6 +12,11 @@ dist_plugin(
         "intellij.java.jshell.protocol",
     ],
     descriptor = "resources/META-INF/plugin.xml",
+    descriptors = {
+        "@community//plugins/jshell/console:resources/intellij.java.jshell.console.xml": "intellij.java.jshell.console.xml",
+        "@community//plugins/jshell/execution:resources/intellij.java.jshell.execution.xml": "intellij.java.jshell.execution.xml",
+        "@community//plugins/jshell/protocol:resources/intellij.java.jshell.protocol.xml": "intellij.java.jshell.protocol.xml",
+    },
     jars = {
         "lib/intellij.java.jshell.execution.jar": [
             "intellij.java.jshell.execution",
@@ -21,6 +27,12 @@ dist_plugin(
     main_module = "intellij.java.jshell",
     mode_refused_content_modules = {
         "frontend": ["intellij.java.jshell.console"],
+    },
+    module_labels = {
+        "intellij.java.jshell": "@community//plugins/jshell:jshell",
+        "intellij.java.jshell.console": "@community//plugins/jshell/console:console",
+        "intellij.java.jshell.execution": "@community//plugins/jshell/execution:execution",
+        "intellij.java.jshell.protocol": "@community//plugins/jshell/protocol:protocol",
     },
 )
 ### auto-generated section `dev intellij.java.jshell` end
@@ -56,11 +68,10 @@ ij_plugin(
 ### auto-generated section `plugin intellij.java.jshell` end
 
 ### auto-generated section `iml intellij.java.jshell` start
-exports_files(
-    [
-        "intellij.java.jshell.iml",
-        "resources/META-INF/plugin.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.java.jshell",
+    descriptors = ["resources/META-INF/plugin.xml"],
+    plugin = True,
+    target = "jshell",
 )
 ### auto-generated section `iml intellij.java.jshell` end

@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
@@ -59,12 +60,10 @@ jvm_library(
 ### auto-generated section `build intellij.platform.ide.fileChooser.universal` end
 
 ### auto-generated section `iml intellij.platform.ide.fileChooser.universal` start
-exports_files(
-    [
-        "intellij.platform.ide.fileChooser.universal.iml",
-        "resources/intellij.platform.ide.fileChooser.universal.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.platform.ide.fileChooser.universal",
+    descriptors = ["resources/intellij.platform.ide.fileChooser.universal.xml"],
+    target = "ide-fileChooser-universal",
 )
 ### auto-generated section `iml intellij.platform.ide.fileChooser.universal` end
 
@@ -108,10 +107,9 @@ jvm_library(
 ### auto-generated section `build intellij.platform.ide.fileChooser.universal.tests` end
 
 ### auto-generated section `iml intellij.platform.ide.fileChooser.universal.tests` start
-exports_files(
-    [
-        "intellij.platform.ide.fileChooser.universal.tests.iml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.platform.ide.fileChooser.universal.tests",
+    resources = False,
+    target = "ide-fileChooser-universal-tests_test_lib",
 )
 ### auto-generated section `iml intellij.platform.ide.fileChooser.universal.tests` end

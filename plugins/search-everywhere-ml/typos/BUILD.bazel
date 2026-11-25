@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
@@ -64,12 +65,10 @@ jvm_library(
 ### auto-generated section `build intellij.searchEverywhereMl.typos` end
 
 ### auto-generated section `iml intellij.searchEverywhereMl.typos` start
-exports_files(
-    [
-        "intellij.searchEverywhereMl.typos.iml",
-        "resources/intellij.searchEverywhereMl.typos.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.searchEverywhereMl.typos",
+    descriptors = ["resources/intellij.searchEverywhereMl.typos.xml"],
+    target = "typos",
 )
 ### auto-generated section `iml intellij.searchEverywhereMl.typos` end
 
@@ -114,10 +113,9 @@ jvm_library(
 ### auto-generated section `build intellij.searchEverywhereMl.typos.tests` end
 
 ### auto-generated section `iml intellij.searchEverywhereMl.typos.tests` start
-exports_files(
-    [
-        "intellij.searchEverywhereMl.typos.tests.iml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.searchEverywhereMl.typos.tests",
+    resources = False,
+    target = "searchEverywhereMl-typos-tests_test_lib",
 )
 ### auto-generated section `iml intellij.searchEverywhereMl.typos.tests` end

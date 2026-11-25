@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
@@ -66,12 +67,10 @@ jvm_library(
 ### auto-generated section `build intellij.platform.diff.impl` end
 
 ### auto-generated section `iml intellij.platform.diff.impl` start
-exports_files(
-    [
-        "intellij.platform.diff.impl.iml",
-        "resources/intellij.platform.diff.impl.actions.xml",
-        "resources/intellij.platform.diff.impl.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.platform.diff.impl",
+    descriptors = ["resources/intellij.platform.diff.impl.xml"],
+    target = "diff-impl",
+    exports = ["resources/intellij.platform.diff.impl.actions.xml"],
 )
 ### auto-generated section `iml intellij.platform.diff.impl` end

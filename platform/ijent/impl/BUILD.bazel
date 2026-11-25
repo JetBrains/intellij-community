@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
@@ -59,11 +60,9 @@ jvm_library(
 ### auto-generated section `build intellij.platform.ijent.community.impl` end
 
 ### auto-generated section `iml intellij.platform.ijent.community.impl` start
-exports_files(
-    [
-        "intellij.platform.ijent.community.impl.iml",
-        "resources/intellij.platform.ijent.community.impl.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.platform.ijent.community.impl",
+    descriptors = ["resources/intellij.platform.ijent.community.impl.xml"],
+    target = "impl",
 )
 ### auto-generated section `iml intellij.platform.ijent.community.impl` end

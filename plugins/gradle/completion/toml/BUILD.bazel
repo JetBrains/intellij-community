@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
@@ -45,12 +46,10 @@ jvm_library(
 ### auto-generated section `build intellij.gradle.completion.toml` end
 
 ### auto-generated section `iml intellij.gradle.completion.toml` start
-exports_files(
-    [
-        "intellij.gradle.completion.toml.iml",
-        "resources/intellij.gradle.completion.toml.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.gradle.completion.toml",
+    descriptors = ["resources/intellij.gradle.completion.toml.xml"],
+    target = "toml",
 )
 ### auto-generated section `iml intellij.gradle.completion.toml` end
 
@@ -107,11 +106,10 @@ jvm_library(
 ### auto-generated section `build intellij.gradle.completion.toml.tests` end
 
 ### auto-generated section `iml intellij.gradle.completion.toml.tests` start
-exports_files(
-    [
-        "intellij.gradle.completion.toml.tests.iml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.gradle.completion.toml.tests",
+    resources = False,
+    target = "gradle-completion-toml-tests_test_lib",
 )
 ### auto-generated section `iml intellij.gradle.completion.toml.tests` end
 

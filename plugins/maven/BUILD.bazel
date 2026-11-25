@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.maven` start
@@ -147,14 +148,14 @@ jvm_library(
 ### auto-generated section `build intellij.maven` end
 
 ### auto-generated section `iml intellij.maven` start
-exports_files(
-    [
-        "intellij.maven.iml",
+jps_module(
+    name = "intellij.maven",
+    descriptors = ["src/main/resources/intellij.maven.xml"],
+    target = "maven",
+    exports = [
         "src/main/resources/inlayProviders/maven.pom.model.version.hints/preview.xml",
-        "src/main/resources/intellij.maven.xml",
         "src/main/resources/liveTemplates/maven_xml.xml",
         "src/main/resources/org/jetbrains/idea/maven/dom/converters/repositories/repositories.xml",
     ],
-    visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.maven` end

@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.libraries.oshi.core` start
@@ -19,11 +20,9 @@ jvm_library(
 ### auto-generated section `build intellij.libraries.oshi.core` end
 
 ### auto-generated section `iml intellij.libraries.oshi.core` start
-exports_files(
-    [
-        "intellij.libraries.oshi.core.iml",
-        "resources/intellij.libraries.oshi.core.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.libraries.oshi.core",
+    descriptors = ["resources/intellij.libraries.oshi.core.xml"],
+    target = "oshi-core",
 )
 ### auto-generated section `iml intellij.libraries.oshi.core` end

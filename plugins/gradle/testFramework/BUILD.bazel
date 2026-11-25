@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.gradle.testFramework` start
@@ -87,10 +88,8 @@ jvm_library(
 ### auto-generated section `build intellij.gradle.testFramework` end
 
 ### auto-generated section `iml intellij.gradle.testFramework` start
-exports_files(
-    [
-        "intellij.gradle.testFramework.iml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.gradle.testFramework",
+    target = "testFramework",
 )
 ### auto-generated section `iml intellij.gradle.testFramework` end

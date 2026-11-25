@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library")
 
@@ -95,12 +96,10 @@ jvm_library(
 ### auto-generated section `build intellij.maven.testFramework` end
 
 ### auto-generated section `iml intellij.maven.testFramework` start
-exports_files(
-    [
-        "intellij.maven.testFramework.iml",
-        "resources/intellij.maven.testFramework.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.maven.testFramework",
+    descriptors = ["resources/intellij.maven.testFramework.xml"],
+    target = "testFramework",
 )
 ### auto-generated section `iml intellij.maven.testFramework` end
 
@@ -130,10 +129,9 @@ jvm_library(
 ### auto-generated section `build intellij.maven.testFramework.tests` end
 
 ### auto-generated section `iml intellij.maven.testFramework.tests` start
-exports_files(
-    [
-        "intellij.maven.testFramework.tests.iml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.maven.testFramework.tests",
+    resources = False,
+    target = "testFramework-tests_test_lib",
 )
 ### auto-generated section `iml intellij.maven.testFramework.tests` end

@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@community//platform/build-scripts/bazel-rules:ij_plugin_module.bzl", "ij_plugin_module")
 
 ### auto-generated section `build intellij.libraries.joni` start
@@ -20,11 +21,9 @@ ij_plugin_module(
 ### auto-generated section `build intellij.libraries.joni` end
 
 ### auto-generated section `iml intellij.libraries.joni` start
-exports_files(
-    [
-        "intellij.libraries.joni.iml",
-        "resources/intellij.libraries.joni.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.libraries.joni",
+    descriptors = ["resources/intellij.libraries.joni.xml"],
+    target = "joni",
 )
 ### auto-generated section `iml intellij.libraries.joni` end

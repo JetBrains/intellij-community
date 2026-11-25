@@ -1,7 +1,8 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@community//build:tests-options.bzl", "jps_test")
 load("@community//platform/build-scripts/bazel-rules:ij_plugin.bzl", "ij_plugin")
-load("@jps_dynamic_deps_community//:targets.bzl", "dist_plugin")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:dist_plugin.bzl", "dist_plugin")
 
 jps_test(
     name = "mermaid-tests_test",
@@ -22,12 +23,25 @@ dist_plugin(
         "intellij.mermaid.spellchecker",
     ],
     descriptor = "resources/META-INF/plugin.xml",
+    descriptors = {
+        "@community//plugins/mermaid/frontend:resources/intellij.mermaid.frontend.xml": "intellij.mermaid.frontend.xml",
+        "@community//plugins/mermaid/json:resources/intellij.mermaid.json.xml": "intellij.mermaid.json.xml",
+        "@community//plugins/mermaid/markdown:resources/intellij.mermaid.markdown.xml": "intellij.mermaid.markdown.xml",
+        "@community//plugins/mermaid/spellchecker:resources/intellij.mermaid.spellchecker.xml": "intellij.mermaid.spellchecker.xml",
+    },
     jars = {
         "lib/mermaid.jar": ["intellij.mermaid"],
     },
     main_module = "intellij.mermaid",
     mode_refused_content_modules = {
         "frontend": ["intellij.mermaid.json"],
+    },
+    module_labels = {
+        "intellij.mermaid": "@community//plugins/mermaid:mermaid",
+        "intellij.mermaid.frontend": "@community//plugins/mermaid/frontend:frontend",
+        "intellij.mermaid.json": "@community//plugins/mermaid/json:json",
+        "intellij.mermaid.markdown": "@community//plugins/mermaid/markdown:markdown",
+        "intellij.mermaid.spellchecker": "@community//plugins/mermaid/spellchecker:spellchecker",
     },
 )
 ### auto-generated section `dev intellij.mermaid` end
@@ -111,15 +125,16 @@ ij_plugin(
 ### auto-generated section `plugin intellij.mermaid` end
 
 ### auto-generated section `iml intellij.mermaid` start
-exports_files(
-    [
-        "intellij.mermaid.iml",
-        "resources/META-INF/plugin.xml",
+jps_module(
+    name = "intellij.mermaid",
+    descriptors = ["resources/META-INF/plugin.xml"],
+    plugin = True,
+    target = "mermaid",
+    exports = [
         "resources/colorSchemes/MermaidDarcula.xml",
         "resources/colorSchemes/MermaidDefault.xml",
         "resources/liveTemplates/MermaidHidden.xml",
     ],
-    visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.mermaid` end
 
@@ -184,10 +199,8 @@ jvm_library(
 ### auto-generated section `build intellij.mermaid.tests` end
 
 ### auto-generated section `iml intellij.mermaid.tests` start
-exports_files(
-    [
-        "intellij.mermaid.tests.iml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.mermaid.tests",
+    target = "mermaid-tests_test_lib",
 )
 ### auto-generated section `iml intellij.mermaid.tests` end

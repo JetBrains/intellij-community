@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.libraries.compose.swing.test` start
@@ -15,10 +16,9 @@ jvm_library(
 ### auto-generated section `build intellij.libraries.compose.swing.test` end
 
 ### auto-generated section `iml intellij.libraries.compose.swing.test` start
-exports_files(
-    [
-        "intellij.libraries.compose.swing.test.iml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.libraries.compose.swing.test",
+    resources = False,
+    target = "test",
 )
 ### auto-generated section `iml intellij.libraries.compose.swing.test` end

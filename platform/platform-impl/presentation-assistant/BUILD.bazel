@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
@@ -48,11 +49,9 @@ jvm_library(
 ### auto-generated section `build intellij.platform.ide.presentationAssistant` end
 
 ### auto-generated section `iml intellij.platform.ide.presentationAssistant` start
-exports_files(
-    [
-        "intellij.platform.ide.presentationAssistant.iml",
-        "resources/intellij.platform.ide.presentationAssistant.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.platform.ide.presentationAssistant",
+    descriptors = ["resources/intellij.platform.ide.presentationAssistant.xml"],
+    target = "presentation-assistant",
 )
 ### auto-generated section `iml intellij.platform.ide.presentationAssistant` end

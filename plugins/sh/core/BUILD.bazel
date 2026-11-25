@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
@@ -74,14 +75,14 @@ jvm_library(
 ### auto-generated section `build intellij.sh.core` end
 
 ### auto-generated section `iml intellij.sh.core` start
-exports_files(
-    [
-        "intellij.sh.core.iml",
+jps_module(
+    name = "intellij.sh.core",
+    descriptors = ["resources/intellij.sh.core.xml"],
+    target = "core",
+    exports = [
         "resources/colors/ShDarcula.xml",
         "resources/colors/ShDefault.xml",
-        "resources/intellij.sh.core.xml",
     ],
-    visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.sh.core` end
 
@@ -147,10 +148,8 @@ jvm_library(
 ### auto-generated section `build intellij.sh.tests` end
 
 ### auto-generated section `iml intellij.sh.tests` start
-exports_files(
-    [
-        "intellij.sh.tests.iml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.sh.tests",
+    target = "tests_test_lib",
 )
 ### auto-generated section `iml intellij.sh.tests` end

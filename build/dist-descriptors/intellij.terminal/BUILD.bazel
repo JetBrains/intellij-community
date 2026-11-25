@@ -12,26 +12,24 @@
 # the stamps. The component index names the `dev_plugin` target or the component of a `dist_complex_plugin`
 # call.
 #
-# A descriptor leaf derives its conventional descriptor rows from the bridge index of its half.
+# A descriptor leaf states every descriptor row. The label of a conventional row is in the recorded form.
 
-load("@jps_dynamic_deps_community//:targets.bzl", "dist_plugin_descriptor")
+load("//platform/build-scripts/bazel-rules:dist_plugin_descriptor.bzl", "dist_plugin_descriptor")
 
 dist_plugin_descriptor(
-    content_modules = [
-        "intellij.libraries.completion.ranking.sh",
-        "intellij.terminal.backend",
-        "intellij.terminal.cloud",
-        "intellij.terminal.completion",
-        "intellij.terminal.completion.ml",
-        "intellij.terminal.emulator",
-        "intellij.terminal.execution",
-        "intellij.terminal.frontend",
-        "intellij.terminal.libraries.completionDbWithExtensions",
-        "intellij.terminal.sh",
-    ],
     descriptor = "//plugins/terminal:resources/META-INF/plugin.xml",
     descriptors = {
         "//plugins/terminal:resources/META-INF/terminal.xml": "META-INF/terminal.xml",
+        "@community//libraries/completion-ranking-sh:resources/intellij.libraries.completion.ranking.sh.xml": "intellij.libraries.completion.ranking.sh.xml",
+        "@community//plugins/terminal/backend:resources/intellij.terminal.backend.xml": "intellij.terminal.backend.xml",
+        "@community//plugins/terminal/cloud:resources/intellij.terminal.cloud.xml": "intellij.terminal.cloud.xml",
+        "@community//plugins/terminal/completion-ml:resources/intellij.terminal.completion.ml.xml": "intellij.terminal.completion.ml.xml",
+        "@community//plugins/terminal/completion:resources/intellij.terminal.completion.xml": "intellij.terminal.completion.xml",
+        "@community//plugins/terminal/emulator:resources/intellij.terminal.emulator.xml": "intellij.terminal.emulator.xml",
+        "@community//plugins/terminal/execution:resources/intellij.terminal.execution.xml": "intellij.terminal.execution.xml",
+        "@community//plugins/terminal/frontend:resources/intellij.terminal.frontend.xml": "intellij.terminal.frontend.xml",
+        "@community//plugins/terminal/libraries:resources/intellij.terminal.libraries.completionDbWithExtensions.xml": "intellij.terminal.libraries.completionDbWithExtensions.xml",
+        "@community//plugins/terminal/sh:resources/intellij.terminal.sh.xml": "intellij.terminal.sh.xml",
     },
     main_module = "intellij.terminal",
     mode_refused_content_modules = {

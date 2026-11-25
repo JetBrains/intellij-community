@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.libraries.kotlinc.kotlin.main.kts` start
@@ -15,10 +16,9 @@ jvm_library(
 ### auto-generated section `build intellij.libraries.kotlinc.kotlin.main.kts` end
 
 ### auto-generated section `iml intellij.libraries.kotlinc.kotlin.main.kts` start
-exports_files(
-    [
-        "intellij.libraries.kotlinc.kotlin.main.kts.iml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.libraries.kotlinc.kotlin.main.kts",
+    resources = False,
+    target = "libraries-kotlinc-kotlin-main-kts",
 )
 ### auto-generated section `iml intellij.libraries.kotlinc.kotlin.main.kts` end

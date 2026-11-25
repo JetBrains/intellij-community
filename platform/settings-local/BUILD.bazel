@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
@@ -71,12 +72,10 @@ jvm_library(
 ### auto-generated section `build intellij.platform.settings.local` end
 
 ### auto-generated section `iml intellij.platform.settings.local` start
-exports_files(
-    [
-        "intellij.platform.settings.local.iml",
-        "resources/intellij.platform.settings.local.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.platform.settings.local",
+    descriptors = ["resources/intellij.platform.settings.local.xml"],
+    target = "settings-local",
 )
 ### auto-generated section `iml intellij.platform.settings.local` end
 
@@ -125,10 +124,9 @@ jvm_library(
 ### auto-generated section `build intellij.platform.settings.local.tests` end
 
 ### auto-generated section `iml intellij.platform.settings.local.tests` start
-exports_files(
-    [
-        "intellij.platform.settings.local.tests.iml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.platform.settings.local.tests",
+    resources = False,
+    target = "settings-local-tests_test_lib",
 )
 ### auto-generated section `iml intellij.platform.settings.local.tests` end

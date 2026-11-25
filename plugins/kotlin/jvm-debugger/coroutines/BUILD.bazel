@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
@@ -107,11 +108,9 @@ jvm_library(
 ### auto-generated section `build intellij.kotlin.jvm.debugger.coroutines` end
 
 ### auto-generated section `iml intellij.kotlin.jvm.debugger.coroutines` start
-exports_files(
-    [
-        "intellij.kotlin.jvm.debugger.coroutines.iml",
-        "resources/intellij.kotlin.jvm.debugger.coroutines.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.kotlin.jvm.debugger.coroutines",
+    descriptors = ["resources/intellij.kotlin.jvm.debugger.coroutines.xml"],
+    target = "coroutines",
 )
 ### auto-generated section `iml intellij.kotlin.jvm.debugger.coroutines` end

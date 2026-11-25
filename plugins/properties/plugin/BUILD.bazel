@@ -1,6 +1,7 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@community//platform/build-scripts/bazel-rules:ij_plugin.bzl", "ij_plugin")
-load("@jps_dynamic_deps_community//:targets.bzl", "dist_plugin")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:dist_plugin.bzl", "dist_plugin")
 
 ### auto-generated section `dev intellij.properties.plugin` start
 dist_plugin(
@@ -14,6 +15,14 @@ dist_plugin(
         "intellij.properties.psi",
     ],
     descriptor = "resources/META-INF/plugin.xml",
+    descriptors = {
+        "@community//plugins/properties/copyright:resources/intellij.properties.copyright.xml": "intellij.properties.copyright.xml",
+        "@community//plugins/properties/properties-common:resources/intellij.properties.xml": "intellij.properties.xml",
+        "@community//plugins/properties/properties-psi-api:resources/intellij.properties.psi.xml": "intellij.properties.psi.xml",
+        "@community//plugins/properties/properties-psi-impl:resources/intellij.properties.backend.psi.xml": "intellij.properties.backend.psi.xml",
+        "@community//plugins/properties/structuralsearch:resources/intellij.properties.structuralSearch.xml": "intellij.properties.structuralSearch.xml",
+        "@community//plugins/properties:resources/intellij.properties.backend.xml": "intellij.properties.backend.xml",
+    },
     jars = {
         "lib/properties-plugin.jar": ["intellij.properties.plugin"],
     },
@@ -28,6 +37,15 @@ dist_plugin(
     module_jar_paths = {
         "intellij.properties": "lib/intellij.properties.jar",
         "intellij.properties.psi": "lib/intellij.properties.psi.jar",
+    },
+    module_labels = {
+        "intellij.properties": "@community//plugins/properties/properties-common:properties",
+        "intellij.properties.backend": "@community//plugins/properties:properties-backend",
+        "intellij.properties.backend.psi": "@community//plugins/properties/properties-psi-impl:backend-psi",
+        "intellij.properties.copyright": "@community//plugins/properties/copyright:copyright",
+        "intellij.properties.plugin": "@community//plugins/properties/plugin:plugin",
+        "intellij.properties.psi": "@community//plugins/properties/properties-psi-api:psi",
+        "intellij.properties.structuralSearch": "@community//plugins/properties/structuralsearch:structuralSearch",
     },
 )
 ### auto-generated section `dev intellij.properties.plugin` end
@@ -66,11 +84,10 @@ ij_plugin(
 ### auto-generated section `plugin intellij.properties.plugin` end
 
 ### auto-generated section `iml intellij.properties.plugin` start
-exports_files(
-    [
-        "intellij.properties.plugin.iml",
-        "resources/META-INF/plugin.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.properties.plugin",
+    descriptors = ["resources/META-INF/plugin.xml"],
+    plugin = True,
+    target = "plugin",
 )
 ### auto-generated section `iml intellij.properties.plugin` end

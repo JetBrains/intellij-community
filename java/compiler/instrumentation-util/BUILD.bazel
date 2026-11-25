@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
@@ -28,11 +29,9 @@ jvm_library(
 ### auto-generated section `build intellij.java.compiler.instrumentationUtil` end
 
 ### auto-generated section `iml intellij.java.compiler.instrumentationUtil` start
-exports_files(
-    [
-        "intellij.java.compiler.instrumentationUtil.iml",
-        "resources/intellij.java.compiler.instrumentationUtil.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.java.compiler.instrumentationUtil",
+    descriptors = ["resources/intellij.java.compiler.instrumentationUtil.xml"],
+    target = "instrumentation-util",
 )
 ### auto-generated section `iml intellij.java.compiler.instrumentationUtil` end

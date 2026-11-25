@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.platform.buildScripts.searchableOptionsInjector` start
@@ -22,10 +23,9 @@ jvm_library(
 ### auto-generated section `build intellij.platform.buildScripts.searchableOptionsInjector` end
 
 ### auto-generated section `iml intellij.platform.buildScripts.searchableOptionsInjector` start
-exports_files(
-    [
-        "intellij.platform.buildScripts.searchableOptionsInjector.iml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.platform.buildScripts.searchableOptionsInjector",
+    resources = False,
+    target = "searchable-options-injector",
 )
 ### auto-generated section `iml intellij.platform.buildScripts.searchableOptionsInjector` end

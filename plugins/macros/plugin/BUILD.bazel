@@ -1,15 +1,23 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@community//platform/build-scripts/bazel-rules:ij_plugin.bzl", "ij_plugin")
-load("@jps_dynamic_deps_community//:targets.bzl", "dist_plugin")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:dist_plugin.bzl", "dist_plugin")
 
 ### auto-generated section `dev intellij.macros.plugin` start
 dist_plugin(
     content_modules = ["intellij.macros.shared"],
     descriptor = "resources/META-INF/plugin.xml",
+    descriptors = {
+        "@community//plugins/macros/shared:resources/intellij.macros.shared.xml": "intellij.macros.shared.xml",
+    },
     jars = {
         "lib/macros-plugin.jar": ["intellij.macros.plugin"],
     },
     main_module = "intellij.macros.plugin",
+    module_labels = {
+        "intellij.macros.plugin": "@community//plugins/macros/plugin:plugin",
+        "intellij.macros.shared": "@community//plugins/macros/shared:shared",
+    },
 )
 ### auto-generated section `dev intellij.macros.plugin` end
 
@@ -39,11 +47,10 @@ ij_plugin(
 ### auto-generated section `plugin intellij.macros.plugin` end
 
 ### auto-generated section `iml intellij.macros.plugin` start
-exports_files(
-    [
-        "intellij.macros.plugin.iml",
-        "resources/META-INF/plugin.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.macros.plugin",
+    descriptors = ["resources/META-INF/plugin.xml"],
+    plugin = True,
+    target = "plugin",
 )
 ### auto-generated section `iml intellij.macros.plugin` end

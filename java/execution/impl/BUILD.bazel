@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
@@ -96,13 +97,13 @@ jvm_library(
 ### auto-generated section `build intellij.java.execution.impl` end
 
 ### auto-generated section `iml intellij.java.execution.impl` start
-exports_files(
-    [
-        "intellij.java.execution.impl.iml",
+jps_module(
+    name = "intellij.java.execution.impl",
+    descriptors = ["resources/intellij.java.execution.impl.xml"],
+    target = "impl",
+    exports = [
         "resources/META-INF/RegistryKeysExecutionImpl.xml",
         "resources/intellij.java.execution.impl.analyzer.xml",
-        "resources/intellij.java.execution.impl.xml",
     ],
-    visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.java.execution.impl` end

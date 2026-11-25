@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
@@ -119,12 +120,10 @@ jvm_library(
 ### auto-generated section `build intellij.kotlin.codeInsight` end
 
 ### auto-generated section `iml intellij.kotlin.codeInsight` start
-exports_files(
-    [
-        "intellij.kotlin.codeInsight.iml",
-        "resources/intellij.kotlin.codeInsight.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.kotlin.codeInsight",
+    descriptors = ["resources/intellij.kotlin.codeInsight.xml"],
+    target = "kotlin-codeInsight",
 )
 ### auto-generated section `iml intellij.kotlin.codeInsight` end
 
@@ -235,11 +234,10 @@ jvm_library(
 ### auto-generated section `build intellij.kotlin.codeInsight.tests` end
 
 ### auto-generated section `iml intellij.kotlin.codeInsight.tests` start
-exports_files(
-    [
-        "intellij.kotlin.codeInsight.tests.iml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.kotlin.codeInsight.tests",
+    resources = False,
+    target = "kotlin-codeInsight-tests_test_lib",
 )
 ### auto-generated section `iml intellij.kotlin.codeInsight.tests` end
 

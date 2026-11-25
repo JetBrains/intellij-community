@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.execution.process.mediator.daemon` start
@@ -32,11 +33,9 @@ jvm_library(
 ### auto-generated section `build intellij.execution.process.mediator.daemon` end
 
 ### auto-generated section `iml intellij.execution.process.mediator.daemon` start
-exports_files(
-    [
-        "intellij.execution.process.mediator.daemon.iml",
-        "resources/intellij.execution.process.mediator.daemon.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.execution.process.mediator.daemon",
+    descriptors = ["resources/intellij.execution.process.mediator.daemon.xml"],
+    target = "daemon",
 )
 ### auto-generated section `iml intellij.execution.process.mediator.daemon` end

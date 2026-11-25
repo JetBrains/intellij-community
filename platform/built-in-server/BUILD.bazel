@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
@@ -78,12 +79,10 @@ jvm_library(
 ### auto-generated section `build intellij.platform.builtInServer.impl` end
 
 ### auto-generated section `iml intellij.platform.builtInServer.impl` start
-exports_files(
-    [
-        "intellij.platform.builtInServer.impl.iml",
-        "resources/intellij.platform.builtInServer.impl.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.platform.builtInServer.impl",
+    descriptors = ["resources/intellij.platform.builtInServer.impl.xml"],
+    target = "builtInServer-impl",
 )
 ### auto-generated section `iml intellij.platform.builtInServer.impl` end
 
@@ -146,10 +145,8 @@ jvm_library(
 ### auto-generated section `build intellij.platform.builtInServer.tests` end
 
 ### auto-generated section `iml intellij.platform.builtInServer.tests` start
-exports_files(
-    [
-        "intellij.platform.builtInServer.tests.iml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.platform.builtInServer.tests",
+    target = "builtInServer-tests_test_lib",
 )
 ### auto-generated section `iml intellij.platform.builtInServer.tests` end

@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.space.java.jps` start
@@ -28,11 +29,9 @@ jvm_library(
 ### auto-generated section `build intellij.space.java.jps` end
 
 ### auto-generated section `iml intellij.space.java.jps` start
-exports_files(
-    [
-        "intellij.space.java.jps.iml",
-        "resources/intellij.space.java.jps.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.space.java.jps",
+    descriptors = ["resources/intellij.space.java.jps.xml"],
+    target = "java-jps",
 )
 ### auto-generated section `iml intellij.space.java.jps` end

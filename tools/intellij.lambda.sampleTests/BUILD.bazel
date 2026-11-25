@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
@@ -45,11 +46,9 @@ jvm_library(
 ### auto-generated section `build intellij.lambda.sampleTests` end
 
 ### auto-generated section `iml intellij.lambda.sampleTests` start
-exports_files(
-    [
-        "intellij.lambda.sampleTests.iml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.lambda.sampleTests",
+    target = "lambda-sampleTests_test_lib",
 )
 ### auto-generated section `iml intellij.lambda.sampleTests` end
 

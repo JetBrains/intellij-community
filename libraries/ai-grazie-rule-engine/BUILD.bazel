@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.libraries.ai.grazie.rule.engine` start
@@ -19,11 +20,9 @@ jvm_library(
 ### auto-generated section `build intellij.libraries.ai.grazie.rule.engine` end
 
 ### auto-generated section `iml intellij.libraries.ai.grazie.rule.engine` start
-exports_files(
-    [
-        "intellij.libraries.ai.grazie.rule.engine.iml",
-        "resources/intellij.libraries.ai.grazie.rule.engine.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.libraries.ai.grazie.rule.engine",
+    descriptors = ["resources/intellij.libraries.ai.grazie.rule.engine.xml"],
+    target = "ai-grazie-rule-engine",
 )
 ### auto-generated section `iml intellij.libraries.ai.grazie.rule.engine` end

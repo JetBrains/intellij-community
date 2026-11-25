@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@community//platform/build-scripts/bazel-rules:ij_plugin_module.bzl", "ij_plugin_module")
 
 ### auto-generated section `build intellij.libraries.commons.pool2` start
@@ -20,11 +21,9 @@ ij_plugin_module(
 ### auto-generated section `build intellij.libraries.commons.pool2` end
 
 ### auto-generated section `iml intellij.libraries.commons.pool2` start
-exports_files(
-    [
-        "intellij.libraries.commons.pool2.iml",
-        "resources/intellij.libraries.commons.pool2.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.libraries.commons.pool2",
+    descriptors = ["resources/intellij.libraries.commons.pool2.xml"],
+    target = "pool2",
 )
 ### auto-generated section `iml intellij.libraries.commons.pool2` end

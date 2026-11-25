@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
@@ -27,11 +28,9 @@ jvm_library(
 ### auto-generated section `build intellij.libraries.jgoodies.forms` end
 
 ### auto-generated section `iml intellij.libraries.jgoodies.forms` start
-exports_files(
-    [
-        "intellij.libraries.jgoodies.forms.iml",
-        "resources/intellij.libraries.jgoodies.forms.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.libraries.jgoodies.forms",
+    descriptors = ["resources/intellij.libraries.jgoodies.forms.xml"],
+    target = "forms",
 )
 ### auto-generated section `iml intellij.libraries.jgoodies.forms` end

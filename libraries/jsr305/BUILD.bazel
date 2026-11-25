@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@community//platform/build-scripts/bazel-rules:ij_plugin_module.bzl", "ij_plugin_module")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
@@ -28,11 +29,9 @@ ij_plugin_module(
 ### auto-generated section `build intellij.libraries.jsr305` end
 
 ### auto-generated section `iml intellij.libraries.jsr305` start
-exports_files(
-    [
-        "intellij.libraries.jsr305.iml",
-        "resources/intellij.libraries.jsr305.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.libraries.jsr305",
+    descriptors = ["resources/intellij.libraries.jsr305.xml"],
+    target = "jsr305",
 )
 ### auto-generated section `iml intellij.libraries.jsr305` end

@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
@@ -144,9 +145,11 @@ jvm_library(
 ### auto-generated section `build intellij.java.impl` end
 
 ### auto-generated section `iml intellij.java.impl` start
-exports_files(
-    [
-        "intellij.java.impl.iml",
+jps_module(
+    name = "intellij.java.impl",
+    descriptors = ["resources/intellij.java.impl.xml"],
+    target = "impl",
+    exports = [
         "resources/META-INF/IntentionPowerPack.xml",
         "resources/META-INF/Intentions.xml",
         "resources/META-INF/RegistryKeysJavaImpl.xml",
@@ -154,11 +157,9 @@ exports_files(
         "resources/com/intellij/internal/statistic/libraryJar/library-jar-statistics.xml",
         "resources/com/intellij/internal/statistic/libraryUsage/library-usage-statistics.xml",
         "resources/intellij.java.impl.analyzer.xml",
-        "resources/intellij.java.impl.xml",
         "resources/liveTemplates/Java.xml",
         "resources/liveTemplates/JavaImplicitClass.xml",
         "resources/liveTemplates/JavaNormalClassesWithInstanceMain.xml",
     ],
-    visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.java.impl` end

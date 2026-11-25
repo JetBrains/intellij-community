@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.libraries.jackson3.dataformat.xml` start
@@ -23,11 +24,9 @@ jvm_library(
 ### auto-generated section `build intellij.libraries.jackson3.dataformat.xml` end
 
 ### auto-generated section `iml intellij.libraries.jackson3.dataformat.xml` start
-exports_files(
-    [
-        "intellij.libraries.jackson3.dataformat.xml.iml",
-        "resources/intellij.libraries.jackson3.dataformat.xml.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.libraries.jackson3.dataformat.xml",
+    descriptors = ["resources/intellij.libraries.jackson3.dataformat.xml.xml"],
+    target = "libraries-jackson3-dataformat-xml",
 )
 ### auto-generated section `iml intellij.libraries.jackson3.dataformat.xml` end

@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
@@ -45,11 +46,9 @@ jvm_library(
 ### auto-generated section `build intellij.libraries.compose.foundation.desktop` end
 
 ### auto-generated section `iml intellij.libraries.compose.foundation.desktop` start
-exports_files(
-    [
-        "intellij.libraries.compose.foundation.desktop.iml",
-        "resources/intellij.libraries.compose.foundation.desktop.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.libraries.compose.foundation.desktop",
+    descriptors = ["resources/intellij.libraries.compose.foundation.desktop.xml"],
+    target = "compose-foundation-desktop",
 )
 ### auto-generated section `iml intellij.libraries.compose.foundation.desktop` end

@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
@@ -65,14 +66,14 @@ jvm_library(
 ### auto-generated section `build intellij.java.indexing.impl` end
 
 ### auto-generated section `iml intellij.java.indexing.impl` start
-exports_files(
-    [
-        "intellij.java.indexing.impl.iml",
+jps_module(
+    name = "intellij.java.indexing.impl",
+    descriptors = ["resources/intellij.java.indexing.impl.xml"],
+    target = "indexing-impl",
+    exports = [
         "resources/META-INF/JavaIndexingPlugin.xml",
         "resources/META-INF/RegistryKeysIndexingImpl.xml",
         "resources/intellij.java.indexing.impl.analyzer.xml",
-        "resources/intellij.java.indexing.impl.xml",
     ],
-    visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.java.indexing.impl` end

@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
@@ -56,11 +57,9 @@ jvm_library(
 ### auto-generated section `build intellij.grazie.markdown.specification` end
 
 ### auto-generated section `iml intellij.grazie.markdown.specification` start
-exports_files(
-    [
-        "intellij.grazie.markdown.specification.iml",
-        "src/main/resources/intellij.grazie.markdown.specification.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.grazie.markdown.specification",
+    descriptors = ["src/main/resources/intellij.grazie.markdown.specification.xml"],
+    target = "specification",
 )
 ### auto-generated section `iml intellij.grazie.markdown.specification` end

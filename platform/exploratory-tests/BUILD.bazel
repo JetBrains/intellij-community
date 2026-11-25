@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.platform.exploratory.tests.main` start
@@ -31,10 +32,8 @@ jvm_library(
 ### auto-generated section `build intellij.platform.exploratory.tests.main` end
 
 ### auto-generated section `iml intellij.platform.exploratory.tests.main` start
-exports_files(
-    [
-        "intellij.platform.exploratory.tests.main.iml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.platform.exploratory.tests.main",
+    target = "exploratory-tests-main_test_lib",
 )
 ### auto-generated section `iml intellij.platform.exploratory.tests.main` end

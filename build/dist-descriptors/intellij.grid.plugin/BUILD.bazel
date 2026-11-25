@@ -12,24 +12,24 @@
 # the stamps. The component index names the `dev_plugin` target or the component of a `dist_complex_plugin`
 # call.
 #
-# A descriptor leaf derives its conventional descriptor rows from the bridge index of its half.
+# A descriptor leaf states every descriptor row. The label of a conventional row is in the recorded form.
 
-load("@jps_dynamic_deps_community//:targets.bzl", "dist_plugin_descriptor")
 load("//platform/build-scripts/bazel-rules:dev_plugin.bzl", "dev_plugin")
+load("//platform/build-scripts/bazel-rules:dist_plugin_descriptor.bzl", "dist_plugin_descriptor")
 
 dist_plugin_descriptor(
-    content_modules = [
-        "intellij.grid",
-        "intellij.grid.core.impl",
-        "intellij.grid.csv.core.impl",
-        "intellij.grid.images.impl",
-        "intellij.grid.impl",
-        "intellij.grid.impl.ide",
-        "intellij.grid.json.impl",
-        "intellij.grid.structureview",
-        "intellij.grid.types",
-    ],
     descriptor = "//grid/plugin:resources/META-INF/plugin.xml",
+    descriptors = {
+        "@community//grid/api:resources/intellij.grid.xml": "intellij.grid.xml",
+        "@community//grid/core-impl:resources/intellij.grid.core.impl.xml": "intellij.grid.core.impl.xml",
+        "@community//grid/csv:resources/intellij.grid.csv.core.impl.xml": "intellij.grid.csv.core.impl.xml",
+        "@community//grid/images:resources/intellij.grid.images.impl.xml": "intellij.grid.images.impl.xml",
+        "@community//grid/impl-ide:resources/intellij.grid.impl.ide.xml": "intellij.grid.impl.ide.xml",
+        "@community//grid/impl:resources/intellij.grid.impl.xml": "intellij.grid.impl.xml",
+        "@community//grid/json:resources/intellij.grid.json.impl.xml": "intellij.grid.json.impl.xml",
+        "@community//grid/structureview:resources/intellij.grid.structureview.xml": "intellij.grid.structureview.xml",
+        "@community//grid/types:resources/intellij.grid.types.xml": "intellij.grid.types.xml",
+    },
     main_module = "intellij.grid.plugin",
     mode_refused_content_modules = {
         "frontend": ["intellij.grid.json.impl"],

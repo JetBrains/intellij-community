@@ -1,6 +1,7 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@community//platform/build-scripts/bazel-rules:ij_plugin.bzl", "ij_plugin")
-load("@jps_dynamic_deps_community//:targets.bzl", "dist_plugin")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:dist_plugin.bzl", "dist_plugin")
 
 ### auto-generated section `dev intellij.keymap.visualStudio2022` start
 dist_plugin(
@@ -9,6 +10,9 @@ dist_plugin(
         "lib/keymap-visualStudio2022.jar": ["intellij.keymap.visualStudio2022"],
     },
     main_module = "intellij.keymap.visualStudio2022",
+    module_labels = {
+        "intellij.keymap.visualStudio2022": "@community//plugins/keymaps/visual-studio2022-keymap:keymap-visualStudio2022",
+    },
 )
 ### auto-generated section `dev intellij.keymap.visualStudio2022` end
 
@@ -38,12 +42,11 @@ ij_plugin(
 ### auto-generated section `plugin intellij.keymap.visualStudio2022` end
 
 ### auto-generated section `iml intellij.keymap.visualStudio2022` start
-exports_files(
-    [
-        "intellij.keymap.visualStudio2022.iml",
-        "resources/META-INF/plugin.xml",
-        "resources/keymaps/Visual Studio 2022.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.keymap.visualStudio2022",
+    descriptors = ["resources/META-INF/plugin.xml"],
+    plugin = True,
+    target = "keymap-visualStudio2022",
+    exports = ["resources/keymaps/Visual Studio 2022.xml"],
 )
 ### auto-generated section `iml intellij.keymap.visualStudio2022` end

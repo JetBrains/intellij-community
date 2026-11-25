@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
@@ -89,11 +90,9 @@ jvm_library(
 ### auto-generated section `build intellij.kotlin.refactorings.base` end
 
 ### auto-generated section `iml intellij.kotlin.refactorings.base` start
-exports_files(
-    [
-        "intellij.kotlin.refactorings.base.iml",
-        "resources/intellij.kotlin.refactorings.base.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.kotlin.refactorings.base",
+    descriptors = ["resources/intellij.kotlin.refactorings.base.xml"],
+    target = "kotlin-refactorings-base",
 )
 ### auto-generated section `iml intellij.kotlin.refactorings.base` end

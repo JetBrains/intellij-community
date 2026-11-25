@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
@@ -42,11 +43,9 @@ jvm_library(
 ### auto-generated section `build intellij.gradle.java.properties` end
 
 ### auto-generated section `iml intellij.gradle.java.properties` start
-exports_files(
-    [
-        "intellij.gradle.java.properties.iml",
-        "resources/intellij.gradle.java.properties.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.gradle.java.properties",
+    descriptors = ["resources/intellij.gradle.java.properties.xml"],
+    target = "properties",
 )
 ### auto-generated section `iml intellij.gradle.java.properties` end

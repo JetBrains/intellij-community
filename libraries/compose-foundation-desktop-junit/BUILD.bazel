@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.libraries.compose.foundation.desktop.junit` start
@@ -34,10 +35,8 @@ jvm_library(
 ### auto-generated section `build intellij.libraries.compose.foundation.desktop.junit` end
 
 ### auto-generated section `iml intellij.libraries.compose.foundation.desktop.junit` start
-exports_files(
-    [
-        "intellij.libraries.compose.foundation.desktop.junit.iml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.libraries.compose.foundation.desktop.junit",
+    target = "compose-foundation-desktop-junit_test_lib",
 )
 ### auto-generated section `iml intellij.libraries.compose.foundation.desktop.junit` end

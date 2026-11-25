@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
@@ -37,11 +38,9 @@ jvm_library(
 ### auto-generated section `build intellij.groovy.dev` end
 
 ### auto-generated section `iml intellij.groovy.dev` start
-exports_files(
-    [
-        "intellij.groovy.dev.iml",
-        "resources/intellij.groovy.dev.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.groovy.dev",
+    descriptors = ["resources/intellij.groovy.dev.xml"],
+    target = "groovy-dev",
 )
 ### auto-generated section `iml intellij.groovy.dev` end

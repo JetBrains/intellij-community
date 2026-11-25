@@ -1,15 +1,23 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@community//platform/build-scripts/bazel-rules:ij_plugin.bzl", "ij_plugin")
-load("@jps_dynamic_deps_community//:targets.bzl", "dist_plugin")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:dist_plugin.bzl", "dist_plugin")
 
 ### auto-generated section `dev intellij.lsp.ui.plugin` start
 dist_plugin(
     content_modules = ["intellij.lsp.ui.frontend"],
     descriptor = "resources/META-INF/plugin.xml",
+    descriptors = {
+        "@community//plugins/lsp.ui/lsp.ui.frontend:resources/intellij.lsp.ui.frontend.xml": "intellij.lsp.ui.frontend.xml",
+    },
     jars = {
         "lib/lsp-ui-plugin.jar": ["intellij.lsp.ui.plugin"],
     },
     main_module = "intellij.lsp.ui.plugin",
+    module_labels = {
+        "intellij.lsp.ui.frontend": "@community//plugins/lsp.ui/lsp.ui.frontend:lsp.ui.frontend",
+        "intellij.lsp.ui.plugin": "@community//plugins/lsp.ui/lsp.ui.plugin:lsp.ui.plugin",
+    },
 )
 ### auto-generated section `dev intellij.lsp.ui.plugin` end
 
@@ -39,11 +47,10 @@ ij_plugin(
 ### auto-generated section `plugin intellij.lsp.ui.plugin` end
 
 ### auto-generated section `iml intellij.lsp.ui.plugin` start
-exports_files(
-    [
-        "intellij.lsp.ui.plugin.iml",
-        "resources/META-INF/plugin.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.lsp.ui.plugin",
+    descriptors = ["resources/META-INF/plugin.xml"],
+    plugin = True,
+    target = "lsp.ui.plugin",
 )
 ### auto-generated section `iml intellij.lsp.ui.plugin` end

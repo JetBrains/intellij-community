@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
@@ -54,12 +55,10 @@ jvm_library(
 ### auto-generated section `build intellij.dev.pluginLoading` end
 
 ### auto-generated section `iml intellij.dev.pluginLoading` start
-exports_files(
-    [
-        "intellij.dev.pluginLoading.iml",
-        "resources/intellij.dev.pluginLoading.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.dev.pluginLoading",
+    descriptors = ["resources/intellij.dev.pluginLoading.xml"],
+    target = "pluginLoading",
 )
 ### auto-generated section `iml intellij.dev.pluginLoading` end
 
@@ -96,10 +95,9 @@ jvm_library(
 ### auto-generated section `build intellij.dev.pluginLoading.tests` end
 
 ### auto-generated section `iml intellij.dev.pluginLoading.tests` start
-exports_files(
-    [
-        "intellij.dev.pluginLoading.tests.iml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.dev.pluginLoading.tests",
+    resources = False,
+    target = "pluginLoading-tests_test_lib",
 )
 ### auto-generated section `iml intellij.dev.pluginLoading.tests` end

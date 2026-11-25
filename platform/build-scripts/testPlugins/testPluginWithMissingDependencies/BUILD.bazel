@@ -1,17 +1,25 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@community//platform/build-scripts/bazel-rules:ij_plugin.bzl", "ij_plugin")
-load("@jps_dynamic_deps_community//:targets.bzl", "dist_plugin")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:dist_plugin.bzl", "dist_plugin")
 
 ### auto-generated section `dev intellij.platform.buildScripts.testPlugins.testPluginWithMissingDependencies` start
 dist_plugin(
     content_modules = ["intellij.platform.buildScripts.testPlugins.testPluginWithMissingDependencies.module"],
     descriptor = "resources/META-INF/plugin.xml",
+    descriptors = {
+        "@community//platform/build-scripts/testPlugins/testPluginWithMissingDependencies/module:resources/intellij.platform.buildScripts.testPlugins.testPluginWithMissingDependencies.module.xml": "intellij.platform.buildScripts.testPlugins.testPluginWithMissingDependencies.module.xml",
+    },
     jars = {
         "lib/platform-buildScripts-testPlugins-testPluginWithMissingDependencies.jar": ["intellij.platform.buildScripts.testPlugins.testPluginWithMissingDependencies"],
     },
     main_module = "intellij.platform.buildScripts.testPlugins.testPluginWithMissingDependencies",
     mode_refused_content_modules = {
         "frontend": ["intellij.platform.buildScripts.testPlugins.testPluginWithMissingDependencies.module"],
+    },
+    module_labels = {
+        "intellij.platform.buildScripts.testPlugins.testPluginWithMissingDependencies": "@community//platform/build-scripts/testPlugins/testPluginWithMissingDependencies:testPluginWithMissingDependencies",
+        "intellij.platform.buildScripts.testPlugins.testPluginWithMissingDependencies.module": "@community//platform/build-scripts/testPlugins/testPluginWithMissingDependencies/module:module",
     },
 )
 ### auto-generated section `dev intellij.platform.buildScripts.testPlugins.testPluginWithMissingDependencies` end
@@ -42,12 +50,11 @@ ij_plugin(
 ### auto-generated section `plugin intellij.platform.buildScripts.testPlugins.testPluginWithMissingDependencies` end
 
 ### auto-generated section `iml intellij.platform.buildScripts.testPlugins.testPluginWithMissingDependencies` start
-exports_files(
-    [
-        "intellij.platform.buildScripts.testPlugins.testPluginWithMissingDependencies.iml",
-        "resources/META-INF/plugin.xml",
-        "resources/intellij.platform.buildScripts.tests.testPluginWithMissingDependencies.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.platform.buildScripts.testPlugins.testPluginWithMissingDependencies",
+    descriptors = ["resources/META-INF/plugin.xml"],
+    plugin = True,
+    target = "testPluginWithMissingDependencies",
+    exports = ["resources/intellij.platform.buildScripts.tests.testPluginWithMissingDependencies.xml"],
 )
 ### auto-generated section `iml intellij.platform.buildScripts.testPlugins.testPluginWithMissingDependencies` end

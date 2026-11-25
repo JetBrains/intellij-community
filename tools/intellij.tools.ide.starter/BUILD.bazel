@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 
@@ -75,12 +76,10 @@ jvm_library(
 ### auto-generated section `build intellij.tools.ide.starter` end
 
 ### auto-generated section `iml intellij.tools.ide.starter` start
-exports_files(
-    [
-        "intellij.tools.ide.starter.iml",
-        "resources/ide.general.xml",
-        "resources/intellij.tools.ide.starter.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.tools.ide.starter",
+    descriptors = ["resources/intellij.tools.ide.starter.xml"],
+    target = "ide-starter",
+    exports = ["resources/ide.general.xml"],
 )
 ### auto-generated section `iml intellij.tools.ide.starter` end

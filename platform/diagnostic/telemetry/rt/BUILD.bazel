@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
@@ -34,11 +35,10 @@ jvm_library(
 ### auto-generated section `build intellij.platform.diagnostic.telemetry.rt` end
 
 ### auto-generated section `iml intellij.platform.diagnostic.telemetry.rt` start
-exports_files(
-    [
-        "intellij.platform.diagnostic.telemetry.rt.iml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.platform.diagnostic.telemetry.rt",
+    resources = False,
+    target = "rt",
 )
 ### auto-generated section `iml intellij.platform.diagnostic.telemetry.rt` end
 
@@ -67,10 +67,9 @@ jvm_library(
 ### auto-generated section `build intellij.platform.diagnostic.telemetry.rt.tests` end
 
 ### auto-generated section `iml intellij.platform.diagnostic.telemetry.rt.tests` start
-exports_files(
-    [
-        "intellij.platform.diagnostic.telemetry.rt.tests.iml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.platform.diagnostic.telemetry.rt.tests",
+    resources = False,
+    target = "diagnostic-telemetry-rt-tests_test_lib",
 )
 ### auto-generated section `iml intellij.platform.diagnostic.telemetry.rt.tests` end

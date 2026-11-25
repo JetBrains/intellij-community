@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
@@ -74,11 +75,9 @@ jvm_library(
 ### auto-generated section `build intellij.kotlin.migration` end
 
 ### auto-generated section `iml intellij.kotlin.migration` start
-exports_files(
-    [
-        "intellij.kotlin.migration.iml",
-        "resources/intellij.kotlin.migration.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.kotlin.migration",
+    descriptors = ["resources/intellij.kotlin.migration.xml"],
+    target = "migration",
 )
 ### auto-generated section `iml intellij.kotlin.migration` end

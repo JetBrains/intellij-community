@@ -1,6 +1,7 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@community//platform/build-scripts/bazel-rules:ij_plugin.bzl", "ij_plugin")
-load("@jps_dynamic_deps_community//:targets.bzl", "dist_plugin")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:dist_plugin.bzl", "dist_plugin")
 
 ### auto-generated section `dev intellij.lombok.plugin` start
 dist_plugin(
@@ -13,6 +14,13 @@ dist_plugin(
         "intellij.lombok.backend",
     ],
     descriptor = "resources/META-INF/plugin.xml",
+    descriptors = {
+        "@community//plugins/lombok/backend:resources/intellij.lombok.backend.xml": "intellij.lombok.backend.xml",
+        "@community//plugins/lombok/compiler:resources/intellij.lombok.compiler.xml": "intellij.lombok.compiler.xml",
+        "@community//plugins/lombok/generated:resources/intellij.lombok.generated.xml": "intellij.lombok.generated.xml",
+        "@community//plugins/lombok/shared:resources/intellij.lombok.shared.xml": "intellij.lombok.shared.xml",
+        "@community//plugins/lombok:src/main/resources/intellij.lombok.xml": "intellij.lombok.xml",
+    },
     jars = {
         "lib/lombok-plugin.jar": ["intellij.lombok.plugin"],
     },
@@ -22,6 +30,14 @@ dist_plugin(
             "intellij.lombok.compiler",
             "intellij.lombok.backend",
         ],
+    },
+    module_labels = {
+        "intellij.lombok": "@community//plugins/lombok:lombok",
+        "intellij.lombok.backend": "@community//plugins/lombok/backend:backend",
+        "intellij.lombok.compiler": "@community//plugins/lombok/compiler:compiler",
+        "intellij.lombok.generated": "@community//plugins/lombok/generated:generated",
+        "intellij.lombok.plugin": "@community//plugins/lombok/plugin:plugin",
+        "intellij.lombok.shared": "@community//plugins/lombok/shared:shared",
     },
 )
 ### auto-generated section `dev intellij.lombok.plugin` end
@@ -60,11 +76,10 @@ ij_plugin(
 ### auto-generated section `plugin intellij.lombok.plugin` end
 
 ### auto-generated section `iml intellij.lombok.plugin` start
-exports_files(
-    [
-        "intellij.lombok.plugin.iml",
-        "resources/META-INF/plugin.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.lombok.plugin",
+    descriptors = ["resources/META-INF/plugin.xml"],
+    plugin = True,
+    target = "plugin",
 )
 ### auto-generated section `iml intellij.lombok.plugin` end

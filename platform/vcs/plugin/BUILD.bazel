@@ -1,6 +1,7 @@
-load("@jps_dynamic_deps_community//:targets.bzl", "dist_plugin")
+load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:dev_plugin_remainder.bzl", "dist_complex_plugin")
+load("//platform/build-scripts/bazel-rules:dist_plugin.bzl", "dist_plugin")
 
 ### auto-generated section `dev intellij.platform.vcs.plugin` start
 dist_plugin(
@@ -24,6 +25,25 @@ dist_plugin(
         "intellij.libraries.sqlite.native",
     ],
     main_module = "intellij.platform.vcs.plugin",
+    module_labels = {
+        "intellij.libraries.sqlite.native": "@community//libraries/sqlite-native:sqlite-native",
+        "intellij.platform.sqlite": "@community//platform/sqlite:sqlite",
+        "intellij.platform.vcs": "@community//platform/vcs-api:vcs",
+        "intellij.platform.vcs.dvcs": "@community//platform/dvcs-api:vcs-dvcs",
+        "intellij.platform.vcs.dvcs.impl": "@community//platform/dvcs-impl:vcs-dvcs-impl",
+        "intellij.platform.vcs.impl": "@community//platform/vcs-impl:vcs-impl",
+        "intellij.platform.vcs.impl.backend": "@community//platform/vcs-impl/backend:backend",
+        "intellij.platform.vcs.impl.debugger": "@community//platform/vcs-impl/debugger:debugger",
+        "intellij.platform.vcs.impl.exec": "@community//platform/vcs-impl/exec:exec",
+        "intellij.platform.vcs.impl.frontend": "@community//platform/vcs-impl/frontend:frontend",
+        "intellij.platform.vcs.impl.lang": "@community//platform/vcs-impl/lang:lang",
+        "intellij.platform.vcs.impl.lang.actions": "@community//platform/vcs-impl/lang/actions:actions",
+        "intellij.platform.vcs.log": "@community//platform/vcs-log/api:vcs-log",
+        "intellij.platform.vcs.log.graph": "@community//platform/vcs-log/graph-api:vcs-log-graph",
+        "intellij.platform.vcs.log.graph.impl": "@community//platform/vcs-log/graph:vcs-log-graph-impl",
+        "intellij.platform.vcs.log.impl": "@community//platform/vcs-log/impl:impl",
+        "intellij.platform.vcs.plugin": "@community//platform/vcs/plugin:plugin",
+    },
 )
 
 dist_complex_plugin(
@@ -86,11 +106,9 @@ jvm_library(
 ### auto-generated section `build intellij.platform.vcs.plugin` end
 
 ### auto-generated section `iml intellij.platform.vcs.plugin` start
-exports_files(
-    [
-        "intellij.platform.vcs.plugin.iml",
-        "resources/META-INF/plugin.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.platform.vcs.plugin",
+    descriptors = ["resources/META-INF/plugin.xml"],
+    target = "plugin",
 )
 ### auto-generated section `iml intellij.platform.vcs.plugin` end

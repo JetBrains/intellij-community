@@ -12,20 +12,20 @@
 # the stamps. The component index names the `dev_plugin` target or the component of a `dist_complex_plugin`
 # call.
 #
-# A descriptor leaf derives its conventional descriptor rows from the bridge index of its half.
+# A descriptor leaf states every descriptor row. The label of a conventional row is in the recorded form.
 
-load("@jps_dynamic_deps_community//:targets.bzl", "dist_plugin_descriptor")
 load("//platform/build-scripts/bazel-rules:dev_plugin.bzl", "dev_plugin")
+load("//platform/build-scripts/bazel-rules:dist_plugin_descriptor.bzl", "dist_plugin_descriptor")
 
 dist_plugin_descriptor(
-    content_modules = [
-        "intellij.java.aetherDependencyResolver",
-        "intellij.libraries.maven.resolver.provider",
-        "intellij.libraries.maven.resolver.transport",
-        "intellij.libraries.plexus.utils",
-        "intellij.repository.search.completion",
-    ],
     descriptor = "//aether-dependency-resolver/plugin:resources/META-INF/plugin.xml",
+    descriptors = {
+        "@community//aether-dependency-resolver:resources/intellij.java.aetherDependencyResolver.xml": "intellij.java.aetherDependencyResolver.xml",
+        "@community//libraries/maven-resolver-provider:resources/intellij.libraries.maven.resolver.provider.xml": "intellij.libraries.maven.resolver.provider.xml",
+        "@community//libraries/maven-resolver-transport:resources/intellij.libraries.maven.resolver.transport.xml": "intellij.libraries.maven.resolver.transport.xml",
+        "@community//libraries/plexus-utils:resources/intellij.libraries.plexus.utils.xml": "intellij.libraries.plexus.utils.xml",
+        "@community//plugins/repository-search/completion:resources/intellij.repository.search.completion.xml": "intellij.repository.search.completion.xml",
+    },
     main_module = "intellij.java.aetherDependencyResolver.plugin",
     mode_refused_content_modules = {
         "frontend": ["intellij.repository.search.completion"],

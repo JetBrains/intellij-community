@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library")
 
 ### auto-generated section `build intellij.platform.testFramework.buildView` start
@@ -51,11 +52,9 @@ jvm_library(
 ### auto-generated section `build intellij.platform.testFramework.buildView` end
 
 ### auto-generated section `iml intellij.platform.testFramework.buildView` start
-exports_files(
-    [
-        "intellij.platform.testFramework.buildView.iml",
-        "resources/intellij.platform.testFramework.buildView.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.platform.testFramework.buildView",
+    descriptors = ["resources/intellij.platform.testFramework.buildView.xml"],
+    target = "buildView",
 )
 ### auto-generated section `iml intellij.platform.testFramework.buildView` end

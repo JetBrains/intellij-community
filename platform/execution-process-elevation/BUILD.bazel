@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.execution.process.elevation` start
@@ -41,11 +42,9 @@ jvm_library(
 ### auto-generated section `build intellij.execution.process.elevation` end
 
 ### auto-generated section `iml intellij.execution.process.elevation` start
-exports_files(
-    [
-        "intellij.execution.process.elevation.iml",
-        "resources/intellij.execution.process.elevation.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.execution.process.elevation",
+    descriptors = ["resources/intellij.execution.process.elevation.xml"],
+    target = "execution-process-elevation",
 )
 ### auto-generated section `iml intellij.execution.process.elevation` end

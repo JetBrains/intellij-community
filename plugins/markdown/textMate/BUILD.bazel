@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
@@ -44,11 +45,9 @@ jvm_library(
 ### auto-generated section `build intellij.markdown.fenceInjector.textMate` end
 
 ### auto-generated section `iml intellij.markdown.fenceInjector.textMate` start
-exports_files(
-    [
-        "intellij.markdown.fenceInjector.textMate.iml",
-        "resources/intellij.markdown.fenceInjector.textMate.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.markdown.fenceInjector.textMate",
+    descriptors = ["resources/intellij.markdown.fenceInjector.textMate.xml"],
+    target = "textMate",
 )
 ### auto-generated section `iml intellij.markdown.fenceInjector.textMate` end

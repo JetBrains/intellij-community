@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@community//fleet/build:fleet.bzl", "fleet_wasmjs_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
@@ -72,11 +73,9 @@ jvm_library(
 ### auto-generated section `build fleet.kernel` end
 
 ### auto-generated section `iml fleet.kernel` start
-exports_files(
-    [
-        "fleet.kernel.iml",
-        "resources/fleet.kernel.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "fleet.kernel",
+    descriptors = ["resources/fleet.kernel.xml"],
+    target = "kernel",
 )
 ### auto-generated section `iml fleet.kernel` end

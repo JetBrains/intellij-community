@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
@@ -83,12 +84,10 @@ jvm_library(
 ### auto-generated section `build intellij.kotlin.gradle.tooling.impl` end
 
 ### auto-generated section `iml intellij.kotlin.gradle.tooling.impl` start
-exports_files(
-    [
-        "intellij.kotlin.gradle.tooling.impl.iml",
-        "resources/intellij.kotlin.gradle.tooling.impl.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.kotlin.gradle.tooling.impl",
+    descriptors = ["resources/intellij.kotlin.gradle.tooling.impl.xml"],
+    target = "impl",
 )
 ### auto-generated section `iml intellij.kotlin.gradle.tooling.impl` end
 
@@ -119,10 +118,9 @@ jvm_library(
 ### auto-generated section `build intellij.kotlin.gradle.tooling.impl.tests` end
 
 ### auto-generated section `iml intellij.kotlin.gradle.tooling.impl.tests` start
-exports_files(
-    [
-        "intellij.kotlin.gradle.tooling.impl.tests.iml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.kotlin.gradle.tooling.impl.tests",
+    resources = False,
+    target = "kotlin-gradle-tooling-impl-tests_test_lib",
 )
 ### auto-generated section `iml intellij.kotlin.gradle.tooling.impl.tests` end

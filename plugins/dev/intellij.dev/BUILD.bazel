@@ -1,6 +1,7 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@community//platform/build-scripts/bazel-rules:ij_plugin.bzl", "ij_plugin")
-load("@jps_dynamic_deps_community//:targets.bzl", "dist_plugin")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:dist_plugin.bzl", "dist_plugin")
 
 ### auto-generated section `dev intellij.dev` start
 dist_plugin(
@@ -19,6 +20,20 @@ dist_plugin(
         "intellij.dev.core",
     ],
     main_module = "intellij.dev",
+    module_labels = {
+        "intellij.dev": "@community//plugins/dev/intellij.dev:dev",
+        "intellij.dev.codeInsight": "@community//plugins/dev/intellij.dev.codeInsight:codeInsight",
+        "intellij.dev.core": "@community//plugins/dev/intellij.dev.core:core",
+        "intellij.dev.pluginLoading": "@community//plugins/dev/intellij.dev.pluginLoading:pluginLoading",
+        "intellij.dev.psiViewer": "@community//plugins/dev/intellij.dev.psiViewer:psiViewer",
+        "intellij.groovy.dev": "@community//plugins/dev/intellij.groovy.dev:groovy-dev",
+        "intellij.java.dev": "@community//plugins/dev/intellij.java.dev:java-dev",
+        "intellij.kotlin.dev": "@community//plugins/dev/intellij.kotlin.dev:kotlin-dev",
+        "intellij.platform.ide.ui.inspector": "@community//platform/platform-impl/ui-inspector:ide-ui-inspector",
+        "intellij.platform.statistics.devkit": "@community//platform/statistics/devkit:devkit",
+        "intellij.platform.statistics.devkit.backend": "@community//platform/statistics/devkit/backend:backend",
+        "intellij.platform.statistics.devkit.frontend": "@community//platform/statistics/devkit/frontend:frontend",
+    },
 )
 ### auto-generated section `dev intellij.dev` end
 
@@ -66,11 +81,10 @@ ij_plugin(
 ### auto-generated section `plugin intellij.dev` end
 
 ### auto-generated section `iml intellij.dev` start
-exports_files(
-    [
-        "intellij.dev.iml",
-        "resources/META-INF/plugin.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.dev",
+    descriptors = ["resources/META-INF/plugin.xml"],
+    plugin = True,
+    target = "dev",
 )
 ### auto-generated section `iml intellij.dev` end

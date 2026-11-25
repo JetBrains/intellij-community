@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@community//platform/build-scripts/bazel-rules:ij_plugin_module.bzl", "ij_plugin_module")
 
 ### auto-generated section `build intellij.libraries.completion.ranking.typescript` start
@@ -20,11 +21,9 @@ ij_plugin_module(
 ### auto-generated section `build intellij.libraries.completion.ranking.typescript` end
 
 ### auto-generated section `iml intellij.libraries.completion.ranking.typescript` start
-exports_files(
-    [
-        "intellij.libraries.completion.ranking.typescript.iml",
-        "resources/intellij.libraries.completion.ranking.typescript.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.libraries.completion.ranking.typescript",
+    descriptors = ["resources/intellij.libraries.completion.ranking.typescript.xml"],
+    target = "completion-ranking-typescript",
 )
 ### auto-generated section `iml intellij.libraries.completion.ranking.typescript` end

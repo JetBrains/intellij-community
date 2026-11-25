@@ -1,5 +1,6 @@
 load("@buildifier_prebuilt//:rules.bzl", "buildifier")
 load("@community//build:bazel_targets_json.bzl", "current_bazel_targets_json")
+load("@community//build:jps_module.bzl", "jps_module")
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("@rules_kotlin//kotlin:core.bzl", "kt_plugin_cfg")
@@ -298,11 +299,10 @@ jvm_library(
 ### auto-generated section `build intellij.idea.community.main` end
 
 ### auto-generated section `iml intellij.idea.community.main` start
-exports_files(
-    [
-        "intellij.idea.community.main.iml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.idea.community.main",
+    resources = False,
+    target = "main",
 )
 ### auto-generated section `iml intellij.idea.community.main` end
 
@@ -331,11 +331,10 @@ jvm_library(
 ### auto-generated section `build intellij.idea.community.main.android` end
 
 ### auto-generated section `iml intellij.idea.community.main.android` start
-exports_files(
-    [
-        "intellij.idea.community.main.android.iml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.idea.community.main.android",
+    resources = False,
+    target = "main-android",
 )
 ### auto-generated section `iml intellij.idea.community.main.android` end
 
@@ -750,10 +749,8 @@ jvm_library(
 ### auto-generated section `build intellij.idea.community.main.tests` end
 
 ### auto-generated section `iml intellij.idea.community.main.tests` start
-exports_files(
-    [
-        "intellij.idea.community.main.tests.iml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.idea.community.main.tests",
+    target = "main-tests_test_lib",
 )
 ### auto-generated section `iml intellij.idea.community.main.tests` end

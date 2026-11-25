@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@community//build:tests-options.bzl", "jps_test")
 load("@community//platform/build-scripts/bazel-rules:ij_plugin_module.bzl", "ij_plugin_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
@@ -89,12 +90,14 @@ ij_plugin_module(
 ### auto-generated section `build intellij.relaxng` end
 
 ### auto-generated section `iml intellij.relaxng` start
-exports_files(
-    [
-        "intellij.relaxng.iml",
-        "resources/intellij.relaxng.xml",
+jps_module(
+    name = "intellij.relaxng",
+    descriptors = ["resources/intellij.relaxng.xml"],
+    libraries = [
+        "//xml/relaxng/lib:rngom-20051226-patched.jar",
+        "//xml/relaxng/lib:trang-core.jar",
     ],
-    visibility = ["//visibility:public"],
+    target = "relaxng",
 )
 ### auto-generated section `iml intellij.relaxng` end
 
@@ -152,10 +155,13 @@ jvm_library(
 ### auto-generated section `build intellij.relaxng.tests` end
 
 ### auto-generated section `iml intellij.relaxng.tests` start
-exports_files(
-    [
-        "intellij.relaxng.tests.iml",
+jps_module(
+    name = "intellij.relaxng.tests",
+    libraries = [
+        "//xml/relaxng/lib:rngom-20051226-patched.jar",
+        "//xml/relaxng/lib:trang-core.jar",
     ],
-    visibility = ["//visibility:public"],
+    resources = False,
+    target = "relaxng-tests_test_lib",
 )
 ### auto-generated section `iml intellij.relaxng.tests` end

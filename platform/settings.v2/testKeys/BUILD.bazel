@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.platform.settings.v2.testKeys` start
@@ -29,11 +30,9 @@ jvm_library(
 ### auto-generated section `build intellij.platform.settings.v2.testKeys` end
 
 ### auto-generated section `iml intellij.platform.settings.v2.testKeys` start
-exports_files(
-    [
-        "intellij.platform.settings.v2.testKeys.iml",
-        "resources/intellij.platform.settings.v2.testKeys.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.platform.settings.v2.testKeys",
+    descriptors = ["resources/intellij.platform.settings.v2.testKeys.xml"],
+    target = "testKeys",
 )
 ### auto-generated section `iml intellij.platform.settings.v2.testKeys` end

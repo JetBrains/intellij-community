@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
@@ -56,12 +57,10 @@ jvm_library(
 ### auto-generated section `build intellij.platform.externalProcessAuthHelper` end
 
 ### auto-generated section `iml intellij.platform.externalProcessAuthHelper` start
-exports_files(
-    [
-        "intellij.platform.externalProcessAuthHelper.iml",
-        "resources/intellij.platform.externalProcessAuthHelper.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.platform.externalProcessAuthHelper",
+    descriptors = ["resources/intellij.platform.externalProcessAuthHelper.xml"],
+    target = "external-process-auth-helper",
 )
 ### auto-generated section `iml intellij.platform.externalProcessAuthHelper` end
 
@@ -89,10 +88,9 @@ jvm_library(
 ### auto-generated section `build intellij.platform.externalProcessAuthHelper.tests` end
 
 ### auto-generated section `iml intellij.platform.externalProcessAuthHelper.tests` start
-exports_files(
-    [
-        "intellij.platform.externalProcessAuthHelper.tests.iml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.platform.externalProcessAuthHelper.tests",
+    resources = False,
+    target = "externalProcessAuthHelper-tests_test_lib",
 )
 ### auto-generated section `iml intellij.platform.externalProcessAuthHelper.tests` end

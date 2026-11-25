@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
@@ -117,12 +118,10 @@ jvm_library(
 ### auto-generated section `build intellij.java.compiler.impl` end
 
 ### auto-generated section `iml intellij.java.compiler.impl` start
-exports_files(
-    [
-        "intellij.java.compiler.impl.iml",
-        "resources/META-INF/RegistryKeysCompilerImpl.xml",
-        "resources/intellij.java.compiler.impl.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.java.compiler.impl",
+    descriptors = ["resources/intellij.java.compiler.impl.xml"],
+    target = "impl",
+    exports = ["resources/META-INF/RegistryKeysCompilerImpl.xml"],
 )
 ### auto-generated section `iml intellij.java.compiler.impl` end

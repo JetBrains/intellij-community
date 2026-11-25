@@ -1,6 +1,7 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@community//build:tests-options.bzl", "jps_test")
-load("@jps_dynamic_deps_community//:targets.bzl", "dist_plugin")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:dist_plugin.bzl", "dist_plugin")
 
 jps_test(
     name = "java-coverage-tests_test",
@@ -21,6 +22,12 @@ dist_plugin(
         "intellij.java.coverage.rt.testng",
     ],
     descriptor = "resources/META-INF/plugin.xml",
+    descriptors = {
+        "@community//libraries/test-discovery:resources/intellij.libraries.test.discovery.xml": "intellij.libraries.test.discovery.xml",
+        "@community//plugins/coverage/coverage_rt:resources/intellij.java.coverage.rt.xml": "intellij.java.coverage.rt.xml",
+        "@community//plugins/coverage/junit:resources/intellij.java.coverage.rt.junit.xml": "intellij.java.coverage.rt.junit.xml",
+        "@community//plugins/coverage/testng:resources/intellij.java.coverage.rt.testng.xml": "intellij.java.coverage.rt.testng.xml",
+    },
     jars = {
         "lib/intellij.libraries.test.discovery.jar": ["intellij.libraries.test.discovery"],
         "lib/intellij-test-discovery-agent.jar": ["@lib//:libraries-test-discovery-intellij-test-discovery"],
@@ -31,6 +38,13 @@ dist_plugin(
     main_module = "intellij.java.coverage",
     module_jar_paths = {
         "intellij.java.coverage.rt": "lib/intellij.java.coverage.rt.jar",
+    },
+    module_labels = {
+        "intellij.java.coverage": "@community//plugins/coverage:coverage",
+        "intellij.java.coverage.rt": "@community//plugins/coverage/coverage_rt:java-coverage-rt",
+        "intellij.java.coverage.rt.junit": "@community//plugins/coverage/junit:junit",
+        "intellij.java.coverage.rt.testng": "@community//plugins/coverage/testng:testng",
+        "intellij.libraries.test.discovery": "@community//libraries/test-discovery:test-discovery",
     },
 )
 ### auto-generated section `dev intellij.java.coverage` end
@@ -111,12 +125,10 @@ jvm_library(
 ### auto-generated section `build intellij.java.coverage` end
 
 ### auto-generated section `iml intellij.java.coverage` start
-exports_files(
-    [
-        "intellij.java.coverage.iml",
-        "resources/META-INF/plugin.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.java.coverage",
+    descriptors = ["resources/META-INF/plugin.xml"],
+    target = "coverage",
 )
 ### auto-generated section `iml intellij.java.coverage` end
 
@@ -201,10 +213,9 @@ jvm_library(
 ### auto-generated section `build intellij.java.coverage.tests` end
 
 ### auto-generated section `iml intellij.java.coverage.tests` start
-exports_files(
-    [
-        "intellij.java.coverage.tests.iml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.java.coverage.tests",
+    resources = False,
+    target = "java-coverage-tests_test_lib",
 )
 ### auto-generated section `iml intellij.java.coverage.tests` end

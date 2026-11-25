@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
@@ -46,12 +47,10 @@ jvm_library(
 ### auto-generated section `build intellij.platform.lsp` end
 
 ### auto-generated section `iml intellij.platform.lsp` start
-exports_files(
-    [
-        "intellij.platform.lsp.iml",
-        "resources/META-INF/intellij.moduleSets.libraries.lsp4j.xml",
-        "resources/intellij.platform.lsp.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.platform.lsp",
+    descriptors = ["resources/intellij.platform.lsp.xml"],
+    target = "lsp",
+    exports = ["resources/META-INF/intellij.moduleSets.libraries.lsp4j.xml"],
 )
 ### auto-generated section `iml intellij.platform.lsp` end

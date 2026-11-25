@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "kt_javac_options")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
@@ -78,13 +79,13 @@ jvm_library(
 ### auto-generated section `build intellij.platform.ide` end
 
 ### auto-generated section `iml intellij.platform.ide` start
-exports_files(
-    [
-        "intellij.platform.ide.iml",
+jps_module(
+    name = "intellij.platform.ide",
+    descriptors = ["resources/intellij.platform.ide.xml"],
+    target = "ide",
+    exports = [
         "resources/PlatformProductivityFeatures.xml",
         "resources/intellij.platform.ide.actions.xml",
-        "resources/intellij.platform.ide.xml",
     ],
-    visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.platform.ide` end

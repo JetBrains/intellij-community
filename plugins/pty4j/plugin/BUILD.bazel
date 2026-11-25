@@ -1,12 +1,20 @@
-load("@jps_dynamic_deps_community//:targets.bzl", "dist_plugin")
+load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:dev_plugin_remainder.bzl", "dist_complex_plugin")
+load("//platform/build-scripts/bazel-rules:dist_plugin.bzl", "dist_plugin")
 
 ### auto-generated section `dev intellij.pty4j.plugin` start
 dist_plugin(
     content_modules = ["intellij.libraries.pty4j"],
     descriptor = "resources/META-INF/plugin.xml",
+    descriptors = {
+        "@community//libraries/pty4j:resources/intellij.libraries.pty4j.xml": "intellij.libraries.pty4j.xml",
+    },
     main_module = "intellij.pty4j.plugin",
+    module_labels = {
+        "intellij.libraries.pty4j": "@community//libraries/pty4j:pty4j",
+        "intellij.pty4j.plugin": "@community//plugins/pty4j/plugin:plugin",
+    },
 )
 
 dist_complex_plugin(
@@ -56,11 +64,9 @@ jvm_library(
 ### auto-generated section `build intellij.pty4j.plugin` end
 
 ### auto-generated section `iml intellij.pty4j.plugin` start
-exports_files(
-    [
-        "intellij.pty4j.plugin.iml",
-        "resources/META-INF/plugin.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.pty4j.plugin",
+    descriptors = ["resources/META-INF/plugin.xml"],
+    target = "plugin",
 )
 ### auto-generated section `iml intellij.pty4j.plugin` end

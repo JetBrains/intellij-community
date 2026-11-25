@@ -1,7 +1,8 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@community//build:tests-options.bzl", "jps_test")
 load("@community//platform/build-scripts/bazel-rules:ij_plugin.bzl", "ij_plugin")
-load("@jps_dynamic_deps_community//:targets.bzl", "dist_plugin")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:dist_plugin.bzl", "dist_plugin")
 
 jps_test(
     name = "jsonpath-tests_test",
@@ -15,12 +16,19 @@ jps_test(
 dist_plugin(
     content_modules = ["intellij.jsonpath.scratch"],
     descriptor = "resources/META-INF/plugin.xml",
+    descriptors = {
+        "@community//plugins/jsonpath/scratch:resources/intellij.jsonpath.scratch.xml": "intellij.jsonpath.scratch.xml",
+    },
     jars = {
         "lib/jsonpath.jar": ["intellij.jsonpath"],
     },
     main_module = "intellij.jsonpath",
     mode_refused_content_modules = {
         "frontend": ["intellij.jsonpath.scratch"],
+    },
+    module_labels = {
+        "intellij.jsonpath": "@community//plugins/jsonpath:jsonpath",
+        "intellij.jsonpath.scratch": "@community//plugins/jsonpath/scratch:scratch",
     },
 )
 ### auto-generated section `dev intellij.jsonpath` end
@@ -78,12 +86,11 @@ ij_plugin(
 ### auto-generated section `plugin intellij.jsonpath` end
 
 ### auto-generated section `iml intellij.jsonpath` start
-exports_files(
-    [
-        "intellij.jsonpath.iml",
-        "resources/META-INF/plugin.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.jsonpath",
+    descriptors = ["resources/META-INF/plugin.xml"],
+    plugin = True,
+    target = "jsonpath",
 )
 ### auto-generated section `iml intellij.jsonpath` end
 
@@ -133,10 +140,9 @@ jvm_library(
 ### auto-generated section `build intellij.jsonpath.tests` end
 
 ### auto-generated section `iml intellij.jsonpath.tests` start
-exports_files(
-    [
-        "intellij.jsonpath.tests.iml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.jsonpath.tests",
+    resources = False,
+    target = "jsonpath-tests_test_lib",
 )
 ### auto-generated section `iml intellij.jsonpath.tests` end

@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
@@ -51,12 +52,10 @@ jvm_library(
 ### auto-generated section `build intellij.platform.usageView` end
 
 ### auto-generated section `iml intellij.platform.usageView` start
-exports_files(
-    [
-        "intellij.platform.usageView.iml",
-        "resources/intellij.platform.usageView.actions.xml",
-        "resources/intellij.platform.usageView.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.platform.usageView",
+    descriptors = ["resources/intellij.platform.usageView.xml"],
+    target = "usageView",
+    exports = ["resources/intellij.platform.usageView.actions.xml"],
 )
 ### auto-generated section `iml intellij.platform.usageView` end

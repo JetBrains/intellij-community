@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
@@ -72,14 +73,14 @@ jvm_library(
 ### auto-generated section `build intellij.yaml.backend` end
 
 ### auto-generated section `iml intellij.yaml.backend` start
-exports_files(
-    [
-        "intellij.yaml.backend.iml",
+jps_module(
+    name = "intellij.yaml.backend",
+    descriptors = ["resources/intellij.yaml.backend.xml"],
+    target = "backend",
+    exports = [
         "resources/colorSchemes/YAMLDarcula.xml",
         "resources/colorSchemes/YAMLDefault.xml",
-        "resources/intellij.yaml.backend.xml",
     ],
-    visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.yaml.backend` end
 
@@ -175,10 +176,8 @@ jvm_library(
 ### auto-generated section `build intellij.yaml.backend.tests` end
 
 ### auto-generated section `iml intellij.yaml.backend.tests` start
-exports_files(
-    [
-        "intellij.yaml.backend.tests.iml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.yaml.backend.tests",
+    target = "backend-tests_test_lib",
 )
 ### auto-generated section `iml intellij.yaml.backend.tests` end

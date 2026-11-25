@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 
@@ -44,10 +45,8 @@ jvm_library(
 ### auto-generated section `build fleet.build.s3` end
 
 ### auto-generated section `iml fleet.build.s3` start
-exports_files(
-    [
-        "fleet.build.s3.iml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "fleet.build.s3",
+    target = "s3",
 )
 ### auto-generated section `iml fleet.build.s3` end

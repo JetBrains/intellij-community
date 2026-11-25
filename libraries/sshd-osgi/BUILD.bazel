@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.libraries.sshd.osgi` start
@@ -23,11 +24,9 @@ jvm_library(
 ### auto-generated section `build intellij.libraries.sshd.osgi` end
 
 ### auto-generated section `iml intellij.libraries.sshd.osgi` start
-exports_files(
-    [
-        "intellij.libraries.sshd.osgi.iml",
-        "resources/intellij.libraries.sshd.osgi.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.libraries.sshd.osgi",
+    descriptors = ["resources/intellij.libraries.sshd.osgi.xml"],
+    target = "sshd-osgi",
 )
 ### auto-generated section `iml intellij.libraries.sshd.osgi` end

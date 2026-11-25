@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.libraries.kotlin.tooling.core` start
@@ -19,11 +20,9 @@ jvm_library(
 ### auto-generated section `build intellij.libraries.kotlin.tooling.core` end
 
 ### auto-generated section `iml intellij.libraries.kotlin.tooling.core` start
-exports_files(
-    [
-        "intellij.libraries.kotlin.tooling.core.iml",
-        "resources/intellij.libraries.kotlin.tooling.core.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.libraries.kotlin.tooling.core",
+    descriptors = ["resources/intellij.libraries.kotlin.tooling.core.xml"],
+    target = "libraries-kotlin-tooling-core",
 )
 ### auto-generated section `iml intellij.libraries.kotlin.tooling.core` end

@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@community//platform/build-scripts/bazel-rules:ij_plugin_module.bzl", "ij_plugin_module")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
@@ -52,11 +53,9 @@ ij_plugin_module(
 ### auto-generated section `build intellij.libraries.grpc` end
 
 ### auto-generated section `iml intellij.libraries.grpc` start
-exports_files(
-    [
-        "intellij.libraries.grpc.iml",
-        "resources/intellij.libraries.grpc.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.libraries.grpc",
+    descriptors = ["resources/intellij.libraries.grpc.xml"],
+    target = "grpc",
 )
 ### auto-generated section `iml intellij.libraries.grpc` end

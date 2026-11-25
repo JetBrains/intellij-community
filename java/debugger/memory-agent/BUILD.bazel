@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.java.debugger.memory.agent` start
@@ -27,11 +28,9 @@ jvm_library(
 ### auto-generated section `build intellij.java.debugger.memory.agent` end
 
 ### auto-generated section `iml intellij.java.debugger.memory.agent` start
-exports_files(
-    [
-        "intellij.java.debugger.memory.agent.iml",
-        "resources/intellij.java.debugger.memory.agent.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.java.debugger.memory.agent",
+    descriptors = ["resources/intellij.java.debugger.memory.agent.xml"],
+    target = "java-debugger-memory-agent",
 )
 ### auto-generated section `iml intellij.java.debugger.memory.agent` end

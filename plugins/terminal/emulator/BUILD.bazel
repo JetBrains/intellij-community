@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
@@ -43,12 +44,10 @@ jvm_library(
 ### auto-generated section `build intellij.terminal.emulator` end
 
 ### auto-generated section `iml intellij.terminal.emulator` start
-exports_files(
-    [
-        "intellij.terminal.emulator.iml",
-        "resources/intellij.terminal.emulator.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.terminal.emulator",
+    descriptors = ["resources/intellij.terminal.emulator.xml"],
+    target = "emulator",
 )
 ### auto-generated section `iml intellij.terminal.emulator` end
 
@@ -83,10 +82,9 @@ jvm_library(
 ### auto-generated section `build intellij.terminal.emulator.tests` end
 
 ### auto-generated section `iml intellij.terminal.emulator.tests` start
-exports_files(
-    [
-        "intellij.terminal.emulator.tests.iml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.terminal.emulator.tests",
+    resources = False,
+    target = "emulator-tests_test_lib",
 )
 ### auto-generated section `iml intellij.terminal.emulator.tests` end

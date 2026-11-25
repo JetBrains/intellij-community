@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.maven.server.m40` start
@@ -31,10 +32,8 @@ jvm_library(
 ### auto-generated section `build intellij.maven.server.m40` end
 
 ### auto-generated section `iml intellij.maven.server.m40` start
-exports_files(
-    [
-        "intellij.maven.server.m40.iml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.maven.server.m40",
+    target = "server-m40",
 )
 ### auto-generated section `iml intellij.maven.server.m40` end

@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
@@ -90,13 +91,13 @@ jvm_library(
 ### auto-generated section `build intellij.markdown` end
 
 ### auto-generated section `iml intellij.markdown` start
-exports_files(
-    [
-        "intellij.markdown.iml",
+jps_module(
+    name = "intellij.markdown",
+    descriptors = ["resources/intellij.markdown.xml"],
+    target = "markdown",
+    exports = [
         "resources/colorSchemes/MarkdownDarcula.xml",
         "resources/colorSchemes/MarkdownDefault.xml",
-        "resources/intellij.markdown.xml",
     ],
-    visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.markdown` end

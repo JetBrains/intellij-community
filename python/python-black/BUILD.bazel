@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
@@ -63,11 +64,9 @@ jvm_library(
 ### auto-generated section `build intellij.python.black` end
 
 ### auto-generated section `iml intellij.python.black` start
-exports_files(
-    [
-        "intellij.python.black.iml",
-        "resources/intellij.python.black.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.python.black",
+    descriptors = ["resources/intellij.python.black.xml"],
+    target = "black",
 )
 ### auto-generated section `iml intellij.python.black` end

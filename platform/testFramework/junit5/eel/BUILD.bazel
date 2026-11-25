@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
@@ -53,11 +54,10 @@ jvm_library(
 ### auto-generated section `build intellij.platform.testFramework.junit5.eel` end
 
 ### auto-generated section `iml intellij.platform.testFramework.junit5.eel` start
-exports_files(
-    [
-        "intellij.platform.testFramework.junit5.eel.iml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.platform.testFramework.junit5.eel",
+    resources = False,
+    target = "eel",
 )
 ### auto-generated section `iml intellij.platform.testFramework.junit5.eel` end
 
@@ -111,10 +111,8 @@ jvm_library(
 ### auto-generated section `build intellij.platform.testFramework.junit5.eel.tests` end
 
 ### auto-generated section `iml intellij.platform.testFramework.junit5.eel.tests` start
-exports_files(
-    [
-        "intellij.platform.testFramework.junit5.eel.tests.iml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.platform.testFramework.junit5.eel.tests",
+    target = "testFramework-junit5-eel-tests_test_lib",
 )
 ### auto-generated section `iml intellij.platform.testFramework.junit5.eel.tests` end

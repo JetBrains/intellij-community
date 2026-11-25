@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.tools.ide.performanceTesting.commands` start
@@ -25,10 +26,9 @@ jvm_library(
 ### auto-generated section `build intellij.tools.ide.performanceTesting.commands` end
 
 ### auto-generated section `iml intellij.tools.ide.performanceTesting.commands` start
-exports_files(
-    [
-        "intellij.tools.ide.performanceTesting.commands.iml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.tools.ide.performanceTesting.commands",
+    resources = False,
+    target = "tools-ide-performanceTesting-commands",
 )
 ### auto-generated section `iml intellij.tools.ide.performanceTesting.commands` end

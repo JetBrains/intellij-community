@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
@@ -123,14 +124,14 @@ jvm_library(
 ### auto-generated section `build intellij.compose.ide.plugin.codeInsight` end
 
 ### auto-generated section `iml intellij.compose.ide.plugin.codeInsight` start
-exports_files(
-    [
-        "intellij.compose.ide.plugin.codeInsight.iml",
+jps_module(
+    name = "intellij.compose.ide.plugin.codeInsight",
+    descriptors = ["resources/intellij.compose.ide.plugin.codeInsight.xml"],
+    target = "ide-plugin-codeInsight",
+    exports = [
         "resources/colorSchemes/IntelliJComposeColorSchemeDarcula.xml",
         "resources/colorSchemes/IntelliJComposeColorSchemeDefault.xml",
-        "resources/intellij.compose.ide.plugin.codeInsight.xml",
     ],
-    visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.compose.ide.plugin.codeInsight` end
 
@@ -208,10 +209,9 @@ jvm_library(
 ### auto-generated section `build intellij.compose.ide.plugin.codeInsight.tests` end
 
 ### auto-generated section `iml intellij.compose.ide.plugin.codeInsight.tests` start
-exports_files(
-    [
-        "intellij.compose.ide.plugin.codeInsight.tests.iml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.compose.ide.plugin.codeInsight.tests",
+    resources = False,
+    target = "ide-plugin-codeInsight-tests_test_lib",
 )
 ### auto-generated section `iml intellij.compose.ide.plugin.codeInsight.tests` end

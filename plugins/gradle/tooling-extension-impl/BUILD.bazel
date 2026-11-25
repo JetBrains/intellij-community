@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
@@ -72,12 +73,10 @@ jvm_library(
 ### auto-generated section `build intellij.gradle.toolingExtension.impl` end
 
 ### auto-generated section `iml intellij.gradle.toolingExtension.impl` start
-exports_files(
-    [
-        "intellij.gradle.toolingExtension.impl.iml",
-        "resources/intellij.gradle.toolingExtension.impl.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.gradle.toolingExtension.impl",
+    descriptors = ["resources/intellij.gradle.toolingExtension.impl.xml"],
+    target = "toolingExtension-impl",
 )
 ### auto-generated section `iml intellij.gradle.toolingExtension.impl` end
 
@@ -155,10 +154,8 @@ jvm_library(
 ### auto-generated section `build intellij.gradle.toolingExtension.tests` end
 
 ### auto-generated section `iml intellij.gradle.toolingExtension.tests` start
-exports_files(
-    [
-        "intellij.gradle.toolingExtension.tests.iml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.gradle.toolingExtension.tests",
+    target = "toolingExtension-tests_test_lib",
 )
 ### auto-generated section `iml intellij.gradle.toolingExtension.tests` end

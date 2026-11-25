@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
@@ -61,11 +62,10 @@ jvm_library(
 ### auto-generated section `build intellij.kotlin.searching.test` end
 
 ### auto-generated section `iml intellij.kotlin.searching.test` start
-exports_files(
-    [
-        "intellij.kotlin.searching.test.iml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.kotlin.searching.test",
+    resources = False,
+    target = "test_test_lib",
 )
 ### auto-generated section `iml intellij.kotlin.searching.test` end
 

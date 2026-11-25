@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
@@ -55,12 +56,10 @@ jvm_library(
 ### auto-generated section `build intellij.python.community.services.shared` end
 
 ### auto-generated section `iml intellij.python.community.services.shared` start
-exports_files(
-    [
-        "intellij.python.community.services.shared.iml",
-        "resources/intellij.python.community.services.shared.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.python.community.services.shared",
+    descriptors = ["resources/intellij.python.community.services.shared.xml"],
+    target = "shared",
 )
 ### auto-generated section `iml intellij.python.community.services.shared` end
 
@@ -103,10 +102,8 @@ jvm_library(
 ### auto-generated section `build intellij.python.community.services.shared.tests` end
 
 ### auto-generated section `iml intellij.python.community.services.shared.tests` start
-exports_files(
-    [
-        "intellij.python.community.services.shared.tests.iml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.python.community.services.shared.tests",
+    target = "python-community-services-shared-tests_test_lib",
 )
 ### auto-generated section `iml intellij.python.community.services.shared.tests` end

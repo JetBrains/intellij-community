@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.python.syntax.lambdaTests.plugin` start
@@ -18,10 +19,8 @@ jvm_library(
 ### auto-generated section `build intellij.python.syntax.lambdaTests.plugin` end
 
 ### auto-generated section `iml intellij.python.syntax.lambdaTests.plugin` start
-exports_files(
-    [
-        "intellij.python.syntax.lambdaTests.plugin.iml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.python.syntax.lambdaTests.plugin",
+    target = "python-syntax-lambdaTests-plugin_test_lib",
 )
 ### auto-generated section `iml intellij.python.syntax.lambdaTests.plugin` end

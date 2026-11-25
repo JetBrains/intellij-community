@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
@@ -27,11 +28,9 @@ jvm_library(
 ### auto-generated section `build intellij.libraries.kotlinx.datetime` end
 
 ### auto-generated section `iml intellij.libraries.kotlinx.datetime` start
-exports_files(
-    [
-        "intellij.libraries.kotlinx.datetime.iml",
-        "resources/intellij.libraries.kotlinx.datetime.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.libraries.kotlinx.datetime",
+    descriptors = ["resources/intellij.libraries.kotlinx.datetime.xml"],
+    target = "datetime",
 )
 ### auto-generated section `iml intellij.libraries.kotlinx.datetime` end

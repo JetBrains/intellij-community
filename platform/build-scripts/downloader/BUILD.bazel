@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
@@ -50,12 +51,10 @@ jvm_library(
 ### auto-generated section `build intellij.platform.buildScripts.downloader` end
 
 ### auto-generated section `iml intellij.platform.buildScripts.downloader` start
-exports_files(
-    [
-        "intellij.platform.buildScripts.downloader.iml",
-        "resources/intellij.platform.buildScripts.downloader.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.platform.buildScripts.downloader",
+    descriptors = ["resources/intellij.platform.buildScripts.downloader.xml"],
+    target = "downloader",
 )
 ### auto-generated section `iml intellij.platform.buildScripts.downloader` end
 
@@ -91,11 +90,9 @@ jvm_library(
 ### auto-generated section `build intellij.platform.buildScripts.downloader.tests` end
 
 ### auto-generated section `iml intellij.platform.buildScripts.downloader.tests` start
-exports_files(
-    [
-        "intellij.platform.buildScripts.downloader.tests.iml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.platform.buildScripts.downloader.tests",
+    target = "buildScripts-downloader-tests_test_lib",
 )
 ### auto-generated section `iml intellij.platform.buildScripts.downloader.tests` end
 

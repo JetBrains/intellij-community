@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
@@ -92,11 +93,9 @@ jvm_library(
 ### auto-generated section `build intellij.kotlin.gradle.codeInsight.common` end
 
 ### auto-generated section `iml intellij.kotlin.gradle.codeInsight.common` start
-exports_files(
-    [
-        "intellij.kotlin.gradle.codeInsight.common.iml",
-        "resources/intellij.kotlin.gradle.codeInsight.common.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.kotlin.gradle.codeInsight.common",
+    descriptors = ["resources/intellij.kotlin.gradle.codeInsight.common.xml"],
+    target = "kotlin-gradle-codeInsight-common",
 )
 ### auto-generated section `iml intellij.kotlin.gradle.codeInsight.common` end

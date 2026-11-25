@@ -1,7 +1,8 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@community//build:tests-options.bzl", "jps_test")
 load("@community//platform/build-scripts/bazel-rules:ij_plugin.bzl", "ij_plugin")
-load("@jps_dynamic_deps_community//:targets.bzl", "dist_plugin")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:dist_plugin.bzl", "dist_plugin")
 
 jps_test(
     name = "featuresTrainer-tests_test",
@@ -24,6 +25,15 @@ dist_plugin(
         "intellij.libraries.git.learning.project",
     ],
     descriptor = "res/META-INF/plugin.xml",
+    descriptors = {
+        "@community//libraries/assertj-core:resources/intellij.libraries.assertj.core.xml": "intellij.libraries.assertj.core.xml",
+        "@community//libraries/assertj-swing:resources/intellij.libraries.assertj.swing.xml": "intellij.libraries.assertj.swing.xml",
+        "@community//libraries/git-learning-project:resources/intellij.libraries.git.learning.project.xml": "intellij.libraries.git.learning.project.xml",
+        "@community//plugins/git-features-trainer:resources/intellij.vcs.git.featuresTrainer.xml": "intellij.vcs.git.featuresTrainer.xml",
+        "@community//plugins/ide-features-trainer/onboarding:resources/intellij.featuresTrainer.onboarding.xml": "intellij.featuresTrainer.onboarding.xml",
+        "@community//plugins/ide-features-trainer/tips:resources/intellij.featuresTrainer.tips.xml": "intellij.featuresTrainer.tips.xml",
+        "@community//plugins/kotlin/onboarding-promoter:resources/intellij.kotlin.onboarding.promoter.xml": "intellij.kotlin.onboarding.promoter.xml",
+    },
     jars = {
         "lib/featuresTrainer.jar": [
             "intellij.featuresTrainer",
@@ -47,6 +57,16 @@ dist_plugin(
             "intellij.kotlin.onboarding.promoter",
             "intellij.featuresTrainer.tips",
         ],
+    },
+    module_labels = {
+        "intellij.featuresTrainer": "@community//plugins/ide-features-trainer:featuresTrainer",
+        "intellij.featuresTrainer.onboarding": "@community//plugins/ide-features-trainer/onboarding:onboarding",
+        "intellij.featuresTrainer.tips": "@community//plugins/ide-features-trainer/tips:tips",
+        "intellij.kotlin.onboarding.promoter": "@community//plugins/kotlin/onboarding-promoter:onboarding-promoter",
+        "intellij.libraries.assertj.core": "@community//libraries/assertj-core:assertj-core",
+        "intellij.libraries.assertj.swing": "@community//libraries/assertj-swing:assertj-swing",
+        "intellij.libraries.git.learning.project": "@community//libraries/git-learning-project:git-learning-project",
+        "intellij.vcs.git.featuresTrainer": "@community//plugins/git-features-trainer:vcs-git-featuresTrainer",
     },
 )
 ### auto-generated section `dev intellij.featuresTrainer` end
@@ -141,12 +161,11 @@ ij_plugin(
 ### auto-generated section `plugin intellij.featuresTrainer` end
 
 ### auto-generated section `iml intellij.featuresTrainer` start
-exports_files(
-    [
-        "intellij.featuresTrainer.iml",
-        "res/META-INF/plugin.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.featuresTrainer",
+    descriptors = ["res/META-INF/plugin.xml"],
+    plugin = True,
+    target = "featuresTrainer",
 )
 ### auto-generated section `iml intellij.featuresTrainer` end
 
@@ -215,10 +234,8 @@ jvm_library(
 ### auto-generated section `build intellij.featuresTrainer.tests` end
 
 ### auto-generated section `iml intellij.featuresTrainer.tests` start
-exports_files(
-    [
-        "intellij.featuresTrainer.tests.iml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.featuresTrainer.tests",
+    target = "featuresTrainer-tests_test_lib",
 )
 ### auto-generated section `iml intellij.featuresTrainer.tests` end

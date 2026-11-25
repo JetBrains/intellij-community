@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@community//fleet/build:fleet.bzl", "fleet_wasmjs_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
@@ -42,10 +43,8 @@ jvm_library(
 ### auto-generated section `build fleet.util.multiplatform` end
 
 ### auto-generated section `iml fleet.util.multiplatform` start
-exports_files(
-    [
-        "fleet.util.multiplatform.iml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "fleet.util.multiplatform",
+    target = "multiplatform",
 )
 ### auto-generated section `iml fleet.util.multiplatform` end

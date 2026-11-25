@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
@@ -66,12 +67,10 @@ jvm_library(
 ### auto-generated section `build intellij.platform.ide.nonModalWelcomeScreen` end
 
 ### auto-generated section `iml intellij.platform.ide.nonModalWelcomeScreen` start
-exports_files(
-    [
-        "intellij.platform.ide.nonModalWelcomeScreen.iml",
-        "resources/intellij.platform.ide.nonModalWelcomeScreen.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.platform.ide.nonModalWelcomeScreen",
+    descriptors = ["resources/intellij.platform.ide.nonModalWelcomeScreen.xml"],
+    target = "non-modal-welcome-screen",
 )
 ### auto-generated section `iml intellij.platform.ide.nonModalWelcomeScreen` end
 
@@ -126,10 +125,9 @@ jvm_library(
 ### auto-generated section `build intellij.platform.ide.nonModalWelcomeScreen.tests` end
 
 ### auto-generated section `iml intellij.platform.ide.nonModalWelcomeScreen.tests` start
-exports_files(
-    [
-        "intellij.platform.ide.nonModalWelcomeScreen.tests.iml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.platform.ide.nonModalWelcomeScreen.tests",
+    resources = False,
+    target = "ide-nonModalWelcomeScreen-tests_test_lib",
 )
 ### auto-generated section `iml intellij.platform.ide.nonModalWelcomeScreen.tests` end

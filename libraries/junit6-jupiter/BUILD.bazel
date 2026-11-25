@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
@@ -33,11 +34,9 @@ jvm_library(
 ### auto-generated section `build intellij.libraries.junit6.jupiter` end
 
 ### auto-generated section `iml intellij.libraries.junit6.jupiter` start
-exports_files(
-    [
-        "intellij.libraries.junit6.jupiter.iml",
-        "resources/intellij.libraries.junit6.jupiter.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.libraries.junit6.jupiter",
+    descriptors = ["resources/intellij.libraries.junit6.jupiter.xml"],
+    target = "junit6-jupiter",
 )
 ### auto-generated section `iml intellij.libraries.junit6.jupiter` end

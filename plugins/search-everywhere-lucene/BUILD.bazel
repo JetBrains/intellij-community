@@ -1,6 +1,7 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@community//platform/build-scripts/bazel-rules:ij_plugin.bzl", "ij_plugin")
-load("@jps_dynamic_deps_community//:targets.bzl", "dist_plugin")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:dist_plugin.bzl", "dist_plugin")
 
 ### auto-generated section `dev intellij.searchEverywhereLucene.plugin` start
 dist_plugin(
@@ -12,6 +13,12 @@ dist_plugin(
         "intellij.searchEverywhereLucene.performanceTesting",
     ],
     descriptor = "resources/META-INF/plugin.xml",
+    descriptors = {
+        "@community//plugins/search-everywhere-lucene/backend:resources/intellij.searchEverywhereLucene.backend.xml": "intellij.searchEverywhereLucene.backend.xml",
+        "@community//plugins/search-everywhere-lucene/common:resources/intellij.searchEverywhereLucene.common.xml": "intellij.searchEverywhereLucene.common.xml",
+        "@community//plugins/search-everywhere-lucene/frontend:resources/intellij.searchEverywhereLucene.frontend.xml": "intellij.searchEverywhereLucene.frontend.xml",
+        "@community//plugins/search-everywhere-lucene/test-commands:resources/intellij.searchEverywhereLucene.performanceTesting.xml": "intellij.searchEverywhereLucene.performanceTesting.xml",
+    },
     jars = {
         "lib/searchEverywhereLucene-plugin.jar": ["intellij.searchEverywhereLucene.plugin"],
     },
@@ -24,6 +31,13 @@ dist_plugin(
     },
     module_jar_paths = {
         "intellij.searchEverywhereLucene.common": "lib/intellij.searchEverywhereLucene.common.jar",
+    },
+    module_labels = {
+        "intellij.searchEverywhereLucene.backend": "@community//plugins/search-everywhere-lucene/backend:backend",
+        "intellij.searchEverywhereLucene.common": "@community//plugins/search-everywhere-lucene/common:common",
+        "intellij.searchEverywhereLucene.frontend": "@community//plugins/search-everywhere-lucene/frontend:frontend",
+        "intellij.searchEverywhereLucene.performanceTesting": "@community//plugins/search-everywhere-lucene/test-commands:searchEverywhereLucene-performanceTesting",
+        "intellij.searchEverywhereLucene.plugin": "@community//plugins/search-everywhere-lucene:searchEverywhereLucene-plugin",
     },
 )
 ### auto-generated section `dev intellij.searchEverywhereLucene.plugin` end
@@ -60,11 +74,10 @@ ij_plugin(
 ### auto-generated section `plugin intellij.searchEverywhereLucene.plugin` end
 
 ### auto-generated section `iml intellij.searchEverywhereLucene.plugin` start
-exports_files(
-    [
-        "intellij.searchEverywhereLucene.plugin.iml",
-        "resources/META-INF/plugin.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.searchEverywhereLucene.plugin",
+    descriptors = ["resources/META-INF/plugin.xml"],
+    plugin = True,
+    target = "searchEverywhereLucene-plugin",
 )
 ### auto-generated section `iml intellij.searchEverywhereLucene.plugin` end

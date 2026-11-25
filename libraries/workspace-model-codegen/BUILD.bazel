@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@community//platform/build-scripts/bazel-rules:ij_plugin_module.bzl", "ij_plugin_module")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
@@ -28,11 +29,9 @@ ij_plugin_module(
 ### auto-generated section `build intellij.libraries.workspace.model.codegen` end
 
 ### auto-generated section `iml intellij.libraries.workspace.model.codegen` start
-exports_files(
-    [
-        "intellij.libraries.workspace.model.codegen.iml",
-        "resources/intellij.libraries.workspace.model.codegen.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.libraries.workspace.model.codegen",
+    descriptors = ["resources/intellij.libraries.workspace.model.codegen.xml"],
+    target = "workspace-model-codegen",
 )
 ### auto-generated section `iml intellij.libraries.workspace.model.codegen` end

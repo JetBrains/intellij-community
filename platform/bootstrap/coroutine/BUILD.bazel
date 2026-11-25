@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.platform.bootstrap.coroutine` start
@@ -25,10 +26,9 @@ jvm_library(
 ### auto-generated section `build intellij.platform.bootstrap.coroutine` end
 
 ### auto-generated section `iml intellij.platform.bootstrap.coroutine` start
-exports_files(
-    [
-        "intellij.platform.bootstrap.coroutine.iml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.platform.bootstrap.coroutine",
+    resources = False,
+    target = "coroutine",
 )
 ### auto-generated section `iml intellij.platform.bootstrap.coroutine` end

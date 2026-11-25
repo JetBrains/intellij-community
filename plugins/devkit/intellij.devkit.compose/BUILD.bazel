@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("@rules_kotlin//kotlin:core.bzl", "kt_plugin_cfg")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
@@ -103,11 +104,9 @@ jvm_library(
 ### auto-generated section `build intellij.devkit.compose` end
 
 ### auto-generated section `iml intellij.devkit.compose` start
-exports_files(
-    [
-        "intellij.devkit.compose.iml",
-        "resources/intellij.devkit.compose.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.devkit.compose",
+    descriptors = ["resources/intellij.devkit.compose.xml"],
+    target = "compose",
 )
 ### auto-generated section `iml intellij.devkit.compose` end

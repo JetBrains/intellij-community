@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 
@@ -63,11 +64,9 @@ jvm_library(
 ### auto-generated section `build intellij.kotlin.jsr223.plugin` end
 
 ### auto-generated section `iml intellij.kotlin.jsr223.plugin` start
-exports_files(
-    [
-        "intellij.kotlin.jsr223.plugin.iml",
-        "resources/META-INF/plugin.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.kotlin.jsr223.plugin",
+    descriptors = ["resources/META-INF/plugin.xml"],
+    target = "jsr223-plugin",
 )
 ### auto-generated section `iml intellij.kotlin.jsr223.plugin` end

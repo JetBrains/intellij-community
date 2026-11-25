@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
@@ -27,11 +28,9 @@ jvm_library(
 ### auto-generated section `build intellij.libraries.stream` end
 
 ### auto-generated section `iml intellij.libraries.stream` start
-exports_files(
-    [
-        "intellij.libraries.stream.iml",
-        "resources/intellij.libraries.stream.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.libraries.stream",
+    descriptors = ["resources/intellij.libraries.stream.xml"],
+    target = "stream",
 )
 ### auto-generated section `iml intellij.libraries.stream` end

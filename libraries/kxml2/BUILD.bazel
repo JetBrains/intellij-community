@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@community//platform/build-scripts/bazel-rules:ij_plugin_module.bzl", "ij_plugin_module")
 
 ### auto-generated section `build intellij.libraries.kxml2` start
@@ -20,11 +21,9 @@ ij_plugin_module(
 ### auto-generated section `build intellij.libraries.kxml2` end
 
 ### auto-generated section `iml intellij.libraries.kxml2` start
-exports_files(
-    [
-        "intellij.libraries.kxml2.iml",
-        "resources/intellij.libraries.kxml2.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.libraries.kxml2",
+    descriptors = ["resources/intellij.libraries.kxml2.xml"],
+    target = "kxml2",
 )
 ### auto-generated section `iml intellij.libraries.kxml2` end

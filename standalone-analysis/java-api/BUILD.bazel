@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.standaloneAnalysis.java` start
@@ -29,10 +30,9 @@ jvm_library(
 ### auto-generated section `build intellij.standaloneAnalysis.java` end
 
 ### auto-generated section `iml intellij.standaloneAnalysis.java` start
-exports_files(
-    [
-        "intellij.standaloneAnalysis.java.iml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.standaloneAnalysis.java",
+    resources = False,
+    target = "standaloneAnalysis-java",
 )
 ### auto-generated section `iml intellij.standaloneAnalysis.java` end

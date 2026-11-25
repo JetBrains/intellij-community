@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@community//platform/build-scripts/bazel-rules:ij_plugin_module.bzl", "ij_plugin_module")
 
 ### auto-generated section `build intellij.libraries.ktor.server.sse` start
@@ -24,11 +25,9 @@ ij_plugin_module(
 ### auto-generated section `build intellij.libraries.ktor.server.sse` end
 
 ### auto-generated section `iml intellij.libraries.ktor.server.sse` start
-exports_files(
-    [
-        "intellij.libraries.ktor.server.sse.iml",
-        "resources/intellij.libraries.ktor.server.sse.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.libraries.ktor.server.sse",
+    descriptors = ["resources/intellij.libraries.ktor.server.sse.xml"],
+    target = "libraries-ktor-server-sse",
 )
 ### auto-generated section `iml intellij.libraries.ktor.server.sse` end

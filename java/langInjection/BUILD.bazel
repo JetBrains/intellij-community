@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
@@ -63,13 +64,13 @@ jvm_library(
 ### auto-generated section `build intellij.java.langInjection` end
 
 ### auto-generated section `iml intellij.java.langInjection` start
-exports_files(
-    [
-        "intellij.java.langInjection.iml",
-        "resources/intellij.java.langInjection.xml",
+jps_module(
+    name = "intellij.java.langInjection",
+    descriptors = ["resources/intellij.java.langInjection.xml"],
+    target = "langInjection",
+    exports = [
         "resources/resources/assertJ.xml",
         "resources/resources/javaInjections.xml",
     ],
-    visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.java.langInjection` end

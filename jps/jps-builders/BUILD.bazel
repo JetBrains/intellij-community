@@ -1,4 +1,5 @@
 load("@community//build:bazel_targets_json.bzl", "current_bazel_targets_json")
+load("@community//build:jps_module.bzl", "jps_module")
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
@@ -113,12 +114,10 @@ jvm_library(
 ### auto-generated section `build intellij.platform.jps.build` end
 
 ### auto-generated section `iml intellij.platform.jps.build` start
-exports_files(
-    [
-        "intellij.platform.jps.build.iml",
-        "resources/intellij.platform.jps.build.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.platform.jps.build",
+    descriptors = ["resources/intellij.platform.jps.build.xml"],
+    target = "build",
 )
 ### auto-generated section `iml intellij.platform.jps.build` end
 
@@ -176,10 +175,8 @@ jvm_library(
 ### auto-generated section `build intellij.platform.jps.build.tests` end
 
 ### auto-generated section `iml intellij.platform.jps.build.tests` start
-exports_files(
-    [
-        "intellij.platform.jps.build.tests.iml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.platform.jps.build.tests",
+    target = "build-tests_test_lib",
 )
 ### auto-generated section `iml intellij.platform.jps.build.tests` end

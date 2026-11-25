@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
@@ -68,12 +69,10 @@ jvm_library(
 ### auto-generated section `build intellij.kotlin.injection` end
 
 ### auto-generated section `iml intellij.kotlin.injection` start
-exports_files(
-    [
-        "intellij.kotlin.injection.iml",
-        "resources/injection/kotlinInjections.k2.xml",
-        "resources/intellij.kotlin.injection.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.kotlin.injection",
+    descriptors = ["resources/intellij.kotlin.injection.xml"],
+    target = "kotlin-injection",
+    exports = ["resources/injection/kotlinInjections.k2.xml"],
 )
 ### auto-generated section `iml intellij.kotlin.injection` end

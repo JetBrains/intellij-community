@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.libraries.jline` start
@@ -19,11 +20,9 @@ jvm_library(
 ### auto-generated section `build intellij.libraries.jline` end
 
 ### auto-generated section `iml intellij.libraries.jline` start
-exports_files(
-    [
-        "intellij.libraries.jline.iml",
-        "resources/intellij.libraries.jline.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.libraries.jline",
+    descriptors = ["resources/intellij.libraries.jline.xml"],
+    target = "jline",
 )
 ### auto-generated section `iml intellij.libraries.jline` end

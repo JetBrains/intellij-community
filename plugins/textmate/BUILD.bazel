@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("@rules_pkg//pkg:mappings.bzl", "pkg_files", "strip_prefix")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
@@ -88,11 +89,9 @@ jvm_library(
 ### auto-generated section `build intellij.textmate` end
 
 ### auto-generated section `iml intellij.textmate` start
-exports_files(
-    [
-        "intellij.textmate.iml",
-        "resources/intellij.textmate.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.textmate",
+    descriptors = ["resources/intellij.textmate.xml"],
+    target = "textmate",
 )
 ### auto-generated section `iml intellij.textmate` end

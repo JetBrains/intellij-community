@@ -1,6 +1,7 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@community//platform/build-scripts/bazel-rules:ij_plugin.bzl", "ij_plugin")
-load("@jps_dynamic_deps_community//:targets.bzl", "dist_plugin")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:dist_plugin.bzl", "dist_plugin")
 
 ### auto-generated section `dev intellij.grid.plugin` start
 dist_plugin(
@@ -17,6 +18,18 @@ dist_plugin(
         "intellij.grid.structureview",
     ],
     main_module = "intellij.grid.plugin",
+    module_labels = {
+        "intellij.grid": "@community//grid/api:grid",
+        "intellij.grid.core.impl": "@community//grid/core-impl:core-impl",
+        "intellij.grid.csv.core.impl": "@community//grid/csv:csv-core-impl",
+        "intellij.grid.images.impl": "@community//grid/images:images-impl",
+        "intellij.grid.impl": "@community//grid/impl:impl",
+        "intellij.grid.impl.ide": "@community//grid/impl-ide:impl-ide",
+        "intellij.grid.json.impl": "@community//grid/json:json-impl",
+        "intellij.grid.plugin": "@community//grid/plugin:plugin",
+        "intellij.grid.structureview": "@community//grid/structureview:structureview",
+        "intellij.grid.types": "@community//grid/types:types",
+    },
 )
 ### auto-generated section `dev intellij.grid.plugin` end
 
@@ -65,11 +78,10 @@ ij_plugin(
 ### auto-generated section `plugin intellij.grid.plugin` end
 
 ### auto-generated section `iml intellij.grid.plugin` start
-exports_files(
-    [
-        "intellij.grid.plugin.iml",
-        "resources/META-INF/plugin.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.grid.plugin",
+    descriptors = ["resources/META-INF/plugin.xml"],
+    plugin = True,
+    target = "plugin",
 )
 ### auto-generated section `iml intellij.grid.plugin` end

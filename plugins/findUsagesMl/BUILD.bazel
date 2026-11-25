@@ -1,7 +1,8 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@community//build:tests-options.bzl", "jps_test")
 load("@community//platform/build-scripts/bazel-rules:ij_plugin.bzl", "ij_plugin")
-load("@jps_dynamic_deps_community//:targets.bzl", "dist_plugin")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:dist_plugin.bzl", "dist_plugin")
 
 jps_test(
     name = "findUsagesMl-tests_test",
@@ -18,6 +19,9 @@ dist_plugin(
         "lib/findUsagesMl.jar": ["intellij.findUsagesMl"],
     },
     main_module = "intellij.findUsagesMl",
+    module_labels = {
+        "intellij.findUsagesMl": "@community//plugins/findUsagesMl:findUsagesMl",
+    },
 )
 ### auto-generated section `dev intellij.findUsagesMl` end
 
@@ -63,12 +67,11 @@ ij_plugin(
 ### auto-generated section `plugin intellij.findUsagesMl` end
 
 ### auto-generated section `iml intellij.findUsagesMl` start
-exports_files(
-    [
-        "intellij.findUsagesMl.iml",
-        "resources/META-INF/plugin.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.findUsagesMl",
+    descriptors = ["resources/META-INF/plugin.xml"],
+    plugin = True,
+    target = "findUsagesMl",
 )
 ### auto-generated section `iml intellij.findUsagesMl` end
 
@@ -102,10 +105,9 @@ jvm_library(
 ### auto-generated section `build intellij.findUsagesMl.tests` end
 
 ### auto-generated section `iml intellij.findUsagesMl.tests` start
-exports_files(
-    [
-        "intellij.findUsagesMl.tests.iml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.findUsagesMl.tests",
+    resources = False,
+    target = "findUsagesMl-tests_test_lib",
 )
 ### auto-generated section `iml intellij.findUsagesMl.tests` end

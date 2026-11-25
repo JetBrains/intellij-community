@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
@@ -70,13 +71,13 @@ jvm_library(
 ### auto-generated section `build intellij.kotlin.base.resources` end
 
 ### auto-generated section `iml intellij.kotlin.base.resources` start
-exports_files(
-    [
-        "intellij.kotlin.base.resources.iml",
+jps_module(
+    name = "intellij.kotlin.base.resources",
+    descriptors = ["resources/intellij.kotlin.base.resources.xml"],
+    target = "kotlin-base-resources",
+    exports = [
         "resources/colorScheme/Darcula_Kotlin.xml",
         "resources/colorScheme/Default_Kotlin.xml",
-        "resources/intellij.kotlin.base.resources.xml",
     ],
-    visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.kotlin.base.resources` end

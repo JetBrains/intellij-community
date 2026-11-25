@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
@@ -22,12 +23,10 @@ jvm_library(
 ### auto-generated section `build intellij.platform.resources.fileTypes` end
 
 ### auto-generated section `iml intellij.platform.resources.fileTypes` start
-exports_files(
-    [
-        "intellij.platform.resources.fileTypes.iml",
-        "src/defaultFileTypes.xml",
-        "src/intellij.platform.resources.fileTypes.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.platform.resources.fileTypes",
+    descriptors = ["src/intellij.platform.resources.fileTypes.xml"],
+    target = "resources-fileTypes",
+    exports = ["src/defaultFileTypes.xml"],
 )
 ### auto-generated section `iml intellij.platform.resources.fileTypes` end

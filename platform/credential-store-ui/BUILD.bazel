@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
@@ -42,11 +43,9 @@ jvm_library(
 ### auto-generated section `build intellij.platform.credentialStore.ui` end
 
 ### auto-generated section `iml intellij.platform.credentialStore.ui` start
-exports_files(
-    [
-        "intellij.platform.credentialStore.ui.iml",
-        "resources/intellij.platform.credentialStore.ui.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.platform.credentialStore.ui",
+    descriptors = ["resources/intellij.platform.credentialStore.ui.xml"],
+    target = "credentialStore-ui",
 )
 ### auto-generated section `iml intellij.platform.credentialStore.ui` end

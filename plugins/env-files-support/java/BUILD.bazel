@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.dotenv.java` start
@@ -33,11 +34,9 @@ jvm_library(
 ### auto-generated section `build intellij.dotenv.java` end
 
 ### auto-generated section `iml intellij.dotenv.java` start
-exports_files(
-    [
-        "intellij.dotenv.java.iml",
-        "resources/intellij.dotenv.java.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.dotenv.java",
+    descriptors = ["resources/intellij.dotenv.java.xml"],
+    target = "java",
 )
 ### auto-generated section `iml intellij.dotenv.java` end

@@ -1,8 +1,9 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@community//build:tests-options.bzl", "jps_test")
 load("@community//platform/build-scripts/bazel-rules:ij_plugin.bzl", "ij_plugin")
-load("@jps_dynamic_deps_community//:targets.bzl", "dist_plugin")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("//platform/build-scripts/bazel-rules:dist_plugin.bzl", "dist_plugin")
 
 jps_test(
     name = "java-byteCodeViewer-tests_test",
@@ -19,6 +20,9 @@ dist_plugin(
         "lib/java-byteCodeViewer.jar": ["intellij.java.byteCodeViewer"],
     },
     main_module = "intellij.java.byteCodeViewer",
+    module_labels = {
+        "intellij.java.byteCodeViewer": "@community//plugins/ByteCodeViewer:java-byteCodeViewer",
+    },
 )
 ### auto-generated section `dev intellij.java.byteCodeViewer` end
 
@@ -79,12 +83,11 @@ ij_plugin(
 ### auto-generated section `plugin intellij.java.byteCodeViewer` end
 
 ### auto-generated section `iml intellij.java.byteCodeViewer` start
-exports_files(
-    [
-        "intellij.java.byteCodeViewer.iml",
-        "resources/META-INF/plugin.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.java.byteCodeViewer",
+    descriptors = ["resources/META-INF/plugin.xml"],
+    plugin = True,
+    target = "java-byteCodeViewer",
 )
 ### auto-generated section `iml intellij.java.byteCodeViewer` end
 
@@ -120,10 +123,9 @@ jvm_library(
 ### auto-generated section `build intellij.java.byteCodeViewer.tests` end
 
 ### auto-generated section `iml intellij.java.byteCodeViewer.tests` start
-exports_files(
-    [
-        "intellij.java.byteCodeViewer.tests.iml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.java.byteCodeViewer.tests",
+    resources = False,
+    target = "java-byteCodeViewer-tests_test_lib",
 )
 ### auto-generated section `iml intellij.java.byteCodeViewer.tests` end

@@ -12,24 +12,24 @@
 # the stamps. The component index names the `dev_plugin` target or the component of a `dist_complex_plugin`
 # call.
 #
-# A descriptor leaf derives its conventional descriptor rows from the bridge index of its half.
+# A descriptor leaf states every descriptor row. The label of a conventional row is in the recorded form.
 
-load("@jps_dynamic_deps_community//:targets.bzl", "dist_plugin_descriptor")
+load("//platform/build-scripts/bazel-rules:dist_plugin_descriptor.bzl", "dist_plugin_descriptor")
 
 dist_plugin_descriptor(
-    content_modules = [
-        "intellij.maven",
-        "intellij.maven.completion",
-        "intellij.maven.delegation.junit",
-        "intellij.maven.delegation.testng",
-        "intellij.maven.groovy",
-        "intellij.maven.jps",
-        "intellij.maven.jps.ide",
-        "intellij.maven.model",
-        "intellij.maven.performanceTesting",
-        "intellij.maven.proofreading",
-    ],
     descriptor = "//plugins/maven/plugin:resources/META-INF/plugin.xml",
+    descriptors = {
+        "@community//plugins/maven/completion:resources/intellij.maven.completion.xml": "intellij.maven.completion.xml",
+        "@community//plugins/maven/delegation/junit:resources/intellij.maven.delegation.junit.xml": "intellij.maven.delegation.junit.xml",
+        "@community//plugins/maven/delegation/testng:resources/intellij.maven.delegation.testng.xml": "intellij.maven.delegation.testng.xml",
+        "@community//plugins/maven/groovy:resources/intellij.maven.groovy.xml": "intellij.maven.groovy.xml",
+        "@community//plugins/maven/jps/ide:resources/intellij.maven.jps.ide.xml": "intellij.maven.jps.ide.xml",
+        "@community//plugins/maven/jps:resources/intellij.maven.jps.xml": "intellij.maven.jps.xml",
+        "@community//plugins/maven/model:resources/intellij.maven.model.xml": "intellij.maven.model.xml",
+        "@community//plugins/maven/performanceTesting:resources/intellij.maven.performanceTesting.xml": "intellij.maven.performanceTesting.xml",
+        "@community//plugins/maven/proofreading:resources/intellij.maven.proofreading.xml": "intellij.maven.proofreading.xml",
+        "@community//plugins/maven:src/main/resources/intellij.maven.xml": "intellij.maven.xml",
+    },
     main_module = "intellij.maven.plugin",
     mode_refused_content_modules = {
         "frontend": [

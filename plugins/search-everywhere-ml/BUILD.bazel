@@ -1,6 +1,7 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@community//build:tests-options.bzl", "jps_test")
-load("@jps_dynamic_deps_community//:targets.bzl", "dist_plugin")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:dist_plugin.bzl", "dist_plugin")
 
 jps_test(
     name = "searchEverywhereMl-tests_test",
@@ -26,6 +27,18 @@ dist_plugin(
         "intellij.libraries.search.everywhere.find.ec.model",
     ],
     descriptor = "resources/META-INF/plugin.xml",
+    descriptors = {
+        "@community//libraries/mlapi/core:resources/intellij.libraries.mlapi.core.xml": "intellij.libraries.mlapi.core.xml",
+        "@community//libraries/search-everywhere-find-all-model:resources/intellij.libraries.search.everywhere.find.all.model.xml": "intellij.libraries.search.everywhere.find.all.model.xml",
+        "@community//libraries/search-everywhere-find-ec-model:resources/intellij.libraries.search.everywhere.find.ec.model.xml": "intellij.libraries.search.everywhere.find.ec.model.xml",
+        "@community//platform/ml-logs:resources/intellij.platform.ml.logs.xml": "intellij.platform.ml.logs.xml",
+        "@community//plugins/search-everywhere-ml/ranking/core:resources/intellij.searchEverywhereMl.ranking.core.xml": "intellij.searchEverywhereMl.ranking.core.xml",
+        "@community//plugins/search-everywhere-ml/ranking/ext:resources/intellij.searchEverywhereMl.ranking.ext.xml": "intellij.searchEverywhereMl.ranking.ext.xml",
+        "@community//plugins/search-everywhere-ml/ranking/java:resources/intellij.searchEverywhereMl.ranking.java.xml": "intellij.searchEverywhereMl.ranking.java.xml",
+        "@community//plugins/search-everywhere-ml/ranking/vcs:resources/intellij.searchEverywhereMl.ranking.vcs.xml": "intellij.searchEverywhereMl.ranking.vcs.xml",
+        "@community//plugins/search-everywhere-ml/ranking/yaml:resources/intellij.searchEverywhereMl.ranking.yaml.xml": "intellij.searchEverywhereMl.ranking.yaml.xml",
+        "@community//plugins/search-everywhere-ml/typos:resources/intellij.searchEverywhereMl.typos.xml": "intellij.searchEverywhereMl.typos.xml",
+    },
     jars = {
         "lib/searchEverywhereMl.jar": [
             "intellij.searchEverywhereMl",
@@ -43,6 +56,19 @@ dist_plugin(
             "intellij.searchEverywhereMl.ranking.yaml",
             "intellij.searchEverywhereMl.ranking.vcs",
         ],
+    },
+    module_labels = {
+        "intellij.libraries.mlapi.core": "@community//libraries/mlapi/core:core",
+        "intellij.libraries.search.everywhere.find.all.model": "@community//libraries/search-everywhere-find-all-model:search-everywhere-find-all-model",
+        "intellij.libraries.search.everywhere.find.ec.model": "@community//libraries/search-everywhere-find-ec-model:search-everywhere-find-ec-model",
+        "intellij.platform.ml.logs": "@community//platform/ml-logs:ml-logs",
+        "intellij.searchEverywhereMl": "@community//plugins/search-everywhere-ml:search-everywhere-ml",
+        "intellij.searchEverywhereMl.ranking.core": "@community//plugins/search-everywhere-ml/ranking/core:core",
+        "intellij.searchEverywhereMl.ranking.ext": "@community//plugins/search-everywhere-ml/ranking/ext:ext",
+        "intellij.searchEverywhereMl.ranking.java": "@community//plugins/search-everywhere-ml/ranking/java:java",
+        "intellij.searchEverywhereMl.ranking.vcs": "@community//plugins/search-everywhere-ml/ranking/vcs:vcs",
+        "intellij.searchEverywhereMl.ranking.yaml": "@community//plugins/search-everywhere-ml/ranking/yaml:yaml",
+        "intellij.searchEverywhereMl.typos": "@community//plugins/search-everywhere-ml/typos:typos",
     },
 )
 ### auto-generated section `dev intellij.searchEverywhereMl` end
@@ -82,12 +108,10 @@ jvm_library(
 ### auto-generated section `build intellij.searchEverywhereMl` end
 
 ### auto-generated section `iml intellij.searchEverywhereMl` start
-exports_files(
-    [
-        "intellij.searchEverywhereMl.iml",
-        "resources/META-INF/plugin.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.searchEverywhereMl",
+    descriptors = ["resources/META-INF/plugin.xml"],
+    target = "search-everywhere-ml",
 )
 ### auto-generated section `iml intellij.searchEverywhereMl` end
 
@@ -139,10 +163,9 @@ jvm_library(
 ### auto-generated section `build intellij.searchEverywhereMl.tests` end
 
 ### auto-generated section `iml intellij.searchEverywhereMl.tests` start
-exports_files(
-    [
-        "intellij.searchEverywhereMl.tests.iml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.searchEverywhereMl.tests",
+    resources = False,
+    target = "searchEverywhereMl-tests_test_lib",
 )
 ### auto-generated section `iml intellij.searchEverywhereMl.tests` end

@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
@@ -32,11 +33,9 @@ jvm_library(
 ### auto-generated section `build intellij.libraries.netty.handler.proxy` end
 
 ### auto-generated section `iml intellij.libraries.netty.handler.proxy` start
-exports_files(
-    [
-        "intellij.libraries.netty.handler.proxy.iml",
-        "resources/intellij.libraries.netty.handler.proxy.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.libraries.netty.handler.proxy",
+    descriptors = ["resources/intellij.libraries.netty.handler.proxy.xml"],
+    target = "libraries-netty-handler-proxy",
 )
 ### auto-generated section `iml intellij.libraries.netty.handler.proxy` end

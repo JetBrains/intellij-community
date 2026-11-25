@@ -1,6 +1,7 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@community//platform/build-scripts/bazel-rules:ij_plugin.bzl", "ij_plugin")
-load("@jps_dynamic_deps_community//:targets.bzl", "dist_plugin")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:dist_plugin.bzl", "dist_plugin")
 
 ### auto-generated section `dev intellij.groovy.scripting` start
 dist_plugin(
@@ -11,6 +12,11 @@ dist_plugin(
         "intellij.libraries.ivy",
     ],
     descriptor = "resources/META-INF/plugin.xml",
+    descriptors = {
+        "@community//libraries/groovy/jsr223:resources/intellij.libraries.groovy.jsr223.xml": "intellij.libraries.groovy.jsr223.xml",
+        "@community//libraries/groovy:resources/intellij.libraries.groovy.xml": "intellij.libraries.groovy.xml",
+        "@community//libraries/ivy:resources/intellij.libraries.ivy.xml": "intellij.libraries.ivy.xml",
+    },
     jars = {
         "lib/intellij.libraries.groovy.jar": [
             "intellij.libraries.groovy",
@@ -28,6 +34,12 @@ dist_plugin(
         "lib/groovy-scripting.jar": ["intellij.groovy.scripting"],
     },
     main_module = "intellij.groovy.scripting",
+    module_labels = {
+        "intellij.groovy.scripting": "@community//plugins/groovy-scripting:groovy-scripting",
+        "intellij.libraries.groovy": "@community//libraries/groovy:groovy",
+        "intellij.libraries.groovy.jsr223": "@community//libraries/groovy/jsr223:jsr223",
+        "intellij.libraries.ivy": "@community//libraries/ivy:ivy",
+    },
 )
 ### auto-generated section `dev intellij.groovy.scripting` end
 
@@ -68,11 +80,10 @@ ij_plugin(
 ### auto-generated section `plugin intellij.groovy.scripting` end
 
 ### auto-generated section `iml intellij.groovy.scripting` start
-exports_files(
-    [
-        "intellij.groovy.scripting.iml",
-        "resources/META-INF/plugin.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.groovy.scripting",
+    descriptors = ["resources/META-INF/plugin.xml"],
+    plugin = True,
+    target = "groovy-scripting",
 )
 ### auto-generated section `iml intellij.groovy.scripting` end

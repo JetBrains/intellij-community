@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_java//java:defs.bzl", "java_binary")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("@rules_kotlin//kotlin:core.bzl", "kt_plugin_cfg")
@@ -83,11 +84,9 @@ jvm_library(
 ### auto-generated section `build intellij.platform.jewel.samples.standalone` end
 
 ### auto-generated section `iml intellij.platform.jewel.samples.standalone` start
-exports_files(
-    [
-        "intellij.platform.jewel.samples.standalone.iml",
-        "src/main/resources/intellij.platform.jewel.samples.standalone.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.platform.jewel.samples.standalone",
+    descriptors = ["src/main/resources/intellij.platform.jewel.samples.standalone.xml"],
+    target = "standalone",
 )
 ### auto-generated section `iml intellij.platform.jewel.samples.standalone` end

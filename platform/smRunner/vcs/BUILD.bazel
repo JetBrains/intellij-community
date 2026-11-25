@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
@@ -52,11 +53,9 @@ jvm_library(
 ### auto-generated section `build intellij.platform.smRunner.vcs` end
 
 ### auto-generated section `iml intellij.platform.smRunner.vcs` start
-exports_files(
-    [
-        "intellij.platform.smRunner.vcs.iml",
-        "resources/intellij.platform.smRunner.vcs.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.platform.smRunner.vcs",
+    descriptors = ["resources/intellij.platform.smRunner.vcs.xml"],
+    target = "vcs",
 )
 ### auto-generated section `iml intellij.platform.smRunner.vcs` end

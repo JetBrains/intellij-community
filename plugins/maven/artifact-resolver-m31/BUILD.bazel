@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.maven.artifactResolver.m31` start
@@ -29,11 +30,9 @@ jvm_library(
 ### auto-generated section `build intellij.maven.artifactResolver.m31` end
 
 ### auto-generated section `iml intellij.maven.artifactResolver.m31` start
-exports_files(
-    [
-        "intellij.maven.artifactResolver.m31.iml",
-        "resources/META-INF/plexus/components.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.maven.artifactResolver.m31",
+    target = "artifactResolver-m31",
+    exports = ["resources/META-INF/plexus/components.xml"],
 )
 ### auto-generated section `iml intellij.maven.artifactResolver.m31` end

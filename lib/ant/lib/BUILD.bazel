@@ -1,4 +1,5 @@
 load("@rules_java//java:defs.bzl", "java_import", "java_library")
+load("//:library_jars.bzl", "library_jars")
 
 # The files in the `lib` directory of the Ant distribution. The Ant plugin puts them in its `dist/lib` directory.
 filegroup(
@@ -84,3 +85,11 @@ exports_files(
 )
 
 ### auto-generated section `local-libs` end
+
+### auto-generated section `library jars` start
+library_jars(
+    name = "library_jars",
+    visibility = ["//visibility:public"],
+)
+
+### auto-generated section `library jars` end

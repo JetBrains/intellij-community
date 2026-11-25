@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
@@ -80,11 +81,9 @@ jvm_library(
 ### auto-generated section `build intellij.kotlin.formatter.minimal` end
 
 ### auto-generated section `iml intellij.kotlin.formatter.minimal` start
-exports_files(
-    [
-        "intellij.kotlin.formatter.minimal.iml",
-        "resources/intellij.kotlin.formatter.minimal.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.kotlin.formatter.minimal",
+    descriptors = ["resources/intellij.kotlin.formatter.minimal.xml"],
+    target = "minimal",
 )
 ### auto-generated section `iml intellij.kotlin.formatter.minimal` end

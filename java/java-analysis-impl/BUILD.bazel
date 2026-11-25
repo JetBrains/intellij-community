@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
@@ -95,13 +96,13 @@ jvm_library(
 ### auto-generated section `build intellij.java.analysis.impl` end
 
 ### auto-generated section `iml intellij.java.analysis.impl` start
-exports_files(
-    [
-        "intellij.java.analysis.impl.iml",
+jps_module(
+    name = "intellij.java.analysis.impl",
+    descriptors = ["resources/intellij.java.analysis.impl.xml"],
+    target = "analysis-impl",
+    exports = [
         "resources/META-INF/RegistryKeysAnalysisImpl.xml",
         "resources/intellij.java.analysis.impl.analyzer.xml",
-        "resources/intellij.java.analysis.impl.xml",
     ],
-    visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.java.analysis.impl` end

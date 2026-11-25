@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.platform.extensions` start
@@ -37,10 +38,9 @@ jvm_library(
 ### auto-generated section `build intellij.platform.extensions` end
 
 ### auto-generated section `iml intellij.platform.extensions` start
-exports_files(
-    [
-        "intellij.platform.extensions.iml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.platform.extensions",
+    resources = False,
+    target = "extensions",
 )
 ### auto-generated section `iml intellij.platform.extensions` end

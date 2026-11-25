@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.groovy.git` start
@@ -34,11 +35,9 @@ jvm_library(
 ### auto-generated section `build intellij.groovy.git` end
 
 ### auto-generated section `iml intellij.groovy.git` start
-exports_files(
-    [
-        "intellij.groovy.git.iml",
-        "resources/intellij.groovy.git.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.groovy.git",
+    descriptors = ["resources/intellij.groovy.git.xml"],
+    target = "git",
 )
 ### auto-generated section `iml intellij.groovy.git` end

@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.libraries.byte.buddy` start
@@ -19,11 +20,9 @@ jvm_library(
 ### auto-generated section `build intellij.libraries.byte.buddy` end
 
 ### auto-generated section `iml intellij.libraries.byte.buddy` start
-exports_files(
-    [
-        "intellij.libraries.byte.buddy.iml",
-        "resources/intellij.libraries.byte.buddy.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.libraries.byte.buddy",
+    descriptors = ["resources/intellij.libraries.byte.buddy.xml"],
+    target = "byte-buddy",
 )
 ### auto-generated section `iml intellij.libraries.byte.buddy` end

@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
@@ -50,11 +51,9 @@ jvm_library(
 ### auto-generated section `build intellij.xml.dom` end
 
 ### auto-generated section `iml intellij.xml.dom` start
-exports_files(
-    [
-        "intellij.xml.dom.iml",
-        "resources/intellij.xml.dom.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.xml.dom",
+    descriptors = ["resources/intellij.xml.dom.xml"],
+    target = "dom",
 )
 ### auto-generated section `iml intellij.xml.dom` end

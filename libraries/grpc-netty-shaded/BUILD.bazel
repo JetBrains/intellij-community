@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
@@ -37,11 +38,9 @@ jvm_library(
 ### auto-generated section `build intellij.libraries.grpc.netty.shaded` end
 
 ### auto-generated section `iml intellij.libraries.grpc.netty.shaded` start
-exports_files(
-    [
-        "intellij.libraries.grpc.netty.shaded.iml",
-        "resources/intellij.libraries.grpc.netty.shaded.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.libraries.grpc.netty.shaded",
+    descriptors = ["resources/intellij.libraries.grpc.netty.shaded.xml"],
+    target = "grpc-netty-shaded",
 )
 ### auto-generated section `iml intellij.libraries.grpc.netty.shaded` end

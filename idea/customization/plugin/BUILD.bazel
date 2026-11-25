@@ -1,6 +1,7 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@community//platform/build-scripts/bazel-rules:ij_plugin.bzl", "ij_plugin")
-load("@jps_dynamic_deps_community//:targets.bzl", "dist_plugin")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:dist_plugin.bzl", "dist_plugin")
 
 ### auto-generated section `dev intellij.idea.customization.plugin` start
 dist_plugin(
@@ -13,6 +14,14 @@ dist_plugin(
         "intellij.platform.ide.nonModalWelcomeScreen.backend",
     ],
     main_module = "intellij.idea.customization.plugin",
+    module_labels = {
+        "intellij.idea.customization.backend": "@community//idea/customization/backend:backend",
+        "intellij.idea.customization.base": "@community//idea/customization/base:base",
+        "intellij.idea.customization.plugin": "@community//idea/customization/plugin:plugin",
+        "intellij.platform.ide.nonModalWelcomeScreen": "@community//platform/non-modal-welcome-screen:non-modal-welcome-screen",
+        "intellij.platform.ide.nonModalWelcomeScreen.backend": "@community//platform/non-modal-welcome-screen/backend:backend",
+        "intellij.platform.ide.nonModalWelcomeScreen.frontend": "@community//platform/non-modal-welcome-screen/frontend:frontend",
+    },
 )
 ### auto-generated section `dev intellij.idea.customization.plugin` end
 
@@ -61,11 +70,10 @@ ij_plugin(
 ### auto-generated section `plugin intellij.idea.customization.plugin` end
 
 ### auto-generated section `iml intellij.idea.customization.plugin` start
-exports_files(
-    [
-        "intellij.idea.customization.plugin.iml",
-        "resources/META-INF/plugin.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.idea.customization.plugin",
+    descriptors = ["resources/META-INF/plugin.xml"],
+    plugin = True,
+    target = "plugin",
 )
 ### auto-generated section `iml intellij.idea.customization.plugin` end

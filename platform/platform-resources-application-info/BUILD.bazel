@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
@@ -22,13 +23,13 @@ jvm_library(
 ### auto-generated section `build intellij.platform.resources.applicationInfo` end
 
 ### auto-generated section `iml intellij.platform.resources.applicationInfo` start
-exports_files(
-    [
-        "intellij.platform.resources.applicationInfo.iml",
+jps_module(
+    name = "intellij.platform.resources.applicationInfo",
+    descriptors = ["src/intellij.platform.resources.applicationInfo.xml"],
+    target = "resources-applicationInfo",
+    exports = [
         "src/idea/PlatformApplicationInfo.xml",
         "src/idea/PlatformLangXmlApplicationInfo.xml",
-        "src/intellij.platform.resources.applicationInfo.xml",
     ],
-    visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.platform.resources.applicationInfo` end

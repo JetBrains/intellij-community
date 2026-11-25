@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.platform.testFramework.junit5.highlighting` start
@@ -26,10 +27,9 @@ jvm_library(
 ### auto-generated section `build intellij.platform.testFramework.junit5.highlighting` end
 
 ### auto-generated section `iml intellij.platform.testFramework.junit5.highlighting` start
-exports_files(
-    [
-        "intellij.platform.testFramework.junit5.highlighting.iml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.platform.testFramework.junit5.highlighting",
+    resources = False,
+    target = "highlighting",
 )
 ### auto-generated section `iml intellij.platform.testFramework.junit5.highlighting` end

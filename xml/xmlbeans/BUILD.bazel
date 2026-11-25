@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
@@ -60,12 +61,10 @@ jvm_library(
 ### auto-generated section `build intellij.xml.xmlbeans` end
 
 ### auto-generated section `iml intellij.xml.xmlbeans` start
-exports_files(
-    [
-        "intellij.xml.xmlbeans.iml",
-        "resources/intellij.xml.xmlbeans.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.xml.xmlbeans",
+    descriptors = ["resources/intellij.xml.xmlbeans.xml"],
+    target = "xmlbeans",
 )
 ### auto-generated section `iml intellij.xml.xmlbeans` end
 
@@ -114,10 +113,9 @@ jvm_library(
 ### auto-generated section `build intellij.xml.xmlbeans.tests` end
 
 ### auto-generated section `iml intellij.xml.xmlbeans.tests` start
-exports_files(
-    [
-        "intellij.xml.xmlbeans.tests.iml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.xml.xmlbeans.tests",
+    resources = False,
+    target = "xmlbeans-tests_test_lib",
 )
 ### auto-generated section `iml intellij.xml.xmlbeans.tests` end

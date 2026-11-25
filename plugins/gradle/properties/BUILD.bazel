@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
@@ -61,12 +62,10 @@ jvm_library(
 ### auto-generated section `build intellij.gradle.properties` end
 
 ### auto-generated section `iml intellij.gradle.properties` start
-exports_files(
-    [
-        "intellij.gradle.properties.iml",
-        "resources/intellij.gradle.properties.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.gradle.properties",
+    descriptors = ["resources/intellij.gradle.properties.xml"],
+    target = "properties",
 )
 ### auto-generated section `iml intellij.gradle.properties` end
 
@@ -117,10 +116,9 @@ jvm_library(
 ### auto-generated section `build intellij.gradle.properties.tests` end
 
 ### auto-generated section `iml intellij.gradle.properties.tests` start
-exports_files(
-    [
-        "intellij.gradle.properties.tests.iml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.gradle.properties.tests",
+    resources = False,
+    target = "properties-tests_test_lib",
 )
 ### auto-generated section `iml intellij.gradle.properties.tests` end

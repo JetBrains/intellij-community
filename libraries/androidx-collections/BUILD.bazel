@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.libraries.androidx.collections` start
@@ -19,11 +20,9 @@ jvm_library(
 ### auto-generated section `build intellij.libraries.androidx.collections` end
 
 ### auto-generated section `iml intellij.libraries.androidx.collections` start
-exports_files(
-    [
-        "intellij.libraries.androidx.collections.iml",
-        "resources/intellij.libraries.androidx.collections.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.libraries.androidx.collections",
+    descriptors = ["resources/intellij.libraries.androidx.collections.xml"],
+    target = "androidx-collections",
 )
 ### auto-generated section `iml intellij.libraries.androidx.collections` end

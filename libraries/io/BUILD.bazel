@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
@@ -27,11 +28,9 @@ jvm_library(
 ### auto-generated section `build intellij.libraries.kotlinx.io` end
 
 ### auto-generated section `iml intellij.libraries.kotlinx.io` start
-exports_files(
-    [
-        "intellij.libraries.kotlinx.io.iml",
-        "resources/intellij.libraries.kotlinx.io.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.libraries.kotlinx.io",
+    descriptors = ["resources/intellij.libraries.kotlinx.io.xml"],
+    target = "io",
 )
 ### auto-generated section `iml intellij.libraries.kotlinx.io` end

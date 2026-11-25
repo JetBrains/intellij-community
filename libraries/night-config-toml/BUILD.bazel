@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@community//platform/build-scripts/bazel-rules:ij_plugin_module.bzl", "ij_plugin_module")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
@@ -28,11 +29,9 @@ ij_plugin_module(
 ### auto-generated section `build intellij.libraries.night.config.toml` end
 
 ### auto-generated section `iml intellij.libraries.night.config.toml` start
-exports_files(
-    [
-        "intellij.libraries.night.config.toml.iml",
-        "resources/intellij.libraries.night.config.toml.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.libraries.night.config.toml",
+    descriptors = ["resources/intellij.libraries.night.config.toml.xml"],
+    target = "night-config-toml",
 )
 ### auto-generated section `iml intellij.libraries.night.config.toml` end

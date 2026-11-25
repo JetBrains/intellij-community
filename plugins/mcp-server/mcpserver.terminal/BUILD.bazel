@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
@@ -53,11 +54,9 @@ jvm_library(
 ### auto-generated section `build intellij.mcpserver.terminal` end
 
 ### auto-generated section `iml intellij.mcpserver.terminal` start
-exports_files(
-    [
-        "intellij.mcpserver.terminal.iml",
-        "resources/intellij.mcpserver.terminal.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.mcpserver.terminal",
+    descriptors = ["resources/intellij.mcpserver.terminal.xml"],
+    target = "mcpserver.terminal",
 )
 ### auto-generated section `iml intellij.mcpserver.terminal` end

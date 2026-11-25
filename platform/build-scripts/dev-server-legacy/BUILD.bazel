@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 # `DevDistMain` has no binary of its own here. It resolves every module and library jar by label through the
@@ -57,10 +58,9 @@ jvm_library(
 ### auto-generated section `build intellij.platform.buildScripts.devBuildServer.legacy` end
 
 ### auto-generated section `iml intellij.platform.buildScripts.devBuildServer.legacy` start
-exports_files(
-    [
-        "intellij.platform.buildScripts.devBuildServer.legacy.iml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.platform.buildScripts.devBuildServer.legacy",
+    resources = False,
+    target = "buildScripts-devBuildServer-legacy",
 )
 ### auto-generated section `iml intellij.platform.buildScripts.devBuildServer.legacy` end

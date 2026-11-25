@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.libraries.zxing.core` start
@@ -19,11 +20,9 @@ jvm_library(
 ### auto-generated section `build intellij.libraries.zxing.core` end
 
 ### auto-generated section `iml intellij.libraries.zxing.core` start
-exports_files(
-    [
-        "intellij.libraries.zxing.core.iml",
-        "resources/intellij.libraries.zxing.core.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.libraries.zxing.core",
+    descriptors = ["resources/intellij.libraries.zxing.core.xml"],
+    target = "zxing-core",
 )
 ### auto-generated section `iml intellij.libraries.zxing.core` end

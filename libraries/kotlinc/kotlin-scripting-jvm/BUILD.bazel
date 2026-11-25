@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.libraries.kotlinc.kotlin.scripting.jvm` start
@@ -24,11 +25,9 @@ jvm_library(
 ### auto-generated section `build intellij.libraries.kotlinc.kotlin.scripting.jvm` end
 
 ### auto-generated section `iml intellij.libraries.kotlinc.kotlin.scripting.jvm` start
-exports_files(
-    [
-        "intellij.libraries.kotlinc.kotlin.scripting.jvm.iml",
-        "resources/intellij.libraries.kotlinc.kotlin.scripting.jvm.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.libraries.kotlinc.kotlin.scripting.jvm",
+    descriptors = ["resources/intellij.libraries.kotlinc.kotlin.scripting.jvm.xml"],
+    target = "libraries-kotlinc-kotlin-scripting-jvm",
 )
 ### auto-generated section `iml intellij.libraries.kotlinc.kotlin.scripting.jvm` end

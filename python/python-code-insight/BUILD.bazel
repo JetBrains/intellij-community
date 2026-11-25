@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
@@ -99,12 +100,10 @@ jvm_library(
 ### auto-generated section `build intellij.python.codeInsight` end
 
 ### auto-generated section `iml intellij.python.codeInsight` start
-exports_files(
-    [
-        "intellij.python.codeInsight.iml",
-        "resources/intellij.python.codeInsight.xml",
-        "resources/liveTemplates/Python.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.python.codeInsight",
+    descriptors = ["resources/intellij.python.codeInsight.xml"],
+    target = "codeInsight",
+    exports = ["resources/liveTemplates/Python.xml"],
 )
 ### auto-generated section `iml intellij.python.codeInsight` end

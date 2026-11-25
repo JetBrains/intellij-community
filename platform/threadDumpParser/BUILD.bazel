@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
@@ -48,12 +49,10 @@ jvm_library(
 ### auto-generated section `build intellij.platform.threadDumpParser` end
 
 ### auto-generated section `iml intellij.platform.threadDumpParser` start
-exports_files(
-    [
-        "intellij.platform.threadDumpParser.iml",
-        "resources/intellij.platform.threadDumpParser.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.platform.threadDumpParser",
+    descriptors = ["resources/intellij.platform.threadDumpParser.xml"],
+    target = "threadDumpParser",
 )
 ### auto-generated section `iml intellij.platform.threadDumpParser` end
 
@@ -84,10 +83,9 @@ jvm_library(
 ### auto-generated section `build intellij.platform.threadDumpParser.tests` end
 
 ### auto-generated section `iml intellij.platform.threadDumpParser.tests` start
-exports_files(
-    [
-        "intellij.platform.threadDumpParser.tests.iml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.platform.threadDumpParser.tests",
+    resources = False,
+    target = "threadDumpParser-tests_test_lib",
 )
 ### auto-generated section `iml intellij.platform.threadDumpParser.tests` end

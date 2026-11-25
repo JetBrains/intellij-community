@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
@@ -81,12 +82,10 @@ jvm_library(
 ### auto-generated section `build intellij.python.pyproject` end
 
 ### auto-generated section `iml intellij.python.pyproject` start
-exports_files(
-    [
-        "intellij.python.pyproject.iml",
-        "resources/intellij.python.pyproject.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.python.pyproject",
+    descriptors = ["resources/intellij.python.pyproject.xml"],
+    target = "pyproject",
 )
 ### auto-generated section `iml intellij.python.pyproject` end
 
@@ -169,10 +168,8 @@ jvm_library(
 ### auto-generated section `build intellij.python.pyproject.tests` end
 
 ### auto-generated section `iml intellij.python.pyproject.tests` start
-exports_files(
-    [
-        "intellij.python.pyproject.tests.iml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.python.pyproject.tests",
+    target = "pyproject-tests_test_lib",
 )
 ### auto-generated section `iml intellij.python.pyproject.tests` end

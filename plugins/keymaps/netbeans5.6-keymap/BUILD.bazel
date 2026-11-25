@@ -1,6 +1,7 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@community//platform/build-scripts/bazel-rules:ij_plugin.bzl", "ij_plugin")
-load("@jps_dynamic_deps_community//:targets.bzl", "dist_plugin")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:dist_plugin.bzl", "dist_plugin")
 
 ### auto-generated section `dev intellij.keymap.netbeans` start
 dist_plugin(
@@ -9,6 +10,9 @@ dist_plugin(
         "lib/keymap-netbeans.jar": ["intellij.keymap.netbeans"],
     },
     main_module = "intellij.keymap.netbeans",
+    module_labels = {
+        "intellij.keymap.netbeans": "@community//plugins/keymaps/netbeans5.6-keymap:keymap-netbeans",
+    },
 )
 ### auto-generated section `dev intellij.keymap.netbeans` end
 
@@ -38,12 +42,11 @@ ij_plugin(
 ### auto-generated section `plugin intellij.keymap.netbeans` end
 
 ### auto-generated section `iml intellij.keymap.netbeans` start
-exports_files(
-    [
-        "intellij.keymap.netbeans.iml",
-        "resources/META-INF/plugin.xml",
-        "resources/keymaps/NetBeans 6.5.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.keymap.netbeans",
+    descriptors = ["resources/META-INF/plugin.xml"],
+    plugin = True,
+    target = "keymap-netbeans",
+    exports = ["resources/keymaps/NetBeans 6.5.xml"],
 )
 ### auto-generated section `iml intellij.keymap.netbeans` end

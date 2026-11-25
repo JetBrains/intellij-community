@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 
@@ -51,10 +52,9 @@ jvm_library(
 ### auto-generated section `build kotlin.fir.testFramework` end
 
 ### auto-generated section `iml kotlin.fir.testFramework` start
-exports_files(
-    [
-        "kotlin.fir.testFramework.iml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "kotlin.fir.testFramework",
+    resources = False,
+    target = "testFramework",
 )
 ### auto-generated section `iml kotlin.fir.testFramework` end

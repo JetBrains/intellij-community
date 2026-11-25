@@ -1,7 +1,8 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@community//build:tests-options.bzl", "jps_test")
 load("@community//platform/build-scripts/bazel-rules:ij_plugin.bzl", "ij_plugin")
-load("@jps_dynamic_deps_community//:targets.bzl", "dist_plugin")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:dist_plugin.bzl", "dist_plugin")
 
 jps_test(
     name = "remoteControl-tests_test",
@@ -18,6 +19,9 @@ dist_plugin(
         "lib/remoteControl.jar": ["intellij.remoteControl"],
     },
     main_module = "intellij.remoteControl",
+    module_labels = {
+        "intellij.remoteControl": "@community//plugins/remote-control:remote-control",
+    },
 )
 ### auto-generated section `dev intellij.remoteControl` end
 
@@ -67,12 +71,11 @@ ij_plugin(
 ### auto-generated section `plugin intellij.remoteControl` end
 
 ### auto-generated section `iml intellij.remoteControl` start
-exports_files(
-    [
-        "intellij.remoteControl.iml",
-        "resources/META-INF/plugin.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.remoteControl",
+    descriptors = ["resources/META-INF/plugin.xml"],
+    plugin = True,
+    target = "remote-control",
 )
 ### auto-generated section `iml intellij.remoteControl` end
 
@@ -122,10 +125,9 @@ jvm_library(
 ### auto-generated section `build intellij.remoteControl.tests` end
 
 ### auto-generated section `iml intellij.remoteControl.tests` start
-exports_files(
-    [
-        "intellij.remoteControl.tests.iml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.remoteControl.tests",
+    resources = False,
+    target = "remoteControl-tests_test_lib",
 )
 ### auto-generated section `iml intellij.remoteControl.tests` end

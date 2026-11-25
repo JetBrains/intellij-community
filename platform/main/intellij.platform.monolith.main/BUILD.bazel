@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.platform.monolith.main` start
@@ -20,10 +21,9 @@ jvm_library(
 ### auto-generated section `build intellij.platform.monolith.main` end
 
 ### auto-generated section `iml intellij.platform.monolith.main` start
-exports_files(
-    [
-        "intellij.platform.monolith.main.iml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.platform.monolith.main",
+    resources = False,
+    target = "monolith-main",
 )
 ### auto-generated section `iml intellij.platform.monolith.main` end

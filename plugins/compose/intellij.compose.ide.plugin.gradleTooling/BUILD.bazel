@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
@@ -45,11 +46,9 @@ jvm_library(
 ### auto-generated section `build intellij.compose.ide.plugin.gradleTooling.rt` end
 
 ### auto-generated section `iml intellij.compose.ide.plugin.gradleTooling.rt` start
-exports_files(
-    [
-        "intellij.compose.ide.plugin.gradleTooling.rt.iml",
-        "resources/intellij.compose.ide.plugin.gradleTooling.rt.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.compose.ide.plugin.gradleTooling.rt",
+    descriptors = ["resources/intellij.compose.ide.plugin.gradleTooling.rt.xml"],
+    target = "ide-plugin-gradleTooling-rt",
 )
 ### auto-generated section `iml intellij.compose.ide.plugin.gradleTooling.rt` end

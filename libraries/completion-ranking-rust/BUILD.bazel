@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@community//platform/build-scripts/bazel-rules:ij_plugin_module.bzl", "ij_plugin_module")
 
 ### auto-generated section `build intellij.libraries.completion.ranking.rust` start
@@ -20,11 +21,9 @@ ij_plugin_module(
 ### auto-generated section `build intellij.libraries.completion.ranking.rust` end
 
 ### auto-generated section `iml intellij.libraries.completion.ranking.rust` start
-exports_files(
-    [
-        "intellij.libraries.completion.ranking.rust.iml",
-        "resources/intellij.libraries.completion.ranking.rust.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.libraries.completion.ranking.rust",
+    descriptors = ["resources/intellij.libraries.completion.ranking.rust.xml"],
+    target = "completion-ranking-rust",
 )
 ### auto-generated section `iml intellij.libraries.completion.ranking.rust` end

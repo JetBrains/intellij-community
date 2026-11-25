@@ -1,6 +1,7 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@community//platform/build-scripts/bazel-rules:ij_plugin.bzl", "ij_plugin")
-load("@jps_dynamic_deps_community//:targets.bzl", "dist_plugin")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:dist_plugin.bzl", "dist_plugin")
 
 ### auto-generated section `dev intellij.platform.scratch.plugin` start
 dist_plugin(
@@ -10,12 +11,21 @@ dist_plugin(
         "intellij.platform.scratch.backend",
     ],
     descriptor = "resources/META-INF/plugin.xml",
+    descriptors = {
+        "@community//platform/scratch/backend:resources/intellij.platform.scratch.backend.xml": "intellij.platform.scratch.backend.xml",
+        "@community//platform/scratch:resources/intellij.platform.scratch.xml": "intellij.platform.scratch.xml",
+    },
     jars = {
         "lib/platform-scratch-plugin.jar": ["intellij.platform.scratch.plugin"],
     },
     main_module = "intellij.platform.scratch.plugin",
     mode_refused_content_modules = {
         "frontend": ["intellij.platform.scratch.backend"],
+    },
+    module_labels = {
+        "intellij.platform.scratch": "@community//platform/scratch:scratch",
+        "intellij.platform.scratch.backend": "@community//platform/scratch/backend:backend",
+        "intellij.platform.scratch.plugin": "@community//platform/scratch/plugin:plugin",
     },
 )
 ### auto-generated section `dev intellij.platform.scratch.plugin` end
@@ -52,11 +62,10 @@ ij_plugin(
 ### auto-generated section `plugin intellij.platform.scratch.plugin` end
 
 ### auto-generated section `iml intellij.platform.scratch.plugin` start
-exports_files(
-    [
-        "intellij.platform.scratch.plugin.iml",
-        "resources/META-INF/plugin.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.platform.scratch.plugin",
+    descriptors = ["resources/META-INF/plugin.xml"],
+    plugin = True,
+    target = "plugin",
 )
 ### auto-generated section `iml intellij.platform.scratch.plugin` end

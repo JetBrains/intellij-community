@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.commandInterface` start
@@ -39,11 +40,9 @@ jvm_library(
 ### auto-generated section `build intellij.commandInterface` end
 
 ### auto-generated section `iml intellij.commandInterface` start
-exports_files(
-    [
-        "intellij.commandInterface.iml",
-        "resources/intellij.commandInterface.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.commandInterface",
+    descriptors = ["resources/intellij.commandInterface.xml"],
+    target = "commandInterface",
 )
 ### auto-generated section `iml intellij.commandInterface` end

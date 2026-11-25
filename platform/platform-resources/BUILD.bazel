@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
@@ -35,9 +36,11 @@ jvm_library(
 ### auto-generated section `build intellij.platform.resources` end
 
 ### auto-generated section `iml intellij.platform.resources` start
-exports_files(
-    [
-        "intellij.platform.resources.iml",
+jps_module(
+    name = "intellij.platform.resources",
+    descriptors = ["src/intellij.platform.resources.xml"],
+    target = "resources",
+    exports = [
         "generated/META-INF/intellij.moduleSets.builtInServer.xml",
         "generated/META-INF/intellij.moduleSets.compose.runtime.xml",
         "generated/META-INF/intellij.moduleSets.core.ide.xml",
@@ -86,16 +89,15 @@ exports_files(
         "src/PageSizes.xml",
         "src/idea/DefaultKeymap.xml",
         "src/idea/FindViewColorsScheme.xml",
-        "src/intellij.platform.resources.xml",
         "src/keymaps/$default.xml",
         "src/keymaps/Default for GNOME.xml",
         "src/keymaps/Default for KDE.xml",
         "src/keymaps/Default for XWin.xml",
         "src/keymaps/Emacs.xml",
-        "src/keymaps/Mac OS X 10.5+.xml",
         "src/keymaps/Mac OS X.xml",
-        "src/keymaps/Sublime Text (Mac OS X).xml",
+        "src/keymaps/Mac OS X 10.5+.xml",
         "src/keymaps/Sublime Text.xml",
+        "src/keymaps/Sublime Text (Mac OS X).xml",
         "src/keymaps/macOS System Shortcuts.xml",
         "src/themes/Light.xml",
         "src/themes/expUI/expUI_darculaContrastScheme.xml",
@@ -105,6 +107,5 @@ exports_files(
         "src/themes/islands/IslandSchemeDark.xml",
         "src/themes/islands/highContrastScheme.xml",
     ],
-    visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.platform.resources` end

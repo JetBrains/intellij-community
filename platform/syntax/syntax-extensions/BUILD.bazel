@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
@@ -60,12 +61,10 @@ jvm_library(
 ### auto-generated section `build intellij.platform.syntax.extensions` end
 
 ### auto-generated section `iml intellij.platform.syntax.extensions` start
-exports_files(
-    [
-        "intellij.platform.syntax.extensions.iml",
-        "resources/intellij.platform.syntax.extensions.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.platform.syntax.extensions",
+    descriptors = ["resources/intellij.platform.syntax.extensions.xml"],
+    target = "extensions",
 )
 ### auto-generated section `iml intellij.platform.syntax.extensions` end
 
@@ -94,10 +93,9 @@ jvm_library(
 ### auto-generated section `build intellij.platform.syntax.extensions.tests` end
 
 ### auto-generated section `iml intellij.platform.syntax.extensions.tests` start
-exports_files(
-    [
-        "intellij.platform.syntax.extensions.tests.iml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.platform.syntax.extensions.tests",
+    resources = False,
+    target = "extensions-tests_test_lib",
 )
 ### auto-generated section `iml intellij.platform.syntax.extensions.tests` end

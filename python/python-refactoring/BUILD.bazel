@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
@@ -70,11 +71,9 @@ jvm_library(
 ### auto-generated section `build intellij.python.refactoring` end
 
 ### auto-generated section `iml intellij.python.refactoring` start
-exports_files(
-    [
-        "intellij.python.refactoring.iml",
-        "resources/intellij.python.refactoring.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.python.refactoring",
+    descriptors = ["resources/intellij.python.refactoring.xml"],
+    target = "refactoring",
 )
 ### auto-generated section `iml intellij.python.refactoring` end

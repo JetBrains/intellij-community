@@ -1,7 +1,8 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@community//build:tests-options.bzl", "jps_test")
 load("@community//platform/build-scripts/bazel-rules:ij_plugin.bzl", "ij_plugin")
-load("@jps_dynamic_deps_community//:targets.bzl", "dist_plugin")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:dist_plugin.bzl", "dist_plugin")
 
 filegroup(
     name = "testData",
@@ -24,6 +25,9 @@ dist_plugin(
         "lib/java-i18n.jar": ["intellij.java.i18n"],
     },
     main_module = "intellij.java.i18n",
+    module_labels = {
+        "intellij.java.i18n": "@community//plugins/java-i18n:java-i18n",
+    },
 )
 ### auto-generated section `dev intellij.java.i18n` end
 
@@ -110,12 +114,11 @@ ij_plugin(
 ### auto-generated section `plugin intellij.java.i18n` end
 
 ### auto-generated section `iml intellij.java.i18n` start
-exports_files(
-    [
-        "intellij.java.i18n.iml",
-        "resources/META-INF/plugin.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.java.i18n",
+    descriptors = ["resources/META-INF/plugin.xml"],
+    plugin = True,
+    target = "java-i18n",
 )
 ### auto-generated section `iml intellij.java.i18n` end
 
@@ -186,10 +189,9 @@ jvm_library(
 ### auto-generated section `build intellij.java.i18n.tests` end
 
 ### auto-generated section `iml intellij.java.i18n.tests` start
-exports_files(
-    [
-        "intellij.java.i18n.tests.iml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.java.i18n.tests",
+    resources = False,
+    target = "java-i18n-tests_test_lib",
 )
 ### auto-generated section `iml intellij.java.i18n.tests` end

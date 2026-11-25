@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
@@ -43,12 +44,10 @@ jvm_library(
 ### auto-generated section `build intellij.java.aetherDependencyResolver` end
 
 ### auto-generated section `iml intellij.java.aetherDependencyResolver` start
-exports_files(
-    [
-        "intellij.java.aetherDependencyResolver.iml",
-        "resources/intellij.java.aetherDependencyResolver.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.java.aetherDependencyResolver",
+    descriptors = ["resources/intellij.java.aetherDependencyResolver.xml"],
+    target = "aether-dependency-resolver",
 )
 ### auto-generated section `iml intellij.java.aetherDependencyResolver` end
 
@@ -78,11 +77,10 @@ jvm_library(
 ### auto-generated section `build intellij.java.aetherDependencyResolver.tests` end
 
 ### auto-generated section `iml intellij.java.aetherDependencyResolver.tests` start
-exports_files(
-    [
-        "intellij.java.aetherDependencyResolver.tests.iml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.java.aetherDependencyResolver.tests",
+    resources = False,
+    target = "java-aetherDependencyResolver-tests_test_lib",
 )
 ### auto-generated section `iml intellij.java.aetherDependencyResolver.tests` end
 

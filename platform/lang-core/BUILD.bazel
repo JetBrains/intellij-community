@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
@@ -51,11 +52,9 @@ jvm_library(
 ### auto-generated section `build intellij.platform.lang.core` end
 
 ### auto-generated section `iml intellij.platform.lang.core` start
-exports_files(
-    [
-        "intellij.platform.lang.core.iml",
-        "resources/intellij.platform.lang.core.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.platform.lang.core",
+    descriptors = ["resources/intellij.platform.lang.core.xml"],
+    target = "lang-core",
 )
 ### auto-generated section `iml intellij.platform.lang.core` end

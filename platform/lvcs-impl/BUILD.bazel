@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
@@ -67,12 +68,10 @@ jvm_library(
 ### auto-generated section `build intellij.platform.lvcs.impl` end
 
 ### auto-generated section `iml intellij.platform.lvcs.impl` start
-exports_files(
-    [
-        "intellij.platform.lvcs.impl.iml",
-        "resources/intellij.platform.lvcs.impl.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.platform.lvcs.impl",
+    descriptors = ["resources/intellij.platform.lvcs.impl.xml"],
+    target = "lvcs-impl",
 )
 ### auto-generated section `iml intellij.platform.lvcs.impl` end
 
@@ -132,10 +131,9 @@ jvm_library(
 ### auto-generated section `build intellij.platform.lvcs.impl.tests` end
 
 ### auto-generated section `iml intellij.platform.lvcs.impl.tests` start
-exports_files(
-    [
-        "intellij.platform.lvcs.impl.tests.iml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.platform.lvcs.impl.tests",
+    resources = False,
+    target = "lvcs-impl-tests_test_lib",
 )
 ### auto-generated section `iml intellij.platform.lvcs.impl.tests` end

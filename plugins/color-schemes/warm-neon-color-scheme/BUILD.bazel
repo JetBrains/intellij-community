@@ -1,6 +1,7 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@community//platform/build-scripts/bazel-rules:ij_plugin.bzl", "ij_plugin")
-load("@jps_dynamic_deps_community//:targets.bzl", "dist_plugin")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:dist_plugin.bzl", "dist_plugin")
 
 ### auto-generated section `dev intellij.color.scheme.warmNeon` start
 dist_plugin(
@@ -9,6 +10,9 @@ dist_plugin(
         "lib/color-scheme-warmNeon.jar": ["intellij.color.scheme.warmNeon"],
     },
     main_module = "intellij.color.scheme.warmNeon",
+    module_labels = {
+        "intellij.color.scheme.warmNeon": "@community//plugins/color-schemes/warm-neon-color-scheme:color-scheme-warmNeon",
+    },
 )
 ### auto-generated section `dev intellij.color.scheme.warmNeon` end
 
@@ -38,12 +42,11 @@ ij_plugin(
 ### auto-generated section `plugin intellij.color.scheme.warmNeon` end
 
 ### auto-generated section `iml intellij.color.scheme.warmNeon` start
-exports_files(
-    [
-        "intellij.color.scheme.warmNeon.iml",
-        "resources/META-INF/plugin.xml",
-        "resources/colorSchemes/WarmNeon.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.color.scheme.warmNeon",
+    descriptors = ["resources/META-INF/plugin.xml"],
+    plugin = True,
+    target = "color-scheme-warmNeon",
+    exports = ["resources/colorSchemes/WarmNeon.xml"],
 )
 ### auto-generated section `iml intellij.color.scheme.warmNeon` end

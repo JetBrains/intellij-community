@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
@@ -45,11 +46,9 @@ jvm_library(
 ### auto-generated section `build intellij.javaFX.sceneBuilder` end
 
 ### auto-generated section `iml intellij.javaFX.sceneBuilder` start
-exports_files(
-    [
-        "intellij.javaFX.sceneBuilder.iml",
-        "resources/intellij.javaFX.sceneBuilder.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.javaFX.sceneBuilder",
+    descriptors = ["resources/intellij.javaFX.sceneBuilder.xml"],
+    target = "sceneBuilder",
 )
 ### auto-generated section `iml intellij.javaFX.sceneBuilder` end

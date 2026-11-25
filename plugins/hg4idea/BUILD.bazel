@@ -1,7 +1,8 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@community//build:tests-options.bzl", "jps_test")
 load("@community//platform/build-scripts/bazel-rules:ij_plugin.bzl", "ij_plugin")
-load("@jps_dynamic_deps_community//:targets.bzl", "dist_plugin")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:dist_plugin.bzl", "dist_plugin")
 
 ### auto-generated section `dev intellij.vcs.hg` start
 dist_plugin(
@@ -10,6 +11,9 @@ dist_plugin(
         "lib/vcs-hg.jar": ["intellij.vcs.hg"],
     },
     main_module = "intellij.vcs.hg",
+    module_labels = {
+        "intellij.vcs.hg": "@community//plugins/hg4idea:vcs-hg",
+    },
 )
 ### auto-generated section `dev intellij.vcs.hg` end
 
@@ -89,12 +93,11 @@ ij_plugin(
 ### auto-generated section `plugin intellij.vcs.hg` end
 
 ### auto-generated section `iml intellij.vcs.hg` start
-exports_files(
-    [
-        "intellij.vcs.hg.iml",
-        "resources/META-INF/plugin.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.vcs.hg",
+    descriptors = ["resources/META-INF/plugin.xml"],
+    plugin = True,
+    target = "vcs-hg",
 )
 ### auto-generated section `iml intellij.vcs.hg` end
 
@@ -152,10 +155,9 @@ jvm_library(
 ### auto-generated section `build intellij.vcs.hg.tests` end
 
 ### auto-generated section `iml intellij.vcs.hg.tests` start
-exports_files(
-    [
-        "intellij.vcs.hg.tests.iml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.vcs.hg.tests",
+    resources = False,
+    target = "vcs-hg-tests_test_lib",
 )
 ### auto-generated section `iml intellij.vcs.hg.tests` end

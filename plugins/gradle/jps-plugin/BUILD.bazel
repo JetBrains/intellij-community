@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@community//build:tests-options.bzl", "jps_test")
 load("@community//platform/build-scripts/bazel-rules:ij_plugin_module.bzl", "ij_plugin_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
@@ -49,12 +50,10 @@ ij_plugin_module(
 ### auto-generated section `build intellij.gradle.jps` end
 
 ### auto-generated section `iml intellij.gradle.jps` start
-exports_files(
-    [
-        "intellij.gradle.jps.iml",
-        "resources/intellij.gradle.jps.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.gradle.jps",
+    descriptors = ["resources/intellij.gradle.jps.xml"],
+    target = "jps",
 )
 ### auto-generated section `iml intellij.gradle.jps` end
 
@@ -88,10 +87,9 @@ jvm_library(
 ### auto-generated section `build intellij.gradle.jps.tests` end
 
 ### auto-generated section `iml intellij.gradle.jps.tests` start
-exports_files(
-    [
-        "intellij.gradle.jps.tests.iml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.gradle.jps.tests",
+    resources = False,
+    target = "jps-tests_test_lib",
 )
 ### auto-generated section `iml intellij.gradle.jps.tests` end

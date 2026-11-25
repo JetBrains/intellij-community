@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.grazie.core` start
@@ -121,13 +122,13 @@ jvm_library(
 ### auto-generated section `build intellij.grazie.core` end
 
 ### auto-generated section `iml intellij.grazie.core` start
-exports_files(
-    [
-        "intellij.grazie.core.iml",
+jps_module(
+    name = "intellij.grazie.core",
+    descriptors = ["main/resources/intellij.grazie.core.xml"],
+    target = "core",
+    exports = [
         "main/resources/colorSchemes/GrazieDarcula.xml",
         "main/resources/colorSchemes/GrazieDefault.xml",
-        "main/resources/intellij.grazie.core.xml",
     ],
-    visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.grazie.core` end

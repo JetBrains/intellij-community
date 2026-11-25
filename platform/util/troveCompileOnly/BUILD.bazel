@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.platform.util.troveCompileOnly` start
@@ -19,10 +20,9 @@ jvm_library(
 ### auto-generated section `build intellij.platform.util.troveCompileOnly` end
 
 ### auto-generated section `iml intellij.platform.util.troveCompileOnly` start
-exports_files(
-    [
-        "intellij.platform.util.troveCompileOnly.iml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.platform.util.troveCompileOnly",
+    resources = False,
+    target = "troveCompileOnly",
 )
 ### auto-generated section `iml intellij.platform.util.troveCompileOnly` end

@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.mps.resources` start
@@ -17,12 +18,10 @@ jvm_library(
 ### auto-generated section `build intellij.mps.resources` end
 
 ### auto-generated section `iml intellij.mps.resources` start
-exports_files(
-    [
-        "intellij.mps.resources.iml",
-        "src/META-INF/plugin.xml",
-        "src/idea/MPSApplicationInfo.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.mps.resources",
+    descriptors = ["src/META-INF/plugin.xml"],
+    target = "mps-resources",
+    exports = ["src/idea/MPSApplicationInfo.xml"],
 )
 ### auto-generated section `iml intellij.mps.resources` end

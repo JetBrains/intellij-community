@@ -1,4 +1,5 @@
 load("@community//build:bazel_targets_json.bzl", "current_bazel_targets_json")
+load("@community//build:jps_module.bzl", "jps_module")
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
@@ -120,12 +121,10 @@ jvm_library(
 ### auto-generated section `build intellij.gradle.java` end
 
 ### auto-generated section `iml intellij.gradle.java` start
-exports_files(
-    [
-        "intellij.gradle.java.iml",
-        "resources/intellij.gradle.java.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.gradle.java",
+    descriptors = ["resources/intellij.gradle.java.xml"],
+    target = "java",
 )
 ### auto-generated section `iml intellij.gradle.java` end
 
@@ -239,10 +238,8 @@ jvm_library(
 ### auto-generated section `build intellij.gradle.java.tests` end
 
 ### auto-generated section `iml intellij.gradle.java.tests` start
-exports_files(
-    [
-        "intellij.gradle.java.tests.iml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.gradle.java.tests",
+    target = "java-tests_test_lib",
 )
 ### auto-generated section `iml intellij.gradle.java.tests` end

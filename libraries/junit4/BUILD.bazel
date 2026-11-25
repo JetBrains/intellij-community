@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@community//platform/build-scripts/bazel-rules:ij_plugin_module.bzl", "ij_plugin_module")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
@@ -36,11 +37,9 @@ ij_plugin_module(
 ### auto-generated section `build intellij.libraries.junit4` end
 
 ### auto-generated section `iml intellij.libraries.junit4` start
-exports_files(
-    [
-        "intellij.libraries.junit4.iml",
-        "resources/intellij.libraries.junit4.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.libraries.junit4",
+    descriptors = ["resources/intellij.libraries.junit4.xml"],
+    target = "junit4",
 )
 ### auto-generated section `iml intellij.libraries.junit4` end

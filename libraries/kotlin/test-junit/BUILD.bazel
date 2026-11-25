@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.libraries.kotlin.test.junit` start
@@ -23,11 +24,9 @@ jvm_library(
 ### auto-generated section `build intellij.libraries.kotlin.test.junit` end
 
 ### auto-generated section `iml intellij.libraries.kotlin.test.junit` start
-exports_files(
-    [
-        "intellij.libraries.kotlin.test.junit.iml",
-        "resources/intellij.libraries.kotlin.test.junit.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.libraries.kotlin.test.junit",
+    descriptors = ["resources/intellij.libraries.kotlin.test.junit.xml"],
+    target = "libraries-kotlin-test-junit",
 )
 ### auto-generated section `iml intellij.libraries.kotlin.test.junit` end

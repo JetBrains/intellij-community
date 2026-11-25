@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library", compiler_plugin_jvm_library = "jvm_library")
 load("@rules_kotlin//kotlin:core.bzl", "kt_compiler_plugin")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
@@ -55,10 +56,8 @@ jvm_library(
 ### auto-generated section `build fleet.compiler.plugins.rpc` end
 
 ### auto-generated section `iml fleet.compiler.plugins.rpc` start
-exports_files(
-    [
-        "fleet.compiler.plugins.rpc.iml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "fleet.compiler.plugins.rpc",
+    target = "rpc",
 )
 ### auto-generated section `iml fleet.compiler.plugins.rpc` end

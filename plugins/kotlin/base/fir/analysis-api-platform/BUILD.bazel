@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
@@ -86,12 +87,10 @@ jvm_library(
 ### auto-generated section `build intellij.kotlin.analysis.platform` end
 
 ### auto-generated section `iml intellij.kotlin.analysis.platform` start
-exports_files(
-    [
-        "intellij.kotlin.analysis.platform.iml",
-        "resources/intellij.kotlin.analysis.platform.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.kotlin.analysis.platform",
+    descriptors = ["resources/intellij.kotlin.analysis.platform.xml"],
+    target = "kotlin-analysis-platform",
 )
 ### auto-generated section `iml intellij.kotlin.analysis.platform` end
 
@@ -186,11 +185,10 @@ jvm_library(
 ### auto-generated section `build intellij.kotlin.analysis.platform.tests` end
 
 ### auto-generated section `iml intellij.kotlin.analysis.platform.tests` start
-exports_files(
-    [
-        "intellij.kotlin.analysis.platform.tests.iml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.kotlin.analysis.platform.tests",
+    resources = False,
+    target = "kotlin-analysis-platform-tests_test_lib",
 )
 ### auto-generated section `iml intellij.kotlin.analysis.platform.tests` end
 

@@ -1,4 +1,5 @@
 load("@community//build:bazel_targets_json.bzl", "current_bazel_targets_json")
+load("@community//build:jps_module.bzl", "jps_module")
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
@@ -114,13 +115,11 @@ jvm_library(
 ### auto-generated section `build intellij.java.ui` end
 
 ### auto-generated section `iml intellij.java.ui` start
-exports_files(
-    [
-        "intellij.java.ui.iml",
-        "resources/META-INF/RegistryKeysJavaUi.xml",
-        "resources/intellij.java.ui.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.java.ui",
+    descriptors = ["resources/intellij.java.ui.xml"],
+    target = "ui",
+    exports = ["resources/META-INF/RegistryKeysJavaUi.xml"],
 )
 ### auto-generated section `iml intellij.java.ui` end
 
@@ -207,10 +206,9 @@ jvm_library(
 ### auto-generated section `build intellij.java.ui.tests` end
 
 ### auto-generated section `iml intellij.java.ui.tests` start
-exports_files(
-    [
-        "intellij.java.ui.tests.iml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.java.ui.tests",
+    resources = False,
+    target = "ui-tests_test_lib",
 )
 ### auto-generated section `iml intellij.java.ui.tests` end

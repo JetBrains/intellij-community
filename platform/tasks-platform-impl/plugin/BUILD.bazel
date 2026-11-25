@@ -1,6 +1,7 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@community//platform/build-scripts/bazel-rules:ij_plugin.bzl", "ij_plugin")
-load("@jps_dynamic_deps_community//:targets.bzl", "dist_plugin")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:dist_plugin.bzl", "dist_plugin")
 
 ### auto-generated section `dev intellij.platform.tasks.plugin` start
 dist_plugin(
@@ -12,6 +13,12 @@ dist_plugin(
         "intellij.platform.tasks.impl.debugger",
     ],
     descriptor = "resources/META-INF/plugin.xml",
+    descriptors = {
+        "@community//platform/tasks-platform-api:resources/intellij.platform.tasks.xml": "intellij.platform.tasks.xml",
+        "@community//platform/tasks-platform-impl/tasks.impl.bookmarks:resources/intellij.platform.tasks.impl.bookmarks.xml": "intellij.platform.tasks.impl.bookmarks.xml",
+        "@community//platform/tasks-platform-impl/tasks.impl.debugger:resources/intellij.platform.tasks.impl.debugger.xml": "intellij.platform.tasks.impl.debugger.xml",
+        "@community//platform/tasks-platform-impl:resources/intellij.platform.tasks.impl.xml": "intellij.platform.tasks.impl.xml",
+    },
     jars = {
         "lib/platform-tasks-plugin.jar": ["intellij.platform.tasks.plugin"],
     },
@@ -22,6 +29,13 @@ dist_plugin(
             "intellij.platform.tasks.impl.bookmarks",
             "intellij.platform.tasks.impl.debugger",
         ],
+    },
+    module_labels = {
+        "intellij.platform.tasks": "@community//platform/tasks-platform-api:tasks",
+        "intellij.platform.tasks.impl": "@community//platform/tasks-platform-impl:tasks-impl",
+        "intellij.platform.tasks.impl.bookmarks": "@community//platform/tasks-platform-impl/tasks.impl.bookmarks:tasks.impl.bookmarks",
+        "intellij.platform.tasks.impl.debugger": "@community//platform/tasks-platform-impl/tasks.impl.debugger:tasks.impl.debugger",
+        "intellij.platform.tasks.plugin": "@community//platform/tasks-platform-impl/plugin:plugin",
     },
 )
 ### auto-generated section `dev intellij.platform.tasks.plugin` end
@@ -58,11 +72,10 @@ ij_plugin(
 ### auto-generated section `plugin intellij.platform.tasks.plugin` end
 
 ### auto-generated section `iml intellij.platform.tasks.plugin` start
-exports_files(
-    [
-        "intellij.platform.tasks.plugin.iml",
-        "resources/META-INF/plugin.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.platform.tasks.plugin",
+    descriptors = ["resources/META-INF/plugin.xml"],
+    plugin = True,
+    target = "plugin",
 )
 ### auto-generated section `iml intellij.platform.tasks.plugin` end

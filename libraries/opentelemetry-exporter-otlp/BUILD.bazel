@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.libraries.opentelemetry.exporter.otlp` start
@@ -27,11 +28,9 @@ jvm_library(
 ### auto-generated section `build intellij.libraries.opentelemetry.exporter.otlp` end
 
 ### auto-generated section `iml intellij.libraries.opentelemetry.exporter.otlp` start
-exports_files(
-    [
-        "intellij.libraries.opentelemetry.exporter.otlp.iml",
-        "resources/intellij.libraries.opentelemetry.exporter.otlp.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.libraries.opentelemetry.exporter.otlp",
+    descriptors = ["resources/intellij.libraries.opentelemetry.exporter.otlp.xml"],
+    target = "opentelemetry-exporter-otlp",
 )
 ### auto-generated section `iml intellij.libraries.opentelemetry.exporter.otlp` end

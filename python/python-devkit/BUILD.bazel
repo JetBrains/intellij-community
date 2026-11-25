@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
@@ -67,12 +68,10 @@ jvm_library(
 ### auto-generated section `build intellij.python.devkit` end
 
 ### auto-generated section `iml intellij.python.devkit` start
-exports_files(
-    [
-        "intellij.python.devkit.iml",
-        "resources/intellij.python.devkit.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.python.devkit",
+    descriptors = ["resources/intellij.python.devkit.xml"],
+    target = "devkit",
 )
 ### auto-generated section `iml intellij.python.devkit` end
 
@@ -138,10 +137,9 @@ jvm_library(
 ### auto-generated section `build intellij.python.devkit.tests` end
 
 ### auto-generated section `iml intellij.python.devkit.tests` start
-exports_files(
-    [
-        "intellij.python.devkit.tests.iml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.python.devkit.tests",
+    resources = False,
+    target = "devkit-tests_test_lib",
 )
 ### auto-generated section `iml intellij.python.devkit.tests` end

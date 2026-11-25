@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
@@ -60,12 +61,10 @@ jvm_library(
 ### auto-generated section `build intellij.devkit.themes` end
 
 ### auto-generated section `iml intellij.devkit.themes` start
-exports_files(
-    [
-        "intellij.devkit.themes.iml",
-        "resources/intellij.devkit.themes.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.devkit.themes",
+    descriptors = ["resources/intellij.devkit.themes.xml"],
+    target = "themes",
 )
 ### auto-generated section `iml intellij.devkit.themes` end
 
@@ -99,11 +98,10 @@ jvm_library(
 ### auto-generated section `build intellij.devkit.themes.tests` end
 
 ### auto-generated section `iml intellij.devkit.themes.tests` start
-exports_files(
-    [
-        "intellij.devkit.themes.tests.iml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.devkit.themes.tests",
+    resources = False,
+    target = "themes-tests_test_lib",
 )
 ### auto-generated section `iml intellij.devkit.themes.tests` end
 

@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
@@ -70,13 +71,11 @@ jvm_library(
 ### auto-generated section `build intellij.kotlin.codeInsight.liveTemplates` end
 
 ### auto-generated section `iml intellij.kotlin.codeInsight.liveTemplates` start
-exports_files(
-    [
-        "intellij.kotlin.codeInsight.liveTemplates.iml",
-        "resources/intellij.kotlin.codeInsight.liveTemplates.xml",
-        "resources/liveTemplates/Kotlin.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.kotlin.codeInsight.liveTemplates",
+    descriptors = ["resources/intellij.kotlin.codeInsight.liveTemplates.xml"],
+    target = "kotlin-codeInsight-liveTemplates",
+    exports = ["resources/liveTemplates/Kotlin.xml"],
 )
 ### auto-generated section `iml intellij.kotlin.codeInsight.liveTemplates` end
 
@@ -149,11 +148,10 @@ jvm_library(
 ### auto-generated section `build intellij.kotlin.codeInsight.liveTemplates.tests` end
 
 ### auto-generated section `iml intellij.kotlin.codeInsight.liveTemplates.tests` start
-exports_files(
-    [
-        "intellij.kotlin.codeInsight.liveTemplates.tests.iml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.kotlin.codeInsight.liveTemplates.tests",
+    resources = False,
+    target = "kotlin-codeInsight-liveTemplates-tests_test_lib",
 )
 ### auto-generated section `iml intellij.kotlin.codeInsight.liveTemplates.tests` end
 

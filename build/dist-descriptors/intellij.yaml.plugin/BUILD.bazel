@@ -12,19 +12,19 @@
 # the stamps. The component index names the `dev_plugin` target or the component of a `dist_complex_plugin`
 # call.
 #
-# A descriptor leaf derives its conventional descriptor rows from the bridge index of its half.
+# A descriptor leaf states every descriptor row. The label of a conventional row is in the recorded form.
 
-load("@jps_dynamic_deps_community//:targets.bzl", "dist_plugin_descriptor")
 load("//platform/build-scripts/bazel-rules:dev_plugin.bzl", "dev_plugin")
+load("//platform/build-scripts/bazel-rules:dist_plugin_descriptor.bzl", "dist_plugin_descriptor")
 
 dist_plugin_descriptor(
-    content_modules = [
-        "intellij.yaml",
-        "intellij.yaml.backend",
-        "intellij.yaml.spellchecker",
-        "intellij.yaml.syntax",
-    ],
     descriptor = "//plugins/yaml/plugin:resources/META-INF/plugin.xml",
+    descriptors = {
+        "@community//plugins/yaml/backend:resources/intellij.yaml.backend.xml": "intellij.yaml.backend.xml",
+        "@community//plugins/yaml/spellchecker:resources/intellij.yaml.spellchecker.xml": "intellij.yaml.spellchecker.xml",
+        "@community//plugins/yaml/syntax:resources/intellij.yaml.syntax.xml": "intellij.yaml.syntax.xml",
+        "@community//plugins/yaml:resources/intellij.yaml.xml": "intellij.yaml.xml",
+    },
     main_module = "intellij.yaml.plugin",
     mode_refused_content_modules = {
         "frontend": ["intellij.yaml.backend"],

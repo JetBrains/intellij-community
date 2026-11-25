@@ -1,6 +1,7 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@community//platform/build-scripts/bazel-rules:ij_plugin.bzl", "ij_plugin")
-load("@jps_dynamic_deps_community//:targets.bzl", "dist_plugin")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:dist_plugin.bzl", "dist_plugin")
 
 ### auto-generated section `dev intellij.platform.bookmarks.plugin` start
 dist_plugin(
@@ -13,6 +14,13 @@ dist_plugin(
         "intellij.platform.vcs.log.impl.bookmarks",
     ],
     descriptor = "resources/META-INF/plugin.xml",
+    descriptors = {
+        "@community//platform/bookmarks/backend:resources/intellij.platform.bookmarks.backend.xml": "intellij.platform.bookmarks.backend.xml",
+        "@community//platform/bookmarks/frontend:resources/intellij.platform.bookmarks.frontend.xml": "intellij.platform.bookmarks.frontend.xml",
+        "@community//platform/bookmarks:resources/intellij.platform.bookmarks.xml": "intellij.platform.bookmarks.xml",
+        "@community//platform/vcs-log/impl/bookmarks:resources/intellij.platform.vcs.log.impl.bookmarks.xml": "intellij.platform.vcs.log.impl.bookmarks.xml",
+        "@community//platform/xdebugger-impl/bookmarks:resources/intellij.platform.debugger.impl.bookmarks.xml": "intellij.platform.debugger.impl.bookmarks.xml",
+    },
     jars = {
         "lib/platform-bookmarks-plugin.jar": [
             "intellij.platform.bookmarks.plugin",
@@ -24,6 +32,14 @@ dist_plugin(
     main_module = "intellij.platform.bookmarks.plugin",
     mode_refused_content_modules = {
         "frontend": ["intellij.platform.bookmarks.backend"],
+    },
+    module_labels = {
+        "intellij.platform.bookmarks": "@community//platform/bookmarks:bookmarks",
+        "intellij.platform.bookmarks.backend": "@community//platform/bookmarks/backend:backend",
+        "intellij.platform.bookmarks.frontend": "@community//platform/bookmarks/frontend:frontend",
+        "intellij.platform.bookmarks.plugin": "@community//platform/bookmarks/plugin:plugin",
+        "intellij.platform.debugger.impl.bookmarks": "@community//platform/xdebugger-impl/bookmarks:bookmarks",
+        "intellij.platform.vcs.log.impl.bookmarks": "@community//platform/vcs-log/impl/bookmarks:bookmarks",
     },
 )
 ### auto-generated section `dev intellij.platform.bookmarks.plugin` end
@@ -61,11 +77,10 @@ ij_plugin(
 ### auto-generated section `plugin intellij.platform.bookmarks.plugin` end
 
 ### auto-generated section `iml intellij.platform.bookmarks.plugin` start
-exports_files(
-    [
-        "intellij.platform.bookmarks.plugin.iml",
-        "resources/META-INF/plugin.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.platform.bookmarks.plugin",
+    descriptors = ["resources/META-INF/plugin.xml"],
+    plugin = True,
+    target = "plugin",
 )
 ### auto-generated section `iml intellij.platform.bookmarks.plugin` end

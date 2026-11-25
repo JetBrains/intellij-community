@@ -1,6 +1,7 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@community//platform/build-scripts/bazel-rules:ij_plugin.bzl", "ij_plugin")
-load("@jps_dynamic_deps_community//:targets.bzl", "dist_plugin")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:dist_plugin.bzl", "dist_plugin")
 
 ### auto-generated section `dev intellij.toml` start
 dist_plugin(
@@ -13,6 +14,14 @@ dist_plugin(
         "intellij.toml.grazie",
     ],
     main_module = "intellij.toml",
+    module_labels = {
+        "intellij.toml": "@community//plugins/toml:toml",
+        "intellij.toml.backend": "@community//plugins/toml/backend:backend",
+        "intellij.toml.core": "@community//plugins/toml/core:core",
+        "intellij.toml.frontend": "@community//plugins/toml/frontend:frontend",
+        "intellij.toml.grazie": "@community//plugins/toml/grazie:grazie",
+        "intellij.toml.json": "@community//plugins/toml/json:json",
+    },
 )
 ### auto-generated section `dev intellij.toml` end
 
@@ -54,11 +63,10 @@ ij_plugin(
 ### auto-generated section `plugin intellij.toml` end
 
 ### auto-generated section `iml intellij.toml` start
-exports_files(
-    [
-        "intellij.toml.iml",
-        "resources/META-INF/plugin.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.toml",
+    descriptors = ["resources/META-INF/plugin.xml"],
+    plugin = True,
+    target = "toml",
 )
 ### auto-generated section `iml intellij.toml` end

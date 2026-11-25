@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.cucumber.jvmFormatter5` start
@@ -27,11 +28,9 @@ jvm_library(
 ### auto-generated section `build intellij.cucumber.jvmFormatter5` end
 
 ### auto-generated section `iml intellij.cucumber.jvmFormatter5` start
-exports_files(
-    [
-        "intellij.cucumber.jvmFormatter5.iml",
-        "resources/intellij.cucumber.jvmFormatter5.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.cucumber.jvmFormatter5",
+    descriptors = ["resources/intellij.cucumber.jvmFormatter5.xml"],
+    target = "cucumber-jvmFormatter5",
 )
 ### auto-generated section `iml intellij.cucumber.jvmFormatter5` end

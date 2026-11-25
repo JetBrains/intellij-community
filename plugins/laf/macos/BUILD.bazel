@@ -1,11 +1,15 @@
-load("@jps_dynamic_deps_community//:targets.bzl", "dist_plugin")
+load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:dev_plugin_remainder.bzl", "dist_complex_plugin")
+load("//platform/build-scripts/bazel-rules:dist_plugin.bzl", "dist_plugin")
 
 ### auto-generated section `dev intellij.laf.macos` start
 dist_plugin(
     descriptor = "resources/META-INF/plugin.xml",
     main_module = "intellij.laf.macos",
+    module_labels = {
+        "intellij.laf.macos": "@community//plugins/laf/macos:macos",
+    },
     variants = ["darwin"],
 )
 
@@ -60,11 +64,9 @@ jvm_library(
 ### auto-generated section `build intellij.laf.macos` end
 
 ### auto-generated section `iml intellij.laf.macos` start
-exports_files(
-    [
-        "intellij.laf.macos.iml",
-        "resources/META-INF/plugin.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.laf.macos",
+    descriptors = ["resources/META-INF/plugin.xml"],
+    target = "macos",
 )
 ### auto-generated section `iml intellij.laf.macos` end

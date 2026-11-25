@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.ide.starter.allure.annotations.scanner` start
@@ -23,10 +24,9 @@ jvm_library(
 ### auto-generated section `build intellij.ide.starter.allure.annotations.scanner` end
 
 ### auto-generated section `iml intellij.ide.starter.allure.annotations.scanner` start
-exports_files(
-    [
-        "intellij.ide.starter.allure.annotations.scanner.iml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.ide.starter.allure.annotations.scanner",
+    resources = False,
+    target = "ide-starter-allure-annotations-scanner",
 )
 ### auto-generated section `iml intellij.ide.starter.allure.annotations.scanner` end

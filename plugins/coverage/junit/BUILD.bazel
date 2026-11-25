@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
@@ -43,11 +44,9 @@ jvm_library(
 ### auto-generated section `build intellij.java.coverage.rt.junit` end
 
 ### auto-generated section `iml intellij.java.coverage.rt.junit` start
-exports_files(
-    [
-        "intellij.java.coverage.rt.junit.iml",
-        "resources/intellij.java.coverage.rt.junit.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.java.coverage.rt.junit",
+    descriptors = ["resources/intellij.java.coverage.rt.junit.xml"],
+    target = "junit",
 )
 ### auto-generated section `iml intellij.java.coverage.rt.junit` end

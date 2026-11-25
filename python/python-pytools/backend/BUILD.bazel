@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
@@ -62,11 +63,9 @@ jvm_library(
 ### auto-generated section `build intellij.python.pytools.backend` end
 
 ### auto-generated section `iml intellij.python.pytools.backend` start
-exports_files(
-    [
-        "intellij.python.pytools.backend.iml",
-        "resources/intellij.python.pytools.backend.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.python.pytools.backend",
+    descriptors = ["resources/intellij.python.pytools.backend.xml"],
+    target = "backend",
 )
 ### auto-generated section `iml intellij.python.pytools.backend` end

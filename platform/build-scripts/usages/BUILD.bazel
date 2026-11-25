@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
@@ -48,11 +49,10 @@ jvm_library(
 ### auto-generated section `build intellij.platform.buildScripts.usages` end
 
 ### auto-generated section `iml intellij.platform.buildScripts.usages` start
-exports_files(
-    [
-        "intellij.platform.buildScripts.usages.iml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.platform.buildScripts.usages",
+    resources = False,
+    target = "usages",
 )
 ### auto-generated section `iml intellij.platform.buildScripts.usages` end
 
@@ -85,10 +85,9 @@ jvm_library(
 ### auto-generated section `build intellij.platform.buildScripts.usages.tests` end
 
 ### auto-generated section `iml intellij.platform.buildScripts.usages.tests` start
-exports_files(
-    [
-        "intellij.platform.buildScripts.usages.tests.iml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.platform.buildScripts.usages.tests",
+    resources = False,
+    target = "buildScripts-usages-tests_test_lib",
 )
 ### auto-generated section `iml intellij.platform.buildScripts.usages.tests` end

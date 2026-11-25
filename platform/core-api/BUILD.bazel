@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
@@ -52,12 +53,10 @@ jvm_library(
 ### auto-generated section `build intellij.platform.core` end
 
 ### auto-generated section `iml intellij.platform.core` start
-exports_files(
-    [
-        "intellij.platform.core.iml",
-        "resources/META-INF/Core.analyzer.xml",
-        "resources/intellij.platform.core.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.platform.core",
+    descriptors = ["resources/intellij.platform.core.xml"],
+    target = "core",
+    exports = ["resources/META-INF/Core.analyzer.xml"],
 )
 ### auto-generated section `iml intellij.platform.core` end

@@ -12,36 +12,36 @@
 # the stamps. The component index names the `dev_plugin` target or the component of a `dist_complex_plugin`
 # call.
 #
-# A descriptor leaf derives its conventional descriptor rows from the bridge index of its half.
+# A descriptor leaf states every descriptor row. The label of a conventional row is in the recorded form.
 
-load("@jps_dynamic_deps_community//:targets.bzl", "dist_plugin_descriptor")
 load("//platform/build-scripts/bazel-rules:dev_plugin.bzl", "dev_plugin")
+load("//platform/build-scripts/bazel-rules:dist_plugin_descriptor.bzl", "dist_plugin_descriptor")
 
 dist_plugin_descriptor(
-    content_modules = [
-        "intellij.gradle",
-        "intellij.gradle.backend",
-        "intellij.gradle.codeInsight",
-        "intellij.gradle.codeInsight.backend",
-        "intellij.gradle.codeInsight.groovy",
-        "intellij.gradle.codeInsight.groovy.backend",
-        "intellij.gradle.codeInsight.kotlin",
-        "intellij.gradle.codeInsight.kotlin.backend",
-        "intellij.gradle.codeInsight.properties",
-        "intellij.gradle.codeInsight.properties.backend",
-        "intellij.gradle.codeInsight.toml",
-        "intellij.gradle.codeInsight.toml.backend",
-        "intellij.gradle.completion",
-        "intellij.gradle.completion.kotlin",
-        "intellij.gradle.completion.toml",
-        "intellij.gradle.properties",
-        "intellij.gradle.settings",
-        "intellij.gradle.toolingExtension",
-        "intellij.gradle.toolingExtension.impl",
-        "intellij.gradle.toolingProxy",
-        "intellij.libraries.gradle",
-    ],
     descriptor = "//plugins/gradle/plugin:resources/META-INF/plugin.xml",
+    descriptors = {
+        "@community//libraries/gradle:resources/intellij.libraries.gradle.xml": "intellij.libraries.gradle.xml",
+        "@community//plugins/gradle/backend:resources/intellij.gradle.backend.xml": "intellij.gradle.backend.xml",
+        "@community//plugins/gradle/codeInsight/backend:resources/intellij.gradle.codeInsight.backend.xml": "intellij.gradle.codeInsight.backend.xml",
+        "@community//plugins/gradle/codeInsight/groovy/backend:resources/intellij.gradle.codeInsight.groovy.backend.xml": "intellij.gradle.codeInsight.groovy.backend.xml",
+        "@community//plugins/gradle/codeInsight/groovy:resources/intellij.gradle.codeInsight.groovy.xml": "intellij.gradle.codeInsight.groovy.xml",
+        "@community//plugins/gradle/codeInsight/kotlin/backend:resources/intellij.gradle.codeInsight.kotlin.backend.xml": "intellij.gradle.codeInsight.kotlin.backend.xml",
+        "@community//plugins/gradle/codeInsight/kotlin:resources/intellij.gradle.codeInsight.kotlin.xml": "intellij.gradle.codeInsight.kotlin.xml",
+        "@community//plugins/gradle/codeInsight/properties/backend:resources/intellij.gradle.codeInsight.properties.backend.xml": "intellij.gradle.codeInsight.properties.backend.xml",
+        "@community//plugins/gradle/codeInsight/properties:resources/intellij.gradle.codeInsight.properties.xml": "intellij.gradle.codeInsight.properties.xml",
+        "@community//plugins/gradle/codeInsight/toml/backend:resources/intellij.gradle.codeInsight.toml.backend.xml": "intellij.gradle.codeInsight.toml.backend.xml",
+        "@community//plugins/gradle/codeInsight/toml:resources/intellij.gradle.codeInsight.toml.xml": "intellij.gradle.codeInsight.toml.xml",
+        "@community//plugins/gradle/codeInsight:resources/intellij.gradle.codeInsight.xml": "intellij.gradle.codeInsight.xml",
+        "@community//plugins/gradle/completion/kotlin:resources/intellij.gradle.completion.kotlin.xml": "intellij.gradle.completion.kotlin.xml",
+        "@community//plugins/gradle/completion/toml:resources/intellij.gradle.completion.toml.xml": "intellij.gradle.completion.toml.xml",
+        "@community//plugins/gradle/completion:resources/intellij.gradle.completion.xml": "intellij.gradle.completion.xml",
+        "@community//plugins/gradle/properties:resources/intellij.gradle.properties.xml": "intellij.gradle.properties.xml",
+        "@community//plugins/gradle/settings:resources/intellij.gradle.settings.xml": "intellij.gradle.settings.xml",
+        "@community//plugins/gradle/tooling-extension-api:resources/intellij.gradle.toolingExtension.xml": "intellij.gradle.toolingExtension.xml",
+        "@community//plugins/gradle/tooling-extension-impl:resources/intellij.gradle.toolingExtension.impl.xml": "intellij.gradle.toolingExtension.impl.xml",
+        "@community//plugins/gradle/tooling-proxy:resources/intellij.gradle.toolingProxy.xml": "intellij.gradle.toolingProxy.xml",
+        "@community//plugins/gradle:plugin-resources/intellij.gradle.xml": "intellij.gradle.xml",
+    },
     main_module = "intellij.gradle.plugin",
     mode_refused_content_modules = {
         "frontend": [

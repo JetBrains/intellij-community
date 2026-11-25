@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.libraries.kodein.di.jvm` start
@@ -19,11 +20,9 @@ jvm_library(
 ### auto-generated section `build intellij.libraries.kodein.di.jvm` end
 
 ### auto-generated section `iml intellij.libraries.kodein.di.jvm` start
-exports_files(
-    [
-        "intellij.libraries.kodein.di.jvm.iml",
-        "resources/intellij.libraries.kodein.di.jvm.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.libraries.kodein.di.jvm",
+    descriptors = ["resources/intellij.libraries.kodein.di.jvm.xml"],
+    target = "kodein-di-jvm",
 )
 ### auto-generated section `iml intellij.libraries.kodein.di.jvm` end

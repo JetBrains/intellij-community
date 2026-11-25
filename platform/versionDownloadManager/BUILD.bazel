@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
@@ -46,12 +47,10 @@ jvm_library(
 ### auto-generated section `build intellij.platform.versionDownloadManager` end
 
 ### auto-generated section `iml intellij.platform.versionDownloadManager` start
-exports_files(
-    [
-        "intellij.platform.versionDownloadManager.iml",
-        "resources/intellij.platform.versionDownloadManager.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.platform.versionDownloadManager",
+    descriptors = ["resources/intellij.platform.versionDownloadManager.xml"],
+    target = "versionDownloadManager",
 )
 ### auto-generated section `iml intellij.platform.versionDownloadManager` end
 
@@ -91,10 +90,9 @@ jvm_library(
 ### auto-generated section `build intellij.platform.versionDownloadManager.tests` end
 
 ### auto-generated section `iml intellij.platform.versionDownloadManager.tests` start
-exports_files(
-    [
-        "intellij.platform.versionDownloadManager.tests.iml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.platform.versionDownloadManager.tests",
+    resources = False,
+    target = "versionDownloadManager-tests_test_lib",
 )
 ### auto-generated section `iml intellij.platform.versionDownloadManager.tests` end

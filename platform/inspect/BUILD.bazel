@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
@@ -75,12 +76,10 @@ jvm_library(
 ### auto-generated section `build intellij.platform.inspect` end
 
 ### auto-generated section `iml intellij.platform.inspect` start
-exports_files(
-    [
-        "intellij.platform.inspect.iml",
-        "resources/intellij.platform.inspect.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.platform.inspect",
+    descriptors = ["resources/intellij.platform.inspect.xml"],
+    target = "inspect",
 )
 ### auto-generated section `iml intellij.platform.inspect` end
 
@@ -119,10 +118,9 @@ jvm_library(
 ### auto-generated section `build intellij.platform.inspect.tests` end
 
 ### auto-generated section `iml intellij.platform.inspect.tests` start
-exports_files(
-    [
-        "intellij.platform.inspect.tests.iml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.platform.inspect.tests",
+    resources = False,
+    target = "inspect-tests_test_lib",
 )
 ### auto-generated section `iml intellij.platform.inspect.tests` end

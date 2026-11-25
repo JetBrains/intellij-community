@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
@@ -43,11 +44,9 @@ jvm_library(
 ### auto-generated section `build intellij.featuresTrainer.tips` end
 
 ### auto-generated section `iml intellij.featuresTrainer.tips` start
-exports_files(
-    [
-        "intellij.featuresTrainer.tips.iml",
-        "resources/intellij.featuresTrainer.tips.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.featuresTrainer.tips",
+    descriptors = ["resources/intellij.featuresTrainer.tips.xml"],
+    target = "tips",
 )
 ### auto-generated section `iml intellij.featuresTrainer.tips` end

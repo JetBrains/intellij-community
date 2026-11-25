@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
@@ -46,11 +47,9 @@ jvm_library(
 ### auto-generated section `build intellij.editorconfig.common` end
 
 ### auto-generated section `iml intellij.editorconfig.common` start
-exports_files(
-    [
-        "intellij.editorconfig.common.iml",
-        "resources/intellij.editorconfig.common.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.editorconfig.common",
+    descriptors = ["resources/intellij.editorconfig.common.xml"],
+    target = "common",
 )
 ### auto-generated section `iml intellij.editorconfig.common` end

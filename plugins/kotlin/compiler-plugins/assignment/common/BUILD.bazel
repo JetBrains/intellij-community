@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
@@ -66,11 +67,9 @@ jvm_library(
 ### auto-generated section `build intellij.kotlin.compilerPlugins.assignment.fixes` end
 
 ### auto-generated section `iml intellij.kotlin.compilerPlugins.assignment.fixes` start
-exports_files(
-    [
-        "intellij.kotlin.compilerPlugins.assignment.fixes.iml",
-        "resources/intellij.kotlin.compilerPlugins.assignment.fixes.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.kotlin.compilerPlugins.assignment.fixes",
+    descriptors = ["resources/intellij.kotlin.compilerPlugins.assignment.fixes.xml"],
+    target = "kotlin-compilerPlugins-assignment-fixes",
 )
 ### auto-generated section `iml intellij.kotlin.compilerPlugins.assignment.fixes` end

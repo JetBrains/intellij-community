@@ -12,7 +12,7 @@
 # and are shared by every product referencing that set, so this file carries only what no set covers.
 # The same holds for the packing labels: the label of a set member lives in the `packed` dict of its set, and
 # `packed_content_module_jars` names only the labels of the modules no set covers. The binder unions the set
-# labels into the payload at load time with `dist_packed_labels`.
+# labels into the payload at load time with `packed_labels`.
 #
 # `module_system_loaded` names the packed jars that the module system loads, as labels, and only the ones no
 # set carries in its own `module_system_loaded`. The payload puts every other packed direct child of `lib/` on

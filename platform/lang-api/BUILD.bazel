@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
@@ -64,12 +65,10 @@ jvm_library(
 ### auto-generated section `build intellij.platform.lang` end
 
 ### auto-generated section `iml intellij.platform.lang` start
-exports_files(
-    [
-        "intellij.platform.lang.iml",
-        "resources/intellij.platform.lang.actions.xml",
-        "resources/intellij.platform.lang.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.platform.lang",
+    descriptors = ["resources/intellij.platform.lang.xml"],
+    target = "lang",
+    exports = ["resources/intellij.platform.lang.actions.xml"],
 )
 ### auto-generated section `iml intellij.platform.lang` end

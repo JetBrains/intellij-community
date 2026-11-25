@@ -1,6 +1,7 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@community//platform/build-scripts/bazel-rules:ij_plugin.bzl", "ij_plugin")
-load("@jps_dynamic_deps_community//:targets.bzl", "dist_plugin")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:dist_plugin.bzl", "dist_plugin")
 
 ### auto-generated section `dev intellij.platform.navbar.plugin` start
 dist_plugin(
@@ -12,10 +13,23 @@ dist_plugin(
         "intellij.platform.navbar.monolith",
     ],
     descriptor = "resources/META-INF/plugin.xml",
+    descriptors = {
+        "@community//platform/navbar/backend:resources/intellij.platform.navbar.backend.xml": "intellij.platform.navbar.backend.xml",
+        "@community//platform/navbar/frontend:resources/intellij.platform.navbar.frontend.xml": "intellij.platform.navbar.frontend.xml",
+        "@community//platform/navbar/monolith:resources/intellij.platform.navbar.monolith.xml": "intellij.platform.navbar.monolith.xml",
+        "@community//platform/navbar/shared:resources/intellij.platform.navbar.xml": "intellij.platform.navbar.xml",
+    },
     jars = {
         "lib/platform-navbar-plugin.jar": ["intellij.platform.navbar.plugin"],
     },
     main_module = "intellij.platform.navbar.plugin",
+    module_labels = {
+        "intellij.platform.navbar": "@community//platform/navbar/shared:navbar",
+        "intellij.platform.navbar.backend": "@community//platform/navbar/backend:backend",
+        "intellij.platform.navbar.frontend": "@community//platform/navbar/frontend:frontend",
+        "intellij.platform.navbar.monolith": "@community//platform/navbar/monolith:monolith",
+        "intellij.platform.navbar.plugin": "@community//platform/navbar/plugin:plugin",
+    },
 )
 ### auto-generated section `dev intellij.platform.navbar.plugin` end
 
@@ -51,11 +65,10 @@ ij_plugin(
 ### auto-generated section `plugin intellij.platform.navbar.plugin` end
 
 ### auto-generated section `iml intellij.platform.navbar.plugin` start
-exports_files(
-    [
-        "intellij.platform.navbar.plugin.iml",
-        "resources/META-INF/plugin.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.platform.navbar.plugin",
+    descriptors = ["resources/META-INF/plugin.xml"],
+    plugin = True,
+    target = "plugin",
 )
 ### auto-generated section `iml intellij.platform.navbar.plugin` end

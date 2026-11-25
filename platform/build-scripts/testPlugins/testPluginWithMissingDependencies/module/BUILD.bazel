@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
@@ -37,11 +38,9 @@ jvm_library(
 ### auto-generated section `build intellij.platform.buildScripts.testPlugins.testPluginWithMissingDependencies.module` end
 
 ### auto-generated section `iml intellij.platform.buildScripts.testPlugins.testPluginWithMissingDependencies.module` start
-exports_files(
-    [
-        "intellij.platform.buildScripts.testPlugins.testPluginWithMissingDependencies.module.iml",
-        "resources/intellij.platform.buildScripts.testPlugins.testPluginWithMissingDependencies.module.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.platform.buildScripts.testPlugins.testPluginWithMissingDependencies.module",
+    descriptors = ["resources/intellij.platform.buildScripts.testPlugins.testPluginWithMissingDependencies.module.xml"],
+    target = "module",
 )
 ### auto-generated section `iml intellij.platform.buildScripts.testPlugins.testPluginWithMissingDependencies.module` end

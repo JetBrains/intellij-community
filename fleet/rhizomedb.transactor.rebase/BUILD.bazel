@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@community//fleet/build:fleet.bzl", "fleet_plugin_services_resources", "fleet_wasmjs_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
@@ -119,11 +120,9 @@ jvm_library(
 ### auto-generated section `build fleet.rhizomedb.transactor.rebase` end
 
 ### auto-generated section `iml fleet.rhizomedb.transactor.rebase` start
-exports_files(
-    [
-        "fleet.rhizomedb.transactor.rebase.iml",
-        "resources/fleet.rhizomedb.transactor.rebase.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "fleet.rhizomedb.transactor.rebase",
+    descriptors = ["resources/fleet.rhizomedb.transactor.rebase.xml"],
+    target = "rhizomedb.transactor.rebase",
 )
 ### auto-generated section `iml fleet.rhizomedb.transactor.rebase` end

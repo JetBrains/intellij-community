@@ -1,7 +1,8 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@community//build:tests-options.bzl", "jps_test")
 load("@community//platform/build-scripts/bazel-rules:ij_plugin.bzl", "ij_plugin")
-load("@jps_dynamic_deps_community//:targets.bzl", "dist_plugin")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+load("//platform/build-scripts/bazel-rules:dist_plugin.bzl", "dist_plugin")
 
 jps_test(
     name = "images-tests_test",
@@ -21,10 +22,21 @@ dist_plugin(
         "intellij.platform.images.xdebugger",
     ],
     descriptor = "resources/META-INF/plugin.xml",
+    descriptors = {
+        "@community//images/intellij.platform.images.copyright:resources/intellij.platform.images.copyright.xml": "intellij.platform.images.copyright.xml",
+        "@community//images/intellij.platform.images.xdebugger:resources/intellij.platform.images.xdebugger.xml": "intellij.platform.images.xdebugger.xml",
+        "@community//images/jcef:resources/intellij.platform.images.jcef.xml": "intellij.platform.images.jcef.xml",
+    },
     jars = {
         "lib/platform-images.jar": ["intellij.platform.images"],
     },
     main_module = "intellij.platform.images",
+    module_labels = {
+        "intellij.platform.images": "@community//images:images",
+        "intellij.platform.images.copyright": "@community//images/intellij.platform.images.copyright:copyright",
+        "intellij.platform.images.jcef": "@community//images/jcef:jcef",
+        "intellij.platform.images.xdebugger": "@community//images/intellij.platform.images.xdebugger:xdebugger",
+    },
 )
 ### auto-generated section `dev intellij.platform.images` end
 
@@ -108,12 +120,11 @@ ij_plugin(
 ### auto-generated section `plugin intellij.platform.images` end
 
 ### auto-generated section `iml intellij.platform.images` start
-exports_files(
-    [
-        "intellij.platform.images.iml",
-        "resources/META-INF/plugin.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.platform.images",
+    descriptors = ["resources/META-INF/plugin.xml"],
+    plugin = True,
+    target = "images",
 )
 ### auto-generated section `iml intellij.platform.images` end
 
@@ -153,10 +164,9 @@ jvm_library(
 ### auto-generated section `build intellij.platform.images.tests` end
 
 ### auto-generated section `iml intellij.platform.images.tests` start
-exports_files(
-    [
-        "intellij.platform.images.tests.iml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.platform.images.tests",
+    resources = False,
+    target = "images-tests_test_lib",
 )
 ### auto-generated section `iml intellij.platform.images.tests` end

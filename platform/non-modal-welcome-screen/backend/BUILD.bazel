@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
@@ -45,11 +46,9 @@ jvm_library(
 ### auto-generated section `build intellij.platform.ide.nonModalWelcomeScreen.backend` end
 
 ### auto-generated section `iml intellij.platform.ide.nonModalWelcomeScreen.backend` start
-exports_files(
-    [
-        "intellij.platform.ide.nonModalWelcomeScreen.backend.iml",
-        "resources/intellij.platform.ide.nonModalWelcomeScreen.backend.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.platform.ide.nonModalWelcomeScreen.backend",
+    descriptors = ["resources/intellij.platform.ide.nonModalWelcomeScreen.backend.xml"],
+    target = "backend",
 )
 ### auto-generated section `iml intellij.platform.ide.nonModalWelcomeScreen.backend` end

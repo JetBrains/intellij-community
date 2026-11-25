@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.idea.community.customization` start
@@ -27,12 +28,12 @@ jvm_library(
 ### auto-generated section `build intellij.idea.community.customization` end
 
 ### auto-generated section `iml intellij.idea.community.customization` start
-exports_files(
-    [
-        "intellij.idea.community.customization.iml",
+jps_module(
+    name = "intellij.idea.community.customization",
+    target = "customization",
+    exports = [
         "resources/META-INF/IdeaPlugin.xml",
         "resources/idea/IdeaApplicationInfo.xml",
     ],
-    visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.idea.community.customization` end

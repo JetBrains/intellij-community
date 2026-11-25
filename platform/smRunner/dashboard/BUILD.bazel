@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
@@ -47,11 +48,9 @@ jvm_library(
 ### auto-generated section `build intellij.platform.smRunner.dashboard` end
 
 ### auto-generated section `iml intellij.platform.smRunner.dashboard` start
-exports_files(
-    [
-        "intellij.platform.smRunner.dashboard.iml",
-        "resources/intellij.platform.smRunner.dashboard.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.platform.smRunner.dashboard",
+    descriptors = ["resources/intellij.platform.smRunner.dashboard.xml"],
+    target = "dashboard",
 )
 ### auto-generated section `iml intellij.platform.smRunner.dashboard` end

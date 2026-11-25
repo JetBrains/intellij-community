@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 
@@ -49,11 +50,9 @@ jvm_library(
 ### auto-generated section `build intellij.platform.debugger.impl.bookmarks` end
 
 ### auto-generated section `iml intellij.platform.debugger.impl.bookmarks` start
-exports_files(
-    [
-        "intellij.platform.debugger.impl.bookmarks.iml",
-        "resources/intellij.platform.debugger.impl.bookmarks.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.platform.debugger.impl.bookmarks",
+    descriptors = ["resources/intellij.platform.debugger.impl.bookmarks.xml"],
+    target = "bookmarks",
 )
 ### auto-generated section `iml intellij.platform.debugger.impl.bookmarks` end

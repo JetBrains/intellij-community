@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
@@ -45,11 +46,9 @@ jvm_library(
 ### auto-generated section `build intellij.python.zuban` end
 
 ### auto-generated section `iml intellij.python.zuban` start
-exports_files(
-    [
-        "intellij.python.zuban.iml",
-        "resources/intellij.python.zuban.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.python.zuban",
+    descriptors = ["resources/intellij.python.zuban.xml"],
+    target = "zuban",
 )
 ### auto-generated section `iml intellij.python.zuban` end

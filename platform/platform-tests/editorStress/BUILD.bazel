@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
@@ -227,11 +228,10 @@ jvm_library(
 ### auto-generated section `build intellij.platform.tests.editorStress` end
 
 ### auto-generated section `iml intellij.platform.tests.editorStress` start
-exports_files(
-    [
-        "intellij.platform.tests.editorStress.iml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.platform.tests.editorStress",
+    resources = False,
+    target = "editorStress_test_lib",
 )
 ### auto-generated section `iml intellij.platform.tests.editorStress` end
 

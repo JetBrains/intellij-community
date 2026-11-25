@@ -1,12 +1,20 @@
-load("@jps_dynamic_deps_community//:targets.bzl", "dist_plugin")
+load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:dev_plugin_remainder.bzl", "dist_complex_plugin")
+load("//platform/build-scripts/bazel-rules:dist_plugin.bzl", "dist_plugin")
 
 ### auto-generated section `dev intellij.jna.plugin` start
 dist_plugin(
     content_modules = ["intellij.libraries.jna"],
     descriptor = "resources/META-INF/plugin.xml",
+    descriptors = {
+        "@community//libraries/jna:resources/intellij.libraries.jna.xml": "intellij.libraries.jna.xml",
+    },
     main_module = "intellij.jna.plugin",
+    module_labels = {
+        "intellij.jna.plugin": "@community//plugins/jna/plugin:plugin",
+        "intellij.libraries.jna": "@community//libraries/jna:jna",
+    },
 )
 
 dist_complex_plugin(
@@ -52,11 +60,9 @@ jvm_library(
 ### auto-generated section `build intellij.jna.plugin` end
 
 ### auto-generated section `iml intellij.jna.plugin` start
-exports_files(
-    [
-        "intellij.jna.plugin.iml",
-        "resources/META-INF/plugin.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.jna.plugin",
+    descriptors = ["resources/META-INF/plugin.xml"],
+    target = "plugin",
 )
 ### auto-generated section `iml intellij.jna.plugin` end

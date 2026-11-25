@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
@@ -31,11 +32,9 @@ jvm_library(
 ### auto-generated section `build intellij.libraries.proxy.vole` end
 
 ### auto-generated section `iml intellij.libraries.proxy.vole` start
-exports_files(
-    [
-        "intellij.libraries.proxy.vole.iml",
-        "resources/intellij.libraries.proxy.vole.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.libraries.proxy.vole",
+    descriptors = ["resources/intellij.libraries.proxy.vole.xml"],
+    target = "proxy-vole",
 )
 ### auto-generated section `iml intellij.libraries.proxy.vole` end

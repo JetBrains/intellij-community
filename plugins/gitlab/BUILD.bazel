@@ -1,6 +1,7 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@community//platform/build-scripts/bazel-rules:ij_plugin.bzl", "ij_plugin")
-load("@jps_dynamic_deps_community//:targets.bzl", "dist_plugin")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:dist_plugin.bzl", "dist_plugin")
 
 ### auto-generated section `dev intellij.vcs.gitlab` start
 dist_plugin(
@@ -13,6 +14,14 @@ dist_plugin(
         "intellij.vcs.gitlab.yaml",
     ],
     main_module = "intellij.vcs.gitlab",
+    module_labels = {
+        "intellij.vcs.gitlab": "@community//plugins/gitlab:gitlab",
+        "intellij.vcs.gitlab.backend": "@community//plugins/gitlab/gitlab-core:vcs-gitlab-backend",
+        "intellij.vcs.gitlab.frontend": "@community//plugins/gitlab/frontend:frontend",
+        "intellij.vcs.gitlab.git": "@community//plugins/gitlab/gitlab-git:vcs-gitlab-git",
+        "intellij.vcs.gitlab.shared": "@community//plugins/gitlab/shared:shared",
+        "intellij.vcs.gitlab.yaml": "@community//plugins/gitlab/gitlab-yaml:vcs-gitlab-yaml",
+    },
 )
 ### auto-generated section `dev intellij.vcs.gitlab` end
 
@@ -61,11 +70,10 @@ ij_plugin(
 ### auto-generated section `plugin intellij.vcs.gitlab` end
 
 ### auto-generated section `iml intellij.vcs.gitlab` start
-exports_files(
-    [
-        "intellij.vcs.gitlab.iml",
-        "resources/META-INF/plugin.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.vcs.gitlab",
+    descriptors = ["resources/META-INF/plugin.xml"],
+    plugin = True,
+    target = "gitlab",
 )
 ### auto-generated section `iml intellij.vcs.gitlab` end

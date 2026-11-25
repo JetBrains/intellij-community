@@ -1,6 +1,7 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@community//platform/build-scripts/bazel-rules:ij_plugin.bzl", "ij_plugin")
-load("@jps_dynamic_deps_community//:targets.bzl", "dist_plugin")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:dist_plugin.bzl", "dist_plugin")
 
 ### auto-generated section `dev intellij.python.zuban.plugin` start
 dist_plugin(
@@ -11,12 +12,23 @@ dist_plugin(
         "intellij.python.zuban",
     ],
     descriptor = "resources/META-INF/plugin.xml",
+    descriptors = {
+        "@community//python/python-zuban/common:resources/intellij.python.zuban.common.xml": "intellij.python.zuban.common.xml",
+        "@community//python/python-zuban/frontend:resources/intellij.python.zuban.frontend.xml": "intellij.python.zuban.frontend.xml",
+        "@community//python/python-zuban:resources/intellij.python.zuban.xml": "intellij.python.zuban.xml",
+    },
     jars = {
         "lib/python-zuban-plugin.jar": ["intellij.python.zuban.plugin"],
     },
     main_module = "intellij.python.zuban.plugin",
     mode_refused_content_modules = {
         "frontend": ["intellij.python.zuban"],
+    },
+    module_labels = {
+        "intellij.python.zuban": "@community//python/python-zuban:zuban",
+        "intellij.python.zuban.common": "@community//python/python-zuban/common:common",
+        "intellij.python.zuban.frontend": "@community//python/python-zuban/frontend:frontend",
+        "intellij.python.zuban.plugin": "@community//python/python-zuban/plugin:plugin",
     },
 )
 ### auto-generated section `dev intellij.python.zuban.plugin` end
@@ -52,11 +64,10 @@ ij_plugin(
 ### auto-generated section `plugin intellij.python.zuban.plugin` end
 
 ### auto-generated section `iml intellij.python.zuban.plugin` start
-exports_files(
-    [
-        "intellij.python.zuban.plugin.iml",
-        "resources/META-INF/plugin.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.python.zuban.plugin",
+    descriptors = ["resources/META-INF/plugin.xml"],
+    plugin = True,
+    target = "plugin",
 )
 ### auto-generated section `iml intellij.python.zuban.plugin` end

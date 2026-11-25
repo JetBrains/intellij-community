@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.tools.testsBootstrap` start
@@ -41,11 +42,9 @@ jvm_library(
 ### auto-generated section `build intellij.tools.testsBootstrap` end
 
 ### auto-generated section `iml intellij.tools.testsBootstrap` start
-exports_files(
-    [
-        "intellij.tools.testsBootstrap.iml",
-        "resources/intellij.tools.testsBootstrap.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.tools.testsBootstrap",
+    descriptors = ["resources/intellij.tools.testsBootstrap.xml"],
+    target = "tools-testsBootstrap",
 )
 ### auto-generated section `iml intellij.tools.testsBootstrap` end

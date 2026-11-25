@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@community//platform/build-scripts/bazel-rules:ij_plugin_module.bzl", "ij_plugin_module")
 
 ### auto-generated section `build intellij.libraries.mcp.kotlin.sdk` start
@@ -25,11 +26,9 @@ ij_plugin_module(
 ### auto-generated section `build intellij.libraries.mcp.kotlin.sdk` end
 
 ### auto-generated section `iml intellij.libraries.mcp.kotlin.sdk` start
-exports_files(
-    [
-        "intellij.libraries.mcp.kotlin.sdk.iml",
-        "resources/intellij.libraries.mcp.kotlin.sdk.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.libraries.mcp.kotlin.sdk",
+    descriptors = ["resources/intellij.libraries.mcp.kotlin.sdk.xml"],
+    target = "mcp-kotlin-sdk",
 )
 ### auto-generated section `iml intellij.libraries.mcp.kotlin.sdk` end

@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@community//platform/build-scripts/bazel-rules:ij_plugin_module.bzl", "ij_plugin_module")
 
 ### auto-generated section `build intellij.libraries.ktor.server.content.negotiation` start
@@ -34,11 +35,9 @@ ij_plugin_module(
 ### auto-generated section `build intellij.libraries.ktor.server.content.negotiation` end
 
 ### auto-generated section `iml intellij.libraries.ktor.server.content.negotiation` start
-exports_files(
-    [
-        "intellij.libraries.ktor.server.content.negotiation.iml",
-        "resources/intellij.libraries.ktor.server.content.negotiation.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.libraries.ktor.server.content.negotiation",
+    descriptors = ["resources/intellij.libraries.ktor.server.content.negotiation.xml"],
+    target = "libraries-ktor-server-content-negotiation",
 )
 ### auto-generated section `iml intellij.libraries.ktor.server.content.negotiation` end

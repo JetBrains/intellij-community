@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
@@ -43,11 +44,9 @@ jvm_library(
 ### auto-generated section `build intellij.libraries.jna` end
 
 ### auto-generated section `iml intellij.libraries.jna` start
-exports_files(
-    [
-        "intellij.libraries.jna.iml",
-        "resources/intellij.libraries.jna.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.libraries.jna",
+    descriptors = ["resources/intellij.libraries.jna.xml"],
+    target = "jna",
 )
 ### auto-generated section `iml intellij.libraries.jna` end

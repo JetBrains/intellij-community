@@ -12,20 +12,20 @@
 # the stamps. The component index names the `dev_plugin` target or the component of a `dist_complex_plugin`
 # call.
 #
-# A descriptor leaf derives its conventional descriptor rows from the bridge index of its half.
+# A descriptor leaf states every descriptor row. The label of a conventional row is in the recorded form.
 
-load("@jps_dynamic_deps_community//:targets.bzl", "dist_plugin_descriptor")
 load("//platform/build-scripts/bazel-rules:dev_plugin.bzl", "dev_plugin")
+load("//platform/build-scripts/bazel-rules:dist_plugin_descriptor.bzl", "dist_plugin_descriptor")
 
 dist_plugin_descriptor(
-    content_modules = [
-        "intellij.compose.ide.plugin.codeInsight",
-        "intellij.compose.ide.plugin.gradleTooling.rt",
-        "intellij.compose.ide.plugin.resources",
-        "intellij.compose.ide.plugin.resources.android",
-        "intellij.compose.ide.plugin.shared",
-    ],
     descriptor = "//plugins/compose:resources/META-INF/plugin.xml",
+    descriptors = {
+        "@community//plugins/compose/intellij.compose.ide.plugin.codeInsight:resources/intellij.compose.ide.plugin.codeInsight.xml": "intellij.compose.ide.plugin.codeInsight.xml",
+        "@community//plugins/compose/intellij.compose.ide.plugin.gradleTooling:resources/intellij.compose.ide.plugin.gradleTooling.rt.xml": "intellij.compose.ide.plugin.gradleTooling.rt.xml",
+        "@community//plugins/compose/intellij.compose.ide.plugin.resources.android:resources/intellij.compose.ide.plugin.resources.android.xml": "intellij.compose.ide.plugin.resources.android.xml",
+        "@community//plugins/compose/intellij.compose.ide.plugin.resources:resources/intellij.compose.ide.plugin.resources.xml": "intellij.compose.ide.plugin.resources.xml",
+        "@community//plugins/compose/intellij.compose.ide.plugin.shared:resources/intellij.compose.ide.plugin.shared.xml": "intellij.compose.ide.plugin.shared.xml",
+    },
     main_module = "intellij.compose.ide.plugin",
     mode_refused_content_modules = {
         "frontend": [

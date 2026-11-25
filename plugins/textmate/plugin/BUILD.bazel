@@ -1,6 +1,7 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@community//platform/build-scripts/bazel-rules:ij_plugin.bzl", "ij_plugin")
 load("@community//platform/build-scripts/bazel-rules:ij_plugin_module.bzl", "ij_plugin_module")
-load("@jps_dynamic_deps_community//:targets.bzl", "dist_plugin")
+load("//platform/build-scripts/bazel-rules:dist_plugin.bzl", "dist_plugin")
 
 ### auto-generated section `dev intellij.textmate.plugin` start
 dist_plugin(
@@ -14,6 +15,15 @@ dist_plugin(
         "intellij.libraries.joni",
     ],
     main_module = "intellij.textmate.plugin",
+    module_labels = {
+        "intellij.libraries.joni": "@community//libraries/joni:joni",
+        "intellij.textmate": "@community//plugins/textmate:textmate",
+        "intellij.textmate.backend": "@community//plugins/textmate/backend:backend",
+        "intellij.textmate.common": "@community//plugins/textmate/common:common",
+        "intellij.textmate.core": "@community//plugins/textmate/core:core",
+        "intellij.textmate.joni": "@community//plugins/textmate/joni:joni",
+        "intellij.textmate.plugin": "@community//plugins/textmate/plugin:plugin",
+    },
 )
 ### auto-generated section `dev intellij.textmate.plugin` end
 
@@ -58,11 +68,10 @@ ij_plugin(
 ### auto-generated section `plugin intellij.textmate.plugin` end
 
 ### auto-generated section `iml intellij.textmate.plugin` start
-exports_files(
-    [
-        "intellij.textmate.plugin.iml",
-        "resources/META-INF/plugin.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.textmate.plugin",
+    descriptors = ["resources/META-INF/plugin.xml"],
+    plugin = True,
+    target = "plugin",
 )
 ### auto-generated section `iml intellij.textmate.plugin` end

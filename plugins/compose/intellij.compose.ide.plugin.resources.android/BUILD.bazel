@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.compose.ide.plugin.resources.android` start
@@ -31,11 +32,9 @@ jvm_library(
 ### auto-generated section `build intellij.compose.ide.plugin.resources.android` end
 
 ### auto-generated section `iml intellij.compose.ide.plugin.resources.android` start
-exports_files(
-    [
-        "intellij.compose.ide.plugin.resources.android.iml",
-        "resources/intellij.compose.ide.plugin.resources.android.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.compose.ide.plugin.resources.android",
+    descriptors = ["resources/intellij.compose.ide.plugin.resources.android.xml"],
+    target = "ide-plugin-resources-android",
 )
 ### auto-generated section `iml intellij.compose.ide.plugin.resources.android` end

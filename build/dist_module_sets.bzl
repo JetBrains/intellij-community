@@ -13,6 +13,9 @@
 # the module it states, and `alias` is the plugin alias of the set. `dist_product_descriptor` and
 # `dist_embedded_product_descriptor` walk the sets in DSL order with these facts and compose the product content.
 #
+# `descriptors` maps each member to the label of its conventional descriptor `<module>.xml`, in the form of the
+# targets JSON. The product descriptor macros take the descriptor row of a member from it.
+#
 # `packed` maps each member that owns a `content_module_jar` target to that label, written once per set. A
 # product's `platform_lib` payload in `dist_fragment_inputs.bzl` names only the labels no set carries.
 # Every product that references a set hands over the labels of its members, less the ones its mode refuses.
@@ -33,6 +36,10 @@ DIST_MODULE_SETS = {
         ],
         nested = [
         ],
+        descriptors = {
+            "intellij.platform.builtInServer.impl": "@community//platform/built-in-server:resources/intellij.platform.builtInServer.impl.xml",
+            "intellij.platform.externalProcessAuthHelper": "@community//platform/external-process-auth-helper:resources/intellij.platform.externalProcessAuthHelper.xml",
+        },
         packed = {
             "intellij.platform.builtInServer.impl": "//platform/built-in-server:builtInServer-impl_content_module_jar",
             "intellij.platform.externalProcessAuthHelper": "//platform/external-process-auth-helper:external-process-auth-helper_content_module_jar",
@@ -50,6 +57,11 @@ DIST_MODULE_SETS = {
         ],
         nested = [
         ],
+        descriptors = {
+            "intellij.libraries.compose.runtime.desktop": "@community//libraries/compose-runtime-desktop:resources/intellij.libraries.compose.runtime.desktop.xml",
+            "intellij.libraries.compose.swing": "@community//libraries/compose-swing-ui:resources/intellij.libraries.compose.swing.xml",
+            "intellij.platform.compose.swing": "@community//platform/compose/swing-ui:resources/intellij.platform.compose.swing.xml",
+        },
         packed = {
             "intellij.libraries.compose.runtime.desktop": "//libraries/compose-runtime-desktop:compose-runtime-desktop_content_module_jar",
             "intellij.libraries.compose.swing": "//libraries/compose-swing-ui:compose-swing_content_module_jar",
@@ -97,6 +109,23 @@ DIST_MODULE_SETS = {
             "intellij.platform.usageView": "embedded",
             "intellij.platform.util.http": "embedded",
             "intellij.platform.welcomeScreen": "embedded",
+        },
+        descriptors = {
+            "intellij.platform.credentialStore": "@community//platform/credential-store:resources/intellij.platform.credentialStore.xml",
+            "intellij.platform.ide": "@community//platform/platform-api:resources/intellij.platform.ide.xml",
+            "intellij.platform.ide.observable": "@community//platform/observable:resources/intellij.platform.ide.observable.xml",
+            "intellij.platform.ide.recentProjects": "@community//platform/platform-impl/recentProjects:resources/intellij.platform.ide.recentProjects.xml",
+            "intellij.platform.ide.rpc": "@community//platform/platform-impl/rpc:resources/intellij.platform.ide.rpc.xml",
+            "intellij.platform.ide.ui": "@community//platform/platform-impl/ui:resources/intellij.platform.ide.ui.xml",
+            "intellij.platform.ide.util.io.impl": "@community//platform/platform-util-io-impl:resources/intellij.platform.ide.util.io.impl.xml",
+            "intellij.platform.ide.util.netty": "@community//platform/platform-util-netty:resources/intellij.platform.ide.util.netty.xml",
+            "intellij.platform.remoteServers": "@community//platform/remote-servers/api:resources/intellij.platform.remoteServers.xml",
+            "intellij.platform.remoteServers.agent.rt": "@community//platform/remote-servers/agent-rt:resources/intellij.platform.remoteServers.agent.rt.xml",
+            "intellij.platform.resources": "@community//platform/platform-resources:src/intellij.platform.resources.xml",
+            "intellij.platform.resources.en": "@community//platform/platform-resources-en:src/intellij.platform.resources.en.xml",
+            "intellij.platform.usageView": "@community//platform/usageView:resources/intellij.platform.usageView.xml",
+            "intellij.platform.util.http": "@community//platform/util/http:resources/intellij.platform.util.http.xml",
+            "intellij.platform.welcomeScreen": "@community//platform/welcome-screen:resources/intellij.platform.welcomeScreen.xml",
         },
         packed = {
             "intellij.platform.credentialStore": "//platform/credential-store:credential-store_content_module_jar",
@@ -252,6 +281,81 @@ DIST_MODULE_SETS = {
             "intellij.platform.util.diff": "embedded",
             "intellij.platform.vfs.impl": "embedded",
             "intellij.platform.welcomeScreen.impl": "embedded",
+        },
+        descriptors = {
+            "fleet.andel": "@community//fleet/andel:resources/fleet.andel.xml",
+            "intellij.libraries.zip.signer": "@community//libraries/zip-signer:resources/intellij.libraries.zip.signer.xml",
+            "intellij.platform.backend.workspace.impl": "@community//platform/backend/workspace.impl:resources/intellij.platform.backend.workspace.impl.xml",
+            "intellij.platform.bootstrap": "@community//platform/bootstrap:resources/intellij.platform.bootstrap.xml",
+            "intellij.platform.builtInServer": "@community//platform/built-in-server-api:resources/intellij.platform.builtInServer.xml",
+            "intellij.platform.codeStyle.impl": "@community//platform/code-style-impl:resources/intellij.platform.codeStyle.impl.xml",
+            "intellij.platform.configurationStore.impl": "@community//platform/configuration-store-impl:resources/intellij.platform.configurationStore.impl.xml",
+            "intellij.platform.consoleView": "@community//platform/consoleView:resources/intellij.platform.consoleView.xml",
+            "intellij.platform.consoleView.impl": "@community//platform/consoleView/impl:resources/intellij.platform.consoleView.impl.xml",
+            "intellij.platform.diagnostic.startUpPerformanceReporter": "@community//platform/diagnostic/startUpPerformanceReporter:resources/intellij.platform.diagnostic.startUpPerformanceReporter.xml",
+            "intellij.platform.diff": "@community//platform/diff-api:resources/intellij.platform.diff.xml",
+            "intellij.platform.diff.impl": "@community//platform/diff-impl:resources/intellij.platform.diff.impl.xml",
+            "intellij.platform.discoverability": "@community//platform/discoverability:resources/intellij.platform.discoverability.xml",
+            "intellij.platform.eel.impl": "@community//platform/eel-impl:resources/intellij.platform.eel.impl.xml",
+            "intellij.platform.eel.impl.base": "@community//platform/eel-impl-base:resources/intellij.platform.eel.impl.base.xml",
+            "intellij.platform.eel.nioFs.impl": "@community//platform/eel-nioFs-impl:resources/intellij.platform.eel.nioFs.impl.xml",
+            "intellij.platform.execution": "@community//platform/execution:resources/intellij.platform.execution.xml",
+            "intellij.platform.execution.impl": "@community//platform/execution-impl:resources/intellij.platform.execution.impl.xml",
+            "intellij.platform.experiment": "@community//platform/experiment:resources/intellij.platform.experiment.xml",
+            "intellij.platform.foldings": "@community//platform/foldings:resources/intellij.platform.foldings.xml",
+            "intellij.platform.icons.impl.intellij": "@community//platform/icons-impl/intellij:resources/intellij.platform.icons.impl.intellij.xml",
+            "intellij.platform.ide.bootstrap": "@community//platform/platform-impl/bootstrap:resources/intellij.platform.ide.bootstrap.xml",
+            "intellij.platform.ide.bootstrap.eel": "@community//platform/platform-impl/bootstrap/eel:resources/intellij.platform.ide.bootstrap.eel.xml",
+            "intellij.platform.ide.codeinsight.inline": "@community//platform/platform-impl/codeinsight-inline:resources/intellij.platform.ide.codeinsight.inline.xml",
+            "intellij.platform.ide.colorPicker": "@community//platform/platform-impl/color-picker:resources/intellij.platform.ide.colorPicker.xml",
+            "intellij.platform.ide.concurrency": "@community//platform/platform-impl/concurrency:resources/intellij.platform.ide.concurrency.xml",
+            "intellij.platform.ide.designer": "@community//platform/platform-impl/designer:resources/intellij.platform.ide.designer.xml",
+            "intellij.platform.ide.dnd": "@community//platform/platform-impl/dnd:resources/intellij.platform.ide.dnd.xml",
+            "intellij.platform.ide.errorTreeView": "@community//platform/platform-impl/error-tree-view:resources/intellij.platform.ide.errorTreeView.xml",
+            "intellij.platform.ide.favoritesTreeView": "@community//platform/favoritesTreeView:resources/intellij.platform.ide.favoritesTreeView.xml",
+            "intellij.platform.ide.fileChooser.universal": "@community//platform/platform-impl/file-chooser-universal:resources/intellij.platform.ide.fileChooser.universal.xml",
+            "intellij.platform.ide.hprof": "@community//platform/platform-impl/hprof:resources/intellij.platform.ide.hprof.xml",
+            "intellij.platform.ide.impl": "@community//platform/platform-impl:resources/intellij.platform.ide.impl.xml",
+            "intellij.platform.ide.initialConfigImport": "@community//platform/platform-impl/initial-config-import:resources/intellij.platform.ide.initialConfigImport.xml",
+            "intellij.platform.ide.json": "@community//platform/platform-impl/json:resources/intellij.platform.ide.json.xml",
+            "intellij.platform.ide.learnIde": "@community//platform/platform-impl/learn-ide:resources/intellij.platform.ide.learnIde.xml",
+            "intellij.platform.ide.maintenance": "@community//platform/platform-impl/maintenance:resources/intellij.platform.ide.maintenance.xml",
+            "intellij.platform.ide.osCertificates": "@community//platform/platform-impl/os-certificates:resources/intellij.platform.ide.osCertificates.xml",
+            "intellij.platform.ide.playback": "@community//platform/platform-impl/playback:resources/intellij.platform.ide.playback.xml",
+            "intellij.platform.ide.pluginSignatureVerifier": "@community//platform/platform-impl/plugin-signature-verifier:resources/intellij.platform.ide.pluginSignatureVerifier.xml",
+            "intellij.platform.ide.progress": "@community//platform/progress/shared:resources/intellij.platform.ide.progress.xml",
+            "intellij.platform.ide.remote": "@community//platform/platform-impl/remote:resources/intellij.platform.ide.remote.xml",
+            "intellij.platform.ide.tabInEditor": "@community//platform/platform-impl/tab-in-editor:resources/intellij.platform.ide.tabInEditor.xml",
+            "intellij.platform.ide.tabInEditor.frontend": "@community//platform/platform-impl/tab-in-editor/frontend:resources/intellij.platform.ide.tabInEditor.frontend.xml",
+            "intellij.platform.ide.util.io.native": "@community//platform/platform-util-io-native:resources/intellij.platform.ide.util.io.native.xml",
+            "intellij.platform.ijent": "@community//platform/ijent:resources/intellij.platform.ijent.xml",
+            "intellij.platform.ijent.community.buildConstants": "@community//platform/ijent/buildConstants:resources/intellij.platform.ijent.community.buildConstants.xml",
+            "intellij.platform.ijent.community.impl": "@community//platform/ijent/impl:resources/intellij.platform.ijent.community.impl.xml",
+            "intellij.platform.indexing.impl": "@community//platform/indexing-impl:resources/intellij.platform.indexing.impl.xml",
+            "intellij.platform.lang": "@community//platform/lang-api:resources/intellij.platform.lang.xml",
+            "intellij.platform.lang.core": "@community//platform/lang-core:resources/intellij.platform.lang.core.xml",
+            "intellij.platform.lang.impl": "@community//platform/lang-impl:resources/intellij.platform.lang.impl.xml",
+            "intellij.platform.lvcs": "@community//platform/lvcs-api:resources/intellij.platform.lvcs.xml",
+            "intellij.platform.macro": "@community//platform/macro:resources/intellij.platform.macro.xml",
+            "intellij.platform.project": "@community//platform/project/shared:resources/intellij.platform.project.xml",
+            "intellij.platform.rd.community": "@community//platform/rd-platform-community:resources/intellij.platform.rd.community.xml",
+            "intellij.platform.refactoring": "@community//platform/refactoring:resources/intellij.platform.refactoring.xml",
+            "intellij.platform.remote.core": "@community//platform/remote-core:resources/intellij.platform.remote.core.xml",
+            "intellij.platform.statistics": "@community//platform/statistics:resources/intellij.platform.statistics.xml",
+            "intellij.platform.statistics.config": "@community//platform/statistics/config:resources/intellij.platform.statistics.config.xml",
+            "intellij.platform.statistics.uploader": "@community//platform/statistics/uploader:resources/intellij.platform.statistics.uploader.xml",
+            "intellij.platform.syntax.psi": "@community//platform/syntax/syntax-psi:resources/intellij.platform.syntax.psi.xml",
+            "intellij.platform.terminal": "@community//platform/terminal:resources/intellij.platform.terminal.xml",
+            "intellij.platform.testIntegration": "@community//platform/testIntegration:resources/intellij.platform.testIntegration.xml",
+            "intellij.platform.testIntegration.ui": "@community//platform/testIntegration-ui:resources/intellij.platform.testIntegration.ui.xml",
+            "intellij.platform.threadDumpParser": "@community//platform/threadDumpParser:resources/intellij.platform.threadDumpParser.xml",
+            "intellij.platform.ui.tree": "@community//platform/ui.tree:resources/intellij.platform.ui.tree.xml",
+            "intellij.platform.undo": "@community//platform/undo:resources/intellij.platform.undo.xml",
+            "intellij.platform.usageView.impl": "@community//platform/usageView-impl:resources/intellij.platform.usageView.impl.xml",
+            "intellij.platform.util.diff": "@community//platform/util/diff:resources/intellij.platform.util.diff.xml",
+            "intellij.platform.vfs.impl": "@community//platform/vfs-impl:resources/intellij.platform.vfs.impl.xml",
+            "intellij.platform.welcomeScreen.impl": "@community//platform/welcome-screen-impl:resources/intellij.platform.welcomeScreen.impl.xml",
+            "intellij.platform.wsl.impl": "@community//platform/wsl-impl:resources/intellij.platform.wsl.impl.xml",
         },
         packed = {
             "fleet.andel": "//fleet/andel:andel_content_module_jar",
@@ -469,6 +573,58 @@ DIST_MODULE_SETS = {
             "intellij.platform.workspace.jps": "embedded",
             "intellij.platform.workspace.storage": "embedded",
         },
+        descriptors = {
+            "intellij.platform.analysis": "@community//platform/analysis-api:resources/intellij.platform.analysis.xml",
+            "intellij.platform.analysis.impl": "@community//platform/analysis-impl:resources/intellij.platform.analysis.impl.xml",
+            "intellij.platform.backend.observation": "@community//platform/backend/observation:resources/intellij.platform.backend.observation.xml",
+            "intellij.platform.backend.workspace": "@community//platform/backend/workspace:resources/intellij.platform.backend.workspace.xml",
+            "intellij.platform.bazel.runfiles": "@community//platform/bazel-runfiles:resources/intellij.platform.bazel.runfiles.xml",
+            "intellij.platform.buildData": "@community//platform/buildData:resources/intellij.platform.buildData.xml",
+            "intellij.platform.buildScripts.concurrency": "@community//platform/build-scripts/concurrency:resources/intellij.platform.buildScripts.concurrency.xml",
+            "intellij.platform.codeStyle": "@community//platform/code-style-api:resources/intellij.platform.codeStyle.xml",
+            "intellij.platform.concurrency": "@community//platform/util/concurrency:resources/intellij.platform.concurrency.xml",
+            "intellij.platform.core": "@community//platform/core-api:resources/intellij.platform.core.xml",
+            "intellij.platform.core.impl": "@community//platform/core-impl:resources/intellij.platform.core.impl.xml",
+            "intellij.platform.core.ui": "@community//platform/core-ui:resources/intellij.platform.core.ui.xml",
+            "intellij.platform.editor.ex": "@community//platform/editor-ui-ex:resources/intellij.platform.editor.ex.xml",
+            "intellij.platform.editor.ui": "@community//platform/editor-ui-api:resources/intellij.platform.editor.ui.xml",
+            "intellij.platform.eel.provider": "@community//platform/eel-provider:resources/intellij.platform.eel.provider.xml",
+            "intellij.platform.icons": "@community//platform/icons:src/intellij.platform.icons.xml",
+            "intellij.platform.icons.api": "@community//platform/icons-api:resources/intellij.platform.icons.api.xml",
+            "intellij.platform.icons.api.rendering": "@community//platform/icons-api/rendering:resources/intellij.platform.icons.api.rendering.xml",
+            "intellij.platform.icons.impl": "@community//platform/icons-impl:resources/intellij.platform.icons.impl.xml",
+            "intellij.platform.ide.core": "@community//platform/ide-core:resources/intellij.platform.ide.core.xml",
+            "intellij.platform.ide.core.impl": "@community//platform/ide-core-impl:resources/intellij.platform.ide.core.impl.xml",
+            "intellij.platform.ide.core.plugins": "@community//platform/ide-core/plugins:resources/intellij.platform.ide.core.plugins.xml",
+            "intellij.platform.indexing": "@community//platform/indexing-api:resources/intellij.platform.indexing.xml",
+            "intellij.platform.instanceContainer": "@community//platform/instanceContainer:resources/intellij.platform.instanceContainer.xml",
+            "intellij.platform.jbr": "@community//platform/jbr:resources/intellij.platform.jbr.xml",
+            "intellij.platform.locking.impl": "@community//platform/locking-impl:resources/intellij.platform.locking.impl.xml",
+            "intellij.platform.objectSerializer": "@community//platform/object-serializer:resources/intellij.platform.objectSerializer.xml",
+            "intellij.platform.pluginSystem.parser.impl": "@community//platform/pluginSystem/parser/impl:resources/intellij.platform.pluginSystem.parser.impl.xml",
+            "intellij.platform.pratt": "@community//platform/pratt:resources/intellij.platform.pratt.xml",
+            "intellij.platform.productMode": "@community//platform/productMode:resources/intellij.platform.productMode.xml",
+            "intellij.platform.projectFrame": "@community//platform/project-frame:resources/intellij.platform.projectFrame.xml",
+            "intellij.platform.projectModel": "@community//platform/projectModel-api:resources/intellij.platform.projectModel.xml",
+            "intellij.platform.projectModel.impl": "@community//platform/projectModel-impl:resources/intellij.platform.projectModel.impl.xml",
+            "intellij.platform.runtime.product": "@community//platform/runtime/product:resources/intellij.platform.runtime.product.xml",
+            "intellij.platform.serviceContainer": "@community//platform/service-container:resources/intellij.platform.serviceContainer.xml",
+            "intellij.platform.settings": "@community//platform/settings:resources/intellij.platform.settings.xml",
+            "intellij.platform.syntax": "@community//platform/syntax/syntax-api:resources/intellij.platform.syntax.xml",
+            "intellij.platform.syntax.extensions": "@community//platform/syntax/syntax-extensions:resources/intellij.platform.syntax.extensions.xml",
+            "intellij.platform.syntax.i18n": "@community//platform/syntax/syntax-i18n:resources/intellij.platform.syntax.i18n.xml",
+            "intellij.platform.syntax.tree": "@community//platform/syntax/syntax-tree:resources/intellij.platform.syntax.tree.xml",
+            "intellij.platform.syntax.util": "@community//platform/syntax/syntax-util:resources/intellij.platform.syntax.util.xml",
+            "intellij.platform.util.annotations": "@community//platform/util/annotations:resources/intellij.platform.util.annotations.xml",
+            "intellij.platform.util.coroutines": "@community//platform/util/coroutines:resources/intellij.platform.util.coroutines.xml",
+            "intellij.platform.util.ex": "@community//platform/util-ex:resources/intellij.platform.util.ex.xml",
+            "intellij.platform.util.io.storages": "@community//platform/util/storages:resources/intellij.platform.util.io.storages.xml",
+            "intellij.platform.util.progress": "@community//platform/util/progress:resources/intellij.platform.util.progress.xml",
+            "intellij.platform.util.text.matching": "@community//platform/util/text-matching:resources/intellij.platform.util.text.matching.xml",
+            "intellij.platform.util.ui": "@community//platform/util:ui/resources/intellij.platform.util.ui.xml",
+            "intellij.platform.workspace.jps": "@community//platform/workspace/jps:resources/intellij.platform.workspace.jps.xml",
+            "intellij.platform.workspace.storage": "@community//platform/workspace/storage:resources/intellij.platform.workspace.storage.xml",
+        },
         packed = {
             "intellij.platform.analysis": "//platform/analysis-api:analysis_content_module_jar",
             "intellij.platform.analysis.impl": "//platform/analysis-impl:analysis-impl_content_module_jar",
@@ -532,6 +688,10 @@ DIST_MODULE_SETS = {
         ],
         nested = [
         ],
+        descriptors = {
+            "intellij.platform.credentialStore.impl": "@community//platform/credential-store-impl:resources/intellij.platform.credentialStore.impl.xml",
+            "intellij.platform.credentialStore.ui": "@community//platform/credential-store-ui:resources/intellij.platform.credentialStore.ui.xml",
+        },
         packed = {
             "intellij.platform.credentialStore.impl": "//platform/credential-store-impl:credentialStore-impl_content_module_jar",
             "intellij.platform.credentialStore.ui": "//platform/credential-store-ui:credentialStore-ui_content_module_jar",
@@ -555,6 +715,17 @@ DIST_MODULE_SETS = {
         ],
         nested = [
         ],
+        descriptors = {
+            "intellij.platform.debugger": "@community//platform/xdebugger-api:resources/intellij.platform.debugger.xml",
+            "intellij.platform.debugger.impl": "@community//platform/xdebugger-impl:resources/intellij.platform.debugger.impl.xml",
+            "intellij.platform.debugger.impl.backend": "@community//platform/xdebugger-impl/backend:resources/intellij.platform.debugger.impl.backend.xml",
+            "intellij.platform.debugger.impl.dashboard": "@community//platform/xdebugger-impl/dashboard:resources/intellij.platform.debugger.impl.dashboard.xml",
+            "intellij.platform.debugger.impl.frontend": "@community//platform/xdebugger-impl/frontend:resources/intellij.platform.debugger.impl.frontend.xml",
+            "intellij.platform.debugger.impl.rpc": "@community//platform/xdebugger-impl/rpc:resources/intellij.platform.debugger.impl.rpc.xml",
+            "intellij.platform.debugger.impl.rpc.backend": "@community//platform/xdebugger-impl/rpc.backend:resources/intellij.platform.debugger.impl.rpc.backend.xml",
+            "intellij.platform.debugger.impl.shared": "@community//platform/xdebugger-impl/shared:resources/intellij.platform.debugger.impl.shared.xml",
+            "intellij.platform.debugger.impl.ui": "@community//platform/xdebugger-impl/ui:resources/intellij.platform.debugger.impl.ui.xml",
+        },
         packed = {
             "intellij.platform.debugger": "//platform/xdebugger-api:debugger_content_module_jar",
             "intellij.platform.debugger.impl": "//platform/xdebugger-impl:debugger-impl_content_module_jar",
@@ -591,6 +762,9 @@ DIST_MODULE_SETS = {
         ],
         nested = [
         ],
+        descriptors = {
+            "intellij.platform.duplicates.analysis": "@community//platform/duplicates-analysis:resources/intellij.platform.duplicates.analysis.xml",
+        },
         packed = {
             "intellij.platform.duplicates.analysis": "//platform/duplicates-analysis:duplicates-analysis_content_module_jar",
         },
@@ -643,6 +817,37 @@ DIST_MODULE_SETS = {
         ],
         loading = {
             "intellij.platform.markdown.utils": "embedded",
+        },
+        descriptors = {
+            "intellij.libraries.download.pgp.verifier": "@community//libraries/download-pgp-verifier:resources/intellij.libraries.download.pgp.verifier.xml",
+            "intellij.platform.buildScripts.downloader": "@community//platform/build-scripts/downloader:resources/intellij.platform.buildScripts.downloader.xml",
+            "intellij.platform.completion.backend": "@community//platform/completion/backend:resources/intellij.platform.completion.backend.xml",
+            "intellij.platform.completion.common": "@community//platform/completion/common:resources/intellij.platform.completion.common.xml",
+            "intellij.platform.completion.frontend": "@community//platform/completion/frontend:resources/intellij.platform.completion.frontend.xml",
+            "intellij.platform.eel.tcp": "@community//platform/eel-tcp:resources/intellij.platform.eel.tcp.xml",
+            "intellij.platform.feedback": "@community//platform/feedback:resources/intellij.platform.feedback.xml",
+            "intellij.platform.ide.filterField": "@community//platform/platform-impl/filter-field:resources/intellij.platform.ide.filterField.xml",
+            "intellij.platform.ide.migLayout": "@community//platform/platform-impl/mig-layout:resources/intellij.platform.ide.migLayout.xml",
+            "intellij.platform.ide.presentationAssistant": "@community//platform/platform-impl/presentation-assistant:resources/intellij.platform.ide.presentationAssistant.xml",
+            "intellij.platform.ide.socketConnection": "@community//platform/platform-impl/socket-connection:resources/intellij.platform.ide.socketConnection.xml",
+            "intellij.platform.ide.updateChecker": "@community//platform/platform-impl/update-checker:resources/intellij.platform.ide.updateChecker.xml",
+            "intellij.platform.indexing.impl.backend": "@community//platform/indexing-impl/backend:resources/intellij.platform.indexing.impl.backend.xml",
+            "intellij.platform.inline.completion": "@community//platform/inline-completion/shared:resources/intellij.platform.inline.completion.xml",
+            "intellij.platform.managed.cache": "@community//platform/managed-cache/managed.cache:resources/intellij.platform.managed.cache.xml",
+            "intellij.platform.managed.cache.backend": "@community//platform/managed-cache/managed.cache.backend:resources/intellij.platform.managed.cache.backend.xml",
+            "intellij.platform.markdown.utils": "@community//platform/markdown-utils:resources/intellij.platform.markdown.utils.xml",
+            "intellij.platform.ml": "@community//platform/ml-api:resources/intellij.platform.ml.xml",
+            "intellij.platform.pluginManager.backend": "@community//platform/pluginManager/backend:resources/intellij.platform.pluginManager.backend.xml",
+            "intellij.platform.pluginManager.frontend": "@community//platform/pluginManager/frontend:resources/intellij.platform.pluginManager.frontend.xml",
+            "intellij.platform.pluginManager.shared": "@community//platform/pluginManager/shared:resources/intellij.platform.pluginManager.shared.xml",
+            "intellij.platform.pluginManager.shared.baseline": "@community//platform/pluginManager/shared.baseline:resources/intellij.platform.pluginManager.shared.baseline.xml",
+            "intellij.platform.settings.v2": "@community//platform/settings.v2:resources/intellij.platform.settings.v2.xml",
+            "intellij.platform.settings.v2.backend": "@community//platform/settings.v2/backend:resources/intellij.platform.settings.v2.backend.xml",
+            "intellij.platform.settings.v2.backend.baseline": "@community//platform/settings.v2/backend/baseline:resources/intellij.platform.settings.v2.backend.baseline.xml",
+            "intellij.platform.settings.v2.shared": "@community//platform/settings.v2/shared:resources/intellij.platform.settings.v2.shared.xml",
+            "intellij.platform.settings.v2.vcs": "@community//platform/settings.v2/vcs:resources/intellij.platform.settings.v2.vcs.xml",
+            "intellij.remoteDev.frontendProcessLauncher": "@community//platform/remoteDev/frontendProcessLauncher:resources/intellij.remoteDev.frontendProcessLauncher.xml",
+            "intellij.remoteDev.util": "@community//platform/remoteDev-util:resources/intellij.remoteDev.util.xml",
         },
         packed = {
             "intellij.libraries.download.pgp.verifier": "//libraries/download-pgp-verifier:download-pgp-verifier_content_module_jar",
@@ -726,6 +931,12 @@ DIST_MODULE_SETS = {
         ],
         nested = [
         ],
+        descriptors = {
+            "intellij.platform.execution.impl.backend": "@community//platform/execution-impl/backend:resources/intellij.platform.execution.impl.backend.xml",
+            "intellij.platform.execution.impl.frontend": "@community//platform/execution-impl/frontend:resources/intellij.platform.execution.impl.frontend.xml",
+            "intellij.platform.execution.impl.rpc.backend": "@community//platform/execution-impl/rpc.backend:resources/intellij.platform.execution.impl.rpc.backend.xml",
+            "intellij.platform.execution.rpc": "@community//platform/execution-impl/rpc:resources/intellij.platform.execution.rpc.xml",
+        },
         packed = {
             "intellij.platform.execution.impl.backend": "//platform/execution-impl/backend:backend_content_module_jar",
             "intellij.platform.execution.impl.frontend": "//platform/execution-impl/frontend:frontend_content_module_jar",
@@ -753,6 +964,11 @@ DIST_MODULE_SETS = {
         ],
         nested = [
         ],
+        descriptors = {
+            "intellij.platform.externalSystem": "@community//platform/external-system-api:resources/intellij.platform.externalSystem.xml",
+            "intellij.platform.externalSystem.dependencyUpdater": "@community//platform/external-system-api/dependency-updater:resources/intellij.platform.externalSystem.dependencyUpdater.xml",
+            "intellij.platform.externalSystem.impl": "@community//platform/external-system-impl:resources/intellij.platform.externalSystem.impl.xml",
+        },
         packed = {
             "intellij.platform.externalSystem": "//platform/external-system-api:externalSystem_content_module_jar",
             "intellij.platform.externalSystem.dependencyUpdater": "//platform/external-system-api/dependency-updater:dependency-updater_content_module_jar",
@@ -771,6 +987,10 @@ DIST_MODULE_SETS = {
         ],
         nested = [
         ],
+        descriptors = {
+            "intellij.platform.find": "@community//platform/find:resources/intellij.platform.find.xml",
+            "intellij.platform.find.backend": "@community//platform/find/backend:resources/intellij.platform.find.backend.xml",
+        },
         packed = {
             "intellij.platform.find": "//platform/find:find_content_module_jar",
             "intellij.platform.find.backend": "//platform/find/backend:backend_content_module_jar",
@@ -815,6 +1035,20 @@ DIST_MODULE_SETS = {
             "fleet.util.core": "embedded",
             "fleet.util.logging.api": "embedded",
             "fleet.util.serialization": "embedded",
+        },
+        descriptors = {
+            "fleet.bifurcan": "@community//fleet/bifurcan:resources/fleet.bifurcan.xml",
+            "fleet.fastutil": "@community//fleet/fastutil:resources/fleet.fastutil.xml",
+            "fleet.multiplatform.shims": "@community//fleet/multiplatform.shims:resources/fleet.multiplatform.shims.xml",
+            "fleet.openmap": "@community//fleet/openmap:resources/fleet.openmap.xml",
+            "fleet.reporting.api": "@community//fleet/reporting/api:resources/fleet.reporting.api.xml",
+            "fleet.reporting.shared": "@community//fleet/reporting/shared:resources/fleet.reporting.shared.xml",
+            "fleet.rpc": "@community//fleet/rpc:resources/fleet.rpc.xml",
+            "fleet.rpc.server": "@community//fleet/rpc.server:resources/fleet.rpc.server.xml",
+            "fleet.util.codepoints": "@community//fleet/util/codepoints:resources/fleet.util.codepoints.xml",
+            "fleet.util.core": "@community//fleet/util/core:resources/fleet.util.core.xml",
+            "fleet.util.logging.api": "@community//fleet/util/logging/api:resources/fleet.util.logging.api.xml",
+            "fleet.util.serialization": "@community//fleet/util/serialization:resources/fleet.util.serialization.xml",
         },
         packed = {
             "fleet.bifurcan": "//fleet/bifurcan:bifurcan_content_module_jar",
@@ -876,6 +1110,35 @@ DIST_MODULE_SETS = {
             "intellij.moduleSets.xml.runtime",
             "intellij.moduleSets.duplicates",
         ],
+        descriptors = {
+            "intellij.emojipicker": "@community//plugins/emojipicker:resources/intellij.emojipicker.xml",
+            "intellij.platform.buildView": "@community//platform/buildView:resources/intellij.platform.buildView.xml",
+            "intellij.platform.buildView.backend": "@community//platform/buildView/backend:resources/intellij.platform.buildView.backend.xml",
+            "intellij.platform.buildView.frontend": "@community//platform/buildView/frontend:resources/intellij.platform.buildView.frontend.xml",
+            "intellij.platform.collaborationTools": "@community//platform/collaboration-tools:resources/intellij.platform.collaborationTools.xml",
+            "intellij.platform.collaborationTools.auth": "@community//platform/collaboration-tools/auth:resources/intellij.platform.collaborationTools.auth.xml",
+            "intellij.platform.collaborationTools.auth.base": "@community//platform/collaboration-tools/auth-base:resources/intellij.platform.collaborationTools.auth.base.xml",
+            "intellij.platform.collaborationTools.shared": "@community//platform/collaboration-tools/shared:resources/intellij.platform.collaborationTools.shared.xml",
+            "intellij.platform.diagnostic.freezeAnalyzer": "@community//platform/diagnostic/freezeAnalyzer:resources/intellij.platform.diagnostic.freezeAnalyzer.xml",
+            "intellij.platform.diagnostic.telemetry.agent.extension": "@community//platform/diagnostic/telemetry/agent-extension:resources/intellij.platform.diagnostic.telemetry.agent.extension.xml",
+            "intellij.platform.ide.impl.wsl": "@community//platform/platform-impl/eel:resources/intellij.platform.ide.impl.wsl.xml",
+            "intellij.platform.ide.scripting": "@community//platform/platform-impl/scripting:resources/intellij.platform.ide.scripting.xml",
+            "intellij.platform.inspect": "@community//platform/inspect:resources/intellij.platform.inspect.xml",
+            "intellij.platform.langInjection": "@community//plugins/IntelliLang:resources/intellij.platform.langInjection.xml",
+            "intellij.platform.langInjection.backend": "@community//plugins/IntelliLang/backend:resources/intellij.platform.langInjection.backend.xml",
+            "intellij.platform.lvcs.impl": "@community//platform/lvcs-impl:resources/intellij.platform.lvcs.impl.xml",
+            "intellij.platform.projectView": "@community//platform/projectView/shared:resources/intellij.platform.projectView.xml",
+            "intellij.platform.projectView.backend": "@community//platform/projectView/backend:resources/intellij.platform.projectView.backend.xml",
+            "intellij.platform.projectView.frontend": "@community//platform/projectView/frontend:resources/intellij.platform.projectView.frontend.xml",
+            "intellij.platform.registry.ui": "@community//platform/platform-impl/registry-ui:resources/intellij.platform.registry.ui.xml",
+            "intellij.platform.scriptDebugger.backend": "@community//platform/script-debugger/backend:resources/intellij.platform.scriptDebugger.backend.xml",
+            "intellij.platform.scriptDebugger.protocolReaderRuntime": "@community//platform/script-debugger/protocol/protocol-reader-runtime:resources/intellij.platform.scriptDebugger.protocolReaderRuntime.xml",
+            "intellij.platform.scriptDebugger.ui": "@community//platform/script-debugger/debugger-ui:resources/intellij.platform.scriptDebugger.ui.xml",
+            "intellij.platform.versionDownloadManager": "@community//platform/versionDownloadManager:resources/intellij.platform.versionDownloadManager.xml",
+            "intellij.platform.warmup": "@community//platform/warmup:resources/intellij.platform.warmup.xml",
+            "intellij.regexp": "@community//RegExpSupport:resources/intellij.regexp.xml",
+            "intellij.spellchecker.vcs": "@community//spellchecker/vcs:resources/intellij.spellchecker.vcs.xml",
+        },
         packed = {
             "intellij.emojipicker": "//plugins/emojipicker:emojipicker_content_module_jar",
             "intellij.platform.buildView": "//platform/buildView:buildView_content_module_jar",
@@ -956,6 +1219,10 @@ DIST_MODULE_SETS = {
         ],
         nested = [
         ],
+        descriptors = {
+            "intellij.platform.ide.internal": "@community//platform/platform-impl/internal:resources/intellij.platform.ide.internal.xml",
+            "intellij.platform.ide.internal.backend": "@community//platform/platform-impl/internal/ide.internal.backend:resources/intellij.platform.ide.internal.backend.xml",
+        },
         packed = {
             "intellij.platform.ide.internal": "//platform/platform-impl/internal:internal_content_module_jar",
             "intellij.platform.ide.internal.backend": "//platform/platform-impl/internal/ide.internal.backend:ide.internal.backend_content_module_jar",
@@ -977,6 +1244,10 @@ DIST_MODULE_SETS = {
         ],
         nested = [
         ],
+        descriptors = {
+            "intellij.libraries.eclipse.lsp4j.debug": "@community//libraries/lsp4j/debug:resources/intellij.libraries.eclipse.lsp4j.debug.xml",
+            "intellij.libraries.eclipse.lsp4j.jsonrpc.debug": "@community//libraries/lsp4j/jsonrpc-debug:resources/intellij.libraries.eclipse.lsp4j.jsonrpc.debug.xml",
+        },
         packed = {
             "intellij.libraries.eclipse.lsp4j.debug": "//libraries/lsp4j/debug:debug_content_module_jar",
             "intellij.libraries.eclipse.lsp4j.jsonrpc.debug": "//libraries/lsp4j/jsonrpc-debug:libraries-eclipse-lsp4j-jsonrpc-debug_content_module_jar",
@@ -993,6 +1264,10 @@ DIST_MODULE_SETS = {
         ],
         nested = [
         ],
+        descriptors = {
+            "intellij.libraries.grpc": "@community//libraries/grpc:resources/intellij.libraries.grpc.xml",
+            "intellij.libraries.grpc.netty.shaded": "@community//libraries/grpc-netty-shaded:resources/intellij.libraries.grpc.netty.shaded.xml",
+        },
         packed = {
             "intellij.libraries.grpc": "//libraries/grpc:grpc_content_module_jar",
             "intellij.libraries.grpc.netty.shaded": "//libraries/grpc-netty-shaded:grpc-netty-shaded_content_module_jar",
@@ -1031,6 +1306,20 @@ DIST_MODULE_SETS = {
             "intellij.libraries.rd.text": "embedded",
             "intellij.libraries.winp": "embedded",
         },
+        descriptors = {
+            "intellij.libraries.jediterm.core": "@community//libraries/jediterm-core:resources/intellij.libraries.jediterm.core.xml",
+            "intellij.libraries.jediterm.ui": "@community//libraries/jediterm-ui:resources/intellij.libraries.jediterm.ui.xml",
+            "intellij.libraries.jgoodies.common": "@community//libraries/jgoodies/common:resources/intellij.libraries.jgoodies.common.xml",
+            "intellij.libraries.jgoodies.forms": "@community//libraries/jgoodies/forms:resources/intellij.libraries.jgoodies.forms.xml",
+            "intellij.libraries.jsch.agent.proxy": "@community//libraries/jsch-agent-proxy:resources/intellij.libraries.jsch.agent.proxy.xml",
+            "intellij.libraries.miglayout.swing": "@community//libraries/miglayout-swing:resources/intellij.libraries.miglayout.swing.xml",
+            "intellij.libraries.rd.core": "@community//libraries/rd/core:resources/intellij.libraries.rd.core.xml",
+            "intellij.libraries.rd.framework": "@community//libraries/rd/framework:resources/intellij.libraries.rd.framework.xml",
+            "intellij.libraries.rd.swing": "@community//libraries/rd/swing:resources/intellij.libraries.rd.swing.xml",
+            "intellij.libraries.rd.text": "@community//libraries/rd/text:resources/intellij.libraries.rd.text.xml",
+            "intellij.libraries.sshj": "@community//libraries/sshj:resources/intellij.libraries.sshj.xml",
+            "intellij.libraries.winp": "@community//libraries/winp:resources/intellij.libraries.winp.xml",
+        },
         packed = {
             "intellij.libraries.jediterm.core": "//libraries/jediterm-core:jediterm-core_content_module_jar",
             "intellij.libraries.jediterm.ui": "//libraries/jediterm-ui:jediterm-ui_content_module_jar",
@@ -1061,6 +1350,14 @@ DIST_MODULE_SETS = {
         ],
         nested = [
         ],
+        descriptors = {
+            "intellij.libraries.commons.text": "@community//libraries/commons/text:resources/intellij.libraries.commons.text.xml",
+            "intellij.libraries.javax.activation": "@community//libraries/javax/activation:resources/intellij.libraries.javax.activation.xml",
+            "intellij.libraries.jettison": "@community//libraries/jettison:resources/intellij.libraries.jettison.xml",
+            "intellij.libraries.opencsv": "@community//libraries/opencsv:resources/intellij.libraries.opencsv.xml",
+            "intellij.libraries.squareup.okio.jvm": "@community//libraries/okio:resources/intellij.libraries.squareup.okio.jvm.xml",
+            "intellij.libraries.xstream": "@community//libraries/xstream:resources/intellij.libraries.xstream.xml",
+        },
         packed = {
             "intellij.libraries.commons.text": "//libraries/commons/text:text_content_module_jar",
             "intellij.libraries.javax.activation": "//libraries/javax/activation:activation_content_module_jar",
@@ -1092,6 +1389,17 @@ DIST_MODULE_SETS = {
         ],
         nested = [
         ],
+        descriptors = {
+            "intellij.libraries.jackson": "@community//libraries/jackson/jackson:resources/intellij.libraries.jackson.xml",
+            "intellij.libraries.jackson.databind": "@community//libraries/jackson/databind:resources/intellij.libraries.jackson.databind.xml",
+            "intellij.libraries.jackson.dataformat.toml": "@community//libraries/jackson/dataformat-toml:resources/intellij.libraries.jackson.dataformat.toml.xml",
+            "intellij.libraries.jackson.dataformat.xml": "@community//libraries/jackson/dataformat-xml:resources/intellij.libraries.jackson.dataformat.xml.xml",
+            "intellij.libraries.jackson.dataformat.yaml": "@community//libraries/jackson/dataformat-yaml:resources/intellij.libraries.jackson.dataformat.yaml.xml",
+            "intellij.libraries.jackson.datatype.jdk8": "@community//libraries/jackson/datatype-jdk8:resources/intellij.libraries.jackson.datatype.jdk8.xml",
+            "intellij.libraries.jackson.datatype.jsr310": "@community//libraries/jackson/datatype-jsr310:resources/intellij.libraries.jackson.datatype.jsr310.xml",
+            "intellij.libraries.jackson.jr.objects": "@community//libraries/jackson/jr-objects:resources/intellij.libraries.jackson.jr.objects.xml",
+            "intellij.libraries.jackson.module.kotlin": "@community//libraries/jackson/module-kotlin:resources/intellij.libraries.jackson.module.kotlin.xml",
+        },
         packed = {
             "intellij.libraries.jackson": "//libraries/jackson/jackson:jackson_content_module_jar",
             "intellij.libraries.jackson.databind": "//libraries/jackson/databind:databind_content_module_jar",
@@ -1134,6 +1442,15 @@ DIST_MODULE_SETS = {
             "intellij.libraries.jackson3.jr.objects": "embedded",
             "intellij.libraries.jackson3.module.kotlin": "embedded",
         },
+        descriptors = {
+            "intellij.libraries.jackson.annotations": "@community//libraries/jackson/annotations:resources/intellij.libraries.jackson.annotations.xml",
+            "intellij.libraries.jackson3": "@community//libraries/jackson3/jackson:resources/intellij.libraries.jackson3.xml",
+            "intellij.libraries.jackson3.databind": "@community//libraries/jackson3/databind:resources/intellij.libraries.jackson3.databind.xml",
+            "intellij.libraries.jackson3.dataformat.toml": "@community//libraries/jackson3/dataformat-toml:resources/intellij.libraries.jackson3.dataformat.toml.xml",
+            "intellij.libraries.jackson3.dataformat.yaml": "@community//libraries/jackson3/dataformat-yaml:resources/intellij.libraries.jackson3.dataformat.yaml.xml",
+            "intellij.libraries.jackson3.jr.objects": "@community//libraries/jackson3/jr-objects:resources/intellij.libraries.jackson3.jr.objects.xml",
+            "intellij.libraries.jackson3.module.kotlin": "@community//libraries/jackson3/module-kotlin:resources/intellij.libraries.jackson3.module.kotlin.xml",
+        },
         packed = {
             "intellij.libraries.jackson.annotations": "//libraries/jackson/annotations:annotations_content_module_jar",
             "intellij.libraries.jackson3": "//libraries/jackson3/jackson:libraries-jackson3_content_module_jar",
@@ -1168,6 +1485,16 @@ DIST_MODULE_SETS = {
             "intellij.libraries.ktor.network.tls": "embedded",
             "intellij.libraries.ktor.utils": "embedded",
         },
+        descriptors = {
+            "intellij.libraries.kotlinx.serialization.json.io": "@community//libraries/kotlinx/serialization/json-io:resources/intellij.libraries.kotlinx.serialization.json.io.xml",
+            "intellij.libraries.ktor.client": "@community//libraries/ktor/client:resources/intellij.libraries.ktor.client.xml",
+            "intellij.libraries.ktor.client.cio": "@community//libraries/ktor/client-cio:resources/intellij.libraries.ktor.client.cio.xml",
+            "intellij.libraries.ktor.io": "@community//libraries/ktor/io:resources/intellij.libraries.ktor.io.xml",
+            "intellij.libraries.ktor.network.tls": "@community//libraries/ktor/network-tls:resources/intellij.libraries.ktor.network.tls.xml",
+            "intellij.libraries.ktor.server.cio": "@community//libraries/ktor/server-cio:resources/intellij.libraries.ktor.server.cio.xml",
+            "intellij.libraries.ktor.server.core": "@community//libraries/ktor/server-core:resources/intellij.libraries.ktor.server.core.xml",
+            "intellij.libraries.ktor.utils": "@community//libraries/ktor/utils:resources/intellij.libraries.ktor.utils.xml",
+        },
         packed = {
             "intellij.libraries.kotlinx.serialization.json.io": "//libraries/kotlinx/serialization/json-io:libraries-kotlinx-serialization-json-io_content_module_jar",
             "intellij.libraries.ktor.client": "//libraries/ktor/client:client_content_module_jar",
@@ -1195,6 +1522,10 @@ DIST_MODULE_SETS = {
             "intellij.libraries.eclipse.lsp4j": "embedded",
             "intellij.libraries.eclipse.lsp4j.jsonrpc": "embedded",
         },
+        descriptors = {
+            "intellij.libraries.eclipse.lsp4j": "@community//libraries/lsp4j:resources/intellij.libraries.eclipse.lsp4j.xml",
+            "intellij.libraries.eclipse.lsp4j.jsonrpc": "@community//libraries/lsp4j/jsonrpc:resources/intellij.libraries.eclipse.lsp4j.jsonrpc.xml",
+        },
         packed = {
             "intellij.libraries.eclipse.lsp4j": "//libraries/lsp4j:lsp4j_content_module_jar",
             "intellij.libraries.eclipse.lsp4j.jsonrpc": "//libraries/lsp4j/jsonrpc:jsonrpc_content_module_jar",
@@ -1215,6 +1546,13 @@ DIST_MODULE_SETS = {
             "intellij.libraries.netty.codec.compression": "embedded",
             "intellij.libraries.netty.codec.http": "embedded",
             "intellij.libraries.netty.codec.protobuf": "embedded",
+        },
+        descriptors = {
+            "intellij.libraries.netty.buffer": "@community//libraries/netty/buffer:resources/intellij.libraries.netty.buffer.xml",
+            "intellij.libraries.netty.codec.compression": "@community//libraries/netty/codec-compression:resources/intellij.libraries.netty.codec.compression.xml",
+            "intellij.libraries.netty.codec.http": "@community//libraries/netty/codec-http:resources/intellij.libraries.netty.codec.http.xml",
+            "intellij.libraries.netty.codec.protobuf": "@community//libraries/netty/codec-protobuf:resources/intellij.libraries.netty.codec.protobuf.xml",
+            "intellij.libraries.netty.handler.proxy": "@community//libraries/netty/handler-proxy:resources/intellij.libraries.netty.handler.proxy.xml",
         },
         packed = {
             "intellij.libraries.netty.buffer": "//libraries/netty/buffer:buffer_content_module_jar",
@@ -1240,6 +1578,11 @@ DIST_MODULE_SETS = {
             "intellij.libraries.opentelemetry.extension.kotlin": "embedded",
             "intellij.libraries.opentelemetry.semconv": "embedded",
         },
+        descriptors = {
+            "intellij.libraries.opentelemetry": "@community//libraries/opentelemetry:resources/intellij.libraries.opentelemetry.xml",
+            "intellij.libraries.opentelemetry.extension.kotlin": "@community//libraries/opentelemetry-extension-kotlin:resources/intellij.libraries.opentelemetry.extension.kotlin.xml",
+            "intellij.libraries.opentelemetry.semconv": "@community//libraries/opentelemetry-semconv:resources/intellij.libraries.opentelemetry.semconv.xml",
+        },
         packed = {
             "intellij.libraries.opentelemetry": "//libraries/opentelemetry:opentelemetry_content_module_jar",
             "intellij.libraries.opentelemetry.extension.kotlin": "//libraries/opentelemetry-extension-kotlin:opentelemetry-extension-kotlin_content_module_jar",
@@ -1258,6 +1601,11 @@ DIST_MODULE_SETS = {
             "intellij.libraries.opentelemetry.exporter.otlp.common": "embedded",
             "intellij.libraries.opentelemetry.exporter.sender.jdk": "embedded",
             "intellij.libraries.opentelemetry.sdk.autoconfigure.spi": "embedded",
+        },
+        descriptors = {
+            "intellij.libraries.opentelemetry.exporter.otlp.common": "@community//libraries/opentelemetry-exporter-otlp-common:resources/intellij.libraries.opentelemetry.exporter.otlp.common.xml",
+            "intellij.libraries.opentelemetry.exporter.sender.jdk": "@community//libraries/opentelemetry-exporter-sender-jdk:resources/intellij.libraries.opentelemetry.exporter.sender.jdk.xml",
+            "intellij.libraries.opentelemetry.sdk.autoconfigure.spi": "@community//libraries/opentelemetry-sdk-autoconfigure-spi:resources/intellij.libraries.opentelemetry.sdk.autoconfigure.spi.xml",
         },
         packed = {
             "intellij.libraries.opentelemetry.exporter.otlp.common": "//libraries/opentelemetry-exporter-otlp-common:opentelemetry-exporter-otlp-common_content_module_jar",
@@ -1406,6 +1754,81 @@ DIST_MODULE_SETS = {
             "intellij.libraries.xtext.xbase": "embedded",
             "intellij.libraries.xz": "embedded",
         },
+        descriptors = {
+            "intellij.libraries.aalto.xml": "@community//libraries/aalto-xml:resources/intellij.libraries.aalto.xml.xml",
+            "intellij.libraries.asm": "@community//libraries/asm:resources/intellij.libraries.asm.xml",
+            "intellij.libraries.asm.tools": "@community//libraries/asm-tools:resources/intellij.libraries.asm.tools.xml",
+            "intellij.libraries.automaton": "@community//libraries/automaton:resources/intellij.libraries.automaton.xml",
+            "intellij.libraries.blockmap": "@community//libraries/blockmap:resources/intellij.libraries.blockmap.xml",
+            "intellij.libraries.bouncy.castle.pgp": "@community//libraries/bouncy-castle-pgp:resources/intellij.libraries.bouncy.castle.pgp.xml",
+            "intellij.libraries.bouncy.castle.provider": "@community//libraries/bouncy-castle-provider:resources/intellij.libraries.bouncy.castle.provider.xml",
+            "intellij.libraries.caffeine": "@community//libraries/caffeine:resources/intellij.libraries.caffeine.xml",
+            "intellij.libraries.classgraph": "@community//libraries/classgraph:resources/intellij.libraries.classgraph.xml",
+            "intellij.libraries.cli.parser": "@community//libraries/cli-parser:resources/intellij.libraries.cli.parser.xml",
+            "intellij.libraries.commons.cli": "@community//libraries/commons/cli:resources/intellij.libraries.commons.cli.xml",
+            "intellij.libraries.commons.codec": "@community//libraries/commons/codec:resources/intellij.libraries.commons.codec.xml",
+            "intellij.libraries.commons.compress": "@community//libraries/commons/compress:resources/intellij.libraries.commons.compress.xml",
+            "intellij.libraries.commons.imaging": "@community//libraries/commons/imaging:resources/intellij.libraries.commons.imaging.xml",
+            "intellij.libraries.commons.io": "@community//libraries/commons/io:resources/intellij.libraries.commons.io.xml",
+            "intellij.libraries.commons.lang3": "@community//libraries/commons/lang3:resources/intellij.libraries.commons.lang3.xml",
+            "intellij.libraries.commons.logging": "@community//libraries/commons/logging:resources/intellij.libraries.commons.logging.xml",
+            "intellij.libraries.fastutil": "@community//libraries/fastutil:resources/intellij.libraries.fastutil.xml",
+            "intellij.libraries.fus.ap.validation": "@community//libraries/fus-ap-validation:resources/intellij.libraries.fus.ap.validation.xml",
+            "intellij.libraries.gson": "@community//libraries/gson:resources/intellij.libraries.gson.xml",
+            "intellij.libraries.guava": "@community//libraries/guava:resources/intellij.libraries.guava.xml",
+            "intellij.libraries.hash4j": "@community//libraries/hash4j:resources/intellij.libraries.hash4j.xml",
+            "intellij.libraries.hdr.histogram": "@community//libraries/hdr-histogram:resources/intellij.libraries.hdr.histogram.xml",
+            "intellij.libraries.http.client": "@community//libraries/http-client:resources/intellij.libraries.http.client.xml",
+            "intellij.libraries.imgscalr": "@community//libraries/imgscalr:resources/intellij.libraries.imgscalr.xml",
+            "intellij.libraries.ini4j": "@community//libraries/ini4j:resources/intellij.libraries.ini4j.xml",
+            "intellij.libraries.ion": "@community//libraries/ion:resources/intellij.libraries.ion.xml",
+            "intellij.libraries.java.compatibility": "@community//libraries/java-compatibility:resources/intellij.libraries.java.compatibility.xml",
+            "intellij.libraries.java.websocket": "@community//libraries/java-websocket:resources/intellij.libraries.java.websocket.xml",
+            "intellij.libraries.javax.annotation": "@community//libraries/javax/annotation:resources/intellij.libraries.javax.annotation.xml",
+            "intellij.libraries.jaxb": "@community//libraries/jaxb:resources/intellij.libraries.jaxb.xml",
+            "intellij.libraries.jaxen": "@community//libraries/jaxen:resources/intellij.libraries.jaxen.xml",
+            "intellij.libraries.jbr": "@community//libraries/jbr:resources/intellij.libraries.jbr.xml",
+            "intellij.libraries.jcip": "@community//libraries/jcip:resources/intellij.libraries.jcip.xml",
+            "intellij.libraries.jetbrains.annotations": "@community//libraries/jetbrains/annotations:resources/intellij.libraries.jetbrains.annotations.xml",
+            "intellij.libraries.jsonpath": "@community//libraries/jsonpath:resources/intellij.libraries.jsonpath.xml",
+            "intellij.libraries.jsoup": "@community//libraries/jsoup:resources/intellij.libraries.jsoup.xml",
+            "intellij.libraries.jspecify": "@community//libraries/jspecify:resources/intellij.libraries.jspecify.xml",
+            "intellij.libraries.jsvg": "@community//libraries/jsvg:resources/intellij.libraries.jsvg.xml",
+            "intellij.libraries.jvm.native.trusted.roots": "@community//libraries/jvm-native-trusted-roots:resources/intellij.libraries.jvm.native.trusted.roots.xml",
+            "intellij.libraries.jzlib": "@community//libraries/jzlib:resources/intellij.libraries.jzlib.xml",
+            "intellij.libraries.kotlin.metadata": "@community//libraries/kotlin/metadata:resources/intellij.libraries.kotlin.metadata.xml",
+            "intellij.libraries.kotlin.reflect": "@community//libraries/kotlin/reflect:resources/intellij.libraries.kotlin.reflect.xml",
+            "intellij.libraries.kotlinx.collections.immutable": "@community//libraries/kotlinx/collections-immutable:resources/intellij.libraries.kotlinx.collections.immutable.xml",
+            "intellij.libraries.kotlinx.coroutines.core": "@community//libraries/kotlinx/coroutines/core:resources/intellij.libraries.kotlinx.coroutines.core.xml",
+            "intellij.libraries.kotlinx.coroutines.debug": "@community//libraries/kotlinx/coroutines/debug:resources/intellij.libraries.kotlinx.coroutines.debug.xml",
+            "intellij.libraries.kotlinx.coroutines.guava": "@community//libraries/kotlinx/coroutines/guava:resources/intellij.libraries.kotlinx.coroutines.guava.xml",
+            "intellij.libraries.kotlinx.coroutines.slf4j": "@community//libraries/kotlinx/coroutines/slf4j:resources/intellij.libraries.kotlinx.coroutines.slf4j.xml",
+            "intellij.libraries.kotlinx.datetime": "@community//libraries/kotlinx/datetime:resources/intellij.libraries.kotlinx.datetime.xml",
+            "intellij.libraries.kotlinx.html": "@community//libraries/kotlinx/html:resources/intellij.libraries.kotlinx.html.xml",
+            "intellij.libraries.kotlinx.io": "@community//libraries/io:resources/intellij.libraries.kotlinx.io.xml",
+            "intellij.libraries.kotlinx.serialization.cbor": "@community//libraries/kotlinx/serialization/cbor:resources/intellij.libraries.kotlinx.serialization.cbor.xml",
+            "intellij.libraries.kotlinx.serialization.core": "@community//libraries/kotlinx/serialization/core:resources/intellij.libraries.kotlinx.serialization.core.xml",
+            "intellij.libraries.kotlinx.serialization.json": "@community//libraries/kotlinx/serialization/json:resources/intellij.libraries.kotlinx.serialization.json.xml",
+            "intellij.libraries.kotlinx.serialization.protobuf": "@community//libraries/kotlinx/serialization/protobuf:resources/intellij.libraries.kotlinx.serialization.protobuf.xml",
+            "intellij.libraries.kryo5": "@community//libraries/kryo5:resources/intellij.libraries.kryo5.xml",
+            "intellij.libraries.lz4": "@community//libraries/lz4:resources/intellij.libraries.lz4.xml",
+            "intellij.libraries.markdown": "@community//libraries/markdown:resources/intellij.libraries.markdown.xml",
+            "intellij.libraries.mvstore": "@community//libraries/mvstore:resources/intellij.libraries.mvstore.xml",
+            "intellij.libraries.oro.matcher": "@community//libraries/oro-matcher:resources/intellij.libraries.oro.matcher.xml",
+            "intellij.libraries.protobuf": "@community//libraries/protobuf:resources/intellij.libraries.protobuf.xml",
+            "intellij.libraries.protobuf.java.util": "@community//libraries/protobuf-java-util:resources/intellij.libraries.protobuf.java.util.xml",
+            "intellij.libraries.protobuf.kotlin": "@community//libraries/protobuf-kotlin:resources/intellij.libraries.protobuf.kotlin.xml",
+            "intellij.libraries.proxy.vole": "@community//libraries/proxy-vole:resources/intellij.libraries.proxy.vole.xml",
+            "intellij.libraries.rhino": "@community//libraries/rhino:resources/intellij.libraries.rhino.xml",
+            "intellij.libraries.semver": "@community//libraries/semver:resources/intellij.libraries.semver.xml",
+            "intellij.libraries.snakeyaml": "@community//libraries/snakeyaml:resources/intellij.libraries.snakeyaml.xml",
+            "intellij.libraries.snakeyaml.engine": "@community//libraries/snakeyaml-engine:resources/intellij.libraries.snakeyaml.engine.xml",
+            "intellij.libraries.stream": "@community//libraries/stream:resources/intellij.libraries.stream.xml",
+            "intellij.libraries.teamcity.service.messages": "@community//libraries/teamcity/service-messages:resources/intellij.libraries.teamcity.service.messages.xml",
+            "intellij.libraries.velocity": "@community//libraries/velocity:resources/intellij.libraries.velocity.xml",
+            "intellij.libraries.xtext.xbase": "@community//libraries/xtext-xbase:resources/intellij.libraries.xtext.xbase.xml",
+            "intellij.libraries.xz": "@community//libraries/xz:resources/intellij.libraries.xz.xml",
+        },
         packed = {
             "intellij.libraries.aalto.xml": "//libraries/aalto-xml:aalto-xml_content_module_jar",
             "intellij.libraries.asm": "//libraries/asm:asm_content_module_jar",
@@ -1510,6 +1933,12 @@ DIST_MODULE_SETS = {
         nested = [
             "intellij.moduleSets.libraries.lsp4j",
         ],
+        descriptors = {
+            "intellij.platform.lsp": "@community//platform/lsp:resources/intellij.platform.lsp.xml",
+            "intellij.platform.lsp.impl": "@community//platform/lsp-impl:resources/intellij.platform.lsp.impl.xml",
+            "intellij.platform.lsp.impl.problems": "@community//platform/lsp-impl/problems:resources/intellij.platform.lsp.impl.problems.xml",
+            "intellij.platform.lsp.impl.structureView": "@community//platform/lsp-impl/structureView:resources/intellij.platform.lsp.impl.structureView.xml",
+        },
         packed = {
             "intellij.platform.lsp": "//platform/lsp:lsp_content_module_jar",
             "intellij.platform.lsp.impl": "//platform/lsp-impl:lsp-impl_content_module_jar",
@@ -1529,6 +1958,9 @@ DIST_MODULE_SETS = {
         ],
         nested = [
         ],
+        descriptors = {
+            "intellij.platform.ml.impl": "@community//platform/ml-impl:resources/intellij.platform.ml.impl.xml",
+        },
         packed = {
             "intellij.platform.ml.impl": "//platform/ml-impl:ml-impl_content_module_jar",
         },
@@ -1554,6 +1986,11 @@ DIST_MODULE_SETS = {
             "intellij.platform.resources.en.fileTemplates": "embedded",
             "intellij.platform.resources.fileTypes": "embedded",
         },
+        descriptors = {
+            "intellij.platform.resources.applicationInfo": "@community//platform/platform-resources-application-info:src/intellij.platform.resources.applicationInfo.xml",
+            "intellij.platform.resources.en.fileTemplates": "@community//platform/platform-resources-en-file-templates:src/intellij.platform.resources.en.fileTemplates.xml",
+            "intellij.platform.resources.fileTypes": "@community//platform/platform-resources-file-types:src/intellij.platform.resources.fileTypes.xml",
+        },
         packed = {
             "intellij.platform.resources.applicationInfo": "//platform/platform-resources-application-info:resources-applicationInfo_content_module_jar",
             "intellij.platform.resources.en.fileTemplates": "//platform/platform-resources-en-file-templates:resources-en-fileTemplates_content_module_jar",
@@ -1568,6 +2005,11 @@ DIST_MODULE_SETS = {
         ],
         nested = [
         ],
+        descriptors = {
+            "intellij.platform.polySymbols": "@community//platform/polySymbols/shared:resources/intellij.platform.polySymbols.xml",
+            "intellij.platform.polySymbols.backend": "@community//platform/polySymbols/backend:resources/intellij.platform.polySymbols.backend.xml",
+            "intellij.platform.polySymbols.web": "@community//platform/polySymbols/web:resources/intellij.platform.polySymbols.web.xml",
+        },
         packed = {
             "intellij.platform.polySymbols": "//platform/polySymbols/shared:polySymbols_content_module_jar",
             "intellij.platform.polySymbols.backend": "//platform/polySymbols/backend:backend_content_module_jar",
@@ -1614,6 +2056,12 @@ DIST_MODULE_SETS = {
         ],
         nested = [
         ],
+        descriptors = {
+            "intellij.platform.rpc.backend": "@community//platform/kernel/rpc.backend:resources/intellij.platform.rpc.backend.xml",
+            "intellij.platform.rpc.topics": "@community//platform/remote-topics/shared:resources/intellij.platform.rpc.topics.xml",
+            "intellij.platform.rpc.topics.backend": "@community//platform/remote-topics/backend:resources/intellij.platform.rpc.topics.backend.xml",
+            "intellij.platform.rpc.topics.frontend": "@community//platform/remote-topics/frontend:resources/intellij.platform.rpc.topics.frontend.xml",
+        },
         packed = {
             "intellij.platform.rpc.backend": "//platform/kernel/rpc.backend:rpc.backend_content_module_jar",
             "intellij.platform.rpc.topics": "//platform/remote-topics/shared:rpc-topics_content_module_jar",
@@ -1646,6 +2094,11 @@ DIST_MODULE_SETS = {
             "intellij.platform.klogger": "embedded",
             "intellij.platform.rpc.lite": "embedded",
         },
+        descriptors = {
+            "intellij.platform.klogger": "@community//platform/kernel/klogger:resources/intellij.platform.klogger.xml",
+            "intellij.platform.rpc": "@community//platform/kernel/rpc:resources/intellij.platform.rpc.xml",
+            "intellij.platform.rpc.lite": "@community//platform/kernel/rpc.lite:resources/intellij.platform.rpc.lite.xml",
+        },
         packed = {
             "intellij.platform.klogger": "//platform/kernel/klogger:klogger_content_module_jar",
             "intellij.platform.rpc": "//platform/kernel/rpc:rpc_content_module_jar",
@@ -1662,6 +2115,10 @@ DIST_MODULE_SETS = {
         ],
         nested = [
         ],
+        descriptors = {
+            "intellij.platform.scopes": "@community//platform/scopes:resources/intellij.platform.scopes.xml",
+            "intellij.platform.scopes.backend": "@community//platform/scopes/backend:resources/intellij.platform.scopes.backend.xml",
+        },
         packed = {
             "intellij.platform.scopes": "//platform/scopes:scopes_content_module_jar",
             "intellij.platform.scopes.backend": "//platform/scopes/backend:backend_content_module_jar",
@@ -1684,6 +2141,11 @@ DIST_MODULE_SETS = {
         ],
         nested = [
         ],
+        descriptors = {
+            "intellij.platform.searchEverywhere": "@community//platform/searchEverywhere/shared:resources/intellij.platform.searchEverywhere.xml",
+            "intellij.platform.searchEverywhere.backend": "@community//platform/searchEverywhere/backend:resources/intellij.platform.searchEverywhere.backend.xml",
+            "intellij.platform.searchEverywhere.frontend": "@community//platform/searchEverywhere/frontend:resources/intellij.platform.searchEverywhere.frontend.xml",
+        },
         packed = {
             "intellij.platform.searchEverywhere": "//platform/searchEverywhere/shared:searchEverywhere_content_module_jar",
             "intellij.platform.searchEverywhere.backend": "//platform/searchEverywhere/backend:backend_content_module_jar",
@@ -1707,6 +2169,10 @@ DIST_MODULE_SETS = {
         ],
         nested = [
         ],
+        descriptors = {
+            "intellij.libraries.jgit": "@community//libraries/jgit:resources/intellij.libraries.jgit.xml",
+            "intellij.settingsSync.core": "@community//platform/settings-sync-core:resources/intellij.settingsSync.core.xml",
+        },
         packed = {
             "intellij.libraries.jgit": "//libraries/jgit:jgit_content_module_jar",
             "intellij.settingsSync.core": "//platform/settings-sync-core:settingsSync-core_content_module_jar",
@@ -1723,6 +2189,10 @@ DIST_MODULE_SETS = {
         ],
         nested = [
         ],
+        descriptors = {
+            "intellij.libraries.lucene.common": "@community//libraries/lucene.common:resources/intellij.libraries.lucene.common.xml",
+            "intellij.spellchecker": "@community//spellchecker:resources/intellij.spellchecker.xml",
+        },
         packed = {
             "intellij.libraries.lucene.common": "//libraries/lucene.common:lucene.common_content_module_jar",
             "intellij.spellchecker": "//spellchecker:spellchecker_content_module_jar",
@@ -1746,6 +2216,16 @@ DIST_MODULE_SETS = {
         nested = [
             "intellij.moduleSets.rpc.backend.extended",
         ],
+        descriptors = {
+            "intellij.platform.backend": "@community//platform/backend:resources/intellij.platform.backend.xml",
+            "intellij.platform.backend.baseline": "@community//platform/backend/baseline:resources/intellij.platform.backend.baseline.xml",
+            "intellij.platform.frontend": "@community//platform/platform-frontend:resources/intellij.platform.frontend.xml",
+            "intellij.platform.lang.impl.backend": "@community//platform/lang-impl/backend:resources/intellij.platform.lang.impl.backend.xml",
+            "intellij.platform.monolith": "@community//platform/monolith:resources/intellij.platform.monolith.xml",
+            "intellij.platform.progress.backend": "@community//platform/progress/backend:resources/intellij.platform.progress.backend.xml",
+            "intellij.platform.project.backend": "@community//platform/project/backend:resources/intellij.platform.project.backend.xml",
+            "intellij.platform.settings.local": "@community//platform/settings-local:resources/intellij.platform.settings.local.xml",
+        },
         packed = {
             "intellij.platform.backend": "//platform/backend:backend_content_module_jar",
             "intellij.platform.backend.baseline": "//platform/backend/baseline:baseline_content_module_jar",
@@ -1787,6 +2267,9 @@ DIST_MODULE_SETS = {
         loading = {
             "intellij.platform.diagnostic.telemetry": "embedded",
         },
+        descriptors = {
+            "intellij.platform.diagnostic.telemetry": "@community//platform/diagnostic/telemetry:resources/intellij.platform.diagnostic.telemetry.xml",
+        },
         packed = {
             "intellij.platform.diagnostic.telemetry": "//platform/diagnostic/telemetry:telemetry_content_module_jar",
         },
@@ -1803,6 +2286,10 @@ DIST_MODULE_SETS = {
             "intellij.platform.diagnostic.telemetry.exporters": "embedded",
             "intellij.platform.diagnostic.telemetry.impl": "embedded",
         },
+        descriptors = {
+            "intellij.platform.diagnostic.telemetry.exporters": "@community//platform/diagnostic/telemetry.exporters:resources/intellij.platform.diagnostic.telemetry.exporters.xml",
+            "intellij.platform.diagnostic.telemetry.impl": "@community//platform/diagnostic/telemetry-impl:resources/intellij.platform.diagnostic.telemetry.impl.xml",
+        },
         packed = {
             "intellij.platform.diagnostic.telemetry.exporters": "//platform/diagnostic/telemetry.exporters:telemetry.exporters_content_module_jar",
             "intellij.platform.diagnostic.telemetry.impl": "//platform/diagnostic/telemetry-impl:telemetry-impl_content_module_jar",
@@ -1815,6 +2302,9 @@ DIST_MODULE_SETS = {
         nested = [
             "intellij.moduleSets.vcs.shared",
         ],
+        descriptors = {
+            "intellij.libraries.microba": "@community//libraries/microba:resources/intellij.libraries.microba.xml",
+        },
         packed = {
             "intellij.libraries.microba": "//libraries/microba:microba_content_module_jar",
         },
@@ -1831,6 +2321,12 @@ DIST_MODULE_SETS = {
         ],
         nested = [
         ],
+        descriptors = {
+            "intellij.platform.vcs.core": "@community//platform/vcs-api/vcs-api-core:resources/intellij.platform.vcs.core.xml",
+            "intellij.platform.vcs.dvcs.impl.shared": "@community//platform/dvcs-impl/shared:resources/intellij.platform.vcs.dvcs.impl.shared.xml",
+            "intellij.platform.vcs.impl.shared": "@community//platform/vcs-impl/shared:resources/intellij.platform.vcs.impl.shared.xml",
+            "intellij.platform.vcs.shared": "@community//platform/vcs-api/shared:resources/intellij.platform.vcs.shared.xml",
+        },
         packed = {
             "intellij.platform.vcs.core": "//platform/vcs-api/vcs-api-core:vcs-core_content_module_jar",
             "intellij.platform.vcs.dvcs.impl.shared": "//platform/dvcs-impl/shared:shared_content_module_jar",
@@ -1852,6 +2348,9 @@ DIST_MODULE_SETS = {
         ],
         loading = {
             "intellij.libraries.cglib": "embedded",
+        },
+        descriptors = {
+            "intellij.libraries.cglib": "@community//platform/libraries/cglib:resources/intellij.libraries.cglib.xml",
         },
         packed = {
             "intellij.libraries.cglib": "//platform/libraries/cglib:cglib_content_module_jar",

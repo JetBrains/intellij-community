@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
@@ -31,11 +32,9 @@ jvm_library(
 ### auto-generated section `build intellij.libraries.eclipse.lsp4j.debug` end
 
 ### auto-generated section `iml intellij.libraries.eclipse.lsp4j.debug` start
-exports_files(
-    [
-        "intellij.libraries.eclipse.lsp4j.debug.iml",
-        "resources/intellij.libraries.eclipse.lsp4j.debug.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.libraries.eclipse.lsp4j.debug",
+    descriptors = ["resources/intellij.libraries.eclipse.lsp4j.debug.xml"],
+    target = "debug",
 )
 ### auto-generated section `iml intellij.libraries.eclipse.lsp4j.debug` end

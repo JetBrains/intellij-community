@@ -1,17 +1,25 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@community//platform/build-scripts/bazel-rules:ij_plugin.bzl", "ij_plugin")
-load("@jps_dynamic_deps_community//:targets.bzl", "dist_plugin")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:dist_plugin.bzl", "dist_plugin")
 
 ### auto-generated section `dev intellij.compilation.charts` start
 dist_plugin(
     content_modules = ["intellij.compilation.charts.jps"],
     descriptor = "resources/META-INF/plugin.xml",
+    descriptors = {
+        "@community//plugins/compilation-charts/jps-plugin:resources/intellij.compilation.charts.jps.xml": "intellij.compilation.charts.jps.xml",
+    },
     jars = {
         "lib/compilation-charts.jar": ["intellij.compilation.charts"],
     },
     main_module = "intellij.compilation.charts",
     mode_refused_content_modules = {
         "frontend": ["intellij.compilation.charts.jps"],
+    },
+    module_labels = {
+        "intellij.compilation.charts": "@community//plugins/compilation-charts:compilation-charts",
+        "intellij.compilation.charts.jps": "@community//plugins/compilation-charts/jps-plugin:compilation-charts-jps",
     },
 )
 ### auto-generated section `dev intellij.compilation.charts` end
@@ -84,11 +92,10 @@ ij_plugin(
 ### auto-generated section `plugin intellij.compilation.charts` end
 
 ### auto-generated section `iml intellij.compilation.charts` start
-exports_files(
-    [
-        "intellij.compilation.charts.iml",
-        "resources/META-INF/plugin.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.compilation.charts",
+    descriptors = ["resources/META-INF/plugin.xml"],
+    plugin = True,
+    target = "compilation-charts",
 )
 ### auto-generated section `iml intellij.compilation.charts` end

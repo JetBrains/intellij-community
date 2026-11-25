@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
@@ -54,11 +55,9 @@ jvm_library(
 ### auto-generated section `build intellij.python.ruff.frontend` end
 
 ### auto-generated section `iml intellij.python.ruff.frontend` start
-exports_files(
-    [
-        "intellij.python.ruff.frontend.iml",
-        "resources/intellij.python.ruff.frontend.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.python.ruff.frontend",
+    descriptors = ["resources/intellij.python.ruff.frontend.xml"],
+    target = "frontend",
 )
 ### auto-generated section `iml intellij.python.ruff.frontend` end

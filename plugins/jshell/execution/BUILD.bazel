@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@community//platform/build-scripts/bazel-rules:ij_plugin_module.bzl", "ij_plugin_module")
 load("@rules_java//java:defs.bzl", "java_import")
 
@@ -36,11 +37,10 @@ ij_plugin_module(
 ### auto-generated section `build intellij.java.jshell.execution` end
 
 ### auto-generated section `iml intellij.java.jshell.execution` start
-exports_files(
-    [
-        "intellij.java.jshell.execution.iml",
-        "resources/intellij.java.jshell.execution.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.java.jshell.execution",
+    descriptors = ["resources/intellij.java.jshell.execution.xml"],
+    libraries = ["//plugins/jshell/execution:jshell-frontend.jar"],
+    target = "execution",
 )
 ### auto-generated section `iml intellij.java.jshell.execution` end

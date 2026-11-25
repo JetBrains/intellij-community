@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
@@ -38,11 +39,9 @@ jvm_library(
 ### auto-generated section `build intellij.grazie.todo` end
 
 ### auto-generated section `iml intellij.grazie.todo` start
-exports_files(
-    [
-        "intellij.grazie.todo.iml",
-        "src/main/resources/intellij.grazie.todo.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.grazie.todo",
+    descriptors = ["src/main/resources/intellij.grazie.todo.xml"],
+    target = "todo",
 )
 ### auto-generated section `iml intellij.grazie.todo` end

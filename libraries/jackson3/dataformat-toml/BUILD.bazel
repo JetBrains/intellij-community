@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
@@ -31,11 +32,9 @@ jvm_library(
 ### auto-generated section `build intellij.libraries.jackson3.dataformat.toml` end
 
 ### auto-generated section `iml intellij.libraries.jackson3.dataformat.toml` start
-exports_files(
-    [
-        "intellij.libraries.jackson3.dataformat.toml.iml",
-        "resources/intellij.libraries.jackson3.dataformat.toml.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.libraries.jackson3.dataformat.toml",
+    descriptors = ["resources/intellij.libraries.jackson3.dataformat.toml.xml"],
+    target = "libraries-jackson3-dataformat-toml",
 )
 ### auto-generated section `iml intellij.libraries.jackson3.dataformat.toml` end

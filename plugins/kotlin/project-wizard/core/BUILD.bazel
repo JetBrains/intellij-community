@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
@@ -80,16 +81,16 @@ jvm_library(
 ### auto-generated section `build intellij.kotlin.projectWizard.core` end
 
 ### auto-generated section `iml intellij.kotlin.projectWizard.core` start
-exports_files(
-    [
-        "intellij.kotlin.projectWizard.core.iml",
-        "resources/intellij.kotlin.projectWizard.core.xml",
+jps_module(
+    name = "intellij.kotlin.projectWizard.core",
+    descriptors = ["resources/intellij.kotlin.projectWizard.core.xml"],
+    target = "core",
+    exports = [
         "resources/org/jetbrains/kotlin/tools/projectWizard/templates/android/AndroidManifest.xml",
         "resources/org/jetbrains/kotlin/tools/projectWizard/templates/android/colors.xml",
         "resources/org/jetbrains/kotlin/tools/projectWizard/templates/android/styles.xml",
         "resources/org/jetbrains/kotlin/tools/projectWizard/templates/android/stylesCompose.xml",
     ],
-    visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.kotlin.projectWizard.core` end
 
@@ -118,11 +119,10 @@ jvm_library(
 ### auto-generated section `build intellij.kotlin.projectWizard.core.tests` end
 
 ### auto-generated section `iml intellij.kotlin.projectWizard.core.tests` start
-exports_files(
-    [
-        "intellij.kotlin.projectWizard.core.tests.iml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.kotlin.projectWizard.core.tests",
+    resources = False,
+    target = "kotlin-projectWizard-core-tests_test_lib",
 )
 ### auto-generated section `iml intellij.kotlin.projectWizard.core.tests` end
 

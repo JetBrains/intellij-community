@@ -1,6 +1,7 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@community//platform/build-scripts/bazel-rules:ij_plugin.bzl", "ij_plugin")
-load("@jps_dynamic_deps_community//:targets.bzl", "dist_plugin")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:dist_plugin.bzl", "dist_plugin")
 
 ### auto-generated section `dev intellij.lsp.client.playground` start
 dist_plugin(
@@ -9,6 +10,9 @@ dist_plugin(
         "lib/lsp-client-playground.jar": ["intellij.lsp.client.playground"],
     },
     main_module = "intellij.lsp.client.playground",
+    module_labels = {
+        "intellij.lsp.client.playground": "@community//plugins/lsp.client.playground:lsp.client.playground",
+    },
 )
 ### auto-generated section `dev intellij.lsp.client.playground` end
 
@@ -57,11 +61,10 @@ ij_plugin(
 ### auto-generated section `plugin intellij.lsp.client.playground` end
 
 ### auto-generated section `iml intellij.lsp.client.playground` start
-exports_files(
-    [
-        "intellij.lsp.client.playground.iml",
-        "resources/META-INF/plugin.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.lsp.client.playground",
+    descriptors = ["resources/META-INF/plugin.xml"],
+    plugin = True,
+    target = "lsp.client.playground",
 )
 ### auto-generated section `iml intellij.lsp.client.playground` end

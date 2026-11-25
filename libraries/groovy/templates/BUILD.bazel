@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.libraries.groovy.templates` start
@@ -19,11 +20,9 @@ jvm_library(
 ### auto-generated section `build intellij.libraries.groovy.templates` end
 
 ### auto-generated section `iml intellij.libraries.groovy.templates` start
-exports_files(
-    [
-        "intellij.libraries.groovy.templates.iml",
-        "resources/intellij.libraries.groovy.templates.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.libraries.groovy.templates",
+    descriptors = ["resources/intellij.libraries.groovy.templates.xml"],
+    target = "templates",
 )
 ### auto-generated section `iml intellij.libraries.groovy.templates` end

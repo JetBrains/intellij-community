@@ -1,8 +1,9 @@
 load("@community//build:bazel_targets_json.bzl", "current_bazel_targets_json")
+load("@community//build:jps_module.bzl", "jps_module")
 load("@community//build:tests-options.bzl", "jps_test")
 load("@community//platform/build-scripts/bazel-rules:ij_plugin.bzl", "ij_plugin")
-load("@jps_dynamic_deps_community//:targets.bzl", "dist_plugin")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:dist_plugin.bzl", "dist_plugin")
 load(":stream_debugger_test_dependencies.bzl", "MAVEN_REPOSITORY_RUNFILES_PATH", "all_test_dep_targets")
 
 BAZEL_TARGETS_JSON = current_bazel_targets_json()
@@ -44,6 +45,15 @@ dist_plugin(
         "intellij.debugger.streams.java.rt.gatherers",
     ],
     descriptor = "resources/META-INF/plugin.xml",
+    descriptors = {
+        "@community//plugins/stream-debugger/backend:resources/intellij.debugger.streams.backend.xml": "intellij.debugger.streams.backend.xml",
+        "@community//plugins/stream-debugger/core:resources/intellij.debugger.streams.core.xml": "intellij.debugger.streams.core.xml",
+        "@community//plugins/stream-debugger/java/frontend:resources/intellij.debugger.streams.java.frontend.xml": "intellij.debugger.streams.java.frontend.xml",
+        "@community//plugins/stream-debugger/java:resources/intellij.debugger.streams.java.xml": "intellij.debugger.streams.java.xml",
+        "@community//plugins/stream-debugger/rt/gatherers:resources/intellij.debugger.streams.java.rt.gatherers.xml": "intellij.debugger.streams.java.rt.gatherers.xml",
+        "@community//plugins/stream-debugger/rt:resources/intellij.debugger.streams.java.rt.xml": "intellij.debugger.streams.java.rt.xml",
+        "@community//plugins/stream-debugger/shared:resources/intellij.debugger.streams.shared.xml": "intellij.debugger.streams.shared.xml",
+    },
     jars = {
         "lib/debugger-streams-plugin.jar": ["intellij.debugger.streams.plugin"],
     },
@@ -57,6 +67,16 @@ dist_plugin(
     module_jar_paths = {
         "intellij.debugger.streams.java.rt": "lib/intellij.debugger.streams.java.rt.jar",
         "intellij.debugger.streams.java.rt.gatherers": "lib/intellij.debugger.streams.java.rt.gatherers.jar",
+    },
+    module_labels = {
+        "intellij.debugger.streams.backend": "@community//plugins/stream-debugger/backend:backend",
+        "intellij.debugger.streams.core": "@community//plugins/stream-debugger/core:core",
+        "intellij.debugger.streams.java": "@community//plugins/stream-debugger/java:java",
+        "intellij.debugger.streams.java.frontend": "@community//plugins/stream-debugger/java/frontend:frontend",
+        "intellij.debugger.streams.java.rt": "@community//plugins/stream-debugger/rt:rt",
+        "intellij.debugger.streams.java.rt.gatherers": "@community//plugins/stream-debugger/rt/gatherers:gatherers",
+        "intellij.debugger.streams.plugin": "@community//plugins/stream-debugger:debugger-streams-plugin",
+        "intellij.debugger.streams.shared": "@community//plugins/stream-debugger/shared:shared",
     },
 )
 ### auto-generated section `dev intellij.debugger.streams.plugin` end
@@ -97,12 +117,11 @@ ij_plugin(
 ### auto-generated section `plugin intellij.debugger.streams.plugin` end
 
 ### auto-generated section `iml intellij.debugger.streams.plugin` start
-exports_files(
-    [
-        "intellij.debugger.streams.plugin.iml",
-        "resources/META-INF/plugin.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.debugger.streams.plugin",
+    descriptors = ["resources/META-INF/plugin.xml"],
+    plugin = True,
+    target = "debugger-streams-plugin",
 )
 ### auto-generated section `iml intellij.debugger.streams.plugin` end
 
@@ -169,10 +188,9 @@ jvm_library(
 ### auto-generated section `build intellij.java.debugger.streams.tests` end
 
 ### auto-generated section `iml intellij.java.debugger.streams.tests` start
-exports_files(
-    [
-        "intellij.java.debugger.streams.tests.iml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.java.debugger.streams.tests",
+    resources = False,
+    target = "java-debugger-streams-tests_test_lib",
 )
 ### auto-generated section `iml intellij.java.debugger.streams.tests` end

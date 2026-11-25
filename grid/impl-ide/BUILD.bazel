@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
@@ -43,11 +44,9 @@ jvm_library(
 ### auto-generated section `build intellij.grid.impl.ide` end
 
 ### auto-generated section `iml intellij.grid.impl.ide` start
-exports_files(
-    [
-        "intellij.grid.impl.ide.iml",
-        "resources/intellij.grid.impl.ide.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.grid.impl.ide",
+    descriptors = ["resources/intellij.grid.impl.ide.xml"],
+    target = "impl-ide",
 )
 ### auto-generated section `iml intellij.grid.impl.ide` end

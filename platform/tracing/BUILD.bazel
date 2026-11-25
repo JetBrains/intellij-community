@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.platform.tracing.rt` start
@@ -19,10 +20,9 @@ jvm_library(
 ### auto-generated section `build intellij.platform.tracing.rt` end
 
 ### auto-generated section `iml intellij.platform.tracing.rt` start
-exports_files(
-    [
-        "intellij.platform.tracing.rt.iml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.platform.tracing.rt",
+    resources = False,
+    target = "tracing-rt",
 )
 ### auto-generated section `iml intellij.platform.tracing.rt` end

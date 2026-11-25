@@ -1,6 +1,7 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@community//platform/build-scripts/bazel-rules:ij_plugin.bzl", "ij_plugin")
-load("@jps_dynamic_deps_community//:targets.bzl", "dist_plugin")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:dist_plugin.bzl", "dist_plugin")
 
 ### auto-generated section `dev intellij.editorconfig.plugin` start
 dist_plugin(
@@ -13,6 +14,14 @@ dist_plugin(
         "intellij.libraries.ec4j.core",
     ],
     main_module = "intellij.editorconfig.plugin",
+    module_labels = {
+        "intellij.editorconfig.backend": "@community//plugins/editorconfig/backend:backend",
+        "intellij.editorconfig.backend.spellchecking": "@community//plugins/editorconfig/backend.spellchecking:backend.spellchecking",
+        "intellij.editorconfig.common": "@community//plugins/editorconfig/common:common",
+        "intellij.editorconfig.frontend": "@community//plugins/editorconfig/frontend:frontend",
+        "intellij.editorconfig.plugin": "@community//plugins/editorconfig:editorconfig-plugin",
+        "intellij.libraries.ec4j.core": "@community//libraries/ec4j/core:core",
+    },
 )
 ### auto-generated section `dev intellij.editorconfig.plugin` end
 
@@ -54,12 +63,11 @@ ij_plugin(
 ### auto-generated section `plugin intellij.editorconfig.plugin` end
 
 ### auto-generated section `iml intellij.editorconfig.plugin` start
-exports_files(
-    [
-        "intellij.editorconfig.plugin.iml",
-        "resources/META-INF/plugin.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.editorconfig.plugin",
+    descriptors = ["resources/META-INF/plugin.xml"],
+    plugin = True,
+    target = "editorconfig-plugin",
 )
 ### auto-generated section `iml intellij.editorconfig.plugin` end
 
@@ -83,10 +91,9 @@ jvm_library(
 ### auto-generated section `build intellij.editorconfig.plugin.main` end
 
 ### auto-generated section `iml intellij.editorconfig.plugin.main` start
-exports_files(
-    [
-        "intellij.editorconfig.plugin.main.iml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.editorconfig.plugin.main",
+    resources = False,
+    target = "editorconfig-plugin-main",
 )
 ### auto-generated section `iml intellij.editorconfig.plugin.main` end

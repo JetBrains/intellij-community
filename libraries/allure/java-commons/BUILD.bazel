@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.libraries.allure.java.commons` start
@@ -19,11 +20,9 @@ jvm_library(
 ### auto-generated section `build intellij.libraries.allure.java.commons` end
 
 ### auto-generated section `iml intellij.libraries.allure.java.commons` start
-exports_files(
-    [
-        "intellij.libraries.allure.java.commons.iml",
-        "resources/intellij.libraries.allure.java.commons.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.libraries.allure.java.commons",
+    descriptors = ["resources/intellij.libraries.allure.java.commons.xml"],
+    target = "libraries-allure-java-commons",
 )
 ### auto-generated section `iml intellij.libraries.allure.java.commons` end

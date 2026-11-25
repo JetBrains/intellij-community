@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
@@ -46,11 +47,9 @@ jvm_library(
 ### auto-generated section `build intellij.grazie.xml` end
 
 ### auto-generated section `iml intellij.grazie.xml` start
-exports_files(
-    [
-        "intellij.grazie.xml.iml",
-        "main/resources/intellij.grazie.xml.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.grazie.xml",
+    descriptors = ["main/resources/intellij.grazie.xml.xml"],
+    target = "xml",
 )
 ### auto-generated section `iml intellij.grazie.xml` end

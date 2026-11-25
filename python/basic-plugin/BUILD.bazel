@@ -1,5 +1,6 @@
-load("@jps_dynamic_deps_community//:targets.bzl", "dist_plugin")
+load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:dist_plugin.bzl", "dist_plugin")
 
 ### auto-generated section `dev intellij.python.basic.plugin` start
 dist_plugin(
@@ -12,6 +13,13 @@ dist_plugin(
         "intellij.python.syntax.core.frontend",
     ],
     descriptor = "resources/META-INF/plugin.xml",
+    descriptors = {
+        "@community//python/python-ast:resources/intellij.python.ast.xml": "intellij.python.ast.xml",
+        "@community//python/python-parser:resources/intellij.python.parser.xml": "intellij.python.parser.xml",
+        "@community//python/python-syntax-core/frontend:resources/intellij.python.syntax.core.frontend.xml": "intellij.python.syntax.core.frontend.xml",
+        "@community//python/python-syntax-core:resources/intellij.python.syntax.core.xml": "intellij.python.syntax.core.xml",
+        "@community//python/python-syntax:resources/intellij.python.syntax.xml": "intellij.python.syntax.xml",
+    },
     jars = {
         "lib/python-basic-plugin.jar": ["intellij.python.basic.plugin"],
     },
@@ -21,6 +29,14 @@ dist_plugin(
         "intellij.python.ast": "lib/intellij.python.ast.jar",
         "intellij.python.syntax.core": "lib/intellij.python.syntax.core.jar",
         "intellij.python.syntax": "lib/intellij.python.syntax.jar",
+    },
+    module_labels = {
+        "intellij.python.ast": "@community//python/python-ast:ast",
+        "intellij.python.basic.plugin": "@community//python/basic-plugin:basic-plugin",
+        "intellij.python.parser": "@community//python/python-parser:parser",
+        "intellij.python.syntax": "@community//python/python-syntax:syntax",
+        "intellij.python.syntax.core": "@community//python/python-syntax-core:syntax-core",
+        "intellij.python.syntax.core.frontend": "@community//python/python-syntax-core/frontend:frontend",
     },
 )
 ### auto-generated section `dev intellij.python.basic.plugin` end
@@ -50,11 +66,9 @@ jvm_library(
 ### auto-generated section `build intellij.python.basic.plugin` end
 
 ### auto-generated section `iml intellij.python.basic.plugin` start
-exports_files(
-    [
-        "intellij.python.basic.plugin.iml",
-        "resources/META-INF/plugin.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.python.basic.plugin",
+    descriptors = ["resources/META-INF/plugin.xml"],
+    target = "basic-plugin",
 )
 ### auto-generated section `iml intellij.python.basic.plugin` end

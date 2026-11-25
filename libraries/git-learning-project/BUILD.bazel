@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@community//platform/build-scripts/bazel-rules:ij_plugin_module.bzl", "ij_plugin_module")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
@@ -28,11 +29,9 @@ ij_plugin_module(
 ### auto-generated section `build intellij.libraries.git.learning.project` end
 
 ### auto-generated section `iml intellij.libraries.git.learning.project` start
-exports_files(
-    [
-        "intellij.libraries.git.learning.project.iml",
-        "resources/intellij.libraries.git.learning.project.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.libraries.git.learning.project",
+    descriptors = ["resources/intellij.libraries.git.learning.project.xml"],
+    target = "git-learning-project",
 )
 ### auto-generated section `iml intellij.libraries.git.learning.project` end

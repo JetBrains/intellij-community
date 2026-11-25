@@ -1,5 +1,6 @@
-load("@jps_dynamic_deps_community//:targets.bzl", "dist_plugin")
+load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:dist_plugin.bzl", "dist_plugin")
 
 ### auto-generated section `dev intellij.gradle.plugin` start
 dist_plugin(
@@ -31,6 +32,33 @@ dist_plugin(
         "intellij.libraries.groovy.ant",
     ],
     main_module = "intellij.gradle.plugin",
+    module_labels = {
+        "intellij.gradle": "@community//plugins/gradle:gradle",
+        "intellij.gradle.backend": "@community//plugins/gradle/backend:backend",
+        "intellij.gradle.codeInsight": "@community//plugins/gradle/codeInsight:codeInsight",
+        "intellij.gradle.codeInsight.backend": "@community//plugins/gradle/codeInsight/backend:backend",
+        "intellij.gradle.codeInsight.groovy": "@community//plugins/gradle/codeInsight/groovy:groovy",
+        "intellij.gradle.codeInsight.groovy.backend": "@community//plugins/gradle/codeInsight/groovy/backend:backend",
+        "intellij.gradle.codeInsight.kotlin": "@community//plugins/gradle/codeInsight/kotlin:kotlin",
+        "intellij.gradle.codeInsight.kotlin.backend": "@community//plugins/gradle/codeInsight/kotlin/backend:backend",
+        "intellij.gradle.codeInsight.properties": "@community//plugins/gradle/codeInsight/properties:properties",
+        "intellij.gradle.codeInsight.properties.backend": "@community//plugins/gradle/codeInsight/properties/backend:backend",
+        "intellij.gradle.codeInsight.toml": "@community//plugins/gradle/codeInsight/toml:toml",
+        "intellij.gradle.codeInsight.toml.backend": "@community//plugins/gradle/codeInsight/toml/backend:backend",
+        "intellij.gradle.common": "@community//plugins/gradle:gradle-common",
+        "intellij.gradle.completion": "@community//plugins/gradle/completion:completion",
+        "intellij.gradle.completion.kotlin": "@community//plugins/gradle/completion/kotlin:kotlin",
+        "intellij.gradle.completion.toml": "@community//plugins/gradle/completion/toml:toml",
+        "intellij.gradle.plugin": "@community//plugins/gradle/plugin:plugin",
+        "intellij.gradle.properties": "@community//plugins/gradle/properties:properties",
+        "intellij.gradle.settings": "@community//plugins/gradle/settings:settings",
+        "intellij.gradle.toolingExtension": "@community//plugins/gradle/tooling-extension-api:toolingExtension",
+        "intellij.gradle.toolingExtension.impl": "@community//plugins/gradle/tooling-extension-impl:toolingExtension-impl",
+        "intellij.gradle.toolingProxy": "@community//plugins/gradle/tooling-proxy:tooling-proxy",
+        "intellij.libraries.gradle": "@community//libraries/gradle:gradle",
+        "intellij.libraries.groovy": "@community//libraries/groovy:groovy",
+        "intellij.libraries.groovy.ant": "@community//libraries/groovy/ant:ant",
+    },
 )
 ### auto-generated section `dev intellij.gradle.plugin` end
 
@@ -51,11 +79,9 @@ jvm_library(
 ### auto-generated section `build intellij.gradle.plugin` end
 
 ### auto-generated section `iml intellij.gradle.plugin` start
-exports_files(
-    [
-        "intellij.gradle.plugin.iml",
-        "resources/META-INF/plugin.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.gradle.plugin",
+    descriptors = ["resources/META-INF/plugin.xml"],
+    target = "plugin",
 )
 ### auto-generated section `iml intellij.gradle.plugin` end

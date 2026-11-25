@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
@@ -81,12 +82,10 @@ jvm_library(
 ### auto-generated section `build intellij.platform.problemView.ui` end
 
 ### auto-generated section `iml intellij.platform.problemView.ui` start
-exports_files(
-    [
-        "intellij.platform.problemView.ui.iml",
-        "resources/intellij.platform.problemView.ui.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.platform.problemView.ui",
+    descriptors = ["resources/intellij.platform.problemView.ui.xml"],
+    target = "ui",
 )
 ### auto-generated section `iml intellij.platform.problemView.ui` end
 
@@ -139,10 +138,9 @@ jvm_library(
 ### auto-generated section `build intellij.platform.problemView.ui.tests` end
 
 ### auto-generated section `iml intellij.platform.problemView.ui.tests` start
-exports_files(
-    [
-        "intellij.platform.problemView.ui.tests.iml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.platform.problemView.ui.tests",
+    resources = False,
+    target = "problemView-ui-tests_test_lib",
 )
 ### auto-generated section `iml intellij.platform.problemView.ui.tests` end

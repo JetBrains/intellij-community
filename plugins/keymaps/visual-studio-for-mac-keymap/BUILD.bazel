@@ -1,6 +1,7 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@community//platform/build-scripts/bazel-rules:ij_plugin.bzl", "ij_plugin")
-load("@jps_dynamic_deps_community//:targets.bzl", "dist_plugin")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:dist_plugin.bzl", "dist_plugin")
 
 ### auto-generated section `dev intellij.keymap.visualStudioForMac` start
 dist_plugin(
@@ -9,6 +10,9 @@ dist_plugin(
         "lib/keymap-visualStudioForMac.jar": ["intellij.keymap.visualStudioForMac"],
     },
     main_module = "intellij.keymap.visualStudioForMac",
+    module_labels = {
+        "intellij.keymap.visualStudioForMac": "@community//plugins/keymaps/visual-studio-for-mac-keymap:keymap-visualStudioForMac",
+    },
 )
 ### auto-generated section `dev intellij.keymap.visualStudioForMac` end
 
@@ -38,12 +42,11 @@ ij_plugin(
 ### auto-generated section `plugin intellij.keymap.visualStudioForMac` end
 
 ### auto-generated section `iml intellij.keymap.visualStudioForMac` start
-exports_files(
-    [
-        "intellij.keymap.visualStudioForMac.iml",
-        "resources/META-INF/plugin.xml",
-        "resources/keymaps/Visual Studio for Mac.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.keymap.visualStudioForMac",
+    descriptors = ["resources/META-INF/plugin.xml"],
+    plugin = True,
+    target = "keymap-visualStudioForMac",
+    exports = ["resources/keymaps/Visual Studio for Mac.xml"],
 )
 ### auto-generated section `iml intellij.keymap.visualStudioForMac` end

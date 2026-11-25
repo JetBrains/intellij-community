@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
@@ -33,11 +34,9 @@ jvm_library(
 ### auto-generated section `build intellij.libraries.netty.codec.protobuf` end
 
 ### auto-generated section `iml intellij.libraries.netty.codec.protobuf` start
-exports_files(
-    [
-        "intellij.libraries.netty.codec.protobuf.iml",
-        "resources/intellij.libraries.netty.codec.protobuf.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.libraries.netty.codec.protobuf",
+    descriptors = ["resources/intellij.libraries.netty.codec.protobuf.xml"],
+    target = "libraries-netty-codec-protobuf",
 )
 ### auto-generated section `iml intellij.libraries.netty.codec.protobuf` end

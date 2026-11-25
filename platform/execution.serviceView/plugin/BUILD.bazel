@@ -1,6 +1,7 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@community//platform/build-scripts/bazel-rules:ij_plugin.bzl", "ij_plugin")
-load("@jps_dynamic_deps_community//:targets.bzl", "dist_plugin")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:dist_plugin.bzl", "dist_plugin")
 
 ### auto-generated section `dev intellij.platform.execution.serviceView.plugin` start
 dist_plugin(
@@ -16,6 +17,16 @@ dist_plugin(
         "intellij.platform.execution.serviceView.frontend",
     ],
     descriptor = "resources/META-INF/plugin.xml",
+    descriptors = {
+        "@community//platform/execution.dashboard/backend:resources/intellij.platform.execution.dashboard.backend.xml": "intellij.platform.execution.dashboard.backend.xml",
+        "@community//platform/execution.dashboard/debugger:resources/intellij.platform.execution.dashboard.debugger.xml": "intellij.platform.execution.dashboard.debugger.xml",
+        "@community//platform/execution.dashboard/frontend:resources/intellij.platform.execution.dashboard.frontend.xml": "intellij.platform.execution.dashboard.frontend.xml",
+        "@community//platform/execution.dashboard:resources/intellij.platform.execution.dashboard.xml": "intellij.platform.execution.dashboard.xml",
+        "@community//platform/execution.serviceView/backend:resources/intellij.platform.execution.serviceView.backend.xml": "intellij.platform.execution.serviceView.backend.xml",
+        "@community//platform/execution.serviceView/frontend:resources/intellij.platform.execution.serviceView.frontend.xml": "intellij.platform.execution.serviceView.frontend.xml",
+        "@community//platform/execution.serviceView:resources/intellij.platform.execution.serviceView.xml": "intellij.platform.execution.serviceView.xml",
+        "@community//platform/remote-servers/clouds:resources/intellij.platform.clouds.xml": "intellij.platform.clouds.xml",
+    },
     jars = {
         "lib/platform-execution-serviceView-plugin.jar": ["intellij.platform.execution.serviceView.plugin"],
     },
@@ -25,6 +36,17 @@ dist_plugin(
             "intellij.platform.execution.dashboard.backend",
             "intellij.platform.execution.serviceView.backend",
         ],
+    },
+    module_labels = {
+        "intellij.platform.clouds": "@community//platform/remote-servers/clouds:clouds",
+        "intellij.platform.execution.dashboard": "@community//platform/execution.dashboard:execution.dashboard",
+        "intellij.platform.execution.dashboard.backend": "@community//platform/execution.dashboard/backend:backend",
+        "intellij.platform.execution.dashboard.debugger": "@community//platform/execution.dashboard/debugger:debugger",
+        "intellij.platform.execution.dashboard.frontend": "@community//platform/execution.dashboard/frontend:frontend",
+        "intellij.platform.execution.serviceView": "@community//platform/execution.serviceView:execution.serviceView",
+        "intellij.platform.execution.serviceView.backend": "@community//platform/execution.serviceView/backend:backend",
+        "intellij.platform.execution.serviceView.frontend": "@community//platform/execution.serviceView/frontend:frontend",
+        "intellij.platform.execution.serviceView.plugin": "@community//platform/execution.serviceView/plugin:plugin",
     },
 )
 ### auto-generated section `dev intellij.platform.execution.serviceView.plugin` end
@@ -65,11 +87,10 @@ ij_plugin(
 ### auto-generated section `plugin intellij.platform.execution.serviceView.plugin` end
 
 ### auto-generated section `iml intellij.platform.execution.serviceView.plugin` start
-exports_files(
-    [
-        "intellij.platform.execution.serviceView.plugin.iml",
-        "resources/META-INF/plugin.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.platform.execution.serviceView.plugin",
+    descriptors = ["resources/META-INF/plugin.xml"],
+    plugin = True,
+    target = "plugin",
 )
 ### auto-generated section `iml intellij.platform.execution.serviceView.plugin` end

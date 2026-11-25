@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
@@ -92,12 +93,10 @@ jvm_library(
 ### auto-generated section `build intellij.kotlin.highlighting` end
 
 ### auto-generated section `iml intellij.kotlin.highlighting` start
-exports_files(
-    [
-        "intellij.kotlin.highlighting.iml",
-        "resources/intellij.kotlin.highlighting.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.kotlin.highlighting",
+    descriptors = ["resources/intellij.kotlin.highlighting.xml"],
+    target = "kotlin-highlighting",
 )
 ### auto-generated section `iml intellij.kotlin.highlighting` end
 
@@ -189,11 +188,10 @@ jvm_library(
 ### auto-generated section `build intellij.kotlin.highlighting.tests` end
 
 ### auto-generated section `iml intellij.kotlin.highlighting.tests` start
-exports_files(
-    [
-        "intellij.kotlin.highlighting.tests.iml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.kotlin.highlighting.tests",
+    resources = False,
+    target = "kotlin-highlighting-tests_test_lib",
 )
 ### auto-generated section `iml intellij.kotlin.highlighting.tests` end
 

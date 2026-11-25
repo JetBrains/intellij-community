@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
@@ -128,14 +129,14 @@ jvm_library(
 ### auto-generated section `build intellij.devkit.core` end
 
 ### auto-generated section `iml intellij.devkit.core` start
-exports_files(
-    [
-        "intellij.devkit.core.iml",
+jps_module(
+    name = "intellij.devkit.core",
+    descriptors = ["resources/intellij.devkit.core.xml"],
+    target = "core",
+    exports = [
         "resources/codeVisionProviders/devkit.descriptors.including.content.module/preview.xml",
         "resources/codeVisionProviders/devkit.module.entry.split.mode.kind/preview.xml",
         "resources/codeVisionProviders/devkit.plugin.descriptor.split.mode.kind/preview.xml",
-        "resources/intellij.devkit.core.xml",
     ],
-    visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.devkit.core` end

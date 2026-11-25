@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
@@ -61,11 +62,10 @@ jvm_library(
 ### auto-generated section `build kotlin.base.injection.tests` end
 
 ### auto-generated section `iml kotlin.base.injection.tests` start
-exports_files(
-    [
-        "kotlin.base.injection.tests.iml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "kotlin.base.injection.tests",
+    resources = False,
+    target = "tests_test_lib",
 )
 ### auto-generated section `iml kotlin.base.injection.tests` end
 

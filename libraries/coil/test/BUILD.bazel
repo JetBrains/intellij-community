@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.libraries.coil.test` start
@@ -15,10 +16,9 @@ jvm_library(
 ### auto-generated section `build intellij.libraries.coil.test` end
 
 ### auto-generated section `iml intellij.libraries.coil.test` start
-exports_files(
-    [
-        "intellij.libraries.coil.test.iml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.libraries.coil.test",
+    resources = False,
+    target = "test",
 )
 ### auto-generated section `iml intellij.libraries.coil.test` end

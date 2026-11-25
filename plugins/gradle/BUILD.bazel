@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library", "resourcegroup")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
@@ -141,12 +142,10 @@ jvm_library(
 ### auto-generated section `build intellij.gradle` end
 
 ### auto-generated section `iml intellij.gradle` start
-exports_files(
-    [
-        "intellij.gradle.iml",
-        "plugin-resources/intellij.gradle.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.gradle",
+    descriptors = ["plugin-resources/intellij.gradle.xml"],
+    target = "gradle",
 )
 ### auto-generated section `iml intellij.gradle` end
 
@@ -165,11 +164,10 @@ jvm_library(
 ### auto-generated section `build intellij.gradle.common` end
 
 ### auto-generated section `iml intellij.gradle.common` start
-exports_files(
-    [
-        "intellij.gradle.common.iml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.gradle.common",
+    resources = False,
+    target = "gradle-common",
 )
 ### auto-generated section `iml intellij.gradle.common` end
 
@@ -286,11 +284,9 @@ jvm_library(
 ### auto-generated section `build intellij.gradle.tests` end
 
 ### auto-generated section `iml intellij.gradle.tests` start
-exports_files(
-    [
-        "intellij.gradle.tests.iml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.gradle.tests",
+    target = "gradle-tests_test_lib",
 )
 ### auto-generated section `iml intellij.gradle.tests` end
 
@@ -342,10 +338,8 @@ jvm_library(
 ### auto-generated section `build intellij.gradle.tests.main` end
 
 ### auto-generated section `iml intellij.gradle.tests.main` start
-exports_files(
-    [
-        "intellij.gradle.tests.main.iml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.gradle.tests.main",
+    target = "gradle-tests-main_test_lib",
 )
 ### auto-generated section `iml intellij.gradle.tests.main` end

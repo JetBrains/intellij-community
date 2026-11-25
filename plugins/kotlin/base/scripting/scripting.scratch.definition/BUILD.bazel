@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
@@ -52,11 +53,9 @@ jvm_library(
 ### auto-generated section `build intellij.kotlin.base.scripting.scratch.definition` end
 
 ### auto-generated section `iml intellij.kotlin.base.scripting.scratch.definition` start
-exports_files(
-    [
-        "intellij.kotlin.base.scripting.scratch.definition.iml",
-        "resources/intellij.kotlin.base.scripting.scratch.definition.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.kotlin.base.scripting.scratch.definition",
+    descriptors = ["resources/intellij.kotlin.base.scripting.scratch.definition.xml"],
+    target = "scripting.scratch.definition",
 )
 ### auto-generated section `iml intellij.kotlin.base.scripting.scratch.definition` end

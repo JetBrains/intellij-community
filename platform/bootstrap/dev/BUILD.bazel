@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.platform.bootstrap.dev` start
@@ -29,10 +30,9 @@ jvm_library(
 ### auto-generated section `build intellij.platform.bootstrap.dev` end
 
 ### auto-generated section `iml intellij.platform.bootstrap.dev` start
-exports_files(
-    [
-        "intellij.platform.bootstrap.dev.iml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.platform.bootstrap.dev",
+    resources = False,
+    target = "dev",
 )
 ### auto-generated section `iml intellij.platform.bootstrap.dev` end

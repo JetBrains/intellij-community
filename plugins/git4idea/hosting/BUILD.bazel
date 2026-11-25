@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
@@ -55,11 +56,9 @@ jvm_library(
 ### auto-generated section `build intellij.vcs.git.hosting` end
 
 ### auto-generated section `iml intellij.vcs.git.hosting` start
-exports_files(
-    [
-        "intellij.vcs.git.hosting.iml",
-        "resources/intellij.vcs.git.hosting.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.vcs.git.hosting",
+    descriptors = ["resources/intellij.vcs.git.hosting.xml"],
+    target = "hosting",
 )
 ### auto-generated section `iml intellij.vcs.git.hosting` end

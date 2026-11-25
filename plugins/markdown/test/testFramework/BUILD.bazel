@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.markdown.testFramework` start
@@ -27,10 +28,9 @@ jvm_library(
 ### auto-generated section `build intellij.markdown.testFramework` end
 
 ### auto-generated section `iml intellij.markdown.testFramework` start
-exports_files(
-    [
-        "intellij.markdown.testFramework.iml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.markdown.testFramework",
+    resources = False,
+    target = "testFramework",
 )
 ### auto-generated section `iml intellij.markdown.testFramework` end

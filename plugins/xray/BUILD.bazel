@@ -1,6 +1,7 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@community//platform/build-scripts/bazel-rules:ij_plugin.bzl", "ij_plugin")
-load("@jps_dynamic_deps_community//:targets.bzl", "dist_plugin")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:dist_plugin.bzl", "dist_plugin")
 
 ### auto-generated section `dev intellij.xray` start
 dist_plugin(
@@ -11,12 +12,23 @@ dist_plugin(
         "intellij.xray.backend",
     ],
     descriptor = "resources/META-INF/plugin.xml",
+    descriptors = {
+        "@community//plugins/xray/backend:resources/intellij.xray.backend.xml": "intellij.xray.backend.xml",
+        "@community//plugins/xray/frontend:resources/intellij.xray.frontend.xml": "intellij.xray.frontend.xml",
+        "@community//plugins/xray/shared:resources/intellij.xray.shared.xml": "intellij.xray.shared.xml",
+    },
     jars = {
         "lib/xray.jar": ["intellij.xray"],
     },
     main_module = "intellij.xray",
     mode_refused_content_modules = {
         "frontend": ["intellij.xray.backend"],
+    },
+    module_labels = {
+        "intellij.xray": "@community//plugins/xray:xray",
+        "intellij.xray.backend": "@community//plugins/xray/backend:backend",
+        "intellij.xray.frontend": "@community//plugins/xray/frontend:frontend",
+        "intellij.xray.shared": "@community//plugins/xray/shared:shared",
     },
 )
 ### auto-generated section `dev intellij.xray` end
@@ -52,11 +64,10 @@ ij_plugin(
 ### auto-generated section `plugin intellij.xray` end
 
 ### auto-generated section `iml intellij.xray` start
-exports_files(
-    [
-        "intellij.xray.iml",
-        "resources/META-INF/plugin.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.xray",
+    descriptors = ["resources/META-INF/plugin.xml"],
+    plugin = True,
+    target = "xray",
 )
 ### auto-generated section `iml intellij.xray` end

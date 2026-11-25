@@ -1,7 +1,8 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@community//build:tests-options.bzl", "jps_test")
 load("@community//platform/build-scripts/bazel-rules:ij_plugin.bzl", "ij_plugin")
-load("@jps_dynamic_deps_community//:targets.bzl", "dist_plugin")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:dist_plugin.bzl", "dist_plugin")
 
 jps_test(
     name = "xpath-tests_test",
@@ -19,12 +20,21 @@ dist_plugin(
         "intellij.xpath.rt",
     ],
     descriptor = "xpath-lang/resources/META-INF/plugin.xml",
+    descriptors = {
+        "@community//plugins/xpath/xslt-rt:resources/intellij.xpath.rt.xml": "intellij.xpath.rt.xml",
+        "@community//xml/langInjection/xpath:resources/intellij.xml.langInjection.xpath.xml": "intellij.xml.langInjection.xpath.xml",
+    },
     jars = {
         "lib/xpath.jar": ["intellij.xpath"],
     },
     main_module = "intellij.xpath",
     mode_refused_content_modules = {
         "frontend": ["intellij.xml.langInjection.xpath"],
+    },
+    module_labels = {
+        "intellij.xml.langInjection.xpath": "@community//xml/langInjection/xpath:xpath",
+        "intellij.xpath": "@community//plugins/xpath:xpath",
+        "intellij.xpath.rt": "@community//plugins/xpath/xslt-rt:rt",
     },
 )
 ### auto-generated section `dev intellij.xpath` end
@@ -116,14 +126,15 @@ ij_plugin(
 ### auto-generated section `plugin intellij.xpath` end
 
 ### auto-generated section `iml intellij.xpath` start
-exports_files(
-    [
-        "intellij.xpath.iml",
-        "xpath-lang/resources/META-INF/plugin.xml",
+jps_module(
+    name = "intellij.xpath",
+    descriptors = ["xpath-lang/resources/META-INF/plugin.xml"],
+    plugin = True,
+    target = "xpath",
+    exports = [
         "xpath-lang/resources/liveTemplates/xsl.xml",
         "xpath-lang/resources/org/intellij/lang/xpath/xslt/resources/documentation.xml",
     ],
-    visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.xpath` end
 
@@ -189,10 +200,8 @@ jvm_library(
 ### auto-generated section `build intellij.xpath.tests` end
 
 ### auto-generated section `iml intellij.xpath.tests` start
-exports_files(
-    [
-        "intellij.xpath.tests.iml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.xpath.tests",
+    target = "xpath-tests_test_lib",
 )
 ### auto-generated section `iml intellij.xpath.tests` end

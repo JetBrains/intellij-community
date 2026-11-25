@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
@@ -75,12 +76,10 @@ jvm_library(
 ### auto-generated section `build intellij.kotlin.mcp` end
 
 ### auto-generated section `iml intellij.kotlin.mcp` start
-exports_files(
-    [
-        "intellij.kotlin.mcp.iml",
-        "resources/intellij.kotlin.mcp.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.kotlin.mcp",
+    descriptors = ["resources/intellij.kotlin.mcp.xml"],
+    target = "mcp",
 )
 ### auto-generated section `iml intellij.kotlin.mcp` end
 
@@ -144,11 +143,9 @@ jvm_library(
 ### auto-generated section `build intellij.kotlin.mcp.tests` end
 
 ### auto-generated section `iml intellij.kotlin.mcp.tests` start
-exports_files(
-    [
-        "intellij.kotlin.mcp.tests.iml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.kotlin.mcp.tests",
+    target = "mcp-tests_test_lib",
 )
 ### auto-generated section `iml intellij.kotlin.mcp.tests` end
 

@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library", compiler_plugin_jvm_library = "jvm_library")
 load("@rules_kotlin//kotlin:core.bzl", "kt_compiler_plugin")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
@@ -54,10 +55,8 @@ jvm_library(
 ### auto-generated section `build fleet.compiler.plugins.noria` end
 
 ### auto-generated section `iml fleet.compiler.plugins.noria` start
-exports_files(
-    [
-        "fleet.compiler.plugins.noria.iml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "fleet.compiler.plugins.noria",
+    target = "noria",
 )
 ### auto-generated section `iml fleet.compiler.plugins.noria` end

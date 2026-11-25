@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
@@ -23,12 +24,10 @@ jvm_library(
 ### auto-generated section `build intellij.testng.langInjection` end
 
 ### auto-generated section `iml intellij.testng.langInjection` start
-exports_files(
-    [
-        "intellij.testng.langInjection.iml",
-        "resources/intellij.testng.langInjection.xml",
-        "resources/javaInjections.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.testng.langInjection",
+    descriptors = ["resources/intellij.testng.langInjection.xml"],
+    target = "langInjection",
+    exports = ["resources/javaInjections.xml"],
 )
 ### auto-generated section `iml intellij.testng.langInjection` end

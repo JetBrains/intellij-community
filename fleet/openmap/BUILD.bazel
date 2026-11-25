@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@community//fleet/build:fleet.bzl", "fleet_wasmjs_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
@@ -62,11 +63,9 @@ jvm_library(
 ### auto-generated section `build fleet.openmap` end
 
 ### auto-generated section `iml fleet.openmap` start
-exports_files(
-    [
-        "fleet.openmap.iml",
-        "resources/fleet.openmap.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "fleet.openmap",
+    descriptors = ["resources/fleet.openmap.xml"],
+    target = "openmap",
 )
 ### auto-generated section `iml fleet.openmap` end

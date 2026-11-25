@@ -1,4 +1,5 @@
 load("@bazel_skylib//rules:common_settings.bzl", "bool_flag")
+load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_java//java:defs.bzl", "java_binary")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
@@ -74,10 +75,8 @@ jvm_library(
 ### auto-generated section `build fleet.build.cli` end
 
 ### auto-generated section `iml fleet.build.cli` start
-exports_files(
-    [
-        "fleet.build.cli.iml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "fleet.build.cli",
+    target = "cli",
 )
 ### auto-generated section `iml fleet.build.cli` end

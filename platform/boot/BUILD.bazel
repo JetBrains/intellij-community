@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.platform.boot` start
@@ -28,10 +29,8 @@ jvm_library(
 ### auto-generated section `build intellij.platform.boot` end
 
 ### auto-generated section `iml intellij.platform.boot` start
-exports_files(
-    [
-        "intellij.platform.boot.iml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.platform.boot",
+    target = "boot",
 )
 ### auto-generated section `iml intellij.platform.boot` end

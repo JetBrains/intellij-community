@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
@@ -37,11 +38,9 @@ jvm_library(
 ### auto-generated section `build intellij.xml.vcs` end
 
 ### auto-generated section `iml intellij.xml.vcs` start
-exports_files(
-    [
-        "intellij.xml.vcs.iml",
-        "resources/intellij.xml.vcs.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.xml.vcs",
+    descriptors = ["resources/intellij.xml.vcs.xml"],
+    target = "vcs",
 )
 ### auto-generated section `iml intellij.xml.vcs` end

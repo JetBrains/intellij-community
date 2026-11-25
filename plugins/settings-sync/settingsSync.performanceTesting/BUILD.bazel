@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.settingsSync.performanceTesting` start
@@ -31,11 +32,9 @@ jvm_library(
 ### auto-generated section `build intellij.settingsSync.performanceTesting` end
 
 ### auto-generated section `iml intellij.settingsSync.performanceTesting` start
-exports_files(
-    [
-        "intellij.settingsSync.performanceTesting.iml",
-        "resources/intellij.settingsSync.performanceTesting.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.settingsSync.performanceTesting",
+    descriptors = ["resources/intellij.settingsSync.performanceTesting.xml"],
+    target = "settingsSync.performanceTesting",
 )
 ### auto-generated section `iml intellij.settingsSync.performanceTesting` end

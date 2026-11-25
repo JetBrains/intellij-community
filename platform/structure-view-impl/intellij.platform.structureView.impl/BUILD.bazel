@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
@@ -23,11 +24,9 @@ jvm_library(
 ### auto-generated section `build intellij.platform.structureView.impl` end
 
 ### auto-generated section `iml intellij.platform.structureView.impl` start
-exports_files(
-    [
-        "intellij.platform.structureView.impl.iml",
-        "resources/intellij.platform.structureView.impl.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.platform.structureView.impl",
+    descriptors = ["resources/intellij.platform.structureView.impl.xml"],
+    target = "structureView-impl",
 )
 ### auto-generated section `iml intellij.platform.structureView.impl` end

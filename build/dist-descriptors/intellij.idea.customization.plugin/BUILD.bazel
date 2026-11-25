@@ -12,20 +12,20 @@
 # the stamps. The component index names the `dev_plugin` target or the component of a `dist_complex_plugin`
 # call.
 #
-# A descriptor leaf derives its conventional descriptor rows from the bridge index of its half.
+# A descriptor leaf states every descriptor row. The label of a conventional row is in the recorded form.
 
-load("@jps_dynamic_deps_community//:targets.bzl", "dist_plugin_descriptor")
 load("//platform/build-scripts/bazel-rules:dev_plugin.bzl", "dev_plugin")
+load("//platform/build-scripts/bazel-rules:dist_plugin_descriptor.bzl", "dist_plugin_descriptor")
 
 dist_plugin_descriptor(
-    content_modules = [
-        "intellij.idea.customization.backend",
-        "intellij.idea.customization.base",
-        "intellij.platform.ide.nonModalWelcomeScreen",
-        "intellij.platform.ide.nonModalWelcomeScreen.backend",
-        "intellij.platform.ide.nonModalWelcomeScreen.frontend",
-    ],
     descriptor = "//idea/customization/plugin:resources/META-INF/plugin.xml",
+    descriptors = {
+        "@community//idea/customization/backend:resources/intellij.idea.customization.backend.xml": "intellij.idea.customization.backend.xml",
+        "@community//idea/customization/base:resources/intellij.idea.customization.base.xml": "intellij.idea.customization.base.xml",
+        "@community//platform/non-modal-welcome-screen/backend:resources/intellij.platform.ide.nonModalWelcomeScreen.backend.xml": "intellij.platform.ide.nonModalWelcomeScreen.backend.xml",
+        "@community//platform/non-modal-welcome-screen/frontend:resources/intellij.platform.ide.nonModalWelcomeScreen.frontend.xml": "intellij.platform.ide.nonModalWelcomeScreen.frontend.xml",
+        "@community//platform/non-modal-welcome-screen:resources/intellij.platform.ide.nonModalWelcomeScreen.xml": "intellij.platform.ide.nonModalWelcomeScreen.xml",
+    },
     main_module = "intellij.idea.customization.plugin",
     mode_refused_content_modules = {
         "frontend": ["intellij.platform.ide.nonModalWelcomeScreen.backend"],

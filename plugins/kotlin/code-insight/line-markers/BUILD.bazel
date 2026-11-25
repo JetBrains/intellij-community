@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
@@ -89,12 +90,10 @@ jvm_library(
 ### auto-generated section `build intellij.kotlin.codeInsight.lineMarkers` end
 
 ### auto-generated section `iml intellij.kotlin.codeInsight.lineMarkers` start
-exports_files(
-    [
-        "intellij.kotlin.codeInsight.lineMarkers.iml",
-        "resources/intellij.kotlin.codeInsight.lineMarkers.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.kotlin.codeInsight.lineMarkers",
+    descriptors = ["resources/intellij.kotlin.codeInsight.lineMarkers.xml"],
+    target = "line-markers",
 )
 ### auto-generated section `iml intellij.kotlin.codeInsight.lineMarkers` end
 
@@ -162,11 +161,10 @@ jvm_library(
 ### auto-generated section `build intellij.kotlin.codeInsight.lineMarkers.tests` end
 
 ### auto-generated section `iml intellij.kotlin.codeInsight.lineMarkers.tests` start
-exports_files(
-    [
-        "intellij.kotlin.codeInsight.lineMarkers.tests.iml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.kotlin.codeInsight.lineMarkers.tests",
+    resources = False,
+    target = "kotlin-codeInsight-lineMarkers-tests_test_lib",
 )
 ### auto-generated section `iml intellij.kotlin.codeInsight.lineMarkers.tests` end
 

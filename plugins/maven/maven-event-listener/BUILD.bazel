@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
@@ -37,12 +38,10 @@ jvm_library(
 ### auto-generated section `build intellij.maven.server.eventListener` end
 
 ### auto-generated section `iml intellij.maven.server.eventListener` start
-exports_files(
-    [
-        "intellij.maven.server.eventListener.iml",
-        "src/main/resources/META-INF/plexus/components.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.maven.server.eventListener",
+    target = "server-eventListener",
+    exports = ["src/main/resources/META-INF/plexus/components.xml"],
 )
 ### auto-generated section `iml intellij.maven.server.eventListener` end
 
@@ -72,10 +71,9 @@ jvm_library(
 ### auto-generated section `build intellij.maven.server.eventListener.tests` end
 
 ### auto-generated section `iml intellij.maven.server.eventListener.tests` start
-exports_files(
-    [
-        "intellij.maven.server.eventListener.tests.iml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.maven.server.eventListener.tests",
+    resources = False,
+    target = "server-eventListener-tests_test_lib",
 )
 ### auto-generated section `iml intellij.maven.server.eventListener.tests` end

@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
@@ -38,11 +39,9 @@ jvm_library(
 ### auto-generated section `build intellij.jvm.analysis.quickFix` end
 
 ### auto-generated section `iml intellij.jvm.analysis.quickFix` start
-exports_files(
-    [
-        "intellij.jvm.analysis.quickFix.iml",
-        "resources/intellij.jvm.analysis.quickFix.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.jvm.analysis.quickFix",
+    descriptors = ["resources/intellij.jvm.analysis.quickFix.xml"],
+    target = "analysis-quickFix",
 )
 ### auto-generated section `iml intellij.jvm.analysis.quickFix` end

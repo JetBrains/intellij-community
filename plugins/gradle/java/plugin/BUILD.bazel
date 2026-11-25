@@ -1,6 +1,7 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@community//platform/build-scripts/bazel-rules:ij_plugin.bzl", "ij_plugin")
-load("@jps_dynamic_deps_community//:targets.bzl", "dist_plugin")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:dist_plugin.bzl", "dist_plugin")
 
 ### auto-generated section `dev intellij.gradle.java.plugin` start
 dist_plugin(
@@ -20,6 +21,21 @@ dist_plugin(
         "intellij.gradle.java.properties",
     ],
     main_module = "intellij.gradle.java.plugin",
+    module_labels = {
+        "intellij.gradle.analysis": "@community//plugins/gradle/intellij.gradle.analysis:analysis",
+        "intellij.gradle.dependencyUpdater": "@community//plugins/gradle/gradle-dependency-updater:dependencyUpdater",
+        "intellij.gradle.java": "@community//plugins/gradle/java:java",
+        "intellij.gradle.java.coverage": "@community//plugins/gradle/java/coverage:coverage",
+        "intellij.gradle.java.groovy": "@community//plugins/gradle/java/groovy:groovy",
+        "intellij.gradle.java.groovy.ml": "@community//plugins/gradle/java/groovy/ml:ml",
+        "intellij.gradle.java.groovy.toml": "@community//plugins/gradle/java/groovy/toml:toml",
+        "intellij.gradle.java.maven": "@community//plugins/gradle-maven:gradle-java-maven",
+        "intellij.gradle.java.performance": "@community//plugins/gradle/java/performance:performance",
+        "intellij.gradle.java.plugin": "@community//plugins/gradle/java/plugin:plugin",
+        "intellij.gradle.java.properties": "@community//plugins/gradle/java/properties:properties",
+        "intellij.gradle.java.toml": "@community//plugins/gradle/java/toml:toml",
+        "intellij.gradle.jps": "@community//plugins/gradle/jps-plugin:jps",
+    },
 )
 ### auto-generated section `dev intellij.gradle.java.plugin` end
 
@@ -68,11 +84,10 @@ ij_plugin(
 ### auto-generated section `plugin intellij.gradle.java.plugin` end
 
 ### auto-generated section `iml intellij.gradle.java.plugin` start
-exports_files(
-    [
-        "intellij.gradle.java.plugin.iml",
-        "resources/META-INF/plugin.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.gradle.java.plugin",
+    descriptors = ["resources/META-INF/plugin.xml"],
+    plugin = True,
+    target = "plugin",
 )
 ### auto-generated section `iml intellij.gradle.java.plugin` end

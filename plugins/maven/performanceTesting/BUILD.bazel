@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
@@ -50,11 +51,9 @@ jvm_library(
 ### auto-generated section `build intellij.maven.performanceTesting` end
 
 ### auto-generated section `iml intellij.maven.performanceTesting` start
-exports_files(
-    [
-        "intellij.maven.performanceTesting.iml",
-        "resources/intellij.maven.performanceTesting.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.maven.performanceTesting",
+    descriptors = ["resources/intellij.maven.performanceTesting.xml"],
+    target = "performanceTesting",
 )
 ### auto-generated section `iml intellij.maven.performanceTesting` end

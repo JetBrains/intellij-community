@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
@@ -27,11 +28,9 @@ jvm_library(
 ### auto-generated section `build intellij.libraries.libthrift` end
 
 ### auto-generated section `iml intellij.libraries.libthrift` start
-exports_files(
-    [
-        "intellij.libraries.libthrift.iml",
-        "resources/intellij.libraries.libthrift.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.libraries.libthrift",
+    descriptors = ["resources/intellij.libraries.libthrift.xml"],
+    target = "libthrift",
 )
 ### auto-generated section `iml intellij.libraries.libthrift` end

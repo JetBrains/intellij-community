@@ -12,38 +12,38 @@
 # the stamps. The component index names the `dev_plugin` target or the component of a `dist_complex_plugin`
 # call.
 #
-# A descriptor leaf derives its conventional descriptor rows from the bridge index of its half.
+# A descriptor leaf states every descriptor row. The label of a conventional row is in the recorded form.
 
-load("@jps_dynamic_deps_community//:targets.bzl", "dist_plugin_descriptor")
 load("//platform/build-scripts/bazel-rules:dev_plugin.bzl", "dev_plugin")
+load("//platform/build-scripts/bazel-rules:dist_plugin_descriptor.bzl", "dist_plugin_descriptor")
 
 dist_plugin_descriptor(
-    content_modules = [
-        "intellij.dev.leakDetection",
-        "intellij.driver.client",
-        "intellij.driver.impl",
-        "intellij.driver.model",
-        "intellij.libraries.assertj.core",
-        "intellij.libraries.assertj.swing",
-        "intellij.libraries.oshi.core",
-        "intellij.performanceTesting.backend",
-        "intellij.performanceTesting.debugger",
-        "intellij.performanceTesting.execution",
-        "intellij.performanceTesting.freezes",
-        "intellij.performanceTesting.frontend",
-        "intellij.performanceTesting.frontend.baseline",
-        "intellij.performanceTesting.lsp",
-        "intellij.performanceTesting.problemsView",
-        "intellij.performanceTesting.rdct",
-        "intellij.performanceTesting.remoteDriver",
-        "intellij.performanceTesting.remoteDriver.compose",
-        "intellij.performanceTesting.remoteDriver.jcef",
-        "intellij.performanceTesting.structureView",
-        "intellij.performanceTesting.todo",
-        "intellij.performanceTesting.vcs",
-        "intellij.tools.ide.starter.bus",
-    ],
     descriptor = "//plugins/performanceTesting/core:resources/META-INF/plugin.xml",
+    descriptors = {
+        "@community//libraries/assertj-core:resources/intellij.libraries.assertj.core.xml": "intellij.libraries.assertj.core.xml",
+        "@community//libraries/assertj-swing:resources/intellij.libraries.assertj.swing.xml": "intellij.libraries.assertj.swing.xml",
+        "@community//libraries/oshi-core:resources/intellij.libraries.oshi.core.xml": "intellij.libraries.oshi.core.xml",
+        "@community//platform/remote-driver/client:resources/intellij.driver.client.xml": "intellij.driver.client.xml",
+        "@community//platform/remote-driver/core:resources/intellij.driver.impl.xml": "intellij.driver.impl.xml",
+        "@community//platform/remote-driver/model:resources/intellij.driver.model.xml": "intellij.driver.model.xml",
+        "@community//plugins/dev/intellij.dev.leakDetection:resources/intellij.dev.leakDetection.xml": "intellij.dev.leakDetection.xml",
+        "@community//plugins/performanceTesting/backend:resources/intellij.performanceTesting.backend.xml": "intellij.performanceTesting.backend.xml",
+        "@community//plugins/performanceTesting/debugger:resources/intellij.performanceTesting.debugger.xml": "intellij.performanceTesting.debugger.xml",
+        "@community//plugins/performanceTesting/event-bus:resources/intellij.tools.ide.starter.bus.xml": "intellij.tools.ide.starter.bus.xml",
+        "@community//plugins/performanceTesting/execution:resources/intellij.performanceTesting.execution.xml": "intellij.performanceTesting.execution.xml",
+        "@community//plugins/performanceTesting/freezes:resources/intellij.performanceTesting.freezes.xml": "intellij.performanceTesting.freezes.xml",
+        "@community//plugins/performanceTesting/frontend-baseline:resources/intellij.performanceTesting.frontend.baseline.xml": "intellij.performanceTesting.frontend.baseline.xml",
+        "@community//plugins/performanceTesting/frontend:resources/intellij.performanceTesting.frontend.xml": "intellij.performanceTesting.frontend.xml",
+        "@community//plugins/performanceTesting/lsp:resources/intellij.performanceTesting.lsp.xml": "intellij.performanceTesting.lsp.xml",
+        "@community//plugins/performanceTesting/problemsView:resources/intellij.performanceTesting.problemsView.xml": "intellij.performanceTesting.problemsView.xml",
+        "@community//plugins/performanceTesting/rdct:resources/intellij.performanceTesting.rdct.xml": "intellij.performanceTesting.rdct.xml",
+        "@community//plugins/performanceTesting/remote-driver.compose:resources/intellij.performanceTesting.remoteDriver.compose.xml": "intellij.performanceTesting.remoteDriver.compose.xml",
+        "@community//plugins/performanceTesting/remote-driver.jcef:resources/intellij.performanceTesting.remoteDriver.jcef.xml": "intellij.performanceTesting.remoteDriver.jcef.xml",
+        "@community//plugins/performanceTesting/remote-driver:resources/intellij.performanceTesting.remoteDriver.xml": "intellij.performanceTesting.remoteDriver.xml",
+        "@community//plugins/performanceTesting/structureView:resources/intellij.performanceTesting.structureView.xml": "intellij.performanceTesting.structureView.xml",
+        "@community//plugins/performanceTesting/todo:resources/intellij.performanceTesting.todo.xml": "intellij.performanceTesting.todo.xml",
+        "@community//plugins/performanceTesting/vcs:resources/intellij.performanceTesting.vcs.xml": "intellij.performanceTesting.vcs.xml",
+    },
     main_module = "intellij.performanceTesting",
     mode_refused_content_modules = {
         "frontend": ["intellij.performanceTesting.backend"],

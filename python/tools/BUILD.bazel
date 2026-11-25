@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.python.tools` start
@@ -40,10 +41,8 @@ jvm_library(
 ### auto-generated section `build intellij.python.tools` end
 
 ### auto-generated section `iml intellij.python.tools` start
-exports_files(
-    [
-        "intellij.python.tools.iml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.python.tools",
+    target = "tools",
 )
 ### auto-generated section `iml intellij.python.tools` end

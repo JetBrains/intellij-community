@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
@@ -44,11 +45,9 @@ jvm_library(
 ### auto-generated section `build intellij.groovy.langInjection` end
 
 ### auto-generated section `iml intellij.groovy.langInjection` start
-exports_files(
-    [
-        "intellij.groovy.langInjection.iml",
-        "resources/intellij.groovy.langInjection.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.groovy.langInjection",
+    descriptors = ["resources/intellij.groovy.langInjection.xml"],
+    target = "langInjection",
 )
 ### auto-generated section `iml intellij.groovy.langInjection` end

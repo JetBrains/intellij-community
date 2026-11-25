@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
@@ -83,12 +84,10 @@ jvm_library(
 ### auto-generated section `build intellij.kotlin.base.scripting.main.kts` end
 
 ### auto-generated section `iml intellij.kotlin.base.scripting.main.kts` start
-exports_files(
-    [
-        "intellij.kotlin.base.scripting.main.kts.iml",
-        "resources/intellij.kotlin.base.scripting.main.kts.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.kotlin.base.scripting.main.kts",
+    descriptors = ["resources/intellij.kotlin.base.scripting.main.kts.xml"],
+    target = "scripting.main.kts",
 )
 ### auto-generated section `iml intellij.kotlin.base.scripting.main.kts` end
 
@@ -152,11 +151,10 @@ jvm_library(
 ### auto-generated section `build intellij.kotlin.base.scripting.main.kts.tests` end
 
 ### auto-generated section `iml intellij.kotlin.base.scripting.main.kts.tests` start
-exports_files(
-    [
-        "intellij.kotlin.base.scripting.main.kts.tests.iml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.kotlin.base.scripting.main.kts.tests",
+    resources = False,
+    target = "kotlin-base-scripting-main-kts-tests_test_lib",
 )
 ### auto-generated section `iml intellij.kotlin.base.scripting.main.kts.tests` end
 

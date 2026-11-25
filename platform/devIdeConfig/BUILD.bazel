@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.platform.devIdeConfig` start
@@ -17,10 +18,9 @@ jvm_library(
 ### auto-generated section `build intellij.platform.devIdeConfig` end
 
 ### auto-generated section `iml intellij.platform.devIdeConfig` start
-exports_files(
-    [
-        "intellij.platform.devIdeConfig.iml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.platform.devIdeConfig",
+    resources = False,
+    target = "devIdeConfig",
 )
 ### auto-generated section `iml intellij.platform.devIdeConfig` end

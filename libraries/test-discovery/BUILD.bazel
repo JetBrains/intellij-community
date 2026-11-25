@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.libraries.test.discovery` start
@@ -19,11 +20,9 @@ jvm_library(
 ### auto-generated section `build intellij.libraries.test.discovery` end
 
 ### auto-generated section `iml intellij.libraries.test.discovery` start
-exports_files(
-    [
-        "intellij.libraries.test.discovery.iml",
-        "resources/intellij.libraries.test.discovery.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.libraries.test.discovery",
+    descriptors = ["resources/intellij.libraries.test.discovery.xml"],
+    target = "test-discovery",
 )
 ### auto-generated section `iml intellij.libraries.test.discovery` end

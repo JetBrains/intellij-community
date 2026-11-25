@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
@@ -64,14 +65,14 @@ jvm_library(
 ### auto-generated section `build intellij.xml.emmet` end
 
 ### auto-generated section `iml intellij.xml.emmet` start
-exports_files(
-    [
-        "intellij.xml.emmet.iml",
-        "resources/intellij.xml.emmet.xml",
+jps_module(
+    name = "intellij.xml.emmet",
+    descriptors = ["resources/intellij.xml.emmet.xml"],
+    target = "emmet",
+    exports = [
         "resources/liveTemplates/html_xml.xml",
         "resources/liveTemplates/zen_html.xml",
         "resources/liveTemplates/zen_xsl.xml",
     ],
-    visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.xml.emmet` end

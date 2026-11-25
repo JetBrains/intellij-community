@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
@@ -70,12 +71,10 @@ jvm_library(
 ### auto-generated section `build intellij.platform.credentialStore.impl` end
 
 ### auto-generated section `iml intellij.platform.credentialStore.impl` start
-exports_files(
-    [
-        "intellij.platform.credentialStore.impl.iml",
-        "resources/intellij.platform.credentialStore.impl.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.platform.credentialStore.impl",
+    descriptors = ["resources/intellij.platform.credentialStore.impl.xml"],
+    target = "credentialStore-impl",
 )
 ### auto-generated section `iml intellij.platform.credentialStore.impl` end
 
@@ -121,10 +120,9 @@ jvm_library(
 ### auto-generated section `build intellij.platform.credentialStore.impl.tests` end
 
 ### auto-generated section `iml intellij.platform.credentialStore.impl.tests` start
-exports_files(
-    [
-        "intellij.platform.credentialStore.impl.tests.iml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.platform.credentialStore.impl.tests",
+    resources = False,
+    target = "credentialStore-impl-tests_test_lib",
 )
 ### auto-generated section `iml intellij.platform.credentialStore.impl.tests` end

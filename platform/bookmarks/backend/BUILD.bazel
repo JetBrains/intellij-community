@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.platform.bookmarks.backend` start
@@ -35,11 +36,9 @@ jvm_library(
 ### auto-generated section `build intellij.platform.bookmarks.backend` end
 
 ### auto-generated section `iml intellij.platform.bookmarks.backend` start
-exports_files(
-    [
-        "intellij.platform.bookmarks.backend.iml",
-        "resources/intellij.platform.bookmarks.backend.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.platform.bookmarks.backend",
+    descriptors = ["resources/intellij.platform.bookmarks.backend.xml"],
+    target = "backend",
 )
 ### auto-generated section `iml intellij.platform.bookmarks.backend` end

@@ -1,6 +1,7 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@community//platform/build-scripts/bazel-rules:ij_plugin.bzl", "ij_plugin")
-load("@jps_dynamic_deps_community//:targets.bzl", "dist_plugin")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:dist_plugin.bzl", "dist_plugin")
 
 ### auto-generated section `dev intellij.devkit` start
 dist_plugin(
@@ -37,6 +38,38 @@ dist_plugin(
         "intellij.libraries.workspace.model.codegen",
     ],
     main_module = "intellij.devkit",
+    module_labels = {
+        "intellij.devkit": "@community//plugins/devkit:devkit",
+        "intellij.devkit.apiDump": "@community//plugins/devkit/api-dump:api-dump",
+        "intellij.devkit.apiDump.lang": "@community//plugins/devkit/api-dump-lang:apiDump-lang",
+        "intellij.devkit.compose": "@community//plugins/devkit/intellij.devkit.compose:compose",
+        "intellij.devkit.core": "@community//plugins/devkit/devkit-core:core",
+        "intellij.devkit.debugger": "@community//plugins/devkit/intellij.devkit.debugger:debugger",
+        "intellij.devkit.experiments": "@community//plugins/devkit/intellij.devkit.experiments:experiments",
+        "intellij.devkit.gradle": "@community//plugins/devkit/intellij.devkit.gradle:gradle",
+        "intellij.devkit.gradle.toml": "@community//plugins/devkit/intellij.devkit.gradle.toml:gradle-toml",
+        "intellij.devkit.gradle.tooling": "@community//plugins/devkit/intellij.devkit.gradle.tooling:gradle-tooling",
+        "intellij.devkit.i18n": "@community//plugins/devkit/intellij.devkit.i18n:i18n",
+        "intellij.devkit.ide": "@community//plugins/devkit/intellij.devkit.ide:ide",
+        "intellij.devkit.intelliLang": "@community//plugins/devkit/intellij.devkit.intelliLang:intelliLang",
+        "intellij.devkit.jps": "@community//plugins/devkit/jps-plugin:jps",
+        "intellij.devkit.mcp": "@community//plugins/devkit/intellij.devkit.mcp:mcp",
+        "intellij.devkit.mcp.inspections": "@community//plugins/devkit/intellij.devkit.mcp.inspections:mcp-inspections",
+        "intellij.devkit.modules": "@community//plugins/devkit/intellij.devkit.modules:modules",
+        "intellij.devkit.scaffolding": "@community//plugins/devkit/intellij.devkit.scaffolding:scaffolding",
+        "intellij.devkit.smartupdate": "@community//plugins/devkit/intellij.devkit.smartupdate:smartupdate",
+        "intellij.devkit.stacktrace": "@community//plugins/devkit/intellij.devkit.stacktrace:stacktrace",
+        "intellij.devkit.themes": "@community//plugins/devkit/intellij.devkit.themes:themes",
+        "intellij.devkit.threading": "@community//plugins/devkit/intellij.devkit.threading:threading",
+        "intellij.devkit.uiDesigner": "@community//plugins/devkit/intellij.devkit.uiDesigner:uiDesigner",
+        "intellij.devkit.uiDsl": "@community//plugins/devkit/intellij.devkit.uiDsl:uiDsl",
+        "intellij.devkit.workspaceModel": "@community//plugins/devkit/intellij.devkit.workspaceModel:workspaceModel",
+        "intellij.devkit.workspaceModel.k2": "@community//plugins/devkit/intellij.devkit.workspaceModel/k2:k2",
+        "intellij.kotlin.devkit": "@community//plugins/devkit/intellij.kotlin.devkit:kotlin-devkit",
+        "intellij.kotlin.devkit.k2": "@community//plugins/devkit/intellij.kotlin.devkit/k2:k2",
+        "intellij.libraries.workspace.model.codegen": "@community//libraries/workspace-model-codegen:workspace-model-codegen",
+        "intellij.platform.jewel.samples.showcase": "@community//platform/jewel/samples/showcase:showcase",
+    },
 )
 ### auto-generated section `dev intellij.devkit` end
 
@@ -103,12 +136,11 @@ ij_plugin(
 ### auto-generated section `plugin intellij.devkit` end
 
 ### auto-generated section `iml intellij.devkit` start
-exports_files(
-    [
-        "intellij.devkit.iml",
-        "resources/META-INF/plugin.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.devkit",
+    descriptors = ["resources/META-INF/plugin.xml"],
+    plugin = True,
+    target = "devkit",
 )
 ### auto-generated section `iml intellij.devkit` end
 
@@ -134,11 +166,10 @@ jvm_library(
 ### auto-generated section `build intellij.devkit.plugin.main` end
 
 ### auto-generated section `iml intellij.devkit.plugin.main` start
-exports_files(
-    [
-        "intellij.devkit.plugin.main.iml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.devkit.plugin.main",
+    resources = False,
+    target = "devkit-plugin-main",
 )
 ### auto-generated section `iml intellij.devkit.plugin.main` end
 
@@ -173,10 +204,9 @@ jvm_library(
 ### auto-generated section `build intellij.devkit.plugin.main.noKotlin` end
 
 ### auto-generated section `iml intellij.devkit.plugin.main.noKotlin` start
-exports_files(
-    [
-        "intellij.devkit.plugin.main.noKotlin.iml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.devkit.plugin.main.noKotlin",
+    resources = False,
+    target = "devkit-plugin-main-noKotlin",
 )
 ### auto-generated section `iml intellij.devkit.plugin.main.noKotlin` end

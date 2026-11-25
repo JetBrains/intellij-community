@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
@@ -48,12 +49,10 @@ jvm_library(
 ### auto-generated section `build intellij.platform.ijent` end
 
 ### auto-generated section `iml intellij.platform.ijent` start
-exports_files(
-    [
-        "intellij.platform.ijent.iml",
-        "resources/intellij.platform.ijent.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.platform.ijent",
+    descriptors = ["resources/intellij.platform.ijent.xml"],
+    target = "ijent",
 )
 ### auto-generated section `iml intellij.platform.ijent` end
 
@@ -99,10 +98,9 @@ jvm_library(
 ### auto-generated section `build intellij.platform.ijent.tests` end
 
 ### auto-generated section `iml intellij.platform.ijent.tests` start
-exports_files(
-    [
-        "intellij.platform.ijent.tests.iml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.platform.ijent.tests",
+    resources = False,
+    target = "ijent-tests_test_lib",
 )
 ### auto-generated section `iml intellij.platform.ijent.tests` end

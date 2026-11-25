@@ -1,11 +1,15 @@
-load("@jps_dynamic_deps_community//:targets.bzl", "dist_plugin")
+load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:dev_plugin_remainder.bzl", "dist_complex_plugin")
+load("//platform/build-scripts/bazel-rules:dist_plugin.bzl", "dist_plugin")
 
 ### auto-generated section `dev intellij.webp` start
 dist_plugin(
     descriptor = "resources/META-INF/plugin.xml",
     main_module = "intellij.webp",
+    module_labels = {
+        "intellij.webp": "@community//plugins/webp:webp",
+    },
 )
 
 dist_complex_plugin(
@@ -96,11 +100,10 @@ jvm_library(
 ### auto-generated section `build intellij.webp` end
 
 ### auto-generated section `iml intellij.webp` start
-exports_files(
-    [
-        "intellij.webp.iml",
-        "resources/META-INF/plugin.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.webp",
+    descriptors = ["resources/META-INF/plugin.xml"],
+    libraries = ["//plugins/webp/lib:libwebp.jar"],
+    target = "webp",
 )
 ### auto-generated section `iml intellij.webp` end

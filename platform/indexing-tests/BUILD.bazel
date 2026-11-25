@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
@@ -38,10 +39,9 @@ jvm_library(
 ### auto-generated section `build intellij.platform.indexing.tests` end
 
 ### auto-generated section `iml intellij.platform.indexing.tests` start
-exports_files(
-    [
-        "intellij.platform.indexing.tests.iml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.platform.indexing.tests",
+    resources = False,
+    target = "indexing-tests_test_lib",
 )
 ### auto-generated section `iml intellij.platform.indexing.tests` end

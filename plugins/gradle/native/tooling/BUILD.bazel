@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
@@ -46,11 +47,9 @@ jvm_library(
 ### auto-generated section `build intellij.gradle.native.tooling` end
 
 ### auto-generated section `iml intellij.gradle.native.tooling` start
-exports_files(
-    [
-        "intellij.gradle.native.tooling.iml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.gradle.native.tooling",
+    target = "tooling",
 )
 ### auto-generated section `iml intellij.gradle.native.tooling` end
 
@@ -81,10 +80,9 @@ jvm_library(
 ### auto-generated section `build intellij.gradle.native.tooling.tests` end
 
 ### auto-generated section `iml intellij.gradle.native.tooling.tests` start
-exports_files(
-    [
-        "intellij.gradle.native.tooling.tests.iml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.gradle.native.tooling.tests",
+    resources = False,
+    target = "gradle-native-tooling-tests_test_lib",
 )
 ### auto-generated section `iml intellij.gradle.native.tooling.tests` end

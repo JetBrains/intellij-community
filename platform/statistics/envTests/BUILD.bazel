@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
@@ -38,11 +39,9 @@ jvm_library(
 ### auto-generated section `build intellij.platform.statistics.envTests` end
 
 ### auto-generated section `iml intellij.platform.statistics.envTests` start
-exports_files(
-    [
-        "intellij.platform.statistics.envTests.iml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.platform.statistics.envTests",
+    target = "envTests_test_lib",
 )
 ### auto-generated section `iml intellij.platform.statistics.envTests` end
 

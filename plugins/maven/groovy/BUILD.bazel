@@ -1,4 +1,5 @@
 load("@community//build:bazel_targets_json.bzl", "current_bazel_targets_json")
+load("@community//build:jps_module.bzl", "jps_module")
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
@@ -81,12 +82,10 @@ jvm_library(
 ### auto-generated section `build intellij.maven.groovy` end
 
 ### auto-generated section `iml intellij.maven.groovy` start
-exports_files(
-    [
-        "intellij.maven.groovy.iml",
-        "resources/intellij.maven.groovy.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.maven.groovy",
+    descriptors = ["resources/intellij.maven.groovy.xml"],
+    target = "groovy",
 )
 ### auto-generated section `iml intellij.maven.groovy` end
 
@@ -148,10 +147,9 @@ jvm_library(
 ### auto-generated section `build intellij.maven.groovy.tests` end
 
 ### auto-generated section `iml intellij.maven.groovy.tests` start
-exports_files(
-    [
-        "intellij.maven.groovy.tests.iml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.maven.groovy.tests",
+    resources = False,
+    target = "groovy-tests_test_lib",
 )
 ### auto-generated section `iml intellij.maven.groovy.tests` end

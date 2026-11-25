@@ -1,6 +1,7 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@community//platform/build-scripts/bazel-rules:ij_plugin.bzl", "ij_plugin")
-load("@jps_dynamic_deps_community//:targets.bzl", "dist_plugin")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:dist_plugin.bzl", "dist_plugin")
 
 ### auto-generated section `dev intellij.yaml.plugin` start
 dist_plugin(
@@ -12,6 +13,13 @@ dist_plugin(
         "intellij.yaml.syntax",
     ],
     main_module = "intellij.yaml.plugin",
+    module_labels = {
+        "intellij.yaml": "@community//plugins/yaml:yaml",
+        "intellij.yaml.backend": "@community//plugins/yaml/backend:backend",
+        "intellij.yaml.plugin": "@community//plugins/yaml/plugin:plugin",
+        "intellij.yaml.spellchecker": "@community//plugins/yaml/spellchecker:spellchecker",
+        "intellij.yaml.syntax": "@community//plugins/yaml/syntax:syntax",
+    },
 )
 ### auto-generated section `dev intellij.yaml.plugin` end
 
@@ -54,11 +62,10 @@ ij_plugin(
 ### auto-generated section `plugin intellij.yaml.plugin` end
 
 ### auto-generated section `iml intellij.yaml.plugin` start
-exports_files(
-    [
-        "intellij.yaml.plugin.iml",
-        "resources/META-INF/plugin.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.yaml.plugin",
+    descriptors = ["resources/META-INF/plugin.xml"],
+    plugin = True,
+    target = "plugin",
 )
 ### auto-generated section `iml intellij.yaml.plugin` end

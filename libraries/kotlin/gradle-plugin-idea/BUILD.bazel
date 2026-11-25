@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
@@ -31,11 +32,9 @@ jvm_library(
 ### auto-generated section `build intellij.libraries.kotlin.gradle.plugin.idea` end
 
 ### auto-generated section `iml intellij.libraries.kotlin.gradle.plugin.idea` start
-exports_files(
-    [
-        "intellij.libraries.kotlin.gradle.plugin.idea.iml",
-        "resources/intellij.libraries.kotlin.gradle.plugin.idea.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.libraries.kotlin.gradle.plugin.idea",
+    descriptors = ["resources/intellij.libraries.kotlin.gradle.plugin.idea.xml"],
+    target = "libraries-kotlin-gradle-plugin-idea",
 )
 ### auto-generated section `iml intellij.libraries.kotlin.gradle.plugin.idea` end

@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.libraries.ffmpeg` start
@@ -43,11 +44,9 @@ jvm_library(
 ### auto-generated section `build intellij.libraries.ffmpeg` end
 
 ### auto-generated section `iml intellij.libraries.ffmpeg` start
-exports_files(
-    [
-        "intellij.libraries.ffmpeg.iml",
-        "resources/intellij.libraries.ffmpeg.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.libraries.ffmpeg",
+    descriptors = ["resources/intellij.libraries.ffmpeg.xml"],
+    target = "ffmpeg",
 )
 ### auto-generated section `iml intellij.libraries.ffmpeg` end

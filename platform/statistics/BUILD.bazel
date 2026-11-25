@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
@@ -86,12 +87,10 @@ jvm_library(
 ### auto-generated section `build intellij.platform.statistics` end
 
 ### auto-generated section `iml intellij.platform.statistics` start
-exports_files(
-    [
-        "intellij.platform.statistics.iml",
-        "resources/intellij.platform.statistics.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.platform.statistics",
+    descriptors = ["resources/intellij.platform.statistics.xml"],
+    target = "statistics",
 )
 ### auto-generated section `iml intellij.platform.statistics` end
 
@@ -133,10 +132,9 @@ jvm_library(
 ### auto-generated section `build intellij.platform.statistics.tests` end
 
 ### auto-generated section `iml intellij.platform.statistics.tests` start
-exports_files(
-    [
-        "intellij.platform.statistics.tests.iml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.platform.statistics.tests",
+    resources = False,
+    target = "statistics-tests_test_lib",
 )
 ### auto-generated section `iml intellij.platform.statistics.tests` end

@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
@@ -49,14 +50,14 @@ jvm_library(
 ### auto-generated section `build intellij.xml.ui.common` end
 
 ### auto-generated section `iml intellij.xml.ui.common` start
-exports_files(
-    [
-        "intellij.xml.ui.common.iml",
+jps_module(
+    name = "intellij.xml.ui.common",
+    descriptors = ["resources/intellij.xml.ui.common.xml"],
+    target = "ui-common",
+    exports = [
         "resources/colorSchemes/XmlDarcula.xml",
         "resources/colorSchemes/XmlHighContrast.xml",
         "resources/colorSchemes/XmlIntelliJLight.xml",
-        "resources/intellij.xml.ui.common.xml",
     ],
-    visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.xml.ui.common` end

@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
@@ -52,12 +53,10 @@ jvm_library(
 ### auto-generated section `build intellij.java.debugger` end
 
 ### auto-generated section `iml intellij.java.debugger` start
-exports_files(
-    [
-        "intellij.java.debugger.iml",
-        "resources/intellij.java.debugger.content.xml",
-        "resources/intellij.java.debugger.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.java.debugger",
+    descriptors = ["resources/intellij.java.debugger.xml"],
+    target = "java-debugger",
+    exports = ["resources/intellij.java.debugger.content.xml"],
 )
 ### auto-generated section `iml intellij.java.debugger` end

@@ -1,6 +1,7 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@community//platform/build-scripts/bazel-rules:ij_plugin.bzl", "ij_plugin")
-load("@jps_dynamic_deps_community//:targets.bzl", "dist_plugin")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:dist_plugin.bzl", "dist_plugin")
 
 ### auto-generated section `dev intellij.java.basic.plugin` start
 dist_plugin(
@@ -14,6 +15,14 @@ dist_plugin(
         "intellij.java.frontback.impl",
     ],
     descriptor = "resources/META-INF/plugin.xml",
+    descriptors = {
+        "@community//java/java-frontback-impl:resource/intellij.java.frontback.impl.xml": "intellij.java.frontback.impl.xml",
+        "@community//java/java-frontback-psi-api:resources/intellij.java.frontback.psi.xml": "intellij.java.frontback.psi.xml",
+        "@community//java/java-frontback-psi-impl:resources/intellij.java.frontback.psi.impl.xml": "intellij.java.frontback.psi.impl.xml",
+        "@community//java/java-psi-api:resources/intellij.java.psi.xml": "intellij.java.psi.xml",
+        "@community//java/java-psi-impl:resources/intellij.java.psi.impl.xml": "intellij.java.psi.impl.xml",
+        "@community//java/java-syntax:resources/intellij.java.syntax.xml": "intellij.java.syntax.xml",
+    },
     jars = {
         "lib/java-basic-plugin.jar": ["intellij.java.basic.plugin"],
     },
@@ -25,6 +34,15 @@ dist_plugin(
         "intellij.java.psi": "lib/intellij.java.psi.jar",
         "intellij.java.psi.impl": "lib/intellij.java.psi.impl.jar",
         "intellij.java.frontback.impl": "lib/intellij.java.frontback.impl.jar",
+    },
+    module_labels = {
+        "intellij.java.basic.plugin": "@community//java/basic-plugin:basic-plugin",
+        "intellij.java.frontback.impl": "@community//java/java-frontback-impl:frontback-impl",
+        "intellij.java.frontback.psi": "@community//java/java-frontback-psi-api:frontback-psi",
+        "intellij.java.frontback.psi.impl": "@community//java/java-frontback-psi-impl:frontback-psi-impl",
+        "intellij.java.psi": "@community//java/java-psi-api:psi",
+        "intellij.java.psi.impl": "@community//java/java-psi-impl:psi-impl",
+        "intellij.java.syntax": "@community//java/java-syntax:syntax",
     },
 )
 ### auto-generated section `dev intellij.java.basic.plugin` end
@@ -72,11 +90,10 @@ ij_plugin(
 ### auto-generated section `plugin intellij.java.basic.plugin` end
 
 ### auto-generated section `iml intellij.java.basic.plugin` start
-exports_files(
-    [
-        "intellij.java.basic.plugin.iml",
-        "resources/META-INF/plugin.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.java.basic.plugin",
+    descriptors = ["resources/META-INF/plugin.xml"],
+    plugin = True,
+    target = "basic-plugin",
 )
 ### auto-generated section `iml intellij.java.basic.plugin` end

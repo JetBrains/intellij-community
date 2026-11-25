@@ -1,6 +1,7 @@
-load("@jps_dynamic_deps_community//:targets.bzl", "dist_plugin")
+load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library")
 load("//platform/build-scripts/bazel-rules:dev_plugin_remainder.bzl", "dist_complex_plugin")
+load("//platform/build-scripts/bazel-rules:dist_plugin.bzl", "dist_plugin")
 load(":downloads_test.bzl", "downloads_test_suite")
 
 ### auto-generated section `dev intellij.terminal` start
@@ -27,6 +28,19 @@ dist_plugin(
         "intellij.terminal.libraries.completionDbWithExtensions",
     ],
     main_module = "intellij.terminal",
+    module_labels = {
+        "intellij.libraries.completion.ranking.sh": "@community//libraries/completion-ranking-sh:completion-ranking-sh",
+        "intellij.terminal": "@community//plugins/terminal:terminal",
+        "intellij.terminal.backend": "@community//plugins/terminal/backend:backend",
+        "intellij.terminal.cloud": "@community//plugins/terminal/cloud:cloud",
+        "intellij.terminal.completion": "@community//plugins/terminal/completion:completion",
+        "intellij.terminal.completion.ml": "@community//plugins/terminal/completion-ml:completion-ml",
+        "intellij.terminal.emulator": "@community//plugins/terminal/emulator:emulator",
+        "intellij.terminal.execution": "@community//plugins/terminal/execution:execution",
+        "intellij.terminal.frontend": "@community//plugins/terminal/frontend:frontend",
+        "intellij.terminal.libraries.completionDbWithExtensions": "@community//plugins/terminal/libraries:libraries-completionDbWithExtensions",
+        "intellij.terminal.sh": "@community//plugins/terminal/sh:sh",
+    },
 )
 
 dist_complex_plugin(
@@ -219,12 +233,10 @@ jvm_library(
 ### auto-generated section `build intellij.terminal` end
 
 ### auto-generated section `iml intellij.terminal` start
-exports_files(
-    [
-        "intellij.terminal.iml",
-        "resources/META-INF/plugin.xml",
-        "resources/META-INF/terminal.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.terminal",
+    descriptors = ["resources/META-INF/plugin.xml"],
+    target = "terminal",
+    exports = ["resources/META-INF/terminal.xml"],
 )
 ### auto-generated section `iml intellij.terminal` end

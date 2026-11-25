@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
@@ -45,11 +46,9 @@ jvm_library(
 ### auto-generated section `build intellij.platform.vcs.dvcs.impl.shared` end
 
 ### auto-generated section `iml intellij.platform.vcs.dvcs.impl.shared` start
-exports_files(
-    [
-        "intellij.platform.vcs.dvcs.impl.shared.iml",
-        "resources/intellij.platform.vcs.dvcs.impl.shared.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.platform.vcs.dvcs.impl.shared",
+    descriptors = ["resources/intellij.platform.vcs.dvcs.impl.shared.xml"],
+    target = "shared",
 )
 ### auto-generated section `iml intellij.platform.vcs.dvcs.impl.shared` end

@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@community//platform/build-scripts/bazel-rules:ij_plugin_module.bzl", "ij_plugin_module")
 
 ### auto-generated section `build intellij.libraries.qodana.sarif` start
@@ -20,11 +21,9 @@ ij_plugin_module(
 ### auto-generated section `build intellij.libraries.qodana.sarif` end
 
 ### auto-generated section `iml intellij.libraries.qodana.sarif` start
-exports_files(
-    [
-        "intellij.libraries.qodana.sarif.iml",
-        "resources/intellij.libraries.qodana.sarif.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.libraries.qodana.sarif",
+    descriptors = ["resources/intellij.libraries.qodana.sarif.xml"],
+    target = "sarif",
 )
 ### auto-generated section `iml intellij.libraries.qodana.sarif` end

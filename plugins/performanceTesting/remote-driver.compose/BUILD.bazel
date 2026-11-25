@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
@@ -37,11 +38,9 @@ jvm_library(
 ### auto-generated section `build intellij.performanceTesting.remoteDriver.compose` end
 
 ### auto-generated section `iml intellij.performanceTesting.remoteDriver.compose` start
-exports_files(
-    [
-        "intellij.performanceTesting.remoteDriver.compose.iml",
-        "resources/intellij.performanceTesting.remoteDriver.compose.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.performanceTesting.remoteDriver.compose",
+    descriptors = ["resources/intellij.performanceTesting.remoteDriver.compose.xml"],
+    target = "remote-driver.compose",
 )
 ### auto-generated section `iml intellij.performanceTesting.remoteDriver.compose` end

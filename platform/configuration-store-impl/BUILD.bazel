@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
@@ -83,13 +84,11 @@ jvm_library(
 ### auto-generated section `build intellij.platform.configurationStore.impl` end
 
 ### auto-generated section `iml intellij.platform.configurationStore.impl` start
-exports_files(
-    [
-        "intellij.platform.configurationStore.impl.iml",
-        "resources/intellij.platform.configurationStore.impl.actions.xml",
-        "resources/intellij.platform.configurationStore.impl.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.platform.configurationStore.impl",
+    descriptors = ["resources/intellij.platform.configurationStore.impl.xml"],
+    target = "configurationStore-impl",
+    exports = ["resources/intellij.platform.configurationStore.impl.actions.xml"],
 )
 ### auto-generated section `iml intellij.platform.configurationStore.impl` end
 
@@ -169,10 +168,8 @@ jvm_library(
 ### auto-generated section `build intellij.platform.configurationStore.tests` end
 
 ### auto-generated section `iml intellij.platform.configurationStore.tests` start
-exports_files(
-    [
-        "intellij.platform.configurationStore.tests.iml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.platform.configurationStore.tests",
+    target = "configurationStore-tests_test_lib",
 )
 ### auto-generated section `iml intellij.platform.configurationStore.tests` end

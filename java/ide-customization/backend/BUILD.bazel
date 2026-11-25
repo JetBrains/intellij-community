@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
@@ -53,12 +54,10 @@ jvm_library(
 ### auto-generated section `build intellij.java.ide.customization.backend` end
 
 ### auto-generated section `iml intellij.java.ide.customization.backend` start
-exports_files(
-    [
-        "intellij.java.ide.customization.backend.iml",
-        "resources/intellij.java.ide.customization.backend.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.java.ide.customization.backend",
+    descriptors = ["resources/intellij.java.ide.customization.backend.xml"],
+    target = "backend",
 )
 ### auto-generated section `iml intellij.java.ide.customization.backend` end
 
@@ -100,10 +99,9 @@ jvm_library(
 ### auto-generated section `build intellij.java.ide.customization.backend.tests` end
 
 ### auto-generated section `iml intellij.java.ide.customization.backend.tests` start
-exports_files(
-    [
-        "intellij.java.ide.customization.backend.tests.iml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.java.ide.customization.backend.tests",
+    resources = False,
+    target = "java-ide-customization-backend-tests_test_lib",
 )
 ### auto-generated section `iml intellij.java.ide.customization.backend.tests` end

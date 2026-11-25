@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
@@ -54,12 +55,10 @@ jvm_library(
 ### auto-generated section `build intellij.kotlin.gradle.java` end
 
 ### auto-generated section `iml intellij.kotlin.gradle.java` start
-exports_files(
-    [
-        "intellij.kotlin.gradle.java.iml",
-        "resources/intellij.kotlin.gradle.java.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.kotlin.gradle.java",
+    descriptors = ["resources/intellij.kotlin.gradle.java.xml"],
+    target = "kotlin-gradle-java",
 )
 ### auto-generated section `iml intellij.kotlin.gradle.java` end
 
@@ -148,11 +147,10 @@ jvm_library(
 ### auto-generated section `build intellij.kotlin.gradle.java.tests` end
 
 ### auto-generated section `iml intellij.kotlin.gradle.java.tests` start
-exports_files(
-    [
-        "intellij.kotlin.gradle.java.tests.iml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.kotlin.gradle.java.tests",
+    resources = False,
+    target = "kotlin-gradle-java-tests_test_lib",
 )
 ### auto-generated section `iml intellij.kotlin.gradle.java.tests` end
 

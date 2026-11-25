@@ -1,6 +1,7 @@
-load("@jps_dynamic_deps_community//:targets.bzl", "dist_plugin")
+load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:dev_plugin_remainder.bzl", "dist_complex_plugin")
+load("//platform/build-scripts/bazel-rules:dist_plugin.bzl", "dist_plugin")
 load(":downloads_test.bzl", "downloads_test_suite")
 
 ### auto-generated section `dev intellij.jcef.plugin` start
@@ -15,7 +16,24 @@ dist_plugin(
         "intellij.internal.jcef",
     ],
     descriptor = "resources/META-INF/plugin.xml",
+    descriptors = {
+        "@community//libraries/jcef:resources/intellij.libraries.jcef.xml": "intellij.libraries.jcef.xml",
+        "@community//platform/new-ui-onboarding/jcef:resources/intellij.platform.ide.newUiOnboarding.jcef.xml": "intellij.platform.ide.newUiOnboarding.jcef.xml",
+        "@community//platform/platform-impl/internal/jcef:resources/intellij.internal.jcef.xml": "intellij.internal.jcef.xml",
+        "@community//platform/platform-impl/jcef:resources/intellij.platform.ide.impl.jcef.xml": "intellij.platform.ide.impl.jcef.xml",
+        "@community//platform/ui.jcef:resources/intellij.platform.ui.jcef.xml": "intellij.platform.ui.jcef.xml",
+        "@community//plugins/jcef/frontend:resources/intellij.jcef.frontend.xml": "intellij.jcef.frontend.xml",
+    },
     main_module = "intellij.jcef.plugin",
+    module_labels = {
+        "intellij.internal.jcef": "@community//platform/platform-impl/internal/jcef:jcef",
+        "intellij.jcef.frontend": "@community//plugins/jcef/frontend:frontend",
+        "intellij.jcef.plugin": "@community//plugins/jcef/plugin:plugin",
+        "intellij.libraries.jcef": "@community//libraries/jcef:jcef",
+        "intellij.platform.ide.impl.jcef": "@community//platform/platform-impl/jcef:jcef",
+        "intellij.platform.ide.newUiOnboarding.jcef": "@community//platform/new-ui-onboarding/jcef:jcef",
+        "intellij.platform.ui.jcef": "@community//platform/ui.jcef:ui.jcef",
+    },
     variants = [
         "darwin_aarch64",
         "darwin_x64",
@@ -79,11 +97,9 @@ jvm_library(
 ### auto-generated section `build intellij.jcef.plugin` end
 
 ### auto-generated section `iml intellij.jcef.plugin` start
-exports_files(
-    [
-        "intellij.jcef.plugin.iml",
-        "resources/META-INF/plugin.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.jcef.plugin",
+    descriptors = ["resources/META-INF/plugin.xml"],
+    target = "plugin",
 )
 ### auto-generated section `iml intellij.jcef.plugin` end

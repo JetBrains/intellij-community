@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
@@ -44,11 +45,9 @@ jvm_library(
 ### auto-generated section `build fleet.build.http.tests` end
 
 ### auto-generated section `iml fleet.build.http.tests` start
-exports_files(
-    [
-        "fleet.build.http.tests.iml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "fleet.build.http.tests",
+    target = "tests_test_lib",
 )
 ### auto-generated section `iml fleet.build.http.tests` end
 

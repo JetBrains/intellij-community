@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
@@ -34,11 +35,9 @@ jvm_library(
 ### auto-generated section `build intellij.platform.tasks` end
 
 ### auto-generated section `iml intellij.platform.tasks` start
-exports_files(
-    [
-        "intellij.platform.tasks.iml",
-        "resources/intellij.platform.tasks.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.platform.tasks",
+    descriptors = ["resources/intellij.platform.tasks.xml"],
+    target = "tasks",
 )
 ### auto-generated section `iml intellij.platform.tasks` end

@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.kotlin.testFramework` start
@@ -77,10 +78,9 @@ jvm_library(
 ### auto-generated section `build intellij.kotlin.testFramework` end
 
 ### auto-generated section `iml intellij.kotlin.testFramework` start
-exports_files(
-    [
-        "intellij.kotlin.testFramework.iml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.kotlin.testFramework",
+    resources = False,
+    target = "test-framework",
 )
 ### auto-generated section `iml intellij.kotlin.testFramework` end

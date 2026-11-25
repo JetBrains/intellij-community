@@ -1,8 +1,9 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@community//build:tests-options.bzl", "jps_test")
 load("@community//platform/build-scripts/bazel-rules:ij_plugin.bzl", "ij_plugin")
-load("@jps_dynamic_deps_community//:targets.bzl", "dist_plugin")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("//platform/build-scripts/bazel-rules:dist_plugin.bzl", "dist_plugin")
 
 ### auto-generated section `dev intellij.vcs.git` start
 dist_plugin(
@@ -20,6 +21,19 @@ dist_plugin(
         "intellij.vcs.git.rt",
     ],
     main_module = "intellij.vcs.git",
+    module_labels = {
+        "intellij.vcs.git": "@community//plugins/git4idea:vcs-git",
+        "intellij.vcs.git.backend": "@community//plugins/git4idea/backend:backend",
+        "intellij.vcs.git.coverage": "@community//plugins/git4idea/intellij.vcs.git.coverage:vcs-git-coverage",
+        "intellij.vcs.git.frontend": "@community//plugins/git4idea/frontend:frontend",
+        "intellij.vcs.git.hosting": "@community//plugins/git4idea/hosting:hosting",
+        "intellij.vcs.git.localHistory": "@community//plugins/git4idea/localHistory:localHistory",
+        "intellij.vcs.git.performanceTesting": "@community//plugins/git4idea/performanceTesting:performanceTesting",
+        "intellij.vcs.git.rpc.backend": "@community//plugins/git4idea/rpc.backend:rpc.backend",
+        "intellij.vcs.git.rt": "@community//plugins/git4idea/rt:rt",
+        "intellij.vcs.git.shared": "@community//plugins/git4idea/shared:shared",
+        "intellij.vcs.git.terminal": "@community//plugins/git4idea/terminal:terminal",
+    },
 )
 ### auto-generated section `dev intellij.vcs.git` end
 
@@ -97,12 +111,11 @@ ij_plugin(
 ### auto-generated section `plugin intellij.vcs.git` end
 
 ### auto-generated section `iml intellij.vcs.git` start
-exports_files(
-    [
-        "intellij.vcs.git.iml",
-        "resources/META-INF/plugin.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.vcs.git",
+    descriptors = ["resources/META-INF/plugin.xml"],
+    plugin = True,
+    target = "vcs-git",
 )
 ### auto-generated section `iml intellij.vcs.git` end
 
@@ -247,10 +260,9 @@ jvm_library(
 ### auto-generated section `build intellij.vcs.git.backend.tests` end
 
 ### auto-generated section `iml intellij.vcs.git.backend.tests` start
-exports_files(
-    [
-        "intellij.vcs.git.backend.tests.iml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.vcs.git.backend.tests",
+    resources = False,
+    target = "vcs-git-backend-tests_test_lib",
 )
 ### auto-generated section `iml intellij.vcs.git.backend.tests` end

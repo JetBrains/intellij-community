@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@community//platform/build-scripts/bazel-rules:ij_plugin_module.bzl", "ij_plugin_module")
 
 ### auto-generated section `build intellij.libraries.cloud.config.client` start
@@ -20,11 +21,9 @@ ij_plugin_module(
 ### auto-generated section `build intellij.libraries.cloud.config.client` end
 
 ### auto-generated section `iml intellij.libraries.cloud.config.client` start
-exports_files(
-    [
-        "intellij.libraries.cloud.config.client.iml",
-        "resources/intellij.libraries.cloud.config.client.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.libraries.cloud.config.client",
+    descriptors = ["resources/intellij.libraries.cloud.config.client.xml"],
+    target = "cloud-config-client",
 )
 ### auto-generated section `iml intellij.libraries.cloud.config.client` end

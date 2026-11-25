@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
@@ -94,11 +95,9 @@ jvm_library(
 ### auto-generated section `build intellij.platform.jewel.markdown.ideLafBridgeStyling` end
 
 ### auto-generated section `iml intellij.platform.jewel.markdown.ideLafBridgeStyling` start
-exports_files(
-    [
-        "intellij.platform.jewel.markdown.ideLafBridgeStyling.iml",
-        "src/main/resources/intellij.platform.jewel.markdown.ideLafBridgeStyling.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.platform.jewel.markdown.ideLafBridgeStyling",
+    descriptors = ["src/main/resources/intellij.platform.jewel.markdown.ideLafBridgeStyling.xml"],
+    target = "ide-laf-bridge-styling",
 )
 ### auto-generated section `iml intellij.platform.jewel.markdown.ideLafBridgeStyling` end

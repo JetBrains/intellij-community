@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
@@ -35,11 +36,9 @@ jvm_library(
 ### auto-generated section `build intellij.xray.shared` end
 
 ### auto-generated section `iml intellij.xray.shared` start
-exports_files(
-    [
-        "intellij.xray.shared.iml",
-        "resources/intellij.xray.shared.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.xray.shared",
+    descriptors = ["resources/intellij.xray.shared.xml"],
+    target = "shared",
 )
 ### auto-generated section `iml intellij.xray.shared` end

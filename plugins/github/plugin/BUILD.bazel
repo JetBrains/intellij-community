@@ -1,6 +1,7 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@community//platform/build-scripts/bazel-rules:ij_plugin.bzl", "ij_plugin")
-load("@jps_dynamic_deps_community//:targets.bzl", "dist_plugin")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:dist_plugin.bzl", "dist_plugin")
 
 ### auto-generated section `dev intellij.vcs.github.plugin` start
 dist_plugin(
@@ -13,6 +14,14 @@ dist_plugin(
         "intellij.vcs.github.json",
     ],
     main_module = "intellij.vcs.github.plugin",
+    module_labels = {
+        "intellij.vcs.github": "@community//plugins/github/github-core:vcs-github",
+        "intellij.vcs.github.git": "@community//plugins/github/github-git:vcs-github-git",
+        "intellij.vcs.github.json": "@community//plugins/github/github-json:vcs-github-json",
+        "intellij.vcs.github.plugin": "@community//plugins/github/plugin:plugin",
+        "intellij.vcs.github.tracker": "@community//plugins/github/github-tracker:vcs-github-tracker",
+        "intellij.vcs.github.ultimatePromo": "@community//plugins/github/ultimate-promo:ultimate-promo",
+    },
 )
 ### auto-generated section `dev intellij.vcs.github.plugin` end
 
@@ -57,11 +66,10 @@ ij_plugin(
 ### auto-generated section `plugin intellij.vcs.github.plugin` end
 
 ### auto-generated section `iml intellij.vcs.github.plugin` start
-exports_files(
-    [
-        "intellij.vcs.github.plugin.iml",
-        "resources/META-INF/plugin.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.vcs.github.plugin",
+    descriptors = ["resources/META-INF/plugin.xml"],
+    plugin = True,
+    target = "plugin",
 )
 ### auto-generated section `iml intellij.vcs.github.plugin` end

@@ -1,7 +1,8 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@community//build:tests-options.bzl", "jps_test")
 load("@community//platform/build-scripts/bazel-rules:ij_plugin.bzl", "ij_plugin")
-load("@jps_dynamic_deps_community//:targets.bzl", "dist_plugin")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:dist_plugin.bzl", "dist_plugin")
 
 jps_test(
     name = "configurationScript-tests_test",
@@ -27,12 +28,21 @@ dist_plugin(
         "intellij.configurationScript.execution",
     ],
     descriptor = "resources/META-INF/plugin.xml",
+    descriptors = {
+        "@community//plugins/configuration-script/backend:resources/intellij.configurationScript.backend.xml": "intellij.configurationScript.backend.xml",
+        "@community//plugins/configuration-script/execution:resources/intellij.configurationScript.execution.xml": "intellij.configurationScript.execution.xml",
+    },
     jars = {
         "lib/configurationScript.jar": ["intellij.configurationScript"],
     },
     main_module = "intellij.configurationScript",
     mode_refused_content_modules = {
         "frontend": ["intellij.configurationScript.backend"],
+    },
+    module_labels = {
+        "intellij.configurationScript": "@community//plugins/configuration-script:configuration-script",
+        "intellij.configurationScript.backend": "@community//plugins/configuration-script/backend:backend",
+        "intellij.configurationScript.execution": "@community//plugins/configuration-script/execution:execution",
     },
 )
 ### auto-generated section `dev intellij.configurationScript` end
@@ -92,12 +102,11 @@ ij_plugin(
 ### auto-generated section `plugin intellij.configurationScript` end
 
 ### auto-generated section `iml intellij.configurationScript` start
-exports_files(
-    [
-        "intellij.configurationScript.iml",
-        "resources/META-INF/plugin.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.configurationScript",
+    descriptors = ["resources/META-INF/plugin.xml"],
+    plugin = True,
+    target = "configuration-script",
 )
 ### auto-generated section `iml intellij.configurationScript` end
 
@@ -134,11 +143,10 @@ jvm_library(
 ### auto-generated section `build intellij.configurationScript.test.java` end
 
 ### auto-generated section `iml intellij.configurationScript.test.java` start
-exports_files(
-    [
-        "intellij.configurationScript.test.java.iml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.configurationScript.test.java",
+    resources = False,
+    target = "configurationScript-test-java_test_lib",
 )
 ### auto-generated section `iml intellij.configurationScript.test.java` end
 
@@ -198,10 +206,9 @@ jvm_library(
 ### auto-generated section `build intellij.configurationScript.tests` end
 
 ### auto-generated section `iml intellij.configurationScript.tests` start
-exports_files(
-    [
-        "intellij.configurationScript.tests.iml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.configurationScript.tests",
+    resources = False,
+    target = "configurationScript-tests_test_lib",
 )
 ### auto-generated section `iml intellij.configurationScript.tests` end

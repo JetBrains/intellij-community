@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@community//fleet/build:fleet.bzl", "fleet_wasmjs_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
@@ -61,11 +62,9 @@ jvm_library(
 ### auto-generated section `build fleet.util.codepoints` end
 
 ### auto-generated section `iml fleet.util.codepoints` start
-exports_files(
-    [
-        "fleet.util.codepoints.iml",
-        "resources/fleet.util.codepoints.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "fleet.util.codepoints",
+    descriptors = ["resources/fleet.util.codepoints.xml"],
+    target = "codepoints",
 )
 ### auto-generated section `iml fleet.util.codepoints` end

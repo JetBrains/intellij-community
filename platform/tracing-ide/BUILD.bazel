@@ -1,6 +1,7 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@community//platform/build-scripts/bazel-rules:ij_plugin.bzl", "ij_plugin")
-load("@jps_dynamic_deps_community//:targets.bzl", "dist_plugin")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:dist_plugin.bzl", "dist_plugin")
 
 ### auto-generated section `dev intellij.platform.tracing.ide` start
 dist_plugin(
@@ -9,6 +10,9 @@ dist_plugin(
         "lib/platform-tracing-ide.jar": ["intellij.platform.tracing.ide"],
     },
     main_module = "intellij.platform.tracing.ide",
+    module_labels = {
+        "intellij.platform.tracing.ide": "@community//platform/tracing-ide:tracing-ide",
+    },
 )
 ### auto-generated section `dev intellij.platform.tracing.ide` end
 
@@ -54,11 +58,10 @@ ij_plugin(
 ### auto-generated section `plugin intellij.platform.tracing.ide` end
 
 ### auto-generated section `iml intellij.platform.tracing.ide` start
-exports_files(
-    [
-        "intellij.platform.tracing.ide.iml",
-        "resources/META-INF/plugin.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.platform.tracing.ide",
+    descriptors = ["resources/META-INF/plugin.xml"],
+    plugin = True,
+    target = "tracing-ide",
 )
 ### auto-generated section `iml intellij.platform.tracing.ide` end

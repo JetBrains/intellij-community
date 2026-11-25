@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
@@ -68,12 +69,10 @@ jvm_library(
 ### auto-generated section `build intellij.platform.jewel.markdown.extensions.gfmTables` end
 
 ### auto-generated section `iml intellij.platform.jewel.markdown.extensions.gfmTables` start
-exports_files(
-    [
-        "intellij.platform.jewel.markdown.extensions.gfmTables.iml",
-        "src/main/resources/intellij.platform.jewel.markdown.extensions.gfmTables.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.platform.jewel.markdown.extensions.gfmTables",
+    descriptors = ["src/main/resources/intellij.platform.jewel.markdown.extensions.gfmTables.xml"],
+    target = "gfm-tables",
 )
 ### auto-generated section `iml intellij.platform.jewel.markdown.extensions.gfmTables` end
 
@@ -122,10 +121,9 @@ jvm_library(
 ### auto-generated section `build intellij.platform.jewel.markdown.extensions.gfmTables.tests` end
 
 ### auto-generated section `iml intellij.platform.jewel.markdown.extensions.gfmTables.tests` start
-exports_files(
-    [
-        "intellij.platform.jewel.markdown.extensions.gfmTables.tests.iml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.platform.jewel.markdown.extensions.gfmTables.tests",
+    resources = False,
+    target = "jewel-markdown-extensions-gfmTables-tests_test_lib",
 )
 ### auto-generated section `iml intellij.platform.jewel.markdown.extensions.gfmTables.tests` end

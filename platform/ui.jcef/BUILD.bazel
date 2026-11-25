@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "kt_javac_options")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
@@ -61,11 +62,9 @@ jvm_library(
 ### auto-generated section `build intellij.platform.ui.jcef` end
 
 ### auto-generated section `iml intellij.platform.ui.jcef` start
-exports_files(
-    [
-        "intellij.platform.ui.jcef.iml",
-        "resources/intellij.platform.ui.jcef.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.platform.ui.jcef",
+    descriptors = ["resources/intellij.platform.ui.jcef.xml"],
+    target = "ui.jcef",
 )
 ### auto-generated section `iml intellij.platform.ui.jcef` end

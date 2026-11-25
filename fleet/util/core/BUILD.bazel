@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@community//fleet/build:fleet.bzl", "fleet_wasmjs_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
@@ -97,11 +98,9 @@ jvm_library(
 ### auto-generated section `build fleet.util.core` end
 
 ### auto-generated section `iml fleet.util.core` start
-exports_files(
-    [
-        "fleet.util.core.iml",
-        "resources/fleet.util.core.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "fleet.util.core",
+    descriptors = ["resources/fleet.util.core.xml"],
+    target = "core",
 )
 ### auto-generated section `iml fleet.util.core` end

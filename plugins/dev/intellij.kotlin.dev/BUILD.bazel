@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.kotlin.dev` start
@@ -35,11 +36,9 @@ jvm_library(
 ### auto-generated section `build intellij.kotlin.dev` end
 
 ### auto-generated section `iml intellij.kotlin.dev` start
-exports_files(
-    [
-        "intellij.kotlin.dev.iml",
-        "resources/intellij.kotlin.dev.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.kotlin.dev",
+    descriptors = ["resources/intellij.kotlin.dev.xml"],
+    target = "kotlin-dev",
 )
 ### auto-generated section `iml intellij.kotlin.dev` end

@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
@@ -59,12 +60,10 @@ jvm_library(
 ### auto-generated section `build intellij.platform.compose.swing` end
 
 ### auto-generated section `iml intellij.platform.compose.swing` start
-exports_files(
-    [
-        "intellij.platform.compose.swing.iml",
-        "resources/intellij.platform.compose.swing.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.platform.compose.swing",
+    descriptors = ["resources/intellij.platform.compose.swing.xml"],
+    target = "swing",
 )
 ### auto-generated section `iml intellij.platform.compose.swing` end
 
@@ -116,10 +115,9 @@ jvm_library(
 ### auto-generated section `build intellij.platform.compose.swing.tests` end
 
 ### auto-generated section `iml intellij.platform.compose.swing.tests` start
-exports_files(
-    [
-        "intellij.platform.compose.swing.tests.iml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.platform.compose.swing.tests",
+    resources = False,
+    target = "swing-tests_test_lib",
 )
 ### auto-generated section `iml intellij.platform.compose.swing.tests` end

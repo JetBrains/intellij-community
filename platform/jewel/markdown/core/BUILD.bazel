@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
@@ -69,12 +70,10 @@ jvm_library(
 ### auto-generated section `build intellij.platform.jewel.markdown.core` end
 
 ### auto-generated section `iml intellij.platform.jewel.markdown.core` start
-exports_files(
-    [
-        "intellij.platform.jewel.markdown.core.iml",
-        "src/main/resources/intellij.platform.jewel.markdown.core.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.platform.jewel.markdown.core",
+    descriptors = ["src/main/resources/intellij.platform.jewel.markdown.core.xml"],
+    target = "core",
 )
 ### auto-generated section `iml intellij.platform.jewel.markdown.core` end
 
@@ -125,10 +124,8 @@ jvm_library(
 ### auto-generated section `build intellij.platform.jewel.markdown.core.tests` end
 
 ### auto-generated section `iml intellij.platform.jewel.markdown.core.tests` start
-exports_files(
-    [
-        "intellij.platform.jewel.markdown.core.tests.iml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.platform.jewel.markdown.core.tests",
+    target = "jewel-markdown-core-tests_test_lib",
 )
 ### auto-generated section `iml intellij.platform.jewel.markdown.core.tests` end

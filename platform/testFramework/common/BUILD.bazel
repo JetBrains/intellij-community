@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "kt_javac_options")
 
 ### auto-generated section `build intellij.platform.testFramework.common` start
@@ -73,11 +74,9 @@ jvm_library(
 ### auto-generated section `build intellij.platform.testFramework.common` end
 
 ### auto-generated section `iml intellij.platform.testFramework.common` start
-exports_files(
-    [
-        "intellij.platform.testFramework.common.iml",
-        "resources/intellij.platform.testFramework.common.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.platform.testFramework.common",
+    descriptors = ["resources/intellij.platform.testFramework.common.xml"],
+    target = "common",
 )
 ### auto-generated section `iml intellij.platform.testFramework.common` end

@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_java//java:defs.bzl", "java_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
@@ -38,10 +39,9 @@ jvm_library(
 ### auto-generated section `build intellij.standaloneAnalysis.java.smoke` end
 
 ### auto-generated section `iml intellij.standaloneAnalysis.java.smoke` start
-exports_files(
-    [
-        "intellij.standaloneAnalysis.java.smoke.iml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.standaloneAnalysis.java.smoke",
+    resources = False,
+    target = "standaloneAnalysis-java-smoke",
 )
 ### auto-generated section `iml intellij.standaloneAnalysis.java.smoke` end

@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.libraries.junit6.suites` start
@@ -24,11 +25,9 @@ jvm_library(
 ### auto-generated section `build intellij.libraries.junit6.suites` end
 
 ### auto-generated section `iml intellij.libraries.junit6.suites` start
-exports_files(
-    [
-        "intellij.libraries.junit6.suites.iml",
-        "resources/intellij.libraries.junit6.suites.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.libraries.junit6.suites",
+    descriptors = ["resources/intellij.libraries.junit6.suites.xml"],
+    target = "junit6-suites",
 )
 ### auto-generated section `iml intellij.libraries.junit6.suites` end

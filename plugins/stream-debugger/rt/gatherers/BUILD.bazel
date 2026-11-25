@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
@@ -26,11 +27,9 @@ jvm_library(
 ### auto-generated section `build intellij.debugger.streams.java.rt.gatherers` end
 
 ### auto-generated section `iml intellij.debugger.streams.java.rt.gatherers` start
-exports_files(
-    [
-        "intellij.debugger.streams.java.rt.gatherers.iml",
-        "resources/intellij.debugger.streams.java.rt.gatherers.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.debugger.streams.java.rt.gatherers",
+    descriptors = ["resources/intellij.debugger.streams.java.rt.gatherers.xml"],
+    target = "gatherers",
 )
 ### auto-generated section `iml intellij.debugger.streams.java.rt.gatherers` end

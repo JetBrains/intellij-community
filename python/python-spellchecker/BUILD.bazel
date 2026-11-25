@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
@@ -55,11 +56,9 @@ jvm_library(
 ### auto-generated section `build intellij.python.spellchecker` end
 
 ### auto-generated section `iml intellij.python.spellchecker` start
-exports_files(
-    [
-        "intellij.python.spellchecker.iml",
-        "resources/intellij.python.spellchecker.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.python.spellchecker",
+    descriptors = ["resources/intellij.python.spellchecker.xml"],
+    target = "spellchecker",
 )
 ### auto-generated section `iml intellij.python.spellchecker` end

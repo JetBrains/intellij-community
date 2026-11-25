@@ -1,7 +1,8 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@community//build:tests-options.bzl", "jps_test")
 load("@community//platform/build-scripts/bazel-rules:ij_plugin.bzl", "ij_plugin")
-load("@jps_dynamic_deps_community//:targets.bzl", "dist_plugin")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:dist_plugin.bzl", "dist_plugin")
 
 filegroup(
     name = "testData",
@@ -26,12 +27,19 @@ jps_test(
 dist_plugin(
     content_modules = ["intellij.java.decompiler.engine"],
     descriptor = "resources/META-INF/plugin.xml",
+    descriptors = {
+        "@community//plugins/java-decompiler/engine:resources/intellij.java.decompiler.engine.xml": "intellij.java.decompiler.engine.xml",
+    },
     jars = {
         "lib/java-decompiler.jar": ["intellij.java.decompiler"],
     },
     main_module = "intellij.java.decompiler",
     module_jar_paths = {
         "intellij.java.decompiler.engine": "lib/intellij.java.decompiler.engine.jar",
+    },
+    module_labels = {
+        "intellij.java.decompiler": "@community//plugins/java-decompiler/plugin:java-decompiler",
+        "intellij.java.decompiler.engine": "@community//plugins/java-decompiler/engine:engine",
     },
 )
 ### auto-generated section `dev intellij.java.decompiler` end
@@ -90,12 +98,11 @@ ij_plugin(
 ### auto-generated section `plugin intellij.java.decompiler` end
 
 ### auto-generated section `iml intellij.java.decompiler` start
-exports_files(
-    [
-        "intellij.java.decompiler.iml",
-        "resources/META-INF/plugin.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.java.decompiler",
+    descriptors = ["resources/META-INF/plugin.xml"],
+    plugin = True,
+    target = "java-decompiler",
 )
 ### auto-generated section `iml intellij.java.decompiler` end
 
@@ -154,10 +161,9 @@ jvm_library(
 ### auto-generated section `build intellij.java.decompiler.tests` end
 
 ### auto-generated section `iml intellij.java.decompiler.tests` start
-exports_files(
-    [
-        "intellij.java.decompiler.tests.iml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.java.decompiler.tests",
+    resources = False,
+    target = "java-decompiler-tests_test_lib",
 )
 ### auto-generated section `iml intellij.java.decompiler.tests` end

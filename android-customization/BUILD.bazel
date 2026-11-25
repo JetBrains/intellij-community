@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.idea.android.customization` start
@@ -29,13 +30,13 @@ jvm_library(
 ### auto-generated section `build intellij.idea.android.customization` end
 
 ### auto-generated section `iml intellij.idea.android.customization` start
-exports_files(
-    [
-        "intellij.idea.android.customization.iml",
+jps_module(
+    name = "intellij.idea.android.customization",
+    descriptors = ["resources/intellij.idea.android.customization.xml"],
+    target = "idea-android-customization",
+    exports = [
         "resources/META-INF/AndroidStudioPlugin.xml",
         "resources/idea/AndroidStudioApplicationInfo.xml",
-        "resources/intellij.idea.android.customization.xml",
     ],
-    visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.idea.android.customization` end

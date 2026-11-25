@@ -1,6 +1,7 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@community//platform/build-scripts/bazel-rules:ij_plugin.bzl", "ij_plugin")
-load("@jps_dynamic_deps_community//:targets.bzl", "dist_plugin")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:dist_plugin.bzl", "dist_plugin")
 
 ### auto-generated section `dev intellij.color.scheme.github` start
 dist_plugin(
@@ -9,6 +10,9 @@ dist_plugin(
         "lib/color-scheme-github.jar": ["intellij.color.scheme.github"],
     },
     main_module = "intellij.color.scheme.github",
+    module_labels = {
+        "intellij.color.scheme.github": "@community//plugins/color-schemes/github-color-scheme:color-scheme-github",
+    },
 )
 ### auto-generated section `dev intellij.color.scheme.github` end
 
@@ -38,12 +42,11 @@ ij_plugin(
 ### auto-generated section `plugin intellij.color.scheme.github` end
 
 ### auto-generated section `iml intellij.color.scheme.github` start
-exports_files(
-    [
-        "intellij.color.scheme.github.iml",
-        "resources/META-INF/plugin.xml",
-        "resources/colorSchemes/github.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.color.scheme.github",
+    descriptors = ["resources/META-INF/plugin.xml"],
+    plugin = True,
+    target = "color-scheme-github",
+    exports = ["resources/colorSchemes/github.xml"],
 )
 ### auto-generated section `iml intellij.color.scheme.github` end

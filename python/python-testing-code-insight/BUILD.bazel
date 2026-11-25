@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
@@ -56,11 +57,9 @@ jvm_library(
 ### auto-generated section `build intellij.python.testing.codeInsight` end
 
 ### auto-generated section `iml intellij.python.testing.codeInsight` start
-exports_files(
-    [
-        "intellij.python.testing.codeInsight.iml",
-        "resources/intellij.python.testing.codeInsight.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.python.testing.codeInsight",
+    descriptors = ["resources/intellij.python.testing.codeInsight.xml"],
+    target = "testing-codeInsight",
 )
 ### auto-generated section `iml intellij.python.testing.codeInsight` end

@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.libraries.mockk` start
@@ -19,11 +20,9 @@ jvm_library(
 ### auto-generated section `build intellij.libraries.mockk` end
 
 ### auto-generated section `iml intellij.libraries.mockk` start
-exports_files(
-    [
-        "intellij.libraries.mockk.iml",
-        "resources/intellij.libraries.mockk.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.libraries.mockk",
+    descriptors = ["resources/intellij.libraries.mockk.xml"],
+    target = "mockk",
 )
 ### auto-generated section `iml intellij.libraries.mockk` end

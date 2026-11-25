@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@community//platform/build-scripts/bazel-rules:ij_plugin_module.bzl", "ij_plugin_module")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
@@ -28,11 +29,9 @@ ij_plugin_module(
 ### auto-generated section `build intellij.libraries.sqlite` end
 
 ### auto-generated section `iml intellij.libraries.sqlite` start
-exports_files(
-    [
-        "intellij.libraries.sqlite.iml",
-        "resources/intellij.libraries.sqlite.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.libraries.sqlite",
+    descriptors = ["resources/intellij.libraries.sqlite.xml"],
+    target = "sqlite",
 )
 ### auto-generated section `iml intellij.libraries.sqlite` end

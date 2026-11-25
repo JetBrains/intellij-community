@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
@@ -44,11 +45,9 @@ jvm_library(
 ### auto-generated section `build intellij.platform.execution.serviceView.backend` end
 
 ### auto-generated section `iml intellij.platform.execution.serviceView.backend` start
-exports_files(
-    [
-        "intellij.platform.execution.serviceView.backend.iml",
-        "resources/intellij.platform.execution.serviceView.backend.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.platform.execution.serviceView.backend",
+    descriptors = ["resources/intellij.platform.execution.serviceView.backend.xml"],
+    target = "backend",
 )
 ### auto-generated section `iml intellij.platform.execution.serviceView.backend` end

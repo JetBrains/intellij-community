@@ -1,4 +1,5 @@
 load("@community//build:bazel_targets_json.bzl", "current_bazel_targets_json")
+load("@community//build:jps_module.bzl", "jps_module")
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
@@ -62,11 +63,9 @@ jvm_library(
 ### auto-generated section `build intellij.platform.jps.model.serialization` end
 
 ### auto-generated section `iml intellij.platform.jps.model.serialization` start
-exports_files(
-    [
-        "intellij.platform.jps.model.serialization.iml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.platform.jps.model.serialization",
+    target = "model-serialization",
 )
 ### auto-generated section `iml intellij.platform.jps.model.serialization` end
 
@@ -110,10 +109,8 @@ jvm_library(
 ### auto-generated section `build intellij.platform.jps.model.serialization.tests` end
 
 ### auto-generated section `iml intellij.platform.jps.model.serialization.tests` start
-exports_files(
-    [
-        "intellij.platform.jps.model.serialization.tests.iml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.platform.jps.model.serialization.tests",
+    target = "model-serialization-tests_test_lib",
 )
 ### auto-generated section `iml intellij.platform.jps.model.serialization.tests` end

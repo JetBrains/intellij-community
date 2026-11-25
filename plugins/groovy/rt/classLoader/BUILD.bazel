@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.groovy.rt.classLoader` start
@@ -27,10 +28,8 @@ jvm_library(
 ### auto-generated section `build intellij.groovy.rt.classLoader` end
 
 ### auto-generated section `iml intellij.groovy.rt.classLoader` start
-exports_files(
-    [
-        "intellij.groovy.rt.classLoader.iml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.groovy.rt.classLoader",
+    target = "classLoader",
 )
 ### auto-generated section `iml intellij.groovy.rt.classLoader` end

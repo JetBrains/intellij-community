@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@community//platform/build-scripts/bazel-rules:ij_plugin_module.bzl", "ij_plugin_module")
 
 ### auto-generated section `build intellij.libraries.schema.kenerator` start
@@ -35,11 +36,9 @@ ij_plugin_module(
 ### auto-generated section `build intellij.libraries.schema.kenerator` end
 
 ### auto-generated section `iml intellij.libraries.schema.kenerator` start
-exports_files(
-    [
-        "intellij.libraries.schema.kenerator.iml",
-        "resources/intellij.libraries.schema.kenerator.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.libraries.schema.kenerator",
+    descriptors = ["resources/intellij.libraries.schema.kenerator.xml"],
+    target = "schema-kenerator",
 )
 ### auto-generated section `iml intellij.libraries.schema.kenerator` end

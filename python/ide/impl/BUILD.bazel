@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
@@ -104,12 +105,10 @@ jvm_library(
 ### auto-generated section `build intellij.pycharm.community.ide.impl` end
 
 ### auto-generated section `iml intellij.pycharm.community.ide.impl` start
-exports_files(
-    [
-        "intellij.pycharm.community.ide.impl.iml",
-        "resources/intellij.pycharm.community.ide.impl.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.pycharm.community.ide.impl",
+    descriptors = ["resources/intellij.pycharm.community.ide.impl.xml"],
+    target = "impl",
 )
 ### auto-generated section `iml intellij.pycharm.community.ide.impl` end
 
@@ -176,11 +175,9 @@ jvm_library(
 ### auto-generated section `build intellij.pycharm.community.ide.impl.tests` end
 
 ### auto-generated section `iml intellij.pycharm.community.ide.impl.tests` start
-exports_files(
-    [
-        "intellij.pycharm.community.ide.impl.tests.iml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.pycharm.community.ide.impl.tests",
+    target = "pycharm-community-ide-impl-tests_test_lib",
 )
 ### auto-generated section `iml intellij.pycharm.community.ide.impl.tests` end
 

@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.pycharm.community.ide.customization` start
@@ -22,11 +23,9 @@ jvm_library(
 ### auto-generated section `build intellij.pycharm.community.ide.customization` end
 
 ### auto-generated section `iml intellij.pycharm.community.ide.customization` start
-exports_files(
-    [
-        "intellij.pycharm.community.ide.customization.iml",
-        "resources/intellij.pycharm.community.ide.customization.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.pycharm.community.ide.customization",
+    descriptors = ["resources/intellij.pycharm.community.ide.customization.xml"],
+    target = "pycharm-community-ide-customization",
 )
 ### auto-generated section `iml intellij.pycharm.community.ide.customization` end

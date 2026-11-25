@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
@@ -56,11 +57,9 @@ jvm_library(
 ### auto-generated section `build intellij.gradle.codeInsight.kotlin.backend` end
 
 ### auto-generated section `iml intellij.gradle.codeInsight.kotlin.backend` start
-exports_files(
-    [
-        "intellij.gradle.codeInsight.kotlin.backend.iml",
-        "resources/intellij.gradle.codeInsight.kotlin.backend.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.gradle.codeInsight.kotlin.backend",
+    descriptors = ["resources/intellij.gradle.codeInsight.kotlin.backend.xml"],
+    target = "backend",
 )
 ### auto-generated section `iml intellij.gradle.codeInsight.kotlin.backend` end

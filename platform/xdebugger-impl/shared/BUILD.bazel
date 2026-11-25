@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
@@ -60,12 +61,10 @@ jvm_library(
 ### auto-generated section `build intellij.platform.debugger.impl.shared` end
 
 ### auto-generated section `iml intellij.platform.debugger.impl.shared` start
-exports_files(
-    [
-        "intellij.platform.debugger.impl.shared.iml",
-        "resources/intellij.platform.debugger.impl.shared.content.xml",
-        "resources/intellij.platform.debugger.impl.shared.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.platform.debugger.impl.shared",
+    descriptors = ["resources/intellij.platform.debugger.impl.shared.xml"],
+    target = "shared",
+    exports = ["resources/intellij.platform.debugger.impl.shared.content.xml"],
 )
 ### auto-generated section `iml intellij.platform.debugger.impl.shared` end

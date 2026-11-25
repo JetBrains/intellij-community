@@ -1,6 +1,7 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@community//platform/build-scripts/bazel-rules:ij_plugin.bzl", "ij_plugin")
-load("@jps_dynamic_deps_community//:targets.bzl", "dist_plugin")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:dist_plugin.bzl", "dist_plugin")
 
 ### auto-generated section `dev intellij.compose.ide.plugin` start
 dist_plugin(
@@ -13,6 +14,14 @@ dist_plugin(
         "intellij.compose.ide.plugin.resources.android",
     ],
     main_module = "intellij.compose.ide.plugin",
+    module_labels = {
+        "intellij.compose.ide.plugin": "@community//plugins/compose:compose-ide-plugin",
+        "intellij.compose.ide.plugin.codeInsight": "@community//plugins/compose/intellij.compose.ide.plugin.codeInsight:ide-plugin-codeInsight",
+        "intellij.compose.ide.plugin.gradleTooling.rt": "@community//plugins/compose/intellij.compose.ide.plugin.gradleTooling:ide-plugin-gradleTooling-rt",
+        "intellij.compose.ide.plugin.resources": "@community//plugins/compose/intellij.compose.ide.plugin.resources:ide-plugin-resources",
+        "intellij.compose.ide.plugin.resources.android": "@community//plugins/compose/intellij.compose.ide.plugin.resources.android:ide-plugin-resources-android",
+        "intellij.compose.ide.plugin.shared": "@community//plugins/compose/intellij.compose.ide.plugin.shared:ide-plugin-shared",
+    },
 )
 ### auto-generated section `dev intellij.compose.ide.plugin` end
 
@@ -57,11 +66,10 @@ ij_plugin(
 ### auto-generated section `plugin intellij.compose.ide.plugin` end
 
 ### auto-generated section `iml intellij.compose.ide.plugin` start
-exports_files(
-    [
-        "intellij.compose.ide.plugin.iml",
-        "resources/META-INF/plugin.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.compose.ide.plugin",
+    descriptors = ["resources/META-INF/plugin.xml"],
+    plugin = True,
+    target = "compose-ide-plugin",
 )
 ### auto-generated section `iml intellij.compose.ide.plugin` end

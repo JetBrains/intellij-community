@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
@@ -27,11 +28,9 @@ jvm_library(
 ### auto-generated section `build intellij.platform.statistics.devkit.frontend` end
 
 ### auto-generated section `iml intellij.platform.statistics.devkit.frontend` start
-exports_files(
-    [
-        "intellij.platform.statistics.devkit.frontend.iml",
-        "resources/intellij.platform.statistics.devkit.frontend.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.platform.statistics.devkit.frontend",
+    descriptors = ["resources/intellij.platform.statistics.devkit.frontend.xml"],
+    target = "frontend",
 )
 ### auto-generated section `iml intellij.platform.statistics.devkit.frontend` end

@@ -1,6 +1,7 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@community//platform/build-scripts/bazel-rules:ij_plugin.bzl", "ij_plugin")
-load("@jps_dynamic_deps_community//:targets.bzl", "dist_plugin")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:dist_plugin.bzl", "dist_plugin")
 
 ### auto-generated section `dev intellij.markdown.plugin` start
 dist_plugin(
@@ -29,6 +30,30 @@ dist_plugin(
         "intellij.markdown.vcs",
     ],
     main_module = "intellij.markdown.plugin",
+    module_labels = {
+        "intellij.markdown": "@community//plugins/markdown/core:markdown",
+        "intellij.markdown.backend": "@community//plugins/markdown/core/backend:backend",
+        "intellij.markdown.compose.preview": "@community//plugins/markdown/compose:compose-preview",
+        "intellij.markdown.execution": "@community//plugins/markdown/execution:execution",
+        "intellij.markdown.fenceInjection": "@community//plugins/markdown/fenceInjection:fenceInjection",
+        "intellij.markdown.fenceInjector.textMate": "@community//plugins/markdown/textMate:textMate",
+        "intellij.markdown.figmaAdvertiser": "@community//plugins/markdown/figmaAdvertiser:figmaAdvertiser",
+        "intellij.markdown.frontend": "@community//plugins/markdown/core/frontend:frontend",
+        "intellij.markdown.frontend.execution": "@community//plugins/markdown/core/frontend/execution:execution",
+        "intellij.markdown.frontmatter": "@community//plugins/markdown/frontmatter:frontmatter",
+        "intellij.markdown.frontmatter.toml": "@community//plugins/markdown/frontmatter/toml:toml",
+        "intellij.markdown.frontmatter.yaml": "@community//plugins/markdown/frontmatter/yaml:yaml",
+        "intellij.markdown.images": "@community//plugins/markdown/images:images",
+        "intellij.markdown.java": "@community//plugins/markdown/java:java",
+        "intellij.markdown.jcef": "@community//plugins/markdown/jcef:jcef",
+        "intellij.markdown.jewel": "@community//plugins/markdown/jewel:jewel",
+        "intellij.markdown.model": "@community//plugins/markdown/model:model",
+        "intellij.markdown.plugin": "@community//plugins/markdown/plugin:plugin",
+        "intellij.markdown.projectView": "@community//plugins/markdown/projectView:projectView",
+        "intellij.markdown.spellchecker": "@community//plugins/markdown/spellchecker:spellchecker",
+        "intellij.markdown.vcs": "@community//plugins/markdown/vcs:vcs",
+        "intellij.markdown.xml": "@community//plugins/markdown/xml:xml",
+    },
 )
 ### auto-generated section `dev intellij.markdown.plugin` end
 
@@ -86,12 +111,11 @@ ij_plugin(
 ### auto-generated section `plugin intellij.markdown.plugin` end
 
 ### auto-generated section `iml intellij.markdown.plugin` start
-exports_files(
-    [
-        "intellij.markdown.plugin.iml",
-        "resources/META-INF/plugin.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.markdown.plugin",
+    descriptors = ["resources/META-INF/plugin.xml"],
+    plugin = True,
+    target = "plugin",
 )
 ### auto-generated section `iml intellij.markdown.plugin` end
 
@@ -124,10 +148,9 @@ jvm_library(
 ### auto-generated section `build intellij.markdown.plugin.main` end
 
 ### auto-generated section `iml intellij.markdown.plugin.main` start
-exports_files(
-    [
-        "intellij.markdown.plugin.main.iml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.markdown.plugin.main",
+    resources = False,
+    target = "plugin-main",
 )
 ### auto-generated section `iml intellij.markdown.plugin.main` end

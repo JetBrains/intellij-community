@@ -1,6 +1,7 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@community//build:tests-options.bzl", "jps_test")
-load("@jps_dynamic_deps_community//:targets.bzl", "dist_plugin")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library")
+load("//platform/build-scripts/bazel-rules:dist_plugin.bzl", "dist_plugin")
 
 jps_test(
     name = "tests_test",
@@ -40,6 +41,32 @@ dist_plugin(
         "intellij.libraries.assertj.swing",
     ],
     main_module = "intellij.performanceTesting",
+    module_labels = {
+        "intellij.dev.leakDetection": "@community//plugins/dev/intellij.dev.leakDetection:leakDetection",
+        "intellij.driver.client": "@community//platform/remote-driver/client:client",
+        "intellij.driver.impl": "@community//platform/remote-driver/core:driver-impl",
+        "intellij.driver.model": "@community//platform/remote-driver/model:model",
+        "intellij.libraries.assertj.core": "@community//libraries/assertj-core:assertj-core",
+        "intellij.libraries.assertj.swing": "@community//libraries/assertj-swing:assertj-swing",
+        "intellij.libraries.oshi.core": "@community//libraries/oshi-core:oshi-core",
+        "intellij.performanceTesting": "@community//plugins/performanceTesting/core:performanceTesting",
+        "intellij.performanceTesting.backend": "@community//plugins/performanceTesting/backend:backend",
+        "intellij.performanceTesting.debugger": "@community//plugins/performanceTesting/debugger:debugger",
+        "intellij.performanceTesting.execution": "@community//plugins/performanceTesting/execution:execution",
+        "intellij.performanceTesting.freezes": "@community//plugins/performanceTesting/freezes:freezes",
+        "intellij.performanceTesting.frontend": "@community//plugins/performanceTesting/frontend:frontend",
+        "intellij.performanceTesting.frontend.baseline": "@community//plugins/performanceTesting/frontend-baseline:frontend-baseline",
+        "intellij.performanceTesting.lsp": "@community//plugins/performanceTesting/lsp:lsp",
+        "intellij.performanceTesting.problemsView": "@community//plugins/performanceTesting/problemsView:problemsView",
+        "intellij.performanceTesting.rdct": "@community//plugins/performanceTesting/rdct:rdct",
+        "intellij.performanceTesting.remoteDriver": "@community//plugins/performanceTesting/remote-driver:remote-driver",
+        "intellij.performanceTesting.remoteDriver.compose": "@community//plugins/performanceTesting/remote-driver.compose:remote-driver.compose",
+        "intellij.performanceTesting.remoteDriver.jcef": "@community//plugins/performanceTesting/remote-driver.jcef:remote-driver.jcef",
+        "intellij.performanceTesting.structureView": "@community//plugins/performanceTesting/structureView:structureView",
+        "intellij.performanceTesting.todo": "@community//plugins/performanceTesting/todo:todo",
+        "intellij.performanceTesting.vcs": "@community//plugins/performanceTesting/vcs:vcs",
+        "intellij.tools.ide.starter.bus": "@community//plugins/performanceTesting/event-bus:tools-ide-starter-bus",
+    },
 )
 ### auto-generated section `dev intellij.performanceTesting` end
 
@@ -136,12 +163,10 @@ jvm_library(
 ### auto-generated section `build intellij.performanceTesting` end
 
 ### auto-generated section `iml intellij.performanceTesting` start
-exports_files(
-    [
-        "intellij.performanceTesting.iml",
-        "resources/META-INF/plugin.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.performanceTesting",
+    descriptors = ["resources/META-INF/plugin.xml"],
+    target = "performanceTesting",
 )
 ### auto-generated section `iml intellij.performanceTesting` end
 
@@ -199,10 +224,8 @@ jvm_library(
 ### auto-generated section `build intellij.performanceTesting.tests` end
 
 ### auto-generated section `iml intellij.performanceTesting.tests` start
-exports_files(
-    [
-        "intellij.performanceTesting.tests.iml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.performanceTesting.tests",
+    target = "tests_test_lib",
 )
 ### auto-generated section `iml intellij.performanceTesting.tests` end

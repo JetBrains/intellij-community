@@ -1,18 +1,26 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@community//build:tests-options.bzl", "jps_test")
 load("@community//platform/build-scripts/bazel-rules:ij_plugin.bzl", "ij_plugin")
-load("@jps_dynamic_deps_community//:targets.bzl", "dist_plugin")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:dist_plugin.bzl", "dist_plugin")
 
 ### auto-generated section `dev intellij.vcs.svn` start
 dist_plugin(
     content_modules = ["intellij.libraries.sqlite"],
     descriptor = "resources/META-INF/plugin.xml",
+    descriptors = {
+        "@community//libraries/sqlite:resources/intellij.libraries.sqlite.xml": "intellij.libraries.sqlite.xml",
+    },
     jars = {
         "lib/vcs-svn.jar": ["intellij.vcs.svn"],
     },
     main_module = "intellij.vcs.svn",
     module_jar_paths = {
         "intellij.libraries.sqlite": "lib/intellij.libraries.sqlite.jar",
+    },
+    module_labels = {
+        "intellij.libraries.sqlite": "@community//libraries/sqlite:sqlite",
+        "intellij.vcs.svn": "@community//plugins/svn4idea:vcs-svn",
     },
 )
 ### auto-generated section `dev intellij.vcs.svn` end
@@ -98,12 +106,11 @@ ij_plugin(
 ### auto-generated section `plugin intellij.vcs.svn` end
 
 ### auto-generated section `iml intellij.vcs.svn` start
-exports_files(
-    [
-        "intellij.vcs.svn.iml",
-        "resources/META-INF/plugin.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.vcs.svn",
+    descriptors = ["resources/META-INF/plugin.xml"],
+    plugin = True,
+    target = "vcs-svn",
 )
 ### auto-generated section `iml intellij.vcs.svn` end
 
@@ -160,10 +167,9 @@ jvm_library(
 ### auto-generated section `build intellij.vcs.svn.tests` end
 
 ### auto-generated section `iml intellij.vcs.svn.tests` start
-exports_files(
-    [
-        "intellij.vcs.svn.tests.iml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.vcs.svn.tests",
+    resources = False,
+    target = "vcs-svn-tests_test_lib",
 )
 ### auto-generated section `iml intellij.vcs.svn.tests` end

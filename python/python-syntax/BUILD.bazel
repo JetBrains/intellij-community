@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
@@ -55,13 +56,13 @@ jvm_library(
 ### auto-generated section `build intellij.python.syntax` end
 
 ### auto-generated section `iml intellij.python.syntax` start
-exports_files(
-    [
-        "intellij.python.syntax.iml",
+jps_module(
+    name = "intellij.python.syntax",
+    descriptors = ["resources/intellij.python.syntax.xml"],
+    target = "syntax",
+    exports = [
         "resources/colorSchemes/PythonDarcula.xml",
         "resources/colorSchemes/PythonDefault.xml",
-        "resources/intellij.python.syntax.xml",
     ],
-    visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.python.syntax` end

@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.pycharm.community.ide.implTraining` start
@@ -33,11 +34,9 @@ jvm_library(
 ### auto-generated section `build intellij.pycharm.community.ide.implTraining` end
 
 ### auto-generated section `iml intellij.pycharm.community.ide.implTraining` start
-exports_files(
-    [
-        "intellij.pycharm.community.ide.implTraining.iml",
-        "resources/intellij.pycharm.community.ide.implTraining.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.pycharm.community.ide.implTraining",
+    descriptors = ["resources/intellij.pycharm.community.ide.implTraining.xml"],
+    target = "pycharm-community-ide-implTraining",
 )
 ### auto-generated section `iml intellij.pycharm.community.ide.implTraining` end

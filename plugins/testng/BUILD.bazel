@@ -1,7 +1,8 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@community//build:tests-options.bzl", "jps_test")
 load("@community//platform/build-scripts/bazel-rules:ij_plugin.bzl", "ij_plugin")
-load("@jps_dynamic_deps_community//:targets.bzl", "dist_plugin")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+load("//platform/build-scripts/bazel-rules:dist_plugin.bzl", "dist_plugin")
 
 jps_test(
     name = "testng-tests_test",
@@ -20,6 +21,11 @@ dist_plugin(
         "intellij.testng.rt",
     ],
     descriptor = "resources/META-INF/plugin.xml",
+    descriptors = {
+        "@community//libraries/testng:resources/intellij.libraries.testng.xml": "intellij.libraries.testng.xml",
+        "@community//plugins/testng/langInjection:resources/intellij.testng.langInjection.xml": "intellij.testng.langInjection.xml",
+        "@community//plugins/testng_rt:resources/intellij.testng.rt.xml": "intellij.testng.rt.xml",
+    },
     jars = {
         "lib/intellij.libraries.testng.jar": [
             "intellij.libraries.testng",
@@ -30,6 +36,12 @@ dist_plugin(
     main_module = "intellij.testng",
     module_jar_paths = {
         "intellij.testng.rt": "lib/intellij.testng.rt.jar",
+    },
+    module_labels = {
+        "intellij.libraries.testng": "@community//libraries/testng:testng",
+        "intellij.testng": "@community//plugins/testng:testng",
+        "intellij.testng.langInjection": "@community//plugins/testng/langInjection:langInjection",
+        "intellij.testng.rt": "@community//plugins/testng_rt:testng-rt",
     },
 )
 ### auto-generated section `dev intellij.testng` end
@@ -129,12 +141,11 @@ ij_plugin(
 ### auto-generated section `plugin intellij.testng` end
 
 ### auto-generated section `iml intellij.testng` start
-exports_files(
-    [
-        "intellij.testng.iml",
-        "resources/META-INF/plugin.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.testng",
+    descriptors = ["resources/META-INF/plugin.xml"],
+    plugin = True,
+    target = "testng",
 )
 ### auto-generated section `iml intellij.testng` end
 
@@ -221,10 +232,8 @@ jvm_library(
 ### auto-generated section `build intellij.testng.tests` end
 
 ### auto-generated section `iml intellij.testng.tests` start
-exports_files(
-    [
-        "intellij.testng.tests.iml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.testng.tests",
+    target = "testng-tests_test_lib",
 )
 ### auto-generated section `iml intellij.testng.tests` end

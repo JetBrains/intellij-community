@@ -1,17 +1,25 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@community//platform/build-scripts/bazel-rules:ij_plugin.bzl", "ij_plugin")
-load("@jps_dynamic_deps_community//:targets.bzl", "dist_plugin")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:dist_plugin.bzl", "dist_plugin")
 
 ### auto-generated section `dev intellij.restructuredtext` start
 dist_plugin(
     content_modules = ["intellij.restructuredtext.python"],
     descriptor = "resources/META-INF/plugin.xml",
+    descriptors = {
+        "@community//python/python-restructuredtext:resources/intellij.restructuredtext.python.xml": "intellij.restructuredtext.python.xml",
+    },
     jars = {
         "lib/restructuredtext.jar": ["intellij.restructuredtext"],
     },
     main_module = "intellij.restructuredtext",
     mode_refused_content_modules = {
         "frontend": ["intellij.restructuredtext.python"],
+    },
+    module_labels = {
+        "intellij.restructuredtext": "@community//plugins/restructuredtext:restructuredtext",
+        "intellij.restructuredtext.python": "@community//python/python-restructuredtext:restructuredtext-python",
     },
 )
 ### auto-generated section `dev intellij.restructuredtext` end
@@ -75,14 +83,15 @@ ij_plugin(
 ### auto-generated section `plugin intellij.restructuredtext` end
 
 ### auto-generated section `iml intellij.restructuredtext` start
-exports_files(
-    [
-        "intellij.restructuredtext.iml",
-        "resources/META-INF/plugin.xml",
+jps_module(
+    name = "intellij.restructuredtext",
+    descriptors = ["resources/META-INF/plugin.xml"],
+    plugin = True,
+    target = "restructuredtext",
+    exports = [
         "resources/colorSchemes/RestDarcula.xml",
         "resources/colorSchemes/RestDefault.xml",
     ],
-    visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.restructuredtext` end
 
@@ -113,10 +122,8 @@ jvm_library(
 ### auto-generated section `build intellij.restructuredtext.tests` end
 
 ### auto-generated section `iml intellij.restructuredtext.tests` start
-exports_files(
-    [
-        "intellij.restructuredtext.tests.iml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.restructuredtext.tests",
+    target = "restructuredtext-tests_test_lib",
 )
 ### auto-generated section `iml intellij.restructuredtext.tests` end

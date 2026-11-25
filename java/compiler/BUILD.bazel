@@ -1,4 +1,5 @@
 load("@community//build:bazel_targets_json.bzl", "current_bazel_targets_json")
+load("@community//build:jps_module.bzl", "jps_module")
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
@@ -100,11 +101,10 @@ jvm_library(
 ### auto-generated section `build intellij.java.compiler.tests` end
 
 ### auto-generated section `iml intellij.java.compiler.tests` start
-exports_files(
-    [
-        "intellij.java.compiler.tests.iml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.java.compiler.tests",
+    resources = False,
+    target = "compiler-tests_test_lib",
 )
 ### auto-generated section `iml intellij.java.compiler.tests` end
 
@@ -143,10 +143,8 @@ jvm_library(
 ### auto-generated section `build intellij.java.compiler.tests.main` end
 
 ### auto-generated section `iml intellij.java.compiler.tests.main` start
-exports_files(
-    [
-        "intellij.java.compiler.tests.main.iml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.java.compiler.tests.main",
+    target = "compiler-tests-main_test_lib",
 )
 ### auto-generated section `iml intellij.java.compiler.tests.main` end

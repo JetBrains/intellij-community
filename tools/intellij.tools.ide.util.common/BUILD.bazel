@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 
@@ -33,11 +34,9 @@ jvm_library(
 ### auto-generated section `build intellij.tools.ide.util.common` end
 
 ### auto-generated section `iml intellij.tools.ide.util.common` start
-exports_files(
-    [
-        "intellij.tools.ide.util.common.iml",
-        "resources/intellij.tools.ide.util.common.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.tools.ide.util.common",
+    descriptors = ["resources/intellij.tools.ide.util.common.xml"],
+    target = "ide-util-common",
 )
 ### auto-generated section `iml intellij.tools.ide.util.common` end

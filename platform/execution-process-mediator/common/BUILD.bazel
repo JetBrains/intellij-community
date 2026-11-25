@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
@@ -46,12 +47,10 @@ jvm_library(
 ### auto-generated section `build intellij.execution.process.mediator.common` end
 
 ### auto-generated section `iml intellij.execution.process.mediator.common` start
-exports_files(
-    [
-        "intellij.execution.process.mediator.common.iml",
-        "resources/intellij.execution.process.mediator.common.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.execution.process.mediator.common",
+    descriptors = ["resources/intellij.execution.process.mediator.common.xml"],
+    target = "common",
 )
 ### auto-generated section `iml intellij.execution.process.mediator.common` end
 
@@ -80,10 +79,9 @@ jvm_library(
 ### auto-generated section `build intellij.execution.process.mediator.common.tests` end
 
 ### auto-generated section `iml intellij.execution.process.mediator.common.tests` start
-exports_files(
-    [
-        "intellij.execution.process.mediator.common.tests.iml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.execution.process.mediator.common.tests",
+    resources = False,
+    target = "execution-process-mediator-common-tests_test_lib",
 )
 ### auto-generated section `iml intellij.execution.process.mediator.common.tests` end

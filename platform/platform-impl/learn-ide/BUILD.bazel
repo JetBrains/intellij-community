@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
@@ -49,11 +50,9 @@ jvm_library(
 ### auto-generated section `build intellij.platform.ide.learnIde` end
 
 ### auto-generated section `iml intellij.platform.ide.learnIde` start
-exports_files(
-    [
-        "intellij.platform.ide.learnIde.iml",
-        "resources/intellij.platform.ide.learnIde.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.platform.ide.learnIde",
+    descriptors = ["resources/intellij.platform.ide.learnIde.xml"],
+    target = "learn-ide",
 )
 ### auto-generated section `iml intellij.platform.ide.learnIde` end

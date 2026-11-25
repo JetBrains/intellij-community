@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
@@ -52,12 +53,10 @@ jvm_library(
 ### auto-generated section `build intellij.vcs.git.coverage` end
 
 ### auto-generated section `iml intellij.vcs.git.coverage` start
-exports_files(
-    [
-        "intellij.vcs.git.coverage.iml",
-        "resources/intellij.vcs.git.coverage.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.vcs.git.coverage",
+    descriptors = ["resources/intellij.vcs.git.coverage.xml"],
+    target = "vcs-git-coverage",
 )
 ### auto-generated section `iml intellij.vcs.git.coverage` end
 
@@ -86,10 +85,9 @@ jvm_library(
 ### auto-generated section `build intellij.vcs.git.coverage.tests` end
 
 ### auto-generated section `iml intellij.vcs.git.coverage.tests` start
-exports_files(
-    [
-        "intellij.vcs.git.coverage.tests.iml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.vcs.git.coverage.tests",
+    resources = False,
+    target = "vcs-git-coverage-tests_test_lib",
 )
 ### auto-generated section `iml intellij.vcs.git.coverage.tests` end

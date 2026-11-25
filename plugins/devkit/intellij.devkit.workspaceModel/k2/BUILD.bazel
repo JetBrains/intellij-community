@@ -1,4 +1,5 @@
 load("@community//build:bazel_targets_json.bzl", "current_bazel_targets_json")
+load("@community//build:jps_module.bzl", "jps_module")
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
@@ -67,12 +68,10 @@ jvm_library(
 ### auto-generated section `build intellij.devkit.workspaceModel.k2` end
 
 ### auto-generated section `iml intellij.devkit.workspaceModel.k2` start
-exports_files(
-    [
-        "intellij.devkit.workspaceModel.k2.iml",
-        "resources/intellij.devkit.workspaceModel.k2.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.devkit.workspaceModel.k2",
+    descriptors = ["resources/intellij.devkit.workspaceModel.k2.xml"],
+    target = "k2",
 )
 ### auto-generated section `iml intellij.devkit.workspaceModel.k2` end
 
@@ -133,10 +132,9 @@ jvm_library(
 ### auto-generated section `build intellij.devkit.workspaceModel.k2.tests` end
 
 ### auto-generated section `iml intellij.devkit.workspaceModel.k2.tests` start
-exports_files(
-    [
-        "intellij.devkit.workspaceModel.k2.tests.iml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.devkit.workspaceModel.k2.tests",
+    resources = False,
+    target = "devkit-workspaceModel-k2-tests_test_lib",
 )
 ### auto-generated section `iml intellij.devkit.workspaceModel.k2.tests` end

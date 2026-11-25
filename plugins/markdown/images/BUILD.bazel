@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
@@ -48,11 +49,9 @@ jvm_library(
 ### auto-generated section `build intellij.markdown.images` end
 
 ### auto-generated section `iml intellij.markdown.images` start
-exports_files(
-    [
-        "intellij.markdown.images.iml",
-        "src/main/resources/intellij.markdown.images.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.markdown.images",
+    descriptors = ["src/main/resources/intellij.markdown.images.xml"],
+    target = "images",
 )
 ### auto-generated section `iml intellij.markdown.images` end

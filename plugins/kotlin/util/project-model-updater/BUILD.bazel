@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 
@@ -55,10 +56,8 @@ jvm_library(
 ### auto-generated section `build kotlin.util.project-model-updater` end
 
 ### auto-generated section `iml kotlin.util.project-model-updater` start
-exports_files(
-    [
-        "kotlin.util.project-model-updater.iml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "kotlin.util.project-model-updater",
+    target = "project-model-updater",
 )
 ### auto-generated section `iml kotlin.util.project-model-updater` end

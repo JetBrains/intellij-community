@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@community//platform/build-scripts/bazel-rules:ij_plugin_module.bzl", "ij_plugin_module")
 
 ### auto-generated section `build intellij.libraries.assertj.swing` start
@@ -20,11 +21,9 @@ ij_plugin_module(
 ### auto-generated section `build intellij.libraries.assertj.swing` end
 
 ### auto-generated section `iml intellij.libraries.assertj.swing` start
-exports_files(
-    [
-        "intellij.libraries.assertj.swing.iml",
-        "resources/intellij.libraries.assertj.swing.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.libraries.assertj.swing",
+    descriptors = ["resources/intellij.libraries.assertj.swing.xml"],
+    target = "assertj-swing",
 )
 ### auto-generated section `iml intellij.libraries.assertj.swing` end

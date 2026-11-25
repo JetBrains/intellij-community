@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
@@ -73,12 +74,10 @@ jvm_library(
 ### auto-generated section `build intellij.platform.vcs.impl.shared` end
 
 ### auto-generated section `iml intellij.platform.vcs.impl.shared` start
-exports_files(
-    [
-        "intellij.platform.vcs.impl.shared.iml",
-        "resources/intellij.platform.vcs.impl.shared.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.platform.vcs.impl.shared",
+    descriptors = ["resources/intellij.platform.vcs.impl.shared.xml"],
+    target = "shared",
 )
 ### auto-generated section `iml intellij.platform.vcs.impl.shared` end
 
@@ -133,10 +132,9 @@ jvm_library(
 ### auto-generated section `build intellij.platform.vcs.impl.shared.tests` end
 
 ### auto-generated section `iml intellij.platform.vcs.impl.shared.tests` start
-exports_files(
-    [
-        "intellij.platform.vcs.impl.shared.tests.iml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.platform.vcs.impl.shared.tests",
+    resources = False,
+    target = "vcs-impl-shared-tests_test_lib",
 )
 ### auto-generated section `iml intellij.platform.vcs.impl.shared.tests` end

@@ -1,6 +1,7 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@community//build:tests-options.bzl", "jps_test")
-load("@jps_dynamic_deps_community//:targets.bzl", "dist_plugin")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:dist_plugin.bzl", "dist_plugin")
 
 jps_test(
     name = "settingsRepository-tests_test",
@@ -18,6 +19,10 @@ dist_plugin(
         "intellij.libraries.jgit.ssh",
     ],
     descriptor = "resources/META-INF/plugin.xml",
+    descriptors = {
+        "@community//libraries/jgit-ssh:resources/intellij.libraries.jgit.ssh.xml": "intellij.libraries.jgit.ssh.xml",
+        "@community//libraries/sshd-osgi:resources/intellij.libraries.sshd.osgi.xml": "intellij.libraries.sshd.osgi.xml",
+    },
     jars = {
         "lib/intellij.libraries.sshd.osgi.jar": [
             "intellij.libraries.sshd.osgi",
@@ -31,6 +36,11 @@ dist_plugin(
         "lib/settingsRepository.jar": ["intellij.settingsRepository"],
     },
     main_module = "intellij.settingsRepository",
+    module_labels = {
+        "intellij.libraries.jgit.ssh": "@community//libraries/jgit-ssh:jgit-ssh",
+        "intellij.libraries.sshd.osgi": "@community//libraries/sshd-osgi:sshd-osgi",
+        "intellij.settingsRepository": "@community//plugins/settings-repository:settings-repository",
+    },
 )
 ### auto-generated section `dev intellij.settingsRepository` end
 
@@ -99,12 +109,10 @@ jvm_library(
 ### auto-generated section `build intellij.settingsRepository` end
 
 ### auto-generated section `iml intellij.settingsRepository` start
-exports_files(
-    [
-        "intellij.settingsRepository.iml",
-        "resources/META-INF/plugin.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.settingsRepository",
+    descriptors = ["resources/META-INF/plugin.xml"],
+    target = "settings-repository",
 )
 ### auto-generated section `iml intellij.settingsRepository` end
 
@@ -156,10 +164,9 @@ jvm_library(
 ### auto-generated section `build intellij.settingsRepository.tests` end
 
 ### auto-generated section `iml intellij.settingsRepository.tests` start
-exports_files(
-    [
-        "intellij.settingsRepository.tests.iml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.settingsRepository.tests",
+    resources = False,
+    target = "settingsRepository-tests_test_lib",
 )
 ### auto-generated section `iml intellij.settingsRepository.tests` end

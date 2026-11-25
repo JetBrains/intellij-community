@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library")
 
 ### auto-generated section `build intellij.platform.debugger.testFramework` start
@@ -54,11 +55,9 @@ jvm_library(
 ### auto-generated section `build intellij.platform.debugger.testFramework` end
 
 ### auto-generated section `iml intellij.platform.debugger.testFramework` start
-exports_files(
-    [
-        "intellij.platform.debugger.testFramework.iml",
-        "resources/intellij.platform.debugger.testFramework.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.platform.debugger.testFramework",
+    descriptors = ["resources/intellij.platform.debugger.testFramework.xml"],
+    target = "debugger-testFramework",
 )
 ### auto-generated section `iml intellij.platform.debugger.testFramework` end

@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library")
 
@@ -79,12 +80,10 @@ jvm_library(
 ### auto-generated section `build intellij.platform.testFramework.junit5` end
 
 ### auto-generated section `iml intellij.platform.testFramework.junit5` start
-exports_files(
-    [
-        "intellij.platform.testFramework.junit5.iml",
-        "resources/intellij.platform.testFramework.junit5.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.platform.testFramework.junit5",
+    descriptors = ["resources/intellij.platform.testFramework.junit5.xml"],
+    target = "junit5",
 )
 ### auto-generated section `iml intellij.platform.testFramework.junit5` end
 
@@ -137,10 +136,8 @@ jvm_library(
 ### auto-generated section `build intellij.platform.testFramework.junit5.tests` end
 
 ### auto-generated section `iml intellij.platform.testFramework.junit5.tests` start
-exports_files(
-    [
-        "intellij.platform.testFramework.junit5.tests.iml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.platform.testFramework.junit5.tests",
+    target = "junit5-tests_test_lib",
 )
 ### auto-generated section `iml intellij.platform.testFramework.junit5.tests` end

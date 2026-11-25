@@ -1,7 +1,8 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@community//build:tests-options.bzl", "jps_test")
 load("@community//platform/build-scripts/bazel-rules:ij_plugin.bzl", "ij_plugin")
-load("@jps_dynamic_deps_community//:targets.bzl", "dist_plugin")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:dist_plugin.bzl", "dist_plugin")
 
 jps_test(
     name = "eclipse-tests_test",
@@ -19,6 +20,10 @@ dist_plugin(
         "intellij.eclipse.jps",
     ],
     descriptor = "resources/META-INF/plugin.xml",
+    descriptors = {
+        "@community//plugins/eclipse/common-eclipse-util:resources/intellij.eclipse.common.xml": "intellij.eclipse.common.xml",
+        "@community//plugins/eclipse/jps-plugin:resources/intellij.eclipse.jps.xml": "intellij.eclipse.jps.xml",
+    },
     jars = {
         "lib/eclipse.jar": ["intellij.eclipse"],
     },
@@ -26,6 +31,11 @@ dist_plugin(
     module_jar_paths = {
         "intellij.eclipse.common": "lib/intellij.eclipse.common.jar",
         "intellij.eclipse.jps": "lib/intellij.eclipse.jps.jar",
+    },
+    module_labels = {
+        "intellij.eclipse": "@community//plugins/eclipse:eclipse",
+        "intellij.eclipse.common": "@community//plugins/eclipse/common-eclipse-util:common",
+        "intellij.eclipse.jps": "@community//plugins/eclipse/jps-plugin:jps",
     },
 )
 ### auto-generated section `dev intellij.eclipse` end
@@ -110,14 +120,15 @@ ij_plugin(
 ### auto-generated section `plugin intellij.eclipse` end
 
 ### auto-generated section `iml intellij.eclipse` start
-exports_files(
-    [
-        "intellij.eclipse.iml",
-        "resources/META-INF/plugin.xml",
+jps_module(
+    name = "intellij.eclipse",
+    descriptors = ["resources/META-INF/plugin.xml"],
+    plugin = True,
+    target = "eclipse",
+    exports = [
         "resources/org/jetbrains/idea/eclipse/conversion/template.empty.project.xml",
         "resources/org/jetbrains/idea/eclipse/conversion/template.project.xml",
     ],
-    visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.eclipse` end
 
@@ -183,10 +194,9 @@ jvm_library(
 ### auto-generated section `build intellij.eclipse.tests` end
 
 ### auto-generated section `iml intellij.eclipse.tests` start
-exports_files(
-    [
-        "intellij.eclipse.tests.iml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.eclipse.tests",
+    resources = False,
+    target = "eclipse-tests_test_lib",
 )
 ### auto-generated section `iml intellij.eclipse.tests` end

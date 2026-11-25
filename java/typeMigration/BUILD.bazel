@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
@@ -61,13 +62,11 @@ jvm_library(
 ### auto-generated section `build intellij.java.typeMigration` end
 
 ### auto-generated section `iml intellij.java.typeMigration` start
-exports_files(
-    [
-        "intellij.java.typeMigration.iml",
-        "resources/META-INF/TypeMigration.xml",
-        "resources/intellij.java.typeMigration.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.java.typeMigration",
+    descriptors = ["resources/intellij.java.typeMigration.xml"],
+    target = "typeMigration",
+    exports = ["resources/META-INF/TypeMigration.xml"],
 )
 ### auto-generated section `iml intellij.java.typeMigration` end
 
@@ -129,10 +128,9 @@ jvm_library(
 ### auto-generated section `build intellij.java.typeMigration.tests` end
 
 ### auto-generated section `iml intellij.java.typeMigration.tests` start
-exports_files(
-    [
-        "intellij.java.typeMigration.tests.iml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.java.typeMigration.tests",
+    resources = False,
+    target = "typeMigration-tests_test_lib",
 )
 ### auto-generated section `iml intellij.java.typeMigration.tests` end

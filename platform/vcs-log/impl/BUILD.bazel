@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
@@ -91,12 +92,10 @@ jvm_library(
 ### auto-generated section `build intellij.platform.vcs.log.impl` end
 
 ### auto-generated section `iml intellij.platform.vcs.log.impl` start
-exports_files(
-    [
-        "intellij.platform.vcs.log.impl.iml",
-        "resources/intellij.platform.vcs.log.impl.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.platform.vcs.log.impl",
+    descriptors = ["resources/intellij.platform.vcs.log.impl.xml"],
+    target = "impl",
 )
 ### auto-generated section `iml intellij.platform.vcs.log.impl` end
 
@@ -163,10 +162,9 @@ jvm_library(
 ### auto-generated section `build intellij.platform.vcs.log.impl.tests` end
 
 ### auto-generated section `iml intellij.platform.vcs.log.impl.tests` start
-exports_files(
-    [
-        "intellij.platform.vcs.log.impl.tests.iml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.platform.vcs.log.impl.tests",
+    resources = False,
+    target = "vcs-log-impl-tests_test_lib",
 )
 ### auto-generated section `iml intellij.platform.vcs.log.impl.tests` end

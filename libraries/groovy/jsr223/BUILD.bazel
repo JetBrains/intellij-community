@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@community//platform/build-scripts/bazel-rules:ij_plugin_module.bzl", "ij_plugin_module")
 
 ### auto-generated section `build intellij.libraries.groovy.jsr223` start
@@ -20,11 +21,9 @@ ij_plugin_module(
 ### auto-generated section `build intellij.libraries.groovy.jsr223` end
 
 ### auto-generated section `iml intellij.libraries.groovy.jsr223` start
-exports_files(
-    [
-        "intellij.libraries.groovy.jsr223.iml",
-        "resources/intellij.libraries.groovy.jsr223.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.libraries.groovy.jsr223",
+    descriptors = ["resources/intellij.libraries.groovy.jsr223.xml"],
+    target = "jsr223",
 )
 ### auto-generated section `iml intellij.libraries.groovy.jsr223` end

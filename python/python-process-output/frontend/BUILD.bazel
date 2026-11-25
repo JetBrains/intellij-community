@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
@@ -69,12 +70,10 @@ jvm_library(
 ### auto-generated section `build intellij.python.processOutput.frontend` end
 
 ### auto-generated section `iml intellij.python.processOutput.frontend` start
-exports_files(
-    [
-        "intellij.python.processOutput.frontend.iml",
-        "resources/intellij.python.processOutput.frontend.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.python.processOutput.frontend",
+    descriptors = ["resources/intellij.python.processOutput.frontend.xml"],
+    target = "frontend",
 )
 ### auto-generated section `iml intellij.python.processOutput.frontend` end
 
@@ -148,10 +147,8 @@ jvm_library(
 ### auto-generated section `build intellij.python.processOutput.frontend.tests` end
 
 ### auto-generated section `iml intellij.python.processOutput.frontend.tests` start
-exports_files(
-    [
-        "intellij.python.processOutput.frontend.tests.iml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.python.processOutput.frontend.tests",
+    target = "python-processOutput-frontend-tests_test_lib",
 )
 ### auto-generated section `iml intellij.python.processOutput.frontend.tests` end

@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.platform.externalSystem.rt` start
@@ -23,10 +24,9 @@ jvm_library(
 ### auto-generated section `build intellij.platform.externalSystem.rt` end
 
 ### auto-generated section `iml intellij.platform.externalSystem.rt` start
-exports_files(
-    [
-        "intellij.platform.externalSystem.rt.iml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.platform.externalSystem.rt",
+    resources = False,
+    target = "externalSystem-rt",
 )
 ### auto-generated section `iml intellij.platform.externalSystem.rt` end

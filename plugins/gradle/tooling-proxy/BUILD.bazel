@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
@@ -38,12 +39,10 @@ jvm_library(
 ### auto-generated section `build intellij.gradle.toolingProxy` end
 
 ### auto-generated section `iml intellij.gradle.toolingProxy` start
-exports_files(
-    [
-        "intellij.gradle.toolingProxy.iml",
-        "resources/intellij.gradle.toolingProxy.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.gradle.toolingProxy",
+    descriptors = ["resources/intellij.gradle.toolingProxy.xml"],
+    target = "tooling-proxy",
 )
 ### auto-generated section `iml intellij.gradle.toolingProxy` end
 
@@ -76,11 +75,10 @@ jvm_library(
 ### auto-generated section `build intellij.gradle.toolingProxy.tests` end
 
 ### auto-generated section `iml intellij.gradle.toolingProxy.tests` start
-exports_files(
-    [
-        "intellij.gradle.toolingProxy.tests.iml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.gradle.toolingProxy.tests",
+    resources = False,
+    target = "toolingProxy-tests_test_lib",
 )
 ### auto-generated section `iml intellij.gradle.toolingProxy.tests` end
 

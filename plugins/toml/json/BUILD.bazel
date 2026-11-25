@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
@@ -44,11 +45,9 @@ jvm_library(
 ### auto-generated section `build intellij.toml.json` end
 
 ### auto-generated section `iml intellij.toml.json` start
-exports_files(
-    [
-        "intellij.toml.json.iml",
-        "src/main/resources/intellij.toml.json.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.toml.json",
+    descriptors = ["src/main/resources/intellij.toml.json.xml"],
+    target = "json",
 )
 ### auto-generated section `iml intellij.toml.json` end

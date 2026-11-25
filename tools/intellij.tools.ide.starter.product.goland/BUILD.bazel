@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 
@@ -40,10 +41,8 @@ jvm_library(
 ### auto-generated section `build intellij.tools.ide.starter.product.goland` end
 
 ### auto-generated section `iml intellij.tools.ide.starter.product.goland` start
-exports_files(
-    [
-        "intellij.tools.ide.starter.product.goland.iml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.tools.ide.starter.product.goland",
+    target = "ide-starter-product-goland",
 )
 ### auto-generated section `iml intellij.tools.ide.starter.product.goland` end

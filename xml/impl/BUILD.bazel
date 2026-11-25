@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
@@ -87,12 +88,10 @@ jvm_library(
 ### auto-generated section `build intellij.xml.impl` end
 
 ### auto-generated section `iml intellij.xml.impl` start
-exports_files(
-    [
-        "intellij.xml.impl.iml",
-        "resources/com/intellij/xml/util/htmlreferencetable.xml",
-        "resources/intellij.xml.impl.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.xml.impl",
+    descriptors = ["resources/intellij.xml.impl.xml"],
+    target = "impl",
+    exports = ["resources/com/intellij/xml/util/htmlreferencetable.xml"],
 )
 ### auto-generated section `iml intellij.xml.impl` end

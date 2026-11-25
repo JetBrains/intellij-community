@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
@@ -46,12 +47,10 @@ jvm_library(
 ### auto-generated section `build intellij.platform.externalSystem.dependencyUpdater` end
 
 ### auto-generated section `iml intellij.platform.externalSystem.dependencyUpdater` start
-exports_files(
-    [
-        "intellij.platform.externalSystem.dependencyUpdater.iml",
-        "resources/intellij.platform.externalSystem.dependencyUpdater.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.platform.externalSystem.dependencyUpdater",
+    descriptors = ["resources/intellij.platform.externalSystem.dependencyUpdater.xml"],
+    target = "dependency-updater",
 )
 ### auto-generated section `iml intellij.platform.externalSystem.dependencyUpdater` end
 
@@ -113,10 +112,8 @@ jvm_library(
 ### auto-generated section `build intellij.platform.externalSystem.dependencyUpdater.tests` end
 
 ### auto-generated section `iml intellij.platform.externalSystem.dependencyUpdater.tests` start
-exports_files(
-    [
-        "intellij.platform.externalSystem.dependencyUpdater.tests.iml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.platform.externalSystem.dependencyUpdater.tests",
+    target = "externalSystem-dependencyUpdater-tests_test_lib",
 )
 ### auto-generated section `iml intellij.platform.externalSystem.dependencyUpdater.tests` end

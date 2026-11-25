@@ -1,6 +1,7 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@community//platform/build-scripts/bazel-rules:ij_plugin.bzl", "ij_plugin")
-load("@jps_dynamic_deps_community//:targets.bzl", "dist_plugin")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:dist_plugin.bzl", "dist_plugin")
 
 ### auto-generated section `dev intellij.platform.problemView.plugin` start
 dist_plugin(
@@ -17,6 +18,17 @@ dist_plugin(
         "intellij.platform.problemView.security.backend",
     ],
     descriptor = "resources/META-INF/plugin.xml",
+    descriptors = {
+        "@community//platform/problemsView/backend:resources/intellij.platform.problemView.backend.xml": "intellij.platform.problemView.backend.xml",
+        "@community//platform/problemsView/collector:resources/intellij.platform.problemView.collector.xml": "intellij.platform.problemView.collector.xml",
+        "@community//platform/problemsView/core:resources/intellij.platform.problemView.core.xml": "intellij.platform.problemView.core.xml",
+        "@community//platform/problemsView/frontend:resources/intellij.platform.problemView.frontend.xml": "intellij.platform.problemView.frontend.xml",
+        "@community//platform/problemsView/rpc.backend:resources/intellij.platform.problemView.rpc.backend.xml": "intellij.platform.problemView.rpc.backend.xml",
+        "@community//platform/problemsView/security/backend:resources/intellij.platform.problemView.security.backend.xml": "intellij.platform.problemView.security.backend.xml",
+        "@community//platform/problemsView/security:resources/intellij.platform.problemView.security.xml": "intellij.platform.problemView.security.xml",
+        "@community//platform/problemsView/shared:resources/intellij.platform.problemView.shared.xml": "intellij.platform.problemView.shared.xml",
+        "@community//platform/problemsView/ui:resources/intellij.platform.problemView.ui.xml": "intellij.platform.problemView.ui.xml",
+    },
     jars = {
         "lib/platform-problemView-plugin.jar": ["intellij.platform.problemView.plugin"],
     },
@@ -27,6 +39,18 @@ dist_plugin(
             "intellij.platform.problemView.rpc.backend",
             "intellij.platform.problemView.security.backend",
         ],
+    },
+    module_labels = {
+        "intellij.platform.problemView.backend": "@community//platform/problemsView/backend:backend",
+        "intellij.platform.problemView.collector": "@community//platform/problemsView/collector:collector",
+        "intellij.platform.problemView.core": "@community//platform/problemsView/core:core",
+        "intellij.platform.problemView.frontend": "@community//platform/problemsView/frontend:frontend",
+        "intellij.platform.problemView.plugin": "@community//platform/problemsView/plugin:plugin",
+        "intellij.platform.problemView.rpc.backend": "@community//platform/problemsView/rpc.backend:rpc.backend",
+        "intellij.platform.problemView.security": "@community//platform/problemsView/security:security",
+        "intellij.platform.problemView.security.backend": "@community//platform/problemsView/security/backend:backend",
+        "intellij.platform.problemView.shared": "@community//platform/problemsView/shared:shared",
+        "intellij.platform.problemView.ui": "@community//platform/problemsView/ui:ui",
     },
 )
 ### auto-generated section `dev intellij.platform.problemView.plugin` end
@@ -68,11 +92,10 @@ ij_plugin(
 ### auto-generated section `plugin intellij.platform.problemView.plugin` end
 
 ### auto-generated section `iml intellij.platform.problemView.plugin` start
-exports_files(
-    [
-        "intellij.platform.problemView.plugin.iml",
-        "resources/META-INF/plugin.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.platform.problemView.plugin",
+    descriptors = ["resources/META-INF/plugin.xml"],
+    plugin = True,
+    target = "plugin",
 )
 ### auto-generated section `iml intellij.platform.problemView.plugin` end

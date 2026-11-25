@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
@@ -34,12 +35,10 @@ jvm_library(
 ### auto-generated section `build intellij.platform.ml` end
 
 ### auto-generated section `iml intellij.platform.ml` start
-exports_files(
-    [
-        "intellij.platform.ml.iml",
-        "resources/META-INF/ml-api.xml",
-        "resources/intellij.platform.ml.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.platform.ml",
+    descriptors = ["resources/intellij.platform.ml.xml"],
+    target = "ml",
+    exports = ["resources/META-INF/ml-api.xml"],
 )
 ### auto-generated section `iml intellij.platform.ml` end

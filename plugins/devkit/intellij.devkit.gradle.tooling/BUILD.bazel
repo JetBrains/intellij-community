@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
@@ -39,11 +40,9 @@ jvm_library(
 ### auto-generated section `build intellij.devkit.gradle.tooling` end
 
 ### auto-generated section `iml intellij.devkit.gradle.tooling` start
-exports_files(
-    [
-        "intellij.devkit.gradle.tooling.iml",
-        "resources/intellij.devkit.gradle.tooling.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.devkit.gradle.tooling",
+    descriptors = ["resources/intellij.devkit.gradle.tooling.xml"],
+    target = "gradle-tooling",
 )
 ### auto-generated section `iml intellij.devkit.gradle.tooling` end

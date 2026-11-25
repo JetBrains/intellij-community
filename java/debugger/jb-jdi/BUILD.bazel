@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.java.debugger.libraries.jb.jdi` start
@@ -19,11 +20,9 @@ jvm_library(
 ### auto-generated section `build intellij.java.debugger.libraries.jb.jdi` end
 
 ### auto-generated section `iml intellij.java.debugger.libraries.jb.jdi` start
-exports_files(
-    [
-        "intellij.java.debugger.libraries.jb.jdi.iml",
-        "resources/intellij.java.debugger.libraries.jb.jdi.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.java.debugger.libraries.jb.jdi",
+    descriptors = ["resources/intellij.java.debugger.libraries.jb.jdi.xml"],
+    target = "java-debugger-libraries-jb-jdi",
 )
 ### auto-generated section `iml intellij.java.debugger.libraries.jb.jdi` end

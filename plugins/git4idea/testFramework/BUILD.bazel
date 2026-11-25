@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.vcs.git.testFramework` start
@@ -97,11 +98,9 @@ jvm_library(
 ### auto-generated section `build intellij.vcs.git.testFramework` end
 
 ### auto-generated section `iml intellij.vcs.git.testFramework` start
-exports_files(
-    [
-        "intellij.vcs.git.testFramework.iml",
-        "resources/intellij.vcs.git.testFramework.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.vcs.git.testFramework",
+    descriptors = ["resources/intellij.vcs.git.testFramework.xml"],
+    target = "testFramework",
 )
 ### auto-generated section `iml intellij.vcs.git.testFramework` end

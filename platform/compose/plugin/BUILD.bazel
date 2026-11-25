@@ -1,6 +1,7 @@
-load("@jps_dynamic_deps_community//:targets.bzl", "dist_plugin")
+load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:dev_plugin_remainder.bzl", "dist_complex_plugin")
+load("//platform/build-scripts/bazel-rules:dist_plugin.bzl", "dist_plugin")
 
 ### auto-generated section `dev intellij.platform.compose.plugin` start
 dist_plugin(
@@ -24,7 +25,44 @@ dist_plugin(
         "intellij.platform.compose.markdown",
     ],
     descriptor = "resources/META-INF/plugin.xml",
+    descriptors = {
+        "@community//libraries/coil:resources/intellij.libraries.coil.xml": "intellij.libraries.coil.xml",
+        "@community//libraries/compose-foundation-desktop:resources/intellij.libraries.compose.foundation.desktop.xml": "intellij.libraries.compose.foundation.desktop.xml",
+        "@community//libraries/skiko:resources/intellij.libraries.skiko.xml": "intellij.libraries.skiko.xml",
+        "@community//platform/compose/markdown:resources/intellij.platform.compose.markdown.xml": "intellij.platform.compose.markdown.xml",
+        "@community//platform/compose:resources/intellij.platform.compose.xml": "intellij.platform.compose.xml",
+        "@community//platform/jewel/foundation:src/main/resources/intellij.platform.jewel.foundation.xml": "intellij.platform.jewel.foundation.xml",
+        "@community//platform/jewel/ide-laf-bridge:src/main/resources/intellij.platform.jewel.ideLafBridge.xml": "intellij.platform.jewel.ideLafBridge.xml",
+        "@community//platform/jewel/markdown/core:src/main/resources/intellij.platform.jewel.markdown.core.xml": "intellij.platform.jewel.markdown.core.xml",
+        "@community//platform/jewel/markdown/extensions/autolink:src/main/resources/intellij.platform.jewel.markdown.extensions.autolink.xml": "intellij.platform.jewel.markdown.extensions.autolink.xml",
+        "@community//platform/jewel/markdown/extensions/front-matter:src/main/resources/intellij.platform.jewel.markdown.extensions.frontMatter.xml": "intellij.platform.jewel.markdown.extensions.frontMatter.xml",
+        "@community//platform/jewel/markdown/extensions/gfm-alerts:src/main/resources/intellij.platform.jewel.markdown.extensions.gfmAlerts.xml": "intellij.platform.jewel.markdown.extensions.gfmAlerts.xml",
+        "@community//platform/jewel/markdown/extensions/gfm-strikethrough:src/main/resources/intellij.platform.jewel.markdown.extensions.gfmStrikethrough.xml": "intellij.platform.jewel.markdown.extensions.gfmStrikethrough.xml",
+        "@community//platform/jewel/markdown/extensions/gfm-tables:src/main/resources/intellij.platform.jewel.markdown.extensions.gfmTables.xml": "intellij.platform.jewel.markdown.extensions.gfmTables.xml",
+        "@community//platform/jewel/markdown/extensions/images:src/main/resources/intellij.platform.jewel.markdown.extensions.images.xml": "intellij.platform.jewel.markdown.extensions.images.xml",
+        "@community//platform/jewel/markdown/ide-laf-bridge-styling:src/main/resources/intellij.platform.jewel.markdown.ideLafBridgeStyling.xml": "intellij.platform.jewel.markdown.ideLafBridgeStyling.xml",
+        "@community//platform/jewel/ui:src/main/resources/intellij.platform.jewel.ui.xml": "intellij.platform.jewel.ui.xml",
+    },
     main_module = "intellij.platform.compose.plugin",
+    module_labels = {
+        "intellij.libraries.coil": "@community//libraries/coil:coil",
+        "intellij.libraries.compose.foundation.desktop": "@community//libraries/compose-foundation-desktop:compose-foundation-desktop",
+        "intellij.libraries.skiko": "@community//libraries/skiko:skiko",
+        "intellij.platform.compose": "@community//platform/compose:compose",
+        "intellij.platform.compose.markdown": "@community//platform/compose/markdown:markdown",
+        "intellij.platform.compose.plugin": "@community//platform/compose/plugin:plugin",
+        "intellij.platform.jewel.foundation": "@community//platform/jewel/foundation:foundation",
+        "intellij.platform.jewel.ideLafBridge": "@community//platform/jewel/ide-laf-bridge:ide-laf-bridge",
+        "intellij.platform.jewel.markdown.core": "@community//platform/jewel/markdown/core:core",
+        "intellij.platform.jewel.markdown.extensions.autolink": "@community//platform/jewel/markdown/extensions/autolink:autolink",
+        "intellij.platform.jewel.markdown.extensions.frontMatter": "@community//platform/jewel/markdown/extensions/front-matter:front-matter",
+        "intellij.platform.jewel.markdown.extensions.gfmAlerts": "@community//platform/jewel/markdown/extensions/gfm-alerts:gfm-alerts",
+        "intellij.platform.jewel.markdown.extensions.gfmStrikethrough": "@community//platform/jewel/markdown/extensions/gfm-strikethrough:gfm-strikethrough",
+        "intellij.platform.jewel.markdown.extensions.gfmTables": "@community//platform/jewel/markdown/extensions/gfm-tables:gfm-tables",
+        "intellij.platform.jewel.markdown.extensions.images": "@community//platform/jewel/markdown/extensions/images:images",
+        "intellij.platform.jewel.markdown.ideLafBridgeStyling": "@community//platform/jewel/markdown/ide-laf-bridge-styling:ide-laf-bridge-styling",
+        "intellij.platform.jewel.ui": "@community//platform/jewel/ui:ui",
+    },
 )
 
 dist_complex_plugin(
@@ -86,11 +124,9 @@ jvm_library(
 ### auto-generated section `build intellij.platform.compose.plugin` end
 
 ### auto-generated section `iml intellij.platform.compose.plugin` start
-exports_files(
-    [
-        "intellij.platform.compose.plugin.iml",
-        "resources/META-INF/plugin.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.platform.compose.plugin",
+    descriptors = ["resources/META-INF/plugin.xml"],
+    target = "plugin",
 )
 ### auto-generated section `iml intellij.platform.compose.plugin` end

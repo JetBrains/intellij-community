@@ -1,15 +1,23 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@community//platform/build-scripts/bazel-rules:ij_plugin.bzl", "ij_plugin")
-load("@jps_dynamic_deps_community//:targets.bzl", "dist_plugin")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:dist_plugin.bzl", "dist_plugin")
 
 ### auto-generated section `dev intellij.extendedToolWindowsUi` start
 dist_plugin(
     content_modules = ["intellij.extendedToolWindowsUi.frontend"],
     descriptor = "resources/META-INF/plugin.xml",
+    descriptors = {
+        "@community//plugins/extended-toolwindows-ui/frontend:resources/intellij.extendedToolWindowsUi.frontend.xml": "intellij.extendedToolWindowsUi.frontend.xml",
+    },
     jars = {
         "lib/extendedToolWindowsUi.jar": ["intellij.extendedToolWindowsUi"],
     },
     main_module = "intellij.extendedToolWindowsUi",
+    module_labels = {
+        "intellij.extendedToolWindowsUi": "@community//plugins/extended-toolwindows-ui:extendedToolWindowsUi",
+        "intellij.extendedToolWindowsUi.frontend": "@community//plugins/extended-toolwindows-ui/frontend:frontend",
+    },
 )
 ### auto-generated section `dev intellij.extendedToolWindowsUi` end
 
@@ -40,11 +48,10 @@ ij_plugin(
 ### auto-generated section `plugin intellij.extendedToolWindowsUi` end
 
 ### auto-generated section `iml intellij.extendedToolWindowsUi` start
-exports_files(
-    [
-        "intellij.extendedToolWindowsUi.iml",
-        "resources/META-INF/plugin.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.extendedToolWindowsUi",
+    descriptors = ["resources/META-INF/plugin.xml"],
+    plugin = True,
+    target = "extendedToolWindowsUi",
 )
 ### auto-generated section `iml intellij.extendedToolWindowsUi` end

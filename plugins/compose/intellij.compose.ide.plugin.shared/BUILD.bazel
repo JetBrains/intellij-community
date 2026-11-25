@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
@@ -65,12 +66,10 @@ jvm_library(
 ### auto-generated section `build intellij.compose.ide.plugin.shared` end
 
 ### auto-generated section `iml intellij.compose.ide.plugin.shared` start
-exports_files(
-    [
-        "intellij.compose.ide.plugin.shared.iml",
-        "resources/intellij.compose.ide.plugin.shared.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.compose.ide.plugin.shared",
+    descriptors = ["resources/intellij.compose.ide.plugin.shared.xml"],
+    target = "ide-plugin-shared",
 )
 ### auto-generated section `iml intellij.compose.ide.plugin.shared` end
 
@@ -112,11 +111,10 @@ jvm_library(
 ### auto-generated section `build intellij.compose.ide.plugin.shared.tests` end
 
 ### auto-generated section `iml intellij.compose.ide.plugin.shared.tests` start
-exports_files(
-    [
-        "intellij.compose.ide.plugin.shared.tests.iml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.compose.ide.plugin.shared.tests",
+    resources = False,
+    target = "ide-plugin-shared-tests_test_lib",
 )
 ### auto-generated section `iml intellij.compose.ide.plugin.shared.tests` end
 

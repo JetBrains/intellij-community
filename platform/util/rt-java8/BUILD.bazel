@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.platform.util.rt.java8` start
@@ -19,10 +20,9 @@ jvm_library(
 ### auto-generated section `build intellij.platform.util.rt.java8` end
 
 ### auto-generated section `iml intellij.platform.util.rt.java8` start
-exports_files(
-    [
-        "intellij.platform.util.rt.java8.iml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.platform.util.rt.java8",
+    resources = False,
+    target = "rt-java8",
 )
 ### auto-generated section `iml intellij.platform.util.rt.java8` end

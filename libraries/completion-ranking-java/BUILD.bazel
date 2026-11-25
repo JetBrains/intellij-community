@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@community//platform/build-scripts/bazel-rules:ij_plugin_module.bzl", "ij_plugin_module")
 
 ### auto-generated section `build intellij.libraries.completion.ranking.java` start
@@ -20,11 +21,9 @@ ij_plugin_module(
 ### auto-generated section `build intellij.libraries.completion.ranking.java` end
 
 ### auto-generated section `iml intellij.libraries.completion.ranking.java` start
-exports_files(
-    [
-        "intellij.libraries.completion.ranking.java.iml",
-        "resources/intellij.libraries.completion.ranking.java.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.libraries.completion.ranking.java",
+    descriptors = ["resources/intellij.libraries.completion.ranking.java.xml"],
+    target = "completion-ranking-java",
 )
 ### auto-generated section `iml intellij.libraries.completion.ranking.java` end

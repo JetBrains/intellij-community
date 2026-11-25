@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.platform.eel.testFramework` start
@@ -29,10 +30,9 @@ jvm_library(
 ### auto-generated section `build intellij.platform.eel.testFramework` end
 
 ### auto-generated section `iml intellij.platform.eel.testFramework` start
-exports_files(
-    [
-        "intellij.platform.eel.testFramework.iml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.platform.eel.testFramework",
+    resources = False,
+    target = "testFramework",
 )
 ### auto-generated section `iml intellij.platform.eel.testFramework` end

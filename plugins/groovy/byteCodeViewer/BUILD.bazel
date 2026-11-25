@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
@@ -36,11 +37,9 @@ jvm_library(
 ### auto-generated section `build intellij.groovy.byteCodeViewer` end
 
 ### auto-generated section `iml intellij.groovy.byteCodeViewer` start
-exports_files(
-    [
-        "intellij.groovy.byteCodeViewer.iml",
-        "resources/intellij.groovy.byteCodeViewer.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.groovy.byteCodeViewer",
+    descriptors = ["resources/intellij.groovy.byteCodeViewer.xml"],
+    target = "byteCodeViewer",
 )
 ### auto-generated section `iml intellij.groovy.byteCodeViewer` end

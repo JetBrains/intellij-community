@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
@@ -64,12 +65,10 @@ jvm_library(
 ### auto-generated section `build intellij.platform.jewel.markdown.extensions.autolink` end
 
 ### auto-generated section `iml intellij.platform.jewel.markdown.extensions.autolink` start
-exports_files(
-    [
-        "intellij.platform.jewel.markdown.extensions.autolink.iml",
-        "src/main/resources/intellij.platform.jewel.markdown.extensions.autolink.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.platform.jewel.markdown.extensions.autolink",
+    descriptors = ["src/main/resources/intellij.platform.jewel.markdown.extensions.autolink.xml"],
+    target = "autolink",
 )
 ### auto-generated section `iml intellij.platform.jewel.markdown.extensions.autolink` end
 
@@ -113,10 +112,9 @@ jvm_library(
 ### auto-generated section `build intellij.platform.jewel.markdown.extensions.autolink.tests` end
 
 ### auto-generated section `iml intellij.platform.jewel.markdown.extensions.autolink.tests` start
-exports_files(
-    [
-        "intellij.platform.jewel.markdown.extensions.autolink.tests.iml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.platform.jewel.markdown.extensions.autolink.tests",
+    resources = False,
+    target = "jewel-markdown-extensions-autolink-tests_test_lib",
 )
 ### auto-generated section `iml intellij.platform.jewel.markdown.extensions.autolink.tests` end

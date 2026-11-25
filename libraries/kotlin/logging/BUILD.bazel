@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@community//platform/build-scripts/bazel-rules:ij_plugin_module.bzl", "ij_plugin_module")
 
 ### auto-generated section `build intellij.libraries.kotlin.logging` start
@@ -20,11 +21,9 @@ ij_plugin_module(
 ### auto-generated section `build intellij.libraries.kotlin.logging` end
 
 ### auto-generated section `iml intellij.libraries.kotlin.logging` start
-exports_files(
-    [
-        "intellij.libraries.kotlin.logging.iml",
-        "resources/intellij.libraries.kotlin.logging.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.libraries.kotlin.logging",
+    descriptors = ["resources/intellij.libraries.kotlin.logging.xml"],
+    target = "logging",
 )
 ### auto-generated section `iml intellij.libraries.kotlin.logging` end

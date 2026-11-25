@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
@@ -109,12 +110,10 @@ jvm_library(
 ### auto-generated section `build intellij.kotlin.base.scripting.scratch` end
 
 ### auto-generated section `iml intellij.kotlin.base.scripting.scratch` start
-exports_files(
-    [
-        "intellij.kotlin.base.scripting.scratch.iml",
-        "resources/intellij.kotlin.base.scripting.scratch.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.kotlin.base.scripting.scratch",
+    descriptors = ["resources/intellij.kotlin.base.scripting.scratch.xml"],
+    target = "scripting.scratch",
 )
 ### auto-generated section `iml intellij.kotlin.base.scripting.scratch` end
 
@@ -174,11 +173,10 @@ jvm_library(
 ### auto-generated section `build intellij.kotlin.base.scripting.scratch.tests` end
 
 ### auto-generated section `iml intellij.kotlin.base.scripting.scratch.tests` start
-exports_files(
-    [
-        "intellij.kotlin.base.scripting.scratch.tests.iml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.kotlin.base.scripting.scratch.tests",
+    resources = False,
+    target = "kotlin-base-scripting-scratch-tests_test_lib",
 )
 ### auto-generated section `iml intellij.kotlin.base.scripting.scratch.tests` end
 

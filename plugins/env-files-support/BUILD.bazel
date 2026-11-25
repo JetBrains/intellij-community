@@ -1,6 +1,7 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@community//platform/build-scripts/bazel-rules:ij_plugin.bzl", "ij_plugin")
-load("@jps_dynamic_deps_community//:targets.bzl", "dist_plugin")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:dist_plugin.bzl", "dist_plugin")
 
 ### auto-generated section `dev intellij.dotenv` start
 dist_plugin(
@@ -11,6 +12,12 @@ dist_plugin(
         "intellij.dotenv.python",
     ],
     main_module = "intellij.dotenv",
+    module_labels = {
+        "intellij.dotenv": "@community//plugins/env-files-support:dotenv",
+        "intellij.dotenv.java": "@community//plugins/env-files-support/java:java",
+        "intellij.dotenv.kotlin": "@community//plugins/env-files-support/kotlin:kotlin",
+        "intellij.dotenv.python": "@community//plugins/env-files-support/python:python",
+    },
 )
 ### auto-generated section `dev intellij.dotenv` end
 
@@ -83,12 +90,11 @@ ij_plugin(
 ### auto-generated section `plugin intellij.dotenv` end
 
 ### auto-generated section `iml intellij.dotenv` start
-exports_files(
-    [
-        "intellij.dotenv.iml",
-        "src/main/resources/META-INF/js.xml",
-        "src/main/resources/META-INF/plugin.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.dotenv",
+    descriptors = ["src/main/resources/META-INF/plugin.xml"],
+    plugin = True,
+    target = "dotenv",
+    exports = ["src/main/resources/META-INF/js.xml"],
 )
 ### auto-generated section `iml intellij.dotenv` end

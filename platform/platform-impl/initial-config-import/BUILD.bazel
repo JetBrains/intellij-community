@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
@@ -51,13 +52,11 @@ jvm_library(
 ### auto-generated section `build intellij.platform.ide.initialConfigImport` end
 
 ### auto-generated section `iml intellij.platform.ide.initialConfigImport` start
-exports_files(
-    [
-        "intellij.platform.ide.initialConfigImport.iml",
-        "resources/intellij.platform.ide.initialConfigImport.actions.xml",
-        "resources/intellij.platform.ide.initialConfigImport.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.platform.ide.initialConfigImport",
+    descriptors = ["resources/intellij.platform.ide.initialConfigImport.xml"],
+    target = "initial-config-import",
+    exports = ["resources/intellij.platform.ide.initialConfigImport.actions.xml"],
 )
 ### auto-generated section `iml intellij.platform.ide.initialConfigImport` end
 
@@ -90,11 +89,10 @@ jvm_library(
 ### auto-generated section `build intellij.platform.ide.initialConfigImport.tests` end
 
 ### auto-generated section `iml intellij.platform.ide.initialConfigImport.tests` start
-exports_files(
-    [
-        "intellij.platform.ide.initialConfigImport.tests.iml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.platform.ide.initialConfigImport.tests",
+    resources = False,
+    target = "ide-initialConfigImport-tests_test_lib",
 )
 ### auto-generated section `iml intellij.platform.ide.initialConfigImport.tests` end
 

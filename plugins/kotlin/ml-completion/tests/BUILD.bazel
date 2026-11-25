@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
@@ -28,11 +29,10 @@ jvm_library(
 ### auto-generated section `build intellij.kotlin.completion.ml.tests` end
 
 ### auto-generated section `iml intellij.kotlin.completion.ml.tests` start
-exports_files(
-    [
-        "intellij.kotlin.completion.ml.tests.iml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.kotlin.completion.ml.tests",
+    resources = False,
+    target = "tests_test_lib",
 )
 ### auto-generated section `iml intellij.kotlin.completion.ml.tests` end
 

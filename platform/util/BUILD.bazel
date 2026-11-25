@@ -1,3 +1,4 @@
+load("@community//build:jps_module.bzl", "jps_module")
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library", "kt_javac_options", "resourcegroup")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
@@ -88,11 +89,9 @@ jvm_library(
 ### auto-generated section `build intellij.platform.util` end
 
 ### auto-generated section `iml intellij.platform.util` start
-exports_files(
-    [
-        "intellij.platform.util.iml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.platform.util",
+    target = "util",
 )
 ### auto-generated section `iml intellij.platform.util` end
 
@@ -187,11 +186,9 @@ jvm_library(
 ### auto-generated section `build intellij.platform.util.tests` end
 
 ### auto-generated section `iml intellij.platform.util.tests` start
-exports_files(
-    [
-        "intellij.platform.util.tests.iml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.platform.util.tests",
+    target = "util-tests_test_lib",
 )
 ### auto-generated section `iml intellij.platform.util.tests` end
 
@@ -259,11 +256,9 @@ jvm_library(
 ### auto-generated section `build intellij.platform.util.ui` end
 
 ### auto-generated section `iml intellij.platform.util.ui` start
-exports_files(
-    [
-        "intellij.platform.util.ui.iml",
-        "ui/resources/intellij.platform.util.ui.xml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.platform.util.ui",
+    descriptors = ["ui/resources/intellij.platform.util.ui.xml"],
+    target = "util-ui",
 )
 ### auto-generated section `iml intellij.platform.util.ui` end
