@@ -18,6 +18,7 @@ import com.intellij.util.concurrency.annotations.RequiresEdt
 import kotlinx.coroutines.coroutineScope
 import java.util.concurrent.ScheduledFuture
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicReference
 
 private val LOG = logger<SettingsSynchronizer>()
 
@@ -98,15 +99,10 @@ internal class SettingsSynchronizerApplicationInitializedListener : ApplicationA
 private class SettingsSynchronizerState {
   @JvmField val executorService = AppExecutorUtil.createBoundedScheduledExecutorService("Settings Sync Update", 1)
 
-  // accessed only from the EDT
-  @JvmField var scheduledFuture: ScheduledFuture<*>? = null
+  @JvmField val scheduledFuture = AtomicReference<ScheduledFuture<*>?>(null)
 
-  @RequiresEdt
   fun stopSyncingByTimer() {
-    if (scheduledFuture != null) {
-      scheduledFuture!!.cancel(true)
-      scheduledFuture = null
-    }
+    scheduledFuture.getAndSet(null)?.cancel(true)
   }
 }
 
@@ -119,8 +115,8 @@ private class SettingsSynchronizer : ApplicationActivationListener {
       return
     }
 
-    if (autoSyncDelay > 0 && service<SettingsSynchronizerState>().scheduledFuture == null) {
-      service<SettingsSynchronizerState>().scheduledFuture = setupSyncingByTimer()
+    if (autoSyncDelay > 0 && service<SettingsSynchronizerState>().scheduledFuture.get() == null) {
+      service<SettingsSynchronizerState>().scheduledFuture.set(setupSyncingByTimer())
     }
 
     if (Registry.`is`("settingsSync.autoSync.on.focus", true)) {
