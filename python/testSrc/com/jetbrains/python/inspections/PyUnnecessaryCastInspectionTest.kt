@@ -63,15 +63,98 @@ from typing import cast
     )
   }
 
-  // FIXME: a cast of Any narrows the type, so it is necessary and must not be reported
-  @TestFor(classes = [PyUnnecessaryCastInspection::class])
+  @TestFor(issues = ["PY-92667"])
   fun `test cast of Any`() {
     doTestByText(
       """
         from typing import Any, cast
 
         def func(val: Any) -> int:
-            return <weak_warning descr="Unnecessary cast; type is already 'int'">cast(int,</weak_warning> val)
+            return cast(int, val)
+      """.trimIndent()
+    )
+  }
+
+  @TestFor(issues = ["PY-92667"])
+  fun `test cast of a value to Any`() {
+    doTestByText(
+      """
+        from typing import Any, cast
+
+        def func(val: int) -> Any:
+            return cast(Any, val)
+      """.trimIndent()
+    )
+  }
+
+  @TestFor(issues = ["PY-92667"])
+  fun `test cast of a collection of Any`() {
+    doTestByText(
+      """
+        from typing import Any, cast
+
+        def func(val: list[Any]) -> list[int]:
+            return cast(list[int], val)
+      """.trimIndent()
+    )
+  }
+
+  @TestFor(issues = ["PY-92667"])
+  fun `test cast of a callable to a callable with any parameters`() {
+    doTestByText(
+      """
+        from typing import Callable, cast
+
+        def func(cb: Callable[[str], int]) -> Callable[..., int]:
+            return cast(Callable[..., int], cb)
+      """.trimIndent()
+    )
+  }
+
+  @TestFor(issues = ["PY-92667"])
+  fun `test cast of a callable to its type`() {
+    doTestByText(
+      """
+        from typing import Callable, cast
+
+        def func(cb: Callable[[str], int]) -> Callable[[str], int]:
+            return <weak_warning descr="Unnecessary cast; type is already '(str) -> int'">cast(Callable[[str], int],</weak_warning> cb)
+      """.trimIndent()
+    )
+  }
+
+  @TestFor(issues = ["PY-92667"])
+  fun `test cast of an unresolved value`() {
+    doTestByText(
+      """
+        from typing import cast
+
+        def func() -> int:
+            return cast(int, undefined_name)
+      """.trimIndent()
+    )
+  }
+
+  @TestFor(issues = ["PY-92667"])
+  fun `test cast of Any to Any`() {
+    doTestByText(
+      """
+        from typing import Any, cast
+
+        def func(val: Any) -> Any:
+            return <weak_warning descr="Unnecessary cast; type is already 'Any'">cast(Any,</weak_warning> val)
+      """.trimIndent()
+    )
+  }
+
+  @TestFor(issues = ["PY-92667"])
+  fun `test cast of a collection of Any to the same type`() {
+    doTestByText(
+      """
+        from typing import Any, cast
+
+        def func(val: list[Any]) -> list[Any]:
+            return <weak_warning descr="Unnecessary cast; type is already 'list[Any]'">cast(list[Any],</weak_warning> val)
       """.trimIndent()
     )
   }
