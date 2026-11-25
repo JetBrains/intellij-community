@@ -94,7 +94,7 @@ public final class CreateMethodQuickFix extends PsiBasedModCommandAction<PsiClas
     updater.moveCaretTo(method);
     ModTemplateBuilder builder = updater.templateBuilder();
     fields.flushTo(builder);
-    PsiDocumentManager.getInstance(project).commitDocument(updater.getDocument());
+    updater.commitDocument();
     PsiMethod liveMethod = methodPointer.getElement();
     if (liveMethod == null) return;
 

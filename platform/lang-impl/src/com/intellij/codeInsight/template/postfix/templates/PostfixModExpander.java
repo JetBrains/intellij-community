@@ -101,6 +101,6 @@ public interface PostfixModExpander {
     updater.select(TextRange.from(keyRange.getStartOffset(), 0));
     updater.getDocument().deleteString(PostfixLiveTemplate.positiveOffset(keyRange.getStartOffset()),
                                        ctx.selection().getStartOffset());
-    PsiDocumentManager.getInstance(updater.getProject()).commitDocument(updater.getDocument());
+    updater.commitDocument();
   }
 }

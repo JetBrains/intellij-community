@@ -111,7 +111,7 @@ public final class ClassReferenceCompletionItem extends PsiUpdateCompletionItem<
   @Override
   public void update(ActionContext actionContext, InsertionContext insertionContext, ModPsiUpdater updater) {
     if (!contextObject().isValid()) return;
-    PsiDocumentManager.getInstance(updater.getProject()).commitDocument(updater.getDocument());
+    updater.commitDocument();
     if (processInImport(updater)) return;
     if (processJavaDoc(actionContext.selection().getStartOffset(), updater)) return;
     AllClassesGetter.tryShorten(updater.getPsiFile(), updater, contextObject());

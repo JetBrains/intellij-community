@@ -101,7 +101,7 @@ public final class CreateAnnotationMethodFromUsageFix extends PsiUpdateModComman
     }
     ModTemplateBuilder builder = updater.templateBuilder();
     fields.flushTo(builder);
-    PsiDocumentManager.getInstance(project).commitDocument(updater.getDocument());
+    updater.commitDocument();
     PsiMethod liveMethod = methodPointer.getElement();
     if (liveMethod != null) {
       builder.finishAt(liveMethod.getTextRange().getEndOffset());

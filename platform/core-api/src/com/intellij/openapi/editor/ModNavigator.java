@@ -3,6 +3,7 @@ package com.intellij.openapi.editor;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
@@ -39,6 +40,13 @@ public interface ModNavigator {
    */
   @Contract(pure = true)
   @NotNull Document getDocument();
+
+  /**
+   * Commits the currently edited document.
+   */
+  default void commitDocument() {
+    PsiDocumentManager.getInstance(getProject()).commitDocument(getDocument());
+  }
 
   /**
    * @return the PsiFile associated with the document being edited

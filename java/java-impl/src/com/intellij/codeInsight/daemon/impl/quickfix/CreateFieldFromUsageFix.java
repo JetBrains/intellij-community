@@ -154,7 +154,7 @@ public final class CreateFieldFromUsageFix extends PsiBasedModCommandAction<PsiR
       ModTemplateBuilder builder = fields.isEmpty() ? null : updater.templateBuilder();
       if (builder != null) {
         fields.flushTo(builder);
-        PsiDocumentManager.getInstance(project).commitDocument(updater.getDocument());
+        updater.commitDocument();
       }
       PsiField liveField = fieldPointer.getElement();
       if (liveField == null) return;

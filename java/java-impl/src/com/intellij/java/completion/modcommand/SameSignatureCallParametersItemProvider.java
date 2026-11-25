@@ -146,7 +146,7 @@ public final class SameSignatureCallParametersItemProvider extends JavaModComple
       updater.getDocument().deleteString(tailOffset, rParen.getTextRange().getStartOffset());
     }
     if (makeFinalMethodOffset < 0) return;
-    PsiDocumentManager.getInstance(updater.getProject()).commitDocument(updater.getDocument());
+    updater.commitDocument();
     PsiMethod method = PsiTreeUtil.getParentOfType(file.findElementAt(makeFinalMethodOffset), PsiMethod.class, false);
     PsiElement place = file.findElementAt(tailOffset - 1);
     if (method == null || place == null) return;

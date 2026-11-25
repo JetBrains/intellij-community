@@ -83,7 +83,7 @@ final class CatchCompletionItem extends PsiUpdateCompletionItem<PsiCatchSection>
     Project project = updater.getProject();
     int startOffset = updater.getCaretOffset() - 1;
 
-    PsiDocumentManager.getInstance(project).commitDocument(updater.getDocument());
+    updater.commitDocument();
     PsiFile psiFile = updater.getPsiFile();
     PsiElement element = psiFile.findElementAt(startOffset);
     element = PsiTreeUtil.getParentOfType(element, PsiCatchSection.class, false);

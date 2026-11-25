@@ -177,7 +177,7 @@ final class MethodCallCompletionItem extends PsiUpdateCompletionItem<PsiMethod> 
   public void update(ActionContext actionContext, InsertionContext insertionContext, ModPsiUpdater updater) {
     ThreeState parameters = mayHaveParameters(updater.getPsiFile());
     insertParentheses(updater, parameters);
-    PsiDocumentManager.getInstance(updater.getProject()).commitDocument(updater.getDocument());
+    updater.commitDocument();
     if (myNeedExplicitTypeParameters) {
       qualifyMethodCall(updater, actionContext.offset());
       insertExplicitTypeParameters(updater);

@@ -196,6 +196,7 @@ f:com.intellij.openapi.command.CoroutinesKt
 f:com.intellij.openapi.components.ServicesKt
 - *sf:serviceAsync(com.intellij.openapi.components.ComponentManager,java.lang.Class,kotlin.coroutines.Continuation):java.lang.Object
 *:com.intellij.openapi.editor.ModNavigator
+- commitDocument():V
 - a:getCaretOffset():I
 - a:getDocument():com.intellij.openapi.editor.Document
 - a:getProject():com.intellij.openapi.project.Project
