@@ -1,6 +1,24 @@
 load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("@rules_pkg//pkg:mappings.bzl", "pkg_files", "strip_prefix")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
+
+# the GDSL scripts that `GroovyDslFileIndex` reads from `lib/standardDsls` of the plugin
+pkg_files(
+    name = "standard_dsls_resources",
+    srcs = glob(["standardDsls/**"]),
+    prefix = "lib",
+    strip_prefix = strip_prefix.from_pkg(),
+    visibility = ["//plugins/groovy:__pkg__"],
+)
+
+# the script of the Groovy console in `lib` of the plugin
+pkg_files(
+    name = "console_resources",
+    srcs = ["resources/conf/console.groovy"],
+    prefix = "lib",
+    visibility = ["//plugins/groovy:__pkg__"],
+)
 
 ### auto-generated section `dev intellij.groovy.psi` start
 content_module_jar(module = ":psi")

@@ -1,6 +1,9 @@
 load("@community//build:jps_module.bzl", "jps_module")
 load("@community//build:tests-options.bzl", "jps_test")
+load("@community//platform/build-scripts/bazel-rules:ij_plugin.bzl", "ij_plugin")
+load("@community//platform/build-scripts/bazel-rules:ij_plugin_module.bzl", "ij_plugin_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("@rules_pkg//pkg:mappings.bzl", "pkg_files")
 load("//platform/build-scripts/bazel-rules:dist_plugin.bzl", "dist_plugin")
 
 filegroup(
@@ -19,6 +22,13 @@ jps_test(
     runtime_deps = [":groovy-tests_test_lib"],
 )
 ### skip generation section `test intellij.groovy.tests`
+
+# the HotSwap agent in `lib/agent` of the plugin
+pkg_files(
+    name = "hotswap_agent_resources",
+    srcs = ["hotswap/gragent.jar"],
+    prefix = "lib/agent",
+)
 
 ### auto-generated section `dev intellij.groovy` start
 exports_files(
@@ -51,7 +61,7 @@ dist_plugin(
 ### auto-generated section `dev intellij.groovy` end
 
 ### auto-generated section `build intellij.groovy` start
-jvm_library(
+ij_plugin_module(
     name = "groovy",
     srcs = glob(
         [
@@ -62,6 +72,12 @@ jvm_library(
         allow_empty = True,
     ),
     module_name = "intellij.groovy",
+    # manually written attribute
+    non_classpath_data = [
+        ":hotswap_agent_resources",
+        "//plugins/groovy/groovy-psi:console_resources",
+        "//plugins/groovy/groovy-psi:standard_dsls_resources",
+    ],
     resource_strip_prefix = "resources",
     resources = glob(
         ["resources/**/*"],
@@ -142,10 +158,45 @@ jvm_library(
 )
 ### auto-generated section `build intellij.groovy` end
 
+### auto-generated section `plugin intellij.groovy` start
+ij_plugin(
+    name = "groovy_plugin",
+    descriptor_module = ":groovy_plugin_module",
+    content_modules = [
+        # do not sort,
+        "//plugins/groovy/jps-plugin:jps",
+        "//plugins/groovy/rt-constants:constants-rt",
+        "//plugins/groovy/rt",
+        "//plugins/groovy/rt/classLoader",
+        "//plugins/groovy/groovy-psi:psi",
+        "//plugins/groovy/git",
+        "//plugins/groovy/ant",
+        "//plugins/groovy/intellij.groovy.copyright:copyright",
+        "//plugins/groovy/byteCodeViewer",
+        "//plugins/groovy/langInjection",
+        "//plugins/groovy/structuralsearch-groovy:structuralSearch",
+        "//plugins/groovy/spock",
+        "//plugins/groovy/spock-rt",
+        "//libraries/hamcrest:hamcrest_plugin_module",
+        "//libraries/junit4:junit4_plugin_module",
+        "//libraries/opentest4j:opentest4j_plugin_module",
+    ] + select({
+        "@community//build:is_inside_ultimate": [
+            # do not sort,
+            "@@//platform/duplicates-groovy:groovy-duplicates",
+            "@@//platform/duplicates-detection-groovy:groovy-duplicatesDetection",
+        ],
+        "//conditions:default": [],
+    }),
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `plugin intellij.groovy` end
+
 ### auto-generated section `iml intellij.groovy` start
 jps_module(
     name = "intellij.groovy",
     descriptors = ["resources/META-INF/plugin.xml"],
+    plugin = True,
     target = "groovy",
     exports = [
         "resources/META-INF/gant-support.xml",
