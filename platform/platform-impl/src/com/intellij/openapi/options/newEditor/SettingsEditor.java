@@ -633,10 +633,12 @@ public final class SettingsEditor extends AbstractEditor implements UiDataProvid
       return;
     }
     for (FrameProjectConfigurable page : myFrameProjectsGroup.modifiedPagesOf(project)) {
+      page.cancel(project);
+      // the reset drops the mark and the error of the page, and the check marks a page with a change of another project again
       filter.context.fireReset(page);
+      checkModifiedInternal(page);
     }
-    myFrameProjectsGroup.cancel(project);
-    checkFrameProjectPages();
+    updateStatus(filter.context.getCurrentConfigurable());
   }
 
   /** Checks each page of several projects for changes again, because the pages of one project changed or left. */

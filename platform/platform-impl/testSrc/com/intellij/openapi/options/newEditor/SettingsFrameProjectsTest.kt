@@ -462,6 +462,7 @@ internal class SettingsFrameProjectsTest {
     assertThat(pageOf(guest).applies).isZero()
     assertThat(pageOf(owner).cancels).isZero()
     assertThat(page.isModified).describedAs("The change of the frame owner waits for Apply").isTrue()
+    assertThat(editor.isModified).describedAs("The editor keeps the mark of the page for the change of the frame owner").isTrue()
   }
 
   @Test
