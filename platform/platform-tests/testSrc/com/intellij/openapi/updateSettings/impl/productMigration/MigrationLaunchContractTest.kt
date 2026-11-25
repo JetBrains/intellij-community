@@ -83,9 +83,10 @@ class MigrationLaunchContractTest {
 
   @Test
   fun `open command starts a new instance with separate arguments`() {
-    val command = macOpenCommand(Path.of("/Users/me/Applications/Unified IDE.app"), listOf("-Da=b", "/Users/me/my project"))
-    assertEquals(listOf("/usr/bin/open", "-n", "-a", "/Users/me/Applications/Unified IDE.app", "--args", "-Da=b", "/Users/me/my project"),
-                 command)
+    // the text of a path depends on the OS of the test machine
+    val app = Path.of("/Users/me/Applications/Unified IDE.app")
+    val command = macOpenCommand(app, listOf("-Da=b", "/Users/me/my project"))
+    assertEquals(listOf("/usr/bin/open", "-n", "-a", app.toString(), "--args", "-Da=b", "/Users/me/my project"), command)
   }
 
   @Test

@@ -218,9 +218,11 @@ class MigrationRedirectTest {
 
   @Test
   fun `redirect command has the redirect reason and the arguments`() {
-    val command = migrationRedirectCommand(Path.of("/Users/me/Applications/Unified IDE.app"), "GO", listOf("/Users/me/my project", "diff"))
+    // the text of a path depends on the OS of the test machine
+    val app = Path.of("/Users/me/Applications/Unified IDE.app")
+    val command = migrationRedirectCommand(app, "GO", listOf("/Users/me/my project", "diff"))
     assertEquals(listOf(
-      "/usr/bin/open", "-n", "-a", "/Users/me/Applications/Unified IDE.app", "--args",
+      "/usr/bin/open", "-n", "-a", app.toString(), "--args",
       "-Dide.migration.version=1",
       "-Dide.migration.reason=redirect",
       "-Dide.migration.source.product=GO",
