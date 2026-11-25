@@ -127,11 +127,8 @@ internal class ExecServiceImpl private constructor(private val defaultScope: Cor
 
         val successResult = interactiveResult.getOr { failure ->
           val (output, customErrorMessage) = failure.error
-          val additionalMessage = customErrorMessage ?: run {
-            PyExecBundle.message("py.exec.exitCode.error", description, output.exitCode)
-          }
           return@withTimeout processLauncher.createExecError(
-            messageToUser = additionalMessage,
+            messageToUser = customErrorMessage,
             errorReason = ExecErrorReason.UnexpectedProcessTermination(output),
             loggedProcessId = process.loggedProcess.id,
           )

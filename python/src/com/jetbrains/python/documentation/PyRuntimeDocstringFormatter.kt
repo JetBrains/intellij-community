@@ -9,23 +9,22 @@ import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.python.community.execService.Args
 import com.intellij.python.community.execService.ExecService
-import com.intellij.python.community.execService.python.PyHelper
-import com.intellij.python.community.execService.python.StdInProvider
-import com.intellij.python.sdk.backend.PythonInterpreter
-import com.intellij.python.sdk.backend.getPythonInfo
-import com.intellij.python.sdk.backend.binaryPathString
 import com.intellij.python.community.execService.asBinToExec
+import com.intellij.python.community.execService.python.PyHelper
 import com.intellij.python.community.execService.python.executeHelper
-import com.jetbrains.python.errorProcessing.PyResult
+import com.intellij.python.sdk.backend.PythonInterpreter
+import com.intellij.python.sdk.backend.binaryPathString
+import com.intellij.python.sdk.backend.getPythonInfo
 import com.intellij.ui.ColorUtil
 import com.intellij.ui.JBColor
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.jetbrains.python.PyPsiBundle
-import com.jetbrains.python.Result
 import com.jetbrains.python.documentation.docstrings.DocStringFormat
+import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.psi.LanguageLevel
-import com.jetbrains.python.sdk.findLocalHelperPython
+import com.jetbrains.python.pyRetryCommand
 import com.jetbrains.python.sdk.executeHelper
+import com.jetbrains.python.sdk.findLocalHelperPython
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.VisibleForTesting
 
@@ -46,7 +45,7 @@ internal object PyRuntimeDocstringFormatter {
   private class FormatterPython(
     val cacheKey: String,
     val languageLevel: LanguageLevel,
-    val execute: suspend (Args, StdInProvider) -> PyResult<String>,
+    val execute: suspend (Args, ByteArray) -> PyResult<String>,
   )
 
   @RequiresBackgroundThread
@@ -59,14 +58,14 @@ internal object PyRuntimeDocstringFormatter {
           return null
         }.languageLevel
         FormatterPython(interpreter.binaryPathString, languageLevel) { args, stdIn ->
-          ExecService().executeHelper(interpreter = interpreter, helper = helper, helperArgs = args, stdInProvider = stdIn)
+          ExecService().executeHelper(interpreter = interpreter, helper = helper, helperArgs = args, dataForStdIn = stdIn)
         }
       }
       is ModuleOrInterpreter.TheModule -> {
         val module = target.module
         val local = runBlockingMaybeCancellable { findLocalHelperPython(module.project, module) } ?: return logSdkNotFound(format)
         FormatterPython(local.binary.toString(), local.languageLevel) { args, stdIn ->
-          ExecService().executeHelper(python = local.binary.asBinToExec(), helper = helper, helperArgs = args, stdInProvider = stdIn)
+          ExecService().executeHelper(python = local.binary.asBinToExec(), helper = helper, helperArgs = args, dataForStdIn = stdIn)
         }
       }
     }
@@ -81,7 +80,7 @@ internal object PyRuntimeDocstringFormatter {
   }
 
   @RequiresBackgroundThread
-  private fun runProcess(python: FormatterPython, format: DocStringFormat, formatterFlags: List<String>, input: String): String? {
+  private fun runProcess(python: FormatterPython, format: DocStringFormat, formatterFlags: List<String>, input: String): String {
     val encodedInput = DEFAULT_CHARSET.encode(input)
     val data = ByteArray(encodedInput.limit()).also { encodedInput.get(it) }
     val arguments = formatterFlags.toMutableList().apply {
@@ -89,17 +88,9 @@ internal object PyRuntimeDocstringFormatter {
       add(format.formatterCommand)
     }
 
-    val stdInProvider = StdInProvider(data = data) {
-      // If script started, but closed its input, it is 100% helper problem
-      LOG.error("Failed to write to helper input", it)
-    }
-    val result = runBlockingMaybeCancellable { python.execute(Args(*arguments.toTypedArray()), stdInProvider) }
-
-    return when (result) {
-      is Result.Success -> result.result
-      is Result.Failure -> {
-        LOG.warn("Error ${result.error} for input:\n$input")
-        null
+    return runBlockingMaybeCancellable {
+      pyRetryCommand(LOG, { "docstring formatter on ${python.cacheKey}" }) {
+        python.execute(Args(*arguments.toTypedArray()), data)
       }
     }
   }

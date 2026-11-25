@@ -12,7 +12,6 @@ import com.intellij.python.community.execService.ExecuteGetProcessError
 import com.intellij.python.community.execService.ProcessOutputTransformer
 import com.intellij.python.community.execService.PyProcessListener
 import com.intellij.python.community.execService.python.PyHelper
-import com.intellij.python.community.execService.python.StdInProvider
 import com.intellij.python.sdk.backend.PythonInterpreter
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.jetbrains.python.Result
@@ -57,7 +56,7 @@ suspend fun <T> ExecService.execute(
 
 /**
  * Executes [helper] on [interpreter] (copies it to the remote machine if needed)
- * To write something into the `stdin` of [helper], use [stdInProvider].
+ * To write something into the `stdin` of [helper], use [dataForStdIn].
  */
 @Internal
 @CheckReturnValue
@@ -67,8 +66,8 @@ suspend fun ExecService.executeHelper(
   helperArgs: Args = Args(),
   options: ExecOptions = ExecOptions(),
   procListener: PyProcessListener? = null,
-  stdInProvider: StdInProvider? = null,
-): PyResult<String> = executeHelperImpl(interpreter.sdk, helper, helperArgs, options, procListener, stdInProvider)
+  dataForStdIn: ByteArray? = null,
+): PyResult<String> = executeHelperImpl(interpreter.sdk, helper, helperArgs, options, procListener, dataForStdIn)
 
 
 // See function it calls for more info

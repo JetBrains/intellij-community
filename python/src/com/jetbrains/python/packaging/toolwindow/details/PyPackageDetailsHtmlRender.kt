@@ -8,7 +8,6 @@ import com.intellij.python.community.execService.Args
 import com.intellij.python.community.execService.ExecService
 import com.intellij.python.community.execService.asBinToExec
 import com.intellij.python.community.execService.python.PyHelper
-import com.intellij.python.community.execService.python.StdInProvider
 import com.intellij.python.community.execService.python.executeHelper
 import com.intellij.python.sdk.backend.PythonInterpreter
 import com.jetbrains.python.PyBundle.message
@@ -61,7 +60,7 @@ internal class PyPackageDetailsHtmlRender(val project: Project, val currentInter
       ExecService().executeHelper(python = python.binary.asBinToExec(),
                                   helper = REST_RUNNER,
                                   helperArgs = Args("rst2html_no_code"),
-                                  stdInProvider = StdInProvider(text.toByteArray()))
+                                  dataForStdIn = text.toByteArray())
     }
     return when (result) {
       is Result.Success -> result.result

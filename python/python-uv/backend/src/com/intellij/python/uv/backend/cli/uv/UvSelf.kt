@@ -4,6 +4,7 @@ package com.intellij.python.uv.backend.cli.uv
 import com.intellij.platform.eel.provider.utils.stderrString
 import com.intellij.python.community.execService.ProcessOutputTransformer
 import com.intellij.python.community.execService.ZeroCodeStdoutTransformer
+import com.intellij.python.community.execService.zeroCodeTransformer
 import com.intellij.python.pytools.backend.runtime.PyToolRuntime
 import com.intellij.python.pytools.backend.runtime.cliArg
 import com.intellij.python.pytools.backend.runtime.cliArgs
@@ -61,9 +62,8 @@ sealed interface UvSelfUpdateResult {
  * itself at all, and the failure carries its stderr — the refusal names the installation method to use instead, so
  * the user needs to read it.
  */
-internal val SELF_UPDATE_TRANSFORMER: ProcessOutputTransformer<UvSelfUpdateResult> = { output ->
-  if (output.exitCode != 0) Result.failure(null)
-  else Result.success(parseUvSelfUpdate(output.stderrString))
+internal val SELF_UPDATE_TRANSFORMER: ProcessOutputTransformer<UvSelfUpdateResult> = zeroCodeTransformer { output ->
+  Result.success(parseUvSelfUpdate(output.stderrString))
 }
 
 /**

@@ -16,7 +16,6 @@ import com.intellij.python.community.execService.PyProcessListener
 import com.intellij.python.community.execService.execGetStdout
 import com.intellij.python.community.execService.execute
 import com.intellij.python.community.execService.python.PyHelper
-import com.intellij.python.community.execService.python.StdInProvider
 import com.intellij.python.community.execService.python.executeHelper
 import com.intellij.python.sdk.backend.PySdkBundle
 import com.jetbrains.python.Result
@@ -57,7 +56,7 @@ internal suspend fun <T> ExecService.executeImpl(
 
 /**
  * Executes [helper] on [sdk] (copies it to the remote machine if needed)
- * To write something into the `stdin` of [helper], use [stdInProvider].
+ * To write something into the `stdin` of [helper], use [dataForStdIn].
  */
 @CheckReturnValue
 internal suspend fun ExecService.executeHelperImpl(
@@ -66,10 +65,10 @@ internal suspend fun ExecService.executeHelperImpl(
   helperArgs: Args = Args(),
   options: ExecOptions = ExecOptions(),
   procListener: PyProcessListener? = null,
-  stdInProvider: StdInProvider? = null,
+  dataForStdIn: ByteArray? = null,
 ): PyResult<String> {
   val binToExecute = sdk.asBinToExecuteImpl().getOr { return it }
-  return executeHelper(binToExecute, helper, helperArgs, options, procListener, stdInProvider)
+  return executeHelper(binToExecute, helper, helperArgs, options, procListener, dataForStdIn)
 }
 
 // See function it calls for more info

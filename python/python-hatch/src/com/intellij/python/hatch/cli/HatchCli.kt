@@ -7,6 +7,8 @@ import com.intellij.platform.eel.provider.utils.stderrString
 import com.intellij.platform.eel.provider.utils.stdoutString
 import com.intellij.python.community.execService.EnvVar
 import com.intellij.python.community.execService.ProcessOutputTransformer
+import com.intellij.python.community.execService.ZeroCodeStdoutParserTransformer
+import com.intellij.python.community.execService.zeroCodeTransformer
 import com.intellij.python.hatch.runtime.HatchConstants
 import com.intellij.python.pytools.backend.runtime.PyToolRuntime
 import com.intellij.python.pytools.backend.runtime.cliArg
@@ -33,7 +35,7 @@ sealed class HatchCommand<P : PathHolder>(private val command: Array<String>, pr
   protected suspend fun <T> executeAndMatch(
     vararg arguments: String,
     expectedOutput: Regex,
-    transformer: (MatchResult) -> Result<T, @NlsSafe String?>,
+    transformer: (MatchResult) -> Result<T, @NlsSafe String>,
   ): PyResult<T> {
     return runtime.executeAndMatch(*command, *arguments, expectedOutput = expectedOutput, transformer = transformer)
   }
@@ -90,15 +92,13 @@ class HatchCli<P : PathHolder>(internal val runtime: PyToolRuntime) {
    */
   suspend fun run(envName: String? = null, vararg command: String): PyResult<String> {
     val envRuntime = envName?.let { runtime.withEnv(EnvVar(HatchConstants.AppEnvVars.ENV, it)) } ?: runtime
-    return envRuntime.executeAndHandleErrors("run", *command) { output ->
-      if (output.exitCode != 0) return@executeAndHandleErrors Result.failure(null)
-
+    return envRuntime.executeAndHandleErrors("run", *command, transformer = zeroCodeTransformer { output ->
       val scenario = output.stderrString.trim()
       val installDetailsContent = output.stdoutString.replace("─", "").trim()
       val info = installDetailsContent.lines().drop(1).dropLast(2).joinToString("\n")
 
       Result.success("$scenario\n$info")
-    }
+    })
   }
 
   /**
@@ -141,16 +141,14 @@ class HatchCli<P : PathHolder>(internal val runtime: PyToolRuntime) {
    * @return Project Version
    */
   suspend fun getVersion(): PyResult<Version> {
-    return runtime.executeAndHandleErrors("version") { processOutput ->
-      val output = processOutput.takeIf { it.exitCode == 0 }?.stdoutString?.trim()
-                   ?: return@executeAndHandleErrors Result.failure(null)
+    return runtime.executeAndHandleErrors("version", transformer = ZeroCodeStdoutParserTransformer { output ->
       try {
         Result.success(Version.parse(output))
       }
       catch (e: VersionFormatException) {
         Result.failure(e.localizedMessage)
       }
-    }
+    })
   }
 
   /**

@@ -1,7 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.python.community.execService.python
 
-import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.python.community.execService.Args
 import com.intellij.python.community.execService.BinaryToExec
@@ -17,9 +16,6 @@ import com.intellij.python.community.execService.python.impl.execGetStdoutImpl
 import com.intellij.python.community.execService.python.impl.validatePythonAndGetInfoImpl
 import com.jetbrains.python.PythonInfo
 import com.jetbrains.python.errorProcessing.PyResult
-import java.io.IOException
-
-private val logger = fileLogger()
 
 /**
  * Python binary itself (i.e python.exe)
@@ -28,7 +24,7 @@ typealias PythonBinaryOnEelOrTarget = BinaryToExec
 
 /**
  * Execute [helper] on [python]. For a remote eel, we copy the full helpers directory, because helpers can import other helpers.
- * To write something into the `stdin` of [helper], use [stdInProvider].
+ * To write data to the `stdin` of [helper], give it in [dataForStdIn]. The helper gets `EOF` after the data.
  * The process output is reported as progress.
  * Returns `stdout`.
  * Provide [processOutputTransformer] if you want to ignore non-null exit code, or take a part in descicion if result is success.
@@ -39,7 +35,7 @@ suspend fun ExecService.executeHelper(
   helperArgs: Args = Args(),
   options: ExecOptions = ExecOptions(),
   procListener: PyProcessListener? = null,
-  stdInProvider: StdInProvider? = null,
+  dataForStdIn: ByteArray? = null,
   processOutputTransformer: ProcessOutputTransformer<String> = ZeroCodeStdoutTransformer,
 ): PyResult<String> = executeHelperAdvanced(
   ExecutablePython.vanillaExecutablePython(python),
@@ -47,7 +43,7 @@ suspend fun ExecService.executeHelper(
   helperArgs,
   options,
   procListener,
-  stdInProvider,
+  dataForStdIn,
   processOutputTransformer,
 )
 
@@ -91,13 +87,4 @@ suspend fun PythonBinaryOnEelOrTarget.execGetBoolFromStdout(
   execService: ExecService = ExecService(),
 ): PyResult<Boolean> = execService.execGetStdoutBoolImpl(ExecutablePython.vanillaExecutablePython(this), pythonCode)
 
-
-/**
- * When the process starts, sends [data] to its `stdin` and closes `stdin`, so the process gets `EOF`.
- * Reports a broken `stdin` to [onError]. The default handler writes a log record, which is enough in most cases.
- */
-class StdInProvider(
-  internal val data: ByteArray,
-  internal val onError: (IOException) -> Unit = { logger.error(it) }, // Inability to write to stdin usually means helper is broken
-)
 

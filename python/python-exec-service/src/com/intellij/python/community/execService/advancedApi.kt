@@ -99,20 +99,14 @@ fun interface ProcessInteractiveHandler<T> {
    * In latter case returns [EelProcessExecutionResult] (created out of collected output) and optional error message.
    * If no message returned -- the default one is used.
    */
-  suspend fun getResultFromProcess(binary: BinaryToExec, args: List<String>, process: Process): Result<T, Pair<EelProcessExecutionResult, CustomErrorMessage?>>
+  suspend fun getResultFromProcess(binary: BinaryToExec, args: List<String>, process: Process): Result<T, Pair<EelProcessExecutionResult, CustomErrorMessage>>
 }
 
 
 /**
  * Process stdout -> result
  */
-typealias ProcessSemiInteractiveFun<T> = suspend (EelSendChannel, Deferred<EelProcessExecutionResult>) -> Result<T, CustomErrorMessage?>
-
-/**
- * Writes something to the `stdin` of a process.
- * The function owns [EelSendChannel]. Close the channel if the process must get `EOF`.
- */
-typealias StdInConsumer = suspend (stdin: EelSendChannel) -> Unit
+typealias ProcessSemiInteractiveFun<T> = suspend (EelSendChannel, Deferred<EelProcessExecutionResult>) -> Result<T, @Nls String>
 
 /**
  * [ProcessInteractiveHandler], but you do not have to collect output by yourself. You only have access to stdout and exit code.

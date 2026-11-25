@@ -35,10 +35,10 @@ class ZeroCodeJsonParserTransformer<T>(jsonParser: JsonParser<T>) : ZeroCodeStdo
       Result.success(jsonParser.parseJson(it))
     }
     catch (t: SerializationException) {
-      Result.failure(t.localizedMessage)
+      Result.failure(t.localizedMessage ?: t.toString())
     }
     catch (t: IllegalArgumentException) {
-      Result.failure(t.localizedMessage)
+      Result.failure(t.localizedMessage ?: t.toString())
     }
   }
 ) {

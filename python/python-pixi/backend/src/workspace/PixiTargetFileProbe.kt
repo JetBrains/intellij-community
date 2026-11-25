@@ -8,6 +8,7 @@ import com.intellij.python.community.execService.ExecService
 import com.intellij.python.community.execService.ProcessOutputTransformer
 import com.intellij.python.community.execService.execute
 import com.intellij.platform.util.annotations.paths.OsPath
+import com.intellij.python.community.execService.asFailure
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.sdk.add.v2.EelOrTarget
@@ -44,6 +45,6 @@ internal val PIXI_TARGET_FILE_EXISTS: ProcessOutputTransformer<Boolean> = { outp
   when (output.exitCode) {
     0 -> Result.success(true)
     1 -> Result.success(false)
-    else -> Result.failure(null)
+    else -> output.asFailure()
   }
 }

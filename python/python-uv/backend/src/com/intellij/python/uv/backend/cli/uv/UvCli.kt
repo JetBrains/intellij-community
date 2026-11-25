@@ -25,7 +25,7 @@ sealed class UvCommand(private val command: Array<String>, protected val runtime
   protected suspend fun <T> executeAndMatch(
     vararg arguments: String,
     expectedOutput: Regex,
-    transformer: (MatchResult) -> Result<T, @NlsSafe String?>,
+    transformer: (MatchResult) -> Result<T, @NlsSafe String>,
   ): PyResult<T> {
     return runtime.executeAndMatch(*command, *arguments, expectedOutput = expectedOutput, transformer = transformer)
   }

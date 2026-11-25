@@ -202,12 +202,7 @@ public final class Pep8ExternalAnnotator extends ExternalAnnotator<Pep8ExternalA
     var stdin = collectedInfo.fileText.getBytes(StandardCharsets.UTF_8);
     var output = execPep8Helper(pycodestyleScript, python.getBinary(), stdin, options);
 
-
     Results results = new Results(collectedInfo.level);
-    if (output == null) {
-      LOG.info("Timeout running pycodestyle.py");
-      return results;
-    }
     for (String line : StringUtil.split(output, "\n")) {
       ContainerUtil.addIfNotNull(results.problems, parseProblem(line));
     }

@@ -2,18 +2,15 @@
 package com.intellij.python.community.execService.python.impl
 
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.platform.eel.channels.sendWholeBuffer
 import com.intellij.python.community.execService.Args
 import com.intellij.python.community.execService.BinOnEel
 import com.intellij.python.community.execService.BinOnTarget
 import com.intellij.python.community.execService.ExecOptions
 import com.intellij.python.community.execService.ExecService
-import com.intellij.python.community.execService.StdInConsumer
 import com.intellij.python.community.execService.ZeroCodeStdoutParserTransformer
 import com.intellij.python.community.execService.ZeroCodeStdoutTransformerBool
 import com.intellij.python.community.execService.ZeroCodeStdoutTransformerTyped
 import com.intellij.python.community.execService.impl.transformerToHandler
-import com.intellij.python.community.execService.python.StdInProvider
 import com.intellij.python.community.execService.python.advancedApi.ExecutablePython
 import com.intellij.python.community.execService.python.advancedApi.executePythonAdvanced
 import com.intellij.python.community.execService.python.impl.PyExecPythonBundle.message
@@ -25,9 +22,6 @@ import com.jetbrains.python.psi.LanguageLevel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.intellij.lang.annotations.Language
-import org.jetbrains.annotations.ApiStatus
-import java.io.IOException
-import java.nio.ByteBuffer
 import kotlin.io.path.pathString
 import kotlin.time.Duration.Companion.minutes
 
@@ -61,7 +55,6 @@ private const val PYTHON_INFO_CMD =
   "if hasattr($SYS_MODULE, '$IS_GIL_ENABLED_FUNCTION') and callable(getattr($SYS_MODULE, '$IS_GIL_ENABLED_FUNCTION')) " +
   "else print(True)"
 
-@ApiStatus.Internal
 internal suspend fun ExecService.validatePythonAndGetInfoImpl(python: ExecutablePython): PyResult<PythonInfo> =
   withContext(Dispatchers.IO) {
     val handler = transformerToHandler(processOutputTransformer = ZeroCodeStdoutParserTransformer { stdout ->
@@ -78,7 +71,7 @@ internal suspend fun ExecService.validatePythonAndGetInfoImpl(python: Executable
  *
  * The last two lines, because anything an environment prints of its own comes first, while the interpreter starts.
  */
-private fun parsePythonInfo(python: ExecutablePython, stdout: String): Result<PythonInfo, @NlsSafe String?> {
+private fun parsePythonInfo(python: ExecutablePython, stdout: String): Result<PythonInfo, @NlsSafe String> {
   val lines = stdout.lines().map { it.trim() }.filter { it.isNotEmpty() }.takeLast(2)
   val version = if (lines.size == 2) lines[0] else null
   val languageLevel = version?.let { LanguageLevel.fromPythonVersionSafe(it) }
@@ -91,11 +84,9 @@ private fun parsePythonInfo(python: ExecutablePython, stdout: String): Result<Py
   return Result.success(PythonInfo(languageLevel, freeThreaded = !gilEnabled, version = version))
 }
 
-@ApiStatus.Internal
 internal suspend fun ExecService.execGetStdoutBoolImpl(python: ExecutablePython, command: @NlsSafe String): PyResult<Boolean> =
   execGetStdoutImpl(python, command, ZeroCodeStdoutTransformerBool)
 
-@ApiStatus.Internal
 internal suspend fun <T : Any> ExecService.execGetStdoutImpl(
   python: ExecutablePython,
   command: @NlsSafe String,
@@ -118,15 +109,3 @@ private val ExecutablePython.userReadableName: @NlsSafe String
               is BinOnTarget -> binary
             }) + args).joinToString(" ")
 
-
-internal fun StdInProvider.asChannelConsumer(): StdInConsumer = { stdin ->
-  try {
-    stdin.sendWholeBuffer(ByteBuffer.wrap(data))
-    // The process waits for `EOF` on `stdin`, so it never ends until the channel is closed.
-    stdin.close(null)
-  }
-  catch (e: IOException) {
-    // A broken channel needs no close. See EelSendChannelException.
-    onError(e)
-  }
-}

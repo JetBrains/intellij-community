@@ -15,8 +15,6 @@ import com.intellij.python.community.execService.PyProcessListener
 import com.intellij.python.community.execService.RelativePath
 import com.intellij.python.community.execService.impl.transformerToHandler
 import com.intellij.python.community.execService.python.PyHelper
-import com.intellij.python.community.execService.python.StdInProvider
-import com.intellij.python.community.execService.python.impl.asChannelConsumer
 import com.intellij.python.community.execService.reportOutputAsProgress
 import com.intellij.python.community.helpersLocator.PythonHelpersLocator
 import com.jetbrains.python.PYTHONIOENCODING
@@ -47,7 +45,7 @@ suspend fun <T> ExecService.executePythonAdvanced(
 
 /**
  * Execute [helper] on [python]. For a remote eel, we copy the full helpers directory, because helpers can import other helpers.
- * To write something into the `stdin` of [helper], use [stdInProvider].
+ * To write data to the `stdin` of [helper], give it in [dataForStdin]. The helper gets `EOF` after the data.
  * The process output is reported as progress.
  */
 suspend fun <T> ExecService.executeHelperAdvanced(
@@ -56,7 +54,7 @@ suspend fun <T> ExecService.executeHelperAdvanced(
   args: Args = Args(),
   options: ExecOptions = ExecOptions(),
   procListener: PyProcessListener? = null,
-  stdInProvider: StdInProvider? = null,
+  dataForStdin: ByteArray? = null,
   processOutputTransformer: ProcessOutputTransformer<T>,
 ): PyResult<T> = reportOutputAsProgress(procListener) { listener ->
   executePythonAdvanced(
@@ -64,7 +62,7 @@ suspend fun <T> ExecService.executeHelperAdvanced(
     Args().addHelper(helper).add(args),
     // We read the output as UTF-8, but Python on Windows writes it in the ANSI code page by default.
     options.copy(env = CHARSET_ENV + options.env),
-    transformerToHandler(listener, stdInProvider?.asChannelConsumer(), processOutputTransformer))
+    transformerToHandler(listener, dataForStdin, processOutputTransformer))
 }
 
 /**

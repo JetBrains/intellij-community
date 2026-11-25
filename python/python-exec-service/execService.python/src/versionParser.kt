@@ -4,6 +4,8 @@ package com.intellij.python.community.execService.python
 import com.intellij.platform.eel.provider.utils.stderrString
 import com.intellij.platform.eel.provider.utils.stdoutString
 import com.intellij.python.community.execService.ProcessOutputTransformer
+import com.intellij.python.community.execService.asFailure
+import com.intellij.python.community.execService.zeroCodeTransformer
 import com.intellij.util.PatternUtil
 import com.jetbrains.python.Result
 import com.jetbrains.python.psi.LanguageLevel
@@ -23,12 +25,9 @@ fun getVersionStringFromOutput(output: String): String? =
  * https://bugs.python.org/issue18338.
  */
 @ApiStatus.Internal
-val ZeroCodeVersionStringTransformer: ProcessOutputTransformer<String> = { output ->
-  val version = if (output.exitCode == 0) {
-    getVersionStringFromOutput(output.stdoutString) ?: getVersionStringFromOutput(output.stderrString)
-  }
-  else null
-  if (version != null) Result.success(version) else Result.failure(null)
+val ZeroCodeVersionStringTransformer: ProcessOutputTransformer<String> = zeroCodeTransformer { output ->
+  val version = getVersionStringFromOutput(output.stdoutString) ?: getVersionStringFromOutput(output.stderrString)
+  if (version != null) Result.success(version) else output.asFailure()
 }
 
 /**

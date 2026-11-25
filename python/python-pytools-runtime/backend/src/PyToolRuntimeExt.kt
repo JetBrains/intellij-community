@@ -6,6 +6,8 @@ import com.intellij.openapi.util.text.Strings
 import com.intellij.platform.eel.provider.utils.EelProcessExecutionResultInfo
 import com.intellij.platform.eel.provider.utils.stdoutString
 import com.intellij.python.community.execService.ProcessOutputTransformer
+import com.intellij.python.community.execService.asFailure
+import com.intellij.python.community.execService.zeroCodeTransformer
 import com.intellij.python.pytools.backend.PyToolsBundle
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.PyResult
@@ -14,12 +16,12 @@ import com.jetbrains.python.sdk.add.v2.PathHolder
 /**
  * Runs [transformer] only on outputs with exit codes 0 or 1.
  * Treats exit code 1 with a Python traceback on stdout as a tool failure and extracts the last non-empty
- * line of stdout as the error description; other exit codes outside 0..1 fail with no description.
+ * line of stdout as the error description; other exit codes outside 0..1 fail with the process output as the description.
  */
 suspend fun <T> PyToolRuntime.executeAndHandleErrors(vararg arguments: String, transformer: ProcessOutputTransformer<T>): PyResult<T> {
   val errorHandlerTransformer: ProcessOutputTransformer<T> = { output ->
     when (output.exitCode) {
-      !in 0..1 -> Result.failure(null)
+      !in 0..1 -> output.asFailure()
       1 if output.stdoutString.substringBefore('\n').contains("Traceback (most recent call last)") -> {
         val errorDescription = output.stdoutString.split('\n').lastOrNull { it.isNotEmpty() } ?: ""
         Result.failure(errorDescription)
@@ -40,10 +42,9 @@ suspend fun <T> PyToolRuntime.executeAndMatch(
   vararg arguments: String,
   expectedOutput: Regex,
   outputContentSupplier: (EelProcessExecutionResultInfo) -> String = { it.stdoutString },
-  transformer: (MatchResult) -> Result<T, @NlsSafe String?>,
+  transformer: (MatchResult) -> Result<T, @NlsSafe String>,
 ): PyResult<T> {
-  return this.executeAndHandleErrors(*arguments) { processOutput ->
-    if (processOutput.exitCode != 0) return@executeAndHandleErrors Result.failure(null)
+  return this.executeAndHandleErrors(*arguments, transformer = zeroCodeTransformer { processOutput ->
     val output = outputContentSupplier.invoke(processOutput).let { Strings.convertLineSeparators(it) }
     val matchResult = expectedOutput.matchEntire(output)
     if (matchResult == null) {
@@ -52,7 +53,7 @@ suspend fun <T> PyToolRuntime.executeAndMatch(
     else {
       transformer.invoke(matchResult)
     }
-  }
+  })
 }
 
 // Builders for the arguments of a tool's command line. Each returns the tokens one argument contributes, and

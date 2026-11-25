@@ -13,6 +13,7 @@ import com.intellij.python.community.execService.ExecService
 import com.intellij.python.community.execService.ProcessOutputTransformer
 import com.intellij.python.community.execService.UploadConfig
 import com.intellij.python.community.execService.ZeroCodeStdoutTransformer
+import com.intellij.python.community.execService.zeroCodeTransformer
 import com.intellij.python.community.execService.execute
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.PyResult
@@ -65,18 +66,11 @@ suspend fun <T> runExecutableWithProgress(
     downloadAfterExecution = downloadConfig,
   )
 
-  val errorHandlerTransformer: ProcessOutputTransformer<T> = { output ->
-    when {
-      output.exitCode == 0 -> transformer.invoke(output)
-      else -> Result.failure(null)
-    }
-  }
-
   return execService.execute(
     binary = binaryToExec,
     args = args,
     options = execOptions,
-    processOutputTransformer = errorHandlerTransformer
+    processOutputTransformer = zeroCodeTransformer(transformer)
   )
 }
 

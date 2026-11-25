@@ -13,6 +13,7 @@ import com.intellij.python.community.execService.BinOnEel
 import com.intellij.python.community.execService.ExecService
 import com.intellij.python.community.execService.ProcessOutputTransformer
 import com.intellij.python.community.execService.ZeroCodeJsonParserTransformer
+import com.intellij.python.community.execService.asFailure
 import com.intellij.python.community.execService.execute
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.jetbrains.python.Result
@@ -47,7 +48,7 @@ class ProcessOutputTransformerShowCaseTest {
           Result.success(emptyList())
         }
         output.exitCode != 0 -> {
-          Result.failure(null)
+          output.asFailure()
         }
         stdout == "SOME_BUSINESS_ERROR" -> {
           Result.failure("My Business Error Description")

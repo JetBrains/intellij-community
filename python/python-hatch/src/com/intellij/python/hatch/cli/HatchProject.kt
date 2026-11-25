@@ -1,7 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.python.hatch.cli
 
-import com.intellij.platform.eel.provider.utils.stdoutString
+import com.intellij.python.community.execService.ZeroCodeStdoutParserTransformer
 import com.intellij.python.pytools.backend.runtime.PyToolRuntime
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.PyResult
@@ -64,10 +64,7 @@ class HatchProject<P : PathHolder>(runtime: PyToolRuntime) : HatchCommand<P>("pr
    * Display project metadata
    */
   suspend fun metadata(): PyResult<Metadata> {
-    return executeAndHandleErrors("metadata") { processOutput ->
-      val output = processOutput.takeIf { it.exitCode == 0 }?.stdoutString
-                   ?: return@executeAndHandleErrors Result.failure(null)
-
+    return executeAndHandleErrors("metadata", transformer = ZeroCodeStdoutParserTransformer { output ->
       val json = Json { ignoreUnknownKeys = true }
       try {
         val metadata = json.decodeFromString<Metadata>(output)
@@ -76,6 +73,6 @@ class HatchProject<P : PathHolder>(runtime: PyToolRuntime) : HatchCommand<P>("pr
       catch (e: Exception) {
         Result.failure(e.localizedMessage)
       }
-    }
+    })
   }
 }

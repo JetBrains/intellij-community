@@ -5,6 +5,8 @@ import com.intellij.execution.target.FullPathOnTarget
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.eel.provider.utils.stderrString
 import com.intellij.platform.eel.provider.utils.stdoutString
+import com.intellij.python.community.execService.ZeroCodeStdoutParserTransformer
+import com.intellij.python.community.execService.asFailure
 import com.intellij.python.hatch.PyHatchBundle
 import com.intellij.python.pytools.backend.runtime.PyToolRuntime
 import com.intellij.python.pytools.backend.runtime.cliArg
@@ -148,7 +150,7 @@ class HatchEnv<P : PathHolder>(runtime: PyToolRuntime) : HatchCommand<P>("env", 
         it.isSuccessStop("Creating environment") -> Result.success(CreateResult.Created)
         it.exitCode == 0 -> Result.success(CreateResult.AlreadyExists)
         it.stderrString.startsWith("Environment `$actualEnvName` is not defined by project config") -> Result.success(CreateResult.NotDefinedInConfig)
-        else -> Result.failure(null)
+        else -> it.asFailure()
       }
     }
   }
@@ -168,7 +170,7 @@ class HatchEnv<P : PathHolder>(runtime: PyToolRuntime) : HatchCommand<P>("env", 
             Result.success(null)
           }
           else {
-            Result.failure(null)
+            it.asFailure()
           }
         }
       }
@@ -202,7 +204,7 @@ class HatchEnv<P : PathHolder>(runtime: PyToolRuntime) : HatchCommand<P>("env", 
         it.exitCode == 0 && it.stderrString.isBlank() -> Result.success(RemoveResult.NotExists)
         it.stderrString.startsWith("Environment `$actualEnvName` is not defined by project config") -> Result.success(RemoveResult.NotDefinedInConfig)
         it.stderrString.startsWith("Cannot remove active environment") -> Result.success(RemoveResult.CantRemoveActiveEnvironment)
-        else -> Result.failure(null)
+        else -> it.asFailure()
       }
     }
   }
@@ -216,10 +218,7 @@ class HatchEnv<P : PathHolder>(runtime: PyToolRuntime) : HatchCommand<P>("env", 
    * - An error wrapped in [ExecError] if an execution failure occurs.
    */
   suspend fun showWithDetails(vararg envs: String): PyResult<HatchDetailedEnvironments> {
-    return executeAndHandleErrors("show", "--json", *envs) { processOutput ->
-      val output = processOutput.takeIf { it.exitCode == 0 }?.stdoutString
-                   ?: return@executeAndHandleErrors Result.failure(null)
-
+    return executeAndHandleErrors("show", "--json", *envs, transformer = ZeroCodeStdoutParserTransformer { output ->
       val json = Json { ignoreUnknownKeys = true }
       // A response Hatch itself calls JSON, but that the reader rejects, is a failure and not an exception: the caller
       // reports it like any other bad response. Both calls below declare this exception, and nothing else here throws.
@@ -229,10 +228,10 @@ class HatchEnv<P : PathHolder>(runtime: PyToolRuntime) : HatchCommand<P>("env", 
         environments.mapValues { json.decodeFromJsonElement<HatchEnvironmentDetails>(it.value) }
       }
       catch (e: SerializationException) {
-        return@executeAndHandleErrors Result.failure(PyHatchBundle.message("python.hatch.cli.error.response.out.of.pattern", "JSON: ${e.localizedMessage}"))
+        return@ZeroCodeStdoutParserTransformer Result.failure(PyHatchBundle.message("python.hatch.cli.error.response.out.of.pattern", "JSON: ${e.localizedMessage}"))
       }
       Result.success(parsedEnvironments)
-    }
+    })
   }
 
   /**

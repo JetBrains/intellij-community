@@ -166,7 +166,7 @@ suspend fun ExecService.execGetStdoutInShell(
  *
  * @param[args] command line arguments
  * @param[options]  customizable process run options like timeout or environment variables to use
- * @param[stdInConsumer] optional function that writes something into the process `stdin`
+ * @param[dataForStdIn] optional data for the process `stdin`. The process gets `EOF` after the data.
  * @return stdout or error. It is recommended to put this error into [com.jetbrains.python.errorProcessing.ErrorSink], but feel free to match and process it.
  */
 @CheckReturnValue
@@ -175,10 +175,10 @@ suspend fun <T> ExecService.execute(
   args: Args = Args(),
   options: ExecOptions = ExecOptions(),
   procListener: PyProcessListener? = null,
-  stdInConsumer: StdInConsumer? = null,
+  dataForStdIn: ByteArray? = null,
   processOutputTransformer: ProcessOutputTransformer<T>,
 ): PyResult<T> = reportOutputAsProgress(procListener) { listener ->
-  executeAdvanced(binary, args, options, transformerToHandler(listener, stdInConsumer, processOutputTransformer))
+  executeAdvanced(binary, args, options, transformerToHandler(listener, dataForStdIn, processOutputTransformer))
 }
 
 /**
@@ -212,7 +212,7 @@ suspend fun <T> reportOutputAsProgress(
 /**
  * Error is an optional additionalMessage, that will be used instead of a default one for the [ExecError]
  */
-typealias ProcessOutputTransformer<T> = (EelProcessExecutionResult) -> Result<T, @NlsSafe String?>
+typealias ProcessOutputTransformer<T> = (EelProcessExecutionResult) -> Result<T, @NlsSafe String>
 
 /**
  * Return `stdout` if error code is `0`
@@ -236,19 +236,19 @@ val ZeroCodeStdoutTransformerBool: ZeroCodeStdoutTransformerTyped<Boolean> = Zer
  */
 class ZeroCodeStdoutTransformerTyped<T : Any>(private val checkExitCode: Boolean = true, val strParser: (String) -> T?) :
   ProcessOutputTransformer<T> {
-  override fun invoke(processOutput: EelProcessExecutionResult): Result<T, String?> {
-    if (checkExitCode && processOutput.exitCode != 0) {
-      return Result.failure(message("py.exec.error.not.zero"))
-    }
-    val output = processOutput.stdoutString.trim()
-    val result = strParser(output)
-    return if (result == null) {
-      Result.failure(message("py.exec.error.unexpected.output", output))
+  private val parseStdout: ProcessOutputTransformer<T> = { processOutput ->
+    val result = strParser(processOutput.stdoutString.trim())
+    if (result == null) {
+      processOutput.asFailure()
     }
     else {
       Result.success(result)
     }
   }
+
+  private val transformer = if (checkExitCode) zeroCodeTransformer(parseStdout) else parseStdout
+
+  override fun invoke(processOutput: EelProcessExecutionResult): Result<T, String> = transformer(processOutput)
 }
 
 /**
@@ -258,8 +258,8 @@ class ZeroCodeStdoutTransformerTyped<T : Any>(private val checkExitCode: Boolean
  * @param stdoutParser A function that takes a string (standard output) and parses it into a [Result] containing
  * either a successfully parsed result of type [T], or a failure with an optional [NlsSafe] error message.
  */
-open class ZeroCodeStdoutParserTransformer<T>(val stdoutParser: (String) -> Result<T, @NlsSafe String?>) : ProcessOutputTransformer<T> {
-  override fun invoke(processOutput: EelProcessExecutionResult): Result<T, @NlsSafe String?> {
+open class ZeroCodeStdoutParserTransformer<T>(val stdoutParser: (String) -> Result<T, @NlsSafe String>) : ProcessOutputTransformer<T> {
+  override fun invoke(processOutput: EelProcessExecutionResult): Result<T, @NlsSafe String> {
     val data = ZeroCodeStdoutTransformer.invoke(processOutput).getOr { return it }
     return stdoutParser(data)
   }
@@ -574,3 +574,20 @@ fun List<EnvVar>.withVar(name: String, value: String): List<EnvVar> = this + lis
  * Give a map of string/string ([EnvVarVal.BareStr]) convert it a list of [EnvVar] for an API.
  */
 fun Map<String, String>.toEnvVars(): List<EnvVar> = map { EnvVar(it.key, it.value) }
+
+/**
+ * A failure with a short message. It has no output, because [ExecError] shows the command, `stdout`, `stderr`
+ * and the exit code.
+ */
+@ApiStatus.Internal
+fun EelProcessExecutionResult.asFailure(): Result.Failure<@Nls String> =
+  PyResult.failure(message("py.exec.error.unexpected.result", exitCode))
+
+/**
+ * Runs [transformer] only when the exit code is `0`. Any other exit code is a failure, see [asFailure].
+ * If [transformer] reads only `stdout`, use [ZeroCodeStdoutParserTransformer] or [ZeroCodeStdoutTransformerTyped].
+ */
+@ApiStatus.Internal
+fun <T> zeroCodeTransformer(transformer: ProcessOutputTransformer<T>): ProcessOutputTransformer<T> = { output ->
+  if (output.exitCode != 0) output.asFailure() else transformer(output)
+}

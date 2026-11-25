@@ -19,7 +19,7 @@ internal class ProcessSemiInteractiveHandlerImpl<T>(
   private val pyProcessListener: PyProcessListener?,
   private val code: ProcessSemiInteractiveFun<T>,
 ) : ProcessInteractiveHandler<T> {
-  override suspend fun getResultFromProcess(binary: BinaryToExec, args: List<String>, process: Process): Result<T, Pair<EelProcessExecutionResult, CustomErrorMessage?>> =
+  override suspend fun getResultFromProcess(binary: BinaryToExec, args: List<String>, process: Process): Result<T, Pair<EelProcessExecutionResult, CustomErrorMessage>> =
     coroutineScope {
       pyProcessListener?.emit(ProcessEvent.ProcessStarted(binary, args))
       val processOutput = async { process.awaitWithReporting(pyProcessListener) }

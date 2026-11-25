@@ -5,6 +5,7 @@ import com.intellij.openapi.util.io.NioFiles
 import com.intellij.platform.eel.provider.utils.EelProcessExecutionResultInfo
 import com.intellij.platform.eel.provider.utils.stderrString
 import com.intellij.platform.eel.provider.utils.stdoutString
+import com.intellij.python.community.execService.asFailure
 import com.intellij.python.hatch.cli.HatchPython.PythonInstallResponse.AbortReason
 import com.intellij.python.pytools.backend.runtime.PyToolRuntime
 import com.intellij.python.pytools.backend.runtime.cliArg
@@ -40,10 +41,11 @@ class HatchPython<P : PathHolder>(runtime: PyToolRuntime) : HatchCommand<P>("pyt
     return executeAndHandleErrors("find", *arguments) { output ->
       when {
         output.exitCode == 1 && output.stderrString.contains("Distribution not installed: $name") -> Result.success(null)
-        output.exitCode != 0 -> Result.failure(null)
+        output.exitCode != 0 -> output.asFailure()
         else -> {
           val path = NioFiles.toPath(output.stdoutString.trim())
-          path?.let { Result.success(it) } ?: Result.failure(null)
+          // TODO: Add message that path is wrong with map error
+          path?.let { Result.success(it) } ?: output.asFailure()
         }
       }
     }
