@@ -329,6 +329,9 @@ class ProductPluginInitContext(
           if (phpBasicModulesExtractedFromPhpPlugin.any { doesDependOnModule(descriptor, it) }) {
             yieldIfResolves(DependencyRef.of(PHP_PLUGIN_ID))
           }
+          if (javaScriptBasicModulesExtractedFromJavaScriptPlugin.any { doesDependOnModule(descriptor, it) }) {
+            yieldIfResolves(DependencyRef.of(JAVASCRIPT_PLUGIN_ID))
+          }
         }
         for (depends in descriptor.pluginDependencies) {
           if (depends.subDescriptor != null) { // will be processed when invoked for the sub-descriptor
@@ -468,6 +471,19 @@ private val PHP_PLUGIN_ID = PluginId.getId("com.jetbrains.php")
 private val phpBasicModulesExtractedFromPhpPlugin = arrayOf(
   "intellij.php.frontback.impl",
 ).map { PluginModuleId(it, PluginModuleId.JETBRAINS_NAMESPACE) }
+
+/**
+ * Content modules that moved from the plugin `JavaScript` to the plugin `com.intellij.javascript.basic`.
+ * `JavaScript` embedded them, so a dependency on one of them gave the class loader of the main module of `JavaScript`.
+ * To keep compatibility, an external plugin that depends on one of them gets a soft dependency on `JavaScript`.
+ */
+private val javaScriptBasicModulesExtractedFromJavaScriptPlugin = arrayOf(
+  "intellij.javascript.parser",
+  "intellij.javascript.psi.impl",
+  "intellij.javascript.common",
+).map { PluginModuleId(it, PluginModuleId.JETBRAINS_NAMESPACE) }
+
+private val JAVASCRIPT_PLUGIN_ID = PluginId.getId("JavaScript")
 
 private val COLLABORATION_TOOLS_MODULE_ID = PluginModuleId("intellij.platform.collaborationTools", PluginModuleId.JETBRAINS_NAMESPACE)
 

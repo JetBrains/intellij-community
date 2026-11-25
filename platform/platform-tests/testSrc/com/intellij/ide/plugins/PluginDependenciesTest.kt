@@ -1338,6 +1338,62 @@ internal class PluginDependenciesTest {
       }
     }.installAt(pluginDirPath)
 
+    @Test
+    fun `external descriptor that depends on a javascript basic module gets soft dependency on javascript plugin`() {
+      `javascript basic plugin`()
+      `javascript plugin`()
+      plugin("external.consumer") {
+        dependencies { module("intellij.javascript.psi.impl") }
+        content {
+          module("external.consumer.module", ModuleLoadingRuleValue.REQUIRED) {
+            packagePrefix = "external.consumer.module"
+            dependencies { module("intellij.javascript.parser") }
+          }
+        }
+      }.installAt(pluginDirPath)
+      plugin("jetbrains.consumer") {
+        vendor = "JetBrains"
+        dependencies { module("intellij.javascript.psi.impl") }
+      }.installAt(pluginDirPath)
+
+      val pluginSet = buildPluginSet()
+      val javaScript = pluginSet.getEnabledPlugin("JavaScript")
+      val javaScriptPsi = pluginSet.getEnabledModule("intellij.javascript.psi.impl")
+
+      assertThat(pluginSet.getEnabledPlugin("external.consumer")).hasExactDirectParentClassloaders(javaScriptPsi, javaScript)
+      assertThat(pluginSet.getEnabledModule("external.consumer.module"))
+        .hasExactDirectParentClassloaders(pluginSet.getEnabledModule("intellij.javascript.parser"), javaScript)
+      assertThat(pluginSet.getEnabledPlugin("jetbrains.consumer")).hasExactDirectParentClassloaders(javaScriptPsi)
+    }
+
+    @Test
+    fun `external descriptor that depends on a javascript basic module loads without javascript plugin`() {
+      `javascript basic plugin`()
+      plugin("external.consumer") {
+        dependencies { module("intellij.javascript.psi.impl") }
+      }.installAt(pluginDirPath)
+
+      val pluginSet = buildPluginSet()
+
+      assertThat(pluginSet).hasExactlyEnabledPlugins("com.intellij.javascript.basic", "external.consumer")
+      assertThat(pluginSet.getEnabledPlugin("external.consumer"))
+        .hasExactDirectParentClassloaders(pluginSet.getEnabledModule("intellij.javascript.psi.impl"))
+    }
+
+    private fun `javascript basic plugin`() = plugin("com.intellij.javascript.basic") {
+      vendor = "JetBrains"
+      content(namespace = "jetbrains") {
+        for (moduleName in listOf("intellij.javascript.parser", "intellij.javascript.psi.impl")) {
+          module(moduleName, ModuleLoadingRuleValue.REQUIRED) { packagePrefix = moduleName; moduleVisibility = ModuleVisibilityValue.PUBLIC }
+        }
+      }
+    }.installAt(pluginDirPath)
+
+    private fun `javascript plugin`() = plugin("JavaScript") {
+      vendor = "JetBrains"
+      dependencies { plugin("com.intellij.javascript.basic") }
+    }.installAt(pluginDirPath)
+
     private fun `php plugin`() = plugin("com.jetbrains.php") {
       vendor = "JetBrains"
       dependencies { plugin("com.jetbrains.php.basic") }
