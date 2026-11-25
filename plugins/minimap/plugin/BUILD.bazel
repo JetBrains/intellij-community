@@ -5,22 +5,13 @@ load("//platform/build-scripts/bazel-rules:dist_plugin.bzl", "dist_plugin")
 
 ### auto-generated section `dev intellij.minimap.plugin` start
 dist_plugin(
-    content_modules = ["intellij.minimap.core"],
+    content_modules = {"intellij.minimap.core": "//plugins/minimap/core"},
     descriptor = "resources/META-INF/plugin.xml",
-    descriptors = {
-        "@community//plugins/minimap/core:resources/intellij.minimap.core.xml": "intellij.minimap.core.xml",
-    },
-    jars = {
-        "lib/minimap-plugin.jar": ["intellij.minimap.plugin"],
-    },
+    jars = {"lib/minimap-plugin.jar": ["intellij.minimap.plugin"]},
     main_module = "intellij.minimap.plugin",
-    mode_refused_content_modules = {
-        "frontend": ["intellij.minimap.core"],
-    },
-    module_labels = {
-        "intellij.minimap.core": "@community//plugins/minimap/core:core",
-        "intellij.minimap.plugin": "@community//plugins/minimap/plugin:plugin",
-    },
+    mode_refused_content_modules = {"frontend": ["intellij.minimap.core"]},
+    module_descriptors = ["@community//plugins/minimap/core:resources/intellij.minimap.core.xml"],
+    module_labels = {"intellij.minimap.plugin": "//plugins/minimap/plugin"},
 )
 ### auto-generated section `dev intellij.minimap.plugin` end
 

@@ -5,25 +5,15 @@ load("//platform/build-scripts/bazel-rules:dist_plugin.bzl", "dist_plugin")
 
 ### auto-generated section `dev intellij.lombok.plugin` start
 dist_plugin(
-    content_modules = [
-        # do not sort,
-        "intellij.lombok",
-        "intellij.lombok.generated",
-        "intellij.lombok.compiler",
-        "intellij.lombok.shared",
-        "intellij.lombok.backend",
-    ],
+    content_modules = {
+        "intellij.lombok": "//plugins/lombok",
+        "intellij.lombok.generated": "//plugins/lombok/generated",
+        "intellij.lombok.compiler": "//plugins/lombok/compiler",
+        "intellij.lombok.shared": "//plugins/lombok/shared",
+        "intellij.lombok.backend": "//plugins/lombok/backend",
+    },
     descriptor = "resources/META-INF/plugin.xml",
-    descriptors = {
-        "@community//plugins/lombok/backend:resources/intellij.lombok.backend.xml": "intellij.lombok.backend.xml",
-        "@community//plugins/lombok/compiler:resources/intellij.lombok.compiler.xml": "intellij.lombok.compiler.xml",
-        "@community//plugins/lombok/generated:resources/intellij.lombok.generated.xml": "intellij.lombok.generated.xml",
-        "@community//plugins/lombok/shared:resources/intellij.lombok.shared.xml": "intellij.lombok.shared.xml",
-        "@community//plugins/lombok:src/main/resources/intellij.lombok.xml": "intellij.lombok.xml",
-    },
-    jars = {
-        "lib/lombok-plugin.jar": ["intellij.lombok.plugin"],
-    },
+    jars = {"lib/lombok-plugin.jar": ["intellij.lombok.plugin"]},
     main_module = "intellij.lombok.plugin",
     mode_refused_content_modules = {
         "frontend": [
@@ -31,14 +21,14 @@ dist_plugin(
             "intellij.lombok.backend",
         ],
     },
-    module_labels = {
-        "intellij.lombok": "@community//plugins/lombok:lombok",
-        "intellij.lombok.backend": "@community//plugins/lombok/backend:backend",
-        "intellij.lombok.compiler": "@community//plugins/lombok/compiler:compiler",
-        "intellij.lombok.generated": "@community//plugins/lombok/generated:generated",
-        "intellij.lombok.plugin": "@community//plugins/lombok/plugin:plugin",
-        "intellij.lombok.shared": "@community//plugins/lombok/shared:shared",
-    },
+    module_descriptors = [
+        "@community//plugins/lombok/backend:resources/intellij.lombok.backend.xml",
+        "@community//plugins/lombok/compiler:resources/intellij.lombok.compiler.xml",
+        "@community//plugins/lombok/generated:resources/intellij.lombok.generated.xml",
+        "@community//plugins/lombok/shared:resources/intellij.lombok.shared.xml",
+        "@community//plugins/lombok:src/main/resources/intellij.lombok.xml",
+    ],
+    module_labels = {"intellij.lombok.plugin": "//plugins/lombok/plugin"},
 )
 ### auto-generated section `dev intellij.lombok.plugin` end
 

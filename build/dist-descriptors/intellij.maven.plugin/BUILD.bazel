@@ -18,18 +18,6 @@ load("//platform/build-scripts/bazel-rules:dist_plugin_descriptor.bzl", "dist_pl
 
 dist_plugin_descriptor(
     descriptor = "//plugins/maven/plugin:resources/META-INF/plugin.xml",
-    descriptors = {
-        "@community//plugins/maven/completion:resources/intellij.maven.completion.xml": "intellij.maven.completion.xml",
-        "@community//plugins/maven/delegation/junit:resources/intellij.maven.delegation.junit.xml": "intellij.maven.delegation.junit.xml",
-        "@community//plugins/maven/delegation/testng:resources/intellij.maven.delegation.testng.xml": "intellij.maven.delegation.testng.xml",
-        "@community//plugins/maven/groovy:resources/intellij.maven.groovy.xml": "intellij.maven.groovy.xml",
-        "@community//plugins/maven/jps/ide:resources/intellij.maven.jps.ide.xml": "intellij.maven.jps.ide.xml",
-        "@community//plugins/maven/jps:resources/intellij.maven.jps.xml": "intellij.maven.jps.xml",
-        "@community//plugins/maven/model:resources/intellij.maven.model.xml": "intellij.maven.model.xml",
-        "@community//plugins/maven/performanceTesting:resources/intellij.maven.performanceTesting.xml": "intellij.maven.performanceTesting.xml",
-        "@community//plugins/maven/proofreading:resources/intellij.maven.proofreading.xml": "intellij.maven.proofreading.xml",
-        "@community//plugins/maven:src/main/resources/intellij.maven.xml": "intellij.maven.xml",
-    },
     main_module = "intellij.maven.plugin",
     mode_refused_content_modules = {
         "frontend": [
@@ -43,6 +31,18 @@ dist_plugin_descriptor(
             "intellij.maven.jps.ide",
         ],
     },
+    module_descriptors = [
+        "@community//plugins/maven/completion:resources/intellij.maven.completion.xml",
+        "@community//plugins/maven/delegation/junit:resources/intellij.maven.delegation.junit.xml",
+        "@community//plugins/maven/delegation/testng:resources/intellij.maven.delegation.testng.xml",
+        "@community//plugins/maven/groovy:resources/intellij.maven.groovy.xml",
+        "@community//plugins/maven/jps/ide:resources/intellij.maven.jps.ide.xml",
+        "@community//plugins/maven/jps:resources/intellij.maven.jps.xml",
+        "@community//plugins/maven/model:resources/intellij.maven.model.xml",
+        "@community//plugins/maven/performanceTesting:resources/intellij.maven.performanceTesting.xml",
+        "@community//plugins/maven/proofreading:resources/intellij.maven.proofreading.xml",
+        "@community//plugins/maven:src/main/resources/intellij.maven.xml",
+    ],
     refused_content_modules = [
         "intellij.maven.profiler",
         "intellij.maven.errorProne.compiler",

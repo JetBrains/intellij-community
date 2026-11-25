@@ -6,13 +6,9 @@ load("//platform/build-scripts/bazel-rules:dist_plugin.bzl", "dist_plugin")
 ### auto-generated section `dev intellij.keymap.resharper` start
 dist_plugin(
     descriptor = "resources/META-INF/plugin.xml",
-    jars = {
-        "lib/keymap-resharper.jar": ["intellij.keymap.resharper"],
-    },
+    jars = {"lib/keymap-resharper.jar": ["intellij.keymap.resharper"]},
     main_module = "intellij.keymap.resharper",
-    module_labels = {
-        "intellij.keymap.resharper": "@community//plugins/keymaps/resharper-keymap:keymap-resharper",
-    },
+    module_labels = {"intellij.keymap.resharper": "//plugins/keymaps/resharper-keymap:keymap-resharper"},
 )
 ### auto-generated section `dev intellij.keymap.resharper` end
 

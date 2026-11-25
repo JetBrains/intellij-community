@@ -25,22 +25,13 @@ jps_test(
 
 ### auto-generated section `dev intellij.java.guiForms.designer` start
 dist_plugin(
-    content_modules = ["intellij.java.guiForms.jps"],
+    content_modules = {"intellij.java.guiForms.jps": "//plugins/ui-designer/jps-plugin:java-guiForms-jps"},
     descriptor = "resources/META-INF/plugin.xml",
-    descriptors = {
-        "@community//plugins/ui-designer/jps-plugin:resources/intellij.java.guiForms.jps.xml": "intellij.java.guiForms.jps.xml",
-    },
-    jars = {
-        "lib/java-guiForms-designer.jar": ["intellij.java.guiForms.designer"],
-    },
+    jars = {"lib/java-guiForms-designer.jar": ["intellij.java.guiForms.designer"]},
     main_module = "intellij.java.guiForms.designer",
-    mode_refused_content_modules = {
-        "frontend": ["intellij.java.guiForms.jps"],
-    },
-    module_labels = {
-        "intellij.java.guiForms.designer": "@community//plugins/ui-designer:java-guiForms-designer",
-        "intellij.java.guiForms.jps": "@community//plugins/ui-designer/jps-plugin:java-guiForms-jps",
-    },
+    mode_refused_content_modules = {"frontend": ["intellij.java.guiForms.jps"]},
+    module_descriptors = ["@community//plugins/ui-designer/jps-plugin:resources/intellij.java.guiForms.jps.xml"],
+    module_labels = {"intellij.java.guiForms.designer": "//plugins/ui-designer:java-guiForms-designer"},
 )
 ### auto-generated section `dev intellij.java.guiForms.designer` end
 

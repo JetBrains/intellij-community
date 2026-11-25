@@ -5,30 +5,27 @@ load("//platform/build-scripts/bazel-rules:dist_plugin.bzl", "dist_plugin")
 
 ### auto-generated section `dev intellij.java.basic.plugin` start
 dist_plugin(
-    content_modules = [
-        # do not sort,
-        "intellij.java.syntax",
-        "intellij.java.frontback.psi",
-        "intellij.java.frontback.psi.impl",
-        "intellij.java.psi",
-        "intellij.java.psi.impl",
-        "intellij.java.frontback.impl",
-        "intellij.java.basic.frontend",
-    ],
+    content_modules = {
+        "intellij.java.syntax": "//java/java-syntax:syntax",
+        "intellij.java.frontback.psi": "//java/java-frontback-psi-api:frontback-psi",
+        "intellij.java.frontback.psi.impl": "//java/java-frontback-psi-impl:frontback-psi-impl",
+        "intellij.java.psi": "//java/java-psi-api:psi",
+        "intellij.java.psi.impl": "//java/java-psi-impl:psi-impl",
+        "intellij.java.frontback.impl": "//java/java-frontback-impl:frontback-impl",
+        "intellij.java.basic.frontend": "//java/basic-plugin/frontend",
+    },
     descriptor = "resources/META-INF/plugin.xml",
-    descriptors = {
-        "@community//java/basic-plugin/frontend:resources/intellij.java.basic.frontend.xml": "intellij.java.basic.frontend.xml",
-        "@community//java/java-frontback-impl:resource/intellij.java.frontback.impl.xml": "intellij.java.frontback.impl.xml",
-        "@community//java/java-frontback-psi-api:resources/intellij.java.frontback.psi.xml": "intellij.java.frontback.psi.xml",
-        "@community//java/java-frontback-psi-impl:resources/intellij.java.frontback.psi.impl.xml": "intellij.java.frontback.psi.impl.xml",
-        "@community//java/java-psi-api:resources/intellij.java.psi.xml": "intellij.java.psi.xml",
-        "@community//java/java-psi-impl:resources/intellij.java.psi.impl.xml": "intellij.java.psi.impl.xml",
-        "@community//java/java-syntax:resources/intellij.java.syntax.xml": "intellij.java.syntax.xml",
-    },
-    jars = {
-        "lib/java-basic-plugin.jar": ["intellij.java.basic.plugin"],
-    },
+    jars = {"lib/java-basic-plugin.jar": ["intellij.java.basic.plugin"]},
     main_module = "intellij.java.basic.plugin",
+    module_descriptors = [
+        "@community//java/basic-plugin/frontend:resources/intellij.java.basic.frontend.xml",
+        "@community//java/java-frontback-impl:resource/intellij.java.frontback.impl.xml",
+        "@community//java/java-frontback-psi-api:resources/intellij.java.frontback.psi.xml",
+        "@community//java/java-frontback-psi-impl:resources/intellij.java.frontback.psi.impl.xml",
+        "@community//java/java-psi-api:resources/intellij.java.psi.xml",
+        "@community//java/java-psi-impl:resources/intellij.java.psi.impl.xml",
+        "@community//java/java-syntax:resources/intellij.java.syntax.xml",
+    ],
     module_jar_paths = {
         "intellij.java.syntax": "lib/intellij.java.syntax.jar",
         "intellij.java.frontback.psi": "lib/intellij.java.frontback.psi.jar",
@@ -37,16 +34,7 @@ dist_plugin(
         "intellij.java.psi.impl": "lib/intellij.java.psi.impl.jar",
         "intellij.java.frontback.impl": "lib/intellij.java.frontback.impl.jar",
     },
-    module_labels = {
-        "intellij.java.basic.frontend": "@community//java/basic-plugin/frontend:frontend",
-        "intellij.java.basic.plugin": "@community//java/basic-plugin:basic-plugin",
-        "intellij.java.frontback.impl": "@community//java/java-frontback-impl:frontback-impl",
-        "intellij.java.frontback.psi": "@community//java/java-frontback-psi-api:frontback-psi",
-        "intellij.java.frontback.psi.impl": "@community//java/java-frontback-psi-impl:frontback-psi-impl",
-        "intellij.java.psi": "@community//java/java-psi-api:psi",
-        "intellij.java.psi.impl": "@community//java/java-psi-impl:psi-impl",
-        "intellij.java.syntax": "@community//java/java-syntax:syntax",
-    },
+    module_labels = {"intellij.java.basic.plugin": "//java/basic-plugin"},
 )
 ### auto-generated section `dev intellij.java.basic.plugin` end
 

@@ -5,23 +5,14 @@ load("//platform/build-scripts/bazel-rules:dist_plugin.bzl", "dist_plugin")
 
 ### auto-generated section `dev intellij.platform.tasks.plugin` start
 dist_plugin(
-    content_modules = [
-        # do not sort,
-        "intellij.platform.tasks",
-        "intellij.platform.tasks.impl",
-        "intellij.platform.tasks.impl.bookmarks",
-        "intellij.platform.tasks.impl.debugger",
-    ],
+    content_modules = {
+        "intellij.platform.tasks": "//platform/tasks-platform-api:tasks",
+        "intellij.platform.tasks.impl": "//platform/tasks-platform-impl:tasks-impl",
+        "intellij.platform.tasks.impl.bookmarks": "//platform/tasks-platform-impl/tasks.impl.bookmarks",
+        "intellij.platform.tasks.impl.debugger": "//platform/tasks-platform-impl/tasks.impl.debugger",
+    },
     descriptor = "resources/META-INF/plugin.xml",
-    descriptors = {
-        "@community//platform/tasks-platform-api:resources/intellij.platform.tasks.xml": "intellij.platform.tasks.xml",
-        "@community//platform/tasks-platform-impl/tasks.impl.bookmarks:resources/intellij.platform.tasks.impl.bookmarks.xml": "intellij.platform.tasks.impl.bookmarks.xml",
-        "@community//platform/tasks-platform-impl/tasks.impl.debugger:resources/intellij.platform.tasks.impl.debugger.xml": "intellij.platform.tasks.impl.debugger.xml",
-        "@community//platform/tasks-platform-impl:resources/intellij.platform.tasks.impl.xml": "intellij.platform.tasks.impl.xml",
-    },
-    jars = {
-        "lib/platform-tasks-plugin.jar": ["intellij.platform.tasks.plugin"],
-    },
+    jars = {"lib/platform-tasks-plugin.jar": ["intellij.platform.tasks.plugin"]},
     main_module = "intellij.platform.tasks.plugin",
     mode_refused_content_modules = {
         "frontend": [
@@ -30,13 +21,13 @@ dist_plugin(
             "intellij.platform.tasks.impl.debugger",
         ],
     },
-    module_labels = {
-        "intellij.platform.tasks": "@community//platform/tasks-platform-api:tasks",
-        "intellij.platform.tasks.impl": "@community//platform/tasks-platform-impl:tasks-impl",
-        "intellij.platform.tasks.impl.bookmarks": "@community//platform/tasks-platform-impl/tasks.impl.bookmarks:tasks.impl.bookmarks",
-        "intellij.platform.tasks.impl.debugger": "@community//platform/tasks-platform-impl/tasks.impl.debugger:tasks.impl.debugger",
-        "intellij.platform.tasks.plugin": "@community//platform/tasks-platform-impl/plugin:plugin",
-    },
+    module_descriptors = [
+        "@community//platform/tasks-platform-api:resources/intellij.platform.tasks.xml",
+        "@community//platform/tasks-platform-impl/tasks.impl.bookmarks:resources/intellij.platform.tasks.impl.bookmarks.xml",
+        "@community//platform/tasks-platform-impl/tasks.impl.debugger:resources/intellij.platform.tasks.impl.debugger.xml",
+        "@community//platform/tasks-platform-impl:resources/intellij.platform.tasks.impl.xml",
+    ],
+    module_labels = {"intellij.platform.tasks.plugin": "//platform/tasks-platform-impl/plugin"},
 )
 ### auto-generated section `dev intellij.platform.tasks.plugin` end
 

@@ -5,37 +5,22 @@ load("//platform/build-scripts/bazel-rules:dist_plugin.bzl", "dist_plugin")
 
 ### auto-generated section `dev intellij.gradle.java.plugin` start
 dist_plugin(
-    content_modules = [
-        # do not sort,
-        "intellij.gradle.java",
-        "intellij.gradle.jps",
-        "intellij.gradle.java.maven",
-        "intellij.gradle.analysis",
-        "intellij.gradle.dependencyUpdater",
-        "intellij.gradle.java.performance",
-        "intellij.gradle.java.toml",
-        "intellij.gradle.java.groovy",
-        "intellij.gradle.java.groovy.toml",
-        "intellij.gradle.java.groovy.ml",
-        "intellij.gradle.java.coverage",
-        "intellij.gradle.java.properties",
-    ],
-    main_module = "intellij.gradle.java.plugin",
-    module_labels = {
-        "intellij.gradle.analysis": "@community//plugins/gradle/intellij.gradle.analysis:analysis",
-        "intellij.gradle.dependencyUpdater": "@community//plugins/gradle/gradle-dependency-updater:dependencyUpdater",
-        "intellij.gradle.java": "@community//plugins/gradle/java:java",
-        "intellij.gradle.java.coverage": "@community//plugins/gradle/java/coverage:coverage",
-        "intellij.gradle.java.groovy": "@community//plugins/gradle/java/groovy:groovy",
-        "intellij.gradle.java.groovy.ml": "@community//plugins/gradle/java/groovy/ml:ml",
-        "intellij.gradle.java.groovy.toml": "@community//plugins/gradle/java/groovy/toml:toml",
-        "intellij.gradle.java.maven": "@community//plugins/gradle-maven:gradle-java-maven",
-        "intellij.gradle.java.performance": "@community//plugins/gradle/java/performance:performance",
-        "intellij.gradle.java.plugin": "@community//plugins/gradle/java/plugin:plugin",
-        "intellij.gradle.java.properties": "@community//plugins/gradle/java/properties:properties",
-        "intellij.gradle.java.toml": "@community//plugins/gradle/java/toml:toml",
-        "intellij.gradle.jps": "@community//plugins/gradle/jps-plugin:jps",
+    content_modules = {
+        "intellij.gradle.java": "//plugins/gradle/java",
+        "intellij.gradle.jps": "//plugins/gradle/jps-plugin:jps",
+        "intellij.gradle.java.maven": "//plugins/gradle-maven:gradle-java-maven",
+        "intellij.gradle.analysis": "//plugins/gradle/intellij.gradle.analysis:analysis",
+        "intellij.gradle.dependencyUpdater": "//plugins/gradle/gradle-dependency-updater:dependencyUpdater",
+        "intellij.gradle.java.performance": "//plugins/gradle/java/performance",
+        "intellij.gradle.java.toml": "//plugins/gradle/java/toml",
+        "intellij.gradle.java.groovy": "//plugins/gradle/java/groovy",
+        "intellij.gradle.java.groovy.toml": "//plugins/gradle/java/groovy/toml",
+        "intellij.gradle.java.groovy.ml": "//plugins/gradle/java/groovy/ml",
+        "intellij.gradle.java.coverage": "//plugins/gradle/java/coverage",
+        "intellij.gradle.java.properties": "//plugins/gradle/java/properties",
     },
+    main_module = "intellij.gradle.java.plugin",
+    module_labels = {"intellij.gradle.java.plugin": "//plugins/gradle/java/plugin"},
 )
 ### auto-generated section `dev intellij.gradle.java.plugin` end
 

@@ -15,34 +15,23 @@ jps_test(
 
 ### auto-generated section `dev intellij.mermaid` start
 dist_plugin(
-    content_modules = [
-        # do not sort,
-        "intellij.mermaid.markdown",
-        "intellij.mermaid.frontend",
-        "intellij.mermaid.json",
-        "intellij.mermaid.spellchecker",
-    ],
+    content_modules = {
+        "intellij.mermaid.markdown": "//plugins/mermaid/markdown",
+        "intellij.mermaid.frontend": "//plugins/mermaid/frontend",
+        "intellij.mermaid.json": "//plugins/mermaid/json",
+        "intellij.mermaid.spellchecker": "//plugins/mermaid/spellchecker",
+    },
     descriptor = "resources/META-INF/plugin.xml",
-    descriptors = {
-        "@community//plugins/mermaid/frontend:resources/intellij.mermaid.frontend.xml": "intellij.mermaid.frontend.xml",
-        "@community//plugins/mermaid/json:resources/intellij.mermaid.json.xml": "intellij.mermaid.json.xml",
-        "@community//plugins/mermaid/markdown:resources/intellij.mermaid.markdown.xml": "intellij.mermaid.markdown.xml",
-        "@community//plugins/mermaid/spellchecker:resources/intellij.mermaid.spellchecker.xml": "intellij.mermaid.spellchecker.xml",
-    },
-    jars = {
-        "lib/mermaid.jar": ["intellij.mermaid"],
-    },
+    jars = {"lib/mermaid.jar": ["intellij.mermaid"]},
     main_module = "intellij.mermaid",
-    mode_refused_content_modules = {
-        "frontend": ["intellij.mermaid.json"],
-    },
-    module_labels = {
-        "intellij.mermaid": "@community//plugins/mermaid:mermaid",
-        "intellij.mermaid.frontend": "@community//plugins/mermaid/frontend:frontend",
-        "intellij.mermaid.json": "@community//plugins/mermaid/json:json",
-        "intellij.mermaid.markdown": "@community//plugins/mermaid/markdown:markdown",
-        "intellij.mermaid.spellchecker": "@community//plugins/mermaid/spellchecker:spellchecker",
-    },
+    mode_refused_content_modules = {"frontend": ["intellij.mermaid.json"]},
+    module_descriptors = [
+        "@community//plugins/mermaid/frontend:resources/intellij.mermaid.frontend.xml",
+        "@community//plugins/mermaid/json:resources/intellij.mermaid.json.xml",
+        "@community//plugins/mermaid/markdown:resources/intellij.mermaid.markdown.xml",
+        "@community//plugins/mermaid/spellchecker:resources/intellij.mermaid.spellchecker.xml",
+    ],
+    module_labels = {"intellij.mermaid": "//plugins/mermaid"},
 )
 ### auto-generated section `dev intellij.mermaid` end
 

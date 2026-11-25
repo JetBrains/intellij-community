@@ -15,23 +15,15 @@ jps_test(
 
 ### auto-generated section `dev intellij.javaFX.community` start
 dist_plugin(
-    content_modules = [
-        # do not sort,
-        "intellij.javaFX",
-        "intellij.javaFX.properties",
-        "intellij.javaFX.common",
-        "intellij.javaFX.jps",
-        "intellij.javaFX.sceneBuilder",
-    ],
-    main_module = "intellij.javaFX.community",
-    module_labels = {
-        "intellij.javaFX": "@community//plugins/javaFX:javaFX",
-        "intellij.javaFX.common": "@community//plugins/javaFX/common:common",
-        "intellij.javaFX.community": "@community//plugins/javaFX/community:community",
-        "intellij.javaFX.jps": "@community//plugins/javaFX/jps:jps",
-        "intellij.javaFX.properties": "@community//plugins/javaFX:javaFX-properties",
-        "intellij.javaFX.sceneBuilder": "@community//plugins/javaFX/sceneBuilder:sceneBuilder",
+    content_modules = {
+        "intellij.javaFX": "//plugins/javaFX",
+        "intellij.javaFX.properties": "//plugins/javaFX:javaFX-properties",
+        "intellij.javaFX.common": "//plugins/javaFX/common",
+        "intellij.javaFX.jps": "//plugins/javaFX/jps",
+        "intellij.javaFX.sceneBuilder": "//plugins/javaFX/sceneBuilder",
     },
+    main_module = "intellij.javaFX.community",
+    module_labels = {"intellij.javaFX.community": "//plugins/javaFX/community"},
 )
 ### auto-generated section `dev intellij.javaFX.community` end
 

@@ -5,23 +5,15 @@ load("//platform/build-scripts/bazel-rules:dist_plugin.bzl", "dist_plugin")
 
 ### auto-generated section `dev intellij.editorconfig.plugin` start
 dist_plugin(
-    content_modules = [
-        # do not sort,
-        "intellij.editorconfig.common",
-        "intellij.editorconfig.frontend",
-        "intellij.editorconfig.backend",
-        "intellij.editorconfig.backend.spellchecking",
-        "intellij.libraries.ec4j.core",
-    ],
-    main_module = "intellij.editorconfig.plugin",
-    module_labels = {
-        "intellij.editorconfig.backend": "@community//plugins/editorconfig/backend:backend",
-        "intellij.editorconfig.backend.spellchecking": "@community//plugins/editorconfig/backend.spellchecking:backend.spellchecking",
-        "intellij.editorconfig.common": "@community//plugins/editorconfig/common:common",
-        "intellij.editorconfig.frontend": "@community//plugins/editorconfig/frontend:frontend",
-        "intellij.editorconfig.plugin": "@community//plugins/editorconfig:editorconfig-plugin",
-        "intellij.libraries.ec4j.core": "@community//libraries/ec4j/core:core",
+    content_modules = {
+        "intellij.editorconfig.common": "//plugins/editorconfig/common",
+        "intellij.editorconfig.frontend": "//plugins/editorconfig/frontend",
+        "intellij.editorconfig.backend": "//plugins/editorconfig/backend",
+        "intellij.editorconfig.backend.spellchecking": "//plugins/editorconfig/backend.spellchecking",
+        "intellij.libraries.ec4j.core": "//libraries/ec4j/core",
     },
+    main_module = "intellij.editorconfig.plugin",
+    module_labels = {"intellij.editorconfig.plugin": "//plugins/editorconfig:editorconfig-plugin"},
 )
 ### auto-generated section `dev intellij.editorconfig.plugin` end
 

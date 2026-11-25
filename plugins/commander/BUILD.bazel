@@ -15,13 +15,9 @@ jps_test(
 ### auto-generated section `dev intellij.commander` start
 dist_plugin(
     descriptor = "resources/META-INF/plugin.xml",
-    jars = {
-        "lib/commander.jar": ["intellij.commander"],
-    },
+    jars = {"lib/commander.jar": ["intellij.commander"]},
     main_module = "intellij.commander",
-    module_labels = {
-        "intellij.commander": "@community//plugins/commander:commander",
-    },
+    module_labels = {"intellij.commander": "//plugins/commander"},
 )
 ### auto-generated section `dev intellij.commander` end
 

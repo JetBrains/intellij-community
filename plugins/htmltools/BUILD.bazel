@@ -16,13 +16,9 @@ jps_test(
 ### auto-generated section `dev intellij.html.tools` start
 dist_plugin(
     descriptor = "resources/META-INF/plugin.xml",
-    jars = {
-        "lib/html-tools.jar": ["intellij.html.tools"],
-    },
+    jars = {"lib/html-tools.jar": ["intellij.html.tools"]},
     main_module = "intellij.html.tools",
-    module_labels = {
-        "intellij.html.tools": "@community//plugins/htmltools:html-tools",
-    },
+    module_labels = {"intellij.html.tools": "//plugins/htmltools:html-tools"},
 )
 ### auto-generated section `dev intellij.html.tools` end
 

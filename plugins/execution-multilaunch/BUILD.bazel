@@ -5,19 +5,12 @@ load("//platform/build-scripts/bazel-rules:dist_plugin.bzl", "dist_plugin")
 
 ### auto-generated section `dev intellij.execution.multilaunch.plugin` start
 dist_plugin(
-    content_modules = ["intellij.execution.multilaunch.core"],
+    content_modules = {"intellij.execution.multilaunch.core": "//plugins/execution-multilaunch/core"},
     descriptor = "resources/META-INF/plugin.xml",
-    descriptors = {
-        "@community//plugins/execution-multilaunch/core:resources/intellij.execution.multilaunch.core.xml": "intellij.execution.multilaunch.core.xml",
-    },
-    jars = {
-        "lib/execution-multilaunch-plugin.jar": ["intellij.execution.multilaunch.plugin"],
-    },
+    jars = {"lib/execution-multilaunch-plugin.jar": ["intellij.execution.multilaunch.plugin"]},
     main_module = "intellij.execution.multilaunch.plugin",
-    module_labels = {
-        "intellij.execution.multilaunch.core": "@community//plugins/execution-multilaunch/core:core",
-        "intellij.execution.multilaunch.plugin": "@community//plugins/execution-multilaunch:execution-multilaunch-plugin",
-    },
+    module_descriptors = ["@community//plugins/execution-multilaunch/core:resources/intellij.execution.multilaunch.core.xml"],
+    module_labels = {"intellij.execution.multilaunch.plugin": "//plugins/execution-multilaunch:execution-multilaunch-plugin"},
 )
 ### auto-generated section `dev intellij.execution.multilaunch.plugin` end
 

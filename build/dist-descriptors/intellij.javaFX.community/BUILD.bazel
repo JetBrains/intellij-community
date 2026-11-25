@@ -19,13 +19,6 @@ load("//platform/build-scripts/bazel-rules:dist_plugin_descriptor.bzl", "dist_pl
 
 dist_plugin_descriptor(
     descriptor = "//plugins/javaFX/community:resources/META-INF/plugin.xml",
-    descriptors = {
-        "@community//plugins/javaFX/common:resources/intellij.javaFX.common.xml": "intellij.javaFX.common.xml",
-        "@community//plugins/javaFX/jps:resources/intellij.javaFX.jps.xml": "intellij.javaFX.jps.xml",
-        "@community//plugins/javaFX/sceneBuilder:resources/intellij.javaFX.sceneBuilder.xml": "intellij.javaFX.sceneBuilder.xml",
-        "@community//plugins/javaFX:properties/resources/intellij.javaFX.properties.xml": "intellij.javaFX.properties.xml",
-        "@community//plugins/javaFX:resources/intellij.javaFX.xml": "intellij.javaFX.xml",
-    },
     main_module = "intellij.javaFX.community",
     mode_refused_content_modules = {
         "frontend": [
@@ -35,6 +28,13 @@ dist_plugin_descriptor(
             "intellij.javaFX.sceneBuilder",
         ],
     },
+    module_descriptors = [
+        "@community//plugins/javaFX/common:resources/intellij.javaFX.common.xml",
+        "@community//plugins/javaFX/jps:resources/intellij.javaFX.jps.xml",
+        "@community//plugins/javaFX/sceneBuilder:resources/intellij.javaFX.sceneBuilder.xml",
+        "@community//plugins/javaFX:properties/resources/intellij.javaFX.properties.xml",
+        "@community//plugins/javaFX:resources/intellij.javaFX.xml",
+    ],
     refused_content_modules = [
         "intellij.javaFX.css",
         "intellij.platform.commercial.verifier",

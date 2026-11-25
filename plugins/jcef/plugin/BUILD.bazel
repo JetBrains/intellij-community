@@ -6,34 +6,25 @@ load(":downloads_test.bzl", "downloads_test_suite")
 
 ### auto-generated section `dev intellij.jcef.plugin` start
 dist_plugin(
-    content_modules = [
-        # do not sort,
-        "intellij.libraries.jcef",
-        "intellij.platform.ui.jcef",
-        "intellij.platform.ide.impl.jcef",
-        "intellij.platform.ide.newUiOnboarding.jcef",
-        "intellij.jcef.frontend",
-        "intellij.internal.jcef",
-    ],
+    content_modules = {
+        "intellij.libraries.jcef": "//libraries/jcef",
+        "intellij.platform.ui.jcef": "//platform/ui.jcef",
+        "intellij.platform.ide.impl.jcef": "//platform/platform-impl/jcef",
+        "intellij.platform.ide.newUiOnboarding.jcef": "//platform/new-ui-onboarding/jcef",
+        "intellij.jcef.frontend": "//plugins/jcef/frontend",
+        "intellij.internal.jcef": "//platform/platform-impl/internal/jcef",
+    },
     descriptor = "resources/META-INF/plugin.xml",
-    descriptors = {
-        "@community//libraries/jcef:resources/intellij.libraries.jcef.xml": "intellij.libraries.jcef.xml",
-        "@community//platform/new-ui-onboarding/jcef:resources/intellij.platform.ide.newUiOnboarding.jcef.xml": "intellij.platform.ide.newUiOnboarding.jcef.xml",
-        "@community//platform/platform-impl/internal/jcef:resources/intellij.internal.jcef.xml": "intellij.internal.jcef.xml",
-        "@community//platform/platform-impl/jcef:resources/intellij.platform.ide.impl.jcef.xml": "intellij.platform.ide.impl.jcef.xml",
-        "@community//platform/ui.jcef:resources/intellij.platform.ui.jcef.xml": "intellij.platform.ui.jcef.xml",
-        "@community//plugins/jcef/frontend:resources/intellij.jcef.frontend.xml": "intellij.jcef.frontend.xml",
-    },
     main_module = "intellij.jcef.plugin",
-    module_labels = {
-        "intellij.internal.jcef": "@community//platform/platform-impl/internal/jcef:jcef",
-        "intellij.jcef.frontend": "@community//plugins/jcef/frontend:frontend",
-        "intellij.jcef.plugin": "@community//plugins/jcef/plugin:plugin",
-        "intellij.libraries.jcef": "@community//libraries/jcef:jcef",
-        "intellij.platform.ide.impl.jcef": "@community//platform/platform-impl/jcef:jcef",
-        "intellij.platform.ide.newUiOnboarding.jcef": "@community//platform/new-ui-onboarding/jcef:jcef",
-        "intellij.platform.ui.jcef": "@community//platform/ui.jcef:ui.jcef",
-    },
+    module_descriptors = [
+        "@community//libraries/jcef:resources/intellij.libraries.jcef.xml",
+        "@community//platform/new-ui-onboarding/jcef:resources/intellij.platform.ide.newUiOnboarding.jcef.xml",
+        "@community//platform/platform-impl/internal/jcef:resources/intellij.internal.jcef.xml",
+        "@community//platform/platform-impl/jcef:resources/intellij.platform.ide.impl.jcef.xml",
+        "@community//platform/ui.jcef:resources/intellij.platform.ui.jcef.xml",
+        "@community//plugins/jcef/frontend:resources/intellij.jcef.frontend.xml",
+    ],
+    module_labels = {"intellij.jcef.plugin": "//plugins/jcef/plugin"},
     variants = [
         "darwin_aarch64",
         "darwin_x64",

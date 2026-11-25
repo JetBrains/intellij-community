@@ -6,13 +6,9 @@ load("//platform/build-scripts/bazel-rules:dist_plugin.bzl", "dist_plugin")
 ### auto-generated section `dev intellij.marketplaceMl` start
 dist_plugin(
     descriptor = "resources/META-INF/plugin.xml",
-    jars = {
-        "lib/marketplaceMl.jar": ["intellij.marketplaceMl"],
-    },
+    jars = {"lib/marketplaceMl.jar": ["intellij.marketplaceMl"]},
     main_module = "intellij.marketplaceMl",
-    module_labels = {
-        "intellij.marketplaceMl": "@community//plugins/marketplace-ml:marketplace-ml",
-    },
+    module_labels = {"intellij.marketplaceMl": "//plugins/marketplace-ml"},
 )
 ### auto-generated section `dev intellij.marketplaceMl` end
 

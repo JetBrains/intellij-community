@@ -5,21 +5,14 @@ load("//platform/build-scripts/bazel-rules:dist_plugin.bzl", "dist_plugin")
 
 ### auto-generated section `dev intellij.yaml.plugin` start
 dist_plugin(
-    content_modules = [
-        # do not sort,
-        "intellij.yaml.backend",
-        "intellij.yaml",
-        "intellij.yaml.spellchecker",
-        "intellij.yaml.syntax",
-    ],
-    main_module = "intellij.yaml.plugin",
-    module_labels = {
-        "intellij.yaml": "@community//plugins/yaml:yaml",
-        "intellij.yaml.backend": "@community//plugins/yaml/backend:backend",
-        "intellij.yaml.plugin": "@community//plugins/yaml/plugin:plugin",
-        "intellij.yaml.spellchecker": "@community//plugins/yaml/spellchecker:spellchecker",
-        "intellij.yaml.syntax": "@community//plugins/yaml/syntax:syntax",
+    content_modules = {
+        "intellij.yaml.backend": "//plugins/yaml/backend",
+        "intellij.yaml": "//plugins/yaml",
+        "intellij.yaml.spellchecker": "//plugins/yaml/spellchecker",
+        "intellij.yaml.syntax": "//plugins/yaml/syntax",
     },
+    main_module = "intellij.yaml.plugin",
+    module_labels = {"intellij.yaml.plugin": "//plugins/yaml/plugin"},
 )
 ### auto-generated section `dev intellij.yaml.plugin` end
 

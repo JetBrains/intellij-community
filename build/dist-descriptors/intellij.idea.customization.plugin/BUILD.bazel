@@ -19,17 +19,17 @@ load("//platform/build-scripts/bazel-rules:dist_plugin_descriptor.bzl", "dist_pl
 
 dist_plugin_descriptor(
     descriptor = "//idea/customization/plugin:resources/META-INF/plugin.xml",
-    descriptors = {
-        "@community//idea/customization/backend:resources/intellij.idea.customization.backend.xml": "intellij.idea.customization.backend.xml",
-        "@community//idea/customization/base:resources/intellij.idea.customization.base.xml": "intellij.idea.customization.base.xml",
-        "@community//platform/non-modal-welcome-screen/backend:resources/intellij.platform.ide.nonModalWelcomeScreen.backend.xml": "intellij.platform.ide.nonModalWelcomeScreen.backend.xml",
-        "@community//platform/non-modal-welcome-screen/frontend:resources/intellij.platform.ide.nonModalWelcomeScreen.frontend.xml": "intellij.platform.ide.nonModalWelcomeScreen.frontend.xml",
-        "@community//platform/non-modal-welcome-screen:resources/intellij.platform.ide.nonModalWelcomeScreen.xml": "intellij.platform.ide.nonModalWelcomeScreen.xml",
-    },
     main_module = "intellij.idea.customization.plugin",
     mode_refused_content_modules = {
         "frontend": ["intellij.platform.ide.nonModalWelcomeScreen.backend"],
     },
+    module_descriptors = [
+        "@community//idea/customization/backend:resources/intellij.idea.customization.backend.xml",
+        "@community//idea/customization/base:resources/intellij.idea.customization.base.xml",
+        "@community//platform/non-modal-welcome-screen/backend:resources/intellij.platform.ide.nonModalWelcomeScreen.backend.xml",
+        "@community//platform/non-modal-welcome-screen/frontend:resources/intellij.platform.ide.nonModalWelcomeScreen.frontend.xml",
+        "@community//platform/non-modal-welcome-screen:resources/intellij.platform.ide.nonModalWelcomeScreen.xml",
+    ],
     refused_content_modules = [
         "intellij.idea.customization.ultimate",
         "intellij.idea.ultimate.customizationTrial",

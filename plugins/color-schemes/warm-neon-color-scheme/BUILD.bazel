@@ -6,13 +6,9 @@ load("//platform/build-scripts/bazel-rules:dist_plugin.bzl", "dist_plugin")
 ### auto-generated section `dev intellij.color.scheme.warmNeon` start
 dist_plugin(
     descriptor = "resources/META-INF/plugin.xml",
-    jars = {
-        "lib/color-scheme-warmNeon.jar": ["intellij.color.scheme.warmNeon"],
-    },
+    jars = {"lib/color-scheme-warmNeon.jar": ["intellij.color.scheme.warmNeon"]},
     main_module = "intellij.color.scheme.warmNeon",
-    module_labels = {
-        "intellij.color.scheme.warmNeon": "@community//plugins/color-schemes/warm-neon-color-scheme:color-scheme-warmNeon",
-    },
+    module_labels = {"intellij.color.scheme.warmNeon": "//plugins/color-schemes/warm-neon-color-scheme:color-scheme-warmNeon"},
 )
 ### auto-generated section `dev intellij.color.scheme.warmNeon` end
 

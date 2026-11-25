@@ -6,13 +6,9 @@ load("//platform/build-scripts/bazel-rules:dist_plugin.bzl", "dist_plugin")
 ### auto-generated section `dev intellij.color.scheme.cobalt` start
 dist_plugin(
     descriptor = "resources/META-INF/plugin.xml",
-    jars = {
-        "lib/color-scheme-cobalt.jar": ["intellij.color.scheme.cobalt"],
-    },
+    jars = {"lib/color-scheme-cobalt.jar": ["intellij.color.scheme.cobalt"]},
     main_module = "intellij.color.scheme.cobalt",
-    module_labels = {
-        "intellij.color.scheme.cobalt": "@community//plugins/color-schemes/cobalt-color-scheme:color-scheme-cobalt",
-    },
+    module_labels = {"intellij.color.scheme.cobalt": "//plugins/color-schemes/cobalt-color-scheme:color-scheme-cobalt"},
 )
 ### auto-generated section `dev intellij.color.scheme.cobalt` end
 

@@ -15,13 +15,9 @@ jps_test(
 ### auto-generated section `dev intellij.findUsagesMl` start
 dist_plugin(
     descriptor = "resources/META-INF/plugin.xml",
-    jars = {
-        "lib/findUsagesMl.jar": ["intellij.findUsagesMl"],
-    },
+    jars = {"lib/findUsagesMl.jar": ["intellij.findUsagesMl"]},
     main_module = "intellij.findUsagesMl",
-    module_labels = {
-        "intellij.findUsagesMl": "@community//plugins/findUsagesMl:findUsagesMl",
-    },
+    module_labels = {"intellij.findUsagesMl": "//plugins/findUsagesMl"},
 )
 ### auto-generated section `dev intellij.findUsagesMl` end
 

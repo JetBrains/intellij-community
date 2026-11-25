@@ -6,13 +6,9 @@ load("//platform/build-scripts/bazel-rules:dist_plugin.bzl", "dist_plugin")
 ### auto-generated section `dev intellij.keymap.qtcreator` start
 dist_plugin(
     descriptor = "resources/META-INF/plugin.xml",
-    jars = {
-        "lib/keymap-qtcreator.jar": ["intellij.keymap.qtcreator"],
-    },
+    jars = {"lib/keymap-qtcreator.jar": ["intellij.keymap.qtcreator"]},
     main_module = "intellij.keymap.qtcreator",
-    module_labels = {
-        "intellij.keymap.qtcreator": "@community//plugins/keymaps/qtcreator-keymap:keymap-qtcreator",
-    },
+    module_labels = {"intellij.keymap.qtcreator": "//plugins/keymaps/qtcreator-keymap:keymap-qtcreator"},
 )
 ### auto-generated section `dev intellij.keymap.qtcreator` end
 

@@ -5,19 +5,12 @@ load("//platform/build-scripts/bazel-rules:dist_plugin.bzl", "dist_plugin")
 
 ### auto-generated section `dev intellij.lsp.ui.plugin` start
 dist_plugin(
-    content_modules = ["intellij.lsp.ui.frontend"],
+    content_modules = {"intellij.lsp.ui.frontend": "//plugins/lsp.ui/lsp.ui.frontend"},
     descriptor = "resources/META-INF/plugin.xml",
-    descriptors = {
-        "@community//plugins/lsp.ui/lsp.ui.frontend:resources/intellij.lsp.ui.frontend.xml": "intellij.lsp.ui.frontend.xml",
-    },
-    jars = {
-        "lib/lsp-ui-plugin.jar": ["intellij.lsp.ui.plugin"],
-    },
+    jars = {"lib/lsp-ui-plugin.jar": ["intellij.lsp.ui.plugin"]},
     main_module = "intellij.lsp.ui.plugin",
-    module_labels = {
-        "intellij.lsp.ui.frontend": "@community//plugins/lsp.ui/lsp.ui.frontend:lsp.ui.frontend",
-        "intellij.lsp.ui.plugin": "@community//plugins/lsp.ui/lsp.ui.plugin:lsp.ui.plugin",
-    },
+    module_descriptors = ["@community//plugins/lsp.ui/lsp.ui.frontend:resources/intellij.lsp.ui.frontend.xml"],
+    module_labels = {"intellij.lsp.ui.plugin": "//plugins/lsp.ui/lsp.ui.plugin"},
 )
 ### auto-generated section `dev intellij.lsp.ui.plugin` end
 

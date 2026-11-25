@@ -34,29 +34,17 @@ jps_test(
 
 ### auto-generated section `dev intellij.debugger.streams.plugin` start
 dist_plugin(
-    content_modules = [
-        # do not sort,
-        "intellij.debugger.streams.core",
-        "intellij.debugger.streams.shared",
-        "intellij.debugger.streams.backend",
-        "intellij.debugger.streams.java",
-        "intellij.debugger.streams.java.frontend",
-        "intellij.debugger.streams.java.rt",
-        "intellij.debugger.streams.java.rt.gatherers",
-    ],
+    content_modules = {
+        "intellij.debugger.streams.core": "//plugins/stream-debugger/core",
+        "intellij.debugger.streams.shared": "//plugins/stream-debugger/shared",
+        "intellij.debugger.streams.backend": "//plugins/stream-debugger/backend",
+        "intellij.debugger.streams.java": "//plugins/stream-debugger/java",
+        "intellij.debugger.streams.java.frontend": "//plugins/stream-debugger/java/frontend",
+        "intellij.debugger.streams.java.rt": "//plugins/stream-debugger/rt",
+        "intellij.debugger.streams.java.rt.gatherers": "//plugins/stream-debugger/rt/gatherers",
+    },
     descriptor = "resources/META-INF/plugin.xml",
-    descriptors = {
-        "@community//plugins/stream-debugger/backend:resources/intellij.debugger.streams.backend.xml": "intellij.debugger.streams.backend.xml",
-        "@community//plugins/stream-debugger/core:resources/intellij.debugger.streams.core.xml": "intellij.debugger.streams.core.xml",
-        "@community//plugins/stream-debugger/java/frontend:resources/intellij.debugger.streams.java.frontend.xml": "intellij.debugger.streams.java.frontend.xml",
-        "@community//plugins/stream-debugger/java:resources/intellij.debugger.streams.java.xml": "intellij.debugger.streams.java.xml",
-        "@community//plugins/stream-debugger/rt/gatherers:resources/intellij.debugger.streams.java.rt.gatherers.xml": "intellij.debugger.streams.java.rt.gatherers.xml",
-        "@community//plugins/stream-debugger/rt:resources/intellij.debugger.streams.java.rt.xml": "intellij.debugger.streams.java.rt.xml",
-        "@community//plugins/stream-debugger/shared:resources/intellij.debugger.streams.shared.xml": "intellij.debugger.streams.shared.xml",
-    },
-    jars = {
-        "lib/debugger-streams-plugin.jar": ["intellij.debugger.streams.plugin"],
-    },
+    jars = {"lib/debugger-streams-plugin.jar": ["intellij.debugger.streams.plugin"]},
     main_module = "intellij.debugger.streams.plugin",
     mode_refused_content_modules = {
         "frontend": [
@@ -64,20 +52,20 @@ dist_plugin(
             "intellij.debugger.streams.java",
         ],
     },
+    module_descriptors = [
+        "@community//plugins/stream-debugger/backend:resources/intellij.debugger.streams.backend.xml",
+        "@community//plugins/stream-debugger/core:resources/intellij.debugger.streams.core.xml",
+        "@community//plugins/stream-debugger/java/frontend:resources/intellij.debugger.streams.java.frontend.xml",
+        "@community//plugins/stream-debugger/java:resources/intellij.debugger.streams.java.xml",
+        "@community//plugins/stream-debugger/rt/gatherers:resources/intellij.debugger.streams.java.rt.gatherers.xml",
+        "@community//plugins/stream-debugger/rt:resources/intellij.debugger.streams.java.rt.xml",
+        "@community//plugins/stream-debugger/shared:resources/intellij.debugger.streams.shared.xml",
+    ],
     module_jar_paths = {
         "intellij.debugger.streams.java.rt": "lib/intellij.debugger.streams.java.rt.jar",
         "intellij.debugger.streams.java.rt.gatherers": "lib/intellij.debugger.streams.java.rt.gatherers.jar",
     },
-    module_labels = {
-        "intellij.debugger.streams.backend": "@community//plugins/stream-debugger/backend:backend",
-        "intellij.debugger.streams.core": "@community//plugins/stream-debugger/core:core",
-        "intellij.debugger.streams.java": "@community//plugins/stream-debugger/java:java",
-        "intellij.debugger.streams.java.frontend": "@community//plugins/stream-debugger/java/frontend:frontend",
-        "intellij.debugger.streams.java.rt": "@community//plugins/stream-debugger/rt:rt",
-        "intellij.debugger.streams.java.rt.gatherers": "@community//plugins/stream-debugger/rt/gatherers:gatherers",
-        "intellij.debugger.streams.plugin": "@community//plugins/stream-debugger:debugger-streams-plugin",
-        "intellij.debugger.streams.shared": "@community//plugins/stream-debugger/shared:shared",
-    },
+    module_labels = {"intellij.debugger.streams.plugin": "//plugins/stream-debugger:debugger-streams-plugin"},
 )
 ### auto-generated section `dev intellij.debugger.streams.plugin` end
 

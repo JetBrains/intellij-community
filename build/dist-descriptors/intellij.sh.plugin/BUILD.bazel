@@ -19,17 +19,6 @@ load("//platform/build-scripts/bazel-rules:dist_plugin_descriptor.bzl", "dist_pl
 
 dist_plugin_descriptor(
     descriptor = "//plugins/sh/plugin:resources/META-INF/plugin.xml",
-    descriptors = {
-        "@community//plugins/sh/backend:resources/intellij.sh.backend.xml": "intellij.sh.backend.xml",
-        "@community//plugins/sh/copyright:resources/intellij.sh.copyright.xml": "intellij.sh.copyright.xml",
-        "@community//plugins/sh/core:resources/intellij.sh.core.xml": "intellij.sh.core.xml",
-        "@community//plugins/sh/execution:resources/intellij.sh.execution.xml": "intellij.sh.execution.xml",
-        "@community//plugins/sh/markdown:resources/intellij.sh.markdown.xml": "intellij.sh.markdown.xml",
-        "@community//plugins/sh/python:resources/intellij.sh.python.xml": "intellij.sh.python.xml",
-        "@community//plugins/sh/spellchecker:resources/intellij.sh.spellchecker.xml": "intellij.sh.spellchecker.xml",
-        "@community//plugins/sh/terminal/frontend:resources/intellij.sh.terminal.frontend.xml": "intellij.sh.terminal.frontend.xml",
-        "@community//plugins/sh/terminal:resources/intellij.sh.terminal.xml": "intellij.sh.terminal.xml",
-    },
     main_module = "intellij.sh.plugin",
     mode_refused_content_modules = {
         "frontend": [
@@ -40,6 +29,17 @@ dist_plugin_descriptor(
             "intellij.sh.spellchecker",
         ],
     },
+    module_descriptors = [
+        "@community//plugins/sh/backend:resources/intellij.sh.backend.xml",
+        "@community//plugins/sh/copyright:resources/intellij.sh.copyright.xml",
+        "@community//plugins/sh/core:resources/intellij.sh.core.xml",
+        "@community//plugins/sh/execution:resources/intellij.sh.execution.xml",
+        "@community//plugins/sh/markdown:resources/intellij.sh.markdown.xml",
+        "@community//plugins/sh/python:resources/intellij.sh.python.xml",
+        "@community//plugins/sh/spellchecker:resources/intellij.sh.spellchecker.xml",
+        "@community//plugins/sh/terminal/frontend:resources/intellij.sh.terminal.frontend.xml",
+        "@community//plugins/sh/terminal:resources/intellij.sh.terminal.xml",
+    ],
     refused_content_modules = [
         "intellij.sh.frontend.split",
     ],

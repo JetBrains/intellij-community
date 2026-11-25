@@ -5,23 +5,15 @@ load("//platform/build-scripts/bazel-rules:dist_plugin.bzl", "dist_plugin")
 
 ### auto-generated section `dev intellij.vcs.gitlab` start
 dist_plugin(
-    content_modules = [
-        # do not sort,
-        "intellij.vcs.gitlab.shared",
-        "intellij.vcs.gitlab.backend",
-        "intellij.vcs.gitlab.frontend",
-        "intellij.vcs.gitlab.git",
-        "intellij.vcs.gitlab.yaml",
-    ],
-    main_module = "intellij.vcs.gitlab",
-    module_labels = {
-        "intellij.vcs.gitlab": "@community//plugins/gitlab:gitlab",
-        "intellij.vcs.gitlab.backend": "@community//plugins/gitlab/gitlab-core:vcs-gitlab-backend",
-        "intellij.vcs.gitlab.frontend": "@community//plugins/gitlab/frontend:frontend",
-        "intellij.vcs.gitlab.git": "@community//plugins/gitlab/gitlab-git:vcs-gitlab-git",
-        "intellij.vcs.gitlab.shared": "@community//plugins/gitlab/shared:shared",
-        "intellij.vcs.gitlab.yaml": "@community//plugins/gitlab/gitlab-yaml:vcs-gitlab-yaml",
+    content_modules = {
+        "intellij.vcs.gitlab.shared": "//plugins/gitlab/shared",
+        "intellij.vcs.gitlab.backend": "//plugins/gitlab/gitlab-core:vcs-gitlab-backend",
+        "intellij.vcs.gitlab.frontend": "//plugins/gitlab/frontend",
+        "intellij.vcs.gitlab.git": "//plugins/gitlab/gitlab-git:vcs-gitlab-git",
+        "intellij.vcs.gitlab.yaml": "//plugins/gitlab/gitlab-yaml:vcs-gitlab-yaml",
     },
+    main_module = "intellij.vcs.gitlab",
+    module_labels = {"intellij.vcs.gitlab": "//plugins/gitlab"},
 )
 ### auto-generated section `dev intellij.vcs.gitlab` end
 

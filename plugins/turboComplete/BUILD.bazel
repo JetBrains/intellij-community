@@ -15,13 +15,9 @@ jps_test(
 ### auto-generated section `dev intellij.turboComplete` start
 dist_plugin(
     descriptor = "resources/META-INF/plugin.xml",
-    jars = {
-        "lib/turboComplete.jar": ["intellij.turboComplete"],
-    },
+    jars = {"lib/turboComplete.jar": ["intellij.turboComplete"]},
     main_module = "intellij.turboComplete",
-    module_labels = {
-        "intellij.turboComplete": "@community//plugins/turboComplete:turboComplete",
-    },
+    module_labels = {"intellij.turboComplete": "//plugins/turboComplete"},
 )
 ### auto-generated section `dev intellij.turboComplete` end
 

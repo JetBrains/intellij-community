@@ -19,20 +19,6 @@ load("//platform/build-scripts/bazel-rules:dist_plugin_descriptor.bzl", "dist_pl
 
 dist_plugin_descriptor(
     descriptor = "//plugins/gradle/java/plugin:resources/META-INF/plugin.xml",
-    descriptors = {
-        "@community//plugins/gradle-maven:resources/intellij.gradle.java.maven.xml": "intellij.gradle.java.maven.xml",
-        "@community//plugins/gradle/gradle-dependency-updater:resources/intellij.gradle.dependencyUpdater.xml": "intellij.gradle.dependencyUpdater.xml",
-        "@community//plugins/gradle/intellij.gradle.analysis:resources/intellij.gradle.analysis.xml": "intellij.gradle.analysis.xml",
-        "@community//plugins/gradle/java/coverage:resources/intellij.gradle.java.coverage.xml": "intellij.gradle.java.coverage.xml",
-        "@community//plugins/gradle/java/groovy/ml:resources/intellij.gradle.java.groovy.ml.xml": "intellij.gradle.java.groovy.ml.xml",
-        "@community//plugins/gradle/java/groovy/toml:resources/intellij.gradle.java.groovy.toml.xml": "intellij.gradle.java.groovy.toml.xml",
-        "@community//plugins/gradle/java/groovy:resources/intellij.gradle.java.groovy.xml": "intellij.gradle.java.groovy.xml",
-        "@community//plugins/gradle/java/performance:resources/intellij.gradle.java.performance.xml": "intellij.gradle.java.performance.xml",
-        "@community//plugins/gradle/java/properties:resources/intellij.gradle.java.properties.xml": "intellij.gradle.java.properties.xml",
-        "@community//plugins/gradle/java/toml:resources/intellij.gradle.java.toml.xml": "intellij.gradle.java.toml.xml",
-        "@community//plugins/gradle/java:resources/intellij.gradle.java.xml": "intellij.gradle.java.xml",
-        "@community//plugins/gradle/jps-plugin:resources/intellij.gradle.jps.xml": "intellij.gradle.jps.xml",
-    },
     main_module = "intellij.gradle.java.plugin",
     mode_refused_content_modules = {
         "frontend": [
@@ -48,6 +34,20 @@ dist_plugin_descriptor(
             "intellij.gradle.java.properties",
         ],
     },
+    module_descriptors = [
+        "@community//plugins/gradle-maven:resources/intellij.gradle.java.maven.xml",
+        "@community//plugins/gradle/gradle-dependency-updater:resources/intellij.gradle.dependencyUpdater.xml",
+        "@community//plugins/gradle/intellij.gradle.analysis:resources/intellij.gradle.analysis.xml",
+        "@community//plugins/gradle/java/coverage:resources/intellij.gradle.java.coverage.xml",
+        "@community//plugins/gradle/java/groovy/ml:resources/intellij.gradle.java.groovy.ml.xml",
+        "@community//plugins/gradle/java/groovy/toml:resources/intellij.gradle.java.groovy.toml.xml",
+        "@community//plugins/gradle/java/groovy:resources/intellij.gradle.java.groovy.xml",
+        "@community//plugins/gradle/java/performance:resources/intellij.gradle.java.performance.xml",
+        "@community//plugins/gradle/java/properties:resources/intellij.gradle.java.properties.xml",
+        "@community//plugins/gradle/java/toml:resources/intellij.gradle.java.toml.xml",
+        "@community//plugins/gradle/java:resources/intellij.gradle.java.xml",
+        "@community//plugins/gradle/jps-plugin:resources/intellij.gradle.jps.xml",
+    ],
     refused_content_modules = [
         "intellij.gradle.profiler",
     ],

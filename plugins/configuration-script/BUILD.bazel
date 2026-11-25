@@ -22,28 +22,19 @@ jps_test(
 
 ### auto-generated section `dev intellij.configurationScript` start
 dist_plugin(
-    content_modules = [
-        # do not sort,
-        "intellij.configurationScript.backend",
-        "intellij.configurationScript.execution",
-    ],
+    content_modules = {
+        "intellij.configurationScript.backend": "//plugins/configuration-script/backend",
+        "intellij.configurationScript.execution": "//plugins/configuration-script/execution",
+    },
     descriptor = "resources/META-INF/plugin.xml",
-    descriptors = {
-        "@community//plugins/configuration-script/backend:resources/intellij.configurationScript.backend.xml": "intellij.configurationScript.backend.xml",
-        "@community//plugins/configuration-script/execution:resources/intellij.configurationScript.execution.xml": "intellij.configurationScript.execution.xml",
-    },
-    jars = {
-        "lib/configurationScript.jar": ["intellij.configurationScript"],
-    },
+    jars = {"lib/configurationScript.jar": ["intellij.configurationScript"]},
     main_module = "intellij.configurationScript",
-    mode_refused_content_modules = {
-        "frontend": ["intellij.configurationScript.backend"],
-    },
-    module_labels = {
-        "intellij.configurationScript": "@community//plugins/configuration-script:configuration-script",
-        "intellij.configurationScript.backend": "@community//plugins/configuration-script/backend:backend",
-        "intellij.configurationScript.execution": "@community//plugins/configuration-script/execution:execution",
-    },
+    mode_refused_content_modules = {"frontend": ["intellij.configurationScript.backend"]},
+    module_descriptors = [
+        "@community//plugins/configuration-script/backend:resources/intellij.configurationScript.backend.xml",
+        "@community//plugins/configuration-script/execution:resources/intellij.configurationScript.execution.xml",
+    ],
+    module_labels = {"intellij.configurationScript": "//plugins/configuration-script"},
 )
 ### auto-generated section `dev intellij.configurationScript` end
 

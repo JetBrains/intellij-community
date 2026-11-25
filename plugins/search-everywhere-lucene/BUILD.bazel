@@ -5,23 +5,14 @@ load("//platform/build-scripts/bazel-rules:dist_plugin.bzl", "dist_plugin")
 
 ### auto-generated section `dev intellij.searchEverywhereLucene.plugin` start
 dist_plugin(
-    content_modules = [
-        # do not sort,
-        "intellij.searchEverywhereLucene.common",
-        "intellij.searchEverywhereLucene.frontend",
-        "intellij.searchEverywhereLucene.backend",
-        "intellij.searchEverywhereLucene.performanceTesting",
-    ],
+    content_modules = {
+        "intellij.searchEverywhereLucene.common": "//plugins/search-everywhere-lucene/common",
+        "intellij.searchEverywhereLucene.frontend": "//plugins/search-everywhere-lucene/frontend",
+        "intellij.searchEverywhereLucene.backend": "//plugins/search-everywhere-lucene/backend",
+        "intellij.searchEverywhereLucene.performanceTesting": "//plugins/search-everywhere-lucene/test-commands:searchEverywhereLucene-performanceTesting",
+    },
     descriptor = "resources/META-INF/plugin.xml",
-    descriptors = {
-        "@community//plugins/search-everywhere-lucene/backend:resources/intellij.searchEverywhereLucene.backend.xml": "intellij.searchEverywhereLucene.backend.xml",
-        "@community//plugins/search-everywhere-lucene/common:resources/intellij.searchEverywhereLucene.common.xml": "intellij.searchEverywhereLucene.common.xml",
-        "@community//plugins/search-everywhere-lucene/frontend:resources/intellij.searchEverywhereLucene.frontend.xml": "intellij.searchEverywhereLucene.frontend.xml",
-        "@community//plugins/search-everywhere-lucene/test-commands:resources/intellij.searchEverywhereLucene.performanceTesting.xml": "intellij.searchEverywhereLucene.performanceTesting.xml",
-    },
-    jars = {
-        "lib/searchEverywhereLucene-plugin.jar": ["intellij.searchEverywhereLucene.plugin"],
-    },
+    jars = {"lib/searchEverywhereLucene-plugin.jar": ["intellij.searchEverywhereLucene.plugin"]},
     main_module = "intellij.searchEverywhereLucene.plugin",
     mode_refused_content_modules = {
         "frontend": [
@@ -29,16 +20,14 @@ dist_plugin(
             "intellij.searchEverywhereLucene.performanceTesting",
         ],
     },
-    module_jar_paths = {
-        "intellij.searchEverywhereLucene.common": "lib/intellij.searchEverywhereLucene.common.jar",
-    },
-    module_labels = {
-        "intellij.searchEverywhereLucene.backend": "@community//plugins/search-everywhere-lucene/backend:backend",
-        "intellij.searchEverywhereLucene.common": "@community//plugins/search-everywhere-lucene/common:common",
-        "intellij.searchEverywhereLucene.frontend": "@community//plugins/search-everywhere-lucene/frontend:frontend",
-        "intellij.searchEverywhereLucene.performanceTesting": "@community//plugins/search-everywhere-lucene/test-commands:searchEverywhereLucene-performanceTesting",
-        "intellij.searchEverywhereLucene.plugin": "@community//plugins/search-everywhere-lucene:searchEverywhereLucene-plugin",
-    },
+    module_descriptors = [
+        "@community//plugins/search-everywhere-lucene/backend:resources/intellij.searchEverywhereLucene.backend.xml",
+        "@community//plugins/search-everywhere-lucene/common:resources/intellij.searchEverywhereLucene.common.xml",
+        "@community//plugins/search-everywhere-lucene/frontend:resources/intellij.searchEverywhereLucene.frontend.xml",
+        "@community//plugins/search-everywhere-lucene/test-commands:resources/intellij.searchEverywhereLucene.performanceTesting.xml",
+    ],
+    module_jar_paths = {"intellij.searchEverywhereLucene.common": "lib/intellij.searchEverywhereLucene.common.jar"},
+    module_labels = {"intellij.searchEverywhereLucene.plugin": "//plugins/search-everywhere-lucene:searchEverywhereLucene-plugin"},
 )
 ### auto-generated section `dev intellij.searchEverywhereLucene.plugin` end
 

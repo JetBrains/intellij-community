@@ -15,28 +15,20 @@ jps_test(
 
 ### auto-generated section `dev intellij.platform.images` start
 dist_plugin(
-    content_modules = [
-        # do not sort,
-        "intellij.platform.images.jcef",
-        "intellij.platform.images.copyright",
-        "intellij.platform.images.xdebugger",
-    ],
+    content_modules = {
+        "intellij.platform.images.jcef": "//images/jcef",
+        "intellij.platform.images.copyright": "//images/intellij.platform.images.copyright:copyright",
+        "intellij.platform.images.xdebugger": "//images/intellij.platform.images.xdebugger:xdebugger",
+    },
     descriptor = "resources/META-INF/plugin.xml",
-    descriptors = {
-        "@community//images/intellij.platform.images.copyright:resources/intellij.platform.images.copyright.xml": "intellij.platform.images.copyright.xml",
-        "@community//images/intellij.platform.images.xdebugger:resources/intellij.platform.images.xdebugger.xml": "intellij.platform.images.xdebugger.xml",
-        "@community//images/jcef:resources/intellij.platform.images.jcef.xml": "intellij.platform.images.jcef.xml",
-    },
-    jars = {
-        "lib/platform-images.jar": ["intellij.platform.images"],
-    },
+    jars = {"lib/platform-images.jar": ["intellij.platform.images"]},
     main_module = "intellij.platform.images",
-    module_labels = {
-        "intellij.platform.images": "@community//images:images",
-        "intellij.platform.images.copyright": "@community//images/intellij.platform.images.copyright:copyright",
-        "intellij.platform.images.jcef": "@community//images/jcef:jcef",
-        "intellij.platform.images.xdebugger": "@community//images/intellij.platform.images.xdebugger:xdebugger",
-    },
+    module_descriptors = [
+        "@community//images/intellij.platform.images.copyright:resources/intellij.platform.images.copyright.xml",
+        "@community//images/intellij.platform.images.xdebugger:resources/intellij.platform.images.xdebugger.xml",
+        "@community//images/jcef:resources/intellij.platform.images.jcef.xml",
+    ],
+    module_labels = {"intellij.platform.images": "//images"},
 )
 ### auto-generated section `dev intellij.platform.images` end
 

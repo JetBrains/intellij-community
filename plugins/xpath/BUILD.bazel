@@ -14,28 +14,19 @@ jps_test(
 
 ### auto-generated section `dev intellij.xpath` start
 dist_plugin(
-    content_modules = [
-        # do not sort,
-        "intellij.xml.langInjection.xpath",
-        "intellij.xpath.rt",
-    ],
+    content_modules = {
+        "intellij.xml.langInjection.xpath": "//xml/langInjection/xpath",
+        "intellij.xpath.rt": "//plugins/xpath/xslt-rt:rt",
+    },
     descriptor = "xpath-lang/resources/META-INF/plugin.xml",
-    descriptors = {
-        "@community//plugins/xpath/xslt-rt:resources/intellij.xpath.rt.xml": "intellij.xpath.rt.xml",
-        "@community//xml/langInjection/xpath:resources/intellij.xml.langInjection.xpath.xml": "intellij.xml.langInjection.xpath.xml",
-    },
-    jars = {
-        "lib/xpath.jar": ["intellij.xpath"],
-    },
+    jars = {"lib/xpath.jar": ["intellij.xpath"]},
     main_module = "intellij.xpath",
-    mode_refused_content_modules = {
-        "frontend": ["intellij.xml.langInjection.xpath"],
-    },
-    module_labels = {
-        "intellij.xml.langInjection.xpath": "@community//xml/langInjection/xpath:xpath",
-        "intellij.xpath": "@community//plugins/xpath:xpath",
-        "intellij.xpath.rt": "@community//plugins/xpath/xslt-rt:rt",
-    },
+    mode_refused_content_modules = {"frontend": ["intellij.xml.langInjection.xpath"]},
+    module_descriptors = [
+        "@community//plugins/xpath/xslt-rt:resources/intellij.xpath.rt.xml",
+        "@community//xml/langInjection/xpath:resources/intellij.xml.langInjection.xpath.xml",
+    ],
+    module_labels = {"intellij.xpath": "//plugins/xpath"},
 )
 ### auto-generated section `dev intellij.xpath` end
 

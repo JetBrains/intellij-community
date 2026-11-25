@@ -7,33 +7,20 @@ load("//platform/build-scripts/bazel-rules:dist_plugin.bzl", "dist_plugin")
 
 ### auto-generated section `dev intellij.vcs.git` start
 dist_plugin(
-    content_modules = [
-        # do not sort,
-        "intellij.vcs.git.backend",
-        "intellij.vcs.git.hosting",
-        "intellij.vcs.git.localHistory",
-        "intellij.vcs.git.terminal",
-        "intellij.vcs.git.coverage",
-        "intellij.vcs.git.shared",
-        "intellij.vcs.git.frontend",
-        "intellij.vcs.git.performanceTesting",
-        "intellij.vcs.git.rpc.backend",
-        "intellij.vcs.git.rt",
-    ],
-    main_module = "intellij.vcs.git",
-    module_labels = {
-        "intellij.vcs.git": "@community//plugins/git4idea:vcs-git",
-        "intellij.vcs.git.backend": "@community//plugins/git4idea/backend:backend",
-        "intellij.vcs.git.coverage": "@community//plugins/git4idea/intellij.vcs.git.coverage:vcs-git-coverage",
-        "intellij.vcs.git.frontend": "@community//plugins/git4idea/frontend:frontend",
-        "intellij.vcs.git.hosting": "@community//plugins/git4idea/hosting:hosting",
-        "intellij.vcs.git.localHistory": "@community//plugins/git4idea/localHistory:localHistory",
-        "intellij.vcs.git.performanceTesting": "@community//plugins/git4idea/performanceTesting:performanceTesting",
-        "intellij.vcs.git.rpc.backend": "@community//plugins/git4idea/rpc.backend:rpc.backend",
-        "intellij.vcs.git.rt": "@community//plugins/git4idea/rt:rt",
-        "intellij.vcs.git.shared": "@community//plugins/git4idea/shared:shared",
-        "intellij.vcs.git.terminal": "@community//plugins/git4idea/terminal:terminal",
+    content_modules = {
+        "intellij.vcs.git.backend": "//plugins/git4idea/backend",
+        "intellij.vcs.git.hosting": "//plugins/git4idea/hosting",
+        "intellij.vcs.git.localHistory": "//plugins/git4idea/localHistory",
+        "intellij.vcs.git.terminal": "//plugins/git4idea/terminal",
+        "intellij.vcs.git.coverage": "//plugins/git4idea/intellij.vcs.git.coverage:vcs-git-coverage",
+        "intellij.vcs.git.shared": "//plugins/git4idea/shared",
+        "intellij.vcs.git.frontend": "//plugins/git4idea/frontend",
+        "intellij.vcs.git.performanceTesting": "//plugins/git4idea/performanceTesting",
+        "intellij.vcs.git.rpc.backend": "//plugins/git4idea/rpc.backend",
+        "intellij.vcs.git.rt": "//plugins/git4idea/rt",
     },
+    main_module = "intellij.vcs.git",
+    module_labels = {"intellij.vcs.git": "//plugins/git4idea:vcs-git"},
 )
 ### auto-generated section `dev intellij.vcs.git` end
 

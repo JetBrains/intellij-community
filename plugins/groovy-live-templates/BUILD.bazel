@@ -6,13 +6,9 @@ load("//platform/build-scripts/bazel-rules:dist_plugin.bzl", "dist_plugin")
 ### auto-generated section `dev intellij.groovy.live.templates` start
 dist_plugin(
     descriptor = "resources/META-INF/plugin.xml",
-    jars = {
-        "lib/groovy-live-templates.jar": ["intellij.groovy.live.templates"],
-    },
+    jars = {"lib/groovy-live-templates.jar": ["intellij.groovy.live.templates"]},
     main_module = "intellij.groovy.live.templates",
-    module_labels = {
-        "intellij.groovy.live.templates": "@community//plugins/groovy-live-templates:groovy-live-templates",
-    },
+    module_labels = {"intellij.groovy.live.templates": "//plugins/groovy-live-templates"},
 )
 ### auto-generated section `dev intellij.groovy.live.templates` end
 

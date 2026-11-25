@@ -5,34 +5,23 @@ load("//platform/build-scripts/bazel-rules:dist_plugin.bzl", "dist_plugin")
 
 ### auto-generated section `dev intellij.platform.recentFiles.plugin` start
 dist_plugin(
-    content_modules = [
-        # do not sort,
-        "intellij.platform.recentFiles",
-        "intellij.platform.recentFiles.backend",
-        "intellij.platform.recentFiles.frontend",
-        "intellij.platform.ide.tabInEditor.recentFiles",
-    ],
+    content_modules = {
+        "intellij.platform.recentFiles": "//platform/recentFiles/shared:recentFiles",
+        "intellij.platform.recentFiles.backend": "//platform/recentFiles/backend",
+        "intellij.platform.recentFiles.frontend": "//platform/recentFiles/frontend",
+        "intellij.platform.ide.tabInEditor.recentFiles": "//platform/platform-impl/tab-in-editor/recentFiles",
+    },
     descriptor = "resources/META-INF/plugin.xml",
-    descriptors = {
-        "@community//platform/platform-impl/tab-in-editor/recentFiles:resources/intellij.platform.ide.tabInEditor.recentFiles.xml": "intellij.platform.ide.tabInEditor.recentFiles.xml",
-        "@community//platform/recentFiles/backend:resources/intellij.platform.recentFiles.backend.xml": "intellij.platform.recentFiles.backend.xml",
-        "@community//platform/recentFiles/frontend:resources/intellij.platform.recentFiles.frontend.xml": "intellij.platform.recentFiles.frontend.xml",
-        "@community//platform/recentFiles/shared:resources/intellij.platform.recentFiles.xml": "intellij.platform.recentFiles.xml",
-    },
-    jars = {
-        "lib/platform-recentFiles-plugin.jar": ["intellij.platform.recentFiles.plugin"],
-    },
+    jars = {"lib/platform-recentFiles-plugin.jar": ["intellij.platform.recentFiles.plugin"]},
     main_module = "intellij.platform.recentFiles.plugin",
-    mode_refused_content_modules = {
-        "frontend": ["intellij.platform.recentFiles.backend"],
-    },
-    module_labels = {
-        "intellij.platform.ide.tabInEditor.recentFiles": "@community//platform/platform-impl/tab-in-editor/recentFiles:recentFiles",
-        "intellij.platform.recentFiles": "@community//platform/recentFiles/shared:recentFiles",
-        "intellij.platform.recentFiles.backend": "@community//platform/recentFiles/backend:backend",
-        "intellij.platform.recentFiles.frontend": "@community//platform/recentFiles/frontend:frontend",
-        "intellij.platform.recentFiles.plugin": "@community//platform/recentFiles/plugin:plugin",
-    },
+    mode_refused_content_modules = {"frontend": ["intellij.platform.recentFiles.backend"]},
+    module_descriptors = [
+        "@community//platform/platform-impl/tab-in-editor/recentFiles:resources/intellij.platform.ide.tabInEditor.recentFiles.xml",
+        "@community//platform/recentFiles/backend:resources/intellij.platform.recentFiles.backend.xml",
+        "@community//platform/recentFiles/frontend:resources/intellij.platform.recentFiles.frontend.xml",
+        "@community//platform/recentFiles/shared:resources/intellij.platform.recentFiles.xml",
+    ],
+    module_labels = {"intellij.platform.recentFiles.plugin": "//platform/recentFiles/plugin"},
 )
 ### auto-generated section `dev intellij.platform.recentFiles.plugin` end
 

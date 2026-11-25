@@ -25,22 +25,13 @@ jps_test(
 
 ### auto-generated section `dev intellij.java.decompiler` start
 dist_plugin(
-    content_modules = ["intellij.java.decompiler.engine"],
+    content_modules = {"intellij.java.decompiler.engine": "//plugins/java-decompiler/engine"},
     descriptor = "resources/META-INF/plugin.xml",
-    descriptors = {
-        "@community//plugins/java-decompiler/engine:resources/intellij.java.decompiler.engine.xml": "intellij.java.decompiler.engine.xml",
-    },
-    jars = {
-        "lib/java-decompiler.jar": ["intellij.java.decompiler"],
-    },
+    jars = {"lib/java-decompiler.jar": ["intellij.java.decompiler"]},
     main_module = "intellij.java.decompiler",
-    module_jar_paths = {
-        "intellij.java.decompiler.engine": "lib/intellij.java.decompiler.engine.jar",
-    },
-    module_labels = {
-        "intellij.java.decompiler": "@community//plugins/java-decompiler/plugin:java-decompiler",
-        "intellij.java.decompiler.engine": "@community//plugins/java-decompiler/engine:engine",
-    },
+    module_descriptors = ["@community//plugins/java-decompiler/engine:resources/intellij.java.decompiler.engine.xml"],
+    module_jar_paths = {"intellij.java.decompiler.engine": "lib/intellij.java.decompiler.engine.jar"},
+    module_labels = {"intellij.java.decompiler": "//plugins/java-decompiler/plugin:java-decompiler"},
 )
 ### auto-generated section `dev intellij.java.decompiler` end
 

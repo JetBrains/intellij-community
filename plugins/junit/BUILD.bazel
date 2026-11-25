@@ -5,31 +5,18 @@ load("//platform/build-scripts/bazel-rules:dist_plugin.bzl", "dist_plugin")
 
 ### auto-generated section `dev intellij.junit` start
 dist_plugin(
-    content_modules = [
-        # do not sort,
-        "intellij.junit.properties",
-        "intellij.junit.vcs",
-        "intellij.junit.dashboard",
-        "intellij.junit.rt",
-        "intellij.junit.v5.rt",
-        "intellij.junit.v6.rt",
-        "intellij.libraries.hamcrest",
-        "intellij.libraries.junit4",
-    ],
+    content_modules = {
+        "intellij.junit.properties": "//plugins/junit/properties",
+        "intellij.junit.vcs": "//plugins/junit/vcs",
+        "intellij.junit.dashboard": "//plugins/junit/dashboard",
+        "intellij.junit.rt": "//plugins/junit_rt:junit-rt",
+        "intellij.junit.v5.rt": "//plugins/junit5_rt:junit-v5-rt",
+        "intellij.junit.v6.rt": "//plugins/junit6_rt:junit-v6-rt",
+        "intellij.libraries.hamcrest": "//libraries/hamcrest",
+        "intellij.libraries.junit4": "//libraries/junit4",
+    },
     descriptor = "resources/META-INF/plugin.xml",
-    descriptors = {
-        "@community//libraries/hamcrest:resources/intellij.libraries.hamcrest.xml": "intellij.libraries.hamcrest.xml",
-        "@community//libraries/junit4:resources/intellij.libraries.junit4.xml": "intellij.libraries.junit4.xml",
-        "@community//plugins/junit/dashboard:resources/intellij.junit.dashboard.xml": "intellij.junit.dashboard.xml",
-        "@community//plugins/junit/properties:resources/intellij.junit.properties.xml": "intellij.junit.properties.xml",
-        "@community//plugins/junit/vcs:resources/intellij.junit.vcs.xml": "intellij.junit.vcs.xml",
-        "@community//plugins/junit5_rt:resources/intellij.junit.v5.rt.xml": "intellij.junit.v5.rt.xml",
-        "@community//plugins/junit6_rt:resources/intellij.junit.v6.rt.xml": "intellij.junit.v6.rt.xml",
-        "@community//plugins/junit_rt:resources/intellij.junit.rt.xml": "intellij.junit.rt.xml",
-    },
-    jars = {
-        "lib/junit.jar": ["intellij.junit"],
-    },
+    jars = {"lib/junit.jar": ["intellij.junit"]},
     main_module = "intellij.junit",
     mode_refused_content_modules = {
         "frontend": [
@@ -38,6 +25,16 @@ dist_plugin(
             "intellij.junit.dashboard",
         ],
     },
+    module_descriptors = [
+        "@community//libraries/hamcrest:resources/intellij.libraries.hamcrest.xml",
+        "@community//libraries/junit4:resources/intellij.libraries.junit4.xml",
+        "@community//plugins/junit/dashboard:resources/intellij.junit.dashboard.xml",
+        "@community//plugins/junit/properties:resources/intellij.junit.properties.xml",
+        "@community//plugins/junit/vcs:resources/intellij.junit.vcs.xml",
+        "@community//plugins/junit5_rt:resources/intellij.junit.v5.rt.xml",
+        "@community//plugins/junit6_rt:resources/intellij.junit.v6.rt.xml",
+        "@community//plugins/junit_rt:resources/intellij.junit.rt.xml",
+    ],
     module_jar_paths = {
         "intellij.junit.rt": "lib/intellij.junit.rt.jar",
         "intellij.junit.v5.rt": "lib/intellij.junit.v5.rt.jar",
@@ -45,17 +42,7 @@ dist_plugin(
         "intellij.libraries.hamcrest": "lib/intellij.libraries.hamcrest.jar",
         "intellij.libraries.junit4": "lib/intellij.libraries.junit4.jar",
     },
-    module_labels = {
-        "intellij.junit": "@community//plugins/junit:junit",
-        "intellij.junit.dashboard": "@community//plugins/junit/dashboard:dashboard",
-        "intellij.junit.properties": "@community//plugins/junit/properties:properties",
-        "intellij.junit.rt": "@community//plugins/junit_rt:junit-rt",
-        "intellij.junit.v5.rt": "@community//plugins/junit5_rt:junit-v5-rt",
-        "intellij.junit.v6.rt": "@community//plugins/junit6_rt:junit-v6-rt",
-        "intellij.junit.vcs": "@community//plugins/junit/vcs:vcs",
-        "intellij.libraries.hamcrest": "@community//libraries/hamcrest:hamcrest",
-        "intellij.libraries.junit4": "@community//libraries/junit4:junit4",
-    },
+    module_labels = {"intellij.junit": "//plugins/junit"},
 )
 ### auto-generated section `dev intellij.junit` end
 

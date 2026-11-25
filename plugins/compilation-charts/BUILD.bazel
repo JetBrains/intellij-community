@@ -5,22 +5,13 @@ load("//platform/build-scripts/bazel-rules:dist_plugin.bzl", "dist_plugin")
 
 ### auto-generated section `dev intellij.compilation.charts` start
 dist_plugin(
-    content_modules = ["intellij.compilation.charts.jps"],
+    content_modules = {"intellij.compilation.charts.jps": "//plugins/compilation-charts/jps-plugin:compilation-charts-jps"},
     descriptor = "resources/META-INF/plugin.xml",
-    descriptors = {
-        "@community//plugins/compilation-charts/jps-plugin:resources/intellij.compilation.charts.jps.xml": "intellij.compilation.charts.jps.xml",
-    },
-    jars = {
-        "lib/compilation-charts.jar": ["intellij.compilation.charts"],
-    },
+    jars = {"lib/compilation-charts.jar": ["intellij.compilation.charts"]},
     main_module = "intellij.compilation.charts",
-    mode_refused_content_modules = {
-        "frontend": ["intellij.compilation.charts.jps"],
-    },
-    module_labels = {
-        "intellij.compilation.charts": "@community//plugins/compilation-charts:compilation-charts",
-        "intellij.compilation.charts.jps": "@community//plugins/compilation-charts/jps-plugin:compilation-charts-jps",
-    },
+    mode_refused_content_modules = {"frontend": ["intellij.compilation.charts.jps"]},
+    module_descriptors = ["@community//plugins/compilation-charts/jps-plugin:resources/intellij.compilation.charts.jps.xml"],
+    module_labels = {"intellij.compilation.charts": "//plugins/compilation-charts"},
 )
 ### auto-generated section `dev intellij.compilation.charts` end
 

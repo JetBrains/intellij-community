@@ -19,17 +19,17 @@ load("//platform/build-scripts/bazel-rules:dist_plugin_descriptor.bzl", "dist_pl
 
 dist_plugin_descriptor(
     descriptor = "//aether-dependency-resolver/plugin:resources/META-INF/plugin.xml",
-    descriptors = {
-        "@community//aether-dependency-resolver:resources/intellij.java.aetherDependencyResolver.xml": "intellij.java.aetherDependencyResolver.xml",
-        "@community//libraries/maven-resolver-provider:resources/intellij.libraries.maven.resolver.provider.xml": "intellij.libraries.maven.resolver.provider.xml",
-        "@community//libraries/maven-resolver-transport:resources/intellij.libraries.maven.resolver.transport.xml": "intellij.libraries.maven.resolver.transport.xml",
-        "@community//libraries/plexus-utils:resources/intellij.libraries.plexus.utils.xml": "intellij.libraries.plexus.utils.xml",
-        "@community//plugins/repository-search/completion:resources/intellij.repository.search.completion.xml": "intellij.repository.search.completion.xml",
-    },
     main_module = "intellij.java.aetherDependencyResolver.plugin",
     mode_refused_content_modules = {
         "frontend": ["intellij.repository.search.completion"],
     },
+    module_descriptors = [
+        "@community//aether-dependency-resolver:resources/intellij.java.aetherDependencyResolver.xml",
+        "@community//libraries/maven-resolver-provider:resources/intellij.libraries.maven.resolver.provider.xml",
+        "@community//libraries/maven-resolver-transport:resources/intellij.libraries.maven.resolver.transport.xml",
+        "@community//libraries/plexus-utils:resources/intellij.libraries.plexus.utils.xml",
+        "@community//plugins/repository-search/completion:resources/intellij.repository.search.completion.xml",
+    ],
     refused_content_modules = [
         "intellij.repository.search.ultimate",
     ],

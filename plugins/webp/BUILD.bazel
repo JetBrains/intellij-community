@@ -7,9 +7,7 @@ load("//platform/build-scripts/bazel-rules:dist_plugin.bzl", "dist_plugin")
 dist_plugin(
     descriptor = "resources/META-INF/plugin.xml",
     main_module = "intellij.webp",
-    module_labels = {
-        "intellij.webp": "@community//plugins/webp:webp",
-    },
+    module_labels = {"intellij.webp": "//plugins/webp"},
 )
 
 dist_complex_plugin(

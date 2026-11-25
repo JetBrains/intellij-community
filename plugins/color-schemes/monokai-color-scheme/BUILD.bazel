@@ -6,13 +6,9 @@ load("//platform/build-scripts/bazel-rules:dist_plugin.bzl", "dist_plugin")
 ### auto-generated section `dev intellij.color.scheme.monokai` start
 dist_plugin(
     descriptor = "resources/META-INF/plugin.xml",
-    jars = {
-        "lib/color-scheme-monokai.jar": ["intellij.color.scheme.monokai"],
-    },
+    jars = {"lib/color-scheme-monokai.jar": ["intellij.color.scheme.monokai"]},
     main_module = "intellij.color.scheme.monokai",
-    module_labels = {
-        "intellij.color.scheme.monokai": "@community//plugins/color-schemes/monokai-color-scheme:color-scheme-monokai",
-    },
+    module_labels = {"intellij.color.scheme.monokai": "//plugins/color-schemes/monokai-color-scheme:color-scheme-monokai"},
 )
 ### auto-generated section `dev intellij.color.scheme.monokai` end
 

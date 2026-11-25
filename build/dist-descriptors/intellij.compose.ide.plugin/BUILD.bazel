@@ -19,13 +19,6 @@ load("//platform/build-scripts/bazel-rules:dist_plugin_descriptor.bzl", "dist_pl
 
 dist_plugin_descriptor(
     descriptor = "//plugins/compose:resources/META-INF/plugin.xml",
-    descriptors = {
-        "@community//plugins/compose/intellij.compose.ide.plugin.codeInsight:resources/intellij.compose.ide.plugin.codeInsight.xml": "intellij.compose.ide.plugin.codeInsight.xml",
-        "@community//plugins/compose/intellij.compose.ide.plugin.gradleTooling:resources/intellij.compose.ide.plugin.gradleTooling.rt.xml": "intellij.compose.ide.plugin.gradleTooling.rt.xml",
-        "@community//plugins/compose/intellij.compose.ide.plugin.resources.android:resources/intellij.compose.ide.plugin.resources.android.xml": "intellij.compose.ide.plugin.resources.android.xml",
-        "@community//plugins/compose/intellij.compose.ide.plugin.resources:resources/intellij.compose.ide.plugin.resources.xml": "intellij.compose.ide.plugin.resources.xml",
-        "@community//plugins/compose/intellij.compose.ide.plugin.shared:resources/intellij.compose.ide.plugin.shared.xml": "intellij.compose.ide.plugin.shared.xml",
-    },
     main_module = "intellij.compose.ide.plugin",
     mode_refused_content_modules = {
         "frontend": [
@@ -35,6 +28,13 @@ dist_plugin_descriptor(
             "intellij.compose.ide.plugin.resources.android",
         ],
     },
+    module_descriptors = [
+        "@community//plugins/compose/intellij.compose.ide.plugin.codeInsight:resources/intellij.compose.ide.plugin.codeInsight.xml",
+        "@community//plugins/compose/intellij.compose.ide.plugin.gradleTooling:resources/intellij.compose.ide.plugin.gradleTooling.rt.xml",
+        "@community//plugins/compose/intellij.compose.ide.plugin.resources.android:resources/intellij.compose.ide.plugin.resources.android.xml",
+        "@community//plugins/compose/intellij.compose.ide.plugin.resources:resources/intellij.compose.ide.plugin.resources.xml",
+        "@community//plugins/compose/intellij.compose.ide.plugin.shared:resources/intellij.compose.ide.plugin.shared.xml",
+    ],
     refused_content_modules = [
         "intellij.libraries.kmp.wizard.shared",
         "intellij.kmm.wizard",

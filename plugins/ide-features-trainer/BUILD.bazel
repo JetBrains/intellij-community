@@ -14,26 +14,16 @@ jps_test(
 
 ### auto-generated section `dev intellij.featuresTrainer` start
 dist_plugin(
-    content_modules = [
-        # do not sort,
-        "intellij.vcs.git.featuresTrainer",
-        "intellij.featuresTrainer.onboarding",
-        "intellij.kotlin.onboarding.promoter",
-        "intellij.featuresTrainer.tips",
-        "intellij.libraries.assertj.core",
-        "intellij.libraries.assertj.swing",
-        "intellij.libraries.git.learning.project",
-    ],
-    descriptor = "res/META-INF/plugin.xml",
-    descriptors = {
-        "@community//libraries/assertj-core:resources/intellij.libraries.assertj.core.xml": "intellij.libraries.assertj.core.xml",
-        "@community//libraries/assertj-swing:resources/intellij.libraries.assertj.swing.xml": "intellij.libraries.assertj.swing.xml",
-        "@community//libraries/git-learning-project:resources/intellij.libraries.git.learning.project.xml": "intellij.libraries.git.learning.project.xml",
-        "@community//plugins/git-features-trainer:resources/intellij.vcs.git.featuresTrainer.xml": "intellij.vcs.git.featuresTrainer.xml",
-        "@community//plugins/ide-features-trainer/onboarding:resources/intellij.featuresTrainer.onboarding.xml": "intellij.featuresTrainer.onboarding.xml",
-        "@community//plugins/ide-features-trainer/tips:resources/intellij.featuresTrainer.tips.xml": "intellij.featuresTrainer.tips.xml",
-        "@community//plugins/kotlin/onboarding-promoter:resources/intellij.kotlin.onboarding.promoter.xml": "intellij.kotlin.onboarding.promoter.xml",
+    content_modules = {
+        "intellij.vcs.git.featuresTrainer": "//plugins/git-features-trainer:vcs-git-featuresTrainer",
+        "intellij.featuresTrainer.onboarding": "//plugins/ide-features-trainer/onboarding",
+        "intellij.kotlin.onboarding.promoter": "//plugins/kotlin/onboarding-promoter",
+        "intellij.featuresTrainer.tips": "//plugins/ide-features-trainer/tips",
+        "intellij.libraries.assertj.core": "//libraries/assertj-core",
+        "intellij.libraries.assertj.swing": "//libraries/assertj-swing",
+        "intellij.libraries.git.learning.project": "//libraries/git-learning-project",
     },
+    descriptor = "res/META-INF/plugin.xml",
     jars = {
         "lib/featuresTrainer.jar": [
             "intellij.featuresTrainer",
@@ -58,16 +48,16 @@ dist_plugin(
             "intellij.featuresTrainer.tips",
         ],
     },
-    module_labels = {
-        "intellij.featuresTrainer": "@community//plugins/ide-features-trainer:featuresTrainer",
-        "intellij.featuresTrainer.onboarding": "@community//plugins/ide-features-trainer/onboarding:onboarding",
-        "intellij.featuresTrainer.tips": "@community//plugins/ide-features-trainer/tips:tips",
-        "intellij.kotlin.onboarding.promoter": "@community//plugins/kotlin/onboarding-promoter:onboarding-promoter",
-        "intellij.libraries.assertj.core": "@community//libraries/assertj-core:assertj-core",
-        "intellij.libraries.assertj.swing": "@community//libraries/assertj-swing:assertj-swing",
-        "intellij.libraries.git.learning.project": "@community//libraries/git-learning-project:git-learning-project",
-        "intellij.vcs.git.featuresTrainer": "@community//plugins/git-features-trainer:vcs-git-featuresTrainer",
-    },
+    module_descriptors = [
+        "@community//libraries/assertj-core:resources/intellij.libraries.assertj.core.xml",
+        "@community//libraries/assertj-swing:resources/intellij.libraries.assertj.swing.xml",
+        "@community//libraries/git-learning-project:resources/intellij.libraries.git.learning.project.xml",
+        "@community//plugins/git-features-trainer:resources/intellij.vcs.git.featuresTrainer.xml",
+        "@community//plugins/ide-features-trainer/onboarding:resources/intellij.featuresTrainer.onboarding.xml",
+        "@community//plugins/ide-features-trainer/tips:resources/intellij.featuresTrainer.tips.xml",
+        "@community//plugins/kotlin/onboarding-promoter:resources/intellij.kotlin.onboarding.promoter.xml",
+    ],
+    module_labels = {"intellij.featuresTrainer": "//plugins/ide-features-trainer:featuresTrainer"},
 )
 ### auto-generated section `dev intellij.featuresTrainer` end
 

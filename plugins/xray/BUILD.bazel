@@ -5,31 +5,21 @@ load("//platform/build-scripts/bazel-rules:dist_plugin.bzl", "dist_plugin")
 
 ### auto-generated section `dev intellij.xray` start
 dist_plugin(
-    content_modules = [
-        # do not sort,
-        "intellij.xray.frontend",
-        "intellij.xray.shared",
-        "intellij.xray.backend",
-    ],
+    content_modules = {
+        "intellij.xray.frontend": "//plugins/xray/frontend",
+        "intellij.xray.shared": "//plugins/xray/shared",
+        "intellij.xray.backend": "//plugins/xray/backend",
+    },
     descriptor = "resources/META-INF/plugin.xml",
-    descriptors = {
-        "@community//plugins/xray/backend:resources/intellij.xray.backend.xml": "intellij.xray.backend.xml",
-        "@community//plugins/xray/frontend:resources/intellij.xray.frontend.xml": "intellij.xray.frontend.xml",
-        "@community//plugins/xray/shared:resources/intellij.xray.shared.xml": "intellij.xray.shared.xml",
-    },
-    jars = {
-        "lib/xray.jar": ["intellij.xray"],
-    },
+    jars = {"lib/xray.jar": ["intellij.xray"]},
     main_module = "intellij.xray",
-    mode_refused_content_modules = {
-        "frontend": ["intellij.xray.backend"],
-    },
-    module_labels = {
-        "intellij.xray": "@community//plugins/xray:xray",
-        "intellij.xray.backend": "@community//plugins/xray/backend:backend",
-        "intellij.xray.frontend": "@community//plugins/xray/frontend:frontend",
-        "intellij.xray.shared": "@community//plugins/xray/shared:shared",
-    },
+    mode_refused_content_modules = {"frontend": ["intellij.xray.backend"]},
+    module_descriptors = [
+        "@community//plugins/xray/backend:resources/intellij.xray.backend.xml",
+        "@community//plugins/xray/frontend:resources/intellij.xray.frontend.xml",
+        "@community//plugins/xray/shared:resources/intellij.xray.shared.xml",
+    ],
+    module_labels = {"intellij.xray": "//plugins/xray"},
 )
 ### auto-generated section `dev intellij.xray` end
 

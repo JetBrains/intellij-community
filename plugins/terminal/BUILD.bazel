@@ -14,33 +14,20 @@ filegroup(
 )
 
 dist_plugin(
-    content_modules = [
-        # do not sort,
-        "intellij.terminal.backend",
-        "intellij.terminal.emulator",
-        "intellij.terminal.execution",
-        "intellij.terminal.frontend",
-        "intellij.terminal.cloud",
-        "intellij.terminal.sh",
-        "intellij.terminal.completion",
-        "intellij.terminal.completion.ml",
-        "intellij.libraries.completion.ranking.sh",
-        "intellij.terminal.libraries.completionDbWithExtensions",
-    ],
-    main_module = "intellij.terminal",
-    module_labels = {
-        "intellij.libraries.completion.ranking.sh": "@community//libraries/completion-ranking-sh:completion-ranking-sh",
-        "intellij.terminal": "@community//plugins/terminal:terminal",
-        "intellij.terminal.backend": "@community//plugins/terminal/backend:backend",
-        "intellij.terminal.cloud": "@community//plugins/terminal/cloud:cloud",
-        "intellij.terminal.completion": "@community//plugins/terminal/completion:completion",
-        "intellij.terminal.completion.ml": "@community//plugins/terminal/completion-ml:completion-ml",
-        "intellij.terminal.emulator": "@community//plugins/terminal/emulator:emulator",
-        "intellij.terminal.execution": "@community//plugins/terminal/execution:execution",
-        "intellij.terminal.frontend": "@community//plugins/terminal/frontend:frontend",
-        "intellij.terminal.libraries.completionDbWithExtensions": "@community//plugins/terminal/libraries:libraries-completionDbWithExtensions",
-        "intellij.terminal.sh": "@community//plugins/terminal/sh:sh",
+    content_modules = {
+        "intellij.terminal.backend": "//plugins/terminal/backend",
+        "intellij.terminal.emulator": "//plugins/terminal/emulator",
+        "intellij.terminal.execution": "//plugins/terminal/execution",
+        "intellij.terminal.frontend": "//plugins/terminal/frontend",
+        "intellij.terminal.cloud": "//plugins/terminal/cloud",
+        "intellij.terminal.sh": "//plugins/terminal/sh",
+        "intellij.terminal.completion": "//plugins/terminal/completion",
+        "intellij.terminal.completion.ml": "//plugins/terminal/completion-ml",
+        "intellij.libraries.completion.ranking.sh": "//libraries/completion-ranking-sh",
+        "intellij.terminal.libraries.completionDbWithExtensions": "//plugins/terminal/libraries:libraries-completionDbWithExtensions",
     },
+    main_module = "intellij.terminal",
+    module_labels = {"intellij.terminal": "//plugins/terminal"},
 )
 
 dist_complex_plugin(

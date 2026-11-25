@@ -15,13 +15,9 @@ jps_test(
 ### auto-generated section `dev intellij.remoteControl` start
 dist_plugin(
     descriptor = "resources/META-INF/plugin.xml",
-    jars = {
-        "lib/remoteControl.jar": ["intellij.remoteControl"],
-    },
+    jars = {"lib/remoteControl.jar": ["intellij.remoteControl"]},
     main_module = "intellij.remoteControl",
-    module_labels = {
-        "intellij.remoteControl": "@community//plugins/remote-control:remote-control",
-    },
+    module_labels = {"intellij.remoteControl": "//plugins/remote-control"},
 )
 ### auto-generated section `dev intellij.remoteControl` end
 

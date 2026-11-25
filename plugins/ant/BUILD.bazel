@@ -16,22 +16,13 @@ jps_test(
 
 ### auto-generated section `dev intellij.ant` start
 dist_plugin(
-    content_modules = ["intellij.ant.jps"],
+    content_modules = {"intellij.ant.jps": "//plugins/ant/jps-plugin:jps"},
     descriptor = "resources/META-INF/plugin.xml",
-    descriptors = {
-        "@community//plugins/ant/jps-plugin:resources/intellij.ant.jps.xml": "intellij.ant.jps.xml",
-    },
-    jars = {
-        "lib/ant.jar": ["intellij.ant"],
-    },
+    jars = {"lib/ant.jar": ["intellij.ant"]},
     main_module = "intellij.ant",
-    module_jar_paths = {
-        "intellij.ant.jps": "lib/intellij.ant.jps.jar",
-    },
-    module_labels = {
-        "intellij.ant": "@community//plugins/ant:ant",
-        "intellij.ant.jps": "@community//plugins/ant/jps-plugin:jps",
-    },
+    module_descriptors = ["@community//plugins/ant/jps-plugin:resources/intellij.ant.jps.xml"],
+    module_jar_paths = {"intellij.ant.jps": "lib/intellij.ant.jps.jar"},
+    module_labels = {"intellij.ant": "//plugins/ant"},
 )
 ### auto-generated section `dev intellij.ant` end
 

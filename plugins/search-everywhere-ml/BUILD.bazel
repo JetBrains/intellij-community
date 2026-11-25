@@ -13,32 +13,19 @@ jps_test(
 
 ### auto-generated section `dev intellij.searchEverywhereMl` start
 dist_plugin(
-    content_modules = [
-        # do not sort,
-        "intellij.platform.ml.logs",
-        "intellij.searchEverywhereMl.typos",
-        "intellij.searchEverywhereMl.ranking.ext",
-        "intellij.searchEverywhereMl.ranking.core",
-        "intellij.searchEverywhereMl.ranking.java",
-        "intellij.searchEverywhereMl.ranking.yaml",
-        "intellij.searchEverywhereMl.ranking.vcs",
-        "intellij.libraries.mlapi.core",
-        "intellij.libraries.search.everywhere.find.all.model",
-        "intellij.libraries.search.everywhere.find.ec.model",
-    ],
-    descriptor = "resources/META-INF/plugin.xml",
-    descriptors = {
-        "@community//libraries/mlapi/core:resources/intellij.libraries.mlapi.core.xml": "intellij.libraries.mlapi.core.xml",
-        "@community//libraries/search-everywhere-find-all-model:resources/intellij.libraries.search.everywhere.find.all.model.xml": "intellij.libraries.search.everywhere.find.all.model.xml",
-        "@community//libraries/search-everywhere-find-ec-model:resources/intellij.libraries.search.everywhere.find.ec.model.xml": "intellij.libraries.search.everywhere.find.ec.model.xml",
-        "@community//platform/ml-logs:resources/intellij.platform.ml.logs.xml": "intellij.platform.ml.logs.xml",
-        "@community//plugins/search-everywhere-ml/ranking/core:resources/intellij.searchEverywhereMl.ranking.core.xml": "intellij.searchEverywhereMl.ranking.core.xml",
-        "@community//plugins/search-everywhere-ml/ranking/ext:resources/intellij.searchEverywhereMl.ranking.ext.xml": "intellij.searchEverywhereMl.ranking.ext.xml",
-        "@community//plugins/search-everywhere-ml/ranking/java:resources/intellij.searchEverywhereMl.ranking.java.xml": "intellij.searchEverywhereMl.ranking.java.xml",
-        "@community//plugins/search-everywhere-ml/ranking/vcs:resources/intellij.searchEverywhereMl.ranking.vcs.xml": "intellij.searchEverywhereMl.ranking.vcs.xml",
-        "@community//plugins/search-everywhere-ml/ranking/yaml:resources/intellij.searchEverywhereMl.ranking.yaml.xml": "intellij.searchEverywhereMl.ranking.yaml.xml",
-        "@community//plugins/search-everywhere-ml/typos:resources/intellij.searchEverywhereMl.typos.xml": "intellij.searchEverywhereMl.typos.xml",
+    content_modules = {
+        "intellij.platform.ml.logs": "//platform/ml-logs",
+        "intellij.searchEverywhereMl.typos": "//plugins/search-everywhere-ml/typos",
+        "intellij.searchEverywhereMl.ranking.ext": "//plugins/search-everywhere-ml/ranking/ext",
+        "intellij.searchEverywhereMl.ranking.core": "//plugins/search-everywhere-ml/ranking/core",
+        "intellij.searchEverywhereMl.ranking.java": "//plugins/search-everywhere-ml/ranking/java",
+        "intellij.searchEverywhereMl.ranking.yaml": "//plugins/search-everywhere-ml/ranking/yaml",
+        "intellij.searchEverywhereMl.ranking.vcs": "//plugins/search-everywhere-ml/ranking/vcs",
+        "intellij.libraries.mlapi.core": "//libraries/mlapi/core",
+        "intellij.libraries.search.everywhere.find.all.model": "//libraries/search-everywhere-find-all-model",
+        "intellij.libraries.search.everywhere.find.ec.model": "//libraries/search-everywhere-find-ec-model",
     },
+    descriptor = "resources/META-INF/plugin.xml",
     jars = {
         "lib/searchEverywhereMl.jar": [
             "intellij.searchEverywhereMl",
@@ -57,19 +44,19 @@ dist_plugin(
             "intellij.searchEverywhereMl.ranking.vcs",
         ],
     },
-    module_labels = {
-        "intellij.libraries.mlapi.core": "@community//libraries/mlapi/core:core",
-        "intellij.libraries.search.everywhere.find.all.model": "@community//libraries/search-everywhere-find-all-model:search-everywhere-find-all-model",
-        "intellij.libraries.search.everywhere.find.ec.model": "@community//libraries/search-everywhere-find-ec-model:search-everywhere-find-ec-model",
-        "intellij.platform.ml.logs": "@community//platform/ml-logs:ml-logs",
-        "intellij.searchEverywhereMl": "@community//plugins/search-everywhere-ml:search-everywhere-ml",
-        "intellij.searchEverywhereMl.ranking.core": "@community//plugins/search-everywhere-ml/ranking/core:core",
-        "intellij.searchEverywhereMl.ranking.ext": "@community//plugins/search-everywhere-ml/ranking/ext:ext",
-        "intellij.searchEverywhereMl.ranking.java": "@community//plugins/search-everywhere-ml/ranking/java:java",
-        "intellij.searchEverywhereMl.ranking.vcs": "@community//plugins/search-everywhere-ml/ranking/vcs:vcs",
-        "intellij.searchEverywhereMl.ranking.yaml": "@community//plugins/search-everywhere-ml/ranking/yaml:yaml",
-        "intellij.searchEverywhereMl.typos": "@community//plugins/search-everywhere-ml/typos:typos",
-    },
+    module_descriptors = [
+        "@community//libraries/mlapi/core:resources/intellij.libraries.mlapi.core.xml",
+        "@community//libraries/search-everywhere-find-all-model:resources/intellij.libraries.search.everywhere.find.all.model.xml",
+        "@community//libraries/search-everywhere-find-ec-model:resources/intellij.libraries.search.everywhere.find.ec.model.xml",
+        "@community//platform/ml-logs:resources/intellij.platform.ml.logs.xml",
+        "@community//plugins/search-everywhere-ml/ranking/core:resources/intellij.searchEverywhereMl.ranking.core.xml",
+        "@community//plugins/search-everywhere-ml/ranking/ext:resources/intellij.searchEverywhereMl.ranking.ext.xml",
+        "@community//plugins/search-everywhere-ml/ranking/java:resources/intellij.searchEverywhereMl.ranking.java.xml",
+        "@community//plugins/search-everywhere-ml/ranking/vcs:resources/intellij.searchEverywhereMl.ranking.vcs.xml",
+        "@community//plugins/search-everywhere-ml/ranking/yaml:resources/intellij.searchEverywhereMl.ranking.yaml.xml",
+        "@community//plugins/search-everywhere-ml/typos:resources/intellij.searchEverywhereMl.typos.xml",
+    ],
+    module_labels = {"intellij.searchEverywhereMl": "//plugins/search-everywhere-ml"},
 )
 ### auto-generated section `dev intellij.searchEverywhereMl` end
 

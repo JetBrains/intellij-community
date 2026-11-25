@@ -19,17 +19,6 @@ load("//platform/build-scripts/bazel-rules:dist_plugin_descriptor.bzl", "dist_pl
 
 dist_plugin_descriptor(
     descriptor = "//json/plugin:resources/META-INF/plugin.xml",
-    descriptors = {
-        "@community//json/backend/regexp:resources/intellij.json.backend.regexp.xml": "intellij.json.backend.regexp.xml",
-        "@community//json/backend:resources/intellij.json.backend.xml": "intellij.json.backend.xml",
-        "@community//json/networknt.wrapper:resources/intellij.json.networknt.wrapper.xml": "intellij.json.networknt.wrapper.xml",
-        "@community//json/spellchecker:resources/intellij.json.spellchecker.xml": "intellij.json.spellchecker.xml",
-        "@community//json/structureView:resources/intellij.json.structureView.xml": "intellij.json.structureView.xml",
-        "@community//json/syntax:resources/intellij.json.syntax.xml": "intellij.json.syntax.xml",
-        "@community//json:resources/intellij.json.xml": "intellij.json.xml",
-        "@community//libraries/joni:resources/intellij.libraries.joni.xml": "intellij.libraries.joni.xml",
-        "@community//libraries/json-schema-validator:resources/intellij.libraries.jsonSchemaValidator.xml": "intellij.libraries.jsonSchemaValidator.xml",
-    },
     main_module = "intellij.json.plugin",
     mode_refused_content_modules = {
         "frontend": [
@@ -39,6 +28,17 @@ dist_plugin_descriptor(
             "intellij.json.structureView",
         ],
     },
+    module_descriptors = [
+        "@community//json/backend/regexp:resources/intellij.json.backend.regexp.xml",
+        "@community//json/backend:resources/intellij.json.backend.xml",
+        "@community//json/networknt.wrapper:resources/intellij.json.networknt.wrapper.xml",
+        "@community//json/spellchecker:resources/intellij.json.spellchecker.xml",
+        "@community//json/structureView:resources/intellij.json.structureView.xml",
+        "@community//json/syntax:resources/intellij.json.syntax.xml",
+        "@community//json:resources/intellij.json.xml",
+        "@community//libraries/joni:resources/intellij.libraries.joni.xml",
+        "@community//libraries/json-schema-validator:resources/intellij.libraries.jsonSchemaValidator.xml",
+    ],
     refused_content_modules = [
         "intellij.json.frontend.split",
     ],

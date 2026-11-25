@@ -5,19 +5,12 @@ load("//platform/build-scripts/bazel-rules:dist_plugin.bzl", "dist_plugin")
 
 ### auto-generated section `dev intellij.extendedToolWindowsUi` start
 dist_plugin(
-    content_modules = ["intellij.extendedToolWindowsUi.frontend"],
+    content_modules = {"intellij.extendedToolWindowsUi.frontend": "//plugins/extended-toolwindows-ui/frontend"},
     descriptor = "resources/META-INF/plugin.xml",
-    descriptors = {
-        "@community//plugins/extended-toolwindows-ui/frontend:resources/intellij.extendedToolWindowsUi.frontend.xml": "intellij.extendedToolWindowsUi.frontend.xml",
-    },
-    jars = {
-        "lib/extendedToolWindowsUi.jar": ["intellij.extendedToolWindowsUi"],
-    },
+    jars = {"lib/extendedToolWindowsUi.jar": ["intellij.extendedToolWindowsUi"]},
     main_module = "intellij.extendedToolWindowsUi",
-    module_labels = {
-        "intellij.extendedToolWindowsUi": "@community//plugins/extended-toolwindows-ui:extendedToolWindowsUi",
-        "intellij.extendedToolWindowsUi.frontend": "@community//plugins/extended-toolwindows-ui/frontend:frontend",
-    },
+    module_descriptors = ["@community//plugins/extended-toolwindows-ui/frontend:resources/intellij.extendedToolWindowsUi.frontend.xml"],
+    module_labels = {"intellij.extendedToolWindowsUi": "//plugins/extended-toolwindows-ui:extendedToolWindowsUi"},
 )
 ### auto-generated section `dev intellij.extendedToolWindowsUi` end
 

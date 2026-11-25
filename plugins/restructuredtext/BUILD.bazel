@@ -5,22 +5,13 @@ load("//platform/build-scripts/bazel-rules:dist_plugin.bzl", "dist_plugin")
 
 ### auto-generated section `dev intellij.restructuredtext` start
 dist_plugin(
-    content_modules = ["intellij.restructuredtext.python"],
+    content_modules = {"intellij.restructuredtext.python": "//python/python-restructuredtext:restructuredtext-python"},
     descriptor = "resources/META-INF/plugin.xml",
-    descriptors = {
-        "@community//python/python-restructuredtext:resources/intellij.restructuredtext.python.xml": "intellij.restructuredtext.python.xml",
-    },
-    jars = {
-        "lib/restructuredtext.jar": ["intellij.restructuredtext"],
-    },
+    jars = {"lib/restructuredtext.jar": ["intellij.restructuredtext"]},
     main_module = "intellij.restructuredtext",
-    mode_refused_content_modules = {
-        "frontend": ["intellij.restructuredtext.python"],
-    },
-    module_labels = {
-        "intellij.restructuredtext": "@community//plugins/restructuredtext:restructuredtext",
-        "intellij.restructuredtext.python": "@community//python/python-restructuredtext:restructuredtext-python",
-    },
+    mode_refused_content_modules = {"frontend": ["intellij.restructuredtext.python"]},
+    module_descriptors = ["@community//python/python-restructuredtext:resources/intellij.restructuredtext.python.xml"],
+    module_labels = {"intellij.restructuredtext": "//plugins/restructuredtext"},
 )
 ### auto-generated section `dev intellij.restructuredtext` end
 

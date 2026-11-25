@@ -7,9 +7,7 @@ load("//platform/build-scripts/bazel-rules:dist_plugin.bzl", "dist_plugin")
 dist_plugin(
     descriptor = "resources/META-INF/plugin.xml",
     main_module = "intellij.laf.macos",
-    module_labels = {
-        "intellij.laf.macos": "@community//plugins/laf/macos:macos",
-    },
+    module_labels = {"intellij.laf.macos": "//plugins/laf/macos"},
     variants = ["darwin"],
 )
 

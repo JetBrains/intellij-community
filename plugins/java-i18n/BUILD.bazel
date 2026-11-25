@@ -21,13 +21,9 @@ jps_test(
 ### auto-generated section `dev intellij.java.i18n` start
 dist_plugin(
     descriptor = "resources/META-INF/plugin.xml",
-    jars = {
-        "lib/java-i18n.jar": ["intellij.java.i18n"],
-    },
+    jars = {"lib/java-i18n.jar": ["intellij.java.i18n"]},
     main_module = "intellij.java.i18n",
-    module_labels = {
-        "intellij.java.i18n": "@community//plugins/java-i18n:java-i18n",
-    },
+    module_labels = {"intellij.java.i18n": "//plugins/java-i18n"},
 )
 ### auto-generated section `dev intellij.java.i18n` end
 

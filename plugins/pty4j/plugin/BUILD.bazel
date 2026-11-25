@@ -5,16 +5,11 @@ load("//platform/build-scripts/bazel-rules:dist_plugin.bzl", "dist_plugin")
 
 ### auto-generated section `dev intellij.pty4j.plugin` start
 dist_plugin(
-    content_modules = ["intellij.libraries.pty4j"],
+    content_modules = {"intellij.libraries.pty4j": "//libraries/pty4j"},
     descriptor = "resources/META-INF/plugin.xml",
-    descriptors = {
-        "@community//libraries/pty4j:resources/intellij.libraries.pty4j.xml": "intellij.libraries.pty4j.xml",
-    },
     main_module = "intellij.pty4j.plugin",
-    module_labels = {
-        "intellij.libraries.pty4j": "@community//libraries/pty4j:pty4j",
-        "intellij.pty4j.plugin": "@community//plugins/pty4j/plugin:plugin",
-    },
+    module_descriptors = ["@community//libraries/pty4j:resources/intellij.libraries.pty4j.xml"],
+    module_labels = {"intellij.pty4j.plugin": "//plugins/pty4j/plugin"},
 )
 
 dist_complex_plugin(

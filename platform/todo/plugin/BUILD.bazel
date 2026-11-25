@@ -5,37 +5,25 @@ load("//platform/build-scripts/bazel-rules:dist_plugin.bzl", "dist_plugin")
 
 ### auto-generated section `dev intellij.platform.todo.plugin` start
 dist_plugin(
-    content_modules = [
-        # do not sort,
-        "intellij.platform.todo",
-        "intellij.platform.todo.backend",
-        "intellij.platform.todo.frontend",
-        "intellij.platform.vcs.impl.lang.todo",
-        "intellij.platform.vcs.impl.lang.todo.frontend",
-    ],
+    content_modules = {
+        "intellij.platform.todo": "//platform/todo",
+        "intellij.platform.todo.backend": "//platform/todo/backend",
+        "intellij.platform.todo.frontend": "//platform/todo/frontend",
+        "intellij.platform.vcs.impl.lang.todo": "//platform/vcs-impl/lang/todo",
+        "intellij.platform.vcs.impl.lang.todo.frontend": "//platform/vcs-impl/lang/todo/frontend",
+    },
     descriptor = "resources/META-INF/plugin.xml",
-    descriptors = {
-        "@community//platform/todo/backend:resources/intellij.platform.todo.backend.xml": "intellij.platform.todo.backend.xml",
-        "@community//platform/todo/frontend:resources/intellij.platform.todo.frontend.xml": "intellij.platform.todo.frontend.xml",
-        "@community//platform/todo:resources/intellij.platform.todo.xml": "intellij.platform.todo.xml",
-        "@community//platform/vcs-impl/lang/todo/frontend:resources/intellij.platform.vcs.impl.lang.todo.frontend.xml": "intellij.platform.vcs.impl.lang.todo.frontend.xml",
-        "@community//platform/vcs-impl/lang/todo:resources/intellij.platform.vcs.impl.lang.todo.xml": "intellij.platform.vcs.impl.lang.todo.xml",
-    },
-    jars = {
-        "lib/platform-todo-plugin.jar": ["intellij.platform.todo.plugin"],
-    },
+    jars = {"lib/platform-todo-plugin.jar": ["intellij.platform.todo.plugin"]},
     main_module = "intellij.platform.todo.plugin",
-    mode_refused_content_modules = {
-        "frontend": ["intellij.platform.todo.backend"],
-    },
-    module_labels = {
-        "intellij.platform.todo": "@community//platform/todo:todo",
-        "intellij.platform.todo.backend": "@community//platform/todo/backend:backend",
-        "intellij.platform.todo.frontend": "@community//platform/todo/frontend:frontend",
-        "intellij.platform.todo.plugin": "@community//platform/todo/plugin:plugin",
-        "intellij.platform.vcs.impl.lang.todo": "@community//platform/vcs-impl/lang/todo:todo",
-        "intellij.platform.vcs.impl.lang.todo.frontend": "@community//platform/vcs-impl/lang/todo/frontend:frontend",
-    },
+    mode_refused_content_modules = {"frontend": ["intellij.platform.todo.backend"]},
+    module_descriptors = [
+        "@community//platform/todo/backend:resources/intellij.platform.todo.backend.xml",
+        "@community//platform/todo/frontend:resources/intellij.platform.todo.frontend.xml",
+        "@community//platform/todo:resources/intellij.platform.todo.xml",
+        "@community//platform/vcs-impl/lang/todo/frontend:resources/intellij.platform.vcs.impl.lang.todo.frontend.xml",
+        "@community//platform/vcs-impl/lang/todo:resources/intellij.platform.vcs.impl.lang.todo.xml",
+    ],
+    module_labels = {"intellij.platform.todo.plugin": "//platform/todo/plugin"},
 )
 ### auto-generated section `dev intellij.platform.todo.plugin` end
 

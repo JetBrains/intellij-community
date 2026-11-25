@@ -4,27 +4,22 @@ load("//platform/build-scripts/bazel-rules:dist_plugin.bzl", "dist_plugin")
 
 ### auto-generated section `dev intellij.platform.coverage.plugin` start
 dist_plugin(
-    content_modules = [
-        # do not sort,
-        "intellij.platform.coverage",
-        "intellij.platform.coverage.agent",
-    ],
-    descriptor = "resources/META-INF/plugin.xml",
-    descriptors = {
-        "@community//plugins/coverage-common/intellij.platform.coverage.agent:resources/intellij.platform.coverage.agent.xml": "intellij.platform.coverage.agent.xml",
-        "@community//plugins/coverage-common:resources/intellij.platform.coverage.xml": "intellij.platform.coverage.xml",
+    content_modules = {
+        "intellij.platform.coverage": "//plugins/coverage-common:coverage",
+        "intellij.platform.coverage.agent": "//plugins/coverage-common/intellij.platform.coverage.agent:coverage-agent",
     },
+    descriptor = "resources/META-INF/plugin.xml",
     jars = {
         "lib/intellij.platform.coverage.agent.jar": ["intellij.platform.coverage.agent"],
         "lib/intellij-coverage-agent.jar": ["@lib//:platform-coverage-agent-intellij-coverage"],
         "lib/platform-coverage-plugin.jar": ["intellij.platform.coverage.plugin"],
     },
     main_module = "intellij.platform.coverage.plugin",
-    module_labels = {
-        "intellij.platform.coverage": "@community//plugins/coverage-common:coverage",
-        "intellij.platform.coverage.agent": "@community//plugins/coverage-common/intellij.platform.coverage.agent:coverage-agent",
-        "intellij.platform.coverage.plugin": "@community//plugins/coverage-common/plugin:plugin",
-    },
+    module_descriptors = [
+        "@community//plugins/coverage-common/intellij.platform.coverage.agent:resources/intellij.platform.coverage.agent.xml",
+        "@community//plugins/coverage-common:resources/intellij.platform.coverage.xml",
+    ],
+    module_labels = {"intellij.platform.coverage.plugin": "//plugins/coverage-common/plugin"},
 )
 ### auto-generated section `dev intellij.platform.coverage.plugin` end
 

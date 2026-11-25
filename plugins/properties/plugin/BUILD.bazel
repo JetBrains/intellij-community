@@ -5,27 +5,16 @@ load("//platform/build-scripts/bazel-rules:dist_plugin.bzl", "dist_plugin")
 
 ### auto-generated section `dev intellij.properties.plugin` start
 dist_plugin(
-    content_modules = [
-        # do not sort,
-        "intellij.properties.copyright",
-        "intellij.properties.backend.psi",
-        "intellij.properties.backend",
-        "intellij.properties.structuralSearch",
-        "intellij.properties",
-        "intellij.properties.psi",
-    ],
+    content_modules = {
+        "intellij.properties.copyright": "//plugins/properties/copyright",
+        "intellij.properties.backend.psi": "//plugins/properties/properties-psi-impl:backend-psi",
+        "intellij.properties.backend": "//plugins/properties:properties-backend",
+        "intellij.properties.structuralSearch": "//plugins/properties/structuralsearch:structuralSearch",
+        "intellij.properties": "//plugins/properties/properties-common:properties",
+        "intellij.properties.psi": "//plugins/properties/properties-psi-api:psi",
+    },
     descriptor = "resources/META-INF/plugin.xml",
-    descriptors = {
-        "@community//plugins/properties/copyright:resources/intellij.properties.copyright.xml": "intellij.properties.copyright.xml",
-        "@community//plugins/properties/properties-common:resources/intellij.properties.xml": "intellij.properties.xml",
-        "@community//plugins/properties/properties-psi-api:resources/intellij.properties.psi.xml": "intellij.properties.psi.xml",
-        "@community//plugins/properties/properties-psi-impl:resources/intellij.properties.backend.psi.xml": "intellij.properties.backend.psi.xml",
-        "@community//plugins/properties/structuralsearch:resources/intellij.properties.structuralSearch.xml": "intellij.properties.structuralSearch.xml",
-        "@community//plugins/properties:resources/intellij.properties.backend.xml": "intellij.properties.backend.xml",
-    },
-    jars = {
-        "lib/properties-plugin.jar": ["intellij.properties.plugin"],
-    },
+    jars = {"lib/properties-plugin.jar": ["intellij.properties.plugin"]},
     main_module = "intellij.properties.plugin",
     mode_refused_content_modules = {
         "frontend": [
@@ -34,19 +23,19 @@ dist_plugin(
             "intellij.properties.structuralSearch",
         ],
     },
+    module_descriptors = [
+        "@community//plugins/properties/copyright:resources/intellij.properties.copyright.xml",
+        "@community//plugins/properties/properties-common:resources/intellij.properties.xml",
+        "@community//plugins/properties/properties-psi-api:resources/intellij.properties.psi.xml",
+        "@community//plugins/properties/properties-psi-impl:resources/intellij.properties.backend.psi.xml",
+        "@community//plugins/properties/structuralsearch:resources/intellij.properties.structuralSearch.xml",
+        "@community//plugins/properties:resources/intellij.properties.backend.xml",
+    ],
     module_jar_paths = {
         "intellij.properties": "lib/intellij.properties.jar",
         "intellij.properties.psi": "lib/intellij.properties.psi.jar",
     },
-    module_labels = {
-        "intellij.properties": "@community//plugins/properties/properties-common:properties",
-        "intellij.properties.backend": "@community//plugins/properties:properties-backend",
-        "intellij.properties.backend.psi": "@community//plugins/properties/properties-psi-impl:backend-psi",
-        "intellij.properties.copyright": "@community//plugins/properties/copyright:copyright",
-        "intellij.properties.plugin": "@community//plugins/properties/plugin:plugin",
-        "intellij.properties.psi": "@community//plugins/properties/properties-psi-api:psi",
-        "intellij.properties.structuralSearch": "@community//plugins/properties/structuralsearch:structuralSearch",
-    },
+    module_labels = {"intellij.properties.plugin": "//plugins/properties/plugin"},
 )
 ### auto-generated section `dev intellij.properties.plugin` end
 

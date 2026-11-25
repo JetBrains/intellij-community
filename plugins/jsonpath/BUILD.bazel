@@ -14,22 +14,13 @@ jps_test(
 
 ### auto-generated section `dev intellij.jsonpath` start
 dist_plugin(
-    content_modules = ["intellij.jsonpath.scratch"],
+    content_modules = {"intellij.jsonpath.scratch": "//plugins/jsonpath/scratch"},
     descriptor = "resources/META-INF/plugin.xml",
-    descriptors = {
-        "@community//plugins/jsonpath/scratch:resources/intellij.jsonpath.scratch.xml": "intellij.jsonpath.scratch.xml",
-    },
-    jars = {
-        "lib/jsonpath.jar": ["intellij.jsonpath"],
-    },
+    jars = {"lib/jsonpath.jar": ["intellij.jsonpath"]},
     main_module = "intellij.jsonpath",
-    mode_refused_content_modules = {
-        "frontend": ["intellij.jsonpath.scratch"],
-    },
-    module_labels = {
-        "intellij.jsonpath": "@community//plugins/jsonpath:jsonpath",
-        "intellij.jsonpath.scratch": "@community//plugins/jsonpath/scratch:scratch",
-    },
+    mode_refused_content_modules = {"frontend": ["intellij.jsonpath.scratch"]},
+    module_descriptors = ["@community//plugins/jsonpath/scratch:resources/intellij.jsonpath.scratch.xml"],
+    module_labels = {"intellij.jsonpath": "//plugins/jsonpath"},
 )
 ### auto-generated section `dev intellij.jsonpath` end
 

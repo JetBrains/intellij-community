@@ -14,29 +14,22 @@ jps_test(
 
 ### auto-generated section `dev intellij.eclipse` start
 dist_plugin(
-    content_modules = [
-        # do not sort,
-        "intellij.eclipse.common",
-        "intellij.eclipse.jps",
-    ],
+    content_modules = {
+        "intellij.eclipse.common": "//plugins/eclipse/common-eclipse-util:common",
+        "intellij.eclipse.jps": "//plugins/eclipse/jps-plugin:jps",
+    },
     descriptor = "resources/META-INF/plugin.xml",
-    descriptors = {
-        "@community//plugins/eclipse/common-eclipse-util:resources/intellij.eclipse.common.xml": "intellij.eclipse.common.xml",
-        "@community//plugins/eclipse/jps-plugin:resources/intellij.eclipse.jps.xml": "intellij.eclipse.jps.xml",
-    },
-    jars = {
-        "lib/eclipse.jar": ["intellij.eclipse"],
-    },
+    jars = {"lib/eclipse.jar": ["intellij.eclipse"]},
     main_module = "intellij.eclipse",
+    module_descriptors = [
+        "@community//plugins/eclipse/common-eclipse-util:resources/intellij.eclipse.common.xml",
+        "@community//plugins/eclipse/jps-plugin:resources/intellij.eclipse.jps.xml",
+    ],
     module_jar_paths = {
         "intellij.eclipse.common": "lib/intellij.eclipse.common.jar",
         "intellij.eclipse.jps": "lib/intellij.eclipse.jps.jar",
     },
-    module_labels = {
-        "intellij.eclipse": "@community//plugins/eclipse:eclipse",
-        "intellij.eclipse.common": "@community//plugins/eclipse/common-eclipse-util:common",
-        "intellij.eclipse.jps": "@community//plugins/eclipse/jps-plugin:jps",
-    },
+    module_labels = {"intellij.eclipse": "//plugins/eclipse"},
 )
 ### auto-generated section `dev intellij.eclipse` end
 

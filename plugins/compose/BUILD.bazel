@@ -5,23 +5,15 @@ load("//platform/build-scripts/bazel-rules:dist_plugin.bzl", "dist_plugin")
 
 ### auto-generated section `dev intellij.compose.ide.plugin` start
 dist_plugin(
-    content_modules = [
-        # do not sort,
-        "intellij.compose.ide.plugin.shared",
-        "intellij.compose.ide.plugin.codeInsight",
-        "intellij.compose.ide.plugin.gradleTooling.rt",
-        "intellij.compose.ide.plugin.resources",
-        "intellij.compose.ide.plugin.resources.android",
-    ],
-    main_module = "intellij.compose.ide.plugin",
-    module_labels = {
-        "intellij.compose.ide.plugin": "@community//plugins/compose:compose-ide-plugin",
-        "intellij.compose.ide.plugin.codeInsight": "@community//plugins/compose/intellij.compose.ide.plugin.codeInsight:ide-plugin-codeInsight",
-        "intellij.compose.ide.plugin.gradleTooling.rt": "@community//plugins/compose/intellij.compose.ide.plugin.gradleTooling:ide-plugin-gradleTooling-rt",
-        "intellij.compose.ide.plugin.resources": "@community//plugins/compose/intellij.compose.ide.plugin.resources:ide-plugin-resources",
-        "intellij.compose.ide.plugin.resources.android": "@community//plugins/compose/intellij.compose.ide.plugin.resources.android:ide-plugin-resources-android",
-        "intellij.compose.ide.plugin.shared": "@community//plugins/compose/intellij.compose.ide.plugin.shared:ide-plugin-shared",
+    content_modules = {
+        "intellij.compose.ide.plugin.shared": "//plugins/compose/intellij.compose.ide.plugin.shared:ide-plugin-shared",
+        "intellij.compose.ide.plugin.codeInsight": "//plugins/compose/intellij.compose.ide.plugin.codeInsight:ide-plugin-codeInsight",
+        "intellij.compose.ide.plugin.gradleTooling.rt": "//plugins/compose/intellij.compose.ide.plugin.gradleTooling:ide-plugin-gradleTooling-rt",
+        "intellij.compose.ide.plugin.resources": "//plugins/compose/intellij.compose.ide.plugin.resources:ide-plugin-resources",
+        "intellij.compose.ide.plugin.resources.android": "//plugins/compose/intellij.compose.ide.plugin.resources.android:ide-plugin-resources-android",
     },
+    main_module = "intellij.compose.ide.plugin",
+    module_labels = {"intellij.compose.ide.plugin": "//plugins/compose:compose-ide-plugin"},
 )
 ### auto-generated section `dev intellij.compose.ide.plugin` end
 

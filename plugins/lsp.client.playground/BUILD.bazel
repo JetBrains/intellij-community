@@ -6,13 +6,9 @@ load("//platform/build-scripts/bazel-rules:dist_plugin.bzl", "dist_plugin")
 ### auto-generated section `dev intellij.lsp.client.playground` start
 dist_plugin(
     descriptor = "resources/META-INF/plugin.xml",
-    jars = {
-        "lib/lsp-client-playground.jar": ["intellij.lsp.client.playground"],
-    },
+    jars = {"lib/lsp-client-playground.jar": ["intellij.lsp.client.playground"]},
     main_module = "intellij.lsp.client.playground",
-    module_labels = {
-        "intellij.lsp.client.playground": "@community//plugins/lsp.client.playground:lsp.client.playground",
-    },
+    module_labels = {"intellij.lsp.client.playground": "//plugins/lsp.client.playground"},
 )
 ### auto-generated section `dev intellij.lsp.client.playground` end
 

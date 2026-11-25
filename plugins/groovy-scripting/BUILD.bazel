@@ -5,18 +5,12 @@ load("//platform/build-scripts/bazel-rules:dist_plugin.bzl", "dist_plugin")
 
 ### auto-generated section `dev intellij.groovy.scripting` start
 dist_plugin(
-    content_modules = [
-        # do not sort,
-        "intellij.libraries.groovy",
-        "intellij.libraries.groovy.jsr223",
-        "intellij.libraries.ivy",
-    ],
-    descriptor = "resources/META-INF/plugin.xml",
-    descriptors = {
-        "@community//libraries/groovy/jsr223:resources/intellij.libraries.groovy.jsr223.xml": "intellij.libraries.groovy.jsr223.xml",
-        "@community//libraries/groovy:resources/intellij.libraries.groovy.xml": "intellij.libraries.groovy.xml",
-        "@community//libraries/ivy:resources/intellij.libraries.ivy.xml": "intellij.libraries.ivy.xml",
+    content_modules = {
+        "intellij.libraries.groovy": "//libraries/groovy",
+        "intellij.libraries.groovy.jsr223": "//libraries/groovy/jsr223",
+        "intellij.libraries.ivy": "//libraries/ivy",
     },
+    descriptor = "resources/META-INF/plugin.xml",
     jars = {
         "lib/intellij.libraries.groovy.jar": [
             "intellij.libraries.groovy",
@@ -34,12 +28,12 @@ dist_plugin(
         "lib/groovy-scripting.jar": ["intellij.groovy.scripting"],
     },
     main_module = "intellij.groovy.scripting",
-    module_labels = {
-        "intellij.groovy.scripting": "@community//plugins/groovy-scripting:groovy-scripting",
-        "intellij.libraries.groovy": "@community//libraries/groovy:groovy",
-        "intellij.libraries.groovy.jsr223": "@community//libraries/groovy/jsr223:jsr223",
-        "intellij.libraries.ivy": "@community//libraries/ivy:ivy",
-    },
+    module_descriptors = [
+        "@community//libraries/groovy/jsr223:resources/intellij.libraries.groovy.jsr223.xml",
+        "@community//libraries/groovy:resources/intellij.libraries.groovy.xml",
+        "@community//libraries/ivy:resources/intellij.libraries.ivy.xml",
+    ],
+    module_labels = {"intellij.groovy.scripting": "//plugins/groovy-scripting"},
 )
 ### auto-generated section `dev intellij.groovy.scripting` end
 

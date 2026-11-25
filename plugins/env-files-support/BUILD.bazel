@@ -5,19 +5,13 @@ load("//platform/build-scripts/bazel-rules:dist_plugin.bzl", "dist_plugin")
 
 ### auto-generated section `dev intellij.dotenv` start
 dist_plugin(
-    content_modules = [
-        # do not sort,
-        "intellij.dotenv.kotlin",
-        "intellij.dotenv.java",
-        "intellij.dotenv.python",
-    ],
-    main_module = "intellij.dotenv",
-    module_labels = {
-        "intellij.dotenv": "@community//plugins/env-files-support:dotenv",
-        "intellij.dotenv.java": "@community//plugins/env-files-support/java:java",
-        "intellij.dotenv.kotlin": "@community//plugins/env-files-support/kotlin:kotlin",
-        "intellij.dotenv.python": "@community//plugins/env-files-support/python:python",
+    content_modules = {
+        "intellij.dotenv.kotlin": "//plugins/env-files-support/kotlin",
+        "intellij.dotenv.java": "//plugins/env-files-support/java",
+        "intellij.dotenv.python": "//plugins/env-files-support/python",
     },
+    main_module = "intellij.dotenv",
+    module_labels = {"intellij.dotenv": "//plugins/env-files-support:dotenv"},
 )
 ### auto-generated section `dev intellij.dotenv` end
 

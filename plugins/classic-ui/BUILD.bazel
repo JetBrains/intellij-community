@@ -6,13 +6,9 @@ load("//platform/build-scripts/bazel-rules:dist_plugin.bzl", "dist_plugin")
 ### auto-generated section `dev intellij.classic.ui` start
 dist_plugin(
     descriptor = "resources/META-INF/plugin.xml",
-    jars = {
-        "lib/classic-ui.jar": ["intellij.classic.ui"],
-    },
+    jars = {"lib/classic-ui.jar": ["intellij.classic.ui"]},
     main_module = "intellij.classic.ui",
-    module_labels = {
-        "intellij.classic.ui": "@community//plugins/classic-ui:classic-ui",
-    },
+    module_labels = {"intellij.classic.ui": "//plugins/classic-ui"},
 )
 ### auto-generated section `dev intellij.classic.ui` end
 

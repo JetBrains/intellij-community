@@ -5,23 +5,15 @@ load("//platform/build-scripts/bazel-rules:dist_plugin.bzl", "dist_plugin")
 
 ### auto-generated section `dev intellij.idea.customization.plugin` start
 dist_plugin(
-    content_modules = [
-        # do not sort,
-        "intellij.idea.customization.base",
-        "intellij.idea.customization.backend",
-        "intellij.platform.ide.nonModalWelcomeScreen",
-        "intellij.platform.ide.nonModalWelcomeScreen.frontend",
-        "intellij.platform.ide.nonModalWelcomeScreen.backend",
-    ],
-    main_module = "intellij.idea.customization.plugin",
-    module_labels = {
-        "intellij.idea.customization.backend": "@community//idea/customization/backend:backend",
-        "intellij.idea.customization.base": "@community//idea/customization/base:base",
-        "intellij.idea.customization.plugin": "@community//idea/customization/plugin:plugin",
-        "intellij.platform.ide.nonModalWelcomeScreen": "@community//platform/non-modal-welcome-screen:non-modal-welcome-screen",
-        "intellij.platform.ide.nonModalWelcomeScreen.backend": "@community//platform/non-modal-welcome-screen/backend:backend",
-        "intellij.platform.ide.nonModalWelcomeScreen.frontend": "@community//platform/non-modal-welcome-screen/frontend:frontend",
+    content_modules = {
+        "intellij.idea.customization.base": "//idea/customization/base",
+        "intellij.idea.customization.backend": "//idea/customization/backend",
+        "intellij.platform.ide.nonModalWelcomeScreen": "//platform/non-modal-welcome-screen",
+        "intellij.platform.ide.nonModalWelcomeScreen.frontend": "//platform/non-modal-welcome-screen/frontend",
+        "intellij.platform.ide.nonModalWelcomeScreen.backend": "//platform/non-modal-welcome-screen/backend",
     },
+    main_module = "intellij.idea.customization.plugin",
+    module_labels = {"intellij.idea.customization.plugin": "//idea/customization/plugin"},
 )
 ### auto-generated section `dev intellij.idea.customization.plugin` end
 

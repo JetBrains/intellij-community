@@ -19,15 +19,15 @@ load("//platform/build-scripts/bazel-rules:dist_plugin_descriptor.bzl", "dist_pl
 
 dist_plugin_descriptor(
     descriptor = "//plugins/env-files-support:src/main/resources/META-INF/plugin.xml",
-    descriptors = {
-        "@community//plugins/env-files-support/java:resources/intellij.dotenv.java.xml": "intellij.dotenv.java.xml",
-        "@community//plugins/env-files-support/kotlin:resources/intellij.dotenv.kotlin.xml": "intellij.dotenv.kotlin.xml",
-        "@community//plugins/env-files-support/python:resources/intellij.dotenv.python.xml": "intellij.dotenv.python.xml",
-    },
     main_module = "intellij.dotenv",
     mode_refused_content_modules = {
         "frontend": ["intellij.dotenv.python"],
     },
+    module_descriptors = [
+        "@community//plugins/env-files-support/java:resources/intellij.dotenv.java.xml",
+        "@community//plugins/env-files-support/kotlin:resources/intellij.dotenv.kotlin.xml",
+        "@community//plugins/env-files-support/python:resources/intellij.dotenv.python.xml",
+    ],
     refused_content_modules = [
         "intellij.dotenv.php",
         "intellij.dotenv.go",

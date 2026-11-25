@@ -5,35 +5,21 @@ load("//platform/build-scripts/bazel-rules:dist_plugin.bzl", "dist_plugin")
 
 ### auto-generated section `dev intellij.dev` start
 dist_plugin(
-    content_modules = [
-        # do not sort,
-        "intellij.platform.statistics.devkit",
-        "intellij.platform.statistics.devkit.backend",
-        "intellij.platform.statistics.devkit.frontend",
-        "intellij.platform.ide.ui.inspector",
-        "intellij.dev.psiViewer",
-        "intellij.dev.codeInsight",
-        "intellij.dev.pluginLoading",
-        "intellij.java.dev",
-        "intellij.groovy.dev",
-        "intellij.kotlin.dev",
-        "intellij.dev.core",
-    ],
-    main_module = "intellij.dev",
-    module_labels = {
-        "intellij.dev": "@community//plugins/dev/intellij.dev:dev",
-        "intellij.dev.codeInsight": "@community//plugins/dev/intellij.dev.codeInsight:codeInsight",
-        "intellij.dev.core": "@community//plugins/dev/intellij.dev.core:core",
-        "intellij.dev.pluginLoading": "@community//plugins/dev/intellij.dev.pluginLoading:pluginLoading",
-        "intellij.dev.psiViewer": "@community//plugins/dev/intellij.dev.psiViewer:psiViewer",
-        "intellij.groovy.dev": "@community//plugins/dev/intellij.groovy.dev:groovy-dev",
-        "intellij.java.dev": "@community//plugins/dev/intellij.java.dev:java-dev",
-        "intellij.kotlin.dev": "@community//plugins/dev/intellij.kotlin.dev:kotlin-dev",
-        "intellij.platform.ide.ui.inspector": "@community//platform/platform-impl/ui-inspector:ide-ui-inspector",
-        "intellij.platform.statistics.devkit": "@community//platform/statistics/devkit:devkit",
-        "intellij.platform.statistics.devkit.backend": "@community//platform/statistics/devkit/backend:backend",
-        "intellij.platform.statistics.devkit.frontend": "@community//platform/statistics/devkit/frontend:frontend",
+    content_modules = {
+        "intellij.platform.statistics.devkit": "//platform/statistics/devkit",
+        "intellij.platform.statistics.devkit.backend": "//platform/statistics/devkit/backend",
+        "intellij.platform.statistics.devkit.frontend": "//platform/statistics/devkit/frontend",
+        "intellij.platform.ide.ui.inspector": "//platform/platform-impl/ui-inspector:ide-ui-inspector",
+        "intellij.dev.psiViewer": "//plugins/dev/intellij.dev.psiViewer:psiViewer",
+        "intellij.dev.codeInsight": "//plugins/dev/intellij.dev.codeInsight:codeInsight",
+        "intellij.dev.pluginLoading": "//plugins/dev/intellij.dev.pluginLoading:pluginLoading",
+        "intellij.java.dev": "//plugins/dev/intellij.java.dev:java-dev",
+        "intellij.groovy.dev": "//plugins/dev/intellij.groovy.dev:groovy-dev",
+        "intellij.kotlin.dev": "//plugins/dev/intellij.kotlin.dev:kotlin-dev",
+        "intellij.dev.core": "//plugins/dev/intellij.dev.core:core",
     },
+    main_module = "intellij.dev",
+    module_labels = {"intellij.dev": "//plugins/dev/intellij.dev:dev"},
 )
 ### auto-generated section `dev intellij.dev` end
 

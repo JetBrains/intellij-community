@@ -19,22 +19,22 @@ load("//platform/build-scripts/bazel-rules:dist_plugin_descriptor.bzl", "dist_pl
 
 dist_plugin_descriptor(
     descriptor = "//plugins/git4idea:resources/META-INF/plugin.xml",
-    descriptors = {
-        "@community//plugins/git4idea/backend:resources/intellij.vcs.git.backend.xml": "intellij.vcs.git.backend.xml",
-        "@community//plugins/git4idea/frontend:resources/intellij.vcs.git.frontend.xml": "intellij.vcs.git.frontend.xml",
-        "@community//plugins/git4idea/hosting:resources/intellij.vcs.git.hosting.xml": "intellij.vcs.git.hosting.xml",
-        "@community//plugins/git4idea/intellij.vcs.git.coverage:resources/intellij.vcs.git.coverage.xml": "intellij.vcs.git.coverage.xml",
-        "@community//plugins/git4idea/localHistory:resources/intellij.vcs.git.localHistory.xml": "intellij.vcs.git.localHistory.xml",
-        "@community//plugins/git4idea/performanceTesting:resources/intellij.vcs.git.performanceTesting.xml": "intellij.vcs.git.performanceTesting.xml",
-        "@community//plugins/git4idea/rpc.backend:resources/intellij.vcs.git.rpc.backend.xml": "intellij.vcs.git.rpc.backend.xml",
-        "@community//plugins/git4idea/rt:resources/intellij.vcs.git.rt.xml": "intellij.vcs.git.rt.xml",
-        "@community//plugins/git4idea/shared:resources/intellij.vcs.git.shared.xml": "intellij.vcs.git.shared.xml",
-        "@community//plugins/git4idea/terminal:resources/intellij.vcs.git.terminal.xml": "intellij.vcs.git.terminal.xml",
-    },
     main_module = "intellij.vcs.git",
     mode_refused_content_modules = {
         "frontend": ["intellij.vcs.git.rpc.backend"],
     },
+    module_descriptors = [
+        "@community//plugins/git4idea/backend:resources/intellij.vcs.git.backend.xml",
+        "@community//plugins/git4idea/frontend:resources/intellij.vcs.git.frontend.xml",
+        "@community//plugins/git4idea/hosting:resources/intellij.vcs.git.hosting.xml",
+        "@community//plugins/git4idea/intellij.vcs.git.coverage:resources/intellij.vcs.git.coverage.xml",
+        "@community//plugins/git4idea/localHistory:resources/intellij.vcs.git.localHistory.xml",
+        "@community//plugins/git4idea/performanceTesting:resources/intellij.vcs.git.performanceTesting.xml",
+        "@community//plugins/git4idea/rpc.backend:resources/intellij.vcs.git.rpc.backend.xml",
+        "@community//plugins/git4idea/rt:resources/intellij.vcs.git.rt.xml",
+        "@community//plugins/git4idea/shared:resources/intellij.vcs.git.shared.xml",
+        "@community//plugins/git4idea/terminal:resources/intellij.vcs.git.terminal.xml",
+    ],
     refused_content_modules = [
         "intellij.vcs.git.frontend.split",
         "intellij.vcs.git.backend.split",

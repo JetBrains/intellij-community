@@ -5,21 +5,14 @@ load("//platform/build-scripts/bazel-rules:dist_plugin.bzl", "dist_plugin")
 
 ### auto-generated section `dev intellij.platform.testRunner.plugin` start
 dist_plugin(
-    content_modules = [
-        # do not sort,
-        "intellij.platform.testRunner",
-        "intellij.platform.smRunner",
-        "intellij.platform.smRunner.vcs",
-        "intellij.platform.smRunner.dashboard",
-    ],
-    main_module = "intellij.platform.testRunner.plugin",
-    module_labels = {
-        "intellij.platform.smRunner": "@community//platform/smRunner:smRunner",
-        "intellij.platform.smRunner.dashboard": "@community//platform/smRunner/dashboard:dashboard",
-        "intellij.platform.smRunner.vcs": "@community//platform/smRunner/vcs:vcs",
-        "intellij.platform.testRunner": "@community//platform/testRunner:testRunner",
-        "intellij.platform.testRunner.plugin": "@community//platform/testRunner/plugin:plugin",
+    content_modules = {
+        "intellij.platform.testRunner": "//platform/testRunner",
+        "intellij.platform.smRunner": "//platform/smRunner",
+        "intellij.platform.smRunner.vcs": "//platform/smRunner/vcs",
+        "intellij.platform.smRunner.dashboard": "//platform/smRunner/dashboard",
     },
+    main_module = "intellij.platform.testRunner.plugin",
+    module_labels = {"intellij.platform.testRunner.plugin": "//platform/testRunner/plugin"},
 )
 ### auto-generated section `dev intellij.platform.testRunner.plugin` end
 

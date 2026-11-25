@@ -4,23 +4,15 @@ load("//platform/build-scripts/bazel-rules:dist_plugin.bzl", "dist_plugin")
 
 ### auto-generated section `dev intellij.java.aetherDependencyResolver.plugin` start
 dist_plugin(
-    content_modules = [
-        # do not sort,
-        "intellij.java.aetherDependencyResolver",
-        "intellij.libraries.maven.resolver.provider",
-        "intellij.libraries.maven.resolver.transport",
-        "intellij.libraries.plexus.utils",
-        "intellij.repository.search.completion",
-    ],
-    main_module = "intellij.java.aetherDependencyResolver.plugin",
-    module_labels = {
-        "intellij.java.aetherDependencyResolver": "@community//aether-dependency-resolver:aether-dependency-resolver",
-        "intellij.java.aetherDependencyResolver.plugin": "@community//aether-dependency-resolver/plugin:plugin",
-        "intellij.libraries.maven.resolver.provider": "@community//libraries/maven-resolver-provider:maven-resolver-provider",
-        "intellij.libraries.maven.resolver.transport": "@community//libraries/maven-resolver-transport:maven-resolver-transport",
-        "intellij.libraries.plexus.utils": "@community//libraries/plexus-utils:plexus-utils",
-        "intellij.repository.search.completion": "@community//plugins/repository-search/completion:completion",
+    content_modules = {
+        "intellij.java.aetherDependencyResolver": "//aether-dependency-resolver",
+        "intellij.libraries.maven.resolver.provider": "//libraries/maven-resolver-provider",
+        "intellij.libraries.maven.resolver.transport": "//libraries/maven-resolver-transport",
+        "intellij.libraries.plexus.utils": "//libraries/plexus-utils",
+        "intellij.repository.search.completion": "//plugins/repository-search/completion",
     },
+    main_module = "intellij.java.aetherDependencyResolver.plugin",
+    module_labels = {"intellij.java.aetherDependencyResolver.plugin": "//aether-dependency-resolver/plugin"},
 )
 ### auto-generated section `dev intellij.java.aetherDependencyResolver.plugin` end
 

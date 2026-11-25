@@ -19,15 +19,15 @@ load("//platform/build-scripts/bazel-rules:dist_plugin_descriptor.bzl", "dist_pl
 
 dist_plugin_descriptor(
     descriptor = "//plugins/textmate/plugin:resources/META-INF/plugin.xml",
-    descriptors = {
-        "@community//libraries/joni:resources/intellij.libraries.joni.xml": "intellij.libraries.joni.xml",
-        "@community//plugins/textmate/backend:resources/intellij.textmate.backend.xml": "intellij.textmate.backend.xml",
-        "@community//plugins/textmate/common:resources/intellij.textmate.common.xml": "intellij.textmate.common.xml",
-        "@community//plugins/textmate/core:resources/intellij.textmate.core.xml": "intellij.textmate.core.xml",
-        "@community//plugins/textmate/joni:resources/intellij.textmate.joni.xml": "intellij.textmate.joni.xml",
-        "@community//plugins/textmate:resources/intellij.textmate.xml": "intellij.textmate.xml",
-    },
     main_module = "intellij.textmate.plugin",
+    module_descriptors = [
+        "@community//libraries/joni:resources/intellij.libraries.joni.xml",
+        "@community//plugins/textmate/backend:resources/intellij.textmate.backend.xml",
+        "@community//plugins/textmate/common:resources/intellij.textmate.common.xml",
+        "@community//plugins/textmate/core:resources/intellij.textmate.core.xml",
+        "@community//plugins/textmate/joni:resources/intellij.textmate.joni.xml",
+        "@community//plugins/textmate:resources/intellij.textmate.xml",
+    ],
     refused_content_modules = [
         "intellij.textmate.frontend.split",
     ],

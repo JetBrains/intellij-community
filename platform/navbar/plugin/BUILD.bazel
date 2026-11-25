@@ -5,31 +5,22 @@ load("//platform/build-scripts/bazel-rules:dist_plugin.bzl", "dist_plugin")
 
 ### auto-generated section `dev intellij.platform.navbar.plugin` start
 dist_plugin(
-    content_modules = [
-        # do not sort,
-        "intellij.platform.navbar",
-        "intellij.platform.navbar.backend",
-        "intellij.platform.navbar.frontend",
-        "intellij.platform.navbar.monolith",
-    ],
+    content_modules = {
+        "intellij.platform.navbar": "//platform/navbar/shared:navbar",
+        "intellij.platform.navbar.backend": "//platform/navbar/backend",
+        "intellij.platform.navbar.frontend": "//platform/navbar/frontend",
+        "intellij.platform.navbar.monolith": "//platform/navbar/monolith",
+    },
     descriptor = "resources/META-INF/plugin.xml",
-    descriptors = {
-        "@community//platform/navbar/backend:resources/intellij.platform.navbar.backend.xml": "intellij.platform.navbar.backend.xml",
-        "@community//platform/navbar/frontend:resources/intellij.platform.navbar.frontend.xml": "intellij.platform.navbar.frontend.xml",
-        "@community//platform/navbar/monolith:resources/intellij.platform.navbar.monolith.xml": "intellij.platform.navbar.monolith.xml",
-        "@community//platform/navbar/shared:resources/intellij.platform.navbar.xml": "intellij.platform.navbar.xml",
-    },
-    jars = {
-        "lib/platform-navbar-plugin.jar": ["intellij.platform.navbar.plugin"],
-    },
+    jars = {"lib/platform-navbar-plugin.jar": ["intellij.platform.navbar.plugin"]},
     main_module = "intellij.platform.navbar.plugin",
-    module_labels = {
-        "intellij.platform.navbar": "@community//platform/navbar/shared:navbar",
-        "intellij.platform.navbar.backend": "@community//platform/navbar/backend:backend",
-        "intellij.platform.navbar.frontend": "@community//platform/navbar/frontend:frontend",
-        "intellij.platform.navbar.monolith": "@community//platform/navbar/monolith:monolith",
-        "intellij.platform.navbar.plugin": "@community//platform/navbar/plugin:plugin",
-    },
+    module_descriptors = [
+        "@community//platform/navbar/backend:resources/intellij.platform.navbar.backend.xml",
+        "@community//platform/navbar/frontend:resources/intellij.platform.navbar.frontend.xml",
+        "@community//platform/navbar/monolith:resources/intellij.platform.navbar.monolith.xml",
+        "@community//platform/navbar/shared:resources/intellij.platform.navbar.xml",
+    ],
+    module_labels = {"intellij.platform.navbar.plugin": "//platform/navbar/plugin"},
 )
 ### auto-generated section `dev intellij.platform.navbar.plugin` end
 

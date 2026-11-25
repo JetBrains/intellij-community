@@ -21,9 +21,7 @@ dist_plugin(
         "lib/completion-log-events.jar": ["@lib//:stats_collector-completion-log-events"],
     },
     main_module = "intellij.statsCollector",
-    module_labels = {
-        "intellij.statsCollector": "@community//plugins/stats-collector:stats-collector",
-    },
+    module_labels = {"intellij.statsCollector": "//plugins/stats-collector"},
 )
 ### auto-generated section `dev intellij.statsCollector` end
 

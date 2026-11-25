@@ -6,13 +6,9 @@ load("//platform/build-scripts/bazel-rules:dist_plugin.bzl", "dist_plugin")
 ### auto-generated section `dev intellij.keymap.visualStudio` start
 dist_plugin(
     descriptor = "resources/META-INF/plugin.xml",
-    jars = {
-        "lib/keymap-visualStudio.jar": ["intellij.keymap.visualStudio"],
-    },
+    jars = {"lib/keymap-visualStudio.jar": ["intellij.keymap.visualStudio"]},
     main_module = "intellij.keymap.visualStudio",
-    module_labels = {
-        "intellij.keymap.visualStudio": "@community//plugins/keymaps/visual-studio-keymap:keymap-visualStudio",
-    },
+    module_labels = {"intellij.keymap.visualStudio": "//plugins/keymaps/visual-studio-keymap:keymap-visualStudio"},
 )
 ### auto-generated section `dev intellij.keymap.visualStudio` end
 

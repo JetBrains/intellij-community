@@ -5,34 +5,23 @@ load("//platform/build-scripts/bazel-rules:dist_plugin.bzl", "dist_plugin")
 
 ### auto-generated section `dev intellij.python.pixi.plugin` start
 dist_plugin(
-    content_modules = [
-        # do not sort,
-        "intellij.python.pixi.common",
-        "intellij.python.pixi.backend",
-        "intellij.python.pixi.frontend",
-        "intellij.libraries.night.config.toml",
-    ],
+    content_modules = {
+        "intellij.python.pixi.common": "//python/python-pixi/common",
+        "intellij.python.pixi.backend": "//python/python-pixi/backend",
+        "intellij.python.pixi.frontend": "//python/python-pixi/frontend",
+        "intellij.libraries.night.config.toml": "//libraries/night-config-toml",
+    },
     descriptor = "resources/META-INF/plugin.xml",
-    descriptors = {
-        "@community//libraries/night-config-toml:resources/intellij.libraries.night.config.toml.xml": "intellij.libraries.night.config.toml.xml",
-        "@community//python/python-pixi/backend:resources/intellij.python.pixi.backend.xml": "intellij.python.pixi.backend.xml",
-        "@community//python/python-pixi/common:resources/intellij.python.pixi.common.xml": "intellij.python.pixi.common.xml",
-        "@community//python/python-pixi/frontend:resources/intellij.python.pixi.frontend.xml": "intellij.python.pixi.frontend.xml",
-    },
-    jars = {
-        "lib/python-pixi-plugin.jar": ["intellij.python.pixi.plugin"],
-    },
+    jars = {"lib/python-pixi-plugin.jar": ["intellij.python.pixi.plugin"]},
     main_module = "intellij.python.pixi.plugin",
-    mode_refused_content_modules = {
-        "frontend": ["intellij.python.pixi.backend"],
-    },
-    module_labels = {
-        "intellij.libraries.night.config.toml": "@community//libraries/night-config-toml:night-config-toml",
-        "intellij.python.pixi.backend": "@community//python/python-pixi/backend:backend",
-        "intellij.python.pixi.common": "@community//python/python-pixi/common:common",
-        "intellij.python.pixi.frontend": "@community//python/python-pixi/frontend:frontend",
-        "intellij.python.pixi.plugin": "@community//python/python-pixi/plugin:plugin",
-    },
+    mode_refused_content_modules = {"frontend": ["intellij.python.pixi.backend"]},
+    module_descriptors = [
+        "@community//libraries/night-config-toml:resources/intellij.libraries.night.config.toml.xml",
+        "@community//python/python-pixi/backend:resources/intellij.python.pixi.backend.xml",
+        "@community//python/python-pixi/common:resources/intellij.python.pixi.common.xml",
+        "@community//python/python-pixi/frontend:resources/intellij.python.pixi.frontend.xml",
+    ],
+    module_labels = {"intellij.python.pixi.plugin": "//python/python-pixi/plugin"},
 )
 ### auto-generated section `dev intellij.python.pixi.plugin` end
 

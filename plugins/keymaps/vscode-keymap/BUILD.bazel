@@ -6,13 +6,9 @@ load("//platform/build-scripts/bazel-rules:dist_plugin.bzl", "dist_plugin")
 ### auto-generated section `dev intellij.keymap.vscode` start
 dist_plugin(
     descriptor = "resources/META-INF/plugin.xml",
-    jars = {
-        "lib/keymap-vscode.jar": ["intellij.keymap.vscode"],
-    },
+    jars = {"lib/keymap-vscode.jar": ["intellij.keymap.vscode"]},
     main_module = "intellij.keymap.vscode",
-    module_labels = {
-        "intellij.keymap.vscode": "@community//plugins/keymaps/vscode-keymap:keymap-vscode",
-    },
+    module_labels = {"intellij.keymap.vscode": "//plugins/keymaps/vscode-keymap:keymap-vscode"},
 )
 ### auto-generated section `dev intellij.keymap.vscode` end
 

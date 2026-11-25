@@ -6,13 +6,9 @@ load("//platform/build-scripts/bazel-rules:dist_plugin.bzl", "dist_plugin")
 ### auto-generated section `dev intellij.smart.update` start
 dist_plugin(
     descriptor = "resources/META-INF/plugin.xml",
-    jars = {
-        "lib/smart-update.jar": ["intellij.smart.update"],
-    },
+    jars = {"lib/smart-update.jar": ["intellij.smart.update"]},
     main_module = "intellij.smart.update",
-    module_labels = {
-        "intellij.smart.update": "@community//platform/smart-update:smart-update",
-    },
+    module_labels = {"intellij.smart.update": "//platform/smart-update"},
 )
 ### auto-generated section `dev intellij.smart.update` end
 

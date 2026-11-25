@@ -6,13 +6,9 @@ load("//platform/build-scripts/bazel-rules:dist_plugin.bzl", "dist_plugin")
 ### auto-generated section `dev intellij.keymap.netbeans` start
 dist_plugin(
     descriptor = "resources/META-INF/plugin.xml",
-    jars = {
-        "lib/keymap-netbeans.jar": ["intellij.keymap.netbeans"],
-    },
+    jars = {"lib/keymap-netbeans.jar": ["intellij.keymap.netbeans"]},
     main_module = "intellij.keymap.netbeans",
-    module_labels = {
-        "intellij.keymap.netbeans": "@community//plugins/keymaps/netbeans5.6-keymap:keymap-netbeans",
-    },
+    module_labels = {"intellij.keymap.netbeans": "//plugins/keymaps/netbeans5.6-keymap:keymap-netbeans"},
 )
 ### auto-generated section `dev intellij.keymap.netbeans` end
 

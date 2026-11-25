@@ -5,28 +5,19 @@ load("//platform/build-scripts/bazel-rules:dist_plugin.bzl", "dist_plugin")
 
 ### auto-generated section `dev intellij.platform.scratch.plugin` start
 dist_plugin(
-    content_modules = [
-        # do not sort,
-        "intellij.platform.scratch",
-        "intellij.platform.scratch.backend",
-    ],
+    content_modules = {
+        "intellij.platform.scratch": "//platform/scratch",
+        "intellij.platform.scratch.backend": "//platform/scratch/backend",
+    },
     descriptor = "resources/META-INF/plugin.xml",
-    descriptors = {
-        "@community//platform/scratch/backend:resources/intellij.platform.scratch.backend.xml": "intellij.platform.scratch.backend.xml",
-        "@community//platform/scratch:resources/intellij.platform.scratch.xml": "intellij.platform.scratch.xml",
-    },
-    jars = {
-        "lib/platform-scratch-plugin.jar": ["intellij.platform.scratch.plugin"],
-    },
+    jars = {"lib/platform-scratch-plugin.jar": ["intellij.platform.scratch.plugin"]},
     main_module = "intellij.platform.scratch.plugin",
-    mode_refused_content_modules = {
-        "frontend": ["intellij.platform.scratch.backend"],
-    },
-    module_labels = {
-        "intellij.platform.scratch": "@community//platform/scratch:scratch",
-        "intellij.platform.scratch.backend": "@community//platform/scratch/backend:backend",
-        "intellij.platform.scratch.plugin": "@community//platform/scratch/plugin:plugin",
-    },
+    mode_refused_content_modules = {"frontend": ["intellij.platform.scratch.backend"]},
+    module_descriptors = [
+        "@community//platform/scratch/backend:resources/intellij.platform.scratch.backend.xml",
+        "@community//platform/scratch:resources/intellij.platform.scratch.xml",
+    ],
+    module_labels = {"intellij.platform.scratch.plugin": "//platform/scratch/plugin"},
 )
 ### auto-generated section `dev intellij.platform.scratch.plugin` end
 

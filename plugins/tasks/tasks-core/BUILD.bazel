@@ -4,28 +4,17 @@ load("//platform/build-scripts/bazel-rules:dist_plugin.bzl", "dist_plugin")
 
 ### auto-generated section `dev intellij.tasks.core` start
 dist_plugin(
-    content_modules = [
-        # do not sort,
-        "intellij.tasks.trac",
-        "intellij.tasks.bugzilla",
-        "intellij.tasks.jira",
-        "intellij.tasks.java",
-        "intellij.tasks",
-        "intellij.tasks.compatibility",
-        "intellij.libraries.xml.rpc",
-        "intellij.tasks.core.libraries.commonsDiscovery",
-    ],
-    descriptor = "resources/META-INF/plugin.xml",
-    descriptors = {
-        "@community//libraries/xml-rpc:resources/intellij.libraries.xml.rpc.xml": "intellij.libraries.xml.rpc.xml",
-        "@community//plugins/tasks/tasks-api:resources/intellij.tasks.xml": "intellij.tasks.xml",
-        "@community//plugins/tasks/tasks-compatibility:resources/intellij.tasks.compatibility.xml": "intellij.tasks.compatibility.xml",
-        "@community//plugins/tasks/tasks-core/bugzilla:resources/intellij.tasks.bugzilla.xml": "intellij.tasks.bugzilla.xml",
-        "@community//plugins/tasks/tasks-core/jira:resources/intellij.tasks.jira.xml": "intellij.tasks.jira.xml",
-        "@community//plugins/tasks/tasks-core/libraries:resources/intellij.tasks.core.libraries.commonsDiscovery.xml": "intellij.tasks.core.libraries.commonsDiscovery.xml",
-        "@community//plugins/tasks/tasks-core/trac:resources/intellij.tasks.trac.xml": "intellij.tasks.trac.xml",
-        "@community//plugins/tasks/tasks-java:resources/intellij.tasks.java.xml": "intellij.tasks.java.xml",
+    content_modules = {
+        "intellij.tasks.trac": "//plugins/tasks/tasks-core/trac",
+        "intellij.tasks.bugzilla": "//plugins/tasks/tasks-core/bugzilla",
+        "intellij.tasks.jira": "//plugins/tasks/tasks-core/jira",
+        "intellij.tasks.java": "//plugins/tasks/tasks-java:java",
+        "intellij.tasks": "//plugins/tasks/tasks-api:tasks",
+        "intellij.tasks.compatibility": "//plugins/tasks/tasks-compatibility:compatibility",
+        "intellij.libraries.xml.rpc": "//libraries/xml-rpc",
+        "intellij.tasks.core.libraries.commonsDiscovery": "//plugins/tasks/tasks-core/libraries:tasks-core-libraries-commonsDiscovery",
     },
+    descriptor = "resources/META-INF/plugin.xml",
     jars = {
         "lib/intellij.tasks.compatibility.jar": [
             "intellij.tasks.compatibility",
@@ -47,20 +36,18 @@ dist_plugin(
             "intellij.tasks.java",
         ],
     },
-    module_jar_paths = {
-        "intellij.tasks": "lib/intellij.tasks.jar",
-    },
-    module_labels = {
-        "intellij.libraries.xml.rpc": "@community//libraries/xml-rpc:xml-rpc",
-        "intellij.tasks": "@community//plugins/tasks/tasks-api:tasks",
-        "intellij.tasks.bugzilla": "@community//plugins/tasks/tasks-core/bugzilla:bugzilla",
-        "intellij.tasks.compatibility": "@community//plugins/tasks/tasks-compatibility:compatibility",
-        "intellij.tasks.core": "@community//plugins/tasks/tasks-core:core",
-        "intellij.tasks.core.libraries.commonsDiscovery": "@community//plugins/tasks/tasks-core/libraries:tasks-core-libraries-commonsDiscovery",
-        "intellij.tasks.java": "@community//plugins/tasks/tasks-java:java",
-        "intellij.tasks.jira": "@community//plugins/tasks/tasks-core/jira:jira",
-        "intellij.tasks.trac": "@community//plugins/tasks/tasks-core/trac:trac",
-    },
+    module_descriptors = [
+        "@community//libraries/xml-rpc:resources/intellij.libraries.xml.rpc.xml",
+        "@community//plugins/tasks/tasks-api:resources/intellij.tasks.xml",
+        "@community//plugins/tasks/tasks-compatibility:resources/intellij.tasks.compatibility.xml",
+        "@community//plugins/tasks/tasks-core/bugzilla:resources/intellij.tasks.bugzilla.xml",
+        "@community//plugins/tasks/tasks-core/jira:resources/intellij.tasks.jira.xml",
+        "@community//plugins/tasks/tasks-core/libraries:resources/intellij.tasks.core.libraries.commonsDiscovery.xml",
+        "@community//plugins/tasks/tasks-core/trac:resources/intellij.tasks.trac.xml",
+        "@community//plugins/tasks/tasks-java:resources/intellij.tasks.java.xml",
+    ],
+    module_jar_paths = {"intellij.tasks": "lib/intellij.tasks.jar"},
+    module_labels = {"intellij.tasks.core": "//plugins/tasks/tasks-core:core"},
 )
 ### auto-generated section `dev intellij.tasks.core` end
 

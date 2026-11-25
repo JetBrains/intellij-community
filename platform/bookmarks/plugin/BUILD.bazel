@@ -5,22 +5,14 @@ load("//platform/build-scripts/bazel-rules:dist_plugin.bzl", "dist_plugin")
 
 ### auto-generated section `dev intellij.platform.bookmarks.plugin` start
 dist_plugin(
-    content_modules = [
-        # do not sort,
-        "intellij.platform.bookmarks",
-        "intellij.platform.bookmarks.backend",
-        "intellij.platform.bookmarks.frontend",
-        "intellij.platform.debugger.impl.bookmarks",
-        "intellij.platform.vcs.log.impl.bookmarks",
-    ],
-    descriptor = "resources/META-INF/plugin.xml",
-    descriptors = {
-        "@community//platform/bookmarks/backend:resources/intellij.platform.bookmarks.backend.xml": "intellij.platform.bookmarks.backend.xml",
-        "@community//platform/bookmarks/frontend:resources/intellij.platform.bookmarks.frontend.xml": "intellij.platform.bookmarks.frontend.xml",
-        "@community//platform/bookmarks:resources/intellij.platform.bookmarks.xml": "intellij.platform.bookmarks.xml",
-        "@community//platform/vcs-log/impl/bookmarks:resources/intellij.platform.vcs.log.impl.bookmarks.xml": "intellij.platform.vcs.log.impl.bookmarks.xml",
-        "@community//platform/xdebugger-impl/bookmarks:resources/intellij.platform.debugger.impl.bookmarks.xml": "intellij.platform.debugger.impl.bookmarks.xml",
+    content_modules = {
+        "intellij.platform.bookmarks": "//platform/bookmarks",
+        "intellij.platform.bookmarks.backend": "//platform/bookmarks/backend",
+        "intellij.platform.bookmarks.frontend": "//platform/bookmarks/frontend",
+        "intellij.platform.debugger.impl.bookmarks": "//platform/xdebugger-impl/bookmarks",
+        "intellij.platform.vcs.log.impl.bookmarks": "//platform/vcs-log/impl/bookmarks",
     },
+    descriptor = "resources/META-INF/plugin.xml",
     jars = {
         "lib/platform-bookmarks-plugin.jar": [
             "intellij.platform.bookmarks.plugin",
@@ -30,17 +22,15 @@ dist_plugin(
         ],
     },
     main_module = "intellij.platform.bookmarks.plugin",
-    mode_refused_content_modules = {
-        "frontend": ["intellij.platform.bookmarks.backend"],
-    },
-    module_labels = {
-        "intellij.platform.bookmarks": "@community//platform/bookmarks:bookmarks",
-        "intellij.platform.bookmarks.backend": "@community//platform/bookmarks/backend:backend",
-        "intellij.platform.bookmarks.frontend": "@community//platform/bookmarks/frontend:frontend",
-        "intellij.platform.bookmarks.plugin": "@community//platform/bookmarks/plugin:plugin",
-        "intellij.platform.debugger.impl.bookmarks": "@community//platform/xdebugger-impl/bookmarks:bookmarks",
-        "intellij.platform.vcs.log.impl.bookmarks": "@community//platform/vcs-log/impl/bookmarks:bookmarks",
-    },
+    mode_refused_content_modules = {"frontend": ["intellij.platform.bookmarks.backend"]},
+    module_descriptors = [
+        "@community//platform/bookmarks/backend:resources/intellij.platform.bookmarks.backend.xml",
+        "@community//platform/bookmarks/frontend:resources/intellij.platform.bookmarks.frontend.xml",
+        "@community//platform/bookmarks:resources/intellij.platform.bookmarks.xml",
+        "@community//platform/vcs-log/impl/bookmarks:resources/intellij.platform.vcs.log.impl.bookmarks.xml",
+        "@community//platform/xdebugger-impl/bookmarks:resources/intellij.platform.debugger.impl.bookmarks.xml",
+    ],
+    module_labels = {"intellij.platform.bookmarks.plugin": "//platform/bookmarks/plugin"},
 )
 ### auto-generated section `dev intellij.platform.bookmarks.plugin` end
 

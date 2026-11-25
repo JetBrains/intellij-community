@@ -19,13 +19,6 @@ load("//platform/build-scripts/bazel-rules:dist_plugin_descriptor.bzl", "dist_pl
 
 dist_plugin_descriptor(
     descriptor = "//plugins/github/plugin:resources/META-INF/plugin.xml",
-    descriptors = {
-        "@community//plugins/github/github-core:resources/intellij.vcs.github.xml": "intellij.vcs.github.xml",
-        "@community//plugins/github/github-git:resources/intellij.vcs.github.git.xml": "intellij.vcs.github.git.xml",
-        "@community//plugins/github/github-json:resources/intellij.vcs.github.json.xml": "intellij.vcs.github.json.xml",
-        "@community//plugins/github/github-tracker:resources/intellij.vcs.github.tracker.xml": "intellij.vcs.github.tracker.xml",
-        "@community//plugins/github/ultimate-promo:resources/intellij.vcs.github.ultimatePromo.xml": "intellij.vcs.github.ultimatePromo.xml",
-    },
     main_module = "intellij.vcs.github.plugin",
     mode_refused_content_modules = {
         "frontend": [
@@ -35,6 +28,13 @@ dist_plugin_descriptor(
             "intellij.vcs.github.json",
         ],
     },
+    module_descriptors = [
+        "@community//plugins/github/github-core:resources/intellij.vcs.github.xml",
+        "@community//plugins/github/github-git:resources/intellij.vcs.github.git.xml",
+        "@community//plugins/github/github-json:resources/intellij.vcs.github.json.xml",
+        "@community//plugins/github/github-tracker:resources/intellij.vcs.github.tracker.xml",
+        "@community//plugins/github/ultimate-promo:resources/intellij.vcs.github.ultimatePromo.xml",
+    ],
     refused_content_modules = [
         "intellij.vcs.github.ultimate.features",
         "intellij.vcs.github.ultimate.docker",

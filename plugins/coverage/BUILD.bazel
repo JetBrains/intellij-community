@@ -14,20 +14,13 @@ jps_test(
 
 ### auto-generated section `dev intellij.java.coverage` start
 dist_plugin(
-    content_modules = [
-        # do not sort,
-        "intellij.libraries.test.discovery",
-        "intellij.java.coverage.rt",
-        "intellij.java.coverage.rt.junit",
-        "intellij.java.coverage.rt.testng",
-    ],
-    descriptor = "resources/META-INF/plugin.xml",
-    descriptors = {
-        "@community//libraries/test-discovery:resources/intellij.libraries.test.discovery.xml": "intellij.libraries.test.discovery.xml",
-        "@community//plugins/coverage/coverage_rt:resources/intellij.java.coverage.rt.xml": "intellij.java.coverage.rt.xml",
-        "@community//plugins/coverage/junit:resources/intellij.java.coverage.rt.junit.xml": "intellij.java.coverage.rt.junit.xml",
-        "@community//plugins/coverage/testng:resources/intellij.java.coverage.rt.testng.xml": "intellij.java.coverage.rt.testng.xml",
+    content_modules = {
+        "intellij.libraries.test.discovery": "//libraries/test-discovery",
+        "intellij.java.coverage.rt": "//plugins/coverage/coverage_rt:java-coverage-rt",
+        "intellij.java.coverage.rt.junit": "//plugins/coverage/junit",
+        "intellij.java.coverage.rt.testng": "//plugins/coverage/testng",
     },
+    descriptor = "resources/META-INF/plugin.xml",
     jars = {
         "lib/intellij.libraries.test.discovery.jar": ["intellij.libraries.test.discovery"],
         "lib/intellij-test-discovery-agent.jar": ["@lib//:libraries-test-discovery-intellij-test-discovery"],
@@ -36,16 +29,14 @@ dist_plugin(
         "lib/jacoco.jar": ["@lib//:java-coverage-_ja_co_co"],
     },
     main_module = "intellij.java.coverage",
-    module_jar_paths = {
-        "intellij.java.coverage.rt": "lib/intellij.java.coverage.rt.jar",
-    },
-    module_labels = {
-        "intellij.java.coverage": "@community//plugins/coverage:coverage",
-        "intellij.java.coverage.rt": "@community//plugins/coverage/coverage_rt:java-coverage-rt",
-        "intellij.java.coverage.rt.junit": "@community//plugins/coverage/junit:junit",
-        "intellij.java.coverage.rt.testng": "@community//plugins/coverage/testng:testng",
-        "intellij.libraries.test.discovery": "@community//libraries/test-discovery:test-discovery",
-    },
+    module_descriptors = [
+        "@community//libraries/test-discovery:resources/intellij.libraries.test.discovery.xml",
+        "@community//plugins/coverage/coverage_rt:resources/intellij.java.coverage.rt.xml",
+        "@community//plugins/coverage/junit:resources/intellij.java.coverage.rt.junit.xml",
+        "@community//plugins/coverage/testng:resources/intellij.java.coverage.rt.testng.xml",
+    ],
+    module_jar_paths = {"intellij.java.coverage.rt": "lib/intellij.java.coverage.rt.jar"},
+    module_labels = {"intellij.java.coverage": "//plugins/coverage"},
 )
 ### auto-generated section `dev intellij.java.coverage` end
 

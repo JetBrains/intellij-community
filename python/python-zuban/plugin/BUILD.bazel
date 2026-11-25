@@ -5,31 +5,21 @@ load("//platform/build-scripts/bazel-rules:dist_plugin.bzl", "dist_plugin")
 
 ### auto-generated section `dev intellij.python.zuban.plugin` start
 dist_plugin(
-    content_modules = [
-        # do not sort,
-        "intellij.python.zuban.common",
-        "intellij.python.zuban.frontend",
-        "intellij.python.zuban",
-    ],
+    content_modules = {
+        "intellij.python.zuban.common": "//python/python-zuban/common",
+        "intellij.python.zuban.frontend": "//python/python-zuban/frontend",
+        "intellij.python.zuban": "//python/python-zuban:zuban",
+    },
     descriptor = "resources/META-INF/plugin.xml",
-    descriptors = {
-        "@community//python/python-zuban/common:resources/intellij.python.zuban.common.xml": "intellij.python.zuban.common.xml",
-        "@community//python/python-zuban/frontend:resources/intellij.python.zuban.frontend.xml": "intellij.python.zuban.frontend.xml",
-        "@community//python/python-zuban:resources/intellij.python.zuban.xml": "intellij.python.zuban.xml",
-    },
-    jars = {
-        "lib/python-zuban-plugin.jar": ["intellij.python.zuban.plugin"],
-    },
+    jars = {"lib/python-zuban-plugin.jar": ["intellij.python.zuban.plugin"]},
     main_module = "intellij.python.zuban.plugin",
-    mode_refused_content_modules = {
-        "frontend": ["intellij.python.zuban"],
-    },
-    module_labels = {
-        "intellij.python.zuban": "@community//python/python-zuban:zuban",
-        "intellij.python.zuban.common": "@community//python/python-zuban/common:common",
-        "intellij.python.zuban.frontend": "@community//python/python-zuban/frontend:frontend",
-        "intellij.python.zuban.plugin": "@community//python/python-zuban/plugin:plugin",
-    },
+    mode_refused_content_modules = {"frontend": ["intellij.python.zuban"]},
+    module_descriptors = [
+        "@community//python/python-zuban/common:resources/intellij.python.zuban.common.xml",
+        "@community//python/python-zuban/frontend:resources/intellij.python.zuban.frontend.xml",
+        "@community//python/python-zuban:resources/intellij.python.zuban.xml",
+    ],
+    module_labels = {"intellij.python.zuban.plugin": "//python/python-zuban/plugin"},
 )
 ### auto-generated section `dev intellij.python.zuban.plugin` end
 

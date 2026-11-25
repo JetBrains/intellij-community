@@ -5,19 +5,12 @@ load("//platform/build-scripts/bazel-rules:dist_plugin.bzl", "dist_plugin")
 
 ### auto-generated section `dev intellij.macros.plugin` start
 dist_plugin(
-    content_modules = ["intellij.macros.shared"],
+    content_modules = {"intellij.macros.shared": "//plugins/macros/shared"},
     descriptor = "resources/META-INF/plugin.xml",
-    descriptors = {
-        "@community//plugins/macros/shared:resources/intellij.macros.shared.xml": "intellij.macros.shared.xml",
-    },
-    jars = {
-        "lib/macros-plugin.jar": ["intellij.macros.plugin"],
-    },
+    jars = {"lib/macros-plugin.jar": ["intellij.macros.plugin"]},
     main_module = "intellij.macros.plugin",
-    module_labels = {
-        "intellij.macros.plugin": "@community//plugins/macros/plugin:plugin",
-        "intellij.macros.shared": "@community//plugins/macros/shared:shared",
-    },
+    module_descriptors = ["@community//plugins/macros/shared:resources/intellij.macros.shared.xml"],
+    module_labels = {"intellij.macros.plugin": "//plugins/macros/plugin"},
 )
 ### auto-generated section `dev intellij.macros.plugin` end
 

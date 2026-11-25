@@ -19,19 +19,6 @@ load("//platform/build-scripts/bazel-rules:dist_plugin_descriptor.bzl", "dist_pl
 
 dist_plugin_descriptor(
     descriptor = "//plugins/dev/intellij.dev:resources/META-INF/plugin.xml",
-    descriptors = {
-        "@community//platform/platform-impl/ui-inspector:resources/intellij.platform.ide.ui.inspector.xml": "intellij.platform.ide.ui.inspector.xml",
-        "@community//platform/statistics/devkit/backend:resources/intellij.platform.statistics.devkit.backend.xml": "intellij.platform.statistics.devkit.backend.xml",
-        "@community//platform/statistics/devkit/frontend:resources/intellij.platform.statistics.devkit.frontend.xml": "intellij.platform.statistics.devkit.frontend.xml",
-        "@community//platform/statistics/devkit:resources/intellij.platform.statistics.devkit.xml": "intellij.platform.statistics.devkit.xml",
-        "@community//plugins/dev/intellij.dev.codeInsight:resources/intellij.dev.codeInsight.xml": "intellij.dev.codeInsight.xml",
-        "@community//plugins/dev/intellij.dev.core:resources/intellij.dev.core.xml": "intellij.dev.core.xml",
-        "@community//plugins/dev/intellij.dev.pluginLoading:resources/intellij.dev.pluginLoading.xml": "intellij.dev.pluginLoading.xml",
-        "@community//plugins/dev/intellij.dev.psiViewer:resources/intellij.dev.psiViewer.xml": "intellij.dev.psiViewer.xml",
-        "@community//plugins/dev/intellij.groovy.dev:resources/intellij.groovy.dev.xml": "intellij.groovy.dev.xml",
-        "@community//plugins/dev/intellij.java.dev:resources/intellij.java.dev.xml": "intellij.java.dev.xml",
-        "@community//plugins/dev/intellij.kotlin.dev:resources/intellij.kotlin.dev.xml": "intellij.kotlin.dev.xml",
-    },
     main_module = "intellij.dev",
     mode_refused_content_modules = {
         "frontend": [
@@ -43,6 +30,19 @@ dist_plugin_descriptor(
             "intellij.dev.core",
         ],
     },
+    module_descriptors = [
+        "@community//platform/platform-impl/ui-inspector:resources/intellij.platform.ide.ui.inspector.xml",
+        "@community//platform/statistics/devkit/backend:resources/intellij.platform.statistics.devkit.backend.xml",
+        "@community//platform/statistics/devkit/frontend:resources/intellij.platform.statistics.devkit.frontend.xml",
+        "@community//platform/statistics/devkit:resources/intellij.platform.statistics.devkit.xml",
+        "@community//plugins/dev/intellij.dev.codeInsight:resources/intellij.dev.codeInsight.xml",
+        "@community//plugins/dev/intellij.dev.core:resources/intellij.dev.core.xml",
+        "@community//plugins/dev/intellij.dev.pluginLoading:resources/intellij.dev.pluginLoading.xml",
+        "@community//plugins/dev/intellij.dev.psiViewer:resources/intellij.dev.psiViewer.xml",
+        "@community//plugins/dev/intellij.groovy.dev:resources/intellij.groovy.dev.xml",
+        "@community//plugins/dev/intellij.java.dev:resources/intellij.java.dev.xml",
+        "@community//plugins/dev/intellij.kotlin.dev:resources/intellij.kotlin.dev.xml",
+    ],
     refused_content_modules = [
         "intellij.php.dev",
     ],

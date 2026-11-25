@@ -16,13 +16,9 @@ jps_test(
 ### auto-generated section `dev intellij.performanceTesting.ui` start
 dist_plugin(
     descriptor = "resources/META-INF/plugin.xml",
-    jars = {
-        "lib/performanceTesting-ui.jar": ["intellij.performanceTesting.ui"],
-    },
+    jars = {"lib/performanceTesting-ui.jar": ["intellij.performanceTesting.ui"]},
     main_module = "intellij.performanceTesting.ui",
-    module_labels = {
-        "intellij.performanceTesting.ui": "@community//plugins/performanceTesting/scripts-ui:ui",
-    },
+    module_labels = {"intellij.performanceTesting.ui": "//plugins/performanceTesting/scripts-ui:ui"},
 )
 ### auto-generated section `dev intellij.performanceTesting.ui` end
 

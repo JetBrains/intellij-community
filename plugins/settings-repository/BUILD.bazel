@@ -13,16 +13,11 @@ jps_test(
 
 ### auto-generated section `dev intellij.settingsRepository` start
 dist_plugin(
-    content_modules = [
-        # do not sort,
-        "intellij.libraries.sshd.osgi",
-        "intellij.libraries.jgit.ssh",
-    ],
-    descriptor = "resources/META-INF/plugin.xml",
-    descriptors = {
-        "@community//libraries/jgit-ssh:resources/intellij.libraries.jgit.ssh.xml": "intellij.libraries.jgit.ssh.xml",
-        "@community//libraries/sshd-osgi:resources/intellij.libraries.sshd.osgi.xml": "intellij.libraries.sshd.osgi.xml",
+    content_modules = {
+        "intellij.libraries.sshd.osgi": "//libraries/sshd-osgi",
+        "intellij.libraries.jgit.ssh": "//libraries/jgit-ssh",
     },
+    descriptor = "resources/META-INF/plugin.xml",
     jars = {
         "lib/intellij.libraries.sshd.osgi.jar": [
             "intellij.libraries.sshd.osgi",
@@ -36,11 +31,11 @@ dist_plugin(
         "lib/settingsRepository.jar": ["intellij.settingsRepository"],
     },
     main_module = "intellij.settingsRepository",
-    module_labels = {
-        "intellij.libraries.jgit.ssh": "@community//libraries/jgit-ssh:jgit-ssh",
-        "intellij.libraries.sshd.osgi": "@community//libraries/sshd-osgi:sshd-osgi",
-        "intellij.settingsRepository": "@community//plugins/settings-repository:settings-repository",
-    },
+    module_descriptors = [
+        "@community//libraries/jgit-ssh:resources/intellij.libraries.jgit.ssh.xml",
+        "@community//libraries/sshd-osgi:resources/intellij.libraries.sshd.osgi.xml",
+    ],
+    module_labels = {"intellij.settingsRepository": "//plugins/settings-repository"},
 )
 ### auto-generated section `dev intellij.settingsRepository` end
 

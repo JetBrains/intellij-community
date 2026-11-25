@@ -6,13 +6,9 @@ load("//platform/build-scripts/bazel-rules:dist_plugin.bzl", "dist_plugin")
 ### auto-generated section `dev intellij.color.scheme.twilight` start
 dist_plugin(
     descriptor = "resources/META-INF/plugin.xml",
-    jars = {
-        "lib/color-scheme-twilight.jar": ["intellij.color.scheme.twilight"],
-    },
+    jars = {"lib/color-scheme-twilight.jar": ["intellij.color.scheme.twilight"]},
     main_module = "intellij.color.scheme.twilight",
-    module_labels = {
-        "intellij.color.scheme.twilight": "@community//plugins/color-schemes/twilight-color-scheme:color-scheme-twilight",
-    },
+    module_labels = {"intellij.color.scheme.twilight": "//plugins/color-schemes/twilight-color-scheme:color-scheme-twilight"},
 )
 ### auto-generated section `dev intellij.color.scheme.twilight` end
 

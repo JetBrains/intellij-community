@@ -5,31 +5,19 @@ load("//platform/build-scripts/bazel-rules:dist_plugin.bzl", "dist_plugin")
 
 ### auto-generated section `dev intellij.json.plugin` start
 dist_plugin(
-    content_modules = [
-        # do not sort,
-        "intellij.json",
-        "intellij.json.backend",
-        "intellij.json.networknt.wrapper",
-        "intellij.json.backend.regexp",
-        "intellij.json.spellchecker",
-        "intellij.json.structureView",
-        "intellij.json.syntax",
-        "intellij.libraries.jsonSchemaValidator",
-        "intellij.libraries.joni",
-    ],
-    main_module = "intellij.json.plugin",
-    module_labels = {
-        "intellij.json": "@community//json:json",
-        "intellij.json.backend": "@community//json/backend:backend",
-        "intellij.json.backend.regexp": "@community//json/backend/regexp:regexp",
-        "intellij.json.networknt.wrapper": "@community//json/networknt.wrapper:networknt.wrapper",
-        "intellij.json.plugin": "@community//json/plugin:plugin",
-        "intellij.json.spellchecker": "@community//json/spellchecker:spellchecker",
-        "intellij.json.structureView": "@community//json/structureView:structureView",
-        "intellij.json.syntax": "@community//json/syntax:syntax",
-        "intellij.libraries.joni": "@community//libraries/joni:joni",
-        "intellij.libraries.jsonSchemaValidator": "@community//libraries/json-schema-validator:json-schema-validator",
+    content_modules = {
+        "intellij.json": "//json",
+        "intellij.json.backend": "//json/backend",
+        "intellij.json.networknt.wrapper": "//json/networknt.wrapper",
+        "intellij.json.backend.regexp": "//json/backend/regexp",
+        "intellij.json.spellchecker": "//json/spellchecker",
+        "intellij.json.structureView": "//json/structureView",
+        "intellij.json.syntax": "//json/syntax",
+        "intellij.libraries.jsonSchemaValidator": "//libraries/json-schema-validator",
+        "intellij.libraries.joni": "//libraries/joni",
     },
+    main_module = "intellij.json.plugin",
+    module_labels = {"intellij.json.plugin": "//json/plugin"},
 )
 ### auto-generated section `dev intellij.json.plugin` end
 

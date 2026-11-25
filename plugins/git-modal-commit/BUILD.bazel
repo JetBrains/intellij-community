@@ -6,13 +6,9 @@ load("//platform/build-scripts/bazel-rules:dist_plugin.bzl", "dist_plugin")
 ### auto-generated section `dev intellij.vcs.git.commit.modal` start
 dist_plugin(
     descriptor = "resources/META-INF/plugin.xml",
-    jars = {
-        "lib/vcs-git-commit-modal.jar": ["intellij.vcs.git.commit.modal"],
-    },
+    jars = {"lib/vcs-git-commit-modal.jar": ["intellij.vcs.git.commit.modal"]},
     main_module = "intellij.vcs.git.commit.modal",
-    module_labels = {
-        "intellij.vcs.git.commit.modal": "@community//plugins/git-modal-commit:vcs-git-commit-modal",
-    },
+    module_labels = {"intellij.vcs.git.commit.modal": "//plugins/git-modal-commit:vcs-git-commit-modal"},
 )
 ### auto-generated section `dev intellij.vcs.git.commit.modal` end
 

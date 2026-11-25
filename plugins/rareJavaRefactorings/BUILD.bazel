@@ -21,13 +21,9 @@ jps_test(
 ### auto-generated section `dev intellij.java.rareRefactorings` start
 dist_plugin(
     descriptor = "resources/META-INF/plugin.xml",
-    jars = {
-        "lib/java-rareRefactorings.jar": ["intellij.java.rareRefactorings"],
-    },
+    jars = {"lib/java-rareRefactorings.jar": ["intellij.java.rareRefactorings"]},
     main_module = "intellij.java.rareRefactorings",
-    module_labels = {
-        "intellij.java.rareRefactorings": "@community//plugins/rareJavaRefactorings:java-rareRefactorings",
-    },
+    module_labels = {"intellij.java.rareRefactorings": "//plugins/rareJavaRefactorings:java-rareRefactorings"},
 )
 ### auto-generated section `dev intellij.java.rareRefactorings` end
 

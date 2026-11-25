@@ -16,13 +16,9 @@ jps_test(
 ### auto-generated section `dev intellij.java.byteCodeViewer` start
 dist_plugin(
     descriptor = "resources/META-INF/plugin.xml",
-    jars = {
-        "lib/java-byteCodeViewer.jar": ["intellij.java.byteCodeViewer"],
-    },
+    jars = {"lib/java-byteCodeViewer.jar": ["intellij.java.byteCodeViewer"]},
     main_module = "intellij.java.byteCodeViewer",
-    module_labels = {
-        "intellij.java.byteCodeViewer": "@community//plugins/ByteCodeViewer:java-byteCodeViewer",
-    },
+    module_labels = {"intellij.java.byteCodeViewer": "//plugins/ByteCodeViewer:java-byteCodeViewer"},
 )
 ### auto-generated section `dev intellij.java.byteCodeViewer` end
 

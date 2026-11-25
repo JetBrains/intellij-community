@@ -5,31 +5,19 @@ load("//platform/build-scripts/bazel-rules:dist_plugin.bzl", "dist_plugin")
 
 ### auto-generated section `dev intellij.grid.plugin` start
 dist_plugin(
-    content_modules = [
-        # do not sort,
-        "intellij.grid",
-        "intellij.grid.core.impl",
-        "intellij.grid.csv.core.impl",
-        "intellij.grid.impl",
-        "intellij.grid.impl.ide",
-        "intellij.grid.types",
-        "intellij.grid.json.impl",
-        "intellij.grid.images.impl",
-        "intellij.grid.structureview",
-    ],
-    main_module = "intellij.grid.plugin",
-    module_labels = {
-        "intellij.grid": "@community//grid/api:grid",
-        "intellij.grid.core.impl": "@community//grid/core-impl:core-impl",
-        "intellij.grid.csv.core.impl": "@community//grid/csv:csv-core-impl",
-        "intellij.grid.images.impl": "@community//grid/images:images-impl",
-        "intellij.grid.impl": "@community//grid/impl:impl",
-        "intellij.grid.impl.ide": "@community//grid/impl-ide:impl-ide",
-        "intellij.grid.json.impl": "@community//grid/json:json-impl",
-        "intellij.grid.plugin": "@community//grid/plugin:plugin",
-        "intellij.grid.structureview": "@community//grid/structureview:structureview",
-        "intellij.grid.types": "@community//grid/types:types",
+    content_modules = {
+        "intellij.grid": "//grid/api:grid",
+        "intellij.grid.core.impl": "//grid/core-impl",
+        "intellij.grid.csv.core.impl": "//grid/csv:csv-core-impl",
+        "intellij.grid.impl": "//grid/impl",
+        "intellij.grid.impl.ide": "//grid/impl-ide",
+        "intellij.grid.types": "//grid/types",
+        "intellij.grid.json.impl": "//grid/json:json-impl",
+        "intellij.grid.images.impl": "//grid/images:images-impl",
+        "intellij.grid.structureview": "//grid/structureview",
     },
+    main_module = "intellij.grid.plugin",
+    module_labels = {"intellij.grid.plugin": "//grid/plugin"},
 )
 ### auto-generated section `dev intellij.grid.plugin` end
 

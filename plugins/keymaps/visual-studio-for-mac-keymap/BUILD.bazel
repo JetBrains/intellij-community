@@ -6,13 +6,9 @@ load("//platform/build-scripts/bazel-rules:dist_plugin.bzl", "dist_plugin")
 ### auto-generated section `dev intellij.keymap.visualStudioForMac` start
 dist_plugin(
     descriptor = "resources/META-INF/plugin.xml",
-    jars = {
-        "lib/keymap-visualStudioForMac.jar": ["intellij.keymap.visualStudioForMac"],
-    },
+    jars = {"lib/keymap-visualStudioForMac.jar": ["intellij.keymap.visualStudioForMac"]},
     main_module = "intellij.keymap.visualStudioForMac",
-    module_labels = {
-        "intellij.keymap.visualStudioForMac": "@community//plugins/keymaps/visual-studio-for-mac-keymap:keymap-visualStudioForMac",
-    },
+    module_labels = {"intellij.keymap.visualStudioForMac": "//plugins/keymaps/visual-studio-for-mac-keymap:keymap-visualStudioForMac"},
 )
 ### auto-generated section `dev intellij.keymap.visualStudioForMac` end
 

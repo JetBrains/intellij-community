@@ -19,13 +19,6 @@ load("//platform/build-scripts/bazel-rules:dist_plugin_descriptor.bzl", "dist_pl
 
 dist_plugin_descriptor(
     descriptor = "//plugins/gitlab:resources/META-INF/plugin.xml",
-    descriptors = {
-        "@community//plugins/gitlab/frontend:resources/intellij.vcs.gitlab.frontend.xml": "intellij.vcs.gitlab.frontend.xml",
-        "@community//plugins/gitlab/gitlab-core:resources/intellij.vcs.gitlab.backend.xml": "intellij.vcs.gitlab.backend.xml",
-        "@community//plugins/gitlab/gitlab-git:resources/intellij.vcs.gitlab.git.xml": "intellij.vcs.gitlab.git.xml",
-        "@community//plugins/gitlab/gitlab-yaml:resources/intellij.vcs.gitlab.yaml.xml": "intellij.vcs.gitlab.yaml.xml",
-        "@community//plugins/gitlab/shared:resources/intellij.vcs.gitlab.shared.xml": "intellij.vcs.gitlab.shared.xml",
-    },
     main_module = "intellij.vcs.gitlab",
     mode_refused_content_modules = {
         "frontend": [
@@ -34,6 +27,13 @@ dist_plugin_descriptor(
             "intellij.vcs.gitlab.yaml",
         ],
     },
+    module_descriptors = [
+        "@community//plugins/gitlab/frontend:resources/intellij.vcs.gitlab.frontend.xml",
+        "@community//plugins/gitlab/gitlab-core:resources/intellij.vcs.gitlab.backend.xml",
+        "@community//plugins/gitlab/gitlab-git:resources/intellij.vcs.gitlab.git.xml",
+        "@community//plugins/gitlab/gitlab-yaml:resources/intellij.vcs.gitlab.yaml.xml",
+        "@community//plugins/gitlab/shared:resources/intellij.vcs.gitlab.shared.xml",
+    ],
     refused_content_modules = [
         "intellij.vcs.gitlab.ultimate.features.shared",
         "intellij.vcs.gitlab.ultimate.features.backend",

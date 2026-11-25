@@ -5,19 +5,12 @@ load("//platform/build-scripts/bazel-rules:dist_plugin.bzl", "dist_plugin")
 
 ### auto-generated section `dev intellij.platform.editorTabGrouping` start
 dist_plugin(
-    content_modules = ["intellij.platform.editorTabGrouping.impl"],
+    content_modules = {"intellij.platform.editorTabGrouping.impl": "//plugins/editor-tab-grouping:editorTabGrouping-impl"},
     descriptor = "resources/META-INF/plugin.xml",
-    descriptors = {
-        "@community//plugins/editor-tab-grouping:resources/intellij.platform.editorTabGrouping.impl.xml": "intellij.platform.editorTabGrouping.impl.xml",
-    },
-    jars = {
-        "lib/platform-editorTabGrouping.jar": ["intellij.platform.editorTabGrouping"],
-    },
+    jars = {"lib/platform-editorTabGrouping.jar": ["intellij.platform.editorTabGrouping"]},
     main_module = "intellij.platform.editorTabGrouping",
-    module_labels = {
-        "intellij.platform.editorTabGrouping": "@community//plugins/editor-tab-grouping/plugin:editorTabGrouping",
-        "intellij.platform.editorTabGrouping.impl": "@community//plugins/editor-tab-grouping:editorTabGrouping-impl",
-    },
+    module_descriptors = ["@community//plugins/editor-tab-grouping:resources/intellij.platform.editorTabGrouping.impl.xml"],
+    module_labels = {"intellij.platform.editorTabGrouping": "//plugins/editor-tab-grouping/plugin:editorTabGrouping"},
 )
 ### auto-generated section `dev intellij.platform.editorTabGrouping` end
 

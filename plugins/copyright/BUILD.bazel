@@ -15,19 +15,12 @@ jps_test(
 
 ### auto-generated section `dev intellij.copyright` start
 dist_plugin(
-    content_modules = ["intellij.copyright.vcs"],
+    content_modules = {"intellij.copyright.vcs": "//plugins/copyright/vcs"},
     descriptor = "resources/META-INF/plugin.xml",
-    descriptors = {
-        "@community//plugins/copyright/vcs:resources/intellij.copyright.vcs.xml": "intellij.copyright.vcs.xml",
-    },
-    jars = {
-        "lib/copyright.jar": ["intellij.copyright"],
-    },
+    jars = {"lib/copyright.jar": ["intellij.copyright"]},
     main_module = "intellij.copyright",
-    module_labels = {
-        "intellij.copyright": "@community//plugins/copyright:copyright",
-        "intellij.copyright.vcs": "@community//plugins/copyright/vcs:vcs",
-    },
+    module_descriptors = ["@community//plugins/copyright/vcs:resources/intellij.copyright.vcs.xml"],
+    module_labels = {"intellij.copyright": "//plugins/copyright"},
 )
 ### auto-generated section `dev intellij.copyright` end
 

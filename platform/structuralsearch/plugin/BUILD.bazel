@@ -5,22 +5,13 @@ load("//platform/build-scripts/bazel-rules:dist_plugin.bzl", "dist_plugin")
 
 ### auto-generated section `dev intellij.platform.structuralSearch.plugin` start
 dist_plugin(
-    content_modules = ["intellij.platform.structuralSearch"],
+    content_modules = {"intellij.platform.structuralSearch": "//platform/structuralsearch:structuralSearch"},
     descriptor = "resources/META-INF/plugin.xml",
-    descriptors = {
-        "@community//platform/structuralsearch:resources/intellij.platform.structuralSearch.xml": "intellij.platform.structuralSearch.xml",
-    },
-    jars = {
-        "lib/platform-structuralSearch-plugin.jar": ["intellij.platform.structuralSearch.plugin"],
-    },
+    jars = {"lib/platform-structuralSearch-plugin.jar": ["intellij.platform.structuralSearch.plugin"]},
     main_module = "intellij.platform.structuralSearch.plugin",
-    mode_refused_content_modules = {
-        "frontend": ["intellij.platform.structuralSearch"],
-    },
-    module_labels = {
-        "intellij.platform.structuralSearch": "@community//platform/structuralsearch:structuralSearch",
-        "intellij.platform.structuralSearch.plugin": "@community//platform/structuralsearch/plugin:plugin",
-    },
+    mode_refused_content_modules = {"frontend": ["intellij.platform.structuralSearch"]},
+    module_descriptors = ["@community//platform/structuralsearch:resources/intellij.platform.structuralSearch.xml"],
+    module_labels = {"intellij.platform.structuralSearch.plugin": "//platform/structuralsearch/plugin"},
 )
 ### auto-generated section `dev intellij.platform.structuralSearch.plugin` end
 

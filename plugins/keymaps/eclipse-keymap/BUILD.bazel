@@ -6,13 +6,9 @@ load("//platform/build-scripts/bazel-rules:dist_plugin.bzl", "dist_plugin")
 ### auto-generated section `dev intellij.keymap.eclipse` start
 dist_plugin(
     descriptor = "resources/META-INF/plugin.xml",
-    jars = {
-        "lib/keymap-eclipse.jar": ["intellij.keymap.eclipse"],
-    },
+    jars = {"lib/keymap-eclipse.jar": ["intellij.keymap.eclipse"]},
     main_module = "intellij.keymap.eclipse",
-    module_labels = {
-        "intellij.keymap.eclipse": "@community//plugins/keymaps/eclipse-keymap:keymap-eclipse",
-    },
+    module_labels = {"intellij.keymap.eclipse": "//plugins/keymaps/eclipse-keymap:keymap-eclipse"},
 )
 ### auto-generated section `dev intellij.keymap.eclipse` end
 

@@ -5,25 +5,16 @@ load("//platform/build-scripts/bazel-rules:dist_plugin.bzl", "dist_plugin")
 
 ### auto-generated section `dev intellij.textmate.plugin` start
 dist_plugin(
-    content_modules = [
-        # do not sort,
-        "intellij.textmate",
-        "intellij.textmate.common",
-        "intellij.textmate.core",
-        "intellij.textmate.joni",
-        "intellij.textmate.backend",
-        "intellij.libraries.joni",
-    ],
-    main_module = "intellij.textmate.plugin",
-    module_labels = {
-        "intellij.libraries.joni": "@community//libraries/joni:joni",
-        "intellij.textmate": "@community//plugins/textmate:textmate",
-        "intellij.textmate.backend": "@community//plugins/textmate/backend:backend",
-        "intellij.textmate.common": "@community//plugins/textmate/common:common",
-        "intellij.textmate.core": "@community//plugins/textmate/core:core",
-        "intellij.textmate.joni": "@community//plugins/textmate/joni:joni",
-        "intellij.textmate.plugin": "@community//plugins/textmate/plugin:plugin",
+    content_modules = {
+        "intellij.textmate": "//plugins/textmate",
+        "intellij.textmate.common": "//plugins/textmate/common",
+        "intellij.textmate.core": "//plugins/textmate/core",
+        "intellij.textmate.joni": "//plugins/textmate/joni",
+        "intellij.textmate.backend": "//plugins/textmate/backend",
+        "intellij.libraries.joni": "//libraries/joni",
     },
+    main_module = "intellij.textmate.plugin",
+    module_labels = {"intellij.textmate.plugin": "//plugins/textmate/plugin"},
 )
 ### auto-generated section `dev intellij.textmate.plugin` end
 

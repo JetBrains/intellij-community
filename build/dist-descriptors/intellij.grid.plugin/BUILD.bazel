@@ -19,21 +19,21 @@ load("//platform/build-scripts/bazel-rules:dist_plugin_descriptor.bzl", "dist_pl
 
 dist_plugin_descriptor(
     descriptor = "//grid/plugin:resources/META-INF/plugin.xml",
-    descriptors = {
-        "@community//grid/api:resources/intellij.grid.xml": "intellij.grid.xml",
-        "@community//grid/core-impl:resources/intellij.grid.core.impl.xml": "intellij.grid.core.impl.xml",
-        "@community//grid/csv:resources/intellij.grid.csv.core.impl.xml": "intellij.grid.csv.core.impl.xml",
-        "@community//grid/images:resources/intellij.grid.images.impl.xml": "intellij.grid.images.impl.xml",
-        "@community//grid/impl-ide:resources/intellij.grid.impl.ide.xml": "intellij.grid.impl.ide.xml",
-        "@community//grid/impl:resources/intellij.grid.impl.xml": "intellij.grid.impl.xml",
-        "@community//grid/json:resources/intellij.grid.json.impl.xml": "intellij.grid.json.impl.xml",
-        "@community//grid/structureview:resources/intellij.grid.structureview.xml": "intellij.grid.structureview.xml",
-        "@community//grid/types:resources/intellij.grid.types.xml": "intellij.grid.types.xml",
-    },
     main_module = "intellij.grid.plugin",
     mode_refused_content_modules = {
         "frontend": ["intellij.grid.json.impl"],
     },
+    module_descriptors = [
+        "@community//grid/api:resources/intellij.grid.xml",
+        "@community//grid/core-impl:resources/intellij.grid.core.impl.xml",
+        "@community//grid/csv:resources/intellij.grid.csv.core.impl.xml",
+        "@community//grid/images:resources/intellij.grid.images.impl.xml",
+        "@community//grid/impl-ide:resources/intellij.grid.impl.ide.xml",
+        "@community//grid/impl:resources/intellij.grid.impl.xml",
+        "@community//grid/json:resources/intellij.grid.json.impl.xml",
+        "@community//grid/structureview:resources/intellij.grid.structureview.xml",
+        "@community//grid/types:resources/intellij.grid.types.xml",
+    ],
     refused_content_modules = [
         "intellij.grid.scripting.rt",
         "intellij.grid.scripting.impl",

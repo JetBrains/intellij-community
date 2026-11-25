@@ -19,16 +19,16 @@ load("//platform/build-scripts/bazel-rules:dist_plugin_descriptor.bzl", "dist_pl
 
 dist_plugin_descriptor(
     descriptor = "//plugins/yaml/plugin:resources/META-INF/plugin.xml",
-    descriptors = {
-        "@community//plugins/yaml/backend:resources/intellij.yaml.backend.xml": "intellij.yaml.backend.xml",
-        "@community//plugins/yaml/spellchecker:resources/intellij.yaml.spellchecker.xml": "intellij.yaml.spellchecker.xml",
-        "@community//plugins/yaml/syntax:resources/intellij.yaml.syntax.xml": "intellij.yaml.syntax.xml",
-        "@community//plugins/yaml:resources/intellij.yaml.xml": "intellij.yaml.xml",
-    },
     main_module = "intellij.yaml.plugin",
     mode_refused_content_modules = {
         "frontend": ["intellij.yaml.backend"],
     },
+    module_descriptors = [
+        "@community//plugins/yaml/backend:resources/intellij.yaml.backend.xml",
+        "@community//plugins/yaml/spellchecker:resources/intellij.yaml.spellchecker.xml",
+        "@community//plugins/yaml/syntax:resources/intellij.yaml.syntax.xml",
+        "@community//plugins/yaml:resources/intellij.yaml.xml",
+    ],
     refused_content_modules = [
         "intellij.yaml.frontend.split",
         "intellij.yaml.helm",

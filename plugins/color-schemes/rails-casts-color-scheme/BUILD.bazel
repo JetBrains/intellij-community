@@ -6,13 +6,9 @@ load("//platform/build-scripts/bazel-rules:dist_plugin.bzl", "dist_plugin")
 ### auto-generated section `dev intellij.color.scheme.rails_casts` start
 dist_plugin(
     descriptor = "resources/META-INF/plugin.xml",
-    jars = {
-        "lib/color-scheme-rails_casts.jar": ["intellij.color.scheme.rails_casts"],
-    },
+    jars = {"lib/color-scheme-rails_casts.jar": ["intellij.color.scheme.rails_casts"]},
     main_module = "intellij.color.scheme.rails_casts",
-    module_labels = {
-        "intellij.color.scheme.rails_casts": "@community//plugins/color-schemes/rails-casts-color-scheme:color-scheme-rails_casts",
-    },
+    module_labels = {"intellij.color.scheme.rails_casts": "//plugins/color-schemes/rails-casts-color-scheme:color-scheme-rails_casts"},
 )
 ### auto-generated section `dev intellij.color.scheme.rails_casts` end
 

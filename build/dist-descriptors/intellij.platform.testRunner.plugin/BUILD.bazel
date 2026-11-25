@@ -19,16 +19,16 @@ load("//platform/build-scripts/bazel-rules:dist_plugin_descriptor.bzl", "dist_pl
 
 dist_plugin_descriptor(
     descriptor = "//platform/testRunner/plugin:resources/META-INF/plugin.xml",
-    descriptors = {
-        "@community//platform/smRunner/dashboard:resources/intellij.platform.smRunner.dashboard.xml": "intellij.platform.smRunner.dashboard.xml",
-        "@community//platform/smRunner/vcs:resources/intellij.platform.smRunner.vcs.xml": "intellij.platform.smRunner.vcs.xml",
-        "@community//platform/smRunner:resources/intellij.platform.smRunner.xml": "intellij.platform.smRunner.xml",
-        "@community//platform/testRunner:resources/intellij.platform.testRunner.xml": "intellij.platform.testRunner.xml",
-    },
     main_module = "intellij.platform.testRunner.plugin",
     mode_refused_content_modules = {
         "frontend": ["intellij.platform.smRunner.dashboard"],
     },
+    module_descriptors = [
+        "@community//platform/smRunner/dashboard:resources/intellij.platform.smRunner.dashboard.xml",
+        "@community//platform/smRunner/vcs:resources/intellij.platform.smRunner.vcs.xml",
+        "@community//platform/smRunner:resources/intellij.platform.smRunner.xml",
+        "@community//platform/testRunner:resources/intellij.platform.testRunner.xml",
+    ],
     refused_content_modules = [
         "intellij.platform.smRunner.frontend.split",
         "intellij.platform.smRunner.backend.split",

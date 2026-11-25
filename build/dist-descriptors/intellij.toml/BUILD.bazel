@@ -19,13 +19,6 @@ load("//platform/build-scripts/bazel-rules:dist_plugin_descriptor.bzl", "dist_pl
 
 dist_plugin_descriptor(
     descriptor = "//plugins/toml:resources/META-INF/plugin.xml",
-    descriptors = {
-        "@community//plugins/toml/backend:resources/intellij.toml.backend.xml": "intellij.toml.backend.xml",
-        "@community//plugins/toml/core:src/main/resources/intellij.toml.core.xml": "intellij.toml.core.xml",
-        "@community//plugins/toml/frontend:resources/intellij.toml.frontend.xml": "intellij.toml.frontend.xml",
-        "@community//plugins/toml/grazie:src/main/resources/intellij.toml.grazie.xml": "intellij.toml.grazie.xml",
-        "@community//plugins/toml/json:src/main/resources/intellij.toml.json.xml": "intellij.toml.json.xml",
-    },
     main_module = "intellij.toml",
     mode_refused_content_modules = {
         "frontend": [
@@ -34,6 +27,13 @@ dist_plugin_descriptor(
             "intellij.toml.grazie",
         ],
     },
+    module_descriptors = [
+        "@community//plugins/toml/backend:resources/intellij.toml.backend.xml",
+        "@community//plugins/toml/core:src/main/resources/intellij.toml.core.xml",
+        "@community//plugins/toml/frontend:resources/intellij.toml.frontend.xml",
+        "@community//plugins/toml/grazie:src/main/resources/intellij.toml.grazie.xml",
+        "@community//plugins/toml/json:src/main/resources/intellij.toml.json.xml",
+    ],
     refused_content_modules = [
         "intellij.toml.frontend.split",
     ],

@@ -6,13 +6,9 @@ load("//platform/build-scripts/bazel-rules:dist_plugin.bzl", "dist_plugin")
 ### auto-generated section `dev intellij.keymap.visualAssist` start
 dist_plugin(
     descriptor = "resources/META-INF/plugin.xml",
-    jars = {
-        "lib/keymap-visualAssist.jar": ["intellij.keymap.visualAssist"],
-    },
+    jars = {"lib/keymap-visualAssist.jar": ["intellij.keymap.visualAssist"]},
     main_module = "intellij.keymap.visualAssist",
-    module_labels = {
-        "intellij.keymap.visualAssist": "@community//plugins/keymaps/visual-assist-keymap:keymap-visualAssist",
-    },
+    module_labels = {"intellij.keymap.visualAssist": "//plugins/keymaps/visual-assist-keymap:keymap-visualAssist"},
 )
 ### auto-generated section `dev intellij.keymap.visualAssist` end
 

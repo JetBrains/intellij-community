@@ -5,16 +5,11 @@ load("//platform/build-scripts/bazel-rules:dist_plugin.bzl", "dist_plugin")
 
 ### auto-generated section `dev intellij.jna.plugin` start
 dist_plugin(
-    content_modules = ["intellij.libraries.jna"],
+    content_modules = {"intellij.libraries.jna": "//libraries/jna"},
     descriptor = "resources/META-INF/plugin.xml",
-    descriptors = {
-        "@community//libraries/jna:resources/intellij.libraries.jna.xml": "intellij.libraries.jna.xml",
-    },
     main_module = "intellij.jna.plugin",
-    module_labels = {
-        "intellij.jna.plugin": "@community//plugins/jna/plugin:plugin",
-        "intellij.libraries.jna": "@community//libraries/jna:jna",
-    },
+    module_descriptors = ["@community//libraries/jna:resources/intellij.libraries.jna.xml"],
+    module_labels = {"intellij.jna.plugin": "//plugins/jna/plugin"},
 )
 
 dist_complex_plugin(

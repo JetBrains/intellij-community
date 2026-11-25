@@ -5,31 +5,19 @@ load("//platform/build-scripts/bazel-rules:dist_plugin.bzl", "dist_plugin")
 
 ### auto-generated section `dev intellij.sh.plugin` start
 dist_plugin(
-    content_modules = [
-        # do not sort,
-        "intellij.sh.core",
-        "intellij.sh.execution",
-        "intellij.sh.backend",
-        "intellij.sh.terminal",
-        "intellij.sh.terminal.frontend",
-        "intellij.sh.copyright",
-        "intellij.sh.markdown",
-        "intellij.sh.python",
-        "intellij.sh.spellchecker",
-    ],
-    main_module = "intellij.sh.plugin",
-    module_labels = {
-        "intellij.sh.backend": "@community//plugins/sh/backend:backend",
-        "intellij.sh.copyright": "@community//plugins/sh/copyright:copyright",
-        "intellij.sh.core": "@community//plugins/sh/core:core",
-        "intellij.sh.execution": "@community//plugins/sh/execution:execution",
-        "intellij.sh.markdown": "@community//plugins/sh/markdown:markdown",
-        "intellij.sh.plugin": "@community//plugins/sh/plugin:plugin",
-        "intellij.sh.python": "@community//plugins/sh/python:python",
-        "intellij.sh.spellchecker": "@community//plugins/sh/spellchecker:spellchecker",
-        "intellij.sh.terminal": "@community//plugins/sh/terminal:terminal",
-        "intellij.sh.terminal.frontend": "@community//plugins/sh/terminal/frontend:frontend",
+    content_modules = {
+        "intellij.sh.core": "//plugins/sh/core",
+        "intellij.sh.execution": "//plugins/sh/execution",
+        "intellij.sh.backend": "//plugins/sh/backend",
+        "intellij.sh.terminal": "//plugins/sh/terminal",
+        "intellij.sh.terminal.frontend": "//plugins/sh/terminal/frontend",
+        "intellij.sh.copyright": "//plugins/sh/copyright",
+        "intellij.sh.markdown": "//plugins/sh/markdown",
+        "intellij.sh.python": "//plugins/sh/python",
+        "intellij.sh.spellchecker": "//plugins/sh/spellchecker",
     },
+    main_module = "intellij.sh.plugin",
+    module_labels = {"intellij.sh.plugin": "//plugins/sh/plugin"},
 )
 ### auto-generated section `dev intellij.sh.plugin` end
 

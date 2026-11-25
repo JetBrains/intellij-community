@@ -6,22 +6,13 @@ load("//platform/build-scripts/bazel-rules:dist_plugin.bzl", "dist_plugin")
 
 ### auto-generated section `dev intellij.vcs.svn` start
 dist_plugin(
-    content_modules = ["intellij.libraries.sqlite"],
+    content_modules = {"intellij.libraries.sqlite": "//libraries/sqlite"},
     descriptor = "resources/META-INF/plugin.xml",
-    descriptors = {
-        "@community//libraries/sqlite:resources/intellij.libraries.sqlite.xml": "intellij.libraries.sqlite.xml",
-    },
-    jars = {
-        "lib/vcs-svn.jar": ["intellij.vcs.svn"],
-    },
+    jars = {"lib/vcs-svn.jar": ["intellij.vcs.svn"]},
     main_module = "intellij.vcs.svn",
-    module_jar_paths = {
-        "intellij.libraries.sqlite": "lib/intellij.libraries.sqlite.jar",
-    },
-    module_labels = {
-        "intellij.libraries.sqlite": "@community//libraries/sqlite:sqlite",
-        "intellij.vcs.svn": "@community//plugins/svn4idea:vcs-svn",
-    },
+    module_descriptors = ["@community//libraries/sqlite:resources/intellij.libraries.sqlite.xml"],
+    module_jar_paths = {"intellij.libraries.sqlite": "lib/intellij.libraries.sqlite.jar"},
+    module_labels = {"intellij.vcs.svn": "//plugins/svn4idea:vcs-svn"},
 )
 ### auto-generated section `dev intellij.vcs.svn` end
 

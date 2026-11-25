@@ -7,13 +7,9 @@ load("//platform/build-scripts/bazel-rules:dist_plugin.bzl", "dist_plugin")
 ### auto-generated section `dev intellij.vcs.hg` start
 dist_plugin(
     descriptor = "resources/META-INF/plugin.xml",
-    jars = {
-        "lib/vcs-hg.jar": ["intellij.vcs.hg"],
-    },
+    jars = {"lib/vcs-hg.jar": ["intellij.vcs.hg"]},
     main_module = "intellij.vcs.hg",
-    module_labels = {
-        "intellij.vcs.hg": "@community//plugins/hg4idea:vcs-hg",
-    },
+    module_labels = {"intellij.vcs.hg": "//plugins/hg4idea:vcs-hg"},
 )
 ### auto-generated section `dev intellij.vcs.hg` end
 

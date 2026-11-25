@@ -4,19 +4,12 @@ load("//platform/build-scripts/bazel-rules:dist_plugin.bzl", "dist_plugin")
 
 ### auto-generated section `dev intellij.tipsOfTheDay.plugin` start
 dist_plugin(
-    content_modules = ["intellij.tips"],
+    content_modules = {"intellij.tips": "//plugins/tips-of-the-day:tips"},
     descriptor = "resources/META-INF/plugin.xml",
-    descriptors = {
-        "@community//plugins/tips-of-the-day:resources/intellij.tips.xml": "intellij.tips.xml",
-    },
-    jars = {
-        "lib/tipsOfTheDay-plugin.jar": ["intellij.tipsOfTheDay.plugin"],
-    },
+    jars = {"lib/tipsOfTheDay-plugin.jar": ["intellij.tipsOfTheDay.plugin"]},
     main_module = "intellij.tipsOfTheDay.plugin",
-    module_labels = {
-        "intellij.tips": "@community//plugins/tips-of-the-day:tips",
-        "intellij.tipsOfTheDay.plugin": "@community//plugins/tips-of-the-day/plugin:plugin",
-    },
+    module_descriptors = ["@community//plugins/tips-of-the-day:resources/intellij.tips.xml"],
+    module_labels = {"intellij.tipsOfTheDay.plugin": "//plugins/tips-of-the-day/plugin"},
 )
 ### auto-generated section `dev intellij.tipsOfTheDay.plugin` end
 

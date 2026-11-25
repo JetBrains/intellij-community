@@ -6,13 +6,9 @@ load("//platform/build-scripts/bazel-rules:dist_plugin.bzl", "dist_plugin")
 ### auto-generated section `dev intellij.keymap.xcode` start
 dist_plugin(
     descriptor = "resources/META-INF/plugin.xml",
-    jars = {
-        "lib/keymap-xcode.jar": ["intellij.keymap.xcode"],
-    },
+    jars = {"lib/keymap-xcode.jar": ["intellij.keymap.xcode"]},
     main_module = "intellij.keymap.xcode",
-    module_labels = {
-        "intellij.keymap.xcode": "@community//plugins/keymaps/xcode-keymap:keymap-xcode",
-    },
+    module_labels = {"intellij.keymap.xcode": "//plugins/keymaps/xcode-keymap:keymap-xcode"},
 )
 ### auto-generated section `dev intellij.keymap.xcode` end
 

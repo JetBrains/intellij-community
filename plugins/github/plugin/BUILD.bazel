@@ -5,23 +5,15 @@ load("//platform/build-scripts/bazel-rules:dist_plugin.bzl", "dist_plugin")
 
 ### auto-generated section `dev intellij.vcs.github.plugin` start
 dist_plugin(
-    content_modules = [
-        # do not sort,
-        "intellij.vcs.github",
-        "intellij.vcs.github.git",
-        "intellij.vcs.github.ultimatePromo",
-        "intellij.vcs.github.tracker",
-        "intellij.vcs.github.json",
-    ],
-    main_module = "intellij.vcs.github.plugin",
-    module_labels = {
-        "intellij.vcs.github": "@community//plugins/github/github-core:vcs-github",
-        "intellij.vcs.github.git": "@community//plugins/github/github-git:vcs-github-git",
-        "intellij.vcs.github.json": "@community//plugins/github/github-json:vcs-github-json",
-        "intellij.vcs.github.plugin": "@community//plugins/github/plugin:plugin",
-        "intellij.vcs.github.tracker": "@community//plugins/github/github-tracker:vcs-github-tracker",
-        "intellij.vcs.github.ultimatePromo": "@community//plugins/github/ultimate-promo:ultimate-promo",
+    content_modules = {
+        "intellij.vcs.github": "//plugins/github/github-core:vcs-github",
+        "intellij.vcs.github.git": "//plugins/github/github-git:vcs-github-git",
+        "intellij.vcs.github.ultimatePromo": "//plugins/github/ultimate-promo",
+        "intellij.vcs.github.tracker": "//plugins/github/github-tracker:vcs-github-tracker",
+        "intellij.vcs.github.json": "//plugins/github/github-json:vcs-github-json",
     },
+    main_module = "intellij.vcs.github.plugin",
+    module_labels = {"intellij.vcs.github.plugin": "//plugins/github/plugin"},
 )
 ### auto-generated section `dev intellij.vcs.github.plugin` end
 

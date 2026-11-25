@@ -5,34 +5,23 @@ load("//platform/build-scripts/bazel-rules:dist_plugin.bzl", "dist_plugin")
 
 ### auto-generated section `dev intellij.platform.structureView.plugin` start
 dist_plugin(
-    content_modules = [
-        # do not sort,
-        "intellij.platform.structureView",
-        "intellij.platform.structureView.backend",
-        "intellij.platform.structureView.frontend",
-        "intellij.platform.structureView.impl",
-    ],
+    content_modules = {
+        "intellij.platform.structureView": "//platform/structure-view-impl:structureView",
+        "intellij.platform.structureView.backend": "//platform/structure-view-impl/backend",
+        "intellij.platform.structureView.frontend": "//platform/structure-view-impl/frontend",
+        "intellij.platform.structureView.impl": "//platform/structure-view-impl/intellij.platform.structureView.impl:structureView-impl",
+    },
     descriptor = "resources/META-INF/plugin.xml",
-    descriptors = {
-        "@community//platform/structure-view-impl/backend:resources/intellij.platform.structureView.backend.xml": "intellij.platform.structureView.backend.xml",
-        "@community//platform/structure-view-impl/frontend:resources/intellij.platform.structureView.frontend.xml": "intellij.platform.structureView.frontend.xml",
-        "@community//platform/structure-view-impl/intellij.platform.structureView.impl:resources/intellij.platform.structureView.impl.xml": "intellij.platform.structureView.impl.xml",
-        "@community//platform/structure-view-impl:resources/intellij.platform.structureView.xml": "intellij.platform.structureView.xml",
-    },
-    jars = {
-        "lib/platform-structureView-plugin.jar": ["intellij.platform.structureView.plugin"],
-    },
+    jars = {"lib/platform-structureView-plugin.jar": ["intellij.platform.structureView.plugin"]},
     main_module = "intellij.platform.structureView.plugin",
-    mode_refused_content_modules = {
-        "frontend": ["intellij.platform.structureView.backend"],
-    },
-    module_labels = {
-        "intellij.platform.structureView": "@community//platform/structure-view-impl:structureView",
-        "intellij.platform.structureView.backend": "@community//platform/structure-view-impl/backend:backend",
-        "intellij.platform.structureView.frontend": "@community//platform/structure-view-impl/frontend:frontend",
-        "intellij.platform.structureView.impl": "@community//platform/structure-view-impl/intellij.platform.structureView.impl:structureView-impl",
-        "intellij.platform.structureView.plugin": "@community//platform/structure-view-impl/plugin:plugin",
-    },
+    mode_refused_content_modules = {"frontend": ["intellij.platform.structureView.backend"]},
+    module_descriptors = [
+        "@community//platform/structure-view-impl/backend:resources/intellij.platform.structureView.backend.xml",
+        "@community//platform/structure-view-impl/frontend:resources/intellij.platform.structureView.frontend.xml",
+        "@community//platform/structure-view-impl/intellij.platform.structureView.impl:resources/intellij.platform.structureView.impl.xml",
+        "@community//platform/structure-view-impl:resources/intellij.platform.structureView.xml",
+    ],
+    module_labels = {"intellij.platform.structureView.plugin": "//platform/structure-view-impl/plugin"},
 )
 ### auto-generated section `dev intellij.platform.structureView.plugin` end
 
