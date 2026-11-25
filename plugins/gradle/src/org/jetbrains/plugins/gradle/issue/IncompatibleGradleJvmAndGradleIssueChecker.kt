@@ -78,7 +78,7 @@ class IncompatibleGradleJvmAndGradleIssueChecker : GradleIssueChecker {
     // for this reason defined version in gradle/gradle-daemon-jvm.properties is used to run build instead
     if (gradleVersion != null && GradleDaemonJvmHelper.isProjectUsingDaemonJvmCriteria(projectPath, gradleVersion)) {
       GradleDaemonJvmPropertiesFile.getProperties(projectPath).version?.value?.let {
-        return JavaVersion.parse(it)
+        return JavaVersion.tryParse(it)
       }
     }
     val buildEnvironment = issueData.buildEnvironment
