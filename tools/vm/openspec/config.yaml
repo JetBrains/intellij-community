@@ -27,8 +27,8 @@ rules:
     - The design is the decision record of the change. Its H1 states the decision in one sentence.
     - The sections are `## Context`, `## Decisions`, `## Alternatives rejected` and `## Consequences`.
     - The design holds the rationale and no contract sentence. It links each requirement that it explains.
-    - The `.openspec.yaml` of the change has `x-topic: testing`, the topic of the UI lanes on the Air docs site.
-    - A decision with no contract delta is a change with `skip_specs: true` in its `.openspec.yaml`.
+    - "The `.openspec.yaml` of the change has `x-topic: testing`, the topic of the UI lanes on the Air docs site."
+    - "A decision with no contract delta is a change with `skip_specs: true` in its `.openspec.yaml`."
     - A change that replaces or amends an archived decision edits or deletes that archived design.md in its own commit. So the archive holds only the current decisions.
     - A source comment names an archived decision as `decision <YYYY-MM-DD>-<id>`, the name of its archive folder.
   specs:
