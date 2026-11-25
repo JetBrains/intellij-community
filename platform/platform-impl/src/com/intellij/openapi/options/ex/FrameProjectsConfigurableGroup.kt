@@ -70,14 +70,12 @@ class FrameProjectsConfigurableGroup private constructor(
       isListening = true
       // the group calls its listeners in their order, so the listeners move to the new pages before a listener reads the tree
       group.addListener(::listenToNewTree)
-      for (project in projects.projects) {
-        listenToProject(project)
-      }
+      listenToNewTree()
     }
     group.addListener(listener)
   }
 
-  /** Moves the extension point listeners of each project to the pages of the tree that the group built again. */
+  /** Listens to the extension points of the pages of each project in the tree of now. The listeners of the tree before it go. */
   private fun listenToNewTree() {
     for (disposable in projectListeners.values) {
       Disposer.dispose(disposable)
@@ -194,11 +192,8 @@ class FrameProjectsConfigurableGroup private constructor(
     @JvmStatic
     fun buildSettingsWindowGroups(project: Project?): List<ConfigurableGroup> {
       val windowProject = project?.let(::settingsWindowProject)
-      val frameProjects = windowProject?.let { SettingsFrameProjects.create(it) }
-      if (frameProjects != null) {
-        return listOf(create(frameProjects))
-      }
-      return listOf(ConfigurableExtensionPointUtil.getConfigurableGroup(windowProject, /* withIdeSettings = */ true))
+      val frameTree = windowProject?.let { SettingsFrameProjects.create(it) }?.let(::create)
+      return listOf(frameTree ?: ConfigurableExtensionPointUtil.getConfigurableGroup(windowProject, /* withIdeSettings = */ true))
     }
   }
 }

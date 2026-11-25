@@ -646,7 +646,7 @@ public final class SettingsEditor extends AbstractEditor implements UiDataProvid
    * The selector lists only the projects that have the page, and it hides when no project has the page.
    */
   private void updateFrameProject(@Nullable Configurable configurable) {
-    if (myProjectTabs == null || myFrameProjectsGroup == null) {
+    if (myProjectTabs == null) {
       return;
     }
     boolean visible = false;

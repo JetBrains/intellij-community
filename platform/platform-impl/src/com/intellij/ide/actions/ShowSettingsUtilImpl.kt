@@ -28,6 +28,7 @@ import com.intellij.openapi.options.ex.ConfigurableExtensionPointUtil
 import com.intellij.openapi.options.ex.ConfigurableVisitor
 import com.intellij.openapi.options.ex.ConfigurableWrapper
 import com.intellij.openapi.options.ex.FrameProjectsConfigurableGroup
+import com.intellij.openapi.options.ex.FrameProjectsConfigurableGroup.Companion.settingsWindowProject
 import com.intellij.openapi.options.newEditor.SettingsDialog
 import com.intellij.openapi.options.newEditor.SettingsDialogFactory
 import com.intellij.openapi.options.newEditor.SettingsDialogPerformanceTracker
@@ -488,8 +489,6 @@ private fun showOpenSettings(requester: Project): Boolean {
   }
   return SettingsNonModalDialog.navigateOpenDialog(project, null, toSelect) || SettingsToolWindowManager.showIfCreated(project, toSelect)
 }
-
-private fun settingsWindowProject(project: Project): Project = FrameProjectsConfigurableGroup.settingsWindowProject(project)
 
 /** Makes the Settings window of [groups] show [requester], when the project selector of the window lists it. */
 internal fun selectRequester(groups: List<ConfigurableGroup>, requester: Project) {

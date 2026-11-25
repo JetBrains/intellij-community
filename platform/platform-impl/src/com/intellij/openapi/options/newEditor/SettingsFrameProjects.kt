@@ -124,7 +124,8 @@ class SettingsFrameProjects internal constructor(val frameOwner: Project, projec
         return null
       }
       val projects = listProjects(frameOwner)
-      if (!suppressesOwnSettings(frameOwner) && (projects.isEmpty() || projects.size == 1 && projects[0] === frameOwner)) {
+      // without the capability, the frame owner is one of the projects
+      if (!suppressesOwnSettings(frameOwner) && projects.size == 1) {
         return null
       }
       return SettingsFrameProjects(frameOwner, projects)
