@@ -36,6 +36,15 @@ MULTI_ROUTING_FILE_SYSTEM_JVM_FLAGS = [
 JAVA_TEST_ARGS = [
 ]
 
+# The JVM of an Air test compiles with C1 only. The JIT threads of C2 use more CPU than the short tests gain from C2.
+# The tag `jvm-c2` on a jps_test target keeps C2 for it.
+C1_ONLY_JVM_FLAGS = ["-XX:TieredStopAtLevel=1"]
+
+def _is_c1_only(tags):
+    package = native.package_name()
+    is_air = native.repository_name() == "@" and (package == "plugins/air" or package.startswith("plugins/air/"))
+    return is_air and "jvm-c2" not in tags
+
 TEST_FRAMEWORK_DEPS = [
     # TODO Review this list, most likely only tools-testsBootstrap is required
     # junit stuff should be propagated via runtime deps of testsBootstrap
@@ -71,7 +80,7 @@ def _classes_duration_data():
 
 def jps_test(name, jvm_flags = [], runtime_deps = [], args = [], data = [], tags = [], sandbox = False, env = {}, **kwargs):
     # Merge user-provided args with our default ones
-    all_jvm_flags = JAVA_TEST_FLAGS + ADD_OPENS_FLAGS + jvm_flags
+    all_jvm_flags = JAVA_TEST_FLAGS + ADD_OPENS_FLAGS + (C1_ONLY_JVM_FLAGS if _is_c1_only(tags) else []) + jvm_flags
     all_args = JAVA_TEST_ARGS + args
 
     normalized_runtime_deps = [_normalize_runtime_dep(d) for d in runtime_deps]
