@@ -653,6 +653,27 @@ class PyTypeDiffTest : PyCodeInsightTestCase() {
     assertTrue(codeLineTexts(tooltip).count { "h: Named" in it } == 2, tooltip)
   }
 
+  // An overloaded `__call__` has more than one signature, so the protocol keeps its name.
+  @Test
+  @TestFor(issues = ["PY-90882"])
+  fun `a callback protocol with an overloaded call doesn't expand`() {
+    val tooltip = tooltipFor("""
+      from typing import Protocol, overload
+      class Handler(Protocol):
+          @overload
+          def __call__(self, a: int) -> str: ...
+          @overload
+          def __call__(self, a: str) -> str: ...
+      @overload
+      def f(h: Handler, x: int) -> int: ...
+      @overload
+      def f(h: Handler, x: str) -> str: ...
+      def f(h, x): ...
+      f(None, None)
+    """)
+    assertTrue(codeLineTexts(tooltip).count { "h: Handler" in it } == 2, tooltip)
+  }
+
   // A union nested in a type argument aligns its members like a top-level union, so a callable member that differs
   // only in a parameter highlights that parameter type, not the whole callable.
   // A nested union with a paired member follows the rule of a top-level union: under covariance, an expected

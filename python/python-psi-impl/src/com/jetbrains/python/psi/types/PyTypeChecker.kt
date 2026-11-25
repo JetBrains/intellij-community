@@ -21,8 +21,8 @@ import com.jetbrains.python.codeInsight.PyCodeInsightCounters
 import com.jetbrains.python.codeInsight.PyCodeInsightCounters.Counter
 import com.jetbrains.python.codeInsight.typing.ProtocolAndSubclassElements
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider
-import com.jetbrains.python.codeInsight.typing.getProtocolMembers
 import com.jetbrains.python.codeInsight.typing.inspectProtocolSubclass
+import com.jetbrains.python.codeInsight.typing.isCallbackProtocol
 import com.jetbrains.python.codeInsight.typing.isProtocol
 import com.jetbrains.python.documentation.PythonDocumentationProvider
 import com.jetbrains.python.inspections.PyInspectionMessages
@@ -1897,9 +1897,9 @@ object PyTypeChecker {
     val context = matchContext.context
 
     if (expected is PyClassLikeType) {
-      if (isCallableProtocol(expected, context)) {
-        val protocolMembers = expected.getProtocolMembers(context)
-        if (protocolMembers.size != 1 || protocolMembers[0].name != "__call__") {
+      // A protocol that declares `__call__` matches a callable only when it is a callback protocol
+      if (expected.isProtocol(context) && PyNames.CALL in expected.getMemberNames(false, context)) {
+        if (!expected.isCallbackProtocol(context)) {
           return Optional.of(false)
         }
       }
@@ -1911,7 +1911,8 @@ object PyTypeChecker {
       }
     }
 
-    if (expected is PyClassType && actual is PyFunctionType && isCallableProtocol(expected, context)) {
+    // Here a class type is a callback protocol
+    if (expected is PyClassType && actual is PyFunctionType) {
       val expectedOverloads = expected.findMember(PyNames.CALL, PyResolveContext.defaultContext(context)).map { it.type }
       val actualCallable = actual.callable
       val actualOverloads = if (actualCallable is PyFunction) {
@@ -1997,10 +1998,6 @@ object PyTypeChecker {
   private fun match(expected: List<PyType?>, actual: List<PyType?>, matchContext: MatchContext): Boolean {
     return expected.size == actual.size &&
            expected.zip(actual).all { (expectedItem, actualItem) -> match(expectedItem, actualItem, matchContext).getOrDefault(true) }
-  }
-
-  private fun isCallableProtocol(expected: PyClassLikeType, context: TypeEvalContext): Boolean {
-    return expected.isProtocol(context) && PyNames.CALL in expected.getMemberNames(false, context)
   }
 
   private fun widenUnionOfTuplesToTupleOfUnions(unionType: PyUnionType, elementCount: Int): PyTupleType? {
