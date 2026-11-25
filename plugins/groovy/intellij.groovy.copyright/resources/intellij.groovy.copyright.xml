@@ -3,6 +3,7 @@
   <dependencies>
     <plugin id="org.intellij.groovy"/>
     <plugin id="com.intellij.copyright"/>
+    <module name="intellij.groovy.psi"/>
     <module name="intellij.java.copyright"/>
     <module name="intellij.java.psi"/>
     <module name="intellij.platform.core"/>

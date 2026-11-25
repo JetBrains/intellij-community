@@ -1,7 +1,10 @@
 load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
 ### auto-generated section `dev intellij.groovy.psi` start
+content_module_jar(module = ":psi")
+
 filegroup(
     name = "dist_resources",
     srcs = glob(
@@ -85,6 +88,7 @@ jvm_library(
 ### auto-generated section `iml intellij.groovy.psi` start
 jps_module(
     name = "intellij.groovy.psi",
+    descriptors = ["resources/intellij.groovy.psi.xml"],
     target = "psi",
     exports = [
         "resources/colorSchemes/GroovyDarcula.xml",

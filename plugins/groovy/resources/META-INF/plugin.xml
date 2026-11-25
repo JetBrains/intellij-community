@@ -18,6 +18,7 @@
     <module name="intellij.groovy.constants.rt" loading="embedded"/>
     <module name="intellij.groovy.rt" loading="embedded"/>
     <module name="intellij.groovy.rt.classLoader" loading="embedded"/>
+    <module name="intellij.groovy.psi" loading="embedded"/>
     <module name="intellij.groovy.duplicates"/>
     <module name="intellij.groovy.duplicatesDetection"/>
     <module name="intellij.groovy.git"/>

@@ -696,12 +696,6 @@ private fun createAndroidPluginLayout(
 
 fun groovyPlugin(): PluginLayout {
   return pluginAuto("intellij.groovy") { spec ->
-    spec.withModules(
-      listOf(
-        "intellij.groovy.psi",
-      )
-    )
-
     spec.withResourceFromModule("intellij.groovy.psi", "standardDsls", "lib/standardDsls")
     spec.withResource("hotswap/gragent.jar", "lib/agent")
     spec.withResourceFromModule("intellij.groovy.psi", "resources/conf/console.groovy", "lib")
