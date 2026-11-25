@@ -552,7 +552,6 @@ jvm_library(
         # do not sort,
         "//:main",
         "//java/openapi:java",
-        "//java/idea-ui:ui",
         "//python/pluginCore:community-plugin",
         "//python/pluginJava:community-plugin-java",
         "//python/pluginMinor:community-plugin-minor",

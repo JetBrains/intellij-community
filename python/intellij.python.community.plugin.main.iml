@@ -6,7 +6,6 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="intellij.idea.community.main" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.java" scope="RUNTIME" />
-    <orderEntry type="module" module-name="intellij.java.ui" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.python.community.plugin" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.python.community.plugin.java" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.python.community.plugin.minor" scope="RUNTIME" />

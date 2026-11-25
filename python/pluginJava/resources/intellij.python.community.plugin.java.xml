@@ -5,7 +5,6 @@
     <!-- Supports Java -->
     <module name="intellij.java.backend"/>
     <module name="intellij.java.psi"/>
-    <module name="intellij.java.ui"/>
     <module name="intellij.platform.analysis"/>
     <module name="intellij.platform.concurrency"/>
     <module name="intellij.platform.core"/>
@@ -29,7 +28,6 @@
     <newProjectWizard.languageGenerator implementation="com.intellij.python.community.plugin.java.PythonNewProjectWizard"/>
     <moduleType id="PYTHON_MODULE" implementationClass="com.intellij.python.community.plugin.java.facet.PythonModuleType"/>
     <frameworkSupport implementation="com.intellij.python.community.plugin.java.facet.PythonFrameworkSupportProvider"/>
-    <projectStructureDetector implementation="com.intellij.python.community.plugin.java.facet.PyProjectStructureDetector"/>
     <moduleConfigurationEditorProvider implementation="com.intellij.python.community.plugin.java.facet.PythonModuleConfigurationEditorProvider"/>
     <completion.contributor language="Python" implementationClass="com.intellij.python.community.plugin.java.psi.impl.PyConstructorArgumentCompletionContributor"/>
 
