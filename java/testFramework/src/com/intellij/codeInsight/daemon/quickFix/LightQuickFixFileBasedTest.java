@@ -12,8 +12,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ArgumentsSource;
 
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
  * A JUnit 5 quick fix test with one test for each `before` file of {@link #getTestDataPath()}.
@@ -23,10 +21,12 @@ import java.util.regex.Pattern;
  * {@link com.intellij.testFramework.fixtures.LightJavaFixturesKt#lightJavaCodeInsightFixture}.
  * This class sets the test data path of the fixture before each test.
  * A subclass declares {@link #getTestDataPath()} itself, because {@link FileBasedArgumentProvider} finds the method on the test class.
+ *
+ * @deprecated Use {@link LightQuickFixFixtureKt#lightQuickFixFixture} with a parameterized test method and
+ * {@link LightQuickFixFixtureKt#lightQuickFixTestFiles}.
  */
+@Deprecated
 public abstract class LightQuickFixFileBasedTest implements FileBasedTestCaseHelperEx {
-  private static final Pattern JDK_SELECT_PATTERN = Pattern.compile("Java([\\d.]+)(Preview)?(\\.java)?$");
-
   public abstract @NotNull JavaCodeInsightTestFixture getFixture();
 
   public abstract @NotNull String getTestDataPath();
@@ -75,11 +75,7 @@ public abstract class LightQuickFixFileBasedTest implements FileBasedTestCaseHel
    * It is the rule of {@link com.intellij.testFramework.LightJavaCodeInsightTestCase#getLanguageLevel()}.
    */
   public static @Nullable LanguageLevel getLanguageLevelOfFileName(@NotNull String fileName) {
-    Matcher matcher = JDK_SELECT_PATTERN.matcher(fileName);
-    if (!matcher.find()) return null;
-    LanguageLevel level = LanguageLevel.parse(matcher.group(1));
-    if (level == null || matcher.group(2) == null) return level;
-    return LanguageLevel.valueOf(level + "_PREVIEW");
+    return LightQuickFixFixtureKt.lightQuickFixLanguageLevel(fileName);
   }
 
   @ParameterizedTest(name = "{argumentSetNameOrArgumentsWithNames}")
