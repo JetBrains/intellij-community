@@ -1,4 +1,4 @@
-// The metadata of a bundled doc: the ADR status, date and topic, the guide group, and the note state (ADR 0199).
+// The metadata of a bundled doc: the ADR status, date and topic, the guide group, and the note state (decision 2026-10-12-decision-records-are-named-by-date-and-slug-and-have-a-page).
 // Shared by scripts/harvestDocs.ts (node) and the site (browser), so it imports nothing from node. The topics and the
 // guide groups come from the site config (siteConfig.ts).
 //

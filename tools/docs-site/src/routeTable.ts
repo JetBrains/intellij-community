@@ -1,4 +1,4 @@
-// The one ordered table of app URLs of a docs site (ADR 0162 of Air). Parse, build, the app route heads, the nav
+// The one ordered table of app URLs of a docs site (decision 2026-10-25-one-route-table-owns-the-url-the-nav-section-and-the-layout). Parse, build, the app route heads, the nav
 // section, and the crumb head all come from it. The first entry that matches wins, in both directions. Legacy entries
 // only parse, so old links and bookmarks keep working.
 //
@@ -30,7 +30,7 @@ export type KernelRoute =
   | { page: 'home' }
   | { page: 'guides', anchor: string | null }
   | { page: 'guide', slug: string, anchor: string | null }
-  /** The explainers index (ADR 0203 of Air). */
+  /** The explainers index (decision 2026-10-06-an-architecture-explanation-is-a-hand-laid-diagram). */
   | { page: 'explainers', anchor: string | null }
   /** One explainer at one chapter, with the step and the selected node of its diagram. */
   | { page: 'explainer', slug: string, chapter: string | null, step: number | null, node: string | null }

@@ -389,7 +389,7 @@ export function InlineMarkdown({ source }: { source: string }) {
   return <span dangerouslySetInnerHTML={{ __html: html }} />
 }
 
-// --- prose docs with figure fences: hand-laid diagrams (```diagram and ```air-diagram, ADR 0203 of Air) and the fences of the site
+// --- prose docs with figure fences: hand-laid diagrams (```diagram and ```air-diagram, decision 2026-10-06-an-architecture-explanation-is-a-hand-laid-diagram) and the fences of the site
 
 type DocSegment =
   | { kind: 'html', html: string }

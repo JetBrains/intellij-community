@@ -1,4 +1,4 @@
-// The grid of a hand-laid diagram in pixels (ADR 0203). The author chose the columns and the rows;
+// The grid of a hand-laid diagram in pixels (decision 2026-10-06-an-architecture-explanation-is-a-hand-laid-diagram). The author chose the columns and the rows;
 // this module only converts them to positions, sizes, edge sides, and step classes. It imports no
 // data and no React, so src/diagramLayout.test.ts loads it under node.
 
@@ -20,7 +20,7 @@ export const GROUP_HEADER = 34
 export const MIN_NODE_H = 64
 export const BOTTOM_PAD = 20
 
-// the same estimate as src/graph/views.ts: the canvas never measures the DOM (ADR 0097)
+// the same estimate as src/graph/views.ts: the canvas never measures the DOM (decision 2026-08-19-the-docs-canvas-sizes-cards-without-the-dom)
 const CARD_VPAD = 18
 const CARD_ROW_GAP = 2
 // a 14px text-sm title

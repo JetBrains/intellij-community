@@ -137,7 +137,7 @@ def _dist_runtime_module_repository_impl(ctx):
         outputs = [ctx.outputs.compact, ctx.outputs.jar],
         arguments = [args],
         # The remote cache gave no gain for this action, see
-        # `build/openspec/changes/archive/2026-11-19-ci-packs-use-the-remote-cache/design.md`.
+        # decision 2026-11-19-ci-packs-use-the-remote-cache.
         execution_requirements = {"block-network": "1", "no-remote-cache": "1", "no-remote-exec": "1"},
         resource_set = _repository_resources,
         progress_message = "Generating the runtime module repository of %{label}",
@@ -168,7 +168,7 @@ def _dist_runtime_module_facts_impl(ctx):
         outputs = [output],
         arguments = [args],
         # A remote hit downloads the 10 MB output, which takes about as long as the action on the measured link. So
-        # only the disk cache applies, see `build/openspec/changes/archive/2026-11-19-ci-packs-use-the-remote-cache/design.md`.
+        # only the disk cache applies, see decision 2026-11-19-ci-packs-use-the-remote-cache.
         execution_requirements = {"block-network": "1", "no-remote-cache": "1", "no-remote-exec": "1"},
         resource_set = _facts_writer_resources,
         progress_message = "Writing the runtime module facts of %{label}",

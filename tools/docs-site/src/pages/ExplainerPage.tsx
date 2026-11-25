@@ -1,4 +1,4 @@
-// An explainer (ADR 0203): short chapters, one hand-laid diagram each. The left pane holds the
+// An explainer (decision 2026-10-06-an-architecture-explanation-is-a-hand-laid-diagram): short chapters, one hand-laid diagram each. The left pane holds the
 // chapter rail, the prose, and the step list; the right pane holds the canvas with its step bar, and
 // the card of the selected part. useExplainerRoute owns the route: the chapter, the step, and the node.
 // The step bar walks the whole explainer: past the last step it hands off to the next chapter.

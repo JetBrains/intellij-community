@@ -75,7 +75,7 @@ there is a verdict. `java.awt.Robot` captures a real frame there, so a failure a
 macOS 26 or newer, on Apple silicon, it needs no installation. One engine holds two lanes. `--backend container-linux` runs the same Linux guest profile
 in the container of the `testing-ui` skill, on every host of the skill. The skill's noVNC is the live view
 ([the lane runs in the testing-ui container](../openspec/changes/archive/2026-10-04-the-lane-runs-in-the-testing-ui-container/design.md)), and
-the working note `community/tools/vm/docs/the-container-linux-backend-becomes-the-default-worker-plan.md` plans that it becomes the
+the working note [The container-linux backend becomes the default worker](the-container-linux-backend-becomes-the-default-worker-plan.md) plans that it becomes the
 default worker with a later switch commit; until then Docker is the default. A macOS guest preserves JCEF,
 Terminal, native-menu, WindowServer and Aqua behaviour, and that is where coverage about those things belongs.
 Select one with
@@ -348,7 +348,7 @@ skill's live-lane reference has the procedure.
 ## Windows
 
 A Windows PC runs the controller natively, on x86_64 and on arm64
-(`community/tools/vm/docs/a-windows-host-runs-the-controller-natively-plan.md`). It drives the Docker and the
+([A Windows host runs the controller natively](a-windows-host-runs-the-controller-natively-plan.md)). It drives the Docker and the
 container-linux backends.
 The CMD halves of `vm.cmd` and `trace.cmd` build and run the binaries, as `bt.cmd` does.
 

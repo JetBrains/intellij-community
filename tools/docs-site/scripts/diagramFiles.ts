@@ -1,5 +1,5 @@
 // Reads the hand-laid diagrams of a site (`docs.diagrams` of the site config) and cross-checks the diagram fences
-// of its markdown against them (ADR 0203). Grammar and graph errors come from the shared validator (diagram.ts);
+// of its markdown against them (decision 2026-10-06-an-architecture-explanation-is-a-hand-laid-diagram). Grammar and graph errors come from the shared validator (diagram.ts);
 // this module adds the file system: every fence names a known diagram, and every diagram has a fence, because an
 // orphan diagram is a diagram that drifts unseen.
 //

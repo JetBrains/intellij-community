@@ -42,7 +42,7 @@ in the daemon and the tests, not in the guest layer.
 
 The worker code is in [container_linux.rs](../../../../crates/avl-vm/src/worker/container_linux.rs). A decision to
 make this backend the default waits in the working note
-`community/tools/vm/docs/the-container-linux-backend-becomes-the-default-worker-plan.md`.
+[The container-linux backend becomes the default worker](../../../../docs/the-container-linux-backend-becomes-the-default-worker-plan.md).
 
 ## Alternatives rejected
 

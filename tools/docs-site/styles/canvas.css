@@ -74,7 +74,7 @@
   stroke-dasharray: 2 4;
 }
 
-/* a planned part of a hand-laid diagram (src/graph/HandLaidDiagram.tsx, ADR 0204) */
+/* a planned part of a hand-laid diagram (src/graph/HandLaidDiagram.tsx, decision 2026-10-06-an-architecture-explanation-is-a-hand-laid-diagram) */
 .react-flow__edge.edge-target .react-flow__edge-path {
   stroke-dasharray: 6 4;
 }

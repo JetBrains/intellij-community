@@ -1,4 +1,4 @@
-// A hand-laid diagram on React Flow (ADR 0203). The grid comes from the author, the pixels from
+// A hand-laid diagram on React Flow (decision 2026-10-06-an-architecture-explanation-is-a-hand-laid-diagram). The grid comes from the author, the pixels from
 // diagramLayout.ts of the kernel, the cards from its DiagramNode.tsx, and the edges from the shared ArchEdge in its
 // orthogonal shape. Two modes: a compact figure inside a guide, and the full canvas of an explainer.
 // Lazily loaded, so a page without a diagram never downloads React Flow.

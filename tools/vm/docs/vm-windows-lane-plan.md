@@ -5,10 +5,10 @@ Note of 2026-10-02: the crates `avl-lane`, `avl-worker` and `avl-daemon` that th
 ([The UI-lane crates follow the re-key domains, and the audience of each binary picks its error model](../openspec/changes/archive/2026-10-02-the-ui-lane-crates-follow-the-re-key-domains/design.md)). The plan keeps its old text.
 
 Status on 2026-09-30: route 2, the native Windows controller, is implemented, and
-`community/tools/vm/docs/a-windows-host-runs-the-controller-natively-plan.md` records it. It supersedes the paragraph of
+[A Windows host runs the controller natively](a-windows-host-runs-the-controller-natively-plan.md) records it. It supersedes the paragraph of
 [The UI-lane tooling is one Rust implementation in one cargo workspace that Bazel builds](../openspec/changes/archive/2026-09-26-the-ui-lane-tooling-is-rust/design.md) that made Windows an unsupported host. Route 1 is implemented on 2026-09-29, except its step 3. The first
 Windows host, a Windows 11 arm64 VM in Parallels on Apple silicon, has no nested virtualization, so it cannot run
-WSL2 ([Why route 2](#why-route-2)). No `vm.cmd run` has passed on a Windows PC with a Docker engine yet, so `community/tools/vm/docs/a-windows-host-runs-the-controller-natively-plan.md`
+WSL2 ([Why route 2](#why-route-2)). No `vm.cmd run` has passed on a Windows PC with a Docker engine yet, so [A Windows host runs the controller natively](a-windows-host-runs-the-controller-natively-plan.md)
 stays Proposed. The
 controller is `community/tools/vm`, the operator view is [the VM guide](vm-ui-tests.md),
 and the Docker worker is [The Linux worker is a Docker container built from the repository, and it is the default worker](../openspec/changes/archive/2026-10-08-the-linux-worker-is-a-docker-container-and-the-default/design.md) with
@@ -34,7 +34,7 @@ architecture: `linux/amd64` on an x86_64 PC, `linux/arm64` on an arm64 PC.
   `:bt-windows-arm64` and `:clippy-windows-arm64`, and the recorder has `:clippy-windows-arm64`, for the Windows
   side of the PC.
 - **The controller did not build on Windows.** This fact is from 2026-09-29, before route 2. Now every controller
-  crate is portable (`community/tools/vm/docs/a-windows-host-runs-the-controller-natively-plan.md`). Of the seventeen
+  crate is portable ([A Windows host runs the controller natively](a-windows-host-runs-the-controller-natively-plan.md)). Of the seventeen
   crates, six were `avl_crate(portable = True)` and
   build and test on Windows: `avl-base`, `avl-wire`, `avl-trace`, `avl-record`, `avl-report` and `avl-testkit`.
   `avl.bzl` gives the rest `NOT_ON_WINDOWS` ([The UI-lane tooling is one Rust implementation in one cargo workspace that Bazel builds](../openspec/changes/archive/2026-09-26-the-ui-lane-tooling-is-rust/design.md): "Windows is
@@ -57,7 +57,7 @@ architecture: `linux/amd64` on an x86_64 PC, `linux/arm64` on an arm64 PC.
   and Bazel-root paths inside the guest as symlinks onto the share mounts under `/mnt/AirVmShares/<share>`, so a
   `C:\` path cannot exist as a guest path at all. `std::fs::canonicalize` on Windows answers a `\\?\C:\` prefix.
   Phase 2 of route 2 closed both: the shares are `--mount` binds, and the guest names each host path by its drive
-  form (`community/tools/vm/docs/a-windows-host-runs-the-controller-natively-plan.md`).
+  form ([A Windows host runs the controller natively](a-windows-host-runs-the-controller-natively-plan.md)).
 - **Docker Desktop's file sharing is the performance trap.** A bind mount of a Windows path (`C:\...`) crosses the
   Windows-to-WSL2 file boundary, and the guest reads the whole IDE distribution and every test jar through the share.
   A bind mount of a path inside the WSL2 distribution's own filesystem is a local ext4 mount in the same kernel. So
@@ -128,7 +128,7 @@ Docker engine: Docker Desktop, or another engine that the `docker` CLI reaches.
 
 #### The phases of route 2
 
-`community/tools/vm/docs/a-windows-host-runs-the-controller-natively-plan.md` records the decisions and the evidence.
+[A Windows host runs the controller natively](a-windows-host-runs-the-controller-natively-plan.md) records the decisions and the evidence.
 
 1. Done: the controller builds and tests on Windows (commit 7c55a151ea9bb). Each Unix host interface has one seam,
    the Tart and Parallels modules are `cfg(unix)`, and a Windows host defaults to `--backend docker`. A Windows host
@@ -143,11 +143,11 @@ Docker engine: Docker Desktop, or another engine that the `docker` CLI reaches.
    `air_lane_guest_linux_x64_cross` (commit 74118c7a93fd4).
 5. Done: the CMD halves of `vm.cmd` and `trace.cmd` build and run the binaries, as `bt.cmd` does (commit
    9f6c4e284966f).
-6. Done: the guide, the skill, the vm-lane README and `community/tools/vm/docs/a-windows-host-runs-the-controller-natively-plan.md`.
+6. Done: the guide, the skill, the vm-lane README and [A Windows host runs the controller natively](a-windows-host-runs-the-controller-natively-plan.md).
 7. Open: a `vm.cmd --backend docker run <suite>` that passes on an x86_64 and on an arm64 Windows PC with a Docker
    engine, with its time in the guide's table. It is the first check of `--mount source=C:\…` on Docker Desktop,
    of the MANIFEST name that the daemon descriptor gets, of the MANIFEST branch through a real daemon start, and of
-   the share settle. Then the working note `community/tools/vm/docs/a-windows-host-runs-the-controller-natively-plan.md` becomes a decision.
+   the share settle. Then the working note [A Windows host runs the controller natively](a-windows-host-runs-the-controller-natively-plan.md) becomes a decision.
 
 The evidence of the Windows 11 arm64 VM, with native Bazel on the final tree: `//plugins/air/tests/integration/vm-lane/...`
 passes 720 of 720 cases in 15 targets. `avl-trace-serve-test` does not run there, because its Kotlin test data needs
@@ -161,7 +161,7 @@ jars from the private Maven repository `tbx/toolbox-dependencies`, which answers
    struct, and the validator's own-architecture loaders. It also makes a Linux x86_64 CI agent a lane host.
 2. Done: the Linux host defaults and the `vm.cmd` message (steps 2 and 4).
 3. Open: the WSL2 measurement (step 3). The first Windows host cannot run WSL2, so route 2 came first.
-4. Done: the successor to [The UI-lane tooling is one Rust implementation in one cargo workspace that Bazel builds](../openspec/changes/archive/2026-09-26-the-ui-lane-tooling-is-rust/design.md) is `community/tools/vm/docs/a-windows-host-runs-the-controller-natively-plan.md`.
+4. Done: the successor to [The UI-lane tooling is one Rust implementation in one cargo workspace that Bazel builds](../openspec/changes/archive/2026-09-26-the-ui-lane-tooling-is-rust/design.md) is [A Windows host runs the controller natively](a-windows-host-runs-the-controller-natively-plan.md).
    It names Windows as a host of the Docker backend. It does not name WSL2 numbers, because none are measured.
 
 ## Acceptance

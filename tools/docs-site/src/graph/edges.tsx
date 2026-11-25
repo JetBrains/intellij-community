@@ -30,7 +30,7 @@ export function ArchEdge({ sourceX, sourceY, sourcePosition, targetX, targetY, t
     targetY: targetY + approach.dy * inset,
     targetPosition,
   }
-  // a hand-laid diagram (ADR 0204) routes its edges orthogonally, so they follow the grid
+  // a hand-laid diagram (decision 2026-10-06-an-architecture-explanation-is-a-hand-laid-diagram) routes its edges orthogonally, so they follow the grid
   const step = options?.shape === 'step'
   const [path, labelX, labelY] = step ? getSmoothStepPath({ ...ends, borderRadius: 10 }) : getBezierPath(ends)
   return (

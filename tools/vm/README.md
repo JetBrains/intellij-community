@@ -2,7 +2,7 @@
 
 A cargo workspace (`Cargo.toml`, `Cargo.lock`, `rust-toolchain`) that Bazel builds too, through `avl.MODULE.bazel`
 (repository `@avl`) and `avl.bzl`. The workspace is a package of the community module, beside BT. How to operate the
-controller is the `vm-ui-tests` skill; the model behind it is `docs/vm-ui-tests.md`. [The UI-lane tooling is one Rust implementation in one cargo workspace that Bazel builds](openspec/changes/archive/2026-09-26-the-ui-lane-tooling-is-rust/design.md) records the port from Go, and `community/tools/vm/docs/a-windows-host-runs-the-controller-natively-plan.md` records the native
+controller is the `vm-ui-tests` skill; the model behind it is `docs/vm-ui-tests.md`. [The UI-lane tooling is one Rust implementation in one cargo workspace that Bazel builds](openspec/changes/archive/2026-09-26-the-ui-lane-tooling-is-rust/design.md) records the port from Go, and [A Windows host runs the controller natively](docs/a-windows-host-runs-the-controller-natively-plan.md) records the native
 Windows host. [The UI-lane crates follow the re-key domains, and the audience of each binary picks its error model](openspec/changes/archive/2026-10-02-the-ui-lane-crates-follow-the-re-key-domains/design.md) records the rework: the crate rule, the closures, the error model and the command line.
 
 `avl` stands for Air VM Lane; `avl.MODULE.bazel` says why the name is short. An agent that changes this workspace
@@ -116,7 +116,7 @@ links `dev-launch` of the distribution tools, which composes the argument file o
 dev-dependency, and nothing depends on `avl-vm`.
 
 The crates with `portable = True` in their `BUILD.bazel` also build and test on Windows, x86_64 and arm64. Every
-crate is portable except `avl-guest`, which runs only inside a Linux or macOS guest (`community/tools/vm/docs/a-windows-host-runs-the-controller-natively-plan.md`). A Windows host
+crate is portable except `avl-guest`, which runs only inside a Linux or macOS guest ([A Windows host runs the controller natively](docs/a-windows-host-runs-the-controller-natively-plan.md)). A Windows host
 drives the Docker backend only, so the Tart and Parallels modules of `avl-vm`'s `worker` are `cfg(unix)`. A test whose
 fixture is a Tart or Parallels pool, or a shell script, is `cfg(unix)` too. The library of `avl-guest` carries no
 platform constraint and is tagged `manual`, because rules_rs analyzes a binary's dependencies in the exec

@@ -108,7 +108,7 @@ export function guidesRoute(anchor?: string): string {
   return kernelHref({ page: 'guides', anchor: anchor ?? null })
 }
 
-/** The explainers index (ADR 0203 of Air). */
+/** The explainers index (decision 2026-10-06-an-architecture-explanation-is-a-hand-laid-diagram). */
 export function explainersRoute(anchor?: string): string {
   return kernelHref({ page: 'explainers', anchor: anchor ?? null })
 }

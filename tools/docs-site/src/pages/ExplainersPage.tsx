@@ -1,4 +1,4 @@
-// The explainers index (ADR 0203): one card per explainer, with its chapters as the way in.
+// The explainers index (decision 2026-10-06-an-architecture-explanation-is-a-hand-laid-diagram): one card per explainer, with its chapters as the way in.
 
 import { DocPage, EntryCardLink, PageHeader } from '../furniture'
 import { useAnchorScroll } from '../markdown'

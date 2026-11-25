@@ -2,7 +2,7 @@
 //
 // An explainer and a card describe the shape of today for a reader at the whiteboard. The gate checks the four
 // rules of that text that a machine can decide: a long sentence, a history mark (an issue id, a round, a commit
-// hash), a card over the hard cap of ADR 0204, and a count that rots. The other lenses of the guide need a reviewer.
+// hash), a card over the hard cap of decision 2026-10-06-an-architecture-explanation-is-a-hand-laid-diagram, and a count that rots. The other lenses of the guide need a reviewer.
 // The limits and the history marks come from `prose` of the site config.
 //
 // The gate reads the prose of the explainers (`docs.explainers`) and the `summary`, `text`, `detail`, and `caption`

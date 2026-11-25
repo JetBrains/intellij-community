@@ -1,4 +1,4 @@
-// The one owner of an explainer page's route (ADR 0203 of Air, the pattern of its useFlowRoute). The URL holds the
+// The one owner of an explainer page's route (decision 2026-10-06-an-architecture-explanation-is-a-hand-laid-diagram, the pattern of its useFlowRoute). The URL holds the
 // chapter, the step, and the selected node; every mutation writes it through `navigate`, and the
 // keyboard walks the whole explainer with the arrow keys.
 

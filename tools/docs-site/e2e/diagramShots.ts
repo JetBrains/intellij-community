@@ -1,4 +1,4 @@
-// Renders every hand-laid diagram (ADR 0204 of Air) to PNG: the explainer canvas of each chapter at the
+// Renders every hand-laid diagram (decision 2026-10-06-an-architecture-explanation-is-a-hand-laid-diagram) to PNG: the explainer canvas of each chapter at the
 // overview and at each step, in the light and the dark theme, plus the compact figures of each guide
 // and spec that embeds one. A review tool for the author and the critic, not a test: a site runs it after
 // `pnpm run build` through its own `e2e/diagramShots.ts`, which passes its Playwright `chromium` and its spec

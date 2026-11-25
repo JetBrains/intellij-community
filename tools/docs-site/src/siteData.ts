@@ -87,7 +87,7 @@ export interface SiteIndex {
   data: SiteData
   /** Bundled prose docs by content-relative path. */
   docsByPath: ReadonlyMap<string, HarvestedDoc>
-  /** The explainers (ADR 0203 of Air), in frontmatter order. Each one has `chapters`. */
+  /** The explainers (decision 2026-10-06-an-architecture-explanation-is-a-hand-laid-diagram), in frontmatter order. Each one has `chapters`. */
   explainerDocs: readonly ExplainerDoc[]
   /** The decision records, newest first: a dated record before a numbered one. */
   decisionDocs: readonly DecisionDoc[]

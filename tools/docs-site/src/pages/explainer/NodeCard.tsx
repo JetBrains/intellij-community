@@ -1,4 +1,4 @@
-// The detail card of a clicked diagram card (ADR 0203 of Air): what the part does, where its code is, the
+// The detail card of a clicked diagram card (decision 2026-10-06-an-architecture-explanation-is-a-hand-laid-diagram): what the part does, where its code is, the
 // specs and the decision behind it, the steps it appears in, and the other chapters that show it.
 // One level deep, as the explainer checklist asks: no nested disclosure. The module, concept, and spec chips come
 // from the reference links of the site (RefLinks); a site without them shows none.

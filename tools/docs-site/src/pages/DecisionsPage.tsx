@@ -1,4 +1,4 @@
-// Decisions index (ADR 0199 of Air): one row per decision, newest first. A decision is a record of a decision folder or
+// Decisions index (decision 2026-10-12-decision-records-are-named-by-date-and-slug-and-have-a-page): one row per decision, newest first. A decision is a record of a decision folder or
 // the design of an archived OpenSpec change. The status and the topic filters live in the query, so a filtered list
 // is a link. With no topic in the query, the page hides the records of the hidden topic of the site config: the
 // docs-site records describe the site, not its subject. A design without a topic shows only with no topic filter.

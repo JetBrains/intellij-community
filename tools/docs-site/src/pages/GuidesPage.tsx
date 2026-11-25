@@ -1,4 +1,4 @@
-// Guides index (ADR 0199 of Air): the guides in their topic groups (frontmatter `group:`), then the working
+// Guides index (decision 2026-10-12-decision-records-are-named-by-date-and-slug-and-have-a-page): the guides in their topic groups (frontmatter `group:`), then the working
 // notes. A historical note folds away, and the decision records have their own page.
 
 import { routeForDoc } from '../docRoute'

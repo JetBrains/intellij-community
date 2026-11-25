@@ -1,4 +1,4 @@
-// The grammar of a hand-laid diagram (ADR 0203). An author places each node on a grid of columns
+// The grammar of a hand-laid diagram (decision 2026-10-06-an-architecture-explanation-is-a-hand-laid-diagram). An author places each node on a grid of columns
 // and rows, and declares the edges and the numbered steps. Nothing is auto-laid: the renderer only
 // converts the grid to pixels (src/graph/diagramLayout.ts).
 //
@@ -32,7 +32,7 @@ export interface DiagramGrammar {
 /** A Bazel label: an optional repository, a package path, and an optional target name. */
 const BAZEL_LABEL = /^(@[a-z_]+)?\/\/[^:]*(:[A-Za-z0-9_.+-]+)?$/
 
-/** The limits that keep a diagram readable. The review checklist of ADR 0203 names the rest. */
+/** The limits that keep a diagram readable. The review checklist of decision 2026-10-06-an-architecture-explanation-is-a-hand-laid-diagram names the rest. */
 export const DIAGRAM_LIMITS = {
   columns: 6,
   groups: 6,

@@ -1,4 +1,4 @@
-// One decision record (ADR 0199): the record header with its title and the chips of its number, status, date, topic
+// One decision record (decision 2026-10-12-decision-records-are-named-by-date-and-slug-and-have-a-page): the record header with its title and the chips of its number, status, date, topic
 // and issues, then the body. The status paragraph reads as a callout. A superseded record names its successor above
 // the body, so a reader does not act on a replaced rule. The links of the body list under the table of contents.
 

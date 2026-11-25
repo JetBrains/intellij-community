@@ -1,4 +1,4 @@
-// The e2e suite of the kernel pages, for any site: the source viewer, the guides, the explainers (ADR 0204 of Air),
+// The e2e suite of the kernel pages, for any site: the source viewer, the guides, the explainers (decision 2026-10-06-an-architecture-explanation-is-a-hand-laid-diagram),
 // the command palette, the decisions, and the theme. The fixtures come from the site config and from the harvest of
 // the site under test (`generated/`), so a content edit does not break the suite.
 //
@@ -277,7 +277,7 @@ export function defineKernelSuite({ test, expect, config, sitePage }: KernelSuit
     })
   })
 
-  describe('explainers (ADR 0204)', () => {
+  describe('explainers', () => {
     const explainer = harvest.docs.find(doc => doc.kind === 'explainer' && (doc.chapters?.length ?? 0) >= 3)
     if (explainer === undefined) {
       test('the site has an explainer with three chapters', () => {

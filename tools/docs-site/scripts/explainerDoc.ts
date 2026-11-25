@@ -1,4 +1,4 @@
-// The shape of an explainer (ADR 0203): a markdown doc under docs/explainers/ whose `##` headings are
+// The shape of an explainer (decision 2026-10-06-an-architecture-explanation-is-a-hand-laid-diagram): a markdown doc under docs/explainers/ whose `##` headings are
 // the chapters, each with at most one diagram fence. Shared by scripts/harvestDocs.ts (node) and
 // the site (browser), so this file imports nothing from node.
 

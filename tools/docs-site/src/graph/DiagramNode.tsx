@@ -1,4 +1,4 @@
-// The card of a hand-laid diagram (ADR 0203). Eight named handles, so an edge can leave or enter on
+// The card of a hand-laid diagram (decision 2026-10-06-an-architecture-explanation-is-a-hand-laid-diagram). Eight named handles, so an edge can leave or enter on
 // the side the grid implies; the kind picks the skin, and the lane picks the accent color. The root
 // carries `arch-node`, so the state rules of canvas.css (`.step-active`, `.sel-dimmed`, `.selected`)
 // apply unchanged. The kinds and the planned badges come from the site config (`diagram`).

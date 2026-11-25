@@ -38,7 +38,7 @@
      and the diagrams name them: indigo is purple, sky is teal, blue is pink.
    - --brand-gradient: the product mark behind white text, in the two dark stops of the Air app icon.
    - --primary-hover, --primary-pressed, --primary-disabled and the --*-surface and --*-border tints: the host contract
-     of the GenUI catalog, whose primitives this site renders (Air ADR 0218). The values are the stock states and tints:
+     of the GenUI catalog, whose primitives this site renders (decision 2026-10-26-the-docs-site-chrome-is-stock-shadcn-with-a-top-nav). The values are the stock states and tints:
      bg-primary/80, 50 % for disabled, bg-<tone>/10 and border-<tone>/20.
 
    scripts/themeContrast.test.ts checks only the status, lane and --sidebar-primary marks at 3:1 on the background, the
