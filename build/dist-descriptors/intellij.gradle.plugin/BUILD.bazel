@@ -81,6 +81,7 @@ dev_plugin(
         "//plugins/gradle/completion:completion_content_module_jar",
         "//plugins/gradle/properties:properties_content_module_jar",
         "//plugins/gradle/settings:settings_content_module_jar",
+        "//plugins/gradle/tooling-proxy:tooling-proxy_content_module_jar",
         "//plugins/gradle:gradle_content_module_jar",
     ],
     descriptor = "//build/dist-descriptors/intellij.gradle.plugin:intellij.gradle.plugin_dev_descriptor",
@@ -92,9 +93,6 @@ dev_plugin(
         "lib/gradle-plugin.jar": [
             "intellij.gradle.plugin",
             "intellij.gradle.common",
-        ],
-        "lib/gradle-tooling-proxy.jar": [
-            "intellij.gradle.toolingProxy",
         ],
         "lib/gradle-tooling-extension-api.jar": [
             "intellij.gradle.toolingExtension",
@@ -224,6 +222,7 @@ dev_plugin(
     module_jar_paths = {
         "intellij.gradle": "lib/intellij.gradle.jar",
         "intellij.gradle.settings": "lib/intellij.gradle.settings.jar",
+        "intellij.gradle.toolingProxy": "lib/intellij.gradle.toolingProxy.jar",
     },
     modules = {
         "//libraries/gradle": "intellij.libraries.gradle",
@@ -232,7 +231,6 @@ dev_plugin(
         "//plugins/gradle/plugin": "intellij.gradle.plugin",
         "//plugins/gradle/tooling-extension-api:toolingExtension": "intellij.gradle.toolingExtension",
         "//plugins/gradle/tooling-extension-impl:toolingExtension-impl": "intellij.gradle.toolingExtension.impl",
-        "//plugins/gradle/tooling-proxy": "intellij.gradle.toolingProxy",
         "//plugins/gradle:gradle-common": "intellij.gradle.common",
     },
     plugin_directory = "plugins/gradle",

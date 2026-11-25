@@ -1,6 +1,11 @@
 load("@community//build:jps_module.bzl", "jps_module")
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
+
+### auto-generated section `dev intellij.gradle.toolingProxy` start
+content_module_jar(module = ":tooling-proxy")
+### auto-generated section `dev intellij.gradle.toolingProxy` end
 
 jps_test(
     name = "toolingProxy-tests_test",

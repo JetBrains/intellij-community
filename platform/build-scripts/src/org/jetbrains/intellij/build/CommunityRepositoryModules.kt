@@ -172,7 +172,6 @@ fun getCommunityRepositoryPlugins(): PersistentList<PluginLayout> {
         "intellij.gradle.common",
       )
     ) { spec ->
-      spec.withModule("intellij.gradle.toolingProxy", "gradle-tooling-proxy.jar")
       spec.withModule("intellij.gradle.toolingExtension", "gradle-tooling-extension-api.jar")
       spec.withModule("intellij.gradle.toolingExtension.impl", "gradle-tooling-extension-impl.jar")
       spec.withModule("intellij.libraries.groovy", "groovy.jar")
