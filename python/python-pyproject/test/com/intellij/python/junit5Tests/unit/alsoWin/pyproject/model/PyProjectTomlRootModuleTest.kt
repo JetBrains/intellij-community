@@ -4,7 +4,9 @@ package com.intellij.python.junit5Tests.unit.alsoWin.pyproject.model
 import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.python.pyproject.PY_PROJECT_TOML
+import com.intellij.python.pyproject.model.internal.workspaceBridge.PY_PROJECT_MODEL_OWNS_MODULES_KEY
 import com.intellij.testFramework.common.timeoutRunBlocking
+import com.intellij.testFramework.junit5.RegistryKeyAppLevel
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.utils.vfs.createDirectory
 import org.junit.jupiter.api.Test
@@ -15,8 +17,7 @@ import kotlin.time.Duration.Companion.seconds
  * moves away (or is deleted), the module must stay: otherwise the Project Tree jumps to the new location and no code
  * can be launched from the project root anymore (PY-89569).
  */
-@TestApplication
-internal class PyProjectTomlRootModuleTest {
+internal abstract class PyProjectTomlRootModuleTest {
 
   private val f by pyProjectTomlSyncFixture()
 
@@ -41,10 +42,11 @@ internal class PyProjectTomlRootModuleTest {
     movePyprojectTomlToSubDir()
 
     f.reloadProject()
-    // "root" is still taken by the module being moved when names are assigned, hence the "@1" suffix
+    // "root" is still taken by the module being moved when names are assigned, hence the "@1" suffix. Outside PyCharm the
+    // module "root" stays at the project root, and the subdirectory gets a new module.
     f.assertProjectStructure(
       ExpectedModule("root@1", contentRoot = "sub"),
-      ExpectedModule(f.root.name, type = PYTHON, contentRoot = "."),
+      ExpectedModule(f.root.name, type = PYTHON, contentRoot = ".", keepingName = "root"),
     )
   }
 
@@ -58,10 +60,11 @@ internal class PyProjectTomlRootModuleTest {
       f.reloadProject()
     }
 
-    // "root" is free again (the recreated module is named after the project directory), so the suffix is dropped
+    // "root" is free again (the recreated module is named after the project directory), so the suffix is dropped. Outside
+    // PyCharm the module "root" stays at the project root, and the module of the subdirectory keeps its first name.
     f.assertProjectStructure(
-      ExpectedModule("root", contentRoot = "sub"),
-      ExpectedModule(f.root.name, type = PYTHON, contentRoot = "."),
+      ExpectedModule("root", contentRoot = "sub", keepingName = "root@1"),
+      ExpectedModule(f.root.name, type = PYTHON, contentRoot = ".", keepingName = "root"),
     )
   }
 
@@ -77,7 +80,7 @@ internal class PyProjectTomlRootModuleTest {
     edtWriteAction { f.root.findChild(PY_PROJECT_TOML)!!.delete(this) }
 
     f.reloadProject()
-    f.assertProjectStructure(ExpectedModule(f.root.name, type = PYTHON, contentRoot = "."))
+    f.assertProjectStructure(ExpectedModule(f.root.name, type = PYTHON, contentRoot = ".", keepingName = "root"))
   }
 
   /** The recreated root module follows the `@N` naming convention when the project directory name is already taken. */
@@ -93,7 +96,7 @@ internal class PyProjectTomlRootModuleTest {
     f.reloadProject()
     f.assertProjectStructure(
       ExpectedModule(f.root.name, type = JAVA, contentRoot = "occupied"),
-      ExpectedModule("${f.root.name}@1", type = PYTHON, contentRoot = "."),
+      ExpectedModule("${f.root.name}@1", type = PYTHON, contentRoot = ".", keepingName = "root"),
     )
   }
 
@@ -106,3 +109,11 @@ internal class PyProjectTomlRootModuleTest {
     f.assertProjectStructure(ExpectedModule("child", contentRoot = "sub"))
   }
 }
+
+@TestApplication
+@RegistryKeyAppLevel(key = PY_PROJECT_MODEL_OWNS_MODULES_KEY, value = "true")
+internal class PyProjectTomlRootModuleOwningTest : PyProjectTomlRootModuleTest()
+
+@TestApplication
+@RegistryKeyAppLevel(key = PY_PROJECT_MODEL_OWNS_MODULES_KEY, value = "false")
+internal class PyProjectTomlRootModuleKeepingTest : PyProjectTomlRootModuleTest()

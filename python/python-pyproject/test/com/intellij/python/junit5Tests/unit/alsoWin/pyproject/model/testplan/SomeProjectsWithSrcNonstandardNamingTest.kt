@@ -1,15 +1,17 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.python.junit5Tests.unit.alsoWin.pyproject.model.testplan
 
+import com.intellij.openapi.project.Project
 import com.intellij.python.junit5Tests.framework.PyDefaultTestApplication
 import com.intellij.python.junit5Tests.framework.metaInfo.TestClassInfo
 import com.intellij.python.junit5Tests.unit.alsoWin.pyproject.div
 import com.intellij.python.junit5Tests.unit.alsoWin.pyproject.model.ExpectedModule
 import com.intellij.python.junit5Tests.unit.alsoWin.pyproject.model.PYTHON
 import com.intellij.python.junit5Tests.unit.alsoWin.pyproject.model.pyProjectTomlSyncFixture
+import com.intellij.python.pyproject.model.internal.workspaceBridge.PY_PROJECT_MODEL_OWNS_MODULES_KEY
 import com.intellij.testFramework.TestDataPath
 import com.intellij.testFramework.common.timeoutRunBlocking
-import com.intellij.testFramework.junit5.fixture.projectFixture
+import com.intellij.testFramework.junit5.RegistryKeyAppLevel
 import org.junit.jupiter.api.Test
 
 private const val BASE = $$"$CONTENT_ROOT/../testData/monorepo/some_projects_with_src_nonstandard_naming"
@@ -18,15 +20,8 @@ private const val BASE = $$"$CONTENT_ROOT/../testData/monorepo/some_projects_wit
  * PY-88898: each sample here holds its packages in a directory that is not named `src`, and declares that
  * directory in `pyproject.toml`. The build backend of the sample names the table that carries the declaration.
  */
-@PyDefaultTestApplication
-@TestClassInfo(contentRootPath = "python-pyproject/test")
-@TestDataPath("$BASE/flat_layout_poetry")
-internal class FlatLayoutPoetryTest {
-  companion object {
-    private val projectFixture = projectFixture()
-  }
-
-  private val f by pyProjectTomlSyncFixture(projectFixture)
+internal abstract class FlatLayoutPoetryTest(project: Project) {
+  private val f by pyProjectTomlSyncFixture(project)
 
   @Test
   fun sanity(): Unit = timeoutRunBlocking {
@@ -42,13 +37,18 @@ internal class FlatLayoutPoetryTest {
 
 @PyDefaultTestApplication
 @TestClassInfo(contentRootPath = "python-pyproject/test")
-@TestDataPath("$BASE/hatch.build.targets.wheel")
-internal class HatchBuildTargetsWheelTest {
-  companion object {
-    private val projectFixture = projectFixture()
-  }
+@TestDataPath("$BASE/flat_layout_poetry")
+@RegistryKeyAppLevel(key = PY_PROJECT_MODEL_OWNS_MODULES_KEY, value = "true")
+internal class FlatLayoutPoetryOwningTest(project: Project) : FlatLayoutPoetryTest(project)
 
-  private val f by pyProjectTomlSyncFixture(projectFixture)
+@PyDefaultTestApplication
+@TestClassInfo(contentRootPath = "python-pyproject/test")
+@TestDataPath("$BASE/flat_layout_poetry")
+@RegistryKeyAppLevel(key = PY_PROJECT_MODEL_OWNS_MODULES_KEY, value = "false")
+internal class FlatLayoutPoetryKeepingTest(project: Project) : FlatLayoutPoetryTest(project)
+
+internal abstract class HatchBuildTargetsWheelTest(project: Project) {
+  private val f by pyProjectTomlSyncFixture(project)
 
   @Test
   fun sanity(): Unit = timeoutRunBlocking {
@@ -63,13 +63,18 @@ internal class HatchBuildTargetsWheelTest {
 
 @PyDefaultTestApplication
 @TestClassInfo(contentRootPath = "python-pyproject/test")
-@TestDataPath("$BASE/poetry.packages.include")
-internal class PoetryPackagesIncludeTest {
-  companion object {
-    private val projectFixture = projectFixture()
-  }
+@TestDataPath("$BASE/hatch.build.targets.wheel")
+@RegistryKeyAppLevel(key = PY_PROJECT_MODEL_OWNS_MODULES_KEY, value = "true")
+internal class HatchBuildTargetsWheelOwningTest(project: Project) : HatchBuildTargetsWheelTest(project)
 
-  private val f by pyProjectTomlSyncFixture(projectFixture)
+@PyDefaultTestApplication
+@TestClassInfo(contentRootPath = "python-pyproject/test")
+@TestDataPath("$BASE/hatch.build.targets.wheel")
+@RegistryKeyAppLevel(key = PY_PROJECT_MODEL_OWNS_MODULES_KEY, value = "false")
+internal class HatchBuildTargetsWheelKeepingTest(project: Project) : HatchBuildTargetsWheelTest(project)
+
+internal abstract class PoetryPackagesIncludeTest(project: Project) {
+  private val f by pyProjectTomlSyncFixture(project)
 
   @Test
   fun sanity(): Unit = timeoutRunBlocking {
@@ -84,13 +89,18 @@ internal class PoetryPackagesIncludeTest {
 
 @PyDefaultTestApplication
 @TestClassInfo(contentRootPath = "python-pyproject/test")
-@TestDataPath("$BASE/setuptools.packages.find")
-internal class SetuptoolsPackagesFindTest {
-  companion object {
-    private val projectFixture = projectFixture()
-  }
+@TestDataPath("$BASE/poetry.packages.include")
+@RegistryKeyAppLevel(key = PY_PROJECT_MODEL_OWNS_MODULES_KEY, value = "true")
+internal class PoetryPackagesIncludeOwningTest(project: Project) : PoetryPackagesIncludeTest(project)
 
-  private val f by pyProjectTomlSyncFixture(projectFixture)
+@PyDefaultTestApplication
+@TestClassInfo(contentRootPath = "python-pyproject/test")
+@TestDataPath("$BASE/poetry.packages.include")
+@RegistryKeyAppLevel(key = PY_PROJECT_MODEL_OWNS_MODULES_KEY, value = "false")
+internal class PoetryPackagesIncludeKeepingTest(project: Project) : PoetryPackagesIncludeTest(project)
+
+internal abstract class SetuptoolsPackagesFindTest(project: Project) {
+  private val f by pyProjectTomlSyncFixture(project)
 
   @Test
   fun sanity(): Unit = timeoutRunBlocking {
@@ -105,13 +115,18 @@ internal class SetuptoolsPackagesFindTest {
 
 @PyDefaultTestApplication
 @TestClassInfo(contentRootPath = "python-pyproject/test")
-@TestDataPath("$BASE/setuptools.packages.find_multiple_source_roots")
-internal class SetuptoolsPackagesFindMultipleSourceRootsTest {
-  companion object {
-    private val projectFixture = projectFixture()
-  }
+@TestDataPath("$BASE/setuptools.packages.find")
+@RegistryKeyAppLevel(key = PY_PROJECT_MODEL_OWNS_MODULES_KEY, value = "true")
+internal class SetuptoolsPackagesFindOwningTest(project: Project) : SetuptoolsPackagesFindTest(project)
 
-  private val f by pyProjectTomlSyncFixture(projectFixture)
+@PyDefaultTestApplication
+@TestClassInfo(contentRootPath = "python-pyproject/test")
+@TestDataPath("$BASE/setuptools.packages.find")
+@RegistryKeyAppLevel(key = PY_PROJECT_MODEL_OWNS_MODULES_KEY, value = "false")
+internal class SetuptoolsPackagesFindKeepingTest(project: Project) : SetuptoolsPackagesFindTest(project)
+
+internal abstract class SetuptoolsPackagesFindMultipleSourceRootsTest(project: Project) {
+  private val f by pyProjectTomlSyncFixture(project)
 
   @Test
   fun sanity(): Unit = timeoutRunBlocking {
@@ -126,13 +141,18 @@ internal class SetuptoolsPackagesFindMultipleSourceRootsTest {
 
 @PyDefaultTestApplication
 @TestClassInfo(contentRootPath = "python-pyproject/test")
-@TestDataPath("$BASE/uv.build-backend")
-internal class UvBuildBackendTest {
-  companion object {
-    private val projectFixture = projectFixture()
-  }
+@TestDataPath("$BASE/setuptools.packages.find_multiple_source_roots")
+@RegistryKeyAppLevel(key = PY_PROJECT_MODEL_OWNS_MODULES_KEY, value = "true")
+internal class SetuptoolsPackagesFindMultipleSourceRootsOwningTest(project: Project) : SetuptoolsPackagesFindMultipleSourceRootsTest(project)
 
-  private val f by pyProjectTomlSyncFixture(projectFixture)
+@PyDefaultTestApplication
+@TestClassInfo(contentRootPath = "python-pyproject/test")
+@TestDataPath("$BASE/setuptools.packages.find_multiple_source_roots")
+@RegistryKeyAppLevel(key = PY_PROJECT_MODEL_OWNS_MODULES_KEY, value = "false")
+internal class SetuptoolsPackagesFindMultipleSourceRootsKeepingTest(project: Project) : SetuptoolsPackagesFindMultipleSourceRootsTest(project)
+
+internal abstract class UvBuildBackendTest(project: Project) {
+  private val f by pyProjectTomlSyncFixture(project)
 
   @Test
   fun sanity(): Unit = timeoutRunBlocking {
@@ -144,3 +164,15 @@ internal class UvBuildBackendTest {
     )
   }
 }
+
+@PyDefaultTestApplication
+@TestClassInfo(contentRootPath = "python-pyproject/test")
+@TestDataPath("$BASE/uv.build-backend")
+@RegistryKeyAppLevel(key = PY_PROJECT_MODEL_OWNS_MODULES_KEY, value = "true")
+internal class UvBuildBackendOwningTest(project: Project) : UvBuildBackendTest(project)
+
+@PyDefaultTestApplication
+@TestClassInfo(contentRootPath = "python-pyproject/test")
+@TestDataPath("$BASE/uv.build-backend")
+@RegistryKeyAppLevel(key = PY_PROJECT_MODEL_OWNS_MODULES_KEY, value = "false")
+internal class UvBuildBackendKeepingTest(project: Project) : UvBuildBackendTest(project)

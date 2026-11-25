@@ -10,8 +10,10 @@ import com.intellij.platform.workspace.jps.entities.ModuleId
 import com.intellij.python.junit5Tests.unit.alsoWin.pyproject.div
 import com.intellij.python.pyproject.model.api.cleanupPyProjectBasedModules
 import com.intellij.python.pyproject.model.internal.PY_PROJECT_SYSTEM_ID
+import com.intellij.python.pyproject.model.internal.workspaceBridge.PY_PROJECT_MODEL_OWNS_MODULES_KEY
 import com.intellij.python.pyproject.model.internal.workspaceBridge.pyProjectTomlEntity
 import com.intellij.testFramework.common.timeoutRunBlocking
+import com.intellij.testFramework.junit5.RegistryKeyAppLevel
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.utils.vfs.createDirectory
 import org.assertj.core.api.Assertions.assertThat
@@ -25,8 +27,7 @@ import kotlin.time.Duration.Companion.seconds
  * sub-module source and excluded folders relocate to the surviving root, and foreign modules are
  * never touched.
  */
-@TestApplication
-internal class PyProjectCleanupModulesTest {
+internal abstract class PyProjectCleanupModulesTest {
 
   private val f by pyProjectTomlSyncFixture()
 
@@ -39,10 +40,18 @@ internal class PyProjectCleanupModulesTest {
     cleanupPyProjectBasedModules(f.project)
 
     val snapshot = f.project.workspaceModel.currentSnapshot
-    // The sub-module is gone — its name no longer resolves.
-    assertThat(snapshot.resolve(ModuleId("child")))
-      .describedAs("Sub-module 'child' must be deleted by cleanup")
-      .isNull()
+    if (f.mode == ModuleSyncMode.KEEPING) {
+      // Outside PyCharm the modules belong to the user: each one stays, and only the pyproject.toml data goes.
+      val child = snapshot.resolve(ModuleId("child"))
+      assertThat(child).describedAs("Sub-module 'child' must stay").isNotNull
+      assertThat(child!!.pyProjectTomlEntity).describedAs("Sub-module 'child' must lose its pyProjectTomlEntity").isNull()
+    }
+    else {
+      // The sub-module is gone — its name no longer resolves.
+      assertThat(snapshot.resolve(ModuleId("child")))
+        .describedAs("Sub-module 'child' must be deleted by cleanup")
+        .isNull()
+    }
     // The root module survives as a plain `.iml` entity.
     val rootModule = snapshot.resolve(ModuleId("root"))
     assertThat(rootModule)
@@ -100,6 +109,13 @@ internal class PyProjectCleanupModulesTest {
 
     cleanupPyProjectBasedModules(f.project)
 
+    if (f.mode == ModuleSyncMode.KEEPING) {
+      // Outside PyCharm the sub-module stays, and loses the source root that the model added.
+      assertThat(f.sourceRootNames("child"))
+        .describedAs("Sub-module 'child' must lose the source root that the model added")
+        .doesNotContain("sub" / "src")
+      return@timeoutRunBlocking
+    }
     // After cleanup, the sub-module is deleted; its `sub/src` source root should live on the
     // root module (the deepest surviving content root that contains `sub/src`).
     val sources = f.sourceRootNames("root")
@@ -111,3 +127,11 @@ internal class PyProjectCleanupModulesTest {
   private fun ModuleEntity.isPyProjectSourced(): Boolean =
     (entitySource as? JpsImportedEntitySource)?.externalSystemId == PY_PROJECT_SYSTEM_ID.id
 }
+
+@TestApplication
+@RegistryKeyAppLevel(key = PY_PROJECT_MODEL_OWNS_MODULES_KEY, value = "true")
+internal class PyProjectCleanupModulesOwningTest : PyProjectCleanupModulesTest()
+
+@TestApplication
+@RegistryKeyAppLevel(key = PY_PROJECT_MODEL_OWNS_MODULES_KEY, value = "false")
+internal class PyProjectCleanupModulesKeepingTest : PyProjectCleanupModulesTest()

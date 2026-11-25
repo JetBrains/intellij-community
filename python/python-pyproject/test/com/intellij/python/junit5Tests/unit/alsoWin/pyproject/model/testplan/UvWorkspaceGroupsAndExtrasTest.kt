@@ -1,14 +1,16 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.python.junit5Tests.unit.alsoWin.pyproject.model.testplan
 
+import com.intellij.openapi.project.Project
 import com.intellij.python.junit5Tests.framework.PyDefaultTestApplication
 import com.intellij.python.junit5Tests.framework.metaInfo.TestClassInfo
 import com.intellij.python.junit5Tests.unit.alsoWin.pyproject.div
 import com.intellij.python.junit5Tests.unit.alsoWin.pyproject.model.ExpectedModule
 import com.intellij.python.junit5Tests.unit.alsoWin.pyproject.model.pyProjectTomlSyncFixture
+import com.intellij.python.pyproject.model.internal.workspaceBridge.PY_PROJECT_MODEL_OWNS_MODULES_KEY
 import com.intellij.testFramework.TestDataPath
 import com.intellij.testFramework.common.timeoutRunBlocking
-import com.intellij.testFramework.junit5.fixture.projectFixture
+import com.intellij.testFramework.junit5.RegistryKeyAppLevel
 import org.junit.jupiter.api.Test
 
 /**
@@ -20,15 +22,8 @@ import org.junit.jupiter.api.Test
  * the single `workspace-root` workspace (which is what lets members share the root's SDK), and
  * member-to-member deps come only from `[project.dependencies]`.
  */
-@PyDefaultTestApplication
-@TestClassInfo(contentRootPath = "python-pyproject/test")
-@TestDataPath($$"$CONTENT_ROOT/../testData/monorepo/PY-91376-uv-workspace-groups-and-extras")
-internal class UvWorkspaceGroupsAndExtrasTest {
-  companion object {
-    private val projectFixture = projectFixture()
-  }
-
-  private val f by pyProjectTomlSyncFixture(projectFixture)
+internal abstract class UvWorkspaceGroupsAndExtrasTest(project: Project) {
+  private val f by pyProjectTomlSyncFixture(project)
 
   @Test
   fun sanity(): Unit = timeoutRunBlocking {
@@ -47,3 +42,15 @@ internal class UvWorkspaceGroupsAndExtrasTest {
     )
   }
 }
+
+@PyDefaultTestApplication
+@TestClassInfo(contentRootPath = "python-pyproject/test")
+@TestDataPath($$"$CONTENT_ROOT/../testData/monorepo/PY-91376-uv-workspace-groups-and-extras")
+@RegistryKeyAppLevel(key = PY_PROJECT_MODEL_OWNS_MODULES_KEY, value = "true")
+internal class UvWorkspaceGroupsAndExtrasOwningTest(project: Project) : UvWorkspaceGroupsAndExtrasTest(project)
+
+@PyDefaultTestApplication
+@TestClassInfo(contentRootPath = "python-pyproject/test")
+@TestDataPath($$"$CONTENT_ROOT/../testData/monorepo/PY-91376-uv-workspace-groups-and-extras")
+@RegistryKeyAppLevel(key = PY_PROJECT_MODEL_OWNS_MODULES_KEY, value = "false")
+internal class UvWorkspaceGroupsAndExtrasKeepingTest(project: Project) : UvWorkspaceGroupsAndExtrasTest(project)

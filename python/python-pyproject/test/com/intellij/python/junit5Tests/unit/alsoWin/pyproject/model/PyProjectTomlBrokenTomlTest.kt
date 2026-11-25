@@ -3,7 +3,9 @@ package com.intellij.python.junit5Tests.unit.alsoWin.pyproject.model
 
 import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.python.pyproject.model.internal.workspaceBridge.PY_PROJECT_MODEL_OWNS_MODULES_KEY
 import com.intellij.testFramework.common.timeoutRunBlocking
+import com.intellij.testFramework.junit5.RegistryKeyAppLevel
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.utils.vfs.createDirectory
 import com.intellij.util.concurrency.annotations.RequiresWriteLock
@@ -17,8 +19,7 @@ import kotlin.time.Duration.Companion.seconds
  * A typo in `pyproject.toml` must not cost the user a module: the directory must still belong to some module, even if that
  * module loses its `pyproject.toml` identity and degrades to a plain Python one (PY-91694).
  */
-@TestApplication
-internal class PyProjectTomlBrokenTomlTest {
+internal abstract class PyProjectTomlBrokenTomlTest {
   private val f by pyProjectTomlSyncFixture()
 
   /**
@@ -36,7 +37,7 @@ internal class PyProjectTomlBrokenTomlTest {
 
     f.reloadProject()
     // The pyproject module is gone, but the project root is still a module — a plain one, named after its directory.
-    f.assertProjectStructure(ExpectedModule(f.root.name, type = PYTHON, contentRoot = "."))
+    f.assertProjectStructure(ExpectedModule(f.root.name, type = PYTHON, contentRoot = ".", keepingName = "root"))
 
     // Restore it
     val newProjectName = "root2"
@@ -45,7 +46,7 @@ internal class PyProjectTomlBrokenTomlTest {
     f.reloadProject()
 
     // The pyproject is here again
-    f.assertProjectStructure(ExpectedModule(newProjectName, type = PYPROJECT, contentRoot = "."))
+    f.assertProjectStructure(ExpectedModule(newProjectName, type = PYPROJECT, contentRoot = ".", keepingName = "root"))
   }
 
 
@@ -73,6 +74,14 @@ internal class PyProjectTomlBrokenTomlTest {
     )
   }
 }
+
+@TestApplication
+@RegistryKeyAppLevel(key = PY_PROJECT_MODEL_OWNS_MODULES_KEY, value = "true")
+internal class PyProjectTomlBrokenTomlOwningTest : PyProjectTomlBrokenTomlTest()
+
+@TestApplication
+@RegistryKeyAppLevel(key = PY_PROJECT_MODEL_OWNS_MODULES_KEY, value = "false")
+internal class PyProjectTomlBrokenTomlKeepingTest : PyProjectTomlBrokenTomlTest()
 
 /** A `[project]` table that carries everything but the one field the parser insists on. */
 private const val PROJECT_SECTION_WITHOUT_NAME: String = "[project]\nversion = \"1.0\""

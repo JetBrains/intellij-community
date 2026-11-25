@@ -1,14 +1,16 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.python.junit5Tests.unit.alsoWin.pyproject.model.testplan
 
+import com.intellij.openapi.project.Project
 import com.intellij.python.junit5Tests.framework.PyDefaultTestApplication
 import com.intellij.python.junit5Tests.framework.metaInfo.TestClassInfo
 import com.intellij.python.junit5Tests.unit.alsoWin.pyproject.div
 import com.intellij.python.junit5Tests.unit.alsoWin.pyproject.model.ExpectedModule
 import com.intellij.python.junit5Tests.unit.alsoWin.pyproject.model.pyProjectTomlSyncFixture
+import com.intellij.python.pyproject.model.internal.workspaceBridge.PY_PROJECT_MODEL_OWNS_MODULES_KEY
 import com.intellij.testFramework.TestDataPath
 import com.intellij.testFramework.common.timeoutRunBlocking
-import com.intellij.testFramework.junit5.fixture.projectFixture
+import com.intellij.testFramework.junit5.RegistryKeyAppLevel
 import org.junit.jupiter.api.Test
 
 /**
@@ -17,15 +19,8 @@ import org.junit.jupiter.api.Test
  * both members are still discovered as modules (only their workspace grouping — and the deps derived
  * from it — is lost, since the workspace declaration is unusable).
  */
-@PyDefaultTestApplication
-@TestClassInfo(contentRootPath = "python-pyproject/test")
-@TestDataPath($$"$CONTENT_ROOT/../testData/monorepo/PY-91089-uv-workspace-array-workspace")
-internal class UvWorkspaceArrayWorkspaceTest {
-  companion object {
-    private val projectFixture = projectFixture()
-  }
-
-  private val f by pyProjectTomlSyncFixture(projectFixture)
+internal abstract class UvWorkspaceArrayWorkspaceTest(project: Project) {
+  private val f by pyProjectTomlSyncFixture(project)
 
   @Test
   fun sanity(): Unit = timeoutRunBlocking {
@@ -37,3 +32,15 @@ internal class UvWorkspaceArrayWorkspaceTest {
     )
   }
 }
+
+@PyDefaultTestApplication
+@TestClassInfo(contentRootPath = "python-pyproject/test")
+@TestDataPath($$"$CONTENT_ROOT/../testData/monorepo/PY-91089-uv-workspace-array-workspace")
+@RegistryKeyAppLevel(key = PY_PROJECT_MODEL_OWNS_MODULES_KEY, value = "true")
+internal class UvWorkspaceArrayWorkspaceOwningTest(project: Project) : UvWorkspaceArrayWorkspaceTest(project)
+
+@PyDefaultTestApplication
+@TestClassInfo(contentRootPath = "python-pyproject/test")
+@TestDataPath($$"$CONTENT_ROOT/../testData/monorepo/PY-91089-uv-workspace-array-workspace")
+@RegistryKeyAppLevel(key = PY_PROJECT_MODEL_OWNS_MODULES_KEY, value = "false")
+internal class UvWorkspaceArrayWorkspaceKeepingTest(project: Project) : UvWorkspaceArrayWorkspaceTest(project)

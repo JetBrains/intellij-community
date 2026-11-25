@@ -1,14 +1,16 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.python.junit5Tests.unit.alsoWin.pyproject.model.testplan
 
+import com.intellij.openapi.project.Project
 import com.intellij.python.junit5Tests.framework.PyDefaultTestApplication
 import com.intellij.python.junit5Tests.framework.metaInfo.TestClassInfo
 import com.intellij.python.junit5Tests.unit.alsoWin.pyproject.div
 import com.intellij.python.junit5Tests.unit.alsoWin.pyproject.model.ExpectedModule
 import com.intellij.python.junit5Tests.unit.alsoWin.pyproject.model.pyProjectTomlSyncFixture
+import com.intellij.python.pyproject.model.internal.workspaceBridge.PY_PROJECT_MODEL_OWNS_MODULES_KEY
 import com.intellij.testFramework.TestDataPath
 import com.intellij.testFramework.common.timeoutRunBlocking
-import com.intellij.testFramework.junit5.fixture.projectFixture
+import com.intellij.testFramework.junit5.RegistryKeyAppLevel
 import org.junit.jupiter.api.Test
 
 /**
@@ -17,15 +19,8 @@ import org.junit.jupiter.api.Test
  * An extra is a declaration like any other, so the member must still become a module dependency;
  * otherwise `import sub_project_b` inside `sub-project-a` is reported as an unresolved import.
  */
-@PyDefaultTestApplication
-@TestClassInfo(contentRootPath = "python-pyproject/test")
-@TestDataPath($$"$CONTENT_ROOT/../testData/monorepo/PY-91629-uv-workspace-optional-dependency-on-member")
-internal class UvWorkspaceOptionalDependencyOnMemberTest {
-  companion object {
-    private val projectFixture = projectFixture()
-  }
-
-  private val f by pyProjectTomlSyncFixture(projectFixture)
+internal abstract class UvWorkspaceOptionalDependencyOnMemberTest(project: Project) {
+  private val f by pyProjectTomlSyncFixture(project)
 
   @Test
   fun sanity(): Unit = timeoutRunBlocking {
@@ -43,3 +38,15 @@ internal class UvWorkspaceOptionalDependencyOnMemberTest {
     )
   }
 }
+
+@PyDefaultTestApplication
+@TestClassInfo(contentRootPath = "python-pyproject/test")
+@TestDataPath($$"$CONTENT_ROOT/../testData/monorepo/PY-91629-uv-workspace-optional-dependency-on-member")
+@RegistryKeyAppLevel(key = PY_PROJECT_MODEL_OWNS_MODULES_KEY, value = "true")
+internal class UvWorkspaceOptionalDependencyOnMemberOwningTest(project: Project) : UvWorkspaceOptionalDependencyOnMemberTest(project)
+
+@PyDefaultTestApplication
+@TestClassInfo(contentRootPath = "python-pyproject/test")
+@TestDataPath($$"$CONTENT_ROOT/../testData/monorepo/PY-91629-uv-workspace-optional-dependency-on-member")
+@RegistryKeyAppLevel(key = PY_PROJECT_MODEL_OWNS_MODULES_KEY, value = "false")
+internal class UvWorkspaceOptionalDependencyOnMemberKeepingTest(project: Project) : UvWorkspaceOptionalDependencyOnMemberTest(project)

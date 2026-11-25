@@ -8,6 +8,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.doNotEnableExternalStorageByDefaultInTestsSuspend
 import com.intellij.openapi.project.modules
 import com.intellij.openapi.roots.ProjectFileIndex
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.writeText
@@ -27,8 +28,11 @@ import com.intellij.python.junit5Tests.unit.alsoWin.pyproject.div
 import com.intellij.python.pyproject.PY_PROJECT_TOML
 import com.intellij.python.pyproject.model.internal.PY_PROJECT_SYSTEM_ID
 import com.intellij.python.pyproject.model.internal.platformBridge.rebuildPyProjectModelForTest
+import com.intellij.python.pyproject.model.internal.workspaceBridge.PY_PROJECT_MODEL_OWNS_MODULES_KEY
+import com.intellij.python.pyproject.model.internal.workspaceBridge.PyProjectTomlKeptModuleEntitySource
 import com.intellij.python.pyproject.model.internal.workspaceBridge.pyProjectTomlEntity
 import com.intellij.testFramework.junit5.fixture.TestFixture
+import com.intellij.testFramework.junit5.fixture.TestFixtureInitializer
 import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.testFramework.junit5.fixture.testFixture
 import com.intellij.testFramework.utils.vfs.createDirectory
@@ -41,6 +45,18 @@ import org.assertj.core.api.Assertions.assertThat
 import java.nio.file.Path
 import kotlin.io.path.exists
 import kotlin.io.path.name
+
+/**
+ * How the `pyproject.toml` model treats the modules in a test, see [PY_PROJECT_MODEL_OWNS_MODULES_KEY]. A test runs in
+ * both: an abstract class holds the tests, and one subclass for each mode sets the key with `@RegistryKeyAppLevel`.
+ */
+internal enum class ModuleSyncMode {
+  /** The model owns its modules, as in PyCharm. */
+  OWNING,
+
+  /** The modules belong to the user, as in the other IDEs. */
+  KEEPING,
+}
 
 /** Expected module type marker for pyproject-based modules in [PyProjectTomlSyncTestFixture.assertProjectStructure]. */
 internal const val PYPROJECT = "PYPROJECT"
@@ -64,6 +80,11 @@ internal data class ExpectedModule(
   val sourceRoots: List<String> = emptyList(),
   val excludedFolders: List<String> = emptyList(),
   val imlFileName: String = "$name.iml",
+  /**
+   * The name in [ModuleSyncMode.KEEPING], where the model renames no module, or `null` for [name]. The module at the
+   * project root keeps the name of the module that the project had, see [PyProjectTomlSyncTestFixture.implicitModuleName].
+   */
+  val keepingName: String? = null,
 )
 
 /**
@@ -132,22 +153,30 @@ internal fun VirtualFile.convertDirToUvWorkspace(workspaceName: String = name): 
  * Test fixture for pyproject.toml-based module synchronization tests.
  *
  * The sync root is always the project base path, so the common case needs no arguments at all.
- * Pass [projectFixture] only when the project must be created at class level (in a `companion object`):
- * `PyDefaultTestApplication` looks up a *static* project fixture to copy the `@TestDataPath` sample into,
- * see the tests under `model/testplan/`.
+ * The mode comes from [PY_PROJECT_MODEL_OWNS_MODULES_KEY], which each test class sets with `@RegistryKeyAppLevel`.
  *
  * Creates bystander (non-pyproject) Java and Python modules on init,
  * and verifies they remain untouched on teardown.
  */
-internal fun pyProjectTomlSyncFixture(
-  projectFixture: TestFixture<Project> = projectFixture(),
-): TestFixture<PyProjectTomlSyncTestFixture> = testFixture {
-  val project = projectFixture.init()
+internal fun pyProjectTomlSyncFixture(projectFixture: TestFixture<Project> = projectFixture()): TestFixture<PyProjectTomlSyncTestFixture> =
+  testFixture { syncFixture(projectFixture.init()) }
+
+/**
+ * The fixture of [pyProjectTomlSyncFixture] for the class-level [project] that `PyDefaultTestApplication` gives to the
+ * constructor of a test class. The test data of `@TestDataPath` is in that project.
+ */
+internal fun pyProjectTomlSyncFixture(project: Project): TestFixture<PyProjectTomlSyncTestFixture> =
+  testFixture { syncFixture(project) }
+
+private suspend fun TestFixtureInitializer.R<PyProjectTomlSyncTestFixture>.syncFixture(
+  project: Project,
+): TestFixtureInitializer.InitializedTestFixture<PyProjectTomlSyncTestFixture> {
+  val mode = if (Registry.`is`(PY_PROJECT_MODEL_OWNS_MODULES_KEY)) ModuleSyncMode.OWNING else ModuleSyncMode.KEEPING
   val root = VirtualFileManager.getInstance().refreshAndFindFileByNioPath(project.stateStore.projectBasePath)!!
   val implicitModuleName = project.modules.singleOrNull()?.name ?: ""
-  val fixture = PyProjectTomlSyncTestFixture(project, root, implicitModuleName)
+  val fixture = PyProjectTomlSyncTestFixture(project, root, mode, implicitModuleName)
   fixture.setUp()
-  initialized(fixture) {
+  return initialized(fixture) {
     fixture.tearDown()
   }
 }
@@ -162,7 +191,20 @@ internal fun pyProjectTomlSyncFixture(
  * @param implicitModuleName the name of the implicit Python module created by [PyDefaultTestApplication]
  *        (derived from the test class simple name), used to include it in [assertProjectStructure] expectations.
  */
-internal class PyProjectTomlSyncTestFixture(val project: Project, val root: VirtualFile, val implicitModuleName: String = "") {
+internal class PyProjectTomlSyncTestFixture(
+  val project: Project,
+  val root: VirtualFile,
+  val mode: ModuleSyncMode,
+  val implicitModuleName: String = "",
+) {
+
+  /** The name that [expected] has in [mode], see [ExpectedModule.keepingName]. */
+  fun nameOf(expected: ExpectedModule): String = when (mode) {
+    ModuleSyncMode.OWNING -> expected.name
+    ModuleSyncMode.KEEPING -> expected.keepingName
+                              ?: implicitModuleName.takeIf { it.isNotEmpty() && expected.type == PYPROJECT && expected.contentRoot == "." }
+                              ?: expected.name
+  }
 
   /** Triggers a full pyproject.toml sync. */
   suspend fun reloadProject() {
@@ -278,7 +320,11 @@ internal class PyProjectTomlSyncTestFixture(val project: Project, val root: Virt
    * Asserts the full project structure: module names, types, dependencies, and workspace model consistency.
    * Every module entity must be resolvable by its symbolic ID (no orphaned/broken references).
    */
-  suspend fun assertProjectStructure(vararg expectedModules: ExpectedModule) {
+  suspend fun assertProjectStructure(vararg expectedInAnyMode: ExpectedModule) {
+    val expectedModules = expectedInAnyMode.map { expected ->
+      val name = nameOf(expected)
+      expected.copy(name = name, imlFileName = if (expected.imlFileName == "${expected.name}.iml") "$name.iml" else expected.imlFileName)
+    }
     val actualNames = project.modules.map { it.name }.filter { it != BYSTANDER_JAVA && it != BYSTANDER_PYTHON }.sorted()
     assertThat(actualNames).containsExactly(*expectedModules.map { it.name }.sorted().toTypedArray())
 
@@ -307,12 +353,21 @@ internal class PyProjectTomlSyncTestFixture(val project: Project, val root: Virt
         .isNotNull
       when (expected!!.type) {
         PYPROJECT -> {
-          assertThat(isPyProjectBased)
-            .describedAs("PyProject module '${entity.name}' must be pyproject-based")
-            .isTrue()
           assertThat(entity.pyProjectTomlEntity)
             .describedAs("PyProject module '${entity.name}' must have a PyProjectTomlWorkspaceEntity")
             .isNotNull
+          if (mode == ModuleSyncMode.KEEPING) {
+            assertThat(isPyProjectBased)
+              .describedAs("The model keeps the entity source of module '${entity.name}'")
+              .isFalse()
+            assertThat(entity.pyProjectTomlEntity?.entitySource)
+              .describedAs("The PyProjectTomlWorkspaceEntity of module '${entity.name}' is in memory only")
+              .isEqualTo(PyProjectTomlKeptModuleEntitySource)
+            continue
+          }
+          assertThat(isPyProjectBased)
+            .describedAs("PyProject module '${entity.name}' must be pyproject-based")
+            .isTrue()
           // PY-87499: verify entity source consistency on all children
           for (contentRoot in entity.contentRoots) {
             assertThat((contentRoot.entitySource as? JpsImportedEntitySource)?.externalSystemId)

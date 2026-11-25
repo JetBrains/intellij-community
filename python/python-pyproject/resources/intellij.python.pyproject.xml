@@ -46,6 +46,8 @@
     <!-- "ask" means "ask user"-->
     <registryKey defaultValue="[off*|on|ask]" description="Load project structure from pyproject.toml" key="intellij.python.pyproject.model"
                  restartRequired="true"/>
+    <registryKey defaultValue="false" key="python.pyproject.model.owns.modules"
+                 description="The pyproject.toml model owns its modules: it renames them and syncs all their dependencies and roots"/>
     <notificationGroup id="PyProject.toml" displayType="STICKY_BALLOON" isLogByDefault="true"
                        bundle="messages.PyProjectTomlBundle" key="pyproject.notification.title"/>
     <backgroundPostStartupActivity implementation="com.intellij.python.pyproject.model.internal.platformBridge.PyProjectSyncActivity"/>

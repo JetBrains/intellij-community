@@ -7,6 +7,7 @@ import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.python.junit5Tests.framework.env.pyMockInterpreterWithoutModuleFixture
 import com.intellij.python.pyproject.model.evolution.EvoPyProjectModel
 import com.intellij.python.pyproject.model.evolution.setOnWorkspace
+import com.intellij.python.pyproject.model.internal.workspaceBridge.PY_PROJECT_MODEL_OWNS_MODULES_KEY
 import com.intellij.python.sdk.backend.evolution.EvoWorkspace
 import com.intellij.python.sdk.backend.pyInterpreterDependency
 import com.intellij.testFramework.common.timeoutRunBlocking
@@ -34,9 +35,7 @@ private const val ROOT = "ws"
  * widget would then show one thing for a file of the root and another for a file of a member, and the member would
  * resolve no dependency the workspace installed. The product holds all three cases today, on Linux and on Windows.
  */
-@RegistryKeyAppLevel(key = "python.interpreter.library.entries", value = "true")
-@TestApplication
-internal class PyUvWorkspaceInterpreterTest {
+internal abstract class PyUvWorkspaceInterpreterTest {
   private val projectPath = tempPathFixture(prefix = "project")
   private val projectFixture = projectFixture(projectPath, openAfterCreation = true)
   private val f by pyProjectTomlSyncFixture(projectFixture)
@@ -121,3 +120,13 @@ internal class PyUvWorkspaceInterpreterTest {
       ?.joinToString { "${it.root.pyProject.residesOnModule.name}: ${it.members.map { member -> member.pyProject.residesOnModule.name }}" }
     ?: "no snapshot"
 }
+
+@RegistryKeyAppLevel(key = "python.interpreter.library.entries", value = "true")
+@TestApplication
+@RegistryKeyAppLevel(key = PY_PROJECT_MODEL_OWNS_MODULES_KEY, value = "true")
+internal class PyUvWorkspaceInterpreterOwningTest : PyUvWorkspaceInterpreterTest()
+
+@RegistryKeyAppLevel(key = "python.interpreter.library.entries", value = "true")
+@TestApplication
+@RegistryKeyAppLevel(key = PY_PROJECT_MODEL_OWNS_MODULES_KEY, value = "false")
+internal class PyUvWorkspaceInterpreterKeepingTest : PyUvWorkspaceInterpreterTest()

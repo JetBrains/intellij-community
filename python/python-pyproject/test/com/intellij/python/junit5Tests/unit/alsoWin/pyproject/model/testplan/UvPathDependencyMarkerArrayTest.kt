@@ -2,15 +2,17 @@
 package com.intellij.python.junit5Tests.unit.alsoWin.pyproject.model.testplan
 
 import com.intellij.idea.TestFor
+import com.intellij.openapi.project.Project
 import com.intellij.python.junit5Tests.framework.PyDefaultTestApplication
 import com.intellij.python.junit5Tests.framework.metaInfo.TestClassInfo
 import com.intellij.python.junit5Tests.unit.alsoWin.pyproject.div
 import com.intellij.python.junit5Tests.unit.alsoWin.pyproject.model.ExpectedModule
 import com.intellij.python.junit5Tests.unit.alsoWin.pyproject.model.PYTHON
 import com.intellij.python.junit5Tests.unit.alsoWin.pyproject.model.pyProjectTomlSyncFixture
+import com.intellij.python.pyproject.model.internal.workspaceBridge.PY_PROJECT_MODEL_OWNS_MODULES_KEY
 import com.intellij.testFramework.TestDataPath
 import com.intellij.testFramework.common.timeoutRunBlocking
-import com.intellij.testFramework.junit5.fixture.projectFixture
+import com.intellij.testFramework.junit5.RegistryKeyAppLevel
 import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 
@@ -30,15 +32,8 @@ import org.junit.jupiter.api.Test
  * two contributors are unioned by `ProjectDependencies.plus`, and the already-fixed uv resolver would
  * supply the edge on its own — a workspace-scoped version of this test passes today and proves nothing.
  */
-@PyDefaultTestApplication
-@TestClassInfo(contentRootPath = "python-pyproject/test")
-@TestDataPath($$"$CONTENT_ROOT/../testData/monorepo/PY-91195-uv-path-dependency-marker-array")
-internal class UvPathDependencyMarkerArrayTest {
-  companion object {
-    private val projectFixture = projectFixture()
-  }
-
-  private val f by pyProjectTomlSyncFixture(projectFixture)
+internal abstract class UvPathDependencyMarkerArrayTest(project: Project) {
+  private val f by pyProjectTomlSyncFixture(project)
 
   @Test
   @TestFor(issues = ["PY-91195"])
@@ -57,3 +52,15 @@ internal class UvPathDependencyMarkerArrayTest {
     )
   }
 }
+
+@PyDefaultTestApplication
+@TestClassInfo(contentRootPath = "python-pyproject/test")
+@TestDataPath($$"$CONTENT_ROOT/../testData/monorepo/PY-91195-uv-path-dependency-marker-array")
+@RegistryKeyAppLevel(key = PY_PROJECT_MODEL_OWNS_MODULES_KEY, value = "true")
+internal class UvPathDependencyMarkerArrayOwningTest(project: Project) : UvPathDependencyMarkerArrayTest(project)
+
+@PyDefaultTestApplication
+@TestClassInfo(contentRootPath = "python-pyproject/test")
+@TestDataPath($$"$CONTENT_ROOT/../testData/monorepo/PY-91195-uv-path-dependency-marker-array")
+@RegistryKeyAppLevel(key = PY_PROJECT_MODEL_OWNS_MODULES_KEY, value = "false")
+internal class UvPathDependencyMarkerArrayKeepingTest(project: Project) : UvPathDependencyMarkerArrayTest(project)

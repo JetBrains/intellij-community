@@ -1,3 +1,4 @@
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.python.pyproject.model.evolution.impl
 
 import com.intellij.platform.workspace.storage.ConnectionId
@@ -15,9 +16,22 @@ internal object MetadataStorageImpl : MetadataStorageBase() {
   override fun initializeMetadata() {
     val primitiveTypeStringNotNullable = ValueTypeMetadata.SimpleType.PrimitiveType(isNullable = false, type = "String")
     val primitiveTypeMapNotNullable = ValueTypeMetadata.SimpleType.PrimitiveType(isNullable = false, type = "Map")
+    val primitiveTypeListNotNullable = ValueTypeMetadata.SimpleType.PrimitiveType(isNullable = false, type = "List")
     var typeMetadata: StorageTypeMetadata
     typeMetadata =
       FinalClassMetadata.ObjectMetadata(fqName = "com.intellij.python.pyproject.model.evolution.PyInterpreterLibraryEntitySource",
+                                        properties = listOf(OwnPropertyMetadata(isComputable = false,
+                                                                                isKey = false,
+                                                                                isOpen = false,
+                                                                                name = "virtualFileUrl",
+                                                                                valueType = ValueTypeMetadata.SimpleType.CustomType(
+                                                                                  isNullable = true,
+                                                                                  typeMetadata = FinalClassMetadata.KnownClass(fqName = "com.intellij.platform.workspace.storage.url.VirtualFileUrl")),
+                                                                                withDefault = false)),
+                                        supertypes = listOf("com.intellij.platform.workspace.storage.EntitySource"))
+    addMetadata(typeMetadata)
+    typeMetadata =
+      FinalClassMetadata.ObjectMetadata(fqName = "com.intellij.python.pyproject.model.internal.workspaceBridge.PyProjectTomlKeptModuleEntitySource",
                                         properties = listOf(OwnPropertyMetadata(isComputable = false,
                                                                                 isKey = false,
                                                                                 isOpen = false,
@@ -88,6 +102,42 @@ internal object MetadataStorageImpl : MetadataStorageBase() {
                                                       OwnPropertyMetadata(isComputable = false,
                                                                           isKey = false,
                                                                           isOpen = false,
+                                                                          name = "dependencies",
+                                                                          valueType = ValueTypeMetadata.ParameterizedType(generics = listOf(
+                                                                            primitiveTypeStringNotNullable),
+                                                                                                                          primitive = primitiveTypeListNotNullable),
+                                                                          withDefault = false),
+                                                      OwnPropertyMetadata(isComputable = false,
+                                                                          isKey = false,
+                                                                          isOpen = false,
+                                                                          name = "sourceRoots",
+                                                                          valueType = ValueTypeMetadata.ParameterizedType(generics = listOf(
+                                                                            ValueTypeMetadata.SimpleType.CustomType(isNullable = false,
+                                                                                                                    typeMetadata = FinalClassMetadata.KnownClass(
+                                                                                                                      fqName = "com.intellij.platform.workspace.storage.url.VirtualFileUrl"))),
+                                                                                                                          primitive = primitiveTypeListNotNullable),
+                                                                          withDefault = false),
+                                                      OwnPropertyMetadata(isComputable = false,
+                                                                          isKey = false,
+                                                                          isOpen = false,
+                                                                          name = "addedDependencies",
+                                                                          valueType = ValueTypeMetadata.ParameterizedType(generics = listOf(
+                                                                            primitiveTypeStringNotNullable),
+                                                                                                                          primitive = primitiveTypeListNotNullable),
+                                                                          withDefault = false),
+                                                      OwnPropertyMetadata(isComputable = false,
+                                                                          isKey = false,
+                                                                          isOpen = false,
+                                                                          name = "addedSourceRoots",
+                                                                          valueType = ValueTypeMetadata.ParameterizedType(generics = listOf(
+                                                                            ValueTypeMetadata.SimpleType.CustomType(isNullable = false,
+                                                                                                                    typeMetadata = FinalClassMetadata.KnownClass(
+                                                                                                                      fqName = "com.intellij.platform.workspace.storage.url.VirtualFileUrl"))),
+                                                                                                                          primitive = primitiveTypeListNotNullable),
+                                                                          withDefault = false),
+                                                      OwnPropertyMetadata(isComputable = false,
+                                                                          isKey = false,
+                                                                          isOpen = false,
                                                                           name = "module",
                                                                           valueType = ValueTypeMetadata.EntityReference(connectionType = ConnectionId.ConnectionType.ONE_TO_ONE,
                                                                                                                         entityFqName = "com.intellij.platform.workspace.jps.entities.ModuleEntity",
@@ -109,10 +159,12 @@ internal object MetadataStorageImpl : MetadataStorageBase() {
 
   override fun initializeMetadataHash() {
     addMetadataHash(typeFqn = "com.intellij.python.pyproject.model.internal.workspaceBridge.PyProjectTomlWorkspaceEntity",
-                    metadataHash = -1990101490)
+                    metadataHash = 1560627040)
     addMetadataHash(typeFqn = "com.intellij.python.community.common.tools.ToolId", metadataHash = -1960368624)
     addMetadataHash(typeFqn = "com.intellij.platform.workspace.jps.entities.ModuleId", metadataHash = 369441961)
     addMetadataHash(typeFqn = "com.intellij.platform.workspace.storage.EntitySource", metadataHash = -1306802946)
     addMetadataHash(typeFqn = "com.intellij.python.pyproject.model.evolution.PyInterpreterLibraryEntitySource", metadataHash = -1522003732)
+    addMetadataHash(typeFqn = "com.intellij.python.pyproject.model.internal.workspaceBridge.PyProjectTomlKeptModuleEntitySource",
+                    metadataHash = 1913891734)
   }
 }

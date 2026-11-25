@@ -27,10 +27,12 @@ import com.intellij.python.pyproject.model.internal.platformBridge.collectRebuil
 import com.intellij.python.pyproject.model.internal.platformBridge.loadSubtreesIntoVfs
 import com.intellij.python.pyproject.model.internal.platformBridge.toRebuildRequest
 import com.intellij.python.pyproject.model.internal.pyProjectToml.findPyProjectTomlFilesInIndex
+import com.intellij.python.pyproject.model.internal.workspaceBridge.PY_PROJECT_MODEL_OWNS_MODULES_KEY
 import com.intellij.python.pyproject.model.spi.PyProjectManager
 import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.LoggedErrorProcessor
 import com.intellij.testFramework.common.timeoutRunBlocking
+import com.intellij.testFramework.junit5.RegistryKeyAppLevel
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.TestDisposable
 import com.intellij.testFramework.junit5.fixture.projectFixture
@@ -80,6 +82,8 @@ import kotlin.time.Duration.Companion.milliseconds
 @Subsystems.IDE
 @Layers.Functional
 @Timeout(30)
+// The model of PyCharm owns its modules, which these tests observe.
+@RegistryKeyAppLevel(key = PY_PROJECT_MODEL_OWNS_MODULES_KEY, value = "true")
 internal class PyProjectSyncLifecycleTest {
   private val pathFixture = tempPathFixture()
   private val projectFixture = projectFixture(pathFixture)

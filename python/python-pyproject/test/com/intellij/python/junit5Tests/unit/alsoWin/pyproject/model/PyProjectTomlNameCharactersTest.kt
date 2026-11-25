@@ -2,7 +2,9 @@
 package com.intellij.python.junit5Tests.unit.alsoWin.pyproject.model
 
 import com.intellij.openapi.application.edtWriteAction
+import com.intellij.python.pyproject.model.internal.workspaceBridge.PY_PROJECT_MODEL_OWNS_MODULES_KEY
 import com.intellij.testFramework.common.timeoutRunBlocking
+import com.intellij.testFramework.junit5.RegistryKeyAppLevel
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.utils.vfs.createDirectory
 import org.junit.jupiter.api.Test
@@ -14,8 +16,7 @@ import kotlin.time.Duration.Companion.seconds
  *
  * Complements [PyProjectTomlNamingTest], which covers duplicate resolution and rename flows.
  */
-@TestApplication
-internal class PyProjectTomlNameCharactersTest {
+internal abstract class PyProjectTomlNameCharactersTest {
 
   private val f by pyProjectTomlSyncFixture()
 
@@ -99,3 +100,11 @@ internal class PyProjectTomlNameCharactersTest {
   }
 
 }
+
+@TestApplication
+@RegistryKeyAppLevel(key = PY_PROJECT_MODEL_OWNS_MODULES_KEY, value = "true")
+internal class PyProjectTomlNameCharactersOwningTest : PyProjectTomlNameCharactersTest()
+
+@TestApplication
+@RegistryKeyAppLevel(key = PY_PROJECT_MODEL_OWNS_MODULES_KEY, value = "false")
+internal class PyProjectTomlNameCharactersKeepingTest : PyProjectTomlNameCharactersTest()

@@ -35,6 +35,8 @@ import com.intellij.python.pyproject.PY_PROJECT_TOML
 import com.intellij.python.pyproject.model.api.ModelRebuiltListener
 import com.intellij.python.pyproject.model.internal.MODEL_REBUILD
 import com.intellij.python.pyproject.model.internal.platformBridge.toRebuildRequest
+import com.intellij.python.pyproject.model.internal.workspaceBridge.PY_PROJECT_MODEL_OWNS_MODULES_KEY
+import com.intellij.python.pyproject.model.internal.workspaceBridge.pyProjectTomlEntity
 import com.intellij.python.sdk.backend.PIP_MANAGER
 import com.intellij.python.sdk.backend.PyInterpreterLibraryName
 import com.intellij.python.sdk.backend.PythonInterpreterKey
@@ -43,6 +45,7 @@ import com.intellij.python.sdk.backend.setPyInterpreterDependency
 import com.intellij.python.sdk.common.PyEnvRef
 import com.intellij.python.sdk.common.PyInterpreterRef
 import com.intellij.testFramework.common.timeoutRunBlocking
+import com.intellij.testFramework.junit5.RegistryKeyAppLevel
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.TestDisposable
 import com.intellij.testFramework.junit5.fixture.disposableFixture
@@ -70,8 +73,7 @@ import kotlin.time.Duration.Companion.seconds
  * Tests for pyproject.toml module lifecycle: exclude/un-exclude behavior, module adoption,
  * facet preservation, and dependency updates.
  */
-@TestApplication
-internal class PyProjectTomlLifecycleTest {
+internal abstract class PyProjectTomlLifecycleTest {
 
   companion object {
     private val log = fileLogger()
@@ -194,9 +196,16 @@ internal class PyProjectTomlLifecycleTest {
       }
     }
 
-    // Reload — child module should be removed (pyproject.toml is inside excluded folder)
+    // Reload — child module should be removed (pyproject.toml is inside excluded folder). Outside PyCharm the module stays,
+    // and only the pyproject.toml data goes. The clash check then moves the exclude of `sub` from the root to the child.
     f.reloadProject()
-    f.assertProjectStructure(ExpectedModule("root", contentRoot = ".", excludedFolders = listOf("sub")))
+    if (f.mode == ModuleSyncMode.KEEPING) {
+      f.assertKeptChild(sourceRoots = emptyList<String>(), excludedFolders = listOf("sub"))
+      assertThat(f.excludeNames("root")).describedAs("Module 'root' excluded folders").isEmpty()
+    }
+    else {
+      f.assertProjectStructure(ExpectedModule("root", contentRoot = ".", excludedFolders = listOf("sub")))
+    }
 
     // Un-exclude by removing the ExcludeUrlEntity
     f.project.workspaceModel.update("un-exclude sub") { storage ->
@@ -292,15 +301,16 @@ internal class PyProjectTomlLifecycleTest {
       }
     }
 
-    // Rename "old-app" to "new-app" via pyproject.toml
+    // Rename "old-app" to "new-app" via pyproject.toml. Outside PyCharm the model renames no module.
     edtWriteAction {
       f.root.findChild("app")!!.findChild(PY_PROJECT_TOML)!!.writeText("[project]\nname = \"new-app\"")
     }
+    val appName = if (f.mode == ModuleSyncMode.KEEPING) "old-app" else "new-app"
 
     f.reloadProject()
     f.assertProjectStructure(
       ExpectedModule("lib", contentRoot = "lib"),
-      ExpectedModule("new-app", contentRoot = "app"),
+      ExpectedModule(appName, contentRoot = "app"),
       ExpectedModule("root", contentRoot = "."),
     )
 
@@ -310,7 +320,7 @@ internal class PyProjectTomlLifecycleTest {
     assertThat(libFacets2).describedAs("Facet must survive after second sync").hasSize(1)
     assertThat(libFacets2.first().name).isEqualTo("TestFacet")
 
-    val appFacets = snapshot2.resolve(ModuleId("new-app"))!!.facets
+    val appFacets = snapshot2.resolve(ModuleId(appName))!!.facets
     assertThat(appFacets).describedAs("Facet must survive module rename").hasSize(1)
     assertThat(appFacets.first().name).isEqualTo("AppFacet")
   }
@@ -412,6 +422,13 @@ internal class PyProjectTomlLifecycleTest {
     // Reload — the excluded content root makes the FS walker skip sub/, so child becomes an orphan
     f.reloadProject()
 
+    if (f.mode == ModuleSyncMode.KEEPING) {
+      // Outside PyCharm the child module stays with its own excludes, and loses the source root `sub/src` that the
+      // model added. The user's root of the same url goes with it. The child excludes its own root, so no file index
+      // check applies.
+      f.assertKeptChild(sourceRoots = emptyList<String>(), excludedFolders = listOf("sub", "sub" / "__pycache__"))
+      return@timeoutRunBlocking
+    }
     // The child module should be gone, and root should have inherited:
     // - source root: sub/src
     // - excluded folders: sub and sub/__pycache__
@@ -462,10 +479,33 @@ internal class PyProjectTomlLifecycleTest {
 
     f.reloadProject()
 
+    if (f.mode == ModuleSyncMode.KEEPING) {
+      // Outside PyCharm the child module stays with the roots of the user, and loses the source root that the model added.
+      // The child excludes its own root, so no file index check applies.
+      f.assertKeptChild(sourceRoots = listOf("sub" / "vanished_src"), excludedFolders = listOf("sub" / "vanished_cache", "sub"))
+      return@timeoutRunBlocking
+    }
     // Only "sub" exclusion should be relocated (it exists); vanished roots should be dropped
     f.assertProjectStructure(ExpectedModule("root", contentRoot = ".", excludedFolders = listOf("sub")))
   }
 }
+
+/** Asserts that the module "child" stays outside PyCharm, without its pyproject.toml data and with these roots. */
+private fun PyProjectTomlSyncTestFixture.assertKeptChild(sourceRoots: List<String>, excludedFolders: List<String>) {
+  val child = project.workspaceModel.currentSnapshot.resolve(ModuleId("child"))
+  assertThat(child).describedAs("Module 'child' must stay").isNotNull
+  assertThat(child!!.pyProjectTomlEntity).describedAs("Module 'child' must lose its pyProjectTomlEntity").isNull()
+  assertThat(sourceRootNames("child")).describedAs("Module 'child' source roots").containsExactlyInAnyOrderElementsOf(sourceRoots)
+  assertThat(excludeNames("child")).describedAs("Module 'child' excluded folders").containsExactlyInAnyOrderElementsOf(excludedFolders)
+}
+
+@TestApplication
+@RegistryKeyAppLevel(key = PY_PROJECT_MODEL_OWNS_MODULES_KEY, value = "true")
+internal class PyProjectTomlLifecycleOwningTest : PyProjectTomlLifecycleTest()
+
+@TestApplication
+@RegistryKeyAppLevel(key = PY_PROJECT_MODEL_OWNS_MODULES_KEY, value = "false")
+internal class PyProjectTomlLifecycleKeepingTest : PyProjectTomlLifecycleTest()
 
 @Service(Service.Level.PROJECT)
 private class MyService(val scope: CoroutineScope)

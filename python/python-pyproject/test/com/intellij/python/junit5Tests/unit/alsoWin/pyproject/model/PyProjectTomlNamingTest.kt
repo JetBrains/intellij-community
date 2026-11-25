@@ -7,7 +7,9 @@ import com.intellij.openapi.vfs.writeText
 import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.platform.workspace.jps.entities.ModuleId
 import com.intellij.python.pyproject.PY_PROJECT_TOML
+import com.intellij.python.pyproject.model.internal.workspaceBridge.PY_PROJECT_MODEL_OWNS_MODULES_KEY
 import com.intellij.testFramework.common.timeoutRunBlocking
+import com.intellij.testFramework.junit5.RegistryKeyAppLevel
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.utils.vfs.createDirectory
 import com.intellij.workspaceModel.ide.toPath
@@ -18,8 +20,7 @@ import kotlin.time.Duration.Companion.seconds
  * Tests for pyproject.toml module naming: duplicate name resolution with `@N` suffixes,
  * rename propagation, and interaction with non-Python modules.
  */
-@TestApplication
-internal class PyProjectTomlNamingTest {
+internal abstract class PyProjectTomlNamingTest {
 
   private val f by pyProjectTomlSyncFixture()
 
@@ -84,7 +85,9 @@ internal class PyProjectTomlNamingTest {
     }
 
     f.reloadProject()
-    f.assertProjectStructure(ExpectedModule("new-name", contentRoot = "sub"), ExpectedModule("root", contentRoot = "."))
+    // Outside PyCharm the model renames no module.
+    val renamed = if (f.mode == ModuleSyncMode.KEEPING) "old-name" else "new-name"
+    f.assertProjectStructure(ExpectedModule(renamed, contentRoot = "sub"), ExpectedModule("root", contentRoot = "."))
   }
 
   @Test
@@ -110,7 +113,7 @@ internal class PyProjectTomlNamingTest {
     f.reloadProject()
     f.assertProjectStructure(
       ExpectedModule("alpha", contentRoot = "a"),
-      ExpectedModule("alpha@1", contentRoot = "b"),
+      ExpectedModule(if (f.mode == ModuleSyncMode.KEEPING) "beta" else "alpha@1", contentRoot = "b"),
       ExpectedModule("root", contentRoot = "."),
     )
   }
@@ -133,7 +136,7 @@ internal class PyProjectTomlNamingTest {
 
     f.reloadProject()
     f.assertProjectStructure(ExpectedModule("pythonproject13", contentRoot = "."),
-                             ExpectedModule("pythonproject13@1", contentRoot = "second"))
+                             ExpectedModule(if (f.mode == ModuleSyncMode.KEEPING) "pythonproject13x" else "pythonproject13@1", contentRoot = "second"))
   }
 
   /**
@@ -163,8 +166,8 @@ internal class PyProjectTomlNamingTest {
 
     f.reloadProject()
     f.assertProjectStructure(
-      ExpectedModule("alpha@1", contentRoot = "b"),
-      ExpectedModule("beta@1", contentRoot = "a"),
+      ExpectedModule(if (f.mode == ModuleSyncMode.KEEPING) "beta" else "alpha@1", contentRoot = "b"),
+      ExpectedModule(if (f.mode == ModuleSyncMode.KEEPING) "alpha" else "beta@1", contentRoot = "a"),
       ExpectedModule("root", contentRoot = "."),
     )
   }
@@ -203,17 +206,19 @@ internal class PyProjectTomlNamingTest {
 
     // First re-sync: suffix kept because "dup" is still in allModuleNames (from old snapshot)
     f.reloadProject()
+    // Outside PyCharm the model renames no module, so both keep their first names.
+    val keeping = f.mode == ModuleSyncMode.KEEPING
     f.assertProjectStructure(
       ExpectedModule("dup@1", contentRoot = "b"),
-      ExpectedModule("other", contentRoot = "a"),
+      ExpectedModule(if (keeping) "dup" else "other", contentRoot = "a"),
       ExpectedModule("root", contentRoot = "."),
     )
 
     // Second re-sync: suffix dropped — "dup" no longer in allModuleNames
     f.reloadProject()
     f.assertProjectStructure(
-      ExpectedModule("dup", contentRoot = "b"),
-      ExpectedModule("other", contentRoot = "a"),
+      ExpectedModule(if (keeping) "dup@1" else "dup", contentRoot = "b"),
+      ExpectedModule(if (keeping) "dup" else "other", contentRoot = "a"),
       ExpectedModule("root", contentRoot = "."),
     )
   }
@@ -268,10 +273,21 @@ internal class PyProjectTomlNamingTest {
     // Re-sync: suffix preserved on remaining Python module because "lib" is still
     // taken by the Java module (in usedNames from allModuleNames)
     f.reloadProject()
+    // Outside PyCharm the module of the removed pyproject.toml stays, without what the model added.
+    val kept = listOfNotNull(ExpectedModule("lib@2", type = PYTHON, contentRoot = "b").takeIf { f.mode == ModuleSyncMode.KEEPING })
     f.assertProjectStructure(
       ExpectedModule("lib", type = JAVA, contentRoot = "javalib"),
       ExpectedModule("lib@1", contentRoot = "a"),
       ExpectedModule("root", contentRoot = "."),
+      *kept.toTypedArray(),
     )
   }
 }
+
+@TestApplication
+@RegistryKeyAppLevel(key = PY_PROJECT_MODEL_OWNS_MODULES_KEY, value = "true")
+internal class PyProjectTomlNamingOwningTest : PyProjectTomlNamingTest()
+
+@TestApplication
+@RegistryKeyAppLevel(key = PY_PROJECT_MODEL_OWNS_MODULES_KEY, value = "false")
+internal class PyProjectTomlNamingKeepingTest : PyProjectTomlNamingTest()

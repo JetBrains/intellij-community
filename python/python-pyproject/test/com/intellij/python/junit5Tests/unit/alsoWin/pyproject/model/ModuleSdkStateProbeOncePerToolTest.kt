@@ -1,7 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.python.junit5Tests.unit.alsoWin.pyproject.model
 
-import com.jetbrains.python.project.PyProject.Companion.asPyProject
 import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.project.modules
 import com.intellij.openapi.util.Disposer
@@ -12,11 +11,14 @@ import com.intellij.python.pyproject.model.api.SdkForModuleConfigInstruction
 import com.intellij.python.pyproject.model.api.getModuleSdkState
 import com.intellij.python.pyproject.model.internal.SuggestedSdk
 import com.intellij.python.pyproject.model.internal.suggestSdk
+import com.intellij.python.pyproject.model.internal.workspaceBridge.PY_PROJECT_MODEL_OWNS_MODULES_KEY
 import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.common.timeoutRunBlocking
+import com.intellij.testFramework.junit5.RegistryKeyAppLevel
 import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.Result
 import com.jetbrains.python.project.PyProject
+import com.jetbrains.python.project.PyProject.Companion.asPyProject
 import com.jetbrains.python.sdk.configuration.CreateInterpreterInfo
 import com.jetbrains.python.sdk.configuration.EnvCheckerResult
 import com.jetbrains.python.sdk.configuration.PyProjectSdkConfigurationExtension
@@ -41,8 +43,7 @@ private const val FROM_THE_SECOND_ASK = "from-the-second-ask"
  * tool twice, which is both a duplicated entry in the Python Process Output window and doubled interpreter-setup
  * latency. The second ask exists for a tool that declined on toml grounds; one that already answered does not need it.
  */
-@PyDefaultTestApplication
-internal class ModuleSdkStateProbeOncePerToolTest {
+internal abstract class ModuleSdkStateProbeOncePerToolTest {
 
   private val f by pyProjectTomlSyncFixture()
 
@@ -139,3 +140,11 @@ internal class ModuleSdkStateProbeOncePerToolTest {
     }
   }
 }
+
+@PyDefaultTestApplication
+@RegistryKeyAppLevel(key = PY_PROJECT_MODEL_OWNS_MODULES_KEY, value = "true")
+internal class ModuleSdkStateProbeOncePerToolOwningTest : ModuleSdkStateProbeOncePerToolTest()
+
+@PyDefaultTestApplication
+@RegistryKeyAppLevel(key = PY_PROJECT_MODEL_OWNS_MODULES_KEY, value = "false")
+internal class ModuleSdkStateProbeOncePerToolKeepingTest : ModuleSdkStateProbeOncePerToolTest()

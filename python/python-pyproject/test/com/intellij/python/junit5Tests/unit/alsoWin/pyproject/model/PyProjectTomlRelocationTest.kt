@@ -18,7 +18,9 @@ import com.intellij.platform.workspace.jps.entities.SourceRootTypeId
 import com.intellij.platform.workspace.jps.entities.modifyContentRootEntity
 import com.intellij.platform.workspace.storage.impl.url.toVirtualFileUrl
 import com.intellij.python.junit5Tests.unit.alsoWin.pyproject.div
+import com.intellij.python.pyproject.model.internal.workspaceBridge.PY_PROJECT_MODEL_OWNS_MODULES_KEY
 import com.intellij.testFramework.common.timeoutRunBlocking
+import com.intellij.testFramework.junit5.RegistryKeyAppLevel
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.utils.vfs.createDirectory
 import com.intellij.workspaceModel.ide.legacyBridge.LegacyBridgeJpsEntitySourceFactory
@@ -29,8 +31,7 @@ import kotlin.time.Duration.Companion.seconds
  * Tests for source/exclude root relocation when pyproject.toml sub-modules are discovered
  * inside an existing parent module's content root (PY-89073).
  */
-@TestApplication
-internal class PyProjectTomlRelocationTest {
+internal abstract class PyProjectTomlRelocationTest {
 
   private val f by pyProjectTomlSyncFixture()
 
@@ -249,3 +250,11 @@ internal class PyProjectTomlRelocationTest {
     }
   }
 }
+
+@TestApplication
+@RegistryKeyAppLevel(key = PY_PROJECT_MODEL_OWNS_MODULES_KEY, value = "true")
+internal class PyProjectTomlRelocationOwningTest : PyProjectTomlRelocationTest()
+
+@TestApplication
+@RegistryKeyAppLevel(key = PY_PROJECT_MODEL_OWNS_MODULES_KEY, value = "false")
+internal class PyProjectTomlRelocationKeepingTest : PyProjectTomlRelocationTest()

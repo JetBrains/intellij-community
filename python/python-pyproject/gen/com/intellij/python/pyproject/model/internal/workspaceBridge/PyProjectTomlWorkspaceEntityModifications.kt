@@ -10,6 +10,7 @@ import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.WorkspaceEntityBuilder
+import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspaceList
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import com.intellij.python.community.common.tools.ToolId
 import com.intellij.python.pyproject.model.internal.workspaceBridge.impl.PyProjectTomlWorkspaceEntityImpl
@@ -19,6 +20,10 @@ internal interface PyProjectTomlWorkspaceEntityBuilder : WorkspaceEntityBuilder<
   override var entitySource: EntitySource
   var participatedTools: Map<ToolId, ModuleId?>
   var dirWithToml: VirtualFileUrl
+  var dependencies: MutableList<String>
+  var sourceRoots: MutableList<VirtualFileUrl>
+  var addedDependencies: MutableList<String>
+  var addedSourceRoots: MutableList<VirtualFileUrl>
   var module: ModuleEntityBuilder
 }
 
@@ -28,12 +33,20 @@ internal object PyProjectTomlWorkspaceEntityType : EntityType<PyProjectTomlWorks
   operator fun invoke(
     participatedTools: Map<ToolId, ModuleId?>,
     dirWithToml: VirtualFileUrl,
+    dependencies: List<String>,
+    sourceRoots: List<VirtualFileUrl>,
+    addedDependencies: List<String>,
+    addedSourceRoots: List<VirtualFileUrl>,
     entitySource: EntitySource,
     init: (PyProjectTomlWorkspaceEntityBuilder.() -> Unit)? = null,
   ): PyProjectTomlWorkspaceEntityBuilder {
     val builder = builder()
     builder.participatedTools = participatedTools
     builder.dirWithToml = dirWithToml
+    builder.dependencies = dependencies.toMutableWorkspaceList()
+    builder.sourceRoots = sourceRoots.toMutableWorkspaceList()
+    builder.addedDependencies = addedDependencies.toMutableWorkspaceList()
+    builder.addedSourceRoots = addedSourceRoots.toMutableWorkspaceList()
     builder.entitySource = entitySource
     init?.invoke(builder)
     return builder
@@ -53,6 +66,17 @@ internal var ModuleEntityBuilder.pyProjectTomlEntity: PyProjectTomlWorkspaceEnti
 internal fun PyProjectTomlWorkspaceEntity(
   participatedTools: Map<ToolId, ModuleId?>,
   dirWithToml: VirtualFileUrl,
+  dependencies: List<String>,
+  sourceRoots: List<VirtualFileUrl>,
+  addedDependencies: List<String>,
+  addedSourceRoots: List<VirtualFileUrl>,
   entitySource: EntitySource,
   init: (PyProjectTomlWorkspaceEntityBuilder.() -> Unit)? = null,
-): PyProjectTomlWorkspaceEntityBuilder = PyProjectTomlWorkspaceEntityType(participatedTools, dirWithToml, entitySource, init)
+): PyProjectTomlWorkspaceEntityBuilder = PyProjectTomlWorkspaceEntityType(participatedTools,
+                                                                          dirWithToml,
+                                                                          dependencies,
+                                                                          sourceRoots,
+                                                                          addedDependencies,
+                                                                          addedSourceRoots,
+                                                                          entitySource,
+                                                                          init)

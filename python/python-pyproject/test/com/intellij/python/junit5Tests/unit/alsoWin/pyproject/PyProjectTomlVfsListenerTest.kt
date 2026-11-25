@@ -15,9 +15,11 @@ import com.intellij.python.pyproject.model.api.ModelRebuiltListener
 import com.intellij.python.pyproject.model.api.isPyProjectTomlBased
 import com.intellij.python.pyproject.model.internal.MODEL_REBUILD
 import com.intellij.python.pyproject.model.internal.platformBridge.PyProjectModelSyncService
+import com.intellij.python.pyproject.model.internal.workspaceBridge.PY_PROJECT_MODEL_OWNS_MODULES_KEY
 import com.intellij.python.pyproject.model.spi.PyProjectManager
 import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.common.timeoutRunBlocking
+import com.intellij.testFramework.junit5.RegistryKeyAppLevel
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.TestDisposable
 import com.intellij.testFramework.junit5.fixture.projectFixture
@@ -53,6 +55,8 @@ import kotlin.time.Duration.Companion.seconds
  */
 @TestApplication
 @TestFor(issues = ["PY-91841"])
+// The model of PyCharm owns its modules, which these tests observe.
+@RegistryKeyAppLevel(key = PY_PROJECT_MODEL_OWNS_MODULES_KEY, value = "true")
 internal class PyProjectTomlVfsListenerTest {
   private val projectPathFixture = tempPathFixture()
   private val outsidePathFixture = tempPathFixture()

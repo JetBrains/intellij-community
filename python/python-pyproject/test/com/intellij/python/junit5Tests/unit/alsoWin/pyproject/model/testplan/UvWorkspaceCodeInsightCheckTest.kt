@@ -1,25 +1,20 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.python.junit5Tests.unit.alsoWin.pyproject.model.testplan
 
+import com.intellij.openapi.project.Project
 import com.intellij.python.junit5Tests.framework.PyDefaultTestApplication
 import com.intellij.python.junit5Tests.framework.metaInfo.TestClassInfo
 import com.intellij.python.junit5Tests.unit.alsoWin.pyproject.div
 import com.intellij.python.junit5Tests.unit.alsoWin.pyproject.model.ExpectedModule
 import com.intellij.python.junit5Tests.unit.alsoWin.pyproject.model.pyProjectTomlSyncFixture
+import com.intellij.python.pyproject.model.internal.workspaceBridge.PY_PROJECT_MODEL_OWNS_MODULES_KEY
 import com.intellij.testFramework.TestDataPath
 import com.intellij.testFramework.common.timeoutRunBlocking
-import com.intellij.testFramework.junit5.fixture.projectFixture
+import com.intellij.testFramework.junit5.RegistryKeyAppLevel
 import org.junit.jupiter.api.Test
 
-@PyDefaultTestApplication
-@TestClassInfo(contentRootPath = "python-pyproject/test")
-@TestDataPath($$"$CONTENT_ROOT/../testData/monorepo/uv_workspace_codeinsightg_check")
-internal class UvWorkspaceCodeInsightCheckTest {
-  companion object {
-    private val projectFixture = projectFixture()
-  }
-
-  private val f by pyProjectTomlSyncFixture(projectFixture)
+internal abstract class UvWorkspaceCodeInsightCheckTest(project: Project) {
+  private val f by pyProjectTomlSyncFixture(project)
 
   /**
    * The root `my-uv-monorepo` declares `package_a` in `[tool.uv.sources]` with `workspace = true`,
@@ -36,3 +31,15 @@ internal class UvWorkspaceCodeInsightCheckTest {
     )
   }
 }
+
+@PyDefaultTestApplication
+@TestClassInfo(contentRootPath = "python-pyproject/test")
+@TestDataPath($$"$CONTENT_ROOT/../testData/monorepo/uv_workspace_codeinsightg_check")
+@RegistryKeyAppLevel(key = PY_PROJECT_MODEL_OWNS_MODULES_KEY, value = "true")
+internal class UvWorkspaceCodeInsightCheckOwningTest(project: Project) : UvWorkspaceCodeInsightCheckTest(project)
+
+@PyDefaultTestApplication
+@TestClassInfo(contentRootPath = "python-pyproject/test")
+@TestDataPath($$"$CONTENT_ROOT/../testData/monorepo/uv_workspace_codeinsightg_check")
+@RegistryKeyAppLevel(key = PY_PROJECT_MODEL_OWNS_MODULES_KEY, value = "false")
+internal class UvWorkspaceCodeInsightCheckKeepingTest(project: Project) : UvWorkspaceCodeInsightCheckTest(project)

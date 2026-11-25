@@ -71,6 +71,8 @@
   <extensions defaultExtensionNs="com.intellij">
     <registryKey defaultValue="[off|on*|ask]" description="Load project structure from pyproject.toml" key="intellij.python.pyproject.model"
                  restartRequired="true" overrides="true"/>
+    <registryKey defaultValue="true" key="python.pyproject.model.owns.modules" overrides="true"
+                 description="The pyproject.toml model owns its modules: it renames them and syncs all their dependencies and roots"/>
     <projectService serviceInterface="com.intellij.psi.search.ProjectScopeBuilder"
                     serviceImplementation="com.intellij.pycharm.community.ide.impl.PyProjectScopeBuilder"
                     overrides="true"/>

@@ -7,7 +7,9 @@ import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.python.junit5Tests.unit.alsoWin.pyproject.div
+import com.intellij.python.pyproject.model.internal.workspaceBridge.PY_PROJECT_MODEL_OWNS_MODULES_KEY
 import com.intellij.testFramework.common.timeoutRunBlocking
+import com.intellij.testFramework.junit5.RegistryKeyAppLevel
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.testFramework.utils.vfs.createDirectory
@@ -28,8 +30,7 @@ import kotlin.time.Duration.Companion.seconds
  * The project must be open. `WorkspaceModelRootWatcher` serves only `ProjectManager.getInstance().openProjects`, so a
  * closed project never sees the VFS event that turns the source root live.
  */
-@TestApplication
-internal class PyProjectTomlImplicitSrcRootTest {
+internal abstract class PyProjectTomlImplicitSrcRootTest {
 
   private val f by pyProjectTomlSyncFixture(projectFixture(openAfterCreation = true))
 
@@ -88,3 +89,11 @@ internal class PyProjectTomlImplicitSrcRootTest {
     assertThat(f.sourceRootNames("child")).containsExactly("sub" / "src")
   }
 }
+
+@TestApplication
+@RegistryKeyAppLevel(key = PY_PROJECT_MODEL_OWNS_MODULES_KEY, value = "true")
+internal class PyProjectTomlImplicitSrcRootOwningTest : PyProjectTomlImplicitSrcRootTest()
+
+@TestApplication
+@RegistryKeyAppLevel(key = PY_PROJECT_MODEL_OWNS_MODULES_KEY, value = "false")
+internal class PyProjectTomlImplicitSrcRootKeepingTest : PyProjectTomlImplicitSrcRootTest()
