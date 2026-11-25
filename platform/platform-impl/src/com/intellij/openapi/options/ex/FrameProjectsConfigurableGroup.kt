@@ -234,9 +234,9 @@ private class MergedTree(private val projects: SettingsFrameProjects) {
       // no project of the selector is open: the tree of the frame owner is the one tree that is left
       return checkNotNull(ConfigurableExtensionPointUtil.getConfigurableGroup(ConfigurableExtensionPointUtil.getConfigurables(frameOwner, true), frameOwner))
     }
-    val merger = FrameProjectTreeMerger(projects)
-    val root = merger.merge(roots, isParentProjectLevel = false) as SortedConfigurableGroup
-    var pages = merger.newPages.toList()
+    // the tree of the first project becomes the merged tree, and each other tree goes into it
+    val root = roots.first().second
+    var pages = roots.flatMap { (project, tree) -> merge(root.takeIf { it !== tree }, project, tree).newPages }
     if (isOwnerTreeOnly) {
       for (page in pages) {
         page.forget(frameOwner)
@@ -255,11 +255,15 @@ private class MergedTree(private val projects: SettingsFrameProjects) {
   fun join(project: Project, memberTree: SortedConfigurableGroup): Boolean {
     val root = root ?: return false
     restore()
-    val merger = FrameProjectTreeMerger(projects)
-    merger.merge(listOf(null to root, project to memberTree), isParentProjectLevel = false)
+    val merger = merge(root, project, memberTree)
     compact(root)
     pages += merger.newPages
     return merger.hasNewNodes
+  }
+
+  /** Adds [tree], the tree of [project], to the merged tree [root]. Without [root], [tree] becomes the merged tree. */
+  private fun merge(root: SortedConfigurableGroup?, project: Project, tree: SortedConfigurableGroup): FrameProjectTreeMerger {
+    return FrameProjectTreeMerger(projects, project).also { it.merge(root, tree, isParentProjectLevel = false) }
   }
 
   fun forget(project: Project): Set<Configurable> {
@@ -359,97 +363,79 @@ private class MergedTree(private val projects: SettingsFrameProjects) {
 }
 
 /**
- * Merges the Settings trees of several projects into the tree of the first project.
+ * Adds the Settings tree of [project] to the merged tree of a window.
  *
  * The pages of the trees with one id under one parent become one page. An application-level page is the page of the first tree
  * that has it, with the children of all the trees. The project-level pages become one [FrameProjectConfigurable].
- *
- * A node of a pair with no project is a node of a merged tree. It goes first, and the nodes of the other projects merge into it.
  */
-private class FrameProjectTreeMerger(private val projects: SettingsFrameProjects) {
-  /** `true` when a node of a project came under a node of the merged tree that had no node with its id. */
+private class FrameProjectTreeMerger(private val projects: SettingsFrameProjects, private val project: Project) {
+  /** `true` when the tree of [project] gave a node that the merged tree did not have. */
   var hasNewNodes: Boolean = false
     private set
 
   /** The pages of several projects that this merger created. */
   val newPages: MutableList<FrameProjectConfigurable> = ArrayList()
 
-  /** [nodes] holds the pages with one id under one parent: one page for each project that has it, in the order of the projects. */
-  fun merge(nodes: List<Pair<Project?, Configurable>>, isParentProjectLevel: Boolean): Configurable {
-    val first = nodes.first().second
-    if (isProjectLevel(first, isParentProjectLevel)) {
-      return mergeProjectLevel(nodes)
+  /**
+   * Adds [node] of the tree of [project] to [merged], the node of the merged tree with the id of [node] under the same parent.
+   * Without [merged], [node] becomes a node of the merged tree. Returns the node of the merged tree.
+   */
+  fun merge(merged: Configurable?, node: Configurable, isParentProjectLevel: Boolean): Configurable {
+    if (merged == null) {
+      hasNewNodes = true
     }
-    when (first) {
+    val target = merged ?: node
+    if (isProjectLevel(target, isParentProjectLevel)) {
+      val page = merged ?: FrameProjectConfigurable(projects, ConfigurableVisitor.getId(node), mapOf(project to node), emptyArray())
+        .also(newPages::add)
+      if (page is FrameProjectConfigurable) {
+        page.addDelegate(project, node)
+        val children = (node as? Configurable.Composite)?.getConfigurablesSafely()?.asList() ?: emptyList()
+        page.children = mergeChildren(page.children.asList(), children, isParentProjectLevel = true).toTypedArray()
+      }
+      return page
+    }
+    when (target) {
       is SortedConfigurableGroup -> {
-        val children = nodes.map { (project, node) -> project to ((node as? SortedConfigurableGroup)?.myList ?: emptyList()) }
-        if (first.myList != null) {
-          first.setChildren(mergeChildren(children, isParentProjectLevel = false))
+        val own = target.myList
+        if (own != null) {
+          val children = (node as? SortedConfigurableGroup)?.myList ?: emptyList()
+          target.setChildren(mergeChildren(if (merged == null) emptyList() else own, children, isParentProjectLevel = false))
         }
       }
       is ConfigurableWrapper.CompositeWrapper -> {
-        // the first tree gives the children that the extension declares, and they are application-level in every tree;
-        // only the children that the grouping added can be project-level, so each other tree gives only those
-        val children = nodes.mapIndexed { index, (project, node) ->
-          project to if (index == 0) first.configurables.asList() else (node as? ConfigurableWrapper.CompositeWrapper)?.addedConfigurables?.asList() ?: emptyList()
-        }
-        first.setConfigurables(mergeChildren(children, isParentProjectLevel = false).toTypedArray())
+        // the merged tree has the children that the extension declares, and they are application-level in every tree.
+        // Only the children that the grouping added can be project-level, so a tree that joins gives only those
+        val own = target.configurables.asList()
+        val added = (node as? ConfigurableWrapper.CompositeWrapper)?.addedConfigurables?.asList() ?: emptyList()
+        val (base, joining) = if (merged == null) emptyList<Configurable>() to own else own to added
+        target.setConfigurables(mergeChildren(base, joining, isParentProjectLevel = false).toTypedArray())
       }
     }
-    return first
+    return target
   }
 
-  private fun mergeProjectLevel(nodes: List<Pair<Project?, Configurable>>): Configurable {
-    val (firstProject, first) = nodes.first()
-    if (firstProject == null) {
-      return joinProjectLevel(first, nodes.drop(1))
+  /**
+   * Adds [nodes], the children of a node of the tree of [project], to [merged], the children of that node in the merged tree.
+   * The answer keeps the order of [merged], and a new node goes to the end.
+   */
+  private fun mergeChildren(merged: List<Configurable>, nodes: List<Configurable>, isParentProjectLevel: Boolean): List<Configurable> {
+    val result = keyed(merged).toMap(LinkedHashMap())
+    for ((key, node) in keyed(nodes)) {
+      result.put(key, merge(result.get(key), node, isParentProjectLevel))
     }
-    val delegates = LinkedHashMap<Project, Configurable>()
-    for ((project, node) in nodes) {
-      delegates.putIfAbsent(project!!, node)
-    }
-    val children = mergeChildren(childrenOf(nodes), isParentProjectLevel = true)
-    val page = FrameProjectConfigurable(projects, ConfigurableVisitor.getId(first), delegates, children.toTypedArray())
-    newPages.add(page)
-    return page
+    return result.values.toList()
   }
 
-  /** Adds the pages of the projects of [joining] to the page [merged] of a merged tree. */
-  private fun joinProjectLevel(merged: Configurable, joining: List<Pair<Project?, Configurable>>): Configurable {
-    if (merged !is FrameProjectConfigurable) {
-      return merged
+  /** A parent can hold two pages with one id. The key of the second page holds its number, so it stays a page of its own. */
+  private fun keyed(nodes: List<Configurable>): List<Pair<String, Configurable>> {
+    val counts = HashMap<String, Int>()
+    return nodes.map { node ->
+      val id = ConfigurableVisitor.getId(node)
+      val count = counts.merge(id, 1, Int::plus)!!
+      (if (count == 1) id else "$id#$count") to node
     }
-    for ((project, node) in joining) {
-      merged.addDelegate(project!!, node)
-    }
-    val children = listOf(null to merged.children.asList()) + childrenOf(joining)
-    merged.children = mergeChildren(children, isParentProjectLevel = true).toTypedArray()
-    return merged
   }
-
-  private fun childrenOf(nodes: List<Pair<Project?, Configurable>>): List<Pair<Project?, List<Configurable>>> {
-    return nodes.map { (project, node) -> project to ((node as? Configurable.Composite)?.getConfigurablesSafely()?.asList() ?: emptyList()) }
-  }
-
-  /** [children] holds the children of one page in each project. The answer keeps the order of the first project. */
-  private fun mergeChildren(children: List<Pair<Project?, List<Configurable>>>, isParentProjectLevel: Boolean): MutableList<Configurable> {
-    val nodesByKey = LinkedHashMap<String, MutableList<Pair<Project?, Configurable>>>()
-    for ((project, configurables) in children) {
-      val counts = HashMap<String, Int>()
-      for (configurable in configurables) {
-        val id = ConfigurableVisitor.getId(configurable)
-        val count = counts.merge(id, 1, Int::plus)!!
-        // a parent can hold two pages with one id: the second page stays a page of its own
-        val key = if (count == 1) id else "$id#$count"
-        nodesByKey.getOrPut(key) { ArrayList() }.add(project to configurable)
-      }
-    }
-    if (children.any { it.first == null } && nodesByKey.values.any { nodes -> nodes.none { it.first == null } }) {
-      hasNewNodes = true
-    }
-    return nodesByKey.values.mapTo(ArrayList()) { merge(it, isParentProjectLevel) }
-  }
-
 }
 
 /** A page without a declaration, which a parent page builds itself, is of the level of its parent, as in `SettingsTreeView`. */
