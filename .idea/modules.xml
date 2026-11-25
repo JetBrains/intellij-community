@@ -510,6 +510,22 @@
       <module fileurl="file://$PROJECT_DIR$/platform/remote-driver/core/intellij.driver.impl.iml" filepath="$PROJECT_DIR$/platform/remote-driver/core/intellij.driver.impl.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/remote-driver/model/intellij.driver.model.iml" filepath="$PROJECT_DIR$/platform/remote-driver/model/intellij.driver.model.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/remote-driver/test-sdk/intellij.driver.sdk.iml" filepath="$PROJECT_DIR$/platform/remote-driver/test-sdk/intellij.driver.sdk.iml" />
+      <module fileurl="file://$PROJECT_DIR$/platform/remote-driver/test-sdk-clion/intellij.driver.sdk.clion.iml" filepath="$PROJECT_DIR$/platform/remote-driver/test-sdk-clion/intellij.driver.sdk.clion.iml" />
+      <module fileurl="file://$PROJECT_DIR$/platform/remote-driver/test-sdk-database/intellij.driver.sdk.database.iml" filepath="$PROJECT_DIR$/platform/remote-driver/test-sdk-database/intellij.driver.sdk.database.iml" />
+      <module fileurl="file://$PROJECT_DIR$/platform/remote-driver/test-sdk-git4idea/intellij.driver.sdk.git4idea.iml" filepath="$PROJECT_DIR$/platform/remote-driver/test-sdk-git4idea/intellij.driver.sdk.git4idea.iml" />
+      <module fileurl="file://$PROJECT_DIR$/platform/remote-driver/test-sdk-go/intellij.driver.sdk.go.iml" filepath="$PROJECT_DIR$/platform/remote-driver/test-sdk-go/intellij.driver.sdk.go.iml" />
+      <module fileurl="file://$PROJECT_DIR$/platform/remote-driver/test-sdk-gradle/intellij.driver.sdk.gradle.iml" filepath="$PROJECT_DIR$/platform/remote-driver/test-sdk-gradle/intellij.driver.sdk.gradle.iml" />
+      <module fileurl="file://$PROJECT_DIR$/platform/remote-driver/test-sdk-idea/intellij.driver.sdk.idea.iml" filepath="$PROJECT_DIR$/platform/remote-driver/test-sdk-idea/intellij.driver.sdk.idea.iml" />
+      <module fileurl="file://$PROJECT_DIR$/platform/remote-driver/test-sdk-jbacademy/intellij.driver.sdk.jbacademy.iml" filepath="$PROJECT_DIR$/platform/remote-driver/test-sdk-jbacademy/intellij.driver.sdk.jbacademy.iml" />
+      <module fileurl="file://$PROJECT_DIR$/platform/remote-driver/test-sdk-kubernetes/intellij.driver.sdk.kubernetes.iml" filepath="$PROJECT_DIR$/platform/remote-driver/test-sdk-kubernetes/intellij.driver.sdk.kubernetes.iml" />
+      <module fileurl="file://$PROJECT_DIR$/platform/remote-driver/test-sdk-license/intellij.driver.sdk.license.iml" filepath="$PROJECT_DIR$/platform/remote-driver/test-sdk-license/intellij.driver.sdk.license.iml" />
+      <module fileurl="file://$PROJECT_DIR$/platform/remote-driver/test-sdk-maven/intellij.driver.sdk.maven.iml" filepath="$PROJECT_DIR$/platform/remote-driver/test-sdk-maven/intellij.driver.sdk.maven.iml" />
+      <module fileurl="file://$PROJECT_DIR$/platform/remote-driver/test-sdk-microservices/intellij.driver.sdk.microservices.iml" filepath="$PROJECT_DIR$/platform/remote-driver/test-sdk-microservices/intellij.driver.sdk.microservices.iml" />
+      <module fileurl="file://$PROJECT_DIR$/platform/remote-driver/test-sdk-notebooks/intellij.driver.sdk.notebooks.iml" filepath="$PROJECT_DIR$/platform/remote-driver/test-sdk-notebooks/intellij.driver.sdk.notebooks.iml" />
+      <module fileurl="file://$PROJECT_DIR$/platform/remote-driver/test-sdk-python/intellij.driver.sdk.python.iml" filepath="$PROJECT_DIR$/platform/remote-driver/test-sdk-python/intellij.driver.sdk.python.iml" />
+      <module fileurl="file://$PROJECT_DIR$/platform/remote-driver/test-sdk-qodana/intellij.driver.sdk.qodana.iml" filepath="$PROJECT_DIR$/platform/remote-driver/test-sdk-qodana/intellij.driver.sdk.qodana.iml" />
+      <module fileurl="file://$PROJECT_DIR$/platform/remote-driver/test-sdk-rust/intellij.driver.sdk.rust.iml" filepath="$PROJECT_DIR$/platform/remote-driver/test-sdk-rust/intellij.driver.sdk.rust.iml" />
+      <module fileurl="file://$PROJECT_DIR$/platform/remote-driver/test-sdk-ultimate/intellij.driver.sdk.ultimate.iml" filepath="$PROJECT_DIR$/platform/remote-driver/test-sdk-ultimate/intellij.driver.sdk.ultimate.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/eclipse/intellij.eclipse.iml" filepath="$PROJECT_DIR$/plugins/eclipse/intellij.eclipse.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/eclipse/common-eclipse-util/intellij.eclipse.common.iml" filepath="$PROJECT_DIR$/plugins/eclipse/common-eclipse-util/intellij.eclipse.common.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/eclipse/jps-plugin/intellij.eclipse.jps.iml" filepath="$PROJECT_DIR$/plugins/eclipse/jps-plugin/intellij.eclipse.jps.iml" />
