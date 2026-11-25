@@ -2737,6 +2737,9 @@ object PyTypeChecker {
       // to avoid a StackOverflowError.
       val typeVarsBeingSubstituted = HashSet<PyTypeVarType>()
 
+      // The same guard for TypeVarTuples, for example {Ts: *tuple[*Ts]} from the invalid default in `class C[*Ts = *tuple[*Ts]]`.
+      val typeVarTuplesBeingSubstituted = HashSet<PyTypeVarTupleType>()
+
       fun flattenUnpackedTuple(type: PyType?): List<PyType?> {
         return if (type is PyUnpackedTupleType && !type.isUnbound) {
           type.elementTypes
@@ -2758,7 +2761,15 @@ object PyTypeChecker {
         }
         val substitution = substitutions.typeVarTuples[typeVarTupleType]
         if (typeVarTupleType != substitution && substitution.hasGenerics(context)) {
-          return clone(substitution)
+          if (!typeVarTuplesBeingSubstituted.add(typeVarTupleType)) {
+            return typeVarTupleType
+          }
+          try {
+            return clone(substitution)
+          }
+          finally {
+            typeVarTuplesBeingSubstituted.remove(typeVarTupleType)
+          }
         }
         // TODO This should happen in getSubstitutionsWithUnresolvedReturnGenerics, but it won't work for inherited constructors
         //   as in testVariadicGenericCheckTypeAliasesRedundantParameter, investigate why
