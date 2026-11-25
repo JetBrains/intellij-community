@@ -266,7 +266,10 @@ class SplitProjectViewPaneSelectInTarget(
 ) : SplitProjectViewSelectInTarget {
   override val paneIds: List<ProjectViewPaneId> = listOf(paneId)
 
-  override fun canSelect(context: SelectInContext): Boolean = true // TODO maybe implement somehow someday
+  /** See [FrontendProjectViewPaneAggregator.canSelect]. */
+  override fun canSelect(context: SelectInContext): Boolean {
+    return FrontendProjectViewPaneAggregator.getInstance(context.project).canSelect(paneId, context)
+  }
 
   override fun getMinorViewId(): @NonNls String = paneId.idString
 

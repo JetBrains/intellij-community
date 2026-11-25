@@ -8,6 +8,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.platform.projectView.settings.ProjectViewPaneFileNestingValue
 import com.intellij.platform.projectView.settings.ProjectViewPaneOption
 import com.intellij.platform.projectView.settings.ProjectViewPaneSortKey
+import com.intellij.util.concurrency.annotations.RequiresReadLock
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Experimental
@@ -35,6 +36,19 @@ interface ProjectViewPaneModel {
   fun uiDataSnapshot(sink: DataSink, snapshot: DataSnapshot)
   
   fun getDataContext(nodeIds: List<Long>): DataContext
+
+  /**
+   * Tells if this pane can select the [request], before [findNodeForSelectIn] searches the tree.
+   *
+   * Select In calls it in a read action, sometimes on the EDT, so it must be fast.
+   * The pane can be inactive, so the check must not use the tree of the pane.
+   * The default implementation returns `true`.
+   *
+   * A [SelectByEditor] request has no context to check.
+   * The implementations of the platform return `true` for it, and [findNodeForSelectIn] decides.
+   */
+  @RequiresReadLock
+  fun canSelect(request: SelectInRequest): Boolean = true
 
   suspend fun findNodeForSelectIn(selectInRequest: SelectInRequest): ProjectViewNodePath?
   

@@ -399,6 +399,13 @@ abstract class TreeBasedProjectViewPaneModel<T : ProjectViewNodeUserObject>(over
     )
   }
 
+  /** The same check as the default [computeSelectTarget] does first. It does not use the tree. */
+  @RequiresReadLock
+  override fun canSelect(request: SelectInRequest): Boolean = when (request) {
+    is SelectByContext -> canSelectContext(request.context)
+    is SelectByEditor -> true
+  }
+
   override suspend fun findNodeForSelectIn(selectInRequest: SelectInRequest): ProjectViewNodePath? {
     if (currentTreeState.load() == null) return null
     val target = computeSelectTarget(selectInRequest) ?: return null

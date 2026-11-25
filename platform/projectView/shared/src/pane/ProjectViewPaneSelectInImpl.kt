@@ -6,9 +6,11 @@ import com.intellij.ide.SelectInContext
 import com.intellij.ide.vfs.VirtualFileId
 import com.intellij.ide.vfs.rpcId
 import com.intellij.ide.vfs.virtualFile
+import com.intellij.openapi.components.serviceOrNull
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.projectView.actions.EditorChoice
+import com.intellij.util.concurrency.annotations.RequiresReadLock
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
 import org.jetbrains.annotations.ApiStatus
@@ -35,6 +37,23 @@ data class SelectInTargetGroupImpl(
   val weight: Float,
 ) : SelectInTargetGroup
 
+/**
+ * Checks the Select In contexts against the backend panes of this process, see [ProjectViewPaneServiceBase.canSelect].
+ *
+ * Only the backend module registers this service.
+ * So the frontend gets it only in the monolith mode, where the backend runs in the same process.
+ */
+@ApiStatus.Internal
+interface BackendProjectViewSelectInChecker {
+  companion object {
+    /** Returns `null` if the backend does not run in this process. */
+    fun getInstanceIfLocal(project: Project): BackendProjectViewSelectInChecker? = project.serviceOrNull()
+  }
+
+  @RequiresReadLock
+  fun canSelect(paneId: ProjectViewPaneId, context: SelectInContext): Boolean
+}
+
 @ApiStatus.Internal
 fun SelectInRequestDTO.toSelectInRequest(project: Project): SelectInRequest? {
   val context = context ?: restoreSerializedContext(contextDTO, project) ?: return null
@@ -46,7 +65,7 @@ private fun restoreSerializedContext(contextDescriptor: SelectInContextDTO, proj
   return FileSelectInContext(project, file)
 }
 
-private data class SelectByContextImpl(
+internal data class SelectByContextImpl(
   override val context: SelectInContext,
 ) : SelectByContext
 

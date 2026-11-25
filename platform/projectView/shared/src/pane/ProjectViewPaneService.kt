@@ -1,9 +1,10 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:OptIn(FlowPreview::class, ExperimentalAtomicApi::class)
 package com.intellij.platform.projectView.pane
 
 import com.intellij.codeWithMe.ClientId
 import com.intellij.codeWithMe.asContextElement
+import com.intellij.ide.SelectInContext
 import com.intellij.ide.projectView.impl.ProjectViewTransferableFileImpl
 import com.intellij.openapi.client.ClientSessionsManager
 import com.intellij.openapi.application.ApplicationManager
@@ -16,6 +17,7 @@ import com.intellij.platform.projectView.actions.fromDTO
 import com.intellij.platform.projectView.runSafelyCancellable
 import com.intellij.platform.projectView.settings.ProjectViewPaneFileNestingValueImpl
 import com.intellij.platform.projectView.settings.toSettingValue
+import com.intellij.util.concurrency.annotations.RequiresReadLock
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
@@ -201,6 +203,16 @@ abstract class ProjectViewPaneServiceBase(
     val pane = managers[paneId]?.pane ?: return null
     // no need for withPaneActive because (Always) Select Opened File is only used for the active pane
     return pane.findNodeForSelectIn(SelectByEditorImpl(editorChoice, isInvokedManually))
+  }
+
+  /**
+   * Tells if the pane [paneId] can select the [context], see [ProjectViewPaneModel.canSelect].
+   * Returns `false` if there is no such pane, because [findNodeForSelectIn] finds no node then.
+   */
+  @RequiresReadLock
+  fun canSelect(paneId: ProjectViewPaneId, context: SelectInContext): Boolean {
+    val pane = getPane(paneId) ?: return false
+    return pane.canSelect(SelectByContextImpl(context))
   }
 
   override suspend fun findNodeForSelectIn(selectInRequestDTO: SelectInRequestDTO): ProjectViewNodePath? {

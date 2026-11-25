@@ -4,6 +4,7 @@ package com.intellij.ide.projectView.impl
 import com.intellij.history.LocalHistory
 import com.intellij.ide.DeleteProvider
 import com.intellij.ide.IdeBundle
+import com.intellij.ide.impl.PackagesPaneSelectInTarget
 import com.intellij.ide.projectView.ViewSettings
 import com.intellij.ide.projectView.impl.AbstractProjectViewPane.extractValueFromNode
 import com.intellij.ide.projectView.impl.nodes.PackageElement
@@ -30,6 +31,9 @@ import com.intellij.platform.projectView.pane.BackendProjectViewNodeModel
 import com.intellij.platform.projectView.pane.ProjectViewPaneId
 import com.intellij.platform.projectView.pane.ProjectViewPaneModel
 import com.intellij.platform.projectView.pane.ProjectViewPaneProvider
+import com.intellij.platform.projectView.pane.SelectByContext
+import com.intellij.platform.projectView.pane.SelectByEditor
+import com.intellij.platform.projectView.pane.SelectInRequest
 import com.intellij.platform.projectView.pane.projectViewPaneId
 import com.intellij.platform.projectView.settings.ProjectViewPaneOption
 import com.intellij.platform.projectView.settings.ProjectViewPaneSettingsService
@@ -38,6 +42,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.util.PsiUtilCore
 import com.intellij.util.PlatformUtils
+import com.intellij.util.concurrency.annotations.RequiresReadLock
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
 import java.util.Collections
@@ -61,6 +66,13 @@ internal class PackageViewPaneModel(project: Project) : TreeStructureBasedProjec
 
   override fun createTreeStructure(viewSettings: ViewSettings): AbstractProjectTreeStructure {
     return PackageTreeStructure(project, viewSettings)
+  }
+
+  /** The same check as the Select In target of the legacy Packages pane. */
+  @RequiresReadLock
+  override fun canSelect(request: SelectInRequest): Boolean = when (request) {
+    is SelectByContext -> PackagesPaneSelectInTarget(project).canSelect(request.context)
+    is SelectByEditor -> true
   }
 
   override fun supportsOption(option: ProjectViewPaneOption): Boolean {

@@ -15,6 +15,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.packageDependencies.DependencyValidationManager
 import com.intellij.platform.projectView.ProjectView
 import com.intellij.platform.projectView.backend.impl.scope.ScopePaneModel
+import com.intellij.platform.projectView.frontend.actions.SplitProjectViewPaneSelectInTarget
 import com.intellij.platform.projectView.frontend.actions.SplitProjectViewSelectInGroupTarget
 import com.intellij.platform.projectView.frontend.actions.findNodeForSelectIn
 import com.intellij.platform.projectView.frontend.pane.id
@@ -31,6 +32,7 @@ import com.intellij.testFramework.junit5.fixture.sourceRootFixture
 import com.intellij.testFramework.junit5.fixture.tempPathFixture
 import kotlinx.coroutines.flow.first
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNotEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
@@ -108,6 +110,24 @@ internal class ProjectViewScopeSelectInTargetTest : AbstractProjectViewPaneTest(
       val path = scopeTarget(context).findNodeForSelectIn(context)
 
       assertEquals(expectedPaneId, path?.paneId)
+    }
+  }
+
+  @Test
+  fun `the target of a scope pane can select only a file of its scope`() = timeoutRunBlocking(PANE_TEST_TIMEOUT) {
+    withManagedProjectViewToolWindow(project) {
+      awaitStartupPaneSelection(project)
+      val filters = addScopes(helloScope)
+      val helloPaneId = ScopePaneModel.paneId(filters.first { it.scope == helloScope })
+      val hello = FileSelectInContext(project, hello())
+      val world = FileSelectInContext(project, srcRoot.get().virtualFile.findFileByRelativePath("sub/World.txt")!!)
+
+      val helloTarget = scopeTarget(hello).getSubTargets(hello)
+        .filterIsInstance<SplitProjectViewPaneSelectInTarget>()
+        .single { it.paneId == helloPaneId }
+
+      assertTrue(readAction { helloTarget.canSelect(hello) }, "The hello scope contains Hello.txt")
+      assertFalse(readAction { helloTarget.canSelect(world) }, "The hello scope does not contain World.txt")
     }
   }
 

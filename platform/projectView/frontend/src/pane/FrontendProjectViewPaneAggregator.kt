@@ -3,6 +3,7 @@
 
 package com.intellij.platform.projectView.frontend.pane
 
+import com.intellij.ide.SelectInContext
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
@@ -11,6 +12,7 @@ import com.intellij.platform.ide.productMode.IdeProductMode
 import com.intellij.platform.project.projectId
 import com.intellij.platform.projectView.actions.EditorChoice
 import com.intellij.platform.projectView.frontend.impl.TreeBasedFrontendProjectViewPane
+import com.intellij.platform.projectView.pane.BackendProjectViewSelectInChecker
 import com.intellij.platform.projectView.pane.ProjectViewNodePath
 import com.intellij.platform.projectView.pane.ProjectViewPaneDescriptorImpl
 import com.intellij.platform.projectView.pane.ProjectViewPaneId
@@ -149,6 +151,22 @@ internal class FrontendProjectViewPaneAggregator(
     else {
       frontendService().findNodeForSelectIn(selectInRequest)
     }
+  }
+
+  /**
+   * Tells if the pane [paneId] can select the [context].
+   * It asks the same side as [findNodeForSelectIn].
+   * Call it in a read action, the same as [com.intellij.ide.SelectInTarget.canSelect].
+   *
+   * The backend panes answer only in the monolith mode, where the backend runs in this process.
+   * In remote development, this function returns `true` for them, because a read action must not wait for an RPC.
+   */
+  fun canSelect(paneId: ProjectViewPaneId, context: SelectInContext): Boolean {
+    if (!isBackendLoaded.load()) {
+      return FrontendProjectViewPaneService.getInstance(project).canSelect(paneId, context)
+    }
+    val backend = BackendProjectViewSelectInChecker.getInstanceIfLocal(project) ?: return true
+    return backend.canSelect(paneId, context)
   }
 }
 

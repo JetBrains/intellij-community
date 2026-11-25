@@ -38,6 +38,10 @@
       serviceInterface="com.intellij.platform.projectView.impl.BackendProjectView"
       serviceImplementation="com.intellij.platform.projectView.backend.impl.BackendProjectViewImpl"
     />
+    <projectService
+      serviceInterface="com.intellij.platform.projectView.pane.BackendProjectViewSelectInChecker"
+      serviceImplementation="com.intellij.platform.projectView.backend.pane.BackendProjectViewSelectInCheckerImpl"
+    />
     <project.view.pane.model.backend implementation="com.intellij.platform.projectView.backend.impl.project.BackendProjectPaneProvider"/>
     <project.view.pane.model.backend implementation="com.intellij.platform.projectView.backend.impl.scope.ScopePaneProvider"/>
     <project.view.pane.model.backend implementation="com.intellij.platform.projectView.backend.impl.legacy.LegacyBackendProjectViewPaneProvider"/>

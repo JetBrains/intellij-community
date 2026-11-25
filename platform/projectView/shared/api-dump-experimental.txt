@@ -87,6 +87,7 @@
 *a:com.intellij.platform.projectView.impl.TreeBasedProjectViewPaneModel
 - com.intellij.platform.projectView.pane.ProjectViewPaneModel
 - <init>(com.intellij.openapi.project.Project):V
+- canSelect(com.intellij.platform.projectView.pane.SelectInRequest):Z
 - p:computeSelectTarget(com.intellij.platform.projectView.pane.SelectInRequest,kotlin.coroutines.Continuation):java.lang.Object
 - pa:createNodeProvider(com.intellij.platform.projectView.settings.ProjectViewPaneSettingsAccessor,kotlin.coroutines.Continuation):java.lang.Object
 - pa:createSelectNodeVisitorProvider():com.intellij.platform.projectView.impl.ProjectViewSelectNodeVisitorProvider
@@ -220,6 +221,7 @@
 - f:serializer():kotlinx.serialization.KSerializer
 *:com.intellij.platform.projectView.pane.ProjectViewPaneLoadChildrenOptions
 *:com.intellij.platform.projectView.pane.ProjectViewPaneModel
+- canSelect(com.intellij.platform.projectView.pane.SelectInRequest):Z
 - a:describe(com.intellij.platform.projectView.pane.ProjectViewPaneDescriptorBuilder,kotlin.coroutines.Continuation):java.lang.Object
 - a:findNodeForSelectIn(com.intellij.platform.projectView.pane.SelectInRequest,kotlin.coroutines.Continuation):java.lang.Object
 - a:getCutCopyPasteDeleteHandler():com.intellij.platform.projectView.pane.ProjectViewPaneCutCopyPasteDeleteHandler
