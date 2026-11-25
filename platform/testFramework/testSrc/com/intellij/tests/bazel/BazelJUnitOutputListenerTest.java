@@ -34,6 +34,7 @@ import javax.xml.parsers.DocumentBuilderFactory;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Function;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -82,6 +83,29 @@ class BazelJUnitOutputListenerTest {
 
     assertThat(closed).isNotEmpty().doesNotHaveDuplicates();
     assertThat(interrupted).containsExactlyInAnyOrderElementsOf(closed);
+  }
+
+  /** An interrupt while a test runs gives that test a thread dump as its standard error, and the dump shows the test. */
+  @Test
+  void givesATestThatHasNotEndedAThreadDumpWhenTheRunIsInterrupted(@TempDir Path tempDir) throws Exception {
+    Document xml;
+    try {
+      xml = executeAndReadXml(InterruptedWhileRunningScenario.class, tempDir.resolve("interruptedWhileRunning.xml"), listener -> {
+        InterruptedWhileRunningScenario.interrupt = listener::closeForInterrupt;
+        return listener;
+      });
+    }
+    finally {
+      InterruptedWhileRunningScenario.interrupt = null;
+    }
+
+    Element testCase = getOnlyTestCase(xml, "interruptedTest()");
+    NodeList failures = testCase.getElementsByTagName("failure");
+    assertThat(failures.getLength()).isEqualTo(1);
+    assertThat(failures.item(0).getTextContent()).isEqualTo("Test timed out and was interrupted");
+    NodeList errors = testCase.getElementsByTagName("system-err");
+    assertThat(errors.getLength()).isEqualTo(1);
+    assertThat(errors.item(0).getTextContent()).contains("InterruptedWhileRunningScenario.interruptedTest");
   }
 
   /** The nested class and its failure are two suites, and only the first one holds the time of the class. */
@@ -218,6 +242,14 @@ class BazelJUnitOutputListenerTest {
 
   private static Document executeAndReadXml(Class<?> scenarioRootClass, Path xmlOutputFile, boolean interruptAfterJupiter)
     throws Exception {
+    return executeAndReadXml(scenarioRootClass, xmlOutputFile,
+                             listener -> interruptAfterJupiter ? interruptedAfterJupiter(listener) : listener);
+  }
+
+  private static Document executeAndReadXml(Class<?> scenarioRootClass,
+                                            Path xmlOutputFile,
+                                            Function<BazelJUnitOutputListener, TestExecutionListener> registeredListener)
+    throws Exception {
     // Keep this helper isolated from globally auto-registered launcher session listeners:
     // they enable IDE-wide test extensions and first/last-in-suite leak checks that are not
     // part of the XML listener contract under test here.
@@ -230,7 +262,7 @@ class BazelJUnitOutputListenerTest {
       .build();
 
     try (var listener = new BazelJUnitOutputListener(xmlOutputFile)) {
-      launcher.registerTestExecutionListeners(interruptAfterJupiter ? interruptedAfterJupiter(listener) : listener);
+      launcher.registerTestExecutionListeners(registeredListener.apply(listener));
       launcher.execute(request);
     }
 
@@ -437,6 +469,17 @@ class BazelJUnitOutputListenerTest {
     @ParameterizedTest(name = "{0}")
     @EnumSource(ParameterizedValue.class)
     void secondParameterizedTest(ParameterizedValue value) {
+    }
+  }
+
+  @Disabled(SCENARIO_DISABLED_REASON)
+  static class InterruptedWhileRunningScenario {
+    /** Interrupts the run as the shutdown hook of JUnit5BazelRunner does on SIGTERM. */
+    static volatile Runnable interrupt;
+
+    @Test
+    void interruptedTest() {
+      interrupt.run();
     }
   }
 

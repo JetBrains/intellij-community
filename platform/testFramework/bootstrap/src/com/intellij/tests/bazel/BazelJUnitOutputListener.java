@@ -6,6 +6,7 @@
  */
 package com.intellij.tests.bazel;
 
+import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.tests.ClassTemplateInvocations;
 import com.intellij.tests.IgnoreException;
 import org.junit.platform.engine.TestExecutionResult;
@@ -39,6 +40,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
+import static org.junit.platform.launcher.LauncherConstants.STDERR_REPORT_ENTRY_KEY;
 
 public class BazelJUnitOutputListener implements TestExecutionListener, Closeable {
   public static final Logger LOG = Logger.getLogger(BazelJUnitOutputListener.class.getName());
@@ -351,7 +353,41 @@ public class BazelJUnitOutputListener implements TestExecutionListener, Closeabl
 
   public void closeForInterrupt() {
     wasInterrupted.set(true);
+    if (!hasClosed.get()) {
+      attachThreadDumpToRunningTests();
+    }
     close();
+  }
+
+  /**
+   * Gives each test that has not ended a thread dump as its standard error, and writes the dump to the log directory.
+   * <p>
+   * Bazel stops a test target that runs past its timeout with SIGTERM. The dump shows where each thread was then.
+   */
+  private void attachThreadDumpToRunningTests() {
+    List<TestData> running;
+    synchronized (resultsLock) {
+      running = results.values().stream().filter(test -> test.getId().isTest() && test.getDuration() == null).toList();
+    }
+    if (running.isEmpty()) {
+      return;
+    }
+    try {
+      String dump = ThreadDumper.getThreadDumpInfo(ThreadDumper.getThreadInfos(), false).getRawDump();
+      ReportEntry entry = ReportEntry.from(STDERR_REPORT_ENTRY_KEY, dump);
+      running.forEach(test -> test.addReportEntry(entry));
+      System.err.println("The run was interrupted while a test had not ended. Thread dump:\n" + dump);
+      String logDir = System.getProperty("idea.log.path");
+      if (logDir != null) {
+        Path dumpFile = Path.of(logDir).resolve("threadDump-bazelInterrupt-" + System.currentTimeMillis() + ".log");
+        Files.createDirectories(dumpFile.getParent());
+        Files.writeString(dumpFile, dump);
+        System.err.println("Captured thread dump: file:" + dumpFile.toAbsolutePath());
+      }
+    }
+    catch (Throwable e) {
+      LOG.log(Level.WARNING, "Unable to capture a thread dump of the interrupted run", e);
+    }
   }
 
   @Override
