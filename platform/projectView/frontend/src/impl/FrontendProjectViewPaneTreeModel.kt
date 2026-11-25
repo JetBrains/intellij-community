@@ -1,7 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.projectView.frontend.impl
 
-import com.intellij.ide.SelectInTarget
 import com.intellij.ide.dnd.DnDAction
 import com.intellij.ide.projectView.NodeSortKey
 import com.intellij.ide.projectView.impl.ProjectViewFrontendState
@@ -14,7 +13,6 @@ import com.intellij.platform.ide.productMode.IdeProductMode
 import com.intellij.platform.projectView.actions.ProjectViewActionSupport
 import com.intellij.platform.projectView.actions.ProjectViewOptionMenuUpdater
 import com.intellij.platform.projectView.actions.fromDTO
-import com.intellij.platform.projectView.frontend.actions.SplitProjectViewSelectInTarget
 import com.intellij.platform.projectView.pane.ProjectViewActivateStateEvent
 import com.intellij.platform.projectView.pane.ProjectViewChildRemoved
 import com.intellij.platform.projectView.pane.ProjectViewChildrenLoaded
@@ -97,14 +95,6 @@ internal class FrontendProjectViewPaneTreeModel(
   }
 
   private val updateEpoch = MutableStateFlow(0L)
-
-  internal val selectInTargets: Collection<SelectInTarget> = descriptor.selectInTargetDescriptors.map {
-    SplitProjectViewSelectInTarget(
-      minorViewId = it.id,
-      presentableName = it.presentableName,
-      weight = it.weight
-    )
-  }
 
   internal val requestChannel: ReceiveChannel<ProjectViewPaneRequest>
     field = Channel<ProjectViewPaneRequest>(Channel.UNLIMITED)

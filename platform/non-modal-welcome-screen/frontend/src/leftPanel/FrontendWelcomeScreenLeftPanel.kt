@@ -1,7 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ide.nonModalWelcomeScreen.frontend.leftPanel
 
-import com.intellij.ide.SelectInTarget
 import com.intellij.ide.rpc.getComponent
 import com.intellij.ide.rpc.getFocusTargetForTransferredComponent
 import com.intellij.openapi.application.UI
@@ -13,7 +12,6 @@ import com.intellij.platform.ide.nonModalWelcomeScreen.isNonModalWelcomeScreenEn
 import com.intellij.platform.ide.nonModalWelcomeScreen.isWelcomeExperienceProject
 import com.intellij.platform.ide.nonModalWelcomeScreen.leftPanel.WelcomeScreenLeftPanel
 import com.intellij.platform.ide.nonModalWelcomeScreen.leftPanel.WelcomeScreenLeftPanelRpc
-import com.intellij.platform.ide.nonModalWelcomeScreen.leftPanel.WelcomeScreenLeftPanelSelectInTarget
 import com.intellij.platform.project.projectId
 import com.intellij.platform.projectView.frontend.pane.FrontendProjectViewPane
 import com.intellij.platform.projectView.frontend.pane.FrontendProjectViewPaneModel
@@ -122,8 +120,6 @@ internal class FrontendWelcomeScreenLeftPanel(
   }
 
   override var isCurrent: Boolean = false
-
-  override val selectInTargets: Collection<SelectInTarget> = listOf(WelcomeScreenLeftPanelSelectInTarget())
 
   override suspend fun manage() { }
 

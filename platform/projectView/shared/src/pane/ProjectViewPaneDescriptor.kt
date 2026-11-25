@@ -27,16 +27,40 @@ fun projectViewPaneId(idString: @NonNls String): ProjectViewPaneId = ProjectView
 @ApiStatus.Experimental
 sealed interface ProjectViewPaneDescriptor
 
+/**
+ * A group of Select In targets.
+ *
+ * The Select In popup shows the group as one item, and the targets of the group as its children.
+ * The targets of several panes can refer to one group.
+ */
+@ApiStatus.Experimental
+sealed interface SelectInTargetGroup
+
+/**
+ * Creates a group of Select In targets.
+ *
+ * The [id] identifies the group. If several panes create a group with the same [id], the first one decides the
+ * [presentableName] and the [weight].
+ */
+@ApiStatus.Experimental
+fun selectInTargetGroup(id: @NonNls String, presentableName: @NlsSafe String, weight: Float): SelectInTargetGroup =
+  SelectInTargetGroupImpl(id, presentableName, weight)
+
 @ApiStatus.Experimental
 sealed interface ProjectViewPaneDescriptorBuilder {
   fun setDefault(isDefault: Boolean)
 
   fun setIcon(icon: Icon)
 
+  /**
+   * Adds a Select In target that selects in this pane.
+   *
+   * A pane can add any number of targets. A target with a [group] shows as a child of that group.
+   */
   fun addSelectInTarget(
-    id: @NonNls String,
     presentableName: @NlsSafe String,
     weight: Float,
+    group: SelectInTargetGroup? = null,
   )
 
   fun build(id: ProjectViewPaneId, presentableName: @NlsSafe String, order: Int): ProjectViewPaneDescriptor

@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.projectView.frontend.pane
 
-import com.intellij.ide.SelectInTarget
 import com.intellij.platform.projectView.pane.ProjectViewPaneDescriptor
 import com.intellij.platform.projectView.pane.ProjectViewPaneDescriptorBuilder
 import com.intellij.platform.projectView.pane.ProjectViewPaneDescriptorImpl
@@ -28,8 +27,6 @@ interface FrontendProjectViewPane {
   val componentToFocus: JComponent
 
   var isCurrent: Boolean
-  
-  val selectInTargets: Collection<SelectInTarget>
 
   /**
    * Saves the current state of the pane into the specified XML element.

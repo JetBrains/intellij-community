@@ -3,7 +3,6 @@ package com.intellij.platform.projectView.frontend.impl
 
 import com.intellij.ide.DefaultTreeExpander
 import com.intellij.ide.IdeBundle
-import com.intellij.ide.SelectInTarget
 import com.intellij.ide.actions.OpenInRightSplitActionProvider
 import com.intellij.ide.projectView.impl.ProjectViewInitNotifier
 import com.intellij.ide.projectView.impl.ProjectViewPreloadMode
@@ -135,9 +134,6 @@ internal class TreeBasedFrontendProjectViewPane(
 
   val displayName: @NlsSafe String
     get() = paneTreeModel.descriptor.presentableName
-
-  override val selectInTargets: Collection<SelectInTarget>
-    get() = paneTreeModel.selectInTargets
 
   override val component: JComponent
     field = ContentPanel(scrollPane)

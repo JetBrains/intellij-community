@@ -192,7 +192,6 @@ private class LegacyBackendProjectViewPaneModel(
     if (addSelectInTargetDescriptors) {
       val selectInTarget = legacyPaneManager.selectInTarget
       addSelectInTarget(
-        id = legacyPaneManager.id, // For the PV it's the same as selectInTarget.minorViewId, but that one is declared nullable.
         presentableName = selectInTarget.toString(),
         weight = selectInTarget.weight
       )

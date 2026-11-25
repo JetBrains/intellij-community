@@ -2,7 +2,6 @@
 - a:getComponent():javax.swing.JComponent
 - a:getComponentToFocus():javax.swing.JComponent
 - a:getDescriptor():com.intellij.platform.projectView.pane.ProjectViewPaneDescriptor
-- a:getSelectInTargets():java.util.Collection
 - a:isCurrent():Z
 - a:manage(kotlin.coroutines.Continuation):java.lang.Object
 - a:restoreStateFrom(org.jdom.Element,com.intellij.platform.projectView.frontend.pane.RestorePaneStateOptions):V

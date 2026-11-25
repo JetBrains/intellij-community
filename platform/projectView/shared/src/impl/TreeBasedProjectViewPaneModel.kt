@@ -175,7 +175,6 @@ abstract class TreeBasedProjectViewPaneModel<T : ProjectViewNodeUserObject>(over
   
   protected open suspend fun describeSelectInTargets(builder: ProjectViewPaneDescriptorBuilder) {
     builder.addSelectInTarget(
-      id = id().idString,
       presentableName = presentableName(),
       weight = order().toFloat(),
     )

@@ -91,11 +91,11 @@ class ProjectViewPaneDescriptorBuilderImpl : ProjectViewPaneDescriptorBuilder {
   }
 
   override fun addSelectInTarget(
-    id: @NonNls String,
     presentableName: @NlsSafe String,
     weight: Float,
+    group: SelectInTargetGroup?,
   ) {
-    selectInTargets += SelectInTargetDescriptor(id, presentableName, weight)
+    selectInTargets += SelectInTargetDescriptor(presentableName, weight, group as SelectInTargetGroupImpl?)
   }
 
   override fun build(

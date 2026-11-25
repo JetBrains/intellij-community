@@ -204,12 +204,7 @@ abstract class ProjectViewPaneServiceBase(
   }
 
   override suspend fun findNodeForSelectIn(selectInRequestDTO: SelectInRequestDTO): ProjectViewNodePath? {
-    val managers = managers.value ?: return null
-    val manager = managers.values.firstOrNull { pane ->
-      pane.descriptor.selectInTargetDescriptors.any { selectInTargetDescriptor ->
-        selectInTargetDescriptor.id == selectInRequestDTO.targetId
-      }
-    } ?: return null
+    val manager = managers.value?.get(selectInRequestDTO.paneId) ?: return null
     val selectInRequest = selectInRequestDTO.toSelectInRequest(project) ?: return null
     return manager.withPaneActive { // need to wake it up and keep it alive for a while to search
       manager.pane.findNodeForSelectIn(selectInRequest)

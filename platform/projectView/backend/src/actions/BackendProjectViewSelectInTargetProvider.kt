@@ -13,6 +13,7 @@ import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.platform.ide.productMode.IdeProductMode
 import com.intellij.platform.projectView.backend.pane.BackendProjectViewPaneService
 import com.intellij.platform.projectView.pane.ProjectViewPaneDescriptorImpl
+import com.intellij.platform.projectView.pane.ProjectViewPaneId
 import com.intellij.platform.projectView.pane.SelectInRequestDTO
 import com.intellij.platform.projectView.pane.SelectInTargetDescriptor
 import com.intellij.platform.projectView.pane.serialize
@@ -30,31 +31,32 @@ internal class BackendProjectViewSelectInTargetProvider : ProjectViewSelectInTar
     // In the monolith mode, the frontend service does the job.
     // This one is only needed when some code at the backend wants to select something.
     if (!isProjectViewSplit() || IdeProductMode.isMonolith) return emptyList()
-    return buildList { 
-      val paneService = BackendProjectViewPaneService.getInstance(project)
-      val paneDescriptors = paneService.getPaneDescriptors().partition { paneService.isPaneSelected(it.id) }
-      val targetDescriptors = sortedTargetDescriptors(paneDescriptors.first) + sortedTargetDescriptors(paneDescriptors.second)
-      addAll(targetDescriptors.map { BackendProjectViewSelectInTarget(it) })
-    }
+    // The backend has no Select In popup, so the targets stay flat, without their groups.
+    val paneService = BackendProjectViewPaneService.getInstance(project)
+    val paneDescriptors = paneService.getPaneDescriptors().partition { paneService.isPaneSelected(it.id) }
+    return sortedTargets(paneDescriptors.first) + sortedTargets(paneDescriptors.second)
   }
 
-  private fun sortedTargetDescriptors(paneDescriptors: List<ProjectViewPaneDescriptorImpl>): List<SelectInTargetDescriptor> {
+  private fun sortedTargets(paneDescriptors: List<ProjectViewPaneDescriptorImpl>): List<SelectInTarget> {
     return paneDescriptors
-      .flatMap { it.selectInTargetDescriptors }
+      .flatMap { pane -> pane.selectInTargetDescriptors.map { BackendProjectViewSelectInTarget(pane.id, it) } }
       .sortedBy { it.weight }
   }
 }
 
-private class BackendProjectViewSelectInTarget(private val selectInTargetDescriptor: SelectInTargetDescriptor) : SelectInTarget {
+private class BackendProjectViewSelectInTarget(
+  private val paneId: ProjectViewPaneId,
+  private val selectInTargetDescriptor: SelectInTargetDescriptor,
+) : SelectInTarget {
   override fun canSelect(context: SelectInContext): Boolean = true // maybe later
 
   override fun selectIn(context: SelectInContext, requestFocus: Boolean) {
-    BackendProjectViewSelectInService.getInstance(context.project).scheduleSelectIn(selectInTargetDescriptor, context, requestFocus)
+    BackendProjectViewSelectInService.getInstance(context.project).scheduleSelectIn(paneId, context, requestFocus)
   }
 
   override fun getToolWindowId(): @NonNls String = ToolWindowId.PROJECT_VIEW
 
-  override fun getMinorViewId(): @NonNls String = selectInTargetDescriptor.id
+  override fun getMinorViewId(): @NonNls String = paneId.idString
 
   override fun getWeight(): Float = selectInTargetDescriptor.weight
 
@@ -83,8 +85,8 @@ internal class BackendProjectViewSelectInService(
     }
   }
 
-  fun scheduleSelectIn(selectInTargetDescriptor: SelectInTargetDescriptor, context: SelectInContext, requestFocus: Boolean) {
-    val result = tasks.trySend(SelectInTask(selectInTargetDescriptor, context, requestFocus))
+  fun scheduleSelectIn(paneId: ProjectViewPaneId, context: SelectInContext, requestFocus: Boolean) {
+    val result = tasks.trySend(SelectInTask(paneId, context, requestFocus))
     check(result.isSuccess)
   }
   
@@ -92,7 +94,7 @@ internal class BackendProjectViewSelectInService(
     val paneService = BackendProjectViewPaneService.getInstance(project)
     val path = paneService.findNodeForSelectIn(
       SelectInRequestDTO(
-        targetId = task.selectInTargetDescriptor.id,
+        paneId = task.paneId,
         contextDTO = task.context.serialize(),
       )
     ) ?: return
@@ -102,7 +104,7 @@ internal class BackendProjectViewSelectInService(
   }
   
   private data class SelectInTask(
-    val selectInTargetDescriptor: SelectInTargetDescriptor,
+    val paneId: ProjectViewPaneId,
     val context: SelectInContext,
     val requestFocus: Boolean,
   )

@@ -3,7 +3,9 @@
 
 package com.intellij.platform.projectView.frontend.actions
 
+import com.intellij.ide.CompositeSelectInTarget
 import com.intellij.ide.SelectInContext
+import com.intellij.ide.SelectInManager
 import com.intellij.ide.SelectInTarget
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.diagnostic.debug
@@ -18,6 +20,7 @@ import com.intellij.platform.projectView.actions.ProjectViewActionSupport
 import com.intellij.platform.projectView.actions.SelectInSplitProjectView
 import com.intellij.platform.projectView.frontend.pane.FrontendProjectViewPaneAggregator
 import com.intellij.platform.projectView.pane.ProjectViewNodePath
+import com.intellij.platform.projectView.pane.ProjectViewPaneId
 import com.intellij.platform.projectView.pane.SelectInRequestDTO
 import com.intellij.platform.projectView.pane.serialize
 import com.intellij.platform.projectView.runSafelyCancellable
@@ -210,14 +213,8 @@ private data class SelectInTask(
       LOG.error("Target is not supported: $target")
       return
     }
-    val aggregator = FrontendProjectViewPaneAggregator.getInstance(project)
     val nodePath = withTimeoutOrNull(15.seconds) {
-      LOG.debug { "Looking for the node to select for $context" }
-      aggregator.findNodeForSelectIn(SelectInRequestDTO(
-        targetId = target.minorViewId,
-        contextDTO = context.serialize(),
-        context = context,
-      ))
+      target.findNodeForSelectIn(context)
     }
     LOG.debug { "Found the node to select: $nodePath" }
     if (nodePath != null) {
@@ -226,26 +223,83 @@ private data class SelectInTask(
   }
 }
 
+/**
+ * Finds the node of the [context] in the first pane of this target that contains it.
+ * The current pane goes first if this target holds it.
+ */
+internal suspend fun SplitProjectViewSelectInTarget.findNodeForSelectIn(context: SelectInContext): ProjectViewNodePath? {
+  val project = context.project
+  val aggregator = FrontendProjectViewPaneAggregator.getInstance(project)
+  val contextDTO = context.serialize()
+  return currentPaneFirst(project, paneIds).firstNotNullOfOrNull { paneId ->
+    LOG.debug { "Looking for the node to select for $context in $paneId" }
+    aggregator.findNodeForSelectIn(SelectInRequestDTO(paneId = paneId, contextDTO = contextDTO, context = context))
+  }
+}
+
+private fun currentPaneFirst(project: Project, paneIds: List<ProjectViewPaneId>): List<ProjectViewPaneId> {
+  val currentPaneId = ProjectViewToolWindowService.getInstance(project).currentPaneDescriptor?.id
+  if (currentPaneId == null || currentPaneId !in paneIds) return paneIds
+  return listOf(currentPaneId) + paneIds.filter { it != currentPaneId }
+}
+
+/** A Select In target of the split Project View. */
 @ApiStatus.Internal
-class SplitProjectViewSelectInTarget(
-  private val minorViewId: @NonNls String,
-  private val presentableName: @Nls String,
-  private val weight: Float,
-) : SelectInTarget {
-  override fun canSelect(context: SelectInContext): Boolean = true // TODO maybe implement somehow someday
+sealed interface SplitProjectViewSelectInTarget : SelectInTarget {
+  /** The panes that this target selects in, in the order of the search. */
+  val paneIds: List<ProjectViewPaneId>
 
   override fun selectIn(context: SelectInContext, requestFocus: Boolean) {
-    LOG.debug("Select in $minorViewId: $context, requestFocus=$requestFocus")
+    LOG.debug { "Select in $minorViewId: $context, requestFocus=$requestFocus" }
     SelectInSplitProjectView.getInstance(context.project).selectIn(context, this, requestFocus)
   }
 
   override fun getToolWindowId(): @NonNls String = ToolWindowId.PROJECT_VIEW
+}
 
-  override fun getMinorViewId(): @NonNls String = minorViewId
+/** Selects in one pane. */
+@ApiStatus.Internal
+class SplitProjectViewPaneSelectInTarget(
+  val paneId: ProjectViewPaneId,
+  private val presentableName: @Nls String,
+  private val weight: Float,
+) : SplitProjectViewSelectInTarget {
+  override val paneIds: List<ProjectViewPaneId> = listOf(paneId)
+
+  override fun canSelect(context: SelectInContext): Boolean = true // TODO maybe implement somehow someday
+
+  override fun getMinorViewId(): @NonNls String = paneId.idString
 
   override fun getWeight(): Float = weight
 
   // This is actually a part of the SelectInTarget API (sic!).
+  override fun toString(): @Nls String = presentableName
+}
+
+/**
+ * Holds the targets of one group, and selects in the panes of these targets.
+ *
+ * The Select In popup shows the [subTargets] as the children of this target.
+ */
+@ApiStatus.Internal
+class SplitProjectViewSelectInGroupTarget(
+  private val id: @NonNls String,
+  private val presentableName: @Nls String,
+  private val weight: Float,
+  private val subTargets: List<SplitProjectViewPaneSelectInTarget>,
+) : SplitProjectViewSelectInTarget, CompositeSelectInTarget {
+  override val paneIds: List<ProjectViewPaneId> =
+    subTargets.sortedWith(SelectInManager.SelectInTargetComparator.INSTANCE).map { it.paneId }.distinct()
+
+  override fun getSubTargets(context: SelectInContext): Collection<SelectInTarget> = subTargets
+
+  override fun canSelect(context: SelectInContext): Boolean = subTargets.any { it.canSelect(context) }
+
+  // Not null, or the Select In popup shows the icon of the tool window for this target.
+  override fun getMinorViewId(): @NonNls String = id
+
+  override fun getWeight(): Float = weight
+
   override fun toString(): @Nls String = presentableName
 }
 

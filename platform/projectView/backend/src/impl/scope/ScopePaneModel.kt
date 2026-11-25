@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.projectView.backend.impl.scope
 
+import com.intellij.ide.IdeBundle
 import com.intellij.ide.scopeView.NamedScopeFilter
 import com.intellij.ide.scopeView.ScopeViewPane
 import com.intellij.ide.scopeView.ScopeViewTreeModel
@@ -23,6 +24,7 @@ import com.intellij.platform.projectView.impl.TreeStructureProjectViewNode
 import com.intellij.platform.projectView.impl.TreeStructureSelectNodeVisitorProvider
 import com.intellij.platform.projectView.impl.navigateToTreeStructureNodes
 import com.intellij.platform.projectView.pane.ProjectViewNodePath
+import com.intellij.platform.projectView.pane.ProjectViewPaneDescriptorBuilder
 import com.intellij.platform.projectView.pane.ProjectViewPaneId
 import com.intellij.platform.projectView.pane.ProjectViewPaneLoadChildrenOptions
 import com.intellij.platform.projectView.pane.ProjectViewPaneNavigateOptions
@@ -31,6 +33,7 @@ import com.intellij.platform.projectView.pane.ProjectViewPaneStateBuilder
 import com.intellij.platform.projectView.pane.SelectInRequest
 import com.intellij.platform.projectView.pane.SuspendingBackendProjectViewPaneStateAccessor
 import com.intellij.platform.projectView.pane.projectViewPaneId
+import com.intellij.platform.projectView.pane.selectInTargetGroup
 import com.intellij.platform.projectView.settings.ProjectViewPaneOption
 import com.intellij.platform.projectView.settings.ProjectViewPaneSettingsAccessor
 import com.intellij.platform.projectView.settings.ProjectViewPaneSettingsService
@@ -88,6 +91,16 @@ class ScopePaneModel internal constructor(
   override suspend fun presentableName(): @NlsSafe String = currentFilter.value.scope.presentableName
 
   override suspend fun order(): Int = 4
+
+  /** The targets of all scope panes are the children of one group, the same as the sub-IDs of the legacy [ScopeViewPane]. */
+  override suspend fun describeSelectInTargets(builder: ProjectViewPaneDescriptorBuilder) {
+    val weight = order().toFloat()
+    builder.addSelectInTarget(
+      presentableName = presentableName(),
+      weight = weight,
+      group = selectInTargetGroup(id = ScopeViewPane.ID, presentableName = IdeBundle.message("select.in.scope"), weight = weight),
+    )
+  }
 
   /**
    * Re-applies the scope, which is what [ScopeViewPane.updateSelectedScope] does for the legacy pane: the filter

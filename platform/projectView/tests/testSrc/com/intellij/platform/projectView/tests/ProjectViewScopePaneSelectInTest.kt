@@ -179,6 +179,6 @@ internal class ProjectViewScopePaneSelectInTest : AbstractProjectViewPaneTest() 
 
   private fun selectInRequest(paneId: ProjectViewPaneId, file: VirtualFile): SelectInRequestDTO {
     val context = FileSelectInContext(project.get(), file)
-    return SelectInRequestDTO(targetId = paneId.idString, contextDTO = context.serialize(), context = context)
+    return SelectInRequestDTO(paneId = paneId, contextDTO = context.serialize(), context = context)
   }
 }

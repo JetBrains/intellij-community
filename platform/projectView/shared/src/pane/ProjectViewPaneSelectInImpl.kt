@@ -14,18 +14,31 @@ import kotlinx.serialization.Transient
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 
+/**
+ * A Select In target that selects in the pane that declares it.
+ *
+ * A target with a [group] shows as a child of that group.
+ */
 @ApiStatus.Internal
 @Serializable
 data class SelectInTargetDescriptor(
+  val presentableName: @NlsSafe String,
+  val weight: Float,
+  val group: SelectInTargetGroupImpl?,
+)
+
+@ApiStatus.Internal
+@Serializable
+data class SelectInTargetGroupImpl(
   val id: @NonNls String,
   val presentableName: @NlsSafe String,
   val weight: Float,
-)
+) : SelectInTargetGroup
 
 @ApiStatus.Internal
 fun SelectInRequestDTO.toSelectInRequest(project: Project): SelectInRequest? {
   val context = context ?: restoreSerializedContext(contextDTO, project) ?: return null
-  return SelectByContextImpl(targetId, context)
+  return SelectByContextImpl(context)
 }
 
 private fun restoreSerializedContext(contextDescriptor: SelectInContextDTO, project: Project): SelectInContext? {
@@ -34,7 +47,6 @@ private fun restoreSerializedContext(contextDescriptor: SelectInContextDTO, proj
 }
 
 private data class SelectByContextImpl(
-  override val targetId: @NonNls String,
   override val context: SelectInContext,
 ) : SelectByContext
 
@@ -52,7 +64,7 @@ internal data class SelectByEditorImpl(
 @ApiStatus.Internal
 @Serializable
 data class SelectInRequestDTO(
-  val targetId: @NonNls String,
+  val paneId: ProjectViewPaneId,
   val contextDTO: SelectInContextDTO,
   @Transient val context: SelectInContext? = null,
 )

@@ -198,12 +198,14 @@
 - a:performPaste(java.util.List,kotlin.coroutines.Continuation):java.lang.Object
 *:com.intellij.platform.projectView.pane.ProjectViewPaneDescriptor
 *:com.intellij.platform.projectView.pane.ProjectViewPaneDescriptorBuilder
-- a:addSelectInTarget(java.lang.String,java.lang.String,F):V
+- a:addSelectInTarget(java.lang.String,F,com.intellij.platform.projectView.pane.SelectInTargetGroup):V
+- bs:addSelectInTarget$default(com.intellij.platform.projectView.pane.ProjectViewPaneDescriptorBuilder,java.lang.String,F,com.intellij.platform.projectView.pane.SelectInTargetGroup,I,java.lang.Object):V
 - a:build(com.intellij.platform.projectView.pane.ProjectViewPaneId,java.lang.String,I):com.intellij.platform.projectView.pane.ProjectViewPaneDescriptor
 - a:setDefault(Z):V
 - a:setIcon(javax.swing.Icon):V
 *f:com.intellij.platform.projectView.pane.ProjectViewPaneDescriptorKt
 - *sf:projectViewPaneId(java.lang.String):com.intellij.platform.projectView.pane.ProjectViewPaneId
+- *sf:selectInTargetGroup(java.lang.String,java.lang.String,F):com.intellij.platform.projectView.pane.SelectInTargetGroup
 *:com.intellij.platform.projectView.pane.ProjectViewPaneDnDHandler
 - a:performInternalDnD(java.util.List,J,com.intellij.platform.projectView.pane.ProjectViewDnDOptions,kotlin.coroutines.Continuation):java.lang.Object
 - receiveExternalDrop(java.util.List,J,com.intellij.platform.projectView.pane.ProjectViewDnDOptions,kotlin.coroutines.Continuation):java.lang.Object
@@ -254,7 +256,6 @@
 *:com.intellij.platform.projectView.pane.SelectByContext
 - com.intellij.platform.projectView.pane.SelectInRequest
 - a:getContext():com.intellij.ide.SelectInContext
-- a:getTargetId():java.lang.String
 *:com.intellij.platform.projectView.pane.SelectByEditor
 - com.intellij.platform.projectView.pane.SelectInRequest
 - a:getConsiderOnlyLastFocusedEditor():Z
@@ -263,6 +264,7 @@
 - a:getRequestFocus():Z
 - a:setRequestFocus(Z):V
 *:com.intellij.platform.projectView.pane.SelectInRequest
+*:com.intellij.platform.projectView.pane.SelectInTargetGroup
 *:com.intellij.platform.projectView.pane.SuspendingBackendProjectViewPaneStateAccessor
 - a:getChildren(com.intellij.platform.projectView.pane.BackendProjectViewNodeModel,kotlin.coroutines.Continuation):java.lang.Object
 - a:getNodeById(J,kotlin.coroutines.Continuation):java.lang.Object
