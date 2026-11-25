@@ -73,7 +73,7 @@ private object OtherXmlHandler : JbImportXmlHandler {
   }
 
   fun processExperimentalToolbar() {
-    // The settings v2 import can still read the imported component, so the component is reset too.
+    // The default of the settings v2 key reads the component, so the component is reset too.
     if (NotRoamableUiSettings.getInstance().experimentalSingleStripe) {
       NotRoamableUiSettings.getInstance().experimentalSingleStripe = false
     }

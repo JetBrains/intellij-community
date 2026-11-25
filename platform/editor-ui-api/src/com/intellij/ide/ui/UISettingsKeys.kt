@@ -1,11 +1,14 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui
 
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.components.serviceOrNull
+import com.intellij.platform.settings.v2.BooleanSerializer
 import com.intellij.platform.settings.v2.DoubleSerializer
 import com.intellij.platform.settings.v2.KeyLocality
 import com.intellij.platform.settings.v2.Serializer
@@ -31,37 +34,58 @@ import org.jetbrains.annotations.ApiStatus.Internal
  * Holds the settings keys of the UI settings that [NotRoamableUiSettings] stores. Each key resolves only at the
  * application context. The fonts, the antialiasing and the scales depend on the display and the fonts of one machine,
  * so their keys are environmental. Only [SINGLE_STRIPE] is shareable.
+ *
+ * The default of each key reads the current value of the [NotRoamableUiSettings] component, so a key with no stored
+ * value reads the component. The design expects the component to change only through the setters of [UISettings].
  */
 @Internal
 object UISettingsKeys {
-  /** Holds the antialiasing of the text in the IDE. The default is subpixel when the machine supports it. */
-  val IDE_ANTIALIASING: SettingsKey<AntialiasingType> = antialiasingKey("ui.ideAntialiasing") {
+  /**
+   * Holds the antialiasing of the text in the IDE. Without the component, the default is subpixel when the machine
+   * supports it.
+   */
+  val IDE_ANTIALIASING: SettingsKey<AntialiasingType> = uiKey("ui.ideAntialiasing", enumSerializer(), NotRoamableUiSettings::ideAAType) {
     if (AntialiasingType.canUseSubpixelAAForIDE()) AntialiasingType.SUBPIXEL else AntialiasingType.GREYSCALE
   }
 
-  /** Holds the antialiasing of the text in the editor. The default is subpixel when the machine supports it. */
-  val EDITOR_ANTIALIASING: SettingsKey<AntialiasingType> = antialiasingKey("ui.editorAntialiasing") {
+  /**
+   * Holds the antialiasing of the text in the editor. Without the component, the default is subpixel when the machine
+   * supports it.
+   */
+  val EDITOR_ANTIALIASING: SettingsKey<AntialiasingType> = uiKey("ui.editorAntialiasing", enumSerializer(), NotRoamableUiSettings::editorAAType) {
     if (AntialiasingType.canUseSubpixelAAForEditor()) AntialiasingType.SUBPIXEL else AntialiasingType.GREYSCALE
   }
 
   /** Holds the name of the custom font of the IDE, or `null` for the system font. */
-  val CUSTOM_FONT_FACE: SettingsKey<String?> = uiKey("ui.customFont.face", default = null, serializer = StringSerializer.nullable())
+  val CUSTOM_FONT_FACE: SettingsKey<String?> =
+    uiKey("ui.customFont.face", StringSerializer.nullable(), { it.state.fontFace }) { null }
 
-  /** Holds the size of the custom font of the IDE, or `0` for the system size. */
-  val CUSTOM_FONT_SIZE: SettingsKey<Float> = uiKey("ui.customFont.size", default = 0f, serializer = FloatSerializer)
+  /**
+   * Holds the size of the custom font of the IDE. [UISettings] reads a size of `0` or less as the default font size.
+   * The component holds `0` only when it has no stored state.
+   */
+  val CUSTOM_FONT_SIZE: SettingsKey<Float> = uiKey("ui.customFont.size", FloatSerializer, NotRoamableUiSettings::fontSize) { 0f }
 
   /** Tells whether the IDE uses the custom font of [CUSTOM_FONT_FACE] and [CUSTOM_FONT_SIZE]. */
-  val CUSTOM_FONT_ENABLED: SettingsKey<Boolean> = uiKey("ui.customFont.enabled", default = false)
+  val CUSTOM_FONT_ENABLED: SettingsKey<Boolean> =
+    uiKey("ui.customFont.enabled", BooleanSerializer, NotRoamableUiSettings::overrideLafFonts) { false }
 
   /** Holds the scale of the IDE, where `1` is the normal size. */
-  val IDE_SCALE: SettingsKey<Float> = uiKey("ui.ideScale", default = 1f, serializer = FloatSerializer)
+  val IDE_SCALE: SettingsKey<Float> = uiKey("ui.ideScale", FloatSerializer, NotRoamableUiSettings::ideScale) { 1f }
 
-  /** Holds the scale of the IDE in the presentation mode, or `null` when the user did not set one. */
-  val PRESENTATION_MODE_IDE_SCALE: SettingsKey<Float?> =
-    uiKey("ui.presentationModeIdeScale", default = null, serializer = FloatSerializer.nullable())
+  /**
+   * Holds the scale of the IDE in the presentation mode. A scale of the component of `0` or less reads as the default
+   * scale of the presentation mode. The component holds such a scale only before [UISettings] loads its state.
+   */
+  val PRESENTATION_MODE_IDE_SCALE: SettingsKey<Float> =
+    uiKey("ui.presentationModeIdeScale", FloatSerializer,
+          { component -> component.presentationModeIdeScale.takeIf { it > 0 } ?: UISettingsUtils.defaultScale(isPresentation = true) }) {
+      UISettingsUtils.defaultScale(isPresentation = true)
+    }
 
   /** Tells whether the tool windows show their buttons in one stripe. */
-  val SINGLE_STRIPE: SettingsKey<Boolean> = uiKey("toolWindows.singleStripe", default = false, locality = KeyLocality.SHAREABLE)
+  val SINGLE_STRIPE: SettingsKey<Boolean> =
+    uiKey("toolWindows.singleStripe", BooleanSerializer, NotRoamableUiSettings::experimentalSingleStripe, KeyLocality.SHAREABLE) { false }
 
   /** Lists every key of this object. [UISettingsKeysPromoter] registers each one. */
   val ALL_KEYS: List<SettingsKey<*>> = listOf(
@@ -133,34 +157,27 @@ internal class UISettingsKeysScope(val coroutineScope: CoroutineScope) {
 }
 
 /**
- * Creates an application key with a ready default value.
+ * Creates an application key whose default is the value of the [NotRoamableUiSettings] component.
  *
- * @param serializer the serializer of the value, or `null` to infer it from [default]. A `null` or a [Float] default
- *   needs one.
+ * @param componentValue returns the value of the setting from the component
+ * @param fallback returns the default when the component is not available, for example before the application starts
+ *   or after it is disposed
  */
 private fun <T> uiKey(
   name: String,
-  default: T,
-  serializer: Serializer<T>? = null,
+  serializer: Serializer<T>,
+  componentValue: (NotRoamableUiSettings) -> T,
   locality: KeyLocality = KeyLocality.ENVIRONMENTAL,
+  fallback: () -> T,
 ): SettingsKey<T> =
   SettingsKey(name = name,
-              default = default,
               serializer = serializer,
               locality = locality,
-              contextFilter = SettingsContextFilters.APP_ONLY)
-
-/**
- * Creates an environmental application key of an antialiasing type.
- *
- * @param default returns the default value. A factory, because the default depends on the OS and on system properties.
- */
-private fun antialiasingKey(name: String, default: () -> AntialiasingType): SettingsKey<AntialiasingType> =
-  SettingsKey(name = name,
-              serializer = enumSerializer<AntialiasingType>(),
-              locality = KeyLocality.ENVIRONMENTAL,
               contextFilter = SettingsContextFilters.APP_ONLY,
-              defaultFactory = { default() })
+              defaultFactory = {
+                val component = ApplicationManager.getApplication()?.takeUnless { it.isDisposed }?.serviceOrNull<NotRoamableUiSettings>()
+                if (component == null) fallback() else componentValue(component)
+              })
 
 /**
  * Serializes a [Float] as a [SettingsValue.DoubleValue] through [DoubleSerializer]. The conversion goes through the

@@ -13,7 +13,8 @@ import org.jetbrains.annotations.ApiStatus.Internal
  * Imports the state of the [NotRoamableUiSettings] component into the keys of [UISettingsKeys]. The migration writes a
  * value only into a key that holds no stored value, and only when the value differs from the default. So it stores no
  * default, and a repeated run keeps the values that the user set after the first import. The component repairs its
- * state when it loads it, so the import takes the repaired values.
+ * state when it loads it, so the import takes the repaired values. While the default of each key reads the component,
+ * the import finds no difference and stores nothing.
  * Registered as the `settings.v2.appMigration` `ui.importNotRoamableUiSettings` in `intellij.platform.editor.ui.xml`.
  */
 @Internal

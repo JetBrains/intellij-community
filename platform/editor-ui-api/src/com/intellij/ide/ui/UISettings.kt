@@ -447,17 +447,11 @@ class UISettings private constructor(
     }
 
   /**
-   * Holds the scale of the IDE in the presentation mode, the value of [UISettingsKeys.PRESENTATION_MODE_IDE_SCALE].
-   * No value reads as the default scale of the presentation mode. A write returns before it applies.
-   * [addPresentationModeIdeScaleListener] follows the value.
+   * Holds the scale of the IDE in the presentation mode, the value of [UISettingsKeys.PRESENTATION_MODE_IDE_SCALE]. A
+   * write is asynchronous. See [UISettings]. [addPresentationModeIdeScaleListener] follows the value.
    */
   var presentationModeIdeScale: Float
-    get() {
-      if (!usesKeys) {
-        return notRoamableOptions.presentationModeIdeScale
-      }
-      return UISettingsKeys.PRESENTATION_MODE_IDE_SCALE.getValue() ?: UISettingsUtils.defaultScale(isPresentation = true)
-    }
+    get() = readSetting(UISettingsKeys.PRESENTATION_MODE_IDE_SCALE) { notRoamableOptions.presentationModeIdeScale }
     set(value) {
       writeSetting(UISettingsKeys.PRESENTATION_MODE_IDE_SCALE, value) { notRoamableOptions.presentationModeIdeScale = value }
     }
@@ -930,7 +924,7 @@ class UISettings private constructor(
    * [UISettings].
    */
   fun addPresentationModeIdeScaleListener(parentDisposable: Disposable, listener: (Float) -> Unit) {
-    addValueListener(UISettingsKeys.PRESENTATION_MODE_IDE_SCALE, parentDisposable, { presentationModeIdeScale }) { listener(it!!) }
+    addValueListener(UISettingsKeys.PRESENTATION_MODE_IDE_SCALE, parentDisposable, { presentationModeIdeScale }, listener)
   }
 
   /**

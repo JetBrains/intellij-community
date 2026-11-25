@@ -83,8 +83,16 @@ class UISettingsFacadeTest {
   }
 
   @Test
-  fun `no presentation mode scale reads as the default scale of the presentation mode`() {
-    assertEquals(UISettingsUtils.defaultScale(isPresentation = true), settings.presentationModeIdeScale)
+  fun `a presentation mode scale of zero or less in the component reads as the default scale of the presentation mode`() {
+    val component = NotRoamableUiSettings.getInstance()
+    val scaleBeforeTest = component.presentationModeIdeScale
+    component.presentationModeIdeScale = 0f
+    try {
+      assertEquals(UISettingsUtils.defaultScale(isPresentation = true), settings.presentationModeIdeScale)
+    }
+    finally {
+      component.presentationModeIdeScale = scaleBeforeTest
+    }
   }
 
   @Test

@@ -8,7 +8,6 @@ import com.intellij.openapi.ui.ComboBox
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.common.waitUntil
 import com.intellij.testFramework.junit5.TestApplication
-import com.intellij.ui.FontComboBox
 import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -57,17 +56,13 @@ class AppearancePageSettingsTest {
   }
 
   @Test
-  fun `an Apply that enables the custom font stores the font that the inputs show`(): Unit = timeoutRunBlocking(60.seconds) {
-    val shownFontFace = withContext(Dispatchers.EDT) {
-      val page = configurable.createComponent()!!
-      page.customFontCheckBox().isSelected = true
-      val shownFontFace = UIUtil.findComponentOfType(page, FontComboBox::class.java)!!.fontName
+  fun `an Apply that enables the custom font stores the flag`(): Unit = timeoutRunBlocking(60.seconds) {
+    withContext(Dispatchers.EDT) {
+      configurable.createComponent()!!.customFontCheckBox().isSelected = true
       configurable.apply()
-      shownFontFace
     }
 
     waitUntilUISettingsKeyStores(UISettingsKeyIdentities.CUSTOM_FONT_ENABLED, true)
-    waitUntilUISettingsKeyStores(UISettingsKeyIdentities.CUSTOM_FONT_FACE, shownFontFace)
   }
 
   @Test
