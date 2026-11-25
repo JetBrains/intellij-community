@@ -2,6 +2,7 @@
 package com.intellij.python.pyproject.model.evolution
 
 import com.intellij.openapi.diagnostic.fileLogger
+import com.intellij.openapi.module.ModuleTypeManager
 import com.intellij.openapi.project.Project
 import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.platform.workspace.jps.entities.FacetEntity
@@ -49,7 +50,8 @@ private val logger = fileLogger()
  *
  * The Python module type and the Python facet are legacy carriers of a Python module, see [PyProjectImpl.baseDirOf]. Each
  * module with a content root loses both. A facet that names an SDK goes with the migration of its module, also when the
- * SDK table has no such SDK.
+ * SDK table has no such SDK. Where the Python module type is the default type of the IDE, as in PyCharm, the type stays,
+ * see [pythonModuleTypeIsLegacy].
  *
  * The model calls this function on each pass, so a module that an older build gives an SDK later is migrated too.
  */
@@ -61,7 +63,8 @@ internal suspend fun migrateSdkReferences(project: Project) {
     val sdkName = ownSdkReferenceOf(module) ?: projectSdkName?.takeIf { inheritsProjectSdk(module) }
     sdkName?.let { module to it }
   }.toList()
-  if (references.isEmpty() && projectSdkName == null && storage.entities<ModuleEntity>().none { it.hasLegacyPythonCarrier() }) return
+  val pythonTypeIsLegacy = pythonModuleTypeIsLegacy()
+  if (references.isEmpty() && projectSdkName == null && storage.entities<ModuleEntity>().none { it.hasLegacyPythonCarrier(pythonTypeIsLegacy) }) return
 
   val registry = PythonInterpreterRegistry.getInstance(project)
   val lost = mutableListOf<MigratedModule>()
@@ -91,12 +94,14 @@ internal suspend fun migrateSdkReferences(project: Project) {
       transferred.forEach(mutable::removeEntity)
     }
     val migrated = migrations.mapTo(HashSet()) { it.moduleId }
-    for (module in mutable.entities<ModuleEntity>().filter { it.hasLegacyPythonCarrier() }.toList()) {
+    for (module in mutable.entities<ModuleEntity>().filter { it.hasLegacyPythonCarrier(pythonTypeIsLegacy) }.toList()) {
       // Another writer can have given the module a facet with an SDK since the read. That facet waits for the next pass.
       val facets = module.facets.filter { it.isPythonFacet() }
         .filter { it.facetSdkName() == null || module.symbolicId in migrated || interpreterLibraryOf(module) != null }
       facets.forEach(mutable::removeEntity)
-      if (module.type?.name == PYTHON_MODULE_ID) mutable.resolve(module.symbolicId)?.let { mutable.modifyModuleEntity(it) { type = null } }
+      if (pythonTypeIsLegacy && module.type?.name == PYTHON_MODULE_ID) {
+        mutable.resolve(module.symbolicId)?.let { mutable.modifyModuleEntity(it) { type = null } }
+      }
     }
     // Another writer can have changed the project SDK since the read.
     val settings = mutable.entities<ProjectSettingsEntity>().firstOrNull()
@@ -148,7 +153,17 @@ private fun FacetEntity.isPythonFacet(): Boolean = typeId.name == PYTHON_FACET_I
 
 private fun FacetEntity.facetSdkName(): String? = configurationXmlTag?.let(::facetSdkName)
 
-/** Whether [this] module has a content root and the Python module type or a Python facet, which the migration removes. */
-private fun ModuleEntity.hasLegacyPythonCarrier(): Boolean =
-  contentRoots.isNotEmpty() && (type?.name == PYTHON_MODULE_ID || facets.any { it.isPythonFacet() })
+/**
+ * Whether the Python module type marks a module of an older build. Where it is the default type of the IDE, as in PyCharm,
+ * the platform gives it to each module that it makes, and a module without a type has it too. There it marks nothing, and
+ * its removal would only write the workspace model again for each such module.
+ */
+private fun pythonModuleTypeIsLegacy(): Boolean = ModuleTypeManager.getInstance().defaultModuleType.id != PYTHON_MODULE_ID
+
+/**
+ * Whether [this] module has a content root and a Python facet, or the Python module type when [pythonTypeIsLegacy]. The
+ * migration removes both.
+ */
+private fun ModuleEntity.hasLegacyPythonCarrier(pythonTypeIsLegacy: Boolean): Boolean =
+  contentRoots.isNotEmpty() && ((pythonTypeIsLegacy && type?.name == PYTHON_MODULE_ID) || facets.any { it.isPythonFacet() })
 
