@@ -37,7 +37,7 @@ private val logger = fileLogger()
  * module of another type, such as a Java module with its own Python SDK, is a Python project.
  *
  * An older build also stores a Python project SDK, which a module inherits. A module does not inherit its interpreter in
- * this flow, so a Python project that inherits the project SDK gets the entry of that SDK, and the project SDK goes.
+ * this flow, so a module that inherits the project SDK gets the entry of that SDK, and the project SDK goes.
  * A project SDK of another type, such as a JDK, stays.
  *
  * Call it only after the synchronization with the JPS model, so the SDK table is complete. A module that has an entry
@@ -48,7 +48,8 @@ private val logger = fileLogger()
  * and its interpreter appears when the environment comes back.
  *
  * The Python module type and the Python facet are legacy carriers of a Python module, see [PyProjectImpl.baseDirOf]. Each
- * module with a content root loses both. A facet that names an SDK goes only after its SDK gave the module an entry.
+ * module with a content root loses both. A facet that names an SDK goes with the migration of its module, also when the
+ * SDK table has no such SDK.
  *
  * The model calls this function on each pass, so a module that an older build gives an SDK later is migrated too.
  */
@@ -109,9 +110,12 @@ internal suspend fun migrateSdkReferences(project: Project) {
 private fun pythonProjectSdkNameOf(storage: EntityStorage): String? =
   storage.entities<ProjectSettingsEntity>().firstOrNull()?.projectSdk?.takeIf { it.type == PyNames.PYTHON_SDK_ID_NAME }?.name
 
-/** Whether [module] is a Python project that inherits the project SDK. */
+/**
+ * Whether [module] has a content root and inherits the project SDK. The module needs no other sign of a Python project:
+ * a Python project SDK that it inherits is its interpreter, and the entry of that SDK makes it a Python project.
+ */
 private fun inheritsProjectSdk(module: ModuleEntity): Boolean =
-  module.dependencies.any { it is InheritedSdkDependency } && PyProjectImpl.baseDirOf(module) != null
+  module.dependencies.any { it is InheritedSdkDependency } && PyProjectImpl.baseDirOfRoots(module) != null
 
 /**
  * The entry of the SDK named [sdkName] for [module], or `null` when the SDK table has no such Python SDK. The store of
