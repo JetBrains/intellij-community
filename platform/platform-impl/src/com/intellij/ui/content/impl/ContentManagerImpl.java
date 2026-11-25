@@ -258,6 +258,8 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
         // 2. separates the underlying Window.toFront call into a separate EDT event,
         // as that call can be a nightmare involving WAs (IJPL-246659).
         SwingUtilities.invokeLater(() -> {
+          if (myProject.isDisposed()) return;
+
           Content current = getSelectedContent();
           if (current == null) {
             ToolWindowManager.getInstance(myProject).activateEditorComponent();
