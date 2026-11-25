@@ -285,7 +285,6 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
       {"alt MINUS",                SECOND_STROKE, "RInsertAssignmentAction"},
       {"alt SLASH",                "CodeCompletion", "HippieCompletion"},
       {"control A",                "EditorLineStart", "Terminal.MoveCaretToLineStart"},
-      {"control B",                "EditorLeft", "org.intellij.plugins.markdown.ui.actions.styling.ToggleBoldAction"},
       {"control D",                "$Delete", "Diff.ShowDiff", "Compare.SameVersion", "CompareTwoFiles", "SendEOF", "Terminal.CloseSession",
                                    "FileChooser.GotoDesktop", "org.jetbrains.r.console.RConsoleViewImpl.REofAction"},
       {"control E",                "EditorLineEnd", "Terminal.MoveCaretToLineEnd"},

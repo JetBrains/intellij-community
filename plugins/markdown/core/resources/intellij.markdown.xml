@@ -528,6 +528,7 @@
               id="org.intellij.plugins.markdown.ui.actions.styling.ToggleBoldAction"
               icon="org.intellij.plugins.markdown.MarkdownIcons.EditorActions.Bold">
         <keyboard-shortcut first-keystroke="control B" keymap="$default"/>
+        <keyboard-shortcut first-keystroke="control B" keymap="Emacs" remove="true"/>
       </action>
       <action class="org.intellij.plugins.markdown.ui.actions.styling.ToggleItalicAction"
               id="org.intellij.plugins.markdown.ui.actions.styling.ToggleItalicAction"
