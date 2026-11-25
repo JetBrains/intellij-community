@@ -7,6 +7,7 @@ import com.intellij.mcpserver.McpTool
 import com.intellij.mcpserver.McpToolFilter
 import com.intellij.mcpserver.McpToolFilterProvider
 import com.intellij.mcpserver.McpToolInvocationMode
+import com.intellij.mcpserver.McpUnauthorizedRequestNotifier
 import com.intellij.mcpserver.elicitation.McpElicitationKind
 import com.intellij.mcpserver.elicitation.McpElicitationKind.CLI
 import com.intellij.mcpserver.elicitation.McpElicitationKind.IDE
@@ -26,7 +27,6 @@ import com.intellij.mcpserver.stdio.IJ_MCP_SERVER_PROJECT_PATH
 import com.intellij.mcpserver.toolsets.general.ROUTER_TOOL_NAME
 import com.intellij.mcpserver.toolwindow.TransportType
 import com.intellij.mcpserver.util.enableIfNotExplicitlyDisabled
-import com.intellij.mcpserver.util.notifyUnauthorizedMcpRequest
 import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.application.ApplicationInfo
@@ -34,6 +34,7 @@ import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
+import com.intellij.openapi.components.serviceOrNull
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.fileEditor.FileDocumentManager
@@ -478,7 +479,7 @@ open class McpServerServiceImpl(private val cs: CoroutineScope) : McpServerServi
             logger.warn("Rejected an unauthorized MCP request to ${call.request.uri} " +
                         "(user agent: ${call.request.headers[HttpHeaders.UserAgent]})")
             cs.launch {
-              notifyUnauthorizedMcpRequest(resolvedPort)
+              serviceOrNull<McpUnauthorizedRequestNotifier>()?.notifyUnauthorizedRequest(resolvedPort)
             }
             finish()
             return@prePhase

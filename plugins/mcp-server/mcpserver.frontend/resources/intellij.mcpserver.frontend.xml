@@ -29,6 +29,8 @@
   <extensions defaultExtensionNs="com.intellij">
     <applicationService serviceInterface="com.intellij.mcpserver.McpServerConsentUi"
                         serviceImplementation="com.intellij.mcpserver.util.McpServerConsentUiImpl"/>
+    <applicationService serviceInterface="com.intellij.mcpserver.McpUnauthorizedRequestNotifier"
+                        serviceImplementation="com.intellij.mcpserver.frontend.util.McpUnauthorizedRequestNotifierImpl"/>
 
     <serviceViewContributor implementation="com.intellij.mcpserver.frontend.services.McpServiceViewContributor"/>
 
