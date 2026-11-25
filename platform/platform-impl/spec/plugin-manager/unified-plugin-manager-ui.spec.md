@@ -716,9 +716,11 @@ Untested: No focused test verifies Shift-selection across sections.
 - The current section header must remain visible while its rows scroll.
 - The next section header must replace it without duplicating its controls.
 - A sticky expansion control must remain functional.
+- Moving a header into or out of its sticky position must preserve whether its focus outline is visible.
   [@test] ../../testSrc/com/intellij/ide/plugins/unified/UnifiedPluginsPageViewTest.kt (
     `sticky header is pushed off by the next section without duplicating controls`;
-    `sticky expansion control collapses its section`
+    `sticky expansion control collapses its section`;
+    `sticky header preserves the focus outline of its expansion control`
   )
 
 - A section header must remain visible after the first layout, a section replacement, and a resize.

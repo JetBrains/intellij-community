@@ -50,7 +50,9 @@ import org.junit.jupiter.api.Timeout
 import java.awt.Color
 import java.awt.Component
 import java.awt.Container
+import java.awt.DefaultKeyboardFocusManager
 import java.awt.Insets
+import java.awt.KeyboardFocusManager
 import java.awt.Point
 import java.awt.Rectangle
 import java.awt.event.ActionEvent
@@ -1165,6 +1167,70 @@ internal class UnifiedPluginsPageViewTest {
     assertThat(installedList.model.size).isEqualTo(PluginSectionState.COLLAPSED_ITEM_LIMIT)
     assertThat(expansionTextLabel.text).isEqualTo(IdeBundle.message("plugins.configurable.show.more"))
     assertThat(expansionChevronLabel.icon).isSameAs(AllIcons.General.ChevronDown)
+  }
+
+  @Test
+  fun `sticky header preserves the focus outline of its expansion control`(): Unit = timeoutRunBlocking(context = Dispatchers.UI) {
+    val controller = UnifiedPluginsPageController(
+      listOf(section(PluginSectionId.Installed, itemCount = 5), section(PluginSectionId.Bundled, itemCount = 20))
+    )
+    lateinit var view: UnifiedPluginsPageView
+    view = createView(onExpansionChanged = { id, expanded ->
+      controller.setSectionExpanded(id, expanded)
+      view.render(controller.state.value)
+    })
+    view.use {
+      view.render(controller.state.value)
+      prepareForScrolling(view)
+      val title = IdeBundle.message("plugins.configurable.bundled")
+      val header = sectionHeader(view, title)
+      val button = componentsOfType(header, JToggleButton::class.java).single()
+      val headerSlot = header.parent
+      val scrollPane = componentsOfType(view.component, JBScrollPane::class.java).single()
+      val bundledList = sectionList(view, title)
+      val originalFocusManager = KeyboardFocusManager.getCurrentKeyboardFocusManager()
+      val focusManager = object : DefaultKeyboardFocusManager() {
+        override fun getFocusOwner(): Component = button
+      }
+
+      fun gainFocus(cause: FocusEvent.Cause) {
+        val event = FocusEvent(button, FocusEvent.FOCUS_GAINED, false, null, cause)
+        button.focusListeners.forEach { it.focusGained(event) }
+      }
+
+      fun restoreFocus() {
+        val event = FocusEvent(button, FocusEvent.FOCUS_LOST)
+        button.focusListeners.forEach { it.focusLost(event) }
+        gainFocus(FocusEvent.Cause.UNKNOWN)
+      }
+
+      KeyboardFocusManager.setCurrentKeyboardFocusManager(focusManager)
+      try {
+        gainFocus(FocusEvent.Cause.MOUSE_EVENT)
+        button.doClick()
+        assertThat(bundledList.model.size).isEqualTo(20)
+        assertThat(button.isBorderPainted).isFalse()
+
+        scrollToRow(scrollPane, bundledList, 5)
+        assertThat(header.parent).isNotSameAs(headerSlot)
+        restoreFocus()
+        assertThat(button.isBorderPainted).isFalse()
+
+        scrollPane.viewport.viewPosition = Point()
+        assertThat(header.parent).isSameAs(headerSlot)
+        restoreFocus()
+        assertThat(button.isBorderPainted).isFalse()
+
+        gainFocus(FocusEvent.Cause.TRAVERSAL_FORWARD)
+        assertThat(button.isBorderPainted).isTrue()
+        scrollToRow(scrollPane, bundledList, 5)
+        restoreFocus()
+        assertThat(button.isBorderPainted).isTrue()
+      }
+      finally {
+        KeyboardFocusManager.setCurrentKeyboardFocusManager(originalFocusManager)
+      }
+    }
   }
 
   @Test

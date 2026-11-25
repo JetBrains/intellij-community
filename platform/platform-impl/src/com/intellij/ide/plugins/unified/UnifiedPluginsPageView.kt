@@ -950,6 +950,7 @@ internal class UnifiedPluginsPageView @RequiresEdt constructor(
       onHighlightChanged: ((Boolean) -> Unit)? = null,
       private val onToggle: () -> Unit,
     ) : SelectablePanel() {
+      private var restoringMouseFocus = false
       private val toggleButton = object : JToggleButton() {
         override fun getAccessibleContext(): AccessibleContext {
           if (accessibleContext == null) {
@@ -969,11 +970,24 @@ internal class UnifiedPluginsPageView @RequiresEdt constructor(
       }
 
       val focusComponent: JComponent = toggleButton
+      val hasFocusOutline: Boolean
+        get() = toggleButton.isBorderPainted
 
       init {
         toggleButton.layout = BorderLayout()
         toggleButton.addActionListener { onToggle() }
-        configureSectionButton(this, toggleButton, isFooter, onHighlightChanged)
+        configureSectionButton(this, toggleButton, isFooter, onHighlightChanged, ::consumeMouseFocusRestore)
+      }
+
+      fun restoreFocus(focusOwner: Component, hadFocusOutline: Boolean) {
+        restoringMouseFocus = !hadFocusOutline
+        IdeFocusManager.getGlobalInstance().requestFocus(focusOwner, false)
+      }
+
+      private fun consumeMouseFocusRestore(): Boolean {
+        val restoring = restoringMouseFocus
+        restoringMouseFocus = false
+        return restoring
       }
 
       override fun doLayout() {
@@ -1260,36 +1274,35 @@ internal class UnifiedPluginsPageView @RequiresEdt constructor(
     fun moveHeaderTo(host: JPanel) {
       if (header.parent === host) return
 
-      val focusOwner = headerFocusOwner()
-      headerSlot.preferredSize = header.preferredSize
-      headerSlot.remove(header)
-      host.removeAll()
-      host.add(header, BorderLayout.NORTH)
-      headerSlot.revalidate()
-      host.revalidate()
-      restoreHeaderFocus(focusOwner)
+      moveHeaderPreservingFocus {
+        headerSlot.preferredSize = header.preferredSize
+        headerSlot.remove(header)
+        host.removeAll()
+        host.add(header, BorderLayout.NORTH)
+        headerSlot.revalidate()
+        host.revalidate()
+      }
     }
 
     fun moveHeaderBack(host: JPanel) {
       if (header.parent === headerSlot) return
 
-      val focusOwner = headerFocusOwner()
-      host.remove(header)
-      headerSlot.add(header)
-      headerSlot.preferredSize = null
-      host.revalidate()
-      headerSlot.revalidate()
-      restoreHeaderFocus(focusOwner)
+      moveHeaderPreservingFocus {
+        host.remove(header)
+        headerSlot.add(header)
+        headerSlot.preferredSize = null
+        host.revalidate()
+        headerSlot.revalidate()
+      }
     }
 
-    private fun headerFocusOwner(): Component? {
-      return KeyboardFocusManager.getCurrentKeyboardFocusManager().focusOwner
+    private fun moveHeaderPreservingFocus(move: () -> Unit) {
+      val focusOwner = KeyboardFocusManager.getCurrentKeyboardFocusManager().focusOwner
         ?.takeIf { focusOwner -> SwingUtilities.isDescendingFrom(focusOwner, header) }
-    }
-
-    private fun restoreHeaderFocus(focusOwner: Component?) {
+      val hadFocusOutline = fullHeaderButton.hasFocusOutline
+      move()
       if (focusOwner != null) {
-        IdeFocusManager.getGlobalInstance().requestFocus(focusOwner, false)
+        fullHeaderButton.restoreFocus(focusOwner, hadFocusOutline)
       }
     }
 
@@ -1471,6 +1484,7 @@ internal class UnifiedPluginsPageView @RequiresEdt constructor(
       button: AbstractButton,
       isFooter: Boolean,
       onHighlightChanged: ((Boolean) -> Unit)? = null,
+      consumeMouseFocusRestore: (() -> Boolean)? = null,
     ) {
       panel.layout = BorderLayout()
       panel.isOpaque = false
@@ -1515,7 +1529,8 @@ internal class UnifiedPluginsPageView @RequiresEdt constructor(
         model.addChangeListener { updatePresentation() }
         addFocusListener(object : FocusAdapter() {
           override fun focusGained(event: FocusEvent) {
-            focusVisible = event.cause != FocusEvent.Cause.MOUSE_EVENT
+            val mouseFocusRestored = consumeMouseFocusRestore?.invoke() == true && event.cause == FocusEvent.Cause.UNKNOWN
+            focusVisible = event.cause != FocusEvent.Cause.MOUSE_EVENT && !mouseFocusRestored
             updatePresentation()
           }
 
