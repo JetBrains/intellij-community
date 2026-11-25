@@ -22,6 +22,10 @@ const REPORT_ENV_VAR: &str = "XML_OUTPUT_FILE";
 const FILTER_ENV_VAR: &str = "TESTBRIDGE_TEST_ONLY";
 const TARGET_ENV_VAR: &str = "TEST_TARGET";
 
+/// The variables of a sharded run of this test. The converter would take them as its own and run a slice of the
+/// fixture.
+const SHARD_ENV_VARS: [&str; 3] = ["TEST_TOTAL_SHARDS", "TEST_SHARD_INDEX", "TEST_SHARD_STATUS_FILE"];
+
 /// The variables this test gets from its own rule.
 const CONVERTER_ENV_VAR: &str = "LIBTEST_JUNIT_CONVERTER";
 const FIXTURE_ENV_VAR: &str = "LIBTEST_JUNIT_FIXTURE";
@@ -34,19 +38,22 @@ const SUITE: &str = "//a/b:c";
 fn writes_the_expected_report_for_the_fixture() {
     let report_path = temporary_directory().join("fixture.xml");
 
-    let run = Command::new(runfile(CONVERTER_ENV_VAR))
+    let mut converter = Command::new(runfile(CONVERTER_ENV_VAR));
+    converter
         // libtest reports a test when it finishes, so one thread keeps the order of the cases. This
         // argument also proves the converter gives the arguments of the target to the test binary.
         .arg("--test-threads=1")
         .env(TEST_ENV_VAR, rlocation_path(FIXTURE_ENV_VAR))
         .env(REPORT_ENV_VAR, &report_path)
         .env(TARGET_ENV_VAR, SUITE)
-        // A `--test_filter` on this test must not reach the fixture.
+        // A `--test_filter` on this test must not reach the fixture, and neither must a sharded run of it.
         .env_remove(FILTER_ENV_VAR)
         // A backtrace would reach the body of the failure, which the expected report does not hold.
-        .env_remove("RUST_BACKTRACE")
-        .output()
-        .expect("the converter ran");
+        .env_remove("RUST_BACKTRACE");
+    for variable in SHARD_ENV_VARS {
+        converter.env_remove(variable);
+    }
+    let run = converter.output().expect("the converter ran");
 
     let log = String::from_utf8_lossy(&run.stdout);
     let report = stable(&fs::read_to_string(&report_path).expect("the report of the fixture"));
