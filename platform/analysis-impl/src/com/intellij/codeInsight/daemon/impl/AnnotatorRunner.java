@@ -14,6 +14,7 @@ import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.extensions.TechnologyFilter;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
@@ -37,6 +38,7 @@ import org.jetbrains.annotations.Unmodifiable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -73,7 +75,9 @@ final class AnnotatorRunner {
 
     // TODO move inside Divider to calc only once
     List<PsiElement> insideThenOutside = ContainerUtil.concat(inside, outside);
-    Map<Annotator, Set<Language>> supportedLanguages = calcSupportedLanguages(insideThenOutside, myProject, myBatchMode);
+    Set<Language> languages = calcLanguages(insideThenOutside);
+    Map<Annotator, Set<Language>> supportedLanguages = calcSupportedLanguages(languages, myProject, myBatchMode);
+    removeAnnotationsOfNotApplicable(insideThenOutside, calcNotApplicableAnnotators(languages, supportedLanguages, myProject), resultSink);
     Processor<? super Annotator> processor = annotator ->
       ApplicationManagerEx.getApplicationEx().tryRunReadAction(() -> runAnnotator(document, annotator, insideThenOutside, supportedLanguages, resultSink));
     boolean result = JobLauncher.getInstance().processConcurrentlyAsync(new ArrayList<>(supportedLanguages.keySet()), processor, runnable);
@@ -81,7 +85,16 @@ final class AnnotatorRunner {
     return result;
   }
 
-  private static @NotNull @Unmodifiable Map<Annotator, Set<Language>> calcSupportedLanguages(@NotNull List<? extends PsiElement> elements,
+  private static @NotNull Set<Language> calcLanguages(@NotNull List<? extends PsiElement> elements) {
+    Set<Language> languages = new HashSet<>();
+    for (PsiElement element : elements) {
+      Language language = element.getLanguage();
+      addDialects(language, languages);
+    }
+    return languages;
+  }
+
+  private static @NotNull @Unmodifiable Map<Annotator, Set<Language>> calcSupportedLanguages(@NotNull Set<Language> languages,
                                                                                              @NotNull Project project,
                                                                                              boolean batchMode) {
     Map<Annotator, Set<Language>> map = CollectionFactory.createCustomHashingStrategyMap(new HashingStrategy<>() {
@@ -95,11 +108,6 @@ final class AnnotatorRunner {
         return o1 == null || o2 == null ? o1==o2 : o1.getClass().equals(o2.getClass());
       }
     });
-    Set<Language> languages = new HashSet<>();
-    for (PsiElement element : elements) {
-      Language language = element.getLanguage();
-      addDialects(language, languages);
-    }
     for (Language language : languages) {
       List<Annotator> templates = LanguageAnnotators.INSTANCE.allForLanguageOrAny(language, project);
       for (Annotator template : templates) {
@@ -114,6 +122,54 @@ final class AnnotatorRunner {
     }
     return map;
   }
+
+  /**
+   * The classes of the annotators that do not apply to the project, see {@link TechnologyFilter}, with the languages that they support.
+   * A class that runs for a language is not in the result for this language.
+   */
+  private static @NotNull @Unmodifiable Map<Class<? extends Annotator>, Set<Language>> calcNotApplicableAnnotators(
+    @NotNull Set<Language> languages,
+    @NotNull @Unmodifiable Map<Annotator, Set<Language>> supportedLanguages,
+    @NotNull Project project
+  ) {
+    if (!TechnologyFilter.getInstance().isRestricted(project)) {
+      return Map.of();
+    }
+    Map<Class<? extends Annotator>, Set<Language>> result = new HashMap<>();
+    for (Language language : languages) {
+      List<Annotator> applicable = LanguageAnnotators.INSTANCE.allForLanguageOrAny(language, project);
+      for (Annotator template : LanguageAnnotators.INSTANCE.allForLanguageOrAny(language)) {
+        if (ContainerUtil.containsIdentity(applicable, template)) continue;
+        Set<Language> running = supportedLanguages.get(template);
+        if (running == null || !running.contains(language)) {
+          result.computeIfAbsent(template.getClass(), _ -> new HashSet<>()).add(language);
+        }
+      }
+    }
+    return result;
+  }
+
+  /**
+   * Reports an empty result for each annotator that does not apply and each of its elements.
+   * So the annotations from the time when the annotator did apply are removed.
+   */
+  private static void removeAnnotationsOfNotApplicable(@NotNull List<? extends PsiElement> elements,
+                                                       @NotNull @Unmodifiable Map<Class<? extends Annotator>, Set<Language>> notApplicable,
+                                                       @NotNull ResultSink result) {
+    if (notApplicable.isEmpty()) {
+      return;
+    }
+    for (PsiElement element : elements) {
+      ProgressManager.checkCanceled();
+      Language language = element.getLanguage();
+      for (Map.Entry<Class<? extends Annotator>, Set<Language>> entry : notApplicable.entrySet()) {
+        if (entry.getValue().contains(language)) {
+          result.accept(entry.getKey(), element, List.of());
+        }
+      }
+    }
+  }
+
   private static void addDialects(@NotNull Language language, @NotNull Set<? super Language> outProcessedLanguages) {
     if (outProcessedLanguages.add(language)) {
       Collection<Language> dialects = language.getTransitiveDialects();
