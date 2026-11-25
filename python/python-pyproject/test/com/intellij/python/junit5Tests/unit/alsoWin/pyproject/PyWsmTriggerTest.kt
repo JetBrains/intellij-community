@@ -275,7 +275,6 @@ internal class PyWsmTriggerTest {
           dirWithToml = entity.contentRoots.single().url,
           dependencies = emptyList(),
           sourceRoots = emptyList(),
-          addedDependencies = emptyList(),
           addedSourceRoots = emptyList(),
           entitySource = PyProjectTomlKeptModuleEntitySource,
         )

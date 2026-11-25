@@ -12,7 +12,6 @@ import com.intellij.platform.workspace.jps.entities.LibraryId
 import com.intellij.platform.workspace.jps.entities.LibraryTableId
 import com.intellij.platform.workspace.jps.entities.ModuleDependency
 import com.intellij.platform.workspace.jps.entities.ModuleId
-import com.intellij.platform.workspace.jps.entities.modifyModuleEntity
 import com.intellij.python.junit5Tests.unit.alsoWin.pyproject.div
 import com.intellij.python.pyproject.model.internal.workspaceBridge.PY_PROJECT_MODEL_OWNS_MODULES_KEY
 import com.intellij.python.pyproject.model.internal.workspaceBridge.PY_PROJECT_MODEL_WRITES_MODULE_DEPENDENCIES_KEY
@@ -77,24 +76,15 @@ internal class PyProjectTomlKeptModuleTest {
   }
 
   @Test
-  fun `the record of an added dependency follows a rename of its module`(
+  fun `with the write of dependencies the model adds a missing module dependency once`(
     @TestDisposable disposable: Disposable,
   ): Unit = timeoutRunBlocking(30.seconds) {
     Registry.get(PY_PROJECT_MODEL_WRITES_MODULE_DEPENDENCIES_KEY).setValue(true, disposable)
     writeAppThatDependsOnLib()
-    f.reloadProject()
-    assertThat(f.writtenModuleDeps("app")).containsExactly("lib")
-
-    f.project.workspaceModel.update("the user renames the module") { storage ->
-      storage.modifyModuleEntity(storage.resolve(ModuleId("lib"))!!) { name = "lib2" }
+    repeat(2) {
+      f.reloadProject()
+      assertThat(f.writtenModuleDeps("app")).describedAs("The module dependency after rebuild ${it + 1}").containsExactly("lib")
     }
-    f.reloadProject()
-
-    val app = f.project.workspaceModel.currentSnapshot.resolve(ModuleId("app"))!!
-    assertThat(app.pyProjectTomlEntity!!.addedDependencies)
-      .describedAs("The record names the module by its new name, so the model can still remove the dependency")
-      .containsExactly(ModuleId("lib2"))
-    assertThat(f.writtenModuleDeps("app")).containsExactly("lib2")
   }
 
   @Test
@@ -102,10 +92,8 @@ internal class PyProjectTomlKeptModuleTest {
     writeAppThatDependsOnLib()
     f.reloadProject()
 
-    val app = f.project.workspaceModel.currentSnapshot.resolve(ModuleId("app"))!!
     assertThat(f.writtenModuleDeps("app")).describedAs("The module gets no module dependency").isEmpty()
     assertThat(f.tomlDeps("app")).describedAs("The record holds the dependency").containsExactly("lib")
-    assertThat(app.pyProjectTomlEntity!!.addedDependencies).isEmpty()
   }
 
   /** Two `pyproject.toml` files: `app` depends on `lib` by its path. */

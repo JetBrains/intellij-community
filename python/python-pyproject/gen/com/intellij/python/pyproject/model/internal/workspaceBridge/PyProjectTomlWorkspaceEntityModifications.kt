@@ -22,7 +22,6 @@ internal interface PyProjectTomlWorkspaceEntityBuilder : WorkspaceEntityBuilder<
   var dirWithToml: VirtualFileUrl
   var dependencies: MutableList<String>
   var sourceRoots: MutableList<VirtualFileUrl>
-  var addedDependencies: MutableList<ModuleId>
   var addedSourceRoots: MutableList<VirtualFileUrl>
   var module: ModuleEntityBuilder
 }
@@ -35,7 +34,6 @@ internal object PyProjectTomlWorkspaceEntityType : EntityType<PyProjectTomlWorks
     dirWithToml: VirtualFileUrl,
     dependencies: List<String>,
     sourceRoots: List<VirtualFileUrl>,
-    addedDependencies: List<ModuleId>,
     addedSourceRoots: List<VirtualFileUrl>,
     entitySource: EntitySource,
     init: (PyProjectTomlWorkspaceEntityBuilder.() -> Unit)? = null,
@@ -45,7 +43,6 @@ internal object PyProjectTomlWorkspaceEntityType : EntityType<PyProjectTomlWorks
     builder.dirWithToml = dirWithToml
     builder.dependencies = dependencies.toMutableWorkspaceList()
     builder.sourceRoots = sourceRoots.toMutableWorkspaceList()
-    builder.addedDependencies = addedDependencies.toMutableWorkspaceList()
     builder.addedSourceRoots = addedSourceRoots.toMutableWorkspaceList()
     builder.entitySource = entitySource
     init?.invoke(builder)
@@ -68,15 +65,8 @@ internal fun PyProjectTomlWorkspaceEntity(
   dirWithToml: VirtualFileUrl,
   dependencies: List<String>,
   sourceRoots: List<VirtualFileUrl>,
-  addedDependencies: List<ModuleId>,
   addedSourceRoots: List<VirtualFileUrl>,
   entitySource: EntitySource,
   init: (PyProjectTomlWorkspaceEntityBuilder.() -> Unit)? = null,
-): PyProjectTomlWorkspaceEntityBuilder = PyProjectTomlWorkspaceEntityType(participatedTools,
-                                                                          dirWithToml,
-                                                                          dependencies,
-                                                                          sourceRoots,
-                                                                          addedDependencies,
-                                                                          addedSourceRoots,
-                                                                          entitySource,
-                                                                          init)
+): PyProjectTomlWorkspaceEntityBuilder =
+  PyProjectTomlWorkspaceEntityType(participatedTools, dirWithToml, dependencies, sourceRoots, addedSourceRoots, entitySource, init)

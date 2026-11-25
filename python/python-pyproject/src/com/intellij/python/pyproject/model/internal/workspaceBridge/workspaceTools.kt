@@ -543,7 +543,6 @@ private fun updateModule(
           dirWithToml = tomlDirUrl,
           dependencies = desiredModuleDepIds,
           sourceRoots = desiredSourceRootUrls.toList(),
-          addedDependencies = emptyList(),
           addedSourceRoots = emptyList(),
           entitySource = entitySource,
         )
@@ -619,7 +618,6 @@ private fun addNewModule(
       dirWithToml = tomlDirUrl,
       dependencies = entry.dependencies.map { it.name },
       sourceRoots = entry.sourceRoots.map { it.toVirtualFileUrl(virtualFileUrlManager) },
-      addedDependencies = emptyList(),
       addedSourceRoots = emptyList(),
       entitySource = entitySource,
     )

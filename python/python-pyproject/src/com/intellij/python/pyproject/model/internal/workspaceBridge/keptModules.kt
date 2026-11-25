@@ -51,12 +51,15 @@ internal object PyProjectTomlKeptModuleEntitySource : EntitySource
 /**
  * Applies [entries] outside PyCharm, where a module belongs to the user:
  * - a module at the directory of an entry keeps its name, its entity source and its own dependencies and roots. It gets
- *   only the module dependencies and the source roots that it lacks, and the model records them as added;
- * - an entry without a module gets a regular module with an `.iml`. All its dependencies and roots count as added;
- * - a module whose `pyproject.toml` is gone loses only its [PyProjectTomlWorkspaceEntity] and what the model added.
+ *   only the source roots that it lacks, and the model records them as added;
+ * - an entry without a module gets a regular module with an `.iml`. All its roots count as added;
+ * - a module whose `pyproject.toml` is gone loses only its [PyProjectTomlWorkspaceEntity] and the roots that the model added.
  *
- * A dependency or a root that the model added and the user then removed is not added again. It stays in the record while
- * the `pyproject.toml` declares it, so each later rebuild still knows it.
+ * With [modelWritesModuleDependencies], a module also gets the module dependencies that it lacks. The model removes no
+ * module dependency here, because it cannot tell its own from the ones of the user.
+ *
+ * A root that the model added and the user then removed is not added again. It stays in the record while the
+ * `pyproject.toml` declares it, so each later rebuild still knows it.
  */
 internal fun applyKeepingModules(entries: Set<PyProjectTomlBasedEntryImpl>, project: Project, storage: MutableEntityStorage) {
   val urlManager = project.workspaceModel.getVirtualFileUrlManager()
@@ -83,7 +86,7 @@ internal fun applyKeepingModules(entries: Set<PyProjectTomlBasedEntryImpl>, proj
   for (entry in entries - matched.keys) addUserModule(entry, dependenciesOf(entry), project, storage, urlManager)
 }
 
-/** Removes the [PyProjectTomlWorkspaceEntity] of every module and what the model added, for a model that is off. */
+/** Removes the [PyProjectTomlWorkspaceEntity] of every module and the roots that the model added, for a model that is off. */
 internal fun detachAllKeptModules(storage: MutableEntityStorage) {
   for (module in storage.entities<ModuleEntity>().filter { it.pyProjectTomlEntity != null }.toList()) detach(module, storage)
 }
@@ -99,18 +102,8 @@ private fun keep(
   val dependencies = entryDependencies.filter { it != module.name }
   val sourceRoots = entry.sourceRoots.map { it.toVirtualFileUrl(urlManager) }
 
-  // The record follows a rename of a module, because it holds module ids.
-  val knownAdded = known?.addedDependencies.orEmpty().map { it.name }
-  val writesDependencies = modelWritesModuleDependencies()
   val presentDependencies = module.dependencies.filterIsInstance<ModuleDependency>().mapTo(HashSet()) { it.module.name }
-  // Without the write of dependencies the record stays as it is.
-  val (keptDependencies, droppedDependencies) =
-    if (writesDependencies) knownAdded.filter { it in presentDependencies }.partition { it in dependencies }
-    else knownAdded to emptyList()
-  // An added dependency that the module no longer has was removed by the user, so it is not added again.
-  val removedByUser = if (writesDependencies) knownAdded.filter { it !in presentDependencies && it in dependencies } else emptyList()
-  val newDependencies =
-    if (writesDependencies) dependencies.filter { it !in presentDependencies && it !in removedByUser } else emptyList()
+  val newDependencies = if (modelWritesModuleDependencies()) dependencies.filter { it !in presentDependencies } else emptyList()
 
   val contentRoot = module.contentRoots.firstOrNull { it.url == entry.root.toVirtualFileUrl(urlManager) }
   val presentRoots = module.contentRoots.flatMap { it.sourceRoots }.mapTo(HashSet()) { it.url }
@@ -128,12 +121,8 @@ private fun keep(
   val participatedTools = buildParticipatedToolsMap(entry)
   val tomlDir = entry.tomlFile.parent.toVirtualFileUrl(urlManager)
   // The record keeps what the user removed, or the next rebuild would add it again.
-  val addedDependencies = (keptDependencies + newDependencies + removedByUser).map(::ModuleId)
   val addedSourceRoots = keptRoots + newRoots + rootsRemovedByUser
   storage.modifyModuleEntity(module) {
-    if (droppedDependencies.isNotEmpty()) {
-      this.dependencies.removeAll { it is ModuleDependency && it.module.name in droppedDependencies }
-    }
     this.dependencies += newDependencies.map(::moduleDependency)
     if (known == null) {
       this.pyProjectTomlEntity = PyProjectTomlWorkspaceEntity(
@@ -141,7 +130,6 @@ private fun keep(
         dirWithToml = tomlDir,
         dependencies = dependencies,
         sourceRoots = sourceRoots,
-        addedDependencies = addedDependencies,
         addedSourceRoots = addedSourceRoots,
         entitySource = PyProjectTomlKeptModuleEntitySource,
       )
@@ -153,7 +141,6 @@ private fun keep(
       this.dirWithToml = tomlDir
       this.dependencies = dependencies.toMutableList()
       this.sourceRoots = sourceRoots.toMutableList()
-      this.addedDependencies = addedDependencies.toMutableList()
       this.addedSourceRoots = addedSourceRoots.toMutableList()
     }
   }
@@ -168,10 +155,10 @@ private fun addUserModule(
 ) {
   val entitySource = createEntitySourceImpl(project, null)
   val sourceRoots = entry.sourceRoots.map { it.toVirtualFileUrl(urlManager) }
-  val addedDependencies = if (modelWritesModuleDependencies()) dependencies else emptyList()
+  val writtenDependencies = if (modelWritesModuleDependencies()) dependencies else emptyList()
   storage addEntity ModuleEntity(entry.name.name, emptyList(), entitySource) {
     this.dependencies += ModuleSourceDependency
-    this.dependencies += addedDependencies.map(::moduleDependency)
+    this.dependencies += writtenDependencies.map(::moduleDependency)
     contentRoots = listOf(ContentRootEntity(entry.root.toVirtualFileUrl(urlManager), emptyList(), entitySource) {
       this.sourceRoots = sourceRoots.map { pyProjectSourceRoot(it, entitySource) }
     })
@@ -180,8 +167,7 @@ private fun addUserModule(
       dirWithToml = entry.tomlFile.parent.toVirtualFileUrl(urlManager),
       dependencies = dependencies,
       sourceRoots = sourceRoots,
-      // The model made the module, so all of it is the model's to change.
-      addedDependencies = addedDependencies.map(::ModuleId),
+      // The model made the module, so all its roots are the model's to change.
       addedSourceRoots = sourceRoots,
       entitySource = PyProjectTomlKeptModuleEntitySource,
     )
@@ -190,11 +176,7 @@ private fun addUserModule(
 
 private fun detach(module: ModuleEntity, storage: MutableEntityStorage) {
   val known = module.pyProjectTomlEntity ?: return
-  val added = known.addedDependencies.toSet()
   removeSourceRoots(module, known.addedSourceRoots.toSet(), storage)
-  if (added.isNotEmpty() && modelWritesModuleDependencies()) {
-    storage.modifyModuleEntity(module) { this.dependencies.removeAll { it is ModuleDependency && it.module in added } }
-  }
   storage.removeEntity(known)
 }
 

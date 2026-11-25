@@ -9,18 +9,15 @@ import com.intellij.platform.workspace.storage.ConnectionId
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.GeneratedCodeImplVersion
-import com.intellij.platform.workspace.storage.SymbolicEntityId
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.WorkspaceEntityBuilder
 import com.intellij.platform.workspace.storage.WorkspaceEntityInternalApi
 import com.intellij.platform.workspace.storage.impl.EntityLink
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
-import com.intellij.platform.workspace.storage.impl.SoftLinkable
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityData
 import com.intellij.platform.workspace.storage.impl.containers.MutableWorkspaceList
 import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspaceList
-import com.intellij.platform.workspace.storage.impl.indices.WorkspaceMutableIndex
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
 import com.intellij.platform.workspace.storage.instrumentation.instrumentation
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
@@ -59,11 +56,6 @@ internal class PyProjectTomlWorkspaceEntityImpl(private val dataSource: PyProjec
     get() {
       readField("sourceRoots")
       return dataSource.sourceRoots
-    }
-  override val addedDependencies: List<ModuleId>
-    get() {
-      readField("addedDependencies")
-      return dataSource.addedDependencies
     }
   override val addedSourceRoots: List<VirtualFileUrl>
     get() {
@@ -105,9 +97,6 @@ internal class PyProjectTomlWorkspaceEntityImpl(private val dataSource: PyProjec
       if (!getEntityData().isSourceRootsInitialized()) {
         error("Field PyProjectTomlWorkspaceEntity#sourceRoots should be initialized")
       }
-      if (!getEntityData().isAddedDependenciesInitialized()) {
-        error("Field PyProjectTomlWorkspaceEntity#addedDependencies should be initialized")
-      }
       if (!getEntityData().isAddedSourceRootsInitialized()) {
         error("Field PyProjectTomlWorkspaceEntity#addedSourceRoots should be initialized")
       }
@@ -136,10 +125,6 @@ internal class PyProjectTomlWorkspaceEntityImpl(private val dataSource: PyProjec
       if (collection_sourceRoots is MutableWorkspaceList<*>) {
         collection_sourceRoots.cleanModificationUpdateAction()
       }
-      val collection_addedDependencies = getEntityData().addedDependencies
-      if (collection_addedDependencies is MutableWorkspaceList<*>) {
-        collection_addedDependencies.cleanModificationUpdateAction()
-      }
       val collection_addedSourceRoots = getEntityData().addedSourceRoots
       if (collection_addedSourceRoots is MutableWorkspaceList<*>) {
         collection_addedSourceRoots.cleanModificationUpdateAction()
@@ -154,7 +139,6 @@ internal class PyProjectTomlWorkspaceEntityImpl(private val dataSource: PyProjec
       if (this.dirWithToml != dataSource.dirWithToml) this.dirWithToml = dataSource.dirWithToml
       if (this.dependencies != dataSource.dependencies) this.dependencies = dataSource.dependencies.toMutableList()
       if (this.sourceRoots != dataSource.sourceRoots) this.sourceRoots = dataSource.sourceRoots.toMutableList()
-      if (this.addedDependencies != dataSource.addedDependencies) this.addedDependencies = dataSource.addedDependencies.toMutableList()
       if (this.addedSourceRoots != dataSource.addedSourceRoots) this.addedSourceRoots = dataSource.addedSourceRoots.toMutableList()
       updateChildToParentReferences(parents)
     }
@@ -220,26 +204,6 @@ internal class PyProjectTomlWorkspaceEntityImpl(private val dataSource: PyProjec
         getEntityData(true).sourceRoots = value
         sourceRootsUpdater.invoke(value)
       }
-    private val addedDependenciesUpdater: (value: List<ModuleId>) -> Unit = { value ->
-      changedProperty.add("addedDependencies")
-    }
-    override var addedDependencies: MutableList<ModuleId>
-      get() {
-        val collection_addedDependencies = getEntityData().addedDependencies
-        if (collection_addedDependencies !is MutableWorkspaceList) return collection_addedDependencies
-        if (diff == null || modifiable.get()) {
-          collection_addedDependencies.setModificationUpdateAction(addedDependenciesUpdater)
-        }
-        else {
-          collection_addedDependencies.cleanModificationUpdateAction()
-        }
-        return collection_addedDependencies
-      }
-      set(value) {
-        checkModificationAllowed()
-        getEntityData(true).addedDependencies = value
-        addedDependenciesUpdater.invoke(value)
-      }
     private val addedSourceRootsUpdater: (value: List<VirtualFileUrl>) -> Unit = { value ->
       changedProperty.add("addedSourceRoots")
     }
@@ -272,68 +236,17 @@ internal class PyProjectTomlWorkspaceEntityImpl(private val dataSource: PyProjec
 }
 
 @OptIn(WorkspaceEntityInternalApi::class)
-internal class PyProjectTomlWorkspaceEntityData : WorkspaceEntityData<PyProjectTomlWorkspaceEntity>(), SoftLinkable {
+internal class PyProjectTomlWorkspaceEntityData : WorkspaceEntityData<PyProjectTomlWorkspaceEntity>() {
   lateinit var participatedTools: Map<ToolId, ModuleId?>
   lateinit var dirWithToml: VirtualFileUrl
   lateinit var dependencies: MutableList<String>
   lateinit var sourceRoots: MutableList<VirtualFileUrl>
-  lateinit var addedDependencies: MutableList<ModuleId>
   lateinit var addedSourceRoots: MutableList<VirtualFileUrl>
   internal fun isParticipatedToolsInitialized(): Boolean = ::participatedTools.isInitialized
   internal fun isDirWithTomlInitialized(): Boolean = ::dirWithToml.isInitialized
   internal fun isDependenciesInitialized(): Boolean = ::dependencies.isInitialized
   internal fun isSourceRootsInitialized(): Boolean = ::sourceRoots.isInitialized
-  internal fun isAddedDependenciesInitialized(): Boolean = ::addedDependencies.isInitialized
   internal fun isAddedSourceRootsInitialized(): Boolean = ::addedSourceRoots.isInitialized
-  override fun getLinks(): Set<SymbolicEntityId<*>> {
-    val result = HashSet<SymbolicEntityId<*>>()
-    for (item in addedDependencies) {
-      result.add(item)
-    }
-    return result
-  }
-
-  override fun index(index: WorkspaceMutableIndex<SymbolicEntityId<*>>) {
-    for (item in addedDependencies) {
-      index.index(this, item)
-    }
-  }
-
-  override fun updateLinksIndex(prev: Set<SymbolicEntityId<*>>, index: WorkspaceMutableIndex<SymbolicEntityId<*>>) {
-    val mutablePreviousSet = HashSet(prev)
-    for (item in addedDependencies) {
-      val removedItem_item = mutablePreviousSet.remove(item)
-      if (!removedItem_item) {
-        index.index(this, item)
-      }
-    }
-    for (removed in mutablePreviousSet) {
-      index.remove(this, removed)
-    }
-  }
-
-  override fun updateLink(oldLink: SymbolicEntityId<*>, newLink: SymbolicEntityId<*>): Boolean {
-    var changed = false
-    val addedDependencies_data = addedDependencies.map {
-      val it_data = if (it == oldLink) {
-        changed = true
-        newLink as ModuleId
-      }
-      else {
-        null
-      }
-      if (it_data != null) {
-        it_data
-      }
-      else {
-        it
-      }
-    }
-
-    addedDependencies = addedDependencies_data.toMutableWorkspaceList()
-    return changed
-  }
-
   override fun newInstance(): PyProjectTomlWorkspaceEntity = PyProjectTomlWorkspaceEntityImpl(this)
   override fun newBuilderInstance(): ModifiableWorkspaceEntityBase<PyProjectTomlWorkspaceEntity, *> =
     PyProjectTomlWorkspaceEntityImpl.Builder(null)
@@ -347,7 +260,6 @@ internal class PyProjectTomlWorkspaceEntityData : WorkspaceEntityData<PyProjectT
     clonedEntity as PyProjectTomlWorkspaceEntityData
     clonedEntity.dependencies = clonedEntity.dependencies.toMutableWorkspaceList()
     clonedEntity.sourceRoots = clonedEntity.sourceRoots.toMutableWorkspaceList()
-    clonedEntity.addedDependencies = clonedEntity.addedDependencies.toMutableWorkspaceList()
     clonedEntity.addedSourceRoots = clonedEntity.addedSourceRoots.toMutableWorkspaceList()
     return clonedEntity
   }
@@ -357,13 +269,7 @@ internal class PyProjectTomlWorkspaceEntityData : WorkspaceEntityData<PyProjectT
   }
 
   override fun createDetachedEntity(parents: List<WorkspaceEntityBuilder<*>>): WorkspaceEntityBuilder<*> {
-    return PyProjectTomlWorkspaceEntity(participatedTools,
-                                        dirWithToml,
-                                        dependencies,
-                                        sourceRoots,
-                                        addedDependencies,
-                                        addedSourceRoots,
-                                        entitySource) {
+    return PyProjectTomlWorkspaceEntity(participatedTools, dirWithToml, dependencies, sourceRoots, addedSourceRoots, entitySource) {
       parents.filterIsInstance<ModuleEntityBuilder>().singleOrNull()?.let { this.module = it }
     }
   }
@@ -383,7 +289,6 @@ internal class PyProjectTomlWorkspaceEntityData : WorkspaceEntityData<PyProjectT
     if (this.dirWithToml != other.dirWithToml) return false
     if (this.dependencies != other.dependencies) return false
     if (this.sourceRoots != other.sourceRoots) return false
-    if (this.addedDependencies != other.addedDependencies) return false
     if (this.addedSourceRoots != other.addedSourceRoots) return false
     return true
   }
@@ -396,7 +301,6 @@ internal class PyProjectTomlWorkspaceEntityData : WorkspaceEntityData<PyProjectT
     if (this.dirWithToml != other.dirWithToml) return false
     if (this.dependencies != other.dependencies) return false
     if (this.sourceRoots != other.sourceRoots) return false
-    if (this.addedDependencies != other.addedDependencies) return false
     if (this.addedSourceRoots != other.addedSourceRoots) return false
     return true
   }
@@ -407,7 +311,6 @@ internal class PyProjectTomlWorkspaceEntityData : WorkspaceEntityData<PyProjectT
     result = 31 * result + dirWithToml.hashCode()
     result = 31 * result + dependencies.hashCode()
     result = 31 * result + sourceRoots.hashCode()
-    result = 31 * result + addedDependencies.hashCode()
     result = 31 * result + addedSourceRoots.hashCode()
     return result
   }
@@ -418,7 +321,6 @@ internal class PyProjectTomlWorkspaceEntityData : WorkspaceEntityData<PyProjectT
     result = 31 * result + dirWithToml.hashCode()
     result = 31 * result + dependencies.hashCode()
     result = 31 * result + sourceRoots.hashCode()
-    result = 31 * result + addedDependencies.hashCode()
     result = 31 * result + addedSourceRoots.hashCode()
     return result
   }
