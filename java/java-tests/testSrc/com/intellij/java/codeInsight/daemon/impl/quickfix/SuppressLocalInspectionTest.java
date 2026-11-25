@@ -2,7 +2,7 @@
 package com.intellij.java.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.JavaTestUtil;
-import com.intellij.codeInsight.daemon.quickFix.LightQuickFixFileBasedTest;
+import com.intellij.codeInsight.daemon.quickFix.LightQuickFixFixture;
 import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
 import com.intellij.codeInspection.IntentionAndQuickFixAction;
 import com.intellij.codeInspection.ProblemsHolder;
@@ -19,22 +19,24 @@ import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiMethodCallExpression;
 import com.intellij.psi.PsiType;
-import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
 import com.intellij.testFramework.fixtures.LightJavaProject;
 import com.intellij.testFramework.junit5.TestApplication;
 import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.siyeh.ig.psiutils.MethodCallUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 
-import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaCodeInsightFixture;
+import java.util.List;
+
+import static com.intellij.codeInsight.daemon.quickFix.LightQuickFixFixtureKt.lightQuickFixFixture;
+import static com.intellij.codeInsight.daemon.quickFix.LightQuickFixFixtureKt.lightQuickFixTestFiles;
 import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
 import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaTestDescriptor;
 
 @TestApplication
-public class SuppressLocalInspectionTest extends LightQuickFixFileBasedTest {
+public class SuppressLocalInspectionTest {
   static class DummyUnavailableQuickFix extends IntentionAndQuickFixAction {
     @Override
     public boolean isAvailable(@NotNull Project project, @Nullable Editor editor, PsiFile psiFile) {
@@ -71,23 +73,19 @@ public class SuppressLocalInspectionTest extends LightQuickFixFileBasedTest {
     }
   }
 
+  private static final String TEST_DATA_PATH =
+    JavaTestUtil.getJavaTestDataPath() + "/codeInsight/daemonCodeAnalyzer/quickFix/suppressLocalInspection";
   private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(lightJavaTestDescriptor(LanguageLevel.JDK_1_3));
-  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture = lightJavaCodeInsightFixture(projectFixture);
+  private final TestFixture<LightQuickFixFixture> quickFixFixture = lightQuickFixFixture(
+    projectFixture, TEST_DATA_PATH, () -> List.of(new LocalCanBeFinal(), new FieldCanBeLocalInspection(), new MyLocalInspectionTool()));
 
-  @Override
-  public @NotNull JavaCodeInsightTestFixture getFixture() {
-    return codeInsightFixture.get();
+  static List<String> files() {
+    return lightQuickFixTestFiles(TEST_DATA_PATH);
   }
 
-  @Override
-  public @NotNull String getTestDataPath() {
-    return JavaTestUtil.getJavaTestDataPath() + "/codeInsight/daemonCodeAnalyzer/quickFix/suppressLocalInspection";
-  }
-
-  @BeforeEach
-  void setUpInspections() {
-    getFixture().enableInspections(new LocalCanBeFinal(),
-                                   new FieldCanBeLocalInspection(),
-                                   new MyLocalInspectionTool());
+  @ParameterizedTest(name = "{argumentSetNameOrArgumentsWithNames}")
+  @MethodSource("files")
+  void parameterized(String fileName) {
+    quickFixFixture.get().doTest(fileName);
   }
 }

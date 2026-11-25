@@ -2,29 +2,32 @@
 package com.intellij.java.codeInspection.enhancedSwitch
 
 import com.intellij.JavaTestUtil
-import com.intellij.codeInsight.daemon.quickFix.LightQuickFixFileBasedTest
+import com.intellij.codeInsight.daemon.quickFix.lightQuickFixFixture
+import com.intellij.codeInsight.daemon.quickFix.lightQuickFixTestFiles
 import com.intellij.codeInspection.enhancedSwitch.SwitchLabeledRuleCanBeCodeBlockInspection
-import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture
-import com.intellij.testFramework.fixtures.lightJavaCodeInsightFixture
 import com.intellij.testFramework.fixtures.lightJavaProjectFixture
 import com.intellij.testFramework.fixtures.lightJavaTestDescriptor
 import com.intellij.testFramework.junit5.TestApplication
-import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.MethodSource
+import java.util.function.Supplier
 
 @TestApplication
-class SwitchLabeledRuleCanBeCodeBlockFixTest : LightQuickFixFileBasedTest() {
+class SwitchLabeledRuleCanBeCodeBlockFixTest {
   companion object {
+    private val TEST_DATA_PATH = JavaTestUtil.getJavaTestDataPath() + "/inspection/switchLabeledRuleCanBeCodeBlockFix"
     private val projectFixture = lightJavaProjectFixture(lightJavaTestDescriptor())
+
+    @JvmStatic
+    fun files(): List<String> = lightQuickFixTestFiles(TEST_DATA_PATH)
   }
 
-  private val codeInsightFixture = lightJavaCodeInsightFixture(projectFixture)
+  private val quickFixFixture =
+    lightQuickFixFixture(projectFixture, TEST_DATA_PATH, Supplier { listOf(SwitchLabeledRuleCanBeCodeBlockInspection()) })
 
-  override fun getFixture(): JavaCodeInsightTestFixture = codeInsightFixture.get()
-
-  override fun getTestDataPath(): String = JavaTestUtil.getJavaTestDataPath() + "/inspection/switchLabeledRuleCanBeCodeBlockFix"
-
-  @BeforeEach
-  fun setUpInspections() {
-    fixture.enableInspections(SwitchLabeledRuleCanBeCodeBlockInspection())
+  @ParameterizedTest(name = "{argumentSetNameOrArgumentsWithNames}")
+  @MethodSource("files")
+  fun parameterized(fileName: String) {
+    quickFixFixture.get().doTest(fileName)
   }
 }

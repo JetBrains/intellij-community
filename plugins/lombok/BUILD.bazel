@@ -172,6 +172,7 @@ jvm_library(
         "//platform/project/shared:project",
         "//platform/statistics",
         "//libraries/junit6",
+        "//libraries/junit6-params",
         "//java/java-impl-inspections:impl-inspections",
         "//platform/bazel-runfiles",
         "//platform/testFramework/junit5",

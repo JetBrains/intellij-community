@@ -4,36 +4,35 @@
 package com.siyeh.ig.internationalization;
 
 import com.intellij.JavaTestUtil;
-import com.intellij.codeInsight.daemon.quickFix.LightQuickFixFileBasedTest;
-import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.codeInsight.daemon.quickFix.LightQuickFixFixture;
 import com.intellij.testFramework.fixtures.LightJavaProject;
 import com.intellij.testFramework.junit5.TestApplication;
 import com.intellij.testFramework.junit5.fixture.TestFixture;
-import org.jetbrains.annotations.NotNull;
-import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 
+import java.util.List;
+
+import static com.intellij.codeInsight.daemon.quickFix.LightQuickFixFixtureKt.lightQuickFixFixture;
+import static com.intellij.codeInsight.daemon.quickFix.LightQuickFixFixtureKt.lightQuickFixTestFiles;
 import static com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase.JAVA_8;
-import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaCodeInsightFixture;
 import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
 
 @TestApplication
-public class StringConcatenationInspectionFixTest extends LightQuickFixFileBasedTest {
+public class StringConcatenationInspectionFixTest {
+  private static final String TEST_DATA_PATH =
+    JavaTestUtil.getJavaTestDataPath() + "/ig" + "/com/siyeh/igtest/internationalization/string_concatenation";
   private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(JAVA_8);
-  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture = lightJavaCodeInsightFixture(projectFixture);
+  private final TestFixture<LightQuickFixFixture> quickFixFixture =
+    lightQuickFixFixture(projectFixture, TEST_DATA_PATH, () -> List.of(new StringConcatenationInspection()));
 
-  @Override
-  public @NotNull JavaCodeInsightTestFixture getFixture() {
-    return codeInsightFixture.get();
+  static List<String> files() {
+    return lightQuickFixTestFiles(TEST_DATA_PATH);
   }
 
-  @Override
-  public @NotNull String getTestDataPath() {
-    return JavaTestUtil.getJavaTestDataPath() + "/ig" + "/com/siyeh/igtest/internationalization/string_concatenation";
-  }
-
-  @BeforeEach
-  void setUpInspections() {
-    getFixture().enableInspections(new StringConcatenationInspection());
+  @ParameterizedTest(name = "{argumentSetNameOrArgumentsWithNames}")
+  @MethodSource("files")
+  void parameterized(String fileName) {
+    quickFixFixture.get().doTest(fileName);
   }
 }

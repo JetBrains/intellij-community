@@ -2,43 +2,49 @@
 package com.intellij.java.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.JavaTestUtil;
-import com.intellij.codeInsight.daemon.quickFix.LightQuickFixFileBasedTest;
+import com.intellij.codeInsight.daemon.quickFix.LightQuickFixFixture;
 import com.intellij.codeInspection.dataFlow.OptionalOfNullableMisuseInspection;
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
 import com.intellij.testFramework.fixtures.LightJavaProject;
 import com.intellij.testFramework.junit5.TestApplication;
 import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.TestInfo;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 
-import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaCodeInsightFixture;
+import java.util.List;
+
+import static com.intellij.codeInsight.daemon.quickFix.LightQuickFixFixtureKt.lightQuickFixFixture;
+import static com.intellij.codeInsight.daemon.quickFix.LightQuickFixFixtureKt.lightQuickFixTestFiles;
 import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
 
 @TestApplication
-public class ReplaceFromOfNullableFixTest extends LightQuickFixFileBasedTest {
+public class ReplaceFromOfNullableFixTest {
+  private static final String TEST_DATA_PATH =
+    JavaTestUtil.getJavaTestDataPath() + "/codeInsight/daemonCodeAnalyzer/quickFix/replaceFromOfNullable";
   private static final TestFixture<LightJavaProject> projectFixture =
     lightJavaProjectFixture(LightJavaCodeInsightFixtureTestCase.JAVA_LATEST_WITH_LATEST_JDK);
-  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture = lightJavaCodeInsightFixture(projectFixture);
+  private final TestFixture<LightQuickFixFixture> quickFixFixture = lightQuickFixFixture(projectFixture, TEST_DATA_PATH);
 
-  @Override
-  public @NotNull JavaCodeInsightTestFixture getFixture() {
-    return codeInsightFixture.get();
+  static List<String> files() {
+    return lightQuickFixTestFiles(TEST_DATA_PATH);
+  }
+
+  @ParameterizedTest(name = "{argumentSetNameOrArgumentsWithNames}")
+  @MethodSource("files")
+  void parameterized(String fileName) {
+    quickFixFixture.get().doTest(fileName);
   }
 
   @BeforeEach
   public void setupInspections(TestInfo testInfo) {
-    getFixture().enableInspections(OptionalOfNullableMisuseInspection.class);
+    quickFixFixture.get().getFixture().enableInspections(OptionalOfNullableMisuseInspection.class);
     if (testInfo.getDisplayName().contains("Guava")) {
-      addGuavaOptional(getFixture());
+      addGuavaOptional(quickFixFixture.get().getFixture());
     }
-  }
-
-  @Override
-  public @NotNull String getTestDataPath() {
-    return JavaTestUtil.getJavaTestDataPath() + "/codeInsight/daemonCodeAnalyzer/quickFix/replaceFromOfNullable";
   }
 
   public static void addGuavaOptional(JavaCodeInsightTestFixture fixture) {

@@ -2,29 +2,32 @@
 package com.intellij.java.codeInspection
 
 import com.intellij.JavaTestUtil
-import com.intellij.codeInsight.daemon.quickFix.LightQuickFixFileBasedTest
+import com.intellij.codeInsight.daemon.quickFix.lightQuickFixFixture
+import com.intellij.codeInsight.daemon.quickFix.lightQuickFixTestFiles
 import com.intellij.codeInspection.DuplicateBranchesInSwitchInspection
-import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase.JAVA_21
-import com.intellij.testFramework.fixtures.lightJavaCodeInsightFixture
 import com.intellij.testFramework.fixtures.lightJavaProjectFixture
 import com.intellij.testFramework.junit5.TestApplication
-import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.MethodSource
+import java.util.function.Supplier
 
 @TestApplication
-class DuplicateBranchesInSwitchFixTest : LightQuickFixFileBasedTest() {
+class DuplicateBranchesInSwitchFixTest {
   companion object {
+    private val TEST_DATA_PATH = JavaTestUtil.getJavaTestDataPath() + "/inspection/duplicateBranchesInSwitchFix"
     private val projectFixture = lightJavaProjectFixture(JAVA_21)
+
+    @JvmStatic
+    fun files(): List<String> = lightQuickFixTestFiles(TEST_DATA_PATH)
   }
 
-  private val codeInsightFixture = lightJavaCodeInsightFixture(projectFixture)
+  private val quickFixFixture =
+    lightQuickFixFixture(projectFixture, TEST_DATA_PATH, Supplier { listOf(DuplicateBranchesInSwitchInspection()) })
 
-  override fun getFixture(): JavaCodeInsightTestFixture = codeInsightFixture.get()
-
-  override fun getTestDataPath(): String = JavaTestUtil.getJavaTestDataPath() + "/inspection/duplicateBranchesInSwitchFix"
-
-  @BeforeEach
-  fun setUpInspections() {
-    fixture.enableInspections(DuplicateBranchesInSwitchInspection())
+  @ParameterizedTest(name = "{argumentSetNameOrArgumentsWithNames}")
+  @MethodSource("files")
+  fun parameterized(fileName: String) {
+    quickFixFixture.get().doTest(fileName)
   }
 }

@@ -2,22 +2,29 @@
 package com.intellij.java.codeInsight.daemon.impl.quickfix
 
 import com.intellij.JavaTestUtil
-import com.intellij.codeInsight.daemon.quickFix.LightQuickFixFileBasedTest
-import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture
-import com.intellij.testFramework.fixtures.lightJavaCodeInsightFixture
+import com.intellij.codeInsight.daemon.quickFix.lightQuickFixFixture
+import com.intellij.codeInsight.daemon.quickFix.lightQuickFixTestFiles
 import com.intellij.testFramework.fixtures.lightJavaProjectFixture
 import com.intellij.testFramework.fixtures.lightJavaTestDescriptor
 import com.intellij.testFramework.junit5.TestApplication
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.MethodSource
 
 @TestApplication
-class DeleteUnreachableTest : LightQuickFixFileBasedTest() {
+class DeleteUnreachableTest {
   companion object {
+    private val TEST_DATA_PATH = JavaTestUtil.getJavaTestDataPath() + "/codeInsight/daemonCodeAnalyzer/quickFix/deleteUnreachable"
     private val projectFixture = lightJavaProjectFixture(lightJavaTestDescriptor())
+
+    @JvmStatic
+    fun files(): List<String> = lightQuickFixTestFiles(TEST_DATA_PATH)
   }
 
-  private val codeInsightFixture = lightJavaCodeInsightFixture(projectFixture)
+  private val quickFixFixture = lightQuickFixFixture(projectFixture, TEST_DATA_PATH)
 
-  override fun getFixture(): JavaCodeInsightTestFixture = codeInsightFixture.get()
-
-  override fun getTestDataPath(): String = JavaTestUtil.getJavaTestDataPath() + "/codeInsight/daemonCodeAnalyzer/quickFix/deleteUnreachable"
+  @ParameterizedTest(name = "{argumentSetNameOrArgumentsWithNames}")
+  @MethodSource("files")
+  fun parameterized(fileName: String) {
+    quickFixFixture.get().doTest(fileName)
+  }
 }
