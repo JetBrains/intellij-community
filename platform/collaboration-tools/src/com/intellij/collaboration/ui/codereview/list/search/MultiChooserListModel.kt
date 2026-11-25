@@ -1,13 +1,15 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.collaboration.ui.codereview.list.search
 
+import org.jetbrains.annotations.ApiStatus
 import javax.swing.AbstractListModel
 
 /**
  * A special list model which allows choosing multiple items from the list
  * Ensures items are not added to the list twice
  */
-internal class MultiChooserListModel<T> : AbstractListModel<T>() {
+@ApiStatus.Internal
+class MultiChooserListModel<T> : AbstractListModel<T>() {
   private val chosenItems = mutableSetOf<T>()
   private val itemsSet = mutableSetOf<T>()
   private val items = mutableListOf<T>()
