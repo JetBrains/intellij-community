@@ -549,7 +549,7 @@ internal class UnifiedPluginsPageRealRowsTest {
         val lastRow = factory.row(PluginSectionId.Suggested, last).component
         val linkTop = SwingUtilities.convertPoint(link, Point(), view.component).y
         val lastRowBottom = SwingUtilities.convertPoint(lastRow, Point(0, lastRow.height), view.component).y
-        assertThat(linkTop).isGreaterThanOrEqualTo(lastRowBottom)
+        assertThat(linkTop - lastRowBottom).isEqualTo(JBUI.scale(4))
         assertThat(link.accessibleContext.accessibleName).isEqualTo(IdeBundle.message("plugins.configurable.more.on.marketplace"))
         assertThat(link.accessibleContext.accessibleRole).isEqualTo(AccessibleRole.HYPERLINK)
         assertThat(link.icon).isSameAs(AllIcons.Ide.External_link_arrow)

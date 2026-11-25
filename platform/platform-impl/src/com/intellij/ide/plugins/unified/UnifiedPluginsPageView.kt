@@ -719,11 +719,12 @@ internal class UnifiedPluginsPageView @RequiresEdt constructor(
       addContent(showMoreRowLabel, BorderLayout.CENTER)
       forwardMouseEventsFromChildren()
     }
-    private val showMoreRowHost = JPanel(BorderLayout()).apply {
+    private val footerActions = JPanel(ListLayout.vertical(ROW_GAP)).apply {
       isOpaque = false
       isVisible = false
       border = JBUI.Borders.emptyTop(ROW_GAP)
-      add(showMoreRow, BorderLayout.CENTER)
+      add(showMoreRow)
+      marketplaceLinkPanel?.let { add(it) }
     }
 
     val component: JComponent
@@ -780,8 +781,7 @@ internal class UnifiedPluginsPageView @RequiresEdt constructor(
         add(JPanel(BorderLayout()).apply {
           isOpaque = false
           add(unrealizedItemsSpacer, BorderLayout.NORTH)
-          add(showMoreRowHost, BorderLayout.CENTER)
-          marketplaceLinkPanel?.let { add(it, BorderLayout.SOUTH) }
+          add(footerActions, BorderLayout.CENTER)
         }, BorderLayout.SOUTH)
       }
     }
@@ -859,7 +859,7 @@ internal class UnifiedPluginsPageView @RequiresEdt constructor(
       }
       val showExpansionRow = section.canExpand && !section.expanded
       showMoreRow.isVisible = showExpansionRow
-      showMoreRowHost.isVisible = showExpansionRow
+      footerActions.isVisible = showExpansionRow || marketplaceLinkPanel?.isVisible == true
       if (showExpansionRow) {
         showMoreRowLabel.text = if (count != null && !section.exceedsDisplayLimit) {
           IdeBundle.message("plugins.configurable.show.hidden.row", count - visibleItems.size)
