@@ -73,6 +73,19 @@ class PyTestTargetFolderPrefixResolveTest : PyCodeInsightTestCase() {
     assertThat(parts).isEqualTo("tests / MyTestCase in tests/subdir/tests.py")
   }
 
+  @Test
+  fun `class splits to the module under the folder, not to a module of the same name elsewhere`() {
+    createFiles("app_b/tests.py" to TEST_MODULE, "tests/subdir/tests.py" to TEST_MODULE)
+
+    val parts = runReadActionBlocking {
+      QualifiedName.fromDottedString("tests.MyTestCase").tryResolveAndSplit(createContext())?.let {
+        "${it.fileName} / ${it.elementName} in ${relativePath(it.file.virtualFile)}"
+      }
+    }
+
+    assertThat(parts).isEqualTo("tests / MyTestCase in tests/subdir/tests.py")
+  }
+
   private fun createFiles(vararg files: Pair<String, String>) {
     runInEdtAndWait {
       for ([path, text] in files) {
