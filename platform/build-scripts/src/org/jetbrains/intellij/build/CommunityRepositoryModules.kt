@@ -168,7 +168,6 @@ fun getCommunityRepositoryPlugins(): PersistentList<PluginLayout> {
     pluginAuto(
       listOf(
         "intellij.gradle.plugin",
-        "intellij.gradle",
         "intellij.gradle.common",
       )
     ) { spec ->
