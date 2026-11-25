@@ -12,7 +12,7 @@ use crate::build::execute_build;
 use crate::check::{Check, CheckCommand, record_green_run, tree_before_run};
 use crate::digest::{
     DEFAULT_MAX_FRAMES, RenderOptions, RunTime, failure_detail, failure_message, failure_type, format_duration, render_digest,
-    rerun_selector, tail_lines, trim_frames,
+    rerun_filter, tail_lines, trim_frames,
 };
 use crate::options::{Args, Invocation, parse_args};
 use crate::remote::brd_host::BrdHost;
@@ -22,10 +22,13 @@ use bt_core::evidence::{keep_bazel_output, keep_failed_evidence};
 use bt_core::lanes::{
     BEP_FLAG, LaneSpec, RunPlan, bazel_command, bep_override, build_bazel_args, default_shards, uses_shard_plan, wildcard_guards,
 };
+use bt_core::modules::bt_wrapper;
 use bt_core::os_runtime::command_line;
-use bt_core::result::{FlakyRun, RunResult, RunStatus, ShardTimeout, TargetResult, TargetTiming, collect_results, is_verdict};
+use bt_core::result::{Failure, FlakyRun, RunResult, RunStatus, ShardTimeout, TargetResult, TargetTiming, collect_results, is_verdict};
 use bt_core::runtime::{Runtime, SpawnResult, repo_file};
-use bt_core::selector::{Resolution, Selector, SelectorKind, as_filter_or_package, canonical_filter, no_tests_hint, resolve_selector};
+use bt_core::selector::{
+    Resolution, Selector, SelectorKind, apparent_label, as_filter_or_package, canonical_filter, no_tests_hint, resolve_selector,
+};
 use bt_core::shard_plan::{
     Groups, HEAVY_PROFILE_FILE, HEAVY_SHARDS, PROFILE_FILE, SHARD_PLAN_FILE, SHARED_SHARD_PLAN_FILE, SINGLE_PROFILE_FILE, SINGLE_SHARDS,
     ShardPlan, TreeTargets,
@@ -50,6 +53,8 @@ pub(crate) struct Outcome {
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub(crate) struct JsonFailure {
+    /// The label of the target that ran the case, as the BEP and `targets` name it.
+    pub(crate) label: String,
     pub(crate) class_name: String,
     pub(crate) name: String,
     #[serde(rename = "type", default, skip_serializing_if = "Option::is_none")]
@@ -102,13 +107,14 @@ pub(crate) fn to_json(result: &RunResult) -> JsonPayload {
         failures: result
             .failures
             .iter()
-            .map(|failure| {
-                let stack = trim_frames(failure_detail(failure), DEFAULT_MAX_FRAMES);
+            .map(|Failure { label, case }| {
+                let stack = trim_frames(failure_detail(case), DEFAULT_MAX_FRAMES);
                 JsonFailure {
-                    class_name: failure.class_name.clone(),
-                    name: failure.name.clone(),
-                    failure_type: failure_type(failure).map(str::to_owned),
-                    message: failure_message(failure).map(str::to_owned),
+                    label: label.clone(),
+                    class_name: case.class_name.clone(),
+                    name: case.name.clone(),
+                    failure_type: failure_type(case).map(str::to_owned),
+                    message: failure_message(case).map(str::to_owned),
                     frames: stack.frames,
                     frames_omitted: stack.omitted,
                 }
@@ -145,9 +151,6 @@ pub(crate) fn infra_payload(message: &str) -> JsonPayload {
 /// run without a build error, and a query without an answer. Enough to carry a stack trace or a startup refusal, and
 /// far short of the progress log the digest exists to suppress.
 pub(crate) const DIGEST_TAIL_LINES: usize = 40;
-
-/// The command a rerun hint names.
-const WRAPPER: &str = "./community/tools/bt.cmd";
 
 /// Runs one command line (without the program name) end to end.
 ///
@@ -520,12 +523,7 @@ pub(crate) fn execute_args(args: &Args, runtime: &dyn Runtime, areas: &Areas) ->
         analysis_ms: bep.analysis_ms,
     };
 
-    // The rerun selector rather than the test case id, and quoted rather than wrapped in bare single quotes: a
-    // Kotlin backticked name holds apostrophes, and a display name is no selector at all.
-    let rerun_hint = result
-        .failures
-        .first()
-        .map(|failure| format!("{WRAPPER} {}", posix_shell_quote(&rerun_selector(failure))));
+    let rerun_hint = result.failures.first().map(|failure| rerun_command(bt_wrapper(runtime), failure));
     let bazel_log = (result.status == RunStatus::BuildFailed)
         .then(|| keep_bazel_output(runtime, kept_run.as_deref(), &spawned.output))
         .flatten();
@@ -876,6 +874,20 @@ fn tree_targets(runtime: &dyn Runtime, patterns: &[String]) -> Result<Option<Tre
             Ok(None)
         }
     }
+}
+
+/// The command that reruns one failure: the target that ran it, and the filter of the case in that target.
+///
+/// The label and the filter come from the run, so the command needs no accio. It finds the one class even when another
+/// class has the same simple name, and it runs a module outside the migrated list as the run did. Each word is quoted,
+/// because a Kotlin backticked name holds apostrophes.
+pub(crate) fn rerun_command(wrapper: &str, failure: &Failure) -> String {
+    let mut words = vec![wrapper.to_owned(), posix_shell_quote(&apparent_label(&failure.label))];
+    if let Some(filter) = rerun_filter(&failure.case) {
+        words.push("--filter".to_owned());
+        words.push(posix_shell_quote(&filter));
+    }
+    words.join(" ")
 }
 
 /// A value quoted for a POSIX shell, so a rerun hint can be pasted as it stands.

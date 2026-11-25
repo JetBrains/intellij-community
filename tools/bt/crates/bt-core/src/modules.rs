@@ -121,6 +121,11 @@ impl Layout {
     }
 }
 
+/// The path of `bt.cmd` from the checkout root, as a caller types it in a command.
+pub fn bt_wrapper(runtime: &dyn Runtime) -> &'static str {
+    Layout::detect(runtime).wrapper()
+}
+
 /// The patterns of the migrated list. A pattern is a module name, or a module name prefix with one trailing `*`.
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub struct MigratedList {

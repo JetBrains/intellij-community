@@ -143,6 +143,22 @@ fn as_filter_or_package_routes_by_what_the_field_can_express() {
     assert_eq!(as_filter_or_package(None), (None, None));
 }
 
+/// The BEP names a repository by its canonical name, and the rerun hint names the label as a caller types it.
+#[test]
+fn an_apparent_label_drops_the_canonical_spelling_of_its_repository() {
+    for (label, want) in [
+        ("@@community+//tools/bt:bt_test", "@community//tools/bt:bt_test"),
+        ("@@community//tools/bt:bt_test", "@community//tools/bt:bt_test"),
+        ("@@//plugins/air/x:x_test", "//plugins/air/x:x_test"),
+        ("//plugins/air/x:x_test", "//plugins/air/x:x_test"),
+        ("@community//tools/bt:bt_test", "@community//tools/bt:bt_test"),
+        // A repository of a module extension has no apparent name here.
+        ("@@rules_x++ext+repo//p:t", "@@rules_x++ext+repo//p:t"),
+    ] {
+        assert_eq!(apparent_label(label), want, "{label}");
+    }
+}
+
 fn hint_of(filter: &str) -> String {
     no_tests_hint(Some(filter)).unwrap_or_else(|| panic!("no hint for {filter}"))
 }
@@ -159,6 +175,7 @@ fn a_no_tests_hint_names_what_the_filter_selects() {
     assert!(hint_of("a.IDEA_355419.FooTest").starts_with("a class filter is a prefix"));
     assert!(hint_of("a.b.FooTest").contains("package line of the file"));
     assert!(hint_of("a.b").starts_with("a package filter runs the classes of that package and its subpackages"));
+    assert!(hint_of("agent_home::tests::reads").starts_with("a libtest filter matches the tests whose path holds it"));
     assert_eq!(no_tests_hint(None), None);
 }
 
@@ -1111,6 +1128,10 @@ fn a_filter_in_the_form_of_the_runner_stays_and_asks_no_accio() {
         "FooTest",
         "a.IDEA_355419.FooTest",
         "a.b.FooTest#a test name",
+        // A libtest path, which the libtest wrapper passes to libtest.
+        "agent_home::tests::reads_the_home",
+        "agent_home::tests",
+        "crate::reads_the_home",
     ] {
         assert_eq!(
             filter_of(&fake, raw).unwrap_or_else(|failure| panic!("{raw} refused: {failure}")),
@@ -1133,6 +1154,10 @@ fn a_filter_that_no_form_can_express_is_refused_before_the_build() {
         "a.*Test",
         "a.b.FooTest#",
         "*Test",
+        "agent_home::",
+        "::reads_the_home",
+        "agent_home:tests",
+        "agent_home::tests::*",
     ] {
         let failure = refusal(filter_of(&fake, raw));
         assert_eq!(failure.exit, exit::USAGE, "{raw}");

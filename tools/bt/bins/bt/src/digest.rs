@@ -4,7 +4,7 @@
 use bt_junit::TestCase;
 
 use bt_core::result::{RunResult, RunStatus, ShardTimeout, TargetResult, filter_matched_no_class, totals_of};
-use bt_core::selector::Selector;
+use bt_core::selector::{is_method_name, is_target_pattern};
 
 /// Everything a stack trace carries that is not the test.
 ///
@@ -104,18 +104,16 @@ pub(crate) fn failure_detail(case: &TestCase) -> &str {
     case.failure.as_ref().map_or("", |failure| failure.detail.as_str())
 }
 
-/// How the digest names one failure: `SimpleClass#name`, exactly as test.xml carries it.
+/// How the digest names one failure: `SimpleClass#name` of a JVM test, exactly as test.xml carries it, and the path of
+/// a libtest test, such as `agent_home::tests::reads_the_home`.
 ///
-/// An identifier and not a selector; see [`rerun_selector`] for the selector, and for why the two differ.
+/// An identifier and not a filter; see [`rerun_filter`] for the filter, and for why the two differ.
 pub(crate) fn test_case_id(case: &TestCase) -> String {
-    let simple_class = if case.class_name.is_empty() {
-        // `Class Configuration` names no class; its suite starts with the class.
-        suite_class_name(&case.suite_name)
-    } else {
-        case.class_name
-            .rsplit_once('.')
-            .map_or(case.class_name.as_str(), |(_, simple)| simple)
-    };
+    if let Some(path) = libtest_path(case) {
+        return path;
+    }
+    let class = jvm_class(case);
+    let simple_class = class.rsplit_once('.').map_or(class, |(_, simple)| simple);
     if simple_class.is_empty() {
         return case.name.clone();
     }
@@ -125,43 +123,68 @@ pub(crate) fn test_case_id(case: &TestCase) -> String {
 /// These cannot appear in a JVM method name, so a name holding one is a display name.
 const JVM_FORBIDDEN_METHOD_CHARACTERS: &[char] = &['.', ';', '[', ']', '/', '<', '>'];
 
-/// The selector that reruns one failure. It names the method only when the method is selectable, and the class
-/// alone otherwise.
+/// The class name that `community/build/rust-tools/libtest-junit-wrapper` writes for a test at the root of its crate.
+const LIBTEST_ROOT_CLASS: &str = "crate";
+
+/// The filter that reruns one failure in the target that ran it, or `None` for a case that names no class.
 ///
-/// The class alone is a real answer rather than a degradation, because a class rerun works.
+/// A libtest test gives its path, which the libtest wrapper passes to libtest. The wrapper writes the module path as
+/// the class name, and `crate` for a test at the root of its crate.
+///
+/// A JVM test gives the FQN of its class, and the method only when the method is selectable. The class alone is a real
+/// answer rather than a degradation, because a class rerun works.
 /// `community/platform/testFramework/bootstrap/src/com/intellij/tests/bazel/TeamCityTestNames.java` writes the name
 /// of a test as TeamCity shows it: `test()`, `test(TestInfo)`, `test()[MONOLITH]`, `parameterized[FIRST]`. The method
 /// ends at the first `[`, and the runner selects `test()`, `test(TestInfo)` and every method of a name. A name with
 /// no method, such as a `@DisplayName` that starts with the method name, reaches the runner as a method it cannot
 /// find. The run then reports NO TESTS for a class that plainly failed.
 ///
-/// The method survives three checks. Its class must be a top-level class, because the selector of an `@Nested` class is
-/// its outer class (see [`rerun_class_name`]). It must round-trip through [`Selector::classify`], the parser this tool
-/// already owns, so the hint grows no second grammar. It must also hold no character a JVM method name forbids.
-///
-/// A case with no class name, such as `Class Configuration`, reruns the class at the start of its suite name.
-pub(crate) fn rerun_selector(case: &TestCase) -> String {
-    if case.class_name.is_empty() {
-        let suite_class = suite_class_name(&case.suite_name);
-        if suite_class.is_empty() {
-            // No class to fall back to. The name is all there is, and a caller at least reads what failed.
-            return case.name.clone();
-        }
-        return suite_class.to_owned();
+/// The method survives three checks. Its class must be a top-level class, because the runner finds an `@Nested` class
+/// `Outer$Nested` only through `Outer`, and `Outer#method` looks for the method in `Outer` only. It must match
+/// [`is_method_name`], the grammar of `--filter`. It must also hold no character a JVM method name forbids. A case with
+/// no class name, such as `Class Configuration`, reruns the class at the start of its suite name.
+pub(crate) fn rerun_filter(case: &TestCase) -> Option<String> {
+    if let Some(path) = libtest_path(case) {
+        return Some(path);
     }
-    let simple_class = rerun_class_name(&case.class_name);
-    if case.class_name.contains('$') {
-        return simple_class.to_owned();
+    let class = jvm_class(case);
+    if class.is_empty() {
+        return None;
+    }
+    if let Some((outer, _)) = class.split_once('$') {
+        return Some(outer.to_owned());
     }
     let method = method_name(&case.name);
-    let candidate = format!("{simple_class}#{method}");
-    if !method.is_empty()
-        && !method.contains(JVM_FORBIDDEN_METHOD_CHARACTERS)
-        && Selector::classify(&candidate).is_ok_and(|selector| selector.method.is_some())
-    {
-        return candidate;
+    let selectable =
+        !case.class_name.is_empty() && !method.is_empty() && !method.contains(JVM_FORBIDDEN_METHOD_CHARACTERS) && is_method_name(method);
+    Some(if selectable {
+        format!("{class}#{method}")
+    } else {
+        class.to_owned()
+    })
+}
+
+/// The path of a libtest test, `<class name>::<name>`, or `None` for a JVM test.
+///
+/// The libtest wrapper names the suite by the label of the target, and the class by the module path, such as `tests`
+/// or `agent_home::tests`. A JVM runner names the suite by a class. A module path holds no dot, so a JVM class that a
+/// Rust test names with `junit_class` stays a JVM class.
+fn libtest_path(case: &TestCase) -> Option<String> {
+    let class = case.class_name.as_str();
+    let libtest = !class.is_empty()
+        && !class.contains('.')
+        && (class == LIBTEST_ROOT_CLASS || class.contains("::") || is_target_pattern(&case.suite_name));
+    libtest.then(|| format!("{class}::{}", case.name))
+}
+
+/// The class of a JVM test as test.xml names it. A case with no class name, such as `Class Configuration`, takes the
+/// class at the start of its suite name.
+fn jvm_class(case: &TestCase) -> &str {
+    if case.class_name.is_empty() {
+        suite_class(&case.suite_name)
+    } else {
+        &case.class_name
     }
-    simple_class.to_owned()
 }
 
 /// The test name up to the first `[` outside the parameter types: `test(String[])[1]` gives `test(String[])`.
@@ -178,27 +201,21 @@ fn method_name(name: &str) -> &str {
     name
 }
 
-/// The class part of a rerun selector: the last dotted segment, and the outer half of a nested pair.
+/// The FQN of the class at the start of a suite name: the dotted segments up to the first one with an upper-case first
+/// letter, which ends at a `$`, `[` or `(`. The innermost suite comes last, after the last `: `.
 ///
-/// A `@Nested` class reaches test.xml as `Outer$Nested`, which the selector parser refuses. `Outer` is a selector
-/// it accepts, and it runs the nested class too, because the runner's class filter matches a prefix. `Outer#method`
-/// is no such selector: the runner looks for the method in `Outer` only. It then finds no test, or it runs a method of
-/// the same name in `Outer`. So [`rerun_selector`] gives the class of a nested test without its method.
-fn rerun_class_name(class_name: &str) -> &str {
-    let simple = class_name.rsplit_once('.').map_or(class_name, |(_, simple)| simple);
-    simple.split_once('$').map_or(simple, |(outer, _)| outer)
-}
-
-/// The simple name of the class at the start of a suite name: the first dotted segment with an upper-case first
-/// letter, up to a `$`, `[` or `(`. The innermost suite comes last, after the last `: `.
-///
-/// `com.x.FooTest$Inner[MONOLITH].SPLIT`, `com.x.FooTest.factory()` and `S: com.x.FooTest` all give `FooTest`.
-fn suite_class_name(suite_name: &str) -> &str {
+/// `com.x.FooTest$Inner[MONOLITH].SPLIT`, `com.x.FooTest.factory()` and `S: com.x.FooTest` all give `com.x.FooTest`.
+fn suite_class(suite_name: &str) -> &str {
     let innermost = suite_name.rsplit_once(": ").map_or(suite_name, |(_, innermost)| innermost);
-    innermost
-        .split('.')
-        .find(|segment| segment.starts_with(|first: char| first.is_ascii_uppercase()))
-        .map_or("", |segment| segment.split(['$', '[', '(']).next().unwrap_or_default())
+    let mut start = 0;
+    for segment in innermost.split('.') {
+        if segment.starts_with(|first: char| first.is_ascii_uppercase()) {
+            let class = segment.split(['$', '[', '(']).next().unwrap_or_default();
+            return &innermost[..start + class.len()];
+        }
+        start += segment.len() + 1;
+    }
+    ""
 }
 
 /// One failure: its id, its headline, and its trimmed stack.
@@ -469,15 +486,15 @@ pub(crate) fn render_digest(result: &RunResult, options: &RenderOptions) -> Stri
             }
             let shown = result.failures.len().min(options.max_failures);
             for (position, failure) in result.failures[..shown].iter().enumerate() {
-                out.extend(render_failure(position + 1, failure));
+                out.extend(render_failure(position + 1, &failure.case));
                 out.push(String::new());
             }
             let rest = &result.failures[shown..];
             for failure in rest.iter().take(MAX_FAILURE_ONE_LINERS) {
                 out.push(format!(
                     "+ {} — {}",
-                    test_case_id(failure),
-                    one_line(failure_message(failure).unwrap_or(""), 100)
+                    test_case_id(&failure.case),
+                    one_line(failure_message(&failure.case).unwrap_or(""), 100)
                 ));
             }
             if rest.len() > MAX_FAILURE_ONE_LINERS {

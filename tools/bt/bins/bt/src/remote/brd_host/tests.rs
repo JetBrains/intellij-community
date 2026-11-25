@@ -63,9 +63,9 @@ impl FakeBrdHost {
         Self { dir, binary }
     }
 
-    /// A runtime whose checkout is the directory of the script, with the areas of bt.
+    /// A runtime whose ultimate checkout is the directory of the script, with the areas of bt.
     fn runtime(&self) -> FakeRuntime {
-        let fake = FakeRuntime::on(Platform::Darwin, self.root(), []);
+        let fake = FakeRuntime::on(Platform::Darwin, self.root(), [("community/MODULE.bazel", "")]);
         for (path, text) in area_files() {
             fake.put(&path, &text);
         }

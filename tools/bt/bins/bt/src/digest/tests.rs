@@ -7,7 +7,7 @@ use super::*;
 use bt_core::bep::parse_bep;
 use bt_core::exit;
 use bt_core::fake::{AttemptSpec, FakeRuntime, attempt, bep_lines, case, suite, suite_xml, test_result_event, wrapper_xml};
-use bt_core::result::{FlakyRun, ShardTimeout, collect_results};
+use bt_core::result::{Failure, FlakyRun, ShardTimeout, collect_results};
 use bt_core::runtime::Runtime;
 
 #[test]
@@ -226,6 +226,14 @@ fn digest_failure(apply: impl FnOnce(&mut TestCase)) -> TestCase {
     failure
 }
 
+/// The case as a failure of the target of the digest.
+fn failed(case: TestCase) -> Failure {
+    Failure {
+        label: DIGEST_LABEL.to_owned(),
+        case,
+    }
+}
+
 fn render(result: &RunResult) -> String {
     render_digest(result, &RenderOptions::default())
 }
@@ -345,7 +353,7 @@ fn a_red_multi_target_run_reports_its_cost_too() {
                 target.cached = true;
             }),
         ];
-        result.failures = vec![digest_failure(|_| {})];
+        result.failures = vec![failed(digest_failure(|_| {}))];
     }));
     assert!(text.contains("cost   1 ran · 1 cached · slowest a 4.0s"), "{text}");
 }
@@ -431,7 +439,7 @@ fn a_single_failure_renders_id_type_message_and_trimmed_frames() {
                 target.failed = 1;
                 target.log_path = Some("out/bazel-testlogs/plugins/air/x/test.log".to_owned());
             })];
-            result.failures = vec![digest_failure(|_| {})];
+            result.failures = vec![failed(digest_failure(|_| {}))];
         }),
         &RenderOptions {
             rerun_hint: Some(hint.to_owned()),
@@ -455,7 +463,7 @@ fn a_single_failure_renders_id_type_message_and_trimmed_frames() {
 #[test]
 fn failures_past_the_cap_collapse_to_one_liners() {
     let failures = (0..5)
-        .map(|index| digest_failure(|failure| failure.name = format!("case{index}")))
+        .map(|index| failed(digest_failure(|failure| failure.name = format!("case{index}"))))
         .collect();
     let text = render_digest(
         &digest_result(|result| {
@@ -568,50 +576,66 @@ fn a_no_tests_run_gives_the_hint_of_its_filter() {
     assert!(!passed.contains("hint "), "{passed}");
 }
 
-// --- the rerun selector ------------------------------------------------------------------------------------------
+// --- the rerun filter --------------------------------------------------------------------------------------------
 
-/// [`test_case_id`] prints what test.xml carries and [`rerun_selector`] answers what `bt` can run. The two differ
-/// exactly where the renderer writes a display name instead of a method name.
+/// [`test_case_id`] prints what test.xml carries and [`rerun_filter`] answers what the runner can select. The two
+/// differ exactly where the renderer writes a display name instead of a method name.
 #[test]
-fn rerun_selector_keeps_a_method_only_when_the_method_is_selectable() {
+fn rerun_filter_keeps_a_method_only_when_the_method_is_selectable() {
+    const CLASS: &str = "com.intellij.air.x.FooTest";
     for (class_name, name, want) in [
         // An ordinary method, and a Kotlin backticked one, both round-trip whole.
-        ("com.intellij.air.x.FooTest", "resolvesCwd", "FooTest#resolvesCwd"),
+        (CLASS, "resolvesCwd", "com.intellij.air.x.FooTest#resolvesCwd"),
         (
-            "com.intellij.air.x.FooTest",
+            CLASS,
             "the client's token is not logged",
-            "FooTest#the client's token is not logged",
+            "com.intellij.air.x.FooTest#the client's token is not logged",
         ),
         // A dynamic test's display name, and a test-template child's parent-prefixed one.
-        ("com.intellij.air.x.FooTest", "[1] value=x", "FooTest"),
-        ("com.intellij.air.x.FooTest", "renders.[1] value=x", "FooTest"),
+        (CLASS, "[1] value=x", CLASS),
+        (CLASS, "renders.[1] value=x", CLASS),
         // Each JVM-forbidden character on its own.
-        ("com.intellij.air.x.FooTest", "a.b", "FooTest"),
-        ("com.intellij.air.x.FooTest", "a;b", "FooTest"),
-        ("com.intellij.air.x.FooTest", "a/b", "FooTest"),
-        ("com.intellij.air.x.FooTest", "<init>", "FooTest"),
+        (CLASS, "a.b", CLASS),
+        (CLASS, "a;b", CLASS),
+        (CLASS, "a/b", CLASS),
+        (CLASS, "<init>", CLASS),
         // A `@Nested` class reaches test.xml as `Outer$Nested`. The outer class alone runs the nested one, and
         // `Outer#method` would look for the method in the outer class.
-        ("com.intellij.air.x.FooTest$Inner", "resolvesCwd", "FooTest"),
-        ("com.intellij.air.x.FooTest$Inner", "resolvesCwd()[MONOLITH]", "FooTest"),
+        ("com.intellij.air.x.FooTest$Inner", "resolvesCwd", CLASS),
+        ("com.intellij.air.x.FooTest$Inner", "resolvesCwd()[MONOLITH]", CLASS),
         // The name of a test as TeamCity shows it: the method ends at the first `[`.
-        ("com.intellij.air.x.FooTest", "resolvesCwd()", "FooTest#resolvesCwd()"),
-        ("com.intellij.air.x.FooTest", "resolvesCwd(Path)", "FooTest#resolvesCwd(Path)"),
-        ("com.intellij.air.x.FooTest", "renders()[MONOLITH]", "FooTest#renders()"),
-        ("com.intellij.air.x.FooTest", "renders[custom name]", "FooTest#renders"),
-        ("com.intellij.air.x.FooTest", "parameterized[FIRST]", "FooTest#parameterized"),
+        (CLASS, "resolvesCwd()", "com.intellij.air.x.FooTest#resolvesCwd()"),
+        (CLASS, "resolvesCwd(Path)", "com.intellij.air.x.FooTest#resolvesCwd(Path)"),
+        (CLASS, "renders()[MONOLITH]", "com.intellij.air.x.FooTest#renders()"),
+        (CLASS, "renders[custom name]", "com.intellij.air.x.FooTest#renders"),
+        (CLASS, "parameterized[FIRST]", "com.intellij.air.x.FooTest#parameterized"),
         // An array parameter type keeps its brackets.
-        ("com.intellij.air.x.FooTest", "main(String[])", "FooTest"),
-        ("com.intellij.air.x.FooTest", "main(String[])[MONOLITH]", "FooTest"),
-        // A suite that named no class leaves the name as the only thing there is to print.
-        ("", "orphan", "orphan"),
+        (CLASS, "main(String[])", CLASS),
+        (CLASS, "main(String[])[MONOLITH]", CLASS),
+        // A libtest test: the wrapper writes the module path as the class, and `crate` at the root of the crate.
+        ("agent_home::tests", "reads_the_home", "agent_home::tests::reads_the_home"),
+        ("crate", "reads_the_home", "crate::reads_the_home"),
+        ("tests", "reads_the_home", "tests::reads_the_home"),
     ] {
         let failure = digest_failure(|failure| {
             failure.class_name = class_name.to_owned();
             failure.name = name.to_owned();
+            // The libtest wrapper names the suite by the label of the target, and a JVM runner by the class.
+            failure.suite_name = if class_name.contains('.') { class_name } else { DIGEST_LABEL }.to_owned();
         });
-        assert_eq!(rerun_selector(&failure), want, "{class_name} / {name:?}");
+        assert_eq!(rerun_filter(&failure).as_deref(), Some(want), "{class_name} / {name:?}");
     }
+}
+
+/// A suite that names no class leaves no filter: the rerun runs the target.
+#[test]
+fn a_case_without_a_class_has_no_rerun_filter() {
+    let failure = digest_failure(|failure| {
+        failure.class_name = String::new();
+        failure.name = "orphan".to_owned();
+    });
+    assert_eq!(rerun_filter(&failure), None);
+    assert_eq!(test_case_id(&failure), "orphan");
 }
 
 /// Two failed containers of one target keep apart in the digest: each id takes the class from the suite.
@@ -625,23 +649,53 @@ fn a_class_configuration_id_names_the_class_of_its_suite() {
     assert_eq!(test_case_id(&failure), "FooTest#Class Configuration");
 }
 
+/// A JVM class that a Rust test names with `junit_class` keeps the JVM form, which the libtest wrapper reads.
+#[test]
+fn a_jvm_class_of_a_libtest_suite_stays_a_jvm_class() {
+    let failure = digest_failure(|failure| {
+        failure.class_name = "com.example.ModelTest".to_owned();
+        failure.name = "authoredModelIsValid".to_owned();
+        failure.suite_name = DIGEST_LABEL.to_owned();
+    });
+    assert_eq!(
+        rerun_filter(&failure).as_deref(),
+        Some("com.example.ModelTest#authoredModelIsValid")
+    );
+}
+
+/// The digest names a libtest failure by the path that libtest and `--filter` take.
+#[test]
+fn a_libtest_id_is_the_path_of_the_test() {
+    let failure = digest_failure(|failure| {
+        failure.class_name = "agent_home::tests".to_owned();
+        failure.name = "reads_the_home".to_owned();
+    });
+    assert_eq!(test_case_id(&failure), "agent_home::tests::reads_the_home");
+}
+
 /// A failed container has no class name in test.xml. Its suite name starts with the class.
 #[test]
-fn rerun_selector_takes_the_class_of_a_class_configuration_from_its_suite() {
+fn rerun_filter_takes_the_class_of_a_class_configuration_from_its_suite() {
     for (suite_name, want) in [
-        ("com.intellij.air.x.FooTest", "FooTest"),
-        ("com.intellij.air.x.FooTest$Inner.Inner", "FooTest"),
-        ("com.intellij.air.x.FooTest$Inner[MONOLITH].SPLIT", "FooTest"),
-        ("com.intellij.air.x.FooTest.factory()", "FooTest"),
-        ("com.intellij.air.x.AllTests: com.intellij.air.x.FooTest", "FooTest"),
-        ("", "Class Configuration"),
+        ("com.intellij.air.x.FooTest", Some("com.intellij.air.x.FooTest")),
+        ("com.intellij.air.x.FooTest$Inner.Inner", Some("com.intellij.air.x.FooTest")),
+        (
+            "com.intellij.air.x.FooTest$Inner[MONOLITH].SPLIT",
+            Some("com.intellij.air.x.FooTest"),
+        ),
+        ("com.intellij.air.x.FooTest.factory()", Some("com.intellij.air.x.FooTest")),
+        (
+            "com.intellij.air.x.AllTests: com.intellij.air.x.FooTest",
+            Some("com.intellij.air.x.FooTest"),
+        ),
+        ("", None),
     ] {
         let failure = digest_failure(|failure| {
             failure.class_name = String::new();
             failure.name = "Class Configuration".to_owned();
             failure.suite_name = suite_name.to_owned();
         });
-        assert_eq!(rerun_selector(&failure), want, "{suite_name:?}");
+        assert_eq!(rerun_filter(&failure).as_deref(), want, "{suite_name:?}");
     }
 }
 
@@ -663,11 +717,11 @@ fn no_digest_ever_leaks_captured_output() {
     let text = render(&digest_result(|result| {
         result.status = RunStatus::Fail;
         result.targets = vec![digest_target(|target| target.failed = 1)];
-        result.failures = vec![digest_failure(|failure| {
+        result.failures = vec![failed(digest_failure(|failure| {
             if let Some(detail) = failure.failure.as_mut() {
                 detail.message = Some(format!("boom {poison}"));
             }
-        })];
+        }))];
     }));
     assert!(text.len() < 1200, "the digest is {} bytes", text.len());
 }

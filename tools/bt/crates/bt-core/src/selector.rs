@@ -97,8 +97,7 @@ impl Selector {
 
         let (head, method) = match raw.split_once('#') {
             Some((head, tail)) => {
-                // Kotlin backticked test names carry spaces and punctuation, so the method pattern is wide.
-                if !regex!(r"^[A-Za-z_$][A-Za-z0-9_$ '`,.()\[\]-]*$").is_match(tail) {
+                if !is_method_name(tail) {
                     return Err(fail_usage(format!("Invalid test method name: {tail}")));
                 }
                 (head, Some(tail.to_owned()))
@@ -197,6 +196,18 @@ fn is_package_name(value: &str) -> bool {
     regex!(r"^[a-z][A-Za-z0-9_]*(?:\.[a-z][A-Za-z0-9_]*)*$").is_match(value)
 }
 
+/// Whether a value is the method part of a selector or a filter, after `#`. Kotlin backticked test names carry spaces
+/// and punctuation, so the pattern is wide.
+pub fn is_method_name(value: &str) -> bool {
+    regex!(r"^[A-Za-z_$][A-Za-z0-9_$ '`,.()\[\]-]*$").is_match(value)
+}
+
+/// Whether a value is the path of a libtest test or module, such as `agent_home::tests::reads_the_home`. The libtest
+/// wrapper writes the module path as the class name of a case, and libtest takes the path as a filter.
+pub fn is_libtest_path(value: &str) -> bool {
+    regex!(r"^[A-Za-z_][A-Za-z0-9_]*(?:::[A-Za-z_][A-Za-z0-9_]*)+$").is_match(value)
+}
+
 /// The nearest known names to a wanted one, closest first, ties by name.
 ///
 /// The threshold scales with the wanted name's length, because a one-character typo in `FooTest` and in
@@ -260,6 +271,9 @@ pub fn as_filter_or_package(value: Option<&str>) -> (Option<String>, Option<Stri
 pub fn no_tests_hint(filter: Option<&str>) -> Option<String> {
     const PACKAGE_LINE: &str = "take the package from the package line of the file, not from its directory";
     let value = filter?;
+    if is_libtest_path(value) {
+        return Some("a libtest filter matches the tests whose path holds it: copy the path from the test log".to_owned());
+    }
     if is_package_name(value) {
         return Some(format!(
             "a package filter runs the classes of that package and its subpackages: {PACKAGE_LINE}"
@@ -285,8 +299,9 @@ pub struct FilterForm {
 /// Reads an explicit `--filter` value before the first Bazel command, so that a form the runner cannot read costs no
 /// build.
 ///
-/// The runner reads a class name prefix, an FQN `Class#method`, or a package ([`no_tests_hint`] names its rules). A
-/// value whose meaning is clear but whose form is not that one becomes that form, and the note says so:
+/// The runner reads a class name prefix, an FQN `Class#method`, or a package ([`no_tests_hint`] names its rules). The
+/// libtest wrapper reads a libtest path such as `module::tests::name`, which passes as it is. A value whose meaning is
+/// clear but whose form is not that one becomes that form, and the note says so:
 /// - `a.Foo.bar` and `Foo.bar`: a segment after a class that starts with a lower-case letter is a method, `#bar`.
 /// - `Foo#bar`: the runner loads the class by its name, so accio gives the FQN.
 /// - `a.Outer.Inner#bar` and `a.Outer$Inner#bar`: the `$` form. Without a method, the outer class, because the runner
@@ -296,7 +311,7 @@ pub struct FilterForm {
 /// A value that no form can express, such as a regex or a list, is a usage refusal. An accio failure proves nothing
 /// about the class, so the value then stays as given, and the note names the cause.
 pub fn canonical_filter(raw: &str, inputs: &ResolutionInputs<'_>) -> Result<FilterForm, Refusal> {
-    if is_package_name(raw) {
+    if is_package_name(raw) || is_libtest_path(raw) {
         return Ok(FilterForm {
             value: raw.to_owned(),
             note: None,
@@ -319,7 +334,8 @@ pub fn canonical_filter(raw: &str, inputs: &ResolutionInputs<'_>) -> Result<Filt
     let bad_form = || {
         fail_usage(format!(
             "Cannot interpret --filter {raw}\n\
-             --filter takes a class, an FQN Class#method or a package. It takes no wildcard, no regex and no list. Run \
+             --filter takes a class, an FQN Class#method, a package or a libtest path module::test. It takes no \
+             wildcard, no regex and no list. Run \
              each class in its own call, or pass the package of the classes"
         ))
     };
@@ -327,7 +343,7 @@ pub fn canonical_filter(raw: &str, inputs: &ResolutionInputs<'_>) -> Result<Filt
         return Err(bad_form());
     }
     if let Some(method) = method
-        && !regex!(r"^[A-Za-z_$][A-Za-z0-9_$ '`,.()\[\]-]*$").is_match(method)
+        && !is_method_name(method)
     {
         return Err(bad_form());
     }
@@ -766,6 +782,21 @@ pub fn checkout_label(runtime: &dyn Runtime, raw: &str) -> String {
         return raw.to_owned();
     }
     Layout::detect(runtime).community_label(raw).unwrap_or_else(|| raw.to_owned())
+}
+
+/// A label of the BEP in the spelling a caller types. The BEP names a repository by its canonical name, so
+/// `@@community+//x:t` becomes `@community//x:t` and `@@//x:t` becomes `//x:t`. A canonical name of a module
+/// extension holds a second `+` and has no apparent name here, so such a label stays as it is.
+pub fn apparent_label(label: &str) -> String {
+    let Some((repository, rest)) = label.strip_prefix("@@").and_then(|tail| tail.split_once("//")) else {
+        return label.to_owned();
+    };
+    let repository = repository.strip_suffix('+').unwrap_or(repository);
+    match repository {
+        "" => format!("//{rest}"),
+        name if name.contains('+') => label.to_owned(),
+        name => format!("@{name}//{rest}"),
+    }
 }
 
 /// Refuses a label or a target pattern of the root repository whose package directory is not in the checkout.

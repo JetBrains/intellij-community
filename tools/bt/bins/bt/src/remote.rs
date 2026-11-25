@@ -22,6 +22,7 @@ use std::path::{Path, PathBuf};
 
 use bt_core::WithDetails;
 use bt_core::evidence::RUNS_DIR;
+use bt_core::modules::bt_wrapper;
 use bt_core::runtime::{Runtime, repo_file};
 use bt_core::{Refusal, exit};
 
@@ -29,9 +30,6 @@ use crate::check::{Check, CheckCommand, HostSnapshot, record_host_run};
 use crate::execute::{JsonPayload, Outcome, infra_payload};
 
 pub(crate) mod brd_host;
-
-/// The command of the host run, in the root of the slot.
-const COMMAND: &str = "./community/tools/bt.cmd";
 
 /// The flags of this module with a value, which the host run does not get.
 const HOST_FLAGS: [&str; 2] = ["--host", "--host-repo"];
@@ -124,7 +122,8 @@ pub(crate) fn run_on_host(
 ) -> Result<Outcome, Refusal> {
     let forwarded = host_args(argv);
     runtime.write_error(&format!("> {}: bt {}", host.alias, forwarded.join(" ")));
-    let command: Vec<String> = std::iter::once(COMMAND.to_owned()).chain(forwarded).collect();
+    // The slot on the host is a checkout of the same repository, so it has the local layout.
+    let command: Vec<String> = std::iter::once(bt_wrapper(runtime).to_owned()).chain(forwarded).collect();
     // The record names the command apart, so the patterns of a build go without the verb.
     let patterns = match check {
         CheckCommand::Build => command.get(2..),

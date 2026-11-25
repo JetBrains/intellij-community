@@ -70,6 +70,13 @@ pub struct ShardTimeout {
     pub interrupted: Vec<String>,
 }
 
+/// One failed test case and the label of the target that ran it, as the BEP names it.
+#[derive(Clone, Debug, PartialEq)]
+pub struct Failure {
+    pub label: String,
+    pub case: TestCase,
+}
+
 /// One target or shard that passed only on a retry.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct FlakyRun {
@@ -84,7 +91,7 @@ pub struct RunResult {
     pub exit_code: u8,
     pub duration_ms: u64,
     pub targets: Vec<TargetResult>,
-    pub failures: Vec<TestCase>,
+    pub failures: Vec<Failure>,
     pub flaky: Vec<FlakyRun>,
     pub build_errors: Vec<String>,
     /// The details are incomplete: a failed attempt whose test.xml was not there, or a BEP file with no events. The
@@ -361,7 +368,10 @@ pub fn collect_results(runtime: &dyn Runtime, bep: &BepSummary, duration_ms: u64
             } else {
                 suite.failures + suite.errors
             };
-            failures.extend(failed.into_iter().map(|(_, case)| case.clone()));
+            failures.extend(failed.into_iter().map(|(_, case)| Failure {
+                label: last.label.clone(),
+                case: case.clone(),
+            }));
             target.flaky += u32::try_from(retried.len()).unwrap_or(u32::MAX);
             flaky.extend(retried);
         }

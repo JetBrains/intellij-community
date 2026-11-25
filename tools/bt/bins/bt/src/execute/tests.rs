@@ -3,8 +3,8 @@ use serde_json::json;
 
 use super::*;
 use bt_core::fake::{
-    AttemptSpec, FakeRuntime, LANES_FILE, REPO_ROOT, area_files, attempt, bep_lines, build_bazel_text, case, failing, flow_catalog_tree,
-    lanes, loading_failure_events, refusal, suite, suite_xml, test_result_event,
+    AttemptSpec, CaseSpec, FakeRuntime, LANES_FILE, REPO_ROOT, area_files, attempt, bep_lines, build_bazel_text, case, failing,
+    flow_catalog_tree, lanes, loading_failure_events, refusal, suite, suite_xml, test_result_event,
 };
 use bt_core::runtime::SpawnResult;
 
@@ -1240,7 +1240,7 @@ fn a_directory_that_does_not_exist_fails_before_bazel_is_spawned() {
     assert_eq!(fake.spawned(), Vec::<Vec<String>>::new());
 }
 
-fn green_run(cases: Vec<bt_core::fake::CaseSpec>) -> FakeRuntime {
+fn green_run(cases: Vec<CaseSpec>) -> FakeRuntime {
     let fake = fake_air_tree();
     fake.put_absolute(XML_PATH, &suite_xml(&suite("AgentThreadIdentityTest", cases)));
     fake.put_absolute(
@@ -1513,42 +1513,82 @@ fn the_bep_file_is_deleted_even_when_the_run_blows_up() {
     assert_eq!(exploding.0.state().removed, [BEP_PATH]);
 }
 
-/// The digest of a run whose one test failed under the given name.
-fn failed_run(name: &str) -> String {
-    let fake = fake_air_tree();
+/// The FQN of the class of the cases of [`failed_run`].
+const FAILED_CLASS: &str = "com.intellij.air.shared.core.AgentThreadIdentityTest";
+
+/// The digest of a run in `fake` whose one test failed under the given class and name. A class without a dot is a
+/// module path of libtest, whose wrapper names the suite by the label of the target.
+fn failed_run_in(fake: &FakeRuntime, class_name: &str, name: &str) -> String {
     one_attempt(
-        &fake,
+        fake,
         "FAILED",
         &suite_xml(&suite(
-            "AgentThreadIdentityTest",
-            vec![failing(name, "E", "boom", "\tat com.intellij.air.X.y(X.kt:1)")],
+            if class_name.contains('.') { FAILED_CLASS } else { CORE_LABEL },
+            vec![CaseSpec {
+                class_name: class_name.to_owned(),
+                ..failing(name, "E", "boom", "\tat com.intellij.air.X.y(X.kt:1)")
+            }],
         )),
     );
-    spawn_answers(&fake, 3, "");
-    run(&["AgentThreadIdentityTest"], &fake).text
+    spawn_answers(fake, 3, "");
+    run(&["AgentThreadIdentityTest"], fake).text
 }
 
-/// The selector the digest's rerun hint carries, unquoted. Parsed out of the rendered digest rather than taken from
-/// [`rerun_selector`], because the defect this covers was in the rendering: bare single quotes around a name that
-/// holds an apostrophe.
-fn rerun_line(digest: &str) -> String {
-    const PREFIX: &str = "rerun  ./community/tools/bt.cmd ";
-    let quoted = digest
+/// The digest of a run in an ultimate checkout whose one test of [`FAILED_CLASS`] failed under the given name.
+fn failed_run(name: &str) -> String {
+    let fake = fake_air_tree();
+    fake.put("community/MODULE.bazel", "");
+    failed_run_in(&fake, FAILED_CLASS, name)
+}
+
+/// The words of the digest's rerun hint after the wrapper, unquoted. Parsed out of the rendered digest rather than
+/// taken from [`rerun_command`], because the defect this covers was in the rendering: bare single quotes around a name
+/// that holds an apostrophe.
+fn rerun_line(digest: &str) -> Vec<String> {
+    let command = digest
         .lines()
-        .find_map(|line| line.strip_prefix(PREFIX))
+        .find_map(|line| line.strip_prefix("rerun  "))
         .unwrap_or_else(|| panic!("no rerun hint in:\n{digest}"));
-    let inner = quoted
-        .strip_prefix('\'')
-        .and_then(|rest| rest.strip_suffix('\''))
-        .unwrap_or_else(|| panic!("the hint is not one quoted word: {quoted}"));
-    inner.replace(r"'\''", "'")
+    let (_, quoted) = command
+        .split_once(' ')
+        .unwrap_or_else(|| panic!("no words after the wrapper: {command}"));
+    shell_words(quoted)
+}
+
+/// The words of a command line that quotes each word as [`posix_shell_quote`] does, or holds a bare word.
+fn shell_words(line: &str) -> Vec<String> {
+    let mut words = Vec::new();
+    let mut rest = line;
+    while !rest.is_empty() {
+        let mut word = String::new();
+        while let Some(char) = rest.chars().next()
+            && char != ' '
+        {
+            if let Some(quoted) = rest.strip_prefix('\'') {
+                let end = quoted.find('\'').unwrap_or_else(|| panic!("an unclosed quote in {line}"));
+                word.push_str(&quoted[..end]);
+                rest = &quoted[end + 1..];
+            } else if let Some(escaped) = rest.strip_prefix("\\'") {
+                word.push('\'');
+                rest = escaped;
+            } else {
+                word.push(char);
+                rest = &rest[char.len_utf8()..];
+            }
+        }
+        words.push(word);
+        rest = rest.trim_start_matches(' ');
+    }
+    words
 }
 
 #[test]
-fn a_rerun_hint_names_the_first_failure() {
+fn a_rerun_hint_names_the_target_and_the_filter_of_the_first_failure() {
     assert_mentions(
         &failed_run("broken"),
-        &["rerun  ./community/tools/bt.cmd 'AgentThreadIdentityTest#broken'"],
+        &[&format!(
+            "rerun  ./community/tools/bt.cmd '{CORE_LABEL}' --filter 'com.intellij.air.shared.core.AgentThreadIdentityTest#broken'"
+        )],
     );
 }
 
@@ -1558,24 +1598,53 @@ fn a_rerun_hint_names_the_first_failure() {
 fn a_rerun_hint_quotes_an_apostrophe_in_the_method_name() {
     assert_mentions(
         &failed_run("the client's token is not logged"),
-        &[r"rerun  ./community/tools/bt.cmd 'AgentThreadIdentityTest#the client'\''s token is not logged'"],
+        &[r"--filter 'com.intellij.air.shared.core.AgentThreadIdentityTest#the client'\''s token is not logged'"],
     );
 }
 
 /// A dynamic test reaches test.xml under its display name, which names no method. The class rerun is the one that
-/// works, so the hint is the class.
+/// works, so the filter is the class.
 #[test]
 fn a_rerun_hint_falls_back_to_the_class_for_a_display_name() {
     for name in ["[1] value=x", "template.[1] value=x", "a/b", "holds; a semicolon"] {
-        assert_eq!(rerun_line(&failed_run(name)), "AgentThreadIdentityTest", "{name:?}");
+        assert_eq!(rerun_line(&failed_run(name)), [CORE_LABEL, "--filter", FAILED_CLASS], "{name:?}");
     }
 }
 
-/// The hint and the selector parser are one grammar, not two. Every hint this tool prints has to be something the
-/// parser reads back, or the one command a reader copies after a failure refuses at exit 2.
+/// The libtest wrapper writes the module path of a Rust test as its class. The hint names the path, which the
+/// selector parser refused when the hint was a selector.
 #[test]
-fn every_rerun_hint_round_trips_through_the_selector_parser() {
-    for name in [
+fn a_rerun_hint_of_a_libtest_failure_names_the_path_of_the_test() {
+    let fake = fake_air_tree();
+    for (class_name, want) in [
+        ("agent_home::tests", "agent_home::tests::reads_the_home"),
+        ("crate", "crate::reads_the_home"),
+        ("tests", "tests::reads_the_home"),
+    ] {
+        assert_eq!(
+            rerun_line(&failed_run_in(&fake, class_name, "reads_the_home")),
+            [CORE_LABEL, "--filter", want],
+            "{class_name}"
+        );
+    }
+}
+
+/// A community checkout runs `./tools/bt.cmd`, and the hint names that path.
+#[test]
+fn a_rerun_hint_in_a_community_checkout_names_its_own_wrapper() {
+    let digest = failed_run_in(&fake_air_tree(), FAILED_CLASS, "broken");
+    assert!(
+        digest.contains(&format!("rerun  ./tools/bt.cmd '{CORE_LABEL}' --filter ")),
+        "{digest}"
+    );
+}
+
+/// The hint and the command line parser are one grammar, not two. Every hint this tool prints has to be something
+/// bt runs as it stands, or the one command a reader copies after a failure refuses at exit 2. The run takes the
+/// filter as it is: no note, and no accio call.
+#[test]
+fn every_rerun_hint_runs_as_it_stands() {
+    let names = [
         "broken",
         "the client's token is not logged",
         "a name with spaces",
@@ -1584,10 +1653,24 @@ fn every_rerun_hint_round_trips_through_the_selector_parser() {
         "holds; a semicolon",
         "<init>",
         "a/b",
-    ] {
-        let hint = rerun_line(&failed_run(name));
-        let selector = Selector::classify(&hint).unwrap_or_else(|failure| panic!("the hint for {name:?} does not parse: {failure:?}"));
-        assert_eq!(selector.kind, SelectorKind::SimpleName, "{name:?}");
+    ];
+    let hints = names
+        .iter()
+        .map(|name| (FAILED_CLASS, *name))
+        .chain([
+            ("agent_home::tests", "reads_the_home"),
+            ("crate", "reads_the_home"),
+            ("tests", "reads_the_home"),
+        ])
+        .map(|(class_name, name)| (name, rerun_line(&failed_run_in(&fake_air_tree(), class_name, name))));
+    for (name, hint) in hints {
+        let fake = fake_air_tree();
+        let mut argv: Vec<&str> = hint.iter().map(String::as_str).collect();
+        argv.push("--dry-run");
+        let outcome = execute(argv.clone(), &fake).unwrap_or_else(|failure| panic!("the hint for {name:?} refused: {failure:?}"));
+        assert_mentions(&outcome.text, &[&format!("--test_filter={}", hint[2])]);
+        assert!(!outcome.text.contains("note "), "{name:?}: {}", outcome.text);
+        assert!(fake.spawned().is_empty(), "{name:?}: {:?}", fake.spawned());
     }
 }
 

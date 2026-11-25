@@ -58,6 +58,7 @@ fn payload() -> JsonPayload {
         ran_targets: 0,
         targets: Vec::new(),
         failures: vec![JsonFailure {
+            label: "//plugins/air/shared/core:ai-agent-core-tests_test".to_owned(),
             class_name: "AgentThreadIdentityTest".to_owned(),
             name: "resolvesWorktreeCwd".to_owned(),
             failure_type: None,

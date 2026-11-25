@@ -20,9 +20,9 @@ const TREE: &str = "fedcba9876543210fedcba9876543210fedcba98";
 /// Where the check records of the fake checkout go.
 const RECORDS: &str = "/repo/.git/bd-checks.jsonl";
 
-/// A checkout with `bt.json`, whose git knows the tree of [`COMMIT`].
+/// An ultimate checkout with `bt.json`, whose git knows the tree of [`COMMIT`].
 fn checkout() -> FakeRuntime {
-    let fake = FakeRuntime::new([]);
+    let fake = FakeRuntime::new([("community/MODULE.bazel", "")]);
     for (path, text) in area_files() {
         fake.put(&path, &text);
     }

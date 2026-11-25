@@ -304,9 +304,11 @@ fn failures_are_collected_and_the_log_path_is_relativized() {
     );
     assert_eq!((result.status, result.exit_code), (RunStatus::Fail, exit::TEST_FAILED));
     assert_eq!(
-        result.failures.iter().map(|failure| failure.name.as_str()).collect::<Vec<_>>(),
+        result.failures.iter().map(|failure| failure.case.name.as_str()).collect::<Vec<_>>(),
         ["b"]
     );
+    // The rerun hint names the target that ran the case.
+    assert_eq!(result.failures[0].label, "//p:t");
     assert_eq!(
         result.targets[0].log_path.as_deref(),
         Some("out/bazel-testlogs/plugins/air/x/t/test.log")
@@ -818,7 +820,7 @@ fn a_shard_that_timed_out_is_a_shard_timeout_and_not_a_failure_of_its_last_test(
         }]
     );
     assert_eq!(
-        result.failures.iter().map(|failure| failure.name.as_str()).collect::<Vec<_>>(),
+        result.failures.iter().map(|failure| failure.case.name.as_str()).collect::<Vec<_>>(),
         ["b"]
     );
     assert_eq!((result.targets[0].tests, result.targets[0].failed), (4, 1));
@@ -839,7 +841,7 @@ fn an_interrupted_test_of_a_shard_that_did_not_time_out_is_a_failure() {
     assert_eq!((result.status, result.exit_code), (RunStatus::Fail, exit::TEST_FAILED));
     assert_eq!(result.timeouts, []);
     assert_eq!(
-        result.failures.iter().map(|failure| failure.name.as_str()).collect::<Vec<_>>(),
+        result.failures.iter().map(|failure| failure.case.name.as_str()).collect::<Vec<_>>(),
         ["a close stops the row"]
     );
 }
