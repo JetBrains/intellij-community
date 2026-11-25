@@ -6,7 +6,7 @@ See `dist_product_content.bzl`.
 
 load("@rules_java//java:defs.bzl", "JavaInfo")
 load(":content_module_jar.bzl", "library_entries")
-load(":dist_product_content.bzl", "product_content_attributes")
+load(":dist_product_content.bzl", "descriptor_rows", "product_content_attributes")
 load(":dist_tool_info.bzl", "dist_tool_inputs")
 
 def dist_embedded_product_descriptor_target_name(main_module, product = None):
@@ -139,6 +139,7 @@ def dist_embedded_product_descriptor(
         content_module_loading = {},
         content_module_required_if_available = {},
         descriptors = {},
+        module_descriptors = [],
         tags = [],
         visibility = ["//visibility:public"],
         **kwargs):
@@ -164,6 +165,7 @@ def dist_embedded_product_descriptor(
         content_module_required_if_available: the `required-if-available` module of an additional module.
         descriptors: the explicit descriptor rows, keyed by label and valued by load path. The conventional row of each
             additional module is explicit too.
+        module_descriptors: the labels of the explicit rows whose load path is the base name of the file.
         tags: extra tags. `manual` is added.
         visibility: public by default.
         **kwargs: see `_dist_embedded_product_descriptor`.
@@ -180,7 +182,7 @@ def dist_embedded_product_descriptor(
         private_content_modules = private_content_modules,
         content_module_loading = content_module_loading,
         content_module_required_if_available = content_module_required_if_available,
-        descriptors = descriptors,
+        descriptors = descriptor_rows("dist_embedded_product_descriptor", descriptors, module_descriptors),
     ))
     _dist_embedded_product_descriptor(
         name = dist_embedded_product_descriptor_target_name(main_module, product),

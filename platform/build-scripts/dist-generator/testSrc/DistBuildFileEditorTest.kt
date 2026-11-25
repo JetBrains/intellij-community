@@ -36,7 +36,7 @@ class DistBuildFileEditorTest {
     )
     editor.setSection(
       "dev intellij.sample",
-      "dist_plugin(\n    main_module = \"intellij.sample\",\n    module_labels = {\n        \"intellij.sample\": \"//sample:sample\",\n    },\n)",
+      "dist_plugin(\n    main_module = \"intellij.sample\",\n    module_labels = {\"intellij.sample\": \"//sample\"},\n)",
     )
 
     val result = editor.result(mapOf(macroFile to setOf("dist_plugin")))
@@ -48,9 +48,7 @@ class DistBuildFileEditorTest {
       ### auto-generated section `dev intellij.sample` start
       dist_plugin(
           main_module = "intellij.sample",
-          module_labels = {
-              "intellij.sample": "//sample:sample",
-          },
+          module_labels = {"intellij.sample": "//sample"},
       )
       ### auto-generated section `dev intellij.sample` end
       """.trimIndent() + "\n",

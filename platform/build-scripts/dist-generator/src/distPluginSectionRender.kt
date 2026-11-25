@@ -450,15 +450,18 @@ private fun renderBody(
   declaredPackaging?.classpathJars?.ifNotEmpty { call.option("classpath_jars", it.unsorted()) }
   descriptor?.compatibleBuildRange?.let { call.option("compatible_build_range", it) }
   declaredPackaging?.contentModuleJarLabels?.ifNotEmpty { call.option("content_module_jar_labels", LinkedHashMap(it)) }
-  content?.contentModuleNames?.ifNotEmpty { call.option("content_modules", it.unsorted()) }
+  content?.contentModuleNames?.ifNotEmpty { names ->
+    call.option("content_modules", names.associateWithTo(LinkedHashMap()) { sectionModuleLabel(context, it) })
+  }
   descriptor?.descriptor?.ifNotEmpty { call.option("descriptor", it) }
-  descriptor?.let { leaf ->
-    withConventionalDescriptorRows(
+  val descriptorRows = descriptor?.let { leaf ->
+    splitDescriptorRows(withConventionalDescriptorRows(
       rows = leaf.descriptors,
       modules = listOf(context.mainModule) + content?.contentModuleNames.orEmpty(),
       conventionalLabel = context.index::conventionalDescriptorLabel,
-    )
-  }?.ifNotEmpty { call.option("descriptors", LinkedHashMap(it)) }
+    ))
+  }
+  descriptorRows?.descriptors?.ifNotEmpty { call.option("descriptors", LinkedHashMap(it)) }
   descriptor?.directoryName?.ifNotEmpty { call.option("directory_name", it) }
   if (descriptor != null && !descriptor.embedContentModules) {
     call.option("embed_content_modules", false)
@@ -481,6 +484,7 @@ private fun renderBody(
   descriptor?.modeRefusedContentModules?.ifNotEmpty { refusals ->
     call.option("mode_refused_content_modules", LinkedHashMap(refusals.toSortedMap().mapValues { NestedStringList(it.value) }))
   }
+  descriptorRows?.moduleDescriptors?.ifNotEmpty { call.option("module_descriptors", it) }
   declaredPackaging?.moduleJarPaths?.ifNotEmpty { call.option("module_jar_paths", LinkedHashMap(it)) }
   call.option("module_labels", moduleLabelsOption(context = context, content = content, packaging = declaredPackaging))
   descriptor?.refusedContentModules?.ifNotEmpty { call.option("refused_content_modules", it) }
@@ -496,9 +500,8 @@ private fun renderBody(
 }
 
 /**
- * The `module_labels` attribute: the production label of the main module, of each content module and of each module
- * token of `jars`, sorted by module name. Each label is in the recorded form of the targets JSON. The section and its
- * packaging leave out a module without a production jar, so each name has a label.
+ * The `module_labels` attribute: the label of the main module and of each module token of `jars` that is no content
+ * module, sorted by module name. `content_modules` states the label of each content module, see [sectionModuleLabel].
  */
 private fun moduleLabelsOption(
   context: DevSectionContext,
@@ -506,13 +509,30 @@ private fun moduleLabelsOption(
   packaging: DistSimplePackaging?,
 ): LinkedHashMap<String, String> {
   val names = sortedSetOf(context.mainModule)
-  content?.contentModuleNames?.let(names::addAll)
   packaging?.jars?.values?.forEach { tokens -> tokens.filterNotTo(names, ::isLabelToken) }
-  return names.associateWithTo(LinkedHashMap()) { name ->
-    checkNotNull(context.index.productionModuleLabel(name)) {
-      "Plugin '${context.mainModule}' names the module '$name' without a production jar, and the section filters such a name"
-    }
+  content?.contentModuleNames?.let(names::removeAll)
+  return names.associateWithTo(LinkedHashMap()) { sectionModuleLabel(context, it) }
+}
+
+/**
+ * The label of [module] as the converter writes a dependency of the plugin's package, see
+ * [DistBazelIndex.dependencyLabel]. The section and its packaging leave out a module without a production jar, so each
+ * name has a label. The label names the production target of the targets JSON, or the run fails.
+ */
+private fun sectionModuleLabel(context: DevSectionContext, module: String): String {
+  val recorded = checkNotNull(context.index.productionModuleLabel(module)) {
+    "Plugin '${context.mainModule}' names the module '$module' without a production jar, and the section filters such a name"
   }
+  val label = checkNotNull(context.index.dependencyLabel(module = module, dependentIsCommunity = context.isCommunity)) {
+    "Plugin '${context.mainModule}' names the module '$module', which its package cannot name"
+  }
+  val withTarget = if (':' in label) label else label + ":" + label.substringAfterLast('/')
+  val absolute = if (context.isCommunity && withTarget.startsWith("//")) COMMUNITY_REPOSITORY_PREFIX + withTarget.removePrefix("//") else withTarget
+  check(absolute == recorded) {
+    "Plugin '${context.mainModule}' names the module '$module' as '$label', and the targets JSON records the production" +
+    " target '$recorded'"
+  }
+  return label
 }
 
 /**

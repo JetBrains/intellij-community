@@ -638,21 +638,26 @@ def _resolve_module_labels_test_impl(ctx):
     asserts.equals(env, [], resolved.stale)
     asserts.equals(env, [], resolved.messages)
 
+    # A label without a target name names the target of the last package segment.
+    resolved = resolve_module_labels("test.plugin", names, {"test.member": "@community//java/m", "test.plugin": "//plugins/p"})
+    asserts.equals(env, {"test.member": "@community//java/m:m", "test.plugin": "//plugins/p:p"}, resolved.labels)
+    asserts.equals(env, [], resolved.stale)
+
     # A missing and a malformed label make the name stale, and an extra label gets its own warning.
-    resolved = resolve_module_labels("test.plugin", names + ["test.other"], {"test.member": "//m", "test.plugin": "//p:p", "test.stranger": "//s:s"})
+    resolved = resolve_module_labels("test.plugin", names + ["test.other"], {"test.member": "//", "test.plugin": "//p:p", "test.stranger": "//s:s"})
     asserts.equals(env, {"test.plugin": "//p:p"}, resolved.labels)
     asserts.equals(env, ["test.member", "test.other"], resolved.stale)
     asserts.equals(
         env,
         [
-            "WARN: dist_plugin 'test.plugin' omits modules without a label in `module_labels`: test.member, test.other. Regenerate the dev sections.",
+            "WARN: dist_plugin 'test.plugin' omits modules without a label: test.member, test.other. Regenerate the dev sections.",
             "WARN: dist_plugin 'test.plugin' states labels of modules that it does not name: test.stranger. Regenerate the dev sections.",
         ],
         resolved.messages,
     )
     return unittest.end(env)
 
-# A missing, a malformed and an extra label. The function is the one place that tells them apart.
+# A short label, a missing, a malformed and an extra label. The function is the one place that tells them apart.
 _resolve_module_labels_test = unittest.make(_resolve_module_labels_test_impl)
 
 def _plugin_macro_tests(name):
@@ -664,11 +669,8 @@ def _plugin_macro_tests(name):
     _fake_descriptor(name = source)
     dist_plugin(
         main_module = "test.plugin",
-        module_labels = {
-            "test.member": ":" + member,
-            "test.plugin": ":" + owner,
-        },
-        content_modules = ["test.member"],
+        module_labels = {"test.plugin": ":" + owner},
+        content_modules = {"test.member": ":" + member},
         descriptor = source,
     )
     descriptor = native.existing_rule(dist_plugin_descriptor_target_name("test.plugin"))
@@ -685,11 +687,13 @@ def _plugin_macro_tests(name):
         ]),
     )
 
-    # The descriptor leaf takes the rows that the call states, the conventional rows included, sorted by label.
+    # The descriptor leaf takes the rows that the call states, the conventional rows included, sorted by label. A label
+    # of `module_descriptors` answers the base name of its file.
     indexed = {
         role: name + "_macro_indexed_" + role
-        for role in ["owner", "first", "second", "source", "main_xml", "first_xml", "explicit_xml"]
+        for role in ["owner", "first", "second", "source", "main_xml", "explicit_xml"]
     }
+    indexed["first_xml"] = name + "_macro_indexed/test.indexed.first.xml"
     _fake_module(name = indexed["owner"], module_name = "test.indexed")
     _fake_module(name = indexed["first"], module_name = "test.indexed.first")
     _fake_module(name = indexed["second"], module_name = "test.indexed.second")
@@ -697,18 +701,17 @@ def _plugin_macro_tests(name):
         _fake_descriptor(name = indexed[role])
     dist_plugin(
         main_module = "test.indexed",
-        module_labels = {
-            "test.indexed": ":" + indexed["owner"],
+        module_labels = {"test.indexed": ":" + indexed["owner"]},
+        content_modules = {
             "test.indexed.first": ":" + indexed["first"],
             "test.indexed.second": ":" + indexed["second"],
         },
-        content_modules = ["test.indexed.first", "test.indexed.second"],
         descriptor = indexed["source"],
         descriptors = {
             ":" + indexed["main_xml"]: "test.indexed.xml",
-            ":" + indexed["first_xml"]: "test.indexed.first.xml",
             ":" + indexed["explicit_xml"]: "test.indexed.second.xml",
         },
+        module_descriptors = [":" + indexed["first_xml"]],
     )
     indexed_descriptors = native.existing_rule(dist_plugin_descriptor_target_name("test.indexed"))["descriptors"]
     indexed_test = name + "_plugin_macro_indexed_test"
@@ -736,12 +739,11 @@ def _plugin_macro_tests(name):
     _fake_descriptor(name = packed_source)
     dist_plugin(
         main_module = "intellij.test.packed",
-        module_labels = {
-            "intellij.test.packed": ":" + packed_owner,
-            "intellij.test.packed.member": ":" + packed_member,
+        module_labels = {"intellij.test.packed": ":" + packed_owner},
+        content_modules = {
             "intellij.test.packed.split": ":" + packed_split,
+            "intellij.test.packed.member": ":" + packed_member,
         },
-        content_modules = ["intellij.test.packed.split", "intellij.test.packed.member"],
         descriptor = packed_source,
         jars = {
             "lib/test-packed.jar": ["@lib//:fake", "intellij.test.packed", "intellij.test.packed.split"],
@@ -781,7 +783,8 @@ def _plugin_macro_tests(name):
     )
 
     # A reused content module whose call is relocated takes the label `content_module_jar_labels` states. Any other
-    # reused module takes the label of its own package.
+    # reused module takes the label of its own package. The call has the form of an older section: a list of content
+    # modules, and `module_labels` states the label of each one.
     relocated_owner = name + "_macro_relocated_owner"
     relocated_member = name + "_macro_relocated_member"
     relocated_kept = name + "_macro_relocated_kept"

@@ -1369,6 +1369,34 @@ internal fun withConventionalDescriptorRows(
 }
 
 /**
+ * The `descriptors` rows of a call, split over its two attributes. [moduleDescriptors] holds the label of each row whose
+ * load path is the base name of the file, sorted, and [descriptors] holds every other row.
+ *
+ * The macro gives a label of [moduleDescriptors] its base name as the load path, see `descriptor_rows` of
+ * `dist_product_content.bzl`. So the two attributes declare the same rows as [rows].
+ */
+internal class DescriptorRows(
+  @JvmField val moduleDescriptors: List<String>,
+  @JvmField val descriptors: Map<String, String>,
+)
+
+/** [rows], keyed by label and valued by load path, split over `module_descriptors` and `descriptors`, see [DescriptorRows]. */
+internal fun splitDescriptorRows(rows: Map<String, String>): DescriptorRows {
+  val moduleDescriptors = ArrayList<String>()
+  val descriptors = TreeMap<String, String>()
+  for ((label, loadPath) in rows) {
+    if (loadPath == label.substringAfterLast(':').substringAfterLast('/')) {
+      moduleDescriptors.add(label)
+    }
+    else {
+      descriptors.put(label, loadPath)
+    }
+  }
+  moduleDescriptors.sort()
+  return DescriptorRows(moduleDescriptors = moduleDescriptors, descriptors = descriptors)
+}
+
+/**
  * The label that names one reached descriptor in the recorded form, or `null` when no label does.
  *
  * `exportDescriptorFiles` exports every XML under a production resource root from the owning module's own Bazel

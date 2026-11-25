@@ -1185,9 +1185,7 @@ private fun renderEmbeddedProductDescriptorCall(
   // The attributes in buildifier's alphabetical order, so a regenerate leaves the section unchanged.
   val attributes = TreeMap(embedded.content.attributes(DIST_MODULE_SETS_SYMBOL))
   val descriptors = productDescriptorRows(stated = embedded.descriptors, content = embedded.content, refused = emptyList(), index = index)
-  if (descriptors.isNotEmpty()) {
-    attributes.put("descriptors", LinkedHashMap(descriptors))
-  }
+  putDescriptorRows(attributes, descriptors)
   if (embedded.libraryDescriptors.isNotEmpty()) {
     attributes.put("library_descriptors", LinkedHashMap(embedded.libraryDescriptors))
   }

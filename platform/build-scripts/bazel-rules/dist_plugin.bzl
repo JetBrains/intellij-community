@@ -20,8 +20,23 @@ def dist_plugin_component_target_name(main_module):
     """The packed component's target name - `"intellij.json"` gives `"intellij.json_dev_plugin"`."""
     return main_module + _DEV_PLUGIN_SUFFIX
 
+def module_label(label):
+    """`label` in the form `<package>:<target>`, or `None` when it is no module label.
+
+    A label without a target name names the target of the last package segment, as in Bazel: `//java/vcs` gives
+    `//java/vcs:vcs`. A root package needs the target name.
+    """
+    if type(label) != "string":
+        return None
+    if ":" in label:
+        return label if label.rpartition(":")[2] else None
+    package = label.partition("//")[2]
+    if not package:
+        return None
+    return label + ":" + package.rpartition("/")[2]
+
 def resolve_module_labels(main_module, names, module_labels):
-    """The labels of `names` from the `module_labels` of a `dist_plugin` call, and the problems of that map.
+    """The labels of `names` from the labels of a `dist_plugin` call, and the problems of that map.
 
     A name without a label is stale: so is a name whose label names no package and no target. A label of a module that
     `names` does not hold is extra. Both come from a section that the generator has not written again yet, for example
@@ -31,18 +46,18 @@ def resolve_module_labels(main_module, names, module_labels):
     Args:
         main_module: the main module of the call, which the messages name.
         names: the module names that the call names: the main module, the content modules and the module tokens of `jars`.
-        module_labels: the `module_labels` of the call.
+        module_labels: the label of each module of the call: the `module_labels` and the `content_modules` dict together.
 
     Returns:
-        `struct(labels, stale, messages)`: the label of each name that has one, the stale names in the order of `names`,
-        and one warning for the stale names and one for the extra labels.
+        `struct(labels, stale, messages)`: the label of each name that has one in the form of `module_label`, the stale
+        names in the order of `names`, and one warning for the stale names and one for the extra labels.
     """
     named = {name: True for name in names}
     labels = {}
     stale = []
     for name in named:
-        label = module_labels.get(name)
-        if type(label) == "string" and ":" in label:
+        label = module_label(module_labels.get(name))
+        if label != None:
             labels[name] = label
         else:
             stale.append(name)
@@ -51,7 +66,7 @@ def resolve_module_labels(main_module, names, module_labels):
     if stale:
         shown = stale[:_MAX_REPORTED_STALE_MODULES]
         remainder = len(stale) - len(shown)
-        messages.append("WARN: dist_plugin '%s' omits modules without a label in `module_labels`: %s%s. Regenerate the dev sections." % (
+        messages.append("WARN: dist_plugin '%s' omits modules without a label: %s%s. Regenerate the dev sections." % (
             main_module,
             ", ".join(shown),
             " (and %d more)" % remainder if remainder > 0 else "",
@@ -63,13 +78,13 @@ def resolve_module_labels(main_module, names, module_labels):
         ))
     return struct(labels = labels, stale = stale, messages = messages)
 
-def _content_module_jar_label(module_label):
-    return module_label.rpartition(":")[0] + ":" + content_module_jar_target_name(module_label)
+def _content_module_jar_label(label):
+    return label.rpartition(":")[0] + ":" + content_module_jar_target_name(label)
 
 def dist_plugin(
         main_module,
         module_labels = {},
-        content_modules = [],
+        content_modules = {},
         descriptor = "",
         variants = [],
         frontend_application_info = "",
@@ -88,11 +103,12 @@ def dist_plugin(
 
     Args:
         main_module: The main JPS module. It identifies every leaf.
-        module_labels: The rule label of each module that the call names, keyed by module name: the main module, the
-            content modules and the module tokens of `jars`. The generator copies each label from the targets JSON. A
-            name without a label is stale: the macro warns and omits it, see `resolve_module_labels`. A section of an
-            older generator states no map, so its package still loads, and the generator can write the section again.
-        content_modules: The complete ordered list of plugin member JPS module names.
+        module_labels: The rule label of each module of the call that `content_modules` does not hold, keyed by module
+            name: the main module and the module tokens of `jars`. The generator writes each label as the converter
+            writes a dependency, see `module_label`. A name without a label is stale: the macro warns and omits it, see
+            `resolve_module_labels`. So the package of a stale section still loads, and the generator can write it again.
+        content_modules: The plugin member JPS modules in the order of the plugin, each with its rule label. A list of
+            names is the form of an older section: `module_labels` then states the label of each name.
         descriptor: The main descriptor label, package-relative.
         variants: Layout variants. An empty list selects the common variant.
         jars: The packed jars of a simple plugin, keyed by destination relative to the plugin directory and valued by
@@ -127,6 +143,8 @@ def dist_plugin(
     """
     if not main_module or type(module_labels) != "dict":
         fail("dist_plugin requires a main module and a dict of module labels")
+    if type(content_modules) not in ["dict", "list"]:
+        fail("dist_plugin: %s states content modules that are neither a dict nor a list" % main_module)
     shared = [key for key in _SHARED_LEAF_ATTRS if key in descriptor_attrs]
     if shared:
         fail("dist_plugin: %s states shared leaf attributes: %s" % (main_module, shared))
@@ -158,8 +176,12 @@ def dist_plugin(
         if not content_modules:
             fail("dist_plugin: %s states neither content modules nor a descriptor" % main_module)
 
+    labels = dict(module_labels)
+    if type(content_modules) == "dict":
+        labels.update(content_modules)
+    content_modules = list(content_modules)
     jar_modules = [token for token in jar_tokens if not is_library_token(token)]
-    resolved = resolve_module_labels(main_module, [main_module] + content_modules + jar_modules, module_labels)
+    resolved = resolve_module_labels(main_module, [main_module] + content_modules + jar_modules, labels)
     for message in resolved.messages:
         print(message)
     owner = resolved.labels.get(main_module)
@@ -175,7 +197,7 @@ def dist_plugin(
         visibility = ["//visibility:public"],
     )
 
-    # The packed component's inputs. A module a jar names takes its label from `module_labels`, and a library token is
+    # The packed component's inputs. A module a jar names takes its label from the resolved map, and a library token is
     # passed through as the label it is. A stale name skips the whole component below, so a plugin never ships with a
     # module missing.
     packed_modules = {}

@@ -255,15 +255,11 @@ class DistHalfTest {
 
     val body = draft.render(packaging = null).body
     assertThat(body).contains("mode_refused_content_modules")
-    assertThat(body).contains("content_modules = [\"intellij.c.frontend\"]")
-    // The section states the label of each module that it names. No module has a conventional descriptor, so no row.
-    assertThat(body).contains(
-      "    module_labels = {\n" +
-      "        \"intellij.c\": \"@community//plugins/c:c\",\n" +
-      "        \"intellij.c.frontend\": \"@community//plugins/c/frontend:frontend\",\n" +
-      "    },\n",
-    )
-    assertThat(body).doesNotContain("descriptor_modules")
+    // The section states the label of each module that it names once, as the converter writes a dependency of the
+    // package. No module has a conventional descriptor, so no row.
+    assertThat(body).contains("    content_modules = {\"intellij.c.frontend\": \"//plugins/c/frontend\"},\n")
+    assertThat(body).contains("    module_labels = {\"intellij.c\": \"//plugins/c\"},\n")
+    assertThat(body).doesNotContain("module_descriptors")
     assertThat(body).doesNotContain("descriptors =")
   }
 
@@ -326,13 +322,9 @@ class DistHalfTest {
     )
     val body = draft.render(packaging = packaging).body
     assertThat(body).doesNotContain("jars =")
-    // The section states a label for each module that it names, in the form `<package>:<target>`, and for no other.
-    assertThat(body).contains(
-      "    module_labels = {\n" +
-      "        \"intellij.c\": \"@community//plugins/c:c\",\n" +
-      "        \"intellij.c.frontend\": \"@community//plugins/c/frontend:frontend\",\n" +
-      "    },\n",
-    )
+    // The section states a label for each module that it names, and for no other.
+    assertThat(body).contains("    content_modules = {\"intellij.c.frontend\": \"//plugins/c/frontend\"},\n")
+    assertThat(body).contains("    module_labels = {\"intellij.c\": \"//plugins/c\"},\n")
     assertThat(warnings).containsExactly("WARN: intellij.c packaging: no production jar target for [intellij.c.tests], so the section declares no component")
   }
 

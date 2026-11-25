@@ -168,7 +168,7 @@ class DistBazelIndex(
 
   /**
    * The label of the production `jvm_library` target of [module] in the recorded form, or `null` when the converter
-   * records no single production jar for the module. A `dev` section states it in `module_labels`.
+   * records no single production jar for the module. The generator checks each module label of a `dev` section against it.
    */
   fun productionModuleLabel(module: String): String? {
     return targets.modules.get(module)?.productionTargets?.singleOrNull()?.takeIf { it.endsWith(".jar") }?.removeSuffix(".jar")

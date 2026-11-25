@@ -424,8 +424,9 @@ private class CrossHalfDescriptorTarget(entry: PluginDescriptorEntry, product: S
   /**
    * The leaf with every label spelled by [planLabel], except the label of a conventional row.
    *
-   * `descriptors` states the conventional row of each declared content module of the plugin in the recorded form, see
-   * [withConventionalDescriptorRows]. [conventionalLabel] gives that label.
+   * The leaf states the conventional row of each declared content module of the plugin in the recorded form, see
+   * [withConventionalDescriptorRows]. [conventionalLabel] gives that label. A row whose load path is the base name of
+   * the file goes to `module_descriptors`, see [splitDescriptorRows].
    */
   fun render(planLabel: (String) -> String, conventionalLabel: (moduleName: String) -> String?): String = buildString {
     val entry = declaration.entry
@@ -451,14 +452,12 @@ private class CrossHalfDescriptorTarget(entry: PluginDescriptorEntry, product: S
         conventionalLabel = conventionalLabel,
       )
     }
-    appendStarlarkStringDict(
-      name = "descriptors",
-      rows = withConventionalDescriptorRows(
-        rows = statedDescriptors.associate { planLabel(it.label) to it.loadPath },
-        modules = contentModules,
-        conventionalLabel = conventionalLabel,
-      ),
-    )
+    val rows = splitDescriptorRows(withConventionalDescriptorRows(
+      rows = statedDescriptors.associate { planLabel(it.label) to it.loadPath },
+      modules = contentModules,
+      conventionalLabel = conventionalLabel,
+    ))
+    appendStarlarkStringDict(name = "descriptors", rows = rows.descriptors)
     if (!entry.embedsContentModules) {
       append("    embed_content_modules = False,\n")
     }
@@ -486,6 +485,7 @@ private class CrossHalfDescriptorTarget(entry: PluginDescriptorEntry, product: S
       appendStarlarkStringList(name = "markers", values = entry.markers)
     }
     appendStarlarkStringListDict(name = "mode_refused_content_modules", rows = entry.modeRefusedContentModules)
+    appendStarlarkStringList(name = "module_descriptors", values = rows.moduleDescriptors)
     appendStarlarkStringList(name = "refused_content_modules", values = entry.refusedContentModules)
     if (entry.retainProductDescriptor) {
       append("    retain_product_descriptor = True,\n")

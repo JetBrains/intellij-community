@@ -30,8 +30,9 @@ private fun renderProductDescriptorBuildFile(plans: List<ProductDescriptorPlan>,
   append("# A target states the Product DSL content of its product: the aliases, the deprecated includes, the top-level module\n")
   append("# sets with their loading overrides, and the additional modules. The macro walks `DIST_MODULE_SETS` as\n")
   append("# `processAndGetProductPluginContentModules` inlines the sets, and the descriptor writer composes the content. The\n")
-  append("# macro takes the descriptor row of each set member from the table. `descriptors` states the other rows, and the\n")
-  append("# label of a conventional row is in the recorded form. Every target is `manual`, which the macros add.\n")
+  append("# macro takes the descriptor row of each set member from the table. `module_descriptors` states the other rows whose\n")
+  append("# load path is the base name of the file, and `descriptors` states the rest. The label of a conventional row is in\n")
+  append("# the recorded form. Every target is `manual`, which the macros add.\n")
   if (plans.isEmpty()) {
     return@buildString
   }
@@ -60,9 +61,7 @@ private fun renderProductDescriptorBuildFile(plans: List<ProductDescriptorPlan>,
       refused = plan.refusedContentModules,
       index = index,
     )
-    if (descriptors.isNotEmpty()) {
-      attributes.put("descriptors", LinkedHashMap(descriptors))
-    }
+    putDescriptorRows(attributes, descriptors)
     if (plan.libraryDescriptors.isNotEmpty()) {
       attributes.put("library_descriptors", plan.libraryDescriptors.entries.associateTo(LinkedHashMap()) { index.planLabel(it.key) to it.value })
     }
@@ -105,5 +104,19 @@ internal fun staleProductDescriptorSources(projectRoot: Path): List<String> {
   }
   return Files.newDirectoryStream(directory, "*.xml").use { stream ->
     stream.map { "$PRODUCT_DESCRIPTOR_PACKAGE/${it.fileName}" }.sorted()
+  }
+}
+
+/**
+ * Puts the `descriptors` rows into the `module_descriptors` and `descriptors` attributes of a call, see
+ * [splitDescriptorRows]. An empty attribute is left out.
+ */
+internal fun putDescriptorRows(attributes: MutableMap<String, Any>, rows: Map<String, String>) {
+  val split = splitDescriptorRows(rows)
+  if (split.descriptors.isNotEmpty()) {
+    attributes.put("descriptors", LinkedHashMap(split.descriptors))
+  }
+  if (split.moduleDescriptors.isNotEmpty()) {
+    attributes.put("module_descriptors", split.moduleDescriptors)
   }
 }

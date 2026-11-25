@@ -610,16 +610,21 @@ class DistUnplannablePluginsTest {
       "load(\"//platform/build-scripts/bazel-rules:dist_plugin_descriptor.bzl\", \"dist_plugin_descriptor\")\n",
     )
     // `intellij.x.a` gets its conventional row in the recorded form. `intellij.x.b` keeps the row at its load path, and
-    // `intellij.y` is no content module, so its row stays as the closure gives it.
+    // `intellij.y` is no content module, so its row stays as the closure gives it. A row whose load path is the base
+    // name of the file goes to `module_descriptors`.
     assertThat(text).contains(
       "dist_plugin_descriptor(\n" +
       "    descriptor = \"//plugins/x:resources/META-INF/plugin.xml\",\n" +
       "    descriptors = {\n" +
-      "        \"//plugins/x/b:other/intellij.x.b.xml\": \"intellij.x.b.xml\",\n" +
       "        \"//plugins/x:resources/META-INF/x-extra.xml\": \"META-INF/x-extra.xml\",\n" +
-      "        \"//plugins/y:resources/intellij.y.xml\": \"intellij.y.xml\",\n" +
-      "        \"@community//plugins/x/a:resources/intellij.x.a.xml\": \"intellij.x.a.xml\",\n" +
       "    },\n",
+    )
+    assertThat(text).contains(
+      "    module_descriptors = [\n" +
+      "        \"//plugins/x/b:other/intellij.x.b.xml\",\n" +
+      "        \"//plugins/y:resources/intellij.y.xml\",\n" +
+      "        \"@community//plugins/x/a:resources/intellij.x.a.xml\",\n" +
+      "    ],\n",
     )
     assertThat(text).doesNotContain("content_modules")
   }
@@ -656,6 +661,22 @@ class DistUnplannablePluginsTest {
         entry("//c:resources/intellij.c.xml", "intellij.c.xml"),
         entry("//other:intellij.b.xml", "intellij.b.xml"),
       )
+  }
+
+  @Test
+  fun `a row whose load path is the base name of the file goes to the module descriptors`() {
+    val rows = splitDescriptorRows(mapOf(
+      "//b:resources/intellij.b.xml" to "intellij.b.xml",
+      "//a:resources/META-INF/a.xml" to "META-INF/a.xml",
+      "//other:intellij.c.xml" to "intellij.c.xml",
+      "//d:resources/intellij.d.xml" to "intellij.other.xml",
+    ))
+
+    assertThat(rows.moduleDescriptors).containsExactly("//b:resources/intellij.b.xml", "//other:intellij.c.xml")
+    assertThat(rows.descriptors).containsExactly(
+      entry("//a:resources/META-INF/a.xml", "META-INF/a.xml"),
+      entry("//d:resources/intellij.d.xml", "intellij.other.xml"),
+    )
   }
 
   @Test

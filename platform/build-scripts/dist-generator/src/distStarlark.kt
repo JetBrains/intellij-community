@@ -167,7 +167,8 @@ class Target(private val type: String) : Renderable {
  * Renders one attribute value.
  *
  * A collection of one item or less renders inline. A collection of two or more items renders one item per line.
- * A map always renders one entry per line. A string renders as [quoteStarlarkString] writes it.
+ * A map of one single-line entry renders inline, and any other map renders one entry per line. A string renders as
+ * [quoteStarlarkString] writes it.
  */
 internal fun formatValue(value: Any?): String {
   return when (value) {
@@ -182,8 +183,14 @@ internal fun formatValue(value: Any?): String {
     is Array<*> -> value.joinToString(separator = ", ", prefix = "[", postfix = "]") { formatValue(it) }
     is String -> quoteStarlarkString(value)
     is Number -> value.toString()
-    is Map<*, *> -> value.entries.joinToString(",\n$INDENT$INDENT", prefix = "{\n$INDENT$INDENT", postfix = ",\n$INDENT}") {
-      (key, value) -> "${quoteStarlarkString(key.toString())}: ${formatValue(value)}"
+    is Map<*, *> -> {
+      val rows = value.entries.map { (key, value) -> "${quoteStarlarkString(key.toString())}: ${formatValue(value)}" }
+      if (rows.size == 1 && '\n' !in rows.single()) {
+        "{${rows.single()}}"
+      }
+      else {
+        rows.joinToString(",\n$INDENT$INDENT", prefix = "{\n$INDENT$INDENT", postfix = ",\n$INDENT}")
+      }
     }
     true -> "True"
     false -> "False"

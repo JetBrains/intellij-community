@@ -19,6 +19,7 @@ load("//build:dist_product_info.bzl", "DIST_MARKETPLACE_NAMES")
 load("//build:host_platforms.bzl", "HOST_PLATFORMS", "platform_parts")
 load(":content_module_jar.bzl", "library_entries")
 load(":dist_build_date.bzl", "DIST_PINNED_BUILD_DATE_IN_SECONDS")
+load(":dist_product_content.bzl", "descriptor_rows")
 load(":dist_tool_info.bzl", "dist_tool_inputs")
 
 DistPluginDescriptorInfo = provider(
@@ -917,8 +918,9 @@ def dist_plugin_descriptor(
     way `content_module_jar` derives its own. And `manual` is added, for `content_module_jar`'s reason: these are
     per-plugin targets of a measurement, and `bazel build //...` must not run all of them.
 
-    `descriptors` states every row, the conventional row of each content module included. The generator writes the
-    conventional label of a module from the targets JSON.
+    `descriptors` and `module_descriptors` state every row, the conventional row of each content module included. The
+    generator writes the conventional label of a module from the targets JSON. The macro merges the two attributes into
+    the `descriptors` of the rule, sorted by label.
 
     A leaf that embeds no content module also gets a `<name>_classpath` target. That target writes the classpath
     descriptor in the neutral product configuration.
@@ -937,7 +939,7 @@ def dist_plugin_descriptor(
         fail("dist_plugin_descriptor requires exactly one descriptor source")
     source = descriptor or None
 
-    descriptors = kwargs.pop("descriptors", {})
+    descriptors = descriptor_rows("dist_plugin_descriptor", kwargs.pop("descriptors", {}), kwargs.pop("module_descriptors", []))
     if descriptors:
         kwargs["descriptors"] = {label: descriptors[label] for label in sorted(descriptors)}
     name = dist_plugin_descriptor_target_name(main_module, variant)

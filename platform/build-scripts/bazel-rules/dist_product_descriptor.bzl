@@ -10,7 +10,7 @@ and `dist_platform_jar` patches their outputs into the jar.
 
 load("@rules_java//java:defs.bzl", "JavaInfo")
 load(":dist_embedded_product_descriptor.bzl", "add_product_content_args", "declared_descriptors")
-load(":dist_product_content.bzl", "product_content_attributes")
+load(":dist_product_content.bzl", "descriptor_rows", "product_content_attributes")
 load(":dist_tool_info.bzl", "dist_tool_inputs")
 
 def _dist_product_descriptor_impl(ctx):
@@ -145,6 +145,7 @@ def dist_product_descriptor(
         content_module_loading = {},
         content_module_required_if_available = {},
         descriptors = {},
+        module_descriptors = [],
         tags = [],
         visibility = ["//visibility:public"],
         **kwargs):
@@ -167,6 +168,7 @@ def dist_product_descriptor(
         content_module_required_if_available: the `required-if-available` module of an additional module.
         descriptors: the explicit descriptor rows, keyed by label and valued by load path. The conventional row of each
             additional module is explicit too.
+        module_descriptors: the labels of the explicit rows whose load path is the base name of the file.
         tags: extra tags. `manual` is added.
         visibility: public by default.
         **kwargs: see `_dist_product_descriptor`.
@@ -183,7 +185,7 @@ def dist_product_descriptor(
         private_content_modules = private_content_modules,
         content_module_loading = content_module_loading,
         content_module_required_if_available = content_module_required_if_available,
-        descriptors = descriptors,
+        descriptors = descriptor_rows("dist_product_descriptor", descriptors, module_descriptors),
         refused_content_modules = kwargs.get("refused_content_modules", []),
     ))
     _dist_product_descriptor(name = name, tags = tags + ["manual"], visibility = visibility, **attributes)

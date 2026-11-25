@@ -170,6 +170,27 @@ def product_content_rows(
         member_descriptors = member_descriptors,
     )
 
+def descriptor_rows(caller, descriptors, module_descriptors):
+    """The `descriptors` rows of a call, with one row for each label of `module_descriptors`.
+
+    The load path of such a row is the base name of its file, `<module name>.xml` for a conventional row. A label that
+    both attributes state fails.
+
+    Args:
+        caller: the macro name for a failure message.
+        descriptors: the rows whose load path differs from the base name of the file, keyed by label.
+        module_descriptors: the labels of the files whose load path is their base name.
+
+    Returns:
+        The rows keyed by label and valued by load path.
+    """
+    rows = dict(descriptors)
+    for label in module_descriptors:
+        if label in rows:
+            fail("%s states the descriptor '%s' in both `descriptors` and `module_descriptors`" % (caller, label))
+        rows[label] = label.rpartition(":")[2].rpartition("/")[2]
+    return rows
+
 def derived_descriptor_rows(module_names, member_descriptors, descriptors = {}, refused_content_modules = []):
     """Adds the conventional `descriptors` row of each set member that states a descriptor to the explicit rows.
 
