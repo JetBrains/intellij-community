@@ -17,7 +17,7 @@ internal data class ShellBootstrap(val marker: String, val command: String)
 /** Returns the shell command used for deployment and Windows recovery. */
 @VisibleToClasses(
   "com.intellij.platform.ijent.spi.IjentShellBootstrapTest",
-  "com.intellij.platform.ijent.ssh.daemon.DaemonSshTransportSupervisorKt",
+  "com.intellij.platform.ijent.ssh.impl.RecoveryShellCommandKt",
 )
 fun getIjentShellBootstrapCommand(): String = createShellBootstrap().command
 
