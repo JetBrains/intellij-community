@@ -8,7 +8,6 @@ import com.intellij.openapi.options.ex.FrameProjectConfigurable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.openapi.util.text.HtmlChunk
-import com.intellij.openapi.util.text.StringUtil
 import com.intellij.toolWindow.emptyTabComponent
 import com.intellij.ui.Gray
 import com.intellij.ui.JBColor
@@ -27,11 +26,11 @@ import com.intellij.ui.tabs.impl.TabPainterAdapter
 import com.intellij.util.ui.GraphicsUtil
 import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.SwingTextTrimmer
 import com.intellij.util.ui.UIUtil
 import java.awt.BorderLayout
 import java.awt.Color
 import java.awt.Component
-import java.awt.FontMetrics
 import java.awt.Graphics
 import java.awt.Graphics2D
 import java.awt.Rectangle
@@ -113,7 +112,7 @@ internal class SettingsProjectTabs(private val projects: SettingsFrameProjects, 
         tabs.removeAllTabs()
         val metrics = tabs.component.getFontMetrics(tabFont())
         for (project in pageProjects) {
-          val title = shortTitle(project.name, metrics)
+          val title = SwingTextTrimmer.ELLIPSIS_AT_RIGHT.trim(project.name, metrics, JBUI.scale(MAX_TITLE_WIDTH))
           val tooltip = if (title == project.name) {
             HtmlChunk.text(project.presentableUrl.orEmpty())
           }
@@ -137,19 +136,6 @@ internal class SettingsProjectTabs(private val projects: SettingsFrameProjects, 
       isUpdating = false
     }
   }
-}
-
-/** Gives [name], or its start with an ellipsis when [name] is wider than [MAX_TITLE_WIDTH]. */
-private fun shortTitle(name: String, metrics: FontMetrics): String {
-  val maxWidth = JBUI.scale(MAX_TITLE_WIDTH)
-  if (metrics.stringWidth(name) <= maxWidth) {
-    return name
-  }
-  var end = name.length
-  while (end > 1 && metrics.stringWidth(name.substring(0, end) + StringUtil.ELLIPSIS) > maxWidth) {
-    end--
-  }
-  return name.substring(0, end).trimEnd() + StringUtil.ELLIPSIS
 }
 
 private fun tabFont() = JBFont.label().biggerOn(FONT_SIZE_INCREASE)
