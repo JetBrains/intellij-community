@@ -24,6 +24,7 @@ public final class PyUnpackedTupleTypeImpl implements PyUnpackedTupleType {
 
   private final List<PyType> myElementTypes;
   private final boolean myIsHomogeneous;
+  private volatile int myHashCode;
 
   public PyUnpackedTupleTypeImpl(@NotNull List<? extends PyType> elementTypes, boolean isUnbound) {
     elementTypes.forEach(PyAnyType::validate);
@@ -122,7 +123,14 @@ public final class PyUnpackedTupleTypeImpl implements PyUnpackedTupleType {
 
   @Override
   public int hashCode() {
-    return Objects.hash(getElementTypes(), myIsHomogeneous);
+    // UNSPECIFIED is static, so it outlives a change of the PyAnyType flag. Its element types follow the flag.
+    if (this == UNSPECIFIED) return Objects.hash(getElementTypes(), myIsHomogeneous);
+    int hashCode = myHashCode;
+    if (hashCode == 0) {
+      hashCode = Objects.hash(myElementTypes, myIsHomogeneous);
+      myHashCode = hashCode;
+    }
+    return hashCode;
   }
 
   @Override

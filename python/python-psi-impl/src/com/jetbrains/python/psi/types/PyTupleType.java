@@ -19,6 +19,7 @@ import java.util.Objects;
 public class PyTupleType extends PyClassTypeImpl implements PyCollectionType {
 
   private final PyUnpackedTupleType myUnpackedTupleType;
+  private volatile int myHashCode;
 
   public static @Nullable PyTupleType create(@NotNull PsiElement anchor, @NotNull List<? extends PyType> elementTypes) {
     final PyClass tuple = PyBuiltinCache.getInstance(anchor).getClass(PyNames.TUPLE);
@@ -112,7 +113,12 @@ public class PyTupleType extends PyClassTypeImpl implements PyCollectionType {
 
   @Override
   public int hashCode() {
-    return Objects.hash(super.hashCode(), myUnpackedTupleType);
+    int hashCode = myHashCode;
+    if (hashCode == 0) {
+      hashCode = Objects.hash(super.hashCode(), myUnpackedTupleType);
+      myHashCode = hashCode;
+    }
+    return hashCode;
   }
 
   @Override
