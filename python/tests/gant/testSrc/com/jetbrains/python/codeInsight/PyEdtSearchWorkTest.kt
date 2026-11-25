@@ -129,7 +129,7 @@ class PyEdtSearchWorkTest : PyCodeInsightTestCase() {
 
   @TestFor(issues = ["PY-92734"])
   @Test
-  fun `typing an opening parenthesis after a method name evaluates no types`() = runInEdtAndWait {
+  fun `the typed handler of an opening parenthesis after a method name evaluates no types`() = runInEdtAndWait {
     myFixture.configureByText("a.py", """
       import abc
       from abc import ABCMeta
