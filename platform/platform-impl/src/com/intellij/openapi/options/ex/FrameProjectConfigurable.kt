@@ -22,6 +22,9 @@ import javax.swing.JPanel
  * selected project. It keeps the page of each project that it showed, so a change of a project waits for Apply while the
  * window shows another project. [isModified], [apply], [reset] and [cancel] cover the pages of all the projects.
  *
+ * The pages of two projects can show one application-level state, as System Settings does. So an apply resets each
+ * created page that it did not apply, and that page then shows the applied values.
+ *
  * The page shows only the projects that have a page with the id, see [projectsWithPage]. When the selected project has no
  * such page, the page shows the first project that has one, and the selection stays. When no project has such a page, the
  * page is in the tree only as the parent of its child pages, and it shows an empty text.
@@ -156,18 +159,7 @@ class FrameProjectConfigurable internal constructor(
   /** Applies the modified page of each project. A project whose page fails becomes the selected project, so the user sees that page. */
   @Throws(ConfigurationException::class)
   override fun apply() {
-    for ((project, delegate) in createdDelegates) {
-      if (!delegate.isModified) {
-        continue
-      }
-      try {
-        delegate.apply()
-      }
-      catch (e: ConfigurationException) {
-        projects.select(project)
-        throw e
-      }
-    }
+    applyAndResetOthers(createdDelegates.filter { it.second.isModified })
   }
 
   override fun reset() {
@@ -198,15 +190,32 @@ class FrameProjectConfigurable internal constructor(
   @Throws(ConfigurationException::class)
   fun apply(project: Project) {
     val delegate = createdDelegateOf(project) ?: return
-    if (!delegate.isModified) {
+    if (delegate.isModified) {
+      applyAndResetOthers(listOf(project to delegate))
+    }
+  }
+
+  /**
+   * Applies [toApply], and then resets each other created page that has no change. The caller selects [toApply] before
+   * any apply, because an apply can change the state that the page of another project shows.
+   */
+  @Throws(ConfigurationException::class)
+  private fun applyAndResetOthers(toApply: List<Pair<Project, Configurable>>) {
+    if (toApply.isEmpty()) {
       return
     }
-    try {
-      delegate.apply()
+    val toReset = createdDelegates.filter { (_, delegate) -> !delegate.isModified }
+    for ((project, delegate) in toApply) {
+      try {
+        delegate.apply()
+      }
+      catch (e: ConfigurationException) {
+        projects.select(project)
+        throw e
+      }
     }
-    catch (e: ConfigurationException) {
-      projects.select(project)
-      throw e
+    for ((_, delegate) in toReset) {
+      delegate.reset()
     }
   }
 

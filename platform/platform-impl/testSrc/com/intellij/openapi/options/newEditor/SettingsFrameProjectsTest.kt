@@ -413,6 +413,33 @@ internal class SettingsFrameProjectsTest {
   }
 
   @Test
+  fun `the Apply button keeps the change of a page whose state the page of another project shares`(): Unit = withGuestPage { editor, page ->
+    sharedValue = 0
+    pageOf(owner).value = 1
+    editor.checkCurrentModified()
+
+    editor.getApplyAction()!!.actionPerformed(ActionEvent(editor, ActionEvent.ACTION_PERFORMED, null))
+
+    assertThat(sharedValue).describedAs("The page of the frame guest does not write its old value back").isEqualTo(1)
+    assertThat(pageOf(guest).applies).isZero()
+    assertThat(pageOf(guest).value).describedAs("The page of the frame guest shows the applied value").isEqualTo(1)
+    assertThat(page.isModified).isFalse()
+    assertThat(editor.isModified).isFalse()
+  }
+
+  @Test
+  fun `Apply of the pages of a frame guest resets the page of another project that shares their state`(): Unit = withGuestPage { editor, page ->
+    sharedValue = 0
+    pageOf(guest).value = 1
+
+    assertThat(editor.applyFrameProject(guest)).isTrue()
+
+    assertThat(sharedValue).isEqualTo(1)
+    assertThat(pageOf(owner).value).describedAs("The page of the frame owner shows the applied value").isEqualTo(1)
+    assertThat(page.isModified).isFalse()
+  }
+
+  @Test
   fun `Apply in the question of a frame guest that closes applies only the pages of the guest`(): Unit = withGuestPage { editor, page ->
     pageOf(owner).modified = true
     pageOf(guest).modified = true
@@ -753,6 +780,7 @@ internal class SettingsFrameProjectsTest {
         windowManager.removeFrameGuest(guest)
         windowManager.removeFrameGuest(third)
         pagesByProject.clear()
+        sharedValue = null
         projectMasks.clear()
         pageMasks.clear()
         PropertiesComponent.getInstance(owner).unsetValue("settings.editor.selected.project")
@@ -909,6 +937,9 @@ private open class FrameProjectsTestProjectPage(project: Project) : Configurable
   /** `true` when the EDT created the page. */
   val isCreatedOnEdt: Boolean = ApplicationManager.getApplication().isDispatchThread
   var modified = false
+
+  /** The value in the UI of the page. It counts only while [sharedValue] is not `null`. */
+  var value = 0
   var applies = 0
   var resets = 0
   var cancels = 0
@@ -924,15 +955,19 @@ private open class FrameProjectsTestProjectPage(project: Project) : Configurable
 
   override fun createComponent(): JComponent = JPanel()
 
-  override fun isModified(): Boolean = modified
+  override fun isModified(): Boolean = sharedValue?.let { value != it } ?: modified
 
   override fun apply() {
     applies++
     modified = false
+    if (sharedValue != null) {
+      sharedValue = value
+    }
   }
 
   override fun reset() {
     resets++
+    sharedValue?.let { value = it }
     if (Thread.currentThread().stackTrace.any { it.className == FrameProjectConfigurable::class.java.name && it.methodName == "createComponent" }) {
       resetsInsideCreate++
     }
@@ -962,6 +997,12 @@ private class FrameProjectsTestDynamicProjectPage(project: Project) : FrameProje
 private val pagesByProject = HashMap<Project, FrameProjectsTestProjectPage>()
 
 private fun pageOf(project: Project): FrameProjectsTestProjectPage = pagesByProject.getValue(project)
+
+/**
+ * The application-level value that the project-level test pages of all the projects edit, as System Settings does.
+ * It is `null` when each page keeps its own change in [FrameProjectsTestProjectPage.modified].
+ */
+private var sharedValue: Int? = null
 
 /** `true` when [component] and each of its parents up to [root] are visible. */
 private fun isVisibleIn(root: Component, component: Component): Boolean {
