@@ -18,6 +18,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.openapi.wm.impl.IdeFrameGuests;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.PsiInvalidElementAccessException;
@@ -48,12 +49,14 @@ public abstract class ProjectViewSelectInTarget extends SelectInTargetPsiWrapper
     select(myProject, selector, getMinorViewId(), mySubId, virtualFile, requestFocus);
   }
 
-  public static @NotNull ActionCallback select(@NotNull Project project,
+  public static @NotNull ActionCallback select(@NotNull Project contextProject,
                                                final Object toSelect,
                                                final @Nullable String viewId,
                                                final @Nullable String subviewId,
                                                final VirtualFile virtualFile,
                                                final boolean requestFocus) {
+    // a frame guest has no project view tool window: the project view of its frame owner shows its files
+    Project project = IdeFrameGuests.frameOwnerOf(contextProject);
     if (LOG.isDebugEnabled()) {
       LOG.debug(
         "ProjectViewSelectInTarget.select: " +
