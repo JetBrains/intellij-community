@@ -39,7 +39,7 @@
     <editorActionHandler action="EditorBackSpace"
                          implementationClass="com.intellij.markdown.frontend.editor.livepreview.MarkdownLivePreviewHeadingBackspaceHandler"/>
     <annotator language="Markdown" implementationClass="com.intellij.markdown.frontend.highlighting.MarkdownHighlightingAnnotator"/>
-    <fileEditorProvider id="markdown-preview-editor" implementation="com.intellij.markdown.frontend.preview.MarkdownSplitEditorProvider"/>
+    <fileEditorProvider id="split-provider[text-editor;markdown-preview-editor]" implementation="com.intellij.markdown.frontend.preview.MarkdownSplitEditorProvider"/>
     <diff.frontendDiffExtension implementation="com.intellij.markdown.frontend.diff.MarkdownDiffLivePreviewExtension"/>
     <projectService serviceInterface="org.intellij.plugins.markdown.ui.preview.MarkdownPreviewZoomIndicator"
                     serviceImplementation="com.intellij.markdown.frontend.preview.jcef.zoomIndicator.MarkdownPreviewZoomIndicatorImpl"/>
