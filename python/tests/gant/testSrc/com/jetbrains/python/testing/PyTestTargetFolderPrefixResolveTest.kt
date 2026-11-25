@@ -47,6 +47,13 @@ class PyTestTargetFolderPrefixResolveTest : PyCodeInsightTestCase() {
   }
 
   @Test
+  fun `method resolves in the module that declares it, not in a module of the same name without it`() {
+    createFiles("app_b/tests.py" to "class Other:\n    pass\n", "tests/subdir/tests.py" to TEST_MODULE)
+
+    assertThat(resolve("tests.MyTestCase.test_method")).isEqualTo("function test_method in tests/subdir/tests.py")
+  }
+
+  @Test
   fun `folder is resolved when it is the whole name`() {
     createFiles("tests/subdir/tests.py" to TEST_MODULE)
 

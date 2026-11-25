@@ -211,6 +211,8 @@ fun QualifiedName.getElementAndResolvableName(context: QNameResolveContext, stop
   if (element == null && this.firstComponent != null && context.allowInaccurateResult) {
     // If name starts with file which is not in root nor in folders -- use index.
     val nameToFind = this.firstComponent!!
+    // A module that resolves only a prefix of the name does not stop the search: another module may resolve all of it
+    var best: NameAndElement? = null
     for (pyFile in PyModuleNameIndex.find(nameToFind, context.contextAnchor.project, false)) {
       val folder =
         (if (pyFile.name == PyNames.INIT_DOT_PY) { // We are in folder
@@ -221,9 +223,11 @@ fun QualifiedName.getElementAndResolvableName(context: QNameResolveContext, stop
         }) ?: continue
       if (folder == context.folderToStart) continue
       // allowInaccurateResult = false: a second index lookup returns the same files and recurses without end
-      getElementAndResolvableName(context.copy(folderToStart = folder, allowInaccurateResult = false))?.let { return it }
+      val result = getElementAndResolvableName(context.copy(folderToStart = folder, allowInaccurateResult = false)) ?: continue
+      if (result.name.componentCount == componentCount) return result
+      if (best == null || result.name.componentCount > best.name.componentCount) best = result
     }
-    return null
+    return best
   }
   return if (element != null) NameAndElement(currentName, element) else null
 }
