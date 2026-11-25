@@ -3,8 +3,9 @@ package com.intellij.openapi.externalSystem.autoimport.changes
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.editor.EditorFactory
-import com.intellij.openapi.externalSystem.autoimport.ExternalSystemModificationType
 import com.intellij.openapi.externalSystem.autoimport.AutoImportProjectStatus.Stamp
+import com.intellij.openapi.externalSystem.autoimport.AutoImportProjectTracker
+import com.intellij.openapi.externalSystem.autoimport.ExternalSystemModificationType
 import com.intellij.openapi.externalSystem.autoimport.changes.vfs.VirtualFileChangesListener.Companion.installAsyncVirtualFileListener
 import com.intellij.openapi.externalSystem.autoimport.settings.AsyncSupplier
 import com.intellij.openapi.util.io.CanonicalPathPrefixTree
@@ -77,7 +78,8 @@ class AsyncFileChangesListener(
     ) {
       val fileListener = AsyncFileChangesListener(filesProvider, listener)
       val virtualFileListener = AsyncVirtualFilesChangesListener(isIgnoreInternalChanges, fileListener)
-      installAsyncVirtualFileListener(virtualFileListener, parentDisposable)
+      @Suppress("DEPRECATION") // Uses listeners edt in sync mode IJPL-263240. Only tests use sync mode.
+      installAsyncVirtualFileListener(virtualFileListener, parentDisposable, useEdt = !AutoImportProjectTracker.isAsyncChangesProcessing)
     }
 
     @JvmStatic

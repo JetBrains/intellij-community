@@ -2,6 +2,7 @@
 package com.intellij.openapi.externalSystem.autoimport.changes
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.externalSystem.autoimport.AutoImportProjectTracker
 import com.intellij.openapi.externalSystem.autoimport.changes.vfs.VirtualFileChangesListener
 import com.intellij.openapi.externalSystem.autoimport.changes.vfs.VirtualFileChangesListener.Companion.installAsyncVirtualFileListener
 import com.intellij.openapi.vfs.VirtualFile
@@ -46,7 +47,10 @@ abstract class NewFilesListener : VirtualFileChangesListener {
       val listener = object : NewFilesListener() {
         override fun fireNewFilesCreated(files: Collection<VirtualFile>) = action(files)
       }
-      installAsyncVirtualFileListener(listener, parentDisposable)
+      // In theory this listener never needs edt. But apparently order of this listener and  one from `subscribeOnVirtualFilesChanges`
+      // is important for tests, so they both need to be either on edt or on bgt
+      @Suppress("DEPRECATION") // Uses listeners edt in sync mode IJPL-263240. Only tests use sync mode.
+      installAsyncVirtualFileListener(listener, parentDisposable, useEdt = !AutoImportProjectTracker.isAsyncChangesProcessing)
     }
   }
 }

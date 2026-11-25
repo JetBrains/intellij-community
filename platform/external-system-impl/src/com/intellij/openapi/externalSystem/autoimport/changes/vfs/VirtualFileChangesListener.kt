@@ -6,7 +6,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.vfs.AsyncFileListener
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
-import com.intellij.openapi.vfs.newvfs.BulkFileListener
+import com.intellij.openapi.vfs.newvfs.BulkFileListenerBackgroundable
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import org.jetbrains.annotations.ApiStatus
 
@@ -25,8 +25,12 @@ interface VirtualFileChangesListener {
 
   companion object {
 
+    /**
+     * Subscribes [listener] to [VirtualFileManager.VFS_CHANGES_BG].
+     * The [listener] runs on a background thread under write all its methods.
+     */
     fun installBulkVirtualFileListener(listener: VirtualFileChangesListener, parentDisposable: Disposable) {
-      val bulkListener = object : BulkFileListener {
+      val bulkListener = object : BulkFileListenerBackgroundable {
         override fun before(events: List<VFileEvent>) {
           val separator = VirtualFileChangesSeparator(listener, events)
           listener.init()
@@ -43,10 +47,27 @@ interface VirtualFileChangesListener {
       }
       val application = ApplicationManager.getApplication()
       application.messageBus.connect(parentDisposable)
-        .subscribe(VirtualFileManager.VFS_CHANGES, bulkListener)
+        .subscribe(VirtualFileManager.VFS_CHANGES_BG, bulkListener)
     }
 
+    /**
+     * Registers [listener] with [VirtualFileManager.addAsyncFileListenerBackgroundable].
+     * The [listener] runs all its methods on a background thread under the write lock.
+     */
     fun installAsyncVirtualFileListener(listener: VirtualFileChangesListener, parentDisposable: Disposable) {
+      doInstallAsyncVirtualFileListener(listener, parentDisposable, useEdt = false)
+    }
+
+    /**
+     * If [useEdt] is true, registers [listener] with [VirtualFileManager.addAsyncFileListener].
+     * Then the [listener] runs on the EDT.
+     */
+    @Deprecated("The EDT mode exists only for compatibility. Use the overload without useEdt.")
+    fun installAsyncVirtualFileListener(listener: VirtualFileChangesListener, parentDisposable: Disposable, useEdt: Boolean) {
+      doInstallAsyncVirtualFileListener(listener, parentDisposable, useEdt)
+    }
+
+    private fun doInstallAsyncVirtualFileListener(listener: VirtualFileChangesListener, parentDisposable: Disposable, useEdt: Boolean) {
       val asyncListener = AsyncFileListener { events ->
         val separator = VirtualFileChangesSeparator(listener, events)
         object : AsyncFileListener.ChangeApplier {
@@ -62,7 +83,12 @@ interface VirtualFileChangesListener {
         }
       }
       val virtualFileManager = VirtualFileManager.getInstance()
-      virtualFileManager.addAsyncFileListener(asyncListener, parentDisposable)
+      if (!useEdt) {
+        virtualFileManager.addAsyncFileListenerBackgroundable(asyncListener, parentDisposable)
+      }
+      else {
+        virtualFileManager.addAsyncFileListener(asyncListener, parentDisposable)
+      }
     }
   }
 }
