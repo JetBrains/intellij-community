@@ -68,7 +68,7 @@ Three kinds of sentence look like they belong and do not. Each has its own home,
 | Kind of sentence | Example | Home |
 | --- | --- | --- |
 | Implementation mechanics | "Myers replay stores only the reachable diagonals for each depth." | KDoc on the symbol the sentence names |
-| Rationale for a past decision | "…rather than an arbitrary constant." | An architecture decision record |
+| Rationale for a past decision | "…rather than an arbitrary constant." | The `design.md` of an OpenSpec change, which the archive keeps as the decision record |
 | Policy for future changes | "Introducing a cutoff requires measured performance evidence." | The plugin's `AGENTS.md` |
 
 This rule is what makes a spec diff worth reading. When a spec holds only observable behavior, every change to it is a product change and deserves a reviewer's eyes. When it also holds rationale and mechanics, a reviewer cannot separate a behavior change from a re-worded explanation. The diff then gets skipped, and the spec rots.
@@ -132,7 +132,7 @@ A local build MUST read the remote cache and write nothing to it.
 
 ## References
 
-- [The decision record](../../../docs/decisions/0019-example.md), why the rule holds.
+- [The decision record](../../changes/archive/2026-11-10-example/design.md), why the rule holds.
 ```
 
 - The frontmatter has `name`, `description`, `style: openspec-1` and `targets`. A target is a path from the repository
@@ -171,8 +171,8 @@ A local build MUST read the remote cache and write nothing to it.
 
 - A change of a contract goes through `changes/<change>/`. The change id is `<issue>-<slug>` in lowercase, such as
   `mri-5844-dev-home-store`, or a `<slug>`. It is unique among the changes and the archive.
-- `proposal.md` says why and what. `design.md` holds what the open change needs. A decision that outlives the change
-  goes into a decision record in the same commit, and the design links it.
+- `proposal.md` says why and what. `design.md` holds the decision of the change. The section "Decisions" below
+  gives its form.
 - `tasks.md` holds the tasks done before the archive. Each task is checked before the archive, and
   `openspec validate --archived` fails an unchecked task.
 - A delta spec, `changes/<change>/specs/<capability>/spec.md`, has no frontmatter. Its sections are
@@ -185,8 +185,26 @@ A local build MUST read the remote cache and write nothing to it.
   the code.
 - After the archive, move each ADDED requirement next to its group, because the archive appends it at the end. Give a
   new capability its frontmatter, title, `Status:`, `Date:` and Purpose, and update the `targets` of each moved feature.
-- The archive is history. The checks skip it, and a search leaves it out:
-  `accio locate '<text>' --scope '!**/openspec/changes/archive/**'`.
+- The archive keeps the decision records. `openspec validate --all --strict` skips it, and
+  `openspec validate --archived --strict` checks it.
+- A search for code leaves the archive out: `accio locate '<text>' --scope '!**/openspec/changes/archive/**'`. A
+  search for a rationale covers it: `accio locate '<text>' --scope '<root>/openspec/changes/archive/'`.
+
+### Decisions
+
+- A decision lives in the `design.md` of a change. After the archive,
+  `changes/archive/<YYYY-MM-DD>-<id>/design.md` is the decision record.
+- The H1 of `design.md` states the decision in one sentence. Its sections are `## Context`, `## Decisions`,
+  `## Alternatives rejected` and `## Consequences`.
+- `design.md` holds the rationale and no contract sentence. It links each requirement that it explains.
+- The `.openspec.yaml` of the change has `x-topic: <topic>`, with a topic of the docs site of the root.
+- A decision with no contract delta is a change with `skip_specs: true` in its `.openspec.yaml`.
+- A change that replaces or amends an archived decision edits or deletes that archived `design.md` in its own commit.
+  So the archive holds only the current decisions.
+- A source comment names an archived decision as `decision <YYYY-MM-DD>-<id>`, the name of its archive folder.
+- A dated number goes into the measurements of the root, such as `build/dist-measurements.md`, not into a design.
+- The folders `build/docs/decisions/`, `plugins/air/docs/decisions/` and `community/tools/vm/docs/decisions/` take no
+  new record.
 
 ### Checks
 
