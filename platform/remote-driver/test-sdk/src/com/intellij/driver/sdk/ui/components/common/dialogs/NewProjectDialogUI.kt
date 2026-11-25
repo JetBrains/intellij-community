@@ -65,15 +65,6 @@ open class NewProjectDialogUI(data: ComponentData) : UiComponent(data) {
       .click()
   }
 
-  fun getBasePythonInterpreters(): List<String> {
-    interpreterSelector.waitFound().shouldBe(
-      message = "Wait for interpreter list to appear",
-      timeout = 5.seconds,
-      condition = { listValues().isNotEmpty() }
-    )
-    return interpreterSelector.listValues()
-  }
-
   val nameTextField = textField { and(byAccessibleName("Name:"), byType(JTextField::class.java)) }
   val locationTextField = textField { and(byAccessibleName("Location:"), byType(JTextField::class.java)) }
   val groupField = textField { and(byAccessibleName("Group:"), byType(JTextField::class.java)) }
@@ -85,9 +76,5 @@ open class NewProjectDialogUI(data: ComponentData) : UiComponent(data) {
   val sampleCodeLabel = checkBox { byText("Add sample code") }
   val multiModuleLabel = checkBox { byText("Generate multi-module build") }
   val compactStructureLabel = checkBox { byText("Use compact project structure") }
-  val createMainPyCheckbox = checkBox { byText("Create a welcome script") }
-  val installMinicondaLink = x("//div[@text='Install Miniconda']")
-  val projectVenvButton = x { byAccessibleName("Project venv") }
-  private val interpreterSelector = comboBox { byClass("PythonInterpreterComboBox") }
 }
 

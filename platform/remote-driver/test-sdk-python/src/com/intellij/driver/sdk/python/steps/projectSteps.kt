@@ -2,6 +2,8 @@ package com.intellij.driver.sdk.python.steps
 
 import com.intellij.driver.sdk.ManualWaitForIndicators
 import com.intellij.driver.sdk.getOpenProjects
+import com.intellij.driver.sdk.python.createMainPyCheckbox
+import com.intellij.driver.sdk.python.installMinicondaLink
 import com.intellij.driver.sdk.step
 import com.intellij.driver.sdk.ui.UiText.Companion.asString
 import com.intellij.driver.sdk.ui.components.UiComponent.Companion.waitFound

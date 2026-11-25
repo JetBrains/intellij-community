@@ -18,7 +18,6 @@ import com.intellij.driver.sdk.ui.components.common.ideFrame
 import com.intellij.driver.sdk.ui.components.elements.ActionButtonUi
 import com.intellij.driver.sdk.ui.components.elements.JButtonUiComponent
 import com.intellij.driver.sdk.ui.components.elements.JLabelUiComponent
-import com.intellij.driver.sdk.ui.components.elements.JcefOffScreenViewComponent
 import com.intellij.driver.sdk.ui.pasteText
 import com.intellij.driver.sdk.ui.ui
 import com.intellij.driver.sdk.waitFor

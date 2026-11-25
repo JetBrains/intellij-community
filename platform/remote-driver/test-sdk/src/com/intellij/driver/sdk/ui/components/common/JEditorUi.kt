@@ -355,8 +355,6 @@ open class JEditorUiComponent(data: ComponentData) : UiComponent(data) {
     driver.utility(IntentionActionUtils::class).invokeQuickFix(editor, highlightInfo, name)
   }
 
-  fun invokeAiIntentionAction(intentionActionName: String) {
-    driver.utility(AiTestIntentionUtils::class).invokeAiAssistantIntention(editor, intentionActionName)
   /**
    * @see shouldContainText For better readability
    */
@@ -461,9 +459,6 @@ open class JEditorUiComponent(data: ComponentData) : UiComponent(data) {
 interface IntentionActionUtils {
   fun invokeIntentionAction(editor: Editor, intentionActionName: String)
   fun invokeQuickFix(editor: Editor, highlightInfo: HighlightInfo, name: String)
-@Remote("com.intellij.ml.llm.codeGeneration.testGeneration.TestIntentionUtils", plugin = "com.intellij.ml.llm/intellij.ml.llm.core")
-interface AiTestIntentionUtils {
-  fun invokeAiAssistantIntention(editor: Editor, intentionName: String)
 }
 
 @Remote("com.intellij.openapi.editor.impl.EditorComponentImpl")

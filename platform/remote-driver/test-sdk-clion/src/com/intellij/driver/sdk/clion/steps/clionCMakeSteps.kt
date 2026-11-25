@@ -1,5 +1,6 @@
 package com.intellij.driver.sdk.clion.steps
 
+import com.intellij.driver.sdk.clion.cmakeButton
 import com.intellij.driver.sdk.invokeGlobalBackendAction
 import com.intellij.driver.sdk.step
 import com.intellij.driver.sdk.ui.Finder

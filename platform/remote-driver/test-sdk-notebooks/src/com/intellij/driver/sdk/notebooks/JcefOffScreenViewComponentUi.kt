@@ -1,4 +1,4 @@
-package com.intellij.driver.sdk.ui.components.elements
+package com.intellij.driver.sdk.notebooks
 
 import com.intellij.driver.client.Remote
 import com.intellij.driver.sdk.ui.components.ComponentData

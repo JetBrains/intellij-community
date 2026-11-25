@@ -1,4 +1,4 @@
-package com.intellij.driver.sdk.ui.components.common.toolwindows
+package com.intellij.driver.sdk.microservices
 
 import com.intellij.driver.client.Remote
 import com.intellij.driver.model.OnDispatcher
@@ -6,6 +6,7 @@ import com.intellij.driver.sdk.step
 import com.intellij.driver.sdk.ui.components.ComponentData
 import com.intellij.driver.sdk.ui.components.UiComponent
 import com.intellij.driver.sdk.ui.components.common.IdeaFrameUI
+import com.intellij.driver.sdk.ui.components.common.toolwindows.ToolWindowUiComponent
 import com.intellij.driver.sdk.ui.components.elements.JListUiComponent
 import com.intellij.driver.sdk.ui.components.elements.JTextFieldUI
 import com.intellij.driver.sdk.ui.components.elements.textField

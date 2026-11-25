@@ -33,13 +33,8 @@ class ToolWindowLeftToolbarUi(data: ComponentData) : ToolWindowToolbarUi(data) {
   val moreButton: StripeButtonUi = stripeButton("More")
   val debugButton: StripeButtonUi = stripeButton("Debug")
   val findButton: StripeButtonUi = stripeButton("Find")
-  val cmakeButton: StripeButtonUi = stripeButton("CMake")
-  val westButton: StripeButtonUi = stripeButton("West")
   val profilerButton: StripeButtonUi = stripeButton("Profiler")
-  val jpaButton: StripeButtonUi = stripeButton("JPA Console")
-  val persistenceButton: StripeButtonUi = stripeButton("Persistence")
   val valgrindButton: StripeButtonUi = stripeButton("Run Valgrind Memcheck")
-  val vcpkg: StripeButtonUi = stripeButton("Vcpkg")
   fun openMoreToolWindow() {
     moreButton.click()
   }
@@ -56,11 +51,7 @@ class ToolWindowLeftToolbarUi(data: ComponentData) : ToolWindowToolbarUi(data) {
 
 class ToolWindowRightToolbarUi(data: ComponentData) : ToolWindowToolbarUi(data) {
   val notificationsButton: StripeButtonUi = stripeButton("Notifications")
-  val gradleButton: StripeButtonUi = stripeButton("Gradle")
-  val mavenButton: StripeButtonUi = stripeButton("Maven")
-  val databaseButton: StripeButtonUi = stripeButton("Database")
   val aiAssistantButton: StripeButtonUi = stripeButton("AI Chat")
-  val mesonButton: StripeButtonUi = stripeButton("Meson")
 }
 
 class StripeButtonUi(data: ComponentData) : UiComponent(data) {
