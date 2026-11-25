@@ -3,9 +3,11 @@ package com.intellij.slicer;
 
 import com.intellij.ide.projectView.TreeStructureProvider;
 import com.intellij.ide.util.treeView.AbstractTreeStructureBase;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.List;
@@ -14,7 +16,7 @@ import java.util.List;
 public final class SliceTreeStructure extends AbstractTreeStructureBase {
   private final SliceRootNode myRoot;
 
-  SliceTreeStructure(@NotNull Project project, @NotNull SliceRootNode rootNode) {
+  public SliceTreeStructure(@NotNull Project project, @NotNull SliceRootNode rootNode) {
     super(project);
     myRoot = rootNode;
   }
@@ -27,6 +29,16 @@ public final class SliceTreeStructure extends AbstractTreeStructureBase {
   @Override
   public @NotNull SliceRootNode getRootElement() {
     return myRoot;
+  }
+
+  public @Nullable SliceTreeStructure copyForAnalysis() {
+    return ReadAction.computeBlocking(() -> {
+      SliceUsage usage = myRoot.getRootUsage();
+      if (usage.getElement() == null) return null;
+
+      SliceRootNode root = new SliceRootNode(myProject, new DuplicateMap(), usage.copy());
+      return new SliceTreeStructure(myProject, root);
+    });
   }
 
   @Override

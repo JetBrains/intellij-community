@@ -7,7 +7,6 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
@@ -26,7 +25,6 @@ import com.intellij.slicer.SliceLeafAnalyzer;
 import com.intellij.slicer.SliceLeafValueRootNode;
 import com.intellij.slicer.SliceNode;
 import com.intellij.slicer.SliceNullnessAnalyzerBase;
-import com.intellij.slicer.SlicePanel;
 import com.intellij.slicer.SliceRootNode;
 import com.intellij.slicer.SliceTreeBuilder;
 import com.intellij.slicer.SliceTreeStructure;
@@ -37,7 +35,6 @@ import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
 import com.intellij.testFramework.fixtures.LightJavaProject;
 import com.intellij.testFramework.junit5.TestApplication;
 import com.intellij.testFramework.junit5.fixture.TestFixture;
-import com.intellij.toolWindow.ToolWindowHeadlessManagerImpl;
 import com.intellij.util.FontUtil;
 import com.intellij.util.containers.ContainerUtil;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
@@ -61,6 +58,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @TestApplication
@@ -74,33 +72,9 @@ public class SliceTreeTest {
   }
 
   private SliceTreeStructure configureTree(@NonNls String name) {
-    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
-    myFixture.configureByFile(name + ".java");
-    return EdtTestUtil.runInEdtAndGet(() -> {
-      SliceRootNode root = createRoot(myFixture);
-      ToolWindowHeadlessManagerImpl.MockToolWindow toolWindow = new ToolWindowHeadlessManagerImpl.MockToolWindow(myFixture.getProject());
-      SlicePanel panel = new SlicePanel(myFixture.getProject(), true, root, false, toolWindow) {
-        @Override
-        public boolean isAutoScroll() {
-          return false;
-        }
-
-        @Override
-        public void setAutoScroll(boolean autoScroll) {
-        }
-
-        @Override
-        public boolean isPreview() {
-          return false;
-        }
-
-        @Override
-        public void setPreview(boolean preview) {
-        }
-      };
-      Disposer.register(myFixture.getProject(), panel);
-      return panel.getBuilder().getTreeStructure();
-    });
+    LightJavaCodeInsightTestFixture fixture = codeInsightFixture.get();
+    fixture.configureByFile(name + ".java");
+    return EdtTestUtil.runInEdtAndGet(() -> new SliceTreeStructure(fixture.getProject(), createRoot(fixture)));
   }
 
   private static SliceRootNode createRoot(LightJavaCodeInsightTestFixture fixture) {
@@ -281,10 +255,20 @@ public class SliceTreeTest {
   public void testNullness() {
     SliceTreeStructure treeStructure = configureTree("Nulls");
     EdtTestUtil.runInEdtAndWait(() -> {
-      SliceRootNode root = treeStructure.getRootElement();
+      SliceRootNode panelRoot = treeStructure.getRootElement();
+      SliceRootNode competingRoot = new SliceRootNode(panelRoot.getProject(), panelRoot.targetEqualUsages, panelRoot.getRootUsage());
+      SliceNode competingChild = assertThat(competingRoot.getChildren()).singleElement().actual();
+      competingChild.calculateDupNode();
+      SliceNode panelChild = assertThat(panelRoot.getChildren()).singleElement().actual();
+      panelChild.calculateDupNode();
+      assertSame(competingChild, panelChild.getDuplicate());
+
+      SliceTreeStructure analysisTree = treeStructure.copyForAnalysis();
+      assertNotNull(analysisTree);
+      SliceRootNode root = analysisTree.getRootElement();
       Map<SliceNode, JavaSliceNullnessAnalyzer.NullAnalysisResult> map = SliceNullnessAnalyzerBase.createMap();
       JavaSliceNullnessAnalyzer analyzer = new JavaSliceNullnessAnalyzer();
-      JavaSliceNullnessAnalyzer.NullAnalysisResult leaves = analyzer.calcNullableLeaves(root, treeStructure, map);
+      JavaSliceNullnessAnalyzer.NullAnalysisResult leaves = analyzer.calcNullableLeaves(root, analysisTree, map);
 
       SliceRootNode newRoot = analyzer.createNewTree(leaves, root, map);
 

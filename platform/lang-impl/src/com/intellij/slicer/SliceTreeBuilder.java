@@ -6,6 +6,7 @@ import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.util.TriConsumer;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -61,20 +62,21 @@ public final class SliceTreeBuilder {
   }
 
   void switchToGroupedByLeavesNodes() {
-    SliceLanguageSupportProvider provider = getRootSliceNode().getProvider();
-    if(provider == null){
-      return;
-    }
-    analysisInProgress = true;
-    provider.startAnalyzeLeafValues(sliceTreeStructure, () -> analysisInProgress = false);
+    startAnalysis(SliceLanguageSupportProvider::startAnalyzeLeafValues);
   }
 
   public void switchToLeafNulls() {
+    startAnalysis(SliceLanguageSupportProvider::startAnalyzeNullness);
+  }
+
+  private void startAnalysis(TriConsumer<SliceLanguageSupportProvider, SliceTreeStructure, Runnable> analyze) {
     SliceLanguageSupportProvider provider = getRootSliceNode().getProvider();
-    if(provider == null){
-      return;
-    }
+    if (provider == null) return;
+
+    SliceTreeStructure analysisTree = sliceTreeStructure.copyForAnalysis();
+    if (analysisTree == null) return;
+
     analysisInProgress = true;
-    provider.startAnalyzeNullness(sliceTreeStructure, () -> analysisInProgress = false);
+    analyze.accept(provider, analysisTree, () -> analysisInProgress = false);
   }
 }
