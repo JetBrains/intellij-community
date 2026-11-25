@@ -6,6 +6,8 @@ import com.intellij.codeInspection.options.OptDropdown;
 import com.intellij.codeInspection.options.OptHorizontalStack;
 import com.intellij.codeInspection.options.OptMultiSelector;
 import com.intellij.codeInspection.options.OptRegularComponent;
+import com.intellij.codeInspection.options.OptionContainer;
+import com.intellij.codeInspection.options.OptionController;
 import com.intellij.modcommand.ActionContext;
 import com.intellij.modcommand.ModChooseAction;
 import com.intellij.modcommand.ModCommand;
@@ -23,8 +25,12 @@ import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.java.generate.GenerateToStringModCommandAction;
+import org.jetbrains.java.generate.template.TemplateResource;
+import org.jetbrains.java.generate.template.TemplatesManager;
+import org.jetbrains.java.generate.template.toString.ToStringTemplatesManager;
 import org.junit.jupiter.api.Test;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -41,6 +47,7 @@ public final class GenerateToStringModCommandActionTest {
   private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture = lightJavaCodeInsightFixture(projectFixture);
 
   private static final String CONCAT_TEMPLATE = "String concat (+)";
+  private static final String CUSTOM_TEMPLATE = "Custom template";
   private static final String BEFORE = """
     class Point {
         private int x;
@@ -66,6 +73,39 @@ public final class GenerateToStringModCommandActionTest {
       assertEquals("MoreObjects.toStringHelper (Guava 18+) (incompatible)", labels.get("MoreObjects.toStringHelper (Guava 18+)"));
       assertInstanceOf(OptCheckbox.class, components.get(2));
     });
+  }
+
+  @Test
+  public void formShowsChangedTemplates() {
+    LightJavaCodeInsightTestFixture fixture = configure(BEFORE);
+    TemplatesManager templatesManager = ToStringTemplatesManager.getInstance();
+    List<TemplateResource> savedTemplates = new ArrayList<>(templatesManager.getAllTemplates());
+    try {
+      ReadAction.runBlocking(() -> {
+        OptionContainer container = perform(fixture).containerSupplier().get();
+        assertNull(dropdownLabels(container).get(CUSTOM_TEMPLATE));
+
+        templatesManager.addTemplate(new TemplateResource(CUSTOM_TEMPLATE, "public String toString() { return \"\"; }", false, null));
+        assertEquals(CUSTOM_TEMPLATE, dropdownLabels(container).get(CUSTOM_TEMPLATE));
+        assertEquals("MoreObjects.toStringHelper (Guava 18+) (incompatible)",
+                     dropdownLabels(container).get("MoreObjects.toStringHelper (Guava 18+)"));
+
+        OptionController controller = container.getOptionController();
+        controller.setOption("template", CUSTOM_TEMPLATE);
+        templatesManager.setTemplates(savedTemplates);
+        assertNull(dropdownLabels(container).get(CUSTOM_TEMPLATE));
+        assertEquals(templatesManager.getDefaultTemplate().getFileName(), controller.getOption("template"));
+      });
+    }
+    finally {
+      templatesManager.setTemplates(savedTemplates);
+    }
+  }
+
+  private static @NotNull Map<String, String> dropdownLabels(@NotNull OptionContainer container) {
+    OptHorizontalStack stack = assertInstanceOf(OptHorizontalStack.class, container.getOptionsPane().components().get(1));
+    OptDropdown dropdown = assertInstanceOf(OptDropdown.class, stack.children().getFirst());
+    return ContainerUtil.map2Map(dropdown.options(), option -> Pair.create(option.key(), option.label().label()));
   }
 
   @Test

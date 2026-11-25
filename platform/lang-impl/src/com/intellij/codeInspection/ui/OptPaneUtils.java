@@ -19,42 +19,27 @@ import javax.swing.JComboBox;
 import javax.swing.JComponent;
 import javax.swing.JList;
 import javax.swing.text.JTextComponent;
+import java.util.function.Supplier;
 
 @ApiStatus.Experimental
 public final class OptPaneUtils {
   /**
    * Shows UI dialog to edit the specified {@link OptionContainer}.
-   * 
-   * @param project current project
-   * @param data data container to edit
-   * @param title dialog title
+   *
+   * @param project   current project
+   * @param data      data container to edit
+   * @param title     dialog title
    * @param onSuccess code to run on success
    */
   public static void editOptions(@NotNull Project project,
                                  @NotNull OptionContainer data,
                                  @NlsContexts.DialogTitle String title,
                                  @NotNull Runnable onSuccess) {
-    OptPane rootPane = data.getOptionsPane();
-    if (rootPane.equals(OptPane.EMPTY)) {
+    @NotNull Supplier<@NotNull OptPane> paneSupplier = data::getOptionsPane;
+    OptPane pane = paneSupplier.get();
+    if (pane.equals(OptPane.EMPTY)) {
       throw new IllegalArgumentException("OptPane is not defined for " + data.getClass().getName());
     }
-    editOptions(project, data, rootPane, title, onSuccess);
-  }
-
-  /**
-   * Shows UI dialog to edit the specified {@link OptionContainer} using customized pane.
-   *
-   * @param project current project
-   * @param data data container to edit
-   * @param pane OptPane description
-   * @param title dialog title
-   * @param onSuccess code to run on success
-   */
-  public static void editOptions(@NotNull Project project,
-                                 @NotNull OptionContainer data,
-                                 @NotNull OptPane pane,
-                                 @NlsContexts.DialogTitle String title,
-                                 @NotNull Runnable onSuccess) {
     if (ContainerUtil.getOnlyItem(pane.components()) instanceof OptString stringCtl &&
         stringCtl.validator() instanceof StringValidatorWithSwingSelector validator) {
       // Single control with selector: just call the selector
@@ -80,7 +65,7 @@ public final class OptPaneUtils {
     if (helpId != null) {
       builder.setHelpId(helpId);
     }
-    JComponent component = OptionPaneRenderer.getInstance().render(data.getOptionController(), pane, builder, project);
+    JComponent component = OptionPaneRenderer.getInstance().render(data.getOptionController(), paneSupplier, builder, project);
     builder.setCenterPanel(component);
     JComponent toFocus = UIUtil.uiTraverser(component)
       .filter(JComponent.class)

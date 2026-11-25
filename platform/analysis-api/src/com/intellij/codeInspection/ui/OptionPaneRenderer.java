@@ -11,6 +11,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.JComponent;
+import java.util.function.Supplier;
 
 /**
  * A service that renders inspection options pane in Swing UI
@@ -28,7 +29,20 @@ public interface OptionPaneRenderer {
    * @param project    context project
    * @return swing options panel described by supplied inspection
    */
-  @NotNull JComponent render(@NotNull OptionController controller, @NotNull OptPane pane, @NotNull Disposable parent,
+  default @NotNull JComponent render(@NotNull OptionController controller, @NotNull OptPane pane, @NotNull Disposable parent,
+                                     @NotNull Project project) {
+    return render(controller, () -> pane, parent, project);
+  }
+
+  /**
+   * @param controller controller used to update options
+   * @param pane       supplier of the pane to render. The renderer calls it again when a custom component asks to refresh the pane.
+   *                   The renderer calls it on the EDT.
+   * @param parent     parent disposable whose lifecycle corresponds to the lifecycle of the created panel
+   * @param project    context project
+   * @return swing options panel described by supplied inspection
+   */
+  @NotNull JComponent render(@NotNull OptionController controller, @NotNull Supplier<@NotNull OptPane> pane, @NotNull Disposable parent,
                              @NotNull Project project);
 
   /**

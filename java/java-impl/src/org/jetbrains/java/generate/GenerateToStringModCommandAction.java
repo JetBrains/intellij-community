@@ -18,7 +18,6 @@ import com.intellij.modcommand.ModCommand;
 import com.intellij.modcommand.ModCommandAction;
 import com.intellij.modcommand.ModEditOptions;
 import com.intellij.modcommand.ModPsiUpdater;
-import com.intellij.modcommand.ModTriggerFeatureUsed;
 import com.intellij.modcommand.Presentation;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.JavaFeature;
@@ -30,8 +29,6 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiJavaFile;
 import com.intellij.psi.PsiMember;
 import com.intellij.psi.PsiMethod;
-import com.intellij.psi.SmartPointerManager;
-import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
@@ -40,6 +37,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.generate.tostring.GenerateToStringClassFilter;
@@ -56,13 +54,13 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Generates a {@code toString()} method with a {@link ModEditOptions} form instead of a Swing dialog.
  * Thus, the action works in each client that shows a {@link ModEditOptions} form, for example, in LSP.
  * <p>
- * The form has a member selector, a template drop-down, and the "Insert @Override" checkbox.
- * Unlike {@link GenerateToStringAction}, the form has no button for the template settings.
+ * The form has a member selector, a template drop-down, the button for the template settings, and the "Insert @Override" checkbox.
  * The drop-down adds the "(incompatible)" suffix to a template that the class cannot use.
  */
 public final class GenerateToStringModCommandAction implements ModCommandAction {
@@ -85,7 +83,7 @@ public final class GenerateToStringModCommandAction implements ModCommandAction 
     List<PsiElementClassMember<?>> preselection = ContainerUtil.filter(members, m -> m.getElement().getContainingClass() == psiClass);
 
     TemplatesManager templatesManager = ToStringTemplatesManager.getInstance();
-    List<OptDropdown.Option> templateOptions = createTemplateOptions(psiClass, templatesManager.getAllTemplates());
+    Set<String> unavailableClasses = findUnavailableClasses(psiClass, templatesManager.getAllTemplates());
     String defaultTemplate = templatesManager.getDefaultTemplate().getFileName();
 
     boolean annotationsAvailable = PsiUtil.isAvailable(JavaFeature.ANNOTATIONS, psiClass);
@@ -95,24 +93,36 @@ public final class GenerateToStringModCommandAction implements ModCommandAction 
     return ModCommand.editOptions(
       psiClass,
       getFamilyName(),
-      () -> new ToStringOptions(members, templateOptions, annotationsAvailable, psiClass.getLanguage(), preselection, defaultTemplate,
+      () -> new ToStringOptions(members, unavailableClasses, annotationsAvailable, psiClass.getLanguage(), preselection, defaultTemplate,
                                 insertOverride),
       true,
       (cls, options) -> generate(context, cls, members, options));
   }
 
   /**
-   * Creates a drop-down option for each template.
-   * The label of a template has the "(incompatible)" suffix when the resolve scope of the class has no class that the template needs.
+   * Finds the classes that the templates need and that the resolve scope of the class does not have.
+   * Only a bundled template needs a class.
+   * Thus, a template that the user adds in the template settings does not change the result.
    */
-  private static @NotNull List<OptDropdown.Option> createTemplateOptions(@NotNull PsiClass psiClass,
-                                                                         @NotNull Collection<TemplateResource> templates) {
+  private static @NotNull Set<String> findUnavailableClasses(@NotNull PsiClass psiClass, @NotNull Collection<TemplateResource> templates) {
     JavaPsiFacade facade = JavaPsiFacade.getInstance(psiClass.getProject());
     GlobalSearchScope resolveScope = psiClass.getResolveScope();
+    return StreamEx.of(templates)
+      .map(TemplateResource::getClassName)
+      .nonNull()
+      .filter(className -> facade.findClass(className, resolveScope) == null)
+      .toSet();
+  }
+
+  /**
+   * Creates a drop-down option for each template.
+   * The label of a template has the "(incompatible)" suffix when the template needs a class from {@code unavailableClasses}.
+   */
+  private static @NotNull List<OptDropdown.Option> createTemplateOptions(@NotNull Collection<TemplateResource> templates,
+                                                                         @NotNull Set<String> unavailableClasses) {
     return ContainerUtil.map(templates, template -> {
       String name = template.getName();
-      String className = template.getClassName();
-      boolean incompatible = className != null && facade.findClass(className, resolveScope) == null;
+      boolean incompatible = unavailableClasses.contains(template.getClassName());
       return OptPane.option(name, incompatible ? JavaBundle.message("generate.tostring.template.incompatible", name) : name);
     });
   }
@@ -231,25 +241,28 @@ public final class GenerateToStringModCommandAction implements ModCommandAction 
    * <p>
    * The constructor gets the data of the form from a read action.
    * Thus, {@link #getOptionsPane()} needs no PSI access, and the IDE can call it on the EDT.
+   * <p>
+   * {@link #getOptionsPane()} reads the current templates.
+   * Thus, the form shows the changes of the template settings after the renderer refreshes the pane.
    */
   private static final class ToStringOptions implements OptionContainer {
     private final @NotNull List<? extends OptMultiSelector.OptElement> myAllMembers;
-    private final @NotNull List<OptDropdown.Option> myTemplateOptions;
+    private final @NotNull Set<String> myUnavailableClasses;
     private final boolean myAnnotationsAvailable;
     private final @NotNull Language myLanguage;
 
     @SuppressWarnings("FieldMayBeFinal") private @NotNull List<? extends PsiElementClassMember<?>> members;
-    @SuppressWarnings("FieldMayBeFinal") private @NotNull String template;
+    private @NotNull String template;
     @SuppressWarnings("FieldMayBeFinal") private boolean insertOverride;
 
     private ToStringOptions(@NotNull List<PsiElementClassMember<?>> allMembers,
-                            @NotNull List<OptDropdown.Option> templateOptions,
+                            @NotNull Set<String> unavailableClasses,
                             boolean annotationsAvailable, @NotNull Language language,
                             @NotNull List<PsiElementClassMember<?>> members,
                             @NotNull String template,
                             boolean insertOverride) {
       myAllMembers = allMembers;
-      myTemplateOptions = templateOptions;
+      myUnavailableClasses = unavailableClasses;
       myAnnotationsAvailable = annotationsAvailable;
       myLanguage = language;
       this.members = new ArrayList<>(members);
@@ -259,6 +272,12 @@ public final class GenerateToStringModCommandAction implements ModCommandAction 
 
     @Override
     public @NotNull OptPane getOptionsPane() {
+      TemplatesManager templatesManager = ToStringTemplatesManager.getInstance();
+      List<OptDropdown.Option> templateOptions = createTemplateOptions(templatesManager.getAllTemplates(), myUnavailableClasses);
+      if (!ContainerUtil.exists(templateOptions, option -> option.key().equals(template))) {
+        // The template settings removed or renamed the selected template.
+        template = templatesManager.getDefaultTemplate().getFileName();
+      }
       List<OptRegularComponent> components = new ArrayList<>();
       if (!myAllMembers.isEmpty()) {
         components.add(OptPane.multiSelector("members", myAllMembers, OptMultiSelector.SelectionMode.MULTIPLE_OR_EMPTY));
@@ -266,7 +285,7 @@ public final class GenerateToStringModCommandAction implements ModCommandAction 
       components.add(
         OptPane.horizontalStack(
           OptPane.dropdown("template", JavaBundle.message("generate.tostring.template.label"),
-                           myTemplateOptions.toArray(OptDropdown.Option[]::new)),
+                           templateOptions.toArray(OptDropdown.Option[]::new)),
           new JavaConfigurationDialogInfo(JavaConfigurationDialogKind.TO_STRING_TEMPLATE_SETTINGS, myLanguage).button()
         ));
       if (myAnnotationsAvailable) {

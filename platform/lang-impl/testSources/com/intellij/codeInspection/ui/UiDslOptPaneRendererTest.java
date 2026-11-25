@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.ui;
 
 import com.intellij.codeInsight.generation.ClassMember;
@@ -33,6 +33,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.jupiter.api.Test;
 
+import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JComponent;
@@ -493,7 +494,8 @@ public class UiDslOptPaneRendererTest {
         }
 
         @Override
-        public @NotNull JComponent render(String data, @NotNull OptionController controller, @NotNull Project project) {
+        public @NotNull JComponent render(String data, @NotNull OptionController controller, @NotNull Project project,
+                                          @NotNull Runnable refreshPane) {
           return new JComboBox<>();
         }
       }, myDisposable);
@@ -528,7 +530,8 @@ public class UiDslOptPaneRendererTest {
         }
 
         @Override
-        public @NotNull JComponent render(String data, @NotNull OptionController controller, @NotNull Project project) {
+        public @NotNull JComponent render(String data, @NotNull OptionController controller, @NotNull Project project,
+                                          @NotNull Runnable refreshPane) {
           return new JLabel("val:" + controller.getOption(data));
         }
       }, myDisposable);
@@ -547,5 +550,52 @@ public class UiDslOptPaneRendererTest {
     final JLabel label = UIUtil.findComponentOfType(component, JLabel.class);
     assertNotNull(label);
     assertEquals("val:" + inspection.myOption, label.getText());
+  }
+
+  @Test
+  public void testCustomControlRefreshesPane() {
+    CustomComponentExtension.EP_NAME.getPoint().registerExtension(
+      new CustomComponentExtensionWithSwingRenderer<String>("refreshing") {
+        @Override
+        public @NotNull String serializeData(String s) {
+          return s;
+        }
+
+        @Override
+        public String deserializeData(@NotNull String data) {
+          return data;
+        }
+
+        @Override
+        public @NotNull JComponent render(String data, @NotNull OptionController controller, @NotNull Project project,
+                                          @NotNull Runnable refreshPane) {
+          JButton button = new JButton("refresh");
+          button.addActionListener(_ -> refreshPane.run());
+          return button;
+        }
+      }, myDisposable);
+
+    List<OptDropdown.Option> options = new ArrayList<>(List.of(new OptDropdown.Option("o1", new PlainMessage("option 1"))));
+    var inspection = new LocalInspectionTool() {
+      public String myOption = "o1";
+
+      @Override
+      public @NotNull OptPane getOptionsPane() {
+        return pane(horizontalStack(dropdown("myOption", "", options.toArray(OptDropdown.Option[]::new)),
+                                    new OptCustom("refreshing", "", LocMessage.empty())));
+      }
+    };
+    Project project = ProjectManager.getInstance().getDefaultProject();
+    JComponent component = new UiDslOptPaneRenderer().render(inspection.getOptionController(), inspection::getOptionsPane,
+                                                             myDisposable, project);
+    assertEquals(1, UIUtil.findComponentOfType(component, JComboBox.class).getItemCount());
+
+    options.add(new OptDropdown.Option("o2", new PlainMessage("option 2")));
+    inspection.myOption = "o2";
+    ContainerUtil.find(UIUtil.findComponentsOfType(component, JButton.class), button -> "refresh".equals(button.getText())).doClick();
+
+    JComboBox<?> comboBox = UIUtil.findComponentOfType(component, JComboBox.class);
+    assertEquals(2, comboBox.getItemCount());
+    assertEquals("o2", ((OptDropdown.Option)comboBox.getSelectedItem()).key());
   }
 }

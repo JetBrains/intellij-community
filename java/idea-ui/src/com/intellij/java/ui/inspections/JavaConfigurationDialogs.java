@@ -30,13 +30,22 @@ public final class JavaConfigurationDialogs extends CustomComponentExtensionWith
   }
 
   @Override
-  public @NotNull JComponent render(JavaConfigurationDialogInfo info, @NotNull OptionController controller, @NotNull Project project) {
+  public @NotNull JComponent render(JavaConfigurationDialogInfo info,
+                                    @NotNull OptionController controller,
+                                    @NotNull Project project,
+                                    @NotNull Runnable refreshPane) {
     if (project.isDefault()) {
       // Do not provide button for default project
       return new JPanel();
     }
     JButton button = new JButton(getButtonLabel(info.kind()));
-    button.addActionListener(_ -> showDialog(button, info, project));
+    button.addActionListener(_ -> {
+      showDialog(button, info, project);
+      if (info.kind() == JavaConfigurationDialogKind.TO_STRING_TEMPLATE_SETTINGS) {
+        // The dialog can add, remove or rename the templates that the pane shows.
+        refreshPane.run();
+      }
+    });
     return button;
   }
   

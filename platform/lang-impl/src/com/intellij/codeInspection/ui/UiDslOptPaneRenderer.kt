@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.ui
 
 import com.intellij.codeInsight.generation.MemberChooserObject
@@ -36,6 +36,7 @@ import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.options.ex.ConfigurableVisitor
 import com.intellij.openapi.options.ex.Settings
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Iconable
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.text.HtmlBuilder
@@ -62,6 +63,7 @@ import com.intellij.ui.dsl.builder.BottomGap
 import com.intellij.ui.dsl.builder.Cell
 import com.intellij.ui.dsl.builder.LabelPosition
 import com.intellij.ui.dsl.builder.Panel
+import com.intellij.ui.dsl.builder.Placeholder
 import com.intellij.ui.dsl.builder.RightGap
 import com.intellij.ui.dsl.builder.Row
 import com.intellij.ui.dsl.builder.RowLayout
@@ -77,9 +79,11 @@ import com.intellij.util.applyIf
 import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil.setEnabledRecursively
+import com.intellij.util.ui.components.BorderLayoutPanel
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.awt.EventQueue
+import java.util.function.Supplier
 import javax.swing.ComboBoxModel
 import javax.swing.DefaultComboBoxModel
 import javax.swing.JComponent
@@ -91,20 +95,44 @@ import kotlin.math.max
 @ApiStatus.Internal
 class UiDslOptPaneRenderer : OptionPaneRenderer {
 
-  private data class RendererContext(val controller: OptionController, val parent: Disposable, val project: Project) {
+  /**
+   * @param refreshPane renders the whole pane again. See [CustomComponentExtensionWithSwingRenderer.render].
+   */
+  private data class RendererContext(val controller: OptionController,
+                                     val parent: Disposable,
+                                     val project: Project,
+                                     val refreshPane: Runnable) {
     fun getOption(bindId: String): Any? = controller.getOption(bindId)
     fun setOption(bindId: String, value: Any) = controller.setOption(bindId, value)
   }
 
   override fun render(controller: OptionController,
-                      pane: OptPane,
+                      pane: Supplier<OptPane>,
                       parent: Disposable,
-                      project: Project ): JComponent {
-    return panel {
-      pane.components.forEachIndexed { i, component ->
-        render(component, RendererContext(controller, parent, project), i == 0, component.hasBottomGap)
-      }
+                      project: Project): JComponent {
+    lateinit var contentPlaceholder: Placeholder
+    val holder = panel {
+      row {
+        contentPlaceholder = placeholder()
+          .align(Align.FILL)
+          .resizableColumn()
+      }.resizableRow()
     }.apply { registerValidators(parent) }
+
+    var contentDisposable: Disposable? = null
+    fun renderContent() {
+      contentDisposable?.let { Disposer.dispose(it) }
+      val disposable = Disposer.newDisposable(parent)
+      contentDisposable = disposable
+      val context = RendererContext(controller, disposable, project) { renderContent() }
+      contentPlaceholder.component = panel {
+        pane.get().components.forEachIndexed { i, component ->
+          render(component, context, i == 0, component.hasBottomGap)
+        }
+      }
+    }
+    renderContent()
+    return holder
   }
 
   /**
@@ -479,7 +507,9 @@ class UiDslOptPaneRenderer : OptionPaneRenderer {
           if (extension !is CustomComponentExtensionWithSwingRenderer<*>) {
             throw IllegalStateException("Component does not implement ")
           }
-          cell(extension.render(component, context.controller, context.project))
+          val customComponent =
+            extension.render(extension.deserializeData(component.data), context.controller, context.project, context.refreshPane)
+          cell(customComponent)
         }
 
         is OptCheckboxPanel, is OptGroup, is OptHorizontalStack, is OptSeparator, is OptTabSet -> { throw IllegalStateException("Unsupported nested component: ${component.javaClass}") }
@@ -599,11 +629,10 @@ class UiDslOptPaneRenderer : OptionPaneRenderer {
   private fun Row.doubleTextField(min: Double, max: Double): Cell<JBTextField> {
     val result = cell(JBTextField())
       .validationOnInput {
-        val value = it.text.toDoubleOrNull()
-        when {
-          value == null -> error(UIBundle.message("please.enter.a.number"))
-          value < min || value > max -> error(UIBundle.message("please.enter.a.number.from.0.to.1", min, max))
-          else -> null
+        when (it.text.toDoubleOrNull()) {
+            null -> error(UIBundle.message("please.enter.a.number"))
+            !in min..max -> error(UIBundle.message("please.enter.a.number.from.0.to.1", min, max))
+            else -> null
         }
       }
     result.columns(10)

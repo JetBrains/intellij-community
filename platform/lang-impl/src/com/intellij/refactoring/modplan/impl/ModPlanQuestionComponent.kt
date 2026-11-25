@@ -27,7 +27,7 @@ class ModPlanQuestionComponent : CustomComponentExtensionWithSwingSelector<Any?>
     return true
   }
 
-  override fun render(data: Any?, controller: OptionController, project: Project): JComponent {
+  override fun render(data: Any?, controller: OptionController, project: Project, refreshPane: Runnable): JComponent {
     val button = JButton(CommonBundle.message("button.edit"))
     button.addActionListener { select(data, controller, project) }
     return button
