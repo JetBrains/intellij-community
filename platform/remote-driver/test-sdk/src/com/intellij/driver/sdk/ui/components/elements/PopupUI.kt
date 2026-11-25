@@ -112,7 +112,7 @@ class PopupMenuUiComponent(data: ComponentData) : UiComponent(data) {
   }
 
   companion object {
-    internal const val POPUP_MENU_CLASS = "com.intellij.openapi.actionSystem.impl.ActionPopupMenuImpl\$MyMenu"
+    internal const val POPUP_MENU_CLASS = $$"com.intellij.openapi.actionSystem.impl.ActionPopupMenuImpl$MyMenu"
   }
 }
 
@@ -173,16 +173,9 @@ open class PopupUiComponent(data: ComponentData) : WindowUiComponent(data) {
   }
 
   companion object {
-    const val POPUP_CLASS = "javax.swing.Popup\$HeavyWeightWindow"
+    const val POPUP_CLASS = $$"javax.swing.Popup$HeavyWeightWindow"
     const val LUX_POPUP_CLASS = "com.jetbrains.thinclient.lux.swing.LuxFrontendWindow"
   }
-}
-
-@Remote("com.intellij.openapi.actionSystem.impl.ActionMenuItem")
-interface PopupItemRef {
-  fun isSelected(): Boolean
-  fun getText(): String
-  fun getIcon(): Icon
 }
 
 class PopupItemUiComponent(data: ComponentData) : UiComponent(data) {
@@ -194,4 +187,11 @@ class PopupItemUiComponent(data: ComponentData) : UiComponent(data) {
                       ?: "empty"
 
   override fun toString(): String = super.toString() + " '" + getText() + "'"
+
+  @Remote("com.intellij.openapi.actionSystem.impl.ActionMenuItem")
+  private interface PopupItemRef {
+    fun isSelected(): Boolean
+    fun getText(): String
+    fun getIcon(): Icon
+  }
 }

@@ -20,9 +20,9 @@ val IdeaFrameUI.toolbarHeader: FrameHeaderUI
   }, FrameHeaderUI::class.java)
 
 class FrameHeaderUI(data: ComponentData) : UiComponent(data) {
-  val separateRowMenu: UiComponent get() = x("//div[@class='IdeJMenuBar']")
-  val burgerMenuButton: UiComponent get() = x("//div[@tooltiptext='Main Menu']")
-  val appIcon: UiComponent get() = x("//div[@accessiblename='Application icon']")
+  val separateRowMenu: UiComponent = x("//div[@class='IdeJMenuBar']")
+  val burgerMenuButton: UiComponent = x("//div[@tooltiptext='Main Menu']")
+  val appIcon: UiComponent = x("//div[@accessiblename='Application icon']")
 }
 
 fun IdeaFrameUI.openMenuItem(vararg items: String) {
