@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.psi.types
 
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.RecursionManager
 import com.intellij.openapi.util.Ref
@@ -358,6 +359,7 @@ object PyTypeChecker {
 
   private fun match(expected: PyType?, actual: PyType?, context: MatchContext): Optional<Boolean> {
     PyCodeInsightCounters.inc(Counter.MATCH_STEPS)
+    ProgressManager.checkCanceled()
     PyAnyType.validate(expected)
     PyAnyType.validate(actual)
     val result = RecursionManager.doPreventingRecursion(expected to actual, false) {
@@ -2532,6 +2534,7 @@ object PyTypeChecker {
     substitutions: GenericSubstitutions,
     context: TypeEvalContext,
   ): PyType? {
+    ProgressManager.checkCanceled()
     return PyCloningTypeVisitor.clone(type, object : PyCloningTypeVisitor(context) {
       // Type variables currently being expanded along the active substitution path. A substitution map can be
       // mutually recursive (e.g. {T: S, S: T}) or self-referential (e.g. {T: list[T]}), and the transformations
