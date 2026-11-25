@@ -23,7 +23,7 @@ import java.nio.file.Path
 private const val APP_CONFIG_FILE_NAME = "app.settings.json"
 
 /**
- * Holds the identities of the keys of [UISettingsKeys]. That object is internal to its module, so a test finds a key by
+ * Holds the identities of the keys of `UISettingsKeys`. That object is internal to its module, so a test finds a key by
  * its identity in the key registry, see [uiSettingsKey].
  */
 internal object UISettingsKeyIdentities {
@@ -36,7 +36,7 @@ internal object UISettingsKeyIdentities {
   const val PRESENTATION_MODE_IDE_SCALE: String = "ui.presentationModeIdeScale"
   const val SINGLE_STRIPE: String = "toolWindows.singleStripe"
 
-  /** Lists every identity, in the order of the declarations of [UISettingsKeys]. */
+  /** Lists every identity, in the order of the declarations of `UISettingsKeys`. */
   val ALL: List<String> = listOf(IDE_ANTIALIASING, EDITOR_ANTIALIASING, CUSTOM_FONT_FACE, CUSTOM_FONT_SIZE,
                                  CUSTOM_FONT_ENABLED, IDE_SCALE, PRESENTATION_MODE_IDE_SCALE, SINGLE_STRIPE)
 }
@@ -75,7 +75,7 @@ internal fun appConfigFile(locality: LayerLocality): Path =
   Path.of(PathManager.getOptionsPath(), localityFileName(APP_CONFIG_FILE_NAME, locality))
 
 /**
- * Drops every stored value of [UISettingsKeys] and reloads the application context. The environmental keys live in
+ * Drops every stored value of `UISettingsKeys` and reloads the application context. The environmental keys live in
  * the environmental config of the application, and the shareable key lives in its team config. The other entries of
  * the configs stay, such as the migration ledger, so no migration runs again after the reload.
  */

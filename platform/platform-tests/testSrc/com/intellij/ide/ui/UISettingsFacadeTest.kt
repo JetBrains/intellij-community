@@ -11,7 +11,7 @@ import org.junit.jupiter.api.Test
 import kotlin.time.Duration.Companion.seconds
 
 /**
- * Checks that the setters of [UISettings] store their values in the keys of [UISettingsKeys], and that the getters read
+ * Checks that the setters of [UISettings] store their values in the keys of `UISettingsKeys`, and that the getters read
  * them back.
  */
 @TestApplication

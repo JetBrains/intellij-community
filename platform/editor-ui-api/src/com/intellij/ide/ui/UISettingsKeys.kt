@@ -28,7 +28,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.launch
-import org.jetbrains.annotations.ApiStatus.Internal
 
 /**
  * Holds the settings keys of the UI settings that [NotRoamableUiSettings] stores. Each key resolves only at the
@@ -37,9 +36,10 @@ import org.jetbrains.annotations.ApiStatus.Internal
  *
  * The default of each key reads the current value of the [NotRoamableUiSettings] component, so a key with no stored
  * value reads the component. The design expects the component to change only through the setters of [UISettings].
+ * Only [UISettings] and [NotRoamableUiSettingsImport] use the keys. The other code reads and writes the settings
+ * through [UISettings].
  */
-@Internal
-object UISettingsKeys {
+internal object UISettingsKeys {
   /**
    * Holds the antialiasing of the text in the IDE. Without the component, the default is subpixel when the machine
    * supports it.
@@ -105,7 +105,7 @@ object UISettingsKeys {
    * @param update writes the keys, for example `KEY.setValue(value)`
    * @return the job of the update
    */
-  fun updateAsync(update: suspend () -> Unit): Job = service<UISettingsKeysScope>().launchUpdate(update)
+  private fun updateAsync(update: suspend () -> Unit): Job = service<UISettingsKeysScope>().launchUpdate(update)
 
   /**
    * Launches an asynchronous write of [value] for [key], unless [key] already resolves to [value]. So the write never

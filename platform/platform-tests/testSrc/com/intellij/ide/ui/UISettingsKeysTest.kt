@@ -16,7 +16,7 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import kotlin.time.Duration.Companion.seconds
 
-/** Checks the declaration of [UISettingsKeys]: the identities, the promotion and the storage of a [Float] value. */
+/** Checks the declaration of `UISettingsKeys`: the identities, the promotion and the storage of a [Float] value. */
 @TestApplication
 class UISettingsKeysTest {
   @BeforeEach
@@ -43,5 +43,18 @@ class UISettingsKeysTest {
 
     SettingsVault.getInstance().reload(appContext)
     assertEquals(1.1f, uiSettingsKey(UISettingsKeyIdentities.IDE_SCALE)[appContext])
+  }
+
+  @Test
+  fun `a hand-edited integer value of a float key reads as a float after a reload`(): Unit = timeoutRunBlocking(60.seconds) {
+    val appContext = SettingsContext.app()
+    withContext(Dispatchers.IO) {
+      val config = appConfigFile(LayerLocality.ENVIRONMENTAL)
+      val values = JsonConfigFile.read(config).values + (UISettingsKeyIdentities.IDE_SCALE to SettingsValue.IntValue(2))
+      JsonConfigFile.write(config, SettingsValue.MapValue(values))
+    }
+
+    SettingsVault.getInstance().reload(appContext)
+    assertEquals(2f, uiSettingsKey(UISettingsKeyIdentities.IDE_SCALE)[appContext])
   }
 }

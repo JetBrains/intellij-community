@@ -20,8 +20,8 @@ import javax.swing.JComponent
 import kotlin.time.Duration.Companion.seconds
 
 /**
- * Checks that an Apply of the Appearance page stores its inputs in the keys of [UISettingsKeys]. A test edits the inputs
- * as a user does, through the components of the page. The page is the `preferences.lookFeel` configurable.
+ * Checks that an Apply of the Appearance page stores its inputs in the keys of `UISettingsKeys`. A test edits the
+ * inputs as a user does, through the components of the page. The page is the `preferences.lookFeel` configurable.
  */
 @TestApplication
 class AppearancePageSettingsTest {

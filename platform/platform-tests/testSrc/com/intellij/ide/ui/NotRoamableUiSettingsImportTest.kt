@@ -12,7 +12,7 @@ import kotlin.time.Duration.Companion.seconds
 
 /**
  * Checks that [NotRoamableUiSettingsImport] imports the state of [NotRoamableUiSettings] into the keys of
- * [UISettingsKeys]. A test sets the state through the setters of the component and runs the migration. The test
+ * `UISettingsKeys`. A test sets the state through the setters of the component and runs the migration. The test
  * puts back the state that the component had before it.
  */
 @TestApplication

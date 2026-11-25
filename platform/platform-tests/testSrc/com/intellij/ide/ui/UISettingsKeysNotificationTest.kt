@@ -18,7 +18,7 @@ import org.junit.jupiter.api.Test
 import java.util.concurrent.CopyOnWriteArrayList
 import kotlin.time.Duration.Companion.seconds
 
-/** Checks that a change of a key of [UISettingsKeys] reaches each [UISettingsListener]. */
+/** Checks that a change of a key of `UISettingsKeys` reaches each [UISettingsListener]. */
 @TestApplication
 class UISettingsKeysNotificationTest {
   @BeforeEach
