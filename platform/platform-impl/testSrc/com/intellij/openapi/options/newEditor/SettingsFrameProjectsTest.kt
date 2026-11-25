@@ -54,6 +54,7 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Timeout
 import java.awt.Component
+import java.awt.event.ActionEvent
 import javax.swing.JComponent
 import javax.swing.JPanel
 import javax.swing.JScrollPane
@@ -393,6 +394,22 @@ internal class SettingsFrameProjectsTest {
     assertThat(pageOf(owner).resets).isEqualTo(1)
     assertThat(pageOf(guest).resets).isEqualTo(1)
     page.disposeUIResources()
+  }
+
+  @Test
+  fun `the Apply button applies the change of each project`(): Unit = withGuestPage { editor, page ->
+    pageOf(owner).modified = true
+    pageOf(guest).modified = true
+    editor.checkCurrentModified()
+    val apply = editor.getApplyAction()!!
+    assertThat(apply.isEnabled).describedAs("Apply is enabled for a change").isTrue()
+
+    apply.actionPerformed(ActionEvent(editor, ActionEvent.ACTION_PERFORMED, null))
+
+    assertThat(pageOf(owner).applies).isEqualTo(1)
+    assertThat(pageOf(guest).applies).isEqualTo(1)
+    assertThat(page.isModified).isFalse()
+    assertThat(editor.isModified).isFalse()
   }
 
   @Test
