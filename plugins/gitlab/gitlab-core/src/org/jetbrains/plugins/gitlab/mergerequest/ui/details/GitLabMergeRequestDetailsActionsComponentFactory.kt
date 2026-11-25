@@ -3,17 +3,14 @@ package org.jetbrains.plugins.gitlab.mergerequest.ui.details
 
 import com.intellij.collaboration.async.awaitCancelling
 import com.intellij.collaboration.async.launchNow
-import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.collaboration.ui.HorizontalListPanel
 import com.intellij.collaboration.ui.LoadingLabel
-import com.intellij.collaboration.ui.codereview.action.AutoDisablingActionGroup
 import com.intellij.collaboration.ui.codereview.details.CodeReviewDetailsActionsComponentFactory
 import com.intellij.collaboration.ui.codereview.details.data.ReviewRole
 import com.intellij.collaboration.ui.codereview.details.data.ReviewState
 import com.intellij.collaboration.ui.util.bindChildIn
 import com.intellij.collaboration.ui.util.bindVisibilityIn
 import com.intellij.collaboration.ui.util.toAnAction
-import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.ui.components.panels.Wrapper
 import kotlinx.coroutines.CoroutineScope
