@@ -7,27 +7,22 @@ import com.intellij.openapi.util.io.FileUtil;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
 public final class GroovyRtJarPaths {
   public static List<String> getGroovyRtRoots(File jpsPluginRoot, boolean addClassLoaderJar) {
     List<String> result = new ArrayList<>();
-    addGroovyRtJarPath(jpsPluginRoot, "intellij.groovy.rt.jar",
-                       Collections.singletonList("intellij.groovy.rt"), "groovy-rt", result);
-    addGroovyRtJarPath(jpsPluginRoot, "intellij.groovy.constants.rt.jar",
-                       Collections.singletonList("intellij.groovy.constants.rt"), "groovy-constants-rt", result);
+    addGroovyRtJarPath(jpsPluginRoot, "intellij.groovy.rt", "groovy-rt", result);
+    addGroovyRtJarPath(jpsPluginRoot, "intellij.groovy.constants.rt", "groovy-constants-rt", result);
     if (addClassLoaderJar) {
-      addGroovyRtJarPath(jpsPluginRoot, "intellij.groovy.rt.classLoader.jar",
-                         Collections.singletonList("intellij.groovy.rt.classLoader"), "groovy-rt-class-loader", result);
+      addGroovyRtJarPath(jpsPluginRoot, "intellij.groovy.rt.classLoader", "groovy-rt-class-loader", result);
     }
     return result;
   }
 
   private static void addGroovyRtJarPath(File jpsPluginClassesRoot,
-                                         String jarNameInDistribution,
-                                         List<String> moduleNames,
+                                         String moduleName,
                                          String mavenArtifactNamePrefix,
                                          List<String> to) {
     File parentDir = jpsPluginClassesRoot.getParentFile();
@@ -58,18 +53,16 @@ public final class GroovyRtJarPaths {
         if (mapping == null) {
           throw new IllegalStateException("Mapping cannot be null at this point. 'intellij.test.jars.location' is not null");
         }
-        for (String moduleName : moduleNames) {
-          String path = mapping.get("production/" + moduleName);
-          if (path == null) {
-            throw new IllegalStateException("Mapping for module '" + moduleName + "' not found in " + mapping);
-          }
-          to.add(path);
+        String path = mapping.get("production/" + moduleName);
+        if (path == null) {
+          throw new IllegalStateException("Mapping for module '" + moduleName + "' not found in " + mapping);
         }
+        to.add(path);
         return;
       }
       String fileName;
       if (jpsPluginClassesRoot.getName().equals("intellij.groovy.jps.jar")) {
-        fileName = jarNameInDistribution;
+        fileName = moduleName + ".jar";
       }
       else {
         String name = jpsPluginClassesRoot.getName();
@@ -85,9 +78,7 @@ public final class GroovyRtJarPaths {
       to.add(new File(parentDir, fileName).getPath());
     }
     else {
-      for (String moduleName : moduleNames) {
-        to.add(new File(parentDir, moduleName).getPath());
-      }
+      to.add(new File(parentDir, moduleName).getPath());
     }
   }
 }
