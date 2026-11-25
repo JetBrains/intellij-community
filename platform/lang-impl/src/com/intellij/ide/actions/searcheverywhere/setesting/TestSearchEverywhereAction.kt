@@ -48,7 +48,6 @@ class TestSearchEverywhereAction: AnAction() {
     val project = initEvent.project
     val res = mutableListOf<SearchEverywhereContributor<*>>()
     res.add(PSIPresentationBgRendererWrapper.wrapIfNecessary(RecentFilesSEContributor(initEvent)))
-    //res.add(RunConfigurationsSEContributor(project, null) { mySearchEverywhereUI.getSearchField().getText() })
 
     for (factory in SearchEverywhereContributor.EP_NAME.extensionList) {
       if (factory.isAvailable(project)) {

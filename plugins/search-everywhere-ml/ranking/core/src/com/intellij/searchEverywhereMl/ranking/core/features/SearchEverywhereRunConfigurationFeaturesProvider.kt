@@ -3,7 +3,6 @@ package com.intellij.searchEverywhereMl.ranking.core.features
 import com.intellij.execution.RunnerAndConfigurationSettings
 import com.intellij.execution.actions.ChooseRunConfigurationPopup
 import com.intellij.execution.configurations.ConfigurationType
-import com.intellij.ide.actions.searcheverywhere.RunConfigurationsSEContributor
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereSpellCheckResult
 import com.intellij.internal.statistic.eventLog.events.EventField
 import com.intellij.internal.statistic.eventLog.events.EventFields
@@ -12,12 +11,13 @@ import com.intellij.internal.statistic.eventLog.validator.ValidationResultType
 import com.intellij.internal.statistic.eventLog.validator.rules.EventContext
 import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValidationRule
 import com.intellij.internal.statistic.utils.getPluginInfo
+import com.intellij.platform.searchEverywhere.SeProviderIdUtils
 import com.intellij.searchEverywhereMl.ranking.core.features.SearchEverywhereRunConfigurationFeaturesProvider.Fields.IS_SHARED
 import com.intellij.searchEverywhereMl.ranking.core.features.SearchEverywhereRunConfigurationFeaturesProvider.Fields.IS_TEMPORARY
 import com.intellij.searchEverywhereMl.ranking.core.features.SearchEverywhereRunConfigurationFeaturesProvider.Fields.RUN_CONFIGURATION_TYPE
 
 internal class SearchEverywhereRunConfigurationFeaturesProvider
-  : SearchEverywhereElementFeaturesProvider(RunConfigurationsSEContributor::class.java) {
+  : SearchEverywhereElementFeaturesProvider(setOf(SeProviderIdUtils.RUN_CONFIGURATIONS_ID)) {
   object Fields {
     val IS_SHARED = EventFields.Boolean("is_shared")
     val IS_TEMPORARY = EventFields.Boolean("is_temporary")

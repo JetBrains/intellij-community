@@ -145,8 +145,6 @@
 
     <dynamicActionConfigurationCustomizer implementation="com.intellij.execution.runToolbar.MyActionConfigurationCustomizer"/>
 
-    <searchEverywhereContributor implementation="com.intellij.ide.actions.searcheverywhere.RunConfigurationsSEContributor$Factory"/>
-
     <templateModuleBuilderPostprocessing implementation="com.intellij.execution.impl.RunConfigurationTemplateModuleBuilderPostprocessing"/>
     <applicationService serviceInterface="com.intellij.testIntegration.RunSelectedTestAdvertisement"
                         serviceImplementation="com.intellij.execution.impl.RunSelectedTestAdvertisementImpl"/>
