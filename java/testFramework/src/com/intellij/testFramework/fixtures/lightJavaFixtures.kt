@@ -2,6 +2,7 @@
 package com.intellij.testFramework.fixtures
 
 import com.intellij.application.options.CodeStyle
+import com.intellij.codeInsight.daemon.quickFix.lightQuickFixLanguageLevel
 import com.intellij.facet.FacetManager
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.EDT
@@ -28,6 +29,7 @@ import com.intellij.platform.testFramework.junit5.codeInsight.indexing.IndexingM
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.psi.codeStyle.CodeStyleSchemes
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageManagerImpl
+import com.intellij.refactoring.InplaceIntroduceTestUtil
 import com.intellij.testFramework.CodeStyleSettingsTracker
 import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.IndexingTestUtil
@@ -44,6 +46,7 @@ import com.intellij.testFramework.junit5.fixture.TestFixture
 import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.testFramework.junit5.fixture.tempPathFixture
 import com.intellij.testFramework.junit5.fixture.testFixture
+import com.intellij.util.ThrowableRunnable
 import com.intellij.util.application
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -177,6 +180,13 @@ interface LightJavaCodeInsightTestFixture : JavaCodeInsightTestFixture {
    * With [lowercaseFirstLetter], the first letter becomes lower case, unless the name is all in upper case.
    */
   fun getTestName(lowercaseFirstLetter: Boolean): String
+
+  /**
+   * Runs [runnable] on the EDT in a command, as a JUnit 3 `LightPlatformCodeInsightTestCase` ran its whole test.
+   * Call it from any thread. It rethrows an exception of [runnable].
+   * Put the sequence of a refactoring or an editor action in it, from the first action to the last check of its result.
+   */
+  fun runInCommand(runnable: ThrowableRunnable<*>)
 }
 
 @TestOnly
@@ -190,6 +200,10 @@ private class LightJavaCodeInsightTestFixtureImpl(
   override fun shouldTrackVirtualFilePointers(): Boolean = false
 
   override fun getTestName(lowercaseFirstLetter: Boolean): String = PlatformTestUtil.getTestName(testMethodName, lowercaseFirstLetter)
+
+  override fun runInCommand(runnable: ThrowableRunnable<*>) {
+    InplaceIntroduceTestUtil.runInCommand(project) { runnable.run() }
+  }
 }
 
 /**
@@ -201,6 +215,8 @@ private class LightJavaIndexingModeCodeInsightTestFixture(
   indexingMode: IndexingMode,
 ) : JavaIndexingModeCodeInsightTestFixture(lightDelegate, indexingMode), LightJavaCodeInsightTestFixture {
   override fun getTestName(lowercaseFirstLetter: Boolean): String = lightDelegate.getTestName(lowercaseFirstLetter)
+
+  override fun runInCommand(runnable: ThrowableRunnable<*>): Unit = lightDelegate.runInCommand(runnable)
 }
 
 // LightJavaCodeInsightFixtureTestCase.setUp sets this project language level for each test.
@@ -247,6 +263,25 @@ fun lightJavaTestDescriptor(
 ): LightProjectDescriptor =
   object : LightJavaCodeInsightFixtureTestCase.ProjectDescriptor(languageLevel) {
     override fun getSdk(): Sdk = sdk.get()
+  }
+
+/**
+ * Returns the descriptor of each test for the [lightJavaCodeInsightFixture] overload with a descriptor function,
+ * by the test name rule of [com.intellij.testFramework.LightJavaCodeInsightTestCase.getLanguageLevel].
+ *
+ * A test name that ends with `JavaXYZ` or `JavaXYZPreview` gets a descriptor of [lightJavaTestDescriptor] with that language level
+ * and the SDK of [classDescriptor]. [lightQuickFixLanguageLevel] reads the level from the name. Any other test gets [classDescriptor].
+ * Give [classDescriptor] also to [lightJavaProjectFixture], so that the other tests use the module of the class.
+ *
+ * JUnit 3 set the level of the project, and its module had no level. Here the module of the test gets the level.
+ * A class that overrides `getLanguageLevel()` with a constant does not use this rule. Give its level to [lightJavaTestDescriptor].
+ */
+@TestOnly
+fun lightJavaDescriptorOfTestName(classDescriptor: LightProjectDescriptor): Function<String, LightProjectDescriptor> =
+  Function { testName ->
+    val level = lightQuickFixLanguageLevel(testName)
+    if (level == null) classDescriptor
+    else lightJavaTestDescriptor(level) { requireNotNull(classDescriptor.sdk) { "No SDK in $classDescriptor" } }
   }
 
 /**
