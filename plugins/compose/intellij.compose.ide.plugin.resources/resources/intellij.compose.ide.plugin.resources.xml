@@ -130,7 +130,7 @@
     <statistics.counterUsagesCollector implementationClass="com.intellij.compose.ide.plugin.resources.ComposeResourcesUsageCollector"/>
     <lang.foldingBuilder language="kotlin"
                          implementationClass="com.intellij.compose.ide.plugin.resources.folding.ComposeResourcesFoldingBuilder"/>
-    <fileEditorProvider implementation="com.intellij.compose.ide.plugin.resources.vectorDrawable.preview.ComposeResourceEditorProvider"/>
+    <fileEditorProvider id="compose-drawable-preview-editor" implementation="com.intellij.compose.ide.plugin.resources.vectorDrawable.preview.ComposeResourceEditorProvider"/>
     <xml.xmlExtension implementation="com.intellij.compose.ide.plugin.resources.ComposeResourcesDrawableXmlExtension"/>
     <xml.schemaProvider implementation="com.intellij.compose.ide.plugin.resources.ComposeResourcesDrawableXmlSchemaProvider"/>
     <xml.elementDescriptorProvider

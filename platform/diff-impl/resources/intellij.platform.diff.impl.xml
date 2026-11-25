@@ -98,7 +98,7 @@
     <diff.DiffExtension implementation="com.intellij.diff.actions.ShowBlankDiffWindowDiffExtension"/>
     <projectService serviceInterface="com.intellij.diff.editor.DiffEditorTabFilesManager"
                     serviceImplementation="com.intellij.diff.editor.DiffEditorTabFilesManagerImpl"/>
-    <fileEditorProvider implementation="com.intellij.diff.editor.DiffFileEditorProvider"/>
+    <fileEditorProvider id="DiffEditor" implementation="com.intellij.diff.editor.DiffFileEditorProvider"/>
     <diff.editor.diffRequestProcessorEditorCustomizer implementation="com.intellij.diff.editor.DefaultDiffFileEditorCustomizer"/>
     <fileIconProvider implementation="com.intellij.diff.editor.DiffFileIconProvider"/>
     <editorTabTitleProvider implementation="com.intellij.diff.editor.DiffEditorTabTitleProvider"/>

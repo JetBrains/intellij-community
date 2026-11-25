@@ -52,7 +52,7 @@
   <resource-bundle>messages.DevkitComposeBundle</resource-bundle>
 
   <extensions defaultExtensionNs="com.intellij">
-    <fileEditorProvider implementation="com.intellij.devkit.compose.sandbox.ComposeSandboxFileEditorProvider"/>
+    <fileEditorProvider id="compose-sandbox-editor" implementation="com.intellij.devkit.compose.sandbox.ComposeSandboxFileEditorProvider"/>
     <postStartupActivity implementation="com.intellij.devkit.compose.sandbox.ComposeSandboxStartupActivity"/>
     <fileIconProvider implementation="com.intellij.devkit.compose.sandbox.ComposeSandboxFileIconProvider"/>
     <applicationConfigurable

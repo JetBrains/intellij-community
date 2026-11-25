@@ -865,7 +865,7 @@
     <activityTracker implementation="com.intellij.openapi.vfs.newvfs.VfsActivityTracker"/>
     <activityTracker implementation="com.intellij.configurationStore.SavingTracker"/>
     <dataValidators implementation="com.intellij.ide.impl.PlatformDataValidators"/>
-    <fileEditorProvider implementation="com.intellij.ide.plugins.UIComponentEditorProvider"/>
+    <fileEditorProvider id="ui-component-editor" implementation="com.intellij.ide.plugins.UIComponentEditorProvider"/>
     <fileIconProvider order="first" implementation="com.intellij.ide.plugins.UIComponentVirtualFile$UIComponentVirtualFileIconProvider"/>
     <applicationService serviceInterface="com.intellij.openapi.application.impl.WriteActionPresenceService"
                         serviceImplementation="com.intellij.openapi.application.impl.WriteActionPresenceServiceImpl"/>
@@ -1154,7 +1154,7 @@
     <projectService serviceInterface="com.intellij.openapi.vfs.encoding.EncodingProjectManager"
                     serviceImplementation="com.intellij.openapi.vfs.encoding.EncodingProjectManagerImpl"/>
     <postStartupActivity implementation="com.intellij.openapi.vfs.encoding.EncodingProjectManagerStartUpActivity"/>
-    <fileEditorProvider implementation="com.intellij.openapi.fileEditor.impl.http.HttpFileEditorProvider"/>
+    <fileEditorProvider id="httpFileEditor" implementation="com.intellij.openapi.fileEditor.impl.http.HttpFileEditorProvider"/>
     <editorActionHandler action="EditorEscape" implementationClass="com.intellij.codeInsight.hint.EscapeHandler" id="hide-hints"
                          order="before changeSignatureEscape"/>
     <editorActionHandler action="EditorDelete"
@@ -1636,7 +1636,7 @@
     <toolWindow id="Settings" anchor="left" icon="AllIcons.General.Settings"
                 factoryClass="com.intellij.openapi.options.newEditor.SettingsToolWindowFactory"/>
     <defaultToolWindowLayout implementation="com.intellij.openapi.options.newEditor.SettingsToolWindowLayoutExtension" order="last"/>
-    <fileEditorProvider implementation="com.intellij.openapi.options.newEditor.SettingsFileEditorProvider"/>
+    <fileEditorProvider id="settings-editor" implementation="com.intellij.openapi.options.newEditor.SettingsFileEditorProvider"/>
     <fileIconProvider order="first" implementation="com.intellij.openapi.options.newEditor.SettingsFileIconProvider"/>
     <editorAutoClosingHandler implementation="com.intellij.openapi.options.newEditor.SettingsTabAutoClosingHandler"/>
     <virtualFilePreCloseCheck implementation="com.intellij.openapi.options.newEditor.SettingsTabPreCloseCheck"/>

@@ -15,7 +15,7 @@
   <!-- endregion -->
 
   <extensions defaultExtensionNs="com.intellij">
-    <fileEditorProvider implementation="com.intellij.mermaid.frontend.preview.MermaidEditorWithPreviewProvider"/>
+    <fileEditorProvider id="split-provider[text-editor;mermaid-preview-editor]" implementation="com.intellij.mermaid.frontend.preview.MermaidEditorWithPreviewProvider"/>
 
     <annotator language="Mermaid"
                implementationClass="com.intellij.mermaid.frontend.validation.MermaidRenderErrorAnnotator"/>

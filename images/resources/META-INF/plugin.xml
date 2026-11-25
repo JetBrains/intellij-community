@@ -52,7 +52,7 @@
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
-    <fileEditorProvider implementation="org.intellij.images.editor.impl.ImageFileEditorProvider"/>
+    <fileEditorProvider id="images" implementation="org.intellij.images.editor.impl.ImageFileEditorProvider"/>
     <colorSettings implementation="org.intellij.images.options.impl.ImageEditorColorSchemeSettings"
                    bundle="messages.ImagesBundle" key="settings.page.name" priority="OTHER_SETTINGS"/>
 

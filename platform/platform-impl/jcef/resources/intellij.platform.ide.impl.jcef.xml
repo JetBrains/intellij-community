@@ -28,7 +28,7 @@
   <extensions defaultExtensionNs="com.intellij">
     <postStartupActivity implementation="com.intellij.openapi.updateSettings.impl.JcefWhatsNewProjectActivity" order="last"/>
     <fileEditorProvider id="html-editor" implementation="com.intellij.openapi.fileEditor.impl.JcefHtmlEditorProvider"/>
-    <fileEditorProvider implementation="com.intellij.ide.browsers.actions.WebPreviewEditorProvider"/>
+    <fileEditorProvider id="web-preview-editor" implementation="com.intellij.ide.browsers.actions.WebPreviewEditorProvider"/>
     <aboutPopupDescriptionProvider implementation="com.intellij.platform.ide.impl.jcef.JcefAboutPopupDescriptionProvider"/>
     <whatsNewPageProvider implementation="com.intellij.ide.whatsNew.JcefWhatsNewPageProvider"/>
   </extensions>

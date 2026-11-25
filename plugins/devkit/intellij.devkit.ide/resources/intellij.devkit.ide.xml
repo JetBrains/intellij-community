@@ -153,7 +153,7 @@
     <editorTabTitleProvider implementation="com.intellij.devkit.ide.testAssistant.TestDataGroupEditorTabTitleProvider"/>
     <highlightingPassFactory implementation="com.intellij.devkit.ide.testAssistant.TestDataHighlightingPassFactory"/>
     <!--suppress SplitModeXmlApiUsage TestDataGroupVirtualFile is created on the backend by TestDataNavigationHandler; moved as is from devkit core -->
-    <fileEditorProvider implementation="com.intellij.devkit.ide.testAssistant.TestDataGroupEditorProvider"/>
+    <fileEditorProvider id="TestDataGroup" implementation="com.intellij.devkit.ide.testAssistant.TestDataGroupEditorProvider"/>
     <!-- needs the TestData.Navigate action -->
     <codeInsight.lineMarkerProvider language="UAST"
                                     implementationClass="org.jetbrains.idea.devkit.testAssistant.TestDataLineMarkerProvider"/>
