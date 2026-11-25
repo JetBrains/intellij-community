@@ -1,12 +1,9 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework.common
 
-import com.intellij.util.lang.UrlClassLoader
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.Test
-import java.io.File
-import java.nio.file.Path
 
 /**
  * Each test runs [MockitoThreadLocalCleanup] in a class loader of its own.
@@ -17,7 +14,7 @@ class MockitoThreadLocalCleanupTest {
   fun `the cleanup loads no Mockito class when Mockito was not used`() {
     val loader = IsolatedClassLoader()
 
-    loader.clearMockitoState()
+    loader.callStatic(MockitoThreadLocalCleanup::class.java.name, "clearMockitoState")
 
     assertThat(MOCKITO_CLASSES.filter { loader.hasLoadedClass(it) }).isEmpty()
   }
@@ -34,7 +31,7 @@ class MockitoThreadLocalCleanupTest {
       // `verify` with no call on the mock leaves an unfinished verification in the thread state.
       mockito.getMethod("verify", Any::class.java).invoke(null, mock)
 
-      loader.clearMockitoState()
+      loader.callStatic(MockitoThreadLocalCleanup::class.java.name, "clearMockitoState")
 
       // `validateMockitoUsage` throws `UnfinishedVerificationException` when the thread state was not reset.
       mockito.getMethod("validateMockitoUsage").invoke(null)
@@ -66,24 +63,5 @@ private fun withContextClassLoader(loader: ClassLoader, action: () -> Unit) {
   }
   finally {
     thread.contextClassLoader = previous
-  }
-}
-
-private val hostClassLoader: ClassLoader = MockitoThreadLocalCleanup::class.java.classLoader
-
-private fun hostClassPath(): List<Path> =
-  (hostClassLoader as? UrlClassLoader)?.files
-  ?: System.getProperty("java.class.path").split(File.pathSeparator).map { Path.of(it) }
-
-/**
- * Loads its own copy of each class of the host class path, but not the classes of `com.intellij.util.lang`.
- * The host class loader gives those, so that the copy of [MockitoThreadLocalCleanup] sees this loader as a [UrlClassLoader].
- */
-private class IsolatedClassLoader : UrlClassLoader(build().files(hostClassPath()).parent(getPlatformClassLoader()), true) {
-  override fun loadClass(name: String, resolve: Boolean): Class<*> =
-    if (name.startsWith("com.intellij.util.lang.")) hostClassLoader.loadClass(name) else super.loadClass(name, resolve)
-
-  fun clearMockitoState() {
-    loadClass(MockitoThreadLocalCleanup::class.java.name).getMethod("clearMockitoState").invoke(null)
   }
 }

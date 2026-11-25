@@ -11,8 +11,8 @@ import com.intellij.openapi.util.io.IoTestUtil;
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
 import com.intellij.testFramework.GlobalState;
 import com.intellij.testFramework.LightPlatformTestCase;
+import com.intellij.testFramework.ProjectLeakAtSuiteEndKt;
 import com.intellij.testFramework.TeamCityLogger;
-import com.intellij.testFramework.TestApplicationManager;
 import com.intellij.testFramework.Timings;
 import com.intellij.testFramework.UITestUtil;
 import com.intellij.util.SystemProperties;
@@ -163,7 +163,7 @@ public class JUnit5TestSessionListener implements LauncherSessionListener {
 
       // testProjectLeak
       catchExceptionAndReportAsTestIfFailed(_LastInSuiteTestPrefix + "testProjectLeak" + testProcessName + buildConfName, () -> {
-        TestApplicationManager.testProjectLeak();
+        ProjectLeakAtSuiteEndKt.checkProjectLeakAtSuiteEnd();
       });
 
       // testLanguagesHaveDifferentDisplayNames

@@ -6,7 +6,7 @@ import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
 import com.intellij.testFramework.GlobalState;
 import com.intellij.testFramework.JUnit38AssumeSupportRunner;
 import com.intellij.testFramework.LightPlatformTestCase;
-import com.intellij.testFramework.TestApplicationManager;
+import com.intellij.testFramework.ProjectLeakAtSuiteEndKt;
 import junit.framework.TestCase;
 import org.junit.FixMethodOrder;
 import org.junit.runner.RunWith;
@@ -39,7 +39,7 @@ public class _LastInSuiteTest extends TestCase {
   }
 
   public void testProjectLeak() {
-    TestApplicationManager.testProjectLeak();
+    ProjectLeakAtSuiteEndKt.checkProjectLeakAtSuiteEnd();
   }
 
   // should be run as late as possible to give the Languages the chance to instantiate as many of them as possible
