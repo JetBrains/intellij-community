@@ -28,7 +28,6 @@ import com.intellij.testFramework.junit5.fixture.moduleFixture
 import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.testFramework.junit5.fixture.sourceRootFixture
 import com.intellij.testFramework.utils.vfs.createFile
-import com.intellij.util.ref.GCWatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -37,15 +36,17 @@ import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertSame
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
+import java.lang.ref.Reference
 
 /**
  * Lifecycle cases of the smart pointer subsystem that the main suite
  * (`com.intellij.java.psi.impl.smartPointers.SmartPsiElementPointersTest`) does not cover:
- * file deletion and recreation, directory pointers, hard pointers, tracker GC, and the
+ * file deletion and recreation, directory pointers, hard pointers, tracker cleanup, and the
  * degenerate forms of [com.intellij.psi.SmartPsiFileRange].
  *
  * See `docs/IntelliJ-Platform/4_man/Lang/PSI/Smart-Pointers.md` for the specification.
  */
+@Suppress("SuspiciousPackagePrivateAccess")
 @TestApplication
 internal class SmartPointerLifecycleTest {
   private companion object {
@@ -162,15 +163,23 @@ internal class SmartPointerLifecycleTest {
   }
 
   /**
-   * The tracker references pointers weakly: once a pointer is unreachable, a GC plus
-   * [SmartPointerTracker.processQueue] removes it from the tracker. The element's pointer
-   * cache holds the pointer softly, which must not keep it tracked either.
+   * Simulates collection by putting the pointer's weak reference on the queue.
+   * [SmartPointerTracker.processQueue] removes the pointer from the tracker.
    */
   @Test
   fun `tracker stops tracking a collected pointer`() = timeoutRunBlocking {
     val psiFile = createXmlFile("gc.xml")
     val impl = manager as SmartPointerManagerImpl
-    createPointerAndForget(psiFile).ensureCollected()
+    val pointer = readAction {
+      val element = PsiTreeUtil.findChildOfType(psiFile, XmlText::class.java)!!
+      impl.createSmartPsiElementPointer(element) as SmartPsiElementPointerImpl<*>
+    }
+    assertEquals(1, impl.getPointersNumber(psiFile))
+
+    val reference: Reference<*> = checkNotNull(pointer.pointerReference)
+    val enqueued = reference.enqueue()
+    Reference.reachabilityFence(pointer)
+    assertTrue(enqueued, "The tracker reference must enter the queue")
 
     waitUntilAssertSucceeds {
       SmartPointerTracker.processQueue()
@@ -241,11 +250,5 @@ internal class SmartPointerLifecycleTest {
       sourceRootVFile().createFile(name).also { VfsUtil.saveText(it, text) }
     }
     return readAction { PsiManager.getInstance(project).findFile(vFile)!! }
-  }
-
-  private suspend fun createPointerAndForget(psiFile: PsiFile): GCWatcher = readAction {
-    val pointer = manager.createSmartPsiElementPointer(PsiTreeUtil.findChildOfType(psiFile, XmlText::class.java)!!)
-    assertEquals(1, (manager as SmartPointerManagerImpl).getPointersNumber(psiFile))
-    GCWatcher.tracking(pointer)
   }
 }
