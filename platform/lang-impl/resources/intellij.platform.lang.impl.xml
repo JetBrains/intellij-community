@@ -506,6 +506,8 @@
                     interface="com.intellij.refactoring.modplan.safeDelete.ModPlanSafeDeleteProvider" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.refactoring.modPlanRenameProvider"
                     interface="com.intellij.refactoring.modplan.rename.ModPlanRenameProvider" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.refactoring.modPlanMoveProvider"
+                    interface="com.intellij.refactoring.modplan.move.ModPlanMoveProvider" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.moveFileHandler" interface="com.intellij.refactoring.move.moveFilesOrDirectories.MoveFileHandler" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.rename.symbolRenameTargetFactory" dynamic="true"
                     interface="com.intellij.refactoring.rename.symbol.SymbolRenameTargetFactory"/>
@@ -1542,6 +1544,8 @@
                                        order="last, before modPlanHeadlessRename"/>
     <refactoring.modPlanRenameProvider implementation="com.intellij.refactoring.modplan.rename.impl.ModPlanHeadlessRenameProvider"
                                        id="modPlanHeadlessRename" order="last"/>
+    <refactoring.modPlanMoveProvider implementation="com.intellij.refactoring.modplan.move.impl.ModPlanFileMoveProvider"
+                                     id="modPlanFileMove" order="last"/>
     <applicationService serviceInterface="com.intellij.refactoring.modplan.impl.ModPlanFlowUi"
                         serviceImplementation="com.intellij.refactoring.modplan.impl.ModPlanDialogFlowUi"
                         testServiceImplementation="com.intellij.refactoring.modplan.impl.ModPlanTestFlowUi"/>

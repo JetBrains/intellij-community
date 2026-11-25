@@ -904,9 +904,6 @@ c:com.intellij.refactoring.memberPushDown.PushDownProcessor
 - isAnswered(com.intellij.refactoring.modplan.ModPlanOptionValues):Z
 - isConfirmed(com.intellij.refactoring.modplan.ModPlanOptionValues):Z
 - options():java.util.List
-*:com.intellij.refactoring.modplan.move.ModPlanMoveFileHandler
-- sf:NOTHING:com.intellij.refactoring.modplan.move.ModPlanMoveFileHandler
-- a:analyze(com.intellij.psi.PsiFile,com.intellij.refactoring.modplan.move.ModPlanMovePlaces,com.intellij.refactoring.modplan.ModPlanRequest):com.intellij.refactoring.modplan.ModPlanAnalysisResult
 *f:com.intellij.refactoring.modplan.move.ModPlanMoveOptions
 - sf:SEARCH_FOR_REFERENCES:com.intellij.refactoring.modplan.ModPlanOption
 - sf:SEARCH_FOR_TEXT:com.intellij.refactoring.modplan.ModPlanOption
@@ -924,6 +921,44 @@ c:com.intellij.refactoring.memberPushDown.PushDownProcessor
 - message():java.lang.String
 - s:valueOf(java.lang.String):com.intellij.refactoring.modplan.move.ModPlanMoveProblem
 - s:values():com.intellij.refactoring.modplan.move.ModPlanMoveProblem[]
+*:com.intellij.refactoring.modplan.move.ModPlanMoveProvider
+- sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
+- a:analyze(java.util.List,com.intellij.openapi.vfs.VirtualFile,com.intellij.refactoring.modplan.move.ModPlanMovePlaces,com.intellij.refactoring.modplan.ModPlanRequest):com.intellij.refactoring.modplan.move.ModPlanMoveProvider$Analysis
+- a:isOwner(com.intellij.model.SymbolPointer):Z
+- a:place(java.util.List,com.intellij.openapi.vfs.VirtualFile,com.intellij.refactoring.modplan.ModPlanRequest):com.intellij.refactoring.modplan.move.ModPlanMoveProvider$Placement
+*f:com.intellij.refactoring.modplan.move.ModPlanMoveProvider$Analysis
+- java.lang.Record
+- <init>(com.intellij.refactoring.modplan.ModPlanAnalysisResult,java.util.List,com.intellij.psi.PsiElement):V
+- f:equals(java.lang.Object):Z
+- f:hashCode():I
+- place():com.intellij.psi.PsiElement
+- result():com.intellij.refactoring.modplan.ModPlanAnalysisResult
+- usages():java.util.List
+*f:com.intellij.refactoring.modplan.move.ModPlanMoveProvider$ItemMove
+- java.lang.Record
+- <init>(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.vfs.VirtualFile,java.lang.String):V
+- f:equals(java.lang.Object):Z
+- f:hashCode():I
+- item():com.intellij.openapi.vfs.VirtualFile
+- newName():java.lang.String
+- targetDirectory():com.intellij.openapi.vfs.VirtualFile
+*:com.intellij.refactoring.modplan.move.ModPlanMoveProvider$Placement
+*f:com.intellij.refactoring.modplan.move.ModPlanMoveProvider$Placement$Accepted
+- java.lang.Record
+- com.intellij.refactoring.modplan.move.ModPlanMoveProvider$Placement
+- <init>(java.util.List,java.util.List):V
+- emptiedDirectories():java.util.List
+- f:equals(java.lang.Object):Z
+- f:hashCode():I
+- itemMoves():java.util.List
+*f:com.intellij.refactoring.modplan.move.ModPlanMoveProvider$Placement$Refused
+- java.lang.Record
+- com.intellij.refactoring.modplan.move.ModPlanMoveProvider$Placement
+- <init>(com.intellij.refactoring.modplan.move.ModPlanMoveProblem,com.intellij.psi.PsiElement):V
+- f:equals(java.lang.Object):Z
+- f:hashCode():I
+- place():com.intellij.psi.PsiElement
+- problem():com.intellij.refactoring.modplan.move.ModPlanMoveProblem
 *f:com.intellij.refactoring.modplan.move.ModPlanMoveRefactoring
 - com.intellij.refactoring.modplan.ModPlanRefactoring
 - *sf:Companion:com.intellij.refactoring.modplan.move.ModPlanMoveRefactoring$Companion
@@ -1097,8 +1132,6 @@ c:com.intellij.refactoring.memberPushDown.PushDownProcessor
 - f:getInstance():com.intellij.refactoring.modplan.safeDelete.ModPlanSafeDeleteRefactoring
 *:com.intellij.refactoring.modplan.safeDelete.ModPlanSafeDeleteUsage
 - a:asModPlanEdit():com.intellij.refactoring.modplan.ModPlanEdit
-a:com.intellij.refactoring.move.moveFilesOrDirectories.MoveFileHandler
-- *:asModPlan():com.intellij.refactoring.modplan.move.ModPlanMoveFileHandler
 *f:com.intellij.refactoring.rename.HeadlessRenameConflict
 - <init>(java.lang.String,java.lang.String):V
 - f:component1():java.lang.String

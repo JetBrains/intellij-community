@@ -5,7 +5,6 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.refactoring.modplan.move.ModPlanMoveFileHandler;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.MultiMap;
@@ -34,17 +33,6 @@ public abstract class MoveFileHandler {
    * @return true if this handler can handle this file, false otherwise.
    */
   public abstract boolean canProcessElement(PsiFile element);
-
-  /**
-   * The adapter of this handler for the move on the ModPlan engine. A subclass inherits it, as it inherits the rest. A subclass whose move
-   * differs returns null or its own adapter.
-   *
-   * @return the adapter; null if the files of this handler move only in the legacy move
-   */
-  @ApiStatus.Experimental
-  public @Nullable ModPlanMoveFileHandler asModPlan() {
-    return null;
-  }
 
   /**
    * Performs any necessary modifications of the file contents before the move.
@@ -121,15 +109,19 @@ public abstract class MoveFileHandler {
     return DEFAULT;
   }
 
+  /**
+   * @return whether a registered handler processes {@code element}, see {@link #forElement}; false if only the default handler moves it,
+   * which changes nothing in the file
+   */
+  @ApiStatus.Internal
+  public static boolean hasRegisteredHandler(@NotNull PsiFile element) {
+    return forElement(element) != DEFAULT;
+  }
+
   private static final MoveFileHandler DEFAULT = new MoveFileHandler() {
     @Override
     public boolean canProcessElement(final PsiFile element) {
       return true;
-    }
-
-    @Override
-    public @NotNull ModPlanMoveFileHandler asModPlan() {
-      return ModPlanMoveFileHandler.NOTHING;
     }
 
     @Override

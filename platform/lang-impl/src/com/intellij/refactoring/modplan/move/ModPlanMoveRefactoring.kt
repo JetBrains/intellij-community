@@ -5,7 +5,6 @@ import com.intellij.model.SymbolPointer
 import com.intellij.modcommand.FutureVirtualFile
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
-import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.util.io.FileUtil
@@ -13,13 +12,11 @@ import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.VirtualFileSystem
-import com.intellij.psi.PsiCompiledElement
-import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiFileSystemItem
 import com.intellij.psi.PsiManager
 import com.intellij.psi.SmartPointerManager
+import com.intellij.psi.SmartPsiFileRange
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.refactoring.RefactoringBundle
 import com.intellij.refactoring.listeners.RefactoringEventData
@@ -33,9 +30,8 @@ import com.intellij.refactoring.modplan.ModPlanFinalStep
 import com.intellij.refactoring.modplan.ModPlanOptionValues
 import com.intellij.refactoring.modplan.ModPlanRefactoring
 import com.intellij.refactoring.modplan.ModPlanRequest
+import com.intellij.refactoring.modplan.move.ModPlanMoveProvider.ItemMove
 import com.intellij.refactoring.modplan.move.impl.ModPlanFileReferenceUpdates
-import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFileHandler
-import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectoriesUtil
 import com.intellij.util.IncorrectOperationException
 import com.intellij.util.PathUtil
 import com.intellij.util.concurrency.annotations.RequiresReadLock
@@ -43,8 +39,8 @@ import com.intellij.util.containers.CollectionFactory
 import java.util.function.Supplier
 
 /**
- * The move of files and directories on the ModPlan engine. The subjects are the moved files and directories, and
- * [ModPlanMoveOptions.TARGET_DIRECTORY] holds the URL of the target directory. A language joins through [MoveFileHandler.asModPlan].
+ * The move on the ModPlan engine. The subjects are the moved elements, such as files and directories, and
+ * [ModPlanMoveOptions.TARGET_DIRECTORY] holds the URL of the target directory. A language joins through [ModPlanMoveProvider].
  *
  * The flow of the move: [com.intellij.refactoring.modplan.move].
  */
@@ -54,17 +50,9 @@ class ModPlanMoveRefactoring : ModPlanRefactoring {
 
   override fun title(): String = RefactoringBundle.message("move.title")
 
-  /**
-   * Every subject is a valid file or directory on a file system that can be written. The handler of each of its files has an adapter,
-   * also inside a moved directory. The default check also refuses a binary file, because it edits the content of a subject. A move does
-   * not edit the content, so a binary file moves. It searches nothing.
-   */
+  /** Every subject is valid, and it has an owner that is not legacy only for it, see [ModPlanMoveProvider.isOwner]. It searches nothing. */
   override fun isSupported(request: ModPlanRequest): Boolean {
-    return request.subjects().all { subject ->
-      val item = subject.element() as? PsiFileSystemItem
-      item != null && item.isValid && item !is PsiCompiledElement && item.virtualFile?.fileSystem?.isReadOnly == false &&
-      filesOf(item).all { MoveFileHandler.forElement(it).asModPlan() != null }
-    }
+    return request.subjects().all { subject -> subject.element()?.isValid == true && ownerOf(subject) != null }
   }
 
   override fun chain(chainBuilder: ModPlanChainBuilder): ModPlanChain<ModPlanFinalStep<ModPlan>> {
@@ -72,49 +60,75 @@ class ModPlanMoveRefactoring : ModPlanRefactoring {
   }
 
   private fun planOf(request: ModPlanRequest): ModPlan {
-    val requestedItems = request.subjects().map { subject ->
-      subject.element() as? PsiFileSystemItem ?: return refusalOf(null, ModPlanMoveProblem.INVALID_SUBJECT)
+    val resolved = when (val resolution = resolve(request)) {
+      is Resolution.Refused -> return refusalOf(resolution.place, resolution.problem)
+      is Resolution.NotSupported -> return ModPlan.RefusedPlan(ModPlanAnalysisResult.RefusedReason.NOT_SUPPORTED, resolution.place, null)
+      is Resolution.Resolved -> resolution
     }
-    val targetDirectoryUrl = request.optionValues().get(ModPlanMoveOptions.TARGET_DIRECTORY)
-    val acceptedPlacement = when (val placement = placementOf(request.project(), requestedItems, targetDirectoryUrl)) {
-      is Placement.Refused -> return refusalOf(requestedItems.firstOrNull { it.isValid }, placement.problem)
-      is Placement.Accepted -> placement
-    }
-    val items = acceptedPlacement.movedItems
-    val target = acceptedPlacement.target
+    val project = request.project()
+    val target = resolved.target
+    val itemMoves = resolved.itemMoves
+    val places = ModPlanMovePlaces(itemMoves.associate { it.item to childPath(it.targetDirectory.path, it.newName) })
 
-    val adapters = items.flatMap { filesOf(it) }.map { file ->
-      file to (MoveFileHandler.forElement(file).asModPlan()
-               ?: return ModPlan.RefusedPlan(ModPlanAnalysisResult.RefusedReason.NOT_SUPPORTED, file, null))
+    val analyses = ArrayList<ModPlanAnalysisResult.Found>()
+    val usages = ArrayList<SmartPsiFileRange>()
+    for ([owner, ownerSubjects] in resolved.ownedSubjects) {
+      val analysis = owner.analyze(ownerSubjects, target, places, request)
+      when (val result = analysis.result) {
+        is ModPlanAnalysisResult.Refused ->
+          return ModPlan.RefusedPlan(result.reason, analysis.place ?: ownerSubjects.first().element(), null)
+        is ModPlanAnalysisResult.Found -> analyses.add(result)
+      }
+      usages.addAll(analysis.usages)
     }
-    val targetDirectoryPath = target.path
-    val places = ModPlanMovePlaces(items.associate { it.virtualFile to childPath(targetDirectoryPath, it.name) })
-    val analyses = adapters.map { (file, adapter) ->
-      when (val analysis = adapter.analyze(file, places, request)) {
-        is ModPlanAnalysisResult.Refused -> return ModPlan.RefusedPlan(analysis.reason, file, null)
-        is ModPlanAnalysisResult.Found -> analysis
+    val items = itemMoves.mapNotNull { psiItemOf(project, it.item) }
+    val referenceUpdates = ModPlanFileReferenceUpdates.analyze(items, places, request)
+    usages.addAll(referenceUpdates.usages)
+
+    val contentEdits = ArrayList<ModPlanEdit>()
+    val creations = ArrayList<ModPlanEdit.Create>()
+    val deletions = ArrayList<ModPlanEdit.Delete>()
+    for (edit in analyses.flatMap { it.edits }) {
+      when (edit) {
+        is ModPlanEdit.Update, is ModPlanEdit.UpdateRange, is ModPlanEdit.ReplaceText -> contentEdits.add(edit)
+        is ModPlanEdit.Create -> creations.add(edit)
+        is ModPlanEdit.Delete -> deletions.add(edit)
+        is ModPlanEdit.Move, is ModPlanEdit.CreateDirectory ->
+          throw IllegalArgumentException("A move provider gives no edit of the kind ${edit.javaClass.simpleName}: $edit")
       }
     }
-    val referenceUpdates = ModPlanFileReferenceUpdates.analyze(items, places, request)
+    contentEdits.addAll(referenceUpdates.edits)
 
+    val createdDirectories = LinkedHashMap<String, FutureVirtualFile>()
+    for (directory in listOf(target) + itemMoves.map { it.targetDirectory }) {
+      for (created in createdDirectoriesOf(directory)) {
+        createdDirectories.putIfAbsent(created.path, created)
+      }
+    }
     val edits = buildList {
-      analyses.flatMapTo(this) { it.edits }
-      addAll(referenceUpdates.edits)
-      createdDirectoriesOf(target).mapTo(this) { ModPlanEdit.CreateDirectory(it) }
-      items.mapTo(this) { ModPlanEdit.Move(it.virtualFile, target, it.name) }
+      addAll(contentEdits)
+      createdDirectories.values.mapTo(this) { ModPlanEdit.CreateDirectory(it) }
+      addAll(creations)
+      itemMoves.mapTo(this) { move ->
+        val directory = (move.targetDirectory as? FutureVirtualFile)?.let { createdDirectories[it.path] } ?: move.targetDirectory
+        ModPlanEdit.Move(move.item, directory, move.newName)
+      }
+      addAll(deletions)
+      resolved.emptiedDirectories.mapTo(this) { ModPlanEdit.Delete(it) }
     }
     val conflicts = analyses.fold(referenceUpdates.conflicts) { mergedConflicts, analysis -> mergedConflicts.merge(analysis.conflicts) }
-      .merge(ModPlanConflicts.builder().unloadedModules(items).build())
+      .merge(ModPlanConflicts.builder().unloadedModules(resolved.subjects).build())
+    val anchor = resolved.subjects.first()
     return try {
-      ModPlan.createPlan(edits, conflicts, RefactoringBundle.message("move.title"), REFACTORING_ID, items.first(), false,
-                         referenceUpdates.usages, writeEventsOf(items, target))
+      ModPlan.createPlan(edits, conflicts, RefactoringBundle.message("move.title"), REFACTORING_ID, anchor, false,
+                         usages, writeEventsOf(resolved.subjects, target))
     }
     catch (e: IncorrectOperationException) {
-      ModPlan.RefusedPlan(ModPlanAnalysisResult.RefusedReason.EDIT_FAILED, items.first(), e.message)
+      ModPlan.RefusedPlan(ModPlanAnalysisResult.RefusedReason.EDIT_FAILED, anchor, e.message)
     }
   }
 
-  private fun writeEventsOf(items: List<PsiFileSystemItem>, target: VirtualFile): Supplier<ModPlanRefactoring.WriteEvent> {
+  private fun writeEventsOf(items: List<PsiElement>, target: VirtualFile): Supplier<ModPlanRefactoring.WriteEvent> {
     val project = items.first().project
     val itemPointers = items.map { SmartPointerManager.createPointer(it) }
     val existingTarget = target.takeUnless { it is FutureVirtualFile }
@@ -146,7 +160,7 @@ class ModPlanMoveRefactoring : ModPlanRefactoring {
     fun getInstance(): ModPlanMoveRefactoring = service()
 
     /**
-     * @param items              the files and directories to move; at least one
+     * @param items              the elements to move, such as files and directories; at least one
      * @param targetDirectoryUrl the VFS URL of the target directory, see [ModPlanMoveOptions.TARGET_DIRECTORY]
      * @param optionValues       the other options of the move, such as [ModPlanMoveOptions.SEARCH_IN_COMMENTS]
      * @return the request of the move of [items] into the target directory
@@ -155,7 +169,7 @@ class ModPlanMoveRefactoring : ModPlanRefactoring {
     @RequiresReadLock
     fun request(
       project: Project,
-      items: Collection<PsiFileSystemItem>,
+      items: Collection<PsiElement>,
       targetDirectoryUrl: String,
       optionValues: ModPlanOptionValues,
     ): ModPlanRequest {
@@ -164,44 +178,98 @@ class ModPlanMoveRefactoring : ModPlanRefactoring {
     }
 
     /**
-     * Checks that [items] can go into the target directory, in the order of the constants of [ModPlanMoveProblem]. It searches nothing.
-     * An item that repeats another or is inside another moved directory moves with it, so only its validity is checked.
+     * Checks that [items] can go into the target directory. It searches nothing.
+     *
+     * The engine checks the subjects, then the target directory, then [ModPlanMoveProvider.place] of each owner, then the merged item
+     * moves of all owners. The last checks give the problems of [ModPlanMoveProblem] in the order of its constants. A subject that repeats
+     * another or is inside another moved subject moves with it, so the engine checks only its owner.
      *
      * @param targetDirectoryUrl the VFS URL of the target directory, see [ModPlanMoveOptions.TARGET_DIRECTORY]
      * @return the first problem; null if the move can go on
      */
     @JvmStatic
     @RequiresReadLock
-    fun checkPlacement(project: Project, items: List<PsiFileSystemItem>, targetDirectoryUrl: String): ModPlanMoveProblem? {
-      return when (val placement = placementOf(project, items, targetDirectoryUrl)) {
-        is Placement.Refused -> placement.problem
-        is Placement.Accepted -> null
+    fun checkPlacement(project: Project, items: List<PsiElement>, targetDirectoryUrl: String): ModPlanMoveProblem? {
+      if (!items.all { it.isValid }) return ModPlanMoveProblem.INVALID_SUBJECT
+      return when (val resolution = resolve(request(project, items, targetDirectoryUrl, ModPlanOptionValues.EMPTY))) {
+        is Resolution.Refused -> resolution.problem
+        is Resolution.NotSupported -> ModPlanMoveProblem.INVALID_SUBJECT
+        is Resolution.Resolved -> null
       }
+    }
+
+    /** @return the first provider that owns [subject]; null if there is none or if it is legacy only for [subject] */
+    internal fun ownerOf(subject: SymbolPointer): ModPlanMoveProvider? {
+      return ModPlanMoveProvider.EP_NAME.findFirstSafe { it.isOwner(subject) }?.takeUnless { it.isLegacyOnly(subject) }
     }
   }
 }
 
-private sealed interface Placement {
-  class Refused(val problem: ModPlanMoveProblem) : Placement
+private sealed interface Resolution {
+  class Refused(val problem: ModPlanMoveProblem, val place: PsiElement?) : Resolution
 
-  class Accepted(val movedItems: List<PsiFileSystemItem>, val target: VirtualFile) : Placement
+  class NotSupported(val place: PsiElement?) : Resolution
+
+  class Resolved(
+    val subjects: List<PsiElement>,
+    val ownedSubjects: Map<ModPlanMoveProvider, List<SymbolPointer>>,
+    val target: VirtualFile,
+    val itemMoves: List<ItemMove>,
+    val emptiedDirectories: List<VirtualFile>,
+  ) : Resolution
 }
 
-private fun placementOf(project: Project, items: List<PsiFileSystemItem>, targetDirectoryUrl: String): Placement {
-  val fileIndex = ProjectFileIndex.getInstance(project)
-  if (!items.all { isMovable(it, fileIndex) }) return Placement.Refused(ModPlanMoveProblem.INVALID_SUBJECT)
-  val target = findTargetDirectory(targetDirectoryUrl)
-  val nearestDirectory = target?.let { existingAncestorOf(it) }?.takeIf { fileIndex.isInContent(it) }
-    ?.let { PsiManager.getInstance(project).findDirectory(it) }
-  if (target == null || nearestDirectory == null) return Placement.Refused(ModPlanMoveProblem.INVALID_DESTINATION)
-  val movedItems = outermostItems(items)
-  if (movedItems.any { isMoveIntoSelf(it, nearestDirectory) }) return Placement.Refused(ModPlanMoveProblem.MOVE_INTO_ITSELF)
-  if (movedItems.any { it.virtualFile.parent == target }) return Placement.Refused(ModPlanMoveProblem.ALREADY_IN_DESTINATION)
-  val isNameTaken = movedItems.any { target.findChild(it.name) != null }
-  val distinctNames = CollectionFactory.createFilePathSet(movedItems.map { it.name }, nearestDirectory.virtualFile.isCaseSensitive)
-  if (isNameTaken || distinctNames.size != movedItems.size) return Placement.Refused(ModPlanMoveProblem.TARGET_EXISTS)
-  return Placement.Accepted(movedItems, target)
+private fun resolve(request: ModPlanRequest): Resolution {
+  val pointers = request.subjects()
+  val elements = ArrayList<PsiElement>()
+  val owners = ArrayList<ModPlanMoveProvider>()
+  val indices = HashMap<PsiElement, Int>()
+  for (pointer in pointers) {
+    val element = pointer.element()?.takeIf { it.isValid } ?: return Resolution.Refused(ModPlanMoveProblem.INVALID_SUBJECT, null)
+    owners.add(ModPlanMoveRefactoring.ownerOf(pointer) ?: return Resolution.NotSupported(element))
+    indices.putIfAbsent(element, elements.size)
+    elements.add(element)
+  }
+  if (elements.isEmpty()) return Resolution.Refused(ModPlanMoveProblem.INVALID_SUBJECT, null)
+
+  val fileIndex = ProjectFileIndex.getInstance(request.project())
+  val target = findTargetDirectory(request.optionValues().get(ModPlanMoveOptions.TARGET_DIRECTORY))
+  val nearestDirectory = target?.let { existingAncestorOf(it) }?.takeIf { it.isDirectory && fileIndex.isInContent(it) }
+  if (target == null || nearestDirectory == null) return Resolution.Refused(ModPlanMoveProblem.INVALID_DESTINATION, elements.first())
+
+  val subjects = PsiTreeUtil.filterAncestors(elements.toTypedArray())
+  val ownedSubjects = LinkedHashMap<ModPlanMoveProvider, ArrayList<SymbolPointer>>()
+  for (subject in subjects) {
+    val index = indices.getValue(subject)
+    ownedSubjects.getOrPut(owners[index]) { ArrayList() }.add(pointers[index])
+  }
+  val itemMoves = ArrayList<ItemMove>()
+  val emptiedDirectories = ArrayList<VirtualFile>()
+  for ([owner, ownerSubjects] in ownedSubjects) {
+    when (val placement = owner.place(ownerSubjects, target, request)) {
+      is ModPlanMoveProvider.Placement.Refused -> return Resolution.Refused(placement.problem, placement.place ?: elements.first())
+      is ModPlanMoveProvider.Placement.Accepted -> {
+        itemMoves.addAll(placement.itemMoves)
+        emptiedDirectories.addAll(placement.emptiedDirectories)
+      }
+    }
+  }
+  val problem = problemOf(itemMoves, nearestDirectory.isCaseSensitive)
+  if (problem != null) return Resolution.Refused(problem, elements.first())
+  return Resolution.Resolved(subjects.toList(), ownedSubjects, target, itemMoves, emptiedDirectories.distinct())
 }
+
+private fun problemOf(itemMoves: List<ItemMove>, isCaseSensitive: Boolean): ModPlanMoveProblem? {
+  if (itemMoves.any { isMoveIntoSelf(it) }) return ModPlanMoveProblem.MOVE_INTO_ITSELF
+  if (itemMoves.any { it.item.parent == it.targetDirectory && it.item.name == it.newName }) return ModPlanMoveProblem.ALREADY_IN_DESTINATION
+  val isNameTaken = itemMoves.any { it.targetDirectory.findChild(it.newName) != null }
+  val distinctPaths = CollectionFactory.createFilePathSet(itemMoves.map { childPath(it.targetDirectory.path, it.newName) }, isCaseSensitive)
+  if (isNameTaken || distinctPaths.size != itemMoves.size) return ModPlanMoveProblem.TARGET_EXISTS
+  return null
+}
+
+private fun isMoveIntoSelf(itemMove: ItemMove): Boolean =
+  itemMove.item.isDirectory && VfsUtilCore.isAncestor(itemMove.item, existingAncestorOf(itemMove.targetDirectory), false)
 
 private fun findTargetDirectory(targetDirectoryUrl: String): VirtualFile? {
   val fileSystem = VirtualFileManager.extractProtocol(targetDirectoryUrl)?.let { VirtualFileManager.getInstance().getFileSystem(it) }
@@ -224,39 +292,9 @@ private fun existingAncestorOf(directory: VirtualFile): VirtualFile =
 private fun createdDirectoriesOf(directory: VirtualFile): List<FutureVirtualFile> =
   generateSequence(directory as? FutureVirtualFile) { it.parent as? FutureVirtualFile }.toList().asReversed()
 
-private fun isMovable(item: PsiFileSystemItem, fileIndex: ProjectFileIndex): Boolean {
-  if (!item.isValid) return false
-  val file = item.virtualFile ?: return false
-  return fileIndex.isInContent(file) && fileIndex.getContentRootForFile(file) != file
-}
-
-private fun isMoveIntoSelf(item: PsiFileSystemItem, targetDirectory: PsiDirectory): Boolean {
-  try {
-    MoveFilesOrDirectoriesUtil.checkIfMoveIntoSelf(item, targetDirectory)
-    return false
-  }
-  catch (_: IncorrectOperationException) {
-    return true
-  }
-}
-
-private fun outermostItems(items: List<PsiFileSystemItem>): List<PsiFileSystemItem> {
-  return PsiTreeUtil.filterAncestors(items.toTypedArray<PsiElement>()).map { it as PsiFileSystemItem }
-}
-
-private fun filesOf(item: PsiFileSystemItem): List<PsiFile> {
-  if (item is PsiFile) return listOf(item)
-  val directory = item.virtualFile ?: return emptyList()
-  val psiManager = item.manager
-  val files = ArrayList<PsiFile>()
-  VfsUtilCore.iterateChildrenRecursively(directory, null) { file ->
-    ProgressManager.checkCanceled()
-    if (!file.isDirectory) {
-      psiManager.findFile(file)?.let { files.add(it) }
-    }
-    true
-  }
-  return files
+private fun psiItemOf(project: Project, file: VirtualFile): PsiFileSystemItem? {
+  val psiManager = PsiManager.getInstance(project)
+  return if (file.isDirectory) psiManager.findDirectory(file) else psiManager.findFile(file)
 }
 
 private fun childPath(parentPath: String, name: String): String = if (parentPath.endsWith('/')) parentPath + name else "$parentPath/$name"
