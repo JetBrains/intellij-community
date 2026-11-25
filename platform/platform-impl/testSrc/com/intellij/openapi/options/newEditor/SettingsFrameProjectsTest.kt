@@ -5,6 +5,7 @@ package com.intellij.openapi.options.newEditor
 
 import com.intellij.ide.actions.ShowSettingsUtilImpl
 import com.intellij.ide.actions.selectRequester
+import com.intellij.ide.ui.search.SearchableOptionsRegistrar
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
@@ -52,6 +53,7 @@ import java.awt.Component
 import javax.swing.JComponent
 import javax.swing.JPanel
 import javax.swing.JScrollPane
+import javax.swing.event.DocumentEvent
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
@@ -192,6 +194,16 @@ internal class SettingsFrameProjectsTest {
     val component = ConfigurableCardPanel.createConfigurableComponent(page)!!
     assertThat(UIUtil.findComponentOfType(component, JBPanelWithEmptyText::class.java)).isNotNull()
     page.disposeUIResources()
+  }
+
+  @Test
+  fun `a copied Settings path finds a page of the tree of several projects`(): Unit = inFrame(withAppChildPage = true) { disposable ->
+    val group = createGroup(SettingsFrameProjects.create(owner)!!, disposable)
+    val page = projectPage(group)
+    val childPage = findPages(group, APP_CHILD_PAGE_ID).single()
+
+    assertThat(findByPath(group, page)).containsExactly(page)
+    assertThat(findByPath(group, childPage)).describedAs("The path goes through the page of several projects").containsExactly(childPage)
   }
 
   @Test
@@ -726,6 +738,24 @@ internal class SettingsFrameProjectsTest {
 
   private fun findPages(group: FrameProjectsConfigurableGroup, id: String): List<Configurable> {
     return ConfigurableVisitor.findAll({ ConfigurableVisitor.getId(it) == id }, listOf(group))
+  }
+
+  /** The pages that the search field finds for the path of [page], as Copy Settings Path gives it. */
+  private fun findByPath(group: FrameProjectsConfigurableGroup, page: Configurable): Collection<Configurable> {
+    val names = checkNotNull(namesTo(group.configurables.asList(), page)) { "The tree has no ${page.displayName}" }
+    val path = (listOf("Settings") + names).joinToString(SearchableOptionsRegistrar.SETTINGS_GROUP_SEPARATOR)
+    return SearchableOptionsRegistrar.getInstance().getConfigurables(listOf(group), DocumentEvent.EventType.CHANGE, null, path, owner).nameFullHits
+  }
+
+  private fun namesTo(nodes: List<Configurable>, page: Configurable): List<String>? {
+    for (node in nodes) {
+      if (node === page) {
+        return listOf(node.displayName)
+      }
+      val children = (node as? Configurable.Composite)?.configurables ?: continue
+      namesTo(children.asList(), page)?.let { return listOf(node.displayName) + it }
+    }
+    return null
   }
 
   private fun maskPages(projectsWithPage: List<Project>, withAppChildPage: Boolean, disposable: Disposable) {

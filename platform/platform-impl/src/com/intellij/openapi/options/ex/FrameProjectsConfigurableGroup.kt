@@ -6,6 +6,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.options.ConfigurableGroup
 import com.intellij.openapi.options.ConfigurationException
+import com.intellij.openapi.options.SearchableConfigurable
 import com.intellij.openapi.options.newEditor.SettingsDialogPerformanceTracker
 import com.intellij.openapi.options.newEditor.SettingsFrameProjects
 import com.intellij.openapi.project.Project
@@ -16,6 +17,7 @@ import com.intellij.util.concurrency.annotations.RequiresEdt
 import org.jetbrains.annotations.ApiStatus
 import java.util.Collections
 import java.util.IdentityHashMap
+import javax.swing.JComponent
 
 /**
  * The root of the Settings tree of a window that configures several projects, see [SettingsFrameProjects].
@@ -32,13 +34,16 @@ import java.util.IdentityHashMap
  * of one project. The new tree holds new pages.
  * A frame guest that opens while the window is open joins the tree, see [join]. A window that opened with the tree of one
  * project has no such root, and a frame guest that opens later gets no page in it.
+ *
+ * The group gives the id of the root of its tree, as the root of the tree of one project does. The search of a Settings
+ * path, as Copy Settings Path gives it, starts only at a root with that id.
  */
 @ApiStatus.Internal
 class FrameProjectsConfigurableGroup private constructor(
   val projects: SettingsFrameProjects,
   private val tree: MergedTree,
   private val group: EpBasedConfigurableGroup,
-) : MutableConfigurableGroup {
+) : MutableConfigurableGroup, SearchableConfigurable {
   /**
    * The parent of the extension point listeners of each project of the selector, see [EpBasedConfigurableGroup.listenToProject].
    * It goes when its project closes. The map is empty until the first [addListener], and it changes on the EDT.
@@ -49,6 +54,15 @@ class FrameProjectsConfigurableGroup private constructor(
   override fun getDisplayName(): @NlsContexts.ConfigurableName String = group.displayName
 
   override fun getConfigurables(): Array<Configurable> = group.configurables
+
+  override fun getId(): String = group.id
+
+  override fun createComponent(): JComponent? = null
+
+  override fun isModified(): Boolean = false
+
+  override fun apply() {
+  }
 
   @RequiresEdt
   override fun addListener(listener: MutableConfigurableGroup.Listener) {
