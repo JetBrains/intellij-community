@@ -15,6 +15,7 @@ import com.intellij.openapi.util.Ref
 import com.intellij.psi.PsiElement
 import com.intellij.refactoring.suggested.SuggestedRefactoringSupport
 import com.intellij.testFramework.ExtensionTestUtil
+import com.intellij.testFramework.awaitPendingNavigation
 import com.intellij.testFramework.runInEdtAndWait
 import com.intellij.ui.UiInterceptors
 import com.intellij.util.QueryExecutor
@@ -37,7 +38,9 @@ import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
+import java.awt.event.MouseEvent
 import java.util.concurrent.CopyOnWriteArrayList
+import javax.swing.JLabel
 
 /**
  * Searches and type evaluations that the editor actions run on their calling thread.
@@ -69,7 +72,7 @@ class PyEdtSearchWorkTest : PyCodeInsightTestCase() {
 
   @TestFor(issues = ["PY-92732"])
   @Test
-  fun `gutter navigation to the subclasses runs the deep inheritor search on the EDT`() = runInEdtAndWait {
+  fun `gutter navigation to the subclasses runs the deep inheritor search in a background read action`() = runInEdtAndWait {
     val file = myFixture.configureByText("a.py", """
       class Base:
           pass
@@ -83,9 +86,12 @@ class PyEdtSearchWorkTest : PyCodeInsightTestCase() {
     val calls = recordQuery("Pythonid.pyClassInheritorsSearch")
 
     @Suppress("UNCHECKED_CAST")
-    (marker.navigationHandler as GutterIconNavigationHandler<PsiElement>).navigate(null, marker.element!!)
+    (marker.navigationHandler as GutterIconNavigationHandler<PsiElement>).navigate(MouseEvent(JLabel(), 0, 0, 0, 0, 0, 0, false),
+                                                                                   marker.element!!)
+    awaitPendingNavigation(myFixture.project)
 
-    assertEquals(listOf(EDT_READ), calls, "Pinned defect: the correct search runs in a background read action")
+    assertEquals(listOf(BACKGROUND_READ), calls)
+    assertEquals(file.findTopLevelClass("Child")!!.textOffset, myFixture.caretOffset, "The caret did not reach Child")
   }
 
   @TestFor(issues = ["PY-92733"])
@@ -259,6 +265,7 @@ class PyEdtSearchWorkTest : PyCodeInsightTestCase() {
   }
 
   private companion object {
+    const val BACKGROUND_READ = "background read"
     const val EDT_READ = "EDT read"
     const val EDT_WRITE = "EDT write action"
   }

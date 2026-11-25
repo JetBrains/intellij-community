@@ -25,25 +25,27 @@ import com.intellij.codeInsight.daemon.LineMarkerInfo;
 import com.intellij.idea.TestFor;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.psi.NavigatablePsiElement;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.SyntaxTraverser;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testFramework.ExtensionTestUtil;
+import com.intellij.testFramework.NavigationTestUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.QueryExecutor;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyFunction;
-import com.jetbrains.python.psi.PyPossibleClassMember;
 import com.jetbrains.python.psi.search.PyClassInheritorsSearch;
-import org.hamcrest.Matchers;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.Assert;
@@ -82,15 +84,14 @@ public final class PyLineMarkerProviderTest extends PyTestCase {
     GutterIconNavigationHandler<PsiElement> handler = (GutterIconNavigationHandler<PsiElement>)lineMarkerInfo.getNavigationHandler();
     Assert.assertNotNull("Gutter has no navigation handle", handler);
     handler.navigate(new MouseEvent(new JLabel(), 0, 0, 0, 0, 0, 0, false), element);
-    final NavigatablePsiElement[] targets = PyLineMarkerNavigator.getNavigationTargets(element);
-    Assert.assertNotNull("No navigation targets found", targets);
-
-    Assert.assertThat("Wrong number of targets found", targets, Matchers.arrayWithSize(1));
-    final NavigatablePsiElement parentMethod = targets[0];
-    Assert.assertThat("Navigation target has wrong type", parentMethod, Matchers.instanceOf(PyPossibleClassMember.class));
-    final PyClass parentClass = ((PyPossibleClassMember)parentMethod).getContainingClass();
-    Assert.assertNotNull("Function overrides other function, but no parent displayed", parentClass);
-    Assert.assertEquals("Wrong parent class name", "Eggs", parentClass.getName());
+    NavigationTestUtil.awaitPendingNavigation(myFixture.getProject());
+    final Editor editor = FileEditorManager.getInstance(myFixture.getProject()).getSelectedTextEditor();
+    Assert.assertNotNull("No editor is open", editor);
+    final VirtualFile file = FileDocumentManager.getInstance().getFile(editor.getDocument());
+    Assert.assertNotNull("The editor has no file", file);
+    Assert.assertEquals("The gutter icon did not navigate to the super method", "eggs.py", file.getName());
+    Assert.assertEquals("The caret did not land on Eggs.ham",
+                        editor.getDocument().getText().indexOf("ham(self)"), editor.getCaretModel().getOffset());
   }
 
   // PY-4311

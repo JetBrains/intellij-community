@@ -2,14 +2,19 @@
 package com.jetbrains.python.codeInsight
 
 import com.intellij.codeInsight.daemon.GutterIconNavigationHandler
+import com.intellij.codeInsight.daemon.LineMarkerInfo
 import com.intellij.idea.TestFor
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.psi.PsiElement
+import com.intellij.testFramework.awaitPendingNavigation
 import com.intellij.testFramework.runInEdtAndWait
+import com.intellij.ui.ChooserInterceptor
+import com.intellij.ui.UiInterceptors
 import com.jetbrains.python.allure.Layers
 import com.jetbrains.python.allure.Subsystems
 import com.jetbrains.python.fixtures.PyCodeInsightTestCase
+import com.jetbrains.python.psi.PyFile
 import org.intellij.lang.annotations.Language
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
@@ -166,8 +171,35 @@ class PyGotoSuperHandlerTest : PyCodeInsightTestCase() {
     @Suppress("UNCHECKED_CAST")
     val handler = marker.navigationHandler as GutterIconNavigationHandler<PsiElement>
     handler.navigate(MouseEvent(JLabel(), 0, 0, 0, 0, 0, 0, false), identifier)
-    val target = PyLineMarkerNavigator.getNavigationTargets(identifier)?.singleOrNull() ?: fail("Expected one navigation target")
-    assertEquals("lib.py", target.containingFile.name, "The gutter icon did not navigate to the implementation")
+    awaitPendingNavigation(myFixture.project)
+    assertCaretAt("lib.py", "delete(self):")
+  }
+
+  @Test
+  @TestFor(issues = ["PY-92732"], classes = [PyLineMarkerProvider::class])
+  fun `gutter icon of a class with two subclasses navigates to the subclass chosen in the popup`() = runInEdtAndWait {
+    val file = myFixture.configureByText("a.py", """
+      class Base:
+          pass
+
+      class First(Base):
+          pass
+
+      class Second(Base):
+          pass
+    """.trimIndent()) as PyFile
+    val markers = mutableListOf<LineMarkerInfo<*>>()
+    PyLineMarkerProvider().collectSlowLineMarkers(listOf(file.findTopLevelClass("Base")!!), markers)
+    val marker = markers.single()
+    UiInterceptors.register(ChooserInterceptor(null, """(First|Second)\(Base\)""") { options ->
+      assertEquals(setOf("First(Base)", "Second(Base)"), options.toSet(), "The popup did not show both subclasses")
+      "Second(Base)"
+    })
+    @Suppress("UNCHECKED_CAST")
+    val handler = marker.navigationHandler as GutterIconNavigationHandler<PsiElement>
+    handler.navigate(MouseEvent(JLabel(), 0, 0, 0, 0, 0, 0, false), marker.element!!)
+    awaitPendingNavigation(myFixture.project)
+    assertCaretAt("a.py", "Second(Base):")
   }
 
   private fun assertNavigatesTo(
