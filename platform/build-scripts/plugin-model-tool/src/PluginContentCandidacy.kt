@@ -166,8 +166,7 @@ fun derivePluginContentCandidacy(
 /**
  * Whether the layout packs the `<content>` member [member] into a flat jar of another name.
  *
- * Such a member has no jar of its own in this plugin, so this plugin offers none. `intellij.gradle.plugin` is the
- * case: its layout puts the embedded member `intellij.gradle.toolingExtension` into `gradle-tooling-extension-api.jar`.
+ * Such a member has no jar of its own in this plugin, so this plugin offers none.
  * A jar under a subdirectory is a second jar beside the member's own and takes nothing away from it. Another plugin
  * that packs the member's own jar still offers it, the way a pure layout member with a named jar is handled.
  */

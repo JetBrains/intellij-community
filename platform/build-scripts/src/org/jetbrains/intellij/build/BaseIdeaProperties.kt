@@ -72,7 +72,7 @@ val CE_CLASS_VERSIONS: Map<String, String> = mapOf(
   "plugins/java-coverage/lib/modules/intellij.java.coverage.rt.testng.jar" to "1.8",
   "plugins/junit/lib/intellij.junit.rt.jar" to "1.8",
   "plugins/junit/lib/intellij.junit.v5.rt.jar" to "1.8",
-  "plugins/gradle/lib/gradle-tooling-extension-api.jar" to "1.8",
+  "plugins/gradle/lib/intellij.gradle.toolingExtension.jar" to "1.8",
   "plugins/gradle/lib/gradle-tooling-extension-impl.jar" to "1.8",
   "plugins/maven/lib/maven-server.jar" to "1.8",
   "plugins/maven/lib/intellij.maven.server3/maven3-server-common.jar" to "1.8",

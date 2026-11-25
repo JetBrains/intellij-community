@@ -58,8 +58,7 @@ class PluginContentCandidacyTest {
 
   @Test
   fun `a content member the layout packs into a flat jar of another name gets no offer`(@TempDir root: Path) {
-    // `intellij.gradle.toolingExtension` in `intellij.gradle.plugin` is the case: an embedded member whose layout jar is
-    // `gradle-tooling-extension-api.jar`. The plugin never packs the member's own jar, so it vouches for none.
+    // An embedded member whose layout jar has another name. The plugin never packs the member's own jar, so it vouches for none.
     val closure = WalkedContentModules(moduleNames = listOf(MEMBER), loadingRules = mapOf(MEMBER to EMBEDDED_LOADING_RULE), unresolvedIncludes = emptyList())
     val renamed = derive(root = root, residue = PluginContentResidue(memberJars = mapOf(MEMBER to setOf("renamed.jar"))), closure = closure)
     assertThat(renamed.memberPaths).isEqualTo(mapOf(MEMBER to "$MEMBER.jar"))
