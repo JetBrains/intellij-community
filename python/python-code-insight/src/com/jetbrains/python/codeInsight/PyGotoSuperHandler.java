@@ -1,12 +1,14 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.codeInsight;
 
 import com.intellij.codeInsight.CodeInsightActionHandler;
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.codeInsight.navigation.NavigationUtil;
+import com.intellij.codeInsight.navigation.PsiTargetNavigator;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts.PopupTitle;
+import com.intellij.openapi.util.Ref;
+import com.intellij.pom.Navigatable;
 import com.intellij.psi.NavigatablePsiElement;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -25,55 +27,53 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
+/**
+ * Finds the super classes, methods or class attributes in a background read action and navigates to them on the EDT.
+ */
 @ApiStatus.Internal
 public final class PyGotoSuperHandler implements CodeInsightActionHandler {
 
   @Override
   public void invoke(final @NotNull Project project, final @NotNull Editor editor, final @NotNull PsiFile psiFile) {
-    PsiElement element = psiFile.findElementAt(editor.getCaretModel().getOffset());
-    PyClass pyClass = PsiTreeUtil.getParentOfType(element, PyClass.class);
-    if (pyClass != null) {
-      PyFunction function = PsiTreeUtil.getParentOfType(element, PyFunction.class, false, PyClass.class);
-      if (function != null) {
-        gotoSuperFunctions(editor, function, pyClass);
-      }
-      else {
-        final PyAssignmentStatement assignment = PsiTreeUtil.getParentOfType(element, PyAssignmentStatement.class, false, PyClass.class);
-        if (assignment != null && assignment.getTargets()[0] instanceof PyTargetExpression) {
-          gotoSuperClassAttributes(editor, (PyTargetExpression)assignment.getTargets()[0], pyClass);
+    var offset = editor.getCaretModel().getOffset();
+    var title = new Ref<@PopupTitle String>();
+    new PsiTargetNavigator<>(() -> findSuperElements(psiFile, offset, title))
+      .elementsConsumer((elements, navigator) -> navigator.title(title.get()))
+      .navigate(editor, null, element -> {
+        if (element instanceof Navigatable navigatable) {
+          navigatable.navigate(true);
         }
-        else {
-          final TypeEvalContext context = TypeEvalContext.codeAnalysis(project, psiFile);
-          navigateOrChoose(editor, psiFile, pyClass.getAncestorClasses(context), PyCodeInsightBundle.message("goto.superclass.choose"));
-        }
-      }
+        return true;
+      });
+  }
+
+  private static @NotNull List<PsiElement> findSuperElements(@NotNull PsiFile psiFile, int offset, @NotNull Ref<@PopupTitle String> title) {
+    var element = psiFile.findElementAt(offset);
+    var pyClass = PsiTreeUtil.getParentOfType(element, PyClass.class);
+    if (pyClass == null) {
+      return List.of();
     }
+    var function = PsiTreeUtil.getParentOfType(element, PyFunction.class, false, PyClass.class);
+    if (function != null) {
+      title.set(CodeInsightBundle.message("goto.super.method.chooser.title"));
+      return toNavigationTargets(getAllSuperMethodsByName(function, pyClass), function);
+    }
+    var assignment = PsiTreeUtil.getParentOfType(element, PyAssignmentStatement.class, false, PyClass.class);
+    if (assignment != null && assignment.getTargets()[0] instanceof PyTargetExpression target) {
+      title.set(PyCodeInsightBundle.message("code.insight.goto.superclass.attribute.chooser.title"));
+      return toNavigationTargets(getAllSuperAttributesByName(target, pyClass), target);
+    }
+    title.set(PyCodeInsightBundle.message("goto.superclass.choose"));
+    var context = TypeEvalContext.codeAnalysis(psiFile.getProject(), psiFile);
+    return toNavigationTargets(pyClass.getAncestorClasses(context), psiFile);
   }
 
-  private static void gotoSuperFunctions(Editor editor, PyFunction function, PyClass pyClass) {
-    final Collection<PyFunction> superFunctions = getAllSuperMethodsByName(function, pyClass);
-    navigateOrChoose(editor, function, superFunctions, CodeInsightBundle.message("goto.super.method.chooser.title"));
-  }
-
-  private static void gotoSuperClassAttributes(Editor editor, PyTargetExpression attr, PyClass pyClass) {
-    final Collection<PyTargetExpression> attrs = getAllSuperAttributesByName(attr, pyClass);
-    navigateOrChoose(editor, attr, attrs, PyCodeInsightBundle.message("code.insight.goto.superclass.attribute.chooser.title"));
-  }
-
-  private static void navigateOrChoose(Editor editor,
-                                       PsiElement source,
-                                       Collection<? extends NavigatablePsiElement> superElements,
-                                       @PopupTitle String title) {
-    NavigatablePsiElement[] superElementArray = superElements.stream()
-      .map(element -> PyiUtil.getNavigationTarget(element, source) instanceof NavigatablePsiElement target ? target : element)
+  private static @NotNull List<PsiElement> toNavigationTargets(@NotNull Collection<? extends NavigatablePsiElement> superElements,
+                                                               @NotNull PsiElement source) {
+    return superElements.stream()
+      .<PsiElement>map(element -> PyiUtil.getNavigationTarget(element, source) instanceof NavigatablePsiElement target ? target : element)
       .distinct()
-      .toArray(NavigatablePsiElement[]::new);
-    if (superElementArray.length == 1) {
-      superElementArray[0].navigate(true);
-    }
-    else if (superElementArray.length > 1) {
-      NavigationUtil.getPsiElementPopup(superElementArray, title).showInBestPositionFor(editor);
-    }
+      .toList();
   }
 
   private static Collection<PyTargetExpression> getAllSuperAttributesByName(final @NotNull PyTargetExpression classAttr, PyClass pyClass) {

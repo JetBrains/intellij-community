@@ -7,11 +7,13 @@ import com.intellij.idea.TestFor
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Ref
 import com.intellij.psi.PsiElement
 import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.runInEdtAndWait
+import com.intellij.ui.UiInterceptors
 import com.intellij.util.QueryExecutor
 import com.intellij.util.ui.EDT
 import com.jetbrains.python.allure.Layers
@@ -39,9 +41,10 @@ import java.util.concurrent.CopyOnWriteArrayList
  * In the IDE, the platform calls these actions on the EDT.
  *
  * A recording executor, a recording type provider or the counters of the EDT note the work of each call. The work of a
- * background thread does not count as EDT work. Each test pins the current behaviour:
- * the work runs on the EDT, and for Override/Implement also inside the write action.
- * The correct behaviour runs the work in a background read action, so a fix makes the assertion fail.
+ * background thread does not count as EDT work. The correct behaviour runs the work in a background read action.
+ * A test of an open defect pins the current behaviour:
+ * the work runs on the EDT, and for Override/Implement also inside the write action. A fix makes that assertion fail.
+ * A test of a fixed defect asserts the correct behaviour.
  */
 @TestFor(classes = [
   PyLineMarkerNavigator::class,
@@ -140,7 +143,7 @@ class PyEdtSearchWorkTest : PyCodeInsightTestCase() {
 
   @TestFor(issues = ["PY-92735"])
   @Test
-  fun `goto super method computes the ancestor classes on the EDT`() = runInEdtAndWait {
+  fun `goto super method computes the ancestor classes off the EDT`() = runInEdtAndWait {
     myFixture.configureByText("a.py", """
       class Base:
           def run(self):
@@ -155,8 +158,32 @@ class PyEdtSearchWorkTest : PyCodeInsightTestCase() {
     }
 
     assertEquals(myFixture.editor.document.text.indexOf("run(self):"), myFixture.caretOffset, "The caret did not reach Base.run")
-    assertTrue(counts.getValue(Counter.CONTEXTS_CONSTRUCTED) > 0,
-               "Pinned defect: the handler builds a type context for the MRO on the EDT. Counters: $counts")
+    assertEquals(0, counts.getValue(Counter.CONTEXTS_CONSTRUCTED), "The handler built a type context on the EDT. Counters: $counts")
+  }
+
+  @TestFor(issues = ["PY-92735"])
+  @Test
+  fun `goto super class computes the ancestor classes off the EDT`() = runInEdtAndWait {
+    myFixture.configureByText("a.py", """
+      class Base:
+          pass
+
+      class Ch<caret>ild(Base):
+          pass
+    """.trimIndent())
+    var chooserShown = false
+    UiInterceptors.registerPossible(disposable, object : UiInterceptors.UiInterceptor<JBPopup>(JBPopup::class.java) {
+      override fun doIntercept(component: JBPopup) {
+        chooserShown = true
+        Disposer.dispose(component)
+      }
+    })
+    val counts = PyCodeInsightCounters.countOnCurrentThread {
+      PyGotoSuperHandler().invoke(myFixture.project, myFixture.editor, myFixture.file)
+    }
+
+    assertTrue(chooserShown, "The handler did not show the chooser of Base and object")
+    assertEquals(0, counts.getValue(Counter.CONTEXTS_CONSTRUCTED), "The handler built a type context on the EDT. Counters: $counts")
   }
 
   @TestFor(issues = ["PY-92741"])
