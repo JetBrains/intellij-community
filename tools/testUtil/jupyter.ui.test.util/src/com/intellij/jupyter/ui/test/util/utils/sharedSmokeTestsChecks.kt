@@ -1,10 +1,10 @@
 package com.intellij.jupyter.ui.test.util.utils
 
 import com.intellij.driver.client.Driver
+import com.intellij.driver.sdk.notebooks.FirstCell
+import com.intellij.driver.sdk.notebooks.NotebookEditorUiComponent
+import com.intellij.driver.sdk.notebooks.withNotebookEditor
 import com.intellij.driver.sdk.step
-import com.intellij.driver.sdk.ui.components.notebooks.FirstCell
-import com.intellij.driver.sdk.ui.components.notebooks.NotebookEditorUiComponent
-import com.intellij.driver.sdk.ui.components.notebooks.withNotebookEditor
 import com.intellij.driver.sdk.ui.should
 import com.intellij.driver.sdk.waitFor
 import com.intellij.jupyter.ui.test.util.kernel.runAllCellsAndWaitExecuted

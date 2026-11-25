@@ -3,6 +3,10 @@ package com.intellij.jupyter.ui.test.util.utils
 import com.intellij.debugger.ui.test.util.debugger
 import com.intellij.driver.client.Driver
 import com.intellij.driver.sdk.invokeAction
+import com.intellij.driver.sdk.notebooks.CellSelector
+import com.intellij.driver.sdk.notebooks.FirstCell
+import com.intellij.driver.sdk.notebooks.NotebookEditorUiComponent
+import com.intellij.driver.sdk.notebooks.withNotebookEditor
 import com.intellij.driver.sdk.openFile
 import com.intellij.driver.sdk.ui.components.UiComponent
 import com.intellij.driver.sdk.ui.components.common.IdeaFrameUI
@@ -11,10 +15,6 @@ import com.intellij.driver.sdk.ui.components.common.toolwindows.DebugToolWindowU
 import com.intellij.driver.sdk.ui.components.common.toolwindows.debugToolWindow
 import com.intellij.driver.sdk.ui.components.elements.button
 import com.intellij.driver.sdk.ui.components.elements.popup
-import com.intellij.driver.sdk.ui.components.notebooks.CellSelector
-import com.intellij.driver.sdk.ui.components.notebooks.FirstCell
-import com.intellij.driver.sdk.ui.components.notebooks.NotebookEditorUiComponent
-import com.intellij.driver.sdk.ui.components.notebooks.withNotebookEditor
 import com.intellij.driver.sdk.ui.pasteText
 import com.intellij.driver.sdk.ui.ui
 import com.intellij.driver.sdk.wait

@@ -1,0 +1,32 @@
+load("@community//build:jps_module.bzl", "jps_module")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+### auto-generated section `build intellij.driver.sdk.database` start
+jvm_library(
+    name = "driver-sdk-database",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.driver.sdk.database",
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//platform/remote-driver/test-sdk:driver-sdk",
+        "//platform/remote-driver/model",
+    ],
+)
+### auto-generated section `build intellij.driver.sdk.database` end
+
+### auto-generated section `iml intellij.driver.sdk.database` start
+jps_module(
+    name = "intellij.driver.sdk.database",
+    resources = False,
+    target = "driver-sdk-database",
+)
+### auto-generated section `iml intellij.driver.sdk.database` end

@@ -1,13 +1,13 @@
 package com.intellij.jupyter.ui.test.util.tables
 
 import com.intellij.driver.client.Driver
+import com.intellij.driver.sdk.notebooks.NotebookEditorUiComponent
+import com.intellij.driver.sdk.notebooks.NotebookTableOutputUi
 import com.intellij.driver.sdk.ui.components.UiComponent
 import com.intellij.driver.sdk.ui.components.common.IdeaFrameUI
 import com.intellij.driver.sdk.ui.components.common.ideFrame
 import com.intellij.driver.sdk.ui.components.elements.JComboBoxUiComponent
-import com.intellij.driver.sdk.ui.components.elements.NotebookTableOutputUi
 import com.intellij.driver.sdk.ui.components.elements.actionButton
-import com.intellij.driver.sdk.ui.components.notebooks.NotebookEditorUiComponent
 import com.intellij.driver.sdk.ui.pasteText
 import com.intellij.driver.sdk.ui.ui
 import com.intellij.driver.sdk.waitFor

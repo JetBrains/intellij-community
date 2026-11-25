@@ -1,0 +1,31 @@
+load("@community//build:jps_module.bzl", "jps_module")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+### auto-generated section `build intellij.driver.sdk.git4idea` start
+jvm_library(
+    name = "driver-sdk-git4idea",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.driver.sdk.git4idea",
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//platform/remote-driver/test-sdk:driver-sdk",
+    ],
+)
+### auto-generated section `build intellij.driver.sdk.git4idea` end
+
+### auto-generated section `iml intellij.driver.sdk.git4idea` start
+jps_module(
+    name = "intellij.driver.sdk.git4idea",
+    resources = False,
+    target = "driver-sdk-git4idea",
+)
+### auto-generated section `iml intellij.driver.sdk.git4idea` end

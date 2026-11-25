@@ -1,8 +1,8 @@
 package com.intellij.jupyter.ui.test.util.tables
 
+import com.intellij.driver.sdk.notebooks.NotebookEditorUiComponent
 import com.intellij.driver.sdk.ui.components.common.ideFrame
 import com.intellij.driver.sdk.ui.components.elements.popup
-import com.intellij.driver.sdk.ui.components.notebooks.NotebookEditorUiComponent
 import com.intellij.driver.sdk.ui.getClipboardText
 import com.intellij.driver.sdk.ui.should
 import com.intellij.driver.sdk.waitFor

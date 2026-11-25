@@ -1,0 +1,37 @@
+load("@community//build:jps_module.bzl", "jps_module")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+### auto-generated section `build intellij.driver.sdk.go` start
+jvm_library(
+    name = "driver-sdk-go",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.driver.sdk.go",
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//platform/remote-driver/test-sdk:driver-sdk",
+        "//platform/remote-driver/client",
+        "//platform/remote-driver/model",
+        "//platform/util",
+        "//platform/platform-api:ide",
+        "//platform/consoleView",
+        "//platform/remote-driver/test-sdk-git4idea:driver-sdk-git4idea",
+    ],
+)
+### auto-generated section `build intellij.driver.sdk.go` end
+
+### auto-generated section `iml intellij.driver.sdk.go` start
+jps_module(
+    name = "intellij.driver.sdk.go",
+    resources = False,
+    target = "driver-sdk-go",
+)
+### auto-generated section `iml intellij.driver.sdk.go` end

@@ -1,0 +1,32 @@
+load("@community//build:jps_module.bzl", "jps_module")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+### auto-generated section `build intellij.driver.sdk.maven` start
+jvm_library(
+    name = "driver-sdk-maven",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.driver.sdk.maven",
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//platform/remote-driver/test-sdk:driver-sdk",
+        "//platform/remote-driver/model",
+    ],
+)
+### auto-generated section `build intellij.driver.sdk.maven` end
+
+### auto-generated section `iml intellij.driver.sdk.maven` start
+jps_module(
+    name = "intellij.driver.sdk.maven",
+    resources = False,
+    target = "driver-sdk-maven",
+)
+### auto-generated section `iml intellij.driver.sdk.maven` end

@@ -1,0 +1,34 @@
+load("@community//build:jps_module.bzl", "jps_module")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+### auto-generated section `build intellij.driver.sdk.idea` start
+jvm_library(
+    name = "driver-sdk-idea",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.driver.sdk.idea",
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//platform/remote-driver/test-sdk:driver-sdk",
+        "//platform/remote-driver/model",
+        "//platform/util",
+        "//platform/platform-api:ide",
+    ],
+)
+### auto-generated section `build intellij.driver.sdk.idea` end
+
+### auto-generated section `iml intellij.driver.sdk.idea` start
+jps_module(
+    name = "intellij.driver.sdk.idea",
+    resources = False,
+    target = "driver-sdk-idea",
+)
+### auto-generated section `iml intellij.driver.sdk.idea` end

@@ -5,8 +5,8 @@ import com.intellij.driver.sdk.Editor
 import com.intellij.driver.sdk.HighlightInfo
 import com.intellij.driver.sdk.InspectionProfileImpl
 import com.intellij.driver.sdk.getHighlights
+import com.intellij.driver.sdk.notebooks.NotebookEditorUiComponent
 import com.intellij.driver.sdk.singleProject
-import com.intellij.driver.sdk.ui.components.notebooks.NotebookEditorUiComponent
 import com.intellij.driver.sdk.waitForCodeAnalysis
 
 fun Driver.codeAnalysisResults(editor: Editor): Collection<HighlightInfo> = run {

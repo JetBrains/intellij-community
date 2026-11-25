@@ -1,10 +1,10 @@
 package com.intellij.jupyter.ui.test.util.kernel
 
+import com.intellij.driver.sdk.notebooks.NotebookEditorUiComponent
+import com.intellij.driver.sdk.notebooks.hasFailedExecutionIcon
+import com.intellij.driver.sdk.notebooks.waitForHighlighting
 import com.intellij.driver.sdk.step
 import com.intellij.driver.sdk.ui.components.elements.JLabelUiComponent
-import com.intellij.driver.sdk.ui.components.notebooks.NotebookEditorUiComponent
-import com.intellij.driver.sdk.ui.components.notebooks.hasFailedExecutionIcon
-import com.intellij.driver.sdk.ui.components.notebooks.waitForHighlighting
 import com.intellij.driver.sdk.wait
 import com.intellij.driver.sdk.waitFor
 import com.intellij.jupyter.ui.test.util.utils.PostExecutionAwaitStrategy

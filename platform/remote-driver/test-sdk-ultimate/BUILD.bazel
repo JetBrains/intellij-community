@@ -1,0 +1,32 @@
+load("@community//build:jps_module.bzl", "jps_module")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+### auto-generated section `build intellij.driver.sdk.ultimate` start
+jvm_library(
+    name = "driver-sdk-ultimate",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.driver.sdk.ultimate",
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//platform/remote-driver/test-sdk:driver-sdk",
+        "//platform/remote-driver/model",
+    ],
+)
+### auto-generated section `build intellij.driver.sdk.ultimate` end
+
+### auto-generated section `iml intellij.driver.sdk.ultimate` start
+jps_module(
+    name = "intellij.driver.sdk.ultimate",
+    resources = False,
+    target = "driver-sdk-ultimate",
+)
+### auto-generated section `iml intellij.driver.sdk.ultimate` end
