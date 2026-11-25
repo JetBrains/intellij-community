@@ -156,7 +156,7 @@ private class LeakReport(val reporter: String) {
 }
 
 /** Access this map only on the EDT. Weak keys do not keep leaked storage alive. */
-private val reportedStorages = CollectionFactory.createWeakIdentityMap<EntityStorage, LeakReport>(16, 0.75f)
+private lateinit var reportedStorages: MutableMap<EntityStorage, LeakReport>
 
 private fun brokenCleanupMessage(storagesByReporter: Map<String, List<EntityStorage>>, testClass: Class<*>?): String = buildString {
   appendLine("Found workspace model storage that another check already reported. This is not a new leak.")
@@ -209,6 +209,9 @@ private fun doTestWorkspaceModelLeak(unitTestProject: Project? = null, testClass
     var cleanupFailureName: String? = null
     try {
       runInEdtAndWait {
+        if (!::reportedStorages.isInitialized) {
+          reportedStorages = CollectionFactory.createWeakIdentityMap(16, 0.75f)
+        }
         projects = collectAllNonDisposedProjects(unitTestProject)
 
         fun collectSnapshots(): List<EntityStorage> = buildList {
