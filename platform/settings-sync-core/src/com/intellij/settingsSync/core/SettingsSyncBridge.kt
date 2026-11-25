@@ -499,6 +499,7 @@ class SettingsSyncBridge(
                 mergeAndPushAfterProcessingEvents = false
                 stopSyncingAndRollback(previousState)
                 withContext(NonCancellable) {
+                  // Keep the IO switch separate so it returns to this non-cancellable context.
                   deleteServerData(event.afterDeleting)
                 }
               }
@@ -527,10 +528,13 @@ class SettingsSyncBridge(
     }
   }
 
-  private fun deleteServerData(afterDeleting: (DeleteServerDataResult) -> Unit) {
-    val userData = RemoteCommunicatorHolder.getCurrentUserData()
-                   ?: return afterDeleting(DeleteServerDataResult.Error("No user data"))
-    afterDeleting(removeRemoteData(userData))
+  private suspend fun deleteServerData(afterDeleting: (DeleteServerDataResult) -> Unit) {
+    val result = withLockHolderStage("remote communicator call") {
+      val userData = RemoteCommunicatorHolder.getCurrentUserData()
+                     ?: return@withLockHolderStage DeleteServerDataResult.Error("No user data")
+      withContext(Dispatchers.IO) { removeRemoteData(userData) }
+    }
+    afterDeleting(result)
   }
 
   private suspend fun checkServer() {
