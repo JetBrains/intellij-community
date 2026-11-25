@@ -1,7 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.scratch;
 
-import com.intellij.ide.util.PsiNavigationSupport;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageUtil;
 import com.intellij.lang.StdLanguages;
@@ -11,9 +10,12 @@ import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileEditor.FileEditorOpenRequest;
+import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileTypes.ExtensionFileNameMatcher;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
@@ -31,11 +33,11 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiErrorElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
+import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SyntaxTraverser;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.UIBundle;
@@ -104,8 +106,10 @@ public final class ScratchFileCreator {
     VirtualFile file = createScratchFile(project, fileName, context.language, context.text, context.createOption, targetRootType);
     if (file == null) return null;
 
-    Navigatable navigatable = PsiNavigationSupport.getInstance().createNavigatable(project, file, context.caretOffset);
-    navigatable.navigate(!LaterInvocator.isInModalContextForProject(project));
+    var descriptor = new OpenFileDescriptor(project, file, context.caretOffset);
+    var request = FileEditorOpenRequest.fromDescriptor(descriptor).withRequestFocus(!LaterInvocator.isInModalContextForProject(project));
+    var openedFuture = FileEditorManager.getInstance(project).requestOpenEditor(descriptor, request);
+    openedFuture.whenComplete((__, error) -> descriptor.dispose());
     PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
 
     if (context.language != null) {
@@ -113,8 +117,15 @@ public final class ScratchFileCreator {
         .afterCreate(project, context, psiFile);
     }
 
-    if (context.ideView != null && psiFile != null) {
-      context.ideView.selectElement(psiFile);
+    var view = context.ideView;
+    if (view != null && psiFile != null) {
+      var pointer = SmartPointerManager.createPointer(psiFile);
+      openedFuture.thenRun(() -> {
+        PsiFile target = pointer.getElement();
+        if (target != null) {
+          view.selectElement(target);
+        }
+      });
     }
     return psiFile;
   }

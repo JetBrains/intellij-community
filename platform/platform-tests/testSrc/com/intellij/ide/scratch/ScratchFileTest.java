@@ -5,41 +5,42 @@ import com.intellij.codeInsight.completion.CodeCompletionHandlerBase;
 import com.intellij.codeInsight.completion.CompletionType;
 import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.application.WriteAction;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.PlainTextLanguage;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
+import com.intellij.testFramework.EditorOpenTestUtil;
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase;
 
 public class ScratchFileTest extends LightPlatformCodeInsightTestCase {
 
-  private PsiFile createXmlScratch() {
+  private PsiFile createXmlScratch(String text) {
     ScratchFileCreationHelper.Context context = new ScratchFileCreationHelper.Context();
     context.language = XMLLanguage.INSTANCE;
+    context.text = text;
+    context.caretOffset = text.length();
     return ScratchFileCreator.doCreateNewScratch(getProject(), context);
   }
 
   public void testXmlCompletion() {
-    WriteAction.run(() -> {
-      PsiFile file = createXmlScratch();
-      Document document = FileDocumentManager.getInstance().getDocument(file.getVirtualFile());
-      document.setText("<");
-      Editor editor = ((TextEditor)FileEditorManager.getInstance(getProject()).openFile(file.getVirtualFile(), true)[0]).getEditor();
-      editor.getCaretModel().moveToOffset(1);
-      new CodeCompletionHandlerBase(CompletionType.BASIC).invokeCompletion(getProject(), editor);
-    });
+    PsiFile file = createXmlScratch("<");
+    EditorOpenTestUtil.awaitPendingEditorOpen(getProject());
+    Editor editor = FileEditorManager.getInstance(getProject()).getSelectedTextEditor();
+    assertNotNull(editor);
+    assertSame(file.getVirtualFile(), FileDocumentManager.getInstance().getFile(editor.getDocument()));
+    assertEquals(1, editor.getCaretModel().getOffset());
+    new CodeCompletionHandlerBase(CompletionType.BASIC).invokeCompletion(getProject(), editor);
   }
 
   public void testIsFileOfTypeWorks() {
     WriteAction.run(() -> {
-      assertTrue(FileTypeManager.getInstance().isFileOfType(createXmlScratch().getVirtualFile(), StdFileTypes.XML));
+      assertTrue(FileTypeManager.getInstance().isFileOfType(createXmlScratch("").getVirtualFile(), StdFileTypes.XML));
     });
+    EditorOpenTestUtil.awaitPendingEditorOpen(getProject());
   }
 
   public void testCreateScratchOrTempFileReturnsScratch() {
