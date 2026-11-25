@@ -8,6 +8,7 @@ import com.intellij.psi.impl.source.PsiFileImpl
 import com.intellij.psi.stubs.StubTree
 import com.intellij.psi.util.PsiVersioningService
 import com.intellij.testFramework.IndexingTestUtil
+import com.intellij.testFramework.PerformanceUnitTest
 import com.intellij.testFramework.junit5.StressTestApplication
 import com.intellij.testFramework.junit5.fixture.editorFixture
 import com.intellij.testFramework.junit5.fixture.moduleFixture
@@ -28,6 +29,7 @@ import kotlin.coroutines.EmptyCoroutineContext
  * Each accessor checks [com.intellij.psi.impl.source.tree.mvcc.InternalPsiVersioning.isInsideVersioningButNotLocks]
  * and the read access, so these checks dominate a call when the green stub is already loaded.
  */
+@PerformanceUnitTest
 @StressTestApplication
 internal class VersionedGreenStubPerformanceTest {
 
