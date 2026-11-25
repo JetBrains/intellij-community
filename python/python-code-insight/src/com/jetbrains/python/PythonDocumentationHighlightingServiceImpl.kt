@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python
 
+import com.intellij.diagnostic.rethrowControlFlowException
 import com.intellij.lang.documentation.QuickDocHighlightingHelper
 import com.intellij.lang.documentation.QuickDocHighlightingHelper.getStyledCodeFragment
 import com.intellij.lang.documentation.QuickDocHighlightingHelper.guessLanguage
@@ -29,7 +30,7 @@ class PythonDocumentationHighlightingServiceImpl : PythonDocumentationHighlighti
   override fun highlightCodeBlockInHtml(project: Project, @Nls codeBlock: String): String {
     if (codeBlock.isBlank()) return codeBlock
 
-    return runCatching {
+    return try {
       val document = Jsoup.parse(codeBlock)
 
       val preElements = document.select("pre[data-language]")
@@ -47,8 +48,10 @@ class PythonDocumentationHighlightingServiceImpl : PythonDocumentationHighlighti
         codeElement.html(highlightedHtml)
       }
       document.body().html()
-    }.getOrElse {
-      LOG.debug("Failed to apply syntax highlighting to code block in rendered documentation", it)
+    }
+    catch (e: Throwable) {
+      rethrowControlFlowException(e)
+      LOG.debug("Failed to apply syntax highlighting to code block in rendered documentation", e)
       codeBlock
     }
   }

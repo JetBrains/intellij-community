@@ -72,11 +72,9 @@ class PyCancellationCheckpointTest : PyCodeInsightTestCase() {
     }
     assertNotEquals(html, highlighted)
 
-    fixme<AssertionError>("PY-92730 highlightCodeBlockInHtml catches ProcessCanceledException", "expected: not <null>") {
-      assertNotNull(firstCheckpoint {
-        PythonDocumentationHighlightingServiceImpl().highlightCodeBlockInHtml(myFixture.project, html)
-      })
-    }
+    assertNotNull(firstCheckpoint {
+      PythonDocumentationHighlightingServiceImpl().highlightCodeBlockInHtml(myFixture.project, html)
+    })
   }
 
   private fun configure(text: String): PyFile {
