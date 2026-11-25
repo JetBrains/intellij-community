@@ -46,6 +46,10 @@ The other settings modules stay in `essential`.**
 
 - Every product with `core.platform` loads the engine, also CodeServer and Draft. The `essential` set nests
   `core.platform`, so a product with `essential` loads the same settings modules.
+- A module needs only the API module to compile. At run time the vault module must be on the class path too, or a
+  key read fails with a missing service. A product gets the vault module from the module set. A launch from a module
+  class path gets it from a `RUNTIME` dependency: `intellij.platform.main` for a product main module, and
+  `intellij.platform.testFramework.common` for a test application.
 - A product without the shared essential module has no shutdown saver. Its vault runs the save at the close itself
   ([ADR 0181](./0181-the-vault-module-depends-only-on-core-platform-modules-and-the-code-that-needs-more-lives-in-the-shared-essential-module.md)).
 - Both modules load in every product mode. So a split session and a light mode load the same settings modules on

@@ -19,5 +19,6 @@
     <orderEntry type="module" module-name="intellij.platform.debugger.impl.rpc" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.rpc.topics" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.pluginManager.shared" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.settings.v2.shared" scope="RUNTIME" />
   </component>
 </module>

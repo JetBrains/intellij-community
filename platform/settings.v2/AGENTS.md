@@ -20,6 +20,11 @@ in the core class loader, and a module of that set can depend on it. The vault m
 `intellij.platform.settings.v2.shared`, is a content module of the same set. The other settings modules are in the
 `essential` module set. See [ADR 0182](adr/0182-the-api-module-is-embedded-in-core-platform-and-the-vault-module-is-a-content-module-of-the-same-set.md).
 
+A module that reads a key depends only on the API module. The vault module comes at run time: from the module set
+in a product, and from the `RUNTIME` dependencies of `intellij.platform.main` and of
+`intellij.platform.testFramework.common` in a launch from a module class path. An application with another
+bootstrap must put the vault module on its class path itself.
+
 The API module and the vault module depend only on modules of `core.platform` and of the boot jars.
 `SettingsV2CoreDependenciesTest` checks it. Code of the vault that needs another module goes to
 `intellij.platform.settings.v2.shared.essential`. See
