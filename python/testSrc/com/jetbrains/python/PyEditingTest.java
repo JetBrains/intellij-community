@@ -717,6 +717,103 @@ public class PyEditingTest extends PyTestCase {
     doTypingTest('(');
   }
 
+  @TestFor(issues = "PY-92734")
+  public void testFirstParamMetaClassInSameFile() {
+    doTestTyping("""
+                   class Meta(type):
+                       pass
+
+                   class SubMeta(Meta):
+                       def f<caret>""", "(", """
+                   class Meta(type):
+                       pass
+
+                   class SubMeta(Meta):
+                       def f(cls):""");
+  }
+
+  @TestFor(issues = "PY-92734")
+  public void testFirstParamImportedMetaClass() {
+    doTestTyping("""
+                   from abc import ABCMeta
+
+                   class Meta(ABCMeta):
+                       def f<caret>""", "(", """
+                   from abc import ABCMeta
+
+                   class Meta(ABCMeta):
+                       def f(cls):""");
+  }
+
+  @TestFor(issues = "PY-92734")
+  public void testFirstParamNewInImportedMetaClass() {
+    doTestTyping("""
+                   import abc
+
+                   class Meta(abc.ABCMeta):
+                       def __new__<caret>""", "(", """
+                   import abc
+
+                   class Meta(abc.ABCMeta):
+                       def __new__(typ):""");
+  }
+
+  @TestFor(issues = "PY-92734")
+  public void testFirstParamAliasedClassmethodDecorator() {
+    doTestTyping("""
+                   from abc import abstractclassmethod as acm
+
+                   class A:
+                       @acm
+                       def f<caret>""", "(", """
+                   from abc import abstractclassmethod as acm
+
+                   class A:
+                       @acm
+                       def f(cls):""");
+  }
+
+  @TestFor(issues = "PY-92734")
+  public void testFirstParamShadowedClassmethodDecorator() {
+    doTestTyping("""
+                   def classmethod(f):
+                       return f
+
+                   class A:
+                       @classmethod
+                       def f<caret>""", "(", """
+                   def classmethod(f):
+                       return f
+
+                   class A:
+                       @classmethod
+                       def f(self):""");
+  }
+
+  @TestFor(issues = "PY-92734")
+  public void testFirstParamQualifiedClassmethodDecorator() {
+    doTestTyping("""
+                   import abc
+
+                   class A:
+                       @abc.abstractclassmethod
+                       def f<caret>""", "(", """
+                   import abc
+
+                   class A:
+                       @abc.abstractclassmethod
+                       def f(cls):""");
+  }
+
+  @TestFor(issues = "PY-92734")
+  public void testFirstParamInitSubclass() {
+    doTestTyping("""
+                   class A:
+                       def __init_subclass__<caret>""", "(", """
+                   class A:
+                       def __init_subclass__(cls):""");
+  }
+
   // PY-21289
   public void testPairedParenthesesMultipleCalls() {
     doTypingTest('(');
