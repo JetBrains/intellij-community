@@ -95,6 +95,33 @@ class ModuleDescriptorLabelTest {
   }
 
   @Test
+  fun `the record names the descriptor of the label and no other file of that name`() {
+    val checkout = checkout()
+    val packageDirectory = checkout.resolve("community/plugins/test/content")
+    val resources = resources(checkout)
+    val imlFile = packageDirectory.resolve("$moduleName.iml")
+    Files.writeString(imlFile, "<module/>")
+    val module = ModuleDescriptor(
+      imlFile = imlFile,
+      module = JpsElementFactory.getInstance().createModel().project.addModule(moduleName, JpsJavaModuleType.INSTANCE),
+      contentRoots = listOf(packageDirectory),
+      sources = emptyList(),
+      resources = resources,
+      testSources = emptyList(),
+      testResources = emptyList(),
+      isCommunity = true,
+      bazelBuildFileDir = packageDirectory,
+      relativePathFromProjectRoot = Path.of("plugins/test/content"),
+      targetName = "content",
+    )
+
+    // The remapped root and the second plain root also hold the file, and the record leaves them out.
+    val label = moduleDescriptorLabel(module = module, communityRoot = checkout.resolve("community"), ultimateRoot = checkout)
+    assertEquals("@community//plugins/test/content:first/$moduleName.xml", label)
+    assertEquals(listOf(label), conventionalDescriptorLabels(module = module, communityRoot = checkout.resolve("community"), ultimateRoot = checkout))
+  }
+
+  @Test
   fun `a file on the other repository half gives no label`() {
     val checkout = checkout()
     // An ultimate module in the root package: every descriptor lies below the community checkout.

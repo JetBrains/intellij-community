@@ -1330,9 +1330,9 @@ internal fun conventionalDescriptor(descriptor: ReachedDescriptor, contentModule
  * Whether the row [label] to [loadPath] is the conventional row of one of [modules]: the load path is `<module name>.xml`,
  * and [conventionalLabel] gives [label] for that module, see [DistBazelIndex.conventionalDescriptorLabel].
  *
- * A plan drops such a row, and the call states it again in the recorded form, see [withConventionalDescriptorRows]. A
- * row whose label has another spelling is not such a row. It stays, and its load path then holds the conventional row
- * out.
+ * A plan drops such a row. A product call states it again in the recorded form, see [withConventionalDescriptorRows],
+ * and the leaf of a `dev` section takes it from the record of the module. A row whose label has another spelling is not
+ * such a row. It stays, and its load path then holds the conventional row out.
  */
 internal fun isConventionalDescriptorRow(
   label: String,

@@ -99,7 +99,7 @@ internal fun computeDevSection(
   val entries = descriptorEntries.sortedBy { it.variant }
   check(entries.map { it.variant }.distinct().size == entries.size) { "Plugin '$mainModule' has two baseline entries of one variant" }
   val contentModuleNames = sectionContentModuleNames(context = context, memberNames = packing.content.memberNames)
-  // The section states the conventional row of the main module and of each content module, see `renderBody`.
+  // The leaf takes the conventional row of the main module and of each content module from the module record.
   val descriptors = computePluginDescriptors(
     context = context,
     entries = entries,
@@ -188,7 +188,7 @@ internal fun sectionContentModuleNames(context: DevSectionContext, memberNames: 
 internal class PluginDescriptorLeaf(
   @JvmField val variant: String,
   @JvmField val descriptor: String,
-  /** Label to load path, in label order, less the conventional rows. The section adds them, see `renderBody`. */
+  /** Label to load path, in label order, less the conventional rows. The leaf takes them from the module records. */
   @JvmField val descriptors: Map<String, String>,
   /** Container label to space-joined load paths, in first-appearance order. */
   @JvmField val libraryDescriptors: Map<String, String>,
@@ -209,8 +209,8 @@ internal class PluginDescriptorLeaf(
 /**
  * One leaf per variant, or an empty list when the plugin gets no descriptor leaf.
  *
- * A leaf holds no conventional row of [conventionalModules], see [isConventionalDescriptorRow]. The section adds each one
- * in the recorded form.
+ * A leaf holds no conventional row of [conventionalModules], see [isConventionalDescriptorRow]. The descriptor rule
+ * takes each one from the `<module>_model_files` group of the record of the module, which names the same file.
  *
  * Empty when the plugin is outside the population. Empty when the plugin's own package holds no `META-INF/plugin.xml`.
  * Empty when a community plugin would have to name an ultimate label, and that case discards every variant, the leaves
@@ -454,13 +454,8 @@ private fun renderBody(
     call.option("content_modules", names.associateWithTo(LinkedHashMap()) { sectionModuleLabel(context, it) })
   }
   descriptor?.descriptor?.ifNotEmpty { call.option("descriptor", it) }
-  val descriptorRows = descriptor?.let { leaf ->
-    splitDescriptorRows(withConventionalDescriptorRows(
-      rows = leaf.descriptors,
-      modules = listOf(context.mainModule) + content?.contentModuleNames.orEmpty(),
-      conventionalLabel = context.index::conventionalDescriptorLabel,
-    ))
-  }
+  // The leaf takes the conventional row of the main module and of each content module from the record of the module.
+  val descriptorRows = descriptor?.let { splitDescriptorRows(it.descriptors) }
   descriptorRows?.descriptors?.ifNotEmpty { call.option("descriptors", LinkedHashMap(it)) }
   descriptor?.directoryName?.ifNotEmpty { call.option("directory_name", it) }
   if (descriptor != null && !descriptor.embedContentModules) {

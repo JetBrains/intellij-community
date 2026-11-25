@@ -75,21 +75,28 @@ internal fun moduleDescriptorLabel(moduleName: String, resources: List<ResourceD
 }
 
 /**
- * The labels of the conventional descriptors of [module]: `<module name>.xml` and `META-INF/plugin.xml` at each
- * production resource root. A file gives a label only in the package of the module, see [ModulePackage.fileLabel].
+ * The labels of the conventional descriptors of [module]: the `<module name>.xml` of [moduleDescriptorLabel], and
+ * `META-INF/plugin.xml` at each production resource root. A file gives a label only in the package of the module, see
+ * [ModulePackage.fileLabel].
+ *
+ * The record holds no other `<module name>.xml`, so the descriptor rule finds the file of [moduleDescriptorLabel] in
+ * the record, and the dist generator states no row for it.
  *
  * A descriptor on the half of the module but outside its package gives a warning, in both converters. The model of
  * today has none. A file on the other half gives no warning, because `dotenv-ultimate` and `php.dev` keep theirs there.
  */
 internal fun conventionalDescriptorLabels(module: ModuleDescriptor, communityRoot: Path, ultimateRoot: Path?): List<String> {
   val modulePackage = modulePackage(module, communityRoot, ultimateRoot)
+  val moduleDescriptor = moduleDescriptorLabel(moduleName = module.module.name, resources = module.resources, modulePackage = modulePackage)
   val result = ArrayList<String>()
   for (resource in module.resources) {
     for (candidate in listOf("${module.module.name}.xml", "META-INF/plugin.xml")) {
       val file = resource.root.resolve(candidate)
       val label = modulePackage.fileLabel(file)
       if (label != null) {
-        result.add(label)
+        if (candidate == "META-INF/plugin.xml" || label == moduleDescriptor) {
+          result.add(label)
+        }
       }
       else if (modulePackage.isOutsideOnItsHalf(file)) {
         println("WARN: the descriptor $file of module ${module.module.name} is outside the package ${modulePackage.directory}, so it gets no label")

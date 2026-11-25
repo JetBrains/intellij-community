@@ -328,6 +328,65 @@ class DistHalfTest {
     assertThat(warnings).containsExactly("WARN: intellij.c packaging: no production jar target for [intellij.c.tests], so the section declares no component")
   }
 
+  @Test
+  fun `a section states no conventional row of a module that it names, and keeps every other row`() {
+    val frontend = "@community//plugins/c/frontend:resources/intellij.c.frontend.xml"
+    val module = BazelTargetsInfo.TargetsFileModuleDescription(
+      productionTargets = listOf("@community//plugins/c/frontend:frontend.jar"),
+      productionJars = emptyList(),
+      testTargets = emptyList(),
+      testJars = emptyList(),
+      moduleLibraries = emptyMap(),
+      moduleDescriptor = frontend,
+    )
+    val index = syntheticIndex(dir, "intellij.c" to "@community//plugins/c:c.jar")
+    val targets = BazelTargetsInfo.TargetsFile(
+      modules = index.targets.modules + ("intellij.c.frontend" to module),
+      projectLibraries = emptyMap(),
+      pluginDistributionTargets = emptyMap(),
+    )
+    val context = DevSectionContext(
+      mainModule = "intellij.c",
+      isCommunity = true,
+      index = DistBazelIndex(targets = targets, projectRoot = dir),
+      outputProvider = SourceRootModuleOutputProvider(JpsElementFactory.getInstance().createModel().project),
+      warn = {},
+    )
+    val other = "@community//plugins/c/frontend:resources/intellij.c.frontend.extra.xml"
+    val leaf = pluginDescriptorLeaf().let {
+      PluginDescriptorLeaf(
+        variant = it.variant,
+        descriptor = it.descriptor,
+        descriptors = mapOf(other to "intellij.c.frontend.extra.xml", "//plugins/c:resources/META-INF/c-extra.xml" to "META-INF/c-extra.xml"),
+        libraryDescriptors = it.libraryDescriptors,
+        refusedContentModules = it.refusedContentModules,
+        modeRefusedContentModules = it.modeRefusedContentModules,
+        separateJar = it.separateJar,
+        markers = it.markers,
+        versionSuffix = it.versionSuffix,
+        compatibleBuildRange = it.compatibleBuildRange,
+        directoryName = it.directoryName,
+        embedContentModules = it.embedContentModules,
+        exactVersion = it.exactVersion,
+        retainProductDescriptor = it.retainProductDescriptor,
+        embeddedProductDescriptor = it.embeddedProductDescriptor,
+      )
+    }
+    val draft = PendingDevSection(
+      context = context,
+      content = PluginContentModules(listOf("intellij.c.frontend")),
+      descriptors = listOf(leaf),
+      record = DevSectionRecord(descriptorTargets = emptyMap()),
+      loadStatements = emptyList(),
+    )
+
+    // The leaf takes the conventional row of `intellij.c.frontend` from the record of the module.
+    val body = draft.render(packaging = null).body
+    assertThat(body).doesNotContain(frontend)
+    assertThat(body).contains("    descriptors = {\"//plugins/c:resources/META-INF/c-extra.xml\": \"META-INF/c-extra.xml\"},\n")
+    assertThat(body).contains("    module_descriptors = [\"$other\"],\n")
+  }
+
   private fun pluginDescriptorLeaf(): PluginDescriptorLeaf = PluginDescriptorLeaf(
     variant = "",
     descriptor = "resources/META-INF/plugin.xml",

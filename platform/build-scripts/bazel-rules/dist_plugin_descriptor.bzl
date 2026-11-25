@@ -298,16 +298,15 @@ def _descriptor_request(ctx, module_name, embed_content_modules = None, reserial
     # One answer per load path. The writer seeds the files first and puts a jar entry in only when the path is
     # absent. So a load path two declarations answer is refused here, where every declaration is visible.
     answered_by = {}
-    for label, load_path in ctx.attr.descriptors.items():
-        files = label.files.to_list()
-        if len(files) != 1:
-            fail("%s declares %d files, and a descriptor must name exactly one" % (label.label, len(files)), attr = "descriptors")
-        if load_path in answered_by:
-            fail("%s and %s both answer the load path '%s'" % (answered_by[load_path], label.label, load_path), attr = "descriptors")
-        answered_by[load_path] = label.label
-        parameters.append(("--plugin-descriptor", load_path + "=" + files[0].path, "literal"))
-        sources.append(_descriptor_source_binding("descriptors", label.label, load_path, files))
-        inputs.append(files[0])
+    for row in _descriptor_rows(ctx):
+        if len(row.files) != 1:
+            fail("%s declares %d files, and a descriptor must name exactly one" % (row.label, len(row.files)), attr = "descriptors")
+        if row.load_path in answered_by:
+            fail("%s and %s both answer the load path '%s'" % (answered_by[row.load_path], row.label, row.load_path), attr = "descriptors")
+        answered_by[row.load_path] = row.label
+        parameters.append(("--plugin-descriptor", row.load_path + "=" + row.files[0].path, "literal"))
+        sources.append(_descriptor_source_binding("descriptors", row.label, row.load_path, row.files))
+        inputs.append(row.files[0])
     for jar in jars.descriptor_jars:
         if jar.load_path in answered_by:
             fail("%s and %s both answer the load path '%s'" % (answered_by[jar.load_path], jar.label, jar.load_path), attr = "descriptor_jars")
@@ -329,6 +328,41 @@ def _descriptor_request(ctx, module_name, embed_content_modules = None, reserial
                 parameters.append(("--plugin-descriptor-in-jar", load_path + "=" + jar.path, "literal"))
         inputs.extend(library.jars)
     return struct(parameters = tuple(parameters), inputs = tuple(inputs), sources = tuple(sources), stamps = stamps)
+
+def _descriptor_rows(ctx):
+    """The `descriptors` rows of the leaf, and a row for the descriptor of each module of `module_model_files`.
+
+    The record of a module names its `<module>.xml` in the `<module>_model_files` group, see `jps_module`. Only that file
+    goes into the action, never the `.iml` file. A group without such a file gives no row. A stated row wins by label
+    and by load path, as `withConventionalDescriptorRows` of the generator decides.
+
+    The leaf sorts every row by its canonical label, so the order does not depend on how a call spells a label. The
+    order has no meaning, because the leaf refuses two answers for one load path, see `_descriptor_request`.
+
+    Args:
+        ctx: the rule context.
+
+    Returns:
+        A list of `struct(label, load_path, files)`.
+    """
+    rows = [
+        struct(label = target.label, load_path = load_path, files = target.files.to_list())
+        for target, load_path in ctx.attr.descriptors.items()
+    ]
+    stated_labels = {row.label: True for row in rows}
+    stated_load_paths = {row.load_path: True for row in rows}
+    derived = []
+    for group, module_name in ctx.attr.module_model_files.items():
+        load_path = module_name + ".xml"
+        files = [file for file in group.files.to_list() if file.basename == load_path]
+        if len(files) > 1:
+            fail("%s holds %d files named %s, and a module has one descriptor" % (group.label, len(files), load_path), attr = "module_model_files")
+        if not files or files[0].owner in stated_labels or load_path in stated_load_paths:
+            continue
+        derived.append(struct(label = files[0].owner, load_path = load_path, files = files))
+
+    # One key for every row: the canonical label. The order has no meaning, because each load path has one answer.
+    return sorted(rows + derived, key = lambda row: str(row.label))
 
 def _compatible_build_range(ctx):
     """The since and until range of the leaf: the stated one, `EXACT` for an exact version, else `NEWER_WITH_SAME_BASELINE`.
@@ -636,6 +670,12 @@ The load path is what a resolver asks the descriptor cache for. Seeding the cach
 action run with no JPS project model: `resolveElement` reads the cache before it touches a module output.""",
             allow_files = [".xml"],
         ),
+        "module_model_files": attr.label_keyed_string_dict(
+            doc = """The `<module>_model_files` group of each module of the plugin, valued by the module name.
+
+The leaf adds the `<module>.xml` of each group as a row at the load path `<module>.xml`, see `_descriptor_rows`.""",
+            allow_files = True,
+        ),
         "variant": attr.string(
             doc = """The layout variant, empty for a plugin whose one layout serves every platform.
 
@@ -785,6 +825,7 @@ _dist_plugin_classpath_descriptor = rule(
         "jar_inputs": attr.label(providers = [_DistDescriptorJarsInfo]),
         "descriptor_entry": attr.string(),
         "descriptors": attr.label_keyed_string_dict(allow_files = [".xml"]),
+        "module_model_files": attr.label_keyed_string_dict(allow_files = True),
         "variant": attr.string(),
         "platforms": attr.string_list(),
         "markers": attr.string_list(),
@@ -918,9 +959,9 @@ def dist_plugin_descriptor(
     way `content_module_jar` derives its own. And `manual` is added, for `content_module_jar`'s reason: these are
     per-plugin targets of a measurement, and `bazel build //...` must not run all of them.
 
-    `descriptors` and `module_descriptors` state every row, the conventional row of each content module included. The
-    generator writes the conventional label of a module from the targets JSON. The macro merges the two attributes into
-    the `descriptors` of the rule, sorted by label.
+    The leaf takes the descriptor of each module of `module_model_files` from the record of the module. `descriptors`
+    and `module_descriptors` state every other row. The macro merges the two attributes into the `descriptors` of the
+    rule.
 
     A leaf that embeds no content module also gets a `<name>_classpath` target. That target writes the classpath
     descriptor in the neutral product configuration.
@@ -940,8 +981,10 @@ def dist_plugin_descriptor(
     source = descriptor or None
 
     descriptors = descriptor_rows("dist_plugin_descriptor", kwargs.pop("descriptors", {}), kwargs.pop("module_descriptors", []))
+
+    # The leaf owns the order of the rows, see `_descriptor_rows`.
     if descriptors:
-        kwargs["descriptors"] = {label: descriptors[label] for label in sorted(descriptors)}
+        kwargs["descriptors"] = descriptors
     name = dist_plugin_descriptor_target_name(main_module, variant)
     descriptor_jars = kwargs.pop("descriptor_jars", {})
     library_descriptors = kwargs.pop("library_descriptors", {})

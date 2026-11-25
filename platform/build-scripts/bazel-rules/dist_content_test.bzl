@@ -630,6 +630,81 @@ def _fake_descriptor_impl(ctx):
 
 _fake_descriptor = rule(implementation = _fake_descriptor_impl)
 
+def _fake_file_impl(ctx):
+    file = ctx.actions.declare_file(ctx.attr.out)
+    ctx.actions.write(file, "<module/>")
+    return [DefaultInfo(files = depset([file]))]
+
+_fake_file = rule(
+    implementation = _fake_file_impl,
+    attrs = {"out": attr.string(mandatory = True)},
+)
+
+def _derived_rows_test_impl(ctx):
+    env = analysistest.begin(ctx)
+    writes = [
+        action
+        for action in analysistest.target_actions(env)
+        if action.mnemonic == "FileWrite" and action.outputs.to_list()[0].basename.endswith(".declaration.json")
+    ]
+    asserts.equals(env, 1, len(writes))
+    if writes:
+        declaration = json.decode(writes[0].content)
+        rows = [
+            [source["load_path"], [file["basename"] for file in source["files"]]]
+            for source in declaration["sources"]
+            if source["attribute"] == "descriptors"
+        ]
+        asserts.equals(env, json.decode(ctx.attr.expected_rows), rows)
+        inputs = [file["basename"] for action in declaration["actions"] for file in action["declared_inputs"]]
+        asserts.equals(env, [], [name for name in inputs if name.endswith(".iml")])
+    return analysistest.end(env)
+
+_derived_rows_test = analysistest.make(
+    _derived_rows_test_impl,
+    attrs = {"expected_rows": attr.string(mandatory = True, doc = "The JSON list of `[load path, [file names]]` rows.")},
+)
+
+def _derived_rows_tests(name):
+    """The leaf takes the descriptor of each module of the call from its `<module>_model_files` group.
+
+    `test.derived.member` gets a derived row. A stated row at the load path of `test.derived.stated` wins over the file
+    of its group. The group of `test.derived.empty` has no `<module>.xml`, so it gives no row. No `.iml` file goes into
+    the action.
+    """
+    modules = ["test.derived", "test.derived.member", "test.derived.stated", "test.derived.empty"]
+    for module in modules:
+        _fake_module(name = name + "_derived_module_" + module, module_name = module)
+        _fake_file(name = name + "_derived_iml_" + module, out = name + "_derived/" + module + ".iml")
+        srcs = [":" + name + "_derived_iml_" + module]
+        if module != "test.derived.empty":
+            _fake_file(name = name + "_derived_xml_" + module, out = name + "_derived/" + module + ".xml")
+            srcs.append(":" + name + "_derived_xml_" + module)
+        native.filegroup(name = module + "_model_files", srcs = srcs)
+    source = name + "_derived_descriptor"
+    stated = name + "_derived_stated_xml"
+    _fake_descriptor(name = source)
+    _fake_descriptor(name = stated)
+    dist_plugin(
+        main_module = "test.derived",
+        module_labels = {"test.derived": ":" + name + "_derived_module_test.derived"},
+        content_modules = {module: ":" + name + "_derived_module_" + module for module in modules[1:]},
+        descriptor = source,
+        descriptors = {":" + stated: "test.derived.stated.xml"},
+    )
+    test = name + "_derived_rows_test"
+    _derived_rows_test(
+        name = test,
+        target_under_test = ":" + dist_plugin_descriptor_target_name("test.derived"),
+        # The rows in the order of their canonical labels.
+        expected_rows = json.encode([
+            ["test.derived.stated.xml", [stated + ".xml"]],
+            ["test.derived.xml", ["test.derived.xml"]],
+            ["test.derived.member.xml", ["test.derived.member.xml"]],
+        ]),
+    )
+    return [test]
+
 def _resolve_module_labels_test_impl(ctx):
     env = unittest.begin(ctx)
     names = ["test.plugin", "test.member", "test.member"]
@@ -687,8 +762,8 @@ def _plugin_macro_tests(name):
         ]),
     )
 
-    # The descriptor leaf takes the rows that the call states, the conventional rows included, sorted by label. A label
-    # of `module_descriptors` answers the base name of its file.
+    # The descriptor leaf takes the rows that the call states, the conventional rows included. A label of
+    # `module_descriptors` answers the base name of its file.
     indexed = {
         role: name + "_macro_indexed_" + role
         for role in ["owner", "first", "second", "source", "main_xml", "explicit_xml"]
@@ -717,8 +792,8 @@ def _plugin_macro_tests(name):
     indexed_test = name + "_plugin_macro_indexed_test"
     _declaration_test(
         name = indexed_test,
-        # The target names only: `existing_rule` returns a label key in its canonical form.
-        actual = json.encode([[str(label).rpartition(":")[2], path] for label, path in indexed_descriptors.items()]),
+        # The target names only: `existing_rule` returns a label key in its canonical form. The leaf owns the order.
+        actual = json.encode(sorted([[str(label).rpartition(":")[2], path] for label, path in indexed_descriptors.items()])),
         expected = json.encode(sorted([
             [indexed["main_xml"], "test.indexed.xml"],
             [indexed["first_xml"], "test.indexed.first.xml"],
@@ -1148,6 +1223,7 @@ def dist_content_test_suite(name):
     _manifest_test(name = tests[-1], target_under_test = ":" + empty_inputs, expected_suffix = ".bazel-inputs")
 
     tests.extend(_plugin_macro_tests(name))
+    tests.extend(_derived_rows_tests(name))
     _resolve_module_labels_test(name = name + "_resolve_module_labels_test")
     tests.append(name + "_resolve_module_labels_test")
     content_module_jar_test_suite(name = name + "_production")

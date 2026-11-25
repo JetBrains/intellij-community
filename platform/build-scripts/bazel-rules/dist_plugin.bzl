@@ -78,6 +78,10 @@ def resolve_module_labels(main_module, names, module_labels):
         ))
     return struct(labels = labels, stale = stale, messages = messages)
 
+def _module_model_files_label(label, module_name):
+    """The `<module>_model_files` group of the record of `module_name`, in the package of its label, see `jps_module`."""
+    return label.rpartition(":")[0] + ":" + module_name + "_model_files"
+
 def _content_module_jar_label(label):
     return label.rpartition(":")[0] + ":" + content_module_jar_target_name(label)
 
@@ -109,7 +113,8 @@ def dist_plugin(
             `resolve_module_labels`. So the package of a stale section still loads, and the generator can write it again.
         content_modules: The plugin member JPS modules in the order of the plugin, each with its rule label. A list of
             names is the form of an older section: `module_labels` then states the label of each name.
-        descriptor: The main descriptor label, package-relative.
+        descriptor: The main descriptor label, package-relative. The leaf takes the `<module>.xml` of the main module and
+            of each content module from the record of the module, see `jps_module`.
         variants: Layout variants. An empty list selects the common variant.
         jars: The packed jars of a simple plugin, keyed by destination relative to the plugin directory and valued by
             source tokens in merge order. A token is a JPS module name or a library container label. A content module
@@ -145,6 +150,8 @@ def dist_plugin(
         fail("dist_plugin requires a main module and a dict of module labels")
     if type(content_modules) not in ["dict", "list"]:
         fail("dist_plugin: %s states content modules that are neither a dict nor a list" % main_module)
+    if "module_model_files" in descriptor_attrs:
+        fail("dist_plugin: %s states module_model_files, which the macro derives from the module labels" % main_module)
     shared = [key for key in _SHARED_LEAF_ATTRS if key in descriptor_attrs]
     if shared:
         fail("dist_plugin: %s states shared leaf attributes: %s" % (main_module, shared))
@@ -212,11 +219,18 @@ def dist_plugin(
             packed_modules[label] = token
 
     if descriptor:
+        # The leaf takes the descriptor of each module of the call from the record of the module.
+        module_model_files = {
+            _module_model_files_label(resolved.labels[name], name): name
+            for name in [main_module] + content_modules
+            if name in resolved.labels
+        }
         for variant in variants if variants else [""]:
             dist_plugin_descriptor(
                 main_module = main_module,
                 descriptor = descriptor,
                 variant = variant,
+                module_model_files = module_model_files,
                 **descriptor_attrs
             )
     if jars and not resolved.stale:
