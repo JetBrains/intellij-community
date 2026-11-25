@@ -235,6 +235,7 @@
     <annotator language="Python" implementationClass="com.jetbrains.python.validation.UnsupportedFeatures"/>
 
     <daemon.changeLocalityDetector implementation="com.jetbrains.python.inspections.PyChangeLocalityDetector"/>
+    <inspection.basicVisitor class="com.jetbrains.python.psi.PyElementVisitor"/>
 
     <statistics.applicationUsagesCollector implementation="com.jetbrains.python.psi.types.PyTypeEvaluationAggregatesCollector"/>
 
