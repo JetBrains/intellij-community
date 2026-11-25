@@ -5,11 +5,14 @@ import com.intellij.ide.dnd.FileCopyPasteUtil
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.command.executeCommand
 import com.intellij.openapi.editor.actions.PasteAction
 import com.intellij.openapi.ide.CopyPasteManager
 import com.intellij.psi.util.PsiEditorUtil
+import com.intellij.util.concurrency.AppExecutorUtil
 import org.intellij.plugins.markdown.editor.runForEachCaret
 import org.intellij.plugins.markdown.lang.isMarkdownType
 import org.intellij.plugins.markdown.settings.MarkdownCodeInsightSettings
@@ -22,20 +25,23 @@ internal class FileLinkPasteProvider : PasteProvider {
     val transferableProvider = dataContext.getData(PasteAction.TRANSFERABLE_PROVIDER) ?: return
     val transferable = transferableProvider.produce() ?: return
     val files = FileCopyPasteUtil.getFiles(transferable)?.asSequence() ?: return
-    val file = PsiEditorUtil.getPsiFile(editor)
     val document = editor.document
-    val content = MarkdownFileDropHandler.Manager.buildTextContent(files, file)
-    runWriteAction {
-      MarkdownFileDropHandler.Manager.handleReadOnlyModificationException(project, document) {
-        executeCommand(project) {
-          editor.caretModel.runForEachCaret(reverseOrder = true) { caret ->
-            val offset = caret.offset
-            document.insertString(offset, content)
-            caret.moveToOffset(offset + content.length)
+    ReadAction.nonBlocking<String> { MarkdownFileDropHandler.Manager.buildTextContent(files, PsiEditorUtil.getPsiFile(editor)) }
+      .expireWhen { editor.isDisposed }
+      .finishOnUiThread(ModalityState.defaultModalityState()) { content ->
+        runWriteAction {
+          MarkdownFileDropHandler.Manager.handleReadOnlyModificationException(project, document) {
+            executeCommand(project) {
+              editor.caretModel.runForEachCaret(reverseOrder = true) { caret ->
+                val offset = caret.offset
+                document.insertString(offset, content)
+                caret.moveToOffset(offset + content.length)
+              }
+            }
           }
         }
       }
-    }
+      .submit(AppExecutorUtil.getAppExecutorService())
   }
 
   override fun isPasteEnabled(dataContext: DataContext): Boolean {

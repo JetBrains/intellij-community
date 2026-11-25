@@ -7,6 +7,7 @@ import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsigh
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.fixture.projectFixture
+import org.intellij.plugins.markdown.images.editor.paste.MarkdownFileDropHandler
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 
@@ -80,6 +81,31 @@ class MarkdownLinkPastePreProcessorTest {
   @Test
   fun `does not create link from blank selection`() {
     assertPreprocessedText("Some <selection>   </selection> text", "https://example.com")
+  }
+
+  @Test
+  fun `a pasted Markdown file links with the text of its first level-1 heading`() {
+    val titled = myFixture.addFileToProject("docs/titled.md", "Intro\n\n## Section\n\nFirst heading\n===\n\n# Second heading\n")
+    val untitled = myFixture.addFileToProject("untitled.md", "## Section\n")
+    val target = myFixture.configureByText("main.md", "")
+    val content = timeoutRunBlocking {
+      readAction {
+        MarkdownFileDropHandler.Manager.buildTextContent(sequenceOf(titled, untitled).map { it.virtualFile.toNioPath() }, target)
+      }
+    }
+    assertEquals("[First heading](docs/titled.md)\n[untitled.md](untitled.md)", content)
+  }
+
+  @Test
+  fun `a pasted Markdown file escapes the brackets of its heading text`() {
+    val file = myFixture.addFileToProject("brackets.md", """# Notes ] Array[ \[x\] `a[0]` C:\""")
+    val target = myFixture.configureByText("main.md", "")
+    val content = timeoutRunBlocking {
+      readAction {
+        MarkdownFileDropHandler.Manager.buildTextContent(sequenceOf(file.virtualFile.toNioPath()), target)
+      }
+    }
+    assertEquals("""[Notes \] Array\[ \[x\] `a[0]` C:\\](brackets.md)""", content)
   }
 
   private fun assertPreprocessedText(fileText: String, expected: String) {
