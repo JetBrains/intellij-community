@@ -4,6 +4,7 @@ package com.jetbrains.python.psi.impl;
 import com.intellij.codeInsight.completion.CompletionUtilCoreImpl;
 import com.intellij.lang.ASTNode;
 import com.intellij.navigation.ItemPresentation;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.Ref;
@@ -468,6 +469,7 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
   private static @NotNull List<PyClassLikeType> mroMerge(@NotNull List<List<PyClassLikeType>> sequences) throws MROException {
     List<PyClassLikeType> result = new LinkedList<>(); // need to insert to 0th position on linearize
     while (true) {
+      ProgressManager.checkCanceled();
       // filter blank sequences
       final List<List<PyClassLikeType>> nonBlankSequences = new ArrayList<>(sequences.size());
       for (List<PyClassLikeType> item : sequences) {
