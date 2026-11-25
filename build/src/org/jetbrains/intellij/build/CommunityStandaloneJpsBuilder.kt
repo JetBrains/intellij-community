@@ -93,7 +93,7 @@ fun buildCommunityStandaloneJpsBuilder(
   layout.withModule("intellij.groovy.jps", "intellij.groovy.jps.jar")
   layout.withModule("intellij.groovy.rt", "groovy-rt.jar")
   layout.withModule("intellij.groovy.rt.classLoader", "groovy-rt-class-loader.jar")
-  layout.withModule("intellij.groovy.constants.rt", "groovy-constants-rt.jar")
+  layout.withModule("intellij.groovy.constants.rt", "intellij.groovy.constants.rt.jar")
   layout.withModule("intellij.java.guiForms.jps", "intellij.java.guiForms.jps.jar")
 
   layout.withModule("intellij.maven.jps", "maven-jps.jar")
