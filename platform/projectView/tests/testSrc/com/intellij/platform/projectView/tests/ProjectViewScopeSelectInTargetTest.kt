@@ -6,6 +6,7 @@ import com.intellij.ide.FileSelectInContext
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.SelectInContext
 import com.intellij.ide.SelectInManager
+import com.intellij.ide.SelectInTarget
 import com.intellij.ide.impl.ProjectViewSelectInGroupTarget
 import com.intellij.ide.scopeView.NamedScopeFilter
 import com.intellij.openapi.application.readAction
@@ -110,6 +111,21 @@ internal class ProjectViewScopeSelectInTargetTest : AbstractProjectViewPaneTest(
     }
   }
 
+  @Test
+  fun `the order of the scopes in the Select In popup does not depend on the current pane`() = timeoutRunBlocking(PANE_TEST_TIMEOUT) {
+    withManagedProjectViewToolWindow(project) {
+      awaitStartupPaneSelection(project)
+      val filters = addScopes(helloScope, textScope)
+      val context = FileSelectInContext(project, hello())
+      val itemsBefore = popupItems(context)
+
+      // The last scope, so that a current pane first rule would move it.
+      assertTrue(ProjectView.getInstance(project).selectPane(ScopePaneModel.paneId(filters.last())))
+
+      assertEquals(itemsBefore, popupItems(context))
+    }
+  }
+
   private fun hello(): VirtualFile = srcRoot.get().virtualFile.findChild("Hello.txt")!!
 
   /**
@@ -134,4 +150,15 @@ internal class ProjectViewScopeSelectInTargetTest : AbstractProjectViewPaneTest(
     val target = ProjectViewSelectInGroupTarget().getSubTargets(context).filterIsInstance<CompositeSelectInTarget>().single()
     return target as SplitProjectViewSelectInGroupTarget
   }
+
+  /** The items of the Project View submenu of the Select In popup, in the order of the popup. A child of an item has an indent. */
+  private fun popupItems(context: SelectInContext): List<String> {
+    return sorted(ProjectViewSelectInGroupTarget().getSubTargets(context)).flatMap { target ->
+      val children = (target as? CompositeSelectInTarget)?.getSubTargets(context).orEmpty()
+      listOf(target.toString()) + sorted(children).map { "  $it" }
+    }
+  }
+
+  private fun sorted(targets: Collection<SelectInTarget>): List<SelectInTarget> =
+    targets.sortedWith(SelectInManager.SelectInTargetComparator.INSTANCE)
 }
