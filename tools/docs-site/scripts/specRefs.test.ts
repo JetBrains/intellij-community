@@ -2,7 +2,7 @@ import assert from 'node:assert/strict'
 import { describe, it } from 'node:test'
 import { checkSpecRefs, frontmatterStyle, frontmatterTargets, globToRegex, headingSlug, proseSentences, requirementSentences, specRefFindings, type SpecRefsConfig } from './specRefs.ts'
 import { temporaryTree } from './tempTree.ts'
-import { testSiteConfig } from './testSiteConfig.ts'
+import { ARCHIVE_FILES, testSiteConfig, withOpenSpecRoot } from './testSiteConfig.ts'
 
 const TEMPLATE = ['Summary', 'Requirements', 'References']
 
@@ -128,6 +128,21 @@ describe('the spec reference check', () => {
       `spec/a.spec.md:17: section: 'Design' is not a template section;`,
       `spec/b.spec.md:1: style: a spec under spec declares 'style: plain-1'; see community/.ai/spec/SPEC_GUIDE.md 'Writing Style'`,
     ])
+  })
+
+  it('reads the links of a design with an x-topic, and not of a design without one', () => {
+    const site = withOpenSpecRoot(testSiteConfig())
+    const openspec: SpecRefsConfig = { contentRoot: site.contentRoot, docs: site.docs, specs: site.specs }
+    const root = repo({
+      ...ARCHIVE_FILES,
+      'spec/a.spec.md': spec('Short.\n', 'targets:\n  - ../src/A.kt'),
+      'openspec/changes/archive/2026-11-20-one-channel/design.md': '# The host keeps one channel\n\nSee [the gone design](../2026-11-19-gone/design.md).\n',
+      // a design without an x-topic wrote its links for the folder of the active change
+      'openspec/changes/archive/2026-11-22-no-heading/design.md': 'See [the decisions](../../docs/decisions/gone.md).\n',
+    })
+    const { proseDocs, findings } = specRefFindings(openspec, root)
+    assert.deepEqual(proseDocs, ['docs/guides/guide.md', 'openspec/changes/archive/2026-11-20-one-channel/design.md'])
+    assert.deepEqual(findings, [`openspec/changes/archive/2026-11-20-one-channel/design.md:3: link: '../2026-11-19-gone/design.md' points to a missing file`])
   })
 
   it('reports a scan that finds no spec', () => {

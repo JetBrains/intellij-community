@@ -75,6 +75,12 @@ export function specTestFiles(
 /** The file name of a spec under an OpenSpec root: `<root>/specs/<capability>/spec.md`. */
 export const OPENSPEC_SPEC_FILE = 'spec.md'
 
+/** The archive folder of an OpenSpec root, relative to the root: `<root>/changes/archive/<change-id>/`. */
+export const OPENSPEC_ARCHIVE_DIR = 'changes/archive'
+
+/** The file name of the design of a change: `<root>/changes/archive/<change-id>/design.md` is a decision document. */
+export const OPENSPEC_DESIGN_FILE = 'design.md'
+
 /** The part of `SiteConfig.specs` that a spec id needs. */
 export interface SpecRootsConfig {
   roots: string[]
@@ -101,6 +107,22 @@ export function specIdOfRepoPath(specs: SpecRootsConfig, repoPath: string): stri
     const prefix = root === '' ? '' : `${root}/`
     if (repoPath.startsWith(prefix)) {
       return repoPath.slice(prefix.length, -specs.suffix.length)
+    }
+  }
+  return null
+}
+
+/**
+ * The change id of the content-relative `path` when it names the design of an archived change of an OpenSpec root,
+ * `<root>/changes/archive/<change-id>/design.md`, or null.
+ */
+export function archiveDesignChangeId(contentRoot: string, specs: Pick<SpecRootsConfig, 'openspec'>, path: string): string | null {
+  const repoPath = resolveRepoPath(contentRoot, '', path)
+  for (const root of specs.openspec?.roots ?? []) {
+    const prefix = `${root}/${OPENSPEC_ARCHIVE_DIR}/`
+    const slash = repoPath.indexOf('/', prefix.length)
+    if (repoPath.startsWith(prefix) && slash > prefix.length && repoPath.slice(slash + 1) === OPENSPEC_DESIGN_FILE) {
+      return repoPath.slice(prefix.length, slash)
     }
   }
   return null

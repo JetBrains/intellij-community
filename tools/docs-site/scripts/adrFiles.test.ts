@@ -1,12 +1,15 @@
 import assert from 'node:assert/strict'
 import { describe, it } from 'node:test'
-import { checkDecisionReferences, checkDecisionRecords, type DecisionConfig, parseDecisionFileName, parseDecisionRecord, readDecisionRecords } from './adrFiles.ts'
+import { checkDecisionReferences, checkDecisionRecords, type DecisionConfig, parseDecisionFileName, parseDecisionRecord, readArchiveDesigns, readDecisionRecords } from './adrFiles.ts'
 import { temporaryTree } from './tempTree.ts'
 
 const NUMBERED = '---\ntopic: testing\n---\n\n# 12. The lane is a module\n\nDate: 2026-09-01\n\n## Status\n\nAccepted.\n'
 const DATED = '---\ntopic: testing\n---\n\n# A lease prefers the warm slot\n\nDate: 2026-10-12\n\n## Status\n\nAccepted.\n'
 
 const DECISION_FOLDERS = ['plugins/air/docs/decisions', 'community/tools/vm/docs/decisions']
+const OPENSPEC_ROOT = 'plugins/air/openspec'
+const ARCHIVE = `${OPENSPEC_ROOT}/changes/archive`
+const DESIGN = '# The host keeps one channel\n\n## Context\n\nThe host keeps one channel.\n'
 
 function config(allowDuplicateNumbers: string[] = []): DecisionConfig {
   return {
@@ -19,6 +22,7 @@ function config(allowDuplicateNumbers: string[] = []): DecisionConfig {
       hiddenTopic: null,
       allowDuplicateNumbers,
     },
+    specs: { roots: [], suffix: '.spec.md', style: null, templateSections: null, openspec: { roots: [OPENSPEC_ROOT], templateSections: [] } },
   }
 }
 
@@ -136,5 +140,67 @@ describe('the references', () => {
       'plugins/air/spec/a.spec.md:2: "ADR 0012" is ambiguous: 2 records take the number; link the record',
       'plugins/air/spec/a.spec.md:4: "ADR 0012" is ambiguous: 2 records take the number; link the record',
     ])
+  })
+})
+
+describe('the designs of the archived changes', () => {
+  it('are the design files of the archive folders, with the topic and the old ids of .openspec.yaml', () => {
+    const root = repo({
+      [`${ARCHIVE}/2026-11-20-one-channel/design.md`]: DESIGN,
+      [`${ARCHIVE}/2026-11-20-one-channel/.openspec.yaml`]: 'schema: spec-driven\ncreated: 2026-11-20\nx-topic: testing\nx-adr: ["0012", "2026-10-12-a-lease-prefers-the-warm-slot"]\n',
+      [`${ARCHIVE}/2026-11-21-no-design/proposal.md`]: '## Why\n',
+      [`${ARCHIVE}/2026-11-22-no-topic/design.md`]: DESIGN,
+    })
+    assert.deepStrictEqual(readArchiveDesigns(config(), root).map(({ id, date, slug, topic, adr }) => ({ id, date, slug, topic, adr })), [
+      { id: '2026-11-20-one-channel', date: '2026-11-20', slug: 'one-channel', topic: 'testing', adr: ['0012', '2026-10-12-a-lease-prefers-the-warm-slot'] },
+      { id: '2026-11-22-no-topic', date: '2026-11-22', slug: 'no-topic', topic: null, adr: [] },
+    ])
+  })
+
+  it('reject a folder name without a calendar date and a topic that the site does not name', () => {
+    const root = repo({
+      [`${ARCHIVE}/One-Channel/design.md`]: DESIGN,
+      [`${ARCHIVE}/2026-11-20-one-channel/design.md`]: DESIGN,
+      [`${ARCHIVE}/2026-11-20-one-channel/.openspec.yaml`]: 'x-topic: misc\n',
+    })
+    assert.throws(() => readArchiveDesigns(config(), root), (error: Error) => {
+      assert.match(error.message, /2 invalid archived change\(s\)/)
+      assert.match(error.message, /archive\/One-Channel\/design\.md: the folder of an archived change is YYYY-MM-DD-slug/)
+      assert.match(error.message, /archive\/2026-11-20-one-channel\/design\.md: "x-topic: misc" of \.openspec\.yaml is unknown; use one of testing/)
+      return true
+    })
+  })
+
+  it('answer a decision mention and a link to a design, and a dated record answers a mention too', () => {
+    const root = repo({
+      [`${DECISION_FOLDERS[1]}/2026-10-12-a-lease-prefers-the-warm-slot.md`]: DATED,
+      [`${ARCHIVE}/2026-11-20-one-channel/design.md`]: DESIGN,
+      [`${ARCHIVE}/2026-11-20-one-channel/.openspec.yaml`]: 'x-topic: testing\n',
+      // a design with a topic takes the link rule, and a design without one wrote its links for the active change
+      [`${ARCHIVE}/2026-11-21-topic-links/design.md`]: '## Context\n\nSee [the channel](../2026-11-19-gone/design.md).\n',
+      [`${ARCHIVE}/2026-11-21-topic-links/.openspec.yaml`]: 'x-topic: testing\n',
+      [`${ARCHIVE}/2026-11-22-old-links/design.md`]: '## Context\n\nSee [the channel](../archive/2026-11-20-one-channel/design.md).\n',
+      'plugins/air/native/src/host.rs': [
+        '// the decision 2026-11-20-one-channel keeps one channel',
+        '// the decision 2026-10-12-a-lease-prefers-the-warm-slot still answers',
+        '// Decision 2026-11-19-gone names no change',
+      ].join('\n'),
+      'plugins/air/spec/a.spec.md': [
+        'See [the channel](../openspec/changes/archive/2026-11-20-one-channel/design.md).',
+        'See [a gone design](../openspec/changes/archive/2026-11-19-gone/design.md) and the decision 2026-11-18-gone-too.',
+        '```',
+        'decision 2026-01-01-an-example inside a fence',
+        '```',
+      ].join('\n'),
+    })
+    const designs = readArchiveDesigns(config(), root)
+    const findings = checkDecisionReferences(readDecisionRecords(config(), root), config(), root, designs).map(finding => `${finding.path}:${finding.line}: ${finding.message}`)
+    assert.deepStrictEqual(findings, [
+      'plugins/air/native/src/host.rs:3: "Decision 2026-11-19-gone" names no archived change with a design and no dated decision record',
+      `${ARCHIVE}/2026-11-21-topic-links/design.md:3: the link "../2026-11-19-gone/design.md" names no design of an archived change`,
+      'plugins/air/spec/a.spec.md:2: "decision 2026-11-18-gone-too" names no archived change with a design and no dated decision record',
+      'plugins/air/spec/a.spec.md:2: the link "../openspec/changes/archive/2026-11-19-gone/design.md" names no design of an archived change',
+    ])
+    assert.throws(() => checkDecisionRecords(config(), root), /4 stale reference\(s\)/)
   })
 })

@@ -44,7 +44,7 @@ time.
 | `contentRoot` | The directory that each doc path is relative to. The build site uses the repository root, `''`. |
 | `outDir` | The output directory of `pnpm run build`, relative to the repository root. |
 | `docs` | The doc folders: home, notes, guides, explainers, diagrams, glossary, decisions, the extra docs, and the skip names. |
-| `specs` | The spec roots, the file suffix, the `plain-1` style or null, and the template sections. |
+| `specs` | The spec roots, the file suffix, the `plain-1` style or null, the template sections, and the OpenSpec roots. |
 | `sourceRoots` | The folders that a `source:` reference and a spec target can name. |
 | `github` | The GitHub base of a source link and the path of the content root in the repository. |
 | `themeStorageKey` | The localStorage key of the theme. The inline script of `index.html` uses the same key. |
@@ -54,6 +54,31 @@ time.
 | `prose` | The sentence limit, the card limit, the history pattern, and the guide that a finding names. |
 | `vocabulary` | The term rules of the vocabulary check, or null. |
 | `launchPicker` | The launch picker at `/launch`, or null. |
+
+### The decision documents
+
+A decision document is a record of a folder of `decisions.folders`, or the design of an archived change of an
+OpenSpec root of `specs.openspec`. The design is `<root>/changes/archive/<change-id>/design.md`. The change id is the
+name of the archive folder, `YYYY-MM-DD-<slug>`. A folder without a `design.md` gives no decision.
+
+The `.openspec.yaml` file of the change gives the fields of the decision:
+
+| Field | What it gives |
+| --- | --- |
+| `x-topic` | The topic, one of `decisions.topics`. A design without it shows in the list with no topic filter, and in the group "Other changes" of the section tree. |
+| `x-adr` | The ids of the old records of the decision, optional. |
+
+The date of the design is the date prefix of its folder. Its title is its H1. A generic H1, `# Design` or
+`# Proposal`, names no decision. Then the title is the H1 of the `proposal.md` of the same folder, else the slug. An
+archived change is applied, so the status of its design is accepted. The route slug of the design is its change id. A
+design wins over a record of the same slug.
+
+A source names a decision as `decision <change-id>`. Until the switch of a root deletes the old folder, the id of a
+dated record also answers such a mention.
+
+The checks read a design of a change with an `x-topic` as a decision. A design without an `x-topic` is the design of
+a change of its time. Its relative links name the folder of the active change, because the archive moved the file one
+folder down. So the prose rules and the link rules skip it. The vocabulary check reads each design.
 
 ### The model provider
 
@@ -146,12 +171,13 @@ node ../../community/tools/docs-site/scripts/vocabulary.ts site.config.ts
 | Check | It fails on |
 | --- | --- |
 | `diagramFiles` | A grammar or grid error, a fence that names no diagram, and a diagram that no fence shows. |
-| `adrFiles` | A record name of another shape, a new number, a duplicate, a bad H1 or `Date:` line, and a dead link or mention. |
-| `proseLint` | A long sentence, a history mark, and a long card, in the explainers and the diagram cards. |
-| `specRefs` | A dead spec target, `[@test]` link, `.md` link, or anchor, and a break of the `plain-1` rules. |
+| `adrFiles` | A record name of another shape, a new number, a duplicate, a bad H1 or `Date:` line, and a dead link or mention. An archive folder name without a date, an unknown `x-topic`, a `decision <change-id>` mention that names no design, and a dead link to a design. |
+| `proseLint` | A long sentence, a history mark, and a long card, in the explainers and the diagram cards. A long sentence and a history mark in a design with an `x-topic`. |
+| `specRefs` | A dead spec target, `[@test]` link, `.md` link, or anchor, and a break of the `plain-1` rules. The prose docs include each design with an `x-topic`. |
 | `vocabulary` | A term of the site table outside the docs and sections that allow it. |
 
-The doc harvest also fails on a record without a known status or a known topic. The `pnpm run check` script of a
+The doc harvest also fails on a record without a known status or a known topic, and on a design with an unknown
+`x-topic`. The `pnpm run check` script of a
 site runs these checks and its own checks. Then it runs the script tests of the site and of the kernel. Air does not run `specRefs` and `vocabulary`. `AirSpecReferencesTest` owns the Air spec
 references.
 

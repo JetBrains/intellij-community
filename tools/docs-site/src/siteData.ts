@@ -104,13 +104,13 @@ export interface SiteIndex {
 const indexes = new WeakMap<SiteData, SiteIndex>()
 
 /** The index of `data`. The site data module and `createSite` share one index per data object. */
-export function siteIndex(data: SiteData, config: Pick<SiteConfig, 'docs'>): SiteIndex {
+export function siteIndex(data: SiteData, config: Pick<SiteConfig, 'contentRoot' | 'docs' | 'specs'>): SiteIndex {
   const cached = indexes.get(data)
   if (cached !== undefined) {
     return cached
   }
   const docsRoot = `${config.docs.root}/`
-  const { decisionSlug } = decisionPaths(config.docs.decisions)
+  const { decisionSlug } = decisionPaths(config)
   const docByGuideSlug = new Map(
     data.docs
       .filter(doc => doc.path.startsWith(docsRoot) && !doc.path.includes('/decisions/') && doc.kind !== 'explainer')
@@ -123,7 +123,9 @@ export function siteIndex(data: SiteData, config: Pick<SiteConfig, 'docs'>): Sit
   const decisionDocs = data.docs
     .filter((doc): doc is DecisionDoc => doc.adr !== undefined)
     .sort((a, b) => adrOrderKey(b.adr).localeCompare(adrOrderKey(a.adr)) || b.path.localeCompare(a.path))
-  const decisionBySlug = new Map(decisionDocs.map(doc => [decisionSlug(doc.path), doc]))
+  // a design of an archived change wins over a record of the same slug: the design is the new home of the decision
+  const decisionBySlug = new Map([...decisionDocs.filter(doc => doc.adr.change === undefined), ...decisionDocs.filter(doc => doc.adr.change !== undefined)]
+    .map(doc => [decisionSlug(doc.path), doc]))
   const index: SiteIndex = {
     data,
     docsByPath: new Map(data.docs.map(doc => [doc.path, doc])),

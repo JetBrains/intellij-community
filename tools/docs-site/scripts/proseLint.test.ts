@@ -2,9 +2,9 @@ import assert from 'node:assert/strict'
 import { writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { describe, it } from 'node:test'
-import { checkDiagramProse, checkExplainerProse, checkProse, countWords, formatProseFinding, type ProseRule, readProseFindings } from './proseLint.ts'
+import { checkDecisionProse, checkDiagramProse, checkExplainerProse, checkProse, countWords, formatProseFinding, type ProseRule, readProseFindings } from './proseLint.ts'
 import { temporaryTree } from './tempTree.ts'
-import { testSiteConfig } from './testSiteConfig.ts'
+import { ARCHIVE_FILES, testSiteConfig, withOpenSpecRoot } from './testSiteConfig.ts'
 
 /** The limits of the Air site: an issue id and a "Since IJAI" with no number are history marks too. */
 const CONFIG = testSiteConfig({
@@ -134,5 +134,22 @@ describe('the prose gate', () => {
     writeFileSync(join(root, 'docs/explainers/y.md'), 'IJAI-1 moved it.\n')
     assert.deepStrictEqual(readProseFindings(CONFIG, root).findings.map(formatProseFinding), ['docs/explainers/y.md:1: history: "IJAI-1" in "IJAI-1 moved it."'])
     assert.throws(() => checkProse(CONFIG, root), /prose: 1 finding\(s\)[\s\S]*docs\/explainers\/y\.md:1: history/)
+  })
+})
+
+describe('the prose of a decision', () => {
+  it('takes the sentence limit and the history marks, and no count rule', () => {
+    const findings = checkDecisionProse('d/design.md', `## Context\n\n${words(26)}\n\nIJAI-1 moved it. The host reads 4 files.\n`, LIMITS)
+    assert.deepStrictEqual(rules(findings), ['sentence-length', 'history'])
+  })
+
+  it('reads a design with an x-topic, and not a design without one', () => {
+    const root = air({ ...ARCHIVE_FILES, 'openspec/changes/archive/2026-11-22-no-heading/design.md': `${words(30)}\n` })
+    const config = withOpenSpecRoot(CONFIG)
+    assert.equal(checkProse(config, root), 1)
+    writeFileSync(join(root, 'openspec/changes/archive/2026-11-20-one-channel/design.md'), `# The host keeps one channel\n\n${words(26)}\n`)
+    assert.deepStrictEqual(readProseFindings(config, root).findings.map(finding => `${finding.path}:${finding.line}: ${finding.rule}`), [
+      'openspec/changes/archive/2026-11-20-one-channel/design.md:3: sentence-length',
+    ])
   })
 })

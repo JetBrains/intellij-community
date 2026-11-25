@@ -1,7 +1,11 @@
 // The metadata of a bundled doc: the ADR status, date and topic, the guide group, and the note state (ADR 0199).
 // Shared by scripts/harvestDocs.ts (node) and the site (browser), so it imports nothing from node. The topics and the
 // guide groups come from the site config (siteConfig.ts).
+//
+// A decision document is a decision record of a decision folder, or the design of an archived change of an OpenSpec
+// root (`archiveDesignMeta`).
 
+import { withoutFencedBlocks } from './fence.ts'
 import type { LabeledId } from './siteConfig.ts'
 
 /** A topic id of the site config (`decisions.topics`). */
@@ -34,9 +38,12 @@ export interface AdrMeta {
   statusText: string
   /** The `Date:` line, which a dated record also carries in its file name, or null when a numbered record has none. */
   date: string | null
-  topic: AdrTopic
+  /** The topic, or null for the design of an archived change whose `.openspec.yaml` names no `x-topic`. */
+  topic: AdrTopic | null
   /** The content-root-relative path of the record that supersedes this one, or null. */
   supersededBy: string | null
+  /** The change id of the design of an archived OpenSpec change, or absent for a record of a decision folder. */
+  change?: string
 }
 
 /**
@@ -147,4 +154,37 @@ export function parseAdrMeta(path: string, body: string, topic: string | undefin
     topic,
     supersededBy: superseding === null ? null : `${folder}${superseding}`,
   }
+}
+
+/** An H1 that names the kind of the file, not its decision. */
+const GENERIC_HEADING = /^(?:design|proposal)$/i
+
+/** The H1 of a markdown body outside the fenced blocks, or null when the body has none or a generic one. */
+function specificHeading(body: string): string | null {
+  const heading = /^#\s+(.+?)\s*$/m.exec(withoutFencedBlocks(body))?.[1]
+  return heading === undefined || GENERIC_HEADING.test(heading) ? null : heading
+}
+
+/**
+ * The title of the design of an archived change: the H1 of the design, else the H1 of the `proposal.md` of the same
+ * folder, else the slug of the change. A generic H1, `# Design` or `# Proposal`, names no decision, so the title skips it.
+ */
+export function archiveDesignTitle(design: string, proposal: string | null, slug: string): string {
+  return specificHeading(design) ?? (proposal === null ? null : specificHeading(proposal)) ?? slug
+}
+
+/**
+ * The metadata of the design of the archived change `change`. The date is the date prefix of the folder name, and
+ * the topic is the `x-topic` of the change. An archived change is applied, so its status is accepted. Throws with the
+ * path when the folder name has no date or the topic is not one of `topics`, so the harvest fails on a malformed change.
+ */
+export function archiveDesignMeta(path: string, change: string, topic: string | null, topics: readonly LabeledId[]): AdrMeta {
+  const date = /^(\d{4}-\d{2}-\d{2})-/.exec(change)?.[1]
+  if (date === undefined) {
+    throw new Error(`harvest: ${path}: the name of an archived change starts with a date, YYYY-MM-DD-`)
+  }
+  if (topic !== null && !isLabeledId(topics, topic)) {
+    throw new Error(`harvest: ${path}: "x-topic: ${topic}" of .openspec.yaml is unknown; use one of ${topics.map(t => t.id).join(', ')}`)
+  }
+  return { number: null, status: 'accepted', statusText: '', date, topic, supersededBy: null, change }
 }

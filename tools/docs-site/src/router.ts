@@ -35,14 +35,14 @@ interface InstalledRoutes {
 let installed: InstalledRoutes | null = null
 
 /** Installs the route table of the site. `createSite` calls it once, before the first render. */
-export function installRoutes(config: Pick<SiteConfig, 'base' | 'docs' | 'launchPicker'>, extensions: readonly RouteExtension[]): void {
+export function installRoutes(config: Pick<SiteConfig, 'base' | 'contentRoot' | 'docs' | 'launchPicker' | 'specs'>, extensions: readonly RouteExtension[]): void {
   const basePath = config.base.endsWith('/') ? config.base : `${config.base}/`
   const table = siteRouteTable(config, extensions)
   installed = {
     table,
     basePrefix: basePath === '/' ? '' : basePath.slice(0, -1),
     heads: new Set(table.heads()),
-    decisions: decisionPaths(config.docs.decisions),
+    decisions: decisionPaths(config),
   }
 }
 

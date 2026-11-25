@@ -9,18 +9,23 @@
 // fields of the diagrams (`docs.diagrams`). It does not read the frontmatter, a fenced block, a table row, or a
 // heading. A code span counts as one word.
 //
+// The gate also reads the design of each archived OpenSpec change whose `.openspec.yaml` names an `x-topic`: a
+// decision of the site. A decision takes the sentence limit and the history marks. A count in a decision is a fact of
+// its date, so the count rule does not apply. A design with no `x-topic` is a change design of its time, and the
+// gate does not read it.
+//
 // The check is one owner for three callers: the `check` script of a site, the gate of a site (the Air JUnit gate
 // runs on bun), and the harvest. It throws with every finding.
 
 import { existsSync, readdirSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { withoutFencedBlocks } from './fence.ts'
-import { contentDir, isMainModule, repoRoot, runCheck } from './paths.ts'
+import { contentDir, isMainModule, openspecArchiveDesigns, posixRelative, repoRoot, runCheck } from './paths.ts'
 import type { SiteConfig } from './siteConfig.ts'
 import { parseYaml } from './yamlCompat.ts'
 
 /** The part of the site config that the check reads. */
-export type ProseConfig = Pick<SiteConfig, 'contentRoot' | 'docs' | 'prose'>
+export type ProseConfig = Pick<SiteConfig, 'contentRoot' | 'docs' | 'prose' | 'specs'>
 
 /** The limits of the check: `prose` of the site config. */
 export type ProseLimits = SiteConfig['prose']
@@ -134,8 +139,8 @@ function excerptOf(sentence: string): string {
   return words.length > EXCERPT_WORDS ? `${words.slice(0, EXCERPT_WORDS).join(' ')} ...` : sentence
 }
 
-/** The findings of one block of prose: a paragraph, a list item, or a YAML field. */
-function checkBlock(block: LinedText, limits: ProseLimits, report: (line: number, rule: ProseRule, excerpt: string) => void): void {
+/** The findings of one block of prose: a paragraph, a list item, or a YAML field. `counts` false skips the count rule. */
+function checkBlock(block: LinedText, limits: ProseLimits, report: (line: number, rule: ProseRule, excerpt: string) => void, counts: boolean = true): void {
   const prose = normalize(block)
   const history = historyPattern(limits)
   for (const sentence of splitSentences(prose)) {
@@ -147,7 +152,7 @@ function checkBlock(block: LinedText, limits: ProseLimits, report: (line: number
     if (marks.length > 0) {
       report(sentence.line, 'history', `${marks.join(', ')} in "${excerptOf(sentence.text)}"`)
     }
-    const count = ROTTING_COUNT.exec(sentence.text)
+    const count = counts ? ROTTING_COUNT.exec(sentence.text) : null
     if (count !== null) {
       report(sentence.line, 'rotting-count', `"${count[0]}" in "${excerptOf(sentence.text)}"`)
     }
@@ -203,6 +208,15 @@ export function checkExplainerProse(path: string, source: string, limits: ProseL
   const findings: ProseFinding[] = []
   for (const block of explainerBlocks(source)) {
     checkBlock(block, limits, (line, rule, excerpt) => findings.push({ path, line, field: null, rule, excerpt }))
+  }
+  return findings
+}
+
+/** The findings of one decision: the design of an archived change. The count rule does not apply. */
+export function checkDecisionProse(path: string, source: string, limits: ProseLimits): ProseFinding[] {
+  const findings: ProseFinding[] = []
+  for (const block of explainerBlocks(source)) {
+    checkBlock(block, limits, (line, rule, excerpt) => findings.push({ path, line, field: null, rule, excerpt }), false)
   }
   return findings
 }
@@ -327,7 +341,7 @@ function markdownFiles(dir: string, suffix: string): string[] {
   return existsSync(dir) ? readdirSync(dir).filter(entry => entry.endsWith(suffix)).sort() : []
 }
 
-/** Every finding of the explainers and the diagram cards of the site. */
+/** Every finding of the explainers, the diagram cards, and the designs with an `x-topic` of the site. */
 export function readProseFindings(config: ProseConfig, root: string = repoRoot): { files: number, findings: ProseFinding[] } {
   const content = contentDir(config, root)
   const { explainers: explainersDir, diagrams: diagramsDir } = config.docs
@@ -342,10 +356,14 @@ export function readProseFindings(config: ProseConfig, root: string = repoRoot):
     const path = `${diagramsDir}/${entry}`
     findings.push(...checkDiagramProse(path, readFileSync(join(content, path), 'utf8'), config.prose))
   }
-  return { files: explainers.length + diagrams.length, findings }
+  const decisions = openspecArchiveDesigns(config, root).filter(design => design.topic !== null)
+  for (const design of decisions) {
+    findings.push(...checkDecisionProse(posixRelative(content, design.file), readFileSync(design.file, 'utf8'), config.prose))
+  }
+  return { files: explainers.length + diagrams.length + decisions.length, findings }
 }
 
-/** Reads the explainers and the diagram cards. Throws with every finding. Returns the number of files read. */
+/** Reads the explainers, the diagram cards, and the decisions. Throws with every finding. Returns the number of files read. */
 export function checkProse(config: ProseConfig, root: string = repoRoot): number {
   const { files, findings } = readProseFindings(config, root)
   if (findings.length > 0) {

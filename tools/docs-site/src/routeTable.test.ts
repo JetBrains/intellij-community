@@ -3,9 +3,14 @@
 
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
-import { createRouteTable, kernelRouteEntries, type LaunchRoute, pathText, routeBuilder, siteRouteTable, text, type KernelRoute } from './routeTable.ts'
+import { createRouteTable, decisionPaths, kernelRouteEntries, type LaunchRoute, pathText, routeBuilder, siteRouteTable, text, type KernelRoute } from './routeTable.ts'
 
-const CONFIG = { docs: { decisions: ['docs/decisions'] }, launchPicker: { defaultName: 'IDEA', explainChapter: null } } as Parameters<typeof kernelRouteEntries>[0]
+const CONFIG = {
+  contentRoot: 'plugins/air',
+  docs: { decisions: ['docs/decisions'] },
+  specs: { openspec: { roots: ['plugins/air/openspec'] } },
+  launchPicker: { defaultName: 'IDEA', explainChapter: null },
+} as Parameters<typeof kernelRouteEntries>[0]
 const table = createRouteTable(kernelRouteEntries(CONFIG))
 const parse = (input: string, basePrefix = '') => table.parse(input, basePrefix)
 const build = (route: KernelRoute | LaunchRoute, basePrefix = '') => table.build(route, basePrefix)
@@ -46,6 +51,7 @@ const ALIASES: readonly (readonly [string, string])[] = [
   ['/doc/docs%2Fdecisions%2F0197-a.md', '/decisions/0197-a'],
   ['/doc/docs%2Fdecisions%2F0197-a.md/context', '/decisions/0197-a/context'],
   ['/doc/docs/decisions/0197-a.md', '/decisions/0197-a'],
+  ['/doc/openspec%2Fchanges%2Farchive%2F2026-11-20-one-channel%2Fdesign.md', '/decisions/2026-11-20-one-channel'],
   ['/decisions?status=bogus', '/decisions'],
   ['/decisions/group-x/y', '/decisions/group-x'],
   ['/doc/README.md/x/y', '/doc/README.md/x'],
@@ -142,4 +148,15 @@ test('a path value keeps its slashes in the build, and any value parses back', (
   assert.equal(zips.build(zip), '/zip?zip=ui_lane_test/iter-1/A+Test/b+c.zip&note=x%2Fy')
   assert.deepEqual(zips.parse('/zip?zip=ui_lane_test/iter-1/A+Test/b+c.zip&note=x%2Fy'), zip)
   assert.deepEqual(zips.parse('/zip?zip=ui_lane_test%2Fiter-1%2FA%20Test%2Fb%20c.zip&note=x/y'), zip)
+})
+
+test('the design of an archived change is a decision path, and its slug is the change id', () => {
+  const { isDecisionPath, decisionSlug } = decisionPaths(CONFIG)
+  assert.equal(isDecisionPath('docs/decisions/0197-a.md'), true)
+  assert.equal(decisionSlug('docs/decisions/0197-a.md'), '0197-a')
+  assert.equal(isDecisionPath('openspec/changes/archive/2026-11-20-one-channel/design.md'), true)
+  assert.equal(decisionSlug('openspec/changes/archive/2026-11-20-one-channel/design.md'), '2026-11-20-one-channel')
+  assert.equal(isDecisionPath('openspec/changes/archive/2026-11-20-one-channel/proposal.md'), false)
+  assert.equal(isDecisionPath('openspec/changes/2026-11-20-active/design.md'), false)
+  assert.equal(isDecisionPath('openspec/changes/archive/design.md'), false)
 })

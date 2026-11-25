@@ -1,6 +1,7 @@
-// Decisions index (ADR 0199 of Air): one row per decision record, newest first. The status and the
-// topic filters live in the query, so a filtered list is a link. With no topic in the query, the page
-// hides the records of the hidden topic of the site config: the docs-site records describe the site, not its subject.
+// Decisions index (ADR 0199 of Air): one row per decision, newest first. A decision is a record of a decision folder or
+// the design of an archived OpenSpec change. The status and the topic filters live in the query, so a filtered list
+// is a link. With no topic in the query, the page hides the records of the hidden topic of the site config: the
+// docs-site records describe the site, not its subject. A design without a topic shows only with no topic filter.
 
 import { useMemo, useState } from 'react'
 import { Button } from '../components/ui/button'
@@ -31,8 +32,8 @@ function topicItems(): { value: string, label: string }[] {
   ]
 }
 
-function topicLabel(id: string): string {
-  return topics().find(topic => topic.id === id)?.label ?? id
+function topicLabel(id: string | null): string {
+  return id === null ? '' : topics().find(topic => topic.id === id)?.label ?? id
 }
 
 function matchesTopic(doc: DecisionDoc, topic: string | null): boolean {

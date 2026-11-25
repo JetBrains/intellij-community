@@ -4,7 +4,7 @@ import { type CheckRun, createCheckRun } from './checkRun.ts'
 import { harvestDocs } from './harvestDocs.ts'
 import type { ModelProvider } from './modelProvider.ts'
 import { temporaryTree } from './tempTree.ts'
-import { testSiteConfig } from './testSiteConfig.ts'
+import { ARCHIVE_FILES, testSiteConfig, withOpenSpecRoot } from './testSiteConfig.ts'
 
 const DIAGRAM = `id: flow
 title: The flow
@@ -79,6 +79,45 @@ describe('the doc harvest', () => {
     assert.equal('targetRef' in diagram.nodes[1], false)
     assert.deepStrictEqual(diagram.steps.map(step => step.flowRef), [null])
     assert.deepStrictEqual(model.bundled, ['build/BUILD.bazel', 'src/Main.kt'])
+  })
+
+  it('reads the design of each archived change as a decision, with the date and the topic of the change', () => {
+    const root = temporaryTree('harvest-docs-', { ...FILES, ...ARCHIVE_FILES })
+    const harvest = harvestDocs(withOpenSpecRoot(testSiteConfig()), provider(), { root })
+    const designs = harvest.docs.filter(doc => doc.adr?.change !== undefined)
+    assert.deepStrictEqual(designs.map(doc => ({ path: doc.path, title: doc.title, kind: doc.kind, adr: doc.adr })), [
+      {
+        path: 'openspec/changes/archive/2026-11-20-one-channel/design.md',
+        title: 'The host keeps one channel',
+        kind: 'adr',
+        adr: { number: null, status: 'accepted', statusText: '', date: '2026-11-20', topic: 'docs-site', supersededBy: null, change: '2026-11-20-one-channel' },
+      },
+      // a generic H1 takes the H1 of the proposal, and a design with no H1 and no proposal takes the slug
+      {
+        path: 'openspec/changes/archive/2026-11-21-a-view-frame/design.md',
+        title: 'A view keeps its frame',
+        kind: 'adr',
+        adr: { number: null, status: 'accepted', statusText: '', date: '2026-11-21', topic: null, supersededBy: null, change: '2026-11-21-a-view-frame' },
+      },
+      {
+        path: 'openspec/changes/archive/2026-11-22-no-heading/design.md',
+        title: 'no-heading',
+        kind: 'adr',
+        adr: { number: null, status: 'accepted', statusText: '', date: '2026-11-22', topic: null, supersededBy: null, change: '2026-11-22-no-heading' },
+      },
+    ])
+    // the designs follow the decision records and come before the extra docs
+    assert.deepStrictEqual(harvest.docs.map(doc => doc.path).slice(-5), [
+      'docs/decisions/0001-a-record.md',
+      ...designs.map(doc => doc.path),
+      'README.md',
+    ])
+  })
+
+  it('names the topics of the config for a design with an unknown x-topic', () => {
+    const root = temporaryTree('harvest-docs-', { ...FILES, ...ARCHIVE_FILES, 'openspec/changes/archive/2026-11-22-no-heading/.openspec.yaml': 'x-topic: misc\n' })
+    assert.throws(() => harvestDocs(withOpenSpecRoot(testSiteConfig()), provider(), { root }),
+      /2026-11-22-no-heading\/design\.md: "x-topic: misc" of \.openspec\.yaml is unknown; use one of docs-site/)
   })
 
   it('rejects a target that the site cannot resolve', () => {

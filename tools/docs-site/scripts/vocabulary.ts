@@ -1,6 +1,7 @@
 // The vocabulary check of a site: a term that the docs of the site must not use, with the term to use instead. The
-// rules are `vocabulary` of the site config. The check reads the docs that the harvest reads and the specs, by line
-// and by section, and the title, text, detail and caption fields of the diagrams.
+// rules are `vocabulary` of the site config. The check reads the docs that the harvest reads, with the designs of the
+// archived OpenSpec changes, and the specs, by line and by section, and the title, text, detail and caption fields of
+// the diagrams.
 //
 // A match is the term, or the term with an `s`, as a whole word, case-insensitive. The check skips the frontmatter,
 // the fenced blocks, the HTML comments, the code spans, the link targets and the URLs. A rule can allow its term in a
@@ -13,7 +14,7 @@ import { existsSync, readdirSync, readFileSync } from 'node:fs'
 import { join, posix } from 'node:path'
 import { headingText, slugify } from './explainerDoc.ts'
 import { withoutFencedBlocks } from './fence.ts'
-import { contentDir, isMainModule, posixRelative, repoRoot, runCheck, specFiles } from './paths.ts'
+import { contentDir, isMainModule, openspecArchiveDesigns, posixRelative, repoRoot, runCheck, specFiles } from './paths.ts'
 import { type DiagramFieldName, diagramFields } from './proseLint.ts'
 import type { SiteConfig, VocabularyRule } from './siteConfig.ts'
 import { requirementGroup } from './sourcePaths.ts'
@@ -251,8 +252,8 @@ function entries(dir: string, suffix: string): string[] {
 }
 
 /**
- * The files of the site that the check reads: the docs that the doc harvest reads, the specs, and the diagrams. Each
- * file is read once, in this order.
+ * The files of the site that the check reads: the docs that the doc harvest reads, the designs of the archived changes,
+ * the specs, and the diagrams. Each file is read once, in this order.
  */
 export function readVocabularyTexts(config: Omit<VocabularyConfig, 'vocabulary'>, root: string = repoRoot): VocabularyText[] {
   const content = contentDir(config, root)
@@ -271,6 +272,7 @@ export function readVocabularyTexts(config: Omit<VocabularyConfig, 'vocabulary'>
   if (glossary !== null) {
     docs.push(glossary)
   }
+  docs.push(...openspecArchiveDesigns(config, root).map(({ file }) => posixRelative(content, file)))
   docs.push(...extraReadmes)
   docs.push(...specFiles(config, root).map(({ file }) => posixRelative(content, file)))
 

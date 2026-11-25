@@ -11,16 +11,25 @@
 // use, on an H1 or a `Date:` line that disagrees with the file name, on a link to a record that does not exist, and
 // on an `ADR NNNN` mention that names no numbered record. A number of `allowDuplicateNumbers` can name two records;
 // a bare mention of such a number is ambiguous, and a link to the record is not.
+//
+// The design of an archived change of an OpenSpec root (`specs.openspec` of the site config) is a decision document
+// too: `<root>/changes/archive/<change-id>/design.md`. The change id is the name of the archive folder, and a source
+// names the decision as `decision <change-id>`. The check fails on a folder name without a calendar date and a
+// lower-case slug, on an `x-topic` of `.openspec.yaml` that is not a topic of the site, on a `decision <change-id>`
+// mention that names no design and no dated record, and on a link to a `design.md` of an archive folder that does not
+// exist. A file of the archive wrote its relative links for the folder of the active change, and the archive moved it
+// one folder down. So in the archive, only the design of a change with an `x-topic` takes the link rule.
 
 import { existsSync, readdirSync, readFileSync } from 'node:fs'
-import { dirname, join, relative, resolve, sep } from 'node:path'
+import { basename, dirname, join, relative, resolve, sep } from 'node:path'
 import { withoutFencedBlocks } from './fence.ts'
-import { isMainModule, repoRoot, runCheck, walkFiles } from './paths.ts'
+import { isMainModule, openspecArchiveDesigns, openspecArchiveDirs, type OpenSpecArchiveDesign, posixRelative, repoRoot, runCheck, walkFiles } from './paths.ts'
 import type { SiteConfig } from './siteConfig.ts'
 import { readSourceFile } from './sourceCache.ts'
+import { OPENSPEC_DESIGN_FILE } from './sourcePaths.ts'
 
 /** The part of the site config that the check reads. */
-export type DecisionConfig = Pick<SiteConfig, 'decisions'>
+export type DecisionConfig = Pick<SiteConfig, 'decisions' | 'specs'>
 
 /** The directories that a walk of a reference root does not enter: tool outputs, dependencies, test data, and images. */
 const SKIP_DIRS: ReadonlySet<string> = new Set(['node_modules', '.git', 'generated', 'target', 'testData', 'images', 'test-results', 'out', 'dist'])
@@ -164,10 +173,37 @@ export function readDecisionRecords(config: DecisionConfig, root: string = repoR
   return records
 }
 
+/**
+ * The designs of the archived changes of the OpenSpec roots. Throws with every finding: a folder name without a
+ * calendar date and a lower-case slug, and an `x-topic` that is not one of `decisions.topics`.
+ */
+export function readArchiveDesigns(config: DecisionConfig, root: string = repoRoot): OpenSpecArchiveDesign[] {
+  const designs = openspecArchiveDesigns(config, root)
+  const errors: string[] = []
+  for (const design of designs) {
+    const path = posixRelative(root, design.file)
+    const name = DATED.exec(`${design.id}.md`)
+    if (name === null || !isCalendarDate(name[1])) {
+      errors.push(`${path}: the folder of an archived change is YYYY-MM-DD-slug, with a calendar date and a lower-case slug`)
+    }
+    if (design.topic !== null && !config.decisions.topics.some(topic => topic.id === design.topic)) {
+      errors.push(`${path}: "x-topic: ${design.topic}" of .openspec.yaml is unknown; use one of ${config.decisions.topics.map(topic => topic.id).join(', ')}`)
+    }
+  }
+  if (errors.length > 0) {
+    throw new Error(`decisions: ${errors.length} invalid archived change(s)\n${errors.join('\n')}`)
+  }
+  return designs
+}
+
 const LINK = /]\(<?([^)\s>]+?\.md)(?:#[^)\s>]*)?>?\)/g
 /** A markdown link with its text, for example `[ADR 0005](0005-a-record.md)`. */
 const TEXT_LINK = /\[([^\]]*)]\(<?([^)\s>]+?\.md)(?:#[^)\s>]*)?>?\)/g
 const MENTION = /\bADR\s+(\d{3,4})\b/g
+/** A mention of a decision by its id: `decision <change-id>`, or the id of a dated record. */
+const DECISION_MENTION = /\b[Dd]ecision\s+(\d{4}-\d{2}-\d{2}-[a-z0-9]+(?:-[a-z0-9]+)*)\b/g
+/** A quick test for a source file that may hold a `decision <id>` mention. */
+const DECISION_MENTION_HINT = /[Dd]ecision\s+\d{4}-/
 
 /** The source files whose comments cite a record. */
 const SOURCE_SUFFIXES: readonly string[] = ['.kt', '.java', '.ts', '.tsx', '.mjs', '.rs', '.bazel', '.bzl']
@@ -180,12 +216,18 @@ export interface DecisionReferenceFinding {
 }
 
 /**
- * The findings about the references under `decisions.referenceRoots`: a markdown link into a decision folder whose
- * target does not exist, and an `ADR NNNN` mention, in markdown or in a source comment, that names no numbered
- * record or names two. A mention that is the text of a link to a record with its number names that record. A fenced
- * block is not read, so a guide can show the shape of a name.
+ * The findings about the references under `decisions.referenceRoots`: a markdown link into a decision folder or to a
+ * design of an archive folder whose target does not exist, an `ADR NNNN` mention, in markdown or in a source comment,
+ * that names no numbered record or names two, and a `decision <change-id>` mention that names no design of `designs`
+ * and no dated record. A mention that is the text of a link to a record with its number names that record. A fenced block is not
+ * read, so a guide can show the shape of a name.
  */
-export function checkDecisionReferences(records: readonly DecisionRecord[], config: DecisionConfig, root: string = repoRoot): DecisionReferenceFinding[] {
+export function checkDecisionReferences(
+  records: readonly DecisionRecord[],
+  config: DecisionConfig,
+  root: string = repoRoot,
+  designs: readonly OpenSpecArchiveDesign[] = [],
+): DecisionReferenceFinding[] {
   const paths = new Set(records.map(record => record.path))
   const recordsByNumber = new Map<string, number>()
   for (const record of records) {
@@ -195,6 +237,11 @@ export function checkDecisionReferences(records: readonly DecisionRecord[], conf
   }
   const numbersByPath = new Map(records.filter(record => record.number !== null).map(record => [record.path, record.number]))
   const folders = config.decisions.folders.map(folder => resolve(root, folder))
+  const archives = openspecArchiveDirs(config, root)
+  const inArchive = (path: string): boolean => archives.some(archive => path.startsWith(archive + sep))
+  const topicDesigns = new Set(designs.filter(design => design.topic !== null).map(design => design.file))
+  // until the switch of a root deletes its decision folder, a dated record answers a `decision <id>` mention too
+  const decisionIds = new Set([...designs.map(design => design.id), ...records.filter(record => record.date !== null).map(record => record.id)])
   const skipDirs = new Set([...SKIP_DIRS, ...config.decisions.skipDirs])
   const findings: DecisionReferenceFinding[] = []
   for (const referenceRoot of config.decisions.referenceRoots) {
@@ -207,10 +254,11 @@ export function checkDecisionReferences(records: readonly DecisionRecord[], conf
       // a site scan reads the same sources, so the text of a source file comes from the shared read cache
       const source = markdown ? readFileSync(file, 'utf8') : readSourceFile(file)
       // a source file has mentions only, and most source files have none
-      if (!markdown && !source.includes('ADR')) {
+      if (!markdown && !source.includes('ADR') && !DECISION_MENTION_HINT.test(source)) {
         return
       }
       const lines = (markdown ? withoutFencedBlocks(source) : source).split('\n')
+      const checksDesignLinks = !inArchive(file) || topicDesigns.has(file)
       lines.forEach((text, index) => {
         // The text of a link to a numbered record, as [start, end, number of the target].
         const linkedTexts = markdown
@@ -229,6 +277,11 @@ export function checkDecisionReferences(records: readonly DecisionRecord[], conf
             findings.push({ path, line: index + 1, message: `"${mention[0]}" is ambiguous: ${count} records take the number; link the record` })
           }
         }
+        for (const mention of text.matchAll(DECISION_MENTION)) {
+          if (!decisionIds.has(mention[1])) {
+            findings.push({ path, line: index + 1, message: `"${mention[0]}" names no archived change with a design and no dated decision record` })
+          }
+        }
         if (!markdown) {
           return
         }
@@ -238,6 +291,9 @@ export function checkDecisionReferences(records: readonly DecisionRecord[], conf
           if (folder !== undefined && !paths.has(posix(relative(root, target))) && !existsSync(target)) {
             findings.push({ path, line: index + 1, message: `the link "${link[1]}" names no decision record` })
           }
+          else if (checksDesignLinks && basename(target) === OPENSPEC_DESIGN_FILE && inArchive(target) && !existsSync(target)) {
+            findings.push({ path, line: index + 1, message: `the link "${link[1]}" names no design of an archived change` })
+          }
         }
       })
     })
@@ -245,10 +301,13 @@ export function checkDecisionReferences(records: readonly DecisionRecord[], conf
   return findings
 }
 
-/** Reads the records and checks the references. Throws with every finding. */
+/**
+ * Reads the records and the designs of the archived changes, and checks the references. Throws with every finding.
+ * Returns the records of the decision folders.
+ */
 export function checkDecisionRecords(config: DecisionConfig, root: string = repoRoot): DecisionRecord[] {
   const records = readDecisionRecords(config, root)
-  const findings = checkDecisionReferences(records, config, root)
+  const findings = checkDecisionReferences(records, config, root, readArchiveDesigns(config, root))
   if (findings.length > 0) {
     throw new Error(`decisions: ${findings.length} stale reference(s)\n${findings.map(finding => `${finding.path}:${finding.line}: ${finding.message}`).join('\n')}`)
   }

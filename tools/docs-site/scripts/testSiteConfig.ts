@@ -1,5 +1,6 @@
 // A small site config for the kernel tests. The content root is the root of the temporary tree of a test, so a
-// test writes `docs/explainers/x.md` and the check reads it there.
+// test writes `docs/explainers/x.md` and the check reads it there. `withOpenSpecRoot` adds the OpenSpec root
+// `openspec`, and `ARCHIVE_FILES` holds the archived changes of a test.
 
 import type { SiteConfig } from './siteConfig.ts'
 
@@ -55,4 +56,28 @@ export function testSiteConfig(overrides: Partial<SiteConfig> = {}): SiteConfig 
     launchPicker: null,
     ...overrides,
   }
+}
+
+/** The OpenSpec root of `withOpenSpecRoot`. */
+export const TEST_OPENSPEC_ROOT = 'openspec'
+
+/** `config` with the OpenSpec root `openspec`, whose archive holds the designs of a test. */
+export function withOpenSpecRoot(config: SiteConfig): SiteConfig {
+  return { ...config, specs: { ...config.specs, openspec: { roots: [TEST_OPENSPEC_ROOT], templateSections: ['Purpose', 'Requirements'] } } }
+}
+
+/**
+ * The archived changes of a test under `openspec`: a design with an `x-topic`, a design with the generic H1 `# Design`
+ * and a proposal, a design with no H1, and a change with no design.
+ */
+export const ARCHIVE_FILES: Readonly<Record<string, string>> = {
+  'openspec/config.yaml': 'schema: spec-driven\n',
+  'openspec/changes/archive/2026-11-20-one-channel/.openspec.yaml': 'schema: spec-driven\ncreated: 2026-11-20\nx-topic: docs-site\nx-adr: ["0001"]\n',
+  'openspec/changes/archive/2026-11-20-one-channel/design.md':
+    '# The host keeps one channel\n\n## Context\n\nThe host keeps one channel.\n\n## Decisions\n\nThe view keeps [its frame](../2026-11-21-a-view-frame/design.md).\n',
+  'openspec/changes/archive/2026-11-21-a-view-frame/.openspec.yaml': 'schema: spec-driven\ncreated: 2026-11-21\n',
+  'openspec/changes/archive/2026-11-21-a-view-frame/design.md': '# Design\n\n## Context\n\nThe view keeps its frame.\n',
+  'openspec/changes/archive/2026-11-21-a-view-frame/proposal.md': '# A view keeps its frame\n\n## Why\n\nThe frame stays.\n',
+  'openspec/changes/archive/2026-11-22-no-heading/design.md': '## Context\n\nThe text.\n',
+  'openspec/changes/archive/2026-11-23-no-design/proposal.md': '## Why\n\nThe text.\n',
 }

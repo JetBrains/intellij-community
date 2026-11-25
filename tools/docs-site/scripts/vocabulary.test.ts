@@ -2,7 +2,7 @@ import assert from 'node:assert/strict'
 import { describe, it } from 'node:test'
 import type { VocabularyRule } from './siteConfig.ts'
 import { temporaryTree } from './tempTree.ts'
-import { testSiteConfig } from './testSiteConfig.ts'
+import { ARCHIVE_FILES, testSiteConfig, withOpenSpecRoot } from './testSiteConfig.ts'
 import {
   checkVocabulary,
   diagramVocabularyFindings,
@@ -127,6 +127,24 @@ describe('the vocabulary check of a site', () => {
     })
     assert.equal(checkVocabulary(testSiteConfig({ vocabulary: [{ ...COMPOSER, term: 'packer' }] }), undefined, root), 5)
     assert.equal(checkVocabulary(testSiteConfig(), undefined, root), 0)
+  })
+
+  it('reads the design of each archived change after the decision records', () => {
+    const root = temporaryTree('vocabulary-', {
+      ...ARCHIVE_FILES,
+      'docs/decisions/0001-x.md': '# 1. X\n\nThe placer.\n',
+      'openspec/changes/archive/2026-11-22-no-heading/design.md': '## Context\n\nThe composer places files.\n',
+      'README.md': 'The tree.\n',
+    })
+    const config = withOpenSpecRoot(testSiteConfig({ vocabulary: [COMPOSER] }))
+    assert.deepEqual(readVocabularyTexts(config, root).map(text => text.path), [
+      'docs/decisions/0001-x.md',
+      'openspec/changes/archive/2026-11-20-one-channel/design.md',
+      'openspec/changes/archive/2026-11-21-a-view-frame/design.md',
+      'openspec/changes/archive/2026-11-22-no-heading/design.md',
+      'README.md',
+    ])
+    assert.throws(() => checkVocabulary(config, undefined, root), /2026-11-22-no-heading\/design\.md:3: "composer"/)
   })
 
   it('reports an allowed section that names no heading', () => {

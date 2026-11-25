@@ -97,14 +97,17 @@ export function guidesTree(): SectionTree {
   return { id: 'guides', label: 'Guides', href: guidesRoute(), groups: groups.filter(group => group.links.length > 0) }
 }
 
-/** The decision records by topic, in the topic order of the site config; each topic newest first. */
+/** The id and the label of the group of the decisions without a topic: the designs of archived changes with no `x-topic`. */
+const NO_TOPIC = { id: 'no-topic', label: 'Other changes' }
+
+/** The decisions by topic, in the topic order of the site config, then the designs without a topic; each group newest first. */
 export function decisionsTree(): SectionTree {
   const { config, index } = site()
-  const groups = config.decisions.topics.map(topic => ({
+  const groups = [...config.decisions.topics, NO_TOPIC].map(topic => ({
     id: topic.id,
     label: topic.label,
     links: index.decisionDocs
-      .filter(doc => doc.adr.topic === topic.id)
+      .filter(doc => (doc.adr.topic ?? NO_TOPIC.id) === topic.id)
       .map(doc => ({ href: decisionRoute(doc.path), label: doc.title, detail: doc.adr.number ?? undefined, status: doc.adr.status })),
   }))
   return { id: 'decisions', label: 'Decisions', href: decisionsRoute(), groups: groups.filter(group => group.links.length > 0) }

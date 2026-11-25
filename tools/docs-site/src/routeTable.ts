@@ -9,6 +9,7 @@
 // The module is pure: it reads no bundler state, so a node unit test loads it.
 
 import type { SiteConfig } from '../scripts/siteConfig.ts'
+import { archiveDesignChangeId } from '../scripts/sourcePaths.ts'
 
 /** The common shape of every route: a site route has more fields. */
 export interface AnyRoute {
@@ -98,21 +99,25 @@ export function isCatalogAnchor(slug: string | null | undefined): slug is string
   return slug != null && slug.startsWith('group-')
 }
 
-/** The decision records of a site: the paths are relative to `contentRoot`. */
+/** The decision documents of a site: the paths are relative to `contentRoot`. */
 export interface DecisionPaths {
-  /** True for the path of a decision record. */
+  /** True for the path of a decision record or of the design of an archived OpenSpec change. */
   isDecisionPath(path: string): boolean
-  /** The `decision` route slug of a decision record path: the file name without `.md`. */
+  /** The `decision` route slug of a decision path: the file name of a record without `.md`, or the change id of a design. */
   decisionSlug(path: string): string
 }
 
-/** The decision path rules of the decision folders `dirs` (`docs.decisions` of the site config). */
-export function decisionPaths(dirs: readonly string[]): DecisionPaths {
-  const prefixes = dirs.map(dir => `${dir}/`)
+/**
+ * The decision path rules of a site: the records of the decision folders (`docs.decisions` of the site config), and
+ * the design of each archived change of the OpenSpec roots (`specs.openspec`).
+ */
+export function decisionPaths(config: Pick<SiteConfig, 'contentRoot' | 'docs' | 'specs'>): DecisionPaths {
+  const prefixes = config.docs.decisions.map(dir => `${dir}/`)
   const dirOf = (path: string): string | undefined => prefixes.find(dir => path.startsWith(dir) && !path.slice(dir.length).includes('/'))
+  const changeOf = (path: string): string | null => archiveDesignChangeId(config.contentRoot, config.specs, path)
   return {
-    isDecisionPath: path => path.endsWith('.md') && dirOf(path) !== undefined,
-    decisionSlug: path => path.slice((dirOf(path) ?? '').length, -'.md'.length),
+    isDecisionPath: path => (path.endsWith('.md') && dirOf(path) !== undefined) || changeOf(path) !== null,
+    decisionSlug: path => changeOf(path) ?? path.slice((dirOf(path) ?? '').length, -'.md'.length),
   }
 }
 
@@ -405,9 +410,9 @@ const DECISIONS: RouteParent = { label: 'Decisions', route: { page: 'decisions',
  * The routes of the kernel pages, in table order. A site puts its route extensions before them. The launch route is
  * in the table only when the site has a launch picker.
  */
-export function kernelRouteEntries(config: Pick<SiteConfig, 'docs' | 'launchPicker'>): RouteEntry[] {
+export function kernelRouteEntries(config: Pick<SiteConfig, 'contentRoot' | 'docs' | 'launchPicker' | 'specs'>): RouteEntry[] {
   const route = routeBuilder<KernelRoute | LaunchRoute, KernelNavSection | LaunchNavSection>()
-  const { isDecisionPath, decisionSlug } = decisionPaths(config.docs.decisions)
+  const { isDecisionPath, decisionSlug } = decisionPaths(config)
   return [
     route('home', '/', { section: null, layout: 'tool' }),
     route('guides', '/guides/:anchor?', { when: ({ anchor }) => anchor === null || isCatalogAnchor(anchor), section: 'guides', layout: 'catalog' }),
@@ -584,6 +589,6 @@ export function createRouteTable(entries: readonly RouteEntry[]): RouteTable {
 }
 
 /** The table of a site: its route extensions first, then the kernel routes. */
-export function siteRouteTable(config: Pick<SiteConfig, 'docs' | 'launchPicker'>, extensions: readonly RouteExtension[]): RouteTable {
+export function siteRouteTable(config: Pick<SiteConfig, 'contentRoot' | 'docs' | 'launchPicker' | 'specs'>, extensions: readonly RouteExtension[]): RouteTable {
   return createRouteTable([...extensions, ...kernelRouteEntries(config)])
 }
