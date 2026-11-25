@@ -154,6 +154,27 @@ internal class SettingsSyncFlowTest : SettingsSyncTestBase() {
     Assertions.assertFalse(SettingsSyncSettings.getInstance().syncEnabled, "Settings sync was not disabled")
   }
 
+  @Test
+  fun `delete server data from queue job`() = timeoutRunBlockingAndStopBridge {
+    writeToConfig {
+      fileState("options/laf.xml", "LaF Initial")
+    }
+
+    initSettingsSync(SettingsSyncBridge.InitMode.PushToServer)
+
+    val deletionCompleted = CountDownLatch(1)
+    var deletionResult: DeleteServerDataResult? = null
+    SettingsSyncEvents.getInstance().fireSettingsChanged(SyncSettingsEvent.DeleteServerData {
+      deletionResult = it
+      deletionCompleted.countDown()
+    })
+
+    Assertions.assertTrue(deletionCompleted.await(10, TimeUnit.SECONDS), "Deletion did not complete")
+    Assertions.assertEquals(DeleteServerDataResult.Success, deletionResult)
+    assertVersionOnServerIsDeleted()
+    Assertions.assertFalse(SettingsSyncSettings.getInstance().syncEnabled, "Settings sync was not disabled")
+  }
+
   private fun assertVersionOnServerIsDeleted() {
     val versionOnServer = remoteCommunicator.getVersionOnServer()
     Assertions.assertNotNull(versionOnServer, "There is no version on the server")

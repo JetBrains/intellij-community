@@ -1,6 +1,7 @@
 package com.intellij.settingsSync.core
 
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.settingsSync.core.auth.SettingsSyncAuthService
 import com.intellij.settingsSync.core.communicator.SettingsSyncCommunicatorProvider
@@ -69,6 +70,7 @@ internal class MockRemoteCommunicator(override val userId: String) : AbstractSer
   }
 
   override fun writeFileInternal(filePath: String, versionId: String?, content: InputStream): String? {
+    ProgressManager.checkCanceled()
     checkConnected()
     val currentVersion = filesAndVersions[filePath]
     if (versionId != null && currentVersion != null && currentVersion.versionId != versionId) {
