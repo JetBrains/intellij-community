@@ -297,6 +297,7 @@ images/intellij.platform.images.copyright intellij.platform.images.copyright
 images/intellij.platform.images.xdebugger intellij.platform.images.xdebugger
 images/jcef intellij.platform.images.jcef
 java/basic-plugin intellij.java.basic.plugin
+java/basic-plugin/frontend intellij.java.basic.frontend
 java/codeserver/core intellij.java.codeserver.core
 java/codeserver/highlighting intellij.java.codeserver.highlighting
 java/compiler intellij.java.compiler.tests intellij.java.compiler.tests.main

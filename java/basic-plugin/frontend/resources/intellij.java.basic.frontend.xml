@@ -1,0 +1,19 @@
+<!-- The frontend side of the basic Java plugin. It registers the annotator of the language, because the annotator is a frontend API. -->
+<idea-plugin>
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.java.frontback.psi"/>
+    <module name="intellij.java.frontback.psi.impl"/>
+    <module name="intellij.java.psi"/>
+    <module name="intellij.libraries.jetbrains.annotations"/>
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
+    <module name="intellij.platform.frontend"/>
+  </dependencies>
+  <!-- endregion -->
+
+  <extensions defaultExtensionNs="com.intellij">
+    <annotator language="JAVA" implementationClass="com.intellij.java.basic.frontend.JavaAnnotationNameAnnotator"/>
+  </extensions>
+</idea-plugin>

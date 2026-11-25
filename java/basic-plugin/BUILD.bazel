@@ -13,9 +13,11 @@ dist_plugin(
         "intellij.java.psi",
         "intellij.java.psi.impl",
         "intellij.java.frontback.impl",
+        "intellij.java.basic.frontend",
     ],
     descriptor = "resources/META-INF/plugin.xml",
     descriptors = {
+        "@community//java/basic-plugin/frontend:resources/intellij.java.basic.frontend.xml": "intellij.java.basic.frontend.xml",
         "@community//java/java-frontback-impl:resource/intellij.java.frontback.impl.xml": "intellij.java.frontback.impl.xml",
         "@community//java/java-frontback-psi-api:resources/intellij.java.frontback.psi.xml": "intellij.java.frontback.psi.xml",
         "@community//java/java-frontback-psi-impl:resources/intellij.java.frontback.psi.impl.xml": "intellij.java.frontback.psi.impl.xml",
@@ -36,6 +38,7 @@ dist_plugin(
         "intellij.java.frontback.impl": "lib/intellij.java.frontback.impl.jar",
     },
     module_labels = {
+        "intellij.java.basic.frontend": "@community//java/basic-plugin/frontend:frontend",
         "intellij.java.basic.plugin": "@community//java/basic-plugin:basic-plugin",
         "intellij.java.frontback.impl": "@community//java/java-frontback-impl:frontback-impl",
         "intellij.java.frontback.psi": "@community//java/java-frontback-psi-api:frontback-psi",
@@ -84,6 +87,7 @@ ij_plugin(
         "//java/java-psi-api:psi",
         "//java/java-psi-impl:psi-impl",
         "//java/java-frontback-impl:frontback-impl",
+        "//java/basic-plugin/frontend",
     ],
     visibility = ["//visibility:public"],
 )
