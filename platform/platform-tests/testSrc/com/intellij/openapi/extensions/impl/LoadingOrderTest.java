@@ -90,6 +90,20 @@ public class LoadingOrderTest {
   }
 
   @Test
+  public void testSortingByIdWithBracketsAndSemicolon() {
+    String splitId = "split-provider[text-editor;preview-editor]";
+
+    assertSequence(
+      "1 2 3",
+      Arrays.asList(
+      createElement(LoadingOrder.readOrder("after " + splitId), null, "3"),
+      createElement(LoadingOrder.ANY, splitId, "2"),
+      createElement(LoadingOrder.readOrder("before:" + splitId), null, "1")
+      )
+    );
+  }
+
+  @Test
   public void testFailingSortingBeforeFirst() {
     checkSortingFailure(
       Arrays.asList(

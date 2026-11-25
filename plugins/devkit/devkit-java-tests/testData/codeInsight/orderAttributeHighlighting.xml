@@ -21,5 +21,9 @@
     <myEp id="id10" order="before:<error descr="Cannot resolve 'wrongId' com.intellij.myEp extension">wrongId</error>"/>
 
     <myEp id="id11" order="<error descr="Invalid 'order' attribute value">wrongKeyword id6</error>"/>
+
+    <myEp id="split-provider[text-editor;preview-editor]"/>
+    <myEp id="id12" order="after split-provider[text-editor;preview-editor]"/>
+    <myEp id="id13" order="last, before:split-provider[text-editor;preview-editor]"/>
   </extensions>
 </idea-plugin>
