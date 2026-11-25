@@ -40,6 +40,7 @@ import com.intellij.platform.workspace.jps.entities.modifySourceRootEntity
 import com.intellij.platform.workspace.jps.entities.sdkId
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.MutableEntityStorage
+import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.entities
 import com.intellij.platform.workspace.storage.impl.url.toVirtualFileUrl
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
@@ -554,6 +555,10 @@ private fun updateModule(
     }
   }
 
+  if (module.entitySource != entitySource) {
+    projectStorage.moveToEntitySource(module.entitySource, entitySource)
+  }
+
   existingContentRoot?.let { cr ->
     projectStorage.mergeRoots(
       target = cr,
@@ -695,6 +700,17 @@ private fun MutableEntityStorage.addRelocatedRoots(buckets: RelocationBuckets) {
       sourcesToAdd = buckets.sources.byTarget[target] ?: emptyList(),
       excludesToAdd = buckets.excludes.byTarget[target] ?: emptyList(),
     )
+  }
+}
+
+/**
+ * Give each entity of [oldSource] the [newSource], when the model adopts a module. [oldSource] is the source of the `.iml`
+ * file of that module, so all its entities belong to the module. An entity that kept [oldSource] would name no file, and
+ * the save would delete the `.iml` that [newSource] now writes. `ModuleImlFileEntity` is such a child.
+ */
+private fun MutableEntityStorage.moveToEntitySource(oldSource: EntitySource, newSource: EntitySource) {
+  for (entity in entitiesBySource { it == oldSource }.toList()) {
+    modifyEntity(WorkspaceEntity.Builder::class.java, entity) { this.entitySource = newSource }
   }
 }
 
