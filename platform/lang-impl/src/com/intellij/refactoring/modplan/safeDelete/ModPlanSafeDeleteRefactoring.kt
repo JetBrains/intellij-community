@@ -49,9 +49,14 @@ class ModPlanSafeDeleteRefactoring : ModPlanRefactoring {
     return RefactoringBundle.message("safe.delete.comment.occurences.header", UsageViewBundle.getOccurencesString(nonCodeUsages, files))
   }
 
-  /** Every subject is owned by a registered [ModPlanSafeDeleteProvider] that supports it; it searches nothing. */
+  /**
+   * Every subject is valid for the safe delete, as [chain] checks, and a registered [ModPlanSafeDeleteProvider] that supports it owns it;
+   * it searches nothing.
+   */
   override fun isSupported(request: ModPlanRequest): Boolean {
     return super.isSupported(request) && request.subjects().all { subject ->
+      val element = subject.element()
+      element != null && SafeDeleteProcessor.validElement(element) &&
       ModPlanSafeDeleteProvider.EP_NAME.findFirstSafe { it.isApplicable(subject) }?.isLegacyOnly(subject) == false
     }
   }
