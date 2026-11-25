@@ -2,39 +2,43 @@
 package com.siyeh.ig.internationalization;
 
 import com.intellij.JavaTestUtil;
-import com.intellij.codeInsight.daemon.quickFix.LightQuickFixParameterizedTestCase;
-import com.intellij.codeInspection.LocalInspectionTool;
-import com.intellij.pom.java.LanguageLevel;
-import com.intellij.testFramework.LightProjectDescriptor;
+import com.intellij.codeInsight.daemon.quickFix.LightQuickFixFixture;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 
-public class ImplicitDefaultCharsetUsageInspectionFixTest extends LightQuickFixParameterizedTestCase {
-  @Override
-  protected String getBasePath() {
-    return "/com/siyeh/igtest/internationalization/implicit_default_charset_usage";
+import java.util.List;
+
+import static com.intellij.codeInsight.daemon.quickFix.LightQuickFixFixtureKt.lightQuickFixFixture;
+import static com.intellij.codeInsight.daemon.quickFix.LightQuickFixFixtureKt.lightQuickFixLanguageLevel;
+import static com.intellij.codeInsight.daemon.quickFix.LightQuickFixFixtureKt.lightQuickFixTestFiles;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+
+/**
+ * The files with a language level in the name, for example `Java10`, use the JDK 11 project. The other files use the JDK 9 project.
+ */
+@TestApplication
+public class ImplicitDefaultCharsetUsageInspectionFixTest {
+  private static final String TEST_DATA_PATH =
+    JavaTestUtil.getJavaTestDataPath() + "/ig/com/siyeh/igtest/internationalization/implicit_default_charset_usage";
+  private static final TestFixture<LightJavaProject> java9ProjectFixture = lightJavaProjectFixture(LightJavaCodeInsightFixtureTestCase.JAVA_9);
+  private static final TestFixture<LightJavaProject> java11ProjectFixture = lightJavaProjectFixture(LightJavaCodeInsightFixtureTestCase.JAVA_11);
+  private final TestFixture<LightQuickFixFixture> java9QuickFixFixture =
+    lightQuickFixFixture(java9ProjectFixture, TEST_DATA_PATH, () -> List.of(new ImplicitDefaultCharsetUsageInspection()));
+  private final TestFixture<LightQuickFixFixture> java11QuickFixFixture =
+    lightQuickFixFixture(java11ProjectFixture, TEST_DATA_PATH, () -> List.of(new ImplicitDefaultCharsetUsageInspection()));
+
+  static List<String> files() {
+    return lightQuickFixTestFiles(TEST_DATA_PATH);
   }
 
-  @Override
-  protected @NotNull String getTestDataPath() {
-    return JavaTestUtil.getJavaTestDataPath() + "/ig";
-  }
-
-  @Override
-  protected LanguageLevel getLanguageLevel() {
-    LanguageLevel level = super.getLanguageLevel();
-    return level != getDefaultLanguageLevel() ? level : LanguageLevel.JDK_1_9;
-  }
-
-  @Override
-  protected @NotNull LightProjectDescriptor getProjectDescriptor() {
-    return super.getLanguageLevel() != getDefaultLanguageLevel()
-           ? LightJavaCodeInsightFixtureTestCase.JAVA_11
-           : LightJavaCodeInsightFixtureTestCase.JAVA_9;
-  }
-
-  @Override
-  protected LocalInspectionTool @NotNull [] configureLocalInspectionTools() {
-    return new LocalInspectionTool[] {new ImplicitDefaultCharsetUsageInspection()};
+  @ParameterizedTest(name = "{argumentSetNameOrArgumentsWithNames}")
+  @MethodSource("files")
+  void parameterized(String fileName) {
+    LightQuickFixFixture quickFix = lightQuickFixLanguageLevel(fileName) != null ? java11QuickFixFixture.get() : java9QuickFixFixture.get();
+    quickFix.doTest(fileName);
   }
 }

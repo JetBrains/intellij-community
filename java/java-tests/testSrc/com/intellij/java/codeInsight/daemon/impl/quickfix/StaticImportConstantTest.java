@@ -1,20 +1,41 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight.daemon.impl.quickfix;
 
+import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.daemon.impl.quickfix.StaticImportConstantFix;
 import com.intellij.codeInsight.daemon.impl.quickfix.StaticImportMemberFix;
+import com.intellij.codeInsight.daemon.quickFix.LightQuickFixFixture;
 import com.intellij.java.codeInsight.daemon.impl.ImportHelperTest;
-import com.intellij.codeInsight.daemon.quickFix.LightQuickFixParameterizedTestCase;
-import com.intellij.util.ExceptionUtil;
-import com.intellij.util.ThrowableRunnable;
+import com.intellij.testFramework.EdtTestUtil;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.NotNull;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 
+import java.util.List;
 import java.util.function.BooleanSupplier;
 
-public class StaticImportConstantTest extends LightQuickFixParameterizedTestCase {
-  @Override
-  protected void runTestRunnable(@NotNull ThrowableRunnable<Throwable> testRunnable) throws Throwable {
+import static com.intellij.codeInsight.daemon.quickFix.LightQuickFixFixtureKt.lightQuickFixFixture;
+import static com.intellij.codeInsight.daemon.quickFix.LightQuickFixFixtureKt.lightQuickFixTestFiles;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaTestDescriptor;
+
+@TestApplication
+public class StaticImportConstantTest {
+  private static final String TEST_DATA_PATH =
+    JavaTestUtil.getJavaTestDataPath() + "/codeInsight/daemonCodeAnalyzer/quickFix/staticImportConstant";
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(lightJavaTestDescriptor());
+  private final TestFixture<LightQuickFixFixture> quickFixFixture = lightQuickFixFixture(projectFixture, TEST_DATA_PATH);
+
+  static List<String> files() {
+    return lightQuickFixTestFiles(TEST_DATA_PATH);
+  }
+
+  @ParameterizedTest(name = "{argumentSetNameOrArgumentsWithNames}")
+  @MethodSource("files")
+  void parameterized(String fileName) {
     BooleanSupplier isInsideResolve = () -> {
       if (!ImportHelperTest.isFromJavaCodeReferenceElementResolve()) {
         return false;
@@ -27,18 +48,6 @@ public class StaticImportConstantTest extends LightQuickFixParameterizedTestCase
       // check that resolve is called from inside StaticImport*Fix, because there are so many other intentions/fixes which doing resolve in EDT we haven't fixed yet
       return isInsideStaticImportFix;
     };
-    ImportHelperTest.assertResolveNotCalledInEDTDuring(isInsideResolve, () -> {
-      try {
-        super.runTestRunnable(testRunnable);
-      }
-      catch (Throwable e) {
-        ExceptionUtil.rethrow(e);
-      }
-    });
-  }
-
-  @Override
-  protected String getBasePath() {
-    return "/codeInsight/daemonCodeAnalyzer/quickFix/staticImportConstant";
+    EdtTestUtil.runInEdtAndWait(() -> ImportHelperTest.assertResolveNotCalledInEDTDuring(isInsideResolve, () -> quickFixFixture.get().doTest(fileName)));
   }
 }
