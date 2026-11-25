@@ -409,7 +409,7 @@
     <action id="CloseAllProjects" class="com.intellij.ide.actions.CloseAllProjectsAction"/>
     <action id="CloseOtherProjects" class="com.intellij.ide.actions.CloseOtherProjectsAction"/>
     <action id="ShowSettings" class="com.intellij.ide.actions.ShowSettingsAction"/>
-    <action id="ShowPlugins" class="com.intellij.ide.actions.ShowPluginManagerAction">
+    <action id="ShowPlugins" class="com.intellij.ide.actions.ShowPluginManagerAction" icon="AllIcons.Nodes.Plugin">
       <synonym key="action.ShowPlugins.Extensions.text"/>
     </action>
     <action id="ChangeFileEncodingAction" class="com.intellij.openapi.vfs.encoding.ChangeFileEncodingAction"/>
