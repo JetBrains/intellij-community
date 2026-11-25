@@ -52,7 +52,7 @@
 
     <lang.substitutor language="TEXT" implementationClass="com.intellij.restructuredtext.python.RestLanguageSubstitutor"/>
 
-    <fileEditorProvider implementation="com.intellij.restructuredtext.python.editor.RestSplitEditorProvider"/>
+    <fileEditorProvider id="restructured-text-editor" implementation="com.intellij.restructuredtext.python.editor.RestSplitEditorProvider"/>
 
   </extensions>
 

@@ -30,7 +30,7 @@ public class RestEditorProvider implements FileEditorProvider, DumbAware {
 
   @Override
   public @NotNull String getEditorTypeId() {
-    return "restructured-text-editor";
+    return "restructured-text-plain-editor";
   }
 
   @Override

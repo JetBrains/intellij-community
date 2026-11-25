@@ -15,5 +15,7 @@ internal class RestSplitEditorProvider : RestEditorProvider() {
     return TextEditorWithPreview(editor, RestPreviewFileEditor(file, project))
   }
 
+  override fun getEditorTypeId(): String = "restructured-text-editor"
+
   override fun getPolicy() = FileEditorPolicy.HIDE_OTHER_EDITORS
 }

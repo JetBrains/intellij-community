@@ -71,7 +71,7 @@
     <indexPatternBuilder implementation="com.intellij.restructuredtext.RestIndexPatternBuilder"/>
     <todoIndexer filetype="ReST" implementationClass="com.intellij.restructuredtext.RestTodoIndexer"/>
 
-    <fileEditorProvider implementation="com.intellij.restructuredtext.editor.RestEditorProvider"/>
+    <fileEditorProvider id="restructured-text-plain-editor" implementation="com.intellij.restructuredtext.editor.RestEditorProvider"/>
     <applicationService serviceImplementation="com.intellij.restructuredtext.python.editor.RestSettings"/>
 
     <editorHighlighterProvider filetype="ReST" implementationClass="com.intellij.restructuredtext.RestEditorHighlighterProvider"/>
