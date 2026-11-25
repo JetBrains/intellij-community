@@ -1132,6 +1132,7 @@ fun loadDescriptorFromArtifact(file: Path, buildNumber: BuildNumber?): PluginMai
   try {
     Decompressor.Zip(file)
       .withZipExtensions()
+      .escapingSymlinkPolicy(Decompressor.EscapingSymlinkPolicy.DISALLOW)
       .extract(outputDir)
     try {
       //org.jetbrains.intellij.build.io.ZipArchiveOutputStream may add __index__ entry to the plugin zip, we need to ignore it here
