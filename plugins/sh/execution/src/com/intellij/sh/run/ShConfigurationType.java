@@ -35,6 +35,11 @@ public final class ShConfigurationType extends SimpleConfigurationType {
   }
 
   @Override
+  public boolean isDumbAware() {
+    return true;
+  }
+
+  @Override
   public boolean isEditableInDumbMode() {
     return true;
   }
