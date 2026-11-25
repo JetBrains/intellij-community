@@ -52,6 +52,8 @@ class JsonSchemaFileCache : SchemaContentCache {
   private val root: Path = cacheRoot()
   private val locks = StripedMutex()
   private val entries = ConcurrentHashMap<SchemaUrl, Entry>()
+
+  // Bound concurrent cache operations because a synchronous VFS refresh can block an IO thread
   private val ioDispatcher = Dispatchers.IO.limitedParallelism(16, "JsonSchemaFileCache")
 
   override fun read(url: SchemaUrl): CachedSchema? = when (val entry = liveEntry(url)) {
