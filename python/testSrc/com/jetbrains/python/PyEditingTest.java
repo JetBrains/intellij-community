@@ -745,6 +745,55 @@ public class PyEditingTest extends PyTestCase {
                        def f(cls):""");
   }
 
+  // The handler reads only the current file. It gives "self" when a star import gives the metaclass.
+  @TestFor(issues = "PY-92734")
+  public void testFirstParamMetaClassFromStarImport() {
+    doTestTyping("""
+                   from abc import *
+
+                   class Meta(ABCMeta):
+                       def f<caret>""", "(", """
+                   from abc import *
+
+                   class Meta(ABCMeta):
+                       def f(self):""");
+  }
+
+  // The handler reads only the current file. It gives "self" when another module re-exports the metaclass.
+  @TestFor(issues = "PY-92734")
+  public void testFirstParamMetaClassReExportedByAnotherModule() {
+    myFixture.addFileToProject("meta.py", """
+      from abc import ABCMeta
+      """);
+    doTestTyping("""
+                   from meta import ABCMeta
+
+                   class Meta(ABCMeta):
+                       def f<caret>""", "(", """
+                   from meta import ABCMeta
+
+                   class Meta(ABCMeta):
+                       def f(self):""");
+  }
+
+  // The handler reads only the current file. It gives "self" when another module declares the metaclass.
+  @TestFor(issues = "PY-92734")
+  public void testFirstParamMetaClassDeclaredInAnotherModule() {
+    myFixture.addFileToProject("meta.py", """
+      class Meta(type):
+          pass
+      """);
+    doTestTyping("""
+                   from meta import Meta
+
+                   class SubMeta(Meta):
+                       def f<caret>""", "(", """
+                   from meta import Meta
+
+                   class SubMeta(Meta):
+                       def f(self):""");
+  }
+
   @TestFor(issues = "PY-92734")
   public void testFirstParamNewInImportedMetaClass() {
     doTestTyping("""
