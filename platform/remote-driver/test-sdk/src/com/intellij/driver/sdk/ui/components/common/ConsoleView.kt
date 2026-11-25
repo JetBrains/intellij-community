@@ -6,7 +6,9 @@ import com.intellij.driver.sdk.ui.components.UiComponent
 import org.intellij.lang.annotations.Language
 
 fun Finder.consoleView(@Language("xpath") xpath: String? = null, action: ConsoleView.() -> Unit) {
-  x(xpath ?: "//div[@class='ConsoleViewImpl']", ConsoleView::class.java).action()
+  val console = if (xpath != null) x(xpath, ConsoleView::class.java)
+  else x(ConsoleView::class.java) { byType("com.intellij.execution.impl.ConsoleViewImpl") }
+  console.action()
 }
 
 class ConsoleView(data: ComponentData) : UiComponent(data)
