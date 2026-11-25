@@ -1,4 +1,5 @@
 load("@community//build:bazel_targets_json.bzl", "current_bazel_targets_json")
+load("@community//build:jps_module.bzl", "jps_module")
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
@@ -127,10 +128,9 @@ jvm_library(
 ### auto-generated section `build intellij.gradle.java.tests.unit` end
 
 ### auto-generated section `iml intellij.gradle.java.tests.unit` start
-exports_files(
-    [
-        "intellij.gradle.java.tests.unit.iml",
-    ],
-    visibility = ["//visibility:public"],
+jps_module(
+    name = "intellij.gradle.java.tests.unit",
+    resources = False,
+    target = "unit_test_lib",
 )
 ### auto-generated section `iml intellij.gradle.java.tests.unit` end

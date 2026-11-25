@@ -1,6 +1,4 @@
-load("@community//build:bazel_targets_json.bzl", "current_bazel_targets_json")
 load("@community//build:jps_module.bzl", "jps_module")
-load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
@@ -141,6 +139,7 @@ jvm_library(
         "//plugins/properties/plugin",
         "//plugins/gradle/codeInsight/groovy/backend",
         "//plugins/maven/plugin",
+        "//plugins/maven/jps",
         "//plugins/junit",
         "//platform/main/intellij.platform.monolith.main:monolith-main",
         "//community-resources:customization",

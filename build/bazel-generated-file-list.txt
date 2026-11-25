@@ -1452,6 +1452,7 @@ plugins/gradle/java/tests/integration intellij.gradle.java.tests.integration
 plugins/gradle/java/tests/integration/eel intellij.gradle.java.tests.integration.eel
 plugins/gradle/java/tests/integration/service intellij.gradle.java.tests.integration.service
 plugins/gradle/java/tests/quarantine intellij.gradle.java.tests.quarantine
+plugins/gradle/java/tests/unit intellij.gradle.java.tests.unit
 plugins/gradle/java/toml intellij.gradle.java.toml
 plugins/gradle/java/toml/tests intellij.gradle.java.toml.tests
 plugins/gradle/jps-plugin intellij.gradle.jps intellij.gradle.jps.tests
@@ -1470,6 +1471,7 @@ plugins/gradle/tests/integration intellij.gradle.tests.integration
 plugins/gradle/tests/integration/eel intellij.gradle.tests.integration.eel
 plugins/gradle/tests/integration/service intellij.gradle.tests.integration.service
 plugins/gradle/tests/quarantine intellij.gradle.tests.quarantine
+plugins/gradle/tests/unit intellij.gradle.tests.unit
 plugins/gradle/tooling-extension-api intellij.gradle.toolingExtension
 plugins/gradle/tooling-extension-impl intellij.gradle.toolingExtension.impl intellij.gradle.toolingExtension.tests
 plugins/gradle/tooling-extension-impl/tests/compatibility intellij.gradle.toolingExtension.tests.compatibility

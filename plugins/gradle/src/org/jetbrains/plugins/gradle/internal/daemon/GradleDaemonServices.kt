@@ -10,7 +10,9 @@ import com.intellij.gradle.toolingExtension.impl.GradleToolingExtensionImplClass
 import com.intellij.gradle.toolingExtension.util.GradleReflectionUtil
 import com.intellij.gradle.toolingExtension.util.GradleVersionUtil
 import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.diagnostic.Attachment
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.ExceptionUtil
@@ -94,6 +96,8 @@ private fun runActionWithDaemonClient(
 
       PathManager.getJarForClass(DynamicBundle::class.java),
       PathManager.getJarForClass(AbstractBundle::class.java),
+      PathManager.getJarForClass(Attachment::class.java),
+      PathManager.getJarForClass(ProcessCanceledException::class.java),
       PathManager.getJarForClass(HashingStrategy::class.java),
       PathManager.getJarForClass(Hash::class.java),
       PathManager.getJarForClass(Function::class.java)

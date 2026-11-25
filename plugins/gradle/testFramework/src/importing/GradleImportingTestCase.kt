@@ -41,6 +41,7 @@ import com.intellij.openapi.util.Couple
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.io.findOrCreateDirectory
 import com.intellij.openapi.util.text.Strings
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
@@ -237,6 +238,7 @@ abstract class GradleImportingTestCase : JavaExternalSystemImportingTestCase() {
     roots.add(PathManager.getConfigPath())
     roots.add(myGradleDistributionRoot.toString())
     roots.add(gradleUserHome.toString())
+    roots.add(gradleUserHome.findOrCreateDirectory().toRealPath().toString())
     val javaHome = getVariable("JAVA_HOME")
     if (javaHome != null) roots.add(javaHome)
   }

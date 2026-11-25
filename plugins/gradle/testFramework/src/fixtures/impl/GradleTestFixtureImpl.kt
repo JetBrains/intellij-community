@@ -11,14 +11,21 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemUtil
 import com.intellij.openapi.observable.util.setSystemProperty
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.io.findOrCreateDirectory
 import com.intellij.openapi.util.io.toCanonicalPath
+import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess
+import com.intellij.platform.eel.EelDescriptor
+import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.externalSystem.testFramework.ExternalSystemImportingTestCase
 import com.intellij.platform.externalSystem.testFramework.ExternalSystemTestObservation.awaitProjectActivity
 import com.intellij.platform.externalSystem.testFramework.fixtures.WorkspaceFixture
 import com.intellij.testFramework.common.runAll
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.gradle.util.GradleVersion
 import org.jetbrains.jps.model.java.JdkVersionDetector.JdkVersionInfo
 import org.jetbrains.plugins.gradle.connection.GradleConnectorService.Companion.USE_PRODUCTION_DISPOSE_FOR_TESTS_KEY
+import org.jetbrains.plugins.gradle.service.execution.gradleUserHomeDir
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import org.jetbrains.plugins.gradle.util.getGradleProjectReloadOperation
 import java.nio.file.Path
@@ -60,23 +67,33 @@ class GradleTestFixtureImpl(
     )
   }
 
+  private suspend fun allowGradleUserHomeAccess(eelDescriptor: EelDescriptor) {
+    val gradleUserHome = withContext(Dispatchers.IO) {
+      gradleUserHomeDir(eelDescriptor).findOrCreateDirectory().toRealPath()
+    }
+    VfsRootAccess.allowRootAccess(testDisposable, gradleUserHome.toString())
+  }
+
   override suspend fun <R> withAllowedProjectSyncs(numProjectSyncs: Int, action: suspend () -> R): R {
     return syncLeakTracker.withAllowedOperationAsync(numProjectSyncs, action)
   }
 
   override suspend fun openProject(projectPath: Path, numProjectSyncs: Int): Project {
+    allowGradleUserHomeAccess(projectPath.getEelDescriptor())
     return withAllowedProjectSyncs(numProjectSyncs) {
       workspaceFixture.openProject(projectPath)
     }
   }
 
   override suspend fun linkProject(project: Project, projectPath: Path) {
+    allowGradleUserHomeAccess(project.getEelDescriptor())
     withAllowedProjectSyncs {
       workspaceFixture.linkProject(project, projectPath, GradleConstants.SYSTEM_ID)
     }
   }
 
   override suspend fun syncProject(project: Project, projectPath: Path, configure: ImportSpecBuilder.() -> Unit) {
+    allowGradleUserHomeAccess(project.getEelDescriptor())
     withAllowedProjectSyncs {
       awaitProjectActivity(project) {
         ExternalSystemUtil.refreshProject(
