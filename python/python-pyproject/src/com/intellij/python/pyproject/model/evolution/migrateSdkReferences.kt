@@ -53,7 +53,8 @@ private val logger = fileLogger()
  * SDK table has no such SDK. Where the Python module type is the default type of the IDE, as in PyCharm, the type stays,
  * see [pythonModuleTypeIsLegacy].
  *
- * The model calls this function on each pass, so a module that an older build gives an SDK later is migrated too.
+ * [PySdkReferenceMigration] calls this function on each change of the modules, so a module that an older build gives an
+ * SDK later is migrated too.
  */
 internal suspend fun migrateSdkReferences(project: Project) {
   val projectDir = project.interpreterOwnerProjectDir ?: return
