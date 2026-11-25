@@ -6,6 +6,7 @@ import com.intellij.modcommand.ModMoveFile
 import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiDirectory
@@ -13,10 +14,13 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiFileSystemItem
 import com.intellij.psi.PsiManager
+import com.intellij.psi.SmartPointerManager
 import com.intellij.refactoring.listeners.RefactoringElementListener
 import com.intellij.refactoring.listeners.RefactoringElementListenerProvider
 import com.intellij.refactoring.listeners.RefactoringEventData
 import com.intellij.refactoring.listeners.RefactoringEventListener
+import com.intellij.refactoring.modplan.move.ModPlanMoveFileHandler
+import com.intellij.refactoring.modplan.move.ModPlanMoveOptions
 import com.intellij.refactoring.modplan.move.ModPlanMoveProblem
 import com.intellij.refactoring.modplan.move.ModPlanMoveRefactoring
 import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFileHandler
@@ -35,11 +39,16 @@ class ModPlanMoveTest : BasePlatformTestCase() {
     return if (file.isDirectory) psiManager.findDirectory(file)!! else psiManager.findFile(file)!!
   }
 
-  private fun requestOfItems(items: List<PsiFileSystemItem>, targetPath: String): ModPlanRequest = runReadActionBlocking {
-    ModPlanMoveRefactoring.request(project, items, urlOf(targetPath), ModPlanOptionValues.EMPTY)
+  private fun requestOfItems(
+    items: List<PsiFileSystemItem>,
+    targetPath: String,
+    optionValues: ModPlanOptionValues = ModPlanOptionValues.EMPTY,
+  ): ModPlanRequest = runReadActionBlocking {
+    ModPlanMoveRefactoring.request(project, items, urlOf(targetPath), optionValues)
   }
 
-  private fun requestOf(paths: List<String>, targetPath: String): ModPlanRequest = requestOfItems(paths.map { itemOf(it) }, targetPath)
+  private fun requestOf(paths: List<String>, targetPath: String, optionValues: ModPlanOptionValues = ModPlanOptionValues.EMPTY)
+    : ModPlanRequest = requestOfItems(paths.map { itemOf(it) }, targetPath, optionValues)
 
   private fun plan(request: ModPlanRequest): ModPlan = inBackground { ModPlanMoveRefactoring.getInstance().plan(request) }
 
@@ -227,6 +236,20 @@ class ModPlanMoveTest : BasePlatformTestCase() {
     }
   }
 
+  fun `test a move without the search for references keeps the edits of the adapter`() {
+    myFixture.addFileToProject("d/a.handled.txt", "a")
+    myFixture.addFileToProject("e/b.txt", "b")
+    ExtensionTestUtil.addExtensions(ExtensionPointName.create<MoveFileHandler>("com.intellij.moveFileHandler"),
+                                    listOf<MoveFileHandler>(HandlerWithAdapter()), testRootDisposable)
+    val request = requestOf(listOf("d/a.handled.txt"), "e",
+                            ModPlanOptionValues.EMPTY.with(ModPlanMoveOptions.SEARCH_FOR_REFERENCES, false))
+
+    val result = execute(plan(request) as ModPlan.AcceptedPlan)
+
+    assertEquals(ModPlanExecutionResult.Applied, result)
+    assertEquals("edited", FileDocumentManager.getInstance().getDocument(root().findFileByRelativePath("e/a.handled.txt")!!)!!.text)
+  }
+
   private class EventData {
     var started: RefactoringEventData? = null
     var done: RefactoringEventData? = null
@@ -263,8 +286,17 @@ class ModPlanMoveTest : BasePlatformTestCase() {
     return movedPaths
   }
 
-  private class HandlerWithoutAdapter : MoveFileHandler() {
-    override fun canProcessElement(element: PsiFile): Boolean = element.name.endsWith(".handled")
+  private class HandlerWithoutAdapter : EmptyHandler(".handled")
+
+  private class HandlerWithAdapter : EmptyHandler(".handled.txt") {
+    override fun asModPlan(): ModPlanMoveFileHandler = ModPlanMoveFileHandler { file, _, _ ->
+      val place = SmartPointerManager.getInstance(file.project).createSmartPsiFileRangePointer(file, file.textRange)
+      ModPlanAnalysisResult.Found(listOf(ModPlanEdit.ReplaceText(place, "edited")), ModPlanConflicts.EMPTY)
+    }
+  }
+
+  private open class EmptyHandler(private val suffix: String) : MoveFileHandler() {
+    override fun canProcessElement(element: PsiFile): Boolean = element.name.endsWith(suffix)
 
     override fun prepareMovedFile(file: PsiFile, moveDestination: PsiDirectory, oldToNewMap: MutableMap<PsiElement, PsiElement>) {
     }

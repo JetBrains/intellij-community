@@ -15,6 +15,15 @@ public final class ModPlanMoveOptions {
   public static final @NotNull ModPlanOption<String> TARGET_DIRECTORY =
     ModPlanOption.text("targetDirectory", "", RefactoringBundle.messagePointer("move.files.to.directory.label"));
   /**
+   * Whether the move updates the references, as
+   * {@link com.intellij.refactoring.RefactoringSettings#MOVE_SEARCH_FOR_REFERENCES_FOR_FILE} does in the legacy move. With the option
+   * off, the move searches nothing. The references to the moved items and the file references in the moved files keep their text, and no
+   * reference is a conflict. A language still edits the moved files, as {@link MoveFileHandler#updateMovedFile} does. It searches and
+   * edits no usage: the legacy move calls {@link MoveFileHandler#findUsages} only with the option on.
+   */
+  public static final @NotNull ModPlanOption<Boolean> SEARCH_FOR_REFERENCES =
+    ModPlanOption.bool("searchForReferences", true, RefactoringBundle.messagePointer("search.for.references"));
+  /**
    * Whether a language also searches the comments and the strings, as {@link MoveFileHandler#findUsages} does with
    * {@code searchInComments}.
    */

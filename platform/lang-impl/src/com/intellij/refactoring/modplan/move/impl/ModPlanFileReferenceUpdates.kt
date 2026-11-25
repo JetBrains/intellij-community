@@ -27,6 +27,7 @@ import com.intellij.refactoring.modplan.ModPlanConflicts
 import com.intellij.refactoring.modplan.ModPlanEdit
 import com.intellij.refactoring.modplan.ModPlanRefactoring
 import com.intellij.refactoring.modplan.ModPlanRequest
+import com.intellij.refactoring.modplan.move.ModPlanMoveOptions
 import com.intellij.refactoring.modplan.move.ModPlanMovePlaces
 import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectoriesUtil.MovedFileOrDirectoryUsageInfo
 import com.intellij.refactoring.util.CommonRefactoringUtil
@@ -53,12 +54,16 @@ internal object ModPlanFileReferenceUpdates {
    * The updates of the file references that the move of [subjects] changes. They cover the references to each moved item, also inside a
    * moved directory, and the references in each moved file. A reference between the items that move together keeps its path. A
    * reference from a root in a moved file keeps its path if the root stays. A reference at a place that [request] excludes keeps its path.
-   * A reference that the move cannot update is a conflict.
+   * A reference that the move cannot update is a conflict. With [ModPlanMoveOptions.SEARCH_FOR_REFERENCES] off, it searches nothing, and
+   * the result is empty.
    *
    * @param subjects the moved files and directories; none is inside another
    */
   @RequiresReadLock
   fun analyze(subjects: List<PsiFileSystemItem>, places: ModPlanMovePlaces, request: ModPlanRequest): Result {
+    if (!request.optionValues().get(ModPlanMoveOptions.SEARCH_FOR_REFERENCES)) {
+      return Result(listOf(), ModPlanConflicts.EMPTY, listOf())
+    }
     val movedItems = subjects.flatMap { itemsOf(it) }
     val referenceUsages = ArrayList<ReferenceUsage>()
     val conflicts = ModPlanConflicts.builder()

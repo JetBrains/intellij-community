@@ -31,6 +31,7 @@ import com.intellij.refactoring.modplan.ModPlanExecutionResult
 import com.intellij.refactoring.modplan.ModPlanExecutor
 import com.intellij.refactoring.modplan.ModPlanOptionValues
 import com.intellij.refactoring.modplan.ModPlanRefactoring
+import com.intellij.refactoring.modplan.move.ModPlanMoveOptions
 import com.intellij.refactoring.modplan.move.ModPlanMoveRefactoring
 import com.intellij.refactoring.util.CommonRefactoringUtil
 import com.intellij.testFramework.PsiTestUtil
@@ -102,6 +103,9 @@ class HtmlModPlanMoveTest {
   }
 
   private fun hasTextUpdates(plan: ModPlan.AcceptedPlan): Boolean = plan.execution.command.unpack().any { it is ModUpdateFileText }
+
+  private fun withoutSearchForReferences(): ModPlanOptionValues =
+    ModPlanOptionValues.EMPTY.with(ModPlanMoveOptions.SEARCH_FOR_REFERENCES, false)
 
   @Test
   fun `test a reference to a moved file gets the new relative path`() {
@@ -327,6 +331,40 @@ class HtmlModPlanMoveTest {
     val message = RefactoringBundle.message("move.modplan.conflict.reference.not.updated", CommonRefactoringUtil.htmlEmphasize("a.png"))
     assertEquals(listOf(message), conflict.messages)
     assertFalse(hasTextUpdates(plan))
+  }
+
+  @Test
+  fun `test a move without the search for references keeps the references to the moved file`() {
+    myFixture.addFileToProject("page.html", """<a href="img/a.png">image</a>""")
+    myFixture.addFileToProject("img/a.png", "")
+
+    val plan = accepted(listOf("img/a.png"), "assets", withoutSearchForReferences())
+
+    assertEquals(listOf<Any>(), plan.usages)
+    assertEquals(ModPlanExecutionResult.Applied, execute(plan))
+    assertEquals("""<a href="img/a.png">image</a>""", textOf("page.html"))
+    assertNotNull(root().findFileByRelativePath("assets/a.png"))
+  }
+
+  @Test
+  fun `test a move without the search for references keeps the references in the moved file`() {
+    myFixture.addFileToProject("a.png", "")
+    myFixture.addFileToProject("d/page.html", """<img src="../a.png">""")
+
+    val result = execute(accepted(listOf("d/page.html"), "e/f", withoutSearchForReferences()))
+
+    assertEquals(ModPlanExecutionResult.Applied, result)
+    assertEquals("""<img src="../a.png">""", textOf("e/f/page.html"))
+  }
+
+  @Test
+  fun `test a move without the search for references reports no conflict of a reference`() {
+    myFixture.addFileToProject("css/site.css", "")
+    myFixture.addFileToProject("page.html", """<link rel="stylesheet" href="/css/site.css">""")
+
+    val plan = accepted(listOf("css/site.css"), "styles", withoutSearchForReferences())
+
+    assertEquals(listOf<Any>(), plan.conflicts.conflicts)
   }
 
   @Test

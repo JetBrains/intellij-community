@@ -909,6 +909,7 @@ c:com.intellij.refactoring.memberPushDown.PushDownProcessor
 - sf:NOTHING:com.intellij.refactoring.modplan.move.ModPlanMoveFileHandler
 - a:analyze(com.intellij.psi.PsiFile,com.intellij.refactoring.modplan.move.ModPlanMovePlaces,com.intellij.refactoring.modplan.ModPlanRequest):com.intellij.refactoring.modplan.ModPlanAnalysisResult
 *f:com.intellij.refactoring.modplan.move.ModPlanMoveOptions
+- sf:SEARCH_FOR_REFERENCES:com.intellij.refactoring.modplan.ModPlanOption
 - sf:SEARCH_FOR_TEXT:com.intellij.refactoring.modplan.ModPlanOption
 - sf:SEARCH_IN_COMMENTS:com.intellij.refactoring.modplan.ModPlanOption
 - sf:TARGET_DIRECTORY:com.intellij.refactoring.modplan.ModPlanOption

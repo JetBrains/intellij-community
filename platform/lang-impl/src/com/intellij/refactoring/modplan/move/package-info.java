@@ -15,7 +15,9 @@
  *   {@link com.intellij.refactoring.modplan.move.ModPlanMovePlaces}.</li>
  *   <li>The file references to each moved item, and to each item inside a moved directory, get their new relative paths. The file
  *   references in each moved file get new relative paths too, see {@link com.intellij.refactoring.modplan.move.ModPlanMoveUsage}. A
- *   reference from a root, such as {@code /css/site.css}, stays as it is if the root of its file stays.</li>
+ *   reference from a root, such as {@code /css/site.css}, stays as it is if the root of its file stays. With
+ *   {@link com.intellij.refactoring.modplan.move.ModPlanMoveOptions#SEARCH_FOR_REFERENCES} off, the move searches and updates no file
+ *   reference.</li>
  *   <li>The place of each updated file reference is a usage of the plan, which a preview shows. A usage that the user excludes keeps its
  *   path, see {@link com.intellij.refactoring.modplan.ModPlanRefactoring#EXCLUDED_USAGES}.</li>
  *   <li>The edits are the edits of the adapters and of the file references. Then each missing directory of the target gets one creation,
@@ -30,8 +32,8 @@
  *   <li>The default {@code MoveFileHandler} joins with an adapter that adds nothing,
  *   {@link com.intellij.refactoring.modplan.move.ModPlanMoveFileHandler#NOTHING}. The handler of a language has no adapter until the
  *   language joins the ModPlan move.</li>
- *   <li>The options are in {@link com.intellij.refactoring.modplan.move.ModPlanMoveOptions}: the target directory, the search in comments
- *   and strings, and the search for text. The default adapter reads no search option.</li>
+ *   <li>The options are in {@link com.intellij.refactoring.modplan.move.ModPlanMoveOptions}: the target directory, the search for
+ *   references, the search in comments and strings, and the search for text. The default adapter reads no search option.</li>
  * </ul>
  */
 @ApiStatus.Experimental
