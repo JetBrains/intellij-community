@@ -8,10 +8,8 @@ import com.intellij.driver.sdk.ui.components.UiComponent
 import com.intellij.driver.sdk.ui.components.elements.checkBox
 import com.intellij.driver.sdk.ui.components.elements.comboBox
 import com.intellij.driver.sdk.ui.components.elements.textField
-import com.intellij.driver.sdk.ui.shouldBe
 import com.intellij.driver.sdk.ui.ui
 import javax.swing.JTextField
-import kotlin.time.Duration.Companion.seconds
 
 fun Finder.newProjectDialog(action: NewProjectDialogUI.() -> Unit) {
   x("//div[@title='New Project' or @title='New Module']", NewProjectDialogUI::class.java).action()

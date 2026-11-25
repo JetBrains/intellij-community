@@ -10,6 +10,7 @@ import com.intellij.driver.sdk.ui.components.elements.accessibleList
 import com.intellij.driver.sdk.ui.components.elements.popup
 import com.intellij.driver.sdk.ui.components.settings.SettingsDialogUiComponent
 import com.intellij.driver.sdk.ui.components.settings.settingsDialog
+import com.intellij.driver.sdk.ui.ui
 import com.intellij.openapi.util.SystemInfo
 import java.awt.Point
 import java.awt.Rectangle
