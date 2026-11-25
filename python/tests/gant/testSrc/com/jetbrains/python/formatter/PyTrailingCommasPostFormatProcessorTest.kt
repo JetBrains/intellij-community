@@ -11,7 +11,6 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.psi.codeStyle.CodeStyleSettings
 import com.intellij.psi.impl.source.codeStyle.PostFormatProcessor
-import com.intellij.python.community.testFramework.fixme
 import com.intellij.testFramework.junit5.TestDisposable
 import com.jetbrains.python.PythonFileType
 import com.jetbrains.python.allure.Layers
@@ -19,7 +18,6 @@ import com.jetbrains.python.allure.Subsystems
 import com.jetbrains.python.fixtures.PyCodeInsightTestCase
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
-import org.opentest4j.AssertionFailedError
 
 @Subsystems.Formatter
 @Layers.Functional
@@ -89,20 +87,45 @@ class PyTrailingCommasPostFormatProcessorTest : PyCodeInsightTestCase() {
 
   @TestFor(issues = ["PY-86792"])
   @Test
-  fun `no trailing comma follows a sole generator argument`() =
-    fixme<AssertionFailedError>("PY-86792 the formatter adds a comma after the generator, which is a syntax error", "range(3),") {
-      assertReformattedWithTrailingCommas("""
-        print(
-            x
-            for x in range(3)
-        )
-      """, """
-        print(
-            x
-            for x in range(3)
-        )
-      """)
-    }
+  fun `no trailing comma follows a sole generator argument`() = assertReformattedWithTrailingCommas("""
+    print(
+        x
+        for x in range(3)
+    )
+  """, """
+    print(
+        x
+        for x in range(3)
+    )
+  """)
+
+  @TestFor(issues = ["PY-86792"])
+  @Test
+  fun `no trailing comma follows a sole generator argument with star unpacking`() = assertReformattedWithTrailingCommas("""
+    print(
+        *x
+        for x in [[1], [2]]
+    )
+  """, """
+    print(
+        *x
+        for x in [[1], [2]]
+    )
+  """)
+
+  @TestFor(issues = ["PY-86792"])
+  @Test
+  fun `a trailing comma follows a sole parenthesized generator argument`() = assertReformattedWithTrailingCommas("""
+    print(
+        (x
+         for x in range(3))
+    )
+  """, """
+    print(
+        (x
+         for x in range(3)),
+    )
+  """)
 
   /** Reformats [before] with trailing commas in argument lists on, and compares the text with [after]. */
   private fun assertReformattedWithTrailingCommas(before: String, after: String) {

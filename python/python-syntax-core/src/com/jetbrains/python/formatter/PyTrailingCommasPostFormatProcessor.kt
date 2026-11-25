@@ -19,6 +19,7 @@ import com.jetbrains.python.PythonLanguage
 import com.jetbrains.python.ast.PyAstArgumentList
 import com.jetbrains.python.ast.PyAstDictLiteralExpression
 import com.jetbrains.python.ast.PyAstElement
+import com.jetbrains.python.ast.PyAstGeneratorExpression
 import com.jetbrains.python.ast.PyAstListLiteralExpression
 import com.jetbrains.python.ast.PyAstParameterList
 import com.jetbrains.python.ast.PyAstParenthesizedExpression
@@ -95,10 +96,19 @@ class PyTrailingCommasPostFormatProcessor : PostFormatProcessor {
     }
 
     override fun visitPyArgumentList(node: PyAstArgumentList) {
-      if (pySettings.USE_TRAILING_COMMA_IN_ARGUMENTS_LIST) {
+      if (pySettings.USE_TRAILING_COMMA_IN_ARGUMENTS_LIST && !node.hasSoleBareGenerator()) {
         processContainer(node, node.arguments.asList())
       }
       super.visitPyArgumentList(node)
+    }
+
+    /**
+     * Returns true when the only argument is a generator without its own parentheses, as in `f(x for x in y)`.
+     * A comma after this generator is a syntax error.
+     */
+    private fun PyAstArgumentList.hasSoleBareGenerator(): Boolean {
+      val generator = arguments.singleOrNull() as? PyAstGeneratorExpression ?: return false
+      return generator.firstChild.elementType != PyTokenTypes.LPAR
     }
 
     override fun visitPyTupleExpression(node: PyAstTupleExpression<*>) {
