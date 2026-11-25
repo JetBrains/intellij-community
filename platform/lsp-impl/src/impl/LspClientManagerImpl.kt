@@ -41,6 +41,7 @@ import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.util.containers.ContainerUtil
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
@@ -95,6 +96,13 @@ class LspClientManagerImpl internal constructor(private val project: Project, in
    * A string key is required: a `Class` key would retain the classloader of an unloaded plugin.
    */
   private val lastStopStamps = ConcurrentHashMap<String, Long>()
+
+  /**
+   * The unfinished [start] of each provider class. A later start of the class cancels the earlier one, and [stopClients] cancels it.
+   * An entry leaves the map when its job completes, so the `Class` key does not retain the classloader of an unloaded plugin.
+   */
+  private val startJobs = ConcurrentHashMap<Class<out LspIntegrationProvider>, Job>()
+
   @TestOnly
   private val lsp4jServerWrappers = ContainerUtil.createLockFreeCopyOnWriteList<Lsp4jServerWrapper>()
 
@@ -170,10 +178,11 @@ class LspClientManagerImpl internal constructor(private val project: Project, in
   }
 
   private fun start(provider: LspIntegrationProvider) {
+    val providerClass = provider.javaClass
     val requestStamp = startRequestStamp()
-    cs.launch {
+    val job = cs.launch(start = CoroutineStart.LAZY) {
       val descriptorsToStart = readAction {
-        val clients = getClients(provider.javaClass)
+        val clients = getClients(providerClass)
         val descriptorsToStart = mutableListOf<LspClientDescriptor>()
         // a bulk provider may want one more client for a file within the roots of its other clients
         val bulk = provider is LspBulkIntegrationProvider
@@ -203,8 +212,12 @@ class LspClientManagerImpl internal constructor(private val project: Project, in
         descriptorsToStart
       }
 
-      descriptorsToStart.forEach { ensureStarted(provider.javaClass, it, requestStamp) }
+      descriptorsToStart.forEach { ensureStarted(providerClass, it, requestStamp) }
     }
+    // the job is lazy, so the completion handler cannot run before the put and leave the entry
+    startJobs.put(providerClass, job)?.cancel()
+    job.invokeOnCompletion { startJobs.remove(providerClass, job) }
+    job.start()
   }
 
   /** `false` when [providerClass] is the class of an extension that does not apply to the project, see [TechnologyFilter]. */
@@ -310,6 +323,9 @@ class LspClientManagerImpl internal constructor(private val project: Project, in
 
   /** The same as [stopClients] with a class, by the class name: the clients, if any, know the class, so the caller need not load it. */
   private fun stopClients(providerClassName: String) {
+    for ((startedClass, job) in startJobs) {
+      if (startedClass.name == providerClassName) job.cancel()
+    }
     val clients = synchronized(startStopLock) {
       lastStopStamps[providerClassName] = stopClock.incrementAndGet()
       lspClients.filter { it.providerClass.name == providerClassName }
