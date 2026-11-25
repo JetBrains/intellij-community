@@ -66,7 +66,8 @@ private var statsIsWritten = false
 
 @Internal
 object FUSProjectHotStartUpMeasurer {
-  private val channel = Channel<Event>(Int.MAX_VALUE)
+  @Volatile
+  private var channel = Channel<Event>(Int.MAX_VALUE)
   private val counter = AtomicInteger(0)
   private val handlingStarted = AtomicBoolean(false)
 
@@ -573,6 +574,15 @@ object FUSProjectHotStartUpMeasurer {
     return statsIsWritten
   }
 
+  @TestOnly
+  internal fun resetForTest() {
+    channel.close()
+    channel = Channel(Int.MAX_VALUE)
+    counter.set(0)
+    handlingStarted.set(false)
+    statsIsWritten = false
+  }
+
   private class MarkupResurrectedFileIds {
     private val ids: Map<MarkupType, IntSet> = MarkupType.entries.associateWith { IntOpenHashSet() }
 
@@ -708,11 +718,12 @@ object FUSProjectHotStartUpMeasurer {
 
           for ((projectId, frameBecameVisibleEvent) in frameBecameVisibleEventMap) {
             if (reportedFrameBecameVisibleEventMap.containsKey(projectId)) continue
+            val settingsExist = projectPathReportEvents[projectId]?.hasSettings
+            if (projectId != EmptyProjectMarker.id && settingsExist == null) continue
             val durationFromStart = getDurationFromStart(frameBecameVisibleEvent.time, reportedFirstUiShownEvent)
             val projectsType = projectTypeReportEvent?.projectsType
                                ?: (if (multipleProjectsOpenedEvent?.reopening == true) ProjectsType.Reopened else ProjectsType.Unknown)
             val data: MutableList<EventPair<*>> = mutableListOf(DURATION.with(durationFromStart), PROJECTS_TYPE.with(projectsType))
-            val settingsExist = projectPathReportEvents[projectId]?.hasSettings
             if (settingsExist != null) {
               data.add(HAS_SETTINGS.with(settingsExist))
             }
@@ -737,7 +748,7 @@ object FUSProjectHotStartUpMeasurer {
         else if (frameBecameInteractiveEventMap.size > reportedFrameBecameInteractiveEvenMap.size) {
           for ((projectId, frameBecameInteractiveEvent) in frameBecameInteractiveEventMap) {
             if (reportedFrameBecameInteractiveEvenMap.containsKey(projectId)) continue
-            val lastReportedEvent = reportedFrameBecameVisibleEventMap[projectId] ?: reportedFirstUiShownEvent
+            val lastReportedEvent = reportedFrameBecameVisibleEventMap[projectId] ?: continue
             val durationFromStart = getDurationFromStart(frameBecameInteractiveEvent.time, lastReportedEvent)
 
             if (multipleProjectsOpenedEvent == null) {
@@ -758,8 +769,7 @@ object FUSProjectHotStartUpMeasurer {
         if (projectPathReportEvents.size > reportedFirstEditorEvenMap.size) {
           for ((projectId, projectPathReportEvent) in projectPathReportEvents) {
             if (reportedFirstEditorEvenMap[projectId] != null) continue
-            val lastReportedEvent = reportedFrameBecameInteractiveEvenMap[projectId] ?: reportedFrameBecameVisibleEventMap[projectId]
-                                    ?: reportedFirstUiShownEvent
+            val lastReportedEvent = reportedFrameBecameInteractiveEvenMap[projectId] ?: continue
             val firstEditorEvent = firstEditorEventMap[projectId]
             val data: MutableList<EventPair<*>> = mutableListOf(HAS_SETTINGS.with(projectPathReportEvent.hasSettings))
 
@@ -803,7 +813,8 @@ object FUSProjectHotStartUpMeasurer {
           }
         }
 
-        if (projectPathReportEvents.size > reportedFirstEditorEvenMap.size) {
+        val expectedProjectsCount = multipleProjectsOpenedEvent?.numberOfProjects ?: 1
+        if (reportedFirstEditorEvenMap.size < expectedProjectsCount || projectPathReportEvents.size > reportedFirstEditorEvenMap.size) {
           logInTest { "Break: waiting for events to report first editor event" }
           break
         }
