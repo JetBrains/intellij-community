@@ -231,15 +231,25 @@ internal object WindowTabsManager : ProjectTabsHandler {
     val next = model.remove(entry)
 
     val frame = entry.frame
-    removeFromFrame(frame, null)
+    val untabbedFrames = ArrayList<IdeFrameImpl>()
+    if (removeFromFrame(frame, null)) {
+      untabbedFrames.add(frame)
+    }
     for (each in model.getItems()) {
-      removeFromFrame(each.frame, frame)
+      if (removeFromFrame(each.frame, frame)) {
+        untabbedFrames.add(each.frame)
+      }
     }
     Disposer.dispose(entry.disposable)
 
     if (next != null && !ApplicationManager.getApplication().isExitInProgress) {
       copyBoundsAndState(frame, next.frame)
       showWindow(next.frame)
+    }
+
+    // Call it after showWindow, so that the next frame shows without the DWM transition.
+    for (each in untabbedFrames) {
+      setTabbingPresentation(each, false)
     }
   }
 
@@ -275,28 +285,40 @@ internal object WindowTabsManager : ProjectTabsHandler {
     parent.repaint()
 
     InternalUICustomization.getInstance()?.createProjectTab(frame, tabs)
+    setTabbingPresentation(frame, true)
   }
 
   private fun insertTabForFrame(frame: IdeFrameImpl, tab: IdeFrameImpl, index: Int) {
     checkNotNull(getTabsComponent(getTabsContainer(frame))).insertTabForFrame(tab, index)
   }
 
-  private fun removeFromFrame(frame: IdeFrameImpl, tab: IdeFrameImpl?) {
+  private fun setTabbingPresentation(window: IdeFrameImpl, on: Boolean) {
+    // TODO: call native
+  }
+
+  /**
+   * Removes the tab of [tab] from [frame], or all tabs when [tab] is `null`.
+   * Returns `true` when [frame] loses its tab bar.
+   */
+  private fun removeFromFrame(frame: IdeFrameImpl, tab: IdeFrameImpl?): Boolean {
     val parentComponent = getTabsContainer(frame)
-    val tabs = getTabsComponent(parentComponent) ?: return
+    val tabs = getTabsComponent(parentComponent) ?: return false
 
-    if (tab == null || tabs.removeTabFromFrame(tab)) {
-      parentComponent.remove(tabs)
-      parentComponent.isVisible = false
-      tabs.selfDispose()
-
-      val parent = parentComponent.parent
-      if (parent != null) {
-        parent.doLayout()
-        parent.revalidate()
-        parent.repaint()
-      }
+    if (tab != null && !tabs.removeTabFromFrame(tab)) {
+      return false
     }
+
+    parentComponent.remove(tabs)
+    parentComponent.isVisible = false
+    tabs.selfDispose()
+
+    val parent = parentComponent.parent
+    if (parent != null) {
+      parent.doLayout()
+      parent.revalidate()
+      parent.repaint()
+    }
+    return true
   }
 
   private fun getTabsContainer(frame: IdeFrameImpl): JPanel = frame.rootPane.getClientProperty(WINDOW_TABS_CONTAINER) as JPanel
