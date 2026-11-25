@@ -11,6 +11,7 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.colors.CodeInsightColors
 import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.editor.impl.stickyLines.StickyLinesModel
 import com.intellij.openapi.fileEditor.impl.text.AsyncEditorLoader
 import com.intellij.openapi.ui.playback.PlaybackContext
 import com.intellij.openapi.ui.playback.commands.PlaybackCommandCoroutineAdapter
@@ -247,6 +248,33 @@ internal class LspWaitForFoldRegionCommand(text: String, line: Int) : PlaybackCo
   }
 }
 
+/**
+ * Waits until a sticky line starts in the given line of the selected editor, or with `false` at the end,
+ * until none starts there. Lines start with 1, as in `%goto`. The daemon puts the sticky lines of a file into
+ * the markup model of its document, and the editor pins one to its top only when it scrolls past its start,
+ * so the command reads the model. In a file of an LSP server, a document symbol gives a sticky line
+ * that starts in the line of its name.
+ *
+ * Syntax: `%lspWaitForStickyLine <line> [true|false]`
+ */
+internal class LspWaitForStickyLineCommand(text: String, line: Int) : PlaybackCommandCoroutineAdapter(text, line) {
+  companion object {
+    const val PREFIX: String = CMD_PREFIX + "lspWaitForStickyLine"
+  }
+
+  override suspend fun doExecute(context: PlaybackContext) {
+    val args = extractCommandArgument(PREFIX).trim().split(Regex("\\s+"))
+    require(args.size in 1..2) { "Expected: $PREFIX <line> [true|false], got: '$text'" }
+    val line = args[0].toInt()
+    val present = args.getOrNull(1)?.toBooleanStrict() ?: true
+    val what = if (present) "a sticky line that starts in line $line" else "rid of the sticky line that starts in line $line"
+    awaitEditorState(context.project, what, stateForFailure = { "Its sticky lines start in lines: ${it.stickyLineList()}" }) { editor ->
+      editor.requireLine(line)
+      editor.stickyLineList().contains(line) == present
+    }
+  }
+}
+
 /** The arguments `<line> <column> [true|false]` of a wait for something at a position. */
 private data class PositionArguments(val line: Int, val column: Int, val present: Boolean) {
   /** For the message of a failure: "a problem at 3:5", or with [present] `false`, "rid of the problem at 3:5". */
@@ -338,6 +366,12 @@ private fun Editor.codeLenses(): List<CodeLens> {
 
 private fun Editor.foldRegionList(): List<String> =
   foldingModel.allFoldRegions.filter { it.isValid }.map { positionOf(it.startOffset) }
+
+/** The lines, which start with 1, in which the sticky lines of the document start. */
+private fun Editor.stickyLineList(): List<Int> {
+  val model = project?.let { StickyLinesModel.getModel(it, document) } ?: return emptyList()
+  return model.allStickyLines.map { it.primaryLine() + 1 }.sorted()
+}
 
 /** The offsets of the line, which starts with 1, from its start to its end. */
 private fun Editor.lineRange(line: Int): IntRange {
