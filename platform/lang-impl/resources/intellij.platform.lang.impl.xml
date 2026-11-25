@@ -328,6 +328,9 @@
     <extensionPoint name="projectViewSelectInTargetProvider"
                     interface="com.intellij.ide.impl.ProjectViewSelectInTargetProvider"
                     dynamic="true"/>
+    <extensionPoint name="selectInPrefetcher"
+                    interface="com.intellij.ide.impl.SelectInPrefetcher"
+                    dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.workspaceModel.optionalExclusionContributor" dynamic="true"
                     interface="com.intellij.workspaceModel.ide.OptionalExclusionContributor"/>
     <extensionPoint qualifiedName="com.intellij.stacktrace.fold" beanClass="com.intellij.execution.console.CustomizableConsoleFoldingBean" dynamic="true"/>

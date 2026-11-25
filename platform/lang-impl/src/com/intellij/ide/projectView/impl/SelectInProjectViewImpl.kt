@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:ApiStatus.Internal
 
 package com.intellij.ide.projectView.impl
@@ -11,6 +11,8 @@ import com.intellij.ide.FileSelectInContext
 import com.intellij.ide.SelectInContext
 import com.intellij.ide.SelectInTarget
 import com.intellij.ide.SmartSelectInContext
+import com.intellij.ide.impl.getSelectInPrefetchers
+import com.intellij.ide.impl.prefetchForSelectIn
 import com.intellij.ide.projectView.ProjectView
 import com.intellij.ide.scopeView.ScopeViewPane
 import com.intellij.openapi.application.EDT
@@ -321,6 +323,7 @@ open class SelectInProjectViewImpl(
 
   private suspend fun doSelectInAnyTarget(context: SelectInContext, targets: Collection<SelectInTarget>, requestFocus: Boolean) {
     LOG.debug { "doSelectInAnyTarget: context=$context, targets=$targets, requestFocus=$requestFocus" }
+    prefetchForSelectIn(context, getSelectInPrefetchers(context))
     for (target in targets) {
       val canSelect = readAction { target.canSelect(context) }
       LOG.debug { "${if (canSelect) "Can" else "Can NOT"} select $context in $target" }

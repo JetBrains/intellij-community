@@ -60,7 +60,7 @@ fun SelectInRequestDTO.toSelectInRequest(project: Project): SelectInRequest? {
   return SelectByContextImpl(context)
 }
 
-private fun restoreSerializedContext(contextDescriptor: SelectInContextDTO, project: Project): SelectInContext? {
+internal fun restoreSerializedContext(contextDescriptor: SelectInContextDTO, project: Project): SelectInContext? {
   val file = contextDescriptor.fileId.virtualFile() ?: return null
   return FileSelectInContext(project, file)
 }

@@ -4,13 +4,16 @@ package com.intellij.platform.projectView.pane
 
 import com.intellij.codeWithMe.ClientId
 import com.intellij.codeWithMe.asContextElement
+import com.intellij.diagnostic.rethrowControlFlowException
 import com.intellij.ide.SelectInContext
 import com.intellij.ide.projectView.impl.ProjectViewTransferableFileImpl
 import com.intellij.openapi.client.ClientSessionsManager
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.options.advanced.AdvancedSettingsChangeListener
+import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.openapi.project.Project
 import com.intellij.platform.projectView.actions.EditorChoice
 import com.intellij.platform.projectView.actions.fromDTO
@@ -213,6 +216,34 @@ abstract class ProjectViewPaneServiceBase(
   fun canSelect(paneId: ProjectViewPaneId, context: SelectInContext): Boolean {
     val pane = getPane(paneId) ?: return false
     return pane.canSelect(SelectByContextImpl(context))
+  }
+
+  /**
+   * Returns the panes that cannot select the [contextDTO], see [ProjectViewPaneModel.canSelect].
+   * A pane whose check fails is not in the result, because Select In must then keep its target enabled.
+   */
+  suspend fun getPanesThatCannotSelect(contextDTO: SelectInContextDTO): List<ProjectViewPaneId> {
+    val managers = managers.value ?: return emptyList()
+    return readAction {
+      val context = restoreSerializedContext(contextDTO, project) ?: return@readAction emptyList()
+      val request = SelectByContextImpl(context)
+      managers.values.filter { manager -> !canSelectOrTrue(manager.pane, request) }.map { it.id }
+    }
+  }
+
+  @RequiresReadLock
+  private fun canSelectOrTrue(pane: ProjectViewPaneModel, request: SelectInRequest): Boolean {
+    return try {
+      pane.canSelect(request)
+    }
+    catch (_: IndexNotReadyException) {
+      true
+    }
+    catch (e: Throwable) {
+      rethrowControlFlowException(e)
+      LOG.warn("The Select In check of the pane $pane failed", e)
+      true
+    }
   }
 
   override suspend fun findNodeForSelectIn(selectInRequestDTO: SelectInRequestDTO): ProjectViewNodePath? {

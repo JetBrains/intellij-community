@@ -41,6 +41,7 @@
       serviceImplementation="com.intellij.platform.projectView.frontend.actions.SelectInSplitProjectViewImpl"
     />
     <projectViewSelectInTargetProvider implementation="com.intellij.platform.projectView.frontend.actions.FrontendProjectViewSelectInTargetProvider"/>
+    <selectInPrefetcher implementation="com.intellij.platform.projectView.frontend.actions.FrontendProjectViewSelectInPrefetcher"/>
     <uiDataRule implementation="com.intellij.platform.projectView.frontend.pane.FrontendProjectViewPaneUiDataRule"/>
   </extensions>
 </idea-plugin>

@@ -31,6 +31,10 @@
                  description="Enables the new experimental split Project View tool window in monolith only" />
     <registryKey key="project.view.toolwindow.split.remdev" defaultValue="true" restartRequired="true"
                  description="Enables the new experimental split Project View tool window in remdev only" />
+    <registryKey key="project.view.toolwindow.split.remdev.select.in.prefetch" defaultValue="true"
+                 description="In remdev, the Select In popup asks the backend which Project View panes can select the file before the popup shows. Set it on the frontend" />
+    <registryKey key="project.view.toolwindow.split.remdev.select.in.prefetch.timeout.ms" defaultValue="500"
+                 description="How long the Select In popup waits for the backend answer about the Project View panes, in milliseconds. Set it on the frontend" />
     <remote.customDataContextSerializer implementation="com.intellij.platform.projectView.pane.ProjectViewPaneIdDataContextSerializer" />
     <remote.customDataContextSerializer implementation="com.intellij.platform.projectView.pane.ProjectViewSelectedNodeIdsDataContextSerializer" />
     <projectService

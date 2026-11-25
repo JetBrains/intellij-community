@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.projectView.backend.rpc
 
 import com.intellij.ide.vfs.VirtualFileId
@@ -18,6 +18,7 @@ import com.intellij.platform.projectView.pane.ProjectViewPaneDescriptorDTO
 import com.intellij.platform.projectView.pane.ProjectViewPaneId
 import com.intellij.platform.projectView.pane.ProjectViewPaneRequest
 import com.intellij.platform.projectView.pane.ProjectViewPaneStateEventDTO
+import com.intellij.platform.projectView.pane.SelectInContextDTO
 import com.intellij.platform.projectView.pane.SelectInRequestDTO
 import com.intellij.platform.projectView.rpc.ProjectViewRpc
 import com.intellij.platform.projectView.rpc.SelectPaneRequestDTO
@@ -74,6 +75,10 @@ internal class ProjectViewRpcImpl : ProjectViewRpc {
       selectInRequest: SelectInRequestDTO,
   ): ProjectViewNodePathImpl? {
     return BackendProjectViewPaneService.getInstance(projectId.findProject()).findNodeForSelectIn(selectInRequest) as ProjectViewNodePathImpl?
+  }
+
+  override suspend fun getPanesThatCannotSelect(projectId: ProjectId, context: SelectInContextDTO): List<ProjectViewPaneId> {
+    return BackendProjectViewPaneService.getInstance(projectId.findProject()).getPanesThatCannotSelect(context)
   }
 
   override suspend fun getFileUpdateRequestChannel(projectId: ProjectId): SendChannel<FileUpdateDTO> {

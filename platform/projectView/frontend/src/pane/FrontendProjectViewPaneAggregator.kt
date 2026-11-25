@@ -4,10 +4,13 @@
 package com.intellij.platform.projectView.frontend.pane
 
 import com.intellij.ide.SelectInContext
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Disposer
 import com.intellij.platform.ide.productMode.IdeProductMode
 import com.intellij.platform.project.projectId
 import com.intellij.platform.projectView.actions.EditorChoice
@@ -20,7 +23,9 @@ import com.intellij.platform.projectView.pane.ProjectViewPaneKind
 import com.intellij.platform.projectView.pane.ProjectViewPaneRequest
 import com.intellij.platform.projectView.pane.ProjectViewPaneService
 import com.intellij.platform.projectView.pane.ProjectViewPaneStateEvent
+import com.intellij.platform.projectView.pane.SelectInContextDTO
 import com.intellij.platform.projectView.pane.SelectInRequestDTO
+import com.intellij.platform.projectView.pane.serialize
 import com.intellij.platform.projectView.rpc.ProjectViewRpc
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import kotlinx.coroutines.CoroutineName
@@ -33,8 +38,12 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeoutOrNull
+import org.jetbrains.annotations.TestOnly
+import java.lang.ref.WeakReference
 import kotlin.concurrent.atomics.AtomicBoolean
 import kotlin.concurrent.atomics.ExperimentalAtomicApi
+import kotlin.time.Duration
 
 @Service(Service.Level.PROJECT)
 internal class FrontendProjectViewPaneAggregator(
@@ -55,6 +64,16 @@ internal class FrontendProjectViewPaneAggregator(
   private val backendDescriptors = MutableStateFlow<Map<ProjectViewPaneId, ProjectViewPaneDescriptorImpl>?>(null)
 
   private val isBackendLoaded = AtomicBoolean(false)
+
+  /**
+   * The answer of the last [prefetchCanSelect].
+   * One answer is enough, because a Select In popup and the selection that it starts use one context.
+   */
+  @Volatile
+  private var lastPrefetchedAnswer: PrefetchedCanSelectAnswer? = null
+
+  @Volatile
+  private var isRemoteBackendSimulated = false
 
   init {
     coroutineScope.launch(CoroutineName("PV UI pane descriptors fetching")) {
@@ -158,16 +177,69 @@ internal class FrontendProjectViewPaneAggregator(
    * It asks the same side as [findNodeForSelectIn].
    * Call it in a read action, the same as [com.intellij.ide.SelectInTarget.canSelect].
    *
-   * The backend panes answer only in the monolith mode, where the backend runs in this process.
-   * In remote development, this function returns `true` for them, because a read action must not wait for an RPC.
+   * The backend panes answer directly only in the monolith mode, where the backend runs in this process.
+   * In remote development, this function uses the answer of [prefetchCanSelect] for the [context].
+   * Without an answer, it returns `true`, because a read action must not wait for an RPC.
    */
   fun canSelect(paneId: ProjectViewPaneId, context: SelectInContext): Boolean {
     if (!isBackendLoaded.load()) {
       return FrontendProjectViewPaneService.getInstance(project).canSelect(paneId, context)
     }
-    val backend = BackendProjectViewSelectInChecker.getInstanceIfLocal(project) ?: return true
-    return backend.canSelect(paneId, context)
+    val localBackend = localBackend()
+    if (localBackend != null) {
+      return localBackend.canSelect(paneId, context)
+    }
+    val answer = lastPrefetchedAnswer?.takeIf { it.isFor(context) } ?: return true
+    return paneId !in answer.panesThatCannotSelect
   }
+
+  /**
+   * Tells if [canSelect] needs [prefetchCanSelect] for the [context].
+   * It needs it when the backend runs in another process and there is no answer for the [context] yet.
+   */
+  fun isCanSelectPrefetchNeeded(context: SelectInContext): Boolean {
+    return isBackendLoaded.load() && localBackend() == null && lastPrefetchedAnswer?.isFor(context) != true
+  }
+
+  /**
+   * Fetches from the backend the panes that cannot select the [context], for [canSelect].
+   * If the answer does not come in [timeout], [canSelect] returns `true` for the backend panes.
+   */
+  suspend fun prefetchCanSelect(context: SelectInContext, timeout: Duration) {
+    if (!isCanSelectPrefetchNeeded(context)) return
+    val contextDTO = context.serialize()
+    val panesThatCannotSelect = withTimeoutOrNull(timeout) {
+      backendServiceDeferred.await().getPanesThatCannotSelect(contextDTO)
+    }
+    if (panesThatCannotSelect == null) {
+      LOG.info("The backend did not tell in $timeout which panes cannot select $context")
+      return
+    }
+    LOG.debug { "The panes that cannot select $context: $panesThatCannotSelect" }
+    lastPrefetchedAnswer = PrefetchedCanSelectAnswer(context, panesThatCannotSelect.toSet())
+  }
+
+  private fun localBackend(): BackendProjectViewSelectInChecker? {
+    if (isRemoteBackendSimulated) return null
+    return BackendProjectViewSelectInChecker.getInstanceIfLocal(project)
+  }
+
+  /** Makes this aggregator use the backend as if it ran in another process, until [disposable] is disposed. */
+  @TestOnly
+  fun simulateRemoteBackend(disposable: Disposable) {
+    isRemoteBackendSimulated = true
+    Disposer.register(disposable) { isRemoteBackendSimulated = false }
+  }
+}
+
+/**
+ * The panes that cannot select the context.
+ * It keeps the context through a weak reference, so it does not keep the editor or the PSI of the context.
+ */
+private class PrefetchedCanSelectAnswer(context: SelectInContext, val panesThatCannotSelect: Set<ProjectViewPaneId>) {
+  private val contextReference = WeakReference(context)
+
+  fun isFor(context: SelectInContext): Boolean = contextReference.get() === context
 }
 
 private class BackendDelegatingProjectViewPaneService(
@@ -199,6 +271,10 @@ private class BackendDelegatingProjectViewPaneService(
 
   override suspend fun findNodeForSelectIn(selectInRequestDTO: SelectInRequestDTO): ProjectViewNodePath? {
     return rpc.findNodeForSelectIn(project.projectId(), selectInRequestDTO)
+  }
+
+  suspend fun getPanesThatCannotSelect(contextDTO: SelectInContextDTO): List<ProjectViewPaneId> {
+    return rpc.getPanesThatCannotSelect(project.projectId(), contextDTO)
   }
 }
 

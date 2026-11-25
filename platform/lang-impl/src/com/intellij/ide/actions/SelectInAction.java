@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
 import com.intellij.ide.CompositeSelectInTarget;
@@ -6,6 +6,7 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.SelectInContext;
 import com.intellij.ide.SelectInManager;
 import com.intellij.ide.SelectInTarget;
+import com.intellij.ide.ui.IdeUiService;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -25,13 +26,18 @@ import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.ui.DirtyUI;
+import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.ui.EmptyIcon;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.Icon;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+
+import static com.intellij.ide.impl.SelectInPrefetcherKt.getSelectInPrefetchers;
+import static com.intellij.ide.impl.SelectInPrefetcherKt.prefetchForSelectInWithProgressIcon;
 
 public final class SelectInAction extends DumbAwareAction implements PerformWithDocumentsCommitted, ActionRemoteBehaviorSpecification.Frontend {
 
@@ -44,7 +50,17 @@ public final class SelectInAction extends DumbAwareAction implements PerformWith
   public void actionPerformed(@NotNull AnActionEvent e) {
     SelectInContext context = SelectInContextImpl.createContext(e);
     if (context == null) return;
-    invoke(e.getDataContext(), context);
+    var dataContext = e.getDataContext();
+    var prefetchers = getSelectInPrefetchers(context);
+    if (prefetchers.isEmpty()) {
+      invoke(dataContext, context, null);
+      return;
+    }
+    // The data context does not work after the wait. So the location and the async data context come before the wait.
+    var location = JBPopupFactory.getInstance().guessBestPopupLocation(dataContext);
+    var asyncDataContext = IdeUiService.getInstance().createAsyncDataContext(dataContext);
+    prefetchForSelectInWithProgressIcon(dataContext, e.getPlace(), context, prefetchers);
+    invoke(asyncDataContext, context, location);
   }
 
   @Override
@@ -59,7 +75,7 @@ public final class SelectInAction extends DumbAwareAction implements PerformWith
     }
   }
 
-  private static void invoke(@NotNull DataContext dataContext, @NotNull SelectInContext context) {
+  private static void invoke(@NotNull DataContext dataContext, @NotNull SelectInContext context, @Nullable RelativePoint location) {
     List<SelectInTarget> targetVector = SelectInManager.getInstance(context.getProject()).getTargetList();
     ListPopup popup;
     if (Registry.is("ide.selectIn.experimental.popup", true)) {
@@ -68,7 +84,12 @@ public final class SelectInAction extends DumbAwareAction implements PerformWith
     else {
       popup = createLegacyPopup(dataContext, context, targetVector);
     }
-    popup.showInBestPositionFor(dataContext);
+    if (location != null) {
+      popup.show(location);
+    }
+    else {
+      popup.showInBestPositionFor(dataContext);
+    }
   }
 
   private static @NotNull ListPopup createLegacyPopup(@NotNull DataContext dataContext, @NotNull SelectInContext context, List<SelectInTarget> targetVector) {

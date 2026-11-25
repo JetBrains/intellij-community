@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.projectView.rpc
 
 import com.intellij.ide.vfs.VirtualFileId
@@ -11,6 +11,7 @@ import com.intellij.platform.projectView.pane.ProjectViewPaneDescriptorDTO
 import com.intellij.platform.projectView.pane.ProjectViewPaneId
 import com.intellij.platform.projectView.pane.ProjectViewPaneRequest
 import com.intellij.platform.projectView.pane.ProjectViewPaneStateEventDTO
+import com.intellij.platform.projectView.pane.SelectInContextDTO
 import com.intellij.platform.projectView.pane.SelectInRequestDTO
 import com.intellij.platform.rpc.lite.LiteRemoteApiProviderService
 import fleet.rpc.RemoteApi
@@ -33,6 +34,12 @@ interface ProjectViewRpc : RemoteApi<Unit> {
   suspend fun findNodeForOpenedFile(projectId: ProjectId, paneId: ProjectViewPaneId, editorChoice: EditorChoice, isInvokedManually: Boolean): ProjectViewNodePathImpl?
 
   suspend fun findNodeForSelectIn(projectId: ProjectId, selectInRequest: SelectInRequestDTO): ProjectViewNodePathImpl?
+
+  /**
+   * Returns the panes that cannot select the [context], see [com.intellij.platform.projectView.pane.ProjectViewPaneModel.canSelect].
+   * A pane that is not in the result can select the [context], or the backend does not know it.
+   */
+  suspend fun getPanesThatCannotSelect(projectId: ProjectId, context: SelectInContextDTO): List<ProjectViewPaneId>
 
   suspend fun getFileUpdateRequestChannel(projectId: ProjectId): SendChannel<FileUpdateDTO>
 
