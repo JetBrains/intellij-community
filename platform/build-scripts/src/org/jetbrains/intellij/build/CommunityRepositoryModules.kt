@@ -694,7 +694,7 @@ private fun createAndroidPluginLayout(
   }
 }
 
-fun groovyPlugin(additionalModules: List<String> = emptyList(), addition: ((PluginLayout.PluginLayoutBuilder) -> Unit)? = null): PluginLayout {
+fun groovyPlugin(): PluginLayout {
   return pluginAuto("intellij.groovy") { spec ->
     spec.withModules(
       listOf(
@@ -704,12 +704,10 @@ fun groovyPlugin(additionalModules: List<String> = emptyList(), addition: ((Plug
     spec.withModule("intellij.groovy.rt", "groovy-rt.jar")
     spec.withModule("intellij.groovy.rt.classLoader", "groovy-rt-class-loader.jar")
     spec.withModule("intellij.groovy.constants.rt", "groovy-constants-rt.jar")
-    spec.withModules(additionalModules)
 
     spec.withResourceFromModule("intellij.groovy.psi", "standardDsls", "lib/standardDsls")
     spec.withResource("hotswap/gragent.jar", "lib/agent")
     spec.withResourceFromModule("intellij.groovy.psi", "resources/conf/console.groovy", "lib")
-    addition?.invoke(spec)
   }
 }
 
