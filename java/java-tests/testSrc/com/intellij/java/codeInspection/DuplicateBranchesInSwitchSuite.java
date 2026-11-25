@@ -11,11 +11,8 @@ import org.junit.runners.Suite;
 @Ignore("Manual only")
 @RunWith(Suite.class)
 @Suite.SuiteClasses({
-  DuplicateBranchesInEnhancedSwitchFixTest.class,
   DuplicateBranchesInEnhancedSwitchTest.class,
-  DuplicateBranchesInSwitchFixTest.class,
   DuplicateBranchesInSwitchTest.class,
-  DuplicateBranchesInEnhancedSwitchFix21PreviewTest.class,
 })
 public class DuplicateBranchesInSwitchSuite {
 }
