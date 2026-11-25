@@ -27,6 +27,7 @@ import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
+import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.FileIdAdapter
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.ex.WelcomeScreenProjectProvider
@@ -457,6 +458,50 @@ object FUSProjectHotStartUpMeasurer {
     }
   }
 
+  /**
+   * Binds the project marker of the running startup open to [project], so the machinery that opens the frame guests of
+   * [project] can report the editors of the frame, see [firstOpenedEditorOfGuest]. A call outside the startup open finds
+   * no marker and binds nothing.
+   */
+  internal fun bindProjectMarker(project: Project) {
+    if (!currentThreadContext().isProperContext()) return
+    val marker = currentThreadContext().getProjectMarker() ?: return
+    project.putUserData(PROJECT_MARKER_KEY, marker)
+  }
+
+  /**
+   * Reports the first editor of the frame of [frameOwner] when a frame guest restored it,
+   * see `ProjectFrameCapability.GUEST_STARTUP_EDITORS`. A [frameOwner] without a bound marker, see [bindProjectMarker],
+   * is not the project of the measured startup, and the call does nothing.
+   */
+  fun firstOpenedEditorOfGuest(frameOwner: Project, file: VirtualFile, guest: Project, fileEditor: FileEditor) {
+    withBoundProjectMarker(frameOwner) { projectId ->
+      sendEvent(Event.FirstEditorEvent(SourceOfSelectedEditor.TextEditor, file, System.nanoTime(), projectId))
+      if (ApplicationManagerEx.isInIntegrationTest()) {
+        checkEditorHasBasicHighlight(file, guest, fileEditor)
+      }
+    }
+  }
+
+  /** [firstOpenedUnknownEditor] for the frame of [frameOwner], see [firstOpenedEditorOfGuest]. */
+  fun firstOpenedUnknownEditorOfGuest(frameOwner: Project, file: VirtualFile, nanoTime: Long) {
+    withBoundProjectMarker(frameOwner) { projectId ->
+      sendEvent(Event.FirstEditorEvent(SourceOfSelectedEditor.UnknownEditor, file, nanoTime, projectId))
+    }
+  }
+
+  /** [reportNoMoreEditorsOnStartup] for the frame of [frameOwner], see [firstOpenedEditorOfGuest]. */
+  fun reportNoMoreGuestEditorsOnStartup(frameOwner: Project, nanoTime: Long) {
+    withBoundProjectMarker(frameOwner) { projectId ->
+      sendEvent(Event.NoMoreEditorsEvent(nanoTime, projectId))
+    }
+  }
+
+  private inline fun withBoundProjectMarker(frameOwner: Project, block: (ProjectId) -> Unit) {
+    val marker = frameOwner.getUserData(PROJECT_MARKER_KEY) ?: return
+    block(marker.id)
+  }
+
   private fun sendEvent(event: Event) {
     logInTest { "Registered event: ${event.javaClass.simpleName}" }
     channel.trySend(event)
@@ -787,6 +832,9 @@ object FUSProjectHotStartUpMeasurer {
   }
 
   private val EmptyProjectMarker = MyProjectMarker(ProjectId(-1))
+
+  /** The marker of the startup open on the project it opened, see [bindProjectMarker]. */
+  private val PROJECT_MARKER_KEY: Key<MyProjectMarker> = Key.create("FUSProjectHotStartUpMeasurer.projectMarker")
 
   private data class MyProjectMarker(val id: ProjectId) : CoroutineContext.Element, IntelliJContextElement {
     object Key : CoroutineContext.Key<MyProjectMarker>

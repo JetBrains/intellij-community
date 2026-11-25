@@ -79,6 +79,15 @@ enum class ProjectFrameCapability {
    * A tool window that presents every project itself is not affected, see `MultiProjectToolWindowFactory`.
    */
   SUPPRESS_OWN_TOOL_WINDOW_CONTENT,
+
+  /**
+   * Marks a frame owner whose startup editors come from its frame guests.
+   *
+   * The guests open after the project open of the owner. The machinery that opens the guests reports the first editor
+   * of the frame to the hot-startup measurement, and reports a frame without editors too, see
+   * `FUSProjectHotStartUpMeasurer.firstOpenedEditorOfGuest`. The project open of the owner reports neither.
+   */
+  GUEST_STARTUP_EDITORS,
 }
 
 /**

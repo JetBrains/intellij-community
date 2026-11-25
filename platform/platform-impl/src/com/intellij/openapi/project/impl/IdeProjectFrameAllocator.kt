@@ -144,6 +144,7 @@ internal class IdeProjectFrameAllocator(
   override suspend fun preInitProject(project: Project) {
     // the earliest point that knows the project, before the background write actions of the pre-init
     permitMainMenuFill(project)
+    FUSProjectHotStartUpMeasurer.bindProjectMarker(project)
     if (serviceAsync<ProjectFrameCapabilitiesService>().has(project, ProjectFrameCapability.WELCOME_EXPERIENCE)) {
       // the left panel of the welcome frame takes the list instead of collecting it on the EDT
       preloadRecentProjectsWithoutCurrent(project)
@@ -365,7 +366,13 @@ internal class IdeProjectFrameAllocator(
           val project = projectInitObservable.awaitProjectInit()
           val startUpContextElementToPass = FUSProjectHotStartUpMeasurer.getStartUpContextElementToPass() ?: EmptyCoroutineContext
 
-          val onNoEditorsLeft = captureThreadContext { FUSProjectHotStartUpMeasurer.reportNoMoreEditorsOnStartup(System.nanoTime()) }
+          // the guests of a frame owner with guest startup editors report the editor verdict of the frame, see the capability
+          val guestStartupEditors = serviceAsync<ProjectFrameCapabilitiesService>().has(project, ProjectFrameCapability.GUEST_STARTUP_EDITORS)
+          val onNoEditorsLeft = captureThreadContext {
+            if (!guestStartupEditors) {
+              FUSProjectHotStartUpMeasurer.reportNoMoreEditorsOnStartup(System.nanoTime())
+            }
+          }
 
           @Suppress("UsagesOfObsoleteApi")
           (project as ComponentManagerEx).getCoroutineScope().launch(startUpContextElementToPass + rootTask()) {
@@ -948,7 +955,9 @@ private suspend fun postOpenEditors(
           emptyStateTakesFocus && emptyStateClaimKept.get()
         })
       }
-      FUSProjectHotStartUpMeasurer.reportNoMoreEditorsOnStartup(System.nanoTime())
+      if (!serviceAsync<ProjectFrameCapabilitiesService>().has(project, ProjectFrameCapability.GUEST_STARTUP_EDITORS)) {
+        FUSProjectHotStartUpMeasurer.reportNoMoreEditorsOnStartup(System.nanoTime())
+      }
     }
   }
   finally {
