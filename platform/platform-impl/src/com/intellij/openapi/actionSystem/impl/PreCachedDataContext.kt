@@ -35,10 +35,12 @@ import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.impl.EditorComponentImpl
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils
 import com.intellij.openapi.progress.util.waitWithParallelismCompensation
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.openapi.util.UserDataHolder
@@ -80,6 +82,7 @@ private val ourDataKeysIndices = ConcurrentHashMap<String, Int>()
 private val ourDataKeysCount = AtomicInteger()
 private val ourEDTWarnsInterner = Interner.createStringInterner()
 private var ourIsCapturingSnapshot = false
+private val ourReportedEditorProjectMismatches = ConcurrentHashMap.newKeySet<String>()
 
 internal open class PreCachedDataContext : AsyncDataContext, UserDataHolder, InjectedDataContextSupplier {
   private val myComponentRef: ComponentRef
@@ -127,6 +130,8 @@ internal open class PreCachedDataContext : AsyncDataContext, UserDataHolder, Inj
           while (true) {
             sink.keys = null
             sink.uiSnapshot = initial?.uiSnapshot?.builder()
+            sink.projectSource = initial?.projectSource
+            sink.editorSource = initial?.editorSource
             cachedData = cacheComponentsData(sink, isDisplayable, components)
             if (components.isEmpty() && initial?.uiComputed?.isNotEmpty() == true) {
               cachedData.uiComputed.putAll(initial.uiComputed)
@@ -149,6 +154,7 @@ internal open class PreCachedDataContext : AsyncDataContext, UserDataHolder, Inj
     finally {
       ourIsCapturingSnapshot = false
     }
+    checkEditorProject(myCachedData)
   }
 
   private constructor(
@@ -422,7 +428,7 @@ private fun getDataKeyIndex(dataId: String): Int {
 
 private fun cacheComponentsData(sink: MySink, isDisplayable: Boolean, components: List<Component>): CachedData {
   if (components.isEmpty()) {
-    return CachedData(isDisplayable, sink.uiSnapshot?.build() ?: persistentMapOf())
+    return CachedData(isDisplayable, sink.uiSnapshot?.build() ?: persistentMapOf(), sink.projectSource, sink.editorSource)
   }
   lateinit var cachedData: CachedData
   val start = System.currentTimeMillis()
@@ -430,7 +436,7 @@ private fun cacheComponentsData(sink: MySink, isDisplayable: Boolean, components
     val dataProvider = if (comp is UiDataProvider) comp else DataManagerImpl.getDataProviderEx(comp)
     hideParentEditorIfNeeded(sink, comp)
     cacheProviderData(sink, dataProvider)
-    cachedData = CachedData(isDisplayable, sink.uiSnapshot?.build() ?: persistentMapOf())
+    cachedData = CachedData(isDisplayable, sink.uiSnapshot?.build() ?: persistentMapOf(), sink.projectSource, sink.editorSource)
     ourPrevMaps[comp] = cachedData
   }
   val time = System.currentTimeMillis() - start
@@ -495,6 +501,12 @@ private class MySink : DataSink {
 
   var source: Any? = null
 
+  /** The class name of the provider that wrote [CommonDataKeys.PROJECT] into [uiSnapshot], see [checkEditorProject]. */
+  var projectSource: String? = null
+
+  /** The class name of the provider that wrote [CommonDataKeys.EDITOR] into [uiSnapshot], see [checkEditorProject]. */
+  var editorSource: String? = null
+
   var keys: Array<DataKey<*>>? = null
 
   var closed: Boolean = true
@@ -546,6 +558,16 @@ private class MySink : DataSink {
     if (key == CommonDataKeys.EDITOR && validated !== CustomizedDataContext.EXPLICIT_NULL) {
       map[CommonDataKeys.EDITOR_EVEN_IF_INACTIVE.name] = validated
     }
+    if (uiComputed == null) {
+      recordSource(key)
+    }
+  }
+
+  private fun recordSource(key: DataKey<*>) {
+    when (key) {
+      CommonDataKeys.PROJECT -> projectSource = sourceName(source)
+      CommonDataKeys.EDITOR -> editorSource = sourceName(source)
+    }
   }
 
   override fun <T : Any> setNull(key: DataKey<T>) {
@@ -557,6 +579,7 @@ private class MySink : DataSink {
     }
     val map = uiSnapshot ?: persistentHashMapOf<String, Any>().builder().also { uiSnapshot = it }
     map[key.name] = CustomizedDataContext.EXPLICIT_NULL
+    recordSource(key)
   }
 
   override fun <T : Any> lazy(key: DataKey<T>, data: () -> T?) {
@@ -691,7 +714,9 @@ internal fun wrapUnsafeData(data: Any?): Any? = when {
 
 private class CachedData(
   val isDisplayable: Boolean,
-  uiSnapshot: PersistentMap<String, Any>
+  uiSnapshot: PersistentMap<String, Any>,
+  val projectSource: String? = null,
+  val editorSource: String? = null,
 ) : DataProvider, DataValidators.SourceWrapper {
   @Volatile
   var uiSnapshot: PersistentMap<String, Any> = uiSnapshot
@@ -752,4 +777,28 @@ private fun handleDataProviderException(e: Throwable) {
       LOG.error(e)
     }
   }
+}
+
+private fun sourceName(source: Any?): String? {
+  val unwrapped = (source as? DataValidators.SourceWrapper)?.unwrapSource() ?: source
+  return unwrapped?.javaClass?.name
+}
+
+/**
+ * Reports a data context whose [CommonDataKeys.EDITOR] belongs to another project than its [CommonDataKeys.PROJECT].
+ * The message names the provider of each key. An action that reads both keys then works on the wrong project.
+ *
+ * Runs in the internal mode and in tests only. Outside tests, it reports each pair of providers once.
+ */
+private fun checkEditorProject(data: CachedData) {
+  val application = ApplicationManager.getApplication() ?: return
+  val isUnitTestMode = application.isUnitTestMode
+  if (!isUnitTestMode && !application.isInternal) return
+  val editor = data.uiSnapshot[CommonDataKeys.EDITOR.name] as? Editor ?: return
+  val project = data.uiSnapshot[CommonDataKeys.PROJECT.name] as? Project ?: return
+  val editorProject = editor.project ?: return
+  if (editorProject === project || editorProject.isDefault) return
+  if (!isUnitTestMode && !ourReportedEditorProjectMismatches.add("${data.projectSource}|${data.editorSource}")) return
+  LOG.error("The data context gives PROJECT $project from ${data.projectSource}, " +
+            "but EDITOR of the project $editorProject from ${data.editorSource}")
 }
