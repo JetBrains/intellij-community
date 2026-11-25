@@ -185,6 +185,16 @@ public abstract class FirQuickDocTestGenerated extends AbstractFirQuickDocTest {
             runTest("../../idea/tests/testData/editor/quickDoc/FunctionalReceiver.kt");
         }
 
+        @TestMetadata("InInjection1.kt")
+        public void testInInjection1() throws Exception {
+            runTest("../../idea/tests/testData/editor/quickDoc/InInjection1.kt");
+        }
+
+        @TestMetadata("InInjection2.kt")
+        public void testInInjection2() throws Exception {
+            runTest("../../idea/tests/testData/editor/quickDoc/InInjection2.kt");
+        }
+
         @TestMetadata("IndentedCodeBlock.kt")
         public void testIndentedCodeBlock() throws Exception {
             runTest("../../idea/tests/testData/editor/quickDoc/IndentedCodeBlock.kt");

@@ -79,7 +79,7 @@ public abstract class AbstractQuickDocProviderTest extends KotlinLightCodeInsigh
             }
             String expectedInfo = expectedInfoBuilder.toString();
 
-            String cleanedInfo = info == null ? "" : StringUtil.join(
+            String cleanedInfo = info == null ? "null\n" : StringUtil.join(
                     StringUtil.split(info, "\n", false)
                             .stream()
                             .map(s -> StringUtil.isEmptyOrSpaces(s) ? "\n" : s)
