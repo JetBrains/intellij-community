@@ -369,6 +369,16 @@ public abstract class KotlinFirInlineTestGenerated extends AbstractKotlinFirInli
             runTest("testData/inline/inlineTypeAlias/varargParameter.kt");
         }
 
+        @TestMetadata("varargPrimitiveMixedParameters.kt")
+        public void testVarargPrimitiveMixedParameters() throws Exception {
+            runTest("testData/inline/inlineTypeAlias/varargPrimitiveMixedParameters.kt");
+        }
+
+        @TestMetadata("varargPrimitiveParameter.kt")
+        public void testVarargPrimitiveParameter() throws Exception {
+            runTest("testData/inline/inlineTypeAlias/varargPrimitiveParameter.kt");
+        }
+
         @TestMetadata("varargSuspendFunctionParameter.kt")
         public void testVarargSuspendFunctionParameter() throws Exception {
             runTest("testData/inline/inlineTypeAlias/varargSuspendFunctionParameter.kt");
