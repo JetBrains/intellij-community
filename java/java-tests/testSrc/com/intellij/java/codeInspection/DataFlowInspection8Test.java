@@ -511,6 +511,15 @@ public class DataFlowInspection8Test {
     dataFlow.get().doTest();
   }
   @Test
+  public void testCheckerRequiresNonNull() {
+    LightJavaCodeInsightTestFixture myFixture = dataFlow.get().getFixture();
+    addCheckerAnnotations(myFixture);
+    myFixture.addClass("package org.checkerframework.checker.nullness.qual;import java.lang.annotation.*;" +
+                       "@Target({ElementType.METHOD, ElementType.CONSTRUCTOR})public @interface RequiresNonNull {String[] value();}");
+    myFixture.addClass("package custom;public @interface RequiresNonNull {String[] value();}");
+    dataFlow.get().doTest();
+  }
+  @Test
   public void testSpotBugsDefaultAnnotation() {
     dataFlow.get().doTest();
   }

@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.dataFlow.jvm.descriptors;
 
+import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.ExpressionUtil;
 import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil;
@@ -15,8 +16,11 @@ import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
 import com.intellij.codeInspection.dataFlow.value.VariableDescriptor;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.JavaRecursiveElementWalkingVisitor;
+import com.intellij.psi.PsiAnnotation;
+import com.intellij.psi.PsiAnnotationMemberValue;
 import com.intellij.psi.PsiAnonymousClass;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiClassInitializer;
@@ -26,6 +30,7 @@ import com.intellij.psi.PsiEllipsisType;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiForeachStatement;
+import com.intellij.psi.PsiJavaCodeReferenceElement;
 import com.intellij.psi.PsiLambdaExpression;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiMember;
@@ -158,6 +163,9 @@ public final class PlainDescriptor extends PsiVarDescriptor {
               return DfaNullability.UNKNOWN;
             }
             if (method != null) {
+              if (!method.isConstructor() && isRequiredNonNull(field, method)) {
+                return DfaNullability.NOT_NULL;
+              }
               if (!method.isConstructor() && isPossiblyNonInitialized(field, method)) {
                 return DfaNullability.NULLABLE;
               }
@@ -166,8 +174,13 @@ public final class PlainDescriptor extends PsiVarDescriptor {
               }
             }
           }
-          if (method != null && field.hasModifierProperty(PsiModifier.STATIC) && isPossiblyNonInitialized(field, method)) {
-            return DfaNullability.NULLABLE;
+          if (method != null && field.hasModifierProperty(PsiModifier.STATIC)) {
+            if (isRequiredNonNull(field, method)) {
+              return DfaNullability.NOT_NULL;
+            }
+            if (isPossiblyNonInitialized(field, method)) {
+              return DfaNullability.NULLABLE;
+            }
           }
         }
       }
@@ -195,6 +208,45 @@ public final class PlainDescriptor extends PsiVarDescriptor {
     return DfaNullability.UNKNOWN;
   }
 
+  /**
+   * Checks the {@code @RequiresNonNull} precondition of the method.
+   * The check accepts any annotation with this short name, as NullAway does.
+   * It accepts the Checker Framework, the NullAway, and a user-defined annotation.
+   * The check does not verify the precondition at the call sites.
+   *
+   * @param field the field of the method class
+   * @param method the method that reads the field
+   * @return true if the {@code @RequiresNonNull} annotation of the method names the field
+   */
+  private static boolean isRequiredNonNull(@NotNull PsiField field, @NotNull PsiMethod method) {
+    for (PsiAnnotation annotation : method.getModifierList().getAnnotations()) {
+      PsiJavaCodeReferenceElement ref = annotation.getNameReferenceElement();
+      if (ref == null || !REQUIRES_NON_NULL.equals(ref.getReferenceName())) continue;
+      for (PsiAnnotationMemberValue value : AnnotationUtil.arrayAttributeValues(annotation.findAttributeValue("value"))) {
+        String expression = AnnotationUtil.getStringAttributeValue(value);
+        if (expression != null && isReferenceToField(expression.trim(), field)) return true;
+      }
+    }
+    return false;
+  }
+
+  /**
+   * @param expression the Java expression of the Checker Framework, like {@code "foo"}, {@code "this.foo"} or {@code "Holder.foo"}
+   * @param field the field of the current class
+   * @return true if the expression refers to the field
+   */
+  private static boolean isReferenceToField(@NotNull String expression, @NotNull PsiField field) {
+    String name = field.getName();
+    if (expression.equals(name)) return true;
+    if (!expression.endsWith("." + name)) return false;
+    String qualifier = expression.substring(0, expression.length() - name.length() - 1);
+    if (!field.hasModifierProperty(PsiModifier.STATIC)) {
+      return qualifier.equals(JavaKeywords.THIS);
+    }
+    PsiClass aClass = field.getContainingClass();
+    return aClass != null && (qualifier.equals(aClass.getName()) || qualifier.equals(aClass.getQualifiedName()));
+  }
+
   private static boolean isPossiblyNonInitialized(@NotNull PsiField target, @NotNull PsiMethod placeMethod) {
     if (target.getType() instanceof PsiPrimitiveType) return false;
     PsiClass placeClass = placeMethod.getContainingClass();
@@ -208,6 +260,8 @@ public final class PlainDescriptor extends PsiVarDescriptor {
     }
     return getAccessOffset(placeMethod) < getWriteOffset(target);
   }
+
+  private static final String REQUIRES_NON_NULL = "RequiresNonNull";
 
   private static final CallMatcher READ_OBJECT = CallMatcher.instanceCall(CommonClassNames.JAVA_LANG_OBJECT, "readObject")
     .parameterTypes("java.io.ObjectInputStream");  
