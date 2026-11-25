@@ -82,6 +82,13 @@ class MainToolbarUI(data: ComponentData) : UiComponent(data) {
   val runWidget: ActionButtonUi = x(ActionButtonUi::class.java) { contains(byJavaClass("com.intellij.execution.ui.RedesignedRunConfigurationSelector")) }
   val cwmButton: UiComponent = x { byTooltip("Code With Me") }
 
+  fun selectRunConfiguration(runConfigurationName: String) {
+    step("Select run configuration `$runConfigurationName`") {
+      runWidget.click()
+      driver.ui.popup().waitOneText(runConfigurationName).click()
+    }
+  }
+
   fun projectWidget(projectName: String): AbstractToolbarComboUi =
     abstractToolbarCombo { and(byType("com.intellij.openapi.wm.impl.AbstractToolbarCombo"), contains(byVisibleText(projectName))) }
 
