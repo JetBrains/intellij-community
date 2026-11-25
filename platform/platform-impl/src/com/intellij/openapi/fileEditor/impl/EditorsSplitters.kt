@@ -858,20 +858,16 @@ open class EditorsSplitters internal constructor(
     iconUpdateChannel.queue(file)
   }
 
-  internal fun updateFileIconImmediately(file: VirtualFile, icon: Icon) {
-    val uiSettings = UISettings.getInstance()
-    for (window in windows) {
-      val (composite, tab) = window.findCompositeAndTab(file) ?: continue
-      tab.setIcon(decorateFileIcon(composite = composite, baseIcon = icon, uiSettings = uiSettings))
-    }
-  }
-
   internal suspend fun updateFileIcon(file: VirtualFile) {
     val icon = readAction {
       IconUtil.computeFileIcon(file = file, flags = Iconable.ICON_FLAG_READ_STATUS, project = manager.project)
     }
     withContext(Dispatchers.EDT) {
-      updateFileIconImmediately(file, icon)
+      val uiSettings = UISettings.getInstance()
+      for (window in windows) {
+        val (composite, tab) = window.findCompositeAndTab(file) ?: continue
+        tab.setIcon(decorateFileIcon(composite = composite, baseIcon = icon, uiSettings = uiSettings))
+      }
     }
   }
 

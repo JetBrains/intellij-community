@@ -102,7 +102,6 @@ import com.intellij.openapi.roots.ModuleRootEvent
 import com.intellij.openapi.roots.ModuleRootListener
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.EmptyRunnable
-import com.intellij.openapi.util.Iconable
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.ModificationTracker
 import com.intellij.openapi.util.Pair
@@ -139,7 +138,6 @@ import com.intellij.ui.docking.DockManager
 import com.intellij.ui.docking.impl.DockManagerImpl
 import com.intellij.ui.tabs.TabInfo
 import com.intellij.util.ExceptionUtil
-import com.intellij.util.IconUtil
 import com.intellij.util.ObjectUtils
 import com.intellij.util.StartupUiGate
 import com.intellij.util.application
@@ -847,22 +845,9 @@ open class FileEditorManagerImpl(
     }
   }
 
-  /**
-   * Updates tab icon for the specified `file`. The `file`
-   * should be opened in the myEditor, otherwise the method throws an assertion.
-   */
-  /**
-   * Updates tab icon for the specified `file`. The `file`
-   * should be opened in the myEditor, otherwise the method throws an assertion.
-   */
-  protected fun updateFileIcon(file: VirtualFile, immediately: Boolean = false) {
+  private fun updateFileIcon(file: VirtualFile) {
     for (splitters in getAllSplitters()) {
-      if (immediately) {
-        splitters.updateFileIconImmediately(file = file, icon = IconUtil.computeFileIcon(file, Iconable.ICON_FLAG_READ_STATUS, project))
-      }
-      else {
-        splitters.scheduleUpdateFileIcon(file)
-      }
+      splitters.scheduleUpdateFileIcon(file)
     }
   }
 
