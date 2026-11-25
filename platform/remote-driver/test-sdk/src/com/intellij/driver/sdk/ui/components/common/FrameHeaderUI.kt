@@ -1,17 +1,15 @@
 package com.intellij.driver.sdk.ui.components.common
 
-import com.intellij.driver.sdk.ui.DEFAULT_FIND_TIMEOUT
+import com.intellij.driver.sdk.jdk.isRemoteMac
 import com.intellij.driver.sdk.ui.Finder
-import com.intellij.driver.sdk.ui.boundsOnScreen
 import com.intellij.driver.sdk.ui.components.ComponentData
 import com.intellij.driver.sdk.ui.components.UiComponent
 import com.intellij.driver.sdk.ui.components.UiComponent.Companion.waitFound
-import com.intellij.driver.sdk.ui.components.elements.JListUiComponent
+import com.intellij.driver.sdk.ui.components.elements.PopupMenuUiComponent
+import com.intellij.driver.sdk.ui.components.elements.listPopup
 import com.intellij.driver.sdk.ui.xQuery
-import com.intellij.driver.sdk.waitFor
-import com.intellij.openapi.util.SystemInfo.isLinux
-import java.awt.Point
-import java.awt.Rectangle
+import javax.swing.JMenuBar
+import javax.swing.JPopupMenu
 import kotlin.time.Duration.Companion.seconds
 
 val IdeaFrameUI.toolbarHeader: FrameHeaderUI
@@ -30,51 +28,34 @@ fun IdeaFrameUI.openMenuItem(vararg items: String) {
 }
 
 fun IdeaFrameUI.openMenuItem(clickOnFirst: Boolean = false, fullMatch: Boolean = true, vararg items: String) {
-  if (isLinux) {
-    x("//div[@tooltiptext='Main Menu']").click()
-  } else {
-    toolbarHeader.burgerMenuButton.click()
-  }
+  x("//div[@tooltiptext='Main Menu']").click()
 
-  if (xx(xQuery { or(byClass("LinuxIdeMenuBar"), byClass("IdeJMenuBar")) }).list().isNotEmpty()) {
-    if(clickOnFirst) {
-      actionMenuButtonByText(items.first()).apply {
-        waitFound(5.seconds)
-        click(point = Point(10, 10))
-      }
-    }
-    items.dropLast(1).forEach { path ->
-      actionMenuButtonByText(path).apply {
-        waitFound(5.seconds)
-        moveMouse(point = Point(10, 10))
-        moveMouse()
-      }
-    }
-    actionMenuButtonByText(items.last()).click(point = Point(10, 10))
+  if (driver.isRemoteMac) {
+    listPopup().select(*items, fullMatch = fullMatch)
   }
   else {
-    val openLists = mutableListOf<Rectangle>()
-    items.dropLast(1).forEach { item ->
-      val list = menuList(item, openLists)
-      list.hoverItem(item, fullMatch, offset = Point(10, 10))
-      openLists += list.boundsOnScreen
+    val menuBar = x { byType(JMenuBar::class.java) }
+    menuBar.actionMenuButtonByText(items.first(), fullMatch).apply {
+      waitFound(5.seconds)
+      if (clickOnFirst) {
+        click()
+      }
+      moveMouse()
     }
-    menuList(items.last(), openLists).clickItem(items.last(), fullMatch, offset = Point(10, 10))
+    menuBar.x(PopupMenuUiComponent::class.java) { byType(JPopupMenu::class.java) }.let {
+      if (fullMatch) {
+        it.select(*items.drop(1).toTypedArray())
+      }
+      else {
+        it.selectContains(*items.drop(1).toTypedArray())
+      }
+    }
   }
 }
 
-/** Waits for a menu list that shows [item] and is not one of [openLists]. */
-private fun Finder.menuList(item: String, openLists: List<Rectangle>): JListUiComponent = waitFor(
-  message = "The menu shows a list with '$item'",
-  timeout = DEFAULT_FIND_TIMEOUT,
-  getter = {
-    xx(JListUiComponent::class.java) { contains(byVisibleText(item)) and byJavaClass($$"com.intellij.ui.popup.list.ListPopupImpl$MyList") }
-      .list()
-      .filter { it.boundsOnScreen !in openLists }
-  },
-  checker = { it.isNotEmpty() },
-).first()
-
-private fun Finder.actionMenuButtonByText(text: String): UiComponent {
-  return x(xQuery { or(byClass("LinuxIdeMenuBar"), byClass("IdeJMenuBar")) } + xQuery { and(contains(byClass("ActionMenu")), byText(text)) })
+private fun Finder.actionMenuButtonByText(text: String, fullMatch: Boolean): UiComponent {
+  return x {
+    and(byType("com.intellij.openapi.actionSystem.impl.ActionMenu"),
+        if (fullMatch) byAccessibleName(text) else contains(byAccessibleName(text)))
+  }
 }

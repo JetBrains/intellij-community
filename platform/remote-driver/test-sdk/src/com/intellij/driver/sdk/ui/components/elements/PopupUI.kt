@@ -15,6 +15,7 @@ import com.intellij.driver.sdk.ui.components.ComponentData
 import com.intellij.driver.sdk.ui.components.UIComponentsList
 import com.intellij.driver.sdk.ui.components.UiComponent
 import com.intellij.driver.sdk.ui.components.common.Icon
+import com.intellij.driver.sdk.ui.components.elements.ListPopupUiComponent.Companion.POPUP_LIST_CLASS
 import com.intellij.driver.sdk.ui.components.elements.PopupMenuUiComponent.Companion.POPUP_MENU_CLASS
 import com.intellij.driver.sdk.ui.components.elements.PopupUiComponent.Companion.LUX_POPUP_CLASS
 import com.intellij.driver.sdk.ui.components.elements.PopupUiComponent.Companion.POPUP_CLASS
@@ -23,6 +24,7 @@ import com.intellij.driver.sdk.ui.xQuery
 import com.intellij.driver.sdk.waitFor
 import com.intellij.driver.sdk.waitForOne
 import org.intellij.lang.annotations.Language
+import java.awt.Point
 import javax.swing.JPopupMenu
 
 @Deprecated("Search the popup from its owner window or from UiRobot. Use WindowUiComponent.popup or UiRobot.popup.")
@@ -60,12 +62,22 @@ fun UiRobot.popupMenu(locator: QueryBuilder.() -> String = { byType(POPUP_MENU_C
 fun PopupMenuUiComponent.popupMenu(locator: QueryBuilder.() -> String = { byType(JPopupMenu::class.java) }): PopupMenuUiComponent =
   onPopupMenu(locator)
 
+fun WindowUiComponent.listPopup(
+  locator: QueryBuilder.() -> String = { componentWithChild(byType(POPUP_CLASS), byType(POPUP_LIST_CLASS)) }
+): ListPopupUiComponent = onListPopup(locator)
+
+fun UiRobot.listPopup(
+  locator: QueryBuilder.() -> String = { componentWithChild(byType(POPUP_CLASS), byType(POPUP_LIST_CLASS)) }
+): ListPopupUiComponent = onListPopup(locator)
+
 private fun Finder.onPopup(locator: QueryBuilder.() -> String): PopupUiComponent = x(PopupUiComponent::class.java, locator)
 
 private fun Finder.onPopupLux(locator: QueryBuilder.() -> String): PopupUiComponent = x(PopupUiComponent::class.java, locator)
 
 private fun Finder.onPopupMenu(locator: QueryBuilder.() -> String): PopupMenuUiComponent =
   x(xQuery(locator), PopupMenuUiComponent::class.java)
+
+private fun Finder.onListPopup(locator: QueryBuilder.() -> String): ListPopupUiComponent = x(ListPopupUiComponent::class.java, locator)
 
 class PopupMenuUiComponent(data: ComponentData) : UiComponent(data) {
   private val menuItems: UIComponentsList<PopupItemUiComponent> =
@@ -95,7 +107,10 @@ class PopupMenuUiComponent(data: ComponentData) : UiComponent(data) {
   private fun doSelect(vararg items: String, predicate: (String, String) -> Boolean) {
     var currentMenu = this
     for (item in items) {
-      waitForOne("Find menu item '$item'", getter = { currentMenu.getMenuItems() }, checker = { predicate(it.getText(), item) }).click()
+      // The click goes near the top-left corner of the item, not to its center.
+      // On the way to the center, the mouse can cross another item, and the menu bar then closes the current menu.
+      waitForOne("Find menu item '$item'", getter = { currentMenu.getMenuItems() }, checker = { predicate(it.getText(), item) })
+        .click(Point(10, 10))
       currentMenu = currentMenu.popupMenu()
     }
   }
@@ -193,5 +208,23 @@ class PopupItemUiComponent(data: ComponentData) : UiComponent(data) {
     fun isSelected(): Boolean
     fun getText(): String
     fun getIcon(): Icon
+  }
+}
+
+class ListPopupUiComponent(data: ComponentData) : PopupUiComponent(data) {
+  val list: JListUiComponent = accessibleList()
+
+  fun select(vararg items: String, fullMatch: Boolean = true) {
+    var currentPopup = this
+    items.dropLast(1).forEach { item ->
+      val list = currentPopup.accessibleList()
+      list.hoverItem(item, fullMatch, offset = Point(10, 10))
+      currentPopup = currentPopup.listPopup()
+    }
+    currentPopup.accessibleList().clickItem(items.last(), fullMatch, offset = Point(10, 10))
+  }
+
+  companion object {
+    internal const val POPUP_LIST_CLASS = $$"com.intellij.ui.popup.list.ListPopupImpl$MyList"
   }
 }
