@@ -47,7 +47,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Function;
 
 import static com.intellij.openapi.util.NlsContexts.DialogMessage;
 
@@ -199,22 +198,8 @@ public class RenameJavaVariableProcessor extends RenameJavaMemberProcessor {
                                         @NotNull String newName,
                                         @NotNull MultiMap<PsiElement, @DialogMessage String> conflicts,
                                         @NotNull Map<PsiElement, String> allRenames) {
-    findExistingNameConflicts(conflicts, allRenames, RenamePsiElementProcessor::forElement);
-  }
-
-  /**
-   * Collects the conflicts of every element of the rename, each one with the processor of that element.
-   *
-   * @param processorOf the processor of an element. A rename with a user takes it from
-   *                    {@code renamePsiElementProcessor}, and a rename with no user takes it from
-   *                    {@link HeadlessRenamePsiElementProcessor}, which is registered on its own.
-   */
-  @ApiStatus.Internal
-  public static void findExistingNameConflicts(@NotNull MultiMap<PsiElement, @DialogMessage String> conflicts,
-                                        @NotNull Map<PsiElement, String> allRenames,
-                                        @NotNull Function<PsiElement, ? extends RenamePsiElementProcessorBase> processorOf) {
     for (PsiElement psiElement : allRenames.keySet()) {
-      processorOf.apply(psiElement).findExistingNameConflicts(psiElement, allRenames.get(psiElement), conflicts);
+      forElement(psiElement).findExistingNameConflicts(psiElement, allRenames.get(psiElement), conflicts);
     }
   }
 

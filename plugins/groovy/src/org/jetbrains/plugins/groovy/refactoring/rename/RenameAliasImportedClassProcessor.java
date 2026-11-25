@@ -4,8 +4,8 @@ package org.jetbrains.plugins.groovy.refactoring.rename;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.search.SearchScope;
-import com.intellij.refactoring.rename.DelegatingHeadlessRenamePsiElementProcessor;
 import com.intellij.refactoring.rename.RenameJavaClassProcessor;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 
@@ -14,8 +14,7 @@ import java.util.Collection;
 /**
  * @author Maxim.Medvedev
  */
-public final class RenameAliasImportedClassProcessor extends RenameJavaClassProcessor
-  implements DelegatingHeadlessRenamePsiElementProcessor {
+public final class RenameAliasImportedClassProcessor extends RenameJavaClassProcessor {
   @Override
   public boolean canProcessElement(@NotNull PsiElement element) {
     return element instanceof GroovyPsiElement && super.canProcessElement(element);
@@ -26,5 +25,23 @@ public final class RenameAliasImportedClassProcessor extends RenameJavaClassProc
                                                           @NotNull SearchScope searchScope,
                                                           boolean searchInCommentsAndStrings) {
     return RenameAliasedUsagesUtil.filterAliasedRefs(super.findReferences(element, searchScope, searchInCommentsAndStrings), element);
+  }
+
+  /**
+   * The rename of a Groovy class on the ModPlan engine with this processor, see {@link ModPlanGroovyRenameProvider}. The processor renames
+   * every Groovy class. Its alias filter only keeps a reference through an import alias:
+   * <pre>{@code
+   * import Foo as Bar
+   * Bar bar = new Bar()
+   * // rename Foo to F
+   * import F as Bar
+   * Bar bar = new Bar()
+   * }</pre>
+   */
+  @ApiStatus.Internal
+  public static final class ModPlanGrClassRenameProvider extends ModPlanGroovyRenameProvider {
+    public ModPlanGrClassRenameProvider() {
+      super(RenameAliasImportedClassProcessor.class);
+    }
   }
 }

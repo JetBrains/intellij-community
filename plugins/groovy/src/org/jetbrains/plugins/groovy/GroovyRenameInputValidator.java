@@ -5,10 +5,12 @@ import com.intellij.patterns.ElementPattern;
 import com.intellij.patterns.PlatformPatterns;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.rename.RenameInputValidator;
+import com.intellij.refactoring.rename.RenamePsiElementProcessor;
 import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.GrNamedElement;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
+import org.jetbrains.plugins.groovy.refactoring.rename.RenameAliasImportedMethodProcessor;
 
 public final class GroovyRenameInputValidator implements RenameInputValidator {
 
@@ -17,8 +19,10 @@ public final class GroovyRenameInputValidator implements RenameInputValidator {
     return PlatformPatterns.psiElement(GrNamedElement.class);
   }
 
+  /** A Groovy method accepts any name, as its rename dialog does: Groovy writes a name that is no identifier as a string. */
   @Override
   public boolean isInputValid(@NotNull String newName, @NotNull PsiElement element, @NotNull ProcessingContext context) {
+    if (RenamePsiElementProcessor.forElement(element) instanceof RenameAliasImportedMethodProcessor) return true;
     return GroovyRefactoringUtil.isCorrectReferenceName(newName, element.getProject());
   }
 }

@@ -60,11 +60,6 @@ private val KNOWN_GAPS: Map<String, List<String>> = mapOf(
     "The unused imports of a file of a related rename: the legacy rename keeps them, as it optimizes only the files of the usages. The gap goes with the legacy rename" to listOf(
         "AutomaticRenamerKotlinTestClassForFacade_AutomaticRenamerKotlinTestClassForFacade",
     ),
-    "D6: a Groovy overrider of a renamed property has no owner, so the plan is refused. The legacy rename gives it to the processor of the Java getters that Kotlin reads" to listOf(
-        "RenameKotlinValProperty_RenameBase",
-        "RenameKotlinValProperty_RenameAsJavaGetterForExplicitGetter",
-        "RenameKotlinValProperty_RenameOverriden",
-    ),
     "Not analyzed yet: the text differs, or an edit fails" to listOf(
     ),
 )

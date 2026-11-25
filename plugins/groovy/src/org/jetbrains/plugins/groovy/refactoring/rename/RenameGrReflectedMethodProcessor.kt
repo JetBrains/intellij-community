@@ -4,16 +4,22 @@
 package org.jetbrains.plugins.groovy.refactoring.rename
 
 import com.intellij.psi.PsiElement
-import com.intellij.refactoring.rename.DelegatingHeadlessRenamePsiElementProcessor
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
 
-class RenameGrReflectedMethodProcessor : RenameAliasImportedMethodProcessor(), DelegatingHeadlessRenamePsiElementProcessor {
+class RenameGrReflectedMethodProcessor : RenameAliasImportedMethodProcessor() {
 
   override fun canProcessElement(element: PsiElement): Boolean {
     return element is GrMethod && element.reflectedMethods.isNotEmpty()
   }
 
   override fun isInplaceRenameSupported(): Boolean = false
-
-  override fun substituteElementToRenameHeadless(element: PsiElement): PsiElement? = substituteElementToRename(element, null, false)
 }
+
+/**
+ * The rename on the ModPlan engine of a Groovy method with reflected methods, as [RenameGrReflectedMethodProcessor] renames it. Example:
+ * `def add(int a, int b = 1)` has the reflected methods `add(int)` and `add(int, int)`. Its rename to `sum` renames the calls of both.
+ */
+@ApiStatus.Internal
+class ModPlanGrReflectedMethodRenameProvider :
+  RenameAliasImportedMethodProcessor.ModPlanGrMethodRenameProvider(RenameGrReflectedMethodProcessor::class.java)

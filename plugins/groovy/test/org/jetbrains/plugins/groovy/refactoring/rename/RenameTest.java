@@ -21,7 +21,6 @@ import com.intellij.refactoring.RefactoringFactory;
 import com.intellij.refactoring.RenameRefactoring;
 import com.intellij.refactoring.rename.RenameProcessor;
 import com.intellij.refactoring.rename.RenameUtil;
-import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.fixtures.CodeInsightTestUtil;
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
@@ -111,7 +110,7 @@ public class RenameTest implements BaseTest {
 
     runInEdtAndWait(() -> {
       PsiElement parameter = fixture.getFile().findReferenceAt(fixture.getEditor().getCaretModel().getOffset()).resolve();
-      fixture.renameElement(parameter, "newName", true, true);
+      rename(parameter, "newName", true, true);
     });
     fixture.checkResult("""
                                def foo(newName) {
@@ -132,7 +131,7 @@ public class RenameTest implements BaseTest {
       SomeClass c = new SomeClass()
       Zoo zoo
       """);
-    runInEdtAndWait(() -> fixture.renameElement(someClass, "NewClass"));
+    runInEdtAndWait(() -> rename(someClass, "NewClass"));
     fixture.checkResult("""
                                import foo.bar.Zoo
                                NewClass c = new NewClass()
@@ -147,7 +146,7 @@ public class RenameTest implements BaseTest {
     runInEdtAndWait(() -> {
       PsiMethod[] methods = fixture.findClass("Foo").findMethodsByName("getFoo", false);
       fixture.configureByText("a.groovy", "print new Foo().foo");
-      fixture.renameElement(methods[0], "get");
+      rename(methods[0], "get");
     });
     fixture.checkResult("print new Foo().get()");
   }
@@ -159,7 +158,7 @@ public class RenameTest implements BaseTest {
     runInEdtAndWait(() -> {
       PsiMethod[] methods = fixture.findClass("Foo").findMethodsByName("setFoo", false);
       fixture.configureByText("a.groovy", "print new Foo().foo = 2");
-      fixture.renameElement(methods[0], "set");
+      rename(methods[0], "set");
     });
     fixture.checkResult("print new Foo().set(2)");
   }
@@ -181,7 +180,7 @@ public class RenameTest implements BaseTest {
       }""");
     runInEdtAndWait(() -> {
       PsiElement field = fixture.getElementAtCaret();
-      fixture.renameElement(field, "newName");
+      rename(field, "newName");
     });
     fixture.checkResult("""
                                class Foo {
@@ -217,7 +216,7 @@ public class RenameTest implements BaseTest {
       }""");
     runInEdtAndWait(() -> {
       PsiElement field = fixture.getElementAtCaret();
-      fixture.renameElement(field, "newName");
+      rename(field, "newName");
     });
     fixture.checkResult("""
                                class Foo {
@@ -257,7 +256,7 @@ public class RenameTest implements BaseTest {
       }""");
     runInEdtAndWait(() -> {
       PsiElement field = fixture.getElementAtCaret();
-      fixture.renameElement(field, "ndame");
+      rename(field, "ndame");
     });
     fixture.checkResult("""
                                class A {
@@ -294,7 +293,7 @@ public class RenameTest implements BaseTest {
       """);
     runInEdtAndWait(() -> {
       final PsiClass clazz = fixture.findClass("SomeBean");
-      fixture.renameElement(new PropertyForRename(List.of(clazz.findFieldByName("xXx", false), clazz.findMethodsByName("getxXx", false)[0]),
+      rename(new PropertyForRename(List.of(clazz.findFieldByName("xXx", false), clazz.findMethodsByName("getxXx", false)[0]),
                                                   "xXx", PsiManager.getInstance(getProject())), "xXx777");
       Assertions.assertEquals("""
                             class SomeBean {
@@ -322,7 +321,7 @@ public class RenameTest implements BaseTest {
       print new Test()
       print new Test(1)
       """);
-    runInEdtAndWait(() -> fixture.renameElement(fixture.findClass("Test"), "Foo"));
+    runInEdtAndWait(() -> rename(fixture.findClass("Test"), "Foo"));
     fixture.checkResult("""
                                class Foo {
                                  def Foo(def abc = null){}
@@ -331,6 +330,27 @@ public class RenameTest implements BaseTest {
                                print new Foo()
                                print new Foo(1)
                                """);
+  }
+
+  /** Renames {@code element} as {@code renameElement} of the fixture does; the twin on the ModPlan engine overrides it. */
+  protected void rename(PsiElement element, String newName, boolean searchInComments, boolean searchTextOccurrences) {
+    getFixture().renameElement(element, newName, searchInComments, searchTextOccurrences);
+  }
+
+  protected final void rename(PsiElement element, String newName) {
+    rename(element, newName, false, false);
+  }
+
+  /** Renames the element at the caret as {@code renameElementAtCaret} of the fixture does; the twin on the ModPlan engine overrides it. */
+  protected void renameAtCaret(String newName) {
+    getFixture().renameElementAtCaret(newName);
+  }
+
+  /** Renames {@code field} and {@code accessor}, an implicit accessor of it, with one processor; the twin on the ModPlan engine overrides it. */
+  protected void renameWithAccessor(GrField field, GrAccessorMethod accessor, String accessorNewName) {
+    RenameProcessor processor = new RenameProcessor(getProject(), field, "newName", true, true);
+    processor.addElement(accessor, accessorNewName);
+    processor.run();
   }
 
   public void doTest() {
@@ -346,16 +366,14 @@ public class RenameTest implements BaseTest {
       if (resolved instanceof PsiMethod method && !(resolved instanceof GrAccessorMethod)) {
         String name = method.getName();
         String newName = createNewNameForMethod(name);
-        fixture.renameElementAtCaret(newName);
+        renameAtCaret(newName);
       }
       else if (resolved instanceof GrAccessorMethod method) {
         GrField field = method.getProperty();
-        RenameProcessor processor = new RenameProcessor(fixture.getProject(), field, "newName", true, true);
-        processor.addElement(resolved, createNewNameForMethod(method.getName()));
-        processor.run();
+        renameWithAccessor(field, method, createNewNameForMethod(method.getName()));
       }
       else {
-        fixture.renameElementAtCaret("newName");
+        renameAtCaret("newName");
       }
       PostprocessReformattingAspect.getInstance(getProject()).doPostponedFormatting();
       fixture.checkResult(list.get(1));
@@ -393,7 +411,7 @@ public class RenameTest implements BaseTest {
       }
       """);
     runInEdtAndWait(() -> {
-      fixture.renameElementAtCaret("b");
+      renameAtCaret("b");
       Assertions.assertEquals("""
                             class SomeBean {
                           
@@ -443,7 +461,7 @@ public class RenameTest implements BaseTest {
       print getFoo()
       setFoo(2)
       foo = 4""");
-    runInEdtAndWait(() -> fixture.renameElement(fixture.findClass("Foo").getFields()[0], "newName"));
+    runInEdtAndWait(() -> rename(fixture.findClass("Foo").getFields()[0], "newName"));
     fixture.checkResult("""
                                import static Foo.newName as foo
                                
@@ -464,7 +482,7 @@ public class RenameTest implements BaseTest {
       import Foo as Bar
       Bar bar = new Bar()
       """);
-    runInEdtAndWait(() -> fixture.renameElement(fixture.findClass("Foo"), "F"));
+    runInEdtAndWait(() -> rename(fixture.findClass("Foo"), "F"));
     fixture.checkResult("""
                                import F as Bar
                                Bar bar = new Bar()
@@ -482,7 +500,7 @@ public class RenameTest implements BaseTest {
       import static Foo.bar as foo
       foo()
       """);
-    runInEdtAndWait(() -> fixture.renameElement(fixture.findClass("Foo").findMethodsByName("bar", false)[0], "b"));
+    runInEdtAndWait(() -> rename(fixture.findClass("Foo").findMethodsByName("bar", false)[0], "b"));
     fixture.checkResult("""
                                import static Foo.b as foo
                                foo()
@@ -501,12 +519,48 @@ public class RenameTest implements BaseTest {
       
       print foo
       foo = 4""");
-    runInEdtAndWait(() -> fixture.renameElement(fixture.findClass("Foo").getFields()[0], "newName"));
+    runInEdtAndWait(() -> rename(fixture.findClass("Foo").getFields()[0], "newName"));
     fixture.checkResult("""
                                import static Foo.newName as foo
-                               
+
                                print foo
                                foo = 4""");
+  }
+
+  @Test
+  public void renameStaticImportedJavaMethod() {
+    JavaCodeInsightTestFixture fixture = getFixture();
+    fixture.addFileToProject("p/Util.java", """
+      package p;
+      public class Util {
+        public static int bar() { return 1; }
+      }""");
+    fixture.configureByText("a.groovy", """
+      import static p.Util.bar
+      print bar()
+      """);
+    runInEdtAndWait(() -> rename(fixture.findClass("p.Util").findMethodsByName("bar", false)[0], "baz"));
+    fixture.checkResult("""
+                          import static p.Util.baz
+                          print baz()
+                          """);
+  }
+
+  @Test
+  public void renameImportedJavaClass() {
+    JavaCodeInsightTestFixture fixture = getFixture();
+    fixture.addFileToProject("p/Widget.java", """
+      package p;
+      public class Widget {}""");
+    fixture.configureByText("a.groovy", """
+      import p.Widget
+      print new Widget()
+      """);
+    runInEdtAndWait(() -> rename(fixture.findClass("p.Widget"), "Gadget"));
+    fixture.checkResult("""
+                          import p.Gadget
+                          print new Gadget()
+                          """);
   }
 
   @Test
@@ -541,7 +595,7 @@ public class RenameTest implements BaseTest {
       """);
     runInEdtAndWait(() -> {
       fixture.configureFromExistingVirtualFile(file.getVirtualFile());
-      fixture.renameElement(fixture.findClass("Foo"), "Bar");
+      rename(fixture.findClass("Foo"), "Bar");
     });
     fixture.checkResult("""
                                      class Bar {
@@ -557,7 +611,7 @@ public class RenameTest implements BaseTest {
     JavaCodeInsightTestFixture fixture = getFixture();
     fixture.configureByText("Foo.gy", "class Foo {}");
     runInEdtAndWait(() -> {
-      fixture.renameElement(fixture.findClass("Foo"), "Bar");
+      rename(fixture.findClass("Foo"), "Bar");
       Assertions.assertEquals("gy", fixture.getFile().getVirtualFile().getExtension());
     });
   }
@@ -577,7 +631,7 @@ public class RenameTest implements BaseTest {
       }""");
     runInEdtAndWait(() -> {
       try {
-        fixture.renameElement(fixture.findClass("Foo").getMethods()[0], "'newName'");
+        rename(fixture.findClass("Foo").getMethods()[0], "'newName'");
       }
       catch (BaseRefactoringProcessor.ConflictsInTestsException e) {
         Assertions.assertEquals("<b><code>'newName'</code></b> is not a correct identifier to use in <b><code>new Foo().foo</code></b>",
@@ -598,7 +652,7 @@ public class RenameTest implements BaseTest {
     fixture.configureByText("Bar.groovy", """
       print new Foo(field: 2)
       """);
-    runInEdtAndWait(() -> fixture.renameElement(fixture.findClass("Foo").getFields()[0], "anotherOneName"));
+    runInEdtAndWait(() -> rename(fixture.findClass("Foo").getFields()[0], "anotherOneName"));
     fixture.checkResult("""
                                print new Foo(anotherOneName: 2)
                                """);
@@ -660,7 +714,7 @@ public class RenameTest implements BaseTest {
     PsiFile groovyFile = getFixture().addFileToProject("g.groovy", """
       print new J().foo""");
     runInEdtAndWait(() -> {
-      getFixture().renameElementAtCaret("getAbc");
+      renameAtCaret("getAbc");
       Assertions.assertEquals("""
                             print new J().abc""", groovyFile.getText());
     });
@@ -678,7 +732,7 @@ public class RenameTest implements BaseTest {
       """);
     runInEdtAndWait(() -> {
       GrMethod method = ((GrTypeDefinition)file.getClasses()[0]).getCodeMethods()[0];
-      fixture.renameElement(method, "f oo");
+      rename(method, "f oo");
     });
     fixture.checkResult("""
                                class X {
@@ -708,7 +762,7 @@ public class RenameTest implements BaseTest {
           }
         }""");
       try {
-        fixture.renameElement(method, "f oo");
+        rename(method, "f oo");
         Assertions.fail();
       }
       catch (BaseRefactoringProcessor.ConflictsInTestsException ignored) {
@@ -725,7 +779,7 @@ public class RenameTest implements BaseTest {
           @TupleConstructor
           class X<caret>x {}
           """);
-    runInEdtAndWait(() -> fixture.renameElementAtCaret("Yy"));
+    runInEdtAndWait(() -> renameAtCaret("Yy"));
     fixture.checkResult("""
                       import groovy.transform.TupleConstructor
                       
@@ -742,7 +796,7 @@ public class RenameTest implements BaseTest {
             def Fo<caret>o() {}
           }
           """);
-    runInEdtAndWait(() -> fixture.renameElementAtCaret("Bar"));
+    runInEdtAndWait(() -> renameAtCaret("Bar"));
     fixture.checkResult("""
                       class Bar {
                         def Ba<caret>r() {}
@@ -754,7 +808,7 @@ public class RenameTest implements BaseTest {
   public void stringNameForMethod() {
     JavaCodeInsightTestFixture fixture = getFixture();
     fixture.configureByText(GroovyFileType.GROOVY_FILE_TYPE, "def fo<caret>o() {}");
-    runInEdtAndWait(() -> fixture.renameElementAtCaret("import"));
+    runInEdtAndWait(() -> renameAtCaret("import"));
     fixture.checkResult("def 'import'() {}");
   }
 
@@ -771,7 +825,7 @@ public class RenameTest implements BaseTest {
             }
           }
           """);
-    runInEdtAndWait(() -> fixture.renameElementAtCaret("Bassse"));
+    runInEdtAndWait(() -> renameAtCaret("Bassse"));
     fixture.checkResult("""
                       class Bassse {
                         def Bassse() {}
@@ -800,7 +854,7 @@ public class RenameTest implements BaseTest {
           new Inheritor().foo()
           new Inheritor().foo(2)
           """);
-    runInEdtAndWait(() -> fixture.renameElementAtCaret("bar"));
+    runInEdtAndWait(() -> renameAtCaret("bar"));
     fixture.checkResult("""
                       class Base {
                         void ba<caret>r(){}
@@ -820,7 +874,7 @@ public class RenameTest implements BaseTest {
   public void renameScriptFile() {
     JavaCodeInsightTestFixture fixture = getFixture();
     final PsiFile file = fixture.configureByText("Abc.groovy", "print new Abc()\n");
-    runInEdtAndWait(() -> fixture.renameElement(file, "Abcd.groovy"));
+    runInEdtAndWait(() -> rename(file, "Abcd.groovy"));
     fixture.checkResult("print new Abcd()\n");
   }
 
@@ -838,7 +892,7 @@ public class RenameTest implements BaseTest {
     JavaCodeInsightTestFixture fixture = getFixture();
     runInEdtAndWait(() -> {
       VirtualFile file = fixture.configureByText("Abc.groovy", "print new Abc()\n").getVirtualFile();
-      fixture.renameElement(fixture.getFile(), newName);
+      rename(fixture.getFile(), newName);
       Assertions.assertEquals(newName, file.getName());
       Assertions.assertEquals(PlainTextLanguage.INSTANCE, PsiManager.getInstance(fixture.getProject()).findFile(file).getLanguage());
       Assertions.assertEquals("print new Abc()\n", FileDocumentManager.getInstance().getDocument(file).getText());
@@ -869,7 +923,7 @@ public class RenameTest implements BaseTest {
               }
           }
           """);
-    runInEdtAndWait(() -> fixture.renameElementAtCaret("baz"));
+    runInEdtAndWait(() -> renameAtCaret("baz"));
     fixture.checkResult("""
                       trait T {
                           public int baz = 5
@@ -921,7 +975,7 @@ public class RenameTest implements BaseTest {
       """);
     fixture.addFileToProject("p/intentionallyNonClassName.groovy", "package p; class MyList {}");
     runInEdtAndWait(() -> {
-      fixture.renameElement(fixture.findClass("p.MyList"), "List");
+      rename(fixture.findClass("p.MyList"), "List");
       Assertions.assertEquals(
         """
           import java.util.*;
@@ -945,7 +999,7 @@ public class RenameTest implements BaseTest {
         }
       }
       """);
-    runInEdtAndWait(() -> fixture.renameElementAtCaret("var"));
+    runInEdtAndWait(() -> renameAtCaret("var"));
     fixture.checkResult("""
       class A{}
       class B extends A{}
@@ -958,7 +1012,8 @@ public class RenameTest implements BaseTest {
       """);
   }
 
-  private void runRenameRefactoringWithAutomaticRenames(String newName) {
+  /** Renames the element at the caret with the automatic renames that the settings enable; the twin on the ModPlan engine overrides it. */
+  protected void runRenameRefactoringWithAutomaticRenames(String newName) {
     runInEdtAndWait(() -> {
       PsiElement element = getFixture().getElementAtCaret();
       RenameRefactoring renameRefactoring = RefactoringFactory.getInstance(getProject())

@@ -185,12 +185,21 @@ public abstract class ModPlanJavaRenameProvider extends ModPlanBridgeRenameProvi
         writtenByCollisions.add(usage.getElement());
       }
     }
-    //todo ПРИМЕР - прямо тут для каждого edits!
+    // The usages that get no edit of their own:
+    // 1. A reference that the edit of a collision with a static import writes. One run renames B.log and p.Util.format to print:
+    //      import static p.Util.format;
+    //      class A { static class B { static void log() {} static void use() { format(); } } }
+    //    The edit of the collision writes Util.print() at the call, so the call gets no edit as a usage of format.
+    // 2. A reference to a constructor: Foo::new stays, and the edit of the class reference Foo writes Bar, see the Javadoc.
+    // 3. A reference of another language through an import alias, see ModPlanRenameAliasFilter. Groovy gives:
+    //      import p.Widget as W
+    //      print new W()      // rename Widget to Gadget: W stays
     List<UsageInfo> keptUsages = ContainerUtil.filter(usages, usage -> usage instanceof ModPlanWritableUsageInfo ||
                                                                        usage instanceof NonCodeUsageInfo ||
                                                                        !writtenByCollisions.contains(usage.getElement()) &&
                                                                        !(usage.getElement() instanceof PsiMethodReferenceExpression reference &&
-                                                                         reference.isConstructor()));
+                                                                         reference.isConstructor()) &&
+                                                                       !(element instanceof PsiClass aClass && isAliasReference(usage, aClass)));
     List<ModPlanEdit> edits = new ArrayList<>();
     for (UsageInfo usage : keptUsages) {
       if (usage instanceof CollidingClassImportUsageInfo info) edits.addAll(info.asModPlanEdits(newName, renamed));
@@ -208,6 +217,10 @@ public abstract class ModPlanJavaRenameProvider extends ModPlanBridgeRenameProvi
     }
     edits.addAll(importEdits(keptUsages, renamed));
     return new ModPlanAnalysisResult.Found(edits, conflicts);
+  }
+
+  private static boolean isAliasReference(@NotNull UsageInfo usage, @NotNull PsiClass aClass) {
+    return ModPlanRenameAliasFilter.EP_NAME.findFirstSafe(filter -> filter.isAliasReference(usage, aClass)) != null;
   }
 
   /** @return the edit that qualifies {@code occurrence}, a reference to a member of {@code containingClass}, and gives it {@code newName} */

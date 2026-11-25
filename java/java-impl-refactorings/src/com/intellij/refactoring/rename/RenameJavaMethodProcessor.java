@@ -405,7 +405,8 @@ public class RenameJavaMethodProcessor extends RenameJavaMemberProcessor {
    * @return the question about the base method of {@code method}, if the rename asks it, as {@link SuperMethodWarningUtil#checkSuperMethods}
    * does: the method has a base method, or a sibling method that a subclass inherits for it; else null
    */
-  private static @Nullable ModPlanQuestion baseMethodQuestion(@NotNull SymbolPointer subject, @NotNull PsiMethod method) {
+  @ApiStatus.Internal
+  public static @Nullable ModPlanQuestion baseMethodQuestion(@NotNull SymbolPointer subject, @NotNull PsiMethod method) {
     if (method.isConstructor() || JavaPsiRecordUtil.getRecordComponentForAccessor(method) != null) return null;
     PsiMethod[] candidates = SuperMethodWarningUtil.getTargetMethodCandidates(method, List.of());
     if (candidates.length == 1 && candidates[0] == method) return null;

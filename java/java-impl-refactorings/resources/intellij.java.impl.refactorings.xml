@@ -81,6 +81,8 @@
     </extensionPoint>
     <extensionPoint qualifiedName="com.intellij.refactoring.overrideMethodProcessor"
                     interface="com.intellij.refactoring.OverrideMethodsProcessor" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.refactoring.modPlanRenameAliasFilter"
+                    interface="com.intellij.refactoring.rename.ModPlanRenameAliasFilter" dynamic="true"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">

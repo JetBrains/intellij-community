@@ -1,29 +1,27 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.ext.ginq;
 
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiFile;
-import com.intellij.refactoring.rename.HeadlessRenameProcessor;
-import com.intellij.refactoring.rename.HeadlessRenamePsiElementProcessor;
-import com.intellij.refactoring.rename.HeadlessRenameResult;
-import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
 import com.intellij.testFramework.fixtures.LightJavaProject;
 import com.intellij.testFramework.junit5.TestApplication;
 import com.intellij.testFramework.junit5.fixture.TestFixture;
-import org.jetbrains.plugins.groovy.refactoring.rename.GrInlineTransformationElementRenamer;
+import org.jetbrains.plugins.groovy.refactoring.rename.GrInlineTransformationElementRenamer.ModPlanGrInlineTransformationRenameProvider;
 import org.junit.jupiter.api.Test;
 
 import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
 import static org.jetbrains.plugins.groovy.LightGroovyFixtures.lightGroovyFixture;
+import static org.jetbrains.plugins.groovy.refactoring.rename.GroovyModPlanRenameTests.assertOwner;
+import static org.jetbrains.plugins.groovy.refactoring.rename.GroovyModPlanRenameTests.rename;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @TestApplication
-public class GinqHeadlessRenameTest {
+public class ModPlanGinqRenameTest {
   private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(GinqTestUtils.getProjectDescriptor());
   private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture = lightGroovyFixture(projectFixture);
 
@@ -36,21 +34,17 @@ public class GinqHeadlessRenameTest {
         select n
       }
       """);
-    EdtTestUtil.runInEdtAndWait(() -> {
-      PsiElement alias = file.findElementAt(file.getText().indexOf("n in")).getParent();
-      assertInstanceOf(GrInlineTransformationElementRenamer.class, HeadlessRenamePsiElementProcessor.processorOf(alias));
+    PsiElement alias = ReadAction.computeBlocking(() -> file.findElementAt(file.getText().indexOf("n in")).getParent());
+    assertOwner(alias, ModPlanGrInlineTransformationRenameProvider.class);
 
-      HeadlessRenameResult planned = HeadlessRenameProcessor.analyze(myFixture.getProject(), alias, "m");
-      HeadlessRenameResult result = assertInstanceOf(HeadlessRenameResult.Planned.class, planned).getPlan().apply();
+    rename(alias, "m");
 
-      assertInstanceOf(HeadlessRenameResult.Applied.class, result);
-      assertEquals("""
-                     GQ {
-                       from m in [1, 2, 3]
-                       select m
-                     }
-                     """, file.getText());
-    });
+    assertEquals("""
+                   GQ {
+                     from m in [1, 2, 3]
+                     select m
+                   }
+                   """, ReadAction.computeBlocking(() -> file.getText()));
   }
 
   /** The macro GQ has another name, so it overrides no usage of the renamed field. */
@@ -69,15 +63,12 @@ public class GinqHeadlessRenameTest {
         }
       }
       """);
-    EdtTestUtil.runInEdtAndWait(() -> {
-      PsiField hits = myFixture.findClass("Counter").findFieldByName("hits", false);
-      assertNotNull(hits, "no field hits in the fixture");
+    PsiField hits = ReadAction.computeBlocking(() -> myFixture.findClass("Counter").findFieldByName("hits", false));
+    assertNotNull(hits, "no field hits in the fixture");
 
-      HeadlessRenameResult planned = HeadlessRenameProcessor.analyze(myFixture.getProject(), hits, "count");
-      HeadlessRenameResult result = assertInstanceOf(HeadlessRenameResult.Planned.class, planned).getPlan().apply();
+    rename(hits, "count");
 
-      assertInstanceOf(HeadlessRenameResult.Applied.class, result);
-      assertTrue(reader.getText().contains("counter.getCount()"), "the usage kept the old name: " + reader.getText());
-    });
+    String text = ReadAction.computeBlocking(() -> reader.getText());
+    assertTrue(text.contains("counter.getCount()"), "the usage kept the old name: " + text);
   }
 }

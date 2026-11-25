@@ -8,9 +8,10 @@ import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
-import com.intellij.refactoring.rename.DelegatingHeadlessRenamePsiElementProcessor;
+import com.intellij.refactoring.modplan.rename.ModPlanBridgeRenameProvider;
 import com.intellij.refactoring.rename.RenamePsiFileProcessor;
 import com.intellij.util.containers.MultiMap;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyLanguage;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
@@ -22,8 +23,7 @@ import java.util.Map;
 /**
  * @author Max Medvedev
  */
-public final class RenameGroovyScriptProcessor extends RenamePsiFileProcessor
-  implements DelegatingHeadlessRenamePsiElementProcessor {
+public final class RenameGroovyScriptProcessor extends RenamePsiFileProcessor {
   @Override
   public boolean canProcessElement(@NotNull PsiElement element) {
     return element instanceof GroovyFile && ((GroovyFile)element).isScript() && GroovyScriptUtil.isPlainGroovyScript((GroovyFile)element);
@@ -56,5 +56,17 @@ public final class RenameGroovyScriptProcessor extends RenamePsiFileProcessor
   private static boolean isGroovyFileName(@NotNull String fileName) {
     FileType fileType = FileTypeRegistry.getInstance().getFileTypeByFileName(fileName);
     return fileType instanceof LanguageFileType languageFileType && languageFileType.getLanguage() == GroovyLanguage.INSTANCE;
+  }
+
+  /**
+   * The rename of a Groovy script on the ModPlan engine with this processor, see {@link ModPlanBridgeRenameProvider}. Example: the rename
+   * of {@code runner.groovy} to {@code launcher.groovy} also renames the script class, so {@code new runner()} becomes
+   * {@code new launcher()}.
+   */
+  @ApiStatus.Internal
+  public static final class ModPlanGroovyScriptRenameProvider extends ModPlanBridgeRenameProvider {
+    public ModPlanGroovyScriptRenameProvider() {
+      super(RenameGroovyScriptProcessor.class);
+    }
   }
 }

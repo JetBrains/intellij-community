@@ -21,7 +21,7 @@ import com.intellij.refactoring.modplan.ModPlanEdit
  * It is temporary: remove it when every language has its providers.
  */
 internal object ModPlanRenameLanguages {
-  private val SUPPORTED_LANGUAGE_IDS: Set<String> = setOf("JAVA", "kotlin", "Properties", "SPI", "XML", "TEXT")
+  private val SUPPORTED_LANGUAGE_IDS: Set<String> = setOf("JAVA", "kotlin", "Groovy", "Properties", "SPI", "XML", "TEXT")
 
   /** @return whether [language] is Java or Kotlin, the only languages whose headless processors run on the ModPlan engine */
   fun isJvmLanguage(language: Language): Boolean = language.isKindOf("JAVA") || language.isKindOf("kotlin")
