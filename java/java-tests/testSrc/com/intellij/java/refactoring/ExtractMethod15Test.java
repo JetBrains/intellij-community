@@ -16,23 +16,33 @@
 
 package com.intellij.java.refactoring;
 
-import com.intellij.JavaTestUtil;
-import com.intellij.testFramework.LightJavaCodeInsightTestCase;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.junit.jupiter.api.Test;
 
-public class ExtractMethod15Test extends LightJavaCodeInsightTestCase {
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaCodeInsightFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaTestDescriptor;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+@TestApplication
+public class ExtractMethod15Test {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(lightJavaTestDescriptor());
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture =
+    lightJavaCodeInsightFixture(projectFixture, "/java/java-tests/testData");
+
   private static final String BASE_PATH = "/refactoring/extractMethod15/";
 
-  @NotNull
-  @Override
-  protected String getTestDataPath() {
-    return JavaTestUtil.getJavaTestDataPath();
-  }
-
+  @Test
   public void testCodeDuplicatesWithMultOccurences() throws Exception {
-    configureByFile(BASE_PATH + getTestName(false) + ".java");
-    boolean success = ExtractMethodTest.performExtractMethod(true, true, getEditor(), getFile(), getProject());
-    assertTrue(success);
-    checkResultByFile(BASE_PATH + getTestName(false) + "_after.java");
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    myFixture.configureByFile(BASE_PATH + myFixture.getTestName(false) + ".java");
+    myFixture.runInCommand(() -> {
+      boolean success = ExtractMethodTest.performExtractMethod(true, true, myFixture.getEditor(), myFixture.getFile(), myFixture.getProject());
+      assertTrue(success);
+      myFixture.checkResultByFile(BASE_PATH + myFixture.getTestName(false) + "_after.java");
+    });
   }
 }

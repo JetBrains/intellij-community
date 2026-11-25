@@ -15,326 +15,413 @@
  */
 package com.intellij.java.refactoring;
 
-public class FindMethodDuplicatesTest extends FindMethodDuplicatesBaseTest{
+import com.intellij.pom.java.LanguageLevel;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.junit.jupiter.api.Test;
 
-  @Override
-  protected String getTestFilePath() {
-    return "/refactoring/methodDuplicates/" + getTestName(false) + ".java";
-  }
+import static com.intellij.java.refactoring.FindMethodDuplicatesFixtureKt.findMethodDuplicatesFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaTestDescriptor;
 
+@TestApplication
+public class FindMethodDuplicatesTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(lightJavaTestDescriptor(LanguageLevel.JDK_1_7));
+  private final TestFixture<FindMethodDuplicatesFixture> duplicates = findMethodDuplicatesFixture(projectFixture, "/refactoring/methodDuplicates/");
+
+  @Test
   public void testGenmethExtends() {
-    doTest();
+    duplicates.get().doTest();
   }
 
+  @Test
   public void testGenmethExtendsGenericExact() {
-    doTest();
+    duplicates.get().doTest();
   }
 
+  @Test
   public void testGenmethExtendsGenericWildcard() {
-    doTest();
+    duplicates.get().doTest();
   }
 
+  @Test
   public void testGenmethGeneral() {
-    doTest();
+    duplicates.get().doTest();
   }
 
+  @Test
   public void testGenmethSeveral() {
-    doTest();
+    duplicates.get().doTest();
   }
 
+  @Test
   public void testIdentityComplete() {
-    doTest();
+    duplicates.get().doTest();
   }
 
+  @Test
   public void testIdentityComment() {
-    doTest();
+    duplicates.get().doTest();
   }
 
+  @Test
   public void testIdentityName() {
-    doTest();
+    duplicates.get().doTest();
   }
 
+  @Test
   public void testIdentityWhitespace() {
-    doTest();
+    duplicates.get().doTest();
   }
 
+  @Test
   public void testLocationQuantity() {
-    doTest();
+    duplicates.get().doTest();
   }
 
+  @Test
   public void testSkipNonRelatedCalls() {
-    doTest(false);
+    duplicates.get().doTest(false);
   }
 
+  @Test
   public void testMappingAny2ParameterPrimitiveLvalue() {
-    doTest(false);
+    duplicates.get().doTest(false);
   }
 
+  @Test
   public void testMappingExpression2Field() {
-    doTest(false);
+    duplicates.get().doTest(false);
   }
 
+  @Test
   public void testMappingExpression2LocalVar() {
-    doTest(false);
+    duplicates.get().doTest(false);
   }
 
+  @Test
   public void testMappingExpression2ParameterLiterals() {
-    doTest();
+    duplicates.get().doTest();
   }
 
+  @Test
   public void testMappingExpression2ParameterLValues() {
-    doTest();
+    duplicates.get().doTest();
   }
 
+  @Test
   public void testMappingExpression2ParameterMultiple() {
-    doTest();
+    duplicates.get().doTest();
   }
 
+  @Test
   public void testMappingExpression2This() {
-    doTest(false);
+    duplicates.get().doTest(false);
   }
 
+  @Test
   public void testMappingField2Field() {
-    doTest();
+    duplicates.get().doTest();
   }
 
+  @Test
   public void testMappingField2LocalVar() {
-    doTest(false);
+    duplicates.get().doTest(false);
   }
 
+  @Test
   public void testMappingField2Parameter() {
-    doTest();
+    duplicates.get().doTest();
   }
 
+  @Test
   public void testMappingField2This() {
-    doTest(false);
+    duplicates.get().doTest(false);
   }
 
+  @Test
   public void testMappingLocalVar2Expression() {
-    doTest(false);
+    duplicates.get().doTest(false);
   }
 
+  @Test
   public void testMappingLocalVar2Field() {
-    doTest(false);
+    duplicates.get().doTest(false);
   }
 
+  @Test
   public void testMappingLocalVar2LocalVar() {
-    doTest();
+    duplicates.get().doTest();
   }
 
+  @Test
   public void testMappingLocalVar2Parameter() {
-    doTest();
+    duplicates.get().doTest();
   }
 
+  @Test
   public void testMappingLocalVar2This() {
-    doTest(false);
+    duplicates.get().doTest(false);
   }
 
+  @Test
   public void testMappingMember2MemberDifferent() {
-    doTest();
+    duplicates.get().doTest();
   }
 
+  @Test
   public void testMappingParameter2Field() {
-    doTest(false);
+    duplicates.get().doTest(false);
   }
 
+  @Test
   public void testMappingParameter2LocalVar() {
-    doTest(false);
+    duplicates.get().doTest(false);
   }
 
+  @Test
   public void testMappingParameter2Parameter() {
-    doTest();
+    duplicates.get().doTest();
   }
 
+  @Test
   public void testMappingParameter2This() {
-    doTest(false);
+    duplicates.get().doTest(false);
   }
 
+  @Test
   public void testMappingThis2Field() {
-    doTest(false);
+    duplicates.get().doTest(false);
   }
 
+  @Test
   public void testMappingThis2LocalVar() {
-    doTest(false);
+    duplicates.get().doTest(false);
   }
 
+  @Test
   public void testMappingThis2Parameter() {
-    doTest();
+    duplicates.get().doTest();
   }
 
+  @Test
   public void testMappingThis2ThisDifferent() {
-    doTest();
+    duplicates.get().doTest();
   }
 
+  @Test
   public void testMappingThis2ThisQualified() {
-    doTest();
+    duplicates.get().doTest();
   }
 
+  @Test
   public void testPostFragmentUsage() {
-    doTest();
+    duplicates.get().doTest();
   }
 
+  @Test
   public void testReturnExpression() {
-    doTest();
+    duplicates.get().doTest();
   }
 
+  @Test
   public void testReturnField() {
-    doTest();
+    duplicates.get().doTest();
   }
 
+  @Test
   public void testReturnLocalVar() {
-    doTest();
+    duplicates.get().doTest();
   }
 
+  @Test
   public void testReturnParameter() {
-    doTest();
+    duplicates.get().doTest();
   }
 
+  @Test
   public void testReturnThis() {
-    doTest();
+    duplicates.get().doTest();
   }
 
+  @Test
   public void testTypesExtends() {
-    doTest();
+    duplicates.get().doTest();
   }
 
+  @Test
   public void testTypesExtendsReturn() {
-    doTest();
+    duplicates.get().doTest();
   }
 
+  @Test
   public void testTypesExtendsReturnDifferentArray() {
-    doTest();
+    duplicates.get().doTest();
   }
 
+  @Test
   public void testTypesExtendsReturnDifferentGeneric() {
-    doTest();
+    duplicates.get().doTest();
   }
 
+  @Test
   public void testTypesExtendsReturnDifferentPrimitive() {
-    doTest();
+    duplicates.get().doTest();
   }
 
+  @Test
   public void testTypesExtendsReturnDifferentReference() {
-    doTest();
+    duplicates.get().doTest();
   }
 
+  @Test
   public void testTypesGenericsConcrete2Concrete() {
-    doTest();
+    duplicates.get().doTest();
   }
 
+  @Test
   public void testTypesGenericsConcrete2ConcreteDifferent() {
-    doTest(false);
+    duplicates.get().doTest(false);
   }
 
+  @Test
   public void testTypesGenericsConcrete2Extends() {
-    doTest();
+    duplicates.get().doTest();
   }
 
+  @Test
   public void testTypesGenericsConcrete2ExtendsDifferent() {
-    doTest(false);
+    duplicates.get().doTest(false);
   }
 
+  @Test
   public void testTypesGenericsConcrete2Super() {
-    doTest();
+    duplicates.get().doTest();
   }
 
+  @Test
   public void testTypesGenericsConcrete2SuperDifferent() {
-    doTest(false);
+    duplicates.get().doTest(false);
   }
 
+  @Test
   public void testTypesGenericsConcrete2Raw() {
-    doTest();
+    duplicates.get().doTest();
   }
 
+  @Test
   public void testTypesGenericsRaw2Concrete() {
-    doTest();
+    duplicates.get().doTest();
   }
 
+  @Test
   public void testTypesGenericsRaw2Raw() {
-    doTest();
+    duplicates.get().doTest();
   }
 
+  @Test
   public void testTypesImplements() {
-    doTest();
+    duplicates.get().doTest();
   }
 
+  @Test
   public void testTypesNoRelationship() {
-    doTest(false);
+    duplicates.get().doTest(false);
   }
 
+  @Test
   public void testAnonymousTest() {
-    doTest();
+    duplicates.get().doTest();
   }
 
+  @Test
   public void testAnonymousTest1() {
-    doTest();
+    duplicates.get().doTest();
   }
 
+  @Test
   public void testAnonymousTest2() {
-    doTest(false);
+    duplicates.get().doTest(false);
   }
 
+  @Test
   public void testReturnVoidTest() {
-    doTest();
+    duplicates.get().doTest();
   }
 
+  @Test
   public void testThisReferenceTest() {
-    doTest();
+    duplicates.get().doTest();
   }
 
+  @Test
   public void testAddStaticTest() {
-    doTest();
+    duplicates.get().doTest();
   }
 
+  @Test
   public void testStaticMethodReplacement() {
-    doTest();
+    duplicates.get().doTest();
   }
 
+  @Test
   public void testRefReplacement() {
-    doTest();
+    duplicates.get().doTest();
   }
 
+  @Test
   public void testRefReplacement1() {
-    doTest();
+    duplicates.get().doTest();
   }
 
+  @Test
   public void testReturnVariable() {
-    doTest();
+    duplicates.get().doTest();
   }
 
+  @Test
   public void testReturnExpressionDifferent() {
-    doTest(false);
+    duplicates.get().doTest(false);
   }
 
+  @Test
   public void testTypeInheritance() {
-    doTest();
+    duplicates.get().doTest();
   }
 
+  @Test
   public void testTypeInheritance1() {
-    doTest(false);
+    duplicates.get().doTest(false);
   }
 
+  @Test
   public void testUnusedParameter() {
-    doTest();
+    duplicates.get().doTest();
   }
 
+  @Test
   public void testUnusedParameter1() {
-    doTest();
+    duplicates.get().doTest();
   }
 
+  @Test
   public void testInheritance() {
-    doTest();
+    duplicates.get().doTest();
   }
 
+  @Test
   public void testVarargs() {
-    doTest();
+    duplicates.get().doTest();
   }
 
+  @Test
   public void testDeclarationUsage() {
-    doTest(false);
+    duplicates.get().doTest(false);
   }
 
+  @Test
   public void testChangingReturnType() {
-    doTest();
+    duplicates.get().doTest();
   }
 }

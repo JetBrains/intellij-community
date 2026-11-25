@@ -2,25 +2,34 @@
 
 package com.intellij.java.refactoring;
 
-import com.intellij.JavaTestUtil;
 import com.intellij.idea.TestFor;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.JavaCodeFragment;
 import com.intellij.psi.JavaCodeFragmentFactory;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.extractMethodObject.ExtractLightMethodObjectHandler;
 import com.intellij.refactoring.extractMethodObject.LightMethodObjectExtractedData;
-import com.intellij.testFramework.LightJavaCodeInsightTestCase;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.RegistryKey;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.junit.jupiter.api.Test;
 
-public class ExtractMethodObject4DebuggerTest extends LightJavaCodeInsightTestCase {
-  @NotNull
-  @Override
-  protected String getTestDataPath() {
-    return JavaTestUtil.getJavaTestDataPath();
-  }
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaCodeInsightFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaTestDescriptor;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+
+@TestApplication
+@RegistryKey(key = "debugger.compiling.evaluator.magic.accessor", value = "true")
+@RegistryKey(key = "debugger.compiling.evaluator.reflection.access.with.java8", value = "false")
+public class ExtractMethodObject4DebuggerTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(lightJavaTestDescriptor());
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture =
+    lightJavaCodeInsightFixture(projectFixture, "/java/java-tests/testData");
 
   private void doTest(String evaluatedText, String expectedCallSite, String expectedClass) throws Exception {
     doTest(evaluatedText, expectedCallSite, expectedClass, true);
@@ -30,41 +39,24 @@ public class ExtractMethodObject4DebuggerTest extends LightJavaCodeInsightTestCa
                       String expectedCallSite,
                       String expectedClass,
                       boolean codeBlock) throws Exception {
-    final String testName = getTestName(false);
-    configureByFile("/refactoring/extractMethodObject4Debugger/" + testName + ".java");
-    final int offset = getEditor().getCaretModel().getOffset();
-    final PsiElement context = getFile().findElementAt(offset);
-    final JavaCodeFragmentFactory fragmentFactory = JavaCodeFragmentFactory.getInstance(getProject());
-    final JavaCodeFragment fragment = codeBlock ? fragmentFactory.createCodeBlockCodeFragment(evaluatedText, context, false) : fragmentFactory.createExpressionCodeFragment(evaluatedText, context, null, false);
-    final LightMethodObjectExtractedData extractedData =
-      ExtractLightMethodObjectHandler.extractLightMethodObject(getProject(), context, fragment, "test", JavaSdkVersion.JDK_1_8);
-    assertNotNull(extractedData);
-    assertEquals(expectedCallSite, extractedData.getGeneratedCallText());
-    final PsiClass innerClass = extractedData.getGeneratedInnerClass();
-    assertEquals(expectedClass, innerClass.getText());
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    final String testName = myFixture.getTestName(false);
+    myFixture.configureByFile("/refactoring/extractMethodObject4Debugger/" + testName + ".java");
+    myFixture.runInCommand(() -> {
+      final int offset = myFixture.getEditor().getCaretModel().getOffset();
+      final PsiElement context = myFixture.getFile().findElementAt(offset);
+      final JavaCodeFragmentFactory fragmentFactory = JavaCodeFragmentFactory.getInstance(myFixture.getProject());
+      final JavaCodeFragment fragment = codeBlock ? fragmentFactory.createCodeBlockCodeFragment(evaluatedText, context, false) : fragmentFactory.createExpressionCodeFragment(evaluatedText, context, null, false);
+      final LightMethodObjectExtractedData extractedData =
+        ExtractLightMethodObjectHandler.extractLightMethodObject(myFixture.getProject(), context, fragment, "test", JavaSdkVersion.JDK_1_8);
+      assertNotNull(extractedData);
+      assertEquals(expectedCallSite, extractedData.getGeneratedCallText());
+      final PsiClass innerClass = extractedData.getGeneratedInnerClass();
+      assertEquals(expectedClass, innerClass.getText());
+    });
   }
 
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-    Registry.get("debugger.compiling.evaluator.magic.accessor").setValue(true);
-    Registry.get("debugger.compiling.evaluator.reflection.access.with.java8").setValue(false);
-  }
-
-  @Override
-  protected void tearDown() throws Exception {
-    try {
-      Registry.get("debugger.compiling.evaluator.magic.accessor").resetToDefault();
-      Registry.get("debugger.compiling.evaluator.reflection.access.with.java8").resetToDefault();
-    }
-    catch (Throwable e) {
-      addSuppressedException(e);
-    }
-    finally {
-      super.tearDown();
-    }
-  }
-
+  @Test
   public void testSimpleGeneration() throws Exception {
     doTest("int i = 0; int j = 0;", "Test test = new Test().invoke();int i = test.getI();int j = test.getJ();",
 
@@ -89,6 +81,7 @@ public class ExtractMethodObject4DebuggerTest extends LightJavaCodeInsightTestCa
                  }""");
   }
 
+  @Test
   public void testInvokeReturnType() throws Exception {
     doTest("x = 6; y = 6;", "Test test = new Test().invoke();x = test.getX();y = test.getY();int result = test.getResult();",
 
@@ -118,6 +111,7 @@ public class ExtractMethodObject4DebuggerTest extends LightJavaCodeInsightTestCa
                  }""");
   }
 
+  @Test
   public void testAnonymousClassParams() throws Exception {
     doTest("new I() {public void foo(int i) {i++;}};", "I result = Test.invoke();",
 
@@ -133,6 +127,7 @@ public class ExtractMethodObject4DebuggerTest extends LightJavaCodeInsightTestCa
                  }""");
   }
 
+  @Test
   public void testInnerClass() throws Exception {
     doTest("   new I(2).foo()", "new Test().invoke();",
 
@@ -144,6 +139,7 @@ public class ExtractMethodObject4DebuggerTest extends LightJavaCodeInsightTestCa
                  }""");
   }
 
+  @Test
   public void testResultExpr() throws Exception {
     doTest("   foo()", "int result = new Test().invoke();",
 
@@ -155,6 +151,7 @@ public class ExtractMethodObject4DebuggerTest extends LightJavaCodeInsightTestCa
                  }""");
   }
 
+  @Test
   public void testResultStatements() throws Exception {
     doTest("int i = 0;\nfoo()", "Test test = new Test().invoke();int i = test.getI();int result = test.getResult();",
 
@@ -180,6 +177,7 @@ public class ExtractMethodObject4DebuggerTest extends LightJavaCodeInsightTestCa
   }
 
 
+  @Test
   public void testOffsetsAtCallSite() throws Exception {
     doTest("map.entrySet().stream().filter((a) -> (a.getKey()>0));",
            "Stream<Map.Entry<Integer,Integer>> result = new Test(map).invoke();",
@@ -197,6 +195,7 @@ public class ExtractMethodObject4DebuggerTest extends LightJavaCodeInsightTestCa
                  }""");
   }
 
+  @Test
   public void testHangingFunctionalExpressions() throws Exception {
     doTest("() -> {}", "Test.invoke();", """
       static class Test {
@@ -207,6 +206,7 @@ public class ExtractMethodObject4DebuggerTest extends LightJavaCodeInsightTestCa
           }""");
   }
 
+  @Test
   public void testArrayInitializer() throws Exception {
     doTest("{new Runnable() {public void run(){} } }",
            "Runnable[] result = Test.invoke();",
@@ -221,6 +221,7 @@ public class ExtractMethodObject4DebuggerTest extends LightJavaCodeInsightTestCa
                  }""", false);
   }
 
+  @Test
   public void testNewArrayInitializer() throws Exception {
     doTest("new Runnable[] {new Runnable() {public void run(){} } }",
            "Runnable[] result = Test.invoke();",
@@ -235,6 +236,7 @@ public class ExtractMethodObject4DebuggerTest extends LightJavaCodeInsightTestCa
                  }""", false);
   }
 
+  @Test
   public void testThisAndSuperReferences() throws Exception {
     doTest("""
              list.forEach(i -> {
@@ -278,6 +280,7 @@ public class ExtractMethodObject4DebuggerTest extends LightJavaCodeInsightTestCa
                  }""", false);
   }
 
+  @Test
   public void testOnClosingBrace() throws Exception {
     doTest("   foo()", "int result = new Test().invoke();",
 
@@ -289,6 +292,7 @@ public class ExtractMethodObject4DebuggerTest extends LightJavaCodeInsightTestCa
                  }""");
   }
 
+  @Test
   public void testOnClosingBraceLocalClass() throws Exception {
     doTest("   foo()", "int result = new Test().invoke();",
 
@@ -300,6 +304,7 @@ public class ExtractMethodObject4DebuggerTest extends LightJavaCodeInsightTestCa
                  }""");
   }
 
+  @Test
   public void testOnFieldInitialization() throws Exception {
     doTest("   foo()", "int result = new Test().invoke();",
 
@@ -311,6 +316,7 @@ public class ExtractMethodObject4DebuggerTest extends LightJavaCodeInsightTestCa
                  }""");
   }
 
+  @Test
   public void testOnEmptyMethod() throws Exception {
     doTest("   foo()", "int result = Test.invoke();",
 
@@ -322,6 +328,7 @@ public class ExtractMethodObject4DebuggerTest extends LightJavaCodeInsightTestCa
                  }""");
   }
 
+  @Test
   public void testOnSuperConstructorCall() throws Exception {
     doTest("   foo()", "int result = new Test().invoke();",
 
@@ -333,6 +340,7 @@ public class ExtractMethodObject4DebuggerTest extends LightJavaCodeInsightTestCa
                  }""");
   }
 
+  @Test
   public void testOnPrivateField() throws Exception {
     doTest("   foo()", "int result = new Test().invoke();",
 
@@ -345,6 +353,7 @@ public class ExtractMethodObject4DebuggerTest extends LightJavaCodeInsightTestCa
   }
 
   @TestFor(issues = "IDEA-370817")
+  @Test
   public void testOnWithComment() throws Exception {
     doTest("""
              //
@@ -360,6 +369,7 @@ public class ExtractMethodObject4DebuggerTest extends LightJavaCodeInsightTestCa
   }
 
   @TestFor(issues = "IDEA-396115")
+  @Test
   public void testInSwitchRuleBody() throws Exception {
     doTest("i", "Integer result = new Test(i).invoke();",
            """
@@ -377,6 +387,7 @@ public class ExtractMethodObject4DebuggerTest extends LightJavaCodeInsightTestCa
   }
 
   @TestFor(issues = "IDEA-396115")
+  @Test
   public void testInSwitchRuleThrowBody() throws Exception {
     doTest("i", "Integer result = new Test(i).invoke();",
            """
@@ -394,6 +405,7 @@ public class ExtractMethodObject4DebuggerTest extends LightJavaCodeInsightTestCa
   }
 
   @TestFor(issues = "IDEA-396115")
+  @Test
   public void testInSwitchExpressionRuleBody() throws Exception {
     doTest("i", "Integer result = new Test(i).invoke();",
            """

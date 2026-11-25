@@ -17,6 +17,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.Disposer
@@ -34,18 +35,36 @@ import com.intellij.refactoring.listeners.RefactoringEventData
 import com.intellij.refactoring.listeners.RefactoringEventListener
 import com.intellij.refactoring.util.CommonRefactoringUtil.RefactoringErrorHintException
 import com.intellij.testFramework.IdeaTestUtil
-import com.intellij.testFramework.LightJavaCodeInsightTestCase
+import com.intellij.testFramework.common.timeoutRunBlocking
+import com.intellij.testFramework.fixtures.lightJavaCodeInsightFixture
+import com.intellij.testFramework.fixtures.lightJavaDescriptorOfTestName
+import com.intellij.testFramework.fixtures.lightJavaProjectFixture
+import com.intellij.testFramework.fixtures.lightJavaTestDescriptor
+import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.replaceService
 import com.intellij.testFramework.utils.coroutines.waitCoroutinesBlocking
 import com.intellij.ui.ChooserInterceptor
 import com.intellij.ui.UiInterceptors
 import com.intellij.util.FileContentUtil
 import com.intellij.util.ui.UIUtil
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.jetbrains.annotations.NonNls
+import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 
-class ExtractMethodAndDuplicatesInplaceTest: LightJavaCodeInsightTestCase() {
+@TestApplication
+class ExtractMethodAndDuplicatesInplaceTest {
 
   companion object {
+    private val DESCRIPTOR = lightJavaTestDescriptor()
+    private val projectFixture = lightJavaProjectFixture(DESCRIPTOR)
+
     fun nextTemplateVariable(templateState: TemplateState?): Boolean {
       if (templateState == null) return false
       val previousRange = templateState.currentVariableRange
@@ -65,15 +84,29 @@ class ExtractMethodAndDuplicatesInplaceTest: LightJavaCodeInsightTestCase() {
     }
   }
 
+  private val myFixture by lightJavaCodeInsightFixture(projectFixture, lightJavaDescriptorOfTestName(DESCRIPTOR), "/java/java-tests/testData")
+
   private val BASE_PATH: @NonNls String = "/refactoring/extractMethodAndDuplicatesInplace"
 
-  fun testStatement() = doTest()
-  fun testReassignFinalFieldWriteOnly() = doTest()
-  fun testConflictedNamesFiltered() = doTest()
-  fun testVariableGetterSuggested() = doTest()
-  fun testElseIfWithOutputVariable() = doTest()
-  fun testExactDuplicates() = doTest()
+  @Test
+  fun testStatement(): Unit = doTest()
 
+  @Test
+  fun testReassignFinalFieldWriteOnly(): Unit = doTest()
+
+  @Test
+  fun testConflictedNamesFiltered(): Unit = doTest()
+
+  @Test
+  fun testVariableGetterSuggested(): Unit = doTest()
+
+  @Test
+  fun testElseIfWithOutputVariable(): Unit = doTest()
+
+  @Test
+  fun testExactDuplicates(): Unit = doTest()
+
+  @Test
   fun testInvalidRename() {
     doTest {
       renameTemplate("invalid! name")
@@ -82,6 +115,7 @@ class ExtractMethodAndDuplicatesInplaceTest: LightJavaCodeInsightTestCase() {
     require(getActiveTemplate() != null)
   }
 
+  @Test
   fun testConflictRename() {
     doTest {
       renameTemplate("conflict")
@@ -90,6 +124,7 @@ class ExtractMethodAndDuplicatesInplaceTest: LightJavaCodeInsightTestCase() {
     require(getActiveTemplate() != null)
   }
 
+  @Test
   fun testValidRename() {
     doTest {
       renameTemplate("valid")
@@ -97,8 +132,10 @@ class ExtractMethodAndDuplicatesInplaceTest: LightJavaCodeInsightTestCase() {
     }
   }
 
-  fun testGeneratedDefault() = doTest()
+  @Test
+  fun testGeneratedDefault(): Unit = doTest()
 
+  @Test
   fun testRenamedExactDuplicate() {
     doTest {
       renameTemplate("renamed")
@@ -106,6 +143,7 @@ class ExtractMethodAndDuplicatesInplaceTest: LightJavaCodeInsightTestCase() {
     }
   }
 
+  @Test
   fun testRenamedParametrizedDuplicate() {
     doTest {
       renameTemplate("averageWithOffset")
@@ -113,14 +151,17 @@ class ExtractMethodAndDuplicatesInplaceTest: LightJavaCodeInsightTestCase() {
     }
   }
 
-  fun testStaticMustBePlaced() = doTest()
+  @Test
+  fun testStaticMustBePlaced(): Unit = doTest()
 
+  @Test
   fun testShortenClassReferences() {
-    IdeaTestUtil.withLevel(module, LanguageLevel.JDK_11) {
+    IdeaTestUtil.withLevel(myFixture.module, LanguageLevel.JDK_11) {
       doTest()
     }
   }
 
+  @Test
   fun testThreeDuplicates() {
     doTest {
       renameTemplate("sayHello")
@@ -128,86 +169,141 @@ class ExtractMethodAndDuplicatesInplaceTest: LightJavaCodeInsightTestCase() {
     }
   }
 
-  fun testParameterGrouping() = doTest()
-  fun testConditionalExitPoint() = doTest()
-  fun testUnconditionalExitWithReturn() = doTest()
+  @Test
+  fun testParameterGrouping(): Unit = doTest()
 
+  @Test
+  fun testConditionalExitPoint(): Unit = doTest()
+
+  @Test
+  fun testUnconditionalExitWithReturn(): Unit = doTest()
+
+  @Test
   fun testRuntimeCatchMayChangeSemantic1() {
-    assertThrows(RefactoringErrorHintException::class.java,
-                 JavaRefactoringBundle.message("extract.method.error.exception")) {
+    assertThatThrownBy {
       doTest()
-    }
+    }.isInstanceOf(RefactoringErrorHintException::class.java).hasMessageContaining(JavaRefactoringBundle.message("extract.method.error.exception"))
   }
 
+  @Test
   fun testRuntimeCatchMayChangeSemantic2() {
-    assertThrows(RefactoringErrorHintException::class.java,
-                 JavaRefactoringBundle.message("extract.method.error.exception")) {
+    assertThatThrownBy {
       doTest()
-    }
+    }.isInstanceOf(RefactoringErrorHintException::class.java).hasMessageContaining(JavaRefactoringBundle.message("extract.method.error.exception"))
   }
 
-  fun testRuntimeCatchWithLastAssignment() = doTest()
-  fun testSpecificCatch() = doTest()
-  fun testExpressionDuplicates() = doTest()
-  fun testArrayFoldingWithDuplicate() = doTest()
-  fun testFoldReturnExpression() = doTest()
-  fun testOverlappingRanges() = doTest()
-  fun testConditionalYield() = doTest()
-  fun testYieldWithDuplicate() = doTest()
+  @Test
+  fun testRuntimeCatchWithLastAssignment(): Unit = doTest()
 
+  @Test
+  fun testSpecificCatch(): Unit = doTest()
+
+  @Test
+  fun testExpressionDuplicates(): Unit = doTest()
+
+  @Test
+  fun testArrayFoldingWithDuplicate(): Unit = doTest()
+
+  @Test
+  fun testFoldReturnExpression(): Unit = doTest()
+
+  @Test
+  fun testOverlappingRanges(): Unit = doTest()
+
+  @Test
+  fun testConditionalYield(): Unit = doTest()
+
+  @Test
+  fun testYieldWithDuplicate(): Unit = doTest()
+
+  @Test
   fun testDisabledOnSwitchRules() {
-    assertThrows(RefactoringErrorHintException::class.java,
-                 RefactoringBundle.message("selected.block.should.represent.a.set.of.statements.or.an.expression")) {
+    assertThatThrownBy {
       doTest()
-    }
+    }.isInstanceOf(RefactoringErrorHintException::class.java).hasMessageContaining(RefactoringBundle.message("selected.block.should.represent.a.set.of.statements.or.an.expression"))
   }
 
-  fun testNormalizedOnSwitchRule() = doTest()
-  fun testExpressionStatementInSwitchExpression() = doTest()
-  fun testExpressionStatementInSwitchStatement() = doTest()
+  @Test
+  fun testNormalizedOnSwitchRule(): Unit = doTest()
 
+  @Test
+  fun testExpressionStatementInSwitchExpression(): Unit = doTest()
+
+  @Test
+  fun testExpressionStatementInSwitchStatement(): Unit = doTest()
+
+  @Test
   fun testTargetClassSurvivesReparse() {
-    configureFromFileText("Reparse2.java", """
+    myFixture.configureByText("Reparse2.java", """
       class Test {
           void a() { helper(); }
           void helper() {}
       }
     """.trimIndent())
-    val cls = PsiTreeUtil.findChildOfType(file, PsiClass::class.java)!!
-    val elements = cls.findMethodsByName("a", false).first().body!!.statements.toList()
-    val extractor = DuplicatesMethodExtractor.create(cls, elements, "extracted", false)
+    myFixture.runInCommand {
+      val file = myFixture.file
+      val cls = PsiTreeUtil.findChildOfType(file, PsiClass::class.java)!!
+      val elements = cls.findMethodsByName("a", false).first().body!!.statements.toList()
+      val extractor = DuplicatesMethodExtractor.create(cls, elements, "extracted", false)
 
-    FileContentUtil.reparseFiles(project, listOf(file.virtualFile), true)
+      FileContentUtil.reparseFiles(myFixture.project, listOf(file.virtualFile), true)
 
-    val targetFile = extractor.targetFile
-    assertNotNull("targetFile pointer must re-resolve after reparse", targetFile)
-    assertTrue("targetFile must be valid after reparse", targetFile!!.isValid)
-    assertTrue("targetClass pointer must re-resolve to a valid class after reparse", extractor.targetClass.isValid)
+      val targetFile = extractor.targetFile
+      assertNotNull(targetFile, "targetFile pointer must re-resolve after reparse")
+      assertTrue(targetFile!!.isValid, "targetFile must be valid after reparse")
+      assertTrue(extractor.targetClass.isValid, "targetClass pointer must re-resolve to a valid class after reparse")
+    }
   }
 
-  fun testIDEA278872() = doTest()
-  fun testLocalAssignmentDuplicates() = doTest()
-  fun testWrongLocalAssignmentDuplicates() = doTest()
-  fun testDuplicateWithLocalMethodReference() = doTest()
-  fun testDuplicateWithAnonymousMethodReference() = doTest()
-  fun testDuplicateWithAnonymousFieldReference() = doTest()
-  fun testDuplicateWithLocalReferenceInLambda() = doTest()
-  fun testAvoidChangeSignatureForLocalRefsInPattern() = doTest()
-  fun testAvoidChangeSignatureForLocalRefsInCandidate() = doTest()
-  fun testDiamondTypesConsideredAsEqual() = doTest()
-  fun testDuplicatedExpressionAndChangeSignature() = doTest()
-  fun testChangedVariableDeclaredOnce() = doTest()
+  @Test
+  fun testIDEA278872(): Unit = doTest()
 
+  @Test
+  fun testLocalAssignmentDuplicates(): Unit = doTest()
+
+  @Test
+  fun testWrongLocalAssignmentDuplicates(): Unit = doTest()
+
+  @Test
+  fun testDuplicateWithLocalMethodReference(): Unit = doTest()
+
+  @Test
+  fun testDuplicateWithAnonymousMethodReference(): Unit = doTest()
+
+  @Test
+  fun testDuplicateWithAnonymousFieldReference(): Unit = doTest()
+
+  @Test
+  fun testDuplicateWithLocalReferenceInLambda(): Unit = doTest()
+
+  @Test
+  fun testAvoidChangeSignatureForLocalRefsInPattern(): Unit = doTest()
+
+  @Test
+  fun testAvoidChangeSignatureForLocalRefsInCandidate(): Unit = doTest()
+
+  @Test
+  fun testDiamondTypesConsideredAsEqual(): Unit = doTest()
+
+  @Test
+  fun testDuplicatedExpressionAndChangeSignature(): Unit = doTest()
+
+  @Test
+  fun testChangedVariableDeclaredOnce(): Unit = doTest()
+
+  @Test
   fun testDuplicatedWithDeclinedChangeSignature() {
     DuplicatesMethodExtractor.changeSignatureDefault = false
     doTest()
   }
 
+  @Test
   fun testDuplicatedButDeclined() {
     DuplicatesMethodExtractor.replaceDuplicatesDefault = false
     doTest()
   }
 
+  @Test
   fun testTemplateRenamesInsertedCallOnly() {
     doTest {
       renameTemplate("renamed")
@@ -215,94 +311,131 @@ class ExtractMethodAndDuplicatesInplaceTest: LightJavaCodeInsightTestCase() {
     }
   }
 
-  fun testSignatureChangeIsNotAvoided() = doTest()
-  fun testSignatureChangeIsAvoided1() = doTest()
-  fun testSignatureChangeIsAvoided2() = doTest()
-  fun testSignatureChangeIsAvoided3() = doTest()
-  fun testLiteralDuplicates() = doTest()
-  fun testSubExpressionWithCall() = doTest()
+  @Test
+  fun testSignatureChangeIsNotAvoided(): Unit = doTest()
 
+  @Test
+  fun testSignatureChangeIsAvoided1(): Unit = doTest()
+
+  @Test
+  fun testSignatureChangeIsAvoided2(): Unit = doTest()
+
+  @Test
+  fun testSignatureChangeIsAvoided3(): Unit = doTest()
+
+  @Test
+  fun testLiteralDuplicates(): Unit = doTest()
+
+  @Test
+  fun testSubExpressionWithCall(): Unit = doTest()
+
+  @Test
   fun testMakeStaticWithThis() {
     JavaRefactoringSettings.getInstance().EXTRACT_STATIC_METHOD_AND_PASS_FIELDS = true
     doTest()
   }
 
+  @Test
   fun testMakeStaticWithQualifiedThis() {
     JavaRefactoringSettings.getInstance().EXTRACT_STATIC_METHOD_AND_PASS_FIELDS = true
     doTest()
   }
 
+  @Test
   fun testMakeStaticWithStaticMembers() {
     JavaRefactoringSettings.getInstance().EXTRACT_STATIC_METHOD_AND_PASS_FIELDS = true
     doTest()
   }
 
+  @Test
   fun testMakeStaticWithLocalMethod() {
     JavaRefactoringSettings.getInstance().EXTRACT_STATIC_METHOD_AND_PASS_FIELDS = true
     doTest()
   }
 
+  @Test
   fun testFoldedParametersInExactDuplicates() {
     DuplicatesMethodExtractor.changeSignatureDefault = false
     doTest()
   }
 
+  @Test
   fun testIntroduceSimpleObject() {
-    IdeaTestUtil.withLevel(module, LanguageLevel.JDK_1_8) {
+    IdeaTestUtil.withLevel(myFixture.module, LanguageLevel.JDK_1_8) {
       doTest()
     }
   }
 
-  fun testIntroduceSimpleRecord() = doTest()
-  fun testIntroduceNullableObject() = doTest()
-  fun testIntroduceObjectWithAssignments() = doTest()
-  fun testIntroduceObjectWithTypeParameters() = doTest()
+  @Test
+  fun testIntroduceSimpleRecord(): Unit = doTest()
 
+  @Test
+  fun testIntroduceNullableObject(): Unit = doTest()
+
+  @Test
+  fun testIntroduceObjectWithAssignments(): Unit = doTest()
+
+  @Test
+  fun testIntroduceObjectWithTypeParameters(): Unit = doTest()
+
+  @Test
   fun testIntroduceObjectInsideNestedClass() {
-    IdeEventQueue.getInstance().popupManager.closeAllPopups()
-    IdePopupManager().closeAllPopups()
+    timeoutRunBlocking {
+      withContext(Dispatchers.EDT) {
+        IdeEventQueue.getInstance().popupManager.closeAllPopups()
+        IdePopupManager().closeAllPopups()
+      }
+    }
     doTest()
   }
 
+  @Test
   fun testMakeStaticInsideInner() {
     shouldSelectTargetClass("Anonymous in r in X")
     doTest()
   }
 
+  @Test
   fun testMakeStaticInsideInnerFail() {
-    IdeaTestUtil.withLevel(module, LanguageLevel.JDK_15) {
+    IdeaTestUtil.withLevel(myFixture.module, LanguageLevel.JDK_15) {
       shouldSelectTargetClass("Anonymous in r in X")
       doTest()
     }
   }
 
+  @Test
   fun testMakeStaticFailsWithClassUsage() {
     JavaRefactoringSettings.getInstance().EXTRACT_STATIC_METHOD_AND_PASS_FIELDS = true
     doTest()
   }
 
+  @Test
   fun testMakeStaticWithClassUsage() {
     JavaRefactoringSettings.getInstance().EXTRACT_STATIC_METHOD_AND_PASS_FIELDS = true
     doTest()
   }
 
+  @Test
   fun testMakeStaticPassLocalParameters() {
     JavaRefactoringSettings.getInstance().EXTRACT_STATIC_METHOD_AND_PASS_FIELDS = true
     shouldSelectTargetClass("Anonymous.*")
     doTest()
   }
 
+  @Test
   fun testNotStaticByDefault() {
     shouldSelectTargetClass("Anonymous.*")
     doTest()
   }
 
+  @Test
   fun testChangeTargetClassAndMakeStatic() {
     JavaRefactoringSettings.getInstance().EXTRACT_STATIC_METHOD_AND_PASS_FIELDS = true
     shouldSelectTargetClass("Test.*")
     doTest()
   }
 
+  @Test
   fun testIntroduceObjectConflictInsideNestedClass() {
     doTest {
       renameTemplate("Result")
@@ -313,6 +446,7 @@ class ExtractMethodAndDuplicatesInplaceTest: LightJavaCodeInsightTestCase() {
     require(getActiveTemplate() != null)
   }
 
+  @Test
   fun testIntroduceObjectWithRename() {
     doTest {
       renameTemplate("MyResult")
@@ -323,6 +457,7 @@ class ExtractMethodAndDuplicatesInplaceTest: LightJavaCodeInsightTestCase() {
     }
   }
 
+  @Test
   fun testIntroduceObjectWithWrongClassname1() {
     doTest {
       renameTemplate("Wrong !")
@@ -333,6 +468,7 @@ class ExtractMethodAndDuplicatesInplaceTest: LightJavaCodeInsightTestCase() {
     require(getActiveTemplate() != null)
   }
 
+  @Test
   fun testIntroduceObjectWithWrongClassname2() {
     doTest {
       renameTemplate("Conflict")
@@ -343,6 +479,7 @@ class ExtractMethodAndDuplicatesInplaceTest: LightJavaCodeInsightTestCase() {
     require(getActiveTemplate() != null)
   }
 
+  @Test
   fun testIntroduceObjectWithWrongVariableName1() {
     doTest {
       nextTemplateVariable()
@@ -353,6 +490,7 @@ class ExtractMethodAndDuplicatesInplaceTest: LightJavaCodeInsightTestCase() {
     require(getActiveTemplate() != null)
   }
 
+  @Test
   fun testIntroduceObjectWithWrongVariableName2() {
     doTest {
       nextTemplateVariable()
@@ -363,133 +501,164 @@ class ExtractMethodAndDuplicatesInplaceTest: LightJavaCodeInsightTestCase() {
     require(getActiveTemplate() != null)
   }
 
+  @Test
   fun testIntroduceObjectFailedWithLoop() {
-    assertThrows(RefactoringErrorHintException::class.java) {
+    assertThatThrownBy {
       doTest()
-    }
+    }.isInstanceOf(RefactoringErrorHintException::class.java)
   }
 
+  @Test
   fun testIntroduceObjectFailedWithLoop2() {
-    assertThrows(RefactoringErrorHintException::class.java) {
+    assertThatThrownBy {
       doTest()
-    }
+    }.isInstanceOf(RefactoringErrorHintException::class.java)
   }
 
+  @Test
   fun testIntroduceObjectFailedWithAssignment1() {
-    assertThrows(RefactoringErrorHintException::class.java) {
+    assertThatThrownBy {
       doTest()
-    }
+    }.isInstanceOf(RefactoringErrorHintException::class.java)
   }
 
+  @Test
   fun testIntroduceObjectFailedWithAssignment2() {
-    assertThrows(RefactoringErrorHintException::class.java) {
+    assertThatThrownBy {
       doTest()
-    }
+    }.isInstanceOf(RefactoringErrorHintException::class.java)
   }
 
+  @Test
   fun testExtractStaticDuplicateFromNonStaticContext() {
     JavaRefactoringSettings.getInstance().EXTRACT_STATIC_METHOD = false
     doTest()
   }
 
+  @Test
   fun testExtractDefaultToInterfaceJava8() {
     JavaRefactoringSettings.getInstance().EXTRACT_STATIC_METHOD = false
-    IdeaTestUtil.withLevel(module, LanguageLevel.JDK_1_8) {
+    IdeaTestUtil.withLevel(myFixture.module, LanguageLevel.JDK_1_8) {
       doTest()
     }
   }
 
+  @Test
   fun testExtractStaticToInterfaceJava8() {
     JavaRefactoringSettings.getInstance().EXTRACT_STATIC_METHOD = true
     shouldSelectTargetClass("Test")
-    IdeaTestUtil.withLevel(module, LanguageLevel.JDK_1_8) {
+    IdeaTestUtil.withLevel(myFixture.module, LanguageLevel.JDK_1_8) {
       doTest()
     }
   }
 
+  @Test
   fun testExtractPrivateToInterface() {
     shouldSelectTargetClass("Test")
     JavaRefactoringSettings.getInstance().EXTRACT_STATIC_METHOD = false
-    IdeaTestUtil.withLevel(module, LanguageLevel.JDK_11) {
+    IdeaTestUtil.withLevel(myFixture.module, LanguageLevel.JDK_11) {
       doTest()
     }
   }
 
+  @Test
   fun testExtractToInterfaceNotSuggested() {
-    IdeaTestUtil.withLevel(module, LanguageLevel.JDK_1_7) {
+    IdeaTestUtil.withLevel(myFixture.module, LanguageLevel.JDK_1_7) {
         doTest()
     }
   }
 
+  @Test
   fun testPassTypeParametersInStaticMethods() {
     JavaRefactoringSettings.getInstance().EXTRACT_STATIC_METHOD_AND_PASS_FIELDS = true
     doTest()
   }
 
-  fun testExtractVirtualExpressionFromPolyadic() = doTest()
-  fun testExtractVirtualExpressionFromSubstring() = doTest()
+  @Test
+  fun testExtractVirtualExpressionFromPolyadic(): Unit = doTest()
 
+  @Test
+  fun testExtractVirtualExpressionFromSubstring(): Unit = doTest()
+
+  @Test
   fun testExtractExpressionFromClassContext() {
     doTest{
       nextTemplateVariable()
     }
   }
 
+  @Test
   fun testExtractMethodFromClassContext() {
     doTest{
       nextTemplateVariable()
     }
   }
 
-  fun testFoldParametersInDuplicates() = doTest()
+  @Test
+  fun testFoldParametersInDuplicates(): Unit = doTest()
 
+  @Test
   fun testTypeParametersInNonStaticTarget() {
     JavaRefactoringSettings.getInstance().EXTRACT_STATIC_METHOD = true
     shouldSelectTargetClass("Inner in Test")
     doTest()
   }
 
+  @Test
   fun testNonStaticExtractFromStaticInner() {
     shouldSelectTargetClass("Inner in Test")
     JavaRefactoringSettings.getInstance().EXTRACT_STATIC_METHOD = false
     doTest()
   }
 
+  @Test
   fun testPassThisAsParameter() {
     JavaRefactoringSettings.getInstance().EXTRACT_STATIC_METHOD_AND_PASS_FIELDS = true
     doTest()
   }
 
+  @Test
   fun testCheckNameExtractedFromLambda() {
     doTest {
       nextTemplateVariable()
     }
   }
 
+  @Test
   fun testChangeSignatureIsIgnored() {
     DuplicatesMethodExtractor.changeSignatureDefault = true
     doTest()
   }
 
-  fun testKeepVarKeyword() = doTest()
+  @Test
+  fun testKeepVarKeyword(): Unit = doTest()
 
+  @Test
   fun testDeclareVarType() {
     JavaRefactoringSettings.getInstance().INTRODUCE_LOCAL_CREATE_VAR_TYPE = true
     doTest()
   }
 
-  fun testUseVariableName() = doTest()
-  fun testNameFromComment1() = doTest()
-  fun testNameFromComment2() = doTest()
-  fun testCreatePrefixForNewExpression() = doTest()
+  @Test
+  fun testUseVariableName(): Unit = doTest()
 
+  @Test
+  fun testNameFromComment1(): Unit = doTest()
+
+  @Test
+  fun testNameFromComment2(): Unit = doTest()
+
+  @Test
+  fun testCreatePrefixForNewExpression(): Unit = doTest()
+
+  @Test
   fun testRefactoringListener() {
     templateTest {
       configureByDefaultFile()
       var startReceived = false
       var doneReceived = false
-      val connection = project.messageBus.connect()
-      Disposer.register(testRootDisposable, connection)
+      val connection = myFixture.project.messageBus.connect()
+      Disposer.register(myFixture.testRootDisposable, connection)
       connection.subscribe(RefactoringEventListener.REFACTORING_EVENT_TOPIC, object : RefactoringEventListener {
         override fun refactoringStarted(refactoringId: String, beforeData: RefactoringEventData?) {
           startReceived = true
@@ -498,18 +667,19 @@ class ExtractMethodAndDuplicatesInplaceTest: LightJavaCodeInsightTestCase() {
           doneReceived = true
         }
       })
-      startRefactoring(editor)
+      startRefactoring(myFixture.editor)
       require(startReceived)
       nextTemplateVariable()
       require(doneReceived)
     }
   }
 
+  @Test
   fun testNameLookupNotPreselected() {
     templateTest {
       configureByDefaultFile()
-      startRefactoring(editor)
-      val lookup = LookupManager.getActiveLookup(editor) as? LookupImpl
+      startRefactoring(myFixture.editor)
+      val lookup = LookupManager.getActiveLookup(myFixture.editor) as? LookupImpl
       require(lookup != null) {
         "Method-name suggestion lookup must be visible after Extract Method starts"
       }
@@ -517,11 +687,11 @@ class ExtractMethodAndDuplicatesInplaceTest: LightJavaCodeInsightTestCase() {
         "Sanity check: the scenario should produce at least one suggested method name"
       }
       assertEquals(
+        LookupFocusDegree.UNFOCUSED,
+        lookup.lookupFocusDegree,
         "Extract Method's name-suggestion lookup must not pre-select the first suggestion. " +
         "Otherwise typing a custom name and pressing Enter replaces it with the highlighted " +
-        "suggestion.",
-        LookupFocusDegree.UNFOCUSED,
-        lookup.lookupFocusDegree
+        "suggestion."
       )
     }
   }
@@ -529,16 +699,16 @@ class ExtractMethodAndDuplicatesInplaceTest: LightJavaCodeInsightTestCase() {
   private fun doTest(runnable: (TemplateState) -> Unit = { finishTemplate() }) {
     templateTest {
       configureByDefaultFile()
-      val template = startRefactoring(editor)
+      val template = startRefactoring(myFixture.editor)
       runnable.invoke(template)
       if (getActiveTemplate() == null) {
-        checkResultByFile("$BASE_PATH/${getTestName(false)}_after.java")
+        myFixture.checkResultByFile("$BASE_PATH/${myFixture.getTestName(false)}_after.java")
       }
     }
   }
 
   private fun configureByDefaultFile() {
-    configureByFile("$BASE_PATH/${getTestName(false)}.java")
+    myFixture.configureByFile("$BASE_PATH/${myFixture.getTestName(false)}.java")
   }
 
   private fun finishTemplate() {
@@ -547,15 +717,15 @@ class ExtractMethodAndDuplicatesInplaceTest: LightJavaCodeInsightTestCase() {
     } while (isVariableSwitched)
   }
 
-  override fun setUp() {
-    super.setUp()
+  @BeforeEach
+  fun saveSettings() {
     val settings = JavaRefactoringSettings.getInstance()
     val defaultStatic = settings.EXTRACT_STATIC_METHOD
     val defaultPassFields = settings.EXTRACT_STATIC_METHOD_AND_PASS_FIELDS
     val defaultDeclareVar = settings.INTRODUCE_LOCAL_CREATE_VAR_TYPE
     val defaultChangeSignature = DuplicatesMethodExtractor.changeSignatureDefault
     val defaultReplaceDuplicates = DuplicatesMethodExtractor.replaceDuplicatesDefault
-    Disposer.register(testRootDisposable) {
+    Disposer.register(myFixture.testRootDisposable) {
       settings.EXTRACT_STATIC_METHOD = defaultStatic
       settings.EXTRACT_STATIC_METHOD_AND_PASS_FIELDS = defaultPassFields
       settings.INTRODUCE_LOCAL_CREATE_VAR_TYPE = defaultDeclareVar
@@ -573,7 +743,7 @@ class ExtractMethodAndDuplicatesInplaceTest: LightJavaCodeInsightTestCase() {
         message = text
       }
     }
-    ApplicationManager.getApplication().replaceService(HintManager::class.java, manager, testRootDisposable)
+    ApplicationManager.getApplication().replaceService(HintManager::class.java, manager, myFixture.testRootDisposable)
     block.invoke()
     if (message != null) throw RefactoringErrorHintException(message)
   }
@@ -581,46 +751,44 @@ class ExtractMethodAndDuplicatesInplaceTest: LightJavaCodeInsightTestCase() {
   private fun startRefactoring(editor: Editor): TemplateState {
     val selection = with(editor.selectionModel) { TextRange(selectionStart, selectionEnd) }
     throwHintError {
-      MethodExtractor().doExtract(file, selection)
+      MethodExtractor().doExtract(myFixture.file, selection)
       UIUtil.dispatchAllInvocationEvents()
-      waitCoroutinesBlocking(ExtractMethodService.getInstance(project).scope)
+      waitCoroutinesBlocking(ExtractMethodService.getInstance(myFixture.project).scope)
     }
     val templateState = getActiveTemplate()
     require(templateState != null) { "Failed to start refactoring" }
     return templateState
   }
 
-  private fun getActiveTemplate() = TemplateManagerImpl.getTemplateState(editor)
+  private fun getActiveTemplate() = TemplateManagerImpl.getTemplateState(myFixture.editor)
 
   private fun nextTemplateVariable(): Boolean {
     return nextTemplateVariable(getActiveTemplate()).also {
-      waitCoroutinesBlocking(ExtractMethodService.getInstance(project).scope)
+      waitCoroutinesBlocking(ExtractMethodService.getInstance(myFixture.project).scope)
     }
   }
 
   private fun renameTemplate(name: String) = renameTemplate(getActiveTemplate(), name)
 
-  private inline fun templateTest(test: () -> Unit) {
-    val disposable = Disposer.newDisposable()
-    try {
-      TemplateManagerImpl.setTemplateTesting(disposable)
-      test()
-    }
-    finally {
-      Disposer.dispose(disposable)
+  private fun templateTest(test: () -> Unit) {
+    myFixture.runInCommand {
+      val disposable = Disposer.newDisposable()
+      try {
+        TemplateManagerImpl.setTemplateTesting(disposable)
+        test()
+      }
+      finally {
+        Disposer.dispose(disposable)
+      }
     }
   }
 
-  override fun tearDown() {
-    try {
-      val template = getActiveTemplate()
+  @AfterEach
+  fun disposeActiveTemplate(): Unit = timeoutRunBlocking {
+    withContext(Dispatchers.EDT) {
+      val editor = myFixture.editor ?: return@withContext
+      val template = TemplateManagerImpl.getTemplateState(editor)
       if (template != null) Disposer.dispose(template)
-    }
-    catch (e: Throwable) {
-      addSuppressedException(e)
-    }
-    finally {
-      super.tearDown()
     }
   }
 

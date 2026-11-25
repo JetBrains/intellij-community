@@ -15,113 +15,149 @@
  */
 package com.intellij.java.refactoring;
 
-public class FindMethodDuplicatesMiscTest extends FindMethodDuplicatesBaseTest {
-  @Override
-  protected String getTestFilePath() {
-    return "/refactoring/methodDuplicatesMisc/" + getTestName(false) + ".java";
-  }
+import com.intellij.pom.java.LanguageLevel;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.junit.jupiter.api.Test;
 
+import static com.intellij.java.refactoring.FindMethodDuplicatesFixtureKt.findMethodDuplicatesFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaTestDescriptor;
+
+@TestApplication
+public class FindMethodDuplicatesMiscTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(lightJavaTestDescriptor(LanguageLevel.JDK_1_7));
+  private final TestFixture<FindMethodDuplicatesFixture> duplicates = findMethodDuplicatesFixture(projectFixture, "/refactoring/methodDuplicatesMisc/");
+
+  @Test
   public void testChangeReturnTypeByParameter() {
-    doTest();
+    duplicates.get().doTest();
   }
 
+  @Test
   public void testChangeReturnTypeByField() {
-    doTest();
+    duplicates.get().doTest();
   }
 
+  @Test
   public void testMethodTypeParameters() {
-    doTest();
+    duplicates.get().doTest();
   }
 
+  @Test
   public void testChangeReturnTypeByReturnExpression() {
-    doTest();
+    duplicates.get().doTest();
   }
 
+  @Test
   public void testChangeReturnTypeByReturnValue() {
-    doTest();
+    duplicates.get().doTest();
   }
 
+  @Test
   public void testParametersModification() {
-    doTest();
+    duplicates.get().doTest();
   }
 
+  @Test
   public void testPassArray2VarargMethodCall() {
-    doTest();
+    duplicates.get().doTest();
   }
 
+  @Test
   public void testDetectNameConflicts() {
-    doTest();
+    duplicates.get().doTest();
   }
 
+  @Test
   public void testNoDetectNameConflicts() {
-    doTest();
+    duplicates.get().doTest();
   }
 
+  @Test
   public void testDetectNameConflictsWithStatic() {
-    doTest();
+    duplicates.get().doTest();
   }
 
+  @Test
   public void testCorrectThis() {
-    doTest();
+    duplicates.get().doTest();
   }
 
+  @Test
   public void testSuperInTheSameContext() {
-    doTest(false);
+    duplicates.get().doTest(false);
   }
 
+  @Test
   public void testSuperInTheSameContextQualified() {
-    doTest();
+    duplicates.get().doTest();
   }
 
+  @Test
   public void testInsertSuperQualifierWhenNameConflicts() {
-    doTest();
+    duplicates.get().doTest();
   }
 
+  @Test
   public void testUnqualifiedStaticAccess() {
-    doTest();
+    duplicates.get().doTest();
   }
 
+  @Test
   public void testCandidateUnqualifiedStaticAccess() {
-    doTest();
+    duplicates.get().doTest();
   }
 
+  @Test
   public void testVarargsAccess() {
-    doTest();
+    duplicates.get().doTest();
   }
 
+  @Test
   public void testIncorrectVarargsAccess() {
-    doTest();
+    duplicates.get().doTest();
   }
 
+  @Test
   public void testVarVarargsAccess() {
-    doTest();
+    duplicates.get().doTest();
   }
 
+  @Test
   public void testSkipNotAccessible() {
-    doTest(false);
+    duplicates.get().doTest(false);
   }
   
+  @Test
+  
   public void testQualifiers() {
-    doTest();
+    duplicates.get().doTest();
   }
 
+  @Test
   public void testSimpleConstant() {
-    doTest();
+    duplicates.get().doTest();
   }
 
+  @Test
   public void testAnonymousInitializer() {
-    doTest();
+    duplicates.get().doTest();
   }
 
+  @Test
   public void testMakeStaticOnOverride() {
-    doTest(false);
+    duplicates.get().doTest(false);
   }
 
+  @Test
   public void testReplaceDuplicateInsideAnonymous() {
-    doTest();
+    duplicates.get().doTest();
   }
 
+  @Test
   public void testMakeStaticWhenUsedInInheritor() {
-    doTest();
+    duplicates.get().doTest();
   }
 }

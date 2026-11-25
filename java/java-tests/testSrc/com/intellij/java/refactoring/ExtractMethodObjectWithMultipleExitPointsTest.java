@@ -16,156 +16,189 @@
 
 package com.intellij.java.refactoring;
 
-import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.refactoring.extractMethodObject.ExtractMethodObjectHandler;
 import com.intellij.refactoring.extractMethodObject.ExtractMethodObjectProcessor;
-import com.intellij.testFramework.LightJavaCodeInsightTestCase;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.junit.jupiter.api.Test;
 
-public class ExtractMethodObjectWithMultipleExitPointsTest extends LightJavaCodeInsightTestCase {
-  @NotNull
-  @Override
-  protected String getTestDataPath() {
-    return JavaTestUtil.getJavaTestDataPath();
-  }
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaCodeInsightFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaTestDescriptor;
+
+@TestApplication
+public class ExtractMethodObjectWithMultipleExitPointsTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(lightJavaTestDescriptor());
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture =
+    lightJavaCodeInsightFixture(projectFixture, "/java/java-tests/testData");
 
   private void doTest() throws Exception {
     doTest(true);
   }
 
   private void doTest(final boolean createInnerClass) throws Exception {
-    final String testName = getTestName(false);
-    configureByFile("/refactoring/extractMethodObject/multipleExitPoints/" + testName + ".java");
-    int startOffset = getEditor().getSelectionModel().getSelectionStart();
-    int endOffset = getEditor().getSelectionModel().getSelectionEnd();
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    final String testName = myFixture.getTestName(false);
+    myFixture.configureByFile("/refactoring/extractMethodObject/multipleExitPoints/" + testName + ".java");
+    myFixture.runInCommand(() -> {
+      int startOffset = myFixture.getEditor().getSelectionModel().getSelectionStart();
+      int endOffset = myFixture.getEditor().getSelectionModel().getSelectionEnd();
 
-    final PsiElement[] elements;
-    PsiExpression expr = CodeInsightUtil.findExpressionInRange(getFile(), startOffset, endOffset);
-    if (expr != null) {
-      elements = new PsiElement[]{expr};
-    }
-    else {
-      elements = CodeInsightUtil.findStatementsInRange(getFile(), startOffset, endOffset);
-    }
+      final PsiElement[] elements;
+      PsiExpression expr = CodeInsightUtil.findExpressionInRange(myFixture.getFile(), startOffset, endOffset);
+      if (expr != null) {
+        elements = new PsiElement[]{expr};
+      }
+      else {
+        elements = CodeInsightUtil.findStatementsInRange(myFixture.getFile(), startOffset, endOffset);
+      }
 
-    final ExtractMethodObjectProcessor processor =
-      new ExtractMethodObjectProcessor(getProject(), getEditor(), elements, "Inner");
-    final ExtractMethodObjectProcessor.MyExtractMethodProcessor extractProcessor = processor.getExtractProcessor();
-    extractProcessor.setShowErrorDialogs(false);
-    extractProcessor.prepare();
-    extractProcessor.testPrepare();
-    processor.setCreateInnerClass(createInnerClass);
-
-
-    ExtractMethodObjectHandler.extractMethodObject(getProject(), getEditor(), processor, extractProcessor);
+      final ExtractMethodObjectProcessor processor =
+        new ExtractMethodObjectProcessor(myFixture.getProject(), myFixture.getEditor(), elements, "Inner");
+      final ExtractMethodObjectProcessor.MyExtractMethodProcessor extractProcessor = processor.getExtractProcessor();
+      extractProcessor.setShowErrorDialogs(false);
+      extractProcessor.prepare();
+      extractProcessor.testPrepare();
+      processor.setCreateInnerClass(createInnerClass);
 
 
-    checkResultByFile("/refactoring/extractMethodObject/multipleExitPoints/" + testName + ".java" + ".after");
+      ExtractMethodObjectHandler.extractMethodObject(myFixture.getProject(), myFixture.getEditor(), processor, extractProcessor);
+
+
+      myFixture.checkResultByFile("/refactoring/extractMethodObject/multipleExitPoints/" + testName + ".java" + ".after");
+    });
   }
 
+  @Test
   public void testStaticInner() throws Exception {
     doTest();
   }
 
+  @Test
   public void testInputOutput() throws Exception {
     doTest();
   }
 
+  @Test
   public void testOutputVarsReferences() throws Exception {
     doTest();
   }
 
+  @Test
   public void testMultilineDeclarations() throws Exception {
     doTest();
   }
 
+  @Test
   public void testMultilineDeclarationsWithReturn() throws Exception {
     doTest();
   }
 
+  @Test
   public void testConditionalExit() throws Exception {
     doTest();
   }
 
+  @Test
   public void testOutputVariable() throws Exception {
     doTest();
   }
 
+  @Test
   public void testUniqueObjectName() throws Exception {
     doTest();
   }
 
+  @Test
   public void testExtractedAssignmentExpression() throws Exception {
     doTest();
   }
 
+  @Test
   public void testExtractedIncExpression() throws Exception {
     doTest();
   }
 
 
+  @Test
   public void testWithInnerClasses() throws Exception {
     doTest();
   }
 
+  @Test
   public void testNonCanonicalNaming() throws Exception {
     doTest();
   }
 
+  @Test
   public void testExtractFromAnonymous() throws Exception {
     doTest();
   }
 
+  @Test
   public void testExtractFromIfStatementInsideAnonymous() throws Exception {
     doTest();
   }
 
+  @Test
   public void testConditionalExitWithoutCodeBlock() throws Exception {
     doTest();
   }
 
+  @Test
   public void testReturnExitStatement() throws Exception {
     doTest();
   }
 
+  @Test
   public void testFromStaticContext() throws Exception {
     doTest();
   }
 
+  @Test
   public void testBatchUpdateCausedByFormatter() throws Exception {
     doTest();
   }
 
+  @Test
   public void testFormattingInside() throws Exception {
     doTest();
   }
 
+  @Test
   public void testAssignReturnValueToForeachParameter() throws Exception {
     doTest();
   }
 
+  @Test
   public void testRenameInInitializer() throws Exception {
     doTestWithIdeaCodeStyleSettings();
   }
 
+  @Test
   public void testSameFieldsWithPrefix() throws Exception {
     doTestWithIdeaCodeStyleSettings();
   }
 
+  @Test
   public void testOutputVariablesUsedInLoop1() throws Exception {
     doTest();
   }
 
+  @Test
   public void testOutputVariablesUsedInLoop2() throws Exception {
     doTest();
   }
 
   private void doTestWithIdeaCodeStyleSettings() throws Exception {
-    final JavaCodeStyleSettings settings = JavaCodeStyleSettings.getInstance(getProject());
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    final JavaCodeStyleSettings settings = JavaCodeStyleSettings.getInstance(myFixture.getProject());
     settings.FIELD_NAME_PREFIX = "my";
     settings.PREFER_LONGER_NAMES = false;
     doTest();

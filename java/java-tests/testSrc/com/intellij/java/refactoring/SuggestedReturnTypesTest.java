@@ -16,7 +16,6 @@
 
 package com.intellij.java.refactoring;
 
-import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -26,83 +25,100 @@ import com.intellij.psi.PsiFile;
 import com.intellij.refactoring.extractMethod.ExtractMethodProcessor;
 import com.intellij.refactoring.ui.TypeSelectorManager;
 import com.intellij.refactoring.ui.TypeSelectorManagerImpl;
-import com.intellij.testFramework.LightJavaCodeInsightTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
+import org.junit.jupiter.api.Test;
 
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.JComboBox;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
 
-public class SuggestedReturnTypesTest extends LightJavaCodeInsightTestCase {
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaCodeInsightFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaTestDescriptor;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+@TestApplication
+public class SuggestedReturnTypesTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(lightJavaTestDescriptor());
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture =
+    lightJavaCodeInsightFixture(projectFixture, "/java/java-tests/testData");
+
   @NonNls private static final String BASE_PATH = "/refactoring/suggestedTypes/";
 
-  @NotNull
-  @Override
-  protected String getTestDataPath() {
-    return JavaTestUtil.getJavaTestDataPath();
-  }
-
+  @Test
   public void testOutputUsedAsObject() throws Exception {
     doTest("String", "Object", "Serializable", "Comparable<String>", "CharSequence");
   }
 
+  @Test
   public void testOutputUsedAsCharSequence() throws Exception {
     doTest("String", "CharSequence");
   }
 
+  @Test
   public void testFromExpression() throws Exception {
     doTest("String");
   }
 
+  @Test
   public void testOutputUsedInPostfixExpr() throws Exception {
     doTest("Integer", "int");
   }
 
+  @Test
   public void testOutputUsedInReturn() throws Exception {
     doTest("String");
   }
 
   private void doTest(String... types) throws Exception {
-    configureByFile(BASE_PATH + getTestName(false) + ".java");
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    myFixture.configureByFile(BASE_PATH + myFixture.getTestName(false) + ".java");
 
-    final Editor editor = getEditor();
-    final PsiFile file = getFile();
-    final Project project = getProject();
+    myFixture.runInCommand(() -> {
+      final Editor editor = myFixture.getEditor();
+      final PsiFile file = myFixture.getFile();
+      final Project project = myFixture.getProject();
 
-    int startOffset = editor.getSelectionModel().getSelectionStart();
-    int endOffset = editor.getSelectionModel().getSelectionEnd();
-    PsiElement[] elements;
-    PsiExpression expr = CodeInsightUtil.findExpressionInRange(file, startOffset, endOffset);
-    if (expr != null) {
-      elements = new PsiElement[]{expr};
-    }
-    else {
-      elements = CodeInsightUtil.findStatementsInRange(file, startOffset, endOffset);
-    }
-    assertTrue(elements.length > 0);
-
-    final ExtractMethodProcessor processor =
-      new ExtractMethodProcessor(project, editor, elements, null, "Extract Method", "newMethod", null);
-
-    processor.prepare();
-
-    final PsiExpression[] occurrences = processor.findOccurrences();
-    final TypeSelectorManager manager = new TypeSelectorManagerImpl(project, processor.getReturnType(), occurrences, true);
-    final JComponent component = manager.getTypeSelector().getComponent();
-    if (types.length > 1) {
-      assertTrue("One type suggested", component instanceof JComboBox);
-      final DefaultComboBoxModel model = (DefaultComboBoxModel)((JComboBox)component).getModel();
-      assertEquals(types.length, model.getSize());
-      for (int i = 0, typesLength = types.length; i < typesLength; i++) {
-        String type = types[i];
-        assertEquals(type, model.getElementAt(i).toString());
+      int startOffset = editor.getSelectionModel().getSelectionStart();
+      int endOffset = editor.getSelectionModel().getSelectionEnd();
+      PsiElement[] elements;
+      PsiExpression expr = CodeInsightUtil.findExpressionInRange(file, startOffset, endOffset);
+      if (expr != null) {
+        elements = new PsiElement[]{expr};
       }
-    }
-    else if (types.length == 1) {
-      assertTrue("Multiple types suggested", component instanceof JLabel);
-      assertEquals(types[0], ((JLabel)component).getText());
-    }
+      else {
+        elements = CodeInsightUtil.findStatementsInRange(file, startOffset, endOffset);
+      }
+      assertTrue(elements.length > 0);
+
+      final ExtractMethodProcessor processor =
+        new ExtractMethodProcessor(project, editor, elements, null, "Extract Method", "newMethod", null);
+
+      processor.prepare();
+
+      final PsiExpression[] occurrences = processor.findOccurrences();
+      final TypeSelectorManager manager = new TypeSelectorManagerImpl(project, processor.getReturnType(), occurrences, true);
+      final JComponent component = manager.getTypeSelector().getComponent();
+      if (types.length > 1) {
+        assertInstanceOf(JComboBox.class, component, "One type suggested");
+        final DefaultComboBoxModel model = (DefaultComboBoxModel)((JComboBox)component).getModel();
+        assertEquals(types.length, model.getSize());
+        for (int i = 0, typesLength = types.length; i < typesLength; i++) {
+          String type = types[i];
+          assertEquals(type, model.getElementAt(i).toString());
+        }
+      }
+      else if (types.length == 1) {
+        assertInstanceOf(JLabel.class, component, "Multiple types suggested");
+        assertEquals(types[0], ((JLabel)component).getText());
+      }
+    });
   }
 }
