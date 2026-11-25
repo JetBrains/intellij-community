@@ -25,6 +25,7 @@ import git4idea.commands.GitCommand
 import git4idea.commands.GitLineHandler
 import git4idea.commands.GitLineHandlerListener
 import git4idea.config.GitVersionSpecialty
+import git4idea.repo.GitRepositoryReader.Companion.OPERATION_REFS
 import git4idea.util.StringScanner
 import org.jetbrains.annotations.NonNls
 import java.io.File
@@ -42,7 +43,7 @@ internal class GitRepositoryReader(private val project: Project, private val git
     var headInfo = readHead()
 
     val branches: GitBranches
-    var hasCherryPickHeadRef = false
+    var operationRefs = emptySet<String>()
     if (headInfo != null && Registry.`is`("git.read.branches.from.disk")) {
       // read branches from disk (.git/refs/ and .git/packed-refs)
       branches = readBranches(remotes)
@@ -51,7 +52,7 @@ internal class GitRepositoryReader(private val project: Project, private val git
       // read branches via git executable
       val refs = readBranchesFromGit(remotes)
       branches = refs.branches
-      hasCherryPickHeadRef = refs.hasCherryPickHeadRef
+      operationRefs = refs.operationRefs
       val headInfoFromGit = refs.headInfo
       if (headInfo == null || headInfoFromGit != HeadInfo.Unknown) {
         headInfo = headInfoFromGit
@@ -69,7 +70,7 @@ internal class GitRepositoryReader(private val project: Project, private val git
       }
     }
 
-    val state = readRepositoryState(isOnBranch = headInfo is HeadInfo.Branch, hasCherryPickHeadRef = hasCherryPickHeadRef)
+    val state = readRepositoryState(isOnBranch = headInfo is HeadInfo.Branch, operationRefs)
     val headState = parseHeadState(headInfo, state, branches)
     return GitBranchState(headState.currentRevision, headState.currentBranch, state,
                           branches.localBranches, branches.remoteBranches)
@@ -134,7 +135,7 @@ internal class GitRepositoryReader(private val project: Project, private val git
     return shallowFile.length() > 0
   }
 
-  private fun readRepositoryState(isOnBranch: Boolean, hasCherryPickHeadRef: Boolean): Repository.State {
+  private fun readRepositoryState(isOnBranch: Boolean, operationRefs: Set<String>): Repository.State {
     if (isMergeInProgress()) {
       return Repository.State.MERGING
     }
@@ -144,10 +145,10 @@ internal class GitRepositoryReader(private val project: Project, private val git
     if (!isOnBranch) {
       return Repository.State.DETACHED
     }
-    if (hasCherryPickHeadRef || isCherryPickInProgress()) {
+    if (CHERRY_PICK_HEAD in operationRefs || isCherryPickInProgress()) {
       return Repository.State.GRAFTING
     }
-    if (isRevertInProgress()) {
+    if (REVERT_HEAD in operationRefs || isRevertInProgress()) {
       return Repository.State.REVERTING
     }
 
@@ -230,7 +231,9 @@ internal class GitRepositoryReader(private val project: Project, private val git
       val handler = GitLineHandler(project, gitFiles.rootDir, GitCommand.FOR_EACH_REF)
       handler.isEnableInteractiveCallbacks = false // the method might be called in GitRepository constructor
       if (GitVersionSpecialty.FOR_EACH_REF_SUPPORTS_INCLUDE_ROOT_REFS.existsIn(project)) {
-        handler.addParameters("--include-root-refs", CHERRY_PICK_HEAD)
+        // A reftable repository keeps CHERRY_PICK_HEAD and REVERT_HEAD in its tables. No files with these names exist.
+        handler.addParameters("--include-root-refs")
+        handler.addParameters(OPERATION_REFS.toList())
       }
       handler.addParameters("refs/heads/**", "refs/remotes/**")
       handler.addParameters("--no-color")
@@ -238,7 +241,7 @@ internal class GitRepositoryReader(private val project: Project, private val git
 
       val resolvedRefs = mutableMapOf<String, Hash>()
       var headStateRef: HeadInfo? = null
-      var hasCherryPickHeadRef = false
+      val operationRefs = mutableSetOf<String>()
       handler.addLineListener(object : GitLineHandlerListener {
         private var badLineReported = 0
         override fun onLineAvailable(line: @NlsSafe String, outputType: Key<*>) {
@@ -247,8 +250,8 @@ internal class GitRepositoryReader(private val project: Project, private val git
               val scanner = StringScanner(line)
               val refName = scanner.tabToken() ?: return
               val hash = GitRefUtil.parseHash(scanner.tabToken()) ?: return
-              if (refName == CHERRY_PICK_HEAD) {
-                hasCherryPickHeadRef = true
+              if (refName in OPERATION_REFS) {
+                operationRefs.add(refName)
                 return
               }
               val isHead = "*" == scanner.line()
@@ -272,22 +275,22 @@ internal class GitRepositoryReader(private val project: Project, private val git
       val branches = createBranchesFromData(remotes, resolvedRefs)
 
       if (headState != null) {
-        return RefsFromGit(branches, headState, hasCherryPickHeadRef)
+        return RefsFromGit(branches, headState, operationRefs)
       }
 
       // handle fresh repository
       if (branches.localBranches.isEmpty()) {
         val currentBranch = resolveCurrentBranch()
         if (currentBranch != null) {
-          return RefsFromGit(GitBranches(emptyMap(), branches.remoteBranches), HeadInfo.Branch(currentBranch), hasCherryPickHeadRef)
+          return RefsFromGit(GitBranches(emptyMap(), branches.remoteBranches), HeadInfo.Branch(currentBranch), operationRefs)
         }
       }
 
-      return RefsFromGit(branches, HeadInfo.Unknown, hasCherryPickHeadRef)
+      return RefsFromGit(branches, HeadInfo.Unknown, operationRefs)
     }
     catch (e: VcsException) {
       LOG.warn(e)
-      return RefsFromGit(GitBranches(emptyMap(), emptyMap()), HeadInfo.Unknown, hasCherryPickHeadRef = false)
+      return RefsFromGit(GitBranches(emptyMap(), emptyMap()), HeadInfo.Unknown, operationRefs = emptySet())
     }
   }
 
@@ -380,13 +383,13 @@ internal class GitRepositoryReader(private val project: Project, private val git
   /**
    * The result of [readBranchesFromGit].
    *
-   * [hasCherryPickHeadRef] is `true` only for a reftable repository in which the `CHERRY_PICK_HEAD` ref exists.
-   * For the `files` format, see [isCherryPickInProgress].
+   * [operationRefs] holds the names of the [OPERATION_REFS] that exist in a reftable repository.
+   * It is empty for the `files` format: see [isCherryPickInProgress] and [isRevertInProgress].
    */
   private class RefsFromGit(
     val branches: GitBranches,
     val headInfo: HeadInfo,
-    val hasCherryPickHeadRef: Boolean,
+    val operationRefs: Set<String>,
   )
 
   companion object {
@@ -394,6 +397,12 @@ internal class GitRepositoryReader(private val project: Project, private val git
 
     private const val DETACHED_HEAD = "detached HEAD"
     private const val CHERRY_PICK_HEAD = "CHERRY_PICK_HEAD"
+    private const val REVERT_HEAD = "REVERT_HEAD"
+
+    /**
+     * The refs outside `refs/` that show a cherry-pick or a revert in progress.
+     */
+    private val OPERATION_REFS = setOf(CHERRY_PICK_HEAD, REVERT_HEAD)
 
     private fun isExistingExecutableFile(file: File): Boolean {
       return file.exists() && file.canExecute()

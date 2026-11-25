@@ -263,35 +263,53 @@ abstract class GitRepositoryReaderNewTest(private val usingReftable: Boolean) {
 
   @Test
   fun `test cherry-pick state of a single conflicting commit ends after continue`(): Unit = with(context) {
-    val file = "file.txt"
-    prepareSingleConflictingCherryPick(file)
-
-    assertGraftingWithoutSequencer()
-
-    overwrite(file, "resolved content")
-    git("add $file")
-    git("cherry-pick --continue --no-edit")
-
-    assertThat(readState().state).isEqualTo(State.NORMAL)
+    checkSingleConflictEndsAfterContinue("cherry-pick", State.GRAFTING)
   }
 
   @Test
   fun `test cherry-pick state of a single conflicting commit ends after abort`(): Unit = with(context) {
-    prepareSingleConflictingCherryPick("file.txt")
+    checkSingleConflictEndsAfterAbort("cherry-pick", State.GRAFTING)
+  }
 
-    assertGraftingWithoutSequencer()
+  @Test
+  fun `test revert state of a single conflicting commit ends after continue`(): Unit = with(context) {
+    checkSingleConflictEndsAfterContinue("revert", State.REVERTING)
+  }
 
-    git("cherry-pick --abort")
+  @Test
+  fun `test revert state of a single conflicting commit ends after abort`(): Unit = with(context) {
+    checkSingleConflictEndsAfterAbort("revert", State.REVERTING)
+  }
+
+  private fun GitPlatformTestContext.checkSingleConflictEndsAfterContinue(command: String, stateInProgress: State) {
+    val file = "file.txt"
+    prepareSingleConflict(command, file)
+
+    assertInProgressWithoutSequencer(stateInProgress)
+
+    overwrite(file, "resolved content")
+    git("add $file")
+    git("$command --continue --no-edit")
 
     assertThat(readState().state).isEqualTo(State.NORMAL)
   }
 
-  private fun GitPlatformTestContext.assertGraftingWithoutSequencer() {
-    assertThat(repo.repositoryFiles.sequencerTodoFile).describedAs("A cherry-pick of one commit has no sequencer").doesNotExist()
+  private fun GitPlatformTestContext.checkSingleConflictEndsAfterAbort(command: String, stateInProgress: State) {
+    prepareSingleConflict(command, "file.txt")
+
+    assertInProgressWithoutSequencer(stateInProgress)
+
+    git("$command --abort")
+
+    assertThat(readState().state).isEqualTo(State.NORMAL)
+  }
+
+  private fun GitPlatformTestContext.assertInProgressWithoutSequencer(stateInProgress: State) {
+    assertThat(repo.repositoryFiles.sequencerTodoFile).describedAs("An operation on one commit has no sequencer").doesNotExist()
 
     val state = readState()
-    assertThat(state.state).isEqualTo(State.GRAFTING)
-    assertThat(state.localBranches.keys.map { it.name }).describedAs("CHERRY_PICK_HEAD is not a branch").containsExactly("master")
+    assertThat(state.state).isEqualTo(stateInProgress)
+    assertThat(state.localBranches.keys.map { it.name }).describedAs("The ref of the operation is not a branch").containsExactly("master")
     assertThat(state.remoteBranches).isEmpty()
   }
 
@@ -311,13 +329,13 @@ private fun GitPlatformTestContext.prepareStateForApplyChangesTest(command: Stri
   git("$command $commit $commit2", true)
 }
 
-private fun GitPlatformTestContext.prepareSingleConflictingCherryPick(file: String) {
+private fun GitPlatformTestContext.prepareSingleConflict(command: String, file: String) {
   makeCommit(file)
   overwrite(file, "new content")
   val commit = addCommit("modified $file 1")
   overwrite(file, "newer content")
   addCommit("modified $file 2")
-  git("cherry-pick $commit", true)
+  git("$command $commit", true)
 }
 
 private fun GitPlatformTestContext.moveToDetachedHead(): String {
