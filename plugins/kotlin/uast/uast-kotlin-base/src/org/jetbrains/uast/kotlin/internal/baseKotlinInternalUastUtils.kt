@@ -3,7 +3,10 @@
 package org.jetbrains.uast.kotlin
 
 import com.intellij.lang.Language
+import com.intellij.openapi.diagnostic.Logger
+import com.intellij.psi.PsiArrayType
 import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiClassType
 import com.intellij.psi.PsiCompiledElement
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiField
@@ -11,6 +14,7 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.PsiPrimitiveType
 import com.intellij.psi.PsiType
+import com.intellij.psi.PsiTypeParameter
 import com.intellij.psi.PsiTypes
 import com.intellij.psi.util.PsiTypesUtil
 import org.jetbrains.annotations.ApiStatus
@@ -59,8 +63,17 @@ import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForSelectorOrThis
 import org.jetbrains.kotlin.psi.psiUtil.parents
 import org.jetbrains.kotlin.resolve.ArrayFqNames
 import org.jetbrains.kotlin.resolve.references.ReferenceAccess
-import org.jetbrains.kotlin.type.MapPsiToAsmDesc
 import org.jetbrains.kotlin.utils.addToStdlib.constant
+import org.jetbrains.org.objectweb.asm.Type
+import org.jetbrains.org.objectweb.asm.Type.BOOLEAN_TYPE
+import org.jetbrains.org.objectweb.asm.Type.BYTE_TYPE
+import org.jetbrains.org.objectweb.asm.Type.CHAR_TYPE
+import org.jetbrains.org.objectweb.asm.Type.DOUBLE_TYPE
+import org.jetbrains.org.objectweb.asm.Type.FLOAT_TYPE
+import org.jetbrains.org.objectweb.asm.Type.INT_TYPE
+import org.jetbrains.org.objectweb.asm.Type.LONG_TYPE
+import org.jetbrains.org.objectweb.asm.Type.SHORT_TYPE
+import org.jetbrains.org.objectweb.asm.Type.VOID_TYPE
 import org.jetbrains.uast.UDeclaration
 import org.jetbrains.uast.UDeclarationsExpression
 import org.jetbrains.uast.UElement
@@ -303,4 +316,63 @@ fun isKotlin(element: PsiElement?): Boolean {
 /** Returns true if the given language is Kotlin. */
 fun isKotlin(language: Language?): Boolean {
     return language == KotlinLanguage.INSTANCE
+}
+
+private object MapPsiToAsmDesc {
+    fun typeDesc(type: PsiType): String = when (type) {
+        PsiTypes.voidType() -> primitive(VOID_TYPE)
+
+        PsiTypes.booleanType() -> primitive(BOOLEAN_TYPE)
+
+        PsiTypes.charType() -> primitive(CHAR_TYPE)
+        PsiTypes.intType() -> primitive(INT_TYPE)
+        PsiTypes.byteType() -> primitive(BYTE_TYPE)
+        PsiTypes.shortType() -> primitive(SHORT_TYPE)
+        PsiTypes.longType() -> primitive(LONG_TYPE)
+
+        PsiTypes.floatType() -> primitive(FLOAT_TYPE)
+        PsiTypes.doubleType() -> primitive(DOUBLE_TYPE)
+
+        is PsiArrayType -> "[" + typeDesc(type.componentType)
+
+        is PsiClassType -> {
+            when (val resolved = type.resolve()) {
+                is PsiTypeParameter -> resolved.superTypes.firstOrNull()?.let { typeDesc(it) } ?: "Ljava/lang/Object;"
+                is PsiClass -> classDesc(resolved)
+                null -> unknownSignature()
+            }
+
+        }
+        else -> error("Unexpected type $type of class ${type::class.java}")
+    }
+
+    private fun classDesc(psiClass: PsiClass) = buildString {
+        append("L")
+        val classes = generateSequence(psiClass) { it.containingClass }.toList().reversed()
+        append(classes.first().qualifiedName!!.replace(".", "/"))
+        classes.drop(1).forEach {
+            append("$")
+            append(it.name!!)
+        }
+        append(";")
+    }
+
+    fun methodDesc(psiMethod: PsiMethod): String = buildString {
+        append("(")
+        psiMethod.parameterList.parameters.forEach {
+            append(typeDesc(it.type))
+        }
+        append(")")
+        append(psiMethod.returnType?.let { typeDesc(it) } ?: "V")
+    }
+
+    private fun unknownSignature() = ""
+    private fun error(message: String): String {
+        LOG.error(message)
+        return unknownSignature()
+    }
+
+    private fun primitive(asmType: Type) = asmType.descriptor
+
+    private val LOG = Logger.getInstance(this::class.java)
 }

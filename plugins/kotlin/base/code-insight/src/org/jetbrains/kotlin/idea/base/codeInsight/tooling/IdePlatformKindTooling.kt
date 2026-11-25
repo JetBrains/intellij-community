@@ -28,9 +28,7 @@ abstract class IdePlatformKindTooling {
     override fun equals(other: Any?): Boolean = javaClass == other?.javaClass
     override fun hashCode(): Int = javaClass.hashCode()
 
-    companion object : ApplicationExtensionDescriptor<IdePlatformKindTooling>(
-        "org.jetbrains.kotlin.idePlatformKindTooling", IdePlatformKindTooling::class.java
-    ) {
+    companion object : ApplicationExtensionDescriptor<IdePlatformKindTooling>("org.jetbrains.kotlin.idePlatformKindTooling") {
         private val ALL_TOOLING_SUPPORT: List<IdePlatformKindTooling> by lazy { getInstances() }
 
         private val TOOLING_SUPPORT_BY_KIND: Map<IdePlatformKind, IdePlatformKindTooling> by lazy {
