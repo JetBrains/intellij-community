@@ -4,6 +4,7 @@ package com.jetbrains.python.codeInsight
 import com.intellij.codeInsight.daemon.GutterIconNavigationHandler
 import com.intellij.codeInsight.daemon.LineMarkerInfo
 import com.intellij.idea.TestFor
+import com.intellij.lang.LanguageExtensionPoint
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.command.WriteCommandAction
@@ -12,6 +13,7 @@ import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Ref
 import com.intellij.psi.PsiElement
+import com.intellij.refactoring.suggested.SuggestedRefactoringSupport
 import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.runInEdtAndWait
 import com.intellij.ui.UiInterceptors
@@ -144,6 +146,9 @@ class PyEdtSearchWorkTest : PyCodeInsightTestCase() {
     val editor = myFixture.editor
     val file = myFixture.file
     // Typing in the fixture also runs the other typed handlers and the pending EDT events, so the test calls the handler alone.
+    // The suggested refactoring listener reads the function on each document change, so the test masks its support.
+    val suggestedRefactoringSupports = ExtensionPointName<LanguageExtensionPoint<SuggestedRefactoringSupport>>(SuggestedRefactoringSupport.name)
+    ExtensionTestUtil.maskExtensions(suggestedRefactoringSupports, emptyList(), disposable)
     val counts = PyCodeInsightCounters.countOnCurrentThread {
       WriteCommandAction.runWriteCommandAction(myFixture.project) {
         editor.caretModel.runForEachCaret { _ ->
