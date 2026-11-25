@@ -16,10 +16,13 @@ import com.intellij.openapi.project.rootManager
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.eel.provider.toEelApi
 import com.intellij.platform.util.progress.withProgressText
+import com.intellij.platform.workspace.jps.entities.ModuleId
+import com.intellij.platform.workspace.jps.entities.modifyModuleEntity
 import com.intellij.python.sdk.backend.detectPythonEnvironment
 import com.intellij.python.sdk.backend.getPythonInfo
 import com.intellij.python.community.services.systemPython.SystemPython
@@ -116,7 +119,12 @@ suspend fun createVenvAndSdk(
     edtWriteAction {
       val projectPath = vfsPath.toNioPath()
       val file = projectPath.resolve("${projectPath.fileName}.iml")
-      ModuleManager.getInstance(project).newModule(file, ModuleTypeManager.getInstance().defaultModuleType.id)
+      val module = ModuleManager.getInstance(project).newModule(file, ModuleTypeManager.getInstance().defaultModuleType.id)
+      // A module without a type has the default type of the IDE. The interpreter makes it a Python project, not its type,
+      // and the migration would otherwise remove a Python module type with a write of its own, see migrateSdkReferences.
+      project.workspaceModel.updateProjectModel("Remove the type of the new module ${module.name}") { storage ->
+        storage.resolve(ModuleId(module.name))?.let { storage.modifyModuleEntity(it) { type = null } }
+      }
     }
   }
   val module = moduleOrProject.moduleIfExists ?: project.modules.first()
