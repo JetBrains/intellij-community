@@ -10354,6 +10354,66 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
         public void testPublicInlineClass() throws Exception {
             runTest("../../../idea/tests/testData/quickfix/inlineClass/publicInlineClass.kt");
         }
+
+        @TestMetadata("typedEqualsBlockBody.kt")
+        public void testTypedEqualsBlockBody() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/inlineClass/typedEqualsBlockBody.kt");
+        }
+
+        @TestMetadata("typedEqualsCallsEqualsOnThis.kt")
+        public void testTypedEqualsCallsEqualsOnThis() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/inlineClass/typedEqualsCallsEqualsOnThis.kt");
+        }
+
+        @TestMetadata("typedEqualsCast.kt")
+        public void testTypedEqualsCast() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/inlineClass/typedEqualsCast.kt");
+        }
+
+        @TestMetadata("typedEqualsExpressionBody.kt")
+        public void testTypedEqualsExpressionBody() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/inlineClass/typedEqualsExpressionBody.kt");
+        }
+
+        @TestMetadata("typedEqualsGeneric.kt")
+        public void testTypedEqualsGeneric() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/inlineClass/typedEqualsGeneric.kt");
+        }
+
+        @TestMetadata("typedEqualsIfElse.kt")
+        public void testTypedEqualsIfElse() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/inlineClass/typedEqualsIfElse.kt");
+        }
+
+        @TestMetadata("typedEqualsNoReturnType.kt")
+        public void testTypedEqualsNoReturnType() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/inlineClass/typedEqualsNoReturnType.kt");
+        }
+
+        @TestMetadata("typedEqualsOtherTypeCheck.kt")
+        public void testTypedEqualsOtherTypeCheck() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/inlineClass/typedEqualsOtherTypeCheck.kt");
+        }
+
+        @TestMetadata("typedEqualsParameterName.kt")
+        public void testTypedEqualsParameterName() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/inlineClass/typedEqualsParameterName.kt");
+        }
+
+        @TestMetadata("typedEqualsSafeCast.kt")
+        public void testTypedEqualsSafeCast() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/inlineClass/typedEqualsSafeCast.kt");
+        }
+
+        @TestMetadata("typedEqualsWhen.kt")
+        public void testTypedEqualsWhen() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/inlineClass/typedEqualsWhen.kt");
+        }
+
+        @TestMetadata("typedEqualsWithoutCustomEquals.kt")
+        public void testTypedEqualsWithoutCustomEquals() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/inlineClass/typedEqualsWithoutCustomEquals.kt");
+        }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)

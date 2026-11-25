@@ -1,0 +1,12 @@
+// "Add 'equals(other: Box<*>)' and call it from 'equals(Any?)'" "true"
+// WITH_STDLIB
+// COMPILER_ARGUMENTS: -XXLanguage:+CustomEqualsInValueClasses
+
+@JvmInline
+value class Box<T>(val value: T) {
+    override fun <caret>equals(other: Any?): Boolean = other is Box<*> && value == other.value
+
+    override fun hashCode(): Int = value.hashCode()
+}
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.AddTypedEqualsFixFactory$AddTypedEqualsFix
