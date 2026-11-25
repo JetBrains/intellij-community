@@ -2,8 +2,8 @@
 package com.intellij.openapi.updateSettings.impl
 
 import com.intellij.openapi.components.BaseState
-import com.intellij.openapi.components.RoamingType
 import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.SettingsCategory
 import com.intellij.openapi.components.SimplePersistentStateComponent
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
@@ -20,7 +20,9 @@ import org.jetbrains.annotations.ApiStatus
 internal const val PLUGIN_UPDATE_EXCLUSIONS_FILE_NAME = "pluginUpdateExclusions.xml"
 
 @Service(Service.Level.APP)
-@State(name = "PluginUpdateExclusionService", storages = [Storage(PLUGIN_UPDATE_EXCLUSIONS_FILE_NAME, roamingType = RoamingType.DISABLED)])
+@State(name = "PluginUpdateExclusionService",
+       storages = [Storage(PLUGIN_UPDATE_EXCLUSIONS_FILE_NAME)],
+       category = SettingsCategory.PLUGINS)
 @ApiStatus.Internal
 class PluginUpdateExclusionService :
   SimplePersistentStateComponent<PluginUpdateExclusionState>(PluginUpdateExclusionState()) {
