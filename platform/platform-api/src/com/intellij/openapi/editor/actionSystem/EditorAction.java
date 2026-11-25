@@ -148,11 +148,12 @@ public abstract class EditorAction extends AnAction implements DumbAware, LightE
         presentation.setEnabled(false);
       }
       else {
+        DataContext projectAwareContext = getProjectAwareDataContext(editor, dataContext);
         if (e.getInputEvent() instanceof KeyEvent) {
-          updateForKeyboardAccess(editor, presentation, dataContext);
+          updateForKeyboardAccess(editor, presentation, projectAwareContext);
         }
         else {
-          update(editor, presentation, dataContext);
+          update(editor, presentation, projectAwareContext);
         }
       }
     }

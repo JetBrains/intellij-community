@@ -58,8 +58,10 @@ public abstract class CodeInsightAction extends AnAction implements PerformWithD
     actionPerformedImpl(project, editor, DataContext.EMPTY_CONTEXT);
   }
 
-  private void actionPerformedImpl(final @NotNull Project project, final Editor editor, @NotNull DataContext dataContext) {
+  private void actionPerformedImpl(@NotNull Project contextProject, final Editor editor, @NotNull DataContext dataContext) {
     if (editor == null) return;
+    final Project project = PsiUtilBase.getProjectOfEditor(editor, contextProject);
+    if (project == null) return;
     //final PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
     final PsiFile psiFile = PsiUtilBase.getPsiFileInEditor(editor, project);
     if (psiFile == null) return;
@@ -93,16 +95,21 @@ public abstract class CodeInsightAction extends AnAction implements PerformWithD
   public void update(@NotNull AnActionEvent e) {
     Presentation presentation = e.getPresentation();
 
-    Project project = e.getProject();
-    if (project == null) {
+    Project contextProject = e.getProject();
+    if (contextProject == null) {
       presentation.setEnabled(false);
       return;
     }
 
     final DataContext dataContext = e.getDataContext();
-    Editor editor = getEditor(dataContext, project, true);
+    Editor editor = getEditor(dataContext, contextProject, true);
     if (editor == null) {
       presentation.setVisible(!e.isFromContextMenu());
+      presentation.setEnabled(false);
+      return;
+    }
+    Project project = PsiUtilBase.getProjectOfEditor(editor, contextProject);
+    if (project == null) {
       presentation.setEnabled(false);
       return;
     }

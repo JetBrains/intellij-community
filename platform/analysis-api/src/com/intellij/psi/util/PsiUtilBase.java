@@ -22,6 +22,7 @@ import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.PsiFileWithOneLanguage;
 import com.intellij.psi.PsiLanguageInjectionHost;
 import com.intellij.psi.PsiWhiteSpace;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -142,6 +143,21 @@ public final class PsiUtilBase extends PsiUtilCore implements PsiEditorUtil {
 
     if (language == psiFile.getLanguage()) return psiFile;
     return getPsiFileAtOffset(psiFile, navigator.getCaretOffset());
+  }
+
+  /**
+   * Gives the project that an action works in for {@code editor}: the project of the editor, else {@code contextProject}.
+   * A data context can take PROJECT and EDITOR from different components, so the two can name different projects.
+   * <p>
+   * Gives {@code null} for an editor of the default project or of a disposed project, when {@code contextProject} is another project.
+   * The caller then disables the action.
+   */
+  @ApiStatus.Internal
+  public static @Nullable Project getProjectOfEditor(@NotNull Editor editor, @NotNull Project contextProject) {
+    Project editorProject = editor.getProject();
+    if (editorProject == null || editorProject == contextProject) return contextProject;
+    if (editorProject.isDefault() || editorProject.isDisposed()) return null;
+    return editorProject;
   }
 
   /**

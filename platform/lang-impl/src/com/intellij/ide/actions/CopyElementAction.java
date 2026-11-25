@@ -20,6 +20,7 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.refactoring.copy.CopyHandler;
 import org.jetbrains.annotations.NotNull;
 
@@ -33,12 +34,16 @@ public final class CopyElementAction extends AnAction implements DumbAware {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     final DataContext dataContext = e.getDataContext();
-    final Project project = CommonDataKeys.PROJECT.getData(dataContext);
+    final Project contextProject = CommonDataKeys.PROJECT.getData(dataContext);
+    if (contextProject == null) {
+      return;
+    }
+    final Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
+    final Project project = editor == null ? contextProject : PsiUtilBase.getProjectOfEditor(editor, contextProject);
     if (project == null) {
       return;
     }
     PsiDocumentManager.getInstance(project).commitAllDocuments();
-    final Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
     PsiElement[] elements;
 
     PsiElement targetPsiElement = LangDataKeys.TARGET_PSI_ELEMENT.getData(dataContext);
@@ -88,10 +93,14 @@ public final class CopyElementAction extends AnAction implements DumbAware {
       return;
     }
 
-    Project project = CommonDataKeys.PROJECT.getData(dataContext);
-    if (project == null) {
+    Project contextProject = CommonDataKeys.PROJECT.getData(dataContext);
+    if (contextProject == null) {
       return;
 
+    }
+    Project project = PsiUtilBase.getProjectOfEditor(editor, contextProject);
+    if (project == null) {
+      return;
     }
     PsiFile file = EditorContextManager.getPsiFileForEditor(editor, project);
 

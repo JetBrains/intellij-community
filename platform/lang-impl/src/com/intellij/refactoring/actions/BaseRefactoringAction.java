@@ -35,6 +35,7 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageEditorUtil;
+import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.RefactoringUsageCollector;
@@ -106,6 +107,11 @@ public abstract class BaseRefactoringAction extends AnAction {
     DataContext dataContext = e.getDataContext();
     Project project = e.getProject();
     if (project == null) return;
+    Editor editor = e.getData(CommonDataKeys.EDITOR);
+    if (editor != null) {
+      project = PsiUtilBase.getProjectOfEditor(editor, project);
+      if (project == null) return;
+    }
     if (!RefactoringSafeMode.isRefactoringAllowed(dataContext)) return;
     int eventCount = IdeEventQueue.getInstance().getEventCount();
     if (!PsiDocumentManager.getInstance(project).commitAllDocumentsUnderProgress()) {
@@ -124,10 +130,12 @@ public abstract class BaseRefactoringAction extends AnAction {
   }
 
   @ApiStatus.Internal
-  public static void performRefactoringAction(@NotNull Project project,
+  public static void performRefactoringAction(@NotNull Project contextProject,
                                               @NotNull DataContext dataContext,
                                               @Nullable RefactoringActionHandler handler) {
     final Editor editor = dataContext.getData(CommonDataKeys.EDITOR);
+    final Project project = editor != null ? PsiUtilBase.getProjectOfEditor(editor, contextProject) : contextProject;
+    if (project == null) return;
 
     if (handler == null) {
       String message =
