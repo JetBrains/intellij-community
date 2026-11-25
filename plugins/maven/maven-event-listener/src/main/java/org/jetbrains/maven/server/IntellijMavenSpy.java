@@ -13,7 +13,10 @@ import org.eclipse.aether.RepositoryEvent;
 import javax.inject.Named;
 import javax.inject.Singleton;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 import static org.jetbrains.maven.server.SpyConstants.NEWLINE;
 
@@ -21,6 +24,8 @@ import static org.jetbrains.maven.server.SpyConstants.NEWLINE;
 @Singleton
 public class IntellijMavenSpy extends AbstractEventSpy {
   private static EventInfoPrinter ourPrinter = new EventInfoPrinter(s -> System.out.println(s));
+
+  private final Set<String> myDownloadingArtifacts = Collections.newSetFromMap(new ConcurrentHashMap<>());
 
 
   public static void printInternalLogging(String message){
@@ -81,12 +86,26 @@ public class IntellijMavenSpy extends AbstractEventSpy {
 
     // optimization to prevent unnecessary CPU and memory pressure on many irrelevant events
     //   only these events are currently used (see MavenEventType)
-    if (type != RepositoryEvent.EventType.ARTIFACT_DOWNLOADING && type != RepositoryEvent.EventType.ARTIFACT_RESOLVING) return;
+    if (type != RepositoryEvent.EventType.ARTIFACT_DOWNLOADING && type != RepositoryEvent.EventType.ARTIFACT_RESOLVED) return;
 
-    String errMessage = event.getException() == null ? "" : event.getException().getMessage();
-    String path = event.getFile() == null ? "" : event.getFile().getPath();
     String artifactCoord = event.getArtifact() == null ? "" : event.getArtifact().toString();
+    boolean failed = event.getException() != null;
+    if (type == RepositoryEvent.EventType.ARTIFACT_DOWNLOADING) {
+      myDownloadingArtifacts.add(artifactCoord);
+    }
+    else if (!myDownloadingArtifacts.remove(artifactCoord) && !failed) {
+      // the IDE shows a node only for an artifact that it has reported as downloading, or for a failure
+      return;
+    }
+
+    String errMessage = failed ? event.getException().getMessage() : "";
+    String path = event.getFile() == null ? "" : event.getFile().getPath();
     ourPrinter.printMavenEventInfo(type, "path", path, "artifactCoord", artifactCoord, "error", errMessage);
+  }
+
+  @Override
+  public void close() {
+    myDownloadingArtifacts.clear();
   }
 
   private void onExecutionEvent(ExecutionEvent event) {
