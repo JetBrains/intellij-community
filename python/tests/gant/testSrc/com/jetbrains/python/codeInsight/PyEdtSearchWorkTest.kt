@@ -126,19 +126,25 @@ class PyEdtSearchWorkTest : PyCodeInsightTestCase() {
 
   @TestFor(issues = ["PY-92734"])
   @Test
-  fun `typing an opening parenthesis after a method name evaluates types on the EDT`() = runInEdtAndWait {
+  fun `typing an opening parenthesis after a method name evaluates no types`() = runInEdtAndWait {
     myFixture.configureByText("a.py", """
-      class Base:
+      import abc
+      from abc import ABCMeta
+
+      class Base(ABCMeta):
           pass
 
       class Child(Base):
           def run<caret>
+
+          @abc.abstractclassmethod
+          def start<caret>
     """.trimIndent())
     val counts = PyCodeInsightCounters.countOnCurrentThread { myFixture.type('(') }
 
-    assertTrue(myFixture.editor.document.text.contains("def run(self):"), myFixture.editor.document.text)
-    assertTrue(counts.getValue(Counter.CONTEXTS_CONSTRUCTED) > 0,
-               "Pinned defect: the handler builds a type context for the MRO on the EDT. Counters: $counts")
+    assertTrue(myFixture.editor.document.text.contains("def run(cls):"), myFixture.editor.document.text)
+    assertTrue(myFixture.editor.document.text.contains("def start(cls):"), myFixture.editor.document.text)
+    assertEquals(0, counts.getValue(Counter.CONTEXTS_CONSTRUCTED), "The handler builds a type context on the EDT. Counters: $counts")
   }
 
   @TestFor(issues = ["PY-92735"])
