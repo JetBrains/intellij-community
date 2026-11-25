@@ -453,7 +453,7 @@ private fun matchEntriesToModules(
  * The module then has no type and no content root, so it adds nothing to the project model.
  * It also held its own name, and the importer gave the new module the name `<name>@1` (PY-91133).
  */
-private fun ModuleEntity.isStaleRegistration(): Boolean =
+internal fun ModuleEntity.isStaleRegistration(): Boolean =
   type == null && contentRoots.isEmpty() && !entitySource.isPythonEntity
 
 private fun deleteModule(

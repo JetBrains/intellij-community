@@ -63,6 +63,10 @@ internal object PyProjectTomlKeptModuleEntitySource : EntitySource
  */
 internal fun applyKeepingModules(entries: Set<PyProjectTomlBasedEntryImpl>, project: Project, storage: MutableEntityStorage) {
   val urlManager = project.workspaceModel.getVirtualFileUrlManager()
+  // The name dedup frees the name of a stale registration, see isStaleRegistration, so an entry can take it. Such a module
+  // has no content root and adds nothing, so it goes first, as in PyCharm.
+  val entryNames = entries.mapTo(HashSet()) { it.name.name }
+  storage.entities<ModuleEntity>().filter { it.isStaleRegistration() && it.name in entryNames }.toList().forEach(storage::removeEntity)
   val modules = storage.entities<ModuleEntity>().toList()
   val tomlModules = modules.filter { it.pyProjectTomlEntity != null }
 
