@@ -62,6 +62,9 @@ class SettingsFrameProjects internal constructor(val frameOwner: Project, projec
   /**
    * Removes [project] from the selector, because the project closes. The selection moves to the next project of the selector.
    * When the selector lists no project after the call, [frameOwner] is selected, so no closed project stays selected.
+   *
+   * The stored selection stays the last project that the user chose. A frame closes its frame guests one by one, so a
+   * selection that this call stored would replace that choice on each close of the frame.
    */
   fun remove(project: Project) {
     val index = projects.indexOf(project)
