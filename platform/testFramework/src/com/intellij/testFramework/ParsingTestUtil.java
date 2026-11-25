@@ -7,7 +7,6 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
-import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.pom.tree.events.impl.TreeChangeEventImpl;
 import com.intellij.psi.PsiDocumentManager;
@@ -17,6 +16,7 @@ import com.intellij.psi.PsiErrorElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiRecursiveElementVisitor;
 import com.intellij.psi.impl.BlockSupportImpl;
+import com.intellij.psi.impl.NodeReparse;
 import com.intellij.psi.impl.ChangedPsiRangeUtil;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.impl.DiffLog;
@@ -152,8 +152,8 @@ public final class ParsingTestUtil {
       TextRange changedRange =
         ChangedPsiRangeUtil.getChangedPsiRange(subTreeFile, Objects.requireNonNull(subTreeFile.getTreeElement()), newFileText);
       TestCase.assertNotNull("No changes found", changedRange);
-      Couple<ASTNode> reparseableRoots = ReadAction.computeBlocking(
-        () -> BlockSupportImpl.findReparseableNodeAndReparseIt(subTreeFile, subTree.getNode(), changedRange, newFileText)
+      NodeReparse.Replaced reparseableRoots = ReadAction.computeBlocking(
+        () -> BlockSupportImpl.reparseIncrementally(subTreeFile, subTree.getNode(), changedRange, newFileText)
       );
       result.append("Subtree: ").append(subTree.getLanguage()).append(NL_SEPARATOR_NL);
       serializeReparseableRoots(reparseableRoots, result, newFileText);
@@ -181,7 +181,7 @@ public final class ParsingTestUtil {
     UsefulTestCase.assertSameLinesWithFile(answersFilePath, result.toString(), false);
   }
 
-  private static void serializeReparseableRoots(@Nullable Couple<ASTNode> reparseableRoots,
+  private static void serializeReparseableRoots(@Nullable NodeReparse.Replaced reparseableRoots,
                                                 @NotNull StringBuilder result,
                                                 @NotNull CharSequence newText) {
     TextRange reparsedRange;
@@ -189,7 +189,7 @@ public final class ParsingTestUtil {
       reparsedRange = TextRange.create(0, newText.length());
     }
     else {
-      reparsedRange = TextRange.from(reparseableRoots.first.getStartOffset(), reparseableRoots.second.getTextLength());
+      reparsedRange = TextRange.from(reparseableRoots.getOldNode().getStartOffset(), reparseableRoots.getNewNode().getTextLength());
     }
     result.append(newText, 0, reparsedRange.getStartOffset());
     result.append("<reparse>");

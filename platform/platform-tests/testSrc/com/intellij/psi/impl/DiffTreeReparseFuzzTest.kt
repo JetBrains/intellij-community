@@ -349,8 +349,8 @@ private class Oracle(private val project: Project, info: TestInfo) {
 
   private fun kindOf(file: PsiFileImpl, newText: String): Kind {
     val range = ChangedPsiRangeUtil.getChangedPsiRange(file, file.treeElement!!, newText) ?: return Kind.NONE
-    val couple = BlockSupportImpl.findReparseableNodeAndReparseIt(file, file.node, range, newText) ?: return Kind.FULL
-    return if (couple.first is LeafElement) Kind.LEAF else Kind.NODE
+    val replaced = BlockSupportImpl.reparseIncrementally(file, file.node, range, newText) ?: return Kind.FULL
+    return if (replaced.oldNode is LeafElement) Kind.LEAF else Kind.NODE
   }
 
   /** `REPARSE` if the reparsed node in place of the old node differs from a full parse, else `MERGE`. */
@@ -359,10 +359,10 @@ private class Oracle(private val project: Project, info: TestInfo) {
     dump(file)
     val newText = change.apply(text)
     val range = ChangedPsiRangeUtil.getChangedPsiRange(file, file.treeElement!!, newText) ?: return "MERGE (no change)"
-    val couple = BlockSupportImpl.findReparseableNodeAndReparseIt(file, file.node, range, newText) ?: return "MERGE (full reparse)"
-    val inPlace = dumpTree(file.node, couple.first, couple.second)
+    val replaced = BlockSupportImpl.reparseIncrementally(file, file.node, range, newText) ?: return "MERGE (full reparse)"
+    val inPlace = dumpTree(file.node, replaced.oldNode, replaced.newNode)
     val full = dumpTree(createFile(newText).node, null, null)
-    return if (inPlace == full) "MERGE (node reparse of ${couple.first.elementType})" else "REPARSE of ${couple.first.elementType}"
+    return if (inPlace == full) "MERGE (node reparse of ${replaced.oldNode.elementType})" else "REPARSE of ${replaced.oldNode.elementType}"
   }
 }
 
