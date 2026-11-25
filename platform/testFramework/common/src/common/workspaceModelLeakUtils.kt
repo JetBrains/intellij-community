@@ -111,7 +111,11 @@ private val IGNORED_FIELDS = setOf(
   "com.intellij.testFramework.HeavyPlatformTestCase.myEditorListenerTracker",
   "com.intellij.testFramework.HeavyPlatformTestCase.myProject",
 
-  "org.mockito.internal.util.MockUtil.defaultMockMaker", // mocks
+  // mocks: the interceptor maps of Mockito hold stubbed answers, and an answer may hold test PSI.
+  // Block the maps themselves, not each static route to them.
+  "org.mockito.internal.util.MockUtil.defaultMockMaker",
+  "org.mockito.internal.creation.bytebuddy.InlineDelegateByteBuddyMockMaker.mocks",
+  "org.mockito.internal.creation.bytebuddy.MockMethodAdvice.interceptors",
 
   "com.intellij.testFramework.junit5.showcase.JUnit5ModuleFixtureTest.seenModule", // can be disposed
   "com.intellij.platform.testFramework.junit5.codeInsight.fixture.CodeInsightModuleFixtureTest.previousModule",
