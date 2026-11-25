@@ -24,7 +24,6 @@ import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.application.impl.TestOnlyThreading
 import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.application.runReadActionBlocking
-import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.command.CommandEvent
 import com.intellij.openapi.command.CommandListener
 import com.intellij.openapi.command.CommandProcessor
@@ -1163,36 +1162,34 @@ class LineStatusTrackerManager(
 
   @RequiresEdt
   internal fun restoreTrackersForPartiallyChangedFiles(trackerStates: List<ChangelistsLocalLineStatusTracker.State>) {
-    runWriteAction { /* FileDocumentManager.getDocument */
-      if (isDisposed) return@runWriteAction
-      for (state in trackerStates) {
-        val virtualFile = state.virtualFile
-        val document = FileDocumentManager.getInstance().getDocument(virtualFile) ?: continue
+    if (isDisposed) return
+    for (state in trackerStates) {
+      val virtualFile = state.virtualFile
+      val document = runReadActionBlocking { FileDocumentManager.getInstance().getDocument(virtualFile) } ?: continue
 
-        val provider = getTrackerProvider(virtualFile, document)
-        if (provider !is ChangelistsAwareLocalStatusTrackerProvider) continue
+      val provider = getTrackerProvider(virtualFile, document)
+      if (provider !is ChangelistsAwareLocalStatusTrackerProvider) continue
 
-        switchTracker(virtualFile, document)
+      switchTracker(virtualFile, document)
 
-        val tracker = trackers[document]?.tracker
-        if (tracker !is ChangelistsLocalLineStatusTracker) continue
+      val tracker = trackers[document]?.tracker
+      if (tracker !is ChangelistsLocalLineStatusTracker) continue
 
-        val isLoading = loader.hasRequestFor(document)
-        if (isLoading) {
-          fileStatesAwaitingRefresh.put(state.virtualFile, state)
-          log("State restoration scheduled", virtualFile)
-        }
-        else {
-          val success = tracker.restoreState(state)
-          log("State restored. success - $success", virtualFile)
-        }
+      val isLoading = loader.hasRequestFor(document)
+      if (isLoading) {
+        fileStatesAwaitingRefresh.put(state.virtualFile, state)
+        log("State restoration scheduled", virtualFile)
       }
-
-      loader.addAfterUpdateRunnable(Runnable {
-        log("State restoration finished", null)
-        fileStatesAwaitingRefresh.clear()
-      })
+      else {
+        val success = tracker.restoreState(state)
+        log("State restored. success - $success", virtualFile)
+      }
     }
+
+    loader.addAfterUpdateRunnable(Runnable {
+      log("State restoration finished", null)
+      fileStatesAwaitingRefresh.clear()
+    })
 
     onEverythingChanged()
   }
