@@ -15,7 +15,9 @@ import com.intellij.execution.actions.RunConfigurationsComboBoxAction
 import com.intellij.execution.actions.RunConfigurationsComboBoxAction.SelectConfigAction
 import com.intellij.execution.actions.RunCurrentFileExecutorAction
 import com.intellij.execution.actions.RunSpecifiedConfigExecutorAction
+import com.intellij.execution.configurations.ConfigurationType
 import com.intellij.execution.configurations.RunProfile
+import com.intellij.execution.configurations.UnknownConfigurationType
 import com.intellij.execution.executors.DefaultRunExecutor
 import com.intellij.execution.getStoppableDescriptors
 import com.intellij.execution.impl.ExecutionManagerImpl
@@ -191,7 +193,7 @@ internal fun createRunConfigurationsActionGroup(project: Project, selectedFile: 
     actions.add(Separator.create())
     actions.add(ActionManager.getInstance().getAction("AllRunConfigurationsToggle"))
   }
-  actions.add(createRunConfigurationActionGroup(configurationMap.values, alreadyShownIds, withShowAllToggle) {
+  actions.add(createRunConfigurationActionGroup(configurationMap, alreadyShownIds, withShowAllToggle) {
     createRunConfigurationWithInlines(project, it, runExecutor, debugExecutor, false)
   })
   if (RunConfigurationsComboBoxAction.hasRunCurrentFileItem(project)) {
@@ -202,21 +204,47 @@ internal fun createRunConfigurationsActionGroup(project: Project, selectedFile: 
   return actions
 }
 
-private fun createRunConfigurationActionGroup(folderMaps: Collection<Map<String?, List<RunnerAndConfigurationSettings>>>,
-                                              alreadyShownIds: Set<String>,
-                                              withShowAllToggle: Boolean,
-                                              actionCreator: (RunnerAndConfigurationSettings) -> AnAction): AnAction {
+@ApiStatus.Internal
+fun createRunConfigurationActionGroup(typeMap: Map<ConfigurationType, Map<String?, List<RunnerAndConfigurationSettings>>>,
+                                      alreadyShownIds: Set<String>,
+                                      withShowAllToggle: Boolean,
+                                      actionCreator: (RunnerAndConfigurationSettings) -> AnAction): AnAction {
   val regularTag = if (withShowAllToggle) TAG_REGULAR_HIDE else TAG_REGULAR_SHOW
   return object : ActionGroup() {
     override fun getChildren(e: AnActionEvent?): Array<out AnAction> {
       val result = ArrayList<AnAction>()
-      for (folderMap in folderMaps) {
+      for ((type, folderMap) in typeMap) {
         result.add(object : ActionGroup() {
           init {
             templatePresentation.putClientProperty(ActionUtil.ALWAYS_VISIBLE_GROUP, true)
           }
           override fun getChildren(e: AnActionEvent?): Array<out AnAction> {
             val result = ArrayList<AnAction>()
+            if (type is UnknownConfigurationType) {
+              val allUnknown = folderMap.values.flatten()
+              val title = ExecutionBundle.message("run.toolbar.widget.dropdown.unknown.configurations.text")
+              result.add(object : ActionGroup() {
+                init {
+                  templatePresentation.isPopupGroup = true
+                  templatePresentation.setText(title)
+                  templatePresentation.setIcon(AllIcons.Actions.Help)
+                  templatePresentation.putClientProperty(ActionUtil.SEARCH_TAG, regularTag)
+                  templatePresentation.putClientProperty(ActionUtil.ALWAYS_VISIBLE_GROUP, true)
+                }
+
+                override fun getChildren(e: AnActionEvent?): Array<out AnAction> {
+                  return allUnknown.map { cfg -> actionCreator(cfg) }.toTypedArray()
+                }
+              })
+              for (cfg in allUnknown) {
+                if (alreadyShownIds.contains(cfg.uniqueID)) continue
+                result.add(actionCreator(cfg).also {
+                  it.templatePresentation.putClientProperty(ActionUtil.SEARCH_TAG, TAG_HIDDEN)
+                  it.templatePresentation.putClientProperty(ActionUtil.SECONDARY_TEXT, title)
+                })
+              }
+              return result.toTypedArray()
+            }
             for (folderEntry in folderMap.entries) {
               val folderName = folderEntry.key
               if (folderName == null) {

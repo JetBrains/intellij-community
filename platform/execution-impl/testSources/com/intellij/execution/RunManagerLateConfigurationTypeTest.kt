@@ -11,6 +11,12 @@ import com.intellij.execution.configurations.UnknownConfigurationType
 import com.intellij.execution.impl.RunManagerImpl
 import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl
 import com.intellij.execution.runners.ExecutionEnvironment
+import com.intellij.execution.ui.createRunConfigurationActionGroup
+import com.intellij.icons.AllIcons
+import com.intellij.openapi.actionSystem.ActionGroup
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.components.BaseState
 import com.intellij.openapi.options.SettingsEditor
 import com.intellij.openapi.project.Project
@@ -141,6 +147,45 @@ class RunManagerLateConfigurationTypeTest {
         assertThat(runManager.getAllConfigurationsGroupedByTypeAndFolder().flattenSettings())
           .containsExactlyInAnyOrder(known, unknownTwin, unknownAlone)
         assertThat(runManager.allSettings).contains(unknownTwin)
+      }
+    }
+  }
+
+  /** The run widget popup shows all unknown configurations as one group node. */
+  @Test
+  fun `unknown configurations take one group node in the run widget popup`() {
+    val knownType = registerType(KNOWN_TYPE_ID)
+    runBlocking {
+      createOrLoadProject(tempDir, projectCreator = { dir ->
+        VfsTestUtil.createFile(dir, ".idea/runConfigurations/u1.xml", sharedFileText("u1"))
+        VfsTestUtil.createFile(dir, ".idea/runConfigurations/u2.xml", sharedFileText("u2"))
+        dir.toNioPath()
+      }) { project ->
+        val runManager = RunManagerImpl.getInstanceImpl(project)
+        runManager.allSettings.single { it.name == "u2" }.folderName = "f"
+        val known = runManager.createConfiguration("known", knownType.configurationFactories.single())
+        runManager.addConfiguration(known)
+
+        val group = createRunConfigurationActionGroup(runManager.getConfigurationsGroupedByTypeAndFolder(true), emptySet(), false) { cfg ->
+          object : AnAction(cfg.name) {
+            override fun actionPerformed(e: AnActionEvent) = Unit
+          }
+        } as ActionGroup
+        val typeGroups = group.getChildren(null).filterIsInstance<ActionGroup>()
+        assertThat(typeGroups).hasSize(2)
+        val rows = typeGroups.flatMap { it.getChildren(null).asList() }
+
+        val unknownGroup = rows.filterIsInstance<ActionGroup>().single()
+        val title = ExecutionBundle.message("run.toolbar.widget.dropdown.unknown.configurations.text")
+        assertThat(unknownGroup.templatePresentation.isPopupGroup).isTrue()
+        assertThat(unknownGroup.templatePresentation.text).isEqualTo(title)
+        assertThat(unknownGroup.templatePresentation.icon).isSameAs(AllIcons.Actions.Help)
+        assertThat(unknownGroup.getChildren(null).map { it.templateText }).containsExactlyInAnyOrder("u1", "u2")
+
+        val hidden = rows.filter { it.templatePresentation.getClientProperty(ActionUtil.SEARCH_TAG) == "hidden" }
+        assertThat(hidden.map { it.templateText }).containsExactlyInAnyOrder("u1", "u2")
+        assertThat(hidden.map { it.templatePresentation.getClientProperty(ActionUtil.SECONDARY_TEXT) }).containsOnly(title)
+        assertThat(rows.filter { it !is ActionGroup }.map { it.templateText }).containsExactlyInAnyOrder("known", "u1", "u2")
       }
     }
   }
