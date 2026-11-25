@@ -74,10 +74,15 @@ internal suspend fun waitUntilUISettingsKeyStores(identity: String, value: Any?)
 internal fun appConfigFile(locality: LayerLocality): Path =
   Path.of(PathManager.getOptionsPath(), localityFileName(APP_CONFIG_FILE_NAME, locality))
 
+/** Holds the state of [NotRoamableUiSettings] at the first call of [dropStoredUISettings]. */
+private val componentStateBeforeTests: NotRoamableUiOptions by lazy { NotRoamableUiSettings.getInstance().state }
+
 /**
  * Drops every stored value of `UISettingsKeys` and reloads the application context. The environmental keys live in
  * the environmental config of the application, and the shareable key lives in its team config. The other entries of
- * the configs stay, such as the migration ledger, so no migration runs again after the reload.
+ * the configs stay, such as the migration ledger, so no migration runs again after the reload. It also puts back the
+ * state of [NotRoamableUiSettings] of the first call. The setters of [UISettings] write the component, and the defaults
+ * of the keys read it.
  */
 internal suspend fun dropStoredUISettings() {
   val vault = SettingsVault.getInstance()
@@ -91,4 +96,5 @@ internal suspend fun dropStoredUISettings() {
     }
   }
   vault.reload(appContext)
+  NotRoamableUiSettings.getInstance().loadState(componentStateBeforeTests)
 }

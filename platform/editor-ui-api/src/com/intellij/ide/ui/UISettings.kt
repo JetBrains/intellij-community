@@ -965,11 +965,13 @@ class UISettings private constructor(
     if (usesKeys) key.getValue() else componentValue()
 
   /**
-   * Launches a write of [value] for [key], as [UISettingsKeys.setAsync] does. An instance over a given component
-   * writes [value] with [writeComponent] instead.
+   * Launches a write of [value] for [key], as [UISettingsKeys.setAsync] does, and writes [value] with [writeComponent].
+   * An instance over a given component writes only the component.
    */
   private inline fun <T> writeSetting(key: SettingsKey<T>, value: T, writeComponent: () -> Unit) {
-    if (usesKeys) UISettingsKeys.setAsync(key, value) else writeComponent()
+    if (usesKeys) UISettingsKeys.setAsync(key, value)
+    // IJPL-262873 removes this write of the component.
+    writeComponent()
   }
 
   /**

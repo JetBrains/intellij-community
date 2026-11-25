@@ -168,4 +168,11 @@ class UISettingsFacadeTest {
     assertEquals(component.fontSize, instance.fontSize2D)
   }
 
+  @Test
+  fun `a setter writes the component at once`(): Unit = timeoutRunBlocking(60.seconds) {
+    settings.ideScale = 1.5f
+
+    assertEquals(1.5f, NotRoamableUiSettings.getInstance().ideScale)
+    waitUntilUISettingsKeyStores(UISettingsKeyIdentities.IDE_SCALE, 1.5f)
+  }
 }

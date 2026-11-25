@@ -101,12 +101,14 @@ internal object UISettingsKeys {
 
   /**
    * Queues a write of [value] for [key] and returns, for a caller that cannot suspend, such as an action on the EDT. The
-   * writes apply one by one, in the order of the calls. A write stores nothing when [key] resolves to [value] at its
-   * turn, so it never stores a value that the key already has, such as its default.
+   * writes apply one by one, in the order of the calls. A write stores nothing when [key] resolves to [value] both at
+   * the call and at its turn, so it never stores a value that the key already has, such as its default. The check at
+   * the call counts, because the setter of [UISettings] writes the component, which the default reads, before the turn.
    */
   fun <T> setAsync(key: SettingsKey<T>, value: T) {
+    val valueAtCall = key.getValue()
     service<UISettingsKeysScope>().writes.trySend {
-      if (key.getValue() != value) {
+      if (valueAtCall != value || key.getValue() != value) {
         key.setValue(value)
       }
     }
