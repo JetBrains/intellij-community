@@ -1,0 +1,13 @@
+// COMPILER_ARGUMENTS: -XXLanguage:+FullValueClasses
+value class C6(val b: Byte) {
+    override fun equals(other: Any?): Boolean {
+        if (other !is C6) return false
+        if (b != other.b) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        return b.hashCode()
+    }
+}

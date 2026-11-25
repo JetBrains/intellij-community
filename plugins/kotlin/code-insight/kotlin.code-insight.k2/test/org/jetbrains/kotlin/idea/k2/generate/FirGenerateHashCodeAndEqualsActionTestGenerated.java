@@ -38,6 +38,11 @@ public class FirGenerateHashCodeAndEqualsActionTestGenerated extends AbstractFir
         runTest("../../idea/tests/testData/codeInsight/generate/equalsWithHashCode/arrays.kt");
     }
 
+    @TestMetadata("byteAndShortVars.kt")
+    public void testByteAndShortVars() throws Exception {
+        runTest("../../idea/tests/testData/codeInsight/generate/equalsWithHashCode/byteAndShortVars.kt");
+    }
+
     @TestMetadata("customAccessors.kt")
     public void testCustomAccessors() throws Exception {
         runTest("../../idea/tests/testData/codeInsight/generate/equalsWithHashCode/customAccessors.kt");
@@ -68,9 +73,34 @@ public class FirGenerateHashCodeAndEqualsActionTestGenerated extends AbstractFir
         runTest("../../idea/tests/testData/codeInsight/generate/equalsWithHashCode/explicitDefaultAccessors.kt");
     }
 
+    @TestMetadata("floatAndDoubleVars.kt")
+    public void testFloatAndDoubleVars() throws Exception {
+        runTest("../../idea/tests/testData/codeInsight/generate/equalsWithHashCode/floatAndDoubleVars.kt");
+    }
+
     @TestMetadata("fullValueClass.kt")
     public void testFullValueClass() throws Exception {
         runTest("../../idea/tests/testData/codeInsight/generate/equalsWithHashCode/fullValueClass.kt");
+    }
+
+    @TestMetadata("fullValueClassByteAndShort.kt")
+    public void testFullValueClassByteAndShort() throws Exception {
+        runTest("../../idea/tests/testData/codeInsight/generate/equalsWithHashCode/fullValueClassByteAndShort.kt");
+    }
+
+    @TestMetadata("fullValueClassFloatAndDouble.kt")
+    public void testFullValueClassFloatAndDouble() throws Exception {
+        runTest("../../idea/tests/testData/codeInsight/generate/equalsWithHashCode/fullValueClassFloatAndDouble.kt");
+    }
+
+    @TestMetadata("fullValueClassSingleByte.kt")
+    public void testFullValueClassSingleByte() throws Exception {
+        runTest("../../idea/tests/testData/codeInsight/generate/equalsWithHashCode/fullValueClassSingleByte.kt");
+    }
+
+    @TestMetadata("fullValueClassSingleDouble.kt")
+    public void testFullValueClassSingleDouble() throws Exception {
+        runTest("../../idea/tests/testData/codeInsight/generate/equalsWithHashCode/fullValueClassSingleDouble.kt");
     }
 
     @TestMetadata("genericClass.kt")
@@ -176,6 +206,11 @@ public class FirGenerateHashCodeAndEqualsActionTestGenerated extends AbstractFir
     @TestMetadata("object.kt")
     public void testObject() throws Exception {
         runTest("../../idea/tests/testData/codeInsight/generate/equalsWithHashCode/object.kt");
+    }
+
+    @TestMetadata("singleByteVar.kt")
+    public void testSingleByteVar() throws Exception {
+        runTest("../../idea/tests/testData/codeInsight/generate/equalsWithHashCode/singleByteVar.kt");
     }
 
     @TestMetadata("singleVar.kt")

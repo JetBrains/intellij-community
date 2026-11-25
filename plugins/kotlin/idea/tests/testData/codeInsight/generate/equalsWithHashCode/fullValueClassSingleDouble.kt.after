@@ -1,0 +1,13 @@
+// COMPILER_ARGUMENTS: -XXLanguage:+FullValueClasses
+value class C7(val d: Double) {
+    override fun equals(other: Any?): Boolean {
+        if (other !is C7) return false
+        if (d != other.d) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        return d.hashCode()
+    }
+}

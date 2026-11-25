@@ -1,0 +1,16 @@
+// COMPILER_ARGUMENTS: -XXLanguage:+FullValueClasses
+value class C8(val f: Float, val d: Double) {
+    override fun equals(other: Any?): Boolean {
+        if (other !is C8) return false
+        if (f != other.f) return false
+        if (d != other.d) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = f.hashCode()
+        result = 31 * result + d.hashCode()
+        return result
+    }
+}

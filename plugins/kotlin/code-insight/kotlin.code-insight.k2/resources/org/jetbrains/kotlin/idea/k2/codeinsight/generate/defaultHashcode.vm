@@ -63,7 +63,7 @@ return #addClassLiteral()##
         $dot##
         contentHashCode()##
         #end
-    #elseif ($field.byte || $field.short || $field.int)
+    #elseif ($field.int)
         $field.name##
     #else $field.name##
     $dot##

@@ -1,0 +1,21 @@
+// WITH_STDLIB
+
+data class A(val s: Short, val a: IntArray) {
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as A
+
+        if (s != other.s) return false
+        if (!a.contentEquals(other.a)) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = s.hashCode()
+        result = 31 * result + a.contentHashCode()
+        return result
+    }
+}

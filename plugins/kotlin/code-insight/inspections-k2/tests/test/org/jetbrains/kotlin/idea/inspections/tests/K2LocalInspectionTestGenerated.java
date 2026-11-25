@@ -11788,6 +11788,16 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
             runTest("../../../idea/tests/testData/inspectionsLocal/arrayInDataClass/nonOverrideHashCode.kt");
         }
 
+        @TestMetadata("shortAndArray.kt")
+        public void testShortAndArray() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/arrayInDataClass/shortAndArray.kt");
+        }
+
+        @TestMetadata("valueClassByteAndArray.kt")
+        public void testValueClassByteAndArray() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/arrayInDataClass/valueClassByteAndArray.kt");
+        }
+
         @TestMetadata("valueClassGenericArray.kt")
         public void testValueClassGenericArray() throws Exception {
             runTest("../../../idea/tests/testData/inspectionsLocal/arrayInDataClass/valueClassGenericArray.kt");
