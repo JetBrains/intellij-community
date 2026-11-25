@@ -26,6 +26,11 @@ internal class DefaultJava11ShimTest {
   }
 
   @Test
+  fun `the caller class is the class below the callee frames`() {
+    assertThat(Callee.callerClass(shim)).isEqualTo(DefaultJava11ShimTest::class.java)
+  }
+
+  @Test
   fun `the default shim converts the whole stack`() {
     assertThat(shim.walksOnlyRequestedFrames).isFalse()
   }
@@ -34,5 +39,9 @@ internal class DefaultJava11ShimTest {
     fun frames(shim: Java11Shim, limit: Int): Array<StackTraceElement> = inner(shim, limit)
 
     private fun inner(shim: Java11Shim, limit: Int): Array<StackTraceElement> = shim.getStackTrace(limit, Callee::class.java.name)
+
+    fun callerClass(shim: Java11Shim): Class<*>? = innerCallerClass(shim)
+
+    private fun innerCallerClass(shim: Java11Shim): Class<*>? = shim.findCallerClass { it === Callee::class.java }
   }
 }

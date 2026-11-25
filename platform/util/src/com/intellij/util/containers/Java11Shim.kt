@@ -68,6 +68,13 @@ abstract class Java11Shim {
   abstract fun getCallerClass(stackFrameIndex: Int): Class<*>?
 
   /**
+   * The class of the first frame below the frames of this shim and of the callee classes:
+   * the class of the code that called into those classes. [isCalleeClass] tells a callee class.
+   * When [walksOnlyRequestedFrames] is true, the call reads only the frames up to the result, in one walk.
+   */
+  abstract fun findCallerClass(isCalleeClass: (Class<*>) -> Boolean): Class<*>?
+
+  /**
    * The top [limit] frames of the current stack below the frames of this shim and of [calleeClassNames]:
    * the stack of the code that called into those classes. A nested class of a callee class counts as that class.
    * A [StackTraceElement] holds no class, so a caller can keep the frames and keep no class loader.

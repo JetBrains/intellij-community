@@ -75,6 +75,13 @@ class Java11ShimImpl : Java11Shim() {
     }
   }
 
+  override fun findCallerClass(isCalleeClass: (Class<*>) -> Boolean): Class<*>? {
+    val shimClass = javaClass
+    return walker.walk { stream ->
+      stream.map { it.declaringClass }.dropWhile { it === shimClass || isCalleeClass(it) }.findFirst().orElse(null)
+    }
+  }
+
   override val walksOnlyRequestedFrames: Boolean
     get() = true
 

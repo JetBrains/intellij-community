@@ -61,6 +61,21 @@ internal class DefaultJava11Shim : Java11Shim() {
     return ReflectionUtil.getCallerClass(stackFrameIndex + 1) // +1 to accommodate the current frame
   }
 
+  override fun findCallerClass(isCalleeClass: (Class<*>) -> Boolean): Class<*>? {
+    // The frames of `ReflectionUtil` come first. Skip them, then skip the frames of this shim and of the callees.
+    var inCalleeFrames = false
+    var depth = 0
+    while (true) {
+      val aClass = ReflectionUtil.findCallerClass(depth++) ?: return null
+      if (aClass === javaClass || isCalleeClass(aClass)) {
+        inCalleeFrames = true
+      }
+      else if (inCalleeFrames) {
+        return aClass
+      }
+    }
+  }
+
   override fun getStackTrace(limit: Int, vararg calleeClassNames: String): Array<StackTraceElement> {
     return topFrames(Throwable().stackTrace, limit, arrayOf(DefaultJava11Shim::class.java.name, *calleeClassNames))
   }
