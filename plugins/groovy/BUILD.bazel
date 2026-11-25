@@ -29,6 +29,10 @@ exports_files(
 dist_plugin(
     content_modules = {
         "intellij.groovy.jps": "//plugins/groovy/jps-plugin:jps",
+        "intellij.groovy.constants.rt": "//plugins/groovy/rt-constants:constants-rt",
+        "intellij.groovy.rt": "//plugins/groovy/rt",
+        "intellij.groovy.rt.classLoader": "//plugins/groovy/rt/classLoader",
+        "intellij.groovy.psi": "//plugins/groovy/groovy-psi:psi",
         "intellij.groovy.git": "//plugins/groovy/git",
         "intellij.groovy.ant": "//plugins/groovy/ant",
         "intellij.groovy.copyright": "//plugins/groovy/intellij.groovy.copyright:copyright",
@@ -40,10 +44,6 @@ dist_plugin(
         "intellij.libraries.hamcrest": "//libraries/hamcrest",
         "intellij.libraries.junit4": "//libraries/junit4",
         "intellij.libraries.opentest4j": "//libraries/opentest4j",
-        "intellij.groovy.constants.rt": "//plugins/groovy/rt-constants:constants-rt",
-        "intellij.groovy.psi": "//plugins/groovy/groovy-psi:psi",
-        "intellij.groovy.rt": "//plugins/groovy/rt",
-        "intellij.groovy.rt.classLoader": "//plugins/groovy/rt/classLoader",
     },
     main_module = "intellij.groovy",
     module_labels = {"intellij.groovy": "//plugins/groovy"},
