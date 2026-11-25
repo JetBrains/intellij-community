@@ -1,22 +1,41 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight.daemon.impl.quickfix;
 
-import com.intellij.codeInsight.daemon.quickFix.LightQuickFixParameterizedTestCase;
+import com.intellij.JavaTestUtil;
+import com.intellij.codeInsight.daemon.quickFix.LightQuickFixFixture;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 
-public class ReplaceIteratorForEachLoopWithIteratorForLoopFixTest extends LightQuickFixParameterizedTestCase {
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-    if (getTestName(false).startsWith("Final")) {
-      final JavaCodeStyleSettings codeStyleSettings =
-        JavaCodeStyleSettings.getInstance(getProject());
-      codeStyleSettings.GENERATE_FINAL_LOCALS = true;
-    }
+import java.util.List;
+
+import static com.intellij.codeInsight.daemon.quickFix.LightQuickFixFixtureKt.lightQuickFixFixture;
+import static com.intellij.codeInsight.daemon.quickFix.LightQuickFixFixtureKt.lightQuickFixTestFiles;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaTestDescriptor;
+
+@TestApplication
+public class ReplaceIteratorForEachLoopWithIteratorForLoopFixTest {
+  private static final String TEST_DATA_PATH =
+    JavaTestUtil.getJavaTestDataPath() + "/codeInsight/daemonCodeAnalyzer/quickFix/replaceIteratorForEachWithFor";
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(lightJavaTestDescriptor());
+  private final TestFixture<LightQuickFixFixture> quickFixFixture = lightQuickFixFixture(projectFixture, TEST_DATA_PATH);
+
+  static List<String> files() {
+    return lightQuickFixTestFiles(TEST_DATA_PATH);
   }
 
-  @Override
-  protected String getBasePath() {
-    return "/codeInsight/daemonCodeAnalyzer/quickFix/replaceIteratorForEachWithFor";
+  @ParameterizedTest(name = "{argumentSetNameOrArgumentsWithNames}")
+  @MethodSource("files")
+  void parameterized(String fileName) {
+    if (fileName.startsWith("Final")) {
+      final JavaCodeStyleSettings codeStyleSettings =
+        JavaCodeStyleSettings.getInstance(quickFixFixture.get().getFixture().getProject());
+      codeStyleSettings.GENERATE_FINAL_LOCALS = true;
+    }
+    quickFixFixture.get().doTest(fileName);
   }
 }

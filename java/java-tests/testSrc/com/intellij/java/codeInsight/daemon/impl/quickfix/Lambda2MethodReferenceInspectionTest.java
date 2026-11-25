@@ -1,29 +1,46 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight.daemon.impl.quickfix;
 
-import com.intellij.codeInsight.daemon.quickFix.LightQuickFixParameterizedTestCase;
+import com.intellij.JavaTestUtil;
+import com.intellij.codeInsight.daemon.quickFix.LightQuickFixFixture;
 import com.intellij.codeInspection.LambdaCanBeMethodReferenceInspection;
-import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 
+import java.util.List;
 
-public class Lambda2MethodReferenceInspectionTest extends LightQuickFixParameterizedTestCase {
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
+import static com.intellij.codeInsight.daemon.quickFix.LightQuickFixFixtureKt.lightQuickFixFixture;
+import static com.intellij.codeInsight.daemon.quickFix.LightQuickFixFixtureKt.lightQuickFixTestFiles;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaTestDescriptor;
+
+@TestApplication
+public class Lambda2MethodReferenceInspectionTest {
+  private static final String TEST_DATA_PATH =
+    JavaTestUtil.getJavaTestDataPath() + "/codeInsight/daemonCodeAnalyzer/quickFix/lambda2methodReference";
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(lightJavaTestDescriptor());
+  private final TestFixture<LightQuickFixFixture> quickFixFixture = lightQuickFixFixture(projectFixture, TEST_DATA_PATH);
+
+  static List<String> files() {
+    return lightQuickFixTestFiles(TEST_DATA_PATH);
+  }
+
+  @ParameterizedTest(name = "{argumentSetNameOrArgumentsWithNames}")
+  @MethodSource("files")
+  void parameterized(String fileName) {
+    quickFixFixture.get().doTest(fileName);
+  }
+
+  @BeforeEach
+  void setUpSettingsAndInspections() {
     JavaCodeStyleSettings javaSettings =
-      JavaCodeStyleSettings.getInstance(getProject());
+      JavaCodeStyleSettings.getInstance(quickFixFixture.get().getFixture().getProject());
     javaSettings.REPLACE_INSTANCEOF_AND_CAST = true;
-  }
-
-  @Override
-  protected LocalInspectionTool @NotNull [] configureLocalInspectionTools() {
-    return new LocalInspectionTool[]{new LambdaCanBeMethodReferenceInspection()};
-  }
-
-  @Override
-  protected String getBasePath() {
-    return "/codeInsight/daemonCodeAnalyzer/quickFix/lambda2methodReference";
+    quickFixFixture.get().getFixture().enableInspections(new LambdaCanBeMethodReferenceInspection());
   }
 }

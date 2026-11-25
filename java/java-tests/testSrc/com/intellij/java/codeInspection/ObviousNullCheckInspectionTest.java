@@ -16,19 +16,22 @@
 package com.intellij.java.codeInspection;
 
 import com.intellij.JavaTestUtil;
-import com.intellij.codeInsight.daemon.quickFix.LightQuickFixParameterizedTestCase;
-import com.intellij.codeInspection.LocalInspectionTool;
+import com.intellij.codeInsight.daemon.quickFix.LightQuickFixFixture;
 import com.intellij.codeInspection.ObviousNullCheckInspection;
-import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import com.intellij.testFramework.fixtures.LightJavaProject;
 import com.intellij.testFramework.junit5.TestApplication;
 import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.siyeh.ig.LightJavaInspectionFixture;
-import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 
+import java.util.List;
+
+import static com.intellij.codeInsight.daemon.quickFix.LightQuickFixFixtureKt.lightQuickFixFixture;
+import static com.intellij.codeInsight.daemon.quickFix.LightQuickFixFixtureKt.lightQuickFixTestFiles;
 import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
 import static com.siyeh.ig.LightJavaInspectionFixtureKt.lightJavaInspectionFixture;
 
@@ -50,21 +53,21 @@ public class ObviousNullCheckInspectionTest {
     inspectionFixture.get().doTest();
   }
 
-  public static class ObviousNullCheckInspectionFixTest extends LightQuickFixParameterizedTestCase {
-    @Override
-    protected LocalInspectionTool @NotNull [] configureLocalInspectionTools() {
-      return new LocalInspectionTool[]{new ObviousNullCheckInspection()};
+  @TestApplication
+  public static class ObviousNullCheckInspectionFixTest {
+    private static final String FIX_TEST_DATA_PATH = JavaTestUtil.getJavaTestDataPath() + TEST_DATA_DIR;
+    private static final TestFixture<LightJavaProject> fixProjectFixture = lightJavaProjectFixture(LightJavaCodeInsightFixtureTestCase.JAVA_11_ANNOTATED);
+    private final TestFixture<LightQuickFixFixture> fixQuickFixFixture =
+      lightQuickFixFixture(fixProjectFixture, FIX_TEST_DATA_PATH, () -> List.of(new ObviousNullCheckInspection()));
+
+    static List<String> files() {
+      return lightQuickFixTestFiles(FIX_TEST_DATA_PATH);
     }
 
-    @NotNull
-    @Override
-    protected LightProjectDescriptor getProjectDescriptor() {
-      return LightJavaCodeInsightFixtureTestCase.JAVA_11_ANNOTATED;
-    }
-
-    @Override
-    protected String getBasePath() {
-      return TEST_DATA_DIR;
+    @ParameterizedTest(name = "{argumentSetNameOrArgumentsWithNames}")
+    @MethodSource("files")
+    void parameterized(String fileName) {
+      fixQuickFixFixture.get().doTest(fileName);
     }
   }
 }

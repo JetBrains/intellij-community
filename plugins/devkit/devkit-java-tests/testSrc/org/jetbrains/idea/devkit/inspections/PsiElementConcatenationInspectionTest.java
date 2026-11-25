@@ -15,42 +15,52 @@
  */
 package org.jetbrains.idea.devkit.inspections;
 
-import com.intellij.codeInsight.daemon.quickFix.LightQuickFixParameterizedTestCase;
-import com.intellij.codeInspection.LocalInspectionTool;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.codeInsight.daemon.quickFix.ActionHint;
+import com.intellij.codeInsight.daemon.quickFix.LightQuickFixFixture;
+import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.jetbrains.idea.devkit.DevkitJavaTestsUtil;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 
-public class PsiElementConcatenationInspectionTest extends LightQuickFixParameterizedTestCase {
-  @Override
-  protected void beforeActionStarted(String testName, String contents) {
-    createAndSaveFile("com/intellij/psi/PsiElement.java",
-                      "package com.intellij.psi;interface PsiElement {}");
-    createAndSaveFile("com/intellij/psi/PsiExpression.java",
-                      "package com.intellij.psi;interface PsiExpression extends PsiElement {}");
-    createAndSaveFile("com/intellij/psi/PsiType.java",
-                      "package com.intellij.psi;interface PsiType {}");
-    createAndSaveFile("com/intellij/psi/PsiElementFactory.java",
-                      """
-                        package com.intellij.psi;
-                        interface PsiElementFactory {
-                        PsiExpression createExpressionFromText(String str, PsiElement context);
-                        }""");
-    super.beforeActionStarted(testName, contents);
+import java.util.List;
+
+import static com.intellij.codeInsight.daemon.quickFix.LightQuickFixFixtureKt.lightQuickFixFixture;
+import static com.intellij.codeInsight.daemon.quickFix.LightQuickFixFixtureKt.lightQuickFixTestFiles;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaTestDescriptor;
+
+@TestApplication
+public class PsiElementConcatenationInspectionTest {
+  private static final String TEST_DATA_PATH = DevkitJavaTestsUtil.TESTDATA_ABSOLUTE_PATH + "/inspections/psiElementConcatenation";
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(lightJavaTestDescriptor());
+  private final TestFixture<LightQuickFixFixture> quickFixFixture =
+    lightQuickFixFixture(projectFixture, TEST_DATA_PATH, () -> List.of(new PsiElementConcatenationInspection()));
+
+  static List<String> files() {
+    return lightQuickFixTestFiles(TEST_DATA_PATH);
   }
 
-  @Override
-  protected LocalInspectionTool @NotNull [] configureLocalInspectionTools() {
-    return new LocalInspectionTool[]{new PsiElementConcatenationInspection()};
-  }
-
-  @NotNull
-  @Override
-  protected String getTestDataPath() {
-    return DevkitJavaTestsUtil.TESTDATA_ABSOLUTE_PATH;
-  }
-
-  @Override
-  protected String getBasePath() {
-    return "/inspections/psiElementConcatenation";
+  @ParameterizedTest(name = "{argumentSetNameOrArgumentsWithNames}")
+  @MethodSource("files")
+  void parameterized(String fileName) {
+    LightQuickFixFixture quickFix = quickFixFixture.get();
+    ActionHint hint = quickFix.configure(fileName);
+    JavaCodeInsightTestFixture fixture = quickFix.getFixture();
+    fixture.addFileToProject("com/intellij/psi/PsiElement.java",
+                             "package com.intellij.psi;interface PsiElement {}");
+    fixture.addFileToProject("com/intellij/psi/PsiExpression.java",
+                             "package com.intellij.psi;interface PsiExpression extends PsiElement {}");
+    fixture.addFileToProject("com/intellij/psi/PsiType.java",
+                             "package com.intellij.psi;interface PsiType {}");
+    fixture.addFileToProject("com/intellij/psi/PsiElementFactory.java",
+                             """
+                               package com.intellij.psi;
+                               interface PsiElementFactory {
+                               PsiExpression createExpressionFromText(String str, PsiElement context);
+                               }""");
+    quickFix.checkAction(fileName, hint);
   }
 }

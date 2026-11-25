@@ -15,27 +15,40 @@
  */
 package com.intellij.codeInsight;
 
-import com.intellij.codeInsight.daemon.quickFix.LightQuickFixParameterizedTestCase;
+import com.intellij.codeInsight.daemon.quickFix.LightQuickFixFixture;
+import com.intellij.codeInsight.daemon.quickFix.LightQuickFixOptions;
 import com.intellij.testFramework.PlatformTestUtil;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
+
+import java.util.List;
+
+import static com.intellij.codeInsight.daemon.quickFix.LightQuickFixFixtureKt.lightQuickFixFixture;
+import static com.intellij.codeInsight.daemon.quickFix.LightQuickFixFixtureKt.lightQuickFixTestFiles;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaTestDescriptor;
 
 /**
  * @author Dmitry Batkovich
  */
-public class ConvertToLongAdderIntentionTest extends LightQuickFixParameterizedTestCase {
-  @Override
-  protected boolean shouldBeAvailableAfterExecution() {
-    return true;
+@TestApplication
+public class ConvertToLongAdderIntentionTest {
+  private static final String TEST_DATA_PATH =
+    PlatformTestUtil.getCommunityPath() + "/java/typeMigration/testData" + "/intentions/longAdder";
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(lightJavaTestDescriptor());
+  private final TestFixture<LightQuickFixFixture> quickFixFixture =
+    lightQuickFixFixture(projectFixture, TEST_DATA_PATH, List::of, LightQuickFixOptions.DEFAULT.withActionAvailableAfterExecution());
+
+  static List<String> files() {
+    return lightQuickFixTestFiles(TEST_DATA_PATH);
   }
 
-  @Override
-  protected String getBasePath() {
-    return "/intentions/longAdder";
-  }
-
-  @NotNull
-  @Override
-  protected String getTestDataPath() {
-    return PlatformTestUtil.getCommunityPath() + "/java/typeMigration/testData";
+  @ParameterizedTest(name = "{argumentSetNameOrArgumentsWithNames}")
+  @MethodSource("files")
+  void parameterized(String fileName) {
+    quickFixFixture.get().doTest(fileName);
   }
 }

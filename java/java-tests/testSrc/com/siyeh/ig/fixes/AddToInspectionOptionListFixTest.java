@@ -2,50 +2,54 @@
 package com.siyeh.ig.fixes;
 
 import com.intellij.JavaTestUtil;
-import com.intellij.codeInsight.daemon.quickFix.LightQuickFixParameterizedTestCase;
-import com.intellij.codeInspection.LocalInspectionTool;
+import com.intellij.codeInsight.daemon.quickFix.LightQuickFixFixture;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.siyeh.ig.bugs.ResultOfObjectAllocationIgnoredInspection;
 import com.siyeh.ig.imports.StaticImportInspection;
 import com.siyeh.ig.style.SizeReplaceableByIsEmptyInspection;
 import com.siyeh.ig.threading.AccessToStaticFieldLockedOnInstanceInspection;
-import org.jetbrains.annotations.NotNull;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 
-/**
- * @author Bas Leijdekkers
- */
-public class AddToInspectionOptionListFixTest extends LightQuickFixParameterizedTestCase {
+import java.util.List;
 
-  @Override
-  protected void setUp() throws Exception {
+import static com.intellij.codeInsight.daemon.quickFix.LightQuickFixFixtureKt.lightQuickFixFixture;
+import static com.intellij.codeInsight.daemon.quickFix.LightQuickFixFixtureKt.lightQuickFixTestFiles;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaTestDescriptor;
+
+@TestApplication
+public class AddToInspectionOptionListFixTest {
+  private static final String TEST_DATA_PATH = JavaTestUtil.getJavaTestDataPath() + "/ig/com/siyeh/igfixes/fixes/ignore_class_fix";
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(lightJavaTestDescriptor());
+  private final TestFixture<LightQuickFixFixture> quickFixFixture = lightQuickFixFixture(projectFixture, TEST_DATA_PATH);
+
+  static List<String> files() {
+    return lightQuickFixTestFiles(TEST_DATA_PATH);
+  }
+
+  @ParameterizedTest(name = "{argumentSetNameOrArgumentsWithNames}")
+  @MethodSource("files")
+  void parameterized(String fileName) {
+    quickFixFixture.get().doTest(fileName);
+  }
+
+  @BeforeEach
+  void setUpInspections() {
     InspectionProfileImpl.INIT_INSPECTIONS = true;
-    super.setUp();
+    quickFixFixture.get().getFixture().enableInspections(new SizeReplaceableByIsEmptyInspection(),
+                                   new ResultOfObjectAllocationIgnoredInspection(),
+                                   new StaticImportInspection(),
+                                   new AccessToStaticFieldLockedOnInstanceInspection());
   }
 
-  @Override
-  protected void tearDown() throws Exception {
-    super.tearDown();
+  @AfterEach
+  void tearDownInspections() {
     InspectionProfileImpl.INIT_INSPECTIONS = false;
-  }
-
-  @Override
-  protected LocalInspectionTool @NotNull [] configureLocalInspectionTools() {
-    return new LocalInspectionTool[]{
-      new SizeReplaceableByIsEmptyInspection(),
-      new ResultOfObjectAllocationIgnoredInspection(),
-      new StaticImportInspection(),
-      new AccessToStaticFieldLockedOnInstanceInspection()
-    };
-  }
-
-  @Override
-  protected String getBasePath() {
-    return "/com/siyeh/igfixes/fixes/ignore_class_fix";
-  }
-
-  @NotNull
-  @Override
-  protected String getTestDataPath() {
-    return JavaTestUtil.getJavaTestDataPath() + "/ig/";
   }
 }

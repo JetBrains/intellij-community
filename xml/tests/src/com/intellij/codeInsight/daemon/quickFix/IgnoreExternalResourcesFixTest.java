@@ -17,31 +17,38 @@ package com.intellij.codeInsight.daemon.quickFix;
 
 import com.intellij.codeInsight.daemon.impl.analysis.XmlUnresolvedReferenceInspection;
 import com.intellij.testFramework.PlatformTestUtil;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 
 import java.io.File;
+import java.util.List;
 
-public class IgnoreExternalResourcesFixTest extends LightQuickFixParameterizedTestCase {
-  @Override
-  protected String getBasePath() {
-    return "/quickFix/ignoreExternalResources";
+import static com.intellij.codeInsight.daemon.quickFix.LightQuickFixFixtureKt.lightQuickFixFixture;
+import static com.intellij.codeInsight.daemon.quickFix.LightQuickFixFixtureKt.lightQuickFixTestFiles;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaTestDescriptor;
+
+@TestApplication
+public class IgnoreExternalResourcesFixTest {
+  private static final String TEST_DATA_PATH =
+    PlatformTestUtil.getCommunityPath().replace(File.separatorChar, '/') + "/xml/tests/testData/" + "/quickFix/ignoreExternalResources";
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(lightJavaTestDescriptor());
+  private final TestFixture<LightQuickFixFixture> quickFixFixture =
+    lightQuickFixFixture(projectFixture, TEST_DATA_PATH, () -> List.of(new XmlUnresolvedReferenceInspection()));
+
+  static List<String> files() {
+    return lightQuickFixTestFiles(TEST_DATA_PATH);
   }
 
   // just check for action availability
-  @Override
-  protected void doAction(@NotNull ActionHint actionHint, @NotNull String testFullPath, @NotNull String testName) {
-    findActionAndCheck(actionHint, testFullPath);
-  }
-
-  @NotNull
-  @Override
-  protected String getTestDataPath() {
-    return PlatformTestUtil.getCommunityPath().replace(File.separatorChar, '/') + "/xml/tests/testData/";
-  }
-
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-    enableInspectionTool(new XmlUnresolvedReferenceInspection());
+  @ParameterizedTest(name = "{argumentSetNameOrArgumentsWithNames}")
+  @MethodSource("files")
+  void parameterized(String fileName) {
+    LightQuickFixFixture quickFix = quickFixFixture.get();
+    ActionHint actionHint = quickFix.configure(fileName);
+    quickFix.findAction(fileName, actionHint);
   }
 }

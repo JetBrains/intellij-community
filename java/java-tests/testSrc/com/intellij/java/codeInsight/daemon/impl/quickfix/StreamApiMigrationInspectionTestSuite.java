@@ -1,234 +1,439 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight.daemon.impl.quickfix;
 
-
+import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.daemon.quickFix.ActionHint;
-import com.intellij.codeInsight.daemon.quickFix.LightQuickFixParameterizedTestCase;
+import com.intellij.codeInsight.daemon.quickFix.LightQuickFixFixture;
+import com.intellij.codeInsight.daemon.quickFix.LightQuickFixOptions;
 import com.intellij.codeInsight.intention.IntentionManager;
 import com.intellij.codeInsight.intention.impl.config.IntentionManagerImpl;
-import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.streamMigration.StreamApiMigrationInspection;
 import com.intellij.pom.java.LanguageLevel;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.jetbrains.annotations.NotNull;
-import org.junit.Ignore;
-import org.junit.runner.RunWith;
-import org.junit.runners.Suite;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 
-@Ignore("Manual only")
-@RunWith(Suite.class)
-@Suite.SuiteClasses({
-  StreamApiMigrationInspectionTestSuite.AddAllTest.class,
-  StreamApiMigrationInspectionTestSuite.AfterAllActionsTest.class,
-  StreamApiMigrationInspectionTestSuite.AllMatchTest.class,
-  StreamApiMigrationInspectionTestSuite.AnyMatchTest.class,
-  StreamApiMigrationInspectionTestSuite.BufferedReaderTest.class,
-  StreamApiMigrationInspectionTestSuite.CollectTest.class,
-  StreamApiMigrationInspectionTestSuite.ContinueTest.class,
-  StreamApiMigrationInspectionTestSuite.CountTest.class,
-  StreamApiMigrationInspectionTestSuite.FilterTest.class,
-  StreamApiMigrationInspectionTestSuite.FindFirstTest.class,
-  StreamApiMigrationInspectionTestSuite.FlatMapFirstTest.class,
-  StreamApiMigrationInspectionTestSuite.ForEachTest.class,
-  StreamApiMigrationInspectionTestSuite.JoiningTest.class,
-  StreamApiMigrationInspectionTestSuite.LimitTest.class,
-  StreamApiMigrationInspectionTestSuite.MinMaxTest.class,
-  StreamApiMigrationInspectionTestSuite.NoneMatchTest.class,
-  StreamApiMigrationInspectionTestSuite.OtherTest.class,
-  StreamApiMigrationInspectionTestSuite.ReductionTest.class,
-  StreamApiMigrationInspectionTestSuite.SummingTest.class,
-  StreamApiMigrationInspectionTestSuite.Java9Test.class,
-  StreamApiMigrationInspectionTestSuite.Java10Test.class,
-  StreamApiMigrationInspectionTestSuite.Java14Test.class,
-})
+import java.util.List;
+
+import static com.intellij.codeInsight.daemon.quickFix.LightQuickFixFixtureKt.lightQuickFixFixture;
+import static com.intellij.codeInsight.daemon.quickFix.LightQuickFixFixtureKt.lightQuickFixTestFiles;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaTestDescriptor;
+
 public class StreamApiMigrationInspectionTestSuite {
-  public static abstract class StreamApiMigrationInspectionBaseTest extends LightQuickFixParameterizedTestCase {
-    @Override
-    protected LocalInspectionTool @NotNull [] configureLocalInspectionTools() {
-      StreamApiMigrationInspection inspection = new StreamApiMigrationInspection();
-      inspection.SUGGEST_FOREACH = true;
-      return new LocalInspectionTool[]{
-        inspection
-      };
+  private static @NotNull String testDataPath(@NotNull String folder) {
+    return JavaTestUtil.getJavaTestDataPath() + "/codeInsight/daemonCodeAnalyzer/quickFix/streamApiMigration/" + folder;
+  }
+
+  private static TestFixture<LightQuickFixFixture> createQuickFixFixture(TestFixture<LightJavaProject> projectFixture,
+                                                                       String testDataPath) {
+    return lightQuickFixFixture(projectFixture, testDataPath, () -> List.of(createInspection()),
+                                LightQuickFixOptions.DEFAULT.withLanguageLevelFromFileName());
+  }
+
+  private static StreamApiMigrationInspection createInspection() {
+    StreamApiMigrationInspection inspection = new StreamApiMigrationInspection();
+    inspection.SUGGEST_FOREACH = true;
+    return inspection;
+  }
+
+  private static void doTest(LightQuickFixFixture quickFix, String fileName) {
+    ActionHint hint = quickFix.configure(fileName);
+    ((IntentionManagerImpl)IntentionManager.getInstance())
+      .withDisabledIntentions(() -> quickFix.checkAction(fileName, hint));
+  }
+
+  @TestApplication
+  public static class AddAllTest {
+    private static final String TEST_DATA_PATH = testDataPath("addAll");
+    private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(lightJavaTestDescriptor(LanguageLevel.JDK_1_8));
+    private final TestFixture<LightQuickFixFixture> quickFixFixture = createQuickFixFixture(projectFixture, TEST_DATA_PATH);
+
+    static List<String> files() {
+      return lightQuickFixTestFiles(TEST_DATA_PATH);
     }
 
-    @Override
-    protected LanguageLevel getDefaultLanguageLevel() {
-      return LanguageLevel.JDK_1_8;
-    }
-
-      @Override
-    protected void doAction(@NotNull ActionHint actionHint, @NotNull String testFullPath, @NotNull String testName) throws Exception {
-      ((IntentionManagerImpl)IntentionManager.getInstance())
-        .withDisabledIntentions(() -> super.doAction(actionHint, testFullPath, testName));
-    }
-
-    abstract String getFolder();
-
-    @Override
-    protected String getBasePath() {
-      return "/codeInsight/daemonCodeAnalyzer/quickFix/streamApiMigration/" + getFolder();
+    @ParameterizedTest(name = "{argumentSetNameOrArgumentsWithNames}")
+    @MethodSource("files")
+    void parameterized(String fileName) {
+      doTest(quickFixFixture.get(), fileName);
     }
   }
 
-  public static class AddAllTest extends StreamApiMigrationInspectionBaseTest {
-    @Override
-    String getFolder() {
-      return "addAll";
+  @TestApplication
+  public static class AfterAllActionsTest {
+    private static final String TEST_DATA_PATH = testDataPath("afterAllActions");
+    private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(lightJavaTestDescriptor(LanguageLevel.JDK_1_8));
+    private final TestFixture<LightQuickFixFixture> quickFixFixture = createQuickFixFixture(projectFixture, TEST_DATA_PATH);
+
+    static List<String> files() {
+      return lightQuickFixTestFiles(TEST_DATA_PATH);
+    }
+
+    @ParameterizedTest(name = "{argumentSetNameOrArgumentsWithNames}")
+    @MethodSource("files")
+    void parameterized(String fileName) {
+      doTest(quickFixFixture.get(), fileName);
     }
   }
 
-  public static class AfterAllActionsTest extends StreamApiMigrationInspectionBaseTest {
-    @Override
-    String getFolder() {
-      return "afterAllActions";
+  @TestApplication
+  public static class AllMatchTest {
+    private static final String TEST_DATA_PATH = testDataPath("allMatch");
+    private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(lightJavaTestDescriptor(LanguageLevel.JDK_1_8));
+    private final TestFixture<LightQuickFixFixture> quickFixFixture = createQuickFixFixture(projectFixture, TEST_DATA_PATH);
+
+    static List<String> files() {
+      return lightQuickFixTestFiles(TEST_DATA_PATH);
+    }
+
+    @ParameterizedTest(name = "{argumentSetNameOrArgumentsWithNames}")
+    @MethodSource("files")
+    void parameterized(String fileName) {
+      doTest(quickFixFixture.get(), fileName);
     }
   }
 
-  public static class AllMatchTest extends StreamApiMigrationInspectionBaseTest {
-    @Override
-    String getFolder() {
-      return "allMatch";
+  @TestApplication
+  public static class AnyMatchTest {
+    private static final String TEST_DATA_PATH = testDataPath("anyMatch");
+    private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(lightJavaTestDescriptor(LanguageLevel.JDK_1_8));
+    private final TestFixture<LightQuickFixFixture> quickFixFixture = createQuickFixFixture(projectFixture, TEST_DATA_PATH);
+
+    static List<String> files() {
+      return lightQuickFixTestFiles(TEST_DATA_PATH);
+    }
+
+    @ParameterizedTest(name = "{argumentSetNameOrArgumentsWithNames}")
+    @MethodSource("files")
+    void parameterized(String fileName) {
+      doTest(quickFixFixture.get(), fileName);
     }
   }
 
-  public static class AnyMatchTest extends StreamApiMigrationInspectionBaseTest {
-    @Override
-    String getFolder() {
-      return "anyMatch";
+  @TestApplication
+  public static class BufferedReaderTest {
+    private static final String TEST_DATA_PATH = testDataPath("bufferedReader");
+    private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(lightJavaTestDescriptor(LanguageLevel.JDK_1_8));
+    private final TestFixture<LightQuickFixFixture> quickFixFixture = createQuickFixFixture(projectFixture, TEST_DATA_PATH);
+
+    static List<String> files() {
+      return lightQuickFixTestFiles(TEST_DATA_PATH);
+    }
+
+    @ParameterizedTest(name = "{argumentSetNameOrArgumentsWithNames}")
+    @MethodSource("files")
+    void parameterized(String fileName) {
+      doTest(quickFixFixture.get(), fileName);
     }
   }
 
-  public static class BufferedReaderTest extends StreamApiMigrationInspectionBaseTest {
-    @Override
-    String getFolder() {
-      return "bufferedReader";
+  @TestApplication
+  public static class CollectTest {
+    private static final String TEST_DATA_PATH = testDataPath("collect");
+    private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(lightJavaTestDescriptor(LanguageLevel.JDK_1_8));
+    private final TestFixture<LightQuickFixFixture> quickFixFixture = createQuickFixFixture(projectFixture, TEST_DATA_PATH);
+
+    static List<String> files() {
+      return lightQuickFixTestFiles(TEST_DATA_PATH);
+    }
+
+    @ParameterizedTest(name = "{argumentSetNameOrArgumentsWithNames}")
+    @MethodSource("files")
+    void parameterized(String fileName) {
+      doTest(quickFixFixture.get(), fileName);
     }
   }
 
-  public static class CollectTest extends StreamApiMigrationInspectionBaseTest {
-    @Override
-    String getFolder() {
-      return "collect";
+  @TestApplication
+  public static class ContinueTest {
+    private static final String TEST_DATA_PATH = testDataPath("continue");
+    private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(lightJavaTestDescriptor(LanguageLevel.JDK_1_8));
+    private final TestFixture<LightQuickFixFixture> quickFixFixture = createQuickFixFixture(projectFixture, TEST_DATA_PATH);
+
+    static List<String> files() {
+      return lightQuickFixTestFiles(TEST_DATA_PATH);
+    }
+
+    @ParameterizedTest(name = "{argumentSetNameOrArgumentsWithNames}")
+    @MethodSource("files")
+    void parameterized(String fileName) {
+      doTest(quickFixFixture.get(), fileName);
     }
   }
 
-  public static class ContinueTest extends StreamApiMigrationInspectionBaseTest {
-    @Override
-    String getFolder() {
-      return "continue";
+  @TestApplication
+  public static class CountTest {
+    private static final String TEST_DATA_PATH = testDataPath("count");
+    private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(lightJavaTestDescriptor(LanguageLevel.JDK_1_8));
+    private final TestFixture<LightQuickFixFixture> quickFixFixture = createQuickFixFixture(projectFixture, TEST_DATA_PATH);
+
+    static List<String> files() {
+      return lightQuickFixTestFiles(TEST_DATA_PATH);
+    }
+
+    @ParameterizedTest(name = "{argumentSetNameOrArgumentsWithNames}")
+    @MethodSource("files")
+    void parameterized(String fileName) {
+      doTest(quickFixFixture.get(), fileName);
     }
   }
 
-  public static class CountTest extends StreamApiMigrationInspectionBaseTest {
-    @Override
-    String getFolder() {
-      return "count";
+  @TestApplication
+  public static class FilterTest {
+    private static final String TEST_DATA_PATH = testDataPath("filter");
+    private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(lightJavaTestDescriptor(LanguageLevel.JDK_1_8));
+    private final TestFixture<LightQuickFixFixture> quickFixFixture = createQuickFixFixture(projectFixture, TEST_DATA_PATH);
+
+    static List<String> files() {
+      return lightQuickFixTestFiles(TEST_DATA_PATH);
+    }
+
+    @ParameterizedTest(name = "{argumentSetNameOrArgumentsWithNames}")
+    @MethodSource("files")
+    void parameterized(String fileName) {
+      doTest(quickFixFixture.get(), fileName);
     }
   }
 
-  public static class FilterTest extends StreamApiMigrationInspectionBaseTest {
-    @Override
-    String getFolder() {
-      return "filter";
+  @TestApplication
+  public static class FindFirstTest {
+    private static final String TEST_DATA_PATH = testDataPath("findFirst");
+    private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(lightJavaTestDescriptor(LanguageLevel.JDK_1_8));
+    private final TestFixture<LightQuickFixFixture> quickFixFixture = createQuickFixFixture(projectFixture, TEST_DATA_PATH);
+
+    static List<String> files() {
+      return lightQuickFixTestFiles(TEST_DATA_PATH);
+    }
+
+    @ParameterizedTest(name = "{argumentSetNameOrArgumentsWithNames}")
+    @MethodSource("files")
+    void parameterized(String fileName) {
+      doTest(quickFixFixture.get(), fileName);
     }
   }
 
-  public static class FindFirstTest extends StreamApiMigrationInspectionBaseTest {
-    @Override
-    String getFolder() {
-      return "findFirst";
+  @TestApplication
+  public static class FlatMapFirstTest {
+    private static final String TEST_DATA_PATH = testDataPath("flatMap");
+    private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(lightJavaTestDescriptor(LanguageLevel.JDK_1_8));
+    private final TestFixture<LightQuickFixFixture> quickFixFixture = createQuickFixFixture(projectFixture, TEST_DATA_PATH);
+
+    static List<String> files() {
+      return lightQuickFixTestFiles(TEST_DATA_PATH);
+    }
+
+    @ParameterizedTest(name = "{argumentSetNameOrArgumentsWithNames}")
+    @MethodSource("files")
+    void parameterized(String fileName) {
+      doTest(quickFixFixture.get(), fileName);
     }
   }
 
-  public static class FlatMapFirstTest extends StreamApiMigrationInspectionBaseTest {
-    @Override
-    String getFolder() {
-      return "flatMap";
+  @TestApplication
+  public static class ForEachTest {
+    private static final String TEST_DATA_PATH = testDataPath("foreach");
+    private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(lightJavaTestDescriptor(LanguageLevel.JDK_1_8));
+    private final TestFixture<LightQuickFixFixture> quickFixFixture = createQuickFixFixture(projectFixture, TEST_DATA_PATH);
+
+    static List<String> files() {
+      return lightQuickFixTestFiles(TEST_DATA_PATH);
+    }
+
+    @ParameterizedTest(name = "{argumentSetNameOrArgumentsWithNames}")
+    @MethodSource("files")
+    void parameterized(String fileName) {
+      doTest(quickFixFixture.get(), fileName);
     }
   }
 
-  public static class ForEachTest extends StreamApiMigrationInspectionBaseTest {
-    @Override
-    String getFolder() {
-      return "foreach";
+  @TestApplication
+  public static class JoiningTest {
+    private static final String TEST_DATA_PATH = testDataPath("joining");
+    private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(lightJavaTestDescriptor(LanguageLevel.JDK_1_8));
+    private final TestFixture<LightQuickFixFixture> quickFixFixture = createQuickFixFixture(projectFixture, TEST_DATA_PATH);
+
+    static List<String> files() {
+      return lightQuickFixTestFiles(TEST_DATA_PATH);
+    }
+
+    @ParameterizedTest(name = "{argumentSetNameOrArgumentsWithNames}")
+    @MethodSource("files")
+    void parameterized(String fileName) {
+      doTest(quickFixFixture.get(), fileName);
     }
   }
 
+  @TestApplication
+  public static class LimitTest {
+    private static final String TEST_DATA_PATH = testDataPath("limit");
+    private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(lightJavaTestDescriptor(LanguageLevel.JDK_1_8));
+    private final TestFixture<LightQuickFixFixture> quickFixFixture = createQuickFixFixture(projectFixture, TEST_DATA_PATH);
 
-  public static class JoiningTest extends StreamApiMigrationInspectionBaseTest {
-    @Override
-    String getFolder() {
-      return "joining";
+    static List<String> files() {
+      return lightQuickFixTestFiles(TEST_DATA_PATH);
+    }
+
+    @ParameterizedTest(name = "{argumentSetNameOrArgumentsWithNames}")
+    @MethodSource("files")
+    void parameterized(String fileName) {
+      doTest(quickFixFixture.get(), fileName);
     }
   }
 
-  public static class LimitTest extends StreamApiMigrationInspectionBaseTest {
-    @Override
-    String getFolder() {
-      return "limit";
+  @TestApplication
+  public static class MinMaxTest {
+    private static final String TEST_DATA_PATH = testDataPath("minMax");
+    private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(lightJavaTestDescriptor(LanguageLevel.JDK_1_8));
+    private final TestFixture<LightQuickFixFixture> quickFixFixture = createQuickFixFixture(projectFixture, TEST_DATA_PATH);
+
+    static List<String> files() {
+      return lightQuickFixTestFiles(TEST_DATA_PATH);
+    }
+
+    @ParameterizedTest(name = "{argumentSetNameOrArgumentsWithNames}")
+    @MethodSource("files")
+    void parameterized(String fileName) {
+      doTest(quickFixFixture.get(), fileName);
     }
   }
 
-  public static class MinMaxTest extends StreamApiMigrationInspectionBaseTest {
-    @Override
-    String getFolder() {
-      return "minMax";
+  @TestApplication
+  public static class NoneMatchTest {
+    private static final String TEST_DATA_PATH = testDataPath("noneMatch");
+    private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(lightJavaTestDescriptor(LanguageLevel.JDK_1_8));
+    private final TestFixture<LightQuickFixFixture> quickFixFixture = createQuickFixFixture(projectFixture, TEST_DATA_PATH);
+
+    static List<String> files() {
+      return lightQuickFixTestFiles(TEST_DATA_PATH);
+    }
+
+    @ParameterizedTest(name = "{argumentSetNameOrArgumentsWithNames}")
+    @MethodSource("files")
+    void parameterized(String fileName) {
+      doTest(quickFixFixture.get(), fileName);
     }
   }
 
-  public static class NoneMatchTest extends StreamApiMigrationInspectionBaseTest {
-    @Override
-    String getFolder() {
-      return "noneMatch";
+  @TestApplication
+  public static class OtherTest {
+    private static final String TEST_DATA_PATH = testDataPath("other");
+    private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(lightJavaTestDescriptor(LanguageLevel.JDK_1_8));
+    private final TestFixture<LightQuickFixFixture> quickFixFixture = createQuickFixFixture(projectFixture, TEST_DATA_PATH);
+
+    static List<String> files() {
+      return lightQuickFixTestFiles(TEST_DATA_PATH);
+    }
+
+    @ParameterizedTest(name = "{argumentSetNameOrArgumentsWithNames}")
+    @MethodSource("files")
+    void parameterized(String fileName) {
+      doTest(quickFixFixture.get(), fileName);
     }
   }
 
-  public static class OtherTest extends StreamApiMigrationInspectionBaseTest {
-    @Override
-    String getFolder() {
-      return "other";
+  @TestApplication
+  public static class ReductionTest {
+    private static final String TEST_DATA_PATH = testDataPath("reduce");
+    private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(lightJavaTestDescriptor(LanguageLevel.JDK_1_8));
+    private final TestFixture<LightQuickFixFixture> quickFixFixture = createQuickFixFixture(projectFixture, TEST_DATA_PATH);
+
+    static List<String> files() {
+      return lightQuickFixTestFiles(TEST_DATA_PATH);
+    }
+
+    @ParameterizedTest(name = "{argumentSetNameOrArgumentsWithNames}")
+    @MethodSource("files")
+    void parameterized(String fileName) {
+      doTest(quickFixFixture.get(), fileName);
     }
   }
 
-  public static class ReductionTest extends StreamApiMigrationInspectionBaseTest {
-    @Override
-    String getFolder() {
-      return "reduce";
+  @TestApplication
+  public static class SummingTest {
+    private static final String TEST_DATA_PATH = testDataPath("sum");
+    private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(lightJavaTestDescriptor(LanguageLevel.JDK_1_8));
+    private final TestFixture<LightQuickFixFixture> quickFixFixture = createQuickFixFixture(projectFixture, TEST_DATA_PATH);
+
+    static List<String> files() {
+      return lightQuickFixTestFiles(TEST_DATA_PATH);
+    }
+
+    @ParameterizedTest(name = "{argumentSetNameOrArgumentsWithNames}")
+    @MethodSource("files")
+    void parameterized(String fileName) {
+      doTest(quickFixFixture.get(), fileName);
     }
   }
 
-  public static class SummingTest extends StreamApiMigrationInspectionBaseTest {
-    @Override
-    String getFolder() {
-      return "sum";
+  @TestApplication
+  public static class Java9Test {
+    private static final String TEST_DATA_PATH = testDataPath("java9");
+    private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(lightJavaTestDescriptor(LanguageLevel.JDK_1_8));
+    private final TestFixture<LightQuickFixFixture> quickFixFixture = createQuickFixFixture(projectFixture, TEST_DATA_PATH);
+
+    static List<String> files() {
+      return lightQuickFixTestFiles(TEST_DATA_PATH);
+    }
+
+    @ParameterizedTest(name = "{argumentSetNameOrArgumentsWithNames}")
+    @MethodSource("files")
+    void parameterized(String fileName) {
+      doTest(quickFixFixture.get(), fileName);
     }
   }
 
-  public static class Java9Test extends StreamApiMigrationInspectionBaseTest {
-    @Override
-    String getFolder() {
-      return "java9";
+  @TestApplication
+  public static class Java10Test {
+    private static final String TEST_DATA_PATH = testDataPath("java10");
+    private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(lightJavaTestDescriptor(LanguageLevel.JDK_1_8));
+    private final TestFixture<LightQuickFixFixture> quickFixFixture = createQuickFixFixture(projectFixture, TEST_DATA_PATH);
+
+    static List<String> files() {
+      return lightQuickFixTestFiles(TEST_DATA_PATH);
+    }
+
+    @ParameterizedTest(name = "{argumentSetNameOrArgumentsWithNames}")
+    @MethodSource("files")
+    void parameterized(String fileName) {
+      doTest(quickFixFixture.get(), fileName);
     }
   }
 
-  public static class Java10Test extends StreamApiMigrationInspectionBaseTest {
-    @Override
-    String getFolder() {
-      return "java10";
+  @TestApplication
+  public static class Java14Test {
+    private static final String TEST_DATA_PATH = testDataPath("java14");
+    private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(lightJavaTestDescriptor(LanguageLevel.JDK_1_8));
+    private final TestFixture<LightQuickFixFixture> quickFixFixture = createQuickFixFixture(projectFixture, TEST_DATA_PATH);
+
+    static List<String> files() {
+      return lightQuickFixTestFiles(TEST_DATA_PATH);
+    }
+
+    @ParameterizedTest(name = "{argumentSetNameOrArgumentsWithNames}")
+    @MethodSource("files")
+    void parameterized(String fileName) {
+      doTest(quickFixFixture.get(), fileName);
     }
   }
 
-  public static class Java14Test extends StreamApiMigrationInspectionBaseTest {
-    @Override
-    String getFolder() {
-      return "java14";
-    }
-  }
+  @TestApplication
+  public static class Java19Test {
+    private static final String TEST_DATA_PATH = testDataPath("java19");
+    private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(lightJavaTestDescriptor(LanguageLevel.JDK_1_8));
+    private final TestFixture<LightQuickFixFixture> quickFixFixture = createQuickFixFixture(projectFixture, TEST_DATA_PATH);
 
-  public static class Java19Test extends StreamApiMigrationInspectionBaseTest {
-    @Override
-    String getFolder() {
-      return "java19";
+    static List<String> files() {
+      return lightQuickFixTestFiles(TEST_DATA_PATH);
+    }
+
+    @ParameterizedTest(name = "{argumentSetNameOrArgumentsWithNames}")
+    @MethodSource("files")
+    void parameterized(String fileName) {
+      doTest(quickFixFixture.get(), fileName);
     }
   }
 }

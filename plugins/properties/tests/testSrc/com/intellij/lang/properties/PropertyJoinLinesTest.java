@@ -1,25 +1,41 @@
 package com.intellij.lang.properties;
 
-import com.intellij.codeInsight.daemon.quickFix.ActionHint;
-import org.jetbrains.annotations.NonNls;
+import com.intellij.codeInsight.daemon.quickFix.LightQuickFixFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.jetbrains.annotations.NotNull;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 
-public class PropertyJoinLinesTest extends PropertiesLightQuickFixParameterizedTestCase {
+import java.util.List;
 
-  @Override
-  protected @NonNls String getBasePath() {
-    return "/properties/joinlines";
+import static com.intellij.codeInsight.daemon.quickFix.LightQuickFixFixtureKt.lightQuickFixFixture;
+import static com.intellij.codeInsight.daemon.quickFix.LightQuickFixFixtureKt.lightQuickFixTestFiles;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaTestDescriptor;
+
+@TestApplication
+public class PropertyJoinLinesTest {
+  private static final String TEST_DATA_PATH = PropertiesQuickFixTestUtil.getPropertiesTestDataRoot() + "/properties/joinlines";
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(lightJavaTestDescriptor());
+  private final TestFixture<LightQuickFixFixture> quickFixFixture = lightQuickFixFixture(projectFixture, TEST_DATA_PATH);
+
+  static List<String> files() {
+    return lightQuickFixTestFiles(TEST_DATA_PATH);
   }
 
-  @Override
-  protected void doAction(@NotNull ActionHint actionHint, @NotNull String testFullPath, @NotNull String testName) {
-    executeAction("EditorJoinLines");
+  @ParameterizedTest(name = "{argumentSetNameOrArgumentsWithNames}")
+  @MethodSource("files")
+  void parameterized(String fileName) {
+    LightQuickFixFixture quickFix = quickFixFixture.get();
+    quickFix.configure(fileName);
+    PropertiesQuickFixTestUtil.executeAction(quickFix.getFixture(), "EditorJoinLines");
 
-    checkResult(testName);
+    checkResult(fileName);
   }
 
-  private void checkResult(@NotNull final String testName) {
-    final String expectedFilePath = getBasePath() + "/after" + testName;
-    checkResultByFile("In file: " + expectedFilePath, expectedFilePath, false);
+  private void checkResult(@NotNull final String fileName) {
+    quickFixFixture.get().getFixture().checkResultByFile("after" + fileName);
   }
 }

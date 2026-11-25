@@ -15,24 +15,36 @@
  */
 package com.intellij.xml.actions;
 
-import com.intellij.codeInsight.daemon.LightIntentionActionTestCase;
+import com.intellij.codeInsight.daemon.quickFix.LightQuickFixFixture;
+import com.intellij.codeInsight.daemon.quickFix.LightQuickFixOptions;
 import com.intellij.testFramework.PlatformTestUtil;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 
-public class SplitTagActionTest extends LightIntentionActionTestCase {
-  @Override
-  protected boolean shouldBeAvailableAfterExecution() {
-    return true;
+import java.util.List;
+
+import static com.intellij.codeInsight.daemon.quickFix.LightQuickFixFixtureKt.lightQuickFixFixture;
+import static com.intellij.codeInsight.daemon.quickFix.LightQuickFixFixtureKt.lightQuickFixTestFiles;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaTestDescriptor;
+
+@TestApplication
+public class SplitTagActionTest {
+  private static final String TEST_DATA_PATH = PlatformTestUtil.getCommunityPath() + "/xml/tests/testData/intentions/splitTag";
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(lightJavaTestDescriptor());
+  private final TestFixture<LightQuickFixFixture> quickFixFixture =
+    lightQuickFixFixture(projectFixture, TEST_DATA_PATH, List::of, LightQuickFixOptions.DEFAULT.withActionAvailableAfterExecution());
+
+  static List<String> files() {
+    return lightQuickFixTestFiles(TEST_DATA_PATH);
   }
 
-  @Override
-  protected String getBasePath() {
-    return "";
-  }
-
-  @Override
-  @NotNull
-  protected String getTestDataPath() {
-    return PlatformTestUtil.getCommunityPath() + "/xml/tests/testData/intentions/splitTag";
+  @ParameterizedTest(name = "{argumentSetNameOrArgumentsWithNames}")
+  @MethodSource("files")
+  void parameterized(String fileName) {
+    quickFixFixture.get().doTest(fileName);
   }
 }

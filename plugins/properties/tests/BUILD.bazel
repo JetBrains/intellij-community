@@ -99,6 +99,7 @@ jvm_library(
         "//platform/testFramework/junit5",
         "//platform/testFramework/junit5/codeInsight",
         "//libraries/junit6",
+        "//libraries/junit6-params",
     ],
 )
 ### auto-generated section `build intellij.properties.tests` end

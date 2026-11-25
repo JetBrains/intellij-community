@@ -1,44 +1,48 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInspection.classCanBeRecord;
 
-import com.intellij.codeInsight.daemon.quickFix.LightQuickFixParameterizedTestCase;
-import com.intellij.codeInspection.LocalInspectionTool;
+import com.intellij.JavaTestUtil;
+import com.intellij.codeInsight.daemon.quickFix.LightQuickFixFixture;
 import com.intellij.codeInspection.classCanBeRecord.ClassCanBeRecordInspection;
+import com.intellij.codeInspection.classCanBeRecord.ClassCanBeRecordInspection.ConversionStrategy;
 import com.intellij.refactoring.BaseRefactoringProcessor;
-import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 
-import static com.intellij.codeInspection.classCanBeRecord.ClassCanBeRecordInspection.ConversionStrategy;
+import java.util.List;
 
-public class ClassCanBeRecordInspectionFlexibleConstructorBodiesTest extends LightQuickFixParameterizedTestCase {
-  @Override
-  protected LocalInspectionTool @NotNull [] configureLocalInspectionTools() {
-    ClassCanBeRecordInspection inspection = new ClassCanBeRecordInspection(ConversionStrategy.DO_NOT_SUGGEST, true);
-    return new LocalInspectionTool[]{inspection};
+import static com.intellij.codeInsight.daemon.quickFix.LightQuickFixFixtureKt.lightQuickFixFixture;
+import static com.intellij.codeInsight.daemon.quickFix.LightQuickFixFixtureKt.lightQuickFixTestFiles;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+
+@TestApplication
+public class ClassCanBeRecordInspectionFlexibleConstructorBodiesTest {
+  private static final String TEST_DATA_PATH = JavaTestUtil.getJavaTestDataPath() + "/inspection/classCanBeRecord/flexibleConstructorBodies";
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(LightJavaCodeInsightFixtureTestCase.JAVA_25);
+  private final TestFixture<LightQuickFixFixture> quickFixFixture = lightQuickFixFixture(
+    projectFixture, TEST_DATA_PATH, () -> List.of(new ClassCanBeRecordInspection(ConversionStrategy.DO_NOT_SUGGEST, true)));
+
+  static List<String> files() {
+    return lightQuickFixTestFiles(TEST_DATA_PATH);
   }
 
-  @Override
-  protected @NotNull LightProjectDescriptor getProjectDescriptor() {
-    return LightJavaCodeInsightFixtureTestCase.JAVA_25;
-  }
-
-  @Override
-  protected String getBasePath() {
-    return "/inspection/classCanBeRecord/flexibleConstructorBodies";
-  }
-
-  @Override
-  public void runSingle() throws Throwable {
+  @ParameterizedTest(name = "{argumentSetNameOrArgumentsWithNames}")
+  @MethodSource("files")
+  void parameterized(String fileName) {
+    LightQuickFixFixture quickFix = quickFixFixture.get();
     try {
-      super.runSingle();
+      quickFix.doTest(fileName);
     }
     catch (BaseRefactoringProcessor.ConflictsInTestsException e) {
       // Verify that no content was changed. See IDEA-371645.
-      checkResultByFile(getTestName(false) + ".java", getBasePath() + "/before" + getTestName(false), false);
+      quickFix.getFixture().checkResultByFile("before" + fileName);
     }
 
 
-    super.runSingle();
+    quickFix.doTest(fileName);
   }
 }

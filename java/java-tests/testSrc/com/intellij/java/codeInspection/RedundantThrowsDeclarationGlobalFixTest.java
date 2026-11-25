@@ -3,46 +3,64 @@ package com.intellij.java.codeInspection;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.daemon.quickFix.ActionHint;
-import com.intellij.codeInsight.daemon.quickFix.LightQuickFixParameterizedTestCase;
+import com.intellij.codeInsight.daemon.quickFix.LightQuickFixFixture;
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.unneededThrows.RedundantThrowsDeclarationInspection;
+import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.testFramework.EdtTestUtil;
+import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 
-public class RedundantThrowsDeclarationGlobalFixTest extends LightQuickFixParameterizedTestCase {
+import java.util.List;
 
-  @Override
-  protected void doAction(@NotNull ActionHint actionHint, @NotNull String testFullPath, @NotNull String testName) {
-    final LocalQuickFix fix = (LocalQuickFix)new RedundantThrowsDeclarationInspection().getQuickFix(actionHint.getExpectedText());
+import static com.intellij.codeInsight.daemon.quickFix.LightQuickFixFixtureKt.lightQuickFixFixture;
+import static com.intellij.codeInsight.daemon.quickFix.LightQuickFixFixtureKt.lightQuickFixTestFiles;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaTestDescriptor;
 
-    final int offset = getEditor().getCaretModel().getOffset();
-    final PsiElement psiElement = getFile().findElementAt(offset);
-    assert psiElement != null;
+@TestApplication
+public class RedundantThrowsDeclarationGlobalFixTest {
+  private static final String TEST_DATA_PATH = JavaTestUtil.getJavaTestDataPath() + "/inspection/redundantThrowsGlobalFix";
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(lightJavaTestDescriptor());
+  private final TestFixture<LightQuickFixFixture> quickFixFixture = lightQuickFixFixture(projectFixture, TEST_DATA_PATH);
 
-    final ProblemDescriptor descriptor = InspectionManager.getInstance(getProject())
-      .createProblemDescriptor(psiElement.getParent(),
-                               "",
-                               fix,
-                               ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
-                               true);
-
-    fix.applyFix(getProject(), descriptor);
-
-    final String expectedFilePath = getBasePath() + "/after" + testName;
-    checkResultByFile("In file: " + expectedFilePath, expectedFilePath, false);
+  static List<String> files() {
+    return lightQuickFixTestFiles(TEST_DATA_PATH);
   }
 
-  @Override
-  protected @NotNull String getTestDataPath() {
-    return JavaTestUtil.getJavaTestDataPath() + "/inspection";
-  }
+  @ParameterizedTest(name = "{argumentSetNameOrArgumentsWithNames}")
+  @MethodSource("files")
+  void parameterized(String fileName) {
+    LightQuickFixFixture quickFix = quickFixFixture.get();
+    ActionHint actionHint = quickFix.configure(fileName);
+    JavaCodeInsightTestFixture fixture = quickFix.getFixture();
+    Project project = fixture.getProject();
+    EdtTestUtil.runInEdtAndWait(() -> CommandProcessor.getInstance().executeCommand(project, () -> {
+      final LocalQuickFix fix = (LocalQuickFix)new RedundantThrowsDeclarationInspection().getQuickFix(actionHint.getExpectedText());
 
-  @Override
-  protected @NonNls String getBasePath() {
-    return "/redundantThrowsGlobalFix";
+      final int offset = fixture.getEditor().getCaretModel().getOffset();
+      final PsiElement psiElement = fixture.getFile().findElementAt(offset);
+      assert psiElement != null;
+
+      final ProblemDescriptor descriptor = InspectionManager.getInstance(project)
+        .createProblemDescriptor(psiElement.getParent(),
+                                 "",
+                                 fix,
+                                 ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
+                                 true);
+
+      fix.applyFix(project, descriptor);
+
+      fixture.checkResultByFile("after" + fileName);
+    }, "", null));
   }
 }

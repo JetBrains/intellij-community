@@ -1,49 +1,52 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight.daemon.impl.quickfix;
 
-import com.intellij.codeInsight.daemon.quickFix.ActionHint;
-import com.intellij.codeInsight.daemon.quickFix.LightQuickFixParameterizedTestCase;
+import com.intellij.JavaTestUtil;
+import com.intellij.codeInsight.daemon.quickFix.LightQuickFixFixture;
+import com.intellij.codeInsight.daemon.quickFix.LightQuickFixOptions;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.impl.preview.IntentionPreviewPopupUpdateProcessor;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.psi.PsiFile;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
 import com.intellij.testFramework.fixtures.LightJavaProject;
 import com.intellij.testFramework.junit5.TestApplication;
 import com.intellij.testFramework.junit5.fixture.TestFixture;
-import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 
+import java.util.List;
+
+import static com.intellij.codeInsight.daemon.quickFix.LightQuickFixFixtureKt.lightQuickFixFixture;
+import static com.intellij.codeInsight.daemon.quickFix.LightQuickFixFixtureKt.lightQuickFixTestFiles;
 import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaCodeInsightFixture;
 import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaTestDescriptor;
 
-public class CreateMethodFromUsageTest extends LightQuickFixParameterizedTestCase {
+@TestApplication
+public class CreateMethodFromUsageTest {
+  private static final String TEST_DATA_PATH =
+    JavaTestUtil.getJavaTestDataPath() + "/codeInsight/daemonCodeAnalyzer/quickFix/createMethodFromUsage";
+  private static final TestFixture<LightJavaProject> quickFixProjectFixture =
+    lightJavaProjectFixture(lightJavaTestDescriptor(LanguageLevel.HIGHEST, IdeaTestUtil::getMockJdk21));
+  private final TestFixture<LightQuickFixFixture> quickFixFixture =
+    lightQuickFixFixture(quickFixProjectFixture, TEST_DATA_PATH, List::of, LightQuickFixOptions.DEFAULT.withPrefixActionHintMatch());
 
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-    if (getTestName(false).endsWith("GenerateFinal.java")) {
-      JavaCodeStyleSettings.getInstance(getProject()).GENERATE_FINAL_PARAMETERS = true;
+  static List<String> files() {
+    return lightQuickFixTestFiles(TEST_DATA_PATH);
+  }
+
+  @ParameterizedTest(name = "{argumentSetNameOrArgumentsWithNames}")
+  @MethodSource("files")
+  void parameterized(String fileName) {
+    if (fileName.endsWith("GenerateFinal.java")) {
+      JavaCodeStyleSettings.getInstance(quickFixFixture.get().getFixture().getProject()).GENERATE_FINAL_PARAMETERS = true;
     }
-  }
-
-  @Override
-  protected String getBasePath() {
-    return "/codeInsight/daemonCodeAnalyzer/quickFix/createMethodFromUsage";
-  }
-
-  @Override
-  protected Sdk getProjectJDK() {
-    return IdeaTestUtil.getMockJdk21();
-  }
-
-  @Override
-  protected ActionHint parseActionHintImpl(@NotNull PsiFile psiFile, @NotNull String contents) {
-    return ActionHint.parse(psiFile, contents, false);
+    quickFixFixture.get().doTest(fileName);
   }
 
   @TestApplication

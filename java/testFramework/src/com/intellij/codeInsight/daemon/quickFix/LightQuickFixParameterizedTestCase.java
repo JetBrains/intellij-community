@@ -9,8 +9,10 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 /**
- * @see LightQuickFixParameterizedTestCase5
+ * @deprecated Use {@link LightQuickFixFixtureKt#lightQuickFixFixture} with a parameterized test method and
+ * {@link LightQuickFixFixtureKt#lightQuickFixTestFiles} in a JUnit 5 test.
  */
+@Deprecated
 @RunWith(Parameterized.class)
 public abstract class LightQuickFixParameterizedTestCase extends LightQuickFixTestCase implements FileBasedTestCaseHelperEx {
   @Override
