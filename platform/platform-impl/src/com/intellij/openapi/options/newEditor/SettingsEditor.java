@@ -77,6 +77,7 @@ import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JPanel;
 import javax.swing.LayoutFocusTraversalPolicy;
+import javax.swing.SwingUtilities;
 import java.awt.AWTEvent;
 import java.awt.BorderLayout;
 import java.awt.Color;
@@ -84,6 +85,7 @@ import java.awt.Component;
 import java.awt.Font;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
+import java.awt.Window;
 import java.awt.event.ActionEvent;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
@@ -817,6 +819,17 @@ public final class SettingsEditor extends AbstractEditor implements UiDataProvid
   @Override
   protected Action getResetAction() {
     return myResetAllAction;
+  }
+
+  /**
+   * Gives the value of a table cell that the user still edits to its page. A check for changes that comes before a
+   * question about them needs this call first, or it does not see that value.
+   */
+  void stopFocusedEditing() {
+    Window window = SwingUtilities.getWindowAncestor(myContent);
+    if (window != null) {
+      UIUtil.stopFocusedEditing(window);
+    }
   }
 
   /** Checks the current page for changes at once. Without this call, the editor checks a page only after a delay. */

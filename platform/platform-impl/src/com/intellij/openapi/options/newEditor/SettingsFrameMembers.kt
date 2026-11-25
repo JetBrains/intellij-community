@@ -35,6 +35,7 @@ internal object SettingsFrameGuestClose {
     if (project !in group.projects.projects) {
       return true
     }
+    editor.stopFocusedEditing()
     // the editor checks a page for changes only after a delay, and a change of the last second must count too
     editor.checkCurrentModified()
     if (!group.isModified(project)) {

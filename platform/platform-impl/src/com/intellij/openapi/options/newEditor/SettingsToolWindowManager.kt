@@ -425,7 +425,7 @@ internal class SettingsToolWindowManager(private val project: Project, private v
   @RequiresEdt
   private fun resolveUnsavedChanges(@NlsContexts.DialogMessage message: String): Boolean {
     val editor = editor ?: return true
-    stopFocusedEditing()
+    editor.stopFocusedEditing()
     // the editor checks a page for changes only after a delay, and a change of the last second must count too
     editor.checkCurrentModified()
     if (!editor.isModified) {
@@ -461,18 +461,13 @@ internal class SettingsToolWindowManager(private val project: Project, private v
   @RequiresEdt
   private fun apply(): Boolean {
     val editor = editor ?: return true
-    stopFocusedEditing()
+    editor.stopFocusedEditing()
     // a click on a Swing button holds no write-intent lock, and some pages apply in a write action
     val applied = WriteIntentReadAction.compute { editor.apply() }
     if (applied) {
       SaveAndSyncHandler.getInstance().scheduleSave(SaveAndSyncHandler.SaveTask(null, true))
     }
     return applied
-  }
-
-  /** Gives the value of a table cell that the user still edits to its page. */
-  private fun stopFocusedEditing() {
-    SwingUtilities.getWindowAncestor(content)?.let { UIUtil.stopFocusedEditing(it) }
   }
 
   override fun dispose() {
