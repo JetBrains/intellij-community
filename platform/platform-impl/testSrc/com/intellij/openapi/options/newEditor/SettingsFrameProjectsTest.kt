@@ -6,6 +6,7 @@ package com.intellij.openapi.options.newEditor
 import com.intellij.ide.actions.selectRequester
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.extensions.DefaultPluginDescriptor
 import com.intellij.openapi.extensions.PluginId
@@ -82,6 +83,9 @@ internal class SettingsFrameProjectsTest {
   /** The parent of the masks of the project-level pages of each project, and the mask that is in effect. */
   private val projectMasks = HashMap<Project, Disposable>()
   private val pageMasks = HashMap<Project, Disposable>()
+
+  /** `true` when the declaration of the project-level test page says that the page builds its child pages itself. */
+  private var isProjectPageDynamic = false
 
   @Test
   fun `the selector lists the frame owner and its frame guests`(): Unit = inFrame {
@@ -501,6 +505,20 @@ internal class SettingsFrameProjectsTest {
   }
 
   @Test
+  fun `the page of a frame guest that joins builds its child pages off the EDT`(): Unit = inFrame(
+    projectsWithPage = { listOf(third) },
+    withDynamicProjectPage = true,
+  ) { disposable ->
+    val group = createGroup(SettingsFrameProjects.create(owner)!!, disposable)
+    WindowManagerEx.getInstanceEx().addFrameGuest(owner, third)
+
+    SettingsFrameGuestJoins.join(group, third) {}
+
+    assertThat(projectPage(group).projectsWithPage).containsExactly(third)
+    assertThat(pageOf(third).isCreatedOnEdt).describedAs("The merge on the EDT creates no page").isFalse()
+  }
+
+  @Test
   fun `the last frame guest that closes takes its pages out of the tree and leaves the frame owner selected`(): Unit = inFrame { disposable ->
     suppressSettingsOfOwner(disposable)
     withForcedRespectIsShowingClientProperty {
@@ -567,12 +585,14 @@ internal class SettingsFrameProjectsTest {
 
   /**
    * Runs [block] on the EDT with `guest` as a frame guest of `owner`. Each project of [projectsWithPage] has the project-level
-   * test page. With [withAppChildPage], an application-level page is a child of that page. The context is `Dispatchers.EDT`,
-   * because a settings page is created under the write-intent lock.
+   * test page. With [withAppChildPage], an application-level page is a child of that page. With [withDynamicProjectPage],
+   * the project-level test page builds its child pages itself. The context is `Dispatchers.EDT`, because a settings page is
+   * created under the write-intent lock.
    */
   private fun inFrame(
     projectsWithPage: () -> List<Project> = { listOf(owner, guest, third) },
     withAppChildPage: Boolean = false,
+    withDynamicProjectPage: Boolean = false,
     block: suspend (Disposable) -> Unit,
   ) {
     timeoutRunBlocking(context = Dispatchers.EDT) {
@@ -580,6 +600,7 @@ internal class SettingsFrameProjectsTest {
       val windowManager = WindowManagerEx.getInstanceEx()
       windowManager.addFrameGuest(owner, guest)
       try {
+        isProjectPageDynamic = withDynamicProjectPage
         maskPages(projectsWithPage(), withAppChildPage, disposable)
         block(disposable)
       }
@@ -675,6 +696,7 @@ internal class SettingsFrameProjectsTest {
       id = PROJECT_PAGE_ID
       displayName = "Project Page"
       instanceClass = FrameProjectsTestProjectPage::class.java.name
+      dynamic = isProjectPageDynamic
     }
     val point = Configurable.PROJECT_CONFIGURABLE.getPoint(project) as ExtensionPointImpl<ConfigurableEP<Configurable>>
     point.maskAll(if (hasPage) listOf(projectPage) else emptyList(), mask, fireEvents)
@@ -713,7 +735,9 @@ private class FrameProjectsTestAppPage : Configurable {
 }
 
 /** The project-level test page. The test finds the page of a project with [pageOf]. */
-private class FrameProjectsTestProjectPage(project: Project) : Configurable {
+private class FrameProjectsTestProjectPage(project: Project) : Configurable, Configurable.Composite {
+  /** `true` when the EDT created the page. */
+  val isCreatedOnEdt: Boolean = ApplicationManager.getApplication().isDispatchThread
   var modified = false
   var applies = 0
   var resets = 0
@@ -727,6 +751,8 @@ private class FrameProjectsTestProjectPage(project: Project) : Configurable {
   }
 
   override fun getDisplayName(): String = "Project Page"
+
+  override fun getConfigurables(): Array<Configurable> = emptyArray()
 
   override fun createComponent(): JComponent = JPanel()
 

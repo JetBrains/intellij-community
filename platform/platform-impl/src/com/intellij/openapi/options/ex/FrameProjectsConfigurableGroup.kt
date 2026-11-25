@@ -140,11 +140,33 @@ class FrameProjectsConfigurableGroup private constructor(
       return FrameProjectsConfigurableGroup(projects, tree, group)
     }
 
-    /** Builds the tree of [project] for [join]. This is heavy, so it must not run on the EDT. */
+    /**
+     * Builds the tree of [project] for [join]. This is heavy, so it must not run on the EDT.
+     * Each project-level page of the tree has its child pages after the call, so the merge of [join] on the EDT creates no page.
+     */
     @JvmStatic
     fun buildMemberTree(project: Project): SortedConfigurableGroup? {
       // no tree gets a project: the name of a group must not hold the name of one of the projects
-      return ConfigurableExtensionPointUtil.buildGroupTree(ConfigurableExtensionPointUtil.getConfigurables(project, true), null)
+      val root = ConfigurableExtensionPointUtil.buildGroupTree(ConfigurableExtensionPointUtil.getConfigurables(project, true), null)
+      root?.myList?.let { buildProjectLevelChildren(it, isParentProjectLevel = false) }
+      return root
+    }
+
+    /**
+     * Makes each project-level page of [nodes] build its child pages. A page that builds them itself is created for that.
+     * An application-level page stays as it is: the merge reads only the child pages that the grouping added to it.
+     */
+    private fun buildProjectLevelChildren(nodes: List<Configurable>, isParentProjectLevel: Boolean) {
+      for (node in nodes) {
+        when {
+          isProjectLevel(node, isParentProjectLevel) -> {
+            val children = (node as? Configurable.Composite)?.getConfigurablesSafely() ?: continue
+            buildProjectLevelChildren(children.asList(), isParentProjectLevel = true)
+          }
+          node is SortedConfigurableGroup -> buildProjectLevelChildren(node.myList ?: continue, isParentProjectLevel = false)
+          node is ConfigurableWrapper.CompositeWrapper -> buildProjectLevelChildren(node.addedConfigurables.asList(), isParentProjectLevel = false)
+        }
+      }
     }
 
     /**
@@ -433,13 +455,14 @@ private class FrameProjectTreeMerger(private val projects: SettingsFrameProjects
     return nodesByKey.values.mapTo(ArrayList()) { merge(it, isParentProjectLevel) }
   }
 
-  /** A page without a declaration, which a parent page builds itself, is of the level of its parent, as in `SettingsTreeView`. */
-  private fun isProjectLevel(configurable: Configurable, isParentProjectLevel: Boolean): Boolean {
-    return when (configurable) {
-      is FrameProjectConfigurable -> true
-      is ConfigurableWrapper -> configurable.project != null
-      is SortedConfigurableGroup -> false
-      else -> isParentProjectLevel
-    }
+}
+
+/** A page without a declaration, which a parent page builds itself, is of the level of its parent, as in `SettingsTreeView`. */
+private fun isProjectLevel(configurable: Configurable, isParentProjectLevel: Boolean): Boolean {
+  return when (configurable) {
+    is FrameProjectConfigurable -> true
+    is ConfigurableWrapper -> configurable.project != null
+    is SortedConfigurableGroup -> false
+    else -> isParentProjectLevel
   }
 }
