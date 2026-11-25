@@ -201,6 +201,8 @@ takes `DOCS_GATE_DATA` and `DOCS_GATE_ENV` of `//tools/openspec:defs.bzl`. `air-
 `plugins/air/tests/architecture-gate` runs the Air gate, and `//build/docs:docs-site_test` runs the build gate. The gate has no
 `node_modules`, so each module that it loads imports nothing from npm. `scripts/yamlCompat.ts` parses with
 `Bun.YAML` on bun, also on a machine that has the packages.
+The crate passes the declared `checkout-files` binary in `DOCS_CHECKOUT_FILES`. With it, `walkFiles` of
+`scripts/paths.ts` reads the files that git lists under a root, once for each root, and reads no directory.
 
 ## Wiring in a site
 

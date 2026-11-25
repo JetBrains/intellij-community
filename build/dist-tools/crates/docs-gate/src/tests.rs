@@ -2,34 +2,38 @@ use super::{Outcome, Runtime, interpret};
 use std::fs;
 use std::path::PathBuf;
 
-/// A temporary directory with a bun file and the entry of an OpenSpec package folder.
+/// A temporary directory with a bun file, the entry of an OpenSpec package folder and a `checkout-files` file.
 fn declared_tree() -> tempfile::TempDir {
     let root = tempfile::tempdir().expect("a temporary directory");
     fs::write(root.path().join("bun"), "").expect("bun");
     fs::create_dir_all(root.path().join("openspec/bin")).expect("the package folder");
     fs::write(root.path().join("openspec/bin/openspec.js"), "").expect("the entry");
+    fs::write(root.path().join("checkout-files"), "").expect("checkout-files");
     root
 }
 
 /// The runtime that `root` of [`declared_tree`] declares.
 fn declared_runtime(root: &tempfile::TempDir) -> Runtime {
     let resolve = |location: &str| Some(root.path().join(location));
-    Runtime::from_locations(Some("bun".to_owned()), Some("openspec".to_owned()), resolve).expect("a declared runtime")
+    Runtime::from_locations(Some("bun".to_owned()), Some("openspec".to_owned()), Some("checkout-files".to_owned()), resolve)
+        .expect("a declared runtime")
 }
 
 #[test]
-fn the_runtime_resolves_bun_and_the_entry_of_the_openspec_cli() {
+fn the_runtime_resolves_bun_the_entry_of_the_openspec_cli_and_checkout_files() {
     let root = declared_tree();
 
     let runtime = declared_runtime(&root);
 
     assert_eq!(runtime.bun, root.path().join("bun"));
     assert_eq!(runtime.openspec_entry, root.path().join("openspec/bin/openspec.js"));
+    assert_eq!(runtime.checkout_files, root.path().join("checkout-files"));
 }
 
 #[test]
 fn the_runtime_refuses_a_missing_declaration() {
-    let error = Runtime::from_locations(None, Some("openspec".to_owned()), |_| None::<PathBuf>).expect_err("no bun");
+    let error = Runtime::from_locations(None, Some("openspec".to_owned()), Some("checkout-files".to_owned()), |_| None::<PathBuf>)
+        .expect_err("no bun");
 
     assert_eq!(
         format!("{error:#}"),
@@ -42,7 +46,8 @@ fn the_runtime_refuses_a_package_folder_without_the_entry() {
     let root = declared_tree();
     let resolve = |location: &str| Some(root.path().join(location));
 
-    let error = Runtime::from_locations(Some("bun".to_owned()), Some("bun-folder".to_owned()), resolve).expect_err("no entry");
+    let error = Runtime::from_locations(Some("bun".to_owned()), Some("bun-folder".to_owned()), Some("checkout-files".to_owned()), resolve)
+        .expect_err("no entry");
 
     assert!(
         format!("{error:#}").starts_with("the declared OpenSpec CLI has no entry at "),
@@ -97,7 +102,7 @@ fn a_run_of_the_gate_reads_the_output_of_the_script() {
     let bun = root.path().join("bun");
     fs::write(
         &bun,
-        "#!/bin/sh\necho noise\necho 'docs-gate 1'\nprintf 'spec\\t%s\\n' \"$1\" \"$OPENSPEC_ENTRY\"\n",
+        "#!/bin/sh\necho noise\necho 'docs-gate 1'\nprintf 'spec\\t%s\\n' \"$1\" \"$OPENSPEC_ENTRY\" \"$DOCS_CHECKOUT_FILES\"\n",
     )
     .expect("the fake bun");
     fs::set_permissions(&bun, fs::Permissions::from_mode(0o755)).expect("an executable bun");
@@ -106,8 +111,13 @@ fn a_run_of_the_gate_reads_the_output_of_the_script() {
     let outcome = runtime.run_gate(root.path(), "gate.ts", Duration::from_secs(10));
 
     let entry = root.path().join("openspec/bin/openspec.js");
+    let checkout_files = root.path().join("checkout-files");
     assert_eq!(
         outcome,
-        Outcome::Records(vec!["spec\tgate.ts".to_owned(), format!("spec\t{}", entry.display())])
+        Outcome::Records(vec![
+            "spec\tgate.ts".to_owned(),
+            format!("spec\t{}", entry.display()),
+            format!("spec\t{}", checkout_files.display()),
+        ])
     );
 }

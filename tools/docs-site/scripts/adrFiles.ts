@@ -216,6 +216,23 @@ export interface DecisionReferenceFinding {
 }
 
 /**
+ * The files under `decisions.referenceRoots` that the reference check reads, in the order of the walk: each markdown
+ * file and each source file of [SOURCE_SUFFIXES]. A gate reads them ahead into the shared read cache.
+ */
+export function decisionReferenceFiles(config: DecisionConfig, root: string = repoRoot): string[] {
+  const skipDirs = new Set([...SKIP_DIRS, ...config.decisions.skipDirs])
+  const files: string[] = []
+  for (const referenceRoot of config.decisions.referenceRoots) {
+    walkFiles(join(root, referenceRoot), entry => skipDirs.has(entry), (file) => {
+      if (file.endsWith('.md') || SOURCE_SUFFIXES.some(suffix => file.endsWith(suffix))) {
+        files.push(file)
+      }
+    })
+  }
+  return files
+}
+
+/**
  * The findings about the references under `decisions.referenceRoots`: a markdown link into a decision folder or to a
  * design of an archive folder whose target does not exist, an `ADR NNNN` mention, in markdown or in a source comment,
  * that names no numbered record or names two, and a `decision <change-id>` mention that names no design of `designs`
@@ -242,60 +259,54 @@ export function checkDecisionReferences(
   const topicDesigns = new Set(designs.filter(design => design.topic !== null).map(design => design.file))
   // until the switch of a root deletes its decision folder, a dated record answers a `decision <id>` mention too
   const decisionIds = new Set([...designs.map(design => design.id), ...records.filter(record => record.date !== null).map(record => record.id)])
-  const skipDirs = new Set([...SKIP_DIRS, ...config.decisions.skipDirs])
   const findings: DecisionReferenceFinding[] = []
-  for (const referenceRoot of config.decisions.referenceRoots) {
-    walkFiles(join(root, referenceRoot), entry => skipDirs.has(entry), (file) => {
-      const markdown = file.endsWith('.md')
-      if (!markdown && !SOURCE_SUFFIXES.some(suffix => file.endsWith(suffix))) {
+  for (const file of decisionReferenceFiles(config, root)) {
+    const markdown = file.endsWith('.md')
+    const path = posix(relative(root, file))
+    // a site scan reads the same files, so the text comes from the shared read cache
+    const source = readSourceFile(file)
+    // a source file has mentions only, and most source files have none
+    if (!markdown && !source.includes('ADR') && !DECISION_MENTION_HINT.test(source)) {
+      continue
+    }
+    const lines = (markdown ? withoutFencedBlocks(source) : source).split('\n')
+    const checksDesignLinks = !inArchive(file) || topicDesigns.has(file)
+    lines.forEach((text, index) => {
+      // The text of a link to a numbered record, as [start, end, number of the target].
+      const linkedTexts = markdown
+        ? [...text.matchAll(TEXT_LINK)].flatMap((link) => {
+            const target = numbersByPath.get(posix(relative(root, resolve(dirname(file), link[2]))))
+            return target === undefined ? [] : [{ start: link.index + 1, end: link.index + 1 + link[1].length, number: target }]
+          })
+        : []
+      for (const mention of text.matchAll(MENTION)) {
+        const number = mention[1].padStart(4, '0')
+        const count = recordsByNumber.get(number) ?? 0
+        if (count === 0) {
+          findings.push({ path, line: index + 1, message: `"${mention[0]}" names no decision record` })
+        }
+        else if (count > 1 && !linkedTexts.some(linked => linked.number === number && linked.start <= mention.index && mention.index < linked.end)) {
+          findings.push({ path, line: index + 1, message: `"${mention[0]}" is ambiguous: ${count} records take the number; link the record` })
+        }
+      }
+      for (const mention of text.matchAll(DECISION_MENTION)) {
+        if (!decisionIds.has(mention[1])) {
+          findings.push({ path, line: index + 1, message: `"${mention[0]}" names no archived change with a design and no dated decision record` })
+        }
+      }
+      if (!markdown) {
         return
       }
-      const path = posix(relative(root, file))
-      // a site scan reads the same sources, so the text of a source file comes from the shared read cache
-      const source = markdown ? readFileSync(file, 'utf8') : readSourceFile(file)
-      // a source file has mentions only, and most source files have none
-      if (!markdown && !source.includes('ADR') && !DECISION_MENTION_HINT.test(source)) {
-        return
+      for (const link of text.matchAll(LINK)) {
+        const target = resolve(dirname(file), link[1])
+        const folder = folders.find(candidate => target.startsWith(candidate + sep))
+        if (folder !== undefined && !paths.has(posix(relative(root, target))) && !existsSync(target)) {
+          findings.push({ path, line: index + 1, message: `the link "${link[1]}" names no decision record` })
+        }
+        else if (checksDesignLinks && basename(target) === OPENSPEC_DESIGN_FILE && inArchive(target) && !existsSync(target)) {
+          findings.push({ path, line: index + 1, message: `the link "${link[1]}" names no design of an archived change` })
+        }
       }
-      const lines = (markdown ? withoutFencedBlocks(source) : source).split('\n')
-      const checksDesignLinks = !inArchive(file) || topicDesigns.has(file)
-      lines.forEach((text, index) => {
-        // The text of a link to a numbered record, as [start, end, number of the target].
-        const linkedTexts = markdown
-          ? [...text.matchAll(TEXT_LINK)].flatMap((link) => {
-              const target = numbersByPath.get(posix(relative(root, resolve(dirname(file), link[2]))))
-              return target === undefined ? [] : [{ start: link.index + 1, end: link.index + 1 + link[1].length, number: target }]
-            })
-          : []
-        for (const mention of text.matchAll(MENTION)) {
-          const number = mention[1].padStart(4, '0')
-          const count = recordsByNumber.get(number) ?? 0
-          if (count === 0) {
-            findings.push({ path, line: index + 1, message: `"${mention[0]}" names no decision record` })
-          }
-          else if (count > 1 && !linkedTexts.some(linked => linked.number === number && linked.start <= mention.index && mention.index < linked.end)) {
-            findings.push({ path, line: index + 1, message: `"${mention[0]}" is ambiguous: ${count} records take the number; link the record` })
-          }
-        }
-        for (const mention of text.matchAll(DECISION_MENTION)) {
-          if (!decisionIds.has(mention[1])) {
-            findings.push({ path, line: index + 1, message: `"${mention[0]}" names no archived change with a design and no dated decision record` })
-          }
-        }
-        if (!markdown) {
-          return
-        }
-        for (const link of text.matchAll(LINK)) {
-          const target = resolve(dirname(file), link[1])
-          const folder = folders.find(candidate => target.startsWith(candidate + sep))
-          if (folder !== undefined && !paths.has(posix(relative(root, target))) && !existsSync(target)) {
-            findings.push({ path, line: index + 1, message: `the link "${link[1]}" names no decision record` })
-          }
-          else if (checksDesignLinks && basename(target) === OPENSPEC_DESIGN_FILE && inArchive(target) && !existsSync(target)) {
-            findings.push({ path, line: index + 1, message: `the link "${link[1]}" names no design of an archived change` })
-          }
-        }
-      })
     })
   }
   return findings

@@ -5,9 +5,10 @@
 //! check passed, and the records of the site follow the sentinel. Exit 3 means that a check failed, and the report
 //! follows. Exit 4 means that the gate could not finish, such as an OpenSpec CLI that gives no report.
 //!
-//! The test target declares bun and the OpenSpec CLI as `data`, and passes their runfiles paths in [`BUN_ENV_VAR`] and
-//! [`OPENSPEC_ENV_VAR`]. `DOCS_GATE_DATA` and `DOCS_GATE_ENV` of `//tools/openspec:defs.bzl` in the ultimate root hold
-//! both. A missing declaration is a hard failure and never falls back to `community/tools/bun.cmd`.
+//! The test target declares bun, the OpenSpec CLI and the `checkout-files` binary as `data`, and passes their runfiles
+//! paths in [`BUN_ENV_VAR`], [`OPENSPEC_ENV_VAR`] and [`CHECKOUT_FILES_ENV_VAR`]. `DOCS_GATE_DATA` and `DOCS_GATE_ENV` of
+//! `//tools/openspec:defs.bzl` in the ultimate root hold all three. A missing declaration is a hard failure and never
+//! falls back to `community/tools/bun.cmd`.
 //!
 //! [`process`] runs a child process with a deadline. The cases of a site use it for other scripts too.
 
@@ -16,6 +17,7 @@ pub mod process;
 use crate::process::{Finished, output_of};
 use anyhow::{Context, Result, ensure};
 use std::env;
+use std::io::{self, Write};
 use std::path::{Path, PathBuf};
 use std::process::Command;
 use std::time::Duration;
@@ -35,28 +37,46 @@ pub const BUN_ENV_VAR: &str = "DOCS_GATE_BUN";
 /// The runfiles path of the package folder of the declared OpenSpec CLI, which the target sets.
 pub const OPENSPEC_ENV_VAR: &str = "DOCS_GATE_OPENSPEC";
 
+/// The runfiles path of the `checkout-files` binary of `community/build/dist-tools/bins`, which the target sets.
+pub const CHECKOUT_FILES_ENV_VAR: &str = "DOCS_GATE_CHECKOUT_FILES";
+
+/// The variable that gives a script the `checkout-files` binary, so the file walk of the docs-site kernel reads the
+/// files that git lists (`walkFiles` of `scripts/paths.ts`).
+const SCRIPT_CHECKOUT_FILES_ENV_VAR: &str = "DOCS_CHECKOUT_FILES";
+
 /// The entry file of the OpenSpec CLI in its package folder.
 const OPENSPEC_ENTRY_FILE: &str = "bin/openspec.js";
 
 /// The variable that gives a script the entry of the OpenSpec CLI (`openspecCommand` of the docs-site kernel).
 const OPENSPEC_ENTRY_ENV_VAR: &str = "OPENSPEC_ENTRY";
 
-/// The bun and the OpenSpec CLI that the test target declares.
+/// The bun, the OpenSpec CLI and the `checkout-files` binary that the test target declares.
 #[derive(Debug)]
 pub struct Runtime {
     bun: PathBuf,
     openspec_entry: PathBuf,
+    checkout_files: PathBuf,
 }
 
 impl Runtime {
-    /// The runtime that [`BUN_ENV_VAR`] and [`OPENSPEC_ENV_VAR`] declare. `resolve` gives the file of a runfiles path,
-    /// such as `Runfiles::rlocation` of the runfiles library.
+    /// The runtime that [`BUN_ENV_VAR`], [`OPENSPEC_ENV_VAR`] and [`CHECKOUT_FILES_ENV_VAR`] declare. `resolve` gives the
+    /// file of a runfiles path, such as `Runfiles::rlocation` of the runfiles library.
     pub fn declared(resolve: impl Fn(&str) -> Option<PathBuf>) -> Result<Self> {
-        Self::from_locations(env::var(BUN_ENV_VAR).ok(), env::var(OPENSPEC_ENV_VAR).ok(), resolve)
+        Self::from_locations(
+            env::var(BUN_ENV_VAR).ok(),
+            env::var(OPENSPEC_ENV_VAR).ok(),
+            env::var(CHECKOUT_FILES_ENV_VAR).ok(),
+            resolve,
+        )
     }
 
-    /// The runtime from the runfiles paths of bun and of the package folder of the OpenSpec CLI.
-    fn from_locations(bun: Option<String>, openspec: Option<String>, resolve: impl Fn(&str) -> Option<PathBuf>) -> Result<Self> {
+    /// The runtime from the runfiles paths of bun, of the package folder of the OpenSpec CLI and of `checkout-files`.
+    fn from_locations(
+        bun: Option<String>,
+        openspec: Option<String>,
+        checkout_files: Option<String>,
+        resolve: impl Fn(&str) -> Option<PathBuf>,
+    ) -> Result<Self> {
         let bun_location = bun.with_context(|| {
             format!("{BUN_ENV_VAR} is not set; add `DOCS_GATE_DATA` and `DOCS_GATE_ENV` of `//tools/openspec:defs.bzl` to the target")
         })?;
@@ -77,22 +97,36 @@ impl Runtime {
              `//tools/openspec` data dependency",
             openspec_entry.display()
         );
-        Ok(Self { bun, openspec_entry })
+        let checkout_files_location = checkout_files.with_context(|| {
+            format!("{CHECKOUT_FILES_ENV_VAR} is not set; add `DOCS_GATE_DATA` and `DOCS_GATE_ENV` of `//tools/openspec:defs.bzl` to the target")
+        })?;
+        let checkout_files =
+            resolve(&checkout_files_location).with_context(|| format!("cannot resolve the runfile {checkout_files_location}"))?;
+        ensure!(
+            checkout_files.is_file(),
+            "the declared checkout-files is not a file at {} (from {CHECKOUT_FILES_ENV_VAR}={checkout_files_location}); check              the `data` dependency",
+            checkout_files.display()
+        );
+        Ok(Self { bun, openspec_entry, checkout_files })
     }
 
     /// The command that runs `script` on bun in `directory`. The script reads the entry of the OpenSpec CLI from
     /// [`OPENSPEC_ENTRY_ENV_VAR`]. Under `bazel test` the wrapper `tools/openspec.cmd` would build the CLI and wait for
-    /// the output base lock of the test.
+    /// the output base lock of the test. The script reads the `checkout-files` binary from
+    /// [`SCRIPT_CHECKOUT_FILES_ENV_VAR`].
     pub fn command(&self, directory: &Path, script: &str) -> Command {
         let mut command = Command::new(&self.bun);
         command
             .arg(script)
             .current_dir(directory)
-            .env(OPENSPEC_ENTRY_ENV_VAR, &self.openspec_entry);
+            .env(OPENSPEC_ENTRY_ENV_VAR, &self.openspec_entry)
+            .env(SCRIPT_CHECKOUT_FILES_ENV_VAR, &self.checkout_files);
         command
     }
 
-    /// Runs the gate `script` in `directory` until it exits or `deadline` passes.
+    /// Runs the gate `script` in `directory` until it exits or `deadline` passes. The stderr of a gate that exits goes
+    /// to the stderr of this process past the capture of libtest, so the test log holds the time of each check also
+    /// when each case passes.
     pub fn run_gate(&self, directory: &Path, script: &str, deadline: Duration) -> Outcome {
         let shown = format!("{} {script}", self.bun.display());
         match process::run(&mut self.command(directory, script), deadline) {
@@ -103,6 +137,8 @@ impl Runtime {
                 stderr.trim()
             )),
             Ok(Finished::Exited { status, stdout, stderr }) => {
+                // a log line that cannot be written changes no outcome
+                let _ = io::stderr().write_all(stderr.as_bytes());
                 let exit = status.code().map_or_else(|| status.to_string(), |code| code.to_string());
                 interpret(status.code(), &exit, &stdout, &stderr)
             }
