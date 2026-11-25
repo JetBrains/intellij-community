@@ -3444,6 +3444,16 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
             runTest("../../../idea/tests/testData/intentions/addWhenRemainingBranches/emptyWhen.kt");
         }
 
+        @TestMetadata("multilineEntry.kt")
+        public void testMultilineEntry() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/addWhenRemainingBranches/multilineEntry.kt");
+        }
+
+        @TestMetadata("multilineEntryWithoutLineBreak.kt")
+        public void testMultilineEntryWithoutLineBreak() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/addWhenRemainingBranches/multilineEntryWithoutLineBreak.kt");
+        }
+
         @TestMetadata("noElse.kt")
         public void testNoElse() throws Exception {
             runTest("../../../idea/tests/testData/intentions/addWhenRemainingBranches/noElse.kt");
