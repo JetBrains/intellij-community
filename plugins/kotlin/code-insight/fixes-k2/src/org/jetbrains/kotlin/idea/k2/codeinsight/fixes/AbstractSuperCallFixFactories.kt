@@ -73,7 +73,7 @@ internal object AbstractSuperCallFixFactories {
             functionSymbol.isAnyEquals() -> {
                 val info = computeInfoIfNotInObject(containingClass) ?: return null
                 val generatedEquals = GenerateEqualsAndHashCodeUtils.generateEquals(info, tryToFindEqualsMethodForClass = false)
-                                      ?: return null
+                                      .singleOrNull() ?: return null
                 val elementContext = UpdateToCorrectMethodFix.ElementContext(generatedEquals)
                 UpdateToCorrectMethodFix(containingFunction, elementContext, UpdateToCorrectMethodFix.Method.EQUALS)
             }

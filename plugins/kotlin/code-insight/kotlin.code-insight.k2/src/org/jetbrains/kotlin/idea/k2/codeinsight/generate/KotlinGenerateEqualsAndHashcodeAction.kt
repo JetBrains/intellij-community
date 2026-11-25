@@ -135,7 +135,7 @@ class KotlinGenerateEqualsAndHashcodeAction : KotlinGenerateMemberActionBase<Inf
         val prototypes = ArrayList<KtDeclaration>(2)
 
         analyzeInModalWindow(targetClass, KotlinBundle.message("fix.change.signature.prepare")) {
-            prototypes.addIfNotNull(generateEquals(info))
+            prototypes.addAll(generateEquals(info))
             prototypes.addIfNotNull(generateHashCode(info))
         }
 

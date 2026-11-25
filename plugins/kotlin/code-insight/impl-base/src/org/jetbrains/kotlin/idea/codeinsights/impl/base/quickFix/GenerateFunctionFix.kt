@@ -12,12 +12,14 @@ import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
 
-abstract class GenerateFunctionFix(private val functionDefinitionText: String) : PsiUpdateModCommandQuickFix() {
+abstract class GenerateFunctionFix(private val functionDefinitionTexts: List<String>) : PsiUpdateModCommandQuickFix() {
     override fun getFamilyName(): @IntentionName String = name
 
     override fun applyFix(project: Project, element: PsiElement, updater: ModPsiUpdater) {
         val klass = element.getNonStrictParentOfType<KtClass>() ?: return
-        val function = KtPsiFactory.contextual(klass).createFunction(functionDefinitionText)
-        shortenReferences(klass.addMemberDeclaration(function))
+        val psiFactory = KtPsiFactory.contextual(klass)
+        for (functionDefinitionText in functionDefinitionTexts) {
+            shortenReferences(klass.addMemberDeclaration(psiFactory.createFunction(functionDefinitionText)))
+        }
     }
 }

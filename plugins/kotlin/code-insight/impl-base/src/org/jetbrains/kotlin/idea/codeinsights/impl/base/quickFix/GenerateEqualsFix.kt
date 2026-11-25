@@ -3,6 +3,6 @@ package org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix
 
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 
-class GenerateEqualsFix(function: String) : GenerateFunctionFix(function) {
+class GenerateEqualsFix(functions: List<String>) : GenerateFunctionFix(functions) {
     override fun getName(): String = KotlinBundle.message("equals.text")
 }

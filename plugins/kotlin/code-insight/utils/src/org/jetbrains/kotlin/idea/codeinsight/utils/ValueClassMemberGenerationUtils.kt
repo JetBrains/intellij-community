@@ -15,6 +15,15 @@ object ValueClassMemberGenerationUtils {
                 languageVersionSettings.supportsFeature(LanguageFeature.FullValueClasses) &&
                 KotlinPsiHeuristics.findAnnotation(this, StandardKotlinNames.Jvm.JvmInline) == null
 
+    /**
+     * Whether this is an inline value class that can declare `equals` and `hashCode`.
+     * Such a class declares the typed `equals(other: C): Boolean`, not `equals(other: Any?)`.
+     */
+    fun KtClass.isInlineValueClassWithCustomEquals(): Boolean =
+        isValue() &&
+                !isFullValueClass() &&
+                languageVersionSettings.supportsFeature(LanguageFeature.CustomEqualsInValueClasses)
+
     fun KtClass.generationParameters(needsOverride: (Int) -> Boolean = { false }) : List<Parameter>? {
         val parameters = primaryConstructorParameters
         if (parameters.isEmpty()) return null

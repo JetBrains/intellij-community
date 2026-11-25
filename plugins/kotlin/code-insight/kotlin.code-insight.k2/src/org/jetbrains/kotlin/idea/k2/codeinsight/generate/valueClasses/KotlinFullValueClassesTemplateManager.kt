@@ -11,18 +11,31 @@ import com.intellij.openapi.components.Storage
 import com.intellij.openapi.components.service
 import org.jetbrains.java.generate.template.TemplateResource
 
+/**
+ * Holds the `equals` and `hashCode` templates for value classes: the [BASE_TEMPLATE_NAME] pair for a full value class, and the
+ * [INLINE_TEMPLATE_NAME] pair for an inline value class that can declare `equals` and `hashCode`.
+ */
 @Service(Level.APP)
 @State(name = "KotlinFullValueClassesEqualsHashcodeTemplates", storages = [Storage("kotlinFullValueClassesEqualsHashcodeTemplates.xml")], category = SettingsCategory.CODE)
 class KotlinFullValueClassesTemplateManager : EqualsHashCodeTemplatesManagerBase() {
     override fun getDefaultTemplates(): List<TemplateResource> =
+        templatePair(BASE_TEMPLATE_NAME, VALUE_CLASS_EQUALS) + templatePair(INLINE_TEMPLATE_NAME, INLINE_VALUE_CLASS_EQUALS)
+
+    /**
+     * Returns the `equals` and `hashCode` templates whose base name is [baseName].
+     */
+    fun templatesWithBaseName(baseName: String): List<TemplateResource> =
+        defaultTemplates.filter { getTemplateBaseName(it) == baseName }
+
+    private fun templatePair(baseName: String, equalsFile: String): List<TemplateResource> =
         listOf(
             TemplateResource(
-                "$BASE_TEMPLATE_NAME $EQUALS_SUFFIX",
-                readFile(VALUE_CLASS_EQUALS, KotlinFullValueClassesTemplateManager::class.java),
+                "$baseName $EQUALS_SUFFIX",
+                readFile(equalsFile, KotlinFullValueClassesTemplateManager::class.java),
                 true
             ),
             TemplateResource(
-                "$BASE_TEMPLATE_NAME $HASH_CODE_SUFFIX",
+                "$baseName $HASH_CODE_SUFFIX",
                 readFile(VALUE_CLASS_HASHCODE, KotlinFullValueClassesTemplateManager::class.java),
                 true
             ),
@@ -30,8 +43,10 @@ class KotlinFullValueClassesTemplateManager : EqualsHashCodeTemplatesManagerBase
 
     companion object {
         private const val VALUE_CLASS_EQUALS = "valueClassEquals.vm"
+        private const val INLINE_VALUE_CLASS_EQUALS = "inlineValueClassEquals.vm"
         private const val VALUE_CLASS_HASHCODE = "valueClassHashcode.vm"
         internal const val BASE_TEMPLATE_NAME: String = "IntelliJ Value Class"
+        internal const val INLINE_TEMPLATE_NAME: String = "IntelliJ Inline Value Class"
 
         fun getInstance(): KotlinFullValueClassesTemplateManager =
             ApplicationManager.getApplication().service<KotlinFullValueClassesTemplateManager>()

@@ -4,19 +4,18 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.generate.valueClasses
 import com.intellij.codeInsight.generation.EqualsHashCodeTemplatesManagerBase
 import org.jetbrains.java.generate.template.TemplateResource
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.config.LanguageFeature
-import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
-import org.jetbrains.kotlin.idea.base.psi.KotlinPsiHeuristics
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.extensions.KotlinEqualsHashCodeGeneratorExtension
-import org.jetbrains.kotlin.idea.codeinsight.utils.StandardKotlinNames
+import org.jetbrains.kotlin.idea.codeinsight.utils.ValueClassMemberGenerationUtils.isFullValueClass
+import org.jetbrains.kotlin.idea.codeinsight.utils.ValueClassMemberGenerationUtils.isInlineValueClassWithCustomEquals
 import org.jetbrains.kotlin.psi.KtClass
 
+/**
+ * Gives the value class templates of [KotlinFullValueClassesTemplateManager] to a full value class, and to an inline value class that can
+ * declare `equals` and `hashCode`. The default IntelliJ template gives red code for both.
+ */
 internal class KotlinFullValueClassEqualsHashCodeGeneratorExtension : KotlinEqualsHashCodeGeneratorExtension {
     override fun isApplicable(klass: KtClass): Boolean =
-        // TODO: Has to be dropped when KTIJ-40105 is fixed
-        klass.isValue() &&
-                klass.languageVersionSettings.supportsFeature(LanguageFeature.FullValueClasses) &&
-                KotlinPsiHeuristics.findAnnotation(klass, StandardKotlinNames.Jvm.JvmInline) == null
+        templateBaseNameFor(klass) != null
 
     context(session: KaSession)
     override fun extraEqualsContext(klass: KtClass): Map<String, Any> =
@@ -27,17 +26,19 @@ internal class KotlinFullValueClassEqualsHashCodeGeneratorExtension : KotlinEqua
         emptyMap()
 
     override fun alternativeDefaultTemplateFor(klass: KtClass): String? =
-        if (isApplicable(klass)) {
-            KotlinFullValueClassesTemplateManager.BASE_TEMPLATE_NAME
-        } else {
-            null
-        }
+        templateBaseNameFor(klass)
 
-    override fun getTemplatesFor(klass: KtClass): List<TemplateResource> =
-        if (isApplicable(klass)) {
-            KotlinFullValueClassesTemplateManager.getInstance().defaultTemplates
-        } else {
-            emptyList()
+    override fun getTemplatesFor(klass: KtClass): List<TemplateResource> {
+        val baseName = templateBaseNameFor(klass) ?: return emptyList()
+        return KotlinFullValueClassesTemplateManager.getInstance().templatesWithBaseName(baseName)
+    }
+
+    private fun templateBaseNameFor(klass: KtClass): String? =
+        when {
+            // TODO: Has to be dropped when KTIJ-40105 is fixed
+            klass.isFullValueClass() -> KotlinFullValueClassesTemplateManager.BASE_TEMPLATE_NAME
+            klass.isInlineValueClassWithCustomEquals() -> KotlinFullValueClassesTemplateManager.INLINE_TEMPLATE_NAME
+            else -> null
         }
 
     override fun isExtensionTemplate(name: String): Boolean =

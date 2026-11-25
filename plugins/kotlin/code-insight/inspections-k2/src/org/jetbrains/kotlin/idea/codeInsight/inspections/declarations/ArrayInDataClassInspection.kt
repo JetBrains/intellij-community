@@ -16,6 +16,8 @@ import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinAp
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
 import org.jetbrains.kotlin.idea.codeinsight.utils.KotlinEqualsHashCodeToStringSymbolUtils.matchesEqualsMethodSignature
 import org.jetbrains.kotlin.idea.codeinsight.utils.KotlinEqualsHashCodeToStringSymbolUtils.matchesHashCodeMethodSignature
+import org.jetbrains.kotlin.idea.codeinsight.utils.ValueClassMemberGenerationUtils.isFullValueClass
+import org.jetbrains.kotlin.idea.codeinsight.utils.ValueClassMemberGenerationUtils.isInlineValueClassWithCustomEquals
 import org.jetbrains.kotlin.idea.k2.codeinsight.generate.GenerateEqualsAndHashCodeUtils
 import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtFunction
@@ -27,7 +29,7 @@ import org.jetbrains.kotlin.psi.psiUtil.containingClass
 
 class ArrayInDataClassInspection : KotlinApplicableInspectionBase.Simple<KtParameter, ArrayInDataClassInspection.Context>() {
     class Context(
-        val equals: String?,
+        val equals: List<String>,
         val hashCode: String?,
         val classKindText: String,
     )
@@ -43,8 +45,8 @@ class ArrayInDataClassInspection : KotlinApplicableInspectionBase.Simple<KtParam
             override fun applyFix(project: Project, element: KtParameter, updater: ModPsiUpdater): Unit = with(context) {
                 val psiFactory = KtPsiFactory(project, markGenerated = true)
                 val containingClass = element.containingClass() ?: return
-                if (equals != null) {
-                    generateFunctionDeclarationInClass(psiFactory, containingClass, equals)
+                for (function in equals) {
+                    generateFunctionDeclarationInClass(psiFactory, containingClass, function)
                 }
                 if (hashCode != null) {
                     generateFunctionDeclarationInClass(psiFactory, containingClass, hashCode)
@@ -84,7 +86,7 @@ class ArrayInDataClassInspection : KotlinApplicableInspectionBase.Simple<KtParam
             EqualsHashCodeOverrides.HAS_EQUALS_AND_HASHCODE -> null
             EqualsHashCodeOverrides.HAS_EQUALS -> {
                 val text = GenerateEqualsAndHashCodeUtils.generateHashCode(containingClass)
-                Context(equals = null, hashCode = text, classKindText = classKind.text)
+                Context(equals = emptyList(), hashCode = text, classKindText = classKind.text)
             }
 
             EqualsHashCodeOverrides.HAS_HASHCODE -> {
@@ -103,7 +105,7 @@ class ArrayInDataClassInspection : KotlinApplicableInspectionBase.Simple<KtParam
     private fun KtClass.arrayPropertyClassKind(): ArrayPropertyClassKind? {
         return when {
             isData() -> ArrayPropertyClassKind.DATA
-            isValue() -> ArrayPropertyClassKind.VALUE
+            isFullValueClass() || isInlineValueClassWithCustomEquals() -> ArrayPropertyClassKind.VALUE
             else -> null
         }
     }

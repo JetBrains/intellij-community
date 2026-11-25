@@ -1,0 +1,17 @@
+// WITH_STDLIB
+// COMPILER_ARGUMENTS: -XXLanguage:+CustomEqualsInValueClasses
+
+@JvmInline
+value class Money(val cents: Long) {
+    override fun hashCode(): Int = cents.hashCode()
+    override fun equals(other: Any?): Boolean {
+        if (other !is Money) return false
+        return equals(other)
+    }
+
+    fun equals(other: Money): Boolean {
+        if (cents != other.cents) return false
+
+        return true
+    }
+}

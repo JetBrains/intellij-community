@@ -44,6 +44,9 @@ object GenerateEqualsAndHashCodeUtils {
     const val CHECK_PARAMETER_WITH_INSTANCEOF: String = "checkParameterWithInstanceof"
 
     /**
+     * Generates the `equals()` functions of [Info.klass]. A template can give more than one function: the value class template of an inline
+     * value class gives `equals(other: Any?)` and the typed `equals(other: C)`.
+     *
      * @param tryToFindEqualsMethodForClass Pass `true` to attempt to find an existing `equals()` implementation in
      * the class or its superclass.
      *
@@ -55,8 +58,8 @@ object GenerateEqualsAndHashCodeUtils {
      * error because the method where this error appears must be ignored.
      */
     context(_: KaSession)
-    fun generateEquals(info: Info, tryToFindEqualsMethodForClass: Boolean = true): KtNamedFunction? {
-        if (info.equalsInClass != null) return null
+    fun generateEquals(info: Info, tryToFindEqualsMethodForClass: Boolean = true): List<KtNamedFunction> {
+        if (info.equalsInClass != null) return emptyList()
 
         val klass = info.klass
 
@@ -84,11 +87,11 @@ object GenerateEqualsAndHashCodeUtils {
             .velocityGenerateCode(
                 klass, sortedVariables, contextMap,
                 KotlinEqualsHashCodeTemplatesManager.getInstance().defaultEqualsTemplate.template, false
-            ) ?: return null
+            ) ?: return emptyList()
 
-        val function = KtPsiFactory.contextual(klass).createFunction(methodText)
-        setupExpectActualFunction(klass, function)
-        return function
+        val functions = KtPsiFactory.contextual(klass).createClass("class C {\n$methodText\n}").declarations.filterIsInstance<KtNamedFunction>()
+        functions.forEach { setupExpectActualFunction(klass, it) }
+        return functions
     }
 
     /**
@@ -197,15 +200,15 @@ object GenerateEqualsAndHashCodeUtils {
         }
     }
 
-    fun generateEquals(klass: KtClass): String {
+    fun generateEquals(klass: KtClass): List<String> {
         return analyze(klass) {
             val unfilteredVariables = getPropertiesToUseInGeneratedMember(klass, searchInSuper = true)
             val filters = KotlinEqualsHashCodeGeneratorExtension.getSingleApplicableFor(klass)?.memberFilters ?: DefaultMemberFilters
             val variablesForEquals = unfilteredVariables.filter { filters.isApplicableForEqualsInClass(it, klass) }
             val equals = KotlinEqualsHashCodeTemplatesManager.getInstance().runWithExtensionTemplatesFor(klass) {
-                generateEquals(Info(klass, variablesForEquals, emptyList(), null, null))!!
+                generateEquals(Info(klass, variablesForEquals, emptyList(), null, null))
             }
-            equals.text
+            equals.map { it.text }
         }
     }
 

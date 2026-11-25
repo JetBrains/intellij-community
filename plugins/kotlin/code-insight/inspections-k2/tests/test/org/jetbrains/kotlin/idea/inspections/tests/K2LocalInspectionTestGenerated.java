@@ -5218,6 +5218,11 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
         public void testValueClass() throws Exception {
             runTest("../../../idea/tests/testData/inspectionsLocal/equalsOrHashCode/valueClass.kt");
         }
+
+        @TestMetadata("valueClassHashCodeOnly.kt")
+        public void testValueClassHashCodeOnly() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/equalsOrHashCode/valueClassHashCodeOnly.kt");
+        }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
@@ -11726,6 +11731,36 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
         @TestMetadata("justHashCode.kt")
         public void testJustHashCode() throws Exception {
             runTest("../../../idea/tests/testData/inspectionsLocal/arrayInDataClass/justHashCode.kt");
+        }
+
+        @TestMetadata("jvmInlineValueClassArray.kt")
+        public void testJvmInlineValueClassArray() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/arrayInDataClass/jvmInlineValueClassArray.kt");
+        }
+
+        @TestMetadata("jvmInlineValueClassGenericArray.kt")
+        public void testJvmInlineValueClassGenericArray() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/arrayInDataClass/jvmInlineValueClassGenericArray.kt");
+        }
+
+        @TestMetadata("jvmInlineValueClassJustHashCode.kt")
+        public void testJvmInlineValueClassJustHashCode() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/arrayInDataClass/jvmInlineValueClassJustHashCode.kt");
+        }
+
+        @TestMetadata("jvmInlineValueClassNestedArray.kt")
+        public void testJvmInlineValueClassNestedArray() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/arrayInDataClass/jvmInlineValueClassNestedArray.kt");
+        }
+
+        @TestMetadata("jvmInlineValueClassTypedEqualsAndHashCodeNoWarn.kt")
+        public void testJvmInlineValueClassTypedEqualsAndHashCodeNoWarn() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/arrayInDataClass/jvmInlineValueClassTypedEqualsAndHashCodeNoWarn.kt");
+        }
+
+        @TestMetadata("jvmInlineValueClassWithoutCustomEqualsNoWarn.kt")
+        public void testJvmInlineValueClassWithoutCustomEqualsNoWarn() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/arrayInDataClass/jvmInlineValueClassWithoutCustomEqualsNoWarn.kt");
         }
 
         @TestMetadata("mixedParameters.kt")
