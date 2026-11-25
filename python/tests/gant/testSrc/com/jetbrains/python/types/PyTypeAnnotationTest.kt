@@ -2523,8 +2523,14 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
     type AItself[T = T] = list[T]
     #                └ WARNING Default type of type parameter 'T' refers to itself
     x: Itself
+    print(x)
+    #     └ TYPE Itself[T]
     y: SelfNested
+    print(y)
+    #     └ TYPE SelfNested[list[T]]
     z: AItself
+    print(z)
+    #     └ TYPE list[T]
     """.trimIndent())
 
   @Test
@@ -2536,6 +2542,12 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
     #                ^^ WARNING Default type of this type parameter refers to one or more type variables that are out of scope
     type ALater[S2 = S1, S1 = str] = tuple[S1, S2]
     #                ^^ WARNING Default type of this type parameter refers to one or more type variables that are out of scope
+    x: Later
+    print(x)
+    #     └ TYPE Later[str, str]
+    y: ALater
+    print(y)
+    #     └ TYPE tuple[str, str]
     """.trimIndent())
 
   @Test
@@ -2544,6 +2556,8 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
     class Mutual[T = U, U = T]: ...
     #                └ WARNING Default type of this type parameter refers to one or more type variables that are out of scope
     x: Mutual
+    print(x)
+    #     └ TYPE Mutual[T, T]
     """.trimIndent())
 
   @Test
@@ -2552,6 +2566,16 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
     class SelfBound[T: T]: ...
     #                  └ ERROR Generic types are not allowed inside constraints and bounds of type parameters
     x: SelfBound[int]
+    """.trimIndent())
+
+  @Test
+  @TestFor(issues = ["PY-94318"])
+  fun `new-style bound that refers to a later type parameter`() = test("""
+    class LaterBound[T: U, U]: ...
+    #                   └ ERROR Generic types are not allowed inside constraints and bounds of type parameters
+    x: LaterBound[int, str]
+    print(x)
+    #     └ TYPE LaterBound[int, str]
     """.trimIndent())
 
   @Test
@@ -2573,6 +2597,15 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
     class TsLater[*Ts = *tuple[T, ...], T = int]: ...
     #                          │        ^^^^^^^ ERROR TypeVar with a default value cannot follow TypeVarTuple
     #                          └ WARNING Default type of this type parameter refers to one or more type variables that are out of scope
+    x: Nested
+    print(x)
+    #     └ TYPE Nested[list[str], str]
+    y: PLater
+    print(y)
+    #     └ TYPE PLater[[int], int]
+    z: TsLater
+    print(z)
+    #     └ TYPE TsLater[*tuple[int, ...], int]
     """.trimIndent())
 
   @Test
@@ -2583,6 +2616,35 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
     class TsOk[T = int, *Ts = *tuple[T, ...]]: ...
     def f_ok[S1 = str, S2 = S1](): ...
     type AOk[S1 = str, S2 = S1] = tuple[S1, S2]
+    """.trimIndent())
+
+  @Test
+  @TestFor(issues = ["PY-94318"])
+  fun `new-style ParamSpec default that refers to another type parameter`() = test("""
+    from typing import Callable
+
+    class PSelf[**P = P]: ...
+    #                 └ WARNING Default type of type parameter 'P' refers to itself
+    class PLaterParamSpec[**P1 = P2, **P2 = [int]]: ...
+    #                            ^^ WARNING Default type of this type parameter refers to one or more type variables that are out of scope
+    class PEarlier[**P1 = [int], **P2 = P1]: ...
+    class PEarlierTypeVar[T = int, **P = [T, str]]: ...
+    type APEarlier[**P1 = [int], **P2 = P1] = Callable[P2, None]
+    a: PSelf
+    print(a)
+    #     └ TYPE PSelf[**P]
+    b: PLaterParamSpec
+    print(b)
+    #     └ TYPE PLaterParamSpec[[int], [int]]
+    c: PEarlier
+    print(c)
+    #     └ TYPE PEarlier[[int], [int]]
+    d: PEarlierTypeVar
+    print(d)
+    #     └ TYPE PEarlierTypeVar[int, [int, str]]
+    e: APEarlier
+    print(e)
+    #     └ TYPE (int) -> None
     """.trimIndent())
 
   @Test
