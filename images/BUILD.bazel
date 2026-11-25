@@ -159,6 +159,7 @@ jvm_library(
         "//libraries/junit6",
         "//platform/main/intellij.platform.monolith.main:monolith-main",
         "//community-resources:customization",
+        "//platform/core-ui",
     ],
 )
 ### auto-generated section `build intellij.platform.images.tests` end

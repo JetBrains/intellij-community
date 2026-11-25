@@ -10,14 +10,20 @@ import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.command.UndoConfirmationPolicy
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.ide.CopyPasteManager
+import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.util.ui.MultiResolutionImageProvider
 import org.intellij.images.ImagesBundle
 import java.awt.Image
+import java.awt.datatransfer.DataFlavor
 import java.awt.datatransfer.DataFlavor.imageFlavor
+import java.awt.datatransfer.SystemFlavorMap
+import java.awt.datatransfer.Transferable
 import java.awt.image.BufferedImage
-import java.awt.image.MultiResolutionImage
+import java.io.ByteArrayOutputStream
 import java.io.IOException
+import java.io.InputStream
 import javax.imageio.ImageIO
 
 /**
@@ -37,6 +43,9 @@ open class ImagePasteProvider : PasteProvider {
 
   final override fun performPaste(dataContext: DataContext) {
     val currentFile = dataContext.getData(CommonDataKeys.VIRTUAL_FILE) ?: return
+    if (SystemInfoRt.isMac) {
+      (SystemFlavorMap.getDefaultFlavorMap() as? SystemFlavorMap)?.addFlavorForUnencodedNative("PNG", PNG_FLAVOR)
+    }
     val pasteContents = CopyPasteManager.getInstance().contents ?: return
 
     val newFileParent = if (currentFile.isDirectory) currentFile else currentFile.parent
@@ -46,18 +55,11 @@ open class ImagePasteProvider : PasteProvider {
 
     // Step 1: Obtain image data from the clipboard
     val imageToPaste = try {
-      pasteContents.getTransferData(imageFlavor)
+      pasteContents.pngBytes() ?: pasteContents.getTransferData(imageFlavor).toPngBytes()
     }
     catch (ioException: IOException) {
       logger.error("Failed to get data from the clipboard. Data is no longer available. Aborting operation.", ioException)
       return
-    }.let {
-      when (it) {
-        is MultiResolutionImage -> it.resolutionVariants.firstOrNull()?.toBufferedImage()
-        is BufferedImage -> it
-        is Image -> it.toBufferedImage()
-        else -> null
-      }
     }
 
     if (imageToPaste == null) {
@@ -83,7 +85,7 @@ open class ImagePasteProvider : PasteProvider {
         try {
           imageFile.getOutputStream(this)
             .use {
-              ImageIO.write(imageToPaste, "png", it)
+              it.write(imageToPaste)
             }
         }
         catch (ioException: IOException) {
@@ -106,6 +108,20 @@ open class ImagePasteProvider : PasteProvider {
   }
 
   open fun imageFilePasted(dataContext: DataContext, imageFile: VirtualFile) = Unit
+}
+
+private val PNG_FLAVOR = DataFlavor("image/png;class=java.io.InputStream", "PNG")
+
+private fun Transferable.pngBytes(): ByteArray? {
+  if (!isDataFlavorSupported(PNG_FLAVOR)) return null
+  return (getTransferData(PNG_FLAVOR) as InputStream).use { it.readAllBytes() }
+}
+
+private fun Any?.toPngBytes(): ByteArray? {
+  if (this !is Image) return null
+  val output = ByteArrayOutputStream()
+  ImageIO.write(MultiResolutionImageProvider.getMaxSizeResolutionVariant(this).toBufferedImage(), "png", output)
+  return output.toByteArray()
 }
 
 private fun Image.toBufferedImage() = let { img ->
