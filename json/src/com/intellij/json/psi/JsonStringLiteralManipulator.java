@@ -4,6 +4,8 @@ package com.intellij.json.psi;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.AbstractElementManipulator;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.impl.source.tree.LeafPsiElement;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
@@ -21,7 +23,14 @@ public final class JsonStringLiteralManipulator extends AbstractElementManipulat
       StringUtil.unescapeStringCharacters(originalContent.substring(withoutQuotes.getStartOffset(), range.getStartOffset())) +
       newContent +
       StringUtil.unescapeStringCharacters(originalContent.substring(range.getEndOffset(), withoutQuotes.getEndOffset()));
-    return (JsonStringLiteral)element.replace(generator.createStringLiteral(replacement));
+    JsonStringLiteral newLiteral = generator.createStringLiteral(replacement);
+    // A new text of the token keeps the format around the literal, like a one-line array. A replace of the literal reformats it.
+    PsiElement token = element.getFirstChild();
+    if (token instanceof LeafPsiElement leaf && token == element.getLastChild()) {
+      leaf.replaceWithText(newLiteral.getText());
+      return element;
+    }
+    return (JsonStringLiteral)element.replace(newLiteral);
   }
 
   @Override
