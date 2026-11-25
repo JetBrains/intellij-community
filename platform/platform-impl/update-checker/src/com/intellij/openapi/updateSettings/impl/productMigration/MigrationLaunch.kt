@@ -16,6 +16,7 @@ import com.intellij.openapi.application.productMigration.MigrationState
 import com.intellij.openapi.application.productMigration.MigrationStatus
 import com.intellij.openapi.application.productMigration.macOpenCommand
 import com.intellij.openapi.application.productMigration.migrationLaunchArguments
+import com.intellij.openapi.application.productMigration.migrationLauncherCommand
 import com.intellij.openapi.application.productMigration.readInstalledProductInfo
 import com.intellij.openapi.application.productMigration.startMigrationLauncher
 import com.intellij.openapi.application.productMigration.startMigrationProcess
@@ -102,7 +103,7 @@ private fun startMigrationApp(state: MigrationState) {
       OS.Windows -> {
         // no wait: a launcher that cannot start the IDE shows its own message and does not exit
         val launcher = readInstalledProductInfo(state.app)?.launcher
-        if (launcher == null) LOG.warn("no launcher in ${state.app}") else startMigrationLauncher(launcher, arguments)
+        if (launcher == null) LOG.warn("no launcher in ${state.app}") else startMigrationLauncher(migrationLauncherCommand(launcher, arguments))
       }
       OS.Linux, OS.FreeBSD, OS.OHOS, OS.Other -> LOG.warn("no start of the Unified IDE for ${OS.CURRENT}")
     }

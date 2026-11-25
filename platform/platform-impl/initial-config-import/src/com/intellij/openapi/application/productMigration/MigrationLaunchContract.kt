@@ -98,13 +98,12 @@ fun macOpenCommand(app: Path, arguments: List<String>): List<String> =
 fun migrationLauncherCommand(launcher: Path, arguments: List<String>): List<String> = listOf(launcher.toString()) + arguments
 
 /**
- * Starts [launcher] directly with [arguments] and logs the start. A failure is logged and gives `null`.
- * The process is the Unified IDE, and it continues after the exit of this process.
+ * Starts [command] directly and logs the start. A failure is logged and gives `null`.
+ * [command] is a [migrationLauncherCommand]. The process is the Unified IDE, and it continues after the exit of this process.
  * So it gets no pipe for its output, and its working directory is the user home and not a folder of this IDE.
  */
 @ApiStatus.Internal
-fun startMigrationLauncher(launcher: Path, arguments: List<String>): Process? {
-  val command = migrationLauncherCommand(launcher, arguments)
+fun startMigrationLauncher(command: List<String>): Process? {
   LOG.info("starting the Unified IDE: ${command}")
   try {
     return ProcessBuilder(command)
