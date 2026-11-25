@@ -238,7 +238,7 @@ internal class SettingsFrameProjectsTest {
   @Test
   fun `a project-level page keeps the change of a project while it shows another project`(): Unit = inFrame { disposable ->
     val projects = SettingsFrameProjects.create(owner)!!
-    val page = findPages(createGroup(projects, disposable), PROJECT_PAGE_ID).single() as FrameProjectConfigurable
+    val page = projectPage(createGroup(projects, disposable))
 
     // as the Settings editor does: the component, then a reset
     assertThat(ConfigurableCardPanel.createConfigurableComponent(page)).isNotNull()
@@ -263,7 +263,7 @@ internal class SettingsFrameProjectsTest {
   @Test
   fun `a page shows the first project that has it while the selected project has none`(): Unit = inFrame(projectsWithPage = { listOf(guest) }) { disposable ->
     val projects = SettingsFrameProjects.create(owner)!!
-    val page = findPages(createGroup(projects, disposable), PROJECT_PAGE_ID).single() as FrameProjectConfigurable
+    val page = projectPage(createGroup(projects, disposable))
 
     assertThat(page.projectsWithPage).containsExactly(guest)
     val component = ConfigurableCardPanel.createConfigurableComponent(page)!!
@@ -294,7 +294,7 @@ internal class SettingsFrameProjectsTest {
   fun `a project that closes leaves the selector and takes its pages with it`(): Unit = inFrame { disposable ->
     val projects = SettingsFrameProjects.create(owner)!!
     val group = createGroup(projects, disposable)
-    val page = findPages(group, PROJECT_PAGE_ID).single() as FrameProjectConfigurable
+    val page = projectPage(group)
     projects.select(guest)
     assertThat(ConfigurableCardPanel.createConfigurableComponent(page)).isNotNull()
     pageOf(guest).modified = true
@@ -769,14 +769,7 @@ internal class SettingsFrameProjectsTest {
       val group = createGroup(projects, disposable)
       val appPage = findPages(group, APP_PAGE_ID).single()
       val projectPage = findPages(group, PROJECT_PAGE_ID).single()
-      val editor = SettingsEditor(
-        disposable, owner, listOf(group), appPage, null, true,
-        ISettingsTreeViewFactory { f, g -> SettingsTreeView(f, g) },
-        spotlightPainterFactory,
-        null,
-        false,
-      )
-      markAsShowing(editor)
+      val editor = createEditor(group, appPage, disposable)
       val tabs = UIUtil.findComponentOfType(editor.content, SingleHeightTabs::class.java)!!
 
       waitFor("the application-level page") { editor.selectedConfigurable === appPage }
