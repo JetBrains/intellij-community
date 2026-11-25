@@ -43,6 +43,9 @@ class PyCallableParameterImpl @JvmOverloads internal constructor(
   private val myIsPositionalOnlySeparator: Boolean = false,
   private val myDeclarationElement: PsiElement? = null,
 ) : PyCallableParameter {
+  @Volatile
+  private var myHashCode = 0
+
   init {
     if (myType != null) {
       PyAnyType.validate(myType.get())
@@ -180,18 +183,23 @@ class PyCallableParameterImpl @JvmOverloads internal constructor(
   }
 
   override fun hashCode(): Int {
-    return Objects.hash(
-      parameter,
-      myName,
-      myType?.get(),
-      myIsSelf,
-      myIsPositionalContainer,
-      myIsKeywordContainer,
-      myIsKeywordOnlySeparator,
-      myIsPositionalOnlySeparator,
-      myDefaultValue,
-      myDefaultValueText,
-    )
+    var hashCode = myHashCode
+    if (hashCode == 0) {
+      hashCode = Objects.hash(
+        parameter,
+        myName,
+        myType?.get(),
+        myIsSelf,
+        myIsPositionalContainer,
+        myIsKeywordContainer,
+        myIsKeywordOnlySeparator,
+        myIsPositionalOnlySeparator,
+        myDefaultValue,
+        myDefaultValueText,
+      )
+      myHashCode = hashCode
+    }
+    return hashCode
   }
 
   companion object {

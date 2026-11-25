@@ -32,6 +32,7 @@ public class PyCallableTypeImpl implements PyCallableType {
   private final @Nullable PyType myReturnType;
   private final @Nullable PyCallable myCallable;
   private final @Nullable PyFunction.Modifier myModifier;
+  private volatile int myHashCode;
 
   public PyCallableTypeImpl(@Nullable PyCallableParameterVariadicType parametersType, @Nullable PyType returnType) {
     this(null, parametersType, returnType, null, null);
@@ -205,6 +206,11 @@ public class PyCallableTypeImpl implements PyCallableType {
 
   @Override
   public int hashCode() {
-    return Objects.hash(myTypeParameters, myParametersType, myReturnType, myCallable, myModifier);
+    int hashCode = myHashCode;
+    if (hashCode == 0) {
+      hashCode = Objects.hash(myTypeParameters, myParametersType, myReturnType, myCallable, myModifier);
+      myHashCode = hashCode;
+    }
+    return hashCode;
   }
 }
