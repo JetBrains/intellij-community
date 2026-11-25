@@ -37,6 +37,7 @@ import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.openapi.editor.actions.ChangeEditorFontSizeStrategy;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.ex.util.EditorUIUtil;
+import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.impl.EditorsSplittersKt;
@@ -233,6 +234,7 @@ public final class EditorComponentImpl extends JTextComponent
     if (editor.isRendererMode()) return;
 
     sink.set(CommonDataKeys.EDITOR, editor);
+    EditorUtil.putEditorProject(sink, editor);
     sink.set(CommonDataKeys.CARET, editor.getCaretModel().getCurrentCaret());
 
     LogicalPosition location = editor.myLastMousePressedLocation;

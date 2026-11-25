@@ -16,6 +16,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.CustomizedDataContext;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.DataSink;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.CommandEvent;
@@ -126,6 +127,19 @@ public final class EditorUtil {
   private static final Logger LOG = Logger.getInstance(EditorUtil.class);
 
   private EditorUtil() {
+  }
+
+  /**
+   * Writes the project of {@code editor} as {@link CommonDataKeys#PROJECT}. A component that writes {@code editor} as
+   * {@link CommonDataKeys#EDITOR} calls it, so a data context does not give the editor with the project of another component.
+   * An editor without a project or of the default project writes no project.
+   */
+  @ApiStatus.Internal
+  public static void putEditorProject(@NotNull DataSink sink, @NotNull Editor editor) {
+    Project project = editor.getProject();
+    if (project != null && !project.isDefault()) {
+      sink.set(PROJECT, project);
+    }
   }
 
   /**

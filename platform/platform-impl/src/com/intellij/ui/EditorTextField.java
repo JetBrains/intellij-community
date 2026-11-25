@@ -32,6 +32,7 @@ import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory;
 import com.intellij.openapi.editor.impl.DocumentImpl;
@@ -1187,6 +1188,7 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
     }
     else {
       sink.set(CommonDataKeys.EDITOR, editor);
+      EditorUtil.putEditorProject(sink, editor);
     }
   }
 

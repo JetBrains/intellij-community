@@ -124,6 +124,7 @@ open class UsagePreviewPanel @JvmOverloads constructor(project: Project,
   override fun uiDataSnapshot(sink: DataSink) {
     val editor = myEditor ?: return
     sink[CommonDataKeys.EDITOR] = editor
+    EditorUtil.putEditorProject(sink, editor)
     val position = editor.caretModel.logicalPosition
     val project = editor.project ?: return
     sink.lazy(CommonDataKeys.NAVIGATABLE_ARRAY) {
