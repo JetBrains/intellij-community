@@ -159,11 +159,9 @@ class UniversalToolset : McpToolset {
 
   private suspend fun resolveRouterTools(): List<McpToolDef> {
     // No session: the host runs the call outside an MCP session, for example as an LSP command.
-    val sessionHandler = currentCoroutineContext().mcpCallInfo.sessionHandler
-                         ?: return McpServerServiceImpl.getInstanceAsync().getMcpToolsAsync(useFiltersFromEP = false)
-    val directTools = sessionHandler.toolsProvider.mcpTools.value
-    val routerTools = sessionHandler.routerToolsProvider.mcpTools.value
-    return (directTools + routerTools).distinctBy { it.descriptor.name }
+    val routableTools = currentCoroutineContext().mcpCallInfo.routableTools
+                        ?: return McpServerServiceImpl.getInstanceAsync().getMcpToolsAsync(useFiltersFromEP = false)
+    return routableTools()
   }
 
   private fun findTool(name: String, all: List<McpToolDef>, dispatchEvent: ExecuteToolDispatchEvent): McpToolDef {
@@ -212,7 +210,7 @@ class UniversalToolset : McpToolset {
 
   /**
    * Calls the dispatched tool and reports it as a tool call in its own right. The call goes straight to
-   * [McpToolDef.call], bypassing the wrapper in `McpSessionHandler` that reports `mcp.tool.call`, so without this a
+   * [McpToolDef.call], bypassing the wrapper `runMcpToolCall` that reports `mcp.tool.call`, so without this a
    * routed call produced a dispatch row and no call row.
    */
   private suspend fun invokeTool(tool: McpToolDef, jsonArgs: JsonObject): String {

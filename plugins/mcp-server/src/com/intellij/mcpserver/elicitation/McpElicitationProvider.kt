@@ -1,6 +1,7 @@
 package com.intellij.mcpserver.elicitation
 
 import com.intellij.lang.Language
+import com.intellij.mcpserver.McpExpectedError
 import com.intellij.mcpserver.projectOrNull
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
@@ -15,9 +16,14 @@ import kotlin.coroutines.CoroutineContext
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
-/** Returns the applicable [McpElicitationProvider] for the current session, or `null`. */
+/**
+ * Returns the applicable [McpElicitationProvider] for the current session, or `null`. A call whose caller asks no user,
+ * see [McpNoElicitationElement], gets a provider whose each request fails the tool call.
+ */
 suspend fun elicitationProvider(): McpElicitationProvider? {
-  val kind = currentCoroutineContext()[McpSessionElement]?.elicitationKind ?: return null
+  val context = currentCoroutineContext()
+  if (context[McpNoElicitationKey] != null) return McpRefusedElicitationProvider
+  val kind = context[McpSessionElement]?.elicitationKind ?: return null
   return McpElicitationProvider.EP.extensionList.firstOrNull { it.isApplicable(kind) }
 }
 
@@ -189,4 +195,21 @@ internal class McpSessionElement(
   val elicitationKind: McpElicitationKind,
 ) : AbstractCoroutineContextElement(McpSessionElement) {
   companion object Key : CoroutineContext.Key<McpSessionElement>
+}
+
+/**
+ * Marks a tool call whose caller asks no user, such as an in-process call of a CLI of an agent. An elicitation of such a
+ * call fails the call with [McpExpectedError], so the tool neither waits for an answer nor opens its IDE dialog.
+ */
+internal object McpNoElicitationElement : AbstractCoroutineContextElement(McpNoElicitationKey)
+
+/** The key of [McpNoElicitationElement]. */
+internal object McpNoElicitationKey : CoroutineContext.Key<McpNoElicitationElement>
+
+/** The provider of a call of [McpNoElicitationElement]: each request fails the call. */
+private object McpRefusedElicitationProvider : McpElicitationProvider {
+  override fun isApplicable(kind: McpElicitationKind): Boolean = false
+
+  override suspend fun <T> requestElicitation(form: ElicitationForm, deserializer: DeserializationStrategy<T>): ElicitationResult<T> =
+    throw McpExpectedError("This step asks the user, and the caller of this tool asks no user. Ask the user to do this step in the IDE.")
 }

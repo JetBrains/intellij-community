@@ -2,7 +2,6 @@ package com.intellij.mcpserver
 
 import com.intellij.concurrency.IntelliJContextElement
 import com.intellij.mcpserver.impl.McpServerService
-import com.intellij.mcpserver.impl.McpSessionHandler
 import com.intellij.mcpserver.impl.util.projectPathParameterName
 import com.intellij.mcpserver.util.getPathForMcp
 import com.intellij.openapi.project.Project
@@ -41,7 +40,11 @@ class McpCallInfo(
   // Minted here rather than by the caller so that every construction site gets a value unique to its call.
   val toolCallId: McpToolCallId = McpToolCallId.generate(),
 ) {
-  internal var sessionHandler: McpSessionHandler? = null
+  /**
+   * The tools that the router tool of this call reaches: the direct and the routed tools of its session. `null` for a
+   * call outside a session, such as an LSP command, which reaches every tool.
+   */
+  internal var routableTools: (() -> List<McpTool>)? = null
 
   override fun toString(): String {
     return "McpCallAdditionalData(id=$callId, clientInfo=$clientInfo, toolName=${mcpToolDescriptor.name}"

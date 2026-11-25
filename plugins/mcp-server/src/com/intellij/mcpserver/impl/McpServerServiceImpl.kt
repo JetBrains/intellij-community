@@ -1,9 +1,11 @@
 package com.intellij.mcpserver.impl
 
 import com.intellij.diagnostic.rethrowControlFlowException
+import com.intellij.mcpserver.ClientInfo
 import com.intellij.mcpserver.McpServerBundle
 import com.intellij.mcpserver.McpSessionInvocationMode
 import com.intellij.mcpserver.McpTool
+import com.intellij.mcpserver.McpToolCallResult
 import com.intellij.mcpserver.McpToolFilter
 import com.intellij.mcpserver.McpToolFilterProvider
 import com.intellij.mcpserver.McpToolInvocationMode
@@ -74,6 +76,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
+import kotlinx.serialization.json.JsonObject
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import java.io.IOException
@@ -295,6 +298,14 @@ open class McpServerServiceImpl(private val cs: CoroutineScope) : McpServerServi
       logger.trace { "Authorized MCP session stopped" }
     }
   }
+
+  override suspend fun callTool(
+    mcpSessionOptions: McpSessionOptions,
+    projectPath: String,
+    clientInfo: ClientInfo,
+    toolName: String,
+    arguments: JsonObject,
+  ): McpToolCallResult = callToolInProcess(this, mcpSessionOptions, projectPath, clientInfo, toolName, arguments)
 
   private fun isKnownToken(token: String): Boolean {
     return activeAuthorizedSessions.containsKey(token)
