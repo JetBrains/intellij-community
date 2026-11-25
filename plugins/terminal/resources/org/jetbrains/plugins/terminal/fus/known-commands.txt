@@ -475,6 +475,7 @@ chmod
 choco
 choosenim
 chown
+chrome-devtools
 chruby
 chsh
 ci
