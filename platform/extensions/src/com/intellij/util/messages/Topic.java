@@ -69,6 +69,16 @@ public class Topic<L> {
     myImmediateDelivery = false;
   }
 
+  Topic(@NonNls @NotNull String name,
+        @NotNull Class<L> listenerClass,
+        @NotNull BroadcastDirection broadcastDirection,
+        boolean immediateDelivery) {
+    myDisplayName = name;
+    myListenerClass = listenerClass;
+    myBroadcastDirection = broadcastDirection;
+    myImmediateDelivery = immediateDelivery;
+  }
+
   /**
    * @return human-readable name of the current topic. Is intended to be used in informational/logging purposes only
    */

@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.messages.impl
 
+import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.util.CheckedDisposable
 import com.intellij.openapi.util.Disposer
@@ -13,6 +14,7 @@ import com.intellij.tools.ide.metrics.benchmark.Benchmark
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.messages.MessageBus
 import com.intellij.util.messages.MessageBusOwner
+import com.intellij.util.messages.ReadOnlyTopic
 import com.intellij.util.messages.Topic
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.delay
@@ -103,6 +105,66 @@ class MessageBusTest : MessageBusOwner {
     connection.subscribe(TOPIC1, T1Handler("c"))
     bus.syncPublisher(TOPIC1).t11()
     assertEvents("c:t11")
+  }
+
+  @Test
+  fun readOnlyTopicSubscriberGetsMessagesOfWrappedTopic() {
+    val readOnly = ReadOnlyTopic(TOPIC1)
+    bus.connect().subscribe(readOnly, T1Handler("c"))
+    bus.simpleConnect().subscribe(readOnly, T1Handler("simple"))
+    bus.syncPublisher(TOPIC1).t11()
+    assertEvents("c:t11", "simple:t11")
+  }
+
+  @Test
+  fun publishingOnReadOnlyTopicLogsErrorAndDeliversToWrappedTopic() {
+    val readOnly = ReadOnlyTopic(TOPIC1)
+    bus.connect().subscribe(TOPIC1, T1Handler("c"))
+    val errors = ArrayList<String>()
+    LoggedErrorProcessor.executeWith<Throwable>(object : LoggedErrorProcessor() {
+      override fun processError(category: String, message: String, details: Array<String>, t: Throwable?): Set<Action> {
+        errors.add(message)
+        return emptySet()
+      }
+    }) {
+      bus.syncPublisher(readOnly).t11()
+    }
+    assertThat(errors).hasSize(1)
+    assertThat(errors.single()).contains("read-only")
+    assertEvents("c:t11")
+  }
+
+  @Test
+  fun publishingOnReadOnlyTopicLogsErrorOncePerTopicAndPublisher() {
+    val readOnly1 = ReadOnlyTopic(TOPIC1)
+    val readOnly2 = ReadOnlyTopic(TOPIC2)
+    val errors = ArrayList<String>()
+    LoggedErrorProcessor.executeWith<Throwable>(object : LoggedErrorProcessor() {
+      override fun processError(category: String, message: String, details: Array<String>, t: Throwable?): Set<Action> {
+        errors.add(message)
+        return emptySet()
+      }
+    }) {
+      repeat(1000) {
+        bus.syncPublisher(readOnly1)
+        bus.syncPublisher(readOnly2)
+      }
+    }
+    assertThat(errors).hasSize(2)
+    assertThat(errors[0]).contains("'T1'")
+    assertThat(errors[1]).contains("'T2'")
+  }
+
+  @Test
+  fun readOnlyTopicMarksEachPluginOnce() {
+    val readOnly = ReadOnlyTopic(TOPIC1)
+    val plugin1 = PluginId.getId("read.only.topic.plugin1")
+    val plugin2 = PluginId.getId("read.only.topic.plugin2")
+    assertThat(readOnly.markPublishReported(plugin1)).isTrue()
+    assertThat(readOnly.markPublishReported(plugin1)).isFalse()
+    assertThat(readOnly.markPublishReported(plugin2)).isTrue()
+    assertThat(readOnly.markPublishReported(null)).isTrue()
+    assertThat(readOnly.markPublishReported(null)).isFalse()
   }
 
   @Test

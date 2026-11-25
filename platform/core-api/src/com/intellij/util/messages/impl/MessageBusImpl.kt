@@ -4,7 +4,9 @@
 package com.intellij.util.messages.impl
 
 import com.intellij.codeWithMe.ClientId
+import com.intellij.diagnostic.PluginException
 import com.intellij.ide.plugins.IdeaPluginDescriptor
+import com.intellij.ide.plugins.cl.PluginAwareClassLoader
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.isMessageBusErrorPropagationEnabled
 import com.intellij.openapi.application.isMessageBusThrowsWhenDisposed
@@ -16,11 +18,13 @@ import com.intellij.serviceContainer.AlreadyDisposedException
 import com.intellij.util.ArrayUtilRt
 import com.intellij.util.EventDispatcher
 import com.intellij.util.concurrency.AppExecutorUtil
+import com.intellij.util.containers.Java11Shim
 import com.intellij.util.messages.ListenerDescriptor
 import com.intellij.util.messages.MessageBus
 import com.intellij.util.messages.MessageBusConnection
 import com.intellij.util.messages.MessageBusOwner
 import com.intellij.util.messages.MessageHandler
+import com.intellij.util.messages.ReadOnlyTopic
 import com.intellij.util.messages.SimpleMessageBusConnection
 import com.intellij.util.messages.Topic
 import com.intellij.util.messages.Topic.BroadcastDirection
@@ -196,6 +200,10 @@ open class MessageBusImpl : MessageBus, MessageBusEx {
 
   override fun <L : Any> syncPublisher(topic: Topic<L>): L {
     checkDisposed()
+    if (topic is ReadOnlyTopic<L>) {
+      reportPublishOnReadOnlyTopic(topic)
+      return syncPublisher(topic.wrappedTopic)
+    }
 
     @Suppress("UNCHECKED_CAST")
     return publisherCache.computeIfAbsent(topic) { topic1 ->
@@ -203,6 +211,21 @@ open class MessageBusImpl : MessageBus, MessageBusEx {
       val publisher = createPublisher(topic = topic1, direction = topic1.broadcastDirection)
       Proxy.newProxyInstance(aClass.classLoader, arrayOf(aClass), publisher)
     } as L
+  }
+
+  private fun reportPublishOnReadOnlyTopic(topic: ReadOnlyTopic<*>) {
+    val publisherClass = Java11Shim.INSTANCE.findCallerClass { MessageBus::class.java.isAssignableFrom(it) }
+    val pluginId = (publisherClass?.classLoader as? PluginAwareClassLoader)?.pluginId
+    if (!topic.markPublishReported(pluginId)) {
+      return
+    }
+    val message = "Do not publish on the read-only $topic. Its owner publishes on it."
+    if (pluginId == null) {
+      LOG.error(message)
+    }
+    else {
+      LOG.error(PluginException(message, pluginId))
+    }
   }
 
   override fun <L : Any> syncAndPreloadPublisher(topic: Topic<L>): L {
@@ -246,6 +269,9 @@ open class MessageBusImpl : MessageBus, MessageBusEx {
   override fun hasUndeliveredEvents(topic: Topic<*>): Boolean {
     if (isDisposed) {
       return false
+    }
+    if (topic is ReadOnlyTopic<*>) {
+      return hasUndeliveredEvents(topic.wrappedTopic)
     }
 
     val queue = rootBus.queue

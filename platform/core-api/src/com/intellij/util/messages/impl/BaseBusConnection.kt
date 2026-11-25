@@ -3,6 +3,7 @@ package com.intellij.util.messages.impl
 
 import com.intellij.serviceContainer.AlreadyDisposedException
 import com.intellij.util.ArrayUtilRt
+import com.intellij.util.messages.ReadOnlyTopic
 import com.intellij.util.messages.Topic
 import com.intellij.util.messages.impl.MessageBusImpl.MessageHandlerHolder
 import java.util.Arrays
@@ -21,6 +22,10 @@ internal sealed class BaseBusConnection(bus: MessageBusImpl) : MessageHandlerHol
     get() = bus == null
 
   fun <L : Any> subscribe(topic: Topic<L>, handler: L) {
+    if (topic is ReadOnlyTopic<L>) {
+      subscribe(topic.wrappedTopic, handler)
+      return
+    }
     val liveBus = bus ?: throw AlreadyDisposedException("Message bus connection is closed: $this")
     var list: Array<Any>
     var newList: Array<Any>
