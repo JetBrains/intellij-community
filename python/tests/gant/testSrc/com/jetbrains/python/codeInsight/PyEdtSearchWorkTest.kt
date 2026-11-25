@@ -6,6 +6,7 @@ import com.intellij.codeInsight.daemon.LineMarkerInfo
 import com.intellij.idea.TestFor
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.util.Disposer
@@ -140,7 +141,16 @@ class PyEdtSearchWorkTest : PyCodeInsightTestCase() {
           @abc.abstractclassmethod
           def start<caret>
     """.trimIndent())
-    val counts = PyCodeInsightCounters.countOnCurrentThread { myFixture.type('(') }
+    val editor = myFixture.editor
+    val file = myFixture.file
+    // Typing in the fixture also runs the other typed handlers and the pending EDT events, so the test calls the handler alone.
+    val counts = PyCodeInsightCounters.countOnCurrentThread {
+      WriteCommandAction.runWriteCommandAction(myFixture.project) {
+        editor.caretModel.runForEachCaret { _ ->
+          PyMethodNameTypedHandler().beforeCharTyped('(', myFixture.project, editor, file, file.fileType)
+        }
+      }
+    }
 
     assertTrue(myFixture.editor.document.text.contains("def run(cls):"), myFixture.editor.document.text)
     assertTrue(myFixture.editor.document.text.contains("def start(cls):"), myFixture.editor.document.text)
