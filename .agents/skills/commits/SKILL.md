@@ -18,7 +18,7 @@ IDEA-12345 <subject>              # a change with a ticket: the id, then one sen
 ```
 
 - A behavioral change needs a YouTrack ticket. If you are unsure whether it is behavioral, it is.
-- Write the subject after the id or the label as an imperative sentence. The body stays declarative.
+- Write `<subject>` as an imperative sentence. The body stays declarative.
 - With a ticket, the subject is the id and one sentence that says what the change does or decides. Do not add a label
   or a subsystem: the id already names the area. `IDEA-12345 skip a generated file in the inspection`, not
   `IDEA-12345 the inspection skips a generated file` or `IDEA-12345 fix inspections: generated files`.
