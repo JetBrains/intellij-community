@@ -3,6 +3,7 @@ package com.intellij.driver.sdk.ui.components.elements
 import com.intellij.driver.client.Remote
 import com.intellij.driver.client.impl.RefWrapper
 import com.intellij.driver.model.OnDispatcher
+import com.intellij.driver.model.StringTable
 import com.intellij.driver.sdk.SimpleTextAttributes
 import com.intellij.driver.sdk.invokeAction
 import com.intellij.driver.sdk.ui.AccessibleNameCellRendererReader
@@ -162,6 +163,17 @@ open class JListUiComponent(data: ComponentData) : UiComponent(data) {
     }.takeIf { it != -1 }
 
   fun getTextAttributesAt(index: Int): List<Pair<String, SimpleTextAttributes>>? = fixture.getTextAttributes(index)
+
+  /**
+   * The text fragments of the renderer of each row. A fragment with no accessible name is also in the list.
+   * The rows are read in one EDT call. Use it on a list that updates, such as a search result list: a read of [items] and
+   * then of each row with [getTextAttributesAt] can see a row index that is no longer in the list.
+   */
+  val rowFragments: List<List<String>>
+    get() {
+      val table = fixture.collectRowFragments()
+      return List(table.size) { row -> table.getValue(row).let { fragments -> List(fragments.size) { fragments.getValue(it) } } }
+    }
 }
 
 @Remote("com.jetbrains.performancePlugin.remotedriver.fixtures.JListTextFixture", plugin = REMOTE_ROBOT_MODULE_ID)
@@ -175,6 +187,7 @@ interface JListFixtureRef {
   fun visibleBackgroundAtIndex(index: Int): String
   fun getComponentAtIndex(index: Int): Component
   fun getTextAttributes(index: Int): List<Pair<String, SimpleTextAttributes>>?
+  fun collectRowFragments(): StringTable
 }
 
 @Remote("javax.swing.JList")

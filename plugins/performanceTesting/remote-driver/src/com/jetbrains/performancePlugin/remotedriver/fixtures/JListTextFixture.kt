@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.performancePlugin.remotedriver.fixtures
 
+import com.intellij.driver.model.StringTable
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.popup.list.SelectablePanel
 import com.jetbrains.performancePlugin.remotedriver.dataextractor.TextCellRendererReader
@@ -70,5 +71,18 @@ class JListTextFixture(robot: Robot, component: JList<*>) : JListFixture(robot, 
   fun getTextAttributes(index: Int): List<Pair<String, SimpleTextAttributes>> {
     val component = getComponentAtIndex(index)
     return component.collectTextAttributes(robot())
+  }
+
+  /**
+   * The text fragments of the renderer of each row, as row index → fragment index → text. The call reads all rows in one EDT
+   * call, so the rows are one state of the list, also while the list updates.
+   */
+  fun collectRowFragments(): StringTable = computeOnEdt {
+    StringTable().also { table ->
+      repeat(target().model.size) { row ->
+        val fragments = renderComponentAtIndex(row).collectTextAttributes(robot())
+        table[row] = HashMap<Int, String>().apply { fragments.forEachIndexed { index, fragment -> put(index, fragment.first) } }
+      }
+    }
   }
 }
