@@ -599,6 +599,7 @@
       <module fileurl="file://$PROJECT_DIR$/plugins/gradle/java/tests/integration/eel/intellij.gradle.java.tests.integration.eel.iml" filepath="$PROJECT_DIR$/plugins/gradle/java/tests/integration/eel/intellij.gradle.java.tests.integration.eel.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/gradle/java/tests/integration/service/intellij.gradle.java.tests.integration.service.iml" filepath="$PROJECT_DIR$/plugins/gradle/java/tests/integration/service/intellij.gradle.java.tests.integration.service.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/gradle/java/tests/quarantine/intellij.gradle.java.tests.quarantine.iml" filepath="$PROJECT_DIR$/plugins/gradle/java/tests/quarantine/intellij.gradle.java.tests.quarantine.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/gradle/java/tests/unit/intellij.gradle.java.tests.unit.iml" filepath="$PROJECT_DIR$/plugins/gradle/java/tests/unit/intellij.gradle.java.tests.unit.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/gradle/java/toml/intellij.gradle.java.toml.iml" filepath="$PROJECT_DIR$/plugins/gradle/java/toml/intellij.gradle.java.toml.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/gradle/java/toml/tests/intellij.gradle.java.toml.tests.iml" filepath="$PROJECT_DIR$/plugins/gradle/java/toml/tests/intellij.gradle.java.toml.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/gradle/jps-plugin/intellij.gradle.jps.iml" filepath="$PROJECT_DIR$/plugins/gradle/jps-plugin/intellij.gradle.jps.iml" />
@@ -622,6 +623,7 @@
       <module fileurl="file://$PROJECT_DIR$/plugins/gradle/tests/integration/service/intellij.gradle.tests.integration.service.iml" filepath="$PROJECT_DIR$/plugins/gradle/tests/integration/service/intellij.gradle.tests.integration.service.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/gradle/intellij.gradle.tests.main.iml" filepath="$PROJECT_DIR$/plugins/gradle/intellij.gradle.tests.main.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/gradle/tests/quarantine/intellij.gradle.tests.quarantine.iml" filepath="$PROJECT_DIR$/plugins/gradle/tests/quarantine/intellij.gradle.tests.quarantine.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/gradle/tests/unit/intellij.gradle.tests.unit.iml" filepath="$PROJECT_DIR$/plugins/gradle/tests/unit/intellij.gradle.tests.unit.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/gradle/tooling-extension-api/intellij.gradle.toolingExtension.iml" filepath="$PROJECT_DIR$/plugins/gradle/tooling-extension-api/intellij.gradle.toolingExtension.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/gradle/tooling-extension-impl/intellij.gradle.toolingExtension.impl.iml" filepath="$PROJECT_DIR$/plugins/gradle/tooling-extension-impl/intellij.gradle.toolingExtension.impl.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/gradle/tooling-extension-impl/intellij.gradle.toolingExtension.tests.iml" filepath="$PROJECT_DIR$/plugins/gradle/tooling-extension-impl/intellij.gradle.toolingExtension.tests.iml" />

@@ -9,12 +9,12 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="intellij.platform.bootstrap.coroutine" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.gradle.backend.tests" scope="RUNTIME" />
-    <orderEntry type="module" module-name="intellij.gradle.java.tests" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.gradle.java.tests.unit" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.gradle.java.toml.tests" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.gradle.java.coverage.tests" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.gradle.jps.tests" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.gradle.properties.tests" scope="RUNTIME" />
-    <orderEntry type="module" module-name="intellij.gradle.tests" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.gradle.tests.unit" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.gradle.testFramework.tests" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.gradle.toolingExtension.tests" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.gradle.native.tooling.tests" scope="RUNTIME" />
