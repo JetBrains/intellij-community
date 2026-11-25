@@ -30,7 +30,7 @@ class GroovyRtPathsTest {
     }.generateInTempDir().toFile()
     val roots = GroovyRtJarPaths.getGroovyRtRoots(File(lib, "intellij.groovy.jps.jar"), true)
     assertSameFiles(roots,
-      File(lib, "intellij.groovy.rt.jar"), File(lib, "intellij.groovy.constants.rt.jar"), File(lib, "groovy-rt-class-loader.jar"))
+      File(lib, "intellij.groovy.rt.jar"), File(lib, "intellij.groovy.constants.rt.jar"), File(lib, "intellij.groovy.rt.classLoader.jar"))
   }
 
   @Test

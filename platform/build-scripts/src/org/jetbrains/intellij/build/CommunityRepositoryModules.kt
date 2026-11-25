@@ -701,7 +701,6 @@ fun groovyPlugin(): PluginLayout {
         "intellij.groovy.psi",
       )
     )
-    spec.withModule("intellij.groovy.rt.classLoader", "groovy-rt-class-loader.jar")
 
     spec.withResourceFromModule("intellij.groovy.psi", "standardDsls", "lib/standardDsls")
     spec.withResource("hotswap/gragent.jar", "lib/agent")

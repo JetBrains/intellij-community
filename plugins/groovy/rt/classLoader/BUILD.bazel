@@ -1,5 +1,10 @@
 load("@community//build:jps_module.bzl", "jps_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
+
+### auto-generated section `dev intellij.groovy.rt.classLoader` start
+content_module_jar(module = ":classLoader")
+### auto-generated section `dev intellij.groovy.rt.classLoader` end
 
 ### auto-generated section `build intellij.groovy.rt.classLoader` start
 jvm_library(
@@ -30,6 +35,7 @@ jvm_library(
 ### auto-generated section `iml intellij.groovy.rt.classLoader` start
 jps_module(
     name = "intellij.groovy.rt.classLoader",
+    descriptors = ["resources/intellij.groovy.rt.classLoader.xml"],
     target = "classLoader",
 )
 ### auto-generated section `iml intellij.groovy.rt.classLoader` end

@@ -19,7 +19,7 @@ public final class GroovyRtJarPaths {
     addGroovyRtJarPath(jpsPluginRoot, "intellij.groovy.constants.rt.jar",
                        Collections.singletonList("intellij.groovy.constants.rt"), "groovy-constants-rt", result);
     if (addClassLoaderJar) {
-      addGroovyRtJarPath(jpsPluginRoot, "groovy-rt-class-loader.jar",
+      addGroovyRtJarPath(jpsPluginRoot, "intellij.groovy.rt.classLoader.jar",
                          Collections.singletonList("intellij.groovy.rt.classLoader"), "groovy-rt-class-loader", result);
     }
     return result;
