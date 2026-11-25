@@ -9897,6 +9897,11 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
             runTest("../../../idea/tests/testData/quickfix/implement/manyInterfacesMemberNotImplemented.kt");
         }
 
+        @TestMetadata("namedContextParameterFromGenericHierarchy.kt")
+        public void testNamedContextParameterFromGenericHierarchy() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/implement/namedContextParameterFromGenericHierarchy.kt");
+        }
+
         @TestMetadata("nested.kt")
         public void testNested() throws Exception {
             runTest("../../../idea/tests/testData/quickfix/implement/nested.kt");
