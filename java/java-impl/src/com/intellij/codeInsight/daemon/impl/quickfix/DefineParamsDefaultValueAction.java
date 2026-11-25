@@ -181,7 +181,7 @@ public final class DefineParamsDefaultValueAction extends PsiBasedModCommandActi
       if (MethodSignatureUtil.areParametersErasureEqual(existingMethod, methodPrototype)) {
         updater.moveCaretTo(existingMethod.getTextOffset());
         String description = RefactoringUIUtil.getDescription(existingMethod, false);
-        updater.message(StringUtil.capitalize(JavaBundle.message("default.param.value.warning", description)));
+        updater.message(StringUtil.capitalize(StringUtil.stripHtml(JavaBundle.message("default.param.value.warning", description), false)));
         return;
       }
     }

@@ -7,7 +7,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * A command that displays a message.
  *
- * @param messageText localized message to display
+ * @param messageText localized message to display (plain text, no HTML tags)
  * @param kind message kind
  */
 public record ModDisplayMessage(@NlsContexts.Tooltip @NotNull String messageText, @NotNull MessageKind kind) implements ModCommand {
