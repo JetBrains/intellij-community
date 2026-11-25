@@ -67,20 +67,31 @@ internal object SettingsFrameGuestJoins {
 
   /**
    * Adds each frame guest of the frame owner of [group] that opens later to [group], until [parentDisposable] is disposed.
+   * A frame guest that finished its open while the tree of [group] was built joins too: it reported itself before this call.
    * [joined] runs on the EDT after a join. It gets `true` when the tree got a new node, see [FrameProjectsConfigurableGroup.join].
    */
   @JvmStatic
+  @RequiresEdt
   fun follow(group: FrameProjectsConfigurableGroup, coroutineScope: CoroutineScope, parentDisposable: Disposable, joined: Consumer<Boolean>) {
-    followers.add(Follower(group, coroutineScope, joined), parentDisposable)
+    val follower = Follower(group, coroutineScope, joined)
+    // the follower is in the list first, so no guest opens unseen between the two steps. [join] adds a guest once
+    followers.add(follower, parentDisposable)
+    for (project in SettingsFrameProjects.listProjects(group.projects.frameOwner)) {
+      joinIfMissing(follower, project)
+    }
   }
 
   /** Adds [project], an open frame guest, to each tree of its frame owner. */
   fun guestOpened(project: Project) {
     for (follower in followers) {
-      if (isJoining(follower.group, project)) {
-        follower.coroutineScope.launch {
-          join(follower.group, project, follower.joined)
-        }
+      joinIfMissing(follower, project)
+    }
+  }
+
+  private fun joinIfMissing(follower: Follower, project: Project) {
+    if (isJoining(follower.group, project)) {
+      follower.coroutineScope.launch {
+        join(follower.group, project, follower.joined)
       }
     }
   }

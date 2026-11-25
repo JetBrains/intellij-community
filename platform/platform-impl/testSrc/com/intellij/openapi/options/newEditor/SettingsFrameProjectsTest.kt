@@ -489,6 +489,40 @@ internal class SettingsFrameProjectsTest {
   }
 
   @Test
+  fun `a frame guest that finished its open while the tree was built gets a tab in the new window`(): Unit = inFrame { disposable ->
+    withForcedRespectIsShowingClientProperty {
+      val projects = SettingsFrameProjects.create(owner)!!
+      val group = createGroup(projects, disposable)
+      val page = projectPage(group)
+      // the guest reports its open before the editor follows the frame, so no follower gets the report
+      WindowManagerEx.getInstanceEx().addFrameGuest(owner, third)
+      SettingsFrameGuestJoins.guestOpened(third)
+
+      val editor = createEditor(group, page, disposable)
+
+      val tabs = UIUtil.findComponentOfType(editor.content, SingleHeightTabs::class.java)!!
+      waitFor("the tab of the frame guest that opened before the editor") { tabs.tabs.map { it.`object` } == listOf(owner, guest, third) }
+      assertThat(page.projectsWithPage).containsExactly(owner, guest, third)
+    }
+  }
+
+  @Test
+  fun `a project that left the frame while the tree was built has no tab in the new window`(): Unit = inFrame { disposable ->
+    withForcedRespectIsShowingClientProperty {
+      val projects = SettingsFrameProjects.create(owner)!!
+      val group = createGroup(projects, disposable)
+      val page = projectPage(group)
+      // the editor does not listen yet, so it gets no close event of the guest
+      WindowManagerEx.getInstanceEx().removeFrameGuest(guest)
+
+      createEditor(group, page, disposable)
+
+      assertThat(projects.projects).containsExactly(owner)
+      assertThat(page.projectsWithPage).containsExactly(owner)
+    }
+  }
+
+  @Test
   fun `a frame guest that joins with a page that the tree does not have adds a node`(): Unit = inFrame(projectsWithPage = { listOf(third) }) { disposable ->
     val projects = SettingsFrameProjects.create(owner)!!
     val group = createGroup(projects, disposable)

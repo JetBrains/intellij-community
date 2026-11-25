@@ -522,6 +522,13 @@ public final class SettingsEditor extends AbstractEditor implements UiDataProvid
         }
       }
     });
+    // a project that left the frame while the tree was built sent its close event before this subscription
+    List<Project> frameProjects = SettingsFrameProjects.listProjects(projects.getFrameOwner());
+    for (Project project : projects.getProjects()) {
+      if (!frameProjects.contains(project)) {
+        forgetFrameProject(project);
+      }
+    }
     SettingsFrameGuestJoins.follow(group, coroutineScope, this, hasNewNodes -> {
       if (hasNewNodes) {
         // the tree shows the new nodes. The filter keeps its context, so the modified marks stay
