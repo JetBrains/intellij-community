@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.resolve.graphInference;
 
+import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil;
 import com.intellij.core.JavaPsiBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
@@ -1296,7 +1297,7 @@ public class InferenceSession {
           type = type.withNullability(eqBound.getNullability().join(lowerBound.getNullability()));
         }
 
-        if (isLowerBoundNotAssignable(var, eqBound, false)) {
+        if (!JavaGenericsUtil.isReifiableType(eqBound) && isLowerBoundNotAssignable(var, eqBound, false)) {
           setErased();
         }
 

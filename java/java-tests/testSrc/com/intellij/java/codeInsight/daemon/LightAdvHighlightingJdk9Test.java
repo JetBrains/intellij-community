@@ -44,6 +44,7 @@ public class LightAdvHighlightingJdk9Test extends LightDaemonAnalyzerTestCase {
   public void testDiamondsWithAnonymousRejectIntersectionType() { doTest(false, false);}
   public void testDiamondsWithAnonymousInsideCallToInfer() { doTest(false, false);}
   public void testDiamondsWithAnonymousDiamond() { doTest(false, false);}
+  public void testDiamondsWithAnonymousUncheckedCallInLambda() { doTest(false, false);}
 
   public void testHighlightApiUsages() {
     IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_1_8, () -> doTest(false, false));
