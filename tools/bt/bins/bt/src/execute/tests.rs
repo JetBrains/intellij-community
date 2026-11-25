@@ -16,8 +16,11 @@ fn with_areas(fake: FakeRuntime) -> FakeRuntime {
     fake
 }
 
+/// The Air tree, where `bazel query` finds no test target until a test names some with [`tree_has`].
 fn fake_air_tree() -> FakeRuntime {
-    with_areas(bt_core::fake::fake_air_tree())
+    let fake = with_areas(bt_core::fake::fake_air_tree());
+    tree_has(&fake, &[]);
+    fake
 }
 
 const CLASS_TIME_BUDGET_FILE: &str = "plugins/air/tests/integration/class-time-budget.tsv";
@@ -123,21 +126,22 @@ fn dry_run_on_a_lane_prints_the_lane_flags() {
     );
 }
 
-/// The excluded targets are compiled first, in their own spawn, so `--lane fast` still answers whether they build.
-/// Order matters: a compile break must not cost a whole lane run first.
+/// The excluded targets are compiled after the query of the groups and before the first test, in their own spawn, so
+/// `--lane fast` still answers whether they build. Order matters: a compile break must not cost a whole lane run first.
 #[test]
 fn the_fast_lane_builds_the_excluded_targets_before_it_runs_anything() {
     let fake = fake_air_tree();
     run(&["--lane", "fast"], &fake);
     let spawned = fake.spawned();
-    assert_eq!(spawned.len(), 2, "{spawned:?}");
-    let first = spawned[0].join(" ");
-    assert!(first.contains(" build "), "{first}");
+    assert_eq!(spawned.len(), 3, "{spawned:?}");
+    assert!(spawned[0].join(" ").contains(" query "), "{:?}", spawned[0]);
+    let build = spawned[1].join(" ");
+    assert!(build.contains(" build "), "{build}");
     assert!(
-        first.contains("//plugins/air/frontend/llm:air-frontend-llm-tests_test_lib"),
-        "{first}"
+        build.contains("//plugins/air/frontend/llm:air-frontend-llm-tests_test_lib"),
+        "{build}"
     );
-    assert!(spawned[1].join(" ").contains(" test "), "{:?}", spawned[1]);
+    assert!(spawned[2].join(" ").contains(" test "), "{:?}", spawned[2]);
 }
 
 /// A target that does not compile is the answer, not a footnote after a green lane.
@@ -147,7 +151,10 @@ fn a_failed_excluded_build_stops_the_lane_and_reports_build_failed() {
     spawn_answers(&fake, 1, "ERROR: ui_test does not compile");
     let outcome = run(&["--lane", "fast"], &fake);
     assert_eq!(outcome.exit_code, exit::BUILD_FAILED, "{}", outcome.text);
-    assert_eq!(fake.spawned().len(), 1, "the lane ran anyway");
+    assert!(
+        !fake.spawned().iter().any(|argv| argv.join(" ").contains(" test ")),
+        "the lane ran anyway"
+    );
     assert!(
         fake.state().stderr.join("\n").contains("ui_test does not compile"),
         "bazel's own words are the only evidence of a failed build"
@@ -242,7 +249,7 @@ fn the_bep_file_is_deleted_after_a_dry_run_and_after_a_failed_excluded_build() {
     spawn_answers(&fake, 1, "ERROR: ui_test does not compile");
     let outcome = run(&["--lane", "fast"], &fake);
     assert_eq!(outcome.exit_code, exit::BUILD_FAILED, "{}", outcome.text);
-    assert_eq!(fake.state().removed, [BEP_PATH], "after a failed excluded build");
+    assert!(fake.state().removed.contains(&BEP_PATH.to_owned()), "after a failed excluded build");
 }
 
 /// A lane parallelises across its targets already, so the shard plan gives each target its own count.
@@ -477,8 +484,9 @@ fn tree_has(fake: &FakeRuntime, labels: &[&str]) {
     query_answers(fake, 0, labels);
 }
 
-/// `bazel query` exits with `exit_code` and writes these labels.
+/// `bazel query` exits with `exit_code` and writes these labels, in place of an answer that the test gave before.
 fn query_answers(fake: &FakeRuntime, exit_code: i32, labels: &[&str]) {
+    fake.state().spawn_rules.retain(|(text, _)| text != " query ");
     fake.state().spawn_rules.push((
         " query ".to_owned(),
         SpawnResult {
@@ -633,13 +641,15 @@ fn a_plan_target_that_the_tree_does_not_have_runs_in_no_invocation() {
         &[
             &format!("--query_file={TREE_QUERY_PATH}"),
             &format!("--output_file={TREE_TARGETS_PATH}"),
-            "--output=label",
+            "--output=label_kind",
             "--keep_going",
         ],
     );
     assert_eq!(
         fake.state().files.get(TREE_QUERY_PATH).map(String::as_str),
-        Some(r#"tests(set() + "//plugins/air/..." + "@community//tools/bt/..." + "@community//tools/vm/...")"#)
+        Some(
+            r#"let t = tests(set() + "//plugins/air/..." + "@community//tools/bt/..." + "@community//tools/vm/...") in $t except attr(tags, "\bmanual\b", $t)"#
+        )
     );
     let tests = test_commands(&fake);
     assert_eq!(tests.len(), 3, "{tests:#?}");
@@ -715,7 +725,9 @@ fn a_test_invocation_without_a_verdict_is_infra_with_the_tail_of_bazel() {
 #[test]
 #[should_panic(expected = "a bazel query without a spawn rule")]
 fn an_unscripted_query_fails_the_test() {
-    run(&["--lane", "fast"], &stale_plan_tree());
+    let fake = stale_plan_tree();
+    fake.state().spawn_rules.retain(|(text, _)| text != " query ");
+    run(&["--lane", "fast"], &fake);
 }
 
 /// A plan whose heavy and single-shard targets are all gone from the tree leaves one invocation, with no exclusion.
@@ -791,22 +803,57 @@ fn a_dry_run_runs_no_query_and_marks_its_groups_unchecked() {
     assert_mentions(&line_of(&text, "single  "), &[SINGLE_LABEL, GONE_SINGLE_LABEL]);
     assert_eq!(
         line_of(&text, "note    "),
-        "note    unchecked groups: the run keeps only the heavy and single targets that bazel query finds in the tree"
+        "note    unchecked groups: the run keeps only the heavy and single targets that bazel query finds in the tree, and adds each Rust test target to single"
     );
     assert!(
-        !dry_run(&["--lane", "fast"]).contains("note    "),
+        !dry_run(&["--lane", "fast", "--shards", "3"]).contains("note    "),
         "a run without groups has no note"
     );
 }
 
-/// The query runs only for a plan that names a covered heavy or single-shard target.
+/// A Rust test target runs with one shard, also when the plan records it as heavy or has no record of it.
 #[test]
-fn a_plan_without_a_heavy_or_a_single_shard_target_runs_no_query() {
+fn a_rust_test_target_runs_in_the_single_shard_invocation() {
+    const RUST_LABEL: &str = "//plugins/air/tests/architecture-gate:air-docs-model_test";
+    const NEW_RUST_LABEL: &str = "@community//tools/bt/crates/bt-core:bt-core_test";
     let fake = fake_air_tree();
-    fake.put_absolute(SHARD_PLAN, &format!("default\t2\nclass\t{OTHER_LABEL}\tcom.B\t120.000\n"));
+    fake.put_absolute(
+        SHARD_PLAN,
+        &format!("default\t2\nclass\t{RUST_LABEL}\tcom.R\t530.000\nclass\t{OTHER_LABEL}\tcom.B\t120.000\n"),
+    );
+    tree_has(
+        &fake,
+        &[
+            &format!("_rust_test_junit_test rule {RUST_LABEL}"),
+            &format!("rust_test rule {NEW_RUST_LABEL}"),
+            &format!("java_test rule {OTHER_LABEL}"),
+        ],
+    );
     run(&["--lane", "fast"], &fake);
+    let tests = test_commands(&fake);
+    assert_eq!(tests.len(), 2, "{tests:#?}");
+    assert!(
+        tests[0].contains("forced=2") && tests[0].ends_with(&format!("-- -{RUST_LABEL} -{NEW_RUST_LABEL}")),
+        "{}",
+        tests[0]
+    );
+    assert!(
+        tests[1].contains("forced=1") && tests[1].ends_with(&format!("{RUST_LABEL} {NEW_RUST_LABEL}")),
+        "{}",
+        tests[1]
+    );
+}
+
+/// An explicit shard count wins: the run asks no query and keeps one invocation for the Rust test targets too.
+#[test]
+fn an_explicit_shard_count_runs_no_query() {
+    let fake = fake_air_tree();
+    run(&["--lane", "fast", "--shards", "3"], &fake);
     let spawned: Vec<String> = fake.spawned().iter().map(|argv| argv.join(" ")).collect();
     assert!(!spawned.iter().any(|command| command.contains(" query ")), "{spawned:#?}");
+    let tests = test_commands(&fake);
+    assert_eq!(tests.len(), 1, "{tests:#?}");
+    assert!(tests[0].contains("forced=3"), "{}", tests[0]);
 }
 
 /// The invocations read as one run: disjoint targets, one verdict, one plan update.

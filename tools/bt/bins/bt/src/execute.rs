@@ -346,7 +346,8 @@ pub(crate) fn execute_args(args: &Args, runtime: &dyn Runtime, areas: &Areas) ->
     let tree_before = if args.shared.dry_run { None } else { tree_before_run(runtime) };
     let mut check_record_ms = runtime.now_ms().saturating_sub(record_started);
     // A BEP path of the caller would take the events of all invocations, so such a run keeps one invocation.
-    let groups = if !(planned && owns_bep_file) {
+    let grouped = planned && owns_bep_file;
+    let groups = if !grouped {
         Groups::default()
     } else if args.shared.dry_run {
         // A dry run starts no bazel command, so it waits for the server lock of no other command and starts no server.
@@ -432,7 +433,7 @@ pub(crate) fn execute_args(args: &Args, runtime: &dyn Runtime, areas: &Areas) ->
     if args.shared.dry_run {
         return Ok(Outcome {
             exit_code: exit::GREEN,
-            text: dry_run_text(runtime, &plan.resolution, &invocations, build_only.as_deref()),
+            text: dry_run_text(runtime, &plan.resolution, &invocations, build_only.as_deref(), grouped),
             json: None,
         });
     }
@@ -817,7 +818,7 @@ fn gone_targets_line(gone: &[String]) -> String {
     )
 }
 
-/// The test targets that the target patterns of a run name in the current tree, by `bazel query`.
+/// The test targets that the target patterns of a run name in the current tree, with the rule kind of each, by `bazel query`.
 ///
 /// The query reads its expression from a file and writes the labels to a file. So no shell quotes the expression, and
 /// no line of bazel mixes with a label. With `--keep_going`, bazel exits 3 and still answers the targets of each
@@ -850,7 +851,7 @@ fn tree_targets(runtime: &dyn Runtime, patterns: &[String]) -> Result<Option<Tre
         "query".to_owned(),
         format!("--query_file={}", query_file.path.to_string_lossy()),
         format!("--output_file={}", answer_file.path.to_string_lossy()),
-        "--output=label".to_owned(),
+        "--output=label_kind".to_owned(),
         "--keep_going".to_owned(),
         "--noshow_progress".to_owned(),
         "--curses=no".to_owned(),
@@ -908,7 +909,14 @@ impl Drop for TempFile<'_> {
     }
 }
 
-fn dry_run_text(runtime: &dyn Runtime, resolution: &Resolution, invocations: &[BazelInvocation], build_only: Option<&[String]>) -> String {
+/// `grouped` tells whether a real run asks `bazel query` for the groups.
+fn dry_run_text(
+    runtime: &dyn Runtime,
+    resolution: &Resolution,
+    invocations: &[BazelInvocation],
+    build_only: Option<&[String]>,
+    grouped: bool,
+) -> String {
     let first = resolution.labels.first().map_or("", String::as_str);
     let suffix = match resolution.labels.len() {
         0 | 1 => String::new(),
@@ -935,12 +943,9 @@ fn dry_run_text(runtime: &dyn Runtime, resolution: &Resolution, invocations: &[B
             command_line(&bazel_command(runtime.repo_root(), runtime.platform(), build_only))
         ));
     }
-    if invocations
-        .iter()
-        .any(|invocation| !matches!(invocation.kind, InvocationKind::Planned))
-    {
+    if grouped {
         lines.push(
-            "note    unchecked groups: the run keeps only the heavy and single targets that bazel query finds in the tree".to_owned(),
+            "note    unchecked groups: the run keeps only the heavy and single targets that bazel query finds in the tree, and adds each Rust test target to single".to_owned(),
         );
     }
     lines.join("\n")
