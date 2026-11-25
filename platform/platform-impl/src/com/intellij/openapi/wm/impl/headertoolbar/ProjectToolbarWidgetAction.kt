@@ -272,34 +272,45 @@ open class ProjectToolbarWidgetAction : ExpandableComboAction(), DumbAware {
       }
 
     if (!hideProjectSwitching(initEvent)) {
-      val group = ActionManager.getInstance().getAction("ProjectWidget.Actions") as ActionGroup
-      result.addAll(group.getChildren(initEvent).asList())
-
-      WelcomeUtils.addWelcomeProjectNewAction(initEvent, initEvent.project, result)
-
-      WelcomeUtils.getGotoWelcomeProjectAction()?.let {
-        result.addSeparator()
-        result.add(it)
-      }
-
-      val openProjectsPredicate = OpenProjectSelectionPredicateSupplier.getInstance().getPredicate()
-      val actionsMap = RecentProjectListActionProvider.getInstance().getActions(initEvent.project)
-        .asSequence()
-        .take(MAX_RECENT_COUNT)
-        .groupBy { openProjectsPredicate.test(it) }
-
-      actionsMap.get(true)?.let {
-        result.addSeparator(IdeUICustomization.getInstance().projectMessage("project.widget.open.projects"))
-        result.addAll(it)
-      }
-
-      actionsMap.get(false)?.let {
-        result.addSeparator(IdeUICustomization.getInstance().projectMessage("project.widget.recent.projects"))
-        result.addAll(it)
-      }
+      addProjectSwitchingActions(result, initEvent)
     }
 
     return result
+  }
+
+  /**
+   * Adds the part of the popup that opens or switches a project to [group]: the actions of the group
+   * `ProjectWidget.Actions`, then the open projects and the recent projects.
+   *
+   * A product whose window shows something other than one project overrides this to give its own actions and sections.
+   * The popup does not call this when a [ProjectWidgetActionsFilter] hides the project switching.
+   */
+  protected open fun addProjectSwitchingActions(group: DefaultActionGroup, initEvent: AnActionEvent) {
+    val actions = ActionManager.getInstance().getAction("ProjectWidget.Actions") as ActionGroup
+    group.addAll(actions.getChildren(initEvent).asList())
+
+    WelcomeUtils.addWelcomeProjectNewAction(initEvent, initEvent.project, group)
+
+    WelcomeUtils.getGotoWelcomeProjectAction()?.let {
+      group.addSeparator()
+      group.add(it)
+    }
+
+    val openProjectsPredicate = OpenProjectSelectionPredicateSupplier.getInstance().getPredicate()
+    val actionsMap = RecentProjectListActionProvider.getInstance().getActions(initEvent.project)
+      .asSequence()
+      .take(MAX_RECENT_COUNT)
+      .groupBy { openProjectsPredicate.test(it) }
+
+    actionsMap.get(true)?.let {
+      group.addSeparator(IdeUICustomization.getInstance().projectMessage("project.widget.open.projects"))
+      group.addAll(it)
+    }
+
+    actionsMap.get(false)?.let {
+      group.addSeparator(IdeUICustomization.getInstance().projectMessage("project.widget.recent.projects"))
+      group.addAll(it)
+    }
   }
 
   private fun createStep(actionGroup: ActionGroup, context: DataContext): ListPopupStep<PopupFactoryImpl.ActionItem> {
