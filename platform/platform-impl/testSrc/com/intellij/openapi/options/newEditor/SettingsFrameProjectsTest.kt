@@ -10,9 +10,13 @@ import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.extensions.BaseExtensionPointName
 import com.intellij.openapi.extensions.DefaultPluginDescriptor
+import com.intellij.openapi.extensions.ExtensionPoint
+import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl
+import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.options.ConfigurableEP
 import com.intellij.openapi.options.ConfigurableGroup
@@ -66,6 +70,10 @@ private const val APP_CHILD_PAGE_ID = "settingsFrameProjectsTest.appChild"
 
 /** A project-level page below the project-level page. */
 private const val PROJECT_CHILD_PAGE_ID = "settingsFrameProjectsTest.projectChild"
+
+/** An extension point of the application that the dynamic project-level test page depends on. */
+@Suppress("UnresolvedPluginConfigReference")
+private val TEST_PAGE_DEPENDENCY = ExtensionPointName<Runnable>("com.intellij.openapi.options.settingsFrameProjectsTest.dependency")
 
 /**
  * The Settings window of a frame that shows several projects, see [SettingsFrameProjects] and [FrameProjectsConfigurableGroup].
@@ -320,6 +328,27 @@ internal class SettingsFrameProjectsTest {
     maskProjectPage(guest, hasPage = false, fireEvents = true)
 
     assertThat(updates).describedAs("The group listens to no extension point of a closed project").isEqualTo(updatesAfterClose)
+  }
+
+  @Test
+  fun `a page that the tree gets when it is built again tells the group about a change of its extension point`(): Unit = inFrame(
+    projectsWithPage = { emptyList() },
+    withDynamicProjectPage = true,
+  ) { disposable ->
+    (ApplicationManager.getApplication().extensionArea as ExtensionsAreaImpl)
+      .registerExtensionPoint(TEST_PAGE_DEPENDENCY, Runnable::class.java.name, ExtensionPoint.Kind.INTERFACE, disposable)
+    // the parent of the mask is older than the group, so the mask ends after the group
+    val maskParent = Disposer.newDisposable(disposable)
+    val group = createGroup(SettingsFrameProjects.create(owner)!!, disposable)
+    var updates = 0
+    group.addListener { updates++ }
+    maskProjectPage(guest, hasPage = true, fireEvents = true)
+    assertThat(projectPage(group).projectsWithPage).containsExactly(guest)
+    val updatesAfterBuild = updates
+
+    ExtensionTestUtil.maskExtensions(TEST_PAGE_DEPENDENCY, listOf(Runnable {}), maskParent, fireEvents = true)
+
+    assertThat(updates).describedAs("The point of the page of the new tree tells the group").isGreaterThan(updatesAfterBuild)
   }
 
   @Test
@@ -898,9 +927,18 @@ private open class FrameProjectsTestProjectPage(project: Project) : Configurable
   }
 }
 
-/** The project-level test page that builds its child pages itself. */
-private class FrameProjectsTestDynamicProjectPage(project: Project) : FrameProjectsTestProjectPage(project), Configurable.Composite {
+/**
+ * The project-level test page that builds its child pages itself. It depends on [TEST_PAGE_DEPENDENCY] while that point is
+ * registered.
+ */
+private class FrameProjectsTestDynamicProjectPage(project: Project) : FrameProjectsTestProjectPage(project), Configurable.Composite,
+                                                                     Configurable.WithEpDependencies {
   override fun getConfigurables(): Array<Configurable> = emptyArray()
+
+  override fun getDependencies(): Collection<BaseExtensionPointName<*>> {
+    val isRegistered = ApplicationManager.getApplication().extensionArea.hasExtensionPoint(TEST_PAGE_DEPENDENCY)
+    return if (isRegistered) listOf(TEST_PAGE_DEPENDENCY) else emptyList()
+  }
 }
 
 /** The last project-level test page that each project created. */

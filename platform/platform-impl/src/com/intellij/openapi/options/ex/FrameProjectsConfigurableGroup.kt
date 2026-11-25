@@ -46,7 +46,8 @@ class FrameProjectsConfigurableGroup private constructor(
 ) : MutableConfigurableGroup, SearchableConfigurable {
   /**
    * The parent of the extension point listeners of each project of the selector, see [EpBasedConfigurableGroup.listenToProject].
-   * It goes when its project closes. The map is empty until the first [addListener], and it changes on the EDT.
+   * It goes when its project closes or when the tree is built again. The map is empty until the first [addListener],
+   * and it changes on the EDT.
    */
   private val projectListeners = HashMap<Project, Disposable>()
   private var isListening = false
@@ -66,12 +67,25 @@ class FrameProjectsConfigurableGroup private constructor(
 
   @RequiresEdt
   override fun addListener(listener: MutableConfigurableGroup.Listener) {
-    group.addListener(listener)
     if (!isListening) {
       isListening = true
+      // the group calls its listeners in their order, so the listeners move to the new pages before a listener reads the tree
+      group.addListener(::listenToNewTree)
       for (project in projects.projects) {
         listenToProject(project)
       }
+    }
+    group.addListener(listener)
+  }
+
+  /** Moves the extension point listeners of each project to the pages of the tree that the group built again. */
+  private fun listenToNewTree() {
+    for (disposable in projectListeners.values) {
+      Disposer.dispose(disposable)
+    }
+    projectListeners.clear()
+    for (project in projects.projects) {
+      listenToProject(project)
     }
   }
 
