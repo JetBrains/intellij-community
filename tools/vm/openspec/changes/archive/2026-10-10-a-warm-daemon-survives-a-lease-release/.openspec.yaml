@@ -1,0 +1,5 @@
+schema: spec-driven
+created: 2026-10-10
+skip_specs: true
+x-topic: testing
+x-adr: ["0106-a-warm-daemon-survives-a-lease-release", "2026-10-10-a-lease-prefers-the-warm-slot"]

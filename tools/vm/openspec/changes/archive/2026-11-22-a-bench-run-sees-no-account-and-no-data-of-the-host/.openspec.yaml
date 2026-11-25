@@ -1,0 +1,5 @@
+schema: spec-driven
+created: 2026-11-22
+skip_specs: true
+x-topic: testing
+x-adr: ["2026-11-22-a-bench-run-sees-no-account-and-no-data-of-the-host"]

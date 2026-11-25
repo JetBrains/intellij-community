@@ -1,0 +1,5 @@
+schema: spec-driven
+created: 2026-09-26
+skip_specs: true
+x-topic: testing
+x-adr: ["0059-the-ui-lane-tooling-is-rust", "0105-the-ui-lane-controller-is-go", "0108-the-guest-half-of-the-image-pipeline-is-go", "0017-bazel-provided-bt", "0107-bt-is-the-go-binary"]

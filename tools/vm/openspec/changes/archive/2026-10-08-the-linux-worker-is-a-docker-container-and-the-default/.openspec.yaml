@@ -1,0 +1,5 @@
+schema: spec-driven
+created: 2026-10-08
+skip_specs: true
+x-topic: testing
+x-adr: ["0183-a-linux-worker-may-be-a-container", "0190-the-docker-engine-is-the-default-worker", "2026-10-08-the-docker-image-carries-node-and-the-tart-linux-worker-is-retired", "0110-the-truncation-chain-is-a-daemon-kill-under-load"]

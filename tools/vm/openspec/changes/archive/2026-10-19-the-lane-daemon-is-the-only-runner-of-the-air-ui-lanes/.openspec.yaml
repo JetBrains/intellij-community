@@ -1,0 +1,5 @@
+schema: spec-driven
+created: 2026-10-19
+skip_specs: true
+x-topic: testing
+x-adr: ["2026-10-19-the-lane-daemon-is-the-only-runner-of-the-air-ui-lanes", "0104-the-daemon-caches-a-process-not-a-build"]

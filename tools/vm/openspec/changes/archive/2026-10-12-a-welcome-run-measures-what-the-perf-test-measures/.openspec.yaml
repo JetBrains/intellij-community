@@ -1,0 +1,5 @@
+schema: spec-driven
+created: 2026-10-12
+skip_specs: true
+x-topic: testing
+x-adr: ["2026-10-12-a-welcome-run-measures-what-the-perf-test-measures"]

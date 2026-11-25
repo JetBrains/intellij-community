@@ -1,0 +1,5 @@
+schema: spec-driven
+created: 2026-09-29
+skip_specs: true
+x-topic: testing
+x-adr: ["0185-the-recorder-encodes-its-own-video"]

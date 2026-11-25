@@ -1,0 +1,5 @@
+schema: spec-driven
+created: 2026-10-02
+skip_specs: true
+x-topic: testing
+x-adr: ["0074-the-ui-lane-crates-follow-the-re-key-domains"]

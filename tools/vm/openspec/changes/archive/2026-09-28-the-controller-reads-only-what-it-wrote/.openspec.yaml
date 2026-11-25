@@ -1,0 +1,5 @@
+schema: spec-driven
+created: 2026-09-28
+skip_specs: true
+x-topic: testing
+x-adr: ["0065-the-controller-reads-only-what-it-wrote"]

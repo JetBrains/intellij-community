@@ -1,0 +1,5 @@
+schema: spec-driven
+created: 2026-10-23
+skip_specs: true
+x-topic: testing
+x-adr: ["2026-10-21-a-scenario-with-a-video-takes-lossy-stills", "2026-10-23-a-lossy-still-is-avif-from-libaom"]

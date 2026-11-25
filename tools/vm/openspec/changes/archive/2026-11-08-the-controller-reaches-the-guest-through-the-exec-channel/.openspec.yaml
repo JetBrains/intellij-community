@@ -1,0 +1,5 @@
+schema: spec-driven
+created: 2026-11-08
+skip_specs: true
+x-topic: testing
+x-adr: ["0182-the-daemon-is-reached-through-the-exec-channel", "2026-11-08-the-image-build-reaches-ssh-through-the-exec-channel"]

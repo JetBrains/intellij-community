@@ -1,0 +1,5 @@
+schema: spec-driven
+created: 2026-10-20
+skip_specs: true
+x-topic: testing
+x-adr: ["2026-10-20-a-teamcity-lane-run-records-video-and-keeps-its-evidence"]

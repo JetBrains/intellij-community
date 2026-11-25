@@ -1,0 +1,5 @@
+schema: spec-driven
+created: 2026-11-18
+skip_specs: true
+x-topic: testing
+x-adr: ["0189-the-docker-engine-is-a-lima-vm-the-controller-owns", "2026-10-09-apple-container-is-a-second-engine-of-the-docker-backend", "0224-apple-container-is-the-default-engine-of-a-mac", "2026-10-10-the-container-pool-follows-the-host-memory-and-the-builder-stops", "2026-10-13-the-lima-engine-is-retired", "2026-11-18-the-pinned-container-runs-from-the-volume-of-the-runtime-root", "0191-the-engine-vm-leaves-the-usernet-path"]

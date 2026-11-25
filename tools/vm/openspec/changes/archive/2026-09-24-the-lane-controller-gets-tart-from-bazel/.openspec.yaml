@@ -1,0 +1,5 @@
+schema: spec-driven
+created: 2026-09-24
+skip_specs: true
+x-topic: testing
+x-adr: ["0158-the-lane-controller-gets-tart-from-bazel"]

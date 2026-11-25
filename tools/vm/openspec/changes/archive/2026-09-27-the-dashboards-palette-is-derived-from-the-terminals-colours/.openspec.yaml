@@ -1,0 +1,5 @@
+schema: spec-driven
+created: 2026-09-27
+skip_specs: true
+x-topic: testing
+x-adr: ["0063-the-dashboards-palette-is-derived-from-the-terminals-colours"]

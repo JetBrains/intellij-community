@@ -1,0 +1,5 @@
+schema: spec-driven
+created: 2026-10-22
+skip_specs: true
+x-topic: testing
+x-adr: ["2026-10-22-a-cargo-sync-run-ends-at-a-line-of-idea-log"]

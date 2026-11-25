@@ -1,0 +1,5 @@
+schema: spec-driven
+created: 2026-10-07
+skip_specs: true
+x-topic: testing
+x-adr: ["2026-10-07-the-ui-lane-workspace-lives-in-community"]

@@ -1,0 +1,5 @@
+schema: spec-driven
+created: 2026-10-22
+skip_specs: true
+x-topic: testing
+x-adr: ["0196-the-class-count-of-a-bench-run-is-the-jvm-class-load-log", "2026-10-22-the-bench-clock-starts-at-the-load-of-the-main-class"]

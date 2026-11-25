@@ -1,0 +1,5 @@
+schema: spec-driven
+created: 2026-10-01
+skip_specs: true
+x-topic: testing
+x-adr: ["0193-the-start-up-bench-is-a-vm-verb-over-a-staged-generation"]

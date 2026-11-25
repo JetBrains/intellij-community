@@ -1,0 +1,5 @@
+schema: spec-driven
+created: 2026-10-19
+skip_specs: true
+x-topic: testing
+x-adr: ["2026-10-19-the-bench-names-the-trigger-of-each-plugin-loader"]
