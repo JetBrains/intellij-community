@@ -4,8 +4,6 @@
 fun use() = B6.value()
 
 class B6 {
-    companion object {
-    }
 }
 
 companion fun B6.value() = 6

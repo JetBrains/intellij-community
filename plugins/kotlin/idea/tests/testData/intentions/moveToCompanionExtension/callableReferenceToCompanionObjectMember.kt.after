@@ -2,8 +2,6 @@
 // Issue: KT-87036
 
 class Foo {
-    companion object {
-    }
 }
 
 val companionReference: (Int) -> Int = Foo::len
