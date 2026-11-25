@@ -5,14 +5,23 @@ import com.intellij.ide.util.scopeChooser.ScopeChooserConfigurable;
 import com.intellij.ide.util.scopeChooser.ScopeConfigurable;
 import com.intellij.ide.util.scopeChooser.ScopeEditorPanel;
 import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MasterDetailsStateService;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packageDependencies.DependencyValidationManager;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
+import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
 import com.intellij.psi.search.scope.packageSet.PatternPackageSet;
 import com.intellij.testFramework.LightJavaCodeInsightTestCase;
-import org.junit.Assert;
+import com.intellij.util.concurrency.Semaphore;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class ScopeConfigurableTest extends LightJavaCodeInsightTestCase {
@@ -59,21 +68,35 @@ public class ScopeConfigurableTest extends LightJavaCodeInsightTestCase {
     }
   }
 
-  public void testCancel() throws InterruptedException {
+  public void testCancel() throws Exception {
     ScopeEditorPanel panel = new ScopeEditorPanel(getProject(), DependencyValidationManager.getInstance(getProject()));
+    CompletableFuture<ProgressIndicator> resetStarted = new CompletableFuture<>();
+    Semaphore releaseReset = new Semaphore(1);
+    AtomicBoolean resetCompleted = new AtomicBoolean();
     try {
-      AtomicBoolean wasNotCanceled = new AtomicBoolean();
-      panel.reset(new PatternPackageSet("java.util.*", PatternPackageSet.Scope.LIBRARY, null), () -> wasNotCanceled.set(true));
-      Thread.sleep(2); //ensure that Future was not canceled non started
+      // Keep the pattern field empty so the panel keeps this package set.
+      panel.reset(new PatternPackageSet("", PatternPackageSet.Scope.ANY, null) {
+        @Override
+        public boolean contains(@NotNull VirtualFile file, @NotNull Project project, @Nullable NamedScopesHolder holder) {
+          if (!resetStarted.isDone()) {
+            resetStarted.complete(ProgressManager.getInstance().getProgressIndicator());
+            assertTrue("The rebuild request did not release the reset request", releaseReset.waitFor(10_000));
+            ProgressManager.checkCanceled();
+          }
+          return super.contains(file, project, holder);
+        }
+      }, () -> resetCompleted.set(true));
+
+      ProgressIndicator resetProgress = resetStarted.get(10, TimeUnit.SECONDS);
+      assertNotNull("The reset request must run with a progress indicator", resetProgress);
       panel.rebuild(false);
-      //Wait for the 'rebuild' task to complete. 
-      //If 'reset' was not canceled by rebuild, 'rebuild' would wait on sync TreeModelBuilder.createTreeModel
-      panel.waitForCompletion();   
-      if (wasNotCanceled.get()) {
-        Assert.fail("Model was not canceled by the consequent request");
-      }
+      assertTrue("The rebuild request did not cancel the reset request", resetProgress.isCanceled());
+      releaseReset.up();
+      panel.waitForCompletion();
+      assertFalse("The canceled reset request ran its callback", resetCompleted.get());
     }
     finally {
+      releaseReset.up();
       panel.cancelCurrentProgress();
       Disposer.dispose(panel);
     }
