@@ -14,6 +14,7 @@ import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.application.productMigration.MigrationLaunchReason
 import com.intellij.openapi.application.productMigration.MigrationState
 import com.intellij.openapi.application.productMigration.MigrationStatus
+import com.intellij.openapi.application.productMigration.isMigrationLauncherMissing
 import com.intellij.openapi.application.productMigration.macOpenCommand
 import com.intellij.openapi.application.productMigration.migrationLaunchArguments
 import com.intellij.openapi.application.productMigration.migrationLauncherCommand
@@ -49,7 +50,7 @@ internal fun restartToMigration() {
     LOG.info("no installed migration distribution to start: ${state?.status}")
     return
   }
-  if (!state.app.isDirectory() || OS.CURRENT == OS.Windows && readInstalledProductInfo(state.app)?.launcher == null) {
+  if (!state.app.isDirectory() || isMigrationLauncherMissing(readInstalledProductInfo(state.app))) {
     LOG.info("the Unified IDE does not exist or has no launcher: ${state.app}")
     store.clear()
     UpdateChecker.getNotificationGroupForIdeUpdateResults()

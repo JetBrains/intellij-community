@@ -8,6 +8,7 @@ import com.intellij.openapi.application.productMigration.migrationRedirectConten
 import com.intellij.openapi.application.productMigration.migrationStateFile
 import com.intellij.openapi.application.productMigration.readMigrationState
 import com.intellij.openapi.application.productMigration.writeMigrationState
+import com.intellij.util.system.OS
 import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -37,7 +38,8 @@ class MigrationStateTest {
 
   @Before
   fun writeApp() {
-    writeProductInfo(app)
+    // the check reads the launcher of the OS of the test machine, and Windows needs one
+    writeMacLauncher(app, osName = currentLaunchOsName())
   }
 
   @Test
@@ -119,6 +121,31 @@ class MigrationStateTest {
     write(json())
     assertNull(read())
     assertFalse(file.exists())
+  }
+
+  @Test
+  fun `Windows application without a launcher is ignored and deleted`() {
+    writeProductInfo(app)
+    write(json())
+    assertNull(readMigrationState(file, OS.Windows))
+    assertFalse(file.exists())
+  }
+
+  @Test
+  fun `Windows application with a launcher is valid`() {
+    val windowsApp = tempDir.root.toPath().resolve("Programs/JetBrains")
+    writeRootLauncher(windowsApp, osName = "Windows", launcherPath = "bin/jetbrains64.exe")
+    write(json(app = quoted(windowsApp.toString())))
+    assertEquals(windowsApp, readMigrationState(file, OS.Windows)!!.app)
+    assertTrue(file.exists())
+  }
+
+  @Test
+  fun `macOS application without a launcher is valid`() {
+    writeProductInfo(app)
+    write(json())
+    assertEquals(app, readMigrationState(file, OS.macOS)!!.app)
+    assertTrue(file.exists())
   }
 
   @Test

@@ -1,4 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:OptIn(LowLevelLocalMachineAccess::class)
+
 package com.intellij.openapi.application.productMigration
 
 import com.intellij.diagnostic.rethrowControlFlowException
@@ -15,6 +17,8 @@ import com.intellij.ui.JBColor
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.io.URLUtil
 import com.intellij.util.io.awaitExit
+import com.intellij.util.system.LowLevelLocalMachineAccess
+import com.intellij.util.system.OS
 import com.intellij.util.ui.GridBag
 import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.JBUI
@@ -133,12 +137,14 @@ private fun existingPath(argument: String, currentDir: Path): Path? {
  * Only an [MigrationRedirectStart.OPEN] start reads the content copy, and a missing or invalid copy shows no window.
  * A failure is logged and gives `null`, so that the usual start continues.
  * When [isMigrationDisabled] is true, the result is `null`, and no file is read, checked or deleted.
+ * [os] selects the launcher of the Unified IDE and the check of the state, see [readMigrationState].
  */
 @ApiStatus.Internal
 fun loadMigrationRedirect(
   start: MigrationRedirectStart?,
   stateFile: Path = migrationStateFile(),
   isMigrationDisabled: Boolean = MigrationKillSwitch.isActive(),
+  os: OS = OS.CURRENT,
 ): MigrationRedirect? {
   if (start == null || isMigrationDisabled) {
     return null
@@ -148,8 +154,8 @@ fun loadMigrationRedirect(
     if (unchecked.status != MigrationStatus.MOVED) {
       return null
     }
-    val info = readInstalledProductInfo(unchecked.app)
-    val state = validateMigrationState(unchecked, stateFile, info) ?: return null
+    val info = readInstalledProductInfo(unchecked.app, os)
+    val state = validateMigrationState(unchecked, stateFile, info, os) ?: return null
     if (start.waits) {
       LOG.info("a start that waits for the result, ${state.app} starts with no window")
       return MigrationRedirect(state, waits = true, content = null, launcher = info?.launcher)
@@ -168,18 +174,35 @@ fun loadMigrationRedirect(
 }
 
 /**
- * The command that starts the Unified IDE with the `redirect` reason and the arguments of this start.
- * Without [launcher], it starts a new instance with `open`. With [launcher], it runs the launcher of the Unified IDE.
+ * The command that starts the Unified IDE [app] with the `redirect` reason and the arguments of this start, or `null` when [os] has none.
+ * A start that [waits] runs [launcher], the launcher of the Unified IDE, on each OS.
+ * A start that does not wait starts a new instance with `open` on macOS, and it runs [launcher] on Windows.
+ * A command with the launcher needs a non-null [launcher].
  */
 @ApiStatus.Internal
-fun migrationRedirectCommand(app: Path, sourceProduct: String, arguments: List<String>, launcher: Path? = null): List<String> {
+fun migrationRedirectCommand(
+  app: Path,
+  sourceProduct: String,
+  arguments: List<String>,
+  launcher: Path?,
+  waits: Boolean,
+  os: OS = OS.CURRENT,
+): List<String>? {
   val launchArguments = migrationLaunchArguments(MigrationLaunchReason.REDIRECT, sourceProduct, arguments)
-  return if (launcher == null) macOpenCommand(app, launchArguments) else listOf(launcher.toString()) + launchArguments
+  if (waits) {
+    return launcher?.let { migrationLauncherCommand(it, launchArguments) }
+  }
+  return when (os) {
+    OS.macOS -> macOpenCommand(app, launchArguments)
+    OS.Windows -> launcher?.let { migrationLauncherCommand(it, launchArguments) }
+    OS.Linux, OS.FreeBSD, OS.OHOS, OS.Other -> null
+  }
 }
 
 /**
- * Starts the Unified IDE of [redirect] and returns the exit code for this process, or `null` when the start fails.
- * A start that does not wait uses `open` and gives `0`.
+ * Starts the Unified IDE of [redirect] with its [migrationRedirectCommand] for [os].
+ * Returns the exit code for this process, or `null` when the start fails or [os] has no command.
+ * A start that does not wait gives `0`. On macOS, it waits for `open`. On Windows, it is good when the process of the launcher starts.
  * A start that waits runs the launcher as a child with the standard streams of this process, and gives the exit code of the child.
  * [onStart] runs after the start of the child.
  */
@@ -188,24 +211,32 @@ suspend fun launchMigrationRedirect(
   redirect: MigrationRedirect,
   sourceProduct: String,
   arguments: List<String>,
+  os: OS = OS.CURRENT,
   onStart: suspend () -> Unit = {},
 ): Int? {
   val app = redirect.state.app
-  if (!redirect.waits) {
-    val process = startMigrationProcess(migrationRedirectCommand(app, sourceProduct, arguments)) ?: return null
-    val isStarted = runInterruptible(Dispatchers.IO) { waitForMigrationOpen(process, OPEN_TIMEOUT_SECONDS) }
-    return if (isStarted) 0 else null
-  }
-
-  val launcher = redirect.launcher ?: run {
-    LOG.warn("no launcher in ${app}, the start that waits cannot be redirected")
+  val command = migrationRedirectCommand(app, sourceProduct, arguments, redirect.launcher, redirect.waits, os) ?: run {
+    LOG.warn("no command starts ${app} on ${os}, launcher=${redirect.launcher}, waits=${redirect.waits}")
     return null
   }
-  val child = startMigrationProcess(migrationRedirectCommand(app, sourceProduct, arguments, launcher), inheritIO = true) ?: return null
-  onStart()
-  val exitCode = child.awaitExit()
-  LOG.info("the Unified IDE exited with the code ${exitCode}")
-  return exitCode
+  if (redirect.waits) {
+    val child = startMigrationProcess(command, inheritIO = true) ?: return null
+    onStart()
+    val exitCode = child.awaitExit()
+    LOG.info("the Unified IDE exited with the code ${exitCode}")
+    return exitCode
+  }
+
+  return when (os) {
+    OS.macOS -> {
+      val process = startMigrationProcess(command) ?: return null
+      val isStarted = runInterruptible(Dispatchers.IO) { waitForMigrationOpen(process, OPEN_TIMEOUT_SECONDS) }
+      if (isStarted) 0 else null
+    }
+    // no wait: a launcher that cannot start the IDE shows its own message and does not exit
+    OS.Windows -> if (startMigrationLauncher(command) == null) null else 0
+    OS.Linux, OS.FreeBSD, OS.OHOS, OS.Other -> null
+  }
 }
 
 /**

@@ -51,12 +51,13 @@ fun migrationStateFile(configDir: Path = PathManager.getConfigDir()): Path = con
 /**
  * Returns the state in [file], or `null` when the file does not exist.
  * A valid state is not about this IDE, and its Unified IDE exists and has the product code [MigrationState.product].
+ * Its Unified IDE also has the launcher that [os] needs, see [isMigrationLauncherMissing].
  * An invalid file is deleted, and the log gets the reason.
  */
 @ApiStatus.Internal
-fun readMigrationState(file: Path): MigrationState? {
+fun readMigrationState(file: Path, os: OS = OS.CURRENT): MigrationState? {
   val state = readUncheckedMigrationState(file) ?: return null
-  return validateMigrationState(state, file, readInstalledProductInfo(state.app))
+  return validateMigrationState(state, file, readInstalledProductInfo(state.app, os), os)
 }
 
 /** Returns the state in [file] without the check of the Unified IDE. An invalid file is deleted. */
@@ -82,9 +83,9 @@ internal fun readUncheckedMigrationState(file: Path): MigrationState? {
 
 /**
  * Returns [state] when it passes the check of [readMigrationState], else deletes [file].
- * [info] is the product info of [MigrationState.app].
+ * [info] is the product info of [MigrationState.app] for [os].
  */
-internal fun validateMigrationState(state: MigrationState, file: Path, info: InstalledProductInfo?): MigrationState? {
+internal fun validateMigrationState(state: MigrationState, file: Path, info: InstalledProductInfo?, os: OS = OS.CURRENT): MigrationState? {
   if (state.product == ApplicationInfoImpl.getShadowInstance().build.productCode) {
     return discard(file, "the state is about this IDE: ${state.product}")
   }
@@ -94,7 +95,21 @@ internal fun validateMigrationState(state: MigrationState, file: Path, info: Ins
   if (info?.productCode != state.product) {
     return discard(file, "${state.app} has the product code ${info?.productCode}, expected ${state.product}")
   }
+  if (isMigrationLauncherMissing(info, os)) {
+    return discard(file, "the Unified IDE has no launcher: ${state.app}")
+  }
   return state
+}
+
+/**
+ * Returns `true` when the Unified IDE with the product info [info] has no launcher, and [os] needs one.
+ * On Windows, this IDE starts the Unified IDE only with its launcher, so a Unified IDE with no launcher counts as removed.
+ * On macOS, `open` starts the application, so the launcher is necessary only for a start that waits.
+ */
+@ApiStatus.Internal
+fun isMigrationLauncherMissing(info: InstalledProductInfo?, os: OS = OS.CURRENT): Boolean = when (os) {
+  OS.Windows -> info?.launcher == null
+  OS.macOS, OS.Linux, OS.FreeBSD, OS.OHOS, OS.Other -> false
 }
 
 /** Writes a temporary file next to [file], then renames it. */

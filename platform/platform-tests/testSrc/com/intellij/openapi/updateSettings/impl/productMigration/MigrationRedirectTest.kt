@@ -21,6 +21,7 @@ import com.intellij.openapi.application.productMigration.writeMigrationState
 import com.intellij.openapi.util.io.IoTestUtil
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.runInEdtAndGet
+import com.intellij.util.system.OS
 import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -48,10 +49,12 @@ class MigrationRedirectTest {
   private val stateFile: Path by lazy { migrationStateFile(configDir) }
   private val contentFile: Path by lazy { migrationRedirectContentFile(stateFile) }
   private val app: Path by lazy { tempDir.root.toPath().resolve("Unified IDE.app").createDirectories() }
+  private lateinit var launcher: Path
 
   @Before
   fun writeApp() {
-    writeProductInfo(app)
+    // the redirect reads the launcher of the OS of the test machine, and Windows needs one
+    launcher = writeMacLauncher(app, osName = currentLaunchOsName())
   }
 
   @Test
@@ -107,19 +110,51 @@ class MigrationRedirectTest {
       val redirect = load(start)!!
       assertTrue(redirect.waits)
       assertNull(redirect.content)
-      assertNull("the application has no launcher", redirect.launcher)
     }
     assertTrue(contentFile.exists())
   }
 
   @Test
   fun `each kind of start has the launcher of the Unified IDE`() {
-    // the redirect reads the launcher of the OS of the test machine
-    val launcher = writeMacLauncher(app, osName = currentLaunchOsName())
     writeState(MigrationStatus.MOVED)
     for (start in MigrationRedirectStart.entries) {
       assertEquals(start.name, launcher, load(start)!!.launcher)
     }
+  }
+
+  @Test
+  fun `Windows application without a launcher deletes the state and the copy`() {
+    writeProductInfo(app)
+    for (start in MigrationRedirectStart.entries) {
+      writeState(MigrationStatus.MOVED)
+      writeContent()
+      assertNull(start.name, loadMigrationRedirect(start, stateFile, isMigrationDisabled = false, os = OS.Windows))
+      assertFalse(start.name, stateFile.exists())
+      assertFalse(start.name, contentFile.exists())
+    }
+  }
+
+  @Test
+  fun `Windows application with a launcher is redirected`() {
+    val windowsApp = tempDir.root.toPath().resolve("Programs/JetBrains")
+    val windowsLauncher = writeRootLauncher(windowsApp, osName = "Windows", launcherPath = "bin/jetbrains64.exe")
+    writeState(MigrationStatus.MOVED, app = windowsApp)
+    for (start in MigrationRedirectStart.entries) {
+      val redirect = loadMigrationRedirect(start, stateFile, isMigrationDisabled = false, os = OS.Windows)
+      assertEquals(start.name, windowsLauncher, redirect!!.launcher)
+    }
+    assertTrue(stateFile.exists())
+  }
+
+  @Test
+  fun `macOS application without a launcher is redirected`() {
+    writeProductInfo(app)
+    writeState(MigrationStatus.MOVED)
+    for (start in MigrationRedirectStart.entries) {
+      val redirect = loadMigrationRedirect(start, stateFile, isMigrationDisabled = false, os = OS.macOS)
+      assertNull(start.name, redirect!!.launcher)
+    }
+    assertTrue(stateFile.exists())
   }
 
   @Test
@@ -227,10 +262,11 @@ class MigrationRedirectTest {
   }
 
   @Test
-  fun `redirect command has the redirect reason and the arguments`() {
+  fun `macOS command of a start that does not wait starts a new instance with the redirect reason and the arguments`() {
     // the text of a path depends on the OS of the test machine
     val app = Path.of("/Users/me/Applications/Unified IDE.app")
-    val command = migrationRedirectCommand(app, "GO", listOf("/Users/me/my project", "diff"))
+    val launcher = app.resolve("Contents/MacOS/light")
+    val command = migrationRedirectCommand(app, "GO", listOf("/Users/me/my project", "diff"), launcher, waits = false, os = OS.macOS)
     assertEquals(listOf(
       "/usr/bin/open", "-n", "-a", app.toString(), "--args",
       "-Dide.migration.version=1",
@@ -242,17 +278,55 @@ class MigrationRedirectTest {
   }
 
   @Test
-  fun `launcher command runs the launcher with the redirect reason first`() {
-    val launcher = Path.of("/Users/me/Applications/Unified IDE.app/Contents/MacOS/light")
-    val command = migrationRedirectCommand(Path.of("/Users/me/Applications/Unified IDE.app"), "GO", listOf("--wait", "/a"), launcher)
+  fun `command of a start that waits runs the launcher with the redirect reason first on each OS`() {
+    val app = Path.of("/Users/me/Applications/Unified IDE.app")
+    val launcher = app.resolve("Contents/MacOS/light")
+    for (os in OS.entries) {
+      val command = migrationRedirectCommand(app, "GO", listOf("--wait", "/a"), launcher, waits = true, os = os)
+      assertEquals(os.name, listOf(
+        launcher.toString(),
+        "-Dide.migration.version=1",
+        "-Dide.migration.reason=redirect",
+        "-Dide.migration.source.product=GO",
+        "--wait",
+        "/a",
+      ), command)
+    }
+  }
+
+  @Test
+  fun `Windows command of a start that does not wait runs the launcher with the redirect reason first`() {
+    val app = Path.of("C:\\Users\\John Smith\\AppData\\Local\\Programs\\JetBrains")
+    val launcher = app.resolve("bin").resolve("jetbrains64.exe")
+    val command = migrationRedirectCommand(app, "GO", listOf("C:\\Users\\John Smith\\my project"), launcher, waits = false, os = OS.Windows)
     assertEquals(listOf(
       launcher.toString(),
       "-Dide.migration.version=1",
       "-Dide.migration.reason=redirect",
       "-Dide.migration.source.product=GO",
-      "--wait",
-      "/a",
+      "C:\\Users\\John Smith\\my project",
     ), command)
+  }
+
+  @Test
+  fun `no command without a launcher, except the macOS start that does not wait`() {
+    val app = Path.of("/Users/me/Applications/Unified IDE.app")
+    for (os in OS.entries) {
+      assertNull(os.name, migrationRedirectCommand(app, "GO", emptyList(), launcher = null, waits = true, os = os))
+    }
+    assertEquals("/usr/bin/open", migrationRedirectCommand(app, "GO", emptyList(), launcher = null, waits = false, os = OS.macOS)!!.first())
+    for (os in OS.entries - OS.macOS) {
+      assertNull(os.name, migrationRedirectCommand(app, "GO", emptyList(), launcher = null, waits = false, os = os))
+    }
+  }
+
+  @Test
+  fun `no command of a start that does not wait on a system other than macOS and Windows`() {
+    val app = Path.of("/opt/unified-ide")
+    val launcher = app.resolve("bin/unified")
+    for (os in OS.entries - OS.macOS - OS.Windows) {
+      assertNull(os.name, migrationRedirectCommand(app, "GO", listOf("/a"), launcher, waits = false, os = os))
+    }
   }
 
   @Test
@@ -289,7 +363,7 @@ class MigrationRedirectTest {
 
   @Test
   fun `failed start returns null`() {
-    // `open` fails for a missing application, and a system without `open` cannot start the command
+    // `open` fails for a missing application, and another OS has no command without a launcher
     val state = MigrationState(MigrationStatus.MOVED, tempDir.root.toPath().resolve("Missing.app"), "JB")
     assertNull(launch(MigrationRedirect(state, waits = false, content = null, launcher = null), emptyList()))
   }
