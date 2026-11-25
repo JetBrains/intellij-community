@@ -137,6 +137,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
@@ -152,6 +153,7 @@ public final class DaemonListeners implements Disposable {
   volatile boolean cutOperationJustHappened;
   private List<Editor> myActiveEditors = Collections.emptyList();
   private final AtomicLong myFoldingStateChanged = new AtomicLong();
+  private final AtomicBoolean myTrafficLightUpdateScheduled = new AtomicBoolean();
   // some expensive flags, e.g. isMarkedExcluded and isCodeFragment are computed in BGT
   private final Alarm myRecomputeFlagsInBGT;
 
@@ -343,7 +345,7 @@ public final class DaemonListeners implements Disposable {
       public void rootsChanged(@NotNull ModuleRootEvent event) {
         stopDaemonAndRestartAllFiles("Project roots changed");
         // re-initialize TrafficLightRenderer in each editor since root change event could change highlight-ability
-        reInitTrafficLightRendererForAllEditors();
+        scheduleTrafficLightRendererReInit();
       }
     });
     connection.subscribe(AdditionalLibraryRootsListener.TOPIC, (_, _, _, _) -> stopDaemonAndRestartAllFiles("Additional libraries changed"));
@@ -553,6 +555,15 @@ public final class DaemonListeners implements Disposable {
       if (markup instanceof EditorMarkupModelImpl editorMarkup) {
         editorMarkup.repaintTrafficLightIcon();
       }
+    }
+  }
+
+  private void scheduleTrafficLightRendererReInit() {
+    if (myTrafficLightUpdateScheduled.compareAndSet(false, true)) {
+      ApplicationManager.getApplication().invokeLater(() -> {
+        myTrafficLightUpdateScheduled.set(false);
+        reInitTrafficLightRendererForAllEditors();
+      }, ModalityState.defaultModalityState(), myProject.getDisposed());
     }
   }
 

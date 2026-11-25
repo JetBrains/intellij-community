@@ -13,16 +13,14 @@ import com.intellij.lang.Language;
 import com.intellij.lang.LanguageUtil;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.WriteIntentReadAction;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
-import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.diagnostic.RuntimeExceptionWithAttachments;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.BinaryFileTypeDecompilers;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.DumbModeListenerBackgroundable;
-import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.util.LowMemoryWatcher;
@@ -422,21 +420,23 @@ public final class FileManagerImpl implements FileManagerEx {
   }
 
   private void processFileTypesChanged(boolean clearViewProviders, boolean clearLightFiles) {
-    if (myProcessingFileTypesChange) return;
-    myProcessingFileTypesChange = true;
-    DebugUtil.performPsiModification(null, () -> {
+    WriteIntentReadAction.run(() -> {
+      if (myProcessingFileTypesChange) return;
+      myProcessingFileTypesChange = true;
       try {
-        ApplicationManager.getApplication().runWriteAction(() -> {
-          PsiTreeChangeEventImpl event = new PsiTreeChangeEventImpl(myManager);
-          event.setPropertyName(PsiTreeChangeEvent.PROP_FILE_TYPES);
-          myManager.beforePropertyChange(event);
+        DebugUtil.performPsiModification(null, () -> {
+          ApplicationManager.getApplication().runWriteAction(() -> {
+            PsiTreeChangeEventImpl event = new PsiTreeChangeEventImpl(myManager);
+           event.setPropertyName(PsiTreeChangeEvent.PROP_FILE_TYPES);
+            myManager.beforePropertyChange(event);
 
-          possiblyInvalidatePhysicalPsi();
-          if (clearViewProviders) {
-            clearViewProviders("processFileTypesChanged", clearLightFiles);
-          }
+            possiblyInvalidatePhysicalPsi();
+            if (clearViewProviders) {
+              clearViewProviders("processFileTypesChanged", clearLightFiles);
+            }
 
-          myManager.propertyChanged(event);
+            myManager.propertyChanged(event);
+          });
         });
       }
       finally {

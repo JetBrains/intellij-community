@@ -2,7 +2,9 @@
 package com.intellij.openapi.roots.impl
 
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.WriteIntentReadAction
 import com.intellij.openapi.components.State
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
@@ -37,7 +39,7 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType
 import java.util.concurrent.ConcurrentHashMap
 
-private val LOG = logger<ProjectRootManagerImpl>()
+private val LOG: Logger = logger<ProjectRootManagerImpl>()
 
 @State(name = "ProjectRootManager")
 @ApiStatus.Internal
@@ -46,8 +48,8 @@ open class ProjectRootManagerImpl(
   @JvmField protected val coroutineScope: CoroutineScope,
 ) : ProjectRootManagerEx() {
 
-  private val projectJdkEventDispatcher = EventDispatcher.create(ProjectJdkListener::class.java)
-  private val moduleRootManagerInstances = ConcurrentHashMap<Module, ModuleRootManager>()
+  private val projectJdkEventDispatcher: EventDispatcher<ProjectJdkListener?> = EventDispatcher.create(ProjectJdkListener::class.java)
+  private val moduleRootManagerInstances: ConcurrentHashMap<Module, ModuleRootManager> = ConcurrentHashMap<Module, ModuleRootManager>()
 
   private val rootCache: OrderRootsCache
 
@@ -89,40 +91,45 @@ open class ProjectRootManagerImpl(
 
   @ApiStatus.Internal
   abstract inner class BatchSession<Change, ChangeList>(private val fileTypes: Boolean) {
-    private var batchLevel = 0
-    private var pendingRootsChanged = 0
-    private var isChanged = false
+    private var batchLevel: Int = 0
+    private var pendingRootsChanged: Int = 0
+    private var isChanged: Boolean = false
     private var changes: ChangeList? = null
 
     fun levelUp() {
-      if (batchLevel == 0) {
-        isChanged = false
-        changes = null
+      WriteIntentReadAction.run {
+        if (batchLevel == 0) {
+          isChanged = false
+          changes = null
+        }
+        batchLevel += 1
       }
-      batchLevel += 1
     }
 
     fun levelDown() {
-      batchLevel -= 1
-      if (isChanged && batchLevel == 0) {
-        try {
-          // todo make sure it should be not null here
-          if (changes == null) {
-            changes = initiateChangelist(genericChange)
+      WriteIntentReadAction.run {
+        batchLevel -= 1
+        if (isChanged && batchLevel == 0) {
+          try {
+            // todo make sure it should be not null here
+            if (changes == null) {
+              changes = initiateChangelist(genericChange)
+            }
+            pendingRootsChanged--
+            ApplicationManager.getApplication().runWriteAction { fireRootsChanged(copy(changes!!)) }
           }
-          pendingRootsChanged--
-          ApplicationManager.getApplication().runWriteAction { fireRootsChanged(copy(changes!!)) }
-        }
-        finally {
-          if (pendingRootsChanged == 0) {
-            isChanged = false
-            changes = null
+          finally {
+            if (pendingRootsChanged == 0) {
+              isChanged = false
+              changes = null
+            }
           }
         }
       }
     }
 
     fun beforeRootsChanged() {
+      ThreadingAssertions.assertWriteAccess()
       if (batchLevel == 0 || !isChanged) {
         fireBeforeRootsChanged(fileTypes)
         pendingRootsChanged++
@@ -132,6 +139,7 @@ open class ProjectRootManagerImpl(
 
     @JvmOverloads
     fun rootsChanged(change: Change = genericChange) {
+      ThreadingAssertions.assertWriteAccess()
       changes = if (changes == null) initiateChangelist(change) else accumulate(changes!!, change)
       if (batchLevel == 0 && isChanged) {
         pendingRootsChanged--
@@ -421,6 +429,8 @@ open class ProjectRootManagerImpl(
   }
 
   @ApiStatus.Internal
+  @get:RequiresWriteLock
+  @set:RequiresWriteLock
   var isFiringEvent: Boolean = false
     protected set
 

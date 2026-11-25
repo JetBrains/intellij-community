@@ -1309,7 +1309,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   /**
    * Defers file type notifications until the token finishes.
    * File type cache invalidation and legacy field updates remain immediate.
-   * Call this method and finish the token in an EDT write action.
+   * Call this method in an EDT write action. Finish the token in a write action.
    */
   @ApiStatus.Internal
   public @NotNull AccessToken deferFileTypesChanged() {
@@ -1321,7 +1321,6 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     List<FileTypeEvent> deferred = new ArrayList<>();
     myDeferredFileTypeEvents = deferred;
     return AccessToken.create(() -> {
-      ThreadingAssertions.assertEventDispatchThread();
       ThreadingAssertions.assertWriteAccess();
       if (myDeferredFileTypeEvents != deferred) {
         return;

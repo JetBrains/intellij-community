@@ -2,12 +2,16 @@
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeInsight.intention.impl.CachedIntentions;
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
 public abstract class IntentionsUI {
@@ -21,6 +25,7 @@ public abstract class IntentionsUI {
   }
 
   private final AtomicReference<CachedIntentions> myCachedIntentions = new AtomicReference<>();
+  private final AtomicBoolean myHideScheduled = new AtomicBoolean();
 
   public @NotNull CachedIntentions getCachedIntentions(@NotNull Editor editor, @NotNull PsiFile psiFile) {
     return myCachedIntentions.updateAndGet(cachedIntentions -> {
@@ -33,7 +38,15 @@ public abstract class IntentionsUI {
 
   public void invalidate() {
     myCachedIntentions.set(null);
-    hide();
+    Application application = ApplicationManager.getApplication();
+    if (myHideScheduled.compareAndSet(false, true)) {
+      application.invokeLater(() -> {
+        myHideScheduled.set(false);
+        if (myCachedIntentions.get() == null) {
+          hide();
+        }
+      }, ModalityState.defaultModalityState(), myProject.getDisposed());
+    }
   }
 
   @ApiStatus.Internal

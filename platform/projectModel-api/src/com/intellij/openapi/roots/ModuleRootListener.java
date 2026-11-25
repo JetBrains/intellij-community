@@ -13,6 +13,8 @@ import java.util.EventListener;
 /**
  * Project root changes.
  * <p>
+ * Callbacks can run outside the EDT. They always hold write access.
+ * <p>
  * For more fine-grained, incremental updates related specifically to workspace model changes,
  * consider using {@link com.intellij.platform.backend.workspace.WorkspaceModelChangeListener}.
  * <p>

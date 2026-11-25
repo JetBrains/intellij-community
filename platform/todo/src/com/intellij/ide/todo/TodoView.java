@@ -5,6 +5,8 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.lang.LangBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadConstraint;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
@@ -41,12 +43,10 @@ import org.jetbrains.annotations.VisibleForTesting;
 
 import javax.swing.JTree;
 import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
-
-import static com.intellij.ide.todo.TodoImplementationChooserKt.shouldUseSplitTodo;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 @State(name = "TodoView", storages = @Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE), perClient = true)
 public class TodoView implements PersistentStateComponent<TodoView.State>, Disposable {
@@ -56,11 +56,10 @@ public class TodoView implements PersistentStateComponent<TodoView.State>, Dispo
   private ToolWindow myToolWindow;
   private ContentManager myContentManager;
   private TodoPanel myAllTodos;
-  private @Nullable TodoPanel myChangeListTodosPanel;
   private CurrentFileTodosPanel myCurrentFileTodosPanel;
-  private ScopeBasedTodosPanel myScopeBasedTodosPanel;
   private final List<TodoPanel> myPanels = new ArrayList<>();
   private final List<Content> myNotAddedContent = new ArrayList<>();
+  private volatile boolean myDisposed;
 
   private State state = new State();
 
@@ -129,6 +128,7 @@ public class TodoView implements PersistentStateComponent<TodoView.State>, Dispo
 
   @Override
   public void dispose() {
+    myDisposed = true;
   }
 
   @TestOnly
@@ -187,17 +187,17 @@ public class TodoView implements PersistentStateComponent<TodoView.State>, Dispo
 
     String tabName = myChangesSupport.getTabName(myProject);
     myChangeListTodosContent = contentFactory.createContent(null, tabName, false);
-    myChangeListTodosPanel = myChangesSupport.createPanel(this, state.current, myChangeListTodosContent);
-    if (myChangeListTodosPanel != null) {
-      Disposer.register(this, myChangeListTodosPanel);
-      myChangeListTodosContent.setComponent(myChangeListTodosPanel);
-      myChangeListTodosContent.setPreferredFocusableComponent(myChangeListTodosPanel.getTree());
+    TodoPanel changeListTodosPanel = myChangesSupport.createPanel(this, state.current, myChangeListTodosContent);
+    if (changeListTodosPanel != null) {
+      Disposer.register(this, changeListTodosPanel);
+      myChangeListTodosContent.setComponent(changeListTodosPanel);
+      myChangeListTodosContent.setPreferredFocusableComponent(changeListTodosPanel.getTree());
     }
 
     Content scopeBasedTodoContent = contentFactory.createContent(null, LangBundle.message("tab.title.scope.based"), false);
-    myScopeBasedTodosPanel = new ScopeBasedTodosPanel(this, state.current, scopeBasedTodoContent);
-    Disposer.register(this, myScopeBasedTodosPanel);
-    scopeBasedTodoContent.setComponent(myScopeBasedTodosPanel);
+    ScopeBasedTodosPanel scopeBasedTodosPanel = new ScopeBasedTodosPanel(this, state.current, scopeBasedTodoContent);
+    Disposer.register(this, scopeBasedTodosPanel);
+    scopeBasedTodoContent.setComponent(scopeBasedTodosPanel);
 
     myToolWindow = toolWindow;
     myContentManager = toolWindow.getContentManager();
@@ -222,11 +222,11 @@ public class TodoView implements PersistentStateComponent<TodoView.State>, Dispo
     myContentManager.setSelectedContent(content == null ? allTodosContent : content);
 
     myPanels.add(myAllTodos);
-    if (myChangeListTodosPanel != null) {
-      myPanels.add(myChangeListTodosPanel);
+    if (changeListTodosPanel != null) {
+      myPanels.add(changeListTodosPanel);
     }
     myPanels.add(myCurrentFileTodosPanel);
-    myPanels.add(myScopeBasedTodosPanel);
+    myPanels.add(scopeBasedTodosPanel);
 
     MyVisibilityListener visibilityListener = new MyVisibilityListener();
     myProject.getMessageBus().connect(this).subscribe(ToolWindowManagerListener.TOPIC, visibilityListener);
@@ -234,8 +234,8 @@ public class TodoView implements PersistentStateComponent<TodoView.State>, Dispo
 
     myAllTodos.invokePostponedRunnable();
     myCurrentFileTodosPanel.invokePostponedRunnable();
-    if (myChangeListTodosPanel != null) {
-      myChangeListTodosPanel.invokePostponedRunnable();
+    if (changeListTodosPanel != null) {
+      changeListTodosPanel.invokePostponedRunnable();
     }
   }
 
@@ -266,9 +266,16 @@ public class TodoView implements PersistentStateComponent<TodoView.State>, Dispo
   }
 
   private final class MyFileTypeListener implements FileTypeListener {
+    private final AtomicBoolean myRefreshScheduled = new AtomicBoolean();
+
     @Override
     public void fileTypesChanged(@NotNull FileTypeEvent e) {
-      refresh();
+      if (myRefreshScheduled.compareAndSet(false, true)) {
+        ApplicationManager.getApplication().invokeLater(() -> {
+          myRefreshScheduled.set(false);
+          refresh();
+        }, ModalityState.defaultModalityState(), _ -> myDisposed || myProject.isDisposed());
+      }
     }
   }
 
@@ -291,8 +298,8 @@ public class TodoView implements PersistentStateComponent<TodoView.State>, Dispo
     }
   }
 
-  public final void refresh(@NotNull List<VirtualFile> files) {
-    if (myAllTodos == null) {
+  public final void refresh(@NotNull List<? extends VirtualFile> files) {
+    if (myDisposed || myAllTodos == null) {
       return;
     }
 
@@ -308,7 +315,7 @@ public class TodoView implements PersistentStateComponent<TodoView.State>, Dispo
 
   @VisibleForTesting
   public final @NotNull CompletableFuture<Void> refresh() {
-    if (myAllTodos == null) {
+    if (myDisposed || myAllTodos == null) {
       return CompletableFuture.completedFuture(null);
     }
 
@@ -340,12 +347,7 @@ public class TodoView implements PersistentStateComponent<TodoView.State>, Dispo
     }
     myPanels.add(panel);
     content.setCloseable(true);
-    content.setDisposer(new Disposable() {
-      @Override
-      public void dispose() {
-        myPanels.remove(panel);
-      }
-    });
+    content.setDisposer(() -> myPanels.remove(panel));
     return content;
   }
 }

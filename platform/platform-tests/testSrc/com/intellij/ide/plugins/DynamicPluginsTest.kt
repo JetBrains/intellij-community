@@ -45,6 +45,7 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.useBackgroundWriteAction
 import com.intellij.openapi.components.ComponentManager
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Editor
@@ -57,8 +58,10 @@ import com.intellij.openapi.module.ModuleConfigurationEditor
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
+import com.intellij.openapi.project.RootsChangeRescanningInfo
 import com.intellij.openapi.roots.ModuleRootEvent
 import com.intellij.openapi.roots.ModuleRootListener
+import com.intellij.openapi.roots.ex.ProjectRootManagerEx
 import com.intellij.openapi.roots.ui.configuration.ModuleConfigurationEditorProvider
 import com.intellij.openapi.roots.ui.configuration.ModuleConfigurationState
 import com.intellij.openapi.util.Disposer
@@ -959,27 +962,74 @@ class DynamicPluginsTest {
     checkFileTypeEventsAfterPluginLoad()
   }
 
+  @Test
+  fun loadRootsModification() {
+    val project = projectRule.project
+    val rootManager = ProjectRootManagerEx.getInstanceEx(project)
+    val notifications = mutableListOf<String>()
+    val listenerDisposable = Disposer.newDisposable(testDisposable.disposable)
+    application.messageBus.connect(listenerDisposable).subscribe(DynamicPluginListener.TOPIC, object : DynamicPluginListener {
+      override fun pluginLoaded(pluginDescriptor: IdeaPluginDescriptor) {
+        application.assertIsDispatchThread()
+        notifications.add("plugin loaded")
+        application.runWriteAction {
+          rootManager.makeRootsChange({}, RootsChangeRescanningInfo.NO_RESCAN_NEEDED)
+        }
+        assertThat(notifications).containsExactly("plugin loaded")
+      }
+
+      override fun pluginsLoaded() {
+        application.assertIsDispatchThread()
+        assertThat(notifications).containsExactly("plugin loaded")
+        notifications.add("plugins loaded")
+      }
+    })
+    project.messageBus.connect(listenerDisposable).subscribe(ModuleRootListener.TOPIC, object : ModuleRootListener {
+      override fun rootsChanged(event: ModuleRootEvent) {
+        application.assertWriteAccessAllowed()
+        assertThat(event.isCausedByFileTypesChange).isFalse()
+        assertThat(application.isDispatchThread).isEqualTo(!useBackgroundWriteAction)
+        notifications.add("roots changed")
+      }
+    })
+    val disposable = loadPluginWithText(plugin("rootsChanges") {})
+    try {
+      assertThat(notifications).containsExactly("plugin loaded", "plugins loaded", "roots changed")
+    }
+    finally {
+      Disposer.dispose(listenerDisposable)
+      Disposer.dispose(disposable)
+    }
+  }
+
   private fun checkFileTypeEventsAfterPluginLoad() {
     FileTypeManager.getInstance()
     val notifications = mutableListOf<String>()
+    val loading = AtomicBoolean()
     val connection = application.messageBus.connect(testDisposable.disposable)
     connection.subscribe(DynamicPluginListener.TOPIC, object : DynamicPluginListener {
       override fun pluginLoaded(pluginDescriptor: IdeaPluginDescriptor) {
+        application.assertIsDispatchThread()
         notifications.add("plugin loaded")
       }
 
       override fun pluginsLoaded() {
+        application.assertIsDispatchThread()
         notifications.add("plugins loaded")
       }
     })
     connection.subscribe(FileTypeManager.TOPIC, object : FileTypeListener {
       override fun fileTypesChanged(event: FileTypeEvent) {
+        assertThat(application.isDispatchThread).isEqualTo(!loading.get() || !useBackgroundWriteAction)
+        application.assertWriteAccessAllowed()
         notifications.add("file types changed")
       }
     })
     projectRule.project.messageBus.connect(testDisposable.disposable).subscribe(ProjectTopics.PROJECT_ROOTS, object : ModuleRootListener {
       override fun rootsChanged(event: ModuleRootEvent) {
         if (event.isCausedByFileTypesChange) {
+          application.assertWriteAccessAllowed()
+          assertThat(application.isDispatchThread).isEqualTo(!loading.get() || !useBackgroundWriteAction)
           notifications.add("roots changed")
         }
       }
@@ -988,11 +1038,13 @@ class DynamicPluginsTest {
     val textToLoad = "<fileType name=\"PLAIN_TEXT\" language=\"PLAIN_TEXT\" fileNames=\".texttest\"/>"
     repeat(2) {
       notifications.clear()
+      loading.set(true)
       val disposable = loadExtensionWithText(textToLoad)
       try {
         assertThat(notifications).containsExactly("plugin loaded", "file types changed", "plugins loaded", "roots changed")
       }
       finally {
+        loading.set(false)
         Disposer.dispose(disposable)
       }
       UIUtil.dispatchAllInvocationEvents()

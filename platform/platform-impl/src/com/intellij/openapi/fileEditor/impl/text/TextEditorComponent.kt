@@ -9,6 +9,7 @@ import com.intellij.openapi.actionSystem.DataSink
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.actionSystem.UiCompatibleDataProvider
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.event.DocumentEvent
@@ -37,6 +38,7 @@ import java.awt.Component
 import java.awt.Graphics
 import java.awt.GridBagConstraints
 import java.awt.GridBagLayout
+import java.util.concurrent.atomic.AtomicBoolean
 import javax.swing.JComponent
 import javax.swing.JLayeredPane
 
@@ -56,7 +58,10 @@ open class TextEditorComponent(
   /**
    * Whether the editor is valid or not
    */
+  @Volatile
   private var isValid: Boolean
+  private var notifiedValid: Boolean
+  private val validityUpdateScheduled: AtomicBoolean = AtomicBoolean()
 
   @Volatile
   var isDisposed: Boolean = false
@@ -84,6 +89,7 @@ open class TextEditorComponent(
 
     isModified = isModifiedImpl
     isValid = isEditorValidImpl
+    notifiedValid = isValid
     LOG.assertTrue(isValid)
   }
 
@@ -186,9 +192,24 @@ open class TextEditorComponent(
     get() = FileDocumentManager.getInstance().canHaveDocument(file)
 
   private fun updateValidProperty(textEditor: TextEditorImpl) {
-    val oldValid = isValid
     isValid = isEditorValidImpl
-    textEditor.firePropertyChange(FileEditor.getPropValid(), oldValid, isValid)
+    val application = ApplicationManager.getApplication()
+    if (validityUpdateScheduled.compareAndSet(false, true)) {
+      application.invokeLater({
+        validityUpdateScheduled.set(false)
+        if (!isDisposed) {
+          notifyValidityChanged(textEditor)
+        }
+      }, ModalityState.defaultModalityState(), { isDisposed })
+    }
+  }
+
+  private fun notifyValidityChanged(textEditor: TextEditorImpl) {
+    ThreadingAssertions.assertEventDispatchThread()
+    val oldValid = notifiedValid
+    val newValid = isValid
+    notifiedValid = newValid
+    textEditor.firePropertyChange(FileEditor.getPropValid(), oldValid, newValid)
   }
 
   override fun uiDataSnapshot(sink: DataSink) {

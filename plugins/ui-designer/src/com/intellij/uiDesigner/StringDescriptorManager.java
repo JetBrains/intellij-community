@@ -87,6 +87,8 @@ public final class StringDescriptorManager {
   }
 
   void clear() {
-    myPropertiesFileCache.clear();
+    synchronized (myPropertiesFileCache) {
+      myPropertiesFileCache.clear();
+    }
   }
 }

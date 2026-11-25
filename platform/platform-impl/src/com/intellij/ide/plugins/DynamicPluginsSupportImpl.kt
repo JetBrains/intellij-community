@@ -3,6 +3,7 @@ package com.intellij.ide.plugins
 
 import com.intellij.configurationStore.BatchUpdateListener
 import com.intellij.configurationStore.saveProjectsAndApp
+import com.intellij.diagnostic.PerformanceWatcher
 import com.intellij.diagnostic.dumpCoroutines
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.SaveAndSyncHandler
@@ -24,6 +25,7 @@ import com.intellij.openapi.actionSystem.impl.ActionManagerImpl
 import com.intellij.openapi.application.AccessToken
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.backgroundWriteAction
 import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.application.impl.ApplicationImpl
 import com.intellij.openapi.components.ComponentManagerEx
@@ -171,6 +173,7 @@ internal class DynamicPluginsSupportImpl(
     currentCoroutineContext().ensureActive()
 
     return withContext(NonCancellable) {
+      val responsiveness = PerformanceWatcher.takeSnapshot()
       val criticalSectionResult = if (criticalSectionModalProgressConfig != null) {
         tracer.spanBuilder(DynamicPlugins.CRITICAL_SECTION_MODAL_PROGRESS_SPAN).useWithScope {
           withModalProgress(criticalSectionModalProgressConfig.owner,
@@ -191,6 +194,7 @@ internal class DynamicPluginsSupportImpl(
       tracer.spanBuilder("postLoadNotifications").useWithScope {
         criticalSectionResult.deferredPostLoadNotification.invoke()
       }
+      responsiveness.logResponsivenessSinceCreation("Dynamic plugin reconfiguration")
       criticalSectionResult.result
     }
   }
@@ -445,8 +449,10 @@ internal class DynamicPluginsSupportImpl(
         finally {
           try {
             fileTypeEvents?.let { token ->
-              edtWriteAction {
-                token.finish()
+              backgroundWriteAction {
+                tracer.spanBuilder("fileTypeNotifications").use {
+                  token.finish()
+                }
               }
             }
           }
@@ -458,10 +464,12 @@ internal class DynamicPluginsSupportImpl(
             }
             finally {
               if (projectsWithDeferredRoots.isNotEmpty()) {
-                edtWriteAction {
-                  for (project in projectsWithDeferredRoots) {
-                    if (!project.isDisposed) {
-                      project.messageBus.syncPublisher(BatchUpdateListener.TOPIC).onBatchUpdateFinished()
+                backgroundWriteAction {
+                  tracer.spanBuilder("rootsChangeNotifications").use {
+                    for (project in projectsWithDeferredRoots) {
+                      if (!project.isDisposed) {
+                        project.messageBus.syncPublisher(BatchUpdateListener.TOPIC).onBatchUpdateFinished()
+                      }
                     }
                   }
                 }

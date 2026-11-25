@@ -205,6 +205,7 @@ import java.beans.PropertyChangeListener
 import java.util.EventListener
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.CopyOnWriteArrayList
+import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
 import java.util.concurrent.atomic.LongAdder
@@ -2441,8 +2442,19 @@ open class FileEditorManagerImpl(
    * Gets events from FileTypeManager and updates icons on tabs
    */
   private inner class MyFileTypeListener : FileTypeListener {
-    @RequiresEdt
+    private val updateIconsScheduled: AtomicBoolean = AtomicBoolean()
+
     override fun fileTypesChanged(event: FileTypeEvent) {
+      if (updateIconsScheduled.compareAndSet(false, true)) {
+        coroutineScope.launch(Dispatchers.EDT + ModalityState.defaultModalityState().asContextElement()) {
+          updateIconsScheduled.set(false)
+          updateIcons()
+        }
+      }
+    }
+
+    @RequiresEdt
+    private fun updateIcons() {
       for (file in openedFiles.asReversed()) {
         updateFileIcon(file)
       }

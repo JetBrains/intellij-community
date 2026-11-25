@@ -130,13 +130,11 @@ public class ClasspathEditor extends ModuleElementsEditor implements ModuleRootL
 
   @Override
   public void rootsChanged(@NotNull ModuleRootEvent event) {
-    if (myPanel != null) {
-      ApplicationManager.getApplication().invokeLater(() -> {
-        if (!myDisposed) {
-          myPanel.rootsChanged();
-        }
-      });
-    }
+    ApplicationManager.getApplication().invokeLater(() -> {
+      if (!myDisposed && myPanel != null) {
+        myPanel.rootsChanged();
+      }
+    });
   }
 
   @Override

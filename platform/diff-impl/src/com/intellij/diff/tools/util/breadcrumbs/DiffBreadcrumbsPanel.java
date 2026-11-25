@@ -4,6 +4,8 @@ package com.intellij.diff.tools.util.breadcrumbs;
 import com.intellij.codeInsight.breadcrumbs.FileBreadcrumbsCollector;
 import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
@@ -15,7 +17,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiManager;
 import com.intellij.ui.breadcrumbs.BreadcrumbsUtil;
-import com.intellij.util.ModalityUiUtil;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.xml.breadcrumbs.BreadcrumbsPanel;
@@ -39,7 +41,7 @@ public abstract class DiffBreadcrumbsPanel extends BreadcrumbsPanel {
         updateVisibility();
       }
     });
-    connection.subscribe(UISettingsListener.TOPIC, uiSettings -> updateVisibility());
+    connection.subscribe(UISettingsListener.TOPIC, _ -> updateVisibility());
   }
 
   public void setCrumbsShown(boolean value) {
@@ -48,17 +50,30 @@ public abstract class DiffBreadcrumbsPanel extends BreadcrumbsPanel {
   }
 
   private void updateVisibility() {
-    ModalityUiUtil.invokeLaterIfNeeded(ModalityState.stateForComponent(this), () -> {
-      if (Disposer.isDisposed(this)) return;
-
-      boolean hasCollectors = updateCollectors(myCrumbsShown);
-      if (hasCollectors != isVisible()) {
-        setVisible(hasCollectors);
-        revalidate();
-        repaint();
+    Application application = ApplicationManager.getApplication();
+    application.invokeLater(() -> {
+      if (myEditor == null) return;
+      ModalityState modality = ModalityState.stateForComponent(this);
+      if (ModalityState.current().accepts(modality)) {
+        updateVisibilityOnEdt();
       }
-      queueUpdate();
-    });
+      else {
+        application.invokeLater(() -> updateVisibilityOnEdt(), modality, myProject.getDisposed());
+      }
+    }, ModalityState.any(), myProject.getDisposed());
+  }
+
+  @RequiresEdt
+  private void updateVisibilityOnEdt() {
+    if (myEditor == null || Disposer.isDisposed(this)) return;
+
+    boolean hasCollectors = updateCollectors(myCrumbsShown);
+    if (hasCollectors != isVisible()) {
+      setVisible(hasCollectors);
+      revalidate();
+      repaint();
+    }
+    queueUpdate();
   }
 
   protected abstract boolean updateCollectors(boolean enabled);
