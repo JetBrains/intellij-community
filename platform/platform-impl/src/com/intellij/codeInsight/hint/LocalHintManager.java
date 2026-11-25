@@ -426,8 +426,10 @@ public final class LocalHintManager implements ClientHintManager {
 
       @Override
       public void hintHidden(@NotNull EventObject event) {
-        if (highlighter != null) {
-          highlighter.dispose();
+        RangeHighlighter currentHighlighter = highlighter;
+        highlighter = null;
+        if (currentHighlighter != null) {
+          currentHighlighter.dispose();
         }
 
         if (myQuestionHint == hint) {
@@ -438,7 +440,7 @@ public final class LocalHintManager implements ClientHintManager {
 
       @Override
       public void beforeShow(@NotNull EventObject event) {
-        if (offset1 == offset2) return;
+        if (highlighter != null || offset1 == offset2 || offset2 > editor.getDocument().getTextLength()) return;
 
         highlighter = editor.getMarkupModel()
           .addRangeHighlighter(offset1, offset2, HighlighterLayer.ERROR + 1, attributes, HighlighterTargetArea.EXACT_RANGE);
