@@ -164,7 +164,7 @@ public class EditorColorsSchemeImpl extends AbstractColorsScheme implements Exte
     for (String keyName : attributesMap.keySet()) {
       TextAttributesKey key = TextAttributesKey.find(keyName);
       if (!isTextAttributeKeyIgnored(filters, key) &&
-          !getAttributes(key, useDefaults).equals(otherScheme.getAttributes(key, useDefaults))) {
+          !Comparing.equal(getAttributes(key, useDefaults), otherScheme.getAttributes(key, useDefaults))) {
         return false;
       }
     }

@@ -700,6 +700,25 @@ public class EditorColorsSchemeImplTest {
   }
 
   @Test
+  public void testSettingsEqualWithoutDefaultsAcceptsInheritedKeyWithoutFallback() throws Exception {
+    String keyName = "EditorColorsSchemeImplTest.INHERITED_KEY_WITHOUT_FALLBACK";
+    try {
+      AbstractColorsScheme scheme = (AbstractColorsScheme)loadScheme(
+        "<scheme name=\"Copy\" version=\"142\" parent_scheme=\"Default\">\n" +
+        "  <attributes>\n" +
+        "    <option name=\"" + keyName + "\" baseAttributes=\"DEFAULT_KEYWORD\" />\n" +
+        "  </attributes>\n" +
+        "</scheme>\n"
+      );
+      EditorColorsScheme defaultScheme = EditorColorsManager.getInstance().getDefaultScheme();
+      assertTrue(scheme.settingsEqual(defaultScheme, null, true, false));
+    }
+    finally {
+      TextAttributesKey.removeTextAttributesKey(keyName);
+    }
+  }
+
+  @Test
   public void testReadFontPreferences() throws Exception {
     String name1 = FontPreferencesTest.getExistingNonDefaultFontName();
     String name2 = FontPreferencesTest.getAnotherExistingNonDefaultFontName();
