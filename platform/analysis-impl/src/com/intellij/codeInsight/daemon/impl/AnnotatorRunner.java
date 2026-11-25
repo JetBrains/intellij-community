@@ -73,7 +73,7 @@ final class AnnotatorRunner {
 
     // TODO move inside Divider to calc only once
     List<PsiElement> insideThenOutside = ContainerUtil.concat(inside, outside);
-    Map<Annotator, Set<Language>> supportedLanguages = calcSupportedLanguages(insideThenOutside, myBatchMode);
+    Map<Annotator, Set<Language>> supportedLanguages = calcSupportedLanguages(insideThenOutside, myProject, myBatchMode);
     Processor<? super Annotator> processor = annotator ->
       ApplicationManagerEx.getApplicationEx().tryRunReadAction(() -> runAnnotator(document, annotator, insideThenOutside, supportedLanguages, resultSink));
     boolean result = JobLauncher.getInstance().processConcurrentlyAsync(new ArrayList<>(supportedLanguages.keySet()), processor, runnable);
@@ -81,7 +81,9 @@ final class AnnotatorRunner {
     return result;
   }
 
-  private static @NotNull @Unmodifiable Map<Annotator, Set<Language>> calcSupportedLanguages(@NotNull List<? extends PsiElement> elements, boolean batchMode) {
+  private static @NotNull @Unmodifiable Map<Annotator, Set<Language>> calcSupportedLanguages(@NotNull List<? extends PsiElement> elements,
+                                                                                             @NotNull Project project,
+                                                                                             boolean batchMode) {
     Map<Annotator, Set<Language>> map = CollectionFactory.createCustomHashingStrategyMap(new HashingStrategy<>() {
       @Override
       public int hashCode(Annotator object) {
@@ -99,7 +101,7 @@ final class AnnotatorRunner {
       addDialects(language, languages);
     }
     for (Language language : languages) {
-      List<Annotator> templates = LanguageAnnotators.INSTANCE.allForLanguageOrAny(language);
+      List<Annotator> templates = LanguageAnnotators.INSTANCE.allForLanguageOrAny(language, project);
       for (Annotator template : templates) {
         if (batchMode && !template.runInBatchMode()) continue;
         Set<Language> supportedLanguages = map.get(template);
