@@ -388,32 +388,42 @@ internal class UnifiedPluginsPageViewTest {
   }
 
   @Test
-  fun `collapsed preview ends with a Show more row`(): Unit = timeoutRunBlocking(context = Dispatchers.UI) {
-    val expansionChanges = ArrayList<Pair<PluginSectionId, Boolean>>()
+  fun `section footer expands and collapses a plugin preview`(): Unit = timeoutRunBlocking(context = Dispatchers.UI) {
     val controller = UnifiedPluginsPageController(listOf(section(PluginSectionId.Installed, itemCount = 5)))
-    createView(onExpansionChanged = { id, expanded -> expansionChanges.add(id to expanded) }).use { view ->
+    lateinit var view: UnifiedPluginsPageView
+    view = createView(onExpansionChanged = { id, expanded ->
+      controller.setSectionExpanded(id, expanded)
+      view.render(controller.state.value)
+    })
+    view.use {
       view.render(controller.state.value)
       val title = IdeBundle.message("plugin.manager.tab.installed")
+      val list = sectionList(view, title)
       val headerButton = componentsOfType(sectionHeader(view, title), JToggleButton::class.java).single()
-      val showMoreButton = componentsOfType(sectionList(view, title).parent, JToggleButton::class.java).single { it !== headerButton }
-      val showMoreRow = showMoreButton.parent as JComponent
-      assertThat(showMoreRow.isVisible).isTrue()
-      assertThat(showMoreRow.preferredSize.height).isEqualTo(JBUI.scale(24))
-      assertThat((showMoreRow.parent as JComponent).insets.top).isEqualTo(JBUI.scale(4))
-      assertThat(showMoreButton.accessibleContext.accessibleName)
-        .isEqualTo(IdeBundle.message("plugins.configurable.show.hidden.row", 2))
-      val label = componentsOfType(showMoreButton, JBLabel::class.java).single()
+      val footerButton = componentsOfType(list.parent, JToggleButton::class.java).single { it !== headerButton }
+      val footerRow = footerButton.parent as JComponent
+      val showMoreText = IdeBundle.message("plugins.configurable.show.hidden.row", 2)
+      val label = componentsOfType(footerButton, JBLabel::class.java).single()
+      assertThat(footerRow.isVisible).isTrue()
+      assertThat(footerRow.preferredSize.height).isEqualTo(JBUI.scale(24))
+      assertThat((footerRow.parent as JComponent).insets.top).isEqualTo(JBUI.scale(4))
+      assertThat(footerButton.accessibleContext.accessibleName).isEqualTo(showMoreText)
       assertThat(label.foreground).isEqualTo(UIUtil.getContextHelpForeground())
       assertThat(label.icon).isSameAs(AllIcons.General.ChevronDown)
       assertThat(label.horizontalTextPosition).isEqualTo(SwingConstants.LEADING)
 
-      showMoreButton.doClick()
-      assertThat(expansionChanges).containsExactly(PluginSectionId.Installed to true)
+      footerButton.doClick()
 
-      controller.setSectionExpanded(PluginSectionId.Installed, true)
-      view.render(controller.state.value)
-      assertThat(showMoreRow.isVisible).isFalse()
-      assertThat(showMoreRow.parent.isVisible).isFalse()
+      assertThat(list.model.size).isEqualTo(5)
+      assertThat(footerRow.isVisible).isTrue()
+      assertThat(footerButton.accessibleContext.accessibleName).isEqualTo(IdeBundle.message("plugins.configurable.show.less"))
+      assertThat(footerButton.accessibleContext.accessibleStateSet.contains(AccessibleState.EXPANDED)).isTrue()
+      assertThat(label.icon).isSameAs(AllIcons.General.ChevronUp)
+
+      footerButton.doClick()
+
+      assertThat(list.model.size).isEqualTo(PluginSectionState.COLLAPSED_ITEM_LIMIT)
+      assertThat(footerButton.accessibleContext.accessibleName).isEqualTo(showMoreText)
     }
   }
 

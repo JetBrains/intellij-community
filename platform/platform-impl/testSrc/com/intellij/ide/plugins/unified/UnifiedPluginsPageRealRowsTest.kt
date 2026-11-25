@@ -341,7 +341,7 @@ internal class UnifiedPluginsPageRealRowsTest {
     }
 
   @Test
-  fun `suggested follows the last Bundled row after scrolling through the section`(): Unit =
+  fun `suggested follows the Bundled footer after scrolling through the section`(): Unit =
     timeoutRunBlocking(context = Dispatchers.UI) {
       val factory = RecordingRowFactory()
       val bundled = (1..150).map { item("bundled.$it", "Languages") }
@@ -366,12 +366,18 @@ internal class UnifiedPluginsPageRealRowsTest {
           val rowsTop = SwingUtilities.convertPoint(firstRow.parent, Point(), scrollPane.viewport.view).y
           scrollPane.viewport.viewPosition = Point(0, rowsTop + 130 * ROW_HEIGHT)
           assertThat(factory.activeRows).hasSize(151)
+          sectionsPanel.validate()
 
           val lastBundled = controller.state.value.sections.single { it.id == PluginSectionId.Bundled }.items.last()
           val bundledRow = factory.row(PluginSectionId.Bundled, lastBundled).component
+          val bundledSection = bundledRow.parent.parent
+          val collapseButton = componentsOfType(bundledSection, JToggleButton::class.java)
+            .single { it.accessibleContext.accessibleName == IdeBundle.message("plugins.configurable.show.less") }
+          val footerTop = componentOffset(scrollPane, collapseButton)
+          assertThat(footerTop - componentOffset(scrollPane, bundledRow) - bundledRow.height).isEqualTo(JBUI.scale(4))
           val suggestedRow = factory.row(PluginSectionId.Suggested, suggested).component
           val suggestedSection = suggestedRow.parent.parent as JComponent
-          val gap = componentOffset(scrollPane, suggestedSection) - componentOffset(scrollPane, bundledRow) - bundledRow.height
+          val gap = componentOffset(scrollPane, suggestedSection) - footerTop - collapseButton.height
           assertThat(gap).isEqualTo(JBUI.scale(8))
         }
         finally {
@@ -580,6 +586,9 @@ internal class UnifiedPluginsPageRealRowsTest {
         val link = componentsOfType(view.component, ActionLink::class.java).single { it.text == text }
         assertThat(link.parent.isVisible).isEqualTo(visible)
         assertThat(link in factory.keyboardOrder).isEqualTo(visible)
+        assertThat(componentsOfType(view.component, JToggleButton::class.java)).noneMatch {
+          it.parent.isVisible && it.accessibleContext.accessibleName == IdeBundle.message("plugins.configurable.show.less")
+        }
       }
 
       assertLinkVisible(false)
@@ -589,6 +598,9 @@ internal class UnifiedPluginsPageRealRowsTest {
 
       controller.setSectionExpanded(suggestedId, false)
       assertLinkVisible(false)
+      assertThat(componentsOfType(view.component, JToggleButton::class.java)).anyMatch {
+        it.parent.isVisible && it.accessibleContext.accessibleName == IdeBundle.message("plugins.configurable.show.hidden.row", 2)
+      }
 
       val collapsedItems = ready.items.take(PluginSectionState.COLLAPSED_ITEM_LIMIT)
       controller.updateSection(ready.copy(items = collapsedItems))

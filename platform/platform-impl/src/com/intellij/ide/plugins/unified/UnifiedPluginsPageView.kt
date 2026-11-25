@@ -707,23 +707,22 @@ internal class UnifiedPluginsPageView @RequiresEdt constructor(
       add(expansionChevronLabel)
     }
     private val dividerBorder = JBUI.Borders.customLine(JBColor.border(), 1, 0, 0, 0)
-    private val showMoreRowLabel = JBLabel().apply {
+    private val expansionRowLabel = JBLabel().apply {
       foreground = UIUtil.getContextHelpForeground()
-      icon = AllIcons.General.ChevronDown
       horizontalAlignment = SwingConstants.LEADING
       horizontalTextPosition = SwingConstants.LEADING
       iconTextGap = JBUI.scale(EXPANSION_CONTROL_GAP)
     }
-    private val showMoreRow = SectionHeaderButton(isFooter = true) { onExpansionChanged(id, true) }.apply {
+    private val expansionRow = SectionHeaderButton(isFooter = true) { onExpansionChanged(id, !expanded) }.apply {
       isVisible = false
-      addContent(showMoreRowLabel, BorderLayout.CENTER)
+      addContent(expansionRowLabel, BorderLayout.CENTER)
       forwardMouseEventsFromChildren()
     }
     private val footerActions = JPanel(ListLayout.vertical(ROW_GAP)).apply {
       isOpaque = false
       isVisible = false
       border = JBUI.Borders.emptyTop(ROW_GAP)
-      add(showMoreRow)
+      add(expansionRow)
       marketplaceLinkPanel?.let { add(it) }
     }
 
@@ -851,23 +850,26 @@ internal class UnifiedPluginsPageView @RequiresEdt constructor(
       val expansionText = IdeBundle.message(
         if (section.expanded) "plugins.configurable.show.less" else "plugins.configurable.show.more",
       )
+      val expansionIcon = if (section.expanded) AllIcons.General.ChevronUp else AllIcons.General.ChevronDown
       expansionControl.isVisible = section.canExpand
       expansionTextLabel.text = expansionText
       expansionChevronLabel.apply {
         isVisible = section.canExpand
-        icon = if (section.expanded) AllIcons.General.ChevronUp else AllIcons.General.ChevronDown
+        icon = expansionIcon
       }
-      val showExpansionRow = section.canExpand && !section.expanded
-      showMoreRow.isVisible = showExpansionRow
+      val showExpansionRow = section.canExpand && (!section.expanded || id != PluginSectionId.Suggested)
+      expansionRow.isVisible = showExpansionRow
       footerActions.isVisible = showExpansionRow || marketplaceLinkPanel?.isVisible == true
       if (showExpansionRow) {
-        showMoreRowLabel.text = if (count != null && !section.exceedsDisplayLimit) {
+        val rowText = if (!section.expanded && count != null && !section.exceedsDisplayLimit) {
           IdeBundle.message("plugins.configurable.show.hidden.row", count - visibleItems.size)
         }
         else {
-          IdeBundle.message("plugins.configurable.show.more")
+          expansionText
         }
-        showMoreRow.setPresentation(enabled = true, selected = false, accessibleName = showMoreRowLabel.text)
+        expansionRowLabel.text = rowText
+        expansionRowLabel.icon = expansionIcon
+        expansionRow.setPresentation(enabled = true, selected = section.expanded, accessibleName = rowText)
       }
 
       items = visibleItems

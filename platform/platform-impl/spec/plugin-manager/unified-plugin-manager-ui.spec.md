@@ -505,9 +505,10 @@ Untested: Community tests verify the Enter handler, but they do not verify the S
 
 - A collapsed section with hidden plugins must offer an expansion row after the preview.
 - The expansion row must show the hidden count when the count is known and within the display limit.
-- The row must show “Show more” when the count is unavailable or exceeds the display limit.
+- A collapsed preview must use “Show more” when the count is unavailable or exceeds the display limit.
+- An expanded section that can collapse must offer “Show less” after its plugins, except for Suggested.
   [@test] ../../testSrc/com/intellij/ide/plugins/unified/UnifiedPluginsPageViewTest.kt (
-    `collapsed preview ends with a Show more row`;
+    `section footer expands and collapses a plugin preview`;
     `loading icon replaces count while retaining items`;
     `large section count shows the display limit`
   )
@@ -710,7 +711,7 @@ Untested: No focused test verifies Shift-selection across sections.
 
 - When the end of an expanded section is visible, the next section must follow its last row or footer with the standard gap.
   [@test] ../../testSrc/com/intellij/ide/plugins/unified/UnifiedPluginsPageRealRowsTest.kt (
-    `suggested follows the last Bundled row after scrolling through the section`
+    `suggested follows the Bundled footer after scrolling through the section`
   )
 
 - The current section header must remain visible while its rows scroll.
@@ -771,6 +772,7 @@ Untested: No focused test verifies Shift-selection across sections.
 
 - Suggested must show a “More on JetBrains Marketplace” link after its plugin rows.
   The link requires a successful load, all Suggested plugin rows to be visible, and the default Marketplace to be active.
+- The expanded Suggested section must reserve its footer for the Marketplace link.
 - The link must show an external link arrow and open the Marketplace home page in the browser.
 - Enter and Space on the focused link must open the Marketplace home page.
 - The link must use muted text.
