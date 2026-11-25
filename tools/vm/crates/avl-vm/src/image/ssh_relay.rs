@@ -2,7 +2,7 @@
 //!
 //! Packer's communicator connects to the guest address that `tart ip` names, a `192.168.64.*` address on the vmnet
 //! bridge. macOS Local Network privacy refuses that address to a host process whose app the user did not grant, with
-//! "No route to host", while `tart exec` reaches the same guest over vsock. ADR 0182 moved the lane daemon to the exec
+//! "No route to host", while `tart exec` reaches the same guest over vsock. The design `community/tools/vm/openspec/changes/archive/2026-11-08-the-controller-reaches-the-guest-through-the-exec-channel/design.md` moved the lane daemon to the exec
 //! channel for this reason, and the image build follows it: the build of 2026-11-08 timed out waiting for SSH while
 //! sshd ran in the candidate.
 //!

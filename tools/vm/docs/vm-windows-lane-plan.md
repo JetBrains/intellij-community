@@ -2,17 +2,17 @@
 
 Note of 2026-10-02: the crates `avl-lane`, `avl-worker` and `avl-daemon` that this plan names are now the modules
 `lane`, `worker` and `daemon` of `avl-vm`. `avl-trace-serve` is the module `serve` of `air-trace`
-([ADR 0074](decisions/0074-the-ui-lane-crates-follow-the-re-key-domains.md)). The plan keeps its old text.
+([The UI-lane crates follow the re-key domains, and the audience of each binary picks its error model](../openspec/changes/archive/2026-10-02-the-ui-lane-crates-follow-the-re-key-domains/design.md)). The plan keeps its old text.
 
 Status on 2026-09-30: route 2, the native Windows controller, is implemented, and
-[ADR 0186](decisions/0186-a-windows-host-runs-the-controller-natively.md) records it. It supersedes the paragraph of
-ADR 0059 that made Windows an unsupported host. Route 1 is implemented on 2026-09-29, except its step 3. The first
+`community/tools/vm/docs/a-windows-host-runs-the-controller-natively-plan.md` records it. It supersedes the paragraph of
+[The UI-lane tooling is one Rust implementation in one cargo workspace that Bazel builds](../openspec/changes/archive/2026-09-26-the-ui-lane-tooling-is-rust/design.md) that made Windows an unsupported host. Route 1 is implemented on 2026-09-29, except its step 3. The first
 Windows host, a Windows 11 arm64 VM in Parallels on Apple silicon, has no nested virtualization, so it cannot run
-WSL2 ([Why route 2](#why-route-2)). No `vm.cmd run` has passed on a Windows PC with a Docker engine yet, so ADR 0186
+WSL2 ([Why route 2](#why-route-2)). No `vm.cmd run` has passed on a Windows PC with a Docker engine yet, so `community/tools/vm/docs/a-windows-host-runs-the-controller-natively-plan.md`
 stays Proposed. The
 controller is `community/tools/vm`, the operator view is [the VM guide](vm-ui-tests.md),
-and the Docker worker is [ADR 0183](decisions/0183-a-linux-worker-may-be-a-container.md) with
-[ADR 0184](decisions/0184-the-worker-image-is-pulled-by-its-content-tag.md).
+and the Docker worker is [The Linux worker is a Docker container built from the repository, and it is the default worker](../openspec/changes/archive/2026-10-08-the-linux-worker-is-a-docker-container-and-the-default/design.md) with
+[The controller pulls the worker image by its content tag before it builds it](../openspec/changes/archive/2026-09-29-the-worker-image-is-pulled-by-its-content-tag/design.md).
 
 ## Goal
 
@@ -23,7 +23,7 @@ architecture: `linux/amd64` on an x86_64 PC, `linux/arm64` on an arm64 PC.
 ## Facts, checked on 2026-09-29
 
 - **The image already runs on Windows.** `registry.jetbrains.team/p/ij/containers-public/air-ui-worker:<tag>` is an
-  image index with a `linux/arm64` and a `linux/amd64` half (ADR 0184). Docker Desktop on an x86_64 PC runs the
+  image index with a `linux/arm64` and a `linux/amd64` half ([The controller pulls the worker image by its content tag before it builds it](../openspec/changes/archive/2026-09-29-the-worker-image-is-pulled-by-its-content-tag/design.md)). Docker Desktop on an x86_64 PC runs the
   amd64 half natively in its WSL2 VM, and on an arm64 PC the arm64 half. The Dockerfile has no arm64 step, and every name of `GUEST_PACKAGES` is an
   Ubuntu 26.04 package on amd64 too. Nothing below is about the container.
 - **An arm64 PC needs no code of its own.** WSL2 on an arm64 PC is a Linux arm64 host. `GuestArch::of` answers
@@ -34,15 +34,15 @@ architecture: `linux/amd64` on an x86_64 PC, `linux/arm64` on an arm64 PC.
   `:bt-windows-arm64` and `:clippy-windows-arm64`, and the recorder has `:clippy-windows-arm64`, for the Windows
   side of the PC.
 - **The controller did not build on Windows.** This fact is from 2026-09-29, before route 2. Now every controller
-  crate is portable ([ADR 0186](decisions/0186-a-windows-host-runs-the-controller-natively.md)). Of the seventeen
+  crate is portable (`community/tools/vm/docs/a-windows-host-runs-the-controller-natively-plan.md`). Of the seventeen
   crates, six were `avl_crate(portable = True)` and
   build and test on Windows: `avl-base`, `avl-wire`, `avl-trace`, `avl-record`, `avl-report` and `avl-testkit`.
-  `avl.bzl` gives the rest `NOT_ON_WINDOWS` ([ADR 0059](decisions/0059-the-ui-lane-tooling-is-rust.md): "Windows is
+  `avl.bzl` gives the rest `NOT_ON_WINDOWS` ([The UI-lane tooling is one Rust implementation in one cargo workspace that Bazel builds](../openspec/changes/archive/2026-09-26-the-ui-lane-tooling-is-rust/design.md): "Windows is
   not a supported host"). `bt` is not one of them; it lives in `community/tools/bt`. The controller path `avl-vm`,
   `avl-lane`, `avl-worker`, `avl-host-sys`, `avl-daemon` and `avl-trace-serve` holds about 36 `std::os::unix` lines,
   13 of them outside tests: file modes, `O_EXCL` creates, process groups, exit-status signals, symlinks. `avl-guest`
   runs only inside a guest and needs no port.
-- **The controller assumed an arm64 guest in seven places.** ADR 0184 listed five. The engine gate in `docker.rs`.
+- **The controller assumed an arm64 guest in seven places.** [The controller pulls the worker image by its content tag before it builds it](../openspec/changes/archive/2026-09-29-the-worker-image-is-pulled-by-its-content-tag/design.md) listed five. The engine gate in `docker.rs`.
   The guest-agent and recorder labels (`agent_label`, `ui_lane_ide.bzl`), which needed `x86_64-unknown-linux-musl`
   builds of `vm-guest-agent` and `air-trace-record` beside the arm64 ones. The Node archive label
   (`node_archive_label`), where `node-v24.19.0-linux-x64.tar.gz` was already pinned. The validator's loader
@@ -57,12 +57,12 @@ architecture: `linux/amd64` on an x86_64 PC, `linux/arm64` on an arm64 PC.
   and Bazel-root paths inside the guest as symlinks onto the share mounts under `/mnt/AirVmShares/<share>`, so a
   `C:\` path cannot exist as a guest path at all. `std::fs::canonicalize` on Windows answers a `\\?\C:\` prefix.
   Phase 2 of route 2 closed both: the shares are `--mount` binds, and the guest names each host path by its drive
-  form (ADR 0186).
+  form (`community/tools/vm/docs/a-windows-host-runs-the-controller-natively-plan.md`).
 - **Docker Desktop's file sharing is the performance trap.** A bind mount of a Windows path (`C:\...`) crosses the
   Windows-to-WSL2 file boundary, and the guest reads the whole IDE distribution and every test jar through the share.
   A bind mount of a path inside the WSL2 distribution's own filesystem is a local ext4 mount in the same kernel. So
   the checkout and the Bazel output root must live inside WSL2, and the same applies to the daemon's staged runtime,
-  which the worker reads from the share at each start. The 2 s settle of ADR 0183 is a VirtioFS attribute-cache
+  which the worker reads from the share at each start. The 2 s settle of [The Linux worker is a Docker container built from the repository, and it is the default worker](../openspec/changes/archive/2026-10-08-the-linux-worker-is-a-docker-container-and-the-default/design.md) is a VirtioFS attribute-cache
   measurement on OrbStack; a WSL2 ext4 bind mount has no such cache, and the number must be measured again there.
 - **The host defaults were a Mac's.** The runtime root was `~/Library/Application Support/JetBrains/macos-vm-ui-tests`,
   the Bazel user root default was `~/Library/Caches/JetBrains/MonorepoBazel`, and `HOME` is required.
@@ -104,7 +104,7 @@ What it needs, and what was built (the differences from the first draft are name
    variables are not read; the two `AIR_VM_*` overrides stay the way to move them.
 3. **A measurement on WSL2.** `pool start air-docker-1`, `status`, and `run AgentSessionToolWindowComposerUiTest`
    on an x86_64 and on an arm64 Windows PC with the checkout inside WSL2. Record the boot, the staging, the share refresh behaviour after a
-   rename on the host (the ADR 0183 spike, repeated on ext4), and the lane time in the guide's table. Then try the
+   rename on the host (the [The Linux worker is a Docker container built from the repository, and it is the default worker](../openspec/changes/archive/2026-10-08-the-linux-worker-is-a-docker-container-and-the-default/design.md) spike, repeated on ext4), and the lane time in the guide's table. Then try the
    same with the checkout on `C:\` through `/mnt/c`, once, to record why the guide says not to.
 4. **The guide and the skill** get a "Windows" section: install Docker Desktop, enable WSL integration, clone inside
    the distribution, run `vm.cmd` there. The CMD halves of `vm.cmd` and `trace.cmd` print that sentence and exit 78
@@ -116,7 +116,7 @@ Everything of route 1, plus the port: the `std::os::unix` uses behind `cfg` gate
 ACLs for the 0600 receipts, job objects for the process groups, no signals in exit statuses), `share_arguments`
 accepting a drive letter and the parity layout mapping `C:\` prefixes, `canonicalize` without the `\\?\` prefix, and
 `vm.cmd`'s CMD half doing what the sh half does. It also inherits the file-sharing trap, because the checkout and the
-Bazel outputs then sit on the Windows side. ADR 0059's reasons for not supporting Windows still hold for the Tart and
+Bazel outputs then sit on the Windows side. [The UI-lane tooling is one Rust implementation in one cargo workspace that Bazel builds](../openspec/changes/archive/2026-09-26-the-ui-lane-tooling-is-rust/design.md)'s reasons for not supporting Windows still hold for the Tart and
 Parallels backends, so a Windows host drives the Docker backend only.
 
 #### Why route 2
@@ -128,7 +128,7 @@ Docker engine: Docker Desktop, or another engine that the `docker` CLI reaches.
 
 #### The phases of route 2
 
-[ADR 0186](decisions/0186-a-windows-host-runs-the-controller-natively.md) records the decisions and the evidence.
+`community/tools/vm/docs/a-windows-host-runs-the-controller-natively-plan.md` records the decisions and the evidence.
 
 1. Done: the controller builds and tests on Windows (commit 7c55a151ea9bb). Each Unix host interface has one seam,
    the Tart and Parallels modules are `cfg(unix)`, and a Windows host defaults to `--backend docker`. A Windows host
@@ -143,11 +143,11 @@ Docker engine: Docker Desktop, or another engine that the `docker` CLI reaches.
    `air_lane_guest_linux_x64_cross` (commit 74118c7a93fd4).
 5. Done: the CMD halves of `vm.cmd` and `trace.cmd` build and run the binaries, as `bt.cmd` does (commit
    9f6c4e284966f).
-6. Done: the guide, the skill, the vm-lane README and ADR 0186.
+6. Done: the guide, the skill, the vm-lane README and `community/tools/vm/docs/a-windows-host-runs-the-controller-natively-plan.md`.
 7. Open: a `vm.cmd --backend docker run <suite>` that passes on an x86_64 and on an arm64 Windows PC with a Docker
    engine, with its time in the guide's table. It is the first check of `--mount source=C:\…` on Docker Desktop,
    of the MANIFEST name that the daemon descriptor gets, of the MANIFEST branch through a real daemon start, and of
-   the share settle. Then ADR 0186 becomes Accepted.
+   the share settle. Then the working note `community/tools/vm/docs/a-windows-host-runs-the-controller-natively-plan.md` becomes a decision.
 
 The evidence of the Windows 11 arm64 VM, with native Bazel on the final tree: `//plugins/air/tests/integration/vm-lane/...`
 passes 720 of 720 cases in 15 targets. `avl-trace-serve-test` does not run there, because its Kotlin test data needs
@@ -161,7 +161,7 @@ jars from the private Maven repository `tbx/toolbox-dependencies`, which answers
    struct, and the validator's own-architecture loaders. It also makes a Linux x86_64 CI agent a lane host.
 2. Done: the Linux host defaults and the `vm.cmd` message (steps 2 and 4).
 3. Open: the WSL2 measurement (step 3). The first Windows host cannot run WSL2, so route 2 came first.
-4. Done: the successor to ADR 0059 is [ADR 0186](decisions/0186-a-windows-host-runs-the-controller-natively.md).
+4. Done: the successor to [The UI-lane tooling is one Rust implementation in one cargo workspace that Bazel builds](../openspec/changes/archive/2026-09-26-the-ui-lane-tooling-is-rust/design.md) is `community/tools/vm/docs/a-windows-host-runs-the-controller-natively-plan.md`.
    It names Windows as a host of the Docker backend. It does not name WSL2 numbers, because none are measured.
 
 ## Acceptance
@@ -182,7 +182,7 @@ jars from the private Maven repository `tbx/toolbox-dependencies`, which answers
   Rosetta; the JVM and the IDE run, but the timing is not a verdict. The guest arch follows the host, so a Mac
   always runs the arm64 half. An engine that runs another architecture is refused by name. An Intel Mac gets
   the same refusal, because its Starlark selection is the arm64 guest.
-- **Docker Desktop licensing.** ADR 0183 notes that Docker Desktop is not free for JetBrains at company scale. Route 1
+- **Docker Desktop licensing.** [The Linux worker is a Docker container built from the repository, and it is the default worker](../openspec/changes/archive/2026-10-08-the-linux-worker-is-a-docker-container-and-the-default/design.md) notes that Docker Desktop is not free for JetBrains at company scale. Route 1
   needs Docker Desktop, or a Docker engine installed inside the WSL2 distribution directly, which is free and works
   the same way for this controller because it talks to the `docker` CLI only. Measure with the engine inside WSL2
   first.

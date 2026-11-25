@@ -652,7 +652,7 @@ filterAndProcessContentModules(rootElement, pluginMainModuleName, context) { mod
   if (pluginLayout.pathsToScramble.isEmpty() || refused) {
     // NOT scrambled → embed content module descriptors now in plugin.xml
     // Safe because: no scrambling = no class name changes
-    // A refused module has no jar in the distribution, so the run time reads its body here (ADR 0022)
+    // A refused module has no jar in the distribution, so the run time reads its body here (decision 2026-09-28-a-frontend-packs-the-plugins-of-its-monolith)
     embedContentModules(
       moduleElement = moduleElement,
       pluginDescriptorContainer = descriptorContainer,

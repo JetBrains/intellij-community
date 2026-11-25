@@ -450,5 +450,5 @@ None.
 
 ## References
 
-- [ADR 0234](../../../../plugins/air/docs/decisions/0234-the-guest-agent-launches-the-lane-ide.md)
+- [The lane IDE runs closed under the guest agent, and the HTTP bridge is the only way in](../../../../plugins/air/openspec/changes/archive/2026-10-09-the-lane-ide-is-a-closed-process-that-the-http-bridge-reaches/design.md)
 - [The UI-lane Controller](lane-controller.spec.md)

@@ -10,10 +10,10 @@ They use the crates of this workspace through path dependencies.
 
 The contracts are in the specs under `build/openspec/specs/` of the ultimate root. The explainer
 [`from-an-iml-to-a-dist.md`](../../../build/docs/explainers/from-an-iml-to-a-dist.md#where-the-code-goes) names each tool by its Bazel label.
-[ADR 0020](../../../build/docs/decisions/0020-the-dev-dist-tools-are-rust.md) records why the tools are Rust.
-[ADR 0043](../../../build/docs/decisions/0043-the-crate-boundaries-follow-the-re-key-domains.md) records the crate rule
+[Every dist tool is a Rust binary, and a crate boundary follows a re-key domain](../../../build/openspec/changes/archive/2026-10-01-every-dist-tool-is-a-rust-binary/design.md) records why the tools are Rust.
+[Every dist tool is a Rust binary, and a crate boundary follows a re-key domain](../../../build/openspec/changes/archive/2026-10-01-every-dist-tool-is-a-rust-binary/design.md) records the crate rule
 and the closure test.
-[ADR 0027](../../../build/docs/decisions/0027-four-jvm-tools-stay-on-the-distribution-path.md) lists the JVM tools that a
+[Every dist tool is a Rust binary, and a crate boundary follows a re-key domain](../../../build/openspec/changes/archive/2026-10-01-every-dist-tool-is-a-rust-binary/design.md) lists the JVM tools that a
 distribution still runs. They are not in this workspace.
 
 ## The crate map

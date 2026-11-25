@@ -330,7 +330,7 @@ private fun reportOrphanRoots(parent: Path, current: Path, warn: (String) -> Uni
 /**
  * Deletes each launcher home `<row>/homes/<pid>` in [devData] whose process no longer runs.
  *
- * The dev launcher of ADR 0014 made these homes. A launch over a runfiles home makes none.
+ * The dev launcher of decision 2026-11-09-a-dev-launch-starts-the-production-launcher-from-a-generation made these homes. A launch over a runfiles home makes none.
  * The function deletes an empty `homes` directory too, and nothing else.
  */
 @OptIn(ExperimentalPathApi::class)

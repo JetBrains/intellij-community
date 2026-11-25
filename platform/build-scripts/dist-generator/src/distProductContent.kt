@@ -303,7 +303,7 @@ internal fun parseProductContent(xml: String): ComposedProductContent {
 }
 
 /**
- * Fails when the composition of [content] over [table] differs from the Kotlin rendering [xml], see ADR 0037. The
+ * Fails when the composition of [content] over [table] differs from the Kotlin rendering [xml], see decision 2026-09-30-the-core-classpath-is-derived-from-the-loading-rule. The
  * message names [owner] and the first row that differs.
  */
 internal fun checkProductContent(owner: String, content: ProductContentPlan, table: Map<String, ModuleSetData>, xml: String) {

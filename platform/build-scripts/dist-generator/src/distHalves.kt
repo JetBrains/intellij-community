@@ -164,7 +164,7 @@ internal class DistBazelComputes(
 )
 
 /**
- * What the ultimate half reads of the community half, and nothing else. The rules are those of ADR 0030.
+ * What the ultimate half reads of the community half, and nothing else. The rules are those of decision 2026-09-30-the-dist-generator-lives-in-community.
  *
  * - [contentModuleJarCalls] are the `content_module_jar` calls, keyed by module. An ultimate call with another text is
  *   relocated, see R3 and [isRelocatedContentModuleJarCall].

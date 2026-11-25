@@ -166,7 +166,7 @@ fun contentModuleJarCoreClasspathEntries(
  * `dist_platform_payload` derives the same list in Bazel: every packed direct child of `lib/` that the module system
  * does not load. Here the module jars come from [contentModuleJarCoreClasspathEntries] over every module jar of
  * [layout]. A jar with project libraries and no module is on the list when it is a direct child of `lib/`, as in
- * [generateClassPathByLayoutReport]. The plan generator checks the Bazel derivation against this function, see ADR 0037.
+ * [generateClassPathByLayoutReport]. The plan generator checks the Bazel derivation against this function, see decision 2026-09-30-the-core-classpath-is-derived-from-the-loading-rule.
  *
  * The list keeps `nio-fs.jar`. [launchBootClassPathJarNames] removes it for a launch with the multi-routing file system.
  */

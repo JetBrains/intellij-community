@@ -10,7 +10,7 @@ directly rather than pushed in through a flag.
 
 **Remote-cacheable on purpose.** These actions read tens of small XML files, not a platform's gigabytes, so
 `_LOCAL_DISK_CACHE_ONLY` of `intellij_dist.bzl` does not apply here and `local` is not set. A cheap hermetic action
-that both caches keep is the property ADR 0006 asks for.
+that both caches keep is the property decision 2026-08-25-content-module-in-jar-out-composer-places-it asks for.
 """
 
 load("@bazel_skylib//rules:common_settings.bzl", "BuildSettingInfo")

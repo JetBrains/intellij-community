@@ -35,7 +35,7 @@ This spec owns both contracts, because the tests that guard them state examples 
 
 The IJPL UI group owns the module and this spec. No bundled plugin declares a frame type today. Air used
 one for its dedicated frame and dropped it, as
-[ADR 0116](../../../../plugins/air/docs/decisions/0116-the-welcome-project-hosts-the-agent-sessions.md)
+[The platform welcome project is the Agent Sessions window, with no fallback frame](../../../../plugins/air/openspec/changes/archive/2026-08-29-the-welcome-project-hosts-the-agent-sessions/design.md)
 records.
 
 ## Goals
@@ -199,6 +199,6 @@ There a suppressed registration is asserted against a non-empty layout.
 ## References
 
 - `../../../../plugins/air/spec/frame/agent-sessions-window-project-switching.spec.md`
-- [ADR 0116](../../../../plugins/air/docs/decisions/0116-the-welcome-project-hosts-the-agent-sessions.md)
+- [The platform welcome project is the Agent Sessions window, with no fallback frame](../../../../plugins/air/openspec/changes/archive/2026-08-29-the-welcome-project-hosts-the-agent-sessions/design.md)
 - `../../welcome-screen/src/com/intellij/openapi/wm/ex/WelcomeScreenProjectProvider.kt`
 - `../../../.ai/spec/SPEC_GUIDE.md`

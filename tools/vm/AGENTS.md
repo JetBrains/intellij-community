@@ -3,7 +3,7 @@
 Read [`README.md`](README.md) first. Read
 [Rust Code Style](../../.agents/skills/rust-code-style/SKILL.md) for the idioms: the error model,
 the command line, the crate rule, the test layout, the lints and the banned methods.
-[ADR 0074](docs/decisions/0074-the-ui-lane-crates-follow-the-re-key-domains.md) records the crate rule here.
+[The UI-lane crates follow the re-key domains, and the audience of each binary picks its error model](openspec/changes/archive/2026-10-02-the-ui-lane-crates-follow-the-re-key-domains/design.md) records the crate rule here.
 
 - **Name no implementation language in a spec or in the guide.** Write "the controller", "the guest agent", "the
   recorder", "the server" and "the planner". The language belongs in the decision records only.

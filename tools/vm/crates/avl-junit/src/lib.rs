@@ -6,7 +6,7 @@
 //!
 //! The shape follows `community/build/rust-tools/libtest-junit-wrapper/src/junit.rs`. The document holds one
 //! `testsuite` for each test class, in the order the stream first names it. A case is
-//! `<testcase classname="<testClassName>" name="<scenario>" time>`, which is the name `<FQN>.<scenario>` of ADR 0128,
+//! `<testcase classname="<testClassName>" name="<scenario>" time>`, which is the name `<FQN>.<scenario>` of decision 2026-09-11-a-lane-is-selected-by-its-tag-and-a-scenario-is-one-junit-case,
 //! because the generator refuses a dot in a scenario name. A failure is `<failure message type>` with the message and
 //! the detail as CDATA, and a skip is `<skipped message>`. A prologue failure is one case named after the suite.
 //!

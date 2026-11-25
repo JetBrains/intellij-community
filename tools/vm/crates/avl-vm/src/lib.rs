@@ -4,7 +4,7 @@
 //! composes one invocation's collaborators, and routes the command to the module that owns it. The crates below it
 //! hold the code that another binary shares (`avl-base`, `avl-host-sys`, `avl-affected` and the contracts) and the
 //! frozen bytes of the agent-facing report (`avl-report`). It builds for a macOS, a Linux and a Windows host. A
-//! Windows host drives the Docker backend only (ADR 0186).
+//! Windows host drives the Docker backend only (plan community/tools/vm/docs/a-windows-host-runs-the-controller-natively-plan.md).
 //!
 //! - [`cli`]: the clap tree, which renders the help, and how a parse becomes an invocation or a refusal;
 //! - [`terminal`]: the output form, the footer and the dashboard rules;

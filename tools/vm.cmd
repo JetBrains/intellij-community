@@ -14,7 +14,7 @@ GOTO :CMDSCRIPT
 #    nothing. There is no honest cache key, and the
 #    failure a wrong one produces is this port's worst case: a silently stale controller judging a lane
 #    and reporting a verdict about code it did not run.
-#    `vm/docs/decisions/0105-the-ui-lane-controller-is-go.md` (superseded by ADR 0059, the port to Rust)
+#    `vm/openspec/changes/archive/2026-09-26-the-ui-lane-tooling-is-rust/design.md` (the port to Rust)
 #    records the same trap already paid for once - an `lstat`-based freshness check on a `go_cross_binary`
 #    degraded to "always reinstall", passed its whole suite, and failed on hardware. So every invocation runs
 #    `bazel build`, and the build's event file names the binary: the build *is* the freshness guarantee. Neither
@@ -27,8 +27,8 @@ GOTO :CMDSCRIPT
 #
 # 2. **`AIR_VM_BIN` overrides everything on the sh half, checked first.** It names an explicit binary and
 #    skips Bazel entirely: a debugger attaching to it, a hand-built binary, or one binary held for the whole of a
-#    comparison rather than rebuilt between its halves. There is no parity gate behind it any more; ADR
-#    0174 deleted the Go implementation it compared against. The CMD half reads it the same way (note 7).
+#    comparison rather than rebuilt between its halves. There is no parity gate behind it any more;
+#    the design `community/tools/vm/openspec/changes/archive/2026-09-26-the-ui-lane-tooling-is-rust/design.md` deleted the Go implementation it compared against. The CMD half reads it the same way (note 7).
 #
 # 3. **No `--refresh`.** There is nothing to drop.
 #

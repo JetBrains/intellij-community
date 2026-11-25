@@ -53,7 +53,7 @@ macOS Local Network privacy refuses the guest address to an app the user did
 not grant, so the build needs no grant. The controller names the candidate
 and passes it and the port to `build-golden.sh`, which therefore runs only
 through `vm.cmd`. The record is
-`../docs/decisions/2026-11-08-the-image-build-reaches-ssh-through-the-exec-channel.md`.
+`../openspec/changes/archive/2026-11-08-the-controller-reaches-the-guest-through-the-exec-channel/design.md`.
 
 Packer always writes an unapproved candidate, never the pool's golden name.
 After Packer powers it off, `build-golden.sh` captures its disk,
@@ -87,7 +87,7 @@ Both `image` commands need a working `./bazel.cmd` in this checkout. The guest h
 Packer its path - `image validate` included, because Packer's `file` provisioner stats its source while
 validating. `AIR_VM_GUEST_AGENT_SOURCE` overrides that build with a hand-built binary. The image itself
 still contains no checkout, no Bazel and no toolchain that builds the guest agent. Why the pipeline took that
-dependency on is `../docs/decisions/0108-the-guest-half-of-the-image-pipeline-is-go.md`.
+dependency on is `../openspec/changes/archive/2026-09-26-the-ui-lane-tooling-is-rust/design.md`.
 
 `image build` is the only large download. The golden image remains a 50 GB
 local Tart VM. A worker is an APFS copy-on-write clone of it whose sparse root

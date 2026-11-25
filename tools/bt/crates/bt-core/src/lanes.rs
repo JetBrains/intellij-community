@@ -123,7 +123,7 @@ pub struct LaneSpec {
     #[serde(default)]
     pub catalog_lane: Option<String>,
     /// The flow catalog's name for the suites of an explicit-only lane (`UI_PERF`). A suite document of this lane
-    /// belongs to the lane, and no changed path, flow or suite id reaches it (ADR 0200). A lane states this or
+    /// belongs to the lane, and no changed path, flow or suite id reaches it (decision 2026-10-04-the-live-lane-runs-real-agents-in-a-linux-guest). A lane states this or
     /// [`LaneSpec::catalog_lane`], never both.
     #[serde(default)]
     pub document_lane: Option<String>,

@@ -2,13 +2,13 @@
 
 Open work on the VM UI-test controller itself. The Go migration underneath it is done, then the Rust port
 that replaced it, and so is the cost work the hardware runs opened: the ports' record — why there is one
-implementation, the parity gate, the Windows stance — is [ADR 0105](decisions/0105-the-ui-lane-controller-is-go.md)
-for Go and [ADR 0059](decisions/0059-the-ui-lane-tooling-is-rust.md) for Rust. [`vm-linux-guest.md`](vm-linux-guest.md) is the history of the Linux guest. It holds no open list, because
-the decision [the Docker image carries Node, and the Tart Linux worker is retired](decisions/2026-10-08-the-docker-image-carries-node-and-the-tart-linux-worker-is-retired.md)
+implementation, the parity gate, the Windows stance — is [The UI-lane tooling is one Rust implementation in one cargo workspace that Bazel builds](../openspec/changes/archive/2026-09-26-the-ui-lane-tooling-is-rust/design.md)
+for Go and [The UI-lane tooling is one Rust implementation in one cargo workspace that Bazel builds](../openspec/changes/archive/2026-09-26-the-ui-lane-tooling-is-rust/design.md) for Rust. [`vm-linux-guest.md`](vm-linux-guest.md) is the history of the Linux guest. It holds no open list, because
+the decision [the Docker image carries Node, and the Tart Linux worker is retired](../openspec/changes/archive/2026-10-08-the-linux-worker-is-a-docker-container-and-the-default/design.md)
 retired the Tart Linux worker. The sealed-macOS backend has no open list either — its open list was
 retired on 2026-08-23 once the golden was rebuilt and the lane measured on it, and what survived it lives
 in the [VM guide](vm-ui-tests.md) under `## Parity gate`. Why the daemon exists at all is
-[ADR 0104](../../../../plugins/air/docs/decisions/0104-the-daemon-caches-a-process-not-a-build.md). **This file is only the open list.**
+[The lane daemon of the guest agent is the only runner of the Air UI lanes](../openspec/changes/archive/2026-10-19-the-lane-daemon-is-the-only-runner-of-the-air-ui-lanes/design.md). **This file is only the open list.**
 A closed item leaves this file. The commit that closed it, named by its subject, and the ADRs under
 [`decisions/`](../../../../plugins/air/docs/decisions/) are the record.
 
@@ -140,9 +140,9 @@ Every item below was found by running something, and says so. Where a measuremen
   executions, and none in the quiet twelve. The daemon no longer dies with it. The guest agent starts the
   supervisor as a released, session-detached spawn on every guest, so the daemon outlives its launch channel.
   The systemd unit of the retired Tart Linux worker is gone
-  ([the Docker image carries Node, and the Tart Linux worker is retired](decisions/2026-10-08-the-docker-image-carries-node-and-the-tart-linux-worker-is-retired.md)). So the
+  ([the Docker image carries Node, and the Tart Linux worker is retired](../openspec/changes/archive/2026-10-08-the-linux-worker-is-a-docker-container-and-the-default/design.md)). So the
   cancel now costs a reconnect instead of a lane, and
-  [ADR 0110](decisions/0110-the-truncation-chain-is-a-daemon-kill-under-load.md) holds the whole
+  [The Linux worker is a Docker container built from the repository, and it is the default worker](../openspec/changes/archive/2026-10-08-the-linux-worker-is-a-docker-container-and-the-default/design.md) holds the whole
   measurement. Do not try to fix that binary here.
 
 - The `PackContentModuleJar` remote-cache work belongs to another session. The action declares 159 JBR files

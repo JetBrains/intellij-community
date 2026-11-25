@@ -385,7 +385,7 @@ fn an_unmatched_scrambled_module_is_refused() {
 }
 
 /// A descriptor that embeds no body still embeds the body of a module the product's mode refuses. The distribution
-/// places no jar of that module, so the run time reads the body here and excludes the module (ADR 0021).
+/// places no jar of that module, so the run time reads the body here and excludes the module (decision 2026-09-28-a-frontend-packs-the-plugins-of-its-monolith).
 #[test]
 fn a_mode_refused_module_keeps_its_body_in_a_non_embedding_descriptor() {
     let request = ContentRequest {

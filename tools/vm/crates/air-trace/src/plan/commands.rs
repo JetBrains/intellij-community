@@ -35,7 +35,7 @@ const LIVE_LANE: &str = "ui-live";
 
 /// The guest input of a lane: the run input that its guest run reads, and the host command whose output it is. The
 /// live context of the committed lane document states both. For the live lane they are the developer's own Central
-/// session, piped into the run so no file on the host holds it (ADR 0200).
+/// session, piped into the run so no file on the host holds it (decision 2026-10-04-the-live-lane-runs-real-agents-in-a-linux-guest).
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub(crate) struct GuestInput {
     pub(crate) input: String,
@@ -119,8 +119,8 @@ impl Planner<'_> {
     ///
     /// Per lane, because a lane is the unit a person picks and the one a guest is chosen for: the skill keeps a
     /// GUI-chat suite on the guest the user chose, and a run per lane lets them run one and not the other. Each line
-    /// stands alone: `vm.cmd run` without a receipt warms the analysis, takes its own lease and releases it (ADR
-    /// 0157), so the planner spells no lease script.
+    /// stands alone: `vm.cmd run` without a receipt warms the analysis, takes its own lease and releases it (the design
+    /// `community/tools/vm/openspec/changes/archive/2026-09-24-a-flow-is-a-test-selector/design.md`), so the planner spells no lease script.
     pub(crate) fn commands(&self, inputs: &BTreeMap<String, GuestInput>) -> Vec<Command> {
         let mut commands = Vec::new();
         for lane in &self.result.lanes {

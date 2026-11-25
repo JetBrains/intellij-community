@@ -45,8 +45,7 @@
 #
 # These binaries replaced the Go ones in one commit: the wrappers switched and the Go was deleted together, so
 # there was never a period with two *live* implementations.
-# `docs/decisions/0059-the-ui-lane-tooling-is-rust.md` records the port and supersedes ADRs 0105, 0107
-# and 0108.
+# `openspec/changes/archive/2026-09-26-the-ui-lane-tooling-is-rust/design.md` records the port to Rust.
 #
 # Every crate is declared by `avl_crate` in `avl.bzl`, a binding of `rust_tool_crate` of
 # `community/build/rust-tools/defs.bzl`, and every test target through `rust_test_junit`: libtest writes no report,

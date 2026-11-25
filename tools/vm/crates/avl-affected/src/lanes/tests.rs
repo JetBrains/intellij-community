@@ -51,7 +51,7 @@ fn a_ui_lanes_own_target_reads_as_that_lane() {
 }
 
 /// A lane without a catalog lane runs only when a caller names it. `ui-live` is one: each of its scenarios spends a
-/// billed turn on a real account, so no flow, suite or changed path may reach it (ADR 0200). `ui-perf` is another:
+/// billed turn on a real account, so no flow, suite or changed path may reach it (decision 2026-10-04-the-live-lane-runs-real-agents-in-a-linux-guest). `ui-perf` is another:
 /// each of its scenarios takes up to ninety minutes. `jcp` is the third: it drives a real preprod account.
 #[test]
 fn only_the_live_perf_and_jcp_lanes_are_explicit_only() {

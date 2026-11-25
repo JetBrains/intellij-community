@@ -8,7 +8,7 @@ source "$script_dir/lib.sh"
 
 # Before Packer, because `packer validate` already needs the binary: the guest half of this build is a Bazel
 # target now, so building a golden image builds the Rust agent first. resolve_guest_agent_binary states what that costs an
-# operator; ADR 0108 states why the pipeline took the dependency.
+# operator; the design `community/tools/vm/openspec/changes/archive/2026-09-26-the-ui-lane-tooling-is-rust/design.md` states why the pipeline took the dependency.
 resolve_guest_agent_binary
 
 # `vm.cmd image build` names the candidate and serves Packer's SSH to it over the exec channel of Tart on a loopback

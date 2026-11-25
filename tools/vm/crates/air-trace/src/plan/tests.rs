@@ -159,7 +159,7 @@ fn live_lane_document(input: &str, source: &str) -> String {
 /// class of the live lane with no host run. Asked of every committed suite, so a document the reader misreads is found
 /// by name.
 #[test]
-#[cfg_attr(windows, ignore = "the Windows CI host cannot fetch the jar of the suite documents (ADR 0186)")]
+#[cfg_attr(windows, ignore = "the Windows CI host cannot fetch the jar of the suite documents (plan community/tools/vm/docs/a-windows-host-runs-the-controller-natively-plan.md)")]
 fn every_committed_class_plans_its_suites_scenarios() {
     let documents = documents_or_skip!();
     let repo = fixture_repo(&documents);
@@ -214,7 +214,7 @@ fn host_line(class: &str) -> String {
 /// the guest the user chose, and every other lane runs on the default Linux pool. No line names a runner, because the
 /// lane daemon runs every lane.
 #[test]
-#[cfg_attr(windows, ignore = "the Windows CI host cannot fetch the jar of the suite documents (ADR 0186)")]
+#[cfg_attr(windows, ignore = "the Windows CI host cannot fetch the jar of the suite documents (plan community/tools/vm/docs/a-windows-host-runs-the-controller-natively-plan.md)")]
 fn a_vm_line_is_one_self_leased_run_on_the_lanes_guest() {
     let documents = documents_or_skip!();
     let repo = fixture_repo(&documents);
@@ -228,7 +228,7 @@ fn a_vm_line_is_one_self_leased_run_on_the_lanes_guest() {
         let vm = command_of(&result, CommandKind::Vm, lane);
         let want = match lane {
             "gui-chat" => format!("./community/tools/vm.cmd --backend parallels run {}", document.test_class_name),
-            // The guest run of the live lane needs the developer's own Central session, piped in (ADR 0200).
+            // The guest run of the live lane needs the developer's own Central session, piped in (decision 2026-10-04-the-live-lane-runs-real-agents-in-a-linux-guest).
             "ui-live" => format!(
                 "central login export | ./community/tools/vm.cmd run {} --test-env AIR_LIVE_CENTRAL_LOGIN=@-",
                 document.test_class_name
@@ -375,7 +375,7 @@ fn the_vm_line_pipes_the_login_that_the_lane_document_names() {
 /// A scenario name, a suite id, a step id and a check id each reach the scenarios that carry them, and a class
 /// that runs more scenarios than were asked for says so, because `run` cannot select one of them.
 #[test]
-#[cfg_attr(windows, ignore = "the Windows CI host cannot fetch the jar of the suite documents (ADR 0186)")]
+#[cfg_attr(windows, ignore = "the Windows CI host cannot fetch the jar of the suite documents (plan community/tools/vm/docs/a-windows-host-runs-the-controller-natively-plan.md)")]
 fn a_program_id_reaches_the_scenarios_that_run_it() {
     let documents = documents_or_skip!();
     let repo = fixture_repo(&documents);
@@ -431,7 +431,7 @@ fn a_program_id_reaches_the_scenarios_that_run_it() {
 /// A name that is nothing the planner knows is unmapped with a reason, and the CLI says so with its own exit code
 /// rather than with an empty success.
 #[test]
-#[cfg_attr(windows, ignore = "the Windows CI host cannot fetch the jar of the suite documents (ADR 0186)")]
+#[cfg_attr(windows, ignore = "the Windows CI host cannot fetch the jar of the suite documents (plan community/tools/vm/docs/a-windows-host-runs-the-controller-natively-plan.md)")]
 fn an_unknown_name_is_unmapped_and_the_cli_exits_three() {
     let documents = documents_or_skip!();
     let repo = fixture_repo(&documents);
@@ -453,7 +453,7 @@ fn an_unknown_name_is_unmapped_and_the_cli_exits_three() {
 /// A flow reaches every scenario that tells it or walks one of its steps, and every scenario of a suite whose story
 /// flows implement it - whether it is named by its id or by its flow text, dropped or on disk.
 #[test]
-#[cfg_attr(windows, ignore = "the Windows CI host cannot fetch the jar of the suite documents (ADR 0186)")]
+#[cfg_attr(windows, ignore = "the Windows CI host cannot fetch the jar of the suite documents (plan community/tools/vm/docs/a-windows-host-runs-the-controller-natively-plan.md)")]
 fn every_flow_reaches_the_scenarios_that_walk_or_implement_it() {
     let documents = documents_or_skip!();
     let repo = fixture_repo(&documents);
@@ -486,7 +486,7 @@ fn every_flow_reaches_the_scenarios_that_walk_or_implement_it() {
 /// A flow with a text and no scenario is still a flow, and says why it plans nothing rather than being read as an
 /// unknown name.
 #[test]
-#[cfg_attr(windows, ignore = "the Windows CI host cannot fetch the jar of the suite documents (ADR 0186)")]
+#[cfg_attr(windows, ignore = "the Windows CI host cannot fetch the jar of the suite documents (plan community/tools/vm/docs/a-windows-host-runs-the-controller-natively-plan.md)")]
 fn a_flow_with_no_scenario_says_so() {
     let documents = documents_or_skip!();
     let repo = fixture_repo(&documents);
@@ -502,7 +502,7 @@ fn a_flow_with_no_scenario_says_so() {
 
 /// A dropped suite document plans its own scenarios, as it reads, in its own lane.
 #[test]
-#[cfg_attr(windows, ignore = "the Windows CI host cannot fetch the jar of the suite documents (ADR 0186)")]
+#[cfg_attr(windows, ignore = "the Windows CI host cannot fetch the jar of the suite documents (plan community/tools/vm/docs/a-windows-host-runs-the-controller-natively-plan.md)")]
 fn a_dropped_profile_plans_its_own_scenarios() {
     let documents = documents_or_skip!();
     let repo = fixture_repo(&documents);
@@ -550,7 +550,7 @@ fn junit_of(document: &SuiteDocument, failed: &str, class_level: bool) -> String
 /// A JUnit document plans the scenario whose case failed; a case that names no scenario is the suite failing
 /// around them and plans all of them; a green document plans every case it holds.
 #[test]
-#[cfg_attr(windows, ignore = "the Windows CI host cannot fetch the jar of the suite documents (ADR 0186)")]
+#[cfg_attr(windows, ignore = "the Windows CI host cannot fetch the jar of the suite documents (plan community/tools/vm/docs/a-windows-host-runs-the-controller-natively-plan.md)")]
 fn a_junit_document_plans_what_failed() {
     let documents = documents_or_skip!();
     let repo = fixture_repo(&documents);
@@ -622,7 +622,7 @@ fn example_manifest() -> Manifest {
 /// A `vm.cmd` envelope plans its failures, and names the bundles of the traces archive its report names. Found
 /// wherever the report sits: a red run's `error.details`, after the NDJSON progress `--stream` writes.
 #[test]
-#[cfg_attr(windows, ignore = "the Windows CI host cannot fetch the jar of the suite documents (ADR 0186)")]
+#[cfg_attr(windows, ignore = "the Windows CI host cannot fetch the jar of the suite documents (plan community/tools/vm/docs/a-windows-host-runs-the-controller-natively-plan.md)")]
 fn a_report_envelope_plans_its_failures_and_names_its_traces() {
     let documents = documents_or_skip!();
     let repo = fixture_repo(&documents);
@@ -697,7 +697,7 @@ fn a_report_envelope_plans_its_failures_and_names_its_traces() {
 /// A bundle is opened, not re-recorded: it plans no scenario and no command, and is named with its manifest's
 /// identity whether it is a directory, a zip, or one of its files dropped.
 #[test]
-#[cfg_attr(windows, ignore = "the Windows CI host cannot fetch the jar of the suite documents (ADR 0186)")]
+#[cfg_attr(windows, ignore = "the Windows CI host cannot fetch the jar of the suite documents (plan community/tools/vm/docs/a-windows-host-runs-the-controller-natively-plan.md)")]
 fn a_bundle_is_opened_and_plans_nothing() {
     let documents = documents_or_skip!();
     let repo = fixture_repo(&documents);
@@ -760,7 +760,7 @@ fn a_bundle_is_opened_and_plans_nothing() {
 /// A source path is joined the way `vm.cmd suites` joins it, and its answer is taken whole: every scenario of every
 /// suite it reaches, its unmapped reasons verbatim, and one `run --changed` per lane with one flag per path.
 #[test]
-#[cfg_attr(windows, ignore = "the Windows CI host cannot fetch the jar of the suite documents (ADR 0186)")]
+#[cfg_attr(windows, ignore = "the Windows CI host cannot fetch the jar of the suite documents (plan community/tools/vm/docs/a-windows-host-runs-the-controller-natively-plan.md)")]
 fn a_source_path_is_joined_as_vm_suites_joins_it() {
     let documents = documents_or_skip!();
     let repo = fixture_repo(&documents);
@@ -815,7 +815,7 @@ fn a_source_path_is_joined_as_vm_suites_joins_it() {
 /// A path with no tag reaches the suites whose routes walk its module, which is `bt`'s coarse relation, and those
 /// are the documents whose `modules` name it.
 #[test]
-#[cfg_attr(windows, ignore = "the Windows CI host cannot fetch the jar of the suite documents (ADR 0186)")]
+#[cfg_attr(windows, ignore = "the Windows CI host cannot fetch the jar of the suite documents (plan community/tools/vm/docs/a-windows-host-runs-the-controller-natively-plan.md)")]
 fn an_untagged_path_reaches_the_suites_that_walk_its_module() {
     let documents = documents_or_skip!();
     let repo = fixture_repo(&documents);
@@ -846,7 +846,7 @@ fn an_untagged_path_reaches_the_suites_that_walk_its_module() {
 /// A bare file name is looked up among the checkout's tracked files, and a dropped file's bytes pick among several
 /// of that name.
 #[test]
-#[cfg_attr(windows, ignore = "the Windows CI host cannot fetch the jar of the suite documents (ADR 0186)")]
+#[cfg_attr(windows, ignore = "the Windows CI host cannot fetch the jar of the suite documents (plan community/tools/vm/docs/a-windows-host-runs-the-controller-natively-plan.md)")]
 fn a_file_name_is_looked_up_in_the_checkout() {
     let documents = documents_or_skip!();
     let repo = fixture_repo(&documents);
@@ -940,7 +940,7 @@ fn cli(repo: &Repo, arguments: &[&str], stdin: &[u8]) -> (u8, String, String) {
 
 /// The CLI answers JSON with `--json` and text otherwise, and reads standard input for `-`.
 #[test]
-#[cfg_attr(windows, ignore = "the Windows CI host cannot fetch the jar of the suite documents (ADR 0186)")]
+#[cfg_attr(windows, ignore = "the Windows CI host cannot fetch the jar of the suite documents (plan community/tools/vm/docs/a-windows-host-runs-the-controller-natively-plan.md)")]
 fn the_cli_answers_json_text_and_standard_input() {
     let documents = documents_or_skip!();
     let repo = fixture_repo(&documents);
@@ -989,7 +989,7 @@ fn the_cli_answers_json_text_and_standard_input() {
 /// does. Here the golden bundle is zipped the way Bazel zips a test's outputs, under a root given with `--root`; the
 /// default roots stay out, so the suite reads nothing of the machine it runs on.
 #[test]
-#[cfg_attr(windows, ignore = "the Windows CI host cannot fetch the jar of the suite documents (ADR 0186)")]
+#[cfg_attr(windows, ignore = "the Windows CI host cannot fetch the jar of the suite documents (plan community/tools/vm/docs/a-windows-host-runs-the-controller-natively-plan.md)")]
 fn the_cli_lists_the_bundles_already_on_disk_for_its_scenarios() {
     let documents = documents_or_skip!();
     let repo = fixture_repo(&documents);

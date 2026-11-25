@@ -1,7 +1,7 @@
 //! The Docker backend: the `docker` CLI against containers the controller creates and owns by name.
 //!
 //! A Docker worker is the Linux guest, in a container. The guest agent, the parity layout, the guest paths and the
-//! relay over the exec channel (ADR 0182) are those of a VM worker. What differs is how the worker is made and
+//! relay over the exec channel (the design `community/tools/vm/openspec/changes/archive/2026-11-08-the-controller-reaches-the-guest-through-the-exec-channel/design.md`) are those of a VM worker. What differs is how the worker is made and
 //! reached:
 //!
 //! - **the image** is built from `community/tools/vm/docker/Dockerfile` and its entrypoint `air-display`, both embedded here.
@@ -9,11 +9,11 @@
 //!   entrypoint, the base pin or [`GUEST_PACKAGES`] builds a new image, and no stale image can answer for a new
 //!   tree. The image installs the packages and the pinned Node, and its entrypoint starts the display, so the boot
 //!   only installs the agent and runs `validate-guest` ([`validate_argv`]). Before a build, the controller pulls the
-//!   tag from `AIR_VM_DOCKER_REGISTRY` (ADR 0184): the tag names the same bytes wherever the image was built, and the
+//!   tag from `AIR_VM_DOCKER_REGISTRY` (the design `community/tools/vm/openspec/changes/archive/2026-09-29-the-worker-image-is-pulled-by-its-content-tag/design.md`): the tag names the same bytes wherever the image was built, and the
 //!   image's `org.opencontainers.image.revision` label carries the tag digest, so a pulled image that does not say
 //!   the digest is dropped and built instead. The Apple `container` engine pulls the tag from the file mirror
 //!   `AIR_VM_IMAGE_MIRROR` instead, as an OCI archive (the decision
-//!   `2026-10-09-apple-container-is-a-second-engine-of-the-docker-backend`), and checks the same label.
+//!   the design `community/tools/vm/openspec/changes/archive/2026-11-18-the-docker-backend-runs-on-the-host-engine-or-apple-container/design.md`), and checks the same label.
 //! - **the container** is made by `docker create` with the shares as read-only bind mounts and `WorkerData` in a
 //!   named volume. The shares are arguments of the create, as they are arguments of `tart run` on Tart, so a
 //!   share-set change makes the container again. The create arguments are recorded ([`CreateRecord`]), and a record

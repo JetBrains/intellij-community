@@ -9,7 +9,7 @@ source "$script_dir/lib.sh"
 # Static validation builds the guest agent too, and it has to: Packer's `file` provisioner stats its source
 # during `packer validate`, so a template naming a binary that does not exist is not a valid configuration.
 # Every required variable is passed here and by `build-golden.sh` alike, or this script reports a valid
-# configuration for a build that cannot start. ADR 0108 has the dependency's argument. The proxy port is a
+# configuration for a build that cannot start. The design `community/tools/vm/openspec/changes/archive/2026-09-26-the-ui-lane-tooling-is-rust/design.md` has the dependency's argument. The proxy port is a
 # placeholder: validation connects to nothing, and only `image build` serves the proxy.
 resolve_guest_agent_binary
 

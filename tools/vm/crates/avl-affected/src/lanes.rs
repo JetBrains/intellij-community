@@ -23,7 +23,7 @@ pub struct UiLane {
     ///
     /// No flow, suite or changed path reaches such a lane, because the suite join maps lanes through the catalog.
     /// `shard` and `flake` refuse it, because each repeats a selection and every scenario of `ui-live` spends a
-    /// billed turn on a real account (ADR 0200).
+    /// billed turn on a real account (decision 2026-10-04-the-live-lane-runs-real-agents-in-a-linux-guest).
     pub explicit_only: bool,
 }
 

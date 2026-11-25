@@ -143,7 +143,7 @@ fn catalog_with_a_perf_suite() -> FakeRuntime {
     FakeRuntime::with_tree(&tree)
 }
 
-// A flow never reaches a suite of an explicit-only lane, though one of its scenarios walks the flow (ADR 0200). A
+// A flow never reaches a suite of an explicit-only lane, though one of its scenarios walks the flow (decision 2026-10-04-the-live-lane-runs-real-agents-in-a-linux-guest). A
 // suite id of that lane is refused, and the refusal names the lane that runs it.
 #[test]
 fn no_flow_or_suite_id_reaches_a_suite_of_an_explicit_only_lane() {

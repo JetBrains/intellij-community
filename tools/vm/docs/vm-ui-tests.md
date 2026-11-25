@@ -23,7 +23,7 @@ package map is `community/tools/vm/README.md`.
 
 You install no Tart. The controller asks Bazel for a pinned Tart at its first Tart command, and only
 that request downloads it. An IDE sync or a `bazel build //...` does not
-([ADR 0158](decisions/0158-the-lane-controller-gets-tart-from-bazel.md)). `TART_BIN` names another
+([The lane controller gets Tart from Bazel, and only when it asks](../openspec/changes/archive/2026-09-24-the-lane-controller-gets-tart-from-bazel/design.md)). `TART_BIN` names another
 Tart. Only the `softnet` network mode still needs a manual install, of Softnet.
 
 Leasing a Linux worker is part of running the lane. The user's own choice is still needed for a
@@ -42,11 +42,11 @@ set. On 2026-10-27 one changed bridge function selected 86 suites in three lanes
 test one flow, run `vm.cmd run flow-rename-session`: it selects every generated suite that tells or
 walks the flow. `vm.cmd run rename-session` selects one suite by its id. A suite is the smallest unit,
 because its scenarios share one managed-agent chain
-([ADR 0157](decisions/0157-a-flow-is-a-test-selector.md)).
+([A flow id and a suite id are test selectors, and run takes its own lease](../openspec/changes/archive/2026-09-24-a-flow-is-a-test-selector/design.md)).
 
 A `run` without `--lease-file` builds on the host, leases one worker, and releases it on every exit,
 so one line is a whole run. Without `--lane`, it runs one iteration for each lane the answer reaches
-([ADR 0159](../../../../plugins/air/docs/decisions/0159-one-run-takes-every-lane-it-reaches.md)). A receipt from `lease acquire`
+([One vm.cmd run takes every lane it reaches, and suites answers each relation of a path](../../../../plugins/air/openspec/changes/archive/2026-09-24-one-run-takes-every-lane-it-reaches/design.md)). A receipt from `lease acquire`
 keeps one worker across several iterations, which is the warm inner loop. An interrupt of a self-leased run keeps the lease, because
 the iteration can still run on the guest, and the refusal names the receipt that frees it.
 
@@ -63,19 +63,19 @@ runs in it.
 | session | `Xvfb :88` and fluxbox, from the image's entrypoint | Aqua | Aqua | the skill's `Xvnc :1`, with noVNC |
 | root disk and memory | on Apple `container` a VM of its own, 8 GiB; on the engine of the host environment the engine's, shared by every container | 120 GB, 32 GiB | the VM's own | the container's disk, 6 GiB |
 | `pool stop` | stops the container and never an engine, keeps nothing warm; on Apple `container` an unleased worker also stops by itself an hour after its release | `tart suspend`, keeps the daemon and the IDE | suspends | removes the container and its guest-local state with it, keeps nothing warm |
-| Robot screenshot | a real frame | black, see ADR 0113 | a real frame | a real frame |
+| Robot screenshot | a real frame | black, see [A Tart macOS worker fails the UI lane because nothing activates the IDE window](../../../../plugins/air/openspec/changes/archive/2026-08-27-the-macos-lane-is-red-on-window-activation/design.md) | a real frame | a real frame |
 | Peekaboo | no | no | yes | no |
 | provenance | the base digest and the image tag | a seal receipt per worker | none | none |
 | concurrent lanes | one per container | one per worker | one, sequential | one per checkout |
 
 Docker is the default on every host
-([ADR 0190](decisions/0190-the-docker-engine-is-the-default-worker.md)), and it is the one Linux worker
-([the Docker image carries Node, and the Tart Linux worker is retired](decisions/2026-10-08-the-docker-image-carries-node-and-the-tart-linux-worker-is-retired.md)). A red run
+([The Linux worker is a Docker container built from the repository, and it is the default worker](../openspec/changes/archive/2026-10-08-the-linux-worker-is-a-docker-container-and-the-default/design.md)), and it is the one Linux worker
+([the Docker image carries Node, and the Tart Linux worker is retired](../openspec/changes/archive/2026-10-08-the-linux-worker-is-a-docker-container-and-the-default/design.md)). A red run
 there is a verdict. `java.awt.Robot` captures a real frame there, so a failure arrives with a picture. On a Mac of
 macOS 26 or newer, on Apple silicon, it needs no installation. One engine holds two lanes. `--backend container-linux` runs the same Linux guest profile
 in the container of the `testing-ui` skill, on every host of the skill. The skill's noVNC is the live view
-([the lane runs in the testing-ui container](decisions/2026-10-04-the-lane-runs-in-the-testing-ui-container.md)), and
-[the container-linux backend becomes the default worker](decisions/2026-10-09-the-container-linux-backend-becomes-the-default-worker.md) decides that it becomes the
+([the lane runs in the testing-ui container](../openspec/changes/archive/2026-10-04-the-lane-runs-in-the-testing-ui-container/design.md)), and
+the working note `community/tools/vm/docs/the-container-linux-backend-becomes-the-default-worker-plan.md` plans that it becomes the
 default worker with a later switch commit; until then Docker is the default. A macOS guest preserves JCEF,
 Terminal, native-menu, WindowServer and Aqua behaviour, and that is where coverage about those things belongs.
 Select one with
@@ -84,11 +84,11 @@ infers it and rejects a conflict.
 
 **The Tart macOS lane is known red.** At one tree it was 23 of 23 on Linux and 8 of 24 on macOS, and
 every macOS failure is macOS-only. The mechanism is window activation:
-[ADR 0113](../../../../plugins/air/docs/decisions/0113-the-macos-lane-is-red-on-window-activation.md) and
+[A Tart macOS worker fails the UI lane because nothing activates the IDE window](../../../../plugins/air/openspec/changes/archive/2026-08-27-the-macos-lane-is-red-on-window-activation/design.md) and
 [IJAI-1228](https://youtrack.jetbrains.com/issue/IJAI-1228) own it. Ask for that backend explicitly,
 and do not read a red run there as a verdict about the product.
 
-A lease takes the warmest free slot ([a lease prefers the warm slot](decisions/2026-10-10-a-lease-prefers-the-warm-slot.md)). The first choice
+A lease takes the warmest free slot ([a lease prefers the warm slot](../openspec/changes/archive/2026-10-10-a-warm-daemon-survives-a-lease-release/design.md)). The first choice
 is a running slot whose daemon record names the launch digest of the build that asks. Then come a running slot, a
 stopped slot and a slot with no machine. Within one class the slot order of the pool stays. The probes start nothing: a
 Docker engine that is down, Parallels and `container-linux` give no running state, and every slot then keeps its
@@ -146,13 +146,13 @@ contain, including its macOS version and each installed agent CLI build. Provena
 admission are fail-closed at every step, and no registry publish operation exists. An `image build`
 costs about a day of downloading rather than minutes of provisioning, because the cost is the base
 pull: run it detached. `community/tools/vm/provision/README.md` and
-[ADR 0108](decisions/0108-the-guest-half-of-the-image-pipeline-is-go.md) own the pipeline.
+[The UI-lane tooling is one Rust implementation in one cargo workspace that Bazel builds](../openspec/changes/archive/2026-09-26-the-ui-lane-tooling-is-rust/design.md) own the pipeline.
 
 ## The Linux guest
 
 The hypervisor and the guest OS are separate axes. The one Linux guest is the Docker worker, and the
 section below describes its container layer. The Tart Linux worker was retired on 2026-10-08
-([the Docker image carries Node, and the Tart Linux worker is retired](decisions/2026-10-08-the-docker-image-carries-node-and-the-tart-linux-worker-is-retired.md)).
+([the Docker image carries Node, and the Tart Linux worker is retired](../openspec/changes/archive/2026-10-08-the-linux-worker-is-a-docker-container-and-the-default/design.md)).
 Everything above still applies: one read-only share, the parity layout, the exec channel and a daemon with a
 warm IDE. On the `container-linux` backend the Bazel share is a read-only mount at its host path, so the
 guest has no parity layout. Four macOS
@@ -168,14 +168,14 @@ shared libraries the IDE's own native code links against. `GUEST_PACKAGES` names
 So each boot ends with the guest proving itself. `validate-guest` refuses the boot unless three things
 hold. The C library is glibc, the display answers, and a window manager is registered on it. Each refusal
 carries its own code and sentence.
-[ADR 0108](decisions/0108-the-guest-half-of-the-image-pipeline-is-go.md) is why.
+[The UI-lane tooling is one Rust implementation in one cargo workspace that Bazel builds](../openspec/changes/archive/2026-09-26-the-ui-lane-tooling-is-rust/design.md) is why.
 
 The lane daemon proves the shared objects at its own boot. It runs `ldd` over each shared object of its
 distribution. A library that the guest does not have refuses the boot of the lane daemon with
 `linux_shared_object_unresolved`.
 
 The image carries Node 24.19.0 at `/usr/local/bin/node`, and `AIR_VM_NODE` defaults to that path. The
-image tag pins the Node, so a boot runs no Node check ([the Docker image carries Node, and the Tart Linux worker is retired](decisions/2026-10-08-the-docker-image-carries-node-and-the-tart-linux-worker-is-retired.md)). Only `ui-live` uses the guest Node.
+image tag pins the Node, so a boot runs no Node check ([the Docker image carries Node, and the Tart Linux worker is retired](../openspec/changes/archive/2026-10-08-the-linux-worker-is-a-docker-container-and-the-default/design.md)). Only `ui-live` uses the guest Node.
 Its npm-installed registry ACP agents and the Claude CLI run on it, through `AIR_VM_NODE` and `NODE_BIN`
 in the daemon environment.
 
@@ -186,14 +186,14 @@ The daemon receives these inputs through its runfiles. The IDE receives one laun
 other PATH entries: the `bin` directory of its context.
 Missing inputs or a different version fail before the IDE starts. Host overrides cannot replace a
 runtime. VM preparation installs and probes no agent CLI, and existing images need no rebuild.
-[ADR 0137](../../../../plugins/air/docs/decisions/0137-agent-clis-are-declared-bazel-test-runtimes.md) is why.
+[Each agent CLI of a test is a pinned Bazel test runtime, and no test skips for a missing CLI](../../../../plugins/air/openspec/changes/archive/2026-09-13-agent-clis-are-declared-bazel-test-runtimes/design.md) is why.
 
 ## The Docker guest
 
 The default backend, `docker`, runs the Linux guest in a container on a Docker engine.
-[ADR 0183](decisions/0183-a-linux-worker-may-be-a-container.md) made it a backend,
-[ADR 0190](decisions/0190-the-docker-engine-is-the-default-worker.md) made it the default, and
-[the Docker image carries Node, and the Tart Linux worker is retired](decisions/2026-10-08-the-docker-image-carries-node-and-the-tart-linux-worker-is-retired.md) made it the one Linux worker. The guest is the Linux guest of the section above. This section describes the
+[The Linux worker is a Docker container built from the repository, and it is the default worker](../openspec/changes/archive/2026-10-08-the-linux-worker-is-a-docker-container-and-the-default/design.md) made it a backend,
+[The Linux worker is a Docker container built from the repository, and it is the default worker](../openspec/changes/archive/2026-10-08-the-linux-worker-is-a-docker-container-and-the-default/design.md) made it the default, and
+[the Docker image carries Node, and the Tart Linux worker is retired](../openspec/changes/archive/2026-10-08-the-linux-worker-is-a-docker-container-and-the-default/design.md) made it the one Linux worker. The guest is the Linux guest of the section above. This section describes the
 container layer below it.
 
 The image is `community/tools/vm/docker/Dockerfile`. The base is `DOCKER_BASE_IMAGE`
@@ -204,7 +204,7 @@ the build, and it checks a pinned sha256. The tag is `air-ui-worker:<12 hex digi
 `air-display` entrypoint, the base image and the package list. A start that finds no such tag on the
 engine pulls `registry.jetbrains.team/p/ij/containers-public/air-ui-worker:<tag>` first, and builds only
 when the pull fails or the pulled image's `org.opencontainers.image.revision` label is not the tag digest
-([ADR 0184](decisions/0184-the-worker-image-is-pulled-by-its-content-tag.md)). The tag is the only pin.
+([The controller pulls the worker image by its content tag before it builds it](../openspec/changes/archive/2026-09-29-the-worker-image-is-pulled-by-its-content-tag/design.md)). The tag is the only pin.
 `AIR_VM_DOCKER_REGISTRY=off` builds without a registry, and `AIR_VM_DOCKER_PUSH=1` makes the controller
 build and publish the tag for `linux/arm64` and `linux/amd64` as one image index, which is how the
 registry gets a new tag. So a fresh worker runs no `apt-get`, and a cold host runs no build. A tag that the
@@ -226,14 +226,14 @@ on the host, as Bazel does. In the container, `cat` returned the new bytes at on
 failed with `ENOENT`. Only `stat` was late: it reported the old size at +0 s and the new size from +1 s
 on. On Apple `container`, on 2026-10-09, `open` failed with `ENOENT` after the rename when the guest had
 read the path just before it. That dead node expired by itself after 34 ms to 58 ms. No remount was
-needed ([Apple container is a second engine of the Docker backend](decisions/2026-10-09-apple-container-is-a-second-engine-of-the-docker-backend.md)).
+needed ([Apple container is a second engine of the Docker backend](../openspec/changes/archive/2026-11-18-the-docker-backend-runs-on-the-host-engine-or-apple-container/design.md)).
 So a remount on Docker is a 2 s settle for the virtiofs dead nodes and the attribute cache, on both engines.
 A lane run on Docker goes through
 the same daemon, and the remount step of the daemon becomes the 2 s settle. The controller recreates a
 container when its create arguments change. The record of those arguments covers the share, the image
 tag, the display and `AIR_VM_SCREEN`. The arguments name no checkout, so every checkout of the host uses the
 same container, and a switch to another checkout recreates nothing
-([the guest reads no checkout](decisions/2026-10-10-the-guest-reads-no-checkout.md)). A warm iteration compares the record too, before it reuses the
+([the guest reads no checkout](../openspec/changes/archive/2026-10-10-the-guest-reads-no-checkout/design.md)). A warm iteration compares the record too, before it reuses the
 daemon. On a difference it recreates the container under its own lease and starts the daemon cold. A missing record also gives a recreate, and so does an engine
 container id that differs from the recorded id. `pool start <worker>` and `pool init` refuse with
 `worker_leased` when the stale container runs and another holder leases it. `pool start all` and
@@ -247,7 +247,7 @@ volumes. `vnc`, `peekaboo` and `image validate|build` have no meaning here, and 
 `unsupported_backend_operation` (exit 2).
 
 One rule decides the engine, and no flag selects it
-([the Lima engine is retired](decisions/2026-10-13-the-lima-engine-is-retired.md)). When `DOCKER_BIN` or `DOCKER_HOST`
+([the Lima engine is retired](../openspec/changes/archive/2026-11-18-the-docker-backend-runs-on-the-host-engine-or-apple-container/design.md)). When `DOCKER_BIN` or `DOCKER_HOST`
 names an engine, the controller runs that CLI against that engine, on every host. When neither variable is set, a
 macOS host of macOS 26 or newer, on Apple silicon, runs Apple `container`. Every other Mac keeps the engine of its
 host environment: an older macOS, an Intel Mac, and a Mac whose version cannot be read. On such a Mac, the Docker CLI
@@ -282,7 +282,7 @@ run, remove `~/.local/state/JetBrains/air-vm-ui-tests/lima` instead:
 LIMA_HOME=~/.local/state/JetBrains/air-vm-ui-tests/lima limactl delete --force air-docker-engine
 ```
 
-On Apple `container` ([Apple container is a second engine of the Docker backend](decisions/2026-10-09-apple-container-is-a-second-engine-of-the-docker-backend.md)),
+On Apple `container` ([Apple container is a second engine of the Docker backend](../openspec/changes/archive/2026-11-18-the-docker-backend-runs-on-the-host-engine-or-apple-container/design.md)),
 each container is a VM of its own. The controller runs the Apple CLI that Bazel pins in
 `community/tools/vm/container.MODULE.bazel`, or the one that `CONTAINER_BIN` names. It runs no Docker CLI and no buildx.
 
@@ -300,7 +300,7 @@ env -u DOCKER_HOST ./community/tools/vm.cmd run AgentSessionToolWindowComposerUi
   volume than the runtime root, such as an external disk, the network plugin of the engine does not start from there.
   The controller then runs a copy of the pinned install, `<runtime root>/apple-container/<pin>`, made once per pin
   (about 420 MB) and checked with `codesign --verify --strict`. A failed copy or check is `container_copy_failed`
-  ([the pinned Apple container runs from the volume of the runtime root](decisions/2026-11-18-the-pinned-container-runs-from-the-volume-of-the-runtime-root.md)).
+  ([the pinned Apple container runs from the volume of the runtime root](../openspec/changes/archive/2026-11-18-the-docker-backend-runs-on-the-host-engine-or-apple-container/design.md)).
 - **The nameserver.** The DNS proxy of the engine does not answer on every host. So each build and each container
   gets `--dns`: `AIR_VM_DNS`, else the first nameserver of the host outside the loopback, else `1.1.1.1`. A guest
   that needs a name that only a VPN resolver knows needs `AIR_VM_DNS`.
@@ -314,11 +314,11 @@ env -u DOCKER_HOST ./community/tools/vm.cmd run AgentSessionToolWindowComposerUi
   4 GiB, and the builder stops after the build.
 - **The pool size.** The workers get at most a quarter of the host memory, from 2 to 16 slots. A host of 128 GiB with
   workers of 8 GiB has 4 slots, and a host of 64 GiB has 2. `AIR_VM_MAX_WORKERS` sets the count
-  ([the Apple container pool follows the host memory, and the builder stops after a build](decisions/2026-10-10-the-container-pool-follows-the-host-memory-and-the-builder-stops.md)).
+  ([the Apple container pool follows the host memory, and the builder stops after a build](../openspec/changes/archive/2026-11-18-the-docker-backend-runs-on-the-host-engine-or-apple-container/design.md)).
 - **The idle stop.** A release keeps the warm daemon for an hour. Then the unleased worker stops, and it gives its
   memory back. The next run starts it again with a cold daemon, and the volume keeps the guest-local state.
   `AIR_VM_IDLE_STOP` sets the grace in seconds, `off` keeps the worker running, and `0` stops it at the release
-  ([an idle Apple container worker stops itself](decisions/2026-10-10-an-idle-container-worker-stops-itself.md)).
+  ([an idle Apple container worker stops itself](../openspec/changes/archive/2026-10-10-an-idle-container-worker-stops-itself/design.md)).
 - **The pool commands.** `pool stop` stops the containers only. `pool recycle all` deletes the builder too. `status`
   prints `engine=container`, whether the server runs, the pool size with its reason, and the idle stop deadline of
   each worker. It never starts the server.
@@ -329,7 +329,7 @@ A shell that exports `DOCKER_HOST`, for example for OrbStack, keeps that engine.
 example does.
 
 The live lane `ui-live` runs on the Docker guest too, but only when a caller names it, because each of its scenarios
-spends a billed turn ([ADR 0200](../../../../plugins/air/docs/decisions/0200-the-live-lane-also-runs-in-a-linux-guest-with-a-per-run-central-login.md)).
+spends a billed turn ([The live lane runs real agents on a per-run Central login in the lane daemon of a Linux guest](../../../../plugins/air/openspec/changes/archive/2026-10-04-the-live-lane-runs-real-agents-in-a-linux-guest/design.md)).
 Its lane table entry has no catalog lane, so no flow, suite or `--changed` reaches it, and `shard` and `flake` refuse it
 with `explicit_only_lane`. The run hands the guest a per-run Central login as a run secret file:
 
@@ -348,13 +348,13 @@ skill's live-lane reference has the procedure.
 ## Windows
 
 A Windows PC runs the controller natively, on x86_64 and on arm64
-([ADR 0186](decisions/0186-a-windows-host-runs-the-controller-natively.md)). It drives the Docker and the
+(`community/tools/vm/docs/a-windows-host-runs-the-controller-natively-plan.md`). It drives the Docker and the
 container-linux backends.
 The CMD halves of `vm.cmd` and `trace.cmd` build and run the binaries, as `bt.cmd` does.
 
 1. Install a Docker engine that the `docker` CLI reaches. That is Docker Desktop, or another engine. The controller
    talks to the `docker` CLI only. Docker Desktop is not free for JetBrains at company scale
-   ([ADR 0183](decisions/0183-a-linux-worker-may-be-a-container.md)).
+   ([The Linux worker is a Docker container built from the repository, and it is the default worker](../openspec/changes/archive/2026-10-08-the-linux-worker-is-a-docker-container-and-the-default/design.md)).
 2. In a Windows shell, run `community\tools\vm.cmd status`. With no `--backend`, a Windows host takes `docker`.
    `--backend tart` and `parallels` are refused with `unsupported_host_backend` (exit 2). An engine that
    does not answer is `docker_missing` (exit 69).
@@ -391,10 +391,10 @@ The host paths are Windows paths, and the guest is Linux, so two steps differ fr
 
 The `container-linux` backend has passed the `ui` lane of `flow-new-session` on a Windows 10 PC with WSL 2.9.13:
 9 tests, cold in 283 s with a daemon start of 84 s, warm in 134 s
-([the lane runs in the testing-ui container](decisions/2026-10-04-the-lane-runs-in-the-testing-ui-container.md)). That run took the MANIFEST branch through
+([the lane runs in the testing-ui container](../openspec/changes/archive/2026-10-04-the-lane-runs-in-the-testing-ui-container/design.md)). That run took the MANIFEST branch through
 a real daemon start. No `vm.cmd run` has passed on a Windows PC with a Docker engine yet, so `--mount source=C:\…`
 on Docker Desktop and the MANIFEST name that the runtime descriptor gets there are not confirmed, and the cost table
-below has no Docker row for Windows. The 2 s share settle of ADR 0183 is a VirtioFS measurement on OrbStack, and a
+below has no Docker row for Windows. The 2 s share settle of [The Linux worker is a Docker container built from the repository, and it is the default worker](../openspec/changes/archive/2026-10-08-the-linux-worker-is-a-docker-container-and-the-default/design.md) is a VirtioFS measurement on OrbStack, and a
 Windows engine needs its own. A bind mount of a Windows path crosses from Windows into the engine's Linux VM, and
 the guest reads the IDE distribution and every test jar through it. That cost is not measured yet either.
 
@@ -421,7 +421,7 @@ JCEF plugin of the distribution.
 its warm cache, then it launches the built test stub in the guest. The launch environment is the one
 Bazel's test runner would provide.
 
-**The guest reads no checkout** ([the guest reads no checkout](decisions/2026-10-10-the-guest-reads-no-checkout.md)). It sees one read-only
+**The guest reads no checkout** ([the guest reads no checkout](../openspec/changes/archive/2026-10-10-the-guest-reads-no-checkout/design.md)). It sees one read-only
 share, Bazel's output user root. A **parity layout** makes that root position-identical: the output user root is a
 single symlink onto the mount. The guest builds its own runfiles tree from the MANIFEST of the runtime descriptor,
 at `<vmData>/runfiles/<digest>`, with the `runfiles-tree` verb in the `parity-probe` phase. A runfile whose target
@@ -531,7 +531,7 @@ A one-shot run pays an IDE launch with a project open on every iteration. `run` 
 persistent guest process: the **lane daemon**, the `lane-daemon` verb of the guest agent. It reads the runtime
 descriptor of the lane build. `lane-run` is the one-shot form of the same library, with no control channel. A Bazel
 lane test, `bt --lane` and a TeamCity agent run it on their own host. Why a daemon is kept,
-now that Bazel caches the distribution it launches, is [ADR 0104](../../../../plugins/air/docs/decisions/0104-the-daemon-caches-a-process-not-a-build.md).
+now that Bazel caches the distribution it launches, is [The lane daemon of the guest agent is the only runner of the Air UI lanes](../openspec/changes/archive/2026-10-19-the-lane-daemon-is-the-only-runner-of-the-air-ui-lanes/design.md).
 
 The rule `plugins/air/tests/integration/air_ui_daemon_runtime.bzl` writes a versioned JSON **runtime
 descriptor**, and `//plugins/air/tests/integration/ui:ui_daemon` is that descriptor. It names the static flags, the
@@ -544,10 +544,10 @@ The lane daemon reads the inputs of the lane IDE from it at its boot, and the bo
 
 Every UI lane runs over this one descriptor, which names the suite documents and the lane documents of every lane. The
 run request of the lane daemon names the lane, and the lane daemon carries the warm IDE across whole controller
-iterations ([ADR 0138](../../../../plugins/air/docs/decisions/0138-air-owns-its-lane-ide.md)).
+iterations ([The lane IDE runs closed under the guest agent, and the HTTP bridge is the only way in](../../../../plugins/air/openspec/changes/archive/2026-10-09-the-lane-ide-is-a-closed-process-that-the-http-bridge-reaches/design.md)).
 
 The guest agent launches the IDE and owns its process
-([ADR 0234](../../../../plugins/air/docs/decisions/0234-the-guest-agent-launches-the-lane-ide.md)). The daemon
+([The lane IDE runs closed under the guest agent, and the HTTP bridge is the only way in](../../../../plugins/air/openspec/changes/archive/2026-10-09-the-lane-ide-is-a-closed-process-that-the-http-bridge-reaches/design.md)). The daemon
 decides what to launch and when, and it prepares and launches the IDE in its own process. The preparation lays out
 the context `$AIR_VM_DATA/ide/<launchKey>`: the data directories, the project, the disabled plugins, and the `home`
 and `bin` directories. The daemon then writes the option files, the bridge token, the seeds of the home and the
@@ -560,7 +560,7 @@ The environment of the IDE is closed, and the layout of its context sets it. `HO
 context, and `PATH` starts with its `bin` directory. The agent copies a short allowlist from its own environment,
 for example `DISPLAY`, `LANG` and `TMPDIR`. When the agent has no UTF-8 locale, the IDE gets `LC_ALL=C.UTF-8`.
 No other variable reaches the IDE, and the run spec records this policy and no value
-([ADR 0221](../../../../plugins/air/docs/decisions/0221-the-lane-ide-runs-in-a-closed-environment-and-no-secret-crosses-the-agent.md)).
+([The lane IDE runs closed under the guest agent, and the HTTP bridge is the only way in](../../../../plugins/air/openspec/changes/archive/2026-10-09-the-lane-ide-is-a-closed-process-that-the-http-bridge-reaches/design.md)).
 The bridge token is a private file of the config directory, `config/air-ui-test/token`, which the daemon
 writes. No launch document, argument file or argv holds it.
 
@@ -642,7 +642,7 @@ directory on the guest disk, so the daemon can outlive a remount, and there are 
 one running. The daemon holds the guest supervisor's run slot for its whole lifetime, so
 `exec` is refused until `daemon stop`. Each lane IDE has a slot of its own, so it does not hold that
 slot. A lease release keeps that warm daemon:
-[ADR 0106](decisions/0106-a-warm-daemon-survives-a-lease-release.md). The release stops the lane IDEs,
+[A lease release keeps a parked warm daemon, and an acquisition prefers the warm slot](../openspec/changes/archive/2026-10-10-a-warm-daemon-survives-a-lease-release/design.md). The release stops the lane IDEs,
 so the next holder gets none of them.
 
 The controller reaches the daemon through the relay, never through the guest network. For each pooled
@@ -650,14 +650,14 @@ HTTP connection, the controller spawns `tart exec -i <worker> <agent> relay <por
 spawns `prlctl exec <worker> "'<agent>' 'relay' '<port>'"`. The `relay` verb of the guest agent bridges its
 stdin and stdout to `127.0.0.1:<port>` inside the guest. The daemon binds only that loopback address.
 So the host needs no route to the guest and no permission for one. Each relay spawn costs about 0.65 s.
-[ADR 0182](decisions/0182-the-daemon-is-reached-through-the-exec-channel.md) records the decision.
+[The controller reaches the guest daemon and the image-build SSH through the exec channel](../openspec/changes/archive/2026-11-08-the-controller-reaches-the-guest-through-the-exec-channel/design.md) records the decision.
 On the `container-linux` backend the controller spawns no relay. `start --publish` maps the daemon's guest port to a
 host loopback port derived from the checkout (`AIR_VM_DAEMON_HOST_PORT`), and the controller connects to it with
 plain TCP. The daemon binds the container's interfaces for that, because a published port forwards to the
 container's address, not to its loopback; its token guards it. Each one-shot guest command runs through
 `POST /v1/execute` on the skill's control port, with the Bearer the skill writes to
 `out/testing-ui/container.ctl_bearer`, and a pull runs through `container.cmd exec`
-([the lane runs in the testing-ui container](decisions/2026-10-04-the-lane-runs-in-the-testing-ui-container.md)).
+([the lane runs in the testing-ui container](../openspec/changes/archive/2026-10-04-the-lane-runs-in-the-testing-ui-container/design.md)).
 
 A start whose daemon never answers `/status` within `AIR_VM_DAEMON_HEALTH_TIMEOUT` (180 s) cancels the
 run it launched and keeps its record, so `daemon log` still reads it. The refusal names what the last
@@ -740,7 +740,7 @@ IDE. A pass of the rerun makes the run green, and the JUnit XML keeps both attem
 flaky when the build has the failure condition "Support test retry". More than 3 failures rerun nothing. The lane
 daemon of a worker reruns nothing, so `vm.cmd run` shows each flake.
 `env AIR_LANE_INJECT_FAILURE='first:<scenario>'` (or `every:`) with `--test_env` fails a scenario on purpose, to
-see the rerun. [lane-run reruns each failed scenario once](decisions/2026-10-29-lane-run-reruns-each-failed-scenario-once.md)
+see the rerun. [lane-run reruns each failed scenario once](../openspec/changes/archive/2026-10-29-lane-run-reruns-each-failed-scenario-once/design.md)
 records why.
 
 A TeamCity UI job splits a lane across its runners with `-Didea.test.runner.index` and `-Didea.test.runners.count`.
@@ -765,8 +765,8 @@ the stream can never be green. Agents consume the JSON report.
 
 The fixed costs around a lane, measured on `air-linux-1`, each reproduced on the same worker and
 day. `air-linux-1` was a Tart Linux worker, which
-the decision [the Docker image carries Node, and the Tart Linux worker is retired](decisions/2026-10-08-the-docker-image-carries-node-and-the-tart-linux-worker-is-retired.md) retired, so its rows are history.
-The decision [the Lima engine is retired](decisions/2026-10-13-the-lima-engine-is-retired.md) retired the Lima engine, so its rows are history too:
+the decision [the Docker image carries Node, and the Tart Linux worker is retired](../openspec/changes/archive/2026-10-08-the-linux-worker-is-a-docker-container-and-the-default/design.md) retired, so its rows are history.
+The decision [the Lima engine is retired](../openspec/changes/archive/2026-11-18-the-docker-backend-runs-on-the-host-engine-or-apple-container/design.md) retired the Lima engine, so its rows are history too:
 
 | what | cost |
 | --- | --- |
@@ -799,10 +799,10 @@ order on that day. The lane rows are one iteration per cell on 2026-09-30, on on
 test passed in each. The Lima engine and `air-linux-1` took times of the same order, and the
 measurement shows no penalty for the engine. One iteration per cell shows no spread, so this guide
 does not call one of them faster. The `shard` row is one iteration on 2026-09-30, and its memory was not
-measured ([ADR 0190](decisions/0190-the-docker-engine-is-the-default-worker.md)). The engine rows come from
-[ADR 0189](decisions/0189-the-docker-engine-is-a-lima-vm-the-controller-owns.md). The ADR 0189 rows ran on Ubuntu
-24.04. The 26.04 rows come from [ADR 0191](decisions/0191-the-engine-vm-leaves-the-usernet-path.md), on
-2026-10-01, and each is one sample. The lane time on 26.04 was never measured. The runs that ADR 0191
+measured ([The Linux worker is a Docker container built from the repository, and it is the default worker](../openspec/changes/archive/2026-10-08-the-linux-worker-is-a-docker-container-and-the-default/design.md)). The engine rows come from
+[The Docker backend runs on the engine of the host or on Apple container, by the macOS version](../openspec/changes/archive/2026-11-18-the-docker-backend-runs-on-the-host-engine-or-apple-container/design.md). The [The Docker backend runs on the engine of the host or on Apple container, by the macOS version](../openspec/changes/archive/2026-11-18-the-docker-backend-runs-on-the-host-engine-or-apple-container/design.md) rows ran on Ubuntu
+24.04. The 26.04 rows come from [The Docker backend runs on the engine of the host or on Apple container, by the macOS version](../openspec/changes/archive/2026-11-18-the-docker-backend-runs-on-the-host-engine-or-apple-container/design.md), on
+2026-10-01, and each is one sample. The lane time on 26.04 was never measured. The runs that [The Docker backend runs on the engine of the host or on Apple container, by the macOS version](../openspec/changes/archive/2026-11-18-the-docker-backend-runs-on-the-host-engine-or-apple-container/design.md)
 names are no longer owed, because the engine is retired.
 
 The **daemon** is the expensive warm state, several times the IDE it holds. A restart that keeps the
@@ -836,7 +836,7 @@ Class durations are very uneven. The median class is 3.0 s and the slowest is 41
 than 2x, because the second worker pays its own daemon start. Twelve quiet trials of the whole lane
 passed 12 of 12. The lane flake rate is 0, with a two-sided 95 % Wilson interval of [0, 0.143].
 Quote the interval rather than the zero. The loaded complement is
-[ADR 0110](decisions/0110-the-truncation-chain-is-a-daemon-kill-under-load.md).
+[The Linux worker is a Docker container built from the repository, and it is the default worker](../openspec/changes/archive/2026-10-08-the-linux-worker-is-a-docker-container-and-the-default/design.md).
 
 A failing scenario spends its operation timeouts before it reports, so **read a slow lane as a red
 lane** until the per-class numbers say otherwise. A warm full-lane iteration is about 196 s.
@@ -882,11 +882,11 @@ and `lease show` with the receipt names it as `run=<id>`. `exec` and `peekaboo` 
 so they refuse `lease_busy` (exit 75) until the run ends. Another operation on the worker, such as a
 `daemon start` or a `lease release`, holds the lock for its whole length. Then `ls` and `pull` refuse
 `lease_busy` until it ends. The fix is to wait, not to stop the daemon that makes the next iteration
-fast. [A run marks its worker and holds the lock at its ends](decisions/2026-10-13-a-run-marks-its-worker-and-holds-the-lock-at-its-ends.md)
+fast. [A run marks its worker and holds the lock at its ends](../openspec/changes/archive/2026-10-13-a-run-marks-its-worker-and-holds-the-lock-at-its-ends/design.md)
 records the decision.
 
 The trace bundles and the heartbeat screenshots of the IDE log directory are the evidence of record
-on Linux and Parallels. On a Tart macOS worker a Robot screenshot is black, and ADR 0113 says why. Read
+on Linux and Parallels. On a Tart macOS worker a Robot screenshot is black, and [A Tart macOS worker fails the UI lane because nothing activates the IDE window](../../../../plugins/air/openspec/changes/archive/2026-08-27-the-macos-lane-is-red-on-window-activation/design.md) says why. Read
 the Swing tree of the trace there instead.
 
 A macOS worker has two VNC servers with two different auth models. Both are a diagnostic channel and
@@ -900,7 +900,7 @@ It also holds the Swing tree at each of those moments, the gestures, the bridge 
 of `idea.log`, and the generated program, so the instructions a failure never reached are visible. The
 contract is [`community/tools/vm/spec/scenario-trace.spec.md`](../spec/scenario-trace.spec.md). The lane's side is
 [`plugins/air/spec/docs/flow-trace.spec.md`](../../../../plugins/air/spec/docs/flow-trace.spec.md), and
-[ADR 0155](../../../../plugins/air/docs/decisions/0155-a-ui-scenario-leaves-a-trace.md) is why the trace is shaped this way.
+[A UI scenario leaves one self-contained trace bundle, and the run brings it home as each test ends](../../../../plugins/air/openspec/changes/archive/2026-10-09-a-ui-scenario-leaves-one-trace-bundle-that-the-run-brings-home/design.md) is why the trace is shaped this way.
 
 The recorder is `air-trace-record`, a binary that the lane daemon starts from its runfiles, once per iteration. The
 lane daemon tells it what happens, one line per event on its standard input. A lane daemon that dies closes that
@@ -1106,8 +1106,8 @@ decoder:
 - A scenario with a video takes lossy AVIF stills from libaom, because a lossless still of the CI desktop is about
   900 KB. An AVIF still is less than half the size of the lossy WebP still before it, at a better quality. A
   scenario without a video takes lossless WebP stills, pixel-exact UI evidence with crisp text. The manifest names
-  lossy stills ([A scenario with a video takes lossy stills](decisions/2026-10-21-a-scenario-with-a-video-takes-lossy-stills.md),
-  [A lossy still is AVIF from libaom](decisions/2026-10-23-a-lossy-still-is-avif-from-libaom.md)).
+  lossy stills ([A scenario with a video takes lossy stills](../openspec/changes/archive/2026-10-23-a-scenario-with-a-video-takes-lossy-avif-stills/design.md),
+  [A lossy still is AVIF from libaom](../openspec/changes/archive/2026-10-23-a-scenario-with-a-video-takes-lossy-avif-stills/design.md)).
 - Video is H.264 in fragmented MP4, the one codec with hardware decode in both browsers on every Mac. The
   fragmented container survives a killed encoder, and `video.index.json` makes every seek exact.
 - A zip stores its media uncompressed, so a server answers byte ranges straight out of it.
@@ -1210,8 +1210,8 @@ reaches a hypervisor, so it fails when either the Bazel target or the wrapper is
 line also runs the tests of BT**, through `@community//tools/bt/...`. The clippy tests of BT run only
 from `community/`, with `./bazel.cmd test //tools/bt/...` there, because the clippy aspect skips a
 target of an external repository. BT is the community workspace `community/tools/bt`, not a part of the
-controller ([ADR 0070](../../../../plugins/air/docs/decisions/0070-bt-core-lives-in-community.md)). The controller is the community workspace
-`community/tools/vm` beside it ([the UI-lane workspace lives in community](decisions/2026-10-07-the-ui-lane-workspace-lives-in-community.md)). The
+controller ([The BT core lives in community and knows no product path, and bt.json names each area](../../../../plugins/air/openspec/changes/archive/2026-09-29-bt-core-lives-in-community/design.md)). The controller is the community workspace
+`community/tools/vm` beside it ([the UI-lane workspace lives in community](../openspec/changes/archive/2026-10-07-the-ui-lane-workspace-lives-in-community/design.md)). The
 tests that read files of the ultimate root are in `//plugins/air/tests/integration/vm-contract`.
 
 `status` is a report, and it is almost write-free. It resolves the two host paths a parity verdict
@@ -1228,10 +1228,10 @@ workers, because the guest model behind them is one model.
 | # | criterion | verdict |
 | --- | --- | --- |
 | 1 | a worker boots, provisions and reports ready | **Verified** on both pools. A macOS worker also reports console login, TCC admission and a unique SSH host key. A Docker worker has no field for those, and it is never verified by them |
-| 2 | the lane is green on a macOS worker | **Not met, and understood.** 8 of 24 classes pass, and not one of the 16 failures reproduces on Linux. See [ADR 0113](../../../../plugins/air/docs/decisions/0113-the-macos-lane-is-red-on-window-activation.md) and [IJAI-1228](https://youtrack.jetbrains.com/issue/IJAI-1228) |
-| 3 | two lanes run concurrently | **Open behind criterion 2.** Guest-side work does go in parallel, and every host-side Bazel call queues. Lane truncation under load is [ADR 0110](decisions/0110-the-truncation-chain-is-a-daemon-kill-under-load.md) |
+| 2 | the lane is green on a macOS worker | **Not met, and understood.** 8 of 24 classes pass, and not one of the 16 failures reproduces on Linux. See [A Tart macOS worker fails the UI lane because nothing activates the IDE window](../../../../plugins/air/openspec/changes/archive/2026-08-27-the-macos-lane-is-red-on-window-activation/design.md) and [IJAI-1228](https://youtrack.jetbrains.com/issue/IJAI-1228) |
+| 3 | two lanes run concurrently | **Open behind criterion 2.** Guest-side work does go in parallel, and every host-side Bazel call queues. Lane truncation under load is [The Linux worker is a Docker container built from the repository, and it is the default worker](../openspec/changes/archive/2026-10-08-the-linux-worker-is-a-docker-container-and-the-default/design.md) |
 | 4 | a product edit invalidates correctly | **Met.** The stamp moved, the shares were remounted, the IDE relaunched, and the daemon survived it |
-| 5 | per-class time is comparable to the default runner | **Met.** A macOS worker is slower around a run, not per class. ADR 0113 has the figures |
+| 5 | per-class time is comparable to the default runner | **Met.** A macOS worker is slower around a run, not per class. [A Tart macOS worker fails the UI lane because nothing activates the IDE window](../../../../plugins/air/openspec/changes/archive/2026-08-27-the-macos-lane-is-red-on-window-activation/design.md) has the figures |
 | 6 | the controller's own suite passes | **Verified.** Run it with the commands under [Verifying the controller](#verifying-the-controller) |
 
 Controller-shaped open work that is not a gate criterion lives in

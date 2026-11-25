@@ -925,7 +925,7 @@ The Runs page, the run page and the trace page are in
 
 ## References
 
-- [ADR 0155](../../../../plugins/air/docs/decisions/0155-a-ui-scenario-leaves-a-trace.md), the rationale of the trace
+- [A UI scenario leaves one self-contained trace bundle, and the run brings it home as each test ends](../../../../plugins/air/openspec/changes/archive/2026-10-09-a-ui-scenario-leaves-one-trace-bundle-that-the-run-brings-home/design.md), the rationale of the trace
 - [VM guide](../docs/vm-ui-tests.md), section Traces
 - [Flow UI Scenario Traces](../../../../plugins/air/spec/docs/flow-trace.spec.md)
 - [The UI-lane Controller](lane-controller.spec.md)

@@ -818,7 +818,7 @@ impl Host {
     /// this pool reads.
     ///
     /// A real build and deliberately not `--nobuild`: `--nobuild` warms the analysis and leaves the outputs
-    /// unbuilt, so the next start still pays the actions - and ADR 0105 records what a canary built on `--nobuild`
+    /// unbuilt, so the next start still pays the actions - and the design `community/tools/vm/openspec/changes/archive/2026-09-26-the-ui-lane-tooling-is-rust/design.md` records what a canary built on `--nobuild`
     /// cost when it launched an hour of VM work against a tree whose assembler had failed.
     ///
     /// One guest configuration per warm. The host Bazel argv adds this guest's `.bazelrc` config, whose build

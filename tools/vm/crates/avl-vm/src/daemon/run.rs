@@ -429,7 +429,7 @@ impl Host {
 /// Refuses a repeated selection of an explicit-only lane: `shard` and `flake` would multiply its billed turns.
 ///
 /// A flow, a suite or a changed path never reaches such a lane, so only `--lane` and a selector that resolves to its
-/// target can name one. Both are refused here, before a build or a lease (ADR 0200).
+/// target can name one. Both are refused here, before a build or a lease (decision 2026-10-04-the-live-lane-runs-real-agents-in-a-linux-guest).
 fn refuse_explicit_only(label: &str, program: &str) -> Result<(), Refusal> {
     match avl_affected::ui_lane_of_label(label) {
         Some(lane) if lane.explicit_only => Err(Refusal::new(
@@ -450,7 +450,7 @@ fn refuse_explicit_only(label: &str, program: &str) -> Result<(), Refusal> {
 /// The jar bytes that one upload connection carries before the push opens another.
 ///
 /// Each upload in flight holds a pooled HTTP connection of its own, and each new connection spawns one relay child in
-/// the guest, which ADR 0182 measured at 0.65 s on Tart. A new connection pays only for bytes that one connection would
+/// the guest, which the design `community/tools/vm/openspec/changes/archive/2026-11-08-the-controller-reaches-the-guest-through-the-exec-channel/design.md` measured at 0.65 s on Tart. A new connection pays only for bytes that one connection would
 /// take longer than that to move. So a push of at most 8 MiB uses the one connection of the `/jars` query and opens no
 /// relay more. The throughput of one `tart exec` stream is not measured, so the step is an estimate.
 pub(crate) const BYTES_PER_UPLOAD_CONNECTION: u64 = 8 << 20;

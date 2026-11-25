@@ -10,9 +10,9 @@ Two sites use the kernel:
 - The dev distribution site, [`build/docs`](../../../build/docs/README.md), served at `/build/`.
 
 The decision records
-[The docs site is a shared kernel](../../../plugins/air/docs/decisions/2026-10-14-the-docs-site-is-a-shared-kernel.md)
+[The docs site is a shared kernel](../../../plugins/air/openspec/changes/archive/2026-10-14-the-docs-site-is-a-shared-kernel/design.md)
 (Air) and
-[The dev distribution docs run on the docs-site kernel](../../../build/docs/decisions/2026-10-14-the-dev-distribution-docs-run-on-the-docs-site-kernel.md)
+[The dev distribution docs run on the docs-site kernel](../../../build/openspec/changes/archive/2026-11-10-the-distribution-docs-run-on-the-docs-site-kernel/design.md)
 (build) give the reasons.
 
 ## Layout
@@ -135,12 +135,12 @@ theme color is the stock blue theme. The
 domain tokens are a status, the six lanes, and the brand gradient. The kernel also defines the host contract tokens of
 the GenUI catalog from the stock values, because a site can render the catalog primitives. A link is the foreground
 color with an underline, as in the shadcn docs. The Air record
-[The docs sites and the GenUI catalog take the stock shadcn preset](../../../plugins/air/docs/decisions/2026-10-26-the-docs-sites-and-the-genui-catalog-take-the-stock-shadcn-preset.md)
+[The docs sites and the GenUI catalog take the stock shadcn preset](../../../plugins/air/openspec/changes/archive/2026-10-26-the-docs-site-chrome-is-stock-shadcn-with-a-top-nav/design.md)
 lists every deviation from the stock values and its reason.
 
 The kernel imports each shadcn component by a relative path, for example `./ui/button`. The files under
 `src/components/ui/` are stock shadcn. The Air site resolves a kernel import of a GenUI catalog name to the catalog
-file (Air ADR 0218). The kernel has no `components.json`: run `pnpm exec shadcn add` in a site, move the new file to
+file (Air [The docs site chrome is stock shadcn with a top nav, an in-page breadcrumb and the GenUI primitives](../../../plugins/air/openspec/changes/archive/2026-10-26-the-docs-site-chrome-is-stock-shadcn-with-a-top-nav/design.md)). The kernel has no `components.json`: run `pnpm exec shadcn add` in a site, move the new file to
 `src/components/ui/`, and change its `@/` imports to relative paths.
 
 ## Hand-laid diagrams
@@ -154,7 +154,7 @@ An explainer is a markdown doc in the `docs.explainers` folder. Each `## ` headi
 diagram. One explainer keeps one lane order in each chapter. A stage can split into sub-lanes of its color. A chapter
 answers one question, a step lights two to five nodes, and a card holds at most 150 words. The method is in the Air
 [hand-laid diagram guide](../../../plugins/air/docs/guides/hand-laid-diagram-guide.md), and the review list is in
-[Air ADR 0204](../../../plugins/air/docs/decisions/0204-an-architecture-explanation-is-laid-out-by-hand.md).
+[An architecture explanation is a hand-laid diagram, and a diagram step may bind to a flow step](../../../plugins/air/openspec/changes/archive/2026-10-06-an-architecture-explanation-is-a-hand-laid-diagram/design.md).
 
 ## Checks
 
@@ -232,7 +232,7 @@ Each site builds with one node and one pnpm. Bazel declares them:
 
 The aliases are in `//build`, not in this directory. The root `.bazelignore` lists `community`, so a package here has
 no root label. The pins stay in the ultimate module, per
-[build ADR 0009](../../../build/docs/decisions/0009-bun-pins-in-the-ultimate-module.md).
+[The bun pins live in the ultimate module, so a community checkout downloads no bun](../../../build/openspec/changes/archive/2026-09-04-bun-pins-in-the-ultimate-module/design.md).
 
 The kernel `package.json` is the source of the versions: `engines.node` and `packageManager`.
 `DocsSiteToolchainConsistencyTest` fails when the pins drift from it, or when a site names another `packageManager`.

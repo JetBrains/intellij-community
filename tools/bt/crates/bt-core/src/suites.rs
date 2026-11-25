@@ -6,7 +6,7 @@
 //! each generated class, release. The class names were the only handle, and a reader who knows the flow had to look
 //! them up first. The committed suite documents already state which suites tell or walk a flow, so a flow id and a
 //! suite id answer that lookup here, and `vm.cmd run flow-rename-session` and `bt.cmd flow-rename-session` are one
-//! line each. ADR 0157 records the decision.
+//! line each. The design `community/tools/vm/openspec/changes/archive/2026-09-24-a-flow-is-a-test-selector/design.md` records the decision.
 //!
 //! # The flow relation has one owner
 //!
@@ -17,8 +17,8 @@
 //! # One input beyond the suite documents
 //!
 //! A flow that no suite covers is a different answer from a flow id with a typo, and the suite documents alone
-//! cannot tell the two apart. The committed story-flow text can: every story flow has one file there (ADR 0153,
-//! ADR 0154). It is read only on that refusal path.
+//! cannot tell the two apart. The committed story-flow text can: every story flow has one file there (decision
+//! 2026-09-22-a-flow-is-a-kdoc-story-drawn-by-dot-and-committed-as-qa-text). It is read only on that refusal path.
 //!
 //! # One lane per iteration
 //!
@@ -123,7 +123,7 @@ pub fn affected_answer(area: &Area, documents: &[SuiteDocument], via: &Via, unma
     let mut lane_names = BTreeSet::new();
     for (&index, reasons) in via {
         let document = &documents[index];
-        // A changed path or a flow never reaches a suite of an explicit-only lane (ADR 0200).
+        // A changed path or a flow never reaches a suite of an explicit-only lane (decision 2026-10-04-the-live-lane-runs-real-agents-in-a-linux-guest).
         if document.is_explicit_only(lanes) {
             continue;
         }

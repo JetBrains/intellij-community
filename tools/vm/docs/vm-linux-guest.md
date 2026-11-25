@@ -1,7 +1,7 @@
 # A Linux guest for the Air UI lanes
 
 **Status.** The Tart Linux worker was retired on 2026-10-08
-([the Docker image carries Node, and the Tart Linux worker is retired](decisions/2026-10-08-the-docker-image-carries-node-and-the-tart-linux-worker-is-retired.md)). The Docker
+([the Docker image carries Node, and the Tart Linux worker is retired](../openspec/changes/archive/2026-10-08-the-linux-worker-is-a-docker-container-and-the-default/design.md)). The Docker
 guest keeps the Linux guest model of this note, and its image carries Node. The rest of this note is history. The
 current model is in the [VM guide](vm-ui-tests.md).
 
@@ -379,7 +379,7 @@ own, because a guest *script* has no envelope to speak in and the host withholds
 a script's stderr by contract (`Guest::raw` in `crates/avl-host-sys/src/guest.rs`). Every refusal above travels
 as a code and a sentence at one status instead, `AgentExit::Refused` in `avl_wire::supervisor` — and the window
 manager's two say which of its two repairs an operator has, where one integer had covered both.
-[ADR 0108](decisions/0108-the-guest-half-of-the-image-pipeline-is-go.md) owns that argument, names the five
+[The UI-lane tooling is one Rust implementation in one cargo workspace that Bazel builds](../openspec/changes/archive/2026-09-26-the-ui-lane-tooling-is-rust/design.md) owns that argument, names the five
 numbers, and says why the history of them stays there.
 
 The validator holds no package list and no soname-to-package mapping. It gets the display alone, and the
@@ -419,7 +419,7 @@ bytes and of nothing else.
    both**. So the two guests were worth having for exactly the reason claimed — the diff attributes a
    failure — and the attribution came out entirely on the macOS side, at a focus/window-activation
    mechanism that X11 does not have. The run, the per-class table and the mechanism are in the
-   [ADR 0113](../../../../plugins/air/docs/decisions/0113-the-macos-lane-is-red-on-window-activation.md); the product side is
+   [A Tart macOS worker fails the UI lane because nothing activates the IDE window](../../../../plugins/air/openspec/changes/archive/2026-08-27-the-macos-lane-is-red-on-window-activation/design.md); the product side is
    [IJAI-1228](https://youtrack.jetbrains.com/issue/IJAI-1228). Note the denominators differ on purpose:
    the macOS golden installs Codex, and this guest held none at that tree. Codex is a declared test
    runtime now, so both guests read it from the test runfiles.
@@ -437,8 +437,8 @@ being fetched over the guest's NAT.
 version, it carries the locked npm dependencies, and it selects the native package of the machine that
 executes the tests. The IDE reaches it through the `bin` directory of its context, which is first on the PATH of the IDE. Pi has
 the same shape, under `tests/tools/pi`.
-[ADR 0137](../../../../plugins/air/docs/decisions/0137-agent-clis-are-declared-bazel-test-runtimes.md) states the decision, and
-[ADR 0047](decisions/0047-agent-clis-are-provisioned-per-boot.md) holds the per-boot install it replaced.
+[Each agent CLI of a test is a pinned Bazel test runtime, and no test skips for a missing CLI](../../../../plugins/air/openspec/changes/archive/2026-09-13-agent-clis-are-declared-bazel-test-runtimes/design.md) states the decision, and
+[Each agent CLI of a test is a pinned Bazel test runtime, and no test skips for a missing CLI](../../../../plugins/air/openspec/changes/archive/2026-09-13-agent-clis-are-declared-bazel-test-runtimes/design.md) holds the per-boot install it replaced.
 
 VM preparation therefore installs and probes no agent CLI. `install-agent-clis`, its pins and its four
 refusal codes are gone, and so is `CODEX_BIN`. A cold boot reaches the network once, for `apt` in

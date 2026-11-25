@@ -1,6 +1,6 @@
 """The absolute local paths that a dev launcher writes into its `java` argument file, as constants of `@dev_launch_paths`.
 
-`java` expands no variable, and a launch runs no code before the JVM. So the paths that the launcher of ADR 0014 read
+`java` expands no variable, and a launch runs no code before the JVM. So the paths that the launcher of decision 2026-11-09-a-dev-launch-starts-the-production-launcher-from-a-generation read
 from the environment at launch are constants at analysis: the workspace root, the output base and the home directory of
 the user. The repository reads no workspace file. `getenv` tracks `HOME`, and a moved checkout has another output base,
 which fetches the repository again.

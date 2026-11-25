@@ -85,7 +85,7 @@ internal class BazelBuildInputsTest {
 
   @Test
   fun `a container names the file a source read, and naming marks nothing used`(@TempDir tempDir: Path) {
-    // The defect ADR 0006 rule 3 records: all 26 jars of `ant` carry the same label, so the label cannot say which jar
+    // The defect decision 2026-08-25-content-module-in-jar-out-composer-places-it rule 4 records: all 26 jars of `ant` carry the same label, so the label cannot say which jar
     // an output took. A name is not a read, so asking must not shrink the unused-input list either.
     val first = "bazel-out/jvm-fastbuild/bin/ant/lib/ant.jar"
     val second = "bazel-out/jvm-fastbuild/bin/ant/lib/ant-launcher.jar"

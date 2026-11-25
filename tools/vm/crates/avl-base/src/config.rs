@@ -83,7 +83,7 @@ pub const CONTAINER_MACOS_MAJOR: u32 = 26;
 const SYSTEM_VERSION_PLIST: &str = "/System/Library/CoreServices/SystemVersion.plist";
 
 /// The default memory of one worker on the Apple `container` engine, in MiB. Each container is a VM of its own, and
-/// the live lane's container peaked at 6.3 GiB on 2026-10-04 (ADR 0200). A running VM returns no memory to the host
+/// the live lane's container peaked at 6.3 GiB on 2026-10-04 (decision 2026-10-04-the-live-lane-runs-real-agents-in-a-linux-guest). A running VM returns no memory to the host
 /// until it stops, so the limit is the price of a running worker.
 pub const CONTAINER_WORKER_MEMORY_MIB: u32 = 8_192;
 
@@ -715,7 +715,7 @@ pub struct Selection {
 
 impl Selection {
     /// Where an invocation that names no backend and carries no lease receipt runs: the Docker pool, on every host.
-    /// ADR 0190 records the choice.
+    /// The design `community/tools/vm/openspec/changes/archive/2026-10-08-the-linux-worker-is-a-docker-container-and-the-default/design.md` records the choice.
     ///
     /// A Linux guest and not a macOS one: on 2026-08-23 the same `--lane ui` was 23 of 23 on `air-linux-1` and 8 of
     /// 24 on `air-macos-1`, all 16 macOS failures at a window-activation mechanism the lane's IDE cannot satisfy in a
@@ -997,7 +997,7 @@ fn tart_root_disk_gb(reader: &mut Reader<'_>) -> u32 {
 /// A pool has [`DEFAULT_POOL_SLOTS`] slots unless `AIR_VM_MAX_WORKERS` says otherwise. On the Apple `container` engine
 /// the default follows the host memory instead ([`default_docker_slots`]), because each worker is a VM of
 /// `worker_mib`. A container on the host engine has no cap, so that pool keeps the fixed default (the decision
-/// `2026-10-10-the-container-pool-follows-the-host-memory-and-the-builder-stops`).
+/// the design `community/tools/vm/openspec/changes/archive/2026-11-18-the-docker-backend-runs-on-the-host-engine-or-apple-container/design.md`).
 ///
 /// A container-linux pool has one slot, `container-linux-1`: the skill's script runs one container, so an
 /// `AIR_VM_MAX_WORKERS` other than 1 is refused there.
@@ -1430,14 +1430,14 @@ impl Config {
         if reader.set(REMOVED_DOCKER_ENGINE_VARIABLE).is_some() {
             reader.refuse(Refusal::invalid_environment(format!(
                 "{REMOVED_DOCKER_ENGINE_VARIABLE} is removed: the macOS version chooses the engine of the Docker backend \
-                 (the decision 2026-10-13-the-lima-engine-is-retired of community/tools/vm/docs/decisions); unset it, or \
+                 (the design community/tools/vm/openspec/changes/archive/2026-11-18-the-docker-backend-runs-on-the-host-engine-or-apple-container/design.md); unset it, or \
                  name an engine in DOCKER_BIN or DOCKER_HOST"
             )));
         }
         if reader.set(REMOVED_LIMA_HOME_VARIABLE).is_some() {
             reader.refuse(Refusal::invalid_environment(format!(
-                "{REMOVED_LIMA_HOME_VARIABLE} is removed with the Lima engine (the decision \
-                 2026-10-13-the-lima-engine-is-retired of community/tools/vm/docs/decisions); unset it"
+                "{REMOVED_LIMA_HOME_VARIABLE} is removed with the Lima engine \
+                 (the design community/tools/vm/openspec/changes/archive/2026-11-18-the-docker-backend-runs-on-the-host-engine-or-apple-container/design.md); unset it"
             )));
         }
         let docker_engine = DockerEngine::decide(host, macos, docker_bin.is_some(), docker_host.is_some());
@@ -1528,7 +1528,7 @@ impl Config {
         if reader.set(REMOVED_REPO_SHARE_VARIABLE).is_some() {
             reader.refuse(Refusal::invalid_environment(format!(
                 "{REMOVED_REPO_SHARE_VARIABLE} is removed: a worker has no repository share, because the guest reads no \
-                 checkout (the decision 2026-10-10-the-guest-reads-no-checkout of community/tools/vm/docs/decisions); unset it"
+                 checkout (the design community/tools/vm/openspec/changes/archive/2026-10-10-the-guest-reads-no-checkout/design.md); unset it"
             )));
         }
         let bazel_share_name = reader.string("AIR_VM_BAZEL_SHARE_NAME", "air-macos-bazel");
@@ -1619,7 +1619,7 @@ impl Config {
             guest_arch: GuestArch::of(backend),
             guest: selection.profile(),
             // `TART_BIN` and `TART_HOME` keep the Tart ecosystem's names: `TART_HOME` is Tart's own variable, which
-            // the tart binary and the image scripts read too, and ADR 0158 records `TART_BIN` as its override.
+            // the tart binary and the image scripts read too, and the design `community/tools/vm/openspec/changes/archive/2026-09-24-the-lane-controller-gets-tart-from-bazel/design.md` records `TART_BIN` as its override.
             tart: reader.optional("TART_BIN").map(PathBuf::from),
             parallels: reader.string("AIR_VM_PARALLELS_BIN", "prlctl"),
             parallels_peekaboo: reader.string("AIR_VM_PEEKABOO_BIN", "/opt/homebrew/bin/peekaboo"),

@@ -692,7 +692,7 @@ private data class FragmentPayload(
    * asked which of them pack - the question `dist_platform_payload` used to answer with an aspect over an output
    * group. The generator is the only side that knows, and `bazel-targets.json` already records the label per module.
    *
-   * This is not the name table that [ADR 0001][] deleted. That table had 2 524 module names in a separate file.
+   * This is not the name table that decision 2026-08-23-a-content-module-jar-is-packed-by-a-target-of-its-own deleted. That table had 2 524 module names in a separate file.
    * Each `.iml` edit re-keyed that table. Each label here selects an existing packing target for that payload.
    *
    * [collectFragmentPlan] fills the whole handover set. [collectDescriptorFiles] then keeps only the labels no
@@ -1613,7 +1613,7 @@ private fun collectFragmentPlan(
   }
   val layout = createPlatformLayout(properties, outputProvider)
   // A module library merges into the jar of its module, as the content module jar packs it. No producer of the split
-  // distribution packs one that the layout places elsewhere, see ADR 0023.
+  // distribution packs one that the layout places elsewhere, see decision 2026-09-28-the-platform-ships-no-swingx.
   layout.getIncludedModuleLibraries().firstOrNull()?.let {
     error("${product.name}: the platform layout places the module library '${it.libraryName}' of '${it.moduleName}' outside its module jar")
   }

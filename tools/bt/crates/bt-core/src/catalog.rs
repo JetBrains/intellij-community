@@ -106,7 +106,7 @@ impl SuiteDocument {
     }
 
     /// Whether the suite belongs to an explicit-only lane, whose suites no changed path, flow or suite id reaches
-    /// (ADR 0200).
+    /// (decision 2026-10-04-the-live-lane-runs-real-agents-in-a-linux-guest).
     pub fn is_explicit_only(&self, lanes: &Lanes) -> bool {
         lanes.by_suite_lane(&self.lane).is_some_and(|lane| lane.document_lane.is_some())
     }

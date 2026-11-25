@@ -214,7 +214,7 @@ private data class DirectResourceTree(
   @JvmField val input: String,
 )
 
-/** Binds each directory as a plain tree copy. Two directories over one destination are refused, see ADR 0032. */
+/** Binds each directory as a plain tree copy. Two directories over one destination are refused, see decision 2026-10-02-two-directories-over-one-destination-are-refused. */
 private fun bindDirectResourceTrees(
   mainModule: String,
   trees: List<DirectResourceTree>,
@@ -228,7 +228,7 @@ private fun bindDirectResourceTrees(
     if (group.size > 1) {
       throw DistUnplannableLayoutException(
         "Plugin '$mainModule' copies ${group.size} directories over the destination '$destination'. " +
-        "Declare the children of the directories one by one (ADR 0032)."
+        "Declare the children of the directories one by one (decision 2026-10-02-two-directories-over-one-destination-are-refused)."
       )
     }
     val tree = group.single()

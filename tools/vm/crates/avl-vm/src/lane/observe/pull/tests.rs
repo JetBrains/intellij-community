@@ -60,8 +60,9 @@ async fn pull_from(fixture: &Fixture, worker: &str, source: &str, destination: &
     pull_guest_file(&Ctx::background(), &fixture.manager, worker, source, destination).await
 }
 
-// The channels that ADR 0182 and 0183 measured byte-clean move the bytes as they are, and so does the container-linux
-// exec; Parallels keeps base64.
+// The channels that the design `community/tools/vm/openspec/changes/archive/2026-11-08-the-controller-reaches-the-guest-through-the-exec-channel/design.md` and the design
+// `community/tools/vm/openspec/changes/archive/2026-10-08-the-linux-worker-is-a-docker-container-and-the-default/design.md` measured byte-clean move the bytes as they are,
+// and so does the container-linux exec; Parallels keeps base64.
 #[test]
 fn a_pull_moves_raw_bytes_on_tart_docker_and_container_linux_and_base64_on_parallels() {
     assert_eq!(

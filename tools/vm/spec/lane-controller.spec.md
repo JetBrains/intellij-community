@@ -2286,10 +2286,10 @@ The [controller to-do list](../docs/ui-lane-controller-todo.md) holds the open w
 
 ## References
 
-- [ADR 0157](../docs/decisions/0157-a-flow-is-a-test-selector.md)
-- [ADR 0059](../docs/decisions/0059-the-ui-lane-tooling-is-rust.md)
-- [ADR 0106](../docs/decisions/0106-a-warm-daemon-survives-a-lease-release.md)
-- [ADR 0182](../docs/decisions/0182-the-daemon-is-reached-through-the-exec-channel.md)
-- [ADR 0234](../../../../plugins/air/docs/decisions/0234-the-guest-agent-launches-the-lane-ide.md)
+- [A flow id and a suite id are test selectors, and run takes its own lease](../openspec/changes/archive/2026-09-24-a-flow-is-a-test-selector/design.md)
+- [The UI-lane tooling is one Rust implementation in one cargo workspace that Bazel builds](../openspec/changes/archive/2026-09-26-the-ui-lane-tooling-is-rust/design.md)
+- [A lease release keeps a parked warm daemon, and an acquisition prefers the warm slot](../openspec/changes/archive/2026-10-10-a-warm-daemon-survives-a-lease-release/design.md)
+- [The controller reaches the guest daemon and the image-build SSH through the exec channel](../openspec/changes/archive/2026-11-08-the-controller-reaches-the-guest-through-the-exec-channel/design.md)
+- [The lane IDE runs closed under the guest agent, and the HTTP bridge is the only way in](../../../../plugins/air/openspec/changes/archive/2026-10-09-the-lane-ide-is-a-closed-process-that-the-http-bridge-reaches/design.md)
 - [Flow UI Scenarios](../../../../plugins/air/spec/docs/flow-ui-scenarios.spec.md)
 - [Scenario Traces](scenario-trace.spec.md)

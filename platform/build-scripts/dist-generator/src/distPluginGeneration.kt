@@ -798,7 +798,7 @@ internal fun mergeGeneratedPreparationFacts(
 
 /**
  * The distribution has no module filter. A directory that a module jar must not carry lives outside the resource
- * root, and the layout copies it from there, see ADR 0026.
+ * root, and the layout copies it from there, see decision 2026-10-02-two-directories-over-one-destination-are-refused.
  */
 private fun requireNoModuleExcludes(layout: PluginLayout) {
   val (module, excludes) = layout.moduleExcludes.entries.firstOrNull { it.value.isNotEmpty() } ?: return

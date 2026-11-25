@@ -1,7 +1,7 @@
 //! `air-trace`: Playwright-style traces of the AIR UI scenarios, run through `community/tools/trace.cmd`. The
 //! recorder a lane starts is not here: it is avl-record's own binary, `air-trace-record`.
 //!
-//! It builds for Unix and Windows, like the controller (ADR 0186). No lane target links it. [plan] answers what an
+//! It builds for Unix and Windows, like the controller (plan community/tools/vm/docs/a-windows-host-runs-the-controller-natively-plan.md). No lane target links it. [plan] answers what an
 //! input covers and how to record new traces of it, and [serve] is the local server behind the trace viewer. Both
 //! read bundles with `avl_trace_tools::discover`, so a bundle is named the same way by the planner, the server and
 //! the controller's trace sync. The planner reads the UI lanes from `avl_affected::lanes`, the table the controller

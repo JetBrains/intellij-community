@@ -280,7 +280,7 @@ def pack_jar(ctx, output, spans, module_jars, library_jars, merged_module_names,
         executable = ctx.executable._packer,
         tools = dist_tool_inputs(ctx.attr._packer),
         # One process per action, not a persistent worker: the memory of each action is freed when it exits, and
-        # `resource_set` states it to the scheduler. See ADR 0019. The action reads only its declared inputs and writes
+        # `resource_set` states it to the scheduler. See decision 2026-11-19-ci-packs-use-the-remote-cache. The action reads only its declared inputs and writes
         # only its declared outputs, so a local build skips the sandbox. `--config=ci` removes `no-sandbox` and checks it.
         execution_requirements = {"no-sandbox": "1"},
         resource_set = _packer_resources,

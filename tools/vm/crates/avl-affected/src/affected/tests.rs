@@ -528,7 +528,7 @@ fn a_harness_path_reaches_every_suite_of_every_lane() {
     }
 }
 
-/// A harness path reaches every suite of every lane, and still never a suite of an explicit-only lane (ADR 0200). Its
+/// A harness path reaches every suite of every lane, and still never a suite of an explicit-only lane (decision 2026-10-04-the-live-lane-runs-real-agents-in-a-linux-guest). Its
 /// document maps to its lane, so the join refuses no lane, and the answer leaves the suite out.
 #[test]
 fn a_harness_path_reaches_no_suite_of_an_explicit_only_lane() {

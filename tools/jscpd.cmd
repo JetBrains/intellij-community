@@ -15,7 +15,7 @@ GOTO :CMDSCRIPT
 # the user reads the same file, so a new worktree starts warm and does not wait for the Bazel server of its checkout.
 # The version is the cache key, so a version bump makes an old entry unreachable, not wrong. A path that does not
 # exist any more resolves again.
-# `plugins/air/docs/decisions/0017-bazel-provided-bt.md` records this design for the old BT wrapper.
+# `community/tools/vm/openspec/changes/archive/2026-09-26-the-ui-lane-tooling-is-rust/design.md` records this design for the old BT wrapper.
 #
 # `JSCPD_BIN` names an explicit binary and skips Bazel.
 #
