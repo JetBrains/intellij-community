@@ -2609,6 +2609,45 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
     """.trimIndent())
 
   @Test
+  @TestFor(issues = ["PY-94318"])
+  fun `new-style quoted default or bound that refers to its own or a later type parameter`() = test("""
+    class QItself[T = "T"]: ...
+    #                 ^^^ WARNING FIXME Default type of type parameter 'T' refers to itself
+    class QSelfNested[T = "list[T]"]: ...
+    #                     ^^^^^^^^^ WARNING FIXME Default type of type parameter 'T' refers to itself
+    class QLater[S2 = "S1", S1 = str]: ...
+    #                 ^^^^ WARNING FIXME Default type of this type parameter refers to one or more type variables that are out of scope
+    class QMutual[T = "U", U = "T"]: ...
+    #                 ^^^ WARNING FIXME Default type of this type parameter refers to one or more type variables that are out of scope
+    class QSelfBound[T: "T"]: ...
+    #                   ^^^ ERROR FIXME Generic types are not allowed inside constraints and bounds of type parameters
+    class QLaterBound[T: "U", U]: ...
+    #                    ^^^ ERROR FIXME Generic types are not allowed inside constraints and bounds of type parameters
+    class QEarlier[S1 = str, S2 = "list[S1]"]: ...
+    a: QItself
+    print(a)
+    #     └ TYPE QItself[T]
+    b: QSelfNested
+    print(b)
+    #     └ TYPE QSelfNested[list[T]]
+    c: QLater
+    print(c)
+    #     └ TYPE QLater[str, str]
+    d: QMutual
+    print(d)
+    #     └ TYPE QMutual[T, T]
+    e: QSelfBound[int]
+    print(e)
+    #     └ TYPE QSelfBound[int]
+    g: QLaterBound[int, str]
+    print(g)
+    #     └ TYPE QLaterBound[int, str]
+    h: QEarlier
+    print(h)
+    #     └ TYPE QEarlier[str, list[str]]
+    """.trimIndent())
+
+  @Test
   @TestFor(issues = ["PY-92893"])
   fun `new-style default that refers to an earlier type parameter`() = test("""
     class Ok[S1 = str, S2 = list[S1]]: ...
