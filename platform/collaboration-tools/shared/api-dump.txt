@@ -195,6 +195,20 @@ a:com.intellij.collaboration.auth.ServerAccount
 f:com.intellij.collaboration.messages.CollaborationToolsBundle
 - s:message(java.lang.String,java.lang.Object[]):java.lang.String
 - s:messagePointer(java.lang.String,java.lang.Object[]):java.util.function.Supplier
+e:com.intellij.collaboration.snippets.PathHandlingMode
+- java.lang.Enum
+- sf:Companion:com.intellij.collaboration.snippets.PathHandlingMode$Companion
+- sf:ContentRootRelativePaths:com.intellij.collaboration.snippets.PathHandlingMode
+- sf:FlattenedPaths:com.intellij.collaboration.snippets.PathHandlingMode
+- sf:ProjectRelativePaths:com.intellij.collaboration.snippets.PathHandlingMode
+- sf:RelativePaths:com.intellij.collaboration.snippets.PathHandlingMode
+- f:getDisplayName():java.lang.String
+- s:getEntries():kotlin.enums.EnumEntries
+- f:getTooltip():java.lang.String
+- s:valueOf(java.lang.String):com.intellij.collaboration.snippets.PathHandlingMode
+- s:values():com.intellij.collaboration.snippets.PathHandlingMode[]
+f:com.intellij.collaboration.snippets.PathHandlingMode$Companion
+- f:getFileNameExtractor(com.intellij.openapi.project.Project,java.util.List,com.intellij.collaboration.snippets.PathHandlingMode):kotlin.jvm.functions.Function2
 e:com.intellij.collaboration.ui.codereview.details.data.ReviewRequestState
 - java.lang.Enum
 - sf:CLOSED:com.intellij.collaboration.ui.codereview.details.data.ReviewRequestState
@@ -277,6 +291,8 @@ com.intellij.collaboration.ui.codereview.user.CodeReviewUser
 f:com.intellij.collaboration.util.ChangesSelectionKt
 - sf:getSelectedChange(com.intellij.collaboration.util.ChangesSelection):com.intellij.openapi.vcs.changes.RefComparisonChange
 - sf:withLocation(com.intellij.collaboration.util.ChangesSelection$Precise,kotlin.Pair):com.intellij.collaboration.util.ChangesSelection$Precise
+f:com.intellij.collaboration.util.CodeReviewFilesUtil
+- sf:INSTANCE:com.intellij.collaboration.util.CodeReviewFilesUtil
 f:com.intellij.collaboration.util.CollectionDelta
 - <init>(java.util.Collection,java.util.Collection):V
 - f:getNewCollection():java.util.Collection
@@ -352,6 +368,7 @@ f:com.intellij.collaboration.util.IncrementallyComputedValue$Value
 - s:hashCode-impl(java.lang.Object):I
 - s:toString-impl(java.lang.Object):java.lang.String
 - bf:unbox-impl():java.lang.Object
+f:com.intellij.collaboration.util.KeyValuePairKt
 f:com.intellij.collaboration.util.RefComparisonChangeKt
 - sf:getFilePath(com.intellij.openapi.vcs.changes.RefComparisonChange):com.intellij.openapi.vcs.FilePath
 - sf:getFileStatus(com.intellij.openapi.vcs.changes.RefComparisonChange):com.intellij.openapi.vcs.FileStatus

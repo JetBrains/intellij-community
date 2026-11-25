@@ -95,20 +95,6 @@ a:com.intellij.collaboration.file.ComplexPathVirtualFileWithoutContent
 - getOutputStream(java.lang.Object,J,J):java.lang.Void
 - pf:getSessionId():java.lang.String
 - hashCode():I
-e:com.intellij.collaboration.snippets.PathHandlingMode
-- java.lang.Enum
-- sf:Companion:com.intellij.collaboration.snippets.PathHandlingMode$Companion
-- sf:ContentRootRelativePaths:com.intellij.collaboration.snippets.PathHandlingMode
-- sf:FlattenedPaths:com.intellij.collaboration.snippets.PathHandlingMode
-- sf:ProjectRelativePaths:com.intellij.collaboration.snippets.PathHandlingMode
-- sf:RelativePaths:com.intellij.collaboration.snippets.PathHandlingMode
-- f:getDisplayName():java.lang.String
-- s:getEntries():kotlin.enums.EnumEntries
-- f:getTooltip():java.lang.String
-- s:valueOf(java.lang.String):com.intellij.collaboration.snippets.PathHandlingMode
-- s:values():com.intellij.collaboration.snippets.PathHandlingMode[]
-f:com.intellij.collaboration.snippets.PathHandlingMode$Companion
-- f:getFileNameExtractor(com.intellij.openapi.project.Project,java.util.List,com.intellij.collaboration.snippets.PathHandlingMode):kotlin.jvm.functions.Function2
 f:com.intellij.collaboration.ui.codereview.details.data.CodeReviewCIJob
 - <init>(java.lang.String,com.intellij.collaboration.ui.codereview.details.data.CodeReviewCIJobState,Z,java.lang.String):V
 - f:component1():java.lang.String
@@ -148,9 +134,6 @@ e:com.intellij.collaboration.ui.codereview.details.data.ReviewState
 - s:getEntries():kotlin.enums.EnumEntries
 - s:valueOf(java.lang.String):com.intellij.collaboration.ui.codereview.details.data.ReviewState
 - s:values():com.intellij.collaboration.ui.codereview.details.data.ReviewState[]
-f:com.intellij.collaboration.util.CodeReviewFilesUtil
-- sf:INSTANCE:com.intellij.collaboration.util.CodeReviewFilesUtil
-f:com.intellij.collaboration.util.KeyValuePairKt
 f:com.intellij.collaboration.util.ProgressIndicatorsProvider
 - com.intellij.openapi.Disposable
 - <init>():V
