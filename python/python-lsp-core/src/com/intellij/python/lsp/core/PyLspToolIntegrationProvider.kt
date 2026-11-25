@@ -40,10 +40,6 @@ import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsActions
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.openapi.util.text.HtmlChunk
-import com.intellij.openapi.util.text.buildChildren
-import com.intellij.openapi.util.text.buildHtml
-import com.intellij.openapi.util.text.plus
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.lsp.api.LspClient
 import com.intellij.platform.lsp.api.LspClientDescriptor
@@ -979,55 +975,7 @@ open class PyLspToolCustomization(
     override fun getTooltip(diagnostic: Diagnostic): String {
       val code = diagnostic.presentableCode.takeIf { showSourceAndCode }
       val source = diagnostic.source.takeIf { showSourceAndCode }
-      val style = "color: gray"
-      // workaround for IJPL-196845
-      val codeLink = when {
-        diagnostic.codeDescription?.href != null && code != null -> HtmlChunk.link(diagnostic.codeDescription?.href!!, code)
-        code != null -> HtmlChunk.span(style).buildChildren { append(HtmlChunk.text(code)) }
-        else -> null
-      }
-      val suffix = when {
-        source != null && codeLink != null && diagnostic.codeDescription?.href != null -> {
-          // "source(code)" with link
-          HtmlChunk.span(style).buildChildren {
-            append(HtmlChunk.text("$source("))
-          } +
-          codeLink +
-          HtmlChunk.span(style).buildChildren {
-            append(HtmlChunk.text(")"))
-          }
-        }
-        source != null && code != null -> {
-          // "source(code)" without link
-          HtmlChunk.span(style).buildChildren {
-            append(HtmlChunk.text("$source($code)"))
-          }
-        }
-        source != null -> {
-          // "source"
-          HtmlChunk.span(style).buildChildren {
-            append(HtmlChunk.text(source))
-          }
-        }
-        else -> {
-          // "code" or null (empty)
-          codeLink
-        }
-      }
-
-      val tooltip = super.getTooltip(diagnostic)
-      // workaround for leading spaces getting removed
-      val fixed = tooltip.replace(Regex("\n +")) { m ->
-        val spaces = m.value.substring(1)
-        "\n" + "\u00A0".repeat(spaces.length)
-      }
-      // workaround for IJPL-196664
-      return buildHtml {
-        append(HtmlChunk.text(fixed))
-        if (suffix != null) {
-          append(HtmlChunk.nbsp() + suffix)
-        }
-      }
+      return formatTooltip(diagnostic, source, code)
     }
 
     // workaround for IJPL-196573

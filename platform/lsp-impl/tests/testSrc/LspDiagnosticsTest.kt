@@ -10,6 +10,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.StreamUtil
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.lsp.api.LspClientManager
 import com.intellij.platform.lsp.common.FakeLspServerSession
@@ -44,6 +45,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.eclipse.lsp4j.Diagnostic
+import org.eclipse.lsp4j.DiagnosticCodeDescription
 import org.eclipse.lsp4j.DiagnosticRegistrationOptions
 import org.eclipse.lsp4j.DiagnosticSeverity
 import org.eclipse.lsp4j.DocumentDiagnosticReport
@@ -84,6 +86,49 @@ internal class LspDiagnosticsTest {
   @Nested
   inner class PublishDiagnostics {
     private val fakeLspIntegration by projectFixture.fakeLspIntegrationFixture()
+
+    @Test
+    fun `diagnostic tooltips show the source and link the code`(): Unit = timeoutRunBlocking {
+      val file = codeInsightFixture.configureByText("diagnosticTooltips.txt", "abcdef").virtualFile
+      val server = fakeLspIntegration.serverSession(file)
+      val message = "Expected <T>\n  in this expression"
+      fun diagnostic(offset: Int, text: String, source: String? = null): Diagnostic =
+        Diagnostic(Range(Position(0, offset), Position(0, offset + 1)), text, DiagnosticSeverity.Error, source)
+
+      server.sendNotification(server.PUBLISH_DIAGNOSTICS) {
+        PublishDiagnosticsParams(server.fileUri(file), listOf(
+          diagnostic(0, message, "A&B").apply {
+            setCode("rule<T>")
+            codeDescription = DiagnosticCodeDescription("https://example.org/rules?id=1&lang=en")
+          },
+          diagnostic(1, "Source only", "linter"),
+          diagnostic(2, "Numeric code").apply { setCode(0) },
+          diagnostic(3, "No metadata"),
+          diagnostic(4, "No link", "compiler").apply { setCode("syntax") },
+          diagnostic(5, "Private URI").apply {
+            setCode("rule")
+            codeDescription = DiagnosticCodeDescription("custom:rule")
+          },
+        ))
+      }
+
+      waitUntilAssertSucceeds {
+        val tooltips = codeInsightFixture.doHighlighting().associate { it.description to it.toolTip }
+        assertEquals(setOf(message, "Source only", "Numeric code", "No metadata", "No link", "Private URI"), tooltips.keys)
+        val linkedTooltip = tooltips.getValue(message)!!
+        assertTrue(linkedTooltip.contains("Expected &lt;T&gt;<br/>\u00A0\u00A0in this expression"), linkedTooltip)
+        val linkedCode = """<a href="https://example.org/rules?id=1&amp;lang=en">rule&lt;T&gt;</a>"""
+        assertTrue(linkedTooltip.contains(linkedCode), linkedTooltip)
+        assertTrue(StringUtil.stripHtml(linkedTooltip, false).endsWith("&nbsp;A&amp;B(rule&lt;T&gt;)"), linkedTooltip)
+        fun tooltipText(description: String): String = StringUtil.stripHtml(tooltips.getValue(description)!!, false)
+        assertEquals("Source only&nbsp;linter", tooltipText("Source only"))
+        assertEquals("Numeric code&nbsp;0", tooltipText("Numeric code"))
+        assertEquals("No metadata", tooltipText("No metadata"))
+        assertEquals("No link&nbsp;compiler(syntax)", tooltipText("No link"))
+        assertEquals("Private URI&nbsp;rule", tooltipText("Private URI"))
+        assertTrue(tooltips.getValue("Private URI")!!.contains("""<a href="custom:rule">rule</a>"""))
+      }
+    }
 
     @Test
     fun `publish diagnostics twice for the same document version`() = timeoutRunBlocking {

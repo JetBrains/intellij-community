@@ -129,7 +129,9 @@ internal fun createClientCapabilities(lspCustomization: LspCustomization): Clien
       resolveSupport = InlayHintResolveSupportCapabilities(listOf("label.location", "tooltip", "label.tooltip"))
     }
     documentHighlight = DocumentHighlightCapabilities(true)
-    diagnostic = DiagnosticCapabilities(true)
+    diagnostic = DiagnosticCapabilities(true).apply {
+      codeDescriptionSupport = true
+    }
     definition = DefinitionCapabilities().apply {
       dynamicRegistration = true
       linkSupport = true
@@ -220,6 +222,7 @@ internal fun createClientCapabilities(lspCustomization: LspCustomization): Clien
 
     publishDiagnostics = PublishDiagnosticsCapabilities().apply {
       versionSupport = true
+      codeDescriptionSupport = true
       tagSupport = Either.forRight(DiagnosticsTagSupport(listOf(DiagnosticTag.Unnecessary, DiagnosticTag.Deprecated)))
       dataSupport = true
     }

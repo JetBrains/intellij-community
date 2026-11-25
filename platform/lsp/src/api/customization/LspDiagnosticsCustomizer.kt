@@ -9,6 +9,10 @@ import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.TextRange
+import com.intellij.openapi.util.text.HtmlChunk
+import com.intellij.openapi.util.text.buildChildren
+import com.intellij.openapi.util.text.buildHtml
+import com.intellij.openapi.util.text.plus
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.lsp.util.messageIfStringOrEmpty
 import com.intellij.psi.PsiDocumentManager
@@ -88,7 +92,61 @@ open class LspDiagnosticsSupport : LspDiagnosticsCustomizer() {
   open fun getMessage(diagnostic: Diagnostic): String = diagnostic.messageIfStringOrEmpty
 
   @NlsContexts.Tooltip
-  open fun getTooltip(diagnostic: Diagnostic): String = diagnostic.messageIfStringOrEmpty
+  open fun getTooltip(diagnostic: Diagnostic): String =
+    formatTooltip(diagnostic, diagnostic.source, diagnostic.code?.get()?.toString())
+
+  @ApiStatus.Internal
+  @NlsContexts.Tooltip
+  protected fun formatTooltip(diagnostic: Diagnostic, source: String?, code: String?): String {
+    val style = "color: gray"
+    val codeLink = when {
+      diagnostic.codeDescription?.href != null && code != null -> HtmlChunk.link(diagnostic.codeDescription?.href!!, code)
+      code != null -> HtmlChunk.span(style).buildChildren { append(HtmlChunk.text(code)) }
+      else -> null
+    }
+    val suffix = when {
+      source != null && codeLink != null && diagnostic.codeDescription?.href != null -> {
+        // "source(code)" with link
+        HtmlChunk.span(style).buildChildren {
+          append(HtmlChunk.text("$source("))
+        } +
+        codeLink +
+        HtmlChunk.span(style).buildChildren {
+          append(HtmlChunk.text(")"))
+        }
+      }
+      source != null && code != null -> {
+        // "source(code)" without link
+        HtmlChunk.span(style).buildChildren {
+          append(HtmlChunk.text("$source($code)"))
+        }
+      }
+      source != null -> {
+        // "source"
+        HtmlChunk.span(style).buildChildren {
+          append(HtmlChunk.text(source))
+        }
+      }
+      else -> {
+        // "code" or null (empty)
+        codeLink
+      }
+    }
+
+    val tooltip = diagnostic.messageIfStringOrEmpty
+    // workaround for leading spaces getting removed
+    val fixed = tooltip.replace(Regex("\n +")) { m ->
+      val spaces = m.value.substring(1)
+      "\n" + "\u00A0".repeat(spaces.length)
+    }
+    // workaround for IJPL-196664
+    return buildHtml {
+      append(HtmlChunk.text(fixed))
+      if (suffix != null) {
+        append(HtmlChunk.nbsp() + suffix)
+      }
+    }
+  }
 
   open fun getSpecialHighlightType(diagnostic: Diagnostic): ProblemHighlightType? = when {
     diagnostic.tags?.contains(DiagnosticTag.Unnecessary) == true -> ProblemHighlightType.LIKE_UNUSED_SYMBOL
