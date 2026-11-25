@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins
 
+import com.intellij.ide.CopyPasteManagerEx
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.plugins.api.PluginDto
 import com.intellij.ide.plugins.marketplace.statistics.UnifiedPluginSearchStatistics
@@ -58,6 +59,7 @@ import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.UiWithModelAccess
 import com.intellij.openapi.application.impl.ApplicationInfoImpl.DEFAULT_PLUGINS_HOST
 import com.intellij.openapi.extensions.PluginId
+import com.intellij.openapi.ide.CopyPasteManager
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.options.newEditor.SpotlightPainter
 import com.intellij.openapi.ui.Messages
@@ -109,6 +111,8 @@ import java.awt.Dimension
 import java.awt.GridBagConstraints
 import java.awt.GridBagLayout
 import java.awt.Window
+import java.awt.datatransfer.DataFlavor
+import java.awt.datatransfer.Transferable
 import java.awt.event.KeyEvent
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
@@ -160,6 +164,38 @@ internal class UnifiedPluginsPageSessionTest {
         val contentData = snapshot(content)
         assertThat(centerData[PluginManagerConfigurable.PLUGIN_INSTALL_CALLBACK_DATA_KEY]).isNotNull()
         assertThat(contentData[PlatformDataKeys.COPY_PROVIDER]).isNotNull()
+      }
+      finally {
+        Disposer.dispose(session)
+      }
+    }
+
+  @Test
+  fun `Copy includes the name ID and version of every selected plugin`(@TestDisposable disposable: Disposable): Unit =
+    uiTest {
+      var copiedText: Any? = null
+      val clipboard = object : CopyPasteManagerEx() {
+        override fun setContents(content: Transferable) {
+          copiedText = content.getTransferData(DataFlavor.stringFlavor)
+        }
+      }
+      ApplicationManager.getApplication().replaceService(CopyPasteManager::class.java, clipboard, disposable)
+
+      val installed = inventoryItem("installed.plugin", "Installed Plugin", version = "1.2")
+      val bundled = inventoryItem("bundled.plugin", "Bundled Plugin", bundled = true, version = "3.4")
+      val provider = FixedLocalDataProvider(UnifiedPluginInventory(listOf(installed), listOf(bundled)))
+      val session = createSession(null, provider)
+      try {
+        val content = session.getComponent()
+        val pluginIds = listOf(installed.model.pluginId, bundled.model.pluginId)
+        session.select(pluginIds)
+        waitForSelectedPluginIds(content, pluginIds.map { it.idString }.toSet())
+
+        val copyProvider = checkNotNull(snapshot(content)[PlatformDataKeys.COPY_PROVIDER])
+        assertThat(copyProvider.isCopyEnabled(DataContext.EMPTY_CONTEXT)).isTrue()
+        copyProvider.performCopy(DataContext.EMPTY_CONTEXT)
+
+        assertThat(copiedText).isEqualTo("Installed Plugin (installed.plugin, 1.2)\nBundled Plugin (bundled.plugin, 3.4)")
       }
       finally {
         Disposer.dispose(session)
@@ -1753,8 +1789,11 @@ internal class UnifiedPluginsPageSessionTest {
     }
   }
 
-  private fun inventoryItem(id: String, name: String, bundled: Boolean = false): UnifiedPluginInventoryItem {
-    val model = PluginDto(name, PluginId.getId(id)).apply { source = PluginSource.LOCAL }
+  private fun inventoryItem(id: String, name: String, bundled: Boolean = false, version: String? = null): UnifiedPluginInventoryItem {
+    val model = PluginDto(name, PluginId.getId(id)).apply {
+      source = PluginSource.LOCAL
+      this.version = version
+    }
     return UnifiedPluginInventoryItem(
       model = model,
       runtimeOn = PluginSource.LOCAL,

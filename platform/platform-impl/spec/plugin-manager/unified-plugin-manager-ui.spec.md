@@ -653,6 +653,11 @@ Untested: Community tests verify the Enter handler, but they do not verify the S
     `compatible multi selection renders every row and details occurrence`
   )
 
+- Copy must put one line per selected plugin on the clipboard in the format `name (id, version)`.
+  [@test] ../../testSrc/com/intellij/ide/plugins/UnifiedPluginsPageSessionTest.kt (
+    `Copy includes the name ID and version of every selected plugin`
+  )
+
 - An independent source update must preserve the current explicit selection or explicitly cleared selection.
   [@test] ../../testSrc/com/intellij/ide/plugins/unified/UnifiedPluginsPageControllerTest.kt (
     `remote completion does not steal local selection`;

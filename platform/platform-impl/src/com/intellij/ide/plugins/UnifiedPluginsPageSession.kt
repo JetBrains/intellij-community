@@ -17,6 +17,7 @@ import com.intellij.ide.plugins.newui.PluginModelAsyncOperationsExecutor
 import com.intellij.ide.plugins.newui.PluginModelEvent
 import com.intellij.ide.plugins.newui.PluginPriceService
 import com.intellij.ide.plugins.newui.PluginSource
+import com.intellij.ide.plugins.newui.PluginUiModel
 import com.intellij.ide.plugins.newui.PluginUpdatesEvent
 import com.intellij.ide.plugins.newui.PluginUpdatesService
 import com.intellij.ide.plugins.newui.SearchQueryParser
@@ -621,15 +622,16 @@ internal class UnifiedPluginsPageSession @RequiresEdt constructor(
   private fun createContentComponent(): JComponent {
     val copyProvider = object : CopyProvider {
       override fun performCopy(dataContext: DataContext) {
-        val item = selectedItem() ?: return
-        val model = item.modelHandle?.model ?: return
-        val text = String.format("%s (%s)", model.name, model.version)
+        val text = selectedModels().joinToString("\n") { model ->
+          "${model.name} (${model.pluginId.idString}, ${model.version})"
+        }
+        if (text.isEmpty()) return
         CopyPasteManager.getInstance().setContents(TextTransferable(text as String?))
       }
 
       override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
 
-      override fun isCopyEnabled(dataContext: DataContext): Boolean = selectedItem()?.modelHandle != null
+      override fun isCopyEnabled(dataContext: DataContext): Boolean = selectedModels().any()
 
       override fun isCopyVisible(dataContext: DataContext): Boolean = true
     }
@@ -845,11 +847,12 @@ internal class UnifiedPluginsPageSession @RequiresEdt constructor(
     return controller.selectAndRevealOccurrences(compatibleOccurrences)
   }
 
-  private fun selectedItem() = controller.state.value.selectedOccurrence?.let { selectedOccurrence ->
-    controller.state.value.sections
-      .firstOrNull { it.id == selectedOccurrence.sectionId }
-      ?.items
-      ?.firstOrNull { it.pluginId == selectedOccurrence.pluginId }
+  private fun selectedModels(): Sequence<PluginUiModel> {
+    val state = controller.state.value
+    return state.selectedOccurrences.asSequence().mapNotNull { (sectionId, pluginId) ->
+      val section = state.sections.firstOrNull { it.id == sectionId }
+      section?.items?.firstOrNull { it.pluginId == pluginId }?.modelHandle?.model
+    }
   }
 }
 
