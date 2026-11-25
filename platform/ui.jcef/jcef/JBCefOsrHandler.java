@@ -27,6 +27,8 @@ import java.awt.Component;
 import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.Graphics2D;
+import java.awt.GraphicsConfiguration;
+import java.awt.GraphicsDevice;
 import java.awt.Image;
 import java.awt.Point;
 import java.awt.Rectangle;
@@ -185,11 +187,13 @@ class JBCefOsrHandler implements CefRenderHandler {
       return;
 
     myFpsMeter.paintFrameStarted();
-    VolatileImage vi = myVolatileImage;
+    GraphicsConfiguration paintConfiguration = g.getDeviceConfiguration();
+    boolean onScreen = paintConfiguration != null && paintConfiguration.getDevice().getType() == GraphicsDevice.TYPE_RASTER_SCREEN;
+    VolatileImage vi = onScreen ? myVolatileImage : null;
 
     do {
       boolean contentOutdated = myContentOutdated;
-      myContentOutdated = false;
+      if (onScreen) myContentOutdated = false;
       if (vi == null || vi.getWidth() != frameSize.width || vi.getHeight() != frameSize.height) {
         vi = createVolatileImage(g, frameSize.width, frameSize.height);
       }
@@ -206,7 +210,8 @@ class JBCefOsrHandler implements CefRenderHandler {
     }
     while (vi.contentsLost());
 
-    myVolatileImage = vi;
+    if (onScreen) myVolatileImage = vi;
+    else vi.flush();
 
     if (myPopupShown) {
       synchronized (myPopupMutex) {
