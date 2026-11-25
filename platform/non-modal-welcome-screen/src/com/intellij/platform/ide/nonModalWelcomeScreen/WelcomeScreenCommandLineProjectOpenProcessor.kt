@@ -2,15 +2,14 @@
 package com.intellij.platform.ide.nonModalWelcomeScreen
 
 import com.intellij.configurationStore.ProjectStorePathManager
+import com.intellij.ide.TrustedFiles
 import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.ide.lightEdit.LightEdit
 import com.intellij.ide.projectView.ProjectView
-import com.intellij.ide.TrustedFiles
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.FileEditorOpenRequest
-import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.fileEditor.impl.NonProjectFileWritingAccessProvider
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
@@ -21,6 +20,7 @@ import com.intellij.openapi.wm.ex.WelcomeScreenProjectProvider
 import com.intellij.openapi.wm.ex.getWelcomeScreenProjectProvider
 import com.intellij.platform.CommandLineProjectOpenProcessor
 import com.intellij.platform.ide.nonModalWelcomeScreen.rightTab.WelcomeScreenTabFocusState
+import com.intellij.platform.navigateToFileFromCommandLine
 import com.intellij.projectImport.ProjectOpenProcessor
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.sync.Mutex
@@ -138,14 +138,13 @@ internal class WelcomeScreenCommandLineProjectOpenProcessor(
     column: Int,
     selectInProjectView: Boolean,
   ) {
-    val fileEditorManager = project.serviceAsync<FileEditorManager>()
     if (line > 0) {
-      withContext(Dispatchers.EDT) {
-        OpenFileDescriptor(project, virtualFile, line - 1, column.coerceAtLeast(0)).navigate(true)
+      if (!navigateToFileFromCommandLine(project, virtualFile, line, column)) {
+        return
       }
     }
     else {
-      fileEditorManager.openFile(virtualFile, FileEditorOpenRequest.withFocus(true))
+      project.serviceAsync<FileEditorManager>().openFile(virtualFile, FileEditorOpenRequest.withFocus(true))
     }
     if (selectInProjectView) {
       withContext(Dispatchers.EDT) {

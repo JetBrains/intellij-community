@@ -515,7 +515,8 @@ fun openFileFromCommandLine(project: Project, file: Path, line: Int, column: Int
 /**
  * @return `false` if the navigation did nothing, eg, because a newer navigation superseded it
  */
-internal suspend fun navigateToFileFromCommandLine(project: Project, file: VirtualFile, line: Int, column: Int): Boolean {
+@Internal
+suspend fun navigateToFileFromCommandLine(project: Project, file: VirtualFile, line: Int, column: Int): Boolean {
   // a command line open is a programmatic navigation, so it records no back history
   return navigateToFile(project, file, line, column, NavigationOptions.requestFocus().recordAsBackHistory(false))
 }

@@ -5,7 +5,11 @@ import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.ide.TrustedFiles
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.editor.EditorFactory
+import com.intellij.openapi.editor.event.EditorFactoryEvent
+import com.intellij.openapi.editor.event.EditorFactoryListener
 import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
@@ -16,6 +20,7 @@ import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.SystemProperty
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.TestDisposable
+import com.intellij.testFramework.junit5.fixture.fileEditorManagerFixture
 import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.util.asDisposable
 import kotlinx.coroutines.Dispatchers
@@ -36,6 +41,7 @@ import kotlin.time.Duration.Companion.seconds
 @TestApplication
 internal class WelcomeScreenCommandLineProjectOpenProcessorTest {
   private val projectFixture = projectFixture(openAfterCreation = true)
+  private val editorManager = projectFixture.fileEditorManagerFixture()
 
   @TestDisposable
   lateinit var disposable: Disposable
@@ -80,8 +86,17 @@ internal class WelcomeScreenCommandLineProjectOpenProcessorTest {
 
   @Test
   @Timeout(30)
-  fun `caret position is preserved`(@TempDir tempDir: Path): Unit = timeoutRunBlocking {
+  fun `line navigation opens the editor without a blocking wait on the EDT`(@TempDir tempDir: Path): Unit = timeoutRunBlocking {
     val file = createFile(tempDir, "position.txt", "first line\nsecond line\n")
+    val target = findVirtualFile(file)
+    lateinit var creationStack: Array<StackTraceElement>
+    EditorFactory.getInstance().addEditorFactoryListener(object : EditorFactoryListener {
+      override fun editorCreated(event: EditorFactoryEvent) {
+        if (event.editor.project === project && FileDocumentManager.getInstance().getFile(event.editor.document) == target) {
+          creationStack = Thread.currentThread().stackTrace
+        }
+      }
+    }, disposable)
     val processor = createProcessor {
       provider.welcomeProject = project
       project
@@ -93,7 +108,8 @@ internal class WelcomeScreenCommandLineProjectOpenProcessorTest {
     })
 
     withContext(Dispatchers.EDT) {
-      val position = FileEditorManager.getInstance(project).selectedTextEditor?.caretModel?.logicalPosition
+      assertFalse(creationStack.any { it.methodName == "blockingWaitForCompositeFileOpen" }) { creationStack.joinToString("\n") }
+      val position = editorManager.get().selectedTextEditor?.caretModel?.logicalPosition
       assertEquals(1, position?.line)
       assertEquals(3, position?.column)
     }
