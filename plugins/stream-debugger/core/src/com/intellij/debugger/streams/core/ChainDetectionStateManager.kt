@@ -136,11 +136,12 @@ class ChainDetectionStateManager(private val cs: CoroutineScope) {
     }
 
     private suspend fun computeStatus(position: XSourcePosition): ChainStatus {
-      val element = smartReadAction(session.project) { positionResolver.getNearestElementToBreakpoint(session.project, position) }
-                    ?: return ChainStatus.NotFound
-      val chains = smartReadAction(session.project) {
-        if (providersFor(element.language).isEmpty()) null else getChains(element)
-      } ?: return ChainStatus.LanguageNotSupported
+      val (element, chains) = smartReadAction(session.project) {
+        val element = positionResolver.getNearestElementToBreakpoint(session.project, position) ?: return@smartReadAction null
+        val chains = if (providersFor(element.language).isEmpty()) null else getChains(element)
+        element to chains
+      } ?: return ChainStatus.NotFound
+      if (chains == null) return ChainStatus.LanguageNotSupported
       if (chains.isEmpty()) return ChainStatus.NotFound
       val traceable = filterTraceable(chains, position, element)
       return if (traceable.isEmpty()) ChainStatus.NotFound else ChainStatus.Found(position, traceable)
