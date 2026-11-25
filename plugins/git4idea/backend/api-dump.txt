@@ -180,6 +180,7 @@ f:git4idea.config.GitVersion
 - s:parse(java.lang.String):git4idea.config.GitVersion
 e:git4idea.config.GitVersionSpecialty
 - sf:CONFIG_BASED_HOOKS:git4idea.config.GitVersionSpecialty
+- sf:FOR_EACH_REF_SUPPORTS_INCLUDE_ROOT_REFS:git4idea.config.GitVersionSpecialty
 - sf:MERGE_TREE_PASS_THREE_TREES_SUPPORTED:git4idea.config.GitVersionSpecialty
 - sf:PATHSPEC_FROM_FILE_SUPPORTED:git4idea.config.GitVersionSpecialty
 - f:existsIn(com.intellij.openapi.project.Project):Z

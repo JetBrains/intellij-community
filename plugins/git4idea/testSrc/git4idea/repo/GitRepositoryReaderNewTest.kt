@@ -261,6 +261,40 @@ abstract class GitRepositoryReaderNewTest(private val usingReftable: Boolean) {
     assertThat(readState().state).isEqualTo(State.REVERTING)
   }
 
+  @Test
+  fun `test cherry-pick state of a single conflicting commit ends after continue`(): Unit = with(context) {
+    val file = "file.txt"
+    prepareSingleConflictingCherryPick(file)
+
+    assertGraftingWithoutSequencer()
+
+    overwrite(file, "resolved content")
+    git("add $file")
+    git("cherry-pick --continue --no-edit")
+
+    assertThat(readState().state).isEqualTo(State.NORMAL)
+  }
+
+  @Test
+  fun `test cherry-pick state of a single conflicting commit ends after abort`(): Unit = with(context) {
+    prepareSingleConflictingCherryPick("file.txt")
+
+    assertGraftingWithoutSequencer()
+
+    git("cherry-pick --abort")
+
+    assertThat(readState().state).isEqualTo(State.NORMAL)
+  }
+
+  private fun GitPlatformTestContext.assertGraftingWithoutSequencer() {
+    assertThat(repo.repositoryFiles.sequencerTodoFile).describedAs("A cherry-pick of one commit has no sequencer").doesNotExist()
+
+    val state = readState()
+    assertThat(state.state).isEqualTo(State.GRAFTING)
+    assertThat(state.localBranches.keys.map { it.name }).describedAs("CHERRY_PICK_HEAD is not a branch").containsExactly("master")
+    assertThat(state.remoteBranches).isEmpty()
+  }
+
   private fun GitPlatformTestContext.readState(): GitBranchState {
     val config = GitConfig.read(project, projectNioRoot)
     val reader = GitRepositoryReader(project, repo.repositoryFiles)
@@ -275,6 +309,15 @@ private fun GitPlatformTestContext.prepareStateForApplyChangesTest(command: Stri
   overwrite(file, "newer content")
   val commit2 = addCommit("modified $file 2")
   git("$command $commit $commit2", true)
+}
+
+private fun GitPlatformTestContext.prepareSingleConflictingCherryPick(file: String) {
+  makeCommit(file)
+  overwrite(file, "new content")
+  val commit = addCommit("modified $file 1")
+  overwrite(file, "newer content")
+  addCommit("modified $file 2")
+  git("cherry-pick $commit", true)
 }
 
 private fun GitPlatformTestContext.moveToDetachedHead(): String {

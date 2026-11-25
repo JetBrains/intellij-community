@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.repo
 
 import com.intellij.dvcs.DvcsUtil
@@ -42,15 +42,17 @@ internal class GitRepositoryReader(private val project: Project, private val git
     var headInfo = readHead()
 
     val branches: GitBranches
+    var hasCherryPickHeadRef = false
     if (headInfo != null && Registry.`is`("git.read.branches.from.disk")) {
       // read branches from disk (.git/refs/ and .git/packed-refs)
       branches = readBranches(remotes)
     }
     else {
       // read branches via git executable
-      val pair = readBranchesFromGit(remotes)
-      branches = pair.first
-      val headInfoFromGit = pair.second
+      val refs = readBranchesFromGit(remotes)
+      branches = refs.branches
+      hasCherryPickHeadRef = refs.hasCherryPickHeadRef
+      val headInfoFromGit = refs.headInfo
       if (headInfo == null || headInfoFromGit != HeadInfo.Unknown) {
         headInfo = headInfoFromGit
       }
@@ -67,7 +69,7 @@ internal class GitRepositoryReader(private val project: Project, private val git
       }
     }
 
-    val state = readRepositoryState(headInfo is HeadInfo.Branch)
+    val state = readRepositoryState(isOnBranch = headInfo is HeadInfo.Branch, hasCherryPickHeadRef = hasCherryPickHeadRef)
     val headState = parseHeadState(headInfo, state, branches)
     return GitBranchState(headState.currentRevision, headState.currentBranch, state,
                           branches.localBranches, branches.remoteBranches)
@@ -132,7 +134,7 @@ internal class GitRepositoryReader(private val project: Project, private val git
     return shallowFile.length() > 0
   }
 
-  private fun readRepositoryState(isOnBranch: Boolean): Repository.State {
+  private fun readRepositoryState(isOnBranch: Boolean, hasCherryPickHeadRef: Boolean): Repository.State {
     if (isMergeInProgress()) {
       return Repository.State.MERGING
     }
@@ -142,7 +144,7 @@ internal class GitRepositoryReader(private val project: Project, private val git
     if (!isOnBranch) {
       return Repository.State.DETACHED
     }
-    if (isCherryPickInProgress()) {
+    if (hasCherryPickHeadRef || isCherryPickInProgress()) {
       return Repository.State.GRAFTING
     }
     if (isRevertInProgress()) {
@@ -223,29 +225,37 @@ internal class GitRepositoryReader(private val project: Project, private val git
     }
   }
 
-  private fun readBranchesFromGit(remotes: Collection<GitRemote>): Pair<GitBranches, HeadInfo> {
+  private fun readBranchesFromGit(remotes: Collection<GitRemote>): RefsFromGit {
     try {
       val handler = GitLineHandler(project, gitFiles.rootDir, GitCommand.FOR_EACH_REF)
       handler.isEnableInteractiveCallbacks = false // the method might be called in GitRepository constructor
+      if (GitVersionSpecialty.FOR_EACH_REF_SUPPORTS_INCLUDE_ROOT_REFS.existsIn(project)) {
+        handler.addParameters("--include-root-refs", CHERRY_PICK_HEAD)
+      }
       handler.addParameters("refs/heads/**", "refs/remotes/**")
       handler.addParameters("--no-color")
       handler.addParameters("--format=%(refname)\t%(objectname)\t%(HEAD)")
 
       val resolvedRefs = mutableMapOf<String, Hash>()
       var headStateRef: HeadInfo? = null
+      var hasCherryPickHeadRef = false
       handler.addLineListener(object : GitLineHandlerListener {
         private var badLineReported = 0
         override fun onLineAvailable(line: @NlsSafe String, outputType: Key<*>) {
           try {
             if (ProcessOutputType.isStdout(outputType)) {
               val scanner = StringScanner(line)
-              val branchRef = scanner.tabToken() ?: return
-              val branchHash = GitRefUtil.parseHash(scanner.tabToken()) ?: return
+              val refName = scanner.tabToken() ?: return
+              val hash = GitRefUtil.parseHash(scanner.tabToken()) ?: return
+              if (refName == CHERRY_PICK_HEAD) {
+                hasCherryPickHeadRef = true
+                return
+              }
               val isHead = "*" == scanner.line()
               if (isHead) {
-                headStateRef = HeadInfo.Branch(GitLocalBranch(branchRef))
+                headStateRef = HeadInfo.Branch(GitLocalBranch(refName))
               }
-              resolvedRefs[branchRef] = branchHash
+              resolvedRefs[refName] = hash
             }
           }
           catch (e: VcsException) {
@@ -262,22 +272,22 @@ internal class GitRepositoryReader(private val project: Project, private val git
       val branches = createBranchesFromData(remotes, resolvedRefs)
 
       if (headState != null) {
-        return Pair(branches, headState)
+        return RefsFromGit(branches, headState, hasCherryPickHeadRef)
       }
 
       // handle fresh repository
       if (branches.localBranches.isEmpty()) {
         val currentBranch = resolveCurrentBranch()
         if (currentBranch != null) {
-          return Pair(GitBranches(emptyMap(), branches.remoteBranches), HeadInfo.Branch(currentBranch))
+          return RefsFromGit(GitBranches(emptyMap(), branches.remoteBranches), HeadInfo.Branch(currentBranch), hasCherryPickHeadRef)
         }
       }
 
-      return Pair(branches, HeadInfo.Unknown)
+      return RefsFromGit(branches, HeadInfo.Unknown, hasCherryPickHeadRef)
     }
     catch (e: VcsException) {
       LOG.warn(e)
-      return Pair(GitBranches(emptyMap(), emptyMap()), HeadInfo.Unknown)
+      return RefsFromGit(GitBranches(emptyMap(), emptyMap()), HeadInfo.Unknown, hasCherryPickHeadRef = false)
     }
   }
 
@@ -367,10 +377,23 @@ internal class GitRepositoryReader(private val project: Project, private val git
     val currentRevision: String?,
   )
 
+  /**
+   * The result of [readBranchesFromGit].
+   *
+   * [hasCherryPickHeadRef] is `true` only for a reftable repository in which the `CHERRY_PICK_HEAD` ref exists.
+   * For the `files` format, see [isCherryPickInProgress].
+   */
+  private class RefsFromGit(
+    val branches: GitBranches,
+    val headInfo: HeadInfo,
+    val hasCherryPickHeadRef: Boolean,
+  )
+
   companion object {
     private val LOG = Logger.getInstance(GitRepositoryReader::class.java)
 
     private const val DETACHED_HEAD = "detached HEAD"
+    private const val CHERRY_PICK_HEAD = "CHERRY_PICK_HEAD"
 
     private fun isExistingExecutableFile(file: File): Boolean {
       return file.exists() && file.canExecute()

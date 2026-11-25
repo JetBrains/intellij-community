@@ -142,6 +142,11 @@ enum class GitVersionSpecialty(val version: GitVersion) {
   INIT_SUPPORTS_REFTABLE_FORMAT(GitVersion(2, 45, 0, 0)),
 
   /**
+   * The "--include-root-refs" option lets "git for-each-ref" list root refs, such as CHERRY_PICK_HEAD and REVERT_HEAD.
+   */
+  FOR_EACH_REF_SUPPORTS_INCLUDE_ROOT_REFS(GitVersion(2, 45, 0, 0)),
+
+  /**
    *  When "--merge-base=" is specified for the "git merge-tree" command, branch1 and branch2 do not need to specify commits; trees are enough.
    */
   MERGE_TREE_PASS_THREE_TREES_SUPPORTED((GitVersion(2, 45, 0, 0))),
