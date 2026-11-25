@@ -45,9 +45,9 @@ internal class TextEditorCustomizerTest {
 
     ExtensionTestUtil.maskExtensions(textEditorCustomizerEp, listOf(object : TextEditorCustomizer {
       override fun customize(textEditor: TextEditor, coroutineScope: CoroutineScope) {
-        customizerScope.complete(coroutineScope)
         coroutineScope.launch {
           try {
+            customizerScope.complete(coroutineScope)
             awaitCancellation()
           }
           finally {
