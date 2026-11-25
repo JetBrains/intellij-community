@@ -39,10 +39,10 @@ import com.intellij.util.ThrowableRunnable
 import com.intellij.util.io.copyRecursively
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.maven.MavenCustomNioRepositoryHelper
+import org.jetbrains.idea.maven.externalSystemIntegration.output.parsers.MavenTaskFailedResultImpl
 import org.jetbrains.idea.maven.fixtures.ExecutionInfo
 import org.jetbrains.idea.maven.fixtures.checkUpdatingExcludedFoldersAfterExecution
 import org.jetbrains.idea.maven.fixtures.execute
-import org.jetbrains.idea.maven.externalSystemIntegration.output.parsers.MavenTaskFailedResultImpl
 import org.jetbrains.idea.maven.project.MavenWorkspaceSettingsComponent
 import org.jetbrains.idea.maven.project.MavenWrapper
 import org.jetbrains.idea.maven.utils.MavenLog
@@ -60,10 +60,10 @@ import java.nio.file.Path
 import java.util.Properties
 import java.util.concurrent.CopyOnWriteArrayList
 import kotlin.io.path.absolutePathString
-import kotlin.time.Duration.Companion.minutes
 import kotlin.io.path.exists
 import kotlin.io.path.isRegularFile
 import kotlin.io.path.listDirectoryEntries
+import kotlin.time.Duration.Companion.minutes
 
 @TestApplication
 @ParameterizedClass
@@ -131,6 +131,7 @@ class RealMavenExecutionTest(mavenVersion: String, modelVersion: String) {
    */
   @Test
   fun testFailingTestReportsErrorInMojoNode() = runBlocking {
+    maven.assumeVersionAtLeast("3.6.3")
     useProject("mavenProjectWithFailingTest")
     maven.importProjectAsync()
     val executionInfo = maven.execute(
