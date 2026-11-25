@@ -1,7 +1,13 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.devkit.uiDsl.sandbox
 
+import com.intellij.ide.DataManager
 import com.intellij.ide.ui.laf.darcula.ui.DarculaButtonUI
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.ActionPlaces
+import com.intellij.openapi.actionSystem.ActionUiKind
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.EditorTextField
 import com.intellij.ui.SearchTextField
@@ -17,6 +23,7 @@ import com.intellij.ui.dsl.builder.rows
 import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.ThreeStateCheckBox
 import org.jetbrains.annotations.Nls
+import java.awt.Component
 import java.util.function.Consumer
 import javax.swing.AbstractButton
 import javax.swing.JButton
@@ -136,4 +143,19 @@ internal fun <T> Row.jbList(label: @NlsContexts.Label String?, items: List<T>, r
     result.label(it, LabelPosition.TOP)
   }
   return result
+}
+
+/**
+ * Adds a row with [text] that has a link. The link opens the UI DSL Showcase.
+ * A page ends with this row when the showcase shows a feature better than the page.
+ */
+internal fun Panel.uiDslShowcaseRow(text: @NlsContexts.Label String) {
+  row {
+    text(text) { event ->
+      val action = ActionManager.getInstance().getAction("UiDslShowcaseAction") ?: return@text
+      val component = event.source as? Component ?: return@text
+      val dataContext = DataManager.getInstance().getDataContext(component)
+      ActionUtil.performAction(action, AnActionEvent.createEvent(action, dataContext, null, ActionPlaces.UNKNOWN, ActionUiKind.NONE, null))
+    }
+  }
 }

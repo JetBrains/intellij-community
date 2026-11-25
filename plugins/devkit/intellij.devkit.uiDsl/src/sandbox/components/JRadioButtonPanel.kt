@@ -4,6 +4,7 @@ package com.intellij.devkit.uiDsl.sandbox.components
 import com.intellij.devkit.uiDsl.DevkitUiDslBundle
 import com.intellij.devkit.uiDsl.sandbox.UISandboxPanel
 import com.intellij.devkit.uiDsl.sandbox.applyStateText
+import com.intellij.devkit.uiDsl.sandbox.uiDslShowcaseRow
 import com.intellij.openapi.Disposable
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.builder.selected
@@ -41,6 +42,8 @@ internal class JRadioButtonPanel : UISandboxPanel {
           }
         }
       }
+
+      uiDslShowcaseRow(DevkitUiDslBundle.message("sandbox.ui.dsl.showcase.comments"))
     }
   }
 }
