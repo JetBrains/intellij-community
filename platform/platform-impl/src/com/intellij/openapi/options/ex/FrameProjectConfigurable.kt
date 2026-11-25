@@ -33,8 +33,20 @@ open class FrameProjectConfigurable internal constructor(
 ) : SearchableConfigurable, Weighted, ConfigurableProjectProvider, Configurable.NoScroll, Configurable.NoMargin {
   private val delegates = LinkedHashMap(delegates)
 
-  /** The page that gives the name, the weight and the declaration. It stays when its project closes. */
-  val representative: Configurable = delegates.values.first()
+  // the page stores its name and its weight, because the page of the first project goes when that project closes
+  private val name: @NlsContexts.ConfigurableName String = delegates.values.first().displayName
+  private val weight: Int = (delegates.values.first() as? Weighted)?.weight ?: 0
+
+  /** The owner of the frame of the Settings window. It lives as long as the window. */
+  val frameOwner: Project
+    get() = projects.frameOwner
+
+  /**
+   * The page that holds the declaration of this page: the page of the first project that has one.
+   * It is `null` when no project has a page with the id.
+   */
+  val declaration: Configurable?
+    get() = delegates.values.firstOrNull()
 
   /** The component of each project that this page showed. */
   private val pages = LinkedHashMap<Project, JComponent>()
@@ -62,14 +74,14 @@ open class FrameProjectConfigurable internal constructor(
 
   override fun getId(): String = id
 
-  override fun getDisplayName(): @NlsContexts.ConfigurableName String = representative.displayName
+  override fun getDisplayName(): @NlsContexts.ConfigurableName String = name
 
-  override fun getHelpTopic(): String? = (selectedDelegate ?: representative).helpTopic
+  override fun getHelpTopic(): String? = selectedDelegate?.helpTopic
 
-  override fun getWeight(): Int = (representative as? Weighted)?.weight ?: 0
+  override fun getWeight(): Int = weight
 
   override fun getOriginalClass(): Class<*> {
-    val delegate = selectedDelegate ?: representative
+    val delegate = selectedDelegate ?: return javaClass
     return (delegate as? SearchableConfigurable)?.originalClass ?: delegate.javaClass
   }
 

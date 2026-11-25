@@ -450,7 +450,7 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
   private static @Nullable Project findConfigurableProject(@NotNull MyNode node) {
     Configurable configurable = node.myConfigurable;
     if (configurable instanceof FrameProjectConfigurable frameProject) {
-      // the project of the node is the project at the build of the tree, and the page shows the selected project
+      // the project of the node is the frame owner, and the page shows the selected project
       return frameProject.getProject();
     }
     Project project = node.getProject();
@@ -470,6 +470,10 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
   @ApiStatus.Internal
   public static @Nullable Project prepareProject(@Nullable CachingSimpleNode parent,
                                                  @Nullable Configurable configurable) {
+    if (configurable instanceof FrameProjectConfigurable frameProject) {
+      // a node lives longer than a project of the page, and the frame owner lives as long as the tree
+      return frameProject.getFrameOwner();
+    }
     if (configurable instanceof ConfigurableWrapper wrapper) {
       return wrapper.getExtensionPoint().getProject();
     }
@@ -637,6 +641,8 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
     private final int myLevel;
     private ConfigurableTreeRenderer myRenderer;
     private boolean myPrepareRenderer = true;
+    /** The declaration that gave {@link #myRenderer}. */
+    private Configurable myRendererDeclaration;
     private Boolean myHasNewOptions;
 
     private MyNode(CachingSimpleNode parent, @NotNull Configurable configurable, int level) {
@@ -649,9 +655,12 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
     }
 
     public @Nullable ConfigurableTreeRenderer getRenderer() {
-      if (myPrepareRenderer) {
+      Configurable declared = declarationOf(myConfigurable);
+      // a page of several projects gets another declaration when the project of its declaration closes
+      if (myPrepareRenderer || declared != myRendererDeclaration) {
         myPrepareRenderer = false;
-        Configurable declared = declarationOf(myConfigurable);
+        myRendererDeclaration = declared;
+        myRenderer = null;
         if (declared instanceof ConfigurableTreeRenderer) {
           myRenderer = (ConfigurableTreeRenderer)declared;
         }
@@ -890,7 +899,7 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
         ConfigurableTreeRenderer renderer = node.getRenderer();
         if (renderer != null) {
           if (configurable instanceof FrameProjectConfigurable frameProject) {
-            configurable = frameProject.getRepresentative();
+            configurable = frameProject.getDeclaration();
           }
           if (configurable instanceof ConfigurableWrapper) {
             configurable = ((ConfigurableWrapper)configurable).getRawConfigurable();
@@ -960,9 +969,12 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
     }
   }
 
-  /** The page that holds the declaration of {@code c}: a page of several projects has the declaration of one of its pages. */
+  /**
+   * The page that holds the declaration of {@code c}: a page of several projects has the declaration of one of its pages.
+   * It has none when no project has that page.
+   */
   private static @Nullable Configurable declarationOf(@Nullable Configurable c) {
-    return c instanceof FrameProjectConfigurable frameProject ? frameProject.getRepresentative() : c;
+    return c instanceof FrameProjectConfigurable frameProject ? frameProject.getDeclaration() : c;
   }
 
   /**

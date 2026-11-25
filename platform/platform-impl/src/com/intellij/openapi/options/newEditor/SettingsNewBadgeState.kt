@@ -57,7 +57,7 @@ class SettingsNewBadgeState {
    * A configurable component that no extension point declares cannot hold a new option.
    */
   private fun isNewOptions(configurable: Configurable): Boolean {
-    val declared = (configurable as? FrameProjectConfigurable)?.representative ?: configurable
+    val declared = if (configurable is FrameProjectConfigurable) configurable.declaration else configurable
     return declared is ConfigurableWrapper && declared.extensionPoint.newOptions
   }
 }

@@ -212,6 +212,22 @@ internal class SettingsFrameProjectsTest {
   }
 
   @Test
+  fun `a page keeps no project that closed`(): Unit = inFrame(projectsWithPage = { listOf(guest, third) }) { disposable ->
+    WindowManagerEx.getInstanceEx().addFrameGuest(owner, third)
+    val projects = SettingsFrameProjects.create(owner)!!
+    val group = createGroup(projects, disposable)
+    val page = projectPage(group)
+    assertThat((page.declaration as ConfigurableWrapper).project).isSameAs(guest)
+
+    group.forget(guest)
+    projects.remove(guest)
+
+    assertThat((page.declaration as ConfigurableWrapper).project).describedAs("The declaration is of an open project").isSameAs(third)
+    assertThat(page.displayName).isEqualTo("Project Page")
+    assertThat(SettingsTreeView.prepareProject(null, page)).describedAs("A tree node keeps the frame owner").isSameAs(owner)
+  }
+
+  @Test
   fun `the first page is reset once outside the creation of its component and keeps its decoration`(): Unit = inFrame { disposable ->
     val page = projectPage(createGroup(SettingsFrameProjects.create(owner)!!, disposable))
 
