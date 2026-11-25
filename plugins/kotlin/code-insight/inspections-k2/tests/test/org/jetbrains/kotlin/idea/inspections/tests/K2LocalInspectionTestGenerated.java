@@ -17217,6 +17217,11 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
                 runTest("testData/inspectionsLocal/convertTwoComparisonsToRangeCheck/hexadecimal.kt");
             }
 
+            @TestMetadata("inRangeFloat.kt")
+            public void testInRangeFloat() throws Exception {
+                runTest("testData/inspectionsLocal/convertTwoComparisonsToRangeCheck/inRangeFloat.kt");
+            }
+
             @TestMetadata("lteqgt.kt")
             public void testLteqgt() throws Exception {
                 runTest("testData/inspectionsLocal/convertTwoComparisonsToRangeCheck/lteqgt.kt");
@@ -17265,6 +17270,21 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
             @TestMetadata("notInRange.kt")
             public void testNotInRange() throws Exception {
                 runTest("testData/inspectionsLocal/convertTwoComparisonsToRangeCheck/notInRange.kt");
+            }
+
+            @TestMetadata("notInRangeDoubleIntConstantsNoWarn.kt")
+            public void testNotInRangeDoubleIntConstantsNoWarn() throws Exception {
+                runTest("testData/inspectionsLocal/convertTwoComparisonsToRangeCheck/notInRangeDoubleIntConstantsNoWarn.kt");
+            }
+
+            @TestMetadata("notInRangeDoubleNoWarn.kt")
+            public void testNotInRangeDoubleNoWarn() throws Exception {
+                runTest("testData/inspectionsLocal/convertTwoComparisonsToRangeCheck/notInRangeDoubleNoWarn.kt");
+            }
+
+            @TestMetadata("notInRangeFloatNoWarn.kt")
+            public void testNotInRangeFloatNoWarn() throws Exception {
+                runTest("testData/inspectionsLocal/convertTwoComparisonsToRangeCheck/notInRangeFloatNoWarn.kt");
             }
 
             @TestMetadata("notInRangeInclusive.kt")

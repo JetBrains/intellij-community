@@ -223,6 +223,7 @@ internal class ConvertTwoComparisonsToRangeCheckInspection : KotlinApplicableIns
 
         val valueType = psiContext.value.expressionType?.lowerBoundIfFlexible() ?: return null
         if (!valueType.isSubtypeOf(StandardClassIds.Comparable)) return null
+        if (psiContext.isInverseCheck && valueType.isFloatingPointType) return null
 
         var min = psiContext.min
         var max = psiContext.max
