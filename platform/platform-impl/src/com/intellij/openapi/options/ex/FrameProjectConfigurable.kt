@@ -25,13 +25,18 @@ import javax.swing.JPanel
  * The page shows only the projects that have a page with the id, see [projectsWithPage]. When the selected project has no
  * such page, the page shows the first project that has one, and the selection stays. When no project has such a page, the
  * page is in the tree only as the parent of its child pages, and it shows an empty text.
+ *
+ * The child pages of the page are the child pages of all the projects. A page without child pages is a leaf of the tree.
+ * A project that joins can add child pages to each page, see [FrameProjectsConfigurableGroup.join].
  */
 @ApiStatus.Internal
-open class FrameProjectConfigurable internal constructor(
+class FrameProjectConfigurable internal constructor(
   private val projects: SettingsFrameProjects,
   private val id: String,
   delegates: Map<Project, Configurable>,
-) : SearchableConfigurable, Weighted, ConfigurableProjectProvider, Configurable.NoScroll, Configurable.NoMargin {
+  /** The child pages of all the projects. A join and a close of a project change them. */
+  internal var children: Array<Configurable>,
+) : SearchableConfigurable, Weighted, ConfigurableProjectProvider, Configurable.NoScroll, Configurable.NoMargin, Configurable.Composite {
   private val delegates = LinkedHashMap(delegates)
 
   // the page stores its name and its weight, because the page of the first project goes when that project closes
@@ -86,6 +91,8 @@ open class FrameProjectConfigurable internal constructor(
   override fun getHelpTopic(): String? = selectedDelegate?.helpTopic
 
   override fun getWeight(): Int = weight
+
+  override fun getConfigurables(): Array<Configurable> = children
 
   override fun getOriginalClass(): Class<*> {
     val delegate = selectedDelegate ?: return javaClass
@@ -230,15 +237,4 @@ open class FrameProjectConfigurable internal constructor(
   }
 
   override fun toString(): String = displayName
-}
-
-/** A [FrameProjectConfigurable] with child pages. [children] holds the child pages of all the projects. */
-internal class FrameProjectCompositeConfigurable(
-  projects: SettingsFrameProjects,
-  id: String,
-  delegates: Map<Project, Configurable>,
-  /** A project that joins the Settings window adds its child pages here, see [FrameProjectsConfigurableGroup.join]. */
-  var children: Array<Configurable>,
-) : FrameProjectConfigurable(projects, id, delegates), Configurable.Composite {
-  override fun getConfigurables(): Array<Configurable> = children
 }

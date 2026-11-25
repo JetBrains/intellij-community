@@ -64,6 +64,9 @@ private const val PROJECT_PAGE_ID = "settingsFrameProjectsTest.project"
 /** An application-level page below the project-level page. */
 private const val APP_CHILD_PAGE_ID = "settingsFrameProjectsTest.appChild"
 
+/** A project-level page below the project-level page. */
+private const val PROJECT_CHILD_PAGE_ID = "settingsFrameProjectsTest.projectChild"
+
 /**
  * The Settings window of a frame that shows several projects, see [SettingsFrameProjects] and [FrameProjectsConfigurableGroup].
  * A unit test has no frame, so the record of the test window manager makes `guest` a frame guest of `owner`.
@@ -583,6 +586,23 @@ internal class SettingsFrameProjectsTest {
   }
 
   @Test
+  fun `a frame guest that joins adds its child pages to a page that has no child page`(): Unit = inFrame { disposable ->
+    maskProjectPage(third, hasPage = true, fireEvents = false, withChildPage = true)
+    val group = createGroup(SettingsFrameProjects.create(owner)!!, disposable)
+    val page = projectPage(group)
+    assertThat(findPages(group, PROJECT_CHILD_PAGE_ID)).isEmpty()
+    WindowManagerEx.getInstanceEx().addFrameGuest(owner, third)
+    var hasNewNodes = false
+
+    SettingsFrameGuestJoins.join(group, third) { hasNewNodes = it }
+
+    assertThat(hasNewNodes).isTrue()
+    assertThat(projectPage(group)).describedAs("The tree keeps its page").isSameAs(page)
+    val childPage = findPages(group, PROJECT_CHILD_PAGE_ID).single() as FrameProjectConfigurable
+    assertThat(childPage.projectsWithPage).containsExactly(third)
+  }
+
+  @Test
   fun `the page of a frame guest that joins builds its child pages off the EDT`(): Unit = inFrame(
     projectsWithPage = { listOf(third) },
     withDynamicProjectPage = true,
@@ -780,9 +800,10 @@ internal class SettingsFrameProjectsTest {
 
   /**
    * Gives [project] the project-level test page, or no project-level page. With [fireEvents], the listeners of the
-   * extension point of [project] get the change, as when a plugin loads.
+   * extension point of [project] get the change, as when a plugin loads. With [withChildPage], a project-level page is
+   * a child of the test page.
    */
-  private fun maskProjectPage(project: Project, hasPage: Boolean, fireEvents: Boolean) {
+  private fun maskProjectPage(project: Project, hasPage: Boolean, fireEvents: Boolean, withChildPage: Boolean = false) {
     val parent = projectMasks.getValue(project)
     // an extension point takes one mask at a time
     pageMasks.remove(project)?.let { Disposer.dispose(it) }
@@ -791,11 +812,18 @@ internal class SettingsFrameProjectsTest {
       pluginDescriptor = testPluginDescriptor
       id = PROJECT_PAGE_ID
       displayName = "Project Page"
-      instanceClass = FrameProjectsTestProjectPage::class.java.name
+      instanceClass = (if (isProjectPageDynamic) FrameProjectsTestDynamicProjectPage::class else FrameProjectsTestProjectPage::class).java.name
       dynamic = isProjectPageDynamic
     }
+    val childPage = ConfigurableEP<Configurable>(project).apply {
+      pluginDescriptor = testPluginDescriptor
+      id = PROJECT_CHILD_PAGE_ID
+      parentId = PROJECT_PAGE_ID
+      displayName = "Project Child Page"
+      instanceClass = FrameProjectsTestAppPage::class.java.name
+    }
     val point = Configurable.PROJECT_CONFIGURABLE.getPoint(project) as ExtensionPointImpl<ConfigurableEP<Configurable>>
-    point.maskAll(if (hasPage) listOf(projectPage) else emptyList(), mask, fireEvents)
+    point.maskAll(if (hasPage) listOfNotNull(projectPage, childPage.takeIf { withChildPage }) else emptyList(), mask, fireEvents)
   }
 
   /** Makes `owner` a frame owner without project-level settings of its own, as the host of a JetBrains Light workspace. */
@@ -831,7 +859,7 @@ private class FrameProjectsTestAppPage : Configurable {
 }
 
 /** The project-level test page. The test finds the page of a project with [pageOf]. */
-private class FrameProjectsTestProjectPage(project: Project) : Configurable, Configurable.Composite {
+private open class FrameProjectsTestProjectPage(project: Project) : Configurable {
   /** `true` when the EDT created the page. */
   val isCreatedOnEdt: Boolean = ApplicationManager.getApplication().isDispatchThread
   var modified = false
@@ -847,8 +875,6 @@ private class FrameProjectsTestProjectPage(project: Project) : Configurable, Con
   }
 
   override fun getDisplayName(): String = "Project Page"
-
-  override fun getConfigurables(): Array<Configurable> = emptyArray()
 
   override fun createComponent(): JComponent = JPanel()
 
@@ -870,6 +896,11 @@ private class FrameProjectsTestProjectPage(project: Project) : Configurable, Con
     cancels++
     modified = false
   }
+}
+
+/** The project-level test page that builds its child pages itself. */
+private class FrameProjectsTestDynamicProjectPage(project: Project) : FrameProjectsTestProjectPage(project), Configurable.Composite {
+  override fun getConfigurables(): Array<Configurable> = emptyArray()
 }
 
 /** The last project-level test page that each project created. */

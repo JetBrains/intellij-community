@@ -312,11 +312,10 @@ private class MergedTree(private val projects: SettingsFrameProjects) {
   private fun keeps(node: Configurable, removed: MutableSet<Configurable>): Boolean {
     val keeps = when (node) {
       is SortedConfigurableGroup -> removeEmptyChildren(node, removed)
-      is FrameProjectCompositeConfigurable -> {
+      is FrameProjectConfigurable -> {
         node.children = node.children.filter { keeps(it, removed) }.toTypedArray()
         node.declaration != null || node.children.isNotEmpty()
       }
-      is FrameProjectConfigurable -> node.declaration != null
       is ConfigurableWrapper.CompositeWrapper -> {
         // the merge built the children of each application-level page, so this call creates no page
         val children = node.configurables
@@ -376,7 +375,6 @@ private class MergedTree(private val projects: SettingsFrameProjects) {
  * that has it, with the children of all the trees. The project-level pages become one [FrameProjectConfigurable].
  *
  * A node of a pair with no project is a node of a merged tree. It goes first, and the nodes of the other projects merge into it.
- * A non-composite [FrameProjectConfigurable] takes no child pages from a project that joins.
  */
 private class FrameProjectTreeMerger(private val projects: SettingsFrameProjects) {
   /** `true` when a node of a project came under a node of the merged tree that had no node with its id. */
@@ -420,13 +418,8 @@ private class FrameProjectTreeMerger(private val projects: SettingsFrameProjects
     for ((project, node) in nodes) {
       delegates.putIfAbsent(project!!, node)
     }
-    val id = ConfigurableVisitor.getId(first)
-    val page = if (nodes.none { it.second is Configurable.Composite }) {
-      FrameProjectConfigurable(projects, id, delegates)
-    }
-    else {
-      FrameProjectCompositeConfigurable(projects, id, delegates, mergeChildren(childrenOf(nodes), isParentProjectLevel = true).toTypedArray())
-    }
+    val children = mergeChildren(childrenOf(nodes), isParentProjectLevel = true)
+    val page = FrameProjectConfigurable(projects, ConfigurableVisitor.getId(first), delegates, children.toTypedArray())
     newPages.add(page)
     return page
   }
@@ -439,10 +432,8 @@ private class FrameProjectTreeMerger(private val projects: SettingsFrameProjects
     for ((project, node) in joining) {
       merged.addDelegate(project!!, node)
     }
-    if (merged is FrameProjectCompositeConfigurable) {
-      val children = listOf(null to merged.children.asList()) + childrenOf(joining)
-      merged.children = mergeChildren(children, isParentProjectLevel = true).toTypedArray()
-    }
+    val children = listOf(null to merged.children.asList()) + childrenOf(joining)
+    merged.children = mergeChildren(children, isParentProjectLevel = true).toTypedArray()
     return merged
   }
 
