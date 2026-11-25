@@ -2188,8 +2188,6 @@ f:com.intellij.util.system.OS$LinuxInfo
 - isUnderWsl():Z
 f:com.intellij.util.system.OS$MacOsInfo
 - com.intellij.util.system.OS$OsInfo
-f:com.intellij.util.system.OS$OHOSInfo
-- com.intellij.util.system.OS$UnixInfo
 com.intellij.util.system.OS$OsInfo
 c:com.intellij.util.system.OS$UnixInfo
 - com.intellij.util.system.OS$OsInfo

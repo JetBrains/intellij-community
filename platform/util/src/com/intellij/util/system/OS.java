@@ -66,12 +66,12 @@ public enum OS {
 
   /// Returns an instance of [OsInfo] for the current OS.
   public final @NotNull OsInfo getOsInfo() {
-    return
+    return (
       this == Windows ? WindowsInfo.INSTANCE :
       this == macOS ? MacOsInfo.INSTANCE :
       this == Linux ? LinuxInfo.INSTANCE :
-      this == OHOS ? OHOSInfo.INSTANCE :
-      UnixInfo.INSTANCE;
+      UnixInfo.INSTANCE
+    );
   }
 
   public @NotNull Platform getPlatform() {
@@ -195,10 +195,5 @@ public enum OS {
       }
       return isUnderWsl;
     }
-  }
-  public static final class OHOSInfo extends UnixInfo {
-    private static final OHOSInfo INSTANCE = new OHOSInfo();
-
-    private OHOSInfo() { }
   }
 }
