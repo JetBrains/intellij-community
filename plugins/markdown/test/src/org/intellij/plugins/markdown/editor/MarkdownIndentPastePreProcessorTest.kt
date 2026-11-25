@@ -4,18 +4,39 @@ package org.intellij.plugins.markdown.editor
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.ide.CopyPasteManager
 import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightModuleFixture
+import com.intellij.testFramework.TestDataPath
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.fixture.projectFixture
 import java.awt.datatransfer.StringSelection
 import org.junit.jupiter.api.Test
+import kotlin.io.path.Path
+import kotlin.io.path.readText
 
 @TestApplication
+@TestDataPath($$"$PROJECT_ROOT/community/plugins/markdown/test/data/editor/paste")
 internal class MarkdownIndentPastePreProcessorTest {
   companion object {
     private val projectFixture = projectFixture(openAfterCreation = true)
   }
 
   private val myFixture by codeInsightModuleFixture(projectFixture)
+
+  @Test
+  fun `test paste preserves footnote indentation`() {
+    val pasted = Path(myFixture.testDataPath, "footnoteIndentation.md").readText()
+    doTest("<caret>", pasted, "$pasted<caret>")
+  }
+
+  @Test
+  fun `test paste preserves footnote continuation indentation`() {
+    val pasted = "[^note]:\n\tFootnote text"
+    doTest("<caret>", pasted, "$pasted<caret>")
+  }
+
+  @Test
+  fun `test paste adjusts prose indentation inside a list`() {
+    doTest("- <caret>", "first\n second", "- first\n  second<caret>")
+  }
 
   @Test
   fun `test paste into quote in list`() {

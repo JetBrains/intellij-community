@@ -10,6 +10,7 @@ import com.intellij.openapi.util.Ref
 import com.intellij.psi.PsiFile
 import org.intellij.plugins.markdown.editor.livepreview.MarkdownLivePreviewUtils
 import org.intellij.plugins.markdown.lang.supportsMarkdown
+import org.intellij.plugins.markdown.util.isFootnoteLabelText
 import java.awt.datatransfer.Transferable
 
 internal class MarkdownListCopyPastePostProcessor : CopyPastePostProcessor<TextBlockTransferableData>() {
@@ -32,7 +33,8 @@ internal class MarkdownListCopyPastePostProcessor : CopyPastePostProcessor<TextB
     values: List<TextBlockTransferableData>,
   ) {
     if (indented.get() != null || !editor.supportsMarkdown()) return
-    if (containsIndentedListItem(editor.document.getText(bounds.textRange))) {
+    val text = editor.document.getText(bounds.textRange)
+    if (containsIndentedListItem(text) || containsFootnoteContinuation(text)) {
       indented.set(true)
     }
   }
@@ -42,6 +44,21 @@ internal class MarkdownListCopyPastePostProcessor : CopyPastePostProcessor<TextB
   private fun containsIndentedListItem(text: String): Boolean = text.lineSequence().any { line ->
     val markerStart = line.indexOfFirst { it != ' ' && it != '\t' }
     markerStart > 0 && isListMarker(line, markerStart)
+  }
+
+  private fun containsFootnoteContinuation(text: String): Boolean {
+    var hasDefinition = false
+    for (line in text.lineSequence()) {
+      val contentStart = line.indexOfFirst { it != ' ' && it != '\t' }
+      if (contentStart < 0) continue
+      if (hasDefinition && contentStart > 0) return true
+      if (hasDefinition || !line.startsWith("[^", contentStart)) continue
+      val labelEnd = line.indexOf("]:", contentStart)
+      if (labelEnd >= 0 && isFootnoteLabelText(line.substring(contentStart, labelEnd + 1))) {
+        hasDefinition = true
+      }
+    }
+    return false
   }
 
   private fun isListMarker(line: String, start: Int): Boolean =
