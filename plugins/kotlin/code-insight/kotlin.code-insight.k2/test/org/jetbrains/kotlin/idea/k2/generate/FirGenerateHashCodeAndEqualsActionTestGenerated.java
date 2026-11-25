@@ -93,6 +93,21 @@ public class FirGenerateHashCodeAndEqualsActionTestGenerated extends AbstractFir
         runTest("../../idea/tests/testData/codeInsight/generate/equalsWithHashCode/interface.kt");
     }
 
+    @TestMetadata("jvmInlineValueClass.kt")
+    public void testJvmInlineValueClass() throws Exception {
+        runTest("../../idea/tests/testData/codeInsight/generate/equalsWithHashCode/jvmInlineValueClass.kt");
+    }
+
+    @TestMetadata("jvmInlineValueClassWithCustomEquals.kt")
+    public void testJvmInlineValueClassWithCustomEquals() throws Exception {
+        runTest("../../idea/tests/testData/codeInsight/generate/equalsWithHashCode/jvmInlineValueClassWithCustomEquals.kt");
+    }
+
+    @TestMetadata("jvmInlineValueClassWithFullValueClasses.kt")
+    public void testJvmInlineValueClassWithFullValueClasses() throws Exception {
+        runTest("../../idea/tests/testData/codeInsight/generate/equalsWithHashCode/jvmInlineValueClassWithFullValueClasses.kt");
+    }
+
     @TestMetadata("keepQuotes.kt")
     public void testKeepQuotes() throws Exception {
         runTest("../../idea/tests/testData/codeInsight/generate/equalsWithHashCode/keepQuotes.kt");
