@@ -4,7 +4,7 @@ package com.intellij.openapi.updateSettings.impl.productMigration
 import com.intellij.openapi.application.productMigration.MigrationStatus
 import com.intellij.openapi.updateSettings.impl.PlatformUpdates
 import com.intellij.openapi.updateSettings.impl.parseUpdateData
-import com.intellij.openapi.util.io.IoTestUtil
+import com.intellij.openapi.util.JDOMUtil
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertSame
@@ -13,15 +13,11 @@ import org.junit.Test
 import java.io.IOException
 
 class PlatformUpdateDecisionTest {
-  // only macOS reads the <distribution> element
-  private val migrationBuild by lazy {
-    IoTestUtil.assumeMacOS()
-    loaded("""
-      <build number="271.1234" version="2027.1">
-        <button name="Download" url="https://www.jetbrains.com/go/download/" download="true"/>
-        ${distributionXml()}
-      </build>""")
-  }
+  private val migrationBuild = loaded("""
+    <build number="271.1234" version="2027.1">
+      <button name="Download" url="https://www.jetbrains.com/go/download/" download="true"/>
+      ${distributionXml()}
+    </build>""")
 
   private val usualBuild = loaded("""
     <build number="263.200" version="2026.3.1">
@@ -109,13 +105,14 @@ class PlatformUpdateDecisionTest {
   ): PlatformUpdateDecision = decidePlatformUpdate(updates, userInitiated, remindLaterActive, status)
 
   private fun loaded(buildXml: String): PlatformUpdates.Loaded {
-    val channel = parseUpdateData("""
+    // the test gives the OS, because only some systems read the <distribution> element
+    val channel = parseUpdateData(JDOMUtil.load("""
       <products>
         <product name="GoLand">
           <code>GO</code>
           <channel id="GO_Release" status="release" licensing="release">${buildXml}</channel>
         </product>
-      </products>""", "GO")!!.channels.single()
+      </products>"""), "GO", distributionOs = "mac")!!.channels.single()
     return PlatformUpdates.Loaded(channel.builds.single(), channel)
   }
 }

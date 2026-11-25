@@ -4,7 +4,7 @@ package com.intellij.openapi.updateSettings.impl
 import com.intellij.openapi.updateSettings.UpdateStrategyCustomization
 import com.intellij.openapi.updateSettings.impl.productMigration.distributionXml
 import com.intellij.openapi.util.BuildNumber
-import com.intellij.openapi.util.io.IoTestUtil
+import com.intellij.openapi.util.JDOMUtil
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
@@ -81,7 +81,6 @@ class UpdateStrategyTest {
 
   @Test
   fun `build with a distribution is a manual download for a direct caller`() {
-    IoTestUtil.assumeMacOS()
     val result = assertLoaded(
       currentBuild = "IU-263.100",
       selectedChannel = ChannelStatus.RELEASE,
@@ -395,7 +394,8 @@ class UpdateStrategyTest {
     settings.ignoredBuildNumbers += ignoredBuilds
     return UpdateStrategy(
       BuildNumber.fromString(currentBuild)!!,
-      parseUpdateData(updatesInfoText, "IU"),
+      // the test gives the OS, because only some systems read the <distribution> element
+      parseUpdateData(JDOMUtil.load(updatesInfoText), "IU", distributionOs = "mac"),
       settings,
       UpdateStrategyCustomization(),
     ).checkForUpdates()

@@ -8,7 +8,6 @@ import com.intellij.openapi.updateSettings.impl.parseDistribution
 import com.intellij.openapi.updateSettings.impl.parseUpdateData
 import com.intellij.openapi.updateSettings.impl.productMigration.distributionXml
 import com.intellij.openapi.util.JDOMUtil
-import com.intellij.openapi.util.io.IoTestUtil
 import com.intellij.util.system.CpuArch
 import com.intellij.util.system.OS
 import org.junit.Assert.assertEquals
@@ -146,8 +145,8 @@ class UpdateInfoParsingTest {
 
   @Test
   fun distribution() {
-    IoTestUtil.assumeMacOS()
-    val builds = parseUpdateData("""
+    // the test gives the OS, because only some systems read the <distribution> element
+    val builds = parseUpdateData(JDOMUtil.load("""
       <products>
         <product name="GoLand">
           <code>GO</code>
@@ -158,7 +157,7 @@ class UpdateInfoParsingTest {
             <build number="263.200" version="2026.3.2"/>
           </channel>
         </product>
-      </products>""".trimIndent(), "GO")!!.channels[0].builds
+      </products>""".trimIndent()), "GO", distributionOs = "mac")!!.channels[0].builds
 
     val distribution = builds[0].distribution!!
     assertEquals("JB", distribution.product)
