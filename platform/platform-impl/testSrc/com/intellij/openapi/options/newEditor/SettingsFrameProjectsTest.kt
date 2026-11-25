@@ -609,6 +609,52 @@ internal class SettingsFrameProjectsTest {
   }
 
   @Test
+  fun `a frame guest that joins a window with no project shows the selector above the open page`(): Unit = inFrame(withAppChildPage = true) { disposable ->
+    suppressSettingsOfOwner(disposable)
+    WindowManagerEx.getInstanceEx().removeFrameGuest(guest)
+    withForcedRespectIsShowingClientProperty {
+      val projects = SettingsFrameProjects.create(owner)!!
+      val group = createGroup(projects, disposable)
+      val page = projectPage(group)
+      val editor = createEditor(group, page, disposable)
+      waitFor("the project-level page") { editor.selectedConfigurable === page }
+      val tabs = UIUtil.findComponentOfType(editor.content, SingleHeightTabs::class.java)!!
+      assertThat(isVisibleIn(editor.content, tabs)).isFalse()
+
+      WindowManagerEx.getInstanceEx().addFrameGuest(owner, guest)
+      SettingsFrameGuestJoins.guestOpened(guest)
+
+      waitFor("the tab of the frame guest that joined") { tabs.tabs.map { it.`object` } == listOf(guest) }
+      waitFor("the selector above the project-level page") { isVisibleIn(editor.content, tabs) }
+      waitFor("the page of the frame guest") { ConfigurableWrapper.cast(FrameProjectsTestProjectPage::class.java, page) === pagesByProject.get(guest) }
+    }
+  }
+
+  @Test
+  fun `a frame guest that joins a window with no project shows the selector above a page selected after the join`(): Unit = inFrame { disposable ->
+    suppressSettingsOfOwner(disposable)
+    WindowManagerEx.getInstanceEx().removeFrameGuest(guest)
+    withForcedRespectIsShowingClientProperty {
+      val projects = SettingsFrameProjects.create(owner)!!
+      val group = createGroup(projects, disposable)
+      val appPage = findPages(group, APP_PAGE_ID).single()
+      val editor = createEditor(group, appPage, disposable)
+      waitFor("the application-level page") { editor.selectedConfigurable === appPage }
+      val tabs = UIUtil.findComponentOfType(editor.content, SingleHeightTabs::class.java)!!
+
+      WindowManagerEx.getInstanceEx().addFrameGuest(owner, guest)
+      SettingsFrameGuestJoins.guestOpened(guest)
+      waitFor("the page of the frame guest in the tree") { findPages(group, PROJECT_PAGE_ID).isNotEmpty() }
+      val page = projectPage(group)
+
+      editor.treeView.select(page)
+      waitFor("the project-level page") { editor.selectedConfigurable === page }
+      waitFor("the selector above the project-level page") { isVisibleIn(editor.content, tabs) }
+      assertThat(tabs.tabs.map { it.`object` }).containsExactly(guest)
+    }
+  }
+
+  @Test
   fun `a frame guest that finished its open while the tree was built gets a tab in the new window`(): Unit = inFrame { disposable ->
     withForcedRespectIsShowingClientProperty {
       val projects = SettingsFrameProjects.create(owner)!!
