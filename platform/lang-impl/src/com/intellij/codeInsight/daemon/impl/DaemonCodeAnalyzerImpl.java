@@ -124,7 +124,6 @@ import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -184,7 +183,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
   private final DaemonListener myDaemonListenerPublisher;
 
   private final DaemonCodeAnalyzerRepaintIconHelper repaintIconHelper;
-  volatile Future<?> renewInBackgroundAndRestart = CompletableFuture.completedFuture(null); // accessed in EDT only
+  volatile CompletableFuture<Void> renewInBackgroundAndRestart = CompletableFuture.completedFuture(null); // accessed in EDT only
 
   public DaemonCodeAnalyzerImpl(@NotNull Project project, @NotNull CoroutineScope coroutineScope) {
     // DependencyValidationManagerImpl adds scope listener, so we need to force service creation
@@ -1288,7 +1287,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
     }
 
     boolean submitted = false;
-    int sessionCreationAttempts = 0;
+    boolean attemptedSessionCreation = false;
     boolean shouldRestart = true;
     ProcessCanceledException pce = null;
     // have to store created indicators because myUpdateProgress removes the canceled indicator immediately
@@ -1335,7 +1334,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
               progressIndicator = null;
             }
             else {
-              sessionCreationAttempts++;
+              attemptedSessionCreation = true;
               progressIndicator = queuePassesCreation(fileEditor, virtualFile, ArrayUtil.EMPTY_INT_ARRAY, mainDocumentPasses,
                                                        backgroundHighlighter);
             }
@@ -1357,10 +1356,9 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
     }
     finally {
       boolean wasCanceledDuringSubmit = ContainerUtil.exists(createdIndicators, p -> p.isCanceled());
-      if (((!submitted && sessionCreationAttempts != 0) || wasCanceledDuringSubmit) && shouldRestart) {
-        // happens e.g., when we are trying to open a directory and there's a FileEditor supporting this
-        // invokeLater is required because we can't stop daemon from inside UpdateRunnable, since its future hasn't been scheduled yet
-        // or when PCE happened in queuePassesCreation
+      // A cache miss leaves the retry to the background check, which can confirm that PSI exists.
+      if (shouldRestart && (wasCanceledDuringSubmit || (pce != null && !submitted && attemptedSessionCreation))) {
+        // Wait until UpdateRunnable completes before checking for a pending update.
         String reason = "Couldn't create session for " + activeEditors
                         + (pce == null ? "" : "; PCE was thrown: " + pce)
                         + (wasCanceledDuringSubmit ? "; was canceled during queuePassesCreation(): "+createdIndicators : "");
@@ -1398,9 +1396,11 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
   }
 
   /**
-   * @return HighlightingSession when everything's OK or
-   * return null if the session wasn't created because highlighter/document/psiFile wasn't found or
-   * throw PCE if it really wasn't an appropriate moment to ask
+   * Queues highlighting passes if the document and PSI are available.
+   * Schedules a background check if either is missing from the cache.
+   *
+   * @return the progress indicator, or {@code null} if no passes were queued
+   * @throws ProcessCanceledException if a write action is pending
    */
   @RequiresEdt
   ProgressIndicator queuePassesCreation(@NotNull FileEditor fileEditor,
@@ -1435,13 +1435,15 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
       CodeInsightContext context = cachedContext != null ? cachedContext : CodeInsightContexts.anyContext();
       PsiFile psiFileToSubmit = TextEditorBackgroundHighlighter.getCachedFileToHighlight(myProject, virtualFile, context);
       if (psiFileToSubmit == null || document == null) {
-        String reason = document == null ? "queuePassesCreation: couldn't submit" +  virtualFile + " because document is null: fileEditor="+ fileEditor+" ("+ fileEditor.getClass()+")"
-                        : "queuePassesCreation: psiFile is null for "+virtualFile+"; context:"+context+"; cachedContext:"+cachedContext;
         if (PassExecutorService.LOG.isDebugEnabled()) {
+          String reason = document == null
+                          ? "queuePassesCreation: couldn't submit " + virtualFile + " because document is null: fileEditor="
+                            + fileEditor + " (" + fileEditor.getClass() + ")"
+                          : "queuePassesCreation: psiFile is null for " + virtualFile + "; context:" + context
+                            + "; cachedContext:" + cachedContext;
           PassExecutorService.log(null, null, reason);
         }
-        renewInBackgroundAndRestart.cancel(false);
-        renewInBackgroundAndRestart = CompletableFuture.runAsync(() -> {
+        CompletableFuture<Void> renewal = CompletableFuture.runAsync(() -> {
           ApplicationManagerEx.getApplicationEx().tryRunReadAction(() -> {
             if (!myProject.isDisposed()) {
               // refresh the current file and cache it (in background) so that FileDocumentManager.getCachedDocument above could retrieve it later
@@ -1449,16 +1451,21 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
               if (renewedDocument != null) {
                 CodeInsightContext renewedContext = editor == null ? CodeInsightContexts.anyContext() : EditorContextManager.getEditorContext(editor, myProject);
                 PsiFile psiFile = TextEditorBackgroundHighlighter.renewFile(myProject, renewedDocument, renewedContext);
-                if (psiFile != null && !isRunning()) {
-                  // if for some reason the TextEditorBackgroundHighlighter.getCachedFileToHighlight() returned null,
-                  // but the full refresh and get PSI returned not-null PSI, restart the daemon (if not already restarted)
-                  // (but only in this case; all other cases e.g., the file out of project roots should not lead to endless restarts)
-                  stopProcess(true, reason);
+                if (psiFile != null) {
+                  // Queue an update and let the passes for other editors finish.
+                  synchronized (this) {
+                    if (!myDisposed) {
+                      scheduleIfNotRunning();
+                    }
+                  }
                 }
               }
             }
           });
         }, JobLauncher.getInstance());
+        // One update can start checks for several editors. The future completes when all pending checks finish.
+        CompletableFuture<Void> pendingRenewals = renewInBackgroundAndRestart;
+        renewInBackgroundAndRestart = pendingRenewals.isDone() ? renewal : CompletableFuture.allOf(pendingRenewals, renewal);
         return null;
       }
       progress = createUpdateProgress(fileEditor);
@@ -1860,7 +1867,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
     /**
      * @return true if no editor with this key is in {@code files} yet; always true for a key with an unknown context
      */
-    boolean addIfNew(@NotNull Set<FileInContext> files) {
+    boolean addIfNew(@NotNull Set<? super FileInContext> files) {
       return context == UNKNOWN_EDITOR_CONTEXT || files.add(this);
     }
   }

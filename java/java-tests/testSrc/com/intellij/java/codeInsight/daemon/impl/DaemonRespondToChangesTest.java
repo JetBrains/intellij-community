@@ -204,7 +204,6 @@ import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -484,14 +483,13 @@ public class DaemonRespondToChangesTest {
         try {
           fixture.setActiveEditors(editor);
           testDaemonCodeAnalyzer.waitForTermination();
-          Supplier<Future<?>> renewalTask = () -> Objects.requireNonNull(
-            ReflectionUtil.getField(DaemonCodeAnalyzerImpl.class, daemonCodeAnalyzer, Future.class, "renewInBackgroundAndRestart"));
-          var previousTask = renewalTask.get();
+          Future<?> previousTask = getFileRenewalTask(daemonCodeAnalyzer);
           WriteAction.run(() -> PsiManagerEx.getInstanceEx(project).getFileManager().setViewProvider(file, null));
           assertNull(TextEditorBackgroundHighlighter.getCachedFileToHighlight(project, file, CodeInsightContexts.anyContext()));
           daemonCodeAnalyzer.restart(fixture.getTestName(false));
-          PlatformTestUtil.waitWithEventsDispatching("The daemon must renew the file", () -> renewalTask.get() != previousTask, 10);
-          Future<?> renewal = renewalTask.get();
+          PlatformTestUtil.waitWithEventsDispatching("The daemon must renew the file",
+                                                     () -> getFileRenewalTask(daemonCodeAnalyzer) != previousTask, 10);
+          Future<?> renewal = getFileRenewalTask(daemonCodeAnalyzer);
           PlatformTestUtil.waitWithEventsDispatching("The file renewal must finish", renewal::isDone, 10);
           renewal.get();
           return renewal;
@@ -504,6 +502,11 @@ public class DaemonRespondToChangesTest {
       Editor editor = editorRef.get();
       LeakHunter.checkLeak(future, Editor.class, leaked -> leaked == editor);
     });
+  }
+
+  private static @NotNull Future<?> getFileRenewalTask(@NotNull DaemonCodeAnalyzerImpl daemonCodeAnalyzer) {
+    return Objects.requireNonNull(
+      ReflectionUtil.getField(DaemonCodeAnalyzerImpl.class, daemonCodeAnalyzer, Future.class, "renewInBackgroundAndRestart"));
   }
 
   public static class MyWaitingAnnotator extends DaemonAnnotatorsRespondToChangesTest.MyRecordingAnnotator {
@@ -3356,22 +3359,20 @@ public class DaemonRespondToChangesTest {
       PsiFile psiFile = read(() -> PsiManager.getInstance(project).findFile(virtualFile));
       assertNull(psiFile, String.valueOf(psiFile));
 
-      AtomicInteger restarts = new AtomicInteger();
-      project.getMessageBus().connect(fixture.getTestRootDisposable()).subscribe(DaemonCodeAnalyzer.DAEMON_EVENT_TOPIC,
-              new DaemonCodeAnalyzer.DaemonListener() {
-                @Override
-                public void daemonStarting(@NotNull Collection<? extends @NotNull FileEditor> fileEditors) {
-                  restarts.incrementAndGet();
-                }
-              });
+      // Watch the PSI check because the daemon can loop before a highlighting session starts.
+      DaemonCodeAnalyzerImpl daemonCodeAnalyzer = fixture.getDaemonCodeAnalyzer();
+      Future<?> previousRenewal = getFileRenewalTask(daemonCodeAnalyzer);
       fixture.configureByExistingFile(virtualFile);
 
       EdtTestUtil.runInEdtAndWait(() -> {
-        TestTimeOut t = TestTimeOut.setTimeout(10, TimeUnit.SECONDS);
-        while (!t.isTimedOut()) {
-          assertTrue(restarts.get() < 10, restarts.toString());
-          PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
-        }
+        PlatformTestUtil.waitWithEventsDispatching("The daemon must check the file for PSI",
+                                                  () -> getFileRenewalTask(daemonCodeAnalyzer) != previousRenewal, 10);
+        Future<?> renewal = getFileRenewalTask(daemonCodeAnalyzer);
+        PlatformTestUtil.waitWithEventsDispatching("The daemon must finish checking the file for PSI", renewal::isDone, 10);
+        renewal.get();
+        // Run any retry that the daemon posted to the EDT before comparing the futures.
+        PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
+        assertSame(renewal, getFileRenewalTask(daemonCodeAnalyzer), "The daemon scheduled another check for a file without PSI");
       });
     });
   }
