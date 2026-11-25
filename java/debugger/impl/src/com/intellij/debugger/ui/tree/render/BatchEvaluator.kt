@@ -159,6 +159,7 @@ class BatchEvaluator private constructor() {
         }
       }
       catch (e: EvaluateException) {
+        if (e.cause is ObjectCollectedException) return false
         val exceptionFromTargetVM = e.exceptionFromTargetVM
         if (exceptionFromTargetVM != null && "java.io.UTFDataFormatException" == exceptionFromTargetVM.referenceType().name()) {
           // one of the strings is too long - just fall back to the regular separate toString calls
