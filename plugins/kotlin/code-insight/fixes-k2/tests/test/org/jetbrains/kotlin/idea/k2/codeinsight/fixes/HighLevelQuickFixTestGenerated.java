@@ -9986,6 +9986,16 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
         public void testTypeParametersClass() throws Exception {
             runTest("../../../idea/tests/testData/quickfix/implement/typeParametersClass.kt");
         }
+
+        @TestMetadata("unnamedContextParameter.kt")
+        public void testUnnamedContextParameter() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/implement/unnamedContextParameter.kt");
+        }
+
+        @TestMetadata("unnamedContextParameterInGenericInterface.kt")
+        public void testUnnamedContextParameterInGenericInterface() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/implement/unnamedContextParameterInGenericInterface.kt");
+        }
     }
 
 
