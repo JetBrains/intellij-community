@@ -96,11 +96,75 @@ class PyUnnecessaryCastInspectionTest : PyCodeInsightTestCase() {
     """.trimIndent())
 
   @Test
+  @TestFor(issues = ["PY-92667"])
   fun `cast of Any`() = test("""
     from typing import Any, cast
 
     def func(val: Any) -> int:
-        return cast(int, val)  # WEAK_WARNING Unnecessary cast; type is already 'int' FIXME # a cast of Any narrows the type
+        return cast(int, val)
+    """.trimIndent())
+
+  @Test
+  @TestFor(issues = ["PY-92667"])
+  fun `cast of a value to Any`() = test("""
+    from typing import Any, cast
+
+    def func(val: int) -> Any:
+        return cast(Any, val)
+    """.trimIndent())
+
+  @Test
+  @TestFor(issues = ["PY-92667"])
+  fun `cast of a collection of Any`() = test("""
+    from typing import Any, cast
+
+    def func(val: list[Any]) -> list[int]:
+        return cast(list[int], val)
+    """.trimIndent())
+
+  @Test
+  @TestFor(issues = ["PY-92667"])
+  fun `cast of a callable to a callable with any parameters`() = test("""
+    from typing import Callable, cast
+
+    def func(cb: Callable[[str], int]) -> Callable[..., int]:
+        return cast(Callable[..., int], cb)
+    """.trimIndent())
+
+  @Test
+  @TestFor(issues = ["PY-92667"])
+  fun `cast of a callable to its type`() = test("""
+    from typing import Callable, cast
+
+    def func(cb: Callable[[str], int]) -> Callable[[str], int]:
+        return cast(Callable[[str], int], cb)  # WEAK_WARNING Unnecessary cast; type is already '(str) -> int'
+    """.trimIndent())
+
+  @Test
+  @TestFor(issues = ["PY-92667"])
+  fun `cast of an unresolved value`() = test("""
+    from typing import cast
+
+    def func() -> int:
+        return cast(int, undefined_name)
+    """.trimIndent())
+
+  @Test
+  @TestFor(issues = ["PY-92667"])
+  fun `cast of Any to Any`() = test("""
+    from typing import Any, cast
+
+    def func(val: Any) -> Any:
+        return cast(Any, val)  # WEAK_WARNING Unnecessary cast; type is already 'Any'
+    """.trimIndent())
+
+  @Test
+  @TestFor(issues = ["PY-92667"])
+  fun `cast of a collection of Any to the same type`() = test("""
+    from typing import Any, cast
+
+    def func(val: list[Any]) -> list[Any]:
+        return cast(list[Any], val)  # WEAK_WARNING Unnecessary cast; type is already 'list[Any]'
     """.trimIndent())
 
   @Test

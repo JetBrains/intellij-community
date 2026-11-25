@@ -19,7 +19,12 @@ import com.jetbrains.python.documentation.PythonDocumentationProvider
 import com.jetbrains.python.psi.PyCallExpression
 import com.jetbrains.python.psi.PyExpression
 import com.jetbrains.python.psi.impl.PyPsiUtils
+import com.jetbrains.python.psi.types.PyAnyType
+import com.jetbrains.python.psi.types.PyCallableType
 import com.jetbrains.python.psi.types.PyLiteralType
+import com.jetbrains.python.psi.types.PyRecursiveTypeVisitor
+import com.jetbrains.python.psi.types.PyRecursiveTypeVisitor.PyTypeTraverser
+import com.jetbrains.python.psi.types.PyRecursiveTypeVisitor.Traversal
 import com.jetbrains.python.psi.types.PyType
 import com.jetbrains.python.psi.types.PyTypeUtil
 import com.jetbrains.python.psi.types.PyTypeUtil.asUnionSequence
@@ -51,7 +56,7 @@ class PyUnnecessaryCastInspection : PyInspection() {
         val value = args[1]
         val actualType: PyType? = myTypeEvalContext.getType(value)
 
-        if (!targetType.isSameType(actualType, myTypeEvalContext) &&
+        if (!isRedundantCast(targetType, actualType, myTypeEvalContext) &&
             !isSameAsWidenedLiteral(targetType, value, myTypeEvalContext)) return
         val toName = PythonDocumentationProvider.getTypeName(targetType, myTypeEvalContext)
         registerProblem(
@@ -78,6 +83,47 @@ class PyUnnecessaryCastInspection : PyInspection() {
       }
     }
   }
+}
+
+/**
+ * Returns true when a cast of a value of [actualType] to [targetType] changes nothing.
+ *
+ * `Any` matches every type in both directions.
+ * When one of the two types contains `Any` or Unknown, the cast is redundant only when the two types are equal.
+ */
+private fun isRedundantCast(targetType: PyType?, actualType: PyType?, context: TypeEvalContext): Boolean {
+  if (containsAnyOrUnknown(targetType, context) || containsAnyOrUnknown(actualType, context)) {
+    return targetType == actualType
+  }
+  return targetType.isSameType(actualType, context)
+}
+
+private fun containsAnyOrUnknown(root: PyType?, context: TypeEvalContext): Boolean {
+  var found = false
+  PyRecursiveTypeVisitor.traverse(root, context, object : PyTypeTraverser() {
+    override fun visitPyType(type: PyType): Traversal {
+      if (type is PyAnyType) {
+        found = true
+        return Traversal.TERMINATE
+      }
+      return Traversal.CONTINUE
+    }
+
+    override fun visitPyCallableType(callableType: PyCallableType): Traversal {
+      // `Callable[..., R]` has no parameter list, and it takes any arguments
+      if (callableType.getParameters(context) == null) {
+        found = true
+        return Traversal.TERMINATE
+      }
+      return visitPyType(callableType)
+    }
+
+    override fun visitUnknownType(): Traversal {
+      found = true
+      return Traversal.TERMINATE
+    }
+  })
+  return found
 }
 
 /**
