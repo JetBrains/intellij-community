@@ -3885,6 +3885,53 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
       foo4: StarParam = named_parameter
       #                 ^^^^^^^^^^^^^^^ WARNING Expected type 'StarParam', got '(arg: float | int) -> float | int' instead
       """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-90882"])
+    fun `function against callback protocol that overrides the call of its base protocol`() = test("""
+      from typing import Protocol
+
+      class Base(Protocol):
+          def __call__(self, arg: int) -> int: ...
+
+      class Derived(Base, Protocol):
+          def __call__(self, arg: int) -> int: ...
+
+      def f(arg: int) -> int: ...
+      def g(arg: str) -> int: ...
+
+      x: Derived = f
+      y: Derived = g
+      #            └ WARNING Expected type 'Derived', got 'def g(arg: str) -> int' instead
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-90882"])
+    fun `function against protocol with call and a member of a distant base protocol`() = test("""
+      from typing import Protocol
+
+      class Named(Protocol):
+          name: str
+
+      class Base(Named, Protocol):
+          def __call__(self, arg: int) -> int: ...
+
+      class Derived(Base, Protocol):
+          def __call__(self, arg: int) -> int: ...
+
+      class Empty(Named, Protocol):
+          pass
+
+      class Callback(Empty, Protocol):
+          def __call__(self, arg: int) -> int: ...
+
+      def f(arg: int) -> int: ...
+
+      x: Derived = f
+      #            └ WARNING Expected type 'Derived', got 'def f(arg: int) -> int' instead
+      y: Callback = f
+      #             └ WARNING Expected type 'Callback', got 'def f(arg: int) -> int' instead
+      """.trimIndent())
   }
 
   @Nested
