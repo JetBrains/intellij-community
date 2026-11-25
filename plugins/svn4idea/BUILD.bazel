@@ -10,7 +10,6 @@ dist_plugin(
     descriptor = "resources/META-INF/plugin.xml",
     jars = {"lib/vcs-svn.jar": ["intellij.vcs.svn"]},
     main_module = "intellij.vcs.svn",
-    module_descriptors = ["@community//libraries/sqlite:resources/intellij.libraries.sqlite.xml"],
     module_jar_paths = {"intellij.libraries.sqlite": "lib/intellij.libraries.sqlite.jar"},
     module_labels = {"intellij.vcs.svn": "//plugins/svn4idea:vcs-svn"},
 )

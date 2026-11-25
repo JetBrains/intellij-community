@@ -30,7 +30,6 @@ dist_plugin(
     jars = {"lib/java-guiForms-designer.jar": ["intellij.java.guiForms.designer"]},
     main_module = "intellij.java.guiForms.designer",
     mode_refused_content_modules = {"frontend": ["intellij.java.guiForms.jps"]},
-    module_descriptors = ["@community//plugins/ui-designer/jps-plugin:resources/intellij.java.guiForms.jps.xml"],
     module_labels = {"intellij.java.guiForms.designer": "//plugins/ui-designer:java-guiForms-designer"},
 )
 ### auto-generated section `dev intellij.java.guiForms.designer` end

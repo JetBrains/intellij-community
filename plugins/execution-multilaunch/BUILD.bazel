@@ -9,7 +9,6 @@ dist_plugin(
     descriptor = "resources/META-INF/plugin.xml",
     jars = {"lib/execution-multilaunch-plugin.jar": ["intellij.execution.multilaunch.plugin"]},
     main_module = "intellij.execution.multilaunch.plugin",
-    module_descriptors = ["@community//plugins/execution-multilaunch/core:resources/intellij.execution.multilaunch.core.xml"],
     module_labels = {"intellij.execution.multilaunch.plugin": "//plugins/execution-multilaunch:execution-multilaunch-plugin"},
 )
 ### auto-generated section `dev intellij.execution.multilaunch.plugin` end

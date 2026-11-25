@@ -9,7 +9,6 @@ dist_plugin(
     descriptor = "resources/META-INF/plugin.xml",
     jars = {"lib/platform-editorTabGrouping.jar": ["intellij.platform.editorTabGrouping"]},
     main_module = "intellij.platform.editorTabGrouping",
-    module_descriptors = ["@community//plugins/editor-tab-grouping:resources/intellij.platform.editorTabGrouping.impl.xml"],
     module_labels = {"intellij.platform.editorTabGrouping": "//plugins/editor-tab-grouping/plugin:editorTabGrouping"},
 )
 ### auto-generated section `dev intellij.platform.editorTabGrouping` end

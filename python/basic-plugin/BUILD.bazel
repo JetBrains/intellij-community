@@ -15,13 +15,6 @@ dist_plugin(
     descriptor = "resources/META-INF/plugin.xml",
     jars = {"lib/python-basic-plugin.jar": ["intellij.python.basic.plugin"]},
     main_module = "intellij.python.basic.plugin",
-    module_descriptors = [
-        "@community//python/python-ast:resources/intellij.python.ast.xml",
-        "@community//python/python-parser:resources/intellij.python.parser.xml",
-        "@community//python/python-syntax-core/frontend:resources/intellij.python.syntax.core.frontend.xml",
-        "@community//python/python-syntax-core:resources/intellij.python.syntax.core.xml",
-        "@community//python/python-syntax:resources/intellij.python.syntax.xml",
-    ],
     module_jar_paths = {
         "intellij.python.parser": "lib/intellij.python.parser.jar",
         "intellij.python.ast": "lib/intellij.python.ast.jar",

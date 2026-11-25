@@ -23,14 +23,6 @@ dist_plugin(
             "intellij.properties.structuralSearch",
         ],
     },
-    module_descriptors = [
-        "@community//plugins/properties/copyright:resources/intellij.properties.copyright.xml",
-        "@community//plugins/properties/properties-common:resources/intellij.properties.xml",
-        "@community//plugins/properties/properties-psi-api:resources/intellij.properties.psi.xml",
-        "@community//plugins/properties/properties-psi-impl:resources/intellij.properties.backend.psi.xml",
-        "@community//plugins/properties/structuralsearch:resources/intellij.properties.structuralSearch.xml",
-        "@community//plugins/properties:resources/intellij.properties.backend.xml",
-    ],
     module_jar_paths = {
         "intellij.properties": "lib/intellij.properties.jar",
         "intellij.properties.psi": "lib/intellij.properties.psi.jar",

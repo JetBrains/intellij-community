@@ -8,7 +8,6 @@ dist_plugin(
     descriptor = "resources/META-INF/plugin.xml",
     jars = {"lib/tipsOfTheDay-plugin.jar": ["intellij.tipsOfTheDay.plugin"]},
     main_module = "intellij.tipsOfTheDay.plugin",
-    module_descriptors = ["@community//plugins/tips-of-the-day:resources/intellij.tips.xml"],
     module_labels = {"intellij.tipsOfTheDay.plugin": "//plugins/tips-of-the-day/plugin"},
 )
 ### auto-generated section `dev intellij.tipsOfTheDay.plugin` end

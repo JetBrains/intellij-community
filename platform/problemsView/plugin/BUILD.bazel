@@ -26,17 +26,6 @@ dist_plugin(
             "intellij.platform.problemView.security.backend",
         ],
     },
-    module_descriptors = [
-        "@community//platform/problemsView/backend:resources/intellij.platform.problemView.backend.xml",
-        "@community//platform/problemsView/collector:resources/intellij.platform.problemView.collector.xml",
-        "@community//platform/problemsView/core:resources/intellij.platform.problemView.core.xml",
-        "@community//platform/problemsView/frontend:resources/intellij.platform.problemView.frontend.xml",
-        "@community//platform/problemsView/rpc.backend:resources/intellij.platform.problemView.rpc.backend.xml",
-        "@community//platform/problemsView/security/backend:resources/intellij.platform.problemView.security.backend.xml",
-        "@community//platform/problemsView/security:resources/intellij.platform.problemView.security.xml",
-        "@community//platform/problemsView/shared:resources/intellij.platform.problemView.shared.xml",
-        "@community//platform/problemsView/ui:resources/intellij.platform.problemView.ui.xml",
-    ],
     module_labels = {"intellij.platform.problemView.plugin": "//platform/problemsView/plugin"},
 )
 ### auto-generated section `dev intellij.platform.problemView.plugin` end

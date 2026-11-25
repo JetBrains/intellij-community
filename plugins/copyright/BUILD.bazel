@@ -19,7 +19,6 @@ dist_plugin(
     descriptor = "resources/META-INF/plugin.xml",
     jars = {"lib/copyright.jar": ["intellij.copyright"]},
     main_module = "intellij.copyright",
-    module_descriptors = ["@community//plugins/copyright/vcs:resources/intellij.copyright.vcs.xml"],
     module_labels = {"intellij.copyright": "//plugins/copyright"},
 )
 ### auto-generated section `dev intellij.copyright` end

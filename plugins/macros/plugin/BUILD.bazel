@@ -9,7 +9,6 @@ dist_plugin(
     descriptor = "resources/META-INF/plugin.xml",
     jars = {"lib/macros-plugin.jar": ["intellij.macros.plugin"]},
     main_module = "intellij.macros.plugin",
-    module_descriptors = ["@community//plugins/macros/shared:resources/intellij.macros.shared.xml"],
     module_labels = {"intellij.macros.plugin": "//plugins/macros/plugin"},
 )
 ### auto-generated section `dev intellij.macros.plugin` end

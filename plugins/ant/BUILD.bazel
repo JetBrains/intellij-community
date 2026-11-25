@@ -20,7 +20,6 @@ dist_plugin(
     descriptor = "resources/META-INF/plugin.xml",
     jars = {"lib/ant.jar": ["intellij.ant"]},
     main_module = "intellij.ant",
-    module_descriptors = ["@community//plugins/ant/jps-plugin:resources/intellij.ant.jps.xml"],
     module_jar_paths = {"intellij.ant.jps": "lib/intellij.ant.jps.jar"},
     module_labels = {"intellij.ant": "//plugins/ant"},
 )

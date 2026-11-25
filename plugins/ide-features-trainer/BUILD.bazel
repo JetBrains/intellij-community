@@ -48,15 +48,6 @@ dist_plugin(
             "intellij.featuresTrainer.tips",
         ],
     },
-    module_descriptors = [
-        "@community//libraries/assertj-core:resources/intellij.libraries.assertj.core.xml",
-        "@community//libraries/assertj-swing:resources/intellij.libraries.assertj.swing.xml",
-        "@community//libraries/git-learning-project:resources/intellij.libraries.git.learning.project.xml",
-        "@community//plugins/git-features-trainer:resources/intellij.vcs.git.featuresTrainer.xml",
-        "@community//plugins/ide-features-trainer/onboarding:resources/intellij.featuresTrainer.onboarding.xml",
-        "@community//plugins/ide-features-trainer/tips:resources/intellij.featuresTrainer.tips.xml",
-        "@community//plugins/kotlin/onboarding-promoter:resources/intellij.kotlin.onboarding.promoter.xml",
-    ],
     module_labels = {"intellij.featuresTrainer": "//plugins/ide-features-trainer:featuresTrainer"},
 )
 ### auto-generated section `dev intellij.featuresTrainer` end

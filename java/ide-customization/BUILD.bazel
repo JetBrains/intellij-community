@@ -27,10 +27,6 @@ dist_plugin(
             "intellij.java.ide.customization.backend",
         ],
     },
-    module_descriptors = [
-        "@community//java/ide-customization/backend:resources/intellij.java.ide.customization.backend.xml",
-        "@community//java/ide-customization/training:resources/intellij.java.ide.customization.training.xml",
-    ],
     module_labels = {"intellij.java.ide.customization": "//java/ide-customization"},
 )
 ### auto-generated section `dev intellij.java.ide.customization` end

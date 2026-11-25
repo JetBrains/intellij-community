@@ -14,11 +14,6 @@ dist_plugin(
     jars = {"lib/python-zuban-plugin.jar": ["intellij.python.zuban.plugin"]},
     main_module = "intellij.python.zuban.plugin",
     mode_refused_content_modules = {"frontend": ["intellij.python.zuban"]},
-    module_descriptors = [
-        "@community//python/python-zuban/common:resources/intellij.python.zuban.common.xml",
-        "@community//python/python-zuban/frontend:resources/intellij.python.zuban.frontend.xml",
-        "@community//python/python-zuban:resources/intellij.python.zuban.xml",
-    ],
     module_labels = {"intellij.python.zuban.plugin": "//python/python-zuban/plugin"},
 )
 ### auto-generated section `dev intellij.python.zuban.plugin` end

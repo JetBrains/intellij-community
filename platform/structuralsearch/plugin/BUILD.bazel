@@ -10,7 +10,6 @@ dist_plugin(
     jars = {"lib/platform-structuralSearch-plugin.jar": ["intellij.platform.structuralSearch.plugin"]},
     main_module = "intellij.platform.structuralSearch.plugin",
     mode_refused_content_modules = {"frontend": ["intellij.platform.structuralSearch"]},
-    module_descriptors = ["@community//platform/structuralsearch:resources/intellij.platform.structuralSearch.xml"],
     module_labels = {"intellij.platform.structuralSearch.plugin": "//platform/structuralsearch/plugin"},
 )
 ### auto-generated section `dev intellij.platform.structuralSearch.plugin` end

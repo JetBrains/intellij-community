@@ -23,13 +23,6 @@ dist_plugin(
     },
     main_module = "intellij.platform.bookmarks.plugin",
     mode_refused_content_modules = {"frontend": ["intellij.platform.bookmarks.backend"]},
-    module_descriptors = [
-        "@community//platform/bookmarks/backend:resources/intellij.platform.bookmarks.backend.xml",
-        "@community//platform/bookmarks/frontend:resources/intellij.platform.bookmarks.frontend.xml",
-        "@community//platform/bookmarks:resources/intellij.platform.bookmarks.xml",
-        "@community//platform/vcs-log/impl/bookmarks:resources/intellij.platform.vcs.log.impl.bookmarks.xml",
-        "@community//platform/xdebugger-impl/bookmarks:resources/intellij.platform.debugger.impl.bookmarks.xml",
-    ],
     module_labels = {"intellij.platform.bookmarks.plugin": "//platform/bookmarks/plugin"},
 )
 ### auto-generated section `dev intellij.platform.bookmarks.plugin` end

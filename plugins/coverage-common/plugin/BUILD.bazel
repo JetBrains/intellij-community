@@ -15,10 +15,6 @@ dist_plugin(
         "lib/platform-coverage-plugin.jar": ["intellij.platform.coverage.plugin"],
     },
     main_module = "intellij.platform.coverage.plugin",
-    module_descriptors = [
-        "@community//plugins/coverage-common/intellij.platform.coverage.agent:resources/intellij.platform.coverage.agent.xml",
-        "@community//plugins/coverage-common:resources/intellij.platform.coverage.xml",
-    ],
     module_labels = {"intellij.platform.coverage.plugin": "//plugins/coverage-common/plugin"},
 )
 ### auto-generated section `dev intellij.platform.coverage.plugin` end

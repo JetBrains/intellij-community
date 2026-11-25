@@ -21,13 +21,6 @@ dist_plugin(
             "intellij.lombok.backend",
         ],
     },
-    module_descriptors = [
-        "@community//plugins/lombok/backend:resources/intellij.lombok.backend.xml",
-        "@community//plugins/lombok/compiler:resources/intellij.lombok.compiler.xml",
-        "@community//plugins/lombok/generated:resources/intellij.lombok.generated.xml",
-        "@community//plugins/lombok/shared:resources/intellij.lombok.shared.xml",
-        "@community//plugins/lombok:src/main/resources/intellij.lombok.xml",
-    ],
     module_labels = {"intellij.lombok.plugin": "//plugins/lombok/plugin"},
 )
 ### auto-generated section `dev intellij.lombok.plugin` end

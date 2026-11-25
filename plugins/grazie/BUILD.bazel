@@ -80,22 +80,6 @@ dist_plugin(
             "intellij.grazie.properties",
         ],
     },
-    module_descriptors = [
-        "@community//libraries/ai-grazie-rule-engine:resources/intellij.libraries.ai.grazie.rule.engine.xml",
-        "@community//libraries/ai-grazie-semantic-engine:resources/intellij.libraries.ai.grazie.semantic.engine.xml",
-        "@community//libraries/ai.grazie.spell.gec.engine.local:resources/intellij.libraries.ai.grazie.spell.gec.engine.local.xml",
-        "@community//libraries/kotlin/logging:resources/intellij.libraries.kotlin.logging.xml",
-        "@community//plugins/grazie/java:src/main/resources/intellij.grazie.java.xml",
-        "@community//plugins/grazie/json:src/main/resources/intellij.grazie.json.xml",
-        "@community//plugins/grazie/markdown/specification:src/main/resources/intellij.grazie.markdown.specification.xml",
-        "@community//plugins/grazie/markdown:src/main/resources/intellij.grazie.markdown.xml",
-        "@community//plugins/grazie/properties:src/main/resources/intellij.grazie.properties.xml",
-        "@community//plugins/grazie/src:main/resources/intellij.grazie.core.xml",
-        "@community//plugins/grazie/todo:src/main/resources/intellij.grazie.todo.xml",
-        "@community//plugins/grazie/vcs:main/resources/intellij.grazie.vcs.xml",
-        "@community//plugins/grazie/xml:main/resources/intellij.grazie.xml.xml",
-        "@community//plugins/grazie/yaml:main/resources/intellij.grazie.yaml.xml",
-    ],
     module_labels = {"intellij.grazie": "//plugins/grazie"},
 )
 ### auto-generated section `dev intellij.grazie` end

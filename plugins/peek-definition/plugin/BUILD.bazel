@@ -9,7 +9,6 @@ dist_plugin(
     descriptor = "resources/META-INF/plugin.xml",
     jars = {"lib/peek-definition-plugin.jar": ["intellij.peek.definition.plugin"]},
     main_module = "intellij.peek.definition.plugin",
-    module_descriptors = ["@community//plugins/peek-definition/frontend:resources/intellij.peek.definition.frontend.xml"],
     module_labels = {"intellij.peek.definition.plugin": "//plugins/peek-definition/plugin"},
 )
 ### auto-generated section `dev intellij.peek.definition.plugin` end

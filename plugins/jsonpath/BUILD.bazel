@@ -19,7 +19,6 @@ dist_plugin(
     jars = {"lib/jsonpath.jar": ["intellij.jsonpath"]},
     main_module = "intellij.jsonpath",
     mode_refused_content_modules = {"frontend": ["intellij.jsonpath.scratch"]},
-    module_descriptors = ["@community//plugins/jsonpath/scratch:resources/intellij.jsonpath.scratch.xml"],
     module_labels = {"intellij.jsonpath": "//plugins/jsonpath"},
 )
 ### auto-generated section `dev intellij.jsonpath` end

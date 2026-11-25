@@ -15,12 +15,6 @@ dist_plugin(
     jars = {"lib/platform-structureView-plugin.jar": ["intellij.platform.structureView.plugin"]},
     main_module = "intellij.platform.structureView.plugin",
     mode_refused_content_modules = {"frontend": ["intellij.platform.structureView.backend"]},
-    module_descriptors = [
-        "@community//platform/structure-view-impl/backend:resources/intellij.platform.structureView.backend.xml",
-        "@community//platform/structure-view-impl/frontend:resources/intellij.platform.structureView.frontend.xml",
-        "@community//platform/structure-view-impl/intellij.platform.structureView.impl:resources/intellij.platform.structureView.impl.xml",
-        "@community//platform/structure-view-impl:resources/intellij.platform.structureView.xml",
-    ],
     module_labels = {"intellij.platform.structureView.plugin": "//platform/structure-view-impl/plugin"},
 )
 ### auto-generated section `dev intellij.platform.structureView.plugin` end

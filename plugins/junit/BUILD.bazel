@@ -25,16 +25,6 @@ dist_plugin(
             "intellij.junit.dashboard",
         ],
     },
-    module_descriptors = [
-        "@community//libraries/hamcrest:resources/intellij.libraries.hamcrest.xml",
-        "@community//libraries/junit4:resources/intellij.libraries.junit4.xml",
-        "@community//plugins/junit/dashboard:resources/intellij.junit.dashboard.xml",
-        "@community//plugins/junit/properties:resources/intellij.junit.properties.xml",
-        "@community//plugins/junit/vcs:resources/intellij.junit.vcs.xml",
-        "@community//plugins/junit5_rt:resources/intellij.junit.v5.rt.xml",
-        "@community//plugins/junit6_rt:resources/intellij.junit.v6.rt.xml",
-        "@community//plugins/junit_rt:resources/intellij.junit.rt.xml",
-    ],
     module_jar_paths = {
         "intellij.junit.rt": "lib/intellij.junit.rt.jar",
         "intellij.junit.v5.rt": "lib/intellij.junit.v5.rt.jar",

@@ -28,11 +28,6 @@ dist_plugin(
         "lib/testng.jar": ["intellij.testng"],
     },
     main_module = "intellij.testng",
-    module_descriptors = [
-        "@community//libraries/testng:resources/intellij.libraries.testng.xml",
-        "@community//plugins/testng/langInjection:resources/intellij.testng.langInjection.xml",
-        "@community//plugins/testng_rt:resources/intellij.testng.rt.xml",
-    ],
     module_jar_paths = {"intellij.testng.rt": "lib/intellij.testng.rt.jar"},
     module_labels = {"intellij.testng": "//plugins/testng"},
 )

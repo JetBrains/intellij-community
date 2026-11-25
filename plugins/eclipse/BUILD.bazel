@@ -21,10 +21,6 @@ dist_plugin(
     descriptor = "resources/META-INF/plugin.xml",
     jars = {"lib/eclipse.jar": ["intellij.eclipse"]},
     main_module = "intellij.eclipse",
-    module_descriptors = [
-        "@community//plugins/eclipse/common-eclipse-util:resources/intellij.eclipse.common.xml",
-        "@community//plugins/eclipse/jps-plugin:resources/intellij.eclipse.jps.xml",
-    ],
     module_jar_paths = {
         "intellij.eclipse.common": "lib/intellij.eclipse.common.jar",
         "intellij.eclipse.jps": "lib/intellij.eclipse.jps.jar",

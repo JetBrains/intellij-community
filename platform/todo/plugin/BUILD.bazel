@@ -16,13 +16,6 @@ dist_plugin(
     jars = {"lib/platform-todo-plugin.jar": ["intellij.platform.todo.plugin"]},
     main_module = "intellij.platform.todo.plugin",
     mode_refused_content_modules = {"frontend": ["intellij.platform.todo.backend"]},
-    module_descriptors = [
-        "@community//platform/todo/backend:resources/intellij.platform.todo.backend.xml",
-        "@community//platform/todo/frontend:resources/intellij.platform.todo.frontend.xml",
-        "@community//platform/todo:resources/intellij.platform.todo.xml",
-        "@community//platform/vcs-impl/lang/todo/frontend:resources/intellij.platform.vcs.impl.lang.todo.frontend.xml",
-        "@community//platform/vcs-impl/lang/todo:resources/intellij.platform.vcs.impl.lang.todo.xml",
-    ],
     module_labels = {"intellij.platform.todo.plugin": "//platform/todo/plugin"},
 )
 ### auto-generated section `dev intellij.platform.todo.plugin` end

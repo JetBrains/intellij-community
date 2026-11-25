@@ -20,11 +20,6 @@ dist_plugin(
     },
     main_module = "intellij.java.jshell",
     mode_refused_content_modules = {"frontend": ["intellij.java.jshell.console"]},
-    module_descriptors = [
-        "@community//plugins/jshell/console:resources/intellij.java.jshell.console.xml",
-        "@community//plugins/jshell/execution:resources/intellij.java.jshell.execution.xml",
-        "@community//plugins/jshell/protocol:resources/intellij.java.jshell.protocol.xml",
-    ],
     module_labels = {"intellij.java.jshell": "//plugins/jshell"},
 )
 ### auto-generated section `dev intellij.java.jshell` end

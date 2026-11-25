@@ -20,12 +20,6 @@ dist_plugin(
             "intellij.searchEverywhereLucene.performanceTesting",
         ],
     },
-    module_descriptors = [
-        "@community//plugins/search-everywhere-lucene/backend:resources/intellij.searchEverywhereLucene.backend.xml",
-        "@community//plugins/search-everywhere-lucene/common:resources/intellij.searchEverywhereLucene.common.xml",
-        "@community//plugins/search-everywhere-lucene/frontend:resources/intellij.searchEverywhereLucene.frontend.xml",
-        "@community//plugins/search-everywhere-lucene/test-commands:resources/intellij.searchEverywhereLucene.performanceTesting.xml",
-    ],
     module_jar_paths = {"intellij.searchEverywhereLucene.common": "lib/intellij.searchEverywhereLucene.common.jar"},
     module_labels = {"intellij.searchEverywhereLucene.plugin": "//plugins/search-everywhere-lucene:searchEverywhereLucene-plugin"},
 )

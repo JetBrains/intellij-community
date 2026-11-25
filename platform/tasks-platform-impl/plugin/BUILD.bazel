@@ -21,12 +21,6 @@ dist_plugin(
             "intellij.platform.tasks.impl.debugger",
         ],
     },
-    module_descriptors = [
-        "@community//platform/tasks-platform-api:resources/intellij.platform.tasks.xml",
-        "@community//platform/tasks-platform-impl/tasks.impl.bookmarks:resources/intellij.platform.tasks.impl.bookmarks.xml",
-        "@community//platform/tasks-platform-impl/tasks.impl.debugger:resources/intellij.platform.tasks.impl.debugger.xml",
-        "@community//platform/tasks-platform-impl:resources/intellij.platform.tasks.impl.xml",
-    ],
     module_labels = {"intellij.platform.tasks.plugin": "//platform/tasks-platform-impl/plugin"},
 )
 ### auto-generated section `dev intellij.platform.tasks.plugin` end

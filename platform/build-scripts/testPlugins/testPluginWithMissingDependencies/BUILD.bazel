@@ -10,7 +10,6 @@ dist_plugin(
     jars = {"lib/platform-buildScripts-testPlugins-testPluginWithMissingDependencies.jar": ["intellij.platform.buildScripts.testPlugins.testPluginWithMissingDependencies"]},
     main_module = "intellij.platform.buildScripts.testPlugins.testPluginWithMissingDependencies",
     mode_refused_content_modules = {"frontend": ["intellij.platform.buildScripts.testPlugins.testPluginWithMissingDependencies.module"]},
-    module_descriptors = ["@community//platform/build-scripts/testPlugins/testPluginWithMissingDependencies/module:resources/intellij.platform.buildScripts.testPlugins.testPluginWithMissingDependencies.module.xml"],
     module_labels = {"intellij.platform.buildScripts.testPlugins.testPluginWithMissingDependencies": "//platform/build-scripts/testPlugins/testPluginWithMissingDependencies"},
 )
 ### auto-generated section `dev intellij.platform.buildScripts.testPlugins.testPluginWithMissingDependencies` end

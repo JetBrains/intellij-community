@@ -30,10 +30,6 @@ dist_plugin(
     jars = {"lib/configurationScript.jar": ["intellij.configurationScript"]},
     main_module = "intellij.configurationScript",
     mode_refused_content_modules = {"frontend": ["intellij.configurationScript.backend"]},
-    module_descriptors = [
-        "@community//plugins/configuration-script/backend:resources/intellij.configurationScript.backend.xml",
-        "@community//plugins/configuration-script/execution:resources/intellij.configurationScript.execution.xml",
-    ],
     module_labels = {"intellij.configurationScript": "//plugins/configuration-script"},
 )
 ### auto-generated section `dev intellij.configurationScript` end

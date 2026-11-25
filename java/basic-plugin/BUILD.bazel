@@ -17,15 +17,6 @@ dist_plugin(
     descriptor = "resources/META-INF/plugin.xml",
     jars = {"lib/java-basic-plugin.jar": ["intellij.java.basic.plugin"]},
     main_module = "intellij.java.basic.plugin",
-    module_descriptors = [
-        "@community//java/basic-plugin/frontend:resources/intellij.java.basic.frontend.xml",
-        "@community//java/java-frontback-impl:resource/intellij.java.frontback.impl.xml",
-        "@community//java/java-frontback-psi-api:resources/intellij.java.frontback.psi.xml",
-        "@community//java/java-frontback-psi-impl:resources/intellij.java.frontback.psi.impl.xml",
-        "@community//java/java-psi-api:resources/intellij.java.psi.xml",
-        "@community//java/java-psi-impl:resources/intellij.java.psi.impl.xml",
-        "@community//java/java-syntax:resources/intellij.java.syntax.xml",
-    ],
     module_jar_paths = {
         "intellij.java.syntax": "lib/intellij.java.syntax.jar",
         "intellij.java.frontback.psi": "lib/intellij.java.frontback.psi.jar",

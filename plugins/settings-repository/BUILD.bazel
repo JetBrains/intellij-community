@@ -31,10 +31,6 @@ dist_plugin(
         "lib/settingsRepository.jar": ["intellij.settingsRepository"],
     },
     main_module = "intellij.settingsRepository",
-    module_descriptors = [
-        "@community//libraries/jgit-ssh:resources/intellij.libraries.jgit.ssh.xml",
-        "@community//libraries/sshd-osgi:resources/intellij.libraries.sshd.osgi.xml",
-    ],
     module_labels = {"intellij.settingsRepository": "//plugins/settings-repository"},
 )
 ### auto-generated section `dev intellij.settingsRepository` end

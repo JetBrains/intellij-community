@@ -9,7 +9,6 @@ dist_plugin(
     descriptor = "resources/META-INF/plugin.xml",
     jars = {"lib/extendedToolWindowsUi.jar": ["intellij.extendedToolWindowsUi"]},
     main_module = "intellij.extendedToolWindowsUi",
-    module_descriptors = ["@community//plugins/extended-toolwindows-ui/frontend:resources/intellij.extendedToolWindowsUi.frontend.xml"],
     module_labels = {"intellij.extendedToolWindowsUi": "//plugins/extended-toolwindows-ui:extendedToolWindowsUi"},
 )
 ### auto-generated section `dev intellij.extendedToolWindowsUi` end

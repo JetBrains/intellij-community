@@ -9,7 +9,6 @@ dist_plugin(
     descriptor = "resources/META-INF/plugin.xml",
     jars = {"lib/lsp-ui-plugin.jar": ["intellij.lsp.ui.plugin"]},
     main_module = "intellij.lsp.ui.plugin",
-    module_descriptors = ["@community//plugins/lsp.ui/lsp.ui.frontend:resources/intellij.lsp.ui.frontend.xml"],
     module_labels = {"intellij.lsp.ui.plugin": "//plugins/lsp.ui/lsp.ui.plugin"},
 )
 ### auto-generated section `dev intellij.lsp.ui.plugin` end

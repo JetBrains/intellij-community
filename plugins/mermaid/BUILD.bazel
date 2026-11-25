@@ -25,12 +25,6 @@ dist_plugin(
     jars = {"lib/mermaid.jar": ["intellij.mermaid"]},
     main_module = "intellij.mermaid",
     mode_refused_content_modules = {"frontend": ["intellij.mermaid.json"]},
-    module_descriptors = [
-        "@community//plugins/mermaid/frontend:resources/intellij.mermaid.frontend.xml",
-        "@community//plugins/mermaid/json:resources/intellij.mermaid.json.xml",
-        "@community//plugins/mermaid/markdown:resources/intellij.mermaid.markdown.xml",
-        "@community//plugins/mermaid/spellchecker:resources/intellij.mermaid.spellchecker.xml",
-    ],
     module_labels = {"intellij.mermaid": "//plugins/mermaid"},
 )
 ### auto-generated section `dev intellij.mermaid` end

@@ -16,14 +16,6 @@ dist_plugin(
     },
     descriptor = "resources/META-INF/plugin.xml",
     main_module = "intellij.jcef.plugin",
-    module_descriptors = [
-        "@community//libraries/jcef:resources/intellij.libraries.jcef.xml",
-        "@community//platform/new-ui-onboarding/jcef:resources/intellij.platform.ide.newUiOnboarding.jcef.xml",
-        "@community//platform/platform-impl/internal/jcef:resources/intellij.internal.jcef.xml",
-        "@community//platform/platform-impl/jcef:resources/intellij.platform.ide.impl.jcef.xml",
-        "@community//platform/ui.jcef:resources/intellij.platform.ui.jcef.xml",
-        "@community//plugins/jcef/frontend:resources/intellij.jcef.frontend.xml",
-    ],
     module_labels = {"intellij.jcef.plugin": "//plugins/jcef/plugin"},
     variants = [
         "darwin_aarch64",

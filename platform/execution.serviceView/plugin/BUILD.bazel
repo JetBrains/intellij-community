@@ -24,16 +24,6 @@ dist_plugin(
             "intellij.platform.execution.serviceView.backend",
         ],
     },
-    module_descriptors = [
-        "@community//platform/execution.dashboard/backend:resources/intellij.platform.execution.dashboard.backend.xml",
-        "@community//platform/execution.dashboard/debugger:resources/intellij.platform.execution.dashboard.debugger.xml",
-        "@community//platform/execution.dashboard/frontend:resources/intellij.platform.execution.dashboard.frontend.xml",
-        "@community//platform/execution.dashboard:resources/intellij.platform.execution.dashboard.xml",
-        "@community//platform/execution.serviceView/backend:resources/intellij.platform.execution.serviceView.backend.xml",
-        "@community//platform/execution.serviceView/frontend:resources/intellij.platform.execution.serviceView.frontend.xml",
-        "@community//platform/execution.serviceView:resources/intellij.platform.execution.serviceView.xml",
-        "@community//platform/remote-servers/clouds:resources/intellij.platform.clouds.xml",
-    ],
     module_labels = {"intellij.platform.execution.serviceView.plugin": "//platform/execution.serviceView/plugin"},
 )
 ### auto-generated section `dev intellij.platform.execution.serviceView.plugin` end

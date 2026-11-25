@@ -15,12 +15,6 @@ dist_plugin(
     jars = {"lib/python-pixi-plugin.jar": ["intellij.python.pixi.plugin"]},
     main_module = "intellij.python.pixi.plugin",
     mode_refused_content_modules = {"frontend": ["intellij.python.pixi.backend"]},
-    module_descriptors = [
-        "@community//libraries/night-config-toml:resources/intellij.libraries.night.config.toml.xml",
-        "@community//python/python-pixi/backend:resources/intellij.python.pixi.backend.xml",
-        "@community//python/python-pixi/common:resources/intellij.python.pixi.common.xml",
-        "@community//python/python-pixi/frontend:resources/intellij.python.pixi.frontend.xml",
-    ],
     module_labels = {"intellij.python.pixi.plugin": "//python/python-pixi/plugin"},
 )
 ### auto-generated section `dev intellij.python.pixi.plugin` end

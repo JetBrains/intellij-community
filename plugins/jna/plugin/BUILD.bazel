@@ -8,7 +8,6 @@ dist_plugin(
     content_modules = {"intellij.libraries.jna": "//libraries/jna"},
     descriptor = "resources/META-INF/plugin.xml",
     main_module = "intellij.jna.plugin",
-    module_descriptors = ["@community//libraries/jna:resources/intellij.libraries.jna.xml"],
     module_labels = {"intellij.jna.plugin": "//plugins/jna/plugin"},
 )
 

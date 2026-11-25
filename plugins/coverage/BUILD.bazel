@@ -29,12 +29,6 @@ dist_plugin(
         "lib/jacoco.jar": ["@lib//:java-coverage-_ja_co_co"],
     },
     main_module = "intellij.java.coverage",
-    module_descriptors = [
-        "@community//libraries/test-discovery:resources/intellij.libraries.test.discovery.xml",
-        "@community//plugins/coverage/coverage_rt:resources/intellij.java.coverage.rt.xml",
-        "@community//plugins/coverage/junit:resources/intellij.java.coverage.rt.junit.xml",
-        "@community//plugins/coverage/testng:resources/intellij.java.coverage.rt.testng.xml",
-    ],
     module_jar_paths = {"intellij.java.coverage.rt": "lib/intellij.java.coverage.rt.jar"},
     module_labels = {"intellij.java.coverage": "//plugins/coverage"},
 )

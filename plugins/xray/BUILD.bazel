@@ -14,11 +14,6 @@ dist_plugin(
     jars = {"lib/xray.jar": ["intellij.xray"]},
     main_module = "intellij.xray",
     mode_refused_content_modules = {"frontend": ["intellij.xray.backend"]},
-    module_descriptors = [
-        "@community//plugins/xray/backend:resources/intellij.xray.backend.xml",
-        "@community//plugins/xray/frontend:resources/intellij.xray.frontend.xml",
-        "@community//plugins/xray/shared:resources/intellij.xray.shared.xml",
-    ],
     module_labels = {"intellij.xray": "//plugins/xray"},
 )
 ### auto-generated section `dev intellij.xray` end

@@ -44,18 +44,6 @@ dist_plugin(
             "intellij.searchEverywhereMl.ranking.vcs",
         ],
     },
-    module_descriptors = [
-        "@community//libraries/mlapi/core:resources/intellij.libraries.mlapi.core.xml",
-        "@community//libraries/search-everywhere-find-all-model:resources/intellij.libraries.search.everywhere.find.all.model.xml",
-        "@community//libraries/search-everywhere-find-ec-model:resources/intellij.libraries.search.everywhere.find.ec.model.xml",
-        "@community//platform/ml-logs:resources/intellij.platform.ml.logs.xml",
-        "@community//plugins/search-everywhere-ml/ranking/core:resources/intellij.searchEverywhereMl.ranking.core.xml",
-        "@community//plugins/search-everywhere-ml/ranking/ext:resources/intellij.searchEverywhereMl.ranking.ext.xml",
-        "@community//plugins/search-everywhere-ml/ranking/java:resources/intellij.searchEverywhereMl.ranking.java.xml",
-        "@community//plugins/search-everywhere-ml/ranking/vcs:resources/intellij.searchEverywhereMl.ranking.vcs.xml",
-        "@community//plugins/search-everywhere-ml/ranking/yaml:resources/intellij.searchEverywhereMl.ranking.yaml.xml",
-        "@community//plugins/search-everywhere-ml/typos:resources/intellij.searchEverywhereMl.typos.xml",
-    ],
     module_labels = {"intellij.searchEverywhereMl": "//plugins/search-everywhere-ml"},
 )
 ### auto-generated section `dev intellij.searchEverywhereMl` end

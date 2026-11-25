@@ -28,11 +28,6 @@ dist_plugin(
         "lib/groovy-scripting.jar": ["intellij.groovy.scripting"],
     },
     main_module = "intellij.groovy.scripting",
-    module_descriptors = [
-        "@community//libraries/groovy/jsr223:resources/intellij.libraries.groovy.jsr223.xml",
-        "@community//libraries/groovy:resources/intellij.libraries.groovy.xml",
-        "@community//libraries/ivy:resources/intellij.libraries.ivy.xml",
-    ],
     module_labels = {"intellij.groovy.scripting": "//plugins/groovy-scripting"},
 )
 ### auto-generated section `dev intellij.groovy.scripting` end

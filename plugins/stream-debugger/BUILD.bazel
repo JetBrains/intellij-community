@@ -52,15 +52,6 @@ dist_plugin(
             "intellij.debugger.streams.java",
         ],
     },
-    module_descriptors = [
-        "@community//plugins/stream-debugger/backend:resources/intellij.debugger.streams.backend.xml",
-        "@community//plugins/stream-debugger/core:resources/intellij.debugger.streams.core.xml",
-        "@community//plugins/stream-debugger/java/frontend:resources/intellij.debugger.streams.java.frontend.xml",
-        "@community//plugins/stream-debugger/java:resources/intellij.debugger.streams.java.xml",
-        "@community//plugins/stream-debugger/rt/gatherers:resources/intellij.debugger.streams.java.rt.gatherers.xml",
-        "@community//plugins/stream-debugger/rt:resources/intellij.debugger.streams.java.rt.xml",
-        "@community//plugins/stream-debugger/shared:resources/intellij.debugger.streams.shared.xml",
-    ],
     module_jar_paths = {
         "intellij.debugger.streams.java.rt": "lib/intellij.debugger.streams.java.rt.jar",
         "intellij.debugger.streams.java.rt.gatherers": "lib/intellij.debugger.streams.java.rt.gatherers.jar",
