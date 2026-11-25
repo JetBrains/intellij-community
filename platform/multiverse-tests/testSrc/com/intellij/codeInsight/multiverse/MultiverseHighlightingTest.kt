@@ -66,6 +66,7 @@ import com.intellij.psi.PsiManager
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.testFramework.IndexingTestUtil
 import com.intellij.testFramework.InspectionTestUtil
+import com.intellij.testFramework.LightVirtualFile
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.createGlobalContextForTool
@@ -453,10 +454,12 @@ class MultiverseHighlightingTest {
 
     suspend fun findHiddenContexts() = findHiddenContexts(first, second, supportsSimultaneousRendering = false)
 
-    withContext(Dispatchers.EDT) { context = first }
-    assertEquals(setOf(second), findHiddenContexts(), "the view shows the context of the editor only")
-    withContext(Dispatchers.EDT) { context = second }
-    assertEquals(setOf(first), findHiddenContexts(), "the view follows the context of the editor")
+    withContext(Dispatchers.EDT) {
+      context = first
+      assertEquals(setOf(second), findHiddenContexts(), "the view shows the context of the editor only")
+      context = second
+      assertEquals(setOf(first), findHiddenContexts(), "the view follows the context of the editor")
+    }
   }
 
   /**
@@ -712,21 +715,23 @@ class MultiverseHighlightingTest {
     val otherFile = createOtherJavaFile()
     val otherFirst = FakeContext("other first")
     val otherProvider = registerOwningProvider(otherFile, Answer.Contexts(listOf(otherFirst)))
-    val manager = CodeInsightContextManager.getInstance(project)
-    getRawContexts()
-    assertEquals(listOf(otherFirst), readAction { manager.getCodeInsightContexts(otherFile) })
 
-    // The request names only the first file, so only a dropped answer can show this.
-    otherProvider.answer = Answer.Contexts(listOf(FakeContext("other second")))
-    val second = FakeContext("second")
-    provider.answer = Answer.Contexts(listOf(second))
     withContext(Dispatchers.EDT) {
-      CodeInsightContextManagerImpl.getInstanceImpl(project).requestInvalidationNow(setOf(virtualFile))
-    }
+      val manager = CodeInsightContextManagerImpl.getInstanceImpl(project)
+      val cachedContexts = manager.getCodeInsightContexts(virtualFile)
+      assertEquals(listOf(otherFirst), manager.getCodeInsightContexts(otherFile))
+      val changes = recordPerFileChanges()
 
-    assertEquals(listOf(second), getRawContexts())
-    assertEquals(listOf(otherFirst), readAction { manager.getCodeInsightContexts(otherFile) },
-                 "the other file keeps its cached answer")
+      otherProvider.answer = Answer.Contexts(listOf(FakeContext("other second")))
+      val second = FakeContext("second")
+      provider.answer = Answer.Contexts(listOf(second))
+      manager.requestInvalidationNow(setOf(virtualFile))
+      Reference.reachabilityFence(cachedContexts)
+
+      assertEquals(listOf(setOf(virtualFile)), changes)
+      assertEquals(listOf(second), manager.getCodeInsightContexts(virtualFile))
+      assertEquals(listOf(otherFirst), manager.getCodeInsightContexts(otherFile), "the other file keeps its cached answer")
+    }
   }
 
   // A recheck builds the answer again and drops only a changed answer, so an unchanged one costs no write action.
@@ -758,49 +763,52 @@ class MultiverseHighlightingTest {
     val first = FakeContext("first")
     val second = FakeContext("second")
     val provider = registerOwningProvider(virtualFile, Answer.Contexts(listOf(first, second)), preferred = second)
-    assertEquals(second, getPreferredContext())
-    val changes = recordPerFileChanges()
 
-    provider.preferred = first
     withContext(Dispatchers.EDT) {
-      CodeInsightContextManagerImpl.getInstanceImpl(project).requestInvalidationNow(setOf(virtualFile))
-    }
+      val contextManager = CodeInsightContextManagerImpl.getInstanceImpl(project)
+      val cachedContexts = contextManager.getCodeInsightContexts(virtualFile)
+      assertEquals(second, contextManager.getPreferredContext(virtualFile))
+      val changes = recordPerFileChanges()
 
-    assertEquals(listOf(setOf(virtualFile)), changes)
-    assertEquals(first, getPreferredContext())
+      provider.preferred = first
+      contextManager.requestInvalidationNow(setOf(virtualFile))
+      Reference.reachabilityFence(cachedContexts)
+
+      assertEquals(listOf(setOf(virtualFile)), changes)
+      assertEquals(first, contextManager.getPreferredContext(virtualFile))
+    }
   }
 
   // The GC can clear a cached answer while the editor still uses its contexts, so the recheck cannot skip such a file.
   @Test
   fun testRecheckOfFileWithNoCachedAnswerDropsTheFile(): Unit = runTest {
-    fixture.configureByText(JavaFileType.INSTANCE, "class C {}")
-    val changes = withContext(Dispatchers.EDT) {
-      registerOwningProvider(virtualFile, Answer.Contexts(listOf(FakeContext("first"))))
+    val file = LightVirtualFile("C.java")
+    registerOwningProvider(file, Answer.Contexts(listOf(FakeContext("first"))))
+
+    withContext(Dispatchers.EDT) {
       val changes = recordPerFileChanges()
 
-      CodeInsightContextManagerImpl.getInstanceImpl(project).requestInvalidationNow(setOf(virtualFile))
-      changes
-    }
+      CodeInsightContextManagerImpl.getInstanceImpl(project).requestInvalidationNow(setOf(file))
 
-    assertEquals(listOf(setOf(virtualFile)), changes)
+      assertEquals(listOf(setOf(file)), changes)
+    }
   }
 
   // A file with no cached answer counts as changed in a recheck, so the recheck shows that the call cached nothing.
   @Test
   fun testContextsWithoutCachingDoNotCacheTheAnswer(): Unit = runTest {
-    fixture.configureByText(JavaFileType.INSTANCE, "class C {}")
+    val file = LightVirtualFile("C.java")
     val first = FakeContext("first")
-    val manager = CodeInsightContextManagerImpl.getInstanceImpl(project)
-    val changes = withContext(Dispatchers.EDT) {
-      registerOwningProvider(virtualFile, Answer.Contexts(listOf(first)))
+    registerOwningProvider(file, Answer.Contexts(listOf(first)))
 
-      assertEquals(listOf(first), manager.getCodeInsightContextsWithoutCaching(virtualFile))
+    withContext(Dispatchers.EDT) {
+      val manager = CodeInsightContextManagerImpl.getInstanceImpl(project)
+      assertEquals(listOf(first), manager.getCodeInsightContextsWithoutCaching(file))
       val changes = recordPerFileChanges()
-      manager.requestInvalidationNow(setOf(virtualFile))
-      changes
-    }
+      manager.requestInvalidationNow(setOf(file))
 
-    assertEquals(listOf(setOf(virtualFile)), changes)
+      assertEquals(listOf(setOf(file)), changes)
+    }
   }
 
   @Test
@@ -808,13 +816,15 @@ class MultiverseHighlightingTest {
     fixture.configureByText(JavaFileType.INSTANCE, "class C {}")
     val first = FakeContext("first")
     val provider = registerOwningProvider(virtualFile, Answer.Contexts(listOf(first)))
-    assertEquals(listOf(first), getRawContexts())
 
-    provider.answer = Answer.Contexts(listOf(FakeContext("second")))
+    withContext(Dispatchers.EDT) {
+      val manager = CodeInsightContextManagerImpl.getInstanceImpl(project)
+      assertEquals(listOf(first), manager.getCodeInsightContexts(virtualFile))
 
-    assertEquals(listOf(first), readAction {
-      CodeInsightContextManagerImpl.getInstanceImpl(project).getCodeInsightContextsWithoutCaching(virtualFile)
-    })
+      provider.answer = Answer.Contexts(listOf(FakeContext("second")))
+
+      assertEquals(listOf(first), manager.getCodeInsightContextsWithoutCaching(virtualFile))
+    }
   }
 
   private fun recordPerFileChanges(): List<Set<VirtualFile>> {
