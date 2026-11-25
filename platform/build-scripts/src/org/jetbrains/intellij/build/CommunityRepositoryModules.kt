@@ -699,7 +699,6 @@ fun groovyPlugin(additionalModules: List<String> = emptyList(), addition: ((Plug
     spec.withModules(
       listOf(
         "intellij.groovy.psi",
-        "intellij.groovy.structuralSearch",
       )
     )
     spec.withModule("intellij.groovy.rt", "groovy-rt.jar")
