@@ -189,6 +189,33 @@ public final class BlockSupportImpl extends BlockSupport {
     return null;
   }
 
+  /**
+   * Parses {@code newFileText} as a copy of {@code fileImpl} without PSI events.
+   * The full reparse merges the result into the old tree.
+   */
+  static @NotNull ASTNode parseFileCopy(@NotNull PsiFileImpl fileImpl, @NotNull FileASTNode oldFileNode, @NotNull CharSequence newFileText) {
+    FileViewProvider viewProvider = fileImpl.getViewProvider();
+    viewProvider.getLanguages();
+    VirtualFile virtualFile = viewProvider.getVirtualFile();
+    FileType fileType = virtualFile.getFileType();
+    String fileName = fileImpl.getName();
+    LightVirtualFile lightFile = new LightVirtualFile(fileName, fileType, newFileText, virtualFile.getCharset(),
+                                                      viewProvider.getModificationStamp());
+    lightFile.setOriginalFile(virtualFile);
+
+    FileViewProvider providerCopy = PsiVersioningService.createVersionedPsiElements(oldFileNode, () -> viewProvider.createCopy(lightFile));
+    if (providerCopy.supportsSendingPsiEvents()) {
+      throw new AssertionError("Copied view provider must not correspond to real file for reparse to deliver correct events: " + viewProvider);
+    }
+    providerCopy.getLanguages();
+    SingleRootFileViewProvider.doNotCheckFileSizeLimit(lightFile); // optimization: do not convert file contents to bytes to determine if we should codeinsight it
+    PsiFileImpl newFile = getFileCopy(fileImpl, providerCopy);
+
+    newFile.setOriginalFile(fileImpl);
+
+    return PsiVersioningService.createVersionedPsiElements(oldFileNode, () -> newFile.getNode());
+  }
+
   private static @Nullable ASTNode tryReparseNode(@NotNull IReparseableElementTypeBase reparseable,
                                                   @NotNull ASTNode node,
                                                   @NotNull CharSequence newTextStr,
@@ -266,25 +293,7 @@ public final class BlockSupportImpl extends BlockSupport {
       return new ReparseResult(diffLog, oldFileNode, holderElement);
     }
     FileViewProvider viewProvider = fileImpl.getViewProvider();
-    viewProvider.getLanguages();
-    VirtualFile virtualFile = viewProvider.getVirtualFile();
-    FileType fileType = virtualFile.getFileType();
-    String fileName = fileImpl.getName();
-    LightVirtualFile lightFile = new LightVirtualFile(fileName, fileType, newFileText, virtualFile.getCharset(),
-                                                      viewProvider.getModificationStamp());
-    lightFile.setOriginalFile(virtualFile);
-
-    FileViewProvider providerCopy = PsiVersioningService.createVersionedPsiElements(oldFileNode, () -> viewProvider.createCopy(lightFile));
-    if (providerCopy.supportsSendingPsiEvents()) {
-      throw new AssertionError("Copied view provider must not corerspond to real file for reparse to deliver correct events: " + viewProvider);
-    }
-    providerCopy.getLanguages();
-    SingleRootFileViewProvider.doNotCheckFileSizeLimit(lightFile); // optimization: do not convert file contents to bytes to determine if we should codeinsight it
-    PsiFileImpl newFile = getFileCopy(fileImpl, providerCopy);
-
-    newFile.setOriginalFile(fileImpl);
-
-    ASTNode newFileElement = PsiVersioningService.createVersionedPsiElements(oldFileNode, () -> newFile.getNode());
+    ASTNode newFileElement = parseFileCopy(fileImpl, oldFileNode, newFileText);
     if (lastCommittedText.length() != oldFileNode.getTextLength()) {
       Document docCachedByFile = PsiDocumentManager.getInstance(fileImpl.getProject()).getCachedDocument(fileImpl);
       Document docByViewProvider = viewProvider.getDocument();
