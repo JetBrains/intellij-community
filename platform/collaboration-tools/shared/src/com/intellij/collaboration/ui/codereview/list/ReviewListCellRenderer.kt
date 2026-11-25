@@ -54,7 +54,6 @@ data class ReviewListCellUiOptions(
   val bordered: Boolean = true,
 )
 
-@ApiStatus.Internal
 internal class ReviewListCellRenderer<T>(
   private val presenter: (T) -> ReviewListItemPresentation,
   private val options: ReviewListCellUiOptions = ReviewListCellUiOptions(),
