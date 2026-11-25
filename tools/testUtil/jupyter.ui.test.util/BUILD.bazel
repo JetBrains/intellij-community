@@ -20,6 +20,7 @@ jvm_library(
         "//libraries/junit6",
         "//platform/remote-driver/client",
         "//platform/remote-driver/test-sdk:driver-sdk",
+        "//platform/remote-driver/test-sdk-notebooks:driver-sdk-notebooks",
         "//platform/remote-driver/model",
         "//tools/testUtil/debugger.ui.test.util",
     ],

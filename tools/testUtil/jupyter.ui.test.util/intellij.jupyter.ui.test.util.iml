@@ -11,6 +11,7 @@
     <orderEntry type="module" module-name="intellij.libraries.junit6" />
     <orderEntry type="module" module-name="intellij.driver.client" />
     <orderEntry type="module" module-name="intellij.driver.sdk" />
+    <orderEntry type="module" module-name="intellij.driver.sdk.notebooks" />
     <orderEntry type="module" module-name="intellij.driver.model" />
     <orderEntry type="module" module-name="intellij.debugger.ui.test.util" />
   </component>
