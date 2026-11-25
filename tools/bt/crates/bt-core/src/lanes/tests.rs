@@ -256,8 +256,9 @@ fn the_fast_lane_builds_what_it_excludes_from_the_run() {
 }
 
 /// Every IDE-launching lane runs a target the fast lane excludes, so the library of a JUnit target must be in the
-/// build spawn. A lane test runs through the `lane-run` verb and has no library of its own. `AirIntegrationTagTest`
-/// checks the whole list against the BUILD files.
+/// build spawn. A lane test runs through the `lane-run` verb and has no library of its own. The case
+/// `theFastLaneCompilesTheLibraryOfEveryTargetItExcludes` of `air-architecture-model_test` checks the whole list
+/// against the BUILD files.
 #[test]
 fn every_ide_launching_lane_has_its_library_in_the_build_spawn() {
     for name in ["ui", "ui-real", "ui-live", "ui-perf", "jcp", "gui-chat"] {

@@ -79,7 +79,7 @@ def avl_crate(
     community module (`_CROSS_MODULE_CRATES`).
 
     The test runs through `rust_test_junit`: libtest writes no report, Bazel's own report holds one case for the whole
-    target, and BT counts cases. `AirTestTargetDeclarationTest` does not see this test, because it scans `BUILD.bazel`
+    target, and BT counts cases. The test target checks of `air-architecture-model_test` do not see this test, because they scan `BUILD.bazel`
     files for rule calls named `*_test` or `*_test_*`, and this one is `avl_crate`. So nothing gates `test_tags`, and an
     `external` or `no-sandbox` tag there makes the test uncached.
 

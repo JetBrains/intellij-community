@@ -131,6 +131,11 @@ impl ClassTimeBudgetBaseline {
         }
         Ok(Self { reasons })
     }
+
+    /// The rows of the baseline, each class or suite identifier with its reason, in identifier order.
+    pub fn rows(&self) -> impl Iterator<Item = (&str, &str)> {
+        self.reasons.iter().map(|(class, reason)| (class.as_str(), reason.as_str()))
+    }
 }
 
 #[cfg(test)]
