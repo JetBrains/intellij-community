@@ -58,6 +58,10 @@ internal class FirOverrideImplementTest : OverrideImplementTest<KtClassMember>()
         doImplementFileTest()
     }
 
+    fun testAnnotatedContextFunction() {
+        doImplementFileTest()
+    }
+
     fun testImplementDeprecatedFunction() {
         doImplementFileTest()
     }

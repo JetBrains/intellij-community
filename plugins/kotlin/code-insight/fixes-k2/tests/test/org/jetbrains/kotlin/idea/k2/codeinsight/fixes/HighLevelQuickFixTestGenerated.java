@@ -9787,6 +9787,11 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
             runTest("../../../idea/tests/testData/quickfix/implement/abstract.kt");
         }
 
+        @TestMetadata("annotatedContextFunction.kt")
+        public void testAnnotatedContextFunction() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/implement/annotatedContextFunction.kt");
+        }
+
         @TestMetadata("annotation.kt")
         public void testAnnotation() throws Exception {
             runTest("../../../idea/tests/testData/quickfix/implement/annotation.kt");
