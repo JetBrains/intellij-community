@@ -30,6 +30,10 @@ internal class EpBasedConfigurableGroup(private val project: Project?, delegate:
   private val listeners = CopyOnWriteArrayList<MutableConfigurableGroup.Listener>()
   private val extendableConfigurableWrappers: MutableList<ConfigurableWrapper> = ArrayList()
   private val configurablesWithEpDependencies: MutableList<WithEpDependencies> = ArrayList()
+  private val epListener = createListener()
+
+  /** The extension points of the application that [listenToProject] listens to, by name. */
+  private val applicationPointsOfProjects = HashSet<String>()
 
   override fun getDisplayName(): String = value.value.displayName
 
@@ -48,39 +52,10 @@ internal class EpBasedConfigurableGroup(private val project: Project?, delegate:
   override fun addListener(listener: MutableConfigurableGroup.Listener) {
     if (listeners.isEmpty()) {
       val projectOrDefault = project ?: DefaultProjectFactory.getInstance().defaultProject
-      val epListener = createListener()
 
       Configurable.APPLICATION_CONFIGURABLE.addChangeListener(epListener, this)
       Configurable.PROJECT_CONFIGURABLE.getPoint(projectOrDefault).addChangeListener(epListener, this)
-
-      for (wrapper in extendableConfigurableWrappers) {
-        val ep = wrapper.extensionPoint
-        val area = wrapper.project?.extensionArea ?: ApplicationManager.getApplication().extensionArea
-        if (ep.childrenEPName != null) {
-          area.getExtensionPointIfRegistered<Any>(ep.childrenEPName)?.addChangeListener(epListener, this)
-        }
-        else if (ep.dynamic) {
-          val cast = ConfigurableWrapper.cast(WithEpDependencies::class.java, wrapper)
-          if (cast != null) {
-            for (it in cast.dependencies) {
-              findExtensionPoint(area, it.name).addChangeListener(epListener, this)
-            }
-          }
-        }
-        if (ep.providerClass != null) {
-          val provider = ep.instantiateConfigurableProvider() as? WithEpDependencies
-          if (provider != null) {
-            for (it in provider.dependencies) {
-              findExtensionPoint(area, it.name).addChangeListener(epListener, this)
-            }
-          }
-        }
-      }
-      for (withEpDependency in configurablesWithEpDependencies) {
-        for (it in withEpDependency.dependencies) {
-          findExtensionPoint(projectOrDefault.extensionArea, it.name).addChangeListener(epListener, this)
-        }
-      }
+      listenToPoints(extendableConfigurableWrappers, configurablesWithEpDependencies, projectOrDefault, this)
 
       if (project != null) {
         val appConnection = ApplicationManager.getApplication().messageBus.connect(this)
@@ -92,6 +67,77 @@ internal class EpBasedConfigurableGroup(private val project: Project?, delegate:
       }
     }
     listeners.add(listener)
+  }
+
+  /**
+   * Listens to the extension points of the pages of [project] in the pages of several projects of the tree, see
+   * [FrameProjectConfigurable], until [parentDisposable] is disposed. A change of such a point builds the tree again.
+   *
+   * The group itself looks at no page inside a page of several projects, also not at a page of its own project.
+   * [parentDisposable] must go when [project] closes: a listener keeps its extension point, and the point keeps its project.
+   */
+  @Synchronized
+  fun listenToProject(project: Project, parentDisposable: Disposable) {
+    if (project !== this.project) {
+      Configurable.PROJECT_CONFIGURABLE.getPoint(project).addChangeListener(epListener, parentDisposable)
+    }
+    val wrappers = ArrayList<ConfigurableWrapper>()
+    val withEpDependencies = ArrayList<WithEpDependencies>()
+    ConfigurableVisitor.collect({ configurable ->
+      val page = (configurable as? FrameProjectConfigurable)?.pageOf(project)
+      if (page != null) {
+        collectPage(wrappers, withEpDependencies, page)
+      }
+    }, value.value.configurables)
+    listenToPoints(wrappers, withEpDependencies, project, parentDisposable)
+  }
+
+  private fun listenToPoints(
+    wrappers: List<ConfigurableWrapper>,
+    withEpDependencies: List<WithEpDependencies>,
+    project: Project,
+    parentDisposable: Disposable,
+  ) {
+    for (wrapper in wrappers) {
+      val ep = wrapper.extensionPoint
+      val area = wrapper.project?.extensionArea ?: ApplicationManager.getApplication().extensionArea
+      if (ep.childrenEPName != null) {
+        area.getExtensionPointIfRegistered<Any>(ep.childrenEPName)?.addChangeListener(epListener, parentDisposable)
+      }
+      else if (ep.dynamic) {
+        val cast = ConfigurableWrapper.cast(WithEpDependencies::class.java, wrapper)
+        if (cast != null) {
+          for (it in cast.dependencies) {
+            listenToPoint(area, it.name, parentDisposable)
+          }
+        }
+      }
+      if (ep.providerClass != null) {
+        val provider = ep.instantiateConfigurableProvider() as? WithEpDependencies
+        if (provider != null) {
+          for (it in provider.dependencies) {
+            listenToPoint(area, it.name, parentDisposable)
+          }
+        }
+      }
+    }
+    for (withEpDependency in withEpDependencies) {
+      for (it in withEpDependency.dependencies) {
+        listenToPoint(project.extensionArea, it.name, parentDisposable)
+      }
+    }
+  }
+
+  /** Listens to the point [name] of [area], or to the point of the application when [area] has no such point. */
+  private fun listenToPoint(area: ExtensionsArea, name: String, parentDisposable: Disposable) {
+    if (parentDisposable === this || area.hasExtensionPoint(name)) {
+      findExtensionPoint(area, name).addChangeListener(epListener, parentDisposable)
+    }
+    else if (applicationPointsOfProjects.add(name)) {
+      // the pages of several projects name one point of the application: one listener builds the tree once,
+      // and it must not go with the first project that closes
+      findExtensionPoint(area, name).addChangeListener(epListener, this)
+    }
   }
 
   override fun apply() {}
@@ -136,23 +182,7 @@ private fun findExtensionPoint(area: ExtensionsArea, name: String): ExtensionPoi
 @ApiStatus.Internal
 private fun collect(configurableWrappers: MutableList<ConfigurableWrapper>, configurablesWithEpDependencies: MutableList<WithEpDependencies>, configurables: Array<Configurable>) {
   for (configurable in configurables) {
-    if (configurable is ConfigurableWrapper) {
-      val ep = configurable.extensionPoint
-      if (ep.childrenEPName != null || ep.dynamic) {
-        configurableWrappers.add(configurable)
-      }
-      if (configurable.providerClass != null) {
-        val providerClass = ep.findClassOrNull(configurable.providerClass)
-        if (providerClass != null) {
-          if (WithEpDependencies::class.java.isAssignableFrom(providerClass)) {
-            configurableWrappers.add(configurable)
-          }
-        }
-      }
-    }
-    else if (configurable is WithEpDependencies) {
-      configurablesWithEpDependencies.add(configurable)
-    }
+    collectPage(configurableWrappers, configurablesWithEpDependencies, configurable)
     if (configurable !is Configurable.Composite) {
       continue
     }
@@ -168,5 +198,30 @@ private fun collect(configurableWrappers: MutableList<ConfigurableWrapper>, conf
       continue
     }
     collect(configurableWrappers, configurablesWithEpDependencies, children)
+  }
+}
+
+/** Adds [configurable] to the list that fits it when its presence or its child pages depend on an extension point. */
+private fun collectPage(
+  configurableWrappers: MutableList<ConfigurableWrapper>,
+  configurablesWithEpDependencies: MutableList<WithEpDependencies>,
+  configurable: Configurable,
+) {
+  if (configurable is ConfigurableWrapper) {
+    val ep = configurable.extensionPoint
+    if (ep.childrenEPName != null || ep.dynamic) {
+      configurableWrappers.add(configurable)
+    }
+    if (configurable.providerClass != null) {
+      val providerClass = ep.findClassOrNull(configurable.providerClass)
+      if (providerClass != null) {
+        if (WithEpDependencies::class.java.isAssignableFrom(providerClass)) {
+          configurableWrappers.add(configurable)
+        }
+      }
+    }
+  }
+  else if (configurable is WithEpDependencies) {
+    configurablesWithEpDependencies.add(configurable)
   }
 }

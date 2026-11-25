@@ -2,6 +2,7 @@
 package com.intellij.openapi.options.ex
 
 import com.intellij.ide.ui.search.getConfigurablesSafely
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.options.ConfigurableGroup
 import com.intellij.openapi.options.ConfigurationException
@@ -27,7 +28,8 @@ import java.util.IdentityHashMap
  * When no project of the selector is open, the tree is the tree of the frame owner. A frame owner that suppresses its own
  * settings gets its tree without its project-level pages then, see [SettingsFrameProjects.suppressesOwnSettings].
  *
- * A change of an extension point builds the tree again, as for the tree of one project. The new tree holds new pages.
+ * A change of an extension point of the application or of a project of the selector builds the tree again, as for the tree
+ * of one project. The new tree holds new pages.
  * A frame guest that opens while the window is open joins the tree, see [join]. A window that opened with the tree of one
  * project has no such root, and a frame guest that opens later gets no page in it.
  */
@@ -35,14 +37,37 @@ import java.util.IdentityHashMap
 class FrameProjectsConfigurableGroup private constructor(
   val projects: SettingsFrameProjects,
   private val tree: MergedTree,
-  private val group: MutableConfigurableGroup,
+  private val group: EpBasedConfigurableGroup,
 ) : MutableConfigurableGroup {
+  /**
+   * The parent of the extension point listeners of each project of the selector, see [EpBasedConfigurableGroup.listenToProject].
+   * It goes when its project closes. The map is empty until the first [addListener], and it changes on the EDT.
+   */
+  private val projectListeners = HashMap<Project, Disposable>()
+  private var isListening = false
+
   override fun getDisplayName(): @NlsContexts.ConfigurableName String = group.displayName
 
   override fun getConfigurables(): Array<Configurable> = group.configurables
 
+  @RequiresEdt
   override fun addListener(listener: MutableConfigurableGroup.Listener) {
     group.addListener(listener)
+    if (!isListening) {
+      isListening = true
+      for (project in projects.projects) {
+        listenToProject(project)
+      }
+    }
+  }
+
+  private fun listenToProject(project: Project) {
+    if (project.isDisposed || project in projectListeners) {
+      return
+    }
+    val disposable = Disposer.newDisposable(this, "Settings pages of a frame project")
+    projectListeners.put(project, disposable)
+    group.listenToProject(project, disposable)
   }
 
   override fun dispose() {
@@ -56,7 +81,10 @@ class FrameProjectsConfigurableGroup private constructor(
    * tree again.
    */
   @RequiresEdt
-  fun forget(project: Project): Set<Configurable> = tree.forget(project)
+  fun forget(project: Project): Set<Configurable> {
+    projectListeners.remove(project)?.let { Disposer.dispose(it) }
+    return tree.forget(project)
+  }
 
   /** `true` when a page of [project] has a change that waits for Apply. */
   fun isModified(project: Project): Boolean = tree.pages.any { it.isModified(project) }
@@ -87,7 +115,16 @@ class FrameProjectsConfigurableGroup private constructor(
    * of the selector is open. The tree of a frame owner that suppresses its own settings takes a join.
    */
   @RequiresEdt
-  fun join(project: Project, memberTree: SortedConfigurableGroup): Boolean = tree.join(project, memberTree)
+  fun join(project: Project, memberTree: SortedConfigurableGroup): Boolean {
+    if (!tree.canJoin()) {
+      return false
+    }
+    val hasNewNodes = tree.join(project, memberTree)
+    if (isListening) {
+      listenToProject(project)
+    }
+    return hasNewNodes
+  }
 
   /** `true` when [join] can add the pages of a project to the tree. */
   fun canJoin(): Boolean = tree.canJoin()

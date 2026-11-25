@@ -74,6 +74,15 @@ internal class SettingsFrameProjectsTest {
   /** A project that joins the frame of `owner` while the Settings window is open. */
   private val third by projectFixture(openAfterCreation = true)
 
+  private val testPluginDescriptor = DefaultPluginDescriptor(
+    PluginId.getId("com.intellij.openapi.options.settingsFrameProjectsTest"),
+    SettingsFrameProjectsTest::class.java.classLoader,
+  )
+
+  /** The parent of the masks of the project-level pages of each project, and the mask that is in effect. */
+  private val projectMasks = HashMap<Project, Disposable>()
+  private val pageMasks = HashMap<Project, Disposable>()
+
   @Test
   fun `the selector lists the frame owner and its frame guests`(): Unit = inFrame {
     assertThat(SettingsFrameProjects.create(owner)!!.projects).containsExactly(owner, guest)
@@ -269,6 +278,27 @@ internal class SettingsFrameProjectsTest {
     assertThat(page.isModified).describedAs("The change of the closed project is gone").isFalse()
     assertThat(ConfigurableWrapper.cast(FrameProjectsTestProjectPage::class.java, page)).isSameAs(pageOf(owner))
     page.disposeUIResources()
+  }
+
+  @Test
+  fun `a page that a frame guest gets while the Settings window is open builds the tree again`(): Unit = inFrame(projectsWithPage = { listOf(owner) }) { disposable ->
+    val projects = SettingsFrameProjects.create(owner)!!
+    val group = createGroup(projects, disposable)
+    var updates = 0
+    group.addListener { updates++ }
+    assertThat(projectPage(group).projectsWithPage).containsExactly(owner)
+
+    maskProjectPage(guest, hasPage = true, fireEvents = true)
+
+    assertThat(updates).describedAs("The extension point of the frame guest tells the group").isGreaterThan(0)
+    assertThat(projectPage(group).projectsWithPage).containsExactly(owner, guest)
+
+    group.forget(guest)
+    projects.remove(guest)
+    val updatesAfterClose = updates
+    maskProjectPage(guest, hasPage = false, fireEvents = true)
+
+    assertThat(updates).describedAs("The group listens to no extension point of a closed project").isEqualTo(updatesAfterClose)
   }
 
   @Test
@@ -558,6 +588,8 @@ internal class SettingsFrameProjectsTest {
         windowManager.removeFrameGuest(guest)
         windowManager.removeFrameGuest(third)
         pagesByProject.clear()
+        projectMasks.clear()
+        pageMasks.clear()
         PropertiesComponent.getInstance(owner).unsetValue("settings.editor.selected.project")
       }
     }
@@ -610,16 +642,12 @@ internal class SettingsFrameProjectsTest {
   }
 
   private fun maskPages(projectsWithPage: List<Project>, withAppChildPage: Boolean, disposable: Disposable) {
-    val descriptor = DefaultPluginDescriptor(
-      PluginId.getId("com.intellij.openapi.options.settingsFrameProjectsTest"),
-      SettingsFrameProjectsTest::class.java.classLoader,
-    )
-    val appPage = ConfigurableEP<Configurable>(descriptor).apply {
+    val appPage = ConfigurableEP<Configurable>(testPluginDescriptor).apply {
       id = APP_PAGE_ID
       displayName = "Application Page"
       instanceClass = FrameProjectsTestAppPage::class.java.name
     }
-    val appChildPage = ConfigurableEP<Configurable>(descriptor).apply {
+    val appChildPage = ConfigurableEP<Configurable>(testPluginDescriptor).apply {
       id = APP_CHILD_PAGE_ID
       parentId = PROJECT_PAGE_ID
       displayName = "Application Child Page"
@@ -627,15 +655,29 @@ internal class SettingsFrameProjectsTest {
     }
     ExtensionTestUtil.maskExtensions(Configurable.APPLICATION_CONFIGURABLE, listOfNotNull(appPage, appChildPage.takeIf { withAppChildPage }), disposable)
     for (project in listOf(owner, guest, third)) {
-      val projectPage = ConfigurableEP<Configurable>(project).apply {
-        pluginDescriptor = descriptor
-        id = PROJECT_PAGE_ID
-        displayName = "Project Page"
-        instanceClass = FrameProjectsTestProjectPage::class.java.name
-      }
-      val point = Configurable.PROJECT_CONFIGURABLE.getPoint(project) as ExtensionPointImpl<ConfigurableEP<Configurable>>
-      point.maskAll(if (project in projectsWithPage) listOf(projectPage) else emptyList(), disposable, false)
+      // the parent of the masks of the project: it is older than each group of the test, so it ends after the group
+      projectMasks.put(project, Disposer.newDisposable(disposable))
+      maskProjectPage(project, hasPage = project in projectsWithPage, fireEvents = false)
     }
+  }
+
+  /**
+   * Gives [project] the project-level test page, or no project-level page. With [fireEvents], the listeners of the
+   * extension point of [project] get the change, as when a plugin loads.
+   */
+  private fun maskProjectPage(project: Project, hasPage: Boolean, fireEvents: Boolean) {
+    val parent = projectMasks.getValue(project)
+    // an extension point takes one mask at a time
+    pageMasks.remove(project)?.let { Disposer.dispose(it) }
+    val mask = Disposer.newDisposable(parent).also { pageMasks.put(project, it) }
+    val projectPage = ConfigurableEP<Configurable>(project).apply {
+      pluginDescriptor = testPluginDescriptor
+      id = PROJECT_PAGE_ID
+      displayName = "Project Page"
+      instanceClass = FrameProjectsTestProjectPage::class.java.name
+    }
+    val point = Configurable.PROJECT_CONFIGURABLE.getPoint(project) as ExtensionPointImpl<ConfigurableEP<Configurable>>
+    point.maskAll(if (hasPage) listOf(projectPage) else emptyList(), mask, fireEvents)
   }
 
   /** Makes `owner` a frame owner without project-level settings of its own, as the host of a JetBrains Light workspace. */
