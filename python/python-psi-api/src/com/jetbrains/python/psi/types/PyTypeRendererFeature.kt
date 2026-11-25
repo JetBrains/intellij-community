@@ -32,6 +32,5 @@ enum class PyTypeRendererFeature {
      * `__call__`: `(a: int) -> str` instead of `Handler`. Used where the structure matters more than the name, such as
      * the structural type diff.
      */
-    @ApiStatus.Internal
     CALLBACK_PROTOCOL_AS_CALLABLE,
 }
