@@ -8,6 +8,7 @@ import com.intellij.codeInsight.dataflow.map.DFAMapEngine;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
 import com.jetbrains.python.PyLanguageFacadeKt;
+import com.jetbrains.python.codeInsight.PyCodeInsightCounters;
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.PyReachingDefsDfaInstance;
@@ -43,6 +44,7 @@ import org.jetbrains.annotations.Unmodifiable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -58,6 +60,8 @@ public class ScopeImpl implements Scope {
   private volatile List<Scope> myNestedScopes;
   private final ScopeOwner myFlowOwner;
   private volatile Map<String, Collection<PsiNamedElement>> myNamedElements;
+  // The elements of the names that the nested scopes declare global, by name. Built on the first lookup that includes them
+  private volatile Map<String, List<PsiNamedElement>> myNestedGlobals;
   private volatile List<PyImportedNameDefiner> myImportedNameDefiners;  // Declarations which declare unknown set of imported names
   private volatile Set<String> myAugAssignments;
   private List<PyTargetExpression> myTargetExpressions;
@@ -185,22 +189,34 @@ public class ScopeImpl implements Scope {
     if (!includeNestedGlobals) {
       return Collections.unmodifiableCollection(elements);
     }
-    final Collection<PsiNamedElement> allElements = new ArrayList<>(elements);
-    for (Scope scope : myNestedScopes) {
-      ((ScopeImpl)scope).collectGlobals(name, allElements);
+    Map<String, List<PsiNamedElement>> nestedGlobals = myNestedGlobals;
+    if (nestedGlobals == null) {
+      nestedGlobals = new HashMap<>();
+      for (Scope scope : myNestedScopes) {
+        ((ScopeImpl)scope).collectNestedGlobals(nestedGlobals);
+      }
+      myNestedGlobals = nestedGlobals;
     }
+    final List<PsiNamedElement> globals = nestedGlobals.get(name);
+    if (globals == null || globals.isEmpty()) {
+      return Collections.unmodifiableCollection(elements);
+    }
+    final Collection<PsiNamedElement> allElements = new ArrayList<>(elements);
+    allElements.addAll(globals);
     return Collections.unmodifiableCollection(allElements);
   }
 
-  private void collectGlobals(String name, @NotNull Collection<PsiNamedElement> results) {
+  /** Adds the elements of the names that this scope and its nested scopes declare {@code global}, by name. */
+  private void collectNestedGlobals(@NotNull Map<String, List<PsiNamedElement>> results) {
+    PyCodeInsightCounters.inc(PyCodeInsightCounters.Counter.SCOPE_GLOBALS_VISITS);
     if (myGlobals == null || myNamedElements == null || myNestedScopes == null) {
       collectDeclarations();
     }
-    if (myGlobals.contains(name)) {
-      results.addAll(myNamedElements.getOrDefault(name, List.of()));
+    for (String name : myGlobals) {
+      results.computeIfAbsent(name, _ -> new ArrayList<>()).addAll(myNamedElements.getOrDefault(name, List.of()));
     }
     for (Scope scope : myNestedScopes) {
-      ((ScopeImpl)scope).collectGlobals(name, results);
+      ((ScopeImpl)scope).collectNestedGlobals(results);
     }
   }
 

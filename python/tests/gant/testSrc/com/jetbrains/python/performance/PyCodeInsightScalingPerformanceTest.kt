@@ -11,7 +11,9 @@ import com.jetbrains.python.allure.Layers
 import com.jetbrains.python.allure.Subsystems
 import com.jetbrains.python.codeInsight.PyCodeInsightCounters
 import com.jetbrains.python.codeInsight.PyCodeInsightCounters.Counter
+import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache
 import com.jetbrains.python.codeInsight.controlflow.PyControlFlowBuilder
+import com.jetbrains.python.codeInsight.dataflow.scope.impl.ScopeImpl
 import com.jetbrains.python.fixtures.PyCodeInsightTestCase
 import com.jetbrains.python.inspections.PyRedeclarationInspection
 import com.jetbrains.python.inspections.PyTypeCheckerInspection
@@ -20,6 +22,7 @@ import com.jetbrains.python.inspections.unusedLocal.PyUnusedLocalVariableInspect
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.psi.PyArgumentList
 import com.jetbrains.python.psi.PyFile
+import com.jetbrains.python.psi.PyFunction
 import com.jetbrains.python.psi.PyReferenceExpression
 import com.jetbrains.python.psi.PyTargetExpression
 import com.jetbrains.python.psi.PyTypedElement
@@ -126,6 +129,39 @@ class PyCodeInsightScalingPerformanceTest : PyCodeInsightTestCase() {
         runReadActionBlocking { PyControlFlowBuilder(LanguageLevel.getLatest()).buildControlFlow(function) }
       })
     }
+  }
+
+  @Test
+  @TestFor(issues = ["PY-92692"], classes = [ScopeImpl::class])
+  fun `module names declared global in functions resolve with linear work`() {
+    assertGrowth("nested_globals/scope_visits", NESTED_GLOBALS_SIZES, PyGrowth.LINEAR) { functions ->
+      val (file, reads) = configureNestedGlobals(functions)
+      perf.probe.work { inferAll(file, reads) }[Counter.SCOPE_GLOBALS_VISITS]
+    }
+  }
+
+  @Test
+  @TestFor(issues = ["PY-92692"], classes = [ScopeImpl::class])
+  fun `the module scope gives the global declarations of a name in all nested functions in source order`() {
+    val file = myFixture.configureByText("a.py", """
+      def f():
+          global g
+          g = 1
+
+          def inner():
+              global g
+              g = 2
+
+      def h():
+          global g
+          g = 3
+    """.trimIndent()) as PyFile
+    val declarations = runReadActionBlocking {
+      ControlFlowCache.getScope(file).getNamedElements("g", true).map {
+        "${PsiTreeUtil.getParentOfType(it, PyFunction::class.java)?.name}: ${it.parent.text}"
+      }
+    }
+    assertEquals(listOf("f: global g", "f: g = 1", "inner: global g", "inner: g = 2", "h: global g", "h: g = 3"), declarations)
   }
 
   @PerformanceUnitTest
@@ -266,6 +302,22 @@ class PyCodeInsightScalingPerformanceTest : PyCodeInsightTestCase() {
     appendLine("    return c")
   }
 
+  /** `N` functions that each declare one module name `global` and assign it, and one module read of each name. */
+  private fun configureNestedGlobals(functions: Int): Pair<PyFile, List<PyTargetExpression>> {
+    val code = buildString {
+      for (i in 0 until functions) {
+        appendLine("""
+          def f$i():
+              global g$i
+              g$i = $i
+        """.trimIndent())
+      }
+      for (i in 0 until functions) appendLine("r$i = g$i")
+    }
+    val file = myFixture.configureByText("nested_globals_$functions.py", code) as PyFile
+    return file to runReadActionBlocking { (0 until functions).map { file.findTopLevelAttribute("r$it")!! } }
+  }
+
   /**
    * One function with `N` local names. Every tenth name is bound only in a branch, so the unbound inspection has work.
    * Every seventh name is bound twice, so the redeclaration inspection has work. Half of the names are read.
@@ -373,6 +425,7 @@ class PyCodeInsightScalingPerformanceTest : PyCodeInsightTestCase() {
     val OVERLOAD_SIZES = listOf(10, 20, 40)
     val UNION_SIZES = listOf(10, 20, 40)
     val TYPE_PARAMETER_SIZES = listOf(10, 20, 40)
+    val NESTED_GLOBALS_SIZES = listOf(25, 50, 100)
     const val SITES = 20
     const val SITES_UNION = 50
 

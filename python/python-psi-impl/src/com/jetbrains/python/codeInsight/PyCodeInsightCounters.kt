@@ -9,7 +9,8 @@ import java.util.concurrent.atomic.LongAdder
 
 /**
  * Counts the work of the Python code insight. For the native Python support, it counts type evaluations, type contexts,
- * type matches, type walks, overload checks, control flow builds, completion lookup items and resolve path cache clears.
+ * type matches, type walks, overload checks, control flow builds, the scopes visited for nested `global` names, completion
+ * lookup items and resolve path cache clears.
  * For the Django template support of the Django plugin, it counts the scans of the tag libraries and of the `{% load %}`
  * tags of a template, and the scans for the calls that get the value of an assignment. For the constraint solver of the
  * native type inference, it counts the constraint problems built and the inference variables added to them, which tell
@@ -37,6 +38,7 @@ object PyCodeInsightCounters {
     OVERLOAD_CANDIDATES_CHECKED("overload.candidatesChecked"),
     CFG_BUILDS("cfg.builds"),
     CFG_INSTRUCTIONS("cfg.instructions"),
+    SCOPE_GLOBALS_VISITS("scope.globals.visits"),
     COMPLETION_LOOKUP_ITEMS("completion.lookupItems"),
     PATH_CACHE_CLEARS("resolve.pathCache.clears"),
     DJANGO_TAG_LIBRARY_SCANS("django.tagLibrary.scans"),

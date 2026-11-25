@@ -23,6 +23,7 @@ measures a scenario with these counters, the wall time, the allocations and the 
 | `TYPE_TRAVERSAL_VISITS` | the types that a recursive type walk visits | `PyRecursiveTypeVisitor.visitPyType` |
 | `OVERLOAD_CANDIDATES_CHECKED` | the overload candidates that the argument types check | `PyCallExpressionHelper.matchesByArgumentTypes` |
 | `CFG_BUILDS`, `CFG_INSTRUCTIONS` | the control flow builds and their instructions | `PyControlFlowBuilder.buildControlFlow` |
+| `SCOPE_GLOBALS_VISITS` | the scopes that the index of nested `global` names visits | `ScopeImpl.collectNestedGlobals` |
 | `COMPLETION_LOOKUP_ITEMS` | the lookup items of the Python completion | `CompletionVariantsProcessor.setupItem` |
 | `PATH_CACHE_CLEARS` | the clears of a non-empty resolve path cache | `PythonPathCache.clearCache` |
 | `DJANGO_TAG_LIBRARY_SCANS` | the scans of a Django tag library for its registered tags and filters | `DjangoTagLibrary.getRegistrations` |
