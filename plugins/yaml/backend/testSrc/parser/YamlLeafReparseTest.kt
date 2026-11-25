@@ -185,8 +185,8 @@ class YamlLeafReparseTest {
     val file = createFile(text) as PsiFileImpl
     val newText = range.replace(text, replacement)
     val changedRange = ChangedPsiRangeUtil.getChangedPsiRange(file, file.treeElement!!, newText) ?: return false
-    val result = BlockSupportImpl.findReparseableNodeAndReparseIt(file, file.node, changedRange, newText)
-    return result?.first is LeafElement
+    val result = BlockSupportImpl.reparseIncrementally(file, file.node, changedRange, newText)
+    return result?.oldNode is LeafElement
   }
 
   private fun checkCommit(text: String, range: TextRange, replacement: String) {

@@ -102,9 +102,9 @@ internal class YamlReparseOracle(private val project: Project) {
   fun reparse(file: PsiFileImpl, text: String, change: YamlChange): Pair<YamlReparseKind, String?> {
     val newText = change.apply(text)
     val changedRange = ChangedPsiRangeUtil.getChangedPsiRange(file, file.treeElement!!, newText) ?: return YamlReparseKind.NONE to null
-    val couple = BlockSupportImpl.findReparseableNodeAndReparseIt(file, file.node, changedRange, newText) ?: return YamlReparseKind.FULL to null
-    val oldNode = couple.first
-    val newNode = couple.second
+    val replaced = BlockSupportImpl.reparseIncrementally(file, file.node, changedRange, newText) ?: return YamlReparseKind.FULL to null
+    val oldNode = replaced.oldNode
+    val newNode = replaced.newNode
     val kind = when {
       oldNode is LeafElement -> YamlReparseKind.LEAF
       oldNode.elementType is YamlBlockCollectionType -> YamlReparseKind.BLOCK

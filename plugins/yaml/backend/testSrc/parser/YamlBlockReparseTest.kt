@@ -297,7 +297,7 @@ class YamlBlockReparseTest {
     val file = createFile(text) as PsiFileImpl
     val newText = range.replace(text, replacement)
     val changedRange = ChangedPsiRangeUtil.getChangedPsiRange(file, file.treeElement!!, newText) ?: return null
-    val oldNode = BlockSupportImpl.findReparseableNodeAndReparseIt(file, file.node, changedRange, newText)?.first ?: return null
+    val oldNode = BlockSupportImpl.reparseIncrementally(file, file.node, changedRange, newText)?.oldNode ?: return null
     return oldNode.takeIf { it.elementType is YamlBlockCollectionType }
   }
 

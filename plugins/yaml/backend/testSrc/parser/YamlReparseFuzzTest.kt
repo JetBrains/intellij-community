@@ -206,11 +206,11 @@ class YamlReparseFuzzTest {
     val file = createFile(text) as PsiFileImpl
     val newText = range.replace(text, replacement)
     val changedRange = ChangedPsiRangeUtil.getChangedPsiRange(file, file.treeElement!!, newText) ?: return "none"
-    val result = BlockSupportImpl.findReparseableNodeAndReparseIt(file, file.node, changedRange, newText) ?: return "full"
+    val result = BlockSupportImpl.reparseIncrementally(file, file.node, changedRange, newText) ?: return "full"
     return when {
-      result.first is LeafElement -> "leaf"
-      result.first.elementType is YamlBlockCollectionType -> "block"
-      else -> "other:" + result.first.elementType
+      result.oldNode is LeafElement -> "leaf"
+      result.oldNode.elementType is YamlBlockCollectionType -> "block"
+      else -> "other:" + result.oldNode.elementType
     }
   }
 
