@@ -21,7 +21,7 @@ mod junit;
 mod report;
 
 use crate::event::{Event, Outcome, TestResult};
-use crate::junit::{case_name, write_report};
+use crate::junit::{case_name, write_report, ROOT_CLASS_NAME};
 use crate::report::Report;
 use runfiles::Runfiles;
 use std::error::Error;
@@ -274,6 +274,9 @@ fn is_jvm_flag(arg: &OsStr) -> bool {
 ///
 /// With a `class` for the report, a filter can name a case as JUnit does: `<class>#<case>` asks for the case, and the
 /// class alone asks for every test.
+///
+/// Without a `class`, a filter can name a test at the root of the crate as the report names it: `crate::<name>` asks
+/// for `<name>`. libtest names no test with the prefix `crate::`, so this changes no other filter.
 fn filters(value: &str, class: Option<&str>) -> Vec<String> {
     value
         .split(',')
@@ -286,7 +289,12 @@ fn filters(value: &str, class: Option<&str>) -> Vec<String> {
                     .and_then(|case| case.strip_prefix('#'))
                     .unwrap_or(filter),
             ),
-            None => Some(filter),
+            None => Some(
+                filter
+                    .strip_prefix(ROOT_CLASS_NAME)
+                    .and_then(|name| name.strip_prefix("::"))
+                    .unwrap_or(filter),
+            ),
         })
         .map(str::to_owned)
         .collect()

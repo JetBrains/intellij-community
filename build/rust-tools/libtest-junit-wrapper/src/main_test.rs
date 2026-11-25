@@ -26,6 +26,17 @@ fn splits_the_test_names_bazel_asks_for() {
     assert_eq!(filters("a::b,c", None), vec!["a::b".to_owned(), "c".to_owned()]);
 }
 
+/// The report names a test at the root of the crate with the class `crate`, and the rerun hint of `bt` copies that
+/// name.
+#[test]
+fn reads_a_filter_of_a_test_at_the_root_of_the_crate() {
+    assert_eq!(
+        filters("crate::reads_the_home,agent_home::crate::x", None),
+        vec!["reads_the_home".to_owned(), "agent_home::crate::x".to_owned()]
+    );
+    assert_eq!(filters("crate_name::x", None), vec!["crate_name::x".to_owned()]);
+}
+
 #[test]
 fn drops_an_empty_name() {
     assert_eq!(filters("a,,b,", None), vec!["a".to_owned(), "b".to_owned()]);

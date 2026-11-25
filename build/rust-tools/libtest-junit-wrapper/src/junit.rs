@@ -23,7 +23,7 @@ const MESSAGE_LIMIT: usize = 500;
 const TIME_LIMIT_MESSAGE: &str = "the test exceeded its time limit";
 
 /// The class name of a test which sits at the root of its crate. libtest names it the same way.
-const ROOT_CLASS_NAME: &str = "crate";
+pub(crate) const ROOT_CLASS_NAME: &str = "crate";
 
 /// What a test case reports when it did not pass.
 struct Problem {
