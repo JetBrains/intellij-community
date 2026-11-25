@@ -9,7 +9,7 @@ import com.intellij.driver.sdk.ui.components.common.IdeaFrameUI
 import com.intellij.driver.sdk.ui.pasteText
 import com.intellij.driver.sdk.ui.ui
 import com.intellij.driver.sdk.waitForIndicators
-import com.intellij.driver.tests.utils.HotKeys.selectAll
+import java.awt.event.KeyEvent
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 
@@ -45,7 +45,7 @@ class PackagesSteps(private val ideFrame: IdeaFrameUI) {
         // An empty search shows the installed packages only, so the row is the installed one.
         searchField.click()
         keyboard {
-          selectAll()
+          hotKeyWithDefaultModifierKey(KeyEvent.VK_A)
           backspace()
         }
         packagesTable.waitAnyTexts(pyPackage, timeout = 30.seconds).first().click()
