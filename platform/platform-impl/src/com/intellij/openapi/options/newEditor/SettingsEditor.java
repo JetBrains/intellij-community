@@ -502,17 +502,7 @@ public final class SettingsEditor extends AbstractEditor implements UiDataProvid
 
   private void listenToFrameProjects(@NotNull FrameProjectsConfigurableGroup group) {
     SettingsFrameProjects projects = group.getProjects();
-    projects.addListener(new SettingsFrameProjects.Listener() {
-      @Override
-      public void selectionChanged() {
-        updateController(filter.context.getCurrentConfigurable());
-      }
-
-      @Override
-      public void projectsChanged() {
-        updateController(filter.context.getCurrentConfigurable());
-      }
-    }, this);
+    projects.addListener(() -> updateController(filter.context.getCurrentConfigurable()), this);
     ApplicationManager.getApplication().getMessageBus().connect(this).subscribe(ProjectCloseListener.TOPIC, new ProjectCloseListener() {
       @Override
       public void projectClosing(@NotNull Project project) {

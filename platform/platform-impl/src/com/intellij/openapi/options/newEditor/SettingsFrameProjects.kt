@@ -26,15 +26,7 @@ import org.jetbrains.annotations.ApiStatus
  */
 @ApiStatus.Internal
 class SettingsFrameProjects internal constructor(val frameOwner: Project, projects: List<Project>) {
-  interface Listener {
-    /** [selected] changed. */
-    fun selectionChanged() {}
-
-    /** [projects] changed. A change of [selected] that the same call makes is reported here only. */
-    fun projectsChanged() {}
-  }
-
-  private val listeners = DisposableWrapperList<Listener>()
+  private val listeners = DisposableWrapperList<Runnable>()
 
   /** The projects of the selector, in the order of the frame, see [IdeFrameGuests.orderedProjectsOf]. */
   var projects: List<Project> = projects
@@ -43,8 +35,15 @@ class SettingsFrameProjects internal constructor(val frameOwner: Project, projec
   var selected: Project = storedSelection(frameOwner, projects) ?: projects.firstOrNull() ?: frameOwner
     private set
 
-  fun addListener(listener: Listener, parentDisposable: Disposable) {
+  /** [listener] runs once after each call that changed [projects] or [selected], until [parentDisposable] is disposed. */
+  fun addListener(listener: Runnable, parentDisposable: Disposable) {
     listeners.add(listener, parentDisposable)
+  }
+
+  private fun fireChanged() {
+    for (listener in listeners) {
+      listener.run()
+    }
   }
 
   /** Makes [project] the project that the Settings window shows. A project that the selector does not list changes nothing. */
@@ -54,9 +53,7 @@ class SettingsFrameProjects internal constructor(val frameOwner: Project, projec
     }
     selected = project
     PropertiesComponent.getInstance(frameOwner).setValue(SELECTED_PROJECT, selectionKey(project))
-    for (listener in listeners) {
-      listener.selectionChanged()
-    }
+    fireChanged()
   }
 
   /**
@@ -75,9 +72,7 @@ class SettingsFrameProjects internal constructor(val frameOwner: Project, projec
     if (selected === project) {
       selected = if (projects.isEmpty()) frameOwner else projects[index.coerceAtMost(projects.lastIndex)]
     }
-    for (listener in listeners) {
-      listener.projectsChanged()
-    }
+    fireChanged()
   }
 
   /**
@@ -93,9 +88,7 @@ class SettingsFrameProjects internal constructor(val frameOwner: Project, projec
     if (selected !in projects) {
       selected = project
     }
-    for (listener in listeners) {
-      listener.projectsChanged()
-    }
+    fireChanged()
   }
 
   companion object {

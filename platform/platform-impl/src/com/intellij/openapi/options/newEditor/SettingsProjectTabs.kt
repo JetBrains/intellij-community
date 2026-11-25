@@ -94,11 +94,7 @@ internal class SettingsProjectTabs(private val projects: SettingsFrameProjects, 
         }
       }
     }, parentDisposable)
-    projects.addListener(object : SettingsFrameProjects.Listener {
-      override fun selectionChanged() = update()
-
-      override fun projectsChanged() = update()
-    }, parentDisposable)
+    projects.addListener({ update() }, parentDisposable)
     update()
   }
 
