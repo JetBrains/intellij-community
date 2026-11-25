@@ -33,8 +33,8 @@
     <!-- An application service, so a light IDE reaches it without the rpc backend; intellij.platform.problemView.rpc.backend serves it to a frontend. -->
     <applicationService serviceInterface="com.intellij.platform.problemsView.shared.ProblemsViewApi"
                         serviceImplementation="com.intellij.platform.problemsView.backend.BackendProblemsViewApi"/>
-    <problemsViewPanelProvider implementation="com.intellij.platform.problemsView.backend.BackendProblemsViewHighlightingPanelProvider" order="first"/>
-    <problemsViewPanelProvider implementation="com.intellij.platform.problemsView.backend.BackendProblemsViewProjectErrorsPanelProvider"/>
+    <problemsViewPanelProvider id="backendCurrentFile" implementation="com.intellij.platform.problemsView.backend.BackendProblemsViewHighlightingPanelProvider" order="first"/>
+    <problemsViewPanelProvider id="backendProjectErrors" implementation="com.intellij.platform.problemsView.backend.BackendProblemsViewProjectErrorsPanelProvider" order="first, after backendCurrentFile"/>
     
     <buildProgressListenerRegistrar implementation="com.intellij.platform.problemsView.backend.BuildViewProblemsListenerRegistrar"/>
   </extensions>
