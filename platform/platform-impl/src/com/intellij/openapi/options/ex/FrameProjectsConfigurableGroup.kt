@@ -5,7 +5,6 @@ import com.intellij.ide.ui.search.getConfigurablesSafely
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.options.ConfigurableGroup
-import com.intellij.openapi.options.ConfigurationException
 import com.intellij.openapi.options.SearchableConfigurable
 import com.intellij.openapi.options.newEditor.SettingsDialogPerformanceTracker
 import com.intellij.openapi.options.newEditor.SettingsFrameProjects
@@ -112,24 +111,6 @@ class FrameProjectsConfigurableGroup private constructor(
   fun forget(project: Project): Set<Configurable> {
     projectListeners.remove(project)?.let { Disposer.dispose(it) }
     return tree.forget(project)
-  }
-
-  /** `true` when a page of [project] has a change that waits for Apply. */
-  fun isModified(project: Project): Boolean = tree.pages.any { it.isModified(project) }
-
-  /** Applies the changes of the pages of [project]. A failed page makes [project] the selected project. */
-  @Throws(ConfigurationException::class)
-  fun apply(project: Project) {
-    for (page in tree.pages) {
-      page.apply(project)
-    }
-  }
-
-  /** Drops the changes of the pages of [project], and shows the saved values again. */
-  fun cancel(project: Project) {
-    for (page in tree.pages) {
-      page.cancel(project)
-    }
   }
 
   /** The pages of the tree that have a page of [project] with a change that waits for Apply. */

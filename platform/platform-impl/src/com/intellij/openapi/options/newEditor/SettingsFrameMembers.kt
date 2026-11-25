@@ -38,7 +38,7 @@ internal object SettingsFrameGuestClose {
     editor.stopFocusedEditing()
     // the editor checks a page for changes only after a delay, and a change of the last second must count too
     editor.checkCurrentModified()
-    if (!group.isModified(project)) {
+    if (group.modifiedPagesOf(project).isEmpty()) {
       return true
     }
     return when (ask(ApplicationBundle.message("settings.close.project.unsaved.message", project.name))) {
