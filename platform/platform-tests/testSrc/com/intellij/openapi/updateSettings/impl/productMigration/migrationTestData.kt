@@ -69,7 +69,7 @@ internal fun currentLaunchOsName(): String = when (OS.CURRENT) {
 
 /**
  * Writes a macOS `product-info.json` with the product code `JB` into [app], and the launcher [script] at [launcherPath].
- * The `launch` record has the `os` value [osName]. Returns the launcher. It needs POSIX file permissions.
+ * The `launch` record has the `os` value [osName]. Returns the launcher. A test that runs the launcher needs POSIX file permissions.
  */
 internal fun writeMacLauncher(
   app: Path,
@@ -81,7 +81,9 @@ internal fun writeMacLauncher(
   val launcher = app.resolve("Contents/Resources").resolve(launcherPath).normalize()
   launcher.parent.createDirectories()
   launcher.writeText(script)
-  launcher.setPosixFilePermissions(PosixFilePermissions.fromString("rwxr-xr-x"))
+  if (FileSystems.getDefault().supportedFileAttributeViews().contains("posix")) {
+    launcher.setPosixFilePermissions(PosixFilePermissions.fromString("rwxr-xr-x"))
+  }
   return launcher
 }
 

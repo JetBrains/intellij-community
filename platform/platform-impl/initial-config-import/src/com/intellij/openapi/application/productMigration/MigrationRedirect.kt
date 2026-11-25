@@ -51,7 +51,7 @@ private val GUI_COMMANDS = setOf("diff", "merge")
 
 /**
  * What the migration does with a redirected start. A non-null [content] shows the redirect window.
- * [launcher] is the macOS launcher of the Unified IDE for a start that [waits].
+ * [launcher] is the launcher of the Unified IDE for the current OS, or `null` when the Unified IDE has none.
  */
 @ApiStatus.Internal
 class MigrationRedirect(val state: MigrationState, val waits: Boolean, val content: MigrationRedirectContent?, val launcher: Path?)
@@ -158,7 +158,7 @@ fun loadMigrationRedirect(
     if (content == null) {
       LOG.info("no valid content copy, ${state.app} starts with no window")
     }
-    return MigrationRedirect(state, waits = false, content, launcher = null)
+    return MigrationRedirect(state, waits = false, content, launcher = info?.launcher)
   }
   catch (e: Throwable) {
     rethrowControlFlowException(e)

@@ -113,6 +113,16 @@ class MigrationRedirectTest {
   }
 
   @Test
+  fun `each kind of start has the launcher of the Unified IDE`() {
+    // the redirect reads the launcher of the OS of the test machine
+    val launcher = writeMacLauncher(app, osName = currentLaunchOsName())
+    writeState(MigrationStatus.MOVED)
+    for (start in MigrationRedirectStart.entries) {
+      assertEquals(start.name, launcher, load(start)!!.launcher)
+    }
+  }
+
+  @Test
   fun `missing application deletes the state and the copy`() {
     writeState(MigrationStatus.MOVED, app = tempDir.root.toPath().resolve("Missing.app"))
     writeContent()
