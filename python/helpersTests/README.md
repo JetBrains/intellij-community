@@ -19,7 +19,8 @@ curl -LsSf https://astral.sh/uv/install.sh | sh
 uv run --python 3.14 __main__.py tests/pycharm_tests/test_jb_unittest_runner.py
 ```
 
-- the tests are executed on all supported Python versions using `uv.lock` for reproducible builds
+- the tests are executed on Python 3.9 and later using `uv.lock` for reproducible builds
+- on Python 3.8, the script runs only the `generator3` and `remote_sync.py` tests, without the project dependencies
 - no manual Python installation is required
 - to update the list of dependencies / supported Python versions - edit `pyproject.toml`
 - to update the lock file ...
