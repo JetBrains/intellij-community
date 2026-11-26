@@ -1,4 +1,4 @@
-<fold text='▶ The <b>bo</b>ld & plain<br>summary &lt; <b> 2 < 3 and 5 > 4'><details<fold text='...'>
+<details<fold text='▶ The <b>bo</b>ld & plain<br>summary &lt; <b> 2 < 3 and 5 > 4'>
  title=">">
 <summary title=">">The <b>bo</b>ld <fold text='&'>&amp;</fold> plain<br>summary <fold text='&'>&amp;</fold>lt; <fold text='<'>&lt;</fold>b<fold text='>'>&gt;</fold> 2 < 3 and 5 > 4</summary>
 <!--<fold text='...'>
@@ -8,19 +8,19 @@
 
 Outer content.
 
-<fold text='▶ Nested'><details open<fold text='...'>>
+<details open<fold text='▶ Nested'>>
 <summary>Nested</summary>
 
 Nested content.
 </details
-</fold>></fold>
-</details</fold>></fold>
+</fold>>
+</details</fold>>
 
-<fold text='▶ Details'><DETAILS<fold text='...'>>
+<DETAILS<fold text='▶ Details'>>
 No summary here.
-</DETAILS</fold>></fold>
+</DETAILS</fold>>
 
-<fold text='▶ One line'><details><summary>One line</summary>Content</details></fold>
+<details<fold text='▶ One line'>><summary>One line</summary>Content</details</fold>>
 
 <fold text='```html
 <details>
@@ -51,7 +51,7 @@ Text after the block.</fold></fold>
 
 <fold text='block quote: > <details open>
 > <su...s
-> >'>> <fold text='▶ Quote'><details open<fold text='...'>>
+> >'>> <details open<fold text='▶ Quote'>>
 > <summary>Quote</summary>
 >
 > ## Quote heading
@@ -59,7 +59,7 @@ Text after the block.</fold></fold>
 > Quote content.
 >
 > </details
-> </fold>></fold></fold>
+> </fold>></fold>
 
 <details<fold text='...'>>
 <summary>Unclosed</summary</fold>>

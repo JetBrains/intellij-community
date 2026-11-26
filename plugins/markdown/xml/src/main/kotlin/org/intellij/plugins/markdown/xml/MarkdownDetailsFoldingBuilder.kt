@@ -5,9 +5,9 @@ import com.intellij.lang.ASTNode
 import com.intellij.lang.folding.FoldingBuilderEx
 import com.intellij.lang.folding.FoldingDescriptor
 import com.intellij.lang.html.HTMLLanguage
+import com.intellij.lang.xml.XmlFoldingBuilder
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.project.DumbAware
-import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.PsiElement
 import com.intellij.psi.SyntaxTraverser
@@ -18,7 +18,17 @@ import org.intellij.plugins.markdown.MarkdownBundle
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownFile
 import org.intellij.plugins.markdown.settings.MarkdownCodeFoldingSettings
 
-internal class MarkdownDetailsFoldingBuilder: FoldingBuilderEx(), DumbAware {
+internal class MarkdownDetailsFoldingBuilder : FoldingBuilderEx(), DumbAware {
+  private val htmlFoldingBuilder = object : XmlFoldingBuilder() {
+    fun buildUnclosedTagFold(tag: XmlTag, document: Document): FoldingDescriptor? {
+      val descriptors = mutableListOf<FoldingDescriptor>()
+      addToFold(descriptors, tag, document)
+      val descriptor = descriptors.singleOrNull() ?: return null
+      return FoldingDescriptor(tag.node, descriptor.range, null, descriptor.placeholderText, isCollapsedByDefault(tag.node), emptySet())
+        .apply { setCanBeRemovedWhenCollapsed(true) }
+    }
+  }
+
   override fun buildFoldRegions(root: PsiElement, document: Document, quick: Boolean): Array<FoldingDescriptor> {
     val file = root as? MarkdownFile ?: return FoldingDescriptor.EMPTY_ARRAY
     if (file.language !== file.viewProvider.baseLanguage || !file.viewProvider.contents.contains("<details", ignoreCase = true)) {
@@ -29,14 +39,14 @@ internal class MarkdownDetailsFoldingBuilder: FoldingBuilderEx(), DumbAware {
     return SyntaxTraverser.psiTraverser(html).filterIsInstance<XmlTag>().mapNotNull { tag ->
       if (!tag.name.equals("details", ignoreCase = true)) return@mapNotNull null
       val opening = XmlTagUtil.getStartTagRange(tag) ?: return@mapNotNull null
-      val closing = XmlTagUtil.getEndTagRange(tag) ?: return@mapNotNull null
+      val closing = XmlTagUtil.getEndTagRange(tag) ?: return@mapNotNull htmlFoldingBuilder.buildUnclosedTagFold(tag, document)
       if (opening.endOffset > closing.startOffset) return@mapNotNull null
-      val anchor = file.findElementAt(opening.startOffset) ?: return@mapNotNull null
       val text = tag.subTags.firstOrNull { it.name.equals("summary", ignoreCase = true) }?.summaryText() ?: ""
       val summary = StringUtil.collapseWhiteSpace(decodeDetailsSummary(text).replace('\u00a0', ' '))
         .ifEmpty { MarkdownBundle.message("markdown.folding.details.default.summary") }
-      val range = TextRange(opening.startOffset, closing.endOffset)
-      FoldingDescriptor(anchor.node, range, null, "▶ $summary", collapse, emptySet())
+      val range = htmlFoldingBuilder.getRangeToFold(tag) ?: return@mapNotNull null
+      FoldingDescriptor(tag.node, range, null, "▶ $summary", collapse, emptySet())
+        .apply { setCanBeRemovedWhenCollapsed(true) }
     }.toTypedArray()
   }
 

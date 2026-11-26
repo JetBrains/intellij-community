@@ -2,15 +2,20 @@ package org.intellij.plugins.markdown.folding;
 
 import com.intellij.codeInsight.folding.CodeFoldingManager;
 import com.intellij.ide.impl.OpenProjectTask;
+import com.intellij.lang.folding.LanguageFolding;
+import com.intellij.lang.html.HTMLLanguage;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.FoldRegion;
+import com.intellij.openapi.editor.impl.FoldingKeys;
 import com.intellij.openapi.fileEditor.impl.text.CodeFoldingState;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.LanguageFileViewProviders;
 import com.intellij.psi.PsiDocumentManager;
+import com.intellij.testFramework.CoroutineKt;
 import com.intellij.testFramework.EditorTestUtil;
 import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.PlatformTestUtil;
@@ -27,7 +32,9 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInfo;
 
+import java.time.Duration;
 import java.util.Arrays;
+import java.util.Objects;
 
 import static com.intellij.platform.testFramework.junit5.codeInsight.fixture.CodeInsightFixtureKt.codeInsightModuleFixture;
 import static com.intellij.testFramework.junit5.fixture.FixturesKt.projectFixture;
@@ -315,6 +322,44 @@ public class MarkdownFoldingTest {
   }
 
   @Test
+  @SuppressWarnings("deprecation")
+  public void testDetailsHaveNoDuplicateGenericFoldsAfterCacheRestore() {
+    CoroutineKt.runTestInCoroutineScope(() -> {
+      var myFixture = codeInsightFixture.get();
+      ApplicationManager.getApplication().invokeAndWait(() -> {
+        var file = myFixture.configureByText("details.md", """
+          <details>
+          <summary>The summary</summary>
+
+          Hidden content.
+
+          </details>
+          """);
+        var editor = myFixture.getEditor();
+        var html = Objects.requireNonNull(file.getViewProvider().getPsi(HTMLLanguage.INSTANCE));
+        var builder = LanguageFolding.INSTANCE.forLanguage(HTMLLanguage.INSTANCE);
+        var range = LanguageFolding.buildFoldingDescriptors(builder, html, editor.getDocument(), true)[0].getRange();
+        editor.getFoldingModel().runBatchFoldingOperation(() -> {
+          var region = Objects.requireNonNull(
+            editor.getFoldingModel().addFoldRegion(range.getStartOffset(), range.getEndOffset(), "..."));
+          region.putUserData(FoldingKeys.ZOMBIE_REGION_KEY, true);
+        });
+
+        EditorTestUtil.buildInitialFoldingsInBackground(editor);
+
+        var regions = editor.getFoldingModel().getAllFoldRegions();
+        assertEquals(1, regions.length);
+        assertEquals(range, regions[0].getTextRange());
+        assertEquals("▶ The summary", regions[0].getPlaceholderText());
+        var text = editor.getDocument().getText();
+        var collapsedText = text.substring(0, regions[0].getStartOffset()) + regions[0].getPlaceholderText() +
+                            text.substring(regions[0].getEndOffset());
+        assertEquals("<details▶ The summary>", collapsedText.stripTrailing());
+      });
+    }, Duration.ofSeconds(10));
+  }
+
+  @Test
   public void testDetailsWithoutHtmlRoot(@TestDisposable Disposable disposable) {
     CodeInsightTestFixture myFixture = codeInsightFixture.get();
     LanguageFileViewProviders.INSTANCE.addExplicitExtension(
@@ -339,12 +384,23 @@ public class MarkdownFoldingTest {
     Project project = myFixture.getProject();
     var after = EdtTestUtil.runInEdtAndGet(() -> {
       var editor = myFixture.getEditor();
+      var initialRegions = editor.getFoldingModel().getAllFoldRegions();
+      assertEquals(1, initialRegions.length);
+      assertEquals("...", initialRegions[0].getPlaceholderText());
+      assertTrue(initialRegions[0].isExpanded());
+      editor.getCaretModel().moveToOffset(editor.getDocument().getTextLength());
+      editor.getFoldingModel().runBatchFoldingOperation(() -> {
+        for (var region : editor.getFoldingModel().getAllFoldRegions()) {
+          region.setExpanded(false);
+        }
+      });
       WriteCommandAction.runWriteCommandAction(project, () -> editor.getDocument().insertString(open.length(), "</details>\n"));
       PsiDocumentManager.getInstance(project).commitAllDocuments();
       CodeFoldingManager.getInstance(project).updateFoldRegions(editor);
       return CodeInsightTestFixtureImpl.getFoldingData(editor, false, false);
     });
-    assertTrue(after.contains("<fold text='▶ The summary'><details"), after);
+    assertTrue(after.contains("<details<fold text='▶ The summary'>"), after);
+    assertFalse(after.contains("<fold text='...'>"), after);
   }
 
   private void doTest() {

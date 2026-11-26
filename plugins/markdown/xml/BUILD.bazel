@@ -38,6 +38,7 @@ jvm_library(
         "//platform/projectModel-api:projectModel",
         "//xml/xml-parser:parser",
         "//xml/xml-analysis-api:analysis",
+        "//xml/xml-analysis-impl:analysis-impl",
         "//xml/xml-psi-api:psi",
         "//platform/core-impl",
         "//platform/lang-impl",

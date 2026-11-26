@@ -18,7 +18,7 @@ Simple code fence
 to be collapsed
 ```</fold>
 
-<fold text='▶ The summary' expand='false'><details><summary>The summary</summary>Content.</details></fold>
+<details<fold text='▶ The summary' expand='false'>><summary>The summary</summary>Content.</details</fold>>
 
 <fold text='h1: # Some primary header' expand='true'># Some primary header
 
