@@ -8,8 +8,10 @@ import com.intellij.ui.Graphics2DDelegate
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Test
+import java.awt.Color
 import java.awt.Font
 import java.awt.Graphics2D
+import java.awt.RenderingHints
 import java.awt.Shape
 import java.awt.font.FontRenderContext
 import java.awt.font.GlyphVector
@@ -226,6 +228,28 @@ class GridGlyphFragmentTest {
 
     assertThat(drawn).isEqualTo(DrawnChars("bc", 100f))
     assertThat(layout.layoutCount).isEqualTo(0)
+  }
+
+  @Test
+  fun `translucent LCD text is drawn as glyphs on its cells`() {
+    val layout = layOut("abc", glyph(0, 10.0), glyph(1, 10.0), glyph(2, 10.0), fontAdvance = CELL_WIDTH.toInt())
+    graphics.color = Color(0, 0, 0, 128)
+    graphics.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_LCD_HRGB)
+
+    val drawn = layout.draw()
+
+    assertThat(drawn.positions).containsExactly(0.0, 10.0, 20.0, 30.0)
+  }
+
+  @Test
+  fun `translucent grayscale text whose advances fill its cells is drawn as chars`() {
+    val layout = layOut("abc", glyph(0, 10.0), glyph(1, 10.0), glyph(2, 10.0), fontAdvance = CELL_WIDTH.toInt())
+    graphics.color = Color(0, 0, 0, 128)
+    graphics.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON)
+
+    val drawn = layout.drawChars()
+
+    assertThat(drawn).isEqualTo(DrawnChars("abc", 0f))
   }
 
   @Test

@@ -31,10 +31,11 @@ import java.util.function.Consumer;
  *       width of the font, not the width of their cells.</li>
  * </ul>
  * <p>
- * The cells alone give the layout, so the fragment gets its glyphs at the first draw. Text that needs no layout and
- * whose advances fill its cells exactly is drawn as chars, with no glyph vector. Other text gets the glyphs of the whole
- * fragment once for each render context. A draw of a part draws these glyphs under a clip. Text that needs no layout
- * gets its glyphs without the text layout, see {@link FontLayoutService#createGlyphVector}.
+ * The cells alone give the layout, so the fragment gets its glyphs at the first draw. When text needs no layout and
+ * its advances fill its cells exactly, the fragment draws it as chars, with no glyph vector. Other text and
+ * translucent LCD text get the glyphs of the whole fragment once for each render context. A draw of a part draws these
+ * glyphs under a clip. Text that needs no layout gets its glyphs without the text layout, see
+ * {@link FontLayoutService#createGlyphVector}.
  */
 @ApiStatus.Internal
 public final class GridGlyphFragment extends GlyphFragment {
@@ -162,14 +163,18 @@ public final class GridGlyphFragment extends GlyphFragment {
     assert startOffset >= 0;
     assert endOffset <= myCharPositions.length;
     assert startOffset < endOffset;
-    if (myAdvancesFillCells) {
-      return g -> drawChars(g, x, y, startOffset, endOffset);
-    }
-    return g -> drawGlyphs(g, x, y, startOffset, endOffset);
+    return g -> {
+      if (myAdvancesFillCells && !isTranslucentLcdText(g)) {
+        drawChars(g, x, y, startOffset, endOffset);
+      } else {
+        drawGlyphs(g, x, y, startOffset, endOffset);
+      }
+    };
   }
 
   /**
-   * Draws the chars of the range at {@code x}. The advances fill the cells, so each char lands on its cell.
+   * Draws the chars of the range at {@code x}. The advances fill the cells, and the text is not translucent LCD text,
+   * so each char lands on its cell.
    */
   private void drawChars(@NotNull Graphics2D g, float x, float y, int startOffset, int endOffset) {
     g.setFont(myFont);
