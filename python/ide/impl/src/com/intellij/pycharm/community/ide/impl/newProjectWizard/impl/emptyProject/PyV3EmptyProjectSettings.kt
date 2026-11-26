@@ -1,19 +1,17 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.pycharm.community.ide.impl.newProjectWizard.impl.emptyProject
 
-import com.intellij.python.sdk.backend.PythonInterpreter
-import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.edtWriteAction
-import com.intellij.openapi.application.writeIntentReadAction
+import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.fileEditor.FileEditorOpenRequest
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.rootManager
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.pycharm.community.ide.impl.newProjectWizard.welcome.PyWelcome
 import com.intellij.pycharm.community.ide.impl.newProjectWizard.welcome.PyWelcomeSettings
+import com.intellij.python.sdk.backend.PythonInterpreter
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.newProjectWizard.PyV3ProjectTypeSpecificSettings
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 
 class PyV3EmptyProjectSettings(
   var generateWelcomeScript: Boolean = PyWelcomeSettings.instance.createWelcomeScriptForEmptyProject,
@@ -25,15 +23,13 @@ class PyV3EmptyProjectSettings(
       return PyResult.success(Unit)
 
     val sourceRoot = module.rootManager.sourceRoots.firstOrNull() ?: baseDir
+    val project = module.project
     val file = edtWriteAction {
-      PyWelcome.prepareFile(module.project, sourceRoot)
+      PyWelcome.prepareFile(project, sourceRoot).virtualFile
     }
-    withContext(Dispatchers.EDT) {
-      writeIntentReadAction {
-        if (file.isValid) {
-          file.navigate(true)
-        }
-      }
+    val editorManager = FileEditorManager.getInstanceAsync(project)
+    if (file.isValid) {
+      editorManager.openFile(file, FileEditorOpenRequest.withFocus(true))
     }
 
     return PyResult.success(Unit)
