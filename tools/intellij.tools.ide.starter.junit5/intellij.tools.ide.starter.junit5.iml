@@ -34,6 +34,5 @@
     <orderEntry type="module" module-name="intellij.libraries.junit6.launcher" scope="PROVIDED" />
     <orderEntry type="module" module-name="intellij.tools.ide.util.common" />
     <orderEntry type="module" module-name="intellij.libraries.opentelemetry" scope="RUNTIME" />
-    <orderEntry type="module" module-name="intellij.platform.testFramework.common" scope="RUNTIME" />
   </component>
 </module>

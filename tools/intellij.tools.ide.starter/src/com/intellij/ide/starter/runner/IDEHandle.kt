@@ -2,7 +2,7 @@ package com.intellij.ide.starter.runner
 
 import com.intellij.ide.starter.process.ProcessKiller
 import com.intellij.ide.starter.utils.catchAll
-import com.intellij.testFramework.common.timeoutRunBlocking
+import com.intellij.tools.ide.util.common.timeoutRunBlocking
 import kotlinx.coroutines.Dispatchers
 import kotlin.time.Duration.Companion.minutes
 
@@ -23,7 +23,6 @@ class IDEProcessHandle(private val process: Process) : IDEHandle {
 
   override fun kill() {
     catchAll {
-      @Suppress("TestOnlyProblems")
       timeoutRunBlocking(context = Dispatchers.IO, timeout = 3.minutes) { ProcessKiller.killProcess(process) }
     }
   }

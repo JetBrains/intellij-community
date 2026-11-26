@@ -41,7 +41,6 @@ jvm_library(
         "//libraries/kotlin/reflect",
         "//platform/remote-driver/model",
         "//libraries/opentelemetry",
-        "//platform/testFramework/common",
     ],
     deps = [
         # do not sort,

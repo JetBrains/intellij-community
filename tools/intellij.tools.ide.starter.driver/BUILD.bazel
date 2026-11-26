@@ -46,7 +46,6 @@ jvm_library(
         "//platform/remote-driver/test-sdk:driver-sdk",
         "//libraries/allure/java-commons:libraries-allure-java-commons",
         "//tools/intellij.tools.ide.util.common:ide-util-common",
-        "//platform/testFramework/common",
         "//platform/util",
         "//libraries/opentelemetry",
         "//platform/testFramework/teamCity",

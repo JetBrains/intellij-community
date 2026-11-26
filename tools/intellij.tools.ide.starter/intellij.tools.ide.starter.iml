@@ -41,7 +41,6 @@
     <orderEntry type="module" module-name="intellij.libraries.jetbrains.annotations" />
     <orderEntry type="module" module-name="intellij.libraries.monte.screen.recorder" />
     <orderEntry type="module" module-name="intellij.libraries.allure.java.commons" exported="" />
-    <orderEntry type="module" module-name="intellij.platform.testFramework.common" />
     <orderEntry type="module" module-name="intellij.tools.ide.util.common" />
     <orderEntry type="module" module-name="intellij.tools.ide.starter.bus" exported="" />
     <orderEntry type="module" module-name="intellij.libraries.opentelemetry" />

@@ -10,7 +10,7 @@ import com.intellij.ide.starter.models.IDEStartResult
 import com.intellij.ide.starter.runner.IDEHandle
 import com.intellij.ide.starter.runner.IDERunContext
 import com.intellij.ide.starter.utils.catchAll
-import com.intellij.testFramework.common.timeoutRunBlocking
+import com.intellij.tools.ide.util.common.timeoutRunBlocking
 import kotlinx.coroutines.Deferred
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
@@ -42,7 +42,6 @@ open class RemoteDevBackgroundRun(
       throw testError
     }
     closeError?.let { throw it }
-    @Suppress("TestOnlyProblems")
     return timeoutRunBlocking(5.minutes) {
       backendRun.startResult.await()
         .also {

@@ -12,9 +12,9 @@ import com.intellij.ide.starter.testContextCache.TestContextCache
 import com.intellij.ide.starter.runner.IDEHandle
 import com.intellij.ide.starter.runner.IDERunContext
 import com.intellij.ide.starter.utils.catchAll
-import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.tools.ide.util.common.logError
 import com.intellij.tools.ide.util.common.logOutput
+import com.intellij.tools.ide.util.common.timeoutRunBlocking
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -211,7 +211,6 @@ open class BackgroundRun(
       throw exitError?.also { it.addSuppressed(processError) } ?: processError
     }
 
-    @Suppress("TestOnlyProblems")
     val result = runCatching { timeoutRunBlocking(5.minutes) { startResult.await() } }
     if (exitError == null) return result.getOrThrow()
     result.exceptionOrNull()?.let(exitError::addSuppressed)
@@ -219,7 +218,6 @@ open class BackgroundRun(
   }
 
   private fun ideStateDetails(): String = runCatching {
-    @Suppress("TestOnlyProblems")
     val connected = runCatching {
       timeoutRunBlocking(10.seconds) { withContext(Dispatchers.IO) { driverWithoutAwaitedConnection.isConnected } }
     }.fold({ it.toString() }, { "unknown" })
@@ -268,7 +266,6 @@ internal fun BackgroundRun.syncVfsWithRestoredProjectFiles() {
 
 internal fun throwIdeStartFailure(startResult: Deferred<IDEStartResult>, processId: String): Nothing {
   // Need to wait for startResult as it carries JVM startup failures with captured stderr, so propagate it rather than reporting a generic Driver connection error.
-  @Suppress("TestOnlyProblems")
   val result = timeoutRunBlocking(5.minutes) {
     startResult.await()
   }
