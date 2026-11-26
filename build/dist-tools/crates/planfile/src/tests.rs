@@ -387,18 +387,6 @@ fn read_refuses_malformed_forms() {
             r#"has the kind "native-archive"; the packer executes only layout-assets"#,
         ),
         (
-            "the retired module-filter kind",
-            operation(r#"{"id": "n", "kind": "module-filter", "inputs": [{"artifact": "a"}], "output": "o", "manifest": "keep"}"#),
-            r#"operation "n" has the kind "module-filter"; the packer executes only layout-assets"#,
-        ),
-        (
-            "the primary input of the retired module-filter kind",
-            operation(
-                r#"{"id": "n", "kind": "module-filter", "input": {"artifact": "a"}, "output": "o", "manifest": "keep", "excludes": ["drop/**"]}"#,
-            ),
-            "unknown field `input`",
-        ),
-        (
             "an operation without a kind",
             operation(r#"{"id": "n", "inputs": [{"artifact": "a"}], "output": "o", "manifest": "keep"}"#),
             "missing field `kind`",

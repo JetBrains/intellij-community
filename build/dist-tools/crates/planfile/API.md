@@ -39,7 +39,7 @@ the operation itself. `preparations` is an unknown key.
 | a writer manifest other than `single-meaningful-source`, `keep` and `drop` | unknown variant |
 | `preparations`, `preparationRoots`, and every field of a Kotlin-executed operation | unknown field |
 | `layoutSignature`, because a plan file carries no layout signature | unknown field |
-| an operation kind other than `layout-assets`, for example the retired `module-filter` | the kind |
+| an operation kind other than `layout-assets` | the kind |
 | an operation manifest other than `keep` | the manifest |
 | a layout format other than `tree` and `entries`, or a transform kind other than `archive-tree`, such as the removed `tree-map` and `gzip-xml-archive` | unknown variant |
 | the `tree-map` fields `excludes` and `directoryExcludes` on a transform | unknown field |

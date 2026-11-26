@@ -931,15 +931,6 @@ fn plan_part_refusals() {
         ),
         (
             TEST_PLAN.replacen(
-                r#""kind": "layout-assets", "inputs": [{"artifact": "p.main"}]"#,
-                r#""kind": "module-filter", "inputs": [{"artifact": "p.main"}]"#,
-                1,
-            ),
-            // The plan file reader refuses the retired kind by name.
-            r#"operation "layout-assets:0" has the kind "module-filter"; the packer executes only layout-assets"#,
-        ),
-        (
-            TEST_PLAN.replacen(
                 r#"{"destination": "lib/p.jar","#,
                 r#"{"scope": "distribution", "destination": "lib/p.jar","#,
                 1,
