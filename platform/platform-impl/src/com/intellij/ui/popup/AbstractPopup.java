@@ -204,6 +204,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.CancellationException;
 import java.util.function.Supplier;
 
 import static com.intellij.platform.diagnostic.telemetry.PlatformScopesKt.UI;
@@ -2329,6 +2330,8 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup,
       getFocusManager().doWhenFocusSettlesDown(() -> {
         try (AccessToken ignore = SlowOperations.startSection(SlowOperations.ACTION_PERFORM)) {
           WriteIntentReadAction.run(finalRunnable);
+        }
+        catch (CancellationException ignored) {
         }
       });
       myFinalRunnable = null;
