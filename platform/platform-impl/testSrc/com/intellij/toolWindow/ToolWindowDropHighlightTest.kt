@@ -4,9 +4,12 @@ package com.intellij.toolWindow
 import com.intellij.testFramework.junit5.RunInEdt
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.ui.ExperimentalUI
+import com.intellij.ui.IslandsState
+import com.intellij.ui.IslandsStateExtension
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Assumptions.assumeTrue
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.extension.ExtendWith
 import java.awt.Rectangle
 import java.awt.image.BufferedImage
 import javax.swing.JComponent
@@ -17,7 +20,16 @@ import javax.swing.JComponent
  */
 @TestApplication
 @RunInEdt
+@ExtendWith(IslandsStateExtension::class)
 internal class ToolWindowDropHighlightTest {
+  @Test
+  fun `the corners of the drop target highlight are square outside the Islands theme`() {
+    IslandsState.setEnabled(false, false)
+    val image = paint(ToolWindowDragHelper.createDropTargetHighlightComponent())
+    assertThat(image.alphaAt(0, 0)).isGreaterThan(0)
+    assertThat(image.alphaAt(SIZE - 1, SIZE - 1)).isGreaterThan(0)
+  }
+
   @Test
   fun `the corners of the drop target highlight are rounded`() {
     val image = paint(ToolWindowDragHelper.createDropTargetHighlightComponent())

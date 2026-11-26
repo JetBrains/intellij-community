@@ -9,10 +9,14 @@ import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.fixture.fileEditorManagerFixture
 import com.intellij.testFramework.junit5.fixture.projectFixture
+import com.intellij.ui.IslandsState
+import com.intellij.ui.IslandsStateExtension
 import com.intellij.ui.tabs.TabInfo
+import com.intellij.util.ui.JBUI
 import kotlinx.coroutines.Dispatchers
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.extension.ExtendWith
 import java.awt.Dimension
 import java.awt.Point
 import java.awt.Rectangle
@@ -26,6 +30,7 @@ import javax.swing.JLabel
  * It shows the window that the drop creates, so only its corners at a corner of the editor area are rounded.
  */
 @TestApplication
+@ExtendWith(IslandsStateExtension::class)
 internal class DockableEditorTabDropAreaTest {
   private val projectFixture = projectFixture(
     openProjectTask = OpenProjectTask {
@@ -63,12 +68,36 @@ internal class DockableEditorTabDropAreaTest {
     assertThat(shape.contains(WIDTH / 2 - 0.5, HEIGHT - 0.5)).isTrue()
   }
 
+  @Test
+  fun `the placeholder has square corners outside the Islands theme`(): Unit = timeoutRunBlocking(context = Dispatchers.UiWithModelAccess) {
+    IslandsState.setEnabled(false, false)
+    val shape = dropAreaShape(dragged = "B", dropPoint = LEFT_SIDE)
+    assertThat(shape.contains(0.5, 0.5)).isTrue()
+    assertThat(shape.contains(0.5, HEIGHT - 0.5)).isTrue()
+  }
+
+  @Test
+  fun `the border of the editor area does not make a corner square`(): Unit = timeoutRunBlocking(context = Dispatchers.UiWithModelAccess) {
+    val shape = dropAreaShape(dragged = "B", dropPoint = LEFT_SIDE, borderWidth = 2)
+    assertThat(shape.contains(0.5, 0.5)).isFalse()
+    assertThat(shape.contains(0.5, HEIGHT - 0.5)).isFalse()
+  }
+
+  @Test
+  fun `the placeholder has square corners beside a window narrower than the arc`(): Unit = timeoutRunBlocking(context = Dispatchers.UiWithModelAccess) {
+    val shape = dropAreaShape(dragged = "B", dropPoint = LEFT_SIDE, leftWindowWidth = 12)
+    assertThat(shape.contains(0.5, 0.5)).isTrue()
+    assertThat(shape.contains(0.5, HEIGHT - 0.5)).isTrue()
+  }
+
   /**
    * Opens the tabs `A` and `B`, drags the [dragged] tab out, and moves it over [dropPoint] in the same editor window.
    *
+   * The editor area has a border of [borderWidth], and a window of [leftWindowWidth] is on the left of the editor window.
+   *
    * @return the shape of the drop placeholder
    */
-  private suspend fun dropAreaShape(dragged: String, dropPoint: Point): Shape {
+  private suspend fun dropAreaShape(dragged: String, dropPoint: Point, borderWidth: Int = 0, leftWindowWidth: Int = 0): Shape {
     val manager = managerFixture.get()
     val files = listOf("A", "B").associateWith { LightVirtualFile("$it.txt") }
     for (file in files.values) {
@@ -76,7 +105,7 @@ internal class DockableEditorTabDropAreaTest {
     }
     val window = requireNotNull(manager.currentWindow)
     val tabs = window.tabbedPane.editorTabs
-    tabs.size = Dimension(WIDTH, HEIGHT)
+    tabs.setBounds(borderWidth + leftWindowWidth, borderWidth, WIDTH, HEIGHT)
     tabs.doLayout()
 
     val file = files.getValue(dragged)
@@ -85,7 +114,8 @@ internal class DockableEditorTabDropAreaTest {
     tabs.doLayout()
 
     val container = manager.dockContainer as DockableEditorTabbedContainer
-    container.splitters.size = Dimension(WIDTH, HEIGHT)
+    container.splitters.border = JBUI.Borders.empty(borderWidth)
+    container.splitters.size = Dimension(WIDTH + leftWindowWidth + 2 * borderWidth, HEIGHT + 2 * borderWidth)
     val dropInfo = TabInfo(JLabel()).setText(dragged).setObject(file)
     container.setDropTarget(tabs, dropInfo)
     val point = pointOn(tabs, dropPoint)
