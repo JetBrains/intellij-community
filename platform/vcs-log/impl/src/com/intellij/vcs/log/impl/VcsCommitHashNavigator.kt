@@ -1,6 +1,8 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.impl
 
+import com.intellij.ide.impl.ProjectUtil
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
@@ -12,9 +14,11 @@ import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.vcs.log.VcsLogBundle
 import com.intellij.vcs.log.ui.VcsLogNotificationIdsHolder
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.job
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.ConcurrentHashMap
 
@@ -55,7 +59,7 @@ class VcsCommitHashNavigator(private val project: Project, private val scope: Co
 
   /**
    * Shows the commit in the log of the first item of [findCommitRoots] that holds it and can show it, see
-   * [showCommitWithPrefix].
+   * [showCommitWithPrefix]. After it shows the commit in another project, it brings the window of that project to the front.
    */
   private suspend fun lookup(hash: String, context: FilePath?): LookupOutcome {
     var notShown = false
@@ -68,6 +72,9 @@ class VcsCommitHashNavigator(private val project: Project, private val scope: Co
           notShown = true
           continue
         }
+      }
+      if (commitRoots.project != project) {
+        withContext(Dispatchers.EDT) { ProjectUtil.focusProjectWindow(commitRoots.project, true) }
       }
       return LookupOutcome.Shown
     }
