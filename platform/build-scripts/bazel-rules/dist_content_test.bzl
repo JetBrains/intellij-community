@@ -285,8 +285,8 @@ def _build_inputs_test_impl(ctx):
     expected.extend(ctx.attr.library[JavaInfo].transitive_runtime_jars.to_list())
     for file in expected:
         asserts.true(env, file in info.files.to_list(), file.path)
-    asserts.equals(env, sorted([info.manifest, info.inputs_origin]), sorted(target[DefaultInfo].files.to_list()))
-    asserts.equals(env, 2, len(analysistest.target_actions(env)))
+    asserts.equals(env, [info.manifest], target[DefaultInfo].files.to_list())
+    asserts.equals(env, 1, len(analysistest.target_actions(env)))
     return analysistest.end(env)
 
 _build_inputs_test = analysistest.make(
@@ -321,17 +321,10 @@ def _fragment_test_impl(ctx):
     inputs = ctx.attr.build_inputs[IntellijDevBuildInputsInfo]
     actions = [action for action in analysistest.target_actions(env) if action.mnemonic.startswith("IntellijDev")]
     asserts.equals(env, 1, len(actions))
-    layout = target[OutputGroupInfo].runtime_module_repository_layout.to_list()
-    asserts.equals(env, 1, len(layout))
     if actions:
         action = actions[0]
         for file in inputs.files.to_list():
             asserts.true(env, file in action.inputs.to_list(), file.path)
-
-        # The runtime module repository reference also writes the layout it generates the repository from, beside the
-        # home.
-        asserts.true(env, layout[0] in action.outputs.to_list())
-        asserts.true(env, "--runtime-module-repository-layout=" + layout[0].path in action.argv)
 
     # A reference builds no plugin, so it declares no plugin output: the packed plugin components own that group. It
     # publishes no component provider, so no distribution can compose it.
@@ -601,8 +594,8 @@ def _manifest_test_impl(ctx):
     target = analysistest.target_under_test(env)
     info = target[IntellijDevBuildInputsInfo]
     asserts.true(env, info.manifest.basename.endswith(ctx.attr.expected_suffix))
-    asserts.equals(env, [info.manifest, info.inputs_origin], target[DefaultInfo].files.to_list())
-    asserts.equals(env, 2, len(analysistest.target_actions(env)))
+    asserts.equals(env, [info.manifest], target[DefaultInfo].files.to_list())
+    asserts.equals(env, 1, len(analysistest.target_actions(env)))
     return analysistest.end(env)
 
 _manifest_test = analysistest.make(

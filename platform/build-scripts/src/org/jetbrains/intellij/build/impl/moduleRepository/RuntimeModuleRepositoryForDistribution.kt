@@ -6,12 +6,9 @@ package org.jetbrains.intellij.build.impl.moduleRepository
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.platform.buildScripts.runtimeModuleRepository.PluginDistributionEntry
 import com.intellij.platform.buildScripts.runtimeModuleRepository.RuntimeModuleRepositoryException
-import com.intellij.platform.buildScripts.runtimeModuleRepository.RuntimeModuleRepositoryLayout
-import com.intellij.platform.buildScripts.runtimeModuleRepository.RuntimeModuleRepositoryPluginLayout
 import com.intellij.platform.buildScripts.runtimeModuleRepository.generateRuntimeModuleRepository
 import com.intellij.platform.buildScripts.runtimeModuleRepository.removeDataForSuppressedPlugins
 import com.intellij.platform.buildScripts.runtimeModuleRepository.saveRuntimeModuleRepository
-import com.intellij.platform.buildScripts.runtimeModuleRepository.writeRuntimeModuleRepositoryLayout
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.classPath.PluginBuildDescriptor
 import org.jetbrains.intellij.build.classPath.PluginBuildResult
@@ -110,7 +107,6 @@ internal fun generateRuntimeModuleRepositoryForDevBuild(
   targetDirectory: Path,
   context: BuildContext,
   platformLayout: PlatformLayout,
-  layoutFile: Path? = null,
 ) {
   val additionalFrontendOnlyPlugins = computeDescriptorsForAdditionalFrontendPlugins(context, platformLayout)
   generateRepositoryForDistribution(
@@ -121,7 +117,6 @@ internal fun generateRuntimeModuleRepositoryForDevBuild(
     platformLayout = platformLayout,
     context = context,
     entryPathRelativizer = { targetDirectory.relativize(it) },
-    layoutFile = layoutFile,
   )
 }
 
@@ -167,7 +162,6 @@ internal fun generateCrossPlatformRepository(
 /**
  * Generates and saves the runtime module repository for a distribution.
  * @param entryPathRelativizer converts an absolute path to a path relative to the distribution root
- * @param layoutFile where to write the [RuntimeModuleRepositoryLayout] of the distribution, or `null` for none
  */
 private fun generateRepositoryForDistribution(
   targetDirectory: Path,
@@ -177,7 +171,6 @@ private fun generateRepositoryForDistribution(
   additionalFrontendOnlyPlugins: List<PluginBuildResult>,
   platformLayout: PlatformLayout,
   entryPathRelativizer: (Path) -> Path?,
-  layoutFile: Path? = null,
 ) {
   val pluginDescriptorModulesForAdditionalFrontendPlugins = additionalFrontendOnlyPlugins.mapTo(HashSet()) { it.mainModule }
   val corePluginDescriptorModuleName = context.productProperties.applicationInfoModule
@@ -194,19 +187,6 @@ private fun generateRepositoryForDistribution(
     val pluginConfigurationModuleToDistributionEntries = (bundledPlugins + additionalFrontendOnlyPlugins)
       .associateByTo(HashMap(), { it.mainModule }, { toPluginDistributionEntries(it.distribution, entryPathRelativizer) })
     pluginConfigurationModuleToDistributionEntries[corePluginDescriptorModuleName] = toPluginDistributionEntries(platformEntries, entryPathRelativizer)
-    if (layoutFile != null) {
-      // The core plugin, the bundled plugins and the additional frontend-only plugins, in this order.
-      val plugins = (listOf(corePluginDescriptorModuleName) + bundledPlugins.map { it.mainModule }).map { module ->
-        RuntimeModuleRepositoryPluginLayout(descriptorModule = module, entries = pluginConfigurationModuleToDistributionEntries.getValue(module))
-      } + additionalFrontendOnlyPlugins.map { plugin ->
-        RuntimeModuleRepositoryPluginLayout(
-          descriptorModule = plugin.mainModule,
-          additionalFrontendOnlyPlugin = true,
-          entries = pluginConfigurationModuleToDistributionEntries.getValue(plugin.mainModule),
-        )
-      }
-      writeRuntimeModuleRepositoryLayout(RuntimeModuleRepositoryLayout(plugins = plugins), layoutFile)
-    }
     generateRuntimeModuleRepository(
       pluginDescriptorsData = pluginDescriptorsData,
       pluginConfigurationModuleToDistributionEntries = pluginConfigurationModuleToDistributionEntries,

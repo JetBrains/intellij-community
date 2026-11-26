@@ -8,8 +8,8 @@ import org.jetbrains.intellij.build.impl.ModuleItem
  * Which independently cacheable slice of the distribution one assembly produces.
  *
  * A complete distribution is [COMPLETE] - one assembly, everything in it. Anything else is a fragment. No
- * distribution composes a fragment now: the fragments are the references of the `jars`, `replay` and `runtime-repo`
- * gates, which pack the same files as a second producer. The plugin directories come from the packed plugin
+ * distribution composes a fragment now: the fragments are the references, which pack the same files as a second
+ * producer. The plugin directories come from the packed plugin
  * components, and `bin` and the product metadata come from the `platform_resources` component, so no fragment owns them.
  */
 @ApiStatus.Internal

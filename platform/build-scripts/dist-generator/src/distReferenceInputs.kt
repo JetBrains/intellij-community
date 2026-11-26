@@ -182,7 +182,7 @@ private const val RUNTIME_MODULE_REPOSITORY_PAYLOAD: String = "platform_runtime_
 internal fun renderDistReferenceInputs(inputs: Map<String, DistReferenceInputs>, generatedByHeader: String): String = buildString {
   append(generatedByHeader)
   append("#\n")
-  append("# The labels that the reference fragments of the `jars`, `replay` and `runtime-repo` gates declare as their inputs.\n")
+  append("# The labels that the reference fragments declare as their inputs.\n")
   append("# No distribution reads them. The generator resolves the names of `dist_reference_plan.bzl` and of\n")
   append("# `dist_fragment_inputs.bzl` through the targets JSON. Only the reference macros load this file, so a change here\n")
   append("# re-keys only the reference fragments.\n")

@@ -20,33 +20,18 @@ IntellijDevBuildInputsInfo = provider(
     fields = {
         "files": "The input files named by the manifest.",
         "manifest": "The logical Bazel input label to execution path manifest.",
-        "inputs_origin": "The sidecar naming which half of the declaration each manifest key came from.",
     },
 )
 
-# How strongly a declaration half demands its key, lowest first, for a key more than one half names.
-_ORIGIN_RANK = {"raw": 0, "member": 1, "library": 2}
-
-def _add_input_entry(ctx, entries, origins, logical_key, files, source, origin):
+def _add_input_entry(ctx, entries, logical_key, files, source):
     """Record one manifest entry, failing when two different file lists claim the same logical key.
 
     Same key, same files is the normal case - two content targets naming the same module, say - and deduplicates.
 
     [files] is a *list* because one key does not always mean one file: a module or a raw input is one jar, but a library
     is keyed by the container target that groups its jars (`DistContentInfo.library_jars` in `dist_content.bzl`) and a
-    multi-jar library has several, in an order the packer depends on. The manifest still holds one line per file, which
-    is what keeps `wc -l` counting files for `dist_unused_inputs_test.bzl`. The origin sidecar stays one line per
-    *key* and is read as a lookup rather than positionally (`tally_origins` in `//build/dist-tools/bins/dist`
-    keeps the manifest as a list of pairs and the origins as a `HashMap`), so a repeated key resolves to the one origin
-    it was recorded under.
-
-    [origin] is written to a sidecar only, never to the manifest: it answers "which half of the declaration asked for
-    this key", which is what turns `.unused-inputs` from a count into an attributable measurement.
+    multi-jar library has several, in an order the packer depends on. The manifest holds one line per file.
     """
-    previous_origin = origins.get(logical_key)
-    if previous_origin == None or _ORIGIN_RANK[origin] < _ORIGIN_RANK[previous_origin]:
-        origins[logical_key] = origin
-
     previous = entries.get(logical_key)
     if previous == None:
         entries[logical_key] = files
@@ -60,13 +45,12 @@ def _add_input_entry(ctx, entries, origins, logical_key, files, source, origin):
 
 def _dev_build_inputs_impl(ctx):
     entries = {}
-    origins = {}
 
     for target in ctx.attr.inputs:
         files = target[DefaultInfo].files.to_list()
         if len(files) != 1:
             fail("%s: %s must provide exactly one file, got %s" % (ctx.label, target.label, files))
-        _add_input_entry(ctx, entries, origins, str(target.label), (files[0],), target.label, "raw")
+        _add_input_entry(ctx, entries, str(target.label), (files[0],), target.label)
 
     for target in ctx.attr.content:
         content = target[DistContentInfo]
@@ -79,7 +63,7 @@ def _dev_build_inputs_impl(ctx):
         # (`jvm-rules/rules/common-attrs.bzl:129-132`) - so the jar file's owner is the rule and `owner + ".jar"`
         # reproduces the label. The generator writes the same labels from `build/bazel-targets.json`.
         for jar in content.module_jars.to_list():
-            _add_input_entry(ctx, entries, origins, str(jar.owner) + ".jar", (jar,), jar.owner, "member")
+            _add_input_entry(ctx, entries, str(jar.owner) + ".jar", (jar,), jar.owner)
 
         # A library is keyed by its *container* target, whose label is not derivable from the jars: a Maven library's
         # per-jar target is a `copy_file` output, so a file's owner is the `...jar_copy` rule (`lib.kt:408-423`), and the
@@ -87,37 +71,26 @@ def _dev_build_inputs_impl(ctx):
         # `LibraryDescription.target`, because that is what `findLibraryRoots` asks for; `DistContentInfo` carries it
         # with the container's ordered jars.
         for entry in content.library_jars.to_list():
-            _add_input_entry(ctx, entries, origins, entry.label, entry.jars, entry.label, "library")
+            _add_input_entry(ctx, entries, entry.label, entry.jars, entry.label)
 
     lines = []
     files = []
     for logical_key in sorted(entries.keys()):
         # One line per file, so a multi-jar library repeats its key. `ExplicitBazelInputResolver.load` collects the
-        # repeats into one ordered list; keeping the file as the unit is what lets `wc -l` and the origin sidecar go on
-        # meaning what they meant.
+        # repeats into one ordered list.
         for file in entries[logical_key]:
             lines.append("%s\t%s" % (logical_key, file.path))
             files.append(file)
     manifest = ctx.actions.declare_file(ctx.label.name + ".bazel-inputs")
 
-    # An empty declaration writes an empty file rather than a lone newline, for the same reason `writeUnusedInputs`
-    # does: `wc -l` is what reads this pair, and a blank line would report one declared input that does not exist.
-    # Unchanged for every non-empty manifest, so no reference is re-keyed by this.
+    # An empty declaration writes an empty file rather than a lone newline.
     ctx.actions.write(manifest, ("\n".join(lines) + "\n") if lines else "")
 
-    # A sidecar, deliberately not a third column in the manifest: `ExplicitBazelInputResolver.load` splits on the first
-    # tab and takes the rest of the line as the path, and the manifest is an action input - changing its bytes would
-    # re-key every reference to carry a measurement. Nothing declares this file as an input, so it re-keys nothing.
-    inputs_origin = ctx.actions.declare_file(ctx.label.name + ".bazel-inputs-origin")
-    origin_lines = ["%s\t%s" % (logical_key, origins[logical_key]) for logical_key in sorted(origins.keys())]
-    ctx.actions.write(inputs_origin, ("\n".join(origin_lines) + "\n") if origin_lines else "")
-
     return [
-        DefaultInfo(files = depset([manifest, inputs_origin])),
+        DefaultInfo(files = depset([manifest])),
         IntellijDevBuildInputsInfo(
             files = depset(files),
             manifest = manifest,
-            inputs_origin = inputs_origin,
         ),
     ]
 
@@ -166,8 +139,6 @@ IntellijDevReferenceInfo = provider(
     doc = "A reference fragment, the second producer of a gate. No distribution composes it.",
     fields = {
         "name": "The fragment name.",
-        "inputs_manifest": "The label-to-path manifest of the fragment's declared Bazel inputs.",
-        "unused_inputs": "The declared inputs the assembly never resolved - declared minus these is what it used.",
     },
 )
 
@@ -396,12 +367,7 @@ def _fragment_impl(ctx):
     home = ctx.actions.declare_directory(ctx.label.name + ".home")
     scratch = ctx.actions.declare_directory(ctx.label.name + ".scratch")
 
-    # Which declared inputs the assembly never resolved. It used to be `unused_inputs_list`, pruning the action key
-    # after the fact - which can skip a re-run in one output base but never produce a disk- or remote-cache hit, since
-    # the key is computed over the full declared set before the action runs. Narrowing what is *declared* replaced it.
-    # The file stays as the measurement of how honest a declaration is: declared minus unused is what a reference used.
-    unused_inputs = ctx.actions.declare_file(ctx.label.name + ".unused-inputs")
-    outputs = [home, scratch, unused_inputs]
+    outputs = [home, scratch]
 
     project_tree = ctx.attr.project_model_tree[IntellijProjectModelTreeInfo].tree
     build_inputs = ctx.attr.build_inputs[IntellijDevBuildInputsInfo]
@@ -423,7 +389,6 @@ def _fragment_impl(ctx):
     args.add("--platform-prefix=" + ctx.attr.platform_prefix)
     args.add("--bazel-targets-json=" + ctx.file.bazel_targets_json.path)
     args.add("--bazel-inputs-manifest=" + bazel_inputs_manifest.path)
-    args.add("--unused-inputs=" + unused_inputs.path)
     _add_target_platform_args(args, ctx.attr.target_platform)
 
     if ctx.attr.platform:
@@ -434,17 +399,10 @@ def _fragment_impl(ctx):
             ctx.attr.platform_payload[DistPlatformPayloadInfo].packed_jar_names,
             format_each = "--platform-jar=%s",
         )
-    runtime_module_repository_layout = None
     if ctx.attr.runtime_module_repository:
         # The reference assembler lays the platform and the bundled plugins out without files, then writes only
         # `modules/`.
         args.add("--runtime-module-repository")
-
-        # The layout the repository is generated from, the reference of `./build/dist.cmd runtime-repo`. Not in the
-        # home, so no distribution composes it.
-        runtime_module_repository_layout = ctx.actions.declare_file(ctx.label.name + ".runtime-module-repository-layout.json")
-        args.add("--runtime-module-repository-layout=" + runtime_module_repository_layout.path)
-        outputs.append(runtime_module_repository_layout)
 
     args.add_all(ctx.files.preloaded_manifests, format_each = "--preloaded-manifest=%s")
     args.add("--preloaded-only")
@@ -472,21 +430,12 @@ def _fragment_impl(ctx):
     )
     return [
         DefaultInfo(files = depset([home])),
-        # The three files `./build/dist.cmd inputs` joins, in one group: declared keys with their paths, the
-        # ones the assembly never resolved, and which half of the declaration asked for each. Requesting the group runs
-        # the assembly, which is the point - `used` is only knowable from a real assembly.
         OutputGroupInfo(
-            declared_inputs = depset([bazel_inputs_manifest, build_inputs.inputs_origin, unused_inputs]),
             # The spans of this reference and of the shared project model tree. No distribution composes a reference,
             # so a request for the spans of a distribution does not reach the tree.
             trace_spans = _spans_output_group([spans], [ctx.attr.project_model_tree]),
-            runtime_module_repository_layout = depset([runtime_module_repository_layout] if runtime_module_repository_layout else []),
         ),
-        IntellijDevReferenceInfo(
-            name = ctx.attr.fragment_name,
-            inputs_manifest = bazel_inputs_manifest,
-            unused_inputs = unused_inputs,
-        ),
+        IntellijDevReferenceInfo(name = ctx.attr.fragment_name),
     ]
 
 intellij_fragment = rule(

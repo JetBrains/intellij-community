@@ -3479,10 +3479,9 @@ private fun StringBuilder.appendPlatformJarOrders(orders: List<Pair<String, Plat
 private fun renderReferencePlan(products: List<ProductFragmentPlan>, half: DistHalf): String = buildString {
   append(half.generatedByHeader)
   append("#\n")
-  append("# The facts of every split product that only the reference fragments of the `jars`, `replay` and `runtime-repo`\n")
-  append("# gates read. No distribution reads them. `platform_asset_archives` are the archives that a reference does not\n")
-  append("# preload, because the `platform_assets` component places their files. The labels of the build modules are in\n")
-  append("# `dist_reference_inputs.bzl`.\n")
+  append("# The facts of every split product that only the reference fragments read. No distribution reads them.\n")
+  append("# `platform_asset_archives` are the archives that a reference does not preload, because the `platform_assets`\n")
+  append("# component places their files. The labels of the build modules are in `dist_reference_inputs.bzl`.\n")
   append("#\n")
   append("# Products with equal facts share one private `_REFERENCE_PLAN_<first product>` struct.\n")
   val owners = LinkedHashMap<String, MutableList<String>>()

@@ -11,7 +11,6 @@ import org.jetbrains.intellij.build.dev.BuildRequest
 import org.jetbrains.intellij.build.dev.DevBuildFragment
 import org.jetbrains.intellij.build.dev.PlatformJarSelector
 import org.jetbrains.intellij.build.dev.buildProductInProcess
-import org.jetbrains.intellij.build.impl.BazelBuildInputs
 import java.nio.file.DirectoryNotEmptyException
 import java.nio.file.Files
 import java.nio.file.Path
@@ -22,7 +21,7 @@ import kotlin.system.exitProcess
 
 /**
  * Assembles a reference fragment of the distribution into a caller-specified output directory. A reference is the
- * second producer of the `jars` and `runtime-repo` gates, and no distribution composes it.
+ * second producer of the `jars` gate, and no distribution composes it.
  *
  * Unlike `DevMainImpl`, which builds and launches in the same process from an IDE run configuration, this entry point only
  * builds. The Bazel action gives the run directory ([BuildRequest.runDirOverride]) and the build scratch
@@ -79,9 +78,6 @@ private fun assembleDevDistribution(options: CommandLineOptions) {
   options.optionalPath("--download-cache-dir")?.let { path ->
     System.setProperty(BuildDependenciesConstants.DOWNLOAD_CACHE_DIR_PROPERTY, path.invariantSeparatorsPathString)
   }
-  val unusedInputs = options.optionalPath("--unused-inputs")
-  // The layout the runtime module repository fragment generates the repository from, a side output.
-  val runtimeModuleRepositoryLayoutFile = options.optionalPath("--runtime-module-repository-layout")
   configurePreloadedDownloads(options)
   options.checkNoUnknownOptions()
 
@@ -92,7 +88,6 @@ private fun assembleDevDistribution(options: CommandLineOptions) {
       projectDir = projectDir,
       os = os,
       arch = arch,
-      runtimeModuleRepositoryLayoutFile = runtimeModuleRepositoryLayoutFile,
       runDirOverride = outputDir,
       scratchDir = scratchDir,
       buildDateInSeconds = buildDateInSeconds,
@@ -112,7 +107,6 @@ private fun assembleDevDistribution(options: CommandLineOptions) {
     scratchDir.deleteRecursively()
     Files.createDirectories(scratchDir)
   }
-  unusedInputs?.let(BazelBuildInputs::writeUnusedInputs)
 }
 
 /** Reads which slice of a distribution to assemble. Nothing is inferred: a fragment names itself and its selectors. */
