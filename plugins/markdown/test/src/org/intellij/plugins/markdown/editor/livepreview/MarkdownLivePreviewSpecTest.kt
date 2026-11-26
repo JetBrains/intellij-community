@@ -17,6 +17,7 @@ import org.jsoup.Jsoup
 import org.jsoup.nodes.Element
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 
@@ -219,18 +220,35 @@ class MarkdownLivePreviewSpecTest {
   }
 
   @Test
-  fun testCodeFenceConcealsOnlyItsMarkerLines() {
+  fun testCodeFenceConcealsItsMarkersAndKeepsTheLanguage() {
     val content = """
       |```markdown
       |**bold** and [docs](https://example.org)
       |```
     """.trimMargin()
-    assertEquals(listOf("```markdown", "```"), concealed(content))
+    assertEquals(listOf("```", "```"), concealed(content))
     assertEquals(listOf("```", "```"), concealed("```\nplain\n```"))
-    assertEquals(listOf("~~~python", "~~~"), concealed("~~~python\nprint(1)\n~~~"))
-    assertEquals(listOf("```kotlin", "```"), concealed("  ```kotlin\n  val a = 1\n  ```"))
-    assertEquals(listOf("```kotlin"), concealed("```kotlin\nopen\n"))
-    assertEquals(listOf("```java title=\"123\"", "```"), concealed("```java title=\"123\"\ncode\n```"))
+    assertEquals(listOf("~~~", "~~~"), concealed("~~~python\nprint(1)\n~~~"))
+    assertEquals(listOf("```", "```"), concealed("  ```kotlin\n  val a = 1\n  ```"))
+    assertEquals(listOf("```"), concealed("```kotlin\nopen\n"))
+    assertEquals(listOf("```", " title=\"123\"", "```"), concealed("```java title=\"123\"\ncode\n```"))
+    assertEquals(listOf("``` ", "```"), concealed("``` bash\necho one\n```"))
+  }
+
+  @Test
+  fun testCodeFenceLayoutHasTheStartOfTheLanguageAndOfEachCodeLine() {
+    val content = "- item\n\n  ```bash\n  echo one\n\n    echo two\n  ```"
+    val layout = elements(content).filterIsInstance<MarkdownLivePreviewSpec.CodeFenceLayout>().single()
+
+    assertEquals(content.indexOf("```"), layout.markerStart)
+    assertEquals(content.indexOf("bash"), layout.languageStart)
+    assertEquals(listOf(content.indexOf("echo one"), content.indexOf("  echo two")), layout.codeStarts)
+  }
+
+  @Test
+  fun testUnclosedCodeFenceHasNoLayout() {
+    assertTrue(elements("```bash\necho one\n\ntext").none { it is MarkdownLivePreviewSpec.CodeFenceLayout })
+    assertNull(elements("```\necho one\n```").filterIsInstance<MarkdownLivePreviewSpec.CodeFenceLayout>().single().languageStart)
   }
 
   @Test
@@ -861,7 +879,7 @@ class MarkdownLivePreviewSpecTest {
       prohibited = setOf(MarkdownLivePreviewConfiguration.MERMAID)
     )
 
-    assertEquals(listOf("```mermaid", "```"), concealed(content, configuration))
+    assertEquals(listOf("```", "```"), concealed(content, configuration))
     assertEquals(1, elements(content, configuration).filterIsInstance<MarkdownLivePreviewSpec.CodeFont>().size)
   }
 
@@ -892,6 +910,7 @@ class MarkdownLivePreviewSpecTest {
     is MarkdownLivePreviewSpec.Heading -> listOf(range)
     is MarkdownLivePreviewSpec.Image -> listOf(range)
     is MarkdownLivePreviewSpec.CodeFence -> emptyList()
+    is MarkdownLivePreviewSpec.CodeFenceLayout -> emptyList()
     is MarkdownLivePreviewSpec.CodeFont -> emptyList()
     is MarkdownLivePreviewSpec.Bullet -> listOf(range)
     is MarkdownLivePreviewSpec.TaskCheckbox -> listOf(range)
@@ -910,7 +929,8 @@ class MarkdownLivePreviewSpecTest {
         val offset = element.range.startOffset
         assertTrue(element.range.isEmpty && (offset == 0 || content[offset - 1] == '\n'), "An indent must be empty and sit at a line start: $element")
       }
-      else if (element !is MarkdownLivePreviewSpec.CodeFence && element !is MarkdownLivePreviewSpec.CodeFont) {
+      else if (element !is MarkdownLivePreviewSpec.CodeFence && element !is MarkdownLivePreviewSpec.CodeFenceLayout &&
+               element !is MarkdownLivePreviewSpec.CodeFont) {
         assertFalse(conceals.isEmpty(), "An element with nothing to conceal must not be reported: $element")
       }
       assertTrue(conceals.all { element.range.contains(it) }, "An element must contain the markup it conceals: $element")
@@ -932,7 +952,7 @@ class MarkdownLivePreviewSpecTest {
 
   private fun revealRanges(content: String): List<String> =
     elements(content)
-      .filterNot { it is MarkdownLivePreviewSpec.ListIndent || it is MarkdownLivePreviewSpec.CodeFont }
+      .filterNot { it is MarkdownLivePreviewSpec.ListIndent || it is MarkdownLivePreviewSpec.CodeFont || it is MarkdownLivePreviewSpec.CodeFenceLayout }
       .map { content.substring(it.range.startOffset, it.range.endOffset) }
 
   /** The line number and the depth of each list indent, in document order. */

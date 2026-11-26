@@ -4,6 +4,7 @@ package com.intellij.markdown.frontend.highlighting
 import com.intellij.lang.annotation.AnnotationHolder
 import com.intellij.lang.annotation.Annotator
 import com.intellij.lang.annotation.HighlightSeverity
+import com.intellij.markdown.frontend.editor.livepreview.LIVE_PREVIEW_GRAY_FENCE_KEYS
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.openapi.editor.ex.util.LayeredTextAttributes
@@ -190,6 +191,15 @@ internal class MarkdownHighlightingAnnotator : Annotator, DumbAware {
 
   private fun applyAnnotations(holder: AnnotationHolder, element: PsiElement, keys: HighlightingKeys) {
     if (keys.isEmpty()) return
+    // The editor takes the attributes of these keys from its own scheme, so live preview can restyle them.
+    val editorSchemeKey = keys.singleOrNull()?.takeIf { it in LIVE_PREVIEW_GRAY_FENCE_KEYS }
+    if (editorSchemeKey != null) {
+      holder.newSilentAnnotation(HighlightSeverity.INFORMATION)
+        .textAttributes(editorSchemeKey)
+        .range(element.textRange)
+        .create()
+      return
+    }
 
     val scheme = EditorColorsManager.getInstance().globalScheme
     val attributes = LayeredTextAttributes.create(scheme, keys.toTypedArray())

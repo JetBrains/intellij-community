@@ -96,7 +96,7 @@ fun computeLivePreviewSpecs(file: PsiFile, editor: Editor, configuration: Markdo
         MarkdownElementTypes.CODE_SPAN, MarkdownElementTypes.CODE_BLOCK ->
           listOfNotNull(it.toDecorationSpecs(editor, configuration), it.toCodeFontSpec())
         MarkdownElementTypes.CODE_FENCE ->
-          listOfNotNull(it.toDecorationSpecs(editor, configuration), it.toCodeFontSpec(), it.toFenceMarkerSpec())
+          listOfNotNull(it.toDecorationSpecs(editor, configuration), it.toCodeFontSpec()) + it.toFenceSpecs()
         else -> listOfNotNull(it.toDecorationSpecs(editor, configuration))
       }
     }
@@ -344,13 +344,30 @@ private fun PsiElement.toCodeFontSpec(): MarkdownLivePreviewSpec.CodeFont? {
   return MarkdownLivePreviewSpec.CodeFont(textRange.toMarkdownLivePreviewRange(), codeRanges.map { it.toMarkdownLivePreviewRange() })
 }
 
-private fun PsiElement.toFenceMarkerSpec(): MarkdownLivePreviewSpec.Conceal? {
-  val opening = node.findChildByType(MarkdownTokenTypes.CODE_FENCE_START) ?: return null
-  val openingMarker = fenceMarkerRange(opening)
-  val openingLineEnd = node.findChildByType(MarkdownTokenTypes.FENCE_LANG) ?: opening
-  val openingLine = TextRange(openingMarker.startOffset, openingLineEnd.textRange.endOffset)
-  val closing = node.findChildByType(MarkdownTokenTypes.CODE_FENCE_END)
-  return if (closing == null) inlineConceal(openingLine) else inlineConceal(openingLine, fenceMarkerRange(closing))
+/** Conceals the markers of a code fence and lays out a closed fence. */
+private fun PsiElement.toFenceSpecs(): List<MarkdownLivePreviewSpec> {
+  val opening = node.findChildByType(MarkdownTokenTypes.CODE_FENCE_START) ?: return emptyList()
+  val marker = fenceMarkerRange(opening)
+  // The language stays visible as the header of the block. The attributes after the language stay concealed.
+  val info = node.findChildByType(MarkdownTokenTypes.FENCE_LANG)
+  val language = info?.let(::fenceLanguageRange)
+  // The concealed marker ends at the language, so the space in "``` bash" does not shift the language.
+  val openingMarker = if (language == null) marker else TextRange(marker.startOffset, language.startOffset)
+  val attributes = if (info == null || language == null) TextRange.EMPTY_RANGE else TextRange(language.endOffset, info.textRange.endOffset)
+  val closing = node.findChildByType(MarkdownTokenTypes.CODE_FENCE_END) ?: return listOfNotNull(inlineConceal(openingMarker, attributes))
+  val codeStarts = node.getChildren(TokenSet.create(MarkdownTokenTypes.CODE_FENCE_CONTENT)).map { it.startOffset }
+  return listOfNotNull(
+    inlineConceal(openingMarker, attributes, fenceMarkerRange(closing)),
+    MarkdownLivePreviewSpec.CodeFenceLayout(textRange.toMarkdownLivePreviewRange(), marker.startOffset, language?.startOffset, codeStarts),
+  )
+}
+
+/** The first word of the info string of a fence. The info token can start with the spaces after the marker. */
+private fun fenceLanguageRange(info: ASTNode): TextRange {
+  val text = info.text
+  val start = text.length - text.trimStart().length
+  val end = (start until text.length).firstOrNull { text[it].isWhitespace() } ?: text.length
+  return TextRange(info.startOffset + start, info.startOffset + end)
 }
 
 private fun codeFontRange(token: ASTNode): TextRange {

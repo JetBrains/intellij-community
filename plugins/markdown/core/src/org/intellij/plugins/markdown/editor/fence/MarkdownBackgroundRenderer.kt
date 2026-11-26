@@ -4,7 +4,6 @@ package org.intellij.plugins.markdown.editor.fence
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.VisualPosition
 import com.intellij.openapi.editor.colors.EditorColors
-import com.intellij.openapi.editor.colors.EditorFontType
 import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.impl.EditorImpl
@@ -86,36 +85,14 @@ fun paintBackground(editor: Editor, graphics: Graphics, left: Int, top: Int, bot
   return shape
 }
 
+/**
+ * Fills the lines of the fence from the opening marker line to the closing marker line.
+ * A folded marker line stays in the background, so the code has one line above it and one below it.
+ */
 private fun paintCodeFence(editor: Editor, highlighter: RangeHighlighter, graphics: Graphics, startX: Int) {
-  val document = editor.document
-  val folding = editor.foldingModel
-  var start = highlighter.startOffset
-  var end = highlighter.endOffset
-  var language = ""
-  val opening = folding.getCollapsedRegionAtOffset(start)
-  if (opening != null && opening.startOffset == start) {
-    val info = document.charsSequence.subSequence(start, opening.endOffset).trimStart { it == '`' || it == '~' || it.isWhitespace() }
-    language = info.takeWhile { !it.isWhitespace() }.toString()
-    start = document.getLineEndOffset(document.getLineNumber(start)) + 1
-  }
-
-  val isClosingHidden = folding.getCollapsedRegionAtOffset(end - 1)?.endOffset == end
-  if (isClosingHidden && language.isEmpty()) {
-    end = document.getLineStartOffset(document.getLineNumber(end)) - 1
-  }
-  if (start > end) return
-
-  val right = getRightVisibleEdge(editor)
-  val rows = visualLines(editor, start, end, graphics.clipBounds)
+  val rows = visualLines(editor, highlighter.startOffset, highlighter.endOffset, graphics.clipBounds)
     .map { Row(startX, it.top, it.bottom) }
-  fillRows(editor, graphics, rows, right, roundLeft = true)
-  if (!isClosingHidden || language.isEmpty()) return
-
-  graphics.color = editor.colorsScheme.getAttributes(MarkdownHighlighterColors.CODE_FENCE_LANGUAGE)?.foregroundColor
-                   ?: editor.colorsScheme.defaultForeground
-  graphics.font = editor.colorsScheme.getFont(EditorFontType.PLAIN)
-  val x = right - graphics.fontMetrics.stringWidth(language) - JBUIScale.scale(LANGUAGE_GAP)
-  graphics.drawString(language, x, editor.offsetToXY(end).y + editor.ascent)
+  fillRows(editor, graphics, rows, getRightVisibleEdge(editor), roundLeft = true)
 }
 
 private fun isHiddenByFold(editor: Editor, highlighter: RangeHighlighter): Boolean {
@@ -166,8 +143,6 @@ private fun getRightVisibleEdge(editor: Editor): Int {
 
 /** The space between the background and the vertical scrollbar, in unscaled pixels. */
 private const val RIGHT_GAP = 12
-/** The space between the fence language and the right side of the background, in unscaled pixels. */
-private const val LANGUAGE_GAP = 8
 /**
  * Fills [rows] up to [right] as one shape. The rows follow each other from top to bottom, and the left side steps from row to row.
  * The right corners are round. The outer left corners are round only when [roundLeft] is true.

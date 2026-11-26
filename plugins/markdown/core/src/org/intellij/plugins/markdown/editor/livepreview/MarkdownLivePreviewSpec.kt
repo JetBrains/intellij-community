@@ -194,6 +194,21 @@ sealed interface MarkdownLivePreviewSpec {
     val source: String,
   ) : MarkdownLivePreviewSpec
 
+  /**
+   * Lays out the code of a closed code fence like a block of the HTML preview.
+   * The editor pads the language and each code line on the left, so the language is the header of the code.
+   * The editor pads nothing while the opening marker at [markerStart] shows its source.
+   * [languageStart] is the start of the language, or null for a fence without a language.
+   * Each offset of [codeStarts] is the start of the code on one line. The offsets leave out the line prefixes of a list or a blockquote.
+   */
+  @Serializable
+  data class CodeFenceLayout(
+    override val range: MarkdownLivePreviewRange,
+    val markerStart: Int,
+    val languageStart: Int?,
+    val codeStarts: List<Int>,
+  ) : MarkdownLivePreviewSpec
+
   /** Shows [codeRanges] in the code font. The ranges leave out the line prefixes of a list or a blockquote. */
   @Serializable
   data class CodeFont(

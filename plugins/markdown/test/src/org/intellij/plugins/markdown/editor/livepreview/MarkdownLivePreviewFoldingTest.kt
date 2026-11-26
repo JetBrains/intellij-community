@@ -10,6 +10,7 @@ import com.intellij.markdown.frontend.editor.livepreview.CodeFenceView
 import com.intellij.markdown.frontend.editor.livepreview.MarkdownBlockQuotePainter
 import com.intellij.markdown.frontend.editor.livepreview.MarkdownLivePreviewBulletInlayRenderer
 import com.intellij.markdown.frontend.editor.livepreview.MarkdownLivePreviewCheckboxInlayRenderer
+import com.intellij.markdown.frontend.editor.livepreview.MarkdownLivePreviewCodePaddingInlayRenderer
 import com.intellij.markdown.frontend.editor.livepreview.MarkdownLivePreviewImageInlayRenderer
 import com.intellij.markdown.frontend.editor.livepreview.MarkdownLivePreviewListIndentInlayRenderer
 import com.intellij.markdown.frontend.editor.livepreview.MarkdownLivePreviewReconciler
@@ -19,6 +20,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.command.WriteCommandAction.writeCommandAction
 import com.intellij.openapi.editor.CustomFoldRegion
+import com.intellij.openapi.editor.DefaultLanguageHighlighterColors
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.EditorKind
@@ -32,6 +34,8 @@ import com.intellij.openapi.editor.event.EditorFactoryListener
 import com.intellij.openapi.editor.ex.DocumentEx
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.ex.FoldingListener
+import com.intellij.openapi.editor.ex.MarkupModelEx
+import com.intellij.openapi.editor.impl.DocumentMarkupModel
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.editor.impl.FoldingKeys
 import com.intellij.openapi.editor.impl.SoftWrapModelImpl
@@ -1536,7 +1540,7 @@ class MarkdownLivePreviewFoldingTest {
     withContext(Dispatchers.EDT) {
       val content = "```kotlin\nval a = 1\n```\n\ntail"
       configure("$content<caret>")
-      val concealedText = "\nval a = 1\n\n\ntail"
+      val concealedText = "kotlin\nval a = 1\n\n\ntail"
       assertEquals(concealedText, visibleText())
 
       for (offset in listOf(content.indexOf("kotlin") + 2, content.indexOf("= 1"), content.lastIndexOf("```"))) {
@@ -1547,6 +1551,73 @@ class MarkdownLivePreviewFoldingTest {
 
       moveCaretTo(content.length)
       assertEquals(concealedText, visibleText())
+    }
+  }
+
+  @Test
+  fun testCodeFenceMarkersAndLanguageAreGrayAndPlainOnlyInLivePreview(): Unit = timeoutRunBlocking {
+    withContext(Dispatchers.EDT) {
+      val content = "```kotlin\nval a = 1\n```\n\ntail"
+      configure("$content<caret>")
+      val editor = myFixture.editor as EditorEx
+      val global = EditorColorsManager.getInstance().globalScheme
+      fun languageAttributes() = editor.highlighter.createIterator(content.indexOf("kotlin")).textAttributes
+      fun markerAttributes() = editor.highlighter.createIterator(0).textAttributes
+
+      for (attributes in listOf(languageAttributes(), markerAttributes())) {
+        assertEquals(global.getAttributes(DefaultLanguageHighlighterColors.LINE_COMMENT).foregroundColor, attributes.foregroundColor)
+        assertEquals(Font.PLAIN, attributes.fontType)
+      }
+      val markup = DocumentMarkupModel.forDocument(editor.document, myFixture.project, true) as MarkupModelEx
+      val gray = global.getAttributes(DefaultLanguageHighlighterColors.LINE_COMMENT).foregroundColor
+      val styledByMarkup = ArrayList<String>()
+      markup.processRangeHighlightersOverlappingWith(content.indexOf("kotlin") + 1, content.indexOf("kotlin") + 2) {
+        it.getTextAttributes(editor.colorsScheme)
+          ?.takeIf { attributes -> attributes.foregroundColor.let { color -> color != null && color != gray } || attributes.fontType != Font.PLAIN }
+          ?.let { attributes -> styledByMarkup += "${it.errorStripeTooltip} $attributes" }
+        true
+      }
+      assertThat(styledByMarkup).describedAs("A highlighter of the daemon must not restyle the language").isEmpty()
+
+      editor.setLivePreviewEnabledness(false, configuration)
+      val globalLanguage = global.getAttributes(MarkdownHighlighterColors.CODE_FENCE_LANGUAGE)
+      val globalMarker = global.getAttributes(MarkdownHighlighterColors.CODE_FENCE_MARKER)
+      PlatformTestUtil.waitWithEventsDispatching("The fence keeps the live preview style", {
+        languageAttributes() == globalLanguage && markerAttributes() == globalMarker
+      }, 10)
+    }
+  }
+
+  @Test
+  fun testRevealedCodeFenceHasNoPadding(): Unit = timeoutRunBlocking {
+    withContext(Dispatchers.EDT) {
+      val content = "```bash\necho one\n```\n\ntail"
+      configure("$content<caret>")
+      fun paddings() = myFixture.editor.inlayModel.getInlineElementsInRange(0, content.length, MarkdownLivePreviewCodePaddingInlayRenderer::class.java)
+      assertEquals(2, paddings().size)
+
+      moveCaretTo(content.indexOf("one"))
+      assertThat(paddings()).isEmpty()
+
+      moveCaretTo(content.length)
+      assertEquals(2, paddings().size)
+    }
+  }
+
+  @Test
+  fun testCodeFencePadsTheLanguageAndEachCodeLineOnTheLeft(): Unit = timeoutRunBlocking {
+    withContext(Dispatchers.EDT) {
+      for (opening in listOf("```bash", "``` bash")) {
+        val content = "$opening\necho one\n\necho two\n```\n\ntail"
+        configure("$content<caret>")
+        val editor = myFixture.editor
+        val paddings = editor.inlayModel.getInlineElementsInRange(0, content.length, MarkdownLivePreviewCodePaddingInlayRenderer::class.java)
+
+        assertEquals(listOf(content.indexOf("bash"), content.indexOf("echo one"), content.indexOf("echo two")), paddings.map { it.offset })
+        assertEquals(listOf(false, true, true), paddings.map { it.isRelatedToPrecedingText }, "Only the language padding belongs to the text after it")
+        assertEquals(editor.offsetToXY(content.indexOf("echo one"), true, false).x, editor.offsetToXY(content.indexOf("bash"), true, false).x, "The language of $opening starts at the code")
+        assertTrue(editor.offsetToXY(content.indexOf("echo one"), true, false).x > editor.offsetToXY(0).x, "The code starts after the padding")
+      }
     }
   }
 
@@ -2116,7 +2187,7 @@ class MarkdownLivePreviewFoldingTest {
       PlatformTestUtil.waitWithEventsDispatching("The diagram did not arrive", { (mermaidInlays().singleOrNull()?.heightInPixels ?: 0) > 0 }, 10)
       val inlay = mermaidInlays().single()
       assertEquals(fence.length, inlay.offset)
-      assertEquals("\ngraph LR\n  A --> B\n\n\ntail", visibleText())
+      assertEquals("mermaid\ngraph LR\n  A --> B\n\n\ntail", visibleText())
       assertTrue(SwingUtilities.isDescendingFrom(service.views.single().component, myFixture.editor.contentComponent), "The editor hosts the view")
       assertEquals(20 * myFixture.editor.lineHeight + 2 * JBUI.scale(2), inlay.heightInPixels, "A tall diagram is capped at 20 lines")
 
@@ -2148,7 +2219,7 @@ class MarkdownLivePreviewFoldingTest {
       val content = "![alt](image.png)\n\n# title\n\n> [!NOTE]\n> text\n\n```mermaid\ngraph LR\n```\n\ntail"
       configureProjectFile(content)
 
-      val fenceMarkers = listOf("```mermaid", "```")
+      val fenceMarkers = listOf("```", "```")
       assertEquals(fenceMarkers, concealed())
       assertThat(imageInlays()).isEmpty()
       assertThat(headingFolds()).isEmpty()

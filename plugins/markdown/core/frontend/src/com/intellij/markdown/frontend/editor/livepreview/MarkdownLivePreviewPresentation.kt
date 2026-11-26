@@ -119,6 +119,7 @@ internal class MarkdownLivePreviewPresentationFactory(project: Project, editor: 
     MarkdownLivePreviewSpec.Image::class.java to MarkdownLivePreviewImageRenderer(project, editor),
     MarkdownLivePreviewSpec.Heading::class.java to MarkdownLivePreviewHeadingRenderer(editor),
     MarkdownLivePreviewSpec.CodeFence::class.java to MarkdownLivePreviewCodeFenceRenderer(project, editor),
+    MarkdownLivePreviewSpec.CodeFenceLayout::class.java to MarkdownLivePreviewCodeFenceLayoutRenderer(editor),
   )
 
   init {
