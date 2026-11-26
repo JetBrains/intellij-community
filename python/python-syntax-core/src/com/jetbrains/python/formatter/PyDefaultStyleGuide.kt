@@ -59,6 +59,8 @@ object PyDefaultStyleGuide {
 
       // Force a new line after the colon of single-clause compound statements.
       NEW_LINE_AFTER_COLON = true
+      // Except a class or function body that is only `...` (a dummy implementation).
+      ELLIPSIS_BODY_ON_SAME_LINE = true
 
       // Magic trailing comma.
       USE_TRAILING_COMMA_IN_COLLECTIONS = true
