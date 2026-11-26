@@ -10,6 +10,7 @@ use std::path::{Path, PathBuf};
 
 use anyhow::{Context as _, Result, bail};
 use component::classpath;
+use component::json;
 use component::layout::{CORE_CLASSPATH_FILE, FINGERPRINT_FILE, LOCAL_LAYOUT_FILE};
 use component::manifest::{self, ComponentEntry, ComponentManifest};
 use component::paths;
@@ -323,8 +324,7 @@ fn check_launch_class_path(manifests: &[&ComponentManifest], target: &Path, core
         return Ok(());
     };
     let file = target.join(paths::from_slash(relative_path).as_ref());
-    let data = fs::read(&file).with_context(|| file.display().to_string())?;
-    let info: ProductInfo = serde_json::from_slice(&data).with_context(|| file.display().to_string())?;
+    let info: ProductInfo = json::read(&file)?;
     let Some(launch) = info.launch.first() else {
         bail!("{relative_path} states no launch");
     };

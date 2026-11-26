@@ -5,7 +5,7 @@ The component contract that the collector and the composer share. Each line name
 
 The crate implements only the inputs that the repository produces. Every other input fails with an error that names
 it. The collector writes the manifests, and the composer reads them. `intellij_dist.bzl` writes the metadata
-catalogue with `json.encode`, and the collector reads it with `json::read`. The composer writes the local layout, and
+catalogue with `json.encode`, and the collector reads it with `planfile::json::read`. The composer writes the local layout, and
 `dev-home` and `dist` read it with `layout::read_layout`.
 
 A host path is a `Path` or a `PathBuf`. A path inside a distribution is a `str` in slash form. A list of names is a
@@ -21,8 +21,9 @@ Every function returns `anyhow::Result`. An I/O or JSON error has the path as it
 
 ## JSON rules (`json`)
 
-- `json::read(path: &Path) -> Result<T>`: reads and decodes a JSON file. The error names the file. The collector reads
-  the metadata catalogue with it, and the composer reads the composition spec.
+- `json::read(path: &Path) -> Result<T>`: reads and decodes a JSON file. The error names the file. The composer reads
+  the composition spec and `product-info.json` with it, and `dev-home` reads the home spec. The tools of the plan side
+  link `planfile` and not this crate, so they read through `planfile::json`.
 
 Every reader is plain serde. A type refuses an unknown key, and a repeated key of a struct fails. A key without
 `Option` or a default is required, and `null` fails for it. An `Option` key takes `null`, and an absent `Option` key

@@ -5,7 +5,6 @@
 //! symbolic links. The spec also holds the launch of the target, which the tool passes through to the `json` answer.
 
 use std::collections::BTreeMap;
-use std::fs;
 use std::path::{Path, PathBuf};
 
 use anyhow::{Context as _, Result, bail};
@@ -68,8 +67,7 @@ pub(crate) struct LaunchSpec {
 
 /// Reads and checks the spec at `path`.
 pub(crate) fn read_spec(path: &Path) -> Result<HomeSpec> {
-    let text = fs::read_to_string(path).with_context(|| format!("cannot read {}", path.display()))?;
-    let spec: HomeSpec = serde_json::from_str(&text).with_context(|| format!("{} is not a home spec", path.display()))?;
+    let spec: HomeSpec = component::json::read(path)?;
     validate(&spec).with_context(|| format!("the home spec {} is not valid", path.display()))?;
     Ok(spec)
 }

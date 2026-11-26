@@ -5,7 +5,6 @@ use std::collections::{HashMap, HashSet};
 use std::path::{Path, PathBuf};
 
 use anyhow::{Context as _, Result, bail};
-use component::json;
 use component::manifest::{self, ComponentEntry, ComponentManifest, MANIFEST_VERSION};
 use component::paths;
 use filemeta::macho::MacBinary;
@@ -256,7 +255,7 @@ impl TreeMetadata {
 /// Pairs every jar with its inventory entry, and replaces every tree record with the files that its inventory names.
 /// The result is what the manifest lists, so a tree without a file contributes nothing.
 pub(crate) fn attach_metadata(records: &[JarRecord], catalogue: &Path) -> Result<Vec<SourcedFile>> {
-    let catalogue_records: Vec<MetadataRecord> = json::read(catalogue)?;
+    let catalogue_records: Vec<MetadataRecord> = planfile::json::read(catalogue)?;
     let mut by_source: HashMap<PathBuf, Entry> = HashMap::new();
     let mut trees: HashMap<PathBuf, TreeMetadata> = HashMap::new();
     let mut cache: HashMap<PathBuf, HashMap<String, Entry>> = HashMap::new();

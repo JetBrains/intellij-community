@@ -1,7 +1,7 @@
 //! The JSON reader of the component contract.
 //!
-//! The collector, the composer and Starlark `json.encode` write every file that [`read`] decodes. None of them quotes
-//! a number or repeats a key, so the decoder is plain serde. Each type refuses an unknown key, and a repeated key fails.
+//! Starlark `json.encode` and `serde_json` write every file that [`read`] decodes. Neither quotes a number or repeats
+//! a key, so the decoder is plain serde. Each type refuses an unknown key, and a repeated key fails.
 //! `null` is valid only for an `Option` field, and an absent `Option` field is `None`. `serde` also reads a JSON array
 //! in place of an object, in the field order. No producer writes such an array.
 
