@@ -14,9 +14,9 @@ import org.jetbrains.annotations.ApiStatus
  */
 @ApiStatus.Internal
 @VisibleToClasses(
-  "com.intellij.platform.ijent.ssh.daemon.DaemonSshTransportSupervisor",
-  "com.intellij.platform.ijent.ssh.daemon.SshDeployingStrategy",
   "com.intellij.platform.ijent.ssh.impl.OpenSshStderrLog",
+  "com.intellij.platform.ijent.ssh.impl.SshTransportDeployingStrategy",
+  "com.intellij.platform.ijent.ssh.impl.SshTransportSupervisor",
 )
 interface IjentForeignStderrLog {
   fun trace(message: String)

@@ -10,7 +10,7 @@ import java.io.OutputStream
   "com.intellij.platform.ijent.impl.base.tcp.MutualTlsCertificatesFactory",
   "com.intellij.platform.ijent.spi.IjentDeployingOverShellProcessStrategyUnitTest",
   "com.intellij.platform.ijent.spi.TestShellStrategy",
-  "com.intellij.platform.ijent.ssh.daemon.SshDeployingStrategy",
+  "com.intellij.platform.ijent.ssh.impl.SshTransportDeployingStrategy",
   "com.intellij.platform.ijent.testFramework.functional.fixture.IjentPosixTcpLocalFixture",
   "com.intellij.platform.ijent.testFramework.functional.fixture.IjentWindowsTcpLocalFixture",
   "com.intellij.rd.eel.frontend.RdIjentDeployingStrategy",

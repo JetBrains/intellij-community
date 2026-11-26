@@ -41,7 +41,7 @@ import kotlin.time.toKotlinDuration
 @ApiStatus.Internal
 object IjentSessionMediatorUtils {
   @VisibleToClasses(
-    "com.intellij.platform.ijent.ssh.daemon.DaemonSshTransportSupervisor",
+    "com.intellij.platform.ijent.ssh.impl.SshTransportSupervisor",
   )
   suspend fun ijentProcessStderrLogger(
     errorStream: EelReceiveChannel,
