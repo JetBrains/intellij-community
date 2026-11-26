@@ -128,6 +128,8 @@ internal sealed interface PluginSectionStatus {
   data class Failed(val error: PluginSectionError) : PluginSectionStatus
 }
 
+internal data class SessionPluginInstallGroup(val mainPluginId: PluginId, val pluginIds: List<PluginId>)
+
 internal data class PluginSectionState(
   val id: PluginSectionId,
   val title: @Nls String? = null,
@@ -136,7 +138,7 @@ internal data class PluginSectionState(
   val expanded: Boolean = false,
   val categoryGroups: List<BundledPluginCategoryGroupState> = emptyList(),
   val collapsedItemLimit: Int = COLLAPSED_ITEM_LIMIT,
-  val recentInstallOrder: List<PluginId> = emptyList(),
+  val sessionInstallGroups: List<SessionPluginInstallGroup> = emptyList(),
 ) {
   init {
     require(collapsedItemLimit > 0) { "The collapsed item limit must be positive" }

@@ -254,13 +254,17 @@ Untested: No focused test verifies state isolation across two page sessions.
   )
   [@test] ../../testSrc/com/intellij/ide/plugins/unified/UnifiedPluginsPageSourceCoordinatorTest.kt (
     `prepared manual update overrides a cached update in every occurrence`;
-    `prepared Marketplace install stays installed after the query is repeated`
+    `Marketplace selection follows a scheduled install into Installed`
   )
 
-- A successful install must appear in the default Installed list before Apply.
-- The user must be able to select the prepared install. Reset must remove it when the inventory has no installed copy.
+- A newly scheduled install and its new dependencies must appear with progress in Installed when they match the current query.
+- When a selected Marketplace plugin moves to Installed, the selection must follow it.
+- A successful install must remain selectable before Apply and while Apply refreshes the inventory.
+- Reset must remove a prepared install when the inventory has no installed copy.
   [@test] ../../testSrc/com/intellij/ide/plugins/unified/UnifiedPluginsPageSourceCoordinatorTest.kt (
-    `recent installs lead Installed and are selectable before Apply`
+    `Marketplace selection follows a scheduled install into Installed`;
+    `scheduled installs and dependencies show progress in Installed`;
+    `prepared installs stay visible while Apply reloads the inventory`
   )
 
 - After progress ends, the row and details must replace their action controls with one prepared action.
@@ -288,7 +292,7 @@ Untested: No focused test covers the complete Settings menu or the staged automa
 
 Untested: No focused test covers every management edit and refresh path.
 
-- Enable All and Disable All must use the complete query-independent Installed section.
+- Enable All and Disable All must use the installed inventory in the complete query-independent Installed section.
 - These actions must not include Bundled or remote-source sections.
   [@test] ../../testSrc/com/intellij/ide/plugins/unified/UnifiedPluginsPageStateTest.kt (
     `bulk state actions use only installed section models`

@@ -16,6 +16,7 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.DumbAwareToggleAction
@@ -171,9 +172,12 @@ internal class UnifiedPluginsPageActions @RequiresEdt constructor(
   }
 }
 
-internal fun eligibleInstalledPluginModels(sections: List<PluginSectionState>): List<PluginUiModel> {
+internal fun eligibleInstalledPluginModels(
+  sections: List<PluginSectionState>,
+  installedPluginIds: Set<PluginId>,
+): List<PluginUiModel> {
   val section = sections.firstOrNull { it.id == PluginSectionId.Installed } ?: return emptyList()
-  return section.items.map { item ->
+  return section.items.filter { it.pluginId in installedPluginIds }.map { item ->
     requireNotNull(item.modelHandle) { "Installed plugin ${item.pluginId} has no model handle" }.model
   }
 }

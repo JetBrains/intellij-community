@@ -320,7 +320,10 @@ internal class UnifiedPluginsPageSession @RequiresEdt constructor(
       host = host,
       customizer = customizer,
       onRefreshRequested = ::refresh,
-      installedPlugins = { eligibleInstalledPluginModels(localSource.state.value.sections) },
+      installedPlugins = {
+        val localState = localSource.state.value
+        eligibleInstalledPluginModels(localState.sections, localState.listModelData.installedModels.keys)
+      },
       onPluginInstalledFromDisk = { callbackData ->
         onPluginInstalledFromDisk(callbackData, PluginSource.LOCAL)
       },

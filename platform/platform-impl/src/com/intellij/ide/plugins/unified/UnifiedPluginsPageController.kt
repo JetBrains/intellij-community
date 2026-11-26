@@ -25,6 +25,7 @@ internal class UnifiedPluginsPageController(
   private val sectionInsertionOrder = HashMap<PluginSectionId, Long>()
   private val expandedSections = hashSetOf(PluginSectionId.Suggested, PluginSectionId.Marketplace)
   private var installingExpansionDefaultHandled = false
+  private var keepInstalledCollapsedDuringInstall = false
   private var nextInsertionOrder = 0L
   private var query = initialQuery
   private var projectedQueryRevision = initialQuery.revision
@@ -238,7 +239,13 @@ internal class UnifiedPluginsPageController(
   }
 
   private fun publish(establishSelection: Boolean, collapsedSectionId: PluginSectionId? = null) {
-    val visibleSections = visibleSections().map { section ->
+    val orderedSections = visibleSections()
+    val installed = orderedSections.firstOrNull { it.id == PluginSectionId.Installed }
+    val sessionInstallIds = installed?.sessionInstallGroups.orEmpty().flatMapTo(HashSet(), SessionPluginInstallGroup::pluginIds)
+    if (projectedQueryRevision == query.revision) {
+      updateInstalledExpansion(installed, sessionInstallIds, collapsedSectionId)
+    }
+    val visibleSections = orderedSections.map { section ->
       val expanded = isSectionExpanded(section.id)
       section.copy(
         expanded = expanded,
@@ -252,7 +259,15 @@ internal class UnifiedPluginsPageController(
     }
 
     val currentSelection = selectedOccurrences
-    val retainedSelection = currentSelection.filter { containsOccurrence(visibleSections, it, collapsedSectionId) }
+    val retainedSelection = normalizeSelection(currentSelection.mapNotNull { occurrence ->
+      when {
+        containsOccurrence(visibleSections, occurrence, collapsedSectionId) -> occurrence
+        collapsedSectionId == null && pluginDetailsMode(occurrence.sectionId) == PluginDetailsMode.MARKETPLACE &&
+        occurrence.pluginId in sessionInstallIds && installed?.displayItems.orEmpty().any { it.pluginId == occurrence.pluginId } ->
+          PluginOccurrenceId(PluginSectionId.Installed, occurrence.pluginId)
+        else -> null
+      }
+    })
     if (retainedSelection.isNotEmpty()) {
       selectedOccurrences = retainedSelection
       initialSelectionPending = false
@@ -280,6 +295,24 @@ internal class UnifiedPluginsPageController(
     )
   }
 
+  private fun updateInstalledExpansion(
+    installed: PluginSectionState?,
+    sessionInstallIds: Set<PluginId>,
+    collapsedSectionId: PluginSectionId?,
+  ) {
+    val activeItems = installed?.displayItems.orEmpty().filter {
+      it.pluginId in sessionInstallIds && it.rowInput?.operationInProgress == true
+    }
+    if (activeItems.isEmpty()) {
+      keepInstalledCollapsedDuringInstall = false
+      return
+    }
+    if (collapsedSectionId == PluginSectionId.Installed) keepInstalledCollapsedDuringInstall = true
+    if (keepInstalledCollapsedDuringInstall || isSectionExpanded(PluginSectionId.Installed)) return
+    val preview = checkNotNull(installed).displayItems.take(collapsedItemLimit)
+    if (!preview.containsAll(activeItems)) expandSectionForReveal(PluginSectionId.Installed)
+  }
+
   private fun visibleSections(): List<PluginSectionState> {
     val route = query.sourceRoute()
     val selectedRepositoryIds = if (route.repositories.eligible) route.selectedRepositoryIds else emptySet()
@@ -295,11 +328,34 @@ internal class UnifiedPluginsPageController(
   }
 
   private fun orderSessionInstalls(section: PluginSectionState): PluginSectionState {
-    if (section.id != PluginSectionId.Installed || section.recentInstallOrder.isEmpty() || query.normalizedQuery.isNotEmpty()) return section
-
+    if (section.id != PluginSectionId.Installed || section.sessionInstallGroups.isEmpty() || query.normalizedQuery.isNotEmpty()) {
+      return section
+    }
+    val visibleIds = section.items.mapTo(HashSet(), PluginItemState::pluginId)
     val remaining = section.items.associateByTo(LinkedHashMap(), PluginItemState::pluginId)
-    val recent = section.recentInstallOrder.mapNotNull(remaining::remove)
-    return if (recent.isEmpty()) section else section.copy(items = recent + remaining.values)
+    val leading = ArrayList<PluginItemState>()
+    val dependenciesByMain = LinkedHashMap<PluginId, MutableList<PluginItemState>>()
+    for (group in section.sessionInstallGroups) {
+      val rows = group.pluginIds.mapNotNull(remaining::remove)
+      if (group.mainPluginId in visibleIds && group.mainPluginId !in group.pluginIds) {
+        dependenciesByMain.getOrPut(group.mainPluginId) { ArrayList() }.addAll(rows)
+      }
+      else {
+        leading.addAll(rows)
+      }
+    }
+    val ordered = buildList {
+      fun addWithDependencies(item: PluginItemState) {
+        add(item)
+        dependenciesByMain.remove(item.pluginId).orEmpty().forEach(::addWithDependencies)
+      }
+      (leading + remaining.values).forEach(::addWithDependencies)
+      while (dependenciesByMain.isNotEmpty()) {
+        val unplaced = dependenciesByMain.remove(dependenciesByMain.keys.first()).orEmpty()
+        unplaced.forEach(::addWithDependencies)
+      }
+    }
+    return section.copy(items = ordered)
   }
 
   private fun stabilizeItemOrder(section: PluginSectionState): PluginSectionState {

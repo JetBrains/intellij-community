@@ -62,11 +62,15 @@ internal class UnifiedPluginsPageStateTest {
   @Test
   fun `bulk state actions use only installed section models`() {
     val installed = pluginModel("installed")
+    val scheduled = pluginModel("scheduled")
     val bundled = pluginModel("bundled")
     val sections = listOf(
       PluginSectionState(
         PluginSectionId.Installed,
-        items = listOf(PluginItemState(installed.pluginId, installed.name, modelHandle = PluginItemModelHandle(installed))),
+        items = listOf(
+          PluginItemState(installed.pluginId, installed.name, modelHandle = PluginItemModelHandle(installed)),
+          PluginItemState(scheduled.pluginId, scheduled.name, modelHandle = PluginItemModelHandle(scheduled)),
+        ),
       ),
       PluginSectionState(
         PluginSectionId.Bundled,
@@ -74,7 +78,7 @@ internal class UnifiedPluginsPageStateTest {
       ),
     )
 
-    assertThat(eligibleInstalledPluginModels(sections)).containsExactly(installed)
+    assertThat(eligibleInstalledPluginModels(sections, setOf(installed.pluginId, bundled.pluginId))).containsExactly(installed)
   }
 
   @Test

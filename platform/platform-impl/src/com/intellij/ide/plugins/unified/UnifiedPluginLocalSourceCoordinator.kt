@@ -4,11 +4,9 @@ package com.intellij.ide.plugins.unified
 import com.intellij.ide.plugins.newui.PluginInstallationState
 import com.intellij.ide.plugins.newui.PluginInventoryChangeReason
 import com.intellij.ide.plugins.newui.PluginModelEvent
-import com.intellij.ide.plugins.newui.PluginOperationKind
 import com.intellij.ide.plugins.newui.PluginOperationTerminalResult
 import com.intellij.ide.plugins.newui.PluginProgressState
 import com.intellij.ide.plugins.newui.PluginRowInput
-import com.intellij.ide.plugins.newui.PluginStatus
 import com.intellij.ide.plugins.newui.PluginUpdatesEvent
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.PluginId
@@ -43,7 +41,6 @@ internal data class UnifiedPluginLocalSourceState(
   val manualUpdates: Map<PluginId, UnifiedPluginManualUpdateState> = emptyMap(),
   /** Implementation-detail plugins by their Installed or Bundled section. Only the `/built-in` filter shows them. */
   val implementationDetailItems: Map<PluginSectionId, List<PluginItemState>> = emptyMap(),
-  val preparedSessionInstalls: List<PluginItemState> = emptyList(),
 )
 
 /**
@@ -87,7 +84,6 @@ internal class UnifiedPluginLocalSourceCoordinator(
   private var updateAllTargets: List<UnifiedPluginUpdateAllTarget> = emptyList()
   private var updateAllRevision = 0L
   private val manualUpdates = HashMap<PluginId, UnifiedPluginManualUpdateState>()
-  private val sessionInstalls = LinkedHashSet<PluginId>()
   private val enabledStateOverrides = HashMap<PluginId, Boolean>()
 
   val state: StateFlow<UnifiedPluginLocalSourceState> = mutableState.asStateFlow()
@@ -144,7 +140,12 @@ internal class UnifiedPluginLocalSourceCoordinator(
   private fun acceptHostEvent(event: PluginModelEvent) {
     val manualUpdateChanged = acceptManualUpdateEvent(event)
     if (event is PluginModelEvent.InventoryInvalidated) {
-      if (event.reason == PluginInventoryChangeReason.UNINSTALL) sessionInstalls.removeAll(event.pluginIds)
+      when (event.reason) {
+        PluginInventoryChangeReason.APPLY -> installingLedger.applyPreparedInstalls()
+        PluginInventoryChangeReason.RESET -> installingLedger.resetPreparedInstalls()
+        PluginInventoryChangeReason.UNINSTALL -> installingLedger.forgetUninstalledPlugins(event.pluginIds)
+        else -> Unit
+      }
       if (!acceptEnablementChange(event)) {
         enabledStateOverrides.clear()
         enablementEnrichmentPending = false
@@ -152,19 +153,7 @@ internal class UnifiedPluginLocalSourceCoordinator(
       }
     }
     else {
-      val installingChanged = installingLedger.accept(event)
-      if (installingChanged && event is PluginModelEvent.OperationFinished && event.result == PluginOperationTerminalResult.SUCCEEDED) {
-        val installedModels = snapshot?.listModelData?.installedModels.orEmpty()
-        val dependencyIds = event.installedPlugins.map { it.pluginId }.filterNot(installedModels::containsKey)
-        val newInstalls = if (manualUpdateChanged && event.kind == PluginOperationKind.INSTALL) {
-          dependencyIds + event.displayPluginId
-        }
-        else {
-          dependencyIds
-        }
-        sessionInstalls.removeAll(newInstalls.toSet())
-        sessionInstalls.addAll(newInstalls)
-      }
+      val installingChanged = installingLedger.accept(event, snapshot?.listModelData?.installedModels.orEmpty().keys)
       if (manualUpdateChanged || installingChanged) {
         publish(snapshot, currentStatus(), mayEstablishSelection = false)
       }
@@ -317,6 +306,7 @@ internal class UnifiedPluginLocalSourceCoordinator(
     snapshot = loadedSnapshot
     if (completedRequestKind == RequestKind.Reload) {
       inventoryStale = false
+      if (command.inventory.unavailableSides.isEmpty()) installingLedger.settleAppliedInstalls()
     }
     if (command.updateRevision != updateRevision) {
       enablementEnrichmentPending = false
@@ -375,12 +365,7 @@ internal class UnifiedPluginLocalSourceCoordinator(
         if (installingItems.isNotEmpty()) {
           add(PluginSectionState(PluginSectionId.Installing, items = installingItems))
         }
-        add(PluginSectionState(
-          PluginSectionId.Installed,
-          items = currentSnapshot?.installedItems.orEmpty(),
-          status = status,
-          recentInstallOrder = sessionInstalls.reversed().toList(),
-        ))
+        add(installingLedger.installedSection(currentSnapshot?.installedItems.orEmpty(), listModelData, status))
         add(PluginSectionState(PluginSectionId.Bundled, items = currentSnapshot?.bundledItems.orEmpty(), status = status))
       },
       listModelData = listModelData,
@@ -388,23 +373,6 @@ internal class UnifiedPluginLocalSourceCoordinator(
       facetsLoading = status is PluginSectionStatus.Loading,
       manualUpdates = manualUpdates.toMap(),
       implementationDetailItems = currentSnapshot?.implementationDetailItems.orEmpty(),
-      preparedSessionInstalls = installingItems.mapNotNull { item ->
-        if (item.pluginId !in sessionInstalls || item.pluginId in listModelData.installedModels) return@mapNotNull null
-        val prepared = manualUpdates[item.pluginId]?.presentation as? UnifiedPluginManualUpdatePresentation.Prepared
-                       ?: return@mapNotNull null
-        val model = item.modelHandle?.model ?: return@mapNotNull null
-        val input = item.rowInput ?: return@mapNotNull null
-        if (model.isBundled || model.isBundledUpdate || model.isImplementationDetail ||
-            input.operationInProgress || input.errors.isNotEmpty()) return@mapNotNull null
-
-        val installStatus = if (prepared.restartRequired) PluginStatus.INSTALLED_AND_REQUIRED_RESTART
-                            else PluginStatus.INSTALLED_WITHOUT_RESTART
-        item.copy(rowInput = input.copy(
-          installedPlugin = model,
-          installationState = PluginInstallationState(false, installStatus),
-          enabled = model.isEnabled,
-        ))
-      },
     )
   }
 
