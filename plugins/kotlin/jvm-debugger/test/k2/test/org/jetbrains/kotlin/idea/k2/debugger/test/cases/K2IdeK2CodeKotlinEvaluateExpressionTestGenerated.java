@@ -809,6 +809,11 @@ public abstract class K2IdeK2CodeKotlinEvaluateExpressionTestGenerated extends A
                 runTest("../testData/evaluation/singleBreakpoint/frame/annotationsAreNotShown.kt");
             }
 
+            @TestMetadata("capturedShadowedByLocal.kt")
+            public void testCapturedShadowedByLocal() throws Exception {
+                runTest("../testData/evaluation/singleBreakpoint/frame/capturedShadowedByLocal.kt");
+            }
+
             @TestMetadata("capturedValues1.kt")
             public void testCapturedValues1() throws Exception {
                 runTest("../testData/evaluation/singleBreakpoint/frame/capturedValues1.kt");

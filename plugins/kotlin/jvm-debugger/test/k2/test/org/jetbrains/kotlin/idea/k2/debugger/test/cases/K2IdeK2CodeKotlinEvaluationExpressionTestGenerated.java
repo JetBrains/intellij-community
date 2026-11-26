@@ -53,6 +53,11 @@ public class K2IdeK2CodeKotlinEvaluationExpressionTestGenerated extends Abstract
         runTest("../testData/evaluationExpression/capturedJavaKeywordNameInLambda.kt");
     }
 
+    @TestMetadata("capturedShadowedByLocalInLambda.kt")
+    public void testCapturedShadowedByLocalInLambda() throws Exception {
+        runTest("../testData/evaluationExpression/capturedShadowedByLocalInLambda.kt");
+    }
+
     @TestMetadata("castToClassNamedAsJdkClass.kt")
     public void testCastToClassNamedAsJdkClass() throws Exception {
         runTest("../testData/evaluationExpression/castToClassNamedAsJdkClass.kt");

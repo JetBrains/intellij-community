@@ -91,10 +91,14 @@ open class KotlinStackFrame(
         }
 
         thisVariables.forEach(::addItem)
+        val localNames = otherVariables.map { it.nameWithoutScopeNumber() }.filterNot { it.startsWith(AsmUtil.CAPTURED_PREFIX) }.toSet()
         otherVariables.forEach {
             val nameWithoutScope = it.nameWithoutScopeNumber()
             if (nameWithoutScope.startsWith(AsmUtil.CAPTURED_PREFIX)) {
-                val valueData = CapturedAsLocalVariableValueData(nameWithoutScope.drop(1), it)
+                val sourceName = nameWithoutScope.drop(1)
+                // A local with the same name shadows the captured variable in the source.
+                if (sourceName in localNames) return@forEach
+                val valueData = CapturedAsLocalVariableValueData(sourceName, it)
                 val variableDescriptor = nodeManager.getDescriptor(null, valueData)
                 add(JavaValue.create(null, variableDescriptor, evaluationContext, nodeManager, false))
             } else if (it.name().contains(INLINE_SCOPE_NUMBER_SEPARATOR)) {

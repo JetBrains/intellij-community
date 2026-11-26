@@ -1,0 +1,17 @@
+LineBreakpoint created at capturedShadowedByLocal.kt:15
+Run Java
+Connected to the target VM
+capturedShadowedByLocal.kt:15
+InlineStackFrame lambda 'run' in 'main' (capturedShadowedByLocal.kt:15)
+    JavaValue[local] k = 3
+    JavaValue[local] s: java.lang.String = shadow (capturedShadowedByLocal.kt:12)
+    JavaValue[local] n: int = 2 (capturedShadowedByLocal.kt:13)
+KotlinStackFrame (capturedShadowedByLocal.kt:11)
+    JavaValue[local] k = 3
+    JavaValue[local] n = 1
+    JavaValue[local] s: int[2]@uniqueID = [...]
+        JavaValue[element] 0 = 31
+        JavaValue[element] 1 = 32
+Disconnected from the target VM
+
+Process finished with exit code 0
