@@ -287,6 +287,13 @@ Untested: No focused test verifies state isolation across two page sessions.
 
 Untested: No focused test covers the complete Settings menu or the staged automatic-update setting.
 
+- After a successful disk installation, the page must clear the Plugins search and select the installed plugin before Apply.
+- The page must scroll the selected row into view and expand its section when necessary.
+  [@test] ../../testSrc/com/intellij/ide/plugins/UnifiedPluginsPageSessionTest.kt (
+    `disk install selects the new plugin before Apply`;
+    `disk install clears the search and selects the new plugin`
+  )
+
 - Repository, proxy, and certificate changes must refresh the page after a successful edit.
 - A repository edit must give the active customizer the added and removed repository URLs.
 

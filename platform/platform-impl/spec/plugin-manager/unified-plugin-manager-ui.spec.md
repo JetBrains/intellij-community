@@ -714,8 +714,13 @@ Untested: Community tests verify the Enter handler, but they do not verify the S
     `keyboard navigation reveals a row below the sticky header`
   )
 
+- An explicit reveal must scroll the selected row into view below the sticky header.
+  [@test] ../../testSrc/com/intellij/ide/plugins/unified/UnifiedPluginsPageRealRowsTest.kt (
+    `explicit reveal scrolls a selected row below the sticky header`
+  )
+
 - When a source refresh replaces a visible selected row, the row must remain visible below the sticky header.
-- A source refresh must not scroll to a selected row outside the viewport.
+- A source refresh by itself must not scroll to a selected row outside the viewport.
   [@test] ../../testSrc/com/intellij/ide/plugins/unified/UnifiedPluginsPageRealRowsTest.kt (
     `source refresh reveals a replaced selected row below the sticky header`;
     `source refresh does not reveal a replaced offscreen selected row`

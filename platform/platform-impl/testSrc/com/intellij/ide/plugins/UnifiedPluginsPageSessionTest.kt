@@ -172,6 +172,16 @@ internal class UnifiedPluginsPageSessionTest {
     }
 
   @Test
+  fun `disk install selects the new plugin before Apply`() = uiTest {
+    assertDiskInstallRevealsPlugin(searchQuery = null, pluginId = "disk.install.selection")
+  }
+
+  @Test
+  fun `disk install clears the search and selects the new plugin`() = uiTest {
+    assertDiskInstallRevealsPlugin(searchQuery = "Existing", pluginId = "disk.install.search")
+  }
+
+  @Test
   fun `Copy includes the name ID and version of every selected plugin`(@TestDisposable disposable: Disposable): Unit =
     uiTest {
       var copiedText: Any? = null
@@ -1483,6 +1493,26 @@ internal class UnifiedPluginsPageSessionTest {
         Disposer.dispose(session)
       }
     }
+
+  private suspend fun assertDiskInstallRevealsPlugin(searchQuery: String?, pluginId: String) {
+    val existing = inventoryItem("existing.plugin", "Existing Plugin")
+    val provider = FixedLocalDataProvider(UnifiedPluginInventory(listOf(existing), emptyList()))
+    val installed = inventoryItem(pluginId, "Disk Plugin").model
+    val session = createSession(searchQuery, provider)
+    try {
+      val content = session.getComponent()
+      waitForSelectedPluginIds(content, setOf(existing.model.pluginId.idString))
+      val center = session.getCenterComponent(Configurable.TopComponentController.EMPTY)
+      val install = checkNotNull(snapshot(center)[PluginManagerConfigurable.PLUGIN_INSTALL_CALLBACK_DATA_KEY])
+      install.accept(PluginInstallCallbackData(file = null, pluginDescriptor = installed.getDescriptor(), restartNeeded = true))
+
+      waitForSelectedPluginIds(content, setOf(pluginId))
+      assertThat(searchField(session).text).isEmpty()
+    }
+    finally {
+      Disposer.dispose(session)
+    }
+  }
 
   private fun uiTest(action: suspend CoroutineScope.() -> Unit) {
     withForcedRespectIsShowingClientProperty {

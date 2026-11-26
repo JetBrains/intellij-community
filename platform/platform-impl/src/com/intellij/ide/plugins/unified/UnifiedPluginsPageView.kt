@@ -281,7 +281,7 @@ internal class UnifiedPluginsPageView @RequiresEdt constructor(
   }
 
   @RequiresEdt
-  fun render(state: UnifiedPluginsPageState, showMarketplaceLink: Boolean = false) {
+  fun render(state: UnifiedPluginsPageState, showMarketplaceLink: Boolean = false, revealSelection: Boolean = false) {
     val viewportAnchor = captureViewportAnchor()
     val selectedOccurrence = state.selectedOccurrence?.takeIf { it == renderedState?.selectedOccurrence }
     val visibleSelectedRow = selectedOccurrence?.let { occurrenceId ->
@@ -345,7 +345,7 @@ internal class UnifiedPluginsPageView @RequiresEdt constructor(
     layoutRenderedSections()
     restoreViewportAnchor(viewportAnchor)
     updateStickyHeader()
-    if (visibleSelectedRow != null && rowReconciler?.row(selectedOccurrence) !== visibleSelectedRow) {
+    if (revealSelection || visibleSelectedRow != null && rowReconciler?.row(selectedOccurrence) !== visibleSelectedRow) {
       pendingSelectionRevealRevision = state.query.revision
     }
     revealPendingSelection()

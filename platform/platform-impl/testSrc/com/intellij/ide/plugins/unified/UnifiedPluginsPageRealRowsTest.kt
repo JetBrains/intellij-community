@@ -905,6 +905,26 @@ internal class UnifiedPluginsPageRealRowsTest {
   }
 
   @Test
+  fun `explicit reveal scrolls a selected row below the sticky header`(): Unit = timeoutRunBlocking(context = Dispatchers.UI) {
+    val factory = RecordingRowFactory()
+    val items = (1..20).map { item("plugin.$it") }
+    val controller = UnifiedPluginsPageController(listOf(section(PluginSectionId.Installed, *items.toTypedArray())))
+    val view = createView(factory)
+    view.render(controller.state.value)
+    prepareForScrolling(view)
+
+    val selectedItem = items.last()
+    assertThat(controller.selectAndRevealOccurrence(PluginOccurrenceId(PluginSectionId.Installed, selectedItem.pluginId))).isTrue()
+    view.render(controller.state.value, revealSelection = true)
+
+    val scrollPane = componentsOfType(view.component, JBScrollPane::class.java).single()
+    val selectedRow = factory.row(PluginSectionId.Installed, selectedItem)
+    assertThat(scrollPane.viewport.viewPosition.y).isPositive()
+    assertRowVisibleBelowStickyHeader(scrollPane, selectedRow.component)
+    view.close()
+  }
+
+  @Test
   fun `new query reveals its default selection after the previous anchor disappears`(): Unit =
     timeoutRunBlocking(context = Dispatchers.UI) {
       val factory = RecordingRowFactory()

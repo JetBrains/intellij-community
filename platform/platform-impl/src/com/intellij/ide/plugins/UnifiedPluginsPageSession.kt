@@ -12,6 +12,7 @@ import com.intellij.ide.plugins.marketplace.statistics.enums.PluginManagerOpenSo
 import com.intellij.ide.plugins.marketplace.statistics.enums.UnifiedPluginSearchSourceKind
 import com.intellij.ide.plugins.marketplace.utils.MarketplaceUrls
 import com.intellij.ide.plugins.newui.LegacyPluginUiHost
+import com.intellij.ide.plugins.newui.PluginInventoryChangeReason
 import com.intellij.ide.plugins.newui.PluginManagerCustomizer
 import com.intellij.ide.plugins.newui.PluginModelAsyncOperationsExecutor
 import com.intellij.ide.plugins.newui.PluginModelEvent
@@ -177,7 +178,7 @@ internal class UnifiedPluginsPageSession @RequiresEdt constructor(
     hostEvents = host.events,
     sessionId = host.sessionId,
     loadErrorMessage = IdeBundle.message("plugins.configurable.local.plugins.not.loaded"),
-    hostEventObserver = { event -> updateAllOperationEventSink(event) },
+    hostEventObserver = ::acceptHostEvent,
   )
   private val initialQueryState = initialNavigation.toQueryState()
   private val marketplaceDataProvider = marketplaceDataProviderFactory(host, repositoryCache)
@@ -234,7 +235,7 @@ internal class UnifiedPluginsPageSession @RequiresEdt constructor(
   private val applyState = UnifiedPluginsPageApplyState()
 
   private val callbackLock = Any()
-  private var pendingSelectedPluginIds: List<PluginId> = emptyList()
+  private var pendingSelection: PendingPluginSelection? = null
   private var pendingSelectionSourcesSettled = false
   private var shutdownCallbackExecuted = false
   private var applyScheduled = false
@@ -490,7 +491,7 @@ internal class UnifiedPluginsPageSession @RequiresEdt constructor(
 
   override fun select(pluginIds: Collection<PluginId>) {
     if (disposed) return
-    pendingSelectedPluginIds = pluginIds.toList()
+    pendingSelection = PendingPluginSelection(pluginIds.toSet()).takeUnless { it.pluginIds.isEmpty() }
     if (applyPendingSelection()) {
       view.render(controller.state.value, showMarketplaceLink)
     }
@@ -687,6 +688,19 @@ internal class UnifiedPluginsPageSession @RequiresEdt constructor(
     }
   }
 
+  private fun acceptHostEvent(event: PluginModelEvent) {
+    updateAllOperationEventSink(event)
+    if (event !is PluginModelEvent.InventoryInvalidated || event.reason != PluginInventoryChangeReason.INSTALL_FROM_DISK) return
+    if (event.pluginIds.isEmpty()) return
+
+    application.invokeLater({
+      if (disposed) return@invokeLater
+      applyQueryIntent("", requestFocus = false)
+      pendingSelection = PendingPluginSelection(event.pluginIds, fromDisk = true)
+      if (controller.state.value.query == pageSource.state.value.query) renderControllerState()
+    }, ModalityState.any())
+  }
+
   private fun installShutdownCallback() {
     val installedPluginsState = InstalledPluginsState.getInstance()
     synchronized(callbackLock) {
@@ -733,6 +747,7 @@ internal class UnifiedPluginsPageSession @RequiresEdt constructor(
     scope: PluginsQueryScope = PluginsQueryScope.Unified,
   ) {
     if (disposed) return
+    if (pendingSelection?.fromDisk == true) pendingSelection = null
     queryIntentRevision++
     view.setSearchQuery(query)
     val previousRevision = pageSource.state.value.query.revision
@@ -744,6 +759,7 @@ internal class UnifiedPluginsPageSession @RequiresEdt constructor(
 
   private fun applySearchControl(intent: UnifiedPluginSearchControlIntent) {
     if (disposed) return
+    if (pendingSelection?.fromDisk == true) pendingSelection = null
     queryIntentRevision++
     val previousRevision = pageSource.state.value.query.revision
     pageSource.applySearchControl(intent)
@@ -753,7 +769,7 @@ internal class UnifiedPluginsPageSession @RequiresEdt constructor(
 
   private fun selectOccurrences(occurrenceIds: List<PluginOccurrenceId>) {
     if (disposed) return
-    pendingSelectedPluginIds = emptyList()
+    pendingSelection = null
     controller.selectOccurrences(occurrenceIds)
     renderControllerState()
   }
@@ -761,7 +777,7 @@ internal class UnifiedPluginsPageSession @RequiresEdt constructor(
   private fun selectAllDisplayed(occurrenceId: PluginOccurrenceId) {
     if (disposed) return
     if (!controller.selectAllDisplayed(occurrenceId)) return
-    pendingSelectedPluginIds = emptyList()
+    pendingSelection = null
     renderControllerState()
   }
 
@@ -850,29 +866,39 @@ internal class UnifiedPluginsPageSession @RequiresEdt constructor(
   }
 
   private fun renderControllerState() {
-    applyPendingSelection()
+    val fromDisk = pendingSelection?.fromDisk == true
+    val selectionApplied = applyPendingSelection()
     uiTracker.measure(PluginManagerUiMetric.UNIFIED_PAGE_RENDER) {
-      view.render(controller.state.value, showMarketplaceLink)
+      view.render(controller.state.value, showMarketplaceLink, revealSelection = fromDisk && selectionApplied)
     }
   }
 
   private fun applyPendingSelection(): Boolean {
-    if (pendingSelectedPluginIds.isEmpty()) return false
+    val request = pendingSelection ?: return false
     val state = controller.state.value
-    val pendingIds = pendingSelectedPluginIds.toSet()
+    if (request.fromDisk) {
+      val sourceState = pageSource.state.value
+      if (state.query != sourceState.query || sourceState.projectedQueryRevision != sourceState.query.revision) return false
+    }
+    val dropUnmatched = !request.fromDisk && pendingSelectionSourcesSettled
     val occurrences = state.sections.flatMap { section ->
-      section.items.filter { it.pluginId in pendingIds }.map { section.occurrenceId(it.pluginId) }
+      val items = when {
+        !request.fromDisk -> section.items
+        section.id == PluginSectionId.Installed || section.id == PluginSectionId.Bundled -> section.displayItems
+        else -> emptyList()
+      }
+      items.filter { it.pluginId in request.pluginIds }.map { section.occurrenceId(it.pluginId) }
     }.distinctBy(PluginOccurrenceId::pluginId)
     if (occurrences.isEmpty()) {
-      if (pendingSelectionSourcesSettled) pendingSelectedPluginIds = emptyList()
+      if (dropUnmatched) pendingSelection = null
       return false
     }
     val preferredMode = occurrences.groupBy { pluginDetailsMode(it.sectionId) }
       .maxByOrNull { it.value.size }
       ?.key
     val compatibleOccurrences = occurrences.filter { pluginDetailsMode(it.sectionId) == preferredMode }
-    if (occurrences.mapTo(HashSet(), PluginOccurrenceId::pluginId).containsAll(pendingIds) || pendingSelectionSourcesSettled) {
-      pendingSelectedPluginIds = emptyList()
+    if (occurrences.mapTo(HashSet(), PluginOccurrenceId::pluginId).containsAll(request.pluginIds) || dropUnmatched) {
+      pendingSelection = null
     }
     return controller.selectAndRevealOccurrences(compatibleOccurrences)
   }
@@ -885,6 +911,8 @@ internal class UnifiedPluginsPageSession @RequiresEdt constructor(
     }
   }
 }
+
+private data class PendingPluginSelection(val pluginIds: Set<PluginId>, val fromDisk: Boolean = false)
 
 /** Gives [trailingStatus] the space available after the search field and header actions. */
 private class AdaptivePluginsHeaderLayout(private val trailingStatus: Component) : GridBagLayout() {
