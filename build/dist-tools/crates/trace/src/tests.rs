@@ -131,7 +131,11 @@ fn end_after_fails_the_span_with_the_alternate_form_of_an_error_only() {
     struct Chained;
     impl Display for Chained {
         fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-            if f.alternate() { write!(f, "error: cause") } else { write!(f, "error") }
+            if f.alternate() {
+                write!(f, "error: cause")
+            } else {
+                write!(f, "error")
+            }
         }
     }
 

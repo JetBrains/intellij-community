@@ -98,7 +98,9 @@ impl Runtime {
             openspec_entry.display()
         );
         let checkout_files_location = checkout_files.with_context(|| {
-            format!("{CHECKOUT_FILES_ENV_VAR} is not set; add `DOCS_GATE_DATA` and `DOCS_GATE_ENV` of `//tools/openspec:defs.bzl` to the target")
+            format!(
+                "{CHECKOUT_FILES_ENV_VAR} is not set; add `DOCS_GATE_DATA` and `DOCS_GATE_ENV` of `//tools/openspec:defs.bzl` to the target"
+            )
         })?;
         let checkout_files =
             resolve(&checkout_files_location).with_context(|| format!("cannot resolve the runfile {checkout_files_location}"))?;
@@ -107,7 +109,11 @@ impl Runtime {
             "the declared checkout-files is not a file at {} (from {CHECKOUT_FILES_ENV_VAR}={checkout_files_location}); check              the `data` dependency",
             checkout_files.display()
         );
-        Ok(Self { bun, openspec_entry, checkout_files })
+        Ok(Self {
+            bun,
+            openspec_entry,
+            checkout_files,
+        })
     }
 
     /// The command that runs `script` on bun in `directory`. The script reads the entry of the OpenSpec CLI from

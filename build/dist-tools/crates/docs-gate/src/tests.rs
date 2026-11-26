@@ -15,8 +15,13 @@ fn declared_tree() -> tempfile::TempDir {
 /// The runtime that `root` of [`declared_tree`] declares.
 fn declared_runtime(root: &tempfile::TempDir) -> Runtime {
     let resolve = |location: &str| Some(root.path().join(location));
-    Runtime::from_locations(Some("bun".to_owned()), Some("openspec".to_owned()), Some("checkout-files".to_owned()), resolve)
-        .expect("a declared runtime")
+    Runtime::from_locations(
+        Some("bun".to_owned()),
+        Some("openspec".to_owned()),
+        Some("checkout-files".to_owned()),
+        resolve,
+    )
+    .expect("a declared runtime")
 }
 
 #[test]
@@ -32,8 +37,10 @@ fn the_runtime_resolves_bun_the_entry_of_the_openspec_cli_and_checkout_files() {
 
 #[test]
 fn the_runtime_refuses_a_missing_declaration() {
-    let error = Runtime::from_locations(None, Some("openspec".to_owned()), Some("checkout-files".to_owned()), |_| None::<PathBuf>)
-        .expect_err("no bun");
+    let error = Runtime::from_locations(None, Some("openspec".to_owned()), Some("checkout-files".to_owned()), |_| {
+        None::<PathBuf>
+    })
+    .expect_err("no bun");
 
     assert_eq!(
         format!("{error:#}"),
@@ -46,8 +53,13 @@ fn the_runtime_refuses_a_package_folder_without_the_entry() {
     let root = declared_tree();
     let resolve = |location: &str| Some(root.path().join(location));
 
-    let error = Runtime::from_locations(Some("bun".to_owned()), Some("bun-folder".to_owned()), Some("checkout-files".to_owned()), resolve)
-        .expect_err("no entry");
+    let error = Runtime::from_locations(
+        Some("bun".to_owned()),
+        Some("bun-folder".to_owned()),
+        Some("checkout-files".to_owned()),
+        resolve,
+    )
+    .expect_err("no entry");
 
     assert!(
         format!("{error:#}").starts_with("the declared OpenSpec CLI has no entry at "),

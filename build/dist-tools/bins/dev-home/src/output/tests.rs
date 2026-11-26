@@ -52,7 +52,10 @@ fn the_cmd_form_sets_two_variables_and_refuses_a_percent() {
         text,
         "set \"DEV_HOME_LAUNCHER=/r/g/v5-a-flat/bin/idea\"\r\nset \"IDEA_VM_OPTIONS=/r/g/v5-a-flat/vmoptions-00\"\r\n"
     );
-    let error = format!("{:#}", render(&materialized("/r%TEMP%"), &fixture_launch(), Format::Cmd).unwrap_err());
+    let error = format!(
+        "{:#}",
+        render(&materialized("/r%TEMP%"), &fixture_launch(), Format::Cmd).unwrap_err()
+    );
     assert!(error.contains("which a `.cmd` file cannot hold"), "{error}");
 }
 

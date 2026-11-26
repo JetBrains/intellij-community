@@ -5,7 +5,10 @@ use testkit::{Run, run_tool};
 
 /// Runs the tool as `main` does, with the answer in a buffer that the tests do not read.
 fn run(args: &[&str]) -> Run {
-    run_tool(|args: Vec<OsString>, errors: &mut dyn Write| crate::run(args, &mut Vec::new(), errors), args)
+    run_tool(
+        |args: Vec<OsString>, errors: &mut dyn Write| crate::run(args, &mut Vec::new(), errors),
+        args,
+    )
 }
 
 #[test]
