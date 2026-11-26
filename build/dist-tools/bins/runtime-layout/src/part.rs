@@ -6,8 +6,6 @@ use std::path::Path;
 use anyhow::{Context, bail};
 use serde::{Deserialize, Serialize};
 
-pub(crate) const PART_VERSION: i64 = 1;
-
 // The two orders of a part. A plugin states its jars in the order of its plan file, in which `JarPackager` creates
 // them. It marks the reused content module jars, and the assembly places them by the `<content>` order of the plugin
 // descriptor. The platform states its jars in layout order, and the assembly keeps that order.
@@ -21,7 +19,6 @@ pub(crate) const LAYOUT_ORDER: &str = "layout";
 #[derive(Clone, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub(crate) struct Part {
-    pub version: i64,
     pub descriptor_module: String,
     /// The directory of the plugin relative to the distribution root, such as `plugins/dev`. It is empty for the
     /// platform, whose jars are under the distribution root itself.
@@ -69,9 +66,6 @@ pub(crate) fn read_part(file: &Path) -> anyhow::Result<Part> {
 impl Part {
     pub(crate) fn validate(&self) -> anyhow::Result<()> {
         let module = &self.descriptor_module;
-        if self.version != PART_VERSION {
-            bail!("the part has version {}, but {PART_VERSION} is expected", self.version);
-        }
         if module.is_empty() {
             bail!("the part names no descriptor module");
         }

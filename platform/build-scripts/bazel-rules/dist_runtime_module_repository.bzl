@@ -52,7 +52,6 @@ def _platform_part(ctx, name, payload, descriptor_module, first, last, attr):
     by_destination = {entry.destination: entry for entry in layout}
     part = ctx.actions.declare_file(ctx.label.name + "." + name + ".runtime-layout.json")
     ctx.actions.write(part, json.encode({
-        "version": 1,
         "descriptorModule": descriptor_module,
         "directory": "",
         "order": "layout",

@@ -239,7 +239,8 @@ def _dev_plugin_test_impl(ctx):
     parts = [action for action in actions if layout.part in action.outputs.to_list()]
     asserts.equals(env, 1, len(parts))
     part = json.decode(parts[0].content)
-    asserts.equals(env, [1, _MAIN_MODULE, "plugins/dev-plugin", "plugin", layout.descriptor.path], [part[key] for key in ["version", "descriptorModule", "directory", "order", "descriptor"]])
+    asserts.equals(env, [_MAIN_MODULE, "plugins/dev-plugin", "plugin", layout.descriptor.path], [part[key] for key in ["descriptorModule", "directory", "order", "descriptor"]])
+    asserts.false(env, "version" in part)
     asserts.equals(env, ["lib/member.jar", "lib/dev-plugin.jar", "lib/foo.jar", "lib/tests.jar"], [jar["destination"] for jar in part["jars"]])
     asserts.equals(env, [True, False, False, False], [jar.get("reused", False) for jar in part["jars"]])
     main_members = part["jars"][1]["members"]

@@ -894,7 +894,6 @@ def _dev_plugin_remainder_from_plan_impl(ctx):
     if reused_library_jars:
         independent_libraries = ctx.actions.declare_file(ctx.label.name + ".independent-libraries.json")
         ctx.actions.write(independent_libraries, json.encode({
-            "version": 1,
             "libraries": [{"library": entry.label, "jars": [jar.path for jar in entry.jars]} for entry in reused_library_jars],
         }) + "\n")
         layout_arguments.add(independent_libraries, format = "--independent-libraries=%s")

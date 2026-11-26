@@ -7,7 +7,7 @@ use testkit::Run;
 
 use crate::assemble::{AssembledPart, Layout, PluginLayout, assemble};
 use crate::descriptor::ContentModule;
-use crate::part::{LAYOUT_ORDER, Member, PART_VERSION, PLUGIN_ORDER, Part, PartJar};
+use crate::part::{LAYOUT_ORDER, Member, PLUGIN_ORDER, Part, PartJar};
 use crate::run;
 use crate::targets::{JpsLibrary, LibraryIndex, MODULE_LIBRARY_KIND, PROJECT_LIBRARY_KIND, apparent_label, read_library_index};
 
@@ -128,7 +128,6 @@ fn reused_jar(destination: &str, members: Vec<Member>) -> PartJar {
 
 fn plugin_part(descriptor_module: &str, directory: &str, jars: Vec<PartJar>) -> Part {
     Part {
-        version: PART_VERSION,
         descriptor_module: descriptor_module.to_owned(),
         directory: directory.to_owned(),
         order: PLUGIN_ORDER.to_owned(),
@@ -139,7 +138,6 @@ fn plugin_part(descriptor_module: &str, directory: &str, jars: Vec<PartJar>) -> 
 
 fn layout_part(descriptor_module: &str, jars: Vec<PartJar>) -> Part {
     Part {
-        version: PART_VERSION,
         descriptor_module: descriptor_module.to_owned(),
         order: LAYOUT_ORDER.to_owned(),
         jars,
@@ -488,12 +486,12 @@ fn assemble_command() {
     let part = files.write(
         "part.json",
         &format!(
-            r#"{{"version":1,"descriptorModule":"p.main","directory":"plugins/p","order":"plugin","descriptor":{descriptor:?},"jars":[{{"destination":"lib/p.jar","members":[{{"module":"p.main"}}]}},{{"destination":"lib/modules/p.content.jar","members":[{{"module":"p.content"}}],"reused":true}}]}}"#
+            r#"{{"descriptorModule":"p.main","directory":"plugins/p","order":"plugin","descriptor":{descriptor:?},"jars":[{{"destination":"lib/p.jar","members":[{{"module":"p.main"}}]}},{{"destination":"lib/modules/p.content.jar","members":[{{"module":"p.content"}}],"reused":true}}]}}"#
         ),
     );
     let platform = files.write(
         "platform.json",
-        r#"{"version":1,"descriptorModule":"intellij.idea.customization","directory":"","order":"layout","jars":[{"destination":"lib/util.jar","members":[{"module":"intellij.platform.util"}]},{"destination":"lib/app.jar","members":[{"module":"intellij.idea.customization"},{"library":"@@lib+//:alpha","jars":["external/lib+/alpha.jar"]}]}]}"#,
+        r#"{"descriptorModule":"intellij.idea.customization","directory":"","order":"layout","jars":[{"destination":"lib/util.jar","members":[{"module":"intellij.platform.util"}]},{"destination":"lib/app.jar","members":[{"module":"intellij.idea.customization"},{"library":"@@lib+//:alpha","jars":["external/lib+/alpha.jar"]}]}]}"#,
     );
     let targets = files.write("bazel-targets.json", TEST_TARGETS);
     let output = files.path("layout.json").display().to_string();
@@ -561,7 +559,7 @@ fn assemble_command_selects_the_module_facts() {
     let files = Files::new();
     let platform = files.write(
         "platform.json",
-        r#"{"version":1,"descriptorModule":"intellij.idea.customization","directory":"","order":"layout","jars":[{"destination":"lib/app.jar","members":[{"module":"intellij.idea.customization"},{"library":"@@lib+//:alpha","jars":["external/lib+/alpha.jar"]}]}]}"#,
+        r#"{"descriptorModule":"intellij.idea.customization","directory":"","order":"layout","jars":[{"destination":"lib/app.jar","members":[{"module":"intellij.idea.customization"},{"library":"@@lib+//:alpha","jars":["external/lib+/alpha.jar"]}]}]}"#,
     );
     let targets = files.write("bazel-targets.json", TEST_TARGETS);
     let module_facts = files.write(
@@ -612,35 +610,35 @@ fn invalid_input() {
     let targets = files.write("bazel-targets.json", TEST_TARGETS);
     for (part, message) in [
         (
-            r#"{"version":2,"descriptorModule":"p","directory":"","order":"layout","jars":[]}"#,
-            "version 2",
+            r#"{"version":1,"descriptorModule":"p","directory":"","order":"layout","jars":[]}"#,
+            "unknown field `version`",
         ),
         (
-            r#"{"version":1,"descriptorModule":"p","order":"layout","jars":[]}"#,
+            r#"{"descriptorModule":"p","order":"layout","jars":[]}"#,
             "missing field `directory`",
         ),
         (
-            r#"{"version":1,"descriptorModule":"p","directory":"plugins/p","order":"plugin","jars":[]}"#,
+            r#"{"descriptorModule":"p","directory":"plugins/p","order":"plugin","jars":[]}"#,
             "names no descriptor",
         ),
         (
-            r#"{"version":1,"descriptorModule":"p","directory":"","order":"layout","jars":[{"destination":"p.jar","members":[{"module":"p"}]}]}"#,
+            r#"{"descriptorModule":"p","directory":"","order":"layout","jars":[{"destination":"p.jar","members":[{"module":"p"}]}]}"#,
             "not a jar under lib/",
         ),
         (
-            r#"{"version":1,"descriptorModule":"p","directory":"","order":"layout","jars":[{"destination":"lib/p.jar","members":[]}]}"#,
+            r#"{"descriptorModule":"p","directory":"","order":"layout","jars":[{"destination":"lib/p.jar","members":[]}]}"#,
             "merges nothing",
         ),
         (
-            r#"{"version":1,"descriptorModule":"p","directory":"","order":"layout","jars":[{"destination":"lib/p.jar","members":[{"module":"p","library":"@lib//:a"}]}]}"#,
+            r#"{"descriptorModule":"p","directory":"","order":"layout","jars":[{"destination":"lib/p.jar","members":[{"module":"p","library":"@lib//:a"}]}]}"#,
             "one module or one library",
         ),
         (
-            r#"{"version":1,"descriptorModule":"p","directory":"","order":"layout","extra":true,"jars":[]}"#,
+            r#"{"descriptorModule":"p","directory":"","order":"layout","extra":true,"jars":[]}"#,
             "unknown field",
         ),
         (
-            r#"{"version":1,"descriptorModule":"p","directory":"","order":"sorted","jars":[]}"#,
+            r#"{"descriptorModule":"p","directory":"","order":"sorted","jars":[]}"#,
             r#"has the order "sorted", but "plugin" or "layout" is expected"#,
         ),
     ] {
@@ -810,7 +808,7 @@ fn plan_part() {
     let args = plan_part_args(
         &files,
         TEST_PLAN,
-        r#"{"version": 1, "libraries": [{"library": "@@lib+//:natives", "jars": ["external/lib+/natives.jar"]}]}"#,
+        r#"{"libraries": [{"library": "@@lib+//:natives", "jars": ["external/lib+/natives.jar"]}]}"#,
         "bazel-out/bin/p/plugin.classpath.xml",
         &output,
     );
@@ -824,7 +822,6 @@ fn plan_part() {
     let mut main = modules(&["p.main", "p.other"]);
     main.push(library("@lib//:a", &["external/lib+/a1.jar", "external/lib+/a2.jar"]));
     let expected = Part {
-        version: PART_VERSION,
         descriptor_module: "p.main".to_owned(),
         directory: "plugins/p".to_owned(),
         order: PLUGIN_ORDER.to_owned(),
@@ -840,7 +837,7 @@ fn plan_part() {
     assert!(data.ends_with("}\n"), "the part does not end with a newline: {data:?}");
     // The compact JSON form, in the field order of the part.
     assert!(
-        data.starts_with(r#"{"version":1,"descriptorModule":"p.main","directory":"plugins/p","order":"plugin","descriptor":"bazel-out/bin/p/plugin.classpath.xml","jars":[{"destination":"lib/modules/p.content.jar","members":[{"module":"p.content"}]}"#),
+        data.starts_with(r#"{"descriptorModule":"p.main","directory":"plugins/p","order":"plugin","descriptor":"bazel-out/bin/p/plugin.classpath.xml","jars":[{"destination":"lib/modules/p.content.jar","members":[{"module":"p.content"}]}"#),
         "{data}"
     );
 }
@@ -850,7 +847,7 @@ fn plan_part() {
 /// kept one stays, and a refused module that no jar merges fails.
 #[test]
 fn plan_part_leaves_out_the_jars_of_refused_modules() {
-    let independent = r#"{"version": 1, "libraries": [{"library": "@lib//:natives", "jars": ["external/lib+/natives.jar"]}]}"#;
+    let independent = r#"{"libraries": [{"library": "@lib//:natives", "jars": ["external/lib+/natives.jar"]}]}"#;
     let files = Files::new();
     let output = files.path("part.json").display().to_string();
     let mut args = plan_part_args(&files, TEST_PLAN, independent, "plugin.xml", &output);
@@ -880,7 +877,7 @@ fn plan_part_leaves_out_the_jars_of_refused_modules() {
 /// The native tree of the reused natives jar is not a jar, so the part is the same with and without the tree.
 #[test]
 fn plan_part_skips_the_native_tree() {
-    let independent = r#"{"version": 1, "libraries": [{"library": "@lib//:natives", "jars": ["external/lib+/natives.jar"]}]}"#;
+    let independent = r#"{"libraries": [{"library": "@lib//:natives", "jars": ["external/lib+/natives.jar"]}]}"#;
     let native_tree = r#"{"destination": "lib/native", "inputs": ["native-tree:p.natives"], "kind": "tree", "classPath": false"#;
     let part = |plan: &str| {
         let files = Files::new();
@@ -898,7 +895,7 @@ fn plan_part_skips_the_native_tree() {
 
 #[test]
 fn plan_part_refusals() {
-    let independent = r#"{"version": 1, "libraries": [{"library": "@lib//:natives", "jars": ["external/lib+/natives.jar"]}]}"#;
+    let independent = r#"{"libraries": [{"library": "@lib//:natives", "jars": ["external/lib+/natives.jar"]}]}"#;
     for (plan, message) in [
         (
             TEST_PLAN.replacen(r#""@lib//:a", "kind": "library""#, r#""@lib//:unknown", "kind": "library""#, 1),
@@ -965,16 +962,6 @@ fn plan_part_refusals() {
             result.errors
         );
     }
-    let files = Files::new();
-    let output = files.path("part.json").display().to_string();
-    let result = run_tool(&plan_part_args(
-        &files,
-        TEST_PLAN,
-        r#"{"version": 2, "libraries": []}"#,
-        "plugin.xml",
-        &output,
-    ));
-    assert!(result.errors.contains("has version 2, but 1 is expected"), "{}", result.errors);
     let result = run_tool(&["plan-part".to_owned(), "--plan=plan.json".to_owned()]);
     assert_eq!((result.code, result.errors.as_str()), (1, "ERROR: --catalogue is required\n"));
 }

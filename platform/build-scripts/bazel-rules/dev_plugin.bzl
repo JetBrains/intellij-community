@@ -556,7 +556,6 @@ def _dev_plugin_impl(ctx):
     # Written at analysis, and built only when a runtime module repository asks for it.
     runtime_layout = ctx.actions.declare_file(ctx.label.name + ".runtime-layout.json")
     ctx.actions.write(runtime_layout, json.encode({
-        "version": 1,
         "descriptorModule": main_module,
         "directory": plugin_directory,
         "order": "plugin",

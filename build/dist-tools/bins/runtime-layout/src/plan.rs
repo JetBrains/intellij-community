@@ -6,7 +6,7 @@ use anyhow::bail;
 use planfile::contract::{AssetKind, Catalogue};
 use planfile::{PlanFile, SourceKind};
 
-use crate::part::{Member, PART_VERSION, PLUGIN_ORDER, Part, PartJar};
+use crate::part::{Member, PLUGIN_ORDER, Part, PartJar};
 use crate::targets::apparent_label;
 
 /// Derives the part of a complex plugin from its resolved plan file and its input catalogue.
@@ -65,7 +65,6 @@ pub(crate) fn part_from_plan(
     let prepared_outputs: HashSet<&str> = plan.operations.iter().map(|operation| operation.output.as_str()).collect();
 
     let mut result = Part {
-        version: PART_VERSION,
         descriptor_module: descriptor_module.to_owned(),
         directory: plugin_directory.to_owned(),
         order: PLUGIN_ORDER.to_owned(),
