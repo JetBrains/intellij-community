@@ -14,6 +14,7 @@ import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinMo
 import org.jetbrains.kotlin.idea.codeinsight.utils.NameBasedDestructuringForm
 import org.jetbrains.kotlin.idea.codeinsight.utils.applyNameBasedDestructuringForm
 import org.jetbrains.kotlin.idea.codeinsight.utils.extractPrimaryParameters
+import org.jetbrains.kotlin.idea.codeinsight.utils.isFullValueClassDestructuring
 import org.jetbrains.kotlin.idea.codeinsight.utils.isPositionalDestructuringType
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtDestructuringDeclaration
@@ -63,7 +64,8 @@ internal class ConvertNameBasedDestructuringShortFormToFullInspection :
         if (entries.all { it.name == "_" }) return null
 
         val propertyNames = if (!element.hasSquareBrackets() &&
-            element.languageVersionSettings.supportsFeature(LanguageFeature.EnableNameBasedDestructuringShortForm)
+            (element.languageVersionSettings.supportsFeature(LanguageFeature.EnableNameBasedDestructuringShortForm) ||
+                    element.isFullValueClassDestructuring())
         ) {
             entries.map { it.initializer?.getReferencedNameAsName() ?: it.nameAsName ?: return null }
         } else {

@@ -8945,6 +8945,11 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
             runTest("../../../idea/tests/testData/quickfix/destructingShortForm/reversedEntriesOnlySyntaxOption.kt");
         }
 
+        @TestMetadata("reversedEntriesValueClass.kt")
+        public void testReversedEntriesValueClass() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/destructingShortForm/reversedEntriesValueClass.kt");
+        }
+
         @TestMetadata("singleEntryCompleteOption.kt")
         public void testSingleEntryCompleteOption() throws Exception {
             runTest("../../../idea/tests/testData/quickfix/destructingShortForm/singleEntryCompleteOption.kt");
