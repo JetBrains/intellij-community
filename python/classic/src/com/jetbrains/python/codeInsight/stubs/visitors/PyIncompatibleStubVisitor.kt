@@ -25,7 +25,7 @@ internal class PyIncompatibleStubVisitor(
       registerProblem(file,
                       message,
                       InstallStubQuickFix(stub.stubRequirement, packageManager),
-                      IgnoreStubCompatibilityQuickFix(stub.stubRequirement, ignoredStubPackages))
+                      IgnoreStubCompatibilityQuickFix(stub.stubRequirement))
     }
   }
 }

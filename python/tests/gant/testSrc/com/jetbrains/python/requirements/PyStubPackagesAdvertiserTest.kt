@@ -6,9 +6,12 @@ import com.jetbrains.python.allure.Layers
 import com.jetbrains.python.allure.Subsystems
 
 import com.intellij.codeInspection.ex.InspectionProfileImpl
+import com.intellij.idea.TestFor
 import com.intellij.lang.annotation.HighlightSeverity
+import com.intellij.profile.codeInspection.InspectionProjectProfileManager
 import com.intellij.testFramework.TestDataPath
 import com.jetbrains.python.PyBundle
+import com.jetbrains.python.PyPsiBundle
 import com.jetbrains.python.codeInsight.stubs.PyStubPackagesAdvertiser
 import com.jetbrains.python.packaging.common.PythonPackage
 import com.jetbrains.python.packaging.management.TestPackageManagerProvider
@@ -70,6 +73,24 @@ class PyStubPackagesAdvertiserTest : PythonDependencyTestCase() {
     assertEmpty(highlightInfos)
   }
 
+
+  @TestFor(issues = ["PY-94463"])
+  fun testIgnoreFixAddsPackageToOptions() {
+    val provider = TestPackageManagerProvider()
+      .withPackageInstalled(PythonPackage("pandas", "3.0.0", false))
+      .withRepoPackagesVersions(mapOf("pandas" to listOf("3.0.0"), "pandas-stubs" to listOf("3.0.0")))
+    initTestPackageManager(provider)
+
+    doMultiFileTest("pandas_example.py")
+    val inspection = PyStubPackagesAdvertiser()
+    val profile = InspectionProjectProfileManager.getInstance(project).currentProfile
+    (profile.getUnwrappedTool(inspection.shortName, myFixture.file) as PyStubPackagesAdvertiser).ignoredPackages.add("numpy")
+    myFixture.launchAction(myFixture.findSingleIntention(PyPsiBundle.message("INSP.stub.packages.compatibility.ignore")))
+
+    val tool = profile.getUnwrappedTool(inspection.shortName, myFixture.file) as PyStubPackagesAdvertiser
+    assertEquals(listOf("numpy", "pandas"), tool.ignoredPackages)
+    assertEmpty(myFixture.doHighlighting())
+  }
 
   private fun doMultiFileTest(filename: String) {
     myFixture.copyDirectoryToProject(this::class.java.simpleName, "")

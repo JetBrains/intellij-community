@@ -26,7 +26,7 @@ internal class PyStubAdvertiserVisitor(
       registerProblem(file,
                       message,
                       InstallStubQuickFix(stub.stubRequirement, packageManager),
-                      IgnoreStubAdvertiseQuickFix(stub.packageName, ignoredPackages))
+                      IgnoreStubAdvertiseQuickFix(stub.packageName))
     }
   }
 }

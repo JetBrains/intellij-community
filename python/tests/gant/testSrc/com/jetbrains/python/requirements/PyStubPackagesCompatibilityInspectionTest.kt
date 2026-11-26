@@ -6,7 +6,9 @@ import com.jetbrains.python.allure.Layers
 import com.jetbrains.python.allure.Subsystems
 
 import com.intellij.codeInspection.ex.InspectionProfileImpl
+import com.intellij.idea.TestFor
 import com.intellij.lang.annotation.HighlightSeverity
+import com.intellij.profile.codeInspection.InspectionProjectProfileManager
 import com.intellij.testFramework.TestDataPath
 import com.jetbrains.python.PyPsiBundle
 import com.jetbrains.python.codeInsight.stubs.PyStubPackagesCompatibilityInspection
@@ -93,6 +95,28 @@ class PyStubPackagesCompatibilityInspectionTest : PythonDependencyTestCase() {
     assertEmpty(highlightInfos)
   }
 
+
+  @TestFor(issues = ["PY-94463"])
+  fun testIgnoreFixAddsStubPackageToOptions() {
+    val provider = TestPackageManagerProvider()
+      .withPackageInstalled(PythonPackage("pandas", "3.0.0", false),
+                            PythonPackage("pandas-stubs", "2.9.0", false)
+      )
+      .withRepoPackagesVersions(mapOf("pandas" to listOf("3.0.0"), "pandas-stubs" to listOf("3.0.0", "2.9.0")))
+    initTestPackageManager(provider)
+
+    doMultiFileTest("pandas_example.py")
+    val inspection = PyStubPackagesCompatibilityInspection()
+    val profile = InspectionProjectProfileManager.getInstance(project).currentProfile
+    (profile.getUnwrappedTool(inspection.shortName, myFixture.file) as PyStubPackagesCompatibilityInspection).ignoredStubPackages.add("numpy-stubs")
+    myFixture.launchAction(myFixture.findSingleIntention(PyPsiBundle.message("INSP.stub.packages.compatibility.ignore")))
+
+    val tool = profile.getUnwrappedTool(inspection.shortName, myFixture.file) as PyStubPackagesCompatibilityInspection
+    assertSize(2, tool.ignoredStubPackages)
+    assertEquals("numpy-stubs", tool.ignoredStubPackages[0])
+    assertTrue(tool.ignoredStubPackages[1], tool.ignoredStubPackages[1].startsWith("pandas-stubs"))
+    assertEmpty(myFixture.doHighlighting())
+  }
 
   private fun doMultiFileTest(filename: String) {
     myFixture.copyDirectoryToProject(this::class.java.simpleName, "")
