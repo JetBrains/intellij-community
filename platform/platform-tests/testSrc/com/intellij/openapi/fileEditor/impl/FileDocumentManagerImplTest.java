@@ -71,11 +71,13 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class FileDocumentManagerImplTest extends HeavyPlatformTestCase {
   private FileDocumentManagerImpl myDocumentManager;
   private Boolean myAskReloadFromDiskResult;
+  private VirtualFile myConflictDialogFile;
 
   @Override
   protected void setUp() throws Exception {
     super.setUp();
     myAskReloadFromDiskResult = null;
+    myConflictDialogFile = null;
     FileDocumentManagerImpl impl = (FileDocumentManagerImpl)FileDocumentManager.getInstance();
     impl.setAskReloadFromDisk(getTestRootDisposable(), new MemoryDiskConflictResolver() {
       @Override
@@ -84,6 +86,7 @@ public class FileDocumentManagerImplTest extends HeavyPlatformTestCase {
           fail();
           return new DialogResult(false, false);
         }
+        myConflictDialogFile = file;
         return new DialogResult(myAskReloadFromDiskResult.booleanValue(), false);
       }
     });
@@ -93,6 +96,7 @@ public class FileDocumentManagerImplTest extends HeavyPlatformTestCase {
   @Override
   protected void tearDown() throws Exception {
     myAskReloadFromDiskResult = null;
+    myConflictDialogFile = null;
     myDocumentManager = null;
     super.tearDown();
   }
@@ -576,6 +580,7 @@ public class FileDocumentManagerImplTest extends HeavyPlatformTestCase {
     setBinaryContent(file, "xxx".getBytes(StandardCharsets.UTF_8));
     PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
 
+    assertSame("Expected a conflict dialog for the changed file", file, myConflictDialogFile);
     assertEquals("old test", document.getText());
     assertEquals(oldDocumentStamp, document.getModificationStamp());
   }
@@ -648,6 +653,7 @@ public class FileDocumentManagerImplTest extends HeavyPlatformTestCase {
     changeOnDisk(file, "first\nsecond\nTHIRD\n");
     PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
 
+    assertSame("Expected a conflict dialog for the changed file", file, myConflictDialogFile);
     // the user was asked and kept the memory version. A merge that ran anyway would throw, and leave the disk
     // version in a document that is no longer unsaved
     assertEquals("first\nSECOND\nthird\n", document.getText());
