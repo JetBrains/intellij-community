@@ -2,14 +2,21 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.psi.PsiClassType;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.PsiTypes;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.psi.util.PsiModificationTracker;
+import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.GrFunctionalExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrYieldReturnStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAsyncExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 
 /// @author Bas Leijdekkers
 public final class GrAsyncExpressionImpl extends GrExpressionImpl implements GrAsyncExpression {
@@ -34,9 +41,23 @@ public final class GrAsyncExpressionImpl extends GrExpressionImpl implements GrA
 
   @Override
   public @NotNull PsiType getType() {
+    return CachedValuesManager.getCachedValue(this, () -> {
+      return new CachedValueProvider.Result<>(doGetType(), PsiModificationTracker.MODIFICATION_COUNT);
+    });
+  }
+
+  private @NotNull PsiClassType doGetType() {
     GrFunctionalExpression body = getBody();
     if (body != null) {
       PsiType returnType = body.getReturnType();
+      if (PsiTypes.voidType().equals(returnType)) {
+        for (GrYieldReturnStatement statement : PsiTreeUtil.findChildrenOfType(body, GrYieldReturnStatement.class)) {
+          GrExpression value = statement.getValue();
+          if (value != null) {
+            return TypesUtil.createGenericType("java.lang.Iterable", this, value.getType());
+          }
+        }
+      }
       if (PsiTypes.nullType().equals(returnType)) {
         return TypesUtil.createGenericType("groovy.concurrent.Awaitable", this, TypesUtil.createTypeByFQClassName("java.lang.Void", this));
       }
