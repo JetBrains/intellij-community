@@ -9,14 +9,10 @@ use crate::create_dir_all_0755;
 use crate::entry::{Entry, EntryType, merge};
 use crate::macho::MacBinary;
 
-/// The version of the inventory format.
-const VERSION: i64 = 2;
-
-/// The inventory document. The serializer writes the fields in declaration order, `version` before `entries`.
+/// The inventory document. Every writer and reader runs in one build, so the document has no version.
 #[derive(Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 struct Document {
-    version: i64,
     entries: Vec<WireEntry>,
 }
 
@@ -45,7 +41,7 @@ struct WireEntry {
 /// Reads the inventory file `source` and returns its entries, merged and sorted.
 ///
 /// The function accepts only the shape that [`write`] writes. It rejects data after the document, an unknown, missing
-/// or `null` field, a field of the wrong type, and a version other than 2. A directory must not have the key `hash`,
+/// or `null` field, and a field of the wrong type. A directory must not have the key `hash`,
 /// and every other entry must have a `hash` number. Then the entries must pass [`merge`].
 pub fn read(source: &Path) -> Result<Vec<Entry>> {
     let data = fs::read(source).with_context(|| source.display().to_string())?;
@@ -69,7 +65,6 @@ pub fn write(destination: &Path, entries: &[Entry]) -> Result<()> {
 /// Returns the document followed by a newline.
 pub(crate) fn encode(entries: &[Entry]) -> Vec<u8> {
     let document = Document {
-        version: VERSION,
         entries: entries.iter().map(to_wire).collect(),
     };
     let mut data = serde_json::to_vec(&document).expect("an inventory document has no map with non-string keys");
@@ -79,9 +74,6 @@ pub(crate) fn encode(entries: &[Entry]) -> Vec<u8> {
 
 fn decode(data: &[u8]) -> Result<Vec<Entry>> {
     let document: Document = serde_json::from_slice(data)?;
-    if document.version != VERSION {
-        anyhow::bail!("unsupported metadata version {}", document.version);
-    }
     let entries = document.entries.into_iter().map(from_wire).collect::<Result<Vec<_>>>()?;
     merge(&entries)
 }

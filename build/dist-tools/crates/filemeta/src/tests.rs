@@ -143,15 +143,15 @@ fn metadata_rejects_conflicts_and_unsafe_paths() {
 fn read_rejects_invalid_metadata() {
     let temporary = tempfile::tempdir().unwrap();
     let texts: [&[u8]; 9] = [
-        br#"{"version":1,"entries":[]}"#,
-        br#"{"version":2,"entries":null}"#,
-        br#"{"version":2,"entries":[],"extra":true}"#,
-        br#"{"version":2,"entries":[]} {}"#,
-        br#"{"version":2,"entries":[{"relativePath":"a.jar","type":"file"}]}"#,
-        br#"{"version":2,"entries":[{"relativePath":"a.jar","type":"file","hash":1,"size":-1,"mode":420,"executable":false}]}"#,
-        br#"{"version":2,"entries":[{"relativePath":"a.jar","type":"file","hash":1,"size":1,"mode":493,"executable":false}]}"#,
-        br#"{"version":2,"entries":[{"relativePath":"a.jar","type":"unknown","hash":1,"size":1,"mode":420,"executable":false}]}"#,
-        b"{\"version\":2,\"entries\":[],\"bad\":\"\xff\"}",
+        br#"{"version":2,"entries":[]}"#,
+        br#"{"entries":null}"#,
+        br#"{"entries":[],"extra":true}"#,
+        br#"{"entries":[]} {}"#,
+        br#"{"entries":[{"relativePath":"a.jar","type":"file"}]}"#,
+        br#"{"entries":[{"relativePath":"a.jar","type":"file","hash":1,"size":-1,"mode":420,"executable":false}]}"#,
+        br#"{"entries":[{"relativePath":"a.jar","type":"file","hash":1,"size":1,"mode":493,"executable":false}]}"#,
+        br#"{"entries":[{"relativePath":"a.jar","type":"unknown","hash":1,"size":1,"mode":420,"executable":false}]}"#,
+        b"{\"entries\":[],\"bad\":\"\xff\"}",
     ];
     for (index, text) in texts.iter().enumerate() {
         let source = temporary.path().join(format!("metadata-{index}.json"));
@@ -185,11 +185,11 @@ fn read_rejects_wrong_types_and_null_fields() {
     .enumerate()
     {
         let source = temporary.path().join(format!("metadata-{index}.json"));
-        fs::write(&source, format!(r#"{{"version":2,"entries":[{entry}]}}"#)).unwrap();
+        fs::write(&source, format!(r#"{{"entries":[{entry}]}}"#)).unwrap();
         assert!(read(&source).is_err(), "invalid entry accepted: {entry}");
     }
     let source = temporary.path().join("valid.json");
-    fs::write(&source, format!("{{\"version\":2,\"entries\":[{valid}]}}\n\n")).unwrap();
+    fs::write(&source, format!("{{\"entries\":[{valid}]}}\n\n")).unwrap();
     assert_eq!(read(&source).unwrap().len(), 1);
 }
 
@@ -361,7 +361,7 @@ fn write_produces_the_bytes_of_the_go_writer() {
     write(&destination, &entries).unwrap();
     // The output that the former writer wrote for the same entries.
     let expected = concat!(
-        r#"{"version":2,"entries":["#,
+        r#"{"entries":["#,
         r#"{"relativePath":"a b","type":"directory","size":0,"mode":493,"executable":false},"#,
         "{\"relativePath\":\"a b/\\\"q\\\"\\t\\u0001\u{7f}.txt\",\"type\":\"file\",\"hash\":-42,\"size\":3,\"mode\":493,\"executable\":true},",
         r#"{"relativePath":"lib","type":"directory","size":0,"mode":488,"executable":false},"#,
@@ -459,7 +459,7 @@ fn a_file_keeps_its_mac_binary_kind_and_no_other_entry_has_one() {
     let destination = temporary.path().join("metadata.json");
     write(&destination, std::slice::from_ref(&file)).unwrap();
     let expected = concat!(
-        r#"{"version":2,"entries":["#,
+        r#"{"entries":["#,
         r#"{"relativePath":"bin/gdb","type":"file","hash":7,"size":1,"mode":493,"executable":true,"macBinary":"executable"}"#,
         "]}\n"
     );
@@ -472,7 +472,8 @@ fn a_file_keeps_its_mac_binary_kind_and_no_other_entry_has_one() {
     }]));
     assert_eq!(message, "only a file has a Mach-O kind: lib");
 
-    let unknown = r#"{"version":2,"entries":[{"relativePath":"a","type":"file","hash":1,"size":1,"mode":420,"executable":false,"macBinary":"object"}]}"#;
+    let unknown =
+        r#"{"entries":[{"relativePath":"a","type":"file","hash":1,"size":1,"mode":420,"executable":false,"macBinary":"object"}]}"#;
     fs::write(&destination, unknown).unwrap();
     assert!(read(&destination).is_err(), "an unknown kind is accepted");
 }

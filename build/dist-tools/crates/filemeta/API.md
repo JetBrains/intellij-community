@@ -1,12 +1,13 @@
 # filemeta
 
-The file metadata of the distribution tools: inventory JSON version 2. The path and link rules are in `distpath`.
+The file metadata of the distribution tools: the inventory JSON. The path and link rules are in `distpath`.
 The content hash of a file is `xxh3::hash_file` of the `xxh3` crate. `macho::hash_file` gives the same hash and the
 Mach-O kind of the file in one read. Rustdoc states each public item and its contract.
 
 ## File format
 
-`{"version":2,"entries":[...]}` and one `\n`, with no indentation. The entries are sorted bytewise by `relativePath`.
+`{"entries":[...]}` and one `\n`, with no indentation. Every writer and reader runs in one build, so the document has
+no version. The entries are sorted bytewise by `relativePath`.
 An entry holds `relativePath, type, hash, size, mode, executable, symlinkTarget, macBinary` in this order. A directory
 has no `hash`. `symlinkTarget` is present only when it is not empty. `macBinary` is `executable`, `dylib` or `bundle`,
 and it is present only for a Mach-O file of one of these kinds. `serde_json` writes the document.

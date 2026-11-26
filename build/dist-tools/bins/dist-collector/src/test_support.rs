@@ -30,7 +30,7 @@ pub(crate) fn write_inventory(name: &str, entries: &[Entry]) {
 #[cfg(unix)]
 pub(crate) fn write_raw_inventory(name: &str, entries: &[Entry]) {
     let entries: Vec<Value> = entries.iter().map(entry_json).collect();
-    write_json(name, &json!({"version": 2, "entries": entries}));
+    write_json(name, &json!({"entries": entries}));
 }
 
 #[cfg(unix)]
