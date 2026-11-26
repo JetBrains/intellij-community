@@ -18,7 +18,7 @@ import com.intellij.lang.jvm.actions.createChangeParametersActions
 import com.intellij.lang.jvm.actions.setMethodParametersRequest
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.workspace.ProjectWorkspace
+import com.intellij.openapi.workspace.Workspace
 import com.intellij.psi.PsiAnnotation
 import com.intellij.psi.PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME
 import com.intellij.psi.PsiFile
@@ -111,8 +111,8 @@ internal class MismatchedLightServiceLevelAndCtorInspection : DevKitJvmInspectio
         assert(constructor.isConstructor)
         val parameters = constructor.parameters
         return when (parameters.size) {
-          1 -> parameters[0].hasType(ProjectWorkspace::class.java)
-          2 -> parameters[0].hasType(ProjectWorkspace::class.java) && parameters[1].hasType(CoroutineScope::class.java)
+          1 -> parameters[0].hasType(Workspace::class.java)
+          2 -> parameters[0].hasType(Workspace::class.java) && parameters[1].hasType(CoroutineScope::class.java)
           else -> false
         }
       }

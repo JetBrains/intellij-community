@@ -120,7 +120,7 @@ class ServiceUtilTest {
 
       import com.intellij.openapi.components.ComponentManager;
 
-      public interface ProjectWorkspace extends ComponentManager { }
+      public interface Workspace extends ComponentManager { }
       """.trimIndent()
     )
 

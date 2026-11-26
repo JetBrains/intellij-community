@@ -6,7 +6,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.components.serviceOrNull
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.workspace.ProjectWorkspace
+import com.intellij.openapi.workspace.Workspace
 
 @Service(Service.Level.WORKSPACE)
 class WorkspaceService
@@ -18,7 +18,7 @@ fun fail(project: Project) {
   project.<error descr="The workspace-level service is retrieved as a project-level service">getService</error>(WorkspaceService::class.java)
 }
 
-fun success(workspace: ProjectWorkspace) {
+fun success(workspace: Workspace) {
   workspace.getService(WorkspaceService::class.java)
   workspace.service<WorkspaceService>()
   workspace.serviceOrNull<WorkspaceService>()

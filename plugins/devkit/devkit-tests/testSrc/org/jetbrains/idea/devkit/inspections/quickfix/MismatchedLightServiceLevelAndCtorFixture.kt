@@ -11,7 +11,7 @@ import org.jetbrains.idea.devkit.inspections.MismatchedLightServiceLevelAndCtorI
 /**
  * The fixture of the [MismatchedLightServiceLevelAndCtorInspection] tests. Create it with [mismatchedLightServiceLevelAndCtorFixture].
  *
- * The fixture enables [MismatchedLightServiceLevelAndCtorInspection]. The project has the stubs of `Service`, `Project`, `ProjectWorkspace` and
+ * The fixture enables [MismatchedLightServiceLevelAndCtorInspection]. The project has the stubs of `Service`, `Project`, `Workspace` and
  * `CoroutineScope`.
  */
 class MismatchedLightServiceLevelAndCtorFixture(fixture: LightJavaCodeInsightTestFixture, fileExtension: String) :
@@ -67,7 +67,7 @@ fun mismatchedLightServiceLevelAndCtorFixture(
 
     import com.intellij.openapi.components.ComponentManager;
 
-    public interface ProjectWorkspace extends ComponentManager {}
+    public interface Workspace extends ComponentManager {}
     """)
   fixture.addClass(
     """

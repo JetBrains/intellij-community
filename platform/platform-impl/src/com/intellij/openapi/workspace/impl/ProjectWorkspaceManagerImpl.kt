@@ -9,32 +9,32 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
-import com.intellij.openapi.workspace.ProjectWorkspace
-import com.intellij.openapi.workspace.ProjectWorkspaceManager
+import com.intellij.openapi.workspace.Workspace
+import com.intellij.openapi.workspace.WorkspaceManager
 import com.intellij.serviceContainer.AlreadyDisposedException
 import com.intellij.serviceContainer.getComponentManagerImpl
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 
-private val WORKSPACE_KEY: Key<ProjectWorkspace> = Key.create("ProjectWorkspaceManagerImpl.WORKSPACE")
+private val WORKSPACE_KEY: Key<Workspace> = Key.create("ProjectWorkspaceManagerImpl.WORKSPACE")
 
-private val WORKSPACE_FACTORY_EP: ExtensionPointName<ProjectWorkspaceFactory> = ExtensionPointName("com.intellij.projectWorkspaceFactory")
+private val WORKSPACE_FACTORY_EP: ExtensionPointName<WorkspaceFactory> = ExtensionPointName("com.intellij.workspaceFactory")
 
 private val LOG = logger<ProjectWorkspaceManagerImpl>()
 
 /** Tracks live workspaces and the projects bound to each workspace. */
 @ApiStatus.Internal
-class ProjectWorkspaceManagerImpl : ProjectWorkspaceManager {
+class ProjectWorkspaceManagerImpl : WorkspaceManager {
   companion object {
     fun getInstance(): ProjectWorkspaceManagerImpl {
-      return ApplicationManager.getApplication().service<ProjectWorkspaceManager>() as ProjectWorkspaceManagerImpl
+      return ApplicationManager.getApplication().service<WorkspaceManager>() as ProjectWorkspaceManagerImpl
     }
   }
 
   private val lock = Any()
 
   /** Guarded by [lock]. */
-  private val live = LinkedHashMap<ProjectWorkspace, MutableList<Project>>()
+  private val live = LinkedHashMap<Workspace, MutableList<Project>>()
 
   /**
    * Creates a single-project workspace on first access if the project has no binding.
@@ -42,7 +42,7 @@ class ProjectWorkspaceManagerImpl : ProjectWorkspaceManager {
    *
    * @throws AlreadyDisposedException if the project was disposed before it acquired a workspace.
    */
-  override fun getWorkspace(project: Project): ProjectWorkspace {
+  override fun getWorkspace(project: Project): Workspace {
     project.getUserData(WORKSPACE_KEY)?.let { return it }
     val holder = if (project.isDefault) ProjectManager.getInstance().defaultProject else project
     synchronized(lock) {
@@ -61,7 +61,7 @@ class ProjectWorkspaceManagerImpl : ProjectWorkspaceManager {
    * Otherwise the project joins the live workspace of [frameOwner] if it supports member projects.
    * If no such workspace exists, the manager tries the factories and falls back to [WorkspaceAsProject].
    */
-  fun bindProject(project: Project, identityFile: Path, frameOwner: Project?): ProjectWorkspace {
+  fun bindProject(project: Project, identityFile: Path, frameOwner: Project?): Workspace {
     val ownerWorkspace = frameOwner?.let(::getWorkspace)
     synchronized(lock) {
       project.getUserData(WORKSPACE_KEY)?.let {
@@ -84,7 +84,7 @@ class ProjectWorkspaceManagerImpl : ProjectWorkspaceManager {
     }
   }
 
-  private fun createWorkspaceOfHost(project: Project, identityFile: Path): ProjectWorkspace? {
+  private fun createWorkspaceOfHost(project: Project, identityFile: Path): Workspace? {
     for (factory in WORKSPACE_FACTORY_EP.extensionList) {
       val workspace = factory.createWorkspace(project, identityFile) ?: continue
       val container = workspace.getComponentManagerImpl()
@@ -97,14 +97,14 @@ class ProjectWorkspaceManagerImpl : ProjectWorkspaceManager {
   }
 
   /** The caller must hold [lock]. */
-  private fun startWorkspace(workspace: ProjectWorkspace, project: Project) {
+  private fun startWorkspace(workspace: Workspace, project: Project) {
     live[workspace] = mutableListOf(project)
     (workspace.getComponentManagerImpl() as ProjectWorkspaceComponentManager).registerWorkspaceComponents()
     project.putUserData(WORKSPACE_KEY, workspace)
   }
 
   /** Returns a snapshot that includes workspaces of projects still opening. */
-  fun liveWorkspaces(): List<ProjectWorkspace> {
+  fun liveWorkspaces(): List<Workspace> {
     synchronized(lock) {
       return live.keys.toList()
     }

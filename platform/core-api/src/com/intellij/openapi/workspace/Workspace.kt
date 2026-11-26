@@ -14,14 +14,14 @@ import org.jetbrains.annotations.ApiStatus
  * A shared module can also declare a workspace service when the UI of the service runs on the backend in split mode.
  * A shared module can also declare a workspace service when it owns the UI classes of the service.
  * An example is the file editor manager in `intellij.platform.ide.impl`.
- * Constructors of workspace services, listeners, and extensions can take a [ProjectWorkspace], a `CoroutineScope`, or both in that order.
+ * Constructors of workspace services, listeners, and extensions can take a [Workspace], a `CoroutineScope`, or both in that order.
  *
  * When the last project closes, the platform disposes its project services before the workspace services.
  * When a plugin unloads, the platform disposes its workspace services before its project services.
  */
 @ApiStatus.Experimental
 @ApiStatus.NonExtendable
-interface ProjectWorkspace : ComponentManager {
+interface Workspace : ComponentManager {
   /**
    * A snapshot of the projects in this workspace, with the host first.
    * Member projects appear after they open.

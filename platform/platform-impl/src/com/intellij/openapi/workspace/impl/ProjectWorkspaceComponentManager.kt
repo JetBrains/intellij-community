@@ -9,7 +9,7 @@ import com.intellij.openapi.components.impl.stores.IComponentStore
 import com.intellij.openapi.components.impl.stores.stateStore
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.workspace.ProjectWorkspace
+import com.intellij.openapi.workspace.Workspace
 import com.intellij.serviceContainer.ComponentManagerImpl
 import com.intellij.serviceContainer.coroutineScopeMethodType
 import com.intellij.serviceContainer.emptyConstructorMethodType
@@ -21,9 +21,9 @@ import org.jetbrains.annotations.ApiStatus
 import java.lang.invoke.MethodType
 import java.lang.reflect.Constructor
 
-private val workspaceMethodType: MethodType = MethodType.methodType(Void.TYPE, ProjectWorkspace::class.java)
+private val workspaceMethodType: MethodType = MethodType.methodType(Void.TYPE, Workspace::class.java)
 private val workspaceAndScopeMethodType: MethodType =
-  MethodType.methodType(Void.TYPE, ProjectWorkspace::class.java, CoroutineScope::class.java)
+  MethodType.methodType(Void.TYPE, Workspace::class.java, CoroutineScope::class.java)
 
 @Suppress("ReplaceJavaStaticMethodWithKotlinAnalog")
 private val workspaceSupportedSignaturesOfLightServiceConstructors: List<MethodType> = java.util.List.of(
@@ -33,13 +33,13 @@ private val workspaceSupportedSignaturesOfLightServiceConstructors: List<MethodT
 private val LOG = logger<ProjectWorkspaceComponentManager>()
 
 /**
- * The service container for a [ProjectWorkspace]. Its parent is the application container.
+ * The service container for a [Workspace]. Its parent is the application container.
  */
 @ApiStatus.Internal
 class ProjectWorkspaceComponentManager(
   val hostProject: Project,
 ) : ComponentManagerImpl(ApplicationManager.getApplication().getComponentManagerImpl()) {
-  private var workspace: ProjectWorkspace? = null
+  private var workspace: Workspace? = null
 
   override fun <T : Any> findConstructorAndInstantiateClass(constructors: Array<Constructor<*>>, aClass: Class<T>): T {
     @Suppress("UNCHECKED_CAST")
@@ -49,7 +49,7 @@ class ProjectWorkspaceComponentManager(
       ?: constructors.findConstructorOrNull(coroutineScopeMethodType)?.newInstanceOrThrow(instanceCoroutineScope(aClass))
       ?: constructors.findConstructorOrNull(emptyConstructorMethodType)?.newInstanceOrThrow()
       ?: throw RuntimeException(
-        "Cannot find a suitable constructor, expected (ProjectWorkspace), (ProjectWorkspace, CoroutineScope), (CoroutineScope), or ()"
+        "Cannot find a suitable constructor, expected (Workspace), (Workspace, CoroutineScope), (CoroutineScope), or ()"
       )
     ) as T
   }
@@ -58,9 +58,9 @@ class ProjectWorkspaceComponentManager(
     get() = workspaceSupportedSignaturesOfLightServiceConstructors
 
   /** Registers [workspace] for constructor injection. */
-  fun initForWorkspace(workspace: ProjectWorkspace) {
+  fun initForWorkspace(workspace: Workspace) {
     this.workspace = workspace
-    registerServiceInstance(serviceInterface = ProjectWorkspace::class.java, instance = workspace, pluginDescriptor = fakeCorePluginDescriptor)
+    registerServiceInstance(serviceInterface = Workspace::class.java, instance = workspace, pluginDescriptor = fakeCorePluginDescriptor)
   }
 
   /** Call once when [ProjectWorkspaceManagerImpl] starts the workspace. */

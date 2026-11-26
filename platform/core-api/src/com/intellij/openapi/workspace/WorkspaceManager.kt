@@ -8,6 +8,6 @@ import org.jetbrains.annotations.ApiStatus
  * The application service that gives the workspace of a project. Use [Project.workspace].
  */
 @ApiStatus.Internal
-interface ProjectWorkspaceManager {
-  fun getWorkspace(project: Project): ProjectWorkspace
+interface WorkspaceManager {
+  fun getWorkspace(project: Project): Workspace
 }

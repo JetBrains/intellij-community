@@ -5,7 +5,7 @@ import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
-import com.intellij.openapi.workspace.ProjectWorkspace
+import com.intellij.openapi.workspace.Workspace
 import com.intellij.openapi.workspace.workspace
 import com.intellij.platform.testFramework.loadDescriptorInTest
 import com.intellij.platform.testFramework.plugins.extensions
@@ -95,7 +95,7 @@ internal class ProjectWorkspaceContainerTest {
     assertThat(workspace.getService(TestClientWorkspaceService::class.java)).isNull()
   }
 
-  private fun registerPlugin(workspace: ProjectWorkspace, xml: String) {
+  private fun registerPlugin(workspace: Workspace, xml: String) {
     val descriptor = loadDescriptorInTest(plugin { extensions(xml) }, pluginsDir)
     setPluginClassLoaderForMainAndSubPlugins(descriptor, javaClass.classLoader)
     workspace.getComponentManagerImpl().registerComponents(sequenceOf(descriptor), ApplicationManager.getApplication())
@@ -118,9 +118,9 @@ private class TestNoArgService
 private class TestScopeService(val scope: CoroutineScope)
 
 @Service(Service.Level.WORKSPACE)
-private class TestWorkspaceArgService(val workspace: ProjectWorkspace)
+private class TestWorkspaceArgService(val workspace: Workspace)
 
 @Service(Service.Level.WORKSPACE)
-private class TestWorkspaceAndScopeService(val workspace: ProjectWorkspace, val scope: CoroutineScope)
+private class TestWorkspaceAndScopeService(val workspace: Workspace, val scope: CoroutineScope)
 
-private class TestWorkspaceArgClass(val workspace: ProjectWorkspace)
+private class TestWorkspaceArgClass(val workspace: Workspace)

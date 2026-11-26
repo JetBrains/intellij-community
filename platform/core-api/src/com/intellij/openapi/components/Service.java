@@ -32,7 +32,7 @@ public @interface Service {
     PROJECT,
 
     /**
-     * Workspace-level instance. Its constructor can take a {@link com.intellij.openapi.workspace.ProjectWorkspace ProjectWorkspace}.
+     * Workspace-level instance. Its constructor can take a {@link com.intellij.openapi.workspace.Workspace Workspace}.
      */
     @ApiStatus.Experimental
     WORKSPACE

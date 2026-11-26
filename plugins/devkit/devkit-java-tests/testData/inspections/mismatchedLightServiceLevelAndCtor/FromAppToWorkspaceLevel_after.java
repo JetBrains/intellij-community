@@ -1,11 +1,11 @@
 import com.intellij.openapi.components.Service;
-import com.intellij.openapi.workspace.ProjectWorkspace;
+import com.intellij.openapi.workspace.Workspace;
 
 @Service(Service.Level.WORKSPACE)
 final class MyService {
-  private final ProjectWorkspace myWorkspace;
+  private final Workspace myWorkspace;
 
-  public MyService(ProjectWorkspace workspace) {
+  public MyService(Workspace workspace) {
     myWorkspace = workspace;
   }
 }

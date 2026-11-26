@@ -50,8 +50,8 @@ import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.openapi.workspace.ProjectWorkspace
-import com.intellij.openapi.workspace.ProjectWorkspaceManager
+import com.intellij.openapi.workspace.Workspace
+import com.intellij.openapi.workspace.WorkspaceManager
 import com.intellij.openapi.workspace.impl.ProjectWorkspaceManagerImpl
 import com.intellij.platform.diagnostic.telemetry.IJTracer
 import com.intellij.platform.diagnostic.telemetry.PlatformMetrics
@@ -948,8 +948,8 @@ internal class DynamicPluginsSupportImpl(
     private val tracer: IJTracer by lazy { TelemetryManager.getInstance().getTracer(Scope("dynamicPluginsSupport", PlatformMetrics)) }
 
     /** Gives the live workspaces. It does not create the manager: without the manager, no workspace exists. */
-    internal fun liveWorkspacesOrEmpty(): List<ProjectWorkspace> {
-      val manager = serviceIfCreated<ProjectWorkspaceManager>() as? ProjectWorkspaceManagerImpl
+    internal fun liveWorkspacesOrEmpty(): List<Workspace> {
+      val manager = serviceIfCreated<WorkspaceManager>() as? ProjectWorkspaceManagerImpl
       return manager?.liveWorkspaces() ?: emptyList()
     }
   }

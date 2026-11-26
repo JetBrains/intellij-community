@@ -11,7 +11,7 @@ import org.jetbrains.idea.devkit.inspections.quickfix.lightDevKitInspectionFixtu
 /**
  * The fixture of the [IncorrectServiceRetrievingInspection] tests. Create it with [incorrectServiceRetrievingFixture].
  *
- * The fixture enables [IncorrectServiceRetrievingInspection]. The project has the stubs of `ComponentManager`, `Project`, `ProjectWorkspace`, `Application` and
+ * The fixture enables [IncorrectServiceRetrievingInspection]. The project has the stubs of `ComponentManager`, `Project`, `Workspace`, `Application` and
  * `KClass`.
  */
 class IncorrectServiceRetrievingFixture(fixture: LightJavaCodeInsightTestFixture, fileExtension: String) :
@@ -84,7 +84,7 @@ fun incorrectServiceRetrievingFixture(
 
     import com.intellij.openapi.components.ComponentManager;
 
-    public interface ProjectWorkspace extends ComponentManager {}
+    public interface Workspace extends ComponentManager {}
     """)
   fixture.addClass(
     """

@@ -5,7 +5,7 @@ import com.intellij.openapi.project.Project;
 final class MyService {
   private final Project myProject;
 
-  public <warning descr="Workspace-level service requires a no-arg constructor or a constructor with 'ProjectWorkspace' and 'kotlinx.coroutines.CoroutineScope' parameters">MyService</warning>(Project project) {
+  public <warning descr="Workspace-level service requires a no-arg constructor or a constructor with 'Workspace' and 'kotlinx.coroutines.CoroutineScope' parameters">MyService</warning>(Project project) {
     myProject = project;
   }
 }

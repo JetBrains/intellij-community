@@ -31,7 +31,7 @@ import com.intellij.openapi.util.Condition
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapi.workspace.ProjectWorkspaceManager
+import com.intellij.openapi.workspace.WorkspaceManager
 import com.intellij.openapi.workspace.impl.ProjectWorkspaceManagerImpl
 import com.intellij.platform.project.registerNewProjectId
 import com.intellij.platform.project.unregisterProjectId
@@ -127,7 +127,7 @@ internal class DefaultProject : UserDataHolderBase(), Project, ComponentManagerE
     }
     Disposer.dispose(timedProject)
     runCatching {
-      (ApplicationManager.getApplication().serviceIfCreated<ProjectWorkspaceManager>() as? ProjectWorkspaceManagerImpl)?.releaseProject(this)
+      (ApplicationManager.getApplication().serviceIfCreated<WorkspaceManager>() as? ProjectWorkspaceManagerImpl)?.releaseProject(this)
     }.getOrLogException(LOG)
     unregisterProjectId(this)
   }

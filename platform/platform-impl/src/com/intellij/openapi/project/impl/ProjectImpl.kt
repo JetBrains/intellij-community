@@ -38,7 +38,7 @@ import com.intellij.openapi.wm.ex.ProjectFrameCapabilitiesService
 import com.intellij.openapi.wm.ex.ProjectFrameCapability
 import com.intellij.openapi.wm.impl.IdeFrameGuests
 import com.intellij.openapi.wm.impl.FrameTitleBuilder
-import com.intellij.openapi.workspace.ProjectWorkspaceManager
+import com.intellij.openapi.workspace.WorkspaceManager
 import com.intellij.openapi.workspace.impl.ProjectWorkspaceManagerImpl
 import com.intellij.platform.project.registerNewProjectId
 import com.intellij.platform.project.unregisterProjectId
@@ -350,7 +350,7 @@ open class ProjectImpl(parent: ComponentManagerImpl, private val isLightTestProj
     super.dispose()
 
     runCatching {
-      (app.serviceIfCreated<ProjectWorkspaceManager>() as? ProjectWorkspaceManagerImpl)?.releaseProject(this)
+      (app.serviceIfCreated<WorkspaceManager>() as? ProjectWorkspaceManagerImpl)?.releaseProject(this)
     }.getOrLogException(LOG)
 
     componentStoreValue.valueIfInitialized?.release()

@@ -4,7 +4,7 @@ package com.intellij.openapi.workspace
 import org.jetbrains.annotations.ApiStatus
 
 /**
- * Marks [ProjectWorkspace.hostProject], the adapter that gives the host project of a workspace to a legacy consumer.
+ * Marks [Workspace.hostProject], the adapter that gives the host project of a workspace to a legacy consumer.
  *
  * A legacy consumer is workspace code that calls an API that takes a `Project`, such as a tree node of a tool window.
  * New code must not opt in. It uses the project of the element that it handles, or a workspace service.

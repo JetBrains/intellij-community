@@ -146,8 +146,8 @@
     <extensionPoint qualifiedName="com.intellij.projectOpenInterceptor"
                     interface="com.intellij.openapi.project.impl.ProjectOpenInterceptor"
                     dynamic="true"/>
-    <extensionPoint qualifiedName="com.intellij.projectWorkspaceFactory"
-                    interface="com.intellij.openapi.workspace.impl.ProjectWorkspaceFactory"/>
+    <extensionPoint qualifiedName="com.intellij.workspaceFactory"
+                    interface="com.intellij.openapi.workspace.impl.WorkspaceFactory"/>
     <extensionPoint qualifiedName="com.intellij.editor.interLineBreakpointConfigurationProvider"
                     interface="com.intellij.openapi.editor.impl.InterLineBreakpointConfigurationProvider"
                     dynamic="true"/>
@@ -2004,7 +2004,7 @@
     <applicationService serviceInterface="com.intellij.openapi.project.ProjectManager" open="true"
                         serviceImplementation="com.intellij.openapi.project.impl.ProjectManagerImpl"
                         testServiceImplementation="com.intellij.project.TestProjectManager"/>
-    <applicationService serviceInterface="com.intellij.openapi.workspace.ProjectWorkspaceManager"
+    <applicationService serviceInterface="com.intellij.openapi.workspace.WorkspaceManager"
                         serviceImplementation="com.intellij.openapi.workspace.impl.ProjectWorkspaceManagerImpl"/>
     <settingsController id="LoggingSettingsController" implementation="com.intellij.ide.actions.LoggingSettingsController"/>
 

@@ -20,9 +20,9 @@ import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.workspace.LegacyWorkspaceHostApi
-import com.intellij.openapi.workspace.ProjectWorkspace
+import com.intellij.openapi.workspace.Workspace
 import com.intellij.openapi.workspace.impl.ProjectWorkspaceComponentManager
-import com.intellij.openapi.workspace.impl.ProjectWorkspaceFactory
+import com.intellij.openapi.workspace.impl.WorkspaceFactory
 import com.intellij.openapi.workspace.impl.ProjectWorkspaceManagerImpl
 import com.intellij.openapi.workspace.impl.WorkspaceAsProject
 import com.intellij.openapi.workspace.workspace
@@ -47,7 +47,7 @@ import kotlin.io.path.name
 import kotlin.io.path.readText
 
 /**
- * The binding of a project to its [ProjectWorkspace], see `ProjectWorkspaceManagerImpl.bindProject`.
+ * The binding of a project to its [Workspace], see `ProjectWorkspaceManagerImpl.bindProject`.
  */
 @TestApplication
 @Timeout(120)
@@ -82,14 +82,14 @@ internal class ProjectWorkspaceBindingTest {
   fun `a guest has the workspace of its owner from its creation to its dispose`(): Unit = timeoutRunBlocking {
     registerHostFactory()
     val owner = openOwner("owner")
-    val atBeforeInit = ArrayList<ProjectWorkspace>()
+    val atBeforeInit = ArrayList<Workspace>()
     val options = OpenProjectTask(createTestOpenProjectOptions()) {
       isNewProject = true
       implOptions = OpenProjectImplOptions(frameOwner = owner)
       beforeInitTasks += { atBeforeInit.add(it.workspace) }
     }
     val guest = open(directory("guest"), options)
-    val atDispose = ArrayList<ProjectWorkspace>()
+    val atDispose = ArrayList<Workspace>()
     guest.service<WorkspaceRecordingProjectService>().onDispose = { atDispose.add(it.workspace) }
 
     PlatformTestUtil.forceCloseProjectWithoutSaving(guest)
@@ -165,7 +165,7 @@ internal class ProjectWorkspaceBindingTest {
     get() = ProjectWorkspaceManagerImpl.getInstance()
 
   private fun registerHostFactory() {
-    val ep = ExtensionPointName<ProjectWorkspaceFactory>("com.intellij.projectWorkspaceFactory")
+    val ep = ExtensionPointName<WorkspaceFactory>("com.intellij.workspaceFactory")
     ExtensionTestUtil.maskExtensions(ep, listOf(TestHostWorkspaceFactory()), disposable, fireEvents = false)
   }
 
@@ -192,14 +192,14 @@ internal class ProjectWorkspaceBindingTest {
 }
 
 /** Gives a [TestHostWorkspace] for the directory `owner`. */
-private class TestHostWorkspaceFactory : ProjectWorkspaceFactory {
-  override fun createWorkspace(project: Project, identityFile: Path): ProjectWorkspace? {
+private class TestHostWorkspaceFactory : WorkspaceFactory {
+  override fun createWorkspace(project: Project, identityFile: Path): Workspace? {
     return if (identityFile.name == "owner") TestHostWorkspace(project) else null
   }
 }
 
 /** A workspace of several projects, of the form of [WorkspaceAsProject]. */
-private class TestHostWorkspace(project: Project) : ProjectWorkspace, DelegatingComponentManagerEx {
+private class TestHostWorkspace(project: Project) : Workspace, DelegatingComponentManagerEx {
   private val container = ProjectWorkspaceComponentManager(hostProject = project)
 
   override val delegateComponentManager: ComponentManagerEx

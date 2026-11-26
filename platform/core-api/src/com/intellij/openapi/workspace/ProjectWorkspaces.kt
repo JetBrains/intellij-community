@@ -13,5 +13,5 @@ import org.jetbrains.annotations.ApiStatus
  *
  * @throws IllegalStateException in codeServer and in the analyzer, where the workspace manager is unavailable.
  */
-val Project.workspace: ProjectWorkspace
-  get() = ApplicationManager.getApplication().service<ProjectWorkspaceManager>().getWorkspace(this)
+val Project.workspace: Workspace
+  get() = ApplicationManager.getApplication().service<WorkspaceManager>().getWorkspace(this)

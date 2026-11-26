@@ -24,7 +24,7 @@ import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.workspace.ProjectWorkspace
+import com.intellij.openapi.workspace.Workspace
 import com.intellij.openapi.workspace.workspace
 import com.intellij.platform.ide.progress.ModalTaskOwner
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
@@ -307,7 +307,7 @@ private fun levelsByConstructors(constructors: Array<Constructor<*>>): Levels {
     },
     isWorkspaceLevel = constructors.any { constructor ->
       constructor.parameterCount == 1
-      && constructor.parameterTypes.get(0) == ProjectWorkspace::class.java
+      && constructor.parameterTypes.get(0) == Workspace::class.java
     },
   )
 }

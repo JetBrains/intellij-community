@@ -247,7 +247,7 @@ private val allowedClientProjectSessionsQualifiedNames = setOf(
 private val allowedServiceQualifiedNames = setOf(
   "com.intellij.openapi.project.Project",
   "com.intellij.openapi.module.Module",
-  "com.intellij.openapi.workspace.ProjectWorkspace",
+  "com.intellij.openapi.workspace.Workspace",
   "com.intellij.util.messages.MessageBus",
   "com.intellij.openapi.options.SchemeManagerFactory",
   "com.intellij.openapi.editor.actionSystem.TypedActionHandler",
@@ -290,7 +290,7 @@ private fun isAllowedParameters(list: PsiParameterList,
       return false
     }
 
-    if (name == "ProjectWorkspace" && !isWorkspaceArea && !isServiceAnnotation) {
+    if (name == "Workspace" && !isWorkspaceArea && !isServiceAnnotation) {
       return false
     }
 

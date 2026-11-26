@@ -6,12 +6,12 @@ import com.intellij.openapi.components.DelegatingComponentManagerEx
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.workspace.LegacyWorkspaceHostApi
-import com.intellij.openapi.workspace.ProjectWorkspace
+import com.intellij.openapi.workspace.Workspace
 import org.jetbrains.annotations.ApiStatus
 
 /** A workspace for a single project. */
 @ApiStatus.Internal
-class WorkspaceAsProject(project: Project) : ProjectWorkspace, DelegatingComponentManagerEx {
+class WorkspaceAsProject(project: Project) : Workspace, DelegatingComponentManagerEx {
   private val container = ProjectWorkspaceComponentManager(hostProject = project)
 
   override val delegateComponentManager: ComponentManagerEx
