@@ -23,36 +23,44 @@ class McpToolFilterTest {
   fun `AllowList filter includes allowed tools`() {
     val filter = McpToolFilter.AllowList(setOf("read_file", "write_file", "grep"))
 
-    assertThat(filter.shouldInclude("read_file")).isTrue()
-    assertThat(filter.shouldInclude("write_file")).isTrue()
-    assertThat(filter.shouldInclude("grep")).isTrue()
+    assertThat(filter.shouldInclude(fakeTool("read_file"))).isTrue()
+    assertThat(filter.shouldInclude(fakeTool("write_file"))).isTrue()
+    assertThat(filter.shouldInclude(fakeTool("grep"))).isTrue()
   }
 
   @Test
   fun `AllowList filter excludes non-allowed tools`() {
     val filter = McpToolFilter.AllowList(setOf("read_file", "write_file"))
 
-    assertThat(filter.shouldInclude("execute_command")).isFalse()
-    assertThat(filter.shouldInclude("git_commit")).isFalse()
-    assertThat(filter.shouldInclude("delete_file")).isFalse()
+    assertThat(filter.shouldInclude(fakeTool("execute_command"))).isFalse()
+    assertThat(filter.shouldInclude(fakeTool("git_commit"))).isFalse()
+    assertThat(filter.shouldInclude(fakeTool("delete_file"))).isFalse()
+  }
+
+  @Test
+  fun `AllowList filter matches a tool by its name, not by the name of its function`() {
+    val tool = fakeTool("xdebug_start_debugger_session", fullyQualifiedName = "test.DebuggerToolset.start_debugger_session")
+
+    assertThat(McpToolFilter.AllowList(setOf("xdebug_start_debugger_session")).shouldInclude(tool)).isTrue()
+    assertThat(McpToolFilter.AllowList(setOf("start_debugger_session")).shouldInclude(tool)).isFalse()
   }
 
   @Test
   fun `AllowList filter with empty set excludes all tools`() {
     val filter = McpToolFilter.AllowList(emptySet())
 
-    assertThat(filter.shouldInclude("read_file")).isFalse()
-    assertThat(filter.shouldInclude("write_file")).isFalse()
-    assertThat(filter.shouldInclude("any_tool")).isFalse()
+    assertThat(filter.shouldInclude(fakeTool("read_file"))).isFalse()
+    assertThat(filter.shouldInclude(fakeTool("write_file"))).isFalse()
+    assertThat(filter.shouldInclude(fakeTool("any_tool"))).isFalse()
   }
 
   @Test
   fun `AllowList filter is case sensitive`() {
     val filter = McpToolFilter.AllowList(setOf("read_file"))
 
-    assertThat(filter.shouldInclude("read_file")).isTrue()
-    assertThat(filter.shouldInclude("Read_File")).isFalse()
-    assertThat(filter.shouldInclude("READ_FILE")).isFalse()
+    assertThat(filter.shouldInclude(fakeTool("read_file"))).isTrue()
+    assertThat(filter.shouldInclude(fakeTool("Read_File"))).isFalse()
+    assertThat(filter.shouldInclude(fakeTool("READ_FILE"))).isFalse()
   }
 
   @Test
@@ -276,12 +284,12 @@ class McpToolFilterTest {
     assertThat(context.routerOnlyTools).doesNotContain(tool)
   }
 
-  private fun fakeTool(name: String, alwaysIncluded: Boolean = false): McpTool {
+  private fun fakeTool(name: String, alwaysIncluded: Boolean = false, fullyQualifiedName: String = "test.$name"): McpTool {
     return object : McpTool {
       override val descriptor = McpToolDescriptor(
         name = name,
         description = name,
-        fullyQualifiedName = "test.$name",
+        fullyQualifiedName = fullyQualifiedName,
         category = McpToolCategory(shortName = "Test", fullyQualifiedName = "test", isExperimental = false,
                                    alwaysIncluded = alwaysIncluded),
         inputSchema = McpToolSchema.ofPropertiesSchema(

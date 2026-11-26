@@ -1,3 +1,4 @@
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.mcpserver
 
 /**
@@ -48,10 +49,12 @@ sealed interface McpToolFilter {
    * This is useful for exposing a specific subset of tools to an agent,
    * for example, limiting an agent to only file operations.
    *
+   * A tool matches by its [McpToolDescriptor.name], not by its [McpToolDescriptor.fullyQualifiedName].
+   *
    * @property allowedTools set of tool names that should be included
    */
-  data class AllowList(val allowedTools: Set<String>) : TextMcpToolFilter {
-    override fun shouldInclude(toolName: String): Boolean = toolName.split('.').last() in allowedTools
+  data class AllowList(val allowedTools: Set<String>) : McpToolFilter {
+    override fun shouldInclude(tool: McpTool): Boolean = tool.descriptor.name in allowedTools
   }
 
   /**
