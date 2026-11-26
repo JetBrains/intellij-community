@@ -6,7 +6,7 @@ use std::collections::{BTreeMap, HashSet};
 use std::fs;
 use std::path::{Path, PathBuf};
 
-use component::manifest::{ComponentEntry, ComponentManifest, MANIFEST_VERSION};
+use component::manifest::{ComponentEntry, ComponentManifest};
 use component::paths;
 use testkit::{TempDir, file_symlink, write_file};
 
@@ -15,7 +15,6 @@ use crate::spec::{self, ComponentSources, CompositionComponent};
 
 pub(crate) fn test_manifest(kind: &str) -> ComponentManifest {
     ComponentManifest {
-        version: MANIFEST_VERSION,
         kind: kind.to_owned(),
         os: "linux".to_owned(),
         arch: "x64".to_owned(),

@@ -11,14 +11,10 @@ use anyhow::{Context as _, Result, bail};
 use filemeta::macho::MacBinary;
 use serde::{Deserialize, Serialize};
 
-/// The only manifest version. The collector writes it in every manifest, and the composer refuses every other version.
-pub const MANIFEST_VERSION: i32 = 12;
-
 /// The manifest of one component. A `None` main class is a component that contributes files and nothing else.
 #[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct ComponentManifest {
-    pub version: i32,
     pub kind: String,
     pub os: String,
     pub arch: String,
@@ -158,33 +154,17 @@ pub const fn conventional_mode(executable: bool) -> u32 {
 
 /// Reads a manifest, then applies [`validate_manifest`]. The error has the path as its context.
 ///
-/// The reader checks the version before the other keys, so a manifest of another version fails with its version and
-/// not with its first unknown key. A manifest without a version is a version 9 manifest, which wrote the version only
-/// for a plugin component.
+/// The collector and the composer run in one build, so a manifest has no version. A manifest of another shape fails
+/// at its first unknown or missing key.
 pub fn read_component_manifest(path: &Path) -> Result<ComponentManifest> {
-    #[derive(Deserialize)]
-    struct Version {
-        version: Option<i32>,
-    }
-    let data = fs::read(path).with_context(|| path.display().to_string())?;
-    let version: Version = serde_json::from_slice(&data).with_context(|| path.display().to_string())?;
-    check_version(version.version.unwrap_or(9)).with_context(|| path.display().to_string())?;
-    let manifest: ComponentManifest = serde_json::from_slice(&data).with_context(|| path.display().to_string())?;
+    let manifest: ComponentManifest = crate::json::read(path)?;
     validate_manifest(&manifest).with_context(|| path.display().to_string())?;
     Ok(manifest)
 }
 
-fn check_version(version: i32) -> Result<()> {
-    if version != MANIFEST_VERSION {
-        bail!("Unsupported dev-build component manifest version {version}");
-    }
-    Ok(())
-}
-
-/// Checks the fields that serde cannot check: the version, the core classpath and the entry modes. Each core classpath
-/// jar must be a component file of the manifest.
+/// Checks the fields that serde cannot check: the core classpath and the entry modes. Each core classpath jar must be a
+/// component file of the manifest.
 pub fn validate_manifest(manifest: &ComponentManifest) -> Result<()> {
-    check_version(manifest.version)?;
     let component_files: HashSet<&str> = manifest
         .entries
         .iter()

@@ -41,13 +41,12 @@ the field order. No producer writes such an array.
 - `paths::absolute_path(value: impl AsRef<Path>) -> Result<PathBuf>`: the absolute path of a `host_path`. A relative
   path starts at the working directory. A path that is not UTF-8 fails.
 
-## Component manifest v12 (`manifest`)
+## Component manifest (`manifest`)
 
 Only the composer reads a manifest. Every path of a manifest is ASCII after `distpath::validate_path`, so `str::cmp`
 gives the order of Java `String.compareTo` for the entries and the fingerprint.
 
-- `manifest::MANIFEST_VERSION: i32`: 12.
-- `ComponentManifest { version, kind, os, arch, plugin, main_class, core_class_path, entries }`: one
+- `ComponentManifest { kind, os, arch, plugin, main_class, core_class_path, entries }`: one
   manifest. JSON states every key. `main_class` is an `Option<String>`. `plugin: bool` is true for a plugin
   component.
 - `ComponentEntry`: one entry, with the JSON `type` first. `ComponentFile { relative_path, hash, executable, source,
@@ -64,11 +63,9 @@ gives the order of Java `String.compareTo` for the entries and the fingerprint.
 - `ComponentEntry::to_metadata() -> filemeta::Entry`: the inventory entry for `filemeta::merge`. A file without a
   mode gets the conventional mode.
 - `manifest::conventional_mode(executable: bool) -> u32`: 0o755 or 0o644. A file without a mode has this mode.
-- `manifest::read_component_manifest(path) -> Result<ComponentManifest>`: checks the version first, then decodes and
-  applies `validate_manifest`. A manifest of another version fails with its version, and a manifest without a version
-  is version 9.
-- `manifest::validate_manifest(manifest) -> Result<()>`: checks the version and `validate_entry_mode` for each
-  entry. Each `core_class_path` value must be a `component-file` entry of the same manifest.
+- `manifest::read_component_manifest(path) -> Result<ComponentManifest>`: decodes and applies `validate_manifest`.
+  The collector and the composer run in one build, so a manifest has no version.
+- `manifest::validate_manifest(manifest) -> Result<()>`: checks `validate_entry_mode` for each entry. Each `core_class_path` value must be a `component-file` entry of the same manifest.
 - `manifest::write_component_manifest(path, manifest) -> Result<()>`: writes the `to_json` bytes and creates the
   parent directory.
 - `manifest::validate_entry_mode(entry) -> Result<()>`: the value rules of the Kotlin `validateDevBuildEntryMode`. A

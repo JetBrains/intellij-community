@@ -5,7 +5,7 @@ use std::collections::{HashMap, HashSet};
 use std::path::{Path, PathBuf};
 
 use anyhow::{Context as _, Result, bail};
-use component::manifest::{self, ComponentEntry, ComponentManifest, MANIFEST_VERSION};
+use component::manifest::{self, ComponentEntry, ComponentManifest};
 use component::paths;
 use filemeta::macho::MacBinary;
 use filemeta::{Entry, EntryType};
@@ -183,7 +183,6 @@ pub(crate) fn inventory(files: &[SourcedFile]) -> Result<(Vec<ComponentEntry>, I
 pub(crate) fn build_manifest(header: &ManifestHeader, files: &[SourcedFile]) -> Result<(ComponentManifest, InventoryStats)> {
     let (entries, stats) = inventory(files)?;
     let manifest = ComponentManifest {
-        version: MANIFEST_VERSION,
         kind: header.kind.clone(),
         os: header.os.clone(),
         arch: header.arch.clone(),

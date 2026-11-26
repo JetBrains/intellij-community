@@ -399,9 +399,9 @@ fn every_manifest_states_the_version_and_a_plugin_component_states_its_plugin() 
         &[],
     )
     .unwrap();
-    assert_eq!((manifest.version, manifest.plugin), (12, true));
+    assert!(manifest.plugin);
     let (manifest, _) = build_manifest(&header("files"), &[]).unwrap();
-    assert_eq!((manifest.version, manifest.plugin), (12, false));
+    assert!(!manifest.plugin);
 }
 
 #[cfg(unix)]

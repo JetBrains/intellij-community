@@ -1,6 +1,6 @@
 use std::fs;
 
-use component::manifest::{ComponentEntry, ComponentManifest, MANIFEST_VERSION};
+use component::manifest::{ComponentEntry, ComponentManifest};
 
 use super::*;
 
@@ -17,7 +17,6 @@ fn file(relative_path: &str, executable: bool) -> ComponentEntry {
 
 fn plugin(kind: &str, entries: Vec<ComponentEntry>) -> ComponentManifest {
     ComponentManifest {
-        version: MANIFEST_VERSION,
         kind: kind.to_owned(),
         plugin: true,
         entries,

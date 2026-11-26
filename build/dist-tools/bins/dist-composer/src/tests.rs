@@ -42,7 +42,7 @@ fn write_cli_fixture(local_launch: bool) {
     write_file(
         "fragments/core.json",
         concat!(
-            r#"{"version":12,"kind":"platform_core","os":"linux","arch":"x64","plugin":false,"#,
+            r#"{"kind":"platform_core","os":"linux","arch":"x64","plugin":false,"#,
             r#""mainClass":"com.intellij.idea.Main","coreClassPath":["lib/util.jar","lib/app.jar"],"entries":["#,
             r#"{"type":"component-file","relativePath":"bin/idea.properties","hash":1,"source":"fragments/core/bin/idea.properties"},"#,
             r#"{"type":"component-file","relativePath":"lib/app.jar","hash":4,"source":"fragments/core/lib/app.jar"},"#,
@@ -52,7 +52,7 @@ fn write_cli_fixture(local_launch: bool) {
     write_file(
         "fragments/plugins.json",
         concat!(
-            r#"{"version":12,"kind":"plugins","os":"","arch":"","plugin":true,"#,
+            r#"{"kind":"plugins","os":"","arch":"","plugin":true,"#,
             r#""mainClass":null,"coreClassPath":[],"entries":["#,
             r#"{"type":"component-file","relativePath":"plugins/packed/lib/packed.jar","hash":3,"source":"inputs/packed.jar"}]}"#
         ),
@@ -355,30 +355,6 @@ fn compose_cli_rejects_a_full_distribution_without_source_bindings() {
     assert!(trace.contains(r#""key":"error.message""#), "trace = {trace}");
 }
 
-// Only the composer reads a manifest, so a manifest of another version is a stale input. The composer names its version
-// before any other key of the old shape.
-#[test]
-fn compose_cli_refuses_a_version_9_manifest() {
-    let _directory = WorkingDirectory::enter();
-    write_cli_fixture(false);
-    write_file(
-        "fragments/plugins.json",
-        concat!(
-            r#"{"version":9,"kind":"plugins","platformPrefix":"idea","os":"","arch":"","additionalModules":[],"#,
-            r#""mainClass":null,"coreClassPath":[],"pluginCount":1,"entries":["#,
-            r#"{"relativePath":"plugins/packed/lib/packed.jar","type":"component-file","hash":3,"source":"inputs/packed.jar"}]}"#
-        ),
-    );
-    let (code, errors) = run_cli(&full_cli_args(&[]));
-    assert_eq!(code, 1);
-    let message = format!(
-        "{}: Unsupported dev-build component manifest version 9\n",
-        component::paths::from_slash("fragments/plugins.json")
-    );
-    assert!(errors.starts_with("ERROR: ") && errors.ends_with(&message), "errors = {errors:?}");
-    require_absent("out/dist");
-}
-
 // The reader of a manifest is the one place that checks the entry modes, and the composer reads every manifest before
 // it removes the output of an earlier run.
 #[test]
@@ -427,7 +403,7 @@ fn compose_cli_writes_only_the_executable_list_of_a_context_plugin_pool() {
     write_file(
         "fragments/tool.json",
         concat!(
-            r#"{"version":12,"kind":"tool","os":"","arch":"","plugin":true,"#,
+            r#"{"kind":"tool","os":"","arch":"","plugin":true,"#,
             r#""mainClass":null,"coreClassPath":[],"entries":["#,
             r#"{"type":"directory","relativePath":"plugins/tool/bin","mode":493},"#,
             r#"{"type":"component-file","relativePath":"plugins/tool/bin/tool","hash":3,"executable":true,"source":"inputs/tool"},"#,

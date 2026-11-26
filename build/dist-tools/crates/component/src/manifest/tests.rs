@@ -3,8 +3,7 @@ use testkit::{TempDir, require_error, write_file};
 use super::*;
 use crate::test_support::{directory_entry, file_entry, file_with_mode};
 
-const VALID: &str =
-    r#"{"version":12,"kind":"a","os":"linux","arch":"x64","plugin":false,"mainClass":null,"coreClassPath":[],"entries":[]}"#;
+const VALID: &str = r#"{"kind":"a","os":"linux","arch":"x64","plugin":false,"mainClass":null,"coreClassPath":[],"entries":[]}"#;
 
 const FILE: &str = r#"{"type":"component-file","relativePath":"a","hash":1,"source":"inputs/a"}"#;
 
@@ -26,7 +25,6 @@ fn decode(content: &str) -> serde_json::Result<ComponentManifest> {
 #[test]
 fn a_manifest_states_every_header_key() {
     let manifest = read(VALID).unwrap();
-    assert_eq!(manifest.version, 12);
     assert_eq!(manifest.main_class, None);
     assert!(!manifest.plugin);
     // The composition spec states the product, so a manifest that states one is refused.
@@ -48,44 +46,13 @@ fn a_manifest_states_every_header_key() {
     );
 }
 
-// The composer refuses a manifest of another version by its number, also when the old shape has other keys. Version 9
-// wrote the version only for a plugin component.
-#[test]
-fn the_reader_refuses_another_version_by_its_number() {
-    let version_9 = concat!(
-        r#"{"version":9,"kind":"a","platformPrefix":"idea","os":"","arch":"","additionalModules":[],"#,
-        r#""mainClass":null,"coreClassPath":[],"entries":[{"relativePath":"a","type":"component-file","hash":1}],"pluginCount":1}"#
-    );
-    require_error(read(version_9), "Unsupported dev-build component manifest version 9");
-    require_error(
-        read(&version_9.replace(r#""version":9,"#, "").replace(r#","pluginCount":1"#, "")),
-        "Unsupported dev-build component manifest version 9",
-    );
-    for version in ["8", "11", "13"] {
-        require_error(
-            read(&VALID.replace(r#""version":12"#, &format!(r#""version":{version}"#))),
-            &format!("Unsupported dev-build component manifest version {version}"),
-        );
-    }
-    let directory = TempDir::new();
-    let file = directory.path().join("old.json");
-    write_file(&file, version_9);
-    require_error(read_component_manifest(&file), &format!("{}: Unsupported", file.display()));
-}
-
 // No producer quotes a number or a boolean, so the reader refuses the kotlinx forms.
 #[test]
 fn quoted_numbers_and_booleans_are_refused() {
-    for (from, to, message) in [
-        (r#""version":12"#, r#""version":"12""#, "invalid type: string \"12\", expected i32"),
-        (
-            r#""plugin":false"#,
-            r#""plugin":"false""#,
-            "invalid type: string \"false\", expected a boolean",
-        ),
-    ] {
-        require_error(read(&VALID.replace(from, to)), message);
-    }
+    require_error(
+        read(&VALID.replace(r#""plugin":false"#, r#""plugin":"false""#)),
+        "invalid type: string \"false\", expected a boolean",
+    );
     for (entry, message) in [
         (
             FILE.replace(r#""hash":1"#, r#""hash":"-3""#),
@@ -138,17 +105,8 @@ fn only_an_optional_key_accepts_null() {
 
 #[test]
 fn a_required_key_must_be_present() {
-    for (key, removed) in [
-        ("coreClassPath", r#""coreClassPath":[],"#),
-        ("plugin", r#""plugin":false,"#),
-        ("version", r#""version":12,"#),
-    ] {
-        let message = if key == "version" {
-            "Unsupported dev-build component manifest version 9".to_owned()
-        } else {
-            format!("missing field `{key}`")
-        };
-        require_error(read(&VALID.replace(removed, "")), &message);
+    for (key, removed) in [("coreClassPath", r#""coreClassPath":[],"#), ("plugin", r#""plugin":false,"#)] {
+        require_error(read(&VALID.replace(removed, "")), &format!("missing field `{key}`"));
     }
     for (entry, key) in [
         (r#"{"type":"component-file","hash":1,"source":"inputs/a"}"#, "relativePath"),
@@ -374,7 +332,6 @@ fn the_writer_writes_indented_json() {
     manifest.entries = vec![directory_entry("lib", 0o755), executable, link, file_entry("lib/a.jar")];
     let expected = concat!(
         "{\n",
-        "  \"version\": 12,\n",
         "  \"kind\": \"files<test>&\",\n",
         "  \"os\": \"linux\",\n",
         "  \"arch\": \"x64\",\n",
