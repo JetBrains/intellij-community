@@ -4,9 +4,12 @@ package org.jetbrains.kotlin.idea.debugger.test
 import com.intellij.debugger.engine.JavaValue
 import com.intellij.xdebugger.XDebuggerTestUtil
 import com.intellij.xdebugger.XTestEvaluationCallback
+import com.intellij.xdebugger.XTestValueNode
 import com.intellij.xdebugger.frame.XNamedValue
 import com.intellij.xdebugger.frame.XValue
 import com.intellij.xdebugger.frame.XValueContainer
+import com.intellij.xdebugger.frame.XValuePlace
+import com.sun.jdi.ArrayReference
 import com.sun.jdi.StringReference
 import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils.findLinesWithPrefixesRemoved
 import org.jetbrains.kotlin.idea.debugger.test.preference.DebuggerPreferences
@@ -33,6 +36,7 @@ import org.jetbrains.kotlin.idea.debugger.test.util.iterator
  * `VARIABLE_PATH` is a dot-separated chain of variable / field names rooted in the current stack frame
  * (e.g. `foo` or `foo.bar`). `EVAL_EXPRESSION` is the text the IDE is expected to fill the Evaluate Expression dialog with.
  * If `EVAL_RESULT` is present for each path, the test also evaluates each expression and checks its value.
+ * An evaluation error is shown as `error: <message>`.
  */
 abstract class AbstractKotlinEvaluationExpressionTest : KotlinDescriptorTestCaseWithStepping() {
     private val capturedFailures = mutableListOf<Throwable>()
@@ -63,6 +67,9 @@ abstract class AbstractKotlinEvaluationExpressionTest : KotlinDescriptorTestCase
                             val target = resolvePath(rootValues, path)
                                 ?: error("Could not resolve variable path `$path` from frame children: " +
                                          rootValues.mapNotNull { (it as? XNamedValue)?.name })
+                            // The Variables view calculates the value of a node before the user can evaluate the node.
+                            XTestValueNode().also { target.computePresentation(it, XValuePlace.TREE) }
+                                .waitFor(XDebuggerTestUtil.TIMEOUT_MS.toLong())
                             val expression = checkNotNull(target.calculateEvaluationExpression().blockingGet(XDebuggerTestUtil.TIMEOUT_MS))
                             val actual = expression.expression
                             assertEquals(
@@ -75,14 +82,18 @@ abstract class AbstractKotlinEvaluationExpressionTest : KotlinDescriptorTestCase
                                 val callback = object : XTestEvaluationCallback() {
                                     override fun evaluated(result: XValue) {
                                         val value = (result as JavaValue).descriptor.value
-                                        actualResult = if (value is StringReference) value.value() else value.toString()
+                                        actualResult = when (value) {
+                                            is StringReference -> value.value()
+                                            is ArrayReference -> value.values.joinToString(prefix = "[", postfix = "]")
+                                            else -> value.toString()
+                                        }
                                         super.evaluated(result)
                                     }
                                 }
                                 checkNotNull(first().evaluator).evaluate(expression, callback, first().sourcePosition)
                                 val result = callback.waitFor(XDebuggerTestUtil.TIMEOUT_MS.toLong())
-                                assertNull("Cannot evaluate `$actual`: ${result.second}", result.second)
-                                assertEquals("Wrong value for `$actual`", expectedResult, actualResult)
+                                val error = result.second
+                                assertEquals("Wrong value for `$actual`", expectedResult, if (error != null) "error: $error" else actualResult)
                             }
                         }
                     } catch (t: Throwable) {
