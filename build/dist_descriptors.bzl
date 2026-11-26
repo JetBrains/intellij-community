@@ -2,7 +2,7 @@
 #
 # The shared project model tree carries every content module descriptor and every bundled plugin descriptor,
 # so a reader of the tree reads files instead of opening module jars. Only the runtime module facts action
-# and the references read the tree - see `intellij_project_model_tree`.
+# reads the tree - see `intellij_project_model_tree`.
 #
 # The JPS-to-Bazel converter writes the conventional descriptors into the record of each module:
 # `<moduleName>.xml` and `META-INF/plugin.xml` at a production resource root. This file is the remainder.
