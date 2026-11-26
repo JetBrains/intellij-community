@@ -5,6 +5,7 @@
 package org.jetbrains.kotlin.idea.codeinsight.utils
 
 import com.intellij.openapi.project.Project
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.rendering.KaRenderer
 import org.jetbrains.kotlin.analysis.api.rendering.renderToString
@@ -56,8 +57,13 @@ fun addTypeArguments(element: KtCallElement, context: String, project: Project) 
     ShortenReferencesFacility.getInstance().shorten(newArgumentList)
 }
 
+/**
+ * Whether this type is an error type or has an error type at any depth,
+ * for example as a type argument or as the return type of a function type.
+ */
+@ApiStatus.Internal
 context(_: KaSession)
-private fun KaType.containsErrorType(): Boolean = when (this) {
+fun KaType.containsErrorType(): Boolean = when (this) {
     is KaErrorType -> true
     is KaFunctionType -> {
         (receiverType?.containsErrorType() == true)

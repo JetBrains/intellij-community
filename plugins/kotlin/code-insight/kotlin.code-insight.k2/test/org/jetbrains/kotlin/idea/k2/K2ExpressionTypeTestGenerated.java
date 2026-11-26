@@ -228,6 +228,16 @@ public class K2ExpressionTypeTestGenerated extends AbstractK2ExpressionTypeTest 
         runTest("../../idea/tests/testData/codeInsight/expressionType/TypealiasedConstructorCall_implicitTypeArguments.kt");
     }
 
+    @TestMetadata("UnresolvedCall.kt")
+    public void testUnresolvedCall() throws Exception {
+        runTest("../../idea/tests/testData/codeInsight/expressionType/UnresolvedCall.kt");
+    }
+
+    @TestMetadata("UnresolvedMemberInLambda.kt")
+    public void testUnresolvedMemberInLambda() throws Exception {
+        runTest("../../idea/tests/testData/codeInsight/expressionType/UnresolvedMemberInLambda.kt");
+    }
+
     @TestMetadata("VariableDeclaration.kt")
     public void testVariableDeclaration() throws Exception {
         runTest("../../idea/tests/testData/codeInsight/expressionType/VariableDeclaration.kt");
