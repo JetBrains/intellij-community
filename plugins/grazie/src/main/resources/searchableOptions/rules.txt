@@ -423,7 +423,7 @@ Compound adjective: new look
 Compound adjective: out of body
 Compound adjective: rags to riches
 Compound adjective: wall to wall
-Confusion of cyrillic and latin letters
+Confusion of Cyrillic and Latin letters
 Confusion of mans/men
 Confusion of mars/Mars
 Contraction errors: e.g. did'nt (didn't)

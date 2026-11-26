@@ -3289,17 +3289,17 @@ jvm_import(
 )
 
 copy_file(
-    name = "ai.grazie.gec/gec-util-0.9.9.jar_copy",
-    src = "@ai_grazie_gec-gec-util-0_9_9_http//file",
-    out = "ai.grazie.gec/gec-util-0.9.9.jar",
+    name = "ai.grazie.gec/gec-util-0.9.12.jar_copy",
+    src = "@ai_grazie_gec-gec-util-0_9_12_http//file",
+    out = "ai.grazie.gec/gec-util-0.9.12.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
 
 jvm_import(
     name = "grazie-core-ai-grazie-gec-util",
-    jar = "@ai_grazie_gec-gec-util-0_9_9_http//file",
-    source_jar = "@ai_grazie_gec-gec-util-0_9_9-sources_http//file",
+    jar = "@ai_grazie_gec-gec-util-0_9_12_http//file",
+    source_jar = "@ai_grazie_gec-gec-util-0_9_12-sources_http//file",
     visibility = ["//visibility:public"],
 )
 
@@ -3319,17 +3319,17 @@ jvm_import(
 )
 
 copy_file(
-    name = "ai.grazie.nlp/nlp-common-jvm-0.9.9.jar_copy",
-    src = "@ai_grazie_nlp-nlp-common-jvm-0_9_9_http//file",
-    out = "ai.grazie.nlp/nlp-common-jvm-0.9.9.jar",
+    name = "ai.grazie.nlp/nlp-common-jvm-0.9.12.jar_copy",
+    src = "@ai_grazie_nlp-nlp-common-jvm-0_9_12_http//file",
+    out = "ai.grazie.nlp/nlp-common-jvm-0.9.12.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
 
 jvm_import(
     name = "grazie-core-ai-grazie-nlp-common-jvm",
-    jar = "@ai_grazie_nlp-nlp-common-jvm-0_9_9_http//file",
-    source_jar = "@ai_grazie_nlp-nlp-common-jvm-0_9_9-sources_http//file",
+    jar = "@ai_grazie_nlp-nlp-common-jvm-0_9_12_http//file",
+    source_jar = "@ai_grazie_nlp-nlp-common-jvm-0_9_12-sources_http//file",
     visibility = ["//visibility:public"],
 )
 
@@ -5599,9 +5599,49 @@ jvm_import(
 )
 
 copy_file(
-    name = "ai.grazie/grazie-rule-engine-0.4.70.jar_copy",
-    src = "@ai_grazie-grazie-rule-engine-0_4_70_http//file",
-    out = "ai.grazie/grazie-rule-engine-0.4.70.jar",
+    name = "ai.grazie/grazie-rule-engine-0.9.12.jar_copy",
+    src = "@ai_grazie-grazie-rule-engine-0_9_12_http//file",
+    out = "ai.grazie/grazie-rule-engine-0.9.12.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
+    name = "ai.grazie/grazie-rules-en-0.9.12.jar_copy",
+    src = "@ai_grazie-grazie-rules-en-0_9_12_http//file",
+    out = "ai.grazie/grazie-rules-en-0.9.12.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
+    name = "ai.grazie/grazie-rules-de-0.9.12.jar_copy",
+    src = "@ai_grazie-grazie-rules-de-0_9_12_http//file",
+    out = "ai.grazie/grazie-rules-de-0.9.12.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
+    name = "ai.grazie/grazie-rules-ru-0.9.12.jar_copy",
+    src = "@ai_grazie-grazie-rules-ru-0_9_12_http//file",
+    out = "ai.grazie/grazie-rules-ru-0.9.12.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
+    name = "ai.grazie/grazie-rules-uk-0.9.12.jar_copy",
+    src = "@ai_grazie-grazie-rules-uk-0_9_12_http//file",
+    out = "ai.grazie/grazie-rules-uk-0.9.12.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
+    name = "ai.grazie/grazie-rules-core-0.9.12.jar_copy",
+    src = "@ai_grazie-grazie-rules-core-0_9_12_http//file",
+    out = "ai.grazie/grazie-rules-core-0.9.12.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
@@ -5619,15 +5659,50 @@ java_library(
     visibility = ["//visibility:public"],
     exports = [
         # do not sort,
-        ":ai_grazie-grazie-rule-engine-0_4_70_http_import",
+        ":ai_grazie-grazie-rule-engine-0_9_12_http_import",
+        ":ai_grazie-grazie-rules-en-0_9_12_http_import",
+        ":ai_grazie-grazie-rules-de-0_9_12_http_import",
+        ":ai_grazie-grazie-rules-ru-0_9_12_http_import",
+        ":ai_grazie-grazie-rules-uk-0_9_12_http_import",
+        ":ai_grazie-grazie-rules-core-0_9_12_http_import",
         ":net_fellbaum-jemoji-1_3_1_http_import",
     ],
 )
 
 jvm_import(
-    name = "ai_grazie-grazie-rule-engine-0_4_70_http_import",
-    jar = "@ai_grazie-grazie-rule-engine-0_4_70_http//file",
-    source_jar = "@ai_grazie-grazie-rule-engine-0_4_70-sources_http//file",
+    name = "ai_grazie-grazie-rule-engine-0_9_12_http_import",
+    jar = "@ai_grazie-grazie-rule-engine-0_9_12_http//file",
+    source_jar = "@ai_grazie-grazie-rule-engine-0_9_12-sources_http//file",
+)
+
+jvm_import(
+    name = "ai_grazie-grazie-rules-en-0_9_12_http_import",
+    jar = "@ai_grazie-grazie-rules-en-0_9_12_http//file",
+    source_jar = "@ai_grazie-grazie-rules-en-0_9_12-sources_http//file",
+)
+
+jvm_import(
+    name = "ai_grazie-grazie-rules-de-0_9_12_http_import",
+    jar = "@ai_grazie-grazie-rules-de-0_9_12_http//file",
+    source_jar = "@ai_grazie-grazie-rules-de-0_9_12-sources_http//file",
+)
+
+jvm_import(
+    name = "ai_grazie-grazie-rules-ru-0_9_12_http_import",
+    jar = "@ai_grazie-grazie-rules-ru-0_9_12_http//file",
+    source_jar = "@ai_grazie-grazie-rules-ru-0_9_12-sources_http//file",
+)
+
+jvm_import(
+    name = "ai_grazie-grazie-rules-uk-0_9_12_http_import",
+    jar = "@ai_grazie-grazie-rules-uk-0_9_12_http//file",
+    source_jar = "@ai_grazie-grazie-rules-uk-0_9_12-sources_http//file",
+)
+
+jvm_import(
+    name = "ai_grazie-grazie-rules-core-0_9_12_http_import",
+    jar = "@ai_grazie-grazie-rules-core-0_9_12_http//file",
+    source_jar = "@ai_grazie-grazie-rules-core-0_9_12-sources_http//file",
 )
 
 jvm_import(
@@ -5696,17 +5771,17 @@ jvm_import(
 )
 
 copy_file(
-    name = "ai.grazie.nlp/nlp-detect-jvm-0.9.9.jar_copy",
-    src = "@ai_grazie_nlp-nlp-detect-jvm-0_9_9_http//file",
-    out = "ai.grazie.nlp/nlp-detect-jvm-0.9.9.jar",
+    name = "ai.grazie.nlp/nlp-detect-jvm-0.9.12.jar_copy",
+    src = "@ai_grazie_nlp-nlp-detect-jvm-0_9_12_http//file",
+    out = "ai.grazie.nlp/nlp-detect-jvm-0.9.12.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
 
 jvm_import(
     name = "libraries-ai-grazie-spell-gec-engine-local-ai-grazie-nlp-detect",
-    jar = "@ai_grazie_nlp-nlp-detect-jvm-0_9_9_http//file",
-    source_jar = "@ai_grazie_nlp-nlp-detect-jvm-0_9_9-sources_http//file",
+    jar = "@ai_grazie_nlp-nlp-detect-jvm-0_9_12_http//file",
+    source_jar = "@ai_grazie_nlp-nlp-detect-jvm-0_9_12-sources_http//file",
     visibility = ["//visibility:public"],
 )
 
@@ -5756,25 +5831,25 @@ jvm_import(
 )
 
 copy_file(
-    name = "ai.grazie.spell/gec-spell-engine-local-0.9.9.jar_copy",
-    src = "@ai_grazie_spell-gec-spell-engine-local-0_9_9_http//file",
-    out = "ai.grazie.spell/gec-spell-engine-local-0.9.9.jar",
+    name = "ai.grazie.spell/gec-spell-engine-local-0.9.12.jar_copy",
+    src = "@ai_grazie_spell-gec-spell-engine-local-0_9_12_http//file",
+    out = "ai.grazie.spell/gec-spell-engine-local-0.9.12.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
 
 copy_file(
-    name = "ai.grazie.nlp/nlp-patterns-jvm-0.9.9.jar_copy",
-    src = "@ai_grazie_nlp-nlp-patterns-jvm-0_9_9_http//file",
-    out = "ai.grazie.nlp/nlp-patterns-jvm-0.9.9.jar",
+    name = "ai.grazie.nlp/nlp-patterns-jvm-0.9.12.jar_copy",
+    src = "@ai_grazie_nlp-nlp-patterns-jvm-0_9_12_http//file",
+    out = "ai.grazie.nlp/nlp-patterns-jvm-0.9.12.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
 
 copy_file(
-    name = "ai.grazie.nlp/nlp-tokenizer-jvm-0.9.9.jar_copy",
-    src = "@ai_grazie_nlp-nlp-tokenizer-jvm-0_9_9_http//file",
-    out = "ai.grazie.nlp/nlp-tokenizer-jvm-0.9.9.jar",
+    name = "ai.grazie.nlp/nlp-tokenizer-jvm-0.9.12.jar_copy",
+    src = "@ai_grazie_nlp-nlp-tokenizer-jvm-0_9_12_http//file",
+    out = "ai.grazie.nlp/nlp-tokenizer-jvm-0.9.12.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
@@ -5784,42 +5859,42 @@ java_library(
     visibility = ["//visibility:public"],
     exports = [
         # do not sort,
-        ":ai_grazie_spell-gec-spell-engine-local-0_9_9_http_import",
-        ":ai_grazie_nlp-nlp-common-jvm-0_9_9_http_import",
-        ":ai_grazie_nlp-nlp-patterns-jvm-0_9_9_http_import",
-        ":ai_grazie_nlp-nlp-tokenizer-jvm-0_9_9_http_import",
-        ":ai_grazie_nlp-nlp-detect-jvm-0_9_9_http_import",
+        ":ai_grazie_spell-gec-spell-engine-local-0_9_12_http_import",
+        ":ai_grazie_nlp-nlp-common-jvm-0_9_12_http_import",
+        ":ai_grazie_nlp-nlp-patterns-jvm-0_9_12_http_import",
+        ":ai_grazie_nlp-nlp-tokenizer-jvm-0_9_12_http_import",
+        ":ai_grazie_nlp-nlp-detect-jvm-0_9_12_http_import",
     ],
 )
 
 jvm_import(
-    name = "ai_grazie_spell-gec-spell-engine-local-0_9_9_http_import",
-    jar = "@ai_grazie_spell-gec-spell-engine-local-0_9_9_http//file",
-    source_jar = "@ai_grazie_spell-gec-spell-engine-local-0_9_9-sources_http//file",
+    name = "ai_grazie_spell-gec-spell-engine-local-0_9_12_http_import",
+    jar = "@ai_grazie_spell-gec-spell-engine-local-0_9_12_http//file",
+    source_jar = "@ai_grazie_spell-gec-spell-engine-local-0_9_12-sources_http//file",
 )
 
 jvm_import(
-    name = "ai_grazie_nlp-nlp-common-jvm-0_9_9_http_import",
-    jar = "@ai_grazie_nlp-nlp-common-jvm-0_9_9_http//file",
-    source_jar = "@ai_grazie_nlp-nlp-common-jvm-0_9_9-sources_http//file",
+    name = "ai_grazie_nlp-nlp-common-jvm-0_9_12_http_import",
+    jar = "@ai_grazie_nlp-nlp-common-jvm-0_9_12_http//file",
+    source_jar = "@ai_grazie_nlp-nlp-common-jvm-0_9_12-sources_http//file",
 )
 
 jvm_import(
-    name = "ai_grazie_nlp-nlp-patterns-jvm-0_9_9_http_import",
-    jar = "@ai_grazie_nlp-nlp-patterns-jvm-0_9_9_http//file",
-    source_jar = "@ai_grazie_nlp-nlp-patterns-jvm-0_9_9-sources_http//file",
+    name = "ai_grazie_nlp-nlp-patterns-jvm-0_9_12_http_import",
+    jar = "@ai_grazie_nlp-nlp-patterns-jvm-0_9_12_http//file",
+    source_jar = "@ai_grazie_nlp-nlp-patterns-jvm-0_9_12-sources_http//file",
 )
 
 jvm_import(
-    name = "ai_grazie_nlp-nlp-tokenizer-jvm-0_9_9_http_import",
-    jar = "@ai_grazie_nlp-nlp-tokenizer-jvm-0_9_9_http//file",
-    source_jar = "@ai_grazie_nlp-nlp-tokenizer-jvm-0_9_9-sources_http//file",
+    name = "ai_grazie_nlp-nlp-tokenizer-jvm-0_9_12_http_import",
+    jar = "@ai_grazie_nlp-nlp-tokenizer-jvm-0_9_12_http//file",
+    source_jar = "@ai_grazie_nlp-nlp-tokenizer-jvm-0_9_12-sources_http//file",
 )
 
 jvm_import(
-    name = "ai_grazie_nlp-nlp-detect-jvm-0_9_9_http_import",
-    jar = "@ai_grazie_nlp-nlp-detect-jvm-0_9_9_http//file",
-    source_jar = "@ai_grazie_nlp-nlp-detect-jvm-0_9_9-sources_http//file",
+    name = "ai_grazie_nlp-nlp-detect-jvm-0_9_12_http_import",
+    jar = "@ai_grazie_nlp-nlp-detect-jvm-0_9_12_http//file",
+    source_jar = "@ai_grazie_nlp-nlp-detect-jvm-0_9_12-sources_http//file",
 )
 
 copy_file(
@@ -19116,15 +19191,15 @@ jvm_import(
 
 jvm_import(
     name = "search_everywhere_ml-typos-ai-grazie-spell-gec-engine-local-jvm",
-    jar = "@ai_grazie_spell-gec-spell-engine-local-0_9_9_http//file",
-    source_jar = "@ai_grazie_spell-gec-spell-engine-local-0_9_9-sources_http//file",
+    jar = "@ai_grazie_spell-gec-spell-engine-local-0_9_12_http//file",
+    source_jar = "@ai_grazie_spell-gec-spell-engine-local-0_9_12-sources_http//file",
     visibility = ["//visibility:public"],
 )
 
 jvm_import(
     name = "search_everywhere_ml-typos-tests-ai-grazie-spell-gec-engine-local-jvm",
-    jar = "@ai_grazie_spell-gec-spell-engine-local-0_9_9_http//file",
-    source_jar = "@ai_grazie_spell-gec-spell-engine-local-0_9_9-sources_http//file",
+    jar = "@ai_grazie_spell-gec-spell-engine-local-0_9_12_http//file",
+    source_jar = "@ai_grazie_spell-gec-spell-engine-local-0_9_12-sources_http//file",
     visibility = ["//visibility:public"],
 )
 
