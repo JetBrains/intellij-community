@@ -2,7 +2,6 @@
 package com.intellij.python.lsp.core
 
 import com.intellij.codeInsight.completion.CompletionParameters
-import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.codeInsight.intention.CustomizableIntentionAction
 import com.intellij.codeInsight.intention.FileModifier
 import com.intellij.codeInsight.intention.IntentionAction
@@ -18,7 +17,6 @@ import com.intellij.modcommand.ModCommandAction
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
@@ -65,14 +63,11 @@ import com.intellij.platform.lsp.api.lsWidget.LspClientWidgetItem
 import com.intellij.platform.lsp.api.lsWidget.LspWidgetInternalService
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
-import com.intellij.psi.PsiManager
 import com.intellij.python.community.execService.BinaryToExec
 import com.intellij.python.community.execService.asGeneralCommandLine
-import com.intellij.python.lsp.core.typeEngine.PyTypeEngineUtils
 import com.intellij.python.lsp.core.utils.PyLspToolVersionTracker
 import com.intellij.python.pyproject.model.evolution.EvoPyProjectModel
 import com.intellij.python.pytools.backend.PyTool
-import com.intellij.python.pytools.backend.PyTypeEngineSelectableTool
 import com.intellij.python.pytools.backend.runtime.toolExecutableWithBaseArgs
 import com.intellij.python.pytools.backend.runtime.toolExecutableWithBaseArgsIfReady
 import com.intellij.python.pytools.common.PY_EXTERNAL_TOOLS_SETTINGS_ID
@@ -89,7 +84,6 @@ import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.project.PyProject
 import com.jetbrains.python.project.name
 import com.jetbrains.python.project.project
-import com.jetbrains.python.psi.types.PyTypeEngineSettingsModificationTracker
 import com.jetbrains.python.sdk.ModuleOrProject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.currentCoroutineContext
@@ -117,7 +111,7 @@ abstract class PyLspToolIntegrationProvider : LspIntegrationProvider {
     // The tool decides first, because [getDescriptor] is not cheap. A tool that answers for every
     // Python project reads the interpreter and the installed packages of each one, see
     // [pyLspProjectsToServeWith], and this runs in a read action for every file the user opens. A
-    // project that runs neither the tool nor its type engine must pay none of that.
+    // project that does not run the tool must pay none of that.
     if (!isActiveOn(project))
       return
     // Subscribe before the first snapshot too: its arrival starts the server of this file, see [watchInterpreters].
@@ -140,11 +134,10 @@ abstract class PyLspToolIntegrationProvider : LspIntegrationProvider {
   /**
    * Names this provider on [descriptor] and subscribes to the project changes this provider watches.
    *
-   * Every path that builds a descriptor calls this, not [fileOpened] alone. The type engine builds a
-   * descriptor and starts the server itself, and `LspOpenedFilesService` then skips [fileOpened] for
-   * a file the new server already covers. Without this call for that path the provider would never
-   * subscribe, so no package event would ever re-group the modules, and `supportProvider` would stay
-   * unset for a server that advertises `executeCommandProvider`.
+   * Every path that builds a descriptor calls this, not [fileOpened] alone. `LspOpenedFilesService` skips
+   * [fileOpened] for a file that a running server already covers. Without this call for a server that another
+   * path started, the provider would never subscribe, so no package event would ever re-group the modules, and
+   * `supportProvider` would stay unset for a server that advertises `executeCommandProvider`.
    */
   @ApiStatus.Internal
   fun attach(descriptor: PyLspToolDescriptor) {
@@ -217,15 +210,10 @@ abstract class PyLspToolIntegrationProvider : LspIntegrationProvider {
   /**
    * Whether this provider runs a server for [project].
    *
-   * The default asks the tool, see [PyLspTool.isActiveOn], and also counts a type engine that runs the tool's
-   * own server, see [PyTypeEngineSelectableTool.runsForExternalTypeEngine]. A provider that runs only one of
-   * the two servers of a tool, the server of the External Tools tool or the server of the type engine, answers
-   * for that server alone.
+   * The default asks the tool, see [PyLspTool.isActiveOn]. A provider that runs only one of the servers of a tool
+   * answers for that server alone.
    */
-  open fun isActiveOn(project: Project): Boolean {
-    val tool = pyTool(project)
-    return tool.isActiveOn(project) || (tool as? PyTypeEngineSelectableTool)?.runsForExternalTypeEngine(project) == true
-  }
+  open fun isActiveOn(project: Project): Boolean = pyTool(project).isActiveOn(project)
 
   /**
    * Whether the servers of this provider run the copy of the tool that the interpreters hold.
@@ -586,7 +574,7 @@ abstract class PyLspToolDescriptor(
    * The interpreter of each served Python project when [createCommandLine] last ran, or `null` before that. The
    * binary of the server comes from these interpreters.
    *
-   * Only a served interpreter counts, see [PyTypeEngineUtils.servedInterpreterOf], so a Python project of a target or a
+   * Only a served interpreter counts, see [servedInterpreterOf], so a Python project of a target or a
    * read-only interpreter maps to `null` here.
    */
   @Volatile
@@ -610,7 +598,7 @@ abstract class PyLspToolDescriptor(
    */
   fun interpreterChanged(snapshot: EvoPyProjectModel.Snapshot): Boolean {
     val started = startedInterpreters ?: return false
-    return liveServedProjects.any { started[it] != snapshot.forPyProject(it)?.interpreter?.let(PyTypeEngineUtils::servedInterpreterOf) }
+    return liveServedProjects.any { started[it] != snapshot.forPyProject(it)?.interpreter?.let(::servedInterpreterOf) }
   }
 
   /** The served Python project that holds [file], or `null` when no served Python project does. */
@@ -770,9 +758,6 @@ abstract class PyLspToolDescriptor(
 
   abstract val toolConfig: PyLspToolSettings
 
-  /** Whether the selected type engine reads its types from this server. */
-  open val servesTypeEngine: Boolean get() = (pyTool as? PyTypeEngineSelectableTool)?.runsForExternalTypeEngine(project) == true
-
   open val executableName: String get() = pyTool.packageName.name
 
   abstract fun lspArguments(): List<String>
@@ -792,7 +777,7 @@ abstract class PyLspToolDescriptor(
 
   override fun createCommandLine(): GeneralCommandLine = runBlockingMaybeCancellable {
     val snapshot = EvoPyProjectModel.getInstance(project).snapshot()
-    startedInterpreters = liveServedProjects.associateWith { snapshot.forPyProject(it)?.interpreter?.let(PyTypeEngineUtils::servedInterpreterOf) }
+    startedInterpreters = liveServedProjects.associateWith { snapshot.forPyProject(it)?.interpreter?.let(::servedInterpreterOf) }
     resolveCommandLine()
   }
 
@@ -820,7 +805,6 @@ abstract class PyLspToolDescriptor(
   open inner class PyLspToolDescriptorLspServerListener : LspServerListener {
     override fun serverInitialized(params: InitializeResult) {
       synchronized(commandActionsLock) { initializedServers++ }
-      dropCachedTypeContexts()
       if (this@PyLspToolDescriptor::supportProvider.isInitialized) supportProvider.checkGroupsOfNewClient(project)
       registerCommandActions(params)
     }
@@ -833,7 +817,6 @@ abstract class PyLspToolDescriptor(
       }
       // The actions go before the project is read, because the stop can come after the project is gone.
       stale?.let { Disposer.dispose(it) }
-      dropCachedTypeContexts()
     }
 
     // workaround for IJPL-196574
@@ -877,23 +860,6 @@ abstract class PyLspToolDescriptor(
       val previous = synchronized(commandActionsLock) { commandActions.also { commandActions = registration } }
       previous?.let { Disposer.dispose(it) }
     }
-
-    /**
-     * The engine of the selected tool exists before this server runs, and it answers `Unknown` until
-     * then. A type context does not cache that answer, but a cached value or a resolve result built on
-     * it keeps the `Unknown` until the next edit, and nothing else learns that the server started. So
-     * each start and stop of the selected engine's server drops the cached contexts and the PSI
-     * caches, and runs the daemon again.
-     */
-    private fun dropCachedTypeContexts() {
-      if (project.isDisposed || !servesTypeEngine) return
-      PyTypeEngineSettingsModificationTracker.getInstance(project).incModificationCount()
-      // `dropPsiCaches` needs the EDT or a write action, and the server listener runs on a pooled thread.
-      ApplicationManager.getApplication().invokeLater({
-        PsiManager.getInstance(project).dropPsiCaches()
-        DaemonCodeAnalyzer.getInstance(project).restart("PyLspToolDescriptor.dropCachedTypeContexts")
-      }, project.disposed)
-    }
   }
 
   // workaround for IJPL-196574
@@ -916,17 +882,13 @@ abstract class PyLspToolDescriptor(
 /**
  * The editor features of one server of [pyTool].
  *
- * [isActive] tells whether the server may serve now. The default asks the tool, see [PyLspTool.isActiveOn],
- * and also counts a type engine that runs the tool's own server, see
- * [PyTypeEngineSelectableTool.runsForExternalTypeEngine].
+ * [isActive] tells whether the server may serve now. The default asks the tool, see [PyLspTool.isActiveOn].
  */
 open class PyLspToolCustomization(
   val toolConfig: PyLspToolSettings,
   pyTool: PyLspTool<*>,
   project: Project,
-  private val isActive: () -> Boolean = {
-    pyTool.isActiveOn(project) || (pyTool as? PyTypeEngineSelectableTool)?.runsForExternalTypeEngine(project) == true
-  },
+  private val isActive: () -> Boolean = { pyTool.isActiveOn(project) },
 ) : LspCustomization() {
   val Diagnostic.presentableCode: String?
     get() = code?.get()?.toString()?.let { codeCustomizer(it) }

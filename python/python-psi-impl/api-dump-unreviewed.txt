@@ -649,7 +649,6 @@ f:com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider
 - getReturnType(com.jetbrains.python.psi.PyCallable,com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider$Context):com.intellij.openapi.util.Ref
 - sf:getStringBasedType(java.lang.String,com.intellij.psi.PsiElement,com.jetbrains.python.psi.types.TypeEvalContext):com.intellij.openapi.util.Ref
 - sf:getType(com.jetbrains.python.psi.PyExpression,com.jetbrains.python.psi.types.TypeEvalContext):com.intellij.openapi.util.Ref
-- sf:getType(com.jetbrains.python.psi.PyExpression,com.jetbrains.python.psi.types.TypeEvalContext,Z):com.intellij.openapi.util.Ref
 - sf:getTypeCommentValue(java.lang.String):java.lang.String
 - sf:isBitwiseOrUnionAvailable(com.intellij.psi.PsiElement):Z
 - sf:isBitwiseOrUnionAvailable(com.jetbrains.python.psi.types.TypeEvalContext):Z
@@ -681,8 +680,6 @@ f:com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider$Companion
 - f:getTYPE_PARAMETER_FACTORIES():java.util.Set
 - f:getTYPING_BUILTINS_GENERIC_ALIASES():com.google.common.collect.ImmutableMap
 - f:getType(com.jetbrains.python.psi.PyExpression,com.jetbrains.python.psi.types.TypeEvalContext):com.intellij.openapi.util.Ref
-- f:getType(com.jetbrains.python.psi.PyExpression,com.jetbrains.python.psi.types.TypeEvalContext,Z):com.intellij.openapi.util.Ref
-- bs:getType$default(com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider$Companion,com.jetbrains.python.psi.PyExpression,com.jetbrains.python.psi.types.TypeEvalContext,Z,I,java.lang.Object):com.intellij.openapi.util.Ref
 - f:getTypeCommentValue(java.lang.String):java.lang.String
 - f:getTypeCommentValueRange(java.lang.String):com.intellij.openapi.util.TextRange
 - f:getUnpackedType(com.intellij.psi.PsiElement,com.jetbrains.python.psi.types.TypeEvalContext):com.jetbrains.python.psi.types.PyPositionalVariadicType
@@ -2323,7 +2320,6 @@ f:com.jetbrains.python.psi.types.PyLiteralType
 - sf:boolLiteral(com.intellij.psi.PsiElement,Z):com.jetbrains.python.psi.types.PyLiteralType
 - sf:enumMember(com.jetbrains.python.psi.PyClass,java.lang.String):com.jetbrains.python.psi.types.PyLiteralType
 - equals(java.lang.Object):Z
-- sf:fromLiteralValue(com.intellij.psi.PsiElement,java.lang.Object):com.jetbrains.python.psi.types.PyLiteralType
 - f:getBoolValue():java.lang.Boolean
 - f:getEnumMemberName():java.lang.String
 - f:getIntValue():java.math.BigInteger
@@ -2338,9 +2334,7 @@ f:com.jetbrains.python.psi.types.PyLiteralType
 f:com.jetbrains.python.psi.types.PyLiteralType$Companion
 - f:boolLiteral(com.intellij.psi.PsiElement,Z):com.jetbrains.python.psi.types.PyLiteralType
 - f:enumMember(com.jetbrains.python.psi.PyClass,java.lang.String):com.jetbrains.python.psi.types.PyLiteralType
-- f:fromLiteralParameter(com.jetbrains.python.psi.PyExpression,com.jetbrains.python.psi.types.TypeEvalContext,Z):com.jetbrains.python.psi.types.PyType
-- bs:fromLiteralParameter$default(com.jetbrains.python.psi.types.PyLiteralType$Companion,com.jetbrains.python.psi.PyExpression,com.jetbrains.python.psi.types.TypeEvalContext,Z,I,java.lang.Object):com.jetbrains.python.psi.types.PyType
-- f:fromLiteralValue(com.intellij.psi.PsiElement,java.lang.Object):com.jetbrains.python.psi.types.PyLiteralType
+- f:fromLiteralParameter(com.jetbrains.python.psi.PyExpression,com.jetbrains.python.psi.types.TypeEvalContext):com.jetbrains.python.psi.types.PyType
 - f:inferLiteralTypeForLiteralExpressions():Z
 - f:intLiteral(com.intellij.psi.PsiElement,java.math.BigInteger):com.jetbrains.python.psi.types.PyLiteralType
 - f:match(com.jetbrains.python.psi.types.PyLiteralType,com.jetbrains.python.psi.types.PyLiteralType):Z
@@ -2519,10 +2513,8 @@ f:com.jetbrains.python.psi.types.PyTypeParser
 - <init>():V
 - s:getTypeByName(com.intellij.psi.PsiElement,java.lang.String):com.jetbrains.python.psi.types.PyType
 - s:getTypeByName(com.intellij.psi.PsiElement,java.lang.String,com.jetbrains.python.psi.types.TypeEvalContext):com.jetbrains.python.psi.types.PyType
-- s:getTypeByName(com.intellij.psi.PsiElement,java.lang.String,com.jetbrains.python.psi.types.TypeEvalContext,Z):com.jetbrains.python.psi.types.PyType
 - s:parse(com.intellij.psi.PsiElement,java.lang.String):com.jetbrains.python.psi.types.PyTypeParser$ParseResult
 - s:parse(com.intellij.psi.PsiElement,java.lang.String,com.jetbrains.python.psi.types.TypeEvalContext):com.jetbrains.python.psi.types.PyTypeParser$ParseResult
-- s:parse(com.intellij.psi.PsiElement,java.lang.String,com.jetbrains.python.psi.types.TypeEvalContext,Z):com.jetbrains.python.psi.types.PyTypeParser$ParseResult
 c:com.jetbrains.python.psi.types.PyTypeParser$ParseResult
 - getFullRanges():java.util.Map
 - getImports():java.util.Map

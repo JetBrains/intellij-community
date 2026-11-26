@@ -6,10 +6,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.platform.lsp.api.LspClientManager
 import com.intellij.python.lsp.core.PyLspTool
 import com.intellij.python.lsp.core.isActiveOn
-import com.intellij.python.lsp.core.typeEngine.PyTypeEngineProjectSettings
-import com.intellij.python.lsp.core.typeEngine.PyTypeEngineType
 import com.intellij.python.pytools.backend.PyTool
-import com.intellij.python.pytools.backend.PyTypeEngineSelectableTool
 import com.jetbrains.python.packaging.PyPackageName
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.Icon
@@ -19,7 +16,7 @@ import javax.swing.Icon
  * written in Rust by Astral (currently in preview).
  */
 @ApiStatus.Internal
-class TyPyTool : PyLspTool<TyConfiguration>(), PyTypeEngineSelectableTool {
+class TyPyTool : PyLspTool<TyConfiguration>() {
   override val lspServerName: String = "ty"
   override val icon: Icon = TyUtil.getDefaultTyIcon()
   override val packageName: PyPackageName = PyPackageName.from("ty")
@@ -27,16 +24,10 @@ class TyPyTool : PyLspTool<TyConfiguration>(), PyTypeEngineSelectableTool {
   override fun configuration(project: Project): TyConfiguration = project.service()
 
   override fun onEnabledChanged(project: Project, enabled: Boolean) {
-    if (!enabled && isSelectedAsTypeEngine(project)) {
-      PyTypeEngineProjectSettings.getInstance(project).typeEngine = PyTypeEngineType.PYCHARM
-    }
     val manager = LspClientManager.getInstance(project)
-    if (isActiveOn(project) || runsForExternalTypeEngine(project)) manager.startClientsIfNeeded(TyLspIntegrationProvider::class.java)
+    if (isActiveOn(project)) manager.startClientsIfNeeded(TyLspIntegrationProvider::class.java)
     else manager.stopClients(TyLspIntegrationProvider::class.java)
   }
-
-  override fun isSelectedAsTypeEngine(project: Project): Boolean =
-    PyTypeEngineProjectSettings.getInstance(project).typeEngine == PyTypeEngineType.TY
 
   companion object {
     fun getInstance(): TyPyTool = PyTool.EP_NAME.findExtensionOrFail(TyPyTool::class.java)

@@ -3,7 +3,6 @@
   <dependencies>
     <module name="intellij.platform.lsp.impl"/>
     <module name="intellij.libraries.eclipse.lsp4j"/>
-    <module name="intellij.libraries.eclipse.lsp4j.jsonrpc"/>
     <module name="intellij.libraries.fastutil"/>
     <module name="intellij.libraries.guava"/>
     <module name="intellij.platform.analysis"/>
@@ -27,7 +26,6 @@
     <module name="intellij.python.lsp.core"/>
     <module name="intellij.python.psi"/>
     <module name="intellij.python.psi.impl"/>
-    <module name="intellij.python.pyproject"/>
     <module name="intellij.python.pyrefly.common"/>
     <module name="intellij.python.pytools.backend"/>
     <module name="intellij.xml.parser"/>
@@ -40,25 +38,11 @@
 
     <statistics.counterUsagesCollector implementationClass="com.intellij.python.pyrefly.PyreflyUsageCollector"/>
 
-    <registryKey key="pyrefly.type.engine" defaultValue="false"
-                 description="Enforce pyrefly type engine"/>
-
-    <postStartupActivity implementation="com.intellij.python.pyrefly.PyreflyTypeEngineRegistryListener"/>
-
-    <registryKey key="use.bundled.pyrefly" defaultValue="false"
-                 description="Use the bundled Pyrefly as the type engine"
-                 restartRequired="true"/>
-
     <registryKey key="pyrefly.heartbeat.interval.ms" defaultValue="60000"
                  description="Interval in milliseconds between the resource usage heartbeats of a Pyrefly server process"/>
 
-    <python.lsp.typeEngineConfigurable implementation="com.intellij.python.pyrefly.PyreflyPyTypeEngineProvider"/>
     <projectSettings service="com.intellij.python.pyrefly.PyreflyConfiguration"/>
-    <projectSettings service="com.intellij.python.pyrefly.PyreflyTypeEngineConfiguration"/>
+    <projectSettings service="com.intellij.python.pyrefly.BundledPyreflyConfiguration"/>
     <python.pytools.pyTool implementation="com.intellij.python.pyrefly.PyreflyPyTool"/>
-  </extensions>
-
-  <extensions defaultExtensionNs="Pythonid">
-    <typeEvalTypeEngineProvider implementation="com.intellij.python.pyrefly.typeEngine.PyreflyLspTypeEngineProvider"/>
   </extensions>
 </idea-plugin>

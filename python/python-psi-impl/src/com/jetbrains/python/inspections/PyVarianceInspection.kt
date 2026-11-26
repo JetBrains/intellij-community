@@ -44,9 +44,6 @@ class PyVarianceInspection : PyInspection() {
 
   override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean, session: LocalInspectionToolSession): PsiElementVisitor {
     val context = PyInspectionVisitor.getContext(session)
-    if (context.usesExternalTypeEngine) {
-      return PsiElementVisitor.EMPTY_VISITOR
-    }
     val typeExpressionVisitor = TypeExpressionVisitor(holder, context)
     return PotentialLocationsVisitor(typeExpressionVisitor, holder, context)
   }

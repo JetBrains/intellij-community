@@ -53,11 +53,7 @@ public final class PyArgumentListInspection extends PyInspection {
   public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
                                                  boolean isOnTheFly,
                                                  @NotNull LocalInspectionToolSession session) {
-    TypeEvalContext context = PyInspectionVisitor.getContext(session);
-    if (context.getUsesExternalTypeEngine()) {
-      return PsiElementVisitor.EMPTY_VISITOR;
-    }
-    return new Visitor(holder, context);
+    return new Visitor(holder, PyInspectionVisitor.getContext(session));
   }
 
   private static class Visitor extends PyInspectionVisitor {
@@ -445,11 +441,11 @@ public final class PyArgumentListInspection extends PyInspection {
     final PyInspectionMessages.ProblemMessage header = PyMismatchTooltips.header(callables);
     final @InspectionMessage String description = PyMismatchTooltips.description(header, argumentSlots, expectedRows);
     if (holder.isOnTheFly()) {
-      holder.problem(element, description).highlight(ProblemHighlightType.GENERIC_ERROR_OR_WARNING)
+      holder.problem(element, description)
         .tooltip(PyMismatchTooltips.tooltip(header, argumentSlots, expectedRows, context)).register();
     }
     else {
-      holder.problem(element, description).highlight(ProblemHighlightType.GENERIC_ERROR_OR_WARNING).register();
+      holder.problem(element, description).register();
     }
   }
 

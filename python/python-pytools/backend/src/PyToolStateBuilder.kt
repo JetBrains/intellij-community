@@ -39,7 +39,6 @@ internal suspend fun buildToolState(
       version = managed?.installedVersion,
       minimumSupportedVersion = executable.minimumSupportedVersion?.toCompactString(),
       support = executable.manager?.support(descriptor) ?: PyToolSupport.NONE,
-      selectedAsTypeEngine = (executable as? PyTypeEngineSelectableTool)?.runsForExternalTypeEngine(project) == true,
     )
     else -> PyToolDetails()
   }
@@ -59,7 +58,6 @@ internal suspend fun buildToolState(
     latestVersion = managed?.latestVersion?.takeIf {
       details.support.canUpgrade && PyPackageVersionComparator.STR_COMPARATOR.compare(it, managed.installedVersion) > 0
     },
-    selectedAsTypeEngine = details.selectedAsTypeEngine,
   )
 }
 
@@ -67,5 +65,4 @@ private data class PyToolDetails(
   val version: String? = null,
   val minimumSupportedVersion: String? = null,
   val support: PyToolSupport = PyToolSupport.NONE,
-  val selectedAsTypeEngine: Boolean = false,
 )

@@ -10,7 +10,6 @@ import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.python.junit5Tests.framework.pyProjectFixture
 import com.intellij.python.junit5Tests.framework.subdirectoryFixture
-import com.intellij.python.lsp.core.typeEngine.PyTypeEngineUtils
 import com.intellij.python.lsp.core.utils.PyLspToolVersionTracker
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.fixture.projectFixture
@@ -28,7 +27,6 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
-import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Nested
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Test
@@ -274,17 +272,6 @@ internal class PyLspServedModulesTest {
       firstSdk.get()
       secondSdk.get()
 
-      assertEquals(listOf(firstPyProject.get(), secondPyProject.get()), pyLspProjectsToServeWith(secondPyProject.get(), tyTool))
-    }
-
-    @Test
-    @TestFor(issues = ["PY-92008"])
-    @Disabled("AT-3959")
-    fun `the type engine registry key does not decide how many servers run`() {
-      firstSdk.get()
-      secondSdk.get()
-
-      assertFalse(PyTypeEngineUtils.isMultiModuleSupportEnabled)
       assertEquals(listOf(firstPyProject.get(), secondPyProject.get()), pyLspProjectsToServeWith(secondPyProject.get(), tyTool))
     }
 

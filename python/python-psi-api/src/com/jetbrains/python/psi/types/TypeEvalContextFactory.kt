@@ -12,8 +12,6 @@ interface TypeEvalContextFactory {
   fun userInitiated(project: Project, origin: PsiFile?): TypeEvalContext
   fun codeAnalysis(project: Project, origin: PsiFile?): TypeEvalContext
   fun codeInsightFallback(project: Project?): TypeEvalContext
-  fun externalContext(project: Project): TypeEvalContext
-
   fun deepCodeInsight(project: Project): TypeEvalContext
 
   companion object {

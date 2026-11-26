@@ -133,9 +133,6 @@ The Python plug-in provides smart editing for Python scripts. The feature set of
     <module name="intellij.python.black"/>
     <module name="intellij.python.lsp.core"/>
     <module name="intellij.python.lsp.impl.frontend"/>
-    <module name="intellij.python.typeEngine"/>
-    <module name="intellij.python.typeEngine.common"/>
-    <module name="intellij.python.typeEngine.frontend"/>
     <module name="intellij.python.ty"/>
     <module name="intellij.python.ruff"/>
     <module name="intellij.python.pyrefly"/>

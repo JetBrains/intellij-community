@@ -6,7 +6,6 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
-import com.intellij.platform.lsp.api.Lsp4jServer
 import com.intellij.platform.lsp.api.LspClient
 import com.intellij.platform.lsp.api.LspServerState
 import com.intellij.platform.lsp.api.customization.LspGoToDefinitionDisabled
@@ -17,7 +16,6 @@ import com.intellij.python.lsp.core.PyLspToolIntegrationProvider
 import com.intellij.python.lsp.core.PyLspToolSettings
 import com.intellij.python.lsp.core.pyLspAttachedDescriptor
 import com.intellij.python.lsp.core.pyLspProjectsToServeWith
-import com.intellij.python.lsp.core.utils.PyLspServerModificationTracker
 import com.intellij.python.sdk.backend.NativePythonInterpreter
 import com.jetbrains.python.project.PyProject
 import org.eclipse.lsp4j.ConfigurationItem
@@ -42,8 +40,7 @@ class TyLspIntegrationProvider : PyLspToolIntegrationProvider() {
  * The descriptor to start ty with for [pyProject].
  *
  * ty keeps its settings for each workspace folder and resolves the environment against that
- * folder's root, so one server answers for every Python project of a multi-module project. This holds
- * for the type engine and for the External Tools tool: both start the server from this descriptor. A
+ * folder's root, so one server answers for every Python project of a multi-module project. A
  * Python project whose environment pins another ty version gets a server of its own, because one
  * server runs one binary. For a project of one served Python project the server answers for
  * [pyProject] alone.
@@ -53,8 +50,6 @@ class TyLspIntegrationProvider : PyLspToolIntegrationProvider() {
 internal fun tyDescriptor(pyProject: PyProject): TyLspClientDescriptor {
   val served = pyLspProjectsToServeWith(pyProject, TyPyTool.getInstance())
   val descriptor = TyLspClientDescriptor(served.first(), served)
-  // The type engine builds a descriptor and starts the server itself, so it must wire the provider
-  // here. `fileOpened` may never run for the file that started the server.
   pyLspAttachedDescriptor(descriptor, TyLspIntegrationProvider::class.java)
   return descriptor
 }
@@ -176,14 +171,10 @@ class TyLspClientDescriptor(
     // Everything the server already answered came from the old search path and stays cached until the
     // file changes, so ask for all of it again now that the push is on its way.
     client.invalidateServerResults()
-    PyLspServerModificationTracker.getInstance(project).incModificationCount()
   }
 
   override val toolConfig: PyLspToolSettings
     get() = project.service<TyConfiguration>()
-
-  override val lsp4jServerClass: Class<out Lsp4jServer>
-    get() = TyLsp4jServer::class.java
 
   override val commandDescriptions: Map<String, String?> = mapOf(
     "ty.printDebugInformation" to "Print debug information",

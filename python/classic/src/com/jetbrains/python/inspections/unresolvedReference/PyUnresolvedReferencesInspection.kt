@@ -42,9 +42,6 @@ class PyUnresolvedReferencesInspection : PyInspection() {
 
   override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean, session: LocalInspectionToolSession): PsiElementVisitor {
     val context = PyInspectionVisitor.getContext(session)
-    if (context.usesExternalTypeEngine) {
-      return PsiElementVisitor.EMPTY_VISITOR
-    }
     val visitor = PyUnresolvedReferencesVisitor(holder,
                                                 ignoredIdentifiers,
                                                 context,

@@ -48,14 +48,11 @@ jvm_library(
         "//platform/core-api:core",
         "//platform/core-ui",
         "//platform/platform-api:ide",
-        "//platform/observable",
         "//platform/kernel/rpc",
-        "//python/python-type-engine/common",
         "//python/python-pytools/common",
         "//python/python-pytools/frontend",
         "//python/python-ty/common",
         "//python/python-lsp-core/frontend",
-        "//python/python-type-engine/frontend",
     ],
 )
 ### auto-generated section `build intellij.python.ty.frontend` end

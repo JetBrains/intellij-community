@@ -13,24 +13,23 @@ import com.intellij.util.xmlb.XmlSerializerUtil
 /**
  * The editor features of the bundled Pyrefly server.
  *
- * Only the Type Engine page edits it, and only the bundled server reads it. The External Tools Pyrefly reads
- * [PyreflyConfiguration]. The inspections and the completions stay on.
+ * Only the bundled server reads it. The External Tools Pyrefly reads [PyreflyConfiguration].
  */
 @Service(Service.Level.PROJECT)
 @State(
-  name = "PyreflyTypeEngineConfiguration",
+  name = "BundledPyreflyConfiguration",
   storages = [Storage(LSP_TOOLS_STORAGE_FILE)]
 )
-data class PyreflyTypeEngineConfiguration(
+data class BundledPyreflyConfiguration(
   override var inlayHints: Boolean? = false,
   override var completions: Boolean? = true,
   override var documentation: Boolean? = false,
-) : PyLspToolConfiguration<PyreflyTypeEngineConfiguration>() {
-  override fun loadState(state: PyreflyTypeEngineConfiguration) {
+) : PyLspToolConfiguration<BundledPyreflyConfiguration>() {
+  override fun loadState(state: BundledPyreflyConfiguration) {
     XmlSerializerUtil.copyBean(state, this)
   }
 
   companion object {
-    fun getInstance(project: Project): PyreflyTypeEngineConfiguration = project.service()
+    fun getInstance(project: Project): BundledPyreflyConfiguration = project.service()
   }
 }

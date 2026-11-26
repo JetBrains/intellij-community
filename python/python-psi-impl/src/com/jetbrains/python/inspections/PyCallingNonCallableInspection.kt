@@ -32,11 +32,7 @@ class PyCallingNonCallableInspection : PyInspection() {
     isOnTheFly: Boolean,
     session: LocalInspectionToolSession,
   ): PsiElementVisitor {
-    val context = PyInspectionVisitor.getContext(session)
-    if (context.usesExternalTypeEngine) {
-      return PsiElementVisitor.EMPTY_VISITOR
-    }
-    return Visitor(holder, context)
+    return Visitor(holder, PyInspectionVisitor.getContext(session))
   }
 
   class Visitor(holder: ProblemsHolder?, context: TypeEvalContext) : PyInspectionVisitor(holder, context) {

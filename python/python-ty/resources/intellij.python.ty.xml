@@ -2,7 +2,6 @@
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <module name="intellij.libraries.eclipse.lsp4j"/>
-    <module name="intellij.libraries.eclipse.lsp4j.jsonrpc"/>
     <module name="intellij.libraries.fastutil"/>
     <module name="intellij.libraries.guava"/>
     <module name="intellij.libraries.jackson3"/>
@@ -23,12 +22,10 @@
     <module name="intellij.platform.projectModel"/>
     <module name="intellij.platform.projectModel.impl"/>
     <module name="intellij.platform.smRunner"/>
-    <module name="intellij.platform.statistics"/>
     <module name="intellij.platform.util.progress"/>
     <module name="intellij.python.lsp.core"/>
     <module name="intellij.python.psi"/>
     <module name="intellij.python.psi.impl"/>
-    <module name="intellij.python.pyproject"/>
     <module name="intellij.python.pytools.backend"/>
     <module name="intellij.python.ty.common"/>
     <module name="intellij.xml.parser"/>
@@ -37,17 +34,7 @@
 
   <extensions defaultExtensionNs="com.intellij">
     <platform.lsp.integrationProvider implementation="com.intellij.python.ty.TyLspIntegrationProvider"/>
-    <statistics.counterUsagesCollector implementationClass="com.intellij.python.ty.TyUsageCollector"/>
-
-    <registryKey key="ty.type.engine.support" defaultValue="false"
-                 description="Support ty type engine"/>
-
-    <python.lsp.typeEngineConfigurable implementation="com.intellij.python.ty.typeEngine.TyPyTypeEngine"/>
     <projectSettings service="com.intellij.python.ty.TyConfiguration"/>
     <python.pytools.pyTool implementation="com.intellij.python.ty.TyPyTool"/>
-  </extensions>
-
-  <extensions defaultExtensionNs="Pythonid">
-    <typeEvalTypeEngineProvider implementation="com.intellij.python.ty.typeEngine.TyLspTypeEngineProvider"/>
   </extensions>
 </idea-plugin>

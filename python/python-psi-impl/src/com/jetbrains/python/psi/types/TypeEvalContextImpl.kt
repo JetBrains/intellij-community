@@ -1,15 +1,10 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.psi.types
 
-import com.intellij.python.sdk.backend.isIgnoredInterpreterEntry
-import com.intellij.python.sdk.backend.isInterpreterLibraryCarrier
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.module.Module
-import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.roots.JdkOrderEntry
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.util.RecursionManager
@@ -35,12 +30,9 @@ import com.jetbrains.python.psi.PyInstantTypeProvider
 import com.jetbrains.python.psi.PyTypedElement
 import com.jetbrains.python.psi.resolve.PyResolveContext
 import com.jetbrains.python.psi.resolve.RatedResolveResult
-import com.jetbrains.python.psi.types.engine.PyTypeEngine
-import com.jetbrains.python.psi.types.engine.PyTypeEngineProvider
 import com.jetbrains.python.pyi.PyiLanguageDialect
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
-import java.util.Optional
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentMap
 import kotlin.concurrent.Volatile
@@ -59,38 +51,9 @@ open class TypeEvalContextImpl internal constructor(
 
   private val myProcessingContext = ThreadLocal.withInitial { ProcessingContext() }
 
-  private val myModuleTypeEngines: MutableMap<Module, Optional<PyTypeEngine>> = ConcurrentHashMap()
-
-  @ApiStatus.Internal
-  val typeEngine: PyTypeEngine? = constraints.myOrigin?.let {
-    if (isNotebookExternalTypeEngineDisabled(it)) {
-      return@let null
-    }
-    getOrCreateTypeEngine(it.originalFile)
-  }
-
-  private fun getTypeEngine(element: PyTypedElement): PyTypeEngine? {
-    val containingFile = element.containingFile ?: return null
-    if (isNotebookExternalTypeEngineDisabled(containingFile)) {
-      return null
-    }
-    return getOrCreateTypeEngine(containingFile)
-  }
-
-  private fun getOrCreateTypeEngine(file: PsiFile): PyTypeEngine? {
-    val module = file.getUserData(ModuleUtilCore.KEY_MODULE) ?: ModuleUtilCore.findModuleForFile(file.originalFile)
-    if (module != null) {
-      return moduleTypeEngine(module)
-    }
-    return findTypeEngineWithoutModule(file.originalFile)
-  }
-
-  private fun moduleTypeEngine(module: Module): PyTypeEngine? =
-    myModuleTypeEngines.computeIfAbsent(module) { Optional.ofNullable(PyTypeEngineProvider.createTypeEngine(it)) }.orElse(null)
-
   protected val myEvaluated: MutableMap<PyTypedElement?, PyType?> = getConcurrentMapForCachingTypes()
   protected val myEvaluatedReturn: MutableMap<PyCallable?, PyType?> = getConcurrentMapForCachingTypes()
-  protected val contextTypeCache: ConcurrentMap<Pair<Any, Any>, PyType> = getConcurrentMapForCachingTypes()
+  protected val contextTypeCache: ConcurrentMap<Pair<PyExpression?, Any?>, PyType> = getConcurrentMapForCachingTypes()
   protected val myVarianceCache: MutableMap<PyTypeParameterType, PyVariance> = getConcurrentMapForCaching()
   protected val mySubstitutionsCache: MutableMap<SubstitutionsIdentifier, PyTypeChecker.GenericSubstitutions> = getConcurrentMapForCaching()
 
@@ -121,10 +84,9 @@ open class TypeEvalContextImpl internal constructor(
     allowDataFlow: Boolean,
     allowStubToAST: Boolean,
     allowCallContext: Boolean,
-    isExternal: Boolean,
     origin: PsiFile?,
   ) : this(
-    TypeEvalConstraints(allowDataFlow, allowStubToAST, allowCallContext, isExternal, origin)
+    TypeEvalConstraints(allowDataFlow, allowStubToAST, allowCallContext, origin)
   )
 
 
@@ -147,26 +109,6 @@ open class TypeEvalContextImpl internal constructor(
   override fun maySwitchToAST(element: PsiElement): Boolean {
     return constraints.myAllowStubToAST && !element.inPyiFile() || inOrigin(element)
   }
-
-  private fun isNotebookExternalTypeEngineDisabled(origin: PsiFile): Boolean {
-    val realFile = origin.originalFile.virtualFile ?: return false
-    return realFile.extension.equals("ipynb", ignoreCase = true) &&
-           !Registry.`is`("python.lsp.type.engine.notebooks", false)
-  }
-
-  private fun findTypeEngineWithoutModule(origin: PsiFile): PyTypeEngine? {
-    val virtualFile = origin.virtualFile ?: return null
-    return ProjectFileIndex.getInstance(origin.project).getOrderEntriesForFile(virtualFile)
-      .asSequence()
-      // The interpreter library of a module carries the roots of its interpreter, as its SDK does.
-      .filter { !it.isIgnoredInterpreterEntry() && (it is JdkOrderEntry || it.isInterpreterLibraryCarrier()) }
-      .map { it.ownerModule }
-      .distinct()
-      .firstNotNullOfOrNull(::moduleTypeEngine)
-  }
-
-  @ApiStatus.Internal
-  override fun isExternal(): Boolean = constraints.myIsExternal
 
   override fun withTracing(): TypeEvalContext {
     if (myTrace == null) {
@@ -306,33 +248,14 @@ open class TypeEvalContextImpl internal constructor(
 
     return RecursionManager.doPreventingRecursion(element to this, false) {
       PyCodeInsightCounters.inc(Counter.GET_TYPE_EVALUATIONS)
-      val engine = getTypeEngine(element)?.takeIf { it.isSupportedForResolve(element) }
-      val type = if (engine == null) {
-        evaluateWithBuiltInEngine(element)
+      val type = PyTypeEvaluationAggregatesCollector.recordPyCharmTypeEngineTime {
+        element.getType(this, KeyImpl)
       }
-      else if (engine.isReady) {
-        PyTypeEvaluationAggregatesCollector.recordHybridTypeEngineTime(engine) {
-          val isUserInitiated = constraints.myAllowStubToAST && constraints.myAllowDataFlow
-          val resolvedType = engine.resolveType(element, isUserInitiated)
-          // resolvedType is null when the engine could not evaluate at all, in contrast to Ref(null) which means the type is legitimately null
-          if (resolvedType == null) evaluateWithBuiltInEngine(element) else resolvedType.get()
-        }
-      }
-      else {
-        // The engine answers after its server starts, and the start drops this context. Do not cache the gap.
-        return@doPreventingRecursion PyAnyType.unknown
-      }
-
       assertValid(type, element)
       PyAnyType.validate(type, element)
       publish(myEvaluated, element, type ?: PyAnyType.unknown)
     } ?: PyAnyType.unknown
   }
-
-  private fun evaluateWithBuiltInEngine(element: PyTypedElement): PyType? =
-    PyTypeEvaluationAggregatesCollector.recordPyCharmTypeEngineTime {
-      element.getType(this, KeyImpl)
-    }
 
   override fun getReturnType(callable: PyCallable): PyType? {
     if (canDelegateToLibraryContext(callable)) {
@@ -376,11 +299,8 @@ open class TypeEvalContextImpl internal constructor(
 
   override val origin: PsiFile? = constraints.myOrigin
 
-  override val usesExternalTypeEngine: Boolean
-    get() = typeEngine != null
-
   @ApiStatus.Internal
-  override fun getContextTypeCache(): MutableMap<Pair<Any, Any>, PyType?> {
+  override fun getContextTypeCache(): MutableMap<Pair<PyExpression?, Any?>, PyType?> {
     return contextTypeCache
   }
 
@@ -545,7 +465,7 @@ open class TypeEvalContextImpl internal constructor(
     }
 
     @ApiStatus.Internal
-    override fun getContextTypeCache(): MutableMap<Pair<Any, Any>, PyType?> {
+    override fun getContextTypeCache(): MutableMap<Pair<PyExpression?, Any?>, PyType?> {
       return topAssumption.myParent.getContextTypeCache()
     }
   }
@@ -558,7 +478,7 @@ open class TypeEvalContextImpl internal constructor(
   }
 
   class OptimizedTypeEvalContext(allowDataFlow: Boolean, allowStubToAST: Boolean, allowCallContext: Boolean, origin: PsiFile?) :
-    TypeEvalContextImpl(allowDataFlow, allowStubToAST, allowCallContext, false, origin) {
+    TypeEvalContextImpl(allowDataFlow, allowStubToAST, allowCallContext, origin) {
     @Volatile
     private var codeInsightFallback: TypeEvalContext? = null
 

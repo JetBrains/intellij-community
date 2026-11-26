@@ -43,17 +43,12 @@ jvm_library(
         "//platform/core-api:core",
         "//platform/core-ui",
         "//platform/platform-api:ide",
-        "//platform/observable",
-        "//platform/progress/shared:ide-progress",
-        "//platform/project/shared:project",
         "//platform/kernel/rpc",
         "//python/python-pytools/common",
         "//python/python-lsp-core/common",
         "//python/python-pyrefly/common",
         "//python/python-lsp-core/frontend",
         "//python/python-pytools/frontend",
-        "//python/python-type-engine/common",
-        "//python/python-type-engine/frontend",
     ],
 )
 ### auto-generated section `build intellij.python.pyrefly.frontend` end

@@ -1,7 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.python.lsp.core
 
-import com.jetbrains.python.project.PyProject
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
@@ -10,7 +9,6 @@ import com.intellij.platform.lsp.api.LspClient
 import com.intellij.platform.lsp.api.LspClientDescriptor
 import com.intellij.platform.lsp.api.LspIntegrationProvider
 import com.intellij.platform.lsp.api.LspServerState
-import com.intellij.python.ty.TyLspClientDescriptor
 import com.intellij.python.ty.TyLspIntegrationProvider
 import org.eclipse.lsp4j.InitializeResult
 import org.eclipse.lsp4j.TextDocumentIdentifier
@@ -41,6 +39,3 @@ internal fun fakePyLspClient(
   private fun unused(): Nothing = throw UnsupportedOperationException("The test only reads the descriptor")
 }
 
-/** A fake client of a Python LSP tool whose server answers for [servedProjects] and is in [serverState]. */
-internal fun fakePyToolClient(vararg servedProjects: PyProject, serverState: LspServerState = LspServerState.Running): LspClient =
-  fakePyLspClient(TyLspClientDescriptor(servedProjects.first(), servedProjects.toList()), serverState)

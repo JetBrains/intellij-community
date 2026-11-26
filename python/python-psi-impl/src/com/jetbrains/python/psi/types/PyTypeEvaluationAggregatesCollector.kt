@@ -5,8 +5,6 @@ import com.intellij.internal.statistic.beans.MetricEvent
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesCollector
-import com.intellij.openapi.diagnostic.logger
-import com.jetbrains.python.psi.types.engine.PyTypeEngine
 import org.HdrHistogram.Recorder
 import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.ConcurrentHashMap
@@ -47,12 +45,10 @@ class PyTypeEvaluationAggregatesCollector : ApplicationUsagesCollector() {
   }
 
   companion object {
-    private val LOG = logger<PyTypeEvaluationAggregatesCollector>()
-    private val GROUP = EventLogGroup("python.type.evaluation.aggregates", 1)
+    private val GROUP = EventLogGroup("python.type.evaluation.aggregates", 2)
 
     private const val PYCHARM_TYPE_ENGINE = "pycharm"
-    private val EXTERNAL_TYPE_ENGINES = listOf("pyrefly", "ty")
-    private val TYPE_ENGINE_FIELD = EventFields.String("type_engine", listOf(PYCHARM_TYPE_ENGINE) + EXTERNAL_TYPE_ENGINES)
+    private val TYPE_ENGINE_FIELD = EventFields.String("type_engine", listOf(PYCHARM_TYPE_ENGINE))
     private val EVALUATIONS_TOTAL_FIELD = EventFields.Int("evaluations_total")
     private val DURATION_MEAN_FIELD = EventFields.Double("duration_mean_ms")
     private val DURATION_90P_FIELD = EventFields.Int("duration_90ile_ms")
@@ -87,30 +83,10 @@ class PyTypeEvaluationAggregatesCollector : ApplicationUsagesCollector() {
       return result
     }
 
-    inline fun recordHybridTypeEngineTime(typeEngine: PyTypeEngine, block: () -> PyType?): PyType? {
-      val (result, duration) = measureTimedValue {
-        block()
-      }
-      recordHybridDuration(typeEngine, duration)
-      return result
-    }
-
     @PublishedApi
     internal fun recordPyCharmDuration(duration: Duration) {
       val clampedDuration = duration.coerceAtMost(MAX_TRACKABLE_DURATION)
       getOrCreateRecorder(PYCHARM_TYPE_ENGINE).recordValue(clampedDuration.inWholeMilliseconds)
-    }
-
-    @PublishedApi
-    internal fun recordHybridDuration(typeEngine: PyTypeEngine, duration: Duration) {
-      val recorderName = typeEngine.name.lowercase()
-      // Only record metrics for registered external type engines
-      if (recorderName !in EXTERNAL_TYPE_ENGINES) {
-        LOG.error("Unknown type engine name '${typeEngine.name}' (normalized: '$recorderName'). Expected one of: ${EXTERNAL_TYPE_ENGINES.joinToString()}")
-        return
-      }
-      val clampedDuration = duration.coerceAtMost(MAX_TRACKABLE_DURATION)
-      getOrCreateRecorder(recorderName).recordValue(clampedDuration.inWholeMilliseconds)
     }
   }
 }

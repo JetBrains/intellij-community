@@ -25,8 +25,8 @@ import java.util.concurrent.ConcurrentMap;
  * <p>
  * Contexts for user code are flushed on every PSI change or low memory conditions. Contexts for library code are kept in a
  * separate map that deliberately outlives PSI changes — that is the point of the split — and is flushed only by
- * {@link PyLibraryModificationTracker} (roots change, dumb mode, forced reparse, or an edit inside a library file), low
- * memory conditions, or a change to the type engine settings.
+ * {@link PyLibraryModificationTracker} (roots change, dumb mode, forced reparse, or an edit inside a library file) or low
+ * memory conditions.
  * See {@link #getContext(TypeEvalContext)}
  *
  * @author Ilya.Kazakevich
@@ -45,8 +45,7 @@ public final class TypeEvalContextCacheImpl implements TypeEvalContextCache {
         // This method is called if cache is empty. Create new map for it.
         // Concurrent map allows several threads to call get and put, so it is thread safe but not atomic
         final ConcurrentMap<TypeEvalConstraints, TypeEvalContext> map = ContainerUtil.createConcurrentSoftValueMap();
-        return new CachedValueProvider.Result<>(map, PsiModificationTracker.MODIFICATION_COUNT, myLowMemoryModificationTracker,
-                                                PyTypeEngineSettingsModificationTracker.getInstance(project));
+        return new CachedValueProvider.Result<>(map, PsiModificationTracker.MODIFICATION_COUNT, myLowMemoryModificationTracker);
       }
     });
 
@@ -56,10 +55,8 @@ public final class TypeEvalContextCacheImpl implements TypeEvalContextCache {
         // This method is called if cache is empty. Create new map for it.
         // Concurrent map allows several threads to call get and put, so it is thread safe but not atomic
         final ConcurrentMap<TypeEvalConstraints, TypeEvalContext> map = ContainerUtil.createConcurrentSoftValueMap();
-        // library types come from the same engine, and nothing else invalidates them when its settings change
         return new CachedValueProvider.Result<>(map, PyLibraryModificationTracker.Companion.getInstance(project),
-                                                myLowMemoryModificationTracker,
-                                                PyTypeEngineSettingsModificationTracker.getInstance(project));
+                                                myLowMemoryModificationTracker);
       }
     });
 
@@ -105,7 +102,6 @@ public final class TypeEvalContextCacheImpl implements TypeEvalContextCache {
                                     : new TypeEvalConstraints(constraints.myAllowDataFlow,
                                                               constraints.myAllowStubToAST,
                                                               constraints.myAllowCallContext,
-                                                              constraints.myIsExternal,
                                                               origin);
     final ConcurrentMap<TypeEvalConstraints, TypeEvalContext> map = myLibrariesCachedMapStorage.getValue();
     final TypeEvalContext cachedContext = map.get(key);

@@ -24,8 +24,8 @@ class PyreflyLspIntegrationProvider : PyLspToolIntegrationProvider() {
 /**
  * Runs the bundled Pyrefly, the binary of the plugin.
  *
- * Only the type engine selection starts and stops it, see [PyreflyPyTool.runsBundledPyrefly]. The `pyrefly`
- * package of an environment does not change its binary, so a change of that package does not restart it.
+ * Nothing starts it yet, see [PyreflyPyTool.runsBundledPyrefly]. The `pyrefly` package of an environment does not
+ * change its binary, so a change of that package does not restart it.
  */
 class BundledPyreflyLspIntegrationProvider : PyLspToolIntegrationProvider() {
   override fun getDescriptor(pyProject: PyProject): PyLspToolDescriptor = bundledPyreflyDescriptor(pyProject)
@@ -52,8 +52,6 @@ class BundledPyreflyLspIntegrationProvider : PyLspToolIntegrationProvider() {
 internal fun pyreflyDescriptor(pyProject: PyProject): PyreflyLspClientDescriptor {
   val servedProjects = pyLspProjectsToServeWith(pyProject, PyreflyPyTool.getInstance())
   val descriptor = PyreflyLspClientDescriptor(servedProjects.first(), servedProjects)
-  // The type engine builds a descriptor and starts the server itself, so it must wire the provider
-  // here. `fileOpened` may never run for the file that started the server.
   pyLspAttachedDescriptor(descriptor, PyreflyLspIntegrationProvider::class.java)
   return descriptor
 }
@@ -69,7 +67,3 @@ internal fun bundledPyreflyDescriptor(pyProject: PyProject): PyreflyLspClientDes
   pyLspAttachedDescriptor(descriptor, BundledPyreflyLspIntegrationProvider::class.java)
   return descriptor
 }
-
-/** The descriptor of the server that the type engine reads its types from, see [PyreflyPyTool.typeEngineProviderClass]. */
-internal fun pyreflyTypeEngineDescriptor(pyProject: PyProject): PyreflyLspClientDescriptor =
-  if (PyreflyPyTool.isBundledPyreflyEnabled()) bundledPyreflyDescriptor(pyProject) else pyreflyDescriptor(pyProject)

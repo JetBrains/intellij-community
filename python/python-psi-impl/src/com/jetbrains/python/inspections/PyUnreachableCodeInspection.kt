@@ -19,11 +19,7 @@ class PyUnreachableCodeInspection : PyInspection() {
     isOnTheFly: Boolean,
     session: LocalInspectionToolSession
   ): PsiElementVisitor {
-    val context = PyInspectionVisitor.getContext(session)
-    if (context.usesExternalTypeEngine) {
-      return PsiElementVisitor.EMPTY_VISITOR
-    }
-    return object : PyInspectionVisitor(holder, context) {
+    return object : PyInspectionVisitor(holder, getContext(session)) {
       override fun visitPyStatementList(node: PyStatementList) {
         if (node.parent.getReachabilityForInspection(myTypeEvalContext) == Reachability.UNREACHABLE) return
         if (node.getReachabilityForInspection(myTypeEvalContext) == Reachability.UNREACHABLE) {

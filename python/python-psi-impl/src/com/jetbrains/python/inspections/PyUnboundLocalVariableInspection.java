@@ -53,11 +53,7 @@ public final class PyUnboundLocalVariableInspection extends PyInspection {
   public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
                                                  boolean isOnTheFly,
                                                  final @NotNull LocalInspectionToolSession session) {
-    TypeEvalContext context = PyInspectionVisitor.getContext(session);
-    if (context.getUsesExternalTypeEngine()) {
-      return PsiElementVisitor.EMPTY_VISITOR;
-    }
-    return new Visitor(holder, context);
+    return new Visitor(holder, PyInspectionVisitor.getContext(session));
   }
 
   public static class Visitor extends PyInspectionVisitor {
@@ -158,16 +154,13 @@ public final class PyUnboundLocalVariableInspection extends PyInspection {
           if (resolved != null && !PyUtil.inSameFile(node, resolved)) {
             return;
           }
-          registerProblem(node, PyPsiBundle.problemMessage("INSP.unbound.name.undefined", name),
-                          ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
+          registerProblem(node, PyPsiBundle.problemMessage("INSP.unbound.name.undefined", name));
         }
         else if (scope.isGlobal(name)) {
-          registerProblem(node, PyPsiBundle.problemMessage("INSP.unbound.name.undefined", name),
-                          ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
+          registerProblem(node, PyPsiBundle.problemMessage("INSP.unbound.name.undefined", name));
         }
         else if (isNonLocal) {
-          registerProblem(node, PyPsiBundle.problemMessage("INSP.unbound.local.variable", name),
-                          ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
+          registerProblem(node, PyPsiBundle.problemMessage("INSP.unbound.local.variable", name));
         }
         else {
           registerProblem(node, PyPsiBundle.problemMessage("INSP.unbound.local.variable", node.getName()),

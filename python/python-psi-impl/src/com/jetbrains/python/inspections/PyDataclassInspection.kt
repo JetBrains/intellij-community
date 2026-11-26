@@ -13,11 +13,5 @@ class PyDataclassInspection : PyInspection() {
     holder: ProblemsHolder,
     isOnTheFly: Boolean,
     session: LocalInspectionToolSession,
-  ): PsiElementVisitor {
-    val context = PyInspectionVisitor.getContext(session)
-    if (context.usesExternalTypeEngine) {
-      return PsiElementVisitor.EMPTY_VISITOR
-    }
-    return PyCommonDataclassVisitor(holder, context)
-  }
+  ): PsiElementVisitor = PyCommonDataclassVisitor(holder, PyInspectionVisitor.getContext(session))
 }

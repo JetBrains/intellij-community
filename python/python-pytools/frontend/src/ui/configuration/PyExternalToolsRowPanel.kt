@@ -4,7 +4,6 @@ package com.intellij.python.pytools.frontend.ui.configuration
 import com.intellij.icons.AllIcons
 import com.intellij.ide.setToolTipText
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.python.pytools.common.PyToolConfigurationDto
@@ -74,20 +73,7 @@ internal class PyExternalToolRowPanel(
   private val toggle = OnOffButton().apply {
     addActionListener {
       val newEnabled = isSelected
-      // When the tool is in use (e.g. it is the project's staged/persisted type engine) confirm before
-      // turning it off instead of hard-disabling the toggle; on decline, restore the toggle and bail.
-      val isEngine = host.isTypeEngine(row)
-      val confirmation = row.detailConfigurableProvider?.enableToggleConfirmation(newEnabled, isEngine)
-      if (confirmation != null &&
-          !MessageDialogBuilder.yesNo(PyToolsUiBundle.message("settings.external.tools.toggle.confirm.title"), confirmation)
-            .ask(this@PyExternalToolRowPanel)) {
-        isSelected = !newEnabled
-        return@addActionListener
-      }
       row.staged = row.staged.copy(enabled = newEnabled)
-      row.enabledEdited = true
-      // Turning off a tool that is the staged type engine clears the staged engine, keeping them in sync.
-      if (!newEnabled && isEngine) host.onTypeEngineToolDisabled()
       updateHeader()
     }
   }

@@ -12,20 +12,20 @@ import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.lsp.api.LspClient
-import com.intellij.platform.lsp.api.LspClientManager
 import com.intellij.platform.lsp.api.LspIntegrationProvider
 import com.intellij.platform.lsp.api.LspServerState
-import com.intellij.python.lsp.core.typeEngine.PyTypeEngineUtils
 import com.intellij.python.lsp.core.utils.PyLspToolVersionTracker
 import com.intellij.python.pyproject.model.evolution.EvoPyProjectModel
 import com.intellij.python.pyproject.model.evolution.getInterpreter
 import com.intellij.python.pytools.backend.PyTool
+import com.intellij.python.sdk.backend.NativePythonInterpreter
 import com.intellij.python.sdk.backend.PythonInterpreter
+import com.intellij.python.sdk.backend.TargetPythonInterpreter
 import com.intellij.python.sdk.backend.detectedEnvironment
+import com.intellij.python.sdk.backend.isReadOnly
 import com.intellij.util.messages.Topic
 import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.project.PyProject
-import com.jetbrains.python.project.name
 import com.jetbrains.python.project.project
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
@@ -38,9 +38,24 @@ import java.util.concurrent.atomic.AtomicReference
 private val MODULE_CLIENTS_LOG: Logger = logger<PyLspToolDescriptor>()
 
 /**
+ * [interpreter] when an LSP tool can run against it, else `null`: a native interpreter that is not read-only. A tool
+ * runs on the machine of the interpreter through Eel, so WSL and Docker count. A legacy target, such as SSH, has no
+ * such machine.
+ */
+@ApiStatus.Internal
+fun servedInterpreterOf(interpreter: PythonInterpreter): NativePythonInterpreter? = when (interpreter) {
+  is NativePythonInterpreter -> interpreter.takeUnless { it.isReadOnly }
+  is TargetPythonInterpreter -> null
+}
+
+/** Whether an LSP tool can run against [interpreter], see [servedInterpreterOf]. */
+@ApiStatus.Internal
+fun isServedInterpreter(interpreter: PythonInterpreter): Boolean = servedInterpreterOf(interpreter) != null
+
+/**
  * The Python projects one server can answer for in [snapshot], in a stable order.
  *
- * A Python project is served when it has a native, writable interpreter, see [PyTypeEngineUtils.isServedInterpreter],
+ * A Python project is served when it has a native, writable interpreter, see [isServedInterpreter],
  * because the tool runs against the interpreter. A Python project always has a content root, its
  * [PyProject.baseDir], and that root becomes the workspace folder. The order comes from the base directory, not from
  * the module name, so renaming a module keeps it.
@@ -50,7 +65,7 @@ private val MODULE_CLIENTS_LOG: Logger = logger<PyLspToolDescriptor>()
 @ApiStatus.Internal
 fun pyLspServedProjects(snapshot: EvoPyProjectModel.Snapshot): List<PyProject> =
   snapshot.evoPyProjects
-    .filter { evoPyProject -> evoPyProject.interpreter?.let(PyTypeEngineUtils::isServedInterpreter) == true }
+    .filter { evoPyProject -> evoPyProject.interpreter?.let(::isServedInterpreter) == true }
     .map { it.pyProject }
     .filterNot { it.residesOnModule.isDisposed }
     .sortedBy { it.baseDir.toString() }
@@ -76,9 +91,8 @@ suspend fun pyLspServedProjects(project: Project): List<PyProject> =
  * one that does, and every one of them lands in exactly one group.
  *
  * The list never comes back empty. [pyProject] alone answers for a project of one served Python project,
- * and for a Python project no server may serve. The second case does not arrive through the type engine
- * or the tool, because both check the interpreter before they build a descriptor. It keeps the promise
- * for any other caller.
+ * and for a Python project no server may serve. The second case does not arrive through the tool,
+ * because it checks the interpreter before it builds a descriptor. It keeps the promise for any other caller.
  *
  * Pass the [PyLspToolIntegrationProvider.followsToolPackage] of the provider as [followsToolPackage]. A server that
  * runs a binary of its own does not run the copy of [pyTool] in an environment, so that version does not split the
@@ -96,11 +110,9 @@ fun pyLspProjectsToServeWith(pyProject: PyProject, pyTool: PyTool, followsToolPa
 /**
  * The last known [PyLspServeKey] of every served Python project of [project] for [pyTool].
  *
- * The answer never blocks and never reads an interpreter, because the type evaluation path asks for
- * it under a read lock. `TypeEvalContextImpl` builds a type engine in its constructor, and the
- * factory builds a context before it looks in its cache, so this runs for every `TypeEvalContext`.
- * Reading the installed packages here would call [PythonPackageManager.forPythonInterpreter], which creates a
- * manager and does first-touch I/O while the caller holds the read lock.
+ * The answer never blocks and never reads an interpreter, because [PyLspToolIntegrationProvider.fileOpened] asks
+ * for it under a read lock. Reading the installed packages here would call [PythonPackageManager.forPythonInterpreter],
+ * which creates a manager and does first-touch I/O while the caller holds the read lock.
  *
  * A Python project the snapshot does not name yet states no version, see [pyLspServeKeyWithoutVersion], so
  * every Python project of a workspace shares one server until the snapshot arrives. A refresh that changes the
@@ -228,7 +240,7 @@ private class PyLspServeKeyCache(private val project: Project, private val cs: C
 
     val computed = computeKeys(pyTool)
     // A refresh that began earlier and ends later must not replace a newer snapshot. It would bring
-    // back a grouping the project left, and the type engine would start a server for it again.
+    // back a grouping the project left, and the tool would start a server for it again.
     var previous: Snapshot? = null
     var replaced = false
     val stored = ref.updateAndGet { current ->
@@ -539,22 +551,11 @@ val LspClient.pyServedProjects: List<PyProject>
   get() = (descriptor as? PyLspToolDescriptor)?.servedProjects.orEmpty()
 
 /**
- * The client of this collection whose server answers for [pyProject], or `null` when none does.
- *
- * A server answers for the Python projects of its own descriptor. One server can hold several, so do not
- * compare against the primary one alone. A client that answers nothing is skipped, see [isUsable].
- */
-@ApiStatus.Internal
-fun Collection<LspClient>.clientFor(pyProject: PyProject): LspClient? =
-  firstOrNull { it.isUsable && it.pyServedProjects.holds(pyProject) }
-
-/**
  * Whether [this] answers a request now.
  *
  * The platform answers `null` to a request sent before the server runs, see
  * `LspRequestExecutorBase.doSendRequestAsync`, so a client that still initializes answers nothing. A
- * type engine behind it would store `PyNullType` for every element. A shut-down server stays in the
- * client list, and it answers nothing either.
+ * shut-down server stays in the client list, and it answers nothing either.
  */
 @get:ApiStatus.Internal
 val LspClient.isUsable: Boolean
@@ -563,8 +564,7 @@ val LspClient.isUsable: Boolean
 /**
  * [descriptor], wired to the provider of [providerClass].
  *
- * The type engine and the tool both start a server from a descriptor, and each one must reach the
- * provider that owns it, see [PyLspToolIntegrationProvider.attach].
+ * A server started from [descriptor] must reach the provider that owns it, see [PyLspToolIntegrationProvider.attach].
  */
 @ApiStatus.Internal
 fun <T : PyLspToolIntegrationProvider> pyLspAttachedDescriptor(
@@ -574,25 +574,4 @@ fun <T : PyLspToolIntegrationProvider> pyLspAttachedDescriptor(
   LspIntegrationProvider.EP_NAME.findFirstSafe { providerClass.isInstance(it) }
     ?.let { (it as PyLspToolIntegrationProvider).attach(descriptor) }
   return descriptor
-}
-
-/**
- * The running [providerClass] client that answers for [pyProject], or `null` when none does. The debug
- * log names the modules that each client serves, and the state of that client.
- *
- * A module gets no client when the tool cannot drive its interpreter. The caller then leaves the
- * external type engine off for that module, and PyCharm infers the types itself.
- */
-@ApiStatus.Internal
-fun findLspClientFor(pyProject: PyProject, providerClass: Class<out LspIntegrationProvider>): LspClient? {
-  val clients = LspClientManager.getInstance(pyProject.project).getClients(providerClass)
-  val client = clients.clientFor(pyProject)
-  if (client == null && MODULE_CLIENTS_LOG.isDebugEnabled) {
-    val served = clients.joinToString { client ->
-      val modules = client.pyServedProjects.joinToString("+") { p -> p.name }.ifEmpty { "<not a python tool>" }
-      "$modules (${client.state})"
-    }
-    MODULE_CLIENTS_LOG.debug("No running ${providerClass.simpleName} client serves module '${pyProject.name}'. The clients serve: [$served]")
-  }
-  return client
 }

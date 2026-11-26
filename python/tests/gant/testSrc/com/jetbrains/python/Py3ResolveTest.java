@@ -1212,7 +1212,7 @@ public class Py3ResolveTest extends PyResolveTestCase {
     PyExpression annotationExpr = PyTypingTypeProvider.getAnnotationValue(parameter, fallbackContext);
     assertNotNull("annotation fragment", annotationExpr);
 
-    Ref<PyType> typeRef = PyTypingTypeProvider.getType(annotationExpr, fallbackContext, false);
+    Ref<PyType> typeRef = PyTypingTypeProvider.getType(annotationExpr, fallbackContext);
     assertNotNull("resolved type", typeRef);
     PyType type = typeRef.get();
     assertInstanceOf(type, PyClassType.class);
@@ -1230,7 +1230,7 @@ public class Py3ResolveTest extends PyResolveTestCase {
     PyExpression returnAnnotationExpr = PyTypingTypeProvider.getAnnotationValue(function, fallbackContext);
     assertNotNull("annotation fragment", returnAnnotationExpr);
 
-    Ref<PyType> typeRef = PyTypingTypeProvider.getType(returnAnnotationExpr, fallbackContext, false);
+    Ref<PyType> typeRef = PyTypingTypeProvider.getType(returnAnnotationExpr, fallbackContext);
     assertNotNull("resolved type", typeRef);
     PyType type = typeRef.get();
     assertInstanceOf(type, PyClassType.class);

@@ -10,6 +10,7 @@ import com.intellij.openapi.application.WriteIntentReadAction
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.command.WriteCommandAction
+import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectFileIndex
@@ -28,7 +29,8 @@ import com.jetbrains.python.codeInsight.PyCodeInsightCounters
 import com.jetbrains.python.codeInsight.PyCodeInsightCounters.Counter
 import com.jetbrains.python.psi.PyFunction
 import com.jetbrains.python.psi.PyTypedElement
-import com.jetbrains.python.psi.types.PyTypeEngineSettingsModificationTracker
+import com.jetbrains.python.psi.types.TypeEvalContextCache
+import com.jetbrains.python.psi.types.TypeEvalContextCacheImpl
 import com.jetbrains.python.psi.types.TypeEvalContext
 import java.lang.management.ManagementFactory
 import java.nio.file.Files
@@ -152,7 +154,7 @@ class PyPerfProbe(private val project: Project, private val editor: Editor, priv
     ApplicationManager.getApplication().invokeAndWait {
       WriteIntentReadAction.run {
         PsiManager.getInstance(project).dropPsiCaches()
-        PyTypeEngineSettingsModificationTracker.getInstance(project).incModificationCount()
+        (project.service<TypeEvalContextCache>() as TypeEvalContextCacheImpl).clear()
       }
     }
   }
@@ -381,8 +383,6 @@ class PyPerfProbe(private val project: Project, private val editor: Editor, priv
       "python.use.csp.type.inference" to "true",
       "python.typing.weak.keys.type.eval.context" to "true",
       "python.strict.type.narrow" to "true",
-      // Declared by the type engine module. Without the declaration, each read throws and catches an exception.
-      "pycharm.type.engine" to "true",
     )
 
     private val THREAD_MX_BEAN = ManagementFactory.getThreadMXBean() as com.sun.management.ThreadMXBean

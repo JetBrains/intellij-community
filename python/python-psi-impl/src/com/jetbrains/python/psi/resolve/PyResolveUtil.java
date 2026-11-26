@@ -747,10 +747,9 @@ public final class PyResolveUtil {
   /**
    * Resolves a member path like "Class.method" by walking from {@code start} (a package, a module or a class) through nested classes and methods.
    */
-  @ApiStatus.Internal
-  public static @Nullable PsiElement resolveMemberPath(@Nullable PsiElement start,
-                                                       @NotNull QualifiedName memberPath,
-                                                       @NotNull TypeEvalContext context) {
+  private static @Nullable PsiElement resolveMemberPath(@Nullable PsiElement start,
+                                                        @NotNull QualifiedName memberPath,
+                                                        @NotNull TypeEvalContext context) {
     PsiElement current = PyUtil.turnDirIntoInit(start);
     for (String componentName : memberPath.getComponents()) {
       if (componentName == null) {

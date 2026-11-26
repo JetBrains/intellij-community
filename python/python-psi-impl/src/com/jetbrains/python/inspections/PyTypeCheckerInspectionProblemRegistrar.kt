@@ -41,7 +41,6 @@ internal object PyTypeCheckerInspectionProblemRegistrar {
     callSite: PyElement,
     calleesResults: List<AnalyzeCalleeResults>,
     context: TypeEvalContext,
-    highlightOverride: ProblemHighlightType?,
     hiddenCandidates: Int = 0,
   ) {
     val code = suppressionCodeFor(callSite)
@@ -52,11 +51,10 @@ internal object PyTypeCheckerInspectionProblemRegistrar {
         callSite,
         calleesResults[0],
         context,
-        highlightOverride
       )
     }
     else if (!calleesResults.isEmpty()) {
-      registerMultiCalleeProblem(holder, code, callSite, calleesResults, context, highlightOverride, hiddenCandidates)
+      registerMultiCalleeProblem(holder, code, callSite, calleesResults, context, hiddenCandidates)
     }
   }
 
@@ -76,18 +74,16 @@ internal object PyTypeCheckerInspectionProblemRegistrar {
     callSite: PyElement,
     calleeResults: AnalyzeCalleeResults,
     context: TypeEvalContext,
-    highlightOverride: ProblemHighlightType?,
   ) {
     for (argumentResult in calleeResults.results) {
       if (argumentResult.isMatched) continue
 
       val argument = argumentResult.argument
       val message = getSingleCalleeProblemMessage(argumentResult, context)
-      val type = highlightOverride ?: ProblemHighlightType.GENERIC_ERROR_OR_WARNING
       // The breakdown tooltip re-runs the match, so reportWithTooltip invokes the supplier only on-the-fly.
       val expectedTypeAfterSubstitution = if (argumentResult.expectedTypeAfterSubstitution.isUnknown) null else argumentResult.expectedTypeAfterSubstitution
       val expected = expectedTypeAfterSubstitution ?: argumentResult.expectedType
-      PyTypeCheckerProblemReporter.reportWithTooltip(holder, code, argument, message, type) {
+      PyTypeCheckerProblemReporter.reportWithTooltip(holder, code, argument, message, ProblemHighlightType.GENERIC_ERROR_OR_WARNING) {
         // The call site lets the breakdown read as "f() needs parameter 'a' … / 'x' is …" instead of a bare tree.
         val actualType = argumentResult.actualType
         val callSite = PyTypeMismatchProse.CallSite(
@@ -111,10 +107,9 @@ internal object PyTypeCheckerInspectionProblemRegistrar {
     for (unexpectedArgumentForParamSpec in calleeResults.unmatchedArguments) {
       val argument = unexpectedArgumentForParamSpec.argument
       val paramSpecTypeName = unexpectedArgumentForParamSpec.paramSpecType.variableName
-      registerWithOverride(
+      registerProblem(
         holder, code, argument,
         PyPsiBundle.problemMessage("INSP.type.checker.unexpected.argument.from.paramspec", paramSpecTypeName),
-        highlightOverride
       )
     }
 
@@ -127,11 +122,11 @@ internal object PyTypeCheckerInspectionProblemRegistrar {
             val parameterName = unfilledParameterFromParamSpec.parameter.name
             val paramSpecTypeName = unfilledParameterFromParamSpec.paramSpecType.variableName
             if (parameterName != null) {
-              registerWithOverride(
+              registerProblem(
                 holder, code, rpar, PyPsiBundle.problemMessage(
                   "INSP.type.checker.unfilled.parameter.for.paramspec", parameterName,
                   paramSpecTypeName
-                ), highlightOverride
+                ),
               )
             }
           }
@@ -139,9 +134,8 @@ internal object PyTypeCheckerInspectionProblemRegistrar {
           for (unfilledParameterFromParamSpec in calleeResults.unfilledPositionalVarargs) {
             val varargName = unfilledParameterFromParamSpec.varargName
             val expectedType = PyInspectionMessages.CodifiedParam.ofType(unfilledParameterFromParamSpec.expectedType, rpar, context)
-            registerWithOverride(
+            registerProblem(
               holder, code, rpar, PyPsiBundle.problemMessage("INSP.type.checker.unfilled.vararg", varargName, expectedType),
-              highlightOverride
             )
           }
         }
@@ -149,15 +143,13 @@ internal object PyTypeCheckerInspectionProblemRegistrar {
     }
   }
 
-  private fun registerWithOverride(
+  private fun registerProblem(
     holder: ProblemsHolder,
     code: PyTypeCheckerSuppressionCode,
     element: PsiElement,
     message: PyInspectionMessages.ProblemMessage,
-    highlightOverride: ProblemHighlightType?,
   ) {
-    val type = highlightOverride ?: ProblemHighlightType.GENERIC_ERROR_OR_WARNING
-    PyTypeCheckerProblemReporter.report(holder, code, element, message, type)
+    PyTypeCheckerProblemReporter.report(holder, code, element, message, ProblemHighlightType.GENERIC_ERROR_OR_WARNING)
   }
 
   private fun registerMultiCalleeProblem(
@@ -166,14 +158,13 @@ internal object PyTypeCheckerInspectionProblemRegistrar {
     callSite: PyElement,
     calleesResults: List<AnalyzeCalleeResults>,
     context: TypeEvalContext,
-    highlightOverride: ProblemHighlightType?,
     hiddenCandidates: Int,
   ) {
     if (callSite is PyBinaryExpression) {
-      registerMultiCalleeProblemForBinaryExpression(holder, code, callSite, calleesResults, context, highlightOverride)
+      registerMultiCalleeProblemForBinaryExpression(holder, code, callSite, calleesResults, context)
     }
     else {
-      registerMultiCalleeProblem(holder, code, getMultiCalleeElementToHighlight(callSite), calleesResults, context, highlightOverride,
+      registerMultiCalleeProblem(holder, code, getMultiCalleeElementToHighlight(callSite), calleesResults, context,
                                  hiddenCandidates)
     }
   }
@@ -184,7 +175,6 @@ internal object PyTypeCheckerInspectionProblemRegistrar {
     element: PsiElement?,
     calleesResults: List<AnalyzeCalleeResults>,
     context: TypeEvalContext,
-    highlightOverride: ProblemHighlightType?,
     hiddenCandidates: Int = 0,
   ) {
     val header = PyMismatchTooltips.header(calleesResults.map { it.callable })
@@ -197,9 +187,8 @@ internal object PyTypeCheckerInspectionProblemRegistrar {
     val expectedTypeParameters = calleesResults.map { typeParameterPrefix(it.callable) }
 
     val description = PyMismatchTooltips.description(header, argumentSlots, expectedRows, expectedTypeParameters, hiddenCandidates)
-    val highlightType = highlightOverride ?: ProblemHighlightType.GENERIC_ERROR_OR_WARNING
     // The aligned-table tooltip is only worth building on-the-fly; reportWithTooltip invokes the supplier then.
-    PyTypeCheckerProblemReporter.reportWithTooltip(holder, code, element, description, highlightType) {
+    PyTypeCheckerProblemReporter.reportWithTooltip(holder, code, element, description, ProblemHighlightType.GENERIC_ERROR_OR_WARNING) {
       PyMismatchTooltips.tooltip(header, argumentSlots, expectedRows, context, expectedTypeParameters, hiddenCandidates)
     }
   }
@@ -296,7 +285,6 @@ internal object PyTypeCheckerInspectionProblemRegistrar {
     binaryExpression: PyBinaryExpression,
     calleesResults: List<AnalyzeCalleeResults>,
     context: TypeEvalContext,
-    highlightOverride: ProblemHighlightType?,
   ) {
     val isRightOperatorResults =
       { calleeResults: AnalyzeCalleeResults -> binaryExpression.isRightOperator(calleeResults.callable) }
@@ -316,7 +304,6 @@ internal object PyTypeCheckerInspectionProblemRegistrar {
         binaryExpression,
         preferredOperatorsResults[0],
         context,
-        highlightOverride
       )
     }
     else {
@@ -324,7 +311,7 @@ internal object PyTypeCheckerInspectionProblemRegistrar {
         holder,
         code,
         if (allCalleesAreRightOperators) binaryExpression.leftExpression else binaryExpression.rightExpression,
-        preferredOperatorsResults, context, highlightOverride
+        preferredOperatorsResults, context
       )
     }
   }

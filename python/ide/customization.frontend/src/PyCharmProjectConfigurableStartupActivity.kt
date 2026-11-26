@@ -14,7 +14,6 @@ import com.intellij.openapi.startup.ProjectActivity
  Full list of settings in Pycharm group with weights and configurables ids:
 
  All Interpreters, weight=199 (set in XML) / projectConfigurable "com.intellij.pycharm.community.ide.impl.configuration.interpreter.PyAllInterpretersConfigurable"
- Type Engine, weight=190 (set in XML) / projectConfigurable "com.intellij.python.lsp.core.PyTypeEngineConfigurable"
  Debugger, weight=80 (set here), width=119 (set in XML) / projectConfigurable "reference.idesettings.debugger.python"
    - TypeRenderers / applicationConfigurable "debugger.dataViews.python.type.renderers"
  Console weight=75 / projectConfigurable "pyconsole"

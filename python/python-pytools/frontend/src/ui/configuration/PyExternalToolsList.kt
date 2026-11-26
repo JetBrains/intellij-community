@@ -3,7 +3,6 @@ package com.intellij.python.pytools.frontend.ui.configuration
 
 import com.intellij.openapi.options.ConfigurationException
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Version
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.platform.project.projectId
@@ -22,7 +21,6 @@ import com.intellij.python.pytools.common.PyToolEventKind
 import com.intellij.python.pytools.common.PyToolEnabledStateDto
 import com.intellij.python.pytools.common.FusId
 import com.intellij.python.pytools.common.PyToolLogEventRequest
-import com.intellij.python.pytools.frontend.ui.PyToolTypeEnginePreview
 import com.intellij.python.pytools.frontend.ui.PyToolsUiBundle
 import com.intellij.ui.components.panels.VerticalLayout
 import com.intellij.util.ui.JBUI
@@ -45,10 +43,6 @@ internal interface RowHost : PathActionHost {
   fun lookupChainHtml(row: ToolRow): @Nls String
   /** Explanation for the lookup chain when an enabled tool resolves nowhere (red chain); `null` otherwise. */
   fun lookupChainTooltip(row: ToolRow): @Nls String?
-  /** Whether [row]'s tool is the project's current type engine — the **staged** selection if a Type Engine page is open, else the persisted one. */
-  fun isTypeEngine(row: ToolRow): Boolean
-  /** Called after the user turns off a tool that is the type engine: clears the staged engine so the two stay consistent. */
-  fun onTypeEngineToolDisabled()
   /**
    * The user just expanded [row]. The host collapses every other row, then makes sure the background
    * state (the path and version probe) is fresh.
@@ -111,50 +105,6 @@ internal class PyExternalToolsList(
     rows.forEach { add(rowPanels.getValue(it)) }
   }
 
-  /** Scopes the staged-engine observer to this page's lifetime; disposed in [disposeUIResources]. */
-  private val engineObserverDisposable = Disposer.newDisposable()
-
-  /** Previous staged engine package, to detect when a tool stops being the staged engine. */
-  private var lastStagedEngine: String? = null
-
-  init {
-    val preview = PyToolTypeEnginePreview.getInstance(project)
-    lastStagedEngine = preview.stagedEnginePackage.get()
-    // Live reflection of the staged engine on the tools' toggles.
-    preview.stagedEnginePackage.afterChange(engineObserverDisposable) { staged ->
-      rows.forEach { row ->
-        val pkg = row.tool.fusId.value
-        val stagedRunsTool = preview.engineRunsTool(staged, pkg)
-        when {
-          // Became the staged engine → turn its toggle on.
-          stagedRunsTool && !row.staged.enabled -> {
-            row.staged = row.staged.copy(enabled = true)
-            row.enabledEdited = false
-            refreshRow(row)
-          }
-          // Was on only because it was the staged engine (not persisted-enabled) and no longer is →
-          // revert to off, so staging an engine and switching away leaves the tool unchanged.
-          preview.engineRunsTool(lastStagedEngine, pkg) && !stagedRunsTool && row.staged.enabled &&
-          !snapshotOf(row).enabled && !row.enabledEdited -> {
-            row.staged = row.staged.copy(enabled = false); refreshRow(row)
-          }
-        }
-      }
-      lastStagedEngine = staged
-    }
-    // When the user, on the Type Engine page, chose to turn an engine's tool off while switching away,
-    // flip that tool's toggle off here too.
-    preview.pendingDisable.afterChange(engineObserverDisposable) { pending ->
-      rows.forEach { row ->
-        if (row.tool.fusId.value in pending && row.staged.enabled) {
-          row.staged = row.staged.copy(enabled = false)
-          row.enabledEdited = true
-          refreshRow(row)
-        }
-      }
-    }
-  }
-
   /** The active showing-scope, set by [onShown]; `null` before the first show. */
   private var scope: CoroutineScope? = null
 
@@ -179,14 +129,6 @@ internal class PyExternalToolsList(
     if (row.staged.enabled && row.resolvesNowhere(uv.uvAvailable.get()))
       PyToolsUiBundle.message("settings.external.tools.unresolved.chain.tooltip")
     else null
-
-  override fun isTypeEngine(row: ToolRow): Boolean = isEngineFor(row.tool)
-
-  override fun onTypeEngineToolDisabled() {
-    // Deselect the engine in the staging (built-in, "") — not `null`, which would fall back to the still
-    // persisted engine and re-enable the tool. This flips the Type Engine page's button to Built-in.
-    PyToolTypeEnginePreview.getInstance(project).stagedEnginePackage.set("")
-  }
 
   override fun isUpgradeAvailable(row: ToolRow): Boolean = uv.isUpgradeAvailable(row)
   override fun upgradeTargetVersion(row: ToolRow): Version? = uv.latestVersionFor(row)
@@ -271,14 +213,7 @@ internal class PyExternalToolsList(
       PyToolsRequest(project.projectId(), listOf(row.tool.fusId)),
     ).singleOrNull()
     if (state != null) {
-      // Read the baseline before applying the state, which moves it. Staging the type engine's tool on is a
-      // default, not a correction, so it may only speak for a toggle the user has left alone.
-      val enabledUntouched = row.staged.enabled == snapshotOf(row).enabled
       row.applyBackendState(state, updateStagedPath = true, updateStagedEnabled = true)
-      if (enabledUntouched && !row.staged.enabled && isEngineFor(row.tool)) {
-        row.staged = row.staged.copy(enabled = true)
-        row.enabledEdited = false
-      }
       persistedPaths[row.tool.fusId] = row.persistedCustomPath
     }
     refreshRow(row)
@@ -296,27 +231,25 @@ internal class PyExternalToolsList(
     }
   }
 
-  /** True iff any row has unsaved edits: an [enabledToApply] edit, a path edit, or a dirty detail configurable. */
+  /** True iff any row has unsaved edits — a staged enable/path diff, or a dirty detail configurable. */
   fun isModified(): Boolean = rows.any { row ->
-    enabledToApply(row) != null ||
-    row.staged.customPath != snapshotOf(row).customPath ||
-    row.detail?.isModified() == true
+    row.staged != snapshotOf(row) || row.detail?.isModified() == true
   }
 
-  /** Persist all rows' edits on the backend and apply any dirty detail configurables. See [enabledToApply]. */
+  /** Persist all rows' staged state on the backend and apply any dirty detail configurables. */
   fun apply() {
     checkNoPathErrors(rows)
     rows.forEach { row ->
       val detailModified = row.detail?.isModified() == true
-      val pathChanged = row.staged.customPath != snapshotOf(row).customPath
-      val enabled = enabledToApply(row)
-      val rowChanged = enabled != null || pathChanged || detailModified
+      val current = snapshotOf(row)
+      val rowChanged = row.staged != current || detailModified
+      val pathChanged = row.staged.customPath != current.customPath
+      val enabledChanged = row.staged.enabled != current.enabled
       // The path goes before an enable, so the server that the enable starts resolves the binary the
       // user chose. It goes after a disable, so a tool the user turns off does not restart for the path.
-      if (enabled == false) applyEnabled(row, false)
+      if (enabledChanged && !row.staged.enabled) applyEnabled(row)
       if (pathChanged) applyPath(row)
-      if (enabled == true) applyEnabled(row, true)
-      row.enabledEdited = false
+      if (enabledChanged && row.staged.enabled) applyEnabled(row)
       if (detailModified) {
         try {
           row.detail?.apply()
@@ -355,13 +288,13 @@ internal class PyExternalToolsList(
     persistedPaths[row.tool.fusId] = row.persistedCustomPath
   }
 
-  private fun applyEnabled(row: ToolRow, enabled: Boolean) {
+  private fun applyEnabled(row: ToolRow) {
     val backendState = runWithModalProgressBlocking(
       project,
       PyToolsUiBundle.message("settings.external.tools.apply.progress"),
     ) {
       ProjectLevelPyToolApi.getInstance().setEnabled(
-        PyToolSetEnabledRequest(PyToolRequest(project.projectId(), row.tool.fusId), enabled),
+        PyToolSetEnabledRequest(PyToolRequest(project.projectId(), row.tool.fusId), row.staged.enabled),
       )
     }
     row.applyBackendState(backendState)
@@ -371,8 +304,7 @@ internal class PyExternalToolsList(
   /** Revert all rows' staged state to the persisted snapshot and reset any open detail configurables. */
   fun reset() {
     rows.forEach { row ->
-      row.staged = stagedFor(row)
-      row.enabledEdited = false
+      row.staged = snapshotOf(row)
       row.detail?.reset()
       // Re-probe so the path field / version reflect the reverted path, and clear any stale error
       // from a rejected custom edit (a non-custom probe never clears it on its own).
@@ -383,11 +315,6 @@ internal class PyExternalToolsList(
   }
 
   fun disposeUIResources() {
-    Disposer.dispose(engineObserverDisposable)
-    // The staged engine belongs to this Settings dialog. The Type Engine page also clears it, but only after
-    // the user opened that page.
-    PyToolTypeEnginePreview.getInstance(project).stagedEnginePackage.set(null)
-    PyToolTypeEnginePreview.getInstance(project).pendingDisable.set(emptySet())
     rows.forEach { it.detail?.disposeUIResources(); it.detail = null }
   }
 
@@ -442,43 +369,5 @@ internal class PyExternalToolsList(
       enabled = row.persistedEnabled,
       customPath = persistedPaths[row.tool.fusId],
     )
-  }
-
-  /**
-   * Initial (and post-reset) editing state for a row: the persisted [snapshotOf], but with the enable
-   * toggle shown **on** when the tool is the project's current type engine ([isEngineFor]).
-   *
-   * This toggle is not an edit, and Apply does not persist it. See [enabledToApply].
-   */
-  private fun stagedFor(row: ToolRow): RowState {
-    val persisted = snapshotOf(row)
-    return if (!persisted.enabled && isEngineFor(row.tool)) persisted.copy(enabled = true) else persisted
-  }
-
-  /**
-   * Returns the enabled flag that Apply sends for [row], or `null` when the row has no enabled edit.
-   *
-   * Only a toggle that the user set is an edit. The page turns the toggle on for the type engine, but the
-   * engine runs the tool without the flag. A persisted flag would keep the tool running after a switch to
-   * another engine.
-   *
-   * A toggle that the user turned off on the tool of the selected engine is an edit, also when the flag is
-   * off. The backend deselects the engine when it turns off the tool of the engine.
-   */
-  private fun enabledToApply(row: ToolRow): Boolean? {
-    if (!row.enabledEdited) return null
-    val enabled = row.staged.enabled
-    return enabled.takeIf { it != row.persistedEnabled || !it && row.selectedAsTypeEngine }
-  }
-
-  /**
-   * Whether the project's current type engine runs [tool]: the **staged** selection published by an open
-   * Type Engine page ([PyToolTypeEnginePreview]) when present, else the persisted engine. An engine with a
-   * server of its own runs no tool, see [PyToolTypeEnginePreview.engineRunsTool].
-   */
-  private fun isEngineFor(tool: PyTool): Boolean {
-    val preview = PyToolTypeEnginePreview.getInstance(project)
-    val staged = preview.stagedEnginePackage.get()
-    return if (staged != null) preview.engineRunsTool(staged, tool.fusId.value) else rows.first { it.tool == tool }.selectedAsTypeEngine
   }
 }

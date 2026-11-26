@@ -34,9 +34,6 @@ class PyAttrsDataclassInspection : PyInspection() {
     session: LocalInspectionToolSession,
   ): PsiElementVisitor {
     val context = PyInspectionVisitor.getContext(session)
-    if (context.usesExternalTypeEngine) {
-      return PsiElementVisitor.EMPTY_VISITOR
-    }
     return Visitor(holder, context)
   }
 

@@ -8,12 +8,11 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.util.ProcessingContext
 import com.jetbrains.python.psi.PyCallable
+import com.jetbrains.python.psi.PyExpression
 import com.jetbrains.python.psi.PyTypedElement
 import org.jetbrains.annotations.ApiStatus
 
 abstract class TypeEvalContext protected constructor() {
-  @get:ApiStatus.Internal
-  abstract val usesExternalTypeEngine: Boolean
   abstract val processingContext: ProcessingContext
   abstract val origin: PsiFile?
 
@@ -22,8 +21,6 @@ abstract class TypeEvalContext protected constructor() {
   abstract fun allowCallContext(element: PsiElement): Boolean
   abstract fun maySwitchToAST(element: PsiElement): Boolean
 
-  @ApiStatus.Internal
-  open fun isExternal(): Boolean = false
   abstract fun withTracing(): TypeEvalContext
 
   abstract fun trace(message: String, vararg args: Any?)
@@ -47,7 +44,7 @@ abstract class TypeEvalContext protected constructor() {
   abstract fun getReturnType(callable: PyCallable): PyType?
 
   @ApiStatus.Internal
-  abstract fun getContextTypeCache(): MutableMap<Pair<Any, Any>, PyType?>
+  abstract fun getContextTypeCache(): MutableMap<Pair<PyExpression?, Any?>, PyType?>
 
   @ApiStatus.Internal
   abstract fun getVarianceCache(): MutableMap<PyTypeParameterType, PyVariance>
@@ -115,16 +112,6 @@ abstract class TypeEvalContext protected constructor() {
     @JvmStatic
     fun codeInsightFallback(project: Project?): TypeEvalContext {
       return TypeEvalContextFactory.getInstance().codeInsightFallback(project)
-    }
-
-
-    /**
-     * Special context to converting types from an external type checker, more aggressive assumptions can be made.
-     */
-    @ApiStatus.Internal
-    @JvmStatic
-    fun externalContext(project: Project): TypeEvalContext {
-      return TypeEvalContextFactory.getInstance().externalContext(project)
     }
 
     /**

@@ -24,7 +24,7 @@ public class PyLiteralPatternImpl extends PyElementImpl implements PyLiteralPatt
 
   @Override
   public @Nullable PyType getType(@NotNull TypeEvalContext context, TypeEvalContext.@NotNull Key key) {
-    PyType literalType = PyLiteralType.Companion.fromLiteralParameter(getExpression(), context, false);
+    PyType literalType = PyLiteralType.Companion.fromLiteralParameter(getExpression(), context);
     if (literalType != null) {
       return literalType;
     }

@@ -32,7 +32,6 @@ jvm_library(
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
-        "//libraries/guava",
         "//libraries/lsp4j",
         "//libraries/lsp4j/jsonrpc",
         "//platform/core-api:core",
@@ -51,7 +50,6 @@ jvm_library(
         "//python/python-sdk/backend",
         "//python/python-pyproject:pyproject",
         "//platform/ide-core",
-        "//platform/statistics",
         "//platform/core-impl",
         "//platform/util:util-ui",
         "//python/python-pytools/backend",

@@ -25,10 +25,6 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 class PyAssertTypeInspection : PyInspection() {
   override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean, session: LocalInspectionToolSession): PsiElementVisitor {
-    val context = PyInspectionVisitor.getContext(session)
-    if (context.usesExternalTypeEngine) {
-      return PsiElementVisitor.EMPTY_VISITOR
-    }
     return object : PyInspectionVisitor(holder, getContext(session)) {
       override fun visitPyCallExpression(callExpression: PyCallExpression) {
         val callable = callExpression.multiResolveCalleeFunction(resolveContext).singleOrNull()

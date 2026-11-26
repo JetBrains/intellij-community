@@ -50,11 +50,7 @@ public final class PyAbstractClassInspection extends PyInspection {
   public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
                                                  boolean isOnTheFly,
                                                  @NotNull LocalInspectionToolSession session) {
-    TypeEvalContext context = PyInspectionVisitor.getContext(session);
-    if (context.getUsesExternalTypeEngine()) {
-      return PsiElementVisitor.EMPTY_VISITOR;
-    }
-    return new Visitor(holder, context);
+    return new Visitor(holder, PyInspectionVisitor.getContext(session));
   }
 
   private static final class Visitor extends PyInspectionVisitor {
@@ -79,8 +75,7 @@ public final class PyAbstractClassInspection extends PyInspection {
             }
             else if (isAbstract(pyClass)) {
               registerProblem(node, PyPsiBundle.problemMessage("INSP.abstract.class.cannot.instantiate.abstract.class",
-                                                               CodifiedParam.ofReference(pyClass)),
-                              ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
+                                                               CodifiedParam.ofReference(pyClass)));
             }
           }
         }

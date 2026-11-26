@@ -96,11 +96,10 @@ public final class PyTypeCachingTest extends PyTestCase {
       () -> TypeEvalContext.userInitiated(project, file),
       () -> TypeEvalContext.codeAnalysis(project, file),
       () -> TypeEvalContext.codeInsightFallback(project),
-      () -> TypeEvalContext.externalContext(project),
       () -> TypeEvalContext.deepCodeInsight(project),
       // The constraints of codeAnalysis, which the library context takes without a context to carry them
       () -> project.getService(TypeEvalContextCache.class)
-        .getLibraryContext(new TypeEvalConstraints(false, false, false, false, file)));
+        .getLibraryContext(new TypeEvalConstraints(false, false, false, file)));
     for (Supplier<TypeEvalContext> lookup : lookups) {
       final TypeEvalContext first = lookup.get();
       final TypeEvalContext[] second = new TypeEvalContext[1];

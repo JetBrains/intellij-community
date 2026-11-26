@@ -22,19 +22,10 @@ object PyLegacyDocstringTypeParser {
     PyTypeParser.getTypeByName(anchor, type, context)
 
   @JvmStatic
-  @Contract("null, _, _, _ -> null")
-  fun getTypeByName(anchor: PsiElement?, type: String, context: TypeEvalContext, fqnOnly: Boolean): PyType? =
-    PyTypeParser.getTypeByName(anchor, type, context, fqnOnly)
-
-  @JvmStatic
   fun parse(anchor: PsiElement, type: String): PyTypeParser.ParseResult =
     PyTypeParser.parse(anchor, type)
 
   @JvmStatic
   fun parse(anchor: PsiElement, type: String, context: TypeEvalContext): PyTypeParser.ParseResult =
     PyTypeParser.parse(anchor, type, context)
-
-  @JvmStatic
-  fun parse(anchor: PsiElement, type: String, context: TypeEvalContext, fqnOnly: Boolean): PyTypeParser.ParseResult =
-    PyTypeParser.parse(anchor, type, context, fqnOnly)
 }

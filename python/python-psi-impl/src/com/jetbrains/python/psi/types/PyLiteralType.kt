@@ -1,12 +1,9 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("SSBasedInspection")
-
 package com.jetbrains.python.psi.types
 
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiElement
-import com.intellij.psi.impl.source.resolve.FileContextUtil
 import com.jetbrains.python.PyNames
 import com.jetbrains.python.PyTokenTypes
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil
@@ -40,7 +37,6 @@ import com.jetbrains.python.psi.PyTupleExpression
 import com.jetbrains.python.psi.PyUtil
 import com.jetbrains.python.psi.impl.PyBuiltinCache
 import com.jetbrains.python.psi.impl.PyEvaluator
-import com.jetbrains.python.psi.impl.PyPsiFacadeImpl
 import com.jetbrains.python.psi.resolve.PyResolveContext
 import com.jetbrains.python.psi.resolve.PyResolveUtil
 import com.jetbrains.python.psi.stubs.PyLiteralKind
@@ -148,14 +144,14 @@ class PyLiteralType private constructor(
     /**
      * Tries to construct literal type for index passed to `typing.Literal[...]`
      */
-    fun fromLiteralParameter(expression: PyExpression, context: TypeEvalContext, typeRepresentation: Boolean = false): PyType? =
+    fun fromLiteralParameter(expression: PyExpression, context: TypeEvalContext): PyType? =
       when (expression) {
         is PyTupleExpression -> {
           val elements = expression.elements
-          val classes = elements.mapNotNull { createFromLiteralParameter(it, context, typeRepresentation) }
+          val classes = elements.mapNotNull { createFromLiteralParameter(it, context) }
           if (elements.size == classes.size) PyUnionType.unionOrUnknown(classes) else null
         }
-        else -> createFromLiteralParameter(expression, context, typeRepresentation)
+        else -> createFromLiteralParameter(expression, context)
       }
 
     @JvmStatic
@@ -189,20 +185,6 @@ class PyLiteralType private constructor(
     fun boolLiteral(anchor: PsiElement, value: Boolean): PyLiteralType? {
       val boolClass = PyBuiltinCache.getInstance(anchor).boolType?.pyClass
       return boolClass?.let { PyLiteralType(it, PyLiteralValue.BoolValue(value)) }
-    }
-
-    /**
-     * Build a [PyLiteralType] from a raw deserialized value whose runtime type
-     * determines the literal kind (`Boolean` → bool, `Number` → int, `String` → str).
-     * Returns `null` when the value type is unsupported or the backing class cannot
-     * be resolved.
-     */
-    @JvmStatic
-    fun fromLiteralValue(anchor: PsiElement, value: Any): PyLiteralType? = when (value) {
-      is Boolean -> boolLiteral(anchor, value)
-      is Number -> intLiteral(anchor, BigInteger.valueOf(value.toLong()))
-      is String -> stringLiteral(anchor, value)
-      else -> null
     }
 
     /**
@@ -400,15 +382,15 @@ class PyLiteralType private constructor(
              LanguageLevel.forElement(expression).isPython2
     }
 
-    private fun createFromLiteralParameter(expression: PyExpression, context: TypeEvalContext, typeRepresentation: Boolean): PyType? {
+    private fun createFromLiteralParameter(expression: PyExpression, context: TypeEvalContext): PyType? {
       if (isNone(expression)) return PyBuiltinCache.getInstance(expression).noneType
 
       if (expression is PyReferenceExpression || expression is PySubscriptionExpression) {
-        val subLiteralType = Ref.deref(PyTypingTypeProvider.getType(expression, context, typeRepresentation))
+        val subLiteralType = Ref.deref(PyTypingTypeProvider.getType(expression, context))
         if (subLiteralType.toStream().all { it is PyLiteralType || it.isNoneType }) return subLiteralType
       }
 
-      return literalType(expression, context, true, typeRepresentation)
+      return literalType(expression, context, true)
     }
 
     @ApiStatus.Internal
@@ -421,7 +403,7 @@ class PyLiteralType private constructor(
           }
         )
       }
-      return literalType(expression, context, false, false)
+      return literalType(expression, context, false)
     }
 
     private fun getLiteralOrLiteralStringType(expression: PyExpression, context: TypeEvalContext): PyType? {
@@ -439,21 +421,15 @@ class PyLiteralType private constructor(
       return expression.getLiteralType(context)
     }
 
-    private fun literalType(expression: PyExpression, context: TypeEvalContext, index: Boolean, typeRepresentation: Boolean): PyLiteralType? {
+    private fun literalType(expression: PyExpression, context: TypeEvalContext, index: Boolean): PyLiteralType? {
       if (expression is PyReferenceExpression && expression.isQualified) {
-        val type = if (typeRepresentation) {
-          getEnumMemberType(expression)
-        }
-        else {
-          PyUtil.multiResolveTopPriority(expression, PyResolveContext.defaultContext(context)).firstNotNullOfOrNull {
-            PyStdlibTypeProvider.getEnumMemberType(it!!, context)
-          }
-          // When regular reference resolution yields nothing because the reference lives in a stub-only file rather than
-          // the one being analyzed (e.g. an overload signature `Literal[E.a]` in an imported module), fall back to
-          // stub-safe scope resolution of the enum member's qualified name. Without this, the literal type is lost and
-          // overload resolution can't tell the overloads apart. PY-42473.
-          ?: resolveEnumMemberInScope(expression, context)
-        }
+        // When regular reference resolution yields nothing because the reference lives in a stub-only file rather than
+        // the one being analyzed (e.g. an overload signature `Literal[E.a]` in an imported module), fall back to
+        // stub-safe scope resolution of the enum member's qualified name. Without this, the literal type is lost and
+        // overload resolution can't tell the overloads apart. PY-42473.
+        val type = PyUtil.multiResolveTopPriority(expression, PyResolveContext.defaultContext(context)).firstNotNullOfOrNull {
+          PyStdlibTypeProvider.getEnumMemberType(it!!, context)
+        } ?: resolveEnumMemberInScope(expression, context)
         if (type != null) {
           return type
         }
@@ -461,15 +437,6 @@ class PyLiteralType private constructor(
       val cls = classOfAcceptableLiteral(expression, context, index) ?: return null
       val value = extractLiteralValue(expression) ?: return null
       return PyLiteralType(cls, value)
-    }
-
-    private fun getEnumMemberType(typeRepresentationRef: PyReferenceExpression): PyLiteralType? {
-      val contextFile = FileContextUtil.getContextFile(typeRepresentationRef) ?: return null
-      val qualifiedName = typeRepresentationRef.asQualifiedName() ?: return null
-      val enumClass = PyPsiFacadeImpl.resolveQName(qualifiedName.removeLastComponent(), contextFile).singleOrNull()
-                        as? PyClass ?: return null
-      val enumMemberName = qualifiedName.lastComponent ?: return null
-      return enumMember(enumClass, enumMemberName)
     }
 
     private fun resolveEnumMemberInScope(reference: PyReferenceExpression, context: TypeEvalContext): PyLiteralType? {

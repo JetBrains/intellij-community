@@ -29,7 +29,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
@@ -77,24 +76,20 @@ public final class PyPsiFacadeImpl extends PyPsiFacade {
     return PythonDocumentationProvider.getTypeName(type, context, features.toArray(new PyTypeRendererFeature[0]));
   }
 
-  public static @NotNull List<@Nullable PsiElement> resolveQName(@NotNull QualifiedName qualifiedName, @NotNull PsiElement anchor) {
+  @Override
+  public @Nullable PyClass createClassByQName(final @NotNull String qName, final @NotNull PsiElement anchor) {
+    final QualifiedName qualifiedName = QualifiedName.fromDottedString(qName);
     // Only built-in classes can be found by their unqualified names.
     if (qualifiedName.getComponentCount() == 1) {
-      PyClass aClass = PyBuiltinCache.getInstance(anchor).getClass(qualifiedName.toString());
-      return aClass != null ? List.of(aClass) : Collections.emptyList();
+      return PyBuiltinCache.getInstance(anchor).getClass(qName);
     }
 
     final Module module = ModuleUtilCore.findModuleForPsiElement(ObjectUtils.notNull(anchor.getContainingFile(), anchor));
-    if (module == null) return Collections.emptyList();
+    if (module == null) return null;
     // Don't use PyResolveImportUtil.fromFoothold here as setting foothold file is going to affect resolve results
     // particularly if the anchor element happens to be in the same file as the target class.
     final PyQualifiedNameResolveContext resolveContext = PyResolveImportUtil.fromModule(module).copyWithMembers();
-    return PyResolveImportUtil.resolveQualifiedName(qualifiedName, resolveContext);
-  }
-
-  @Override
-  public @Nullable PyClass createClassByQName(final @NotNull String qName, final @NotNull PsiElement anchor) {
-    return StreamEx.of(resolveQName(QualifiedName.fromDottedString(qName), anchor))
+    return StreamEx.of(PyResolveImportUtil.resolveQualifiedName(qualifiedName, resolveContext))
       .select(PyClass.class)
       .findFirst()
       .orElse(null);

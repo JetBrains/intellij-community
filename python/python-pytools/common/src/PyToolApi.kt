@@ -53,7 +53,6 @@ data class PyToolStateDto(
   val version: String?,
   val canInstall: Boolean,
   val latestVersion: String? = null,
-  val selectedAsTypeEngine: Boolean = false,
 )
 
 /** The resolved path of one tool, without the version or the manager data that a full state carries. */

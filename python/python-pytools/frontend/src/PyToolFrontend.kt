@@ -8,7 +8,6 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.python.pytools.common.FusId
 import com.intellij.python.pytools.common.PyToolConfigurationDto
 import com.intellij.python.pytools.common.PyToolDescriptorDto
-import com.intellij.python.pytools.frontend.ui.PyToolsUiBundle
 import org.jetbrains.annotations.Nls
 import javax.swing.Icon
 import kotlin.reflect.KClass
@@ -58,16 +57,6 @@ interface ProjectLevelPyToolFrontend<C : PyToolConfigurationDto> : PyToolFronten
 
   /** Returns a short summary of the active features. An empty value hides the summary. */
   fun summary(project: Project, configuration: C): @NlsSafe String = ""
-
-  /**
-   * Returns a confirmation message for an enabled-state change.
-   *
-   * The default asks for confirmation only when the user disables the selected type engine.
-   */
-  fun enableToggleConfirmation(isOn: Boolean, isTypeEngine: Boolean): @Nls String? {
-    if (isOn || !isTypeEngine) return null
-    return PyToolsUiBundle.message("py.tool.toggle.confirm.type.engine", presentableName)
-  }
 }
 
 /** Marks a tool that appears on the Package Managers page. */

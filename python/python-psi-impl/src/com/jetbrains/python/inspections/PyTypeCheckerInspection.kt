@@ -189,9 +189,6 @@ open class PyTypeCheckerInspection : PyInspection() {
       session.putUserData(TIME_KEY, System.nanoTime())
     }
     val context = PyInspectionVisitor.getContext(session)
-    if (context.usesExternalTypeEngine) {
-      return PsiElementVisitor.EMPTY_VISITOR
-    }
     val visitor = Visitor(holder, context, allowCovariantAttributeOverrides, checkInferredAttributeOverrides)
     return PyReachableElementVisitor(visitor, context)
   }
@@ -1686,7 +1683,6 @@ open class PyTypeCheckerInspection : PyInspection() {
       PyTypeCheckerInspectionProblemRegistrar
         .registerProblem(
           holder, callSite, shown, myTypeEvalContext,
-          ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
           hiddenCandidates = candidates.size - chosen.size,
         )
       return true
@@ -1714,7 +1710,7 @@ open class PyTypeCheckerInspection : PyInspection() {
         }
 
       PyTypeCheckerInspectionProblemRegistrar
-        .registerProblem(holder, callSite, reportResults, myTypeEvalContext, ProblemHighlightType.GENERIC_ERROR_OR_WARNING)
+        .registerProblem(holder, callSite, reportResults, myTypeEvalContext)
     }
 
     private fun reportArgumentTypeMismatch(callSite: PyElement, argumentsMappings: List<PyArgumentsMapping>): Boolean {
@@ -1732,10 +1728,7 @@ open class PyTypeCheckerInspection : PyInspection() {
       if (areTypesMatched(typeMatchResult)) return false
 
       PyTypeCheckerInspectionProblemRegistrar
-        .registerProblem(
-          holder, callSite, listOf(typeMatchResult), myTypeEvalContext,
-          ProblemHighlightType.GENERIC_ERROR_OR_WARNING
-        )
+        .registerProblem(holder, callSite, listOf(typeMatchResult), myTypeEvalContext)
       return true
     }
 

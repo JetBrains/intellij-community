@@ -16,7 +16,6 @@
     <orderEntry type="module" module-name="intellij.python.psi" />
     <orderEntry type="module" module-name="intellij.python.psi.impl" />
     <orderEntry type="module" module-name="intellij.python.sdk.backend" />
-    <orderEntry type="module" module-name="intellij.python.pyproject" />
     <orderEntry type="module" module-name="intellij.platform.codeStyle.impl" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.editor.ex" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.ide.impl" />
@@ -29,12 +28,10 @@
     <orderEntry type="module" module-name="intellij.platform.lsp" />
     <orderEntry type="module" module-name="intellij.platform.core" />
     <orderEntry type="module" module-name="intellij.libraries.eclipse.lsp4j" />
-    <orderEntry type="module" module-name="intellij.libraries.eclipse.lsp4j.jsonrpc" />
     <orderEntry type="module" module-name="intellij.platform.analysis" />
     <orderEntry type="module" module-name="intellij.python.lsp.core" />
     <orderEntry type="module" module-name="intellij.python.ty.common" />
     <orderEntry type="module" module-name="intellij.platform.core.impl" />
-    <orderEntry type="module" module-name="intellij.platform.statistics" />
     <orderEntry type="module" module-name="intellij.libraries.jackson3" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.libraries.jackson3.databind" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.ide.progress" scope="RUNTIME" />

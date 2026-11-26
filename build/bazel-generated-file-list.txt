@@ -2153,9 +2153,6 @@ python/python-testing-code-insight intellij.python.testing.codeInsight
 python/python-ty intellij.python.ty
 python/python-ty/common intellij.python.ty.common
 python/python-ty/frontend intellij.python.ty.frontend
-python/python-type-engine intellij.python.typeEngine
-python/python-type-engine/common intellij.python.typeEngine.common
-python/python-type-engine/frontend intellij.python.typeEngine.frontend
 python/python-uv/backend intellij.python.uv.backend
 python/python-uv/common intellij.python.uv.common
 python/python-uv/frontend intellij.python.uv.frontend

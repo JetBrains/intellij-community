@@ -26,12 +26,7 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 class PyNewTypeInspection : PyInspection() {
   override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean, session: LocalInspectionToolSession): PsiElementVisitor {
-    val context = PyInspectionVisitor.getContext(session)
-    if (context.usesExternalTypeEngine) {
-      return PsiElementVisitor.EMPTY_VISITOR
-    }
-
-    return object : PyInspectionVisitor(holder, context) {
+    return object : PyInspectionVisitor(holder, getContext(session)) {
       override fun visitPyTargetExpression(node: PyTargetExpression) {
         val assignedValue = node.findAssignedValue()
         if (assignedValue !is PyCallExpression) return

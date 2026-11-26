@@ -13,7 +13,7 @@ class TypeEvalContextFactoryImpl : TypeEvalContextFactory {
     project: Project,
     origin: PsiFile?,
   ): TypeEvalContext {
-    val constraints = TypeEvalConstraints(true, true, true, false, origin)
+    val constraints = TypeEvalConstraints(true, true, true, origin)
     return getContextFromCache(project, constraints) { TypeEvalContextImpl(constraints) }
   }
 
@@ -21,7 +21,7 @@ class TypeEvalContextFactoryImpl : TypeEvalContextFactory {
     project: Project,
     origin: PsiFile?,
   ): TypeEvalContext {
-    val constraints = TypeEvalConstraints(true, true, false, false, origin)
+    val constraints = TypeEvalConstraints(true, true, false, origin)
     return getContextFromCache(project, constraints) { TypeEvalContextImpl(constraints) }
   }
 
@@ -30,26 +30,21 @@ class TypeEvalContextFactoryImpl : TypeEvalContextFactory {
     origin: PsiFile?,
   ): TypeEvalContext {
     // The registry key selects only the class that a miss builds. Both classes have the same constraints.
-    return getContextFromCache(project, TypeEvalConstraints(false, false, false, false, origin)) {
+    return getContextFromCache(project, TypeEvalConstraints(false, false, false, origin)) {
       buildCodeAnalysisContext(origin)
     }
   }
 
   override fun codeInsightFallback(project: Project?): TypeEvalContext {
-    val constraints = TypeEvalConstraints(false, false, false, false, null)
+    val constraints = TypeEvalConstraints(false, false, false, null)
     if (project != null) {
       return getContextFromCache(project, constraints) { TypeEvalContextImpl(constraints) }
     }
     return TypeEvalContextImpl(constraints)
   }
 
-  override fun externalContext(project: Project): TypeEvalContext {
-    val constraints = TypeEvalConstraints(false, false, false, true, null)
-    return getContextFromCache(project, constraints) { TypeEvalContextImpl(constraints) }
-  }
-
   override fun deepCodeInsight(project: Project): TypeEvalContext {
-    val constraints = TypeEvalConstraints(false, true, false, false, null)
+    val constraints = TypeEvalConstraints(false, true, false, null)
     return getContextFromCache(project, constraints) { TypeEvalContextImpl(constraints) }
   }
 
@@ -75,6 +70,6 @@ class TypeEvalContextFactoryImpl : TypeEvalContextFactory {
     if (Registry.`is`("python.optimized.type.eval.context")) {
       return TypeEvalContextImpl.OptimizedTypeEvalContext(false, false, false, origin)
     }
-    return TypeEvalContextImpl(false, false, false, false, origin)
+    return TypeEvalContextImpl(false, false, false, origin)
   }
 }
