@@ -116,6 +116,11 @@ public final class MMappedFileStorage implements Closeable, Flushable, Unmappabl
 
   private final RegionAllocationAtomicityLock regionAllocationAtomicityLock;
 
+  /// Have storage resources been released?
+  /// There is a difference between 'closed' and 'resources released': storage is open until `channel.isOpen()`, but it could
+  /// be `!channel.isOpen()` while resources is not yet closed -- e.g. `channel` could be closed from outside this class, by
+  /// `interrupt()`-ing its operations => we need a separate flag
+  private volatile boolean resourcesReleased = false;
   /**
    * Stack trace of {@linkplain #close()} call -- stored to provide more information to 'already closed' exception
    * in use-after-close scenario
@@ -352,10 +357,10 @@ public final class MMappedFileStorage implements Closeable, Flushable, Unmappabl
   }
 
   private void closeStorageAndUnmapMemory() throws IOException {
-    boolean actuallyClosed = false;
+    boolean actuallyClosed = false;// i.e. not already closed
     try {
       synchronized (pagesLock) {
-        if (channel.isOpen()) {
+        if (!resourcesReleased) {
           try {
             channel.close();
           }
@@ -363,17 +368,18 @@ public final class MMappedFileStorage implements Closeable, Flushable, Unmappabl
             if (pagesArena.scope().isAlive()) {
               pagesArena.close();
             }
-          }
-          for (Page page : pages) {
-            if (page != null) {
-              unregisterMappedPage(pageSize);
+            for (Page page : pages) {
+              if (page != null) {
+                unregisterMappedPage(pageSize);
+              }
             }
-          }
-          Arrays.fill(pages, null);
-          actuallyClosed = true;
-        }
+            Arrays.fill(pages, null);
+            actuallyClosed = true;
 
-        this.closeStackTrace = new Exception("Close stack trace");
+            this.resourcesReleased = true;
+            this.closeStackTrace = new Exception("Close stack trace");
+          }
+        }
       }
     }
     finally {
