@@ -12,8 +12,12 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.components.JBPanelWithEmptyText
 import org.jetbrains.annotations.ApiStatus
 import java.awt.BorderLayout
+import java.awt.Component
+import java.awt.Container
+import java.awt.Point
 import javax.swing.JComponent
 import javax.swing.JPanel
+import javax.swing.JScrollPane
 
 /**
  * One project-level page of a Settings window that configures several projects, see [SettingsFrameProjects].
@@ -28,6 +32,9 @@ import javax.swing.JPanel
  * The page shows only the projects that have a page with the id, see [projectsWithPage]. When the selected project has no
  * such page, the page shows the first project that has one, and the selection stays. When no project has such a page, the
  * page is in the tree only as the parent of its child pages, and it shows an empty text.
+ *
+ * A change of the shown project moves no scroll. The page of the new project takes the scroll positions of the page that
+ * was shown before, see [showSelectedProject].
  *
  * The child pages of the page are the child pages of all the projects. A page without child pages is a leaf of the tree.
  * A project that joins can add child pages to each page, see [FrameProjectsConfigurableGroup.join].
@@ -134,7 +141,10 @@ class FrameProjectConfigurable internal constructor(
     return panel
   }
 
-  /** Shows the page of [shownProject]. The first call for a project creates the page of the project. */
+  /**
+   * Shows the page of [shownProject]. The first call for a project creates the page of the project.
+   * The page takes the scroll positions of the page that the call replaces.
+   */
   fun showSelectedProject() {
     val container = container ?: return
     val delegate = selectedDelegate
@@ -148,10 +158,44 @@ class FrameProjectConfigurable internal constructor(
     if (container.componentCount == 1 && container.getComponent(0) === page) {
       return
     }
+    val previous = container.components.firstOrNull()
     container.removeAll()
     container.add(page, BorderLayout.CENTER)
     container.revalidate()
+    if (previous != null) {
+      // a scroll pane without a layout has an empty view, and it then moves each position back to the start
+      container.validate()
+      copyScrollPositions(previous, page)
+    }
     container.repaint()
+  }
+
+  /**
+   * Gives each scroll pane of [to] the scroll position of the scroll pane at the same place of [from].
+   * Two places are the same while the components on the way to them have the same class and the same index in their parent.
+   * A position that is after the end of the view of [to] becomes the end of that view.
+   */
+  private fun copyScrollPositions(from: Component, to: Component) {
+    if (from.javaClass != to.javaClass) {
+      return
+    }
+    if (from is JScrollPane && to is JScrollPane) {
+      val position = from.viewport?.viewPosition
+      val viewport = to.viewport
+      if (position != null && viewport != null) {
+        val viewSize = viewport.viewSize
+        val extentSize = viewport.extentSize
+        viewport.viewPosition = Point(
+          position.x.coerceAtMost(viewSize.width - extentSize.width).coerceAtLeast(0),
+          position.y.coerceAtMost(viewSize.height - extentSize.height).coerceAtLeast(0),
+        )
+      }
+    }
+    if (from is Container && to is Container) {
+      for (index in 0 until minOf(from.componentCount, to.componentCount)) {
+        copyScrollPositions(from.getComponent(index), to.getComponent(index))
+      }
+    }
   }
 
   override fun isModified(): Boolean = createdDelegates.any { it.second.isModified }

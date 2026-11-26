@@ -60,6 +60,8 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Timeout
 import java.awt.BorderLayout
 import java.awt.Component
+import java.awt.Dimension
+import java.awt.Point
 import java.awt.event.ActionEvent
 import javax.swing.JComponent
 import javax.swing.JPanel
@@ -433,6 +435,49 @@ internal class SettingsFrameProjectsTest {
 
     assertThat(pageOf(owner).resets).isEqualTo(1)
     assertThat(pageOf(guest).resets).isEqualTo(1)
+    page.disposeUIResources()
+  }
+
+  @Test
+  fun `a change of the shown project keeps the scroll positions of the page`(): Unit = inFrame { disposable ->
+    pageHeights.put(owner, 2000)
+    pageHeights.put(guest, 2000)
+    val projects = SettingsFrameProjects.create(owner)!!
+    val page = projectPage(createGroup(projects, disposable))
+    val component = showInWindow(page)
+    scroll(component, Point(0, 500), Point(0, 300))
+
+    projects.select(guest)
+    page.showSelectedProject()
+
+    assertThat(ConfigurableWrapper.cast(FrameProjectsTestProjectPage::class.java, page)).isSameAs(pageOf(guest))
+    assertThat(scrollPositionsOf(component)).describedAs("The page of the frame guest takes the positions of the page of the frame owner")
+      .containsExactly(Point(0, 500), Point(0, 300))
+
+    scroll(component, Point(0, 40), Point(0, 700))
+    projects.select(owner)
+    page.showSelectedProject()
+
+    assertThat(scrollPositionsOf(component)).describedAs("The page of the frame owner follows the page of the frame guest")
+      .containsExactly(Point(0, 40), Point(0, 700))
+    page.disposeUIResources()
+  }
+
+  @Test
+  fun `a page that is shorter than the scroll position shows its end`(): Unit = inFrame { disposable ->
+    pageHeights.put(owner, 2000)
+    pageHeights.put(guest, 400)
+    val projects = SettingsFrameProjects.create(owner)!!
+    val page = projectPage(createGroup(projects, disposable))
+    val component = showInWindow(page)
+    scroll(component, Point(0, 500), Point(0, 600))
+
+    projects.select(guest)
+    page.showSelectedProject()
+
+    val (pagePane, innerPane) = scrollPanesOf(component)
+    assertThat(pagePane.viewport.viewPosition).isEqualTo(Point(0, 400 - pagePane.viewport.extentSize.height))
+    assertThat(innerPane.viewport.viewPosition).isEqualTo(Point(0, 400 - innerPane.viewport.extentSize.height))
     page.disposeUIResources()
   }
 
@@ -861,6 +906,7 @@ internal class SettingsFrameProjectsTest {
         windowManager.removeFrameGuest(third)
         pagesByProject.clear()
         sharedValue = null
+        pageHeights.clear()
         projectMasks.clear()
         pageMasks.clear()
         PropertiesComponent.getInstance(owner).unsetValue("settings.editor.selected.project")
@@ -900,6 +946,22 @@ internal class SettingsFrameProjectsTest {
     )
     markAsShowing(editor)
     return editor
+  }
+
+  /** Creates the component of [page] and gives it the size and the layout of a window that is lower than the page. */
+  private fun showInWindow(page: FrameProjectConfigurable): JComponent {
+    val component = ConfigurableCardPanel.createConfigurableComponent(page)!!
+    component.setSize(300, 200)
+    component.validate()
+    return component
+  }
+
+  /** Scrolls the scroll pane of the page in [component] to [pagePosition], and the scroll pane in that page to [innerPosition]. */
+  private fun scroll(component: Component, pagePosition: Point, innerPosition: Point) {
+    val (pagePane, innerPane) = scrollPanesOf(component)
+    pagePane.viewport.viewPosition = pagePosition
+    innerPane.viewport.viewPosition = innerPosition
+    assertThat(scrollPositionsOf(component)).describedAs("The scroll panes have a layout").containsExactly(pagePosition, innerPosition)
   }
 
   /** Puts [editor] into a parent that gives [project] as the project of the data context, as the Settings window does. */
@@ -1028,7 +1090,7 @@ private class FrameProjectsTestAppPage : Configurable {
 }
 
 /** The project-level test page. The test finds the page of a project with [pageOf]. */
-private open class FrameProjectsTestProjectPage(project: Project) : Configurable {
+private open class FrameProjectsTestProjectPage(private val project: Project) : Configurable {
   /** `true` when the EDT created the page. */
   val isCreatedOnEdt: Boolean = ApplicationManager.getApplication().isDispatchThread
   var modified = false
@@ -1048,7 +1110,16 @@ private open class FrameProjectsTestProjectPage(project: Project) : Configurable
 
   override fun getDisplayName(): String = "Project Page"
 
-  override fun createComponent(): JComponent = JPanel()
+  /** A page with a height in [pageHeights] holds a scroll pane with a view of that height. */
+  override fun createComponent(): JComponent {
+    val height = pageHeights.get(project) ?: return JPanel()
+    val innerView = JPanel().apply { preferredSize = Dimension(INNER_PANE_SIZE, height) }
+    val innerPane = JScrollPane(innerView).apply { preferredSize = Dimension(INNER_PANE_SIZE, INNER_PANE_SIZE) }
+    return JPanel(BorderLayout()).apply {
+      preferredSize = Dimension(INNER_PANE_SIZE, height)
+      add(innerPane, BorderLayout.NORTH)
+    }
+  }
 
   override fun isModified(): Boolean = sharedValue?.let { value != it } ?: modified
 
@@ -1098,6 +1169,22 @@ private fun pageOf(project: Project): FrameProjectsTestProjectPage = pagesByProj
  * It is `null` when each page keeps its own change in [FrameProjectsTestProjectPage.modified].
  */
 private var sharedValue: Int? = null
+
+/**
+ * The height of the project-level test page of a project. Such a page is higher than the window, and it holds a scroll pane.
+ * A project without a height has an empty page.
+ */
+private val pageHeights = HashMap<Project, Int>()
+
+/** The width and the height of the scroll pane in a project-level test page with a height. */
+private const val INNER_PANE_SIZE = 100
+
+/** The scroll position of each scroll pane of [component], the scroll pane of the page first. */
+private fun scrollPositionsOf(component: Component): List<Point> = scrollPanesOf(component).map { it.viewport.viewPosition }
+
+private fun scrollPanesOf(component: Component): List<JScrollPane> {
+  return UIUtil.uiTraverser(component).filter(JScrollPane::class.java).toList()
+}
 
 /** `true` when [component] and each of its parents up to [root] are visible. */
 private fun isVisibleIn(root: Component, component: Component): Boolean {
