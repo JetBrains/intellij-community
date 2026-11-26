@@ -13,7 +13,9 @@ class VcsLogNotificationIdsHolder : NotificationIdsHolder {
       COMMIT_NOT_FOUND,
       NAVIGATION_ERROR,
       FILE_HISTORY_ACTION_LOAD_DETAILS_ERROR,
-      LOAD_COMMIT_DETAILS_ERROR
+      LOAD_COMMIT_DETAILS_ERROR,
+      COMMIT_HASH_NOT_FOUND,
+      COMMIT_HASH_NOT_SHOWN,
     )
   }
 
@@ -24,5 +26,7 @@ class VcsLogNotificationIdsHolder : NotificationIdsHolder {
     const val NAVIGATION_ERROR: String = "vcs.log.navigation.error"
     const val FILE_HISTORY_ACTION_LOAD_DETAILS_ERROR: String = "file.history.load.details.error"
     const val LOAD_COMMIT_DETAILS_ERROR: String = "load.commit.details.error"
+    const val COMMIT_HASH_NOT_FOUND: String = "vcs.log.commit.hash.not.found"
+    const val COMMIT_HASH_NOT_SHOWN: String = "vcs.log.commit.hash.not.shown"
   }
 }
