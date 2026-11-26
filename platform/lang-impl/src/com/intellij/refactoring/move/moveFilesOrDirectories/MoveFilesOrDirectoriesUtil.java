@@ -31,6 +31,7 @@ import com.intellij.refactoring.modplan.ModPlanEdit;
 import com.intellij.refactoring.modplan.move.ModPlanMovePlaces;
 import com.intellij.refactoring.modplan.move.ModPlanMoveUsage;
 import com.intellij.refactoring.modplan.move.impl.ModPlanFileReferenceUpdates;
+import com.intellij.refactoring.move.FileMoveVeto;
 import com.intellij.refactoring.move.FileReferenceContextUtil;
 import com.intellij.refactoring.move.MoveCallback;
 import com.intellij.refactoring.move.MoveHandler;
@@ -365,6 +366,12 @@ public final class MoveFilesOrDirectoriesUtil {
     //element.checkDelete(); //move != delete + add
     newContainer.checkAdd(element);
     checkIfMoveIntoSelf(element, newContainer);
+    if (element instanceof PsiFileSystemItem item && newContainer instanceof PsiDirectory directory) {
+      var problem = FileMoveVeto.findProblem(item, directory);
+      if (problem != null) {
+        throw new IncorrectOperationException(problem);
+      }
+    }
   }
 
   public static void checkIfMoveIntoSelf(PsiElement element, PsiElement newContainer) throws IncorrectOperationException {

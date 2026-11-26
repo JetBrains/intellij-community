@@ -20,6 +20,7 @@ import com.intellij.platform.ide.productMode.IdeProductMode;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.refactoring.RefactoringActionHandler;
@@ -176,6 +177,9 @@ public final class MoveHandler implements RefactoringActionHandler {
   }
 
   private static @Nullable MoveHandlerDelegate findDelegate(PsiElement @NotNull [] elements, @Nullable PsiElement targetContainer, @Nullable PsiReference reference) {
+    if (isVetoed(elements, targetContainer)) {
+      return null;
+    }
     for (MoveHandlerDelegate delegate: MoveHandlerDelegate.EP_NAME.getExtensionList()) {
       if (delegate.canMove(elements, targetContainer, reference)) {
         return delegate;
@@ -183,6 +187,19 @@ public final class MoveHandler implements RefactoringActionHandler {
     }
 
     return null;
+  }
+
+  /** Tells whether a {@link FileMoveVeto} forbids the move of one of {@code elements} into {@code targetContainer}. */
+  private static boolean isVetoed(PsiElement @NotNull [] elements, @Nullable PsiElement targetContainer) {
+    if (!(targetContainer instanceof PsiDirectory directory)) {
+      return false;
+    }
+    for (var element : elements) {
+      if (element instanceof PsiFileSystemItem item && FileMoveVeto.findProblem(item, directory) != null) {
+        return true;
+      }
+    }
+    return false;
   }
 
   public static @Nullable @NlsActions.ActionText String getActionName(@NotNull DataContext dataContext) {
