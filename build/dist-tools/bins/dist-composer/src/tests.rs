@@ -82,7 +82,7 @@ fn write_cli_fixture(local_launch: bool) {
         "composition.json",
         format!(
             concat!(
-                r#"{{"version":1,"platformPrefix":"idea","expectedFragments":["platform_core","plugins"],"#,
+                r#"{{"platformPrefix":"idea","expectedFragments":["platform_core","plugins"],"#,
                 r#""additionalModules":["intellij.packed","intellij.bundled"],"bundledModules":["plugins"],"components":["#,
                 r#"{{"manifest":"fragments/core.json","pluginClasspathPart":null}},"#,
                 r#"{{"manifest":"fragments/plugins.json","pluginClasspathPart":"fragments/plugins.part"}}],"#,

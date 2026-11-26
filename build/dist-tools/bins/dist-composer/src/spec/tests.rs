@@ -12,7 +12,7 @@ fn write_spec(directory: &TempDir, content: &str) -> PathBuf {
 
 /// The shape of `json.encode` in `intellij_dist.bzl`: every key, with `null` for an absent file or map.
 const STARLARK_SPEC: &str = concat!(
-    r#"{"version":1,"platformPrefix":"idea","expectedFragments":["platform_core","intellij.java.plugin"],"#,
+    r#"{"platformPrefix":"idea","expectedFragments":["platform_core","intellij.java.plugin"],"#,
     r#""additionalModules":["intellij.air.plugin"],"#,
     r#""bundledModules":["intellij.java.plugin"],"#,
     r#""components":[{"manifest":"core.json","pluginClasspathPart":null},{"manifest":"plugins.json","pluginClasspathPart":"plugins.part"}],"#,
@@ -55,13 +55,15 @@ fn composition_spec_decodes_the_starlark_shape() {
 fn composition_spec_rejects_invalid_content() {
     let cases = [
         (
-            r#""version":1"#,
-            r#""version":2"#,
-            "Unsupported dev-build composition spec version 2 in ",
+            r#""platformPrefix":"idea""#,
+            r#""platformPrefix":"idea","platformPrefix":"idea""#,
+            "duplicate field `platformPrefix`",
         ),
-        (r#""version":1"#, r#""version":"1""#, "invalid type: string \"1\", expected i32"),
-        (r#""version":1"#, r#""version":1,"version":1"#, "duplicate field `version`"),
-        (r#""version":1,"#, "", "missing field `version`"),
+        (
+            r#""platformPrefix":"idea","#,
+            r#""version":1,"platformPrefix":"idea","#,
+            "unknown field `version`",
+        ),
         (r#""platformPrefix":"idea","#, "", "missing field `platformPrefix`"),
         (
             r#""additionalModules":["intellij.air.plugin"],"#,

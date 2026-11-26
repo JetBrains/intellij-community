@@ -1,4 +1,4 @@
-//! Composition spec v1, the file that `--composition-spec` names, and the source bindings JSONL that it can name.
+//! The composition spec, the file that `--composition-spec` names, and the source bindings JSONL that it can name.
 //!
 //! `intellij_dist.bzl` writes both files with `json.encode`. It writes every key of the spec, with `null` for an
 //! absent value. A key without `Option` is required. An `Option` key takes `null`, and an absent one reads as `None`.
@@ -12,9 +12,6 @@ use component::{json, paths};
 use serde::Deserialize;
 
 use crate::placement::Placement;
-
-/// The only composition spec version that the composer accepts.
-pub(crate) const COMPOSITION_SPEC_VERSION: i32 = 1;
 
 /// One component of the composition spec. Its manifest names each file where it already is.
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
@@ -30,7 +27,6 @@ pub(crate) struct CompositionComponent {
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub(crate) struct CompositionSpec {
-    pub(crate) version: i32,
     /// The `build/dev-build.json` key of the product. The IDE config states it as `platform.prefix`, and the fingerprint
     /// hashes it. No component manifest states a product.
     pub(crate) platform_prefix: String,
@@ -48,16 +44,10 @@ pub(crate) struct CompositionSpec {
     pub(crate) placement: Option<Placement>,
 }
 
-/// Reads a spec, then checks its version and that it has components.
+/// Reads a spec, then checks that it has components. The rule and the composer run in one build, so a spec has no
+/// version.
 pub(crate) fn read_composition_spec(path: &Path) -> Result<CompositionSpec> {
     let spec: CompositionSpec = json::read(path)?;
-    if spec.version != COMPOSITION_SPEC_VERSION {
-        bail!(
-            "Unsupported dev-build composition spec version {} in {}",
-            spec.version,
-            path.display()
-        );
-    }
     if spec.components.is_empty() {
         bail!("Dev-build composition spec in {} has no components", path.display());
     }

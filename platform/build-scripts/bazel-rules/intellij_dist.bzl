@@ -647,7 +647,6 @@ def _compose(ctx, fragment_targets):
     ctx.actions.write(
         composition_spec,
         json.encode({
-            "version": 1,
             "platformPrefix": ctx.attr.platform_prefix,
             "expectedFragments": ctx.attr.expect_fragments,
             "additionalModules": ctx.attr.additional_modules,
