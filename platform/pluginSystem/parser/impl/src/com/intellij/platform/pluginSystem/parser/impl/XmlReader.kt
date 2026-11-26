@@ -454,7 +454,6 @@ private fun readExtensionPoints(
         LOG.warn("`include` is supported only on a root level (${reader.location})")
         // TODO: note, this function does not copy misc extensions (bug?)
         copyExtensionPoints(partial.getBuilder(), builder) { it.appContainerBuilder }
-        copyExtensionPoints(partial.getBuilder(), builder) { it.workspaceContainerBuilder }
         copyExtensionPoints(partial.getBuilder(), builder) { it.projectContainerBuilder }
         copyExtensionPoints(partial.getBuilder(), builder) { it.moduleContainerBuilder }
       }
@@ -502,7 +501,6 @@ private fun readExtensionPoints(
 
     val containerBuilder = when (area) {
       null -> builder.appContainerBuilder
-      PluginXmlConst.EXTENSION_POINT_AREA_IDEA_WORKSPACE_VALUE -> builder.workspaceContainerBuilder
       PluginXmlConst.EXTENSION_POINT_AREA_IDEA_PROJECT_VALUE -> builder.projectContainerBuilder
       PluginXmlConst.EXTENSION_POINT_AREA_IDEA_MODULE_VALUE -> builder.moduleContainerBuilder
       else -> {

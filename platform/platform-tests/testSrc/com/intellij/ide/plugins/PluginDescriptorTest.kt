@@ -233,16 +233,12 @@ class PluginDescriptorTest {
   <workspaceListeners>
     <listener class="a.Listener" topic="a.Topic"/>
   </workspaceListeners>
-  <extensionPoints>
-    <extensionPoint qualifiedName="a.point" interface="a.Point" area="IDEA_WORKSPACE"/>
-  </extensionPoints>
 </idea-plugin>""")
     val descriptor = loadDescriptorInTest(pluginDirPath)
     assertThat(descriptor).isNotNull
     val workspace = descriptor.workspaceContainerDescriptor
     assertThat(workspace.services.map { it.serviceImplementation }).containsExactly("a.Service")
     assertThat(workspace.listeners.map { it.listenerClassName to it.topicClassName }).containsExactly("a.Listener" to "a.Topic")
-    assertThat(workspace.extensionPoints.map { it.name }).containsExactly("a.point")
     assertThat(descriptor.projectContainerDescriptor.services).isEmpty()
   }
 

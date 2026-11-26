@@ -193,8 +193,6 @@ f:com.intellij.openapi.command.CoroutinesKt
 - *sf:execute(com.intellij.openapi.command.WriteCommandAction$Builder,kotlin.jvm.functions.Function0,kotlin.coroutines.Continuation):java.lang.Object
 - *sf:writeCommandAction(com.intellij.openapi.application.ReadAndWriteScope,com.intellij.openapi.project.Project,java.lang.String,kotlin.jvm.functions.Function0):com.intellij.openapi.application.ReadResult
 - *sf:writeCommandAction(com.intellij.openapi.project.Project,java.lang.String,kotlin.jvm.functions.Function0,kotlin.coroutines.Continuation):java.lang.Object
-f:com.intellij.openapi.components.ExtensionAreas
-- *sf:IDEA_WORKSPACE:java.lang.String
 e:com.intellij.openapi.components.Service$Level
 - java.lang.Enum
 - *sf:WORKSPACE:com.intellij.openapi.components.Service$Level

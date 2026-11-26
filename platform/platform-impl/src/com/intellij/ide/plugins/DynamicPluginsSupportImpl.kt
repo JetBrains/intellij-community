@@ -753,7 +753,6 @@ internal class DynamicPluginsSupportImpl(
       openedProjects.add(ProjectManagerEx.getInstanceEx().defaultProject)
     }
     val workspaces = liveWorkspacesOrEmpty()
-    val workspaceAreas = workspaces.map { it.getComponentManagerImpl().extensionArea }
 
     val appExtensionArea = app.extensionArea
     val priorityUnloadListeners = mutableListOf<Runnable>()
@@ -762,7 +761,6 @@ internal class DynamicPluginsSupportImpl(
       extensionMap = module.extensions,
       pluginDescriptor = module,
       appExtensionArea = appExtensionArea,
-      workspaceAreas = workspaceAreas,
       openedProjects = openedProjects,
       priorityUnloadListeners = priorityUnloadListeners,
       unloadListeners = unloadListeners
@@ -776,11 +774,11 @@ internal class DynamicPluginsSupportImpl(
     }
 
     // first, reset all plugin extension points before unregistering, so that listeners don't see plugin in semi-torn-down state
-    processExtensionPoints(module, workspaceAreas, openedProjects) { points, area ->
+    processExtensionPoints(module, openedProjects) { points, area ->
       area.resetExtensionPoints(points, module)
     }
     // unregister plugin extension points
-    processExtensionPoints(module, workspaceAreas, openedProjects) { points, area ->
+    processExtensionPoints(module, openedProjects) { points, area ->
       area.unregisterExtensionPoints(points, module)
     }
 
@@ -825,7 +823,6 @@ internal class DynamicPluginsSupportImpl(
     extensionMap: Map<String, List<ExtensionDescriptor>>,
     pluginDescriptor: IdeaPluginDescriptorImpl,
     appExtensionArea: ExtensionsAreaImpl,
-    workspaceAreas: List<ExtensionsAreaImpl>,
     openedProjects: List<Project>,
     priorityUnloadListeners: MutableList<Runnable>,
     unloadListeners: MutableList<Runnable>,
@@ -834,13 +831,6 @@ internal class DynamicPluginsSupportImpl(
       val isAppLevelEp = appExtensionArea.unregisterExtensions(epName, pluginDescriptor, priorityUnloadListeners,
                                                                unloadListeners)
       if (isAppLevelEp) {
-        continue
-      }
-
-      val isWorkspaceLevelEp = workspaceAreas.count { area ->
-        area.unregisterExtensions(epName, pluginDescriptor, priorityUnloadListeners, unloadListeners)
-      } > 0
-      if (isWorkspaceLevelEp) {
         continue
       }
 
@@ -860,17 +850,11 @@ internal class DynamicPluginsSupportImpl(
 
   internal fun processExtensionPoints(
     pluginDescriptor: IdeaPluginDescriptorImpl,
-    workspaceAreas: List<ExtensionsAreaImpl>,
     projects: List<Project>,
     processor: (points: List<ExtensionPointDescriptor>, area: ExtensionsAreaImpl) -> Unit,
   ) {
     pluginDescriptor.appContainerDescriptor.extensionPoints.takeIf { it.isNotEmpty() }?.let {
       processor(it, ApplicationManager.getApplication().extensionArea as ExtensionsAreaImpl)
-    }
-    pluginDescriptor.workspaceContainerDescriptor.extensionPoints.takeIf { it.isNotEmpty() }?.let { extensionPoints ->
-      for (area in workspaceAreas) {
-        processor(extensionPoints, area)
-      }
     }
     pluginDescriptor.projectContainerDescriptor.extensionPoints.takeIf { it.isNotEmpty() }?.let { extensionPoints ->
       for (project in projects) {
@@ -948,7 +932,7 @@ internal class DynamicPluginsSupportImpl(
     private val tracer: IJTracer by lazy { TelemetryManager.getInstance().getTracer(Scope("dynamicPluginsSupport", PlatformMetrics)) }
 
     /** Gives the live workspaces. It does not create the manager: without the manager, no workspace exists. */
-    internal fun liveWorkspacesOrEmpty(): List<Workspace> {
+    private fun liveWorkspacesOrEmpty(): List<Workspace> {
       val manager = serviceIfCreated<WorkspaceManager>() as? ProjectWorkspaceManagerImpl
       return manager?.liveWorkspaces() ?: emptyList()
     }

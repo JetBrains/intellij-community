@@ -836,7 +836,6 @@ elements:
                             - `IDEA_APPLICATION` _(default)_
                             - `IDEA_PROJECT`
                             - `IDEA_MODULE` (**deprecated**)
-                            - `IDEA_WORKSPACE` (**experimental**)
 
                           **It is strongly recommended not to introduce new project- and module-level extension points.**
                           If an extension point needs to operate on a `Project` or `Module` instance, declare an application-level extension

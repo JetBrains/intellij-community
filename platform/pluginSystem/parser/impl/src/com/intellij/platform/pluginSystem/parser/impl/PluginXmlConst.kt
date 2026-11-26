@@ -122,7 +122,6 @@ object PluginXmlConst {
   const val EXTENSION_POINT_INTERFACE_ATTR: String = "interface"
   const val EXTENSION_POINT_DYNAMIC_ATTR: String = "dynamic"
   const val EXTENSION_POINT_HAS_ATTRIBUTES_ATTR: String = "hasAttributes"
-  const val EXTENSION_POINT_AREA_IDEA_WORKSPACE_VALUE: String = "IDEA_WORKSPACE"
   const val EXTENSION_POINT_AREA_IDEA_PROJECT_VALUE: String = "IDEA_PROJECT"
   const val EXTENSION_POINT_AREA_IDEA_MODULE_VALUE: String = "IDEA_MODULE"
 

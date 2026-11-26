@@ -89,13 +89,6 @@ class NonDefaultConstructorInspectionTest {
   }
 
   @Test
-  fun `test workspace extension with Workspace`() {
-    addWorkspaceStubs()
-    myFixture.configureByFile("workspace/plugin.xml")
-    myFixture.testHighlighting("workspace/WorkspaceExtension.java")
-  }
-
-  @Test
   fun `test light service with Workspace`() {
     addWorkspaceStubs()
     myFixture.addClass("package com.intellij.openapi.components; public @interface Service {}")

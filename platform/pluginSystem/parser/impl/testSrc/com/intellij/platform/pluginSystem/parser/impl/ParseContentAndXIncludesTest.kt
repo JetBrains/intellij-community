@@ -37,9 +37,6 @@ internal class ParseContentAndXIncludesTest {
         <workspaceListeners>
           <listener class="a.Listener" topic="a.Topic"/>
         </workspaceListeners>
-        <extensionPoints>
-          <extensionPoint qualifiedName="a.point" interface="a.Point" area="IDEA_WORKSPACE"/>
-        </extensionPoints>
       </idea-plugin>
     """.trimIndent()
     val parseResult = parseContentAndXIncludes(input.toByteArray(), null)

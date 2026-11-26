@@ -31,8 +31,7 @@ public interface ExtensionPoint extends DomElement {
   enum Area {
     IDEA_PROJECT,
     IDEA_MODULE,
-    IDEA_APPLICATION,
-    IDEA_WORKSPACE
+    IDEA_APPLICATION
   }
 
   @NotNull
