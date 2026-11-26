@@ -1172,7 +1172,7 @@ public final class EditorPainter implements TextDrawingCallback {
                                  @Nullable Color effectColor,
                                  @Nullable EffectType effectType,
                                  boolean allowBorder) {
-      if (effectColor == null) {
+      if (effectColor == null || effectType == EffectType.FADED) {
         return;
       }
       myGraphics.setColor(effectColor);
