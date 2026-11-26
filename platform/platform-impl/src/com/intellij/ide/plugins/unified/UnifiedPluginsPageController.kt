@@ -322,20 +322,20 @@ internal class UnifiedPluginsPageController(
       .filter { section -> isVisibleForCurrentQuery(section, selectedRepositoryIds) }
       .map(::orderBundledItems)
       .map { section -> if (projected) stabilizeItemOrder(section) else section }
-      .map(::orderSessionInstalls)
+      .map(::orderRecentInstalls)
       .sortedWith(compareBy({ section: PluginSectionState -> sectionRank(section.id) }, { sectionInsertionOrder.getValue(it.id) }))
       .toList()
   }
 
-  private fun orderSessionInstalls(section: PluginSectionState): PluginSectionState {
-    if (section.id != PluginSectionId.Installed || section.sessionInstallGroups.isEmpty() || query.normalizedQuery.isNotEmpty()) {
+  private fun orderRecentInstalls(section: PluginSectionState): PluginSectionState {
+    if (section.id != PluginSectionId.Installed || section.recentInstallGroups.isEmpty() || query.normalizedQuery.isNotEmpty()) {
       return section
     }
     val visibleIds = section.items.mapTo(HashSet(), PluginItemState::pluginId)
     val remaining = section.items.associateByTo(LinkedHashMap(), PluginItemState::pluginId)
     val leading = ArrayList<PluginItemState>()
     val dependenciesByMain = LinkedHashMap<PluginId, MutableList<PluginItemState>>()
-    for (group in section.sessionInstallGroups) {
+    for (group in section.recentInstallGroups) {
       val rows = group.pluginIds.mapNotNull(remaining::remove)
       if (group.mainPluginId in visibleIds && group.mainPluginId !in group.pluginIds) {
         dependenciesByMain.getOrPut(group.mainPluginId) { ArrayList() }.addAll(rows)

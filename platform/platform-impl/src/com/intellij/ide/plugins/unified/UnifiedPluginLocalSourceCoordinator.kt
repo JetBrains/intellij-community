@@ -61,8 +61,9 @@ internal class UnifiedPluginLocalSourceCoordinator(
   private val sessionId: String,
   private val loadErrorMessage: @Nls String,
   private val hostEventObserver: (PluginModelEvent) -> Unit = {},
+  installHistory: UnifiedPluginInstallHistory = UnifiedPluginInstallHistory(),
 ) : AutoCloseable {
-  private val installingLedger = UnifiedPluginInstallingLedger(sessionId)
+  private val installingLedger = UnifiedPluginInstallingLedger(sessionId, installHistory)
   private val commands = Channel<Command>(Channel.UNLIMITED)
   private val mutableState = MutableStateFlow(initialState())
   private var processorJob: Job? = null

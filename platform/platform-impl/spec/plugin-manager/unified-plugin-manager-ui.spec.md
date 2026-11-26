@@ -19,6 +19,7 @@ targets:
   - ../../src/com/intellij/ide/plugins/unified/LegacyPluginDetailsPresenter.kt
   - ../../src/com/intellij/ide/plugins/unified/PluginRowReconciler.kt
   - ../../src/com/intellij/ide/plugins/unified/PluginRowView.kt
+  - ../../src/com/intellij/ide/plugins/unified/UnifiedPluginInstallHistory.kt
   - ../../src/com/intellij/ide/plugins/unified/UnifiedPluginInternalSourceCoordinator.kt
   - ../../src/com/intellij/ide/plugins/unified/UnifiedPluginInventory.kt
   - ../../src/com/intellij/ide/plugins/unified/UnifiedPluginLocalDataProvider.kt
@@ -378,13 +379,16 @@ Untested: Product welcome buttons on a remote backend keep the Settings route be
 - Enabled plugins must win a match score tie.
 - Later results in the same query revision must retain the relative order of plugins that remain in a section.
 - In the default Installed list, new install groups must appear first, in reverse order of scheduling.
+- This order must survive closing and reopening the Plugins page during the same IDE run.
+- An IDE restart must clear this order. A reopened page must show only the plugins in its inventory from earlier installs.
 - In that list, new dependencies must follow their main plugin if it is present. An existing main plugin must keep its relative position.
 - Installed must expand when a matching scheduled install is outside the preview.
 - A manual collapse must take precedence during the active installs.
 - Other new plugins must append. A plugin that leaves and returns must resume its retained position.
   [@test] ../../testSrc/com/intellij/ide/plugins/unified/UnifiedPluginsPageSourceCoordinatorTest.kt (
     `Marketplace selection stays on a scheduled install`;
-    `scheduled installs and dependencies show progress in Installed`
+    `scheduled installs and dependencies show progress in Installed`;
+    `recent installs keep their order when the page reopens`
   )
 - In Suggested, these rules apply separately to project suggestions, Staff Picks, and Marketplace results.
 - In expanded Bundled, a new plugin must append in its category. A new category must append after existing categories.

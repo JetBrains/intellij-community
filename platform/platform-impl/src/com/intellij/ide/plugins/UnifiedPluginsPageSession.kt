@@ -36,6 +36,7 @@ import com.intellij.ide.plugins.unified.PluginSectionId
 import com.intellij.ide.plugins.unified.PluginSectionStatus
 import com.intellij.ide.plugins.unified.PluginsQueryScope
 import com.intellij.ide.plugins.unified.PluginsQueryState
+import com.intellij.ide.plugins.unified.UnifiedPluginInstallHistory
 import com.intellij.ide.plugins.unified.UnifiedPluginInternalGroup
 import com.intellij.ide.plugins.unified.UnifiedPluginInternalSourceCoordinator
 import com.intellij.ide.plugins.unified.UnifiedPluginLocalDataProvider
@@ -181,6 +182,7 @@ internal class UnifiedPluginsPageSession @RequiresEdt constructor(
     sessionId = host.sessionId,
     loadErrorMessage = IdeBundle.message("plugins.configurable.local.plugins.not.loaded"),
     hostEventObserver = ::acceptHostEvent,
+    installHistory = application.getService(UnifiedPluginInstallHistory::class.java),
   )
   private val initialQueryState = initialNavigation.toQueryState()
   private val marketplaceDataProvider = marketplaceDataProviderFactory(host, repositoryCache)

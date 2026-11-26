@@ -572,6 +572,75 @@ internal class UnifiedPluginsPageSourceCoordinatorTest {
   }
 
   @Test
+  fun `recent installs keep their order when the page reopens`() = runTest {
+    val history = UnifiedPluginInstallHistory()
+    val events = MutableSharedFlow<PluginModelEvent>(extraBufferCapacity = 2)
+    val existing = inventoryItem("existing", "Existing Plugin")
+    val older = inventoryItem("older", "Older Plugin")
+    val newer = inventoryItem("newer", "Newer Plugin")
+    val dependency = inventoryItem("dependency", "Dependency")
+    val unfinished = inventoryItem("unfinished", "Unfinished Plugin")
+    val firstPage = coordinator(
+      provider = FakeLocalDataProvider(UnifiedPluginInventory(listOf(existing), emptyList())),
+      hostEvents = events,
+      installHistory = history,
+    )
+    firstPage.start()
+    runCurrent()
+
+    fun start(plugin: PluginUiModel): UUID {
+      val id = UUID.randomUUID()
+      assertThat(events.tryEmit(PluginModelEvent.OperationStarted(
+        "session", id, plugin.pluginId, plugin, PluginSource.LOCAL, PluginOperationKind.INSTALL,
+      ))).isTrue()
+      runCurrent()
+      return id
+    }
+
+    fun finish(id: UUID, plugin: PluginUiModel, dependencies: List<PluginUiModel> = emptyList()) {
+      assertThat(events.tryEmit(PluginModelEvent.OperationFinished(
+        "session", id, plugin.pluginId, PluginSource.LOCAL, PluginOperationKind.INSTALL,
+        PluginOperationTerminalResult.SUCCEEDED, installedPlugins = dependencies,
+      ))).isTrue()
+      runCurrent()
+    }
+
+    val olderOperation = start(older.model)
+    val newerOperation = start(newer.model)
+    assertThat(events.tryEmit(PluginModelEvent.OperationDependenciesScheduled(
+      "session", newerOperation, newer.model.pluginId, listOf(dependency.model), PluginSource.LOCAL, PluginOperationKind.INSTALL,
+    ))).isTrue()
+    runCurrent()
+    finish(newerOperation, newer.model, listOf(dependency.model))
+    finish(olderOperation, older.model)
+    start(unfinished.model)
+    firstPage.close()
+
+    val inventory = UnifiedPluginInventory(listOf(existing, older, dependency, newer), emptyList())
+    val reopened = coordinator(
+      provider = FakeLocalDataProvider(inventory),
+      marketplaceDataProvider = FixedMarketplaceDataProvider(newer.model),
+      installHistory = history,
+    )
+    reopened.start()
+    runCurrent()
+    fun installedOrder(page: UnifiedPluginsPageSourceCoordinator): List<String> {
+      val controller = UnifiedPluginsPageController(initialSections = page.state.value.sections)
+      return controller.state.value.sections.single { it.id == PluginSectionId.Installed }.items.map { it.pluginId.idString }
+    }
+
+    assertThat(installedOrder(reopened)).containsExactly("newer", "dependency", "older", "existing")
+    assertThat(reopened.state.value.sections.single { it.id == PluginSectionId.Suggested }.items).isEmpty()
+    reopened.close()
+
+    val freshRun = coordinator(provider = FakeLocalDataProvider(inventory))
+    freshRun.start()
+    runCurrent()
+    assertThat(installedOrder(freshRun)).containsExactly("existing", "older", "dependency", "newer")
+    freshRun.close()
+  }
+
+  @Test
   fun `source rows keep an install through Apply`() = runTest {
     val events = MutableSharedFlow<PluginModelEvent>(extraBufferCapacity = 2)
     val plugin = plugin("new.plugin", "New Plugin")
@@ -1622,6 +1691,7 @@ internal class UnifiedPluginsPageSourceCoordinatorTest {
     marketplaceDataProvider: UnifiedPluginMarketplaceDataProvider = EmptyMarketplaceDataProvider,
     internalGroup: UnifiedPluginInternalGroup? = null,
     onSearchReset: () -> Unit = {},
+    installHistory: UnifiedPluginInstallHistory = UnifiedPluginInstallHistory(),
   ): UnifiedPluginsPageSourceCoordinator {
     val localSource = UnifiedPluginLocalSourceCoordinator(
       scope = backgroundScope,
@@ -1630,6 +1700,7 @@ internal class UnifiedPluginsPageSourceCoordinatorTest {
       hostEvents = hostEvents,
       sessionId = "session",
       loadErrorMessage = "Unable to load plugins",
+      installHistory = installHistory,
     )
     val query = initialPluginsQueryState(initialQuery)
     val internalSource = UnifiedPluginInternalSourceCoordinator(

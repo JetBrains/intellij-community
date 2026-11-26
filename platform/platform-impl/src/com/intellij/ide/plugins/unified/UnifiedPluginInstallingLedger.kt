@@ -25,6 +25,7 @@ import java.util.UUID
  */
 internal class UnifiedPluginInstallingLedger(
   private val sessionId: String,
+  private val installHistory: UnifiedPluginInstallHistory = UnifiedPluginInstallHistory(),
 ) {
   private val mutableEntries = LinkedHashMap<PluginId, MutableEntry>()
   private val operations = LinkedHashMap<UUID, Operation>()
@@ -56,6 +57,7 @@ internal class UnifiedPluginInstallingLedger(
 
   fun forgetUninstalledPlugins(pluginIds: Set<PluginId>) {
     operations.values.forEach { it.installIds.removeAll(pluginIds) }
+    installHistory.forget(pluginIds)
   }
 
   fun installedSection(
@@ -64,9 +66,13 @@ internal class UnifiedPluginInstallingLedger(
     status: PluginSectionStatus,
   ): PluginSectionState {
     val items = inventoryItems.associateByTo(LinkedHashMap(), PluginItemState::pluginId)
+    val recentGroups = installHistory.snapshot().toSortedMap(reverseOrder())
+    recentGroups.replaceAll { _, group -> group.copy(pluginIds = group.pluginIds.filter(items::containsKey)) }
+    recentGroups.values.removeIf { it.pluginIds.isEmpty() }
     val groups = ArrayList<SessionPluginInstallGroup>()
     val displayed = HashSet<PluginId>()
     for ((_, operation) in operations.reversed()) {
+      recentGroups.remove(operation.order)
       val installIds = ArrayList<PluginId>()
       for (pluginId in operation.installIds) {
         if (pluginId in displayed) continue
@@ -90,9 +96,19 @@ internal class UnifiedPluginInstallingLedger(
         displayed.add(pluginId)
         installIds.add(pluginId)
       }
-      if (installIds.isNotEmpty()) groups.add(SessionPluginInstallGroup(operation.mainPluginId, installIds))
+      if (installIds.isNotEmpty()) {
+        val group = SessionPluginInstallGroup(operation.mainPluginId, installIds)
+        groups.add(group)
+        recentGroups[operation.order] = group
+      }
     }
-    return PluginSectionState(PluginSectionId.Installed, items = items.values.toList(), status = status, sessionInstallGroups = groups)
+    return PluginSectionState(
+      PluginSectionId.Installed,
+      items = items.values.toList(),
+      status = status,
+      sessionInstallGroups = groups,
+      recentInstallGroups = recentGroups.values.toList(),
+    )
   }
 
   fun section(listModelData: PluginListModelData): PluginSectionState? {
@@ -107,11 +123,13 @@ internal class UnifiedPluginInstallingLedger(
     if (event.sessionId != sessionId) return false
     if (operations.containsKey(event.operationId)) return false
 
-    operations[event.operationId] = Operation(event.displayPluginId).apply {
+    val operation = Operation(event.displayPluginId, installHistory.nextOperationOrder()).apply {
       if (event.kind == PluginOperationKind.INSTALL && event.displayPluginId !in installedPluginIds) {
         installIds.add(event.displayPluginId)
       }
     }
+    operations[event.operationId] = operation
+    rememberInstallGroup(operation)
     val revision = ++nextRevision
     val entry = mutableEntries.getOrPut(event.displayPluginId) {
       MutableEntry(event.displayPluginId, event.presentationModel, revision)
@@ -138,6 +156,7 @@ internal class UnifiedPluginInstallingLedger(
       operation.installIds.addAll(installedDependencies.filter { it != event.displayPluginId && it !in installedPluginIds })
       operation.phase = InstallPhase.Prepared
       operation.restartRequired = event.restartRequired
+      rememberInstallGroup(operation)
     }
     val installedPluginsChanged = event.installedPlugins.fold(false) { changed, plugin ->
       if (plugin.pluginId == event.displayPluginId) changed
@@ -166,7 +185,8 @@ internal class UnifiedPluginInstallingLedger(
   ): Boolean {
     if (event.sessionId != sessionId) return false
 
-    return event.dependencies.fold(false) { changed, plugin ->
+    val operation = operations[event.operationId]
+    val changed = event.dependencies.fold(false) { changed, plugin ->
       if (plugin.pluginId == event.displayPluginId) {
         changed
       }
@@ -187,7 +207,6 @@ internal class UnifiedPluginInstallingLedger(
             target = event.target,
             state = InstallingPluginAttemptState.Active,
           )
-          val operation = operations[event.operationId]
           if (operation?.phase == InstallPhase.Active && plugin.pluginId !in installedPluginIds) {
             operation.installIds.add(plugin.pluginId)
           }
@@ -195,6 +214,8 @@ internal class UnifiedPluginInstallingLedger(
         }
       }
     }
+    if (changed && operation != null) rememberInstallGroup(operation)
+    return changed
   }
 
   private fun acceptPrimaryFinished(event: PluginModelEvent.OperationFinished): Boolean {
@@ -212,7 +233,11 @@ internal class UnifiedPluginInstallingLedger(
     return true
   }
 
-  private class Operation(val mainPluginId: PluginId) {
+  private fun rememberInstallGroup(operation: Operation) {
+    installHistory.remember(operation.order, SessionPluginInstallGroup(operation.mainPluginId, operation.installIds.toList()))
+  }
+
+  private class Operation(val mainPluginId: PluginId, val order: Long) {
     val installIds = LinkedHashSet<PluginId>()
     var phase = InstallPhase.Active
     var restartRequired = false
