@@ -2,8 +2,9 @@
 package com.intellij.java.codeInsight;
 
 import com.intellij.codeInsight.AbstractBasicJavaBackspaceTest;
+import com.intellij.testFramework.junit5.TestApplication;
 
+@TestApplication
 public class JavaBackspaceTest extends AbstractBasicJavaBackspaceTest {
 
 }
-

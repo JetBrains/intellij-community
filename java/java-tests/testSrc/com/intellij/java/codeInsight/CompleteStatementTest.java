@@ -2,8 +2,8 @@
 package com.intellij.java.codeInsight;
 
 import com.intellij.codeInsight.AbstractBasicCompleteStatementTest;
-import com.intellij.testFramework.TestDataPath;
+import com.intellij.testFramework.junit5.TestApplication;
 
-@TestDataPath("$CONTENT_ROOT/testData")
+@TestApplication
 public class CompleteStatementTest extends AbstractBasicCompleteStatementTest {
 }
