@@ -11,6 +11,8 @@ import org.jetbrains.annotations.ApiStatus.Internal
  *
  * A frame shows its frame owner and the frame guests of the owner. Without a provider, the frame owner is first, and the frame
  * guests follow in the order they joined the frame. A product that keeps its own order of the projects gives it here.
+ *
+ * A provider whose order changes while the frame keeps its projects tells that through [ProjectFrameProjectOrderListener].
  */
 @Internal
 @Experimental

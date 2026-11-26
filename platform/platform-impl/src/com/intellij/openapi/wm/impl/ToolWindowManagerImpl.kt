@@ -60,6 +60,7 @@ import com.intellij.openapi.wm.WindowInfo
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.openapi.wm.ex.ProjectFrameCapabilitiesService
 import com.intellij.openapi.wm.ex.ProjectFrameCapability
+import com.intellij.openapi.wm.ex.ProjectFrameProjectOrderListener
 import com.intellij.openapi.wm.ex.ProjectFrameTypeService
 import com.intellij.openapi.wm.ex.ToolWindowEx
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx
@@ -682,6 +683,9 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
         }
       }
     }
+
+    // a frame owner lists the projects of its frame in the selectors of its tool windows
+    connection.subscribe(ProjectFrameProjectOrderListener.TOPIC, ProjectFrameProjectOrderListener { presentation.projectOrderChanged() })
 
     connection.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, object : FileEditorManagerListener {
       override fun fileClosed(source: FileEditorManager, file: VirtualFile) {

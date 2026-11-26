@@ -40,6 +40,8 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.wm.ex.ProjectFrameCapabilitiesProvider
 import com.intellij.openapi.wm.ex.ProjectFrameCapabilitiesService
 import com.intellij.openapi.wm.ex.ProjectFrameCapability
+import com.intellij.openapi.wm.ex.ProjectFrameProjectOrderListener
+import com.intellij.openapi.wm.ex.ProjectFrameProjectOrderProvider
 import com.intellij.openapi.wm.ex.ProjectFrameUiPolicy
 import com.intellij.openapi.wm.ex.WindowManagerEx
 import com.intellij.testFramework.ExtensionTestUtil
@@ -691,6 +693,36 @@ internal class SettingsFrameProjectsTest {
         ConfigurableWrapper.cast(FrameProjectsTestProjectPage::class.java, page)?.let { it === pagesByProject.get(third) } == true
       }
       assertThat(page.isModified).describedAs("The change of the frame owner waits for Apply").isTrue()
+    }
+  }
+
+  @Test
+  fun `an open Settings window lists its tabs in the new order of the frame`(): Unit = inFrame { disposable ->
+    // as a workspace whose user moves a project: the order of the frame changes, and no project joins or leaves
+    var order = listOf(owner, guest)
+    ExtensionTestUtil.maskExtensions(
+      ProjectFrameProjectOrderProvider.EP_NAME,
+      listOf(object : ProjectFrameProjectOrderProvider {
+        override fun getProjectOrder(frameOwner: Project): List<Project>? = if (frameOwner === owner) order else null
+      }),
+      disposable,
+    )
+    withForcedRespectIsShowingClientProperty {
+      val projects = SettingsFrameProjects.create(owner)!!
+      val group = createGroup(projects, disposable)
+      val page = projectPage(group)
+      val editor = createEditor(group, page, disposable)
+      waitFor("the project-level page") { editor.selectedConfigurable === page }
+      val tabs = UIUtil.findComponentOfType(editor.content, SingleHeightTabs::class.java)!!
+      waitFor("the tabs of the frame") { tabs.tabs.map { it.`object` } == listOf(owner, guest) }
+
+      order = listOf(guest, owner)
+      owner.messageBus.syncPublisher(ProjectFrameProjectOrderListener.TOPIC).projectOrderChanged()
+
+      assertThat(projects.projects).containsExactly(guest, owner)
+      waitFor("the tabs in the new order") { tabs.tabs.map { it.`object` } == listOf(guest, owner) }
+      assertThat(projects.selected).describedAs("The selection stays").isSameAs(owner)
+      assertThat(tabs.selectedInfo?.`object`).isSameAs(owner)
     }
   }
 

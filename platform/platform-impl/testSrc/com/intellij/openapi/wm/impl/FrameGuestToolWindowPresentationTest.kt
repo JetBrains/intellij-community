@@ -519,6 +519,33 @@ internal class FrameGuestToolWindowPresentationTest {
   }
 
   @Test
+  fun `a change of the order of the frame puts the entries and the tabs of the selector into the new order`() = onEdt {
+    // as a workspace whose user moves a project: the order changes, and no tool window gets an event
+    var order = listOf(owner, first, second)
+    ExtensionTestUtil.maskExtensions(
+      ProjectFrameProjectOrderProvider.EP_NAME,
+      listOf(object : ProjectFrameProjectOrderProvider {
+        override fun getProjectOrder(frameOwner: Project): List<Project>? = if (frameOwner === owner) order else null
+      }),
+      disposable,
+    )
+    val managers = createManagers()
+    val presenting = managers.owner.registerToolWindow(task(), buttonManager(managers.owner)).toolWindow
+    managers.register(first)
+    managers.register(second).show()
+    val selector = selectorIn(presenting.getOrCreateDecoratorComponent())!!
+    assertThat(selector.tabs.map { it.text }).containsExactly(owner.name, first.name, second.name)
+    val selected = managers.owner.presentation.selectedProjectOf(ID)
+
+    order = listOf(second, first, owner)
+    managers.owner.presentation.projectOrderChanged()
+
+    assertThat(managers.owner.presentation.entriesOf(ID)).containsExactly(second, first, owner)
+    assertThat(selector.tabs.map { it.text }).containsExactly(second.name, first.name, owner.name)
+    assertThat(managers.owner.presentation.selectedProjectOf(ID)).describedAs("the selection stays").isSameAs(selected)
+  }
+
+  @Test
   fun `a frame owner with content of its own is the first entry and stays selected`() = onEdt {
     val managers = createManagers()
     managers.owner.layoutState.addInfo(ID, visibleInfo())

@@ -15,6 +15,7 @@ import com.intellij.openapi.wm.RegisterToolWindowTaskData
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowFactory
 import com.intellij.openapi.wm.ToolWindowManager
+import com.intellij.openapi.wm.ex.ProjectFrameProjectOrderListener
 import com.intellij.toolWindow.ToolWindowEntry
 import com.intellij.toolWindow.ToolWindowEventSource
 import com.intellij.toolWindow.ToolWindowFactoryScope
@@ -37,7 +38,8 @@ private val LOG = logger<ToolWindowManagerPresentation>()
  *
  * The selector lists a project while its tool window is available and on the stripe of its project, see
  * [ToolWindowImpl.isOnProjectStripe]. So a project whose Find tool window lost its last content has no entry.
- * The entries are in the order of the projects of the frame, see [IdeFrameGuests.orderedProjectsOf].
+ * The entries are in the order of the projects of the frame, see [IdeFrameGuests.orderedProjectsOf]. A change of that
+ * order with the same projects comes through [projectOrderChanged].
  * The rule is the same for a frame guest and for the frame owner. A frame owner without tool window content of its own
  * is never an entry.
  *
@@ -605,6 +607,19 @@ internal class ToolWindowManagerPresentation(private val manager: ToolWindowMana
     }
     val projects = IdeFrameGuests.orderedProjectsOf(manager.project)
     slot.selection.sort(compareBy { toolWindow -> projects.indexOf(toolWindow.project).let { if (it < 0) Int.MAX_VALUE else it } })
+  }
+
+  /**
+   * The order of the projects of the frame changed with the same projects, see [ProjectFrameProjectOrderListener]. Each
+   * selector lists its entries in the new order. The selection stays.
+   */
+  fun projectOrderChanged() {
+    runOnEdt {
+      for (slot in slots.values) {
+        sortEntries(slot)
+        updateUi(slot)
+      }
+    }
   }
 
   /**

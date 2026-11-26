@@ -46,6 +46,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.openapi.wm.ex.ProjectFrameProjectOrderListener;
 import com.intellij.ui.IdeUICustomization;
 import com.intellij.ui.OnePixelSplitter;
 import com.intellij.ui.SearchTextField;
@@ -513,6 +514,8 @@ public final class SettingsEditor extends AbstractEditor implements UiDataProvid
         }
       }
     });
+    // the selector lists the projects in the order of the frame, and that order can change with the same projects
+    projects.getFrameOwner().getMessageBus().connect(this).subscribe(ProjectFrameProjectOrderListener.TOPIC, projects::reorder);
     // a project that left the frame while the tree was built sent its close event before this subscription
     List<Project> frameProjects = SettingsFrameProjects.listProjects(projects.getFrameOwner());
     for (Project project : projects.getProjects()) {

@@ -9,6 +9,7 @@ import com.intellij.openapi.options.ex.FrameProjectsConfigurableGroup
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.ex.ProjectFrameCapabilitiesService
 import com.intellij.openapi.wm.ex.ProjectFrameCapability
+import com.intellij.openapi.wm.ex.ProjectFrameProjectOrderListener
 import com.intellij.openapi.wm.impl.IdeFrameGuests
 import com.intellij.util.containers.DisposableWrapperList
 import org.jetbrains.annotations.ApiStatus
@@ -28,7 +29,7 @@ import org.jetbrains.annotations.ApiStatus
 class SettingsFrameProjects internal constructor(val frameOwner: Project, projects: List<Project>) {
   private val listeners = DisposableWrapperList<Runnable>()
 
-  /** The projects of the selector, in the order of the frame, see [IdeFrameGuests.orderedProjectsOf]. */
+  /** The projects of the selector, in the order of the frame, see [IdeFrameGuests.orderedProjectsOf] and [reorder]. */
   var projects: List<Project> = projects
     private set
 
@@ -83,12 +84,30 @@ class SettingsFrameProjects internal constructor(val frameOwner: Project, projec
     if (project in projects) {
       return
     }
-    val order = listProjects(frameOwner)
-    projects = (projects + project).sortedBy { order.indexOf(it).let { index -> if (index < 0) Int.MAX_VALUE else index } }
+    projects = inFrameOrder(projects + project)
     if (selected !in projects) {
       selected = project
     }
     fireChanged()
+  }
+
+  /**
+   * Puts the projects of the selector into the order of [listProjects] again, because the order of the frame changed with
+   * the same projects, see [ProjectFrameProjectOrderListener]. The selection stays.
+   */
+  fun reorder() {
+    val reordered = inFrameOrder(projects)
+    if (reordered == projects) {
+      return
+    }
+    projects = reordered
+    fireChanged()
+  }
+
+  /** [projects] in the order of [listProjects]. A project that the frame does not list goes last. */
+  private fun inFrameOrder(projects: List<Project>): List<Project> {
+    val order = listProjects(frameOwner)
+    return projects.sortedBy { order.indexOf(it).let { index -> if (index < 0) Int.MAX_VALUE else index } }
   }
 
   companion object {
