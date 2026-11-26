@@ -1,5 +1,49 @@
 # Jewel Release Notes
 
+## v0.44 (2026-11-26)
+
+| Min supported IJP versions | Compose Multiplatform version |
+|----------------------------|-------------------------------|
+| 2026.3.1                   | 1.13.0-beta01                 |
+
+### ⚠️ Important Changes
+
+* **[JEWEL-1457](https://youtrack.jetbrains.com/issue/JEWEL-1457)** On macOS, `jewel-int-ui-standalone` now calls the
+  native APIs through the JDK's Foreign Function & Memory API instead of JNA
+  ([#3751](https://github.com/JetBrains/intellij-community/pull/3751))
+  * The POM still declares JNA, so an app that gets JNA through Jewel keeps working. A future release removes this
+    dependency. If your app uses JNA, add it to your own dependencies now.
+  * Native calls from an unnamed module print a "restricted method" warning unless native access is enabled. Start
+    your app with `--enable-native-access=ALL-UNNAMED`, or add `Enable-Native-Access: ALL-UNNAMED` to the manifest of
+    an executable JAR.
+* **[JEWEL-1472](https://youtrack.jetbrains.com/issue/JEWEL-1472)** `DefaultMarkdownBlockRenderer.resolveImages` no
+  longer runs for blocks without images. If you override it, it now sees only blocks that contain at least one image
+  ([#3756](https://github.com/JetBrains/intellij-community/pull/3756))
+
+### Bug fixes
+
+* **[JEWEL-1459](https://youtrack.jetbrains.com/issue/JEWEL-1459)** `JBPopupRenderer` now measures the popup content
+  in an invisible popup window before it shows the popup. It no longer uses reflection on the `ComposePanel` internals
+  ([#3715](https://github.com/JetBrains/intellij-community/pull/3715))
+* **[JEWEL-1472](https://youtrack.jetbrains.com/issue/JEWEL-1472)** Markdown paragraphs and headings without inline
+  images no longer allocate snapshot state when they render. The initial composition of long Markdown documents is
+  faster ([#3756](https://github.com/JetBrains/intellij-community/pull/3756))
+* **[JEWEL-1473](https://youtrack.jetbrains.com/issue/JEWEL-1473)** Fixed `GitHubAlertProcessorExtension` crashing with
+  `StringIndexOutOfBoundsException` when parsing lines with tab-indented list items or blockquotes. Also fixed the
+  parsing of alerts indented with up to three spaces or inside tab-indented blocks
+  ([#3746](https://github.com/JetBrains/intellij-community/pull/3746))
+* **[JEWEL-1475](https://youtrack.jetbrains.com/issue/JEWEL-1475)** `SimpleCodeHighlighter` no longer throws a
+  `StackOverflowError` on a code block with a long string, comment, number or CSS identifier. Before, a token of a few
+  thousand characters crashed the highlighting thread, and the error reached the composition
+  ([#3753](https://github.com/JetBrains/intellij-community/pull/3753))
+* **[JEWEL-1475](https://youtrack.jetbrains.com/issue/JEWEL-1475)** The CSS grammar now ends a block comment at the
+  first `*/`. Before, a comment that ended in `**/` was not highlighted, or it colored the code up to the next comment
+  ([#3753](https://github.com/JetBrains/intellij-community/pull/3753))
+* **[JEWEL-1483](https://youtrack.jetbrains.com/issue/JEWEL-1483)** Fixed `Slider` swapping `thumbSize.width` and
+  `thumbSize.height` when it calculates its minimum width and vertical track position. Tracks now center vertically on
+  non-square thumbs, and the minimum width scales with the thumb width
+  ([#3777](https://github.com/JetBrains/intellij-community/pull/3777))
+
 ## v0.43 (2026-11-17)
 
 | Min supported IJP versions | Compose Multiplatform version |
