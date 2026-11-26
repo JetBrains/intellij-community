@@ -7,7 +7,6 @@ import com.intellij.openapi.editor.impl.marker.PMarkerRelocationRoot.Insertions
 import com.intellij.openapi.editor.impl.marker.PMarkerRoot.MarkerDeltaProcessor
 import com.intellij.openapi.editor.impl.marker.PMarkerRoot.MarkerEntry
 import com.intellij.openapi.util.TextRangeScalarUtil
-import com.intellij.util.Processor
 import org.jetbrains.annotations.ApiStatus
 import java.util.function.Consumer
 
@@ -80,14 +79,13 @@ class PMarkerInsertionRoot internal constructor(
     val baseStart = start - if (descending) 0 else offsets.totalDelta
     if (base.endsBefore(baseStart)) return this
     val affected = ArrayList<SnapshotMarkerReference<*>>()
-    val canDefer = base.processRangeMarkersOverlappingWith(baseStart, baseStart, 0) { stored ->
-      val range = resolve(stored.handle)
-      val oldStart = PMarkerResolution.startOffset(range)
-      val oldEnd = PMarkerResolution.endOffset(range)
+    val canDefer = base.processRangeMarkersOverlappingWith(baseStart, baseStart, 0) { stored, delta ->
+      val entry = shifted(stored, delta)
+      val oldStart = entry.nodeStart
+      val oldEnd = entry.nodeEnd
       if (start !in (oldStart + 1) until oldEnd || oldEnd > Int.MAX_VALUE - length) {
         return@processRangeMarkersOverlappingWith false
       }
-      val entry = stored.copy(nodeStart = oldStart, nodeEnd = oldEnd)
       val result = entry.policy.transform(entry, patch, beforeText, afterText)
       if (!result.isValid || result.startOffset != oldStart || result.endOffset != oldEnd + length) {
         return@processRangeMarkersOverlappingWith false
@@ -112,10 +110,10 @@ class PMarkerInsertionRoot internal constructor(
     startOffset: Int,
     endOffset: Int,
     tastePreference: Int,
-    processor: Processor<in MarkerEntry>,
+    processor: MarkerDeltaProcessor,
   ): Boolean {
     val iterator = overlappingIterator(startOffset, endOffset, tastePreference)
-    while (iterator.hasNext()) if (!processor.process(iterator.next())) return false
+    while (iterator.hasNext()) if (!processor.process(iterator.next(), 0)) return false
     return true
   }
 

@@ -1483,8 +1483,8 @@ class SnapshotMarkerEngineTest {
       startOffset = startOffset,
       endOffset = endOffset,
       tastePreference = tastePreference,
-    ) {
-      result.add(label(it.handle))
+    ) { entry, _ ->
+      result.add(label(entry.handle))
       true
     }
     return result

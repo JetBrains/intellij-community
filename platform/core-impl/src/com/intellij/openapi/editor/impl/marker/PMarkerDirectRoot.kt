@@ -7,7 +7,6 @@ import com.intellij.openapi.editor.impl.marker.PMarkerRoot.MarkerDeltaProcessor
 import com.intellij.openapi.editor.impl.marker.PMarkerRoot.MarkerEntry
 import com.intellij.openapi.util.TextRangeScalarUtil
 import com.intellij.util.ObjectUtilsRt
-import com.intellij.util.Processor
 import com.intellij.util.containers.ConcurrentLongLongMap
 import com.intellij.util.containers.Java11Shim
 import it.unimi.dsi.fastutil.longs.Long2LongOpenHashMap
@@ -495,12 +494,12 @@ class PMarkerDirectRoot private constructor(
     startOffset: Int,
     endOffset: Int,
     tastePreference: Int,
-    processor: Processor<in MarkerEntry>,
+    processor: MarkerDeltaProcessor,
   ): Boolean {
     require(startOffset in 0..endOffset) { "The query range is invalid" }
     return processOverlaps(root, 0, startOffset, endOffset, tastePreference and 0xFF) { entry, delta ->
       cacheResolution(entry, delta)
-      processor.process(entry)
+      processor.process(entry, delta)
     }
   }
 

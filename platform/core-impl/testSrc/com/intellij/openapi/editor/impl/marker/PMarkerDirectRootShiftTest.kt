@@ -286,7 +286,10 @@ internal class PMarkerDirectRootShiftTest {
                    shifted.getPrefixAggregate(entry.nodeStart + delta))
     }
     val found = ArrayList<MarkerEntry>()
-    shifted.processRangeMarkersOverlappingWith(0, 200, 1) { found.add(it); true }
+    shifted.processRangeMarkersOverlappingWith(0, 200, 1) { entry, _ ->
+      found.add(entry)
+      true
+    }
     assertEquals(entries.filter { it.flavorFlags.toInt() and 1 != 0 }.map { it.handle }, found.map { it.handle })
   }
 

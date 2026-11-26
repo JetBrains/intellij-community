@@ -384,10 +384,10 @@ class SnapshotMarkerRootStore<T : SnapshotRangeMarkerImpl> @JvmOverloads constru
 
   private class MarkerProcessor(
     private val processor: Processor<in RangeMarkerEx>,
-  ) : Processor<PMarkerRoot.MarkerEntry>, PMarkerRoot.MarkerDeltaProcessor {
+  ) : PMarkerRoot.MarkerDeltaProcessor {
     private var collectedHandles: ArrayList<SnapshotMarkerReference<*>>? = null
 
-    override fun process(entry: PMarkerRoot.MarkerEntry): Boolean {
+    override fun process(entry: PMarkerRoot.MarkerEntry, ancestorDelta: Int): Boolean {
       val marker = entry.marker
       if (marker == null) {
         val handles = collectedHandles ?: ArrayList<SnapshotMarkerReference<*>>().also { collectedHandles = it }
@@ -396,8 +396,6 @@ class SnapshotMarkerRootStore<T : SnapshotRangeMarkerImpl> @JvmOverloads constru
       }
       return marker.isDisposed() || processor.process(marker)
     }
-
-    override fun process(entry: PMarkerRoot.MarkerEntry, ancestorDelta: Int): Boolean = process(entry)
 
     fun purgeCollected(rootStore: SnapshotMarkerRootStore<*>, snapshot: DocumentSnapshot) {
       val handles = collectedHandles ?: return

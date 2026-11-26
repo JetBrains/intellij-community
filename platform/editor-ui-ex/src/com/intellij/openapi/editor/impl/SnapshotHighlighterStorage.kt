@@ -165,7 +165,7 @@ internal class SnapshotHighlighterStorage(
     }
     iteratorDepth.get()[0]++
     try {
-      return root.processRangeMarkersOverlappingWith(start, end, 0) { entry ->
+      return root.processRangeMarkersOverlappingWith(start, end, 0) { entry, _ ->
         val marker = entry.marker
         marker !is SnapshotRangeHighlighterImpl || !marker.isValid || processor.process(marker)
       }
@@ -189,14 +189,14 @@ internal class SnapshotHighlighterStorage(
     iteratorDepth.get()[0]++
     try {
       val lines = ArrayList<SnapshotRangeHighlighterImpl>()
-      roots.linesInRangeRoot.processRangeMarkersOverlappingWith(lineRange.startOffset, lineRange.endOffset, 0) { entry ->
+      roots.linesInRangeRoot.processRangeMarkersOverlappingWith(lineRange.startOffset, lineRange.endOffset, 0) { entry, _ ->
         val marker = entry.marker
         if (marker is SnapshotRangeHighlighterImpl && marker.isValid) lines.add(marker)
         true
       }
       var nextLine = 0
       var nextLineStart = if (lines.isEmpty()) Int.MAX_VALUE else lines[0].affectedAreaStartOffset
-      val completed = roots.exactRangeRoot.processRangeMarkersOverlappingWith(startOffset, endOffset, 0) { entry ->
+      val completed = roots.exactRangeRoot.processRangeMarkersOverlappingWith(startOffset, endOffset, 0) { entry, _ ->
         val marker = entry.marker
         if (marker !is SnapshotRangeHighlighterImpl || !marker.isValid) return@processRangeMarkersOverlappingWith true
         val markerStart = marker.affectedAreaStartOffset

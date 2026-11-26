@@ -6,7 +6,6 @@ import com.intellij.openapi.editor.ex.DocumentText
 import com.intellij.openapi.editor.impl.marker.PMarkerRoot.MarkerDeltaProcessor
 import com.intellij.openapi.editor.impl.marker.PMarkerRoot.MarkerEntry
 import com.intellij.openapi.util.TextRangeScalarUtil
-import com.intellij.util.Processor
 import org.jetbrains.annotations.ApiStatus
 import java.util.function.Consumer
 
@@ -103,7 +102,7 @@ class PMarkerRelocationRoot private constructor(
     val start = patch.startOffset()
     val baseStart = start - (if (descending) 0 else insertions?.totalDelta ?: 0)
     val changes = ArrayList<MarkerEntry>()
-    val canDefer = base.processRangeMarkersOverlappingWith(baseStart, baseStart, 0) { stored ->
+    val canDefer = base.processRangeMarkersOverlappingWith(baseStart, baseStart, 0) { stored, _ ->
       if (positions.getUnchecked(stored.handle.id) != null) return@processRangeMarkersOverlappingWith true
       val entry = stored.copy(nodeStart = start, nodeEnd = start)
       val result = entry.policy.transform(entry, patch, beforeText, afterText)
@@ -187,7 +186,7 @@ class PMarkerRelocationRoot private constructor(
   override fun getPrefixAggregate(offset: Int): Int = base.getPrefixAggregate(offset)
 
   override fun processRangeMarkersOverlappingWith(
-    startOffset: Int, endOffset: Int, tastePreference: Int, processor: Processor<in MarkerEntry>,
+    startOffset: Int, endOffset: Int, tastePreference: Int, processor: MarkerDeltaProcessor,
   ): Boolean = materialize().processRangeMarkersOverlappingWith(startOffset, endOffset, tastePreference, processor)
 
   override fun overlappingIterator(startOffset: Int, endOffset: Int, tastePreference: Int): Iterator<MarkerEntry> =

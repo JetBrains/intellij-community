@@ -345,12 +345,12 @@ public class SnapshotMarkerEngineBenchmark {
   }
 
   /** Reusable callback used by the intersection benchmark. */
-  public static final class MarkerEntryAccumulator implements Processor<PMarkerRoot.MarkerEntry> {
+  public static final class MarkerEntryAccumulator implements PMarkerRoot.MarkerDeltaProcessor {
     private long checksum;
     private long count;
 
     @Override
-    public boolean process(PMarkerRoot.MarkerEntry entry) {
+    public boolean process(PMarkerRoot.MarkerEntry entry, int ancestorDelta) {
       checksum += System.identityHashCode(entry.getHandle());
       count++;
       return true;

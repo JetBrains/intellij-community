@@ -130,7 +130,7 @@ internal class PMarkerDirectRootTest {
     assertNull(resolutionCache(root))
     var visited = 0
 
-    fun process(entry: MarkerEntry): Boolean {
+    val processor = PMarkerRoot.MarkerDeltaProcessor { entry, _ ->
       val expected = entries[visited++]
       val delta = if (expected.nodeStart > 40) 2 else 0
       val offsets = TextRangeScalarUtil.toScalarRange(expected.nodeStart + delta, expected.nodeEnd + delta)
@@ -138,17 +138,17 @@ internal class PMarkerDirectRootTest {
       assertEquals(offsets, checkNotNull(resolutionCache(root))[entry.handle.id])
       assertTrue(root.isValid(entry.handle))
       assertEquals(offsets, root.resolve(entry.handle))
-      return visited < 15
+      visited < 15
     }
 
     when (query) {
-      0 -> assertFalse(root.processAllRangeMarkers { entry, _ -> process(entry) })
-      1 -> assertFalse(root.processRangeMarkersOverlappingWith(0, 200, 0, ::process))
+      0 -> assertFalse(root.processAllRangeMarkers(processor))
+      1 -> assertFalse(root.processRangeMarkersOverlappingWith(0, 200, 0, processor))
       2 -> {
         val iterator = root.overlappingIterator(0, 200, 0)
         do {
           assertTrue(iterator.hasNext())
-        } while (process(iterator.next()))
+        } while (processor.process(iterator.next(), 0))
         assertTrue(iterator.hasNext())
       }
       else -> error("Unknown query: $query")
@@ -588,8 +588,8 @@ internal class PMarkerDirectRootTest {
     assertEquals(specMask, resolvedEntries(root).single { it.handle === handle }.specMask)
     assertEquals(specMask, root.overlappingIterator(0, 100, 0).asSequence().single { it.handle === handle }.specMask)
     val entries = ArrayList<MarkerEntry>()
-    assertTrue(root.processRangeMarkersOverlappingWith(0, 100, 0) {
-      entries.add(it)
+    assertTrue(root.processRangeMarkersOverlappingWith(0, 100, 0) { entry, _ ->
+      entries.add(entry)
       true
     })
     assertEquals(specMask, entries.single { it.handle === handle }.specMask)

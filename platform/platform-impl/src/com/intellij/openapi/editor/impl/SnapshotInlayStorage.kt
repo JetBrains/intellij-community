@@ -147,7 +147,7 @@ internal class SnapshotInlayStorage(
 
   fun processBlock(startOffset: Int, endOffset: Int, processor: Processor<in BlockInlay<*>>): Boolean {
     val root = rootStore.root(snapshotForQueries()) ?: return true
-    return root.processRangeMarkersOverlappingWith(startOffset, endOffset, BLOCK_FLAVOR) { entry ->
+    return root.processRangeMarkersOverlappingWith(startOffset, endOffset, BLOCK_FLAVOR) { entry, _ ->
       val marker = entry.marker as? BlockInlay<*> ?: return@processRangeMarkersOverlappingWith true
       processor.process(marker)
     }
@@ -212,7 +212,7 @@ internal class SnapshotInlayStorage(
   private fun has(startOffset: Int, endOffset: Int, flavor: Int): Boolean {
     val root = rootStore.root(snapshotForQueries()) ?: return false
     var found = false
-    root.processRangeMarkersOverlappingWith(startOffset, endOffset, flavor) {
+    root.processRangeMarkersOverlappingWith(startOffset, endOffset, flavor) { _, _ ->
       found = true
       false
     }
@@ -228,13 +228,13 @@ internal class SnapshotInlayStorage(
     val snapshot = snapshotForQueries()
     val root = rootStore.root(snapshot) ?: return emptyList()
     val markers = ArrayList<SnapshotInlayMarker<*>>()
-    val processor = Processor<PMarkerRoot.MarkerEntry> { entry ->
+    val processor = PMarkerRoot.MarkerDeltaProcessor { entry, _ ->
       val marker = entry.marker as? SnapshotInlayMarker<*>
       if (marker != null) markers.add(marker)
       true
     }
     if (flavor == 0 && startOffset == 0 && endOffset >= snapshot.text().length()) {
-      root.processAllRangeMarkers { entry, _ -> processor.process(entry) }
+      root.processAllRangeMarkers(processor)
     }
     else {
       root.processRangeMarkersOverlappingWith(startOffset, endOffset, flavor, processor)

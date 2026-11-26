@@ -6,7 +6,6 @@ import com.intellij.openapi.editor.ex.DocumentText
 import com.intellij.openapi.editor.impl.marker.PMarkerRoot.MarkerDeltaProcessor
 import com.intellij.openapi.editor.impl.marker.PMarkerRoot.MarkerEntry
 import com.intellij.openapi.util.TextRangeScalarUtil
-import com.intellij.util.Processor
 import java.util.function.Consumer
 
 /**
@@ -68,11 +67,11 @@ internal class PMarkerAppendRoot private constructor(
     startOffset: Int,
     endOffset: Int,
     tastePreference: Int,
-    processor: Processor<in MarkerEntry>,
+    processor: MarkerDeltaProcessor,
   ): Boolean {
     val iterator = overlappingIterator(startOffset, endOffset, tastePreference)
     while (iterator.hasNext()) {
-      if (!processor.process(iterator.next())) return false
+      if (!processor.process(iterator.next(), 0)) return false
     }
     return true
   }

@@ -235,10 +235,13 @@ internal class PMarkerInsertionRootTest {
         for (flags in listOf(0, 1, 2)) {
           val expectedEntries = expected.overlappingIterator(start, end, flags).asSequence().toList()
           assertEquals(expectedEntries, actual.overlappingIterator(start, end, flags).asSequence().toList())
-          val processed = ArrayList<SnapshotMarkerReference<*>>()
-          assertTrue(actual.processRangeMarkersOverlappingWith(start, end, flags) { processed.add(it.handle); true })
-          assertEquals(expectedEntries.map { it.handle }, processed)
-          assertEquals(expectedEntries.isEmpty(), actual.processRangeMarkersOverlappingWith(start, end, flags) { false })
+          val processed = ArrayList<MarkerEntry>()
+          assertTrue(actual.processRangeMarkersOverlappingWith(start, end, flags) { entry, delta ->
+            processed.add(entry.copy(nodeStart = entry.nodeStart + delta, nodeEnd = entry.nodeEnd + delta))
+            true
+          })
+          assertEquals(expectedEntries, processed)
+          assertEquals(expectedEntries.isEmpty(), actual.processRangeMarkersOverlappingWith(start, end, flags) { _, _ -> false })
         }
       }
     }

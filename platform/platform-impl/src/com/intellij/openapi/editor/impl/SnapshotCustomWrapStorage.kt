@@ -72,7 +72,7 @@ internal class SnapshotCustomWrapStorage(
   fun collectInRange(startOffset: Int, endOffset: Int): List<CustomWrap> {
     val root = rootStore.root(currentSnapshot()) ?: return emptyList()
     val result = ArrayList<CustomWrap>()
-    root.processRangeMarkersOverlappingWith(startOffset, endOffset, 0) { entry ->
+    root.processRangeMarkersOverlappingWith(startOffset, endOffset, 0) { entry, _ ->
       val wrap = entry.marker
       if (wrap is SnapshotCustomWrap) result.add(wrap)
       true

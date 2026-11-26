@@ -3,7 +3,6 @@ package com.intellij.openapi.editor.impl.marker
 
 import com.intellij.openapi.editor.ex.DocumentPatch
 import com.intellij.openapi.editor.ex.DocumentText
-import com.intellij.util.Processor
 import org.jetbrains.annotations.TestOnly
 import java.util.function.Consumer
 
@@ -201,14 +200,14 @@ interface PMarkerRoot {
    * Processes valid markers that non-strictly intersect the requested range and contain every bit in [tastePreference].
    * A zero preference matches every marker.
    *
-   * The processor receives the stored entry. Its node range can exclude a lazy shift from an ancestor node. Call [resolve]
-   * when the processor needs actual offsets in the document snapshot.
+   * Add the delta to both entry offsets to get the document offsets.
+   * Returns `false` if the processor stops the traversal.
    */
   fun processRangeMarkersOverlappingWith(
     startOffset: Int,
     endOffset: Int,
     tastePreference: Int,
-    processor: Processor<in MarkerEntry>,
+    processor: MarkerDeltaProcessor,
   ): Boolean
 
   /**

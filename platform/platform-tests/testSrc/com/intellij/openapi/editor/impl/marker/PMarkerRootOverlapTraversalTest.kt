@@ -53,10 +53,10 @@ internal class PMarkerRootOverlapTraversalTest {
         for (flags in 0..7) {
           val expected = entries.filter {
             it.nodeStart <= end && it.nodeEnd >= start && it.flavorFlags.toInt() and flags == flags
-          }.map { it.handle }
-          val actual = ArrayList<SnapshotMarkerReference<*>>()
-          assertTrue(current.processRangeMarkersOverlappingWith(start, end, flags) {
-            actual.add(it.handle)
+          }
+          val actual = ArrayList<MarkerEntry>()
+          assertTrue(current.processRangeMarkersOverlappingWith(start, end, flags) { entry, delta ->
+            actual.add(entry.copy(nodeStart = entry.nodeStart + delta, nodeEnd = entry.nodeEnd + delta))
             true
           })
           assertEquals(expected, actual, "Range [$start, $end], flags $flags")
@@ -76,14 +76,14 @@ internal class PMarkerRootOverlapTraversalTest {
 
     for (limit in listOf(1, 8, expected.size)) {
       val actual = ArrayList<SnapshotMarkerReference<*>>()
-      assertFalse(root.processRangeMarkersOverlappingWith(0, 256, 0) {
+      assertFalse(root.processRangeMarkersOverlappingWith(0, 256, 0) { outerEntry, _ ->
         val nested = ArrayList<SnapshotMarkerReference<*>>()
-        assertTrue(root.processRangeMarkersOverlappingWith(0, 256, 0) { entry ->
+        assertTrue(root.processRangeMarkersOverlappingWith(0, 256, 0) { entry, _ ->
           nested.add(entry.handle)
           true
         })
         assertEquals(expected, nested)
-        actual.add(it.handle)
+        actual.add(outerEntry.handle)
         actual.size < limit
       })
       assertEquals(expected.take(limit), actual)

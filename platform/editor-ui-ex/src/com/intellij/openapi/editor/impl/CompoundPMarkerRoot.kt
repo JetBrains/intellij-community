@@ -10,7 +10,6 @@ import com.intellij.openapi.editor.impl.marker.PMarkerRoot.MarkerDeltaProcessor
 import com.intellij.openapi.editor.impl.marker.PMarkerRoot.MarkerEntry
 import com.intellij.openapi.editor.impl.marker.SnapshotMarkerReference
 import com.intellij.openapi.editor.markup.HighlighterTargetArea
-import com.intellij.util.Processor
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import java.util.function.Consumer
@@ -161,7 +160,7 @@ open class CompoundPMarkerRoot private constructor(
     startOffset: Int,
     endOffset: Int,
     tastePreference: Int,
-    processor: Processor<in MarkerEntry>,
+    processor: MarkerDeltaProcessor,
   ): Boolean {
     if (!exactRangeRoot.processRangeMarkersOverlappingWith(startOffset, endOffset, tastePreference, processor)) return false
     return linesInRangeRoot.processRangeMarkersOverlappingWith(startOffset, endOffset, tastePreference, processor)
