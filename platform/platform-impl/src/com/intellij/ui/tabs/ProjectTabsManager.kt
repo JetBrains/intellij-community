@@ -8,6 +8,7 @@ import com.intellij.ui.mac.MacWinTabsHandler
 import com.intellij.ui.mac.MacWinTabsHandlerV2
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus
+import java.awt.Window
 import javax.swing.JComponent
 import javax.swing.JFrame
 import javax.swing.JRootPane
@@ -77,6 +78,17 @@ object ProjectTabsManager {
     }
     else if (WindowTabsManager.enabled) {
       WindowTabsManager.switchFrameIfPossible(frame, next)
+    }
+  }
+
+  /**
+   * Makes [window] the current frame of the project tabs when the project tabs hide it.
+   * Call it before you bring [window] to the front, because a hidden frame cannot come to the front.
+   * Does nothing on macOS and when [WindowTabsManager] is off.
+   */
+  fun selectTab(window: Window?) {
+    if (window is IdeFrameImpl && !SystemInfoRt.isMac && WindowTabsManager.enabled) {
+      WindowTabsManager.selectTab(window)
     }
   }
 }

@@ -18,6 +18,7 @@ import com.intellij.openapi.wm.WindowManager
 import com.intellij.openapi.wm.impl.ProjectFrameHelper
 import com.intellij.openapi.wm.impl.X11UiUtil
 import com.intellij.ui.paint.PaintUtil
+import com.intellij.ui.tabs.ProjectTabsManager
 import com.intellij.util.IconUtil
 import com.intellij.util.SystemProperties
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
@@ -647,6 +648,7 @@ abstract class AppIcon {
       if (window == null) {
         return
       }
+      ProjectTabsManager.selectTab(window)
 
       if (window is Frame) {
         window.state = Frame.NORMAL

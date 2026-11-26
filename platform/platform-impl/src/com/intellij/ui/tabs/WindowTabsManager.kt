@@ -128,7 +128,7 @@ internal object WindowTabsManager : ProjectTabsHandler {
 
   fun switchFrameIfPossible(frame: JFrame, next: Boolean) {
     val entry = findEntry(frame) ?: return
-    model.getAdjacentGroupItem(entry, next)?.let { showWindow(it.frame) }
+    model.getAdjacentGroupItem(entry, next)?.let { selectTab(it.frame) }
   }
 
   private val currentWindow: IdeFrameImpl?
@@ -201,7 +201,12 @@ internal object WindowTabsManager : ProjectTabsHandler {
     }
   }
 
-  private fun showWindow(target: IdeFrameImpl) {
+  /**
+   * Makes [target] the current frame and shows it. Then hides the previous current frame.
+   * [target] gets the bounds and the extended state of the previous current frame, but not the minimized state.
+   * Does nothing when [target] is already the current frame.
+   */
+  fun selectTab(target: IdeFrameImpl) {
     val entry = findEntry(target) ?: return
     val current = currentWindow
     if (!model.select(entry)) {
@@ -244,10 +249,10 @@ internal object WindowTabsManager : ProjectTabsHandler {
 
     if (next != null && !ApplicationManager.getApplication().isExitInProgress) {
       copyBoundsAndState(frame, next.frame)
-      showWindow(next.frame)
+      selectTab(next.frame)
     }
 
-    // Call it after showWindow, so that the next frame shows without the DWM transition.
+    // Call it after selectTab, so that the next frame shows without the DWM transition.
     for (each in untabbedFrames) {
       setTabbingPresentation(each, false)
     }
@@ -335,7 +340,7 @@ internal object WindowTabsManager : ProjectTabsHandler {
   private class WindowGroupTabsComponent(ownerFrame: IdeFrameImpl, parentDisposable: Disposable) :
     ProjectTabsComponent(ownerFrame, ownerFrame.frameHelper?.project, parentDisposable) {
     override fun selectTab(tabFrame: IdeFrameImpl) {
-      showWindow(tabFrame)
+      WindowTabsManager.selectTab(tabFrame)
     }
 
     override fun performCloseTab(tabFrame: IdeFrameImpl, closeOthers: Boolean) {

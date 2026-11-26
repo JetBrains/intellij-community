@@ -24,6 +24,7 @@ import com.intellij.ui.BalloonLayout
 import com.intellij.ui.DisposableWindow
 import com.intellij.ui.mac.foundation.MacUtil
 import com.intellij.ui.scale.JBUIScale
+import com.intellij.ui.tabs.ProjectTabsManager
 import com.intellij.util.ui.EDT
 import com.intellij.util.ui.EdtInvocationManager
 import com.intellij.util.ui.JBInsets
@@ -275,7 +276,13 @@ class IdeFrameImpl : JFrame(), IdeFrame, UiDataProvider, DisposableWindow {
     return super.createVolatileImage(width, height, caps)
   }
 
-
+  /**
+   * Makes this frame the current frame of the project tabs first, when the project tabs hide it.
+   */
+  override fun toFront() {
+    ProjectTabsManager.selectTab(this)
+    super.toFront()
+  }
 
   @Suppress("OVERRIDE_DEPRECATION")
   override fun show() {
