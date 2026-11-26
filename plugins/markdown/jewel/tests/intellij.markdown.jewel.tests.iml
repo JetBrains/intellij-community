@@ -45,6 +45,8 @@
     <orderEntry type="module" module-name="intellij.textmate.plugin" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.markdown.fenceInjector.textMate" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.markdown.plugin" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.monolith.main" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.idea.community.customization" scope="RUNTIME" />
   </component>
   <component name="TestModuleProperties" production-module="intellij.markdown.jewel" />
 </module>

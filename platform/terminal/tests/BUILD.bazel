@@ -24,6 +24,11 @@ jvm_library(
     ),
     module_name = "intellij.platform.terminal.tests",
     visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        "//platform/main/intellij.platform.monolith.main:monolith-main",
+        "//community-resources:customization",
+    ],
     deps = [
         # do not sort,
         "//platform/terminal",

@@ -21,6 +21,8 @@ jvm_library(
         "//plugins/textmate/plugin",
         "//plugins/markdown/textMate",
         "//plugins/markdown/plugin",
+        "//platform/main/intellij.platform.monolith.main:monolith-main",
+        "//community-resources:customization",
     ],
     deps = [
         # do not sort,

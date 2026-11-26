@@ -27,7 +27,12 @@ jvm_library(
         ["testData/**/*"],
     ),
     visibility = ["//visibility:public"],
-    runtime_deps = ["//plugins/markdown/plugin"],
+    runtime_deps = [
+        # do not sort,
+        "//plugins/markdown/plugin",
+        "//platform/main/intellij.platform.monolith.main:monolith-main",
+        "//community-resources:customization",
+    ],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",

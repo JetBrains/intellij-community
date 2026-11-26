@@ -99,7 +99,12 @@ jvm_library(
     ),
     module_name = "intellij.commander.tests",
     visibility = ["//visibility:public"],
-    runtime_deps = ["//plugins/properties/plugin"],
+    runtime_deps = [
+        # do not sort,
+        "//plugins/properties/plugin",
+        "//platform/main/intellij.platform.monolith.main:monolith-main",
+        "//community-resources:customization",
+    ],
     deps = [
         # do not sort,
         "//java/java-impl:impl",

@@ -109,6 +109,11 @@ jvm_library(
     associates = ["//platform/statistics"],
     visibility = ["//visibility:public"],
     exports = ["//libraries/fus-ap-validation"],
+    runtime_deps = [
+        # do not sort,
+        "//platform/main/intellij.platform.monolith.main:monolith-main",
+        "//community-resources:customization",
+    ],
     deps = [
         # do not sort,
         "//platform/core-api:core",

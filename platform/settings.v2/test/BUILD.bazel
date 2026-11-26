@@ -32,6 +32,8 @@ jvm_library(
         # do not sort,
         "//platform/vcs-impl",
         "//platform/vcs/plugin",
+        "//platform/main/intellij.platform.monolith.main:monolith-main",
+        "//community-resources:customization",
     ],
     deps = [
         # do not sort,
