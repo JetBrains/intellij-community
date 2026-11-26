@@ -14,18 +14,18 @@
 #   1. Change `JSCPD_VERSION` and copy the six `sha256` below from the `checksums.txt` of the release.
 #   2. Run every `jscpd_test` target. A new version can find a clone that the old one did not.
 # `jscpd.cmd` reads `JSCPD_VERSION` from this file, so the line keeps the shape `JSCPD_VERSION = "<version>"`.
-JSCPD_VERSION = "5.4.2"
+JSCPD_VERSION = "5.4.3"
 
 JSCPD_BASE_URL = "https://github.com/kucherenko/jscpd/releases/download"
 
 # The host key of the `config_setting` in `BUILD.bazel`, to the release platform and the sha256 of its archive.
 JSCPD_PLATFORMS = {
-    "darwin_aarch64": ("darwin-arm64", "b51d22d7c7610d27d8fd022577021ff3266a10f13295a2e545a8b8e126133a88"),
-    "darwin_x64": ("darwin-x64", "ae8d24aba2719df7682b1bb2c5021ab096116b8240c45fdae88654fc1ff36b17"),
-    "linux_aarch64": ("linux-arm64-gnu", "f796d57334c34e9361575588ee130f8b0a00388e7e42f3b27f7d50d4aecf85ae"),
-    "linux_x64": ("linux-x64-gnu", "216bae5de2b30c57f893286585c7a348e8af7cd36810949831f569d29f495a3b"),
-    "windows_aarch64": ("windows-arm64-msvc", "283a4a021570370ee145ed692455290f516d1e528cdcb1747ffe72ff9814d159"),
-    "windows_x64": ("windows-x64-msvc", "a7927e3bbdd341a139459c684d3f5e0b6409b7b1660bae275d44523f63128d87"),
+    "darwin_aarch64": ("darwin-arm64", "e119c4c5388118ad348a799c478589f7ad0fa707c0b7c819d6febc94f6f98522"),
+    "darwin_x64": ("darwin-x64", "7e5b81a0b30f1d261bf9cd8d8e72be43f0ce55a54a9374f1111123bb29362362"),
+    "linux_aarch64": ("linux-arm64-gnu", "221a62a254ab4cc42f26e076943ca79ecd311ae41646a76a08e4b790ed8c5fbe"),
+    "linux_x64": ("linux-x64-gnu", "a19d719331b21a047a7537f982566dabcf6d6e5f51581c3b80d9c420979cc92c"),
+    "windows_aarch64": ("windows-arm64-msvc", "ac398ff10ddee4c6f0e57dd82db32ab17a82a397238ea8fd56cbd419b8edb63b"),
+    "windows_x64": ("windows-x64-msvc", "1e9416d179c54cbaf1f8854c764b2bc774a1a15850043160b7e58e63948ffb9d"),
 }
 
 jscpd_archive = use_repo_rule("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
