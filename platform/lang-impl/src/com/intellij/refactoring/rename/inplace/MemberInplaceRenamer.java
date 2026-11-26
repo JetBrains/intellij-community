@@ -249,6 +249,11 @@ public class MemberInplaceRenamer extends VariableInplaceRenamer {
   }
 
   @Override
+  boolean canFinishUnchangedRenameSynchronously() {
+    return getClass() == MemberInplaceRenamer.class;
+  }
+
+  @Override
   protected void performRefactoringRename(String newName, StartMarkAction markAction) {
     try {
       startDumbIfPossible();

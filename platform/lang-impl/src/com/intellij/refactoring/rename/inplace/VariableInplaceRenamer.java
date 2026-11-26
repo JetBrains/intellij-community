@@ -554,6 +554,18 @@ public class VariableInplaceRenamer extends InplaceRefactoring {
         commandProcessor.setCurrentCommandName(getCommandName());
       }
 
+      if (myInsertedName.equals(myOldName) && canFinishUnchangedRenameSynchronously()) {
+        try {
+          performCleanup();
+        }
+        finally {
+          if (mySuggestedNameInfo != null) {
+            mySuggestedNameInfo.nameChosen(myInsertedName);
+          }
+        }
+        return false;
+      }
+
       bind = true;
       ReadAction.nonBlocking(() -> findProblem())
         .expireWhen(() -> myEditor.isDisposed() || myProject.isDisposed())
@@ -574,6 +586,10 @@ public class VariableInplaceRenamer extends InplaceRefactoring {
         .submit(AppExecutorUtil.getAppExecutorService());
     }
     return bind;
+  }
+
+  boolean canFinishUnchangedRenameSynchronously() {
+    return false;
   }
 
   private void cancel() {

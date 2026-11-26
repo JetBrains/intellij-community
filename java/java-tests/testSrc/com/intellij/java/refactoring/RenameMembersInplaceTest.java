@@ -7,6 +7,7 @@ import com.intellij.codeInsight.template.impl.TemplateState;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
 import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.command.impl.StartMarkAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.Inlay;
 import com.intellij.openapi.editor.VisualPosition;
@@ -39,6 +40,7 @@ import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaP
 import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaTestDescriptor;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
@@ -260,6 +262,42 @@ public class RenameMembersInplaceTest {
 
       myFixture.checkResultByFile(BASE_PATH + myFixture.getTestName(false) + "_after.java");
     });
+  }
+
+  @Test
+  public void testRenameAgainAfterKeepingName() {
+    LightJavaCodeInsightTestFixture fixture = codeInsightFixture.get();
+    fixture.configureByText("Example.java", """
+      class Example {
+        int <caret>firstField;
+        int secondField;
+      }
+      """);
+
+    fixture.runInCommand(() -> {
+      Editor editor = fixture.getEditor();
+      TemplateManagerImpl.setTemplateTesting(fixture.getTestRootDisposable());
+      MemberInplaceRenameHandler handler = new MemberInplaceRenameHandler();
+      PsiElement firstField = TargetElementUtil.findTargetElement(editor, TargetElementUtil.getInstance().getAllAccepted());
+      assertNotNull(firstField);
+      handler.doRename(firstField, editor, null);
+      TemplateState state = TemplateManagerImpl.getTemplateState(editor);
+      assertNotNull(state);
+      state.gotoEnd(false);
+      assertNull(StartMarkAction.canStart(editor), "The first rename must finish before the next rename starts");
+
+      editor.getCaretModel().moveToOffset(editor.getDocument().getText().indexOf("secondField"));
+      PsiElement secondField = TargetElementUtil.findTargetElement(editor, TargetElementUtil.getInstance().getAllAccepted());
+      assertNotNull(secondField);
+      CodeInsightTestUtil.doInlineRename(handler, "renamedField", editor, secondField);
+    });
+
+    fixture.checkResult("""
+      class Example {
+        int firstField;
+        int renamedField;
+      }
+      """);
   }
 
   @Test

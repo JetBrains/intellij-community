@@ -7,6 +7,7 @@ import com.intellij.codeInsight.lookup.LookupEx;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.TemplateState;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.rename.inplace.MemberInplaceRenameHandler;
@@ -224,24 +225,27 @@ public class RenameSuggestionsTest {
     myFixture.configureByText("a.java", text);
     Ref<List<String>> suggestions = new Ref<>();
     myFixture.runInCommand(() -> {
-      boolean oldPreselectSetting = myFixture.getEditor().getSettings().isPreselectRename();
+      Editor editor = myFixture.getEditor();
+      boolean oldPreselectSetting = editor.getSettings().isPreselectRename();
       try {
         TemplateManagerImpl.setTemplateTesting(myFixture.getTestRootDisposable());
-        final PsiElement element = TargetElementUtil.findTargetElement(myFixture.getEditor(), TargetElementUtil.getInstance().getAllAccepted());
+        PsiElement element = TargetElementUtil.findTargetElement(editor, TargetElementUtil.getInstance().getAllAccepted());
         assertNotNull(element);
 
         MemberInplaceRenameHandler handler = new MemberInplaceRenameHandler();
-        handler.doRename(element, myFixture.getEditor(), null);
+        handler.doRename(element, editor, null);
+        assertNotNull(TemplateManagerImpl.getTemplateState(editor), "The rename template did not start");
 
-        LookupEx lookup = LookupManager.getActiveLookup(myFixture.getEditor());
+        LookupEx lookup = LookupManager.getActiveLookup(editor);
         assertNotNull(lookup);
         suggestions.set(ContainerUtil.map(lookup.getItems(), LookupElement::getLookupString));
       }
       finally {
-        myFixture.getEditor().getSettings().setPreselectRename(oldPreselectSetting);
-        TemplateState state = TemplateManagerImpl.getTemplateState(myFixture.getEditor());
-        assertNotNull(state);
-        state.gotoEnd(false);
+        editor.getSettings().setPreselectRename(oldPreselectSetting);
+        TemplateState state = TemplateManagerImpl.getTemplateState(editor);
+        if (state != null) {
+          state.gotoEnd(true);
+        }
       }
     });
     return suggestions.get();
