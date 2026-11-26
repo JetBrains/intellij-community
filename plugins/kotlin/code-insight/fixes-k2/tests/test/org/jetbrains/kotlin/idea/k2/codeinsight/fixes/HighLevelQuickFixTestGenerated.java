@@ -9618,6 +9618,21 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
             runTest("../../../idea/tests/testData/quickfix/expressions/uselessElvis.kt");
         }
 
+        @TestMetadata("uselessElvisCommentAfterOperator.kt")
+        public void testUselessElvisCommentAfterOperator() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/expressions/uselessElvisCommentAfterOperator.kt");
+        }
+
+        @TestMetadata("uselessElvisCommentInsideKeptOperand.kt")
+        public void testUselessElvisCommentInsideKeptOperand() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/expressions/uselessElvisCommentInsideKeptOperand.kt");
+        }
+
+        @TestMetadata("uselessElvisEndOfLineComment.kt")
+        public void testUselessElvisEndOfLineComment() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/expressions/uselessElvisEndOfLineComment.kt");
+        }
+
         @TestMetadata("uselessElvisForLambdaInNecessaryNestedParens.kt")
         public void testUselessElvisForLambdaInNecessaryNestedParens() throws Exception {
             runTest("../../../idea/tests/testData/quickfix/expressions/uselessElvisForLambdaInNecessaryNestedParens.kt");
@@ -9633,14 +9648,49 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
             runTest("../../../idea/tests/testData/quickfix/expressions/uselessElvisInNestedParens.kt");
         }
 
+        @TestMetadata("uselessElvisInNestedParensWithComment.kt")
+        public void testUselessElvisInNestedParensWithComment() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/expressions/uselessElvisInNestedParensWithComment.kt");
+        }
+
         @TestMetadata("uselessElvisLeftIsNull.kt")
         public void testUselessElvisLeftIsNull() throws Exception {
             runTest("../../../idea/tests/testData/quickfix/expressions/uselessElvisLeftIsNull.kt");
         }
 
+        @TestMetadata("uselessElvisLeftIsNullCommentBeforeOperator.kt")
+        public void testUselessElvisLeftIsNullCommentBeforeOperator() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/expressions/uselessElvisLeftIsNullCommentBeforeOperator.kt");
+        }
+
+        @TestMetadata("uselessElvisLeftIsNullCommentsAroundOperator.kt")
+        public void testUselessElvisLeftIsNullCommentsAroundOperator() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/expressions/uselessElvisLeftIsNullCommentsAroundOperator.kt");
+        }
+
+        @TestMetadata("uselessElvisLeftIsNullEndOfLineComment.kt")
+        public void testUselessElvisLeftIsNullEndOfLineComment() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/expressions/uselessElvisLeftIsNullEndOfLineComment.kt");
+        }
+
+        @TestMetadata("uselessElvisLeftIsNullWithComment.kt")
+        public void testUselessElvisLeftIsNullWithComment() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/expressions/uselessElvisLeftIsNullWithComment.kt");
+        }
+
         @TestMetadata("uselessElvisRightIsNull.kt")
         public void testUselessElvisRightIsNull() throws Exception {
             runTest("../../../idea/tests/testData/quickfix/expressions/uselessElvisRightIsNull.kt");
+        }
+
+        @TestMetadata("uselessElvisRightIsNullWithComment.kt")
+        public void testUselessElvisRightIsNullWithComment() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/expressions/uselessElvisRightIsNullWithComment.kt");
+        }
+
+        @TestMetadata("uselessElvisWithComment.kt")
+        public void testUselessElvisWithComment() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/expressions/uselessElvisWithComment.kt");
         }
     }
 

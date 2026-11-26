@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.quickfix
 
@@ -16,6 +16,7 @@ import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsi
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.CleanupFix
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.PsiElementSuitabilityCheckers
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.QuickFixesPsiBasedFactory
+import org.jetbrains.kotlin.idea.util.CommentSaver
 import org.jetbrains.kotlin.psi.KtBinaryExpression
 
 class RemoveUselessElvisFix(
@@ -30,7 +31,9 @@ class RemoveUselessElvisFix(
             ReplacementSide.LEFT -> element.left
             ReplacementSide.RIGHT -> element.right
         } ?: return
-        element.replaced(replacement).dropEnclosingParenthesesIfPossible()
+        val commentSaver = CommentSaver(element)
+        val result = element.replaced(replacement).dropEnclosingParenthesesIfPossible()
+        commentSaver.restore(result)
     }
 
     companion object : QuickFixesPsiBasedFactory<PsiElement>(PsiElement::class, PsiElementSuitabilityCheckers.ALWAYS_SUITABLE) {
