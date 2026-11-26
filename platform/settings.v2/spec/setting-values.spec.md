@@ -66,6 +66,9 @@ its own format, so neither the key nor the serializer knows the format.
   [@test] ../test/src/com/intellij/platform/settings/v2/SettingsFloatSerializerTest.kt
 - A double key must read a stored int or long value as a double.
   [@test] ../test/src/com/intellij/platform/settings/v2/SettingsFloatSerializerTest.kt
+- A long key must read a stored int value as a long. A config file gives the smallest kind of a number, so a small
+  long comes back as an int.
+  [@test] ../test/src/com/intellij/platform/settings/v2/SettingsLongSerializerTest.kt
 - The float serializer composes with `nullable()`, `listOf()` and `mapOf()`.
   [@test] ../test/src/com/intellij/platform/settings/v2/SettingsFloatSerializerTest.kt
 - A key with an enum entry as its default infers the enum serializer, also for an entry with a body.

@@ -58,12 +58,20 @@ object IntSerializer : Serializer<Int> {
   override fun deserialize(value: SettingsValue): Int = value.requireValue<IntValue>().value
 }
 
-/** Serializes a [Long] as a [LongValue]. The eager-default constructor of [SettingsKey] infers it. */
+/**
+ * Serializes a [Long] as a [LongValue]. It also reads an [IntValue], because a config file gives the smallest kind of
+ * a number, so a small long comes back as an int. The eager-default constructor of [SettingsKey] infers it.
+ */
 @Experimental
 object LongSerializer : Serializer<Long> {
   override fun serialize(value: Long): SettingsValue = LongValue(value)
 
-  override fun deserialize(value: SettingsValue): Long = value.requireValue<LongValue>().value
+  override fun deserialize(value: SettingsValue): Long = when (value) {
+    is LongValue -> value.value
+    is IntValue -> value.value.toLong()
+    SettingsValue.NullValue, is StringValue, is DoubleValue, is BooleanValue, is ListValue, is MapValue ->
+      throw IllegalArgumentException("Expected a stored LongValue or IntValue, but found $value")
+  }
 }
 
 /**
