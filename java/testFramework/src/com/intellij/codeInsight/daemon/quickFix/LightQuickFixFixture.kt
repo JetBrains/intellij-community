@@ -30,7 +30,6 @@ import com.intellij.testFramework.junit5.fixture.testFixture
 import com.intellij.testFramework.runInEdtAndGet
 import com.intellij.testFramework.runInEdtAndWait
 import com.intellij.util.concurrency.AppExecutorUtil
-import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.TestOnly
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.fail
@@ -163,14 +162,23 @@ class LightQuickFixFixture internal constructor(
     val (editor, file) = runReadActionBlocking { hostEditor() to hostFile() }
     val text = action.text
     val element = runReadActionBlocking { PsiUtilBase.getElementAtCaret(editor) }
-    if (hint.shouldCheckPreview()) {
-      checkPreviewAndLaunchAction(action, file, editor, LightQuickFixTestCase.PREVIEW_PREFIX + fileName)
+    val previewContent = if (hint.shouldCheckPreview()) {
+      // Run in a background thread to catch accidental write actions during the preview generation
+      ReadAction.nonBlocking<String> {
+        IntentionPreviewPopupUpdateProcessor.getPreviewContent(fixture.project, action, file, editor)
+      }.submit(AppExecutorUtil.getAppExecutorService()).get()
     }
-    else {
-      fixture.launchAction(action)
+    else null
+
+    fixture.launchAction(action)
+    runInEdtAndWait {
+      NonBlockingReadActionImpl.waitForAsyncTaskCompletion()
+      PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue()
     }
 
-    runInEdtAndWait { UIUtil.dispatchAllInvocationEvents() }
+    if (previewContent != null) {
+      checkPreview(text, fileName, previewContent)
+    }
 
     if (!options.actionAvailableAfterExecution) {
       val afterAction = CodeInsightTestUtil.findIntentionByText(fixture.availableIntentions, text)
@@ -185,22 +193,16 @@ class LightQuickFixFixture internal constructor(
     }
   }
 
-  private fun checkPreviewAndLaunchAction(action: IntentionAction, file: PsiFile, editor: Editor, previewFilePath: String) {
-    // Run in a background thread to catch accidental write actions during the preview generation
-    val previewContent = ReadAction.nonBlocking<String> {
-      IntentionPreviewPopupUpdateProcessor.getPreviewContent(fixture.project, action, file, editor)
-    }.submit(AppExecutorUtil.getAppExecutorService()).get()
-    fixture.launchAction(action)
-    runInEdtAndWait { NonBlockingReadActionImpl.waitForAsyncTaskCompletion() }
-    val path = Path.of(testDataPath, previewFilePath)
+  private fun checkPreview(actionText: String, fileName: String, previewContent: String) {
+    val path = Path.of(testDataPath, LightQuickFixTestCase.PREVIEW_PREFIX + fileName)
     if (Files.exists(path)) {
       PlatformTestUtil.assertSameLinesWithFile(path.toString(), previewContent)
     }
     else {
       if (previewContent.isEmpty()) {
-        fail("No preview was generated for '${action.text}'")
+        fail("No preview was generated for '$actionText'")
       }
-      assertEquals(runReadActionBlocking { file.text }, previewContent)
+      assertEquals(runReadActionBlocking { hostFile().text }, previewContent)
     }
   }
 
