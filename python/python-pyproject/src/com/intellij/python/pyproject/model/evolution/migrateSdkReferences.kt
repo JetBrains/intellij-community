@@ -5,6 +5,8 @@ import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.module.ModuleTypeManager
 import com.intellij.openapi.project.Project
 import com.intellij.platform.backend.workspace.workspaceModel
+import com.intellij.platform.workspace.jps.JpsFileDependentEntitySource
+import com.intellij.platform.workspace.jps.JpsFileEntitySource
 import com.intellij.platform.workspace.jps.entities.FacetEntity
 import com.intellij.platform.workspace.jps.entities.InheritedSdkDependency
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
@@ -163,8 +165,13 @@ private fun pythonModuleTypeIsLegacy(): Boolean = ModuleTypeManager.getInstance(
 
 /**
  * Whether [this] module has a content root and a Python facet, or the Python module type when [pythonTypeIsLegacy]. The
- * migration removes both.
+ * migration removes both. Only a module that a project file stores, such as an `.iml`, has them from an older build. An
+ * importer such as Bazel makes its modules again on each sync, so the migration leaves them as the importer writes them.
  */
 private fun ModuleEntity.hasLegacyPythonCarrier(pythonTypeIsLegacy: Boolean): Boolean =
-  contentRoots.isNotEmpty() && ((pythonTypeIsLegacy && type?.name == PYTHON_MODULE_ID) || facets.any { it.isPythonFacet() })
+  isStoredInProjectFile() && contentRoots.isNotEmpty() &&
+  ((pythonTypeIsLegacy && type?.name == PYTHON_MODULE_ID) || facets.any { it.isPythonFacet() })
+
+private fun ModuleEntity.isStoredInProjectFile(): Boolean =
+  entitySource is JpsFileEntitySource || entitySource is JpsFileDependentEntitySource
 
