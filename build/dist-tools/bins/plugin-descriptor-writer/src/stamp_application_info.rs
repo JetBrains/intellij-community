@@ -7,7 +7,7 @@ use std::path::PathBuf;
 use anyhow::{Result, bail};
 use appinfo::{Replacement, replace_markers};
 
-use crate::{read_text, report, write_resolved};
+use crate::{read_text, write_resolved};
 
 /// The declared inputs of the application info of a product. The application-info module ships it as
 /// `idea/<prefix>ApplicationInfo.xml`.
@@ -22,11 +22,8 @@ pub(crate) struct StampApplicationInfoRequest {
     pub replacements: Vec<Replacement>,
 }
 
-pub(crate) fn run(options: cli::Options) -> i32 {
-    let parsed = match parse_stamp_application_info_request(options) {
-        Ok(parsed) => parsed,
-        Err(error) => return report(2, &error),
-    };
+pub(crate) fn run(options: cli::Options) -> Result<()> {
+    let parsed = parse_stamp_application_info_request(options)?;
     write_resolved(&parsed.output, stamp_application_info(&parsed), || {
         format!(
             "could not replace the markers of the application info ({})",

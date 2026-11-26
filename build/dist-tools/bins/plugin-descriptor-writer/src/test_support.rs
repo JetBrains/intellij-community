@@ -39,7 +39,7 @@ pub(crate) fn mode_request(values: &[&str]) -> anyhow::Result<cli::Options> {
 }
 
 /// Fails unless `parse` refuses the mode request `request` with an error that holds `want`, and a run of the request
-/// exits with 2. A failure names the case `name`.
+/// exits with 1. A failure names the case `name`.
 #[track_caller]
 pub(crate) fn require_refused_request<T: Debug>(
     name: &str,
@@ -52,7 +52,7 @@ pub(crate) fn require_refused_request<T: Debug>(
         Err(error) => assert!(format!("{error:#}").contains(want), "{name}: {error:#}"),
     }
     let dir = TempDir::new();
-    assert_eq!(run_request(dir.path(), &lines(request)), 2, "{name}");
+    assert_eq!(run_request(dir.path(), &lines(request)), 1, "{name}");
 }
 
 /// The composition of one alias and nothing else.
@@ -66,12 +66,12 @@ pub(crate) fn alias_composition(alias: &str) -> Composition {
 }
 
 /// Runs the tool with these arguments.
-pub(crate) fn run_arguments(arguments: &[String]) -> i32 {
-    crate::run(arguments.iter().map(OsString::from))
+pub(crate) fn run_arguments(arguments: &[String]) -> u8 {
+    crate::run(arguments.iter().map(OsString::from), &mut std::io::stderr())
 }
 
 /// Writes the lines into a flag file of the directory and runs the request, the way a rule passes it.
-pub(crate) fn run_request(dir: &Path, request: &[String]) -> i32 {
+pub(crate) fn run_request(dir: &Path, request: &[String]) -> u8 {
     run_arguments(&[format!("--flagfile={}", request_file(dir, request))])
 }
 

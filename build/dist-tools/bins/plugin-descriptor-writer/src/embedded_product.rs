@@ -10,7 +10,7 @@ use anyhow::{Result, anyhow};
 use crate::compose::{self, Composition};
 use crate::descriptorxml::{self, Element};
 use crate::structural::{self, Cache, ContentRequest};
-use crate::{Jars, append_descriptor_jar, put_descriptor, report, seed_cache, write_resolved};
+use crate::{Jars, append_descriptor_jar, put_descriptor, seed_cache, write_resolved};
 
 /// The declared inputs of `dist_embedded_product_descriptor`.
 ///
@@ -26,11 +26,8 @@ pub(crate) struct EmbeddedProductRequest {
     pub separate_jar: BTreeSet<String>,
 }
 
-pub(crate) fn run(options: cli::Options) -> i32 {
-    let parsed = match parse_embedded_product_request(options) {
-        Ok(parsed) => parsed,
-        Err(error) => return report(2, &error),
-    };
+pub(crate) fn run(options: cli::Options) -> Result<()> {
+    let parsed = parse_embedded_product_request(options)?;
     write_resolved(&parsed.output, resolve_embedded_product(&parsed), || {
         format!("could not resolve the embedded product descriptor {}", parsed.output.display())
     })

@@ -10,7 +10,7 @@ use anyhow::{Context, Result};
 use crate::descriptorxml;
 use crate::embedded_product::{EmbeddedProductRequest, ProductContent, parse_product_content, resolve_product_content};
 use crate::structural::{self, ContentRequest};
-use crate::{report, write_output};
+use crate::write_output;
 
 /// `PLUGIN_CLASSPATH_FORMAT_VERSION` of `classpath.kt`, the first byte of `plugins/plugin-classpath.txt`.
 pub(crate) const PLUGIN_CLASS_PATH_FORMAT_VERSION: u8 = 3;
@@ -32,43 +32,25 @@ pub(crate) struct ProductDescriptorRequest {
     pub classpath_descriptor: PathBuf,
 }
 
-pub(crate) fn run(options: cli::Options) -> i32 {
-    let parsed = match parse_product_descriptor_request(options) {
-        Ok(parsed) => parsed,
-        Err(error) => return report(2, &error),
-    };
-    let content = match resolve_product_descriptor(&parsed) {
-        Ok(content) => content,
-        Err(error) => {
-            let error = error.context(format!("could not resolve the product descriptor (module={})", parsed.main_module));
-            return report(1, &error);
-        }
-    };
-    let descriptor = classpath_descriptor(&content, &parsed.main_module).and_then(|descriptor| {
-        let prefix = plugin_class_path_prefix(&descriptor)?;
-        Ok((descriptor, prefix))
-    });
-    let (descriptor, prefix) = match descriptor {
-        Ok(result) => result,
-        Err(error) => {
-            let error = error.context(format!(
-                "could not write the plugin classpath prefix (module={})",
-                parsed.main_module
-            ));
-            return report(1, &error);
-        }
-    };
+pub(crate) fn run(options: cli::Options) -> Result<()> {
+    let parsed = parse_product_descriptor_request(options)?;
+    let content = resolve_product_descriptor(&parsed)
+        .with_context(|| format!("could not resolve the product descriptor (module={})", parsed.main_module))?;
+    let (descriptor, prefix) = classpath_descriptor(&content, &parsed.main_module)
+        .and_then(|descriptor| {
+            let prefix = plugin_class_path_prefix(&descriptor)?;
+            Ok((descriptor, prefix))
+        })
+        .with_context(|| format!("could not write the plugin classpath prefix (module={})", parsed.main_module))?;
     let outputs = [
         (&parsed.content.output, content.text.into_bytes()),
         (&parsed.plugin_class_path_prefix, prefix),
         (&parsed.classpath_descriptor, descriptor.into_bytes()),
     ];
     for (file, content) in outputs {
-        if let Err(error) = write_output(file, &content) {
-            return report(1, &error);
-        }
+        write_output(file, &content)?;
     }
-    0
+    Ok(())
 }
 
 /// `writePluginClassPathPrefix` (`classpath.kt`): the format version, the size of the product descriptor as a

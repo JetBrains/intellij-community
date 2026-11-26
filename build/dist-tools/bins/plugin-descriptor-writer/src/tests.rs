@@ -178,7 +178,7 @@ impl Plugin {
     }
 
     /// Writes the request into a flag file of the directory, runs it and returns the exit code.
-    fn run(&self, request: &[String]) -> i32 {
+    fn run(&self, request: &[String]) -> u8 {
         run_request(self.dir(), request)
     }
 
@@ -226,7 +226,7 @@ fn the_request_is_one_flag_file() {
         vec![flagfile.clone(), flagfile],
         lines(&["--flagfile"]),
     ] {
-        assert_eq!(run_arguments(&arguments), 2, "{arguments:?}");
+        assert_eq!(run_arguments(&arguments), 1, "{arguments:?}");
     }
     require_absent(&plugin.output);
 }
@@ -236,7 +236,7 @@ fn the_request_is_one_flag_file() {
 fn a_missing_flag_file_is_refused() {
     let dir = TempDir::new();
     let flagfile = format!("--flagfile={}", path(dir.path(), "absent.txt"));
-    assert_eq!(run_arguments(&[flagfile]), 2);
+    assert_eq!(run_arguments(&[flagfile]), 1);
 }
 
 /// `EXACT` pins both ends to the build number (`CompatibleBuildRange.EXACT` of `PluginXmlPatcher.kt`). The rule states it
@@ -268,7 +268,7 @@ fn a_compatible_build_range_other_than_the_stated_ones_is_refused() {
         let mut request = plugin.request();
         request.retain(|line| line != DEV_RANGE);
         request.extend(range.map(|range| format!("--compatible-build-range={range}")));
-        assert_eq!(plugin.run(&request), 2, "{range:?}");
+        assert_eq!(plugin.run(&request), 1, "{range:?}");
         require_absent(&plugin.output);
     }
 }
@@ -293,7 +293,7 @@ fn an_unknown_option_is_refused() {
         let plugin = Plugin::new(PLUGIN_A);
         let mut request = plugin.request();
         request.push(unknown.to_owned());
-        assert_eq!(plugin.run(&request), 2, "{unknown:?}");
+        assert_eq!(plugin.run(&request), 1, "{unknown:?}");
         require_absent(&plugin.output);
     }
 }
@@ -316,7 +316,7 @@ fn a_valueless_or_repeated_option_is_refused() {
         let names: Vec<&str> = request.iter().map(|line| line.split('=').next().unwrap()).collect();
         lines.retain(|line| !names.contains(&line.split('=').next().unwrap()));
         lines.extend(request.iter().map(|line| (*line).to_owned()));
-        assert_eq!(plugin.run(&lines), 2, "{request:?}");
+        assert_eq!(plugin.run(&lines), 1, "{request:?}");
         require_absent(&plugin.output);
     }
 }
@@ -334,7 +334,7 @@ fn assert_one_more_option_is_refused(option: &str) {
     let plugin = Plugin::new(PLUGIN_A);
     let mut request = plugin.request();
     request.push(option.to_owned());
-    assert_eq!(plugin.run(&request), 2, "{option}");
+    assert_eq!(plugin.run(&request), 1, "{option}");
     require_absent(&plugin.output);
 }
 
@@ -357,7 +357,7 @@ fn an_application_info_option_is_refused() {
         let plugin = Plugin::new(PLUGIN_A);
         let mut request = plugin.retained_request();
         request.push(option.to_owned());
-        assert_eq!(plugin.run(&request), 2, "{option}");
+        assert_eq!(plugin.run(&request), 1, "{option}");
         require_absent(&plugin.output);
         assert_one_more_option_is_refused(option);
     }
@@ -386,7 +386,7 @@ fn a_missing_required_option_is_refused() {
     }
 }
 
-/// Fails unless the request without any one line of `complete` exits with 2. The retain switch itself is optional.
+/// Fails unless the request without any one line of `complete` exits with 1. The retain switch itself is optional.
 fn require_each_option(dir: &Path, complete: &[&str]) {
     for (index, name) in complete.iter().enumerate() {
         let request: Vec<&str> = complete
@@ -395,7 +395,7 @@ fn require_each_option(dir: &Path, complete: &[&str]) {
             .filter(|(other, _)| *other != index)
             .map(|(_, line)| *line)
             .collect();
-        assert_eq!(run_request(dir, &lines(&request)), 2, "no {name}");
+        assert_eq!(run_request(dir, &lines(&request)), 1, "no {name}");
     }
 }
 
@@ -409,7 +409,7 @@ fn a_malformed_descriptor_pair_is_refused() {
         &["--plugin-descriptor==only-a-file"][..],
         &["--plugin-descriptor=a.xml=one.xml", "--plugin-descriptor=a.xml=two.xml"][..],
     ] {
-        assert_eq!(run_request(dir, &lines(request)), 2, "{request:?}");
+        assert_eq!(run_request(dir, &lines(request)), 1, "{request:?}");
     }
 }
 
@@ -422,7 +422,7 @@ fn a_second_source_is_refused() {
         &["--source=a.xml", "--source-in-jar=META-INF/plugin.xml=b.jar"][..],
         &["--source-in-jar=META-INF/plugin.xml"][..],
     ] {
-        assert_eq!(run_request(dir, &lines(request)), 2, "{request:?}");
+        assert_eq!(run_request(dir, &lines(request)), 1, "{request:?}");
     }
 }
 
@@ -579,7 +579,7 @@ fn invalid_modes_are_refused() {
         request.extend(lines(modes));
         let values: Vec<&str> = request.iter().map(String::as_str).collect();
         assert!(take_mode(&mut option_lines(&values)).is_err(), "{modes:?}");
-        assert_eq!(run_request(dir, &request), 2, "{modes:?}");
+        assert_eq!(run_request(dir, &request), 1, "{modes:?}");
         require_absent(&output);
     }
 }
@@ -643,7 +643,7 @@ fn a_bad_stamp_input_is_refused() {
     let mut request = plugin.retained_request();
     request.retain(|line| line != PINNED_BUILD_DATE);
     request.push("--build-date-seconds=soon".to_owned());
-    assert_eq!(plugin.run(&request), 2);
+    assert_eq!(plugin.run(&request), 1);
     require_absent(&plugin.output);
 
     for build_number in ["2027.1", "27.1", "27a.1"] {

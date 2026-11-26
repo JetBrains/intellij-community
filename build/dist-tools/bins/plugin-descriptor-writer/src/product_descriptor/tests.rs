@@ -416,7 +416,7 @@ fn a_request_needs_a_composition() {
             "{error:#}"
         ),
     }
-    assert_eq!(run_request(dir, &request), 2);
+    assert_eq!(run_request(dir, &request), 1);
     require_absent(dir.join("out").join("plugin.xml"));
 }
 
@@ -426,6 +426,6 @@ fn a_malformed_row_is_a_request_error() {
     let dir = TempDir::new();
     let dir = dir.path();
     let request = composed_request(dir, &lines(&["--content-module=intellij.platform.debugger;loading=lazy"]));
-    assert_eq!(run_request(dir, &request), 2);
+    assert_eq!(run_request(dir, &request), 1);
     require_absent(dir.join("out").join("plugin.xml"));
 }

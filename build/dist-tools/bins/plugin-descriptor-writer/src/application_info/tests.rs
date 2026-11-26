@@ -150,7 +150,7 @@ fn application_info_refuses_the_overrides() {
             format!("{error:#}").contains(&format!("unknown option: {name}")),
             "{option}: {error:#}"
         );
-        assert_eq!(run_request(dir, &request), 2, "{option}");
+        assert_eq!(run_request(dir, &request), 1, "{option}");
         require_absent(&output);
     }
 }

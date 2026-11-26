@@ -13,7 +13,7 @@
 //! `community/platform/build-scripts/src/org/jetbrains/intellij/build/impl/PluginXmlPatcher.kt`. A descriptor feeds
 //! every plugin main jar, so a JVM action for it would sit on the critical path of the build.
 //!
-//! Exit code 2 is a request that the rule cannot state. Exit code 1 is a request that the inputs cannot satisfy.
+//! Every failure exits with code 1, because Bazel reads only a nonzero code.
 //!
 //! ### The subset
 //!
@@ -68,8 +68,9 @@ mod tests;
 
 use std::collections::{BTreeMap, BTreeSet, HashMap};
 use std::ffi::OsString;
-use std::io;
+use std::io::{self, Write};
 use std::path::{Path, PathBuf};
+use std::process::ExitCode;
 
 use anyhow::{Context, Result, anyhow, bail};
 use appinfo::{descriptorxml, format_major_release_date};
@@ -78,20 +79,17 @@ use jarpack::Jar;
 use crate::stamps::CompatibleBuildRange;
 use crate::structural::{Cache, ContentRequest};
 
-fn main() {
-    let code = run(std::env::args_os().skip(1));
-    if code != 0 {
-        std::process::exit(code);
-    }
+fn main() -> ExitCode {
+    cli::main(run)
 }
 
-/// Runs one request and returns the exit code. The code is 0 for success and 2 for a request that the rule cannot
-/// state. The code is 1 for a request that the inputs cannot satisfy.
-fn run(arguments: impl IntoIterator<Item = OsString>) -> i32 {
-    let (mode, options) = match read_request(arguments) {
-        Ok(request) => request,
-        Err(error) => return report(2, &error),
-    };
+/// Runs one request and returns the exit code: 0, or 1 after the error goes to `errors`.
+fn run(arguments: impl IntoIterator<Item = OsString>, errors: &mut dyn Write) -> u8 {
+    cli::exit_code(errors, execute(arguments), 1)
+}
+
+fn execute(arguments: impl IntoIterator<Item = OsString>) -> Result<()> {
+    let (mode, options) = read_request(arguments)?;
     match mode {
         Some(Mode::EmbeddedProduct) => embedded_product::run(options),
         Some(Mode::ProductDescriptor) => product_descriptor::run(options),
@@ -99,11 +97,6 @@ fn run(arguments: impl IntoIterator<Item = OsString>) -> i32 {
         Some(Mode::StampApplicationInfo) => stamp_application_info::run(options),
         None => run_plugin_descriptor(options),
     }
-}
-
-fn report(code: i32, error: &anyhow::Error) -> i32 {
-    cli::report(&mut io::stderr(), error);
-    code
 }
 
 /// Reads the request from the one argument that every rule passes, `--flagfile=<file>`, and takes its mode flag.
@@ -217,34 +210,19 @@ enum DescriptorSource {
     JarEntry { jar: PathBuf, entry: String },
 }
 
-fn run_plugin_descriptor(options: cli::Options) -> i32 {
-    let parsed = match parse_plugin_request(options) {
-        Ok(parsed) => parsed,
-        Err(error) => return report(2, &error),
-    };
-    let content = match patch(&parsed) {
-        Ok(content) => content,
-        Err(error) => {
-            let error = error.context(format!("could not patch the descriptor (module={})", parsed.main_module));
-            return report(1, &error);
-        }
-    };
+fn run_plugin_descriptor(options: cli::Options) -> Result<()> {
+    let parsed = parse_plugin_request(options)?;
+    let content = patch(&parsed).with_context(|| format!("could not patch the descriptor (module={})", parsed.main_module))?;
     let mut outputs = vec![(parsed.output.as_path(), content.clone())];
     if let Some(reserialized_output) = &parsed.reserialized_output {
-        match reserialize(&content) {
-            Ok(reserialized) => outputs.push((reserialized_output.as_path(), reserialized)),
-            Err(error) => {
-                let error = error.context(format!("could not reserialize the descriptor (module={})", parsed.main_module));
-                return report(1, &error);
-            }
-        }
+        let reserialized =
+            reserialize(&content).with_context(|| format!("could not reserialize the descriptor (module={})", parsed.main_module))?;
+        outputs.push((reserialized_output.as_path(), reserialized));
     }
     for (file, text) in outputs {
-        if let Err(error) = write_output(file, text.as_bytes()) {
-            return report(1, &error);
-        }
+        write_output(file, text.as_bytes())?;
     }
-    0
+    Ok(())
 }
 
 /// The `JDOMUtil.load` and `JDOMUtil.write` pair that the classpath writer applies to a descriptor.
@@ -526,16 +504,9 @@ fn read_text(path: &Path) -> Result<String> {
     String::from_utf8(read_file(path)?).with_context(|| format!("{} is not valid UTF-8", path.display()))
 }
 
-/// Writes the resolved `content` to `output` and returns the exit code. A failed resolve names `context` and exits with 1,
-/// and so does a failed write.
-fn write_resolved(output: &Path, content: Result<String>, context: impl FnOnce() -> String) -> i32 {
-    match content
-        .with_context(context)
-        .and_then(|content| write_output(output, content.as_bytes()))
-    {
-        Ok(()) => 0,
-        Err(error) => report(1, &error),
-    }
+/// Writes the resolved `content` to `output`. A failed resolve names `context`.
+fn write_resolved(output: &Path, content: Result<String>, context: impl FnOnce() -> String) -> Result<()> {
+    write_output(output, content.with_context(context)?.as_bytes())
 }
 
 /// Writes one output, and creates its directory first.

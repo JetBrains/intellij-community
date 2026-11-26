@@ -7,7 +7,7 @@ use std::path::PathBuf;
 use anyhow::Result;
 use appinfo::{ApplicationInfoElements, Replacement, descriptorxml, merge_host_application_info, replace_markers};
 
-use crate::{read_text, report, write_resolved};
+use crate::{read_text, write_resolved};
 
 /// The declared inputs of `dist_frontend_application_info`.
 ///
@@ -21,11 +21,8 @@ pub(crate) struct ApplicationInfoRequest {
     pub product_application_info: PathBuf,
 }
 
-pub(crate) fn run(options: cli::Options) -> i32 {
-    let parsed = match parse_application_info_request(options) {
-        Ok(parsed) => parsed,
-        Err(error) => return report(2, &error),
-    };
+pub(crate) fn run(options: cli::Options) -> Result<()> {
+    let parsed = parse_application_info_request(options)?;
     write_resolved(&parsed.output, resolve_application_info(&parsed), || {
         "could not produce the frontend application info".to_owned()
     })
