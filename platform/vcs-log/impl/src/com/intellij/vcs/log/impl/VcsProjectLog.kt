@@ -63,6 +63,13 @@ abstract class VcsProjectLog internal constructor() { // not an interface due to
   @Internal
   abstract fun showRevisionAsync(root: VirtualFile, hash: Hash, filePath: FilePath?): Deferred<Boolean>
 
+  /**
+   * Shows the [hash] under [root] like [showRevisionAsync], and waits for the log to load.
+   * It shows no progress of its own, so the caller can show one progress for a longer task.
+   */
+  @Internal
+  abstract suspend fun showRevision(root: VirtualFile, hash: Hash, filePath: FilePath?): Boolean
+
   abstract fun showRevisionInMainLog(root: VirtualFile, hash: Hash)
 
   abstract fun showRevisionInMainLog(hash: Hash)

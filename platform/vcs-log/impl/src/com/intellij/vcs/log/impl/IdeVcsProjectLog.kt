@@ -78,15 +78,14 @@ internal class IdeVcsProjectLog(
     coroutineScope.async {
       val progressTitle = VcsLogBundle.message("vcs.log.show.commit.in.log.process", hash.toShortString())
       withBackgroundProgress(project, progressTitle) {
-        val manager = init(true)
-        if (filePath != null) {
-          manager?.showCommit(hash, root, filePath, true)
-        }
-        else {
-          manager?.showCommit(hash, root, true)
-        } ?: false
+        showRevision(root, hash, filePath)
       }
     }
+
+  override suspend fun showRevision(root: VirtualFile, hash: Hash, filePath: FilePath?): Boolean {
+    val manager = init(true) ?: return false
+    return if (filePath != null) manager.showCommit(hash, root, filePath, true) else manager.showCommit(hash, root, true)
+  }
 
   private suspend fun IdeVcsLogManager.showCommit(hash: Hash, root: VirtualFile, requestFocus: Boolean): Boolean =
     withContext(Dispatchers.EDT) {
