@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.debugger.impl.frontend.hotswap
 
+import com.intellij.diagnostic.rethrowControlFlowException
 import com.intellij.icons.AllIcons
 import com.intellij.ide.HelpTooltip
 import com.intellij.openapi.Disposable
@@ -43,6 +44,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.awt.BorderLayout
 import java.awt.Component
 import java.awt.Insets
@@ -67,7 +69,17 @@ private val showReloadModifiedFilesInEditorPopup: Boolean by lazy {
   HotSwapUiExtension.computeSafeIfAvailable { it.showReloadModifiedFilesInEditorPopup } != false
 }
 
-private fun showFloatingToolbar(project: Project): Boolean = HotSwapUiExtension.computeSafeIfAvailable { it.showFloatingToolbar(project) } != false
+private suspend fun showFloatingToolbar(project: Project): Boolean {
+  val extension = HotSwapUiExtension.findApplicable() ?: return false
+  return try {
+    extension.showFloatingToolbar(project)
+  }
+  catch (e: Throwable) {
+    rethrowControlFlowException(e)
+    logger.error(e)
+    false
+  }
+}
 
 private fun collectPopupMenuActions(): DefaultActionGroup? = HotSwapUiExtension.computeSafeIfAvailable { it.popupMenuActions() }
 
@@ -240,10 +252,13 @@ internal class HotSwapFloatingToolbarProvider : FloatingToolbarProvider {
       component.accessibleContext.accessibleName = HotSwapUiExtension.computeSafeIfAvailable { it.toolbarAccessibleName }
     }
     val manager = FrontendHotSwapManager.getInstance(project)
-    val job = manager.coroutineScope.launch(Dispatchers.EDT) {
+    val job = manager.coroutineScope.launch(Dispatchers.Default) {
       manager.currentStatusFlow.collectLatest { state ->
         val status = state?.status ?: HotSwapVisibleStatus.Hidden
-        onStatusChanged(component, status, editorTag, project)
+        val showToolbar = showFloatingToolbar(project)
+        withContext(Dispatchers.EDT) {
+          onStatusChanged(component, status, showToolbar, editorTag, project)
+        }
       }
     }
     Disposer.register(parentDisposable, Disposable {
@@ -255,6 +270,7 @@ internal class HotSwapFloatingToolbarProvider : FloatingToolbarProvider {
   private fun onStatusChanged(
     component: FloatingToolbarComponent,
     status: HotSwapVisibleStatus,
+    showToolbar: Boolean,
     editorTag: String?,
     project: Project,
   ) {
@@ -262,7 +278,7 @@ internal class HotSwapFloatingToolbarProvider : FloatingToolbarProvider {
 
     EDT.assertIsEdt()
 
-    if (!showFloatingToolbar(project)) {
+    if (!showToolbar) {
       logger.debug { "Hide button because it is disabled ($editorTag)" }
       component.scheduleHide()
       return

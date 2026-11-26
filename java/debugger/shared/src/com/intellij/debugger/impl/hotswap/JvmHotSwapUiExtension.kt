@@ -8,6 +8,7 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.project.DumbAwareToggleAction
 import com.intellij.openapi.project.Project
 import com.intellij.util.PlatformUtils
@@ -17,7 +18,10 @@ import javax.swing.Icon
 
 internal class JvmHotSwapUiExtension : HotSwapUiExtension {
   override fun isApplicable(): Boolean = PlatformUtils.isIntelliJ() || PlatformUtils.isJetBrainsClient()
-  override fun showFloatingToolbar(project: Project) = DebuggerSettings.getInstance().HOTSWAP_SHOW_FLOATING_BUTTON
+
+  override suspend fun showFloatingToolbar(project: Project): Boolean {
+    return serviceAsync<DebuggerSettings>().HOTSWAP_SHOW_FLOATING_BUTTON
+  }
 
   override val hotSwapIcon: Icon
     get() = AllIcons.Debugger.DebuggerSync

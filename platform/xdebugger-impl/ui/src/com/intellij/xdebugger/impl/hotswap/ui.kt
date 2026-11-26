@@ -25,9 +25,12 @@ interface HotSwapUiExtension {
    * @return true if this EP is applicable for the current IDE
    */
   fun isApplicable(): Boolean = true
-  @ApiStatus.Obsolete
-  fun showFloatingToolbar(): Boolean = true
-  fun showFloatingToolbar(project: Project): Boolean = showFloatingToolbar()
+
+  /**
+   * Called on a background thread. Use [com.intellij.openapi.components.serviceAsync] to get a service.
+   */
+  suspend fun showFloatingToolbar(project: Project): Boolean = true
+
   val hotSwapIcon: Icon
   fun configureTooltip(tooltip: HelpTooltip, status: HotSwapVisibleStatus) {
     @Suppress("DialogTitleCapitalization")
@@ -81,10 +84,13 @@ interface HotSwapUiExtension {
   fun popupMenuActions(): DefaultActionGroup? = null
 
   companion object {
-    private val EP_NAME = com.intellij.openapi.extensions.ExtensionPointName<HotSwapUiExtension>("com.intellij.xdebugger.hotSwapUiExtension")
+    private val EP_NAME =
+      com.intellij.openapi.extensions.ExtensionPointName<HotSwapUiExtension>("com.intellij.xdebugger.hotSwapUiExtension")
 
     fun <T> computeSafeIfAvailable(action: (HotSwapUiExtension) -> T): T? = EP_NAME.computeSafeIfAny {
       if (it.isApplicable()) action(it) else null
     }
+
+    fun findApplicable(): HotSwapUiExtension? = EP_NAME.findFirstSafe { it.isApplicable() }
   }
 }
