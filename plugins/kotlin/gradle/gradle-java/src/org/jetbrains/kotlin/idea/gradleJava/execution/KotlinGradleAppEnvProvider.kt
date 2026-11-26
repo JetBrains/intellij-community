@@ -107,7 +107,7 @@ internal fun generateApplicationTaskScript(
     def _workingDir = ${if (workingDirectory.isNullOrEmpty()) "null\n" else "mapPath(${workingDirectory.toGroovyStringLiteral()})"}
     def sourceSetName = '$sourceSetName'
 
-    def isOlderThan64 = GradleVersion.current().getBaseVersion().compareTo(GradleVersion.version("6.4")) < 0
+    def isOlderThan64 = org.gradle.util.GradleVersion.current().getBaseVersion().compareTo(org.gradle.util.GradleVersion.version("6.4")) < 0
 
     GradleLifecycleUtil.afterProject(gradle) { Project project ->
         if (project.rootProject.name + project.path == gradleProjectId) {
