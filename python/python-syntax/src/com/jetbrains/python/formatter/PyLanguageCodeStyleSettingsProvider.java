@@ -122,6 +122,9 @@ public final class PyLanguageCodeStyleSettingsProvider extends LanguageCodeStyle
       consumer.showCustomOption(PyCodeStyleSettings.class, "ALIGN_CONSECUTIVE_ASSIGNMENTS",
                                 PySyntaxBundle.message("formatter.align.consecutive.assignments"),
                                 ApplicationBundle.message("wrapping.assignment.statement"));
+      consumer.showCustomOption(PyCodeStyleSettings.class, "WRAP_LONG_ASSIGNED_VALUE_IN_PARENTHESES",
+                                PySyntaxBundle.message("formatter.wrap.long.assigned.value.in.parentheses"),
+                                ApplicationBundle.message("wrapping.assignment.statement"));
 
       consumer.showCustomOption(PyCodeStyleSettings.class,
                                 "USE_TRAILING_COMMA_IN_ARGUMENTS_LIST",
@@ -216,6 +219,8 @@ public final class PyLanguageCodeStyleSettingsProvider extends LanguageCodeStyle
         .showCustomOption(PyCodeStyleSettings.class, "HANG_CLOSING_BRACKETS", PySyntaxBundle.message("formatter.hang.closing.brackets"), null);
       consumer.showCustomOption(PyCodeStyleSettings.class, "ELLIPSIS_BODY_ON_SAME_LINE",
                                 PySyntaxBundle.message("formatter.ellipsis.body.on.same.line"), null);
+      consumer.showCustomOption(PyCodeStyleSettings.class, "CHOP_DOWN_LONG_SUBSCRIPTIONS",
+                                PySyntaxBundle.message("formatter.chop.down.long.subscriptions"), null);
     }
   }
 
@@ -316,6 +321,10 @@ public final class PyLanguageCodeStyleSettingsProvider extends LanguageCodeStyle
     counter += 1
 
     long_expression = component_one + component_two + component_three + component_four + component_five + component_six
+
+    scores["first_player", "second_player", "third_player", "fourth_player"] = component_one + component_two
+
+    score = scores["first_player", "second_player", "third_player", "fourth_player", "fifth_player"]
 
     def xyzzy(a1, a2, long_parameter_1, a3, a4, long_parameter_2):
         pass

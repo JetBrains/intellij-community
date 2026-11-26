@@ -153,6 +153,20 @@ public class PyCodeStyleSettings extends CustomCodeStyleSettings {
    */
   public boolean HANG_CLOSING_BRACKETS = false;
 
+  /**
+   * Splits a subscription that does not fit on one line: a line break after {@code [}, one item per line,
+   * and {@code ]} on its own line. Black and Ruff split at the same brackets. They keep the items on one line
+   * when the items fit there, but this option chops them down, as the "Chop down if long" collections do.
+   * Without the option, a long subscription wraps as needed.
+   */
+  public boolean CHOP_DOWN_LONG_SUBSCRIPTIONS = false;
+
+  /**
+   * Puts a long assigned value on its own line in parentheses, as Black and Ruff do.
+   * See {@link PyLongAssignedValuePreFormatProcessor} for the cases that the option changes.
+   */
+  public boolean WRAP_LONG_ASSIGNED_VALUE_IN_PARENTHESES = false;
+
   public boolean FORMAT_INJECTED_FRAGMENTS = true;
   public boolean ADD_INDENT_INSIDE_INJECTIONS = false;
 
