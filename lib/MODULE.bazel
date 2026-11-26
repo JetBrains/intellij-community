@@ -3529,17 +3529,17 @@ http_file(
 )
 
 http_file(
-    name = "org_jetbrains_intellij_deps-intellij-deps-java-atk-wrapper-271_37_http",
-    downloaded_file_path = "intellij-deps-java-atk-wrapper-271.37.jar",
-    sha256 = "f6039832d01c8449b2c14c24e01a27faeaaf2deaf4a220368aefdecaaeab811e",
-    url = "https://cache-redirector.jetbrains.com/maven/ultimate-public/org/jetbrains/intellij/deps/intellij-deps-java-atk-wrapper/271.37/intellij-deps-java-atk-wrapper-271.37.jar",
+    name = "org_jetbrains_intellij_deps-intellij-deps-java-atk-wrapper-271_41_http",
+    downloaded_file_path = "intellij-deps-java-atk-wrapper-271.41.jar",
+    sha256 = "fd48aabe6a784518d1c2fd040b9fc0664a49a46691416f0e9789394fa002d93b",
+    url = "https://cache-redirector.jetbrains.com/maven/ultimate-public/org/jetbrains/intellij/deps/intellij-deps-java-atk-wrapper/271.41/intellij-deps-java-atk-wrapper-271.41.jar",
 )
 
 http_file(
-    name = "org_jetbrains_intellij_deps-intellij-deps-java-atk-wrapper-271_37-sources_http",
-    downloaded_file_path = "intellij-deps-java-atk-wrapper-271.37-sources.jar",
-    sha256 = "5f8e0b6217cb03edf4d2698cecf247bfbf42f5f5756975f85b9ee629fd903da8",
-    url = "https://cache-redirector.jetbrains.com/maven/ultimate-public/org/jetbrains/intellij/deps/intellij-deps-java-atk-wrapper/271.37/intellij-deps-java-atk-wrapper-271.37-sources.jar",
+    name = "org_jetbrains_intellij_deps-intellij-deps-java-atk-wrapper-271_41-sources_http",
+    downloaded_file_path = "intellij-deps-java-atk-wrapper-271.41-sources.jar",
+    sha256 = "66d16ef13062d6bbbbb84789d19fd8aa8728946acd5990b489268653212e66ad",
+    url = "https://cache-redirector.jetbrains.com/maven/ultimate-public/org/jetbrains/intellij/deps/intellij-deps-java-atk-wrapper/271.41/intellij-deps-java-atk-wrapper-271.41-sources.jar",
 )
 
 http_file(
