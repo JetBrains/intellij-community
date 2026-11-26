@@ -106,7 +106,8 @@ public class ImportCollector {
   }
 
   public String getNestedName(String fullName, boolean imported) {
-    ClassNode node = DecompilerContext.getClassProcessor().getMapRootClasses().get(fullName.replace('.', '/')); //todo[r.sh] anonymous classes?
+    String binaryName = fullName.replace('.', '/');
+    ClassNode node = DecompilerContext.getClassProcessor().getMapRootClasses().get(binaryName); //todo[r.sh] anonymous classes?
 
     String nestedName;
     if (node != null && node.classStruct.isOwn()) {
@@ -130,7 +131,7 @@ public class ImportCollector {
       fullName = fullName.replace('/', '.');
       int lastDot = fullName.lastIndexOf('.');
       if (lastDot != -1) {
-        nestedName = fullName.substring(lastDot + 1).replace("$", ".");
+        nestedName = DecompilerContext.getClassProcessor().getExternalNestedName(binaryName);
       } else {
         nestedName = fullName;
       }

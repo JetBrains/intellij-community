@@ -177,6 +177,18 @@ class IdeaDecompilerTest {
   }
 
   @Test
+  fun testDollarInExternalMemberType(): Unit = timeoutRunBlocking(timeout = 2.minutes) {
+    val file = getTestFile("DollarInMemberType.class")
+    readAction {
+      val psiFile = PsiManager.getInstance(myFixture.project).findFile(file) as ClsFileImpl
+      val text = BinaryFileTypeDecompilers.getInstance().allowDecompilerSlowOperation { psiFile.mirror.text }
+      val offset = text.indexOf("evidence")
+      assertEquals("evidence", psiFile.findElementAt(offset)?.text)
+      assertTrue(text.contains("Outer.\$less\$colon\$less<String> evidence, Outer.Middle.Inner nested"), text)
+    }
+  }
+
+  @Test
   fun testSignatureWithMoreInterfacesThanClassFile(): Unit = timeoutRunBlocking(timeout = 2.minutes) { doTestInterfaceSignatureMismatch("MoreInterfaces", "Runnable", "Serializable") }
 
   @Test

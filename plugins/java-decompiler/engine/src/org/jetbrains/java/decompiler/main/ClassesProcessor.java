@@ -47,6 +47,7 @@ public class ClassesProcessor {
 
   private final StructContext context;
   private final Map<String, ClassNode> mapRootClasses = new HashMap<>();
+  private final Map<String, String> memberSimpleNames = new HashMap<>();
   private final Set<String> mustBeDecompiled = new HashSet<>();
 
   private static class Inner {
@@ -168,6 +169,10 @@ public class ClassesProcessor {
               }
               if (rec.type == ClassNode.CLASS_MEMBER && !innerName.equals(enclClassName + '$' + entry.simpleName)) {
                 continue;  // not a real inner class
+              }
+
+              if (rec.type == ClassNode.CLASS_MEMBER && entry.enclosingName != null && entry.simpleName != null) {
+                memberSimpleNames.putIfAbsent(innerName, entry.simpleName);
               }
 
               StructClass enclosingClass = context.getClasses().get(enclClassName);
@@ -526,6 +531,16 @@ public class ClassesProcessor {
     for (ClassNode nd : node.nested) {
       destroyWrappers(nd);
     }
+  }
+
+  public String getExternalNestedName(String binaryName) {
+    String simpleName = memberSimpleNames.get(binaryName);
+    if (simpleName == null) {
+      return binaryName.substring(binaryName.lastIndexOf('/') + 1).replace('$', '.');
+    }
+
+    String enclosingName = binaryName.substring(0, binaryName.length() - simpleName.length() - 1);
+    return getExternalNestedName(enclosingName) + '.' + simpleName;
   }
 
   public Map<String, ClassNode> getMapRootClasses() {
