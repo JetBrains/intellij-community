@@ -6,6 +6,7 @@ import com.intellij.ide.BrowserUtil
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.plugins.PluginManagerConfigurable
 import com.intellij.ide.plugins.newui.ListPluginComponent
+import com.intellij.ide.plugins.newui.PluginUiModel
 import com.intellij.ide.setToolTipText
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.actionSystem.ActionToolbar
@@ -357,15 +358,23 @@ internal class UnifiedPluginsPageView @RequiresEdt constructor(
   }
 
   @RequiresEdt
-  fun renderOperationStatus(items: List<PluginItemState>, showUpdateCheck: Boolean) {
+  fun renderOperationStatus(items: List<PluginItemState>, uninstallingPlugins: List<PluginUiModel>, showUpdateCheck: Boolean) {
     val activeItems = items.filter { it.rowInput?.operationInProgress == true }
+    if (activeItems.isEmpty()) operationProgressPluginIds.clear()
+    else activeItems.mapTo(operationProgressPluginIds, PluginItemState::pluginId)
+
+    if (uninstallingPlugins.isNotEmpty()) {
+      val plugin = uninstallingPlugins.singleOrNull()
+      val status = if (plugin == null) IdeBundle.message("plugins.configurable.operation.uninstalling.plugins", uninstallingPlugins.size)
+                   else IdeBundle.message("plugins.configurable.operation.uninstalling.plugin", plugin.name ?: plugin.pluginId.idString)
+      setOperationStatus(status)
+      return
+    }
     if (activeItems.isEmpty()) {
-      operationProgressPluginIds.clear()
       setOperationStatus(if (showUpdateCheck) IdeBundle.message("plugins.configurable.operation.checking.updates") else null)
       return
     }
 
-    activeItems.mapTo(operationProgressPluginIds, PluginItemState::pluginId)
     val allUpdates = activeItems.all { it.rowInput?.installedPlugin != null || it.rowInput?.updateDescriptor != null }
     val total = operationProgressPluginIds.size
     val status = when {

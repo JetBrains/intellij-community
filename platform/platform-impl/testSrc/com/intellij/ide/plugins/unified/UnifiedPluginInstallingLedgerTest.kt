@@ -38,6 +38,23 @@ internal class UnifiedPluginInstallingLedgerTest {
   }
 
   @Test
+  fun `uninstall progress lasts until both sides finish`() {
+    val model = plugin("plugin.id")
+    val localOperation = UUID.randomUUID()
+    val remoteOperation = UUID.randomUUID()
+    val kind = PluginOperationKind.UNINSTALL
+    assertThat(ledger.accept(started(localOperation, model, kind = kind))).isTrue()
+    assertThat(ledger.accept(started(remoteOperation, model, target = PluginSource.REMOTE, kind = kind))).isTrue()
+    assertThat(ledger.uninstallingPlugins).containsExactly(model)
+    assertThat(ledger.section(PluginListModelData.EMPTY)).isNull()
+
+    ledger.accept(finished(localOperation, model.pluginId, PluginOperationTerminalResult.CANCELLED, kind = kind))
+    assertThat(ledger.uninstallingPlugins).containsExactly(model)
+    ledger.accept(finished(remoteOperation, model.pluginId, PluginOperationTerminalResult.FAILED, PluginSource.REMOTE, kind))
+    assertThat(ledger.uninstallingPlugins).isEmpty()
+  }
+
+  @Test
   fun `retry updates the retained occurrence without duplicating it`() {
     val firstModel = plugin("plugin.id", "First")
     val retryModel = plugin("plugin.id", "Retry")

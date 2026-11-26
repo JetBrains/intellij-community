@@ -50,6 +50,7 @@ internal data class UnifiedPluginsPageSourceState(
   val searchControls: UnifiedPluginsSearchControlsState = UnifiedPluginsSearchControlsState(),
   val internalDescriptorSettled: Boolean = true,
   val restartRequired: Boolean = false,
+  val uninstallingPlugins: List<PluginUiModel> = emptyList(),
   /** Identifies the query used by the last completed page projection. */
   val projectedQueryRevision: Long = query.revision,
 ) {
@@ -463,6 +464,7 @@ private fun projectUnifiedPluginsPageSourceState(
     repositoryContentRevision = repositoryState?.repositoryContentRevision ?: 0,
     mayEstablishSelection = mayEstablishSelection,
     internalDescriptorSettled = internalState?.descriptorRequestSettled ?: true,
+    uninstallingPlugins = localState.uninstallingPlugins,
     restartRequired = localState.manualUpdates.values.any {
       (it.presentation as? UnifiedPluginManualUpdatePresentation.Prepared)?.restartRequired == true
     } || localState.listModelData.installationStates.values.any { it.status.isRestartRequired() },

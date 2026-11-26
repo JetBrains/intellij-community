@@ -62,6 +62,7 @@ enum class PluginInventoryChangeReason {
 enum class PluginOperationKind {
   INSTALL,
   UPDATE,
+  UNINSTALL,
 }
 
 @ApiStatus.Internal

@@ -818,7 +818,11 @@ internal class UnifiedPluginsPageSession @RequiresEdt constructor(
     val restartRequired = source.restartRequired || updateAll.restartRequired
     val updateAllRunning = updateAll.presentation is UnifiedPluginUpdateAllPresentation.Running
     val operations = source.sections.firstOrNull { it.id == PluginSectionId.Installing }?.items.orEmpty()
-    view.renderOperationStatus(operations, showUpdateCheck = checkingForUpdates && !restartRequired && !updateAllRunning)
+    view.renderOperationStatus(
+      operations,
+      source.uninstallingPlugins,
+      showUpdateCheck = checkingForUpdates && !restartRequired && !updateAllRunning,
+    )
     updateAllButton.render(updateAll.presentation)
     restartButton.isVisible = restartRequired && !view.operationStatusComponent.isVisible && !updateAllRunning
   }

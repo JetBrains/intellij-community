@@ -2,6 +2,7 @@
 package com.intellij.ide.plugins.newui
 
 import com.intellij.core.CoreBundle
+import com.intellij.diagnostic.rethrowControlFlowException
 import com.intellij.externalDependencies.DependencyOnPlugin
 import com.intellij.externalDependencies.ExternalDependenciesManager
 import com.intellij.ide.IdeBundle
@@ -1151,15 +1152,18 @@ open class MyPluginModel @JvmOverloads constructor(
     callback: Runnable?,
   ) {
     val scope = coroutineScope.childScope(javaClass.name, Dispatchers.IO, true)
-    myTopController!!.showProgress(true)
-    forEachDetailPanel { panel ->
-      if (panel.descriptorForActions === descriptor) {
-        panel.showUninstallProgress(scope)
-      }
-    }
+    val target = controller.getTarget()
+    val context = PluginOperationContext.create(descriptor.pluginId, target, PluginOperationKind.UNINSTALL)
+    operationStarted(context, descriptor)
     try {
+      myTopController!!.showProgress(true)
+      forEachDetailPanel { panel ->
+        if (panel.descriptorForActions === descriptor) {
+          panel.showUninstallProgress(scope)
+        }
+      }
       val needRestartForUninstall = controller.performUninstall(sessionId, descriptor.pluginId)
-      myPluginManagerCustomizer?.onPluginDeleted(descriptor, controller.getTarget())
+      myPluginManagerCustomizer?.onPluginDeleted(descriptor, target)
       val completelyUninstalled = myPluginManagerCustomizer?.isPluginCompletelyUninstalled(descriptor) ?: true
       descriptor.isDeleted = completelyUninstalled
       val errorCheckResult = UiPluginManager.getInstance().loadErrors(sessionId)
@@ -1180,8 +1184,15 @@ open class MyPluginModel @JvmOverloads constructor(
         myEventPublisher.inventoryInvalidated(PluginInventoryChangeReason.UNINSTALL, listOf(descriptor.pluginId))
         callback?.run()
       }
+      operationTargetFinished(context, target, PluginOperationTerminalResult.SUCCEEDED, restartRequired = needRestartForUninstall)
+    }
+    catch (e: Throwable) {
+      rethrowControlFlowException(e)
+      operationTargetFinished(context, target, PluginOperationTerminalResult.FAILED)
+      throw e
     }
     finally {
+      operationFinished(context)
       hideProgresses(descriptor.pluginId)
     }
   }

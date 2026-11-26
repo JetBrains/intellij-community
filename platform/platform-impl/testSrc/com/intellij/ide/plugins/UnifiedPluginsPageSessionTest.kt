@@ -14,6 +14,7 @@ import com.intellij.ide.plugins.marketplace.statistics.enums.UnifiedPluginSearch
 import com.intellij.ide.plugins.marketplace.utils.MarketplaceCustomizationService
 import com.intellij.ide.plugins.newui.CustomPluginRepository
 import com.intellij.ide.plugins.newui.CustomPluginRepositoryLoadResult
+import com.intellij.ide.plugins.newui.DefaultUiPluginManagerController
 import com.intellij.ide.plugins.newui.EventHandler.SelectionType
 import com.intellij.ide.plugins.newui.LegacyPluginUiHost
 import com.intellij.ide.plugins.newui.ListPluginComponent
@@ -26,6 +27,7 @@ import com.intellij.ide.plugins.newui.PluginSource
 import com.intellij.ide.plugins.newui.PluginUiModel
 import com.intellij.ide.plugins.newui.PluginUpdateSourceState
 import com.intellij.ide.plugins.newui.PluginUpdatesEvent
+import com.intellij.ide.plugins.newui.UiPluginManagerController
 import com.intellij.ide.plugins.newui.UpdateButton
 import com.intellij.ide.plugins.unified.UnifiedPluginInternalGroup
 import com.intellij.ide.plugins.unified.UnifiedPluginInventory
@@ -97,6 +99,7 @@ import com.intellij.util.ui.withShowingChanged
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -710,6 +713,50 @@ internal class UnifiedPluginsPageSessionTest {
       }
       checkingForUpdates.value = false
       waitUntilAssertSucceeds { assertThat(status.isVisible).isFalse() }
+    }
+    finally {
+      Disposer.dispose(session)
+    }
+  }
+
+  @Test
+  fun `uninstall progress stays in the header across search changes`(): Unit = uiTest {
+    val plugin = inventoryItem("uninstall.plugin", "Uninstall Plugin")
+    val provider = FixedLocalDataProvider(UnifiedPluginInventory(listOf(plugin), emptyList()))
+    val checkingForUpdates = MutableStateFlow(true)
+    val session = createSession(null, provider, updateCheckInProgress = checkingForUpdates)
+    try {
+      val header = session.getCenterComponent(Configurable.TopComponentController.EMPTY)
+      val status = header.components.filterIsInstance<JLabel>().single()
+      val content = session.getComponent()
+      waitForPluginIds(content, setOf(plugin.model.pluginId.idString))
+      val model = componentsOfType(content, ListPluginComponent::class.java).single().getModelFacade().getModel()
+      val result = CompletableDeferred<Boolean>()
+      val controller = object : UiPluginManagerController by DefaultUiPluginManagerController {
+        override suspend fun performUninstall(sessionId: String, pluginId: PluginId): Boolean = result.await()
+      }
+      val uninstall = async { model.uninstallAndUpdateUi(plugin.model, controller) }
+      try {
+        val uninstalling = IdeBundle.message("plugins.configurable.operation.uninstalling.plugin", plugin.model.name)
+        waitUntilAssertSucceeds {
+          assertThat(status.isVisible).isTrue()
+          assertThat(status.text).isEqualTo(uninstalling)
+        }
+        session.enableSearch("No matching plugin")!!.run()
+        waitForPluginIds(content, emptySet())
+        assertThat(status.text).isEqualTo(uninstalling)
+
+        result.complete(false)
+        uninstall.await()
+        waitUntilAssertSucceeds {
+          assertThat(status.text).isEqualTo(IdeBundle.message("plugins.configurable.operation.checking.updates"))
+        }
+        checkingForUpdates.value = false
+        waitUntilAssertSucceeds { assertThat(status.isVisible).isFalse() }
+      }
+      finally {
+        uninstall.cancel()
+      }
     }
     finally {
       Disposer.dispose(session)

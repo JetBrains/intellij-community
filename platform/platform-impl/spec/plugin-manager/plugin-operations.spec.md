@@ -8,6 +8,7 @@ targets:
   - ../../src/com/intellij/ide/plugins/newui/DefaultUiPluginManagerController.kt
   - ../../src/com/intellij/ide/plugins/newui/LegacyPluginUiHost.kt
   - ../../src/com/intellij/ide/plugins/newui/ListPluginComponent.kt
+  - ../../src/com/intellij/ide/plugins/newui/MyPluginModel.kt
   - ../../src/com/intellij/ide/plugins/newui/PluginDetailsPageComponent.kt
   - ../../src/com/intellij/ide/plugins/newui/PluginManagerCustomizer.kt
   - ../../src/com/intellij/ide/plugins/newui/PluginModelAsyncOperationsExecutor.kt
@@ -368,6 +369,15 @@ Untested: No focused test covers every management edit and refresh path.
     `Update All button counts prepared executor targets`
   )
 
+- An active uninstall must show a spinner and an Uninstalling status beside the settings gear.
+- Uninstall progress takes precedence over other header status. It clears when the uninstall succeeds, fails, or is cancelled.
+  [@test] ../../testSrc/com/intellij/ide/plugins/UnifiedPluginsPageSessionTest.kt (
+    `uninstall progress stays in the header across search changes`
+  )
+  [@test] ../../testSrc/com/intellij/ide/plugins/unified/UnifiedPluginInstallingLedgerTest.kt (
+    `uninstall progress lasts until both sides finish`
+  )
+
 - Pending installs or updates that require restart must show one Restart IDE button with a restart icon beside the settings gear.
 - The button must replace the status when all operations finish. Active progress must take precedence.
 - Search filters must not affect the restart button.
@@ -377,7 +387,7 @@ Untested: No focused test covers every management edit and refresh path.
   )
 
 - While the Plugins page fetches updates, the header must show Checking for updates… with a spinner.
-- Install progress, update progress, and Restart IDE must take precedence over the check status.
+- Install, update, and uninstall progress and Restart IDE must take precedence over the check status.
 - The check status must clear when the fetch succeeds, fails, or is cancelled.
   [@test] ../../testSrc/com/intellij/ide/plugins/newui/DefaultPluginUpdatesProviderTest.kt (
     `update check progress clears after success or failure`

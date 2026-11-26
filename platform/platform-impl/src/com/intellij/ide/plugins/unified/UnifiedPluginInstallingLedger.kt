@@ -17,7 +17,7 @@ import java.util.UUID
 
 // @spec platform/platform-impl/spec/plugin-manager/plugin-operations.spec.md
 /**
- * Retains installation attempts for one plugin manager session.
+ * Retains installation attempts and active uninstalls for one plugin manager session.
  *
  * Use this class from one serialized execution path. The class has no internal synchronization.
  * The local source command processor provides this serialization.
@@ -29,10 +29,14 @@ internal class UnifiedPluginInstallingLedger(
 ) {
   private val mutableEntries = LinkedHashMap<PluginId, MutableEntry>()
   private val operations = LinkedHashMap<UUID, Operation>()
+  private val uninstalls = LinkedHashMap<UUID, PluginUiModel>()
   private var nextRevision = 0L
 
   val entries: List<InstallingPluginLedgerEntry>
     get() = mutableEntries.values.map(MutableEntry::snapshot)
+
+  val uninstallingPlugins: List<PluginUiModel>
+    get() = uninstalls.values.distinctBy(PluginUiModel::pluginId)
 
   fun accept(event: PluginModelEvent, installedPluginIds: Set<PluginId> = emptySet()): Boolean {
     return when (event) {
@@ -121,6 +125,7 @@ internal class UnifiedPluginInstallingLedger(
 
   private fun acceptStarted(event: PluginModelEvent.OperationStarted, installedPluginIds: Set<PluginId>): Boolean {
     if (event.sessionId != sessionId) return false
+    if (event.kind == PluginOperationKind.UNINSTALL) return uninstalls.putIfAbsent(event.operationId, event.presentationModel) == null
     if (operations.containsKey(event.operationId)) return false
 
     val operation = Operation(event.displayPluginId, installHistory.nextOperationOrder()).apply {
@@ -146,6 +151,7 @@ internal class UnifiedPluginInstallingLedger(
 
   private fun acceptFinished(event: PluginModelEvent.OperationFinished, installedPluginIds: Set<PluginId>): Boolean {
     if (event.sessionId != sessionId) return false
+    if (event.kind == PluginOperationKind.UNINSTALL) return uninstalls.remove(event.operationId) != null
 
     val primaryChanged = acceptPrimaryFinished(event)
     if (primaryChanged) {
@@ -183,7 +189,7 @@ internal class UnifiedPluginInstallingLedger(
     event: PluginModelEvent.OperationDependenciesScheduled,
     installedPluginIds: Set<PluginId>,
   ): Boolean {
-    if (event.sessionId != sessionId) return false
+    if (event.sessionId != sessionId || event.kind == PluginOperationKind.UNINSTALL) return false
 
     val operation = operations[event.operationId]
     val changed = event.dependencies.fold(false) { changed, plugin ->

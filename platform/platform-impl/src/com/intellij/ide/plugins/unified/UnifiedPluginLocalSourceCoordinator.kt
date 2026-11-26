@@ -4,9 +4,11 @@ package com.intellij.ide.plugins.unified
 import com.intellij.ide.plugins.newui.PluginInstallationState
 import com.intellij.ide.plugins.newui.PluginInventoryChangeReason
 import com.intellij.ide.plugins.newui.PluginModelEvent
+import com.intellij.ide.plugins.newui.PluginOperationKind
 import com.intellij.ide.plugins.newui.PluginOperationTerminalResult
 import com.intellij.ide.plugins.newui.PluginProgressState
 import com.intellij.ide.plugins.newui.PluginRowInput
+import com.intellij.ide.plugins.newui.PluginUiModel
 import com.intellij.ide.plugins.newui.PluginUpdatesEvent
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.PluginId
@@ -39,6 +41,7 @@ internal data class UnifiedPluginLocalSourceState(
   val mayEstablishSelection: Boolean,
   val facetsLoading: Boolean = false,
   val manualUpdates: Map<PluginId, UnifiedPluginManualUpdateState> = emptyMap(),
+  val uninstallingPlugins: List<PluginUiModel> = emptyList(),
   /** Implementation-detail plugins by their Installed or Bundled section. Only the `/built-in` filter shows them. */
   val implementationDetailItems: Map<PluginSectionId, List<PluginItemState>> = emptyMap(),
 )
@@ -213,7 +216,7 @@ internal class UnifiedPluginLocalSourceCoordinator(
         }
       }
       is PluginModelEvent.OperationStarted -> {
-        if (event.sessionId != sessionId) return false
+        if (event.sessionId != sessionId || event.kind == PluginOperationKind.UNINSTALL) return false
         val next = UnifiedPluginManualUpdateState(
           event.operationId,
           UnifiedPluginManualUpdatePresentation.Downloading,
@@ -221,7 +224,7 @@ internal class UnifiedPluginLocalSourceCoordinator(
         manualUpdates.put(event.displayPluginId, next) != next
       }
       is PluginModelEvent.OperationFinished -> {
-        if (event.sessionId != sessionId) return false
+        if (event.sessionId != sessionId || event.kind == PluginOperationKind.UNINSTALL) return false
         val current = manualUpdates[event.displayPluginId]?.takeIf { it.operationId == event.operationId } ?: return false
         if (event.result == PluginOperationTerminalResult.SUCCEEDED) {
           val next = current.copy(
@@ -374,6 +377,7 @@ internal class UnifiedPluginLocalSourceCoordinator(
       mayEstablishSelection = mayEstablishSelection,
       facetsLoading = status is PluginSectionStatus.Loading,
       manualUpdates = manualUpdates.toMap(),
+      uninstallingPlugins = installingLedger.uninstallingPlugins,
       implementationDetailItems = currentSnapshot?.implementationDetailItems.orEmpty(),
     )
   }
