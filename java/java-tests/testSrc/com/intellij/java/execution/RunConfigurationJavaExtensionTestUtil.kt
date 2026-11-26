@@ -44,6 +44,18 @@ internal fun doTestOnlyApplicableConfigurationExtensionsShouldBeProcessed(
   expectedOutput: String? = null,
 ) {
   ExtensionTestUtil.maskExtensions(RunConfigurationExtension.EP_NAME, listOf(UnApplicableConfigurationExtension()), execution.disposable)
+  val stdout = runAndWaitForTermination(execution, configuration)
+  if (expectedOutput != null) {
+    assertEquals(expectedOutput, stdout)
+  }
+}
+
+/**
+ * Runs [configuration] with the default run executor from the EDT and waits for the end of the process.
+ *
+ * @return the standard output of the process
+ */
+internal fun runAndWaitForTermination(execution: ExecutionTestFixture, configuration: RunConfiguration): String {
   lateinit var processHandler: ProcessHandler
   val executionStarted = Semaphore(1)
   val outputReader = CapturingProcessAdapter()
@@ -61,9 +73,7 @@ internal fun doTestOnlyApplicableConfigurationExtensionsShouldBeProcessed(
   executionStarted.waitFor()
   execution.waitProcess(processHandler)
   assertTrue(processHandler.isProcessTerminated)
-  if (expectedOutput != null) {
-    assertEquals(expectedOutput, outputReader.output.stdout)
-  }
+  return outputReader.output.stdout
 }
 
 /** A run configuration extension that fails the test when the run calls it. */

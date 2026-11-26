@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.application;
 
 import com.intellij.execution.CommonJavaRunConfigurationParameters;
@@ -21,8 +21,10 @@ import com.intellij.execution.target.TargetProgressIndicator;
 import com.intellij.execution.target.TargetedCommandLine;
 import com.intellij.execution.target.TargetedCommandLineBuilder;
 import com.intellij.execution.ui.ConsoleView;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.projectRoots.JdkUtil;
+import com.intellij.openapi.util.Ref;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -64,8 +66,35 @@ public abstract class BaseJavaApplicationCommandLineState<T extends RunConfigura
     return line;
   }
 
+  /**
+   * Creates the console on the EDT.
+   * When the caller holds the read lock, this method creates the console on the current thread.
+   */
   @Override
   protected @Nullable ConsoleView createConsole(@NotNull Executor executor) throws ExecutionException {
+    if (ApplicationManager.getApplication().isReadAccessAllowed()) {
+      return doCreateConsole(executor);
+    }
+    Ref<ConsoleView> console = new Ref<>();
+    Ref<Exception> error = new Ref<>();
+    ApplicationManager.getApplication().invokeAndWait(() -> {
+      try {
+        console.set(doCreateConsole(executor));
+      }
+      catch (ExecutionException | RuntimeException e) {
+        error.set(e);
+      }
+    });
+    if (error.get() instanceof ExecutionException e) {
+      throw e;
+    }
+    if (error.get() instanceof RuntimeException e) {
+      throw e;
+    }
+    return console.get();
+  }
+
+  private @Nullable ConsoleView doCreateConsole(@NotNull Executor executor) throws ExecutionException {
     ConsoleView console = super.createConsole(executor);
     if (console == null) {
       return null;
