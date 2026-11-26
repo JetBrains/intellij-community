@@ -36,6 +36,7 @@ dist_plugin_descriptor(
     },
     module_descriptors = [
         "@community//libraries/gradle:resources/intellij.libraries.gradle.xml",
+        "@community//libraries/groovy/ant:resources/intellij.libraries.groovy.ant.xml",
         "@community//plugins/gradle/backend:resources/intellij.gradle.backend.xml",
         "@community//plugins/gradle/codeInsight/backend:resources/intellij.gradle.codeInsight.backend.xml",
         "@community//plugins/gradle/codeInsight/groovy/backend:resources/intellij.gradle.codeInsight.groovy.backend.xml",
@@ -92,15 +93,15 @@ dev_plugin(
             "intellij.libraries.gradle",
             "@lib//:libraries-gradle-_gradle",
         ],
+        "lib/intellij.libraries.groovy.ant.jar": [
+            "intellij.libraries.groovy.ant",
+            "@lib//:libraries-groovy-ant-groovy-ant",
+        ],
         "lib/gradle-plugin.jar": [
             "intellij.gradle.plugin",
         ],
         "lib/groovy.jar": [
             "@lib//:gradle-plugin-groovy",
-        ],
-        "lib/groovy-ant.jar": [
-            "intellij.libraries.groovy.ant",
-            "@lib//:libraries-groovy-ant-groovy-ant",
         ],
         "lib/ant/ant-antlr.jar": [
             "@lib//ant/lib:ant-antlr.jar",

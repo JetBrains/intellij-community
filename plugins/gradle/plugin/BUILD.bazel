@@ -6,6 +6,7 @@ load("//platform/build-scripts/bazel-rules:dist_plugin.bzl", "dist_plugin")
 dist_plugin(
     content_modules = {
         "intellij.libraries.gradle": "//libraries/gradle",
+        "intellij.libraries.groovy.ant": "//libraries/groovy/ant",
         "intellij.gradle": "//plugins/gradle",
         "intellij.gradle.toolingExtension": "//plugins/gradle/tooling-extension-api:toolingExtension",
         "intellij.gradle.toolingExtension.impl": "//plugins/gradle/tooling-extension-impl:toolingExtension-impl",
@@ -26,7 +27,6 @@ dist_plugin(
         "intellij.gradle.codeInsight.toml.backend": "//plugins/gradle/codeInsight/toml/backend",
         "intellij.gradle.codeInsight.properties": "//plugins/gradle/codeInsight/properties",
         "intellij.gradle.codeInsight.properties.backend": "//plugins/gradle/codeInsight/properties/backend",
-        "intellij.libraries.groovy.ant": "//libraries/groovy/ant",
     },
     main_module = "intellij.gradle.plugin",
     module_labels = {"intellij.gradle.plugin": "//plugins/gradle/plugin"},

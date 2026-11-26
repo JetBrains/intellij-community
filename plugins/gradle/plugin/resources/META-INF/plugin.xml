@@ -18,6 +18,7 @@
 
   <content namespace="jetbrains">
     <module name="intellij.libraries.gradle" loading="embedded"/>
+    <module name="intellij.libraries.groovy.ant" loading="embedded"/>
     <module name="intellij.gradle" loading="embedded"/>
     <module name="intellij.gradle.toolingExtension" loading="embedded"/>
     <module name="intellij.gradle.toolingExtension.impl" loading="embedded"/>

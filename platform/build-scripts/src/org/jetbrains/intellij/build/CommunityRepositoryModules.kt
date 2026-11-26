@@ -165,12 +165,7 @@ fun getCommunityRepositoryPlugins(): PersistentList<PluginLayout> {
       spec.withModule("intellij.maven.artifactResolver.common", "artifact-resolver-m31.jar")
       spec.withModule("intellij.maven.server", relativeJarPath = "maven-server.jar")
     },
-    pluginAuto(
-      listOf(
-        "intellij.gradle.plugin",
-      )
-    ) { spec ->
-      spec.withModule("intellij.libraries.groovy.ant", "groovy-ant.jar")
+    pluginAuto("intellij.gradle.plugin") { spec ->
       spec.withProjectLibrary("Ant", "ant", LibraryPackMode.STANDALONE_SEPARATE)
     },
     pluginAuto(listOf("intellij.devkit")) { spec ->
