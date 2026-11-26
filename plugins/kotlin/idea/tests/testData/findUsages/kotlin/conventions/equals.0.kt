@@ -15,3 +15,4 @@ fun test() {
 }
 
 // IGNORE_PLATFORM_JS: attached sources vs no sources in jvm case
+// SEARCH_IN_PROJECT
