@@ -1,9 +1,8 @@
 """The content boundary of the distribution, expressed as a Bazel provider.
 
-`DistContentInfo` carries the module and library jars one slice of a distribution reads, and
-`intellij_build_inputs` turns them into manifest entries. It has two producers. `dist_platform_payload` is the
-content of the packed `lib/` jars of one product. `dist_plugin_content` is the raw content of the bundled plugins of
-one product, as the plugin components publish it.
+`DistContentInfo` carries the module and library jars one slice of a distribution reads. A plugin component publishes
+it, and `dist_plugin_content` unions it for the bundled plugins of one product. `DistPlatformPayloadInfo` is the
+payload of the packed `lib/` jars of one product.
 """
 
 load(":content_module_jar.bzl", "ContentModuleJarInfo", "DistPlatformJarInfo")
@@ -12,10 +11,8 @@ load(":dist_plugin_descriptor.bzl", "DIST_STAMP_CLASS_CONSUMER_ATTRS", "dist_sta
 DistContentInfo = provider(
     doc = "The module and library jars one slice of the distribution is made of.",
     fields = {
-        # Bare `File`s, because the only consumer - `intellij_build_inputs` - keys a module jar by
-        # `str(file.owner) + ".jar"` and needs nothing else from the target that produced it.
         "module_jars": "depset of File: the jars of the modules this content declares as its own members.",
-        # Not bare `File`s, unlike the module halves: a library's manifest key is the container target's label, which is
+        # Not bare `File`s, unlike the module halves: a library is named by the label of its container target, which is
         # not derivable from the files. The producer expands the container into its jars.
         "library_jars": "depset of struct(label, jars): `label` being the container target's own label.",
     },
@@ -25,15 +22,12 @@ DistPlatformPayloadInfo = provider(
     doc = "The packed `lib/` jars of the platform of one product, and what each of them merges.",
     fields = {
         "packed_jars": "depset of File: the `lib/<module>.jar`s a `content_module_jar` target packed.",
-        # Jars only in `packed_jars`, because the byte gate reads it as the set of jars to compare. The native tree of a
-        # content module jar travels in the record, and the packed-jars component places it from there.
+        # Jars only in `packed_jars`. The native tree of a content module jar travels in the record, and the packed-jars
+        # component places it from there.
         "packed_metadata": """depset of struct(jar, metadata, relative_path, native_tree, native_metadata,
         native_lib_dir, core_classpath): the metadata and the destination of each packed jar, and the native tree of the
         payload's platform with its own metadata and the `lib/` subdirectory the tree goes to. `None` and empty for a jar
         without one. `core_classpath` is true for a jar on the core classpath, see `core_classpath_jar_names`.""",
-        "packed_jar_names": """list of string: their destinations within `lib/`, sorted. The reference target packs them.
-
-        A destination, not a file name: a platform jar can name a subdirectory of `lib/`.""",
         "core_classpath_jar_names": """list of string: the destinations of the packed jars on the core classpath, sorted.
 
         A packed jar is on the core classpath when it is a direct child of `lib/` and `module_system_loaded` does not
@@ -52,8 +46,6 @@ def _dist_platform_payload_impl(ctx):
     module_system_loaded = {target.label: True for target in ctx.attr.module_system_loaded}
     packed_jars = []
     packed_metadata = []
-    packed_member_jars = []
-    packed_library_jars = []
     packed_destinations = []
     layout = []
     core_classpath_jar_names = []
@@ -95,8 +87,6 @@ def _dist_platform_payload_impl(ctx):
             native_lib_dir = native_lib_dir,
             core_classpath = core_classpath,
         ))
-        packed_member_jars.extend(info.member_jars)
-        packed_library_jars.extend(info.library_jars)
         layout.append(struct(destination = info.relative_path, member_modules = info.member_modules, library_jars = info.library_jars))
 
     packed = depset(packed_jars)
@@ -120,16 +110,8 @@ def _dist_platform_payload_impl(ctx):
         DistPlatformPayloadInfo(
             packed_jars = packed,
             packed_metadata = depset(packed_metadata),
-            packed_jar_names = sorted(owner_by_name.keys()),
             core_classpath_jar_names = sorted({name: True for name in core_classpath_jar_names}.keys()),
             layout = sorted(layout, key = lambda entry: entry.destination),
-        ),
-        # The reference target's whole declaration: it packs the handed-over jars the `JarPackager` way, so what it reads
-        # is exactly what is inside them - the member module jars and the libraries merged into them. Ordinary content,
-        # so it arrives through the content boundary `intellij_build_inputs` reads.
-        DistContentInfo(
-            module_jars = depset(packed_member_jars),
-            library_jars = depset(packed_library_jars),
         ),
     ]
 
@@ -140,9 +122,8 @@ dist_platform_payload = rule(
 
     * `packed_jars` and `packed_metadata` go to `intellij_packed_jars_component`, which composes them in and marks
       the jars of the core classpath;
-    * `packed_jar_names` go to the reference target as the jars it packs and nothing else;
-    * `layout` goes to `dist_runtime_module_repository` as the layout of the core plugin;
-    * `DistContentInfo` is what those jars merge, and is the reference target's whole declaration.
+    * `core_classpath_jar_names` go to `dist_product_files`;
+    * `layout` goes to `dist_runtime_module_repository` as the layout of the core plugin.
     """,
     implementation = _dist_platform_payload_impl,
     attrs = {

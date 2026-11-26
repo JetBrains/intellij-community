@@ -1,8 +1,8 @@
 """The repository sets that a dev-mode assembly and IDE Starter read from runfiles, of the archives community owns.
 
-A set maps each `HOST_PLATFORMS` entry to the download repositories of that platform. A reference of a product and the
-legacy dev test read a set with `--preloaded-only`, so an undeclared URL fails them. A split distribution reads no
-set: each component declares the archive file that it places as an input.
+A set maps each `HOST_PLATFORMS` entry to the download repositories of that platform. The legacy dev test reads a set
+with `--preloaded-only`, so an undeclared URL fails it. A split distribution reads no set: each component declares the
+archive file that it places as an input.
 
 This file declares no repository. The extension of each owner declares its archives, beside the owner. The ultimate
 sets are in `//build:dev_launch_dependencies.bzl`, and the two compose through [merge_repo_sets].
@@ -92,20 +92,6 @@ def preloaded_downloads_manifest_data(repo_set, platforms = None):
     single file of a directly-named dependency.
     """
     return _select_by_platform(repo_set, platforms, _manifest_labels)
-
-def preloaded_downloads_for_platform(repo_set, platform):
-    """[preloaded_downloads_data] for one named platform, without a `select`.
-
-    The `select`ing forms key on `//build:host_<platform>`, which answers "what is this build running
-    on". A cross-assembled distribution needs the other question — what is it being built *for* — and
-    those two differ by construction: a Linux distribution assembled on a macOS host wants the
-    linux_aarch64 JBR, and a host select would hand it the darwin one.
-    """
-    return _file_labels(_restricted(repo_set, [platform])[platform])
-
-def preloaded_manifests_for_platform(repo_set, platform):
-    """The manifests that go with [preloaded_downloads_for_platform]."""
-    return _manifest_labels(_restricted(repo_set, [platform])[platform])
 
 def preloaded_downloads_flag(repo_set, platforms = None):
     """`-Dintellij.build.download.preloaded.manifest` for [preloaded_downloads_manifest_data].

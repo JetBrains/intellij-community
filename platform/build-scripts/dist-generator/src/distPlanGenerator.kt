@@ -68,7 +68,6 @@ import org.jetbrains.intellij.build.productLayout.util.DeferredFileUpdater
 import org.jetbrains.jps.model.JpsGlobal
 import org.jetbrains.jps.model.JpsProject
 import org.jetbrains.jps.model.java.JpsJavaClasspathKind
-import org.jetbrains.jps.model.java.JpsJavaDependencyScope
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.jetbrains.jps.model.library.JpsLibrary
 import org.jetbrains.jps.model.library.JpsOrderRootType
@@ -101,7 +100,6 @@ import kotlin.io.path.invariantSeparatorsPathString
 private const val DIST_DESCRIPTORS_RELATIVE_PATH: String = "build/dist_descriptors.bzl"
 private const val DIST_PRODUCT_INFO_RELATIVE_PATH: String = "build/dist_product_info.bzl"
 private const val DIST_PLAN_RELATIVE_PATH: String = "build/dist_plan.bzl"
-private const val DIST_REFERENCE_PLAN_RELATIVE_PATH: String = "build/dist_reference_plan.bzl"
 
 /** The package of the launch models, whose `BUILD.bazel` exports every `<product>.launch.json`. */
 private const val DIST_LAUNCH_DIRECTORY: String = "build/dist-launch"
@@ -475,16 +473,6 @@ internal fun computeDistPlan(
       add(DIST_DESCRIPTORS_RELATIVE_PATH to renderDescriptors(collected.files, half, index))
       add(DIST_PRODUCT_INFO_RELATIVE_PATH to renderProductInfo(collected.pluginDescriptorPlans.filter { it.platformPrefix !in communityProducts }, half))
       add(DIST_PLAN_RELATIVE_PATH to renderPartition(sortedProducts, half, communityProducts))
-      if (DistCapability.REFERENCE_PLAN in half.capabilities) {
-        add(DIST_REFERENCE_PLAN_RELATIVE_PATH to renderReferencePlan(sortedProducts, half))
-        val referenceInputs = buildSpan("distribution plan: resolve reference inputs") {
-          resolveDistReferenceInputs(
-            products = sortedProducts.map(::referenceProduct),
-            model = referenceInputModel(targets, outputProvider),
-          )
-        }
-        add(DIST_REFERENCE_INPUTS_RELATIVE_PATH to renderDistReferenceInputs(referenceInputs, half.generatedByHeader))
-      }
       add(DIST_FRAGMENT_INPUTS_RELATIVE_PATH to renderFragmentInputs(sortedProducts, half))
       add(DIST_MODULE_SETS_RELATIVE_PATH to renderModuleSets(moduleSets, upstreamModuleSets, half))
       add(DIST_CONTENT_SETS_RELATIVE_PATH to renderContentSets(pluginExecutions, half, sections.updatePluginModules))
@@ -674,21 +662,13 @@ private const val PLATFORM_LIB_FRAGMENT = "platform_lib"
  * action writes. The plan emits it for a product with a run configuration that asks for the runtime module repository,
  * and only such a row composes it.
  */
-private const val PLATFORM_RUNTIME_MODULE_REPOSITORY_FRAGMENT = "platform_runtime_module_repository"
 
 /** The exact module and library payload one fragment may resolve, expressed as JPS names rather than Bazel labels. */
 private data class FragmentPayload(
   @JvmField val name: String,
   @JvmField val modules: List<String>,
-  @JvmField val projectLibraries: List<String>,
   /** Module sets whose transitive membership belongs to this payload, as top-level references. */
   @JvmField val moduleSets: List<String> = emptyList(),
-  /**
-   * The modules whose runtime classpath a platform patch loads. The Bazel side declares the outputs and the libraries
-   * of their dependency closure unconditionally: the classpath resolves a module's raw jar even when the payload
-   * hands the module's packed jar over to another producer.
-   */
-  @JvmField val runtimeClasspathModules: List<String> = emptyList(),
   /**
    * The `content_module_jar` target of each payload module that owns a `lib/` jar - labels, not names, and only for the
    * `lib/`-owning payload.
@@ -849,14 +829,9 @@ internal data class PlatformAssetFile(
   @JvmField val executable: Boolean,
 )
 
-/**
- * The platform's declared dist files of one product, as the `platform_assets` component collects them.
- * [files] is keyed by host platform. [archives] names the archives the declarations read, so a fragment does not
- * download what the component already unpacks.
- */
+/** The platform's declared dist files of one product, as the `platform_assets` component collects them, keyed by host platform. */
 internal data class PlatformAssets(
   @JvmField val files: Map<String, List<PlatformAssetFile>>,
-  @JvmField val archives: List<String>,
 )
 
 private class CollectedPlan(
@@ -1580,14 +1555,7 @@ private fun collectFragmentPlan(
   check(platformJarRows > 0) {
     "The source layout of split distribution '${product.name}' has no platform jars for '$productToken'"
   }
-  // A `[platform_libraries]` row names a project library or a module library, and only the project model tells which.
-  // The module that owns a module library declares it, so the payload takes the project libraries alone.
   val jpsProject = outputProvider.findRequiredModule(properties.applicationInfoModule).project
-  for (row in platformTable.platformLibraries) {
-    if (row.product == productToken && jpsProject.libraryCollection.findLibrary(row.library) != null) {
-      platformPayload.projectLibraries.add(row.library)
-    }
-  }
   for (contentModule in directContentModules) {
     // The name is `moduleName/descriptorName` when the descriptor is not named after the module; the payload declares
     // Bazel outputs, which are per module.
@@ -1605,12 +1573,6 @@ private fun collectFragmentPlan(
   // packs its jar. A residual jar packs it with two patches, the product descriptor and the stamped application info,
   // see `ProductDescriptorPlan`. A platform patch of the module keeps the jar with the fragment, which writes both itself.
   platformPayload.modules.add(properties.applicationInfoModule)
-  for (moduleName in config.runtimeClasspathModules) {
-    checkNotNull(outputProvider.findModule(moduleName)) {
-      "Split distribution '${product.name}' loads the runtime classpath of module '$moduleName', which the project does not have"
-    }
-    platformPayload.runtimeClasspathModules.add(moduleName)
-  }
   val isFrontend = properties.productMode == com.intellij.platform.productMode.ProductMode.FRONTEND
   // A product uses its product descriptor action when the action patches the application-info module jar, or, for a
   // frontend, for the plugin-classpath prefix alone.
@@ -1871,15 +1833,7 @@ private fun collectFragmentPlan(
         handedOver = handedOver,
         contentModuleJarDestinations = contentModuleJarDestinations,
       )
-      // A project library the layout places in a residual jar with a module member is inside that jar and nowhere
-      // else, so the fragment that no longer packs the jar has no use for the raw library either. The libraries of a
-      // library-only jar stay in the payload: the runtime module repository fragment reads the platform declaration
-      // and resolves every library of the platform layout.
-      val liftedLibraries = layout.getIncludedProjectLibraries()
-        .filter { it.outPath in residual.keys && it.outPath !in libraryJars.keys }
-        .mapTo(HashSet()) { it.libraryName }
       frozen.copy(
-        projectLibraries = frozen.projectLibraries.filterNot { it in liftedLibraries },
         residualJars = residual,
         pluginClasspathPrefix = requireNotNull(productDescriptor?.pluginClasspathPrefixLabel.takeIf { usesProductDescriptor(residual.values) }) {
           "${product.name}: no product descriptor action writes the plugin-classpath prefix"
@@ -1898,20 +1852,15 @@ private fun collectFragmentPlan(
   val hasRuntimeModuleRepository = runtimeModuleRepository || modularLoader
   val frontendProperties = if (!hasRuntimeModuleRepository) null else properties.embeddedFrontendProperties?.invoke()
   val embeddedFrontend = frontendProperties?.let(embeddedFrontendOf)
-  val runtimeModuleRepositoryPayload = if (!hasRuntimeModuleRepository) {
-    emptyList()
-  }
-  else {
-    listOf(collectRuntimeModuleRepositoryPayload(
+  if (hasRuntimeModuleRepository) {
+    checkRuntimeModuleRepositoryComponents(
       product = product.name,
       properties = properties,
       embeddedFrontend = embeddedFrontend,
       frontendProperties = frontendProperties,
       outputProvider = outputProvider,
       pluginRequests = pluginRequests,
-    ))
-  }
-  if (hasRuntimeModuleRepository) {
+    )
     checkRuntimeModuleRepositoryDescriptors(
       outputProvider = outputProvider,
       properties = properties,
@@ -1930,7 +1879,7 @@ private fun collectFragmentPlan(
     runtimeModuleRepository = hasRuntimeModuleRepository,
     embeddedFrontend = embeddedFrontend,
     modularLoader = modularLoader,
-    payloads = listOf(platformLibPayload) + runtimeModuleRepositoryPayload,
+    payloads = listOf(platformLibPayload),
     platformAssets = collectPlatformAssets(layout = layout, properties = properties, index = index),
     launchModel = launchModel,
     macAppIcons = macAppIcons,
@@ -2017,38 +1966,24 @@ private fun frontendIconPatches(
 }
 
 /**
- * The payload of the runtime module repository fragment: the few names no other declaration carries.
+ * Checks that the runtime module repository component of [product] can read every plugin that the repository names.
  *
- * The generator lays the platform and every bundled plugin out without files, and the dry layout resolves the output
- * and the libraries of each module it packs. The `platform_lib` payload of the product already names the platform,
- * and the `platform_lib` payload of [embeddedFrontend] names the frontend's platform. The reference macro takes
- * both declarations whole, before the packed jars leave them. The bundled plugins arrive as `DistContentInfo` from
- * their components, which `dist_plugin_content` unions per product. So this payload names only the embedded
- * frontend root modules and the product's own modular-loader root, which no platform payload and no plugin carries.
- * A debug wrapper's `rootModule` (`build/dev-build.json`) is that root, and the layout packs it into a residual jar
- * only, whose raw output the `platform_lib` payload does not declare.
- *
- * Every bundled plugin of the product and every frontend-only plugin of the frontend must have a component, or the
- * fragment would lack that plugin's modules and the reference assembler would fail on an undeclared input.
- * [pluginRequests] names the plugins that get one in this run, and this fails on a bundled plugin without a request.
+ * Every bundled plugin of the product and every frontend-only plugin of [embeddedFrontend] must have a component,
+ * because the repository action reads the layout of each plugin from its component. [pluginRequests] names the plugins
+ * that get one in this run, and this fails on a bundled plugin without a request.
  */
-private fun collectRuntimeModuleRepositoryPayload(
+private fun checkRuntimeModuleRepositoryComponents(
   product: String,
   properties: ProductProperties,
   embeddedFrontend: String?,
   frontendProperties: ProductProperties?,
   outputProvider: ModuleOutputProvider,
   pluginRequests: List<DistPluginRequest>,
-): FragmentPayload {
-  val payload = MutablePayload()
-  properties.embeddedFrontendRootModule?.let(payload.modules::add)
-  properties.rootModuleForModularLoader?.let(payload.modules::add)
-
+) {
   val bundledPluginModules = getBundledPluginModules(properties, outputProvider)
   checkBundledPluginsHaveComponents(product = product, properties = properties, mainModules = bundledPluginModules, pluginRequests = pluginRequests)
 
   if (frontendProperties != null) {
-    frontendProperties.embeddedFrontendRootModule?.let(payload.modules::add)
     val frontendOnlyPlugins = getBundledPluginModules(frontendProperties, outputProvider).filterNot { it in bundledPluginModules }
     checkBundledPluginsHaveComponents(
       product = requireNotNull(embeddedFrontend) { "'$product' embeds a frontend without a split product key" },
@@ -2057,11 +1992,6 @@ private fun collectRuntimeModuleRepositoryPayload(
       pluginRequests = pluginRequests,
     )
   }
-
-  // A name the project does not have declares nothing. The generator resolves the reference inputs from these names
-  // and fails on a name that the targets JSON lacks, so the payload keeps only the names of the project.
-  payload.modules.retainAll { outputProvider.findModule(it) != null }
-  return payload.freeze(name = PLATFORM_RUNTIME_MODULE_REPOSITORY_FRAGMENT)
 }
 
 /**
@@ -2337,7 +2267,6 @@ private fun hostPlatformName(os: OsFamily, arch: JvmArchitecture): String = "${i
  */
 internal fun collectPlatformAssets(layout: PlatformLayout, properties: ProductProperties, index: DistBazelIndex): PlatformAssets {
   val files = TreeMap<String, MutableList<PlatformAssetFile>>()
-  val archives = sortedSetOf<String>()
   for ((platform, declarations) in layout.distFileDeclarations) {
     val (os, arch) = platform
     val hostPlatform = hostPlatformName(os, arch)
@@ -2355,7 +2284,6 @@ internal fun collectPlatformAssets(layout: PlatformLayout, properties: ProductPr
         val repository = requireNotNull(DOWNLOAD_ARCHIVE_LABEL.matchEntire(source.label)?.groupValues?.get(1)) {
           "A platform dist file on $hostPlatform must read a download repository, @<repository>//:files: ${source.label}"
         }
-        archives.add(source.label)
         for (mapping in transform.mappings) {
           require(mapping.pattern.none { it in "*?[{" }) {
             "A platform dist file on $hostPlatform must name one archive path, not a glob: ${mapping.pattern}"
@@ -2402,7 +2330,7 @@ internal fun collectPlatformAssets(layout: PlatformLayout, properties: ProductPr
       check(duplicates.isEmpty()) { "Two platform dist files on $hostPlatform share a destination: $duplicates" }
     }
   }
-  return PlatformAssets(files = files, archives = archives.toList())
+  return PlatformAssets(files = files)
 }
 
 /** A module's own `jvm_library` target: the jar target minus `.jar`. A test module has the test jar target only. */
@@ -2434,9 +2362,7 @@ private fun moduleJarTarget(module: String, targets: BazelTargetsInfo.TargetsFil
 
 private class MutablePayload {
   @JvmField val modules: MutableSet<String> = sortedSetOf()
-  @JvmField val projectLibraries: MutableSet<String> = sortedSetOf()
   @JvmField val moduleSets: MutableSet<String> = sortedSetOf()
-  @JvmField val runtimeClasspathModules: MutableSet<String> = sortedSetOf()
 
   /**
    * The payload modules the platform jar table packs under a jar name that is not their own.
@@ -2467,9 +2393,7 @@ private class MutablePayload {
     return FragmentPayload(
       name = name,
       modules = modules.toList(),
-      projectLibraries = projectLibraries.toList(),
       moduleSets = moduleSets.toList(),
-      runtimeClasspathModules = runtimeClasspathModules.toList(),
       packedContentModuleJars = packedContentModuleJars,
     )
   }
@@ -3310,7 +3234,7 @@ private fun renderDescriptors(files: List<DescriptorFile>, half: DistHalf, index
   append("#\n")
   append("# The shared project model tree carries every content module descriptor and every bundled plugin descriptor,\n")
   append("# so a reader of the tree reads files instead of opening module jars. Only the runtime module facts action\n")
-  append("# and the references read the tree - see `intellij_project_model_tree`.\n")
+  append("# reads the tree - see `intellij_project_model_tree`.\n")
   append("#\n")
   append("# The JPS-to-Bazel converter writes the conventional descriptors into the record of each module:\n")
   append("# `<moduleName>.xml` and `META-INF/plugin.xml` at a production resource root. This file is the remainder.\n")
@@ -3339,14 +3263,8 @@ private fun renderPartition(products: List<ProductFragmentPlan>, half: DistHalf,
   append("# The plan of every split product: the facts that its distribution reads. Bazel consumes this plan directly\n")
   append("# and fails when the requested product is absent.\n")
   append("#\n")
-  if (half.writesCommunityPackages) {
-    append("# What the fragments of a product declare as their inputs lives in `dist_fragment_inputs.bzl`, which churns\n")
-    append("# with every model change.\n")
-  }
-  else {
-    append("# The facts that only the reference fragments of the gates read live in `dist_reference_plan.bzl`. What those\n")
-    append("# fragments declare as their inputs lives in `dist_fragment_inputs.bzl`, which churns with every model change.\n")
-  }
+  append("# What the fragments of a product declare as their inputs lives in `dist_fragment_inputs.bzl`, which churns\n")
+  append("# with every model change.\n")
   append("#\n")
   append("# There is deliberately no content digest here. An action key already covers everything that decides what the\n")
   append("# action packs, so a plan change rebuilds only the actions it changes. Overlapping ownership cannot survive a\n")
@@ -3482,82 +3400,6 @@ private fun StringBuilder.appendPlatformJarOrders(orders: List<Pair<String, Plat
   append("}\n")
 }
 
-private fun renderReferencePlan(products: List<ProductFragmentPlan>, half: DistHalf): String = buildString {
-  append(half.generatedByHeader)
-  append("#\n")
-  append("# The facts of every split product that only the reference fragments read. No distribution reads them.\n")
-  append("# `platform_asset_archives` are the archives that a reference does not preload, because the `platform_assets`\n")
-  append("# component places their files. The labels of the build modules are in `dist_reference_inputs.bzl`.\n")
-  append("#\n")
-  append("# Products with equal facts share one private `_REFERENCE_PLAN_<first product>` struct.\n")
-  val owners = LinkedHashMap<String, MutableList<String>>()
-  for (product in products) {
-    owners.computeIfAbsent(renderReferencePlanFields(product, indent = "    ")) { ArrayList() }.add(product.platformPrefix)
-  }
-  val sharedNames = HashMap<String, String>()
-  for ((body, productNames) in owners) {
-    if (productNames.size < 2) continue
-    val name = "_REFERENCE_PLAN_" + productNames.first()
-    for (productName in productNames) {
-      sharedNames.put(productName, name)
-    }
-    append(name).append(" = struct(\n").append(body).append(")\n\n")
-  }
-  append("DIST_REFERENCE_PLANS = {\n")
-  for (product in products) {
-    append("    \"").append(product.platformPrefix).append("\": ")
-    val sharedName = sharedNames.get(product.platformPrefix)
-    if (sharedName == null) {
-      append("struct(\n").append(renderReferencePlanFields(product, indent = "        ")).append("    ),\n")
-    }
-    else {
-      append(sharedName).append(",\n")
-    }
-  }
-  append("}\n")
-}
-
-private fun renderReferencePlanFields(product: ProductFragmentPlan, indent: String): String = buildString {
-  appendNameList("platform_asset_archives", product.platformAssets.archives, indent = indent)
-}
-
-/** The names of [product] that the generator resolves or checks for the references, see [resolveDistReferenceInputs]. */
-private fun referenceProduct(product: ProductFragmentPlan): DistReferenceProduct {
-  val runtimeModuleRepository = product.payloads.singleOrNull { it.name == PLATFORM_RUNTIME_MODULE_REPOSITORY_FRAGMENT }
-  return DistReferenceProduct(
-    platformPrefix = product.platformPrefix,
-    buildModules = product.buildModules,
-    runtimeClasspathModules = product.payloads.singleOrNull { it.name == PLATFORM_LIB_FRAGMENT }?.runtimeClasspathModules.orEmpty(),
-    runtimeModuleRepository = runtimeModuleRepository?.let {
-      DistReferencePayload(modules = it.modules, projectLibraries = it.projectLibraries, moduleSets = it.moduleSets)
-    },
-  )
-}
-
-/**
- * The targets JSON and the JPS model as the reference inputs read them. A module dependency outside the test scope is a
- * runtime classpath edge. A library whose parent is the project is a project library reference, whatever its scope.
- */
-private fun referenceInputModel(targets: BazelTargetsInfo.TargetsFile, outputProvider: ModuleOutputProvider): DistReferenceInputModel {
-  val javaExtension = JpsJavaExtensionService.getInstance()
-  return DistReferenceInputModel(
-    targets = targets,
-    moduleDependencies = { name ->
-      outputProvider.findModule(name)?.dependenciesList?.dependencies.orEmpty()
-        .filterIsInstance<JpsModuleDependency>()
-        .filter { javaExtension.getDependencyExtension(it)?.scope != JpsJavaDependencyScope.TEST }
-        .map { it.moduleReference.moduleName }
-    },
-    projectLibraryReferences = { name ->
-      outputProvider.findModule(name)?.dependenciesList?.dependencies.orEmpty()
-        .filterIsInstance<JpsLibraryDependency>()
-        .filter { it.libraryReference.parentReference.resolve() is JpsProject }
-        .map { it.libraryReference.libraryName }
-    },
-  )
-}
-
-
 /** A Starlark boolean literal. */
 private fun starlarkBoolean(value: Boolean): String = if (value) "True" else "False"
 
@@ -3689,16 +3531,9 @@ private fun renderPlanFields(product: ProductFragmentPlan, indent: String, share
 private fun renderFragmentInputs(products: List<ProductFragmentPlan>, half: DistHalf): String = buildString {
   append(half.generatedByHeader)
   append("#\n")
-  append("# The exact module and library names each fragment declares as its Bazel inputs, so a fragment reads the\n")
-  append("# jars its slice of the layout needs instead of the whole production target set.\n")
+  append("# The platform `lib/` payload of each product: the packing targets, the module sets and the residual jars.\n")
   append("#\n")
-  append("# `modules`, `project_libraries`, `module_sets` and `runtime_classpath_modules` are names. The binder reads this\n")
-  append("# file at load time, and no module extension loads it.")
-  if (DistCapability.REFERENCE_PLAN in half.capabilities) {
-    append(" `dist_reference_inputs.bzl` holds the labels of\n")
-    append("# the build modules, the runtime classpath and the runtime module repository payload.")
-  }
-  append("\n")
+  append("# The binder reads this file at load time, and no module extension loads it.\n")
   append("# `packed_content_module_jars` is labels: whether a module packs a `lib/` jar is a target of its own, and only the\n")
   append("# generator knows which modules have one.\n")
   append("#\n")
@@ -3801,10 +3636,7 @@ private fun renderFragmentPayloads(
 private fun StringBuilder.appendPayload(key: String, payload: FragmentPayload, indent: String, sharedResidualJars: Map<ResidualJarBody, String>) {
   val fieldIndent = "$indent    "
   val fields = buildString {
-    appendNonEmptyNameList("modules", payload.modules, indent = fieldIndent)
-    appendNonEmptyNameList("project_libraries", payload.projectLibraries, indent = fieldIndent)
     appendNonEmptyNameList("module_sets", payload.moduleSets, indent = fieldIndent)
-    appendNonEmptyNameList("runtime_classpath_modules", payload.runtimeClasspathModules, indent = fieldIndent)
     appendNonEmptyNameList("packed_content_module_jars", payload.packedContentModuleJars, indent = fieldIndent)
     appendNonEmptyNameList("module_system_loaded", payload.moduleSystemLoaded, indent = fieldIndent)
     appendResidualJars(payload.residualJars, indent = fieldIndent, shared = sharedResidualJars)

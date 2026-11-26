@@ -22,10 +22,8 @@ Three things the attribute form got wrong and this does not:
   `getattr(ctx.rule.attr, "content_module_jar_libraries", None)` - a name-based read of another rule's attributes that
   answers `None` rather than failing when the name is wrong. They are this rule's own attributes now.
 
-The point of packing here at all is what the action declares: the jars it merges, and nothing else. A reference that
-packs these jars evaluates the whole product layout, so it declares the shared project-model tree, and any `.iml` edit
-re-keys it. No component packs these jars through a layout. The reference that `./build/dist.cmd jars` builds
-packs them only to compare this packer with `JarPackager` byte for byte.
+The point of packing here at all is what the action declares: the jars it merges, and nothing else. No component packs
+these jars through a product layout, so no packing action declares the shared project-model tree.
 
 **Source order is load-bearing.** The packer resolves an entry name offered by more than one source to the first source
 offering it. To reproduce what the in-process `JarPackager` writes, every library jar comes before every module output,

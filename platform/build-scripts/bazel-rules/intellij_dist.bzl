@@ -1,8 +1,6 @@
-"""Composes a dev-mode IDE distribution from components, and declares the reference fragments of the gates.
+"""Composes a dev-mode IDE distribution from components.
 
-A component names the files it places, and the composer copies them into the distribution. A reference fragment
-runs the reference assembler, which produces the same files a second time, so a gate can compare the two producers. No
-distribution composes a reference.
+A component names the files it places, and the composer copies them into the distribution.
 
 Split assembly deliberately supports only builds with scrambling disabled. Platform co-scrambling and per-plugin
 scrambling require both component layouts in one process.
@@ -11,105 +9,8 @@ scrambling require both component layouts in one process.
 load("@bazel_skylib//rules:common_settings.bzl", "BuildSettingInfo")
 load("@community//build:project_model_manifest.bzl", "write_project_model_manifest")
 load("//build:host_platforms.bzl", "platform_parts")
-load(":dist_build_date.bzl", "DIST_PINNED_BUILD_DATE_IN_SECONDS")
-load(":dist_content.bzl", "DistContentInfo", "DistPlatformPayloadInfo")
+load(":dist_content.bzl", "DistPlatformPayloadInfo")
 load(":dist_plugin_descriptor.bzl", "dist_stamp_class_consumer_transition")
-
-IntellijDevBuildInputsInfo = provider(
-    doc = "The exact Bazel inputs and label-to-path manifest made available to one reference.",
-    fields = {
-        "files": "The input files named by the manifest.",
-        "manifest": "The logical Bazel input label to execution path manifest.",
-    },
-)
-
-def _add_input_entry(ctx, entries, logical_key, files, source):
-    """Record one manifest entry, failing when two different file lists claim the same logical key.
-
-    Same key, same files is the normal case - two content targets naming the same module, say - and deduplicates.
-
-    [files] is a *list* because one key does not always mean one file: a module or a raw input is one jar, but a library
-    is keyed by the container target that groups its jars (`DistContentInfo.library_jars` in `dist_content.bzl`) and a
-    multi-jar library has several, in an order the packer depends on. The manifest holds one line per file.
-    """
-    previous = entries.get(logical_key)
-    if previous == None:
-        entries[logical_key] = files
-    elif previous != files:
-        fail("%s: logical input '%s' is provided by both %s and %s" % (
-            ctx.label,
-            logical_key,
-            [file.owner for file in previous],
-            source,
-        ))
-
-def _dev_build_inputs_impl(ctx):
-    entries = {}
-
-    for target in ctx.attr.inputs:
-        files = target[DefaultInfo].files.to_list()
-        if len(files) != 1:
-            fail("%s: %s must provide exactly one file, got %s" % (ctx.label, target.label, files))
-        _add_input_entry(ctx, entries, str(target.label), (files[0],), target.label)
-
-    for target in ctx.attr.content:
-        content = target[DistContentInfo]
-
-        # The keys must be byte-identical to the ones the generated name table produced, because `DevDistMain` asks
-        # for exactly those strings through `BazelBuildInputs.resolve` and an unknown key is a hard error there.
-        #
-        # A module's production label is the *rule* label plus `.jar` (`generateBuildTargets` of the JPS-to-Bazel
-        # converter, `BazelBuildFileGenerator.kt`), and the rule's jar output is `%{name}.jar`
-        # (`jvm-rules/rules/common-attrs.bzl:129-132`) - so the jar file's owner is the rule and `owner + ".jar"`
-        # reproduces the label. The generator writes the same labels from `build/bazel-targets.json`.
-        for jar in content.module_jars.to_list():
-            _add_input_entry(ctx, entries, str(jar.owner) + ".jar", (jar,), jar.owner)
-
-        # A library is keyed by its *container* target, whose label is not derivable from the jars: a Maven library's
-        # per-jar target is a `copy_file` output, so a file's owner is the `...jar_copy` rule (`lib.kt:408-423`), and the
-        # container is a third label again. The key is what `build/bazel-targets.json` records as
-        # `LibraryDescription.target`, because that is what `findLibraryRoots` asks for; `DistContentInfo` carries it
-        # with the container's ordered jars.
-        for entry in content.library_jars.to_list():
-            _add_input_entry(ctx, entries, entry.label, entry.jars, entry.label)
-
-    lines = []
-    files = []
-    for logical_key in sorted(entries.keys()):
-        # One line per file, so a multi-jar library repeats its key. `ExplicitBazelInputResolver.load` collects the
-        # repeats into one ordered list.
-        for file in entries[logical_key]:
-            lines.append("%s\t%s" % (logical_key, file.path))
-            files.append(file)
-    manifest = ctx.actions.declare_file(ctx.label.name + ".bazel-inputs")
-
-    # An empty declaration writes an empty file rather than a lone newline.
-    ctx.actions.write(manifest, ("\n".join(lines) + "\n") if lines else "")
-
-    return [
-        DefaultInfo(files = depset([manifest])),
-        IntellijDevBuildInputsInfo(
-            files = depset(files),
-            manifest = manifest,
-        ),
-    ]
-
-intellij_build_inputs = rule(
-    doc = "Groups the derived raw labels of a reference behind one typed, validated input boundary.",
-    implementation = _dev_build_inputs_impl,
-    attrs = {
-        # Inputs are direct generated labels, never aliases: configured Target.label is the manifest key. The Kotlin
-        # resolver adds apparent-repository aliases for canonical external-repository labels.
-        #
-        # This half keeps carrying the raw sources - the project-model tree's files, plugin descriptors, build modules -
-        # which are files a generator names one by one and no provider can aggregate.
-        "inputs": attr.label_list(allow_files = True),
-        # The jars, aggregated from the graph instead of from a generated name list. Both halves land in one manifest
-        # under the same key convention, so nothing on the Kotlin side can tell where an entry came from. Two targets
-        # can state the same key with the same files, and the manifest then states it once.
-        "content": attr.label_list(providers = [DistContentInfo]),
-    },
-)
 
 IntellijDevFragmentInfo = provider(
     doc = "A component that a distribution composes. Its manifest names each file where it already is.",
@@ -132,13 +33,6 @@ DistPlacementInfo = provider(
         "files": "Dictionary from a file destination to its `File`.",
         "trees": "Dictionary from a directory destination to a directory `File` that holds every entry below it at the same relative path.",
         "executables": "The file destinations that need the executable bit.",
-    },
-)
-
-IntellijDevReferenceInfo = provider(
-    doc = "A reference fragment, the second producer of a gate. No distribution composes it.",
-    fields = {
-        "name": "The fragment name.",
     },
 )
 
@@ -171,14 +65,10 @@ IntellijProjectModelTreeInfo = provider(
     },
 )
 
-# The cache policy of the references and the component collectors. `build/openspec/specs/cache/spec.md` states it.
+# The cache policy of the component collectors. `build/openspec/specs/cache/spec.md` states it.
 # The policy does not use `local`. In the shipped `JetBrains/9.1.0-jb` binary, `Spawns.mayBeCached` tests both
 # `no-cache` and `local`, and `RemoteExecutionService` gates `--disk_cache` on that test. So `local` also stops the disk
 # cache.
-# A reference declares the shared project-model tree and writes a large home, so the remote cache does not keep it.
-# Remote execution is out of scope until platform-independent plans represent the inputs of a reference.
-# A reference runs with `--preloaded-only`, and the blocked network is a second check. An incomplete preload set then
-# fails and does not poison the cache.
 # A collector writes one small manifest, and its payload stays in the cache of the action that produced it. The
 # collectors use this policy too, because no measurement supports another policy for them yet.
 _LOCAL_DISK_CACHE_ONLY = {
@@ -196,10 +86,6 @@ def _small_tool_resources(_os, _inputs):
 def _composer_resources(_os, _inputs):
     """The composer clones the files of an export on a pool of four threads."""
     return {"cpu": 4, "memory": 256}
-
-def _assembler_resources(_os, _inputs):
-    """The reference assembler: `-Xmx8g`, G1 with a few worker threads."""
-    return {"cpu": 2, "memory": 9216}
 
 # The switch that turns span output on, carried by every rule here that runs a packaging tool.
 #
@@ -267,8 +153,7 @@ def _side_output_group(own, dependencies, group_name):
     way.
 
     Propagation is only where the graph makes a file otherwise unreachable, and it is the caller that knows where that
-    is. A fragment carries its project model tree's spans, because no dist rule depends on that tree. A dist carries
-    every group of every fragment it composes. Nothing else propagates: a side output of an action whose output the
+    is. A dist carries every group of every component it composes. Nothing else propagates: a side output of an action whose output the
     build already needs is written by that action anyway, since Bazel runs an action for any of its outputs and requires
     all of them.
 
@@ -309,9 +194,8 @@ def _project_model_tree_impl(ctx):
         # Hermetic. It reads its manifest and the execroot-relative sources that manifest names, writes only under its
         # output directory, and consults no environment variable, no home directory and no network, so it may be
         # sandboxed and the disk cache may keep it. The remote cache may not. The output is tens of thousands of small
-        # files, and every model edit re-keys it. Its consumers are the runtime module facts action and the
-        # references, and both run locally. A remote hit would download the whole tree to save a few seconds of local
-        # copying.
+        # files, and every model edit re-keys it. Its consumer is the runtime module facts action, which runs locally. A
+        # remote hit would download the whole tree to save a few seconds of local copying.
         execution_requirements = {"no-remote-cache": "1"},
         resource_set = _small_tool_resources,
         mnemonic = "IntellijProjectModelTree",
@@ -320,7 +204,7 @@ def _project_model_tree_impl(ctx):
     return [
         DefaultInfo(files = depset([tree])),
         # Not in `IntellijProjectModelTreeInfo`. A consumer reads that provider to declare an *input*, and a span file
-        # must never become one. A reference reaches this group instead.
+        # must never become one. A measuring run asks for this group of the tree target.
         OutputGroupInfo(trace_spans = _spans_output_group([spans], [])),
         IntellijProjectModelTreeInfo(tree = tree),
     ]
@@ -328,8 +212,7 @@ def _project_model_tree_impl(ctx):
 intellij_project_model_tree = rule(
     doc = """The checkout-shaped JPS project model tree.
 
-    Only the runtime module facts action and the references read the tree. No other action of a distribution
-    reads it. A consuming repository can declare one tree for many products and share it with every consumer of those
+    Only the runtime module facts action reads the tree. No other action of a distribution reads it. A consuming repository can declare one tree for many products and share it with every consumer of those
     products. One tree per consumer would repeat about 7 400 file copies for each one.
 
     The tree carries the union of what its consumers need. A file that only one consumer reads, for example the branding
@@ -345,129 +228,11 @@ intellij_project_model_tree = rule(
     } | _TRACE_SPANS_ATTR,
 )
 
-# The selector values `DevDistMain` accepts, mirrored here so a typo in a BUILD file fails at analysis time.
-_PLATFORM_SELECTORS = ["", "only"]
-
 def _add_target_platform_args(args, target_platform):
     if target_platform:
         target_parts = platform_parts(target_platform)
         args.add("--os=" + ("macos" if target_parts.os == "darwin" else target_parts.os))
         args.add("--arch=" + target_parts.arch)
-
-def _mnemonic(fragment_name):
-    """A CamelCase mnemonic, so `bazel --profile` and `--strategy` can name these actions."""
-    return "IntellijDev" + "".join([part.capitalize() for part in fragment_name.replace("-", "_").replace(".", "_").split("_")])
-
-def _fragment_impl(ctx):
-    if not ctx.attr.platform and not ctx.attr.runtime_module_repository:
-        fail("%s selects nothing: set platform or runtime_module_repository" % ctx.label)
-    if not ctx.files.preloaded_manifests:
-        fail("%s must declare at least one preloaded download manifest" % ctx.label)
-
-    home = ctx.actions.declare_directory(ctx.label.name + ".home")
-    scratch = ctx.actions.declare_directory(ctx.label.name + ".scratch")
-
-    outputs = [home, scratch]
-
-    project_tree = ctx.attr.project_model_tree[IntellijProjectModelTreeInfo].tree
-    build_inputs = ctx.attr.build_inputs[IntellijDevBuildInputsInfo]
-    bazel_inputs_manifest = build_inputs.manifest
-
-    args = ctx.actions.args()
-    args.add("--project-dir=" + project_tree.path)
-    args.add("--output-dir=" + home.path)
-    args.add("--scratch-dir=" + scratch.path)
-
-    # Whatever an assembly still wants to download or extract goes here rather than into the checkout, where the cache
-    # used to live: the project tree is shared and read-only now, and a cache no action declares is not an input.
-    # Everything a reference actually reads is declared - see the preloaded archives - so this should stay empty, and
-    # it is cleaned on success.
-    args.add("--download-cache-dir=" + scratch.path + "/download-cache")
-    args.add("--clean-scratch-on-success")
-    args.add("--fragment=" + ctx.attr.fragment_name)
-    args.add("--build-date-seconds=" + ctx.attr.build_date_seconds)
-    args.add("--platform-prefix=" + ctx.attr.platform_prefix)
-    args.add("--bazel-targets-json=" + ctx.file.bazel_targets_json.path)
-    args.add("--bazel-inputs-manifest=" + bazel_inputs_manifest.path)
-    _add_target_platform_args(args, ctx.attr.target_platform)
-
-    if ctx.attr.platform:
-        if not ctx.attr.platform_payload:
-            fail("%s: platform needs platform_payload, which names the jars" % ctx.label, attr = "platform_payload")
-        args.add("--platform=" + ctx.attr.platform)
-        args.add_all(
-            ctx.attr.platform_payload[DistPlatformPayloadInfo].packed_jar_names,
-            format_each = "--platform-jar=%s",
-        )
-    if ctx.attr.runtime_module_repository:
-        # The reference assembler lays the platform and the bundled plugins out without files, then writes only
-        # `modules/`.
-        args.add("--runtime-module-repository")
-
-    args.add_all(ctx.files.preloaded_manifests, format_each = "--preloaded-manifest=%s")
-    args.add("--preloaded-only")
-
-    spans = _declare_spans(ctx, args, ctx.label.name)
-    if spans:
-        outputs.append(spans)
-
-    ctx.actions.run(
-        inputs = depset(
-            direct = [
-                project_tree,
-                bazel_inputs_manifest,
-                ctx.file.bazel_targets_json,
-            ] + ctx.files.preloaded_downloads + ctx.files.preloaded_manifests,
-            transitive = [build_inputs.files],
-        ),
-        outputs = outputs,
-        executable = ctx.executable.assembler,
-        arguments = [args],
-        execution_requirements = _LOCAL_DISK_CACHE_ONLY,
-        resource_set = _assembler_resources,
-        mnemonic = _mnemonic(ctx.attr.fragment_name),
-        progress_message = "Assembling %s dev fragment %s" % (ctx.attr.platform_prefix, ctx.label),
-    )
-    return [
-        DefaultInfo(files = depset([home])),
-        OutputGroupInfo(
-            # The spans of this reference and of the shared project model tree. No distribution composes a reference,
-            # so a request for the spans of a distribution does not reach the tree.
-            trace_spans = _spans_output_group([spans], [ctx.attr.project_model_tree]),
-        ),
-        IntellijDevReferenceInfo(name = ctx.attr.fragment_name),
-    ]
-
-intellij_fragment = rule(
-    doc = """A reference fragment: files of the distribution that the reference assembler packs a second time for a
-    gate.
-
-    It publishes `IntellijDevReferenceInfo`, so no distribution can compose it. What the fragment owns is a selector
-    over names, not a file list. `platform = "only"` owns the `lib/` jars that a generated jar-name set names.
-    `runtime_module_repository` owns `modules/`, the runtime module repository.
-    """,
-    implementation = _fragment_impl,
-    attrs = {
-        "assembler": attr.label(executable = True, cfg = "exec", mandatory = True),
-        "build_date_seconds": attr.string(default = DIST_PINNED_BUILD_DATE_IN_SECONDS),
-        "platform_prefix": attr.string(mandatory = True),
-        "target_platform": attr.string(default = ""),
-        "fragment_name": attr.string(mandatory = True, doc = "Identifies this fragment in its mnemonic and its diagnostics."),
-        "platform": attr.string(default = "", values = _PLATFORM_SELECTORS, doc = "Which `lib/` jars this fragment owns: `only` the packed ones, or none when empty."),
-        "runtime_module_repository": attr.bool(default = False, doc = "Whether this fragment owns `modules/module-descriptors.dat` and `modules/module-descriptors.jar`."),
-        "platform_payload": attr.label(
-            providers = [DistPlatformPayloadInfo],
-            doc = "The `lib/` jar file names `platform` reads, as the target that derives them: the jars that " +
-                  "`intellij_packed_jars_component` provides, which this fragment packs the way `JarPackager` " +
-                  "packs them.",
-        ),
-        "project_model_tree": attr.label(providers = [IntellijProjectModelTreeInfo], mandatory = True, doc = "The materialized project model tree this reference reads. A consuming repository can share one tree with every reference."),
-        "bazel_targets_json": attr.label(allow_single_file = True, mandatory = True),
-        "build_inputs": attr.label(providers = [IntellijDevBuildInputsInfo], mandatory = True),
-        "preloaded_downloads": attr.label_list(allow_files = True),
-        "preloaded_manifests": attr.label_list(allow_files = True),
-    } | _TRACE_SPANS_ATTR,
-)
 
 _COLLECTOR_ATTRS = {
     "collector": attr.label(executable = True, cfg = "exec", mandatory = True),
