@@ -57,11 +57,11 @@ private val TEST_SUPPORT_MODULES = setOf(
  * names `com.intellij.project.TestProjectManager` as the unit-test implementation. That class is in the test framework,
  * and the core cannot depend on the framework, because the framework depends on the core. The core loader of a dev build
  * cannot load the class, so `ProjectManager` works only through the override in `intellij.platform.testFramework.xml`.
- * That registration exists only when the module is loaded as plugin content. An `.iml` rarely declares the module, because
- * a flat test classpath gets it for free from `TEST_FRAMEWORK_DEPS` of `tests-options.bzl`. The walk of the descriptors
- * therefore does not reliably reach it.
+ * That registration exists only when the module is loaded as plugin content. An `.iml` rarely declares the module, so the
+ * walk of the descriptors does not reliably reach it.
  *
- * `intellij.tools.testsBootstrap`: the runner needs its JUnit engines, which a flat test classpath has from the same list.
+ * `intellij.tools.testsBootstrap`: the runner needs its JUnit engines, which a flat test classpath has from
+ * `TEST_FRAMEWORK_DEPS` of `tests-options.bzl`.
  */
 @VisibleForTesting
 internal val BASE_MODULES: List<String> = listOf("intellij.platform.testFramework", "intellij.tools.testsBootstrap")

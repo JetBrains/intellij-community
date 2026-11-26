@@ -64,20 +64,12 @@ def _is_c1_only(tags):
     is_air = native.repository_name() == "@" and (package == "plugins/air" or package.startswith("plugins/air/"))
     return is_air and "jvm-c2" not in tags
 
+# The runner and the classes that its filters load by name, such as `com.intellij.TestCaseLoader`.
+# The JPS test run adds the same two modules. A test gets anything else only from the dependencies of its own module.
 TEST_FRAMEWORK_DEPS = [
-    # TODO Review this list, most likely only tools-testsBootstrap is required
-    # junit stuff should be propagated via runtime deps of testsBootstrap
     "@community//platform/testFramework/bootstrap:tools-testsBootstrap",
-    "@community//platform/util:util-tests_test_lib",
+    "@community//platform/testFramework/core",
 ]
-
-# needed to avoid runtime duplications in jps_test of community/platform/util/BUILD.bazel
-# as depset can't recognize that ":util-tests_test_lib" and "@community//platform/util:util-tests_test_lib" is the same lib
-def _normalize_runtime_dep(dep):
-    if ((dep == ":util-tests_test_lib" and native.package_name() == "platform/util") or
-        dep in ["//platform/util:util-tests_test_lib", "@community//platform/util:util-tests_test_lib"]):
-        return "@community//platform/util:util-tests_test_lib"
-    return dep
 
 def _classes_duration_data():
     repo = native.repository_name()
@@ -102,8 +94,7 @@ def jps_test(name, jvm_flags = [], runtime_deps = [], args = [], data = [], tags
     all_jvm_flags = JAVA_TEST_FLAGS + ADD_OPENS_FLAGS + (C1_ONLY_JVM_FLAGS if _is_c1_only(tags) else []) + (JUNIT_PARALLEL_JVM_FLAGS if junit_parallel else []) + jvm_flags
     all_args = JAVA_TEST_ARGS + args
 
-    normalized_runtime_deps = [_normalize_runtime_dep(d) for d in runtime_deps]
-    all_runtime_deps = depset(TEST_FRAMEWORK_DEPS + normalized_runtime_deps).to_list()
+    all_runtime_deps = depset(TEST_FRAMEWORK_DEPS + runtime_deps).to_list()
 
     # only what this macro contributes: the caller's `data` is concatenated at the end, so it may be
     # a select() - a target whose data depends on the platform, as the macOS-only dev-launch sets do
