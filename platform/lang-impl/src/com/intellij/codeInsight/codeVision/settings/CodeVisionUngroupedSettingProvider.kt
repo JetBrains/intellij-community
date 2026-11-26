@@ -7,7 +7,7 @@ import org.jetbrains.annotations.Nls
 /**
  * Uses to create dummy settings for [com.intellij.codeInsight.codeVision.CodeVisionProvider] if no [CodeVisionGroupSettingProvider] were presented
  */
-internal class CodeVisionUngroppedSettingProvider(
+internal class CodeVisionUngroupedSettingProvider(
   override val groupId: String,
   @Nls private val providerName: String,
 ) : CodeVisionGroupSettingProvider {

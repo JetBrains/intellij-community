@@ -126,7 +126,7 @@ interface CodeVisionGroupSettingProvider {
     fun findSingleModels(project: Project): List<CodeVisionGroupSettingProvider> {
       val registeredGroupIds = EXTENSION_POINT_NAME.extensions.distinctBy { it.groupId }.map { it.groupId }
       val providersWithoutGroup = CodeVisionProviderFactory.createAllProviders(project).filter { registeredGroupIds.contains(it.groupId).not() }
-      return providersWithoutGroup.map { CodeVisionUngroppedSettingProvider(it.groupId, it.name) }
+      return providersWithoutGroup.map { CodeVisionUngroupedSettingProvider(it.groupId, it.name) }
     }
   }
 }
