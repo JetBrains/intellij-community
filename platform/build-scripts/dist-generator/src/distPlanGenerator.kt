@@ -49,7 +49,6 @@ import org.jetbrains.intellij.build.impl.productInfo.computeDevProductLaunchMode
 import org.jetbrains.intellij.build.impl.productInfo.devMacAppIcons
 import org.jetbrains.intellij.build.impl.productInfo.encodeProductLaunchModel
 import org.jetbrains.intellij.build.impl.productInfo.frontendVmOptionsFileName
-import org.jetbrains.intellij.build.impl.productInfo.vmOptionsFileName
 import org.jetbrains.intellij.build.isTestModule
 import org.jetbrains.intellij.build.mapConcurrent
 import org.jetbrains.intellij.build.productLayout.JNA_NATIVE_DIR
@@ -3326,15 +3325,23 @@ private fun renderPartition(products: List<ProductFragmentPlan>, half: DistHalf,
   }
   append("}\n")
   append("\n")
-  append("# The launch model of every product, which its `platform_resources` component renders. A model file takes the\n")
-  append("# case-safe name of its product, so two products never share one file on a case-insensitive disk. The map is\n")
-  append("# apart from the plans, so products with equal launch facts still share one plan.\n")
-  append("DIST_LAUNCH_MODELS = {\n")
-  for (product in products) {
-    val path = product.launchModelRelativePath
-    append("    \"").append(product.platformPrefix).append("\": \"//").append(path.substringBeforeLast('/')).append(':').append(path.substringAfterLast('/')).append("\",\n")
+  append("# The case-safe name of each product whose name differs from its key. The launch model of a product, which its\n")
+  append("# `platform_resources` component renders, is `build/dist-launch/<case-safe name>.launch.json`. So two products\n")
+  append("# never share one file on a case-insensitive disk. Every other product names its model by its key.\n")
+  val caseSafeNames = products.mapNotNull { product ->
+    val name = product.launchModelRelativePath.substringAfterLast('/').removeSuffix(LAUNCH_MODEL_SUFFIX)
+    if (name == product.platformPrefix) null else product.platformPrefix to name
   }
-  append("}\n")
+  if (caseSafeNames.isEmpty()) {
+    append("DIST_CASE_SAFE_NAMES = {}\n")
+  }
+  else {
+    append("DIST_CASE_SAFE_NAMES = {\n")
+    for ((product, name) in caseSafeNames) {
+      append("    \"").append(product).append("\": \"").append(name).append("\",\n")
+    }
+    append("}\n")
+  }
   append("\n")
   append("# The application info sources of every product. The product files action and the plugin descriptor actions read\n")
   append("# these files. So an edit of a version, a suffix, a release date or the EAP flag changes no generated file.\n")
@@ -3431,17 +3438,14 @@ private fun planFieldBodies(product: ProductFragmentPlan): List<PlanFieldBody> {
       append("}")
     }))
   }
-  // The facts of the launch model that Bazel reads at analysis time. `DIST_LAUNCH_MODELS` names the model itself.
+  // The facts of the launch model that Bazel reads at analysis time. The declarations name the model by the case-safe
+  // name of the product, see `DIST_CASE_SAFE_NAMES`, and derive the main vmoptions file name from `launcher`, see
+  // `vm_options_file_name` of `dist_product_files.bzl`.
   val model = product.launchModel
   val osTokens = listOf("darwin" to OsFamily.MACOS, "linux" to OsFamily.LINUX, "windows" to OsFamily.WINDOWS)
   result.add(PlanFieldBody("launch", buildString {
     append("struct(\n")
     append("    idea_properties = \"").append(product.ideaProperties).append("\",\n")
-    append("    vmoptions = {\n")
-    for ((token, os) in osTokens) {
-      append("        \"").append(token).append("\": \"").append(model.vmOptionsFileName(os)).append("\",\n")
-    }
-    append("    },\n")
     // The vmoptions file of the embedded frontend, on one line. The `thinClient` command of the model names it.
     if (model.frontendVmOptions != null) {
       append("    frontend_vmoptions = {")
