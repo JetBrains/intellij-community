@@ -15,10 +15,15 @@ def _dist_tool_impl(ctx):
     name = tool.basename.removesuffix(".exe")
     inputs = rust_tool_identity_inputs(ctx, ctx.attr.tool)
     files = inputs.files + ctx.files._manifests
+    lock = ctx.file._lock
     entries = ctx.actions.args()
     entries.set_param_file_format("multiline")
     entries.add_all(inputs.facts, format_each = "fact=%s")
     entries.add_all(files, map_each = _identity_file_entry)
+
+    # Only the packages of the crates that the tool links enter the identity, so a lock line of another crate leaves it.
+    entries.add_all(inputs.locked, format_each = "locked=%s")
+    entries.add("lock=%s=%s" % (lock.short_path, lock.path))
     flag_file = ctx.actions.declare_file(ctx.label.name + "/" + name + ".identity-entries")
     ctx.actions.write(flag_file, entries)
 
@@ -26,7 +31,7 @@ def _dist_tool_impl(ctx):
     ctx.actions.run(
         executable = ctx.executable._identity_writer,
         arguments = ["--flagfile=" + flag_file.path, "--output=" + identity.path],
-        inputs = files + [flag_file],
+        inputs = files + [lock, flag_file],
         outputs = [identity],
         mnemonic = "DistToolIdentity",
         progress_message = "Writing the identity of %s" % tool.basename,
@@ -64,5 +69,6 @@ this file, see `community/build/bazel_scrubbing.cfg`.""",
             cfg = "exec",
         ),
         _manifests = attr.label(default = "//build/dist-tools:tool_identity_manifests"),
+        _lock = attr.label(default = "//build/dist-tools:Cargo.lock", allow_single_file = True),
     ),
 )

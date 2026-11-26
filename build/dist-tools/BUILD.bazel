@@ -32,15 +32,19 @@ windows_clippy_tests(
     ],
 )
 
-# The files of this workspace that pin what a crate of a tool links: the versions in `Cargo.lock`, the features in
-# `Cargo.toml` and the build settings in `.cargo/config.toml`. The identity of each distribution tool hashes them, see
-# `dist_tool`.
+# The files of this workspace that pin how a crate of a tool builds: the features in `Cargo.toml` and the build
+# settings in `.cargo/config.toml`. The identity of each distribution tool hashes them, see `dist_tool`. The identity
+# takes only the packages of `Cargo.lock` that the tool links, so `Cargo.lock` is exported alone.
 filegroup(
     name = "tool_identity_manifests",
     srcs = [
         ".cargo/config.toml",
-        "Cargo.lock",
         "Cargo.toml",
     ],
+    visibility = ["//platform/build-scripts/bazel-rules:__pkg__"],
+)
+
+exports_files(
+    ["Cargo.lock"],
     visibility = ["//platform/build-scripts/bazel-rules:__pkg__"],
 )

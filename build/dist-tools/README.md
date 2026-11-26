@@ -48,7 +48,7 @@ Run a test target from the ultimate root. From `community/`, drop the `@communit
 | `bins/product-files` | The tool of `dist_product_files`. | `@community//build/dist-tools/bins/product-files:product-files_test` |
 | `bins/project-model-tree` | The `materializer` of `intellij_project_model_tree`. | `@community//build/dist-tools/bins/project-model-tree:project-model-tree_test` |
 | `bins/runtime-layout` | The runtime layout tool. | `@community//build/dist-tools/bins/runtime-layout:runtime-layout_test` |
-| `bins/tool-identity` | The identity writer: the identity file of each distribution tool, from the facts and the files that `dist_tool` states. | `@community//build/dist-tools/bins/tool-identity:tool-identity_test` |
+| `bins/tool-identity` | The identity writer: the identity file of each distribution tool, from the facts, the files and the locked packages that `dist_tool` states. A `Cargo.lock` package that the tool does not link leaves the identity unchanged. | `@community//build/dist-tools/bins/tool-identity:tool-identity_test` |
 | `build/dist-tools/bins/dist` | The binary of `./build/dist.cmd`, in the ultimate root. | `//build/dist-tools/bins/dist:dist_test` |
 
 The `API.md` of a crate states its supported subset and the input that it refuses. Rustdoc states the public items.

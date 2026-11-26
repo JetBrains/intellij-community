@@ -254,14 +254,15 @@ RUST_TOOLCHAIN_TYPE = Label("@rules_rust//rust:toolchain_type")
 _MAX_CRATE_WALK = 10000
 
 def rust_tool_identity_inputs(ctx, binary):
-    """Returns the facts and the files of the identity of a Rust binary, as `struct(facts, files)`.
+    """Returns the facts, the files and the locked crates of the identity of a Rust binary, as `struct(facts, files, locked)`.
 
     The identity is equal on every host and changes when a build of the binary can change. It states each crate that
     the binary links and each proc macro with its own crates, except the host-only crates of `_HOST_CRATES`: the name,
     the type, the edition and the label. Each file is a source or a compile data file of such a crate, with its short
     path as the name. The facts also state the version, the compilation mode options and the extra flags of the Rust
-    toolchain. The files also hold the Starlark sources of rules_rs. The caller adds the files that pin the host-only
-    crates and the features of a crate, such as `Cargo.lock` and `Cargo.toml` of the workspace.
+    toolchain. The files also hold the Starlark sources of rules_rs. `locked` holds the rustc name of each crate of the
+    walk and of each host-only crate, sorted, for the packages of `Cargo.lock` that pin them. The caller adds the files
+    that pin the features of a crate, such as `Cargo.toml` of the workspace.
 
     Args:
       ctx: the context of a rule with `RUST_TOOL_IDENTITY_ATTRS` and the toolchain `RUST_TOOLCHAIN_TYPE`.
@@ -303,7 +304,8 @@ def rust_tool_identity_inputs(ctx, binary):
     facts.append("compilation mode %s %s" % (mode, toolchain.compilation_mode_opts[mode]))
     facts.append("extra rustc flags %s" % toolchain.extra_rustc_flags)
     facts.append("extra exec rustc flags %s" % toolchain.extra_exec_rustc_flags)
-    return struct(facts = facts, files = [files[name] for name in sorted(files)])
+    locked = {crate.name: None for crate in crates} | {crate: None for crate in _HOST_CRATES}
+    return struct(facts = facts, files = [files[name] for name in sorted(files)], locked = sorted(locked.keys()))
 
 def rust_tool_crate(
         name,
