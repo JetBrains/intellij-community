@@ -1207,7 +1207,7 @@ private fun renderEmbeddedProductDescriptorCall(
 
 /**
  * One plugin component, keyed by its main module: one label for every platform, or one label per platform for a
- * platform-specific plugin. The component name and the fragment name are the main module, so neither is stated.
+ * platform-specific plugin. The component name is the main module, so it is not stated.
  */
 internal class GeneratedPluginComponent(
   @JvmField val mainModule: String,

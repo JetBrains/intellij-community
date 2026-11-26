@@ -624,7 +624,7 @@ fun renderDistDistributionIndex(
  * A row states only what differs from the reader's defaults. A flag list or a program argument list of two or more
  * items that two or more rows state alike is one private `_JVM_FLAGS_<first row>` or `_PROGRAM_ARGS_<first row>` list,
  * as a shared residual jar struct is in
- * `dist_fragment_inputs.bzl`. An entry whose every field fits on one line is one line, with its XML file as a
+ * `dist_component_inputs.bzl`. An entry whose every field fits on one line is one line, with its XML file as a
  * trailing comment; buildifier keeps both forms.
  *
  * With [sharedDistributions], the file also holds `DIST_SHARED_DISTRIBUTIONS`: the label of the shared distribution

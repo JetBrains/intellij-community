@@ -20,7 +20,7 @@ class GenerationSummaryPrinterTest {
     // A committing run with one modified plan file.
     val text = summaryOf(
       stats = distPlanStats(
-        DistPlanFileResult("build/dist_fragment_inputs.bzl", FileChangeStatus.MODIFIED),
+        DistPlanFileResult("build/dist_component_inputs.bzl", FileChangeStatus.MODIFIED),
         DistPlanFileResult("build/dist_module_sets.bzl", FileChangeStatus.UNCHANGED),
         DistPlanFileResult("build/dist_content_sets.bzl", FileChangeStatus.UNCHANGED),
       ),
@@ -28,7 +28,7 @@ class GenerationSummaryPrinterTest {
     )
 
     assertThat(text).contains("Distribution Plan")
-    assertThat(text).contains("dist_fragment_inputs.bzl")
+    assertThat(text).contains("dist_component_inputs.bzl")
     assertThat(text).contains("Commit the change")
     assertThat(text).doesNotContain("All files unchanged")
   }
@@ -37,7 +37,7 @@ class GenerationSummaryPrinterTest {
   fun `a committing run with no change counts the plan files`() {
     val text = summaryOf(
       stats = distPlanStats(
-        DistPlanFileResult("build/dist_fragment_inputs.bzl", FileChangeStatus.UNCHANGED),
+        DistPlanFileResult("build/dist_component_inputs.bzl", FileChangeStatus.UNCHANGED),
         DistPlanFileResult("build/dist_module_sets.bzl", FileChangeStatus.UNCHANGED),
       ),
       committed = true,
@@ -53,12 +53,12 @@ class GenerationSummaryPrinterTest {
     // A validating run writes nothing, so a request to commit would point at no change.
     val text = summaryOf(
       stats = distPlanStats(
-        DistPlanFileResult("build/dist_fragment_inputs.bzl", FileChangeStatus.MODIFIED),
+        DistPlanFileResult("build/dist_component_inputs.bzl", FileChangeStatus.MODIFIED),
       ),
       committed = false,
     )
 
-    assertThat(text).contains("dist_fragment_inputs.bzl")
+    assertThat(text).contains("dist_component_inputs.bzl")
     assertThat(text).doesNotContain("Commit the change")
   }
 }

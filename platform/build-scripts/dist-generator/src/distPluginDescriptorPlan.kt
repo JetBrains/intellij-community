@@ -40,7 +40,7 @@ import kotlin.io.path.invariantSeparatorsPathString
  * and the snapshot diff of a composed dist is the regression guard.
  *
  * One population has one reader. [plugins] holds every selected bundled plugin variant. An unsupported variant stops
- * generation. A fragment reads the produced descriptor of every listed plugin.
+ * generation. A component reads the produced descriptor of every listed plugin.
  */
 internal class PluginDescriptorPlan(
   @JvmField val platformPrefix: String,
@@ -62,7 +62,7 @@ internal class PluginDescriptorPlan(
  * them.
  *
  * A plugin whose descriptor differs by OS or architecture gets one plan entry per layout variant, and every entry
- * states which of these platforms it serves. The set target of a fragment is per platform, and `//build` selects one.
+ * states which of these platforms it serves. The set target of a component is per platform, and `//build` selects one.
  */
 internal val HOST_PLATFORMS: List<String> = listOf(
   "darwin_aarch64",

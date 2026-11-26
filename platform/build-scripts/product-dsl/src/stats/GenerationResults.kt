@@ -147,7 +147,7 @@ data class DistPlanFileResult(
 /**
  * Result of generating all distribution plan files.
  *
- * The plan holds every file the distribution fragments read: the cache partition, the declared inputs, the module
+ * The plan holds every file the distribution components read: the cache partition, the declared inputs, the module
  * sets, the content sets, and the descriptor tables. The list holds the unchanged files too, so the summary can state
  * how many files it covers.
  */

@@ -24,7 +24,7 @@ private fun renderProductDescriptorBuildFile(plans: List<ProductDescriptorPlan>,
   append("# The generated entries of the application-info module jar of each product: the product descriptor, and the\n")
   append("# application info of a product with `appInfoXmlReplacements`. The application info action replaces only these\n")
   append("# markers, and the run time reads the build number from `build.txt`. `dist_platform_jar` patches the outputs\n")
-  append("# into the jar, see the `patches` of the residual jar in `build/dist_fragment_inputs.bzl`. A product without\n")
+  append("# into the jar, see the `patches` of the residual jar in `build/dist_component_inputs.bzl`. A product without\n")
   append("# replacements patches its application info source as it is.\n")
   append("#\n")
   append("# A target states the Product DSL content of its product: the aliases, the deprecated includes, the top-level module\n")
