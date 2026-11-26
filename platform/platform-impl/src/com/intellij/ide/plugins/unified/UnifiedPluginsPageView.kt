@@ -357,11 +357,11 @@ internal class UnifiedPluginsPageView @RequiresEdt constructor(
   }
 
   @RequiresEdt
-  fun renderOperationStatus(items: List<PluginItemState>) {
+  fun renderOperationStatus(items: List<PluginItemState>, showUpdateCheck: Boolean) {
     val activeItems = items.filter { it.rowInput?.operationInProgress == true }
     if (activeItems.isEmpty()) {
       operationProgressPluginIds.clear()
-      operationStatusComponent.isVisible = false
+      setOperationStatus(if (showUpdateCheck) IdeBundle.message("plugins.configurable.operation.checking.updates") else null)
       return
     }
 
@@ -376,11 +376,15 @@ internal class UnifiedPluginsPageView @RequiresEdt constructor(
       )
       else -> IdeBundle.message("plugins.configurable.operation.installing.plugins", activeItems.size)
     }
+    setOperationStatus(status)
+  }
+
+  private fun setOperationStatus(status: @Nls String?) {
     operationStatusComponent.apply {
       text = status
       toolTipText = status
       accessibleContext.accessibleName = status
-      isVisible = true
+      isVisible = status != null
     }
   }
 

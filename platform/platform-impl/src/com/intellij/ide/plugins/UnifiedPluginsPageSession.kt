@@ -140,6 +140,7 @@ internal class UnifiedPluginsPageSession @RequiresEdt constructor(
     DefaultUnifiedPluginMarketplaceDataProvider(host, getActiveProject(), cache)
   },
   pluginUpdates: Flow<PluginUpdatesEvent> = PluginUpdatesService.getInstance().updatesFlow(),
+  updateCheckInProgress: Flow<Boolean> = PluginUpdatesService.getInstance().updateCheckInProgress(),
   private val recalculatePluginUpdates: () -> Unit = { PluginUpdatesService.getInstance().recalculateUpdates() },
   private val customizer: PluginManagerCustomizer? = PluginManagerCustomizer.getInstance(),
   pluginStatesReadiness: suspend () -> Unit = { customizer?.awaitPluginStatesLoaded() },
@@ -239,7 +240,7 @@ internal class UnifiedPluginsPageSession @RequiresEdt constructor(
   private val updateAllButton: UnifiedPluginUpdateAllButton
   private val pageSourceCollectionJob: Job
   private val updateAllUpdatesCollectionJob: Job
-  private val updateAllStateCollectionJob: Job
+  private val operationHeaderCollectionJob: Job
   private val applyState = UnifiedPluginsPageApplyState()
 
   private val callbackLock = Any()
@@ -253,6 +254,7 @@ internal class UnifiedPluginsPageSession @RequiresEdt constructor(
   private var renderedRepositoryContentRevision = -1L
   private var pageReadyReported = false
   private var showMarketplaceLink = false
+  private var checkingForUpdates = false
   private var reportedSourceFailures: Set<UnifiedPluginSourceFailure> = emptySet()
   private var spotlightSearchActive = false
   private var queryIntentRevision = 0L
@@ -362,10 +364,14 @@ internal class UnifiedPluginsPageSession @RequiresEdt constructor(
         if (!disposed) renderPageSourceState(state)
       }
     }
-    updateAllStateCollectionJob = contentComponent.launchOnShow("UnifiedPluginsPageSession.updateAllState") {
-      updateAllController.state.collect { state ->
-        if (!disposed) renderOperationHeader(pageSource.state.value, state)
-      }
+    operationHeaderCollectionJob = contentComponent.launchOnShow("UnifiedPluginsPageSession.operationHeader") {
+      updateAllController.state.combine(updateCheckInProgress) { state, checking -> state to checking }
+        .collect { (state, checking) ->
+          if (!disposed) {
+            checkingForUpdates = checking
+            renderOperationHeader(pageSource.state.value, state)
+          }
+        }
     }
     updateAllUpdatesCollectionJob = pageScope.launch(start = CoroutineStart.UNDISPATCHED) {
       sessionPluginUpdates.combine(localSource.state) { updates, localState ->
@@ -574,7 +580,7 @@ internal class UnifiedPluginsPageSession @RequiresEdt constructor(
       pageSource.close()
       pageSourceCollectionJob.cancel()
       updateAllUpdatesCollectionJob.cancel()
-      updateAllStateCollectionJob.cancel()
+      operationHeaderCollectionJob.cancel()
       updateAllController.close()
       updateAllOperationEventSink = {}
       val installationMovedToBackground = host.dispose(closeSession = closeSessionNow)
@@ -805,11 +811,12 @@ internal class UnifiedPluginsPageSession @RequiresEdt constructor(
 
   @RequiresEdt
   private fun renderOperationHeader(source: UnifiedPluginsPageSourceState, updateAll: UnifiedPluginUpdateAllState) {
-    view.renderOperationStatus(source.sections.firstOrNull { it.id == PluginSectionId.Installing }?.items.orEmpty())
+    val restartRequired = source.restartRequired || updateAll.restartRequired
+    val updateAllRunning = updateAll.presentation is UnifiedPluginUpdateAllPresentation.Running
+    val operations = source.sections.firstOrNull { it.id == PluginSectionId.Installing }?.items.orEmpty()
+    view.renderOperationStatus(operations, showUpdateCheck = checkingForUpdates && !restartRequired && !updateAllRunning)
     updateAllButton.render(updateAll.presentation)
-    restartButton.isVisible = (source.restartRequired || updateAll.restartRequired) &&
-                              !view.operationStatusComponent.isVisible &&
-                              updateAll.presentation !is UnifiedPluginUpdateAllPresentation.Running
+    restartButton.isVisible = restartRequired && !view.operationStatusComponent.isVisible && !updateAllRunning
   }
 
   @RequiresEdt

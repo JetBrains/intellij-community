@@ -19,6 +19,7 @@ import com.intellij.testFramework.junit5.RegistryKey
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.TestDisposable
 import com.intellij.util.application
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
@@ -37,6 +38,38 @@ import javax.swing.JComponent
 
 @TestApplication
 internal class DefaultPluginUpdatesProviderTest {
+  @Test
+  fun `update check progress clears after success or failure`(@TestDisposable disposable: Disposable): Unit = timeoutRunBlocking {
+    val requests = Channel<CompletableDeferred<PluginUpdatesModel>>(Channel.UNLIMITED)
+    val handler = object : PluginUpdateHandler by PluginUpdateHandler.getInstance() {
+      override suspend fun loadAndStorePluginUpdates(buildNumber: String?, indicator: ProgressIndicator?): PluginUpdatesModel {
+        val result = CompletableDeferred<PluginUpdatesModel>()
+        requests.send(result)
+        return result.await()
+      }
+    }
+    ExtensionTestUtil.maskExtensions(PluginUpdateHandlerProvider.EP_NAME, listOf(object : PluginUpdateHandlerProvider {
+      override fun getPluginUpdateHandler(): PluginUpdateHandler = handler
+    }), disposable)
+
+    withProvider(disposable) { provider ->
+      val progress = PluginUpdatesService(this).updateCheckInProgress()
+      assertThat(progress.first()).isFalse()
+
+      provider.update()
+      val successfulCheck = requests.receive()
+      assertThat(progress.first()).isTrue()
+      successfulCheck.complete(updatesModel())
+      progress.first { !it }
+
+      provider.update()
+      val failedCheck = requests.receive()
+      assertThat(progress.first()).isTrue()
+      failedCheck.completeExceptionally(IllegalStateException("Plugin update check failed"))
+      progress.first { !it }
+    }
+  }
+
   @Test
   fun `completed checks reach current and later subscribers`(@TestDisposable disposable: Disposable): Unit = timeoutRunBlocking {
     withProvider(disposable) { provider ->

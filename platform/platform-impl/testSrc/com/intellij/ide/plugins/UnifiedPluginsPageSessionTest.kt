@@ -99,9 +99,11 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
 import kotlinx.coroutines.yield
@@ -620,7 +622,8 @@ internal class UnifiedPluginsPageSessionTest {
   fun `pending restart shares the header slot with active progress`(): Unit = uiTest {
     val existing = inventoryItem("restart.existing", "Existing Plugin")
     val provider = FixedLocalDataProvider(UnifiedPluginInventory(listOf(existing), emptyList()))
-    val session = createSession(null, provider)
+    val checkingForUpdates = MutableStateFlow(false)
+    val session = createSession(null, provider, updateCheckInProgress = checkingForUpdates)
     try {
       val header = session.getCenterComponent(Configurable.TopComponentController.EMPTY)
       val restart = restartButton(header)
@@ -629,6 +632,12 @@ internal class UnifiedPluginsPageSessionTest {
       assertThat(restart.icon).isSameAs(AllIcons.Actions.Restart)
       val layout = header.layout as GridBagLayout
       assertThat(layout.getConstraints(restart).gridx).isEqualTo(layout.getConstraints(status).gridx)
+      val checkingText = IdeBundle.message("plugins.configurable.operation.checking.updates")
+      checkingForUpdates.value = true
+      waitUntilAssertSucceeds {
+        assertThat(status.isVisible).isTrue()
+        assertThat(status.text).isEqualTo(checkingText)
+      }
 
       val content = session.getComponent()
       waitForPluginIds(content, setOf(existing.model.pluginId.idString))
@@ -636,6 +645,9 @@ internal class UnifiedPluginsPageSessionTest {
       val plugin = PluginDto("New Plugin", PluginId.getId("restart.install"))
       val install = PluginOperationContext.create(plugin.pluginId, PluginSource.LOCAL, PluginOperationKind.INSTALL)
       model.operationStarted(install, plugin)
+      waitUntilAssertSucceeds {
+        assertThat(status.text).isEqualTo(IdeBundle.message("plugins.configurable.operation.installing.plugin", plugin.name))
+      }
       model.operationTargetFinished(install, PluginSource.LOCAL, PluginOperationTerminalResult.SUCCEEDED, restartRequired = true)
       model.operationFinished(install)
       waitForButton(restart, "Restart IDE", enabled = true)
@@ -644,6 +656,7 @@ internal class UnifiedPluginsPageSessionTest {
       model.operationStarted(update, existing.model)
       waitUntilAssertSucceeds {
         assertThat(status.isVisible).isTrue()
+        assertThat(status.text).isEqualTo(IdeBundle.message("plugins.configurable.operation.updating.plugin", existing.model.name))
         assertThat(restart.isVisible).isFalse()
       }
 
@@ -654,7 +667,13 @@ internal class UnifiedPluginsPageSessionTest {
       assertThat(status.isVisible).isFalse()
 
       session.reset()
-      waitUntilAssertSucceeds { assertThat(restart.isVisible).isFalse() }
+      waitUntilAssertSucceeds {
+        assertThat(restart.isVisible).isFalse()
+        assertThat(status.isVisible).isTrue()
+        assertThat(status.text).isEqualTo(checkingText)
+      }
+      checkingForUpdates.value = false
+      waitUntilAssertSucceeds { assertThat(status.isVisible).isFalse() }
     }
     finally {
       Disposer.dispose(session)
@@ -1580,6 +1599,7 @@ internal class UnifiedPluginsPageSessionTest {
     pluginStatesReadiness: suspend () -> Unit = {},
     sessionInitializationReadiness: suspend (LegacyPluginUiHost) -> Unit = { it.awaitSessionInitialization() },
     pluginUpdates: Flow<PluginUpdatesEvent> = emptyFlow(),
+    updateCheckInProgress: Flow<Boolean> = flowOf(false),
     recalculatePluginUpdates: () -> Unit = {},
     internalGroupLoader: suspend () -> UnifiedPluginInternalGroup? = { null },
     internalLoadingDelay: Duration = 100.milliseconds,
@@ -1595,6 +1615,7 @@ internal class UnifiedPluginsPageSessionTest {
       repositoryDataProviderFactory = { repositoryProvider },
       marketplaceDataProviderFactory = { _, _ -> marketplaceProvider },
       pluginUpdates = pluginUpdates,
+      updateCheckInProgress = updateCheckInProgress,
       recalculatePluginUpdates = recalculatePluginUpdates,
       customizer = null,
       pluginStatesReadiness = pluginStatesReadiness,

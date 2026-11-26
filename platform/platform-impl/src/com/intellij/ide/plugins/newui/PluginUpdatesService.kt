@@ -23,11 +23,13 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
@@ -165,6 +167,12 @@ class PluginUpdatesService(val coroutineScope: CoroutineScope) {
   fun updatesFlow(): Flow<PluginUpdatesEvent> = flow {
     ensureUpdatesStarted()
     emitAll(pluginUpdateFlow)
+  }
+
+  internal fun updateCheckInProgress(): Flow<Boolean> {
+    val checks = PluginUpdatesProvider.getInstances().filterIsInstance<DefaultPluginUpdatesProvider>()
+      .map(DefaultPluginUpdatesProvider::updateCheckInProgress)
+    return if (checks.isEmpty()) flowOf(false) else combine(checks) { states -> states.any { it } }
   }
 
   @VisibleForTesting

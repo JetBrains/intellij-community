@@ -21,6 +21,8 @@ import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.launch
@@ -38,7 +40,10 @@ class DefaultPluginUpdatesProvider(private val coroutineScope: CoroutineScope) :
     tryEmit(null)
   }
   private val updateRequestFlow = MutableSharedFlow<Unit>(replay = 1, extraBufferCapacity = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+  private val mutableUpdateCheckInProgress = MutableStateFlow(false)
   private var lastPluginUpdates: PluginUpdatesEvent? = null
+
+  internal val updateCheckInProgress = mutableUpdateCheckInProgress.asStateFlow()
 
   companion object {
     private val LOG = logger<DefaultPluginUpdatesProvider>()
@@ -89,10 +94,16 @@ class DefaultPluginUpdatesProvider(private val coroutineScope: CoroutineScope) :
       .debounce(300.milliseconds)
       .collectLatest {
         updateMutex.withLock {
-          runCatching {
-            val model = PluginUpdateHandler.getInstance().loadAndStorePluginUpdates(null)
-            publishUpdates(model)
-          }.getOrHandleException { e -> LOG.warn("Failed to load plugin updates:", e) }
+          mutableUpdateCheckInProgress.value = true
+          try {
+            runCatching {
+              val model = PluginUpdateHandler.getInstance().loadAndStorePluginUpdates(null)
+              publishUpdates(model)
+            }.getOrHandleException { e -> LOG.warn("Failed to load plugin updates:", e) }
+          }
+          finally {
+            mutableUpdateCheckInProgress.value = false
+          }
         }
       }
   }

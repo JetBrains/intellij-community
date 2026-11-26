@@ -13,6 +13,7 @@ targets:
   - ../../src/com/intellij/ide/plugins/newui/PluginModelAsyncOperationsExecutor.kt
   - ../../src/com/intellij/ide/plugins/newui/PluginModelEvents.kt
   - ../../src/com/intellij/ide/plugins/newui/PluginUpdateSourceFilter.kt
+  - ../../src/com/intellij/ide/plugins/newui/PluginUpdatesService.kt
   - ../../src/com/intellij/ide/plugins/newui/SelectionBasedPluginModelAction.java
   - ../../src/com/intellij/ide/plugins/newui/UninstallAction.kt
   - ../../src/com/intellij/ide/plugins/unified/LegacyPluginRowFactory.kt
@@ -347,7 +348,7 @@ Untested: No focused test covers every management edit and refresh path.
 
 - Active installs and updates must show a spinner and status beside the settings gear.
 - The status must use spare header space and show a tooltip for truncated text.
-- The status must follow operations across query changes and hide when the last operation finishes.
+- The status must follow operations across query changes and hide when it has no progress to show.
   [@test] ../../testSrc/com/intellij/ide/plugins/UnifiedPluginsPageSessionTest.kt (
     `operation status uses only free header space`;
     `Update All button counts prepared executor targets`
@@ -359,6 +360,16 @@ Untested: No focused test covers every management edit and refresh path.
   [@test] ../../testSrc/com/intellij/ide/plugins/UnifiedPluginsPageSessionTest.kt (
     `pending restart shares the header slot with active progress`;
     `header Restart applies the session before restart`
+  )
+
+- While the Plugins page fetches updates, the header must show Checking for updates… with a spinner.
+- Install progress, update progress, and Restart IDE must take precedence over the check status.
+- The check status must clear when the fetch succeeds, fails, or is cancelled.
+  [@test] ../../testSrc/com/intellij/ide/plugins/newui/DefaultPluginUpdatesProviderTest.kt (
+    `update check progress clears after success or failure`
+  )
+  [@test] ../../testSrc/com/intellij/ide/plugins/UnifiedPluginsPageSessionTest.kt (
+    `pending restart shares the header slot with active progress`
   )
 
 - Update All must stay visible and disabled while its request runs.
