@@ -7,12 +7,17 @@ import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl
 import com.intellij.codeInsight.daemon.impl.HighlightInfo
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType
 import com.intellij.codeInsight.daemon.impl.TestDaemonCodeAnalyzerImpl
+import com.intellij.codeInsight.highlighting.HighlightUsagesHandler
+import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.codeInspection.InspectionProfileEntry
 import com.intellij.ide.DataManager
 import com.intellij.injected.editor.EditorWindow
 import com.intellij.injected.editor.VirtualFileWindow
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.lang.injection.InjectedLanguageManager
+import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.actionSystem.CustomizedDataContext
+import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.WriteAction
@@ -57,6 +62,7 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.util.function.Function
 import java.util.function.Supplier
+import java.util.function.UnaryOperator
 
 /**
  * The options of a [LightDaemonAnalyzerFixture]. Start from [DEFAULT] and add an option with a `with` method.
@@ -84,24 +90,37 @@ class LightDaemonAnalyzerOptions private constructor(
    * The fixture sets the system property `intellij.ml.llm.embeddings.start.indexing.on.project.open` to `false` for the test.
    */
   val productionDaemon: Boolean,
+  /**
+   * When not null, [LightDaemonAnalyzerFixture.doHighlighting] gives its result through this filter.
+   * It replaces a `doHighlighting()` override of [LightDaemonAnalyzerTestCase]. The filter gets a copy that it can change.
+   */
+  val highlightingFilter: UnaryOperator<MutableList<HighlightInfo>>?,
 ) {
-  fun withBasePath(basePath: String): LightDaemonAnalyzerOptions = LightDaemonAnalyzerOptions(basePath, folding, inspections, productionDaemon)
+  fun withBasePath(basePath: String): LightDaemonAnalyzerOptions =
+    LightDaemonAnalyzerOptions(basePath, folding, inspections, productionDaemon, highlightingFilter)
 
-  fun withFolding(): LightDaemonAnalyzerOptions = LightDaemonAnalyzerOptions(basePath, true, inspections, productionDaemon)
+  fun withFolding(): LightDaemonAnalyzerOptions = LightDaemonAnalyzerOptions(basePath, true, inspections, productionDaemon, highlightingFilter)
 
-  fun withoutInspections(): LightDaemonAnalyzerOptions = LightDaemonAnalyzerOptions(basePath, folding, false, productionDaemon)
+  fun withoutInspections(): LightDaemonAnalyzerOptions =
+    LightDaemonAnalyzerOptions(basePath, folding, false, productionDaemon, highlightingFilter)
 
   /**
    * The options of [ProductionLightDaemonAnalyzerTestCase]. See [productionDaemon].
    */
-  fun withProductionDaemon(): LightDaemonAnalyzerOptions = LightDaemonAnalyzerOptions(basePath, folding, inspections, true)
+  fun withProductionDaemon(): LightDaemonAnalyzerOptions = LightDaemonAnalyzerOptions(basePath, folding, inspections, true, highlightingFilter)
+
+  /**
+   * See [highlightingFilter].
+   */
+  fun withHighlightingFilter(filter: UnaryOperator<MutableList<HighlightInfo>>): LightDaemonAnalyzerOptions =
+    LightDaemonAnalyzerOptions(basePath, folding, inspections, productionDaemon, filter)
 
   companion object {
     /**
      * The options of [LightDaemonAnalyzerTestCase] without overrides.
      */
     @JvmField
-    val DEFAULT: LightDaemonAnalyzerOptions = LightDaemonAnalyzerOptions("/java/java-tests/testData", false, true, false)
+    val DEFAULT: LightDaemonAnalyzerOptions = LightDaemonAnalyzerOptions("/java/java-tests/testData", false, true, false, null)
   }
 }
 
@@ -126,7 +145,13 @@ class LightDaemonAnalyzerFixture internal constructor(
    */
   val fixture: LightJavaCodeInsightTestFixture,
   private val sourceRoot: VirtualFile,
-  val options: LightDaemonAnalyzerOptions,
+  /**
+   * The options of the test. A test can change [LightDaemonAnalyzerOptions.folding], [LightDaemonAnalyzerOptions.inspections]
+   * and [LightDaemonAnalyzerOptions.highlightingFilter] for itself, as the hooks `doFolding()`, `doInspections()` and
+   * `doHighlighting()` of [LightDaemonAnalyzerTestCase] can depend on the test name or on the state of the test.
+   * The fixture reads the other options only in its setup.
+   */
+  var options: LightDaemonAnalyzerOptions,
   /**
    * The test helper of the daemon. It is one instance for the test, as `myTestDaemonCodeAnalyzer` of [LightDaemonAnalyzerTestCase].
    */
@@ -351,6 +376,82 @@ class LightDaemonAnalyzerFixture internal constructor(
     }
   }
 
+  /**
+   * Runs [IdeActions.ACTION_EDITOR_SELECT_WORD_AT_CARET] with [executeAction], as `ctrlW` of
+   * [com.intellij.testFramework.LightPlatformCodeInsightTestCase] does.
+   */
+  fun ctrlW() {
+    executeAction(IdeActions.ACTION_EDITOR_SELECT_WORD_AT_CARET)
+  }
+
+  /**
+   * Highlights the usages of the element at the caret of the editor of [fixture] on the EDT, as `ctrlShiftF7` of
+   * [com.intellij.testFramework.LightPlatformCodeInsightTestCase] does. A second call removes the highlighting.
+   */
+  fun ctrlShiftF7() {
+    runInEdtAndWait { HighlightUsagesHandler.invoke(fixture.project, fixture.editor, fixture.file) }
+  }
+
+  /**
+   * Switches [fixture] from an injected editor to the editor of the host file, as `bringRealEditorBack` of
+   * [com.intellij.testFramework.LightPlatformCodeInsightTestCase] does. It commits all documents first.
+   * The host editor keeps its carets and selections. When the editor is not injected, the call only commits.
+   */
+  fun bringRealEditorBack() {
+    runInEdtAndWait { fixture.bringRealEditorBack() }
+  }
+
+  /**
+   * Returns a data context with the project, the editor and the file of [fixture], and the element at the caret, as
+   * `getCurrentEditorDataContext` of [com.intellij.testFramework.LightPlatformCodeInsightTestCase] does.
+   */
+  fun getCurrentEditorDataContext(): DataContext {
+    val editor = fixture.editor
+    val psiFile = fixture.file
+    @Suppress("DEPRECATION")
+    val defaultContext = DataManager.getInstance().dataContext
+    return CustomizedDataContext.withSnapshot(defaultContext) { sink ->
+      sink[CommonDataKeys.EDITOR] = editor
+      sink[CommonDataKeys.PROJECT] = fixture.project
+      sink[CommonDataKeys.PSI_FILE] = psiFile
+      sink.lazy(CommonDataKeys.PSI_ELEMENT) { psiFile.findElementAt(editor.caretModel.offset) }
+    }
+  }
+
+  /**
+   * Runs [doHighlighting] and returns the intentions and the quick fixes at the caret of the editor and the file of [fixture],
+   * as `getAvailableActions()` of [com.intellij.codeInsight.daemon.quickFix.LightQuickFixTestCase] does.
+   * In an injected editor, these are the actions of the injected file.
+   */
+  fun getAvailableActions(): List<IntentionAction> {
+    doHighlighting()
+    val (editor, psiFile) = runReadActionBlocking { fixture.editor to fixture.file }
+    return CodeInsightTestFixtureImpl.getAvailableIntentions(editor, psiFile)
+  }
+
+  /**
+   * Returns the action with the text [text] from [getAvailableActions], or null.
+   */
+  fun findActionWithText(text: String): IntentionAction? = getAvailableActions().find { it.text == text }
+
+  /**
+   * Finds the action with the text [text] with [findActionWithText] and invokes it on the EDT, as `doAction(String)` of
+   * [com.intellij.codeInsight.daemon.quickFix.LightQuickFixTestCase] does. It fails when no such action is available.
+   */
+  fun doAction(text: String) {
+    val available = getAvailableActions()
+    val action = checkNotNull(available.find { it.text == text }) { "Action '$text' not found among $available" }
+    invoke(action)
+  }
+
+  /**
+   * Invokes [action] on the EDT in the editor and the file of [fixture], as `invoke` of
+   * [com.intellij.codeInsight.daemon.quickFix.LightQuickFixTestCase] does.
+   */
+  fun invoke(action: IntentionAction) {
+    runInEdtAndWait { CodeInsightTestFixtureImpl.invokeIntention(action, fixture.file, fixture.editor) }
+  }
+
   fun highlightErrors(): List<HighlightInfo> = doHighlighting(HighlightSeverity.ERROR)
 
   fun doHighlighting(minSeverity: HighlightSeverity): List<HighlightInfo> = DaemonAnalyzerFixture.filter(doHighlighting(), minSeverity)
@@ -360,8 +461,15 @@ class LightDaemonAnalyzerFixture internal constructor(
    * The passes skip the folding and the local inspections as [options] say.
    * In an injected editor, the passes run on the top-level editor and file.
    * With [LightDaemonAnalyzerOptions.withProductionDaemon], it returns [waitHighlighting] with [HighlightInfoType.SYMBOL_TYPE_SEVERITY].
+   * The result goes through [LightDaemonAnalyzerOptions.highlightingFilter] when the options have one.
    */
   fun doHighlighting(): List<HighlightInfo> {
+    val infos = runHighlighting()
+    val filter = options.highlightingFilter ?: return infos
+    return filter.apply(ArrayList(infos))
+  }
+
+  private fun runHighlighting(): List<HighlightInfo> {
     if (options.productionDaemon) {
       return waitHighlighting(HighlightInfoType.SYMBOL_TYPE_SEVERITY)
     }

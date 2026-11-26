@@ -48,6 +48,7 @@ import com.intellij.testFramework.junit5.fixture.tempPathFixture
 import com.intellij.testFramework.junit5.fixture.testFixture
 import com.intellij.util.ThrowableRunnable
 import com.intellij.util.application
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.TestOnly
@@ -187,6 +188,14 @@ interface LightJavaCodeInsightTestFixture : JavaCodeInsightTestFixture {
    * Put the sequence of a refactoring or an editor action in it, from the first action to the last check of its result.
    */
   fun runInCommand(runnable: ThrowableRunnable<*>)
+
+  /**
+   * Switches the fixture from an injected editor to the editor of the host file, as `bringRealEditorBack` of
+   * [com.intellij.testFramework.LightPlatformCodeInsightTestCase] does. It commits all documents first.
+   * The host editor keeps its carets and selections. Call it on the EDT.
+   */
+  @RequiresEdt
+  fun bringRealEditorBack()
 }
 
 @TestOnly
@@ -204,6 +213,10 @@ private class LightJavaCodeInsightTestFixtureImpl(
   override fun runInCommand(runnable: ThrowableRunnable<*>) {
     InplaceIntroduceTestUtil.runInCommand(project) { runnable.run() }
   }
+
+  override fun bringRealEditorBack() {
+    super.bringRealEditorBack()
+  }
 }
 
 /**
@@ -217,6 +230,8 @@ private class LightJavaIndexingModeCodeInsightTestFixture(
   override fun getTestName(lowercaseFirstLetter: Boolean): String = lightDelegate.getTestName(lowercaseFirstLetter)
 
   override fun runInCommand(runnable: ThrowableRunnable<*>): Unit = lightDelegate.runInCommand(runnable)
+
+  override fun bringRealEditorBack(): Unit = lightDelegate.bringRealEditorBack()
 }
 
 // LightJavaCodeInsightFixtureTestCase.setUp sets this project language level for each test.
