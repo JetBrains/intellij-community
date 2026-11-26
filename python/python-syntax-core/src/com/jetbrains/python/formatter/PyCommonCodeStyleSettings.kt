@@ -2,11 +2,11 @@
 package com.jetbrains.python.formatter
 
 import com.intellij.openapi.util.DefaultJDOMExternalizer
+import com.intellij.openapi.util.JDOMExternalizerUtil
 import com.intellij.psi.codeStyle.CodeStyleSettings
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings
 import com.intellij.psi.codeStyle.LanguageCodeStyleProvider
 import com.intellij.psi.codeStyle.arrangement.ArrangementUtil
-import com.intellij.util.xmlb.XmlSerializer
 import com.jetbrains.python.PythonLanguage
 import com.jetbrains.python.formatter.PyCodeStyleReflectionUtil.comparePublicNonFinalFieldsWithSkip
 import org.jdom.Element
@@ -34,8 +34,7 @@ class PyCommonCodeStyleSettings private constructor(private val isTempForDeseria
   // getFields()), `DefaultJDOMExternalizer.write` in [writeExternalBase], and
   // [comparePublicNonFinalFieldsWithSkip] in [equals]. A plain Kotlin `var` compiles to a private
   // backing field that none of them would see, silently dropping the profile id on clone and
-  // failing to serialize it whenever soft margins are empty (the classic profile). The
-  // `@field:` target keeps `SkipInEquals` on the field that reflection inspects.
+  // serialization. The `@field:` target keeps `SkipInEquals` on the field that reflection inspects.
   @JvmField
   @field:PyCodeStyleReflectionUtil.SkipInEquals
   var CODE_STYLE_PROFILE: String? = null
@@ -68,6 +67,9 @@ class PyCommonCodeStyleSettings private constructor(private val isTempForDeseria
     applyPyCodeStyle(PyCodeStyleSettings.storedOrLegacyProfile(tempDeserialize.CODE_STYLE_PROFILE), this, true)
 
     super.readExternal(element)
+    if (element != null) {
+      readLegacySoftMargins(element)
+    }
   }
 
   override fun writeExternal(element: Element, provider: LanguageCodeStyleProvider) {
@@ -97,8 +99,7 @@ class PyCommonCodeStyleSettings private constructor(private val isTempForDeseria
     }
 
     DefaultJDOMExternalizer.write(this, element, SupportedFieldsDiffFilter(this, supportedFields, defaultSettings))
-    val softMargins = getSoftMargins()
-    serializeInto(softMargins, element)
+    writeSoftMargins(element, defaultSettings)
 
     val myIndentOptions = indentOptions
     if (myIndentOptions != null) {
@@ -120,14 +121,30 @@ class PyCommonCodeStyleSettings private constructor(private val isTempForDeseria
     }
   }
 
-  // SoftMargins.serializeInto
-  private fun serializeInto(softMargins: MutableList<Int?>, element: Element) {
-    if (!softMargins.isEmpty()) {
-      XmlSerializer.serializeInto(this, element)
+  //</editor-fold>
+
+  /**
+   * Writes the soft margins in the `SOFT_MARGINS` form that [CommonCodeStyleSettings.readExternal] reads.
+   * The value is a diff against the profile baseline, like the other fields.
+   * An empty value keeps "no visual guides" when the profile has some.
+   */
+  private fun writeSoftMargins(element: Element, defaultSettings: CommonCodeStyleSettings) {
+    if (softMargins != defaultSettings.softMargins) {
+      JDOMExternalizerUtil.writeField(element, SOFT_MARGINS_OPTION, softMargins.joinToString(","))
     }
   }
 
-  //</editor-fold>
+  /**
+   * Reads the soft margins from the `softMargins` list that 2026.3 wrote instead of `SOFT_MARGINS`.
+   */
+  private fun readLegacySoftMargins(element: Element) {
+    if (JDOMExternalizerUtil.readField(element, SOFT_MARGINS_OPTION) != null) return
+    val list = JDOMExternalizerUtil.readOption(element, LEGACY_SOFT_MARGINS_OPTION)?.getChild("list") ?: return
+    // Like the platform read, one bad value drops the whole list.
+    val values = JDOMExternalizerUtil.getChildrenValueAttributes(list, "option").map { it.toIntOrNull() ?: return }
+    softMargins = values
+  }
+
   override fun clone(rootSettings: CodeStyleSettings): CommonCodeStyleSettings {
     val commonSettings = PyCommonCodeStyleSettings()
     copyPublicFields(this, commonSettings)
@@ -214,6 +231,8 @@ class PyCommonCodeStyleSettings private constructor(private val isTempForDeseria
   companion object {
     private const val INDENT_OPTIONS_TAG = "indentOptions"
     private const val ARRANGEMENT_ELEMENT_NAME = "arrangement"
+    private const val SOFT_MARGINS_OPTION = "SOFT_MARGINS"
+    private const val LEGACY_SOFT_MARGINS_OPTION = "softMargins"
 
     private fun createForTempDeserialize(): PyCommonCodeStyleSettings {
       return PyCommonCodeStyleSettings(true)
