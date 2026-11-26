@@ -9,6 +9,7 @@ import com.intellij.execution.process.ProcessOutputType
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.impl.ApplicationInfoImpl
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.externalSystem.issue.BuildIssueException
 import com.intellij.openapi.externalSystem.model.ExternalSystemException
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener
@@ -22,7 +23,6 @@ import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.io.toCanonicalPath
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.openapi.util.use
 import com.intellij.util.ArrayUtilRt
 import com.intellij.util.ExceptionUtil
 import com.intellij.util.lang.JavaVersion
@@ -130,20 +130,19 @@ object GradleExecutionHelper {
       // Setting the custom build file location is deprecated since Gradle 7.6, see IDEA-359161 for more details.
       setupProjectDirectory(context)
 
-      context.reporter.use {
-        val gradleVersion = guessGradleVersion(context)
-        val connectorService = GradleConnectorService.getInstance(context.project)
-        return connectorService.withGradleConnection(context) { connection ->
-          SystemPropertiesAdjuster.executeAdjusted(context.projectPath, gradleVersion) {
-            buildEnvironment = getModel(connection, context, BuildEnvironment::class.java)
-            context.buildEnvironment = buildEnvironment
-            checkExecutionEnvironment(context)
-            action.apply(connection)
-          }
+      val gradleVersion = guessGradleVersion(context)
+      val connectorService = GradleConnectorService.getInstance(context.project)
+      return connectorService.withGradleConnection(context) { connection ->
+        SystemPropertiesAdjuster.executeAdjusted(context.projectPath, gradleVersion) {
+          buildEnvironment = getModel(connection, context, BuildEnvironment::class.java)
+          context.buildEnvironment = buildEnvironment
+          checkExecutionEnvironment(context)
+          action.apply(connection)
         }
       }
     }
     catch (e: ExternalSystemException) {
+      removeReportedIssues(e, context.reporter)
       throw e
     }
     catch (e: BuildCancelledException) {
@@ -153,6 +152,7 @@ object GradleExecutionHelper {
       rethrowControlFlowException(ex)
       throw GradleProjectResolver.createProjectResolverChain()
         .getUserFriendlyError(buildEnvironment, ex, context.projectPath, null)
+        .also { removeReportedIssues(it, context.reporter) }
     }
     catch (e: Throwable) {
       rethrowControlFlowException(e)
@@ -161,6 +161,9 @@ object GradleExecutionHelper {
       val externalSystemException = ExternalSystemException(ExceptionUtil.getMessage(rootCause), e)
       externalSystemException.initCause(e)
       throw externalSystemException
+    }
+    finally {
+      context.reporter.close()
     }
   }
 
@@ -175,6 +178,12 @@ object GradleExecutionHelper {
       rethrowControlFlowException(e)
       LOG.warn("Cannot guess the Gradle version of ${context.projectPath}", e)
       return null
+    }
+  }
+
+  private fun removeReportedIssues(exception: ExternalSystemException, reporter: GradleExecutionReporterImpl) {
+    if (exception is BuildIssueException) {
+      reporter.removePendingIssues(exception.buildIssues)
     }
   }
 

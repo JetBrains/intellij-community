@@ -63,6 +63,12 @@ class GradleExecutionReporterImpl(
     }
   }
 
+  fun removePendingIssues(issues: Collection<BuildIssue>) {
+    pendingIssues.removeIf { (pendingIssue, _) ->
+      issues.any { it.title == pendingIssue.title && it.description == pendingIssue.description }
+    }
+  }
+
   private fun reportFailure(report: GradleExecutionFailureReportImpl) {
     if (report.severity == GradleExecutionFailureReport.Severity.ERROR) {
       hasFailures.set(true)
