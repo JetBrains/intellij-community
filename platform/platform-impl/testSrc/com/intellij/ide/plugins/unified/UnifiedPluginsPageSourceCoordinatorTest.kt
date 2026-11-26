@@ -403,7 +403,7 @@ internal class UnifiedPluginsPageSourceCoordinatorTest {
   }
 
   @Test
-  fun `Marketplace selection follows a scheduled install into Installed`() = runTest {
+  fun `Marketplace selection stays on a scheduled install`() = runTest {
     val events = MutableSharedFlow<PluginModelEvent>(extraBufferCapacity = 2)
     val plugin = plugin("academy.plugin", "Academy Plugin").apply { displayCategory = "Productivity" }
     val query = "academy /category:Productivity"
@@ -431,7 +431,8 @@ internal class UnifiedPluginsPageSourceCoordinatorTest {
       )
     }
     publish()
-    controller.selectOccurrence(PluginOccurrenceId(PluginSectionId.Marketplace, plugin.pluginId))
+    val marketplaceOccurrence = PluginOccurrenceId(PluginSectionId.Marketplace, plugin.pluginId)
+    controller.selectOccurrence(marketplaceOccurrence)
 
     val operationId = UUID.randomUUID()
     assertThat(events.tryEmit(PluginModelEvent.OperationStarted(
@@ -444,10 +445,13 @@ internal class UnifiedPluginsPageSourceCoordinatorTest {
     ))).isTrue()
     runCurrent()
     publish()
-    assertThat(controller.state.value.selectedOccurrence).isEqualTo(PluginOccurrenceId(PluginSectionId.Installed, plugin.pluginId))
+    assertThat(controller.state.value.selectedOccurrence).isEqualTo(marketplaceOccurrence)
     val installed = controller.state.value.sections.single { it.id == PluginSectionId.Installed }
     val scheduled = installed.visibleItems.single { it.pluginId == plugin.pluginId }
     assertThat(scheduled.rowInput?.operationInProgress).isTrue()
+    val marketplace = controller.state.value.sections.single { it.id == PluginSectionId.Marketplace }.items.single()
+    assertThat(marketplace.pluginId).isEqualTo(plugin.pluginId)
+    assertThat(marketplace.rowInput?.operationInProgress).isTrue()
     assertThat(events.tryEmit(PluginModelEvent.OperationFinished(
       sessionId = "session",
       operationId = operationId,
@@ -459,6 +463,7 @@ internal class UnifiedPluginsPageSourceCoordinatorTest {
     runCurrent()
 
     assertInstallPrepared(coordinator.state.value, plugin.pluginId)
+    assertInstallPrepared(coordinator.state.value, plugin.pluginId, PluginSectionId.Marketplace)
     assertThat(coordinator.state.value.sections.single { it.id == PluginSectionId.Installing }.items.map { it.pluginId })
       .containsExactly(plugin.pluginId)
 
@@ -469,6 +474,7 @@ internal class UnifiedPluginsPageSourceCoordinatorTest {
     runCurrent()
 
     assertInstallPrepared(coordinator.state.value, plugin.pluginId)
+    assertInstallPrepared(coordinator.state.value, plugin.pluginId, PluginSectionId.Marketplace)
     coordinator.close()
   }
 
@@ -566,40 +572,59 @@ internal class UnifiedPluginsPageSourceCoordinatorTest {
   }
 
   @Test
-  fun `prepared installs stay visible while Apply reloads the inventory`() = runTest {
+  fun `source rows keep an install through Apply`() = runTest {
     val events = MutableSharedFlow<PluginModelEvent>(extraBufferCapacity = 2)
     val plugin = plugin("new.plugin", "New Plugin")
+    val suggestedPlugin = plugin(plugin.pluginId.idString, "Suggested Plugin")
+    val repositoryPlugin = plugin(plugin.pluginId.idString, "Repository Plugin")
+    val repository = CustomPluginRepository("repository", PluginSource.LOCAL)
+    val repositorySection = PluginSectionId.CustomRepository(repository.id)
+    val sections = listOf(PluginSectionId.Installed, PluginSectionId.Suggested, repositorySection)
     val initialInventory = UnifiedPluginInventory(emptyList(), emptyList())
     val refreshedInventory = CompletableDeferred<UnifiedPluginInventory>()
     var applying = false
     val provider = object : UnifiedPluginLocalDataProvider by FakeLocalDataProvider(initialInventory) {
       override suspend fun loadInventory(): UnifiedPluginInventory = if (applying) refreshedInventory.await() else initialInventory
     }
-    val coordinator = coordinator(provider = provider, hostEvents = events)
+    val coordinator = coordinator(
+      provider = provider,
+      hostEvents = events,
+      marketplaceDataProvider = FixedMarketplaceDataProvider(suggestedPlugin),
+      repositoryDataProvider = FixedRepositoryDataProvider(listOf(repository), mapOf(repository.id to listOf(repositoryPlugin))),
+    )
     coordinator.start()
     runCurrent()
     val id = UUID.randomUUID()
     assertThat(events.tryEmit(PluginModelEvent.OperationStarted(
-      "session", id, plugin.pluginId, plugin, PluginSource.LOCAL, PluginOperationKind.INSTALL,
+      "session", id, plugin.pluginId, repositoryPlugin, PluginSource.LOCAL, PluginOperationKind.INSTALL,
     ))).isTrue()
+    runCurrent()
+    for (sectionId in sections) {
+      val item = coordinator.state.value.sections.single { it.id == sectionId }.items.single()
+      assertThat(item.rowInput?.operationInProgress).describedAs("progress in %s", sectionId).isTrue()
+    }
+
     assertThat(events.tryEmit(PluginModelEvent.OperationFinished(
       "session", id, plugin.pluginId, PluginSource.LOCAL, PluginOperationKind.INSTALL, PluginOperationTerminalResult.SUCCEEDED,
     ))).isTrue()
     runCurrent()
-    assertInstallPrepared(coordinator.state.value, plugin.pluginId)
+    sections.forEach { assertInstallPrepared(coordinator.state.value, plugin.pluginId, it) }
 
     applying = true
     assertThat(events.tryEmit(PluginModelEvent.InventoryInvalidated(PluginInventoryChangeReason.APPLY, emptySet()))).isTrue()
     runCurrent()
-    assertInstallPrepared(coordinator.state.value, plugin.pluginId)
+    sections.forEach { assertInstallPrepared(coordinator.state.value, plugin.pluginId, it) }
 
     refreshedInventory.complete(UnifiedPluginInventory(listOf(
       UnifiedPluginInventoryItem(plugin, runtimeOn = PluginSource.LOCAL, stagedOn = null, bundledOn = null),
     ), emptyList()))
     runCurrent()
-    val installed = coordinator.state.value.sections.single { it.id == PluginSectionId.Installed }.items.single()
-    assertThat(installed.pluginId).isEqualTo(plugin.pluginId)
-    assertThat(installed.rowInput?.preparedUpdate).isNull()
+    for ((sectionId, model) in sections.zip(listOf(plugin, suggestedPlugin, repositoryPlugin))) {
+      val item = coordinator.state.value.sections.single { it.id == sectionId }.items.single()
+      assertThat(item.modelHandle?.model).isSameAs(model)
+      assertThat(item.rowInput?.installedPlugin).isSameAs(plugin)
+      assertThat(item.rowInput?.preparedUpdate).isNull()
+    }
     coordinator.close()
   }
 
@@ -1750,7 +1775,10 @@ internal class UnifiedPluginsPageSourceCoordinatorTest {
 
   private class FixedMarketplaceDataProvider(
     private val plugin: PluginUiModel,
-  ) : UnifiedPluginMarketplaceDataProvider by EmptyMarketplaceDataProvider {
+  ) : UnifiedPluginMarketplaceDataProvider {
+    override fun loadSuggested(): Flow<UnifiedPluginMarketplaceFetchResult> =
+      flowOf(UnifiedPluginMarketplaceFetchResult(listOf(plugin)))
+
     override suspend fun searchMarketplace(query: String): UnifiedPluginMarketplaceFetchResult {
       return UnifiedPluginMarketplaceFetchResult(listOf(plugin))
     }
@@ -1821,9 +1849,14 @@ internal class UnifiedPluginsPageSourceCoordinatorTest {
     return state.sections.single { it.id == PluginSectionId.Installed }.items.map { it.pluginId.idString }
   }
 
-  private fun assertInstallPrepared(state: UnifiedPluginsPageSourceState, pluginId: PluginId) {
-    val item = state.sections.single { it.id == PluginSectionId.Installed }.items.single { it.pluginId == pluginId }
+  private fun assertInstallPrepared(
+    state: UnifiedPluginsPageSourceState,
+    pluginId: PluginId,
+    sectionId: PluginSectionId = PluginSectionId.Installed,
+  ) {
+    val item = state.sections.single { it.id == sectionId }.items.single { it.pluginId == pluginId }
     assertThat(item.rowInput?.preparedUpdate).isEqualTo(PluginPreparedUpdateState(restartRequired = false))
+    assertThat(item.rowInput?.installedPlugin?.pluginId).isEqualTo(pluginId)
   }
 
   private fun repositorySections(state: UnifiedPluginsPageSourceState): List<PluginSectionState> {

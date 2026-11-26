@@ -193,17 +193,20 @@ Untested: Product welcome buttons on a remote backend keep the Settings route be
     `same id on both sides prefers local presentation and retains remote bundled origin`
   )
 
-- When the page shows local sections, a plugin ID in Installed or Bundled must not appear in a remote section.
+- When the page shows local sections, remote sections must exclude bundled plugins and plugins installed before this page session.
 - This exclusion must use the complete local inventory before the page applies query filters.
 - When a source filter hides local sections, the active remote sections can show these plugin IDs.
+- A plugin installed during this page session must remain in matching Marketplace, Suggested, and custom repository results through Apply.
   [@test] ../../testSrc/com/intellij/ide/plugins/unified/UnifiedPluginsPageSourceCoordinatorTest.kt (
     `local plugins are excluded from Marketplace and repository sections`;
     `Suggested limits results after excluding local plugins`;
-    `repository filter shows local plugins when local sections are hidden`
+    `repository filter shows local plugins when local sections are hidden`;
+    `Marketplace selection stays on a scheduled install`;
+    `source rows keep an install through Apply`
   )
 
 - Suggested must show project suggestions, then Staff Picks, then results from an empty Marketplace query.
-- Suggested must show at most 20 plugins after it excludes local plugins.
+- Suggested must show at most 20 plugins after it applies the local exclusion.
 - Suggested must keep one result per plugin ID and prefer the result from the first group that contains it.
 - Suggested must publish each group as soon as that group and all preceding groups finish loading.
 - Suggested must keep successful results when one suggestion source fails.
@@ -380,7 +383,7 @@ Untested: Product welcome buttons on a remote backend keep the Settings route be
 - A manual collapse must take precedence during the active installs.
 - Other new plugins must append. A plugin that leaves and returns must resume its retained position.
   [@test] ../../testSrc/com/intellij/ide/plugins/unified/UnifiedPluginsPageSourceCoordinatorTest.kt (
-    `Marketplace selection follows a scheduled install into Installed`;
+    `Marketplace selection stays on a scheduled install`;
     `scheduled installs and dependencies show progress in Installed`
   )
 - In Suggested, these rules apply separately to project suggestions, Staff Picks, and Marketplace results.

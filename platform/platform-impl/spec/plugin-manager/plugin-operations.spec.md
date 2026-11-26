@@ -254,17 +254,18 @@ Untested: No focused test verifies state isolation across two page sessions.
   )
   [@test] ../../testSrc/com/intellij/ide/plugins/unified/UnifiedPluginsPageSourceCoordinatorTest.kt (
     `prepared manual update overrides a cached update in every occurrence`;
-    `Marketplace selection follows a scheduled install into Installed`
+    `Marketplace selection stays on a scheduled install`
   )
 
 - A newly scheduled install and its new dependencies must appear with progress in Installed when they match the current query.
-- When a selected Marketplace plugin moves to Installed, the selection must follow it.
+- When a user installs a selected plugin, the selection must stay on the source row while it is visible.
+- The source and Installed rows must show the same installation progress and prepared state.
 - A successful install must remain selectable before Apply and while Apply refreshes the inventory.
 - Reset must remove a prepared install when the inventory has no installed copy.
   [@test] ../../testSrc/com/intellij/ide/plugins/unified/UnifiedPluginsPageSourceCoordinatorTest.kt (
-    `Marketplace selection follows a scheduled install into Installed`;
+    `Marketplace selection stays on a scheduled install`;
     `scheduled installs and dependencies show progress in Installed`;
-    `prepared installs stay visible while Apply reloads the inventory`
+    `source rows keep an install through Apply`
   )
 
 - After progress ends, the row and details must replace their action controls with one prepared action.
