@@ -112,6 +112,7 @@ import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.project.PyProject
 import com.jetbrains.python.project.PyProject.Companion.asPyProject
 import com.jetbrains.python.project.eelDescriptor
+import com.jetbrains.python.project.name
 import com.jetbrains.python.project.project
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.sdk.ModuleOrProject
@@ -513,7 +514,7 @@ private object PyEvoSdkApiImpl : PyEvoSdkApi {
     workspace.members.map { member ->
       EvoPyProjectDto(
         key = member.key,
-        name = member.pyProject.residesOnModule.name,
+        name = member.pyProject.name,
         isMain = member === main,
         // Always the root, a standalone project's own self included: it is its own root, so the key it states is its
         // own, which every reader already treats as "no workspace of its own".

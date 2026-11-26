@@ -36,6 +36,7 @@ import com.jetbrains.python.packaging.toolwindow.model.RequirementPackage
 import com.jetbrains.python.packaging.toolwindow.model.UndeclaredPackagesGroup
 import com.jetbrains.python.packaging.toolwindow.model.WorkspaceMember
 import com.jetbrains.python.project.PyProject.Companion.getPyProjects
+import com.jetbrains.python.project.name
 import com.jetbrains.python.sdk.ModuleOrProject
 import org.jetbrains.annotations.ApiStatus
 
@@ -359,7 +360,7 @@ internal fun DisplayablePackage.isBuilderProjectPackage(): Boolean = when (this)
  * already caches the workspace bridge.
  */
 internal suspend fun computeModuleAliasNames(project: Project): Set<WorkspaceMemberName> =
-  project.getPyProjects().mapTo(HashSet()) { WorkspaceMemberName(it.residesOnModule.name) }
+  project.getPyProjects().mapTo(HashSet()) { WorkspaceMemberName(it.name) }
 
 internal fun collectJpsModuleDependencyNames(project: Project, module: Module?): List<ModuleDepName> {
   if (module == null) return emptyList()

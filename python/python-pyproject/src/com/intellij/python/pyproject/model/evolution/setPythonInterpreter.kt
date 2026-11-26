@@ -25,6 +25,7 @@ import com.intellij.python.sdk.backend.TargetPythonInterpreter
 import com.intellij.python.sdk.backend.evolution.EvoWorkspace
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.project.PyProject
+import com.jetbrains.python.project.name
 import com.jetbrains.python.project.project
 import com.jetbrains.python.sdk.writePythonInterpreter
 import kotlinx.coroutines.Dispatchers
@@ -101,11 +102,11 @@ private fun PyProject.libraryNameOf(interpreter: PythonInterpreter): PyInterpret
  * and after, so a log shows which writer gave the module which interpreter.
  */
 private suspend fun PyProject.writeInterpreterLibraryEntry(name: PyInterpreterLibraryName?) {
-  project.workspaceModel.update("Set the Python interpreter of ${residesOnModule.name}") { storage ->
+  project.workspaceModel.update("Set the Python interpreter of ${this.name}") { storage ->
     val module = residesOnModule.findModuleEntity(storage) ?: return@update
     val previous = module.dependencies.pyInterpreterDependency
     if (previous == null && name == null) return@update
-    logger.info("Set the Python interpreter of ${residesOnModule.name}: ${previous?.library?.name} -> $name")
+    logger.info("Set the Python interpreter of ${this.name}: ${previous?.library?.name} -> $name")
     storage.modifyModuleEntity(module) { dependencies.setPyInterpreterDependency(name) }
   }
 }
@@ -134,7 +135,7 @@ internal fun interpreterEnvironmentHomeOf(module: ModuleEntity, projectDir: Path
 private suspend fun PyProject.removeGoneEnvExclusion(home: Path) {
   if (withContext(Dispatchers.IO) { home.exists() }) return
   val url = VfsUtilCore.pathToUrl(home.invariantSeparatorsPathString)
-  project.workspaceModel.update("Remove the exclusion of a gone Python environment of ${residesOnModule.name}") { storage ->
+  project.workspaceModel.update("Remove the exclusion of a gone Python environment of $name") { storage ->
     val module = residesOnModule.findModuleEntity(storage) ?: return@update
     module.contentRoots.flatMap { it.excludedUrls }.filter { it.url.url == url }.forEach(storage::removeEntity)
   }

@@ -15,7 +15,10 @@ import java.nio.file.InvalidPathException
 import java.nio.file.Path
 
 @ConsistentCopyVisibility
-internal data class PyProjectImpl private constructor(override val baseDir: Path, override val residesOnModule: Module) : PyProject {
+internal data class PyProjectImpl private constructor(
+  override val baseDir: Path,
+  @Deprecated("Module is deprecated API, do not use it.") override val residesOnModule: Module,
+) : PyProject {
   internal companion object {
     private val log = fileLogger()
     fun create(module: Module, snapshot: ImmutableEntityStorage): PyProjectImpl? {

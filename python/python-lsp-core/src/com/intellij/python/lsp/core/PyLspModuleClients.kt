@@ -25,6 +25,7 @@ import com.intellij.python.sdk.backend.detectedEnvironment
 import com.intellij.util.messages.Topic
 import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.project.PyProject
+import com.jetbrains.python.project.name
 import com.jetbrains.python.project.project
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
@@ -588,10 +589,10 @@ fun findLspClientFor(pyProject: PyProject, providerClass: Class<out LspIntegrati
   val client = clients.clientFor(pyProject)
   if (client == null && MODULE_CLIENTS_LOG.isDebugEnabled) {
     val served = clients.joinToString { client ->
-      val modules = client.pyServedProjects.joinToString("+") { p -> p.residesOnModule.name }.ifEmpty { "<not a python tool>" }
+      val modules = client.pyServedProjects.joinToString("+") { p -> p.name }.ifEmpty { "<not a python tool>" }
       "$modules (${client.state})"
     }
-    MODULE_CLIENTS_LOG.debug("No running ${providerClass.simpleName} client serves module '${pyProject.residesOnModule.name}'. The clients serve: [$served]")
+    MODULE_CLIENTS_LOG.debug("No running ${providerClass.simpleName} client serves module '${pyProject.name}'. The clients serve: [$served]")
   }
   return client
 }

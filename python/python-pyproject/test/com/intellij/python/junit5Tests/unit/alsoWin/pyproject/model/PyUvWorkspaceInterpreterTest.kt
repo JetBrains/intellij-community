@@ -16,6 +16,7 @@ import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.testFramework.junit5.fixture.tempPathFixture
 import com.intellij.workspaceModel.ide.legacyBridge.findModuleEntity
+import com.jetbrains.python.project.name
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.withTimeoutOrNull
@@ -50,10 +51,10 @@ internal abstract class PyUvWorkspaceInterpreterTest {
 
     val workspace = awaitWorkspace()
 
-    assertThat(workspace.root.pyProject.residesOnModule.name)
+    assertThat(workspace.root.pyProject.name)
       .describedAs("the workspace is rooted at the module of the toml that declares the members")
       .isEqualTo(ROOT)
-    assertThat(workspace.members.map { it.pyProject.residesOnModule.name })
+    assertThat(workspace.members.map { it.pyProject.name })
       .describedAs("every member of `[tool.uv.workspace]` belongs to the one workspace, its root among them")
       .containsExactlyInAnyOrder(ROOT, *memberNames.toTypedArray())
   }
@@ -66,7 +67,7 @@ internal abstract class PyUvWorkspaceInterpreterTest {
 
     val workspace = awaitWorkspace()
 
-    assertThat(workspace.members.associate { it.pyProject.residesOnModule.name to it.interpreter })
+    assertThat(workspace.members.associate { it.pyProject.name to it.interpreter })
       .describedAs("a member uses the interpreter of the workspace root, so every surface shows one interpreter")
       .allSatisfy { _, memberInterpreter -> assertThat(memberInterpreter).isEqualTo(applied) }
   }
@@ -77,7 +78,7 @@ internal abstract class PyUvWorkspaceInterpreterTest {
     awaitWorkspace().setOnWorkspace(interpreter.get()).orThrow()
     EvoPyProjectModel.getInstance(f.project).awaitCurrentInterpreters()
 
-    val entries = awaitWorkspace().members.associate { it.pyProject.residesOnModule.name to entryNameOf(it.pyProject.residesOnModule) }
+    val entries = awaitWorkspace().members.associate { it.pyProject.name to entryNameOf(it.pyProject.residesOnModule) }
 
     assertThat(entries.values)
       .describedAs("the entry of each member names the interpreter of the root, so one library carries its roots: $entries")
@@ -117,7 +118,7 @@ internal abstract class PyUvWorkspaceInterpreterTest {
   private fun describeWorkspaces(): String =
     EvoPyProjectModel.getInstance(f.project).snapshotOrNull()
       ?.workspaces
-      ?.joinToString { "${it.root.pyProject.residesOnModule.name}: ${it.members.map { member -> member.pyProject.residesOnModule.name }}" }
+      ?.joinToString { "${it.root.pyProject.name}: ${it.members.map { member -> member.pyProject.name }}" }
     ?: "no snapshot"
 }
 

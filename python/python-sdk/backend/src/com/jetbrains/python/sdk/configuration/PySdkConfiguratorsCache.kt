@@ -16,6 +16,7 @@ import com.intellij.serviceContainer.AlreadyDisposedException
 import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.PythonPluginDisposable
 import com.jetbrains.python.project.PyProject
+import com.jetbrains.python.project.project
 import com.jetbrains.python.sdk.PythonInterpreterListener
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus
@@ -118,14 +119,14 @@ internal class PySdkConfiguratorsCache(private val project: Project, private val
      * cancellations, and a caller must not tell them apart by the type.
      */
     suspend fun get(pyProject: PyProject): PyProjectConfigurators =
-      pyProject.residesOnModule.project.service<PySdkConfiguratorsCache>().load(pyProject)
+      pyProject.project.service<PySdkConfiguratorsCache>().load(pyProject)
 
     /**
      * Drops the answer for [pyProject], for a caller that has just changed what a probe finds (a tool install). A
      * running probe is cancelled, so its tool processes stop.
      */
     fun invalidate(pyProject: PyProject) {
-      pyProject.residesOnModule.project.service<PySdkConfiguratorsCache>().cancel(pyProject.residesOnModule)
+      pyProject.project.service<PySdkConfiguratorsCache>().cancel(pyProject.residesOnModule)
     }
   }
 }

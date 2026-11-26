@@ -9,6 +9,7 @@ import com.jetbrains.python.configuration.interpreter.PyModuleDependenciesPresen
 import com.jetbrains.python.configuration.interpreter.PyModuleDependenciesPresenter.OrderEntrySlot
 import com.intellij.python.pyproject.model.usePyprojectToml
 import com.jetbrains.python.project.PyProject
+import com.jetbrains.python.project.name
 
 /**
  * Workspace-model port for [PyModuleDependenciesPane]. Encapsulates every `ModifiableRootModel` /
@@ -46,11 +47,11 @@ internal class PyModuleDependenciesModelImpl(
   private val module: Module = subject.residesOnModule
   private val project = module.project
   private val candidatesById: Map<DependencyId, Module> =
-    candidatePyProjects.associate { DependencyId(it.residesOnModule.name) to it.residesOnModule }
+    candidatePyProjects.associate { DependencyId(it.name) to it.residesOnModule }
 
   private val presenter: PyModuleDependenciesPresenter<Module> = PyModuleDependenciesPresenter(
     candidates = candidatesById,
-    initialDependencies = initialDependencies.mapTo(HashSet()) { DependencyId(it.residesOnModule.name) },
+    initialDependencies = initialDependencies.mapTo(HashSet()) { DependencyId(it.name) },
     isEditableProvider = { !project.usePyprojectToml },
   )
 

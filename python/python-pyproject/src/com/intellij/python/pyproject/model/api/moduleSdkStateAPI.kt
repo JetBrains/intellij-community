@@ -7,6 +7,7 @@ import com.intellij.python.sdk.backend.PythonInterpreter
 import com.intellij.python.sdk.backend.PythonInterpreterKey
 import com.jetbrains.python.errorProcessing.PyError
 import com.jetbrains.python.project.PyProject
+import com.jetbrains.python.project.project
 import com.jetbrains.python.sdk.configuration.PyProjectSdkConfigurationExtension
 
 
@@ -29,7 +30,7 @@ suspend fun <T : Any> PyProject.configureSdkIfNeeded(onNoSdk: suspend SdkForModu
     is ModuleSdkState.HasSdk -> {
       // The stored entry decides, and another caller can have written it a moment ago. Wait until the snapshot holds it,
       // so a caller that reads the interpreter next sees it, as after [autoConfigureSdk].
-      EvoPyProjectModel.getInstance(residesOnModule.project).awaitInterpreterOf(listOf(this))
+      EvoPyProjectModel.getInstance(project).awaitInterpreterOf(listOf(this))
       InterpreterConfigurationResult.Configured(s.interpreter)
     }
     is ModuleSdkState.NoSdk -> s.sdkConfigInstruction?.onNoSdk()

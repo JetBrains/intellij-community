@@ -54,6 +54,7 @@ internal class PixiAddPyProjectActionTest {
   private val projectFixture = projectFixture(pathFixture)
   private val pyProjectFixture = projectFixture.pyProjectFixture(pathFixture)
   private val sdkFixture = projectFixture.pyMockSdkFixture(pathFixture)
+  @Suppress("DEPRECATION") // the action under test takes a Module
   private val module: Module get() = pyProjectFixture.get().residesOnModule
 
   @ParameterizedTest

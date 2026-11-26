@@ -19,6 +19,7 @@ import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.Result
 import com.jetbrains.python.project.PyProject
 import com.jetbrains.python.project.PyProject.Companion.asPyProject
+import com.jetbrains.python.project.name
 import com.jetbrains.python.sdk.configuration.CreateInterpreterInfo
 import com.jetbrains.python.sdk.configuration.EnvCheckerResult
 import com.jetbrains.python.sdk.configuration.PyProjectSdkConfigurationExtension
@@ -64,12 +65,12 @@ internal abstract class ModuleSdkStateProbeOncePerToolTest {
     override val potentialDependencyFiles: Set<String> = emptySet()
 
     override suspend fun checkEnvironmentAndPrepareSdkCreator(pyProject: PyProject, venvs: List<PythonBinary>): CreateInterpreterInfo? {
-      probed.add(pyProject.residesOnModule.name)
+      probed.add(pyProject.name)
       return envNotFound(FROM_THE_PROBE)
     }
 
     override suspend fun createSdkWithoutPyProjectTomlChecks(pyProject: PyProject, venvs: List<PythonBinary>): CreateInterpreterInfo? {
-      askedAgain.add(pyProject.residesOnModule.name)
+      askedAgain.add(pyProject.name)
       return envNotFound(FROM_THE_SECOND_ASK)
     }
 

@@ -16,7 +16,3 @@ suspend fun PyProject.resolveFile(fileName: FileName): Path? = resolveFile(fileN
 suspend fun PyProject.resolveFile(fileName: String): Path? = withContext(Dispatchers.IO) {
   baseDir.resolve(fileName).takeIf { it.exists() }
 }
-
-
-@get:ApiStatus.Internal
-val PyProject.project: Project get() = residesOnModule.project

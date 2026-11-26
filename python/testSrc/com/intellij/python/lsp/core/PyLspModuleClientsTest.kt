@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.python.lsp.core
 
+import com.jetbrains.python.project.project
 import kotlin.io.path.Path
 import com.intellij.testFramework.junit5.fixture.pathInProjectFixture
 import com.intellij.idea.TestFor
@@ -69,7 +70,7 @@ internal class PyLspModuleClientsTest {
   @Test
   fun `a client of another integration serves no python module`() {
     val main = mainPyProject.get()
-    val foreign = fakePyLspClient(ForeignDescriptor(main.residesOnModule.project))
+    val foreign = fakePyLspClient(ForeignDescriptor(main.project))
 
     assertTrue(foreign.pyServedProjects.isEmpty())
     assertNull(listOf(foreign).clientFor(main))

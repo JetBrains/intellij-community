@@ -21,6 +21,7 @@ import com.intellij.python.pyproject.model.api.getModuleSdkState
 import com.intellij.python.pyproject.model.api.getPyProjectManager
 import com.intellij.python.pyproject.model.evolution.getInterpreter
 import com.intellij.python.sdk.backend.PythonInterpreter
+import com.jetbrains.python.project.name
 import com.jetbrains.python.sdk.configuration.CreateInterpreterInfo
 import com.intellij.python.sdk.backend.getPythonInfo
 import com.intellij.python.sdk.backend.kindId
@@ -104,7 +105,7 @@ class PythonEnvironmentMcpToolset : McpToolset {
       }
       is SdkForModuleConfigInstruction.SameAs -> {
         if (r.parent.getInterpreter() != null)
-          "PyCharm can inherit the interpreter from parent module '${r.parent.residesOnModule.name}' — $CONFIGURE_PYTHON_INTERPRETER_SUFFIX"
+          "PyCharm can inherit the interpreter from parent module '${r.parent.name}' — $CONFIGURE_PYTHON_INTERPRETER_SUFFIX"
         else null
       }
       null -> null
@@ -135,7 +136,7 @@ class PythonEnvironmentMcpToolset : McpToolset {
         throw McpExpectedError("Failed to configure Python interpreter for '$filePath': ${r.reason.message}")
       }
       is InterpreterConfigurationResult.ParentHasNoInterpreter -> {
-        val parentModuleName = r.parent.residesOnModule.name
+        val parentModuleName = r.parent.name
         throw McpExpectedError(
           "'$filePath' is in a module that inherits its interpreter from '$parentModuleName', " +
           "which is not yet configured. Configure the parent module first by calling configure_python_interpreter " +

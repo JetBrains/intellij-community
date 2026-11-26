@@ -5,11 +5,13 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.eel.EelApi
 import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.eel.provider.toEelApi
 import com.jetbrains.python.project.PyProject.Companion.asPyProject
+import com.jetbrains.python.project.PyProject.Companion.getPyProjects
 import com.jetbrains.python.project.impl.PyProjectService
 import com.jetbrains.python.venvReader.Directory
 import org.jetbrains.annotations.ApiStatus
@@ -27,7 +29,12 @@ interface PyProject {
 
   /**
    * Do not use this field unless absolutely necessary.
+   * Use [PyProject.project] extension if you need a project.
+   * Do not check `isDisposed`: this class is guaranteed to be not disposed when used under read action.
+   * Use [baseDir] to get a module root.
+   * [PyProject.name] returns a module name.
    */
+  @Deprecated("Module is deprecated API, do not use it.")
   val residesOnModule: Module
 
   companion object {
@@ -90,3 +97,13 @@ val PyProject.eelDescriptor: EelDescriptor get() = project.getEelDescriptor()
 
 @ApiStatus.Internal
 suspend fun PyProject.getEel(): EelApi = eelDescriptor.toEelApi()
+
+
+@Suppress("DEPRECATION") // Temporary workaround
+@get:ApiStatus.Internal
+val PyProject.project: Project get() = residesOnModule.project
+
+@Suppress("DEPRECATION") // Temporary workaround
+@get:ApiStatus.Internal
+val PyProject.name: @NlsSafe String get() = residesOnModule.name
+

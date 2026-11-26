@@ -8,6 +8,7 @@ import com.intellij.python.sdk.backend.PythonInterpreterKey
 import com.intellij.python.sdk.common.PyEnvRef
 import com.intellij.python.sdk.common.PyInterpreterRef
 import com.jetbrains.python.project.PyProject
+import com.jetbrains.python.project.name
 import com.jetbrains.python.sdk.configuration.CreateInterpreterInfo
 import com.jetbrains.python.sdk.configuration.PyProjectSdkConfigurationExtension
 import com.jetbrains.python.sdk.configuration.createInterpreter
@@ -37,6 +38,6 @@ suspend fun recreateEnvironmentFor(toolId: ToolId, pyProject: PyProject, key: Py
                      ?: error("The configurator of $toolId must be registered")
   val info = configurator.prepareSdkCreatorFor(pyProject, key) ?: error("The configurator of $toolId gives no creator for $key")
   check(info is CreateInterpreterInfo.WillCreateEnv) { "A gone environment is made, so the creator writes files, got $info" }
-  return info.createInterpreter(pyProject.residesOnModule.name).orThrow()
+  return info.createInterpreter(pyProject.name).orThrow()
 }
 

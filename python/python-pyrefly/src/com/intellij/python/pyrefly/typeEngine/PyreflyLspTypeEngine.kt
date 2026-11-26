@@ -8,6 +8,7 @@ import com.intellij.python.lsp.core.type.PyLspTypeEngine
 import com.intellij.python.lsp.core.typeEngine.PyTypeEngineType
 import com.intellij.python.pyrefly.PyreflyPyTool
 import com.jetbrains.python.project.PyProject
+import com.jetbrains.python.project.project
 import com.jetbrains.python.psi.PyFromImportStatement
 import com.jetbrains.python.psi.PyKeyValueExpression
 import com.jetbrains.python.psi.PyQualifiedExpression
@@ -44,7 +45,7 @@ internal class PyreflyLspTypeEngine(private val pyProject: PyProject) : PyLspTyp
 
   override fun resolveType(pyTypedElement: PyTypedElement, isUserInitiated: Boolean): Ref<PyType?>? {
     val client = lspClient ?: return null
-    val context = PyreflyTypeEvalContextCache.getInstance(pyProject.residesOnModule.project).getContext(client)
+    val context = PyreflyTypeEvalContextCache.getInstance(pyProject.project).getContext(client)
     return context.provideType(pyTypedElement)
   }
 }

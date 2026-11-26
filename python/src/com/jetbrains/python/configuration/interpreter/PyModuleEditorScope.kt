@@ -6,7 +6,9 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.util.Disposer
 import com.intellij.platform.util.coroutines.childScope
 import com.jetbrains.python.project.PyProject
+import com.jetbrains.python.project.project
 import org.jetbrains.annotations.ApiStatus
+import com.jetbrains.python.project.project
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.cancel
 import java.util.concurrent.ConcurrentHashMap
@@ -44,6 +46,6 @@ class PyModuleEditorScopes(private val projectScope: CoroutineScope) {
 
   companion object {
     fun of(pyProject: PyProject): CoroutineScope =
-      pyProject.residesOnModule.project.service<PyModuleEditorScopes>().scopeFor(pyProject)
+      pyProject.project.service<PyModuleEditorScopes>().scopeFor(pyProject)
   }
 }

@@ -65,6 +65,8 @@ import com.intellij.workspaceModel.ide.legacyBridge.LegacyBridgeJpsEntitySourceF
 import com.intellij.workspaceModel.ide.toPath
 import com.jetbrains.python.project.PyProject
 import com.jetbrains.python.project.PyProject.Companion.getPyProjects
+import com.jetbrains.python.project.project
+import com.jetbrains.python.sdk.internal.PYTHON_MODULE_ID
 import com.jetbrains.python.venvReader.Directory
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.sync.Mutex
@@ -259,7 +261,7 @@ private fun demoteModuleToPlainIml(
  * API hands callers a [PyProject]-typed set.
  */
 internal suspend fun PyProject.getPythonDependenciesImpl(): Set<PyProject> {
-  val allProjects = residesOnModule.project.getPyProjects()
+  val allProjects = project.getPyProjects()
   val subject = residesOnModule
   return readAction {
     val depModules = ModuleRootManager.getInstance(subject).dependencies.toHashSet()

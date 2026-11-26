@@ -87,6 +87,7 @@ import com.jetbrains.python.PythonPluginDisposable
 import com.jetbrains.python.packaging.common.PythonPackageManagementListener
 import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.project.PyProject
+import com.jetbrains.python.project.name
 import com.jetbrains.python.project.project
 import com.jetbrains.python.psi.types.PyTypeEngineSettingsModificationTracker
 import com.jetbrains.python.sdk.ModuleOrProject
@@ -666,7 +667,7 @@ abstract class PyLspToolDescriptor(
       val executable = if (waitForInterpreters) moduleOrProject.toolExecutableWithBaseArgs(pyTool, executableName)
       else moduleOrProject.toolExecutableWithBaseArgsIfReady(pyTool, executableName)
       executable.successOrNull?.let { return it }
-      thisLogger().info("$presentableName has no executable in module '${served.residesOnModule.name}'.")
+      thisLogger().info("$presentableName has no executable in module '${served.name}'.")
     }
     return null
   }
@@ -780,7 +781,7 @@ abstract class PyLspToolDescriptor(
   open suspend fun resolveCommandLine(): GeneralCommandLine {
     @Suppress("HardCodedStringLiteral") // this text goes only to the IDE logs
     val noExecutable = liveServedProjects.ifEmpty { null }
-                         ?.let { "No module of ${it.joinToString { p -> p.residesOnModule.name }} provides the $presentableName executable" }
+                         ?.let { "No module of ${it.joinToString { p -> p.name }} provides the $presentableName executable" }
                        ?: "Every module the $presentableName server serves is gone"
     // Outside a read action, when the server starts, so it waits for the interpreters.
     val (binary, baseArgs) = findExecutable(waitForInterpreters = true) ?: throw ExecutionException(noExecutable)

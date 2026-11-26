@@ -10,6 +10,7 @@ import com.intellij.python.lsp.core.typeEngine.PyTypeEngineType
 import com.intellij.python.ty.TyLspClientDescriptor
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.fixture.projectFixture
+import com.jetbrains.python.project.project
 import com.jetbrains.python.psi.types.PyTypeEngineSettingsModificationTracker
 import org.eclipse.lsp4j.InitializeResult
 import org.eclipse.lsp4j.ServerCapabilities
@@ -54,12 +55,12 @@ internal class PyLspTypeEngineServerStateTest {
   private fun tyListener(selected: PyTypeEngineType): LspServerListener {
     val pyProject = pyProjectFixture.get()
     // `loadState` sets the engine without the settings-change message, which would start servers.
-    PyTypeEngineProjectSettings.getInstance(pyProject.residesOnModule.project).loadState(PyTypeEngineSettingsState(selected))
+    PyTypeEngineProjectSettings.getInstance(pyProject.project).loadState(PyTypeEngineSettingsState(selected))
     return TyLspClientDescriptor(pyProject, listOf(pyProject)).lspServerListener
   }
 
   private fun dropsCachedContexts(action: () -> Unit): Boolean {
-    val tracker = PyTypeEngineSettingsModificationTracker.getInstance(pyProjectFixture.get().residesOnModule.project)
+    val tracker = PyTypeEngineSettingsModificationTracker.getInstance(pyProjectFixture.get().project)
     val before = tracker.modificationCount
     action()
     return tracker.modificationCount != before

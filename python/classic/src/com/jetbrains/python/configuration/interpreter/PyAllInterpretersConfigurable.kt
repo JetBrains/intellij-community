@@ -69,6 +69,7 @@ import com.jetbrains.python.configuration.PyInterpreterPathsDialogLauncher
 import com.jetbrains.python.packaging.toolwindow.PyPackagingToolWindowPanel
 import com.jetbrains.python.packaging.utils.PyPackageCoroutine
 import com.jetbrains.python.project.PyProject.Companion.getPyProjects
+import com.jetbrains.python.project.name
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.awt.BorderLayout
@@ -318,7 +319,7 @@ class PyAllInterpretersConfigurable(private val project: Project) : SearchableCo
         PyInterpreterRow(interpreter, inUse = snapshot.isInUse(interpreter), owner = snapshot.ownerNameOf(interpreter))
       }
       val moduleBasePaths = project.getPyProjects().mapTo(HashSet()) { it.baseDir }
-      val ownerOrder = snapshot.evoPyProjects.map { it.pyProject.residesOnModule.name }.toList()
+      val ownerOrder = snapshot.evoPyProjects.map { it.pyProject.name }.toList()
       val showGroups = snapshot.workspaces.size > 1
       val visible = groupByOwner(filterInterpreters(rows, hideOthers, moduleBasePaths), ownerOrder)
       val brokenSdkCount = PythonInterpreterRegistry.getInstance(project).brokenSdkCount()
@@ -723,7 +724,7 @@ internal fun groupByOwner(rows: List<PyInterpreterRow>, ownerOrder: List<String>
  * interpreter. Without such a project, the name of the owner dir.
  */
 internal fun EvoPyProjectModel.Snapshot.ownerNameOf(interpreter: PythonInterpreter): @NlsSafe String =
-  evoPyProjects.firstOrNull { it.pyProject.baseDir == interpreter.ownerDir }?.pyProject?.residesOnModule?.name
+  evoPyProjects.firstOrNull { it.pyProject.baseDir == interpreter.ownerDir }?.pyProject?.name
   ?: interpreter.ownerDir.fileName?.toString()
   ?: interpreter.ownerDir.toString()
 

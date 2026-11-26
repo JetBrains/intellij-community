@@ -33,6 +33,7 @@ import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.testFramework.junit5.fixture.tempPathFixture
 import com.jetbrains.python.project.PyProject
 import com.jetbrains.python.project.PyProject.Companion.asPyProject
+import com.jetbrains.python.project.project
 import com.jetbrains.python.sdk.internal.PYTHON_MODULE_ID
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
@@ -222,7 +223,7 @@ internal class PyLspToolCommandActionsTest {
     }
 
     withOtherProject { otherProject ->
-      val otherEvent = updated(action, otherProject.residesOnModule.project)
+      val otherEvent = updated(action, otherProject.project)
       assertFalse(otherEvent.presentation.isEnabledAndVisible, "the other project runs no server of the tool")
     }
     val thisEvent = updated(action, thisProject)

@@ -3,6 +3,7 @@ package com.jetbrains.python.fixtures
 
 import com.intellij.openapi.application.WriteAction
 import com.intellij.python.sdk.backend.languageLevel
+import com.jetbrains.python.project.name
 import com.jetbrains.python.project.asPyProjectCandidate
 import kotlin.time.Duration.Companion.minutes
 import com.jetbrains.python.sdk.add.v2.PathHolder
@@ -81,7 +82,7 @@ private fun describeWait(project: Project, step: String): String {
   val snapshot = EvoPyProjectModel.getInstance(project).snapshotOrNull()
   return listOf(
     "awaitPythonInterpreters: $step did not end",
-    "snapshot: ${snapshot?.evoPyProjects?.map { "${it.pyProject.residesOnModule.name} -> ${it.interpreter?.let { i -> "${i.ref} in ${i.ownerDir}" }} (entry ${it.entryKey})" }?.toList()}",
+    "snapshot: ${snapshot?.evoPyProjects?.map { "${it.pyProject.name} -> ${it.interpreter?.let { i -> "${i.ref} in ${i.ownerDir}" }} (entry ${it.entryKey})" }?.toList()}",
     PythonInterpreterRegistry.getInstance(project).describeForTests(),
     PythonInterpreterRoots.getInstance(project).describePendingForTests(),
     describePythonLanguageLevelsForTests(project),
