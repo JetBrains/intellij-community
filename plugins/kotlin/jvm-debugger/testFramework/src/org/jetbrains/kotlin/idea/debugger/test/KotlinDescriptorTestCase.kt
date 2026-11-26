@@ -123,6 +123,7 @@ abstract class KotlinDescriptorTestCase : DescriptorTestCase(),
 
     private var breakpointCreator: BreakpointCreator? = null
     private var logPropagator: LogPropagator? = null
+    private var jvmSystemProperties: Map<String, String> = emptyMap()
 
     private var oldValues: OldValuesStorage? = null
     private val vmAttacher = VmAttacher.getInstance()
@@ -255,6 +256,7 @@ abstract class KotlinDescriptorTestCase : DescriptorTestCase(),
 
         val preferences = DebuggerPreferences(myProject, wholeFileContents)
         configureRegistry(preferences)
+        jvmSystemProperties = parseJvmSystemProperties(preferences)
 
         invokeAndWaitIfNeeded {
             oldValues = SettingsMutators.mutate(preferences)
@@ -467,6 +469,14 @@ abstract class KotlinDescriptorTestCase : DescriptorTestCase(),
         doMultiFileTest(testFiles, preferences)
     }
 
+    private fun parseJvmSystemProperties(preferences: DebuggerPreferences): Map<String, String> {
+        return preferences[DebuggerPreferenceKeys.JVM_SYSTEM_PROPERTY].associate { property ->
+            val parts = property.split("=", limit = 2)
+            require(parts.size == 2) { "JVM system properties should have form key=value" }
+            parts[0] to parts[1]
+        }
+    }
+
     private fun configureRegistry(preferences: DebuggerPreferences) {
         val registrySettings = preferences[DebuggerPreferenceKeys.REGISTRY].associate { registrySetting ->
             val parts = registrySetting.split("=")
@@ -668,6 +678,9 @@ abstract class KotlinDescriptorTestCase : DescriptorTestCase(),
             }
             classPath.add(TestKotlinArtifacts.kotlinStdlib.toFile())
             classPath.add(libraryOutputDirectory)
+            for ((key, value) in jvmSystemProperties) {
+                vmParametersList.addProperty(key, value)
+            }
         }
     }
 

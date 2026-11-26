@@ -48,6 +48,34 @@ Note that it doesn't add transitive dependencies, and you have to attach all the
 ### Adding javaagent
 Use `// ATTACH_JAVA_AGENT_BY_LABEL:` with the same syntax as in `// ATTACH_LIBRARY_BY_LABEL:`
 
+For the coroutine debug agent, attach `kotlinx-coroutines-core-jvm-<version>.jar`.
+The IDE attaches the same jar, and the debugger reads `DebugProbesImpl` from it.
+The agent jar also goes to the classpath, so `// ATTACH_LIBRARY_BY_LABEL:` for the same jar is not necessary.
+
+Two other jars do not work:
+1. `kotlinx-coroutines-core-<version>.jar` has only the multiplatform metadata. A test with only this jar does not compile.
+2. `kotlinx-coroutines-debug-1.10.2.jar` has no agent class. Its manifest points to `AgentPremain` in the core jar.
+   It adds the `DebugProbes` API, JUnit timeouts and BlockHound support.
+   It also needs `byte-buddy`, `byte-buddy-agent`, `jna` and `jna-platform`, and the test framework adds no transitive dependencies.
+
+Old tests used `kotlinx-coroutines-debug-1.3.8.jar`. It had `byte-buddy` inside, so the core jar was enough next to it.
+
+### Setting a system property of the debuggee
+Use `// JVM_SYSTEM_PROPERTY: <key>=<value>`. It adds `-D<key>=<value>` to the debuggee JVM.
+
+The directive came with the move of the coroutine tests from kotlinx-coroutines 1.3.8 to 1.10.2.
+Two library changes matter for the tests:
+1. Since 1.8.0, the agent records no creation stack traces by default ([#3783](https://github.com/Kotlin/kotlinx.coroutines/issues/3783)).
+   A test that checks the `Coroutine Creation Stack Trace` section turns them on:
+   ```
+   // ATTACH_JAVA_AGENT_BY_LABEL: classes(@kotlin_test_deps//:kotlinx-coroutines-core-jvm-1.10.2.jar)
+   // JVM_SYSTEM_PROPERTY: kotlinx.coroutines.debug.enable.creation.stack.trace=true
+   ```
+2. Since 1.7.2, the agent ignores a coroutine with `EmptyCoroutineContext` ([#3782](https://github.com/Kotlin/kotlinx.coroutines/issues/3782)).
+   No property turns this off.
+   So `suspend fun main` has no creation stack trace, because its root continuation has the empty context.
+   See `xcoroutines/suspendMain.kt`.
+
 ### Multifile
 
 Use `// FILE: <FILE_NAME>` directive to split a file into several files. You can use Kotlin or Java files.

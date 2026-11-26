@@ -47,6 +47,8 @@ object DebuggerPreferenceKeys {
 
     val REGISTRY by debuggerPreferenceKey(emptyList<String>())
 
+    val JVM_SYSTEM_PROPERTY by debuggerPreferenceKey(emptyList<String>())
+
     val JVM_DEFAULT_MODE by debuggerPreferenceKey("")
 
     val USE_XSESSION_PAUSE_LISTENER by debuggerPreferenceKey(false)
