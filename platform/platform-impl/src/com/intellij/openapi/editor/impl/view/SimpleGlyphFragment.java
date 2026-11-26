@@ -110,7 +110,7 @@ public final class SimpleGlyphFragment extends GlyphFragment {
    * The text needs no layout, so the glyph vector has one glyph for each char.
    */
   private @NotNull GlyphVector createSpacedGlyphs(@NotNull FontRenderContext context, int start, int end) {
-    GlyphVector glyphs = myFont.createGlyphVector(context, Arrays.copyOfRange(myText, start, end));
+    GlyphVector glyphs = FontLayoutService.getInstance().createGlyphVector(myFont, context, myText, start, end);
     float startX = getX(start);
     Point2D.Float position = new Point2D.Float();
     for (int i = 0; i < end - start; i++) {
