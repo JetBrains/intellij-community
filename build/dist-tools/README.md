@@ -34,7 +34,7 @@ Run a test target from the ultimate root. From `community/`, drop the `@communit
 | `crates/jarpack` | The frozen-bytes engine of the packer: the jar reader and writer, the merge, the `__index__`, and the native tree of a presigned library. The remainder packer merges through it, and the descriptor writer reads library jars through its reader. | `@community//build/dist-tools/crates/jarpack:jarpack_test` |
 | `crates/javaglob` | The `java.nio` glob subset that the plan files use. | `@community//build/dist-tools/crates/javaglob:javaglob_test` |
 | `crates/planfile` | The plan file, the remainder contract, the plugin classpath record, and the asset and link-graph rules that the remainder packer and the collector share. | `@community//build/dist-tools/crates/planfile:planfile_test` |
-| `crates/pluginpack` | The remainder engine: the plan and the execution of a plugin remainder, with the Kotlin goldens. Only the remainder packer links it. | `@community//build/dist-tools/crates/pluginpack:pluginpack_test` |
+| `crates/pluginpack` | The remainder engine: the plan and the execution of a plugin remainder. Only the remainder packer links it. | `@community//build/dist-tools/crates/pluginpack:pluginpack_test` |
 | `crates/testkit` | The helpers that the tests of several crates share: the `testdata/` lookup, a temporary directory with a real path, the working directory of one test, and the file, mode and link helpers. Only `[dev-dependencies]` name it, so no tool links it. | `@community//build/dist-tools/crates/testkit:testkit_test` |
 | `crates/trace` | The span API of the traced tools and the Jaeger span file of `--trace-file`. The API is written by hand, so no tool links the `tracing` crates. | `@community//build/dist-tools/crates/trace:trace_test` |
 | `crates/xxh3` | The hash4j xxh3 hashes: the two hashes of the `__index__` keys, and the content hash of a file or a stream in blocks of 256 KiB. | `@community//build/dist-tools/crates/xxh3:xxh3_test` |
@@ -63,8 +63,7 @@ Run the tests from the ultimate root, then the second command in `community/`.
 cd community && ./bazel.cmd test //build/dist-tools/...
 ```
 
-- The tests include the frozen jar digests in `crates/jarpack/src/tests/golden.rs`, the Kotlin goldens of
-  `crates/pluginpack/testdata`, the plan file corpus, the crate closure test of each action tool, and the
+- The tests include the frozen jar digests in `crates/jarpack/src/tests/golden.rs`, the plan file corpus, the crate closure test of each action tool, and the
   `<crate>-clippy` test of every crate.
 - The clippy tests of the community crates run only from `community/`. The clippy aspect of rules_rust skips a target
   of an external repository, and from the ultimate root this module is one. There the tests are incompatible, and

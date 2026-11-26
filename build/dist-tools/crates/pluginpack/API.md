@@ -62,8 +62,8 @@ every other file. The executable bit comes from declared data only:
 
 ## Tests
 
-Under `cargo test`, the tests read `testdata/` from `CARGO_MANIFEST_DIR`, and under Bazel from `DT_TESTDATA_DIR`. The
-three `testdata/kotlin-*-golden-*.txt` files are the frozen output of the deleted Kotlin preparer. Never edit them.
+The materialization test packs each layout-tree fixture and compares the written tree with the record of the fixture:
+the path, the kind, the mode, and the content digest or the link target of every entry.
 
 The corpus test plans every plan file in `testdata/corpus` of `planfile`. Under Bazel, the unit test gets these files
 through the `test_data` attribute with the `planfile_testdata` filegroup.

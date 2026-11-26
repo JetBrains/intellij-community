@@ -9,8 +9,7 @@
 )]
 
 mod corpus;
-mod derive;
-mod kotlin;
+mod materialization;
 
 use std::collections::BTreeMap;
 use std::fs;
@@ -588,112 +587,5 @@ pub(crate) fn require_inventory_matches_tree(output: &Path, inventory: &[filemet
             actual.executable = actual.mode & 0o111 != 0;
         }
         assert_eq!(&actual, entry, "the inventory differs from the tree");
-    }
-}
-
-/// Pins that a fixture produced what it was written for, so an empty tree cannot pass parity.
-pub(crate) fn require_recorded_paths(record: &[String], paths: &[&str]) {
-    for path in paths {
-        assert!(
-            record.iter().any(|line| line.starts_with(&format!("{path}\t"))),
-            "{path} is missing from the output:\n{}",
-            record.join("\n")
-        );
-    }
-}
-
-/// Lists the entries of a jar by name with their content digest, sorted by name. The generated index follows the entry
-/// order and is left out.
-pub(crate) fn jar_entry_record(jar: &Path) -> Vec<String> {
-    let (names, entries) = read_archive(jar);
-    let mut record: Vec<String> = names
-        .iter()
-        .filter(|name| *name != "__index__")
-        .map(|name| format!("{name}\tentry\t-\t{}", sha256_hex(&entries[name])))
-        .collect();
-    record.sort();
-    record
-}
-
-/// Returns a line of a materialization record with the mode that the packer writes for the mode of the line: 0755 for a
-/// directory, 0755 for a file with an executable bit, and 0644 for every other file.
-fn declared_record_mode(line: &str) -> String {
-    let fields: Vec<&str> = line.split('\t').collect();
-    let mode = match fields.as_slice() {
-        [_, "directory", _, _] => "0755".to_owned(),
-        [_, "file", mode, _] => {
-            let mode = u32::from_str_radix(mode, 8).unwrap_or_else(|error| panic!("{line:?}: {error}"));
-            format!("{:04o}", filemeta::file_mode(mode & 0o111 != 0))
-        }
-        _ => return line.to_owned(),
-    };
-    [fields[0], fields[1], &mode, fields[3]].join("\t")
-}
-
-/// The record of the Kotlin materialization of every fixture, frozen under `testdata/<name>-<label>.txt`. The label
-/// states the recording date.
-pub(crate) struct Golden {
-    name: String,
-    label: String,
-    fixtures: BTreeMap<String, Vec<String>>,
-}
-
-impl Golden {
-    pub(crate) fn open(name: &str) -> Self {
-        let directory = testdata_dir();
-        let matches: Vec<PathBuf> = fs::read_dir(&directory)
-            .unwrap_or_else(|error| panic!("{}: {error}", directory.display()))
-            .map(|entry| entry.unwrap().path())
-            .filter(|path| {
-                let file = path.file_name().unwrap().to_string_lossy();
-                file.starts_with(&format!("{name}-")) && file.ends_with(".txt")
-            })
-            .collect();
-        let [file] = matches.as_slice() else {
-            panic!("expected one golden testdata/{name}-<label>.txt, found {matches:?}");
-        };
-        let file_name = file.file_name().unwrap().to_string_lossy().into_owned();
-        let label = file_name[name.len() + 1..file_name.len() - 4].to_owned();
-        let mut fixtures: BTreeMap<String, Vec<String>> = BTreeMap::new();
-        for line in text(&read_bytes(file)).split('\n') {
-            if line.is_empty() || line.starts_with('#') {
-                continue;
-            }
-            let (fixture, entry) = line
-                .split_once('\t')
-                .unwrap_or_else(|| panic!("{}: malformed line {line:?}", file.display()));
-            fixtures.entry(fixture.to_owned()).or_default().push(entry.to_owned());
-        }
-        Self {
-            name: name.to_owned(),
-            label,
-            fixtures,
-        }
-    }
-
-    /// Compares the record with the golden of the fixture. The Kotlin preparer kept the full mode of a source, and the
-    /// packer keeps only the executable bit, so the check reads each golden mode through [`declared_record_mode`].
-    /// The Kotlin preparer read the mode of a source file on disk where the plan declares none. The packer writes 0644
-    /// there, so each path of `undeclared` expects the mode 0644.
-    pub(crate) fn check(&self, fixture: &str, record: &[String], undeclared: &[&str]) {
-        let Some(want) = self.fixtures.get(fixture) else {
-            panic!("fixture {fixture:?} has no golden in testdata/{}-{}.txt", self.name, self.label);
-        };
-        let want: Vec<String> = want
-            .iter()
-            .map(|line| {
-                let line = declared_record_mode(line);
-                let fields: Vec<&str> = line.split('\t').collect();
-                match fields.as_slice() {
-                    [path, "file", _, digest] if undeclared.contains(path) => [path, "file", "0644", digest].join("\t"),
-                    _ => line,
-                }
-            })
-            .collect();
-        require_equal_records(&format!("{fixture} against the golden"), &want, record);
-    }
-
-    pub(crate) fn fixture_names(&self) -> Vec<&str> {
-        self.fixtures.keys().map(String::as_str).collect()
     }
 }
