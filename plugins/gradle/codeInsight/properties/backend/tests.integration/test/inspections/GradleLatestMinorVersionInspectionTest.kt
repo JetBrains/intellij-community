@@ -110,7 +110,7 @@ class GradleLatestMinorVersionInspectionTest : GradleCodeInsightBaseTestCase() {
   @ParameterizedTest
   @GradleTestSource("8.13", "bin,all")
   fun testUpgrade(gradleVersion: GradleVersion, distributionType: String) {
-    val latestGradle8Version = GradleJvmSupportMatrix.suggestLatestMinorGradleVersion(gradleVersion.majorVersion).version
+    val latestGradle8Version = GradleJvmSupportMatrix.suggestLatestMinorGradleVersion(gradleVersion.majorVersion)!!.version
 
     runTest(gradleVersion) {
       testIntention(
@@ -124,7 +124,7 @@ class GradleLatestMinorVersionInspectionTest : GradleCodeInsightBaseTestCase() {
   @ParameterizedTest
   @GradleTestSource("8.13")
   fun testUpgradeWhiteSpace(gradleVersion: GradleVersion) {
-    val latestGradle8Version = GradleJvmSupportMatrix.suggestLatestMinorGradleVersion(gradleVersion.majorVersion).version
+    val latestGradle8Version = GradleJvmSupportMatrix.suggestLatestMinorGradleVersion(gradleVersion.majorVersion)!!.version
 
     runTest(gradleVersion) {
       testIntention(
@@ -138,7 +138,7 @@ class GradleLatestMinorVersionInspectionTest : GradleCodeInsightBaseTestCase() {
   @ParameterizedTest
   @GradleTestSource("8.13", "bin,all")
   fun testUpgradeCustomUrl(gradleVersion: GradleVersion, distributionType: String) {
-    val latestGradle8Version = GradleJvmSupportMatrix.suggestLatestMinorGradleVersion(gradleVersion.majorVersion).version
+    val latestGradle8Version = GradleJvmSupportMatrix.suggestLatestMinorGradleVersion(gradleVersion.majorVersion)!!.version
 
     runTest(gradleVersion) {
       testIntention(
@@ -160,7 +160,7 @@ class GradleLatestMinorVersionInspectionTest : GradleCodeInsightBaseTestCase() {
       "Gradle ${gradleVersion.version} is the latest minor version."
     }
 
-    val latestGradleMinorVersion = GradleJvmSupportMatrix.suggestLatestMinorGradleVersion(gradleVersion.majorVersion).version
+    val latestGradleMinorVersion = GradleJvmSupportMatrix.suggestLatestMinorGradleVersion(gradleVersion.majorVersion)!!.version
 
     runTest(gradleVersion) {
       testIntention(
@@ -173,4 +173,4 @@ class GradleLatestMinorVersionInspectionTest : GradleCodeInsightBaseTestCase() {
 }
 
 private fun isLatestMinorGradleVersion(gradleVersion: GradleVersion): Boolean =
-  gradleVersion >= GradleJvmSupportMatrix.suggestLatestMinorGradleVersion(gradleVersion.majorVersion)
+  gradleVersion >= GradleJvmSupportMatrix.suggestLatestMinorGradleVersion(gradleVersion.majorVersion)!!

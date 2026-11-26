@@ -22,6 +22,11 @@ class GradleJvmSupportMatricesTest : GradleJvmSupportMatricesTestCase() {
     assertEquals(LATEST_GRADLE_VERSION, GradleJvmSupportMatrix.getAllSupportedGradleVersionsByIdea().last().version)
   }
 
+  fun `test suggesting latest minor gradle version`() {
+    assertEquals(LATEST_GRADLE_VERSION, GradleJvmSupportMatrix.suggestLatestMinorGradleVersion(9)?.version)
+    assertNull(GradleJvmSupportMatrix.suggestLatestMinorGradleVersion(GradleVersion.version(FUTURE_GRADLE_VERSION).majorVersion))
+  }
+
   fun `test compatibility between gradle and java versions`() {
     assertTrue(isSupported("2.0", 6))
     assertTrue(isSupported("4.0", 6))

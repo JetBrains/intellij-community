@@ -6,8 +6,6 @@ import com.intellij.build.events.impl.BuildIssueEventImpl
 import com.intellij.codeInsight.daemon.HighlightDisplayKey
 import com.intellij.openapi.externalSystem.model.task.event.ExternalSystemBuildEvent
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager
-import org.gradle.tooling.model.build.BuildEnvironment
-import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.jvmcompat.GradleJvmSupportMatrix.Companion.isGradleDeprecatedByIdea
 import org.jetbrains.plugins.gradle.jvmcompat.GradleJvmSupportMatrix.Companion.suggestLatestMinorGradleVersion
 import org.jetbrains.plugins.gradle.service.execution.GradleExecutionChecker
@@ -19,9 +17,10 @@ internal class OutdatedGradleVersionChecker: GradleExecutionChecker {
     val currentVersion = context.gradleVersion
     if (isGradleDeprecatedByIdea(currentVersion)) return
     if (isLatestMinorVersionInspectionDisabled(context)) return
-    if (isMinorGradleVersionOutdated(currentVersion)) return
+    val latestVersion = suggestLatestMinorGradleVersion(currentVersion.majorVersion) ?: return
+    if (currentVersion >= latestVersion) return
 
-    val issue = OutdatedGradleVersionIssue(context.projectPath, currentVersion)
+    val issue = OutdatedGradleVersionIssue(context.projectPath, currentVersion, latestVersion)
     issue.addOpenInspectionSettingsQuickFix("LatestMinorVersion")
 
     val taskId = context.taskId
@@ -39,10 +38,5 @@ internal class OutdatedGradleVersionChecker: GradleExecutionChecker {
     val projectProfileManager = InspectionProjectProfileManager.getInstance(context.project)
     val inspectionProfile = projectProfileManager.getCurrentProfile()
     return !inspectionProfile.isToolEnabled(inspectionKey)
-  }
-
-  private fun isMinorGradleVersionOutdated(currentVersion: GradleVersion): Boolean {
-    val latestVersion = suggestLatestMinorGradleVersion(currentVersion.majorVersion)
-    return currentVersion >= latestVersion
   }
 }

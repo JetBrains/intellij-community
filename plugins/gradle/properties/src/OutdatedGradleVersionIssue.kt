@@ -15,7 +15,6 @@ import com.intellij.psi.PsiManager
 import org.gradle.util.GradleVersion
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.gradle.issue.ConfigurableGradleBuildIssue
-import org.jetbrains.plugins.gradle.jvmcompat.GradleJvmSupportMatrix
 import org.jetbrains.plugins.gradle.util.GradleBundle
 import org.jetbrains.plugins.gradle.util.GradleUtil
 import java.nio.file.Path
@@ -25,10 +24,10 @@ import java.util.concurrent.CompletableFuture
 class OutdatedGradleVersionIssue(
     projectPath: String,
     private val currentVersion: GradleVersion,
+    latestVersion: GradleVersion,
 ) : ConfigurableGradleBuildIssue() {
 
   init {
-    val latestVersion = GradleJvmSupportMatrix.suggestLatestMinorGradleVersion(currentVersion.majorVersion)
     setTitle(GradleBundle.message("gradle.build.issue.gradle.outdated.minor.version.title"))
     addDescription(
         GradleBundle.message(

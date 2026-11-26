@@ -34,7 +34,7 @@ internal class GradleLatestMinorVersionInspectionVisitor(private val holder: Pro
     }
 
     if (GradleJvmSupportMatrix.isGradleDeprecatedByIdea(currentGradleVersion)) return
-    val latestMinorGradleVersion = GradleJvmSupportMatrix.suggestLatestMinorGradleVersion(currentGradleVersion.majorVersion)
+    val latestMinorGradleVersion = GradleJvmSupportMatrix.suggestLatestMinorGradleVersion(currentGradleVersion.majorVersion) ?: return
     if (currentGradleVersion >= latestMinorGradleVersion) return
 
     holder.problem(element, GradleInspectionBundle.message("inspection.message.newer.gradle.minor.version.available.descriptor"))
