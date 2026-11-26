@@ -752,7 +752,9 @@ public class GeneralToSMTRunnerEventsConvertorTest extends BaseSMTRunnerTestCase
   public void testIntellijExportXslEscaping() throws Exception {
     runInEdtAndWait(() -> {
       String systemOutput = "<span onclick=\"alert(\"Ops!\")\">SYSTEM_OUTPUT\n<span>";
-      String escapedSystemOutput = "&lt;span onclick=\"alert(\"Ops!\")\"&gt;SYSTEM_OUTPUT<br/>&lt;span&gt;<br/>";
+      // The system output does not end with a line break, and the normal output (also stdout) continues its line,
+      // as in the console (IDEA-395942).
+      String escapedSystemOutput = "&lt;span onclick=\"alert(\"Ops!\")\"&gt;SYSTEM_OUTPUT<br/>&lt;span&gt;&lt;div";
       String normalOutput = "<div onclick=\"alert(\"Ops!!\")\">NORMAL_OUTPUT<span>";
       String escapedNormalOutput = "&lt;div onclick=\"alert(\"Ops!!\")\"&gt;NORMAL_OUTPUT&lt;span&gt;<br/>";
       String errorOutput = "<p onclick=\"alert(\"Ops!!!\")\">ERROR_OUTPUT<div>";

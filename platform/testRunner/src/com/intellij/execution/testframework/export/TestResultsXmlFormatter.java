@@ -243,7 +243,9 @@ public final class TestResultsXmlFormatter {
       @Override
       public void print(@NotNull String text, @NotNull ConsoleViewContentType contentType) {
         ProgressManager.checkCanceled();
-        if (contentType != lastType.get()) {
+        // The file keeps only stdout and stderr. A change of the content type inside one of them, such as each color of an
+        // ANSI-colored line, must not start a new element: writeOutput ends each element with a line break (IDEA-395942).
+        if (lastType.isNull() || !getTypeString(contentType).equals(getTypeString(lastType.get()))) {
           if (!buffer.isEmpty()) {
             try {
               writeOutput(lastType.get(), buffer);
