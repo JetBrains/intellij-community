@@ -89,6 +89,28 @@ class ModPlanOptionValues private constructor(values: Map<String, Any?>) {
     return with(option, lines.joinToString("\n"))
   }
 
+  /**
+   * A line of [option] can give a value to its key: the key, a tab and the value, such as the new name of an element. The key has no tab.
+   *
+   * @return the value of [key] in [option], or an empty text if its line has no tab; null if [option] has no line of [key]
+   */
+  fun valueOf(option: ModPlanOption<String>, key: String): String? {
+    val line = answeredKeys(option).firstOrNull { keyOfLine(it) == key } ?: return null
+    return line.substringAfter(VALUE_SEPARATOR, "")
+  }
+
+  /** @return whether the line of [key] in [option] is chosen, see [valueOf] */
+  fun isChosen(option: ModPlanOption<String>, key: String): Boolean = chosenKeys(option).any { keyOfLine(it) == key }
+
+  /** @return a copy of these options in which the line of [key] in [option] holds [value] and is chosen or not; the other lines stay */
+  fun withValue(option: ModPlanOption<String>, key: String, chosen: Boolean, value: String): ModPlanOptionValues {
+    val lines = keysOf(option).filterTo(ArrayList()) { keyOfLine(it.removePrefix(NOT_CHOSEN)) != key }
+    lines.add((if (chosen) "" else NOT_CHOSEN) + key + VALUE_SEPARATOR + value)
+    return with(option, lines.joinToString("\n"))
+  }
+
+  private fun keyOfLine(line: String): String = line.substringBefore(VALUE_SEPARATOR)
+
   private fun keysOf(option: ModPlanOption<String>): Set<String> {
     return StringUtil.split(get(option), "\n").map { it.trim() }.filterTo(LinkedHashSet()) { it.isNotEmpty() }
   }
@@ -103,6 +125,9 @@ class ModPlanOptionValues private constructor(values: Map<String, Any?>) {
 
     /** The prefix of a key that was asked about and not chosen, see [withAnswers]. */
     private const val NOT_CHOSEN = "-"
+
+    /** The separator of a key and its value in a line, see [valueOf]. */
+    private const val VALUE_SEPARATOR = '\t'
   }
 }
 

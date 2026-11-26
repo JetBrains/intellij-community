@@ -318,9 +318,12 @@
 - f:get(com.intellij.refactoring.modplan.ModPlanOption):java.lang.Object
 - f:has(com.intellij.refactoring.modplan.ModPlanOption):Z
 - hashCode():I
+- f:isChosen(com.intellij.refactoring.modplan.ModPlanOption,java.lang.String):Z
+- f:valueOf(com.intellij.refactoring.modplan.ModPlanOption,java.lang.String):java.lang.String
 - f:with(com.intellij.refactoring.modplan.ModPlanOption,java.lang.Object):com.intellij.refactoring.modplan.ModPlanOptionValues
 - f:withAnswers(com.intellij.refactoring.modplan.ModPlanOption,java.util.Collection,java.util.Collection):com.intellij.refactoring.modplan.ModPlanOptionValues
 - f:withChosenKeys(com.intellij.refactoring.modplan.ModPlanOption,java.util.Collection,java.util.Collection):com.intellij.refactoring.modplan.ModPlanOptionValues
+- f:withValue(com.intellij.refactoring.modplan.ModPlanOption,java.lang.String,Z,java.lang.String):com.intellij.refactoring.modplan.ModPlanOptionValues
 *f:com.intellij.refactoring.modplan.ModPlanOptionValues$Companion
 *:com.intellij.refactoring.modplan.ModPlanQuestion
 - s:askCommand(java.lang.String,com.intellij.refactoring.modplan.ModPlanQuestion,com.intellij.refactoring.modplan.ModPlanOptionValues,java.util.function.Function):com.intellij.modcommand.ModCommand
@@ -347,18 +350,29 @@
 - java.lang.Record
 - com.intellij.refactoring.modplan.ModPlanQuestion
 - <init>(com.intellij.codeInspection.options.OptPane,java.util.List,com.intellij.refactoring.modplan.ModPlanQuestion$Storage):V
+- <init>(com.intellij.codeInspection.options.OptPane,java.util.List,com.intellij.refactoring.modplan.ModPlanQuestion$Storage,java.util.List):V
 - f:equals(java.lang.Object):Z
 - f:hashCode():I
 - isAnswered(com.intellij.refactoring.modplan.ModPlanOptionValues):Z
 - s:of(java.util.List,com.intellij.refactoring.modplan.ModPlanQuestion$Storage):com.intellij.refactoring.modplan.ModPlanQuestion$Form
+- s:ofValueRows(com.intellij.refactoring.modplan.ModPlanOption,java.lang.String,java.util.List,com.intellij.refactoring.modplan.ModPlanQuestion$Storage):com.intellij.refactoring.modplan.ModPlanQuestion$Form
 - options():java.util.List
 - pane():com.intellij.codeInspection.options.OptPane
 - storage():com.intellij.refactoring.modplan.ModPlanQuestion$Storage
+- valueRows():java.util.List
 - s:yesNo(com.intellij.refactoring.modplan.ModPlanOption,java.lang.String,java.lang.String):com.intellij.refactoring.modplan.ModPlanQuestion$Form
 *:com.intellij.refactoring.modplan.ModPlanQuestion$Storage
 - s:chooseAll(com.intellij.refactoring.modplan.ModPlanOption,java.util.List):com.intellij.refactoring.modplan.ModPlanQuestion$Storage
 - a:load(com.intellij.refactoring.modplan.ModPlanOptionValues):com.intellij.refactoring.modplan.ModPlanOptionValues
 - a:store(com.intellij.refactoring.modplan.ModPlanOptionValues):V
+*f:com.intellij.refactoring.modplan.ModPlanQuestion$ValueRow
+- java.lang.Record
+- <init>(java.lang.String,java.lang.String,java.lang.String):V
+- f:equals(java.lang.Object):Z
+- f:hashCode():I
+- key():java.lang.String
+- label():java.lang.String
+- note():java.lang.String
 *:com.intellij.refactoring.modplan.ModPlanRefactoring
 - sf:EXCLUDED_USAGES:com.intellij.refactoring.modplan.ModPlanOption
 - sf:PREVIEW:com.intellij.refactoring.modplan.ModPlanOption

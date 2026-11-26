@@ -25,6 +25,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
@@ -161,23 +162,36 @@ public sealed interface ModPlanQuestion {
    * enables.
    * <p>
    * The pane binds to the options by id: each control of {@code pane} has the {@linkplain ModPlanOption#id id} of one of {@code options} as
-   * its bindId, and each option has one control. The values stay in {@link ModPlanOptionValues}, so a headless caller sets them up front
-   * by id.
+   * its bindId, and each option has one control. A form of {@link #ofValueRows} binds its one text option with a row for each key instead.
+   * The values stay in {@link ModPlanOptionValues}, so a headless caller sets them up front by id.
    *
-   * @param pane    the controls of the options; only the controls of {@link OptPane} with no Swing UI of their own work for every client
-   * @param options the options that the pane asks
-   * @param storage where the answers are remembered for the next run; null if they are not. A UI that can remember starts with
-   *                {@link Storage#load} and calls {@link Storage#store} with the answers after OK; the headless callers ignore it
+   * @param pane      the controls of the options; only the controls of {@link OptPane} with no Swing UI of their own work for every client
+   * @param options   the options that the pane asks
+   * @param storage   where the answers are remembered for the next run; null if they are not. A UI that can remember starts with
+   *                  {@link Storage#load} and calls {@link Storage#store} with the answers after OK; the headless callers ignore it
+   * @param valueRows the rows of a form of {@link #ofValueRows}; empty for another form
    */
-  record Form(@NotNull OptPane pane, @NotNull @Unmodifiable List<ModPlanOption<?>> options, @Nullable Storage storage)
+  record Form(@NotNull OptPane pane, @NotNull @Unmodifiable List<ModPlanOption<?>> options, @Nullable Storage storage,
+              @NotNull @Unmodifiable List<ValueRow> valueRows)
     implements ModPlanQuestion {
     public Form {
       options = List.copyOf(options);
-      Set<String> optionIds = options.stream().map(ModPlanOption::getId).collect(Collectors.toSet());
-      Set<String> bindIds = pane.allControls().stream().map(OptControl::bindId).collect(Collectors.toSet());
-      if (!optionIds.equals(bindIds)) {
-        throw new IllegalArgumentException("The controls of the pane must bind the options one to one: " + bindIds + " for " + optionIds);
+      valueRows = List.copyOf(valueRows);
+      if (!valueRows.isEmpty() && (options.size() != 1 || options.getFirst().getType() != String.class)) {
+        throw new IllegalArgumentException("The rows of a form must bind one text option: " + options);
       }
+      Set<String> expectedBindIds = valueRows.isEmpty()
+                                    ? options.stream().map(ModPlanOption::getId).collect(Collectors.toSet())
+                                    : rowBindIds(options.getFirst(), valueRows.size());
+      Set<String> bindIds = pane.allControls().stream().map(OptControl::bindId).collect(Collectors.toSet());
+      if (!expectedBindIds.equals(bindIds)) {
+        throw new IllegalArgumentException("The controls of the pane must bind the options one to one: " + bindIds + " for " +
+                                           expectedBindIds);
+      }
+    }
+
+    public Form(@NotNull OptPane pane, @NotNull List<ModPlanOption<?>> options, @Nullable Storage storage) {
+      this(pane, options, storage, List.of());
     }
 
     /**
@@ -199,6 +213,52 @@ public sealed interface ModPlanQuestion {
     public static @NotNull Form yesNo(@NotNull ModPlanOption<Boolean> option, @Nls @NotNull String yesText, @Nls @NotNull String noText) {
       OptPane pane = OptPane.pane(OptPane.dropdown(option.getId(), "", OptPane.option("true", yesText), OptPane.option("false", noText)));
       return new Form(pane, List.of(option), null);
+    }
+
+    /**
+     * @param option  the text option that holds the value of each key of {@code rows}, see {@link ModPlanOptionValues#valueOf}
+     * @param title   the label of the group of the rows
+     * @param rows    the rows, one under another in their order; not empty
+     * @param storage see {@link #storage}
+     * @return the form of the rows: each row has a checkbox that chooses its key, and an edit box of the value of the key
+     */
+    public static @NotNull Form ofValueRows(@NotNull ModPlanOption<String> option,
+                                            @NlsContexts.Label @NotNull String title,
+                                            @NotNull List<ValueRow> rows,
+                                            @Nullable Storage storage) {
+      OptRegularComponent[] controls = new OptRegularComponent[rows.size()];
+      for (int i = 0; i < rows.size(); i++) {
+        ValueRow row = rows.get(i);
+        String splitLabel = row.note() == null ? "" : "|" + row.note(); //NON-NLS
+        controls[i] = OptPane.horizontalStack(OptPane.checkbox(rowBindId(option, i, false), row.label()),
+                                              OptPane.string(rowBindId(option, i, true), splitLabel));
+      }
+      return new Form(OptPane.pane(OptPane.group(title, controls)), List.of(option), storage, rows);
+    }
+
+    /** @return the bindIds of the controls of {@code rowCount} rows of {@code option}, see {@link #ofValueRows} */
+    private static @NotNull Set<String> rowBindIds(@NotNull ModPlanOption<?> option, int rowCount) {
+      Set<String> result = new HashSet<>();
+      for (int i = 0; i < rowCount; i++) {
+        result.add(rowBindId(option, i, false));
+        result.add(rowBindId(option, i, true));
+      }
+      return result;
+    }
+
+    /** @return the bindId of the checkbox of the row {@code index} of {@code option}, or of its edit box if {@code editBox} */
+    private static @NotNull String rowBindId(@NotNull ModPlanOption<?> option, int index, boolean editBox) {
+      return option.getId() + index + (editBox ? "Value" : "Chosen");
+    }
+
+    /** @return the row whose checkbox, or edit box if {@code editBox}, has the bindId {@code id}; null for another control */
+    private @Nullable ValueRow rowOf(@NotNull String id, boolean editBox) {
+      for (int i = 0; i < valueRows.size(); i++) {
+        if (id.equals(rowBindId(options.getFirst(), i, editBox))) {
+          return valueRows.get(i);
+        }
+      }
+      return null;
     }
 
     /**
@@ -258,11 +318,20 @@ public sealed interface ModPlanQuestion {
     }
 
     /**
-     * @return the value of the control {@code id} of {@code form}: the chosen {@link Choice}s for a multi-selector, else the value of
-     * the option
+     * @return the value of the control {@code id} of {@code form}: the chosen {@link Choice}s for a multi-selector, the choice or the value
+     * of the key of a row, else the value of the option
      */
     private static @NotNull Object answerOf(@NotNull Form form, @NotNull String id, @NotNull ModPlanOptionValues values) {
       ModPlanOption<?> option = form.optionOf(id);
+      @SuppressWarnings("unchecked") ModPlanOption<String> textOption = (ModPlanOption<String>)option;
+      ValueRow chosenRow = form.rowOf(id, false);
+      if (chosenRow != null) {
+        return values.isChosen(textOption, chosenRow.key());
+      }
+      ValueRow valueRow = form.rowOf(id, true);
+      if (valueRow != null) {
+        return Objects.requireNonNullElse(values.valueOf(textOption, valueRow.key()), "");
+      }
       if (form.pane().findControl(id) instanceof OptMultiSelector selector && option.getType() == String.class) {
         @SuppressWarnings("unchecked") Set<String> keys = values.chosenKeys((ModPlanOption<String>)option);
         return new ArrayList<>(ContainerUtil.filter(selector.elements(),
@@ -273,12 +342,23 @@ public sealed interface ModPlanQuestion {
 
     /**
      * @return {@code values} with the value of the control {@code id} of {@code form}. A multi-selector answers about the keys of all its
-     * {@link Choice}s, as {@link ModPlanOptionValues#withChosenKeys} does, and keeps the answers about other keys of the option.
+     * {@link Choice}s, as {@link ModPlanOptionValues#withChosenKeys} does, and keeps the answers about other keys of the option. A control
+     * of a row changes the line of its key only.
      */
     @SuppressWarnings("unchecked")
     private static @NotNull ModPlanOptionValues withAnswer(@NotNull Form form, @NotNull String id, Object value,
                                                            @NotNull ModPlanOptionValues values) {
       ModPlanOption<?> option = form.optionOf(id);
+      ModPlanOption<String> textOption = (ModPlanOption<String>)option;
+      ValueRow chosenRow = form.rowOf(id, false);
+      if (chosenRow != null && value instanceof Boolean chosen) {
+        String key = chosenRow.key();
+        return values.withValue(textOption, key, chosen, Objects.requireNonNullElse(values.valueOf(textOption, key), ""));
+      }
+      ValueRow valueRow = form.rowOf(id, true);
+      if (valueRow != null && value instanceof String keyValue) {
+        return values.withValue(textOption, valueRow.key(), values.isChosen(textOption, valueRow.key()), keyValue);
+      }
       if (form.pane().findControl(id) instanceof OptMultiSelector selector && option.getType() == String.class &&
           value instanceof List<?> elements) {
         List<String> askedKeys = ContainerUtil.mapNotNull(selector.elements(), element -> element instanceof Choice choice ? choice.key() : null);
@@ -288,7 +368,9 @@ public sealed interface ModPlanQuestion {
       return with(values, option, value);
     }
 
+    /** @return the option of the control {@code id}: the option of its id, or the one option of a form of {@link #ofValueRows} */
     private @NotNull ModPlanOption<?> optionOf(@NotNull String id) {
+      if (!valueRows.isEmpty()) return options.getFirst();
       ModPlanOption<?> option = ContainerUtil.find(options, o -> o.getId().equals(id));
       if (option == null) {
         throw new IllegalArgumentException("Unknown option: " + id);
@@ -322,6 +404,16 @@ public sealed interface ModPlanQuestion {
     public @Nullable String getSecondaryText() {
       return secondaryText;
     }
+  }
+
+  /**
+   * A row of a form of {@link Form#ofValueRows}: a checkbox that chooses the key, and an edit box of the value of the key.
+   *
+   * @param key   the key of the row in the option, see {@link ModPlanOptionValues#valueOf}; it has no tab
+   * @param label the label of the checkbox, such as the old name of an element
+   * @param note  the text after the edit box, such as the location of an element; null for none
+   */
+  record ValueRow(@NotNull @NonNls String key, @NotNull @Nls String label, @Nullable @Nls String note) {
   }
 
   /**

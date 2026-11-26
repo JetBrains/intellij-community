@@ -1,8 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.modplan.rename
 
-import com.intellij.codeInspection.options.OptMultiSelector
-import com.intellij.codeInspection.options.OptPane
 import com.intellij.model.SymbolPointer
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.runReadActionBlocking
@@ -135,8 +133,8 @@ internal fun addRelatedRenames(
     val renamer = renamerOfFactory.renamer
     val factoryId = renamerOfFactory.factoryId
     val elementKeys = renamer.elements.filter { renamer.getNewName(it) != null }.mapNotNull { ModPlanRenameOptions.keyOf(factoryId, it) }
-    val choices = renamer.elements.mapNotNull { element -> renamer.getNewName(element)?.let { relatedRenameChoice(factoryId, element, it) } }
-    RelatedRenamesQuestion(factoryId, elementKeys, renamer.dialogDescription, choices, renamer.isSelectedByDefault) { currentValues ->
+    val suggestedRenames = renamer.elements.mapNotNull { element -> renamer.getNewName(element)?.let { suggestedRename(factoryId, element, it) } }
+    RelatedRenamesQuestion(factoryId, elementKeys, renamer.dialogDescription, suggestedRenames, renamer.isSelectedByDefault) { currentValues ->
       renamersOf(ModPlanChain.withOptionValues(request, currentValues), elements, searches)
         .filter { it.renamer.hasAnythingToRename() }.getOrNull(index)?.renamer
     }
@@ -293,15 +291,18 @@ private fun applyChoiceOfRelatedRenamesToRenamer(renamerOfFactory: RenamerOfFact
 }
 
 /**
- * @return the element of the fallback form of [RelatedRenamesQuestion] that renames [element] to [newName]: its key is the line of
- * [ModPlanRenameOptions.RELATED_RENAMES]; null if the element has no file
+ * A rename that a renamer suggests, for the fallback form of [RelatedRenamesQuestion].
+ *
+ * @property key the key of the element in [ModPlanRenameOptions.RELATED_RENAMES]
+ * @property location the location of the element, see [locationOf]
  */
+private class SuggestedRename(val key: String, val oldName: String, val newName: String, val location: @Nls String?)
+
+/** @return the rename of [element] to [newName] for the fallback form of [RelatedRenamesQuestion]; null if the element has no file */
 @RequiresReadLock
-private fun relatedRenameChoice(factoryId: String, element: PsiElement, newName: String): ModPlanQuestion.Choice? {
-  val line = ModPlanRenameOptions.relatedRename(factoryId, element, newName) ?: return null
-  val oldName = (element as? PsiNamedElement)?.name.orEmpty()
-  return ModPlanQuestion.Choice(line, RefactoringBundle.message("modplan.rename.related.rename.0.to.1", oldName, newName),
-                                locationOf(element))
+private fun suggestedRename(factoryId: String, element: PsiElement, newName: String): SuggestedRename? {
+  val key = ModPlanRenameOptions.keyOf(factoryId, element) ?: return null
+  return SuggestedRename(key, (element as? PsiNamedElement)?.name.orEmpty(), newName, locationOf(element))
 }
 
 /** @return the name of the file of [element] and the 1-based number of its line, or only the file name if the file has no document */
@@ -324,14 +325,14 @@ private fun locationOf(element: PsiElement): @Nls String? {
  * @property factoryId the [AutomaticRenamerFactory.getOptionId] of the factory of the renamer
  * @property elementKeys the keys of the elements that the renamer suggests a new name for
  * @property description the description of the dialog of the renamer, the label of the fallback form
- * @property choices the suggested renames of the renamer, for the fallback form
- * @property selectedByDefault whether the fallback form starts with all [choices] chosen, as [AutomaticRenamingDialog] does
+ * @property suggestedRenames the suggested renames of the renamer, for the fallback form
+ * @property selectedByDefault whether the fallback form starts with all [suggestedRenames] chosen, as [AutomaticRenamingDialog] does
  */
 private class RelatedRenamesQuestion(
   private val factoryId: String,
   private val elementKeys: List<String>,
   private val description: @NlsContexts.Label String,
-  private val choices: List<ModPlanQuestion.Choice>,
+  private val suggestedRenames: List<SuggestedRename>,
   private val selectedByDefault: Boolean,
   private val findRenamer: (ModPlanOptionValues) -> AutomaticRenamer?,
 ) : ModPlanQuestion.Custom {
@@ -343,16 +344,24 @@ private class RelatedRenamesQuestion(
     return currentValues.has(ModPlanRenameOptions.RELATED_RENAMES) && answeredElementKeys.containsAll(elementKeys)
   }
 
-  /** A multi-selector of the suggested renames: the chosen ones are made, the others keep their names. */
-  override fun fallback(): ModPlanQuestion.Form {
-    val selector = OptPane.multiSelector(ModPlanRenameOptions.RELATED_RENAMES.id, choices, OptMultiSelector.SelectionMode.MULTIPLE_OR_EMPTY)
-    val storage = if (selectedByDefault) {
-      ModPlanQuestion.Storage.chooseAll(ModPlanRenameOptions.RELATED_RENAMES, choices.map { it.key })
+  /**
+   * A row for each suggested rename: a checkbox and an edit box of the new name. The chosen elements get the names of their edit boxes,
+   * the others keep their names.
+   */
+  override fun fallback(): ModPlanQuestion.Form? {
+    if (suggestedRenames.isEmpty()) return null
+    val option = ModPlanRenameOptions.RELATED_RENAMES
+    val rows = suggestedRenames.map { rename ->
+      ModPlanQuestion.ValueRow(rename.key, RefactoringBundle.message("modplan.rename.related.rename.0.to", rename.oldName), rename.location)
     }
-    else {
-      null
+    val storage = object : ModPlanQuestion.Storage {
+      override fun load(optionValues: ModPlanOptionValues): ModPlanOptionValues =
+        suggestedRenames.fold(optionValues) { values, rename -> values.withValue(option, rename.key, selectedByDefault, rename.newName) }
+
+      override fun store(answers: ModPlanOptionValues) {
+      }
     }
-    return ModPlanQuestion.Form(OptPane.pane(OptPane.group(description, selector)), listOf(ModPlanRenameOptions.RELATED_RENAMES), storage)
+    return ModPlanQuestion.Form.ofValueRows(option, description, rows, storage)
   }
 
   @RequiresEdt
