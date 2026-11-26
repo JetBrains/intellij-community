@@ -28,4 +28,16 @@ object ReferenceUtil {
 
   val linkDestinationPattern: PsiElementPattern.Capture<MarkdownLinkDestination> =
     PlatformPatterns.psiElement(MarkdownLinkDestination::class.java)
+
+  /** A parenthesis without a backslash before it. */
+  private val UNESCAPED_PARENTHESIS = Regex("""(?<!\\)[()]""")
+
+  /** A backslash before an ASCII punctuation character. CommonMark reads this pair as an escape. */
+  private val BACKSLASH_ESCAPE = Regex("""\\([!-/:-@\[-`{-~])""")
+
+  /** Puts a backslash before each parenthesis of [text] that has none. A second call changes nothing. */
+  fun escapeParentheses(text: String): String = UNESCAPED_PARENTHESIS.replace(text, "\\\\$0")
+
+  /** Removes the backslash of each CommonMark escape in [text]. */
+  fun removeBackslashEscapes(text: String): String = BACKSLASH_ESCAPE.replace(text, "$1")
 }

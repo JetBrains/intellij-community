@@ -105,6 +105,8 @@
     <psi.referenceContributor language="Markdown" implementation="org.intellij.plugins.markdown.lang.references.paths.github.GithubWikiLocalReferenceContributor"/>
     <gotoDeclarationHandler implementation="org.intellij.plugins.markdown.lang.references.link.MarkdownLinkTextGotoDeclarationHandler"/>
     <!--suppress SplitModeXmlApiUsage -->
+    <pathReferenceProvider implementation="org.intellij.plugins.markdown.lang.references.paths.MarkdownFileReferenceProvider" order="first"/>
+    <!--suppress SplitModeXmlApiUsage -->
     <pathReferenceProvider implementation="org.intellij.plugins.markdown.lang.references.paths.RelativeFileWithoutExtensionReferenceProvider"/>
     <!--suppress SplitModeXmlApiUsage -->
     <anchorReferenceProvider implementation="org.intellij.plugins.markdown.lang.references.paths.LineNumberPathReferenceProvider"/>

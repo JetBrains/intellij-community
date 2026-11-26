@@ -22,7 +22,10 @@ internal class UrlEncodedFileReferenceSearcher : QueryExecutorBase<PsiReference,
     val target = queryParameters.elementToSearch as? PsiFileSystemItem ?: return
     val virtualFile = target.virtualFile ?: return
     val fileName = virtualFile.nameWithoutExtension.ifEmpty { virtualFile.name }
-    val encodedFileNames = setOf(URLUtil.encodePath(fileName), URLUtil.encodeURIComponent(fileName))
+    // A Markdown escape can split the name in the text. The longest name part finds such a link, and the target check filters the hits.
+    val encodedFileNames = setOf(fileName, URLUtil.encodePath(fileName), URLUtil.encodeURIComponent(fileName))
+      .flatMap { listOf(it, it.longestNamePart()) }
+      .distinct()
       .filter { it != fileName }
     if (encodedFileNames.isEmpty()) return
     val searchScope = PsiSearchScopeUtil.restrictScopeTo(queryParameters.effectiveSearchScope, MarkdownFileType.INSTANCE)
@@ -38,3 +41,7 @@ internal class UrlEncodedFileReferenceSearcher : QueryExecutorBase<PsiReference,
     }
   }
 }
+
+private fun String.longestNamePart(): String = split(NAME_PART_SEPARATOR).maxBy(String::length)
+
+private val NAME_PART_SEPARATOR = Regex("""[^\p{L}\p{N}_]+""")
