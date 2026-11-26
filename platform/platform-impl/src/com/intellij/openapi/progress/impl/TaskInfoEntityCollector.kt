@@ -136,10 +136,16 @@ private suspend fun CoroutineScope.markSuspendable(task: TaskHandle, suspension:
 
   try {
     val suspenderStateChange = MutableSharedFlow<Unit>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+    // The listener must skip only the state change that applySystemStatus() causes. ProgressSuspender reports that change synchronously
+    // on the thread that calls applySystemStatus(). A shared atomic flag would also skip a user pause that another thread (EDT) makes
+    // at the same time, and that pause would be lost. A thread-local flag skips the own change only.
+    val taskStatusUpdateInProgress = ThreadLocal<Boolean>()
 
     ProgressSuspenderTracker.getInstance().startTracking(suspender, object : ProgressSuspenderTracker.SuspenderListener {
       override fun onStateChanged(progressSuspender: ProgressSuspender) {
-        suspenderStateChange.tryEmit(Unit)
+        if (taskStatusUpdateInProgress.get() != true) {
+          suspenderStateChange.tryEmit(Unit)
+        }
       }
     })
 
@@ -163,11 +169,7 @@ private suspend fun CoroutineScope.markSuspendable(task: TaskHandle, suspension:
       task.status
         .filter { it.source != TaskStatus.Source.USER }
         .collect { status ->
-          when (status) {
-            is TaskStatus.Paused -> suspender.suspendProcess(status.reason)
-            is TaskStatus.Running -> suspender.resumeProcess()
-            is TaskStatus.Canceled -> { /* do nothing */ }
-          }
+          applySystemStatus(suspender, status, taskStatusUpdateInProgress)
         }
     }
 
@@ -176,5 +178,23 @@ private suspend fun CoroutineScope.markSuspendable(task: TaskHandle, suspension:
   finally {
     ProgressSuspenderTracker.getInstance().stopTracking(suspender)
     suspender.close()
+  }
+}
+
+/**
+ * Applies a non-user [status] to [suspender] and sets [inProgress] for the time of the call.
+ * The function is not `suspend` on purpose: the thread cannot change between the set and the remove of the thread-local flag.
+ */
+private fun applySystemStatus(suspender: ProgressSuspender, status: TaskStatus, inProgress: ThreadLocal<Boolean>) {
+  inProgress.set(true)
+  try {
+    when (status) {
+      is TaskStatus.Paused -> suspender.suspendProcess(status.reason)
+      is TaskStatus.Running -> suspender.resumeProcess()
+      is TaskStatus.Canceled -> { /* do nothing */ }
+    }
+  }
+  finally {
+    inProgress.remove()
   }
 }

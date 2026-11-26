@@ -16,7 +16,6 @@ import java.util.function.Supplier
 @ApiStatus.Internal
 @VisibleForTesting
 class MergingQueueGuiSuspender {
-  @Volatile
   private var myCurrentSuspender: TaskSuspender? = null
   private val myRequestedSuspensions: MutableList<@NlsContexts.ProgressText String> = ContainerUtil.createConcurrentList()
 
@@ -34,35 +33,45 @@ class MergingQueueGuiSuspender {
 
   fun heavyActivityStarted(activityName: @NlsContexts.ProgressText String): AccessToken {
     val reason = IdeBundle.message("dumb.service.indexing.paused.due.to", activityName)
-    synchronized(myRequestedSuspensions) { myRequestedSuspensions.add(reason) }
-    suspendCurrentTask(reason)
+    synchronized(myRequestedSuspensions) {
+      myRequestedSuspensions.add(reason)
+      suspendCurrentTask(reason)
+    }
     return object : AccessToken() {
       override fun finish() {
-        synchronized(myRequestedSuspensions) { myRequestedSuspensions.remove(reason) }
-        resumeAutoSuspendedTask(reason)
+        synchronized(myRequestedSuspensions) {
+          myRequestedSuspensions.remove(reason)
+          resumeAutoSuspendedTask(reason)
+        }
       }
     }
   }
 
   fun resumeProgressIfPossible() {
-    val suspender = myCurrentSuspender
-    if (suspender != null && suspender.isPaused()) {
-      suspender.resume()
+    synchronized(myRequestedSuspensions) {
+      val suspender = myCurrentSuspender
+      if (suspender != null && suspender.isPaused()) {
+        suspender.resume()
+      }
     }
   }
 
   fun <T> setCurrentSuspenderAndSuspendIfRequested(suspender: TaskSuspender?, runnable: Supplier<T>): T {
     if (suspender == null) return runnable.get()
 
-    LOG.assertTrue(myCurrentSuspender == null, "Already suspended in another thread, or recursive invocation.")
-    return try {
+    synchronized(myRequestedSuspensions) {
+      LOG.assertTrue(myCurrentSuspender == null, "Already suspended in another thread, or recursive invocation.")
       myCurrentSuspender = suspender
       suspendIfRequested(suspender)
+    }
+    return try {
       runnable.get()
     }
     finally {
-      LOG.assertTrue(myCurrentSuspender == suspender, "Suspender has changed unexpectedly")
-      myCurrentSuspender = null
+      synchronized(myRequestedSuspensions) {
+        LOG.assertTrue(myCurrentSuspender == suspender, "Suspender has changed unexpectedly")
+        myCurrentSuspender = null
+      }
     }
   }
 
@@ -75,10 +84,11 @@ class MergingQueueGuiSuspender {
   }
 
   private fun suspendIfRequested(suspender: TaskSuspender) {
-    var suspendedReason: String?
-    synchronized(myRequestedSuspensions) { suspendedReason = myRequestedSuspensions.lastOrNull() }
-    if (suspendedReason != null) {
-      suspender.pause(suspendedReason)
+    synchronized(myRequestedSuspensions) {
+      val suspendedReason = myRequestedSuspensions.lastOrNull()
+      if (suspendedReason != null) {
+        suspender.pause(suspendedReason)
+      }
     }
   }
 

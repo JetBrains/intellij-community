@@ -2,6 +2,7 @@
 package com.intellij.openapi.progress.impl
 
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectCloseListener
 import com.intellij.openapi.project.ProjectManager
@@ -9,7 +10,9 @@ import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.platform.ide.progress.TaskCancellation
 import com.intellij.platform.ide.progress.TaskHandle
 import com.intellij.platform.ide.progress.TaskStorage
+import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.platform.ide.progress.suspender.TaskSuspension
+import com.intellij.platform.ide.progress.suspender.TaskSuspender
 import com.intellij.platform.project.ProjectId
 import com.intellij.platform.project.findProjectOrNull
 import com.intellij.platform.project.projectIdOrNull
@@ -22,7 +25,10 @@ import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.useProjectAsync
 import com.intellij.testFramework.withProjectAsync
 import fleet.util.UID
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
@@ -37,6 +43,38 @@ import java.util.concurrent.atomic.AtomicBoolean
  */
 @TestApplication
 internal class TaskInfoEntityCollectorTest {
+
+  @Test
+  fun `system pause and resume is not replayed as user pause`(@TempDir tempDir: Path): Unit = timeoutRunBlocking {
+    openProject(tempDir.resolve("task")).useProjectAsync { project ->
+      project.service<PerProjectTaskInfoEntityCollector>().startCollectingActiveTasks()
+
+      val taskStarted = CompletableDeferred<Unit>()
+      val mayStop = CompletableDeferred<Unit>()
+      val taskSuspender = TaskSuspender.suspendable("Paused by test")
+      val task = launch {
+        withBackgroundProgress(project, "TaskInfoEntityCollectorTest task", TaskCancellation.nonCancellable(), taskSuspender) {
+          taskStarted.complete(Unit)
+          mayStop.await()
+        }
+      }
+
+      try {
+        taskStarted.await()
+        repeat(100) {
+          taskSuspender.pause("Paused by test")
+          taskSuspender.resume()
+          delay(10)
+          assertFalse(taskSuspender.isPaused())
+        }
+      }
+      finally {
+        taskSuspender.resume()
+        mayStop.complete(Unit)
+        task.join()
+      }
+    }
+  }
 
   @Test
   fun `closing a project removes its tasks and keeps the other tasks`(@TempDir tempDir: Path): Unit = timeoutRunBlocking {
