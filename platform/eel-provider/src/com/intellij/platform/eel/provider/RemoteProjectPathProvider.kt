@@ -48,7 +48,7 @@ fun Project.setRemoteProjectBaseNioPath(rawHostPath: String) {
 @Deprecated("Temporary API for integrating remote development with Eel. Use with caution; see the function documentation.")
 @ApiStatus.Internal
 @VisibleToClasses(
-  "com.intellij.air.acp.frontend.AgentTerminalAuthenticationFrontendService",
+  "com.intellij.air.acp.frontend.AgentTerminalTabFrontendService",
   "com.intellij.air.frontend.core.ProjectBackendBasePathKt",
   "com.intellij.air.frontend.core.ProjectSessionWorkspaceIdKt",
   "com.intellij.air.frontend.session.toolwindow.actions.AgentProjectChooserServiceImpl",
