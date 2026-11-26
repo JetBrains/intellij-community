@@ -89,6 +89,7 @@
     "//plugins/air/frontend/llm:air-frontend-llm-tests_test_lib",
     "//plugins/air/frontend/llm/analytics/jcp:air-frontend-llm-analytics-jcp-tests_test_lib",
     "//plugins/air/frontend/session/view.gui.showcase:air-frontend-session-view-gui-showcase-tests_test_lib",
+    "//plugins/air/shared/airIde/real-git:air-shared-airIde-realGit-tests_test_lib",
     "//plugins/air/shared/airIde:air-shared-airIde-tests_test_lib",
     "//plugins/air/tests/integration/headless/acp-perf:acp-perf_test_lib",
     "//plugins/air/tests/integration/headless/acp:acp_test_lib",
