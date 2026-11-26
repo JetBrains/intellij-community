@@ -34,8 +34,8 @@ internal data class PyProjectImpl private constructor(override val baseDir: Path
      * content root is a Python project when one of these is true:
      * * the IDE is PyCharm, where every module is a Python project;
      * * the `pyproject.toml` model made the module from a `pyproject.toml`, see [pyProjectTomlEntity];
-     * * it has the Python module type, which an importer such as Bazel still writes, so the importer can give it an
-     *   interpreter. The migration removes this type from a module of an `.iml`, see `migrateSdkReferences`;
+     * * it has the Python module type, which an importer such as Bazel and an older build write, so an importer can give
+     *   it an interpreter;
      * * it names an interpreter, see [namesInterpreter]. A module of another IDE, such as a Java module, then is one.
      *
      * The Python facet does not count.
