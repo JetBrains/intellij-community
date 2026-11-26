@@ -65,11 +65,6 @@ _PLATFORM_ASSETS = {
 
 _LAUNCH = struct(
     idea_properties = "//bin:idea.properties",
-    vmoptions = {
-        "darwin": "idea.vmoptions",
-        "linux": "idea64.vmoptions",
-        "windows": "idea64.exe.vmoptions",
-    },
     mac_bundle = struct(icons = {
         "idea.icns": struct(release = "//build:idea-community-images/mac/product.icns", eap = "//build:idea-community-images/mac/product_EAP.icns"),
     }),
@@ -88,12 +83,11 @@ DIST_PLANS = {
     "Idea": _PLAN_AndroidStudio,
 }
 
-# The launch model of every product, which its `platform_resources` component renders. A model file takes the
-# case-safe name of its product, so two products never share one file on a case-insensitive disk. The map is
-# apart from the plans, so products with equal launch facts still share one plan.
-DIST_LAUNCH_MODELS = {
-    "AndroidStudio": "//build/dist-launch:AndroidStudio.launch.json",
-    "Idea": "//build/dist-launch:idea_community.launch.json",
+# The case-safe name of each product whose name differs from its key. The launch model of a product, which its
+# `platform_resources` component renders, is `build/dist-launch/<case-safe name>.launch.json`. So two products
+# never share one file on a case-insensitive disk. Every other product names its model by its key.
+DIST_CASE_SAFE_NAMES = {
+    "Idea": "idea_community",
 }
 
 # The application info sources of every product. The product files action and the plugin descriptor actions read

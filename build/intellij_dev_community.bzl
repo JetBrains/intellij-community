@@ -10,7 +10,7 @@ load("//platform/build-scripts/bazel-rules:dist_runtime_module_repository.bzl", 
 load("//platform/build-scripts/bazel-rules:intellij_dist.bzl", "intellij_project_model_tree")
 load(":dist_fragment_inputs.bzl", "DIST_FRAGMENT_INPUTS")
 load(":dist_module_sets.bzl", "DIST_MODULE_SETS")
-load(":dist_plan.bzl", "DIST_APPLICATION_INFOS", "DIST_LAUNCH_MODELS", "DIST_PLANS", "DIST_PLATFORM_JAR_ORDERS")
+load(":dist_plan.bzl", "DIST_APPLICATION_INFOS", "DIST_CASE_SAFE_NAMES", "DIST_PLANS", "DIST_PLATFORM_JAR_ORDERS")
 load(":dist_product_info.bzl", "DIST_PRODUCT_INFO")
 load(":dist_products.bzl", "DIST_PRODUCTS", "dist_product")
 load(":fragment_names.bzl", "PLATFORM_LIB_FRAGMENT", "PLATFORM_RUNTIME_MODULE_REPOSITORY_FRAGMENT")
@@ -48,7 +48,7 @@ def _product_mode(product):
 # no community launcher changes its flags, and none has a before-run step.
 _DECLARATIONS = intellij_dist_declarations(struct(
     plans = DIST_PLANS,
-    launch_models = DIST_LAUNCH_MODELS,
+    case_safe_names = DIST_CASE_SAFE_NAMES,
     application_infos = DIST_APPLICATION_INFOS,
     platform_jar_orders = DIST_PLATFORM_JAR_ORDERS,
     fragment_inputs = DIST_FRAGMENT_INPUTS,
