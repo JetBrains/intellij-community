@@ -9,7 +9,6 @@ import org.jetbrains.intellij.build.BuildPaths.Companion.COMMUNITY_ROOT
 import org.jetbrains.intellij.build.dev.BuildRequest
 import org.jetbrains.intellij.build.dev.DevBuildFragment
 import org.jetbrains.intellij.build.dev.IdeFingerprintEntry
-import org.jetbrains.intellij.build.dev.PlatformJarSelector
 import org.jetbrains.intellij.build.dev.configureDevModeBuildOptions
 import org.jetbrains.intellij.build.dev.configureTargetPlatform
 import org.jetbrains.intellij.build.dev.computeIdeFingerprint
@@ -62,73 +61,9 @@ class IdeBuilderTest {
   }
 
   @Test
-  fun completeFragmentOwnsEverythingAndNeedsNoManifest() {
-    val complete = DevBuildFragment.COMPLETE
-
-    assertThat(complete.isComplete).isTrue()
-    assertThat(complete.platform).isEqualTo(PlatformJarSelector.ALL)
-    assertThat(complete.runtimeModuleRepository).isTrue()
-    assertThat(
-      DevBuildFragment(
-        name = "platform_lib_reference",
-        platform = PlatformJarSelector(jars = setOf("intellij.charts.jar"), mode = PlatformJarSelector.Mode.ONLY),
-        runtimeModuleRepository = false,
-      ).isComplete
-    ).isFalse()
-  }
-
-  @Test
-  fun runtimeModuleRepositoryFragmentIsNotComplete() {
-    val fragment = DevBuildFragment(name = "platform_runtime_module_repository", platform = null, runtimeModuleRepository = true)
-
-    assertThat(fragment.isComplete).isFalse()
-    assertThat(fragment.runtimeModuleRepository).isTrue()
-    assertThat(fragment.platform).isNull()
-  }
-
-  @Test
-  fun runtimeModuleRepositoryFragmentForcesRepositoryGeneration() {
-    val options = BuildOptions().apply { generateRuntimeModuleRepository = false }
-
-    configureDevModeBuildOptions(
-      options = options,
-      request = createBuildRequest(
-        fragment = DevBuildFragment(name = "platform_runtime_module_repository", platform = null, runtimeModuleRepository = true),
-      ),
-      buildOptionsTemplate = BuildOptions(),
-    )
-
-    assertThat(options.generateRuntimeModuleRepository).isTrue()
-  }
-
-  @Test
-  fun theReferenceSelectorOwnsOnlyTheJarsItNames() {
-    val packed = setOf("intellij.libraries.asm.jar", "intellij.charts.jar")
-    val reference = PlatformJarSelector(jars = packed, mode = PlatformJarSelector.Mode.ONLY)
-    // `product-backend.jar` is named by no module: it holds project libraries only.
-    for (jar in listOf("app-backend.jar", "product-backend.jar", "intellij.libraries.asm.jar", "intellij.charts.jar")) {
-      assertThat(PlatformJarSelector.ALL.accepts(jar)).describedAs(jar).isTrue()
-    }
-
-    assertThat(reference.accepts("intellij.charts.jar")).isTrue()
-    assertThat(reference.accepts("intellij.libraries.asm.jar")).isTrue()
-    assertThat(reference.accepts("app-backend.jar")).isFalse()
-    assertThat(reference.accepts("product-backend.jar")).isFalse()
-  }
-
-  @Test
-  fun onlyASelectorThatOwnsEveryJarMakesADistributionComplete() {
-    assertThat(PlatformJarSelector.ALL.isEverything).isTrue()
-    assertThat(
-      PlatformJarSelector(jars = setOf("intellij.charts.jar"), mode = PlatformJarSelector.Mode.ONLY).isEverything
-    ).isFalse()
-    // A selector that owns only what it names and names nothing owns nothing, which is never what a caller meant.
-    assertThatThrownBy { PlatformJarSelector(jars = emptySet(), mode = PlatformJarSelector.Mode.ONLY) }
-      .isInstanceOf(IllegalArgumentException::class.java)
-      .hasMessageContaining("must name at least one")
-    assertThatThrownBy { PlatformJarSelector(jars = setOf("intellij.charts.jar"), mode = PlatformJarSelector.Mode.ALL) }
-      .isInstanceOf(IllegalArgumentException::class.java)
-      .hasMessageContaining("names none")
+  fun onlyTheCompleteFragmentIsComplete() {
+    assertThat(DevBuildFragment.COMPLETE.isComplete).isTrue()
+    assertThat(DevBuildFragment.PLATFORM_RESOURCES.isComplete).isFalse()
   }
 
   @Test
@@ -221,25 +156,18 @@ class IdeBuilderTest {
     assertThat(options.buildDateInSeconds).isEqualTo(getDevModeOrTestBuildDateInSeconds())
   }
 
-  // The reference of the `jars` gate packs the handed-over jars. The application-info module jar is one of them, and the
-  // product descriptor in it carries the inlined content module descriptors.
   @Test
-  fun theReferenceFragmentInlinesTheProductDescriptorBecauseItPacksTheApplicationInfoJar() {
-    val options = BuildOptions()
+  fun thePlatformResourcesInlineNoProductDescriptorAndGenerateNoRepository() {
+    val options = BuildOptions().apply { generateRuntimeModuleRepository = true }
 
     configureDevModeBuildOptions(
       options = options,
-      request = createBuildRequest(
-        fragment = DevBuildFragment(
-          name = "platform_lib_reference",
-          platform = PlatformJarSelector(jars = setOf("intellij.charts.jar"), mode = PlatformJarSelector.Mode.ONLY),
-          runtimeModuleRepository = false,
-        ),
-      ),
+      request = createBuildRequest(fragment = DevBuildFragment.PLATFORM_RESOURCES),
       buildOptionsTemplate = BuildOptions(),
     )
 
-    assertThat(options.embedProductContentModuleDescriptors).isTrue()
+    assertThat(options.embedProductContentModuleDescriptors).isFalse()
+    assertThat(options.generateRuntimeModuleRepository).isFalse()
   }
 
   @Test

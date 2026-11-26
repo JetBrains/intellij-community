@@ -174,7 +174,7 @@ internal fun scrambleAlreadyLaidOutPluginsForDevMode(
 }
 
 internal fun devModePluginCandidates(request: BuildRequest, context: BuildContext): List<PluginLayout> {
-  check(request.fragment.ownsPlugins || request.fragment.ownsRuntimeModuleRepository) {
+  check(request.fragment.isComplete) {
     "The '${request.fragment}' fragment owns no plugin"
   }
   val bundledMainModuleNames = getBundledMainModuleNames(context, request.additionalModules)

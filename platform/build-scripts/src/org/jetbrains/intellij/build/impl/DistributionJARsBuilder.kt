@@ -603,18 +603,9 @@ internal fun layoutPlatformDistribution(
   platform: PlatformLayout,
   searchableOptionSet: SearchableOptionSetDescriptor?,
   copyFiles: Boolean,
-  /**
-   * The modules to pack, `null` for all of [PlatformLayout.includedModules].
-   *
-   * A split distribution fragment passes its share, so that the modules it does not pack are never resolved to
-   * their outputs and cannot invalidate it.
-   */
-  includedModules: Collection<ModuleItem>? = null,
-  /** Packs only the `lib/` jars this accepts; `null` packs all of them. Set by a split distribution fragment. */
-  assetFilter: DistributionAssetFilter? = null,
   context: BuildContext,
 ): List<DistributionFileEntry> {
-  val selectedModules = includedModules ?: platform.includedModules
+  val selectedModules = platform.includedModules
   val selectedModuleNames = selectedModules.mapTo(HashSet(), ModuleItem::moduleName)
   if (copyFiles) {
     taskScope {
@@ -662,7 +653,6 @@ internal fun layoutPlatformDistribution(
         includedModules = selectedModules,
         searchableOptionSet = searchableOptionSet,
         cachedDescriptorWriterProvider = null,
-        assetFilter = assetFilter,
         context = context,
       ).first
     }
@@ -831,7 +821,6 @@ internal fun layoutDistribution(
   includedModules: Collection<ModuleItem>,
   searchableOptionSet: SearchableOptionSetDescriptor?,
   cachedDescriptorWriterProvider: ScopedCachedDescriptorContainer?,
-  assetFilter: DistributionAssetFilter? = null,
   nativeFilesInPluginDir: Boolean = false,
   context: BuildContext,
 ): Pair<List<DistributionFileEntry>, Path> {
@@ -875,7 +864,6 @@ internal fun layoutDistribution(
           searchableOptionSet = searchableOptionSet,
           dryRun = !copyFiles,
           descriptorCache = cachedDescriptorWriterProvider,
-          assetFilter = assetFilter,
           nativeFilesInPluginDir = nativeFilesInPluginDir,
           context = context,
         )

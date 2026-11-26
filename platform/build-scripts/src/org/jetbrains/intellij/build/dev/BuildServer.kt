@@ -103,7 +103,7 @@ fun renderSplitPlatformResources(
     runDirOverride = scratchDir.resolve("run"),
     scratchDir = scratchDir.resolve("scratch"),
     buildDateInSeconds = buildDateInSeconds,
-    fragment = DevBuildFragment(name = "platform_resources", platform = null, runtimeModuleRepository = false),
+    fragment = DevBuildFragment.PLATFORM_RESOURCES,
   )
   BuildLifetime().use { lifetime ->
     val context = createBuildContextFromProject(
