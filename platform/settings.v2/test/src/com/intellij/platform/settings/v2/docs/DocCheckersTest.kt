@@ -10,7 +10,7 @@ import kotlin.io.path.createParentDirectories
 import kotlin.io.path.writeText
 
 /**
- * Runs [DocLinkChecker], [AdrChainChecker], [AdrNumberChecker] and [ProposedAdrChecker] on small feature folders, so
+ * Runs [DocLinkChecker], [AdrChainChecker], [AdrIdChecker] and [ProposedAdrChecker] on small feature folders, so
  * each kind of problem is found and each correct folder passes.
  */
 class DocCheckersTest {
@@ -34,15 +34,25 @@ class DocCheckersTest {
   private fun chainProblems(maxChainLength: Int = 2): List<String> =
     AdrChainChecker(feature.resolve("adr"), maxChainLength).findProblems().map { it.message }
 
-  private fun numberProblems(): List<String> =
-    AdrNumberChecker(feature.resolve("adr")).findProblems().map { it.message }
+  private fun idProblems(lastAdrNumber: Int = 99): List<String> {
+    val checker = AdrIdChecker(feature.resolve("adr"), lastAdrNumber)
+    val problems = checker.shapeProblems() + checker.newNumberProblems() + checker.duplicateProblems() + checker.recordProblems()
+    return problems.map { it.message }
+  }
 
   private fun proposedProblems(): List<String> =
     ProposedAdrChecker(feature.resolve("adr")).findProblems().map { it.message }
 
-  private fun adr(number: String, status: String, slug: String = "decision-$number", earlierDecisions: String = "") {
-    write("adr/$number-$slug.md", """
-      |# $number. Decision $number
+  private fun adr(
+    id: String,
+    status: String,
+    slug: String = "decision-$id",
+    earlierDecisions: String = "",
+    date: String? = null,
+  ) {
+    val dateLine = date?.let { "\n\nDate: $it" }.orEmpty()
+    write("adr/$id-$slug.md", """
+      |# $id. Decision $id$dateLine
       |
       |## Status
       |
@@ -55,8 +65,8 @@ class DocCheckersTest {
     """.trimMargin())
   }
 
-  private fun foldEntries(vararg numbers: String): String =
-    "\n## Earlier decisions\n" + numbers.joinToString("") { "\n### $it, 2026-01-01: the decision $it\n\nText.\n" }
+  private fun foldEntries(vararg ids: String): String =
+    "\n## Earlier decisions\n" + ids.joinToString("") { "\n### $it, 2026-01-01: the decision $it\n\nText.\n" }
 
   @Test
   fun `correct links pass`() {
@@ -119,6 +129,35 @@ class DocCheckersTest {
   }
 
   @Test
+  fun `correct links to a six-character ADR pass`() {
+    adr("00001C", "Accepted.")
+    write("AGENTS.md", "# Rules")
+    write("spec/a.spec.md", """
+      See [ADR 00001C](../adr/00001C-decision-00001C.md) and [AGENTS](../AGENTS.md).
+    """)
+    write("src/A.kt", "/** Follows ADR 00001C. */")
+    assertEquals(emptyList<String>(), linkProblems())
+  }
+
+  @Test
+  fun `a wrong link and a plain mention of a six-character ADR are found`() {
+    adr("0001", "Accepted.")
+    adr("00001C", "Accepted.")
+    write("spec/a.spec.md", """
+      See [ADR 00002A](../adr/00001C-decision-00001C.md).
+      See [ADR 000001](../adr/0001-decision-0001.md).
+      As ADR 00001C says.
+    """)
+    write("src/A.kt", "/** Follows ADR 00002A. */")
+    assertEquals(listOf(
+      "the link [ADR 00002A] points to 00001C-decision-00001C.md, not to ADR 00002A",
+      "the link [ADR 000001] points to 0001-decision-0001.md, not to ADR 000001",
+      "the mention ADR 00001C is not a link",
+      "no ADR exists for the mention ADR 00002A",
+    ), linkProblems())
+  }
+
+  @Test
   fun `a link outside the checked root is skipped`() {
     repository.resolve("other").createDirectories()
     write("spec/a.spec.md", "See [the other part](../../other/missing.md).")
@@ -153,6 +192,26 @@ class DocCheckersTest {
     assertEquals(listOf("the chain 0001 -> 0002 -> 0003 holds 3 ADRs, more than 2. Merge these ADRs into one decision"),
                  chainProblems())
     assertEquals(emptyList<String>(), chainProblems(maxChainLength = 3))
+  }
+
+  @Test
+  fun `a chain that mixes both id shapes is found`() {
+    adr("0001", "Superseded by [ADR 00001C](./00001C-decision-00001C.md).")
+    adr("00001C", "Accepted. Supersedes [ADR 0001](./0001-decision-0001.md). Amended by [ADR 00002A](./00002A-decision-00002A.md).")
+    adr("00002A", "Accepted. Amends [ADR 00001C](./00001C-decision-00001C.md).")
+    assertEquals(listOf("the chain 0001 -> 00001C -> 00002A holds 3 ADRs, more than 2. Merge these ADRs into one decision"),
+                 chainProblems())
+    assertEquals(emptyList<String>(), chainProblems(maxChainLength = 3))
+  }
+
+  @Test
+  fun `the relation problems of both id shapes come in time order`() {
+    adr("00001C", "Accepted. Amended by [ADR 00002A](./00002A-decision-00002A.md).")
+    adr("00002A", "Accepted.")
+    adr("0005", "Accepted. Amended by [ADR 0006](./0006-decision-0006.md).")
+    adr("0006", "Accepted.")
+    assertEquals(listOf("Amended by ADR 0006, but ADR 0006 has no Amends ADR 0005",
+                        "Amended by ADR 00002A, but ADR 00002A has no Amends ADR 00001C"), chainProblems())
   }
 
   @Test
@@ -246,49 +305,136 @@ class DocCheckersTest {
   }
 
   @Test
-  fun `numbers that each belong to one file or one fold entry pass`() {
+  fun `ids of both shapes that each belong to one file or one fold entry pass`() {
     adr("0001", "Accepted.")
-    adr("0004", "Accepted.", earlierDecisions = foldEntries("0002", "0003"))
-    assertEquals(emptyList<String>(), numberProblems())
+    adr("0004", "Accepted.", earlierDecisions = foldEntries("0002"))
+    adr("00002A", "Accepted.", date = "2026-11-18T05:21:47Z", earlierDecisions = foldEntries("0003", "00001C"))
+    assertEquals(emptyList<String>(), idProblems())
+  }
+
+  @Test
+  fun `a file name that does not start with an ADR id is found`() {
+    write("adr/01abcd-lowercase.md", "# 01abcd. Decision")
+    write("adr/42-short.md", "# 42. Decision")
+    write("adr/README.md", "# ADRs")
+    assertEquals(listOf(
+      "the file name 01abcd-lowercase.md does not start with a four-digit number or a six-character id",
+      "the file name 42-short.md does not start with a four-digit number or a six-character id",
+      "the file name README.md does not start with a four-digit number or a six-character id",
+    ), idProblems())
+  }
+
+  @Test
+  fun `a number above the last number is found`() {
+    adr("0098", "Accepted.", earlierDecisions = foldEntries("0101"))
+    adr("0099", "Accepted.")
+    adr("0100", "Accepted.")
+    assertEquals(listOf(
+      "the fold entry in 0098-decision-0098.md:13 has the number 0101, above the last number 0099. A new ADR takes a time-based id",
+      "the file 0100-decision-0100.md has the number 0100, above the last number 0099. A new ADR takes a time-based id",
+    ), idProblems(lastAdrNumber = 99))
   }
 
   @Test
   fun `two files with the same number are found`() {
     adr("0001", "Accepted.", slug = "first-branch")
     adr("0001", "Accepted.", slug = "second-branch")
-    assertEquals(listOf("the number 0001 is used 2 times: the file 0001-first-branch.md, the file 0001-second-branch.md"),
-                 numberProblems())
+    assertEquals(listOf("the id 000001 is used 2 times: the file 0001-first-branch.md, the file 0001-second-branch.md"),
+                 idProblems())
+  }
+
+  @Test
+  fun `two ADRs that two branches create in the same second are found`() {
+    adr("00001C", "Accepted.", slug = "first-branch", date = "2026-11-18T05:21:13Z")
+    adr("00001C", "Accepted.", slug = "second-branch", date = "2026-11-18T05:21:13Z")
+    assertEquals(listOf("the id 00001C is used 2 times: the file 00001C-first-branch.md, the file 00001C-second-branch.md"),
+                 idProblems())
+  }
+
+  @Test
+  fun `a number and the six-character id with the same value are found`() {
+    adr("0042", "Accepted.")
+    adr("000042", "Accepted.", date = "2026-11-18T05:22:51Z")
+    assertEquals(listOf("the id 000042 is used 2 times: the file 000042-decision-000042.md, the file 0042-decision-0042.md"),
+                 idProblems())
   }
 
   @Test
   fun `a file that reuses a folded number is found`() {
     adr("0001", "Accepted.")
     adr("0002", "Accepted.", earlierDecisions = foldEntries("0001"))
-    assertEquals(listOf("the number 0001 is used 2 times: the file 0001-decision-0001.md, " +
-                        "the fold entry in 0002-decision-0002.md:13"), numberProblems())
+    assertEquals(listOf("the id 000001 is used 2 times: the file 0001-decision-0001.md, " +
+                        "the fold entry in 0002-decision-0002.md:13"), idProblems())
+  }
+
+  @Test
+  fun `a file that reuses a folded six-character id is found`() {
+    adr("00001C", "Accepted.", date = "2026-11-18T05:21:13Z")
+    adr("00002A", "Accepted.", date = "2026-11-18T05:21:47Z", earlierDecisions = foldEntries("00001C"))
+    assertEquals(listOf("the id 00001C is used 2 times: the file 00001C-decision-00001C.md, " +
+                        "the fold entry in 00002A-decision-00002A.md:15"), idProblems())
+  }
+
+  @Test
+  fun `a fold entry with a number and a file with the same six-character id are found`() {
+    adr("0001", "Accepted.", earlierDecisions = foldEntries("0042"))
+    adr("000042", "Accepted.", date = "2026-11-18T05:22:51Z")
+    assertEquals(listOf("the id 000042 is used 2 times: the fold entry in 0001-decision-0001.md:13, " +
+                        "the file 000042-decision-000042.md"), idProblems())
   }
 
   @Test
   fun `two merged ADRs that fold the same number are found`() {
     adr("0002", "Accepted.", earlierDecisions = foldEntries("0001"))
     adr("0003", "Accepted.", earlierDecisions = foldEntries("0001"))
-    assertEquals(listOf("the number 0001 is used 2 times: the fold entry in 0002-decision-0002.md:13, " +
-                        "the fold entry in 0003-decision-0003.md:13"), numberProblems())
+    assertEquals(listOf("the id 000001 is used 2 times: the fold entry in 0002-decision-0002.md:13, " +
+                        "the fold entry in 0003-decision-0003.md:13"), idProblems())
   }
 
   @Test
-  fun `a number that no file and no fold entry uses is found`() {
-    adr("0001", "Accepted.")
-    adr("0004", "Accepted.", earlierDecisions = foldEntries("0003"))
-    assertEquals(listOf("no ADR file and no fold entry uses the number 0002"), numberProblems())
+  fun `an id that does not match the date is found`() {
+    adr("00001C", "Accepted.", date = "2026-11-18T05:21:14Z")
+    adr("00002A", "Accepted.", date = "2026-11-18T05:20:24Z")
+    assertEquals(listOf("the date 2026-11-18T05:21:14Z gives the id 00001D, not 00001C",
+                        "the date 2026-11-18T05:20:24Z gives no id"), idProblems())
   }
 
   @Test
-  fun `a second merge must keep the fold entries of the merged ADR it folds`() {
-    adr("0003", "Accepted.", earlierDecisions = foldEntries("0001", "0002"))
-    assertEquals(emptyList<String>(), numberProblems())
-    adr("0003", "Accepted.", earlierDecisions = foldEntries("0002"))
-    assertEquals(listOf("no ADR file and no fold entry uses the number 0001"), numberProblems())
+  fun `a title that does not start with the id is found`() {
+    write("adr/00001C-decision.md", """
+      # 00001D. Decision
+
+      Date: 2026-11-18T05:21:13Z
+    """)
+    write("adr/00002A-decision.md", """
+      # 00002A Decision
+
+      Date: 2026-11-18T05:21:47Z
+    """)
+    assertEquals(listOf("the title does not start with `# 00001C. `, the id from the file name",
+                        "the title does not start with `# 00002A. `, the id from the file name"), idProblems())
+  }
+
+  @Test
+  fun `a file whose name starts with six capital letters and a dash is read as an ADR`() {
+    write("adr/README-notes.md", "# Notes")
+    assertEquals(listOf("the title does not start with `# README. `, the id from the file name",
+                        "the Date line is not a UTC time in seconds, such as `Date: 2026-11-18T05:21:13Z`"), idProblems())
+  }
+
+  @Test
+  fun `a six-character ADR without a date in seconds is found`() {
+    adr("00001C", "Accepted.", date = "2026-11-18")
+    adr("00002A", "Accepted.", date = "2026-11-18T05:21Z")
+    adr("000042", "Accepted.")
+    val problem = "the Date line is not a UTC time in seconds, such as `Date: 2026-11-18T05:21:13Z`"
+    assertEquals(listOf(problem, problem, problem), idProblems())
+  }
+
+  @Test
+  fun `the date of a merged six-character ADR is read before its merge date`() {
+    adr("00001C", "Accepted.", date = "2026-11-18T05:21:13Z. Merged: 2026-12-01.")
+    assertEquals(emptyList<String>(), idProblems())
   }
 
   @Test
@@ -308,7 +454,7 @@ class DocCheckersTest {
       |
       |### 0001, a later section
     """.trimMargin())
-    assertEquals(emptyList<String>(), numberProblems())
+    assertEquals(emptyList<String>(), idProblems())
   }
 
   @Test
@@ -326,14 +472,14 @@ class DocCheckersTest {
       |
       |### 0002, 2026-01-01: the decision 0002
     """.trimMargin())
-    assertEquals(emptyList<String>(), numberProblems())
+    assertEquals(emptyList<String>(), idProblems())
   }
 
   @Test
-  fun `an empty or missing ADR folder has no number problems`() {
-    assertEquals(emptyList<String>(), numberProblems())
+  fun `an empty or missing ADR folder has no id problems`() {
+    assertEquals(emptyList<String>(), idProblems())
     feature.resolve("adr").createDirectories()
-    assertEquals(emptyList<String>(), numberProblems())
+    assertEquals(emptyList<String>(), idProblems())
   }
 
   @Test
@@ -347,7 +493,9 @@ class DocCheckersTest {
   fun `a Proposed ADR is found`() {
     adr("0001", "Accepted.")
     adr("0002", "Proposed ([ISSUE-1](https://example.com/ISSUE-1)).")
-    assertEquals(listOf("ADR 0002 is Proposed. Accept it before it goes to master"), proposedProblems())
+    adr("00001C", "Proposed.")
+    assertEquals(listOf("ADR 0002 is Proposed. Accept it before it goes to master",
+                        "ADR 00001C is Proposed. Accept it before it goes to master"), proposedProblems())
   }
 
   @Test

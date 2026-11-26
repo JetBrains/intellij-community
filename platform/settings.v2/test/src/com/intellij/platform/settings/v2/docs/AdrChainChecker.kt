@@ -7,7 +7,7 @@ import java.nio.file.Path
  * Checks the amendment and supersession graph of the decision records (ADRs) in one folder.
  *
  * The `Status` section of an ADR names its relations: `Amends`, `Supersedes`, `Amended by` and `Superseded by`, each
- * followed by links like `[ADR NNNN](...)`, up to the end of the sentence. The checker builds the graph from the
+ * followed by links like `[ADR <ID>](...)`, up to the end of the sentence. The checker builds the graph from the
  * older ADR to the newer one and reports:
  * - a relation to an ADR that does not exist;
  * - a relation that the other ADR does not name back. An ADR in the `Proposed` status may amend or supersede an older
@@ -15,7 +15,7 @@ import java.nio.file.Path
  * - a cycle;
  * - a chain of more than [maxChainLength] ADRs. Such a chain must be merged into fewer ADRs.
  *
- * @param adrDir the folder that holds the `NNNN-<slug>.md` files.
+ * @param adrDir the folder that holds the ADR files.
  * @param maxChainLength the largest number of ADRs that one chain may hold.
  */
 class AdrChainChecker(private val adrDir: Path, private val maxChainLength: Int) {
@@ -24,40 +24,40 @@ class AdrChainChecker(private val adrDir: Path, private val maxChainLength: Int)
   /** Returns every problem in the graph. */
   fun findProblems(): List<DocProblem> = relationProblems() + chainProblems()
 
-  /** Returns each chain of more than [maxChainLength] ADRs, as the ADR numbers from the oldest to the newest. */
+  /** Returns each chain of more than [maxChainLength] ADRs, as the ADR ids from the oldest to the newest. */
   fun longChains(): List<List<String>> {
     val newer = newerByOlder()
     val longest = HashMap<String, List<String>>()
-    fun longestFrom(number: String, path: Set<String>): List<String> {
-      longest[number]?.let { return it }
-      val next = newer[number].orEmpty().filter { it !in path }
-      val result = listOf(number) + (next.map { longestFrom(it, path + number) }.maxByOrNull { it.size } ?: emptyList())
-      longest[number] = result
+    fun longestFrom(id: String, path: Set<String>): List<String> {
+      longest[id]?.let { return it }
+      val next = newer[id].orEmpty().filter { it !in path }
+      val result = listOf(id) + (next.map { longestFrom(it, path + id) }.maxByOrNull { it.size } ?: emptyList())
+      longest[id] = result
       return result
     }
     val hasOlder = newer.values.flatten().toSet()
-    return newer.keys.filter { it !in hasOlder }.sorted()
+    return newer.keys.filter { it !in hasOlder }.sortedWith(ADR_ID_ORDER)
       .map { longestFrom(it, emptySet()) }
       .filter { it.size > maxChainLength }
   }
 
   private fun relationProblems(): List<DocProblem> {
     val problems = mutableListOf<DocProblem>()
-    for (record in records.values.sortedBy { it.number }) {
+    for (record in records.values.sortedWith(compareBy(ADR_ID_ORDER, AdrRecord::id))) {
       for (relation in record.relations) {
-        val other = records[relation.number]
+        val other = records[relation.id]
         if (other == null) {
           problems += DocProblem(record.file, record.statusLine,
-                                 "${relation.kind.text} names ADR ${relation.number}, which does not exist")
+                                 "${relation.kind.text} names ADR ${relation.id}, which does not exist")
           continue
         }
         val backKind = relation.kind.inverse
-        val namedBack = other.relations.any { it.kind == backKind && it.number == record.number }
+        val namedBack = other.relations.any { it.kind == backKind && it.id == record.id }
         val mayBeUnnamed = relation.kind.isFromNewer && record.statusWord == PROPOSED_STATUS
         if (!namedBack && !mayBeUnnamed) {
           problems += DocProblem(record.file, record.statusLine,
-                                 "${relation.kind.text} ADR ${relation.number}, but ADR ${relation.number} has no " +
-                                 "${backKind.text} ADR ${record.number}")
+                                 "${relation.kind.text} ADR ${relation.id}, but ADR ${relation.id} has no " +
+                                 "${backKind.text} ADR ${record.id}")
         }
       }
     }
@@ -79,17 +79,17 @@ class AdrChainChecker(private val adrDir: Path, private val maxChainLength: Int)
     val newer = newerByOlder()
     val done = HashSet<String>()
     val problems = mutableListOf<DocProblem>()
-    fun visit(number: String, path: List<String>) {
-      if (number in path) {
-        val cycle = path.subList(path.indexOf(number), path.size) + number
-        val record = records.getValue(number)
+    fun visit(id: String, path: List<String>) {
+      if (id in path) {
+        val cycle = path.subList(path.indexOf(id), path.size) + id
+        val record = records.getValue(id)
         problems += DocProblem(record.file, record.statusLine, "the ADRs form a cycle: ${cycle.joinToString(" -> ")}")
         return
       }
-      if (!done.add(number)) return
-      for (next in newer[number].orEmpty()) visit(next, path + number)
+      if (!done.add(id)) return
+      for (next in newer[id].orEmpty()) visit(next, path + id)
     }
-    for (number in newer.keys.sorted()) visit(number, emptyList())
+    for (id in newer.keys.sortedWith(ADR_ID_ORDER)) visit(id, emptyList())
     return problems
   }
 
@@ -98,10 +98,10 @@ class AdrChainChecker(private val adrDir: Path, private val maxChainLength: Int)
     val newer = HashMap<String, MutableSet<String>>()
     for (record in records.values) {
       for (relation in record.relations) {
-        if (relation.number !in records) continue
-        val (older, newerNumber) = if (relation.kind.isFromNewer) relation.number to record.number else record.number to relation.number
-        newer.getOrPut(older) { sortedSetOf() }.add(newerNumber)
-        newer.getOrPut(newerNumber) { sortedSetOf() }
+        if (relation.id !in records) continue
+        val (older, newerId) = if (relation.kind.isFromNewer) relation.id to record.id else record.id to relation.id
+        newer.getOrPut(older) { sortedSetOf(ADR_ID_ORDER) }.add(newerId)
+        newer.getOrPut(newerId) { sortedSetOf(ADR_ID_ORDER) }
       }
     }
     return newer
@@ -109,7 +109,7 @@ class AdrChainChecker(private val adrDir: Path, private val maxChainLength: Int)
 
   private fun readRecords(): Map<String, AdrRecord> =
     readAdrFiles(adrDir).associate {
-      it.number to AdrRecord(it.number, it.file, it.statusLine, it.statusWord, parseRelations(it.status))
+      it.id to AdrRecord(it.id, it.file, it.statusLine, it.statusWord, parseRelations(it.status))
     }
 
   private fun parseRelations(status: String): List<Relation> {
@@ -117,10 +117,10 @@ class AdrChainChecker(private val adrDir: Path, private val maxChainLength: Int)
     var kind: RelationKind? = null
     for (token in RELATION_TOKEN.findAll(status)) {
       val keyword = token.groups[1]?.value
-      val number = token.groups[2]?.value
+      val id = token.groups[2]?.value?.let(::adrIdOfLinkText)
       when {
         keyword != null -> kind = RelationKind.entries.first { it.text == keyword }
-        number != null -> kind?.let { relations += Relation(it, number) }
+        id != null -> kind?.let { relations += Relation(it, id) }
         else -> kind = null
       }
     }
@@ -128,14 +128,14 @@ class AdrChainChecker(private val adrDir: Path, private val maxChainLength: Int)
   }
 
   private data class AdrRecord(
-    val number: String,
+    val id: String,
     val file: Path,
     val statusLine: Int,
     val statusWord: String,
     val relations: List<Relation>,
   )
 
-  private data class Relation(val kind: RelationKind, val number: String)
+  private data class Relation(val kind: RelationKind, val id: String)
 
   private enum class RelationKind(val text: String, val isFromNewer: Boolean) {
     AMENDS("Amends", true),
@@ -154,6 +154,6 @@ class AdrChainChecker(private val adrDir: Path, private val maxChainLength: Int)
 
   private companion object {
     /** Matches a relation keyword, an ADR link text, or a sentence end, which closes the list of a keyword. */
-    val RELATION_TOKEN = Regex("""(Amends|Supersedes|Amended by|Superseded by)|\[(?:ADR )?(\d{4})]|\.(?=\s|\z)""")
+    val RELATION_TOKEN = Regex("""(Amends|Supersedes|Amended by|Superseded by)|\[($ADR_LINK_TEXT_PATTERN)]|\.(?=\s|\z)""")
   }
 }

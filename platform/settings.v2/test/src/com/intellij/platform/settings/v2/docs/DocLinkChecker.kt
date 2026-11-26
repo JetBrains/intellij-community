@@ -6,7 +6,6 @@ import java.nio.file.Path
 import kotlin.io.path.extension
 import kotlin.io.path.isDirectory
 import kotlin.io.path.isRegularFile
-import kotlin.io.path.listDirectoryEntries
 import kotlin.io.path.name
 import kotlin.io.path.walk
 
@@ -14,14 +13,14 @@ import kotlin.io.path.walk
  * Checks the links between the specs, the decision records (ADRs) and the sources of one feature.
  *
  * The feature keeps its specs in `spec/` and its ADRs in `adr/` under [featureRoot]. An ADR file is named
- * `NNNN-<slug>.md`. The checker reports:
+ * `<ID>-<slug>.md`, or `NNNN-<slug>.md` for an ADR from before the time-based ids. The checker reports:
  * - a relative Markdown link whose target does not exist;
- * - a link with the text `ADR NNNN` or `NNNN` whose target is not the ADR with that number;
- * - an `ADR NNNN` mention in a spec or an ADR that is not a link;
+ * - a link with the text `ADR <ID>` or `NNNN` whose target is not the ADR with that id;
+ * - an `ADR <ID>` mention in a spec or an ADR that is not a link;
  * - a spec `targets` entry or a `[@test]` path that does not exist. A `targets` entry can be a glob, which must
  *   match at least one file;
  * - a `// @spec` backlink in a source file that does not point to an existing `*.spec.md` file;
- * - an `ADR NNNN` mention in a source file for which no ADR exists.
+ * - an `ADR <ID>` mention in a source file for which no ADR exists.
  *
  * The checker never requires a link to be present. It checks only the links that exist. Fenced code blocks and
  * inline code spans in Markdown are not checked.
@@ -35,7 +34,7 @@ import kotlin.io.path.walk
  * @param excludedSources the files and folders under [sourceRoots] that are not checked, such as the tests of this
  *   checker, which hold broken links on purpose.
  * @param extraMarkdown other Markdown files of the feature, such as `AGENTS.md`. Their links are checked, but a plain
- *   `ADR NNNN` mention in them is allowed.
+ *   `ADR <ID>` mention in them is allowed.
  */
 class DocLinkChecker(
   private val featureRoot: Path,
@@ -46,21 +45,18 @@ class DocLinkChecker(
 ) {
   private val specDir = featureRoot.resolve(SPEC_DIR)
   private val adrDir = featureRoot.resolve(ADR_DIR)
-  private val adrNumbers: Set<String> by lazy { adrFiles().mapNotNullTo(HashSet()) { adrNumber(it) } }
+  private val adrIds: Set<String> by lazy { adrFolderFiles(adrDir).mapNotNullTo(HashSet()) { adrIdOf(it) } }
 
   /** Returns every problem in the specs, the ADRs, the extra Markdown files and the sources, sorted by file and line. */
   fun findProblems(): List<DocProblem> {
     val docs = specFiles().flatMap { checkMarkdown(it, requireLinkedMentions = true) } +
-               adrFiles().flatMap { checkMarkdown(it, requireLinkedMentions = true) } +
+               adrFolderFiles(adrDir).flatMap { checkMarkdown(it, requireLinkedMentions = true) } +
                extraMarkdown.filter { it.isRegularFile() }.flatMap { checkMarkdown(it, requireLinkedMentions = false) }
     return (docs + sourceFiles().flatMap { checkSource(it) }).sortedWith(compareBy({ it.file.toString() }, { it.line }))
   }
 
   private fun specFiles(): List<Path> =
     if (specDir.isDirectory()) specDir.walk().filter { it.extension == "md" }.sorted().toList() else emptyList()
-
-  private fun adrFiles(): List<Path> =
-    if (adrDir.isDirectory()) adrDir.listDirectoryEntries("*.md").sorted() else emptyList()
 
   private fun sourceFiles(): List<Path> =
     sourceRoots.filter { it.isDirectory() }.flatMap { root ->
@@ -87,9 +83,9 @@ class DocLinkChecker(
         problems += DocProblem(file, line, "the link target $target does not exist")
         continue
       }
-      val linkedNumber = ADR_LINK_TEXT.matchEntire(linkText)?.groupValues?.get(1) ?: continue
-      if (adrNumber(resolved) != linkedNumber) {
-        problems += DocProblem(file, line, "the link [$linkText] points to ${resolved.name}, not to ADR $linkedNumber")
+      val linkedId = ADR_LINK_TEXT.matchEntire(linkText)?.value?.let(::adrIdOfLinkText) ?: continue
+      if (adrIdOf(resolved) != linkedId) {
+        problems += DocProblem(file, line, "the link [$linkText] points to ${resolved.name}, not to ADR $linkedId")
       }
     }
     if (requireLinkedMentions) {
@@ -119,7 +115,7 @@ class DocLinkChecker(
       }
     }
     for (mention in ADR_MENTION.findAll(text)) {
-      if (mention.groupValues[1] !in adrNumbers) {
+      if (mention.groupValues[1] !in adrIds) {
         problems += DocProblem(file, lineOf(text, mention.range.first), "no ADR exists for the mention ${mention.value}")
       }
     }
@@ -167,18 +163,14 @@ class DocLinkChecker(
     private val GLOB_CHARS = setOf('*', '?', '[', '{')
 
     private val MARKDOWN_LINK = Regex("""\[([^]]*)]\(([^)\s]+)\)""")
-    private val ADR_LINK_TEXT = Regex("""(?:ADR )?(\d{4})""")
-    private val ADR_MENTION = Regex("""\bADR (\d{4})\b""")
+    private val ADR_LINK_TEXT = Regex(ADR_LINK_TEXT_PATTERN)
+    private val ADR_MENTION = Regex("""\bADR ($ADR_ID_PATTERN)\b""")
     private val TEST_LINK = Regex("""\[@test]\s+(\S+)""")
     private val SPEC_BACKLINK = Regex("""//\s*@spec\s+(\S+)""")
     private val FRONT_MATTER = Regex("""\A---\n.*?\n---\n""", RegexOption.DOT_MATCHES_ALL)
     private val TARGETS_BLOCK = Regex("""^targets:\n(?:[ \t]+-.*\n)*""", RegexOption.MULTILINE)
     private val TARGET_ENTRY = Regex("""^[ \t]+-[ \t]+(\S+)""", RegexOption.MULTILINE)
     private val WHITESPACE = Regex("""\s+""")
-    private val ADR_FILE = Regex("""(\d{4})-.*\.md""")
-
-    /** Returns the number of the ADR file [file], or `null` when its name is not `NNNN-<slug>.md`. */
-    fun adrNumber(file: Path): String? = ADR_FILE.matchEntire(file.name)?.groupValues?.get(1)
 
     private fun isExternal(target: String): Boolean = target.contains("://") || target.startsWith("mailto:")
   }
