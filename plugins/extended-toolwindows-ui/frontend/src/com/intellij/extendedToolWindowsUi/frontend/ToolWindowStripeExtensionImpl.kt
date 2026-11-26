@@ -2,6 +2,7 @@
 package com.intellij.extendedToolWindowsUi.frontend
 
 import com.intellij.ide.ui.UISettings
+import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.wm.ToolWindowAnchor
 import com.intellij.toolWindow.extendedToolWindowsUi.ToolWindowStripeExtension
 import com.intellij.ui.IslandsState
@@ -11,6 +12,8 @@ import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
 import java.awt.Dimension
+
+internal const val ROTATE_ICONS_SETTING_ID: String = "extended.tool.windows.ui.rotate.icons"
 
 internal class ToolWindowStripeExtensionImpl : ToolWindowStripeExtension {
 
@@ -24,6 +27,10 @@ internal class ToolWindowStripeExtensionImpl : ToolWindowStripeExtension {
 
   override fun isShowToolWindowsNumbersSupported(): Boolean {
     return true
+  }
+
+  override fun isIconRotatedWithName(): Boolean {
+    return AdvancedSettings.getBoolean(ROTATE_ICONS_SETTING_ID)
   }
 
   override fun getStripeIconUnscaledSize(): Int {

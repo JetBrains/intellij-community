@@ -11,19 +11,25 @@ import com.intellij.openapi.wm.impl.ToolWindowAnchorEnum
 import com.intellij.openapi.wm.impl.isHorizontal
 import com.intellij.openapi.wm.impl.toEnum
 import com.intellij.toolWindow.StripeButtonUi
+import com.intellij.ui.icons.HoledIcon
 import com.intellij.ui.icons.toStrokeIcon
+import com.intellij.ui.paint.use
 import com.intellij.ui.paint.useCopy
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.EmptyIcon
 import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.StartupUiUtil
 import com.intellij.util.ui.UIUtil
 import java.awt.Color
 import java.awt.Dimension
 import java.awt.Graphics
 import java.awt.Point
 import java.awt.Rectangle
+import java.awt.geom.AffineTransform
+import java.awt.geom.Point2D
+import java.awt.image.BufferedImage
 import javax.swing.Icon
 import javax.swing.UIManager
 
@@ -48,7 +54,7 @@ internal class SquareStripeButtonLookVerticalText(button: SquareStripeButton) :
   }
 
   override fun paintIcon(g: Graphics?, actionButton: ActionButtonComponent?, icon: Icon) {
-    if (actionButton == null) {
+    if (actionButton == null || g == null) {
       return
     }
 
@@ -90,28 +96,40 @@ internal class SquareStripeButtonLookVerticalText(button: SquareStripeButton) :
     iconPosition.translate(iconOffset.x, iconOffset.y)
     labelIconPosition.translate(iconOffset.x, iconOffset.y)
 
-    super.paintIcon(g, buttonWrapper, renderedIcon, iconPosition.x, iconPosition.y)
+    val iconRotation = when (anchorEnum) {
+      ToolWindowAnchorEnum.LEFT -> -Math.PI / 2
+      ToolWindowAnchorEnum.RIGHT -> Math.PI / 2
+      ToolWindowAnchorEnum.TOP,
+      ToolWindowAnchorEnum.BOTTOM,
+        -> 0.0
+    }
+    if (iconRotation == 0.0 || ToolWindowStripeExtension.getInstance()?.isIconRotatedWithName() != true) {
+      super.paintIcon(g, buttonWrapper, renderedIcon, iconPosition.x, iconPosition.y)
+    }
+    else {
+      paintRotatedIcon(g, renderedIcon, iconPosition, buttonWrapper, iconRotation)
+    }
 
     val f = getTextFont()
     val fm = button.getFontMetrics(f)
     val text = getStripeText()
     val verticalOffset = JBUIScale.scale(1)
 
-    g!!.useCopy { g2 ->
+    g.useCopy { g2 ->
       g2.color = getForegroundColor()
       g2.font = f
       UISettings.setupAntialiasing(g2)
 
       when (anchorEnum) {
         ToolWindowAnchorEnum.LEFT -> {
-          g2.rotate(-Math.PI / 2)
+          g2.rotate(iconRotation)
           val iconCenterX = labelIconPosition.x + labelIconSize / 2
           val baselineX = iconCenterX + (fm.ascent - fm.descent) / 2 + verticalOffset
           val textBottomY = labelIconPosition.y - scaledInsets.iconLabelInset
           g2.drawString(text, -textBottomY, baselineX)
         }
         ToolWindowAnchorEnum.RIGHT -> {
-          g2.rotate(Math.PI / 2)
+          g2.rotate(iconRotation)
           val iconCenterX = labelIconPosition.x + labelIconSize / 2
           val baselineX = iconCenterX - (fm.ascent - fm.descent) / 2
           val textTopY = labelIconPosition.y + labelIconSize + scaledInsets.iconLabelInset
@@ -127,6 +145,37 @@ internal class SquareStripeButtonLookVerticalText(button: SquareStripeButton) :
         }
       }
     }
+  }
+
+  private fun paintRotatedIcon(g: Graphics, icon: Icon, iconPosition: Point, buttonWrapper: ActionButtonComponent, iconRotation: Double) {
+    val iconCenter = getIconCenter(icon, iconPosition)
+    val rotation = AffineTransform.getRotateInstance(iconRotation, iconCenter.x, iconCenter.y)
+    val iconBounds = Rectangle(iconPosition.x, iconPosition.y, icon.iconWidth, icon.iconHeight)
+    val rotatedBounds = rotation.createTransformedShape(iconBounds).bounds
+
+    // The Vulkan pipeline of JBR paints no rotated image under a non-rectangular clip, and a HoledIcon sets such a clip.
+    // So the rotation happens in an offscreen image, and the screen gets the image without a rotation.
+    // Remove this workaround when JBR-10860 is fixed.
+    val image = UIUtil.createImage(button, rotatedBounds.width, rotatedBounds.height, BufferedImage.TYPE_INT_ARGB)
+    image.createGraphics().use { imageGraphics ->
+      imageGraphics.translate(-rotatedBounds.x, -rotatedBounds.y)
+      imageGraphics.transform(rotation)
+      super.paintIcon(imageGraphics, buttonWrapper, icon, iconPosition.x, iconPosition.y)
+    }
+    StartupUiUtil.drawImage(g, image, rotatedBounds.x, rotatedBounds.y, null)
+  }
+
+  /**
+   * Returns the center of the icon without its badge.
+   * The rotation around this point keeps a square icon in the same square.
+   */
+  private fun getIconCenter(icon: Icon, iconPosition: Point): Point2D.Double {
+    if (icon is HoledIcon) {
+      val badgeInsets = icon.getExtraInsets()
+      return Point2D.Double(iconPosition.x + badgeInsets.left + icon.icon.iconWidth / 2.0,
+                            iconPosition.y + badgeInsets.top + icon.icon.iconHeight / 2.0)
+    }
+    return Point2D.Double(iconPosition.x + icon.iconWidth / 2.0, iconPosition.y + icon.iconHeight / 2.0)
   }
 
   override fun paintDraggingButton(g: Graphics, toolbarAnchor: ToolWindowAnchorEnum) {

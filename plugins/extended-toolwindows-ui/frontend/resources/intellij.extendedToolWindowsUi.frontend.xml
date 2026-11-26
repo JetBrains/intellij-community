@@ -14,13 +14,23 @@
   <!-- endregion -->
 
   <actions resource-bundle="messages.ExtendedToolWindowsUiBundle">
-    <action id="ExtendedToolWindowsUi.ShowToolWindowNumbers"
-            class="com.intellij.extendedToolWindowsUi.frontend.ToolWindowShowNumbersAction">
+    <group id="ExtendedToolWindowsUi.StripeButtonPopup">
+      <action id="ExtendedToolWindowsUi.ShowToolWindowNumbers"
+              class="com.intellij.extendedToolWindowsUi.frontend.ToolWindowShowNumbersAction"/>
+      <action id="ExtendedToolWindowsUi.RotateIconsWithNames"
+              class="com.intellij.extendedToolWindowsUi.frontend.ToolWindowRotateIconsAction"/>
       <add-to-group group-id="ToolWindowStripeButtonPopup" anchor="last"/>
-    </action>
+    </group>
   </actions>
 
   <extensions defaultExtensionNs="com.intellij">
     <toolWindowStripeExtension implementation="com.intellij.extendedToolWindowsUi.frontend.ToolWindowStripeExtensionImpl"/>
+    <advancedSetting id="extended.tool.windows.ui.rotate.icons" default="false"
+                     groupKey="advanced.setting.group.extended.tool.windows.ui" bundle="messages.ExtendedToolWindowsUiBundle"/>
   </extensions>
+
+  <applicationListeners>
+    <listener class="com.intellij.extendedToolWindowsUi.frontend.ToolWindowRotateIconsSettingListener"
+              topic="com.intellij.openapi.options.advanced.AdvancedSettingsChangeListener"/>
+  </applicationListeners>
 </idea-plugin>

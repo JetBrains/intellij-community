@@ -50,6 +50,11 @@ interface ToolWindowStripeExtension {
 
   fun isShowToolWindowsNumbersSupported(): Boolean
 
+  /**
+   * Returns `true` if a vertical stripe turns the icon of a button in the same direction as its name.
+   */
+  fun isIconRotatedWithName(): Boolean
+
   fun getStripeIconUnscaledSize(): Int
 
   fun getIconPadding(toolbarAnchor: ToolWindowAnchor): JBInsets
