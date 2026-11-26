@@ -66,8 +66,7 @@ internal class DistOwnPackagePlans(
 
   /**
    * The home of [mainModule] in its own package, as the ultimate half names it: the directory relative to the monorepo
-   * root, and the call in the community section. The ultimate half writes nothing there, see
-   * [DistPluginPlanFiles.reusedHomes].
+   * root, and the call in the community section. The ultimate half neither writes nor sweeps the plan files there.
    */
   fun upstreamHome(mainModule: String): DistPluginPlanHome {
     val home = checkNotNull(homes.get(mainModule)) { "Plugin '$mainModule' has no plan home in its own package" }

@@ -404,7 +404,6 @@ class DistPluginPlanFilesTest {
 
     val reused = ultimateHalfPlans(records, plans, reused = setOf(communityPlugin))
 
-    assertThat(reused.reusedHomes).containsExactly(communityPlugin)
     assertThat(reused.updates.results).isEmpty()
     val key = key("idea", plugin = communityPlugin)
     val labels = reused.executionGraphLabels(key, records.getValue(key))

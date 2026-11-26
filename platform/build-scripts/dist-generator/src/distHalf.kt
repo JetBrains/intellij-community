@@ -515,12 +515,6 @@ interface DistEmbeddedFrontendClasses {
   /** The home of the class of [product]. A product that no class states is its own home. */
   fun home(product: String): String
 
-  /** The products of [home] that embed the frontend, in the product order. */
-  fun embeddingMembers(home: String): List<String>
-
-  /** The frontend products of [home], in the product order. */
-  fun frontendMembers(home: String): List<String>
-
   /** The label of the jar that packs the root descriptor of every frontend product, keyed by the frontend product. */
   fun frontendRootDescriptorJars(): Map<String, String>
 
@@ -534,10 +528,6 @@ interface DistEmbeddedFrontendClasses {
 /** The classes of a half without an embedded frontend: every product is its own home, and no product reads a class. */
 internal object NoDistEmbeddedFrontendClasses : DistEmbeddedFrontendClasses {
   override fun home(product: String): String = product
-
-  override fun embeddingMembers(home: String): List<String> = emptyList()
-
-  override fun frontendMembers(home: String): List<String> = emptyList()
 
   override fun frontendRootDescriptorJars(): Map<String, String> = emptyMap()
 

@@ -188,7 +188,6 @@ class DistSimplePackagingTest {
     assertThat(packaging.files).isEmpty()
     assertThat(packaging.filePrefixes).isEmpty()
     assertThat(packaging.executables).isEmpty()
-    assertThat(packaging.fileLabels).isEmpty()
     assertThat(packaging.crossHalf).isFalse()
   }
 
@@ -201,7 +200,6 @@ class DistSimplePackagingTest {
     assertThat(packaging.files).containsExactly(entry("bin/helper.sh", "//plugins/x:helper.sh"))
     assertThat(packaging.filePrefixes).isEmpty()
     assertThat(packaging.executables).containsExactly("bin/helper.sh")
-    assertThat(packaging.fileLabels).containsExactly("//plugins/x:helper.sh")
     assertThat(packaging.classpathJars).isEmpty()
     assertThat(packaging.crossHalf).isFalse()
   }
@@ -257,9 +255,12 @@ class DistSimplePackagingTest {
     val assets = listOf(mainJar(), fileCopy("bin/helper.sh", script.id), treeCopy("helpers", tree.id), treeCopy("data", tree.id))
     val packaging: DistSimplePackaging = requireSimple(planEntry(assets = assets, inputs = listOf(script, tree)))
 
-    assertThat(packaging.files.keys).containsExactly("bin/helper.sh", "helpers", "data")
+    assertThat(packaging.files).containsExactly(
+      entry("bin/helper.sh", "//plugins/x:helper.sh"),
+      entry("helpers", "//plugins/x:dist_resources"),
+      entry("data", "//plugins/x:dist_resources"),
+    )
     assertThat(packaging.filePrefixes.keys).containsExactly("helpers", "data")
-    assertThat(packaging.fileLabels).containsExactly("//plugins/x:helper.sh", "//plugins/x:dist_resources")
   }
 
   @Test

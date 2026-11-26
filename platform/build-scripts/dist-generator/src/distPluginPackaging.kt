@@ -94,10 +94,6 @@ internal class DistSimplePackaging(
   /** Every library container or jar file label a token names. */
   val labelTokens: List<String>
     get() = jars.values.flatten().filter(::isLabelToken).distinct()
-
-  /** Every label a copy reads, in the ultimate spelling. */
-  val fileLabels: List<String>
-    get() = files.values.distinct()
 }
 
 internal fun isLabelToken(token: String): Boolean = "//" in token
