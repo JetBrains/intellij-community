@@ -42,6 +42,7 @@ empty segment.
 | `validate_link_target(name: &str, target: &str) -> Result<()>` | | The target check of one link of `validate_links`. |
 | `parent_of(&str) -> Option<&str>` | | The path before the last slash, or `None` for one segment. |
 | `validate_entry_name(&str) -> Result<()>` | | Accepts a portable, relative jar entry name. The generated `__index__` is not a source entry. |
+| `INDEX_FILE_NAME: &str` | | `__index__`, the class-path index that the packer generates in each jar. `jarpack` reads and writes it under this name. |
 | `validate_relative_path(&str) -> Result<()>` | | Accepts a safe jar entry name that is also a portable file name on every host. |
 | `clean(&str) -> String`, `dir(&str) -> String`, `join(&str, &str) -> String` | `path.Clean`, `path.Dir`, `path.Join` | The lexical path functions over slash paths. `join` takes two elements. |
 | `slash_path(&Path) -> Option<String>` | | The components of a relative host path joined by `/`. `None` when a component is not UTF-8. The inventory walk of `filemeta` and the tree walks of `pluginpack` name their entries through it. |

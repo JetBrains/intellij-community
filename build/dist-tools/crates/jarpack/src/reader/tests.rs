@@ -3,8 +3,10 @@
 use std::fs;
 use std::path::Path;
 
+use distpath::INDEX_FILE_NAME;
+
 use crate::tests::testjar::{RawEntry, Scratch, asymmetric, entry, pack, raw, read_entry, write_raw_jar, write_zip_jar};
-use crate::{INDEX_FILE_NAME, Jar, MergeSpec, Source};
+use crate::{Jar, MergeSpec, Source};
 
 fn opened_names(path: &Path) -> Vec<String> {
     let jar = Jar::open(path).unwrap_or_else(|error| panic!("{error}"));

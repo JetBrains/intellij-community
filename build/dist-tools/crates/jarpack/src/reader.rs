@@ -7,8 +7,8 @@ use std::io::Read;
 use std::path::Path;
 
 use anyhow::{Context as _, Result, anyhow, bail};
+use distpath::INDEX_FILE_NAME;
 
-use crate::INDEX_FILE_NAME;
 use crate::writer::{CENTRAL_HEADER_SIZE, LOCAL_HEADER_SIZE};
 
 const EOCD_SIGNATURE: u32 = 0x0605_4b50;

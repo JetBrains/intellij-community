@@ -20,7 +20,7 @@ pub mod writer;
 #[cfg(test)]
 mod tests;
 
-pub use filters::{EntryFilter, INDEX_FILE_NAME, MANIFEST_ENTRY_NAME, library_name_filter, module_output_name_filter};
+pub use filters::{EntryFilter, MANIFEST_ENTRY_NAME, library_name_filter, module_output_name_filter};
 pub use flagfile::{FlagFile, parse_flag_file, resolve_path};
 pub use merge::{ManifestMode, MergeReport, MergeSpec, Source};
 pub use natives::{NativeSpec, NativeTree};

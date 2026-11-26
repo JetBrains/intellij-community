@@ -6,8 +6,10 @@
 
 use std::collections::BTreeSet;
 
+use distpath::INDEX_FILE_NAME;
+
 use crate::filters::{is_ignored_library_name, is_legal_notice, is_versioned_module_info};
-use crate::{INDEX_FILE_NAME, library_name_filter, module_output_name_filter};
+use crate::{library_name_filter, module_output_name_filter};
 
 #[test]
 fn module_output_name_filter_cases() {

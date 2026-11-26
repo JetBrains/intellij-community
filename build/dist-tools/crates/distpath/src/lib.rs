@@ -10,9 +10,10 @@ use std::path::Path;
 
 use anyhow::{Result, bail};
 
-/// The name of the class-path index that the packer generates in each jar. `jarpack` defines the same name, and a source
-/// entry must not have it.
-const INDEX_FILE_NAME: &str = "__index__";
+/// The name of the class-path index that the packer generates in each jar. A source entry must not have it. The reader
+/// of `jarpack` drops it on the way in, and the writer writes a new one. So a jar packed from jars with an index does not
+/// inherit a stale index.
+pub const INDEX_FILE_NAME: &str = "__index__";
 
 /// Checks that `name` is a relative path in slash form that cannot leave its root.
 ///

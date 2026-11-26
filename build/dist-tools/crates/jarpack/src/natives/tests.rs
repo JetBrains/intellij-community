@@ -4,9 +4,11 @@ use std::collections::BTreeMap;
 use std::fs;
 use std::path::{Path, PathBuf};
 
+use distpath::INDEX_FILE_NAME;
+
 use crate::nativelib::{self, Arch, Family};
 use crate::tests::testjar::{self, Scratch, entry, entry_names, is_library, module_source, pack, parse_recipe, read_entry, write_zip_jar};
-use crate::{INDEX_FILE_NAME, MergeSpec, NativeSpec, NativeTree, Source};
+use crate::{MergeSpec, NativeSpec, NativeTree, Source};
 
 /// A presigned library as `JarPackager` sees one. It is a jar with a Maven name and one native per platform under a
 /// common prefix. It also has a class that must stay in the jar.

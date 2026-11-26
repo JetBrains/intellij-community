@@ -17,13 +17,14 @@ use std::fs::{self, File};
 use std::io::{Cursor, Read, Write};
 use std::path::{Path, PathBuf};
 
+use distpath::INDEX_FILE_NAME;
 use sha2::{Digest, Sha256};
 use tempfile::TempDir;
 use zip::write::SimpleFileOptions;
 use zip::{CompressionMethod, DateTime, ZipArchive, ZipWriter};
 
 use crate::writer::INDEX_FORMAT_VERSION;
-use crate::{EntryFilter, FlagFile, INDEX_FILE_NAME, MANIFEST_ENTRY_NAME, MergeSpec, Source, parse_flag_file};
+use crate::{EntryFilter, FlagFile, MANIFEST_ENTRY_NAME, MergeSpec, Source, parse_flag_file};
 
 /// The temporary directories of one test. [`Scratch::dir`] returns a new empty directory, as the Go `t.TempDir()` did.
 pub(crate) struct Scratch {

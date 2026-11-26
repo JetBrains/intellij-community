@@ -1,8 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-/// The generated per-jar class-path index. The reader drops it on the way in, and the writer writes a new one. So a jar
-/// packed from jars with an index does not inherit a stale index.
-pub const INDEX_FILE_NAME: &str = "__index__";
+use distpath::INDEX_FILE_NAME;
 
 /// The one entry that each jar keeps or drops by its policy, not by its name. See [`crate::MergeSpec::merge`].
 pub const MANIFEST_ENTRY_NAME: &str = "META-INF/MANIFEST.MF";

@@ -5,10 +5,10 @@
 use std::io::{BufWriter, Write};
 
 use anyhow::{Result, anyhow};
-
-use crate::INDEX_FILE_NAME;
-use crate::index::{IkvEntry, IndexBuilder};
+use distpath::INDEX_FILE_NAME;
 use xxh3::hash_bytes;
+
+use crate::index::{IkvEntry, IndexBuilder};
 
 pub(crate) const LOCAL_HEADER_SIZE: usize = 30;
 pub(crate) const CENTRAL_HEADER_SIZE: usize = 46;
