@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins
 
+import com.intellij.icons.AllIcons
 import com.intellij.ide.CopyPasteManagerEx
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.plugins.api.PluginDto
@@ -18,6 +19,9 @@ import com.intellij.ide.plugins.newui.LegacyPluginUiHost
 import com.intellij.ide.plugins.newui.ListPluginComponent
 import com.intellij.ide.plugins.newui.PluginManagerSession
 import com.intellij.ide.plugins.newui.PluginManagerSessionService
+import com.intellij.ide.plugins.newui.PluginOperationContext
+import com.intellij.ide.plugins.newui.PluginOperationKind
+import com.intellij.ide.plugins.newui.PluginOperationTerminalResult
 import com.intellij.ide.plugins.newui.PluginSource
 import com.intellij.ide.plugins.newui.PluginUiModel
 import com.intellij.ide.plugins.newui.PluginUpdateSourceState
@@ -613,6 +617,51 @@ internal class UnifiedPluginsPageSessionTest {
   }
 
   @Test
+  fun `pending restart shares the header slot with active progress`(): Unit = uiTest {
+    val existing = inventoryItem("restart.existing", "Existing Plugin")
+    val provider = FixedLocalDataProvider(UnifiedPluginInventory(listOf(existing), emptyList()))
+    val session = createSession(null, provider)
+    try {
+      val header = session.getCenterComponent(Configurable.TopComponentController.EMPTY)
+      val restart = restartButton(header)
+      val status = header.components.filterIsInstance<JLabel>().single()
+      assertThat(restart.isVisible).isFalse()
+      assertThat(restart.icon).isSameAs(AllIcons.Actions.Restart)
+      val layout = header.layout as GridBagLayout
+      assertThat(layout.getConstraints(restart).gridx).isEqualTo(layout.getConstraints(status).gridx)
+
+      val content = session.getComponent()
+      waitForPluginIds(content, setOf(existing.model.pluginId.idString))
+      val model = componentsOfType(content, ListPluginComponent::class.java).single().getModelFacade().getModel()
+      val plugin = PluginDto("New Plugin", PluginId.getId("restart.install"))
+      val install = PluginOperationContext.create(plugin.pluginId, PluginSource.LOCAL, PluginOperationKind.INSTALL)
+      model.operationStarted(install, plugin)
+      model.operationTargetFinished(install, PluginSource.LOCAL, PluginOperationTerminalResult.SUCCEEDED, restartRequired = true)
+      model.operationFinished(install)
+      waitForButton(restart, "Restart IDE", enabled = true)
+
+      val update = PluginOperationContext.create(existing.model.pluginId, PluginSource.LOCAL, PluginOperationKind.UPDATE)
+      model.operationStarted(update, existing.model)
+      waitUntilAssertSucceeds {
+        assertThat(status.isVisible).isTrue()
+        assertThat(restart.isVisible).isFalse()
+      }
+
+      session.enableSearch("No matching plugin")!!.run()
+      model.operationTargetFinished(update, PluginSource.LOCAL, PluginOperationTerminalResult.SUCCEEDED)
+      model.operationFinished(update)
+      waitForButton(restart, "Restart IDE", enabled = true)
+      assertThat(status.isVisible).isFalse()
+
+      session.reset()
+      waitUntilAssertSucceeds { assertThat(restart.isVisible).isFalse() }
+    }
+    finally {
+      Disposer.dispose(session)
+    }
+  }
+
+  @Test
   fun `search keeps its maximum with internal controls and shrinks for header actions`(): Unit =
     uiTest {
       val session = createSession(null)
@@ -989,7 +1038,9 @@ internal class UnifiedPluginsPageSessionTest {
         }
       }, disposable)
       withContext(Dispatchers.EDT) {
-        val button = updateAllButton(session.getCenterComponent(Configurable.TopComponentController.EMPTY))
+        val header = session.getCenterComponent(Configurable.TopComponentController.EMPTY)
+        val button = updateAllButton(header)
+        val restart = restartButton(header)
         val dynamicUpdate = PluginDto("Dynamic", PluginId.getId("dynamic"))
         val restartUpdate = PluginDto("Restart", PluginId.getId("restart"))
         updates.emit(PluginUpdatesEvent(listOf(dynamicUpdate, restartUpdate), emptyList(), emptyList()))
@@ -998,8 +1049,9 @@ internal class UnifiedPluginsPageSessionTest {
         waitForButton(button, "Updating 0/2...", enabled = false)
         executor.callbacks.single().prepared(dynamicUpdate.pluginId, restartRequired = false)
         executor.callbacks.single().prepared(restartUpdate.pluginId, restartRequired = true)
-        waitForButton(button, "Restart IDE", enabled = true)
-        button.doClick()
+        waitForButton(restart, "Restart IDE", enabled = true)
+        assertThat(button.isVisible).isFalse()
+        restart.doClick()
       }
       dialogShown.await()
       if (confirmRestart) {
@@ -1721,7 +1773,11 @@ internal class UnifiedPluginsPageSessionTest {
   }
 
   private fun updateAllButton(header: JComponent): JButton {
-    return header.components.single { it is JButton } as JButton
+    return header.components.filterIsInstance<JButton>().single { it.icon !== AllIcons.Actions.Restart }
+  }
+
+  private fun restartButton(header: JComponent): JButton {
+    return header.components.filterIsInstance<JButton>().single { it.icon === AllIcons.Actions.Restart }
   }
 
   private suspend fun waitForButton(button: JButton, text: String, enabled: Boolean) {

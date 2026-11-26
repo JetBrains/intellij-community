@@ -1,7 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins.unified
 
-import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeBundle
 import com.intellij.ui.AnimatedIcon
 import org.jetbrains.annotations.Nls
@@ -9,14 +8,8 @@ import javax.swing.Icon
 import javax.swing.JButton
 import javax.swing.JComponent
 
-internal sealed interface UnifiedPluginUpdateAllIntent {
-  data object Update : UnifiedPluginUpdateAllIntent
-
-  data object Restart : UnifiedPluginUpdateAllIntent
-}
-
 internal class UnifiedPluginUpdateAllButton(
-  private val onIntent: (UnifiedPluginUpdateAllIntent) -> Unit,
+  onUpdateRequested: () -> Unit,
 ) {
   private val button = JButton()
   private var presentation: UnifiedPluginUpdateAllPresentation = UnifiedPluginUpdateAllPresentation.Hidden
@@ -27,8 +20,7 @@ internal class UnifiedPluginUpdateAllButton(
     button.addActionListener {
       when (presentation) {
         UnifiedPluginUpdateAllPresentation.Available, UnifiedPluginUpdateAllPresentation.Failed ->
-          onIntent(UnifiedPluginUpdateAllIntent.Update)
-        UnifiedPluginUpdateAllPresentation.RestartRequired -> onIntent(UnifiedPluginUpdateAllIntent.Restart)
+          onUpdateRequested()
         else -> Unit
       }
     }
@@ -38,7 +30,7 @@ internal class UnifiedPluginUpdateAllButton(
   fun render(presentation: UnifiedPluginUpdateAllPresentation) {
     this.presentation = presentation
     when (presentation) {
-      UnifiedPluginUpdateAllPresentation.Hidden -> {
+      UnifiedPluginUpdateAllPresentation.Hidden, UnifiedPluginUpdateAllPresentation.RestartRequired -> {
         button.isVisible = false
       }
       UnifiedPluginUpdateAllPresentation.Available, UnifiedPluginUpdateAllPresentation.Failed -> {
@@ -53,13 +45,6 @@ internal class UnifiedPluginUpdateAllButton(
           text = IdeBundle.message("plugins.configurable.updating.button", presentation.prepared, presentation.total),
           icon = AnimatedIcon.Default.INSTANCE,
           enabled = false,
-        )
-      }
-      UnifiedPluginUpdateAllPresentation.RestartRequired -> {
-        show(
-          text = IdeBundle.message("plugins.configurable.restart.ide.button"),
-          icon = AllIcons.Actions.Restart,
-          enabled = true,
         )
       }
       UnifiedPluginUpdateAllPresentation.Updated -> {

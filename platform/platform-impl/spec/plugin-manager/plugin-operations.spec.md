@@ -352,6 +352,14 @@ Untested: No focused test covers every management edit and refresh path.
     `Update All button counts prepared executor targets`
   )
 
+- Pending installs or updates that require restart must show one Restart IDE button with a restart icon beside the settings gear.
+- The button must replace the status when all operations finish. Active progress must take precedence.
+- Search filters must not affect the restart button.
+  [@test] ../../testSrc/com/intellij/ide/plugins/UnifiedPluginsPageSessionTest.kt (
+    `pending restart shares the header slot with active progress`;
+    `header Restart applies the session before restart`
+  )
+
 - Update All must stay visible and disabled while its request runs.
 - Update All must show prepared and total counts while its request runs.
 - Active operation progress must appear in each matching row and in the selected plugin details.

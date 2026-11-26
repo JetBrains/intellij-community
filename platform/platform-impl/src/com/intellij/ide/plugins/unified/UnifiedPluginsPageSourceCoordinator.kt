@@ -9,6 +9,7 @@ import com.intellij.ide.plugins.newui.PluginPreparedUpdateState
 import com.intellij.ide.plugins.newui.PluginProgressState
 import com.intellij.ide.plugins.newui.PluginUiModel
 import com.intellij.ide.plugins.newui.SearchQueryParser
+import com.intellij.ide.plugins.newui.isRestartRequired
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.updateSettings.impl.getPresentableName
 import com.intellij.openapi.util.text.StringUtil
@@ -47,6 +48,7 @@ internal data class UnifiedPluginsPageSourceState(
   val mayEstablishSelection: Boolean,
   val searchControls: UnifiedPluginsSearchControlsState = UnifiedPluginsSearchControlsState(),
   val internalDescriptorSettled: Boolean = true,
+  val restartRequired: Boolean = false,
   /** Identifies the query used by the last completed page projection. */
   val projectedQueryRevision: Long = query.revision,
 ) {
@@ -451,6 +453,9 @@ private fun projectUnifiedPluginsPageSourceState(
     repositoryContentRevision = repositoryState?.repositoryContentRevision ?: 0,
     mayEstablishSelection = mayEstablishSelection,
     internalDescriptorSettled = internalState?.descriptorRequestSettled ?: true,
+    restartRequired = localState.manualUpdates.values.any {
+      (it.presentation as? UnifiedPluginManualUpdatePresentation.Prepared)?.restartRequired == true
+    } || localState.listModelData.installationStates.values.any { it.status.isRestartRequired() },
     searchControls = composeUnifiedPluginsSearchControls(
       query,
       localState,

@@ -207,6 +207,7 @@ internal class UnifiedPluginLocalSourceCoordinator(
               true
             }
           }
+          PluginInventoryChangeReason.UNINSTALL -> manualUpdates.keys.removeAll(event.pluginIds)
           else -> false
         }
       }

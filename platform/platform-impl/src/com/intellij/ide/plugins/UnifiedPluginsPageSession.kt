@@ -49,7 +49,8 @@ import com.intellij.ide.plugins.unified.UnifiedPluginSearchControlIntent
 import com.intellij.ide.plugins.unified.UnifiedPluginUpdateAllButton
 import com.intellij.ide.plugins.unified.UnifiedPluginUpdateAllController
 import com.intellij.ide.plugins.unified.UnifiedPluginUpdateAllExecutor
-import com.intellij.ide.plugins.unified.UnifiedPluginUpdateAllIntent
+import com.intellij.ide.plugins.unified.UnifiedPluginUpdateAllPresentation
+import com.intellij.ide.plugins.unified.UnifiedPluginUpdateAllState
 import com.intellij.ide.plugins.unified.UnifiedPluginsPageActions
 import com.intellij.ide.plugins.unified.UnifiedPluginsPageController
 import com.intellij.ide.plugins.unified.UnifiedPluginsPageSourceCoordinator
@@ -110,6 +111,7 @@ import java.awt.event.ContainerAdapter
 import java.awt.event.ContainerEvent
 import java.util.concurrent.CancellationException
 import java.util.function.Consumer
+import javax.swing.JButton
 import javax.swing.JComponent
 import javax.swing.JPanel
 import kotlin.time.Duration
@@ -223,12 +225,16 @@ internal class UnifiedPluginsPageSession @RequiresEdt constructor(
       .filter(PluginCategoryPromotionProvider::isPriorityCategory)
       .mapTo(HashSet(), PluginCategoryPromotionProvider::getCategoryName),
   )
-  private val updateAllButton = UnifiedPluginUpdateAllButton(::handleUpdateAllIntent)
+  private val restartButton = JButton(IdeBundle.message("plugins.configurable.restart.ide.button"), AllIcons.Actions.Restart).apply {
+    isVisible = false
+    addActionListener { requestRestart() }
+  }
   private val view: UnifiedPluginsPageView
   private val contentComponent: JComponent
   private val actions: UnifiedPluginsPageActions
   private val headerComponent: JComponent
   private val updateAllController: UnifiedPluginUpdateAllController
+  private val updateAllButton: UnifiedPluginUpdateAllButton
   private val pageSourceCollectionJob: Job
   private val updateAllUpdatesCollectionJob: Job
   private val updateAllStateCollectionJob: Job
@@ -313,6 +319,7 @@ internal class UnifiedPluginsPageSession @RequiresEdt constructor(
       executor = updateAllExecutor,
       targetSink = localSource::setUpdateAllTargets,
     )
+    updateAllButton = UnifiedPluginUpdateAllButton(updateAllController::requestUpdateAll)
     updateAllOperationEventSink = updateAllController::acceptOperationEvent
 
     actions = UnifiedPluginsPageActions(
@@ -332,7 +339,6 @@ internal class UnifiedPluginsPageSession @RequiresEdt constructor(
     headerComponent = createHeaderComponent()
     customizer?.initCustomizer(contentComponent)
     renderPageSourceState(pageSource.state.value)
-    updateAllButton.render(updateAllController.state.value.presentation)
     pageSourceCollectionJob = contentComponent.launchOnShow("UnifiedPluginsPageSession.pageSource") {
       launch {
         val usesDefaultMarketplace = withContext(Dispatchers.IO) {
@@ -356,7 +362,7 @@ internal class UnifiedPluginsPageSession @RequiresEdt constructor(
     }
     updateAllStateCollectionJob = contentComponent.launchOnShow("UnifiedPluginsPageSession.updateAllState") {
       updateAllController.state.collect { state ->
-        if (!disposed) updateAllButton.render(state.presentation)
+        if (!disposed) renderOperationHeader(pageSource.state.value, state)
       }
     }
     updateAllUpdatesCollectionJob = pageScope.launch(start = CoroutineStart.UNDISPATCHED) {
@@ -620,15 +626,14 @@ internal class UnifiedPluginsPageSession @RequiresEdt constructor(
             anchor = GridBagConstraints.WEST
           },
         )
-        add(
-          view.operationStatusComponent,
-          GridBagConstraints().apply {
-            gridx = 3
-            gridy = 0
-            anchor = GridBagConstraints.WEST
-            insets = JBUI.insetsLeft(8)
-          },
-        )
+        val operationConstraints = GridBagConstraints().apply {
+          gridx = 3
+          gridy = 0
+          anchor = GridBagConstraints.WEST
+          insets = JBUI.insetsLeft(8)
+        }
+        add(view.operationStatusComponent, operationConstraints)
+        add(restartButton, operationConstraints)
       }
 
       override fun uiDataSnapshot(sink: DataSink) {
@@ -787,18 +792,22 @@ internal class UnifiedPluginsPageSession @RequiresEdt constructor(
   }
 
   @RequiresEdt
-  private fun handleUpdateAllIntent(intent: UnifiedPluginUpdateAllIntent) {
-    when (intent) {
-      UnifiedPluginUpdateAllIntent.Update -> updateAllController.requestUpdateAll()
-      UnifiedPluginUpdateAllIntent.Restart -> {
-        if (customizer != null) {
-          host.requestRestart(customizer, headerComponent)
-        }
-        else {
-          host.runRestartButton(headerComponent)
-        }
-      }
+  private fun requestRestart() {
+    if (customizer != null) {
+      host.requestRestart(customizer, headerComponent)
     }
+    else {
+      host.runRestartButton(headerComponent)
+    }
+  }
+
+  @RequiresEdt
+  private fun renderOperationHeader(source: UnifiedPluginsPageSourceState, updateAll: UnifiedPluginUpdateAllState) {
+    view.renderOperationStatus(source.sections.firstOrNull { it.id == PluginSectionId.Installing }?.items.orEmpty())
+    updateAllButton.render(updateAll.presentation)
+    restartButton.isVisible = (source.restartRequired || updateAll.restartRequired) &&
+                              !view.operationStatusComponent.isVisible &&
+                              updateAll.presentation !is UnifiedPluginUpdateAllPresentation.Running
   }
 
   @RequiresEdt
@@ -810,7 +819,7 @@ internal class UnifiedPluginsPageSession @RequiresEdt constructor(
     }
     val data = state.listModelData
     listModel.replaceAll(data.installedModels, data.errors, data.installationStates, data.updateSources, data.expectedExplanations)
-    view.renderOperationStatus(state.sections.firstOrNull { it.id == PluginSectionId.Installing }?.items.orEmpty())
+    renderOperationHeader(state, updateAllController.state.value)
     controller.replaceSourceState(
       query = state.query,
       updatedSections = state.sections.filterNot { it.id == PluginSectionId.Installing },

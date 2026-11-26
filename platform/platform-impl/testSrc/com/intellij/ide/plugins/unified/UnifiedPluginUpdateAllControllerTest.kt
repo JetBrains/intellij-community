@@ -189,6 +189,8 @@ internal class UnifiedPluginUpdateAllControllerTest {
     controller.requestUpdateAll()
     executor.callbacks.single().prepared(first.pluginId, restartRequired = true)
     finishOperation(second, PluginOperationTerminalResult.FAILED)
+    assertThat(controller.state.value.presentation).isEqualTo(UnifiedPluginUpdateAllPresentation.Failed)
+    assertThat(controller.state.value.restartRequired).isTrue()
     controller.requestUpdateAll()
 
     executor.callbacks.last().prepared(second.pluginId, restartRequired = false)

@@ -42,6 +42,7 @@ internal data class UnifiedPluginUpdateAllTarget(
 internal data class UnifiedPluginUpdateAllState(
   val presentation: UnifiedPluginUpdateAllPresentation = UnifiedPluginUpdateAllPresentation.Hidden,
   val targets: List<UnifiedPluginUpdateAllTarget> = emptyList(),
+  val restartRequired: Boolean = false,
 )
 
 internal data class UnifiedPluginUpdateAllRequest(
@@ -308,7 +309,7 @@ internal class UnifiedPluginUpdateAllController(
 
   private fun publish(state: UnifiedPluginUpdateAllState) {
     val previousTargets = mutableState.value.targets
-    mutableState.value = state
+    mutableState.value = state.copy(restartRequired = preparedRestartRequired)
     if (previousTargets != state.targets) {
       targetSink(state.targets)
     }
