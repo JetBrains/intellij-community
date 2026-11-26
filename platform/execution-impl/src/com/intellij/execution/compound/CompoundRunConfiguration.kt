@@ -62,6 +62,13 @@ class CompoundRunConfiguration @JvmOverloads constructor(@NlsSafe name: String? 
     return sortedConfigurationsWithTargets
   }
 
+  /** True when the compound stores entries, and no entry resolves to an existing configuration. */
+  @ApiStatus.Internal
+  fun hasOnlyUnresolvedConfigurations(runManager: RunManagerImpl): Boolean {
+    initIfNeeded(runManager)
+    return sortedConfigurationsWithTargets.isEmpty() && !isDirty.get() && options.configurations.isNotEmpty()
+  }
+
   fun setConfigurationsWithTargets(value: Map<RunConfiguration, ExecutionTarget?>) {
     markInitialized()
 

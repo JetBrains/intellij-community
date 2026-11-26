@@ -15,6 +15,7 @@ import com.intellij.execution.actions.RunConfigurationsComboBoxAction
 import com.intellij.execution.actions.RunConfigurationsComboBoxAction.SelectConfigAction
 import com.intellij.execution.actions.RunCurrentFileExecutorAction
 import com.intellij.execution.actions.RunSpecifiedConfigExecutorAction
+import com.intellij.execution.compound.CompoundRunConfiguration
 import com.intellij.execution.configurations.ConfigurationType
 import com.intellij.execution.configurations.RunProfile
 import com.intellij.execution.configurations.UnknownConfigurationType
@@ -213,38 +214,27 @@ fun createRunConfigurationActionGroup(typeMap: Map<ConfigurationType, Map<String
   return object : ActionGroup() {
     override fun getChildren(e: AnActionEvent?): Array<out AnAction> {
       val result = ArrayList<AnAction>()
-      for ((type, folderMap) in typeMap) {
+      val unknown = ArrayList<RunnerAndConfigurationSettings>()
+      for ((type, typeFolderMap) in typeMap) {
+        if (type is UnknownConfigurationType) {
+          unknown.addAll(typeFolderMap.values.flatten())
+          continue
+        }
+        val folderMap = LinkedHashMap<String?, List<RunnerAndConfigurationSettings>>()
+        for ((folderName, configurations) in typeFolderMap) {
+          val (broken, resolved) = configurations.partition { isEffectivelyUnknown(it) }
+          unknown.addAll(broken)
+          if (resolved.isNotEmpty()) {
+            folderMap.put(folderName, resolved)
+          }
+        }
+        if (folderMap.isEmpty()) continue
         result.add(object : ActionGroup() {
           init {
             templatePresentation.putClientProperty(ActionUtil.ALWAYS_VISIBLE_GROUP, true)
           }
           override fun getChildren(e: AnActionEvent?): Array<out AnAction> {
             val result = ArrayList<AnAction>()
-            if (type is UnknownConfigurationType) {
-              val allUnknown = folderMap.values.flatten()
-              val title = ExecutionBundle.message("run.toolbar.widget.dropdown.unknown.configurations.text")
-              result.add(object : ActionGroup() {
-                init {
-                  templatePresentation.isPopupGroup = true
-                  templatePresentation.setText(title)
-                  templatePresentation.setIcon(AllIcons.Actions.Help)
-                  templatePresentation.putClientProperty(ActionUtil.SEARCH_TAG, regularTag)
-                  templatePresentation.putClientProperty(ActionUtil.ALWAYS_VISIBLE_GROUP, true)
-                }
-
-                override fun getChildren(e: AnActionEvent?): Array<out AnAction> {
-                  return allUnknown.map { cfg -> actionCreator(cfg) }.toTypedArray()
-                }
-              })
-              for (cfg in allUnknown) {
-                if (alreadyShownIds.contains(cfg.uniqueID)) continue
-                result.add(actionCreator(cfg).also {
-                  it.templatePresentation.putClientProperty(ActionUtil.SEARCH_TAG, TAG_HIDDEN)
-                  it.templatePresentation.putClientProperty(ActionUtil.SECONDARY_TEXT, title)
-                })
-              }
-              return result.toTypedArray()
-            }
             for (folderEntry in folderMap.entries) {
               val folderName = folderEntry.key
               if (folderName == null) {
@@ -287,6 +277,54 @@ fun createRunConfigurationActionGroup(typeMap: Map<ConfigurationType, Map<String
           }
         })
         result.add(Separator.getInstance())
+      }
+      if (unknown.isNotEmpty()) {
+        result.add(createUnknownConfigurationsGroup(unknown, regularTag, alreadyShownIds, actionCreator))
+        result.add(Separator.getInstance())
+      }
+      return result.toTypedArray()
+    }
+  }
+}
+
+/** A compound that stores entries, but resolves none of them, is as broken as an unknown configuration. */
+private fun isEffectivelyUnknown(settings: RunnerAndConfigurationSettings): Boolean {
+  val configuration = settings.configuration
+  return configuration is CompoundRunConfiguration &&
+         configuration.hasOnlyUnresolvedConfigurations(RunManagerImpl.getInstanceImpl(configuration.project))
+}
+
+private fun createUnknownConfigurationsGroup(unknown: List<RunnerAndConfigurationSettings>,
+                                             regularTag: String,
+                                             alreadyShownIds: Set<String>,
+                                             actionCreator: (RunnerAndConfigurationSettings) -> AnAction): AnAction {
+  val title = ExecutionBundle.message("run.toolbar.widget.dropdown.unknown.configurations.text")
+  return object : ActionGroup() {
+    init {
+      templatePresentation.putClientProperty(ActionUtil.ALWAYS_VISIBLE_GROUP, true)
+    }
+
+    override fun getChildren(e: AnActionEvent?): Array<out AnAction> {
+      val result = ArrayList<AnAction>()
+      result.add(object : ActionGroup() {
+        init {
+          templatePresentation.isPopupGroup = true
+          templatePresentation.setText(title)
+          templatePresentation.setIcon(AllIcons.Actions.Help)
+          templatePresentation.putClientProperty(ActionUtil.SEARCH_TAG, regularTag)
+          templatePresentation.putClientProperty(ActionUtil.ALWAYS_VISIBLE_GROUP, true)
+        }
+
+        override fun getChildren(e: AnActionEvent?): Array<out AnAction> {
+          return unknown.map { cfg -> actionCreator(cfg) }.toTypedArray()
+        }
+      })
+      for (cfg in unknown) {
+        if (alreadyShownIds.contains(cfg.uniqueID)) continue
+        result.add(actionCreator(cfg).also {
+          it.templatePresentation.putClientProperty(ActionUtil.SEARCH_TAG, TAG_HIDDEN)
+          it.templatePresentation.putClientProperty(ActionUtil.SECONDARY_TEXT, title)
+        })
       }
       return result.toTypedArray()
     }

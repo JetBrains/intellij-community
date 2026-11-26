@@ -1,6 +1,10 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution
 
+import com.intellij.execution.compound.CompoundRunConfiguration
+import com.intellij.execution.compound.CompoundRunConfigurationOptions
+import com.intellij.execution.compound.CompoundRunConfigurationType
+import com.intellij.execution.compound.TypeNameTarget
 import com.intellij.execution.configurations.ConfigurationFactory
 import com.intellij.execution.configurations.ConfigurationType
 import com.intellij.execution.configurations.RunConfiguration
@@ -8,6 +12,7 @@ import com.intellij.execution.configurations.RunConfigurationBase
 import com.intellij.execution.configurations.RunConfigurationOptions
 import com.intellij.execution.configurations.RunProfileState
 import com.intellij.execution.configurations.UnknownConfigurationType
+import com.intellij.execution.configurations.runConfigurationType
 import com.intellij.execution.impl.RunManagerImpl
 import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl
 import com.intellij.execution.runners.ExecutionEnvironment
@@ -186,6 +191,48 @@ class RunManagerLateConfigurationTypeTest {
         assertThat(hidden.map { it.templateText }).containsExactlyInAnyOrder("u1", "u2")
         assertThat(hidden.map { it.templatePresentation.getClientProperty(ActionUtil.SECONDARY_TEXT) }).containsOnly(title)
         assertThat(rows.filter { it !is ActionGroup }.map { it.templateText }).containsExactlyInAnyOrder("known", "u1", "u2")
+      }
+    }
+  }
+
+  /** A compound that resolves no entry is as broken as its entries, so it joins the unknown group. */
+  @Test
+  fun `a compound with only unresolved configurations joins the unknown group node`() {
+    val knownType = registerType(KNOWN_TYPE_ID)
+    runBlocking {
+      createOrLoadProject(tempDir, projectCreator = { dir ->
+        VfsTestUtil.createFile(dir, ".idea/runConfigurations/u1.xml", sharedFileText("u1"))
+        dir.toNioPath()
+      }) { project ->
+        val runManager = RunManagerImpl.getInstanceImpl(project)
+        val known = runManager.createConfiguration("known", knownType.configurationFactories.single())
+        runManager.addConfiguration(known)
+        val compoundFactory = runConfigurationType<CompoundRunConfigurationType>().configurationFactories.single()
+        val broken = runManager.createConfiguration("broken", compoundFactory)
+        (broken.configuration as CompoundRunConfiguration).loadState(CompoundRunConfigurationOptions().apply {
+          configurations.add(TypeNameTarget(TYPE_ID, "u1", null))
+        })
+        runManager.addConfiguration(broken)
+        val mixed = runManager.createConfiguration("mixed", compoundFactory)
+        (mixed.configuration as CompoundRunConfiguration).loadState(CompoundRunConfigurationOptions().apply {
+          configurations.add(TypeNameTarget(TYPE_ID, "u1", null))
+          configurations.add(TypeNameTarget(KNOWN_TYPE_ID, "known", null))
+        })
+        runManager.addConfiguration(mixed)
+
+        val group = createRunConfigurationActionGroup(runManager.getConfigurationsGroupedByTypeAndFolder(true), emptySet(), false) { cfg ->
+          object : AnAction(cfg.name) {
+            override fun actionPerformed(e: AnActionEvent) = Unit
+          }
+        } as ActionGroup
+        val rows = group.getChildren(null).filterIsInstance<ActionGroup>().flatMap { it.getChildren(null).asList() }
+
+        val unknownGroup = rows.filterIsInstance<ActionGroup>().single()
+        assertThat(unknownGroup.getChildren(null).map { it.templateText }).containsExactlyInAnyOrder("broken", "u1")
+        val hidden = rows.filter { it.templatePresentation.getClientProperty(ActionUtil.SEARCH_TAG) == "hidden" }
+        assertThat(hidden.map { it.templateText }).containsExactlyInAnyOrder("broken", "u1")
+        val regular = rows.filter { it !is ActionGroup && it !in hidden }
+        assertThat(regular.map { it.templateText }).containsExactlyInAnyOrder("known", "mixed")
       }
     }
   }
