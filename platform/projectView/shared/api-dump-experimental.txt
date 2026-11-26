@@ -192,6 +192,7 @@
 *:com.intellij.platform.projectView.pane.ProjectViewNodeUserObject
 - a:getName():java.lang.String
 - getVirtualFile():com.intellij.openapi.vfs.VirtualFile
+- getVirtualFiles():java.util.List
 *:com.intellij.platform.projectView.pane.ProjectViewPaneCutCopyPasteDeleteHandler
 - a:performCopy(java.util.List,kotlin.coroutines.Continuation):java.lang.Object
 - a:performCut(java.util.List,kotlin.coroutines.Continuation):java.lang.Object

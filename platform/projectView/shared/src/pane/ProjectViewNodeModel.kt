@@ -82,6 +82,15 @@ interface ProjectViewNodeUserObject {
    * The virtual file associated with the node, if any.
    */
   fun getVirtualFile(): VirtualFile? = null
+
+  /**
+   * The virtual files that the node stands for.
+   *
+   * It is [getVirtualFile] if the node has one.
+   * A node without a single file can stand for several files, for example a package with several directories.
+   * The call must be fast and must not need a read action, because the conversion of the node for the frontend calls it.
+   */
+  fun getVirtualFiles(): List<VirtualFile> = listOfNotNull(getVirtualFile())
 }
 
 /**
@@ -95,10 +104,15 @@ interface ProjectViewNodeUserObject {
 internal class FrontendProjectViewNodeUserObject(
   override val name: String, // not used on the frontend currently, but is useful for debugging
   val virtualFileId: VirtualFileId?,
+  val virtualFileIds: List<VirtualFileId>,
 ) : ProjectViewNodeUserObject {
   override fun getVirtualFile(): VirtualFile? = virtualFileId?.virtualFile()
 
+  override fun getVirtualFiles(): List<VirtualFile> {
+    return getVirtualFile()?.let { listOf(it) } ?: virtualFileIds.mapNotNull { it.virtualFile() }
+  }
+
   override fun toString(): String {
-    return "FrontendProjectViewNodeUserObject(name='$name', virtualFileId=$virtualFileId)"
+    return "FrontendProjectViewNodeUserObject(name='$name', virtualFileId=$virtualFileId, virtualFileIds=$virtualFileIds)"
   }
 }

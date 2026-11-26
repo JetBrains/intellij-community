@@ -20,6 +20,7 @@ internal data class ProjectViewNodeModelDTO(
 internal data class ProjectViewNodeUserObjectDTO(
   val name: String, // not used on the frontend currently, but is useful for debugging
   val virtualFileId: VirtualFileId?,
+  val virtualFileIds: List<VirtualFileId> = emptyList(),
 )
 
 internal fun ProjectViewNodeModelImpl<*>.toDTO(): ProjectViewNodeModelDTO = ProjectViewNodeModelDTO(
@@ -32,9 +33,11 @@ internal fun ProjectViewNodeModelImpl<*>.toDTO(): ProjectViewNodeModelDTO = Proj
 )
 
 private fun ProjectViewNodeUserObject.toDTO(): ProjectViewNodeUserObjectDTO {
+  val virtualFile = getVirtualFile()
   return ProjectViewNodeUserObjectDTO(
     name = name,
-    virtualFileId = getVirtualFile()?.rpcId(),
+    virtualFileId = virtualFile?.rpcId(),
+    virtualFileIds = if (virtualFile == null) getVirtualFiles().map { it.rpcId() } else emptyList(),
   )
 }
 
@@ -42,6 +45,7 @@ private fun ProjectViewNodeUserObjectDTO.toFrontendUserObject(): ProjectViewNode
   return FrontendProjectViewNodeUserObject(
     name = name,
     virtualFileId = virtualFileId,
+    virtualFileIds = virtualFileIds,
   )
 }
 

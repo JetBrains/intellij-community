@@ -50,11 +50,16 @@ interface TreeStructureProjectViewNode : ProjectViewNodeUserObject {
   }
 }
 
+/**
+ * @param slowData the data that needs a read action, as the full model of the node computed it.
+ * It is not part of [equals], so the pane matches all copies of one node.
+ */
 private class TreeStructureProjectViewNodeImpl(
   override val name: String,
   val element: Any,
   override val elementDescriptor: NodeDescriptor<*>,
   val isRoot: Boolean,
+  val slowData: TreeStructureProjectViewNodeSlowData = TreeStructureProjectViewNodeSlowData.EMPTY,
 ) : TreeStructureProjectViewNode, PathElementIdProvider {
   @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
   fun canNavigate(): Boolean {
@@ -90,6 +95,13 @@ private class TreeStructureProjectViewNodeImpl(
     return (elementDescriptor as? ProjectViewNode<*>)?.isSynthetic == true
   }
 
+  /** Returns a copy of this node with [slowData]. The copy is equal to this node. */
+  fun withSlowData(slowData: TreeStructureProjectViewNodeSlowData): TreeStructureProjectViewNodeImpl {
+    return TreeStructureProjectViewNodeImpl(name, element, elementDescriptor, isRoot, slowData)
+  }
+
+  override fun getVirtualFiles(): List<VirtualFile> = getVirtualFile()?.let { listOf(it) } ?: slowData.roots
+
   override fun getPathElementType(): String = TreeState.calcType(elementDescriptor)
 
   override fun getPathElementId(): String = TreeState.calcId(elementDescriptor)
@@ -111,6 +123,25 @@ private class TreeStructureProjectViewNodeImpl(
 
   override fun toString(): String {
     return "TreeStructureProjectViewNodeImpl(name='$name', element=$element, elementDescriptor=$elementDescriptor, isRoot=$isRoot)"
+  }
+}
+
+/**
+ * The data of a node that needs a read action.
+ * [TreeStructureProjectViewNodeProvider] computes it for each full model.
+ * So [TreeStructureProjectViewNodeImpl.getVirtualFiles] needs no read action.
+ */
+private class TreeStructureProjectViewNodeSlowData(val roots: List<VirtualFile>) {
+  companion object {
+    val EMPTY: TreeStructureProjectViewNodeSlowData = TreeStructureProjectViewNodeSlowData(roots = emptyList())
+
+    /** Takes the [ProjectViewNode.getRoots] of a node without a file. */
+    @RequiresReadLock
+    fun compute(node: TreeStructureProjectViewNodeImpl): TreeStructureProjectViewNodeSlowData {
+      if (node.getVirtualFile() != null) return EMPTY
+      val roots = (node.elementDescriptor as? ProjectViewNode<*>)?.roots?.toList().orEmpty()
+      return TreeStructureProjectViewNodeSlowData(roots)
+    }
   }
 }
 
@@ -200,7 +231,8 @@ class TreeStructureProjectViewNodeProvider(
     fastModel: BackendProjectViewNodeModel<TreeStructureProjectViewNodeImpl>,
   ): BackendProjectViewNodeModel<TreeStructureProjectViewNodeImpl>? = read {
     if (!structure.isValid(node)) return@read null
-    buildProjectViewNodeModel(id, node) { nodeBuilder ->
+    val fullNode = node.withSlowData(TreeStructureProjectViewNodeSlowData.compute(node))
+    buildProjectViewNodeModel(id, fullNode) { nodeBuilder ->
       nodeBuilder.setModel(fastModel)
       nodeBuilder.buildPresentation { presentationBuilder -> 
         presentationBuilder.setLeaf(computeIsLeaf(node))
