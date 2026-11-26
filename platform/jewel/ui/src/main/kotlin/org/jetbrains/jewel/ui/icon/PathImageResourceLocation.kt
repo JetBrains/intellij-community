@@ -66,6 +66,12 @@ public class PathImageResourceLocation(public val path: String, public val class
         append(path.substringAfterLast('.'))
     }
 
+    /** Whether the base file of this location exists. A `_dark` or `_stroke` variant of it is not checked. */
+    internal fun exists(): Boolean {
+        val url = if (classLoader != null) classLoader.getResource(path) else ClassLoader.getSystemResource(path)
+        return url != null
+    }
+
     private fun readOrNull(path: String): ByteArray? {
         val resourceStream =
             if (classLoader != null) {

@@ -131,6 +131,18 @@ open class CachedImageIcon private constructor(
   @ApiStatus.Experimental
   fun getCoords(): Pair<String, ClassLoader>? = loader.getCoords()
 
+  /**
+   * The coordinates of the original image before a path patch, when the icon paints that image as it is: without a filter,
+   * a color patcher, a scale or a fixed dark state. Otherwise `null`.
+   */
+  @Internal
+  fun getPlainImageCoords(): Pair<String, ClassLoader>? {
+    if (localFilterSupplier != null || colorPatcher !== GlobalColorPatcherStrategy || scaleContext != null || attributes.flags != 0) {
+      return null
+    }
+    return originalLoader.getCoords()
+  }
+
   override fun getToolTip(composite: Boolean): String? = toolTip?.get()
 
   final override fun paintIcon(c: Component?, g: Graphics, x: Int, y: Int) {
@@ -362,6 +374,14 @@ open class CachedImageIcon private constructor(
     }
     return copy(colorPatcher = CustomColorPatcherStrategy(colorPatcher), attributes = newAttributes)
   }
+
+  /**
+   * The SVG color patcher this icon loads with: the theme palette ([SVGLoader.colorPatcherProvider]) at the moment of the
+   * call, or the patcher given to [createWithPatcher].
+   */
+  @get:Internal
+  val svgColorPatcher: SVGLoader.SvgElementColorPatcherProvider?
+    get() = colorPatcher.colorPatcher
 
   internal fun createStrokeIcon(): CachedImageIcon = copy(attributes.copy(useStroke = true))
 

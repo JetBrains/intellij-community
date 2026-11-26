@@ -10,7 +10,6 @@ import com.intellij.openapi.actionSystem.Toggleable
 import com.intellij.openapi.actionSystem.impl.MenuItemPresentationFactory
 import com.intellij.openapi.actionSystem.isGray
 import com.intellij.openapi.actionSystem.paintToImage
-import com.intellij.openapi.actionSystem.unknownMarkerPixels
 import com.intellij.openapi.actionSystem.visiblePixels
 import com.intellij.openapi.util.IconLoader
 import com.intellij.platform.icons.IconDescriptor
@@ -18,6 +17,7 @@ import com.intellij.platform.icons.imageIconDescriptor
 import com.intellij.platform.icons.impl.intellij.IntelliJIconManager
 import com.intellij.platform.icons.swing.ScalableSwingIcon
 import com.intellij.platform.icons.swing.createSwingIcon
+import com.intellij.platform.icons.swing.toIconDescriptor
 import com.intellij.testFramework.junit5.RegistryKey
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.runInEdtAndGet
@@ -30,6 +30,7 @@ import kotlin.test.assertIsNot
 import kotlin.test.assertNotEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
+import kotlin.test.assertSame
 import kotlin.test.assertTrue
 
 @TestApplication
@@ -62,7 +63,7 @@ class ActionPopupIconDescriptorTest {
   }
 
   @Test
-  fun `legacy-only action gives the unknown marker`() {
+  fun `legacy-only action gives the icon bridged from the legacy icon`() {
     val presentation = Presentation()
     presentation.icon = AllIcons.General.Add
 
@@ -70,7 +71,7 @@ class ActionPopupIconDescriptorTest {
 
     val icon = assertIs<ScalableSwingIcon>(icons.first)
     assertNull(icons.second)
-    assertEquals(unknownMarkerPixels(), icon.paintToImage().visiblePixels(), "the popup row did not paint the unknown marker")
+    assertSame(presentation.iconDescriptor, icon.toIconDescriptor(), "the popup row did not use the bridged descriptor")
   }
 
   @Test

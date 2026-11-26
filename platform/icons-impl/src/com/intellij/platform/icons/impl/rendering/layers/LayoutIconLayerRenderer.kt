@@ -3,6 +3,7 @@ package com.intellij.platform.icons.impl.rendering.layers
 
 import com.intellij.platform.icons.impl.layers.LayoutIconLayer
 import com.intellij.platform.icons.impl.rendering.DefaultRenderingContext
+import com.intellij.platform.icons.impl.rendering.debug.IconRenderDebugger
 import com.intellij.platform.icons.rendering.LayerPaintingContext
 
 class LayoutIconLayerRenderer(private val layoutLayer: LayoutIconLayer, renderingContext: DefaultRenderingContext) :
@@ -36,7 +37,8 @@ class LayoutIconLayerRenderer(private val layoutLayer: LayoutIconLayer, renderin
         when (layoutLayer.direction) {
             LayoutIconLayer.LayoutDirection.Row -> {
                 var offset = 0
-                for (nestedRenderer in nestedRenderers) {
+                for (index in nestedRenderers.indices) {
+                    val nestedRenderer = nestedRenderers[index]
                     val nestedLayerContext =
                         paintingContext.createNestedLayer(
                             base.bounds.x + offset,
@@ -45,13 +47,14 @@ class LayoutIconLayerRenderer(private val layoutLayer: LayoutIconLayer, renderin
                             base.bounds.height,
                             scale = base.scale,
                         )
-                    nestedRenderer.render(nestedLayerContext)
+                    renderNested(index, nestedRenderer, nestedLayerContext)
                     offset += nestedRenderer.layout.consumedSpace(paintingContext.scaling).width
                 }
             }
             LayoutIconLayer.LayoutDirection.Column -> {
                 var offset = 0
-                for (nestedRenderer in nestedRenderers) {
+                for (index in nestedRenderers.indices) {
+                    val nestedRenderer = nestedRenderers[index]
                     val nestedLayerContext =
                         paintingContext.createNestedLayer(
                             base.bounds.x,
@@ -59,12 +62,13 @@ class LayoutIconLayerRenderer(private val layoutLayer: LayoutIconLayer, renderin
                             base.bounds.width,
                             scale = base.scale,
                         )
-                    nestedRenderer.render(nestedLayerContext)
+                    renderNested(index, nestedRenderer, nestedLayerContext)
                     offset += nestedRenderer.layout.consumedSpace(paintingContext.scaling).height
                 }
             }
             else -> {
-                for (nestedRenderer in nestedRenderers) {
+                for (index in nestedRenderers.indices) {
+                    val nestedRenderer = nestedRenderers[index]
                     val nestedLayerContext =
                         paintingContext.createNestedLayer(
                             base.bounds.x,
@@ -73,9 +77,18 @@ class LayoutIconLayerRenderer(private val layoutLayer: LayoutIconLayer, renderin
                             base.bounds.height,
                             scale = base.scale,
                         )
-                    nestedRenderer.render(nestedLayerContext)
+                    renderNested(index, nestedRenderer, nestedLayerContext)
                 }
             }
+        }
+    }
+
+    private fun renderNested(index: Int, nestedRenderer: IconLayerRenderer, nestedLayerContext: LayerPaintingContext) {
+        if (IconRenderDebugger.isActive) {
+            IconRenderDebugger.traceLayer(nestedRenderer, layoutLayer.nestedLayers.getOrNull(index), nestedLayerContext)
+        }
+        else {
+            nestedRenderer.render(nestedLayerContext)
         }
     }
 }

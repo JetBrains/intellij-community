@@ -3,6 +3,7 @@ package com.intellij.platform.icons.impl.rendering
 
 import com.intellij.platform.icons.IconDescriptor
 import com.intellij.platform.icons.impl.DefaultLayeredIconDescriptor
+import com.intellij.platform.icons.impl.rendering.debug.IconRenderDebugger
 import com.intellij.platform.icons.impl.rendering.layers.CompoundDimensions
 import com.intellij.platform.icons.impl.rendering.layers.IconLayerManager
 import com.intellij.platform.icons.impl.rendering.layers.IconLayerRenderer
@@ -12,9 +13,15 @@ import com.intellij.platform.icons.rendering.IconRenderer
 import com.intellij.platform.icons.rendering.LayerPaintingContext
 import com.intellij.platform.icons.rendering.RenderingContext
 import com.intellij.platform.icons.rendering.ScalingContext
+import org.jetbrains.annotations.ApiStatus
 
 class DefaultIconRenderer(val iconInstance: DefaultLayeredIconDescriptor, private val context: RenderingContext) : IconRenderer {
     override val iconDescriptor: IconDescriptor = iconInstance
+
+    /** The rendering context of this renderer: the caller modifiers and the theme. Debugging tools read it. */
+    @get:ApiStatus.Internal
+    val renderingContext: RenderingContext
+        get() = context
     private var lastThemeDigest: String = context.theme.digest()
     private var layerRenderers = createRenderers()
 
@@ -26,23 +33,48 @@ class DefaultIconRenderer(val iconInstance: DefaultLayeredIconDescriptor, privat
     override fun render(paintingContext: LayerPaintingContext) {
         val renderers = layers()
         val usedDimensions = usedDimensions(renderers, paintingContext.scaling)
-        for (layer in renderers) {
-            val nested =
-                paintingContext.createNestedLayer(slotWidth = usedDimensions.width, slotHeight = usedDimensions.height)
-            layer.render(nested)
+        if (IconRenderDebugger.isActive) {
+            IconRenderDebugger.traceRender(this, paintingContext, usedDimensions) {
+                renderLayers(renderers, paintingContext, usedDimensions)
+            }
+        }
+        else {
+            renderLayers(renderers, paintingContext, usedDimensions)
         }
     }
 
-  private fun layers(): List<IconLayerRenderer> {
-    val themeDigest = context.theme.digest()
-    if (lastThemeDigest != themeDigest) {
-      layerRenderers = createRenderers()
-      lastThemeDigest = themeDigest
+    private fun renderLayers(renderers: List<IconLayerRenderer>, paintingContext: LayerPaintingContext, usedDimensions: Dimensions) {
+        for (index in renderers.indices) {
+            val layer = renderers[index]
+            val nested =
+                paintingContext.createNestedLayer(slotWidth = usedDimensions.width, slotHeight = usedDimensions.height)
+            if (IconRenderDebugger.isActive) {
+                IconRenderDebugger.traceLayer(layer, iconInstance.layers.getOrNull(index), nested)
+            }
+            else {
+                layer.render(nested)
+            }
+        }
     }
-    return layerRenderers
-  }
+
+    /**
+     * The layer renderers for the current theme: they are created again when the theme changed. It runs before each
+     * measure too, not only before a paint, because a theme change can change the size.
+     */
+    private fun layers(): List<IconLayerRenderer> {
+        val themeDigest = context.theme.digest()
+        if (lastThemeDigest != themeDigest) {
+            layerRenderers = createRenderers()
+            lastThemeDigest = themeDigest
+        }
+        return layerRenderers
+    }
 
     internal fun consumedSpace(): CompoundDimensions = layers().maxCompoundSize { it.layout.consumedSpace() }
+
+    /** The current layer renderers. A theme change creates them again, see `NestedIconLayerRenderer.layout`. */
+    internal val layerRenderersForLayout: Any
+        get() = layers()
 
     override fun calculateUsedDimensions(scaling: ScalingContext): Dimensions = usedDimensions(layers(), scaling)
 

@@ -217,7 +217,17 @@ object IconLoader {
 
   @JvmOverloads
   @JvmStatic
-  fun toImage(icon: Icon, scaleContext: ScaleContext? = null): Image? {
+  fun toImage(icon: Icon, scaleContext: ScaleContext? = null): Image? = toImage(icon, scaleContext, component = null)
+
+  /**
+   * Same as [toImage], but passes [component] to [Icon.paintIcon] when the icon has to be painted to get its image.
+   *
+   * Use it when the target component is known: some icons read its properties (e.g. whether it is enabled), and some
+   * fail when it is `null`.
+   */
+  @Internal
+  @JvmStatic
+  fun toImage(icon: Icon, scaleContext: ScaleContext?, component: Component? = null): Image? {
     var effectiveIcon = icon
     if (effectiveIcon is RetrievableIcon) {
       effectiveIcon = getOriginIcon(effectiveIcon)
@@ -261,7 +271,7 @@ object IconLoader {
 
     val g = image.createGraphics()
     try {
-      effectiveIcon.paintIcon(null, g, 0, 0)
+      effectiveIcon.paintIcon(component, g, 0, 0)
     }
     finally {
       g.dispose()

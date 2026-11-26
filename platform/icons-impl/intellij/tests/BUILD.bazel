@@ -23,7 +23,11 @@ jvm_library(
         ],
         allow_empty = True,
     ),
-    module_name = "intellij.platform.icons.impl.intellij.tests",
+    associates = ["//platform/icons-impl/intellij"],
+    resource_strip_prefix = "testResources",
+    resources = glob(
+        ["testResources/**/*"],
+    ),
     visibility = ["//visibility:public"],
     exports = [
         # do not sort,
@@ -44,13 +48,15 @@ jvm_library(
         "//platform/icons-api",
         "//platform/icons-api/rendering",
         "//platform/icons-impl",
-        "//platform/icons-impl/intellij",
         "//libraries/kotlinx/serialization/json",
+        "//libraries/kotlinx/serialization/core",
         "//platform/testFramework/junit5",
         "//platform/icons",
         "//platform/testFramework",
         "//libraries/junit6",
         "//platform/util:util-ui",
+        "//platform/util",
+        "//platform/core-api:core",
     ],
 )
 ### auto-generated section `build intellij.platform.icons.impl.intellij.tests` end
@@ -58,7 +64,6 @@ jvm_library(
 ### auto-generated section `iml intellij.platform.icons.impl.intellij.tests` start
 jps_module(
     name = "intellij.platform.icons.impl.intellij.tests",
-    resources = False,
     target = "tests_test_lib",
 )
 ### auto-generated section `iml intellij.platform.icons.impl.intellij.tests` end

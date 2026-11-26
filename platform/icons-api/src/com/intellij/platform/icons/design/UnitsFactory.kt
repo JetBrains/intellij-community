@@ -29,6 +29,8 @@ interface UnitsFactory {
 
     fun fitAreaScale(width: IconUnit, height: IconUnit, relative: Boolean = true): FitAreaScale
 
+    fun fitAreaScale(width: IconUnit, height: IconUnit, relative: Boolean, upscale: Boolean, downscale: Boolean): FitAreaScale
+
     fun fillAreaScale(width: IconUnit, height: IconUnit, relative: Boolean = true): FillAreaScale
 
     fun toAwtColor(color: com.intellij.platform.icons.design.Color): Color

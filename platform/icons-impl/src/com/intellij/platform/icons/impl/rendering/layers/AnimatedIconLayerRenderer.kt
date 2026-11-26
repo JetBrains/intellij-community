@@ -5,6 +5,7 @@ import com.intellij.platform.icons.design.dp
 import com.intellij.platform.icons.impl.IconAnimationFrame
 import com.intellij.platform.icons.impl.layers.AnimatedIconLayer
 import com.intellij.platform.icons.impl.rendering.DefaultRenderingContext
+import com.intellij.platform.icons.impl.rendering.debug.IconRenderDebugger
 import com.intellij.platform.icons.rendering.LayerPaintingContext
 import com.intellij.platform.icons.rendering.RenderingContext
 import kotlin.math.cos
@@ -157,8 +158,14 @@ private class BaseAnimatedIconFrameRenderer(val frame: IconAnimationFrame, rende
   }
 
   override fun render(paintingContext: LayerPaintingContext, elapsedMillis: Long) {
-    for (layer in renderers) {
-      layer.render(paintingContext)
+    for (index in renderers.indices) {
+      val layer = renderers[index]
+      if (IconRenderDebugger.isActive) {
+        IconRenderDebugger.traceLayer(layer, frame.layers.getOrNull(index), paintingContext)
+      }
+      else {
+        layer.render(paintingContext)
+      }
     }
   }
 }

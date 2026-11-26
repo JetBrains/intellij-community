@@ -85,6 +85,7 @@ jvm_library(
         "//platform/foldings",
         "//platform/indexing-api:indexing",
         "//jps/model-api:model",
+        "//platform/icons",
         "//platform/icons-impl/intellij",
         "//platform/platform-impl/initial-config-import",
         "//platform/forms_rt:java-guiForms-rt",

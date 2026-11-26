@@ -6,6 +6,7 @@ import com.intellij.platform.icons.IconDescriptor
 import com.intellij.platform.icons.impl.DefaultDeferredIconDescriptor
 import com.intellij.platform.icons.impl.DefaultIconManager
 import com.intellij.platform.icons.impl.DeferredIconEventHandler
+import com.intellij.platform.icons.impl.rendering.debug.IconRenderDebugger
 import com.intellij.platform.icons.rendering.Dimensions
 import com.intellij.platform.icons.rendering.IconRenderer
 import com.intellij.platform.icons.rendering.LayerPaintingContext
@@ -19,7 +20,12 @@ internal class DefaultDeferredIconRenderer(
   val renderingContext: RenderingContext,
 ) : IconRenderer, DeferredIconEventHandler {
     private var isDone = false
+    @Volatile
     private var renderer = iconDescriptor.placeholder?.createRenderer(renderingContext)
+
+    /** The renderer of the placeholder, or of the resolved icon when it is done. */
+    internal val currentRenderer: IconRenderer?
+        get() = renderer
 
     override fun whenDone(deferredIcon: DeferredIconDescriptor, resolvedIconDescriptor: IconDescriptor) {
         renderer = resolvedIconDescriptor.createRenderer(renderingContext)
@@ -32,7 +38,16 @@ internal class DefaultDeferredIconRenderer(
         if (!isDone) {
             DefaultIconManager.getDefaultManagerInstance().scheduleEvaluation(iconDescriptor)
         }
-        renderer?.render(paintingContext)
+        val delegate = renderer
+        if (IconRenderDebugger.isActive) {
+            // the delegate (placeholder / resolved icon renderer) is traced as this renderer's child
+            IconRenderDebugger.traceRender(this, paintingContext, calculateUsedDimensions(paintingContext.scaling)) {
+                delegate?.render(paintingContext)
+            }
+        }
+        else {
+            delegate?.render(paintingContext)
+        }
     }
 
     @ApiStatus.Internal

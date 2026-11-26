@@ -201,8 +201,9 @@ public class ComposeLayerPaintingContext(
         if (width == 0 || height == 0) return
         if (srcWidth == 0 || srcHeight == 0) return
         val targetSize = IntSize(width ?: image.width, height ?: image.height)
+        val painter = image.painterFor(targetSize.width, targetSize.height, scaling)
         drawScope.translate(x.toFloat(), y.toFloat()) {
-            with(image.painter) {
+            with(painter) {
                 draw(
                     Size(targetSize.width.toFloat(), targetSize.height.toFloat()),
                     alpha * this@ComposeLayerPaintingContext.alpha,

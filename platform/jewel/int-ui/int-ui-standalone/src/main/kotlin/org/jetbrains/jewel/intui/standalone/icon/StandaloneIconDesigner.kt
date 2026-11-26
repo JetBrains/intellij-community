@@ -6,7 +6,7 @@ import com.intellij.platform.icons.modifiers.IconModifier
 import org.jetbrains.jewel.ui.icon.PathImageResourceLocation
 
 internal class StandaloneIconDesigner : DefaultIconDesigner() {
-    override fun image(path: String, classLoader: ClassLoader?, modifier: IconModifier) {
+    override fun image(path: String, classLoader: ClassLoader, modifier: IconModifier) {
         image(PathImageResourceLocation(path, classLoader), modifier)
     }
 

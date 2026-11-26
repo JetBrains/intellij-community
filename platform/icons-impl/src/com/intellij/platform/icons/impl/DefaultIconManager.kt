@@ -5,6 +5,37 @@ import com.intellij.platform.icons.DeferredIconDescriptor
 import com.intellij.platform.icons.IconDescriptor
 import com.intellij.platform.icons.IconIdentifier
 import com.intellij.platform.icons.IconManager
+import com.intellij.platform.icons.ImageResourceLocation
+import com.intellij.platform.icons.design.Color
+import com.intellij.platform.icons.design.IconAlign
+import com.intellij.platform.icons.design.IconMargin
+import com.intellij.platform.icons.design.IconUnit
+import com.intellij.platform.icons.design.Shape
+import com.intellij.platform.icons.impl.design.DefaultCircle
+import com.intellij.platform.icons.impl.design.DefaultDisplayPoint
+import com.intellij.platform.icons.impl.design.DefaultFactorScale
+import com.intellij.platform.icons.impl.design.DefaultFillAreaScale
+import com.intellij.platform.icons.impl.design.DefaultFitAreaScale
+import com.intellij.platform.icons.impl.design.DefaultIconAlign
+import com.intellij.platform.icons.impl.design.DefaultIconMargin
+import com.intellij.platform.icons.impl.design.DefaultPixel
+import com.intellij.platform.icons.impl.design.DefaultRectangle
+import com.intellij.platform.icons.impl.design.DefaultSRGB
+import com.intellij.platform.icons.impl.layers.SpacerIconLayer
+import com.intellij.platform.icons.impl.modifiers.AlignIconModifier
+import com.intellij.platform.icons.impl.modifiers.AlphaIconModifier
+import com.intellij.platform.icons.impl.modifiers.ApplyableIconModifier
+import com.intellij.platform.icons.impl.modifiers.ColorFilterModifier
+import com.intellij.platform.icons.impl.modifiers.CombinedIconModifier
+import com.intellij.platform.icons.impl.modifiers.CutoutMarginModifier
+import com.intellij.platform.icons.impl.modifiers.ForceDarkVariantModifier
+import com.intellij.platform.icons.impl.modifiers.MarginIconModifier
+import com.intellij.platform.icons.impl.modifiers.RootIconModifier
+import com.intellij.platform.icons.impl.modifiers.ScaleModifier
+import com.intellij.platform.icons.impl.modifiers.SizeVariantModifier
+import com.intellij.platform.icons.impl.modifiers.StrokeModifier
+import com.intellij.platform.icons.impl.modifiers.SvgPatcherModifier
+import kotlin.reflect.KClass
 import com.intellij.platform.icons.design.IconDesigner
 import com.intellij.platform.icons.design.SvgPatcherDesigner
 import com.intellij.platform.icons.design.UnitsFactory
@@ -88,12 +119,39 @@ abstract class DefaultIconManager : IconManager {
         polymorphic(DeferredIconDescriptor::class, DefaultDeferredIconDescriptor::class, deferredIconDeserializer)
         polymorphic(IconModifier::class, IconModifier.Companion::class, IconModifierConstSerializer)
         polymorphic(IconIdentifier::class, StringIconIdentifier::class, StringIconIdentifier.serializer())
+        polymorphic(ImageResourceLocation::class, UrlImageResourceLocation::class, UrlImageResourceLocation.serializer())
+        polymorphic(ImageResourceLocation::class, FileImageResourceLocation::class, FileImageResourceLocation.serializer())
 
         iconLayer(AnimatedIconLayer::class)
         iconLayer(NestedIconLayer::class)
         iconLayer(ImageIconLayer::class)
         iconLayer(LayoutIconLayer::class)
         iconLayer(ShapeIconLayer::class)
+        iconLayer(SpacerIconLayer::class)
+
+        iconModifier(AlignIconModifier::class, AlignIconModifier.serializer())
+        iconModifier(AlphaIconModifier::class, AlphaIconModifier.serializer())
+        iconModifier(ColorFilterModifier::class, ColorFilterModifier.serializer())
+        iconModifier(CombinedIconModifier::class, CombinedIconModifier.serializer())
+        iconModifier(CutoutMarginModifier::class, CutoutMarginModifier.serializer())
+        iconModifier(ForceDarkVariantModifier::class, ForceDarkVariantModifier.serializer())
+        iconModifier(MarginIconModifier::class, MarginIconModifier.serializer())
+        iconModifier(RootIconModifier::class, RootIconModifier.serializer())
+        iconModifier(ScaleModifier::class, ScaleModifier.serializer())
+        iconModifier(SizeVariantModifier::class, SizeVariantModifier.serializer())
+        iconModifier(StrokeModifier::class, StrokeModifier.serializer())
+        iconModifier(SvgPatcherModifier::class, SvgPatcherModifier.serializer())
+
+        polymorphic(IconScale::class, DefaultFactorScale::class, DefaultFactorScale.serializer())
+        polymorphic(IconScale::class, DefaultFitAreaScale::class, DefaultFitAreaScale.serializer())
+        polymorphic(IconScale::class, DefaultFillAreaScale::class, DefaultFillAreaScale.serializer())
+        polymorphic(IconUnit::class, DefaultPixel::class, DefaultPixel.serializer())
+        polymorphic(IconUnit::class, DefaultDisplayPoint::class, DefaultDisplayPoint.serializer())
+        polymorphic(Color::class, DefaultSRGB::class, DefaultSRGB.serializer())
+        polymorphic(Shape::class, DefaultRectangle::class, DefaultRectangle.serializer())
+        polymorphic(Shape::class, DefaultCircle::class, DefaultCircle.serializer())
+        polymorphic(IconAlign::class, DefaultIconAlign::class, DefaultIconAlign.serializer())
+        polymorphic(IconMargin::class, DefaultIconMargin::class, DefaultIconMargin.serializer())
 
         buildCustomSerializers()
     }
@@ -152,4 +210,14 @@ private object IconModifierConstSerializer : KSerializer<IconModifier.Companion>
         require(v == true) { "Unexpected value: '$v'" }
         return IconModifier
     }
+}
+
+
+/**
+ * Registers the modifier [klass] as an [IconModifier], the type of a layer modifier, and as an [ApplyableIconModifier],
+ * the type of the parts of a [CombinedIconModifier].
+ */
+private fun <T : ApplyableIconModifier> SerializersModuleBuilder.iconModifier(klass: KClass<T>, serializer: KSerializer<T>) {
+    polymorphic(IconModifier::class, klass, serializer)
+    polymorphic(ApplyableIconModifier::class, klass, serializer)
 }
