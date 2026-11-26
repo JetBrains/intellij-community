@@ -179,6 +179,7 @@ startup --noautodetect_server_javabase
 # C:\\Users\\Ilia.Kirianovskii\\AppData\\Local\\Microsoft\\WindowsApps;C:\\WINDOWS;C:\\WINDOWS\\System32;C:\\WINDOWS\\System32\\WindowsPowerShell\\v1.0
 # https://github.com/bazelbuild/bazel/blob/93cde47ab3236b3b7124b41824f843f3659064de/src/main/java/com/google/devtools/build/lib/bazel/rules/BazelRuleClassProvider.java#L162
 common:windows --action_env=PATH=C:\\do-not-use-PATH
+test:windows --test_env=PATH=C:\\Windows\\system32
 
 # Enable compact *.repo_mapping manifest
 build --incompatible_compact_repo_mapping_manifest
