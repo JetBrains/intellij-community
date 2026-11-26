@@ -170,6 +170,7 @@ intellij.kotlin.gradle.tooling.impl.tests
 intellij.kotlin.jvm.debugger.eval4j.tests
 intellij.kotlin.jvm.debugger.performance.test
 intellij.kotlin.jvm.debugger.test
+intellij.kotlin.jvm.debugger.test.compose
 intellij.kotlin.jvm.debugger.test.parcelize
 intellij.kotlin.onboarding.gradle.tests
 intellij.kotlin.onboarding.tests

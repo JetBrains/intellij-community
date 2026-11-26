@@ -10,6 +10,7 @@ jps_test(
     ] + all_test_dep_targets,
     sandbox = True,
     tags = [
+        "kotlin-compose-k2-tests",
         "kotlin-debugger-tests",
     ],
     runtime_deps = [
