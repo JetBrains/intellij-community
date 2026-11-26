@@ -98,14 +98,25 @@ override it.
 
 ## Decision records
 
-- An ADR is `adr/NNNN-<slug>.md`.
-- Numbers are sequential and never reused: each number from `0001` up to the highest belongs to exactly one ADR
-  file or one fold entry `### NNNN,`. `SettingsDocsTest` checks it. After a rebase, a clash with another branch
-  fails the check. Then renumber your ADR and its links.
+- A new ADR is `adr/<ID>-<slug>.md`. Create it with `adr/new-adr.sh "<decision as a sentence>"`: the script computes
+  the id and writes the template. See
+  [ADR 00F5DT](adr/00F5DT-a-new-adr-takes-a-time-based-base-36-id-and-a-numbered-adr-keeps-its-number.md).
+- The id is the number of seconds from `2026-11-18T05:20:25Z` to the creation of the ADR. It is written in uppercase
+  base 36 (`0-9`, then `A-Z`), padded with zeros to six characters: `00K3F9`. The title is `# <ID>. <Title>`.
+- The `Date:` line holds the creation time in UTC with seconds. The id equals that time minus the base.
+- Never choose an id by hand. The only exception is the repair of a duplicate id, below.
+- An older ADR has a number: `adr/NNNN-<slug>.md`. It keeps its file name, its title and its `Date:` line. It holds
+  the id `00NNNN`. Do not pad an old number to six characters in a link or a mention. No new ADR takes a number.
+- `SettingsDocsTest` checks the shape of each file name, and that no number is above the last number. It checks that
+  no two ADRs or fold entries hold one id. It checks that a six-character id matches its title and its `Date:` line.
+- Two branches that create an ADR in the same second get the same id. The test finds it after the merge. Then move
+  the ADR that is not in master one second forward: its file name, its title, its `Date:` line and each link and
+  mention.
+- Below, `<ID>` stands for a six-character id or for an old number.
 - The title states the decision as a sentence, not a topic.
 - Sections: `Status`, `Context`, `Decision`, `Consequences`, and `Rejected alternatives` when there were real
   alternatives. A `Date:` line follows the title.
-- Status values: `Proposed`, `Accepted`, `Accepted. Amended by [ADR NNNN](link)`, `Superseded by [ADR NNNN](link)`,
+- Status values: `Proposed`, `Accepted`, `Accepted. Amended by [ADR <ID>](link)`, `Superseded by [ADR <ID>](link)`,
   `Deprecated`. A relation is a link, so the chain check sees it. Add the issue link when the ADR belongs to an
   issue.
 - An agent writes a new ADR as `Proposed`. Only the user accepts it. The agent sets `Accepted` only after the user
@@ -126,9 +137,9 @@ override it.
 - A chain of amendments and supersessions holds at most 2 ADRs. `SettingsDocsTest` checks it. Merge a longer
   chain into one ADR, as [Merging an ADR chain](#merging-an-adr-chain) says.
 - A folded ADR has no file in `adr/`. A link or a mention of an ADR that is not in `adr/` points to a folded ADR.
-  Search `adr/` for `### NNNN,` to find the merged ADR. The old text is in the git history of `adr/`.
+  Search `adr/` for `### <ID>,` to find the merged ADR. The old text is in the git history of `adr/`.
 - One decision per ADR. An ADR links the spec that holds the resulting behavior.
-- KDoc may cite a decision as `ADR NNNN` when the code follows from it.
+- KDoc may cite a decision as `ADR <ID>` when the code follows from it.
 - In `adr/` and `spec/`, every mention of an ADR or a spec is a relative link, not plain text. This applies to
   each mention, not only to the first one.
 
@@ -142,7 +153,7 @@ decision with its reason. A merge only reorganizes what the ADRs already say. It
    the ADRs that are one decision. Leave out an ADR that is its own decision and only touches the chain. It keeps
    its relation to the merged ADR.
 2. Write the merged ADR into the file of the newest ADR of the chain:
-   - Number and status: those of the newest ADR. When the newest ADR is `Proposed`, the merged ADR is `Proposed`.
+   - Id and status: those of the newest ADR. When the newest ADR is `Proposed`, the merged ADR is `Proposed`.
    - Title and file name: the merged decision as a sentence, not the narrow title of the newest ADR. Rename the file
      when the title changes.
    - `Date:` the date of the newest ADR, then `Merged: <date>`.
@@ -156,7 +167,8 @@ decision with its reason. A merge only reorganizes what the ADRs already say. It
    - `Earlier decisions`: the last section. It has one entry per folded ADR, in time order. An entry keeps the
      folded decision, its consequences and its rejected alternatives, and it says why the decision changed. A part
      that a folded ADR added and a later ADR changed goes to the entry of the folded ADR. The newest ADR has no
-     entry. Write the folded number in plain digits, because a plain `ADR NNNN` mention fails the link check:
+     entry. Write the folded id plain, with no `ADR` before it, because a plain `ADR <ID>` mention fails the link
+     check:
 
      ```markdown
      ## Earlier decisions
@@ -167,12 +179,12 @@ decision with its reason. A merge only reorganizes what the ADRs already say. It
      ```
 
      A folded ADR can be a merged ADR itself. Then its fold entries move into the new merged ADR. Every entry, moved
-     or new, stays in time order. `SettingsDocsTest` fails on a fold entry that the merge lost.
+     or new, stays in time order. Check by hand that the merge lost no fold entry: the test cannot find a lost one.
 3. Compare each folded ADR with the merged ADR. Every reason, consequence, example, rejected alternative and name
    of a person who agreed must be in the merged ADR. Then delete the files of the folded ADRs.
 4. Re-point the references in `adr/`, `spec/`, the sources of all the settings v2 modules, and the `AGENTS.md`
    files. A link to a folded ADR, or to the old file name of the merged ADR, points to the merged file. A link text
-   or an `ADR NNNN` mention of a folded number takes the merged number.
+   or an `ADR <ID>` mention of a folded id takes the merged id.
 5. Read each changed sentence again:
    - A sentence can now be false. "Older ADRs put a user node into the chain" is false of the merged ADR when the
      idea is only in its `Earlier decisions`. Say that in the sentence.
@@ -180,4 +192,4 @@ decision with its reason. A merge only reorganizes what the ADRs already say. It
      `the key identity rule ([ADR 0124](...))`, not `[ADR 0124](...) allowed`.
    - An ADR that named two ADRs of the chain now names the merged ADR twice. Keep one.
 6. Run `./community/tools/bt.cmd --module intellij.platform.settings.v2.test --filter com.intellij.platform.settings.v2.docs.SettingsDocsTest`. Every check must pass. Commit one chain per commit. The subject names the decision and
-   the merged number, and the message lists the folded numbers.
+   the merged id, and the message lists the folded ids.

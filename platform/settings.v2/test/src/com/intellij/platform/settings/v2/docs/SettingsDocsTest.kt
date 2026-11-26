@@ -3,6 +3,7 @@ package com.intellij.platform.settings.v2.docs
 
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.fixtures.IdeaTestExecutionPolicy
+import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import java.nio.file.Files
@@ -67,6 +68,13 @@ class SettingsDocsTest {
     assertNoProblems(ProposedAdrChecker(adrDir).findProblems())
   }
 
+  @Test
+  fun `the ADR script counts the ids from the same base as the checks`() {
+    val script = adrDir.resolve(NEW_ADR_SCRIPT)
+    val scriptBase = SCRIPT_ID_BASE.find(Files.readString(script))?.groupValues?.get(1)?.toLong()
+    assertEquals(ADR_ID_BASE.epochSecond, scriptBase) { "the line ADR_ID_BASE=<seconds> of $script" }
+  }
+
   private fun assertNoProblems(problems: List<DocProblem>) {
     assertTrue(problems.isEmpty()) { "${problems.size} problems:\n" + problems.joinToString("\n") }
   }
@@ -80,5 +88,11 @@ class SettingsDocsTest {
 
     /** Holds the name of the agent instructions file of a module. */
     const val AGENTS_FILE = "AGENTS.md"
+
+    /** Holds the name of the script in the ADR folder that creates an ADR with a time-based id. */
+    const val NEW_ADR_SCRIPT = "new-adr.sh"
+
+    /** Matches the base of the ids in [NEW_ADR_SCRIPT], in epoch seconds. */
+    val SCRIPT_ID_BASE = Regex("""^ADR_ID_BASE=(\d+)$""", RegexOption.MULTILINE)
   }
 }
