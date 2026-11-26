@@ -242,7 +242,7 @@ class MarkdownLivePreviewFoldingTest {
   }
 
   @Test
-  fun testHeadingReplacesAnExpandedFoldThatStartsOnItsLineAndKeepsACollapsedOne(): Unit = timeoutRunBlocking {
+  fun testHeadingKeepsTheFoldsThatStartOnItsLine(): Unit = timeoutRunBlocking {
     withContext(Dispatchers.EDT) {
       val content = "# one\n\nbody\n\n# two\n\nmore"
       configure("<caret>$content")
@@ -251,7 +251,7 @@ class MarkdownLivePreviewFoldingTest {
       editor.foldingModel.runBatchFoldingOperation { expanded = editor.foldingModel.addFoldRegion(0, content.length, "...")!! }
       moveCaretTo(content.length)
       assertEquals(2, headingFolds().size)
-      assertFalse(expanded.isValid)
+      assertTrue(expanded.isValid)
 
       moveCaretTo(0)
       lateinit var collapsed: FoldRegion
@@ -260,14 +260,15 @@ class MarkdownLivePreviewFoldingTest {
         collapsed.isExpanded = false
       }
       moveCaretTo(content.length)
-      assertEquals(listOf(content.indexOf("# two")), headingFolds().map { it.startOffset })
+      assertEquals(listOf(0, content.indexOf("# two")), headingFolds().map { it.startOffset })
+      assertSame(collapsed, editor.foldingModel.getCollapsedRegionAtOffset(0))
       assertTrue(collapsed.isValid)
       assertFalse(collapsed.isExpanded)
     }
   }
 
   @Test
-  fun testHeadingsReplaceTheSectionFoldsOfTheCodeFoldingBuilder(): Unit = timeoutRunBlocking {
+  fun testHeadingsKeepTheSectionFoldsOfTheCodeFoldingBuilder(): Unit = timeoutRunBlocking {
     withContext(Dispatchers.EDT) {
       val content = "# one\n\nbody\n\n## two\n\nmore\n\n# three\n\ntail"
       configure("<caret>$content")
@@ -278,11 +279,38 @@ class MarkdownLivePreviewFoldingTest {
 
       moveCaretTo(content.length)
       assertEquals(3, headingFolds().size)
-      assertFalse(section.isValid)
+      assertTrue(section.isValid)
+      val heading = editor.foldingModel.getCollapsedRegionAtOffset(0)
+      assertTrue(heading is CustomFoldRegion)
+      editor.foldingModel.runBatchFoldingOperation { section.isExpanded = false }
+      assertSame(section, editor.foldingModel.getCollapsedRegionAtOffset(0))
+      editor.foldingModel.runBatchFoldingOperation { section.isExpanded = true }
+      assertSame(heading, editor.foldingModel.getCollapsedRegionAtOffset(0))
 
       EditorTestUtil.buildInitialFoldingsInBackground(editor, null)
       assertEquals(3, headingFolds().size)
       assertEquals(content, editor.document.text)
+    }
+  }
+
+  @Test
+  @TestFor(issues = ["IJPL-262291"])
+  fun testHeadingSectionFoldStaysWhenLivePreviewTurnsOnAndOff(): Unit = timeoutRunBlocking {
+    withContext(Dispatchers.EDT) {
+      val content = "# Heading\n\nParagraph"
+      configure("<caret>$content")
+      val editor = myFixture.editor
+      EditorTestUtil.buildInitialFoldingsInBackground(editor, null)
+      val section = editor.foldingModel.getFoldRegion(0, content.length)!!
+
+      moveCaretTo(content.length)
+      assertEquals(1, headingFolds().size)
+      assertTrue(section.isValid)
+
+      editor.setLivePreviewEnabledness(false, configuration)
+      MarkdownLivePreviewReconciler.getExisting(editor)!!.reconcileNow()
+      assertThat(headingFolds()).isEmpty()
+      assertTrue(section.isValid)
     }
   }
 
@@ -592,7 +620,7 @@ class MarkdownLivePreviewFoldingTest {
   }
 
   @Test
-  fun testSetextHeadingsReplaceTheSectionFoldsOfTheCodeFoldingBuilder(): Unit = timeoutRunBlocking {
+  fun testSetextHeadingsKeepTheSectionFoldsOfTheCodeFoldingBuilder(): Unit = timeoutRunBlocking {
     withContext(Dispatchers.EDT) {
       val content = "Title\n===\n\nbody\nmore\n\nNext\n===\n\ntail"
       configure("<caret>$content")
@@ -603,7 +631,7 @@ class MarkdownLivePreviewFoldingTest {
 
       moveCaretTo(content.length)
       assertEquals(listOf(0, content.indexOf("Next")), headingFolds().map { it.startOffset })
-      assertFalse(section.isValid)
+      assertTrue(section.isValid)
       assertEquals(content, editor.document.text)
     }
   }

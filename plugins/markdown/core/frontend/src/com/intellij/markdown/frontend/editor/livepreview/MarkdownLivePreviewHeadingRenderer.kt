@@ -14,6 +14,7 @@ import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Caret
 import com.intellij.openapi.editor.CustomFoldRegion
 import com.intellij.openapi.editor.Editor
@@ -73,6 +74,8 @@ import javax.swing.text.Element
 import javax.swing.text.html.HTML
 import javax.swing.text.html.HTMLDocument
 import javax.swing.text.html.StyleSheet
+
+private val LOG = logger<MarkdownLivePreviewHeadingRenderer>()
 
 /** [JBHtmlPane] represents a `<wbr>` with this character. */
 private const val ZERO_WIDTH_SPACE = '\u200B'
@@ -187,12 +190,14 @@ internal class MarkdownLivePreviewHeadingRenderer(private val editor: EditorEx) 
 
     override fun create(editor: EditorEx): FoldRegion? {
       val foldingModel = editor.foldingModel
-      // The folding model refuses a custom fold that shares a boundary with a larger fold, such as the section fold that
-      // starts at a heading. It also refuses a custom fold that crosses a fold, such as the fold of a nested quote.
-      // An expanded fold hides nothing, so the heading replaces it.
+
       for (region in foldingModel.getRegionsOverlappingWith(range.startOffset, range.endOffset)) {
         val surrounds = region.startOffset < range.startOffset && region.endOffset > range.endOffset
-        if (region !is CustomFoldRegion && region.isExpanded && !range.contains(region.textRange) && !surrounds) {
+        // The folding model refuses a custom fold that shares its end with a larger fold. It also refuses a custom fold that
+        // crosses a fold, such as the fold of a nested quote.
+        val sharesStart = region.startOffset == range.startOffset
+        if (region !is CustomFoldRegion && region.isExpanded && !range.contains(region.textRange) && !surrounds && !sharesStart) {
+          LOG.warn("The heading fold at $range removes the expanded fold $region")
           foldingModel.removeFoldRegion(region)
         }
       }

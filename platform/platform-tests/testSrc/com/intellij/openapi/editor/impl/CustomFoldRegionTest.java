@@ -35,6 +35,7 @@ import static com.intellij.testFramework.junit5.fixture.FixturesKt.tempPathFixtu
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @TestApplication
@@ -62,11 +63,11 @@ public class CustomFoldRegionTest {
       checkOverlapWithNormalRegion(10, 11, 1, 1, true);
       checkOverlapWithNormalRegion(7, 10, 1, 1, true);
       checkOverlapWithNormalRegion(5, 12, 1, 1, true);
+      checkOverlapWithNormalRegion(6, 12, 1, 1, true);
 
       checkOverlapWithNormalRegion(5, 6, 1, 1, false);
       checkOverlapWithNormalRegion(5, 7, 1, 1, false);
       checkOverlapWithNormalRegion(5, 11, 1, 1, false);
-      checkOverlapWithNormalRegion(6, 12, 1, 1, false);
       checkOverlapWithNormalRegion(10, 12, 1, 1, false);
       checkOverlapWithNormalRegion(11, 12, 1, 1, false);
 
@@ -83,6 +84,23 @@ public class CustomFoldRegionTest {
       checkOverlapWithCustomRegion(1, 2, 0, 2, true);
       checkOverlapWithCustomRegion(1, 2, 1, 3, true);
       checkOverlapWithCustomRegion(1, 2, 0, 3, true);
+    });
+  }
+
+  @Test
+  public void testNormalRegionSharingStartWithCustomRegion() {
+    myFixture.runTest(() -> {
+      myFixture.initText("line1\nline2\n\n");
+      CustomFoldRegion customRegion = myFixture.addCustomFoldRegion(1, 1);
+      assertNotNull(customRegion);
+      FoldRegion region = myFixture.addFoldRegion(6, 12, ".");
+      assertNotNull(region);
+      FoldingModel model = myFixture.getEditor().getFoldingModel();
+      assertSame(customRegion, model.getCollapsedRegionAtOffset(6));
+      myFixture.toggleFoldRegionState(region, false);
+      assertSame(region, model.getCollapsedRegionAtOffset(6));
+      myFixture.toggleFoldRegionState(region, true);
+      assertSame(customRegion, model.getCollapsedRegionAtOffset(6));
     });
   }
 

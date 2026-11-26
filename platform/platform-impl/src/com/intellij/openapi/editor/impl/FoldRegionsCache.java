@@ -203,7 +203,9 @@ abstract class FoldRegionsCache {
     // notes specific to 'custom' fold regions:
     // * we do allow two otherwise identical regions one of which is 'custom' and the other is not - the custom one always takes preference
     //   over 'normal' one in terms of visibility
-    // * regions 'touching' on one of the boundaries are allowed only if both regions are 'normal', or 'custom' region fully contains
+    // * regions 'touching' on the start boundary are always allowed - the 'normal' region shows its marker on the first line of the
+    //   'custom' one
+    // * regions 'touching' on the end boundary are allowed only if both regions are 'normal', or 'custom' region fully contains
     //   the 'normal' one - otherwise, fold region marker would need to be displayed in 'custom' region's area of the gutter, and that's not
     //   currently supported
     int length = end - start;
@@ -227,7 +229,7 @@ abstract class FoldRegionsCache {
       if (length == rLength){
         return custom != rCustom;
       }
-      return start != rStart && end != rEnd || (length < rLength ? (!custom || rCustom) : (!rCustom || custom));
+      return end != rEnd || (length < rLength ? (!custom || rCustom) : (!rCustom || custom));
     });
   }
 
