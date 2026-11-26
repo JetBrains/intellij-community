@@ -434,7 +434,7 @@ public final class DirectoryLock {
 
   //<editor-fold desc="Helpers">
   private static final class CollectingLogger extends DelegatingLogger<Logger> {
-    private volatile List<String> messages = new ArrayList<>();
+    private List<String> messages = new ArrayList<>();
     private final IdeaLogRecordFormatter formatter = new IdeaLogRecordFormatter(true);
     private final String loggerName;
 
@@ -444,15 +444,12 @@ public final class DirectoryLock {
       loggerName = '#' + klass.getName();
     }
 
-    private String messages() {
-      var messages = this.messages;
+    private synchronized String messages() {
       return messages != null ? String.join("\n", messages) : "-";
     }
 
-    private void reset() {
-      var messages = this.messages;
-      if (messages != null) messages.clear();
-      this.messages = null;
+    private synchronized void reset() {
+      messages = null;
     }
 
     @Override
@@ -480,12 +477,14 @@ public final class DirectoryLock {
     }
 
     private void log(LogLevel level, String message, @Nullable Throwable t) {
-      var messages = this.messages;
-      if (messages != null) {
-        var record = new LogRecord(level.getLevel(), message);
-        record.setThrown(t);
-        record.setLoggerName(loggerName);
-        messages.add(formatter.format(record));
+      var record = new LogRecord(level.getLevel(), message);
+      record.setThrown(t);
+      record.setLoggerName(loggerName);
+      var logLine = formatter.format(record);
+      synchronized (this) {
+        if (messages != null) {
+          messages.add(logLine);
+        }
       }
     }
   }
