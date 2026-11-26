@@ -166,6 +166,7 @@ jvm_library(
         "//platform/eel-nioFs",
         "//platform/util/jdom",
         "//platform/productMode",
+        "//libraries/byte-buddy",
     ],
 )
 ### auto-generated section `build intellij.platform.execution.tests` end

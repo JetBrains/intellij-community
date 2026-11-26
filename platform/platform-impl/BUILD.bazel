@@ -360,6 +360,7 @@ jvm_library(
         "//platform/statistics/testFramework",
         "@lib//:jimfs",
         "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark",
+        "//libraries/byte-buddy",
     ],
 )
 ### auto-generated section `build intellij.platform.ide.impl.tests` end

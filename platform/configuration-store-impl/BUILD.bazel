@@ -163,6 +163,7 @@ jvm_library(
         "//xml/plugin",
         "//aether-dependency-resolver/plugin",
         "//platform/testRunner/plugin",
+        "//libraries/byte-buddy",
     ],
 )
 ### auto-generated section `build intellij.platform.configurationStore.tests` end
