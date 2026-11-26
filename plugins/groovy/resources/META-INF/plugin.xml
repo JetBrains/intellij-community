@@ -551,11 +551,11 @@
                                implementation="org.jetbrains.plugins.groovy.refactoring.rename.GrLightElementRenamer"
                                order="first, after groovyPropertyRenameProcessor"/>
     <renamePsiElementProcessor implementation="org.jetbrains.plugins.groovy.refactoring.rename.RenameGrReflectedMethodProcessor"
-                               order="first"/>
+                               order="first, before KotlinAwareJavaGetter"/>
     <renamePsiElementProcessor implementation="org.jetbrains.plugins.groovy.refactoring.rename.RenameAliasImportedClassProcessor"
                                order="first"/>
     <renamePsiElementProcessor implementation="org.jetbrains.plugins.groovy.refactoring.rename.RenameAliasImportedMethodProcessor"
-                               order="first"/>
+                               order="first, before KotlinAwareJavaGetter"/>
     <renamePsiElementProcessor implementation="org.jetbrains.plugins.groovy.refactoring.rename.RenameGroovyScriptProcessor"/>
     <renamePsiElementProcessor implementation="org.jetbrains.plugins.groovy.transformations.impl.synch.SynchronizedRenameFieldProcessor"
                                order="first, before groovyFieldRenameProcessor"/>
