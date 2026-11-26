@@ -54,6 +54,7 @@ jvm_library(
         "//platform/lang-api:lang",
         "//platform/lang-core",
         "//platform/util-ex",
+        "//platform/bazel-runfiles",
         ":libraries_junit6_provided",
     ],
 )

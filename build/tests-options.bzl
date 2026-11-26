@@ -90,14 +90,13 @@ def jps_test(name, jvm_flags = [], runtime_deps = [], args = [], data = [], tags
     # a select() - a target whose data depends on the platform, as the macOS-only dev-launch sets do
     all_data = []
     all_tags = list(tags)
-    all_env = dict(env)
 
     # required for com.intellij.openapi.projectRoots.impl.JavaSdkImpl.internalJdkAnnotationsPath
     # almost all tests in monorepo need it, so we add it to all tests
     all_data.append("@community//java:mockJDK")
 
-    # handled by com.intellij.tests.JUnit5BazelRunner.main
-    all_env["JB_TEST_SANDBOX"] = str(sandbox)
+    # handled by com.intellij.tests.JUnit5BazelRunner.main. The union keeps the caller's `env` a select(), as `data`.
+    all_env = env | {"JB_TEST_SANDBOX": str(sandbox)}
 
     all_tags.append("jetbrains_test_runner")
 
