@@ -184,7 +184,7 @@ class LightDaemonAnalyzerFixture internal constructor(
   fun configureByFile(relativePath: String): PsiFile {
     val fullPath = fixture.testDataPath + relativePath
     val path = Path.of(fullPath)
-    PlatformTestUtil.checkCaseSensitiveFS(fullPath, path.toFile())
+    PlatformTestUtil.checkCaseSensitiveFS(fullPath, path)
     return configureFromFileText(path.fileName.toString(), StringUtilRt.convertLineSeparators(Files.readString(path)))
   }
 

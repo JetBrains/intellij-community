@@ -41,7 +41,7 @@ public final class IncompleteModelHighlightingTest {
   private void configureByFile(@NotNull String relativePath) throws IOException {
     String fullPath = daemonFixture.get().getFixture().getTestDataPath() + relativePath;
     Path path = Path.of(fullPath);
-    PlatformTestUtil.checkCaseSensitiveFS(fullPath, path.toFile());
+    PlatformTestUtil.checkCaseSensitiveFS(fullPath, path);
     String fileText = StringUtilRt.convertLineSeparators(Files.readString(path));
     if (SystemInfoRt.isMac) {
       fileText = fileText.replace("Ctrl+Click, Ctrl+B", MacKeymapUtil.COMMAND + "Click, " + MacKeymapUtil.COMMAND + "B");

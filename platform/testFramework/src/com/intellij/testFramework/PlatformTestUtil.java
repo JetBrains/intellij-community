@@ -1115,6 +1115,18 @@ public final class PlatformTestUtil {
     }
   }
 
+  /**
+   * Fails when the real path of {@code file} ends with {@code fullOrRelativePath} only if the letter case is ignored.
+   * The check finds a wrong letter case of a test data path on a file system that ignores the case.
+   */
+  public static void checkCaseSensitiveFS(@NotNull String fullOrRelativePath, @NotNull Path file) throws IOException {
+    fullOrRelativePath = FileUtil.toSystemDependentName(FileUtil.toCanonicalPath(fullOrRelativePath));
+    var realPath = file.toRealPath().toString();
+    if (!realPath.endsWith(fullOrRelativePath) && StringUtil.endsWithIgnoreCase(realPath, fullOrRelativePath)) {
+      throw new RuntimeException("Queried for: " + fullOrRelativePath + "; but found: " + realPath);
+    }
+  }
+
   public static void assertFilesEqual(@NotNull VirtualFile fileExpected, @NotNull VirtualFile fileActual) throws IOException {
     var actual = BinaryFileTypeDecompilers.getInstance().allowDecompilerSlowOperation(() -> {
       try {
