@@ -15,94 +15,111 @@
  */
 package com.intellij.java.codeInsight.daemon.lambda;
 
-import com.intellij.codeInsight.daemon.LightDaemonAnalyzerTestCase;
-import com.intellij.codeInspection.LocalInspectionTool;
+import com.intellij.codeInsight.daemon.LightDaemonAnalyzerFixture;
 import com.intellij.codeInspection.redundantCast.RedundantCastInspection;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
+import org.junit.jupiter.api.Test;
 
-public class LambdaRedundantCastTest extends LightDaemonAnalyzerTestCase {
+import java.util.List;
+
+import static com.intellij.codeInsight.daemon.LightDaemonAnalyzerFixture.lightDaemonAnalyzerFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaTestDescriptor;
+
+@TestApplication
+public class LambdaRedundantCastTest {
+  private static final TestFixture<LightJavaProject> projectFixture =
+    lightJavaProjectFixture(lightJavaTestDescriptor());
+  private final TestFixture<LightDaemonAnalyzerFixture> daemonFixture =
+    lightDaemonAnalyzerFixture(projectFixture, () -> List.of(new RedundantCastInspection()));
+
   @NonNls static final String BASE_PATH = "/codeInsight/daemonCodeAnalyzer/lambda/redundantCast";
 
-  @Override
-  protected LocalInspectionTool @NotNull [] configureLocalInspectionTools() {
-    return new LocalInspectionTool[]{
-      new RedundantCastInspection()
-    };
-  }
-
-  public void testIntersection() { doTest(); }
-  public void testSer() { doTest(); }
-  public void testLambdaReturnExpressions() { doTest(); }
-  public void testLambdaReturnExpressions1() { doTest(); }
-  public void testPreserveThisContext() { doTest(); }
-  public void testPreventBadReturnTypeInReturnExpression() { doTest(); }
-  public void testExpectedTypeByNestedArrayInitializer() { doTest(); }
+  @Test public void testIntersection() { doTest(); }
+  @Test public void testSer() { doTest(); }
+  @Test public void testLambdaReturnExpressions() { doTest(); }
+  @Test public void testLambdaReturnExpressions1() { doTest(); }
+  @Test public void testPreserveThisContext() { doTest(); }
+  @Test public void testPreventBadReturnTypeInReturnExpression() { doTest(); }
+  @Test public void testExpectedTypeByNestedArrayInitializer() { doTest(); }
+  @Test
   public void testCastToPrimitive() {
     doTest();
   }
 
+  @Test
   public void testAnotherInterfaceMethodIsPointed() {
     doTest();
   }
 
+  @Test
   public void testSerializableLambda() {
     doTest();
   }
 
+  @Test
   public void testWithAnonymousClasses() {
     doTest();
   }
 
 
+  @Test
   public void testCastInMethodCallQualifierWithWildcardReturn() {
     doTest();
   }
 
+  @Test
   public void testCapturedWildcardInCast() {
     doTest();
   }
 
+  @Test
   public void testTopLevelResolutionFailures() {
     doTest();
   }
 
-  public void testEnumConstantWithFunctionalExpressionArg() { doTest(); }
-  public void testSecondLevelOverload() { doTest(); }
-  public void testStopAtMemberLevelDuringWalkUp() { doTest(); }
+  @Test public void testEnumConstantWithFunctionalExpressionArg() { doTest(); }
+  @Test public void testSecondLevelOverload() { doTest(); }
+  @Test public void testStopAtMemberLevelDuringWalkUp() { doTest(); }
 
-  public void testIDEA154861() { doTest();}
+  @Test public void testIDEA154861() { doTest();}
 
+  @Test
   public void testQualifierOfMethodWithCast() {
     doTest();
   }
 
-  public void testInvalidResolveWithoutCast() { doTest();}
-  public void testCastInConditionalBranch() { doTest();}
-  public void testCastInsideLambdaReturnExpressionPassedToEnumConstant() { doTest(); }
-  public void testGroundTargetTypeDiffersFromCastType() { doTest(); }
-  public void testInferenceErrorForApplicableMethod() { doTest(); }
-  public void testLambdaWithCastInReturnStatement() { doTest(); }
-  public void testCastInNeighbourArgument() { doTest(); }
-  public void testErasedTargetType() { doTest(); }
-  public void testThrowsStatementInLambdaBody() { doTest(); }
-  public void testSynchronizeCasts() { doTest(); }
-  public void testBoxingInConditionalOfLambdaReturn() { doTest(); }
-  public void testRawMiddleMan() { doTest(); }
+  @Test public void testInvalidResolveWithoutCast() { doTest();}
+  @Test public void testCastInConditionalBranch() { doTest();}
+  @Test public void testCastInsideLambdaReturnExpressionPassedToEnumConstant() { doTest(); }
+  @Test public void testGroundTargetTypeDiffersFromCastType() { doTest(); }
+  @Test public void testInferenceErrorForApplicableMethod() { doTest(); }
+  @Test public void testLambdaWithCastInReturnStatement() { doTest(); }
+  @Test public void testCastInNeighbourArgument() { doTest(); }
+  @Test public void testErasedTargetType() { doTest(); }
+  @Test public void testThrowsStatementInLambdaBody() { doTest(); }
+  @Test public void testSynchronizeCasts() { doTest(); }
+  @Test public void testBoxingInConditionalOfLambdaReturn() { doTest(); }
+  @Test public void testRawMiddleMan() { doTest(); }
+  @Test
   public void testRejectReturnTypeChange() {
     doTest();
   }
 
+  @Test
   public void testInvalidConditional() {
     doTest();
   }
-  public void testSuperBoundLambda() { doTest(); }
-  public void testLambdaReturnChain() { doTest(); }
-  public void testExpectedTypeProducesBadReturnType() { doTest(); }
-  public void testNonDenotableParent() { doTest(); }
-  public void testToBeNonPolyConditional() { doTest(); }
+  @Test public void testSuperBoundLambda() { doTest(); }
+  @Test public void testLambdaReturnChain() { doTest(); }
+  @Test public void testExpectedTypeProducesBadReturnType() { doTest(); }
+  @Test public void testNonDenotableParent() { doTest(); }
+  @Test public void testToBeNonPolyConditional() { doTest(); }
 
   private void doTest() {
-    doTest(BASE_PATH + "/" + getTestName(false) + ".java", true, false);
+    daemonFixture.get().doTest(BASE_PATH + "/" + daemonFixture.get().getFixture().getTestName(false) + ".java", true, false);
   }
 }

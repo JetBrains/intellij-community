@@ -15,61 +15,86 @@
  */
 package com.intellij.java.codeInsight.daemon.lambda;
 
-import com.intellij.codeInsight.daemon.LightDaemonAnalyzerTestCase;
+import com.intellij.codeInsight.daemon.LightDaemonAnalyzerFixture;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.testFramework.IdeaTestUtil;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.jetbrains.annotations.NonNls;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
-public class Java8RegressionTest extends LightDaemonAnalyzerTestCase {
+import static com.intellij.codeInsight.daemon.LightDaemonAnalyzerFixture.lightDaemonAnalyzerFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaTestDescriptor;
+
+@TestApplication
+public class Java8RegressionTest {
+  private static final TestFixture<LightJavaProject> projectFixture =
+    lightJavaProjectFixture(lightJavaTestDescriptor());
+  private final TestFixture<LightDaemonAnalyzerFixture> daemonFixture = lightDaemonAnalyzerFixture(projectFixture);
+
   @NonNls static final String BASE_PATH = "/codeInsight/daemonCodeAnalyzer/lambda/regression";
 
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-    enableInspectionTool(new UnusedDeclarationInspection());
+  @BeforeEach
+  void setUp() {
+    daemonFixture.get().getFixture().enableInspections(new UnusedDeclarationInspection());
   }
 
+  @Test
   public void testIDEA136856() {
     doTest();
   }
 
+  @Test
   public void testIDEA136887() {
     doTest();
   }
 
+  @Test
   public void testIDEA136840() {
     doTest();
   }
 
+  @Test
   public void testIDEA137277() {
     doTest();
   }
 
+  @Test
   public void testIDEA137694() {
     doTest();
   }
 
+  @Test
   public void testIDEA137668() {
     doTest();
   }
 
+  @Test
   public void testIDEA137795() {
     doTest();
   }
 
+  @Test
   public void testIDEA137893() {
     doTest();
   }
 
+  @Test
   public void testIDEA138696() {
     doTest();
   }
 
+  @Test
   public void testIDEA131282() {
     doTest(false);
   }
 
+  @Test
   public void testIDEA134945() {
     doTest(false);
   }
@@ -79,7 +104,8 @@ public class Java8RegressionTest extends LightDaemonAnalyzerTestCase {
   }
 
   private void doTest(boolean warnings) {
-    IdeaTestUtil.setTestVersion(JavaSdkVersion.JDK_1_8, getModule(), getTestRootDisposable());
-    doTest(BASE_PATH + "/" + getTestName(false) + ".java", warnings, false);
+    LightJavaCodeInsightTestFixture myFixture = daemonFixture.get().getFixture();
+    IdeaTestUtil.setTestVersion(JavaSdkVersion.JDK_1_8, myFixture.getModule(), myFixture.getTestRootDisposable());
+    daemonFixture.get().doTest(BASE_PATH + "/" + myFixture.getTestName(false) + ".java", warnings, false);
   }
 }

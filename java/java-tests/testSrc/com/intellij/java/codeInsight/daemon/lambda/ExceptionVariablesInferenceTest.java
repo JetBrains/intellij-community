@@ -15,21 +15,34 @@
  */
 package com.intellij.java.codeInsight.daemon.lambda;
 
-import com.intellij.codeInsight.daemon.LightDaemonAnalyzerTestCase;
+import com.intellij.codeInsight.daemon.LightDaemonAnalyzerFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.junit.jupiter.api.Test;
 
-public class ExceptionVariablesInferenceTest extends LightDaemonAnalyzerTestCase {
+import static com.intellij.codeInsight.daemon.LightDaemonAnalyzerFixture.lightDaemonAnalyzerFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaTestDescriptor;
+
+@TestApplication
+public class ExceptionVariablesInferenceTest {
+  private static final TestFixture<LightJavaProject> projectFixture =
+    lightJavaProjectFixture(lightJavaTestDescriptor());
+  private final TestFixture<LightDaemonAnalyzerFixture> daemonFixture = lightDaemonAnalyzerFixture(projectFixture);
+
   private static final String BASE_PATH = "/codeInsight/daemonCodeAnalyzer/lambda/exceptions/";
 
-  public void testUnboundExceptions() { doTest(); }
-  public void testNotThrownLambdaBodyReferencedMethod() { doTest(); }
-  public void testNotThrownLambdaBodyReferencedMethodContradictBounds() { doTest(); }
-  public void testLambdaParamExceptionVariable() { doTest(); }
-  public void testIDEA116441() { doTest(); }
-  public void testLambdaBodyUncaughtExceptionsForOuterCallInference() { doTest(); }
-  public void testMethodRefUncaughtExceptionsForOuterCallInference() { doTest(); }
-  public void testExceptionsThrownByCallArguments() { doTest(); }
+  @Test public void testUnboundExceptions() { doTest(); }
+  @Test public void testNotThrownLambdaBodyReferencedMethod() { doTest(); }
+  @Test public void testNotThrownLambdaBodyReferencedMethodContradictBounds() { doTest(); }
+  @Test public void testLambdaParamExceptionVariable() { doTest(); }
+  @Test public void testIDEA116441() { doTest(); }
+  @Test public void testLambdaBodyUncaughtExceptionsForOuterCallInference() { doTest(); }
+  @Test public void testMethodRefUncaughtExceptionsForOuterCallInference() { doTest(); }
+  @Test public void testExceptionsThrownByCallArguments() { doTest(); }
 
   private void doTest() {
-    doTest(BASE_PATH + getTestName(false) + ".java", false, false);
+    daemonFixture.get().doTest(BASE_PATH + daemonFixture.get().getFixture().getTestName(false) + ".java", false, false);
   }
 }

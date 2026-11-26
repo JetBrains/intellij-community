@@ -15,105 +15,113 @@
  */
 package com.intellij.java.codeInsight.daemon.lambda;
 
-import com.intellij.codeInsight.daemon.LightDaemonAnalyzerTestCase;
+import com.intellij.codeInsight.daemon.LightDaemonAnalyzerFixture;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
 import com.intellij.pom.java.LanguageLevel;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
-public class LambdaHighlightingTest extends LightDaemonAnalyzerTestCase {
+import static com.intellij.codeInsight.daemon.LightDaemonAnalyzerFixture.lightDaemonAnalyzerFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaTestDescriptor;
+
+@TestApplication
+public class LambdaHighlightingTest {
+  private static final TestFixture<LightJavaProject> projectFixture =
+    lightJavaProjectFixture(lightJavaTestDescriptor(LanguageLevel.JDK_22));
+  private final TestFixture<LightDaemonAnalyzerFixture> daemonFixture = lightDaemonAnalyzerFixture(projectFixture);
+
   private static final String BASE_PATH = "/codeInsight/daemonCodeAnalyzer/lambda/highlighting/";
 
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-    enableInspectionTool(new UnusedDeclarationInspection());
+  @BeforeEach
+  void setUp() {
+    daemonFixture.get().getFixture().enableInspections(new UnusedDeclarationInspection());
   }
 
-  @Override
-  protected LanguageLevel getLanguageLevel() {
-    return LanguageLevel.JDK_22;
-  }
+  @Test public void testStaticAccess() { doTest(); }
+  @Test public void testEffectiveFinal() { doTest(); }
+  @Test public void testFieldInitializedUsedInLambda() { doTest(); }
+  @Test public void testReassignUsedVars() { doTest(); }
+  @Test public void testLambdaContext() { doTest(); }
+  @Test public void testReturnTypeCompatibility() { doTest(); }
 
-  public void testStaticAccess() { doTest(); }
-  public void testEffectiveFinal() { doTest(); }
-  public void testFieldInitializedUsedInLambda() { doTest(); }
-  public void testReassignUsedVars() { doTest(); }
-  public void testLambdaContext() { doTest(); }
-  public void testReturnTypeCompatibility() { doTest(); }
-
-  public void testTypeArgsConsistency() { doTest(); }
-  public void testTypeArgsConsistencyMisc1() { doTest(); }
-  public void testTypeArgsConsistencyMisc2() { doTest(); }
-  public void testTypeArgsConsistencyWithoutParams() { doTest(); }
-  public void testIncompatibleReturnTypes() { doTest(); }
-  public void testWildcardBounds() { doTest(); }
-  public void testInferenceOnMethodCallSite() { doTest(); }
-  public void testInferFromTypeArgs() { doTest(); }
-  public void testAmbiguity1() { doTest(); }
+  @Test public void testTypeArgsConsistency() { doTest(); }
+  @Test public void testTypeArgsConsistencyMisc1() { doTest(); }
+  @Test public void testTypeArgsConsistencyMisc2() { doTest(); }
+  @Test public void testTypeArgsConsistencyWithoutParams() { doTest(); }
+  @Test public void testIncompatibleReturnTypes() { doTest(); }
+  @Test public void testWildcardBounds() { doTest(); }
+  @Test public void testInferenceOnMethodCallSite() { doTest(); }
+  @Test public void testInferFromTypeArgs() { doTest(); }
+  @Test public void testAmbiguity1() { doTest(); }
   //public void testAmbiguity2() { doTest(); }
-  public void testAmbiguityVarargs() { doTest(); }
-  public void testAmbiguityRawGenerics() { doTest(); }
-  public void testDefaultMethod() { doTest(); }
-  public void testLambdaOnVarargsPlace() { doTest(); }
-  public void testLambdaRawOrNot() { doTest(); }  //todo incorrect testdata
-  public void testReturnTypeCompatibility1() { doTest(); }
-  public void testNoInferenceResult() { doTest(); }
-  public void testInferenceFromArgs() { doTest(); }
-  public void testInContexts() { doTest(); }
-  public void testCastInContexts() { doTest(); }
-  public void testUnhandledException() { doTest(); }
-  public void testConditionalExpr() { doTest(); }
-  public void testIncompleteSubst() { doTest(); }
-  public void testVariableInitialization() { doTest(); }
-  public void testUnreachableStatement() { doTest(); }
-  public void testUnhandledExceptions() { doTest(); }
-  public void testReturnValue() { doTest(); }
-  public void testAlreadyUsedParamName() { doTest(); }
-  public void testRecursiveAccess() { doTest(); }
-  public void testIncompatibleFormalParameterTypes() { doTest(); }
-  public void testNestedLambdas() { doTest(); }
-  public void testEnumConstants() { doTest(); }
-  public void testRawWhenNoParams() { doTest(); }
-  public void testUseIncompleteParentSubstitutor() { doTest(); }
-  public void testReturnTypeCompatibilityBeforeSpecificsCheck() { doTest(); }
-  public void testIntersectionTypeInCast() { doTest(); }
-  public void testAmbiguitySpecificReturn() { doTest(true); }
-  public void testFunctionalInterfaceAnnotation() { doTest(); }
-  public void testFunctionalInterfaceAnnotation2() { doTest(); }
-  public void testFunctionalInterfaceAnnotation3() { doTest(); }
-  public void testAmbiguityReturnValueResolution() { doTest(); }
-  public void testAmbiguityReturnValueResolution1() { doTest(); }
-  public void testAmbiguityReturnValueResolution2() { doTest(true); }
-  public void testAmbiguityReturnValueResolution3() { doTest(); }
-  public void testLambdaOnVarargsPlace1() { doTest(); }
-  public void testInferenceFromSecondLambda() { doTest(); }
-  public void testAcceptRawSubstForLambda() { doTest(); }
-  public void testCheckFunctionalInterfaceAccess() { doTest(); }
-  public void testVoidCompatibility() { doTest(); }
-  public void testConditionalInferenceFromOppositePart() { doTest(); }
-  public void testDeclaredTypeParameterBoundsAndUnboundedWildcard() { doTest(); }
-  public void testConflictResolution() { doTest(); }
-  public void testIDEA108195() { doTest(); }
-  public void testDiamondInference() { doTest(); }
-  public void testFunctionalInterfaceCheck() { doTest(); }
-  public void testUnderscores() { setLanguageLevel(LanguageLevel.JDK_1_8); doTest(true); }
-  public void testReturnTypeAmbiguity() { doTest(); }
-  public void testWildcardsAndFormalLambdaParams() { doTest(); }
-  public void testFinalInitializer() { doTest(); }
-  public void testBreakContinueInside() { doTest(); }
-  public void testSameLambdaParamNames() { doTest(); }
-  public void testIDEA123308() { doTest(); }
-  public void testIntersection() { doTest(); }
-  public void testNoBoxingInLambdaFormalParams() { doTest(); }
-  public void testGenericNotGenericInterfaceMethod() { doTest(); }
-  public void testInferredFromCast() { doTest(); }
-  public void testReferencedFromSelf() { doTest(); }
-  public void testFriendlyMessageInBadInference() { doTest(); }
+  @Test public void testAmbiguityVarargs() { doTest(); }
+  @Test public void testAmbiguityRawGenerics() { doTest(); }
+  @Test public void testDefaultMethod() { doTest(); }
+  @Test public void testLambdaOnVarargsPlace() { doTest(); }
+  @Test public void testLambdaRawOrNot() { doTest(); }  //todo incorrect testdata
+  @Test public void testReturnTypeCompatibility1() { doTest(); }
+  @Test public void testNoInferenceResult() { doTest(); }
+  @Test public void testInferenceFromArgs() { doTest(); }
+  @Test public void testInContexts() { doTest(); }
+  @Test public void testCastInContexts() { doTest(); }
+  @Test public void testUnhandledException() { doTest(); }
+  @Test public void testConditionalExpr() { doTest(); }
+  @Test public void testIncompleteSubst() { doTest(); }
+  @Test public void testVariableInitialization() { doTest(); }
+  @Test public void testUnreachableStatement() { doTest(); }
+  @Test public void testUnhandledExceptions() { doTest(); }
+  @Test public void testReturnValue() { doTest(); }
+  @Test public void testAlreadyUsedParamName() { doTest(); }
+  @Test public void testRecursiveAccess() { doTest(); }
+  @Test public void testIncompatibleFormalParameterTypes() { doTest(); }
+  @Test public void testNestedLambdas() { doTest(); }
+  @Test public void testEnumConstants() { doTest(); }
+  @Test public void testRawWhenNoParams() { doTest(); }
+  @Test public void testUseIncompleteParentSubstitutor() { doTest(); }
+  @Test public void testReturnTypeCompatibilityBeforeSpecificsCheck() { doTest(); }
+  @Test public void testIntersectionTypeInCast() { doTest(); }
+  @Test public void testAmbiguitySpecificReturn() { doTest(true); }
+  @Test public void testFunctionalInterfaceAnnotation() { doTest(); }
+  @Test public void testFunctionalInterfaceAnnotation2() { doTest(); }
+  @Test public void testFunctionalInterfaceAnnotation3() { doTest(); }
+  @Test public void testAmbiguityReturnValueResolution() { doTest(); }
+  @Test public void testAmbiguityReturnValueResolution1() { doTest(); }
+  @Test public void testAmbiguityReturnValueResolution2() { doTest(true); }
+  @Test public void testAmbiguityReturnValueResolution3() { doTest(); }
+  @Test public void testLambdaOnVarargsPlace1() { doTest(); }
+  @Test public void testInferenceFromSecondLambda() { doTest(); }
+  @Test public void testAcceptRawSubstForLambda() { doTest(); }
+  @Test public void testCheckFunctionalInterfaceAccess() { doTest(); }
+  @Test public void testVoidCompatibility() { doTest(); }
+  @Test public void testConditionalInferenceFromOppositePart() { doTest(); }
+  @Test public void testDeclaredTypeParameterBoundsAndUnboundedWildcard() { doTest(); }
+  @Test public void testConflictResolution() { doTest(); }
+  @Test public void testIDEA108195() { doTest(); }
+  @Test public void testDiamondInference() { doTest(); }
+  @Test public void testFunctionalInterfaceCheck() { doTest(); }
+  @Test public void testUnderscores() { daemonFixture.get().setLanguageLevel(LanguageLevel.JDK_1_8); doTest(true); }
+  @Test public void testReturnTypeAmbiguity() { doTest(); }
+  @Test public void testWildcardsAndFormalLambdaParams() { doTest(); }
+  @Test public void testFinalInitializer() { doTest(); }
+  @Test public void testBreakContinueInside() { doTest(); }
+  @Test public void testSameLambdaParamNames() { doTest(); }
+  @Test public void testIDEA123308() { doTest(); }
+  @Test public void testIntersection() { doTest(); }
+  @Test public void testNoBoxingInLambdaFormalParams() { doTest(); }
+  @Test public void testGenericNotGenericInterfaceMethod() { doTest(); }
+  @Test public void testInferredFromCast() { doTest(); }
+  @Test public void testReferencedFromSelf() { doTest(); }
+  @Test public void testFriendlyMessageInBadInference() { doTest(); }
 
   private void doTest() {
     doTest(false);
   }
 
   private void doTest(boolean checkWarnings) {
-    doTest(BASE_PATH + getTestName(false) + ".java", checkWarnings, false);
+    daemonFixture.get().doTest(BASE_PATH + daemonFixture.get().getFixture().getTestName(false) + ".java", checkWarnings, false);
   }
 }

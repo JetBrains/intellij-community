@@ -15,76 +15,105 @@
  */
 package com.intellij.java.codeInsight.daemon.lambda;
 
-import com.intellij.codeInsight.daemon.LightDaemonAnalyzerTestCase;
+import com.intellij.codeInsight.daemon.LightDaemonAnalyzerFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.jetbrains.annotations.NonNls;
+import org.junit.jupiter.api.Test;
 
-public class FunctionalInterfaceTest extends LightDaemonAnalyzerTestCase {
+import static com.intellij.codeInsight.daemon.LightDaemonAnalyzerFixture.lightDaemonAnalyzerFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaTestDescriptor;
+
+@TestApplication
+public class FunctionalInterfaceTest {
+  private static final TestFixture<LightJavaProject> projectFixture =
+    lightJavaProjectFixture(lightJavaTestDescriptor());
+  private final TestFixture<LightDaemonAnalyzerFixture> daemonFixture = lightDaemonAnalyzerFixture(projectFixture);
+
   @NonNls static final String BASE_PATH = "/codeInsight/daemonCodeAnalyzer/lambda/functionalInterface";
 
   private void doTest() {
-    doTest(BASE_PATH + "/" + getTestName(false) + ".java", false, false);
+    daemonFixture.get().doTest(BASE_PATH + "/" + daemonFixture.get().getFixture().getTestName(false) + ".java", false, false);
   }
 
+  @Test
   public void testSimple() {
     doTest();
   }
 
+  @Test
   public void testNoMethods() {
     doTest();
   }
 
+  @Test
   public void testMultipleMethods() {
     doTest();
   }
   
+  @Test
   public void testMultipleMethodsInOne() {
     doTest();
   }
 
+  @Test
   public void testIntersectionOf2FunctionalTypesWithEqualSignatures() {
     doTest();
   }
 
+  @Test
   public void testIntersectionOf2FunctionalTypesWithEqualAfterSubstitutionSignatures() {
     doTest();
   }
 
+  @Test
   public void testClone() {
     doTest();
   }
 
+  @Test
   public void testTwoMethodsSameSignature() {
     doTest();
   } 
   
+  @Test
   public void testTwoMethodsSubSignature() {
     doTest();
   }
   
+  @Test
   public void testTwoMethodsNoSubSignature() {
     doTest();
   }
   
+  @Test
   public void testTwoMethodsNoSubSignature1() {
     doTest();
   } 
   
+  @Test
   public void testTwoMethodsSameSubstSignature() {
     doTest();
   }
   
+  @Test
   public void testMethodWithTypeParam() {
     doTest();
   }
   
+  @Test
   public void testTwoMethodsSameSignatureTypeParams() {
     doTest();
   }
 
+  @Test
   public void testAbstractClass() {
     doTest();
   }
 
+  @Test
   public void testIntersectionTypeWithSameBaseInterfaceInConjuncts() {
     doTest();
   }

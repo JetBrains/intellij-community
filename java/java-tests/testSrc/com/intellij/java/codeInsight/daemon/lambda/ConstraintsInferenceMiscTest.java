@@ -15,57 +15,81 @@
  */
 package com.intellij.java.codeInsight.daemon.lambda;
 
-import com.intellij.codeInsight.daemon.LightDaemonAnalyzerTestCase;
+import com.intellij.codeInsight.daemon.LightDaemonAnalyzerFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.jetbrains.annotations.NonNls;
+import org.junit.jupiter.api.Test;
 
-public class ConstraintsInferenceMiscTest extends LightDaemonAnalyzerTestCase {
+import static com.intellij.codeInsight.daemon.LightDaemonAnalyzerFixture.lightDaemonAnalyzerFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaTestDescriptor;
+
+@TestApplication
+public class ConstraintsInferenceMiscTest {
+  private static final TestFixture<LightJavaProject> projectFixture =
+    lightJavaProjectFixture(lightJavaTestDescriptor());
+  private final TestFixture<LightDaemonAnalyzerFixture> daemonFixture = lightDaemonAnalyzerFixture(projectFixture);
+
   @NonNls static final String BASE_PATH = "/codeInsight/daemonCodeAnalyzer/lambda/constraints";
 
+  @Test
   public void testEqualityUnboundWildcard() {
     doTest(false);
   }
 
+  @Test
   public void testPrimitiveTypesCompatibility() {
     doTest(false);
   }
 
+  @Test
   public void testTypeCompatibilityUncheckedConversion() {
     doTest(false);
   }
 
+  @Test
   public void testTypeCompatibilityUncheckedConversionReturnConstraints() {
     doTest(false);
   }
 
+  @Test
   public void testSubtypingExtendsSuper() {
     doTest(false);
   }
 
+  @Test
   public void testUncheckedBoundsWithErasure() {
     doTest(false);
   }
 
+  @Test
   public void testLambdaGroundTest() {
     doTest(false);
   }
 
+  @Test
   public void testIntersectionTypeStrictSubtypingConstraint() {
     doTest(false);
   }
 
+  @Test
   public void testWildcardParameterizedReturnTypeConflictWithParameterTypes() {
     doTest(false);
   }
 
+  @Test
   public void testSubtypingConstraintWithSuperCapturedWildcard() {
     doTest(false);
   }
 
+  @Test
   public void testExceptionConstraintsWithProperAndNonProperThrows() {
     doTest(false);
   }
 
   private void doTest(final boolean checkWarnings) {
-    doTest(BASE_PATH + "/" + getTestName(false) + ".java", checkWarnings, false);
+    daemonFixture.get().doTest(BASE_PATH + "/" + daemonFixture.get().getFixture().getTestName(false) + ".java", checkWarnings, false);
   }
 }

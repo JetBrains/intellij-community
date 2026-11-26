@@ -15,21 +15,36 @@
  */
 package com.intellij.java.codeInsight.daemon.lambda;
 
-import com.intellij.codeInsight.daemon.LightDaemonAnalyzerTestCase;
+import com.intellij.codeInsight.daemon.LightDaemonAnalyzerFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.jetbrains.annotations.NonNls;
+import org.junit.jupiter.api.Test;
 
-public class LambdaInferenceTest extends LightDaemonAnalyzerTestCase {
+import static com.intellij.codeInsight.daemon.LightDaemonAnalyzerFixture.lightDaemonAnalyzerFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaTestDescriptor;
+
+@TestApplication
+public class LambdaInferenceTest {
+  private static final TestFixture<LightJavaProject> projectFixture =
+    lightJavaProjectFixture(lightJavaTestDescriptor());
+  private final TestFixture<LightDaemonAnalyzerFixture> daemonFixture = lightDaemonAnalyzerFixture(projectFixture);
+
   @NonNls static final String BASE_PATH = "/codeInsight/daemonCodeAnalyzer/lambda/inference";
 
+  @Test
   public void testFunctionalInterfaceShouldHaveExactlyOneMethod() {
     doTest();
   }
   
+  @Test
   public void testSimpleCyclicInference() {
     doTest();
   }
 
   private void doTest() {
-    doTest(BASE_PATH + "/" + getTestName(false) + ".java", false, false);
+    daemonFixture.get().doTest(BASE_PATH + "/" + daemonFixture.get().getFixture().getTestName(false) + ".java", false, false);
   }
 }

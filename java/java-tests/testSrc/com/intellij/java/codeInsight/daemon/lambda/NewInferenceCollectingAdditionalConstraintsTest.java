@@ -15,44 +15,66 @@
  */
 package com.intellij.java.codeInsight.daemon.lambda;
 
-import com.intellij.codeInsight.daemon.LightDaemonAnalyzerTestCase;
+import com.intellij.codeInsight.daemon.LightDaemonAnalyzerFixture;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.testFramework.IdeaTestUtil;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.jetbrains.annotations.NonNls;
+import org.junit.jupiter.api.Test;
 
-public class NewInferenceCollectingAdditionalConstraintsTest extends LightDaemonAnalyzerTestCase {
+import static com.intellij.codeInsight.daemon.LightDaemonAnalyzerFixture.lightDaemonAnalyzerFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaTestDescriptor;
+
+@TestApplication
+public class NewInferenceCollectingAdditionalConstraintsTest {
+  private static final TestFixture<LightJavaProject> projectFixture =
+    lightJavaProjectFixture(lightJavaTestDescriptor());
+  private final TestFixture<LightDaemonAnalyzerFixture> daemonFixture = lightDaemonAnalyzerFixture(projectFixture);
+
   @NonNls static final String BASE_PATH = "/codeInsight/daemonCodeAnalyzer/lambda/additionalConstraints";
 
+  @Test
   public void testInferenceFromNestedIn2LambdasCall() {
     doTest();
   }
 
+  @Test
   public void testStopCollectingAdditionalConstraintsWhenLambdaReturnTypeIsProper() {
     doTest();
   }
 
+  @Test
   public void testDeepLambdaReturnExpressionsWithProperTargetType() {
     doTest();
   }
 
+  @Test
   public void testIncompleteResolveDuringNestedChecks() {
     doTest();
   }
 
+  @Test
   public void testConstraintsInsideNestedBlocks() {
     doTest();
   }
 
+  @Test
   public void testNestedLambdaExpressionsWithTopStandaloneMethod() {
     doTest();
   }
 
+  @Test
   public void testNestedLambdaExpressionsChain() {
     doTest();
   }
 
   private void doTest() {
-    IdeaTestUtil.setTestVersion(JavaSdkVersion.JDK_1_8, getModule(), getTestRootDisposable());
-    doTest(BASE_PATH + "/" + getTestName(false) + ".java", true, false);
+    LightJavaCodeInsightTestFixture myFixture = daemonFixture.get().getFixture();
+    IdeaTestUtil.setTestVersion(JavaSdkVersion.JDK_1_8, myFixture.getModule(), myFixture.getTestRootDisposable());
+    daemonFixture.get().doTest(BASE_PATH + "/" + myFixture.getTestName(false) + ".java", true, false);
   }
 }

@@ -15,16 +15,30 @@
  */
 package com.intellij.java.codeInsight.daemon.lambda;
 
-import com.intellij.codeInsight.daemon.LightDaemonAnalyzerTestCase;
+import com.intellij.codeInsight.daemon.LightDaemonAnalyzerFixture;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.testFramework.IdeaTestUtil;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.jetbrains.annotations.NonNls;
+import org.junit.jupiter.api.Test;
 
-public class GenericsHighlightingGenerated8Test extends LightDaemonAnalyzerTestCase {
+import static com.intellij.codeInsight.daemon.LightDaemonAnalyzerFixture.lightDaemonAnalyzerFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaTestDescriptor;
+
+@TestApplication
+public class GenericsHighlightingGenerated8Test {
+  private static final TestFixture<LightJavaProject> projectFixture =
+    lightJavaProjectFixture(lightJavaTestDescriptor());
+  private final TestFixture<LightDaemonAnalyzerFixture> daemonFixture = lightDaemonAnalyzerFixture(projectFixture);
+
   @NonNls private static final String BASE_PATH = "/codeInsight/daemonCodeAnalyzer/genericsHighlightingGenerated8";
 
-  public void testEmptyTestT() {}
+  @Test public void testEmptyTestT() {}
 
   public void _testUnrelatedClasses() {
     doTest();
@@ -35,8 +49,9 @@ public class GenericsHighlightingGenerated8Test extends LightDaemonAnalyzerTestC
   }
 
   private void doTest() {
-    IdeaTestUtil.setProjectLanguageLevel(getJavaFacade().getProject(), LanguageLevel.JDK_1_8);
-    IdeaTestUtil.setTestVersion(JavaSdkVersion.JDK_1_8, getModule(), getTestRootDisposable());
-    doTest(BASE_PATH + "/" + getTestName(false) + ".java", false, false);
+    LightJavaCodeInsightTestFixture myFixture = daemonFixture.get().getFixture();
+    daemonFixture.get().setLanguageLevel(LanguageLevel.JDK_1_8);
+    IdeaTestUtil.setTestVersion(JavaSdkVersion.JDK_1_8, myFixture.getModule(), myFixture.getTestRootDisposable());
+    daemonFixture.get().doTest(BASE_PATH + "/" + myFixture.getTestName(false) + ".java", false, false);
   }
 }

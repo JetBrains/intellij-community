@@ -15,23 +15,38 @@
  */
 package com.intellij.java.codeInsight.daemon.lambda;
 
-import com.intellij.codeInsight.daemon.LightDaemonAnalyzerTestCase;
+import com.intellij.codeInsight.daemon.LightDaemonAnalyzerFixture;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.jetbrains.annotations.NonNls;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
-public class FunctionalExpressionIncompleteHighlightingTest extends LightDaemonAnalyzerTestCase {
+import static com.intellij.codeInsight.daemon.LightDaemonAnalyzerFixture.lightDaemonAnalyzerFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaTestDescriptor;
+
+@TestApplication
+public class FunctionalExpressionIncompleteHighlightingTest {
+  private static final TestFixture<LightJavaProject> projectFixture =
+    lightJavaProjectFixture(lightJavaTestDescriptor());
+  private final TestFixture<LightDaemonAnalyzerFixture> daemonFixture = lightDaemonAnalyzerFixture(projectFixture);
+
   @NonNls static final String BASE_PATH = "/codeInsight/daemonCodeAnalyzer/lambda/incomplete";
 
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-    enableInspectionTool(new UnusedDeclarationInspection());
+  @BeforeEach
+  void setUp() {
+    daemonFixture.get().getFixture().enableInspections(new UnusedDeclarationInspection());
   }
 
+  @Test
   public void testMissedFunctionalInterfaceMethodReturnType() {
     doTest();
   }
 
+  @Test
   public void testInsideParenthesis() {
     doTest();
   }
@@ -41,6 +56,6 @@ public class FunctionalExpressionIncompleteHighlightingTest extends LightDaemonA
   }
 
   private void doTest(final boolean checkWarnings) {
-    doTest(BASE_PATH + "/" + getTestName(false) + ".java", checkWarnings, false);
+    daemonFixture.get().doTest(BASE_PATH + "/" + daemonFixture.get().getFixture().getTestName(false) + ".java", checkWarnings, false);
   }
 }

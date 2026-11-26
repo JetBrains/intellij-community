@@ -15,82 +15,97 @@
  */
 package com.intellij.java.codeInsight.daemon.lambda;
 
-import com.intellij.codeInsight.daemon.LightDaemonAnalyzerTestCase;
+import com.intellij.codeInsight.daemon.LightDaemonAnalyzerFixture;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.testFramework.IdeaTestUtil;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
-public class MethodRefHighlightingTest extends LightDaemonAnalyzerTestCase {
+import static com.intellij.codeInsight.daemon.LightDaemonAnalyzerFixture.lightDaemonAnalyzerFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaTestDescriptor;
+
+@TestApplication
+public class MethodRefHighlightingTest {
+  private static final TestFixture<LightJavaProject> projectFixture =
+    lightJavaProjectFixture(lightJavaTestDescriptor());
+  private final TestFixture<LightDaemonAnalyzerFixture> daemonFixture = lightDaemonAnalyzerFixture(projectFixture);
+
   private static final String BASE_PATH = "/codeInsight/daemonCodeAnalyzer/lambda/methodRef/";
 
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-    enableInspectionTool(new UnusedDeclarationInspection());
+  @BeforeEach
+  void setUp() {
+    daemonFixture.get().getFixture().enableInspections(new UnusedDeclarationInspection());
   }
 
-  public void testValidContext() { doTest(); }
-  public void testAssignability() { doTest(); }
-  public void testAmbiguity() { doTest(); }
-  public void testMethodReferenceReceiver() { doTest(); }
-  public void testMethodRefMisc() { doTest(); }
-  public void testMethodTypeParamsInference() { doTest(); }
-  public void testMethodRefMisc1() { doTest(); }
-  public void testQualifierTypeArgs() { doTest(); }
-  public void testStaticProblems() { doTest(); }
-  public void testConstructorRefs() { doTest(); }
-  public void testConstructorRefsInnerClasses() { doTest(); }
-  public void testVarargs() { doTest(); }
-  public void testVarargs1() { doTest(); }
-  public void testVarargs2() { doTest(); }
-  public void testConstructorRefInnerFromSuper() { doTest(); }
-  public void testReferenceParameters() { doTest(); }
-  public void testRawQualifier() { doTest(); }
-  public void testCyclicInference() { doTest(); }
-  public void testAccessModifiers() { doTest(); }
-  public void testDefaultConstructor() { doTest(); }
-  public void testWildcards() { doTest(); }
-  public void testVarargsInReceiverPosition() { doTest(); }
-  public void testInferenceFromMethodReference() { doTest(); }
-  public void testAssignability1() { doTest(); }
-  public void testTypeArgumentsOnMethodRefs() { doTest(); }
-  public void testConstructorAssignability() { doTest(); }
-  public void testConstructorWithoutParams() { doTest(); }
-  public void testSOE() { doTest(); }
-  public void testInferenceFromReturnType() { doTest(true); }
-  public void testReturnTypeSpecific() { doTest(true); }
-  public void testResolveConflicts() { doTest(true); }
-  public void testIntersectionTypeInCast() { doTest(false); }
-  public void testUnhandledExceptions() { doTest(); }
-  public void testCapturedWildcards() { doTest(); }
-  public void testConstructorNonAbstractAbstractExpected() { doTest(); }
-  public void test100441() { doTest(); }
-  public void testSuperClassSubst() { doTest(); }
-  public void testNonParameterizedReceiver() { doTest(); }
-  public void testFunctionalInterfaceMethodIsGeneric() { doTest(); /*accepted for method ref, though forbidden for lambda*/ }
-  public void testStaticMethodOnTypedClassReference() { doTest(); }
-  public void testRefOnArrayDeclaration() { doTest(); }
-  public void testGetClassSpecifics() { doTest(); }
-  public void testAbstractMethod() { doTest(); }
-  public void testMethodRefAcceptance() { doTest(); }
-  public void testVarargsMethodRef() { doTest(); }
-  public void testExprReceiver() { doTest(); }
-  public void testVoidReturnTypeAmbiguity() { doTest(true); }
-  public void testTypeParameterWithExtendsList() { doTest(); }
-  public void testIDEA112323() { doTest(); }
-  public void testExactReferencesToArrayCreation() { doTest(); }
-  public void testUnknownQualifierClass() { doTest(); }
-  public void testQualifiersInStaticContext() { doTest(); }
-  public void testInvalidFunctionalTypeInReturnStmt() { doTest(); }
-  public void testIDEA127765() { doTest(); }
-  public void testIntersectionTypesInReceiverPosition() { doTest(); }
+  @Test public void testValidContext() { doTest(); }
+  @Test public void testAssignability() { doTest(); }
+  @Test public void testAmbiguity() { doTest(); }
+  @Test public void testMethodReferenceReceiver() { doTest(); }
+  @Test public void testMethodRefMisc() { doTest(); }
+  @Test public void testMethodTypeParamsInference() { doTest(); }
+  @Test public void testMethodRefMisc1() { doTest(); }
+  @Test public void testQualifierTypeArgs() { doTest(); }
+  @Test public void testStaticProblems() { doTest(); }
+  @Test public void testConstructorRefs() { doTest(); }
+  @Test public void testConstructorRefsInnerClasses() { doTest(); }
+  @Test public void testVarargs() { doTest(); }
+  @Test public void testVarargs1() { doTest(); }
+  @Test public void testVarargs2() { doTest(); }
+  @Test public void testConstructorRefInnerFromSuper() { doTest(); }
+  @Test public void testReferenceParameters() { doTest(); }
+  @Test public void testRawQualifier() { doTest(); }
+  @Test public void testCyclicInference() { doTest(); }
+  @Test public void testAccessModifiers() { doTest(); }
+  @Test public void testDefaultConstructor() { doTest(); }
+  @Test public void testWildcards() { doTest(); }
+  @Test public void testVarargsInReceiverPosition() { doTest(); }
+  @Test public void testInferenceFromMethodReference() { doTest(); }
+  @Test public void testAssignability1() { doTest(); }
+  @Test public void testTypeArgumentsOnMethodRefs() { doTest(); }
+  @Test public void testConstructorAssignability() { doTest(); }
+  @Test public void testConstructorWithoutParams() { doTest(); }
+  @Test public void testSOE() { doTest(); }
+  @Test public void testInferenceFromReturnType() { doTest(true); }
+  @Test public void testReturnTypeSpecific() { doTest(true); }
+  @Test public void testResolveConflicts() { doTest(true); }
+  @Test public void testIntersectionTypeInCast() { doTest(false); }
+  @Test public void testUnhandledExceptions() { doTest(); }
+  @Test public void testCapturedWildcards() { doTest(); }
+  @Test public void testConstructorNonAbstractAbstractExpected() { doTest(); }
+  @Test public void test100441() { doTest(); }
+  @Test public void testSuperClassSubst() { doTest(); }
+  @Test public void testNonParameterizedReceiver() { doTest(); }
+  @Test public void testFunctionalInterfaceMethodIsGeneric() { doTest(); /*accepted for method ref, though forbidden for lambda*/ }
+  @Test public void testStaticMethodOnTypedClassReference() { doTest(); }
+  @Test public void testRefOnArrayDeclaration() { doTest(); }
+  @Test public void testGetClassSpecifics() { doTest(); }
+  @Test public void testAbstractMethod() { doTest(); }
+  @Test public void testMethodRefAcceptance() { doTest(); }
+  @Test public void testVarargsMethodRef() { doTest(); }
+  @Test public void testExprReceiver() { doTest(); }
+  @Test public void testVoidReturnTypeAmbiguity() { doTest(true); }
+  @Test public void testTypeParameterWithExtendsList() { doTest(); }
+  @Test public void testIDEA112323() { doTest(); }
+  @Test public void testExactReferencesToArrayCreation() { doTest(); }
+  @Test public void testUnknownQualifierClass() { doTest(); }
+  @Test public void testQualifiersInStaticContext() { doTest(); }
+  @Test public void testInvalidFunctionalTypeInReturnStmt() { doTest(); }
+  @Test public void testIDEA127765() { doTest(); }
+  @Test public void testIntersectionTypesInReceiverPosition() { doTest(); }
 
   private void doTest() {
     doTest(false);
   }
 
   private void doTest(boolean warnings) {
-    IdeaTestUtil.setTestVersion(JavaSdkVersion.JDK_1_8, getModule(), getTestRootDisposable());
-    doTest(BASE_PATH + getTestName(false) + ".java", warnings, false);
+    LightJavaCodeInsightTestFixture myFixture = daemonFixture.get().getFixture();
+    IdeaTestUtil.setTestVersion(JavaSdkVersion.JDK_1_8, myFixture.getModule(), myFixture.getTestRootDisposable());
+    daemonFixture.get().doTest(BASE_PATH + myFixture.getTestName(false) + ".java", warnings, false);
   }
 }
