@@ -5,16 +5,21 @@ import com.intellij.codeHighlighting.Pass
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerEx
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl
 import com.intellij.codeInsight.daemon.impl.HighlightInfo
+import com.intellij.codeInsight.daemon.impl.HighlightInfoType
 import com.intellij.codeInsight.daemon.impl.TestDaemonCodeAnalyzerImpl
 import com.intellij.codeInspection.InspectionProfileEntry
+import com.intellij.ide.DataManager
 import com.intellij.injected.editor.EditorWindow
 import com.intellij.injected.editor.VirtualFileWindow
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.lang.injection.InjectedLanguageManager
+import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.application.runReadActionBlocking
+import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.actionSystem.TypedAction
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
@@ -25,13 +30,16 @@ import com.intellij.pom.java.LanguageLevel
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
 import com.intellij.psi.impl.PsiManagerEx
+import com.intellij.testFramework.EditorTestUtil
 import com.intellij.testFramework.ExpectedHighlightingData
 import com.intellij.testFramework.FileTreeAccessFilter
 import com.intellij.testFramework.HighlightTestInfo
 import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.PlatformTestUtil
+import com.intellij.testFramework.TestFrameworkUtil
 import com.intellij.testFramework.VfsTestUtil
+import com.intellij.testFramework.awaitPendingNavigationAndEditorOpenIfEnabled
 import com.intellij.testFramework.common.runAllSuspend
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture
 import com.intellij.testFramework.fixtures.LightJavaProject
@@ -41,6 +49,7 @@ import com.intellij.testFramework.junit5.fixture.TestFixture
 import com.intellij.testFramework.junit5.fixture.testFixture
 import com.intellij.testFramework.runInEdtAndGet
 import com.intellij.testFramework.runInEdtAndWait
+import com.intellij.util.ThrowableRunnable
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.TestOnly
@@ -68,19 +77,31 @@ class LightDaemonAnalyzerOptions private constructor(
    * It is `doInspections()` of [LightDaemonAnalyzerTestCase].
    */
   val inspections: Boolean,
+  /**
+   * When `true`, the test uses only the production methods of the daemon, as [ProductionLightDaemonAnalyzerTestCase] does.
+   * [LightDaemonAnalyzerFixture.doHighlighting] then waits for the daemon and does not run the passes itself.
+   * Put each test body in [LightDaemonAnalyzerFixture.runTest].
+   * The fixture sets the system property `intellij.ml.llm.embeddings.start.indexing.on.project.open` to `false` for the test.
+   */
+  val productionDaemon: Boolean,
 ) {
-  fun withBasePath(basePath: String): LightDaemonAnalyzerOptions = LightDaemonAnalyzerOptions(basePath, folding, inspections)
+  fun withBasePath(basePath: String): LightDaemonAnalyzerOptions = LightDaemonAnalyzerOptions(basePath, folding, inspections, productionDaemon)
 
-  fun withFolding(): LightDaemonAnalyzerOptions = LightDaemonAnalyzerOptions(basePath, true, inspections)
+  fun withFolding(): LightDaemonAnalyzerOptions = LightDaemonAnalyzerOptions(basePath, true, inspections, productionDaemon)
 
-  fun withoutInspections(): LightDaemonAnalyzerOptions = LightDaemonAnalyzerOptions(basePath, folding, false)
+  fun withoutInspections(): LightDaemonAnalyzerOptions = LightDaemonAnalyzerOptions(basePath, folding, false, productionDaemon)
+
+  /**
+   * The options of [ProductionLightDaemonAnalyzerTestCase]. See [productionDaemon].
+   */
+  fun withProductionDaemon(): LightDaemonAnalyzerOptions = LightDaemonAnalyzerOptions(basePath, folding, inspections, true)
 
   companion object {
     /**
      * The options of [LightDaemonAnalyzerTestCase] without overrides.
      */
     @JvmField
-    val DEFAULT: LightDaemonAnalyzerOptions = LightDaemonAnalyzerOptions("/java/java-tests/testData", false, true)
+    val DEFAULT: LightDaemonAnalyzerOptions = LightDaemonAnalyzerOptions("/java/java-tests/testData", false, true, false)
   }
 }
 
@@ -114,6 +135,10 @@ class LightDaemonAnalyzerFixture internal constructor(
    * When `true`, the highlighting can change the document. The test method or its class sets it with [CanChangeDocumentDuringHighlighting].
    */
   val isCanChangeDocumentDuringHighlighting: Boolean,
+  /**
+   * `true` for a performance or a stress test, as `UsefulTestCase.isStressTest` decides it from the method name and the class.
+   */
+  val isStressTest: Boolean,
 ) {
   private val javaFilesFilter = FileTreeAccessFilter()
   private var configuredFile: VirtualFile? = null
@@ -270,6 +295,62 @@ class LightDaemonAnalyzerFixture internal constructor(
       }
     }
 
+  /**
+   * Runs [test] on the thread of the caller with the daemon update by timer on, a zero reparse delay and the daemon debug mode,
+   * as each test of [ProductionLightDaemonAnalyzerTestCase] runs. It needs [LightDaemonAnalyzerOptions.withProductionDaemon].
+   * [CodeInsightTestFixtureImpl.instantiateAndRun] fails in [test], so wait for the daemon with [waitHighlighting] or [doHighlighting].
+   */
+  fun runTest(test: ThrowableRunnable<Throwable>) {
+    check(options.productionDaemon) { "runTest needs LightDaemonAnalyzerOptions.withProductionDaemon()" }
+    ProductionDaemonTestUtil.runTestInProduction(isStressTest, daemonCodeAnalyzer, test)
+  }
+
+  /**
+   * Waits on the EDT until the daemon finishes the configured file, and returns the highlighting of the file with [minSeverity]
+   * or a higher severity. Call it in [runTest].
+   */
+  fun waitHighlighting(minSeverity: HighlightSeverity): List<HighlightInfo> {
+    val psiFile = fixture.file
+    return runInEdtAndGet { testDaemonCodeAnalyzer.waitHighlighting(psiFile, minSeverity) }
+  }
+
+  /**
+   * Types [s] in the editor of [fixture], one character after another, as `type` of
+   * [com.intellij.testFramework.LightPlatformCodeInsightTestCase] does. For `'\n'`, it runs the enter action.
+   * Each character goes in its own command on the EDT.
+   */
+  fun type(s: String) {
+    for (c in s) {
+      if (c == '\n') {
+        executeAction(IdeActions.ACTION_EDITOR_ENTER)
+      }
+      else {
+        @Suppress("DEPRECATION")
+        fixture.runInCommand { TypedAction.getInstance().actionPerformed(fixture.editor, c, DataManager.getInstance().dataContext) }
+      }
+    }
+  }
+
+  fun backspace() {
+    executeAction(IdeActions.ACTION_EDITOR_BACKSPACE)
+  }
+
+  fun delete() {
+    executeAction(IdeActions.ACTION_EDITOR_DELETE)
+  }
+
+  /**
+   * Runs the editor action [actionId] in the editor of [fixture] in a command on the EDT, as `executeAction` of
+   * [com.intellij.testFramework.LightPlatformCodeInsightTestCase] does.
+   */
+  fun executeAction(actionId: String) {
+    runInEdtAndWait {
+      val editor = fixture.editor
+      CommandProcessor.getInstance().executeCommand(fixture.project, { EditorTestUtil.executeAction(editor, actionId, true) }, "", null, editor.document)
+      awaitPendingNavigationAndEditorOpenIfEnabled(fixture.project)
+    }
+  }
+
   fun highlightErrors(): List<HighlightInfo> = doHighlighting(HighlightSeverity.ERROR)
 
   fun doHighlighting(minSeverity: HighlightSeverity): List<HighlightInfo> = DaemonAnalyzerFixture.filter(doHighlighting(), minSeverity)
@@ -278,8 +359,12 @@ class LightDaemonAnalyzerFixture internal constructor(
    * Runs the passes of the daemon on the configured file and returns the highlighting.
    * The passes skip the folding and the local inspections as [options] say.
    * In an injected editor, the passes run on the top-level editor and file.
+   * With [LightDaemonAnalyzerOptions.withProductionDaemon], it returns [waitHighlighting] with [HighlightInfoType.SYMBOL_TYPE_SEVERITY].
    */
   fun doHighlighting(): List<HighlightInfo> {
+    if (options.productionDaemon) {
+      return waitHighlighting(HighlightInfoType.SYMBOL_TYPE_SEVERITY)
+    }
     val project = fixture.project
     runInEdtAndWait { PsiDocumentManager.getInstance(project).commitAllDocuments() }
 
@@ -330,33 +415,53 @@ class LightDaemonAnalyzerFixture internal constructor(
       localInspectionTools: Supplier<out List<InspectionProfileEntry>> = Supplier { emptyList() },
       options: LightDaemonAnalyzerOptions = LightDaemonAnalyzerOptions.DEFAULT,
     ): TestFixture<LightDaemonAnalyzerFixture> = testFixture("lightDaemonAnalyzerFixture") { context ->
-      val lightProject = projectFixture.init()
-      val fixture = lightJavaCodeInsightFixture(projectFixture, descriptor, options.basePath).init()
-      val tools = localInspectionTools.get()
-      if (tools.isNotEmpty()) {
-        fixture.enableInspections(*tools.toTypedArray())
-      }
-      val testDaemonCodeAnalyzer = TestDaemonCodeAnalyzerImpl(fixture.project)
-      withContext(Dispatchers.EDT) {
-        testDaemonCodeAnalyzer.prepareForTest()
-      }
-      DaemonCodeAnalyzerSettings.getInstance().isImportHintEnabled = false
+      val oldMlProperty = if (options.productionDaemon) System.setProperty(ML_INDEXING_PROPERTY, "false") else null
+      val daemonFixture = try {
+        val lightProject = projectFixture.init()
+        val fixture = lightJavaCodeInsightFixture(projectFixture, descriptor, options.basePath).init()
+        val tools = localInspectionTools.get()
+        if (tools.isNotEmpty()) {
+          fixture.enableInspections(*tools.toTypedArray())
+        }
+        val testDaemonCodeAnalyzer = TestDaemonCodeAnalyzerImpl(fixture.project)
+        withContext(Dispatchers.EDT) {
+          testDaemonCodeAnalyzer.prepareForTest()
+        }
+        DaemonCodeAnalyzerSettings.getInstance().isImportHintEnabled = false
 
-      val testMethod = context.extensionContext.requiredTestMethod
-      val testClass = context.extensionContext.requiredTestClass
-      fun annotatedWith(annotationClass: Class<out Annotation>): Boolean =
-        testMethod.getAnnotation(annotationClass) != null ||
-        generateSequence(testClass) { it.superclass }.any { it.getAnnotation(annotationClass) != null }
+        val testMethod = context.extensionContext.requiredTestMethod
+        val testClass = context.extensionContext.requiredTestClass
+        fun annotatedWith(annotationClass: Class<out Annotation>): Boolean =
+          testMethod.getAnnotation(annotationClass) != null ||
+          generateSequence(testClass) { it.superclass }.any { it.getAnnotation(annotationClass) != null }
 
-      val canChangeDocument = annotatedWith(CanChangeDocumentDuringHighlighting::class.java) ||
-                              @Suppress("DEPRECATION") annotatedWith(DaemonAnalyzerTestCase.CanChangeDocumentDuringHighlighting::class.java)
-      val daemonFixture = LightDaemonAnalyzerFixture(fixture, lightProject.sourceRoot, options, testDaemonCodeAnalyzer, canChangeDocument)
+        val canChangeDocument = annotatedWith(CanChangeDocumentDuringHighlighting::class.java) ||
+                                @Suppress("DEPRECATION") annotatedWith(DaemonAnalyzerTestCase.CanChangeDocumentDuringHighlighting::class.java)
+        val isStressTest = TestFrameworkUtil.isStressTest(testMethod.name, testClass)
+        LightDaemonAnalyzerFixture(fixture, lightProject.sourceRoot, options, testDaemonCodeAnalyzer, canChangeDocument, isStressTest)
+      }
+      catch (e: Throwable) {
+        if (options.productionDaemon) restoreMlProperty(oldMlProperty)
+        throw e
+      }
       initialized(daemonFixture) {
         runAllSuspend(
           // return default value to avoid unnecessary save
           { DaemonCodeAnalyzerSettings.getInstance().isImportHintEnabled = true },
-          { withContext(Dispatchers.EDT) { testDaemonCodeAnalyzer.cleanupAfterTest() } },
+          { withContext(Dispatchers.EDT) { daemonFixture.testDaemonCodeAnalyzer.cleanupAfterTest() } },
+          { if (options.productionDaemon) restoreMlProperty(oldMlProperty) },
         )
+      }
+    }
+
+    private const val ML_INDEXING_PROPERTY = "intellij.ml.llm.embeddings.start.indexing.on.project.open"
+
+    private fun restoreMlProperty(oldValue: String?) {
+      if (oldValue == null) {
+        System.clearProperty(ML_INDEXING_PROPERTY)
+      }
+      else {
+        System.setProperty(ML_INDEXING_PROPERTY, oldValue)
       }
     }
   }

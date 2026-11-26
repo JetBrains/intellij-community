@@ -16,19 +16,33 @@
 package com.intellij.java.psi;
 
 import com.intellij.codeInsight.daemon.CanChangeDocumentDuringHighlighting;
-import com.intellij.codeInsight.daemon.DaemonAnalyzerTestCase;
-import com.intellij.codeInsight.daemon.LightDaemonAnalyzerTestCase;
+import com.intellij.codeInsight.daemon.LightDaemonAnalyzerFixture;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.testFramework.SkipSlowTestLocally;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.intellij.util.ref.GCUtil;
 import org.intellij.lang.annotations.Language;
+import org.junit.jupiter.api.Test;
+
+import static com.intellij.codeInsight.daemon.LightDaemonAnalyzerFixture.lightDaemonAnalyzerFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaTestDescriptor;
 
 @SkipSlowTestLocally
 @CanChangeDocumentDuringHighlighting
-public class JavaSOEOnReparseTest extends LightDaemonAnalyzerTestCase {
+@TestApplication
+public class JavaSOEOnReparseTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(lightJavaTestDescriptor());
+  private final TestFixture<LightDaemonAnalyzerFixture> daemonFixture = lightDaemonAnalyzerFixture(projectFixture);
+
   private StringBuilder getHugeExpr() {
     int N = 100_000;
     String expr = "+\"b\"";
@@ -37,22 +51,28 @@ public class JavaSOEOnReparseTest extends LightDaemonAnalyzerTestCase {
     .append(StringUtil.repeat(expr, N));
   }
 
+  @Test
   public void testOnHugeBinaryExprInFile() {
     @Language("JAVA")
     String text = "class A { String s = \"\"; }";
-    configureFromFileText("a.java", text);
+    daemonFixture.get().configureFromFileText("a.java", text);
     doTest();
   }
 
+  @Test
   public void testOnHugeBinaryExprInCodeBlock() {
     @Language("JAVA")
     String text = "class A { void m() { String s = \"\"; } }";
-    configureFromFileText("a.java", text);
+    daemonFixture.get().configureFromFileText("a.java", text);
     doTest();
   }
 
   private void doTest() {
-    final int pos = getEditor().getDocument().getText().indexOf("\"\"");
+    LightDaemonAnalyzerFixture daemon = daemonFixture.get();
+    LightJavaCodeInsightTestFixture myFixture = daemon.getFixture();
+    Document document = myFixture.getEditor().getDocument();
+    Project project = myFixture.getProject();
+    final int pos = document.getText().indexOf("\"\"");
 
     int hugeExprLength;
     {
@@ -60,33 +80,33 @@ public class JavaSOEOnReparseTest extends LightDaemonAnalyzerTestCase {
       CharSequence myHugeExpr = getHugeExpr();
       hugeExprLength = myHugeExpr.length();
       WriteCommandAction.runWriteCommandAction(null, () -> {
-        getEditor().getDocument().replaceString(pos, pos + 2, myHugeExpr);
-        PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
+        document.replaceString(pos, pos + 2, myHugeExpr);
+        PsiDocumentManager.getInstance(project).commitAllDocuments();
       });
     }
-    doTestConfiguredFile(false, false, null);
+    daemon.doTestConfiguredFile(false, false, null);
 
     // modify huge binary expression (1)
-    ApplicationManager.getApplication().runWriteAction(() -> {
-      getEditor().getDocument().insertString(pos, "\".\"+");
-      PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
-    });
+    myFixture.runInCommand(() -> ApplicationManager.getApplication().runWriteAction(() -> {
+      document.insertString(pos, "\".\"+");
+      PsiDocumentManager.getInstance(project).commitAllDocuments();
+    }));
     // Let PSI from the previous tree leave the highlighting soft maps and reach their reference queues.
     GCUtil.tryGcSoftlyReachableObjects();
-    doTestConfiguredFile(false, false, null);
+    daemon.doTestConfiguredFile(false, false, null);
 
     // modify huge binary expression (2)
-    ApplicationManager.getApplication().runWriteAction(() -> {
-      getEditor().getDocument().replaceString(pos, pos + 4, "");
-      PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
-    });
-    doTestConfiguredFile(false, false, null);
+    myFixture.runInCommand(() -> ApplicationManager.getApplication().runWriteAction(() -> {
+      document.replaceString(pos, pos + 4, "");
+      PsiDocumentManager.getInstance(project).commitAllDocuments();
+    }));
+    daemon.doTestConfiguredFile(false, false, null);
 
     // replace huge binary expression with small one
-    ApplicationManager.getApplication().runWriteAction(() -> {
-      getEditor().getDocument().replaceString(pos, pos + hugeExprLength, "\".\"");
-      PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
-    });
-    doTestConfiguredFile(false, false, null);
+    myFixture.runInCommand(() -> ApplicationManager.getApplication().runWriteAction(() -> {
+      document.replaceString(pos, pos + hugeExprLength, "\".\"");
+      PsiDocumentManager.getInstance(project).commitAllDocuments();
+    }));
+    daemon.doTestConfiguredFile(false, false, null);
   }
 }

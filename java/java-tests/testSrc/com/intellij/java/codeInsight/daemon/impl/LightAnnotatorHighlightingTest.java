@@ -2,7 +2,8 @@
 package com.intellij.java.codeInsight.daemon.impl;
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
-import com.intellij.codeInsight.daemon.ProductionLightDaemonAnalyzerTestCase;
+import com.intellij.codeInsight.daemon.LightDaemonAnalyzerFixture;
+import com.intellij.codeInsight.daemon.LightDaemonAnalyzerOptions;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.daemon.impl.HighlightVisitorBasedInspection;
@@ -47,12 +48,18 @@ import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlToken;
 import com.intellij.psi.xml.XmlTokenType;
+import com.intellij.testFramework.EdtTestUtil;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.junit.jupiter.api.Test;
 
 import javax.swing.Icon;
 import java.awt.Dimension;
@@ -60,37 +67,77 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.function.Function;
 
-public class LightAnnotatorHighlightingTest extends ProductionLightDaemonAnalyzerTestCase {
+import static com.intellij.codeInsight.daemon.LightDaemonAnalyzerFixture.lightDaemonAnalyzerFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaTestDescriptor;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
+
+@TestApplication
+public class LightAnnotatorHighlightingTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(lightJavaTestDescriptor());
+  private final TestFixture<LightDaemonAnalyzerFixture> daemonFixture =
+    lightDaemonAnalyzerFixture(projectFixture, () -> List.of(), LightDaemonAnalyzerOptions.DEFAULT.withProductionDaemon());
+
+  @Test
   public void testInjectedAnnotator() {
+    LightDaemonAnalyzerFixture daemon = daemonFixture.get();
+    daemon.runTest(() ->
     DaemonAnnotatorsRespondToChangesTest.useAnnotatorsIn(XmlFileType.INSTANCE.getLanguage(), new DaemonAnnotatorsRespondToChangesTest.MyRecordingAnnotator[]{new MyAnnotator()}, () ->
-      doTest(LightAdvHighlightingTest.BASE_PATH + "/" + getTestName(false) + ".xml", true, false)
-    );
+      daemon.doTest(LightAdvHighlightingTest.BASE_PATH + "/" + daemon.getFixture().getTestName(false) + ".xml", true, false)
+    ));
   }
 
+  @Test
   public void testAnnotatorWorksWithFileLevel() {
+    LightDaemonAnalyzerFixture daemon = daemonFixture.get();
+    daemon.runTest(() ->
     DaemonAnnotatorsRespondToChangesTest.useAnnotatorsIn(JavaFileType.INSTANCE.getLanguage(), new DaemonAnnotatorsRespondToChangesTest.MyRecordingAnnotator[]{new MyFileLevelAnnotator()}, () -> {
-      configureFromFileText("x.java", """
+      daemon.configureFromFileText("x.java", """
         class X {
           <caret>
         }
         """);
-      ((EditorEx)getEditor()).getScrollPane().getViewport().setSize(new Dimension(1000,1000)); // whole file fit onscreen
-      assertEmpty(highlightErrors());
-      List<HighlightInfo> fileLevel = myDaemonCodeAnalyzer.getFileLevelHighlights(getProject(), getFile());
+      setViewportSize(daemon); // whole file fit onscreen
+      assertEmpty(daemon.highlightErrors());
+      List<HighlightInfo> fileLevel = getFileLevelHighlights(daemon);
       HighlightInfo info = assertOneElement(fileLevel);
       assertTrue(MyFileLevelAnnotator.isMy(info));
 
-      type("\n\n");
-      assertEmpty(highlightErrors());
-      fileLevel = myDaemonCodeAnalyzer.getFileLevelHighlights(getProject(), getFile());
+      daemon.type("\n\n");
+      assertEmpty(daemon.highlightErrors());
+      fileLevel = getFileLevelHighlights(daemon);
       info = assertOneElement(fileLevel);
       assertTrue(MyFileLevelAnnotator.isMy(info));
-      type("//xxx"); //disable top level annotation
-      List<HighlightInfo> warnings = doHighlighting(HighlightSeverity.WARNING);
+      daemon.type("//xxx"); //disable top level annotation
+      List<HighlightInfo> warnings = daemon.doHighlighting(HighlightSeverity.WARNING);
       assertEmpty(warnings);
-      fileLevel = myDaemonCodeAnalyzer.getFileLevelHighlights(getProject(), getFile());
+      fileLevel = getFileLevelHighlights(daemon);
       assertEmpty(fileLevel);
-    });
+    }));
+  }
+
+  private static void setViewportSize(@NotNull LightDaemonAnalyzerFixture daemon) {
+    EditorEx editor = (EditorEx)daemon.getFixture().getEditor();
+    EdtTestUtil.runInEdtAndWait(() -> editor.getScrollPane().getViewport().setSize(new Dimension(1000, 1000)));
+  }
+
+  private static @NotNull List<HighlightInfo> getFileLevelHighlights(@NotNull LightDaemonAnalyzerFixture daemon) {
+    PsiFile psiFile = daemon.getFixture().getFile();
+    return EdtTestUtil.runInEdtAndGet(() -> daemon.getDaemonCodeAnalyzer().getFileLevelHighlights(daemon.getFixture().getProject(), psiFile));
+  }
+
+  private static <T> T assertOneElement(@NotNull List<T> list) {
+    assertEquals(1, list.size(), list.toString());
+    return list.getFirst();
+  }
+
+  private static void assertEmpty(@NotNull List<?> list) {
+    assertTrue(list.isEmpty(), list.toString());
   }
 
   // must stay public for PicoContainer to work
@@ -132,24 +179,33 @@ public class LightAnnotatorHighlightingTest extends ProductionLightDaemonAnalyze
     }
   }
 
+  @Test
   public void testAnnotatorMustNotSpecifyCrazyRangeForCreatedAnnotation() {
-    DaemonAnnotatorsRespondToChangesTest.useAnnotatorsIn(JavaFileType.INSTANCE.getLanguage(), new DaemonAnnotatorsRespondToChangesTest.MyRecordingAnnotator[]{new MyCrazyAnnotator()}, () -> runMyAnnotators());
+    LightDaemonAnalyzerFixture daemon = daemonFixture.get();
+    daemon.runTest(() ->
+    DaemonAnnotatorsRespondToChangesTest.useAnnotatorsIn(JavaFileType.INSTANCE.getLanguage(), new DaemonAnnotatorsRespondToChangesTest.MyRecordingAnnotator[]{new MyCrazyAnnotator()}, () -> runMyAnnotators(daemon)));
   }
-  private void runMyAnnotators() {
+  private static void runMyAnnotators(@NotNull LightDaemonAnalyzerFixture daemon) {
     @org.intellij.lang.annotations.Language("JAVA")
     String text = """
       class X {
         //XXX
       }
       """;
-    configureFromFileText("x.java", text);
-    EditorImpl editor = (EditorImpl)getEditor();
-    editor.getScrollPane().getViewport().setSize(1000, 1000);
-    assertEquals(getFile().getTextRange(), editor.calculateVisibleRange());
+    daemon.configureFromFileText("x.java", text);
+    EditorImpl editor = (EditorImpl)daemon.getFixture().getEditor();
+    PsiFile psiFile = daemon.getFixture().getFile();
+    Project project = daemon.getFixture().getProject();
+    EdtTestUtil.runInEdtAndWait(() -> {
+      editor.getScrollPane().getViewport().setSize(1000, 1000);
+      assertEquals(psiFile.getTextRange(), editor.calculateVisibleRange());
+    });
 
-    CodeInsightTestFixtureImpl.ensureIndexesUpToDate(getProject());
-    PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
-    myTestDaemonCodeAnalyzer.waitForDaemonToFinish(getFile());
+    CodeInsightTestFixtureImpl.ensureIndexesUpToDate(project);
+    EdtTestUtil.runInEdtAndWait(() -> {
+      PsiDocumentManager.getInstance(project).commitAllDocuments();
+      daemon.getTestDaemonCodeAnalyzer().waitForDaemonToFinish(psiFile);
+    });
   }
 
   public static class MyCrazyAnnotator extends DaemonAnnotatorsRespondToChangesTest.MyRecordingAnnotator {
@@ -465,40 +521,52 @@ public class LightAnnotatorHighlightingTest extends ProductionLightDaemonAnalyze
     }
   }
 
+  @Test
   public void testAnnotationBuilderMethodsAllowedToBeCalledOnlyOnce() {
-    DaemonAnnotatorsRespondToChangesTest.useAnnotatorsIn(JavaFileType.INSTANCE.getLanguage(), new DaemonAnnotatorsRespondToChangesTest.MyRecordingAnnotator[]{new MyIncorrectRepetitiveAnnotator()}, () -> runMyAnnotators());
+    LightDaemonAnalyzerFixture daemon = daemonFixture.get();
+    daemon.runTest(() ->
+    DaemonAnnotatorsRespondToChangesTest.useAnnotatorsIn(JavaFileType.INSTANCE.getLanguage(), new DaemonAnnotatorsRespondToChangesTest.MyRecordingAnnotator[]{new MyIncorrectRepetitiveAnnotator()}, () -> runMyAnnotators(daemon)));
   }
 
+  @Test
   public void testDifferentAnnotatorsTryingToHighlightWarningAndErrorToTheSameElementMustNotInterfere() {
+    LightDaemonAnalyzerFixture daemon = daemonFixture.get();
+    daemon.runTest(() ->
     DaemonAnnotatorsRespondToChangesTest.useAnnotatorsIn(JavaFileType.INSTANCE.getLanguage(), new DaemonAnnotatorsRespondToChangesTest.MyRecordingAnnotator[]{new MyErrorAnnotator(), new MyWarningAnnotator()}, () -> {
-      configureFromFileText("My.java", "class My {}");
-      ((EditorEx)getEditor()).getScrollPane().getViewport().setSize(new Dimension(1000,1000)); // whole file fit onscreen
-      List<HighlightInfo> infos = ContainerUtil.sorted(doHighlighting(HighlightSeverity.WARNING), Comparator.comparing(HighlightInfo::getSeverity));
+      daemon.configureFromFileText("My.java", "class My {}");
+      setViewportSize(daemon); // whole file fit onscreen
+      List<HighlightInfo> infos = ContainerUtil.sorted(daemon.doHighlighting(HighlightSeverity.WARNING), Comparator.comparing(HighlightInfo::getSeverity));
       assertEquals(2, infos.size());
       assertTrue(MyWarningAnnotator.isMy(infos.get(0)));
       assertTrue(MyErrorAnnotator.isMy(infos.get(1)));
-    });
+    }));
   }
   
+  @Test
   public void testDifferentAnnotatorsTryingToHighlightInformationAndErrorToTheSameElementMustNotInterfere() {
+    LightDaemonAnalyzerFixture daemon = daemonFixture.get();
+    daemon.runTest(() ->
     DaemonAnnotatorsRespondToChangesTest.useAnnotatorsIn(JavaFileType.INSTANCE.getLanguage(), new DaemonAnnotatorsRespondToChangesTest.MyRecordingAnnotator[]{new MyErrorAnnotator(), new MyInfoAnnotator()}, () -> {
-      configureFromFileText("My.java", "class My {}");
-      ((EditorEx)getEditor()).getScrollPane().getViewport().setSize(new Dimension(1000,1000)); // whole file fit onscreen
-      List<HighlightInfo> infos = ContainerUtil.sorted(doHighlighting(HighlightSeverity.INFORMATION), Comparator.comparing(HighlightInfo::getSeverity));
+      daemon.configureFromFileText("My.java", "class My {}");
+      setViewportSize(daemon); // whole file fit onscreen
+      List<HighlightInfo> infos = ContainerUtil.sorted(daemon.doHighlighting(HighlightSeverity.INFORMATION), Comparator.comparing(HighlightInfo::getSeverity));
       assertEquals(2, infos.size());
       assertTrue(MyInfoAnnotator.isMy(infos.get(0)));
       assertTrue(MyErrorAnnotator.isMy(infos.get(1)));
-    });
+    }));
   }
 
+  @Test
   public void testAnnotatorTryingToHighlightErrorAndSymbolAttributesToTheSameElementMustSucceed() {
+    LightDaemonAnalyzerFixture daemon = daemonFixture.get();
+    daemon.runTest(() ->
     DaemonAnnotatorsRespondToChangesTest.useAnnotatorsIn(JavaFileType.INSTANCE.getLanguage(), new DaemonAnnotatorsRespondToChangesTest.MyRecordingAnnotator[]{new MyErrorAnnotator(), new MySymbolAnnotator()}, () -> {
-      configureFromFileText("My.java", "class My {}");
-      ((EditorEx)getEditor()).getScrollPane().getViewport().setSize(new Dimension(1000,1000)); // whole file fit onscreen
-      List<HighlightInfo> infos = doHighlighting(HighlightInfoType.SYMBOL_TYPE_SEVERITY);
-      assertTrue(infos.toString(), ContainerUtil.exists(infos, info -> info.getSeverity().equals(HighlightSeverity.ERROR) && MyErrorAnnotator.isMy(info)));
-      assertTrue(infos.toString(), ContainerUtil.exists(infos, info -> info.getSeverity().equals(HighlightInfoType.SYMBOL_TYPE_SEVERITY) && MySymbolAnnotator.isMy(info)));
-    });
+      daemon.configureFromFileText("My.java", "class My {}");
+      setViewportSize(daemon); // whole file fit onscreen
+      List<HighlightInfo> infos = daemon.doHighlighting(HighlightInfoType.SYMBOL_TYPE_SEVERITY);
+      assertTrue(ContainerUtil.exists(infos, info -> info.getSeverity().equals(HighlightSeverity.ERROR) && MyErrorAnnotator.isMy(info)), infos.toString());
+      assertTrue(ContainerUtil.exists(infos, info -> info.getSeverity().equals(HighlightInfoType.SYMBOL_TYPE_SEVERITY) && MySymbolAnnotator.isMy(info)), infos.toString());
+    }));
   }
 
   public static class MyErrorAnnotator extends DaemonAnnotatorsRespondToChangesTest.MyRecordingAnnotator {
@@ -553,24 +621,29 @@ public class LightAnnotatorHighlightingTest extends ProductionLightDaemonAnalyze
   /**
    * Checks that the Platform doesn't add useless "Inspection 'Annotator' options" quick fix. see <a href="https://youtrack.jetbrains.com/issue/WEB-55217"/>
    */
+  @Test
   public void testNoFixesOrOptionsMustBeShownWhenAnnotatorProvidedQuickFixWhichIsDisabled() {
+    LightDaemonAnalyzerFixture daemon = daemonFixture.get();
+    LightJavaCodeInsightTestFixture myFixture = daemon.getFixture();
+    daemon.runTest(() -> {
     GlobalInspectionTool tool = new HighlightVisitorBasedInspection().setRunAnnotators(true);
-    enableInspectionTool(tool);
+    myFixture.enableInspections(tool);
     assertNotNull(HighlightDisplayKey.find(tool.getShortName()));
-    configureFromFileText("foo.txt", "hello<caret>");
+    daemon.configureFromFileText("foo.txt", "hello<caret>");
     DisabledQuickFixAnnotator.FIX_ENABLED = true;
-    assertEmpty(doHighlighting());
-    myDaemonCodeAnalyzer.restart(getTestName(false));
+    assertEmpty(daemon.doHighlighting());
+    daemon.getDaemonCodeAnalyzer().restart(myFixture.getTestName(false));
     DisabledQuickFixAnnotator.FIX_ENABLED = false;
     DaemonAnnotatorsRespondToChangesTest.useAnnotatorsIn(PlainTextLanguage.INSTANCE, new DaemonAnnotatorsRespondToChangesTest.MyRecordingAnnotator[]{new DisabledQuickFixAnnotator()}, ()-> {
-      assertOneElement(highlightErrors());
-      assertEmpty(CodeInsightTestFixtureImpl.getAvailableIntentions(getEditor(), getFile())
+      assertOneElement(daemon.highlightErrors());
+      assertEmpty(CodeInsightTestFixtureImpl.getAvailableIntentions(myFixture.getEditor(), myFixture.getFile())
                     .stream()
                     .filter(i -> IntentionActionDelegate.unwrap(i) instanceof EmptyIntentionAction)
                     .toList()); // nothing, not even EmptyIntentionAction
-      myDaemonCodeAnalyzer.restart(getTestName(false));
+      daemon.getDaemonCodeAnalyzer().restart(myFixture.getTestName(false));
       DisabledQuickFixAnnotator.FIX_ENABLED = true;
-      assertNotEmpty(CodeInsightTestFixtureImpl.getAvailableIntentions(getEditor(), getFile())); // maybe a lot of CleanupIntentionAction, FixAllIntention etc
+      assertFalse(CodeInsightTestFixtureImpl.getAvailableIntentions(myFixture.getEditor(), myFixture.getFile()).isEmpty()); // maybe a lot of CleanupIntentionAction, FixAllIntention etc
+    });
     });
   }
 

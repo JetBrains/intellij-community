@@ -2,8 +2,9 @@
 
 package com.intellij.java.codeInsight.daemon.impl;
 
-import com.intellij.codeInsight.daemon.DaemonAnalyzerTestCase;
-import com.intellij.codeInsight.daemon.ProductionLightDaemonAnalyzerTestCase;
+import com.intellij.codeInsight.daemon.DaemonAnalyzerFixture;
+import com.intellij.codeInsight.daemon.LightDaemonAnalyzerFixture;
+import com.intellij.codeInsight.daemon.LightDaemonAnalyzerOptions;
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerEx;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
@@ -22,16 +23,21 @@ import com.intellij.lang.LanguageAnnotators;
 import com.intellij.lang.LanguageExtensionPoint;
 import com.intellij.lang.annotation.Annotator;
 import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.impl.DocumentMarkupModel;
 import com.intellij.openapi.editor.markup.MarkupModel;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
-import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiClassType;
 import com.intellij.psi.PsiComment;
@@ -43,9 +49,14 @@ import com.intellij.psi.SyntaxTraverser;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiShortNamesCache;
+import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.SkipSlowTestLocally;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.KeyedLazyInstance;
 import com.intellij.util.containers.ContainerUtil;
@@ -53,30 +64,46 @@ import com.intellij.util.text.CharArrayUtil;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Random;
 import java.util.Set;
 
+import static com.intellij.codeInsight.daemon.LightDaemonAnalyzerFixture.lightDaemonAnalyzerFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaTestDescriptor;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotSame;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
+
 @SkipSlowTestLocally
-public class HighlightAfterRandomTypingTest extends ProductionLightDaemonAnalyzerTestCase {
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-    if ("RandomEditingForUnused".equals(getTestName(false))) {
-      enableInspectionTool(new UnusedDeclarationInspection());
-      enableInspectionTool(new UnusedImportInspection());
+@TestApplication
+public class HighlightAfterRandomTypingTest {
+  private static final Logger LOG = Logger.getInstance(HighlightAfterRandomTypingTest.class);
+
+  private static final TestFixture<LightJavaProject> projectFixture =
+    lightJavaProjectFixture(lightJavaTestDescriptor(LanguageLevel.HIGHEST, () -> IdeaTestUtil.getMockJdk21()));
+  private final TestFixture<LightDaemonAnalyzerFixture> daemonFixture =
+    lightDaemonAnalyzerFixture(projectFixture, () -> List.of(), LightDaemonAnalyzerOptions.DEFAULT.withProductionDaemon());
+
+  @BeforeEach
+  void setUp() {
+    LightJavaCodeInsightTestFixture myFixture = daemonFixture.get().getFixture();
+    myFixture.enableInspections(configureLocalInspectionTools(myFixture.getTestName(false)));
+    if ("RandomEditingForUnused".equals(myFixture.getTestName(false))) {
+      myFixture.enableInspections(new UnusedDeclarationInspection());
+      myFixture.enableInspections(new UnusedImportInspection());
     }
     // preload extensions to avoid "PSI/document/model changes are not allowed during highlighting"
-    EntryPointsManagerBase.getInstance(getProject()).getAdditionalAnnotations();
-  }
-
-  @Override
-  protected Sdk getProjectJDK() {
-    return IdeaTestUtil.getMockJdk21();
+    EntryPointsManagerBase.getInstance(myFixture.getProject()).getAdditionalAnnotations();
   }
 
   private static final Set<String> ignoredTools = Set.of(
@@ -85,9 +112,8 @@ public class HighlightAfterRandomTypingTest extends ProductionLightDaemonAnalyze
     "CodeBlock2Expr"/* sensitive to comments*/
   );
 
-  @Override
-  protected LocalInspectionTool @NotNull [] configureLocalInspectionTools() {
-    if ("RandomEditingForUnused".equals(getTestName(false))) {
+  private static LocalInspectionTool @NotNull [] configureLocalInspectionTools(@NotNull String testName) {
+    if ("RandomEditingForUnused".equals(testName)) {
       return LocalInspectionTool.EMPTY_ARRAY;
     }
     List<InspectionToolWrapper<?, ?>> all = InspectionToolRegistrar.getInstance().createTools();
@@ -152,97 +178,110 @@ class X {
   @NonNls private static final String text =
     "import java.util.*;\n" + classText;
 
+  @Test
   public void testAllTheseConcurrentThreadsDoNotCrashAnything() {
-    long time = System.currentTimeMillis();
-    for (int i = 0; i < 20/*00000*/; i++) {
-      //System.out.println("i = " + i);
-      ((PsiManagerEx)getPsiManager()).cleanupForNextTest();
+    LightDaemonAnalyzerFixture daemon = daemonFixture.get();
+    Project project = daemon.getFixture().getProject();
+    daemon.runTest(() -> {
+      long time = System.currentTimeMillis();
+      for (int i = 0; i < 20/*00000*/; i++) {
+        //System.out.println("i = " + i);
+        EdtTestUtil.runInEdtAndWait(() -> PsiManagerEx.getInstanceEx(project).cleanupForNextTest());
 
-      configureFromFileText("A.java", text);
-      List<HighlightInfo> infos = myTestDaemonCodeAnalyzer.waitHighlighting(getFile(), HighlightSeverity.ERROR);
-      assertEmpty(infos);
-      PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
-      FileEditorManagerEx.getInstanceEx(getProject()).closeAllFiles();
-    }
-    LOG.debug(System.currentTimeMillis() - time+"ms");
+        daemon.configureFromFileText("A.java", text);
+        List<HighlightInfo> infos = daemon.waitHighlighting(HighlightSeverity.ERROR);
+        assertEmpty(infos);
+        EdtTestUtil.runInEdtAndWait(() -> {
+          PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
+          FileEditorManagerEx.getInstanceEx(project).closeAllFiles();
+        });
+      }
+      LOG.debug(System.currentTimeMillis() - time+"ms");
+    });
   }
 
+  @Test
   public void testThatInsertingJavadocCommentsInRandomWhitespaceDoesNotCrashAnything() {
-    configureFromFileText("A.java", text);
-    List<HighlightInfo> oldWarnings = new ArrayList<>(myTestDaemonCodeAnalyzer.waitHighlighting(getFile(), HighlightSeverity.WARNING));
-    Comparator<HighlightInfo> infoComparator = (o1, o2) -> {
-      if (o1.equals(o2)) return 0;
-      if (o1.getActualStartOffset() != o2.getActualStartOffset()) return o1.getActualStartOffset() - o2.getActualStartOffset();
-      return text(o1).compareTo(text(o2));
-    };
-    oldWarnings.sort(infoComparator);
-    List<String> oldWarningTexts = new ArrayList<>();
-    for (HighlightInfo info : oldWarnings) {
-      oldWarningTexts.add(text(info));
-      assert info.getHighlighter().isValid();
-    }
-
-    long seed =//2515594662124237646L;
-    new Random().nextLong();
-    Random random = new Random(seed);
-
-    DaemonCodeAnalyzerEx.getInstanceEx(getProject()).restart(getTestName(false));
-    int N = 20;
-    long[] time = new long[N];
-
-    int oldWarningSize = oldWarnings.size();
-    // check that inserting /*--*/ inside whitespace does not crash anything
-    for (int i = 0; i < N; i++) {
-      PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
-      long start = System.currentTimeMillis();
-
-      LOG.debug("i = " + i);
-      String s = getFile().getText();
-      int offset;
-      do {
-        offset = random.nextInt(s.length());
+    LightDaemonAnalyzerFixture daemon = daemonFixture.get();
+    LightJavaCodeInsightTestFixture myFixture = daemon.getFixture();
+    Project project = myFixture.getProject();
+    daemon.runTest(() -> {
+      daemon.configureFromFileText("A.java", text);
+      List<HighlightInfo> oldWarnings = new ArrayList<>(daemon.waitHighlighting(HighlightSeverity.WARNING));
+      Comparator<HighlightInfo> infoComparator = (o1, o2) -> {
+        if (o1.equals(o2)) return 0;
+        if (o1.getActualStartOffset() != o2.getActualStartOffset()) return o1.getActualStartOffset() - o2.getActualStartOffset();
+        return text(o1).compareTo(text(o2));
+      };
+      oldWarnings.sort(infoComparator);
+      List<String> oldWarningTexts = new ArrayList<>();
+      for (HighlightInfo info : oldWarnings) {
+        oldWarningTexts.add(text(info));
+        assert info.getHighlighter().isValid();
       }
-      while (s.charAt(offset) != ' ');
-      getEditor().getCaretModel().moveToOffset(offset);
-      type("/*--*/");
-      List<HighlightInfo> infos = myTestDaemonCodeAnalyzer.waitHighlighting(getFile(), HighlightSeverity.WARNING);
-      if (oldWarningSize != infos.size()) {
-        infos = new ArrayList<>(infos);
-        infos.sort(infoComparator);
 
-        for (int k=0; k<Math.min(infos.size(), oldWarningSize);k++) {
-          HighlightInfo info = infos.get(k);
-          String text = text(info);
-          String oldText = oldWarningTexts.get(k);
-          if (!text.equals(oldText)) {
-            System.err.println(k+"\n"+
-                               "Old: "+oldText+"; info: " + oldWarnings.get(k)+";\n" +
-                               "New: "+text+   "; info: " + info);
-            break;
+      long seed =//2515594662124237646L;
+      new Random().nextLong();
+      Random random = new Random(seed);
+
+      DaemonCodeAnalyzerEx.getInstanceEx(project).restart(myFixture.getTestName(false));
+      int N = 20;
+      long[] time = new long[N];
+
+      int oldWarningSize = oldWarnings.size();
+      // check that inserting /*--*/ inside whitespace does not crash anything
+      for (int i = 0; i < N; i++) {
+        EdtTestUtil.runInEdtAndWait(() -> PsiDocumentManager.getInstance(project).commitAllDocuments());
+        long start = System.currentTimeMillis();
+
+        LOG.debug("i = " + i);
+        String s = ReadAction.computeBlocking(() -> myFixture.getFile().getText());
+        int offset;
+        do {
+          offset = random.nextInt(s.length());
+        }
+        while (s.charAt(offset) != ' ');
+        moveCaret(myFixture, offset);
+        daemon.type("/*--*/");
+        List<HighlightInfo> infos = daemon.waitHighlighting(HighlightSeverity.WARNING);
+        if (oldWarningSize != infos.size()) {
+          infos = new ArrayList<>(infos);
+          infos.sort(infoComparator);
+
+          for (int k=0; k<Math.min(infos.size(), oldWarningSize);k++) {
+            HighlightInfo info = infos.get(k);
+            String text = text(info);
+            String oldText = oldWarningTexts.get(k);
+            if (!text.equals(oldText)) {
+              System.err.println(k+"\n"+
+                                 "Old: "+oldText+"; info: " + oldWarnings.get(k)+";\n" +
+                                 "New: "+text+   "; info: " + info);
+              break;
+            }
           }
+          String oldText = StringUtil.join(oldWarningTexts, "\n");
+          String newText = StringUtil.join(infos, info->text(info), "\n");
+          if (!oldText.equals(newText)) {
+            daemon.waitHighlighting(HighlightSeverity.WARNING);
+          }
+          assertEquals(oldText, newText, seed+"");
+          assertEquals(oldWarningSize, infos.size(), infos.toString());
         }
-        String oldText = StringUtil.join(oldWarningTexts, "\n");
-        String newText = StringUtil.join(infos, info->text(info), "\n");
-        if (!oldText.equals(newText)) {
-          myTestDaemonCodeAnalyzer.waitHighlighting(getFile(), HighlightSeverity.WARNING);
+        for (HighlightInfo info : infos) {
+          assertNotSame(HighlightSeverity.ERROR, info.getSeverity(), String.valueOf(info));
         }
-        assertEquals(seed+"",oldText, newText);
-        assertEquals(infos.toString(), oldWarningSize, infos.size());
-      }
-      for (HighlightInfo info : infos) {
-        assertNotSame(String.valueOf(info), HighlightSeverity.ERROR, info.getSeverity());
-      }
-      for (int k=0; k<"/*--*/".length();k++) {
-        backspace();
-      }
-      PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
+        for (int k=0; k<"/*--*/".length();k++) {
+          daemon.backspace();
+        }
+        EdtTestUtil.runInEdtAndWait(() -> PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue());
 
-      long end = System.currentTimeMillis();
-      time[i] = end - start;
-    }
-    FileEditorManagerEx.getInstanceEx(getProject()).closeAllFiles();
+        long end = System.currentTimeMillis();
+        time[i] = end - start;
+      }
+      EdtTestUtil.runInEdtAndWait(() -> FileEditorManagerEx.getInstanceEx(project).closeAllFiles());
 
-    LOG.debug("Average among the N/3 median times: " + ArrayUtil.averageAmongMedians(time, 3) + "ms");
+      LOG.debug("Average among the N/3 median times: " + ArrayUtil.averageAmongMedians(time, 3) + "ms");
+    });
   }
 
   @NotNull
@@ -250,87 +289,109 @@ class X {
     return TextRange.create(info)+": '"+info.getText()+"': '" + info.getDescription()+"' "+info.getSeverity();
   }
 
+  private static void moveCaret(@NotNull LightJavaCodeInsightTestFixture myFixture, int offset) {
+    Editor editor = myFixture.getEditor();
+    EdtTestUtil.runInEdtAndWait(() -> editor.getCaretModel().moveToOffset(offset));
+  }
+
+  private static void assertEmpty(@NotNull Collection<?> collection) {
+    assertTrue(collection.isEmpty(), collection.toString());
+  }
+
+  private static void assertNotEmpty(@NotNull Collection<?> collection) {
+    assertFalse(collection.isEmpty());
+  }
+
+  @Test
   public void testRandomEditingForUnused() {
-    configureFromFileText("A.java", "class X {<caret>}");
+    LightDaemonAnalyzerFixture daemon = daemonFixture.get();
+    LightJavaCodeInsightTestFixture myFixture = daemon.getFixture();
+    Project project = myFixture.getProject();
+    daemon.runTest(() -> {
+      daemon.configureFromFileText("A.java", "class X {<caret>}");
 
-    PsiShortNamesCache cache = PsiShortNamesCache.getInstance(getProject());
-    String[] names = cache.getAllClassNames();
+      final StringBuilder imports = new StringBuilder();
+      final StringBuilder usages = new StringBuilder();
+      ReadAction.runBlocking(() -> {
+        PsiShortNamesCache cache = PsiShortNamesCache.getInstance(project);
+        String[] names = cache.getAllClassNames();
 
-    final StringBuilder imports = new StringBuilder();
-    final StringBuilder usages = new StringBuilder();
-    int v = 0;
-    outer:
-    for (String name : names) {
-      PsiClass[] classes = cache.getClassesByName(name, GlobalSearchScope.allScope(getProject()));
-      if (classes.length == 0) continue;
-      PsiClass aClass = classes[0];
-      if (!aClass.hasModifierProperty(PsiModifier.PUBLIC)) continue;
-      if (aClass.getSuperClass() == null) continue;
-      PsiClassType[] superTypes = aClass.getSuperTypes();
-      if (superTypes.length == 0) continue;
-      for (PsiClassType superType : superTypes) {
-        PsiClass superClass = superType.resolve();
-        if (superClass == null || !superClass.hasModifierProperty(PsiModifier.PUBLIC)) continue outer;
-      }
-      String qualifiedName = aClass.getQualifiedName();
-      if (qualifiedName.startsWith("java.lang.invoke")) continue ; // java.lang.invoke.MethodHandle has weird access attributes in recent rt.jar which causes spurious highlighting errors
-      if (!accessible(aClass, new HashSet<>())) continue;
-      imports.append("import " + qualifiedName + ";\n");
-      usages.append("/**/ "+aClass.getName() + " var" + v + " = null; var" + v + ".toString();\n");
-      v++;
-      if (v>100) break;
-    }
-    final String text = imports + "\n class X {{\n" + usages + "}}";
-    WriteCommandAction.runWriteCommandAction(null, () -> getEditor().getDocument().setText(text));
-
-    List<HighlightInfo> errors = myTestDaemonCodeAnalyzer.waitHighlighting(getFile(), HighlightSeverity.WARNING);
-    assertEmpty(text, errors);
-    Random random = new Random();
-    int unused = 0;
-    for (int i = 0; i < 100; i++) {
-      String s = getFile().getText();
-
-      int offset;
-      do {
-        offset = random.nextInt(s.length());
-      }
-      while (!CharArrayUtil.regionMatches(s, offset, "/**/") && !CharArrayUtil.regionMatches(s, offset, "//"));
-
-      char next = offset < s.length()-1 ? s.charAt(offset+1) : 0;
-      if (next == '/') {
-        getEditor().getCaretModel().moveToOffset(offset + 1);
-        type("**");
-        unused--;
-      }
-      else if (next == '*') {
-        getEditor().getCaretModel().moveToOffset(offset + 1);
-        delete();
-        delete();
-        unused++;
-      }
-      else {
-        continue;
-      }
-      PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
-      getFile().accept(new PsiRecursiveElementVisitor() {
-        @Override
-        public void visitElement(@NotNull PsiElement element) {
-          assertTrue(element.toString(), element.isValid());
-          super.visitElement(element);
+        int v = 0;
+        outer:
+        for (String name : names) {
+          PsiClass[] classes = cache.getClassesByName(name, GlobalSearchScope.allScope(project));
+          if (classes.length == 0) continue;
+          PsiClass aClass = classes[0];
+          if (!aClass.hasModifierProperty(PsiModifier.PUBLIC)) continue;
+          if (aClass.getSuperClass() == null) continue;
+          PsiClassType[] superTypes = aClass.getSuperTypes();
+          if (superTypes.length == 0) continue;
+          for (PsiClassType superType : superTypes) {
+            PsiClass superClass = superType.resolve();
+            if (superClass == null || !superClass.hasModifierProperty(PsiModifier.PUBLIC)) continue outer;
+          }
+          String qualifiedName = aClass.getQualifiedName();
+          if (qualifiedName.startsWith("java.lang.invoke")) continue ; // java.lang.invoke.MethodHandle has weird access attributes in recent rt.jar which causes spurious highlighting errors
+          if (!accessible(aClass, new HashSet<>())) continue;
+          imports.append("import " + qualifiedName + ";\n");
+          usages.append("/**/ "+aClass.getName() + " var" + v + " = null; var" + v + ".toString();\n");
+          v++;
+          if (v>100) break;
         }
       });
+      final String text = imports + "\n class X {{\n" + usages + "}}";
+      Editor editor = myFixture.getEditor();
+      WriteCommandAction.runWriteCommandAction(null, () -> editor.getDocument().setText(text));
 
-      //System.out.println("i = " + i + " " + next + " at "+offset);
+      List<HighlightInfo> errors = daemon.waitHighlighting(HighlightSeverity.WARNING);
+      assertTrue(errors.isEmpty(), text + "\n" + errors);
+      Random random = new Random();
+      int unused = 0;
+      for (int i = 0; i < 100; i++) {
+        String s = ReadAction.computeBlocking(() -> myFixture.getFile().getText());
 
-      List<HighlightInfo> infos = myTestDaemonCodeAnalyzer.waitHighlighting(getFile(), HighlightSeverity.WARNING);
-      errors = DaemonAnalyzerTestCase.filter(infos, HighlightSeverity.ERROR);
-      assertEmpty(errors);
-      List<HighlightInfo> warns = DaemonAnalyzerTestCase.filter(infos, HighlightSeverity.WARNING);
-      if (unused != warns.size()) {
-        assertEquals(warns.toString(), unused, warns.size());
+        int offset;
+        do {
+          offset = random.nextInt(s.length());
+        }
+        while (!CharArrayUtil.regionMatches(s, offset, "/**/") && !CharArrayUtil.regionMatches(s, offset, "//"));
+
+        char next = offset < s.length()-1 ? s.charAt(offset+1) : 0;
+        if (next == '/') {
+          moveCaret(myFixture, offset + 1);
+          daemon.type("**");
+          unused--;
+        }
+        else if (next == '*') {
+          moveCaret(myFixture, offset + 1);
+          daemon.delete();
+          daemon.delete();
+          unused++;
+        }
+        else {
+          continue;
+        }
+        EdtTestUtil.runInEdtAndWait(() -> PsiDocumentManager.getInstance(project).commitAllDocuments());
+        ReadAction.runBlocking(() -> myFixture.getFile().accept(new PsiRecursiveElementVisitor() {
+          @Override
+          public void visitElement(@NotNull PsiElement element) {
+            assertTrue(element.isValid(), element.toString());
+            super.visitElement(element);
+          }
+        }));
+
+        //System.out.println("i = " + i + " " + next + " at "+offset);
+
+        List<HighlightInfo> infos = daemon.waitHighlighting(HighlightSeverity.WARNING);
+        errors = DaemonAnalyzerFixture.filter(infos, HighlightSeverity.ERROR);
+        assertEmpty(errors);
+        List<HighlightInfo> warns = DaemonAnalyzerFixture.filter(infos, HighlightSeverity.WARNING);
+        if (unused != warns.size()) {
+          assertEquals(unused, warns.size(), warns.toString());
+        }
       }
-    }
-    FileEditorManagerEx.getInstanceEx(getProject()).closeAllFiles();
+      EdtTestUtil.runInEdtAndWait(() -> FileEditorManagerEx.getInstanceEx(project).closeAllFiles());
+    });
   }
 
   private static boolean accessible(PsiClass aClass, Set<? super PsiClass> visited) {
@@ -344,58 +405,67 @@ class X {
     return containingClass == null || accessible(containingClass, visited);
   }
 
+  @Test
   public void testRandomTypingAndDeletingCommentAndCheckingNoHighlightsAreLeftInside() {
-    disableHyperlinkAnnotator();
-    long seed =
-    new Random().nextLong();
-    StringBuilder t = new StringBuilder(text);
-    Random random = new Random(seed);
-    // generate some errors
-    for (int i=0;i<20;i++) {
-      int offset = random.nextInt(text.length());
-      t.insert(offset, '-');
-    }
-    configureFromFileText("A.java", t.toString());
-
-    List<HighlightInfo> initErrors = ContainerUtil.sorted(myTestDaemonCodeAnalyzer.waitHighlighting(getFile(), HighlightSeverity.ERROR), HighlightInfoUpdaterImpl.BY_OFFSETS_AND_HASH_ERRORS_FIRST);
-
-    int N = 100;
-
-    // check that inserting /*--*/ inside whitespace does not crash anything
-    for (int i = 0; i < N; i++) {
-      try {
-        PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
-
-        LOG.debug("i = " + i);
-        String s = getFile().getText();
-        int offset = random.nextInt(20/*do not mess with * in imports*/,s.length()-5);
-        getEditor().getCaretModel().moveToOffset(offset);
-        type("/*-");
-        List<HighlightInfo> infos = myTestDaemonCodeAnalyzer.waitHighlighting(getFile(), HighlightSeverity.ERROR);
-        assertNotEmpty(infos);
-
-        PsiElement comment = SyntaxTraverser.psiTraverser(getFile()).filter(e -> e instanceof PsiComment && e.getText().startsWith("/*-")).toList().getFirst();
-
-        List<HighlightInfo> collect = new ArrayList<>();
-        TextRange cRange = comment.getTextRange().cutOut(TextRange.create(4, comment.getTextRange().getLength()-1)); // to strictly contain
-        //noinspection ConstantValue
-        DaemonCodeAnalyzerEx.processHighlights(getEditor().getDocument(), getProject(), HighlightSeverity.ERROR, cRange.getStartOffset(), cRange.getEndOffset(),
-                                               h -> !cRange.contains(h) || !collect.add(h));
-        assertEmpty("Found error inside comment: "+collect+"; seed="+seed, collect);
-
-        backspace();
-        backspace();
-        backspace();
-        PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
-
-        List<HighlightInfo> after = ContainerUtil.sorted(myTestDaemonCodeAnalyzer.waitHighlighting(getFile(), HighlightSeverity.ERROR), HighlightInfoUpdaterImpl.BY_OFFSETS_AND_HASH_ERRORS_FIRST);
-        assertEquals("highlighters didn't restore; seed="+seed, initErrors, after);
+    LightDaemonAnalyzerFixture daemon = daemonFixture.get();
+    LightJavaCodeInsightTestFixture myFixture = daemon.getFixture();
+    Project project = myFixture.getProject();
+    daemon.runTest(() -> {
+      disableHyperlinkAnnotator();
+      long seed =
+      new Random().nextLong();
+      StringBuilder t = new StringBuilder(text);
+      Random random = new Random(seed);
+      // generate some errors
+      for (int i=0;i<20;i++) {
+        int offset = random.nextInt(text.length());
+        t.insert(offset, '-');
       }
-      catch (Throwable e) {
-        System.err.println("Error running with seed "+seed);
-        throw e;
+      daemon.configureFromFileText("A.java", t.toString());
+
+      List<HighlightInfo> initErrors = ContainerUtil.sorted(daemon.waitHighlighting(HighlightSeverity.ERROR), HighlightInfoUpdaterImpl.BY_OFFSETS_AND_HASH_ERRORS_FIRST);
+
+      int N = 100;
+
+      // check that inserting /*--*/ inside whitespace does not crash anything
+      for (int i = 0; i < N; i++) {
+        try {
+          EdtTestUtil.runInEdtAndWait(() -> PsiDocumentManager.getInstance(project).commitAllDocuments());
+
+          LOG.debug("i = " + i);
+          String s = ReadAction.computeBlocking(() -> myFixture.getFile().getText());
+          int offset = random.nextInt(20/*do not mess with * in imports*/,s.length()-5);
+          moveCaret(myFixture, offset);
+          daemon.type("/*-");
+          List<HighlightInfo> infos = daemon.waitHighlighting(HighlightSeverity.ERROR);
+          assertNotEmpty(infos);
+
+          List<HighlightInfo> collect = new ArrayList<>();
+          Document document = myFixture.getEditor().getDocument();
+          ReadAction.runBlocking(() -> {
+            PsiElement comment = SyntaxTraverser.psiTraverser(myFixture.getFile()).filter(e -> e instanceof PsiComment && e.getText().startsWith("/*-")).toList().getFirst();
+
+            TextRange cRange = comment.getTextRange().cutOut(TextRange.create(4, comment.getTextRange().getLength()-1)); // to strictly contain
+            //noinspection ConstantValue
+            DaemonCodeAnalyzerEx.processHighlights(document, project, HighlightSeverity.ERROR, cRange.getStartOffset(), cRange.getEndOffset(),
+                                                   h -> !cRange.contains(h) || !collect.add(h));
+          });
+          assertTrue(collect.isEmpty(), "Found error inside comment: "+collect+"; seed="+seed);
+
+          daemon.backspace();
+          daemon.backspace();
+          daemon.backspace();
+          EdtTestUtil.runInEdtAndWait(() -> PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue());
+
+          List<HighlightInfo> after = ContainerUtil.sorted(daemon.waitHighlighting(HighlightSeverity.ERROR), HighlightInfoUpdaterImpl.BY_OFFSETS_AND_HASH_ERRORS_FIRST);
+          assertEquals(initErrors, after, "highlighters didn't restore; seed="+seed);
+        }
+        catch (Throwable e) {
+          System.err.println("Error running with seed "+seed);
+          throw e;
+        }
       }
-    }
+    });
   }
 
   private static String genRandomChar(Random random) {
@@ -406,46 +476,54 @@ class X {
   }
 
   private int withTypedLetter(int num, String s, Random random, Runnable in) {
-    int length = getEditor().getDocument().getTextLength();
+    LightJavaCodeInsightTestFixture myFixture = daemonFixture.get().getFixture();
+    Editor editor = myFixture.getEditor();
+    int length = editor.getDocument().getTextLength();
     int errOffset = random.nextInt(20/*do not mess with * in imports*/,length-5);
-    WriteCommandAction.runWriteCommandAction(getProject(), ()->getEditor().getDocument().insertString(errOffset, s)); // do not call type() because of overtyping risks
+    WriteCommandAction.runWriteCommandAction(myFixture.getProject(), ()->editor.getDocument().insertString(errOffset, s)); // do not call type() because of overtyping risks
     try {
       in.run();
     }
     finally {
-      WriteCommandAction.runWriteCommandAction(getProject(), ()-> {
-        getEditor().getDocument().deleteString(errOffset, errOffset+s.length());
+      WriteCommandAction.runWriteCommandAction(myFixture.getProject(), ()-> {
+        editor.getDocument().deleteString(errOffset, errOffset+s.length());
       }); // do not call type() because of overtyping risks
     }
     return errOffset;
   }
   private @NotNull List<HighlightInfo> doHighlightAndSort(long seed) {
-    List<HighlightInfo> infos = myTestDaemonCodeAnalyzer.waitHighlighting(getFile(), HighlightSeverity.WARNING);
+    LightDaemonAnalyzerFixture daemon = daemonFixture.get();
+    List<HighlightInfo> infos = daemon.waitHighlighting(HighlightSeverity.WARNING);
     List<HighlightInfo> sorted = ContainerUtil.sorted(infos, Comparator.comparing(h->text(h)));
     for (HighlightInfo info : sorted) {
       assertTrue(info.getHighlighter().isValid());
     }
-    assertNoDuplicateHighlighters(DocumentMarkupModel.forDocument(getEditor().getDocument(), getProject(), true), seed);
+    Editor editor = daemon.getFixture().getEditor();
+    Project project = daemon.getFixture().getProject();
+    ReadAction.runBlocking(() -> assertNoDuplicateHighlighters(DocumentMarkupModel.forDocument(editor.getDocument(), project, true), editor, seed));
     return sorted;
   }
 
+  @Test
   public void testCheckThat8812599550819766708LTypingDoesNotCreateDuplicateRangeHighlighters() {
     long seed =8812599550819766708L;
     Random random = new Random(seed);
-    randomTypeAndCheckForDuplicates(seed, random);
+    daemonFixture.get().runTest(() -> randomTypeAndCheckForDuplicates(seed, random));
   }
+  @Test
   public void testCheckThatRandomTypingDoesNotCreateDuplicateRangeHighlighters() {
     long seed =//-1816450852840074871L;
     new Random().nextLong();
     Random random = new Random(seed);
-    randomTypeAndCheckForDuplicates(seed, random);
+    daemonFixture.get().runTest(() -> randomTypeAndCheckForDuplicates(seed, random));
   }
 
   private void randomTypeAndCheckForDuplicates(long seed, Random random) {
-    HighlightInfoUpdaterImpl updater = (HighlightInfoUpdaterImpl)HighlightInfoUpdater.getInstance(getProject());
+    LightDaemonAnalyzerFixture daemon = daemonFixture.get();
+    HighlightInfoUpdaterImpl updater = (HighlightInfoUpdaterImpl)HighlightInfoUpdater.getInstance(daemon.getFixture().getProject());
     updater.runAssertingInvariants(() -> {
       disableHyperlinkAnnotator();
-      configureFromFileText("A.java", "import java.util.*;\n" + classText.repeat(1/*0*/));
+      daemon.configureFromFileText("A.java", "import java.util.*;\n" + classText.repeat(1/*0*/));
       List<HighlightInfo> initErrors = doHighlightAndSort(seed);
       assertNotEmpty(initErrors);
 
@@ -453,7 +531,7 @@ class X {
 
       try {
         typeAndCheck(seed, N, random, initErrors);
-        PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
+        EdtTestUtil.runInEdtAndWait(() -> PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue());
       }
       catch (Throwable e) {
         System.err.println("Error running with seed " + seed + "L");
@@ -467,10 +545,10 @@ class X {
     ExtensionPointImpl<KeyedLazyInstance<Annotator>> point = (ExtensionPointImpl<KeyedLazyInstance<Annotator>>)LanguageAnnotators.INSTANCE.getPoint();
     List<KeyedLazyInstance<Annotator>> all = point.getExtensionList();
     List<KeyedLazyInstance<Annotator>> exceptHyper = ContainerUtil.filter(all, a -> !(a instanceof LanguageExtensionPoint<?> l && HyperlinkAnnotator.class.getName().equals(l.implementationClass)));
-    point.maskAll(exceptHyper, getTestRootDisposable(), false);
+    point.maskAll(exceptHyper, daemonFixture.get().getFixture().getTestRootDisposable(), false);
   }
 
-  private void assertNoDuplicateHighlighters(MarkupModel markupModel, long seed) {
+  private static void assertNoDuplicateHighlighters(MarkupModel markupModel, Editor editor, long seed) {
     record HI(TextRange range, String desc, TextAttributes attributes){}
     Set<HI> set = new HashSet<>();
     List<RangeHighlighter> highlighters = new ArrayList<>();
@@ -484,7 +562,7 @@ class X {
         continue;
       }
       highlighters.add(highlighter);
-      HI hi = new HI(highlighter.getTextRange(), info.getDescription(), info.getTextAttributes(null, getEditor().getColorsScheme()));
+      HI hi = new HI(highlighter.getTextRange(), info.getDescription(), info.getTextAttributes(null, editor.getColorsScheme()));
       if (!set.add(hi)) {
         fail("Duplicate found: \n" + highlighter + "; seed=" + seed+"\n"+highlighters);
       }
@@ -506,57 +584,66 @@ class X {
     if (!initInfoText.equals(afterText)) {
       List<HighlightInfo> a3 = doHighlightAndSort(seed);
       String actualInfoText = StringUtil.join(a3, h -> text(h), "\n");
-      assertEquals("highlighters didn't restore; seed=" + seed+"; num="+num, initInfoText, actualInfoText);
+      assertEquals(initInfoText, actualInfoText, "highlighters didn't restore; seed=" + seed+"; num="+num);
     }
     return afterText;
   }
 
+  @Test
   public void testCheckThatTypingRandomErrorsAndThenOpenJavadocCommentDoesGenerateGiantCommentedTextButDoesNotLeaveErrorsInsideCommentedOutText() {
-    disableHyperlinkAnnotator();
-    long seed = //2518799306412815874L;
-    new Random().nextLong();
-    Random random = new Random(seed);
-    configureFromFileText("A.java", "import java.util.*;\n" + classText.repeat(5));
+    LightDaemonAnalyzerFixture daemon = daemonFixture.get();
+    LightJavaCodeInsightTestFixture myFixture = daemon.getFixture();
+    Project project = myFixture.getProject();
+    daemon.runTest(() -> {
+      disableHyperlinkAnnotator();
+      long seed = //2518799306412815874L;
+      new Random().nextLong();
+      Random random = new Random(seed);
+      daemon.configureFromFileText("A.java", "import java.util.*;\n" + classText.repeat(5));
 
-    List<HighlightInfo> initErrors = doHighlightAndSort(seed);
-    assertNotEmpty(initErrors);
+      List<HighlightInfo> initErrors = doHighlightAndSort(seed);
+      assertNotEmpty(initErrors);
 
-    int N = 10;
+      int N = 10;
 
-    // check that inserting /*--*/ inside whitespace does not crash anything
-    for (int i = 0; i < N; i++) {
-      //System.out.println("i = " + i);
-      try {
-        // generate some errors
-        withTypedLetter(0, genRandomChar(random), random, () -> {
+      // check that inserting /*--*/ inside whitespace does not crash anything
+      for (int i = 0; i < N; i++) {
+        //System.out.println("i = " + i);
+        try {
+          // generate some errors
           withTypedLetter(0, genRandomChar(random), random, () -> {
-            withTypedLetter(0, "/*", random, () -> {
-              List<HighlightInfo> infos = myTestDaemonCodeAnalyzer.waitHighlighting(getFile(), HighlightSeverity.ERROR);
-              assertNotEmpty(infos);
+            withTypedLetter(0, genRandomChar(random), random, () -> {
+              withTypedLetter(0, "/*", random, () -> {
+                List<HighlightInfo> infos = daemon.waitHighlighting(HighlightSeverity.ERROR);
+                assertNotEmpty(infos);
 
-              PsiElement comment = SyntaxTraverser.psiTraverser(getFile()).filter(e -> e instanceof PsiComment && e.getText().startsWith("/*")).toList().getFirst();
+                List<HighlightInfo> collect = new ArrayList<>();
+                Document document = myFixture.getEditor().getDocument();
+                ReadAction.runBlocking(() -> {
+                  PsiElement comment = SyntaxTraverser.psiTraverser(myFixture.getFile()).filter(e -> e instanceof PsiComment && e.getText().startsWith("/*")).toList().getFirst();
 
-              List<HighlightInfo> collect = new ArrayList<>();
-              TextRange cringe =
-                comment.getTextRange().cutOut(TextRange.create(4, comment.getTextRange().getLength() - 1)); // to strictly contain
-              //noinspection ConstantValue
-              DaemonCodeAnalyzerEx.processHighlights(getEditor().getDocument(), getProject(), HighlightInfoType.SYMBOL_TYPE_SEVERITY,
-                                                     cringe.getStartOffset(), cringe.getEndOffset(),
-                                                     h -> !(cringe.contains(h) && collect.add(h)));
-              assertEmpty("Found stray highlighting inside comment: " + collect + "; seed=" + seed, collect);
+                  TextRange cringe =
+                    comment.getTextRange().cutOut(TextRange.create(4, comment.getTextRange().getLength() - 1)); // to strictly contain
+                  //noinspection ConstantValue
+                  DaemonCodeAnalyzerEx.processHighlights(document, project, HighlightInfoType.SYMBOL_TYPE_SEVERITY,
+                                                         cringe.getStartOffset(), cringe.getEndOffset(),
+                                                         h -> !(cringe.contains(h) && collect.add(h)));
+                });
+                assertTrue(collect.isEmpty(), "Found stray highlighting inside comment: " + collect + "; seed=" + seed);
+              });
             });
           });
-        });
 
-        PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
+          EdtTestUtil.runInEdtAndWait(() -> PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue());
 
-        List<HighlightInfo> after = doHighlightAndSort(seed);
-        assertEquals("highlighters didn't restore; seed="+seed, initErrors, after);
+          List<HighlightInfo> after = doHighlightAndSort(seed);
+          assertEquals(initErrors, after, "highlighters didn't restore; seed="+seed);
+        }
+        catch (Throwable e) {
+          System.err.println("Error running with seed "+seed+"L");
+          throw e;
+        }
       }
-      catch (Throwable e) {
-        System.err.println("Error running with seed "+seed+"L");
-        throw e;
-      }
-    }
+    });
   }
 }

@@ -15,7 +15,11 @@ import java.util.List;
  * A {@link LightDaemonAnalyzerTestCase} which uses only production methods of the daemon and waits for its completion via e.g.
  * {@link com.intellij.codeInsight.daemon.impl.TestDaemonCodeAnalyzerImpl#waitForDaemonToFinish} methods
  * and prohibits explicitly manipulating daemon state via e.g. {@link CodeInsightTestFixtureImpl#instantiateAndRun}
+ *
+ * @deprecated For a JUnit 6 test, use {@link LightDaemonAnalyzerFixture#lightDaemonAnalyzerFixture} with
+ * {@link LightDaemonAnalyzerOptions#withProductionDaemon()}, and put each test body in {@link LightDaemonAnalyzerFixture#runTest}.
  */
+@Deprecated
 public abstract class ProductionLightDaemonAnalyzerTestCase extends LightDaemonAnalyzerTestCase {
   @Override
   protected void runTestRunnable(@NotNull ThrowableRunnable<Throwable> testRunnable) throws Throwable {

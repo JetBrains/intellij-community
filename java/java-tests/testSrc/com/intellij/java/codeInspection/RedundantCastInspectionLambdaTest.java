@@ -1,66 +1,66 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInspection;
 
-import com.intellij.codeInsight.daemon.LightDaemonAnalyzerTestCase;
-import com.intellij.codeInspection.LocalInspectionTool;
+import com.intellij.codeInsight.daemon.LightDaemonAnalyzerFixture;
 import com.intellij.codeInspection.redundantCast.RedundantCastInspection;
 import com.intellij.idea.TestFor;
-import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.testFramework.IdeaTestUtil;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.junit.jupiter.api.Test;
 
-public class RedundantCastInspectionLambdaTest extends LightDaemonAnalyzerTestCase {
+import java.util.List;
+
+import static com.intellij.codeInsight.daemon.LightDaemonAnalyzerFixture.lightDaemonAnalyzerFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaTestDescriptor;
+
+@TestApplication
+public class RedundantCastInspectionLambdaTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(lightJavaTestDescriptor(LanguageLevel.HIGHEST, () -> IdeaTestUtil.getMockJdk21()));
+  private final TestFixture<LightDaemonAnalyzerFixture> daemonFixture = lightDaemonAnalyzerFixture(projectFixture, () -> List.of(new RedundantCastInspection()));
+
   private static final String BASE_PATH = "/inspection/redundantCast/lambda/";
 
-  @Override
-  protected LocalInspectionTool @NotNull [] configureLocalInspectionTools() {
-    return new LocalInspectionTool[]{
-      new RedundantCastInspection()
-    };
-  }
-
-  @Override
-  protected Sdk getProjectJDK() {
-    return IdeaTestUtil.getMockJdk21();
-  }
-
   private void doTest() {
-    doTest(BASE_PATH + getTestName(false) + ".java", true, false);
+    daemonFixture.get().doTest(BASE_PATH + daemonFixture.get().getFixture().getTestName(false) + ".java", true, false);
   }
 
-  public void testLambdaContext() { doTest(); }
-  public void testMethodRefContext() { doTest(); }
-  public void testExpectedSupertype() { doTest(); }
-  public void testExpressionRendering() { doTest(); }
-  public void testForeachValue() { doTest(); }
-  public void testConditional() { doTest(); }
-  public void testInferApplicabilityError() { doTest(); }
-  public void testCastToRawType() { doTest(); }
-  public void testEnumConstantArgument() { doTest(); }
-  public void testCastInMultidimensionalArrayIndex() { doTest(); }
-  public void testCastWithClassHierarchyWithPrivateMethods() { doTest(); }
-  public void testFieldInitializer() { doTest(); }
-  public void testDiamondWithUpperBounds() { doTest(); }
-  public void testBinaryConversions() { doTest(); }
-  public void testInferenceIncompatibilityWithoutCast() { doTest(); }
-  public void testCastToPrimitive() { doTest(); }
-  public void testParenthesisAroundConditional() { doTest(); }
-  public void testMiscStatements() { doTest(); }
-  public void testSameSubstitutor() { doTest(); }
-  public void testSameUpperBounds() { doTest(); }
-  public void testSameResolveWithConditionalBranches() { doTest(); }
-  public void testIgnoreMessageFormatCall() { doTest(); }
-  public void testClassCastMethodReference() { doTest(); }
+  @Test public void testLambdaContext() { doTest(); }
+  @Test public void testMethodRefContext() { doTest(); }
+  @Test public void testExpectedSupertype() { doTest(); }
+  @Test public void testExpressionRendering() { doTest(); }
+  @Test public void testForeachValue() { doTest(); }
+  @Test public void testConditional() { doTest(); }
+  @Test public void testInferApplicabilityError() { doTest(); }
+  @Test public void testCastToRawType() { doTest(); }
+  @Test public void testEnumConstantArgument() { doTest(); }
+  @Test public void testCastInMultidimensionalArrayIndex() { doTest(); }
+  @Test public void testCastWithClassHierarchyWithPrivateMethods() { doTest(); }
+  @Test public void testFieldInitializer() { doTest(); }
+  @Test public void testDiamondWithUpperBounds() { doTest(); }
+  @Test public void testBinaryConversions() { doTest(); }
+  @Test public void testInferenceIncompatibilityWithoutCast() { doTest(); }
+  @Test public void testCastToPrimitive() { doTest(); }
+  @Test public void testParenthesisAroundConditional() { doTest(); }
+  @Test public void testMiscStatements() { doTest(); }
+  @Test public void testSameSubstitutor() { doTest(); }
+  @Test public void testSameUpperBounds() { doTest(); }
+  @Test public void testSameResolveWithConditionalBranches() { doTest(); }
+  @Test public void testIgnoreMessageFormatCall() { doTest(); }
+  @Test public void testClassCastMethodReference() { doTest(); }
 
   @TestFor(issues = "IDEA-361212")
-  public void testNestedCallRawInheritance() {doTest();}
+  @Test public void testNestedCallRawInheritance() {doTest();}
 
   @TestFor(issues = {"IDEA-375458", "IDEA-377186"})
-  public void testExplicitNullabilityAnnotation() { doTest(); }
+  @Test public void testExplicitNullabilityAnnotation() { doTest(); }
 
   @TestFor(issues = "IDEA-381105")
-  public void testLambdaParameterFieldAccess() { doTest(); }
+  @Test public void testLambdaParameterFieldAccess() { doTest(); }
 
   @TestFor(issues = "IDEA-381105")
-  public void testLambdaParameterFieldAccessSimple() { doTest(); }
+  @Test public void testLambdaParameterFieldAccessSimple() { doTest(); }
 }

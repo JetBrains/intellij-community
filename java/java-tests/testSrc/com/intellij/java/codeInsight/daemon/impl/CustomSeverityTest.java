@@ -3,13 +3,12 @@ package com.intellij.java.codeInsight.daemon.impl;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
-import com.intellij.codeInsight.daemon.LightDaemonAnalyzerTestCase;
+import com.intellij.codeInsight.daemon.LightDaemonAnalyzerFixture;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.daemon.impl.SeveritiesProvider;
 import com.intellij.codeInsight.daemon.impl.SeverityRegistrar;
 import com.intellij.codeInspection.ExplicitTypeCanBeDiamondInspection;
-import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.ex.ApplicationInspectionProfileManager;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.InspectionToolRegistrar;
@@ -26,8 +25,15 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import javax.swing.Icon;
 import java.awt.Color;
@@ -38,31 +44,40 @@ import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public class CustomSeverityTest extends LightDaemonAnalyzerTestCase {
+import static com.intellij.codeInsight.daemon.LightDaemonAnalyzerFixture.lightDaemonAnalyzerFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaTestDescriptor;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+@TestApplication
+public class CustomSeverityTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(lightJavaTestDescriptor());
+  private final TestFixture<LightDaemonAnalyzerFixture> daemonFixture = lightDaemonAnalyzerFixture(projectFixture, () -> List.of(new ExplicitTypeCanBeDiamondInspection()));
+
   private static final String EMBEDDINGS_START_INDEXING_ON_PROJECT_OPEN = "intellij.ml.llm.embeddings.start.indexing.on.project.open";
   private static final String EMBEDDINGS_TRIGGER_INDEXING_ON_SEARCH = "intellij.platform.ml.embeddings.trigger.indexing.on.search";
 
   private String myEmbeddingsStartIndexingOnProjectOpen;
   private String myEmbeddingsTriggerIndexingOnSearch;
 
-  @Override
-  protected void setUp() throws Exception {
+  @BeforeEach
+  void setUp() {
     myEmbeddingsStartIndexingOnProjectOpen = System.setProperty(EMBEDDINGS_START_INDEXING_ON_PROJECT_OPEN, Boolean.FALSE.toString());
     myEmbeddingsTriggerIndexingOnSearch = System.setProperty(EMBEDDINGS_TRIGGER_INDEXING_ON_SEARCH, Boolean.FALSE.toString());
-    super.setUp();
   }
 
-  @Override
-  protected void tearDown() throws Exception {
+  @AfterEach
+  void tearDown() {
     try {
       restoreProperty(EMBEDDINGS_START_INDEXING_ON_PROJECT_OPEN, myEmbeddingsStartIndexingOnProjectOpen);
-      restoreProperty(EMBEDDINGS_TRIGGER_INDEXING_ON_SEARCH, myEmbeddingsTriggerIndexingOnSearch);
-    }
-    catch (Throwable e) {
-      addSuppressedException(e);
     }
     finally {
-      super.tearDown();
+      restoreProperty(EMBEDDINGS_TRIGGER_INDEXING_ON_SEARCH, myEmbeddingsTriggerIndexingOnSearch);
     }
   }
 
@@ -75,15 +90,10 @@ public class CustomSeverityTest extends LightDaemonAnalyzerTestCase {
     }
   }
 
-  @Override
-  protected LocalInspectionTool @NotNull [] configureLocalInspectionTools() {
-    return new LocalInspectionTool[]{
-      new ExplicitTypeCanBeDiamondInspection(),
-    };
-  }
-
+  @Test
   public void testCustomSeverityLayerPriority() {
-    final Project project = getProject();
+    LightJavaCodeInsightTestFixture myFixture = daemonFixture.get().getFixture();
+    final Project project = myFixture.getProject();
 
     final String severityName = "X";
     final TextAttributesKey attributesKey = TextAttributesKey.createTextAttributesKey(severityName);
@@ -94,13 +104,13 @@ public class CustomSeverityTest extends LightDaemonAnalyzerTestCase {
     );
     final SeverityRegistrar registrar = SeverityRegistrar.getSeverityRegistrar(project);
     registrar.registerSeverity(textAttributes, null);
-    Disposer.register(getTestRootDisposable(), () -> registrar.unregisterSeverity(severity));
+    Disposer.register(myFixture.getTestRootDisposable(), () -> registrar.unregisterSeverity(severity));
 
     final InspectionProfileImpl profile = InspectionProfileManager.getInstance(project).getCurrentProfile();
     profile.setErrorLevel(HighlightDisplayKey.find("Convert2Diamond"), HighlightDisplayLevel.find(severity), project);
     assertEquals(severity, profile.getErrorLevel(HighlightDisplayKey.find("Convert2Diamond"), null).getSeverity());
 
-    configureFromFileText("test.java", """
+    daemonFixture.get().configureFromFileText("test.java", """
       import java.util.ArrayList;
       import java.util.List;
       
@@ -112,23 +122,25 @@ public class CustomSeverityTest extends LightDaemonAnalyzerTestCase {
       }
       """);
     final List<HighlightInfo> highlighting = ContainerUtil.filter(
-      doHighlighting(),
+      daemonFixture.get().doHighlighting(),
       highlightInfo -> Objects.requireNonNullElse(highlightInfo.getDescription(), "").startsWith("Explicit type argument ")
     );
-    assertSize(1, highlighting);
+    assertEquals(1, highlighting.size(), highlighting.toString());
 
     final HighlightInfo info = highlighting.getFirst();
     assertEquals(severity, info.getSeverity());
     assertEquals(HighlighterLayer.WARNING, info.getHighlighter().getLayer());
   }
 
+  @Test
   public void testProvidedSeverityAddedAfterProfileManagerInit() {
-    ApplicationInspectionProfileManager.getInstanceImpl().forceInitProfilesInTestUntil(getTestRootDisposable());
-    SeverityRegistrar registrar = SeverityRegistrar.getSeverityRegistrar(getProject());
+    LightJavaCodeInsightTestFixture myFixture = daemonFixture.get().getFixture();
+    ApplicationInspectionProfileManager.getInstanceImpl().forceInitProfilesInTestUntil(myFixture.getTestRootDisposable());
+    SeverityRegistrar registrar = SeverityRegistrar.getSeverityRegistrar(myFixture.getProject());
 
     HighlightInfoType.HighlightInfoTypeImpl infoType =
       infoType("CUSTOM_DYNAMIC", 350, TextAttributesKey.createTextAttributesKey("CUSTOM_DYNAMIC_KEY"));
-    registerProvider(new TestSeveritiesProvider(infoType), getTestRootDisposable());
+    registerProvider(new TestSeveritiesProvider(infoType), myFixture.getTestRootDisposable());
 
     HighlightSeverity severity = Objects.requireNonNull(registrar.getSeverity("CUSTOM_DYNAMIC"));
     assertEquals(infoType.getAttributesKey(), registrar.getHighlightInfoTypeBySeverity(severity).getAttributesKey());
@@ -140,9 +152,11 @@ public class CustomSeverityTest extends LightDaemonAnalyzerTestCase {
                  Objects.requireNonNull(page.getAdditionalHighlightingTagToDescriptorMap()).get("CUSTOM_DYNAMIC"));
   }
 
+  @Test
   public void testProvidedSeverityRemovalRewritesLoadedProjectProfileState() {
-    ApplicationInspectionProfileManager.getInstanceImpl().forceInitProfilesInTestUntil(getTestRootDisposable());
-    SeverityRegistrar registrar = SeverityRegistrar.getSeverityRegistrar(getProject());
+    LightJavaCodeInsightTestFixture myFixture = daemonFixture.get().getFixture();
+    ApplicationInspectionProfileManager.getInstanceImpl().forceInitProfilesInTestUntil(myFixture.getTestRootDisposable());
+    SeverityRegistrar registrar = SeverityRegistrar.getSeverityRegistrar(myFixture.getProject());
 
     HighlightInfoType.HighlightInfoTypeImpl infoType =
       infoType("REMOVABLE_DYNAMIC", 360, TextAttributesKey.createTextAttributesKey("REMOVABLE_DYNAMIC_KEY"));
@@ -150,15 +164,15 @@ public class CustomSeverityTest extends LightDaemonAnalyzerTestCase {
 
     HighlightSeverity severity = Objects.requireNonNull(registrar.getSeverity("REMOVABLE_DYNAMIC"));
     HighlightDisplayLevel level = Objects.requireNonNull(HighlightDisplayLevel.find(severity));
-    InspectionProfileImpl profile = InspectionProfileManager.getInstance(getProject()).getCurrentProfile();
+    InspectionProfileImpl profile = InspectionProfileManager.getInstance(myFixture.getProject()).getCurrentProfile();
     HighlightDisplayKey key = Objects.requireNonNull(HighlightDisplayKey.find("Convert2Diamond"));
-    ToolsImpl tools = profile.getTools("Convert2Diamond", getProject());
+    ToolsImpl tools = profile.getTools("Convert2Diamond", myFixture.getProject());
     NamedScope scope = new NamedScope("REMOVABLE_DYNAMIC_SCOPE", null);
     ScopeToolState scopedState = tools.addTool(scope, tools.getDefaultState().getTool().createCopy(), true, level);
-    profile.setErrorLevel(key, level, getProject());
+    profile.setErrorLevel(key, level, myFixture.getProject());
     assertSame(level, tools.getDefaultState().getLevel());
     assertSame(level, scopedState.getLevel());
-    assertSame(level, profile.getErrorLevel(key, scope, getProject()));
+    assertSame(level, profile.getErrorLevel(key, scope, myFixture.getProject()));
 
     Disposer.dispose(disposable);
 
@@ -166,45 +180,49 @@ public class CustomSeverityTest extends LightDaemonAnalyzerTestCase {
     assertNull(HighlightDisplayLevel.find("REMOVABLE_DYNAMIC"));
     assertSame(HighlightDisplayLevel.WARNING, tools.getDefaultState().getLevel());
     assertSame(HighlightDisplayLevel.WARNING, scopedState.getLevel());
-    assertSame(HighlightDisplayLevel.WARNING, profile.getErrorLevel(key, scope, getProject()));
+    assertSame(HighlightDisplayLevel.WARNING, profile.getErrorLevel(key, scope, myFixture.getProject()));
     assertSame(HighlightDisplayLevel.WARNING, profile.getErrorLevel(key, null));
   }
 
+  @Test
   public void testProvidedSeverityRemovalRewritesLoadedApplicationProfileState() {
+    LightJavaCodeInsightTestFixture myFixture = daemonFixture.get().getFixture();
     ApplicationInspectionProfileManager applicationManager = ApplicationInspectionProfileManager.getInstanceImpl();
-    applicationManager.forceInitProfilesInTestUntil(getTestRootDisposable());
+    applicationManager.forceInitProfilesInTestUntil(myFixture.getTestRootDisposable());
 
     HighlightInfoType.HighlightInfoTypeImpl infoType =
       infoType("APPLICATION_DYNAMIC", 365, TextAttributesKey.createTextAttributesKey("APPLICATION_DYNAMIC_KEY"));
     Disposable disposable = registerProvider(new TestSeveritiesProvider(infoType));
 
-    InspectionProfileImpl applicationProfile = createApplicationProfile(applicationManager, getTestName(false) + "ApplicationProfile");
-    ProjectInspectionProfileManager projectManager = ProjectInspectionProfileManager.getInstance(getProject());
+    InspectionProfileImpl applicationProfile = createApplicationProfile(applicationManager, myFixture.getTestName(false) + "ApplicationProfile");
+    ProjectInspectionProfileManager projectManager = ProjectInspectionProfileManager.getInstance(myFixture.getProject());
     projectManager.useApplicationProfile(applicationProfile.getName());
     assertSame(applicationProfile, projectManager.getCurrentProfile());
 
     boolean initInspections = InspectionProfileImpl.INIT_INSPECTIONS;
     InspectionProfileImpl.INIT_INSPECTIONS = true;
-    Disposer.register(getTestRootDisposable(), () -> InspectionProfileImpl.INIT_INSPECTIONS = initInspections);
-    applicationProfile.initInspectionTools(getProject());
-    assertNotEmpty(applicationProfile.getAllTools());
+    Disposer.register(myFixture.getTestRootDisposable(), () -> InspectionProfileImpl.INIT_INSPECTIONS = initInspections);
+    applicationProfile.initInspectionTools(myFixture.getProject());
+    assertFalse(applicationProfile.getAllTools().isEmpty());
     ScopeToolState appToolState = applicationProfile.getAllTools().getFirst();
     String shortName = appToolState.getTool().getShortName();
     HighlightSeverity severity = Objects.requireNonNull(applicationManager.getSeverityRegistrar().getSeverity("APPLICATION_DYNAMIC"));
     HighlightDisplayLevel level = Objects.requireNonNull(HighlightDisplayLevel.find(severity));
     HighlightDisplayKey key = Objects.requireNonNull(HighlightDisplayKey.find(shortName));
-    applicationProfile.setErrorLevel(key, level, getProject());
-    assertSame(level, applicationProfile.getTools(shortName, getProject()).getDefaultState().getLevel());
+    applicationProfile.setErrorLevel(key, level, myFixture.getProject());
+    assertSame(level, applicationProfile.getTools(shortName, myFixture.getProject()).getDefaultState().getLevel());
 
     Disposer.dispose(disposable);
 
-    assertSame(HighlightDisplayLevel.WARNING, applicationProfile.getTools(shortName, getProject()).getDefaultState().getLevel());
+    assertSame(HighlightDisplayLevel.WARNING, applicationProfile.getTools(shortName, myFixture.getProject()).getDefaultState().getLevel());
     assertSame(HighlightDisplayLevel.WARNING, applicationProfile.getErrorLevel(key, null));
   }
 
+  @Test
   public void testProvidedSeverityRemovalPreservesSameNamedCustomSeverity() {
-    ApplicationInspectionProfileManager.getInstanceImpl().forceInitProfilesInTestUntil(getTestRootDisposable());
-    InspectionProfileImpl profile = InspectionProfileManager.getInstance(getProject()).getCurrentProfile();
+    LightJavaCodeInsightTestFixture myFixture = daemonFixture.get().getFixture();
+    ApplicationInspectionProfileManager.getInstanceImpl().forceInitProfilesInTestUntil(myFixture.getTestRootDisposable());
+    InspectionProfileImpl profile = InspectionProfileManager.getInstance(myFixture.getProject()).getCurrentProfile();
     SeverityRegistrar registrar = profile.getProfileManager().getSeverityRegistrar();
 
     HighlightSeverity customSeverity = new HighlightSeverity("SHADOWED_DYNAMIC", 305);
@@ -213,11 +231,11 @@ public class CustomSeverityTest extends LightDaemonAnalyzerTestCase {
       new TextAttributes(null, Color.CYAN, null, null, Font.PLAIN),
       new HighlightInfoType.HighlightInfoTypeImpl(customSeverity, customKey)
     ), null);
-    Disposer.register(getTestRootDisposable(), () -> registrar.unregisterSeverity(customSeverity));
+    Disposer.register(myFixture.getTestRootDisposable(), () -> registrar.unregisterSeverity(customSeverity));
 
     HighlightDisplayKey key = Objects.requireNonNull(HighlightDisplayKey.find("Convert2Diamond"));
     HighlightDisplayLevel customLevel = Objects.requireNonNull(HighlightDisplayLevel.find(customSeverity));
-    profile.setErrorLevel(key, customLevel, getProject());
+    profile.setErrorLevel(key, customLevel, myFixture.getProject());
     assertEquals(customSeverity, profile.getErrorLevel(key, null).getSeverity());
 
     TextAttributesKey providerKey = TextAttributesKey.createTextAttributesKey("SHADOWED_DYNAMIC_PROVIDER_KEY");
@@ -233,9 +251,11 @@ public class CustomSeverityTest extends LightDaemonAnalyzerTestCase {
     assertEquals(customSeverity, profile.getErrorLevel(key, null).getSeverity());
   }
 
+  @Test
   public void testProvidedSeverityDuplicateNameFallsBackToEarlierProvider() {
-    ApplicationInspectionProfileManager.getInstanceImpl().forceInitProfilesInTestUntil(getTestRootDisposable());
-    SeverityRegistrar registrar = SeverityRegistrar.getSeverityRegistrar(getProject());
+    LightJavaCodeInsightTestFixture myFixture = daemonFixture.get().getFixture();
+    ApplicationInspectionProfileManager.getInstanceImpl().forceInitProfilesInTestUntil(myFixture.getTestRootDisposable());
+    SeverityRegistrar registrar = SeverityRegistrar.getSeverityRegistrar(myFixture.getProject());
 
     TextAttributesKey firstKey = TextAttributesKey.createTextAttributesKey("DUPLICATE_DYNAMIC_FIRST");
     TextAttributesKey secondKey = TextAttributesKey.createTextAttributesKey("DUPLICATE_DYNAMIC_SECOND");
@@ -249,7 +269,7 @@ public class CustomSeverityTest extends LightDaemonAnalyzerTestCase {
     assertEquals(310, initialLevel.getSeverity().myVal);
     assertEquals(firstKey, registrar.getHighlightInfoTypeBySeverity(Objects.requireNonNull(registrar.getSeverity("DUPLICATE_DYNAMIC")))
       .getAttributesKey());
-    assertTrue(findDuplicateDynamicStandardSeverityType() instanceof HighlightInfoType.Iconable);
+    assertInstanceOf(HighlightInfoType.Iconable.class, findDuplicateDynamicStandardSeverityType());
 
     Disposable secondProvider = registerProvider(new TestSeveritiesProvider(duplicateDynamicInfoType(
       320,
@@ -262,7 +282,7 @@ public class CustomSeverityTest extends LightDaemonAnalyzerTestCase {
     assertEquals(320, Objects.requireNonNull(registrar.getSeverity("DUPLICATE_DYNAMIC")).myVal);
     assertEquals(secondKey, registrar.getHighlightInfoTypeBySeverity(Objects.requireNonNull(registrar.getSeverity("DUPLICATE_DYNAMIC")))
       .getAttributesKey());
-    assertTrue(findDuplicateDynamicStandardSeverityType() instanceof HighlightInfoType.Iconable);
+    assertInstanceOf(HighlightInfoType.Iconable.class, findDuplicateDynamicStandardSeverityType());
 
     Disposer.dispose(secondProvider);
 
@@ -271,16 +291,18 @@ public class CustomSeverityTest extends LightDaemonAnalyzerTestCase {
     assertEquals(310, Objects.requireNonNull(registrar.getSeverity("DUPLICATE_DYNAMIC")).myVal);
     assertEquals(firstKey, registrar.getHighlightInfoTypeBySeverity(Objects.requireNonNull(registrar.getSeverity("DUPLICATE_DYNAMIC")))
       .getAttributesKey());
-    assertTrue(findDuplicateDynamicStandardSeverityType() instanceof HighlightInfoType.Iconable);
+    assertInstanceOf(HighlightInfoType.Iconable.class, findDuplicateDynamicStandardSeverityType());
     Disposer.dispose(firstProvider);
   }
 
+  @Test
   public void testProvidedSeverityChangePublishesProjectSeverityEvents() {
-    ApplicationInspectionProfileManager.getInstanceImpl().forceInitProfilesInTestUntil(getTestRootDisposable());
-    SeverityRegistrar registrar = SeverityRegistrar.getSeverityRegistrar(getProject());
+    LightJavaCodeInsightTestFixture myFixture = daemonFixture.get().getFixture();
+    ApplicationInspectionProfileManager.getInstanceImpl().forceInitProfilesInTestUntil(myFixture.getTestRootDisposable());
+    SeverityRegistrar registrar = SeverityRegistrar.getSeverityRegistrar(myFixture.getProject());
 
     AtomicInteger notifications = new AtomicInteger();
-    getProject().getMessageBus().connect(getTestRootDisposable())
+    myFixture.getProject().getMessageBus().connect(myFixture.getTestRootDisposable())
       .subscribe(SeverityRegistrar.SEVERITIES_CHANGED_TOPIC, notifications::incrementAndGet);
 
     long beforeAdd = registrar.getModificationCount();
@@ -295,9 +317,11 @@ public class CustomSeverityTest extends LightDaemonAnalyzerTestCase {
     assertEquals(2, notifications.get());
   }
 
+  @Test
   public void testSeverityPositionInAllSeveritiesMatchesSeverityIndex() {
-    ApplicationInspectionProfileManager.getInstanceImpl().forceInitProfilesInTestUntil(getTestRootDisposable());
-    SeverityRegistrar registrar = SeverityRegistrar.getSeverityRegistrar(getProject());
+    LightJavaCodeInsightTestFixture myFixture = daemonFixture.get().getFixture();
+    ApplicationInspectionProfileManager.getInstanceImpl().forceInitProfilesInTestUntil(myFixture.getTestRootDisposable());
+    SeverityRegistrar registrar = SeverityRegistrar.getSeverityRegistrar(myFixture.getProject());
     assertPositionMatchesSeverityIndex(registrar);
 
     HighlightSeverity customSeverity = new HighlightSeverity("INDEXED_CUSTOM", 305);
@@ -305,7 +329,7 @@ public class CustomSeverityTest extends LightDaemonAnalyzerTestCase {
       new TextAttributes(null, Color.ORANGE, null, null, Font.PLAIN),
       new HighlightInfoType.HighlightInfoTypeImpl(customSeverity, TextAttributesKey.createTextAttributesKey("INDEXED_CUSTOM_KEY"))
     ), null);
-    Disposer.register(getTestRootDisposable(), () -> registrar.unregisterSeverity(customSeverity));
+    Disposer.register(myFixture.getTestRootDisposable(), () -> registrar.unregisterSeverity(customSeverity));
     assertPositionMatchesSeverityIndex(registrar);
 
     Disposable disposable = registerProvider(new TestSeveritiesProvider(
@@ -318,10 +342,10 @@ public class CustomSeverityTest extends LightDaemonAnalyzerTestCase {
 
   private static void assertPositionMatchesSeverityIndex(@NotNull SeverityRegistrar registrar) {
     List<HighlightSeverity> severities = registrar.getAllSeverities();
-    assertNotEmpty(severities);
+    assertFalse(severities.isEmpty());
     for (int position = 0; position < severities.size(); position++) {
       HighlightSeverity severity = severities.get(position);
-      assertEquals(severity.getName(), position, registrar.getSeverityIdx(severity));
+      assertEquals(position, registrar.getSeverityIdx(severity), severity.getName());
     }
   }
 
@@ -350,7 +374,7 @@ public class CustomSeverityTest extends LightDaemonAnalyzerTestCase {
   private @NotNull Disposable registerProvider(@NotNull SeveritiesProvider provider) {
     Disposable disposable = Disposer.newDisposable();
     registerProvider(provider, disposable);
-    Disposer.register(getTestRootDisposable(), disposable);
+    Disposer.register(daemonFixture.get().getFixture().getTestRootDisposable(), disposable);
     return disposable;
   }
 
@@ -360,7 +384,7 @@ public class CustomSeverityTest extends LightDaemonAnalyzerTestCase {
       new InspectionProfileImpl(profileName, InspectionToolRegistrar.getInstance(), profileManager,
                                 profileManager.getCurrentProfile(), null);
     profileManager.addProfile(profile);
-    Disposer.register(getTestRootDisposable(), () -> profileManager.deleteProfile(profileName));
+    Disposer.register(daemonFixture.get().getFixture().getTestRootDisposable(), () -> profileManager.deleteProfile(profileName));
     return profile;
   }
 

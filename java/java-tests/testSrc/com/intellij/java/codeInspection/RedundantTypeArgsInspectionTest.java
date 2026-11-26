@@ -2,60 +2,57 @@
 
 package com.intellij.java.codeInspection;
 
-import com.intellij.JavaTestUtil;
-import com.intellij.codeInsight.daemon.LightDaemonAnalyzerTestCase;
-import com.intellij.codeInspection.LocalInspectionTool;
+import com.intellij.codeInsight.daemon.LightDaemonAnalyzerFixture;
 import com.intellij.codeInspection.miscGenerics.RedundantTypeArgsInspection;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.testFramework.IdeaTestUtil;
-import com.intellij.testFramework.LightProjectDescriptor;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
+import static com.intellij.codeInsight.daemon.LightDaemonAnalyzerFixture.lightDaemonAnalyzerFixture;
 import static com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase.JAVA_21;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
 
-public class RedundantTypeArgsInspectionTest extends LightDaemonAnalyzerTestCase {
-
-  @Override
-  protected LocalInspectionTool @NotNull [] configureLocalInspectionTools() {
-    return new LocalInspectionTool[] { new RedundantTypeArgsInspection()};
-  }
-
-  @Override
-  protected @NotNull LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_21;
-  }
-
-  @NotNull
-  @Override
-  protected String getTestDataPath() {
-    return JavaTestUtil.getJavaTestDataPath();
-  }
+@TestApplication
+public class RedundantTypeArgsInspectionTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(JAVA_21);
+  private final TestFixture<LightDaemonAnalyzerFixture> daemonFixture = lightDaemonAnalyzerFixture(projectFixture, () -> List.of(new RedundantTypeArgsInspection()));
 
   private void doTest() {
-    doTest("/inspection/redundantTypeArgs/" + getTestName(false) + ".java", true, false);
+    daemonFixture.get().doTest("/inspection/redundantTypeArgs/" + daemonFixture.get().getFixture().getTestName(false) + ".java", true, false);
   }
 
+  @Test
   public void testReturnPrimitiveTypes() { // javac non-boxing: IDEA-53984
     doTest();
   }
 
+  @Test
   public void testConditionalExpression() {
     doTest();
   }
 
+  @Test
   public void testBoundInference() {
     doTest();
   }
 
+  @Test
   public void testNestedCalls() {
     doTest();
   }
   
+  @Test
   public void testTooManyArguments() {
     doTest();
   }
 
+  @Test
   public void testNonGeneric() {
-    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_1_8, () -> doTest());
+    IdeaTestUtil.withLevel(daemonFixture.get().getFixture().getModule(), LanguageLevel.JDK_1_8, () -> doTest());
   }
 }
