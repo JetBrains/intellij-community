@@ -22,7 +22,7 @@
 //!   --descriptor-module=<module> --plugin-directory=plugins/<directory> --descriptor=<file> --output=<file>
 //! ```
 //!
-//! The independent libraries file is `{"version": 1, "libraries": [{"library": <label>, "jars": [<file>...]}...]}`: the
+//! The independent libraries file is `{"libraries": [{"library": <label>, "jars": [<file>...]}...]}`: the
 //! libraries that the reused content module jars of the plugin merge. A refused module is a content module that the
 //! product mode of the chain refuses. The part leaves out the jars that the packer omits for the refused modules.
 

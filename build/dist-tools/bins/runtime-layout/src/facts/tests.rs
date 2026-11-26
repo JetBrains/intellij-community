@@ -2,8 +2,8 @@
 
 use std::collections::BTreeMap;
 
-use crate::assemble::{Entry, LAYOUT_VERSION, Layout, PluginLayout};
-use crate::facts::{Dependency, FACTS_VERSION, FactsTable, ModuleFacts, select_facts};
+use crate::assemble::{Entry, Layout, PluginLayout};
+use crate::facts::{Dependency, FactsTable, ModuleFacts, select_facts};
 
 fn module(name: &str, content_module: bool) -> Dependency {
     Dependency {
@@ -33,7 +33,6 @@ fn entry(kind: &str, name: &str) -> Entry {
 /// A plugin `p.main` that bundles `p.util`, a module library of `p.owner`, and the project library `lib`.
 fn layout() -> Layout {
     Layout {
-        version: LAYOUT_VERSION,
         plugins: vec![PluginLayout {
             descriptor_module: "p.main".to_owned(),
             additional_frontend_only_plugin: false,
@@ -72,7 +71,6 @@ fn table() -> FactsTable {
         },
     );
     FactsTable {
-        version: FACTS_VERSION,
         modules,
         project_libraries: vec!["lib".to_owned(), "unused".to_owned()],
     }
@@ -105,7 +103,6 @@ fn an_edit_outside_the_layout_keeps_the_selected_bytes() {
 #[test]
 fn facts_read_and_write_the_kotlin_form() {
     let text = r#"{
-  "version": 1,
   "modules": {
     "p.main": {},
     "p.util": {

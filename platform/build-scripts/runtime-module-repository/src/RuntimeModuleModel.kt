@@ -1,8 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.buildScripts.runtimeModuleRepository
 
-import kotlinx.serialization.EncodeDefault
-import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
 import kotlinx.serialization.json.Json
@@ -15,8 +13,6 @@ import org.jetbrains.jps.model.module.JpsModule
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.TreeMap
-
-private const val FACTS_FORMAT_VERSION = 1
 
 private val factsJson = Json {
   encodeDefaults = false
@@ -90,11 +86,9 @@ class RuntimeModuleDependency(
  * The facts file: the facts of each module by name, and the names of the project-level libraries. The writer sorts both, so equal facts give equal
  * bytes.
  */
-@OptIn(ExperimentalSerializationApi::class)
 @ApiStatus.Internal
 @Serializable
 class RuntimeModuleFactsTable(
-  @EncodeDefault @JvmField val version: Int = FACTS_FORMAT_VERSION,
   @JvmField val modules: Map<String, RuntimeModuleFacts>,
   @JvmField val projectLibraries: List<String>,
 ) : RuntimeModuleModel {
@@ -108,17 +102,12 @@ class RuntimeModuleFactsTable(
 
 @ApiStatus.Internal
 fun readRuntimeModuleFacts(file: Path): RuntimeModuleFactsTable {
-  val table = factsJson.decodeFromString<RuntimeModuleFactsTable>(Files.readString(file))
-  require(table.version == FACTS_FORMAT_VERSION) {
-    "$file has the facts format version ${table.version}, but $FACTS_FORMAT_VERSION is expected"
-  }
-  return table
+  return factsJson.decodeFromString<RuntimeModuleFactsTable>(Files.readString(file))
 }
 
 @ApiStatus.Internal
 fun writeRuntimeModuleFacts(table: RuntimeModuleFactsTable, file: Path) {
   val sorted = RuntimeModuleFactsTable(
-    version = table.version,
     modules = TreeMap(table.modules),
     projectLibraries = table.projectLibraries.sorted(),
   )

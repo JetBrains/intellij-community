@@ -7,8 +7,6 @@ import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Files
 import java.nio.file.Path
 
-private const val LAYOUT_FORMAT_VERSION = 1
-
 private val layoutJson = Json {
   encodeDefaults = true
   explicitNulls = false
@@ -22,7 +20,6 @@ private val layoutJson = Json {
 @ApiStatus.Internal
 @Serializable
 class RuntimeModuleRepositoryLayout(
-  val version: Int = LAYOUT_FORMAT_VERSION,
   /** The core plugin, the bundled plugins and the additional frontend-only plugins, in this order. */
   val plugins: List<RuntimeModuleRepositoryPluginLayout>,
 )
@@ -40,11 +37,7 @@ class RuntimeModuleRepositoryPluginLayout(
 
 @ApiStatus.Internal
 fun readRuntimeModuleRepositoryLayout(file: Path): RuntimeModuleRepositoryLayout {
-  val layout = layoutJson.decodeFromString<RuntimeModuleRepositoryLayout>(Files.readString(file))
-  require(layout.version == LAYOUT_FORMAT_VERSION) {
-    "$file has the layout format version ${layout.version}, but $LAYOUT_FORMAT_VERSION is expected"
-  }
-  return layout
+  return layoutJson.decodeFromString<RuntimeModuleRepositoryLayout>(Files.readString(file))
 }
 
 @ApiStatus.Internal

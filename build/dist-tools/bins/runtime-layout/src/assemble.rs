@@ -9,14 +9,11 @@ use crate::descriptor::ContentModule;
 use crate::part::{LAYOUT_ORDER, PLUGIN_ORDER, Part, PartJar};
 use crate::targets::{JpsLibrary, LibraryIndex, MODULE_KIND, MODULE_LIBRARY_KIND};
 
-pub(crate) const LAYOUT_VERSION: i64 = 1;
-
 /// The `RuntimeModuleRepositoryLayout` that `RuntimeModuleRepositoryMain` reads. The field order and the omitted absent
 /// fields follow its Kotlin serialization.
 #[derive(Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub(crate) struct Layout {
-    pub version: i64,
     pub plugins: Vec<PluginLayout>,
 }
 
@@ -65,10 +62,7 @@ struct ResolvedLibrary {
 }
 
 pub(crate) fn assemble(parts: &[AssembledPart], libraries: &LibraryIndex) -> anyhow::Result<Layout> {
-    let mut result = Layout {
-        version: LAYOUT_VERSION,
-        plugins: Vec::new(),
-    };
+    let mut result = Layout { plugins: Vec::new() };
     let mut seen = HashSet::new();
     for assembled in parts {
         let part = &assembled.part;

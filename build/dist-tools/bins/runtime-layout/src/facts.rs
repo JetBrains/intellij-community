@@ -13,14 +13,11 @@ use serde::{Deserialize, Serialize};
 use crate::assemble::Layout;
 use crate::targets::{MODULE_KIND, MODULE_LIBRARY_KIND, PROJECT_LIBRARY_KIND};
 
-pub(crate) const FACTS_VERSION: i64 = 1;
-
 /// The `RuntimeModuleFactsTable` that `RuntimeModuleFactsMain` writes and `RuntimeModuleRepositoryMain` reads. The
 /// field names and the omitted default fields follow its Kotlin serialization.
 #[derive(Debug, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub(crate) struct FactsTable {
-    pub version: i64,
     pub modules: BTreeMap<String, ModuleFacts>,
     pub project_libraries: Vec<String>,
 }
@@ -53,11 +50,7 @@ const fn is_false(value: &bool) -> bool {
 }
 
 pub(crate) fn read_facts(file: &Path) -> anyhow::Result<FactsTable> {
-    let table: FactsTable = planfile::json::read(file)?;
-    if table.version != FACTS_VERSION {
-        bail!("{} has version {}, but {FACTS_VERSION} is expected", file.display(), table.version);
-    }
-    Ok(table)
+    planfile::json::read(file)
 }
 
 /// Returns the facts of the modules and the project libraries that `layout` names: the module of each module entry,
@@ -91,7 +84,6 @@ pub(crate) fn select_facts(table: &FactsTable, layout: &Layout) -> anyhow::Resul
         bail!("the module facts have no project library '{missing}'");
     }
     Ok(FactsTable {
-        version: FACTS_VERSION,
         modules,
         project_libraries: library_names.into_iter().map(str::to_owned).collect(),
     })

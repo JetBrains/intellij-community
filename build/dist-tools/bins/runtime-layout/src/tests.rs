@@ -503,7 +503,6 @@ fn assemble_command() {
     ]);
     assert_eq!((result.code, result.errors.as_str()), (0, ""), "a run that succeeds writes nothing");
     let expected = r#"{
-  "version": 1,
   "plugins": [
     {
       "descriptorModule": "intellij.idea.customization",
@@ -564,7 +563,7 @@ fn assemble_command_selects_the_module_facts() {
     let targets = files.write("bazel-targets.json", TEST_TARGETS);
     let module_facts = files.write(
         "module-facts.json",
-        r#"{"version":1,"modules":{"intellij.idea.customization":{"dependencies":[{"module":"b","contentModule":true},{"library":"alpha"}]},"unrelated":{}},"projectLibraries":["alpha","zeta"]}"#,
+        r#"{"modules":{"intellij.idea.customization":{"dependencies":[{"module":"b","contentModule":true},{"library":"alpha"}]},"unrelated":{}},"projectLibraries":["alpha","zeta"]}"#,
     );
     let output = files.path("layout.json").display().to_string();
     let selected = files.path("selected.json").display().to_string();
@@ -578,7 +577,6 @@ fn assemble_command_selects_the_module_facts() {
     let result = run_tool(&args);
     assert_eq!(result.code, 0, "{}", result.errors);
     let expected = r#"{
-  "version": 1,
   "modules": {
     "intellij.idea.customization": {
       "dependencies": [
