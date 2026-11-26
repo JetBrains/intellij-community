@@ -21,7 +21,7 @@ use avl_wire::program::lane::PerformanceSeries;
 use serde::Deserialize;
 
 #[cfg(test)]
-mod tests;
+pub(crate) mod tests;
 
 /// The variable that names the baseline file.
 pub(crate) const BASELINE_VARIABLE: &str = "AIR_PERF_BASELINE";

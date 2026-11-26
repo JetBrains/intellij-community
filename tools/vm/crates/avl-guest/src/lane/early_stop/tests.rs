@@ -30,15 +30,18 @@ fn name(pass: u32) -> String {
 }
 
 /// open.M.gestureToTabMs of the nights before 2026-11-19 22:19: about 550 ms, so the band ends at 30 % more.
-fn early_stop() -> EarlyStop {
-    let baseline: Baseline = serde_json::from_value(json!({
+pub(crate) fn long_session_baseline() -> Baseline {
+    serde_json::from_value(json!({
         "minPasses": 2,
         "series": {"air/long-session/M": {"open.M.gestureToTabMs": {
             "values": [560, 532, 548, 571, 540, 555, 566, 538, 549, 561], "relative": 25, "absolute": 30, "noise": 5
         }}}
     }))
-    .unwrap();
-    EarlyStop::new(baseline)
+    .unwrap()
+}
+
+fn early_stop() -> EarlyStop {
+    EarlyStop::new(long_session_baseline())
 }
 
 fn record(stop: &EarlyStop, pass: u32, value: i64) {

@@ -74,6 +74,25 @@ fn spawn_answers(fake: &FakeRuntime, exit_code: i32, output: &str) {
     };
 }
 
+/// Runs the fast lane over a tree whose excluded build fails, and checks that the run answers `BUILD_FAILED`.
+fn run_with_a_failed_excluded_build() -> FakeRuntime {
+    let fake = fake_air_tree();
+    spawn_answers(&fake, 1, "ERROR: ui_test does not compile");
+    let outcome = run(&["--lane", "fast"], &fake);
+    assert_eq!(outcome.exit_code, exit::BUILD_FAILED, "{}", outcome.text);
+    fake
+}
+
+/// Checks that the run asked no `bazel query` and ran one test invocation, and returns that invocation.
+#[track_caller]
+fn single_test_command_without_query(fake: &FakeRuntime) -> String {
+    let spawned: Vec<String> = fake.spawned().iter().map(|argv| argv.join(" ")).collect();
+    assert!(!spawned.iter().any(|command| command.contains(" query ")), "{spawned:#?}");
+    let mut tests = test_commands(fake);
+    assert_eq!(tests.len(), 1, "{tests:#?}");
+    tests.remove(0)
+}
+
 /// A run of the core target whose BEP names one attempt with this status, reading the given test.xml.
 fn one_attempt(fake: &FakeRuntime, status: &'static str, xml: &str) {
     fake.put_absolute(XML_PATH, xml);
@@ -147,10 +166,7 @@ fn the_fast_lane_builds_the_excluded_targets_before_it_runs_anything() {
 /// A target that does not compile is the answer, not a footnote after a green lane.
 #[test]
 fn a_failed_excluded_build_stops_the_lane_and_reports_build_failed() {
-    let fake = fake_air_tree();
-    spawn_answers(&fake, 1, "ERROR: ui_test does not compile");
-    let outcome = run(&["--lane", "fast"], &fake);
-    assert_eq!(outcome.exit_code, exit::BUILD_FAILED, "{}", outcome.text);
+    let fake = run_with_a_failed_excluded_build();
     assert!(
         !fake.spawned().iter().any(|argv| argv.join(" ").contains(" test ")),
         "the lane ran anyway"
@@ -245,10 +261,7 @@ fn the_bep_file_is_deleted_after_a_dry_run_and_after_a_failed_excluded_build() {
     assert_eq!(outcome.exit_code, exit::GREEN, "{}", outcome.text);
     assert_eq!(fake.state().removed, [BEP_PATH], "after --dry-run");
 
-    let fake = fake_air_tree();
-    spawn_answers(&fake, 1, "ERROR: ui_test does not compile");
-    let outcome = run(&["--lane", "fast"], &fake);
-    assert_eq!(outcome.exit_code, exit::BUILD_FAILED, "{}", outcome.text);
+    let fake = run_with_a_failed_excluded_build();
     assert!(fake.state().removed.contains(&BEP_PATH.to_owned()), "after a failed excluded build");
 }
 
@@ -761,11 +774,8 @@ fn a_query_without_an_answer_leaves_each_target_in_the_invocation_of_the_pattern
     let fake = stale_plan_tree();
     fake.state().write_failures.insert(TREE_QUERY_PATH.to_owned());
     run(&["--lane", "fast"], &fake);
-    let spawned: Vec<String> = fake.spawned().iter().map(|argv| argv.join(" ")).collect();
-    assert!(!spawned.iter().any(|command| command.contains(" query ")), "{spawned:#?}");
-    let tests = test_commands(&fake);
-    assert_eq!(tests.len(), 1, "{tests:#?}");
-    assert!(!tests[0].contains(" -- -"), "{}", tests[0]);
+    let test = single_test_command_without_query(&fake);
+    assert!(!test.contains(" -- -"), "{test}");
     let stderr = fake.state().stderr.join("\n");
     assert_mentions(
         &stderr,
@@ -849,11 +859,8 @@ fn a_rust_test_target_runs_in_the_single_shard_invocation() {
 fn an_explicit_shard_count_runs_no_query() {
     let fake = fake_air_tree();
     run(&["--lane", "fast", "--shards", "3"], &fake);
-    let spawned: Vec<String> = fake.spawned().iter().map(|argv| argv.join(" ")).collect();
-    assert!(!spawned.iter().any(|command| command.contains(" query ")), "{spawned:#?}");
-    let tests = test_commands(&fake);
-    assert_eq!(tests.len(), 1, "{tests:#?}");
-    assert!(tests[0].contains("forced=3"), "{}", tests[0]);
+    let test = single_test_command_without_query(&fake);
+    assert!(test.contains("forced=3"), "{test}");
 }
 
 /// The invocations read as one run: disjoint targets, one verdict, one plan update.

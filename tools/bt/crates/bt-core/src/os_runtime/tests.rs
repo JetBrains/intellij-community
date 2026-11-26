@@ -343,6 +343,31 @@ fn git_in(repo: &Path, args: &[&str], index: Option<&Path>) -> String {
     String::from_utf8(output.stdout).expect("UTF-8").trim_end().to_owned()
 }
 
+/// Makes `main` a repository with one commit of every file in it.
+fn commit_everything(main: &Path) {
+    git_in(main, &["init", "-q"], None);
+    git_in(main, &["add", "-A"], None);
+    git_in(main, &["commit", "-q", "-m", "first"], None);
+}
+
+/// Adds the linked work tree `lease` next to `main`, at the detached HEAD of `main`, and returns its path.
+fn add_lease(main: &Path) -> PathBuf {
+    git_in(main, &["worktree", "add", "-q", "--detach", "../lease"], None);
+    main.parent().expect("a parent of the main checkout").join("lease")
+}
+
+/// The tree of HEAD with the files of the work tree that `add -A` stages for `pathspec`, written through a scratch
+/// index outside the checkout, so `add -A` does not stage the index file itself.
+fn expected_tree(repo: &Path, pathspec: &[&str]) -> String {
+    let scratch = tempfile::tempdir().expect("a temporary directory");
+    let expected_index = scratch.path().join("expected-index");
+    git_in(repo, &["read-tree", "HEAD"], Some(&expected_index));
+    let mut add = vec!["add", "-A"];
+    add.extend_from_slice(pathspec);
+    git_in(repo, &add, Some(&expected_index));
+    git_in(repo, &["write-tree"], Some(&expected_index))
+}
+
 /// The listing is that of `git ls-files`, so the case needs a repository that git makes: a tracked file, an untracked
 /// one, an ignored one, and a tracked file that is gone from the disk. Skipped where no git is installed.
 #[test]
@@ -502,12 +527,9 @@ fn the_tree_of_a_checkout_holds_its_local_changes_and_leaves_its_index_alone() {
     assert_eq!(main_runtime.checkout_tree().expect("no git is no error"), None);
     assert_eq!(main_runtime.git_common_path("bt/plan").expect("no git is no error"), None);
 
-    git_in(&main, &["init", "-q"], None);
-    git_in(&main, &["add", "-A"], None);
-    git_in(&main, &["commit", "-q", "-m", "first"], None);
+    commit_everything(&main);
     assert_eq!(main_runtime.checkout_tree().expect("a main checkout is no error"), None);
-    git_in(&main, &["worktree", "add", "-q", "--detach", "../lease"], None);
-    let repo = &dir.path().join("lease");
+    let repo = &add_lease(&main);
     let runtime = OsRuntime::builder(repo).build();
     let head = git_in(repo, &["rev-parse", "HEAD"], None);
     let head_tree = git_in(repo, &["rev-parse", "HEAD^{tree}"], None);
@@ -568,24 +590,16 @@ fn the_tree_of_a_checkout_holds_its_local_changes_and_leaves_its_index_alone() {
         .expect("git reads a changed checkout")
         .expect("a git checkout");
 
-    // Outside the checkout, so `add -A` does not stage the index file itself.
-    let scratch = tempfile::tempdir().expect("a temporary directory");
-    let expected_index = scratch.path().join("expected-index");
-    git_in(repo, &["read-tree", "HEAD"], Some(&expected_index));
-    git_in(
+    let expected = expected_tree(
         repo,
         &[
-            "add",
-            "-A",
             "--",
             ".",
             ":(exclude)src/nested",
             ":(exclude)added/nested",
             ":(exclude)only-nested/nested",
         ],
-        Some(&expected_index),
     );
-    let expected = git_in(repo, &["write-tree"], Some(&expected_index));
     assert_eq!(
         dirty,
         CheckoutTree {
@@ -644,11 +658,8 @@ fn a_new_directory_with_a_name_that_is_not_utf8_is_in_the_tree() {
     };
     let main = dir.path().join("main");
     write_in(&main, "src/Kept.kt", "kept");
-    git_in(&main, &["init", "-q"], None);
-    git_in(&main, &["add", "-A"], None);
-    git_in(&main, &["commit", "-q", "-m", "first"], None);
-    git_in(&main, &["worktree", "add", "-q", "--detach", "../lease"], None);
-    let repo = &dir.path().join("lease");
+    commit_everything(&main);
+    let repo = &add_lease(&main);
     let odd = repo.join(OsStr::from_bytes(b"odd-\xff"));
     std::fs::create_dir_all(odd.join("deep")).expect("mkdir");
     std::fs::write(odd.join("deep/File.kt"), "new").expect("write");
@@ -660,11 +671,7 @@ fn a_new_directory_with_a_name_that_is_not_utf8_is_in_the_tree() {
         .expect("git reads a changed checkout")
         .expect("a linked work tree");
 
-    let scratch = tempfile::tempdir().expect("a temporary directory");
-    let expected_index = scratch.path().join("expected-index");
-    git_in(repo, &["read-tree", "HEAD"], Some(&expected_index));
-    git_in(repo, &["add", "-A"], Some(&expected_index));
-    assert_eq!(tree.tree, git_in(repo, &["write-tree"], Some(&expected_index)));
+    assert_eq!(tree.tree, expected_tree(repo, &[]));
     assert_eq!(tree.changed, ["added/Top.kt", "odd-\u{fffd}/deep/File.kt"]);
 }
 

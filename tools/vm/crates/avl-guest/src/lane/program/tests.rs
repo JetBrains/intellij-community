@@ -2509,9 +2509,7 @@ fn a_quiet_night_skips_the_passes_after_the_first_two() {
             artifact_path: "air-long-session/M".to_owned(),
         })
         .collect();
-    let baseline = serde_json::from_value(json!({"minPasses": 2, "series": {"air/long-session/M": {"open.M.gestureToTabMs": {
-        "values": [560, 532, 548, 571, 540, 555, 566, 538, 549, 561], "relative": 25, "absolute": 30, "noise": 5}}}}))
-    .unwrap();
+    let baseline = crate::lane::early_stop::tests::long_session_baseline();
     let ran = run_set(
         &fake,
         &[suite_of(&document)],

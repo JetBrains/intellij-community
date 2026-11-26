@@ -124,32 +124,36 @@ pub(crate) struct Property {
 impl Property {
     /// Parses `<name>=<value>`. The name is the text before the first `=`.
     pub(crate) fn parse(text: &str) -> Result<Self, String> {
-        let Some((name, value)) = text.split_once('=') else {
-            return Err(format!("the property `{text}` has no `=`; write <name>=<value>"));
-        };
-        check_twin_text("the property name", name)?;
-        if !value.is_empty() {
-            check_twin_text("the property value", value)?;
-        }
-        Ok(Self {
-            name: name.to_owned(),
-            value: value.to_owned(),
+        Self::parse_with(text, |_, value| {
+            if value.is_empty() {
+                Ok(())
+            } else {
+                check_twin_text("the property value", value)
+            }
         })
     }
-}
 
-impl Property {
     /// Parses `<name>=<value>` of a property of every run of a session. The name is a name that [`check_twin_text`]
     /// accepts, and the value can hold any character but a control character, such as the `/` of a path: no label
     /// names it.
     pub(crate) fn parse_session(text: &str) -> Result<Self, String> {
+        Self::parse_with(text, |name, value| {
+            if value.chars().any(char::is_control) {
+                Err(format!("the value of the property `{name}` holds a control character"))
+            } else {
+                Ok(())
+            }
+        })
+    }
+
+    /// Splits `<name>=<value>` at the first `=`, checks the name with [`check_twin_text`] and the value with
+    /// `check_value`.
+    fn parse_with(text: &str, check_value: impl FnOnce(&str, &str) -> Result<(), String>) -> Result<Self, String> {
         let Some((name, value)) = text.split_once('=') else {
             return Err(format!("the property `{text}` has no `=`; write <name>=<value>"));
         };
         check_twin_text("the property name", name)?;
-        if value.chars().any(char::is_control) {
-            return Err(format!("the value of the property `{name}` holds a control character"));
-        }
+        check_value(name, value)?;
         Ok(Self {
             name: name.to_owned(),
             value: value.to_owned(),

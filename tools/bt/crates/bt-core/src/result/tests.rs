@@ -217,6 +217,20 @@ fn collect_failed(xml: &str, attempt: &AttemptSpec) -> RunResult {
     collect_results(&fake, &bep, 5000, 3, "")
 }
 
+/// Collects one green shard of `//p:t` that lasted 30 s, with `report` as its test.xml.
+fn collect_a_30_second_shard(report: &str) -> RunResult {
+    let fake = FakeRuntime::new([]);
+    fake.put_absolute("/exec/t/test.xml", report);
+    let bep = bep_of(
+        &fake,
+        &[test_result_event(&AttemptSpec {
+            duration_ms: 30_000,
+            ..at("//p:t", "/exec/t/test.xml")
+        })],
+    );
+    collect_results(&fake, &bep, 30_000, 0, "")
+}
+
 fn target_completed_failure(label: &str) -> serde_json::Value {
     json!({
         "id": {"targetCompleted": {"label": label}},
@@ -929,16 +943,7 @@ fn a_cached_or_failed_shard_gives_no_fixed_seconds() {
 /// The class seconds can exceed the wall time of the shard by rounding, and a cost is never below zero.
 #[test]
 fn class_seconds_above_the_wall_time_give_a_fixed_cost_of_zero() {
-    let fake = FakeRuntime::new([]);
-    fake.put_absolute("/exec/t/test.xml", &timed_report(&[("com.A", 30.5)]));
-    let bep = bep_of(
-        &fake,
-        &[test_result_event(&AttemptSpec {
-            duration_ms: 30_000,
-            ..at("//p:t", "/exec/t/test.xml")
-        })],
-    );
-    let result = collect_results(&fake, &bep, 30_000, 0, "");
+    let result = collect_a_30_second_shard(&timed_report(&[("com.A", 30.5)]));
     assert_eq!(result.targets[0].fixed_ms, Some(0));
     assert_eq!(result.timings[0].fixed_seconds, Some(0.0));
 }
@@ -946,23 +951,11 @@ fn class_seconds_above_the_wall_time_give_a_fixed_cost_of_zero() {
 /// The suite of a class lasts until its nested classes end, so a nested class with a recorded outer class counts once.
 #[test]
 fn a_nested_class_counts_once_in_the_class_seconds_of_a_shard() {
-    let fake = FakeRuntime::new([]);
-    fake.put_absolute(
-        "/exec/t/test.xml",
-        &timed_report(&[
-            ("com.A", 20.0),
-            ("com.A$Inner", 15.0),
-            ("com.A$Inner$Deep", 5.0),
-            ("com.B$Only", 4.0),
-        ]),
-    );
-    let bep = bep_of(
-        &fake,
-        &[test_result_event(&AttemptSpec {
-            duration_ms: 30_000,
-            ..at("//p:t", "/exec/t/test.xml")
-        })],
-    );
-    let result = collect_results(&fake, &bep, 30_000, 0, "");
+    let result = collect_a_30_second_shard(&timed_report(&[
+        ("com.A", 20.0),
+        ("com.A$Inner", 15.0),
+        ("com.A$Inner$Deep", 5.0),
+        ("com.B$Only", 4.0),
+    ]));
     assert_eq!((result.targets[0].fixed_ms, result.targets[0].test_ms), (Some(6_000), Some(24_000)));
 }

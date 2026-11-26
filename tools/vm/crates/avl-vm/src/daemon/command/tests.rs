@@ -561,6 +561,13 @@ async fn run_for_verdict(fixture: &Fixture, argv: &[&str], receipt: Option<&Path
     (result, recorded.verdict())
 }
 
+/// One green `run` of `argv` under `receipt`, which must build the guest descriptor `label` last.
+async fn run_builds(fixture: &Fixture, argv: &[&str], receipt: &Path, label: &str) {
+    let (result, _) = run_for_verdict(fixture, argv, Some(receipt)).await;
+    result.unwrap();
+    assert_eq!(fixture.bazel.built_labels().last().map(String::as_str), Some(label));
+}
+
 /// The refusal of `result`, which must have `code` and `exit`.
 fn refused_with(result: Result<Outcome, Refusal>, code: &str, exit: Exit) -> Refusal {
     let failure = refusal(result);
@@ -1323,23 +1330,14 @@ async fn a_live_run_builds_the_live_descriptor_and_another_run_the_one_of_the_la
     commit_live_lane_document(&fixture);
     fixture.queue_runs(vec![passing_run_lines("it-36"), passing_run_lines("it-37")]);
     fixture.stdin.feed(b"central-login-export-from-a-pipe-0123456789\n");
-    let (live, _) = run_for_verdict(
+    run_builds(
         &fixture,
         &["--lane", "ui-live", "--test-env", "AIR_LIVE_CENTRAL_LOGIN=@-"],
-        Some(&receipt),
+        &receipt,
+        avl_wire::daemon::LINUX_GUEST_LIVE_LABEL,
     )
     .await;
-    live.unwrap();
-    assert_eq!(
-        fixture.bazel.built_labels().last().map(String::as_str),
-        Some(avl_wire::daemon::LINUX_GUEST_LIVE_LABEL)
-    );
-    let (lanes, _) = run_for_verdict(&fixture, &["--lane", "ui"], Some(&receipt)).await;
-    lanes.unwrap();
-    assert_eq!(
-        fixture.bazel.built_labels().last().map(String::as_str),
-        Some(avl_wire::daemon::LINUX_GUEST_LABEL)
-    );
+    run_builds(&fixture, &["--lane", "ui"], &receipt, avl_wire::daemon::LINUX_GUEST_LABEL).await;
 }
 
 // A run of the light lane builds the descriptor of JetBrains Light, and a run of another lane builds the one of the
@@ -1349,18 +1347,14 @@ async fn a_light_run_builds_the_light_descriptor_and_another_run_the_one_of_the_
     let (fixture, receipt) = run_outcome_fixture(Vec::new()).await;
     assert_eq!(fixture.settings.guest_os, GuestOs::Linux);
     fixture.queue_runs(vec![passing_run_lines("it-38"), passing_run_lines("it-39")]);
-    let (light, _) = run_for_verdict(&fixture, &["--lane", avl_wire::daemon::LIGHT_LANE], Some(&receipt)).await;
-    light.unwrap();
-    assert_eq!(
-        fixture.bazel.built_labels().last().map(String::as_str),
-        Some(avl_wire::daemon::LINUX_GUEST_LIGHT_LABEL)
-    );
-    let (lanes, _) = run_for_verdict(&fixture, &["--lane", "ui"], Some(&receipt)).await;
-    lanes.unwrap();
-    assert_eq!(
-        fixture.bazel.built_labels().last().map(String::as_str),
-        Some(avl_wire::daemon::LINUX_GUEST_LABEL)
-    );
+    run_builds(
+        &fixture,
+        &["--lane", avl_wire::daemon::LIGHT_LANE],
+        &receipt,
+        avl_wire::daemon::LINUX_GUEST_LIGHT_LABEL,
+    )
+    .await;
+    run_builds(&fixture, &["--lane", "ui"], &receipt, avl_wire::daemon::LINUX_GUEST_LABEL).await;
 }
 
 // One build names one IDE distribution. So a plan that holds the light lane beside another lane is refused, and a plan

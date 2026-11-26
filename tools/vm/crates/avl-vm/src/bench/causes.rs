@@ -30,7 +30,7 @@ use super::record::{self, PLUGIN_CLASSES_FILE, QUIT_ANCHOR, RunId};
 use super::session::{self, CLASS_CAUSE_LOG, CLASS_LOAD_LOG, SelectedRun};
 use super::timeline::Timeline;
 use super::trace::tenth;
-use super::triggers::{frame_class, frame_owner, is_skipped, strip_frame_prefix, trigger_frame};
+use super::triggers::{frame_class, frame_owner, is_skipped, of_filters, run_header, strip_frame_prefix, trigger_frame};
 
 /// The message that starts the record of one class load.
 const STACK_HEADER: &str = "Java stack when loading ";
@@ -457,31 +457,16 @@ fn rows(
 impl CauseReport {
     /// The text: the run, the anchor, then one block per entry frame.
     pub(crate) fn text(&self) -> String {
-        let mut text = String::new();
-        let picked = self
-            .median_by
-            .map_or_else(String::new, |metric| format!(" (the median run by {metric})"));
-        let _ = writeln!(
-            text,
-            "vm bench causes {} {}{picked}",
-            session::display_name(&self.session),
-            self.run
+        let (mut text, where_, anchors) = run_header(
+            "causes",
+            &self.session,
+            &self.run,
+            self.median_by,
+            self.at.as_deref(),
+            &self.anchors,
         );
-        let where_ = self
-            .at
-            .as_deref()
-            .map_or_else(|| "over the whole run".to_owned(), |at| format!("at {at}"));
-        let anchors = if self.anchors.is_empty() {
-            "none".to_owned()
-        } else {
-            self.anchors.join(", ")
-        };
         let filters: Vec<String> = self.plugins.iter().chain(&self.modules).cloned().collect();
-        let of = if filters.is_empty() {
-            String::new()
-        } else {
-            format!(" of {}", filters.join(", "))
-        };
+        let of = of_filters(&filters);
         let _ = writeln!(
             text,
             "anchors: {anchors}; {} classes{of} in {} loaders {where_}, {} of {} entry frames",

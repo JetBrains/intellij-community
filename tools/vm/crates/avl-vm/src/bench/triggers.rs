@@ -261,6 +261,38 @@ fn row(trigger: String, mut loaders: Vec<TriggerLoader>, top: usize) -> TriggerR
     }
 }
 
+/// The start of the text of a report of one run, which `bench triggers` and `bench causes` share. The first line names
+/// the command, the session, the run and the metric whose median picked the run. The answer also holds the text of the
+/// anchor and the list of the anchors of the run, which the next line of the report names.
+pub(super) fn run_header(
+    command: &str,
+    session_name: &str,
+    run: &str,
+    median_by: Option<&str>,
+    at: Option<&str>,
+    anchors: &[&str],
+) -> (String, String, String) {
+    let mut text = String::new();
+    let picked = median_by.map_or_else(String::new, |metric| format!(" (the median run by {metric})"));
+    let _ = writeln!(text, "vm bench {command} {} {run}{picked}", session::display_name(session_name));
+    let where_ = at.map_or_else(|| "over the whole run".to_owned(), |at| format!("at {at}"));
+    let anchors = if anchors.is_empty() {
+        "none".to_owned()
+    } else {
+        anchors.join(", ")
+    };
+    (text, where_, anchors)
+}
+
+/// The text ` of <filters>` of the filters of a report, or the empty text without a filter.
+pub(super) fn of_filters(filters: &[String]) -> String {
+    if filters.is_empty() {
+        String::new()
+    } else {
+        format!(" of {}", filters.join(", "))
+    }
+}
+
 /// A cell of a value that the run may lack: the number, else `-`.
 fn cell(value: Option<f64>) -> String {
     value.map_or_else(|| "-".to_owned(), number)
@@ -269,30 +301,15 @@ fn cell(value: Option<f64>) -> String {
 impl TriggerReport {
     /// The text: the run, the anchor, the table of the triggers, then the loaders of each trigger.
     pub(crate) fn text(&self) -> String {
-        let mut text = String::new();
-        let picked = self
-            .median_by
-            .map_or_else(String::new, |metric| format!(" (the median run by {metric})"));
-        let _ = writeln!(
-            text,
-            "vm bench triggers {} {}{picked}",
-            session::display_name(&self.session),
-            self.run
+        let (mut text, where_, anchors) = run_header(
+            "triggers",
+            &self.session,
+            &self.run,
+            self.median_by,
+            self.at.as_deref(),
+            &self.anchors,
         );
-        let where_ = self
-            .at
-            .as_deref()
-            .map_or_else(|| "over the whole run".to_owned(), |at| format!("at {at}"));
-        let anchors = if self.anchors.is_empty() {
-            "none".to_owned()
-        } else {
-            self.anchors.join(", ")
-        };
-        let plugins = if self.plugins.is_empty() {
-            String::new()
-        } else {
-            format!(" of {}", self.plugins.join(", "))
-        };
+        let plugins = of_filters(&self.plugins);
         let _ = writeln!(
             text,
             "anchors: {anchors}; {} loaders{plugins} with a class {where_}, {} of {} triggers",
