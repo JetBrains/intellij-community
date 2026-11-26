@@ -95,7 +95,7 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
   protected final @NotNull PyClass myClass;
   protected final boolean myIsDefinition;
   protected final @NotNull List<PyType> myTypeArguments;
-  private final @NotNull Ref<Integer> myHashCode = new Ref<>();
+  private volatile int myHashCode;
 
   /**
    * Describes a class-based type. Since everything in Python is an instance of some class, this type pretty much completes
@@ -949,15 +949,16 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
 
   @Override
   public int hashCode() {
-    if (myHashCode.isNull()) {
-      int result = myClass.hashCode();
-      result = 31 * result + (myIsDefinition ? 1 : 0);
+    int hashCode = myHashCode;
+    if (hashCode == 0) {
+      hashCode = myClass.hashCode();
+      hashCode = 31 * hashCode + (myIsDefinition ? 1 : 0);
       if (!myTypeArguments.isEmpty()) {
-        result = 31 * result + myTypeArguments.hashCode();
+        hashCode = 31 * hashCode + myTypeArguments.hashCode();
       }
-      myHashCode.set(result);
+      myHashCode = hashCode;
     }
-    return myHashCode.get();
+    return hashCode;
   }
 
   @Override
