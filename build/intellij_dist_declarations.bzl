@@ -317,24 +317,16 @@ _OS_TOKENS = ["darwin", "linux", "windows"]
 def _vm_options_file_name(launch, os):
     """The name of the main vmoptions file of `launch`, the `launch` struct of a plan, for the OS token `os`.
 
-    The name follows from the launcher facts, see `vm_options_file_name`. A plan of an older generator states the names
-    in `vmoptions`, and then the plan wins.
+    The name follows from the launcher facts, see `vm_options_file_name`.
     """
-    stated = getattr(launch, "vmoptions", None)
-    if stated != None:
-        return stated[os]
     return vm_options_file_name(os, launch.launcher.base_file_name, launch.launcher.language_server)
 
 def _launch_model(tables, product):
     """The label of the launch model of `product`: `<build package>/dist-launch:<case-safe name>.launch.json`.
 
-    `tables.case_safe_names` maps a product to its case-safe name when the name differs from the product key. A
-    table set of an older generator states every label in `launch_models`, and then the table wins.
+    `tables.case_safe_names` maps a product to its case-safe name when the name differs from the product key.
     """
-    stated = getattr(tables, "launch_models", None)
-    if stated != None:
-        return stated[product]
-    name = getattr(tables, "case_safe_names", {}).get(product, product)
+    name = tables.case_safe_names.get(product, product)
     return "%s/dist-launch:%s.launch.json" % (tables.build_package, name)
 
 def _launch_destinations(plan, os):
