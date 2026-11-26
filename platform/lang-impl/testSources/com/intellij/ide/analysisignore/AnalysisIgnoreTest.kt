@@ -22,6 +22,7 @@ import com.intellij.platform.workspace.jps.entities.ContentRootEntity
 import com.intellij.platform.workspace.jps.entities.modifyContentRootEntity
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
+import com.intellij.testFramework.LightVirtualFile
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.junit5.RegistryKey
 import com.intellij.testFramework.junit5.TestApplication
@@ -794,6 +795,33 @@ class AnalysisIgnoreTest {
     assertTrue(caseInsensitive.shouldExclude(capitalBuild))
     assertFalse(caseInsensitive.shouldExclude(builds))
     assertTrue(caseInsensitive.shouldExclude(generated))
+  }
+
+  @Test
+  fun `the names without a wildcard are compared by their ids in one lookup`() {
+    val nodeModules = dir("projectRoot/a/node_modules")
+    val git = dir("projectRoot/.git")
+    val venvFile = file("projectRoot/a/.venv")
+    val capitalGit = dir("projectRoot/a/.Git")
+    val cacheDir = dir("projectRoot/a/cache")
+    val cacheFile = file("projectRoot/b/cache")
+    val log = file("projectRoot/a/build.log")
+    val source = file("projectRoot/a/Main.kt")
+
+    // On a case-sensitive file system the three names alone share one set of ids. The directory pattern and the wildcard stay apart.
+    val matcher = matcherOf(projectRoot, caseSensitive = true, "node_modules", ".git", ".venv", "cache/", "*.log")
+    assertTrue(matcher.shouldExclude(nodeModules))
+    assertTrue(matcher.shouldExclude(git))
+    assertTrue(matcher.shouldExclude(venvFile))
+    assertFalse(matcher.shouldExclude(capitalGit))
+    assertTrue(matcher.shouldExclude(cacheDir))
+    assertFalse(matcher.shouldExclude(cacheFile))
+    assertTrue(matcher.shouldExclude(log))
+    assertFalse(matcher.shouldExclude(source))
+
+    // A file outside the VFS has no id of its name, and the letters decide.
+    assertTrue(matcher.shouldExclude(LightVirtualFile("node_modules")))
+    assertFalse(matcher.shouldExclude(LightVirtualFile("Node_modules")))
   }
 
   // -----------------------------------------------------------------------------------------------------------------------------------

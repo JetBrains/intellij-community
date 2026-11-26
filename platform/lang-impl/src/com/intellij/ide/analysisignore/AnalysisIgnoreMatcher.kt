@@ -2,7 +2,10 @@
 package com.intellij.ide.analysisignore
 
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSetExclusionCondition
+import it.unimi.dsi.fastutil.ints.IntOpenHashSet
+import it.unimi.dsi.fastutil.ints.IntSet
 import org.jetbrains.annotations.ApiStatus
 
 /**
@@ -19,8 +22,17 @@ class AnalysisIgnoreMatcher(
   // The lines that these patterns come from. The index compares two conditions by these lines.
   private val sources: List<String> = patterns.map { it.source }
 
-  // The patterns without a slash. Each names a name at any level below the directory of the file.
-  private val namePatterns: List<AnalysisIgnorePattern> = patterns.filter { !it.anchored }
+  // The names of the patterns without a slash that match one exact name, of a file or of a directory. One lookup in [exactNameIds]
+  // compares a name with all of them.
+  private val exactNames: List<String> = patterns.mapNotNull { if (it.directoryOnly) null else it.exactName }
+
+  // The ids of [exactNames] in the names of the VFS, or `null` before the first comparison with a file of the VFS. Two threads can store
+  // the names at the same time and get equal sets.
+  @Volatile
+  private var exactNameIds: IntSet? = null
+
+  // The other patterns without a slash. Each names a name at any level below the directory of the file.
+  private val namePatterns: List<AnalysisIgnorePattern> = patterns.filter { !it.anchored && (it.directoryOnly || it.exactName == null) }
 
   // The anchored patterns with a `**`. Each needs the whole path of a file below the directory of the file.
   private val chainPatterns: List<AnalysisIgnorePattern> = patterns.filter { it.anchored && it.hasAnySegments }
@@ -42,8 +54,9 @@ class AnalysisIgnoreMatcher(
     if (file == baseDir) return false
 
     var node: AnalysisIgnoreNode? = null
-    if (namePatterns.isNotEmpty()) {
+    if (exactNames.isNotEmpty() || namePatterns.isNotEmpty()) {
       node = AnalysisIgnoreNode(file)
+      if (exactNames.isNotEmpty() && matchesExactName(node)) return true
       for (i in namePatterns.indices) {
         if (namePatterns[i].matchesName(node)) return true
       }
@@ -66,6 +79,30 @@ class AnalysisIgnoreMatcher(
       }
     }
     return false
+  }
+
+  private fun matchesExactName(node: AnalysisIgnoreNode): Boolean {
+    val nameId = node.nameId
+    if (nameId != NO_NAME_ID) return exactNameIds().contains(nameId)
+
+    // A file outside the VFS has no id of its name, and the letters decide.
+    val name = node.name
+    for (i in exactNames.indices) {
+      if (name.contentEquals(exactNames[i])) return true
+    }
+    return false
+  }
+
+  private fun exactNameIds(): IntSet {
+    exactNameIds?.let { return it }
+
+    val fileManager = VirtualFileManager.getInstance()
+    val ids = IntOpenHashSet(exactNames.size)
+    for (name in exactNames) {
+      ids.add(fileManager.storeName(name))
+    }
+    exactNameIds = ids
+    return ids
   }
 
   private fun depthBelow(file: VirtualFile): Int {

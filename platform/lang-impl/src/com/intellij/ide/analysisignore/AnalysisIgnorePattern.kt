@@ -34,6 +34,10 @@ class AnalysisIgnorePattern internal constructor(
   // `true` if a segment is a `**`. Such a pattern matches paths of several depths, and thus it needs the whole path of a file.
   internal val hasAnySegments: Boolean = segments.any { it === AnalysisIgnoreSegment.AnySegments }
 
+  // The one name that a pattern without a slash matches by an exact comparison, as `node_modules` on a case-sensitive file system.
+  // `null` for every other pattern.
+  internal val exactName: String? = if (anchored) null else segments[0].exactName
+
   // The count of the segments. An anchored pattern without a `**` matches a path of this depth only.
   internal val depth: Int
     get() = segments.size
@@ -190,6 +194,10 @@ class AnalysisIgnorePattern internal constructor(
  * One component of a pattern. It matches one component of a path, apart from [AnySegments], which takes zero or more of them.
  */
 internal sealed interface AnalysisIgnoreSegment {
+  /** The one name that this segment matches by an exact comparison. `null` for a segment that matches more names or no name. */
+  val exactName: String?
+    get() = null
+
   /** Returns `true` if this segment matches [name], one component of a path. */
   fun matches(name: CharSequence): Boolean
 
@@ -202,6 +210,9 @@ internal sealed interface AnalysisIgnoreSegment {
     // the name at the same time and get the same id.
     @Volatile
     private var textNameId: Int = NO_NAME_ID
+
+    override val exactName: String?
+      get() = if (ignoreCase) null else text
 
     override fun matches(name: CharSequence): Boolean = name.contentEquals(text, ignoreCase)
 
