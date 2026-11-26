@@ -95,28 +95,6 @@ public final class FontInfo {
   }
 
   /**
-   * Returns the letter spacing in pixels at the font size, see {@link com.intellij.openapi.editor.colors.FontPreferences#getLetterSpacing()}.
-   * Without fractional metrics, the value is a whole number of device pixels, so all gaps between the glyphs are equal.
-   * A {@code null} context counts as a context without fractional metrics and without a transform.
-   */
-  @ApiStatus.Internal
-  public static float letterSpacingPixels(float letterSpacing, float size, @Nullable FontRenderContext context) {
-    float pixels = letterSpacing * size;
-    if (pixels == 0) {
-      // also turns -0 into 0
-      return 0;
-    }
-    if (context != null && context.usesFractionalMetrics()) {
-      return pixels;
-    }
-    double scale = context == null ? 1 : Math.abs(context.getTransform().getScaleX());
-    if (scale == 0) {
-      scale = 1;
-    }
-    return (float)(Math.round(pixels * scale) / scale);
-  }
-
-  /**
    * Returns the context of the font metrics that the component gives, or the default context for {@code null}.
    * On JBR, for a {@link JComponent}, it loads no font and ignores an override of {@link JComponent#getFontMetrics}.
    */
@@ -148,6 +126,28 @@ public final class FontInfo {
     } else {
       return font.canDisplay(codePoint);
     }
+  }
+
+  /**
+   * Returns the letter spacing in pixels at the font size, see {@link com.intellij.openapi.editor.colors.FontPreferences#getLetterSpacing()}.
+   * Without fractional metrics, the value is a whole number of device pixels, so all gaps between the glyphs are equal.
+   * A {@code null} context counts as a context without fractional metrics and without a transform.
+   */
+  @ApiStatus.Internal
+  public static float letterSpacingPixels(float letterSpacing, float size, @Nullable FontRenderContext context) {
+    float pixels = letterSpacing * size;
+    if (pixels == 0) {
+      // also turns -0 into 0
+      return 0;
+    }
+    if (context != null && context.usesFractionalMetrics()) {
+      return pixels;
+    }
+    double scale = context == null ? 1 : Math.abs(context.getTransform().getScaleX());
+    if (scale == 0) {
+      scale = 1;
+    }
+    return (float)(Math.round(pixels * scale) / scale);
   }
 
   private final @NotNull Font myFont;
