@@ -93,6 +93,13 @@ public final class RenamedClassView extends LightClass {
     return StringUtil.getQualifiedName(myTargetPackage != null ? myTargetPackage : StringUtil.getPackageName(qualifiedName), myNewName);
   }
 
+  /** A moved view is equivalent to a view of the same class only, not to the class itself. */
+  @Override
+  public boolean isEquivalentTo(PsiElement another) {
+    if (!isMoved()) return super.isEquivalentTo(another);
+    return this == another || another instanceof RenamedClassView && myToRename == ((RenamedClassView)another).myToRename;
+  }
+
   @NotNull String getTargetPackage() {
     return Objects.requireNonNull(myTargetPackage);
   }

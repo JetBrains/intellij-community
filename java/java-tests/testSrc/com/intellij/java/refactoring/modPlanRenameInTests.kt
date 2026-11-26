@@ -69,23 +69,6 @@ private val KNOWN_GAPS: Map<String, KnownGap> = mapOf(
     )),
   "No Java move provider owns the subject, so the engine refuses it." to
     KnownGap("refused: NOT_SUPPORTED", listOf(
-      "MoveClassOnModPlanTest.testWithoutReference",
-      "MoveClassOnModPlanTest.testConflictingNames",
-      "MoveClassOnModPlanTest.testLocalClass",
-      "MoveClassOnModPlanTest.testRefInPropertiesFile",
-      "MoveClassOnModPlanTest.testIdeadev27996",
-      "MoveClassOnModPlanTest.testMoveMultiple1",
-      "MoveClassOnModPlanTest.testContextChange2",
-      "MoveClassOnModPlanTest.testImplicitClass",
-      "MoveClassOnModPlanTest.testContextChange1",
-      "MoveClassOnModPlanTest.testNonJava",
-      "MoveClassOnModPlanTest.testSecondaryClass",
-      "MoveClassOnModPlanTest.testStringsAndComments2",
-      "MoveClassOnModPlanTest.testToDefaultPackage",
-      "MoveClassOnModPlanTest.testQualifiedRef",
-      "MoveClassOnModPlanTest.testClassAndSecondary",
-      "MoveClassOnModPlanTest.testUnusedImport",
-      "MoveClassOnModPlanTest.testStringsAndComments",
       "MovePackageOnModPlanTest.testMoveSingle",
       "MovePackageOnModPlanTest.testQualifiedRef",
       "MovePackageOnModPlanTest.testInsidePackage",
@@ -95,8 +78,13 @@ private val KNOWN_GAPS: Map<String, KnownGap> = mapOf(
       "MovePackageMultirootOnModPlanTest.testMoveFilesToEmptyPkg2",
       "MovePackageMultirootOnModPlanTest.testMoveFilesToNonEmptyPkg1",
       "MovePackageMultirootOnModPlanTest.testMoveFilesToNonEmptyPkg2",
-      "MovePackageMultirootOnModPlanTest.testMoveFilesToNonEmptyPkg3",
-      "MoveJavaFileOnModPlanTest.testPackageInfo",
-      "MoveJavaFileOnModPlanTest.testConflict"
+      "MovePackageMultirootOnModPlanTest.testMoveFilesToNonEmptyPkg3"
     )),
+  "The legacy move takes a secondary class out of its file into a new file of the same package. The twin passes the file of the " +
+    "class, as a client of the language server does, and the file is in the target directory already." to
+    KnownGap("refused: NOT_APPLICABLE An item to move is already in the target directory",
+             listOf("MoveClassOnModPlanTest.testSecondaryClass")),
+  "The legacy move takes a class out of a file that keeps other classes. The twin passes the file of the class, " +
+    "as a client of the language server does, so the whole file moves." to
+    KnownGap("Text mismatch in the file", listOf("MoveClassOnModPlanTest.testIdeadev27996")),
 )

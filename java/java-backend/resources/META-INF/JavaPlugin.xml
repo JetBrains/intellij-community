@@ -643,6 +643,8 @@
                                                    language="JAVA"/>
     <refactoring.safeDeleteProcessor implementation="com.intellij.refactoring.safeDelete.JavaSafeDeleteProcessor" id="javaProcessor"/>
     <refactoring.modPlanSafeDeleteProvider implementation="com.intellij.refactoring.safeDelete.ModPlanJavaSafeDeleteProvider"/>
+    <refactoring.modPlanMoveProvider implementation="com.intellij.refactoring.move.moveClassesOrPackages.ModPlanJavaMoveProvider"
+                                     order="first"/>
     <refactoring.modPlanRenameProvider implementation="com.intellij.refactoring.rename.RenameJavaClassProcessor$ModPlanJavaClassRenameProvider"/>
     <refactoring.modPlanRenameProvider implementation="com.intellij.refactoring.rename.RenameJavaMethodProcessor$ModPlanJavaMethodRenameProvider"/>
     <refactoring.modPlanRenameProvider implementation="com.intellij.refactoring.rename.RenameJavaVariableProcessor$ModPlanJavaVariableRenameProvider"/>

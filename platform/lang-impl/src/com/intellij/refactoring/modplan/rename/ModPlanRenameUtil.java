@@ -13,7 +13,6 @@ import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.SmartPointerManager;
-import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.SmartPsiFileRange;
 import com.intellij.psi.impl.source.resolve.reference.impl.PsiMultiReference;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReference;
@@ -45,11 +44,16 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.function.BiConsumer;
+import java.util.function.Function;
+import java.util.function.Predicate;
 
 /**
- * Static helpers for the providers that rename with the legacy {@code UsageInfo}s, which the search of the legacy rename finds, see
- * {@link #ownUsages}. Every edit here carries out a decision of the analysis and resolves nothing in the copy it writes. The one
- * exception is the bind of a file reference, which computes the path to its target, see {@link #referenceEdits}.
+ * Static helpers for the providers that edit with the legacy {@code UsageInfo}s, which the search of the legacy rename or move finds, see
+ * {@link #ownUsages}. Every edit here carries out a decision of the analysis.
+ * <p>
+ * An edit resolves nothing in the copy it writes, with two exceptions. {@link #referenceEdits} computes the path of a file reference to
+ * its target. {@link #bindingEdits} calls {@link PsiReference#bindToElement}, which resolves in the copy.
  */
 @ApiStatus.Internal
 public final class ModPlanRenameUtil {
@@ -121,46 +125,74 @@ public final class ModPlanRenameUtil {
    */
   @RequiresReadLock
   public static @Nullable List<ModPlanEdit> referenceEdits(@NotNull List<UsageInfo> references, @NotNull String newName) {
-    Map<Pair<PsiFile, TextRange>, Map<Integer, SmartPsiElementPointer<PsiFileSystemItem>>> boundTargetsByPlace = new LinkedHashMap<>();
+    return editsAtPlaces(
+      references, ModPlanRenameUtil::isRenamedByName,
+      usage -> {
+        PsiReference reference = Objects.requireNonNull(usage.getReference());
+        return reference instanceof FileReference && reference.resolve() instanceof PsiFileSystemItem target
+               ? SmartPointerManager.getInstance(reference.getElement().getProject()).createSmartPsiElementPointer(target)
+               : null;
+      },
+      (reference, boundTarget) -> {
+        PsiFileSystemItem target = boundTarget == null ? null : boundTarget.getElement();
+        if (target != null && reference instanceof FileReference fileReference) {
+          bindAndRename(fileReference, target, newName);
+        }
+        else {
+          reference.handleElementRename(newName);
+        }
+      });
+  }
+
+  private static <T> @Nullable List<ModPlanEdit> editsAtPlaces(@NotNull List<UsageInfo> references,
+                                                               @NotNull Predicate<? super PsiReference> isWritable,
+                                                               @NotNull Function<? super UsageInfo, ? extends T> payloadOf,
+                                                               @NotNull BiConsumer<? super PsiReference, ? super T> write) {
+    Map<Pair<PsiFile, TextRange>, Map<Integer, T>> boundTargetsByPlace = new LinkedHashMap<>();
     for (UsageInfo usage : references) {
       PsiReference reference = usage.getReference();
-      if (reference == null || !isRenamedByName(reference)) return null;
+      if (reference == null || !isWritable.test(reference)) return null;
       PsiFile file = reference.getElement().getContainingFile();
       Pair<PsiFile, TextRange> place = Pair.create(file, rangeInFile(reference));
-      SmartPsiElementPointer<PsiFileSystemItem> boundTarget =
-        reference instanceof FileReference && reference.resolve() instanceof PsiFileSystemItem target
-        ? SmartPointerManager.getInstance(file.getProject()).createSmartPsiElementPointer(target)
-        : null;
+      T boundTarget = payloadOf.apply(usage);
       boundTargetsByPlace.computeIfAbsent(place, _ -> new LinkedHashMap<>()).put(indexAt(reference), boundTarget);
     }
     List<ModPlanEdit> result = new ArrayList<>();
-    for (Map.Entry<Pair<PsiFile, TextRange>, Map<Integer, SmartPsiElementPointer<PsiFileSystemItem>>> entry : boundTargetsByPlace.entrySet()) {
+    for (Map.Entry<Pair<PsiFile, TextRange>, Map<Integer, T>> entry : boundTargetsByPlace.entrySet()) {
       PsiFile file = entry.getKey().getFirst();
       SmartPsiFileRange place =
         SmartPointerManager.getInstance(file.getProject()).createSmartPsiFileRangePointer(file, entry.getKey().getSecond());
-      Map<Integer, SmartPsiElementPointer<PsiFileSystemItem>> boundTargets = new LinkedHashMap<>(entry.getValue());
+      Map<Integer, T> boundTargets = new LinkedHashMap<>(entry.getValue());
       result.add(new ModPlanEdit.UpdateRange(place, (copy, range) -> {
         List<PsiReference> referencesOfRange = referencesAt(copy, range);
-        Map<PsiReference, SmartPsiElementPointer<PsiFileSystemItem>> renamedReferences = new LinkedHashMap<>();
-        for (Map.Entry<Integer, SmartPsiElementPointer<PsiFileSystemItem>> indexEntry : boundTargets.entrySet()) {
+        Map<PsiReference, T> renamedReferences = new LinkedHashMap<>();
+        for (Map.Entry<Integer, T> indexEntry : boundTargets.entrySet()) {
           int index = indexEntry.getKey();
           if (index >= referencesOfRange.size()) {
             throw new IncorrectOperationException("No reference at " + range + " in " + copy);
           }
           renamedReferences.put(referencesOfRange.get(index), indexEntry.getValue());
         }
-        renamedReferences.forEach((reference, boundTarget) -> {
-          PsiFileSystemItem target = boundTarget == null ? null : boundTarget.getElement();
-          if (target != null && reference instanceof FileReference fileReference) {
-            bindAndRename(fileReference, target, newName);
-          }
-          else {
-            reference.handleElementRename(newName);
-          }
-        });
+        renamedReferences.forEach(write);
       }));
     }
     return result;
+  }
+
+  /**
+   * The edits bind each reference to the element that {@code targetOf} gives for its usage. The bind resolves in the copy of the file.
+   * <p>
+   * The edit of a place finds every reference of the place again in the copy before it binds the first, as {@link #referenceEdits} does.
+   *
+   * @param targetOf gives the element that a reference of the usage refers to after the edit
+   * @return one {@link ModPlanEdit.UpdateRange} for each place; null if a usage has no reference or the write cannot find it again,
+   * see {@link #indexAt}
+   */
+  @RequiresReadLock
+  public static @Nullable List<ModPlanEdit> bindingEdits(@NotNull List<UsageInfo> references,
+                                                         @NotNull Function<? super UsageInfo, ? extends PsiElement> targetOf) {
+    return editsAtPlaces(references, reference -> indexAt(reference) >= 0, usage -> usage,
+                         (reference, usage) -> reference.bindToElement(targetOf.apply(usage)));
   }
 
   private static void bindAndRename(@NotNull FileReference reference, @NotNull PsiFileSystemItem target, @NotNull String newName) {

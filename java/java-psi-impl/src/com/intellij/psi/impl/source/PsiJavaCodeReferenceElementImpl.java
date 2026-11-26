@@ -617,8 +617,11 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
     CheckUtil.checkWritable(containingFile);
     // The view is equivalent to the class to rename, so isReferenceTo is true for it.
     if (element instanceof RenamedClassView) {
-      String name = nameAfterRename(this, (RenamedClassView)element);
-      return name == null ? handleElementRename(((RenamedClassView)element).getName()) : replaceWithClassName(name, (PsiClass)element);
+      RenamedClassView view = (RenamedClassView)element;
+      String name = nameAfterRename(this, view);
+      if (name == null) return handleElementRename(view.getName());
+      PsiJavaCodeReferenceElement shortened = replaceWithShortNameOfMovedClass(view, name);
+      return shortened != null ? shortened : replaceWithClassName(name, view);
     }
     if (isReferenceTo(element)) return this;
 
@@ -672,6 +675,18 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
 
   private static @NotNull IncorrectOperationException cannotBindError(@NotNull PsiElement element, @NotNull Kind kind, @NotNull String reason) {
     return new IncorrectOperationException("Cannot bind to " + element+" of kind: "+kind+" because "+reason);
+  }
+
+  private @Nullable PsiJavaCodeReferenceElement replaceWithShortNameOfMovedClass(@NotNull RenamedClassView view, @NotNull String name) {
+    String qualifiedName = view.getQualifiedName();
+    if (!view.isMoved() || !name.equals(view.getName()) || !isQualified() || qualifiedName == null || !qualifiedName.contains(".") ||
+        PsiTreeUtil.getChildrenOfTypeAsList(this, PsiAnnotation.class).isEmpty()) {
+      return null;
+    }
+    PsiJavaCodeReferenceElement qualified = replaceWithClassName(qualifiedName, view);
+    PsiElement qualifier = qualified.getQualifier();
+    if (qualifier != null) qualifier.delete();
+    return qualified;
   }
 
   /**
@@ -884,17 +899,17 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
   public static @NotNull RenamedClassForm formAfterRename(@NotNull PsiJavaCodeReferenceElement reference, @NotNull RenamedClassView view) {
     PsiClass aClass = view.getToRename();
     String qualifiedName = view.getQualifiedName();
-    if (qualifiedName == null || !qualifiedName.contains(".") ||
-        PsiTreeUtil.getParentOfType(reference, PsiImportStatementBase.class, PsiDocComment.class) != null) {
+    PsiElement context = PsiTreeUtil.getParentOfType(reference, PsiImportStatementBase.class, PsiDocComment.class);
+    if (qualifiedName == null || !qualifiedName.contains(".") || context != null && !(view.isMoved() && context instanceof PsiDocComment)) {
       return RenamedClassForm.RENAMED;
     }
     PsiFile file = reference.getContainingFile();
     ResolveAfterRenameUtil.Target target;
-    if (reference.isQualified()) {
-      PsiElement qualifier = reference.getQualifier();
-      if (aClass.getContainingClass() != null || !(qualifier instanceof PsiJavaCodeReferenceElement) ||
-          !(((PsiJavaCodeReferenceElement)qualifier).resolve() instanceof PsiPackage) ||
-          JavaFileCodeStyleFacade.forContext(file).useFQClassNames()) {
+    boolean movedShortReference = view.isMoved() && !reference.isQualified();
+    if (reference.isQualified() || movedShortReference) {
+      boolean useFqNames = JavaFileCodeStyleFacade.forContext(file).useFQClassNames();
+      if (!movedShortReference && !isQualifiedByPackage(reference) || aClass.getContainingClass() != null ||
+          useFqNames && !movedShortReference) {
         return RenamedClassForm.RENAMED;
       }
       target = ResolveAfterRenameUtil.resolveClass(view, reference);
@@ -902,9 +917,13 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
         case RENAMED:
           return RenamedClassForm.SHORT;
         case OTHER:
-          return isImportBlocked(target, file) ? RenamedClassForm.RENAMED : RenamedClassForm.IMPORTED;
+          if (!useFqNames && !isImportBlocked(target, file)) return RenamedClassForm.IMPORTED;
+          return movedShortReference ? RenamedClassForm.QUALIFIED : RenamedClassForm.RENAMED;
         default:
-          return RenamedClassForm.IMPORTED;
+          if (!useFqNames) return RenamedClassForm.IMPORTED;
+          PsiImportList importList = file instanceof PsiJavaFile ? ((PsiJavaFile)file).getImportList() : null;
+          return importList != null && importList.findSingleClassImportStatement(qualifiedName) != null ? RenamedClassForm.SHORT
+                                                                                                          : RenamedClassForm.QUALIFIED;
       }
     }
     target = ResolveAfterRenameUtil.resolveClass(view, reference);
@@ -916,6 +935,11 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
       default:
         return RenamedClassForm.RENAMED;
     }
+  }
+
+  private static boolean isQualifiedByPackage(@NotNull PsiJavaCodeReferenceElement reference) {
+    PsiElement qualifier = reference.getQualifier();
+    return qualifier instanceof PsiJavaCodeReferenceElement && ((PsiJavaCodeReferenceElement)qualifier).resolve() instanceof PsiPackage;
   }
 
   /**
@@ -956,11 +980,28 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
         PsiImportList importList = ((PsiJavaFile)file).getImportList();
         // The copy of a file does not see the renamed class, so an import that an earlier bind added does not resolve.
         boolean imported = importList != null && importList.findSingleClassImportStatement(qualifiedName) != null ||
-                           importClass(view, qualifiedName, (PsiJavaFile)file);
+                           (view.isMoved() ? importMovedClass(view, qualifiedName, (PsiJavaFile)file)
+                                           : importClass(view, qualifiedName, (PsiJavaFile)file));
         return imported ? view.getName() : qualifiedName;
       default:
-        return null;
+        return view.isMoved() && isQualifiedByPackage(reference) ? qualifiedName : null;
     }
+  }
+
+  private static boolean importMovedClass(@NotNull RenamedClassView view, @NotNull String qualifiedName, @NotNull PsiJavaFile javaFile) {
+    boolean imported = importClass(view, qualifiedName, javaFile);
+    String packageName = StringUtil.getPackageName(qualifiedName);
+    PsiImportList importList = javaFile.getImportList();
+    if (importList == null || packageName.isEmpty() || packageName.equals(javaFile.getPackageName()) ||
+        importList.findSingleClassImportStatement(qualifiedName) != null || importList.findOnDemandImportStatement(packageName) != null) {
+      return imported;
+    }
+    for (PsiImportStatement statement : importList.getImportStatements()) {
+      PsiJavaCodeReferenceElement reference = statement.getImportReference();
+      if (!statement.isOnDemand() && reference != null && view.getName().equals(reference.getReferenceName())) return false;
+    }
+    importList.add(JavaPsiFacade.getElementFactory(javaFile.getProject()).createImportStatement(view));
+    return true;
   }
 
   private @NotNull List<PsiAnnotation> getAnnotations() {
