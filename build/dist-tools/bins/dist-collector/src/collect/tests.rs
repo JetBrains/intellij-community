@@ -322,7 +322,7 @@ fn packed_collector_requires_metadata() {
     write_jar_records("jars.json", &["missing.jar"]);
     let outcome = run_collector(&base_args("--jars-file=jars.json"));
     outcome.assert_error("require --metadata-catalogue");
-    assert_eq!(outcome.code, 2);
+    assert_eq!(outcome.code, 1);
 }
 
 #[cfg(unix)]

@@ -15,22 +15,31 @@ mod plugin_component;
 use std::ffi::OsString;
 use std::io::Write;
 use std::path::Path;
+use std::process::ExitCode;
 
 use anyhow::{Context, bail};
 
 use crate::inventory::{ManifestHeader, SourcedFile};
 use crate::plugin_component::{Outputs, PluginComponentSpec};
 
-/// The mode of a run. `Spec` is the path of the plugin component spec after the option parse, and the checked spec
-/// after [`Options::read_spec`].
+/// The mode of a run.
 #[derive(Debug)]
-enum Mode<Spec> {
-    Jars { jars_file: String, catalogue: String },
-    Files { files_file: String },
-    PluginComponent { spec: Spec, classpath: String },
+enum Mode {
+    Jars {
+        jars_file: String,
+        catalogue: String,
+    },
+    Files {
+        files_file: String,
+    },
+    /// The checked plugin component spec and the path of the classpath record.
+    PluginComponent {
+        spec: Box<PluginComponentSpec>,
+        classpath: String,
+    },
 }
 
-impl<Spec> Mode<Spec> {
+impl Mode {
     /// The name of the root span.
     const fn job(&self) -> &'static str {
         match self {
@@ -42,48 +51,19 @@ impl<Spec> Mode<Spec> {
 }
 
 #[derive(Debug)]
-struct Options<Spec> {
+struct Options {
     manifest: String,
     kind: String,
     /// Empty for a platform-neutral component, with `arch`.
     os: String,
     arch: String,
-    mode: Mode<Spec>,
+    mode: Mode,
     trace_file: Option<String>,
     /// The IDE main class that the manifest declares.
     main_class: Option<String>,
 }
 
-impl Options<String> {
-    /// Reads and checks the plugin component spec. `run` calls this before the tracer starts, so an invalid spec writes
-    /// no span file.
-    fn read_spec(self) -> anyhow::Result<Options<PluginComponentSpec>> {
-        let mode = match self.mode {
-            Mode::Jars { jars_file, catalogue } => Mode::Jars { jars_file, catalogue },
-            Mode::Files { files_file } => Mode::Files { files_file },
-            Mode::PluginComponent { spec, classpath } => {
-                let outputs = Outputs {
-                    manifest: &self.manifest,
-                    classpath: &classpath,
-                    trace_file: self.trace_file.as_deref(),
-                };
-                let spec = PluginComponentSpec::read(&spec, &outputs)?;
-                Mode::PluginComponent { spec, classpath }
-            }
-        };
-        Ok(Options {
-            manifest: self.manifest,
-            kind: self.kind,
-            os: self.os,
-            arch: self.arch,
-            mode,
-            trace_file: self.trace_file,
-            main_class: self.main_class,
-        })
-    }
-}
-
-impl<Spec> Options<Spec> {
+impl Options {
     fn header(&self) -> ManifestHeader {
         ManifestHeader {
             kind: self.kind.clone(),
@@ -95,17 +75,14 @@ impl<Spec> Options<Spec> {
     }
 }
 
-fn main() -> std::process::ExitCode {
-    std::process::ExitCode::from(run(std::env::args_os().skip(1).collect(), &mut std::io::stderr()))
+fn main() -> ExitCode {
+    cli::main(run)
 }
 
-/// Runs the tool and returns the exit code: 2 for an option error, 1 for any other error. A run that succeeds writes
-/// nothing. The `fileCount` tag of the `inventory build component` span states the number of files.
-fn run(args: Vec<OsString>, errors: &mut dyn Write) -> u8 {
+/// Runs the tool and returns the exit code: 0, or 1 for any error. A run that succeeds writes nothing. The `fileCount`
+/// tag of the `inventory build component` span states the number of files.
+fn run(args: impl IntoIterator<Item = OsString>, errors: &mut dyn Write) -> u8 {
     let Some(options) = cli::ok_or_report(errors, parse_options(args)) else {
-        return 2;
-    };
-    let Some(options) = cli::ok_or_report(errors, options.read_spec()) else {
         return 1;
     };
     let job = options.mode.job();
@@ -122,7 +99,7 @@ fn run(args: Vec<OsString>, errors: &mut dyn Write) -> u8 {
 }
 
 /// Collects the files of the mode and writes the manifest. The plugin component mode also writes the classpath record.
-fn collect(options: &Options<PluginComponentSpec>, root: &trace::Span) -> anyhow::Result<()> {
+fn collect(options: &Options, root: &trace::Span) -> anyhow::Result<()> {
     let (files, classpath) = match &options.mode {
         Mode::Jars { jars_file, catalogue } => {
             let span = root.child("collect platform jars");
@@ -165,7 +142,7 @@ fn record_collection(
     result
 }
 
-fn write_manifest(options: &Options<PluginComponentSpec>, files: &[SourcedFile], root: &trace::Span) -> anyhow::Result<()> {
+fn write_manifest(options: &Options, files: &[SourcedFile], root: &trace::Span) -> anyhow::Result<()> {
     let span = root.child("inventory build component");
     match inventory::write_manifest(Path::new(&options.manifest), &options.header(), files) {
         Ok(stats) => {
@@ -186,7 +163,9 @@ fn value(options: &mut cli::Options, name: &str) -> anyhow::Result<Option<String
     Ok(options.take(name)?.filter(|value| !value.is_empty()))
 }
 
-fn parse_options(args: Vec<OsString>) -> anyhow::Result<Options<String>> {
+/// Parses the options and reads the plugin component spec. `run` calls this before the tracer starts, so an invalid
+/// spec writes no span file.
+fn parse_options(args: impl IntoIterator<Item = OsString>) -> anyhow::Result<Options> {
     let mut options = cli::parse(args)?;
     let manifest = options.require("--component-manifest")?;
     let kind = options.require("--kind")?;
@@ -197,11 +176,25 @@ fn parse_options(args: Vec<OsString>) -> anyhow::Result<Options<String>> {
     let files_file = value(&mut options, "--files-file")?;
     let plugin_component = value(&mut options, "--plugin-component")?;
     let catalogue = value(&mut options, "--metadata-catalogue")?;
-    let mut plugin_classpath = value(&mut options, "--plugin-classpath-part")?;
+    let plugin_classpath = value(&mut options, "--plugin-classpath-part")?;
     let trace_file = value(&mut options, "--trace-file")?;
     let main_class = value(&mut options, "--main-class")?;
     options.finish()?;
-    let mode = match (jars_file, files_file, plugin_component) {
+    if plugin_component.is_some() != plugin_classpath.is_some() {
+        bail!("--plugin-component and --plugin-classpath-part are required together");
+    }
+    let (os, arch) = if platform_neutral {
+        if plugin_component.is_none() {
+            bail!("--platform-neutral applies only to --plugin-component: no rule collects neutral jars or files");
+        }
+        if os.is_some() || arch.is_some() {
+            bail!("--platform-neutral cannot be combined with --os or --arch");
+        }
+        (String::new(), String::new())
+    } else {
+        (target_os(os.as_deref())?, target_arch(arch.as_deref())?)
+    };
+    let mode = match (jars_file, files_file, plugin_component.zip(plugin_classpath)) {
         (Some(jars_file), None, None) => {
             let Some(catalogue) = catalogue else {
                 bail!("packed jars require --metadata-catalogue; payload inventories belong to the packing action");
@@ -214,33 +207,22 @@ fn parse_options(args: Vec<OsString>) -> anyhow::Result<Options<String>> {
             }
             Mode::Files { files_file }
         }
-        (None, None, Some(spec)) => {
+        (None, None, Some((spec, classpath))) => {
             if catalogue.is_some() {
                 bail!("--plugin-component cannot use --metadata-catalogue");
             }
             if main_class.is_some() {
                 bail!("--plugin-component cannot declare --main-class");
             }
-            let Some(classpath) = plugin_classpath.take() else {
-                bail!("--plugin-component and --plugin-classpath-part are required together");
+            let outputs = Outputs {
+                manifest: &manifest,
+                classpath: &classpath,
+                trace_file: trace_file.as_deref(),
             };
+            let spec = Box::new(PluginComponentSpec::read(&spec, &outputs)?);
             Mode::PluginComponent { spec, classpath }
         }
         _ => bail!("exactly one of --jars-file, --files-file and --plugin-component is required"),
-    };
-    if plugin_classpath.is_some() {
-        bail!("--plugin-component and --plugin-classpath-part are required together");
-    }
-    let (os, arch) = if platform_neutral {
-        if !matches!(mode, Mode::PluginComponent { .. }) {
-            bail!("--platform-neutral applies only to --plugin-component: no rule collects neutral jars or files");
-        }
-        if os.is_some() || arch.is_some() {
-            bail!("--platform-neutral cannot be combined with --os or --arch");
-        }
-        (String::new(), String::new())
-    } else {
-        (target_os(os.as_deref())?, target_arch(arch.as_deref())?)
     };
     Ok(Options {
         manifest,

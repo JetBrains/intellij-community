@@ -798,6 +798,22 @@ fn packed_component_keeps_the_descriptor_bytes() {
     assert!(actual.starts_with(&prefix), "classpath {actual:x?}");
 }
 
+/// The collector checks the manifest path as an output, so the parser keeps the declared slash form.
+#[test]
+fn the_parse_keeps_the_declared_manifest_path_of_a_plugin_component() {
+    let _directory = WorkingDirectory::enter();
+    write_packed_fixture(&packed_spec(true));
+    let args = [
+        "--component-manifest=out/component.json",
+        "--kind=plugins_json",
+        "--platform-neutral",
+        "--plugin-component=component-spec.json",
+        "--plugin-classpath-part=component.plugin-classpath-part",
+    ];
+    let options = crate::parse_options(args.map(std::ffi::OsString::from)).unwrap();
+    assert_eq!(options.manifest, "out/component.json");
+}
+
 #[test]
 fn packed_component_is_platform_neutral() {
     let _directory = WorkingDirectory::enter();

@@ -2,20 +2,20 @@ use std::ffi::OsString;
 
 use testkit::{WorkingDirectory, write_file};
 
+use crate::parse_options;
 use crate::test_support::*;
-use crate::{Mode, parse_options};
 
-fn parse(args: &[&str]) -> anyhow::Result<crate::Options<String>> {
-    parse_options(args.iter().map(OsString::from).collect())
+fn parse(args: &[&str]) -> anyhow::Result<crate::Options> {
+    parse_options(args.iter().map(OsString::from))
 }
 
-fn parse_with(base: &[String], extra: &[&str]) -> anyhow::Result<crate::Options<String>> {
+fn parse_with(base: &[String], extra: &[&str]) -> anyhow::Result<crate::Options> {
     let args: Vec<&str> = base.iter().map(String::as_str).chain(extra.iter().copied()).collect();
     parse(&args)
 }
 
 #[track_caller]
-fn require_error(result: anyhow::Result<crate::Options<String>>, message: &str) {
+fn require_error(result: anyhow::Result<crate::Options>, message: &str) {
     match result {
         Ok(options) => panic!("accepted options {options:?}, expected {message:?}"),
         Err(error) => assert!(format!("{error:#}").contains(message), "error {error:#}, expected {message:?}"),
@@ -99,7 +99,8 @@ fn every_mode_takes_only_the_options_its_rule_passes() {
     let plugin = base_args("--plugin-component=spec.json");
     require_error(parse_with(&plugin, &[]), "required together");
     let plugin_args = [plugin.as_slice(), &["--plugin-classpath-part=part".to_owned()]].concat();
-    assert!(matches!(parse_with(&plugin_args, &[]).unwrap().mode, Mode::PluginComponent { .. }));
+    // The options pass, so the parse reads the spec, which does not exist here.
+    require_error(parse_with(&plugin_args, &[]), "spec.json");
     require_error(
         parse_with(&plugin_args, &["--metadata-catalogue=catalogue.json"]),
         "cannot use --metadata-catalogue",
@@ -110,8 +111,9 @@ fn every_mode_takes_only_the_options_its_rule_passes() {
 
 #[test]
 fn platform_neutral_options() {
-    let options = parse(&[NEUTRAL_PLUGIN.as_slice(), &["--platform-neutral"]].concat()).unwrap();
-    assert_eq!((options.os.as_str(), options.arch.as_str()), ("", ""));
+    // The options pass, so the parse reads the spec, which does not exist here. `packed_component_is_platform_neutral`
+    // reads a real spec.
+    require_error(parse(&[NEUTRAL_PLUGIN.as_slice(), &["--platform-neutral"]].concat()), "spec.json");
     for extra in [
         &["--platform-neutral", "--os=linux"][..],
         &["--platform-neutral", "--arch=x64"],
@@ -133,6 +135,7 @@ fn platform_neutral_options() {
 
 /// The collector checks the manifest path as an output. Bazel declares it in slash form, and an absolute form has
 /// backslashes on Windows, so the parser keeps the declared value in every mode.
+/// `the_parse_keeps_the_declared_manifest_path_of_a_plugin_component` covers the plugin component mode.
 #[test]
 fn options_keep_the_declared_manifest_path() {
     let base = ["--component-manifest=out/component.json", "--kind=files", "--files-file=files.json"];
@@ -140,15 +143,6 @@ fn options_keep_the_declared_manifest_path() {
         let options = parse(&[base.as_slice(), extra].concat()).unwrap();
         assert_eq!(options.manifest, "out/component.json");
     }
-    let options = parse(
-        &[
-            &NEUTRAL_PLUGIN[1..],
-            &["--component-manifest=out/component.json", "--platform-neutral"],
-        ]
-        .concat(),
-    )
-    .unwrap();
-    assert_eq!(options.manifest, "out/component.json");
 }
 
 #[test]
