@@ -63,8 +63,9 @@ Run the tests from the ultimate root, then the second command in `community/`.
 cd community && ./bazel.cmd test //build/dist-tools/...
 ```
 
-- The tests include the frozen jar digests in `crates/jarpack/src/tests/golden.rs`, the plan file corpus, the crate closure test of each action tool, and the
-  `<crate>-clippy` test of every crate.
+- The tests include the frozen jar digests in `crates/jarpack/src/tests/golden.rs`, the crate closure test of each action
+  tool, and the `<crate>-clippy` test of every crate. `//build/dist-tools/plan-corpus:plan-corpus_test` of the ultimate
+  root reads every checked-in plan file.
 - The clippy tests of the community crates run only from `community/`. The clippy aspect of rules_rust skips a target
   of an external repository, and from the ultimate root this module is one. There the tests are incompatible, and
   `bazel test` reports them as skipped. The clippy tests of the ultimate tools run from the ultimate root.
@@ -130,10 +131,11 @@ cp out/bazel-bin/build/dist-tools/bins/<bin>/<bin>_closure.txt build/dist-tools/
 A tool supports only the input that the repository produces. It refuses all other input with an error that names the
 input. So a shape that no producer writes has no code here, and it cannot pass in silence.
 
-`crates/planfile/testdata/corpus` holds a copy of the checked-in plan files. The corpus test reads and derives every
-copy, and it requires every accepted source kind and operation kind to occur. The `javaglob` test requires a recorded
-JDK answer for every glob of the corpus. A plan author who needs a new shape changes the contract, the corpus and the
-`API.md` of the crate together.
+The plan corpus test, `build/dist-tools/plan-corpus` of the ultimate root, reads the checked-in plan files of both
+halves. The generator lists them in `build/dist-tools/plan_files.bzl` of each half. The test derives and plans every file,
+and it requires every accepted source kind and operation kind to occur. It also requires a recorded JDK answer for
+every glob of the files. Most plan files belong to closed products, so the test and its record live in the ultimate
+root. A plan author who needs a new shape changes the contract, the record and the `API.md` of the crate together.
 
 ## Cargo beside Bazel
 
@@ -160,7 +162,7 @@ JDK answer for every glob of the corpus. A plan author who needs a new shape cha
 - A test reads `testdata/` through `testkit::testdata_dir`: from `DT_TESTDATA_DIR` under Bazel, and from the run-time
   `CARGO_MANIFEST_DIR` under `cargo test`. The process wrapper of rules_rust refuses `env!("CARGO_MANIFEST_DIR")`.
 - A test that reads the `testdata/` of another crate adds that crate's `<name>_testdata` filegroup to `test_data` of
-  `dist_rust_crate`. The `javaglob` crate reads the plan corpus this way.
+  `dist_rust_crate`.
 - A new crate or binary goes into `members` of `Cargo.toml`. Then run `cargo build` to update `Cargo.lock`.
 
 ### After a change of `Cargo.lock`

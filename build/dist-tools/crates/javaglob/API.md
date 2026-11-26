@@ -13,10 +13,10 @@ Matches a jar entry name against a `java.nio` `glob:` pattern of the subset that
 
 ## Tests
 
-`testdata/java-path-matcher.txt` holds the JDK answers that `testdata/RecordPathMatcher.java` recorded. Every recorded
-pattern stays inside the subset.
-A test reads every glob of the plan file corpus of the `planfile` crate, and it requires a recorded case for each.
-Thus a new pattern in a plan file needs a new case in `RecordPathMatcher.java` and a new record.
-The unit tests read the record through `testkit::testdata_dir`: from `DT_TESTDATA_DIR` under Bazel, or from
-`CARGO_MANIFEST_DIR/testdata` under `cargo test`. The corpus is at `../../planfile/testdata/corpus` from that directory,
-by a lexical path.
+`testdata/java-path-matcher.txt` holds the JDK answers that `testdata/RecordPathMatcher.java` recorded for the
+constructs of the subset. Every recorded pattern stays inside the subset. The unit tests read the record through
+`testkit::testdata_dir`: from `DT_TESTDATA_DIR` under Bazel, or from `CARGO_MANIFEST_DIR/testdata` under `cargo test`.
+
+The globs of the plan files have their own record in `build/dist-tools/plan-corpus/testdata` of the ultimate root. The
+plan corpus test requires a recorded case for each of them, so a new pattern in a plan file needs a new case in that
+`RecordPathMatcher.java` and a new record.

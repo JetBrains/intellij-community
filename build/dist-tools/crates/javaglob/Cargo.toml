@@ -14,5 +14,4 @@ anyhow.workspace = true
 regex.workspace = true
 
 [dev-dependencies]
-planfile.workspace = true
 testkit.workspace = true

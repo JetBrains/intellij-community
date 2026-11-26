@@ -65,5 +65,4 @@ every other file. The executable bit comes from declared data only:
 The materialization test packs each layout-tree fixture and compares the written tree with the record of the fixture:
 the path, the kind, the mode, and the content digest or the link target of every entry.
 
-The corpus test plans every plan file in `testdata/corpus` of `planfile`. Under Bazel, the unit test gets these files
-through the `test_data` attribute with the `planfile_testdata` filegroup.
+The plan corpus test of the ultimate root, `build/dist-tools/plan-corpus`, plans every checked-in plan file.

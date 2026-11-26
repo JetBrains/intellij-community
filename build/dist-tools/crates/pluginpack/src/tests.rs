@@ -8,7 +8,6 @@
     reason = "a fixture writes small lengths into zip fields and compares known offsets"
 )]
 
-mod corpus;
 mod materialization;
 
 use std::collections::BTreeMap;
@@ -22,7 +21,7 @@ use planfile::contract::{
 };
 use sha2::Digest;
 use testkit::require_case_error;
-pub(crate) use testkit::{read_bytes, require_absent, testdata_dir, write_file};
+pub(crate) use testkit::{read_bytes, require_absent, write_file};
 
 use crate::plan;
 

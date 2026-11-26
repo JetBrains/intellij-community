@@ -1,7 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-use std::collections::{BTreeSet, HashSet};
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 
 use testkit::testdata_dir;
 
@@ -12,47 +11,6 @@ struct RecordedCase {
     pattern: String,
     name: String,
     matches: bool,
-}
-
-/// Every distinct glob of the plan file corpus of the planfile crate. The packer compiles the includes, executables and
-/// mapping patterns of a layout transform as globs. An include loses its leading `!`, and an empty mapping pattern is
-/// `**`.
-fn corpus_patterns() -> BTreeSet<String> {
-    // The corpus is in the testdata of the sibling crate. The lexical path holds in the Bazel runfiles too.
-    let corpus = testdata_dir()
-        .parent()
-        .and_then(Path::parent)
-        .expect("the testdata directory is under crates/javaglob")
-        .join("planfile/testdata/corpus");
-    let entries = std::fs::read_dir(&corpus).unwrap_or_else(|error| panic!("{}: {error}", corpus.display()));
-    let mut files = 0;
-    let mut patterns = BTreeSet::new();
-    for entry in entries {
-        let file = entry.unwrap().path();
-        if !file.to_string_lossy().ends_with(".dev-plan.json") {
-            continue;
-        }
-        files += 1;
-        let plan = planfile::read(&file).unwrap_or_else(|error| panic!("{error}"));
-        for operation in &plan.operations {
-            let assets = operation.layout_assets.assets.iter();
-            for transform in assets.filter_map(|asset| asset.transform.as_ref()) {
-                patterns.extend(transform.executables.iter().cloned());
-                patterns.extend(
-                    transform
-                        .includes
-                        .iter()
-                        .map(|include| include.strip_prefix('!').unwrap_or(include).to_owned()),
-                );
-                patterns.extend(transform.mappings.iter().map(|mapping| match mapping.pattern.as_str() {
-                    "" => "**".to_owned(),
-                    pattern => pattern.to_owned(),
-                }));
-            }
-        }
-    }
-    assert!(files > 0, "{} holds no plan file", corpus.display());
-    patterns
 }
 
 fn testdata(name: &str) -> PathBuf {
@@ -103,12 +61,12 @@ fn read_record() -> Vec<RecordedCase> {
         .collect()
 }
 
-/// The Go port recorded 184 JDK vectors. The record keeps the 111 vectors inside the subset and drops the other 73.
-/// It adds 112 vectors for the patterns of the plan file corpus.
+/// The record holds the JDK answers for the constructs of the subset. The patterns of the plan files have their own
+/// record in the plan corpus test of the ultimate root.
 #[test]
 fn match_agrees_with_the_recorded_path_matcher() {
     let record = read_record();
-    assert_eq!(record.len(), 223, "the record lost or gained a vector");
+    assert_eq!(record.len(), 51, "the record lost or gained a vector");
     let mut failures = Vec::new();
     for recorded in record {
         match JavaGlob::compile(&recorded.pattern) {
@@ -123,22 +81,7 @@ fn match_agrees_with_the_recorded_path_matcher() {
     assert!(failures.is_empty(), "{}", failures.join("\n"));
 }
 
-/// A new pattern in a plan file fails here until `RecordPathMatcher.java` has a case for it.
-#[test]
-fn every_corpus_pattern_compiles_and_has_a_recorded_case() {
-    let recorded: HashSet<String> = read_record().into_iter().map(|recorded| recorded.pattern).collect();
-    let mut failures = Vec::new();
-    for pattern in corpus_patterns() {
-        if let Err(error) = JavaGlob::compile(&pattern) {
-            failures.push(format!("{error:#}"));
-        } else if !recorded.contains(&pattern) {
-            failures.push(format!("the record has no case for {pattern:?}"));
-        }
-    }
-    assert!(failures.is_empty(), "{}", failures.join("\n"));
-}
-
-/// The Go port pinned the regular expression of each construct, and so does this port.
+/// The test pins the regular expression of each construct.
 #[test]
 fn translate_keeps_the_structure_of_each_construct() {
     for (pattern, expected) in [

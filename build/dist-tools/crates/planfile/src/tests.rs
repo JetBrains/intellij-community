@@ -1,7 +1,5 @@
-//! The tests of the plan file reader and the derivation. The plan check of a derived recipe needs the `pluginpack`
-//! crate, so its tests hold it.
-
-mod corpus;
+//! The tests of the plan file reader and the derivation. The plan corpus test of the ultimate root reads and plans every
+//! checked-in plan file.
 
 use testkit::{plan_text, require_case_error};
 
