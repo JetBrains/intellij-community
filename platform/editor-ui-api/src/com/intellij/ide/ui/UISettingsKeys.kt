@@ -9,14 +9,13 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceOrNull
 import com.intellij.platform.settings.v2.BooleanSerializer
-import com.intellij.platform.settings.v2.DoubleSerializer
+import com.intellij.platform.settings.v2.FloatSerializer
 import com.intellij.platform.settings.v2.KeyLocality
 import com.intellij.platform.settings.v2.Serializer
 import com.intellij.platform.settings.v2.SettingsContext
 import com.intellij.platform.settings.v2.SettingsContextFilters
 import com.intellij.platform.settings.v2.SettingsKey
 import com.intellij.platform.settings.v2.SettingsKeyPromoter
-import com.intellij.platform.settings.v2.SettingsValue
 import com.intellij.platform.settings.v2.StringSerializer
 import com.intellij.platform.settings.v2.enumSerializer
 import com.intellij.platform.settings.v2.getValue
@@ -177,22 +176,6 @@ private fun <T> uiKey(
                 val component = ApplicationManager.getApplication()?.takeUnless { it.isDisposed }?.serviceOrNull<NotRoamableUiSettings>()
                 if (component == null) fallback() else componentValue(component)
               })
-
-/**
- * Serializes a [Float] as a [SettingsValue.DoubleValue] through [DoubleSerializer]. The conversion goes through the
- * decimal text of the value, so `1.1f` is stored as `1.1`, not as `1.100000023841858`. It also reads a stored
- * [SettingsValue.IntValue] or [SettingsValue.LongValue], such as a hand-edited `2`.
- */
-private object FloatSerializer : Serializer<Float> {
-  override fun serialize(value: Float): SettingsValue = DoubleSerializer.serialize(value.toString().toDouble())
-
-  override fun deserialize(value: SettingsValue): Float = when (value) {
-    is SettingsValue.IntValue -> value.value.toFloat()
-    is SettingsValue.LongValue -> value.value.toFloat()
-    is SettingsValue.DoubleValue, SettingsValue.NullValue, is SettingsValue.StringValue, is SettingsValue.BooleanValue,
-    is SettingsValue.ListValue, is SettingsValue.MapValue -> DoubleSerializer.deserialize(value).toFloat()
-  }
-}
 
 /**
  * Registers the keys of [UISettingsKeys], so a write of them is not a missing promotion.
