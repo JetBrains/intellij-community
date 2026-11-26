@@ -17,6 +17,8 @@ class JupyterMarkdownCompatibilityChecker : MarkdownCompatibilityChecker {
     if (language.id != "Jupyter") return false
     if (dataContext == null) return true
     val editor = dataContext.getData(CommonDataKeys.EDITOR) ?: return true
+    // An injected fragment, such as the SQL of an SQL cell, has no cell lines and is never a Markdown cell.
+    if (!NotebookCellLines.hasSupport(editor)) return false
     val lineNumber = editor.document.getLineNumber(editor.caretModel.offset)
     val cell = NotebookCellLines.get(editor).getCellByLineNumber(lineNumber) ?: return true
     return cell.type == CellType.MARKDOWN
