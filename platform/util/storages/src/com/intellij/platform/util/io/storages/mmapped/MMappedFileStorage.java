@@ -159,8 +159,17 @@ public final class MMappedFileStorage implements Closeable, Flushable, Unmappabl
     synchronized (openedStorages) {
       MMappedFileStorage alreadyExistingStorage = openedStorages.get(absolutePath);
       if (alreadyExistingStorage != null) {
-        throw new IllegalStateException("Storage[" + absolutePath + "] is already opened (and not yet closed)" +
-                                        " -- can't open same file more than once");
+        if (!alreadyExistingStorage.isOpen()) {
+          //ideally, it should be unreachable: storage.close() should remove the storage from openedStorages;
+          // but there are some corner-cases there storage is closed implicitly, but interrupt-ing its .channel
+          // IO, in which case storage.close() may be walked around:
+          LOG.warn("Storage[" + absolutePath + "] is closed, but not removed from openedStorages registry " +
+                   "=> replace it with the newly opened storage");
+        }
+        else {
+          throw new IllegalStateException("Storage[" + absolutePath + "] is already opened (and not yet closed)" +
+                                          " -- can't open same file more than once");
+        }
       }
 
       channel = FileChannel.open(storagePath, READ, WRITE, CREATE);
