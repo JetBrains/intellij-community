@@ -20,7 +20,7 @@ jvm_library(
     visibility = ["//visibility:public"],
     exports = [
         # do not sort,
-        "//plugins/gradle:gradle-common",
+        "//plugins/gradle",
         "//plugins/gradle/native/tooling",
     ],
     runtime_deps = ["//platform/platform-util-io:ide-util-io"],
@@ -29,7 +29,6 @@ jvm_library(
         "//platform/lang-api:lang",
         "//platform/lang-impl",
         "//plugins/gradle",
-        "//plugins/gradle:gradle-common",
         "//plugins/gradle/native/tooling",
         "//plugins/gradle/tooling-extension-impl:toolingExtension-impl",
     ],

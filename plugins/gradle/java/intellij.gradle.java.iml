@@ -10,8 +10,7 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" name="kotlin-stdlib" level="project" />
-    <orderEntry type="module" module-name="intellij.gradle" />
-    <orderEntry type="module" module-name="intellij.gradle.common" exported="" />
+    <orderEntry type="module" module-name="intellij.gradle" exported="" />
     <orderEntry type="module" module-name="intellij.gradle.jps" />
     <orderEntry type="module" module-name="intellij.java.indexing" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.analysis" />

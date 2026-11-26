@@ -53,7 +53,7 @@ jvm_library(
         "//plugins/kotlin/project-wizard/idea",
         "//platform/platform-impl:ide-impl",
         "//platform/ide-core",
-        "//plugins/gradle:gradle-common",
+        "//plugins/gradle",
         "//platform/lang-core",
         "//plugins/gradle/java",
         "//java/idea-ui:ui",

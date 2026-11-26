@@ -10,8 +10,7 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="intellij.platform.lang" />
     <orderEntry type="module" module-name="intellij.platform.lang.impl" />
-    <orderEntry type="module" module-name="intellij.gradle" />
-    <orderEntry type="module" module-name="intellij.gradle.common" exported="" />
+    <orderEntry type="module" module-name="intellij.gradle" exported="" />
     <orderEntry type="module" module-name="intellij.gradle.native.tooling" exported="" />
     <orderEntry type="module" module-name="intellij.gradle.toolingExtension.impl" />
     <orderEntry type="module" module-name="intellij.platform.ide.util.io" scope="RUNTIME" />

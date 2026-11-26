@@ -70,7 +70,7 @@ jvm_library(
         "//libraries/kotlinx/datetime",
         "//libraries/kotlinx/serialization/core",
         "//libraries/kotlinx/serialization/json",
-        "//plugins/gradle:gradle-common",
+        "//plugins/gradle",
         "//plugins/kotlin/project-configuration",
         "//plugins/kotlin/base/facet",
         "//plugins/kotlin/onboarding",

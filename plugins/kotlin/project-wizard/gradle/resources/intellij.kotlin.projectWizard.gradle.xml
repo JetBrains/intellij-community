@@ -4,6 +4,7 @@
   <dependencies>
     <module name="intellij.kotlin.gradle.tooling"/>
     <module name="intellij.gradle.java"/>
+    <module name="intellij.gradle"/>
     <module name="intellij.java.syntax"/>
     <module name="intellij.java.ui"/>
     <module name="intellij.kotlin.base.plugin"/>

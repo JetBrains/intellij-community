@@ -77,7 +77,6 @@ jvm_library(
         "@lib//:slf4j-api",
         "//platform/projectModel-api:projectModel",
         "//platform/projectModel-impl",
-        "//plugins/gradle:gradle-common",
         "//java/idea-ui:ui",
         "//platform/platform-impl:ide-impl",
         "//platform/ide-core",

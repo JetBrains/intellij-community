@@ -168,7 +168,6 @@ fun getCommunityRepositoryPlugins(): PersistentList<PluginLayout> {
     pluginAuto(
       listOf(
         "intellij.gradle.plugin",
-        "intellij.gradle.common",
       )
     ) { spec ->
       spec.withModule("intellij.libraries.groovy", "groovy.jar")

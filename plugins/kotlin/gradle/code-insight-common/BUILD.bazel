@@ -79,7 +79,7 @@ jvm_library(
         "//platform/external-system-api:externalSystem",
         "//java/java-impl:impl",
         "//java/java-psi-api:psi",
-        "//plugins/gradle:gradle-common",
+        "//plugins/gradle",
         "//plugins/kotlin/project-wizard/core",
         "//plugins/gradle/java",
         "//plugins/kotlin/base/statistics",

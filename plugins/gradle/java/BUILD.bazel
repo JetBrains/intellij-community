@@ -33,7 +33,7 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
-    exports = ["//plugins/gradle:gradle-common"],
+    exports = ["//plugins/gradle"],
     runtime_deps = [
         # do not sort,
         "//java/java-indexing-api:indexing",
@@ -49,7 +49,6 @@ jvm_library(
         # do not sort,
         "@lib//:kotlin-stdlib",
         "//plugins/gradle",
-        "//plugins/gradle:gradle-common",
         "//plugins/gradle/jps-plugin:jps",
         "//platform/analysis-api:analysis",
         "//platform/code-style-api:codeStyle",

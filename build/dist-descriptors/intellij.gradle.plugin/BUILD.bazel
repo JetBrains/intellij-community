@@ -94,7 +94,6 @@ dev_plugin(
         ],
         "lib/gradle-plugin.jar": [
             "intellij.gradle.plugin",
-            "intellij.gradle.common",
         ],
         "lib/groovy.jar": [
             "intellij.libraries.groovy",
@@ -227,7 +226,6 @@ dev_plugin(
         "//libraries/groovy": "intellij.libraries.groovy",
         "//libraries/groovy/ant": "intellij.libraries.groovy.ant",
         "//plugins/gradle/plugin": "intellij.gradle.plugin",
-        "//plugins/gradle:gradle-common": "intellij.gradle.common",
     },
     plugin_directory = "plugins/gradle",
     stamp_class_modes = [

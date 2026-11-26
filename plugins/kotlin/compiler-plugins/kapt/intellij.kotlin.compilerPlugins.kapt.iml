@@ -33,7 +33,7 @@
     <orderEntry type="module" module-name="kotlin.gradle.gradle-java" />
     <orderEntry type="module" module-name="intellij.kotlin.gradle.tooling.impl" />
     <orderEntry type="module" module-name="intellij.platform.lang" />
-    <orderEntry type="module" module-name="intellij.gradle.common" />
+    <orderEntry type="module" module-name="intellij.gradle" />
     <orderEntry type="module" module-name="intellij.kotlin.gradle.gradle" />
   </component>
 </module>

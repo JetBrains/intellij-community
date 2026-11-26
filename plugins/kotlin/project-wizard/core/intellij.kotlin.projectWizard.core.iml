@@ -41,7 +41,6 @@
     <orderEntry type="library" name="slf4j-api" level="project" />
     <orderEntry type="module" module-name="intellij.platform.projectModel" />
     <orderEntry type="module" module-name="intellij.platform.projectModel.impl" />
-    <orderEntry type="module" module-name="intellij.gradle.common" />
     <orderEntry type="module" module-name="intellij.java.ui" />
     <orderEntry type="module" module-name="intellij.platform.ide.impl" />
     <orderEntry type="module" module-name="intellij.platform.ide.core" />

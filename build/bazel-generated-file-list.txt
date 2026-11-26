@@ -1413,7 +1413,7 @@ plugins/gitlab/gitlab-core/tests/api intellij.vcs.gitlab.tests.api
 plugins/gitlab/gitlab-git intellij.vcs.gitlab.git
 plugins/gitlab/gitlab-yaml intellij.vcs.gitlab.yaml intellij.vcs.gitlab.yaml.tests
 plugins/gitlab/shared intellij.vcs.gitlab.shared
-plugins/gradle intellij.gradle intellij.gradle.common intellij.gradle.tests intellij.gradle.tests.main
+plugins/gradle intellij.gradle intellij.gradle.tests intellij.gradle.tests.main
 plugins/gradle-maven intellij.gradle.java.maven intellij.gradle.java.maven.tests
 plugins/gradle/backend intellij.gradle.backend intellij.gradle.backend.tests
 plugins/gradle/codeInsight intellij.gradle.codeInsight

@@ -29,7 +29,6 @@
     <orderEntry type="module" module-name="intellij.platform.buildView" />
     <orderEntry type="module" module-name="intellij.platform.util" />
     <orderEntry type="module" module-name="intellij.gradle" />
-    <orderEntry type="module" module-name="intellij.gradle.common" />
     <orderEntry type="module" module-name="intellij.gradle.java" />
     <orderEntry type="module" module-name="intellij.gradle.toolingExtension" />
     <orderEntry type="module" module-name="intellij.devkit.gradle.tooling" />

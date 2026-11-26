@@ -65,7 +65,6 @@ jvm_library(
         "//platform/buildView",
         "//platform/util",
         "//plugins/gradle",
-        "//plugins/gradle:gradle-common",
         "//plugins/gradle/java",
         "//plugins/gradle/tooling-extension-api:toolingExtension",
         "//plugins/devkit/intellij.devkit.gradle.tooling:gradle-tooling",
