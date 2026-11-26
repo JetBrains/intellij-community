@@ -6,10 +6,8 @@
 
 use std::collections::{BTreeSet, HashSet};
 use std::fs;
-use std::io;
+use std::io::{self, Write as _};
 use std::path::{Path, PathBuf};
-use std::process;
-use std::time::{SystemTime, UNIX_EPOCH};
 
 use anyhow::{Context as _, Result, bail};
 use component::layout::{LocalLayout, read_layout};
@@ -17,7 +15,7 @@ use rayon::prelude::*;
 
 use crate::lock::StoreLock;
 use crate::spec::HomeSpec;
-use crate::store::{BlobSource, Store, TEMPORARY_PREFIX};
+use crate::store::{BlobSource, Store, create_temporary};
 
 /// The name of the generation directory in the root.
 pub(crate) const GENERATIONS_DIR: &str = "g";
@@ -112,12 +110,10 @@ struct FileJob<'a> {
 
 fn build(spec: &HomeSpec, store: &Store, generation: &Path) -> Result<()> {
     let layout = read_layout(&spec.layout)?;
-    let nanos = SystemTime::now()
-        .duration_since(UNIX_EPOCH)
-        .map_or(0, |duration| duration.as_nanos());
     let name = generation.file_name().and_then(|name| name.to_str()).unwrap_or("generation");
-    let staging = generation.with_file_name(format!("{name}{TEMPORARY_PREFIX}{}-{nanos}", process::id()));
-    fs::create_dir(&staging).with_context(|| format!("cannot create {}", staging.display()))?;
+    let parent = generation.parent().unwrap_or(generation);
+    let staging = create_temporary(parent, name, |staging| fs::create_dir(staging))
+        .with_context(|| format!("cannot create the staging directory of {}", generation.display()))?;
     let result = fill(spec, store, &layout, generation, &staging);
     if let Err(error) = result {
         let _ = fs::remove_dir_all(&staging);
@@ -308,8 +304,14 @@ fn write_vm_options(spec: &HomeSpec, generation: &Path, home: &Path) -> Result<P
     if file.exists() {
         return Ok(file);
     }
-    let temporary = generation.join(format!("{TEMPORARY_PREFIX}vmoptions-{}", process::id()));
-    fs::write(&temporary, &text).with_context(|| format!("cannot write {}", temporary.display()))?;
+    let temporary = create_temporary(generation, "vmoptions", |temporary| {
+        fs::OpenOptions::new()
+            .write(true)
+            .create_new(true)
+            .open(temporary)?
+            .write_all(text.as_bytes())
+    })
+    .with_context(|| format!("cannot write the vmoptions file of {}", generation.display()))?;
     let result = match fs::hard_link(&temporary, &file) {
         Ok(()) => Ok(()),
         Err(error) if error.kind() == io::ErrorKind::AlreadyExists => Ok(()),

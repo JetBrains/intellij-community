@@ -5,7 +5,7 @@ use std::thread;
 use testkit::{read_text, write_file};
 
 use crate::generation::{COMPLETE_FILE, GENERATIONS_DIR, check_path_length, generation_key, materialize, target_marker};
-use crate::store::{STORE_DIR, link_count};
+use crate::store::{STORE_DIR, link_count, next_temporary_counter, temporary_name};
 use crate::test_support::{Fixture, names};
 
 #[test]
@@ -169,4 +169,73 @@ fn a_path_longer_than_the_limit_fails() {
 fn a_target_marker_is_a_file_name() {
     assert_eq!(target_marker("//build:idea"), "__build_idea");
     assert_eq!(target_marker("@community//build:idea.dev-1"), "_community__build_idea.dev-1");
+}
+
+/// The names of the next `count` temporary entries of this process with `stem`. The other tests of the process take
+/// counter values too, so a window of many names covers the entry that the next start creates.
+fn next_temporary_names(stem: &str, count: u64) -> Vec<String> {
+    let first = next_temporary_counter();
+    (first..first + count).map(|counter| temporary_name(stem, counter)).collect()
+}
+
+/// A crashed start of a process with this process id linked its temporary vmoptions file to the published file and
+/// left it. The next start with other flags writes a new file, and the published file keeps its text.
+#[test]
+fn a_leftover_vmoptions_temporary_does_not_change_a_published_file() {
+    let fixture = Fixture::new("");
+    let first = fixture.materialize().unwrap();
+    let text = read_text(&first.vm_options_file);
+    let generation = first.vm_options_file.parent().unwrap();
+    let leftovers = next_temporary_names("vmoptions", 1024);
+    for name in &leftovers {
+        fs::hard_link(&first.vm_options_file, generation.join(name)).unwrap();
+    }
+
+    let mut other = fixture.spec.clone();
+    other.vm_options = fixture.directory.path().join("other.vmoptions");
+    write_file(&other.vm_options, "-Didea.config.path=/other/config");
+    let second = materialize(&other, fixture.root(), &fixture.store()).unwrap();
+    assert_ne!(second.vm_options_file, first.vm_options_file);
+    assert!(read_text(&second.vm_options_file).starts_with("-Didea.config.path=/other/config\n"));
+    assert_eq!(read_text(&first.vm_options_file), text);
+    for name in &leftovers {
+        assert_eq!(read_text(generation.join(name)), text, "{name}");
+    }
+}
+
+/// A crashed start of a process with this process id left a temporary blob in the store. The next start copies its
+/// blobs to other names and succeeds.
+#[test]
+fn a_leftover_store_temporary_does_not_fail_a_start() {
+    let fixture = Fixture::new("");
+    let store = fixture.root().join(STORE_DIR);
+    let leftovers = next_temporary_names("", 1024);
+    for name in &leftovers {
+        write_file(store.join(name), "leftover");
+    }
+
+    let home = fixture.materialize().unwrap();
+    assert_eq!(read_text(home.home.join("lib/app.jar")), "app");
+    for name in &leftovers {
+        assert_eq!(read_text(store.join(name)), "leftover", "{name}");
+    }
+}
+
+/// A crashed start of a process with this process id left the staging directory of the generation. The next start
+/// stages the generation in another directory and succeeds.
+#[test]
+fn a_leftover_staging_directory_does_not_fail_a_start() {
+    let fixture = Fixture::new("");
+    let generations = fixture.root().join(GENERATIONS_DIR);
+    let leftovers = next_temporary_names("v5-first-flat", 1024);
+    for name in &leftovers {
+        write_file(generations.join(name).join("lib/app.jar"), "leftover");
+    }
+
+    let home = fixture.materialize().unwrap();
+    assert_eq!(home.home, generations.join("v5-first-flat"));
+    assert_eq!(read_text(home.home.join("lib/app.jar")), "app");
+    for name in &leftovers {
+        assert_eq!(read_text(generations.join(name).join("lib/app.jar")), "leftover", "{name}");
+    }
 }

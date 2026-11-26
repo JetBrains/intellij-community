@@ -20,6 +20,35 @@ pub(crate) const TEMPORARY_PREFIX: &str = ".tmp-";
 
 static COUNTER: AtomicU64 = AtomicU64::new(0);
 
+/// The temporary name `<stem>.tmp-<process id>-<counter>`.
+pub(crate) fn temporary_name(stem: &str, counter: u64) -> String {
+    format!("{stem}{TEMPORARY_PREFIX}{}-{counter}", process::id())
+}
+
+/// Creates a new temporary entry in `directory` with `create`, and returns its path.
+///
+/// A temporary entry is never written through and never reused. `create` must fail with
+/// [`io::ErrorKind::AlreadyExists`] when the path exists, as `fs::create_dir`, `OpenOptions::create_new` and
+/// `fscopy::clone_or_copy` do. Then the next value of the process-wide counter names the next candidate. The counter
+/// tells apart two threads of one process, and the process id two live processes. A leftover of a crashed process
+/// whose id this process reuses stays as it is, so a file that the leftover links keeps its content.
+pub(crate) fn create_temporary(directory: &Path, stem: &str, mut create: impl FnMut(&Path) -> io::Result<()>) -> io::Result<PathBuf> {
+    loop {
+        let path = directory.join(temporary_name(stem, COUNTER.fetch_add(1, Ordering::Relaxed)));
+        match create(&path) {
+            Ok(()) => return Ok(path),
+            Err(error) if error.kind() == io::ErrorKind::AlreadyExists => {}
+            Err(error) => return Err(error),
+        }
+    }
+}
+
+/// The counter value that the next temporary name takes.
+#[cfg(test)]
+pub(crate) fn next_temporary_counter() -> u64 {
+    COUNTER.load(Ordering::Relaxed)
+}
+
 /// The store of one root.
 #[derive(Debug, Clone)]
 pub(crate) struct Store {
@@ -100,13 +129,9 @@ impl Store {
     /// Clones `source` to a temporary file, checks its hash and size, sets the mode, and publishes it as `blob`.
     /// A blob that another writer published first is kept.
     fn publish(&self, source: &Path, blob: &Path, hash: i64, size: u64, mode: u32) -> Result<()> {
-        let temporary = self.directory.join(format!(
-            "{TEMPORARY_PREFIX}{}-{}",
-            process::id(),
-            COUNTER.fetch_add(1, Ordering::Relaxed)
-        ));
+        let temporary = create_temporary(&self.directory, "", |temporary| fscopy::clone_or_copy(source, temporary))
+            .with_context(|| format!("cannot copy {} into the store", source.display()))?;
         let result = (|| {
-            fscopy::clone_or_copy(source, &temporary).with_context(|| format!("cannot copy {} into the store", source.display()))?;
             let actual = xxh3::hash_file(&temporary).with_context(|| format!("cannot read {}", temporary.display()))?;
             let actual_size = fs::metadata(&temporary)
                 .with_context(|| format!("cannot read {}", temporary.display()))?

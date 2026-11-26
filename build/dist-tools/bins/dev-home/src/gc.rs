@@ -19,7 +19,7 @@ use anyhow::{Context as _, Result};
 use crate::generation::{COMPLETE_FILE, GENERATIONS_DIR, TARGETS_DIR, TRASH_PREFIX, USED_FILE};
 use crate::holders;
 use crate::lock::StoreLock;
-use crate::store::{STORE_DIR, TEMPORARY_PREFIX, link_count};
+use crate::store::{STORE_DIR, TEMPORARY_PREFIX, create_temporary, link_count};
 
 /// The stamp of the last collection in the root.
 pub(crate) const STAMP_FILE: &str = "gc.stamp";
@@ -106,9 +106,8 @@ fn tool_copy(root: &Path) -> Result<PathBuf> {
     fs::create_dir_all(&directory).with_context(|| format!("cannot create {}", directory.display()))?;
     let copy = directory.join(format!("dev-home-{hash:016x}{}", std::env::consts::EXE_SUFFIX));
     if !copy.exists() {
-        let temporary = directory.join(format!("{TEMPORARY_PREFIX}{}{}", process::id(), std::env::consts::EXE_SUFFIX));
-        let _ = fs::remove_file(&temporary);
-        fscopy::clone_or_copy(&current, &temporary).with_context(|| format!("cannot copy {}", current.display()))?;
+        let temporary = create_temporary(&directory, "dev-home", |temporary| fscopy::clone_or_copy(&current, temporary))
+            .with_context(|| format!("cannot copy {}", current.display()))?;
         if fs::rename(&temporary, &copy).is_err() {
             let _ = fs::remove_file(&temporary);
         }
